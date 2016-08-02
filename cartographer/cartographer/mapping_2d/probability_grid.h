@@ -1,0 +1,197 @@
+/*
+ * Copyright 2016 The Cartographer Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef CARTOGRAPHER_MAPPING_2D_PROBABILITY_GRID_H_
+#define CARTOGRAPHER_MAPPING_2D_PROBABILITY_GRID_H_
+
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "cartographer/common/math.h"
+#include "cartographer/common/port.h"
+#include "cartographer/mapping/probability_values.h"
+#include "cartographer/mapping_2d/map_limits.h"
+#include "cartographer/mapping_2d/xy_index.h"
+#include "glog/logging.h"
+
+namespace cartographer {
+namespace mapping_2d {
+
+// Represents a 2D grid of probabilities.
+class ProbabilityGrid {
+ public:
+  explicit ProbabilityGrid(const MapLimits& limits)
+      : limits_(limits),
+        cells_(limits_.cell_limits().num_x_cells *
+                   limits_.cell_limits().num_y_cells,
+               mapping::kUnknownProbabilityValue),
+        max_x_(0),
+        max_y_(0),
+        min_x_(limits_.cell_limits().num_x_cells - 1),
+        min_y_(limits_.cell_limits().num_y_cells - 1) {}
+
+  // Returns the limits of this ProbabilityGrid.
+  const MapLimits& limits() const { return limits_; }
+
+  // Starts the next update sequence.
+  void StartUpdate() {
+    while (!update_indices_.empty()) {
+      DCHECK_GE(cells_[update_indices_.back()], mapping::kUpdateMarker);
+      cells_[update_indices_.back()] -= mapping::kUpdateMarker;
+      update_indices_.pop_back();
+    }
+  }
+
+  // Sets the probability of the cell at 'xy_index' to the given 'probability'.
+  // Only allowed if the cell was unknown before.
+  void SetProbability(const Eigen::Array2i& xy_index, const float probability) {
+    uint16& cell = cells_[GetIndexOfCell(xy_index)];
+    CHECK_EQ(cell, mapping::kUnknownProbabilityValue);
+    cell = mapping::ProbabilityToValue(probability);
+    UpdateBounds(xy_index);
+  }
+
+  // Applies the 'odds' specified when calling ComputeLookupTableToApplyOdds()
+  // to the probability of the cell at 'xy_index' if the cell has not already
+  // been updated. Multiple updates of the same cell will be ignored until
+  // StartUpdate() is called. Returns true if the cell was updated.
+  //
+  // If this is the first call to ApplyOdds() for the specified cell, its value
+  // will be set to probability corresponding to 'odds'.
+  bool ApplyLookupTable(const Eigen::Array2i& xy_index,
+                        const std::vector<uint16>& table) {
+    DCHECK_EQ(table.size(), mapping::kUpdateMarker);
+    const int cell_index = GetIndexOfCell(xy_index);
+    uint16& cell = cells_[cell_index];
+    if (cell >= mapping::kUpdateMarker) {
+      return false;
+    }
+    update_indices_.push_back(cell_index);
+    cell = table[cell];
+    DCHECK_GE(cell, mapping::kUpdateMarker);
+    UpdateBounds(xy_index);
+    return true;
+  }
+
+  // Returns the probability of the cell with 'xy_index'.
+  float GetProbability(const Eigen::Array2i& xy_index) const {
+    if (limits_.Contains(xy_index)) {
+      return mapping::ValueToProbability(cells_[GetIndexOfCell(xy_index)]);
+    }
+    return mapping::kMinProbability;
+  }
+
+  // Returns the probability of the cell containing the point ('x', 'y').
+  float GetProbability(const double x, const double y) const {
+    return GetProbability(limits_.GetXYIndexOfCellContainingPoint(x, y));
+  }
+
+  // Returns true if the probability at the specified index is known.
+  bool IsKnown(const Eigen::Array2i& xy_index) const {
+    return limits_.Contains(xy_index) &&
+           cells_[GetIndexOfCell(xy_index)] !=
+               mapping::kUnknownProbabilityValue;
+  }
+
+  // Returns the center of the cell at 'xy_index'.
+  void GetCenterOfCellWithXYIndex(const Eigen::Array2i& xy_index,
+                                  double* const x, double* const y) const {
+    *CHECK_NOTNULL(x) = limits_.edge_limits().max().x() -
+                        (xy_index.y() + 0.5) * limits_.resolution();
+    *CHECK_NOTNULL(y) = limits_.edge_limits().max().y() -
+                        (xy_index.x() + 0.5) * limits_.resolution();
+  }
+
+  // Fills in 'offset' and 'limits' to define a subregion of that contains all
+  // known cells.
+  void ComputeCroppedLimits(Eigen::Array2i* const offset,
+                            CellLimits* const limits) const {
+    *offset = Eigen::Array2i(min_x_, min_y_);
+    *limits = CellLimits(std::max(max_x_, min_x_) - min_x_ + 1,
+                         std::max(max_y_, min_y_) - min_y_ + 1);
+  }
+
+  // Grows the map as necessary to include 'x' and 'y'. This changes the meaning
+  // of these coordinates going forward. This method must be called immediately
+  // after 'StartUpdate', before any calls to 'ApplyLookupTable'.
+  void GrowLimits(const double x, const double y) {
+    CHECK(update_indices_.empty());
+    while (!limits_.Contains(limits_.GetXYIndexOfCellContainingPoint(x, y))) {
+      const int x_offset = limits_.cell_limits().num_x_cells / 2;
+      const int y_offset = limits_.cell_limits().num_y_cells / 2;
+      const MapLimits new_limits(
+          limits_.resolution(),
+          limits_.centered_limits().max().x() + y_offset * limits_.resolution(),
+          limits_.centered_limits().max().y() + x_offset * limits_.resolution(),
+          CellLimits(2 * limits_.cell_limits().num_x_cells,
+                     2 * limits_.cell_limits().num_y_cells));
+      const int stride = new_limits.cell_limits().num_x_cells;
+      const int offset = x_offset + stride * y_offset;
+      const int new_size = new_limits.cell_limits().num_x_cells *
+                           new_limits.cell_limits().num_y_cells;
+      std::vector<uint16> new_cells(new_size,
+                                    mapping::kUnknownProbabilityValue);
+      for (int i = 0; i < limits_.cell_limits().num_y_cells; ++i) {
+        for (int j = 0; j < limits_.cell_limits().num_x_cells; ++j) {
+          new_cells[offset + j + i * stride] =
+              cells_[j + i * limits_.cell_limits().num_x_cells];
+        }
+      }
+      cells_ = new_cells;
+      limits_ = new_limits;
+      min_x_ += x_offset;
+      min_y_ += y_offset;
+      max_x_ += x_offset;
+      max_y_ += y_offset;
+    }
+  }
+
+ private:
+  // Returns the index of the cell at 'xy_index'.
+  int GetIndexOfCell(const Eigen::Array2i& xy_index) const {
+    CHECK(limits_.Contains(xy_index)) << xy_index;
+    return mapping_2d::GetIndexOfCell(xy_index,
+                                      limits_.cell_limits().num_x_cells);
+  }
+
+  void UpdateBounds(const Eigen::Array2i& xy_index) {
+    min_x_ = std::min(min_x_, xy_index.x());
+    min_y_ = std::min(min_y_, xy_index.y());
+    max_x_ = std::max(max_x_, xy_index.x());
+    max_y_ = std::max(max_y_, xy_index.y());
+  }
+
+  MapLimits limits_;
+  std::vector<uint16> cells_;  // Highest bit is update marker.
+  std::vector<int> update_indices_;
+
+  // Minimum and maximum cell coordinates of know cells to efficiently compute
+  // cropping limits.
+  int max_x_;
+  int max_y_;
+  int min_x_;
+  int min_y_;
+};
+
+}  // namespace mapping_2d
+}  // namespace cartographer
+
+#endif  // CARTOGRAPHER_MAPPING_2D_PROBABILITY_GRID_H_

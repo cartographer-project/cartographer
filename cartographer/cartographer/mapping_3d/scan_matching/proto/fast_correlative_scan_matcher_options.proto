@@ -1,0 +1,44 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package cartographer.mapping_3d.scan_matching.proto;
+
+message FastCorrelativeScanMatcherOptions {
+  // Number of precomputed grids to use.
+  optional int32 branch_and_bound_depth = 2;
+
+  // Number of full resolution grids to use, additional grids will reduce the
+  // resolution by half each.
+  optional int32 full_resolution_depth = 8;
+
+  // Number of histogram buckets for the rotational scan matcher.
+  optional int32 rotational_histogram_size = 3;
+
+  // Minimum score for the rotational scan matcher.
+  optional double min_rotational_score = 4;
+
+  // Linear search window in the plane orthogonal to gravity in which the best
+  // possible scan alignment will be found.
+  optional double linear_xy_search_window = 5;
+
+  // Linear search window in the gravity direction in which the best possible
+  // scan alignment will be found.
+  optional double linear_z_search_window = 6;
+
+  // Minimum angular search window in which the best possible scan alignment
+  // will be found.
+  optional double angular_search_window = 7;
+}

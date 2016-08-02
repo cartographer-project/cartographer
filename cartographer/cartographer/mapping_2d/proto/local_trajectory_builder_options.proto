@@ -1,0 +1,53 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package cartographer.mapping_2d.proto;
+
+import "cartographer/kalman_filter/proto/pose_tracker_options.proto";
+import "cartographer/mapping_3d/proto/motion_filter_options.proto";
+import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
+import "cartographer/mapping_2d/proto/submaps_options.proto";
+import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.proto";
+import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
+
+message LocalTrajectoryBuilderOptions {
+  // Cropping parameters for the horizontal laser fan.
+  optional float horizontal_laser_min_z = 1;
+  optional float horizontal_laser_max_z = 2;
+
+  // Voxel filter that gets applied to the horizontal laser immediately after
+  // cropping.
+  optional float horizontal_laser_voxel_filter_size = 3;
+
+  // Whether to solve the online scan matching first using the correlative scan
+  // matcher to generate a good starting point for Ceres.
+  optional bool use_online_correlative_scan_matching = 5;
+
+  // Voxel filter used to compute a sparser point cloud for matching.
+  optional sensor.proto.AdaptiveVoxelFilterOptions
+      adaptive_voxel_filter_options = 6;
+
+  optional scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
+      real_time_correlative_scan_matcher_options = 7;
+  optional scan_matching.proto.CeresScanMatcherOptions
+      ceres_scan_matcher_options = 8;
+  optional mapping_3d.proto.MotionFilterOptions motion_filter_options = 13;
+  optional kalman_filter.proto.PoseTrackerOptions pose_tracker_options = 10;
+  optional mapping_2d.proto.SubmapsOptions submaps_options = 11;
+
+  // True if an IMU is configured in the sensor data.
+  optional bool expect_imu_data = 12;
+}

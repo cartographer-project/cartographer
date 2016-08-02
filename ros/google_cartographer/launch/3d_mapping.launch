@@ -1,0 +1,100 @@
+<!--
+  Copyright 2016 The Cartographer Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<launch>
+ <node pkg="nodelet" type="nodelet" name="velodyne_nodelet_manager"
+        args="manager" />
+ <node pkg="nodelet" type="nodelet" name="horizontal_driver_nodelet"
+        args="load velodyne_driver/DriverNodelet velodyne_nodelet_manager" >
+    <remap from="velodyne_packets" to="horizontal_velodyne_packets" />
+    <param name="model" value="VLP16"/>
+    <param name="pcap" value=""/>
+    <param name="read_once" value="false"/>
+    <param name="read_fast" value="false"/>
+    <param name="repeat_delay" value="0.0"/>
+    <param name="rpm" value="600.0"/>
+    <param name="port" value="2368" />
+    <param name="frame_id" value="horizontal_vlp16_link"/>
+  </node>
+
+ <node pkg="nodelet" type="nodelet" name="vertical_driver_nodelet"
+        args="load velodyne_driver/DriverNodelet velodyne_nodelet_manager" >
+    <remap from="velodyne_packets" to="vertical_velodyne_packets" />
+    <param name="model" value="VLP16"/>
+    <param name="pcap" value=""/>
+    <param name="read_once" value="false"/>
+    <param name="read_fast" value="false"/>
+    <param name="repeat_delay" value="0.0"/>
+    <param name="rpm" value="600.0"/>
+    <param name="port" value="2369" />
+    <param name="frame_id" value="vertical_vlp16_link"/>
+  </node>
+
+  <remap from="/imu/imu" to="/imu" />
+  <!-- TODO(hrapp): the IMU has a bug that makes it impossible to use arg for
+       setting the parameter. so we work around this by setting the param
+       directly -->
+  <param name="/imu/frameId" value="imu_link"/>
+  <include file="$(find imu_3dm_gx4)/launch/imu.launch">
+    <arg name="frame_id" value="imu_link"/>
+  </include>
+
+  <!-- VLP16 packets -> points -->
+  <arg name="calibration" default="$(find velodyne_pointcloud)/params/VLP16db.yaml"/>
+  <arg name="min_range" default="0.4" />
+  <arg name="max_range" default="130.0" />
+  <node pkg="nodelet" type="nodelet" name="cloud_nodelet_horizontal"
+    args="load velodyne_pointcloud/CloudNodelet velodyne_nodelet_manager">
+    <remap from="velodyne_packets" to="horizontal_velodyne_packets" />
+    <remap from="velodyne_points" to="horizontal_3d_laser" />
+    <param name="calibration" value="$(arg calibration)"/>
+    <param name="min_range" value="$(arg min_range)"/>
+    <param name="max_range" value="$(arg max_range)"/>
+  </node>
+
+  <node pkg="nodelet" type="nodelet" name="cloud_nodelet_vertical"
+    args="load velodyne_pointcloud/CloudNodelet velodyne_nodelet_manager">
+    <remap from="velodyne_packets" to="vertical_velodyne_packets" />
+    <remap from="velodyne_points" to="vertical_3d_laser" />
+    <param name="calibration" value="$(arg calibration)"/>
+    <param name="min_range" value="$(arg min_range)"/>
+    <param name="max_range" value="$(arg max_range)"/>
+  </node>
+
+  <param name="robot_description"
+    textfile="$(find google_cartographer)/urdf/backpack_3d.urdf" />
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher"
+    type="robot_state_publisher" />
+
+  <node name="cartographer" pkg="google_cartographer"
+      type="cartographer_node" output="screen" >
+    <rosparam subst_value="true">
+      map_frame: "map"
+      tracking_frame: "base_link"
+      configuration_files_directories: [
+        "$(find google_cartographer)/configuration_files"
+      ]
+      mapping_configuration_basename: "3d_mapping.lua"
+      imu_topic: "/imu"
+      laser_scan_3d_topics: ["/horizontal_3d_laser", "/vertical_3d_laser"]
+      laser_min_range_m: 0.
+      laser_max_range_m: 30.
+      laser_missing_echo_ray_length_m: 5.
+    </rosparam>
+  </node>
+
+</launch>

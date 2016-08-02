@@ -1,0 +1,44 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package cartographer.mapping.sparse_pose_graph.proto;
+
+import "cartographer/common/proto/ceres_solver_options.proto";
+
+// NEXT ID: 11
+message OptimizationProblemOptions {
+  // Scaling parameter for Huber loss function.
+  optional double huber_scale = 1;
+
+  // Scaling parameter for the IMU acceleration term.
+  optional double acceleration_scale = 8;
+
+  // Scaling parameter for the IMU rotation term.
+  optional double rotation_scale = 9;
+
+  // Penalty factors for changes to the relative pose between consecutive scans.
+  optional double consecutive_scan_translation_penalty_factor = 2;
+  optional double consecutive_scan_rotation_penalty_factor = 3;
+
+  // If true, the Ceres solver summary will be logged for every optimization.
+  optional bool log_solver_summary = 5;
+
+  // If true, histograms of the final residual values after optimization will be
+  // logged for every optimization.
+  optional bool log_residual_histograms = 10;
+
+  optional common.proto.CeresSolverOptions ceres_solver_options = 7;
+}

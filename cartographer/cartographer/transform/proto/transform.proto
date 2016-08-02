@@ -1,0 +1,77 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package cartographer.transform.proto;
+
+// All coordinates are expressed in the right-handed Cartesian coordinate system
+// used by Cartographer (x forward, y left, z up). Message names are chosen to
+// mirror those used in the Eigen library.
+
+message Vector2d {
+  optional double x = 1;
+  optional double y = 2;
+}
+
+message Vector2f {
+  optional float x = 1;
+  optional float y = 2;
+}
+
+message Vector3d {
+  optional double x = 1;
+  optional double y = 2;
+  optional double z = 3;
+}
+
+message Vector3f {
+  optional float x = 1;
+  optional float y = 2;
+  optional float z = 3;
+}
+
+message Quaterniond {
+  optional double x = 1;
+  optional double y = 2;
+  optional double z = 3;
+  optional double w = 4;
+}
+
+message Quaternionf {
+  optional float x = 1;
+  optional float y = 2;
+  optional float z = 3;
+  optional float w = 4;
+}
+
+message Rigid2d {
+  optional Vector2d translation = 1;
+  optional double rotation = 2;
+}
+
+message Rigid2f {
+  optional Vector2f translation = 1;
+  optional float rotation = 2;
+}
+
+message Rigid3d {
+  optional Vector3d translation = 1;
+  optional Quaterniond rotation = 2;
+}
+
+message Rigid3f {
+  optional Vector3f translation = 1;
+  optional Quaternionf rotation = 2;
+}

@@ -1,0 +1,41 @@
+<!--
+  Copyright 2016 The Cartographer Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<launch>
+  <param name="robot_description"
+    textfile="$(find google_cartographer)/urdf/turtlebot.urdf" />
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher"
+    type="robot_state_publisher" />
+
+  <node name="cartographer" pkg="google_cartographer"
+      type="cartographer_node" output="screen" >
+    <rosparam subst_value="true">
+      map_frame: "map"
+      tracking_frame: "base_link"
+      configuration_files_directories: [
+        "$(find google_cartographer)/configuration_files"
+      ]
+      mapping_configuration_basename: "turtlebot.lua"
+      imu_topic: "/imu"
+      laser_scan_2d_topic: "/horizontal_2d_laser"
+      laser_min_range_m: 0.
+      laser_max_range_m: 30.
+      laser_missing_echo_ray_length_m: 5.
+    </rosparam>
+  </node>
+
+</launch>

@@ -1,0 +1,32 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package cartographer.kalman_filter.proto;
+
+message PoseTrackerOptions {
+  // Model variances depend linearly on time.
+  optional double position_model_variance = 1;
+  optional double orientation_model_variance = 2;
+  optional double velocity_model_variance = 3;
+
+  // Time constant for the orientation moving average based on observed gravity
+  // via linear acceleration.
+  optional double imu_gravity_time_constant = 4;
+  optional double imu_gravity_variance = 5;
+
+  // Maximum number of previous odometry states to keep.
+  optional int32 num_odometry_states = 6;
+}
