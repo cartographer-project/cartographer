@@ -23,6 +23,7 @@
 
   <run_depend>catkin</run_depend>
   <buildtool_depend>cmake</buildtool_depend>
+  <build_depend>ceres_catkin</build_depend>
 
   <export>
     <build_type>cmake</build_type>
