@@ -5,10 +5,15 @@ mapping
 ([SLAM](http://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping))
 across multiple platforms and sensor configurations.
 
-## Installation instructions
+## Installation with ROS
 
-For Ubuntu 14.04 (Trusty):
+See https://github.com/googlecartographer/cartographer_ros
 
+## Installation without ROS
+
+On Ubuntu 14.04 (Trusty):
+
+    # Install the required libraries that are available as debs
     sudo apt-get install \
       g++ \
       google-mock \
@@ -23,8 +28,7 @@ For Ubuntu 14.04 (Trusty):
       protobuf-compiler \
       python-sphinx
 
-Download, build and install Ceres:
-
+    # Build and install Ceres
     git clone https://ceres-solver.googlesource.com/ceres-solver
     cd ceres-solver
     mkdir build && cd build
@@ -32,17 +36,8 @@ Download, build and install Ceres:
     make
     sudo make install
 
-Build Cartographer:
-
+    # Build Cartographer
     cd cartographer
     mkdir build && cd build
     cmake .. -G Ninja
     ninja
-
-## Running with Velodyne data
-
-    apt-get install libpcap-dev
-    cd <somwhere>
-    git clone git@github.com:ros-drivers/velodyne.git
-    cd <catkin_ws>/src
-    ln -s <somewhere>/velodyne/velodyne* .
