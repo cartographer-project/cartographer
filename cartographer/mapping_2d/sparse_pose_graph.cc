@@ -90,7 +90,7 @@ void SparsePoseGraph::AddScan(
     const mapping::Submaps* submaps,
     const mapping::Submap* const matching_submap,
     const std::vector<const mapping::Submap*>& insertion_submaps) {
-  const transform::Rigid3d optimized_pose(GetOdometryToMapTransform(*submaps) *
+  const transform::Rigid3d optimized_pose(GetLocalToGlobalTransform(*submaps) *
                                           transform::Embed3D(pose));
 
   common::MutexLocker locker(&mutex_);
@@ -393,7 +393,7 @@ std::vector<SparsePoseGraph::Constraint3D> SparsePoseGraph::constraints_3d() {
   return {};
 }
 
-transform::Rigid3d SparsePoseGraph::GetOdometryToMapTransform(
+transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
     const mapping::Submaps& submaps) {
   return GetSubmapTransforms(submaps).back() *
          submaps.Get(submaps.size() - 1)->local_pose().inverse();

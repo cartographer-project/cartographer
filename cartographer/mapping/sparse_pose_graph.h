@@ -106,9 +106,10 @@ class SparsePoseGraph {
   virtual std::vector<transform::Rigid3d> GetSubmapTransforms(
       const Submaps& submaps) = 0;
 
-  // Returns the transform converting from odometry based transforms to the
-  // optimized world.
-  virtual transform::Rigid3d GetOdometryToMapTransform(
+  // Returns the transform converting data in the local map frame (i.e. the
+  // continuous, non-loop-closed frame) into the global map frame (i.e. the
+  // discontinuous, loop-closed frame).
+  virtual transform::Rigid3d GetLocalToGlobalTransform(
       const mapping::Submaps& submaps) = 0;
 
   // Returns the current optimized trajectory.
