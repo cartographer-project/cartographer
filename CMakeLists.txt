@@ -108,8 +108,6 @@ install(
     lib
 )
 
-# TODO(hrapp): We have to mention glog here, otherwise we get unresolved
-# symbols. Piggybacking on Ceres does not seem to do the trick.
 set(CARTOGRAPHER_LIBRARIES "")
 list(APPEND CARTOGRAPHER_LIBRARIES "cartographer")
 list(APPEND CARTOGRAPHER_LIBRARIES "${CERES_LIBRARIES}")
@@ -117,7 +115,6 @@ list(APPEND CARTOGRAPHER_LIBRARIES "${Boost_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${LUA_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${PROTOBUF_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "webp")
-list(APPEND CARTOGRAPHER_LIBRARIES "glog")
 
 CONFIGURE_PACKAGE_CONFIG_FILE(
   cartographer-config.cmake.in
