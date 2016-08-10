@@ -44,7 +44,7 @@ class GlobalTrajectoryBuilderInterface {
   // 3. UKF estimate after integrating any measurements
   //
   // Finally, 'pose' is the end-user visualization of orientation and
-  // 'point_cloud' is the point cloud, in the local SLAM map frame.
+  // 'point_cloud' is the point cloud, in the local map frame.
   struct PoseEstimate {
     PoseEstimate() = default;
     PoseEstimate(common::Time time,
