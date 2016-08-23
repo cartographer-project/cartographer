@@ -22,8 +22,11 @@
   <license>Apache 2.0</license>
 
   <run_depend>catkin</run_depend>
+  <run_depend>lua5.2-dev</run_depend>
   <buildtool_depend>cmake</buildtool_depend>
   <build_depend>ceres_catkin</build_depend>
+  <build_depend>google-mock</build_depend>
+  <build_depend>lua5.2-dev</build_depend>
 
   <export>
     <build_type>cmake</build_type>
