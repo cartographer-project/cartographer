@@ -49,7 +49,7 @@ find_package(Protobuf REQUIRED)
 # Only build the documentation if we can find Sphinx.
 find_package(Sphinx)
 if(SPHINX_FOUND)
-  add_subdirectory("doc")
+  add_subdirectory("docs")
 endif()
 
 set(GMOCK_SRC_DIR "/usr/src/gmock" CACHE STRING "Path to google-mock sources.")
