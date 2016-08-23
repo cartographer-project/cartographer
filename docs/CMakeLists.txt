@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(OUTPUT_DIR "${CMAKE_BINARY_DIR}/doc/html")
+set(OUTPUT_DIR "${CMAKE_BINARY_DIR}/docs/html")
 
 add_custom_target(build_doc ALL
     ${SPHINX_EXECUTABLE} -b html
