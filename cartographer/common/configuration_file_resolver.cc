@@ -37,10 +37,11 @@ string ConfigurationFileResolver::GetFullPathOrDie(const string& basename) {
     const string filename = path + "/" + basename;
     std::ifstream stream(filename.c_str());
     if (stream.good()) {
+      LOG(INFO) << "Found '" << filename << "' for '" << basename << "'.";
       return filename;
     }
   }
-  LOG(FATAL) << "File " << basename << " was not found.";
+  LOG(FATAL) << "File '" << basename << "' was not found.";
 }
 
 string ConfigurationFileResolver::GetFileContentOrDie(const string& basename) {
