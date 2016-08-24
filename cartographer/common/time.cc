@@ -22,10 +22,14 @@ namespace cartographer {
 namespace common {
 
 Duration FromSeconds(const double seconds) {
-  return Duration(static_cast<int64>(1e7 * seconds));
+  return std::chrono::duration_cast<Duration>(
+      std::chrono::duration<double>(seconds));
 }
 
-double ToSeconds(const Duration duration) { return duration.count() * 1e-7; }
+double ToSeconds(const Duration duration) {
+  return std::chrono::duration_cast<std::chrono::duration<double>>(duration)
+      .count();
+}
 
 Time FromUniversal(const int64 ticks) { return Time(Duration(ticks)); }
 
@@ -36,8 +40,9 @@ std::ostream& operator<<(std::ostream& os, const Time time) {
   return os;
 }
 
-common::Duration FromMilliseconds(int64 milliseconds) {
-  return common::Duration(milliseconds * 10000);
+common::Duration FromMilliseconds(const int64 milliseconds) {
+  return std::chrono::duration_cast<Duration>(
+      std::chrono::milliseconds(milliseconds));
 }
 
 }  // namespace common
