@@ -11,7 +11,7 @@ See https://github.com/googlecartographer/cartographer_ros
 
 ## Installation without ROS
 
-On Ubuntu 14.04 (Trusty):
+On Ubuntu 14.04 (Trusty) or Ubuntu 16.04 (Xenial):
 
     # Install the required libraries that are available as debs
     sudo apt-get install \

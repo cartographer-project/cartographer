@@ -117,31 +117,6 @@ class XYIndexRangeIterator
   Eigen::Array2i xy_index_;
 };
 
-// Returns the center of the resolution interval containing x.
-inline double Center(double x, double resolution) {
-  return (std::floor(x / resolution) + 0.5) * resolution;
-}
-
-// Returns the index of the cell containing the point (x, y) which is allowed to
-// lie outside the map.
-inline Eigen::Array2i GetXYIndexOfCellContainingPoint(double x, double y,
-                                                      double centered_max_x,
-                                                      double centered_max_y,
-                                                      double resolution) {
-  // Index values are row major and the top left has Eigen::Array2i::Zero() and
-  // contains (centered_max_x, centered_max_y). We need to flip and rotate.
-  const int cell_x = common::RoundToInt((centered_max_y - y) / resolution);
-  const int cell_y = common::RoundToInt((centered_max_x - x) / resolution);
-  return Eigen::Array2i(cell_x, cell_y);
-}
-
-// Returns the index into the vector with 'stride' for the cell with 'xy_index'.
-inline int GetIndexOfCell(const Eigen::Array2i& xy_index, int stride) {
-  CHECK_GE(xy_index.x(), 0);
-  CHECK_GE(xy_index.y(), 0);
-  return stride * xy_index.y() + xy_index.x();
-}
-
 }  // namespace mapping_2d
 }  // namespace cartographer
 

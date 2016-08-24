@@ -111,15 +111,6 @@ class ProbabilityGrid {
                mapping::kUnknownProbabilityValue;
   }
 
-  // Returns the center of the cell at 'xy_index'.
-  void GetCenterOfCellWithXYIndex(const Eigen::Array2i& xy_index,
-                                  double* const x, double* const y) const {
-    *CHECK_NOTNULL(x) = limits_.edge_limits().max().x() -
-                        (xy_index.y() + 0.5) * limits_.resolution();
-    *CHECK_NOTNULL(y) = limits_.edge_limits().max().y() -
-                        (xy_index.x() + 0.5) * limits_.resolution();
-  }
-
   // Fills in 'offset' and 'limits' to define a subregion of that contains all
   // known cells.
   void ComputeCroppedLimits(Eigen::Array2i* const offset,
@@ -168,8 +159,7 @@ class ProbabilityGrid {
   // Returns the index of the cell at 'xy_index'.
   int GetIndexOfCell(const Eigen::Array2i& xy_index) const {
     CHECK(limits_.Contains(xy_index)) << xy_index;
-    return mapping_2d::GetIndexOfCell(xy_index,
-                                      limits_.cell_limits().num_x_cells);
+    return limits_.cell_limits().num_x_cells * xy_index.y() + xy_index.x();
   }
 
   void UpdateBounds(const Eigen::Array2i& xy_index) {
