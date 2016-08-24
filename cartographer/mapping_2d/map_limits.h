@@ -133,7 +133,7 @@ class MapLimits {
 
  private:
   // Returns the center of the resolution interval containing 'x'.
-  double Center(double x) {
+  double Center(const double x) {
     return (std::floor(x / resolution_) + 0.5) * resolution_;
   }
 
