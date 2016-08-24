@@ -153,8 +153,7 @@ TEST(ProbabilityGridTest, CorrectCropping) {
       MapLimits(0.05, 10., 10., CellLimits(400, 400)));
   probability_grid.StartUpdate();
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(
-           probability_grid.limits().cell_limits(), Eigen::Array2i(100, 100),
-           Eigen::Array2i(299, 299))) {
+           Eigen::Array2i(100, 100), Eigen::Array2i(299, 299))) {
     probability_grid.SetProbability(xy_index, value_distribution(rng));
   }
   Eigen::Array2i offset;

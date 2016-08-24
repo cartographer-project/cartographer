@@ -38,19 +38,15 @@ namespace mapping_2d {
 // performance reasons.
 class MapLimits {
  public:
-  MapLimits(const double resolution, const Eigen::AlignedBox2d& edge_limits) {
-    SetLimits(resolution, edge_limits);
+  MapLimits(const double resolution, const Eigen::AlignedBox2d& edge_limits)
+      : resolution_(resolution) {
+    SetLimits(edge_limits);
   }
 
   MapLimits(const double resolution, const double max_x, const double max_y,
-            const CellLimits& cell_limits) {
-    SetLimits(resolution, max_x, max_y, cell_limits);
-  }
-
-  MapLimits(const double resolution, const double center_x,
-            const double center_y) {
-    SetLimits(resolution, center_x + 100 * resolution,
-              center_y + 100 * resolution, CellLimits(200, 200));
+            const CellLimits& cell_limits)
+      : resolution_(resolution) {
+    SetLimits(max_x, max_y, cell_limits);
   }
 
   // Returns the cell size in meters. All cells are square and the resolution is
@@ -137,38 +133,26 @@ class MapLimits {
     return (std::floor(x / resolution_) + 0.5) * resolution_;
   }
 
-  // Sets the cell size to the specified resolution in meters and the limits of
-  // the grid to the specified bounding box in meters.
-  void SetLimits(double resolution, const Eigen::AlignedBox2d& limits) {
+  // Sets the limits of the grid to the specified bounding box in meters.
+  void SetLimits(const Eigen::AlignedBox2d& limits) {
     CHECK(!limits.isEmpty());
-    resolution_ = resolution;
     const int num_x_cells = common::RoundToInt((Center(limits.max().y()) -
                                                 Center(limits.min().y())) /
-                                               resolution) +
+                                               resolution_) +
                             1;
     const int num_y_cells = common::RoundToInt((Center(limits.max().x()) -
                                                 Center(limits.min().x())) /
-                                               resolution) +
+                                               resolution_) +
                             1;
-    SetLimits(resolution, limits.max().x(), limits.max().y(),
+    SetLimits(limits.max().x(), limits.max().y(),
               CellLimits(num_x_cells, num_y_cells));
   }
 
-  // Sets the cell size to the specified resolution in meters and the limits of
-  // the grid to the specified bounding box.
-  //
-  // Note that implementing this in terms of the previous SetLimits method
-  // results in unnecessary (and expensive?) calls to common::RoundToInt.
-  //
-  // TODO(whess): Measure whether it really is still too slow. Otherwise,
-  // simplify.
-  void SetLimits(double resolution, double max_x, double max_y,
-                 const CellLimits& limits) {
-    CHECK_GT(resolution, 0.);
+  void SetLimits(double max_x, double max_y, const CellLimits& limits) {
+    CHECK_GT(resolution_, 0.);
     CHECK_GT(limits.num_x_cells, 0.);
     CHECK_GT(limits.num_y_cells, 0.);
 
-    resolution_ = resolution;
     cell_limits_ = limits;
     centered_limits_.max().x() = Center(max_x);
     centered_limits_.max().y() = Center(max_y);
@@ -176,11 +160,7 @@ class MapLimits {
                                  resolution_ * (cell_limits_.num_y_cells - 1);
     centered_limits_.min().y() = centered_limits_.max().y() -
                                  resolution_ * (cell_limits_.num_x_cells - 1);
-    UpdateEdgeLimits();
-  }
 
-  // Updates the edge limits from the previously calculated centered limits.
-  void UpdateEdgeLimits() {
     const double half_resolution = resolution_ / 2.;
     edge_limits_.min().x() = centered_limits_.min().x() - half_resolution;
     edge_limits_.min().y() = centered_limits_.min().y() - half_resolution;
