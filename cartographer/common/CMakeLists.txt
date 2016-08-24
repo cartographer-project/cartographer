@@ -138,6 +138,15 @@ google_library(common_port
     port.h
 )
 
+google_library(common_rate_timer
+  HDRS
+    rate_timer.h
+  DEPENDS
+    common_math
+    common_port
+    common_time
+)
+
 google_library(common_thread_pool
   USES_CERES
   SRCS
@@ -195,4 +204,11 @@ google_test(common_ordered_multi_queue_test
   DEPENDS
     common_make_unique
     common_ordered_multi_queue
+)
+
+google_test(common_rate_timer_test
+  SRCS
+    rate_timer_test.cc
+  DEPENDS
+    common_rate_timer
 )
