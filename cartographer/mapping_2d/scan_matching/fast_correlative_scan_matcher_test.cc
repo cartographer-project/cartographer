@@ -43,8 +43,7 @@ TEST(PrecomputationGridTest, CorrectValues) {
       MapLimits(0.05, 5., 5., CellLimits(250, 250)));
   probability_grid.StartUpdate();
   for (const Eigen::Array2i& xy_index :
-       XYIndexRangeIterator(probability_grid.limits().cell_limits(),
-                            Eigen::Array2i(50, 50), Eigen::Array2i(249, 249))) {
+       XYIndexRangeIterator(Eigen::Array2i(50, 50), Eigen::Array2i(249, 249))) {
     probability_grid.SetProbability(
         xy_index, PrecomputationGrid::ToProbability(distribution(prng)));
   }

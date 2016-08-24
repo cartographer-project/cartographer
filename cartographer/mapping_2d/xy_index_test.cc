@@ -23,16 +23,14 @@ namespace mapping_2d {
 namespace {
 
 TEST(XYIndexTest, XYIndexRangeIterator) {
-  const CellLimits limits(5, 5);
   const Eigen::Array2i min(1, 2);
   const Eigen::Array2i max(3, 4);
-  XYIndexRangeIterator it(limits, min, max);
+  XYIndexRangeIterator it(min, max);
   EXPECT_TRUE((min == *it.begin()).all()) << *it.begin();
   EXPECT_TRUE((Eigen::Array2i(1, 5) == *it.end()).all()) << *it.end();
   EXPECT_TRUE((min == *it).all()) << *it;
   int num_indices = 0;
-  for (const Eigen::Array2i& xy_index :
-       XYIndexRangeIterator(limits, min, max)) {
+  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(min, max)) {
     LOG(INFO) << xy_index;
     EXPECT_TRUE((xy_index >= min).all());
     EXPECT_TRUE((xy_index <= max).all());

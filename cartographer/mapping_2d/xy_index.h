@@ -43,33 +43,18 @@ struct CellLimits {
 class XYIndexRangeIterator
     : public std::iterator<std::input_iterator_tag, Eigen::Array2i> {
  public:
-  // Constructs a new iterator for the specified range. The range is cropped to
-  // fit within the given 'cell_limits'.
-  XYIndexRangeIterator(const CellLimits& cell_limits,
-                       const Eigen::Array2i& min_xy_index,
+  // Constructs a new iterator for the specified range.
+  XYIndexRangeIterator(const Eigen::Array2i& min_xy_index,
                        const Eigen::Array2i& max_xy_index)
-      : XYIndexRangeIterator(
-            min_xy_index.max(Eigen::Array2i::Zero()),
-            max_xy_index.min(Eigen::Array2i(cell_limits.num_x_cells - 1,
-                                            cell_limits.num_y_cells - 1))) {}
+      : min_xy_index_(min_xy_index),
+        max_xy_index_(max_xy_index),
+        xy_index_(min_xy_index) {}
 
   // Constructs a new iterator for everything contained in 'cell_limits'.
   explicit XYIndexRangeIterator(const CellLimits& cell_limits)
       : XYIndexRangeIterator(Eigen::Array2i::Zero(),
                              Eigen::Array2i(cell_limits.num_x_cells - 1,
                                             cell_limits.num_y_cells - 1)) {}
-
-  XYIndexRangeIterator(const XYIndexRangeIterator& other)
-      : min_xy_index_(other.min_xy_index_),
-        max_xy_index_(other.max_xy_index_),
-        xy_index_(other.xy_index_) {}
-
-  XYIndexRangeIterator& operator=(const XYIndexRangeIterator& other) {
-    min_xy_index_ = other.min_xy_index_;
-    max_xy_index_ = other.max_xy_index_;
-    xy_index_ = other.xy_index_;
-    return *this;
-  }
 
   XYIndexRangeIterator& operator++() {
     // This is a necessary evil. Bounds checking is very expensive and needs to
@@ -106,12 +91,6 @@ class XYIndexRangeIterator
   }
 
  private:
-  XYIndexRangeIterator(const Eigen::Array2i& min_xy_index,
-                       const Eigen::Array2i& max_xy_index)
-      : min_xy_index_(min_xy_index),
-        max_xy_index_(max_xy_index),
-        xy_index_(min_xy_index) {}
-
   Eigen::Array2i min_xy_index_;
   Eigen::Array2i max_xy_index_;
   Eigen::Array2i xy_index_;
