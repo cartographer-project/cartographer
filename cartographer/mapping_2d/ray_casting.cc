@@ -150,20 +150,25 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
               const std::function<void(const Eigen::Array2i&)>& hit_visitor,
               const std::function<void(const Eigen::Array2i&)>& miss_visitor) {
-  const double resolution = limits.resolution() / kSubpixelScale;
+  const double superscaled_resolution = limits.resolution() / kSubpixelScale;
   const Eigen::Vector2d superscaled_centered_max =
-      limits.edge_limits().max() - resolution / 2. * Eigen::Vector2d::Ones();
-  const Eigen::Array2i begin = GetXYIndexOfCellContainingPoint(
-      laser_fan.origin.x(), laser_fan.origin.y(), superscaled_centered_max.x(),
-      superscaled_centered_max.y(), resolution);
+      limits.edge_limits().max() -
+      superscaled_resolution / 2. * Eigen::Vector2d::Ones();
+  const MapLimits superscaled_limits(
+      superscaled_resolution, superscaled_centered_max.x(),
+      superscaled_centered_max.y(),
+      CellLimits(limits.cell_limits().num_x_cells * kSubpixelScale,
+                 limits.cell_limits().num_y_cells * kSubpixelScale));
+  const Eigen::Array2i begin =
+      superscaled_limits.GetXYIndexOfCellContainingPoint(laser_fan.origin.x(),
+                                                         laser_fan.origin.y());
 
   // Compute and add the end points.
   std::vector<Eigen::Array2i> ends;
   ends.reserve(laser_fan.point_cloud.size());
   for (const Eigen::Vector2f& laser_return : laser_fan.point_cloud) {
-    ends.push_back(GetXYIndexOfCellContainingPoint(
-        laser_return.x(), laser_return.y(), superscaled_centered_max.x(),
-        superscaled_centered_max.y(), resolution));
+    ends.push_back(superscaled_limits.GetXYIndexOfCellContainingPoint(
+        laser_return.x(), laser_return.y()));
     hit_visitor(ends.back() / kSubpixelScale);
   }
 
@@ -175,10 +180,8 @@ void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
   // Finally, compute and add empty rays based on missing echos in the scan.
   for (const Eigen::Vector2f& missing_echo :
        laser_fan.missing_echo_point_cloud) {
-    CastRay(begin, GetXYIndexOfCellContainingPoint(
-                       missing_echo.x(), missing_echo.y(),
-                       superscaled_centered_max.x(),
-                       superscaled_centered_max.y(), resolution),
+    CastRay(begin, superscaled_limits.GetXYIndexOfCellContainingPoint(
+                       missing_echo.x(), missing_echo.y()),
             miss_visitor);
   }
 }

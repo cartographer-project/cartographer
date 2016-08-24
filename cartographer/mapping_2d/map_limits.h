@@ -74,9 +74,12 @@ class MapLimits {
   // false for Contains().
   Eigen::Array2i GetXYIndexOfCellContainingPoint(const double x,
                                                  const double y) const {
-    return mapping_2d::GetXYIndexOfCellContainingPoint(
-        x, y, centered_limits_.max().x(), centered_limits_.max().y(),
-        resolution_);
+    // Index values are row major and the top left has Eigen::Array2i::Zero()
+    // and contains (centered_max_x, centered_max_y). We need to flip and
+    // rotate.
+    return Eigen::Array2i(
+        common::RoundToInt((centered_limits_.max().y() - y) / resolution_),
+        common::RoundToInt((centered_limits_.max().x() - x) / resolution_));
   }
 
   // Returns true of the ProbabilityGrid contains 'xy_index'.
@@ -129,20 +132,24 @@ class MapLimits {
   }
 
  private:
+  // Returns the center of the resolution interval containing 'x'.
+  double Center(const double x) {
+    return (std::floor(x / resolution_) + 0.5) * resolution_;
+  }
+
   // Sets the cell size to the specified resolution in meters and the limits of
   // the grid to the specified bounding box in meters.
   void SetLimits(double resolution, const Eigen::AlignedBox2d& limits) {
     CHECK(!limits.isEmpty());
-    const int num_x_cells =
-        common::RoundToInt((mapping_2d::Center(limits.max().y(), resolution) -
-                            mapping_2d::Center(limits.min().y(), resolution)) /
-                           resolution) +
-        1;
-    const int num_y_cells =
-        common::RoundToInt((mapping_2d::Center(limits.max().x(), resolution) -
-                            mapping_2d::Center(limits.min().x(), resolution)) /
-                           resolution) +
-        1;
+    resolution_ = resolution;
+    const int num_x_cells = common::RoundToInt((Center(limits.max().y()) -
+                                                Center(limits.min().y())) /
+                                               resolution) +
+                            1;
+    const int num_y_cells = common::RoundToInt((Center(limits.max().x()) -
+                                                Center(limits.min().x())) /
+                                               resolution) +
+                            1;
     SetLimits(resolution, limits.max().x(), limits.max().y(),
               CellLimits(num_x_cells, num_y_cells));
   }
@@ -163,8 +170,8 @@ class MapLimits {
 
     resolution_ = resolution;
     cell_limits_ = limits;
-    centered_limits_.max().x() = Center(max_x, resolution);
-    centered_limits_.max().y() = Center(max_y, resolution);
+    centered_limits_.max().x() = Center(max_x);
+    centered_limits_.max().y() = Center(max_y);
     centered_limits_.min().x() = centered_limits_.max().x() -
                                  resolution_ * (cell_limits_.num_y_cells - 1);
     centered_limits_.min().y() = centered_limits_.max().y() -

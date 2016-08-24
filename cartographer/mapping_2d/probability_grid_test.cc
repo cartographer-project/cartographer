@@ -144,26 +144,6 @@ TEST(ProbabilityGridTest, GetXYIndexOfCellContainingPoint) {
                   .all());
 }
 
-TEST(ProbabilityGridTest, GetCenterOfCell) {
-  ProbabilityGrid probability_grid(MapLimits(
-      2.,
-      Eigen::AlignedBox2d(Eigen::Vector2d(-4., 0.), Eigen::Vector2d(-0., 6.))));
-
-  // Limits are on the edge of a cell. Make sure that the grid grows (in
-  // positive direction).
-  const MapLimits& limits = probability_grid.limits();
-  const CellLimits& cell_limits = limits.cell_limits();
-  EXPECT_EQ(4, cell_limits.num_x_cells);
-  EXPECT_EQ(3, cell_limits.num_y_cells);
-
-  const Eigen::Array2i xy_index(3, 2);
-  double x, y;
-  probability_grid.GetCenterOfCellWithXYIndex(xy_index, &x, &y);
-  EXPECT_NEAR(-3., x, 1e-6);
-  EXPECT_NEAR(1., y, 1e-6);
-  EXPECT_TRUE((xy_index == limits.GetXYIndexOfCellContainingPoint(x, y)).all());
-}
-
 TEST(ProbabilityGridTest, CorrectCropping) {
   // Create a probability grid with random values.
   std::mt19937 rng(42);
