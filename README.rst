@@ -21,9 +21,10 @@
 Cartographer
 ============
 
-.. toctree::
-   :maxdepth: 2
-   :hidden:
+|docs|
+
+Purpose
+=======
 
 `Cartographer`_ is a system that provides real-time simultaneous localization
 and mapping `SLAM`_ across multiple platforms and sensor configurations. This
@@ -32,46 +33,23 @@ project provides Cartographer's ROS integration.
 .. _Cartographer: http://www.github.com/googlecartographer/cartographer
 .. _SLAM: http://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
-Getting Started with ROS
-========================
+Documentation
+=============
 
-You will find complete documentation for using Cartographer with ROS at `our
-Read the Docs site`_.
+You will find complete documentation for using Cartographer `our Read the Docs
+site`_.
 
-.. _our Read the Docs site: https://google-cartographer-ros.readthedocs.io
+.. _our Read the Docs site: https://google-cartographer.readthedocs.io
 
-Getting Started without ROS
-===========================
+Contributing
+============
 
-On Ubuntu 14.04 (Trusty):
+You can find information about contributing to Cartographer at our `Contribution
+page`_.
 
-  .. code-block:: bash
+.. _Contribution page: https://github.com/googlecartographer/cartographer/blob/master/CONTRIBUTING.md
 
-    # Install the required libraries that are available as debs
-    sudo apt-get install \
-      g++ \
-      google-mock \
-      libboost-all-dev \
-      libgflags-dev \
-      libgoogle-glog-dev \
-      liblua5.2-dev \
-      libprotobuf-dev \
-      libsuitesparse-dev \
-      libwebp-dev \
-      ninja-build \
-      protobuf-compiler \
-      python-sphinx
-
-    # Build and install Ceres
-    git clone https://ceres-solver.googlesource.com/ceres-solver
-    cd ceres-solver
-    mkdir build && cd build
-    cmake ..
-    make
-    sudo make install
-
-    # Build Cartographer
-    cd cartographer
-    mkdir build && cd build
-    cmake .. -G Ninja
-    ninja
+.. |docs| image:: https://readthedocs.org/projects/google-cartographer/badge/?version=latest
+    :alt: Documentation Status
+    :scale: 100%
+    :target: https://google-cartographer.readthedocs.io/en/latest/?badge=latest
