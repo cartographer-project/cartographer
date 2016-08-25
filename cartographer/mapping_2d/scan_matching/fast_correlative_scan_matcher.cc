@@ -232,8 +232,11 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
       1e6 * limits_.resolution(),  // Linear search window, 1e6 cells/direction.
       M_PI,  // Angular search window, 180 degrees in both directions.
       point_cloud, limits_.resolution());
-  const transform::Rigid2d center =
-      transform::Rigid2d::Translation(limits_.edge_limits().center());
+  const transform::Rigid2d center = transform::Rigid2d::Translation(
+      limits_.max() -
+      0.5 * limits_.resolution() *
+          Eigen::Vector2d(limits_.cell_limits().num_y_cells,
+                          limits_.cell_limits().num_x_cells));
   return MatchWithSearchParameters(search_parameters, center, point_cloud,
                                    min_score, score, pose_estimate, covariance);
 }

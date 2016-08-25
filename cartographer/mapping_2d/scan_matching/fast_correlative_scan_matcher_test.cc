@@ -40,7 +40,7 @@ TEST(PrecomputationGridTest, CorrectValues) {
   std::mt19937 prng(42);
   std::uniform_int_distribution<int> distribution(0, 255);
   ProbabilityGrid probability_grid(
-      MapLimits(0.05, 5., 5., CellLimits(250, 250)));
+      MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(250, 250)));
   probability_grid.StartUpdate();
   for (const Eigen::Array2i& xy_index :
        XYIndexRangeIterator(Eigen::Array2i(50, 50), Eigen::Array2i(249, 249))) {
@@ -73,7 +73,8 @@ TEST(PrecomputationGridTest, CorrectValues) {
 TEST(PrecomputationGridTest, TinyProbabilityGrid) {
   std::mt19937 prng(42);
   std::uniform_int_distribution<int> distribution(0, 255);
-  ProbabilityGrid probability_grid(MapLimits(0.05, 0.1, 0.1, CellLimits(4, 4)));
+  ProbabilityGrid probability_grid(
+      MapLimits(0.05, Eigen::Vector2d(0.1, 0.1), CellLimits(4, 4)));
   probability_grid.StartUpdate();
   for (const Eigen::Array2i& xy_index :
        XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
@@ -147,7 +148,7 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
         0.5 * distribution(prng));
 
     ProbabilityGrid probability_grid(
-        MapLimits(0.05, 5., 5., CellLimits(200, 200)));
+        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
     probability_grid.StartUpdate();
     laser_fan_inserter.Insert(sensor::LaserFan{expected_pose.translation(),
                                                sensor::TransformPointCloud2D(
@@ -198,7 +199,7 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
         perturbation.inverse();
 
     ProbabilityGrid probability_grid(
-        MapLimits(0.05, 5., 5., CellLimits(200, 200)));
+        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
     probability_grid.StartUpdate();
     laser_fan_inserter.Insert(
         sensor::LaserFan{

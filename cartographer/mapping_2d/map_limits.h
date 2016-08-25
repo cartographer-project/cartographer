@@ -38,29 +38,21 @@ namespace mapping_2d {
 // performance reasons.
 class MapLimits {
  public:
-  MapLimits(const double resolution, const Eigen::AlignedBox2d& edge_limits)
-      : resolution_(resolution) {
-    SetLimits(edge_limits);
-  }
-
-  MapLimits(const double resolution, const double max_x, const double max_y,
+  MapLimits(const double resolution, const Eigen::Vector2d& max,
             const CellLimits& cell_limits)
-      : resolution_(resolution) {
-    SetLimits(max_x, max_y, cell_limits);
+      : resolution_(resolution), max_(max), cell_limits_(cell_limits) {
+    CHECK_GT(resolution_, 0.);
+    CHECK_GT(cell_limits.num_x_cells, 0.);
+    CHECK_GT(cell_limits.num_y_cells, 0.);
   }
 
   // Returns the cell size in meters. All cells are square and the resolution is
   // the length of one side.
   double resolution() const { return resolution_; }
 
-  // Returns the limits of the grid from edge to edge in meters.
-  const Eigen::AlignedBox2d& edge_limits() const { return edge_limits_; }
-
-  // Returns the limits of the grid between the centers of the edge cells in
-  // meters.
-  const Eigen::AlignedBox2d& centered_limits() const {
-    return centered_limits_;
-  }
+  // Returns the corner of the limits, i.e., all pixels have positions with
+  // smaller coordinates.
+  const Eigen::Vector2d& max() const { return max_; }
 
   // Returns the limits of the grid in number of cells.
   const CellLimits& cell_limits() const { return cell_limits_; }
@@ -74,8 +66,8 @@ class MapLimits {
     // and contains (centered_max_x, centered_max_y). We need to flip and
     // rotate.
     return Eigen::Array2i(
-        common::RoundToInt((centered_limits_.max().y() - y) / resolution_),
-        common::RoundToInt((centered_limits_.max().x() - x) / resolution_));
+        common::RoundToInt((max_.y() - y) / resolution_ - 0.5),
+        common::RoundToInt((max_.x() - x) / resolution_ - 0.5));
   }
 
   // Returns true of the ProbabilityGrid contains 'xy_index'.
@@ -97,7 +89,9 @@ class MapLimits {
     const float kPadding = 3.f * resolution;
     bounding_box.min() -= kPadding * Eigen::Vector2f::Ones();
     bounding_box.max() += kPadding * Eigen::Vector2f::Ones();
-    return MapLimits(resolution, bounding_box.cast<double>());
+    return MapLimits(resolution, bounding_box.max().cast<double>(),
+                     CellLimits(common::RoundToInt(bounding_box.sizes().y()),
+                                common::RoundToInt(bounding_box.sizes().x())));
   }
 
   static Eigen::AlignedBox2f ComputeMapBoundingBox(
@@ -128,49 +122,8 @@ class MapLimits {
   }
 
  private:
-  // Returns the center of the resolution interval containing 'x'.
-  double Center(const double x) {
-    return (std::floor(x / resolution_) + 0.5) * resolution_;
-  }
-
-  // Sets the limits of the grid to the specified bounding box in meters.
-  void SetLimits(const Eigen::AlignedBox2d& limits) {
-    CHECK(!limits.isEmpty());
-    const int num_x_cells = common::RoundToInt((Center(limits.max().y()) -
-                                                Center(limits.min().y())) /
-                                               resolution_) +
-                            1;
-    const int num_y_cells = common::RoundToInt((Center(limits.max().x()) -
-                                                Center(limits.min().x())) /
-                                               resolution_) +
-                            1;
-    SetLimits(limits.max().x(), limits.max().y(),
-              CellLimits(num_x_cells, num_y_cells));
-  }
-
-  void SetLimits(double max_x, double max_y, const CellLimits& limits) {
-    CHECK_GT(resolution_, 0.);
-    CHECK_GT(limits.num_x_cells, 0.);
-    CHECK_GT(limits.num_y_cells, 0.);
-
-    cell_limits_ = limits;
-    centered_limits_.max().x() = Center(max_x);
-    centered_limits_.max().y() = Center(max_y);
-    centered_limits_.min().x() = centered_limits_.max().x() -
-                                 resolution_ * (cell_limits_.num_y_cells - 1);
-    centered_limits_.min().y() = centered_limits_.max().y() -
-                                 resolution_ * (cell_limits_.num_x_cells - 1);
-
-    const double half_resolution = resolution_ / 2.;
-    edge_limits_.min().x() = centered_limits_.min().x() - half_resolution;
-    edge_limits_.min().y() = centered_limits_.min().y() - half_resolution;
-    edge_limits_.max().x() = centered_limits_.max().x() + half_resolution;
-    edge_limits_.max().y() = centered_limits_.max().y() + half_resolution;
-  }
-
   double resolution_;
-  Eigen::AlignedBox2d edge_limits_;
-  Eigen::AlignedBox2d centered_limits_;
+  Eigen::Vector2d max_;
   CellLimits cell_limits_;
 };
 

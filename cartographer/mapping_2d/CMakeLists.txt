@@ -144,6 +144,7 @@ google_library(mapping_2d_submaps
   DEPENDS
     common_lua_parameter_dictionary
     common_make_unique
+    common_port
     mapping_2d_laser_fan_inserter
     mapping_2d_map_limits
     mapping_2d_probability_grid

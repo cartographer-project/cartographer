@@ -80,10 +80,10 @@ void Submaps::AddProbabilityGridToResponse(
   response->set_height(limits.num_y_cells);
   const double resolution = probability_grid.limits().resolution();
   response->set_resolution(resolution);
-  const double max_x = probability_grid.limits().edge_limits().max().x() -
-                       resolution * offset.y();
-  const double max_y = probability_grid.limits().edge_limits().max().y() -
-                       resolution * offset.x();
+  const double max_x =
+      probability_grid.limits().max().x() - resolution * offset.y();
+  const double max_y =
+      probability_grid.limits().max().y() - resolution * offset.x();
   *response->mutable_slice_pose() = transform::ToProto(
       local_submap_pose.inverse() *
       transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));

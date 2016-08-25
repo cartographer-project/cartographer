@@ -22,43 +22,18 @@ namespace cartographer {
 namespace mapping_2d {
 namespace {
 
-TEST(MapLimits, SetEdgeLimits) {
-  const MapLimits limits(2., Eigen::AlignedBox2d(Eigen::Vector2d(-0.5, 1.5),
-                                                 Eigen::Vector2d(0.5, 5.5)));
-
-  const Eigen::AlignedBox2d& edge_limits = limits.edge_limits();
-  EXPECT_EQ(-2., edge_limits.min().x());
-  EXPECT_EQ(0., edge_limits.min().y());
-  EXPECT_EQ(2., edge_limits.max().x());
-  EXPECT_EQ(6., edge_limits.max().y());
-
-  const CellLimits& cell_limits = limits.cell_limits();
-  EXPECT_EQ(3, cell_limits.num_x_cells);
-  EXPECT_EQ(2, cell_limits.num_y_cells);
-}
-
-TEST(MapLimits, SetCellLimits) {
-  const MapLimits limits(3., 1.5, -0.5, CellLimits(2, 3));
+TEST(MapLimits, ConstructAndGet) {
+  const MapLimits limits(42., Eigen::Vector2d(3., 0.), CellLimits(2, 3));
 
   const CellLimits& cell_limits = limits.cell_limits();
   EXPECT_EQ(2, cell_limits.num_x_cells);
   EXPECT_EQ(3, cell_limits.num_y_cells);
 
-  const Eigen::AlignedBox2d& edge_limits = limits.edge_limits();
-  EXPECT_EQ(-6., edge_limits.min().x());
-  EXPECT_EQ(-6., edge_limits.min().y());
-  EXPECT_EQ(3., edge_limits.max().x());
-  EXPECT_EQ(0., edge_limits.max().y());
-}
+  const Eigen::Vector2d& max = limits.max();
+  EXPECT_EQ(3., max.x());
+  EXPECT_EQ(0., max.y());
 
-TEST(MapLimits, GetCenteredLimits) {
-  const MapLimits limits(2., -0.5, 1.5, CellLimits(3, 2));
-
-  const Eigen::AlignedBox2d& centered_limits = limits.centered_limits();
-  EXPECT_EQ(-3, centered_limits.min().x());
-  EXPECT_EQ(-3., centered_limits.min().y());
-  EXPECT_EQ(-1., centered_limits.max().x());
-  EXPECT_EQ(1., centered_limits.max().y());
+  EXPECT_EQ(42., limits.resolution());
 }
 
 }  // namespace

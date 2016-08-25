@@ -37,9 +37,8 @@ namespace {
 class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
  protected:
   RealTimeCorrelativeScanMatcherTest()
-      : probability_grid_(MapLimits(
-            0.05, Eigen::AlignedBox2d(Eigen::Vector2d(-0.225, -0.025),
-                                      Eigen::Vector2d(0.025, 0.225)))) {
+      : probability_grid_(
+            MapLimits(0.05, Eigen::Vector2d(0.05, 0.25), CellLimits(6, 6))) {
     {
       auto parameter_dictionary = common::MakeDictionary(
           "return { "

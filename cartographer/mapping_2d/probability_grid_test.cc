@@ -25,7 +25,8 @@ namespace mapping_2d {
 namespace {
 
 TEST(ProbabilityGridTest, ApplyOdds) {
-  ProbabilityGrid probability_grid(MapLimits(1., 0.5, 0.5, CellLimits(2, 2)));
+  ProbabilityGrid probability_grid(
+      MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)));
   const MapLimits& limits = probability_grid.limits();
 
   EXPECT_TRUE(limits.Contains(Eigen::Array2i(0, 0)));
@@ -77,15 +78,11 @@ TEST(ProbabilityGridTest, ApplyOdds) {
 
 TEST(ProbabilityGridTest, GetProbability) {
   ProbabilityGrid probability_grid(
-      MapLimits(1., Eigen::AlignedBox2d(Eigen::Vector2d(-0.5, 0.5),
-                                        Eigen::Vector2d(0.5, 1.5))));
+      MapLimits(1., Eigen::Vector2d(1., 2.), CellLimits(2, 2)));
 
   const MapLimits& limits = probability_grid.limits();
-  const Eigen::AlignedBox2d& edge_limits = limits.edge_limits();
-  EXPECT_EQ(-1., edge_limits.min().x());
-  EXPECT_EQ(0., edge_limits.min().y());
-  EXPECT_EQ(1., edge_limits.max().x());
-  EXPECT_EQ(2., edge_limits.max().y());
+  EXPECT_EQ(1., limits.max().x());
+  EXPECT_EQ(2., limits.max().y());
 
   const CellLimits& cell_limits = limits.cell_limits();
   ASSERT_EQ(2, cell_limits.num_x_cells);
@@ -107,7 +104,8 @@ TEST(ProbabilityGridTest, GetProbability) {
 }
 
 TEST(ProbabilityGridTest, GetXYIndexOfCellContainingPoint) {
-  ProbabilityGrid probability_grid(MapLimits(2., 7, 13, CellLimits(14, 8)));
+  ProbabilityGrid probability_grid(
+      MapLimits(2., Eigen::Vector2d(8., 14.), CellLimits(14, 8)));
 
   const MapLimits& limits = probability_grid.limits();
   const CellLimits& cell_limits = limits.cell_limits();
@@ -150,7 +148,7 @@ TEST(ProbabilityGridTest, CorrectCropping) {
   std::uniform_real_distribution<float> value_distribution(
       mapping::kMinProbability, mapping::kMaxProbability);
   ProbabilityGrid probability_grid(
-      MapLimits(0.05, 10., 10., CellLimits(400, 400)));
+      MapLimits(0.05, Eigen::Vector2d(10., 10.), CellLimits(400, 400)));
   probability_grid.StartUpdate();
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(
            Eigen::Array2i(100, 100), Eigen::Array2i(299, 299))) {
