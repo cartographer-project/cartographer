@@ -24,6 +24,7 @@
 
 #include "Eigen/Geometry"
 #include "cartographer/common/make_unique.h"
+#include "cartographer/common/port.h"
 #include "glog/logging.h"
 #include "webp/encode.h"
 
@@ -70,11 +71,10 @@ ProbabilityGrid ComputeCroppedProbabilityGrid(
   CellLimits limits;
   probability_grid.ComputeCroppedLimits(&offset, &limits);
   const double resolution = probability_grid.limits().resolution();
-  const double max_x = probability_grid.limits().centered_limits().max().x() -
-                       resolution * offset.y();
-  const double max_y = probability_grid.limits().centered_limits().max().y() -
-                       resolution * offset.x();
-  ProbabilityGrid cropped_grid(MapLimits(resolution, max_x, max_y, limits));
+  const Eigen::Vector2d max =
+      probability_grid.limits().max() -
+      resolution * Eigen::Vector2d(offset.y(), offset.x());
+  ProbabilityGrid cropped_grid(MapLimits(resolution, max, limits));
   cropped_grid.StartUpdate();
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(limits)) {
     if (probability_grid.IsKnown(xy_index + offset)) {
@@ -164,13 +164,14 @@ void Submaps::AddSubmap(const Eigen::Vector2f& origin) {
   if (size() > 1) {
     FinishSubmap(size() - 2);
   }
+  const int num_cells_per_dimension =
+      common::RoundToInt(2. * options_.half_length() / options_.resolution()) +
+      1;
   submaps_.push_back(common::make_unique<Submap>(
       MapLimits(options_.resolution(),
-                Eigen::AlignedBox2d(
-                    origin.cast<double>() -
-                        options_.half_length() * Eigen::Vector2d::Ones(),
-                    origin.cast<double>() +
-                        options_.half_length() * Eigen::Vector2d::Ones())),
+                origin.cast<double>() +
+                    options_.half_length() * Eigen::Vector2d::Ones(),
+                CellLimits(num_cells_per_dimension, num_cells_per_dimension)),
       origin, num_laser_fans_));
   LOG(INFO) << "Added submap " << size();
   num_laser_fans_in_last_submap_ = 0;

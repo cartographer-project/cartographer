@@ -32,12 +32,7 @@ class LaserFanInserterTest : public ::testing::Test {
  protected:
   LaserFanInserterTest()
       : probability_grid_(
-            MapLimits(1., Eigen::AlignedBox2d(Eigen::Vector2d(-4., 0.),
-                                              Eigen::Vector2d(0., 4.)))) {
-    const CellLimits& cell_limits = probability_grid_.limits().cell_limits();
-    CHECK_EQ(5, cell_limits.num_x_cells);
-    CHECK_EQ(5, cell_limits.num_y_cells);
-
+            MapLimits(1., Eigen::Vector2d(1., 5.), CellLimits(5, 5))) {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
         "insert_free_space = true, "
@@ -68,12 +63,8 @@ class LaserFanInserterTest : public ::testing::Test {
 TEST_F(LaserFanInserterTest, InsertPointCloud) {
   InsertPointCloud();
 
-  const Eigen::AlignedBox2d& edge_limits =
-      probability_grid_.limits().edge_limits();
-  EXPECT_NEAR(-4., edge_limits.min().x(), 1e-9);
-  EXPECT_NEAR(0., edge_limits.min().y(), 1e-9);
-  EXPECT_NEAR(1., edge_limits.max().x(), 1e-9);
-  EXPECT_NEAR(5., edge_limits.max().y(), 1e-9);
+  EXPECT_NEAR(1., probability_grid_.limits().max().x(), 1e-9);
+  EXPECT_NEAR(5., probability_grid_.limits().max().y(), 1e-9);
 
   const CellLimits& cell_limits = probability_grid_.limits().cell_limits();
   EXPECT_EQ(5, cell_limits.num_x_cells);

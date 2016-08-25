@@ -130,8 +130,8 @@ class ProbabilityGrid {
       const int y_offset = limits_.cell_limits().num_y_cells / 2;
       const MapLimits new_limits(
           limits_.resolution(),
-          limits_.centered_limits().max().x() + y_offset * limits_.resolution(),
-          limits_.centered_limits().max().y() + x_offset * limits_.resolution(),
+          limits_.max() +
+              limits_.resolution() * Eigen::Vector2d(y_offset, x_offset),
           CellLimits(2 * limits_.cell_limits().num_x_cells,
                      2 * limits_.cell_limits().num_y_cells));
       const int stride = new_limits.cell_limits().num_x_cells;

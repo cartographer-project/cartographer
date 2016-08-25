@@ -151,12 +151,8 @@ void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
               const std::function<void(const Eigen::Array2i&)>& hit_visitor,
               const std::function<void(const Eigen::Array2i&)>& miss_visitor) {
   const double superscaled_resolution = limits.resolution() / kSubpixelScale;
-  const Eigen::Vector2d superscaled_centered_max =
-      limits.edge_limits().max() -
-      superscaled_resolution / 2. * Eigen::Vector2d::Ones();
   const MapLimits superscaled_limits(
-      superscaled_resolution, superscaled_centered_max.x(),
-      superscaled_centered_max.y(),
+      superscaled_resolution, limits.max(),
       CellLimits(limits.cell_limits().num_x_cells * kSubpixelScale,
                  limits.cell_limits().num_y_cells * kSubpixelScale));
   const Eigen::Array2i begin =

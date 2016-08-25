@@ -35,8 +35,7 @@ class CeresScanMatcherTest : public ::testing::Test {
  protected:
   CeresScanMatcherTest()
       : probability_grid_(
-            MapLimits(1., Eigen::AlignedBox2d(Eigen::Vector2d(-10., -10.),
-                                              Eigen::Vector2d(10., 10.)))) {
+            MapLimits(1., Eigen::Vector2d(10., 10.), CellLimits(20, 20))) {
     probability_grid_.SetProbability(
         probability_grid_.limits().GetXYIndexOfCellContainingPoint(-3.5, 2.5),
         mapping::kMaxProbability);

@@ -62,13 +62,12 @@ class OccupiedSpaceCostFunctor {
       const Eigen::Matrix<T, 3, 1> point((T(point_cloud_[i].x())),
                                          (T(point_cloud_[i].y())), T(1.));
       const Eigen::Matrix<T, 3, 1> world = transform * point;
-      interpolator.Evaluate((limits.centered_limits().max().x() - world[0]) /
-                                    limits.resolution() +
-                                T(kPadding),
-                            (limits.centered_limits().max().y() - world[1]) /
-                                    limits.resolution() +
-                                T(kPadding),
-                            &residual[i]);
+      interpolator.Evaluate(
+          (limits.max().x() - world[0]) / limits.resolution() - 0.5 +
+              T(kPadding),
+          (limits.max().y() - world[1]) / limits.resolution() - 0.5 +
+              T(kPadding),
+          &residual[i]);
       residual[i] = scaling_factor_ * (1. - residual[i]);
     }
     return true;
