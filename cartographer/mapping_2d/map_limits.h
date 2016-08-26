@@ -89,9 +89,11 @@ class MapLimits {
     const float kPadding = 3.f * resolution;
     bounding_box.min() -= kPadding * Eigen::Vector2f::Ones();
     bounding_box.max() += kPadding * Eigen::Vector2f::Ones();
+    const Eigen::Vector2d pixel_sizes =
+        bounding_box.sizes().cast<double>() / resolution;
     return MapLimits(resolution, bounding_box.max().cast<double>(),
-                     CellLimits(common::RoundToInt(bounding_box.sizes().y()),
-                                common::RoundToInt(bounding_box.sizes().x())));
+                     CellLimits(common::RoundToInt(pixel_sizes.y()),
+                                common::RoundToInt(pixel_sizes.x())));
   }
 
   static Eigen::AlignedBox2f ComputeMapBoundingBox(
