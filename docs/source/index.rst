@@ -45,17 +45,17 @@ Getting Started without ROS
 
 On Ubuntu 14.04 (Trusty):
 
-.. include:: ../../scripts/install_debs.sh
-  :code: bash
-  :number-lines:
-  :start-line: 19
+.. literalinclude:: ../../scripts/install_debs.sh
+  :language: bash
+  :linenos:
+  :lines: 20-
 
-.. include:: ../../scripts/install_ceres.sh
-  :code: bash
-  :number-lines:
-  :start-line: 19
+.. literalinclude:: ../../scripts/install_ceres.sh
+  :language: bash
+  :linenos:
+  :lines: 20-
 
-.. include:: ../../scripts/install_cartographer.sh
-  :code: bash
-  :number-lines:
-  :start-line: 19
+.. literalinclude:: ../../scripts/install_cartographer.sh
+  :language: bash
+  :linenos:
+  :lines: 20-
