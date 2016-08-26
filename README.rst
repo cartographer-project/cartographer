@@ -21,7 +21,7 @@
 Cartographer
 ============
 
-|docs|
+|build| |docs|
 
 Purpose
 =======
@@ -48,6 +48,11 @@ You can find information about contributing to Cartographer at our `Contribution
 page`_.
 
 .. _Contribution page: https://github.com/googlecartographer/cartographer/blob/master/CONTRIBUTING.md
+
+.. |build| image:: https://travis-ci.org/googlecartographer/cartographer.svg?branch=master
+    :alt: Build Status
+    :scale: 100%
+    :target: https://travis-ci.org/googlecartographer/cartographer
 
 .. |docs| image:: https://readthedocs.org/projects/google-cartographer/badge/?version=latest
     :alt: Documentation Status
