@@ -12,11 +12,6 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-.. Cartographer documentation master file, created by
-   sphinx-quickstart on Fri Jul  8 10:41:33 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 ============
 Cartographer
 ============
@@ -27,10 +22,9 @@ Purpose
 =======
 
 `Cartographer`_ is a system that provides real-time simultaneous localization
-and mapping `SLAM`_ across multiple platforms and sensor configurations. This
-project provides Cartographer's ROS integration.
+and mapping `SLAM`_ across multiple platforms and sensor configurations.
 
-.. _Cartographer: http://www.github.com/googlecartographer/cartographer
+.. _Cartographer: https://github.com/googlecartographer/cartographer
 .. _SLAM: http://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
 Documentation
