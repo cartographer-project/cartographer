@@ -36,8 +36,8 @@ project provides Cartographer's ROS integration.
 Documentation
 =============
 
-You will find complete documentation for using Cartographer `our Read the Docs
-site`_.
+You will find complete documentation for using Cartographer at `our Read the
+Docs site`_.
 
 .. _our Read the Docs site: https://google-cartographer.readthedocs.io
 
