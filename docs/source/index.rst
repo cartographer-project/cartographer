@@ -12,11 +12,6 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-.. Cartographer documentation master file, created by
-   sphinx-quickstart on Fri Jul  8 10:41:33 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 ============
 Cartographer
 ============
@@ -26,19 +21,20 @@ Cartographer
    :hidden:
 
 `Cartographer`_ is a system that provides real-time simultaneous localization
-and mapping `SLAM`_ across multiple platforms and sensor configurations. This
-project provides Cartographer's ROS integration.
+and mapping `SLAM`_ across multiple platforms and sensor configurations.
 
-.. _Cartographer: http://www.github.com/googlecartographer/cartographer
+.. _Cartographer: https://github.com/googlecartographer/cartographer
 .. _SLAM: http://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
 Getting Started with ROS
 ========================
 
-You will find complete documentation for using Cartographer with ROS at `our
-Read the Docs site`_.
+ROS integration is provided by the `Cartographer ROS repository`_. You will find
+complete documentation for using Cartographer with ROS at the
+`Cartographer ROS Read the Docs site`_.
 
-.. _our Read the Docs site: https://google-cartographer-ros.readthedocs.io
+.. _Cartographer ROS repository: https://github.com/googlecartographer/cartographer_ros
+.. _Cartographer ROS Read the Docs site: https://google-cartographer-ros.readthedocs.io
 
 Getting Started without ROS
 ===========================
