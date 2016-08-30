@@ -34,16 +34,14 @@
   <build_depend>g++-static</build_depend>
   <build_depend>google-mock</build_depend>
   <build_depend>python-sphinx</build_depend>
-  <build_depend>wget</build_depend>  <!-- for glog -->
 
   <depend>boost</depend>
-  <depend>ceres_catkin</depend>
+  <depend>ceres_solver</depend>
   <depend>eigen</depend>
   <depend>libgflags-dev</depend>
   <depend>libgoogle-glog-dev</depend>
   <depend>lua5.2-dev</depend>
   <depend>protobuf-dev</depend>
-  <depend>suitesparse</depend><!-- for Ceres -->
   <!-- TODO(whess): This is missing libwebp-dev -->
 
   <export>
