@@ -55,3 +55,17 @@ On Ubuntu 14.04 (Trusty):
   :language: bash
   :linenos:
   :lines: 20-
+
+Please Cite Us
+==============
+
+Some background about the algorithms used by Cartographer can be found in the
+following publication. If you use Cartographer for your research, we would
+appreciate it if you cite our paper.
+
+W. Hess, D. Kohler, H. Rapp, and D. Andor,
+`Real-Time Loop Closure in 2D LIDAR SLAM`_, in
+*Robotics and Automation (ICRA), 2016 IEEE International Conference on*.
+IEEE, 2016. pp. 1271--1278.
+
+.. _Real-Time Loop Closure in 2D LIDAR SLAM: https://research.google.com/pubs/pub45466.html
