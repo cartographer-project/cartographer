@@ -66,6 +66,6 @@ appreciate it if you cite our paper.
 W. Hess, D. Kohler, H. Rapp, and D. Andor,
 `Real-Time Loop Closure in 2D LIDAR SLAM`_, in
 *Robotics and Automation (ICRA), 2016 IEEE International Conference on*.
-IEEE, 2016. pp. 1271--1278.
+IEEE, 2016. pp. 1271–1278.
 
 .. _Real-Time Loop Closure in 2D LIDAR SLAM: https://research.google.com/pubs/pub45466.html
