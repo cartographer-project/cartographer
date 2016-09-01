@@ -26,7 +26,7 @@ and mapping `SLAM`_ across multiple platforms and sensor configurations.
 .. _Cartographer: https://github.com/googlecartographer/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
-Getting Started with ROS
+Getting started with ROS
 ========================
 
 ROS integration is provided by the `Cartographer ROS repository`_. You will find
@@ -36,7 +36,7 @@ complete documentation for using Cartographer with ROS at the
 .. _Cartographer ROS repository: https://github.com/googlecartographer/cartographer_ros
 .. _Cartographer ROS Read the Docs site: https://google-cartographer-ros.readthedocs.io
 
-Getting Started without ROS
+Getting started without ROS
 ===========================
 
 On Ubuntu 14.04 (Trusty):
@@ -56,10 +56,10 @@ On Ubuntu 14.04 (Trusty):
   :linenos:
   :lines: 20-
 
-Please Cite Us
+How to cite us
 ==============
 
-Some background about the algorithms used by Cartographer can be found in the
+Background about the algorithms developed for Cartographer can be found in the
 following publication. If you use Cartographer for your research, we would
 appreciate it if you cite our paper.
 
