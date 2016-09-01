@@ -26,7 +26,7 @@ and mapping `SLAM`_ across multiple platforms and sensor configurations.
 .. _Cartographer: https://github.com/googlecartographer/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
-Getting Started with ROS
+Getting started with ROS
 ========================
 
 ROS integration is provided by the `Cartographer ROS repository`_. You will find
@@ -36,7 +36,7 @@ complete documentation for using Cartographer with ROS at the
 .. _Cartographer ROS repository: https://github.com/googlecartographer/cartographer_ros
 .. _Cartographer ROS Read the Docs site: https://google-cartographer-ros.readthedocs.io
 
-Getting Started without ROS
+Getting started without ROS
 ===========================
 
 On Ubuntu 14.04 (Trusty):
@@ -55,3 +55,17 @@ On Ubuntu 14.04 (Trusty):
   :language: bash
   :linenos:
   :lines: 20-
+
+How to cite us
+==============
+
+Background about the algorithms developed for Cartographer can be found in the
+following publication. If you use Cartographer for your research, we would
+appreciate it if you cite our paper.
+
+W. Hess, D. Kohler, H. Rapp, and D. Andor,
+`Real-Time Loop Closure in 2D LIDAR SLAM`_, in
+*Robotics and Automation (ICRA), 2016 IEEE International Conference on*.
+IEEE, 2016. pp. 1271–1278.
+
+.. _Real-Time Loop Closure in 2D LIDAR SLAM: https://research.google.com/pubs/pub45466.html
