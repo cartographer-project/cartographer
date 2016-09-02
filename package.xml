@@ -40,9 +40,9 @@
   <depend>eigen</depend>
   <depend>libgflags-dev</depend>
   <depend>libgoogle-glog-dev</depend>
+  <depend>libwebp-dev</depend>
   <depend>lua5.2-dev</depend>
   <depend>protobuf-dev</depend>
-  <!-- TODO(whess): This is missing libwebp-dev -->
 
   <export>
     <build_type>cmake</build_type>
