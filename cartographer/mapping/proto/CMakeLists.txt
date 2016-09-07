@@ -12,6 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+google_proto_library(mapping_proto_map_builder_options
+  SRCS
+    map_builder_options.proto
+  DEPENDS
+    mapping_2d_proto_local_trajectory_builder_options
+    mapping_3d_proto_local_trajectory_builder_options
+    mapping_proto_sparse_pose_graph_options
+)
+
 google_proto_library(mapping_proto_scan_matching_progress
   SRCS
     scan_matching_progress.proto
