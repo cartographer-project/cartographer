@@ -51,29 +51,26 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
           parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
   options.set_num_background_threads(
       parameter_dictionary->GetNonNegativeInt("num_background_threads"));
-  *options.mutable_sparse_pose_graph_options() =
-      CreateSparsePoseGraphOptions(
-          parameter_dictionary->GetDictionary("sparse_pose_graph").get());
-  CHECK_NE(options.use_trajectory_builder_2d(), options.use_trajectory_builder_3d());
+  *options.mutable_sparse_pose_graph_options() = CreateSparsePoseGraphOptions(
+      parameter_dictionary->GetDictionary("sparse_pose_graph").get());
+  CHECK_NE(options.use_trajectory_builder_2d(),
+           options.use_trajectory_builder_3d());
   return options;
 }
 
-MapBuilder::MapBuilder(
-    const proto::MapBuilderOptions& options,
-    std::deque<TrajectoryNode::ConstantData>* constant_data)
+MapBuilder::MapBuilder(const proto::MapBuilderOptions& options,
+                       std::deque<TrajectoryNode::ConstantData>* constant_data)
     : options_(options),
       thread_pool_(options.num_background_threads()),
       trajectory_builders_() {
   if (options.use_trajectory_builder_2d()) {
     sparse_pose_graph_2d_ = common::make_unique<mapping_2d::SparsePoseGraph>(
-        options_.sparse_pose_graph_options(), &thread_pool_,
-        constant_data);
+        options_.sparse_pose_graph_options(), &thread_pool_, constant_data);
     sparse_pose_graph_ = sparse_pose_graph_2d_.get();
   }
   if (options.use_trajectory_builder_3d()) {
     sparse_pose_graph_3d_ = common::make_unique<mapping_3d::SparsePoseGraph>(
-        options_.sparse_pose_graph_options(), &thread_pool_,
-        constant_data);
+        options_.sparse_pose_graph_options(), &thread_pool_, constant_data);
     sparse_pose_graph_ = sparse_pose_graph_3d_.get();
   }
 }
@@ -116,16 +113,14 @@ int MapBuilder::GetTrajectoryId(const Submaps* trajectory) const {
 
 proto::TrajectoryConnectivity MapBuilder::GetTrajectoryConnectivity() {
   return ToProto(sparse_pose_graph_->GetConnectedTrajectories(),
-                          trajectory_ids_);
+                 trajectory_ids_);
 }
 
 int MapBuilder::num_trajectory_builders() const {
   return trajectory_builders_.size();
 }
 
-SparsePoseGraph* MapBuilder::sparse_pose_graph() {
-  return sparse_pose_graph_;
-}
+SparsePoseGraph* MapBuilder::sparse_pose_graph() { return sparse_pose_graph_; }
 
 }  // namespace mapping
 }  // namespace cartographer
