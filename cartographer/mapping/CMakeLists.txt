@@ -28,6 +28,34 @@ google_library(mapping_global_trajectory_builder_interface
     sensor_point_cloud
 )
 
+google_library(mapping_map_builder
+  USES_CERES
+  USES_EIGEN
+  SRCS
+    map_builder.cc
+  HDRS
+    map_builder.h
+  DEPENDS
+    common_lua_parameter_dictionary
+    common_thread_pool
+    mapping_2d_global_trajectory_builder
+    mapping_2d_local_trajectory_builder
+    mapping_2d_sparse_pose_graph
+    mapping_2d_submaps
+    mapping_3d_global_trajectory_builder
+    mapping_3d_local_trajectory_builder_options
+    mapping_3d_proto_local_trajectory_builder_options
+    mapping_3d_sparse_pose_graph
+    mapping_global_trajectory_builder_interface
+    mapping_proto_map_builder_options
+    mapping_sparse_pose_graph
+    mapping_trajectory_node
+    sensor_laser
+    sensor_voxel_filter
+    transform_rigid_transform
+    transform_transform
+)
+
 google_library(mapping_probability_values
   USES_CERES
   SRCS

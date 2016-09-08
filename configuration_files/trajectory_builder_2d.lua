@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-TRAJECTORY_BUILDER = {
+TRAJECTORY_BUILDER_2D = {
   expect_imu_data = true,
   horizontal_laser_min_z = -0.8,
   horizontal_laser_max_z = 2.,
