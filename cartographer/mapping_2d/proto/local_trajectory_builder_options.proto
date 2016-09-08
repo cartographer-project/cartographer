@@ -48,6 +48,6 @@ message LocalTrajectoryBuilderOptions {
   optional kalman_filter.proto.PoseTrackerOptions pose_tracker_options = 10;
   optional mapping_2d.proto.SubmapsOptions submaps_options = 11;
 
-  // True if an IMU is configured in the sensor data.
-  optional bool expect_imu_data = 12;
+  // True if IMU data should be expected and used.
+  optional bool use_imu_data = 12;
 }
