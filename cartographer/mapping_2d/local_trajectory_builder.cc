@@ -54,7 +54,7 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
           parameter_dictionary->GetDictionary("pose_tracker").get());
   *options.mutable_submaps_options() = CreateSubmapsOptions(
       parameter_dictionary->GetDictionary("submaps").get());
-  options.set_expect_imu_data(parameter_dictionary->GetBool("expect_imu_data"));
+  options.set_use_imu_data(parameter_dictionary->GetBool("use_imu_data"));
   return options;
 }
 
@@ -148,7 +148,7 @@ std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddHorizontalLaserFan(
     const common::Time time, const sensor::LaserFan3D& laser_fan) {
   // Initialize pose tracker now if we do not ever use an IMU.
-  if (!options_.expect_imu_data()) {
+  if (!options_.use_imu_data()) {
     InitializePoseTracker(time);
   }
 
@@ -236,9 +236,7 @@ LocalTrajectoryBuilder::pose_estimate() const {
 void LocalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
     const Eigen::Vector3d& angular_velocity) {
-  CHECK(options_.expect_imu_data())
-      << "An IMU packet was added, but the IMU is not in the "
-         "sensor_configuration.";
+  CHECK(options_.use_imu_data()) << "An unexpected IMU packet was added.";
 
   InitializePoseTracker(time);
   pose_tracker_->AddImuLinearAccelerationObservation(time, linear_acceleration);
