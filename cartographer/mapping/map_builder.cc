@@ -60,24 +60,23 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 
 MapBuilder::MapBuilder(
     const proto::MapBuilderOptions& options,
-    std::deque<TrajectoryNode::ConstantData>* constant_node_data)
+    std::deque<TrajectoryNode::ConstantData>* constant_data)
     : options_(options),
       thread_pool_(options.num_background_threads()),
-      sparse_pose_graph_2d_(options.use_trajectory_builder_2d()
-                                ? new mapping_2d::SparsePoseGraph(
-                                      options_.sparse_pose_graph_options(),
-                                      &thread_pool_, constant_node_data)
-                                : nullptr),
-      sparse_pose_graph_3d_(options.use_trajectory_builder_3d()
-                                ? new mapping_3d::SparsePoseGraph(
-                                      options_.sparse_pose_graph_options(),
-                                      &thread_pool_, constant_node_data)
-                                : nullptr),
-      sparse_pose_graph_(
-          options.use_trajectory_builder_2d()
-              ? static_cast<SparsePoseGraph*>(sparse_pose_graph_2d_.get())
-              : static_cast<SparsePoseGraph*>(sparse_pose_graph_3d_.get())),
-      trajectory_builders_() {}
+      trajectory_builders_() {
+  if (options.use_trajectory_builder_2d()) {
+    sparse_pose_graph_2d_ = common::make_unique<mapping_2d::SparsePoseGraph>(
+        options_.sparse_pose_graph_options(), &thread_pool_,
+        constant_data);
+    sparse_pose_graph_ = sparse_pose_graph_2d_.get();
+  }
+  if (options.use_trajectory_builder_3d()) {
+    sparse_pose_graph_3d_ = common::make_unique<mapping_3d::SparsePoseGraph>(
+        options_.sparse_pose_graph_options(), &thread_pool_,
+        constant_data);
+    sparse_pose_graph_ = sparse_pose_graph_3d_.get();
+  }
+}
 
 MapBuilder::~MapBuilder() {}
 

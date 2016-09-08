@@ -34,5 +34,5 @@ message MapBuilderOptions {
   // Number of threads to use for background operations.
   optional int32 num_background_threads = 5;
 
-  optional mapping.proto.SparsePoseGraphOptions sparse_pose_graph_options = 6;
+  optional SparsePoseGraphOptions sparse_pose_graph_options = 6;
 }

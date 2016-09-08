@@ -45,9 +45,8 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 // and a SparsePoseGraph for loop closure.
 class MapBuilder {
  public:
-  MapBuilder(
-      const proto::MapBuilderOptions& options,
-      std::deque<mapping::TrajectoryNode::ConstantData>* constant_node_data);
+  MapBuilder(const proto::MapBuilderOptions& options,
+             std::deque<mapping::TrajectoryNode::ConstantData>* constant_data);
   ~MapBuilder();
 
   MapBuilder(const MapBuilder&) = delete;
