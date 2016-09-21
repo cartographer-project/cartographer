@@ -102,10 +102,6 @@ class ConstraintBuilder {
   // computations triggered by MaybeAddConstraint() have finished.
   void WhenDone(std::function<void(const Result&)> callback);
 
-  // Computes the inverse square root of 'covariance'.
-  Eigen::Matrix<double, 6, 6> ComputeSqrtLambda(
-      const kalman_filter::PoseCovariance& covariance) const;
-
   // Returns the number of consecutive finished scans.
   int GetNumFinishedScans();
 

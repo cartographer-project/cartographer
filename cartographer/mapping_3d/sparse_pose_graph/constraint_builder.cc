@@ -153,13 +153,6 @@ void ConstraintBuilder::WhenDone(
       [this, current_computation] { FinishComputation(current_computation); });
 }
 
-Eigen::Matrix<double, 6, 6> ConstraintBuilder::ComputeSqrtLambda(
-    const kalman_filter::PoseCovariance& covariance) const {
-  return common::ComputeSpdMatrixSqrtInverse(
-      covariance, options_.max_covariance_trace(),
-      options_.lower_covariance_eigenvalue_bound());
-}
-
 void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
     const int submap_index,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
@@ -248,24 +241,21 @@ void ConstraintBuilder::ComputeConstraint(
   // closure constraints since it is representative of a larger area (as opposed
   // to the local Ceres estimate of covariance).
   ceres::Solver::Summary unused_summary;
-  // TODO(hrapp): Compute covariance instead of relying on Ceres.
   kalman_filter::PoseCovariance covariance;
   ceres_scan_matcher_.Match(
       pose_estimate, pose_estimate,
       {{&filtered_point_cloud, submap_scan_matcher->hybrid_grid}},
       &pose_estimate, &covariance, &unused_summary);
-
   // 'covariance' is unchanged as (submap <- map) is a translation.
-  if (covariance.trace() > options_.max_covariance_trace()) {
-    return;
-  }
 
   const transform::Rigid3d constraint_transform =
       submap->local_pose().inverse() * pose_estimate;
   constraint->reset(new OptimizationProblem::Constraint{
       submap_index,
       scan_index,
-      {constraint_transform, ComputeSqrtLambda(covariance)},
+      {constraint_transform,
+       common::ComputeSpdMatrixSqrtInverse(
+           covariance, options_.lower_covariance_eigenvalue_bound())},
       OptimizationProblem::Constraint::INTER_SUBMAP});
 
   if (options_.log_matches()) {

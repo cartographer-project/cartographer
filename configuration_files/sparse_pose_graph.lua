@@ -25,7 +25,6 @@ SPARSE_POSE_GRAPH = {
     },
     min_score = 0.55,
     global_localization_min_score = 0.6,
-    max_covariance_trace = 1e-8,
     lower_covariance_eigenvalue_bound = 1e-11,
     log_matches = false,
     fast_correlative_scan_matcher = {
@@ -68,11 +67,11 @@ SPARSE_POSE_GRAPH = {
     },
   },
   optimization_problem = {
-    huber_scale = 5e-2,
-    acceleration_scale = 7.,
-    rotation_scale = 3e2,
-    consecutive_scan_translation_penalty_factor = 1e1,
-    consecutive_scan_rotation_penalty_factor = 1e1,
+    huber_scale = 5e2,
+    acceleration_scale = 7e4,
+    rotation_scale = 3e6,
+    consecutive_scan_translation_penalty_factor = 1e5,
+    consecutive_scan_rotation_penalty_factor = 1e5,
     log_solver_summary = false,
     log_residual_histograms = false,
     ceres_solver_options = {

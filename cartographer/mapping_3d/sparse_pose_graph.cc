@@ -189,10 +189,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
         scan_index,
         {constraint_transform,
          common::ComputeSpdMatrixSqrtInverse(
-             covariance,
-             options_.constraint_builder_options().max_covariance_trace(),
-             options_.constraint_builder_options()
-                 .lower_covariance_eigenvalue_bound())},
+             covariance, options_.constraint_builder_options()
+                             .lower_covariance_eigenvalue_bound())},
         Constraint3D::INTRA_SUBMAP});
   }
 

@@ -106,9 +106,6 @@ class ConstraintBuilder {
   // computations triggered by MaybeAddConstraint() have finished.
   void WhenDone(std::function<void(const Result&)> callback);
 
-  // Computes the inverse square root of 'covariance'.
-  Eigen::Matrix3d ComputeSqrtLambda(const Eigen::Matrix3d& covariance) const;
-
   // Returns the number of consecutive finished scans.
   int GetNumFinishedScans();
 

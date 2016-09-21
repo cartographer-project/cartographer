@@ -37,6 +37,7 @@ google_library(mapping_map_builder
     map_builder.h
   DEPENDS
     common_lua_parameter_dictionary
+    common_make_unique
     common_thread_pool
     mapping_2d_global_trajectory_builder
     mapping_2d_local_trajectory_builder
