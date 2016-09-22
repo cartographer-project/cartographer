@@ -129,13 +129,6 @@ void ConstraintBuilder::WhenDone(
       [this, current_computation] { FinishComputation(current_computation); });
 }
 
-Eigen::Matrix3d ConstraintBuilder::ComputeSqrtLambda(
-    const Eigen::Matrix3d& covariance) const {
-  return common::ComputeSpdMatrixSqrtInverse(
-      covariance, options_.max_covariance_trace(),
-      options_.lower_covariance_eigenvalue_bound());
-}
-
 void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
     const int submap_index, const ProbabilityGrid* const submap,
     const std::function<void()> work_item) {
@@ -217,10 +210,6 @@ void ConstraintBuilder::ComputeConstraint(
     // We've reported a successful local match.
     CHECK_GT(score, options_.min_score());
     // 'covariance' is unchanged as (submap <- map) is a translation.
-    if (covariance.trace() > options_.max_covariance_trace()) {
-      return;
-    }
-
     {
       common::MutexLocker locker(&mutex_);
       score_histogram_.Add(score);
@@ -244,7 +233,9 @@ void ConstraintBuilder::ComputeConstraint(
   constraint->reset(new OptimizationProblem::Constraint{
       submap_index,
       scan_index,
-      {constraint_transform, ComputeSqrtLambda(covariance)},
+      {constraint_transform,
+       common::ComputeSpdMatrixSqrtInverse(
+           covariance, options_.lower_covariance_eigenvalue_bound())},
       OptimizationProblem::Constraint::INTER_SUBMAP});
 
   if (options_.log_matches()) {

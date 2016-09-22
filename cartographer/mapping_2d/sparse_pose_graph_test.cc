@@ -79,7 +79,6 @@ class SparsePoseGraphTest : public ::testing::Test {
               },
               min_score = 0.5,
               global_localization_min_score = 0.6,
-              max_covariance_trace = 10.,
               lower_covariance_eigenvalue_bound = 1e-6,
               log_matches = true,
               fast_correlative_scan_matcher = {

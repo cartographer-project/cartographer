@@ -41,10 +41,6 @@ message ConstraintBuilderOptions {
   // Threshold below which global localizations are not trusted.
   optional double global_localization_min_score = 5;
 
-  // Threshold for the covariance trace above which a match is not considered.
-  // High traces indicate that the match is not very unique.
-  optional double max_covariance_trace = 6;
-
   // Lower bound for covariance eigenvalues to limit the weight of matches.
   optional double lower_covariance_eigenvalue_bound = 7;
 

@@ -38,8 +38,6 @@ proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
   options.set_min_score(parameter_dictionary->GetDouble("min_score"));
   options.set_global_localization_min_score(
       parameter_dictionary->GetDouble("global_localization_min_score"));
-  options.set_max_covariance_trace(
-      parameter_dictionary->GetDouble("max_covariance_trace"));
   options.set_lower_covariance_eigenvalue_bound(
       parameter_dictionary->GetDouble("lower_covariance_eigenvalue_bound"));
   options.set_log_matches(parameter_dictionary->GetBool("log_matches"));

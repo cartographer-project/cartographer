@@ -32,6 +32,7 @@
 #include "cartographer/common/math.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/scan_matching_progress.pb.h"
+#include "cartographer/mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "glog/logging.h"
@@ -171,12 +172,14 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid2d constraint_transform =
         sparse_pose_graph::ComputeSubmapPose(*submap).inverse() * pose;
-    constraints_.push_back(
-        Constraint2D{submap_index,
-                     scan_index,
-                     {constraint_transform,
-                      constraint_builder_.ComputeSqrtLambda(covariance)},
-                     Constraint2D::INTRA_SUBMAP});
+    constraints_.push_back(Constraint2D{
+        submap_index,
+        scan_index,
+        {constraint_transform,
+         common::ComputeSpdMatrixSqrtInverse(
+             covariance, options_.constraint_builder_options()
+                             .lower_covariance_eigenvalue_bound())},
+        Constraint2D::INTRA_SUBMAP});
   }
 
   // Determine if this scan should be globally localized.
