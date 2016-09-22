@@ -27,7 +27,4 @@ message FastCorrelativeScanMatcherOptions {
 
   // Number of precomputed grids to use.
   optional int32 branch_and_bound_depth = 2;
-
-  // Covariance estimate is multiplied by this scale.
-  optional double covariance_scale = 5;
 };

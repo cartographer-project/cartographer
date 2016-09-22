@@ -24,7 +24,6 @@
 
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/transform.h"
@@ -86,8 +85,6 @@ CreateFastCorrelativeScanMatcherOptions(
       parameter_dictionary->GetDouble("angular_search_window"));
   options.set_branch_and_bound_depth(
       parameter_dictionary->GetInt("branch_and_bound_depth"));
-  options.set_covariance_scale(
-      parameter_dictionary->GetDouble("covariance_scale"));
   return options;
 }
 
@@ -212,20 +209,18 @@ FastCorrelativeScanMatcher::~FastCorrelativeScanMatcher() {}
 bool FastCorrelativeScanMatcher::Match(
     const transform::Rigid2d& initial_pose_estimate,
     const sensor::PointCloud2D& point_cloud, const float min_score,
-    float* score, transform::Rigid2d* pose_estimate,
-    kalman_filter::Pose2DCovariance* covariance) const {
+    float* score, transform::Rigid2d* pose_estimate) const {
   const SearchParameters search_parameters(options_.linear_search_window(),
                                            options_.angular_search_window(),
                                            point_cloud, limits_.resolution());
   return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
-                                   point_cloud, min_score, score, pose_estimate,
-                                   covariance);
+                                   point_cloud, min_score, score,
+                                   pose_estimate);
 }
 
 bool FastCorrelativeScanMatcher::MatchFullSubmap(
     const sensor::PointCloud2D& point_cloud, float min_score, float* score,
-    transform::Rigid2d* pose_estimate,
-    kalman_filter::Pose2DCovariance* covariance) const {
+    transform::Rigid2d* pose_estimate) const {
   // Compute a search window around the center of the submap that includes it
   // fully.
   const SearchParameters search_parameters(
@@ -238,18 +233,16 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
           Eigen::Vector2d(limits_.cell_limits().num_y_cells,
                           limits_.cell_limits().num_x_cells));
   return MatchWithSearchParameters(search_parameters, center, point_cloud,
-                                   min_score, score, pose_estimate, covariance);
+                                   min_score, score, pose_estimate);
 }
 
 bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
     SearchParameters search_parameters,
     const transform::Rigid2d& initial_pose_estimate,
     const sensor::PointCloud2D& point_cloud, float min_score, float* score,
-    transform::Rigid2d* pose_estimate,
-    kalman_filter::Pose2DCovariance* covariance) const {
+    transform::Rigid2d* pose_estimate) const {
   CHECK_NOTNULL(score);
   CHECK_NOTNULL(pose_estimate);
-  CHECK_NOTNULL(covariance);
 
   const Eigen::Rotation2Dd initial_rotation = initial_pose_estimate.rotation();
   const sensor::PointCloud2D rotated_point_cloud =
@@ -266,22 +259,15 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
 
   const std::vector<Candidate> lowest_resolution_candidates =
       ComputeLowestResolutionCandidates(discrete_scans, search_parameters);
-  // The following are intermediate results for computing covariance. See
-  // "Real-Time Correlative Scan Matching" by Olson.
-  Eigen::Matrix3d K = Eigen::Matrix3d::Zero();
-  Eigen::Vector3d u = Eigen::Vector3d::Zero();
-  double s = 0.;
   const Candidate best_candidate = BranchAndBound(
       discrete_scans, search_parameters, lowest_resolution_candidates,
-      precomputation_grid_stack_->max_depth(), min_score, &K, &u, &s);
+      precomputation_grid_stack_->max_depth(), min_score);
   if (best_candidate.score > min_score) {
     *score = best_candidate.score;
     *pose_estimate = transform::Rigid2d(
         {initial_pose_estimate.translation().x() + best_candidate.x,
          initial_pose_estimate.translation().y() + best_candidate.y},
         initial_rotation * Eigen::Rotation2Dd(best_candidate.orientation));
-    *covariance = (1. / s) * K - (1. / (s * s)) * (u * u.transpose());
-    *covariance *= options_.covariance_scale();
     return true;
   }
   return false;
@@ -361,16 +347,8 @@ Candidate FastCorrelativeScanMatcher::BranchAndBound(
     const std::vector<DiscreteScan>& discrete_scans,
     const SearchParameters& search_parameters,
     const std::vector<Candidate>& candidates, const int candidate_depth,
-    float min_score, Eigen::Matrix3d* K, Eigen::Vector3d* u, double* s) const {
+    float min_score) const {
   if (candidate_depth == 0) {
-    // Update the covariance computation intermediate values.
-    for (const Candidate& candidate : candidates) {
-      const double p = candidate.score;
-      const Eigen::Vector3d xi(candidate.x, candidate.y, candidate.orientation);
-      *K += (xi * xi.transpose()) * p;
-      *u += xi * p;
-      *s += p;
-    }
     // Return the best candidate.
     return *candidates.begin();
   }
@@ -405,7 +383,7 @@ Candidate FastCorrelativeScanMatcher::BranchAndBound(
         best_high_resolution_candidate,
         BranchAndBound(discrete_scans, search_parameters,
                        higher_resolution_candidates, candidate_depth - 1,
-                       best_high_resolution_candidate.score, K, u, s));
+                       best_high_resolution_candidate.score));
   }
   return best_high_resolution_candidate;
 }

@@ -30,7 +30,6 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/port.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
@@ -109,20 +108,18 @@ class FastCorrelativeScanMatcher {
 
   // Aligns 'point_cloud' within the 'probability_grid' given an
   // 'initial_pose_estimate'. If a score above 'min_score' (excluding equality)
-  // is possible, true is returned, and 'score', 'pose_estimate' and
-  // 'covariance' are updated with the result.
+  // is possible, true is returned, and 'score' and 'pose_estimate' are updated
+  // with the result.
   bool Match(const transform::Rigid2d& initial_pose_estimate,
              const sensor::PointCloud2D& point_cloud, float min_score,
-             float* score, transform::Rigid2d* pose_estimate,
-             kalman_filter::Pose2DCovariance* covariance) const;
+             float* score, transform::Rigid2d* pose_estimate) const;
 
   // Aligns 'point_cloud' within the full 'probability_grid', i.e., not
   // restricted to the configured search window. If a score above 'min_score'
-  // (excluding equality) is possible, true is returned, and 'score',
-  // 'pose_estimate' and 'covariance' are updated with the result.
+  // (excluding equality) is possible, true is returned, and 'score' and
+  // 'pose_estimate' are updated with the result.
   bool MatchFullSubmap(const sensor::PointCloud2D& point_cloud, float min_score,
-                       float* score, transform::Rigid2d* pose_estimate,
-                       kalman_filter::Pose2DCovariance* covariance) const;
+                       float* score, transform::Rigid2d* pose_estimate) const;
 
  private:
   // The actual implementation of the scan matcher, called by Match() and
@@ -132,8 +129,7 @@ class FastCorrelativeScanMatcher {
       SearchParameters search_parameters,
       const transform::Rigid2d& initial_pose_estimate,
       const sensor::PointCloud2D& point_cloud, float min_score, float* score,
-      transform::Rigid2d* pose_estimate,
-      kalman_filter::Pose2DCovariance* covariance) const;
+      transform::Rigid2d* pose_estimate) const;
   std::vector<Candidate> ComputeLowestResolutionCandidates(
       const std::vector<DiscreteScan>& discrete_scans,
       const SearchParameters& search_parameters) const;
@@ -146,9 +142,7 @@ class FastCorrelativeScanMatcher {
   Candidate BranchAndBound(const std::vector<DiscreteScan>& discrete_scans,
                            const SearchParameters& search_parameters,
                            const std::vector<Candidate>& candidates,
-                           int candidate_depth, float min_score,
-                           Eigen::Matrix3d* K, Eigen::Vector3d* u,
-                           double* s) const;
+                           int candidate_depth, float min_score) const;
 
   const proto::FastCorrelativeScanMatcherOptions options_;
   MapLimits limits_;

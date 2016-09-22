@@ -16,7 +16,6 @@
 
 #include "cartographer/mapping_2d/scan_matching/fast_global_localizer.h"
 
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -36,7 +35,6 @@ bool PerformGlobalLocalization(
   CHECK(best_score != nullptr) << "Need a non-null best_score!";
   *best_score = cutoff;
   transform::Rigid2d pose_estimate;
-  kalman_filter::Pose2DCovariance best_pose_estimate_covariance;
   const sensor::PointCloud2D filtered_point_cloud =
       voxel_filter.Filter(point_cloud);
   bool success = false;
@@ -47,13 +45,11 @@ bool PerformGlobalLocalization(
   for (auto& matcher : matchers) {
     float score = -1;
     transform::Rigid2d pose_estimate;
-    kalman_filter::Pose2DCovariance pose_estimate_covariance;
     if (matcher->MatchFullSubmap(filtered_point_cloud, *best_score, &score,
-                                 &pose_estimate, &pose_estimate_covariance)) {
+                                 &pose_estimate)) {
       CHECK_GT(score, *best_score) << "MatchFullSubmap lied!";
       *best_score = score;
       *best_pose_estimate = pose_estimate;
-      best_pose_estimate_covariance = pose_estimate_covariance;
       success = true;
     }
   }

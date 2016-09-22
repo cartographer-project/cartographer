@@ -191,12 +191,11 @@ void ConstraintBuilder::ComputeConstraint(
   // - the ComputeSubmapPose() (map <- i)
   float score = 0.;
   transform::Rigid2d pose_estimate = transform::Rigid2d::Identity();
-  kalman_filter::Pose2DCovariance covariance;
 
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             filtered_point_cloud, options_.global_localization_min_score(),
-            &score, &pose_estimate, &covariance)) {
+            &score, &pose_estimate)) {
       trajectory_connectivity->Connect(scan_trajectory, submap_trajectory);
     } else {
       return;
@@ -204,12 +203,11 @@ void ConstraintBuilder::ComputeConstraint(
   } else {
     if (!submap_scan_matcher->fast_correlative_scan_matcher->Match(
             initial_pose, filtered_point_cloud, options_.min_score(), &score,
-            &pose_estimate, &covariance)) {
+            &pose_estimate)) {
       return;
     }
     // We've reported a successful local match.
     CHECK_GT(score, options_.min_score());
-    // 'covariance' is unchanged as (submap <- map) is a translation.
     {
       common::MutexLocker locker(&mutex_);
       score_histogram_.Add(score);
@@ -218,15 +216,13 @@ void ConstraintBuilder::ComputeConstraint(
 
   // Use the CSM estimate as both the initial and previous pose. This has the
   // effect that, in the absence of better information, we prefer the original
-  // CSM estimate. We also prefer to use the CSM covariance estimate for loop
-  // closure constraints since it is representative of a larger area (as opposed
-  // to the local Ceres estimate of covariance).
+  // CSM estimate.
   ceres::Solver::Summary unused_summary;
-  kalman_filter::Pose2DCovariance unused_covariance;
+  kalman_filter::Pose2DCovariance covariance;
   ceres_scan_matcher_.Match(pose_estimate, pose_estimate, filtered_point_cloud,
                             *submap_scan_matcher->probability_grid,
-                            &pose_estimate, &unused_covariance,
-                            &unused_summary);
+                            &pose_estimate, &covariance, &unused_summary);
+  // 'covariance' is unchanged as (submap <- map) is a translation.
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;
