@@ -115,10 +115,9 @@ void LocalTrajectoryBuilder::ScanMatch(
   const sensor::PointCloud2D filtered_point_cloud_in_tracking_2d =
       adaptive_voxel_filter.Filter(laser_fan_in_tracking_2d.point_cloud);
   if (options_.use_online_correlative_scan_matching()) {
-    kalman_filter::Pose2DCovariance unused_covariance_observation;
     real_time_correlative_scan_matcher_.Match(
         pose_prediction_2d, filtered_point_cloud_in_tracking_2d,
-        probability_grid, &initial_ceres_pose, &unused_covariance_observation);
+        probability_grid, &initial_ceres_pose);
   }
 
   transform::Rigid2d tracking_2d_to_map;

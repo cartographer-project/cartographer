@@ -24,7 +24,6 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/transform.h"
@@ -46,8 +45,6 @@ CreateRealTimeCorrelativeScanMatcherOptions(
       parameter_dictionary->GetDouble("translation_delta_cost_weight"));
   options.set_rotation_delta_cost_weight(
       parameter_dictionary->GetDouble("rotation_delta_cost_weight"));
-  options.set_covariance_scale(
-      parameter_dictionary->GetDouble("covariance_scale"));
   CHECK_GE(options.translation_delta_cost_weight(), 0.);
   CHECK_GE(options.rotation_delta_cost_weight(), 0.);
   return options;
@@ -94,10 +91,9 @@ RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchCandidates(
 double RealTimeCorrelativeScanMatcher::Match(
     const transform::Rigid2d& initial_pose_estimate,
     const sensor::PointCloud2D& point_cloud,
-    const ProbabilityGrid& probability_grid, transform::Rigid2d* pose_estimate,
-    kalman_filter::Pose2DCovariance* covariance) const {
+    const ProbabilityGrid& probability_grid,
+    transform::Rigid2d* pose_estimate) const {
   CHECK_NOTNULL(pose_estimate);
-  CHECK_NOTNULL(covariance);
 
   const Eigen::Rotation2Dd initial_rotation = initial_pose_estimate.rotation();
   const sensor::PointCloud2D rotated_point_cloud =
@@ -118,20 +114,6 @@ double RealTimeCorrelativeScanMatcher::Match(
       GenerateExhaustiveSearchCandidates(search_parameters);
   ScoreCandidates(probability_grid, discrete_scans, search_parameters,
                   &candidates);
-
-  // Covariance computed as in "Real-Time Correlative Scan Matching" by Olson.
-  Eigen::Matrix3d K = Eigen::Matrix3d::Zero();
-  Eigen::Vector3d u = Eigen::Vector3d::Zero();
-  double s = 0.f;
-  for (const Candidate& candidate : candidates) {
-    const double p = candidate.score;
-    const Eigen::Vector3d xi(candidate.x, candidate.y, candidate.orientation);
-    K += (xi * xi.transpose()) * p;
-    u += xi * p;
-    s += p;
-  }
-  *covariance = (1. / s) * K - (1. / (s * s)) * (u * u.transpose());
-  *covariance *= options_.covariance_scale();
 
   const Candidate& best_candidate =
       *std::max_element(candidates.begin(), candidates.end());

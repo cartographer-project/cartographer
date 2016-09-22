@@ -14,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """A dumb CMakeLists.txt generator that relies on source name conventions."""
 
 import os
@@ -131,8 +130,8 @@ def ReadFileWithoutGoogleTargets(filename):
 
 
 def main():
-  root_directory = os.path.realpath(os.path.join(
-      os.path.dirname(__file__), os.path.pardir, "cartographer"))
+  root_directory = os.path.realpath(
+      os.path.join(os.path.dirname(__file__), os.path.pardir, "cartographer"))
   targets_by_src = {}
   targets = []
 
@@ -198,8 +197,8 @@ def main():
       if lines:
         outfile.write("\n".join(lines))
         outfile.write("\n")
-      outfile.write("\n\n".join(t.Format(directory) for t in
-                                targets_in_directory))
+      outfile.write("\n\n".join(
+          t.Format(directory) for t in targets_in_directory))
       outfile.write("\n")
 
 

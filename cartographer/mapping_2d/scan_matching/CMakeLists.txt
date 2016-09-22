@@ -99,7 +99,6 @@ google_library(mapping_2d_scan_matching_real_time_correlative_scan_matcher
   DEPENDS
     common_lua_parameter_dictionary
     common_math
-    kalman_filter_pose_tracker
     mapping_2d_probability_grid
     mapping_2d_scan_matching_correlative_scan_matcher
     mapping_2d_scan_matching_proto_real_time_correlative_scan_matcher_options

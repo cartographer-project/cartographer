@@ -41,7 +41,6 @@
 #include <vector>
 
 #include "Eigen/Core"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
@@ -66,13 +65,12 @@ class RealTimeCorrelativeScanMatcher {
       const RealTimeCorrelativeScanMatcher&) = delete;
 
   // Aligns 'point_cloud' within the 'probability_grid' given an
-  // 'initial_pose_estimate' then updates 'pose_estimate' and 'covariance'
-  // with the result and returns the score.
+  // 'initial_pose_estimate' then updates 'pose_estimate' with the result and
+  // returns the score.
   double Match(const transform::Rigid2d& initial_pose_estimate,
                const sensor::PointCloud2D& point_cloud,
                const ProbabilityGrid& probability_grid,
-               transform::Rigid2d* pose_estimate,
-               kalman_filter::Pose2DCovariance* covariance) const;
+               transform::Rigid2d* pose_estimate) const;
 
   // Computes the score for each Candidate in a collection. The cost is computed
   // as the sum of probabilities, different from the Ceres CostFunctions:
