@@ -28,7 +28,4 @@ message RealTimeCorrelativeScanMatcherOptions {
   // Weights applied to each part of the score.
   optional double translation_delta_cost_weight = 3;
   optional double rotation_delta_cost_weight = 4;
-
-  // Covariance estimate is multiplied by this scale.
-  optional double covariance_scale = 5;
 }

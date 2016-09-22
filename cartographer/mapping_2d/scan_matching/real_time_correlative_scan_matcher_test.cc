@@ -67,7 +67,6 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
           "angular_search_window = 0.16, "
           "translation_delta_cost_weight = 0., "
           "rotation_delta_cost_weight = 0., "
-          "covariance_scale = 1., "
           "}");
       real_time_correlative_scan_matcher_ =
           common::make_unique<RealTimeCorrelativeScanMatcher>(

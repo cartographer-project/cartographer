@@ -102,7 +102,6 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
               angular_search_window = math.rad(1.),
               translation_delta_cost_weight = 1e-1,
               rotation_delta_cost_weight = 1.,
-              covariance_scale = 1.,
             },
             pose_tracker = {
               orientation_model_variance = 5e-4,

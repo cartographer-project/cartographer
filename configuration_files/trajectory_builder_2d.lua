@@ -30,7 +30,6 @@ TRAJECTORY_BUILDER_2D = {
     angular_search_window = math.rad(20.),
     translation_delta_cost_weight = 1e-1,
     rotation_delta_cost_weight = 1e-1,
-    covariance_scale = 1.,
   },
 
   ceres_scan_matcher = {

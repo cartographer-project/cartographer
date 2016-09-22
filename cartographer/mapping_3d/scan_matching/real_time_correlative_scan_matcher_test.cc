@@ -56,7 +56,6 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
           angular_search_window = math.rad(1.),
           translation_delta_cost_weight = 1e-1,
           rotation_delta_cost_weight = 1.,
-          covariance_scale = 1.,
         })text");
     real_time_correlative_scan_matcher_.reset(
         new RealTimeCorrelativeScanMatcher(
