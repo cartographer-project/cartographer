@@ -85,7 +85,6 @@ class SparsePoseGraphTest : public ::testing::Test {
                 linear_search_window = 3.,
                 angular_search_window = 0.1,
                 branch_and_bound_depth = 3,
-                covariance_scale = 1.,
               },
               ceres_scan_matcher = {
                 occupied_space_cost_functor_weight = 20.,

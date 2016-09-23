@@ -237,9 +237,7 @@ void ConstraintBuilder::ComputeConstraint(
 
   // Use the CSM estimate as both the initial and previous pose. This has the
   // effect that, in the absence of better information, we prefer the original
-  // CSM estimate. We also prefer to use the CSM covariance estimate for loop
-  // closure constraints since it is representative of a larger area (as opposed
-  // to the local Ceres estimate of covariance).
+  // CSM estimate.
   ceres::Solver::Summary unused_summary;
   kalman_filter::PoseCovariance covariance;
   ceres_scan_matcher_.Match(

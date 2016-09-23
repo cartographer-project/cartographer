@@ -58,7 +58,6 @@ google_library(mapping_2d_scan_matching_fast_correlative_scan_matcher
   DEPENDS
     common_math
     common_port
-    kalman_filter_pose_tracker
     mapping_2d_probability_grid
     mapping_2d_scan_matching_correlative_scan_matcher
     mapping_2d_scan_matching_proto_fast_correlative_scan_matcher_options
@@ -74,7 +73,6 @@ google_library(mapping_2d_scan_matching_fast_global_localizer
   HDRS
     fast_global_localizer.h
   DEPENDS
-    kalman_filter_pose_tracker
     mapping_2d_scan_matching_fast_correlative_scan_matcher
     sensor_voxel_filter
 )

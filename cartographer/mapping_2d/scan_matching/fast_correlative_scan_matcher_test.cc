@@ -111,7 +111,6 @@ CreateFastCorrelativeScanMatcherTestOptions(const int branch_and_bound_depth) {
       return {
          linear_search_window = 3.,
          angular_search_window = 1.,
-         covariance_scale = 1.,
          branch_and_bound_depth = )text" +
                              std::to_string(branch_and_bound_depth) + "}");
   return CreateFastCorrelativeScanMatcherOptions(parameter_dictionary.get());
@@ -159,11 +158,10 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
     FastCorrelativeScanMatcher fast_correlative_scan_matcher(probability_grid,
                                                              options);
     transform::Rigid2d pose_estimate;
-    kalman_filter::Pose2DCovariance unused_covariance;
     float score;
     EXPECT_TRUE(fast_correlative_scan_matcher.Match(
         transform::Rigid2d::Identity(), point_cloud, kMinScore, &score,
-        &pose_estimate, &unused_covariance));
+        &pose_estimate));
     EXPECT_LT(kMinScore, score);
     EXPECT_THAT(expected_pose,
                 transform::IsNearly(pose_estimate.cast<float>(), 0.03f))
@@ -211,10 +209,9 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
     FastCorrelativeScanMatcher fast_correlative_scan_matcher(probability_grid,
                                                              options);
     transform::Rigid2d pose_estimate;
-    kalman_filter::Pose2DCovariance unused_covariance;
     float score;
     EXPECT_TRUE(fast_correlative_scan_matcher.MatchFullSubmap(
-        point_cloud, kMinScore, &score, &pose_estimate, &unused_covariance));
+        point_cloud, kMinScore, &score, &pose_estimate));
     EXPECT_LT(kMinScore, score);
     EXPECT_THAT(expected_pose,
                 transform::IsNearly(pose_estimate.cast<float>(), 0.03f))

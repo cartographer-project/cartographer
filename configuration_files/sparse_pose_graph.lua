@@ -31,13 +31,12 @@ SPARSE_POSE_GRAPH = {
       linear_search_window = 7.,
       angular_search_window = math.rad(30.),
       branch_and_bound_depth = 7,
-      covariance_scale = 1e-6,
     },
     ceres_scan_matcher = {
       occupied_space_cost_functor_weight = 20.,
       previous_pose_translation_delta_cost_functor_weight = 10.,
       initial_pose_estimate_rotation_delta_cost_functor_weight = 1.,
-      covariance_scale = 1e-6,
+      covariance_scale = 1e-4,
       ceres_solver_options = {
         use_nonmonotonic_steps = true,
         max_num_iterations = 10,
@@ -67,7 +66,7 @@ SPARSE_POSE_GRAPH = {
     },
   },
   optimization_problem = {
-    huber_scale = 5e2,
+    huber_scale = 1e1,
     acceleration_scale = 7e4,
     rotation_scale = 3e6,
     consecutive_scan_translation_penalty_factor = 1e5,
