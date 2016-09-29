@@ -24,6 +24,8 @@ Purpose
 `Cartographer`_ is a system that provides real-time simultaneous localization
 and mapping `SLAM`_ across multiple platforms and sensor configurations.
 
+|video|
+
 .. _Cartographer: https://github.com/googlecartographer/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
@@ -52,3 +54,9 @@ page`_.
     :alt: Documentation Status
     :scale: 100%
     :target: https://google-cartographer.readthedocs.io/en/latest/?badge=latest
+
+.. |video| image:: https://j.gifs.com/wp3BJM.gif
+    :alt: Cartographer 3D SLAM Demo (6x)
+    :scale: 100%
+    :target: https://youtu.be/DM0dpHLhtX0
+
