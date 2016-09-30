@@ -24,9 +24,6 @@ message SparsePoseGraphOptions {
   // is built.
   optional int32 optimize_every_n_scans = 1;
 
-  // If true, constraints between old scans and new submaps will be computed.
-  optional bool also_match_to_new_submaps = 2;
-
   // Options for the constraint builder.
   optional mapping.sparse_pose_graph.proto.ConstraintBuilderOptions
       constraint_builder_options = 3;

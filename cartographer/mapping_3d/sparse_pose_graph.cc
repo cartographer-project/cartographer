@@ -234,11 +234,9 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     const int finished_submap_index = GetSubmapIndex(finished_submap);
     SubmapState& finished_submap_state = submap_states_[finished_submap_index];
     CHECK(!finished_submap_state.finished);
-    if (options_.also_match_to_new_submaps()) {
-      // We have a new completed submap, so we look into adding constraints for
-      // old scans.
-      ComputeConstraintsForOldScans(finished_submap);
-    }
+    // We have a new completed submap, so we look into adding constraints for
+    // old scans.
+    ComputeConstraintsForOldScans(finished_submap);
     finished_submap_state.finished = true;
   }
   constraint_builder_.NotifyEndOfScan(scan_index);

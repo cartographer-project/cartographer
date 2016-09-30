@@ -14,7 +14,6 @@
 
 SPARSE_POSE_GRAPH = {
   optimize_every_n_scans = 90,
-  also_match_to_new_submaps = true,
   constraint_builder = {
     sampling_ratio = 0.3,
     max_constraint_distance = 15.,
