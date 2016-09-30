@@ -68,7 +68,6 @@ class SparsePoseGraphTest : public ::testing::Test {
       auto parameter_dictionary = common::MakeDictionary(R"text(
           return {
             optimize_every_n_scans = 1000,
-            also_match_to_new_submaps = true,
             constraint_builder = {
               sampling_ratio = 1.,
               max_constraint_distance = 6.,

@@ -45,8 +45,6 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   proto::SparsePoseGraphOptions options;
   options.set_optimize_every_n_scans(
       parameter_dictionary->GetInt("optimize_every_n_scans"));
-  options.set_also_match_to_new_submaps(
-      parameter_dictionary->GetBool("also_match_to_new_submaps"));
   *options.mutable_constraint_builder_options() =
       sparse_pose_graph::CreateConstraintBuilderOptions(
           parameter_dictionary->GetDictionary("constraint_builder").get());
