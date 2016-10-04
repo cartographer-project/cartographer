@@ -17,7 +17,7 @@ MAX_3D_LASER_RANGE = 60.
 TRAJECTORY_BUILDER_3D = {
   laser_min_range = 1.,
   laser_max_range = MAX_3D_LASER_RANGE,
-  scans_per_accumulation = 20,
+  scans_per_accumulation = 1,
   laser_voxel_filter_size = 0.15,
 
   high_resolution_adaptive_voxel_filter = {
