@@ -22,7 +22,8 @@ Purpose
 =======
 
 `Cartographer`_ is a system that provides real-time simultaneous localization
-and mapping `SLAM`_ across multiple platforms and sensor configurations.
+and mapping `SLAM`_ in 2D and 3D across multiple platforms and sensor
+configurations.
 
 |video|
 
@@ -40,10 +41,10 @@ Docs site`_.
 Contributing
 ============
 
-You can find information about contributing to Cartographer at our `Contribution
+You can find information about contributing to Cartographer at `our Contribution
 page`_.
 
-.. _Contribution page: https://github.com/googlecartographer/cartographer/blob/master/CONTRIBUTING.md
+.. _our Contribution page: https://github.com/googlecartographer/cartographer/blob/master/CONTRIBUTING.md
 
 .. |build| image:: https://travis-ci.org/googlecartographer/cartographer.svg?branch=master
     :alt: Build Status
@@ -56,7 +57,6 @@ page`_.
     :target: https://google-cartographer.readthedocs.io/en/latest/?badge=latest
 
 .. |video| image:: https://j.gifs.com/wp3BJM.gif
-    :alt: Cartographer 3D SLAM Demo (6x)
+    :alt: Cartographer 3D SLAM Demo
     :scale: 100%
     :target: https://youtu.be/DM0dpHLhtX0
-
