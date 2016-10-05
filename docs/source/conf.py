@@ -256,8 +256,8 @@ texinfo_documents = [
     ('index', 'Cartographer', u'Cartographer Documentation',
      u'The Cartographer Authors', 'Cartographer',
      'Cartographer is a system that provides real-time simultaneous '
-     'localization and mapping (SLAM) across multiple platforms and sensor '
-     'configurations.', 'Miscellaneous'),
+     'localization and mapping (SLAM) in 2D and 3D across multiple platforms '
+     'and sensor configurations.', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
