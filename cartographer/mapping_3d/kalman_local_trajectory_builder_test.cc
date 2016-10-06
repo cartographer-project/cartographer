@@ -20,7 +20,6 @@
 #include <random>
 
 #include "Eigen/Core"
-#include "Eigen/StdVector"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"

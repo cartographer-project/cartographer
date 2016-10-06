@@ -22,7 +22,6 @@
 #include <vector>
 
 #include "Eigen/Geometry"
-#include "Eigen/StdVector"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping_2d/laser_fan_inserter.h"

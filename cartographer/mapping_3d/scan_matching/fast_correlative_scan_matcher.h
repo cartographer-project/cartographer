@@ -24,7 +24,6 @@
 #include <vector>
 
 #include "Eigen/Core"
-#include "Eigen/StdVector"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"

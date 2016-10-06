@@ -15,7 +15,6 @@
  */
 
 #include "cartographer/mapping_2d/ray_casting.h"
-#include "Eigen/StdVector"
 
 namespace cartographer {
 namespace mapping_2d {

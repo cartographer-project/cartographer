@@ -25,7 +25,6 @@
 #include "Eigen/Cholesky"
 #include "Eigen/Core"
 #include "Eigen/Eigenvalues"
-#include "Eigen/StdVector"
 #include "cartographer/kalman_filter/gaussian_distribution.h"
 #include "glog/logging.h"
 

@@ -22,7 +22,6 @@
 #include <limits>
 
 #include "Eigen/Geometry"
-#include "Eigen/StdVector"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping_3d/scan_matching/precomputation_grid.h"
