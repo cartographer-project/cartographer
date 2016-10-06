@@ -51,7 +51,8 @@ T GetYaw(const Rigid3<T>& transform) {
 // rotation as the given 'quaternion'.
 template <typename T>
 Eigen::Matrix<T, 3, 1> RotationQuaternionToAngleAxisVector(
-    Eigen::Quaternion<T> quaternion) {
+    const Eigen::Quaternion<T>& _quaternion) {
+  auto quaternion = _quaternion;
   quaternion.normalize();
   // We choose the quaternion with positive 'w', i.e., the one with a smaller
   // angle that represents this orientation.
@@ -75,7 +76,7 @@ Eigen::Matrix<T, 3, 1> RotationQuaternionToAngleAxisVector(
 // vector.
 template <typename T>
 Eigen::Quaternion<T> AngleAxisVectorToRotationQuaternion(
-    Eigen::Matrix<T, 3, 1> angle_axis) {
+    const Eigen::Matrix<T, 3, 1>& angle_axis) {
   T scale = T(0.5);
   T w = T(1.);
   constexpr double kCutoffAngle = 1e-8;  // We linearize below this angle.
