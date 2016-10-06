@@ -25,6 +25,7 @@
 #include "Eigen/Cholesky"
 #include "Eigen/Core"
 #include "Eigen/Eigenvalues"
+#include "Eigen/StdVector"
 #include "cartographer/kalman_filter/gaussian_distribution.h"
 #include "glog/logging.h"
 
@@ -158,7 +159,7 @@ class UnscentedKalmanFilter {
     W.reserve(2 * N + 1);
     W.emplace_back(StateType::Zero());
 
-    std::vector<Eigen::Matrix<FloatType, K, 1>> Z;
+    std::vector<Eigen::Matrix<FloatType, K, 1>, Eigen::aligned_allocator<Eigen::Matrix<FloatType, K, 1>>> Z;
     Z.reserve(2 * N + 1);
     Z.emplace_back(h(mu));
 

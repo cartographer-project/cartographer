@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "Eigen/Core"
+#include "Eigen/StdVector"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping_2d/map_limits.h"
 #include "cartographer/mapping_2d/xy_index.h"
@@ -29,7 +30,7 @@ namespace cartographer {
 namespace mapping_2d {
 namespace scan_matching {
 
-typedef std::vector<Eigen::Array2i> DiscreteScan;
+typedef std::vector<Eigen::Array2i, Eigen::aligned_allocator<Eigen::Array2i>> DiscreteScan;
 
 // Describes the search space.
 struct SearchParameters {

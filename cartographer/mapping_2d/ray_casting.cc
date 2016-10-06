@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/mapping_2d/ray_casting.h"
+#include "Eigen/StdVector"
 
 namespace cartographer {
 namespace mapping_2d {
@@ -160,7 +161,7 @@ void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
                                                          laser_fan.origin.y());
 
   // Compute and add the end points.
-  std::vector<Eigen::Array2i> ends;
+  std::vector<Eigen::Array2i, Eigen::aligned_allocator<Eigen::Array2i>> ends;
   ends.reserve(laser_fan.point_cloud.size());
   for (const Eigen::Vector2f& laser_return : laser_fan.point_cloud) {
     ends.push_back(superscaled_limits.GetXYIndexOfCellContainingPoint(

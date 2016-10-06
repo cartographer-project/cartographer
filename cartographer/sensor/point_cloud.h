@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "Eigen/Core"
+#include "Eigen/StdVector"
 #include "Eigen/Geometry"
 #include "cartographer/sensor/proto/sensor.pb.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -28,8 +29,9 @@
 namespace cartographer {
 namespace sensor {
 
-typedef std::vector<Eigen::Vector3f> PointCloud;
-typedef std::vector<Eigen::Vector2f> PointCloud2D;
+
+typedef std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> PointCloud;
+typedef std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>> PointCloud2D;
 
 // Transforms 'point_cloud' according to 'transform'.
 PointCloud TransformPointCloud(const PointCloud& point_cloud,

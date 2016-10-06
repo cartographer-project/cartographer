@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "Eigen/Core"
+#include "Eigen/StdVector"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
@@ -45,7 +46,7 @@ class PrecomputationGridStack;
 struct DiscreteScan {
   transform::Rigid3f pose;
   // Contains a vector of discretized scans for each 'depth'.
-  std::vector<std::vector<Eigen::Array3i>> cell_indices_per_depth;
+  std::vector<std::vector<Eigen::Array3i, Eigen::aligned_allocator<Eigen::Array3i>>> cell_indices_per_depth;
 };
 
 struct Candidate {
