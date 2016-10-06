@@ -90,6 +90,8 @@ class PrecomputationGrid {
 
   // Probabilites mapped to 0 to 255.
   std::vector<uint8> cells_;
+ public:
+   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 class PrecomputationGridStack;

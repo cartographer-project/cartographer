@@ -94,6 +94,8 @@ class XYIndexRangeIterator
   Eigen::Array2i min_xy_index_;
   Eigen::Array2i max_xy_index_;
   Eigen::Array2i xy_index_;
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 }  // namespace mapping_2d

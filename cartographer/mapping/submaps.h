@@ -89,6 +89,7 @@ struct Submap {
   // change anymore. Otherwise, this is nullptr and the next call to
   // InsertLaserFan() will change the submap.
   const mapping_2d::ProbabilityGrid* finished_probability_grid = nullptr;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 // A container of Submaps.

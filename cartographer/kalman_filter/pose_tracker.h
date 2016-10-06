@@ -87,6 +87,8 @@ class ImuTracker {
   Eigen::Quaterniond orientation_;
   Eigen::Vector3d gravity_direction_;
   Eigen::Vector3d imu_angular_velocity_;
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 // A Kalman filter for a 3D state of position and orientation.

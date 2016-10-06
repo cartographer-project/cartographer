@@ -127,6 +127,8 @@ class MapLimits {
   double resolution_;
   Eigen::Vector2d max_;
   CellLimits cell_limits_;
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 }  // namespace mapping_2d

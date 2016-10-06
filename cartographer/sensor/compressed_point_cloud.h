@@ -89,6 +89,8 @@ class CompressedPointCloud::ConstIterator
   Eigen::Vector3f current_point_;
   Eigen::Vector3i current_block_coordinates_;
   std::vector<int32>::const_iterator input_;
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 }  // namespace sensor

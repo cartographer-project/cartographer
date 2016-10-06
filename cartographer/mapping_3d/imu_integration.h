@@ -33,12 +33,14 @@ struct ImuData {
   common::Time time;
   Eigen::Vector3d linear_acceleration;
   Eigen::Vector3d angular_velocity;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 template <typename T>
 struct IntegrateImuResult {
   Eigen::Matrix<T, 3, 1> delta_velocity;
   Eigen::Quaternion<T> delta_rotation;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 // Returns velocity delta in map frame.

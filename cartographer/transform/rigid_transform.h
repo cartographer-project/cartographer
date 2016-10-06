@@ -94,6 +94,8 @@ class Rigid2 {
  private:
   Vector translation_;
   Rotation2D rotation_;
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 template <typename FloatType>
@@ -194,6 +196,8 @@ class Rigid3 {
  private:
   Vector translation_;
   Quaternion rotation_;
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 template <typename FloatType>

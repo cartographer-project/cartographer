@@ -45,6 +45,8 @@ class RotationalScanMatcher {
   float MatchHistogram(const Eigen::VectorXf& scan_histogram) const;
 
   Eigen::VectorXf histogram_;
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 }  // namespace scan_matching

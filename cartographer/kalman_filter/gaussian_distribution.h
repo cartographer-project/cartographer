@@ -38,6 +38,8 @@ class GaussianDistribution {
  private:
   Eigen::Matrix<T, N, 1> mean_;
   Eigen::Matrix<T, N, N> covariance_;
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 template <typename T, int N>

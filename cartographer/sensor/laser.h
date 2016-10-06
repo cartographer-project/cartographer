@@ -33,6 +33,7 @@ struct LaserFan {
   Eigen::Vector2f origin;
   PointCloud2D point_cloud;
   PointCloud2D missing_echo_point_cloud;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 LaserFan ToLaserFan(const proto::LaserScan& proto, float min_range,
                     float max_range, float missing_echo_ray_length);
@@ -52,6 +53,7 @@ struct LaserFan3D {
 
   // Reflectivity value of returns.
   std::vector<uint8> reflectivities;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 // Like LaserFan3D but with compressed point clouds. The point order changes
@@ -63,6 +65,7 @@ struct CompressedLaserFan3D {
 
   // Reflectivity value of returns.
   std::vector<uint8> reflectivities;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 LaserFan3D Decompress(const CompressedLaserFan3D& compressed_laser_fan);
