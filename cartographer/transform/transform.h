@@ -63,8 +63,7 @@ Eigen::Matrix<T, 3, 1> RotationQuaternionToAngleAxisVector(
     normalized_quaternion.z() *= T(-1.);
   }
   // We convert the normalized_quaternion into a vector along the rotation axis
-  // with
-  // length of the rotation angle.
+  // with length of the rotation angle.
   const T angle = T(2.) * atan2(normalized_quaternion.vec().norm(),
                                 normalized_quaternion.w());
   constexpr double kCutoffAngle = 1e-7;  // We linearize below this angle.
