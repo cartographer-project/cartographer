@@ -52,23 +52,23 @@ T GetYaw(const Rigid3<T>& transform) {
 template <typename T>
 Eigen::Matrix<T, 3, 1> RotationQuaternionToAngleAxisVector(
     const Eigen::Quaternion<T>& quaternion) {
-  auto normalized_quat = quaternion.normalized();
+  Eigen::Quaternion<T> normalized_quaternion = quaternion.normalized();
   // We choose the quaternion with positive 'w', i.e., the one with a smaller
   // angle that represents this orientation.
-  if (normalized_quat.w() < 0.) {
+  if (normalized_quaternion.w() < 0.) {
     // Multiply by -1. http://eigen.tuxfamily.org/bz/show_bug.cgi?id=560
-    normalized_quat.w() *= T(-1.);
-    normalized_quat.x() *= T(-1.);
-    normalized_quat.y() *= T(-1.);
-    normalized_quat.z() *= T(-1.);
+    normalized_quaternion.w() *= T(-1.);
+    normalized_quaternion.x() *= T(-1.);
+    normalized_quaternion.y() *= T(-1.);
+    normalized_quaternion.z() *= T(-1.);
   }
-  // We convert the normalized_quat into a vector along the rotation axis with
+  // We convert the normalized_quaternion into a vector along the rotation axis with
   // length of the rotation angle.
-  const T angle = T(2.) * atan2(normalized_quat.vec().norm(), normalized_quat.w());
+  const T angle = T(2.) * atan2(normalized_quaternion.vec().norm(), normalized_quaternion.w());
   constexpr double kCutoffAngle = 1e-7;  // We linearize below this angle.
   const T scale = angle < kCutoffAngle ? T(2.) : angle / sin(angle / T(2.));
-  return Eigen::Matrix<T, 3, 1>(scale * normalized_quat.x(), scale * normalized_quat.y(),
-                                scale * normalized_quat.z());
+  return Eigen::Matrix<T, 3, 1>(scale * normalized_quaternion.x(), scale * normalized_quaternion.y(),
+                                scale * normalized_quaternion.z());
 }
 
 // Returns a quaternion representing the same rotation as the given 'angle_axis'
