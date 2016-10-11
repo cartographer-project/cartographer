@@ -25,11 +25,14 @@ include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
 google_initialize_cartographer_project()
 google_enable_testing()
 
+include(FindPkgConfig)
+
 find_package(Boost REQUIRED COMPONENTS system iostreams)
 find_package(Ceres REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
 find_package(Protobuf REQUIRED)
+PKG_SEARCH_MODULE(CAIRO REQUIRED cairo>=1.12.16)
 
 # Only build the documentation if we can find Sphinx.
 find_package(Sphinx)
@@ -83,6 +86,7 @@ list(APPEND CARTOGRAPHER_LIBRARIES "${CERES_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${Boost_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${LUA_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${PROTOBUF_LIBRARIES}")
+list(APPEND CARTOGRAPHER_LIBRARIES "${CAIRO_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "webp")
 
 CONFIGURE_PACKAGE_CONFIG_FILE(
