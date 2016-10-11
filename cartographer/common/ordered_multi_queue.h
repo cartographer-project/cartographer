@@ -66,8 +66,8 @@ class OrderedMultiQueue {
     auto* queue = FindOrNull(queue_key);
     if (queue == nullptr) {
       // TODO(damonkohler): This will not work for every value of "queue_key".
-      LOG_EVERY_N(WARNING, 60) << "Ignored value for queue: '" << queue_key
-                               << "'";
+      LOG_EVERY_N(WARNING, 1000) << "Ignored value for queue: '" << queue_key
+                                 << "'";
       return;
     }
     queue->queue.Push(
