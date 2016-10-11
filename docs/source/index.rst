@@ -30,9 +30,8 @@ configurations.
 Getting started
 ===============
 
-The easiest way to get started with Cartographer is to use `ROS
-<http://www.ros.org>`_. However, Cartographer is also available as a standalone
-library.
+Cartographer is a standalone C++ library. To get started quickly, use our `ROS
+<http://www.ros.org>`_ integration.
 
 Getting started with ROS
 ------------------------
