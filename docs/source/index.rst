@@ -27,8 +27,14 @@ configurations.
 .. _Cartographer: https://github.com/googlecartographer/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
+Getting started
+===============
+
+Cartographer is a standalone C++ library. To get started quickly, use our `ROS
+<http://www.ros.org>`_ integration.
+
 Getting started with ROS
-========================
+------------------------
 
 ROS integration is provided by the `Cartographer ROS repository`_. You will find
 complete documentation for using Cartographer with ROS at the
@@ -38,7 +44,10 @@ complete documentation for using Cartographer with ROS at the
 .. _Cartographer ROS Read the Docs site: https://google-cartographer-ros.readthedocs.io
 
 Getting started without ROS
-===========================
+---------------------------
+
+Please see our ROS integration as a starting point for integrating your system
+with the standalone library. Currently, it is the best available reference.
 
 On Ubuntu 14.04 (Trusty):
 
@@ -56,6 +65,17 @@ On Ubuntu 14.04 (Trusty):
   :language: bash
   :linenos:
   :lines: 20-
+
+System Requirements
+===================
+
+Although Cartographer may run on other systems, it is confirmed to be working
+on systems that meet the following requirements:
+
+* 64-bit, modern CPU (e.g. 3rd generation i7)
+* 16 GB RAM
+* Ubuntu 14.04 (Trusty)
+* gcc version 4.8.4
 
 How to cite us
 ==============

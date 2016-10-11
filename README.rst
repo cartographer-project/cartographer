@@ -30,13 +30,14 @@ configurations.
 .. _Cartographer: https://github.com/googlecartographer/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
-Documentation
-=============
+Getting started
+===============
 
-You will find complete documentation for using Cartographer at `our Read the
-Docs site`_.
+* Learn to use Cartographer at `our Read the Docs site`_.
+* Please join the `mailing list`_ and ask questions.
 
 .. _our Read the Docs site: https://google-cartographer.readthedocs.io
+.. _mailing list: https://groups.google.com/forum/#!forum/google-cartographer
 
 Contributing
 ============
@@ -50,12 +51,10 @@ page`_.
     :alt: Build Status
     :scale: 100%
     :target: https://travis-ci.org/googlecartographer/cartographer
-
 .. |docs| image:: https://readthedocs.org/projects/google-cartographer/badge/?version=latest
     :alt: Documentation Status
     :scale: 100%
     :target: https://google-cartographer.readthedocs.io/en/latest/?badge=latest
-
 .. |video| image:: https://j.gifs.com/wp3BJM.gif
     :alt: Cartographer 3D SLAM Demo
     :scale: 100%
