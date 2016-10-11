@@ -29,8 +29,8 @@ google_library(sensor_compressed_point_cloud
 )
 
 google_library(sensor_configuration
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     configuration.cc
   HDRS
@@ -57,8 +57,8 @@ google_library(sensor_laser
 )
 
 google_library(sensor_point_cloud
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     point_cloud.cc
   HDRS
@@ -70,7 +70,7 @@ google_library(sensor_point_cloud
 )
 
 google_library(sensor_sensor_packet_period_histogram_builder
-  USES_CERES
+  USES_GLOG
   SRCS
     sensor_packet_period_histogram_builder.cc
   HDRS

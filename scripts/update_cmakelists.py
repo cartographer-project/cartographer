@@ -93,11 +93,12 @@ def ExtractUses(source):
       uses.add("USES_EIGEN")
     if re.match(r"^#include <lua.hpp>", line):
       uses.add("USES_LUA")
-    if re.match(r'^#include "(ceres|glog)/', line):
-      # We abuse Ceres CFLAGS for other Google libraries that we all depend on.
-      # The alternative is to ship and maintain our own Find*.cmake files which
-      # is not appealing.
+    if re.match(r'^#include "ceres/', line):
       uses.add("USES_CERES")
+    if re.match(r'^#include "glog/', line):
+      uses.add("USES_GLOG")
+    if re.match(r'^#include "gflags/', line):
+      uses.add("USES_GFLAGS")
     if re.match(r"^#include <boost/", line):
       uses.add("USES_BOOST")
     if re.match(r'^#include "webp/', line):
@@ -176,6 +177,16 @@ def main():
     for c in sorted(protos):
       name = module_name + "_" + path.basename(path.splitext(c)[0])
       AddTarget("google_proto_library", name, directory, [c], [])
+
+    mains = set(fn for fn in sources if fn.endswith("_main.cc"))
+    sources -= mains
+    for c in sorted(mains):
+      # Binaries do not get their full subpath appended, but we prepend
+      # 'cartographer' to distinguish them after installation. So,
+      # 'io/asset_writer_main.cc' will generate a binary called
+      # 'cartographer_asset_writer'.
+      name = 'cartographer_' + path.basename(path.splitext(c)[0][:-5])
+      AddTarget("google_binary", name, directory, [c], [])
 
     assert (not sources), "Remaining sources without target: %s" % sources
 
