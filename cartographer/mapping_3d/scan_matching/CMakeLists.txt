@@ -17,6 +17,7 @@ add_subdirectory("proto")
 google_library(mapping_3d_scan_matching_ceres_scan_matcher
   USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     ceres_scan_matcher.cc
   HDRS
@@ -38,8 +39,8 @@ google_library(mapping_3d_scan_matching_ceres_scan_matcher
 )
 
 google_library(mapping_3d_scan_matching_fast_correlative_scan_matcher
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     fast_correlative_scan_matcher.cc
   HDRS
@@ -78,8 +79,8 @@ google_library(mapping_3d_scan_matching_occupied_space_cost_functor
 )
 
 google_library(mapping_3d_scan_matching_precomputation_grid
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     precomputation_grid.cc
   HDRS
@@ -91,8 +92,8 @@ google_library(mapping_3d_scan_matching_precomputation_grid
 )
 
 google_library(mapping_3d_scan_matching_real_time_correlative_scan_matcher
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     real_time_correlative_scan_matcher.cc
   HDRS

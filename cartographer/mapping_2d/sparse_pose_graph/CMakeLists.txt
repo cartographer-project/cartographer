@@ -13,8 +13,8 @@
 # limitations under the License.
 
 google_library(mapping_2d_sparse_pose_graph_constraint_builder
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     constraint_builder.cc
   HDRS
@@ -45,6 +45,7 @@ google_library(mapping_2d_sparse_pose_graph_constraint_builder
 google_library(mapping_2d_sparse_pose_graph_optimization_problem
   USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     optimization_problem.cc
   HDRS

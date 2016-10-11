@@ -22,6 +22,8 @@ macro(_parse_arguments ARGS)
     USES_LUA
     USES_BOOST
     USES_WEBP
+    USES_GLOG
+    USES_GFLAGS
   )
   set(ONE_VALUE_ARG )
   set(MULTI_VALUE_ARGS SRCS HDRS DEPENDS)
@@ -60,6 +62,15 @@ macro(_common_compile_stuff VISIBILITY)
 
   if(ARG_USES_WEBP)
     target_link_libraries("${NAME}" webp)
+  endif()
+
+  # We rely on Ceres to find glog and gflags for us.
+  if(ARG_USES_GLOG)
+    target_link_libraries("${NAME}" glog)
+  endif()
+
+  if(ARG_USES_GFLAGS)
+    target_link_libraries("${NAME}" gflags)
   endif()
 
   # Add the binary directory first, so that port.h is included after it has
@@ -184,6 +195,18 @@ function(google_test NAME)
   target_link_libraries("${NAME}" gmock_main)
 
   add_test(${NAME} ${NAME})
+endfunction()
+
+function(google_binary NAME)
+  _parse_arguments("${ARGN}")
+
+  add_executable(${NAME}
+    ${ARG_SRCS} ${ARG_HDRS}
+  )
+
+  _common_compile_stuff("PRIVATE")
+
+  install(TARGETS "${NAME}" RUNTIME DESTINATION bin)
 endfunction()
 
 function(google_library NAME)

@@ -19,7 +19,7 @@ configure_file (
   ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 google_library(common_blocking_queue
-  USES_CERES
+  USES_GLOG
   HDRS
     blocking_queue.h
   DEPENDS
@@ -45,7 +45,7 @@ google_library(common_config
 )
 
 google_library(common_configuration_file_resolver
-  USES_CERES
+  USES_GLOG
   SRCS
     configuration_file_resolver.cc
   HDRS
@@ -66,7 +66,7 @@ google_library(common_fixed_ratio_sampler
 )
 
 google_library(common_histogram
-  USES_CERES
+  USES_GLOG
   SRCS
     histogram.cc
   HDRS
@@ -82,7 +82,7 @@ google_library(common_lua
 )
 
 google_library(common_lua_parameter_dictionary
-  USES_CERES
+  USES_GLOG
   SRCS
     lua_parameter_dictionary.cc
   HDRS
@@ -93,7 +93,7 @@ google_library(common_lua_parameter_dictionary
 )
 
 google_library(common_lua_parameter_dictionary_test_helpers
-  USES_CERES
+  USES_GLOG
   HDRS
     lua_parameter_dictionary_test_helpers.h
   DEPENDS
@@ -148,7 +148,7 @@ google_library(common_rate_timer
 )
 
 google_library(common_thread_pool
-  USES_CERES
+  USES_GLOG
   SRCS
     thread_pool.cc
   HDRS

@@ -46,8 +46,8 @@ google_library(mapping_3d_global_trajectory_builder
 )
 
 google_library(mapping_3d_hybrid_grid
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   HDRS
     hybrid_grid.h
   DEPENDS
@@ -58,8 +58,8 @@ google_library(mapping_3d_hybrid_grid
 )
 
 google_library(mapping_3d_imu_integration
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     imu_integration.cc
   HDRS
@@ -70,7 +70,7 @@ google_library(mapping_3d_imu_integration
 )
 
 google_library(mapping_3d_kalman_local_trajectory_builder
-  USES_CERES
+  USES_GLOG
   SRCS
     kalman_local_trajectory_builder.cc
   HDRS
@@ -107,8 +107,8 @@ google_library(mapping_3d_kalman_local_trajectory_builder_options
 )
 
 google_library(mapping_3d_laser_fan_inserter
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     laser_fan_inserter.cc
   HDRS
@@ -146,7 +146,7 @@ google_library(mapping_3d_local_trajectory_builder_interface
 )
 
 google_library(mapping_3d_local_trajectory_builder_options
-  USES_CERES
+  USES_GLOG
   SRCS
     local_trajectory_builder_options.cc
   HDRS
@@ -163,7 +163,7 @@ google_library(mapping_3d_local_trajectory_builder_options
 )
 
 google_library(mapping_3d_motion_filter
-  USES_CERES
+  USES_GLOG
   SRCS
     motion_filter.cc
   HDRS
@@ -177,7 +177,7 @@ google_library(mapping_3d_motion_filter
 )
 
 google_library(mapping_3d_optimizing_local_trajectory_builder
-  USES_CERES
+  USES_GLOG
   SRCS
     optimizing_local_trajectory_builder.cc
   HDRS
@@ -223,8 +223,8 @@ google_library(mapping_3d_rotation_cost_function
 )
 
 google_library(mapping_3d_sparse_pose_graph
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     sparse_pose_graph.cc
   HDRS
@@ -251,8 +251,8 @@ google_library(mapping_3d_sparse_pose_graph
 )
 
 google_library(mapping_3d_submaps
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     submaps.cc
   HDRS
@@ -285,8 +285,8 @@ google_test(mapping_3d_hybrid_grid_test
 )
 
 google_test(mapping_3d_kalman_local_trajectory_builder_test
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     kalman_local_trajectory_builder_test.cc
   DEPENDS
