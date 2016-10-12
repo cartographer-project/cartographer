@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_KALMAN_FILTER_ODOMETRY_STATE_TRACKER_H_
-#define CARTOGRAPHER_KALMAN_FILTER_ODOMETRY_STATE_TRACKER_H_
+#ifndef CARTOGRAPHER_MAPPING_ODOMETRY_STATE_TRACKER_H_
+#define CARTOGRAPHER_MAPPING_ODOMETRY_STATE_TRACKER_H_
 
 #include <deque>
 
@@ -23,7 +23,7 @@
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
-namespace kalman_filter {
+namespace mapping {
 
 struct OdometryState {
   OdometryState(common::Time time, const transform::Rigid3d& odometer_pose,
@@ -52,7 +52,7 @@ class OdometryStateTracker {
   // Returns true if no elements are present in the odometry queue.
   bool empty() const;
 
-  // Retrieves the most recent OdometryState or an empty one if non yet present.
+  // Retrieves the most recent OdometryState. Must not be called when empty.
   const OdometryState& newest() const;
 
  private:
@@ -60,7 +60,7 @@ class OdometryStateTracker {
   size_t window_size_;
 };
 
-}  // namespace kalman_filter
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_KALMAN_FILTER_ODOMETRY_STATE_TRACKER_H_
+#endif  // CARTOGRAPHER_MAPPING_ODOMETRY_STATE_TRACKER_H_

@@ -123,56 +123,6 @@ PoseTracker::State ModelFunction2D(const PoseTracker::State& state,
 
 }  // namespace
 
-ImuTracker::ImuTracker(const proto::PoseTrackerOptions& options,
-                       const common::Time time)
-    : options_(options),
-      time_(time),
-      last_linear_acceleration_time_(common::Time::min()),
-      orientation_(Eigen::Quaterniond::Identity()),
-      gravity_direction_(Eigen::Vector3d::UnitZ()),
-      imu_angular_velocity_(Eigen::Vector3d::Zero()) {}
-
-void ImuTracker::Predict(const common::Time time) {
-  CHECK_LE(time_, time);
-  const double delta_t = common::ToSeconds(time - time_);
-  const Eigen::Quaterniond rotation =
-      transform::AngleAxisVectorToRotationQuaternion(
-          Eigen::Vector3d(imu_angular_velocity_ * delta_t));
-  orientation_ = (orientation_ * rotation).normalized();
-  gravity_direction_ = rotation.inverse() * gravity_direction_;
-  time_ = time;
-}
-
-void ImuTracker::AddImuLinearAccelerationObservation(
-    const common::Time time, const Eigen::Vector3d& imu_linear_acceleration) {
-  Predict(time);
-  // Update the 'gravity_direction_' with an exponential moving average using
-  // the 'imu_gravity_time_constant'.
-  const double delta_t =
-      last_linear_acceleration_time_ > common::Time::min()
-          ? common::ToSeconds(time - last_linear_acceleration_time_)
-          : std::numeric_limits<double>::infinity();
-  last_linear_acceleration_time_ = time;
-  const double alpha =
-      1. - std::exp(-delta_t / options_.imu_gravity_time_constant());
-  gravity_direction_ =
-      (1. - alpha) * gravity_direction_ + alpha * imu_linear_acceleration;
-  // Change the 'orientation_' so that it agrees with the current
-  // 'gravity_direction_'.
-  const Eigen::Quaterniond rotation = Eigen::Quaterniond::FromTwoVectors(
-      gravity_direction_, orientation_.inverse() * Eigen::Vector3d::UnitZ());
-  orientation_ = (orientation_ * rotation).normalized();
-  CHECK_GT((orientation_.inverse() * Eigen::Vector3d::UnitZ())
-               .dot(gravity_direction_),
-           0.);
-}
-
-void ImuTracker::AddImuAngularVelocityObservation(
-    const common::Time time, const Eigen::Vector3d& imu_angular_velocity) {
-  Predict(time);
-  imu_angular_velocity_ = imu_angular_velocity;
-}
-
 PoseAndCovariance operator*(const transform::Rigid3d& transform,
                             const PoseAndCovariance& pose_and_covariance) {
   GaussianDistribution<double, 6> distribution(
@@ -219,7 +169,7 @@ PoseTracker::PoseTracker(const proto::PoseTrackerOptions& options,
       model_function_(model_function),
       time_(time),
       kalman_filter_(KalmanFilterInit(), AddDelta, ComputeDelta),
-      imu_tracker_(options, time),
+      imu_tracker_(options.imu_gravity_time_constant(), time),
       odometry_state_tracker_(options.num_odometry_states()) {}
 
 PoseTracker::~PoseTracker() {}
@@ -270,7 +220,7 @@ const PoseTracker::Distribution PoseTracker::BuildModelNoise(
 }
 
 void PoseTracker::Predict(const common::Time time) {
-  imu_tracker_.Predict(time);
+  imu_tracker_.Advance(time);
   CHECK_LE(time_, time);
   const double delta_t = common::ToSeconds(time - time_);
   if (delta_t == 0.) {
@@ -293,14 +243,15 @@ void PoseTracker::Predict(const common::Time time) {
 
 void PoseTracker::AddImuLinearAccelerationObservation(
     const common::Time time, const Eigen::Vector3d& imu_linear_acceleration) {
-  imu_tracker_.AddImuLinearAccelerationObservation(time,
-                                                   imu_linear_acceleration);
+  imu_tracker_.Advance(time);
+  imu_tracker_.AddImuLinearAccelerationObservation(imu_linear_acceleration);
   Predict(time);
 }
 
 void PoseTracker::AddImuAngularVelocityObservation(
     const common::Time time, const Eigen::Vector3d& imu_angular_velocity) {
-  imu_tracker_.AddImuAngularVelocityObservation(time, imu_angular_velocity);
+  imu_tracker_.Advance(time);
+  imu_tracker_.AddImuAngularVelocityObservation(imu_angular_velocity);
   Predict(time);
 }
 
@@ -349,8 +300,8 @@ void PoseTracker::AddOdometerPoseObservation(
       {time, odometer_pose, RigidFromState(belief.GetMean())});
 }
 
-const OdometryStateTracker::OdometryStates& PoseTracker::odometry_states()
-    const {
+const mapping::OdometryStateTracker::OdometryStates&
+PoseTracker::odometry_states() const {
   return odometry_state_tracker_.odometry_states();
 }
 
