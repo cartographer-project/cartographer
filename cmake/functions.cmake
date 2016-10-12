@@ -16,22 +16,23 @@ include(CMakeParseArguments)
 
 macro(_parse_arguments ARGS)
   set(OPTIONS
+    USES_BOOST
     USES_CERES
     USES_EIGEN
+    USES_GFLAGS
+    USES_GLOG
     USES_GLOG
     USES_LUA
-    USES_BOOST
     USES_WEBP
-    USES_GLOG
-    USES_GFLAGS
   )
 
   # Options only used by projects using Cartographers cmake files.
   list(APPEND OPTIONS
     USES_CARTOGRAPHER
-    USES_ROS
-    USES_ZLIB
     USES_PCL
+    USES_ROS
+    USES_YAMLCPP
+    USES_ZLIB
   )
   set(ONE_VALUE_ARG )
   set(MULTI_VALUE_ARGS SRCS HDRS DEPENDS)
@@ -108,6 +109,10 @@ macro(_common_compile_stuff VISIBILITY)
     endforeach()
   endif()
 
+  if(ARG_USES_YAMLCPP)
+    target_link_libraries("${NAME}" yaml-cpp)
+  endif()
+
   set_target_properties(${NAME} PROPERTIES
     COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
@@ -163,17 +168,6 @@ function(google_combined_library NAME)
     OUTPUT  ${DUMMY_SOURCE}
     COMMAND cmake -E touch ${DUMMY_SOURCE}
     DEPENDS ${ARG_SRCS}
-  )
-
-  add_custom_command(
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.pb.cc"
-           "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.pb.h"
-    COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-    ARGS --cpp_out  ${CMAKE_BINARY_DIR} -I
-      ${CMAKE_BINARY_DIR} ${REWRITTEN_PROTO}
-    DEPENDS ${REWRITTEN_PROTO}
-    COMMENT "Running C++ protocol buffer compiler on ${FIL}"
-    VERBATIM
   )
 
   # Just a dummy library, we will overwrite its output directly after again
@@ -273,6 +267,7 @@ function(google_library NAME)
     STATIC
     ${ARG_SRCS} ${ARG_HDRS}
   )
+  set_property(TARGET "${NAME}" PROPERTY POSITION_INDEPENDENT_CODE ON)
 
   # Update the global variable that contains all static libraries.
   SET(ALL_LIBRARIES "${ALL_LIBRARIES};${NAME}" CACHE INTERNAL "ALL_LIBRARIES")
