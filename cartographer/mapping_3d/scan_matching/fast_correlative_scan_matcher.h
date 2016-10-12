@@ -45,7 +45,7 @@ class PrecomputationGridStack;
 struct DiscreteScan {
   transform::Rigid3f pose;
   // Contains a vector of discretized scans for each 'depth'.
-  std::vector<std::vector<Eigen::Array3i>> cell_indices_per_depth;
+  std::vector<std::vector<Eigen::Array3i, Eigen::aligned_allocator<Eigen::Array3i>>> cell_indices_per_depth;
 };
 
 struct Candidate {

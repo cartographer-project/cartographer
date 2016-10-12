@@ -118,7 +118,7 @@ class Submaps : public mapping::Submaps {
   // The first three entries of this is are a cell_index and the last is the
   // corresponding probability value. We batch them together like this to only
   // have one vector and have better cache locality.
-  std::vector<Eigen::Array4i> voxel_indices_and_probabilities_;
+  std::vector<Eigen::Array4i, Eigen::aligned_allocator<Eigen::Array4i>> voxel_indices_and_probabilities_;
 };
 
 }  // namespace mapping_3d

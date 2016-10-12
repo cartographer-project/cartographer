@@ -143,9 +143,9 @@ bool FastCorrelativeScanMatcher::Match(
 DiscreteScan FastCorrelativeScanMatcher::DiscretizeScan(
     const sensor::PointCloud& point_cloud,
     const transform::Rigid3f& pose) const {
-  std::vector<std::vector<Eigen::Array3i>> cell_indices_per_depth;
+  std::vector<std::vector<Eigen::Array3i, Eigen::aligned_allocator<Eigen::Array3i>>> cell_indices_per_depth;
   const PrecomputationGrid& original_grid = precomputation_grid_stack_->Get(0);
-  std::vector<Eigen::Array3i> full_resolution_cell_indices;
+  std::vector<Eigen::Array3i, Eigen::aligned_allocator<Eigen::Array3i>> full_resolution_cell_indices;
   for (const Eigen::Vector3f& point :
        sensor::TransformPointCloud(point_cloud, pose)) {
     full_resolution_cell_indices.push_back(original_grid.GetCellIndex(point));

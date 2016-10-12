@@ -29,7 +29,7 @@ namespace cartographer {
 namespace mapping_2d {
 namespace scan_matching {
 
-typedef std::vector<Eigen::Array2i> DiscreteScan;
+typedef std::vector<Eigen::Array2i, Eigen::aligned_allocator<Eigen::Array2i>> DiscreteScan;
 
 // Describes the search space.
 struct SearchParameters {
