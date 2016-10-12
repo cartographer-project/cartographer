@@ -66,6 +66,8 @@ On Ubuntu 14.04 (Trusty):
   :linenos:
   :lines: 20-
 
+.. _system-requirements:
+
 System Requirements
 ===================
 
@@ -76,6 +78,12 @@ on systems that meet the following requirements:
 * 16 GB RAM
 * Ubuntu 14.04 (Trusty)
 * gcc version 4.8.4
+
+Known Issues
+------------
+
+* 32-bit builds have libeigen alignment problems which cause crashes and/or
+  memory corruptions.
 
 How to cite us
 ==============
