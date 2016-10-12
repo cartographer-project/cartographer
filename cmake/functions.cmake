@@ -25,6 +25,14 @@ macro(_parse_arguments ARGS)
     USES_GLOG
     USES_GFLAGS
   )
+
+  # Options only used by projects using Cartographers cmake files.
+  list(APPEND OPTIONS
+    USES_CARTOGRAPHER
+    USES_ROS
+    USES_ZLIB
+    USES_PCL
+  )
   set(ONE_VALUE_ARG )
   set(MULTI_VALUE_ARGS SRCS HDRS DEPENDS)
   cmake_parse_arguments(ARG
@@ -33,31 +41,29 @@ endmacro(_parse_arguments)
 
 macro(_common_compile_stuff VISIBILITY)
   set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
-  set_target_properties(${NAME} PROPERTIES
-    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
   if(ARG_USES_EIGEN)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${EIGEN3_INCLUDE_DIR}")
-    target_link_libraries("${NAME}" "${EIGEN3_LIBRARIES}")
+    target_link_libraries("${NAME}" ${EIGEN3_LIBRARIES})
   endif()
 
   if(ARG_USES_CERES)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${CERES_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" "${CERES_LIBRARIES}")
+    target_link_libraries("${NAME}" ${CERES_LIBRARIES})
   endif()
 
   if(ARG_USES_LUA)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${LUA_INCLUDE_DIR}")
-    target_link_libraries("${NAME}" "${LUA_LIBRARIES}")
+    target_link_libraries("${NAME}" ${LUA_LIBRARIES})
   endif()
 
   if(ARG_USES_BOOST)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "{Boost_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" "${Boost_LIBRARIES}")
+    target_link_libraries("${NAME}" ${Boost_LIBRARIES})
   endif()
 
   if(ARG_USES_WEBP)
@@ -72,6 +78,38 @@ macro(_common_compile_stuff VISIBILITY)
   if(ARG_USES_GFLAGS)
     target_link_libraries("${NAME}" gflags)
   endif()
+
+  if(ARG_USES_ROS)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${catkin_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${catkin_LIBRARIES})
+    add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
+  )
+  endif()
+
+  if(ARG_USES_ZLIB)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${ZLIB_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${ZLIB_LIBRARIES})
+  endif()
+
+  if(ARG_USES_CARTOGRAPHER)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${CARTOGRAPHER_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${CARTOGRAPHER_LIBRARIES})
+  endif()
+
+  if(ARG_USES_PCL)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${PCL_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${PCL_LIBRARIES})
+    foreach(DEFINITION ${PCL_DEFINITIONS})
+      set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${DEFINITION}")
+    endforeach()
+  endif()
+
+  set_target_properties(${NAME} PROPERTIES
+    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
   # Add the binary directory first, so that port.h is included after it has
   # been generated.
@@ -265,5 +303,38 @@ function(google_proto_library NAME)
     "${PROTOBUF_INCLUDE_DIR}")
   # TODO(hrapp): This should not explicityly list pthread and use
   # PROTOBUF_LIBRARIES, but that failed on first try.
-  target_link_libraries("${NAME}" "${PROTOBUF_LIBRARY}" pthread)
+  target_link_libraries("${NAME}" ${PROTOBUF_LIBRARY} pthread)
 endfunction()
+
+macro(google_initialize_cartographer_project)
+  SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+  set(GOOG_CXX_FLAGS "-pthread -std=c++11 ${GOOG_CXX_FLAGS}")
+
+  google_add_flag(GOOG_CXX_FLAGS "-Wall")
+  google_add_flag(GOOG_CXX_FLAGS "-Wpedantic")
+
+  # Turn some warnings into errors.
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=format-security")
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=reorder")
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=return-type")
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=uninitialized")
+
+  if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
+    set(CMAKE_BUILD_TYPE Release)
+  endif()
+
+  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    google_add_flag(GOOG_CXX_FLAGS "-O3 -DNDEBUG")
+  elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    google_add_flag(GOOG_CXX_FLAGS "-O3 -g -DNDEBUG")
+  elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(FATAL_ERROR "Compiling in debug mode is not supported.")
+  else()
+    message(FATAL_ERROR "Unknown CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+  endif()
+
+  message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+  set(GMOCK_SRC_DIR "/usr/src/gmock" CACHE STRING "Path to google-mock sources.")
+  add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
+endmacro()

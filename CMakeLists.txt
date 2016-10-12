@@ -22,23 +22,7 @@ set(CARTOGRAPHER_VERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERS
 set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION})
 
 include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
-
-if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-  google_add_flag(GOOG_CXX_FLAGS "-O3 -DNDEBUG")
-elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-  google_add_flag(GOOG_CXX_FLAGS "-O3 -g -DNDEBUG")
-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  message(FATAL_ERROR "Cartographer is too slow to be useful in debug mode.")
-else()
-  message(FATAL_ERROR "Unknown CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-endif()
-
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+google_initialize_cartographer_project()
 
 find_package(Boost REQUIRED COMPONENTS system iostreams)
 find_package(Ceres REQUIRED)
@@ -52,26 +36,6 @@ if(SPHINX_FOUND)
   add_subdirectory("docs")
 endif()
 
-set(GMOCK_SRC_DIR "/usr/src/gmock" CACHE STRING "Path to google-mock sources.")
-
-add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
-
-google_add_flag(GOOG_CXX_FLAGS "-std=c++11")
-
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  google_add_flag(GOOG_CXX_FLAGS "-Weverything")
-  google_add_flag(GOOG_CXX_FLAGS "-Werror=deprecated")
-  google_add_flag(GOOG_CXX_FLAGS "-Werror=non-pod-varargs")
-else()
-  google_add_flag(GOOG_CXX_FLAGS "-Wall")
-  google_add_flag(GOOG_CXX_FLAGS "-Wpedantic")
-endif()
-
-# Turn some warnings into errors. These are defined for clang and gcc.
-google_add_flag(GOOG_CXX_FLAGS "-Werror=format-security")
-google_add_flag(GOOG_CXX_FLAGS "-Werror=return-type")
-google_add_flag(GOOG_CXX_FLAGS "-Werror=uninitialized")
-
 enable_testing()
 
 SET(ALL_LIBRARIES "" CACHE INTERNAL "ALL_LIBRARIES")
@@ -81,6 +45,8 @@ install(FILES package.xml DESTINATION share/cartographer)
 
 set(CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY "${CMAKE_INSTALL_PREFIX}/share/cartographer/configuration_files")
 install(DIRECTORY configuration_files DESTINATION share/cartographer/)
+
+install(DIRECTORY cmake DESTINATION share/cartographer/)
 
 add_subdirectory("cartographer")
 
@@ -96,11 +62,15 @@ list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${LUA_INCLUDE_DIR}")
 list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${CERES_INCLUDE_DIRS}")
 list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${PROTOBUF_INCLUDE_DIR}")
 
+set(CARTOGRAPHER_CMAKE_DIR "${CMAKE_INSTALL_PREFIX}/share/cartographer/cmake")
+
 google_combined_library(cartographer
   SRCS "${ALL_LIBRARIES}"
 )
 
 get_property(CARTOGRAPHER_LIBRARY_FILE TARGET cartographer PROPERTY LOCATION)
+get_filename_component(CARTOGRAPHER_LIBRARY_FILE_BASENAME 
+  ${CARTOGRAPHER_LIBRARY_FILE} NAME)
 install(
   FILES
     ${CARTOGRAPHER_LIBRARY_FILE}
@@ -109,7 +79,7 @@ install(
 )
 
 set(CARTOGRAPHER_LIBRARIES "")
-list(APPEND CARTOGRAPHER_LIBRARIES "cartographer")
+list(APPEND CARTOGRAPHER_LIBRARIES "${CMAKE_INSTALL_PREFIX}/lib/${CARTOGRAPHER_LIBRARY_FILE_BASENAME}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${CERES_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${Boost_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${LUA_LIBRARIES}")
@@ -119,7 +89,7 @@ list(APPEND CARTOGRAPHER_LIBRARIES "webp")
 CONFIGURE_PACKAGE_CONFIG_FILE(
   cartographer-config.cmake.in
   "${CMAKE_BINARY_DIR}/cmake/cartographer/cartographer-config.cmake"
-  PATH_VARS CARTOGRAPHER_INCLUDE_DIRS CARTOGRAPHER_LIBRARY_DIRS
+  PATH_VARS CARTOGRAPHER_INCLUDE_DIRS CARTOGRAPHER_LIBRARY_DIRS CARTOGRAPHER_CMAKE_DIR
   INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}/share/cartographer
 )
 
