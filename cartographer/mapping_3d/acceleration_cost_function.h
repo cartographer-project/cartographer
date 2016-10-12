@@ -74,6 +74,8 @@ class AccelerationCostFunction {
   const Eigen::Vector3d delta_velocity_imu_frame_;
   const double first_delta_time_seconds_;
   const double second_delta_time_seconds_;
+ public:
+   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 }  // namespace mapping_3d

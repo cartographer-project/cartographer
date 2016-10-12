@@ -45,6 +45,7 @@ class SparsePoseGraph {
     struct Pose {
       transform::Rigid2d zbar_ij;
       Eigen::Matrix<double, 3, 3> sqrt_Lambda_ij;
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };
 
     // Submap index.
@@ -66,6 +67,7 @@ class SparsePoseGraph {
     struct Pose {
       transform::Rigid3d zbar_ij;
       Eigen::Matrix<double, 6, 6> sqrt_Lambda_ij;
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };
 
     // Submap index.

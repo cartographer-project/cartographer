@@ -52,6 +52,8 @@ class RotationCostFunction {
  private:
   const double scaling_factor_;
   const Eigen::Quaterniond delta_rotation_imu_frame_;
+ public:
+   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 }  // namespace mapping_3d

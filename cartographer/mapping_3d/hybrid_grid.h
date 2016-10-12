@@ -459,6 +459,8 @@ class HybridGridBase : public Grid<ValueType> {
 
   // Position of the center of the octree.
   const Eigen::Vector3f origin_;
+ public:
+   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 // A grid containing probability values stored using 15 bits, and an update
