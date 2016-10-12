@@ -45,7 +45,7 @@ Contributing
 You can find information about contributing to Cartographer at `our Contribution
 page`_.
 
-.. _our Contribution page: https://github.com/googlecartographer/cartographer/blob/master/CONTRIBUTING.md
+.. _our Contribution page: CONTRIBUTING.md
 
 .. |build| image:: https://travis-ci.org/googlecartographer/cartographer.svg?branch=master
     :alt: Build Status
