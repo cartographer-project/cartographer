@@ -22,7 +22,7 @@ set(CARTOGRAPHER_VERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERS
 set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION})
 
 include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
-google_initialize_cartographer_project()
+google_initialize_cartographer_project(True)
 
 find_package(Boost REQUIRED COMPONENTS system iostreams)
 find_package(Ceres REQUIRED)
@@ -35,8 +35,6 @@ find_package(Sphinx)
 if(SPHINX_FOUND)
   add_subdirectory("docs")
 endif()
-
-enable_testing()
 
 SET(ALL_LIBRARIES "" CACHE INTERNAL "ALL_LIBRARIES")
 
