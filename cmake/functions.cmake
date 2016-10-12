@@ -218,20 +218,39 @@ function(google_add_flag VAR_NAME FLAG)
   endif()
 endfunction()
 
-function(google_test NAME)
-  _parse_arguments("${ARGN}")
-
+macro(_common_test_stuff)
   add_executable(${NAME}
     ${ARG_SRCS} ${ARG_HDRS}
   )
-
   _common_compile_stuff("PRIVATE")
 
   # Make sure that gmock always includes the correct gtest/gtest.h.
   target_include_directories("${NAME}" SYSTEM PRIVATE
     "${GMOCK_SRC_DIR}/gtest/include")
   target_link_libraries("${NAME}" gmock_main)
+endmacro()
 
+function(google_catkin_test NAME)
+  if(NOT "${CATKIN_ENABLE_TESTING}")
+    return()
+  endif()
+
+  _parse_arguments("${ARGN}")
+  _common_test_stuff()
+
+  # Copied from the catkin sources. Tracked in ros/catkin:#830.
+  add_dependencies(tests ${NAME})
+  get_target_property(_target_path ${NAME} RUNTIME_OUTPUT_DIRECTORY)
+  set(cmd "${_target_path}/${NAME} --gtest_output=xml:${CATKIN_TEST_RESULTS_DIR}/${PROJECT_NAME}/gtest-${NAME}.xml")
+  catkin_run_tests_target("gtest" ${NAME} "gtest-${NAME}.xml"
+    COMMAND ${cmd}
+    DEPENDENCIES ${NAME}
+    WORKING_DIRECTORY ${ARG_WORKING_DIRECTORY})
+endfunction()
+
+function(google_test NAME)
+  _parse_arguments("${ARGN}")
+  _common_test_stuff()
   add_test(${NAME} ${NAME})
 endfunction()
 
@@ -335,6 +354,10 @@ macro(google_initialize_cartographer_project)
 
   message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+endmacro()
+
+macro(google_enable_testing)
   set(GMOCK_SRC_DIR "/usr/src/gmock" CACHE STRING "Path to google-mock sources.")
   add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
+  enable_testing()
 endmacro()
