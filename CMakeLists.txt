@@ -22,7 +22,8 @@ set(CARTOGRAPHER_VERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERS
 set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION})
 
 include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
-google_initialize_cartographer_project(True)
+google_initialize_cartographer_project()
+google_enable_testing()
 
 find_package(Boost REQUIRED COMPONENTS system iostreams)
 find_package(Ceres REQUIRED)

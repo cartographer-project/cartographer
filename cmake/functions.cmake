@@ -325,7 +325,7 @@ function(google_proto_library NAME)
   target_link_libraries("${NAME}" ${PROTOBUF_LIBRARY} pthread)
 endfunction()
 
-macro(google_initialize_cartographer_project ENABLE_TESTING)
+macro(google_initialize_cartographer_project)
   SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
   set(GOOG_CXX_FLAGS "-pthread -std=c++11 ${GOOG_CXX_FLAGS}")
 
@@ -354,9 +354,10 @@ macro(google_initialize_cartographer_project ENABLE_TESTING)
 
   message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-  if (${ENABLE_TESTING})
-    set(GMOCK_SRC_DIR "/usr/src/gmock" CACHE STRING "Path to google-mock sources.")
-    add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
-    enable_testing()
-  endif()
+endmacro()
+
+macro(google_enable_testing)
+  set(GMOCK_SRC_DIR "/usr/src/gmock" CACHE STRING "Path to google-mock sources.")
+  add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
+  enable_testing()
 endmacro()
