@@ -72,8 +72,8 @@ class SparsePoseGraphTest : public ::testing::Test {
               sampling_ratio = 1.,
               max_constraint_distance = 6.,
               adaptive_voxel_filter = {
-                max_length = 1e-5,
-                min_num_points = 1,
+                max_length = 1e-2,
+                min_num_points = 1000,
                 max_range = 50.,
               },
               min_score = 0.5,

@@ -25,11 +25,10 @@ namespace sensor {
 
 namespace {
 
-template <typename PointCloudType>
-PointCloudType FilterByMaxRange(const PointCloudType& point_cloud,
-                                const float max_range) {
-  PointCloudType result;
-  for (const auto& point : point_cloud) {
+PointCloud FilterByMaxRange(const PointCloud& point_cloud,
+                            const float max_range) {
+  PointCloud result;
+  for (const Eigen::Vector3f& point : point_cloud) {
     if (point.norm() <= max_range) {
       result.push_back(point);
     }
@@ -37,15 +36,14 @@ PointCloudType FilterByMaxRange(const PointCloudType& point_cloud,
   return result;
 }
 
-template <typename PointCloudType>
-PointCloudType AdaptivelyVoxelFiltered(
+PointCloud AdaptivelyVoxelFiltered(
     const proto::AdaptiveVoxelFilterOptions& options,
-    const PointCloudType& point_cloud) {
+    const PointCloud& point_cloud) {
   if (point_cloud.size() <= options.min_num_points()) {
     // 'point_cloud' is already sparse enough.
     return point_cloud;
   }
-  PointCloudType result = VoxelFiltered(point_cloud, options.max_length());
+  PointCloud result = VoxelFiltered(point_cloud, options.max_length());
   if (result.size() >= options.min_num_points()) {
     // Filtering with 'max_length' resulted in a sufficiently dense point cloud.
     return result;
@@ -63,7 +61,7 @@ PointCloudType AdaptivelyVoxelFiltered(
       // edge length is at most 10% off.
       while ((high_length - low_length) / low_length > 1e-1f) {
         const float mid_length = (low_length + high_length) / 2.f;
-        const PointCloudType candidate = VoxelFiltered(point_cloud, mid_length);
+        const PointCloud candidate = VoxelFiltered(point_cloud, mid_length);
         if (candidate.size() >= options.min_num_points()) {
           low_length = mid_length;
           result = candidate;
@@ -79,37 +77,16 @@ PointCloudType AdaptivelyVoxelFiltered(
 
 }  // namespace
 
-PointCloud2D VoxelFiltered(const PointCloud2D& point_cloud, const float size) {
+PointCloud VoxelFiltered(const PointCloud& point_cloud, const float size) {
   VoxelFilter voxel_filter(size);
   voxel_filter.InsertPointCloud(point_cloud);
   return voxel_filter.point_cloud();
 }
 
-PointCloud VoxelFiltered(const PointCloud& point_cloud, const float size) {
-  VoxelFilter3D voxel_filter(size);
-  voxel_filter.InsertPointCloud(point_cloud);
-  return voxel_filter.point_cloud();
-}
-
-VoxelFilter::VoxelFilter(const float size) : size_(size) {}
-
-void VoxelFilter::InsertPointCloud(const PointCloud2D& point_cloud) {
-  for (const Eigen::Vector2f& point : point_cloud) {
-    if (voxels_
-            .emplace(common::RoundToInt64(point.x() / size_),
-                     common::RoundToInt64(point.y() / size_))
-            .second) {
-      point_cloud_.push_back(point);
-    }
-  }
-}
-
-const PointCloud2D& VoxelFilter::point_cloud() const { return point_cloud_; }
-
-VoxelFilter3D::VoxelFilter3D(const float size)
+VoxelFilter::VoxelFilter(const float size)
     : voxels_(size, Eigen::Vector3f::Zero()) {}
 
-void VoxelFilter3D::InsertPointCloud(const PointCloud& point_cloud) {
+void VoxelFilter::InsertPointCloud(const PointCloud& point_cloud) {
   for (const Eigen::Vector3f& point : point_cloud) {
     auto* const value = voxels_.mutable_value(voxels_.GetCellIndex(point));
     if (*value == 0) {
@@ -119,7 +96,7 @@ void VoxelFilter3D::InsertPointCloud(const PointCloud& point_cloud) {
   }
 }
 
-const PointCloud& VoxelFilter3D::point_cloud() const { return point_cloud_; }
+const PointCloud& VoxelFilter::point_cloud() const { return point_cloud_; }
 
 proto::AdaptiveVoxelFilterOptions CreateAdaptiveVoxelFilterOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
@@ -134,12 +111,6 @@ proto::AdaptiveVoxelFilterOptions CreateAdaptiveVoxelFilterOptions(
 AdaptiveVoxelFilter::AdaptiveVoxelFilter(
     const proto::AdaptiveVoxelFilterOptions& options)
     : options_(options) {}
-
-PointCloud2D AdaptiveVoxelFilter::Filter(
-    const PointCloud2D& point_cloud) const {
-  return AdaptivelyVoxelFiltered(
-      options_, FilterByMaxRange(point_cloud, options_.max_range()));
-}
 
 PointCloud AdaptiveVoxelFilter::Filter(const PointCloud& point_cloud) const {
   return AdaptivelyVoxelFiltered(
