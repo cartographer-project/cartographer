@@ -16,10 +16,11 @@
 # limitations under the License.
 """A dumb CMakeLists.txt generator that relies on source name conventions."""
 
-import os
 from os import path
-import re
 import argparse
+import collections
+import os
+import re
 
 
 def MakeRelative(filename, directory):
@@ -70,7 +71,7 @@ class Target(object):
       lines.append("  DEPENDS")
       lines.extend("    " + s for s in sorted(self.depends))
     lines.append(")")
-    return "\n".join(lines)
+    return "\n".join(lines) + "\n\n"
 
 
 def ExtractProjectIncludes(project_name, source):
@@ -130,23 +131,41 @@ def FindSourceFiles(basedir):
     yield (directory, sources)
 
 
-def ReadFileWithoutGoogleTargets(filename):
+def GetNonGoogleTargetLines(filename):
+  """Returns text not written by this script.
+
+  Returns a dictionary where keys are target names and values are list of
+  lines that came after this target in the file. It also contains a special key
+  called 'START'
+  for lines that came before any target.
+  """
+  GOOGLE_TARGET = re.compile(r"^google_[a-z_]*\((.*)$")
+  parts = collections.defaultdict(list)
+  current_target = "START"
   if path.exists(filename):
     ignoring = False
     for line in open(filename):
-      if line.startswith("google_"):
+      m = GOOGLE_TARGET.match(line)
+      if m is not None:
+        current_target = m.group(1)
         ignoring = True
-      elif line == ")" and ignoring:
+        continue
+      if line == "\n" and ignoring:
         ignoring = False
-      elif not ignoring:
-        yield line.rstrip()
+        continue
+      if not ignoring:
+        parts[current_target].append(line)
+  return parts
 
 
 def ParseArgs():
   p = argparse.ArgumentParser(
       description="Automatically update cMakeFiles using build conventions.")
   p.add_argument("root", type=str, help="Source directory.")
-  return p.parse_args()
+
+  args = p.parse_args()
+  args.root = args.root.rstrip("/")
+  return args
 
 
 def main():
@@ -226,14 +245,30 @@ def main():
         target.type = "google_catkin_test"
 
     cmake_file = path.join(directory, "CMakeLists.txt")
-    lines = list(ReadFileWithoutGoogleTargets(cmake_file))
+    parts = GetNonGoogleTargetLines(cmake_file)
+
+    sorted_parts = []
+
+    def dump(lines_as_list):
+      lines = "".join(lines_as_list)
+      if not lines:
+        return
+      sorted_parts.append(lines)
+
+    dump(parts["START"])
+    del parts["START"]
+
+    for target in targets_in_directory:
+      dump(target.Format(directory))
+      if target.name in parts:
+        dump(parts[target.name])
+        del parts[target.name]
+
+    for target in sorted(parts.keys()):
+      dump(parts[target])
+
     with open(cmake_file, "w") as outfile:
-      if lines:
-        outfile.write("\n".join(lines))
-        outfile.write("\n")
-      outfile.write("\n\n".join(
-          t.Format(directory) for t in targets_in_directory))
-      outfile.write("\n")
+      outfile.write("".join(sorted_parts).rstrip() + "\n")
 
 
 if __name__ == "__main__":
