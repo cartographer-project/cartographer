@@ -71,8 +71,7 @@ class Target(object):
       lines.append("  DEPENDS")
       lines.extend("    " + s for s in sorted(self.depends))
     lines.append(")")
-    lines.append("")
-    return "".join(l + "\n" for l in lines)
+    return "\n".join(lines) + "\n\n"
 
 
 def ExtractProjectIncludes(project_name, source):
@@ -133,8 +132,9 @@ def FindSourceFiles(basedir):
 
 
 def GetNonGoogleTargetLines(filename):
-  """Returns a dictionary which keys are target names and values are list of
+  """Returns text not written by this script.
 
+  Returns a dictionary where keys are target names and values are list of
   lines that came after this target in the file. It also contains a special key
   called 'START'
   for lines that came before any target.
