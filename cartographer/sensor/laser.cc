@@ -113,12 +113,16 @@ LaserFan3D FilterLaserFanByMaxRange(const LaserFan3D& laser_fan,
   return result;
 }
 
-LaserFan ProjectCroppedLaserFan(const LaserFan3D& laser_fan,
-                                const Eigen::Vector3f& min,
-                                const Eigen::Vector3f& max) {
+LaserFan3D CropLaserFan(const LaserFan3D& laser_fan, const float min_z,
+                        const float max_z) {
+  return LaserFan3D{laser_fan.origin, Crop(laser_fan.returns, min_z, max_z),
+                    Crop(laser_fan.misses, min_z, max_z)};
+}
+
+LaserFan ProjectLaserFan(const LaserFan3D& laser_fan) {
   return LaserFan{laser_fan.origin.head<2>(),
-                  ProjectToPointCloud2D(Crop(laser_fan.returns, min, max)),
-                  ProjectToPointCloud2D(Crop(laser_fan.misses, min, max))};
+                  ProjectToPointCloud2D(laser_fan.returns),
+                  ProjectToPointCloud2D(laser_fan.misses)};
 }
 
 CompressedLaserFan3D Compress(const LaserFan3D& laser_fan) {

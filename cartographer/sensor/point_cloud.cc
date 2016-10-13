@@ -65,12 +65,11 @@ PointCloud2D ProjectToPointCloud2D(const PointCloud& point_cloud) {
   return point_cloud_2d;
 }
 
-PointCloud Crop(const PointCloud& point_cloud, const Eigen::Vector3f& min,
-                const Eigen::Vector3f& max) {
+PointCloud Crop(const PointCloud& point_cloud, const float min_z,
+                const float max_z) {
   PointCloud cropped_point_cloud;
   for (const auto& point : point_cloud) {
-    if (min.x() <= point.x() && point.x() <= max.x() && min.y() <= point.y() &&
-        point.y() <= max.y() && min.z() <= point.z() && point.z() <= max.z()) {
+    if (min_z <= point.z() && point.z() <= max_z) {
       cropped_point_cloud.push_back(point);
     }
   }

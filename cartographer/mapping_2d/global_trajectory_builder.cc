@@ -47,7 +47,7 @@ void GlobalTrajectoryBuilder::AddHorizontalLaserFan(
   if (insertion_result != nullptr) {
     sparse_pose_graph_->AddScan(
         insertion_result->time, insertion_result->tracking_to_tracking_2d,
-        insertion_result->laser_fan_in_tracking_2d,
+        sensor::ProjectLaserFan(insertion_result->laser_fan_in_tracking_2d),
         insertion_result->pose_estimate_2d,
         kalman_filter::Project2D(insertion_result->covariance_estimate),
         insertion_result->submaps, insertion_result->matching_submap,
