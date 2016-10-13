@@ -17,10 +17,6 @@
 #ifndef CARTOGRAPHER_SENSOR_VOXEL_FILTER_H_
 #define CARTOGRAPHER_SENSOR_VOXEL_FILTER_H_
 
-#include <tuple>
-#include <unordered_set>
-#include <utility>
-
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -28,10 +24,6 @@
 
 namespace cartographer {
 namespace sensor {
-
-// Returns a voxel filtered copy of 'point_cloud' where 'size' is the length
-// a voxel edge.
-PointCloud2D VoxelFiltered(const PointCloud2D& point_cloud, float size);
 
 // Returns a voxel filtered copy of 'point_cloud' where 'size' is the length
 // a voxel edge.
@@ -47,35 +39,6 @@ class VoxelFilter {
 
   VoxelFilter(const VoxelFilter&) = delete;
   VoxelFilter& operator=(const VoxelFilter&) = delete;
-
-  // Inserts a point cloud into the voxel filter.
-  void InsertPointCloud(const PointCloud2D& point_cloud);
-
-  // Returns the filtered point cloud representing the occupied voxels.
-  const PointCloud2D& point_cloud() const;
-
- private:
-  struct IntegerPairHash {
-    size_t operator()(const std::pair<int64, int64>& x) const {
-      const uint64 first = x.first;
-      const uint64 second = x.second;
-      return first ^ (first + 0x9e3779b9u + (second << 6) + (second >> 2));
-    }
-  };
-
-  const float size_;
-  std::unordered_set<std::pair<int64, int64>, IntegerPairHash> voxels_;
-  PointCloud2D point_cloud_;
-};
-
-// The same as VoxelFilter but for 3D PointClouds.
-class VoxelFilter3D {
- public:
-  // 'size' is the length of a voxel edge.
-  explicit VoxelFilter3D(float size);
-
-  VoxelFilter3D(const VoxelFilter3D&) = delete;
-  VoxelFilter3D& operator=(const VoxelFilter3D&) = delete;
 
   // Inserts a point cloud into the voxel filter.
   void InsertPointCloud(const PointCloud& point_cloud);
@@ -99,7 +62,6 @@ class AdaptiveVoxelFilter {
   AdaptiveVoxelFilter(const AdaptiveVoxelFilter&) = delete;
   AdaptiveVoxelFilter& operator=(const AdaptiveVoxelFilter&) = delete;
 
-  PointCloud2D Filter(const PointCloud2D& point_cloud) const;
   PointCloud Filter(const PointCloud& point_cloud) const;
 
  private:
