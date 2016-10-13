@@ -43,6 +43,15 @@ google_library(sensor_configuration
     transform_transform
 )
 
+google_library(sensor_data
+  HDRS
+    data.h
+  DEPENDS
+    kalman_filter_pose_tracker
+    sensor_laser
+    transform_rigid_transform
+)
+
 google_library(sensor_laser
   SRCS
     laser.cc
