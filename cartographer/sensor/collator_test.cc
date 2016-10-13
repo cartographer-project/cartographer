@@ -51,17 +51,17 @@ TEST(Collator, Ordering) {
       });
 
   collator.AddSensorData(0, 100, first.frame_id,
-                                common::make_unique<TestData>(first));
+                         common::make_unique<TestData>(first));
   collator.AddSensorData(0, 600, sixth.frame_id,
-                                common::make_unique<TestData>(sixth));
+                         common::make_unique<TestData>(sixth));
   collator.AddSensorData(0, 400, fourth.frame_id,
-                                common::make_unique<TestData>(fourth));
+                         common::make_unique<TestData>(fourth));
   collator.AddSensorData(0, 200, second.frame_id,
-                                common::make_unique<TestData>(second));
+                         common::make_unique<TestData>(second));
   collator.AddSensorData(0, 500, fifth.frame_id,
-                                common::make_unique<TestData>(fifth));
+                         common::make_unique<TestData>(fifth));
   collator.AddSensorData(0, 300, third.frame_id,
-                                common::make_unique<TestData>(third));
+                         common::make_unique<TestData>(third));
 
   EXPECT_EQ(3, received.size());
   EXPECT_EQ(100, received[0].first);
