@@ -37,41 +37,6 @@ std::vector<uint8> ReorderReflectivities(
 
 }  // namespace
 
-LaserFan ToLaserFan(const proto::LaserScan& proto, const float min_range,
-                    const float max_range,
-                    const float missing_echo_ray_length) {
-  CHECK_GE(min_range, 0.f);
-  CHECK_GT(proto.angle_increment(), 0.f);
-  CHECK_GT(proto.angle_max(), proto.angle_min());
-  LaserFan laser_fan = {Eigen::Vector2f::Zero(), {}, {}};
-  float angle = proto.angle_min();
-  for (const auto& range : proto.range()) {
-    if (range.value_size() > 0) {
-      const float first_echo = range.value(0);
-      if (!std::isnan(first_echo) && first_echo >= min_range) {
-        if (first_echo <= max_range) {
-          laser_fan.point_cloud.push_back(Eigen::Rotation2Df(angle) *
-                                          Eigen::Vector2f(first_echo, 0.f));
-        } else {
-          laser_fan.missing_echo_point_cloud.push_back(
-              Eigen::Rotation2Df(angle) *
-              Eigen::Vector2f(missing_echo_ray_length, 0.f));
-        }
-      }
-    }
-    angle += proto.angle_increment();
-  }
-  return laser_fan;
-}
-
-LaserFan ProjectCroppedLaserFan(const LaserFan3D& laser_fan,
-                                const Eigen::Vector3f& min,
-                                const Eigen::Vector3f& max) {
-  return LaserFan{laser_fan.origin.head<2>(),
-                  ProjectToPointCloud2D(Crop(laser_fan.returns, min, max)),
-                  ProjectToPointCloud2D(Crop(laser_fan.misses, min, max))};
-}
-
 LaserFan TransformLaserFan(const LaserFan& laser_fan,
                            const transform::Rigid2f& transform) {
   return LaserFan{
@@ -80,39 +45,31 @@ LaserFan TransformLaserFan(const LaserFan& laser_fan,
       TransformPointCloud2D(laser_fan.missing_echo_point_cloud, transform)};
 }
 
-LaserFan3D ToLaserFan3D(const LaserFan& laser_fan) {
-  return LaserFan3D{
-      Eigen::Vector3f(laser_fan.origin.x(), laser_fan.origin.y(), 0.),
-      ToPointCloud(laser_fan.point_cloud),
-      ToPointCloud(laser_fan.missing_echo_point_cloud)};
-}
-
-LaserFan3D Decompress(const CompressedLaserFan3D& compressed_laser_fan) {
-  return LaserFan3D{compressed_laser_fan.origin,
-                    compressed_laser_fan.returns.Decompress(),
-                    compressed_laser_fan.misses.Decompress(),
-                    compressed_laser_fan.reflectivities};
-}
-
-CompressedLaserFan3D Compress(const LaserFan3D& laser_fan) {
-  std::vector<int> new_to_old;
-  CompressedPointCloud compressed_returns =
-      CompressedPointCloud::CompressAndReturnOrder(laser_fan.returns,
-                                                   &new_to_old);
-  return CompressedLaserFan3D{
-      laser_fan.origin, std::move(compressed_returns),
-      CompressedPointCloud(laser_fan.misses),
-      ReorderReflectivities(laser_fan.reflectivities, new_to_old)};
-}
-
-LaserFan3D TransformLaserFan3D(const LaserFan3D& laser_fan,
-                               const transform::Rigid3f& transform) {
-  return LaserFan3D{
-      transform * laser_fan.origin,
-      TransformPointCloud(laser_fan.returns, transform),
-      TransformPointCloud(laser_fan.misses, transform),
-      laser_fan.reflectivities,
-  };
+LaserFan3D ToLaserFan3D(const proto::LaserScan& proto, const float min_range,
+                        const float max_range,
+                        const float missing_echo_ray_length) {
+  CHECK_GE(min_range, 0.f);
+  CHECK_GT(proto.angle_increment(), 0.f);
+  CHECK_GT(proto.angle_max(), proto.angle_min());
+  LaserFan3D laser_fan = {Eigen::Vector3f::Zero(), {}, {}};
+  float angle = proto.angle_min();
+  for (const auto& range : proto.range()) {
+    if (range.value_size() > 0) {
+      const float first_echo = range.value(0);
+      if (!std::isnan(first_echo) && first_echo >= min_range) {
+        const Eigen::AngleAxisf rotation(angle, Eigen::Vector3f::UnitZ());
+        if (first_echo <= max_range) {
+          laser_fan.returns.push_back(rotation *
+                                      (first_echo * Eigen::Vector3f::UnitX()));
+        } else {
+          laser_fan.misses.push_back(
+              rotation * (missing_echo_ray_length * Eigen::Vector3f::UnitX()));
+        }
+      }
+    }
+    angle += proto.angle_increment();
+  }
+  return laser_fan;
 }
 
 proto::LaserFan3D ToProto(const LaserFan3D& laser_fan) {
@@ -135,6 +92,16 @@ LaserFan3D FromProto(const proto::LaserFan3D& proto) {
   return laser_fan_3d;
 }
 
+LaserFan3D TransformLaserFan3D(const LaserFan3D& laser_fan,
+                               const transform::Rigid3f& transform) {
+  return LaserFan3D{
+      transform * laser_fan.origin,
+      TransformPointCloud(laser_fan.returns, transform),
+      TransformPointCloud(laser_fan.misses, transform),
+      laser_fan.reflectivities,
+  };
+}
+
 LaserFan3D FilterLaserFanByMaxRange(const LaserFan3D& laser_fan,
                                     const float max_range) {
   LaserFan3D result{laser_fan.origin, {}, {}, {}};
@@ -144,6 +111,32 @@ LaserFan3D FilterLaserFanByMaxRange(const LaserFan3D& laser_fan,
     }
   }
   return result;
+}
+
+LaserFan ProjectCroppedLaserFan(const LaserFan3D& laser_fan,
+                                const Eigen::Vector3f& min,
+                                const Eigen::Vector3f& max) {
+  return LaserFan{laser_fan.origin.head<2>(),
+                  ProjectToPointCloud2D(Crop(laser_fan.returns, min, max)),
+                  ProjectToPointCloud2D(Crop(laser_fan.misses, min, max))};
+}
+
+CompressedLaserFan3D Compress(const LaserFan3D& laser_fan) {
+  std::vector<int> new_to_old;
+  CompressedPointCloud compressed_returns =
+      CompressedPointCloud::CompressAndReturnOrder(laser_fan.returns,
+                                                   &new_to_old);
+  return CompressedLaserFan3D{
+      laser_fan.origin, std::move(compressed_returns),
+      CompressedPointCloud(laser_fan.misses),
+      ReorderReflectivities(laser_fan.reflectivities, new_to_old)};
+}
+
+LaserFan3D Decompress(const CompressedLaserFan3D& compressed_laser_fan) {
+  return LaserFan3D{compressed_laser_fan.origin,
+                    compressed_laser_fan.returns.Decompress(),
+                    compressed_laser_fan.misses.Decompress(),
+                    compressed_laser_fan.reflectivities};
 }
 
 }  // namespace sensor
