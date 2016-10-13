@@ -26,9 +26,10 @@
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/kalman_filter/gaussian_distribution.h"
-#include "cartographer/kalman_filter/odometry_state_tracker.h"
 #include "cartographer/kalman_filter/proto/pose_tracker_options.pb.h"
 #include "cartographer/kalman_filter/unscented_kalman_filter.h"
+#include "cartographer/mapping/imu_tracker.h"
+#include "cartographer/mapping/odometry_state_tracker.h"
 #include "cartographer/sensor/proto/sensor.pb.h"
 #include "cartographer/transform/transform.h"
 
@@ -59,35 +60,6 @@ PoseCovariance PoseCovarianceFromProtoMatrix(
 
 proto::PoseTrackerOptions CreatePoseTrackerOptions(
     common::LuaParameterDictionary* parameter_dictionary);
-
-// Keeps track of the orientation using angular velocities and linear
-// accelerations from an IMU. Because averaged linear acceleration (assuming
-// slow movement) is a direct measurement of gravity, roll/pitch does not drift,
-// though yaw does.
-class ImuTracker {
- public:
-  ImuTracker(const proto::PoseTrackerOptions& options, common::Time time);
-
-  // Updates the orientation to reflect the given 'time'.
-  void Predict(common::Time time);
-
-  // Updates from an IMU reading (in the IMU frame).
-  void AddImuLinearAccelerationObservation(
-      common::Time time, const Eigen::Vector3d& imu_linear_acceleration);
-  void AddImuAngularVelocityObservation(
-      common::Time time, const Eigen::Vector3d& imu_angular_velocity);
-
-  // Query the current orientation estimate.
-  Eigen::Quaterniond orientation() { return orientation_; }
-
- private:
-  const proto::PoseTrackerOptions options_;
-  common::Time time_;
-  common::Time last_linear_acceleration_time_;
-  Eigen::Quaterniond orientation_;
-  Eigen::Vector3d gravity_direction_;
-  Eigen::Vector3d imu_angular_velocity_;
-};
 
 // A Kalman filter for a 3D state of position and orientation.
 // Includes functions to update from IMU and laser scan matches.
@@ -145,7 +117,7 @@ class PoseTracker {
   // Returns the belief at the 'time' which must be >= to the current time.
   Distribution GetBelief(common::Time time);
 
-  const OdometryStateTracker::OdometryStates& odometry_states() const;
+  const mapping::OdometryStateTracker::OdometryStates& odometry_states() const;
 
  private:
   // Returns the distribution required to initialize the KalmanFilter.
@@ -166,8 +138,8 @@ class PoseTracker {
   const ModelFunction model_function_;
   common::Time time_;
   KalmanFilter kalman_filter_;
-  ImuTracker imu_tracker_;
-  OdometryStateTracker odometry_state_tracker_;
+  mapping::ImuTracker imu_tracker_;
+  mapping::OdometryStateTracker odometry_state_tracker_;
 };
 
 }  // namespace kalman_filter

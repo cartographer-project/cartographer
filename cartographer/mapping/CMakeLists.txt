@@ -28,6 +28,19 @@ google_library(mapping_global_trajectory_builder_interface
     sensor_point_cloud
 )
 
+google_library(mapping_imu_tracker
+  USES_EIGEN
+  USES_GLOG
+  SRCS
+    imu_tracker.cc
+  HDRS
+    imu_tracker.h
+  DEPENDS
+    common_math
+    common_time
+    transform_transform
+)
+
 google_library(mapping_map_builder
   USES_EIGEN
   USES_GLOG
@@ -55,6 +68,16 @@ google_library(mapping_map_builder
     sensor_voxel_filter
     transform_rigid_transform
     transform_transform
+)
+
+google_library(mapping_odometry_state_tracker
+  SRCS
+    odometry_state_tracker.cc
+  HDRS
+    odometry_state_tracker.h
+  DEPENDS
+    common_time
+    transform_rigid_transform
 )
 
 google_library(mapping_probability_values
