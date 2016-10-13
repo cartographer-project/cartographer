@@ -49,7 +49,7 @@ class LocalTrajectoryBuilder {
     std::vector<const mapping::Submap*> insertion_submaps;
     transform::Rigid3d tracking_to_tracking_2d;
     transform::Rigid3d tracking_2d_to_map;
-    sensor::LaserFan laser_fan_in_tracking_2d;
+    sensor::LaserFan3D laser_fan_in_tracking_2d;
     transform::Rigid2d pose_estimate_2d;
     kalman_filter::PoseCovariance covariance_estimate;
   };
@@ -75,9 +75,8 @@ class LocalTrajectoryBuilder {
   kalman_filter::PoseTracker* pose_tracker() const;
 
  private:
-  // Transforms 'laser_scan', projects it onto the ground plane,
-  // crops and voxel filters.
-  sensor::LaserFan BuildProjectedLaserFan(
+  // Transforms 'laser_scan', crops and voxel filters.
+  sensor::LaserFan3D BuildCroppedLaserFan(
       const transform::Rigid3f& tracking_to_tracking_2d,
       const sensor::LaserFan3D& laser_fan) const;
 
@@ -85,7 +84,7 @@ class LocalTrajectoryBuilder {
   // 'pose_observation' and 'covariance_observation' with the result.
   void ScanMatch(common::Time time, const transform::Rigid3d& pose_prediction,
                  const transform::Rigid3d& tracking_to_tracking_2d,
-                 const sensor::LaserFan& laser_fan_in_tracking_2d,
+                 const sensor::LaserFan3D& laser_fan_in_tracking_2d,
                  transform::Rigid3d* pose_observation,
                  kalman_filter::PoseCovariance* covariance_observation);
 

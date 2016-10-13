@@ -45,10 +45,9 @@ PointCloud ToPointCloud(const PointCloud2D& point_cloud_2d);
 // Converts 'point_cloud' to a 2D point cloud by removing the z component.
 PointCloud2D ProjectToPointCloud2D(const PointCloud& point_cloud);
 
-// Returns a new point cloud without points that fall outside the axis-aligned
-// cuboid defined by 'min' and 'max'.
-PointCloud Crop(const PointCloud& point_cloud, const Eigen::Vector3f& min,
-                const Eigen::Vector3f& max);
+// Returns a new point cloud without points that fall outside the region defined
+// by 'min_z' and 'max_z'.
+PointCloud Crop(const PointCloud& point_cloud, float min_z, float max_z);
 
 // Converts 'point_cloud' to a proto::PointCloud.
 proto::PointCloud ToProto(const PointCloud& point_cloud);
