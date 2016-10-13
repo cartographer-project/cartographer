@@ -181,8 +181,8 @@ void ConstraintBuilder::ComputeConstraint(
       ComputeSubmapPose(*submap) * initial_relative_pose;
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_index);
-  const sensor::PointCloud2D filtered_point_cloud =
-      adaptive_voxel_filter_.Filter(*point_cloud);
+  const sensor::PointCloud filtered_point_cloud =
+      sensor::ToPointCloud(adaptive_voxel_filter_.Filter(*point_cloud));
 
   // The 'constraint_transform' (i <- j) is computed from:
   // - a 'filtered_point_cloud' in j,

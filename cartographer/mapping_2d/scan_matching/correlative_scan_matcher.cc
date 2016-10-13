@@ -26,14 +26,14 @@ namespace scan_matching {
 
 SearchParameters::SearchParameters(const double linear_search_window,
                                    const double angular_search_window,
-                                   const sensor::PointCloud2D& point_cloud,
+                                   const sensor::PointCloud& point_cloud,
                                    const double resolution)
     : resolution(resolution) {
   // We set this value to something on the order of resolution to make sure that
   // the std::acos() below is defined.
   float max_scan_range = 3.f * resolution;
-  for (const Eigen::Vector2f& point : point_cloud) {
-    const float range = point.norm();
+  for (const Eigen::Vector3f& point : point_cloud) {
+    const float range = point.head<2>().norm();
     max_scan_range = std::max(range, max_scan_range);
   }
   const double kSafetyMargin = 1. - 1e-3;
@@ -91,10 +91,10 @@ void SearchParameters::ShrinkToFit(const std::vector<DiscreteScan>& scans,
   }
 }
 
-std::vector<sensor::PointCloud2D> GenerateRotatedScans(
-    const sensor::PointCloud2D& point_cloud,
+std::vector<sensor::PointCloud> GenerateRotatedScans(
+    const sensor::PointCloud& point_cloud,
     const SearchParameters& search_parameters) {
-  std::vector<sensor::PointCloud2D> rotated_scans;
+  std::vector<sensor::PointCloud> rotated_scans;
   rotated_scans.reserve(search_parameters.num_scans);
 
   double delta_theta = -search_parameters.num_angular_perturbations *
@@ -102,22 +102,24 @@ std::vector<sensor::PointCloud2D> GenerateRotatedScans(
   for (int scan_index = 0; scan_index < search_parameters.num_scans;
        ++scan_index,
            delta_theta += search_parameters.angular_perturbation_step_size) {
-    rotated_scans.push_back(sensor::TransformPointCloud2D(
-        point_cloud, transform::Rigid2f::Rotation(delta_theta)));
+    rotated_scans.push_back(sensor::TransformPointCloud(
+        point_cloud, transform::Rigid3f::Rotation(Eigen::AngleAxisf(
+                         delta_theta, Eigen::Vector3f::UnitZ()))));
   }
   return rotated_scans;
 }
 
 std::vector<DiscreteScan> DiscretizeScans(
-    const MapLimits& map_limits, const std::vector<sensor::PointCloud2D>& scans,
+    const MapLimits& map_limits, const std::vector<sensor::PointCloud>& scans,
     const Eigen::Translation2f& initial_translation) {
   std::vector<DiscreteScan> discrete_scans;
   discrete_scans.reserve(scans.size());
-  for (const sensor::PointCloud2D& scan : scans) {
+  for (const sensor::PointCloud& scan : scans) {
     discrete_scans.emplace_back();
     discrete_scans.back().reserve(scan.size());
-    for (const Eigen::Vector2f& point : scan) {
-      const Eigen::Vector2f translated_point = initial_translation * point;
+    for (const Eigen::Vector3f& point : scan) {
+      const Eigen::Vector2f translated_point =
+          Eigen::Affine2f(initial_translation) * point.head<2>();
       discrete_scans.back().push_back(
           map_limits.GetXYIndexOfCellContainingPoint(translated_point.x(),
                                                      translated_point.y()));

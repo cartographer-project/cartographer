@@ -68,7 +68,7 @@ class RealTimeCorrelativeScanMatcher {
   // 'initial_pose_estimate' then updates 'pose_estimate' with the result and
   // returns the score.
   double Match(const transform::Rigid2d& initial_pose_estimate,
-               const sensor::PointCloud2D& point_cloud,
+               const sensor::PointCloud& point_cloud,
                const ProbabilityGrid& probability_grid,
                transform::Rigid2d* pose_estimate) const;
 

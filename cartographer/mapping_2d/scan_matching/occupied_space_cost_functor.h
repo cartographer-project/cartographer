@@ -36,7 +36,7 @@ class OccupiedSpaceCostFunctor {
   // Creates an OccupiedSpaceCostFunctor using the specified map, resolution
   // level, and point cloud.
   OccupiedSpaceCostFunctor(const double scaling_factor,
-                           const sensor::PointCloud2D& point_cloud,
+                           const sensor::PointCloud& point_cloud,
                            const ProbabilityGrid& probability_grid)
       : scaling_factor_(scaling_factor),
         point_cloud_(point_cloud),
@@ -107,7 +107,7 @@ class OccupiedSpaceCostFunctor {
   };
 
   const double scaling_factor_;
-  const sensor::PointCloud2D& point_cloud_;
+  const sensor::PointCloud& point_cloud_;
   const ProbabilityGrid& probability_grid_;
 };
 

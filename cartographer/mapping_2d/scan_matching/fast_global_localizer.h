@@ -41,7 +41,7 @@ bool PerformGlobalLocalization(
     const std::vector<
         cartographer::mapping_2d::scan_matching::FastCorrelativeScanMatcher*>&
         matchers,
-    const cartographer::sensor::PointCloud2D& point_cloud,
+    const cartographer::sensor::PointCloud& point_cloud,
     transform::Rigid2d* best_pose_estimate, float* best_score);
 
 }  // namespace scan_matching

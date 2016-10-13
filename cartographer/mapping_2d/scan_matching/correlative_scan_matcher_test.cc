@@ -57,9 +57,9 @@ TEST(Candidate, Construction) {
 }
 
 TEST(GenerateRotatedScans, GenerateRotatedScans) {
-  sensor::PointCloud2D point_cloud;
-  point_cloud.emplace_back(-1., 1.);
-  const std::vector<sensor::PointCloud2D> scans =
+  sensor::PointCloud point_cloud;
+  point_cloud.emplace_back(-1.f, 1.f, 0.f);
+  const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud, SearchParameters(0, 1, M_PI / 2., 0.));
   EXPECT_EQ(3, scans.size());
   EXPECT_NEAR(1., scans[0][0].x(), 1e-6);
@@ -71,17 +71,17 @@ TEST(GenerateRotatedScans, GenerateRotatedScans) {
 }
 
 TEST(DiscretizeScans, DiscretizeScans) {
-  sensor::PointCloud2D point_cloud;
-  point_cloud.emplace_back(0.025, 0.175);
-  point_cloud.emplace_back(-0.025, 0.175);
-  point_cloud.emplace_back(-0.075, 0.175);
-  point_cloud.emplace_back(-0.125, 0.175);
-  point_cloud.emplace_back(-0.125, 0.125);
-  point_cloud.emplace_back(-0.125, 0.075);
-  point_cloud.emplace_back(-0.125, 0.025);
+  sensor::PointCloud point_cloud;
+  point_cloud.emplace_back(0.025f, 0.175f, 0.f);
+  point_cloud.emplace_back(-0.025f, 0.175f, 0.f);
+  point_cloud.emplace_back(-0.075f, 0.175f, 0.f);
+  point_cloud.emplace_back(-0.125f, 0.175f, 0.f);
+  point_cloud.emplace_back(-0.125f, 0.125f, 0.f);
+  point_cloud.emplace_back(-0.125f, 0.075f, 0.f);
+  point_cloud.emplace_back(-0.125f, 0.025f, 0.f);
   const MapLimits map_limits(0.05, Eigen::Vector2d(0.05, 0.25),
                              CellLimits(6, 6));
-  const std::vector<sensor::PointCloud2D> scans =
+  const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud, SearchParameters(0, 0, 0., 0.));
   const std::vector<DiscreteScan> discrete_scans =
       DiscretizeScans(map_limits, scans, Eigen::Translation2f::Identity());
