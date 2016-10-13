@@ -14,6 +14,18 @@
 
 add_subdirectory("proto")
 
+google_library(sensor_collator
+  USES_EIGEN
+  USES_GLOG
+  HDRS
+    collator.h
+  DEPENDS
+    common_make_unique
+    common_ordered_multi_queue
+    common_time
+    sensor_sensor_packet_period_histogram_builder
+)
+
 google_library(sensor_compressed_point_cloud
   USES_EIGEN
   SRCS
@@ -100,6 +112,17 @@ google_library(sensor_voxel_filter
     mapping_3d_hybrid_grid
     sensor_point_cloud
     sensor_proto_adaptive_voxel_filter_options
+)
+
+google_test(sensor_collator_test
+  SRCS
+    collator_test.cc
+  DEPENDS
+    common_lua_parameter_dictionary_test_helpers
+    common_make_unique
+    common_time
+    sensor_collator
+    sensor_proto_sensor
 )
 
 google_test(sensor_compressed_point_cloud_test

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_SENSOR_COLLATOR_H_
-#define CARTOGRAPHER_MAPPING_SENSOR_COLLATOR_H_
+#ifndef CARTOGRAPHER_SENSOR_COLLATOR_H_
+#define CARTOGRAPHER_SENSOR_COLLATOR_H_
 
 #include <functional>
 #include <memory>
@@ -32,32 +32,32 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping {
+namespace sensor {
 
-struct SensorCollatorQueueKey {
+struct CollatorQueueKey {
   int trajectory_id;
   string sensor_id;
 
-  bool operator<(const SensorCollatorQueueKey& other) const {
+  bool operator<(const CollatorQueueKey& other) const {
     return std::forward_as_tuple(trajectory_id, sensor_id) <
            std::forward_as_tuple(other.trajectory_id, other.sensor_id);
   }
 };
 
 inline std::ostream& operator<<(std::ostream& out,
-                                const SensorCollatorQueueKey& key) {
+                                const CollatorQueueKey& key) {
   return out << '(' << key.trajectory_id << ", " << key.sensor_id << ')';
 }
 
 template <typename SensorDataType>
-class SensorCollator {
+class Collator {
  public:
   using Callback = std::function<void(int64, std::unique_ptr<SensorDataType>)>;
 
-  SensorCollator() {}
+  Collator() {}
 
-  SensorCollator(const SensorCollator&) = delete;
-  SensorCollator& operator=(const SensorCollator&) = delete;
+  Collator(const Collator&) = delete;
+  Collator& operator=(const Collator&) = delete;
 
   // Adds a trajectory to produce sorted sensor output for. Calls 'callback'
   // for each collated sensor data.
@@ -65,7 +65,7 @@ class SensorCollator {
                      const std::unordered_set<string>& expected_sensor_ids,
                      const Callback callback) {
     for (const auto& sensor_id : expected_sensor_ids) {
-      const auto queue_key = SensorCollatorQueueKey{trajectory_id, sensor_id};
+      const auto queue_key = CollatorQueueKey{trajectory_id, sensor_id};
       queue_.AddQueue(queue_key, [callback](std::unique_ptr<Value> value) {
         callback(value->timestamp, std::move(value->sensor_data));
       });
@@ -89,7 +89,7 @@ class SensorCollator {
     sensor_packet_period_histogram_builder_.Add(trajectory_id, timestamp,
                                                 sensor_id);
     queue_.Add(
-        SensorCollatorQueueKey{trajectory_id, sensor_id}, timestamp,
+        CollatorQueueKey{trajectory_id, sensor_id}, timestamp,
         common::make_unique<Value>(Value{timestamp, std::move(sensor_data)}));
   }
 
@@ -117,15 +117,15 @@ class SensorCollator {
   };
 
   // Queue keys are a pair of trajectory ID and sensor identifier.
-  common::OrderedMultiQueue<SensorCollatorQueueKey, int64, Value> queue_;
+  common::OrderedMultiQueue<CollatorQueueKey, int64, Value> queue_;
 
   // Map of trajectory ID to all associated QueueKeys.
-  std::unordered_map<int, std::vector<SensorCollatorQueueKey>> queue_keys_;
+  std::unordered_map<int, std::vector<CollatorQueueKey>> queue_keys_;
   sensor::SensorPacketPeriodHistogramBuilder
       sensor_packet_period_histogram_builder_;
 };
 
-}  // namespace mapping
+}  // namespace sensor
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_SENSOR_COLLATOR_H_
+#endif  // CARTOGRAPHER_SENSOR_COLLATOR_H_
