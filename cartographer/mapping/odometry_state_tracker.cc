@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "cartographer/kalman_filter/odometry_state_tracker.h"
+#include "cartographer/mapping/odometry_state_tracker.h"
 
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
-namespace kalman_filter {
+namespace mapping {
 
 OdometryState::OdometryState(const common::Time time,
                              const transform::Rigid3d& odometer_pose,
@@ -50,5 +50,5 @@ const OdometryState& OdometryStateTracker::newest() const {
   return odometry_states_.back();
 }
 
-}  // namespace kalman_filter
+}  // namespace mapping
 }  // namespace cartographer

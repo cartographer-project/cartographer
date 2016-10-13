@@ -20,16 +20,6 @@ google_library(kalman_filter_gaussian_distribution
     gaussian_distribution.h
 )
 
-google_library(kalman_filter_odometry_state_tracker
-  SRCS
-    odometry_state_tracker.cc
-  HDRS
-    odometry_state_tracker.h
-  DEPENDS
-    common_time
-    transform_rigid_transform
-)
-
 google_library(kalman_filter_pose_tracker
   USES_EIGEN
   USES_GLOG
@@ -43,9 +33,10 @@ google_library(kalman_filter_pose_tracker
     common_port
     common_time
     kalman_filter_gaussian_distribution
-    kalman_filter_odometry_state_tracker
     kalman_filter_proto_pose_tracker_options
     kalman_filter_unscented_kalman_filter
+    mapping_imu_tracker
+    mapping_odometry_state_tracker
     sensor_proto_sensor
     transform_transform
 )
