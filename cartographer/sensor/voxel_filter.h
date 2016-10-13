@@ -29,7 +29,9 @@ namespace sensor {
 // a voxel edge.
 PointCloud VoxelFiltered(const PointCloud& point_cloud, float size);
 
-// The same as VoxelFilter but for 3D PointClouds.
+// Voxel filter for point clouds. For each voxel, the assembled point cloud
+// contains the first point that fell into it from any of the inserted point
+// clouds.
 class VoxelFilter {
  public:
   // 'size' is the length of a voxel edge.
