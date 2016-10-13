@@ -66,7 +66,7 @@ CeresScanMatcher::~CeresScanMatcher() {}
 
 void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
                              const transform::Rigid2d& initial_pose_estimate,
-                             const sensor::PointCloud2D& point_cloud,
+                             const sensor::PointCloud& point_cloud,
                              const ProbabilityGrid& probability_grid,
                              transform::Rigid2d* const pose_estimate,
                              kalman_filter::Pose2DCovariance* const covariance,

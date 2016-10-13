@@ -49,16 +49,18 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
       laser_fan_inserter_ = common::make_unique<LaserFanInserter>(
           CreateLaserFanInserterOptions(parameter_dictionary.get()));
     }
-    point_cloud_.emplace_back(0.025, 0.175);
-    point_cloud_.emplace_back(-0.025, 0.175);
-    point_cloud_.emplace_back(-0.075, 0.175);
-    point_cloud_.emplace_back(-0.125, 0.175);
-    point_cloud_.emplace_back(-0.125, 0.125);
-    point_cloud_.emplace_back(-0.125, 0.075);
-    point_cloud_.emplace_back(-0.125, 0.025);
+    point_cloud_.emplace_back(0.025f, 0.175f, 0.f);
+    point_cloud_.emplace_back(-0.025f, 0.175f, 0.f);
+    point_cloud_.emplace_back(-0.075f, 0.175f, 0.f);
+    point_cloud_.emplace_back(-0.125f, 0.175f, 0.f);
+    point_cloud_.emplace_back(-0.125f, 0.125f, 0.f);
+    point_cloud_.emplace_back(-0.125f, 0.075f, 0.f);
+    point_cloud_.emplace_back(-0.125f, 0.025f, 0.f);
     probability_grid_.StartUpdate();
     laser_fan_inserter_->Insert(
-        sensor::LaserFan{Eigen::Vector2f::Zero(), point_cloud_, {}},
+        sensor::LaserFan{Eigen::Vector2f::Zero(),
+                         sensor::ProjectToPointCloud2D(point_cloud_),
+                         {}},
         &probability_grid_);
     {
       auto parameter_dictionary = common::MakeDictionary(
@@ -77,14 +79,14 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
 
   ProbabilityGrid probability_grid_;
   std::unique_ptr<LaserFanInserter> laser_fan_inserter_;
-  sensor::PointCloud2D point_cloud_;
+  sensor::PointCloud point_cloud_;
   std::unique_ptr<RealTimeCorrelativeScanMatcher>
       real_time_correlative_scan_matcher_;
 };
 
 TEST_F(RealTimeCorrelativeScanMatcherTest,
        ScorePerfectHighResolutionCandidate) {
-  const std::vector<sensor::PointCloud2D> scans =
+  const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud_, SearchParameters(0, 0, 0., 0.));
   const std::vector<DiscreteScan> discrete_scans = DiscretizeScans(
       probability_grid_.limits(), scans, Eigen::Translation2f::Identity());
@@ -102,7 +104,7 @@ TEST_F(RealTimeCorrelativeScanMatcherTest,
 
 TEST_F(RealTimeCorrelativeScanMatcherTest,
        ScorePartiallyCorrectHighResolutionCandidate) {
-  const std::vector<sensor::PointCloud2D> scans =
+  const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud_, SearchParameters(0, 0, 0., 0.));
   const std::vector<DiscreteScan> discrete_scans = DiscretizeScans(
       probability_grid_.limits(), scans, Eigen::Translation2f::Identity());

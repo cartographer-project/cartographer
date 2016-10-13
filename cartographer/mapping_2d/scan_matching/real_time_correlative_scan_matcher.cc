@@ -90,21 +90,21 @@ RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchCandidates(
 
 double RealTimeCorrelativeScanMatcher::Match(
     const transform::Rigid2d& initial_pose_estimate,
-    const sensor::PointCloud2D& point_cloud,
+    const sensor::PointCloud& point_cloud,
     const ProbabilityGrid& probability_grid,
     transform::Rigid2d* pose_estimate) const {
   CHECK_NOTNULL(pose_estimate);
 
   const Eigen::Rotation2Dd initial_rotation = initial_pose_estimate.rotation();
-  const sensor::PointCloud2D rotated_point_cloud =
-      sensor::TransformPointCloud2D(
-          point_cloud,
-          transform::Rigid2d::Rotation(initial_rotation).cast<float>());
+  const sensor::PointCloud rotated_point_cloud = sensor::TransformPointCloud(
+      point_cloud,
+      transform::Rigid3f::Rotation(Eigen::AngleAxisf(
+          initial_rotation.cast<float>().angle(), Eigen::Vector3f::UnitZ())));
   const SearchParameters search_parameters(
       options_.linear_search_window(), options_.angular_search_window(),
       rotated_point_cloud, probability_grid.limits().resolution());
 
-  const std::vector<sensor::PointCloud2D> rotated_scans =
+  const std::vector<sensor::PointCloud> rotated_scans =
       GenerateRotatedScans(rotated_point_cloud, search_parameters);
   const std::vector<DiscreteScan> discrete_scans = DiscretizeScans(
       probability_grid.limits(), rotated_scans,

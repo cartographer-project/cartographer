@@ -40,7 +40,7 @@ class CeresScanMatcherTest : public ::testing::Test {
         probability_grid_.limits().GetXYIndexOfCellContainingPoint(-3.5, 2.5),
         mapping::kMaxProbability);
 
-    point_cloud_.emplace_back(-3., 2.);
+    point_cloud_.emplace_back(-3.f, 2.f, 0.f);
 
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
@@ -74,7 +74,7 @@ class CeresScanMatcherTest : public ::testing::Test {
   }
 
   ProbabilityGrid probability_grid_;
-  sensor::PointCloud2D point_cloud_;
+  sensor::PointCloud point_cloud_;
   std::unique_ptr<CeresScanMatcher> ceres_scan_matcher_;
 };
 
