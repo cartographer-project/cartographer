@@ -37,14 +37,6 @@ std::vector<uint8> ReorderReflectivities(
 
 }  // namespace
 
-LaserFan TransformLaserFan(const LaserFan& laser_fan,
-                           const transform::Rigid2f& transform) {
-  return LaserFan{
-      transform * laser_fan.origin,
-      TransformPointCloud2D(laser_fan.point_cloud, transform),
-      TransformPointCloud2D(laser_fan.missing_echo_point_cloud, transform)};
-}
-
 LaserFan3D ToLaserFan3D(const proto::LaserScan& proto, const float min_range,
                         const float max_range,
                         const float missing_echo_ray_length) {
@@ -117,12 +109,6 @@ LaserFan3D CropLaserFan(const LaserFan3D& laser_fan, const float min_z,
                         const float max_z) {
   return LaserFan3D{laser_fan.origin, Crop(laser_fan.returns, min_z, max_z),
                     Crop(laser_fan.misses, min_z, max_z)};
-}
-
-LaserFan ProjectLaserFan(const LaserFan3D& laser_fan) {
-  return LaserFan{laser_fan.origin.head<2>(),
-                  ProjectToPointCloud2D(laser_fan.returns),
-                  ProjectToPointCloud2D(laser_fan.misses)};
 }
 
 CompressedLaserFan3D Compress(const LaserFan3D& laser_fan) {

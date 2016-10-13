@@ -96,7 +96,7 @@ int SparsePoseGraph::AddScan(
   CHECK_LT(j, std::numeric_limits<int>::max());
 
   constant_node_data_->push_back(mapping::TrajectoryNode::ConstantData{
-      time, sensor::LaserFan{Eigen::Vector2f::Zero(), {}, {}},
+      time, sensor::LaserFan3D{Eigen::Vector3f::Zero(), {}, {}},
       sensor::Compress(laser_fan_in_tracking), submaps,
       transform::Rigid3d::Identity()});
   trajectory_nodes_.push_back(

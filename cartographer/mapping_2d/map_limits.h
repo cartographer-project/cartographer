@@ -102,21 +102,21 @@ class MapLimits {
     for (const auto& node : trajectory_nodes) {
       const auto& data = *node.constant_data;
       if (!data.laser_fan_3d.returns.empty()) {
-        const sensor::LaserFan3D laser_fan_3d = sensor::TransformLaserFan3D(
+        const sensor::LaserFan3D laser_fan = sensor::TransformLaserFan3D(
             Decompress(data.laser_fan_3d), node.pose.cast<float>());
-        bounding_box.extend(laser_fan_3d.origin.head<2>());
-        for (const Eigen::Vector3f& hit : laser_fan_3d.returns) {
+        bounding_box.extend(laser_fan.origin.head<2>());
+        for (const Eigen::Vector3f& hit : laser_fan.returns) {
           bounding_box.extend(hit.head<2>());
         }
       } else {
-        const sensor::LaserFan laser_fan = sensor::TransformLaserFan(
-            data.laser_fan, transform::Project2D(node.pose).cast<float>());
-        bounding_box.extend(laser_fan.origin);
-        for (const Eigen::Vector2f& hit : laser_fan.point_cloud) {
-          bounding_box.extend(hit);
+        const sensor::LaserFan3D laser_fan = sensor::TransformLaserFan3D(
+            data.laser_fan_2d, node.pose.cast<float>());
+        bounding_box.extend(laser_fan.origin.head<2>());
+        for (const Eigen::Vector3f& hit : laser_fan.returns) {
+          bounding_box.extend(hit.head<2>());
         }
-        for (const Eigen::Vector2f& miss : laser_fan.missing_echo_point_cloud) {
-          bounding_box.extend(miss);
+        for (const Eigen::Vector3f& miss : laser_fan.misses) {
+          bounding_box.extend(miss.head<2>());
         }
       }
     }

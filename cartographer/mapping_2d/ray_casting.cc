@@ -147,7 +147,7 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 
 }  // namespace
 
-void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
+void CastRays(const sensor::LaserFan3D& laser_fan, const MapLimits& limits,
               const std::function<void(const Eigen::Array2i&)>& hit_visitor,
               const std::function<void(const Eigen::Array2i&)>& miss_visitor) {
   const double superscaled_resolution = limits.resolution() / kSubpixelScale;
@@ -161,8 +161,8 @@ void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
 
   // Compute and add the end points.
   std::vector<Eigen::Array2i> ends;
-  ends.reserve(laser_fan.point_cloud.size());
-  for (const Eigen::Vector2f& laser_return : laser_fan.point_cloud) {
+  ends.reserve(laser_fan.returns.size());
+  for (const Eigen::Vector3f& laser_return : laser_fan.returns) {
     ends.push_back(superscaled_limits.GetXYIndexOfCellContainingPoint(
         laser_return.x(), laser_return.y()));
     hit_visitor(ends.back() / kSubpixelScale);
@@ -174,8 +174,7 @@ void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
   }
 
   // Finally, compute and add empty rays based on missing echos in the scan.
-  for (const Eigen::Vector2f& missing_echo :
-       laser_fan.missing_echo_point_cloud) {
+  for (const Eigen::Vector3f& missing_echo : laser_fan.misses) {
     CastRay(begin, superscaled_limits.GetXYIndexOfCellContainingPoint(
                        missing_echo.x(), missing_echo.y()),
             miss_visitor);

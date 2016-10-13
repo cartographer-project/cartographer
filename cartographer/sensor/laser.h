@@ -25,16 +25,6 @@
 namespace cartographer {
 namespace sensor {
 
-struct LaserFan {
-  Eigen::Vector2f origin;
-  PointCloud2D point_cloud;
-  PointCloud2D missing_echo_point_cloud;
-};
-
-// Transforms 'laser_fan' according to 'transform'.
-LaserFan TransformLaserFan(const LaserFan& laser_fan,
-                           const transform::Rigid2f& transform);
-
 // A 3D variant of LaserFan. Rays begin at 'origin'. 'returns' are the points
 // where laser returns were detected. 'misses' are points in the direction of
 // rays for which no return was detected, and were inserted at a configured
@@ -72,9 +62,6 @@ LaserFan3D FilterLaserFanByMaxRange(const LaserFan3D& laser_fan,
 
 // Crops 'laser_fan' according to the region defined by 'min_z' and 'max_z'.
 LaserFan3D CropLaserFan(const LaserFan3D& laser_fan, float min_z, float max_z);
-
-// Projects 'laser_fan' into 2D.
-LaserFan ProjectLaserFan(const LaserFan3D& laser_fan);
 
 // Like LaserFan3D but with compressed point clouds. The point order changes
 // when converting from LaserFan3D.

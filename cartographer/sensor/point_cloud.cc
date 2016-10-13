@@ -22,47 +22,14 @@
 namespace cartographer {
 namespace sensor {
 
-namespace {
-
-template <typename PointCloudType, typename TransformType>
-PointCloudType Transform(const PointCloudType& point_cloud,
-                         const TransformType& transform) {
-  PointCloudType result;
+PointCloud TransformPointCloud(const PointCloud& point_cloud,
+                               const transform::Rigid3f& transform) {
+  PointCloud result;
   result.reserve(point_cloud.size());
-  for (const auto& point : point_cloud) {
+  for (const Eigen::Vector3f& point : point_cloud) {
     result.emplace_back(transform * point);
   }
   return result;
-}
-
-}  // namespace
-
-PointCloud TransformPointCloud(const PointCloud& point_cloud,
-                               const transform::Rigid3f& transform) {
-  return Transform(point_cloud, transform);
-}
-
-PointCloud2D TransformPointCloud2D(const PointCloud2D& point_cloud_2d,
-                                   const transform::Rigid2f& transform) {
-  return Transform(point_cloud_2d, transform);
-}
-
-PointCloud ToPointCloud(const PointCloud2D& point_cloud_2d) {
-  sensor::PointCloud point_cloud;
-  point_cloud.reserve(point_cloud_2d.size());
-  for (const auto& point : point_cloud_2d) {
-    point_cloud.emplace_back(point.x(), point.y(), 0.f);
-  }
-  return point_cloud;
-}
-
-PointCloud2D ProjectToPointCloud2D(const PointCloud& point_cloud) {
-  sensor::PointCloud2D point_cloud_2d;
-  point_cloud_2d.reserve(point_cloud.size());
-  for (const auto& point : point_cloud) {
-    point_cloud_2d.emplace_back(point.x(), point.y());
-  }
-  return point_cloud_2d;
 }
 
 PointCloud Crop(const PointCloud& point_cloud, const float min_z,

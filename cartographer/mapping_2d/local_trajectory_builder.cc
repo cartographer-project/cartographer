@@ -212,8 +212,8 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
   for (int insertion_index : submaps_.insertion_indices()) {
     insertion_submaps.push_back(submaps_.Get(insertion_index));
   }
-  submaps_.InsertLaserFan(sensor::ProjectLaserFan(TransformLaserFan3D(
-      laser_fan_in_tracking_2d, tracking_2d_to_map.cast<float>())));
+  submaps_.InsertLaserFan(TransformLaserFan3D(
+      laser_fan_in_tracking_2d, tracking_2d_to_map.cast<float>()));
 
   return common::make_unique<InsertionResult>(InsertionResult{
       time, &submaps_, matching_submap, insertion_submaps,
