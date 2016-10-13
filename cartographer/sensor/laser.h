@@ -49,8 +49,8 @@ struct LaserFan3D {
 };
 
 // Builds a LaserFan from 'proto' and separates any beams with ranges outside
-// the range ['min_range', 'max_range']. Beams beyond 'max_range' inserted into
-// the 'missing_echo_point_cloud' with length 'missing_echo_ray_length'. The
+// the range ['min_range', 'max_range']. Beams beyond 'max_range' are inserted
+// into the 'misses' point cloud with length 'missing_echo_ray_length'. The
 // points in both clouds are stored in scan order.
 LaserFan3D ToLaserFan3D(const proto::LaserScan& proto, float min_range,
                         float max_range, float missing_echo_ray_length);
