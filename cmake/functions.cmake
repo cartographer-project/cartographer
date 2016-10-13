@@ -32,7 +32,6 @@ macro(_parse_arguments ARGS)
     USES_PCL
     USES_ROS
     USES_YAMLCPP
-    USES_ZLIB
   )
   set(ONE_VALUE_ARG )
   set(MULTI_VALUE_ARGS SRCS HDRS DEPENDS)
@@ -86,12 +85,6 @@ macro(_common_compile_stuff VISIBILITY)
     target_link_libraries("${NAME}" ${catkin_LIBRARIES})
     add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
   )
-  endif()
-
-  if(ARG_USES_ZLIB)
-    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
-      "${ZLIB_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${ZLIB_LIBRARIES})
   endif()
 
   if(ARG_USES_CARTOGRAPHER)
