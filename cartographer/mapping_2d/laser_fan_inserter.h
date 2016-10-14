@@ -42,7 +42,7 @@ class LaserFanInserter {
   LaserFanInserter& operator=(const LaserFanInserter&) = delete;
 
   // Inserts 'laser_fan' into 'probability_grid'.
-  void Insert(const sensor::LaserFan& laser_fan,
+  void Insert(const sensor::LaserFan3D& laser_fan,
               ProbabilityGrid* probability_grid) const;
 
   const std::vector<uint16>& hit_table() const { return hit_table_; }

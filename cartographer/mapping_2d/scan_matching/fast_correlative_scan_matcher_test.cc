@@ -150,10 +150,11 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
         MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
     probability_grid.StartUpdate();
     laser_fan_inserter.Insert(
-        sensor::LaserFan{
-            expected_pose.translation(),
-            sensor::TransformPointCloud2D(
-                sensor::ProjectToPointCloud2D(point_cloud), expected_pose),
+        sensor::LaserFan3D{
+            Eigen::Vector3f(expected_pose.translation().x(),
+                            expected_pose.translation().y(), 0.f),
+            sensor::TransformPointCloud(
+                point_cloud, transform::Embed3D(expected_pose.cast<float>())),
             {}},
         &probability_grid);
 
@@ -192,11 +193,7 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
         {10. * distribution(prng), 10. * distribution(prng)},
         1.6 * distribution(prng));
     const sensor::PointCloud point_cloud = sensor::TransformPointCloud(
-        unperturbed_point_cloud,
-        transform::Rigid3f(Eigen::Vector3f(perturbation.translation().x(),
-                                           perturbation.translation().y(), 0.f),
-                           Eigen::AngleAxisf(perturbation.rotation().angle(),
-                                             Eigen::Vector3f::UnitZ())));
+        unperturbed_point_cloud, transform::Embed3D(perturbation));
     const transform::Rigid2f expected_pose =
         transform::Rigid2f({2. * distribution(prng), 2. * distribution(prng)},
                            0.5 * distribution(prng)) *
@@ -206,10 +203,10 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
         MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
     probability_grid.StartUpdate();
     laser_fan_inserter.Insert(
-        sensor::LaserFan{
-            (expected_pose * perturbation).translation(),
-            sensor::TransformPointCloud2D(
-                sensor::ProjectToPointCloud2D(point_cloud), expected_pose),
+        sensor::LaserFan3D{
+            transform::Embed3D(expected_pose * perturbation).translation(),
+            sensor::TransformPointCloud(point_cloud,
+                                        transform::Embed3D(expected_pose)),
             {}},
         &probability_grid);
 

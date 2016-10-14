@@ -35,7 +35,7 @@ struct TrajectoryNode {
     common::Time time;
 
     // LaserFan in 'pose' frame. Only used in the 2D case.
-    sensor::LaserFan laser_fan;
+    sensor::LaserFan3D laser_fan_2d;
 
     // LaserFan in 'pose' frame. Only used in the 3D case.
     sensor::CompressedLaserFan3D laser_fan_3d;

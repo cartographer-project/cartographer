@@ -44,7 +44,7 @@ class SparsePoseGraphTest : public ::testing::Test {
     // kMinProbability) to unknown space (== kMinProbability).
     for (float t = 0.f; t < 2.f * M_PI; t += 0.005f) {
       const float r = (std::sin(20.f * t) + 2.f) * std::sin(t + 2.f);
-      point_cloud_.emplace_back(r * std::sin(t), r * std::cos(t));
+      point_cloud_.emplace_back(r * std::sin(t), r * std::cos(t), 0.f);
     }
 
     {
@@ -146,8 +146,9 @@ class SparsePoseGraphTest : public ::testing::Test {
   void MoveRelativeWithNoise(const transform::Rigid2d& movement,
                              const transform::Rigid2d& noise) {
     current_pose_ = current_pose_ * movement;
-    const sensor::PointCloud2D new_point_cloud = sensor::TransformPointCloud2D(
-        point_cloud_, current_pose_.inverse().cast<float>());
+    const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
+        point_cloud_,
+        transform::Embed3D(current_pose_.inverse().cast<float>()));
     kalman_filter::Pose2DCovariance covariance =
         kalman_filter::Pose2DCovariance::Identity();
     const mapping::Submap* const matching_submap =
@@ -156,11 +157,11 @@ class SparsePoseGraphTest : public ::testing::Test {
     for (int insertion_index : submaps_->insertion_indices()) {
       insertion_submaps.push_back(submaps_->Get(insertion_index));
     }
-    const sensor::LaserFan laser_fan{
-        Eigen::Vector2f::Zero(), new_point_cloud, {}};
+    const sensor::LaserFan3D laser_fan{
+        Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
-    submaps_->InsertLaserFan(
-        TransformLaserFan(laser_fan, pose_estimate.cast<float>()));
+    submaps_->InsertLaserFan(TransformLaserFan3D(
+        laser_fan, transform::Embed3D(pose_estimate.cast<float>())));
     sparse_pose_graph_->AddScan(common::FromUniversal(0),
                                 transform::Rigid3d::Identity(), laser_fan,
                                 pose_estimate, covariance, submaps_.get(),
@@ -171,7 +172,7 @@ class SparsePoseGraphTest : public ::testing::Test {
     MoveRelativeWithNoise(movement, transform::Rigid2d::Identity());
   }
 
-  sensor::PointCloud2D point_cloud_;
+  sensor::PointCloud point_cloud_;
   std::unique_ptr<Submaps> submaps_;
   std::deque<mapping::TrajectoryNode::ConstantData> constant_node_data_;
   common::ThreadPool thread_pool_;

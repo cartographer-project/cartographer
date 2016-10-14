@@ -51,7 +51,7 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
            submaps.Get(i)->begin_laser_fan_index;
   };
   for (int i = 0; i != 1000; ++i) {
-    submaps.InsertLaserFan({Eigen::Vector2f::Zero(), {}, {}});
+    submaps.InsertLaserFan({Eigen::Vector3f::Zero(), {}, {}});
     const int matching = submaps.matching_index();
     // Except for the first, maps should only be returned after enough scans.
     if (matching != 0) {

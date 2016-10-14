@@ -58,9 +58,7 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
     point_cloud_.emplace_back(-0.125f, 0.025f, 0.f);
     probability_grid_.StartUpdate();
     laser_fan_inserter_->Insert(
-        sensor::LaserFan{Eigen::Vector2f::Zero(),
-                         sensor::ProjectToPointCloud2D(point_cloud_),
-                         {}},
+        sensor::LaserFan3D{Eigen::Vector3f::Zero(), point_cloud_, {}},
         &probability_grid_);
     {
       auto parameter_dictionary = common::MakeDictionary(

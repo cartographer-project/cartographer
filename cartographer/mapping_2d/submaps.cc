@@ -114,7 +114,7 @@ Submaps::Submaps(const proto::SubmapsOptions& options)
   AddSubmap(Eigen::Vector2f::Zero());
 }
 
-void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan) {
+void Submaps::InsertLaserFan(const sensor::LaserFan3D& laser_fan) {
   CHECK_LT(num_laser_fans_, std::numeric_limits<int>::max());
   ++num_laser_fans_;
   for (const int index : insertion_indices()) {
@@ -125,7 +125,7 @@ void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan) {
   }
   ++num_laser_fans_in_last_submap_;
   if (num_laser_fans_in_last_submap_ == options_.num_laser_fans()) {
-    AddSubmap(laser_fan.origin);
+    AddSubmap(laser_fan.origin.head<2>());
   }
 }
 

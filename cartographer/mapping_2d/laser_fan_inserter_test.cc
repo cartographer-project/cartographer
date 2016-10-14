@@ -44,11 +44,11 @@ class LaserFanInserterTest : public ::testing::Test {
   }
 
   void InsertPointCloud() {
-    sensor::LaserFan laser_fan;
-    laser_fan.point_cloud.emplace_back(-3.5, 0.5);
-    laser_fan.point_cloud.emplace_back(-2.5, 1.5);
-    laser_fan.point_cloud.emplace_back(-1.5, 2.5);
-    laser_fan.point_cloud.emplace_back(-0.5, 3.5);
+    sensor::LaserFan3D laser_fan;
+    laser_fan.returns.emplace_back(-3.5, 0.5, 0.f);
+    laser_fan.returns.emplace_back(-2.5, 1.5, 0.f);
+    laser_fan.returns.emplace_back(-1.5, 2.5, 0.f);
+    laser_fan.returns.emplace_back(-0.5, 3.5, 0.f);
     laser_fan.origin.x() = -0.5;
     laser_fan.origin.y() = 0.5;
     probability_grid_.StartUpdate();

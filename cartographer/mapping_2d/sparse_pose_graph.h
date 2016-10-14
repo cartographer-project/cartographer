@@ -70,7 +70,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // by scan matching against the 'matching_submap' and the scan was inserted
   // into the 'insertion_submaps'.
   void AddScan(common::Time time, const transform::Rigid3d& tracking_to_pose,
-               const sensor::LaserFan& laser_fan_in_pose,
+               const sensor::LaserFan3D& laser_fan_in_pose,
                const transform::Rigid2d& pose,
                const kalman_filter::Pose2DCovariance& pose_covariance,
                const mapping::Submaps* submaps,
