@@ -114,6 +114,8 @@ def ExtractUses(project_name, source):
       uses.add("USES_ROS")
     if re.match(r'^#include ["<]yaml-cpp/', line):
       uses.add("USES_YAMLCPP")
+    if re.match(r'^#include ["<]cairo/', line):
+      uses.add("USES_CAIRO")
     if project_name != "cartographer":
       if re.match(r'^#include ["<]cartographer/', line):
         uses.add("USES_CARTOGRAPHER")

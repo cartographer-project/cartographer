@@ -24,6 +24,7 @@ macro(_parse_arguments ARGS)
     USES_GLOG
     USES_LUA
     USES_WEBP
+    USES_CAIRO
   )
 
   # Options only used by projects using Cartographers cmake files.
@@ -104,6 +105,12 @@ macro(_common_compile_stuff VISIBILITY)
 
   if(ARG_USES_YAMLCPP)
     target_link_libraries("${NAME}" yaml-cpp)
+  endif()
+
+  if(ARG_USES_CAIRO)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${CAIRO_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${CAIRO_LIBRARIES})
   endif()
 
   set_target_properties(${NAME} PROPERTIES

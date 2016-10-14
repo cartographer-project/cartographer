@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_subdirectory("common")
+add_subdirectory("io")
 add_subdirectory("kalman_filter")
 add_subdirectory("mapping")
 add_subdirectory("mapping_2d")
