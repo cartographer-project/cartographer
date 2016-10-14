@@ -30,8 +30,7 @@ namespace io {
 // combined into a movie.
 class XRayPointsProcessor : public PointsProcessor {
  public:
-  XRayPointsProcessor(const double voxel_size,
-                      const transform::Rigid3f& transform,
+  XRayPointsProcessor(double voxel_size, const transform::Rigid3f& transform,
                       const string& output_filename, PointsProcessor* next);
 
   ~XRayPointsProcessor() override {}

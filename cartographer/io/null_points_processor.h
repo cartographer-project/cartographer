@@ -17,8 +17,6 @@
 #ifndef CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
 #define CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
 
-#include <cstdint>
-
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
@@ -30,8 +28,8 @@ class NullPointsProcessor : public PointsProcessor {
   NullPointsProcessor() {}
   ~NullPointsProcessor() override {}
 
-  void Process(const PointsBatch& points_batch) override;
-  void Flush() override;
+  void Process(const PointsBatch& points_batch) override {}
+  void Flush() override {}
 };
 
 }  // namespace io

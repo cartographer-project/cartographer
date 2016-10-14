@@ -5,8 +5,6 @@ google_library(io_cairo_types
 )
 
 google_library(io_null_points_processor
-  SRCS
-    null_points_processor.cc
   HDRS
     null_points_processor.h
   DEPENDS

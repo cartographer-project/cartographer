@@ -17,8 +17,6 @@
 #ifndef CARTOGRAPHER_IO_POINTS_PROCESSOR_H_
 #define CARTOGRAPHER_IO_POINTS_PROCESSOR_H_
 
-#include <cstdint>
-
 #include "cartographer/io/points_batch.h"
 
 namespace cartographer {
@@ -30,11 +28,10 @@ namespace io {
 class PointsProcessor {
  public:
   PointsProcessor() {}
+  virtual ~PointsProcessor() {}
 
   PointsProcessor(const PointsProcessor&) = delete;
   PointsProcessor& operator=(const PointsProcessor&) = delete;
-
-  virtual ~PointsProcessor() {}
 
   virtual void Process(const PointsBatch& points_batch) = 0;
   virtual void Flush() = 0;

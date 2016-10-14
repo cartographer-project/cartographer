@@ -11,16 +11,16 @@ namespace cairo {
 
 // std::unique_ptr for Cairo surfaces. The surface is destroyed when the
 // std::unique_ptr is reset or destroyed.
-typedef std::unique_ptr<cairo_surface_t, void (*)(cairo_surface_t*)>
-    UniqueSurfacePtr;
+using UniqueSurfacePtr =
+    std::unique_ptr<cairo_surface_t, void (*)(cairo_surface_t*)>;
 
 // std::unique_ptr for Cairo contexts. The context is destroyed when the
 // std::unique_ptr is reset or destroyed.
-typedef std::unique_ptr<cairo_t, void (*)(cairo_t*)> UniqueContextPtr;
+using UniqueContextPtr = std::unique_ptr<cairo_t, void (*)(cairo_t*)>;
 
 // std::unique_ptr for Cairo paths. The path is destroyed when the
 // std::unique_ptr is reset or destroyed.
-typedef std::unique_ptr<cairo_path_t, void (*)(cairo_path_t*)> UniquePathPtr;
+using UniquePathPtr = std::unique_ptr<cairo_path_t, void (*)(cairo_path_t*)>;
 
 }  // namespace cairo
 }  // namespace io
