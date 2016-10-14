@@ -51,7 +51,7 @@ LaserFanInserter::LaserFanInserter(
       miss_table_(mapping::ComputeLookupTableToApplyOdds(
           mapping::Odds(options.miss_probability()))) {}
 
-void LaserFanInserter::Insert(const sensor::LaserFan3D& laser_fan,
+void LaserFanInserter::Insert(const sensor::LaserFan& laser_fan,
                               ProbabilityGrid* const probability_grid) const {
   CHECK_NOTNULL(probability_grid)->StartUpdate();
 

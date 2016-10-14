@@ -35,10 +35,10 @@ struct TrajectoryNode {
     common::Time time;
 
     // LaserFan in 'pose' frame. Only used in the 2D case.
-    sensor::LaserFan3D laser_fan_2d;
+    sensor::LaserFan laser_fan_2d;
 
     // LaserFan in 'pose' frame. Only used in the 3D case.
-    sensor::CompressedLaserFan3D laser_fan_3d;
+    sensor::CompressedLaserFan laser_fan_3d;
 
     // Trajectory this node belongs to.
     // TODO(jmason): The naming here is confusing because 'trajectory' doesn't

@@ -43,13 +43,13 @@ class GlobalTrajectoryBuilder
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
   void AddLaserFan3D(common::Time time,
-                     const sensor::LaserFan3D& laser_fan) override;
+                     const sensor::LaserFan& laser_fan) override;
   void AddOdometerPose(
       common::Time time, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) override;
   const PoseEstimate& pose_estimate() const override;
 
-  void AddHorizontalLaserFan(common::Time, const sensor::LaserFan3D&) override {
+  void AddHorizontalLaserFan(common::Time, const sensor::LaserFan&) override {
     LOG(FATAL) << "Not implemented.";
   }
 

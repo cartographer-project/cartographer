@@ -157,10 +157,10 @@ class SparsePoseGraphTest : public ::testing::Test {
     for (int insertion_index : submaps_->insertion_indices()) {
       insertion_submaps.push_back(submaps_->Get(insertion_index));
     }
-    const sensor::LaserFan3D laser_fan{
+    const sensor::LaserFan laser_fan{
         Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
-    submaps_->InsertLaserFan(TransformLaserFan3D(
+    submaps_->InsertLaserFan(TransformLaserFan(
         laser_fan, transform::Embed3D(pose_estimate.cast<float>())));
     sparse_pose_graph_->AddScan(common::FromUniversal(0),
                                 transform::Rigid3d::Identity(), laser_fan,

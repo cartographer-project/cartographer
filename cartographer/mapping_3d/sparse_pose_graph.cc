@@ -83,7 +83,7 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
 }
 
 int SparsePoseGraph::AddScan(
-    common::Time time, const sensor::LaserFan3D& laser_fan_in_tracking,
+    common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
     const transform::Rigid3d& pose,
     const kalman_filter::PoseCovariance& covariance, const Submaps* submaps,
     const Submap* const matching_submap,
@@ -96,7 +96,7 @@ int SparsePoseGraph::AddScan(
   CHECK_LT(j, std::numeric_limits<int>::max());
 
   constant_node_data_->push_back(mapping::TrajectoryNode::ConstantData{
-      time, sensor::LaserFan3D{Eigen::Vector3f::Zero(), {}, {}},
+      time, sensor::LaserFan{Eigen::Vector3f::Zero(), {}, {}},
       sensor::Compress(laser_fan_in_tracking), submaps,
       transform::Rigid3d::Identity()});
   trajectory_nodes_.push_back(

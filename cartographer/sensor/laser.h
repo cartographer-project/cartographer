@@ -29,7 +29,7 @@ namespace sensor {
 // where laser returns were detected. 'misses' are points in the direction of
 // rays for which no return was detected, and were inserted at a configured
 // distance. It is assumed that between the 'origin' and 'misses' is free space.
-struct LaserFan3D {
+struct LaserFan {
   Eigen::Vector3f origin;
   PointCloud returns;
   PointCloud misses;
@@ -42,30 +42,29 @@ struct LaserFan3D {
 // the range ['min_range', 'max_range']. Beams beyond 'max_range' are inserted
 // into the 'misses' point cloud with length 'missing_echo_ray_length'. The
 // points in both clouds are stored in scan order.
-LaserFan3D ToLaserFan3D(const proto::LaserScan& proto, float min_range,
-                        float max_range, float missing_echo_ray_length);
+LaserFan ToLaserFan(const proto::LaserScan& proto, float min_range,
+                    float max_range, float missing_echo_ray_length);
 
-// Converts 3D 'laser_fan' to a proto::LaserFan3D.
-proto::LaserFan3D ToProto(const LaserFan3D& laser_fan);
+// Converts 3D 'laser_fan' to a proto::LaserFan.
+proto::LaserFan ToProto(const LaserFan& laser_fan);
 
-// Converts 'proto' to a LaserFan3D.
-LaserFan3D FromProto(const proto::LaserFan3D& proto);
+// Converts 'proto' to a LaserFan.
+LaserFan FromProto(const proto::LaserFan& proto);
 
-LaserFan3D TransformLaserFan3D(const LaserFan3D& laser_fan,
-                               const transform::Rigid3f& transform);
+LaserFan TransformLaserFan(const LaserFan& laser_fan,
+                           const transform::Rigid3f& transform);
 
 // Filter a 'laser_fan', retaining only the returns that have no more than
 // 'max_range' distance from the laser origin. Removes misses and reflectivity
 // information.
-LaserFan3D FilterLaserFanByMaxRange(const LaserFan3D& laser_fan,
-                                    float max_range);
+LaserFan FilterLaserFanByMaxRange(const LaserFan& laser_fan, float max_range);
 
 // Crops 'laser_fan' according to the region defined by 'min_z' and 'max_z'.
-LaserFan3D CropLaserFan(const LaserFan3D& laser_fan, float min_z, float max_z);
+LaserFan CropLaserFan(const LaserFan& laser_fan, float min_z, float max_z);
 
-// Like LaserFan3D but with compressed point clouds. The point order changes
-// when converting from LaserFan3D.
-struct CompressedLaserFan3D {
+// Like LaserFan but with compressed point clouds. The point order changes
+// when converting from LaserFan.
+struct CompressedLaserFan {
   Eigen::Vector3f origin;
   CompressedPointCloud returns;
   CompressedPointCloud misses;
@@ -74,9 +73,9 @@ struct CompressedLaserFan3D {
   std::vector<uint8> reflectivities;
 };
 
-CompressedLaserFan3D Compress(const LaserFan3D& laser_fan);
+CompressedLaserFan Compress(const LaserFan& laser_fan);
 
-LaserFan3D Decompress(const CompressedLaserFan3D& compressed_laser_fan);
+LaserFan Decompress(const CompressedLaserFan& compressed_laser_fan);
 
 }  // namespace sensor
 }  // namespace cartographer

@@ -30,7 +30,7 @@ namespace mapping_2d {
 
 // For each ray in 'laser_fan', calls 'hit_visitor' and 'miss_visitor' on the
 // appropriate cells. Hits are handled before misses.
-void CastRays(const sensor::LaserFan3D& laser_fan, const MapLimits& limits,
+void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
               const std::function<void(const Eigen::Array2i&)>& hit_visitor,
               const std::function<void(const Eigen::Array2i&)>& miss_visitor);
 

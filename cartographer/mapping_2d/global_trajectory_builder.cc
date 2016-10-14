@@ -41,7 +41,7 @@ kalman_filter::PoseTracker* GlobalTrajectoryBuilder::pose_tracker() const {
 }
 
 void GlobalTrajectoryBuilder::AddHorizontalLaserFan(
-    const common::Time time, const sensor::LaserFan3D& laser_fan) {
+    const common::Time time, const sensor::LaserFan& laser_fan) {
   std::unique_ptr<LocalTrajectoryBuilder::InsertionResult> insertion_result =
       local_trajectory_builder_.AddHorizontalLaserFan(time, laser_fan);
   if (insertion_result != nullptr) {

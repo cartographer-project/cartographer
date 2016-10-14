@@ -134,7 +134,7 @@ void OptimizingLocalTrajectoryBuilder::AddOdometerPose(
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
 OptimizingLocalTrajectoryBuilder::AddLaserFan3D(
-    const common::Time time, const sensor::LaserFan3D& laser_fan_in_tracking) {
+    const common::Time time, const sensor::LaserFan& laser_fan_in_tracking) {
   CHECK_GT(laser_fan_in_tracking.returns.size(), 0);
 
   // TODO(hrapp): Handle misses.
@@ -335,7 +335,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   num_accumulated_ = 0;
 
   const transform::Rigid3d optimized_pose = batches_.back().state.ToRigid();
-  sensor::LaserFan3D accumulated_laser_fan_in_tracking = {
+  sensor::LaserFan accumulated_laser_fan_in_tracking = {
       Eigen::Vector3f::Zero(), {}, {}};
 
   for (const auto& batch : batches_) {
@@ -346,15 +346,15 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     }
   }
 
-  return AddAccumulatedLaserFan3D(time, optimized_pose,
-                                  accumulated_laser_fan_in_tracking);
+  return AddAccumulatedLaserFan(time, optimized_pose,
+                                accumulated_laser_fan_in_tracking);
 }
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
-OptimizingLocalTrajectoryBuilder::AddAccumulatedLaserFan3D(
+OptimizingLocalTrajectoryBuilder::AddAccumulatedLaserFan(
     const common::Time time, const transform::Rigid3d& optimized_pose,
-    const sensor::LaserFan3D& laser_fan_in_tracking) {
-  const sensor::LaserFan3D filtered_laser_fan = {
+    const sensor::LaserFan& laser_fan_in_tracking) {
+  const sensor::LaserFan filtered_laser_fan = {
       laser_fan_in_tracking.origin,
       sensor::VoxelFiltered(laser_fan_in_tracking.returns,
                             options_.laser_voxel_filter_size()),
@@ -393,7 +393,7 @@ void OptimizingLocalTrajectoryBuilder::AddTrajectoryNodeIndex(
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
 OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
-    const common::Time time, const sensor::LaserFan3D& laser_fan_in_tracking,
+    const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
     const transform::Rigid3d& pose_observation,
     const kalman_filter::PoseCovariance& covariance_estimate) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
@@ -405,7 +405,7 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
   for (int insertion_index : submaps_->insertion_indices()) {
     insertion_submaps.push_back(submaps_->Get(insertion_index));
   }
-  submaps_->InsertLaserFan(sensor::TransformLaserFan3D(
+  submaps_->InsertLaserFan(sensor::TransformLaserFan(
       laser_fan_in_tracking, pose_observation.cast<float>()));
   return std::unique_ptr<InsertionResult>(new InsertionResult{
       time, laser_fan_in_tracking, pose_observation, covariance_estimate,

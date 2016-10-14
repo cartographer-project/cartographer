@@ -36,7 +36,7 @@ namespace cartographer {
 namespace mapping_3d {
 
 void InsertIntoProbabilityGrid(
-    const sensor::LaserFan3D& laser_fan_3d, const transform::Rigid3f& pose,
+    const sensor::LaserFan& laser_fan, const transform::Rigid3f& pose,
     const float slice_z, const mapping_2d::LaserFanInserter& laser_fan_inserter,
     mapping_2d::ProbabilityGrid* result);
 
@@ -69,7 +69,7 @@ class Submaps : public mapping::Submaps {
       mapping::proto::SubmapQuery::Response* response) override;
 
   // Inserts 'laser_fan' into the Submap collection.
-  void InsertLaserFan(const sensor::LaserFan3D& laser_fan);
+  void InsertLaserFan(const sensor::LaserFan& laser_fan);
 
   // Returns the 'high_resolution' HybridGrid to be used for matching.
   const HybridGrid& high_resolution_matching_grid() const;

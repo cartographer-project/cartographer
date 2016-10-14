@@ -44,7 +44,7 @@ class LaserFanInserterTest : public ::testing::Test {
   }
 
   void InsertPointCloud() {
-    sensor::LaserFan3D laser_fan;
+    sensor::LaserFan laser_fan;
     laser_fan.returns.emplace_back(-3.5, 0.5, 0.f);
     laser_fan.returns.emplace_back(-2.5, 1.5, 0.f);
     laser_fan.returns.emplace_back(-1.5, 2.5, 0.f);

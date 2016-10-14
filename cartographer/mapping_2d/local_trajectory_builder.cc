@@ -78,13 +78,13 @@ kalman_filter::PoseTracker* LocalTrajectoryBuilder::pose_tracker() const {
   return pose_tracker_.get();
 }
 
-sensor::LaserFan3D LocalTrajectoryBuilder::BuildCroppedLaserFan(
+sensor::LaserFan LocalTrajectoryBuilder::BuildCroppedLaserFan(
     const transform::Rigid3f& tracking_to_tracking_2d,
-    const sensor::LaserFan3D& laser_fan) const {
-  const sensor::LaserFan3D cropped_fan = sensor::CropLaserFan(
-      sensor::TransformLaserFan3D(laser_fan, tracking_to_tracking_2d),
+    const sensor::LaserFan& laser_fan) const {
+  const sensor::LaserFan cropped_fan = sensor::CropLaserFan(
+      sensor::TransformLaserFan(laser_fan, tracking_to_tracking_2d),
       options_.horizontal_laser_min_z(), options_.horizontal_laser_max_z());
-  return sensor::LaserFan3D{
+  return sensor::LaserFan{
       cropped_fan.origin,
       sensor::VoxelFiltered(cropped_fan.returns,
                             options_.horizontal_laser_voxel_filter_size()),
@@ -95,7 +95,7 @@ sensor::LaserFan3D LocalTrajectoryBuilder::BuildCroppedLaserFan(
 void LocalTrajectoryBuilder::ScanMatch(
     common::Time time, const transform::Rigid3d& pose_prediction,
     const transform::Rigid3d& tracking_to_tracking_2d,
-    const sensor::LaserFan3D& laser_fan_in_tracking_2d,
+    const sensor::LaserFan& laser_fan_in_tracking_2d,
     transform::Rigid3d* pose_observation,
     kalman_filter::PoseCovariance* covariance_observation) {
   const ProbabilityGrid& probability_grid =
@@ -140,7 +140,7 @@ void LocalTrajectoryBuilder::ScanMatch(
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddHorizontalLaserFan(
-    const common::Time time, const sensor::LaserFan3D& laser_fan) {
+    const common::Time time, const sensor::LaserFan& laser_fan) {
   // Initialize pose tracker now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
     InitializePoseTracker(time);
@@ -165,7 +165,7 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
               -transform::GetYaw(pose_prediction), Eigen::Vector3d::UnitZ())) *
           pose_prediction.rotation());
 
-  const sensor::LaserFan3D laser_fan_in_tracking_2d =
+  const sensor::LaserFan laser_fan_in_tracking_2d =
       BuildCroppedLaserFan(tracking_to_tracking_2d.cast<float>(), laser_fan);
 
   if (laser_fan_in_tracking_2d.returns.empty()) {
@@ -212,8 +212,8 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
   for (int insertion_index : submaps_.insertion_indices()) {
     insertion_submaps.push_back(submaps_.Get(insertion_index));
   }
-  submaps_.InsertLaserFan(TransformLaserFan3D(
-      laser_fan_in_tracking_2d, tracking_2d_to_map.cast<float>()));
+  submaps_.InsertLaserFan(TransformLaserFan(laser_fan_in_tracking_2d,
+                                            tracking_2d_to_map.cast<float>()));
 
   return common::make_unique<InsertionResult>(InsertionResult{
       time, &submaps_, matching_submap, insertion_submaps,
