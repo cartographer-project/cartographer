@@ -150,7 +150,7 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
         MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
     probability_grid.StartUpdate();
     laser_fan_inserter.Insert(
-        sensor::LaserFan3D{
+        sensor::LaserFan{
             Eigen::Vector3f(expected_pose.translation().x(),
                             expected_pose.translation().y(), 0.f),
             sensor::TransformPointCloud(
@@ -203,7 +203,7 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
         MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
     probability_grid.StartUpdate();
     laser_fan_inserter.Insert(
-        sensor::LaserFan3D{
+        sensor::LaserFan{
             transform::Embed3D(expected_pose * perturbation).translation(),
             sensor::TransformPointCloud(point_cloud,
                                         transform::Embed3D(expected_pose)),

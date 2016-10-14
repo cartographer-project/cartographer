@@ -36,8 +36,7 @@ class LaserFanInserter {
   LaserFanInserter& operator=(const LaserFanInserter&) = delete;
 
   // Inserts 'laser_fan' into 'hybrid_grid'.
-  void Insert(const sensor::LaserFan3D& laser_fan,
-              HybridGrid* hybrid_grid) const;
+  void Insert(const sensor::LaserFan& laser_fan, HybridGrid* hybrid_grid) const;
 
  private:
   const proto::LaserFanInserterOptions options_;

@@ -64,7 +64,7 @@ class Submaps : public mapping::Submaps {
       mapping::proto::SubmapQuery::Response* response) override;
 
   // Inserts 'laser_fan' into the Submap collection.
-  void InsertLaserFan(const sensor::LaserFan3D& laser_fan);
+  void InsertLaserFan(const sensor::LaserFan& laser_fan);
 
  private:
   void FinishSubmap(int index);

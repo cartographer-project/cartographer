@@ -102,14 +102,14 @@ class MapLimits {
     for (const auto& node : trajectory_nodes) {
       const auto& data = *node.constant_data;
       if (!data.laser_fan_3d.returns.empty()) {
-        const sensor::LaserFan3D laser_fan = sensor::TransformLaserFan3D(
+        const sensor::LaserFan laser_fan = sensor::TransformLaserFan(
             Decompress(data.laser_fan_3d), node.pose.cast<float>());
         bounding_box.extend(laser_fan.origin.head<2>());
         for (const Eigen::Vector3f& hit : laser_fan.returns) {
           bounding_box.extend(hit.head<2>());
         }
       } else {
-        const sensor::LaserFan3D laser_fan = sensor::TransformLaserFan3D(
+        const sensor::LaserFan laser_fan = sensor::TransformLaserFan(
             data.laser_fan_2d, node.pose.cast<float>());
         bounding_box.extend(laser_fan.origin.head<2>());
         for (const Eigen::Vector3f& hit : laser_fan.returns) {

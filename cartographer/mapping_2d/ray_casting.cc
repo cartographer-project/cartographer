@@ -147,7 +147,7 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 
 }  // namespace
 
-void CastRays(const sensor::LaserFan3D& laser_fan, const MapLimits& limits,
+void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
               const std::function<void(const Eigen::Array2i&)>& hit_visitor,
               const std::function<void(const Eigen::Array2i&)>& miss_visitor) {
   const double superscaled_resolution = limits.resolution() / kSubpixelScale;

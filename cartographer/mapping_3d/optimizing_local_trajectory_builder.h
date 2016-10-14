@@ -54,7 +54,7 @@ class OptimizingLocalTrajectoryBuilder
                   const Eigen::Vector3d& angular_velocity) override;
   std::unique_ptr<InsertionResult> AddLaserFan3D(
       common::Time time,
-      const sensor::LaserFan3D& laser_fan_in_tracking) override;
+      const sensor::LaserFan& laser_fan_in_tracking) override;
 
   void AddOdometerPose(
       const common::Time time, const transform::Rigid3d& pose,
@@ -106,12 +106,12 @@ class OptimizingLocalTrajectoryBuilder
 
   void RemoveObsoleteSensorData();
 
-  std::unique_ptr<InsertionResult> AddAccumulatedLaserFan3D(
+  std::unique_ptr<InsertionResult> AddAccumulatedLaserFan(
       common::Time time, const transform::Rigid3d& pose_observation,
-      const sensor::LaserFan3D& laser_fan_in_tracking);
+      const sensor::LaserFan& laser_fan_in_tracking);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
-      const common::Time time, const sensor::LaserFan3D& laser_fan_in_tracking,
+      const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
       const transform::Rigid3d& pose_observation,
       const kalman_filter::PoseCovariance& covariance_estimate);
 

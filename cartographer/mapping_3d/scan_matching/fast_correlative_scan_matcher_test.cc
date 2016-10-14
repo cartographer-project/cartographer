@@ -89,12 +89,11 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
     HybridGrid hybrid_grid(0.05f /* resolution */,
                            Eigen::Vector3f(0.5f, 1.5f, 2.5f) /* origin */);
     hybrid_grid.StartUpdate();
-    laser_fan_inserter.Insert(
-        sensor::LaserFan3D{
-            expected_pose.translation(),
-            sensor::TransformPointCloud(point_cloud, expected_pose),
-            {}},
-        &hybrid_grid);
+    laser_fan_inserter.Insert(sensor::LaserFan{expected_pose.translation(),
+                                               sensor::TransformPointCloud(
+                                                   point_cloud, expected_pose),
+                                               {}},
+                              &hybrid_grid);
 
     FastCorrelativeScanMatcher fast_correlative_scan_matcher(hybrid_grid, {},
                                                              options);

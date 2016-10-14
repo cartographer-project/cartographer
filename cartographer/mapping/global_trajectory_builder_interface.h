@@ -78,13 +78,13 @@ class GlobalTrajectoryBuilderInterface {
   virtual kalman_filter::PoseTracker* pose_tracker() const = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
-  virtual void AddHorizontalLaserFan(common::Time,
-                                     const sensor::LaserFan3D& laser_fan) = 0;
+  virtual void AddHorizontalLaserFan(common::Time time,
+                                     const sensor::LaserFan& laser_fan) = 0;
   virtual void AddImuData(common::Time time,
                           const Eigen::Vector3d& linear_acceleration,
                           const Eigen::Vector3d& angular_velocity) = 0;
   virtual void AddLaserFan3D(common::Time time,
-                             const sensor::LaserFan3D& laser_fan) = 0;
+                             const sensor::LaserFan& laser_fan) = 0;
   virtual void AddOdometerPose(
       common::Time time, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) = 0;
