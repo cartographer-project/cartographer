@@ -91,18 +91,6 @@ google_library(mapping_probability_values
     common_port
 )
 
-google_library(mapping_sensor_collator
-  USES_EIGEN
-  USES_GLOG
-  HDRS
-    sensor_collator.h
-  DEPENDS
-    common_make_unique
-    common_ordered_multi_queue
-    common_time
-    sensor_sensor_packet_period_histogram_builder
-)
-
 google_library(mapping_sparse_pose_graph
   USES_GLOG
   SRCS
@@ -164,17 +152,6 @@ google_test(mapping_probability_values_test
     probability_values_test.cc
   DEPENDS
     mapping_probability_values
-)
-
-google_test(mapping_sensor_collator_test
-  SRCS
-    sensor_collator_test.cc
-  DEPENDS
-    common_lua_parameter_dictionary_test_helpers
-    common_make_unique
-    common_time
-    mapping_sensor_collator
-    sensor_proto_sensor
 )
 
 google_test(mapping_sparse_pose_graph_test

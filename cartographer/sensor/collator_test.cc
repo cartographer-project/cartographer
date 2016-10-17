@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/sensor_collator.h"
+#include "cartographer/sensor/collator.h"
 
 #include <memory>
 
@@ -25,14 +25,14 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping {
+namespace sensor {
 namespace {
 
 struct TestData {
   string frame_id;
 };
 
-TEST(SensorCollator, Ordering) {
+TEST(Collator, Ordering) {
   TestData first{"horizontal_laser"};
   TestData second{"vertical_laser"};
   TestData third{"imu"};
@@ -43,25 +43,25 @@ TEST(SensorCollator, Ordering) {
   const std::unordered_set<string> frame_ids = {
       "horizontal_laser", "vertical_laser", "imu", "something"};
   std::vector<std::pair<int64, TestData>> received;
-  SensorCollator<TestData> sensor_collator;
-  sensor_collator.AddTrajectory(
+  Collator<TestData> collator;
+  collator.AddTrajectory(
       0, frame_ids,
       [&received](const int64 timestamp, std::unique_ptr<TestData> packet) {
         received.push_back(std::make_pair(timestamp, *packet));
       });
 
-  sensor_collator.AddSensorData(0, 100, first.frame_id,
-                                common::make_unique<TestData>(first));
-  sensor_collator.AddSensorData(0, 600, sixth.frame_id,
-                                common::make_unique<TestData>(sixth));
-  sensor_collator.AddSensorData(0, 400, fourth.frame_id,
-                                common::make_unique<TestData>(fourth));
-  sensor_collator.AddSensorData(0, 200, second.frame_id,
-                                common::make_unique<TestData>(second));
-  sensor_collator.AddSensorData(0, 500, fifth.frame_id,
-                                common::make_unique<TestData>(fifth));
-  sensor_collator.AddSensorData(0, 300, third.frame_id,
-                                common::make_unique<TestData>(third));
+  collator.AddSensorData(0, 100, first.frame_id,
+                         common::make_unique<TestData>(first));
+  collator.AddSensorData(0, 600, sixth.frame_id,
+                         common::make_unique<TestData>(sixth));
+  collator.AddSensorData(0, 400, fourth.frame_id,
+                         common::make_unique<TestData>(fourth));
+  collator.AddSensorData(0, 200, second.frame_id,
+                         common::make_unique<TestData>(second));
+  collator.AddSensorData(0, 500, fifth.frame_id,
+                         common::make_unique<TestData>(fifth));
+  collator.AddSensorData(0, 300, third.frame_id,
+                         common::make_unique<TestData>(third));
 
   EXPECT_EQ(3, received.size());
   EXPECT_EQ(100, received[0].first);
@@ -71,7 +71,7 @@ TEST(SensorCollator, Ordering) {
   EXPECT_EQ(300, received[2].first);
   EXPECT_EQ("imu", received[2].second.frame_id);
 
-  sensor_collator.Flush();
+  collator.Flush();
 
   ASSERT_EQ(6, received.size());
   EXPECT_EQ("horizontal_laser", received[3].second.frame_id);
@@ -82,5 +82,5 @@ TEST(SensorCollator, Ordering) {
 }
 
 }  // namespace
-}  // namespace mapping
+}  // namespace sensor
 }  // namespace cartographer
