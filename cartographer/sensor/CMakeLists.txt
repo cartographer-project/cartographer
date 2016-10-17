@@ -23,6 +23,7 @@ google_library(sensor_collator
     common_make_unique
     common_ordered_multi_queue
     common_time
+    sensor_data
     sensor_sensor_packet_period_histogram_builder
 )
 
