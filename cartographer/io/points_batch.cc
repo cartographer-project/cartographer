@@ -19,15 +19,14 @@
 namespace cartographer {
 namespace io {
 
-PointsBatch RemovePoints(PointsBatch batch, std::vector<int> to_remove) {
+void RemovePoints(std::vector<int> to_remove, PointsBatch* batch) {
   std::sort(to_remove.begin(), to_remove.end(), std::greater<int>());
   for (const int index : to_remove) {
-    batch.points.erase(batch.points.begin() + index);
-    if (!batch.colors.empty()) {
-      batch.colors.erase(batch.colors.begin() + index);
+    batch->points.erase(batch->points.begin() + index);
+    if (!batch->colors.empty()) {
+      batch->colors.erase(batch->colors.begin() + index);
     }
   }
-  return batch;
 }
 
 }  // namespace io

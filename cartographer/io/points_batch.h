@@ -55,8 +55,8 @@ struct PointsBatch {
   std::vector<Color> colors;
 };
 
-// Returns a modified batch with the points in 'to_remove' removed from it.
-PointsBatch RemovePoints(PointsBatch batch, std::vector<int> to_remove);
+// Removes the indices in 'to_remove' from 'batch'.
+void RemovePoints(std::vector<int> to_remove, PointsBatch* batch);
 
 }  // namespace io
 }  // namespace cartographer
