@@ -28,6 +28,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/ordered_multi_queue.h"
 #include "cartographer/common/time.h"
+#include "cartographer/sensor/data.h"
 #include "cartographer/sensor/sensor_packet_period_histogram_builder.h"
 #include "glog/logging.h"
 
@@ -49,10 +50,9 @@ inline std::ostream& operator<<(std::ostream& out,
   return out << '(' << key.trajectory_id << ", " << key.sensor_id << ')';
 }
 
-template <typename SensorDataType>
 class Collator {
  public:
-  using Callback = std::function<void(int64, std::unique_ptr<SensorDataType>)>;
+  using Callback = std::function<void(int64, std::unique_ptr<Data>)>;
 
   Collator() {}
 
@@ -85,7 +85,7 @@ class Collator {
   // added in time order.
   void AddSensorData(const int trajectory_id, const int64 timestamp,
                      const string& sensor_id,
-                     std::unique_ptr<SensorDataType> sensor_data) {
+                     std::unique_ptr<Data> sensor_data) {
     sensor_packet_period_histogram_builder_.Add(trajectory_id, timestamp,
                                                 sensor_id);
     queue_.Add(
@@ -113,7 +113,7 @@ class Collator {
  private:
   struct Value {
     int64 timestamp;
-    std::unique_ptr<SensorDataType> sensor_data;
+    std::unique_ptr<Data> sensor_data;
   };
 
   // Queue keys are a pair of trajectory ID and sensor identifier.

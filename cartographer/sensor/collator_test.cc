@@ -28,40 +28,36 @@ namespace cartographer {
 namespace sensor {
 namespace {
 
-struct TestData {
-  string frame_id;
-};
-
 TEST(Collator, Ordering) {
-  TestData first{"horizontal_laser"};
-  TestData second{"vertical_laser"};
-  TestData third{"imu"};
-  TestData fourth{"horizontal_laser"};
-  TestData fifth{"vertical_laser"};
-  TestData sixth{"something"};
+  Data first("horizontal_laser", sensor::LaserFan{});
+  Data second("vertical_laser", sensor::LaserFan{});
+  Data third("imu", Data::Imu{});
+  Data fourth("horizontal_laser", sensor::LaserFan{});
+  Data fifth("vertical_laser", sensor::LaserFan{});
+  Data sixth("odometry", Data::Odometry{});
 
   const std::unordered_set<string> frame_ids = {
-      "horizontal_laser", "vertical_laser", "imu", "something"};
-  std::vector<std::pair<int64, TestData>> received;
-  Collator<TestData> collator;
+      "horizontal_laser", "vertical_laser", "imu", "odometry"};
+  std::vector<std::pair<int64, Data>> received;
+  Collator collator;
   collator.AddTrajectory(
       0, frame_ids,
-      [&received](const int64 timestamp, std::unique_ptr<TestData> packet) {
+      [&received](const int64 timestamp, std::unique_ptr<Data> packet) {
         received.push_back(std::make_pair(timestamp, *packet));
       });
 
   collator.AddSensorData(0, 100, first.frame_id,
-                         common::make_unique<TestData>(first));
+                         common::make_unique<Data>(first));
   collator.AddSensorData(0, 600, sixth.frame_id,
-                         common::make_unique<TestData>(sixth));
+                         common::make_unique<Data>(sixth));
   collator.AddSensorData(0, 400, fourth.frame_id,
-                         common::make_unique<TestData>(fourth));
+                         common::make_unique<Data>(fourth));
   collator.AddSensorData(0, 200, second.frame_id,
-                         common::make_unique<TestData>(second));
+                         common::make_unique<Data>(second));
   collator.AddSensorData(0, 500, fifth.frame_id,
-                         common::make_unique<TestData>(fifth));
+                         common::make_unique<Data>(fifth));
   collator.AddSensorData(0, 300, third.frame_id,
-                         common::make_unique<TestData>(third));
+                         common::make_unique<Data>(third));
 
   EXPECT_EQ(3, received.size());
   EXPECT_EQ(100, received[0].first);
@@ -78,7 +74,7 @@ TEST(Collator, Ordering) {
   EXPECT_EQ(500, received[4].first);
   EXPECT_EQ("vertical_laser", received[4].second.frame_id);
   EXPECT_EQ(600, received[5].first);
-  EXPECT_EQ("something", received[5].second.frame_id);
+  EXPECT_EQ("odometry", received[5].second.frame_id);
 }
 
 }  // namespace
