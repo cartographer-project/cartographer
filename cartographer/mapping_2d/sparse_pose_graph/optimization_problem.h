@@ -38,52 +38,6 @@ class OptimizationProblem {
  public:
   using Constraint = mapping::SparsePoseGraph::Constraint2D;
 
-  class SpaCostFunction {
-   public:
-    explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
-
-    // Computes the error in the proposed change to the scan-to-submap alignment
-    // 'zbar_ij' where submap pose 'c_i' and scan pose 'c_j' are both in an
-    // arbitrary common frame.
-    template <typename T>
-    static std::array<T, 3> ComputeUnscaledError(
-        const transform::Rigid2d& zbar_ij, const T* const c_i,
-        const T* const c_j) {
-      const T cos_theta_i = cos(c_i[2]);
-      const T sin_theta_i = sin(c_i[2]);
-      const T delta_x = c_j[0] - c_i[0];
-      const T delta_y = c_j[1] - c_i[1];
-      const T h[3] = {cos_theta_i * delta_x + sin_theta_i * delta_y,
-                      -sin_theta_i * delta_x + cos_theta_i * delta_y,
-                      c_j[2] - c_i[2]};
-      return {{T(zbar_ij.translation().x()) - h[0],
-               T(zbar_ij.translation().y()) - h[1],
-               common::NormalizeAngleDifference(T(zbar_ij.rotation().angle()) -
-                                                h[2])}};
-    }
-
-    // Scales the result of ComputeUnscaledError scaled by 'sqrt_Lambda_ij' and
-    // stores it in 'e'.
-    template <typename T>
-    static void ComputeScaledError(const Constraint::Pose& pose,
-                                   const T* const c_i, const T* const c_j,
-                                   T* const e) {
-      std::array<T, 3> e_ij = ComputeUnscaledError(pose.zbar_ij, c_i, c_j);
-      (Eigen::Map<Eigen::Matrix<T, 3, 1>>(e)) =
-          pose.sqrt_Lambda_ij.cast<T>() *
-          Eigen::Map<Eigen::Matrix<T, 3, 1>>(e_ij.data());
-    }
-
-    template <typename T>
-    bool operator()(const T* const c_i, const T* const c_j, T* e) const {
-      ComputeScaledError(pose_, c_i, c_j, e);
-      return true;
-    }
-
-   private:
-    const Constraint::Pose pose_;
-  };
-
   explicit OptimizationProblem(
       const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
           options);
@@ -104,18 +58,6 @@ class OptimizationProblem {
              std::vector<transform::Rigid2d>* submap_transforms);
 
  private:
-  class TieToPoseCostFunction {
-   public:
-    explicit TieToPoseCostFunction(const Constraint::Pose& pose)
-        : pose_(pose) {}
-
-    template <typename T>
-    bool operator()(const T* const c_j, T* e) const;
-
-   private:
-    const Constraint::Pose pose_;
-  };
-
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
 };
 

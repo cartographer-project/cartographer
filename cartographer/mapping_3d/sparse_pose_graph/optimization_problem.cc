@@ -32,6 +32,7 @@
 #include "cartographer/mapping_3d/ceres_pose.h"
 #include "cartographer/mapping_3d/imu_integration.h"
 #include "cartographer/mapping_3d/rotation_cost_function.h"
+#include "cartographer/mapping_3d/sparse_pose_graph/spa_cost_function.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
 #include "ceres/jet.h"
@@ -75,62 +76,6 @@ OptimizationProblem::OptimizationProblem(
     : options_(options) {}
 
 OptimizationProblem::~OptimizationProblem() {}
-
-template <typename T>
-std::array<T, 6> OptimizationProblem::SpaCostFunction::ComputeUnscaledError(
-    const transform::Rigid3d& zbar_ij, const T* const c_i_rotation,
-    const T* const c_i_translation, const T* const c_j_rotation,
-    const T* const c_j_translation) {
-  const Eigen::Quaternion<T> R_i_inverse(c_i_rotation[0], -c_i_rotation[1],
-                                         -c_i_rotation[2], -c_i_rotation[3]);
-
-  const Eigen::Matrix<T, 3, 1> delta(c_j_translation[0] - c_i_translation[0],
-                                     c_j_translation[1] - c_i_translation[1],
-                                     c_j_translation[2] - c_i_translation[2]);
-  const Eigen::Matrix<T, 3, 1> h_translation = R_i_inverse * delta;
-
-  const Eigen::Quaternion<T> h_rotation_inverse =
-      Eigen::Quaternion<T>(c_j_rotation[0], -c_j_rotation[1], -c_j_rotation[2],
-                           -c_j_rotation[3]) *
-      Eigen::Quaternion<T>(c_i_rotation[0], c_i_rotation[1], c_i_rotation[2],
-                           c_i_rotation[3]);
-
-  const Eigen::Matrix<T, 3, 1> angle_axis_difference =
-      transform::RotationQuaternionToAngleAxisVector(
-          h_rotation_inverse * zbar_ij.rotation().cast<T>());
-
-  return {{T(zbar_ij.translation().x()) - h_translation[0],
-           T(zbar_ij.translation().y()) - h_translation[1],
-           T(zbar_ij.translation().z()) - h_translation[2],
-           angle_axis_difference[0], angle_axis_difference[1],
-           angle_axis_difference[2]}};
-}
-
-template <typename T>
-void OptimizationProblem::SpaCostFunction::ComputeScaledError(
-    const Constraint::Pose& pose, const T* const c_i_rotation,
-    const T* const c_i_translation, const T* const c_j_rotation,
-    const T* const c_j_translation, T* const e) {
-  std::array<T, 6> e_ij =
-      ComputeUnscaledError(pose.zbar_ij, c_i_rotation, c_i_translation,
-                           c_j_rotation, c_j_translation);
-  // Matrix-vector product of sqrt_Lambda_ij * e_ij
-  for (int s = 0; s != 6; ++s) {
-    e[s] = T(0.);
-    for (int t = 0; t != 6; ++t) {
-      e[s] += pose.sqrt_Lambda_ij(s, t) * e_ij[t];
-    }
-  }
-}
-
-template <typename T>
-bool OptimizationProblem::SpaCostFunction::operator()(
-    const T* const c_i_rotation, const T* const c_i_translation,
-    const T* const c_j_rotation, const T* const c_j_translation, T* e) const {
-  ComputeScaledError(pose_, c_i_rotation, c_i_translation, c_j_rotation,
-                     c_j_translation, e);
-  return true;
-}
 
 void OptimizationProblem::AddImuData(common::Time time,
                                      const Eigen::Vector3d& linear_acceleration,
