@@ -83,7 +83,7 @@ XRayPointsProcessor::XRayPointsProcessor(const double voxel_size,
       transform_(transform),
       voxels_(voxel_size, Eigen::Vector3f::Zero()) {}
 
-void XRayPointsProcessor::Process(const PointsBatch& batch) {
+void XRayPointsProcessor::Process(PointsBatch batch) {
   for (const auto& point : batch.points) {
     const Eigen::Vector3f camera_point = transform_ * point;
     *voxels_.mutable_value(voxels_.GetCellIndex(camera_point)) = true;
@@ -91,9 +91,16 @@ void XRayPointsProcessor::Process(const PointsBatch& batch) {
   next_->Process(batch);
 }
 
-void XRayPointsProcessor::Flush() {
+PointsProcessor::FlushResult XRayPointsProcessor::Flush() {
   WriteImage();
-  return next_->Flush();
+  switch (next_->Flush()) {
+    case FlushResult::kRestartStream:
+      LOG(FATAL) << "Not supported";
+
+    case FlushResult::kFinished:
+      return FlushResult::kFinished;
+  }
+  LOG(FATAL);
 }
 
 void XRayPointsProcessor::WriteImage() {

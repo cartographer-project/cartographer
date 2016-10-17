@@ -13,6 +13,8 @@ google_library(io_null_points_processor
 
 google_library(io_points_batch
   USES_EIGEN
+  SRCS
+    points_batch.cc
   HDRS
     points_batch.h
   DEPENDS

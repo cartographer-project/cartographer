@@ -26,6 +26,9 @@
 namespace cartographer {
 namespace io {
 
+// A point's color.
+using Color = Eigen::Matrix<uint8, 3, 1>;
+
 // A number of points, captured around the same 'time' and by a
 // sensor at the same 'origin'.
 struct PointsBatch {
@@ -49,9 +52,11 @@ struct PointsBatch {
   int trajectory_index;
 
   std::vector<Eigen::Vector3f> points;
-  std::vector<Eigen::Vector3f> normals;
-  std::vector<Eigen::Matrix<uint8_t, 3, 1>> colors;
+  std::vector<Color> colors;
 };
+
+// Returns a modified batch with the points in 'to_remove' removed from it.
+PointsBatch RemovePoints(PointsBatch batch, std::vector<int> to_remove);
 
 }  // namespace io
 }  // namespace cartographer

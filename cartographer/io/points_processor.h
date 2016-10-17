@@ -23,18 +23,26 @@ namespace cartographer {
 namespace io {
 
 // A processor in a pipeline. It processes a 'points_batch' and hands it to the
-// next processor in the pipeline. Once 'flush' is called no more data will be
-// send through the pipeline.
+// next processor in the pipeline.
 class PointsProcessor {
  public:
+  enum class FlushResult {
+    kRestartStream,
+    kFinished,
+  };
+
   PointsProcessor() {}
   virtual ~PointsProcessor() {}
 
   PointsProcessor(const PointsProcessor&) = delete;
   PointsProcessor& operator=(const PointsProcessor&) = delete;
 
-  virtual void Process(const PointsBatch& points_batch) = 0;
-  virtual void Flush() = 0;
+  // Receive a batch of 'points', process it and pass it on.
+  virtual void Process(PointsBatch points_batch) = 0;
+
+  // Some implementations will perform expensive computations and others that do
+  // multiple passes over the data might ask for restarting the stream.
+  virtual FlushResult Flush() = 0;
 };
 
 }  // namespace io
