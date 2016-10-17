@@ -83,12 +83,12 @@ XRayPointsProcessor::XRayPointsProcessor(const double voxel_size,
       transform_(transform),
       voxels_(voxel_size, Eigen::Vector3f::Zero()) {}
 
-void XRayPointsProcessor::Process(PointsBatch batch) {
-  for (const auto& point : batch.points) {
+void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
+  for (const auto& point : batch->points) {
     const Eigen::Vector3f camera_point = transform_ * point;
     *voxels_.mutable_value(voxels_.GetCellIndex(camera_point)) = true;
   }
-  next_->Process(batch);
+  next_->Process(std::move(batch));
 }
 
 PointsProcessor::FlushResult XRayPointsProcessor::Flush() {

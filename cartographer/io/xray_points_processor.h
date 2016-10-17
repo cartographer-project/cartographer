@@ -35,7 +35,7 @@ class XRayPointsProcessor : public PointsProcessor {
 
   ~XRayPointsProcessor() override {}
 
-  void Process(PointsBatch batch) override;
+  void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
 
  private:

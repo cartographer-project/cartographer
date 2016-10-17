@@ -17,6 +17,8 @@
 #ifndef CARTOGRAPHER_IO_POINTS_PROCESSOR_H_
 #define CARTOGRAPHER_IO_POINTS_PROCESSOR_H_
 
+#include <memory>
+
 #include "cartographer/io/points_batch.h"
 
 namespace cartographer {
@@ -37,8 +39,8 @@ class PointsProcessor {
   PointsProcessor(const PointsProcessor&) = delete;
   PointsProcessor& operator=(const PointsProcessor&) = delete;
 
-  // Receive a batch of 'points', process it and pass it on.
-  virtual void Process(PointsBatch points_batch) = 0;
+  // Receive a 'points_batch', process it and pass it on.
+  virtual void Process(std::unique_ptr<PointsBatch> points_batch) = 0;
 
   // Some implementations will perform expensive computations and others that do
   // multiple passes over the data might ask for restarting the stream.
