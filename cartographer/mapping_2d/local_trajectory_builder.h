@@ -64,7 +64,7 @@ class LocalTrajectoryBuilder {
   const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
       const;
   std::unique_ptr<InsertionResult> AddHorizontalLaserFan(
-      common::Time, const sensor::LaserFan3D& laser_fan);
+      common::Time, const sensor::LaserFan& laser_fan);
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
   void AddOdometerPose(common::Time time, const transform::Rigid3d& pose,
@@ -75,11 +75,10 @@ class LocalTrajectoryBuilder {
   kalman_filter::PoseTracker* pose_tracker() const;
 
  private:
-  // Transforms 'laser_scan', projects it onto the ground plane,
-  // crops and voxel filters.
-  sensor::LaserFan BuildProjectedLaserFan(
+  // Transforms 'laser_scan', crops and voxel filters.
+  sensor::LaserFan BuildCroppedLaserFan(
       const transform::Rigid3f& tracking_to_tracking_2d,
-      const sensor::LaserFan3D& laser_fan) const;
+      const sensor::LaserFan& laser_fan) const;
 
   // Scan match 'laser_fan_in_tracking_2d' and fill in the
   // 'pose_observation' and 'covariance_observation' with the result.

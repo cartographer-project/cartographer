@@ -186,7 +186,7 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
     return first * (to - from) + from;
   }
 
-  sensor::LaserFan3D GenerateLaserFan(const transform::Rigid3d& pose) {
+  sensor::LaserFan GenerateLaserFan(const transform::Rigid3d& pose) {
     // 360 degree rays at 16 angles.
     sensor::PointCloud directions_in_laser_frame;
     for (int r = -8; r != 8; ++r) {

@@ -125,7 +125,7 @@ void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan) {
   }
   ++num_laser_fans_in_last_submap_;
   if (num_laser_fans_in_last_submap_ == options_.num_laser_fans()) {
-    AddSubmap(laser_fan.origin);
+    AddSubmap(laser_fan.origin.head<2>());
   }
 }
 

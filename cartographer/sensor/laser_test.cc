@@ -38,18 +38,19 @@ TEST(ProjectorTest, ToLaserFan) {
   laser_scan.set_angle_increment(static_cast<float>(M_PI_4));
 
   const LaserFan fan = ToLaserFan(laser_scan, 0.f, 10.f, 1.f);
-  EXPECT_TRUE(fan.point_cloud[0].isApprox(Eigen::Vector2f(1.f, 0.f), 1e-6));
-  EXPECT_TRUE(fan.point_cloud[1].isApprox(
-      Eigen::Vector2f(1.f / std::sqrt(2.f), 1.f / std::sqrt(2.f)), 1e-6));
-  EXPECT_TRUE(fan.point_cloud[2].isApprox(Eigen::Vector2f(0.f, 1.f), 1e-6));
-  EXPECT_TRUE(fan.point_cloud[3].isApprox(
-      Eigen::Vector2f(-1.f / std::sqrt(2.f), 1.f / std::sqrt(2.f)), 1e-6));
-  EXPECT_TRUE(fan.point_cloud[4].isApprox(Eigen::Vector2f(-1.f, 0.f), 1e-6));
-  EXPECT_TRUE(fan.point_cloud[5].isApprox(
-      Eigen::Vector2f(-1.f / std::sqrt(2.f), -1.f / std::sqrt(2.f)), 1e-6));
-  EXPECT_TRUE(fan.point_cloud[6].isApprox(Eigen::Vector2f(0.f, -1.f), 1e-6));
-  EXPECT_TRUE(fan.point_cloud[7].isApprox(
-      Eigen::Vector2f(1.f / std::sqrt(2.f), -1.f / std::sqrt(2.f)), 1e-6));
+  EXPECT_TRUE(fan.returns[0].isApprox(Eigen::Vector3f(1.f, 0.f, 0.f), 1e-6));
+  EXPECT_TRUE(fan.returns[1].isApprox(
+      Eigen::Vector3f(1.f / std::sqrt(2.f), 1.f / std::sqrt(2.f), 0.f), 1e-6));
+  EXPECT_TRUE(fan.returns[2].isApprox(Eigen::Vector3f(0.f, 1.f, 0.f), 1e-6));
+  EXPECT_TRUE(fan.returns[3].isApprox(
+      Eigen::Vector3f(-1.f / std::sqrt(2.f), 1.f / std::sqrt(2.f), 0.f), 1e-6));
+  EXPECT_TRUE(fan.returns[4].isApprox(Eigen::Vector3f(-1.f, 0.f, 0.f), 1e-6));
+  EXPECT_TRUE(fan.returns[5].isApprox(
+      Eigen::Vector3f(-1.f / std::sqrt(2.f), -1.f / std::sqrt(2.f), 0.f),
+      1e-6));
+  EXPECT_TRUE(fan.returns[6].isApprox(Eigen::Vector3f(0.f, -1.f, 0.f), 1e-6));
+  EXPECT_TRUE(fan.returns[7].isApprox(
+      Eigen::Vector3f(1.f / std::sqrt(2.f), -1.f / std::sqrt(2.f), 0.f), 1e-6));
 }
 
 TEST(ProjectorTest, ToLaserFanWithInfinityAndNaN) {
@@ -64,13 +65,13 @@ TEST(ProjectorTest, ToLaserFanWithInfinityAndNaN) {
   laser_scan.set_angle_increment(static_cast<float>(M_PI_4));
 
   const LaserFan fan = ToLaserFan(laser_scan, 2.f, 10.f, 1.f);
-  ASSERT_EQ(2, fan.point_cloud.size());
-  EXPECT_TRUE(fan.point_cloud[0].isApprox(Eigen::Vector2f(0.f, 2.f), 1e-6));
-  EXPECT_TRUE(fan.point_cloud[1].isApprox(Eigen::Vector2f(-3.f, 0.f), 1e-6));
+  ASSERT_EQ(2, fan.returns.size());
+  EXPECT_TRUE(fan.returns[0].isApprox(Eigen::Vector3f(0.f, 2.f, 0.f), 1e-6));
+  EXPECT_TRUE(fan.returns[1].isApprox(Eigen::Vector3f(-3.f, 0.f, 0.f), 1e-6));
 
-  ASSERT_EQ(1, fan.missing_echo_point_cloud.size());
-  EXPECT_TRUE(fan.missing_echo_point_cloud[0].isApprox(
-      Eigen::Vector2f(1.f / std::sqrt(2.f), 1.f / std::sqrt(2.f)), 1e-6));
+  ASSERT_EQ(1, fan.misses.size());
+  EXPECT_TRUE(fan.misses[0].isApprox(
+      Eigen::Vector3f(1.f / std::sqrt(2.f), 1.f / std::sqrt(2.f), 0.f), 1e-6));
 }
 
 // Custom matcher for pair<eigen::Vector3f, int> entries.
@@ -81,12 +82,12 @@ MATCHER_P(PairApproximatelyEquals, expected,
 }
 
 TEST(LaserTest, Compression) {
-  LaserFan3D fan = {Eigen::Vector3f(1, 1, 1),
-                    {Eigen::Vector3f(0, 1, 2), Eigen::Vector3f(4, 5, 6),
-                     Eigen::Vector3f(0, 1, 2)},
-                    {Eigen::Vector3f(7, 8, 9)},
-                    {1, 2, 3}};
-  LaserFan3D actual = Decompress(Compress(fan));
+  LaserFan fan = {Eigen::Vector3f(1, 1, 1),
+                  {Eigen::Vector3f(0, 1, 2), Eigen::Vector3f(4, 5, 6),
+                   Eigen::Vector3f(0, 1, 2)},
+                  {Eigen::Vector3f(7, 8, 9)},
+                  {1, 2, 3}};
+  LaserFan actual = Decompress(Compress(fan));
   EXPECT_TRUE(actual.origin.isApprox(Eigen::Vector3f(1, 1, 1), 1e-6));
   EXPECT_EQ(3, actual.returns.size());
   EXPECT_EQ(1, actual.misses.size());

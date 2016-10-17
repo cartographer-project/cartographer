@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/voxel_filter.h"
+#ifndef CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
 
-#include <cmath>
-
-#include "gmock/gmock.h"
+#include "cartographer/io/points_processor.h"
 
 namespace cartographer {
-namespace sensor {
-namespace {
+namespace io {
 
-using ::testing::ContainerEq;
+// A points processor that just drops all points. The end of a pipeline usually.
+class NullPointsProcessor : public PointsProcessor {
+ public:
+  NullPointsProcessor() {}
+  ~NullPointsProcessor() override {}
 
-TEST(VoxelFilterTest, ReturnsTheFirstPointInEachVoxel) {
-  PointCloud point_cloud = {{0.f, 0.f, 0.f},
-                            {0.1f, -0.1f, 0.1f},
-                            {0.3f, -0.1f, 0.f},
-                            {0.f, 0.f, 0.1f}};
-  EXPECT_THAT(VoxelFiltered(point_cloud, 0.3f),
-              ContainerEq(PointCloud{point_cloud[0], point_cloud[2]}));
-}
+  void Process(const PointsBatch& points_batch) override {}
+  void Flush() override {}
+};
 
-}  // namespace
-}  // namespace sensor
+}  // namespace io
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_

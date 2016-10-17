@@ -30,7 +30,7 @@ namespace sensor {
 // filled in. It is only used for time ordering sensor data before passing it
 // on.
 struct Data {
-  enum class Type { kImu, kLaserFan3D, kOdometry };
+  enum class Type { kImu, kLaserFan, kOdometry };
 
   struct Odometry {
     transform::Rigid3d pose;
@@ -46,10 +46,8 @@ struct Data {
       : type(Type::kImu), frame_id(frame_id), imu(imu) {}
 
   Data(const string& frame_id,
-       const ::cartographer::sensor::LaserFan3D& laser_fan_3d)
-      : type(Type::kLaserFan3D),
-        frame_id(frame_id),
-        laser_fan_3d(laser_fan_3d) {}
+       const ::cartographer::sensor::LaserFan& laser_fan)
+      : type(Type::kLaserFan), frame_id(frame_id), laser_fan(laser_fan) {}
 
   Data(const string& frame_id, const Odometry& odometry)
       : type(Type::kOdometry), frame_id(frame_id), odometry(odometry) {}
@@ -57,7 +55,7 @@ struct Data {
   Type type;
   string frame_id;
   Imu imu;
-  sensor::LaserFan3D laser_fan_3d;
+  sensor::LaserFan laser_fan;
   Odometry odometry;
 };
 

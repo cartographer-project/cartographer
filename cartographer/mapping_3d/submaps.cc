@@ -39,16 +39,17 @@ struct LaserSegment {
 
 // We compute a slice around the xy-plane. 'transform' is applied to the laser
 // rays in global map frame to allow choosing an arbitrary slice.
-void GenerateSegmentForSlice(const sensor::LaserFan3D& laser_fan_3d,
+void GenerateSegmentForSlice(const sensor::LaserFan& laser_fan,
                              const transform::Rigid3f& pose,
                              const transform::Rigid3f& transform,
                              std::vector<LaserSegment>* segments) {
-  const sensor::LaserFan3D laser_fan =
-      sensor::TransformLaserFan3D(laser_fan_3d, transform * pose);
-  segments->reserve(laser_fan.returns.size());
-  for (const Eigen::Vector3f& hit : laser_fan.returns) {
-    const Eigen::Vector2f laser_origin_xy = laser_fan.origin.head<2>();
-    const float laser_origin_z = laser_fan.origin.z();
+  const sensor::LaserFan transformed_laser_fan =
+      sensor::TransformLaserFan(laser_fan, transform * pose);
+  segments->reserve(transformed_laser_fan.returns.size());
+  for (const Eigen::Vector3f& hit : transformed_laser_fan.returns) {
+    const Eigen::Vector2f laser_origin_xy =
+        transformed_laser_fan.origin.head<2>();
+    const float laser_origin_z = transformed_laser_fan.origin.z();
     const float delta_z = hit.z() - laser_origin_z;
     const Eigen::Vector2f delta_xy = hit.head<2>() - laser_origin_xy;
     if (laser_origin_z < -kSliceHalfHeight) {
@@ -181,12 +182,12 @@ void InsertSegmentsIntoProbabilityGrid(
 }  // namespace
 
 void InsertIntoProbabilityGrid(
-    const sensor::LaserFan3D& laser_fan_3d, const transform::Rigid3f& pose,
+    const sensor::LaserFan& laser_fan, const transform::Rigid3f& pose,
     const float slice_z, const mapping_2d::LaserFanInserter& laser_fan_inserter,
     mapping_2d::ProbabilityGrid* result) {
   std::vector<LaserSegment> segments;
   GenerateSegmentForSlice(
-      laser_fan_3d, pose,
+      laser_fan, pose,
       transform::Rigid3f::Translation(-slice_z * Eigen::Vector3f::UnitZ()),
       &segments);
   InsertSegmentsIntoProbabilityGrid(segments, laser_fan_inserter.hit_table(),
@@ -265,7 +266,7 @@ void Submaps::SubmapToProto(
                              global_submap_pose.translation().z())));
 }
 
-void Submaps::InsertLaserFan(const sensor::LaserFan3D& laser_fan) {
+void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan) {
   CHECK_LT(num_laser_fans_, std::numeric_limits<int>::max());
   ++num_laser_fans_;
   for (const int index : insertion_indices()) {

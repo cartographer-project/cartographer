@@ -111,14 +111,14 @@ class FastCorrelativeScanMatcher {
   // is possible, true is returned, and 'score' and 'pose_estimate' are updated
   // with the result.
   bool Match(const transform::Rigid2d& initial_pose_estimate,
-             const sensor::PointCloud2D& point_cloud, float min_score,
+             const sensor::PointCloud& point_cloud, float min_score,
              float* score, transform::Rigid2d* pose_estimate) const;
 
   // Aligns 'point_cloud' within the full 'probability_grid', i.e., not
   // restricted to the configured search window. If a score above 'min_score'
   // (excluding equality) is possible, true is returned, and 'score' and
   // 'pose_estimate' are updated with the result.
-  bool MatchFullSubmap(const sensor::PointCloud2D& point_cloud, float min_score,
+  bool MatchFullSubmap(const sensor::PointCloud& point_cloud, float min_score,
                        float* score, transform::Rigid2d* pose_estimate) const;
 
  private:
@@ -128,7 +128,7 @@ class FastCorrelativeScanMatcher {
   bool MatchWithSearchParameters(
       SearchParameters search_parameters,
       const transform::Rigid2d& initial_pose_estimate,
-      const sensor::PointCloud2D& point_cloud, float min_score, float* score,
+      const sensor::PointCloud& point_cloud, float min_score, float* score,
       transform::Rigid2d* pose_estimate) const;
   std::vector<Candidate> ComputeLowestResolutionCandidates(
       const std::vector<DiscreteScan>& discrete_scans,

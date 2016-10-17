@@ -144,6 +144,7 @@ google_test(sensor_point_cloud_test
     point_cloud_test.cc
   DEPENDS
     sensor_point_cloud
+    transform_transform
 )
 
 google_test(sensor_voxel_filter_test

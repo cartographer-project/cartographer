@@ -46,7 +46,7 @@ class LaserFanInserterTest : public ::testing::Test {
                                         {-1.5f, 0.5f, 4.5f},
                                         {-0.5f, 1.5f, 4.5f},
                                         {0.5f, 2.5f, 4.5f}};
-    laser_fan_inserter_->Insert(sensor::LaserFan3D{origin, laser_returns, {}},
+    laser_fan_inserter_->Insert(sensor::LaserFan{origin, laser_returns, {}},
                                 &hybrid_grid_);
   }
 

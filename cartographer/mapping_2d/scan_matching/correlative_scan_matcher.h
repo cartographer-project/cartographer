@@ -42,7 +42,7 @@ struct SearchParameters {
   };
 
   SearchParameters(double linear_search_window, double angular_search_window,
-                   const sensor::PointCloud2D& point_cloud, double resolution);
+                   const sensor::PointCloud& point_cloud, double resolution);
 
   // For testing.
   SearchParameters(int num_linear_perturbations, int num_angular_perturbations,
@@ -60,14 +60,14 @@ struct SearchParameters {
 };
 
 // Generates a collection of rotated scans.
-std::vector<sensor::PointCloud2D> GenerateRotatedScans(
-    const sensor::PointCloud2D& point_cloud,
+std::vector<sensor::PointCloud> GenerateRotatedScans(
+    const sensor::PointCloud& point_cloud,
     const SearchParameters& search_parameters);
 
 // Translates and discretizes the rotated scans into a vector of integer
 // indices.
 std::vector<DiscreteScan> DiscretizeScans(
-    const MapLimits& map_limits, const std::vector<sensor::PointCloud2D>& scans,
+    const MapLimits& map_limits, const std::vector<sensor::PointCloud>& scans,
     const Eigen::Translation2f& initial_translation);
 
 // A possible solution.

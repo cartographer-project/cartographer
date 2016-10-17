@@ -49,7 +49,7 @@ class CeresScanMatcher {
   // the solver 'summary'.
   void Match(const transform::Rigid2d& previous_pose,
              const transform::Rigid2d& initial_pose_estimate,
-             const sensor::PointCloud2D& point_cloud,
+             const sensor::PointCloud& point_cloud,
              const ProbabilityGrid& probability_grid,
              transform::Rigid2d* pose_estimate,
              kalman_filter::Pose2DCovariance* covariance,

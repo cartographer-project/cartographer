@@ -78,22 +78,17 @@ kalman_filter::PoseTracker* LocalTrajectoryBuilder::pose_tracker() const {
   return pose_tracker_.get();
 }
 
-sensor::LaserFan LocalTrajectoryBuilder::BuildProjectedLaserFan(
+sensor::LaserFan LocalTrajectoryBuilder::BuildCroppedLaserFan(
     const transform::Rigid3f& tracking_to_tracking_2d,
-    const sensor::LaserFan3D& laser_fan) const {
-  const sensor::LaserFan projected_fan = sensor::ProjectCroppedLaserFan(
-      sensor::TransformLaserFan3D(laser_fan, tracking_to_tracking_2d),
-      Eigen::Vector3f(-std::numeric_limits<float>::infinity(),
-                      -std::numeric_limits<float>::infinity(),
-                      options_.horizontal_laser_min_z()),
-      Eigen::Vector3f(std::numeric_limits<float>::infinity(),
-                      std::numeric_limits<float>::infinity(),
-                      options_.horizontal_laser_max_z()));
+    const sensor::LaserFan& laser_fan) const {
+  const sensor::LaserFan cropped_fan = sensor::CropLaserFan(
+      sensor::TransformLaserFan(laser_fan, tracking_to_tracking_2d),
+      options_.horizontal_laser_min_z(), options_.horizontal_laser_max_z());
   return sensor::LaserFan{
-      projected_fan.origin,
-      sensor::VoxelFiltered(projected_fan.point_cloud,
+      cropped_fan.origin,
+      sensor::VoxelFiltered(cropped_fan.returns,
                             options_.horizontal_laser_voxel_filter_size()),
-      sensor::VoxelFiltered(projected_fan.missing_echo_point_cloud,
+      sensor::VoxelFiltered(cropped_fan.misses,
                             options_.horizontal_laser_voxel_filter_size())};
 }
 
@@ -112,8 +107,8 @@ void LocalTrajectoryBuilder::ScanMatch(
   transform::Rigid2d initial_ceres_pose = pose_prediction_2d;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.adaptive_voxel_filter_options());
-  const sensor::PointCloud2D filtered_point_cloud_in_tracking_2d =
-      adaptive_voxel_filter.Filter(laser_fan_in_tracking_2d.point_cloud);
+  const sensor::PointCloud filtered_point_cloud_in_tracking_2d =
+      adaptive_voxel_filter.Filter(laser_fan_in_tracking_2d.returns);
   if (options_.use_online_correlative_scan_matching()) {
     real_time_correlative_scan_matcher_.Match(
         pose_prediction_2d, filtered_point_cloud_in_tracking_2d,
@@ -145,7 +140,7 @@ void LocalTrajectoryBuilder::ScanMatch(
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddHorizontalLaserFan(
-    const common::Time time, const sensor::LaserFan3D& laser_fan) {
+    const common::Time time, const sensor::LaserFan& laser_fan) {
   // Initialize pose tracker now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
     InitializePoseTracker(time);
@@ -171,9 +166,9 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
           pose_prediction.rotation());
 
   const sensor::LaserFan laser_fan_in_tracking_2d =
-      BuildProjectedLaserFan(tracking_to_tracking_2d.cast<float>(), laser_fan);
+      BuildCroppedLaserFan(tracking_to_tracking_2d.cast<float>(), laser_fan);
 
-  if (laser_fan_in_tracking_2d.point_cloud.empty()) {
+  if (laser_fan_in_tracking_2d.returns.empty()) {
     LOG(WARNING) << "Dropped empty horizontal laser point cloud.";
     return nullptr;
   }
@@ -202,9 +197,8 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
       {pose_observation, covariance_observation},
       {scan_matcher_pose_estimate_, covariance_estimate},
       scan_matcher_pose_estimate_,
-      sensor::TransformPointCloud(
-          sensor::ToPointCloud(laser_fan_in_tracking_2d.point_cloud),
-          tracking_2d_to_map.cast<float>())};
+      sensor::TransformPointCloud(laser_fan_in_tracking_2d.returns,
+                                  tracking_2d_to_map.cast<float>())};
 
   const transform::Rigid2d pose_estimate_2d =
       transform::Project2D(tracking_2d_to_map);
@@ -219,7 +213,7 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
     insertion_submaps.push_back(submaps_.Get(insertion_index));
   }
   submaps_.InsertLaserFan(TransformLaserFan(laser_fan_in_tracking_2d,
-                                            pose_estimate_2d.cast<float>()));
+                                            tracking_2d_to_map.cast<float>()));
 
   return common::make_unique<InsertionResult>(InsertionResult{
       time, &submaps_, matching_submap, insertion_submaps,

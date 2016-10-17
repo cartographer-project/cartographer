@@ -62,7 +62,7 @@ ConstraintBuilder::~ConstraintBuilder() {
 
 void ConstraintBuilder::MaybeAddConstraint(
     const int submap_index, const mapping::Submap* const submap,
-    const int scan_index, const sensor::PointCloud2D* const point_cloud,
+    const int scan_index, const sensor::PointCloud* const point_cloud,
     const transform::Rigid2d& initial_relative_pose) {
   if (initial_relative_pose.translation().norm() >
       options_.max_constraint_distance()) {
@@ -94,7 +94,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
     const int scan_index, const mapping::Submaps* scan_trajectory,
     const mapping::Submaps* submap_trajectory,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
-    const sensor::PointCloud2D* const point_cloud) {
+    const sensor::PointCloud* const point_cloud) {
   common::MutexLocker locker(&mutex_);
   CHECK_LE(scan_index, current_computation_);
   constraints_.emplace_back();
@@ -174,14 +174,14 @@ void ConstraintBuilder::ComputeConstraint(
     const int scan_index, const mapping::Submaps* scan_trajectory,
     const mapping::Submaps* submap_trajectory, bool match_full_submap,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
-    const sensor::PointCloud2D* const point_cloud,
+    const sensor::PointCloud* const point_cloud,
     const transform::Rigid2d& initial_relative_pose,
     std::unique_ptr<OptimizationProblem::Constraint>* constraint) {
   const transform::Rigid2d initial_pose =
       ComputeSubmapPose(*submap) * initial_relative_pose;
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_index);
-  const sensor::PointCloud2D filtered_point_cloud =
+  const sensor::PointCloud filtered_point_cloud =
       adaptive_voxel_filter_.Filter(*point_cloud);
 
   // The 'constraint_transform' (i <- j) is computed from:

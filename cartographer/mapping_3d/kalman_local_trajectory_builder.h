@@ -49,7 +49,7 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
   std::unique_ptr<InsertionResult> AddLaserFan3D(
-      common::Time time, const sensor::LaserFan3D& laser_fan) override;
+      common::Time time, const sensor::LaserFan& laser_fan) override;
   void AddOdometerPose(
       common::Time time, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) override;
@@ -60,11 +60,11 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
   kalman_filter::PoseTracker* pose_tracker() const override;
 
  private:
-  std::unique_ptr<InsertionResult> AddAccumulatedLaserFan3D(
-      common::Time time, const sensor::LaserFan3D& laser_fan_in_tracking);
+  std::unique_ptr<InsertionResult> AddAccumulatedLaserFan(
+      common::Time time, const sensor::LaserFan& laser_fan_in_tracking);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
-      const common::Time time, const sensor::LaserFan3D& laser_fan_in_tracking,
+      const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
       const transform::Rigid3d& pose_observation,
       const kalman_filter::PoseCovariance& covariance_estimate);
 
@@ -85,7 +85,7 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
 
   int num_accumulated_;
   transform::Rigid3f first_pose_prediction_;
-  sensor::LaserFan3D accumulated_laser_fan_;
+  sensor::LaserFan accumulated_laser_fan_;
 };
 
 }  // namespace mapping_3d

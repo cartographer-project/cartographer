@@ -35,7 +35,7 @@ class LocalTrajectoryBuilderInterface {
 
   struct InsertionResult {
     common::Time time;
-    sensor::LaserFan3D laser_fan_in_tracking;
+    sensor::LaserFan laser_fan_in_tracking;
     transform::Rigid3d pose_observation;
     kalman_filter::PoseCovariance covariance_estimate;
     const Submaps* submaps;
@@ -54,7 +54,7 @@ class LocalTrajectoryBuilderInterface {
                           const Eigen::Vector3d& linear_acceleration,
                           const Eigen::Vector3d& angular_velocity) = 0;
   virtual std::unique_ptr<InsertionResult> AddLaserFan3D(
-      common::Time time, const sensor::LaserFan3D& laser_fan) = 0;
+      common::Time time, const sensor::LaserFan& laser_fan) = 0;
   virtual void AddOdometerPose(
       common::Time time, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) = 0;

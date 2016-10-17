@@ -70,8 +70,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // against the 'matching_submap' and the scan was inserted into the
   // 'insertion_submaps'. The index into the vector of trajectory nodes as
   // used with GetTrajectoryNodes() is returned.
-  int AddScan(common::Time time,
-              const sensor::LaserFan3D& laser_fan_in_tracking,
+  int AddScan(common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
               const transform::Rigid3d& pose,
               const kalman_filter::PoseCovariance& pose_covariance,
               const Submaps* submaps, const Submap* matching_submap,

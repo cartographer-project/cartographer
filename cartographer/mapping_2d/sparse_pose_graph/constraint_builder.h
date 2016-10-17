@@ -78,8 +78,7 @@ class ConstraintBuilder {
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
   // computations are finished.
   void MaybeAddConstraint(int submap_index, const mapping::Submap* submap,
-                          int scan_index,
-                          const sensor::PointCloud2D* point_cloud,
+                          int scan_index, const sensor::PointCloud* point_cloud,
                           const transform::Rigid2d& initial_relative_pose);
 
   // Schedules exploring a new constraint between 'submap' identified by
@@ -97,7 +96,7 @@ class ConstraintBuilder {
       const mapping::Submaps* scan_trajectory,
       const mapping::Submaps* submap_trajectory,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
-      const sensor::PointCloud2D* point_cloud);
+      const sensor::PointCloud* point_cloud);
 
   // Must be called after all computations related to 'scan_index' are added.
   void NotifyEndOfScan(const int scan_index);
@@ -142,7 +141,7 @@ class ConstraintBuilder {
       const mapping::Submaps* scan_trajectory,
       const mapping::Submaps* submap_trajectory, bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
-      const sensor::PointCloud2D* point_cloud,
+      const sensor::PointCloud* point_cloud,
       const transform::Rigid2d& initial_relative_pose,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);
 
