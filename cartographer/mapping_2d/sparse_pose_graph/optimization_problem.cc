@@ -26,6 +26,7 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
+#include "cartographer/mapping_2d/sparse_pose_graph/spa_cost_function.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
 #include "glog/logging.h"

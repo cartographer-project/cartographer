@@ -73,34 +73,6 @@ class OptimizationProblem {
   const std::vector<NodeData>& node_data() const;
 
  private:
-  class SpaCostFunction {
-   public:
-    explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
-
-    // Compute the error (linear offset and rotational error) without scaling
-    // it by the covariance.
-    template <typename T>
-    static std::array<T, 6> ComputeUnscaledError(
-        const transform::Rigid3d& zbar_ij, const T* const c_i_rotation,
-        const T* const c_i_translation, const T* const c_j_rotation,
-        const T* const c_j_translation);
-
-    // Computes the error scaled by 'sqrt_Lambda_ij', storing it in 'e'.
-    template <typename T>
-    static void ComputeScaledError(const Constraint::Pose& pose,
-                                   const T* const c_i_rotation,
-                                   const T* const c_i_translation,
-                                   const T* const c_j_rotation,
-                                   const T* const c_j_translation, T* const e);
-    template <typename T>
-    bool operator()(const T* const c_i_rotation, const T* const c_i_translation,
-                    const T* const c_j_rotation, const T* const c_j_translation,
-                    T* const e) const;
-
-   private:
-    const Constraint::Pose pose_;
-  };
-
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   std::deque<ImuData> imu_data_;
   std::vector<NodeData> node_data_;

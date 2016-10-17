@@ -56,8 +56,20 @@ google_library(mapping_2d_sparse_pose_graph_optimization_problem
     common_lua_parameter_dictionary
     common_math
     common_port
+    mapping_2d_sparse_pose_graph_spa_cost_function
     mapping_2d_submaps
     mapping_sparse_pose_graph
     mapping_sparse_pose_graph_proto_optimization_problem_options
     transform_transform
+)
+
+google_library(mapping_2d_sparse_pose_graph_spa_cost_function
+  USES_CERES
+  USES_EIGEN
+  HDRS
+    spa_cost_function.h
+  DEPENDS
+    common_math
+    mapping_sparse_pose_graph
+    transform_rigid_transform
 )
