@@ -19,6 +19,7 @@
 
 #include <string>
 
+#include "cartographer/common/time.h"
 #include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/sensor/laser.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -42,17 +43,25 @@ struct Data {
     Eigen::Vector3d angular_velocity;
   };
 
-  Data(const string& frame_id, const Imu& imu)
-      : type(Type::kImu), frame_id(frame_id), imu(imu) {}
+  Data(const common::Time time, const string& frame_id, const Imu& imu)
+      : type(Type::kImu), time(time), frame_id(frame_id), imu(imu) {}
 
-  Data(const string& frame_id,
+  Data(const common::Time time, const string& frame_id,
        const ::cartographer::sensor::LaserFan& laser_fan)
-      : type(Type::kLaserFan), frame_id(frame_id), laser_fan(laser_fan) {}
+      : type(Type::kLaserFan),
+        time(time),
+        frame_id(frame_id),
+        laser_fan(laser_fan) {}
 
-  Data(const string& frame_id, const Odometry& odometry)
-      : type(Type::kOdometry), frame_id(frame_id), odometry(odometry) {}
+  Data(const common::Time time, const string& frame_id,
+       const Odometry& odometry)
+      : type(Type::kOdometry),
+        time(time),
+        frame_id(frame_id),
+        odometry(odometry) {}
 
   Type type;
+  common::Time time;
   string frame_id;
   Imu imu;
   sensor::LaserFan laser_fan;

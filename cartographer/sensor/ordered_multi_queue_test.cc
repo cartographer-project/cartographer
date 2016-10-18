@@ -33,12 +33,9 @@ class OrderedMultiQueueTest : public ::testing::Test {
 
   void SetUp() {
     for (const auto& queue_key : {kFirst, kSecond, kThird}) {
-      queue_.AddQueue(queue_key, [this](const common::Time time,
-                                        std::unique_ptr<Data> data) {
-        EXPECT_EQ(common::ToUniversal(time), data->imu.linear_acceleration.x());
+      queue_.AddQueue(queue_key, [this](std::unique_ptr<Data> data) {
         if (!values_.empty()) {
-          EXPECT_GT(data->imu.linear_acceleration.x(),
-                    values_.back().imu.linear_acceleration.x());
+          EXPECT_GT(data->time, values_.back().time);
         }
         values_.push_back(*data);
       });
@@ -47,8 +44,8 @@ class OrderedMultiQueueTest : public ::testing::Test {
 
   std::unique_ptr<Data> MakeImu(const int ordinal) {
     return common::make_unique<Data>(
-        "unused_frame_id",
-        Data::Imu{ordinal * Eigen::Vector3d::UnitX(), Eigen::Vector3d::Zero()});
+        common::FromUniversal(ordinal), "unused_frame_id",
+        Data::Imu{Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero()});
   }
 
   std::vector<Data> values_;
@@ -56,30 +53,30 @@ class OrderedMultiQueueTest : public ::testing::Test {
 };
 
 TEST_F(OrderedMultiQueueTest, Ordering) {
-  queue_.Add(kFirst, common::FromUniversal(4), MakeImu(4));
-  queue_.Add(kFirst, common::FromUniversal(5), MakeImu(5));
-  queue_.Add(kFirst, common::FromUniversal(6), MakeImu(6));
+  queue_.Add(kFirst, MakeImu(4));
+  queue_.Add(kFirst, MakeImu(5));
+  queue_.Add(kFirst, MakeImu(6));
   EXPECT_TRUE(values_.empty());
-  queue_.Add(kSecond, common::FromUniversal(1), MakeImu(1));
+  queue_.Add(kSecond, MakeImu(1));
   EXPECT_TRUE(values_.empty());
-  queue_.Add(kThird, common::FromUniversal(2), MakeImu(2));
+  queue_.Add(kThird, MakeImu(2));
   EXPECT_EQ(values_.size(), 1);
-  queue_.Add(kSecond, common::FromUniversal(3), MakeImu(3));
+  queue_.Add(kSecond, MakeImu(3));
   EXPECT_EQ(values_.size(), 2);
-  queue_.Add(kSecond, common::FromUniversal(7), MakeImu(7));
-  queue_.Add(kThird, common::FromUniversal(8), MakeImu(8));
+  queue_.Add(kSecond, MakeImu(7));
+  queue_.Add(kThird, MakeImu(8));
   queue_.Flush();
 
   EXPECT_EQ(8, values_.size());
   for (size_t i = 0; i < values_.size(); ++i) {
-    EXPECT_EQ(i + 1, values_[i].imu.linear_acceleration.x());
+    EXPECT_EQ(i + 1, common::ToUniversal(values_[i].time));
   }
 }
 
 TEST_F(OrderedMultiQueueTest, MarkQueueAsFinished) {
-  queue_.Add(kFirst, common::FromUniversal(1), MakeImu(1));
-  queue_.Add(kFirst, common::FromUniversal(2), MakeImu(2));
-  queue_.Add(kFirst, common::FromUniversal(3), MakeImu(3));
+  queue_.Add(kFirst, MakeImu(1));
+  queue_.Add(kFirst, MakeImu(2));
+  queue_.Add(kFirst, MakeImu(3));
   EXPECT_TRUE(values_.empty());
   queue_.MarkQueueAsFinished(kFirst);
   EXPECT_TRUE(values_.empty());
@@ -89,7 +86,7 @@ TEST_F(OrderedMultiQueueTest, MarkQueueAsFinished) {
 
   EXPECT_EQ(3, values_.size());
   for (size_t i = 0; i < values_.size(); ++i) {
-    EXPECT_EQ(i + 1, values_[i].imu.linear_acceleration.x());
+    EXPECT_EQ(i + 1, common::ToUniversal(values_[i].time));
   }
 }
 

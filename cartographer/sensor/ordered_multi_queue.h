@@ -51,9 +51,9 @@ inline std::ostream& operator<<(std::ostream& out, const QueueKey& key) {
 // sorted order. This class is thread-compatible.
 class OrderedMultiQueue {
  public:
-  using Callback = std::function<void(common::Time, std::unique_ptr<Data>)>;
+  using Callback = std::function<void(std::unique_ptr<Data>)>;
 
-  // Will wait to see at least one value for each 'expected_queue_keys' before
+  // Will wait to see at least one value for each unfinished queue before
   // dispatching the next smallest value across all queues.
   OrderedMultiQueue() {}
   ~OrderedMultiQueue() {}
@@ -74,17 +74,14 @@ class OrderedMultiQueue {
     return queues_.count(queue_key) != 0;
   }
 
-  void Add(const QueueKey& queue_key, const common::Time& sort_key,
-           std::unique_ptr<Data> value) {
+  void Add(const QueueKey& queue_key, std::unique_ptr<Data> data) {
     auto* queue = FindOrNull(queue_key);
     if (queue == nullptr) {
-      // TODO(damonkohler): This will not work for every value of "queue_key".
-      LOG_EVERY_N(WARNING, 1000) << "Ignored value for queue: '" << queue_key
+      LOG_EVERY_N(WARNING, 1000) << "Ignored data for queue: '" << queue_key
                                  << "'";
       return;
     }
-    queue->queue.Push(
-        common::make_unique<KeyValuePair>(sort_key, std::move(value)));
+    queue->queue.Push(std::move(data));
     Dispatch();
   }
 
@@ -108,15 +105,8 @@ class OrderedMultiQueue {
   }
 
  private:
-  struct KeyValuePair {
-    KeyValuePair(const common::Time& sort_key, std::unique_ptr<Data> value)
-        : sort_key(sort_key), value(std::move(value)) {}
-    common::Time sort_key;
-    std::unique_ptr<Data> value;
-  };
-
   struct Queue {
-    common::BlockingQueue<std::unique_ptr<KeyValuePair>> queue;
+    common::BlockingQueue<std::unique_ptr<Data>> queue;
     Callback callback;
     bool finished = false;
   };
@@ -140,11 +130,11 @@ class OrderedMultiQueue {
   void Dispatch() {
     while (true) {
       Queue* next_queue = nullptr;
-      const KeyValuePair* next_key_value_pair = nullptr;
+      const Data* next_data = nullptr;
       for (auto it = queues_.begin(); it != queues_.end();) {
         auto& queue = it->second.queue;
-        const auto* key_value_pair = queue.template Peek<KeyValuePair>();
-        if (key_value_pair == nullptr) {
+        const auto* data = queue.Peek<Data>();
+        if (data == nullptr) {
           if (it->second.finished) {
             queues_.erase(it++);
             continue;
@@ -152,24 +142,22 @@ class OrderedMultiQueue {
           CannotMakeProgress();
           return;
         }
-        if (next_key_value_pair == nullptr ||
-            std::forward_as_tuple(key_value_pair->sort_key, it->first) <
-                std::forward_as_tuple(next_key_value_pair->sort_key,
-                                      it->first)) {
-          next_key_value_pair = key_value_pair;
+        if (next_data == nullptr ||
+            std::forward_as_tuple(data->time, it->first) <
+                std::forward_as_tuple(next_data->time, it->first)) {
+          next_data = data;
           next_queue = &it->second;
         }
-        CHECK_LE(last_dispatched_key_, next_key_value_pair->sort_key)
-            << "Non-sorted values added to queue: '" << it->first << "'";
+        CHECK_LE(last_dispatched_key_, next_data->time)
+            << "Non-sorted data added to queue: '" << it->first << "'";
         ++it;
       }
-      if (next_key_value_pair == nullptr) {
+      if (next_data == nullptr) {
         CHECK(queues_.empty());
         return;
       }
-      last_dispatched_key_ = next_key_value_pair->sort_key;
-      next_queue->callback(last_dispatched_key_,
-                           std::move(next_queue->queue.Pop()->value));
+      last_dispatched_key_ = next_data->time;
+      next_queue->callback(std::move(next_queue->queue.Pop()));
     }
   }
 

@@ -29,52 +29,46 @@ namespace sensor {
 namespace {
 
 TEST(Collator, Ordering) {
-  Data first("horizontal_laser", sensor::LaserFan{});
-  Data second("vertical_laser", sensor::LaserFan{});
-  Data third("imu", Data::Imu{});
-  Data fourth("horizontal_laser", sensor::LaserFan{});
-  Data fifth("vertical_laser", sensor::LaserFan{});
-  Data sixth("odometry", Data::Odometry{});
+  Data first(common::FromUniversal(100), "horizontal_laser", sensor::LaserFan{});
+  Data second(common::FromUniversal(200),"vertical_laser", sensor::LaserFan{});
+  Data third(common::FromUniversal(300),"imu", Data::Imu{});
+  Data fourth(common::FromUniversal(400),"horizontal_laser", sensor::LaserFan{});
+  Data fifth(common::FromUniversal(500),"vertical_laser", sensor::LaserFan{});
+  Data sixth(common::FromUniversal(600),"odometry", Data::Odometry{});
 
   const std::unordered_set<string> frame_ids = {
       "horizontal_laser", "vertical_laser", "imu", "odometry"};
-  std::vector<std::pair<int64, Data>> received;
+  std::vector<Data> received;
   Collator collator;
   collator.AddTrajectory(
       0, frame_ids,
-      [&received](const int64 timestamp, std::unique_ptr<Data> packet) {
-        received.push_back(std::make_pair(timestamp, *packet));
+      [&received](std::unique_ptr<Data> data) {
+        received.push_back(*data);
       });
 
-  collator.AddSensorData(0, 100, first.frame_id,
-                         common::make_unique<Data>(first));
-  collator.AddSensorData(0, 600, sixth.frame_id,
-                         common::make_unique<Data>(sixth));
-  collator.AddSensorData(0, 400, fourth.frame_id,
-                         common::make_unique<Data>(fourth));
-  collator.AddSensorData(0, 200, second.frame_id,
-                         common::make_unique<Data>(second));
-  collator.AddSensorData(0, 500, fifth.frame_id,
-                         common::make_unique<Data>(fifth));
-  collator.AddSensorData(0, 300, third.frame_id,
-                         common::make_unique<Data>(third));
+  collator.AddSensorData(0, first.frame_id, common::make_unique<Data>(first));
+  collator.AddSensorData(0, sixth.frame_id, common::make_unique<Data>(sixth));
+  collator.AddSensorData(0, fourth.frame_id, common::make_unique<Data>(fourth));
+  collator.AddSensorData(0, second.frame_id, common::make_unique<Data>(second));
+  collator.AddSensorData(0, fifth.frame_id, common::make_unique<Data>(fifth));
+  collator.AddSensorData(0, third.frame_id, common::make_unique<Data>(third));
 
   EXPECT_EQ(3, received.size());
-  EXPECT_EQ(100, received[0].first);
-  EXPECT_EQ("horizontal_laser", received[0].second.frame_id);
-  EXPECT_EQ(200, received[1].first);
-  EXPECT_EQ("vertical_laser", received[1].second.frame_id);
-  EXPECT_EQ(300, received[2].first);
-  EXPECT_EQ("imu", received[2].second.frame_id);
+  EXPECT_EQ(100, common::ToUniversal(received[0].time));
+  EXPECT_EQ("horizontal_laser", received[0].frame_id);
+  EXPECT_EQ(200, common::ToUniversal(received[1].time));
+  EXPECT_EQ("vertical_laser", received[1].frame_id);
+  EXPECT_EQ(300, common::ToUniversal(received[2].time));
+  EXPECT_EQ("imu", received[2].frame_id);
 
   collator.Flush();
 
   ASSERT_EQ(6, received.size());
-  EXPECT_EQ("horizontal_laser", received[3].second.frame_id);
-  EXPECT_EQ(500, received[4].first);
-  EXPECT_EQ("vertical_laser", received[4].second.frame_id);
-  EXPECT_EQ(600, received[5].first);
-  EXPECT_EQ("odometry", received[5].second.frame_id);
+  EXPECT_EQ("horizontal_laser", received[3].frame_id);
+  EXPECT_EQ(500, common::ToUniversal(received[4].time));
+  EXPECT_EQ("vertical_laser", received[4].frame_id);
+  EXPECT_EQ(600, common::ToUniversal(received[5].time));
+  EXPECT_EQ("odometry", received[5].frame_id);
 }
 
 }  // namespace

@@ -37,7 +37,7 @@ namespace sensor {
 
 class Collator {
  public:
-  using Callback = std::function<void(int64, std::unique_ptr<Data>)>;
+  using Callback = std::function<void(std::unique_ptr<Data>)>;
 
   Collator() {}
 
@@ -51,9 +51,8 @@ class Collator {
                      const Callback callback) {
     for (const auto& sensor_id : expected_sensor_ids) {
       const auto queue_key = QueueKey{trajectory_id, sensor_id};
-      queue_.AddQueue(queue_key, [callback](const common::Time time,
-                                            std::unique_ptr<Data> data) {
-        callback(common::ToUniversal(time), std::move(data));
+      queue_.AddQueue(queue_key, [callback](std::unique_ptr<Data> data) {
+        callback(std::move(data));
       });
       queue_keys_[trajectory_id].push_back(queue_key);
     }
@@ -69,12 +68,11 @@ class Collator {
   // Adds 'data' for 'trajectory_id' to be collated. 'data' must contain valid
   // sensor data. Sensor packets with matching 'sensor_id' must be added in time
   // order.
-  void AddSensorData(const int trajectory_id, const int64 timestamp,
-                     const string& sensor_id, std::unique_ptr<Data> data) {
-    sensor_packet_period_histogram_builder_.Add(trajectory_id, timestamp,
-                                                sensor_id);
-    queue_.Add(QueueKey{trajectory_id, sensor_id},
-               common::FromUniversal(timestamp), std::move(data));
+  void AddSensorData(const int trajectory_id, const string& sensor_id,
+                     std::unique_ptr<Data> data) {
+    sensor_packet_period_histogram_builder_.Add(
+        trajectory_id, common::ToUniversal(data->time), sensor_id);
+    queue_.Add(QueueKey{trajectory_id, sensor_id}, std::move(data));
   }
 
   // Dispatches all queued sensor packets. May only be called once.
