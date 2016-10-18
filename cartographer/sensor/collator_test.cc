@@ -47,12 +47,18 @@ TEST(Collator, Ordering) {
       });
 
   constexpr int kTrajectoryId = 0;
-  collator.AddSensorData(kTrajectoryId, kSensorId[0], common::make_unique<Data>(first));
-  collator.AddSensorData(kTrajectoryId, kSensorId[3], common::make_unique<Data>(sixth));
-  collator.AddSensorData(kTrajectoryId, kSensorId[0], common::make_unique<Data>(fourth));
-  collator.AddSensorData(kTrajectoryId, kSensorId[1], common::make_unique<Data>(second));
-  collator.AddSensorData(kTrajectoryId, kSensorId[1], common::make_unique<Data>(fifth));
-  collator.AddSensorData(kTrajectoryId, kSensorId[2], common::make_unique<Data>(third));
+  collator.AddSensorData(kTrajectoryId, kSensorId[0],
+                         common::make_unique<Data>(first));
+  collator.AddSensorData(kTrajectoryId, kSensorId[3],
+                         common::make_unique<Data>(sixth));
+  collator.AddSensorData(kTrajectoryId, kSensorId[0],
+                         common::make_unique<Data>(fourth));
+  collator.AddSensorData(kTrajectoryId, kSensorId[1],
+                         common::make_unique<Data>(second));
+  collator.AddSensorData(kTrajectoryId, kSensorId[1],
+                         common::make_unique<Data>(fifth));
+  collator.AddSensorData(kTrajectoryId, kSensorId[2],
+                         common::make_unique<Data>(third));
 
   ASSERT_EQ(3, received.size());
   EXPECT_EQ(100, common::ToUniversal(received[0].second.time));
