@@ -62,9 +62,21 @@ google_library(mapping_3d_sparse_pose_graph_optimization_problem
     mapping_3d_ceres_pose
     mapping_3d_imu_integration
     mapping_3d_rotation_cost_function
+    mapping_3d_sparse_pose_graph_spa_cost_function
     mapping_3d_submaps
     mapping_sparse_pose_graph_proto_optimization_problem_options
     transform_transform
+)
+
+google_library(mapping_3d_sparse_pose_graph_spa_cost_function
+  USES_CERES
+  USES_EIGEN
+  HDRS
+    spa_cost_function.h
+  DEPENDS
+    common_math
+    mapping_sparse_pose_graph
+    transform_rigid_transform
 )
 
 google_test(mapping_3d_sparse_pose_graph_optimization_problem_test
