@@ -37,7 +37,7 @@ namespace sensor {
 
 class Collator {
  public:
-  using Callback = std::function<void(std::unique_ptr<Data>)>;
+  using Callback = std::function<void(const string&, std::unique_ptr<Data>)>;
 
   Collator() {}
 
@@ -51,9 +51,10 @@ class Collator {
                      const Callback callback) {
     for (const auto& sensor_id : expected_sensor_ids) {
       const auto queue_key = QueueKey{trajectory_id, sensor_id};
-      queue_.AddQueue(queue_key, [callback](std::unique_ptr<Data> data) {
-        callback(std::move(data));
-      });
+      queue_.AddQueue(queue_key,
+                      [callback, sensor_id](std::unique_ptr<Data> data) {
+                        callback(sensor_id, std::move(data));
+                      });
       queue_keys_[trajectory_id].push_back(queue_key);
     }
   }
