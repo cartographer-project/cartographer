@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_IO_POINTS_BATCH_H_
 
 #include <cstdint>
+#include <vector>
 
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
