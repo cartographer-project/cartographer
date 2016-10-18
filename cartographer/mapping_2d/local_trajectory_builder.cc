@@ -250,11 +250,11 @@ void LocalTrajectoryBuilder::AddImuData(
   // cases, it's very likely that 2D SLAM will fail.
   const Eigen::Vector3d gravity_direction =
       Eigen::Quaterniond(pose_estimate.rotation()) * Eigen::Vector3d::UnitZ();
-  const double inclination = std::acos(gravity_direction.z());
-  constexpr double kMaxInclination = common::DegToRad(20.);
-  LOG_IF_EVERY_N(WARNING, inclination > kMaxInclination, 1000)
-      << "Max inclination exceeded: " << common::RadToDeg(inclination) << " > "
-      << common::RadToDeg(kMaxInclination);
+  //const double inclination = std::acos(gravity_direction.z());
+  //constexpr double kMaxInclination = common::DegToRad(20.);
+  //LOG_IF_EVERY_N(WARNING, inclination > kMaxInclination, 1000)
+  //    << "Max inclination exceeded: " << common::RadToDeg(inclination) << " > "
+  //    << common::RadToDeg(kMaxInclination);
 }
 
 void LocalTrajectoryBuilder::AddOdometerPose(
@@ -263,7 +263,7 @@ void LocalTrajectoryBuilder::AddOdometerPose(
   if (pose_tracker_ == nullptr) {
     // Until we've initialized the UKF with our first IMU message, we cannot
     // process odometry poses.
-    LOG_EVERY_N(INFO, 100) << "PoseTracker not yet initialized.";
+    //LOG_EVERY_N(INFO, 100) << "PoseTracker not yet initialized.";
   } else {
     pose_tracker_->AddOdometerPoseObservation(time, pose, covariance);
   }
