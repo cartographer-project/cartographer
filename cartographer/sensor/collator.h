@@ -66,9 +66,9 @@ class Collator {
     }
   }
 
-  // Adds 'data' for 'trajectory_id' to be collated. 'data' must
-  // contain valid sensor data. Sensor packets with matching 'sensor_id' must be
-  // added in time order.
+  // Adds 'data' for 'trajectory_id' to be collated. 'data' must contain valid
+  // sensor data. Sensor packets with matching 'sensor_id' must be added in time
+  // order.
   void AddSensorData(const int trajectory_id, const int64 timestamp,
                      const string& sensor_id, std::unique_ptr<Data> data) {
     sensor_packet_period_histogram_builder_.Add(trajectory_id, timestamp,
