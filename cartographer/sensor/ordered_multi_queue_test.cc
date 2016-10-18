@@ -44,7 +44,7 @@ class OrderedMultiQueueTest : public ::testing::Test {
 
   std::unique_ptr<Data> MakeImu(const int ordinal) {
     return common::make_unique<Data>(
-        common::FromUniversal(ordinal), "unused_frame_id",
+        common::FromUniversal(ordinal),
         Data::Imu{Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero()});
   }
 

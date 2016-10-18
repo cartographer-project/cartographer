@@ -29,46 +29,53 @@ namespace sensor {
 namespace {
 
 TEST(Collator, Ordering) {
-  Data first(common::FromUniversal(100), "horizontal_laser", sensor::LaserFan{});
-  Data second(common::FromUniversal(200),"vertical_laser", sensor::LaserFan{});
-  Data third(common::FromUniversal(300),"imu", Data::Imu{});
-  Data fourth(common::FromUniversal(400),"horizontal_laser", sensor::LaserFan{});
-  Data fifth(common::FromUniversal(500),"vertical_laser", sensor::LaserFan{});
-  Data sixth(common::FromUniversal(600),"odometry", Data::Odometry{});
+  const std::array<string, 4> kSensorId = {"horizontal_laser", "vertical_laser",
+                                           "imu", "odometry"};
+  Data first(common::FromUniversal(100), sensor::LaserFan{});
+  Data second(common::FromUniversal(200), sensor::LaserFan{});
+  Data third(common::FromUniversal(300), Data::Imu{});
+  Data fourth(common::FromUniversal(400), sensor::LaserFan{});
+  Data fifth(common::FromUniversal(500), sensor::LaserFan{});
+  Data sixth(common::FromUniversal(600), Data::Odometry{});
 
-  const std::unordered_set<string> frame_ids = {
-      "horizontal_laser", "vertical_laser", "imu", "odometry"};
-  std::vector<Data> received;
+  std::vector<std::pair<string, Data>> received;
   Collator collator;
   collator.AddTrajectory(
-      0, frame_ids,
-      [&received](std::unique_ptr<Data> data) {
-        received.push_back(*data);
+      0, std::unordered_set<string>(kSensorId.begin(), kSensorId.end()),
+      [&received](const string& sensor_id, std::unique_ptr<Data> data) {
+        received.push_back(std::make_pair(sensor_id, *data));
       });
 
-  collator.AddSensorData(0, first.frame_id, common::make_unique<Data>(first));
-  collator.AddSensorData(0, sixth.frame_id, common::make_unique<Data>(sixth));
-  collator.AddSensorData(0, fourth.frame_id, common::make_unique<Data>(fourth));
-  collator.AddSensorData(0, second.frame_id, common::make_unique<Data>(second));
-  collator.AddSensorData(0, fifth.frame_id, common::make_unique<Data>(fifth));
-  collator.AddSensorData(0, third.frame_id, common::make_unique<Data>(third));
+  constexpr int kTrajectoryId = 0;
+  collator.AddSensorData(kTrajectoryId, kSensorId[0],
+                         common::make_unique<Data>(first));
+  collator.AddSensorData(kTrajectoryId, kSensorId[3],
+                         common::make_unique<Data>(sixth));
+  collator.AddSensorData(kTrajectoryId, kSensorId[0],
+                         common::make_unique<Data>(fourth));
+  collator.AddSensorData(kTrajectoryId, kSensorId[1],
+                         common::make_unique<Data>(second));
+  collator.AddSensorData(kTrajectoryId, kSensorId[1],
+                         common::make_unique<Data>(fifth));
+  collator.AddSensorData(kTrajectoryId, kSensorId[2],
+                         common::make_unique<Data>(third));
 
-  EXPECT_EQ(3, received.size());
-  EXPECT_EQ(100, common::ToUniversal(received[0].time));
-  EXPECT_EQ("horizontal_laser", received[0].frame_id);
-  EXPECT_EQ(200, common::ToUniversal(received[1].time));
-  EXPECT_EQ("vertical_laser", received[1].frame_id);
-  EXPECT_EQ(300, common::ToUniversal(received[2].time));
-  EXPECT_EQ("imu", received[2].frame_id);
+  ASSERT_EQ(3, received.size());
+  EXPECT_EQ(100, common::ToUniversal(received[0].second.time));
+  EXPECT_EQ(kSensorId[0], received[0].first);
+  EXPECT_EQ(200, common::ToUniversal(received[1].second.time));
+  EXPECT_EQ(kSensorId[1], received[1].first);
+  EXPECT_EQ(300, common::ToUniversal(received[2].second.time));
+  EXPECT_EQ(kSensorId[2], received[2].first);
 
   collator.Flush();
 
   ASSERT_EQ(6, received.size());
-  EXPECT_EQ("horizontal_laser", received[3].frame_id);
-  EXPECT_EQ(500, common::ToUniversal(received[4].time));
-  EXPECT_EQ("vertical_laser", received[4].frame_id);
-  EXPECT_EQ(600, common::ToUniversal(received[5].time));
-  EXPECT_EQ("odometry", received[5].frame_id);
+  EXPECT_EQ(kSensorId[0], received[3].first);
+  EXPECT_EQ(500, common::ToUniversal(received[4].second.time));
+  EXPECT_EQ(kSensorId[1], received[4].first);
+  EXPECT_EQ(600, common::ToUniversal(received[5].second.time));
+  EXPECT_EQ(kSensorId[3], received[5].first);
 }
 
 }  // namespace
