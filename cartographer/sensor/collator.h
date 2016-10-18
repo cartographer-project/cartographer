@@ -26,29 +26,14 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/make_unique.h"
-#include "cartographer/common/ordered_multi_queue.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/data.h"
+#include "cartographer/sensor/ordered_multi_queue.h"
 #include "cartographer/sensor/sensor_packet_period_histogram_builder.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace sensor {
-
-struct CollatorQueueKey {
-  int trajectory_id;
-  string sensor_id;
-
-  bool operator<(const CollatorQueueKey& other) const {
-    return std::forward_as_tuple(trajectory_id, sensor_id) <
-           std::forward_as_tuple(other.trajectory_id, other.sensor_id);
-  }
-};
-
-inline std::ostream& operator<<(std::ostream& out,
-                                const CollatorQueueKey& key) {
-  return out << '(' << key.trajectory_id << ", " << key.sensor_id << ')';
-}
 
 class Collator {
  public:
@@ -65,9 +50,10 @@ class Collator {
                      const std::unordered_set<string>& expected_sensor_ids,
                      const Callback callback) {
     for (const auto& sensor_id : expected_sensor_ids) {
-      const auto queue_key = CollatorQueueKey{trajectory_id, sensor_id};
-      queue_.AddQueue(queue_key, [callback](std::unique_ptr<Value> value) {
-        callback(value->timestamp, std::move(value->sensor_data));
+      const auto queue_key = QueueKey{trajectory_id, sensor_id};
+      queue_.AddQueue(queue_key, [callback](const common::Time time,
+                                            std::unique_ptr<Data> data) {
+        callback(common::ToUniversal(time), std::move(data));
       });
       queue_keys_[trajectory_id].push_back(queue_key);
     }
@@ -80,17 +66,15 @@ class Collator {
     }
   }
 
-  // Adds 'sensor_data' for 'trajectory_id' to be collated. 'sensor_data' must
-  // contain valid sensor data. Sensor packets with matching 'sensor_id' must be
-  // added in time order.
+  // Adds 'data' for 'trajectory_id' to be collated. 'data' must contain valid
+  // sensor data. Sensor packets with matching 'sensor_id' must be added in time
+  // order.
   void AddSensorData(const int trajectory_id, const int64 timestamp,
-                     const string& sensor_id,
-                     std::unique_ptr<Data> sensor_data) {
+                     const string& sensor_id, std::unique_ptr<Data> data) {
     sensor_packet_period_histogram_builder_.Add(trajectory_id, timestamp,
                                                 sensor_id);
-    queue_.Add(
-        CollatorQueueKey{trajectory_id, sensor_id}, timestamp,
-        common::make_unique<Value>(Value{timestamp, std::move(sensor_data)}));
+    queue_.Add(QueueKey{trajectory_id, sensor_id},
+               common::FromUniversal(timestamp), std::move(data));
   }
 
   // Dispatches all queued sensor packets. May only be called once.
@@ -111,18 +95,12 @@ class Collator {
   }
 
  private:
-  struct Value {
-    int64 timestamp;
-    std::unique_ptr<Data> sensor_data;
-  };
-
   // Queue keys are a pair of trajectory ID and sensor identifier.
-  common::OrderedMultiQueue<CollatorQueueKey, int64, Value> queue_;
+  OrderedMultiQueue queue_;
 
   // Map of trajectory ID to all associated QueueKeys.
-  std::unordered_map<int, std::vector<CollatorQueueKey>> queue_keys_;
-  sensor::SensorPacketPeriodHistogramBuilder
-      sensor_packet_period_histogram_builder_;
+  std::unordered_map<int, std::vector<QueueKey>> queue_keys_;
+  SensorPacketPeriodHistogramBuilder sensor_packet_period_histogram_builder_;
 };
 
 }  // namespace sensor

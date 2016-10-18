@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_COMMON_ORDERED_MULTI_QUEUE_H_
-#define CARTOGRAPHER_COMMON_ORDERED_MULTI_QUEUE_H_
+#ifndef CARTOGRAPHER_SENSOR_ORDERED_MULTI_QUEUE_H_
+#define CARTOGRAPHER_SENSOR_ORDERED_MULTI_QUEUE_H_
 
 #include <algorithm>
 #include <map>
@@ -24,45 +24,58 @@
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
+#include "cartographer/common/time.h"
+#include "cartographer/sensor/data.h"
 
 namespace cartographer {
-namespace common {
+namespace sensor {
 
 // Number of items that can be queued up before we LOG(WARNING).
 const int kMaxQueueSize = 500;
 
-// Maintains multiple queues of sorted values and dispatches merge sorted
-// values. This class is thread-compatible.
-template <typename QueueKeyType, typename SortKeyType, typename ValueType>
+struct QueueKey {
+  int trajectory_id;
+  string sensor_id;
+
+  bool operator<(const QueueKey& other) const {
+    return std::forward_as_tuple(trajectory_id, sensor_id) <
+           std::forward_as_tuple(other.trajectory_id, other.sensor_id);
+  }
+};
+
+inline std::ostream& operator<<(std::ostream& out, const QueueKey& key) {
+  return out << '(' << key.trajectory_id << ", " << key.sensor_id << ')';
+}
+
+// Maintains multiple queues of sorted sensor data and dispatches it in merge
+// sorted order. This class is thread-compatible.
 class OrderedMultiQueue {
  public:
-  using Callback = std::function<void(std::unique_ptr<ValueType>)>;
+  using Callback = std::function<void(common::Time, std::unique_ptr<Data>)>;
 
   // Will wait to see at least one value for each 'expected_queue_keys' before
   // dispatching the next smallest value across all queues.
-  explicit OrderedMultiQueue(const SortKeyType min_sort_key = SortKeyType())
-      : last_dispatched_key_(min_sort_key) {}
-
+  OrderedMultiQueue() {}
   ~OrderedMultiQueue() {}
 
-  void AddQueue(const QueueKeyType& queue_key, Callback callback) {
+  void AddQueue(const QueueKey& queue_key, Callback callback) {
     CHECK(FindOrNull(queue_key) == nullptr);
     queues_[queue_key].callback = callback;
   }
 
-  void MarkQueueAsFinished(const QueueKeyType& queue_key) {
+  void MarkQueueAsFinished(const QueueKey& queue_key) {
     auto& queue = FindOrDie(queue_key);
     CHECK(!queue.finished);
     queue.finished = true;
     Dispatch();
   }
 
-  bool HasQueue(const QueueKeyType& queue_key) {
+  bool HasQueue(const QueueKey& queue_key) {
     return queues_.count(queue_key) != 0;
   }
 
-  void Add(const QueueKeyType& queue_key, const SortKeyType& sort_key,
-           std::unique_ptr<ValueType> value) {
+  void Add(const QueueKey& queue_key, const common::Time& sort_key,
+           std::unique_ptr<Data> value) {
     auto* queue = FindOrNull(queue_key);
     if (queue == nullptr) {
       // TODO(damonkohler): This will not work for every value of "queue_key".
@@ -78,7 +91,7 @@ class OrderedMultiQueue {
   // Dispatches all remaining values in sorted order and removes the underlying
   // queues.
   void Flush() {
-    std::vector<QueueKeyType> unfinished_queues;
+    std::vector<QueueKey> unfinished_queues;
     for (auto& entry : queues_) {
       if (!entry.second.finished) {
         unfinished_queues.push_back(entry.first);
@@ -90,16 +103,16 @@ class OrderedMultiQueue {
   }
 
   // Returns the number of available values associated with 'queue_key'.
-  int num_available(const QueueKeyType& queue_key) {
+  int num_available(const QueueKey& queue_key) {
     return FindOrDie(queue_key).queue.Size();
   }
 
  private:
   struct KeyValuePair {
-    KeyValuePair(const SortKeyType& sort_key, std::unique_ptr<ValueType> value)
+    KeyValuePair(const common::Time& sort_key, std::unique_ptr<Data> value)
         : sort_key(sort_key), value(std::move(value)) {}
-    SortKeyType sort_key;
-    std::unique_ptr<ValueType> value;
+    common::Time sort_key;
+    std::unique_ptr<Data> value;
   };
 
   struct Queue {
@@ -109,14 +122,14 @@ class OrderedMultiQueue {
   };
 
   // Returns the queue with 'key' or LOG(FATAL).
-  Queue& FindOrDie(const QueueKeyType& key) {
+  Queue& FindOrDie(const QueueKey& key) {
     auto it = queues_.find(key);
     CHECK(it != queues_.end()) << "Did not find '" << key << "'.";
     return it->second;
   }
 
   // Returns the queue with 'key' or nullptr.
-  Queue* FindOrNull(const QueueKeyType& key) {
+  Queue* FindOrNull(const QueueKey& key) {
     auto it = queues_.find(key);
     if (it == queues_.end()) {
       return nullptr;
@@ -155,7 +168,8 @@ class OrderedMultiQueue {
         return;
       }
       last_dispatched_key_ = next_key_value_pair->sort_key;
-      next_queue->callback(std::move(next_queue->queue.Pop()->value));
+      next_queue->callback(last_dispatched_key_,
+                           std::move(next_queue->queue.Pop()->value));
     }
   }
 
@@ -168,12 +182,12 @@ class OrderedMultiQueue {
   }
 
   // Used to verify that values are dispatched in sorted order.
-  SortKeyType last_dispatched_key_;
+  common::Time last_dispatched_key_ = common::Time::min();
 
-  std::map<QueueKeyType, Queue> queues_;
+  std::map<QueueKey, Queue> queues_;
 };
 
-}  // namespace common
+}  // namespace sensor
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_COMMON_ORDERED_MULTI_QUEUE_H_
+#endif  // CARTOGRAPHER_SENSOR_ORDERED_MULTI_QUEUE_H_
