@@ -13,9 +13,7 @@
 # limitations under the License.
 
 FROM ubuntu:trusty
-COPY scripts/install_debs.sh cartographer/scripts/
-RUN cartographer/scripts/install_debs.sh && rm -rf /var/lib/apt/lists/*
-COPY scripts/install_ceres.sh cartographer/scripts/
-RUN cartographer/scripts/install_ceres.sh && rm -rf ceres-solver
 COPY . cartographer
+RUN cartographer/scripts/install_debs.sh && rm -rf /var/lib/apt/lists/*
+RUN cartographer/scripts/install_ceres.sh && rm -rf ceres-solver
 RUN cartographer/scripts/install_cartographer.sh && rm -rf cartographer
