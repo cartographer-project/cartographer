@@ -53,7 +53,7 @@ class LocalTrajectoryBuilderInterface {
   virtual void AddImuData(common::Time time,
                           const Eigen::Vector3d& linear_acceleration,
                           const Eigen::Vector3d& angular_velocity) = 0;
-  virtual std::unique_ptr<InsertionResult> AddLaserFan3D(
+  virtual std::unique_ptr<InsertionResult> AddLaserFan(
       common::Time time, const sensor::LaserFan& laser_fan) = 0;
   virtual void AddOdometerPose(
       common::Time time, const transform::Rigid3d& pose,

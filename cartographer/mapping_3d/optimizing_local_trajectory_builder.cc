@@ -133,7 +133,7 @@ void OptimizingLocalTrajectoryBuilder::AddOdometerPose(
 }
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
-OptimizingLocalTrajectoryBuilder::AddLaserFan3D(
+OptimizingLocalTrajectoryBuilder::AddLaserFan(
     const common::Time time, const sensor::LaserFan& laser_fan_in_tracking) {
   CHECK_GT(laser_fan_in_tracking.returns.size(), 0);
 
