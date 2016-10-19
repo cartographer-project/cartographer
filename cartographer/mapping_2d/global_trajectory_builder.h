@@ -40,7 +40,7 @@ class GlobalTrajectoryBuilder
   const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
       const override;
 
-  // 'laser_fan' will be projected to 2D, and therefore should be approximately
+  // Projects 'laser_fan' to 2D, and therefore should be approximately
   // horizontal.
   void AddLaserFan(common::Time time,
                    const sensor::LaserFan& laser_fan) override;
