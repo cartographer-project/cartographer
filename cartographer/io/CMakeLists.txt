@@ -21,6 +21,16 @@ google_library(io_null_points_processor
     io_points_processor
 )
 
+google_library(io_ply_writing_points_processor
+  USES_GLOG
+  SRCS
+    ply_writing_points_processor.cc
+  HDRS
+    ply_writing_points_processor.h
+  DEPENDS
+    io_points_processor
+)
+
 google_library(io_points_batch
   USES_EIGEN
   SRCS

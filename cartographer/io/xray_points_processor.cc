@@ -96,7 +96,7 @@ PointsProcessor::FlushResult XRayPointsProcessor::Flush() {
   switch (next_->Flush()) {
     case FlushResult::kRestartStream:
       LOG(FATAL) << "X-Ray generation must be configured to occur after any "
-                    "stages that require multiple passes";
+                    "stages that require multiple passes.";
 
     case FlushResult::kFinished:
       return FlushResult::kFinished;
