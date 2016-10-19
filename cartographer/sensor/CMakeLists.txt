@@ -21,9 +21,9 @@ google_library(sensor_collator
     collator.h
   DEPENDS
     common_make_unique
-    common_ordered_multi_queue
     common_time
     sensor_data
+    sensor_ordered_multi_queue
     sensor_sensor_packet_period_histogram_builder
 )
 
@@ -60,6 +60,7 @@ google_library(sensor_data
   HDRS
     data.h
   DEPENDS
+    common_time
     kalman_filter_pose_tracker
     sensor_laser
     transform_rigid_transform
@@ -76,6 +77,17 @@ google_library(sensor_laser
     sensor_point_cloud
     sensor_proto_sensor
     transform_transform
+)
+
+google_library(sensor_ordered_multi_queue
+  HDRS
+    ordered_multi_queue.h
+  DEPENDS
+    common_blocking_queue
+    common_make_unique
+    common_port
+    common_time
+    sensor_data
 )
 
 google_library(sensor_point_cloud
@@ -138,6 +150,14 @@ google_test(sensor_laser_test
     laser_test.cc
   DEPENDS
     sensor_laser
+)
+
+google_test(sensor_ordered_multi_queue_test
+  SRCS
+    ordered_multi_queue_test.cc
+  DEPENDS
+    common_make_unique
+    sensor_ordered_multi_queue
 )
 
 google_test(sensor_point_cloud_test
