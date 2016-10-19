@@ -104,7 +104,9 @@ macro(_common_compile_stuff VISIBILITY)
   endif()
 
   if(ARG_USES_YAMLCPP)
-    target_link_libraries("${NAME}" yaml-cpp)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${YAMLCPP_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${YAMLCPP_LIBRARIES})
   endif()
 
   if(ARG_USES_CAIRO)

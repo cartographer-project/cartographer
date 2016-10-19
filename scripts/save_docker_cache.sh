@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright 2016 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-sudo: required
-services: docker
-
 # Cache intermediate Docker layers. For a description of how this works, see:
 # https://giorgos.sealabs.net/docker-cache-on-travis-and-docker-112.html
-cache:
-  directories:
-    - /home/travis/docker/
-env:
-  global:
-    - DOCKER_CACHE_FILE=/home/travis/docker/cache.tar.gz
-before_install: scripts/load_docker_cache.sh
 
-install: true
-script:
-  - docker build ${TRAVIS_BUILD_DIR} -t cartographer
-  - scripts/save_docker_cache.sh
+set -o errexit
+set -o verbose
+set -o pipefail
+
+if [[ ${TRAVIS_BRANCH} == "master" ]] &&
+    [[ ${TRAVIS_PULL_REQUEST} == "false" ]]; then
+  mkdir -p $(dirname ${DOCKER_CACHE_FILE});
+  docker save $(docker history -q cartographer |
+      grep -v '<missing>') | gzip > ${DOCKER_CACHE_FILE};
+fi
