@@ -30,7 +30,7 @@ class MinMaxRangeFiteringPointsProcessor : public PointsProcessor {
  public:
   MinMaxRangeFiteringPointsProcessor(double min_range, double max_range,
                                      PointsProcessor* next);
-  virtual ~MinMaxRangeFiteringPointsProcessor() {}
+  ~MinMaxRangeFiteringPointsProcessor() override {}
 
   MinMaxRangeFiteringPointsProcessor(
       const MinMaxRangeFiteringPointsProcessor&) = delete;
