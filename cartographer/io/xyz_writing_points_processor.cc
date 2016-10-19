@@ -6,6 +6,7 @@
 
 namespace cartographer {
 namespace io {
+
 namespace {
 
 void WriteXyzPoint(const Eigen::Vector3f& point, std::ofstream* output) {
@@ -16,7 +17,7 @@ void WriteXyzPoint(const Eigen::Vector3f& point, std::ofstream* output) {
 
 XyzWriterPointsProcessor::XyzWriterPointsProcessor(const string& filename,
                                                    PointsProcessor* next)
-    : next_(next), file_(filename, std::ios_base::out) {
+    : next_(next), file_(filename, std::ios_base::out | std::ios_base::binary) {
   file_ << std::setprecision(6);
 }
 
@@ -35,8 +36,8 @@ PointsProcessor::FlushResult XyzWriterPointsProcessor::Flush() {
 }
 
 void XyzWriterPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
-  for (size_t i = 0; i < batch->points.size(); ++i) {
-    WriteXyzPoint(batch->points[i], &file_);
+  for (const Eigen::Vector3f& point : batch->points) {
+    WriteXyzPoint(point, &file_);
   }
   next_->Process(std::move(batch));
 }
