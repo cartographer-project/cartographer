@@ -68,17 +68,20 @@ google_library(mapping_map_builder
   DEPENDS
     common_lua_parameter_dictionary
     common_make_unique
+    common_port
     common_thread_pool
     mapping_2d_global_trajectory_builder
     mapping_2d_sparse_pose_graph
     mapping_3d_global_trajectory_builder
     mapping_3d_local_trajectory_builder_options
     mapping_3d_sparse_pose_graph
-    mapping_global_trajectory_builder_interface
+    mapping_collated_trajectory_builder
     mapping_proto_map_builder_options
     mapping_sparse_pose_graph
     mapping_submaps
+    mapping_trajectory_builder
     mapping_trajectory_node
+    sensor_collator
     sensor_laser
     sensor_voxel_filter
     transform_rigid_transform
