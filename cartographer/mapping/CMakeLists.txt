@@ -171,12 +171,16 @@ google_library(mapping_trajectory_connectivity
 
 google_library(mapping_trajectory_node
   USES_EIGEN
+  SRCS
+    trajectory_node.cc
   HDRS
     trajectory_node.h
   DEPENDS
     common_time
+    proto_trajectory
     sensor_laser
     transform_rigid_transform
+    transform_transform
 )
 
 google_test(mapping_probability_values_test
