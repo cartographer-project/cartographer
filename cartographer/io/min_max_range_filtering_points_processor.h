@@ -32,8 +32,10 @@ class MinMaxRangeFiteringPointsProcessor : public PointsProcessor {
                                      PointsProcessor* next);
   virtual ~MinMaxRangeFiteringPointsProcessor() {}
 
-  MinMaxRangeFiteringPointsProcessor(const MinMaxRangeFiteringPointsProcessor&) = delete;
-  MinMaxRangeFiteringPointsProcessor& operator=(const MinMaxRangeFiteringPointsProcessor&) = delete;
+  MinMaxRangeFiteringPointsProcessor(
+      const MinMaxRangeFiteringPointsProcessor&) = delete;
+  MinMaxRangeFiteringPointsProcessor& operator=(
+      const MinMaxRangeFiteringPointsProcessor&) = delete;
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
