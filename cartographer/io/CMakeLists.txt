@@ -62,3 +62,13 @@ google_library(io_xray_points_processor
     mapping_3d_hybrid_grid
     transform_rigid_transform
 )
+
+google_library(io_xyz_writing_points_processor
+  USES_GLOG
+  SRCS
+    xyz_writing_points_processor.cc
+  HDRS
+    xyz_writing_points_processor.h
+  DEPENDS
+    io_points_processor
+)
