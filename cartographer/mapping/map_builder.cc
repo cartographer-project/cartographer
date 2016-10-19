@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "cartographer/common/make_unique.h"
+#include "cartographer/mapping/collated_trajectory_builder.h"
 #include "cartographer/mapping_2d/global_trajectory_builder.h"
 #include "cartographer/mapping_3d/global_trajectory_builder.h"
 #include "cartographer/mapping_3d/local_trajectory_builder_options.h"
@@ -57,8 +58,9 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
   return options;
 }
 
-MapBuilder::MapBuilder(const proto::MapBuilderOptions& options,
-                       std::deque<TrajectoryNode::ConstantData>* constant_data)
+MapBuilder::MapBuilder(
+    const proto::MapBuilderOptions& options,
+    std::deque<TrajectoryNode::ConstantData>* const constant_data)
     : options_(options), thread_pool_(options.num_background_threads()) {
   if (options.use_trajectory_builder_2d()) {
     sparse_pose_graph_2d_ = common::make_unique<mapping_2d::SparsePoseGraph>(
@@ -74,35 +76,39 @@ MapBuilder::MapBuilder(const proto::MapBuilderOptions& options,
 
 MapBuilder::~MapBuilder() {}
 
-int MapBuilder::AddTrajectoryBuilder() {
+int MapBuilder::AddTrajectoryBuilder(
+    const std::unordered_set<string>& expected_sensor_ids) {
+  const int trajectory_id = trajectory_builders_.size();
   if (options_.use_trajectory_builder_3d()) {
     trajectory_builders_.push_back(
-        common::make_unique<mapping_3d::GlobalTrajectoryBuilder>(
-            options_.trajectory_builder_3d_options(),
-            sparse_pose_graph_3d_.get()));
+        common::make_unique<CollatedTrajectoryBuilder>(
+            &sensor_collator_, trajectory_id, expected_sensor_ids,
+            common::make_unique<mapping_3d::GlobalTrajectoryBuilder>(
+                options_.trajectory_builder_3d_options(),
+                sparse_pose_graph_3d_.get())));
   } else {
     trajectory_builders_.push_back(
-        common::make_unique<mapping_2d::GlobalTrajectoryBuilder>(
-            options_.trajectory_builder_2d_options(),
-            sparse_pose_graph_2d_.get()));
+        common::make_unique<CollatedTrajectoryBuilder>(
+            &sensor_collator_, trajectory_id, expected_sensor_ids,
+            common::make_unique<mapping_2d::GlobalTrajectoryBuilder>(
+                options_.trajectory_builder_2d_options(),
+                sparse_pose_graph_2d_.get())));
   }
-  const int trajectory_id = trajectory_builders_.size() - 1;
   trajectory_ids_.emplace(trajectory_builders_.back()->submaps(),
                           trajectory_id);
   return trajectory_id;
 }
 
-GlobalTrajectoryBuilderInterface* MapBuilder::GetTrajectoryBuilder(
+TrajectoryBuilder* MapBuilder::GetTrajectoryBuilder(
     const int trajectory_id) const {
   return trajectory_builders_.at(trajectory_id).get();
 }
 
-GlobalTrajectoryBuilderInterface* MapBuilder::GetTrajectoryBuilder(
-    const Submaps* trajectory) const {
-  return trajectory_builders_.at(GetTrajectoryId(trajectory)).get();
+void MapBuilder::FinishTrajectory(const int trajectory_id) {
+  sensor_collator_.FinishTrajectory(trajectory_id);
 }
 
-int MapBuilder::GetTrajectoryId(const Submaps* trajectory) const {
+int MapBuilder::GetTrajectoryId(const Submaps* const trajectory) const {
   const auto trajectory_id = trajectory_ids_.find(trajectory);
   CHECK(trajectory_id != trajectory_ids_.end());
   return trajectory_id->second;

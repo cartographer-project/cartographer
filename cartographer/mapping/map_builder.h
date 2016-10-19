@@ -19,19 +19,23 @@
 
 #include <deque>
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "Eigen/Geometry"
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/common/port.h"
 #include "cartographer/common/thread_pool.h"
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/submaps.h"
+#include "cartographer/mapping/trajectory_builder.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/sparse_pose_graph.h"
 #include "cartographer/mapping_3d/sparse_pose_graph.h"
+#include "cartographer/sensor/collator.h"
 
 namespace cartographer {
 namespace mapping {
@@ -51,14 +55,16 @@ class MapBuilder {
   MapBuilder& operator=(const MapBuilder&) = delete;
 
   // Create a new trajectory and return its index.
-  int AddTrajectoryBuilder();
+  int AddTrajectoryBuilder(
+      const std::unordered_set<string>& expected_sensor_ids);
 
   // Returns the TrajectoryBuilder corresponding to the specified
-  // 'trajectory_id' or 'trajectory' pointer.
-  mapping::GlobalTrajectoryBuilderInterface* GetTrajectoryBuilder(
-      int trajectory_id) const;
-  mapping::GlobalTrajectoryBuilderInterface* GetTrajectoryBuilder(
-      const mapping::Submaps* trajectory) const;
+  // 'trajectory_id'.
+  mapping::TrajectoryBuilder* GetTrajectoryBuilder(int trajectory_id) const;
+
+  // Marks the TrajectoryBuilder corresponding to 'trajectory_id' as finished,
+  // i.e. no further sensor data is expected.
+  void FinishTrajectory(int trajectory_id);
 
   // Returns the trajectory ID for 'trajectory'.
   int GetTrajectoryId(const mapping::Submaps* trajectory) const;
@@ -78,8 +84,8 @@ class MapBuilder {
   std::unique_ptr<mapping_3d::SparsePoseGraph> sparse_pose_graph_3d_;
   mapping::SparsePoseGraph* sparse_pose_graph_;
 
-  std::vector<std::unique_ptr<mapping::GlobalTrajectoryBuilderInterface>>
-      trajectory_builders_;
+  sensor::Collator sensor_collator_;
+  std::vector<std::unique_ptr<mapping::TrajectoryBuilder>> trajectory_builders_;
   std::unordered_map<const mapping::Submaps*, int> trajectory_ids_;
 };
 
