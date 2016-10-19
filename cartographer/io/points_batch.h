@@ -27,7 +27,7 @@ namespace cartographer {
 namespace io {
 
 // A point's color.
-using Color = Eigen::Matrix<uint8, 3, 1>;
+using Color = std::array<uint8_t, 3>;
 
 // A number of points, captured around the same 'time' and by a
 // sensor at the same 'origin'.
