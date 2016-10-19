@@ -82,7 +82,8 @@ PointsProcessor::FlushResult PlyWritingPointsProcessor::Flush() {
       return FlushResult::kFinished;
 
     case FlushResult::kRestartStream:
-      LOG(FATAL) << "Not supported";
+      LOG(FATAL) << "PLY generation must be configured to occur after any "
+                    "stages that require multiple passes.";
   }
   LOG(FATAL);
 }
