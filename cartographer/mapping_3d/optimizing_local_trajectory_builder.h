@@ -52,7 +52,7 @@ class OptimizingLocalTrajectoryBuilder
 
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
-  std::unique_ptr<InsertionResult> AddLaserFan3D(
+  std::unique_ptr<InsertionResult> AddLaserFan(
       common::Time time,
       const sensor::LaserFan& laser_fan_in_tracking) override;
 

@@ -74,8 +74,8 @@ void KalmanLocalTrajectoryBuilder::AddImuData(
 }
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
-KalmanLocalTrajectoryBuilder::AddLaserFan3D(const common::Time time,
-                                            const sensor::LaserFan& laser_fan) {
+KalmanLocalTrajectoryBuilder::AddLaserFan(const common::Time time,
+                                          const sensor::LaserFan& laser_fan) {
   if (!pose_tracker_) {
     LOG(INFO) << "PoseTracker not yet initialized.";
     return nullptr;
