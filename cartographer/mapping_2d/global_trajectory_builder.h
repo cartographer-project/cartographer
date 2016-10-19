@@ -40,7 +40,8 @@ class GlobalTrajectoryBuilder
   const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
       const override;
 
-  // Handles approximately horizontal laser fans.
+  // 'laser_fan' will be projected to 2D, and therefore should be approximately
+  // horizontal.
   void AddLaserFan(common::Time time,
                    const sensor::LaserFan& laser_fan) override;
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
