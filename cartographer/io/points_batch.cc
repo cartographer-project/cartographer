@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
-
-#include "cartographer/io/points_processor.h"
+#include "cartographer/io/points_batch.h"
 
 namespace cartographer {
 namespace io {
 
-// A points processor that just drops all points. The end of a pipeline usually.
-class NullPointsProcessor : public PointsProcessor {
- public:
-  NullPointsProcessor() {}
-  ~NullPointsProcessor() override {}
-
-  void Process(std::unique_ptr<PointsBatch> points_batch) override {}
-  FlushResult Flush() override { return FlushResult::kFinished; }
-};
+void RemovePoints(std::vector<int> to_remove, PointsBatch* batch) {
+  std::sort(to_remove.begin(), to_remove.end(), std::greater<int>());
+  for (const int index : to_remove) {
+    batch->points.erase(batch->points.begin() + index);
+    if (!batch->colors.empty()) {
+      batch->colors.erase(batch->colors.begin() + index);
+    }
+  }
+}
 
 }  // namespace io
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_

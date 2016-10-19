@@ -60,6 +60,7 @@ google_library(sensor_data
   HDRS
     data.h
   DEPENDS
+    common_time
     kalman_filter_pose_tracker
     sensor_laser
     transform_rigid_transform

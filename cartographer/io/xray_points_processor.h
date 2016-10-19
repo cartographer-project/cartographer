@@ -35,8 +35,8 @@ class XRayPointsProcessor : public PointsProcessor {
 
   ~XRayPointsProcessor() override {}
 
-  void Process(const PointsBatch& batch) override;
-  void Flush() override;
+  void Process(std::unique_ptr<PointsBatch> batch) override;
+  FlushResult Flush() override;
 
  private:
   using Voxels = mapping_3d::HybridGridBase<bool>;
