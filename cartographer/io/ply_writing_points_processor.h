@@ -28,7 +28,8 @@ class PlyWritingPointsProcessor : public PointsProcessor {
   ~PlyWritingPointsProcessor() override {}
 
   PlyWritingPointsProcessor(const PlyWritingPointsProcessor&) = delete;
-  PlyWritingPointsProcessor& operator=(const PlyWritingPointsProcessor&) = delete;
+  PlyWritingPointsProcessor& operator=(const PlyWritingPointsProcessor&) =
+      delete;
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
