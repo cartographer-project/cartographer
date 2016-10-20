@@ -75,7 +75,8 @@ PointsProcessor::FlushResult PlyWritingPointsProcessor::Flush() {
   file_.seekp(0);
 
   WriteBinaryPlyHeader(has_colors_, num_points_, &file_);
-  file_.flush();
+  file_.close();
+  CHECK(file_) << "Writing PLY file failed.";
 
   switch (next_->Flush()) {
     case FlushResult::kFinished:
