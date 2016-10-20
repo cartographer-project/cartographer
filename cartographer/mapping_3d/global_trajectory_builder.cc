@@ -33,10 +33,6 @@ const mapping_3d::Submaps* GlobalTrajectoryBuilder::submaps() const {
   return local_trajectory_builder_->submaps();
 }
 
-kalman_filter::PoseTracker* GlobalTrajectoryBuilder::pose_tracker() const {
-  return local_trajectory_builder_->pose_tracker();
-}
-
 void GlobalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
     const Eigen::Vector3d& angular_velocity) {

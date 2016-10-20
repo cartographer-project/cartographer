@@ -48,7 +48,6 @@ class GlobalTrajectoryBuilderInterface {
       const GlobalTrajectoryBuilderInterface&) = delete;
 
   virtual const Submaps* submaps() const = 0;
-  virtual kalman_filter::PoseTracker* pose_tracker() const = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
   virtual void AddLaserFan(common::Time time,

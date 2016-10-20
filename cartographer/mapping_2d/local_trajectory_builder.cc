@@ -72,10 +72,6 @@ LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
 const Submaps* LocalTrajectoryBuilder::submaps() const { return &submaps_; }
 
-kalman_filter::PoseTracker* LocalTrajectoryBuilder::pose_tracker() const {
-  return pose_tracker_.get();
-}
-
 sensor::LaserFan LocalTrajectoryBuilder::BuildCroppedLaserFan(
     const transform::Rigid3f& tracking_to_tracking_2d,
     const sensor::LaserFan& laser_fan) const {

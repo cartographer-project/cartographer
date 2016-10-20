@@ -35,7 +35,6 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
   const Submaps* submaps() const override;
-  kalman_filter::PoseTracker* pose_tracker() const override;
   const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
       const override;
 

@@ -25,7 +25,6 @@
 
 #include "cartographer/common/port.h"
 #include "cartographer/common/rate_timer.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
@@ -51,7 +50,6 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilder {
       delete;
 
   const Submaps* submaps() const override;
-  kalman_filter::PoseTracker* pose_tracker() const override;
   const PoseEstimate& pose_estimate() const override;
 
   void AddSensorData(const string& sensor_id,

@@ -50,10 +50,6 @@ const mapping_3d::Submaps* KalmanLocalTrajectoryBuilder::submaps() const {
   return submaps_.get();
 }
 
-kalman_filter::PoseTracker* KalmanLocalTrajectoryBuilder::pose_tracker() const {
-  return pose_tracker_.get();
-}
-
 void KalmanLocalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
     const Eigen::Vector3d& angular_velocity) {

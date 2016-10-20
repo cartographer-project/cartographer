@@ -60,8 +60,6 @@ class OptimizingLocalTrajectoryBuilder
       const common::Time time, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) override;
 
-  kalman_filter::PoseTracker* pose_tracker() const override { return nullptr; }
-
   void AddTrajectoryNodeIndex(int trajectory_node_index) override;
   const mapping_3d::Submaps* submaps() const override;
   const PoseEstimate& pose_estimate() const override;
