@@ -29,8 +29,6 @@ proto::Trajectory ToProto(const std::vector<TrajectoryNode>& nodes) {
     const auto& data = *node.constant_data;
     auto* node_proto = trajectory.add_node();
     node_proto->set_timestamp(common::ToUniversal(data.time));
-    *node_proto->mutable_pose_2d() =
-        transform::ToProto(transform::Project2D(node.pose));
     *node_proto->mutable_pose() =
         transform::ToProto(node.pose * data.tracking_to_pose);
   }

@@ -24,8 +24,6 @@ message Trajectory {
   // NEXT_ID: 7
   message Node {
     optional int64 timestamp = 1;
-    // 2D Pose in map frame.
-    optional transform.proto.Rigid2d pose_2d = 2;
     // Transform from tracking to map frame.
     optional transform.proto.Rigid3d pose = 5;
   }
