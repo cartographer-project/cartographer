@@ -54,13 +54,14 @@ google_library(mapping_2d_local_trajectory_builder
     common_lua_parameter_dictionary
     common_make_unique
     common_time
-    kalman_filter_pose_tracker
     mapping_2d_proto_local_trajectory_builder_options
     mapping_2d_scan_matching_ceres_scan_matcher
     mapping_2d_scan_matching_real_time_correlative_scan_matcher
     mapping_2d_submaps
     mapping_3d_motion_filter
     mapping_global_trajectory_builder_interface
+    mapping_imu_tracker
+    mapping_odometry_state_tracker
     sensor_configuration
     sensor_laser
     sensor_voxel_filter

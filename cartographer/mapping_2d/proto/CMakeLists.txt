@@ -21,7 +21,6 @@ google_proto_library(mapping_2d_proto_local_trajectory_builder_options
   SRCS
     local_trajectory_builder_options.proto
   DEPENDS
-    kalman_filter_proto_pose_tracker_options
     mapping_2d_proto_submaps_options
     mapping_2d_scan_matching_proto_ceres_scan_matcher_options
     mapping_2d_scan_matching_proto_real_time_correlative_scan_matcher_options
