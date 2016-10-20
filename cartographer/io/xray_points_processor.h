@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_IO_XRAY_POINTS_PROCESSOR_H_
 #define CARTOGRAPHER_IO_XRAY_POINTS_PROCESSOR_H_
 
+#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_processor.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -30,8 +31,13 @@ namespace io {
 // combined into a movie.
 class XRayPointsProcessor : public PointsProcessor {
  public:
+  constexpr static const char* kConfigurationFileActionName =
+      "write_xray_image";
   XRayPointsProcessor(double voxel_size, const transform::Rigid3f& transform,
                       const string& output_filename, PointsProcessor* next);
+
+  static std::unique_ptr<XRayPointsProcessor> FromDictionary(
+      common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   ~XRayPointsProcessor() override {}
 

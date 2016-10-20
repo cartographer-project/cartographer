@@ -231,8 +231,8 @@ def RunOnDirectory(root):
     for c in sorted(mains):
       # Binaries do not get their full subpath appended, but we prepend
       # 'cartographer' to distinguish them after installation. So,
-      # 'io/asset_writer_main.cc' will generate a binary called
-      # 'cartographer_asset_writer'.
+      # 'io/assets_writer_main.cc' will generate a binary called
+      # 'cartographer_assets_writer'.
       name = "cartographer_" + path.basename(path.splitext(c)[0][:-5])
       AddTarget("google_binary", name, directory, [c], [])
 

@@ -20,6 +20,7 @@
 #include <fstream>
 #include <string>
 
+#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
@@ -28,7 +29,13 @@ namespace io {
 // Writes ASCII xyz points.
 class XyzWriterPointsProcessor : public PointsProcessor {
  public:
+  constexpr static const char* kConfigurationFileActionName = "write_xyz";
+
   XyzWriterPointsProcessor(const string& filename, PointsProcessor* next);
+
+  static std::unique_ptr<XyzWriterPointsProcessor> FromDictionary(
+      common::LuaParameterDictionary* dictionary, PointsProcessor* next);
+
   ~XyzWriterPointsProcessor() override {}
 
   XyzWriterPointsProcessor(const XyzWriterPointsProcessor&) = delete;
