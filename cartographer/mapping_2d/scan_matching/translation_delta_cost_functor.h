@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_TRANSLATION_DELTA_COST_FUNCTOR_H_
 
 #include "Eigen/Core"
+#include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping_2d {
