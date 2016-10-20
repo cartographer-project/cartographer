@@ -256,9 +256,9 @@ void Submaps::SubmapToProto(
 
   const std::vector<PixelData> accumulated_pixel_data = AccumulatePixelData(
       width, height, min_index, max_index, voxel_indices_and_probabilities);
-  const string celldata = ComputePixelValues(accumulated_pixel_data);
+  const string cell_data = ComputePixelValues(accumulated_pixel_data);
 
-  common::FastGzipString(celldata, response->mutable_cells());
+  common::FastGzipString(cell_data, response->mutable_cells());
   *response->mutable_slice_pose() =
       transform::ToProto(global_submap_pose.inverse() *
                          transform::Rigid3d::Translation(Eigen::Vector3d(
@@ -376,8 +376,8 @@ std::vector<Eigen::Array4i> Submaps::ExtractVoxelData(
 
 string Submaps::ComputePixelValues(
     const std::vector<Submaps::PixelData>& accumulated_pixel_data) const {
-  string celldata;
-  celldata.reserve(2 * accumulated_pixel_data.size());
+  string cell_data;
+  cell_data.reserve(2 * accumulated_pixel_data.size());
   constexpr float kMinZDifference = 3.f;
   constexpr float kFreeSpaceWeight = 0.15f;
   for (const PixelData& pixel : accumulated_pixel_data) {
@@ -386,8 +386,8 @@ string Submaps::ComputePixelValues(
     // chosen resolution.
     const float z_difference = pixel.count > 0 ? pixel.max_z - pixel.min_z : 0;
     if (z_difference < kMinZDifference) {
-      celldata.push_back(0);  // value
-      celldata.push_back(0);  // alpha
+      cell_data.push_back(0);  // value
+      cell_data.push_back(0);  // alpha
       continue;
     }
     const float free_space = std::max(z_difference - pixel.count, 0.f);
@@ -401,10 +401,10 @@ string Submaps::ComputePixelValues(
         128 - mapping::ProbabilityToLogOddsInteger(average_probability);
     const uint8 alpha = delta > 0 ? 0 : -delta;
     const uint8 value = delta > 0 ? delta : 0;
-    celldata.push_back(value);                         // value
-    celldata.push_back((value || alpha) ? alpha : 1);  // alpha
+    cell_data.push_back(value);                         // value
+    cell_data.push_back((value || alpha) ? alpha : 1);  // alpha
   }
-  return celldata;
+  return cell_data;
 }
 
 }  // namespace mapping_3d
