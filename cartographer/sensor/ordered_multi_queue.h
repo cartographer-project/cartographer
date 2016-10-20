@@ -157,7 +157,7 @@ class OrderedMultiQueue {
         return;
       }
       last_dispatched_key_ = next_data->time;
-      next_queue->callback(std::move(next_queue->queue.Pop()));
+      next_queue->callback(next_queue->queue.Pop());
     }
   }
 
