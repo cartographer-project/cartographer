@@ -32,10 +32,6 @@ const Submaps* GlobalTrajectoryBuilder::submaps() const {
   return local_trajectory_builder_.submaps();
 }
 
-kalman_filter::PoseTracker* GlobalTrajectoryBuilder::pose_tracker() const {
-  return local_trajectory_builder_.pose_tracker();
-}
-
 void GlobalTrajectoryBuilder::AddLaserFan(const common::Time time,
                                           const sensor::LaserFan& laser_fan) {
   std::unique_ptr<LocalTrajectoryBuilder::InsertionResult> insertion_result =

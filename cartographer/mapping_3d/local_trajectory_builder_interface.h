@@ -65,7 +65,6 @@ class LocalTrajectoryBuilderInterface {
   virtual void AddTrajectoryNodeIndex(int trajectory_node_index) = 0;
   virtual const mapping_3d::Submaps* submaps() const = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
-  virtual kalman_filter::PoseTracker* pose_tracker() const = 0;
 
  protected:
   LocalTrajectoryBuilderInterface() {}

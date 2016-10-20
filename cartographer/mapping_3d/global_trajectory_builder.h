@@ -38,7 +38,6 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
   const mapping_3d::Submaps* submaps() const override;
-  kalman_filter::PoseTracker* pose_tracker() const override;
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
   void AddLaserFan(common::Time time,

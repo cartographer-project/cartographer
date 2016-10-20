@@ -57,7 +57,6 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
   void AddTrajectoryNodeIndex(int trajectory_node_index) override;
   const mapping_3d::Submaps* submaps() const override;
   const PoseEstimate& pose_estimate() const override;
-  kalman_filter::PoseTracker* pose_tracker() const override;
 
  private:
   std::unique_ptr<InsertionResult> AddAccumulatedLaserFan(

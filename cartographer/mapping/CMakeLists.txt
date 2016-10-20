@@ -25,7 +25,6 @@ google_library(mapping_collated_trajectory_builder
     common_port
     common_rate_timer
     common_time
-    kalman_filter_pose_tracker
     mapping_global_trajectory_builder_interface
     mapping_submaps
     mapping_trajectory_builder
