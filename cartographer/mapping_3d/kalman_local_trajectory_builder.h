@@ -55,7 +55,7 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
       const kalman_filter::PoseCovariance& covariance) override;
 
   void AddTrajectoryNodeIndex(int trajectory_node_index) override;
-  mapping_3d::Submaps* submaps() override;
+  const mapping_3d::Submaps* submaps() const override;
   const PoseEstimate& pose_estimate() const override;
   kalman_filter::PoseTracker* pose_tracker() const override;
 

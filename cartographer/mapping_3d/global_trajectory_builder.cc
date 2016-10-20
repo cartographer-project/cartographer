@@ -33,10 +33,6 @@ const mapping_3d::Submaps* GlobalTrajectoryBuilder::submaps() const {
   return local_trajectory_builder_->submaps();
 }
 
-mapping_3d::Submaps* GlobalTrajectoryBuilder::submaps() {
-  return local_trajectory_builder_->submaps();
-}
-
 kalman_filter::PoseTracker* GlobalTrajectoryBuilder::pose_tracker() const {
   return local_trajectory_builder_->pose_tracker();
 }

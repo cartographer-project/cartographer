@@ -51,7 +51,6 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilder {
       delete;
 
   const Submaps* submaps() const override;
-  Submaps* submaps() override;
   kalman_filter::PoseTracker* pose_tracker() const override;
   const PoseEstimate& pose_estimate() const override;
 

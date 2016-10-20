@@ -140,7 +140,7 @@ int Submaps::size() const { return submaps_.size(); }
 void Submaps::SubmapToProto(
     const int index, const std::vector<mapping::TrajectoryNode>&,
     const transform::Rigid3d&,
-    mapping::proto::SubmapQuery::Response* const response) {
+    mapping::proto::SubmapQuery::Response* const response) const {
   AddProbabilityGridToResponse(Get(index)->local_pose(),
                                Get(index)->probability_grid, response);
 }

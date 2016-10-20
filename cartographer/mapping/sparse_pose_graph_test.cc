@@ -33,7 +33,7 @@ class FakeSubmaps : public Submaps {
 
   void SubmapToProto(int, const std::vector<mapping::TrajectoryNode>&,
                      const transform::Rigid3d&,
-                     proto::SubmapQuery::Response*) override {
+                     proto::SubmapQuery::Response*) const override {
     LOG(FATAL) << "Not implemented.";
   }
 };

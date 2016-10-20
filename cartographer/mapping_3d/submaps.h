@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "Eigen/Geometry"
+#include "cartographer/common/port.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping_2d/laser_fan_inserter.h"
@@ -66,7 +67,7 @@ class Submaps : public mapping::Submaps {
   void SubmapToProto(
       int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
       const transform::Rigid3d& global_submap_pose,
-      mapping::proto::SubmapQuery::Response* response) override;
+      mapping::proto::SubmapQuery::Response* response) const override;
 
   // Inserts 'laser_fan' into the Submap collection.
   void InsertLaserFan(const sensor::LaserFan& laser_fan);
@@ -90,15 +91,21 @@ class Submaps : public mapping::Submaps {
   };
 
   void AddSubmap(const Eigen::Vector3f& origin);
-  void AccumulatePixelData(const int width, const int height,
-                           const Eigen::Array2i& min_index,
-                           const Eigen::Array2i& max_index);
-  void ExtractVoxelData(const HybridGrid& hybrid_grid,
-                        const transform::Rigid3f& transform,
-                        Eigen::Array2i* min_index, Eigen::Array2i* max_index);
+
+  std::vector<PixelData> AccumulatePixelData(
+      const int width, const int height, const Eigen::Array2i& min_index,
+      const Eigen::Array2i& max_index,
+      const std::vector<Eigen::Array4i>& voxel_indices_and_probabilities) const;
+  // The first three entries of each returned value are a cell_index and the
+  // last is the corresponding probability value. We batch them together like
+  // this to only have one vector and have better cache locality.
+  std::vector<Eigen::Array4i> ExtractVoxelData(
+      const HybridGrid& hybrid_grid, const transform::Rigid3f& transform,
+      Eigen::Array2i* min_index, Eigen::Array2i* max_index) const;
   // Builds texture data containing interleaved value and alpha for the
-  // visualization from 'accumulated_pixel_data_' into 'celldata_'.
-  void ComputePixelValues(const int width, const int height);
+  // visualization from 'accumulated_pixel_data'.
+  string ComputePixelValues(
+      const std::vector<PixelData>& accumulated_pixel_data) const;
 
   const proto::SubmapsOptions options_;
 
@@ -110,15 +117,6 @@ class Submaps : public mapping::Submaps {
 
   // Number of LaserFans inserted since the last Submap was added.
   int num_laser_fans_in_last_submap_ = 0;
-
-  // The following members are used for visualization and kept around for
-  // performance reasons (mainly to avoid reallocations).
-  std::vector<PixelData> accumulated_pixel_data_;
-  string celldata_;
-  // The first three entries of this is are a cell_index and the last is the
-  // corresponding probability value. We batch them together like this to only
-  // have one vector and have better cache locality.
-  std::vector<Eigen::Array4i> voxel_indices_and_probabilities_;
 };
 
 }  // namespace mapping_3d

@@ -63,7 +63,7 @@ class LocalTrajectoryBuilderInterface {
   // to the latest inserted laser scan. This is used to remember which
   // trajectory node should be used to visualize a Submap.
   virtual void AddTrajectoryNodeIndex(int trajectory_node_index) = 0;
-  virtual mapping_3d::Submaps* submaps() = 0;
+  virtual const mapping_3d::Submaps* submaps() const = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
   virtual kalman_filter::PoseTracker* pose_tracker() const = 0;
 

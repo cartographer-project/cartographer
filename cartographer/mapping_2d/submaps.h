@@ -61,7 +61,7 @@ class Submaps : public mapping::Submaps {
   void SubmapToProto(
       int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
       const transform::Rigid3d& global_submap_pose,
-      mapping::proto::SubmapQuery::Response* response) override;
+      mapping::proto::SubmapQuery::Response* response) const override;
 
   // Inserts 'laser_fan' into the Submap collection.
   void InsertLaserFan(const sensor::LaserFan& laser_fan);
