@@ -29,8 +29,8 @@ namespace sensor {
 namespace {
 
 TEST(Collator, Ordering) {
-  const std::array<string, 4> kSensorId = {"horizontal_laser", "vertical_laser",
-                                           "imu", "odometry"};
+  const std::array<string, 4> kSensorId = {
+      {"horizontal_laser", "vertical_laser", "imu", "odometry"}};
   Data first(common::FromUniversal(100), sensor::LaserFan{});
   Data second(common::FromUniversal(200), sensor::LaserFan{});
   Data third(common::FromUniversal(300), Data::Imu{});

@@ -71,7 +71,7 @@ google_combined_library(cartographer
 )
 
 get_property(CARTOGRAPHER_LIBRARY_FILE TARGET cartographer PROPERTY LOCATION)
-get_filename_component(CARTOGRAPHER_LIBRARY_FILE_BASENAME 
+get_filename_component(CARTOGRAPHER_LIBRARY_FILE_BASENAME
   ${CARTOGRAPHER_LIBRARY_FILE} NAME)
 install(
   FILES

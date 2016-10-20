@@ -72,8 +72,6 @@ LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
 const Submaps* LocalTrajectoryBuilder::submaps() const { return &submaps_; }
 
-Submaps* LocalTrajectoryBuilder::submaps() { return &submaps_; }
-
 kalman_filter::PoseTracker* LocalTrajectoryBuilder::pose_tracker() const {
   return pose_tracker_.get();
 }

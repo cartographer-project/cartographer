@@ -71,7 +71,6 @@ class LocalTrajectoryBuilder {
                        const kalman_filter::PoseCovariance& covariance);
 
   const Submaps* submaps() const;
-  Submaps* submaps();
   kalman_filter::PoseTracker* pose_tracker() const;
 
  private:
