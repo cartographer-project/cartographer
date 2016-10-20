@@ -331,6 +331,7 @@ macro(google_initialize_cartographer_project)
 
   # Turn some warnings into errors.
   google_add_flag(GOOG_CXX_FLAGS "-Werror=format-security")
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=missing-braces")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=reorder")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=return-type")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=uninitialized")
