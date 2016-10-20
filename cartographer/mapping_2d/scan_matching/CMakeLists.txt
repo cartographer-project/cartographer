@@ -117,6 +117,8 @@ google_library(mapping_2d_scan_matching_translation_delta_cost_functor
   USES_EIGEN
   HDRS
     translation_delta_cost_functor.h
+  DEPENDS
+    transform_rigid_transform
 )
 
 google_test(mapping_2d_scan_matching_ceres_scan_matcher_test
