@@ -87,16 +87,15 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
   for (const auto& constraint : constraints_2d()) {
     auto* const constraint_proto = proto.add_constraint();
-    *constraint_proto->mutable_pose()->mutable_zbar() =
+    *constraint_proto->mutable_relative_pose() =
         transform::ToProto(transform::Embed3D(constraint.pose.zbar_ij));
     for (int i = 0; i != 36; ++i) {
-      constraint_proto->mutable_pose()->mutable_sqrt_lambda()->Add(0.);
+      constraint_proto->mutable_sqrt_lambda()->Add(0.);
     }
     constexpr double kFakePositionCovariance = 1.;
     constexpr double kFakeOrientationCovariance = 1.;
-    Eigen::Map<Eigen::Matrix<double, 6, 6>>(constraint_proto->mutable_pose()
-                                                ->mutable_sqrt_lambda()
-                                                ->mutable_data()) =
+    Eigen::Map<Eigen::Matrix<double, 6, 6>>(
+        constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
         kalman_filter::Embed3D(constraint.pose.sqrt_Lambda_ij,
                                kFakePositionCovariance,
                                kFakeOrientationCovariance);
@@ -107,14 +106,13 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   }
   for (const auto& constraint : constraints_3d()) {
     auto* const constraint_proto = proto.add_constraint();
-    *constraint_proto->mutable_pose()->mutable_zbar() =
+    *constraint_proto->mutable_relative_pose() =
         transform::ToProto(constraint.pose.zbar_ij);
     for (int i = 0; i != 36; ++i) {
-      constraint_proto->mutable_pose()->mutable_sqrt_lambda()->Add(0.);
+      constraint_proto->mutable_sqrt_lambda()->Add(0.);
     }
-    Eigen::Map<Eigen::Matrix<double, 6, 6>>(constraint_proto->mutable_pose()
-                                                ->mutable_sqrt_lambda()
-                                                ->mutable_data()) =
+    Eigen::Map<Eigen::Matrix<double, 6, 6>>(
+        constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
         constraint.pose.sqrt_Lambda_ij;
     // TODO(whess): Support multi-trajectory.
     constraint_proto->mutable_submap_id()->set_submap_index(constraint.i);
