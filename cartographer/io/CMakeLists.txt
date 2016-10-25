@@ -48,6 +48,18 @@ google_library(io_points_processor
     io_points_batch
 )
 
+google_library(io_points_processor_pipeline_builder
+  SRCS
+    points_processor_pipeline_builder.cc
+  HDRS
+    points_processor_pipeline_builder.h
+  DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
+    io_null_points_processor
+    io_points_processor
+)
+
 google_library(io_xray_points_processor
   USES_CAIRO
   USES_EIGEN
@@ -56,6 +68,8 @@ google_library(io_xray_points_processor
   HDRS
     xray_points_processor.h
   DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
     common_math
     io_cairo_types
     io_points_processor
@@ -70,6 +84,8 @@ google_library(io_xyz_writing_points_processor
   HDRS
     xyz_writing_points_processor.h
   DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
     io_points_processor
 )
 

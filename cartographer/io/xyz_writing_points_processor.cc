@@ -2,6 +2,7 @@
 
 #include <iomanip>
 
+#include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -19,6 +20,14 @@ XyzWriterPointsProcessor::XyzWriterPointsProcessor(const string& filename,
                                                    PointsProcessor* next)
     : next_(next), file_(filename, std::ios_base::out | std::ios_base::binary) {
   file_ << std::setprecision(6);
+}
+
+std::unique_ptr<XyzWriterPointsProcessor>
+XyzWriterPointsProcessor::FromDictionary(
+    common::LuaParameterDictionary* const dictionary,
+    PointsProcessor* const next) {
+  return common::make_unique<XyzWriterPointsProcessor>(
+      dictionary->GetString("filename"), next);
 }
 
 PointsProcessor::FlushResult XyzWriterPointsProcessor::Flush() {

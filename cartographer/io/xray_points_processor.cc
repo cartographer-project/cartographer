@@ -21,6 +21,8 @@
 
 #include "Eigen/Core"
 #include "cairo/cairo.h"
+#include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/io/cairo_types.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
@@ -82,6 +84,15 @@ XRayPointsProcessor::XRayPointsProcessor(const double voxel_size,
       output_filename_(output_filename),
       transform_(transform),
       voxels_(voxel_size, Eigen::Vector3f::Zero()) {}
+
+std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
+    common::LuaParameterDictionary* dictionary, PointsProcessor* next) {
+  return common::make_unique<XRayPointsProcessor>(
+      dictionary->GetDouble("voxel_size"),
+      transform::FromDictionary(dictionary->GetDictionary("transform").get())
+          .cast<float>(),
+      dictionary->GetString("filename"), next);
+}
 
 void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   for (const auto& point : batch->points) {
