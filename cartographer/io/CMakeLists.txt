@@ -4,6 +4,20 @@ google_library(io_cairo_types
     cairo_types.h
 )
 
+google_library(io_fixed_ratio_sampling_points_processor
+  USES_EIGEN
+  USES_GLOG
+  SRCS
+    fixed_ratio_sampling_points_processor.cc
+  HDRS
+    fixed_ratio_sampling_points_processor.h
+  DEPENDS
+    common_fixed_ratio_sampler
+    common_lua_parameter_dictionary
+    common_make_unique
+    io_points_processor
+)
+
 google_library(io_min_max_range_filtering_points_processor
   SRCS
     min_max_range_filtering_points_processor.cc
@@ -74,6 +88,7 @@ google_library(io_points_processor_pipeline_builder
   DEPENDS
     common_lua_parameter_dictionary
     common_make_unique
+    io_fixed_ratio_sampling_points_processor
     io_min_max_range_filtering_points_processor
     io_null_points_processor
     io_pcd_writing_points_processor
