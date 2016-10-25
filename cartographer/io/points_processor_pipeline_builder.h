@@ -34,6 +34,9 @@ namespace io {
 // See the various 'PointsProcessor's for examples.
 class PointsProcessorPipelineBuilder {
  public:
+  using FactoryFunction = std::function<std::unique_ptr<PointsProcessor>(
+      common::LuaParameterDictionary*, PointsProcessor* next)>;
+
   PointsProcessorPipelineBuilder(const PointsProcessorPipelineBuilder&) =
       delete;
   PointsProcessorPipelineBuilder& operator=(
@@ -46,13 +49,12 @@ class PointsProcessorPipelineBuilder {
     instance()->RegisterNonStatic<PointsProcessorType>();
   }
 
+  void RegisterType(const std::string& name, FactoryFunction factory);
+
   std::vector<std::unique_ptr<PointsProcessor>> CreatePipeline(
       common::LuaParameterDictionary* dictionary) const;
 
  private:
-  using FactoryFunction = std::function<std::unique_ptr<PointsProcessor>(
-      common::LuaParameterDictionary*, PointsProcessor* next)>;
-
   template <typename PointsProcessorType>
   void RegisterNonStatic() {
     RegisterType(
@@ -65,7 +67,6 @@ class PointsProcessorPipelineBuilder {
 
   PointsProcessorPipelineBuilder();
 
-  void RegisterType(const std::string& name, FactoryFunction factory);
 
   std::unordered_map<std::string, FactoryFunction> factories_;
 };
