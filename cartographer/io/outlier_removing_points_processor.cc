@@ -71,7 +71,8 @@ PointsProcessor::FlushResult OutlierRemovingPointsProcessor::Flush() {
 
     case State::kPhase3:
       CHECK(next_->Flush() == FlushResult::kFinished)
-          << "Restarting not implemented.";
+          << "Voxel filtering and outlier removal must be configured to occur "
+             "after any stages that require multiple passes.";
       return FlushResult::kFinished;
   }
   LOG(FATAL);
