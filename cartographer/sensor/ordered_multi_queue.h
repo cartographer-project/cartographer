@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <set>
+#include <sstream>
 
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/common/make_unique.h"
@@ -164,9 +166,21 @@ class OrderedMultiQueue {
   // Called when not all necessary queues are filled to dispatch messages.
   void CannotMakeProgress() {
     for (auto& entry : queues_) {
-      LOG_IF_EVERY_N(WARNING, entry.second.queue.Size() > kMaxQueueSize, 60)
-          << "Queue " << entry.first << " exceeds maximum size.";
+      if (entry.second.queue.Size() > kMaxQueueSize) {
+        LOG_EVERY_N(WARNING, 60) << "Queues waiting for data: " << EmptyQueuesDebugString();
+        return;
+      }
     }
+  }
+
+  string EmptyQueuesDebugString() {
+    std::ostringstream empty_queues;
+    for (auto& entry : queues_) {
+      if (entry.second.queue.Size() == 0) {
+        empty_queues << (empty_queues.tellp() > 0 ? ", " : "") << entry.first;
+      }
+    }
+    return empty_queues.str();
   }
 
   // Used to verify that values are dispatched in sorted order.
