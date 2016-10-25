@@ -16,6 +16,7 @@
 
 #include <fstream>
 
+#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
@@ -24,8 +25,12 @@ namespace io {
 // Streams a PLY file to disk. The header is written in 'Flush'.
 class PlyWritingPointsProcessor : public PointsProcessor {
  public:
+  constexpr static const char* kConfigurationFileActionName = "write_ply";
   PlyWritingPointsProcessor(const string& filename, PointsProcessor* next);
   ~PlyWritingPointsProcessor() override {}
+
+  static std::unique_ptr<PlyWritingPointsProcessor> FromDictionary(
+      common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   PlyWritingPointsProcessor(const PlyWritingPointsProcessor&) = delete;
   PlyWritingPointsProcessor& operator=(const PlyWritingPointsProcessor&) =

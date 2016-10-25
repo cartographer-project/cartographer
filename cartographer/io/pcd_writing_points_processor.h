@@ -16,6 +16,7 @@
 
 #include <fstream>
 
+#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
@@ -24,7 +25,12 @@ namespace io {
 // Streams a PCD file to disk. The header is written in 'Flush'.
 class PcdWritingPointsProcessor : public PointsProcessor {
  public:
+  constexpr static const char* kConfigurationFileActionName = "write_pcd";
   PcdWritingPointsProcessor(const string& filename, PointsProcessor* next);
+
+  static std::unique_ptr<PcdWritingPointsProcessor> FromDictionary(
+      common::LuaParameterDictionary* dictionary, PointsProcessor* next);
+
   ~PcdWritingPointsProcessor() override {}
 
   PcdWritingPointsProcessor(const PcdWritingPointsProcessor&) = delete;

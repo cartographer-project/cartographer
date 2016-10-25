@@ -16,10 +16,21 @@
 
 #include "cartographer/io/min_max_range_filtering_points_processor.h"
 
+#include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/common/make_unique.h"
 #include "cartographer/io/points_batch.h"
 
 namespace cartographer {
 namespace io {
+
+std::unique_ptr<MinMaxRangeFiteringPointsProcessor>
+MinMaxRangeFiteringPointsProcessor::FromDictionary(
+    common::LuaParameterDictionary* const dictionary,
+    PointsProcessor* const next) {
+  return common::make_unique<MinMaxRangeFiteringPointsProcessor>(
+      dictionary->GetDouble("min_range"), dictionary->GetDouble("max_range"),
+      next);
+}
 
 MinMaxRangeFiteringPointsProcessor::MinMaxRangeFiteringPointsProcessor(
     const double min_range, const double max_range, PointsProcessor* next)

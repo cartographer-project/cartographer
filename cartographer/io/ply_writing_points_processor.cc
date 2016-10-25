@@ -18,6 +18,9 @@
 
 #include <iomanip>
 
+#include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/common/make_unique.h"
+#include "cartographer/io/points_batch.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -28,7 +31,7 @@ namespace {
 // Writes the PLY header claiming 'num_points' will follow it into
 // 'output_file'.
 void WriteBinaryPlyHeader(const bool has_color, const int64 num_points,
-                          std::ofstream* stream) {
+                          std::ofstream* const stream) {
   string color_header = !has_color ? "" : "property uchar red\n"
                                           "property uchar green\n"
                                           "property uchar blue\n";
@@ -45,7 +48,7 @@ void WriteBinaryPlyHeader(const bool has_color, const int64 num_points,
 }
 
 void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point,
-                                   std::ofstream* stream) {
+                                   std::ofstream* const stream) {
   char buffer[12];
   memcpy(buffer, &point[0], sizeof(float));
   memcpy(buffer + 4, &point[1], sizeof(float));
@@ -55,7 +58,7 @@ void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point,
   }
 }
 
-void WriteBinaryPlyPointColor(const Color& color, std::ostream* stream) {
+void WriteBinaryPlyPointColor(const Color& color, std::ostream* const stream) {
   stream->put(color[0]);
   stream->put(color[1]);
   stream->put(color[2]);
@@ -63,8 +66,16 @@ void WriteBinaryPlyPointColor(const Color& color, std::ostream* stream) {
 
 }  // namespace
 
-PlyWritingPointsProcessor::PlyWritingPointsProcessor(const string& filename,
-                                                     PointsProcessor* next)
+std::unique_ptr<PlyWritingPointsProcessor>
+PlyWritingPointsProcessor::FromDictionary(
+    common::LuaParameterDictionary* const dictionary,
+    PointsProcessor* const next) {
+  return common::make_unique<PlyWritingPointsProcessor>(
+      dictionary->GetString("filename"), next);
+}
+
+PlyWritingPointsProcessor::PlyWritingPointsProcessor(
+    const string& filename, PointsProcessor* const next)
     : next_(next),
       num_points_(0),
       has_colors_(false),
