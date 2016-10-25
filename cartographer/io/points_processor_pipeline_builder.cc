@@ -21,6 +21,7 @@
 #include "cartographer/io/fixed_ratio_sampling_points_processor.h"
 #include "cartographer/io/min_max_range_filtering_points_processor.h"
 #include "cartographer/io/null_points_processor.h"
+#include "cartographer/io/outlier_removing_points_processor.h"
 #include "cartographer/io/pcd_writing_points_processor.h"
 #include "cartographer/io/ply_writing_points_processor.h"
 #include "cartographer/io/xray_points_processor.h"
@@ -33,6 +34,7 @@ PointsProcessorPipelineBuilder::PointsProcessorPipelineBuilder() {
   RegisterNonStatic<CountingPointsProcessor>();
   RegisterNonStatic<FixedRatioSamplingPointsProcessor>();
   RegisterNonStatic<MinMaxRangeFiteringPointsProcessor>();
+  RegisterNonStatic<OutlierRemovingPointsProcessor>();
   RegisterNonStatic<PcdWritingPointsProcessor>();
   RegisterNonStatic<PlyWritingPointsProcessor>();
   RegisterNonStatic<XRayPointsProcessor>();

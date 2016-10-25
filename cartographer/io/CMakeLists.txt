@@ -49,6 +49,19 @@ google_library(io_null_points_processor
     io_points_processor
 )
 
+google_library(io_outlier_removing_points_processor
+  USES_GLOG
+  SRCS
+    outlier_removing_points_processor.cc
+  HDRS
+    outlier_removing_points_processor.h
+  DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
+    io_points_processor
+    mapping_3d_hybrid_grid
+)
+
 google_library(io_pcd_writing_points_processor
   USES_GLOG
   SRCS
@@ -104,6 +117,7 @@ google_library(io_points_processor_pipeline_builder
     io_fixed_ratio_sampling_points_processor
     io_min_max_range_filtering_points_processor
     io_null_points_processor
+    io_outlier_removing_points_processor
     io_pcd_writing_points_processor
     io_ply_writing_points_processor
     io_points_processor
