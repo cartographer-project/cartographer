@@ -39,8 +39,11 @@ void PointsProcessorPipelineBuilder::RegisterType(const std::string& name,
 
 std::vector<std::unique_ptr<PointsProcessor>>
 PointsProcessorPipelineBuilder::CreatePipeline(
-    common::LuaParameterDictionary* dictionary) const {
+    common::LuaParameterDictionary* const dictionary) const {
   std::vector<std::unique_ptr<PointsProcessor>> pipeline;
+  // The last consumer in the pipeline must exist, so that the one created after
+  // it (and being before it in the pipeline) has a valid 'next' to point to.
+  // The last consumer will just drop all points.
   pipeline.emplace_back(common::make_unique<NullPointsProcessor>());
 
   std::vector<std::unique_ptr<common::LuaParameterDictionary>> configurations =

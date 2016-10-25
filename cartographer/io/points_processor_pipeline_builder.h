@@ -44,8 +44,8 @@ class PointsProcessorPipelineBuilder {
   void Register() {
     instance()->RegisterType(
         PointsProcessorType::kConfigurationFileActionName,
-        [](common::LuaParameterDictionary* dictionary,
-           PointsProcessor* next) -> std::unique_ptr<PointsProcessor> {
+        [](common::LuaParameterDictionary* const dictionary,
+           PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
           return PointsProcessorType::FromDictionary(dictionary, next);
         });
   }
