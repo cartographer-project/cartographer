@@ -19,6 +19,7 @@
 
 #include <memory>
 
+#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
@@ -28,8 +29,13 @@ namespace io {
 // or closer than 'min_range'.
 class MinMaxRangeFiteringPointsProcessor : public PointsProcessor {
  public:
+  constexpr static const char* kConfigurationFileActionName =
+      "min_max_range_filter";
   MinMaxRangeFiteringPointsProcessor(double min_range, double max_range,
                                      PointsProcessor* next);
+  static std::unique_ptr<MinMaxRangeFiteringPointsProcessor> FromDictionary(
+      common::LuaParameterDictionary* dictionary, PointsProcessor* next);
+
   ~MinMaxRangeFiteringPointsProcessor() override {}
 
   MinMaxRangeFiteringPointsProcessor(

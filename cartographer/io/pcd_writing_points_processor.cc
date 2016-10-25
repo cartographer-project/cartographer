@@ -18,6 +18,9 @@
 
 #include <iomanip>
 
+#include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/common/make_unique.h"
+#include "cartographer/io/points_batch.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -28,7 +31,7 @@ namespace {
 // Writes the PCD header claiming 'num_points' will follow it into
 // 'output_file'.
 void WriteBinaryPcdHeader(const bool has_color, const int64 num_points,
-                          std::ofstream* stream) {
+                          std::ofstream* const stream) {
   string color_header_field = !has_color ? "" : " rgb";
   string color_header_type = !has_color ? "" : " U";
   string color_header_size = !has_color ? "" : " 4";
@@ -40,17 +43,17 @@ void WriteBinaryPcdHeader(const bool has_color, const int64 num_points,
             << "SIZE 4 4 4" << color_header_size << "\n"
             << "TYPE F F F" << color_header_type << "\n"
             << "COUNT 1 1 1" << color_header_count << "\n"
-            << "WIDTH " << std::setw(15) << std::setfill('0')
-            << num_points << "\n"
+            << "WIDTH " << std::setw(15) << std::setfill('0') << num_points
+            << "\n"
             << "HEIGHT 1\n"
             << "VIEWPOINT 0 0 0 1 0 0 0\n"
-            << "POINTS " << std::setw(15) << std::setfill('0')
-            << num_points << "\n"
+            << "POINTS " << std::setw(15) << std::setfill('0') << num_points
+            << "\n"
             << "DATA binary\n";
 }
 
 void WriteBinaryPcdPointCoordinate(const Eigen::Vector3f& point,
-                                   std::ofstream* stream) {
+                                   std::ofstream* const stream) {
   char buffer[12];
   memcpy(buffer, &point[0], sizeof(float));
   memcpy(buffer + 4, &point[1], sizeof(float));
@@ -60,7 +63,7 @@ void WriteBinaryPcdPointCoordinate(const Eigen::Vector3f& point,
   }
 }
 
-void WriteBinaryPcdPointColor(const Color& color, std::ostream* stream) {
+void WriteBinaryPcdPointColor(const Color& color, std::ostream* const stream) {
   // Pack the color as uint32 little-endian
   stream->put(color[2]);
   stream->put(color[1]);
@@ -70,8 +73,16 @@ void WriteBinaryPcdPointColor(const Color& color, std::ostream* stream) {
 
 }  // namespace
 
-PcdWritingPointsProcessor::PcdWritingPointsProcessor(const string& filename,
-                                                     PointsProcessor* next)
+std::unique_ptr<PcdWritingPointsProcessor>
+PcdWritingPointsProcessor::FromDictionary(
+    common::LuaParameterDictionary* const dictionary,
+    PointsProcessor* const next) {
+  return common::make_unique<PcdWritingPointsProcessor>(
+      dictionary->GetString("filename"), next);
+}
+
+PcdWritingPointsProcessor::PcdWritingPointsProcessor(
+    const string& filename, PointsProcessor* const next)
     : next_(next),
       num_points_(0),
       has_colors_(false),

@@ -17,12 +17,23 @@
 #include "cartographer/io/points_processor_pipeline_builder.h"
 
 #include "cartographer/common/make_unique.h"
+#include "cartographer/io/min_max_range_filtering_points_processor.h"
 #include "cartographer/io/null_points_processor.h"
+#include "cartographer/io/pcd_writing_points_processor.h"
+#include "cartographer/io/ply_writing_points_processor.h"
+#include "cartographer/io/xray_points_processor.h"
+#include "cartographer/io/xyz_writing_points_processor.h"
 
 namespace cartographer {
 namespace io {
 
-PointsProcessorPipelineBuilder::PointsProcessorPipelineBuilder() {}
+PointsProcessorPipelineBuilder::PointsProcessorPipelineBuilder() {
+  RegisterNonStatic<MinMaxRangeFiteringPointsProcessor>();
+  RegisterNonStatic<PcdWritingPointsProcessor>();
+  RegisterNonStatic<PlyWritingPointsProcessor>();
+  RegisterNonStatic<XRayPointsProcessor>();
+  RegisterNonStatic<XyzWriterPointsProcessor>();
+}
 
 PointsProcessorPipelineBuilder* PointsProcessorPipelineBuilder::instance() {
   static PointsProcessorPipelineBuilder instance;
