@@ -17,6 +17,7 @@
 #include "cartographer/io/points_processor_pipeline_builder.h"
 
 #include "cartographer/common/make_unique.h"
+#include "cartographer/io/counting_points_processor.h"
 #include "cartographer/io/fixed_ratio_sampling_points_processor.h"
 #include "cartographer/io/min_max_range_filtering_points_processor.h"
 #include "cartographer/io/null_points_processor.h"
@@ -29,6 +30,7 @@ namespace cartographer {
 namespace io {
 
 PointsProcessorPipelineBuilder::PointsProcessorPipelineBuilder() {
+  RegisterNonStatic<CountingPointsProcessor>();
   RegisterNonStatic<FixedRatioSamplingPointsProcessor>();
   RegisterNonStatic<MinMaxRangeFiteringPointsProcessor>();
   RegisterNonStatic<PcdWritingPointsProcessor>();
