@@ -1,0 +1,54 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package cartographer.mapping.proto;
+
+import "cartographer/transform/proto/transform.proto";
+import "cartographer/proto/trajectory.proto";
+
+message SparsePoseGraph {
+  message Constraint {
+    message SubmapId {
+      optional int32 trajectory_id = 1;
+      optional int32 submap_index = 2;  // Submap index in the given trajectory.
+    }
+
+    message ScanId {
+      optional int32 trajectory_id = 1;
+      optional int32 scan_index = 2;  // Scan index in the given trajectory.
+    }
+
+    // Differentiates between intra-submap (where the scan was inserted into the
+    // submap) and inter-submap constraints (where the scan was not inserted
+    // into the submap).
+    enum Tag {
+      INTRA_SUBMAP = 0;
+      INTER_SUBMAP = 1;
+    }
+
+    optional SubmapId submap_id = 1;  // Submap ID.
+    optional ScanId scan_id = 2;  // Scan ID.
+    // Pose of the scan relative to submap, i.e. taking data from the scan frame
+    // into the submap frame.
+    optional transform.proto.Rigid3d relative_pose = 3;
+    // 6x6 square root inverse of the covariance matrix.
+    repeated double sqrt_Lambda = 4;  // NOLINT
+    optional Tag tag = 5;
+  }
+
+  repeated Constraint constraint = 2;
+  repeated .cartographer.proto.Trajectory trajectory = 4;
+}

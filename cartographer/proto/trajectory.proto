@@ -28,6 +28,13 @@ message Trajectory {
     optional transform.proto.Rigid3d pose = 5;
   }
 
+  message Submap {
+    optional transform.proto.Rigid3d pose = 1;
+  }
+
   // Time-ordered sequence of Nodes.
   repeated Node node = 1;
+
+  // Submaps associated with the trajectory.
+  repeated Submap submap = 2;
 }

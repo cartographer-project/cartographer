@@ -167,7 +167,8 @@ class OrderedMultiQueue {
   void CannotMakeProgress() {
     for (auto& entry : queues_) {
       if (entry.second.queue.Size() > kMaxQueueSize) {
-        LOG_EVERY_N(WARNING, 60) << "Queues waiting for data: " << EmptyQueuesDebugString();
+        LOG_EVERY_N(WARNING, 60) << "Queues waiting for data: "
+                                 << EmptyQueuesDebugString();
         return;
       }
     }

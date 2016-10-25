@@ -21,6 +21,7 @@
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/proto/scan_matching_progress.pb.h"
+#include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
@@ -110,7 +111,7 @@ class SparsePoseGraph {
   // continuous, non-loop-closed frame) into the global map frame (i.e. the
   // discontinuous, loop-closed frame).
   virtual transform::Rigid3d GetLocalToGlobalTransform(
-      const mapping::Submaps& submaps) = 0;
+      const Submaps& submaps) = 0;
 
   // Returns the current optimized trajectory.
   virtual std::vector<TrajectoryNode> GetTrajectoryNodes() = 0;
@@ -120,6 +121,11 @@ class SparsePoseGraph {
 
   // Returns the collection of 3D constraints.
   virtual std::vector<Constraint3D> constraints_3d() = 0;
+
+  // Serializes the constraints and the computed trajectory.
+  //
+  // TODO(whess): Support multiple trajectories.
+  proto::SparsePoseGraph ToProto();
 };
 
 }  // namespace mapping
