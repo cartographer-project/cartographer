@@ -72,3 +72,16 @@ google_library(io_xyz_writing_points_processor
   DEPENDS
     io_points_processor
 )
+
+google_library(io_pcd_points_processor
+  USES_EIGEN
+  SRCS
+    pcd_writing_points_processor.cc
+  HDRS
+    pcd_writing_points_processor.h
+  DEPENDS
+    common_math
+    io_points_processor
+    mapping_3d_hybrid_grid
+    transform_rigid_transform
+)
