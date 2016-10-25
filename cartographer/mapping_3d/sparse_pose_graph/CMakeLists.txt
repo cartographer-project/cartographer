@@ -53,7 +53,6 @@ google_library(mapping_3d_sparse_pose_graph_optimization_problem
     optimization_problem.h
   DEPENDS
     common_ceres_solver_options
-    common_lua_parameter_dictionary
     common_make_unique
     common_math
     common_port
@@ -64,6 +63,7 @@ google_library(mapping_3d_sparse_pose_graph_optimization_problem
     mapping_3d_rotation_cost_function
     mapping_3d_sparse_pose_graph_spa_cost_function
     mapping_3d_submaps
+    mapping_sparse_pose_graph
     mapping_sparse_pose_graph_proto_optimization_problem_options
     transform_transform
 )

@@ -30,7 +30,7 @@ google_proto_library(mapping_proto_sparse_pose_graph
   SRCS
     sparse_pose_graph.proto
   DEPENDS
-    proto_trajectory
+    mapping_proto_trajectory
     transform_proto_transform
 )
 
@@ -42,9 +42,16 @@ google_proto_library(mapping_proto_sparse_pose_graph_options
     mapping_sparse_pose_graph_proto_optimization_problem_options
 )
 
-google_proto_library(mapping_proto_submaps
+google_proto_library(mapping_proto_submap_visualization
   SRCS
-    submaps.proto
+    submap_visualization.proto
+  DEPENDS
+    transform_proto_transform
+)
+
+google_proto_library(mapping_proto_trajectory
+  SRCS
+    trajectory.proto
   DEPENDS
     transform_proto_transform
 )

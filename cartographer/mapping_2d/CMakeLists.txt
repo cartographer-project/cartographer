@@ -150,7 +150,7 @@ google_library(mapping_2d_submaps
     mapping_2d_map_limits
     mapping_2d_probability_grid
     mapping_2d_proto_submaps_options
-    mapping_proto_submaps
+    mapping_proto_submap_visualization
     mapping_submaps
     mapping_trajectory_node
     sensor_laser

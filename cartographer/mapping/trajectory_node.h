@@ -22,7 +22,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
-#include "cartographer/proto/trajectory.pb.h"
+#include "cartographer/mapping/proto/trajectory.pb.h"
 #include "cartographer/sensor/laser.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -67,8 +67,7 @@ struct TrajectoryNodes {
   std::vector<mapping::TrajectoryNode> trajectory_nodes;
 };
 
-::cartographer::proto::Trajectory ToProto(
-    const std::vector<TrajectoryNode>& nodes);
+proto::Trajectory ToProto(const std::vector<TrajectoryNode>& nodes);
 
 }  // namespace mapping
 }  // namespace cartographer

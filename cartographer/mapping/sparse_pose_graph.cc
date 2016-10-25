@@ -121,7 +121,7 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   }
 
   // TODO(whess): Support multi-trajectory.
-  ::cartographer::proto::Trajectory* const trajectory = proto.add_trajectory();
+  proto::Trajectory* const trajectory = proto.add_trajectory();
   *trajectory = mapping::ToProto(GetTrajectoryNodes());
   const std::vector<std::vector<const Submaps*>> components =
       GetConnectedTrajectories();

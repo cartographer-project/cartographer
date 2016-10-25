@@ -16,8 +16,6 @@
 
 #include "cartographer/mapping/trajectory_node.h"
 
-#include "cartographer/common/time.h"
-#include "cartographer/proto/trajectory.pb.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {

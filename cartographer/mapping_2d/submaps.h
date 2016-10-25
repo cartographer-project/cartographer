@@ -22,7 +22,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/proto/submaps.pb.h"
+#include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/laser_fan_inserter.h"

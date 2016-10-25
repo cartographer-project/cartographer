@@ -23,7 +23,7 @@
 
 #include "Eigen/Geometry"
 #include "cartographer/common/port.h"
-#include "cartographer/mapping/sparse_pose_graph.h"
+#include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping_2d/laser_fan_inserter.h"
 #include "cartographer/mapping_2d/probability_grid.h"

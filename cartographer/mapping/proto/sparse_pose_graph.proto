@@ -16,8 +16,8 @@ syntax = "proto2";
 
 package cartographer.mapping.proto;
 
+import "cartographer/mapping/proto/trajectory.proto";
 import "cartographer/transform/proto/transform.proto";
-import "cartographer/proto/trajectory.proto";
 
 message SparsePoseGraph {
   message Constraint {
@@ -50,5 +50,5 @@ message SparsePoseGraph {
   }
 
   repeated Constraint constraint = 2;
-  repeated .cartographer.proto.Trajectory trajectory = 4;
+  repeated Trajectory trajectory = 4;
 }
