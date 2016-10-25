@@ -116,13 +116,16 @@ google_library(mapping_sparse_pose_graph
     sparse_pose_graph.h
   DEPENDS
     common_lua_parameter_dictionary
+    kalman_filter_pose_tracker
     mapping_proto_scan_matching_progress
+    mapping_proto_sparse_pose_graph
     mapping_proto_sparse_pose_graph_options
     mapping_sparse_pose_graph_constraint_builder
     mapping_sparse_pose_graph_optimization_problem_options
     mapping_submaps
     mapping_trajectory_node
     transform_rigid_transform
+    transform_transform
 )
 
 google_library(mapping_submaps

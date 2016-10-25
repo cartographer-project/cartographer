@@ -26,6 +26,14 @@ google_proto_library(mapping_proto_scan_matching_progress
     scan_matching_progress.proto
 )
 
+google_proto_library(mapping_proto_sparse_pose_graph
+  SRCS
+    sparse_pose_graph.proto
+  DEPENDS
+    proto_trajectory
+    transform_proto_transform
+)
+
 google_proto_library(mapping_proto_sparse_pose_graph_options
   SRCS
     sparse_pose_graph_options.proto
