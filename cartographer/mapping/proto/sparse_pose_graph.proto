@@ -21,24 +21,36 @@ import "cartographer/proto/trajectory.proto";
 
 message SparsePoseGraph {
   message Constraint {
+    message SubmapId {
+      optional int32 trajectory_id = 1;
+      optional int32 submap_index = 2;  // Submap index in the given trajectory.
+    }
+
+    message ScanId {
+      optional int32 trajectory_id = 1;
+      optional int32 scan_index = 2;  // Scan index in the given trajectory.
+    }
+
+    // Differentiates between intra-submap (where the scan was inserted into the
+    // submap) and inter-submap constraints (where the scan was not inserted
+    // into the submap).
     enum Tag {
       INTRA_SUBMAP = 0;
       INTER_SUBMAP = 1;
     }
 
     message Pose {
-      optional transform.proto.Rigid3d zbar_ij = 1;
+      optional transform.proto.Rigid3d zbar = 1;
       // 6x6 square root inverse of the covariance matrix.
-      repeated double sqrt_Lambda_ij = 2;  // NOLINT
+      repeated double sqrt_Lambda = 2;  // NOLINT
     }
 
-    optional Pose pose = 1;
-    optional int32 i = 2;
-    optional int32 j = 3;
+    optional SubmapId submap_id = 1;  // Submap ID.
+    optional ScanId scan_id = 2;  // Scan ID.
+    optional Pose pose = 3;  // Pose of the scan relative to submap.
     optional Tag tag = 4;
   }
 
   repeated Constraint constraint = 2;
-  repeated transform.proto.Rigid3d submap_pose = 3;
   repeated .cartographer.proto.Trajectory trajectory = 4;
 }

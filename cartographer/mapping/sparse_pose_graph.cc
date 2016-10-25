@@ -87,49 +87,52 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
   for (const auto& constraint : constraints_2d()) {
     auto* const constraint_proto = proto.add_constraint();
-    *constraint_proto->mutable_pose()->mutable_zbar_ij() =
+    *constraint_proto->mutable_pose()->mutable_zbar() =
         transform::ToProto(transform::Embed3D(constraint.pose.zbar_ij));
     for (int i = 0; i != 36; ++i) {
-      constraint_proto->mutable_pose()->mutable_sqrt_lambda_ij()->Add(0.);
+      constraint_proto->mutable_pose()->mutable_sqrt_lambda()->Add(0.);
     }
     constexpr double kFakePositionCovariance = 1.;
     constexpr double kFakeOrientationCovariance = 1.;
     Eigen::Map<Eigen::Matrix<double, 6, 6>>(constraint_proto->mutable_pose()
-                                                ->mutable_sqrt_lambda_ij()
+                                                ->mutable_sqrt_lambda()
                                                 ->mutable_data()) =
         kalman_filter::Embed3D(constraint.pose.sqrt_Lambda_ij,
                                kFakePositionCovariance,
                                kFakeOrientationCovariance);
-    constraint_proto->set_i(constraint.i);
-    constraint_proto->set_j(constraint.j);
+    // TODO(whess): Support multi-trajectory.
+    constraint_proto->mutable_submap_id()->set_submap_index(constraint.i);
+    constraint_proto->mutable_scan_id()->set_scan_index(constraint.j);
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }
   for (const auto& constraint : constraints_3d()) {
     auto* const constraint_proto = proto.add_constraint();
-    *constraint_proto->mutable_pose()->mutable_zbar_ij() =
+    *constraint_proto->mutable_pose()->mutable_zbar() =
         transform::ToProto(constraint.pose.zbar_ij);
     for (int i = 0; i != 36; ++i) {
-      constraint_proto->mutable_pose()->mutable_sqrt_lambda_ij()->Add(0.);
+      constraint_proto->mutable_pose()->mutable_sqrt_lambda()->Add(0.);
     }
     Eigen::Map<Eigen::Matrix<double, 6, 6>>(constraint_proto->mutable_pose()
-                                                ->mutable_sqrt_lambda_ij()
+                                                ->mutable_sqrt_lambda()
                                                 ->mutable_data()) =
         constraint.pose.sqrt_Lambda_ij;
-    constraint_proto->set_i(constraint.i);
-    constraint_proto->set_j(constraint.j);
+    // TODO(whess): Support multi-trajectory.
+    constraint_proto->mutable_submap_id()->set_submap_index(constraint.i);
+    constraint_proto->mutable_scan_id()->set_scan_index(constraint.j);
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }
 
-  // TODO(damonkohler): Support multi-trajectory.
+  // TODO(whess): Support multi-trajectory.
+  ::cartographer::proto::Trajectory* const trajectory = proto.add_trajectory();
+  *trajectory = mapping::ToProto(GetTrajectoryNodes());
   const std::vector<std::vector<const Submaps*>> components =
       GetConnectedTrajectories();
   CHECK_EQ(components.size(), 1);
   CHECK_EQ(components[0].size(), 1);
   const Submaps* const submaps = components[0][0];
   for (const auto& transform : GetSubmapTransforms(*submaps)) {
-    *proto.add_submap_pose() = transform::ToProto(transform);
+    *trajectory->add_submap()->mutable_pose() = transform::ToProto(transform);
   }
-  *proto.add_trajectory() = mapping::ToProto(GetTrajectoryNodes());
 
   return proto;
 }
