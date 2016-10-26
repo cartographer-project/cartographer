@@ -74,6 +74,10 @@ class MapBuilder {
 
   int num_trajectory_builders() const;
 
+  // Returns the number of available sensor data packets for 'trajectory_id'
+  // that can be processed until further progress is blocked.
+  int num_available_packets(int trajectory_id) const;
+
   mapping::SparsePoseGraph* sparse_pose_graph();
 
  private:
