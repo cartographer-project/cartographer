@@ -29,7 +29,6 @@
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/ordered_multi_queue.h"
-#include "cartographer/sensor/sensor_packet_period_histogram_builder.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -71,8 +70,6 @@ class Collator {
   // order.
   void AddSensorData(const int trajectory_id, const string& sensor_id,
                      std::unique_ptr<Data> data) {
-    sensor_packet_period_histogram_builder_.Add(
-        trajectory_id, common::ToUniversal(data->time), sensor_id);
     queue_.Add(QueueKey{trajectory_id, sensor_id}, std::move(data));
   }
 
@@ -80,7 +77,6 @@ class Collator {
   // AddSensorData may not be called after Flush.
   void Flush() {
     queue_.Flush();
-    sensor_packet_period_histogram_builder_.LogHistogramsAndClear();
   }
 
   // Returns the number of packets associated with 'trajectory_id' that are
@@ -99,7 +95,6 @@ class Collator {
 
   // Map of trajectory ID to all associated QueueKeys.
   std::unordered_map<int, std::vector<QueueKey>> queue_keys_;
-  SensorPacketPeriodHistogramBuilder sensor_packet_period_histogram_builder_;
 };
 
 }  // namespace sensor
