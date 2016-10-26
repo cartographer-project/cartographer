@@ -265,7 +265,7 @@ google_library(mapping_3d_submaps
     mapping_3d_hybrid_grid
     mapping_3d_laser_fan_inserter
     mapping_3d_proto_submaps_options
-    mapping_sparse_pose_graph
+    mapping_proto_submap_visualization
     mapping_submaps
     sensor_laser
     transform_transform

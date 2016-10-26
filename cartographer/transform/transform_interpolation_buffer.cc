@@ -21,8 +21,6 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/make_unique.h"
-#include "cartographer/common/time.h"
-#include "cartographer/proto/trajectory.pb.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -87,10 +85,10 @@ bool TransformInterpolationBuffer::empty() const { return deque_.empty(); }
 
 std::unique_ptr<TransformInterpolationBuffer>
 TransformInterpolationBuffer::FromTrajectory(
-    const cartographer::proto::Trajectory& trajectory) {
+    const mapping::proto::Trajectory& trajectory) {
   auto interpolation_buffer =
       common::make_unique<TransformInterpolationBuffer>();
-  for (const cartographer::proto::Trajectory::Node& node : trajectory.node()) {
+  for (const mapping::proto::Trajectory::Node& node : trajectory.node()) {
     interpolation_buffer->Push(common::FromUniversal(node.timestamp()),
                                transform::ToRigid3(node.pose()));
   }

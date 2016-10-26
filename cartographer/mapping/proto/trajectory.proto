@@ -14,9 +14,9 @@
 
 syntax = "proto2";
 
-import "cartographer/transform/proto/transform.proto";
+package cartographer.mapping.proto;
 
-package cartographer.proto;
+import "cartographer/transform/proto/transform.proto";
 
 option java_outer_classname = "TrajectoryOuterClass";
 

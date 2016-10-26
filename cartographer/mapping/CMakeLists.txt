@@ -140,7 +140,7 @@ google_library(mapping_submaps
     common_port
     mapping_2d_probability_grid
     mapping_probability_values
-    mapping_proto_submaps
+    mapping_proto_submap_visualization
     mapping_trajectory_node
     transform_transform
 )
@@ -179,7 +179,7 @@ google_library(mapping_trajectory_node
     trajectory_node.h
   DEPENDS
     common_time
-    proto_trajectory
+    mapping_proto_trajectory
     sensor_laser
     transform_rigid_transform
     transform_transform
