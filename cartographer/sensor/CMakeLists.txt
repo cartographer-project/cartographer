@@ -24,7 +24,6 @@ google_library(sensor_collator
     common_time
     sensor_data
     sensor_ordered_multi_queue
-    sensor_sensor_packet_period_histogram_builder
 )
 
 google_library(sensor_compressed_point_cloud
@@ -101,17 +100,6 @@ google_library(sensor_point_cloud
     sensor_proto_sensor
     transform_rigid_transform
     transform_transform
-)
-
-google_library(sensor_sensor_packet_period_histogram_builder
-  USES_GLOG
-  SRCS
-    sensor_packet_period_histogram_builder.cc
-  HDRS
-    sensor_packet_period_histogram_builder.h
-  DEPENDS
-    common_histogram
-    common_port
 )
 
 google_library(sensor_voxel_filter
