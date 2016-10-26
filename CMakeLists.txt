@@ -70,6 +70,12 @@ google_combined_library(cartographer
   SRCS "${ALL_LIBRARIES}"
 )
 
+# TODO(hrapp): Replacing this get_property with a generator expression is not
+# very easy: it needs to be expanded into a variable which is then used for
+# CONFIGURE_PACKAGE_CONFIG_FILE - I did not find an easy way to do it. A
+# complicated way is to file(READ the cartographer-config.cmake.in and
+# string(CONFIGURE it, then file(GENERATE the output file. I do not have the
+# stomach to attempt this right now.
 get_property(CARTOGRAPHER_LIBRARY_FILE TARGET cartographer PROPERTY LOCATION)
 get_filename_component(CARTOGRAPHER_LIBRARY_FILE_BASENAME
   ${CARTOGRAPHER_LIBRARY_FILE} NAME)
