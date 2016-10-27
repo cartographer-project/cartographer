@@ -79,16 +79,6 @@ class Collator {
     queue_.Flush();
   }
 
-  // Returns the number of packets associated with 'trajectory_id' that are
-  // available for processing.
-  int num_available_packets(const int trajectory_id) {
-    int num = std::numeric_limits<int>::max();
-    for (const auto& queue_key : queue_keys_[trajectory_id]) {
-      num = std::min(num, queue_.num_available(queue_key));
-    }
-    return num;
-  }
-
  private:
   // Queue keys are a pair of trajectory ID and sensor identifier.
   OrderedMultiQueue queue_;
