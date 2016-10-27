@@ -58,7 +58,6 @@ class OrderedMultiQueue {
 
   OrderedMultiQueue() {}
 
-  // CHECKs that all queues are finished.
   ~OrderedMultiQueue() {
     for (auto& entry : queues_) {
       CHECK(entry.second.finished);
