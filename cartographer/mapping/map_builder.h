@@ -29,6 +29,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
+#include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
@@ -71,6 +72,12 @@ class MapBuilder {
 
   // Returns the trajectory connectivity.
   proto::TrajectoryConnectivity GetTrajectoryConnectivity();
+
+  // Fills the SubmapQuery::Response corresponding to 'submap_index' from
+  // 'trajectory_id'. Returns an error string on failure, or an empty string on
+  // success.
+  string SubmapToProto(int trajectory_id, int submap_index,
+                       proto::SubmapQuery::Response* response);
 
   int num_trajectory_builders() const;
 
