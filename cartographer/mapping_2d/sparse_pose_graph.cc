@@ -310,6 +310,10 @@ void SparsePoseGraph::RunFinalOptimization() {
   optimization_problem_.SetMaxNumIterations(
       options_.max_num_final_iterations());
   RunOptimization();
+  optimization_problem_.SetMaxNumIterations(
+      options_.optimization_problem_options()
+          .ceres_solver_options()
+          .max_num_iterations());
 }
 
 void SparsePoseGraph::RunOptimization() {

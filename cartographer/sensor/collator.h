@@ -75,9 +75,7 @@ class Collator {
 
   // Dispatches all queued sensor packets. May only be called once.
   // AddSensorData may not be called after Flush.
-  void Flush() {
-    queue_.Flush();
-  }
+  void Flush() { queue_.Flush(); }
 
  private:
   // Queue keys are a pair of trajectory ID and sensor identifier.
