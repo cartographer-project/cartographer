@@ -105,11 +105,6 @@ class OrderedMultiQueue {
     }
   }
 
-  // Returns the number of available values associated with 'queue_key'.
-  int num_available(const QueueKey& queue_key) {
-    return FindOrDie(queue_key).queue.Size();
-  }
-
  private:
   struct Queue {
     common::BlockingQueue<std::unique_ptr<Data>> queue;
