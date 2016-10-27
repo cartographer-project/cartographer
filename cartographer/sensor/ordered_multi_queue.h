@@ -50,8 +50,10 @@ inline std::ostream& operator<<(std::ostream& out, const QueueKey& key) {
 }
 
 // Maintains multiple queues of sorted sensor data and dispatches it in merge
-// sorted order. It will wait to see at least one value for each unfinished queue before
-// dispatching the next time ordered value across all queues. This class is thread-compatible.
+// sorted order. It will wait to see at least one value for each unfinished
+// queue before dispatching the next time ordered value across all queues.
+//
+// This class is thread-compatible.
 class OrderedMultiQueue {
  public:
   using Callback = std::function<void(std::unique_ptr<Data>)>;
