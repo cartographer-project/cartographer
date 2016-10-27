@@ -76,6 +76,7 @@ google_library(mapping_map_builder
     mapping_3d_sparse_pose_graph
     mapping_collated_trajectory_builder
     mapping_proto_map_builder_options
+    mapping_proto_submap_visualization
     mapping_sparse_pose_graph
     mapping_submaps
     mapping_trajectory_builder
