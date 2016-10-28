@@ -26,9 +26,10 @@ proto::OptimizationProblemOptions CreateOptimizationProblemOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::OptimizationProblemOptions options;
   options.set_huber_scale(parameter_dictionary->GetDouble("huber_scale"));
-  options.set_acceleration_scale(
-      parameter_dictionary->GetDouble("acceleration_scale"));
-  options.set_rotation_scale(parameter_dictionary->GetDouble("rotation_scale"));
+  options.set_acceleration_weight(
+      parameter_dictionary->GetDouble("acceleration_weight"));
+  options.set_rotation_weight(
+      parameter_dictionary->GetDouble("rotation_weight"));
   options.set_consecutive_scan_translation_penalty_factor(
       parameter_dictionary->GetDouble(
           "consecutive_scan_translation_penalty_factor"));

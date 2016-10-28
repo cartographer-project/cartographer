@@ -33,9 +33,9 @@ TRAJECTORY_BUILDER_2D = {
   },
 
   ceres_scan_matcher = {
-    occupied_space_cost_functor_weight = 20.,
-    previous_pose_translation_delta_cost_functor_weight = 1.,
-    initial_pose_estimate_rotation_delta_cost_functor_weight = 1e2,
+    occupied_space_weight = 20.,
+    translation_weight = 1.,
+    rotation_weight = 1e2,
     covariance_scale = 2.34e-4,
     ceres_solver_options = {
       use_nonmonotonic_steps = true,

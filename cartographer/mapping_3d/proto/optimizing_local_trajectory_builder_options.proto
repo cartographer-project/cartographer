@@ -17,11 +17,11 @@ syntax = "proto2";
 package cartographer.mapping_3d.proto;
 
 message OptimizingLocalTrajectoryBuilderOptions {
-  optional double high_resolution_grid_scale = 6;
-  optional double low_resolution_grid_scale = 7;
-  optional double velocity_scale = 1;
-  optional double translation_scale = 2;
-  optional double rotation_scale = 3;
-  optional double odometry_translation_scale = 4;
-  optional double odometry_rotation_scale = 5;
+  optional double high_resolution_grid_weight = 6;
+  optional double low_resolution_grid_weight = 7;
+  optional double velocity_weight = 1;
+  optional double translation_weight = 2;
+  optional double rotation_weight = 3;
+  optional double odometry_translation_weight = 4;
+  optional double odometry_rotation_weight = 5;
 }

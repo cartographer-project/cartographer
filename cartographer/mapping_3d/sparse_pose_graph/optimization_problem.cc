@@ -187,7 +187,7 @@ void OptimizationProblem::Solve(
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<AccelerationCostFunction, 3, 4, 3, 3,
                                           3, 1>(new AccelerationCostFunction(
-              options_.acceleration_scale(), delta_velocity,
+              options_.acceleration_weight(), delta_velocity,
               common::ToSeconds(first_delta_time),
               common::ToSeconds(second_delta_time))),
           nullptr, C_point_clouds[j].rotation(),
@@ -196,7 +196,7 @@ void OptimizationProblem::Solve(
     }
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4>(
-            new RotationCostFunction(options_.rotation_scale(),
+            new RotationCostFunction(options_.rotation_weight(),
                                      result.delta_rotation)),
         nullptr, C_point_clouds[j - 1].rotation(),
         C_point_clouds[j].rotation());

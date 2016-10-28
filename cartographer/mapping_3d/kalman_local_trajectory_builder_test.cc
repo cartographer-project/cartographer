@@ -65,10 +65,10 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
           },
 
           ceres_scan_matcher = {
-            occupied_space_cost_functor_weight_0 = 5.,
-            occupied_space_cost_functor_weight_1 = 20.,
-            previous_pose_translation_delta_cost_functor_weight = 0.1,
-            initial_pose_estimate_rotation_delta_cost_functor_weight = 0.3,
+            occupied_space_weight_0 = 5.,
+            occupied_space_weight_1 = 20.,
+            translation_weight = 0.1,
+            rotation_weight = 0.3,
             covariance_scale = 1e-1,
             only_optimize_yaw = false,
             ceres_solver_options = {
@@ -113,13 +113,13 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
             },
           },
           optimizing_local_trajectory_builder = {
-            high_resolution_grid_scale = 5.,
-            low_resolution_grid_scale = 15.,
-            velocity_scale = 4e1,
-            translation_scale = 1e2,
-            rotation_scale = 1e3,
-            odometry_translation_scale = 1e4,
-            odometry_rotation_scale = 1e4,
+            high_resolution_grid_weight = 5.,
+            low_resolution_grid_weight = 15.,
+            velocity_weight = 4e1,
+            translation_weight = 1e2,
+            rotation_weight = 1e3,
+            odometry_translation_weight = 1e4,
+            odometry_rotation_weight = 1e4,
           },
         }
         )text");

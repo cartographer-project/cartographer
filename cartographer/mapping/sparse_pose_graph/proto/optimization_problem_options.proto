@@ -24,10 +24,10 @@ message OptimizationProblemOptions {
   optional double huber_scale = 1;
 
   // Scaling parameter for the IMU acceleration term.
-  optional double acceleration_scale = 8;
+  optional double acceleration_weight = 8;
 
   // Scaling parameter for the IMU rotation term.
-  optional double rotation_scale = 9;
+  optional double rotation_weight = 9;
 
   // Penalty factors for changes to the relative pose between consecutive scans.
   optional double consecutive_scan_translation_penalty_factor = 2;

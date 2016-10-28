@@ -21,9 +21,9 @@ import "cartographer/common/proto/ceres_solver_options.proto";
 // NEXT ID: 7
 message CeresScanMatcherOptions {
   // Scaling parameters for each cost functor.
-  repeated double occupied_space_cost_functor_weight = 1;
-  optional double previous_pose_translation_delta_cost_functor_weight = 2;
-  optional double initial_pose_estimate_rotation_delta_cost_functor_weight = 3;
+  repeated double occupied_space_weight = 1;
+  optional double translation_weight = 2;
+  optional double rotation_weight = 3;
 
   // Scale applied to the covariance estimate from Ceres.
   optional double covariance_scale = 4;
