@@ -81,7 +81,7 @@ sensor::LaserFan LocalTrajectoryBuilder::BuildCroppedLaserFan(
       sensor::VoxelFiltered(cropped_fan.returns,
                             options_.laser_voxel_filter_size()),
       sensor::VoxelFiltered(cropped_fan.misses,
-                            options_.horizontal_laser_voxel_filter_size())};
+                            options_.laser_voxel_filter_size())};
 }
 
 void LocalTrajectoryBuilder::ScanMatch(
