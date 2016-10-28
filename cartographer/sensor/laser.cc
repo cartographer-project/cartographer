@@ -94,17 +94,6 @@ LaserFan TransformLaserFan(const LaserFan& laser_fan,
   };
 }
 
-LaserFan FilterLaserFanByMaxRange(const LaserFan& laser_fan,
-                                  const float max_range) {
-  LaserFan result{laser_fan.origin, {}, {}, {}};
-  for (const Eigen::Vector3f& return_ : laser_fan.returns) {
-    if ((return_ - laser_fan.origin).norm() <= max_range) {
-      result.returns.push_back(return_);
-    }
-  }
-  return result;
-}
-
 LaserFan CropLaserFan(const LaserFan& laser_fan, const float min_z,
                       const float max_z) {
   return LaserFan{laser_fan.origin, Crop(laser_fan.returns, min_z, max_z),

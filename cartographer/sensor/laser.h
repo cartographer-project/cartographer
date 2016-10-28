@@ -54,11 +54,6 @@ LaserFan FromProto(const proto::LaserFan& proto);
 LaserFan TransformLaserFan(const LaserFan& laser_fan,
                            const transform::Rigid3f& transform);
 
-// Filter a 'laser_fan', retaining only the returns that have no more than
-// 'max_range' distance from the laser origin. Removes misses and reflectivity
-// information.
-LaserFan FilterLaserFanByMaxRange(const LaserFan& laser_fan, float max_range);
-
 // Crops 'laser_fan' according to the region defined by 'min_z' and 'max_z'.
 LaserFan CropLaserFan(const LaserFan& laser_fan, float min_z, float max_z);
 
