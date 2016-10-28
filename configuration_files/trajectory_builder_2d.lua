@@ -14,9 +14,9 @@
 
 TRAJECTORY_BUILDER_2D = {
   use_imu_data = true,
-  horizontal_laser_min_z = -0.8,
-  horizontal_laser_max_z = 2.,
-  horizontal_laser_voxel_filter_size = 0.025,
+  laser_min_z = -0.8,
+  laser_max_z = 2.,
+  laser_voxel_filter_size = 0.025,
 
   use_online_correlative_scan_matching = false,
   adaptive_voxel_filter = {
