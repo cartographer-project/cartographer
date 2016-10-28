@@ -55,6 +55,7 @@ if(NOT GMOCK_LIBRARIES)
     add_subdirectory(${GMOCK_SRC_DIR}/gmock "${CMAKE_CURRENT_BINARY_DIR}/gmock")
     set(GMOCK_INCLUDE_DIRS "${GMOCK_SRC_DIR}/gmock/gtest/include")
     set(GMOCK_LIBRARIES gmock_main)
+    set(GTEST_INCLUDE_DIRS)
   endif()
 endif()
 
@@ -64,5 +65,5 @@ list(APPEND GMOCK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GMock DEFAULT_MSG GMOCK_LIBRARIES
-                                  GMOCK_INCLUDE_DIRS)
+                                  GMOCK_INCLUDE_DIRS GTEST_INCLUDE_DIRS)
 
