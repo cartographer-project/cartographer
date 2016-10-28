@@ -75,19 +75,7 @@ class Collator {
 
   // Dispatches all queued sensor packets. May only be called once.
   // AddSensorData may not be called after Flush.
-  void Flush() {
-    queue_.Flush();
-  }
-
-  // Returns the number of packets associated with 'trajectory_id' that are
-  // available for processing.
-  int num_available_packets(const int trajectory_id) {
-    int num = std::numeric_limits<int>::max();
-    for (const auto& queue_key : queue_keys_[trajectory_id]) {
-      num = std::min(num, queue_.num_available(queue_key));
-    }
-    return num;
-  }
+  void Flush() { queue_.Flush(); }
 
  private:
   // Queue keys are a pair of trajectory ID and sensor identifier.
