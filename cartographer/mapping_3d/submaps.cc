@@ -178,6 +178,20 @@ void InsertSegmentsIntoProbabilityGrid(
   }
 }
 
+// Filters 'laser_fan', retaining only the returns that have no more than
+// 'max_range' distance from the laser origin. Removes misses and reflectivity
+// information.
+sensor::LaserFan FilterLaserFanByMaxRange(const sensor::LaserFan& laser_fan,
+                                          const float max_range) {
+  sensor::LaserFan result{laser_fan.origin, {}, {}, {}};
+  for (const Eigen::Vector3f& return_ : laser_fan.returns) {
+    if ((return_ - laser_fan.origin).norm() <= max_range) {
+      result.returns.push_back(return_);
+    }
+  }
+  return result;
+}
+
 }  // namespace
 
 void InsertIntoProbabilityGrid(
@@ -273,8 +287,8 @@ void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan) {
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
     laser_fan_inserter_.Insert(
-        sensor::FilterLaserFanByMaxRange(laser_fan,
-                                         options_.high_resolution_max_range()),
+        FilterLaserFanByMaxRange(laser_fan,
+                                 options_.high_resolution_max_range()),
         &submap->high_resolution_hybrid_grid);
     laser_fan_inserter_.Insert(laser_fan, &submap->low_resolution_hybrid_grid);
     submap->end_laser_fan_index = num_laser_fans_;
