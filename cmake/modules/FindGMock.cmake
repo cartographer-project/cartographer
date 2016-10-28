@@ -64,5 +64,5 @@ list(APPEND GMOCK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GMock DEFAULT_MSG GMOCK_LIBRARIES
-                                  GMOCK_INCLUDE_DIRS GTEST_INCLUDE_DIRS)
+                                  GMOCK_INCLUDE_DIRS)
 
