@@ -319,7 +319,13 @@ function(google_proto_library NAME)
 endfunction()
 
 macro(google_initialize_cartographer_project)
-  SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+  if(CARTOGRAPHER_CMAKE_DIR)
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+        ${CARTOGRAPHER_CMAKE_DIR}/modules)
+  else()
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+  endif()
   set(GOOG_CXX_FLAGS "-pthread -std=c++11 ${GOOG_CXX_FLAGS}")
 
   google_add_flag(GOOG_CXX_FLAGS "-Wall")

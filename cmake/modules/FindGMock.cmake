@@ -30,6 +30,16 @@ find_library(GMOCK_LIBRARIES
     /usr
 )
 
+# Find system-wide gtest header.
+find_path(GTEST_INCLUDE_DIRS gtest/gtest.h
+  HINTS
+    ENV GTEST_DIR
+  PATH_SUFFIXES include
+  PATHS
+    /usr
+)
+list(APPEND GMOCK_INCLUDE_DIRS ${GTEST_INCLUDE_DIRS})
+
 if(NOT GMOCK_LIBRARIES)
   # If no system-wide gmock found, then find src version.
   # Ubuntu might have this.
@@ -43,20 +53,10 @@ if(NOT GMOCK_LIBRARIES)
   if(GMOCK_SRC_DIR)
     # If src version found, build it.
     add_subdirectory(${GMOCK_SRC_DIR}/gmock "${CMAKE_CURRENT_BINARY_DIR}/gmock")
+    set(GMOCK_INCLUDE_DIRS "${GMOCK_SRC_DIR}/gmock/gtest/include")
     set(GMOCK_LIBRARIES gmock_main)
   endif()
 endif()
-
-# Find gtest header.
-# It is contained in gmock src dir in Ubuntu environment.
-find_path(GTEST_INCLUDE_DIRS gtest/gtest.h
-  HINTS
-    ENV GTEST_DIR
-  PATH_SUFFIXES include
-  PATHS
-    /usr ${GMOCK_SRC_DIR}/gmock/gtest
-)
-list(APPEND GMOCK_INCLUDE_DIRS ${GTEST_INCLUDE_DIRS})
 
 # System-wide installed gmock library might require pthreads.
 find_package(Threads REQUIRED)
@@ -64,5 +64,5 @@ list(APPEND GMOCK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GMock DEFAULT_MSG GMOCK_LIBRARIES
-                                  GMOCK_INCLUDE_DIRS GTEST_INCLUDE_DIRS)
+                                  GMOCK_INCLUDE_DIRS)
 
