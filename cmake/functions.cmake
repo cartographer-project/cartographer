@@ -218,8 +218,8 @@ macro(_common_test_stuff)
 
   # Make sure that gmock always includes the correct gtest/gtest.h.
   target_include_directories("${NAME}" SYSTEM PRIVATE
-    "${GMOCK_SRC_DIR}/gtest/include")
-  target_link_libraries("${NAME}" gmock_main)
+    "${GMOCK_INCLUDE_DIRS}")
+  target_link_libraries("${NAME}" ${GMOCK_LIBRARIES})
 endmacro()
 
 function(google_catkin_test NAME)
@@ -351,7 +351,6 @@ macro(google_initialize_cartographer_project)
 endmacro()
 
 macro(google_enable_testing)
-  set(GMOCK_SRC_DIR "/usr/src/gmock" CACHE STRING "Path to google-mock sources.")
-  add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
   enable_testing()
+  find_package(GMock REQUIRED)
 endmacro()
