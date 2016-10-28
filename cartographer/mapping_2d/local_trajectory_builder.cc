@@ -27,10 +27,8 @@ namespace mapping_2d {
 proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::LocalTrajectoryBuilderOptions options;
-  options.set_laser_min_z(
-      parameter_dictionary->GetDouble("laser_min_z"));
-  options.set_laser_max_z(
-      parameter_dictionary->GetDouble("laser_max_z"));
+  options.set_laser_min_z(parameter_dictionary->GetDouble("laser_min_z"));
+  options.set_laser_max_z(parameter_dictionary->GetDouble("laser_max_z"));
   options.set_laser_voxel_filter_size(
       parameter_dictionary->GetDouble("laser_voxel_filter_size"));
   options.set_use_online_correlative_scan_matching(
