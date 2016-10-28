@@ -229,7 +229,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                                         ceres::DYNAMIC, 3, 4>(
             new scan_matching::OccupiedSpaceCostFunctor(
                 options_.optimizing_local_trajectory_builder_options()
-                        .high_resolution_grid_scale() /
+                        .high_resolution_grid_weight() /
                     std::sqrt(static_cast<double>(
                         batch.high_resolution_filtered_points.size())),
                 batch.high_resolution_filtered_points,
@@ -241,7 +241,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                                         ceres::DYNAMIC, 3, 4>(
             new scan_matching::OccupiedSpaceCostFunctor(
                 options_.optimizing_local_trajectory_builder_options()
-                        .low_resolution_grid_scale() /
+                        .low_resolution_grid_weight() /
                     std::sqrt(static_cast<double>(
                         batch.low_resolution_filtered_points.size())),
                 batch.low_resolution_filtered_points,
@@ -266,7 +266,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
         new ceres::AutoDiffCostFunction<VelocityDeltaCostFunctor, 3, 3, 3>(
             new VelocityDeltaCostFunctor(
                 options_.optimizing_local_trajectory_builder_options()
-                    .velocity_scale())),
+                    .velocity_weight())),
         nullptr, batches_[i - 1].state.velocity.data(),
         batches_[i].state.velocity.data());
 
@@ -274,7 +274,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
         new ceres::AutoDiffCostFunction<TranslationCostFunction, 3, 3, 3, 3>(
             new TranslationCostFunction(
                 options_.optimizing_local_trajectory_builder_options()
-                    .translation_scale(),
+                    .translation_weight(),
                 common::ToSeconds(batches_[i].time - batches_[i - 1].time))),
         nullptr, batches_[i - 1].state.translation.data(),
         batches_[i].state.translation.data(),
@@ -286,7 +286,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
         new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4>(
             new RotationCostFunction(
                 options_.optimizing_local_trajectory_builder_options()
-                    .rotation_scale(),
+                    .rotation_weight(),
                 result.delta_rotation)),
         nullptr, batches_[i - 1].state.rotation.data(),
         batches_[i].state.rotation.data());
@@ -315,9 +315,9 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                                           4, 3, 4, 3, 4>(
               new RelativeTranslationAndYawCostFunction(
                   options_.optimizing_local_trajectory_builder_options()
-                      .odometry_translation_scale(),
+                      .odometry_translation_weight(),
                   options_.optimizing_local_trajectory_builder_options()
-                      .odometry_rotation_scale(),
+                      .odometry_rotation_weight(),
                   delta_pose)),
           nullptr, batches_[i - 1].state.translation.data(),
           batches_[i - 1].state.rotation.data(),

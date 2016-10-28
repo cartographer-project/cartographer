@@ -86,9 +86,9 @@ class SparsePoseGraphTest : public ::testing::Test {
                 branch_and_bound_depth = 3,
               },
               ceres_scan_matcher = {
-                occupied_space_cost_functor_weight = 20.,
-                previous_pose_translation_delta_cost_functor_weight = 10.,
-                initial_pose_estimate_rotation_delta_cost_functor_weight = 1.,
+                occupied_space_weight = 20.,
+                translation_weight = 10.,
+                rotation_weight = 1.,
                 covariance_scale = 1.,
                 ceres_solver_options = {
                   use_nonmonotonic_steps = true,
@@ -106,9 +106,9 @@ class SparsePoseGraphTest : public ::testing::Test {
                 angular_search_window = 0.1,
               },
               ceres_scan_matcher_3d = {
-                occupied_space_cost_functor_weight_0 = 20.,
-                previous_pose_translation_delta_cost_functor_weight = 10.,
-                initial_pose_estimate_rotation_delta_cost_functor_weight = 1.,
+                occupied_space_weight_0 = 20.,
+                translation_weight = 10.,
+                rotation_weight = 1.,
                 covariance_scale = 1.,
                 only_optimize_yaw = true,
                 ceres_solver_options = {
@@ -119,8 +119,8 @@ class SparsePoseGraphTest : public ::testing::Test {
               },
             },
             optimization_problem = {
-              acceleration_scale = 1.,
-              rotation_scale = 1e2,
+              acceleration_weight = 1.,
+              rotation_weight = 1e2,
               huber_scale = 1.,
               consecutive_scan_translation_penalty_factor = 0.,
               consecutive_scan_rotation_penalty_factor = 0.,

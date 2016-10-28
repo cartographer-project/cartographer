@@ -40,8 +40,8 @@ class OptimizationProblemTest : public ::testing::Test {
   CreateOptions() {
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
-          acceleration_scale = 1e-4,
-          rotation_scale = 1e-2,
+          acceleration_weight = 1e-4,
+          rotation_weight = 1e-2,
           huber_scale = 1.,
           consecutive_scan_translation_penalty_factor = 1e-2,
           consecutive_scan_rotation_penalty_factor = 1e-2,
