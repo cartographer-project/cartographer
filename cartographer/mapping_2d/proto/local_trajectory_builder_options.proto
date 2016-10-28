@@ -24,13 +24,13 @@ import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.p
 import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 
 message LocalTrajectoryBuilderOptions {
-  // Cropping parameters for the horizontal laser fan.
-  optional float horizontal_laser_min_z = 1;
-  optional float horizontal_laser_max_z = 2;
+  // Cropping parameters for the laser fan.
+  optional float laser_min_z = 1;
+  optional float laser_max_z = 2;
 
   // Voxel filter that gets applied to the horizontal laser immediately after
   // cropping.
-  optional float horizontal_laser_voxel_filter_size = 3;
+  optional float laser_voxel_filter_size = 3;
 
   // Whether to solve the online scan matching first using the correlative scan
   // matcher to generate a good starting point for Ceres.
