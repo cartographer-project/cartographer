@@ -181,9 +181,9 @@ void InsertSegmentsIntoProbabilityGrid(
 // Filters 'laser_fan', retaining only the returns that have no more than
 // 'max_range' distance from the laser origin. Removes misses and reflectivity
 // information.
-LaserFan FilterLaserFanByMaxRange(const LaserFan& laser_fan,
-                                  const float max_range) {
-  LaserFan result{laser_fan.origin, {}, {}, {}};
+sensor::LaserFan FilterLaserFanByMaxRange(const sensor::LaserFan& laser_fan,
+                                          const float max_range) {
+  sensor::LaserFan result{laser_fan.origin, {}, {}, {}};
   for (const Eigen::Vector3f& return_ : laser_fan.returns) {
     if ((return_ - laser_fan.origin).norm() <= max_range) {
       result.returns.push_back(return_);
