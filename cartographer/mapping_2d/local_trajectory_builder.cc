@@ -28,13 +28,13 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::LocalTrajectoryBuilderOptions options;
   options.set_laser_min_range(
-      lua_parameter_dictionary->GetDouble("laser_min_range"));
+      parameter_dictionary->GetDouble("laser_min_range"));
   options.set_laser_max_range(
-      lua_parameter_dictionary->GetDouble("laser_max_range"));
+      parameter_dictionary->GetDouble("laser_max_range"));
   options.set_laser_min_z(parameter_dictionary->GetDouble("laser_min_z"));
   options.set_laser_max_z(parameter_dictionary->GetDouble("laser_max_z"));
   options.set_laser_missing_echo_ray_length(
-      lua_parameter_dictionary->GetDouble("laser_missing_echo_ray_length"));
+      parameter_dictionary->GetDouble("laser_missing_echo_ray_length"));
   options.set_laser_voxel_filter_size(
       parameter_dictionary->GetDouble("laser_voxel_filter_size"));
   options.set_use_online_correlative_scan_matching(
@@ -76,28 +76,31 @@ LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
 const Submaps* LocalTrajectoryBuilder::submaps() const { return &submaps_; }
 
-sensor::LaserFan LocalTrajectoryBuilder::BuildCroppedLaserFan(
+sensor::LaserFan LocalTrajectoryBuilder::TransformAndFilterLaserFan(
     const transform::Rigid3f& tracking_to_tracking_2d,
     const sensor::LaserFan& laser_fan) const {
-  LaserFan fan{laser_fan.origin, {}, {}, laser_fan.reflectivities};
+  // Drop any returns below the minimum range and convert returns beyond the
+  // maximum range into misses.
+  sensor::LaserFan returns_and_misses{laser_fan.origin, {}, {}, {}};
   for (const Eigen::Vector3f& return_ : laser_fan.returns) {
     const float range = (return_ - laser_fan.origin).norm();
-    if (options_.laser_min_range() <= range &&
-        range <= options_.laser_max_range()) {
-      fan.returns.push_back(return_);
+    if (range >= options_.laser_min_range()) {
+        if (range <= options_.laser_max_range()) {
+          returns_and_misses.returns.push_back(return_);
+        } else {
+          returns_and_misses.misses.push_back(
+              options_.laser_missing_echo_ray_length() * return_.normalized());
+        }
     }
   }
-  for (const Eigen::Vector3f& miss : laser_fan.misses) {
-    fan.misses.push_back(options_.laser_missing_echo_ray_length);
-  }
-  const sensor::LaserFan cropped_fan = sensor::CropLaserFan(
-      sensor::TransformLaserFan(fan, tracking_to_tracking_2d),
+  const sensor::LaserFan cropped = sensor::CropLaserFan(
+      sensor::TransformLaserFan(returns_and_misses, tracking_to_tracking_2d),
       options_.laser_min_z(), options_.laser_max_z());
   return sensor::LaserFan{
-      cropped_fan.origin,
-      sensor::VoxelFiltered(cropped_fan.returns,
+      cropped.origin,
+      sensor::VoxelFiltered(cropped.returns,
                             options_.laser_voxel_filter_size()),
-      sensor::VoxelFiltered(cropped_fan.misses,
+      sensor::VoxelFiltered(cropped.misses,
                             options_.laser_voxel_filter_size())};
 }
 
@@ -174,8 +177,8 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
               -transform::GetYaw(pose_prediction), Eigen::Vector3d::UnitZ())) *
           pose_prediction.rotation());
 
-  const sensor::LaserFan laser_fan_in_tracking_2d =
-      BuildCroppedLaserFan(tracking_to_tracking_2d.cast<float>(), laser_fan);
+  const sensor::LaserFan laser_fan_in_tracking_2d = TransformAndFilterLaserFan(
+      tracking_to_tracking_2d.cast<float>(), laser_fan);
 
   if (laser_fan_in_tracking_2d.returns.empty()) {
     LOG(WARNING) << "Dropped empty horizontal laser point cloud.";

@@ -38,8 +38,7 @@ std::vector<uint8> ReorderReflectivities(
 }  // namespace
 
 LaserFan ToLaserFan(const proto::LaserScan& proto, const float min_range,
-                    const float max_range,
-                    const float missing_echo_ray_length) {
+                    const float max_range) {
   CHECK_GE(min_range, 0.f);
   CHECK_GT(proto.angle_increment(), 0.f);
   CHECK_GT(proto.angle_max(), proto.angle_min());
@@ -48,15 +47,10 @@ LaserFan ToLaserFan(const proto::LaserScan& proto, const float min_range,
   for (const auto& range : proto.range()) {
     if (range.value_size() > 0) {
       const float first_echo = range.value(0);
-      if (!std::isnan(first_echo) && first_echo >= min_range) {
+      if (!std::isnan(first_echo) && min_range <= first_echo && first_echo <= max_range) {
         const Eigen::AngleAxisf rotation(angle, Eigen::Vector3f::UnitZ());
-        if (first_echo <= max_range) {
-          laser_fan.returns.push_back(rotation *
-                                      (first_echo * Eigen::Vector3f::UnitX()));
-        } else {
-          laser_fan.misses.push_back(
-              rotation * (missing_echo_ray_length * Eigen::Vector3f::UnitX()));
-        }
+        laser_fan.returns.push_back(rotation *
+                                    (first_echo * Eigen::Vector3f::UnitX()));
       }
     }
     angle += proto.angle_increment();

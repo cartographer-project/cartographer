@@ -73,8 +73,7 @@ class LocalTrajectoryBuilder {
   const Submaps* submaps() const;
 
  private:
-  // Transforms 'laser_scan', crops and voxel filters.
-  sensor::LaserFan BuildCroppedLaserFan(
+  sensor::LaserFan TransformAndFilterLaserFan(
       const transform::Rigid3f& tracking_to_tracking_2d,
       const sensor::LaserFan& laser_fan) const;
 
