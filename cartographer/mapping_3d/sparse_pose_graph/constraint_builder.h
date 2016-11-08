@@ -55,7 +55,7 @@ namespace sparse_pose_graph {
 // This class is thread-safe.
 class ConstraintBuilder {
  public:
-  using Constraint = mapping::SparsePoseGraph::Constraint3D;
+  using Constraint = mapping::SparsePoseGraph::Constraint;
   using Result = std::vector<Constraint>;
 
   ConstraintBuilder(

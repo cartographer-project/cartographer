@@ -31,10 +31,10 @@ google_library(mapping_2d_sparse_pose_graph_constraint_builder
     mapping_2d_scan_matching_fast_correlative_scan_matcher
     mapping_2d_scan_matching_proto_ceres_scan_matcher_options
     mapping_2d_scan_matching_proto_fast_correlative_scan_matcher_options
-    mapping_2d_sparse_pose_graph_optimization_problem
     mapping_2d_submaps
     mapping_3d_scan_matching_ceres_scan_matcher
     mapping_3d_scan_matching_fast_correlative_scan_matcher
+    mapping_sparse_pose_graph
     mapping_sparse_pose_graph_proto_constraint_builder_options
     mapping_trajectory_connectivity
     sensor_point_cloud
@@ -70,6 +70,8 @@ google_library(mapping_2d_sparse_pose_graph_spa_cost_function
     spa_cost_function.h
   DEPENDS
     common_math
+    kalman_filter_pose_tracker
     mapping_sparse_pose_graph
     transform_rigid_transform
+    transform_transform
 )

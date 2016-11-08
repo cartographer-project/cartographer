@@ -36,7 +36,7 @@ namespace sparse_pose_graph {
 // Implements the SPA loop closure method.
 class OptimizationProblem {
  public:
-  using Constraint = mapping::SparsePoseGraph::Constraint2D;
+  using Constraint = mapping::SparsePoseGraph::Constraint;
 
   explicit OptimizationProblem(
       const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&

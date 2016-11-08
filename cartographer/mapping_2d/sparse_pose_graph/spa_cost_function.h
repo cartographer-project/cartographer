@@ -22,8 +22,10 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
+#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/transform/rigid_transform.h"
+#include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
 #include "ceres/jet.h"
 
@@ -33,7 +35,7 @@ namespace sparse_pose_graph {
 
 class SpaCostFunction {
  public:
-  using Constraint = mapping::SparsePoseGraph::Constraint2D;
+  using Constraint = mapping::SparsePoseGraph::Constraint;
 
   explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
 
@@ -62,9 +64,10 @@ class SpaCostFunction {
   static void ComputeScaledError(const Constraint::Pose& pose,
                                  const T* const c_i, const T* const c_j,
                                  T* const e) {
-    std::array<T, 3> e_ij = ComputeUnscaledError(pose.zbar_ij, c_i, c_j);
+    std::array<T, 3> e_ij =
+        ComputeUnscaledError(transform::Project2D(pose.zbar_ij), c_i, c_j);
     (Eigen::Map<Eigen::Matrix<T, 3, 1>>(e)) =
-        pose.sqrt_Lambda_ij.cast<T>() *
+        kalman_filter::Project2D(pose.sqrt_Lambda_ij).cast<T>() *
         Eigen::Map<Eigen::Matrix<T, 3, 1>>(e_ij.data());
   }
 

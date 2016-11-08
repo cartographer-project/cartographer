@@ -90,8 +90,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_) override;
   std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
       EXCLUDES(mutex_);
-  std::vector<Constraint2D> constraints_2d() override;
-  std::vector<Constraint3D> constraints_3d() override;
+  std::vector<Constraint> constraints() override;
 
  private:
   struct SubmapState {
@@ -179,7 +178,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Current optimization problem.
   sparse_pose_graph::OptimizationProblem optimization_problem_;
   sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
-  std::vector<Constraint2D> constraints_;
+  std::vector<Constraint> constraints_;
   std::vector<transform::Rigid2d> initial_point_cloud_poses_;
   std::vector<transform::Rigid2d> point_cloud_poses_;  // (map <- point cloud)
   std::vector<transform::Rigid2d> submap_transforms_;  // (map <- submap)

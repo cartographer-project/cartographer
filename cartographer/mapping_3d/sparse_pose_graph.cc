@@ -184,14 +184,14 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid3d constraint_transform =
         submap->local_pose().inverse() * pose;
-    constraints_.push_back(Constraint3D{
-        submap_index,
-        scan_index,
-        {constraint_transform,
-         common::ComputeSpdMatrixSqrtInverse(
-             covariance, options_.constraint_builder_options()
-                             .lower_covariance_eigenvalue_bound())},
-        Constraint3D::INTRA_SUBMAP});
+    constraints_.push_back(
+        Constraint{submap_index,
+                   scan_index,
+                   {constraint_transform,
+                    common::ComputeSpdMatrixSqrtInverse(
+                        covariance, options_.constraint_builder_options()
+                                        .lower_covariance_eigenvalue_bound())},
+                   Constraint::INTRA_SUBMAP});
   }
 
   // Determine if this scan should be globally localized.
@@ -393,11 +393,7 @@ std::vector<mapping::TrajectoryNode> SparsePoseGraph::GetTrajectoryNodes() {
   return trajectory_nodes_;
 }
 
-std::vector<SparsePoseGraph::Constraint2D> SparsePoseGraph::constraints_2d() {
-  return {};
-}
-
-std::vector<SparsePoseGraph::Constraint3D> SparsePoseGraph::constraints_3d() {
+std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   return constraints_;
 }
 
