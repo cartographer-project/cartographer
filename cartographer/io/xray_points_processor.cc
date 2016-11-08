@@ -49,7 +49,8 @@ void TakeLogarithm(Eigen::MatrixXf* mat) {
 void WritePng(const string& filename, const Eigen::MatrixXf& mat) {
   const int stride =
       cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, mat.cols());
-  std::vector<uint32_t> pixels(stride * mat.rows(), 0.);
+  CHECK_EQ(stride % 4, 0);
+  std::vector<uint32_t> pixels(stride / 4 * mat.rows(), 0.);
 
   const float max = mat.maxCoeff();
   for (int y = 0; y < mat.rows(); ++y) {
@@ -71,7 +72,9 @@ void WritePng(const string& filename, const Eigen::MatrixXf& mat) {
           reinterpret_cast<unsigned char*>(pixels.data()), CAIRO_FORMAT_ARGB32,
           mat.cols(), mat.rows(), stride),
       cairo_surface_destroy);
-  cairo_surface_write_to_png(surface.get(), filename.c_str());
+  CHECK_EQ(cairo_surface_status(surface.get()), CAIRO_STATUS_SUCCESS);
+  CHECK_EQ(cairo_surface_write_to_png(surface.get(), filename.c_str()),
+           CAIRO_STATUS_SUCCESS);
 }
 
 }  // namespace
