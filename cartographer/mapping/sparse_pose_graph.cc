@@ -28,22 +28,11 @@ namespace cartographer {
 namespace mapping {
 
 proto::SparsePoseGraph::Constraint::Tag ToProto(
-    const SparsePoseGraph::Constraint2D::Tag& tag) {
+    const SparsePoseGraph::Constraint::Tag& tag) {
   switch (tag) {
-    case SparsePoseGraph::Constraint2D::Tag::INTRA_SUBMAP:
+    case SparsePoseGraph::Constraint::Tag::INTRA_SUBMAP:
       return proto::SparsePoseGraph::Constraint::INTRA_SUBMAP;
-    case SparsePoseGraph::Constraint2D::Tag::INTER_SUBMAP:
-      return proto::SparsePoseGraph::Constraint::INTER_SUBMAP;
-  }
-  LOG(FATAL) << "Unsupported tag.";
-}
-
-proto::SparsePoseGraph::Constraint::Tag ToProto(
-    const SparsePoseGraph::Constraint3D::Tag& tag) {
-  switch (tag) {
-    case SparsePoseGraph::Constraint3D::Tag::INTRA_SUBMAP:
-      return proto::SparsePoseGraph::Constraint::INTRA_SUBMAP;
-    case SparsePoseGraph::Constraint3D::Tag::INTER_SUBMAP:
+    case SparsePoseGraph::Constraint::Tag::INTER_SUBMAP:
       return proto::SparsePoseGraph::Constraint::INTER_SUBMAP;
   }
   LOG(FATAL) << "Unsupported tag.";
@@ -85,26 +74,7 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
 
 proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
-  for (const auto& constraint : constraints_2d()) {
-    auto* const constraint_proto = proto.add_constraint();
-    *constraint_proto->mutable_relative_pose() =
-        transform::ToProto(transform::Embed3D(constraint.pose.zbar_ij));
-    for (int i = 0; i != 36; ++i) {
-      constraint_proto->mutable_sqrt_lambda()->Add(0.);
-    }
-    constexpr double kFakePositionCovariance = 1.;
-    constexpr double kFakeOrientationCovariance = 1.;
-    Eigen::Map<Eigen::Matrix<double, 6, 6>>(
-        constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
-        kalman_filter::Embed3D(constraint.pose.sqrt_Lambda_ij,
-                               kFakePositionCovariance,
-                               kFakeOrientationCovariance);
-    // TODO(whess): Support multi-trajectory.
-    constraint_proto->mutable_submap_id()->set_submap_index(constraint.i);
-    constraint_proto->mutable_scan_id()->set_scan_index(constraint.j);
-    constraint_proto->set_tag(mapping::ToProto(constraint.tag));
-  }
-  for (const auto& constraint : constraints_3d()) {
+  for (const auto& constraint : constraints()) {
     auto* const constraint_proto = proto.add_constraint();
     *constraint_proto->mutable_relative_pose() =
         transform::ToProto(constraint.pose.zbar_ij);

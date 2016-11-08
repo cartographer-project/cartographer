@@ -33,7 +33,7 @@ namespace sparse_pose_graph {
 
 class SpaCostFunction {
  public:
-  using Constraint = mapping::SparsePoseGraph::Constraint3D;
+  using Constraint = mapping::SparsePoseGraph::Constraint;
 
   explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
 

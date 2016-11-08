@@ -176,7 +176,7 @@ void ConstraintBuilder::ComputeConstraint(
     mapping::TrajectoryConnectivity* trajectory_connectivity,
     const sensor::PointCloud* const point_cloud,
     const transform::Rigid2d& initial_relative_pose,
-    std::unique_ptr<OptimizationProblem::Constraint>* constraint) {
+    std::unique_ptr<ConstraintBuilder::Constraint>* constraint) {
   const transform::Rigid2d initial_pose =
       ComputeSubmapPose(*submap) * initial_relative_pose;
   const SubmapScanMatcher* const submap_scan_matcher =
@@ -226,13 +226,17 @@ void ConstraintBuilder::ComputeConstraint(
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;
-  constraint->reset(new OptimizationProblem::Constraint{
+  constexpr double kFakePositionCovariance = 1.;
+  constexpr double kFakeOrientationCovariance = 1.;
+  constraint->reset(new Constraint{
       submap_index,
       scan_index,
-      {constraint_transform,
+      {transform::Embed3D(constraint_transform),
        common::ComputeSpdMatrixSqrtInverse(
-           covariance, options_.lower_covariance_eigenvalue_bound())},
-      OptimizationProblem::Constraint::INTER_SUBMAP});
+           kalman_filter::Embed3D(covariance, kFakePositionCovariance,
+                                  kFakeOrientationCovariance),
+           options_.lower_covariance_eigenvalue_bound())},
+      Constraint::INTER_SUBMAP});
 
   if (options_.log_matches()) {
     const transform::Rigid2d difference =
@@ -261,8 +265,7 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
     if (pending_computations_.empty()) {
       CHECK_EQ(submap_queued_work_items_.size(), 0);
       if (when_done_ != nullptr) {
-        for (const std::unique_ptr<OptimizationProblem::Constraint>&
-                 constraint : constraints_) {
+        for (const std::unique_ptr<Constraint>& constraint : constraints_) {
           if (constraint != nullptr) {
             result.push_back(*constraint);
           }

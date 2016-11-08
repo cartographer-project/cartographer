@@ -42,28 +42,7 @@ class SparsePoseGraph {
   // A "constraint" as in the paper by Konolige, Kurt, et al. "Efficient sparse
   // pose adjustment for 2d mapping." Intelligent Robots and Systems (IROS),
   // 2010 IEEE/RSJ International Conference on (pp. 22--29). IEEE, 2010.
-  struct Constraint2D {
-    struct Pose {
-      transform::Rigid2d zbar_ij;
-      Eigen::Matrix<double, 3, 3> sqrt_Lambda_ij;
-    };
-
-    // Submap index.
-    int i;
-
-    // Scan index.
-    int j;
-
-    // Pose of the scan 'j' relative to submap 'i'.
-    Pose pose;
-
-    // Differentiates between intra-submap (where scan 'j' was inserted into
-    // submap 'i') and inter-submap constraints (where scan 'j' was not inserted
-    // into submap 'i').
-    enum Tag { INTRA_SUBMAP, INTER_SUBMAP } tag;
-  };
-
-  struct Constraint3D {
+  struct Constraint {
     struct Pose {
       transform::Rigid3d zbar_ij;
       Eigen::Matrix<double, 6, 6> sqrt_Lambda_ij;
@@ -116,11 +95,8 @@ class SparsePoseGraph {
   // Returns the current optimized trajectory.
   virtual std::vector<TrajectoryNode> GetTrajectoryNodes() = 0;
 
-  // Returns the collection of 2D constraints.
-  virtual std::vector<Constraint2D> constraints_2d() = 0;
-
-  // Returns the collection of 3D constraints.
-  virtual std::vector<Constraint3D> constraints_3d() = 0;
+  // Returns the collection of constraints.
+  virtual std::vector<Constraint> constraints() = 0;
 
   // Serializes the constraints and the computed trajectory.
   //

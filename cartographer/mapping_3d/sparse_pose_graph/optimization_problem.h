@@ -44,7 +44,7 @@ struct NodeData {
 // Implements the SPA loop closure method.
 class OptimizationProblem {
  public:
-  using Constraint = mapping::SparsePoseGraph::Constraint3D;
+  using Constraint = mapping::SparsePoseGraph::Constraint;
 
   explicit OptimizationProblem(
       const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
