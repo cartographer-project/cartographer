@@ -78,16 +78,3 @@ message LaserFan {
   // Reflectivity values of point_cloud or empty.
   repeated int32 reflectivity = 4 [packed = true];
 }
-
-// IMU measurement.
-message Imu {
-  optional transform.proto.Quaterniond orientation = 2;
-  optional transform.proto.Vector3d angular_velocity = 3;
-  optional transform.proto.Vector3d linear_acceleration = 4;
-  optional transform.proto.Vector3d magnetic_field = 5;
-  optional float ambient_pressure = 6;
-  // Rotation in radians in the sensor frame since the previous measurement.
-  optional transform.proto.Vector3d delta_rotation = 7;
-  // Change in velocity in the sensor frame since the previous measurement.
-  optional transform.proto.Vector3d delta_velocity = 8;
-}
