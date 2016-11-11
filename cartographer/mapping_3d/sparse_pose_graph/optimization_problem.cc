@@ -84,10 +84,8 @@ void OptimizationProblem::AddImuData(common::Time time,
 }
 
 void OptimizationProblem::AddTrajectoryNode(
-    common::Time time, const transform::Rigid3d& initial_point_cloud_pose,
-    const transform::Rigid3d& point_cloud_pose) {
-  node_data_.push_back(
-      NodeData{time, initial_point_cloud_pose, point_cloud_pose});
+    common::Time time, const transform::Rigid3d& point_cloud_pose) {
+  node_data_.push_back(NodeData{time, point_cloud_pose});
 }
 
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {

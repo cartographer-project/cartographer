@@ -41,6 +41,7 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
 #include "cartographer/kalman_filter/pose_tracker.h"
+#include "cartographer/mapping/proto/scan_matching_progress.pb.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/constraint_builder.h"

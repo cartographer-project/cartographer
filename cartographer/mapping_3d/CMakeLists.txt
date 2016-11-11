@@ -244,6 +244,7 @@ google_library(mapping_3d_sparse_pose_graph
     mapping_sparse_pose_graph
     mapping_sparse_pose_graph_proto_constraint_builder_options
     mapping_trajectory_connectivity
+    sensor_compressed_point_cloud
     sensor_point_cloud
     sensor_voxel_filter
     transform_rigid_transform
