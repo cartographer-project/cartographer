@@ -37,7 +37,6 @@ namespace sparse_pose_graph {
 
 struct NodeData {
   common::Time time;
-  transform::Rigid3d initial_point_cloud_pose;
   transform::Rigid3d point_cloud_pose;
 };
 
@@ -57,7 +56,6 @@ class OptimizationProblem {
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
   void AddTrajectoryNode(common::Time time,
-                         const transform::Rigid3d& initial_point_cloud_pose,
                          const transform::Rigid3d& point_cloud_pose);
 
   void SetMaxNumIterations(int32 max_num_iterations);

@@ -30,7 +30,6 @@
 #include "Eigen/Eigenvalues"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/scan_matching_progress.pb.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
@@ -101,7 +100,7 @@ void SparsePoseGraph::AddScan(
   constant_node_data_->push_back(mapping::TrajectoryNode::ConstantData{
       time, laser_fan_in_pose,
       Compress(sensor::LaserFan{Eigen::Vector3f::Zero(), {}, {}, {}}), submaps,
-      transform::Rigid3d(tracking_to_pose)});
+      tracking_to_pose});
   trajectory_nodes_.push_back(mapping::TrajectoryNode{
       &constant_node_data_->back(), optimized_pose,
   });
@@ -126,10 +125,19 @@ void SparsePoseGraph::AddScan(
         common::make_unique<common::FixedRatioSampler>(
             options_.global_sampling_ratio());
   }
-  AddWorkItem(
-      std::bind(std::mem_fn(&SparsePoseGraph::ComputeConstraintsForScan), this,
-                j, submaps, matching_submap, insertion_submaps, finished_submap,
-                pose, covariance));
+
+  AddWorkItem([=]() REQUIRES(mutex_) {
+    ComputeConstraintsForScan(j, submaps, matching_submap, insertion_submaps,
+                              finished_submap, pose, covariance);
+  });
+}
+
+void SparsePoseGraph::AddWorkItem(std::function<void()> work_item) {
+  if (scan_queue_ == nullptr) {
+    work_item();
+  } else {
+    scan_queue_->push_back(work_item);
+  }
 }
 
 void SparsePoseGraph::ComputeConstraintsForOldScans(
@@ -299,14 +307,6 @@ void SparsePoseGraph::WaitForAllComputations() {
     notification = true;
   });
   locker.Await([&notification]() { return notification; });
-}
-
-void SparsePoseGraph::AddWorkItem(std::function<void()> work_item) {
-  if (scan_queue_ == nullptr) {
-    work_item();
-  } else {
-    scan_queue_->push_back(work_item);
-  }
 }
 
 void SparsePoseGraph::RunFinalOptimization() {
