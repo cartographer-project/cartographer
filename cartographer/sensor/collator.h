@@ -21,15 +21,10 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
+#include <vector>
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/common/time.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/ordered_multi_queue.h"
-#include "glog/logging.h"
 
 namespace cartographer {
 namespace sensor {
@@ -45,37 +40,22 @@ class Collator {
 
   // Adds a trajectory to produce sorted sensor output for. Calls 'callback'
   // for each collated sensor data.
-  void AddTrajectory(const int trajectory_id,
+  void AddTrajectory(int trajectory_id,
                      const std::unordered_set<string>& expected_sensor_ids,
-                     const Callback callback) {
-    for (const auto& sensor_id : expected_sensor_ids) {
-      const auto queue_key = QueueKey{trajectory_id, sensor_id};
-      queue_.AddQueue(queue_key,
-                      [callback, sensor_id](std::unique_ptr<Data> data) {
-                        callback(sensor_id, std::move(data));
-                      });
-      queue_keys_[trajectory_id].push_back(queue_key);
-    }
-  }
+                     Callback callback);
 
   // Marks 'trajectory_id' as finished.
-  void FinishTrajectory(const int trajectory_id) {
-    for (const auto& queue_key : queue_keys_[trajectory_id]) {
-      queue_.MarkQueueAsFinished(queue_key);
-    }
-  }
+  void FinishTrajectory(int trajectory_id);
 
   // Adds 'data' for 'trajectory_id' to be collated. 'data' must contain valid
   // sensor data. Sensor packets with matching 'sensor_id' must be added in time
   // order.
-  void AddSensorData(const int trajectory_id, const string& sensor_id,
-                     std::unique_ptr<Data> data) {
-    queue_.Add(QueueKey{trajectory_id, sensor_id}, std::move(data));
-  }
+  void AddSensorData(int trajectory_id, const string& sensor_id,
+                     std::unique_ptr<Data> data);
 
   // Dispatches all queued sensor packets. May only be called once.
   // AddSensorData may not be called after Flush.
-  void Flush() { queue_.Flush(); }
+  void Flush();
 
  private:
   // Queue keys are a pair of trajectory ID and sensor identifier.

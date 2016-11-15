@@ -15,13 +15,11 @@
 add_subdirectory("proto")
 
 google_library(sensor_collator
-  USES_EIGEN
-  USES_GLOG
+  SRCS
+    collator.cc
   HDRS
     collator.h
   DEPENDS
-    common_make_unique
-    common_time
     sensor_data
     sensor_ordered_multi_queue
 )
