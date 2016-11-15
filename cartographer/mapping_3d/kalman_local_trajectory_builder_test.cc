@@ -256,8 +256,9 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
     int num_poses = 0;
     for (const TrajectoryNode& node : expected_trajectory) {
       AddLinearOnlyImuObservation(node.time, node.pose);
-      if (local_trajectory_builder_->AddLaserFan(
-              node.time, GenerateLaserFan(node.pose)) != nullptr) {
+      const auto laser_fan = GenerateLaserFan(node.pose);
+      if (local_trajectory_builder_->AddRangefinderData(
+              node.time, laser_fan.origin, laser_fan.returns) != nullptr) {
         const auto pose_estimate = local_trajectory_builder_->pose_estimate();
         EXPECT_THAT(pose_estimate.pose, transform::IsNearly(node.pose, 1e-1));
         ++num_poses;

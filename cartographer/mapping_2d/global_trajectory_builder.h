@@ -38,10 +38,10 @@ class GlobalTrajectoryBuilder
   const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
       const override;
 
-  // Projects 'laser_fan' to 2D, and therefore should be approximately
-  // horizontal.
-  void AddLaserFan(common::Time time,
-                   const sensor::LaserFan& laser_fan) override;
+  // Projects 'ranges' into 2D. Therefore, 'ranges' should be approximately
+  // parallel to the ground plane.
+  void AddRangefinderData(common::Time time, const Eigen::Vector3f& origin,
+                          const sensor::PointCloud& ranges) override;
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
   void AddOdometerData(

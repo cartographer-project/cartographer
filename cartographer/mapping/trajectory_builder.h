@@ -83,10 +83,12 @@ class TrajectoryBuilder {
   virtual void AddSensorData(const string& sensor_id,
                              std::unique_ptr<sensor::Data> data) = 0;
 
-  void AddLaserFan(const string& sensor_id, common::Time time,
-                   const sensor::LaserFan& laser_fan) {
+  void AddRangefinderData(const string& sensor_id, common::Time time,
+                          const Eigen::Vector3f& origin,
+                          const sensor::PointCloud& ranges) {
     AddSensorData(sensor_id,
-                  common::make_unique<sensor::Data>(time, laser_fan));
+                  common::make_unique<sensor::Data>(
+                      time, sensor::Data::Rangefinder{origin, ranges}));
   }
 
   void AddImuData(const string& sensor_id, common::Time time,

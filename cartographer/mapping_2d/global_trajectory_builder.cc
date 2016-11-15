@@ -32,10 +32,12 @@ const Submaps* GlobalTrajectoryBuilder::submaps() const {
   return local_trajectory_builder_.submaps();
 }
 
-void GlobalTrajectoryBuilder::AddLaserFan(const common::Time time,
-                                          const sensor::LaserFan& laser_fan) {
+void GlobalTrajectoryBuilder::AddRangefinderData(
+    const common::Time time, const Eigen::Vector3f& origin,
+    const sensor::PointCloud& ranges) {
   std::unique_ptr<LocalTrajectoryBuilder::InsertionResult> insertion_result =
-      local_trajectory_builder_.AddHorizontalLaserFan(time, laser_fan);
+      local_trajectory_builder_.AddHorizontalLaserFan(
+          time, sensor::LaserFan{origin, ranges, {}, {}});
   if (insertion_result != nullptr) {
     sparse_pose_graph_->AddScan(
         insertion_result->time, insertion_result->tracking_to_tracking_2d,
