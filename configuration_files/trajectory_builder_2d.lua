@@ -14,8 +14,11 @@
 
 TRAJECTORY_BUILDER_2D = {
   use_imu_data = true,
+  laser_min_range = 0.,
+  laser_max_range = 30.,
   laser_min_z = -0.8,
   laser_max_z = 2.,
+  laser_missing_echo_ray_length = 5.,
   laser_voxel_filter_size = 0.025,
 
   use_online_correlative_scan_matching = false,

@@ -38,14 +38,11 @@ struct LaserFan {
   std::vector<uint8> reflectivities;
 };
 
-// Builds a LaserFan from 'proto' and separates any beams with ranges outside
-// the range ['min_range', 'max_range']. Beams beyond 'max_range' are inserted
-// into the 'misses' point cloud with length 'missing_echo_ray_length'. The
-// points in both clouds are stored in scan order.
-LaserFan ToLaserFan(const proto::LaserScan& proto, float min_range,
-                    float max_range, float missing_echo_ray_length);
+// Builds a PointCloud of returns from 'proto', dropping any beams with ranges
+// outside the valid range described by 'proto'.
+PointCloud ToPointCloud(const proto::LaserScan& proto);
 
-// Converts 3D 'laser_fan' to a proto::LaserFan.
+// Converts 'laser_fan' to a proto::LaserFan.
 proto::LaserFan ToProto(const LaserFan& laser_fan);
 
 // Converts 'proto' to a LaserFan.

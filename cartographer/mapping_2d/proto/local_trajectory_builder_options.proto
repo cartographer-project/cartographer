@@ -24,9 +24,15 @@ import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.p
 import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 
 message LocalTrajectoryBuilderOptions {
-  // Cropping parameters for the laser fan.
+  // Laser returns outside these ranges will be dropped.
+  optional float laser_min_range = 14;
+  optional float laser_max_range = 15;
   optional float laser_min_z = 1;
   optional float laser_max_z = 2;
+
+  // Laser returns beyond 'laser_max_range' will be inserted with this length as
+  // empty space.
+  optional float laser_missing_echo_ray_length = 16;
 
   // Voxel filter that gets applied to the horizontal laser immediately after
   // cropping.
