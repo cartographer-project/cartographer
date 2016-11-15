@@ -30,7 +30,8 @@ message LocalTrajectoryBuilderOptions {
   optional float laser_min_z = 1;
   optional float laser_max_z = 2;
 
-  // Missing laser returns will be inserted with this length as empty space.
+  // Laser returns beyond 'laser_max_range' will be inserted with this length as
+  // empty space.
   optional float laser_missing_echo_ray_length = 16;
 
   // Voxel filter that gets applied to the horizontal laser immediately after
