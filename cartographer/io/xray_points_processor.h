@@ -19,24 +19,25 @@
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_processor.h"
+#include "cartographer/mapping/detect_floors.h"
+#include "cartographer/mapping/proto/trajectory.pb.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace io {
 
-// Creates X-ray cuts through the points with pixels being 'voxel_size' big. All
-// images created from a single XRayPointsProcessor have the same dimensions and
-// are centered on the center of the bounding box, so that they can easily be
-// combined into a movie.
+// Creates X-ray cuts through the points with pixels being 'voxel_size' big.
 class XRayPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName =
       "write_xray_image";
   XRayPointsProcessor(double voxel_size, const transform::Rigid3f& transform,
+                      const std::vector<mapping::Floor>& floors,
                       const string& output_filename, PointsProcessor* next);
 
   static std::unique_ptr<XRayPointsProcessor> FromDictionary(
+      const mapping::proto::Trajectory& trajectory,
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   ~XRayPointsProcessor() override {}
@@ -45,14 +46,16 @@ class XRayPointsProcessor : public PointsProcessor {
   FlushResult Flush() override;
 
  private:
-  using Voxels = mapping_3d::HybridGridBase<bool>;
-
-  void WriteImage();
-
   PointsProcessor* const next_;
+
+  // If empty, we do not separate into floors.
+  std::vector<mapping::Floor> floors_;
+
   const string output_filename_;
   const transform::Rigid3f transform_;
-  Voxels voxels_;
+
+  // Only has one entry if we do not separate into floors.
+  std::vector<mapping_3d::HybridGridBase<bool>> voxels_;
 };
 
 }  // namespace io

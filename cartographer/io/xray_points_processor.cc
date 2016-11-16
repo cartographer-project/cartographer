@@ -25,11 +25,14 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/io/cairo_types.h"
+#include "cartographer/mapping/detect_floors.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 
 namespace cartographer {
 namespace io {
 namespace {
+
+using Voxels = mapping_3d::HybridGridBase<bool>;
 
 // Takes the logarithm of each value in 'mat', clamping to 0 as smallest value.
 void TakeLogarithm(Eigen::MatrixXf* mat) {
@@ -77,48 +80,7 @@ void WritePng(const string& filename, const Eigen::MatrixXf& mat) {
            CAIRO_STATUS_SUCCESS);
 }
 
-}  // namespace
-
-XRayPointsProcessor::XRayPointsProcessor(const double voxel_size,
-                                         const transform::Rigid3f& transform,
-                                         const string& output_filename,
-                                         PointsProcessor* next)
-    : next_(next),
-      output_filename_(output_filename),
-      transform_(transform),
-      voxels_(voxel_size, Eigen::Vector3f::Zero()) {}
-
-std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
-    common::LuaParameterDictionary* dictionary, PointsProcessor* next) {
-  return common::make_unique<XRayPointsProcessor>(
-      dictionary->GetDouble("voxel_size"),
-      transform::FromDictionary(dictionary->GetDictionary("transform").get())
-          .cast<float>(),
-      dictionary->GetString("filename"), next);
-}
-
-void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
-  for (const auto& point : batch->points) {
-    const Eigen::Vector3f camera_point = transform_ * point;
-    *voxels_.mutable_value(voxels_.GetCellIndex(camera_point)) = true;
-  }
-  next_->Process(std::move(batch));
-}
-
-PointsProcessor::FlushResult XRayPointsProcessor::Flush() {
-  WriteImage();
-  switch (next_->Flush()) {
-    case FlushResult::kRestartStream:
-      LOG(FATAL) << "X-Ray generation must be configured to occur after any "
-                    "stages that require multiple passes.";
-
-    case FlushResult::kFinished:
-      return FlushResult::kFinished;
-  }
-  LOG(FATAL);
-}
-
-void XRayPointsProcessor::WriteImage() {
+void WriteVoxels(const string& filename, const Voxels& voxels) {
   Eigen::Array3i min(std::numeric_limits<int>::max(),
                      std::numeric_limits<int>::max(),
                      std::numeric_limits<int>::max());
@@ -127,7 +89,7 @@ void XRayPointsProcessor::WriteImage() {
                      std::numeric_limits<int>::min());
 
   // Find the maximum and minimum cells.
-  for (Voxels::Iterator it(voxels_); !it.Done(); it.Next()) {
+  for (Voxels::Iterator it(voxels); !it.Done(); it.Next()) {
     const Eigen::Array3i idx = it.GetCellIndex();
     min = min.min(idx);
     max = max.max(idx);
@@ -144,12 +106,98 @@ void XRayPointsProcessor::WriteImage() {
   const int xsize = max[1] - min[1] + 1;
   const int ysize = max[2] - min[2] + 1;
   Eigen::MatrixXf image = Eigen::MatrixXf::Zero(ysize, xsize);
-  for (Voxels::Iterator it(voxels_); !it.Done(); it.Next()) {
+  for (Voxels::Iterator it(voxels); !it.Done(); it.Next()) {
     const Eigen::Array2i pixel = voxel_index_to_pixel(it.GetCellIndex());
     ++image(pixel.y(), pixel.x());
   }
   TakeLogarithm(&image);
-  WritePng(output_filename_, image);
+  WritePng(filename, image);
+}
+
+bool ContainedIn(
+    const common::Time& time,
+    const std::vector<common::Interval<common::Time>>& time_intervals) {
+  for (const auto& interval : time_intervals) {
+    if (interval.start <= time && time <= interval.end) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void Insert(const PointsBatch& batch, const transform::Rigid3f& transform,
+            Voxels* voxels) {
+  for (const auto& point : batch.points) {
+    const Eigen::Vector3f camera_point = transform * point;
+    *voxels->mutable_value(voxels->GetCellIndex(camera_point)) = true;
+  }
+}
+
+}  // namespace
+
+XRayPointsProcessor::XRayPointsProcessor(
+    const double voxel_size, const transform::Rigid3f& transform,
+    const std::vector<mapping::Floor>& floors, const string& output_filename,
+    PointsProcessor* next)
+    : next_(next),
+      floors_(floors),
+      output_filename_(output_filename),
+      transform_(transform) {
+  for (int i = 0; i < (floors_.empty() ? 1 : floors.size()); ++i) {
+    voxels_.emplace_back(voxel_size, Eigen::Vector3f::Zero());
+  }
+}
+
+std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
+    const mapping::proto::Trajectory& trajectory,
+    common::LuaParameterDictionary* dictionary, PointsProcessor* next) {
+  std::vector<mapping::Floor> floors;
+  if (dictionary->HasKey("separate_floors") &&
+      dictionary->GetBool("separate_floors")) {
+    floors = mapping::DetectFloors(trajectory);
+  }
+
+  return common::make_unique<XRayPointsProcessor>(
+      dictionary->GetDouble("voxel_size"),
+      transform::FromDictionary(dictionary->GetDictionary("transform").get())
+          .cast<float>(),
+      floors, dictionary->GetString("filename"), next);
+}
+
+void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
+  if (floors_.empty()) {
+    CHECK_EQ(voxels_.size(), 1);
+    Insert(*batch, transform_, &voxels_[0]);
+  } else {
+    for (int i = 0; i < floors_.size(); ++i) {
+      if (!ContainedIn(batch->time, floors_[i].timespans)) {
+        continue;
+      }
+      Insert(*batch, transform_, &voxels_[i]);
+    }
+  }
+  next_->Process(std::move(batch));
+}
+
+PointsProcessor::FlushResult XRayPointsProcessor::Flush() {
+  if (floors_.empty()) {
+    CHECK_EQ(voxels_.size(), 1);
+    WriteVoxels(output_filename_ + ".png", voxels_[0]);
+  } else {
+    for (size_t i = 0; i < floors_.size(); ++i) {
+      WriteVoxels(output_filename_ + std::to_string(i) + ".png", voxels_[i]);
+    }
+  }
+
+  switch (next_->Flush()) {
+    case FlushResult::kRestartStream:
+      LOG(FATAL) << "X-Ray generation must be configured to occur after any "
+                    "stages that require multiple passes.";
+
+    case FlushResult::kFinished:
+      return FlushResult::kFinished;
+  }
+  LOG(FATAL);
 }
 
 }  // namespace io
