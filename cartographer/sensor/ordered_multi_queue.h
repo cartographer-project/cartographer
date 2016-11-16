@@ -159,49 +159,23 @@ class OrderedMultiQueue {
 
       // If we haven't dispatched any data yet, fast forward all queues until a
       // common start time has been reached.
-      if (last_dispatched_time_ == common::Time::min() &&
-          !FastForwardToCommonStartTime()) {
-        return;
+      if (common_start_time_ == common::Time::min()) {
+        for (auto& entry : queues_) {
+          common_start_time_ =
+              std::max(common_start_time_, entry.second.queue.Peek<Data>()->time);
+        }
+        LOG(INFO) << "All sensor data is available starting at '"
+                  << common_start_time_ << "'.";
+      }
+
+      if (next_data->time < common_start_time_) {
+        next_queue->queue.Pop();
+        continue;
       }
 
       last_dispatched_time_ = next_data->time;
       next_queue->callback(next_queue->queue.Pop());
     }
-  }
-
-  // Drops data until all queues have reached a common start time and are ready
-  // for dispatching to begin. Returns true if dispatching is ready to begin.
-  bool FastForwardToCommonStartTime() {
-    if (common_start_time_ == common::Time::min()) {
-      common_start_time_ =
-          std::max_element(queues_.begin(), queues_.end(),
-                           [](decltype(queues_)::value_type& lhs,
-                              decltype(queues_)::value_type& rhs) {
-                             const auto* const lhs_data =
-                                 CHECK_NOTNULL(lhs.second.queue.Peek<Data>());
-                             const auto* const rhs_data =
-                                 CHECK_NOTNULL(rhs.second.queue.Peek<Data>());
-                             return lhs_data->time < rhs_data->time;
-                           })
-              ->second.queue.Peek<Data>()
-              ->time;
-      LOG(INFO) << "All sensor data is available starting at '"
-                << common_start_time_ << "'.";
-    }
-    bool ready = true;
-    for (auto& entry : queues_) {
-      auto& queue = entry.second.queue;
-      const auto* data = queue.Peek<Data>();
-      // All queues must have data ready to be dispatched.
-      ready &= (data != nullptr);
-      while (data != nullptr && data->time < common_start_time_) {
-        queue.Pop();
-        data = queue.Peek<Data>();
-        // All queues must have been ready for dispatch before fast forwarding.
-        ready = false;
-      }
-    }
-    return ready;
   }
 
   // Called when not all necessary queues are filled to dispatch messages.
@@ -225,11 +199,9 @@ class OrderedMultiQueue {
     return empty_queues.str();
   }
 
-  //
-  common::Time common_start_time_ = common::Time::min();
-
   // Used to verify that values are dispatched in sorted order.
   common::Time last_dispatched_time_ = common::Time::min();
+  common::Time common_start_time_ = common::Time::min();
 
   std::map<QueueKey, Queue> queues_;
 };
