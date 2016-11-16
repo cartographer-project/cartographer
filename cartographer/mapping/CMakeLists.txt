@@ -41,6 +41,7 @@ google_library(mapping_detect_floors
     detect_floors.h
   DEPENDS
     common_interval
+    common_time
     mapping_proto_trajectory
     transform_transform
 )
