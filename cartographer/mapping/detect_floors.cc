@@ -98,9 +98,10 @@ std::vector<Span> SliceByAltitudeChange(const proto::Trajectory& trajectory) {
 double SpanLength(const proto::Trajectory& trajectory, const Span& span) {
   double length = 0;
   for (int i = span.index.start + 1; i < span.index.end; ++i) {
-    const auto a = transform::ToEigen(trajectory.node(i - 1).pose().translation());
+    const auto a =
+        transform::ToEigen(trajectory.node(i - 1).pose().translation());
     const auto b = transform::ToEigen(trajectory.node(i).pose().translation());
-    length += (a-b).head<2>().norm();
+    length += (a - b).head<2>().norm();
   }
   return length;
 }
