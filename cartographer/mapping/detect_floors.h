@@ -37,8 +37,8 @@ struct Floor {
 
 // Uses a heuristic which looks at z-values of the poses to detect individual
 // floors of a building. This requires that floors are *mostly* on the same
-// z-height and that level changes happen *relatively* abrubtly - i.e. through
-// stairs.
+// z-height and that level changes happen *relatively* abrubtly - e.g. by taking
+// the stairs.
 std::vector<Floor> DetectFloors(const proto::Trajectory& trajectory);
 
 }  // namespace mapping

@@ -29,7 +29,10 @@ namespace mapping {
 
 namespace {
 
-// A union-find structure for assigning levels to 'spans' in the trajectory.
+// A union-find structure for assigning levels to 'spans' in the trajectory
+// implemented as a disjoint-set forest:
+// https://en.wikipedia.org/wiki/Disjoint-set_data_structure#Disjoint-set_forests
+// TODO(hrapp): We use this elsewhere. Pull out into a common place.
 using Levels = std::map<int, int>;
 
 constexpr double kMaxShortSpanLengthMeters = 25.;
@@ -48,7 +51,7 @@ struct Span {
 };
 
 // Union-find implementation for classifying spans into levels.
-int LevelFind(int i, const Levels& levels) {
+int LevelFind(const int i, const Levels& levels) {
   auto it = levels.find(i);
   CHECK(it != levels.end());
   if (it->first == it->second) {
@@ -72,8 +75,8 @@ double Median(const std::vector<double>& sorted) {
   return sorted.at(sorted.size() / 2);
 }
 
-// Cut the trajectory at jumps in z. As soon as the current nodes z is different
-// enough to the median of the current level, we start a new span.
+// Cut the trajectory at jumps in z. A new span is started when the current
+// node's z differes by more than kLevelHeightMeters from the median z values.
 std::vector<Span> SliceByAltitudeChange(const proto::Trajectory& trajectory) {
   CHECK_GT(trajectory.node_size(), 0);
 
@@ -95,9 +98,9 @@ std::vector<Span> SliceByAltitudeChange(const proto::Trajectory& trajectory) {
 double SpanLength(const proto::Trajectory& trajectory, const Span& span) {
   double length = 0;
   for (int i = span.index.start + 1; i < span.index.end; ++i) {
-    const auto a = trajectory.node(i - 1).pose().translation();
-    const auto b = trajectory.node(i).pose().translation();
-    length += std::hypot(a.x() - b.x(), a.y() - b.y());
+    const auto a = transform::ToEigen(trajectory.node(i - 1).pose().translation());
+    const auto b = transform::ToEigen(trajectory.node(i).pose().translation());
+    length += (a-b).head<2>().norm();
   }
   return length;
 }
@@ -121,16 +124,16 @@ void GroupSegmentsByAltitude(const proto::Trajectory& trajectory,
   }
 }
 
-std::vector<Floor> FindLevels(const proto::Trajectory& trajectory,
+std::vector<Floor> FindFloors(const proto::Trajectory& trajectory,
                               const std::vector<Span>& spans,
                               const Levels& levels) {
-  std::map<int, std::vector<Span>> by_level;
+  std::map<int, std::vector<Span>> level_spans;
 
   // Initialize the levels to start out with only long spans.
   for (size_t i = 0; i < spans.size(); ++i) {
     const Span& span = spans[i];
     if (!IsShort(trajectory, span)) {
-      by_level[LevelFind(i, levels)].push_back(span);
+      level_spans[LevelFind(i, levels)].push_back(span);
     }
   }
 
@@ -143,26 +146,26 @@ std::vector<Floor> FindLevels(const proto::Trajectory& trajectory,
     // If we have a long piece on this floor already, merge this short piece
     // into it.
     int level = LevelFind(i, levels);
-    if (!by_level[level].empty()) {
-      by_level[level].push_back(span);
+    if (!level_spans[level].empty()) {
+      level_spans[level].push_back(span);
       continue;
     }
 
-    // Otherwise, add this short piece to the level before and after it: It is
+    // Otherwise, add this short piece to the level before and after it. It is
     // likely some intermediate level on stairs.
-    size_t idx = i - 1;
-    if (idx < spans.size()) {
-      by_level[LevelFind(idx, levels)].push_back(span);
+    size_t index = i - 1;
+    if (index < spans.size()) {
+      level_spans[LevelFind(index, levels)].push_back(span);
     }
-    idx = i + 1;
-    if (idx < spans.size()) {
-      by_level[LevelFind(idx, levels)].push_back(span);
+    index = i + 1;
+    if (index < spans.size()) {
+      level_spans[LevelFind(index, levels)].push_back(span);
     }
   }
 
-  // Convert the by_level structure to 'Floor'.
+  // Convert the level_spans structure to 'Floor'.
   std::vector<Floor> floors;
-  for (auto& level : by_level) {
+  for (auto& level : level_spans) {
     if (level.second.empty()) {
       continue;
     }
@@ -199,7 +202,7 @@ std::vector<Floor> DetectFloors(const proto::Trajectory& trajectory) {
   }
   GroupSegmentsByAltitude(trajectory, spans, &levels);
 
-  std::vector<Floor> floors = FindLevels(trajectory, spans, levels);
+  std::vector<Floor> floors = FindFloors(trajectory, spans, levels);
   std::sort(floors.begin(), floors.end(),
             [](const Floor& a, const Floor& b) { return a.z < b.z; });
   return floors;
