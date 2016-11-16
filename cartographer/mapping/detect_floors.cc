@@ -178,9 +178,10 @@ std::vector<Floor> FindLevels(const proto::Trajectory& trajectory,
         z_values.insert(z_values.end(), span.z_values.begin(),
                         span.z_values.end());
       }
-      floors.back().timespans.push_back(common::Interval<int64_t>{
-          trajectory.node(span.index.start).timestamp(),
-          trajectory.node(span.index.end - 1).timestamp()});
+      floors.back().timespans.push_back(common::Interval<common::Time>{
+          common::FromUniversal(trajectory.node(span.index.start).timestamp()),
+          common::FromUniversal(
+              trajectory.node(span.index.end - 1).timestamp())});
     }
     std::sort(z_values.begin(), z_values.end());
     floors.back().z = Median(z_values);
@@ -197,7 +198,11 @@ std::vector<Floor> DetectFloors(const proto::Trajectory& trajectory) {
     levels[i] = i;
   }
   GroupSegmentsByAltitude(trajectory, spans, &levels);
-  return FindLevels(trajectory, spans, levels);
+
+  std::vector<Floor> floors = FindLevels(trajectory, spans, levels);
+  std::sort(floors.begin(), floors.end(),
+            [](const Floor& a, const Floor& b) { return a.z < b.z; });
+  return floors;
 }
 
 }  // namespace mapping
