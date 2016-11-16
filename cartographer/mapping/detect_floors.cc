@@ -29,6 +29,7 @@ namespace mapping {
 
 namespace {
 
+// A union-find structure for assigning levels to 'spans' in the trajectory.
 using Levels = std::map<int, int>;
 
 constexpr double kMaxShortSpanLengthMeters = 25.;
