@@ -32,6 +32,20 @@ google_library(mapping_collated_trajectory_builder
     sensor_data
 )
 
+google_library(mapping_detect_floors
+  USES_EIGEN
+  USES_GLOG
+  SRCS
+    detect_floors.cc
+  HDRS
+    detect_floors.h
+  DEPENDS
+    common_interval
+    common_time
+    mapping_proto_trajectory
+    transform_transform
+)
+
 google_library(mapping_global_trajectory_builder_interface
   HDRS
     global_trajectory_builder_interface.h

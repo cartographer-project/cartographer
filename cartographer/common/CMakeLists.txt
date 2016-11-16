@@ -75,6 +75,11 @@ google_library(common_histogram
     common_port
 )
 
+google_library(common_interval
+  HDRS
+    interval.h
+)
+
 google_library(common_lua
   USES_LUA
   HDRS
