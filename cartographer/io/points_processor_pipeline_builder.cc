@@ -26,33 +26,51 @@
 #include "cartographer/io/ply_writing_points_processor.h"
 #include "cartographer/io/xray_points_processor.h"
 #include "cartographer/io/xyz_writing_points_processor.h"
+#include "cartographer/mapping/proto/trajectory.pb.h"
 
 namespace cartographer {
 namespace io {
 
-PointsProcessorPipelineBuilder::PointsProcessorPipelineBuilder() {
-  RegisterNonStatic<CountingPointsProcessor>();
-  RegisterNonStatic<FixedRatioSamplingPointsProcessor>();
-  RegisterNonStatic<MinMaxRangeFiteringPointsProcessor>();
-  RegisterNonStatic<OutlierRemovingPointsProcessor>();
-  RegisterNonStatic<PcdWritingPointsProcessor>();
-  RegisterNonStatic<PlyWritingPointsProcessor>();
-  RegisterNonStatic<XRayPointsProcessor>();
-  RegisterNonStatic<XyzWriterPointsProcessor>();
+template <typename PointsProcessorType>
+void RegisterPlainPointsProcessor(PointsProcessorPipelineBuilder* const builder) {
+  builder->Register(
+      PointsProcessorType::kConfigurationFileActionName,
+      [](common::LuaParameterDictionary* const dictionary,
+         PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
+        return PointsProcessorType::FromDictionary(dictionary, next);
+      });
 }
 
-PointsProcessorPipelineBuilder* PointsProcessorPipelineBuilder::instance() {
-  static PointsProcessorPipelineBuilder instance;
-  return &instance;
+void RegisterBuiltInPointsProcessors(
+    const mapping::proto::Trajectory& trajectory,
+    PointsProcessorPipelineBuilder* builder) {
+  RegisterPlainPointsProcessor<CountingPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<FixedRatioSamplingPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<MinMaxRangeFiteringPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<OutlierRemovingPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<PcdWritingPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<PlyWritingPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<XyzWriterPointsProcessor>(builder);
+
+  builder->Register(
+      XRayPointsProcessor::kConfigurationFileActionName,
+      [&trajectory](
+          common::LuaParameterDictionary* const dictionary,
+          PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
+        return XRayPointsProcessor::FromDictionary(trajectory, dictionary,
+                                                   next);
+      });
 }
 
-void PointsProcessorPipelineBuilder::RegisterType(const std::string& name,
-                                                  FactoryFunction factory) {
+void PointsProcessorPipelineBuilder::Register(const std::string& name,
+                                              FactoryFunction factory) {
   CHECK(factories_.count(name) == 0) << "A points processor with named '"
                                      << name
                                      << "' has already been registered.";
   factories_[name] = factory;
 }
+
+PointsProcessorPipelineBuilder::PointsProcessorPipelineBuilder() {}
 
 std::vector<std::unique_ptr<PointsProcessor>>
 PointsProcessorPipelineBuilder::CreatePipeline(

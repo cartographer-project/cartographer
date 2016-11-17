@@ -123,6 +123,7 @@ google_library(io_points_processor_pipeline_builder
     io_points_processor
     io_xray_points_processor
     io_xyz_writing_points_processor
+    mapping_proto_trajectory
 )
 
 google_library(io_xray_points_processor
@@ -139,6 +140,8 @@ google_library(io_xray_points_processor
     io_cairo_types
     io_points_processor
     mapping_3d_hybrid_grid
+    mapping_detect_floors
+    mapping_proto_trajectory
     transform_rigid_transform
 )
 

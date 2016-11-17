@@ -23,52 +23,45 @@
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_processor.h"
+#include "cartographer/mapping/proto/trajectory.pb.h"
 
 namespace cartographer {
 namespace io {
 
-// Singleton that knows how to build a points processor pipeline out of a Lua
-// configuration. All the PointsProcessor shipping with Cartographer are already
-// registered with 'instance', but can register new classes with it that must
-// define its name and a way to build itself out of a LuaParameterDictionary.
-// See the various 'PointsProcessor's for examples.
+// Builder to create a points processor pipeline out of a Lua configuration.
+// You can register all built-in PointsProcessors using
+// 'RegisterBuiltInPointsProcessors'. Non-built-in PointsProcessors must define
+// a name and a factory method for building itself from a
+// LuaParameterDictionary. See the various built-in PointsProcessors for
+// examples.
 class PointsProcessorPipelineBuilder {
  public:
+  using FactoryFunction = std::function<std::unique_ptr<PointsProcessor>(
+      common::LuaParameterDictionary*, PointsProcessor* next)>;
+
+  PointsProcessorPipelineBuilder();
+
   PointsProcessorPipelineBuilder(const PointsProcessorPipelineBuilder&) =
       delete;
   PointsProcessorPipelineBuilder& operator=(
       const PointsProcessorPipelineBuilder&) = delete;
 
-  static PointsProcessorPipelineBuilder* instance();
-
-  template <typename PointsProcessorType>
-  void Register() {
-    instance()->RegisterNonStatic<PointsProcessorType>();
-  }
+  // Register a new PointsProcessor type uniquly identified by 'name' which will
+  // be created using 'factory'.
+  void Register(const std::string& name, FactoryFunction factory);
 
   std::vector<std::unique_ptr<PointsProcessor>> CreatePipeline(
       common::LuaParameterDictionary* dictionary) const;
 
  private:
-  using FactoryFunction = std::function<std::unique_ptr<PointsProcessor>(
-      common::LuaParameterDictionary*, PointsProcessor* next)>;
-
-  template <typename PointsProcessorType>
-  void RegisterNonStatic() {
-    RegisterType(
-        PointsProcessorType::kConfigurationFileActionName,
-        [](common::LuaParameterDictionary* const dictionary,
-           PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
-          return PointsProcessorType::FromDictionary(dictionary, next);
-        });
-  }
-
-  PointsProcessorPipelineBuilder();
-
-  void RegisterType(const std::string& name, FactoryFunction factory);
-
   std::unordered_map<std::string, FactoryFunction> factories_;
 };
+
+// Register all 'PointsProcessor' that ship with Cartographer with this
+// 'builder'.
+void RegisterBuiltInPointsProcessors(
+    const mapping::proto::Trajectory& trajectory,
+    PointsProcessorPipelineBuilder* builder);
 
 }  // namespace io
 }  // namespace cartographer
