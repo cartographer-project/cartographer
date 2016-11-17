@@ -31,15 +31,7 @@ namespace {
 std::unique_ptr<LuaParameterDictionary> MakeNonReferenceCounted(
     const string& code) {
   return LuaParameterDictionary::NonReferenceCounted(
-      code, common::make_unique<DummyFileResolver>(),
-      nullptr /* state_extension_function */);
-}
-
-std::unique_ptr<LuaParameterDictionary> MakePartial(const string& code,
-                                                    const string& key) {
-  return LuaParameterDictionary::Partial(
-      code, key, common::make_unique<DummyFileResolver>(),
-      nullptr /* state_extension_function */);
+      code, common::make_unique<DummyFileResolver>());
 }
 
 class LuaParameterDictionaryTest : public ::testing::Test {
@@ -224,20 +216,6 @@ TEST_F(LuaParameterDictionaryTest, TestChoseFalse) {
 TEST_F(LuaParameterDictionaryTest, TestChooseInvalidArgument) {
   EXPECT_DEATH(MakeDictionary("return { a = choose('truish', 1, 0) }"),
                "condition is not a boolean value.");
-}
-
-TEST_F(LuaParameterDictionaryTest, Partial) {
-  auto partial_dictionary =
-      MakePartial("return { blah = { blue = { red = 200 } } }", "blah.blue");
-  EXPECT_EQ(200, partial_dictionary->GetInt("red"));
-}
-
-TEST_F(LuaParameterDictionaryTest, PartialIsReferenceCounted) {
-  auto partial_dictionary =
-      MakePartial("return { blah = { blue = { red = 200 } } }", "blah.blue");
-  ASSERT_DEATH(partial_dictionary.reset(),
-               ".*Key 'red' was used the wrong number of times..*");
-  partial_dictionary->GetInt("red");
 }
 
 }  // namespace

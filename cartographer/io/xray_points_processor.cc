@@ -143,7 +143,7 @@ XRayPointsProcessor::XRayPointsProcessor(
       floors_(floors),
       output_filename_(output_filename),
       transform_(transform) {
-  for (int i = 0; i < (floors_.empty() ? 1 : floors.size()); ++i) {
+  for (size_t i = 0; i < (floors_.empty() ? 1 : floors.size()); ++i) {
     voxels_.emplace_back(voxel_size, Eigen::Vector3f::Zero());
   }
 }
@@ -169,7 +169,7 @@ void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
     CHECK_EQ(voxels_.size(), 1);
     Insert(*batch, transform_, &voxels_[0]);
   } else {
-    for (int i = 0; i < floors_.size(); ++i) {
+    for (size_t i = 0; i < floors_.size(); ++i) {
       if (!ContainedIn(batch->time, floors_[i].timespans)) {
         continue;
       }
