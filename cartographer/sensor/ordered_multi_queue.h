@@ -32,7 +32,8 @@
 namespace cartographer {
 namespace sensor {
 
-// Number of items that can be queued up before we LOG(WARNING).
+// Number of items that can be queued up before we log which queues are waiting
+// for data.
 const int kMaxQueueSize = 500;
 
 struct QueueKey {
@@ -76,10 +77,6 @@ class OrderedMultiQueue {
     CHECK(!queue.finished);
     queue.finished = true;
     Dispatch();
-  }
-
-  bool HasQueue(const QueueKey& queue_key) {
-    return queues_.count(queue_key) != 0;
   }
 
   void Add(const QueueKey& queue_key, std::unique_ptr<Data> data) {
@@ -151,7 +148,7 @@ class OrderedMultiQueue {
           next_data = data;
           next_queue = &it->second;
         }
-        CHECK_LE(last_dispatched_key_, next_data->time)
+        CHECK_LE(last_dispatched_time_, next_data->time)
             << "Non-sorted data added to queue: '" << it->first << "'";
         ++it;
       }
@@ -159,7 +156,24 @@ class OrderedMultiQueue {
         CHECK(queues_.empty());
         return;
       }
-      last_dispatched_key_ = next_data->time;
+
+      // If we haven't dispatched any data yet, fast forward all queues until a
+      // common start time has been reached.
+      if (common_start_time_ == common::Time::min()) {
+        for (auto& entry : queues_) {
+          common_start_time_ =
+              std::max(common_start_time_, entry.second.queue.Peek<Data>()->time);
+        }
+        LOG(INFO) << "All sensor data is available starting at '"
+                  << common_start_time_ << "'.";
+      }
+
+      if (next_data->time < common_start_time_) {
+        next_queue->queue.Pop();
+        continue;
+      }
+
+      last_dispatched_time_ = next_data->time;
       next_queue->callback(next_queue->queue.Pop());
     }
   }
@@ -186,7 +200,8 @@ class OrderedMultiQueue {
   }
 
   // Used to verify that values are dispatched in sorted order.
-  common::Time last_dispatched_key_ = common::Time::min();
+  common::Time last_dispatched_time_ = common::Time::min();
+  common::Time common_start_time_ = common::Time::min();
 
   std::map<QueueKey, Queue> queues_;
 };

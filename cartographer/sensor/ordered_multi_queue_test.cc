@@ -27,15 +27,16 @@ namespace {
 
 class OrderedMultiQueueTest : public ::testing::Test {
  protected:
-  const QueueKey kFirst{1, "foo"};
-  const QueueKey kSecond{1, "bar"};
-  const QueueKey kThird{2, "bar"};
+  // These are keys are chosen so that they sort first, second, third.
+  const QueueKey kFirst{1, "a"};
+  const QueueKey kSecond{1, "b"};
+  const QueueKey kThird{2, "b"};
 
   void SetUp() {
     for (const auto& queue_key : {kFirst, kSecond, kThird}) {
       queue_.AddQueue(queue_key, [this](std::unique_ptr<Data> data) {
         if (!values_.empty()) {
-          EXPECT_GT(data->time, values_.back().time);
+          EXPECT_GE(data->time, values_.back().time);
         }
         values_.push_back(*data);
       });
@@ -53,23 +54,26 @@ class OrderedMultiQueueTest : public ::testing::Test {
 };
 
 TEST_F(OrderedMultiQueueTest, Ordering) {
+  queue_.Add(kFirst, MakeImu(0));
   queue_.Add(kFirst, MakeImu(4));
   queue_.Add(kFirst, MakeImu(5));
   queue_.Add(kFirst, MakeImu(6));
   EXPECT_TRUE(values_.empty());
+  queue_.Add(kSecond, MakeImu(0));
   queue_.Add(kSecond, MakeImu(1));
   EXPECT_TRUE(values_.empty());
+  queue_.Add(kThird, MakeImu(0));
   queue_.Add(kThird, MakeImu(2));
-  EXPECT_EQ(values_.size(), 1);
+  EXPECT_EQ(values_.size(), 4);
   queue_.Add(kSecond, MakeImu(3));
-  EXPECT_EQ(values_.size(), 2);
+  EXPECT_EQ(values_.size(), 5);
   queue_.Add(kSecond, MakeImu(7));
   queue_.Add(kThird, MakeImu(8));
   queue_.Flush();
 
-  EXPECT_EQ(8, values_.size());
-  for (size_t i = 0; i < values_.size(); ++i) {
-    EXPECT_EQ(i + 1, common::ToUniversal(values_[i].time));
+  EXPECT_EQ(11, values_.size());
+  for (size_t i = 0; i < values_.size() - 1; ++i) {
+    EXPECT_LE(values_[i].time, values_[i + 1].time);
   }
 }
 
