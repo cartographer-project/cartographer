@@ -152,24 +152,6 @@ LuaParameterDictionary::NonReferenceCounted(
       code, ReferenceCount::NO, std::move(file_resolver)));
 }
 
-std::unique_ptr<LuaParameterDictionary> LuaParameterDictionary::Partial(
-    const string& code, const string& key,
-    std::unique_ptr<FileResolver> file_resolver) {
-  auto parameter_dictionary =
-      std::unique_ptr<LuaParameterDictionary>(new LuaParameterDictionary(
-          code, std::move(file_resolver)));
-  // This replaces the table at the top of the stack with the table at 'key'.
-  auto& L = parameter_dictionary->L_;
-
-  const string lua_code = "local table=...; return table." + key;
-  CheckForLuaErrors(L, luaL_loadstring(L, lua_code.c_str()));
-  lua_pushvalue(L, -2);  // S: table, function, table
-  lua_remove(L, -3);     // S: function, table
-  CheckForLuaErrors(L, lua_pcall(L, 1, 1, 0));
-  CheckTableIsAtTopOfStack(L);
-  return parameter_dictionary;
-}
-
 LuaParameterDictionary::LuaParameterDictionary(
     const string& code, std::unique_ptr<FileResolver> file_resolver)
     : LuaParameterDictionary(code, ReferenceCount::YES,

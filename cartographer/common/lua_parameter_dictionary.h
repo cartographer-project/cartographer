@@ -52,13 +52,6 @@ class LuaParameterDictionary {
   static std::unique_ptr<LuaParameterDictionary> NonReferenceCounted(
       const string& code, std::unique_ptr<FileResolver> file_resolver);
 
-  // Constructs a partial LuaParameterDictionary by extracting the dictionary
-  // with 'key' from 'code' where 'key' refers to an arbitrarily deep dictionary
-  // (e.g. "a.b.c").
-  static std::unique_ptr<LuaParameterDictionary> Partial(
-      const string& code, const string& key,
-      std::unique_ptr<FileResolver> file_resolver);
-
   ~LuaParameterDictionary();
 
   // Returns all available keys.

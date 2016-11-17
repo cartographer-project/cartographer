@@ -48,7 +48,7 @@ class DummyFileResolver : public FileResolver {
 
 std::unique_ptr<LuaParameterDictionary> MakeDictionary(const string& code) {
   return common::make_unique<LuaParameterDictionary>(
-      code, std::unique_ptr<DummyFileResolver>(new DummyFileResolver()));
+      code, common::make_unique<DummyFileResolver>());
 }
 
 }  // namespace common
