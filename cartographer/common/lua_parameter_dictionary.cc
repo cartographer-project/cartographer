@@ -147,20 +147,17 @@ void GetArrayValues(lua_State* L, const std::function<void()>& pop_value) {
 
 std::unique_ptr<LuaParameterDictionary>
 LuaParameterDictionary::NonReferenceCounted(
-    const string& code, std::unique_ptr<FileResolver> file_resolver,
-    StateExtensionFunction state_extension_function) {
+    const string& code, std::unique_ptr<FileResolver> file_resolver) {
   return std::unique_ptr<LuaParameterDictionary>(new LuaParameterDictionary(
-      code, ReferenceCount::NO, std::move(file_resolver),
-      state_extension_function));
+      code, ReferenceCount::NO, std::move(file_resolver)));
 }
 
 std::unique_ptr<LuaParameterDictionary> LuaParameterDictionary::Partial(
     const string& code, const string& key,
-    std::unique_ptr<FileResolver> file_resolver,
-    StateExtensionFunction state_extension_function) {
+    std::unique_ptr<FileResolver> file_resolver) {
   auto parameter_dictionary =
       std::unique_ptr<LuaParameterDictionary>(new LuaParameterDictionary(
-          code, std::move(file_resolver), state_extension_function));
+          code, std::move(file_resolver)));
   // This replaces the table at the top of the stack with the table at 'key'.
   auto& L = parameter_dictionary->L_;
 
@@ -174,16 +171,13 @@ std::unique_ptr<LuaParameterDictionary> LuaParameterDictionary::Partial(
 }
 
 LuaParameterDictionary::LuaParameterDictionary(
-    const string& code, std::unique_ptr<FileResolver> file_resolver,
-    StateExtensionFunction state_extension_function)
+    const string& code, std::unique_ptr<FileResolver> file_resolver)
     : LuaParameterDictionary(code, ReferenceCount::YES,
-                             std::move(file_resolver),
-                             state_extension_function) {}
+                             std::move(file_resolver)) {}
 
 LuaParameterDictionary::LuaParameterDictionary(
     const string& code, ReferenceCount reference_count,
-    std::unique_ptr<FileResolver> file_resolver,
-    StateExtensionFunction state_extension_function)
+    std::unique_ptr<FileResolver> file_resolver)
     : L_(luaL_newstate()),
       index_into_reference_table_(-1),
       file_resolver_(std::move(file_resolver)),
@@ -196,9 +190,6 @@ LuaParameterDictionary::LuaParameterDictionary(
   lua_register(L_, "choose", LuaChoose);
   lua_register(L_, "include", LuaInclude);
   lua_register(L_, "read", LuaRead);
-  if (state_extension_function) {
-    state_extension_function(L_);
-  }
 
   CheckForLuaErrors(L_, luaL_loadstring(L_, code.c_str()));
   CheckForLuaErrors(L_, lua_pcall(L_, 0, 1, 0));

@@ -31,15 +31,13 @@ namespace {
 std::unique_ptr<LuaParameterDictionary> MakeNonReferenceCounted(
     const string& code) {
   return LuaParameterDictionary::NonReferenceCounted(
-      code, common::make_unique<DummyFileResolver>(),
-      nullptr /* state_extension_function */);
+      code, common::make_unique<DummyFileResolver>());
 }
 
 std::unique_ptr<LuaParameterDictionary> MakePartial(const string& code,
                                                     const string& key) {
   return LuaParameterDictionary::Partial(
-      code, key, common::make_unique<DummyFileResolver>(),
-      nullptr /* state_extension_function */);
+      code, key, common::make_unique<DummyFileResolver>());
 }
 
 class LuaParameterDictionaryTest : public ::testing::Test {
