@@ -31,6 +31,7 @@ namespace {
 TEST(Collator, Ordering) {
   const std::array<string, 4> kSensorId = {
       {"horizontal_laser", "vertical_laser", "imu", "odometry"}};
+  Data zero(common::FromUniversal(0), sensor::LaserFan{});
   Data first(common::FromUniversal(100), sensor::LaserFan{});
   Data second(common::FromUniversal(200), sensor::LaserFan{});
   Data third(common::FromUniversal(300), Data::Imu{});
@@ -47,6 +48,17 @@ TEST(Collator, Ordering) {
       });
 
   constexpr int kTrajectoryId = 0;
+
+  // Establish a common start time.
+  collator.AddSensorData(kTrajectoryId, kSensorId[0],
+                         common::make_unique<Data>(zero));
+  collator.AddSensorData(kTrajectoryId, kSensorId[1],
+                         common::make_unique<Data>(zero));
+  collator.AddSensorData(kTrajectoryId, kSensorId[2],
+                         common::make_unique<Data>(zero));
+  collator.AddSensorData(kTrajectoryId, kSensorId[3],
+                         common::make_unique<Data>(zero));
+
   collator.AddSensorData(kTrajectoryId, kSensorId[0],
                          common::make_unique<Data>(first));
   collator.AddSensorData(kTrajectoryId, kSensorId[3],
@@ -60,22 +72,22 @@ TEST(Collator, Ordering) {
   collator.AddSensorData(kTrajectoryId, kSensorId[2],
                          common::make_unique<Data>(third));
 
-  ASSERT_EQ(3, received.size());
-  EXPECT_EQ(100, common::ToUniversal(received[0].second.time));
-  EXPECT_EQ(kSensorId[0], received[0].first);
-  EXPECT_EQ(200, common::ToUniversal(received[1].second.time));
-  EXPECT_EQ(kSensorId[1], received[1].first);
-  EXPECT_EQ(300, common::ToUniversal(received[2].second.time));
-  EXPECT_EQ(kSensorId[2], received[2].first);
+  ASSERT_EQ(7, received.size());
+  EXPECT_EQ(100, common::ToUniversal(received[4].second.time));
+  EXPECT_EQ(kSensorId[0], received[4].first);
+  EXPECT_EQ(200, common::ToUniversal(received[5].second.time));
+  EXPECT_EQ(kSensorId[1], received[5].first);
+  EXPECT_EQ(300, common::ToUniversal(received[6].second.time));
+  EXPECT_EQ(kSensorId[2], received[6].first);
 
   collator.Flush();
 
-  ASSERT_EQ(6, received.size());
-  EXPECT_EQ(kSensorId[0], received[3].first);
-  EXPECT_EQ(500, common::ToUniversal(received[4].second.time));
-  EXPECT_EQ(kSensorId[1], received[4].first);
-  EXPECT_EQ(600, common::ToUniversal(received[5].second.time));
-  EXPECT_EQ(kSensorId[3], received[5].first);
+  ASSERT_EQ(10, received.size());
+  EXPECT_EQ(kSensorId[0], received[7].first);
+  EXPECT_EQ(500, common::ToUniversal(received[8].second.time));
+  EXPECT_EQ(kSensorId[1], received[8].first);
+  EXPECT_EQ(600, common::ToUniversal(received[9].second.time));
+  EXPECT_EQ(kSensorId[3], received[9].first);
 }
 
 }  // namespace
