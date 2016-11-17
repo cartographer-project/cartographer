@@ -129,11 +129,14 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds constraints for a scan, and starts scan matching in the background.
   void ComputeConstraintsForScan(
-      common::Time time, int scan_index, const Submaps* scan_trajectory,
-      const Submap* matching_submap,
+      common::Time time, int scan_index, const Submap* matching_submap,
       std::vector<const Submap*> insertion_submaps,
       const Submap* finished_submap, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) REQUIRES(mutex_);
+
+  // Computes constraints for a scan and submap pair.
+  void ComputeConstraint(const int scan_index, const int submap_index)
+      REQUIRES(mutex_);
 
   // Adds constraints for older scans whenever a new submap is finished.
   void ComputeConstraintsForOldScans(const Submap* submap) REQUIRES(mutex_);
@@ -167,7 +170,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   mapping::TrajectoryConnectivity trajectory_connectivity_ GUARDED_BY(mutex_);
 
   // We globally localize a fraction of the scans from each trajectory.
-  std::unordered_map<const Submaps*, std::unique_ptr<common::FixedRatioSampler>>
+  std::unordered_map<const mapping::Submaps*,
+                     std::unique_ptr<common::FixedRatioSampler>>
       global_localization_samplers_ GUARDED_BY(mutex_);
 
   // Number of scans added since last loop closure.

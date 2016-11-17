@@ -196,22 +196,24 @@ void ConstraintBuilder::ComputeConstraint(
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             filtered_point_cloud, options_.global_localization_min_score(),
             &score, &pose_estimate)) {
+      CHECK_GT(score, options_.global_localization_min_score());
       trajectory_connectivity->Connect(scan_trajectory, submap_trajectory);
     } else {
       return;
     }
   } else {
-    if (!submap_scan_matcher->fast_correlative_scan_matcher->Match(
+    if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
             initial_pose, filtered_point_cloud, options_.min_score(), &score,
             &pose_estimate)) {
+      // We've reported a successful local match.
+      CHECK_GT(score, options_.min_score());
+    } else {
       return;
     }
-    // We've reported a successful local match.
-    CHECK_GT(score, options_.min_score());
-    {
-      common::MutexLocker locker(&mutex_);
-      score_histogram_.Add(score);
-    }
+  }
+  {
+    common::MutexLocker locker(&mutex_);
+    score_histogram_.Add(score);
   }
 
   // Use the CSM estimate as both the initial and previous pose. This has the

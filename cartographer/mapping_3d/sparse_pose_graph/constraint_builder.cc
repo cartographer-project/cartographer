@@ -146,7 +146,8 @@ void ConstraintBuilder::WhenDone(
     const std::function<void(const ConstraintBuilder::Result&)> callback) {
   common::MutexLocker locker(&mutex_);
   CHECK(when_done_ == nullptr);
-  when_done_.reset(new std::function<void(const Result&)>(callback));
+  when_done_ =
+      common::make_unique<std::function<void(const Result&)>>(callback);
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
   thread_pool_->Schedule(
@@ -223,13 +224,14 @@ void ConstraintBuilder::ComputeConstraint(
 
   CHECK(!match_full_submap) << "match_full_submap not supported for 3D.";
 
-  if (!submap_scan_matcher->fast_correlative_scan_matcher->Match(
+  if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
           initial_pose, filtered_point_cloud, point_cloud, options_.min_score(),
           &score, &pose_estimate)) {
+    // We've reported a successful local match.
+    CHECK_GT(score, options_.min_score());
+  } else {
     return;
   }
-  // We've reported a successful local match.
-  CHECK_GT(score, options_.min_score());
   {
     common::MutexLocker locker(&mutex_);
     score_histogram_.Add(score);
