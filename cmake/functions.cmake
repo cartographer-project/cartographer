@@ -30,7 +30,6 @@ macro(_parse_arguments ARGS)
   list(APPEND OPTIONS
     USES_CARTOGRAPHER
     USES_PCL
-    USES_ROS
     USES_YAMLCPP
   )
   set(ONE_VALUE_ARG )
@@ -41,6 +40,14 @@ endmacro(_parse_arguments)
 
 macro(_common_compile_stuff VISIBILITY)
   set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
+
+  if(catkin_INCLUDE_DIRS)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${catkin_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${catkin_LIBRARIES})
+    add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
+  )
+  endif()
 
   if(ARG_USES_EIGEN)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
@@ -77,14 +84,6 @@ macro(_common_compile_stuff VISIBILITY)
 
   if(ARG_USES_GFLAGS)
     target_link_libraries("${NAME}" gflags)
-  endif()
-
-  if(ARG_USES_ROS)
-    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
-      "${catkin_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${catkin_LIBRARIES})
-    add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
-  )
   endif()
 
   if(ARG_USES_CARTOGRAPHER)
@@ -222,7 +221,7 @@ macro(_common_test_stuff)
   target_link_libraries("${NAME}" ${GMOCK_LIBRARIES})
 endmacro()
 
-function(google_catkin_test NAME)
+function(_google_catkin_test NAME)
   if(NOT "${CATKIN_ENABLE_TESTING}")
     return()
   endif()
@@ -241,6 +240,10 @@ function(google_catkin_test NAME)
 endfunction()
 
 function(google_test NAME)
+  if (catkin_INCLUDE_DIRS)
+    _google_catkin_test(${ARGV})
+    return()
+  endif()
   _parse_arguments("${ARGN}")
   _common_test_stuff()
   add_test(${NAME} ${NAME})
