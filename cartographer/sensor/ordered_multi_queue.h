@@ -161,8 +161,8 @@ class OrderedMultiQueue {
       // common start time has been reached.
       if (common_start_time_ == common::Time::min()) {
         for (auto& entry : queues_) {
-          common_start_time_ =
-              std::max(common_start_time_, entry.second.queue.Peek<Data>()->time);
+          common_start_time_ = std::max(common_start_time_,
+                                        entry.second.queue.Peek<Data>()->time);
         }
         LOG(INFO) << "All sensor data is available starting at '"
                   << common_start_time_ << "'.";

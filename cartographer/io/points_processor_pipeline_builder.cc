@@ -32,7 +32,8 @@ namespace cartographer {
 namespace io {
 
 template <typename PointsProcessorType>
-void RegisterPlainPointsProcessor(PointsProcessorPipelineBuilder* const builder) {
+void RegisterPlainPointsProcessor(
+    PointsProcessorPipelineBuilder* const builder) {
   builder->Register(
       PointsProcessorType::kConfigurationFileActionName,
       [](common::LuaParameterDictionary* const dictionary,
