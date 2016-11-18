@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 
+#include "cartographer/common/config.h"
 #include "cartographer/common/configuration_file_resolver.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/map_builder.h"
@@ -32,8 +33,8 @@ TEST(ConfigurationFilesTest, ValidateMapBuilderOptions) {
       return MAP_BUILDER)text";
   EXPECT_NO_FATAL_FAILURE({
     auto file_resolver = ::cartographer::common::make_unique<
-        ::cartographer::common::ConfigurationFileResolver>(
-        std::vector<string>{});
+        ::cartographer::common::ConfigurationFileResolver>(std::vector<string>{
+        string(::cartographer::common::kSourceDirectory) + "/configuration_files"});
     ::cartographer::common::LuaParameterDictionary lua_parameter_dictionary(
         kCode, std::move(file_resolver), nullptr);
     ::cartographer::mapping::CreateMapBuilderOptions(&lua_parameter_dictionary);

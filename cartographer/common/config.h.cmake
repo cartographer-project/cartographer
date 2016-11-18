@@ -22,6 +22,7 @@ namespace common {
 
 constexpr char kConfigurationFilesDirectory[] =
     "@CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY@";
+constexpr char kSourceDirectory[] = "@CMAKE_SOURCE_DIR@";
 
 }  // namespace common
 }  // namespace cartographer
