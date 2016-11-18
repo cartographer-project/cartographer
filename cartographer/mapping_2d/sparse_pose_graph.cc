@@ -127,7 +127,7 @@ void SparsePoseGraph::AddScan(
   }
 
   AddWorkItem([=]() REQUIRES(mutex_) {
-    ComputeConstraintsForScan(j, submaps, matching_submap, insertion_submaps,
+    ComputeConstraintsForScan(j, matching_submap, insertion_submaps,
                               finished_submap, pose, covariance);
   });
 }
@@ -140,6 +140,39 @@ void SparsePoseGraph::AddWorkItem(std::function<void()> work_item) {
   }
 }
 
+void SparsePoseGraph::ComputeConstraint(const int scan_index,
+                                        const int submap_index) {
+  const transform::Rigid2d relative_pose =
+      submap_transforms_[submap_index].inverse() *
+      point_cloud_poses_[scan_index];
+
+  const mapping::Submaps* const scan_trajectory =
+      trajectory_nodes_[scan_index].constant_data->trajectory;
+  const mapping::Submaps* const submap_trajectory =
+      submap_states_[submap_index].trajectory;
+  // Only globally match against submaps not in this trajectory.
+  if (scan_trajectory != submap_trajectory &&
+      global_localization_samplers_[scan_trajectory]->Pulse()) {
+    constraint_builder_.MaybeAddGlobalConstraint(
+        submap_index, submap_states_[submap_index].submap, scan_index,
+        scan_trajectory, submap_trajectory, &trajectory_connectivity_,
+        &trajectory_nodes_[scan_index].constant_data->laser_fan_2d.returns);
+  } else {
+    const bool scan_and_submap_trajectories_connected =
+        reverse_connected_components_.count(scan_trajectory) > 0 &&
+        reverse_connected_components_.count(submap_trajectory) > 0 &&
+        reverse_connected_components_.at(scan_trajectory) ==
+            reverse_connected_components_.at(submap_trajectory);
+    if (scan_trajectory == submap_trajectory ||
+        scan_and_submap_trajectories_connected) {
+      constraint_builder_.MaybeAddConstraint(
+          submap_index, submap_states_[submap_index].submap, scan_index,
+          &trajectory_nodes_[scan_index].constant_data->laser_fan_2d.returns,
+          relative_pose);
+    }
+  }
+}
+
 void SparsePoseGraph::ComputeConstraintsForOldScans(
     const mapping::Submap* submap) {
   const int submap_index = GetSubmapIndex(submap);
@@ -148,20 +181,13 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
   const int num_nodes = point_cloud_poses_.size();
   for (int scan_index = 0; scan_index < num_nodes; ++scan_index) {
     if (submap_states_[submap_index].scan_indices.count(scan_index) == 0) {
-      const transform::Rigid2d relative_pose =
-          submap_transforms_[submap_index].inverse() *
-          point_cloud_poses_[scan_index];
-      constraint_builder_.MaybeAddConstraint(
-          submap_index, submap, scan_index,
-          &trajectory_nodes_[scan_index].constant_data->laser_fan_2d.returns,
-          relative_pose);
+      ComputeConstraint(scan_index, submap_index);
     }
   }
 }
 
 void SparsePoseGraph::ComputeConstraintsForScan(
-    int scan_index, const mapping::Submaps* scan_trajectory,
-    const mapping::Submap* matching_submap,
+    int scan_index, const mapping::Submap* matching_submap,
     std::vector<const mapping::Submap*> insertion_submaps,
     const mapping::Submap* finished_submap, const transform::Rigid2d& pose,
     const kalman_filter::Pose2DCovariance& covariance) {
@@ -194,42 +220,12 @@ void SparsePoseGraph::ComputeConstraintsForScan(
         Constraint::INTRA_SUBMAP});
   }
 
-  // Determine if this scan should be globally localized.
-  const bool run_global_localization =
-      global_localization_samplers_[scan_trajectory]->Pulse();
-
   CHECK_LT(submap_states_.size(), std::numeric_limits<int>::max());
   const int num_submaps = submap_states_.size();
   for (int submap_index = 0; submap_index != num_submaps; ++submap_index) {
     if (submap_states_[submap_index].finished) {
       CHECK_EQ(submap_states_[submap_index].scan_indices.count(scan_index), 0);
-      const transform::Rigid2d relative_pose =
-          submap_transforms_[submap_index].inverse() *
-          point_cloud_poses_[scan_index];
-
-      const auto* submap_trajectory = submap_states_[submap_index].trajectory;
-
-      // Only globally match against submaps not in this trajectory.
-      if (run_global_localization && scan_trajectory != submap_trajectory) {
-        constraint_builder_.MaybeAddGlobalConstraint(
-            submap_index, submap_states_[submap_index].submap, scan_index,
-            scan_trajectory, submap_trajectory, &trajectory_connectivity_,
-            &trajectory_nodes_[scan_index].constant_data->laser_fan_2d.returns);
-      } else {
-        const bool scan_and_submap_trajectories_connected =
-            reverse_connected_components_.count(scan_trajectory) > 0 &&
-            reverse_connected_components_.count(submap_trajectory) > 0 &&
-            reverse_connected_components_.at(scan_trajectory) ==
-                reverse_connected_components_.at(submap_trajectory);
-        if (scan_trajectory == submap_trajectory ||
-            scan_and_submap_trajectories_connected) {
-          constraint_builder_.MaybeAddConstraint(
-              submap_index, submap_states_[submap_index].submap, scan_index,
-              &trajectory_nodes_[scan_index]
-                   .constant_data->laser_fan_2d.returns,
-              relative_pose);
-        }
-      }
+      ComputeConstraint(scan_index, submap_index);
     }
   }
 
