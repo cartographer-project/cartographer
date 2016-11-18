@@ -180,9 +180,9 @@ class OrderedMultiQueue {
         last_dispatched_time_ = next_data->time;
         next_queue->callback(next_queue->queue.Pop());
       } else {
-        // We take a peek at the time after next data. If it also is before the
-        // start time we drop 'next_data', otherwise we just found the first
-        // packet to dispatch from this queue.
+        // We take a peek at the time after next data. If it also is not beyond
+        // 'common_start_time_' we drop 'next_data', otherwise we just found the
+        // first packet to dispatch from this queue.
         std::unique_ptr<Data> next_data_owner = next_queue->queue.Pop();
         if (next_queue->queue.Peek<Data>()->time > common_start_time_) {
           last_dispatched_time_ = next_data->time;
