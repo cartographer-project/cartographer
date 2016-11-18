@@ -36,7 +36,7 @@ TEST(ConfigurationFilesTest, ValidateMapBuilderOptions) {
         ::cartographer::common::ConfigurationFileResolver>(std::vector<string>{
         string(::cartographer::common::kSourceDirectory) + "/configuration_files"});
     ::cartographer::common::LuaParameterDictionary lua_parameter_dictionary(
-        kCode, std::move(file_resolver), nullptr);
+        kCode, std::move(file_resolver));
     ::cartographer::mapping::CreateMapBuilderOptions(&lua_parameter_dictionary);
   });
 }
