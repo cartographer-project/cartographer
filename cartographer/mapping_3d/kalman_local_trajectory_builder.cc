@@ -186,7 +186,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
                           covariance_estimate);
 }
 
-void KalmanLocalTrajectoryBuilder::AddOdometerPose(
+void KalmanLocalTrajectoryBuilder::AddOdometerData(
     const common::Time time, const transform::Rigid3d& pose,
     const kalman_filter::PoseCovariance& covariance) {
   if (!pose_tracker_) {

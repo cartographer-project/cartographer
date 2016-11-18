@@ -50,7 +50,7 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
                   const Eigen::Vector3d& angular_velocity) override;
   std::unique_ptr<InsertionResult> AddLaserFan(
       common::Time time, const sensor::LaserFan& laser_fan) override;
-  void AddOdometerPose(
+  void AddOdometerData(
       common::Time time, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) override;
 

@@ -58,10 +58,10 @@ void GlobalTrajectoryBuilder::AddLaserFan(const common::Time time,
   local_trajectory_builder_->AddTrajectoryNodeIndex(trajectory_node_index);
 }
 
-void GlobalTrajectoryBuilder::AddOdometerPose(
+void GlobalTrajectoryBuilder::AddOdometerData(
     const common::Time time, const transform::Rigid3d& pose,
     const kalman_filter::PoseCovariance& covariance) {
-  local_trajectory_builder_->AddOdometerPose(time, pose, covariance);
+  local_trajectory_builder_->AddOdometerData(time, pose, covariance);
 }
 
 const GlobalTrajectoryBuilder::PoseEstimate&

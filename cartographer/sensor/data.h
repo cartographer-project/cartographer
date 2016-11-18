@@ -29,10 +29,12 @@ namespace sensor {
 // filled in. It is only used for time ordering sensor data before passing it
 // on.
 struct Data {
-  enum class Type { kImu, kLaserFan, kOdometry };
+  enum class Type { kImu, kLaserFan, kOdometer };
 
-  struct Odometry {
+  struct Odometer {
     transform::Rigid3d pose;
+    // TODO(damonkohler): Remove this in favor of using the configurable
+    // constant variance directly.
     kalman_filter::PoseCovariance covariance;
   };
 
@@ -48,14 +50,14 @@ struct Data {
        const ::cartographer::sensor::LaserFan& laser_fan)
       : type(Type::kLaserFan), time(time), laser_fan(laser_fan) {}
 
-  Data(const common::Time time, const Odometry& odometry)
-      : type(Type::kOdometry), time(time), odometry(odometry) {}
+  Data(const common::Time time, const Odometer& odometer)
+      : type(Type::kOdometer), time(time), odometer(odometer) {}
 
   Type type;
   common::Time time;
   Imu imu;
   sensor::LaserFan laser_fan;
-  Odometry odometry;
+  Odometer odometer;
 };
 
 }  // namespace sensor

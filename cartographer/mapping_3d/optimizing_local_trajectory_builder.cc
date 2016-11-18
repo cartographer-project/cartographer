@@ -125,7 +125,7 @@ void OptimizingLocalTrajectoryBuilder::AddImuData(
   RemoveObsoleteSensorData();
 }
 
-void OptimizingLocalTrajectoryBuilder::AddOdometerPose(
+void OptimizingLocalTrajectoryBuilder::AddOdometerData(
     const common::Time time, const transform::Rigid3d& pose,
     const kalman_filter::PoseCovariance& covariance) {
   odometer_data_.push_back(OdometerData{time, pose});

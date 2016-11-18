@@ -264,7 +264,7 @@ void LocalTrajectoryBuilder::AddImuData(
       << common::RadToDeg(kMaxInclination);
 }
 
-void LocalTrajectoryBuilder::AddOdometerPose(
+void LocalTrajectoryBuilder::AddOdometerData(
     const common::Time time, const transform::Rigid3d& pose,
     const kalman_filter::PoseCovariance& covariance) {
   if (pose_tracker_ == nullptr) {

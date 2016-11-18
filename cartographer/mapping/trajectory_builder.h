@@ -97,12 +97,12 @@ class TrajectoryBuilder {
                                                          angular_velocity}));
   }
 
-  void AddOdometerPose(const string& sensor_id, common::Time time,
+  void AddOdometerData(const string& sensor_id, common::Time time,
                        const transform::Rigid3d& pose,
                        const kalman_filter::PoseCovariance& covariance) {
     AddSensorData(sensor_id,
                   common::make_unique<sensor::Data>(
-                      time, sensor::Data::Odometry{pose, covariance}));
+                      time, sensor::Data::Odometer{pose, covariance}));
   }
 };
 
