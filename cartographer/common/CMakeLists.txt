@@ -175,6 +175,7 @@ google_test(common_configuration_files_test
   SRCS
     configuration_files_test.cc
   DEPENDS
+    common_config
     common_configuration_file_resolver
     common_lua_parameter_dictionary
     mapping_map_builder
