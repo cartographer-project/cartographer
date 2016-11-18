@@ -168,13 +168,27 @@ class OrderedMultiQueue {
                   << common_start_time_ << "'.";
       }
 
-      if (next_data->time < common_start_time_) {
-        next_queue->queue.Pop();
-        continue;
+      if (next_data->time >= common_start_time_) {
+        // Happy case, we are beyond the 'common_start_time_' already.
+        last_dispatched_time_ = next_data->time;
+        next_queue->callback(next_queue->queue.Pop());
+      } else if (next_queue->queue.Size() < 2) {
+        if (!next_queue->finished) {
+          // We cannot decide whether to drop or dispatch this yet.
+          return;
+        }
+        last_dispatched_time_ = next_data->time;
+        next_queue->callback(next_queue->queue.Pop());
+      } else {
+        // We take a peek at the time after next data. If it also is not beyond
+        // 'common_start_time_' we drop 'next_data', otherwise we just found the
+        // first packet to dispatch from this queue.
+        std::unique_ptr<Data> next_data_owner = next_queue->queue.Pop();
+        if (next_queue->queue.Peek<Data>()->time > common_start_time_) {
+          last_dispatched_time_ = next_data->time;
+          next_queue->callback(std::move(next_data_owner));
+        }
       }
-
-      last_dispatched_time_ = next_data->time;
-      next_queue->callback(next_queue->queue.Pop());
     }
   }
 
