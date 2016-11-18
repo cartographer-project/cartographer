@@ -171,6 +171,15 @@ google_test(common_blocking_queue_test
     common_time
 )
 
+google_test(common_configuration_files_test
+  SRCS
+    configuration_files_test.cc
+  DEPENDS
+    common_configuration_file_resolver
+    common_lua_parameter_dictionary
+    mapping_map_builder
+)
+
 google_test(common_fixed_ratio_sampler_test
   SRCS
     fixed_ratio_sampler_test.cc
