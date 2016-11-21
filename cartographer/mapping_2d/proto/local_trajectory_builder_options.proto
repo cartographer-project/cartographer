@@ -56,4 +56,7 @@ message LocalTrajectoryBuilderOptions {
 
   // True if IMU data should be expected and used.
   optional bool use_imu_data = 12;
+
+  optional double odometer_translational_variance = 17;
+  optional double odometer_rotational_variance = 18;
 }

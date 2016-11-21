@@ -111,6 +111,9 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
               imu_gravity_variance = 1e-4,
               num_odometry_states = 1,
             },
+
+            odometer_translational_variance = 1e-7,
+            odometer_rotational_variance = 1e-7,
           },
           optimizing_local_trajectory_builder = {
             high_resolution_grid_weight = 5.,

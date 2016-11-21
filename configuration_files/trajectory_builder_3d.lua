@@ -83,6 +83,9 @@ TRAJECTORY_BUILDER_3D = {
       translation_delta_cost_weight = 1e-1,
       rotation_delta_cost_weight = 1e-1,
     },
+
+    odometer_translational_variance = 1e-7,
+    odometer_rotational_variance = 1e-7,
   },
 
   optimizing_local_trajectory_builder = {

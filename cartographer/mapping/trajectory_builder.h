@@ -100,11 +100,9 @@ class TrajectoryBuilder {
   }
 
   void AddOdometerData(const string& sensor_id, common::Time time,
-                       const transform::Rigid3d& pose,
-                       const kalman_filter::PoseCovariance& covariance) {
+                       const transform::Rigid3d& odometer_pose) {
     AddSensorData(sensor_id,
-                  common::make_unique<sensor::Data>(
-                      time, sensor::Data::Odometer{pose, covariance}));
+                  common::make_unique<sensor::Data>(time, odometer_pose));
   }
 };
 

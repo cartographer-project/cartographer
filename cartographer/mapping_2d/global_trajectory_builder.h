@@ -44,9 +44,8 @@ class GlobalTrajectoryBuilder
                           const sensor::PointCloud& ranges) override;
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
-  void AddOdometerData(
-      common::Time time, const transform::Rigid3d& pose,
-      const kalman_filter::PoseCovariance& covariance) override;
+  void AddOdometerData(common::Time time,
+                       const transform::Rigid3d& pose) override;
 
  private:
   const proto::LocalTrajectoryBuilderOptions options_;
