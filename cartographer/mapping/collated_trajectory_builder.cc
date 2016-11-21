@@ -94,8 +94,8 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
       return;
 
     case sensor::Data::Type::kOdometer:
-      wrapped_trajectory_builder_->AddOdometerData(
-          data->time, data->odometer.pose, data->odometer.covariance);
+      wrapped_trajectory_builder_->AddOdometerData(data->time,
+                                                   data->odometer_pose);
       return;
   }
   LOG(FATAL);

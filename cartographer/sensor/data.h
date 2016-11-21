@@ -42,27 +42,20 @@ struct Data {
     PointCloud ranges;
   };
 
-  struct Odometer {
-    transform::Rigid3d pose;
-    // TODO(damonkohler): Remove this in favor of using the configurable
-    // constant variance directly.
-    kalman_filter::PoseCovariance covariance;
-  };
-
   Data(const common::Time time, const Imu& imu)
       : type(Type::kImu), time(time), imu(imu) {}
 
   Data(const common::Time time, const Rangefinder& rangefinder)
       : type(Type::kRangefinder), time(time), rangefinder(rangefinder) {}
 
-  Data(const common::Time time, const Odometer& odometer)
-      : type(Type::kOdometer), time(time), odometer(odometer) {}
+  Data(const common::Time time, const transform::Rigid3d& odometer_pose)
+      : type(Type::kOdometer), time(time), odometer_pose(odometer_pose) {}
 
   Type type;
   common::Time time;
   Imu imu;
   Rangefinder rangefinder;
-  Odometer odometer;
+  transform::Rigid3d odometer_pose;
 };
 
 }  // namespace sensor

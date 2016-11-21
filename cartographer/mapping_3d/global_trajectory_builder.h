@@ -43,8 +43,7 @@ class GlobalTrajectoryBuilder
   void AddRangefinderData(common::Time time, const Eigen::Vector3f& origin,
                           const sensor::PointCloud& ranges) override;
   void AddOdometerData(
-      common::Time time, const transform::Rigid3d& pose,
-      const kalman_filter::PoseCovariance& covariance) override;
+      common::Time time, const transform::Rigid3d& pose) override;
   const PoseEstimate& pose_estimate() const override;
 
  private:

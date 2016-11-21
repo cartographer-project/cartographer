@@ -57,8 +57,7 @@ class LocalTrajectoryBuilderInterface {
       common::Time time, const Eigen::Vector3f& origin,
       const sensor::PointCloud& ranges) = 0;
   virtual void AddOdometerData(
-      common::Time time, const transform::Rigid3d& pose,
-      const kalman_filter::PoseCovariance& covariance) = 0;
+      common::Time time, const transform::Rigid3d& pose) = 0;
 
   // Register a 'trajectory_node_index' from the SparsePoseGraph corresponding
   // to the latest inserted laser scan. This is used to remember which

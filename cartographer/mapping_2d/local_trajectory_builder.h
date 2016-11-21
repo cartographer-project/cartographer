@@ -67,8 +67,7 @@ class LocalTrajectoryBuilder {
       common::Time, const sensor::LaserFan& laser_fan);
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
-  void AddOdometerData(common::Time time, const transform::Rigid3d& pose,
-                       const kalman_filter::PoseCovariance& covariance);
+  void AddOdometerData(common::Time time, const transform::Rigid3d& pose);
 
   const Submaps* submaps() const;
 

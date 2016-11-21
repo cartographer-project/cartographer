@@ -20,6 +20,8 @@ TRAJECTORY_BUILDER_2D = {
   laser_max_z = 2.,
   laser_missing_echo_ray_length = 5.,
   laser_voxel_filter_size = 0.025,
+  odometer_translational_variance = 1e-7,
+  odometer_rotational_variance = 1e-7,
 
   use_online_correlative_scan_matching = false,
   adaptive_voxel_filter = {

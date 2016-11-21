@@ -60,9 +60,8 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
 }
 
 void GlobalTrajectoryBuilder::AddOdometerData(
-    const common::Time time, const transform::Rigid3d& pose,
-    const kalman_filter::PoseCovariance& covariance) {
-  local_trajectory_builder_->AddOdometerData(time, pose, covariance);
+    const common::Time time, const transform::Rigid3d& pose) {
+  local_trajectory_builder_->AddOdometerData(time, pose);
 }
 
 const GlobalTrajectoryBuilder::PoseEstimate&

@@ -54,6 +54,9 @@ Pose2DCovariance Project2D(const PoseCovariance& embedded_covariance);
 PoseCovariance Embed3D(const Pose2DCovariance& embedded_covariance,
                        double position_variance, double orientation_variance);
 
+PoseCovariance BuildPoseCovariance(double translational_variance,
+                                   double rotational_variance);
+
 // Deserializes the 'proto_matrix' into a PoseCovariance.
 PoseCovariance PoseCovarianceFromProtoMatrix(
     const sensor::proto::Matrix& proto_matrix);
