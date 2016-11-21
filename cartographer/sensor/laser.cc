@@ -40,8 +40,11 @@ std::vector<uint8> ReorderReflectivities(
 PointCloud ToPointCloud(const proto::LaserScan& proto) {
   CHECK_GE(proto.range_min(), 0.f);
   CHECK_GE(proto.range_max(), proto.range_min());
-  CHECK_GT(proto.angle_increment(), 0.f);
-  CHECK_GT(proto.angle_max(), proto.angle_min());
+  if (proto.angle_increment() > 0.f) {
+    CHECK_GT(proto.angle_max(), proto.angle_min());
+  } else {
+    CHECK_GT(proto.angle_min(), proto.angle_max());
+  }
   PointCloud point_cloud;
   float angle = proto.angle_min();
   for (const auto& range : proto.range()) {
