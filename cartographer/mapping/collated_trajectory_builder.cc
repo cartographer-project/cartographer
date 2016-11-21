@@ -88,8 +88,9 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
                                               data->imu.angular_velocity);
       return;
 
-    case sensor::Data::Type::kLaserFan:
-      wrapped_trajectory_builder_->AddLaserFan(data->time, data->laser_fan);
+    case sensor::Data::Type::kRangefinder:
+      wrapped_trajectory_builder_->AddRangefinderData(
+          data->time, data->rangefinder.origin, data->rangefinder.ranges);
       return;
 
     case sensor::Data::Type::kOdometer:

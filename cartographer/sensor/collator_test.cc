@@ -31,12 +31,12 @@ namespace {
 TEST(Collator, Ordering) {
   const std::array<string, 4> kSensorId = {
       {"horizontal_laser", "vertical_laser", "imu", "odometry"}};
-  Data zero(common::FromUniversal(0), sensor::LaserFan{});
-  Data first(common::FromUniversal(100), sensor::LaserFan{});
-  Data second(common::FromUniversal(200), sensor::LaserFan{});
+  Data zero(common::FromUniversal(0), sensor::Data::Rangefinder{});
+  Data first(common::FromUniversal(100), sensor::Data::Rangefinder{});
+  Data second(common::FromUniversal(200), sensor::Data::Rangefinder{});
   Data third(common::FromUniversal(300), Data::Imu{});
-  Data fourth(common::FromUniversal(400), sensor::LaserFan{});
-  Data fifth(common::FromUniversal(500), sensor::LaserFan{});
+  Data fourth(common::FromUniversal(400), sensor::Data::Rangefinder{});
+  Data fifth(common::FromUniversal(500), sensor::Data::Rangefinder{});
   Data sixth(common::FromUniversal(600), Data::Odometer{});
 
   std::vector<std::pair<string, Data>> received;

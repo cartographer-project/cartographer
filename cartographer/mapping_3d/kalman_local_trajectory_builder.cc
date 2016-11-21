@@ -70,8 +70,9 @@ void KalmanLocalTrajectoryBuilder::AddImuData(
 }
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
-KalmanLocalTrajectoryBuilder::AddLaserFan(const common::Time time,
-                                          const sensor::LaserFan& laser_fan) {
+KalmanLocalTrajectoryBuilder::AddRangefinderData(
+    const common::Time time, const Eigen::Vector3f& origin,
+    const sensor::PointCloud& ranges) {
   if (!pose_tracker_) {
     LOG(INFO) << "PoseTracker not yet initialized.";
     return nullptr;
@@ -89,7 +90,8 @@ KalmanLocalTrajectoryBuilder::AddLaserFan(const common::Time time,
   const transform::Rigid3f tracking_delta =
       first_pose_prediction_.inverse() * pose_prediction.cast<float>();
   const sensor::LaserFan laser_fan_in_first_tracking =
-      sensor::TransformLaserFan(laser_fan, tracking_delta);
+      sensor::TransformLaserFan(sensor::LaserFan{origin, ranges, {}, {}},
+                                tracking_delta);
   for (const Eigen::Vector3f& laser_return :
        laser_fan_in_first_tracking.returns) {
     const Eigen::Vector3f delta =

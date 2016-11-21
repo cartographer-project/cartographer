@@ -41,10 +41,11 @@ void GlobalTrajectoryBuilder::AddImuData(
   sparse_pose_graph_->AddImuData(time, linear_acceleration, angular_velocity);
 }
 
-void GlobalTrajectoryBuilder::AddLaserFan(const common::Time time,
-                                          const sensor::LaserFan& laser_fan) {
+void GlobalTrajectoryBuilder::AddRangefinderData(
+    const common::Time time, const Eigen::Vector3f& origin,
+    const sensor::PointCloud& ranges) {
   auto insertion_result =
-      local_trajectory_builder_->AddLaserFan(time, laser_fan);
+      local_trajectory_builder_->AddRangefinderData(time, origin, ranges);
 
   if (insertion_result == nullptr) {
     return;

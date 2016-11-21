@@ -133,15 +133,16 @@ void OptimizingLocalTrajectoryBuilder::AddOdometerData(
 }
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
-OptimizingLocalTrajectoryBuilder::AddLaserFan(
-    const common::Time time, const sensor::LaserFan& laser_fan_in_tracking) {
-  CHECK_GT(laser_fan_in_tracking.returns.size(), 0);
+OptimizingLocalTrajectoryBuilder::AddRangefinderData(
+    const common::Time time, const Eigen::Vector3f& origin,
+    const sensor::PointCloud& ranges) {
+  CHECK_GT(ranges.size(), 0);
 
   // TODO(hrapp): Handle misses.
   // TODO(hrapp): Where are NaNs in laser_fan_in_tracking coming from?
   sensor::PointCloud point_cloud;
-  for (const Eigen::Vector3f& laser_return : laser_fan_in_tracking.returns) {
-    const Eigen::Vector3f delta = laser_return - laser_fan_in_tracking.origin;
+  for (const Eigen::Vector3f& laser_return : ranges) {
+    const Eigen::Vector3f delta = laser_return - origin;
     const float range = delta.norm();
     if (range >= options_.laser_min_range()) {
       if (range <= options_.laser_max_range()) {

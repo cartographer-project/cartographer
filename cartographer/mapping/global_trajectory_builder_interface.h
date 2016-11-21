@@ -50,8 +50,9 @@ class GlobalTrajectoryBuilderInterface {
   virtual const Submaps* submaps() const = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
-  virtual void AddLaserFan(common::Time time,
-                           const sensor::LaserFan& laser_fan) = 0;
+  virtual void AddRangefinderData(common::Time time,
+                                  const Eigen::Vector3f& origin,
+                                  const sensor::PointCloud& ranges) = 0;
   virtual void AddImuData(common::Time time,
                           const Eigen::Vector3d& linear_acceleration,
                           const Eigen::Vector3d& angular_velocity) = 0;

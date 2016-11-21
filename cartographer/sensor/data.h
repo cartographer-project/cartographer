@@ -20,6 +20,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -29,7 +30,17 @@ namespace sensor {
 // filled in. It is only used for time ordering sensor data before passing it
 // on.
 struct Data {
-  enum class Type { kImu, kLaserFan, kOdometer };
+  enum class Type { kImu, kRangefinder, kOdometer };
+
+  struct Imu {
+    Eigen::Vector3d linear_acceleration;
+    Eigen::Vector3d angular_velocity;
+  };
+
+  struct Rangefinder {
+    Eigen::Vector3f origin;
+    PointCloud ranges;
+  };
 
   struct Odometer {
     transform::Rigid3d pose;
@@ -38,17 +49,11 @@ struct Data {
     kalman_filter::PoseCovariance covariance;
   };
 
-  struct Imu {
-    Eigen::Vector3d linear_acceleration;
-    Eigen::Vector3d angular_velocity;
-  };
-
   Data(const common::Time time, const Imu& imu)
       : type(Type::kImu), time(time), imu(imu) {}
 
-  Data(const common::Time time,
-       const ::cartographer::sensor::LaserFan& laser_fan)
-      : type(Type::kLaserFan), time(time), laser_fan(laser_fan) {}
+  Data(const common::Time time, const Rangefinder& rangefinder)
+      : type(Type::kRangefinder), time(time), rangefinder(rangefinder) {}
 
   Data(const common::Time time, const Odometer& odometer)
       : type(Type::kOdometer), time(time), odometer(odometer) {}
@@ -56,7 +61,7 @@ struct Data {
   Type type;
   common::Time time;
   Imu imu;
-  sensor::LaserFan laser_fan;
+  Rangefinder rangefinder;
   Odometer odometer;
 };
 
