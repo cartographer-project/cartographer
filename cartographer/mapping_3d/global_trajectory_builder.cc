@@ -59,8 +59,8 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
   local_trajectory_builder_->AddTrajectoryNodeIndex(trajectory_node_index);
 }
 
-void GlobalTrajectoryBuilder::AddOdometerData(
-    const common::Time time, const transform::Rigid3d& pose) {
+void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
+                                              const transform::Rigid3d& pose) {
   local_trajectory_builder_->AddOdometerData(time, pose);
 }
 

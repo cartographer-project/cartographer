@@ -60,8 +60,7 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
       parameter_dictionary->GetDictionary("submaps").get());
   options.set_use_imu_data(parameter_dictionary->GetBool("use_imu_data"));
   options.set_odometer_translational_variance(
-      parameter_dictionary->GetDouble(
-          "odometer_translational_variance"));
+      parameter_dictionary->GetDouble("odometer_translational_variance"));
   options.set_odometer_rotational_variance(
       parameter_dictionary->GetDouble("odometer_rotational_variance"));
   return options;
@@ -269,8 +268,8 @@ void LocalTrajectoryBuilder::AddImuData(
       << common::RadToDeg(kMaxInclination);
 }
 
-void LocalTrajectoryBuilder::AddOdometerData(
-    const common::Time time, const transform::Rigid3d& pose) {
+void LocalTrajectoryBuilder::AddOdometerData(const common::Time time,
+                                             const transform::Rigid3d& pose) {
   if (pose_tracker_ == nullptr) {
     // Until we've initialized the UKF with our first IMU message, we cannot
     // process odometer poses.

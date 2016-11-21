@@ -37,8 +37,7 @@ CreateKalmanLocalTrajectoryBuilderOptions(
       kalman_filter::CreatePoseTrackerOptions(
           parameter_dictionary->GetDictionary("pose_tracker").get());
   options.set_odometer_translational_variance(
-      parameter_dictionary->GetDouble(
-          "odometer_translational_variance"));
+      parameter_dictionary->GetDouble("odometer_translational_variance"));
   options.set_odometer_rotational_variance(
       parameter_dictionary->GetDouble("odometer_rotational_variance"));
   return options;

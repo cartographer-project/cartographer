@@ -56,8 +56,8 @@ class GlobalTrajectoryBuilderInterface {
   virtual void AddImuData(common::Time time,
                           const Eigen::Vector3d& linear_acceleration,
                           const Eigen::Vector3d& angular_velocity) = 0;
-  virtual void AddOdometerData(
-      common::Time time, const transform::Rigid3d& pose) = 0;
+  virtual void AddOdometerData(common::Time time,
+                               const transform::Rigid3d& pose) = 0;
 };
 
 }  // namespace mapping
