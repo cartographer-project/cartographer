@@ -42,7 +42,7 @@ class GlobalTrajectoryBuilder
                   const Eigen::Vector3d& angular_velocity) override;
   void AddLaserFan(common::Time time,
                    const sensor::LaserFan& laser_fan) override;
-  void AddOdometerPose(
+  void AddOdometerData(
       common::Time time, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) override;
   const PoseEstimate& pose_estimate() const override;

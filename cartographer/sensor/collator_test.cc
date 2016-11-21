@@ -37,7 +37,7 @@ TEST(Collator, Ordering) {
   Data third(common::FromUniversal(300), Data::Imu{});
   Data fourth(common::FromUniversal(400), sensor::LaserFan{});
   Data fifth(common::FromUniversal(500), sensor::LaserFan{});
-  Data sixth(common::FromUniversal(600), Data::Odometry{});
+  Data sixth(common::FromUniversal(600), Data::Odometer{});
 
   std::vector<std::pair<string, Data>> received;
   Collator collator;

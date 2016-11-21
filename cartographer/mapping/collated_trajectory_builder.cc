@@ -92,9 +92,9 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
       wrapped_trajectory_builder_->AddLaserFan(data->time, data->laser_fan);
       return;
 
-    case sensor::Data::Type::kOdometry:
-      wrapped_trajectory_builder_->AddOdometerPose(
-          data->time, data->odometry.pose, data->odometry.covariance);
+    case sensor::Data::Type::kOdometer:
+      wrapped_trajectory_builder_->AddOdometerData(
+          data->time, data->odometer.pose, data->odometer.covariance);
       return;
   }
   LOG(FATAL);

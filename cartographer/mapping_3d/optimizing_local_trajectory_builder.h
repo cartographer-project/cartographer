@@ -56,7 +56,7 @@ class OptimizingLocalTrajectoryBuilder
       common::Time time,
       const sensor::LaserFan& laser_fan_in_tracking) override;
 
-  void AddOdometerPose(
+  void AddOdometerData(
       const common::Time time, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) override;
 
