@@ -37,7 +37,7 @@
   <build_depend>python-sphinx</build_depend>
 
   <depend>boost</depend>
-  <depend>ceres_solver</depend>
+  <depend>ceres-solver</depend>
   <depend>eigen</depend>
   <depend>libcairo2-dev</depend>
   <depend>libgflags-dev</depend>
