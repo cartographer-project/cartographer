@@ -22,7 +22,6 @@
 #include <memory>
 
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping_3d/imu_integration.h"
 #include "cartographer/mapping_3d/local_trajectory_builder_interface.h"
@@ -107,8 +106,7 @@ class OptimizingLocalTrajectoryBuilder
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
-      const transform::Rigid3d& pose_observation,
-      const kalman_filter::PoseCovariance& covariance_estimate);
+      const transform::Rigid3d& pose_observation);
 
   std::unique_ptr<InsertionResult> MaybeOptimize(common::Time time);
 

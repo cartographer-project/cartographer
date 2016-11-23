@@ -216,11 +216,7 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
   const transform::Rigid3d tracking_2d_to_map =
       pose_estimate_ * tracking_to_tracking_2d.inverse();
   last_pose_estimate_ = {
-      time,
-      {pose_prediction, covariance_observation},
-      {pose_estimate_, covariance_observation},
-      {pose_estimate_, covariance_observation},
-      pose_estimate_,
+      time, pose_estimate_,
       sensor::TransformPointCloud(laser_fan_in_tracking_2d.returns,
                                   tracking_2d_to_map.cast<float>())};
 

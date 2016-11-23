@@ -51,7 +51,6 @@ google_library(mapping_global_trajectory_builder_interface
     global_trajectory_builder_interface.h
   DEPENDS
     common_time
-    kalman_filter_pose_tracker
     mapping_submaps
     mapping_trajectory_builder
     sensor_laser
@@ -167,7 +166,6 @@ google_library(mapping_trajectory_builder
     common_make_unique
     common_port
     common_time
-    kalman_filter_pose_tracker
     mapping_submaps
     sensor_data
     sensor_laser
