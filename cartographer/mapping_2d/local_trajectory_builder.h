@@ -96,12 +96,14 @@ class LocalTrajectoryBuilder {
   mapping::GlobalTrajectoryBuilderInterface::PoseEstimate last_pose_estimate_;
 
   // Current 'pose_estimate_' and 'velocity_estimate_' at 'time_'.
-  common::Time time_;
-  transform::Rigid3d pose_estimate_;
-  Eigen::Vector2d velocity_estimate_;
-  common::Time last_scan_match_time_;
-  // Transform to left-multiply to 'pose_estimate_' according to odometry.
-  transform::Rigid3d odometry_correction_;
+  common::Time time_ = common::Time::min();
+  transform::Rigid3d pose_estimate_ = transform::Rigid3d::Identity();
+  Eigen::Vector2d velocity_estimate_ = Eigen::Vector2d::Zero();
+  common::Time last_scan_match_time_ = common::Time::min();
+  // This is the difference between the model (constant velocity, IMU)
+  // prediction 'pose_estimate_' and the odometry prediction. To get the
+  // odometry prediction, right-multiply this to 'pose_estimate_'.
+  transform::Rigid3d odometry_correction_ = transform::Rigid3d::Identity();
 
   mapping_3d::MotionFilter motion_filter_;
   scan_matching::RealTimeCorrelativeScanMatcher

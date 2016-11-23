@@ -51,8 +51,11 @@ message LocalTrajectoryBuilderOptions {
       ceres_scan_matcher_options = 8;
   optional mapping_3d.proto.MotionFilterOptions motion_filter_options = 13;
 
-  // Time constant for the orientation moving average based on observed gravity
-  // via linear acceleration.
+  // Time constant in seconds for the orientation moving average based on
+  // observed gravity/ via linear acceleration. It should be chosen so that the
+  // error due to actual accelerations (which gets worse when the constant is
+  // reduced) and due to integration of angular velocities (which gets worse
+  // when the constant is increased) is balanced.
   optional double imu_gravity_time_constant = 17;
 
   // Maximum number of previous odometry states to keep.

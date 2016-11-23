@@ -37,8 +37,8 @@ FloatType GetAngle(const Rigid3<FloatType>& transform) {
 }
 
 // Returns the yaw component in radians of the given 3D 'rotation'. Assuming
-// three rotations around X, then Y, then Z axis resulted in the rotational
-// component, the yaw is the angle of the Z rotation.
+// 'rotation' is composed of three rotations around X, then Y, then Z, returns
+// the angle of the Z rotation.
 template <typename T>
 T GetYaw(const Eigen::Quaternion<T>& rotation) {
   const Eigen::Matrix<T, 3, 1> direction =

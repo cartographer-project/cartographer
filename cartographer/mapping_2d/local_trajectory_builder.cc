@@ -68,11 +68,6 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions& options)
     : options_(options),
       submaps_(options.submaps_options()),
-      time_(common::Time::min()),
-      pose_estimate_(transform::Rigid3d::Identity()),
-      velocity_estimate_(Eigen::Vector2d::Zero()),
-      last_scan_match_time_(common::Time::min()),
-      odometry_correction_(transform::Rigid3d::Identity()),
       motion_filter_(options_.motion_filter_options()),
       real_time_correlative_scan_matcher_(
           options_.real_time_correlative_scan_matcher_options()),
