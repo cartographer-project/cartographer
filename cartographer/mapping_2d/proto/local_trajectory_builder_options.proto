@@ -16,7 +16,6 @@ syntax = "proto2";
 
 package cartographer.mapping_2d.proto;
 
-import "cartographer/kalman_filter/proto/pose_tracker_options.proto";
 import "cartographer/mapping_3d/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping_2d/proto/submaps_options.proto";
@@ -51,12 +50,20 @@ message LocalTrajectoryBuilderOptions {
   optional scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options = 8;
   optional mapping_3d.proto.MotionFilterOptions motion_filter_options = 13;
-  optional kalman_filter.proto.PoseTrackerOptions pose_tracker_options = 10;
+
+  // Time constant in seconds for the orientation moving average based on
+  // observed gravity via the IMU. It should be chosen so that the error
+  // 1. from acceleration measurements not due to gravity (which gets worse when
+  // the constant is reduced) and
+  // 2. from integration of angular velocities (which gets worse when the
+  // constant is increased) is balanced.
+  optional double imu_gravity_time_constant = 17;
+
+  // Maximum number of previous odometry states to keep.
+  optional int32 num_odometry_states = 18;
+
   optional mapping_2d.proto.SubmapsOptions submaps_options = 11;
 
   // True if IMU data should be expected and used.
   optional bool use_imu_data = 12;
-
-  optional double odometer_translational_variance = 17;
-  optional double odometer_rotational_variance = 18;
 }

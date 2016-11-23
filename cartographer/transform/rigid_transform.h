@@ -201,7 +201,7 @@ Rigid3<FloatType> operator*(const Rigid3<FloatType>& lhs,
                             const Rigid3<FloatType>& rhs) {
   return Rigid3<FloatType>(
       lhs.rotation() * rhs.translation() + lhs.translation(),
-      lhs.rotation() * rhs.rotation());
+      (lhs.rotation() * rhs.rotation()).normalized());
 }
 
 template <typename FloatType>

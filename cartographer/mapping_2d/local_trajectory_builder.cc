@@ -53,16 +53,14 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
   *options.mutable_motion_filter_options() =
       mapping_3d::CreateMotionFilterOptions(
           parameter_dictionary->GetDictionary("motion_filter").get());
-  *options.mutable_pose_tracker_options() =
-      kalman_filter::CreatePoseTrackerOptions(
-          parameter_dictionary->GetDictionary("pose_tracker").get());
+  options.set_imu_gravity_time_constant(
+      parameter_dictionary->GetDouble("imu_gravity_time_constant"));
+  options.set_num_odometry_states(
+      parameter_dictionary->GetNonNegativeInt("num_odometry_states"));
+  CHECK_GT(options.num_odometry_states(), 0);
   *options.mutable_submaps_options() = CreateSubmapsOptions(
       parameter_dictionary->GetDictionary("submaps").get());
   options.set_use_imu_data(parameter_dictionary->GetBool("use_imu_data"));
-  options.set_odometer_translational_variance(
-      parameter_dictionary->GetDouble("odometer_translational_variance"));
-  options.set_odometer_rotational_variance(
-      parameter_dictionary->GetDouble("odometer_rotational_variance"));
   return options;
 }
 
@@ -70,11 +68,11 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions& options)
     : options_(options),
       submaps_(options.submaps_options()),
-      scan_matcher_pose_estimate_(transform::Rigid3d::Identity()),
       motion_filter_(options_.motion_filter_options()),
       real_time_correlative_scan_matcher_(
           options_.real_time_correlative_scan_matcher_options()),
-      ceres_scan_matcher_(options_.ceres_scan_matcher_options()) {}
+      ceres_scan_matcher_(options_.ceres_scan_matcher_options()),
+      odometry_state_tracker_(options_.num_odometry_states()) {}
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
@@ -135,45 +133,42 @@ void LocalTrajectoryBuilder::ScanMatch(
   transform::Rigid2d tracking_2d_to_map;
   kalman_filter::Pose2DCovariance covariance_observation_2d;
   ceres::Solver::Summary summary;
-  ceres_scan_matcher_.Match(
-      transform::Project2D(scan_matcher_pose_estimate_ *
-                           tracking_to_tracking_2d.inverse()),
-      initial_ceres_pose, filtered_point_cloud_in_tracking_2d, probability_grid,
-      &tracking_2d_to_map, &covariance_observation_2d, &summary);
+  ceres_scan_matcher_.Match(pose_prediction_2d, initial_ceres_pose,
+                            filtered_point_cloud_in_tracking_2d,
+                            probability_grid, &tracking_2d_to_map,
+                            &covariance_observation_2d, &summary);
 
-  CHECK(pose_tracker_ != nullptr);
-
-  *pose_observation = transform::Embed3D(tracking_2d_to_map);
+  *pose_observation =
+      transform::Embed3D(tracking_2d_to_map) * tracking_to_tracking_2d;
   // This covariance is used for non-yaw rotation and the fake height of 0.
   constexpr double kFakePositionCovariance = 1.;
   constexpr double kFakeOrientationCovariance = 1.;
   *covariance_observation =
       kalman_filter::Embed3D(covariance_observation_2d, kFakePositionCovariance,
                              kFakeOrientationCovariance);
-  pose_tracker_->AddPoseObservation(
-      time, (*pose_observation) * tracking_to_tracking_2d,
-      *covariance_observation);
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddHorizontalLaserFan(
     const common::Time time, const sensor::LaserFan& laser_fan) {
-  // Initialize pose tracker now if we do not ever use an IMU.
+  // Initialize IMU tracker now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
-    InitializePoseTracker(time);
+    InitializeImuTracker(time);
   }
 
-  if (pose_tracker_ == nullptr) {
-    // Until we've initialized the UKF with our first IMU message, we cannot
-    // compute the orientation of the laser scanner.
-    LOG(INFO) << "PoseTracker not yet initialized.";
+  if (imu_tracker_ == nullptr) {
+    // Until we've initialized the IMU tracker with our first IMU message, we
+    // cannot compute the orientation of the laser scanner.
+    LOG(INFO) << "ImuTracker not yet initialized.";
     return nullptr;
   }
 
-  transform::Rigid3d pose_prediction;
-  kalman_filter::PoseCovariance covariance_prediction;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose_prediction,
-                                                  &covariance_prediction);
+  Predict(time);
+  const transform::Rigid3d odometry_prediction =
+      pose_estimate_ * odometry_correction_;
+  const transform::Rigid3d model_prediction = pose_estimate_;
+  // TODO(whess): Prefer IMU over odom orientation if configured?
+  const transform::Rigid3d pose_prediction = odometry_prediction;
 
   // Computes the rotation without yaw, as defined by GetYaw().
   const transform::Rigid3d tracking_to_tracking_2d =
@@ -190,30 +185,42 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
     return nullptr;
   }
 
-  transform::Rigid3d pose_observation;
   kalman_filter::PoseCovariance covariance_observation;
   ScanMatch(time, pose_prediction, tracking_to_tracking_2d,
-            laser_fan_in_tracking_2d, &pose_observation,
-            &covariance_observation);
+            laser_fan_in_tracking_2d, &pose_estimate_, &covariance_observation);
+  odometry_correction_ = transform::Rigid3d::Identity();
+  if (!odometry_state_tracker_.empty()) {
+    // We add an odometry state, so that the correction from the scan matching
+    // is not removed by the next odometry data we get.
+    odometry_state_tracker_.AddOdometryState(
+        {time, odometry_state_tracker_.newest().odometer_pose,
+         odometry_state_tracker_.newest().state_pose *
+             odometry_prediction.inverse() * pose_estimate_});
+  }
 
-  kalman_filter::PoseCovariance covariance_estimate;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(
-      time, &scan_matcher_pose_estimate_, &covariance_estimate);
+  // Improve the velocity estimate.
+  if (last_scan_match_time_ > common::Time::min()) {
+    const double delta_t = common::ToSeconds(time - last_scan_match_time_);
+    velocity_estimate_ += (pose_estimate_.translation().head<2>() -
+                           model_prediction.translation().head<2>()) /
+                          delta_t;
+  }
+  last_scan_match_time_ = time_;
 
   // Remove the untracked z-component which floats around 0 in the UKF.
-  const auto translation = scan_matcher_pose_estimate_.translation();
-  scan_matcher_pose_estimate_ = transform::Rigid3d(
+  const auto translation = pose_estimate_.translation();
+  pose_estimate_ = transform::Rigid3d(
       transform::Rigid3d::Vector(translation.x(), translation.y(), 0.),
-      scan_matcher_pose_estimate_.rotation());
+      pose_estimate_.rotation());
 
   const transform::Rigid3d tracking_2d_to_map =
-      scan_matcher_pose_estimate_ * tracking_to_tracking_2d.inverse();
+      pose_estimate_ * tracking_to_tracking_2d.inverse();
   last_pose_estimate_ = {
       time,
-      {pose_prediction, covariance_prediction},
-      {pose_observation, covariance_observation},
-      {scan_matcher_pose_estimate_, covariance_estimate},
-      scan_matcher_pose_estimate_,
+      {pose_prediction, covariance_observation},
+      {pose_estimate_, covariance_observation},
+      {pose_estimate_, covariance_observation},
+      pose_estimate_,
       sensor::TransformPointCloud(laser_fan_in_tracking_2d.returns,
                                   tracking_2d_to_map.cast<float>())};
 
@@ -229,13 +236,14 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
   for (int insertion_index : submaps_.insertion_indices()) {
     insertion_submaps.push_back(submaps_.Get(insertion_index));
   }
-  submaps_.InsertLaserFan(TransformLaserFan(laser_fan_in_tracking_2d,
-                                            tracking_2d_to_map.cast<float>()));
+  submaps_.InsertLaserFan(
+      TransformLaserFan(laser_fan_in_tracking_2d,
+                        transform::Embed3D(pose_estimate_2d.cast<float>())));
 
   return common::make_unique<InsertionResult>(InsertionResult{
       time, &submaps_, matching_submap, insertion_submaps,
       tracking_to_tracking_2d, tracking_2d_to_map, laser_fan_in_tracking_2d,
-      pose_estimate_2d, covariance_estimate});
+      pose_estimate_2d, covariance_observation});
 }
 
 const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate&
@@ -248,19 +256,15 @@ void LocalTrajectoryBuilder::AddImuData(
     const Eigen::Vector3d& angular_velocity) {
   CHECK(options_.use_imu_data()) << "An unexpected IMU packet was added.";
 
-  InitializePoseTracker(time);
-  pose_tracker_->AddImuLinearAccelerationObservation(time, linear_acceleration);
-  pose_tracker_->AddImuAngularVelocityObservation(time, angular_velocity);
-
-  transform::Rigid3d pose_estimate;
-  kalman_filter::PoseCovariance unused_covariance_estimate;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose_estimate,
-                                                  &unused_covariance_estimate);
+  InitializeImuTracker(time);
+  Predict(time);
+  imu_tracker_->AddImuLinearAccelerationObservation(linear_acceleration);
+  imu_tracker_->AddImuAngularVelocityObservation(angular_velocity);
 
   // Log a warning if the backpack inclination exceeds 20 degrees. In these
   // cases, it's very likely that 2D SLAM will fail.
   const Eigen::Vector3d gravity_direction =
-      Eigen::Quaterniond(pose_estimate.rotation()) * Eigen::Vector3d::UnitZ();
+      imu_tracker_->orientation() * Eigen::Vector3d::UnitZ();
   const double inclination = std::acos(gravity_direction.z());
   constexpr double kMaxInclination = common::DegToRad(20.);
   LOG_IF_EVERY_N(WARNING, inclination > kMaxInclination, 1000)
@@ -268,26 +272,56 @@ void LocalTrajectoryBuilder::AddImuData(
       << common::RadToDeg(kMaxInclination);
 }
 
-void LocalTrajectoryBuilder::AddOdometerData(const common::Time time,
-                                             const transform::Rigid3d& pose) {
-  if (pose_tracker_ == nullptr) {
-    // Until we've initialized the UKF with our first IMU message, we cannot
-    // process odometer poses.
-    LOG_EVERY_N(INFO, 100) << "PoseTracker not yet initialized.";
-  } else {
-    pose_tracker_->AddOdometerPoseObservation(
-        time, pose, kalman_filter::BuildPoseCovariance(
-                        options_.odometer_translational_variance(),
-                        options_.odometer_rotational_variance()));
+void LocalTrajectoryBuilder::AddOdometerData(
+    const common::Time time, const transform::Rigid3d& odometer_pose) {
+  if (imu_tracker_ == nullptr) {
+    // Until we've initialized the IMU tracker we do not want to call Predict().
+    LOG(INFO) << "ImuTracker not yet initialized.";
+    return;
+  }
+
+  Predict(time);
+  if (!odometry_state_tracker_.empty()) {
+    const auto& previous_odometry_state = odometry_state_tracker_.newest();
+    const transform::Rigid3d delta =
+        previous_odometry_state.odometer_pose.inverse() * odometer_pose;
+    const transform::Rigid3d new_pose =
+        previous_odometry_state.state_pose * delta;
+    odometry_correction_ = pose_estimate_.inverse() * new_pose;
+  }
+  odometry_state_tracker_.AddOdometryState(
+      {time, odometer_pose, pose_estimate_ * odometry_correction_});
+}
+
+void LocalTrajectoryBuilder::InitializeImuTracker(const common::Time time) {
+  if (imu_tracker_ == nullptr) {
+    imu_tracker_ = common::make_unique<mapping::ImuTracker>(
+        options_.imu_gravity_time_constant(), time);
   }
 }
 
-void LocalTrajectoryBuilder::InitializePoseTracker(const common::Time time) {
-  if (pose_tracker_ == nullptr) {
-    pose_tracker_ = common::make_unique<kalman_filter::PoseTracker>(
-        options_.pose_tracker_options(),
-        kalman_filter::PoseTracker::ModelFunction::k2D, time);
+void LocalTrajectoryBuilder::Predict(const common::Time time) {
+  CHECK(imu_tracker_ != nullptr);
+  CHECK_LE(time_, time);
+  const double last_yaw = transform::GetYaw(imu_tracker_->orientation());
+  imu_tracker_->Advance(time);
+  if (time_ > common::Time::min()) {
+    const double delta_t = common::ToSeconds(time - time_);
+    // Constant velocity model.
+    const Eigen::Vector3d translation =
+        pose_estimate_.translation() +
+        delta_t *
+            Eigen::Vector3d(velocity_estimate_.x(), velocity_estimate_.y(), 0.);
+    // Use the current IMU tracker roll and pitch for gravity alignment, and
+    // apply its change in yaw.
+    const Eigen::Quaterniond rotation =
+        Eigen::AngleAxisd(
+            transform::GetYaw(pose_estimate_.rotation()) - last_yaw,
+            Eigen::Vector3d::UnitZ()) *
+        imu_tracker_->orientation();
+    pose_estimate_ = transform::Rigid3d(translation, rotation);
   }
+  time_ = time;
 }
 
 }  // namespace mapping_2d

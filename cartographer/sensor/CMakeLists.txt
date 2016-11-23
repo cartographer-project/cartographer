@@ -60,6 +60,7 @@ google_library(sensor_data
     common_time
     kalman_filter_pose_tracker
     sensor_laser
+    sensor_point_cloud
     transform_rigid_transform
 )
 
