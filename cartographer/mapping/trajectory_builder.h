@@ -24,7 +24,6 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/laser.h"
@@ -36,37 +35,15 @@ namespace mapping {
 // This interface is used for both 2D and 3D SLAM.
 class TrajectoryBuilder {
  public:
-  // Represents a newly computed pose. Each of the following steps in the pose
-  // estimation pipeline are provided for debugging:
-  //
-  // 1. UKF prediction
-  // 2. Absolute pose observation (e.g. from scan matching)
-  // 3. UKF estimate after integrating any measurements
-  //
-  // Finally, 'pose' is the end-user visualization of orientation and
-  // 'point_cloud' is the point cloud, in the local map frame.
+  // Represents a newly computed pose. 'pose' is the end-user visualization of
+  // orientation and 'point_cloud' is the point cloud, in the local map frame.
   struct PoseEstimate {
     PoseEstimate() = default;
-    PoseEstimate(common::Time time,
-                 const kalman_filter::PoseAndCovariance& prediction,
-                 const kalman_filter::PoseAndCovariance& observation,
-                 const kalman_filter::PoseAndCovariance& estimate,
-                 const transform::Rigid3d& pose,
+    PoseEstimate(common::Time time, const transform::Rigid3d& pose,
                  const sensor::PointCloud& point_cloud)
-        : time(time),
-          prediction(prediction),
-          observation(observation),
-          estimate(estimate),
-          pose(pose),
-          point_cloud(point_cloud) {}
+        : time(time), pose(pose), point_cloud(point_cloud) {}
 
     common::Time time = common::Time::min();
-    kalman_filter::PoseAndCovariance prediction = {
-        transform::Rigid3d::Identity(), kalman_filter::PoseCovariance::Zero()};
-    kalman_filter::PoseAndCovariance observation = {
-        transform::Rigid3d::Identity(), kalman_filter::PoseCovariance::Zero()};
-    kalman_filter::PoseAndCovariance estimate = {
-        transform::Rigid3d::Identity(), kalman_filter::PoseCovariance::Zero()};
     transform::Rigid3d pose = transform::Rigid3d::Identity();
     sensor::PointCloud point_cloud;
   };

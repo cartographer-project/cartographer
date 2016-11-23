@@ -137,9 +137,9 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
   }
 
   transform::Rigid3d pose_prediction;
-  kalman_filter::PoseCovariance covariance_prediction;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose_prediction,
-                                                  &covariance_prediction);
+  kalman_filter::PoseCovariance unused_covariance_prediction;
+  pose_tracker_->GetPoseEstimateMeanAndCovariance(
+      time, &pose_prediction, &unused_covariance_prediction);
 
   transform::Rigid3d initial_ceres_pose = pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
@@ -176,11 +176,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
       time, &scan_matcher_pose_estimate_, &covariance_estimate);
 
   last_pose_estimate_ = {
-      time,
-      {pose_prediction, covariance_prediction},
-      {pose_observation, covariance_observation},
-      {scan_matcher_pose_estimate_, covariance_estimate},
-      scan_matcher_pose_estimate_,
+      time, scan_matcher_pose_estimate_,
       sensor::TransformPointCloud(filtered_laser_fan.returns,
                                   pose_observation.cast<float>())};
 

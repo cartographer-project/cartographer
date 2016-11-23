@@ -22,7 +22,6 @@
 #include <string>
 
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
 #include "cartographer/sensor/laser.h"

@@ -19,6 +19,7 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
+#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_3d/proto/optimizing_local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_3d/rotation_cost_function.h"
 #include "cartographer/mapping_3d/scan_matching/occupied_space_cost_functor.h"
@@ -366,19 +367,12 @@ OptimizingLocalTrajectoryBuilder::AddAccumulatedLaserFan(
     return nullptr;
   }
 
-  const kalman_filter::PoseCovariance covariance =
-      1e-7 * kalman_filter::PoseCovariance::Identity();
-
   last_pose_estimate_ = {
-      time,
-      {optimized_pose, covariance},
-      {optimized_pose, covariance},
-      {optimized_pose, covariance},
-      optimized_pose,
+      time, optimized_pose,
       sensor::TransformPointCloud(filtered_laser_fan.returns,
                                   optimized_pose.cast<float>())};
 
-  return InsertIntoSubmap(time, filtered_laser_fan, optimized_pose, covariance);
+  return InsertIntoSubmap(time, filtered_laser_fan, optimized_pose);
 }
 
 const OptimizingLocalTrajectoryBuilder::PoseEstimate&
@@ -394,8 +388,7 @@ void OptimizingLocalTrajectoryBuilder::AddTrajectoryNodeIndex(
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
 OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
     const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
-    const transform::Rigid3d& pose_observation,
-    const kalman_filter::PoseCovariance& covariance_estimate) {
+    const transform::Rigid3d& pose_observation) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
   }
@@ -407,8 +400,12 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
   }
   submaps_->InsertLaserFan(sensor::TransformLaserFan(
       laser_fan_in_tracking, pose_observation.cast<float>()));
+
+  const kalman_filter::PoseCovariance kCovariance =
+      1e-7 * kalman_filter::PoseCovariance::Identity();
+
   return std::unique_ptr<InsertionResult>(new InsertionResult{
-      time, laser_fan_in_tracking, pose_observation, covariance_estimate,
+      time, laser_fan_in_tracking, pose_observation, kCovariance,
       submaps_.get(), matching_submap, insertion_submaps});
 }
 
