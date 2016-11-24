@@ -109,7 +109,9 @@ void OutlierRemovingPointsProcessor::ProcessInPhaseThree(
   std::vector<int> to_remove;
   for (size_t i = 0; i < batch->points.size(); ++i) {
     const auto voxel = voxels_.value(voxels_.GetCellIndex(batch->points[i]));
-    to_remove.push_back(!(voxel.rays < kMissPerHitLimit * voxel.hits));
+    if (!(voxel.rays < kMissPerHitLimit * voxel.hits)) {
+      to_remove.push_back(i);
+    }
   }
   RemovePoints(to_remove, batch.get());
   next_->Process(std::move(batch));
