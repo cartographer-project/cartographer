@@ -58,8 +58,7 @@ class PrecomputationGridStack {
  public:
   PrecomputationGridStack(
       const HybridGrid& hybrid_grid,
-      const proto::FastCorrelativeScanMatcherOptions& options,
-      const Eigen::Array3i& max_widths) {
+      const proto::FastCorrelativeScanMatcherOptions& options) {
     CHECK_GE(options.branch_and_bound_depth(), 1);
     CHECK_GE(options.full_resolution_depth(), 1);
     precomputation_grids_.reserve(options.branch_and_bound_depth());
@@ -67,8 +66,7 @@ class PrecomputationGridStack {
     Eigen::Array3i last_width = Eigen::Array3i::Ones();
     for (int depth = 1; depth != options.branch_and_bound_depth(); ++depth) {
       const bool half_resolution = depth >= options.full_resolution_depth();
-      const Eigen::Array3i next_width =
-          ((1 << depth) * Eigen::Array3i::Ones()).cwiseMin(max_widths);
+      const Eigen::Array3i next_width = ((1 << depth) * Eigen::Array3i::Ones());
       const int full_voxels_per_high_resolution_voxel =
           1 << std::max(0, depth - options.full_resolution_depth());
       const Eigen::Array3i shift =
@@ -101,10 +99,8 @@ FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
           common::RoundToInt(options_.linear_xy_search_window() / resolution_)),
       linear_z_window_size_(
           common::RoundToInt(options_.linear_z_search_window() / resolution_)),
-      precomputation_grid_stack_(common::make_unique<PrecomputationGridStack>(
-          hybrid_grid, options, Eigen::Array3i(1 + 2 * linear_xy_window_size_,
-                                               1 + 2 * linear_xy_window_size_,
-                                               1 + 2 * linear_z_window_size_))),
+      precomputation_grid_stack_(
+          common::make_unique<PrecomputationGridStack>(hybrid_grid, options)),
       rotational_scan_matcher_(nodes, options_.rotational_histogram_size()) {}
 
 FastCorrelativeScanMatcher::~FastCorrelativeScanMatcher() {}
