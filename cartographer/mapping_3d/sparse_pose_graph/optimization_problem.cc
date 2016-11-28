@@ -77,15 +77,18 @@ OptimizationProblem::OptimizationProblem(
 
 OptimizationProblem::~OptimizationProblem() {}
 
-void OptimizationProblem::AddImuData(common::Time time,
+void OptimizationProblem::AddImuData(const mapping::Submaps* const trajectory,
+                                     const common::Time time,
                                      const Eigen::Vector3d& linear_acceleration,
                                      const Eigen::Vector3d& angular_velocity) {
-  imu_data_.push_back(ImuData{time, linear_acceleration, angular_velocity});
+  imu_data_[trajectory].push_back(
+      ImuData{time, linear_acceleration, angular_velocity});
 }
 
 void OptimizationProblem::AddTrajectoryNode(
-    common::Time time, const transform::Rigid3d& point_cloud_pose) {
-  node_data_.push_back(NodeData{time, point_cloud_pose});
+    const mapping::Submaps* const trajectory, const common::Time time,
+    const transform::Rigid3d& point_cloud_pose) {
+  node_data_.push_back(NodeData{trajectory, time, point_cloud_pose});
 }
 
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
@@ -96,13 +99,17 @@ void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
 void OptimizationProblem::Solve(
     const std::vector<Constraint>& constraints,
     const transform::Rigid3d& submap_0_transform,
-    const std::vector<const mapping::Submaps*>& trajectories,
-    std::vector<transform::Rigid3d>* submap_transforms) {
+    std::vector<transform::Rigid3d>* const submap_transforms) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
   }
-  CHECK(!imu_data_.empty());
+
+  // Compute the indices of consecutive nodes for each trajectory.
+  std::map<const mapping::Submaps*, std::vector<size_t>> nodes_per_trajectory;
+  for (size_t j = 0; j != node_data_.size(); ++j) {
+    nodes_per_trajectory[node_data_[j].trajectory].push_back(j);
+  }
 
   ceres::Problem::Options problem_options;
   ceres::Problem problem(problem_options);
@@ -146,58 +153,68 @@ void OptimizationProblem::Solve(
         C_point_clouds[constraint.j].translation());
   }
 
-  CHECK(!node_data_.empty());
-  CHECK_GE(trajectories.size(), node_data_.size());
+  // Add constraints based on IMU observations of angular velocities and
+  // linear acceleration.
+  for (const auto& trajectory_nodes_pair : nodes_per_trajectory) {
+    const mapping::Submaps* const trajectory = trajectory_nodes_pair.first;
+    const std::vector<size_t>& node_indices = trajectory_nodes_pair.second;
+    const std::deque<ImuData>& imu_data = imu_data_.at(trajectory);
+    CHECK(!node_indices.empty());
+    CHECK(!imu_data.empty());
 
-  // Add constraints for IMU observed data: angular velocities and
-  // accelerations.
-  auto it = imu_data_.cbegin();
-  while ((it + 1) != imu_data_.cend() && (it + 1)->time <= node_data_[0].time) {
-    ++it;
-  }
-
-  for (size_t j = 1; j < node_data_.size(); ++j) {
-    auto it2 = it;
-    const IntegrateImuResult<double> result = IntegrateImu(
-        imu_data_, node_data_[j - 1].time, node_data_[j].time, &it);
-    if (j + 1 < node_data_.size()) {
-      const common::Duration first_delta_time =
-          node_data_[j].time - node_data_[j - 1].time;
-      const common::Duration second_delta_time =
-          node_data_[j + 1].time - node_data_[j].time;
-      const common::Time first_center =
-          node_data_[j - 1].time + first_delta_time / 2;
-      const common::Time second_center =
-          node_data_[j].time + second_delta_time / 2;
-      const IntegrateImuResult<double> result_to_first_center =
-          IntegrateImu(imu_data_, node_data_[j - 1].time, first_center, &it2);
-      const IntegrateImuResult<double> result_center_to_center =
-          IntegrateImu(imu_data_, first_center, second_center, &it2);
-      // 'delta_velocity' is the change in velocity from the point in time
-      // halfway between the first and second poses to halfway between second
-      // and third pose. It is computed from IMU data and still contains a
-      // delta due to gravity. The orientation of this vector is in the IMU
-      // frame at the second pose.
-      const Eigen::Vector3d delta_velocity =
-          (result.delta_rotation.inverse() *
-           result_to_first_center.delta_rotation) *
-          result_center_to_center.delta_velocity;
-      problem.AddResidualBlock(
-          new ceres::AutoDiffCostFunction<AccelerationCostFunction, 3, 4, 3, 3,
-                                          3, 1>(new AccelerationCostFunction(
-              options_.acceleration_weight(), delta_velocity,
-              common::ToSeconds(first_delta_time),
-              common::ToSeconds(second_delta_time))),
-          nullptr, C_point_clouds[j].rotation(),
-          C_point_clouds[j - 1].translation(), C_point_clouds[j].translation(),
-          C_point_clouds[j + 1].translation(), &gravity_constant_);
+    // Skip IMU data before the first node of this trajectory.
+    auto it = imu_data.cbegin();
+    while ((it + 1) != imu_data.cend() &&
+           (it + 1)->time <= node_data_[node_indices[0]].time) {
+      ++it;
     }
-    problem.AddResidualBlock(
-        new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4>(
-            new RotationCostFunction(options_.rotation_weight(),
-                                     result.delta_rotation)),
-        nullptr, C_point_clouds[j - 1].rotation(),
-        C_point_clouds[j].rotation());
+
+    for (size_t j = 1; j < node_indices.size(); ++j) {
+      auto it2 = it;
+      const IntegrateImuResult<double> result =
+          IntegrateImu(imu_data, node_data_[node_indices[j - 1]].time,
+                       node_data_[node_indices[j]].time, &it);
+      if (j + 1 < node_indices.size()) {
+        const common::Time first_time = node_data_[node_indices[j - 1]].time;
+        const common::Time second_time = node_data_[node_indices[j]].time;
+        const common::Time third_time = node_data_[node_indices[j + 1]].time;
+        const common::Duration first_duration = second_time - first_time;
+        const common::Duration second_duration = third_time - second_time;
+        const common::Time first_center = first_time + first_duration / 2;
+        const common::Time second_center = second_time + second_duration / 2;
+        const IntegrateImuResult<double> result_to_first_center =
+            IntegrateImu(imu_data, first_time, first_center, &it2);
+        const IntegrateImuResult<double> result_center_to_center =
+            IntegrateImu(imu_data, first_center, second_center, &it2);
+        // 'delta_velocity' is the change in velocity from the point in time
+        // halfway between the first and second poses to halfway between second
+        // and third pose. It is computed from IMU data and still contains a
+        // delta due to gravity. The orientation of this vector is in the IMU
+        // frame at the second pose.
+        const Eigen::Vector3d delta_velocity =
+            (result.delta_rotation.inverse() *
+             result_to_first_center.delta_rotation) *
+            result_center_to_center.delta_velocity;
+        problem.AddResidualBlock(
+            new ceres::AutoDiffCostFunction<AccelerationCostFunction, 3, 4, 3,
+                                            3, 3, 1>(
+                new AccelerationCostFunction(
+                    options_.acceleration_weight(), delta_velocity,
+                    common::ToSeconds(first_duration),
+                    common::ToSeconds(second_duration))),
+            nullptr, C_point_clouds[node_indices[j]].rotation(),
+            C_point_clouds[node_indices[j - 1]].translation(),
+            C_point_clouds[node_indices[j]].translation(),
+            C_point_clouds[node_indices[j + 1]].translation(),
+            &gravity_constant_);
+      }
+      problem.AddResidualBlock(
+          new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4>(
+              new RotationCostFunction(options_.rotation_weight(),
+                                       result.delta_rotation)),
+          nullptr, C_point_clouds[node_indices[j - 1]].rotation(),
+          C_point_clouds[node_indices[j]].rotation());
+    }
   }
 
   // Solve.

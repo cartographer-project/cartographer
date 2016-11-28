@@ -79,7 +79,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
-  void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
+  void AddImuData(const mapping::Submaps* trajectory, common::Time time,
+                  const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
 
   void RunFinalOptimization() override;

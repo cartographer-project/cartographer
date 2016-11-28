@@ -118,15 +118,14 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
         NoisyNode{RandomTransform(10., 3.), RandomYawOnlyTransform(0.2, 0.3)});
   }
 
-  std::vector<const mapping::Submaps*> trajectories;
   common::Time now = common::FromUniversal(0);
   for (const NoisyNode& node : test_data) {
-    trajectories.push_back(kTrajectory);
     const transform::Rigid3d pose =
         AddNoise(node.ground_truth_pose, node.noise);
-    optimization_problem_.AddImuData(now, Eigen::Vector3d::UnitZ() * 9.81,
+    optimization_problem_.AddImuData(kTrajectory, now,
+                                     Eigen::Vector3d::UnitZ() * 9.81,
                                      Eigen::Vector3d::Zero());
-    optimization_problem_.AddTrajectoryNode(now, pose);
+    optimization_problem_.AddTrajectoryNode(kTrajectory, now, pose);
     now += common::FromSeconds(0.01);
   }
 
@@ -166,7 +165,7 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
                             node_data[j].point_cloud_pose);
   }
 
-  optimization_problem_.Solve(constraints, kSubmap0Transform, trajectories,
+  optimization_problem_.Solve(constraints, kSubmap0Transform,
                               &submap_transforms);
 
   double translation_error_after = 0.;
