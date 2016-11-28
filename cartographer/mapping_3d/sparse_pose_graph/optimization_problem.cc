@@ -77,8 +77,8 @@ OptimizationProblem::OptimizationProblem(
 
 OptimizationProblem::~OptimizationProblem() {}
 
-void OptimizationProblem::AddImuData(const mapping::Submaps* trajectory,
-                                     common::Time time,
+void OptimizationProblem::AddImuData(const mapping::Submaps* const trajectory,
+                                     const common::Time time,
                                      const Eigen::Vector3d& linear_acceleration,
                                      const Eigen::Vector3d& angular_velocity) {
   imu_data_[trajectory].push_back(
@@ -86,7 +86,7 @@ void OptimizationProblem::AddImuData(const mapping::Submaps* trajectory,
 }
 
 void OptimizationProblem::AddTrajectoryNode(
-    const mapping::Submaps* trajectory, common::Time time,
+    const mapping::Submaps* const trajectory, const common::Time time,
     const transform::Rigid3d& point_cloud_pose) {
   node_data_.push_back(NodeData{trajectory, time, point_cloud_pose});
 }
@@ -99,7 +99,7 @@ void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
 void OptimizationProblem::Solve(
     const std::vector<Constraint>& constraints,
     const transform::Rigid3d& submap_0_transform,
-    std::vector<transform::Rigid3d>* submap_transforms) {
+    std::vector<transform::Rigid3d>* const submap_transforms) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
@@ -153,6 +153,8 @@ void OptimizationProblem::Solve(
         C_point_clouds[constraint.j].translation());
   }
 
+  // Add constraints based on IMU observations of angular velocities and
+  // linear acceleration.
   for (const auto& trajectory_nodes_pair : nodes_per_trajectory) {
     const mapping::Submaps* const trajectory = trajectory_nodes_pair.first;
     const std::vector<size_t>& node_indices = trajectory_nodes_pair.second;
@@ -160,8 +162,7 @@ void OptimizationProblem::Solve(
     CHECK(!node_indices.empty());
     CHECK(!imu_data.empty());
 
-    // Add constraints for IMU observed data: angular velocities and
-    // accelerations.
+    // Skip IMU data before the first node of this trajectory.
     auto it = imu_data.cbegin();
     while ((it + 1) != imu_data.cend() &&
            (it + 1)->time <= node_data_[node_indices[0]].time) {
