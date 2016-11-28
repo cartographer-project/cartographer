@@ -38,7 +38,8 @@ void GlobalTrajectoryBuilder::AddImuData(
     const Eigen::Vector3d& angular_velocity) {
   local_trajectory_builder_->AddImuData(time, linear_acceleration,
                                         angular_velocity);
-  sparse_pose_graph_->AddImuData(time, linear_acceleration, angular_velocity);
+  sparse_pose_graph_->AddImuData(local_trajectory_builder_->submaps(), time,
+                                 linear_acceleration, angular_velocity);
 }
 
 void GlobalTrajectoryBuilder::AddRangefinderData(

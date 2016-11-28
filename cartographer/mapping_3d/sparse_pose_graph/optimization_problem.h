@@ -36,6 +36,8 @@ namespace mapping_3d {
 namespace sparse_pose_graph {
 
 struct NodeData {
+  // TODO(whess): Keep nodes per trajectory instead.
+  const mapping::Submaps* trajectory;
   common::Time time;
   transform::Rigid3d point_cloud_pose;
 };
@@ -53,26 +55,24 @@ class OptimizationProblem {
   OptimizationProblem(const OptimizationProblem&) = delete;
   OptimizationProblem& operator=(const OptimizationProblem&) = delete;
 
-  void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
+  void AddImuData(const mapping::Submaps* trajectory, common::Time time,
+                  const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
-  void AddTrajectoryNode(common::Time time,
+  void AddTrajectoryNode(const mapping::Submaps* trajectory, common::Time time,
                          const transform::Rigid3d& point_cloud_pose);
 
   void SetMaxNumIterations(int32 max_num_iterations);
 
-  // Computes the optimized poses. The point cloud at 'point_cloud_poses[i]'
-  // belongs to 'trajectories[i]'. Within a given trajectory, scans are expected
-  // to be contiguous.
+  // Computes the optimized poses.
   void Solve(const std::vector<Constraint>& constraints,
              const transform::Rigid3d& submap_0_transform,
-             const std::vector<const mapping::Submaps*>& trajectories,
              std::vector<transform::Rigid3d>* submap_transforms);
 
   const std::vector<NodeData>& node_data() const;
 
  private:
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
-  std::deque<ImuData> imu_data_;
+  std::map<const mapping::Submaps*, std::deque<ImuData>> imu_data_;
   std::vector<NodeData> node_data_;
   double gravity_constant_ = 9.8;
 };

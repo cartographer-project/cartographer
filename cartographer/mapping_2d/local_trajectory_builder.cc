@@ -168,7 +168,7 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
       pose_estimate_ * odometry_correction_;
   const transform::Rigid3d model_prediction = pose_estimate_;
   // TODO(whess): Prefer IMU over odom orientation if configured?
-  const transform::Rigid3d pose_prediction = odometry_prediction;
+  const transform::Rigid3d& pose_prediction = odometry_prediction;
 
   // Computes the rotation without yaw, as defined by GetYaw().
   const transform::Rigid3d tracking_to_tracking_2d =

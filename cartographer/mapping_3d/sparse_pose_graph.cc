@@ -136,12 +136,13 @@ void SparsePoseGraph::AddWorkItem(std::function<void()> work_item) {
   }
 }
 
-void SparsePoseGraph::AddImuData(common::Time time,
+void SparsePoseGraph::AddImuData(const mapping::Submaps* trajectory,
+                                 common::Time time,
                                  const Eigen::Vector3d& linear_acceleration,
                                  const Eigen::Vector3d& angular_velocity) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([=]() REQUIRES(mutex_) {
-    optimization_problem_.AddImuData(time, linear_acceleration,
+    optimization_problem_.AddImuData(trajectory, time, linear_acceleration,
                                      angular_velocity);
   });
 }
@@ -202,7 +203,10 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       submap_transforms_[matching_index] *
       matching_submap->local_pose().inverse() * pose;
   CHECK_EQ(scan_index, optimization_problem_.node_data().size());
-  optimization_problem_.AddTrajectoryNode(time, optimized_pose);
+  const mapping::Submaps* const scan_trajectory =
+      trajectory_nodes_[scan_index].constant_data->trajectory;
+  optimization_problem_.AddTrajectoryNode(scan_trajectory, time,
+                                          optimized_pose);
   for (const Submap* submap : insertion_submaps) {
     const int submap_index = GetSubmapIndex(submap);
     CHECK(!submap_states_[submap_index].finished);
@@ -319,17 +323,13 @@ void SparsePoseGraph::RunFinalOptimization() {
 void SparsePoseGraph::RunOptimization() {
   if (!submap_transforms_.empty()) {
     transform::Rigid3d submap_0_pose;
-    std::vector<const mapping::Submaps*> trajectories;
     {
       common::MutexLocker locker(&mutex_);
       CHECK(!submap_states_.empty());
       submap_0_pose = submap_states_.front().submap->local_pose();
-      for (const auto& trajectory_node : trajectory_nodes_) {
-        trajectories.push_back(trajectory_node.constant_data->trajectory);
-      }
     }
 
-    optimization_problem_.Solve(constraints_, submap_0_pose, trajectories,
+    optimization_problem_.Solve(constraints_, submap_0_pose,
                                 &submap_transforms_);
     common::MutexLocker locker(&mutex_);
     has_new_optimized_poses_ = true;
