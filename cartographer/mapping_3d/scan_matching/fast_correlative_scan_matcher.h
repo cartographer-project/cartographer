@@ -102,9 +102,9 @@ class FastCorrelativeScanMatcher {
 
  private:
   struct SearchParameters {
-    const int linear_xy_window_size;     // in voxels
-    const int linear_z_window_size;      // in voxels
-    const double angular_search_window;  // in radians
+    const int linear_xy_window_size;     // voxels
+    const int linear_z_window_size;      // voxels
+    const double angular_search_window;  // radians
   };
 
   bool MatchWithSearchParameters(
@@ -137,7 +137,7 @@ class FastCorrelativeScanMatcher {
   const proto::FastCorrelativeScanMatcherOptions options_;
   const float resolution_;
   const Eigen::Vector3f origin_;
-  const int diameter_in_voxels_;
+  const int width_in_voxels_;
   std::unique_ptr<PrecomputationGridStack> precomputation_grid_stack_;
   RotationalScanMatcher rotational_scan_matcher_;
 };

@@ -96,7 +96,7 @@ FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
     : options_(options),
       resolution_(hybrid_grid.resolution()),
       origin_(hybrid_grid.origin()),
-      diameter_in_voxels_(hybrid_grid.grid_size()),
+      width_in_voxels_(hybrid_grid.grid_size()),
       precomputation_grid_stack_(
           common::make_unique<PrecomputationGridStack>(hybrid_grid, options)),
       rotational_scan_matcher_(nodes, options_.rotational_histogram_size()) {}
@@ -107,7 +107,7 @@ bool FastCorrelativeScanMatcher::Match(
     const transform::Rigid3d& initial_pose_estimate,
     const sensor::PointCloud& coarse_point_cloud,
     const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* score, transform::Rigid3d* pose_estimate) const {
+    float* const score, transform::Rigid3d* const pose_estimate) const {
   const SearchParameters search_parameters{
       common::RoundToInt(options_.linear_xy_search_window() / resolution_),
       common::RoundToInt(options_.linear_z_search_window() / resolution_),
@@ -121,15 +121,15 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
     const Eigen::Quaterniond& gravity_alignment,
     const sensor::PointCloud& coarse_point_cloud,
     const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* score, transform::Rigid3d* pose_estimate) const {
+    float* const score, transform::Rigid3d* const pose_estimate) const {
   const transform::Rigid3d initial_pose_estimate(origin_.cast<double>(),
                                                  gravity_alignment);
-  float point_cloud_radius = 0.f;
+  float max_point_distance = 0.f;
   for (const Eigen::Vector3f& point : coarse_point_cloud) {
-    point_cloud_radius = std::max(point_cloud_radius, point.norm());
+    max_point_distance = std::max(max_point_distance, point.norm());
   }
   const int linear_window_size =
-      diameter_in_voxels_ / 2 + std::ceil(point_cloud_radius);
+      (width_in_voxels_ + 1) / 2 + std::ceil(max_point_distance);
   const SearchParameters search_parameters{linear_window_size,
                                            linear_window_size, M_PI};
   return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
@@ -142,7 +142,7 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
     const transform::Rigid3d& initial_pose_estimate,
     const sensor::PointCloud& coarse_point_cloud,
     const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* score, transform::Rigid3d* pose_estimate) const {
+    float* const score, transform::Rigid3d* const pose_estimate) const {
   CHECK_NOTNULL(score);
   CHECK_NOTNULL(pose_estimate);
 
