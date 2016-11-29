@@ -261,7 +261,8 @@ void OptimizationProblem::Solve(
   ceres::Solver::Summary summary;
   ceres::Solver::Options ceres_solver_options =
       common::CreateCeresSolverOptions(options_.ceres_solver_options());
-  ceres_solver_options.linear_solver_type = ceres::DENSE_QR;
+  ceres_solver_options.linear_solver_type = ceres::SPARSE_SCHUR;
+  ceres_solver_options.sparse_linear_algebra_library_type = ceres::EIGEN_SPARSE;
   ceres::Solve(ceres_solver_options, &problem, &summary);
 
   if (options_.log_solver_summary()) {
