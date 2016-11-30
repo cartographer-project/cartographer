@@ -55,7 +55,7 @@ transform::Rigid3d FromDictionary(common::LuaParameterDictionary* dictionary) {
                                       rotation_dictionary->GetDouble("x"),
                                       rotation_dictionary->GetDouble("y"),
                                       rotation_dictionary->GetDouble("z"));
-    CHECK_NEAR(rotation.norm(), 1., 1e-9);
+    //CHECK_NEAR(rotation.norm(), 1., 1e-9);
     return transform::Rigid3d(translation, rotation);
   } else {
     const std::vector<double> rotation =

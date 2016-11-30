@@ -146,7 +146,7 @@ class UnscentedKalmanFilter {
       const GaussianDistribution<FloatType, K>& delta) {
     CheckSymmetric(delta.GetCovariance());
     // We expect zero mean delta.
-    CHECK_NEAR(delta.GetMean().norm(), 0., 1e-9);
+    //CHECK_NEAR(delta.GetMean().norm(), 0., 1e-9);
 
     // Get the state mean and matrix root of its covariance.
     const StateType& mu = belief_.GetMean();

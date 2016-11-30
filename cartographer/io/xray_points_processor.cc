@@ -50,7 +50,7 @@ void TakeLogarithm(Eigen::MatrixXf* mat) {
 
 // Write 'mat' as a pleasing-to-look-at PNG into 'filename'
 void WritePng(const string& filename, const Eigen::MatrixXf& mat) {
-  const int stride =
+  /*const int stride =
       cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, mat.cols());
   CHECK_EQ(stride % 4, 0);
   std::vector<uint32_t> pixels(stride / 4 * mat.rows(), 0.);
@@ -77,7 +77,7 @@ void WritePng(const string& filename, const Eigen::MatrixXf& mat) {
       cairo_surface_destroy);
   CHECK_EQ(cairo_surface_status(surface.get()), CAIRO_STATUS_SUCCESS);
   CHECK_EQ(cairo_surface_write_to_png(surface.get(), filename.c_str()),
-           CAIRO_STATUS_SUCCESS);
+           CAIRO_STATUS_SUCCESS);*/
 }
 
 void WriteVoxels(const string& filename, const Voxels& voxels) {

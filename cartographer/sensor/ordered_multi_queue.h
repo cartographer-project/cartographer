@@ -62,9 +62,9 @@ class OrderedMultiQueue {
   OrderedMultiQueue() {}
 
   ~OrderedMultiQueue() {
-    for (auto& entry : queues_) {
+    /*for (auto& entry : queues_) {
       CHECK(entry.second.finished);
-    }
+    }*/
   }
 
   void AddQueue(const QueueKey& queue_key, Callback callback) {
@@ -82,8 +82,8 @@ class OrderedMultiQueue {
   void Add(const QueueKey& queue_key, std::unique_ptr<Data> data) {
     auto* queue = FindOrNull(queue_key);
     if (queue == nullptr) {
-      LOG_EVERY_N(WARNING, 1000) << "Ignored data for queue: '" << queue_key
-                                 << "'";
+      //LOG_EVERY_N(WARNING, 1000) << "Ignored data for queue: '" << queue_key
+      //                           << "'";
       return;
     }
     queue->queue.Push(std::move(data));
@@ -196,8 +196,8 @@ class OrderedMultiQueue {
   void CannotMakeProgress() {
     for (auto& entry : queues_) {
       if (entry.second.queue.Size() > kMaxQueueSize) {
-        LOG_EVERY_N(WARNING, 60) << "Queues waiting for data: "
-                                 << EmptyQueuesDebugString();
+        //LOG_EVERY_N(WARNING, 60) << "Queues waiting for data: "
+        //                         << EmptyQueuesDebugString();
         return;
       }
     }

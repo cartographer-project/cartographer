@@ -261,18 +261,18 @@ void LocalTrajectoryBuilder::AddImuData(
   // cases, it's very likely that 2D SLAM will fail.
   const Eigen::Vector3d gravity_direction =
       imu_tracker_->orientation() * Eigen::Vector3d::UnitZ();
-  const double inclination = std::acos(gravity_direction.z());
-  constexpr double kMaxInclination = common::DegToRad(20.);
-  LOG_IF_EVERY_N(WARNING, inclination > kMaxInclination, 1000)
-      << "Max inclination exceeded: " << common::RadToDeg(inclination) << " > "
-      << common::RadToDeg(kMaxInclination);
+  //const double inclination = std::acos(gravity_direction.z());
+  //constexpr double kMaxInclination = common::DegToRad(20.);
+  //LOG_IF_EVERY_N(WARNING, inclination > kMaxInclination, 1000)
+  //    << "Max inclination exceeded: " << common::RadToDeg(inclination) << " > "
+  //    << common::RadToDeg(kMaxInclination);
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
     const common::Time time, const transform::Rigid3d& odometer_pose) {
   if (imu_tracker_ == nullptr) {
     // Until we've initialized the IMU tracker we do not want to call Predict().
-    LOG(INFO) << "ImuTracker not yet initialized.";
+    //LOG(INFO) << "ImuTracker not yet initialized.";
     return;
   }
 
