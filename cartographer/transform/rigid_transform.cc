@@ -28,16 +28,6 @@ namespace transform {
 
 namespace {
 
-// Converts (roll, pitch, yaw) to a unit length quaternion. Based on the URDF
-// specification http://wiki.ros.org/urdf/XML/joint.
-Eigen::Quaterniond RollPitchYaw(const double roll, const double pitch,
-                                const double yaw) {
-  const Eigen::AngleAxisd pitch_angle(pitch, Eigen::Vector3d::UnitY());
-  const Eigen::AngleAxisd yaw_angle(yaw, Eigen::Vector3d::UnitZ());
-  const Eigen::AngleAxisd roll_angle(roll, Eigen::Vector3d::UnitX());
-  return yaw_angle * pitch_angle * roll_angle;
-}
-
 Eigen::Vector3d TranslationFromDictionary(
     common::LuaParameterDictionary* dictionary) {
   const std::vector<double> translation = dictionary->GetArrayValuesAsDoubles();
@@ -46,6 +36,14 @@ Eigen::Vector3d TranslationFromDictionary(
 }
 
 }  // namespace
+
+Eigen::Quaterniond RollPitchYaw(const double roll, const double pitch,
+                                const double yaw) {
+  const Eigen::AngleAxisd roll_angle(roll, Eigen::Vector3d::UnitX());
+  const Eigen::AngleAxisd pitch_angle(pitch, Eigen::Vector3d::UnitY());
+  const Eigen::AngleAxisd yaw_angle(yaw, Eigen::Vector3d::UnitZ());
+  return yaw_angle * pitch_angle * roll_angle;
+}
 
 transform::Rigid3d FromDictionary(common::LuaParameterDictionary* dictionary) {
   const Eigen::Vector3d translation =
