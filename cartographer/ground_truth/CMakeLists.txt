@@ -12,12 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory("common")
-add_subdirectory("ground_truth")
-add_subdirectory("io")
-add_subdirectory("kalman_filter")
-add_subdirectory("mapping")
-add_subdirectory("mapping_2d")
-add_subdirectory("mapping_3d")
-add_subdirectory("sensor")
-add_subdirectory("transform")
+
+google_binary(cartographer_compute_relations_metrics
+  USES_GFLAGS
+  USES_GLOG
+  SRCS
+    compute_relations_metrics_main.cc
+  DEPENDS
+    common_math
+    common_port
+    mapping_proto_trajectory
+    transform_rigid_transform
+    transform_transform
+    transform_transform_interpolation_buffer
+)
