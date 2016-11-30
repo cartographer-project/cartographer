@@ -58,7 +58,7 @@ google_library(transform_transform_interpolation_buffer
   DEPENDS
     common_make_unique
     common_time
-    proto_trajectory
+    mapping_proto_trajectory
     transform_rigid_transform
     transform_transform
 )

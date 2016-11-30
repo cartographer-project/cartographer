@@ -25,16 +25,16 @@ SPARSE_POSE_GRAPH = {
     min_score = 0.55,
     global_localization_min_score = 0.6,
     lower_covariance_eigenvalue_bound = 1e-11,
-    log_matches = false,
+    log_matches = true,
     fast_correlative_scan_matcher = {
       linear_search_window = 7.,
       angular_search_window = math.rad(30.),
       branch_and_bound_depth = 7,
     },
     ceres_scan_matcher = {
-      occupied_space_cost_functor_weight = 20.,
-      previous_pose_translation_delta_cost_functor_weight = 10.,
-      initial_pose_estimate_rotation_delta_cost_functor_weight = 1.,
+      occupied_space_weight = 20.,
+      translation_weight = 10.,
+      rotation_weight = 1.,
       covariance_scale = 1e-4,
       ceres_solver_options = {
         use_nonmonotonic_steps = true,
@@ -52,9 +52,9 @@ SPARSE_POSE_GRAPH = {
       angular_search_window = math.rad(15.),
     },
     ceres_scan_matcher_3d = {
-      occupied_space_cost_functor_weight_0 = 20.,
-      previous_pose_translation_delta_cost_functor_weight = 10.,
-      initial_pose_estimate_rotation_delta_cost_functor_weight = 1.,
+      occupied_space_weight_0 = 20.,
+      translation_weight = 10.,
+      rotation_weight = 1.,
       covariance_scale = 1e-6,
       only_optimize_yaw = false,
       ceres_solver_options = {
@@ -66,8 +66,8 @@ SPARSE_POSE_GRAPH = {
   },
   optimization_problem = {
     huber_scale = 1e1,
-    acceleration_scale = 7e4,
-    rotation_scale = 3e6,
+    acceleration_weight = 7e4,
+    rotation_weight = 3e6,
     consecutive_scan_translation_penalty_factor = 1e5,
     consecutive_scan_rotation_penalty_factor = 1e5,
     log_solver_summary = false,
@@ -79,5 +79,5 @@ SPARSE_POSE_GRAPH = {
     },
   },
   max_num_final_iterations = 200,
-  global_sampling_ratio = 0.01,
+  global_sampling_ratio = 0.003,
 }

@@ -125,7 +125,7 @@ void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan) {
   }
   ++num_laser_fans_in_last_submap_;
   if (num_laser_fans_in_last_submap_ == options_.num_laser_fans()) {
-    AddSubmap(laser_fan.origin);
+    AddSubmap(laser_fan.origin.head<2>());
   }
 }
 
@@ -140,7 +140,7 @@ int Submaps::size() const { return submaps_.size(); }
 void Submaps::SubmapToProto(
     const int index, const std::vector<mapping::TrajectoryNode>&,
     const transform::Rigid3d&,
-    mapping::proto::SubmapQuery::Response* const response) {
+    mapping::proto::SubmapQuery::Response* const response) const {
   AddProbabilityGridToResponse(Get(index)->local_pose(),
                                Get(index)->probability_grid, response);
 }

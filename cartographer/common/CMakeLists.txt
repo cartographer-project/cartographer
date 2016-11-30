@@ -75,6 +75,11 @@ google_library(common_histogram
     common_port
 )
 
+google_library(common_interval
+  HDRS
+    interval.h
+)
+
 google_library(common_lua
   USES_LUA
   HDRS
@@ -123,15 +128,6 @@ google_library(common_mutex
     common_time
 )
 
-google_library(common_ordered_multi_queue
-  HDRS
-    ordered_multi_queue.h
-  DEPENDS
-    common_blocking_queue
-    common_make_unique
-    common_port
-)
-
 google_library(common_port
   USES_BOOST
   HDRS
@@ -175,6 +171,16 @@ google_test(common_blocking_queue_test
     common_time
 )
 
+google_test(common_configuration_files_test
+  SRCS
+    configuration_files_test.cc
+  DEPENDS
+    common_config
+    common_configuration_file_resolver
+    common_lua_parameter_dictionary
+    mapping_map_builder
+)
+
 google_test(common_fixed_ratio_sampler_test
   SRCS
     fixed_ratio_sampler_test.cc
@@ -196,14 +202,6 @@ google_test(common_math_test
     math_test.cc
   DEPENDS
     common_math
-)
-
-google_test(common_ordered_multi_queue_test
-  SRCS
-    ordered_multi_queue_test.cc
-  DEPENDS
-    common_make_unique
-    common_ordered_multi_queue
 )
 
 google_test(common_rate_timer_test

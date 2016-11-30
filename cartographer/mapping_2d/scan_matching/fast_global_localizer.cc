@@ -28,14 +28,14 @@ bool PerformGlobalLocalization(
     const std::vector<
         cartographer::mapping_2d::scan_matching::FastCorrelativeScanMatcher*>&
         matchers,
-    const cartographer::sensor::PointCloud2D& point_cloud,
+    const cartographer::sensor::PointCloud& point_cloud,
     transform::Rigid2d* const best_pose_estimate, float* const best_score) {
   CHECK(best_pose_estimate != nullptr)
       << "Need a non-null output_pose_estimate!";
   CHECK(best_score != nullptr) << "Need a non-null best_score!";
   *best_score = cutoff;
   transform::Rigid2d pose_estimate;
-  const sensor::PointCloud2D filtered_point_cloud =
+  const sensor::PointCloud filtered_point_cloud =
       voxel_filter.Filter(point_cloud);
   bool success = false;
   if (matchers.size() == 0) {

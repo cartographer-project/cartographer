@@ -25,6 +25,7 @@ sudo apt-get install -y \
     git \
     google-mock \
     libboost-all-dev \
+    libcairo2-dev \
     libeigen3-dev \
     libgflags-dev \
     libgoogle-glog-dev \

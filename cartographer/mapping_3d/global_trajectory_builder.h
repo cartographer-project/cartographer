@@ -38,20 +38,13 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
   const mapping_3d::Submaps* submaps() const override;
-  mapping_3d::Submaps* submaps() override;
-  kalman_filter::PoseTracker* pose_tracker() const override;
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
-  void AddLaserFan3D(common::Time time,
-                     const sensor::LaserFan3D& laser_fan) override;
-  void AddOdometerPose(
-      common::Time time, const transform::Rigid3d& pose,
-      const kalman_filter::PoseCovariance& covariance) override;
+  void AddRangefinderData(common::Time time, const Eigen::Vector3f& origin,
+                          const sensor::PointCloud& ranges) override;
+  void AddOdometerData(common::Time time,
+                       const transform::Rigid3d& pose) override;
   const PoseEstimate& pose_estimate() const override;
-
-  void AddHorizontalLaserFan(common::Time, const sensor::LaserFan3D&) override {
-    LOG(FATAL) << "Not implemented.";
-  }
 
  private:
   mapping_3d::SparsePoseGraph* const sparse_pose_graph_;

@@ -14,9 +14,9 @@
 
 syntax = "proto2";
 
-import "cartographer/transform/proto/transform.proto";
+package cartographer.mapping.proto;
 
-package cartographer.proto;
+import "cartographer/transform/proto/transform.proto";
 
 option java_outer_classname = "TrajectoryOuterClass";
 
@@ -24,12 +24,17 @@ message Trajectory {
   // NEXT_ID: 7
   message Node {
     optional int64 timestamp = 1;
-    // 2D Pose in map frame.
-    optional transform.proto.Rigid2d pose_2d = 2;
     // Transform from tracking to map frame.
     optional transform.proto.Rigid3d pose = 5;
   }
 
+  message Submap {
+    optional transform.proto.Rigid3d pose = 1;
+  }
+
   // Time-ordered sequence of Nodes.
   repeated Node node = 1;
+
+  // Submaps associated with the trajectory.
+  repeated Submap submap = 2;
 }

@@ -34,15 +34,12 @@ message SubmapList {
 message SubmapQuery {
   message Request {
     // Index into 'SubmapList.trajectory(trajectory_id).submap'.
-    optional int32 submap_id = 1;
+    optional int32 submap_index = 1;
     // Index into 'TrajectoryList.trajectory'.
     optional int32 trajectory_id = 2;
   }
 
   message Response {
-    // ID of the Submap.
-    optional int32 submap_id = 1;
-
     // Version of the given submap, higher means newer.
     optional int32 submap_version = 2;
 

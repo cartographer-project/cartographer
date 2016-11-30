@@ -41,6 +41,7 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
 #include "cartographer/kalman_filter/pose_tracker.h"
+#include "cartographer/mapping/proto/scan_matching_progress.pb.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/constraint_builder.h"
@@ -70,8 +71,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // against the 'matching_submap' and the scan was inserted into the
   // 'insertion_submaps'. The index into the vector of trajectory nodes as
   // used with GetTrajectoryNodes() is returned.
-  int AddScan(common::Time time,
-              const sensor::LaserFan3D& laser_fan_in_tracking,
+  int AddScan(common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
               const transform::Rigid3d& pose,
               const kalman_filter::PoseCovariance& pose_covariance,
               const Submaps* submaps, const Submap* matching_submap,
@@ -79,7 +79,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
-  void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
+  void AddImuData(const mapping::Submaps* trajectory, common::Time time,
+                  const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
 
   void RunFinalOptimization() override;
@@ -93,8 +94,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_) override;
   std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
       EXCLUDES(mutex_);
-  std::vector<Constraint2D> constraints_2d() override;
-  std::vector<Constraint3D> constraints_3d() override;
+  std::vector<Constraint> constraints() override;
 
  private:
   struct SubmapState {
@@ -130,11 +130,14 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds constraints for a scan, and starts scan matching in the background.
   void ComputeConstraintsForScan(
-      common::Time time, int scan_index, const Submaps* scan_trajectory,
-      const Submap* matching_submap,
+      common::Time time, int scan_index, const Submap* matching_submap,
       std::vector<const Submap*> insertion_submaps,
       const Submap* finished_submap, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) REQUIRES(mutex_);
+
+  // Computes constraints for a scan and submap pair.
+  void ComputeConstraint(const int scan_index, const int submap_index)
+      REQUIRES(mutex_);
 
   // Adds constraints for older scans whenever a new submap is finished.
   void ComputeConstraintsForOldScans(const Submap* submap) REQUIRES(mutex_);
@@ -168,7 +171,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   mapping::TrajectoryConnectivity trajectory_connectivity_ GUARDED_BY(mutex_);
 
   // We globally localize a fraction of the scans from each trajectory.
-  std::unordered_map<const Submaps*, std::unique_ptr<common::FixedRatioSampler>>
+  std::unordered_map<const mapping::Submaps*,
+                     std::unique_ptr<common::FixedRatioSampler>>
       global_localization_samplers_ GUARDED_BY(mutex_);
 
   // Number of scans added since last loop closure.
@@ -180,7 +184,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Current optimization problem.
   sparse_pose_graph::OptimizationProblem optimization_problem_;
   sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
-  std::vector<Constraint3D> constraints_;
+  std::vector<Constraint> constraints_;
   std::vector<transform::Rigid3d> submap_transforms_;  // (map <- submap)
 
   // Submaps get assigned an index and state as soon as they are seen, even

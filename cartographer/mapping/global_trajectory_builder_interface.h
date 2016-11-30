@@ -22,8 +22,8 @@
 #include <string>
 
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/submaps.h"
+#include "cartographer/mapping/trajectory_builder.h"
 #include "cartographer/sensor/laser.h"
 #include "cartographer/sensor/point_cloud.h"
 
@@ -36,34 +36,7 @@ namespace mapping {
 // optimized pose estimates.
 class GlobalTrajectoryBuilderInterface {
  public:
-  // Represents a newly computed pose. Each of the following steps in the pose
-  // estimation pipeline are provided for debugging:
-  //
-  // 1. UKF prediction
-  // 2. Absolute pose observation (e.g. from scan matching)
-  // 3. UKF estimate after integrating any measurements
-  //
-  // Finally, 'pose' is the end-user visualization of orientation and
-  // 'point_cloud' is the point cloud, in the local map frame.
-  struct PoseEstimate {
-    PoseEstimate() = default;
-    PoseEstimate(common::Time time,
-                 const kalman_filter::PoseAndCovariance& prediction,
-                 const kalman_filter::PoseAndCovariance& observation,
-                 const kalman_filter::PoseAndCovariance& estimate,
-                 const transform::Rigid3d& pose,
-                 const sensor::PointCloud& point_cloud);
-
-    common::Time time = common::Time::min();
-    kalman_filter::PoseAndCovariance prediction = {
-        transform::Rigid3d::Identity(), kalman_filter::PoseCovariance::Zero()};
-    kalman_filter::PoseAndCovariance observation = {
-        transform::Rigid3d::Identity(), kalman_filter::PoseCovariance::Zero()};
-    kalman_filter::PoseAndCovariance estimate = {
-        transform::Rigid3d::Identity(), kalman_filter::PoseCovariance::Zero()};
-    transform::Rigid3d pose = transform::Rigid3d::Identity();
-    sensor::PointCloud point_cloud;
-  };
+  using PoseEstimate = TrajectoryBuilder::PoseEstimate;
 
   GlobalTrajectoryBuilderInterface() {}
   virtual ~GlobalTrajectoryBuilderInterface() {}
@@ -74,20 +47,16 @@ class GlobalTrajectoryBuilderInterface {
       const GlobalTrajectoryBuilderInterface&) = delete;
 
   virtual const Submaps* submaps() const = 0;
-  virtual Submaps* submaps() = 0;
-  virtual kalman_filter::PoseTracker* pose_tracker() const = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
-  virtual void AddHorizontalLaserFan(common::Time,
-                                     const sensor::LaserFan3D& laser_fan) = 0;
+  virtual void AddRangefinderData(common::Time time,
+                                  const Eigen::Vector3f& origin,
+                                  const sensor::PointCloud& ranges) = 0;
   virtual void AddImuData(common::Time time,
                           const Eigen::Vector3d& linear_acceleration,
                           const Eigen::Vector3d& angular_velocity) = 0;
-  virtual void AddLaserFan3D(common::Time time,
-                             const sensor::LaserFan3D& laser_fan) = 0;
-  virtual void AddOdometerPose(
-      common::Time time, const transform::Rigid3d& pose,
-      const kalman_filter::PoseCovariance& covariance) = 0;
+  virtual void AddOdometerData(common::Time time,
+                               const transform::Rigid3d& pose) = 0;
 };
 
 }  // namespace mapping

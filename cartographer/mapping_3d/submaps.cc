@@ -20,7 +20,6 @@
 #include <limits>
 
 #include "cartographer/common/math.h"
-#include "cartographer/common/port.h"
 #include "cartographer/sensor/laser.h"
 #include "glog/logging.h"
 
@@ -39,16 +38,17 @@ struct LaserSegment {
 
 // We compute a slice around the xy-plane. 'transform' is applied to the laser
 // rays in global map frame to allow choosing an arbitrary slice.
-void GenerateSegmentForSlice(const sensor::LaserFan3D& laser_fan_3d,
+void GenerateSegmentForSlice(const sensor::LaserFan& laser_fan,
                              const transform::Rigid3f& pose,
                              const transform::Rigid3f& transform,
                              std::vector<LaserSegment>* segments) {
-  const sensor::LaserFan3D laser_fan =
-      sensor::TransformLaserFan3D(laser_fan_3d, transform * pose);
-  segments->reserve(laser_fan.returns.size());
-  for (const Eigen::Vector3f& hit : laser_fan.returns) {
-    const Eigen::Vector2f laser_origin_xy = laser_fan.origin.head<2>();
-    const float laser_origin_z = laser_fan.origin.z();
+  const sensor::LaserFan transformed_laser_fan =
+      sensor::TransformLaserFan(laser_fan, transform * pose);
+  segments->reserve(transformed_laser_fan.returns.size());
+  for (const Eigen::Vector3f& hit : transformed_laser_fan.returns) {
+    const Eigen::Vector2f laser_origin_xy =
+        transformed_laser_fan.origin.head<2>();
+    const float laser_origin_z = transformed_laser_fan.origin.z();
     const float delta_z = hit.z() - laser_origin_z;
     const Eigen::Vector2f delta_xy = hit.head<2>() - laser_origin_xy;
     if (laser_origin_z < -kSliceHalfHeight) {
@@ -178,15 +178,29 @@ void InsertSegmentsIntoProbabilityGrid(
   }
 }
 
+// Filters 'laser_fan', retaining only the returns that have no more than
+// 'max_range' distance from the laser origin. Removes misses and reflectivity
+// information.
+sensor::LaserFan FilterLaserFanByMaxRange(const sensor::LaserFan& laser_fan,
+                                          const float max_range) {
+  sensor::LaserFan result{laser_fan.origin, {}, {}, {}};
+  for (const Eigen::Vector3f& return_ : laser_fan.returns) {
+    if ((return_ - laser_fan.origin).norm() <= max_range) {
+      result.returns.push_back(return_);
+    }
+  }
+  return result;
+}
+
 }  // namespace
 
 void InsertIntoProbabilityGrid(
-    const sensor::LaserFan3D& laser_fan_3d, const transform::Rigid3f& pose,
+    const sensor::LaserFan& laser_fan, const transform::Rigid3f& pose,
     const float slice_z, const mapping_2d::LaserFanInserter& laser_fan_inserter,
     mapping_2d::ProbabilityGrid* result) {
   std::vector<LaserSegment> segments;
   GenerateSegmentForSlice(
-      laser_fan_3d, pose,
+      laser_fan, pose,
       transform::Rigid3f::Translation(-slice_z * Eigen::Vector3f::UnitZ()),
       &segments);
   InsertSegmentsIntoProbabilityGrid(segments, laser_fan_inserter.hit_table(),
@@ -234,7 +248,7 @@ int Submaps::size() const { return submaps_.size(); }
 void Submaps::SubmapToProto(
     int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
     const transform::Rigid3d& global_submap_pose,
-    mapping::proto::SubmapQuery::Response* const response) {
+    mapping::proto::SubmapQuery::Response* const response) const {
   // Generate an X-ray view through the 'hybrid_grid', aligned to the xy-plane
   // in the global map frame.
   const HybridGrid& hybrid_grid = Get(index)->high_resolution_hybrid_grid;
@@ -243,20 +257,22 @@ void Submaps::SubmapToProto(
   // Compute a bounding box for the texture.
   Eigen::Array2i min_index(INT_MAX, INT_MAX);
   Eigen::Array2i max_index(INT_MIN, INT_MIN);
-  ExtractVoxelData(
-      hybrid_grid,
-      (global_submap_pose * Get(index)->local_pose().inverse()).cast<float>(),
-      &min_index, &max_index);
+  const std::vector<Eigen::Array4i> voxel_indices_and_probabilities =
+      ExtractVoxelData(hybrid_grid,
+                       (global_submap_pose * Get(index)->local_pose().inverse())
+                           .cast<float>(),
+                       &min_index, &max_index);
 
   const int width = max_index.y() - min_index.y() + 1;
   const int height = max_index.x() - min_index.x() + 1;
   response->set_width(width);
   response->set_height(height);
 
-  AccumulatePixelData(width, height, min_index, max_index);
-  ComputePixelValues(width, height);
+  const std::vector<PixelData> accumulated_pixel_data = AccumulatePixelData(
+      width, height, min_index, max_index, voxel_indices_and_probabilities);
+  const string cell_data = ComputePixelValues(accumulated_pixel_data);
 
-  common::FastGzipString(celldata_, response->mutable_cells());
+  common::FastGzipString(cell_data, response->mutable_cells());
   *response->mutable_slice_pose() =
       transform::ToProto(global_submap_pose.inverse() *
                          transform::Rigid3d::Translation(Eigen::Vector3d(
@@ -265,14 +281,14 @@ void Submaps::SubmapToProto(
                              global_submap_pose.translation().z())));
 }
 
-void Submaps::InsertLaserFan(const sensor::LaserFan3D& laser_fan) {
+void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan) {
   CHECK_LT(num_laser_fans_, std::numeric_limits<int>::max());
   ++num_laser_fans_;
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
     laser_fan_inserter_.Insert(
-        sensor::FilterLaserFanByMaxRange(laser_fan,
-                                         options_.high_resolution_max_range()),
+        FilterLaserFanByMaxRange(laser_fan,
+                                 options_.high_resolution_max_range()),
         &submap->high_resolution_hybrid_grid);
     laser_fan_inserter_.Insert(laser_fan, &submap->low_resolution_hybrid_grid);
     submap->end_laser_fan_index = num_laser_fans_;
@@ -314,13 +330,13 @@ void Submaps::AddSubmap(const Eigen::Vector3f& origin) {
   num_laser_fans_in_last_submap_ = 0;
 }
 
-void Submaps::AccumulatePixelData(const int width, const int height,
-                                  const Eigen::Array2i& min_index,
-                                  const Eigen::Array2i& max_index) {
-  accumulated_pixel_data_.clear();
-  accumulated_pixel_data_.resize(width * height);
+std::vector<Submaps::PixelData> Submaps::AccumulatePixelData(
+    const int width, const int height, const Eigen::Array2i& min_index,
+    const Eigen::Array2i& max_index,
+    const std::vector<Eigen::Array4i>& voxel_indices_and_probabilities) const {
+  std::vector<PixelData> accumulated_pixel_data(width * height);
   for (const Eigen::Array4i& voxel_index_and_probability :
-       voxel_indices_and_probabilities_) {
+       voxel_indices_and_probabilities) {
     const Eigen::Array2i pixel_index = voxel_index_and_probability.head<2>();
     if ((pixel_index < min_index).any() || (pixel_index > max_index).any()) {
       // Out of bounds. This could happen because of floating point inaccuracy.
@@ -328,7 +344,7 @@ void Submaps::AccumulatePixelData(const int width, const int height,
     }
     const int x = max_index.x() - pixel_index[0];
     const int y = max_index.y() - pixel_index[1];
-    PixelData& pixel = accumulated_pixel_data_[x * width + y];
+    PixelData& pixel = accumulated_pixel_data[x * width + y];
     ++pixel.count;
     pixel.min_z = std::min(pixel.min_z, voxel_index_and_probability[2]);
     pixel.max_z = std::max(pixel.max_z, voxel_index_and_probability[2]);
@@ -337,13 +353,13 @@ void Submaps::AccumulatePixelData(const int width, const int height,
     pixel.probability_sum += probability;
     pixel.max_probability = std::max(pixel.max_probability, probability);
   }
+  return accumulated_pixel_data;
 }
 
-void Submaps::ExtractVoxelData(const HybridGrid& hybrid_grid,
-                               const transform::Rigid3f& transform,
-                               Eigen::Array2i* min_index,
-                               Eigen::Array2i* max_index) {
-  voxel_indices_and_probabilities_.clear();
+std::vector<Eigen::Array4i> Submaps::ExtractVoxelData(
+    const HybridGrid& hybrid_grid, const transform::Rigid3f& transform,
+    Eigen::Array2i* min_index, Eigen::Array2i* max_index) const {
+  std::vector<Eigen::Array4i> voxel_indices_and_probabilities;
   const float resolution_inverse = 1. / hybrid_grid.resolution();
 
   constexpr double kXrayObstructedCellProbabilityLimit = 0.501;
@@ -364,29 +380,28 @@ void Submaps::ExtractVoxelData(const HybridGrid& hybrid_grid,
         common::RoundToInt(cell_center_global.z() * resolution_inverse),
         probability_value);
 
-    voxel_indices_and_probabilities_.push_back(voxel_index_and_probability);
+    voxel_indices_and_probabilities.push_back(voxel_index_and_probability);
     const Eigen::Array2i pixel_index = voxel_index_and_probability.head<2>();
     *min_index = min_index->cwiseMin(pixel_index);
     *max_index = max_index->cwiseMax(pixel_index);
   }
+  return voxel_indices_and_probabilities;
 }
 
-void Submaps::ComputePixelValues(const int width, const int height) {
-  celldata_.resize(2 * width * height);
+string Submaps::ComputePixelValues(
+    const std::vector<Submaps::PixelData>& accumulated_pixel_data) const {
+  string cell_data;
+  cell_data.reserve(2 * accumulated_pixel_data.size());
   constexpr float kMinZDifference = 3.f;
   constexpr float kFreeSpaceWeight = 0.15f;
-  auto it = celldata_.begin();
-  for (size_t i = 0; i < accumulated_pixel_data_.size(); ++i) {
-    const PixelData& pixel = accumulated_pixel_data_.at(i);
+  for (const PixelData& pixel : accumulated_pixel_data) {
     // TODO(whess): Take into account submap rotation.
     // TODO(whess): Document the approach and make it more independent from the
     // chosen resolution.
     const float z_difference = pixel.count > 0 ? pixel.max_z - pixel.min_z : 0;
     if (z_difference < kMinZDifference) {
-      *it = 0;  // value
-      ++it;
-      *it = 0;  // alpha
-      ++it;
+      cell_data.push_back(0);  // value
+      cell_data.push_back(0);  // alpha
       continue;
     }
     const float free_space = std::max(z_difference - pixel.count, 0.f);
@@ -400,11 +415,10 @@ void Submaps::ComputePixelValues(const int width, const int height) {
         128 - mapping::ProbabilityToLogOddsInteger(average_probability);
     const uint8 alpha = delta > 0 ? 0 : -delta;
     const uint8 value = delta > 0 ? delta : 0;
-    *it = value;  // value
-    ++it;
-    *it = (value || alpha) ? alpha : 1;  // alpha
-    ++it;
+    cell_data.push_back(value);                         // value
+    cell_data.push_back((value || alpha) ? alpha : 1);  // alpha
   }
+  return cell_data;
 }
 
 }  // namespace mapping_3d

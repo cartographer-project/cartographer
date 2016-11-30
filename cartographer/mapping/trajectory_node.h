@@ -22,6 +22,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/proto/trajectory.pb.h"
 #include "cartographer/sensor/laser.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -35,10 +36,10 @@ struct TrajectoryNode {
     common::Time time;
 
     // LaserFan in 'pose' frame. Only used in the 2D case.
-    sensor::LaserFan laser_fan;
+    sensor::LaserFan laser_fan_2d;
 
     // LaserFan in 'pose' frame. Only used in the 3D case.
-    sensor::CompressedLaserFan3D laser_fan_3d;
+    sensor::CompressedLaserFan laser_fan_3d;
 
     // Trajectory this node belongs to.
     // TODO(jmason): The naming here is confusing because 'trajectory' doesn't
@@ -65,6 +66,8 @@ struct TrajectoryNodes {
   std::deque<mapping::TrajectoryNode::ConstantData> constant_data;
   std::vector<mapping::TrajectoryNode> trajectory_nodes;
 };
+
+proto::Trajectory ToProto(const std::vector<TrajectoryNode>& nodes);
 
 }  // namespace mapping
 }  // namespace cartographer

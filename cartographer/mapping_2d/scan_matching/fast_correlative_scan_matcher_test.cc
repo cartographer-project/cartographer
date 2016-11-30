@@ -133,13 +133,13 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
   constexpr float kMinScore = 0.1f;
   const auto options = CreateFastCorrelativeScanMatcherTestOptions(3);
 
-  sensor::PointCloud2D point_cloud;
-  point_cloud.emplace_back(-2.5f, 0.5f);
-  point_cloud.emplace_back(-2.f, 0.5f);
-  point_cloud.emplace_back(0.f, -0.5f);
-  point_cloud.emplace_back(0.5f, -1.6f);
-  point_cloud.emplace_back(2.5f, 0.5f);
-  point_cloud.emplace_back(2.5f, 1.7f);
+  sensor::PointCloud point_cloud;
+  point_cloud.emplace_back(-2.5f, 0.5f, 0.f);
+  point_cloud.emplace_back(-2.f, 0.5f, 0.f);
+  point_cloud.emplace_back(0.f, -0.5f, 0.f);
+  point_cloud.emplace_back(0.5f, -1.6f, 0.f);
+  point_cloud.emplace_back(2.5f, 0.5f, 0.f);
+  point_cloud.emplace_back(2.5f, 1.7f, 0.f);
 
   for (int i = 0; i != 50; ++i) {
     const transform::Rigid2f expected_pose(
@@ -149,11 +149,14 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
     ProbabilityGrid probability_grid(
         MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
     probability_grid.StartUpdate();
-    laser_fan_inserter.Insert(sensor::LaserFan{expected_pose.translation(),
-                                               sensor::TransformPointCloud2D(
-                                                   point_cloud, expected_pose),
-                                               {}},
-                              &probability_grid);
+    laser_fan_inserter.Insert(
+        sensor::LaserFan{
+            Eigen::Vector3f(expected_pose.translation().x(),
+                            expected_pose.translation().y(), 0.f),
+            sensor::TransformPointCloud(
+                point_cloud, transform::Embed3D(expected_pose.cast<float>())),
+            {}},
+        &probability_grid);
 
     FastCorrelativeScanMatcher fast_correlative_scan_matcher(probability_grid,
                                                              options);
@@ -177,20 +180,20 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
   constexpr float kMinScore = 0.1f;
   const auto options = CreateFastCorrelativeScanMatcherTestOptions(6);
 
-  sensor::PointCloud2D unperturbed_point_cloud;
-  unperturbed_point_cloud.emplace_back(-2.5, 0.5);
-  unperturbed_point_cloud.emplace_back(-2.25, 0.5);
-  unperturbed_point_cloud.emplace_back(0., 0.5);
-  unperturbed_point_cloud.emplace_back(0.25, 1.6);
-  unperturbed_point_cloud.emplace_back(2.5, 0.5);
-  unperturbed_point_cloud.emplace_back(2.0, 1.8);
+  sensor::PointCloud unperturbed_point_cloud;
+  unperturbed_point_cloud.emplace_back(-2.5f, 0.5f, 0.f);
+  unperturbed_point_cloud.emplace_back(-2.25f, 0.5f, 0.f);
+  unperturbed_point_cloud.emplace_back(0.f, 0.5f, 0.f);
+  unperturbed_point_cloud.emplace_back(0.25f, 1.6f, 0.f);
+  unperturbed_point_cloud.emplace_back(2.5f, 0.5f, 0.f);
+  unperturbed_point_cloud.emplace_back(2.0f, 1.8f, 0.f);
 
   for (int i = 0; i != 20; ++i) {
     const transform::Rigid2f perturbation(
         {10. * distribution(prng), 10. * distribution(prng)},
         1.6 * distribution(prng));
-    const sensor::PointCloud2D point_cloud =
-        sensor::TransformPointCloud2D(unperturbed_point_cloud, perturbation);
+    const sensor::PointCloud point_cloud = sensor::TransformPointCloud(
+        unperturbed_point_cloud, transform::Embed3D(perturbation));
     const transform::Rigid2f expected_pose =
         transform::Rigid2f({2. * distribution(prng), 2. * distribution(prng)},
                            0.5 * distribution(prng)) *
@@ -201,8 +204,9 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
     probability_grid.StartUpdate();
     laser_fan_inserter.Insert(
         sensor::LaserFan{
-            (expected_pose * perturbation).translation(),
-            sensor::TransformPointCloud2D(point_cloud, expected_pose),
+            transform::Embed3D(expected_pose * perturbation).translation(),
+            sensor::TransformPointCloud(point_cloud,
+                                        transform::Embed3D(expected_pose)),
             {}},
         &probability_grid);
 

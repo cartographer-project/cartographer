@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "cartographer/common/time.h"
-#include "cartographer/proto/trajectory.pb.h"
+#include "cartographer/mapping/proto/trajectory.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -31,7 +31,7 @@ namespace transform {
 class TransformInterpolationBuffer {
  public:
   static std::unique_ptr<TransformInterpolationBuffer> FromTrajectory(
-      const cartographer::proto::Trajectory& trajectory);
+      const mapping::proto::Trajectory& trajectory);
 
   // Adds a new transform to the buffer and removes the oldest transform if the
   // buffer size limit is exceeded.

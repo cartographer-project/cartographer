@@ -37,6 +37,7 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/fixed_ratio_sampler.h"
+#include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
 #include "cartographer/kalman_filter/pose_tracker.h"
@@ -47,6 +48,7 @@
 #include "cartographer/mapping_2d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_2d/submaps.h"
 #include "cartographer/sensor/point_cloud.h"
+#include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
@@ -81,7 +83,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   void RunFinalOptimization() override;
   bool HasNewOptimizedPoses() override;
   mapping::proto::ScanMatchingProgress GetScanMatchingProgress() override;
-
   std::vector<std::vector<const mapping::Submaps*>> GetConnectedTrajectories()
       override;
   std::vector<transform::Rigid3d> GetSubmapTransforms(
@@ -90,8 +91,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_) override;
   std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
       EXCLUDES(mutex_);
-  std::vector<Constraint2D> constraints_2d() override;
-  std::vector<Constraint3D> constraints_3d() override;
+  std::vector<Constraint> constraints() override;
 
  private:
   struct SubmapState {
@@ -112,6 +112,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
     const mapping::Submaps* trajectory = nullptr;
   };
 
+  // Handles a new work item.
+  void AddWorkItem(std::function<void()> work_item) REQUIRES(mutex_);
+
   int GetSubmapIndex(const mapping::Submap* submap) const REQUIRES(mutex_) {
     const auto iterator = submap_indices_.find(submap);
     CHECK(iterator != submap_indices_.end());
@@ -124,11 +127,14 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds constraints for a scan, and starts scan matching in the background.
   void ComputeConstraintsForScan(
-      int scan_index, const mapping::Submaps* scan_trajectory,
-      const mapping::Submap* matching_submap,
+      int scan_index, const mapping::Submap* matching_submap,
       std::vector<const mapping::Submap*> insertion_submaps,
       const mapping::Submap* finished_submap, const transform::Rigid2d& pose,
       const kalman_filter::Pose2DCovariance& covariance) REQUIRES(mutex_);
+
+  // Computes constraints for a scan and submap pair.
+  void ComputeConstraint(const int scan_index, const int submap_index)
+      REQUIRES(mutex_);
 
   // Adds constraints for older scans whenever a new submap is finished.
   void ComputeConstraintsForOldScans(const mapping::Submap* submap)
@@ -145,9 +151,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Runs the optimization. Callers have to make sure, that there is only one
   // optimization being run at a time.
   void RunOptimization() EXCLUDES(mutex_);
-
-  // Handles a new 'work_item'.
-  void AddWorkItem(std::function<void()> work_item) REQUIRES(mutex_);
 
   // Adds extrapolated transforms, so that there are transforms for all submaps.
   std::vector<transform::Rigid3d> ExtrapolateSubmapTransforms(
@@ -179,7 +182,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Current optimization problem.
   sparse_pose_graph::OptimizationProblem optimization_problem_;
   sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
-  std::vector<Constraint2D> constraints_;
+  std::vector<Constraint> constraints_;
   std::vector<transform::Rigid2d> initial_point_cloud_poses_;
   std::vector<transform::Rigid2d> point_cloud_poses_;  // (map <- point cloud)
   std::vector<transform::Rigid2d> submap_transforms_;  // (map <- submap)

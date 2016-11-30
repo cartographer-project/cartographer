@@ -24,9 +24,9 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
-#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/mapping_3d/imu_integration.h"
 #include "cartographer/mapping_3d/submaps.h"
@@ -36,15 +36,16 @@ namespace mapping_3d {
 namespace sparse_pose_graph {
 
 struct NodeData {
+  // TODO(whess): Keep nodes per trajectory instead.
+  const mapping::Submaps* trajectory;
   common::Time time;
-  transform::Rigid3d initial_point_cloud_pose;
   transform::Rigid3d point_cloud_pose;
 };
 
 // Implements the SPA loop closure method.
 class OptimizationProblem {
  public:
-  using Constraint = mapping::SparsePoseGraph::Constraint3D;
+  using Constraint = mapping::SparsePoseGraph::Constraint;
 
   explicit OptimizationProblem(
       const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
@@ -54,55 +55,24 @@ class OptimizationProblem {
   OptimizationProblem(const OptimizationProblem&) = delete;
   OptimizationProblem& operator=(const OptimizationProblem&) = delete;
 
-  void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
+  void AddImuData(const mapping::Submaps* trajectory, common::Time time,
+                  const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
-  void AddTrajectoryNode(common::Time time,
-                         const transform::Rigid3d& initial_point_cloud_pose,
+  void AddTrajectoryNode(const mapping::Submaps* trajectory, common::Time time,
                          const transform::Rigid3d& point_cloud_pose);
 
   void SetMaxNumIterations(int32 max_num_iterations);
 
-  // Computes the optimized poses. The point cloud at 'point_cloud_poses[i]'
-  // belongs to 'trajectories[i]'. Within a given trajectory, scans are expected
-  // to be contiguous.
+  // Computes the optimized poses.
   void Solve(const std::vector<Constraint>& constraints,
              const transform::Rigid3d& submap_0_transform,
-             const std::vector<const mapping::Submaps*>& trajectories,
              std::vector<transform::Rigid3d>* submap_transforms);
 
   const std::vector<NodeData>& node_data() const;
 
  private:
-  class SpaCostFunction {
-   public:
-    explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
-
-    // Compute the error (linear offset and rotational error) without scaling
-    // it by the covariance.
-    template <typename T>
-    static std::array<T, 6> ComputeUnscaledError(
-        const transform::Rigid3d& zbar_ij, const T* const c_i_rotation,
-        const T* const c_i_translation, const T* const c_j_rotation,
-        const T* const c_j_translation);
-
-    // Computes the error scaled by 'sqrt_Lambda_ij', storing it in 'e'.
-    template <typename T>
-    static void ComputeScaledError(const Constraint::Pose& pose,
-                                   const T* const c_i_rotation,
-                                   const T* const c_i_translation,
-                                   const T* const c_j_rotation,
-                                   const T* const c_j_translation, T* const e);
-    template <typename T>
-    bool operator()(const T* const c_i_rotation, const T* const c_i_translation,
-                    const T* const c_j_rotation, const T* const c_j_translation,
-                    T* const e) const;
-
-   private:
-    const Constraint::Pose pose_;
-  };
-
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
-  std::deque<ImuData> imu_data_;
+  std::map<const mapping::Submaps*, std::deque<ImuData>> imu_data_;
   std::vector<NodeData> node_data_;
   double gravity_constant_ = 9.8;
 };

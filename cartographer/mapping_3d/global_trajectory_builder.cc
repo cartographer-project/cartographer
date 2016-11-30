@@ -33,26 +33,20 @@ const mapping_3d::Submaps* GlobalTrajectoryBuilder::submaps() const {
   return local_trajectory_builder_->submaps();
 }
 
-mapping_3d::Submaps* GlobalTrajectoryBuilder::submaps() {
-  return local_trajectory_builder_->submaps();
-}
-
-kalman_filter::PoseTracker* GlobalTrajectoryBuilder::pose_tracker() const {
-  return local_trajectory_builder_->pose_tracker();
-}
-
 void GlobalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
     const Eigen::Vector3d& angular_velocity) {
   local_trajectory_builder_->AddImuData(time, linear_acceleration,
                                         angular_velocity);
-  sparse_pose_graph_->AddImuData(time, linear_acceleration, angular_velocity);
+  sparse_pose_graph_->AddImuData(local_trajectory_builder_->submaps(), time,
+                                 linear_acceleration, angular_velocity);
 }
 
-void GlobalTrajectoryBuilder::AddLaserFan3D(
-    const common::Time time, const sensor::LaserFan3D& laser_fan) {
+void GlobalTrajectoryBuilder::AddRangefinderData(
+    const common::Time time, const Eigen::Vector3f& origin,
+    const sensor::PointCloud& ranges) {
   auto insertion_result =
-      local_trajectory_builder_->AddLaserFan3D(time, laser_fan);
+      local_trajectory_builder_->AddRangefinderData(time, origin, ranges);
 
   if (insertion_result == nullptr) {
     return;
@@ -66,10 +60,9 @@ void GlobalTrajectoryBuilder::AddLaserFan3D(
   local_trajectory_builder_->AddTrajectoryNodeIndex(trajectory_node_index);
 }
 
-void GlobalTrajectoryBuilder::AddOdometerPose(
-    const common::Time time, const transform::Rigid3d& pose,
-    const kalman_filter::PoseCovariance& covariance) {
-  local_trajectory_builder_->AddOdometerPose(time, pose, covariance);
+void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
+                                              const transform::Rigid3d& pose) {
+  local_trajectory_builder_->AddOdometerData(time, pose);
 }
 
 const GlobalTrajectoryBuilder::PoseEstimate&

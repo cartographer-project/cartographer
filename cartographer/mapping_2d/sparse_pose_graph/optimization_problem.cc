@@ -26,6 +26,7 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
+#include "cartographer/mapping_2d/sparse_pose_graph/spa_cost_function.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
 #include "glog/logging.h"
@@ -133,12 +134,17 @@ void OptimizationProblem::Solve(
     // This pose has a predecessor.
     if (last_pose_indices.count(trajectory) != 0) {
       const int last_pose_index = last_pose_indices[trajectory];
+      constexpr double kUnusedPositionPenalty = 1.;
+      constexpr double kUnusedOrientationPenalty = 1.;
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
-                  initial_point_cloud_poses[last_pose_index].inverse() *
-                      initial_point_cloud_poses[j],
-                  consecutive_pose_change_penalty_matrix})),
+                  transform::Embed3D(
+                      initial_point_cloud_poses[last_pose_index].inverse() *
+                      initial_point_cloud_poses[j]),
+                  kalman_filter::Embed3D(consecutive_pose_change_penalty_matrix,
+                                         kUnusedPositionPenalty,
+                                         kUnusedOrientationPenalty)})),
           nullptr /* loss function */, C_point_clouds[last_pose_index].data(),
           C_point_clouds[j].data());
     }

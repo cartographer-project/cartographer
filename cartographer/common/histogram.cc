@@ -26,38 +26,6 @@
 namespace cartographer {
 namespace common {
 
-namespace {
-
-string PaddedTo(string input, int new_length) {
-  CHECK_GE(new_length, input.size());
-  input.insert(input.begin(), new_length - input.size(), ' ');
-  return input;
-}
-
-}  // namespace
-
-void BucketHistogram::Hit(const string& bucket) { ++buckets_[bucket]; }
-
-string BucketHistogram::ToString() const {
-  int64 sum = 0;
-  size_t max_bucket_name_length = 0;
-  for (const auto& pair : buckets_) {
-    sum += pair.second;
-    max_bucket_name_length =
-        std::max(pair.first.size(), max_bucket_name_length);
-  }
-
-  string result;
-  for (const auto& pair : buckets_) {
-    const float percent = 100.f * pair.second / std::max<int64>(1, sum);
-    result += PaddedTo(pair.first, max_bucket_name_length) + ": " +
-              PaddedTo(std::to_string(pair.second), 7) + " (" +
-              std::to_string(percent) + " %)\n";
-  }
-  result += "Total: " + std::to_string(sum);
-  return result;
-}
-
 void Histogram::Add(const float value) { values_.push_back(value); }
 
 string Histogram::ToString(const int buckets) const {

@@ -16,10 +16,11 @@
 # limitations under the License.
 """A dumb CMakeLists.txt generator that relies on source name conventions."""
 
-import os
 from os import path
-import re
 import argparse
+import collections
+import os
+import re
 
 
 def MakeRelative(filename, directory):
@@ -70,7 +71,7 @@ class Target(object):
       lines.append("  DEPENDS")
       lines.extend("    " + s for s in sorted(self.depends))
     lines.append(")")
-    return "\n".join(lines)
+    return "\n".join(lines) + "\n\n"
 
 
 def ExtractProjectIncludes(project_name, source):
@@ -106,12 +107,10 @@ def ExtractUses(project_name, source):
       uses.add("USES_WEBP")
     if re.match(r'^#include ["<]pcl/', line):
       uses.add("USES_PCL")
-    if re.match(r'^#include ["<]ros/', line):
-      uses.add("USES_ROS")
-    if re.match(r'^#include "[a-zA-Z]*_msgs/', line):
-      uses.add("USES_ROS")
     if re.match(r'^#include ["<]yaml-cpp/', line):
       uses.add("USES_YAMLCPP")
+    if re.match(r'^#include ["<]cairo/', line):
+      uses.add("USES_CAIRO")
     if project_name != "cartographer":
       if re.match(r'^#include ["<]cartographer/', line):
         uses.add("USES_CARTOGRAPHER")
@@ -130,32 +129,56 @@ def FindSourceFiles(basedir):
     yield (directory, sources)
 
 
-def ReadFileWithoutGoogleTargets(filename):
+def GetNonGoogleTargetLines(filename):
+  """Returns text not written by this script.
+
+  Returns a dictionary where keys are target names and values are list of
+  lines that came after this target in the file. It also contains a special key
+  called 'START'
+  for lines that came before any target.
+  """
+  GOOGLE_TARGET = re.compile(r"^google_[a-z_]*\((.*)$")
+  parts = collections.defaultdict(list)
+  current_target = "START"
   if path.exists(filename):
     ignoring = False
     for line in open(filename):
-      if line.startswith("google_"):
+      m = GOOGLE_TARGET.match(line)
+      if m is not None:
+        current_target = m.group(1)
         ignoring = True
-      elif line == ")" and ignoring:
+        continue
+      if line == "\n" and ignoring:
         ignoring = False
-      elif not ignoring:
-        yield line.rstrip()
+        continue
+      if not ignoring:
+        parts[current_target].append(line)
+  return parts
 
 
 def ParseArgs():
   p = argparse.ArgumentParser(
       description="Automatically update cMakeFiles using build conventions.")
-  p.add_argument("root", type=str, help="Source directory.")
-  return p.parse_args()
+  p.add_argument("root", type=str, nargs="*", help="Source directory.")
+
+  args = p.parse_args()
+  return args
 
 
 def main():
   args = ParseArgs()
+
+  for root in args.root:
+    RunOnDirectory(root)
+
+
+def RunOnDirectory(root):
+  root = root.rstrip("/")
   targets_by_src = {}
   targets = []
 
-  project_name = os.path.basename(args.root)
-  base_directory = path.realpath(path.join(args.root, path.pardir))
+  project_name = os.path.basename(root)
+  base_directory = path.realpath(path.join(root, path.pardir))
   directories = set()
 
   def AddTarget(target_type, name, directory, srcs, hdrs):
@@ -171,9 +194,8 @@ def main():
         targets_by_src[proto_stem + ".pb.cc"] = target
     directories.add(directory)
 
-  for (directory, sources) in FindSourceFiles(args.root):
-    module_name = path.relpath(directory,
-                               path.realpath(args.root)).replace("/", "_")
+  for (directory, sources) in FindSourceFiles(root):
+    module_name = path.relpath(directory, path.realpath(root)).replace("/", "_")
 
     prepend_module_name = lambda s: (module_name + "_" + s) if module_name != "." else s
     headers = set(fn for fn in sources if fn.endswith(".h"))
@@ -204,8 +226,8 @@ def main():
     for c in sorted(mains):
       # Binaries do not get their full subpath appended, but we prepend
       # 'cartographer' to distinguish them after installation. So,
-      # 'io/asset_writer_main.cc' will generate a binary called
-      # 'cartographer_asset_writer'.
+      # 'io/assets_writer_main.cc' will generate a binary called
+      # 'cartographer_assets_writer'.
       name = "cartographer_" + path.basename(path.splitext(c)[0][:-5])
       AddTarget("google_binary", name, directory, [c], [])
 
@@ -222,18 +244,32 @@ def main():
             continue
           target.depends.add(dependant.name)
         target.uses.update(ExtractUses(project_name, src))
-      if target.type is "google_test" and "USES_ROS" in target.uses:
-        target.type = "google_catkin_test"
 
     cmake_file = path.join(directory, "CMakeLists.txt")
-    lines = list(ReadFileWithoutGoogleTargets(cmake_file))
+    parts = GetNonGoogleTargetLines(cmake_file)
+
+    sorted_parts = []
+
+    def dump(lines_as_list):
+      lines = "".join(lines_as_list)
+      if not lines:
+        return
+      sorted_parts.append(lines)
+
+    dump(parts["START"])
+    del parts["START"]
+
+    for target in targets_in_directory:
+      dump(target.Format(directory))
+      if target.name in parts:
+        dump(parts[target.name])
+        del parts[target.name]
+
+    for target in sorted(parts.keys()):
+      dump(parts[target])
+
     with open(cmake_file, "w") as outfile:
-      if lines:
-        outfile.write("\n".join(lines))
-        outfile.write("\n")
-      outfile.write("\n\n".join(
-          t.Format(directory) for t in targets_in_directory))
-      outfile.write("\n")
+      outfile.write("".join(sorted_parts).rstrip() + "\n")
 
 
 if __name__ == "__main__":

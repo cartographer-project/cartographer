@@ -25,27 +25,11 @@
 namespace cartographer {
 namespace sensor {
 
-// Builds a LaserFan from 'proto' and separates any beams with ranges outside
-// the range ['min_range', 'max_range']. Beams beyond 'max_range' inserted into
-// the 'missing_echo_point_cloud' with length 'missing_echo_ray_length'. The
-// points in both clouds are stored in scan order.
-struct LaserFan {
-  Eigen::Vector2f origin;
-  PointCloud2D point_cloud;
-  PointCloud2D missing_echo_point_cloud;
-};
-LaserFan ToLaserFan(const proto::LaserScan& proto, float min_range,
-                    float max_range, float missing_echo_ray_length);
-
-// Transforms 'laser_fan' according to 'transform'.
-LaserFan TransformLaserFan(const LaserFan& laser_fan,
-                           const transform::Rigid2f& transform);
-
 // A 3D variant of LaserFan. Rays begin at 'origin'. 'returns' are the points
 // where laser returns were detected. 'misses' are points in the direction of
 // rays for which no return was detected, and were inserted at a configured
 // distance. It is assumed that between the 'origin' and 'misses' is free space.
-struct LaserFan3D {
+struct LaserFan {
   Eigen::Vector3f origin;
   PointCloud returns;
   PointCloud misses;
@@ -54,9 +38,25 @@ struct LaserFan3D {
   std::vector<uint8> reflectivities;
 };
 
-// Like LaserFan3D but with compressed point clouds. The point order changes
-// when converting from LaserFan3D.
-struct CompressedLaserFan3D {
+// Builds a PointCloud of returns from 'proto', dropping any beams with ranges
+// outside the valid range described by 'proto'.
+PointCloud ToPointCloud(const proto::LaserScan& proto);
+
+// Converts 'laser_fan' to a proto::LaserFan.
+proto::LaserFan ToProto(const LaserFan& laser_fan);
+
+// Converts 'proto' to a LaserFan.
+LaserFan FromProto(const proto::LaserFan& proto);
+
+LaserFan TransformLaserFan(const LaserFan& laser_fan,
+                           const transform::Rigid3f& transform);
+
+// Crops 'laser_fan' according to the region defined by 'min_z' and 'max_z'.
+LaserFan CropLaserFan(const LaserFan& laser_fan, float min_z, float max_z);
+
+// Like LaserFan but with compressed point clouds. The point order changes
+// when converting from LaserFan.
+struct CompressedLaserFan {
   Eigen::Vector3f origin;
   CompressedPointCloud returns;
   CompressedPointCloud misses;
@@ -65,32 +65,9 @@ struct CompressedLaserFan3D {
   std::vector<uint8> reflectivities;
 };
 
-LaserFan3D Decompress(const CompressedLaserFan3D& compressed_laser_fan);
+CompressedLaserFan Compress(const LaserFan& laser_fan);
 
-CompressedLaserFan3D Compress(const LaserFan3D& laser_fan);
-
-// Converts 3D 'laser_fan' to a proto::LaserFan3D.
-proto::LaserFan3D ToProto(const LaserFan3D& laser_fan);
-
-// Converts 'proto' to a LaserFan3D.
-LaserFan3D FromProto(const proto::LaserFan3D& proto);
-
-LaserFan3D ToLaserFan3D(const LaserFan& laser_fan);
-
-LaserFan3D TransformLaserFan3D(const LaserFan3D& laser_fan,
-                               const transform::Rigid3f& transform);
-
-// Projects 'laser_fan' into 2D and crops it according to the cuboid defined by
-// 'min' and 'max'.
-LaserFan ProjectCroppedLaserFan(const LaserFan3D& laser_fan,
-                                const Eigen::Vector3f& min,
-                                const Eigen::Vector3f& max);
-
-// Filter a 'laser_fan', retaining only the returns that have no more than
-// 'max_range' distance from the laser origin. Removes misses and reflectivity
-// information.
-LaserFan3D FilterLaserFanByMaxRange(const LaserFan3D& laser_fan,
-                                    float max_range);
+LaserFan Decompress(const CompressedLaserFan& compressed_laser_fan);
 
 }  // namespace sensor
 }  // namespace cartographer

@@ -27,13 +27,6 @@ namespace {
 using ::testing::ContainerEq;
 
 TEST(VoxelFilterTest, ReturnsTheFirstPointInEachVoxel) {
-  PointCloud2D point_cloud = {
-      {0.f, 0.f}, {0.1f, -0.1f}, {0.3f, -0.1f}, {0.f, 0.f}};
-  EXPECT_THAT(VoxelFiltered(point_cloud, 0.3f),
-              ContainerEq(PointCloud2D{point_cloud[0], point_cloud[2]}));
-}
-
-TEST(VoxelFilter3DTest, ReturnsTheFirstPointInEachVoxel) {
   PointCloud point_cloud = {{0.f, 0.f, 0.f},
                             {0.1f, -0.1f, 0.1f},
                             {0.3f, -0.1f, 0.f},

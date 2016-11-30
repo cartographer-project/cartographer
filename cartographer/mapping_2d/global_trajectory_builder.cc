@@ -32,18 +32,12 @@ const Submaps* GlobalTrajectoryBuilder::submaps() const {
   return local_trajectory_builder_.submaps();
 }
 
-Submaps* GlobalTrajectoryBuilder::submaps() {
-  return local_trajectory_builder_.submaps();
-}
-
-kalman_filter::PoseTracker* GlobalTrajectoryBuilder::pose_tracker() const {
-  return local_trajectory_builder_.pose_tracker();
-}
-
-void GlobalTrajectoryBuilder::AddHorizontalLaserFan(
-    const common::Time time, const sensor::LaserFan3D& laser_fan) {
+void GlobalTrajectoryBuilder::AddRangefinderData(
+    const common::Time time, const Eigen::Vector3f& origin,
+    const sensor::PointCloud& ranges) {
   std::unique_ptr<LocalTrajectoryBuilder::InsertionResult> insertion_result =
-      local_trajectory_builder_.AddHorizontalLaserFan(time, laser_fan);
+      local_trajectory_builder_.AddHorizontalLaserFan(
+          time, sensor::LaserFan{origin, ranges, {}, {}});
   if (insertion_result != nullptr) {
     sparse_pose_graph_->AddScan(
         insertion_result->time, insertion_result->tracking_to_tracking_2d,
@@ -62,10 +56,9 @@ void GlobalTrajectoryBuilder::AddImuData(
                                        angular_velocity);
 }
 
-void GlobalTrajectoryBuilder::AddOdometerPose(
-    const common::Time time, const transform::Rigid3d& pose,
-    const kalman_filter::PoseCovariance& covariance) {
-  local_trajectory_builder_.AddOdometerPose(time, pose, covariance);
+void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
+                                              const transform::Rigid3d& pose) {
+  local_trajectory_builder_.AddOdometerData(time, pose);
 }
 
 const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate&

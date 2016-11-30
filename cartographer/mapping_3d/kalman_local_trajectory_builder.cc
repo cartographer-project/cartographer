@@ -46,12 +46,8 @@ KalmanLocalTrajectoryBuilder::KalmanLocalTrajectoryBuilder(
 
 KalmanLocalTrajectoryBuilder::~KalmanLocalTrajectoryBuilder() {}
 
-mapping_3d::Submaps* KalmanLocalTrajectoryBuilder::submaps() {
+const mapping_3d::Submaps* KalmanLocalTrajectoryBuilder::submaps() const {
   return submaps_.get();
-}
-
-kalman_filter::PoseTracker* KalmanLocalTrajectoryBuilder::pose_tracker() const {
-  return pose_tracker_.get();
 }
 
 void KalmanLocalTrajectoryBuilder::AddImuData(
@@ -74,8 +70,9 @@ void KalmanLocalTrajectoryBuilder::AddImuData(
 }
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
-KalmanLocalTrajectoryBuilder::AddLaserFan3D(
-    const common::Time time, const sensor::LaserFan3D& laser_fan) {
+KalmanLocalTrajectoryBuilder::AddRangefinderData(
+    const common::Time time, const Eigen::Vector3f& origin,
+    const sensor::PointCloud& ranges) {
   if (!pose_tracker_) {
     LOG(INFO) << "PoseTracker not yet initialized.";
     return nullptr;
@@ -87,14 +84,14 @@ KalmanLocalTrajectoryBuilder::AddLaserFan3D(
       time, &pose_prediction, &unused_covariance_prediction);
   if (num_accumulated_ == 0) {
     first_pose_prediction_ = pose_prediction.cast<float>();
-    accumulated_laser_fan_ =
-        sensor::LaserFan3D{Eigen::Vector3f::Zero(), {}, {}};
+    accumulated_laser_fan_ = sensor::LaserFan{Eigen::Vector3f::Zero(), {}, {}};
   }
 
   const transform::Rigid3f tracking_delta =
       first_pose_prediction_.inverse() * pose_prediction.cast<float>();
-  const sensor::LaserFan3D laser_fan_in_first_tracking =
-      sensor::TransformLaserFan3D(laser_fan, tracking_delta);
+  const sensor::LaserFan laser_fan_in_first_tracking =
+      sensor::TransformLaserFan(sensor::LaserFan{origin, ranges, {}, {}},
+                                tracking_delta);
   for (const Eigen::Vector3f& laser_return :
        laser_fan_in_first_tracking.returns) {
     const Eigen::Vector3f delta =
@@ -117,17 +114,17 @@ KalmanLocalTrajectoryBuilder::AddLaserFan3D(
 
   if (num_accumulated_ >= options_.scans_per_accumulation()) {
     num_accumulated_ = 0;
-    return AddAccumulatedLaserFan3D(
-        time, sensor::TransformLaserFan3D(accumulated_laser_fan_,
-                                          tracking_delta.inverse()));
+    return AddAccumulatedLaserFan(
+        time, sensor::TransformLaserFan(accumulated_laser_fan_,
+                                        tracking_delta.inverse()));
   }
   return nullptr;
 }
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
-KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan3D(
-    const common::Time time, const sensor::LaserFan3D& laser_fan_in_tracking) {
-  const sensor::LaserFan3D filtered_laser_fan = {
+KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
+    const common::Time time, const sensor::LaserFan& laser_fan_in_tracking) {
+  const sensor::LaserFan filtered_laser_fan = {
       laser_fan_in_tracking.origin,
       sensor::VoxelFiltered(laser_fan_in_tracking.returns,
                             options_.laser_voxel_filter_size()),
@@ -140,9 +137,9 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan3D(
   }
 
   transform::Rigid3d pose_prediction;
-  kalman_filter::PoseCovariance covariance_prediction;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose_prediction,
-                                                  &covariance_prediction);
+  kalman_filter::PoseCovariance unused_covariance_prediction;
+  pose_tracker_->GetPoseEstimateMeanAndCovariance(
+      time, &pose_prediction, &unused_covariance_prediction);
 
   transform::Rigid3d initial_ceres_pose = pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
@@ -179,11 +176,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan3D(
       time, &scan_matcher_pose_estimate_, &covariance_estimate);
 
   last_pose_estimate_ = {
-      time,
-      {pose_prediction, covariance_prediction},
-      {pose_observation, covariance_observation},
-      {scan_matcher_pose_estimate_, covariance_estimate},
-      scan_matcher_pose_estimate_,
+      time, scan_matcher_pose_estimate_,
       sensor::TransformPointCloud(filtered_laser_fan.returns,
                                   pose_observation.cast<float>())};
 
@@ -191,16 +184,20 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan3D(
                           covariance_estimate);
 }
 
-void KalmanLocalTrajectoryBuilder::AddOdometerPose(
-    const common::Time time, const transform::Rigid3d& pose,
-    const kalman_filter::PoseCovariance& covariance) {
+void KalmanLocalTrajectoryBuilder::AddOdometerData(
+    const common::Time time, const transform::Rigid3d& pose) {
   if (!pose_tracker_) {
     pose_tracker_.reset(new kalman_filter::PoseTracker(
         options_.kalman_local_trajectory_builder_options()
             .pose_tracker_options(),
         kalman_filter::PoseTracker::ModelFunction::k3D, time));
   }
-  pose_tracker_->AddOdometerPoseObservation(time, pose, covariance);
+  pose_tracker_->AddOdometerPoseObservation(
+      time, pose, kalman_filter::BuildPoseCovariance(
+                      options_.kalman_local_trajectory_builder_options()
+                          .odometer_translational_variance(),
+                      options_.kalman_local_trajectory_builder_options()
+                          .odometer_rotational_variance()));
 }
 
 const KalmanLocalTrajectoryBuilder::PoseEstimate&
@@ -215,7 +212,7 @@ void KalmanLocalTrajectoryBuilder::AddTrajectoryNodeIndex(
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
 KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
-    const common::Time time, const sensor::LaserFan3D& laser_fan_in_tracking,
+    const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
     const transform::Rigid3d& pose_observation,
     const kalman_filter::PoseCovariance& covariance_estimate) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
@@ -227,7 +224,7 @@ KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
   for (int insertion_index : submaps_->insertion_indices()) {
     insertion_submaps.push_back(submaps_->Get(insertion_index));
   }
-  submaps_->InsertLaserFan(sensor::TransformLaserFan3D(
+  submaps_->InsertLaserFan(sensor::TransformLaserFan(
       laser_fan_in_tracking, pose_observation.cast<float>()));
   return std::unique_ptr<InsertionResult>(new InsertionResult{
       time, laser_fan_in_tracking, pose_observation, covariance_estimate,

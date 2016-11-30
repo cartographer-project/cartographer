@@ -40,13 +40,13 @@ class CeresScanMatcherTest : public ::testing::Test {
         probability_grid_.limits().GetXYIndexOfCellContainingPoint(-3.5, 2.5),
         mapping::kMaxProbability);
 
-    point_cloud_.emplace_back(-3., 2.);
+    point_cloud_.emplace_back(-3.f, 2.f, 0.f);
 
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
-          occupied_space_cost_functor_weight = 1.,
-          previous_pose_translation_delta_cost_functor_weight = 0.1,
-          initial_pose_estimate_rotation_delta_cost_functor_weight = 1.5,
+          occupied_space_weight = 1.,
+          translation_weight = 0.1,
+          rotation_weight = 1.5,
           covariance_scale = 10.,
           ceres_solver_options = {
             use_nonmonotonic_steps = true,
@@ -74,7 +74,7 @@ class CeresScanMatcherTest : public ::testing::Test {
   }
 
   ProbabilityGrid probability_grid_;
-  sensor::PointCloud2D point_cloud_;
+  sensor::PointCloud point_cloud_;
   std::unique_ptr<CeresScanMatcher> ceres_scan_matcher_;
 };
 

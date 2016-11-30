@@ -36,7 +36,7 @@
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/probability_values.h"
-#include "cartographer/mapping/proto/submaps.pb.h"
+#include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "glog/logging.h"
@@ -121,7 +121,7 @@ class Submaps {
   virtual void SubmapToProto(
       int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
       const transform::Rigid3d& global_submap_pose,
-      proto::SubmapQuery::Response* response) = 0;
+      proto::SubmapQuery::Response* response) const = 0;
 
  protected:
   static void AddProbabilityGridToResponse(

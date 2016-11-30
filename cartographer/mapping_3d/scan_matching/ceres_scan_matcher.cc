@@ -56,20 +56,17 @@ proto::CeresScanMatcherOptions CreateCeresScanMatcherOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::CeresScanMatcherOptions options;
   for (int i = 0;; ++i) {
-    const string lua_identifier =
-        "occupied_space_cost_functor_weight_" + std::to_string(i);
+    const string lua_identifier = "occupied_space_weight_" + std::to_string(i);
     if (!parameter_dictionary->HasKey(lua_identifier)) {
       break;
     }
-    options.add_occupied_space_cost_functor_weight(
+    options.add_occupied_space_weight(
         parameter_dictionary->GetDouble(lua_identifier));
   }
-  options.set_previous_pose_translation_delta_cost_functor_weight(
-      parameter_dictionary->GetDouble(
-          "previous_pose_translation_delta_cost_functor_weight"));
-  options.set_initial_pose_estimate_rotation_delta_cost_functor_weight(
-      parameter_dictionary->GetDouble(
-          "initial_pose_estimate_rotation_delta_cost_functor_weight"));
+  options.set_translation_weight(
+      parameter_dictionary->GetDouble("translation_weight"));
+  options.set_rotation_weight(
+      parameter_dictionary->GetDouble("rotation_weight"));
   options.set_covariance_scale(
       parameter_dictionary->GetDouble("covariance_scale"));
   options.set_only_optimize_yaw(
@@ -106,10 +103,10 @@ void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
                 common::make_unique<ceres::QuaternionParameterization>()),
       &problem);
 
-  CHECK_EQ(options_.occupied_space_cost_functor_weight_size(),
+  CHECK_EQ(options_.occupied_space_weight_size(),
            point_clouds_and_hybrid_grids.size());
   for (size_t i = 0; i != point_clouds_and_hybrid_grids.size(); ++i) {
-    CHECK_GT(options_.occupied_space_cost_functor_weight(i), 0.);
+    CHECK_GT(options_.occupied_space_weight(i), 0.);
     const sensor::PointCloud& point_cloud =
         *point_clouds_and_hybrid_grids[i].first;
     const HybridGrid& hybrid_grid = *point_clouds_and_hybrid_grids[i].second;
@@ -117,26 +114,23 @@ void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
         new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunctor,
                                         ceres::DYNAMIC, 3, 4>(
             new OccupiedSpaceCostFunctor(
-                options_.occupied_space_cost_functor_weight(i) /
+                options_.occupied_space_weight(i) /
                     std::sqrt(static_cast<double>(point_cloud.size())),
                 point_cloud, hybrid_grid),
             point_cloud.size()),
         nullptr, ceres_pose.translation(), ceres_pose.rotation());
   }
-  CHECK_GT(options_.previous_pose_translation_delta_cost_functor_weight(), 0.);
+  CHECK_GT(options_.translation_weight(), 0.);
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor, 3, 3>(
-          new TranslationDeltaCostFunctor(
-              options_.previous_pose_translation_delta_cost_functor_weight(),
-              previous_pose)),
+          new TranslationDeltaCostFunctor(options_.translation_weight(),
+                                          previous_pose)),
       nullptr, ceres_pose.translation());
-  CHECK_GT(options_.initial_pose_estimate_rotation_delta_cost_functor_weight(),
-           0.);
+  CHECK_GT(options_.rotation_weight(), 0.);
   problem.AddResidualBlock(
-      new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor, 3,
-                                      4>(new RotationDeltaCostFunctor(
-          options_.initial_pose_estimate_rotation_delta_cost_functor_weight(),
-          initial_pose_estimate.rotation())),
+      new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor, 3, 4>(
+          new RotationDeltaCostFunctor(options_.rotation_weight(),
+                                       initial_pose_estimate.rotation())),
       nullptr, ceres_pose.rotation());
 
   ceres::Solve(ceres_solver_options_, &problem, summary);

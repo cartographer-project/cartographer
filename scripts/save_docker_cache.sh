@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright 2016 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-google_proto_library(proto_trajectory
-  SRCS
-    trajectory.proto
-  DEPENDS
-    transform_proto_transform
-)
+# Cache intermediate Docker layers. For a description of how this works, see:
+# https://giorgos.sealabs.net/docker-cache-on-travis-and-docker-112.html
+
+set -o errexit
+set -o verbose
+set -o pipefail
+
+if [[ ${TRAVIS_BRANCH} == "master" ]] &&
+    [[ ${TRAVIS_PULL_REQUEST} == "false" ]]; then
+  mkdir -p $(dirname ${DOCKER_CACHE_FILE});
+  docker save $(docker history -q cartographer |
+      grep -v '<missing>') | gzip > ${DOCKER_CACHE_FILE};
+fi

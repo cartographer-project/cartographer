@@ -14,9 +14,12 @@
 
 TRAJECTORY_BUILDER_2D = {
   use_imu_data = true,
-  horizontal_laser_min_z = -0.8,
-  horizontal_laser_max_z = 2.,
-  horizontal_laser_voxel_filter_size = 0.025,
+  laser_min_range = 0.,
+  laser_max_range = 30.,
+  laser_min_z = -0.8,
+  laser_max_z = 2.,
+  laser_missing_echo_ray_length = 5.,
+  laser_voxel_filter_size = 0.025,
 
   use_online_correlative_scan_matching = false,
   adaptive_voxel_filter = {
@@ -33,13 +36,13 @@ TRAJECTORY_BUILDER_2D = {
   },
 
   ceres_scan_matcher = {
-    occupied_space_cost_functor_weight = 20.,
-    previous_pose_translation_delta_cost_functor_weight = 1.,
-    initial_pose_estimate_rotation_delta_cost_functor_weight = 1e2,
-    covariance_scale = 2.34e-4,
+    occupied_space_weight = 1e1,
+    translation_weight = 1e1,
+    rotation_weight = 1e2,
+    covariance_scale = 1e-2,
     ceres_solver_options = {
-      use_nonmonotonic_steps = true,
-      max_num_iterations = 50,
+      use_nonmonotonic_steps = false,
+      max_num_iterations = 20,
       num_threads = 1,
     },
   },
@@ -50,14 +53,8 @@ TRAJECTORY_BUILDER_2D = {
     max_angle_radians = math.rad(1.),
   },
 
-  pose_tracker = {
-    orientation_model_variance = 5e-4,
-    position_model_variance = 0.000654766,
-    velocity_model_variance = 0.053926,
-    imu_gravity_time_constant = 10.,
-    imu_gravity_variance = 1e-6,
-    num_odometry_states = 1000,
-  },
+  imu_gravity_time_constant = 10.,
+  num_odometry_states = 1000,
 
   submaps = {
     resolution = 0.05,

@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
+#ifndef CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
+
+#include "cartographer/io/points_processor.h"
 
 namespace cartographer {
-namespace mapping {
+namespace io {
 
-GlobalTrajectoryBuilderInterface::PoseEstimate::PoseEstimate(
-    const common::Time time, const kalman_filter::PoseAndCovariance& prediction,
-    const kalman_filter::PoseAndCovariance& observation,
-    const kalman_filter::PoseAndCovariance& estimate,
-    const transform::Rigid3d& pose, const sensor::PointCloud& point_cloud)
-    : time(time),
-      prediction(prediction),
-      observation(observation),
-      estimate(estimate),
-      pose(pose),
-      point_cloud(point_cloud) {}
+// A points processor that just drops all points. The end of a pipeline usually.
+class NullPointsProcessor : public PointsProcessor {
+ public:
+  NullPointsProcessor() {}
+  ~NullPointsProcessor() override {}
 
-}  // namespace mapping
+  void Process(std::unique_ptr<PointsBatch> points_batch) override {}
+  FlushResult Flush() override { return FlushResult::kFinished; }
+};
+
+}  // namespace io
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_

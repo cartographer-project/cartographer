@@ -76,7 +76,7 @@ LaserFanInserter::LaserFanInserter(
       miss_table_(mapping::ComputeLookupTableToApplyOdds(
           mapping::Odds(options_.miss_probability()))) {}
 
-void LaserFanInserter::Insert(const sensor::LaserFan3D& laser_fan,
+void LaserFanInserter::Insert(const sensor::LaserFan& laser_fan,
                               HybridGrid* hybrid_grid) const {
   CHECK_NOTNULL(hybrid_grid)->StartUpdate();
 

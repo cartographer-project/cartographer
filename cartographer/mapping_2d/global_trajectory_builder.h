@@ -35,21 +35,17 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
   const Submaps* submaps() const override;
-  Submaps* submaps() override;
-  kalman_filter::PoseTracker* pose_tracker() const override;
   const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
       const override;
 
-  void AddHorizontalLaserFan(common::Time time,
-                             const sensor::LaserFan3D& laser_fan) override;
+  // Projects 'ranges' into 2D. Therefore, 'ranges' should be approximately
+  // parallel to the ground plane.
+  void AddRangefinderData(common::Time time, const Eigen::Vector3f& origin,
+                          const sensor::PointCloud& ranges) override;
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
-  void AddOdometerPose(
-      common::Time time, const transform::Rigid3d& pose,
-      const kalman_filter::PoseCovariance& covariance) override;
-  void AddLaserFan3D(common::Time, const sensor::LaserFan3D&) override {
-    LOG(FATAL) << "Not implemented.";
-  };
+  void AddOdometerData(common::Time time,
+                       const transform::Rigid3d& pose) override;
 
  private:
   const proto::LocalTrajectoryBuilderOptions options_;

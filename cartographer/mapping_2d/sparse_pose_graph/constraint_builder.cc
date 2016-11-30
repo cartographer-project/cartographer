@@ -62,7 +62,7 @@ ConstraintBuilder::~ConstraintBuilder() {
 
 void ConstraintBuilder::MaybeAddConstraint(
     const int submap_index, const mapping::Submap* const submap,
-    const int scan_index, const sensor::PointCloud2D* const point_cloud,
+    const int scan_index, const sensor::PointCloud* const point_cloud,
     const transform::Rigid2d& initial_relative_pose) {
   if (initial_relative_pose.translation().norm() >
       options_.max_constraint_distance()) {
@@ -94,7 +94,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
     const int scan_index, const mapping::Submaps* scan_trajectory,
     const mapping::Submaps* submap_trajectory,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
-    const sensor::PointCloud2D* const point_cloud) {
+    const sensor::PointCloud* const point_cloud) {
   common::MutexLocker locker(&mutex_);
   CHECK_LE(scan_index, current_computation_);
   constraints_.emplace_back();
@@ -174,14 +174,14 @@ void ConstraintBuilder::ComputeConstraint(
     const int scan_index, const mapping::Submaps* scan_trajectory,
     const mapping::Submaps* submap_trajectory, bool match_full_submap,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
-    const sensor::PointCloud2D* const point_cloud,
+    const sensor::PointCloud* const point_cloud,
     const transform::Rigid2d& initial_relative_pose,
-    std::unique_ptr<OptimizationProblem::Constraint>* constraint) {
+    std::unique_ptr<ConstraintBuilder::Constraint>* constraint) {
   const transform::Rigid2d initial_pose =
       ComputeSubmapPose(*submap) * initial_relative_pose;
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_index);
-  const sensor::PointCloud2D filtered_point_cloud =
+  const sensor::PointCloud filtered_point_cloud =
       adaptive_voxel_filter_.Filter(*point_cloud);
 
   // The 'constraint_transform' (i <- j) is computed from:
@@ -196,22 +196,24 @@ void ConstraintBuilder::ComputeConstraint(
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             filtered_point_cloud, options_.global_localization_min_score(),
             &score, &pose_estimate)) {
+      CHECK_GT(score, options_.global_localization_min_score());
       trajectory_connectivity->Connect(scan_trajectory, submap_trajectory);
     } else {
       return;
     }
   } else {
-    if (!submap_scan_matcher->fast_correlative_scan_matcher->Match(
+    if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
             initial_pose, filtered_point_cloud, options_.min_score(), &score,
             &pose_estimate)) {
+      // We've reported a successful local match.
+      CHECK_GT(score, options_.min_score());
+    } else {
       return;
     }
-    // We've reported a successful local match.
-    CHECK_GT(score, options_.min_score());
-    {
-      common::MutexLocker locker(&mutex_);
-      score_histogram_.Add(score);
-    }
+  }
+  {
+    common::MutexLocker locker(&mutex_);
+    score_histogram_.Add(score);
   }
 
   // Use the CSM estimate as both the initial and previous pose. This has the
@@ -226,13 +228,17 @@ void ConstraintBuilder::ComputeConstraint(
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;
-  constraint->reset(new OptimizationProblem::Constraint{
+  constexpr double kFakePositionCovariance = 1.;
+  constexpr double kFakeOrientationCovariance = 1.;
+  constraint->reset(new Constraint{
       submap_index,
       scan_index,
-      {constraint_transform,
+      {transform::Embed3D(constraint_transform),
        common::ComputeSpdMatrixSqrtInverse(
-           covariance, options_.lower_covariance_eigenvalue_bound())},
-      OptimizationProblem::Constraint::INTER_SUBMAP});
+           kalman_filter::Embed3D(covariance, kFakePositionCovariance,
+                                  kFakeOrientationCovariance),
+           options_.lower_covariance_eigenvalue_bound())},
+      Constraint::INTER_SUBMAP});
 
   if (options_.log_matches()) {
     const transform::Rigid2d difference =
@@ -261,8 +267,7 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
     if (pending_computations_.empty()) {
       CHECK_EQ(submap_queued_work_items_.size(), 0);
       if (when_done_ != nullptr) {
-        for (const std::unique_ptr<OptimizationProblem::Constraint>&
-                 constraint : constraints_) {
+        for (const std::unique_ptr<Constraint>& constraint : constraints_) {
           if (constraint != nullptr) {
             result.push_back(*constraint);
           }

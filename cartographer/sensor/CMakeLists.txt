@@ -14,6 +14,16 @@
 
 add_subdirectory("proto")
 
+google_library(sensor_collator
+  SRCS
+    collator.cc
+  HDRS
+    collator.h
+  DEPENDS
+    sensor_data
+    sensor_ordered_multi_queue
+)
+
 google_library(sensor_compressed_point_cloud
   USES_EIGEN
   SRCS
@@ -47,8 +57,10 @@ google_library(sensor_data
   HDRS
     data.h
   DEPENDS
+    common_time
     kalman_filter_pose_tracker
     sensor_laser
+    sensor_point_cloud
     transform_rigid_transform
 )
 
@@ -65,6 +77,17 @@ google_library(sensor_laser
     transform_transform
 )
 
+google_library(sensor_ordered_multi_queue
+  HDRS
+    ordered_multi_queue.h
+  DEPENDS
+    common_blocking_queue
+    common_make_unique
+    common_port
+    common_time
+    sensor_data
+)
+
 google_library(sensor_point_cloud
   USES_EIGEN
   USES_GLOG
@@ -78,17 +101,6 @@ google_library(sensor_point_cloud
     transform_transform
 )
 
-google_library(sensor_sensor_packet_period_histogram_builder
-  USES_GLOG
-  SRCS
-    sensor_packet_period_histogram_builder.cc
-  HDRS
-    sensor_packet_period_histogram_builder.h
-  DEPENDS
-    common_histogram
-    common_port
-)
-
 google_library(sensor_voxel_filter
   SRCS
     voxel_filter.cc
@@ -100,6 +112,17 @@ google_library(sensor_voxel_filter
     mapping_3d_hybrid_grid
     sensor_point_cloud
     sensor_proto_adaptive_voxel_filter_options
+)
+
+google_test(sensor_collator_test
+  SRCS
+    collator_test.cc
+  DEPENDS
+    common_lua_parameter_dictionary_test_helpers
+    common_make_unique
+    common_time
+    sensor_collator
+    sensor_proto_sensor
 )
 
 google_test(sensor_compressed_point_cloud_test
@@ -116,11 +139,20 @@ google_test(sensor_laser_test
     sensor_laser
 )
 
+google_test(sensor_ordered_multi_queue_test
+  SRCS
+    ordered_multi_queue_test.cc
+  DEPENDS
+    common_make_unique
+    sensor_ordered_multi_queue
+)
+
 google_test(sensor_point_cloud_test
   SRCS
     point_cloud_test.cc
   DEPENDS
     sensor_point_cloud
+    transform_transform
 )
 
 google_test(sensor_voxel_filter_test
