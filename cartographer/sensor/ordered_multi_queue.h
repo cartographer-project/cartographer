@@ -69,6 +69,11 @@ class OrderedMultiQueue {
   // queues.
   void Flush();
 
+  // Must only be called if at least one unfinished queue exists. Returns the
+  // key of a queue that needs more data before the OrderedMultiQueue can
+  // dispatch data.
+  QueueKey GetBlocker() const;
+
  private:
   struct Queue {
     common::BlockingQueue<std::unique_ptr<Data>> queue;
@@ -77,8 +82,7 @@ class OrderedMultiQueue {
   };
 
   void Dispatch();
-  void CannotMakeProgress();
-  string EmptyQueuesDebugString();
+  void CannotMakeProgress(const QueueKey& queue_key);
   common::Time GetCommonStartTime(int trajectory_id);
 
   // Used to verify that values are dispatched in sorted order.
@@ -86,6 +90,7 @@ class OrderedMultiQueue {
 
   std::map<int, common::Time> common_start_time_per_trajectory_;
   std::map<QueueKey, Queue> queues_;
+  QueueKey blocker_;
 };
 
 }  // namespace sensor

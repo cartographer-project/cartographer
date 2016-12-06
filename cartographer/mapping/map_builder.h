@@ -67,6 +67,11 @@ class MapBuilder {
   // i.e. no further sensor data is expected.
   void FinishTrajectory(int trajectory_id);
 
+  // Must only be called if at least one unfinished trajectory exists. Returns
+  // the ID of the trajectory that needs more data before the MapBuilder is
+  // unblocked.
+  int GetBlockingTrajectoryId() const;
+
   // Returns the trajectory ID for 'trajectory'.
   int GetTrajectoryId(const mapping::Submaps* trajectory) const;
 

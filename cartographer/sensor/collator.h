@@ -57,6 +57,11 @@ class Collator {
   // AddSensorData may not be called after Flush.
   void Flush();
 
+  // Must only be called if at least one unfinished trajectory exists. Returns
+  // the ID of the trajectory that needs more data before the Collator is
+  // unblocked.
+  int GetBlockingTrajectoryId() const;
+
  private:
   // Queue keys are a pair of trajectory ID and sensor identifier.
   OrderedMultiQueue queue_;

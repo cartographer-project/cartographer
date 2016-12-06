@@ -108,6 +108,10 @@ void MapBuilder::FinishTrajectory(const int trajectory_id) {
   sensor_collator_.FinishTrajectory(trajectory_id);
 }
 
+int MapBuilder::GetBlockingTrajectoryId() const {
+  return sensor_collator_.GetBlockingTrajectoryId();
+}
+
 int MapBuilder::GetTrajectoryId(const Submaps* const trajectory) const {
   const auto trajectory_id = trajectory_ids_.find(trajectory);
   CHECK(trajectory_id != trajectory_ids_.end());

@@ -32,11 +32,11 @@ namespace {
 // for data.
 const int kMaxQueueSize = 500;
 
+}  // namespace
+
 inline std::ostream& operator<<(std::ostream& out, const QueueKey& key) {
   return out << '(' << key.trajectory_id << ", " << key.sensor_id << ')';
 }
-
-}  // namespace
 
 OrderedMultiQueue::OrderedMultiQueue() {}
 
@@ -84,11 +84,16 @@ void OrderedMultiQueue::Flush() {
   }
 }
 
+QueueKey OrderedMultiQueue::GetBlocker() const {
+  CHECK(!queues_.empty());
+  return blocker_;
+}
+
 void OrderedMultiQueue::Dispatch() {
   while (true) {
-    Queue* next_queue = nullptr;
     const Data* next_data = nullptr;
-    int next_trajectory_id = -1;
+    Queue* next_queue = nullptr;
+    QueueKey next_queue_key;
     for (auto it = queues_.begin(); it != queues_.end();) {
       const auto* data = it->second.queue.Peek<Data>();
       if (data == nullptr) {
@@ -96,13 +101,13 @@ void OrderedMultiQueue::Dispatch() {
           queues_.erase(it++);
           continue;
         }
-        CannotMakeProgress();
+        CannotMakeProgress(it->first);
         return;
       }
       if (next_data == nullptr || data->time < next_data->time) {
         next_data = data;
         next_queue = &it->second;
-        next_trajectory_id = it->first.trajectory_id;
+        next_queue_key = it->first;
       }
       CHECK_LE(last_dispatched_time_, next_data->time)
           << "Non-sorted data added to queue: '" << it->first << "'";
@@ -116,7 +121,7 @@ void OrderedMultiQueue::Dispatch() {
     // If we haven't dispatched any data for this trajectory yet, fast forward
     // all queues of this trajectory until a common start time has been reached.
     const common::Time common_start_time =
-        GetCommonStartTime(next_trajectory_id);
+        GetCommonStartTime(next_queue_key.trajectory_id);
 
     if (next_data->time >= common_start_time) {
       // Happy case, we are beyond the 'common_start_time' already.
@@ -125,6 +130,7 @@ void OrderedMultiQueue::Dispatch() {
     } else if (next_queue->queue.Size() < 2) {
       if (!next_queue->finished) {
         // We cannot decide whether to drop or dispatch this yet.
+        CannotMakeProgress(next_queue_key);
         return;
       }
       last_dispatched_time_ = next_data->time;
@@ -142,24 +148,14 @@ void OrderedMultiQueue::Dispatch() {
   }
 }
 
-void OrderedMultiQueue::CannotMakeProgress() {
+void OrderedMultiQueue::CannotMakeProgress(const QueueKey& queue_key) {
+  blocker_ = queue_key;
   for (auto& entry : queues_) {
     if (entry.second.queue.Size() > kMaxQueueSize) {
-      LOG_EVERY_N(WARNING, 60) << "Queues waiting for data: "
-                               << EmptyQueuesDebugString();
+      LOG_EVERY_N(WARNING, 60) << "Queue waiting for data: " << queue_key;
       return;
     }
   }
-}
-
-string OrderedMultiQueue::EmptyQueuesDebugString() {
-  std::ostringstream empty_queues;
-  for (auto& entry : queues_) {
-    if (entry.second.queue.Size() == 0) {
-      empty_queues << (empty_queues.tellp() > 0 ? ", " : "") << entry.first;
-    }
-  }
-  return empty_queues.str();
 }
 
 common::Time OrderedMultiQueue::GetCommonStartTime(const int trajectory_id) {
