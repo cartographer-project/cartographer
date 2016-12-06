@@ -68,8 +68,7 @@ void OrderedMultiQueue::Add(const QueueKey& queue_key,
                                << "'";
     return;
   }
-  auto& queue = it->second;
-  queue.queue.Push(std::move(data));
+  it->second.queue.Push(std::move(data));
   Dispatch();
 }
 
