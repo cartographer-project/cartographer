@@ -94,6 +94,23 @@ TEST_F(OrderedMultiQueueTest, MarkQueueAsFinished) {
   }
 }
 
+TEST_F(OrderedMultiQueueTest, CommonStartTimePerTrajectory) {
+  queue_.Add(kFirst, MakeImu(0));
+  queue_.Add(kFirst, MakeImu(1));
+  queue_.Add(kFirst, MakeImu(2));
+  queue_.Add(kFirst, MakeImu(3));
+  queue_.Add(kSecond, MakeImu(2));
+  EXPECT_TRUE(values_.empty());
+  queue_.Add(kThird, MakeImu(4));
+  EXPECT_EQ(values_.size(), 2);
+  queue_.MarkQueueAsFinished(kFirst);
+  EXPECT_EQ(values_.size(), 2);
+  queue_.MarkQueueAsFinished(kSecond);
+  EXPECT_EQ(values_.size(), 4);
+  queue_.MarkQueueAsFinished(kThird);
+  EXPECT_EQ(values_.size(), 4);
+}
+
 }  // namespace
 }  // namespace sensor
 }  // namespace cartographer

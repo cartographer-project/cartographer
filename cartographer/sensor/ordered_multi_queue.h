@@ -79,11 +79,12 @@ class OrderedMultiQueue {
   void Dispatch();
   void CannotMakeProgress();
   string EmptyQueuesDebugString();
+  common::Time GetCommonStartTime(int trajectory_id);
 
   // Used to verify that values are dispatched in sorted order.
   common::Time last_dispatched_time_ = common::Time::min();
-  common::Time common_start_time_ = common::Time::min();
 
+  std::map<int, common::Time> common_start_time_per_trajectory_;
   std::map<QueueKey, Queue> queues_;
 };
 
