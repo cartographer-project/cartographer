@@ -142,8 +142,8 @@ void Run(const string& trajectory_filename, const string& relations_filename) {
 }
 
 }  // namespace
-}  // namespace cartographer
 }  // namespace ground_truth
+}  // namespace cartographer
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
