@@ -46,5 +46,9 @@ void Collator::AddSensorData(const int trajectory_id, const string& sensor_id,
 
 void Collator::Flush() { queue_.Flush(); }
 
+int Collator::GetBlockingTrajectoryId() const {
+  return queue_.GetBlocker().trajectory_id;
+}
+
 }  // namespace sensor
 }  // namespace cartographer
