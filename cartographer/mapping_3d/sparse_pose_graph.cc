@@ -214,14 +214,14 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid3d constraint_transform =
         submap->local_pose().inverse() * pose;
-    constraints_.push_back(
-        Constraint{submap_index,
-                   scan_index,
-                   {constraint_transform,
-                    common::ComputeSpdMatrixSqrtInverse(
-                        covariance, options_.constraint_builder_options()
-                                        .lower_covariance_eigenvalue_bound())},
-                   Constraint::INTRA_SUBMAP});
+    constraints_.push_back(Constraint{
+        submap_index,
+        scan_index,
+        {constraint_transform, common::ComputeSpdMatrixSqrtInverse(
+                                   covariance,
+                                   options_.constraint_builder_options()
+                                       .lower_covariance_eigenvalue_bound())},
+        Constraint::INTRA_SUBMAP});
   }
 
   CHECK_LT(submap_states_.size(), std::numeric_limits<int>::max());

@@ -78,6 +78,9 @@ google_library(sensor_laser
 )
 
 google_library(sensor_ordered_multi_queue
+  USES_GLOG
+  SRCS
+    ordered_multi_queue.cc
   HDRS
     ordered_multi_queue.h
   DEPENDS
