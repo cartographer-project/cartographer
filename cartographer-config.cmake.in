@@ -15,7 +15,7 @@
 #  Usage from an external project:
 #    In your CMakeLists.txt, add these lines:
 #
-#    find_package(Cartographer REQUIRED )
+#    find_package(cartographer REQUIRED )
 #    include_directories(${CARTOGRAPHER_INCLUDE_DIRS})
 #    target_link_libraries(MY_TARGET_NAME ${CARTOGRAPHER_LIBRARIES})
 #

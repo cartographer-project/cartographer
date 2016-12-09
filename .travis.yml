@@ -22,11 +22,8 @@ cache:
     - /home/travis/docker/
 
 env:
-  global:
-    - DOCKER_CACHE_FILE=/home/travis/docker/cache.tar.gz
-  matrix:
-    - UBUNTU_RELEASE=trusty
-    - UBUNTU_RELEASE=xenial
+  - UBUNTU_RELEASE=trusty DOCKER_CACHE_FILE=/home/travis/docker/trusty-cache.tar.gz
+  - UBUNTU_RELEASE=xenial DOCKER_CACHE_FILE=/home/travis/docker/xenial-cache.tar.gz
 
 before_install: scripts/load_docker_cache.sh
 
