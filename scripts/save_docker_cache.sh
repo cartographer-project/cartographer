@@ -24,6 +24,6 @@ set -o pipefail
 if [[ ${TRAVIS_BRANCH} == "master" ]] &&
     [[ ${TRAVIS_PULL_REQUEST} == "false" ]]; then
   mkdir -p $(dirname ${DOCKER_CACHE_FILE});
-  docker save $(docker history -q cartographer |
+  docker save $(docker history -q cartographer:${UBUNTU_RELEASE} |
       grep -v '<missing>') | gzip > ${DOCKER_CACHE_FILE};
 fi
