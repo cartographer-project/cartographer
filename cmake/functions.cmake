@@ -32,7 +32,7 @@ macro(_parse_arguments ARGS)
     USES_PCL
     USES_YAMLCPP
   )
-  set(ONE_VALUE_ARG )
+  set(ONE_VALUE_ARG)
   set(MULTI_VALUE_ARGS SRCS HDRS DEPENDS)
   cmake_parse_arguments(ARG
     "${OPTIONS}" "${ONE_VALUE_ARG}" "${MULTI_VALUE_ARGS}" ${ARGS})
@@ -40,6 +40,10 @@ endmacro(_parse_arguments)
 
 macro(_common_compile_stuff VISIBILITY)
   set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
+
+  foreach(DEPENDENCY ${ARG_DEPENDS})
+    target_link_libraries(${NAME} ${DEPENDENCY})
+  endforeach()
 
   if(catkin_INCLUDE_DIRS)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
@@ -121,10 +125,6 @@ macro(_common_compile_stuff VISIBILITY)
   target_include_directories("${NAME}" ${VISIBILITY} "${CMAKE_BINARY_DIR}")
   target_include_directories("${NAME}" ${VISIBILITY} "${CMAKE_SOURCE_DIR}")
 
-  foreach(DEPENDENCY ${ARG_DEPENDS})
-    target_link_libraries(${NAME} ${DEPENDENCY})
-  endforeach()
-
   # Figure out where to install the header. The logic goes like this: either
   # the header is in the current binary directory (i.e. generated, like port.h)
   # or in the current source directory - a regular header. It could also
@@ -133,7 +133,7 @@ macro(_common_compile_stuff VISIBILITY)
   # e.g. foo/bar/baz.h.in will be installed from the binary directory as
   # 'include/foo/bar/baz.h'.
   foreach(HDR ${ARG_HDRS})
-    if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${HDR})
+    if(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${HDR})
       set(ABS_FIL "${CMAKE_CURRENT_BINARY_DIR}/${HDR}")
       file(RELATIVE_PATH REL_FIL ${CMAKE_BINARY_DIR} ${ABS_FIL})
     elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${HDR})
