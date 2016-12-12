@@ -41,14 +41,10 @@ endmacro(_parse_arguments)
 macro(_common_compile_stuff VISIBILITY)
   set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
 
-  foreach(DEPENDENCY ${ARG_DEPENDS})
-    target_link_libraries(${NAME} ${DEPENDENCY})
-  endforeach()
-
   if(catkin_INCLUDE_DIRS)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${catkin_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${catkin_LIBRARIES})
+    target_link_libraries("${NAME}" PUBLIC ${catkin_LIBRARIES})
     add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
   )
   endif()
@@ -56,50 +52,50 @@ macro(_common_compile_stuff VISIBILITY)
   if(ARG_USES_EIGEN)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${EIGEN3_INCLUDE_DIR}")
-    target_link_libraries("${NAME}" ${EIGEN3_LIBRARIES})
+    target_link_libraries("${NAME}" PUBLIC ${EIGEN3_LIBRARIES})
   endif()
 
   if(ARG_USES_CERES)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${CERES_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${CERES_LIBRARIES})
+    target_link_libraries("${NAME}" PUBLIC ${CERES_LIBRARIES})
   endif()
 
   if(ARG_USES_LUA)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${LUA_INCLUDE_DIR}")
-    target_link_libraries("${NAME}" ${LUA_LIBRARIES})
+    target_link_libraries("${NAME}" PUBLIC ${LUA_LIBRARIES})
   endif()
 
   if(ARG_USES_BOOST)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "{Boost_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${Boost_LIBRARIES})
+    target_link_libraries("${NAME}" PUBLIC ${Boost_LIBRARIES})
   endif()
 
   if(ARG_USES_WEBP)
-    target_link_libraries("${NAME}" webp)
+    target_link_libraries("${NAME}" PUBLIC webp)
   endif()
 
   # We rely on Ceres to find glog and gflags for us.
   if(ARG_USES_GLOG)
-    target_link_libraries("${NAME}" glog)
+    target_link_libraries("${NAME}" PUBLIC glog)
   endif()
 
   if(ARG_USES_GFLAGS)
-    target_link_libraries("${NAME}" gflags)
+    target_link_libraries("${NAME}" PUBLIC gflags)
   endif()
 
   if(ARG_USES_CARTOGRAPHER)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${CARTOGRAPHER_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${CARTOGRAPHER_LIBRARIES})
+    target_link_libraries("${NAME}" PUBLIC ${CARTOGRAPHER_LIBRARIES})
   endif()
 
   if(ARG_USES_PCL)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${PCL_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${PCL_LIBRARIES})
+    target_link_libraries("${NAME}" PUBLIC ${PCL_LIBRARIES})
     foreach(DEFINITION ${PCL_DEFINITIONS})
       set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${DEFINITION}")
     endforeach()
@@ -108,13 +104,13 @@ macro(_common_compile_stuff VISIBILITY)
   if(ARG_USES_YAMLCPP)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${YAMLCPP_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${YAMLCPP_LIBRARIES})
+    target_link_libraries("${NAME}" PUBLIC  ${YAMLCPP_LIBRARIES})
   endif()
 
   if(ARG_USES_CAIRO)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${CAIRO_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${CAIRO_LIBRARIES})
+    target_link_libraries("${NAME}" PUBLIC ${CAIRO_LIBRARIES})
   endif()
 
   set_target_properties(${NAME} PROPERTIES
@@ -124,6 +120,10 @@ macro(_common_compile_stuff VISIBILITY)
   # been generated.
   target_include_directories("${NAME}" ${VISIBILITY} "${CMAKE_BINARY_DIR}")
   target_include_directories("${NAME}" ${VISIBILITY} "${CMAKE_SOURCE_DIR}")
+
+  foreach(DEPENDENCY ${ARG_DEPENDS})
+    target_link_libraries("${NAME}" PUBLIC ${DEPENDENCY})
+  endforeach()
 
   # Figure out where to install the header. The logic goes like this: either
   # the header is in the current binary directory (i.e. generated, like port.h)
@@ -218,7 +218,7 @@ macro(_common_test_stuff)
   # Make sure that gmock always includes the correct gtest/gtest.h.
   target_include_directories("${NAME}" SYSTEM PRIVATE
     "${GMOCK_INCLUDE_DIRS}")
-  target_link_libraries("${NAME}" ${GMOCK_LIBRARIES})
+  target_link_libraries("${NAME}" PUBLIC ${GMOCK_LIBRARIES})
 endmacro()
 
 function(_google_catkin_test NAME)
@@ -318,7 +318,7 @@ function(google_proto_library NAME)
     "${PROTOBUF_INCLUDE_DIR}")
   # TODO(hrapp): This should not explicityly list pthread and use
   # PROTOBUF_LIBRARIES, but that failed on first try.
-  target_link_libraries("${NAME}" ${PROTOBUF_LIBRARY} pthread)
+  target_link_libraries("${NAME}" PUBLIC ${PROTOBUF_LIBRARY} pthread)
 endfunction()
 
 macro(google_initialize_cartographer_project)
