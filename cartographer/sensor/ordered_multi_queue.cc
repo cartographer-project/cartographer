@@ -48,7 +48,7 @@ OrderedMultiQueue::~OrderedMultiQueue() {
 
 void OrderedMultiQueue::AddQueue(const QueueKey& queue_key, Callback callback) {
   CHECK_EQ(queues_.count(queue_key), 0);
-  queues_[queue_key].callback = callback;
+  queues_[queue_key].callback = std::move(callback);
 }
 
 void OrderedMultiQueue::MarkQueueAsFinished(const QueueKey& queue_key) {
