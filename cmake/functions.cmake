@@ -41,6 +41,10 @@ endmacro(_parse_arguments)
 macro(_common_compile_stuff VISIBILITY)
   set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
 
+  foreach(DEPENDENCY ${ARG_DEPENDS})
+    target_link_libraries("${NAME}" PUBLIC ${DEPENDENCY})
+  endforeach()
+
   if(catkin_INCLUDE_DIRS)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${catkin_INCLUDE_DIRS}")
@@ -120,10 +124,6 @@ macro(_common_compile_stuff VISIBILITY)
   # been generated.
   target_include_directories("${NAME}" ${VISIBILITY} "${CMAKE_BINARY_DIR}")
   target_include_directories("${NAME}" ${VISIBILITY} "${CMAKE_SOURCE_DIR}")
-
-  foreach(DEPENDENCY ${ARG_DEPENDS})
-    target_link_libraries("${NAME}" PUBLIC ${DEPENDENCY})
-  endforeach()
 
   # Figure out where to install the header. The logic goes like this: either
   # the header is in the current binary directory (i.e. generated, like port.h)
