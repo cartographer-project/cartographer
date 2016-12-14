@@ -73,7 +73,7 @@ macro(_common_compile_stuff VISIBILITY)
 
   if(ARG_USES_BOOST)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
-      "{Boost_INCLUDE_DIRS}")
+      "${Boost_INCLUDE_DIRS}")
     target_link_libraries("${NAME}" PUBLIC ${Boost_LIBRARIES})
   endif()
 
@@ -122,8 +122,11 @@ macro(_common_compile_stuff VISIBILITY)
 
   # Add the binary directory first, so that port.h is included after it has
   # been generated.
-  target_include_directories("${NAME}" ${VISIBILITY} "${CMAKE_BINARY_DIR}")
-  target_include_directories("${NAME}" ${VISIBILITY} "${CMAKE_SOURCE_DIR}")
+  target_include_directories("${NAME}" ${VISIBILITY}
+      $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+      $<INSTALL_INTERFACE:include>
+  )
 
   # Figure out where to install the header. The logic goes like this: either
   # the header is in the current binary directory (i.e. generated, like port.h)
@@ -159,7 +162,7 @@ function(google_combined_library NAME)
   set(MULTI_VALUE_ARGS SRCS)
   cmake_parse_arguments(ARG "" "" "${MULTI_VALUE_ARGS}" ${ARGN})
 
-  # Cmake requires a source file for each library, so we create a dummy file
+  # CMake requires a source file for each library, so we create a dummy file
   # that is empty. Its creation depends on all libraries we want to include in
   # our combined static library, i.e. it will be touched whenever any of them
   # change, which means that our combined library is regenerated.
