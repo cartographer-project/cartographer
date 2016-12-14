@@ -94,7 +94,7 @@ void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
                              ceres::Solver::Summary* const summary) {
   ceres::Problem problem;
   CeresPose ceres_pose(
-      initial_pose_estimate,
+      initial_pose_estimate, nullptr /* translation_parameterization */,
       options_.only_optimize_yaw()
           ? std::unique_ptr<ceres::LocalParameterization>(
                 common::make_unique<ceres::AutoDiffLocalParameterization<

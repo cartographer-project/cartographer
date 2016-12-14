@@ -34,7 +34,8 @@ namespace {
 class OptimizationProblemTest : public ::testing::Test {
  protected:
   OptimizationProblemTest()
-      : optimization_problem_(CreateOptions()), rng_(45387) {}
+      : optimization_problem_(CreateOptions(), OptimizationProblem::FixZ::kNo),
+        rng_(45387) {}
 
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions
   CreateOptions() {

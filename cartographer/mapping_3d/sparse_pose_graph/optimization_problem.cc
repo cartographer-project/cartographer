@@ -72,8 +72,9 @@ struct ConstantYawQuaternionPlus {
 
 OptimizationProblem::OptimizationProblem(
     const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
-        options)
-    : options_(options) {}
+        options,
+    FixZ fix_z)
+    : options_(options), fix_z_(fix_z) {}
 
 OptimizationProblem::~OptimizationProblem() {}
 
@@ -114,13 +115,21 @@ void OptimizationProblem::Solve(
   ceres::Problem::Options problem_options;
   ceres::Problem problem(problem_options);
 
+  const auto translation_parameterization =
+      [this]() -> std::unique_ptr<ceres::LocalParameterization> {
+    return fix_z_ == FixZ::kYes
+               ? common::make_unique<ceres::SubsetParameterization>(
+                     3, std::vector<int>{2})
+               : nullptr;
+  };
+
   // Set the starting point.
   std::deque<CeresPose> C_submaps;
   std::deque<CeresPose> C_point_clouds;
   // Tie the first submap to the origin.
   CHECK(!submap_transforms->empty());
   C_submaps.emplace_back(
-      transform::Rigid3d::Identity(),
+      transform::Rigid3d::Identity(), translation_parameterization(),
       common::make_unique<ceres::AutoDiffLocalParameterization<
           ConstantYawQuaternionPlus, 4, 2>>(),
       &problem);
@@ -128,12 +137,12 @@ void OptimizationProblem::Solve(
 
   for (size_t i = 1; i != submap_transforms->size(); ++i) {
     C_submaps.emplace_back(
-        (*submap_transforms)[i],
+        (*submap_transforms)[i], translation_parameterization(),
         common::make_unique<ceres::QuaternionParameterization>(), &problem);
   }
   for (size_t j = 0; j != node_data_.size(); ++j) {
     C_point_clouds.emplace_back(
-        node_data_[j].point_cloud_pose,
+        node_data_[j].point_cloud_pose, translation_parameterization(),
         common::make_unique<ceres::QuaternionParameterization>(), &problem);
   }
 
