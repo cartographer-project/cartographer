@@ -73,7 +73,7 @@ struct ConstantYawQuaternionPlus {
 OptimizationProblem::OptimizationProblem(
     const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
         options,
-    bool fix_z)
+    FixZ fix_z)
     : options_(options), fix_z_(fix_z) {}
 
 OptimizationProblem::~OptimizationProblem() {}
@@ -117,9 +117,10 @@ void OptimizationProblem::Solve(
 
   const auto translation_parameterization =
       [this]() -> std::unique_ptr<ceres::LocalParameterization> {
-    return fix_z_ ? common::make_unique<ceres::SubsetParameterization>(
-                        3, std::vector<int>{2})
-                  : nullptr;
+    return fix_z_ == FixZ::kYes
+               ? common::make_unique<ceres::SubsetParameterization>(
+                     3, std::vector<int>{2})
+               : nullptr;
   };
 
   // Set the starting point.

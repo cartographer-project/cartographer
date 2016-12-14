@@ -45,7 +45,7 @@ SparsePoseGraph::SparsePoseGraph(
     std::deque<mapping::TrajectoryNode::ConstantData>* constant_node_data)
     : options_(options),
       optimization_problem_(options_.optimization_problem_options(),
-                            false /* fix_z */),
+                            sparse_pose_graph::OptimizationProblem::FixZ::kNo),
       constraint_builder_(options_.constraint_builder_options(), thread_pool),
       constant_node_data_(constant_node_data) {}
 

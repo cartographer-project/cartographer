@@ -47,10 +47,12 @@ class OptimizationProblem {
  public:
   using Constraint = mapping::SparsePoseGraph::Constraint;
 
-  explicit OptimizationProblem(
+  enum class FixZ { kYes, kNo };
+
+  OptimizationProblem(
       const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
           options,
-      bool fix_z);
+      FixZ fix_z);
   ~OptimizationProblem();
 
   OptimizationProblem(const OptimizationProblem&) = delete;
@@ -73,7 +75,7 @@ class OptimizationProblem {
 
  private:
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
-  bool fix_z_;
+  FixZ fix_z_;
   std::map<const mapping::Submaps*, std::deque<ImuData>> imu_data_;
   std::vector<NodeData> node_data_;
   double gravity_constant_ = 9.8;
