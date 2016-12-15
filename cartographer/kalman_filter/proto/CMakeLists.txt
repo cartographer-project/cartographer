@@ -12,7 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-google_proto_library(kalman_filter_proto_pose_tracker_options
-  SRCS
-    pose_tracker_options.proto
-)
+

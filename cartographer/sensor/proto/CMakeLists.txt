@@ -12,21 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-google_proto_library(sensor_proto_adaptive_voxel_filter_options
-  SRCS
-    adaptive_voxel_filter_options.proto
-)
 
-google_proto_library(sensor_proto_configuration
-  SRCS
-    configuration.proto
-  DEPENDS
-    transform_proto_transform
-)
-
-google_proto_library(sensor_proto_sensor
-  SRCS
-    sensor.proto
-  DEPENDS
-    transform_proto_transform
-)

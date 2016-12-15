@@ -12,7 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-google_proto_library(transform_proto_transform
-  SRCS
-    transform.proto
-)
+

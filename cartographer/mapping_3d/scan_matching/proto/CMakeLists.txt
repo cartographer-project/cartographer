@@ -12,14 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-google_proto_library(mapping_3d_scan_matching_proto_ceres_scan_matcher_options
-  SRCS
-    ceres_scan_matcher_options.proto
-  DEPENDS
-    common_proto_ceres_solver_options
-)
 
-google_proto_library(mapping_3d_scan_matching_proto_fast_correlative_scan_matcher_options
-  SRCS
-    fast_correlative_scan_matcher_options.proto
-)

@@ -12,44 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-google_proto_library(mapping_3d_proto_kalman_local_trajectory_builder_options
-  SRCS
-    kalman_local_trajectory_builder_options.proto
-  DEPENDS
-    kalman_filter_proto_pose_tracker_options
-    mapping_2d_scan_matching_proto_real_time_correlative_scan_matcher_options
-)
 
-google_proto_library(mapping_3d_proto_laser_fan_inserter_options
-  SRCS
-    laser_fan_inserter_options.proto
-)
-
-google_proto_library(mapping_3d_proto_local_trajectory_builder_options
-  SRCS
-    local_trajectory_builder_options.proto
-  DEPENDS
-    mapping_3d_proto_kalman_local_trajectory_builder_options
-    mapping_3d_proto_motion_filter_options
-    mapping_3d_proto_optimizing_local_trajectory_builder_options
-    mapping_3d_proto_submaps_options
-    mapping_3d_scan_matching_proto_ceres_scan_matcher_options
-    sensor_proto_adaptive_voxel_filter_options
-)
-
-google_proto_library(mapping_3d_proto_motion_filter_options
-  SRCS
-    motion_filter_options.proto
-)
-
-google_proto_library(mapping_3d_proto_optimizing_local_trajectory_builder_options
-  SRCS
-    optimizing_local_trajectory_builder_options.proto
-)
-
-google_proto_library(mapping_3d_proto_submaps_options
-  SRCS
-    submaps_options.proto
-  DEPENDS
-    mapping_3d_proto_laser_fan_inserter_options
-)

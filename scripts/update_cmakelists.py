@@ -78,43 +78,10 @@ def ExtractProjectIncludes(project_name, source):
   """Returns all locally included files."""
   includes = set()
   for line in open(MaybeUseCmakeFile(source)):
-    if source.endswith(".proto"):
-      match = re.match(r'^import "(' + project_name + r'/[^"]+)', line)
-    else:
-      match = re.match(r'^#include "(' + project_name + r'/[^"]+)"', line)
+    match = re.match(r'^#include "(' + project_name + r'/[^"]+)"', line)
     if match:
       includes.add(match.group(1))
   return includes
-
-
-def ExtractUses(project_name, source):
-  """Finds the options for the third_party libraries used."""
-  uses = set()
-  for line in open(MaybeUseCmakeFile(source)):
-    if re.match(r'^#include "Eigen/', line):
-      uses.add("USES_EIGEN")
-    if re.match(r"^#include <lua.hpp>", line):
-      uses.add("USES_LUA")
-    if re.match(r'^#include "ceres/', line):
-      uses.add("USES_CERES")
-    if re.match(r'^#include "glog/', line):
-      uses.add("USES_GLOG")
-    if re.match(r'^#include "gflags/', line):
-      uses.add("USES_GFLAGS")
-    if re.match(r'^#include ["<]boost/', line):
-      uses.add("USES_BOOST")
-    if re.match(r'^#include ["<]webp/', line):
-      uses.add("USES_WEBP")
-    if re.match(r'^#include ["<]pcl/', line):
-      uses.add("USES_PCL")
-    if re.match(r'^#include ["<]yaml-cpp/', line):
-      uses.add("USES_YAMLCPP")
-    if re.match(r'^#include ["<]cairo/', line):
-      uses.add("USES_CAIRO")
-    if project_name != "cartographer":
-      if re.match(r'^#include ["<]cartographer/', line):
-        uses.add("USES_CARTOGRAPHER")
-  return uses
 
 
 def FindSourceFiles(basedir):
@@ -122,7 +89,7 @@ def FindSourceFiles(basedir):
   for (directory, _, filenames) in os.walk(basedir):
     for filename in filenames:
       ext = path.splitext(filename)[-1]
-      if ext in [".h", ".cc", ".proto"]:
+      if ext in [".h", ".cc"]:
         sources.add(path.join(directory, filename))
       elif filename.endswith(".h.cmake"):
         sources.add(path.join(directory, path.splitext(filename)[0]))
@@ -188,10 +155,6 @@ def RunOnDirectory(root):
     for s in srcs + hdrs:
       relative_s = MakeRelative(s, base_directory)
       targets_by_src[relative_s] = target
-      if s.endswith(".proto"):
-        proto_stem = os.path.splitext(relative_s)[0]
-        targets_by_src[proto_stem + ".pb.h"] = target
-        targets_by_src[proto_stem + ".pb.cc"] = target
     directories.add(directory)
 
   for (directory, sources) in FindSourceFiles(root):
@@ -201,25 +164,15 @@ def RunOnDirectory(root):
     headers = set(fn for fn in sources if fn.endswith(".h"))
     sources -= headers
     for h in sorted(headers):
-      srcs = []
-      name = prepend_module_name(path.basename(path.splitext(h)[0]))
       cc_file = path.splitext(h)[0] + ".cc"
       if cc_file in sources:
         sources.remove(cc_file)
-        srcs.append(cc_file)
-      AddTarget("google_library", name, directory, srcs, [h])
 
     tests = set(fn for fn in sources if fn.endswith("_test.cc"))
     sources -= tests
     for c in sorted(tests):
       name = prepend_module_name(path.basename(path.splitext(c)[0]))
       AddTarget("google_test", name, directory, [c], [])
-
-    protos = set(fn for fn in sources if fn.endswith(".proto"))
-    sources -= protos
-    for c in sorted(protos):
-      name = prepend_module_name(path.basename(path.splitext(c)[0]))
-      AddTarget("google_proto_library", name, directory, [c], [])
 
     mains = set(fn for fn in sources if fn.endswith("_main.cc"))
     sources -= mains
@@ -235,16 +188,6 @@ def RunOnDirectory(root):
 
   # Write the CMakeLists.txt files.
   for directory in directories:
-    targets_in_directory = [t for t in targets if t.directory == directory]
-    for target in targets_in_directory:
-      for src in target.srcs + target.hdrs:
-        for header in ExtractProjectIncludes(project_name, src):
-          dependant = targets_by_src[header]
-          if dependant.name == target.name:
-            continue
-          target.depends.add(dependant.name)
-        target.uses.update(ExtractUses(project_name, src))
-
     cmake_file = path.join(directory, "CMakeLists.txt")
     parts = GetNonGoogleTargetLines(cmake_file)
 
@@ -259,7 +202,7 @@ def RunOnDirectory(root):
     dump(parts["START"])
     del parts["START"]
 
-    for target in targets_in_directory:
+    for target in [t for t in targets if t.directory == directory]:
       dump(target.Format(directory))
       if target.name in parts:
         dump(parts[target.name])

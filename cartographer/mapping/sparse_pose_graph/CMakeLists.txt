@@ -13,29 +13,3 @@
 # limitations under the License.
 
 add_subdirectory("proto")
-
-google_library(mapping_sparse_pose_graph_constraint_builder
-  SRCS
-    constraint_builder.cc
-  HDRS
-    constraint_builder.h
-  DEPENDS
-    common_lua_parameter_dictionary
-    mapping_2d_scan_matching_ceres_scan_matcher
-    mapping_2d_scan_matching_fast_correlative_scan_matcher
-    mapping_3d_scan_matching_ceres_scan_matcher
-    mapping_3d_scan_matching_fast_correlative_scan_matcher
-    mapping_sparse_pose_graph_proto_constraint_builder_options
-    sensor_voxel_filter
-)
-
-google_library(mapping_sparse_pose_graph_optimization_problem_options
-  SRCS
-    optimization_problem_options.cc
-  HDRS
-    optimization_problem_options.h
-  DEPENDS
-    common_ceres_solver_options
-    common_lua_parameter_dictionary
-    mapping_sparse_pose_graph_proto_optimization_problem_options
-)

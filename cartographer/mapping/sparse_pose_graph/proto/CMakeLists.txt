@@ -12,20 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-google_proto_library(mapping_sparse_pose_graph_proto_constraint_builder_options
-  SRCS
-    constraint_builder_options.proto
-  DEPENDS
-    mapping_2d_scan_matching_proto_ceres_scan_matcher_options
-    mapping_2d_scan_matching_proto_fast_correlative_scan_matcher_options
-    mapping_3d_scan_matching_proto_ceres_scan_matcher_options
-    mapping_3d_scan_matching_proto_fast_correlative_scan_matcher_options
-    sensor_proto_adaptive_voxel_filter_options
-)
-
-google_proto_library(mapping_sparse_pose_graph_proto_optimization_problem_options
-  SRCS
-    optimization_problem_options.proto
-  DEPENDS
-    common_proto_ceres_solver_options
-)
