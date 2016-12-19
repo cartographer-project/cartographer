@@ -16,7 +16,7 @@
 Cartographer
 ============
 
-|build| |docs|
+|build| |docs| |license|
 
 Purpose
 =======
@@ -55,6 +55,10 @@ page`_.
     :alt: Documentation Status
     :scale: 100%
     :target: https://google-cartographer.readthedocs.io/en/latest/?badge=latest
+.. |license| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+     :alt: Apache 2 license.
+     :scale: 100%
+     :target: https://github.com/googlecartographer/cartographer/blob/master/LICENSE
 .. |video| image:: https://j.gifs.com/wp3BJM.gif
     :alt: Cartographer 3D SLAM Demo
     :scale: 100%
