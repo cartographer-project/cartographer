@@ -24,13 +24,23 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/port.h"
+#include "cartographer/common/time.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/mapping_2d/submaps.h"
+#include "cartographer/mapping_3d/imu_integration.h"
 
 namespace cartographer {
 namespace mapping_2d {
 namespace sparse_pose_graph {
+
+struct NodeData {
+  // TODO(whess): Keep nodes per trajectory instead.
+  const mapping::Submaps* trajectory;
+  common::Time time;
+  transform::Rigid2d initial_point_cloud_pose;
+  transform::Rigid2d point_cloud_pose;
+};
 
 // Implements the SPA loop closure method.
 class OptimizationProblem {
@@ -45,19 +55,25 @@ class OptimizationProblem {
   OptimizationProblem(const OptimizationProblem&) = delete;
   OptimizationProblem& operator=(const OptimizationProblem&) = delete;
 
+  void AddImuData(const mapping::Submaps* trajectory, common::Time time,
+                  const Eigen::Vector3d& linear_acceleration,
+                  const Eigen::Vector3d& angular_velocity);
+  void AddTrajectoryNode(const mapping::Submaps* trajectory, common::Time time,
+                         const transform::Rigid2d& initial_point_cloud_pose,
+                         const transform::Rigid2d& point_cloud_pose);
+
   void SetMaxNumIterations(int32 max_num_iterations);
 
-  // Computes the optimized poses. The point cloud at 'point_cloud_poses[i]'
-  // belongs to 'trajectories[i]'. Within a given trajectory, scans are expected
-  // to be contiguous.
+  // Computes the optimized poses.
   void Solve(const std::vector<Constraint>& constraints,
-             const std::vector<const mapping::Submaps*>& trajectories,
-             const std::vector<transform::Rigid2d>& initial_point_cloud_poses,
-             std::vector<transform::Rigid2d>* point_cloud_poses,
              std::vector<transform::Rigid2d>* submap_transforms);
+
+  const std::vector<NodeData>& node_data() const;
 
  private:
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
+  std::map<const mapping::Submaps*, std::deque<mapping_3d::ImuData>> imu_data_;
+  std::vector<NodeData> node_data_;
 };
 
 }  // namespace sparse_pose_graph

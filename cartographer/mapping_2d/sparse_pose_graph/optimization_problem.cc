@@ -59,6 +59,22 @@ OptimizationProblem::OptimizationProblem(
 
 OptimizationProblem::~OptimizationProblem() {}
 
+void OptimizationProblem::AddImuData(const mapping::Submaps* const trajectory,
+                                     const common::Time time,
+                                     const Eigen::Vector3d& linear_acceleration,
+                                     const Eigen::Vector3d& angular_velocity) {
+  imu_data_[trajectory].push_back(
+      mapping_3d::ImuData{time, linear_acceleration, angular_velocity});
+}
+
+void OptimizationProblem::AddTrajectoryNode(
+    const mapping::Submaps* const trajectory, const common::Time time,
+    const transform::Rigid2d& initial_point_cloud_pose,
+    const transform::Rigid2d& point_cloud_pose) {
+  node_data_.push_back(
+      NodeData{trajectory, time, initial_point_cloud_pose, point_cloud_pose});
+}
+
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
   options_.mutable_ceres_solver_options()->set_max_num_iterations(
       max_num_iterations);
@@ -66,11 +82,8 @@ void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
 
 void OptimizationProblem::Solve(
     const std::vector<Constraint>& constraints,
-    const std::vector<const mapping::Submaps*>& trajectories,
-    const std::vector<transform::Rigid2d>& initial_point_cloud_poses,
-    std::vector<transform::Rigid2d>* point_cloud_poses,
-    std::vector<transform::Rigid2d>* submap_transforms) {
-  if (point_cloud_poses->empty()) {
+    std::vector<transform::Rigid2d>* const submap_transforms) {
+  if (node_data_.empty()) {
     // Nothing to optimize.
     return;
   }
@@ -80,13 +93,13 @@ void OptimizationProblem::Solve(
 
   // Set the starting point.
   std::vector<std::array<double, 3>> C_submaps(submap_transforms->size());
-  std::vector<std::array<double, 3>> C_point_clouds(point_cloud_poses->size());
+  std::vector<std::array<double, 3>> C_point_clouds(node_data_.size());
   for (size_t i = 0; i != submap_transforms->size(); ++i) {
     C_submaps[i] = FromPose((*submap_transforms)[i]);
     problem.AddParameterBlock(C_submaps[i].data(), 3);
   }
-  for (size_t j = 0; j != point_cloud_poses->size(); ++j) {
-    C_point_clouds[j] = FromPose((*point_cloud_poses)[j]);
+  for (size_t j = 0; j != node_data_.size(); ++j) {
+    C_point_clouds[j] = FromPose(node_data_[j].point_cloud_pose);
     problem.AddParameterBlock(C_point_clouds[j].data(), 3);
   }
 
@@ -100,7 +113,7 @@ void OptimizationProblem::Solve(
     CHECK_GE(constraint.i, 0);
     CHECK_LT(constraint.i, submap_transforms->size());
     CHECK_GE(constraint.j, 0);
-    CHECK_LT(constraint.j, point_cloud_poses->size());
+    CHECK_LT(constraint.j, node_data_.size());
     constraints_residual_blocks.emplace_back(
         constraint.tag,
         problem.AddResidualBlock(
@@ -115,22 +128,19 @@ void OptimizationProblem::Solve(
   }
 
   // Add penalties for changes between consecutive scans.
-  CHECK(!point_cloud_poses->empty());
   const Eigen::DiagonalMatrix<double, 3> consecutive_pose_change_penalty_matrix(
       options_.consecutive_scan_translation_penalty_factor(),
       options_.consecutive_scan_translation_penalty_factor(),
       options_.consecutive_scan_rotation_penalty_factor());
-  CHECK_GE(initial_point_cloud_poses.size(), point_cloud_poses->size());
-  CHECK_GE(trajectories.size(), point_cloud_poses->size());
 
-  // The poses in initial_point_cloud_poses and point_cloud_poses are
-  // interleaved from multiple trajectories (although the points from a given
-  // trajectory are in time order). 'last_pose_indices[trajectory]' is the index
-  // into 'initial_point_cloud_poses' of the most-recent pose on 'trajectory'.
+  // The poses in 'node_data_' are interleaved from multiple trajectories
+  // (although the points from a given trajectory are in time order).
+  // 'last_pose_indices[trajectory]' is the index of the most-recent pose on
+  // 'trajectory'.
   std::map<const mapping::Submaps*, int> last_pose_indices;
 
-  for (size_t j = 0; j != point_cloud_poses->size(); ++j) {
-    const mapping::Submaps* trajectory = trajectories[j];
+  for (size_t j = 0; j != node_data_.size(); ++j) {
+    const mapping::Submaps* trajectory = node_data_[j].trajectory;
     // This pose has a predecessor.
     if (last_pose_indices.count(trajectory) != 0) {
       const int last_pose_index = last_pose_indices[trajectory];
@@ -139,9 +149,9 @@ void OptimizationProblem::Solve(
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
-                  transform::Embed3D(
-                      initial_point_cloud_poses[last_pose_index].inverse() *
-                      initial_point_cloud_poses[j]),
+                  transform::Embed3D(node_data_[last_pose_index]
+                                         .initial_point_cloud_pose.inverse() *
+                                     node_data_[j].initial_point_cloud_pose),
                   kalman_filter::Embed3D(consecutive_pose_change_penalty_matrix,
                                          kUnusedPositionPenalty,
                                          kUnusedOrientationPenalty)})),
@@ -157,41 +167,6 @@ void OptimizationProblem::Solve(
       common::CreateCeresSolverOptions(options_.ceres_solver_options()),
       &problem, &summary);
 
-  if (options_.log_residual_histograms()) {
-    common::Histogram intra_submap_xy_residuals;
-    common::Histogram intra_submap_theta_residuals;
-    common::Histogram inter_submap_xy_residuals;
-    common::Histogram inter_submap_theta_residuals;
-    for (auto constraint_residual_block : constraints_residual_blocks) {
-      ceres::Problem::EvaluateOptions options;
-      options.apply_loss_function = false;
-      options.residual_blocks = {constraint_residual_block.second};
-      std::vector<double> residuals;
-      problem.Evaluate(options, nullptr, &residuals, nullptr, nullptr);
-      CHECK_EQ(3, residuals.size());
-      switch (constraint_residual_block.first) {
-        case Constraint::INTRA_SUBMAP:
-          intra_submap_xy_residuals.Add(common::Pow2(residuals[0]) +
-                                        common::Pow2(residuals[1]));
-          intra_submap_theta_residuals.Add(common::Pow2(residuals[2]));
-          break;
-        case Constraint::INTER_SUBMAP:
-          inter_submap_xy_residuals.Add(common::Pow2(residuals[0]) +
-                                        common::Pow2(residuals[1]));
-          inter_submap_theta_residuals.Add(common::Pow2(residuals[2]));
-          break;
-      }
-    }
-    LOG(INFO) << "Intra-submap x^2 + y^2 residual histogram:\n"
-              << intra_submap_xy_residuals.ToString(10);
-    LOG(INFO) << "Intra-submap theta^2 residual histogram:\n"
-              << intra_submap_theta_residuals.ToString(10);
-    LOG(INFO) << "Inter-submap x^2 + y^2 residual histogram:\n"
-              << inter_submap_xy_residuals.ToString(10);
-    LOG(INFO) << "Inter-submap theta^2 residual histogram:\n"
-              << inter_submap_theta_residuals.ToString(10);
-  }
-
   if (options_.log_solver_summary()) {
     LOG(INFO) << summary.FullReport();
   }
@@ -200,9 +175,13 @@ void OptimizationProblem::Solve(
   for (size_t i = 0; i != submap_transforms->size(); ++i) {
     (*submap_transforms)[i] = ToPose(C_submaps[i]);
   }
-  for (size_t j = 0; j != point_cloud_poses->size(); ++j) {
-    (*point_cloud_poses)[j] = ToPose(C_point_clouds[j]);
+  for (size_t j = 0; j != node_data_.size(); ++j) {
+    node_data_[j].point_cloud_pose = ToPose(C_point_clouds[j]);
   }
+}
+
+const std::vector<NodeData>& OptimizationProblem::node_data() const {
+  return node_data_;
 }
 
 }  // namespace sparse_pose_graph

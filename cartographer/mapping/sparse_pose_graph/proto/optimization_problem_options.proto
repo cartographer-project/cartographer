@@ -36,9 +36,5 @@ message OptimizationProblemOptions {
   // If true, the Ceres solver summary will be logged for every optimization.
   optional bool log_solver_summary = 5;
 
-  // If true, histograms of the final residual values after optimization will be
-  // logged for every optimization.
-  optional bool log_residual_histograms = 10;
-
   optional common.proto.CeresSolverOptions ceres_solver_options = 7;
 }

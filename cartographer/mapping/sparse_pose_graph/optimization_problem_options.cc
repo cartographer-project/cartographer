@@ -38,8 +38,6 @@ proto::OptimizationProblemOptions CreateOptimizationProblemOptions(
           "consecutive_scan_rotation_penalty_factor"));
   options.set_log_solver_summary(
       parameter_dictionary->GetBool("log_solver_summary"));
-  options.set_log_residual_histograms(
-      parameter_dictionary->GetBool("log_residual_histograms"));
   *options.mutable_ceres_solver_options() =
       common::CreateCeresSolverOptionsProto(
           parameter_dictionary->GetDictionary("ceres_solver_options").get());

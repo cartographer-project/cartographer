@@ -55,8 +55,10 @@ google_library(mapping_2d_sparse_pose_graph_optimization_problem
     common_histogram
     common_math
     common_port
+    common_time
     mapping_2d_sparse_pose_graph_spa_cost_function
     mapping_2d_submaps
+    mapping_3d_imu_integration
     mapping_sparse_pose_graph
     mapping_sparse_pose_graph_proto_optimization_problem_options
     transform_transform

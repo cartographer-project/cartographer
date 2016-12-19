@@ -30,7 +30,6 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping_3d/acceleration_cost_function.h"
 #include "cartographer/mapping_3d/ceres_pose.h"
-#include "cartographer/mapping_3d/imu_integration.h"
 #include "cartographer/mapping_3d/rotation_cost_function.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/spa_cost_function.h"
 #include "cartographer/transform/transform.h"

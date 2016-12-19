@@ -125,7 +125,6 @@ class SparsePoseGraphTest : public ::testing::Test {
               consecutive_scan_translation_penalty_factor = 0.,
               consecutive_scan_rotation_penalty_factor = 0.,
               log_solver_summary = true,
-              log_residual_histograms = true,
               ceres_solver_options = {
                 use_nonmonotonic_steps = false,
                 max_num_iterations = 200,

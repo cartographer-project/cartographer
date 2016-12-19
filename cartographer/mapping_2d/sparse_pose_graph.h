@@ -80,6 +80,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                const std::vector<const mapping::Submap*>& insertion_submaps)
       EXCLUDES(mutex_);
 
+  // Adds new IMU data to be used in the optimization.
+  void AddImuData(const mapping::Submaps* trajectory, common::Time time,
+                  const Eigen::Vector3d& linear_acceleration,
+                  const Eigen::Vector3d& angular_velocity);
+
   void RunFinalOptimization() override;
   bool HasNewOptimizedPoses() override;
   mapping::proto::ScanMatchingProgress GetScanMatchingProgress() override;
@@ -127,7 +132,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds constraints for a scan, and starts scan matching in the background.
   void ComputeConstraintsForScan(
-      int scan_index, const mapping::Submap* matching_submap,
+      common::Time time, int scan_index, const mapping::Submap* matching_submap,
       std::vector<const mapping::Submap*> insertion_submaps,
       const mapping::Submap* finished_submap, const transform::Rigid2d& pose,
       const kalman_filter::Pose2DCovariance& covariance) REQUIRES(mutex_);
@@ -183,8 +188,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   sparse_pose_graph::OptimizationProblem optimization_problem_;
   sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_;
-  std::vector<transform::Rigid2d> initial_point_cloud_poses_;
-  std::vector<transform::Rigid2d> point_cloud_poses_;  // (map <- point cloud)
   std::vector<transform::Rigid2d> submap_transforms_;  // (map <- submap)
 
   // Submaps get assigned an index and state as soon as they are seen, even

@@ -228,8 +228,8 @@ void ConstraintBuilder::ComputeConstraint(
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;
-  constexpr double kFakePositionCovariance = 1.;
-  constexpr double kFakeOrientationCovariance = 1.;
+  constexpr double kFakePositionCovariance = 1e-6;
+  constexpr double kFakeOrientationCovariance = 1e-6;
   constraint->reset(new Constraint{
       submap_index,
       scan_index,
