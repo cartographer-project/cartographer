@@ -323,15 +323,7 @@ void SparsePoseGraph::RunFinalOptimization() {
 
 void SparsePoseGraph::RunOptimization() {
   if (!submap_transforms_.empty()) {
-    transform::Rigid3d submap_0_pose;
-    {
-      common::MutexLocker locker(&mutex_);
-      CHECK(!submap_states_.empty());
-      submap_0_pose = submap_states_.front().submap->local_pose();
-    }
-
-    optimization_problem_.Solve(constraints_, submap_0_pose,
-                                &submap_transforms_);
+    optimization_problem_.Solve(constraints_, &submap_transforms_);
     common::MutexLocker locker(&mutex_);
     has_new_optimized_poses_ = true;
 

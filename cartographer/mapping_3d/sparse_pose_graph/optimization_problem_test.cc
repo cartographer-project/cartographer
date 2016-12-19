@@ -166,8 +166,7 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
                             node_data[j].point_cloud_pose);
   }
 
-  optimization_problem_.Solve(constraints, kSubmap0Transform,
-                              &submap_transforms);
+  optimization_problem_.Solve(constraints, &submap_transforms);
 
   double translation_error_after = 0.;
   double rotation_error_after = 0.;

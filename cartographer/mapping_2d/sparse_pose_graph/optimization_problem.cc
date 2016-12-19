@@ -191,9 +191,6 @@ void OptimizationProblem::Solve(
     LOG(INFO) << "Inter-submap theta^2 residual histogram:\n"
               << inter_submap_theta_residuals.ToString(10);
   }
-  ceres::Solve(
-      common::CreateCeresSolverOptions(options_.ceres_solver_options()),
-      &problem, &summary);
 
   if (options_.log_solver_summary()) {
     LOG(INFO) << summary.FullReport();

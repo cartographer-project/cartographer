@@ -66,7 +66,7 @@ SPARSE_POSE_GRAPH = {
   },
   optimization_problem = {
     huber_scale = 1e1,
-    acceleration_weight = 7e4,
+    acceleration_weight = 1e4,
     rotation_weight = 3e6,
     consecutive_scan_translation_penalty_factor = 1e5,
     consecutive_scan_rotation_penalty_factor = 1e5,
