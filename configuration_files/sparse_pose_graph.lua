@@ -71,7 +71,6 @@ SPARSE_POSE_GRAPH = {
     consecutive_scan_translation_penalty_factor = 1e5,
     consecutive_scan_rotation_penalty_factor = 1e5,
     log_solver_summary = false,
-    log_residual_histograms = false,
     ceres_solver_options = {
       use_nonmonotonic_steps = false,
       max_num_iterations = 50,

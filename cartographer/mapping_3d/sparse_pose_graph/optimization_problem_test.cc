@@ -47,7 +47,6 @@ class OptimizationProblemTest : public ::testing::Test {
           consecutive_scan_translation_penalty_factor = 1e-2,
           consecutive_scan_rotation_penalty_factor = 1e-2,
           log_solver_summary = true,
-          log_residual_histograms = true,
           ceres_solver_options = {
             use_nonmonotonic_steps = false,
             max_num_iterations = 200,
