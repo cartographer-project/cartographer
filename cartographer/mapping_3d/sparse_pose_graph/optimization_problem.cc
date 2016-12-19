@@ -99,7 +99,6 @@ void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
 
 void OptimizationProblem::Solve(
     const std::vector<Constraint>& constraints,
-    const transform::Rigid3d& submap_0_transform,
     std::vector<transform::Rigid3d>* const submap_transforms) {
   if (node_data_.empty()) {
     // Nothing to optimize.
@@ -146,7 +145,7 @@ void OptimizationProblem::Solve(
         common::make_unique<ceres::QuaternionParameterization>(), &problem);
   }
 
-  // Add cost functions for the loop closing constraints.
+  // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
     CHECK_GE(constraint.i, 0);
     CHECK_LT(constraint.i, submap_transforms->size());
@@ -155,7 +154,10 @@ void OptimizationProblem::Solve(
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<SpaCostFunction, 6, 4, 3, 4, 3>(
             new SpaCostFunction(constraint.pose)),
-        new ceres::HuberLoss(options_.huber_scale()),
+        // Only loop closure constraints should have a loss function.
+        constraint.tag == Constraint::INTER_SUBMAP
+            ? new ceres::HuberLoss(options_.huber_scale())
+            : nullptr,
         C_submaps[constraint.i].rotation(),
         C_submaps[constraint.i].translation(),
         C_point_clouds[constraint.j].rotation(),
@@ -228,9 +230,9 @@ void OptimizationProblem::Solve(
 
   // Solve.
   ceres::Solver::Summary summary;
-  ceres::Solver::Options ceres_solver_options =
-      common::CreateCeresSolverOptions(options_.ceres_solver_options());
-  ceres::Solve(ceres_solver_options, &problem, &summary);
+  ceres::Solve(
+      common::CreateCeresSolverOptions(options_.ceres_solver_options()),
+      &problem, &summary);
 
   if (options_.log_solver_summary()) {
     LOG(INFO) << summary.FullReport();

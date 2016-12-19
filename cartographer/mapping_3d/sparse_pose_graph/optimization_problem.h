@@ -68,7 +68,6 @@ class OptimizationProblem {
 
   // Computes the optimized poses.
   void Solve(const std::vector<Constraint>& constraints,
-             const transform::Rigid3d& submap_0_transform,
              std::vector<transform::Rigid3d>* submap_transforms);
 
   const std::vector<NodeData>& node_data() const;

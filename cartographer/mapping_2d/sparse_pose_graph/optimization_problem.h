@@ -23,7 +23,6 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
-#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
