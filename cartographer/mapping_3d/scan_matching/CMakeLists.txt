@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory("proto")
-
 google_test(mapping_3d_scan_matching_ceres_scan_matcher_test
   SRCS
     ceres_scan_matcher_test.cc

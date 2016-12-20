@@ -138,6 +138,7 @@ target_include_directories(cartographer PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+# TODO(damonkohler): Create a testing library.
 target_include_directories(cartographer SYSTEM PRIVATE
   "${GMOCK_INCLUDE_DIRS}")
 target_link_libraries(cartographer PUBLIC ${GMOCK_LIBRARIES})

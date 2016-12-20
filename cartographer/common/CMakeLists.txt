@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory("proto")
-
 configure_file (
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/config.h)

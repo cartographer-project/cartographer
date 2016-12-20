@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory("proto")
 add_subdirectory("scan_matching")
 add_subdirectory("sparse_pose_graph")
 

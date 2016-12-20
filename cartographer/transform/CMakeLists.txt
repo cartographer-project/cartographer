@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory("proto")
-
 google_test(transform_transform_interpolation_buffer_test
   SRCS
     transform_interpolation_buffer_test.cc

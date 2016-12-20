@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory("proto")
-
 google_test(sensor_collator_test
   SRCS
     collator_test.cc
