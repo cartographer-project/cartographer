@@ -13,7 +13,6 @@
 # limitations under the License.
 
 add_subdirectory("scan_matching")
-add_subdirectory("sparse_pose_graph")
 
 google_test(mapping_2d_laser_fan_inserter_test
   SRCS
