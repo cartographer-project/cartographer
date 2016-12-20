@@ -107,24 +107,19 @@ void OptimizationProblem::Solve(
   problem.SetParameterBlockConstant(C_submaps[0].data());
 
   // Add cost functions for intra- and inter-submap constraints.
-  std::vector<std::pair<Constraint::Tag, ceres::ResidualBlockId>>
-      constraints_residual_blocks;
   for (const Constraint& constraint : constraints) {
     CHECK_GE(constraint.i, 0);
     CHECK_LT(constraint.i, submap_transforms->size());
     CHECK_GE(constraint.j, 0);
     CHECK_LT(constraint.j, node_data_.size());
-    constraints_residual_blocks.emplace_back(
-        constraint.tag,
-        problem.AddResidualBlock(
-            new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
-                new SpaCostFunction(constraint.pose)),
-            // Only loop closure constraints should have a loss function.
-            constraint.tag == Constraint::INTER_SUBMAP
-                ? new ceres::HuberLoss(options_.huber_scale())
-                : nullptr,
-            C_submaps[constraint.i].data(),
-            C_point_clouds[constraint.j].data()));
+    problem.AddResidualBlock(
+        new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
+            new SpaCostFunction(constraint.pose)),
+        // Only loop closure constraints should have a loss function.
+        constraint.tag == Constraint::INTER_SUBMAP
+            ? new ceres::HuberLoss(options_.huber_scale())
+            : nullptr,
+        C_submaps[constraint.i].data(), C_point_clouds[constraint.j].data());
   }
 
   // Add penalties for changes between consecutive scans.

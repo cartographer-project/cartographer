@@ -127,7 +127,7 @@ void SparsePoseGraph::AddScan(
   }
 
   AddWorkItem([=]() REQUIRES(mutex_) {
-    ComputeConstraintsForScan(time, j, matching_submap, insertion_submaps,
+    ComputeConstraintsForScan(j, matching_submap, insertion_submaps,
                               finished_submap, pose, covariance);
   });
 }
@@ -199,8 +199,7 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
 }
 
 void SparsePoseGraph::ComputeConstraintsForScan(
-    const common::Time time, const int scan_index,
-    const mapping::Submap* matching_submap,
+    const int scan_index, const mapping::Submap* matching_submap,
     std::vector<const mapping::Submap*> insertion_submaps,
     const mapping::Submap* finished_submap, const transform::Rigid2d& pose,
     const kalman_filter::Pose2DCovariance& covariance) {
@@ -210,10 +209,10 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       submap_transforms_[matching_index] *
       sparse_pose_graph::ComputeSubmapPose(*matching_submap).inverse() * pose;
   CHECK_EQ(scan_index, optimization_problem_.node_data().size());
-  const mapping::Submaps* const scan_trajectory =
-      trajectory_nodes_[scan_index].constant_data->trajectory;
-  optimization_problem_.AddTrajectoryNode(scan_trajectory, time, pose,
-                                          optimized_pose);
+  const mapping::TrajectoryNode::ConstantData* const scan_data =
+      trajectory_nodes_[scan_index].constant_data;
+  optimization_problem_.AddTrajectoryNode(
+      scan_data->trajectory, scan_data->time, pose, optimized_pose);
   for (const mapping::Submap* submap : insertion_submaps) {
     const int submap_index = GetSubmapIndex(submap);
     CHECK(!submap_states_[submap_index].finished);

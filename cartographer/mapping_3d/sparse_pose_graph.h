@@ -130,7 +130,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds constraints for a scan, and starts scan matching in the background.
   void ComputeConstraintsForScan(
-      common::Time time, int scan_index, const Submap* matching_submap,
+      int scan_index, const Submap* matching_submap,
       std::vector<const Submap*> insertion_submaps,
       const Submap* finished_submap, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) REQUIRES(mutex_);
