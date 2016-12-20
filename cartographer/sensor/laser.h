@@ -40,7 +40,14 @@ struct LaserFan {
 
 // Builds a PointCloud of returns from 'proto', dropping any beams with ranges
 // outside the valid range described by 'proto'.
-LaserFan ToLaserFan(const proto::LaserScan& proto);
+PointCloud ToPointCloud(const proto::LaserScan& proto);
+
+// Like above, but also extracts intensities of ouf the laser scan. The
+// intensities of the laser are device specific and therefore require
+// normalization to be comparable. In case the 'proto' does not contain
+// intensities, this will return all 0. for the intensities.
+PointCloudWithIntensities ToPointCloudWithIntensities(
+    const proto::LaserScan& proto);
 
 // Converts 'laser_fan' to a proto::LaserFan.
 proto::LaserFan ToProto(const LaserFan& laser_fan);

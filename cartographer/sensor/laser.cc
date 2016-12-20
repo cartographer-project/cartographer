@@ -37,7 +37,12 @@ std::vector<uint8> ReorderReflectivities(
 
 }  // namespace
 
-LaserFan ToLaserFan(const proto::LaserScan& proto) {
+PointCloud ToPointCloud(const proto::LaserScan& proto) {
+  return ToPointCloudWithIntensities(proto).points;
+}
+
+PointCloudWithIntensities ToPointCloudWithIntensities(
+    const proto::LaserScan& proto) {
   CHECK_GE(proto.range_min(), 0.f);
   CHECK_GE(proto.range_max(), proto.range_min());
   if (proto.angle_increment() > 0.f) {
@@ -45,7 +50,7 @@ LaserFan ToLaserFan(const proto::LaserScan& proto) {
   } else {
     CHECK_GT(proto.angle_min(), proto.angle_max());
   }
-  LaserFan laser_fan = {Eigen::Vector3f::Zero(), {}, {}, {}};
+  PointCloudWithIntensities point_cloud;
   float angle = proto.angle_min();
   for (int i = 0; i < proto.range_size(); ++i) {
     const auto& range = proto.range(i);
@@ -53,16 +58,18 @@ LaserFan ToLaserFan(const proto::LaserScan& proto) {
       const float first_echo = range.value(0);
       if (proto.range_min() <= first_echo && first_echo <= proto.range_max()) {
         const Eigen::AngleAxisf rotation(angle, Eigen::Vector3f::UnitZ());
-        laser_fan.returns.push_back(rotation *
+        point_cloud.points.push_back(rotation *
                                       (first_echo * Eigen::Vector3f::UnitX()));
         if (proto.intensity_size() > 0) {
-          laser_fan.reflectivities.push_back(proto.intensity(i).value(0));
+          point_cloud.intensities.push_back(proto.intensity(i).value(0));
+        } else {
+          point_cloud.intensities.push_back(0.f);
         }
       }
     }
     angle += proto.angle_increment();
   }
-  return laser_fan;
+  return point_cloud;
 }
 
 proto::LaserFan ToProto(const LaserFan& laser_fan) {

@@ -30,6 +30,13 @@ namespace sensor {
 
 typedef std::vector<Eigen::Vector3f> PointCloud;
 
+struct PointCloudWithIntensities {
+  PointCloud points;
+
+  // Normalized intensities [0.,1.].
+  std::vector<float> intensities;
+};
+
 // Transforms 'point_cloud' according to 'transform'.
 PointCloud TransformPointCloud(const PointCloud& point_cloud,
                                const transform::Rigid3f& transform);
