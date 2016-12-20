@@ -59,7 +59,7 @@ PointCloudWithIntensities ToPointCloudWithIntensities(
       if (proto.range_min() <= first_echo && first_echo <= proto.range_max()) {
         const Eigen::AngleAxisf rotation(angle, Eigen::Vector3f::UnitZ());
         point_cloud.points.push_back(rotation *
-                                      (first_echo * Eigen::Vector3f::UnitX()));
+                                     (first_echo * Eigen::Vector3f::UnitX()));
         if (proto.intensity_size() > 0) {
           point_cloud.intensities.push_back(proto.intensity(i).value(0));
         } else {
