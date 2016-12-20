@@ -40,7 +40,7 @@ struct LaserFan {
 
 // Builds a PointCloud of returns from 'proto', dropping any beams with ranges
 // outside the valid range described by 'proto'.
-PointCloud ToPointCloud(const proto::LaserScan& proto);
+LaserFan ToLaserFan(const proto::LaserScan& proto);
 
 // Converts 'laser_fan' to a proto::LaserFan.
 proto::LaserFan ToProto(const LaserFan& laser_fan);

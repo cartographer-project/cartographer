@@ -39,7 +39,7 @@ TEST(LaserTest, ToPointCloud) {
   laser_scan.set_range_min(0.f);
   laser_scan.set_range_max(10.f);
 
-  const auto point_cloud = ToPointCloud(laser_scan);
+  const auto point_cloud = ToLaserFan(laser_scan).returns;
   EXPECT_TRUE(point_cloud[0].isApprox(Eigen::Vector3f(1.f, 0.f, 0.f), 1e-6));
   EXPECT_TRUE(point_cloud[1].isApprox(
       Eigen::Vector3f(1.f / std::sqrt(2.f), 1.f / std::sqrt(2.f), 0.f), 1e-6));
@@ -68,7 +68,7 @@ TEST(LaserTest, ToPointCloudWithInfinityAndNaN) {
   laser_scan.set_range_min(2.f);
   laser_scan.set_range_max(10.f);
 
-  const auto point_cloud = ToPointCloud(laser_scan);
+  const auto point_cloud = ToLaserFan(laser_scan).returns;
   ASSERT_EQ(2, point_cloud.size());
   EXPECT_TRUE(point_cloud[0].isApprox(Eigen::Vector3f(0.f, 2.f, 0.f), 1e-6));
   EXPECT_TRUE(point_cloud[1].isApprox(Eigen::Vector3f(-3.f, 0.f, 0.f), 1e-6));
