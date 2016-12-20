@@ -14,15 +14,6 @@
 
 
 google_binary(cartographer_compute_relations_metrics
-  USES_GFLAGS
-  USES_GLOG
   SRCS
     compute_relations_metrics_main.cc
-  DEPENDS
-    common_math
-    common_port
-    mapping_proto_trajectory
-    transform_rigid_transform
-    transform_transform
-    transform_transform_interpolation_buffer
 )
