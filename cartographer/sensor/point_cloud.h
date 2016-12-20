@@ -32,8 +32,6 @@ typedef std::vector<Eigen::Vector3f> PointCloud;
 
 struct PointCloudWithIntensities {
   PointCloud points;
-
-  // Normalized intensities [0.,1.].
   std::vector<float> intensities;
 };
 
