@@ -20,6 +20,8 @@ Cartographer
    :maxdepth: 2
    :hidden:
 
+   configuration
+
 `Cartographer`_ is a system that provides real-time simultaneous localization
 and mapping (`SLAM`_) in 2D and 3D across multiple platforms and sensor
 configurations.
