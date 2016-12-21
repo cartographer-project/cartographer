@@ -106,6 +106,18 @@ macro(google_initialize_cartographer_project)
 
   message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+  # Add a hook that reruns CMake when source files are added or removed.
+  set(LIST_FILES_CMD "find ${CMAKE_SOURCE_DIR}/ -not -iwholename '*.git*' | sort | sed 's/^/#/'")
+  set(FILES_LIST_PATH "${CMAKE_BINARY_DIR}/AllFiles.cmake")
+  set(DETECT_CHANGES_CMD "bash" "-c" "${LIST_FILES_CMD} | diff -N -q ${FILES_LIST_PATH} - || ${LIST_FILES_CMD} > ${FILES_LIST_PATH}")
+  add_custom_target(cartographer_detect_changes ALL
+    COMMAND ${DETECT_CHANGES_CMD}
+    VERBATIM
+  )
+  if(NOT EXISTS ${FILES_LIST_PATH})
+    execute_process(COMMAND ${DETECT_CHANGES_CMD})
+  endif()
+  include(${FILES_LIST_PATH})
 endmacro()
 
 macro(google_enable_testing)
