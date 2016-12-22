@@ -116,8 +116,8 @@ target_link_libraries(cartographer PUBLIC ${Boost_LIBRARIES})
 
 target_link_libraries(cartographer PUBLIC webp)
 
+# We expect find_package(Ceres) to have located these for us.
 target_link_libraries(cartographer PUBLIC glog)
-
 target_link_libraries(cartographer PUBLIC gflags)
 
 target_include_directories(cartographer SYSTEM PUBLIC
@@ -199,6 +199,7 @@ list(APPEND CARTOGRAPHER_LIBRARIES "${LUA_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${PROTOBUF_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${CAIRO_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "webp")
+list(APPEND CARTOGRAPHER_LIBRARIES "glog")
 
 CONFIGURE_PACKAGE_CONFIG_FILE(
   cartographer-config.cmake.in
