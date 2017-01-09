@@ -44,24 +44,10 @@ endif()
 # Install catkin package.xml
 install(FILES package.xml DESTINATION share/cartographer)
 
-set(CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY "${CMAKE_INSTALL_PREFIX}/share/cartographer/configuration_files")
+set(CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY ${CMAKE_INSTALL_PREFIX}/share/cartographer/configuration_files)
 install(DIRECTORY configuration_files DESTINATION share/cartographer/)
 
 install(DIRECTORY cmake DESTINATION share/cartographer/)
-
-include(CMakePackageConfigHelpers)
-
-# Create a cartographer-config.cmake file for the use from the install tree
-# and install it
-set(CARTOGRAPHER_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/lib")
-list(APPEND CARTOGRAPHER_LIBRARY_DIRS "${LUA_LIBRARY_DIR}")
-
-set(CARTOGRAPHER_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
-list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${LUA_INCLUDE_DIR}")
-list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${CERES_INCLUDE_DIRS}")
-list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${PROTOBUF_INCLUDE_DIR}")
-
-set(CARTOGRAPHER_CMAKE_DIR "${CMAKE_INSTALL_PREFIX}/share/cartographer/cmake")
 
 file(GLOB_RECURSE ALL_SRCS "*.cc" "*.h")
 file(GLOB_RECURSE ALL_TESTS "*_test.cc")
@@ -95,62 +81,65 @@ endforeach()
 set_source_files_properties(${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS} PROPERTIES GENERATED TRUE)
 list(APPEND ALL_SRCS ${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS})
 
-add_library(cartographer ${ALL_SRCS})
+add_library(${PROJECT_NAME} ${ALL_SRCS})
 add_subdirectory("cartographer")
 
-target_include_directories(cartographer SYSTEM PUBLIC
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${EIGEN3_INCLUDE_DIR}")
-target_link_libraries(cartographer PUBLIC ${EIGEN3_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${EIGEN3_LIBRARIES})
 
-target_include_directories(cartographer SYSTEM PUBLIC
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${CERES_INCLUDE_DIRS}")
-target_link_libraries(cartographer PUBLIC ${CERES_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${CERES_LIBRARIES})
 
-target_include_directories(cartographer SYSTEM PUBLIC
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${LUA_INCLUDE_DIR}")
-target_link_libraries(cartographer PUBLIC ${LUA_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${LUA_LIBRARIES})
 
-target_include_directories(cartographer SYSTEM PUBLIC
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${Boost_INCLUDE_DIRS}")
-target_link_libraries(cartographer PUBLIC ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
 
-target_link_libraries(cartographer PUBLIC webp)
+target_link_libraries(${PROJECT_NAME} PUBLIC webp)
 
 # We expect find_package(Ceres) to have located these for us.
-target_link_libraries(cartographer PUBLIC glog)
-target_link_libraries(cartographer PUBLIC gflags)
+target_link_libraries(${PROJECT_NAME} PUBLIC glog)
+target_link_libraries(${PROJECT_NAME} PUBLIC gflags)
 
-target_include_directories(cartographer SYSTEM PUBLIC
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${CAIRO_INCLUDE_DIRS}")
-target_link_libraries(cartographer PUBLIC ${CAIRO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${CAIRO_LIBRARIES})
 
-target_include_directories(cartographer SYSTEM PUBLIC
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   ${PROTOBUF_INCLUDE_DIR})
 # TODO(hrapp): This should not explicitly list pthread and use
 # PROTOBUF_LIBRARIES, but that failed on first try.
-target_link_libraries(cartographer PUBLIC ${PROTOBUF_LIBRARY} pthread)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} pthread)
 
 # Add the binary directory first, so that port.h is included after it has
 # been generated.
-target_include_directories(cartographer PUBLIC
+target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 
 # TODO(damonkohler): Create a testing library.
-target_include_directories(cartographer SYSTEM PRIVATE
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
   "${GMOCK_INCLUDE_DIRS}")
-target_link_libraries(cartographer PUBLIC ${GMOCK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${GMOCK_LIBRARY})
 
 set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
-set_target_properties(cartographer PROPERTIES
+set_target_properties(${PROJECT_NAME} PROPERTIES
   COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
-install(TARGETS cartographer
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin)
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT CartographerExport
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
 
 # Install source headers.
 file(GLOB_RECURSE hdrs "*.h")
@@ -191,26 +180,22 @@ foreach(HDR ${ALL_PROTO_HDRS})
   )
 endforeach()
 
-set(CARTOGRAPHER_LIBRARIES "")
-list(APPEND CARTOGRAPHER_LIBRARIES "${CMAKE_INSTALL_PREFIX}/lib/libcartographer.a")
-list(APPEND CARTOGRAPHER_LIBRARIES "${CERES_LIBRARIES}")
-list(APPEND CARTOGRAPHER_LIBRARIES "${Boost_LIBRARIES}")
-list(APPEND CARTOGRAPHER_LIBRARIES "${LUA_LIBRARIES}")
-list(APPEND CARTOGRAPHER_LIBRARIES "${PROTOBUF_LIBRARIES}")
-list(APPEND CARTOGRAPHER_LIBRARIES "${CAIRO_LIBRARIES}")
-list(APPEND CARTOGRAPHER_LIBRARIES "webp")
-list(APPEND CARTOGRAPHER_LIBRARIES "glog")
-
-CONFIGURE_PACKAGE_CONFIG_FILE(
+set(CARTOGRAPHER_CMAKE_DIR share/cartographer/cmake)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
   cartographer-config.cmake.in
-  "${CMAKE_BINARY_DIR}/cmake/cartographer/cartographer-config.cmake"
-  PATH_VARS CARTOGRAPHER_INCLUDE_DIRS CARTOGRAPHER_LIBRARY_DIRS CARTOGRAPHER_CMAKE_DIR
+  ${CMAKE_BINARY_DIR}/cmake/cartographer/cartographer-config.cmake
+  PATH_VARS CARTOGRAPHER_CMAKE_DIR
   INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}/share/cartographer
 )
 
 install(
-  FILES
-    "${CMAKE_BINARY_DIR}/cmake/cartographer/cartographer-config.cmake"
-  DESTINATION
-    share/cartographer/
+  EXPORT CartographerExport
+  DESTINATION share/cartographer/cmake/
+  FILE CartographerTargets.cmake
+)
+
+install(
+  FILES ${CMAKE_BINARY_DIR}/cmake/cartographer/cartographer-config.cmake
+  DESTINATION share/cartographer/
 )
