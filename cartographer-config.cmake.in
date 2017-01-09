@@ -16,24 +16,9 @@
 #    In your CMakeLists.txt, add these lines:
 #
 #    find_package(cartographer REQUIRED)
-#    include_directories(${CARTOGRAPHER_INCLUDE_DIRS})
-#    target_link_libraries(MY_TARGET_NAME PUBLIC ${CARTOGRAPHER_LIBRARIES})
-#
-#
-#    This file will define the following variables:
-#      - CARTOGRAPHER_LIBRARIES
-#      - CARTOGRAPHER_LIBRARY_DIRS
-#      - CARTOGRAPHER_INCLUDE_DIRS
+#    target_link_libraries(MY_TARGET_NAME PUBLIC cartographer)
 
 @PACKAGE_INIT@
-
-set(CARTOGRAPHER_INCLUDE_DIRS "@PACKAGE_CARTOGRAPHER_INCLUDE_DIRS@")
-set(CARTOGRAPHER_LIBRARY_DIRS "@PACKAGE_CARTOGRAPHER_LIBRARY_DIRS@")
-set(CARTOGRAPHER_CMAKE_DIR "@PACKAGE_CARTOGRAPHER_CMAKE_DIR@")
-
-set(CARTOGRAPHER_LIBRARIES
-  "@CARTOGRAPHER_LIBRARIES@"
-)
 
 set(CERES_DIR_HINTS @Ceres_DIR@)
 
@@ -44,3 +29,6 @@ elseif (cartographer_FIND_REQUIRED)
 else ()
    find_package(Ceres HINTS ${CERES_DIR_HINTS})
 endif()
+
+set_and_check(CARTOGRAPHER_CMAKE_DIR "@PACKAGE_CARTOGRAPHER_CMAKE_DIR@")
+include("${CARTOGRAPHER_CMAKE_DIR}/CartographerTargets.cmake")
