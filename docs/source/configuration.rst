@@ -20,7 +20,7 @@ Configuration
 .. needed and run scripts/update_configuration_doc.py.
 
 cartographer.common.proto.CeresSolverOptions
---------------------------------------------
+============================================
 
 bool use_nonmonotonic_steps
   Configure the Ceres solver. See the Ceres documentation for more
@@ -34,7 +34,7 @@ int32 num_threads
 
 
 cartographer.kalman_filter.proto.PoseTrackerOptions
----------------------------------------------------
+===================================================
 
 double position_model_variance
   Model variances depend linearly on time.
@@ -57,7 +57,7 @@ int32 num_odometry_states
 
 
 cartographer.mapping.proto.MapBuilderOptions
---------------------------------------------
+============================================
 
 bool use_trajectory_builder_2d
   Not yet documented.
@@ -79,7 +79,7 @@ SparsePoseGraphOptions sparse_pose_graph_options
 
 
 cartographer.mapping.proto.SparsePoseGraphOptions
--------------------------------------------------
+=================================================
 
 int32 optimize_every_n_scans
   Online loop closure: If positive, will run the loop closure while the map
@@ -101,7 +101,7 @@ double global_sampling_ratio
 
 
 cartographer.mapping.sparse_pose_graph.proto.ConstraintBuilderOptions
----------------------------------------------------------------------
+=====================================================================
 
 double sampling_ratio
   A constraint will be added if the proportion of added constraints to
@@ -140,7 +140,7 @@ mapping_3d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_option
 
 
 cartographer.mapping.sparse_pose_graph.proto.OptimizationProblemOptions
------------------------------------------------------------------------
+=======================================================================
 
 double huber_scale
   Scaling parameter for Huber loss function.
@@ -165,7 +165,7 @@ common.proto.CeresSolverOptions ceres_solver_options
 
 
 cartographer.mapping_2d.proto.LaserFanInserterOptions
------------------------------------------------------
+=====================================================
 
 double hit_probability
   Probability change for a hit (this will be converted to odds and therefore
@@ -181,7 +181,7 @@ bool insert_free_space
 
 
 cartographer.mapping_2d.proto.LocalTrajectoryBuilderOptions
------------------------------------------------------------
+===========================================================
 
 float laser_min_range
   Laser returns outside these ranges will be dropped.
@@ -238,7 +238,7 @@ bool use_imu_data
 
 
 cartographer.mapping_2d.proto.SubmapsOptions
---------------------------------------------
+============================================
 
 double resolution
   Resolution of the map in meters.
@@ -259,7 +259,7 @@ LaserFanInserterOptions laser_fan_inserter_options
 
 
 cartographer.mapping_2d.scan_matching.proto.CeresScanMatcherOptions
--------------------------------------------------------------------
+===================================================================
 
 double occupied_space_weight
   Scaling parameters for each cost functor.
@@ -279,7 +279,7 @@ common.proto.CeresSolverOptions ceres_solver_options
 
 
 cartographer.mapping_2d.scan_matching.proto.FastCorrelativeScanMatcherOptions
------------------------------------------------------------------------------
+=============================================================================
 
 double linear_search_window
   Minimum linear search window in which the best possible scan alignment
@@ -294,7 +294,7 @@ int32 branch_and_bound_depth
 
 
 cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
----------------------------------------------------------------------------------
+=================================================================================
 
 double linear_search_window
   Minimum linear search window in which the best possible scan alignment
@@ -312,7 +312,7 @@ double rotation_delta_cost_weight
 
 
 cartographer.mapping_3d.proto.KalmanLocalTrajectoryBuilderOptions
------------------------------------------------------------------
+=================================================================
 
 bool use_online_correlative_scan_matching
   Whether to solve the online scan matching first using the correlative scan
@@ -332,7 +332,7 @@ double odometer_rotational_variance
 
 
 cartographer.mapping_3d.proto.LaserFanInserterOptions
------------------------------------------------------
+=====================================================
 
 double hit_probability
   Probability change for a hit (this will be converted to odds and therefore
@@ -348,11 +348,11 @@ int32 num_free_space_voxels
 
 
 cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions
------------------------------------------------------------
+===========================================================
 
 
 cartographer.mapping_3d.proto.MotionFilterOptions
--------------------------------------------------
+=================================================
 
 double max_time_seconds
   Threshold above which a new scan is inserted based on time.
@@ -365,7 +365,7 @@ double max_angle_radians
 
 
 cartographer.mapping_3d.proto.OptimizingLocalTrajectoryBuilderOptions
----------------------------------------------------------------------
+=====================================================================
 
 double high_resolution_grid_weight
   Not yet documented.
@@ -390,7 +390,7 @@ double odometry_rotation_weight
 
 
 cartographer.mapping_3d.proto.SubmapsOptions
---------------------------------------------
+============================================
 
 double high_resolution
   Resolution of the 'high_resolution' map in meters used for local SLAM and
@@ -414,7 +414,7 @@ LaserFanInserterOptions laser_fan_inserter_options
 
 
 cartographer.mapping_3d.scan_matching.proto.CeresScanMatcherOptions
--------------------------------------------------------------------
+===================================================================
 
 double translation_weight
   Scaling parameters for each cost functor.
@@ -434,7 +434,7 @@ common.proto.CeresSolverOptions ceres_solver_options
 
 
 cartographer.mapping_3d.scan_matching.proto.FastCorrelativeScanMatcherOptions
------------------------------------------------------------------------------
+=============================================================================
 
 int32 branch_and_bound_depth
   Number of precomputed grids to use.
@@ -463,7 +463,7 @@ double angular_search_window
 
 
 cartographer.sensor.proto.AdaptiveVoxelFilterOptions
-----------------------------------------------------
+====================================================
 
 float max_length
   'max_length' of a voxel edge.

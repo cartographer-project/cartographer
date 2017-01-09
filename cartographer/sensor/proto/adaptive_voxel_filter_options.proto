@@ -26,4 +26,4 @@ message AdaptiveVoxelFilterOptions {
 
   // Points further away from the origin are removed.
   optional float max_range = 3;
-};
+}
