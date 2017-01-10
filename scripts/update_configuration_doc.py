@@ -76,7 +76,7 @@ def ParseProtoFile(proto_file):
   """Computes the list of Message objects of the option messages in a file."""
   line_iter = iter(proto_file)
 
-  # We ignore the license header and search the 'package' line.
+  # We ignore the license header and search for the 'package' line.
   for line in line_iter:
     line = line.strip()
     if line.startswith('package'):
