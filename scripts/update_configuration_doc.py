@@ -96,7 +96,7 @@ def ParseProtoFile(proto_file):
         # The preceding comments were for a different message it seems.
         message_comments = []
       elif line.startswith('//'):
-        # We keep comment preceding an options message.
+        # We keep comments preceding an options message.
         comment = line[2:].strip()
         if not comment.startswith('NEXT ID:'):
           message_comments.append(comment)
