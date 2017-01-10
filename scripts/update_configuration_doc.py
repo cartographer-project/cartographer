@@ -47,80 +47,131 @@ SUFFIX = """
 """
 NODOC = 'Not yet documented.'
 
-def GenerateDocumentation(output_dict, proto_file_name):
-  copyright = True
-  message = None
-  content = [];
-  package = None
-  multiline = None
-  print("Reading '%s'..." % proto_file_name)
-  for line in io.open(proto_file_name, encoding='UTF-8'):
+
+def ForEachProtoFile(root, callback):
+  for dirpath, dirnames, filenames in os.walk(root):
+    for name in filenames:
+      if name.endswith('.proto'):
+        path = os.path.join(dirpath, name)
+        print("Found '%s'..." % path)
+        assert not os.path.islink(path)
+        callback(io.open(path, encoding='UTF-8'))
+
+
+class Message(object):
+  def __init__(self, name, preceding_comments):
+    self.name = name
+    self.preceding_comments = preceding_comments
+    self.trailing_comments = None
+    self.options = []
+
+  def AddTrailingComments(self, comments):
+    self.trailing_comments = comments
+
+  def AddOption(self, name, comments):
+    self.options.append((name, comments))
+
+
+def ParseProtoFile(proto_file):
+  """Computes the list of Message objects of the option messages in a file."""
+  line_iter = iter(proto_file)
+
+  # We ignore the license header and search for the 'package' line.
+  for line in line_iter:
     line = line.strip()
-    if copyright:
-      if not line.startswith('//'):
-        copyright = False
-      continue
-    if package is None:
-      if line.startswith('package'):
-        assert line[-1] == ';'
-        package = line[7:-1].strip()
-      continue
-    if line.startswith('//'):
-      content_line = line[2:].strip()
-      if not content_line.startswith('NEXT ID:'):
-        content.append(content_line)
-      continue
-    if message is None:
-      if line.startswith('message') and line.endswith('Options {'):
-        message = package + '.' + line[7:-1].strip()
-        print(" Found '%s'." % message)
-        assert message not in output_dict
-        message_list = [message, '=' * len(message), '']
-        output_dict[message] = message_list
-        message_list.extend(content)
-        content = []
-      continue
-    elif line.endswith('}'):
-      message_list.extend(content)
-      content = []
-      message_list = None
-      message = None
+    if line.startswith('package'):
+      assert line[-1] == ';'
+      package = line[7:-1].strip()
+      break
     else:
-      assert not line.startswith('required')
-      if multiline is None:
-        if line.startswith('optional'):
-          multiline = line
-        else:
-          continue
+      assert '}' not in line
+
+  message_list = []
+  while True:
+    # Search for the next options message and capture preceding comments.
+    message_comments = []
+    for line in line_iter:
+      line = line.strip()
+      if '}' in line:
+        # The preceding comments were for a different message it seems.
+        message_comments = []
+      elif line.startswith('//'):
+        # We keep comments preceding an options message.
+        comment = line[2:].strip()
+        if not comment.startswith('NEXT ID:'):
+          message_comments.append(comment)
+      elif line.startswith('message') and line.endswith('Options {'):
+        message_name = package + '.' + line[7:-1].strip()
+        break
+    else:
+      # We reached the end of file.
+      break
+    print(" Found '%s'." % message_name)
+    message = Message(message_name, message_comments)
+    message_list.append(message)
+
+    # We capture the contents of this message.
+    option_comments = []
+    multiline = None
+    for line in line_iter:
+      line = line.strip()
+      if '}' in line:
+        # We reached the end of this message.
+        message.AddTrailingComments(option_comments)
+        break
+      elif line.startswith('//'):
+        comment = line[2:].strip()
+        if not comment.startswith('NEXT ID:'):
+          option_comments.append(comment)
       else:
-        multiline += ' ' + line
-      if not multiline.endswith(';'):
-        continue
-      assert len(multiline) < 200
-      option = multiline[8:-1].strip().rstrip('0123456789').strip()
-      assert option.endswith('=')
-      option = option[:-1].strip();
-      print("  Option '%s'." % option)
-      multiline = None
-      message_list.append(option)
-      if len(content) == 0:
-        content.append(NODOC)
-      for option_description_line in content:
-        message_list.append('  ' + option_description_line)
-      content = []
-      message_list.append('')
+        assert not line.startswith('required')
+        if multiline is None:
+          if line.startswith('optional'):
+            multiline = line
+          else:
+            continue
+        else:
+          multiline += ' ' + line
+        if not multiline.endswith(';'):
+          continue
+        assert len(multiline) < 200
+        option_name = multiline[8:-1].strip().rstrip('0123456789').strip()
+        assert option_name.endswith('=')
+        option_name = option_name[:-1].strip();
+        print("  Option '%s'." % option_name)
+        multiline = None
+        message.AddOption(option_name, option_comments)
+        option_comments = []
+
+  return message_list
+
+
+def GenerateDocumentation(output_dict, proto_file):
+  for message in ParseProtoFile(proto_file):
+    content = [message.name, '=' * len(message.name), '']
+    assert message.name not in output_dict
+    output_dict[message.name] = content
+    if message.preceding_comments:
+      content.extend(preceding_comments)
+      content.append('')
+    for option_name, option_comments in message.options:
+      content.append(option_name)
+      if not option_comments:
+        option_comments.append(NODOC)
+      for comment in option_comments:
+        content.append('  ' + comment)
+      content.append('')
+    if message.trailing_comments:
+      content.extend(message.trailing_comments)
+      content.append('')
 
 
 def GenerateDocumentationRecursively(output_file, root):
   """Recursively generates documentation, sorts and writes it."""
   output_dict = {}
-  for root, dirs, files in os.walk(root):
-    for name in files:
-      if name.endswith('.proto'):
-        path = os.path.join(root, name)
-        assert not os.path.islink(path)
-        GenerateDocumentation(output_dict, path)
-
+  def callback(proto_file):
+    GenerateDocumentation(output_dict, proto_file)
+  ForEachProtoFile(root, callback)
   output = ['\n'.join(doc) for key, doc in sorted(list(output_dict.items()))]
   print('\n\n'.join(output), file=output_file)
 
