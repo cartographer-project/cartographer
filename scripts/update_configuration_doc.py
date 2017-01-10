@@ -48,19 +48,10 @@ SUFFIX = """
 NODOC = 'Not yet documented.'
 
 
-def ForEachProtoFile(root, callback):
-  for dirpath, dirnames, filenames in os.walk(root):
-    for name in filenames:
-      if name.endswith('.proto'):
-        path = os.path.join(dirpath, name)
-        print("Found '%s'..." % path)
-        assert not os.path.islink(path)
-        callback(io.open(path, encoding='UTF-8'))
-
-
 class Message(object):
-  def __init__(self, name, preceding_comments):
+  def __init__(self, name, package, preceding_comments):
     self.name = name
+    self.package = package
     self.preceding_comments = preceding_comments
     self.trailing_comments = None
     self.options = []
@@ -68,8 +59,8 @@ class Message(object):
   def AddTrailingComments(self, comments):
     self.trailing_comments = comments
 
-  def AddOption(self, name, comments):
-    self.options.append((name, comments))
+  def AddOption(self, option_type, name, comments):
+    self.options.append((option_type, name, comments))
 
 
 def ParseProtoFile(proto_file):
@@ -107,7 +98,7 @@ def ParseProtoFile(proto_file):
       # We reached the end of file.
       break
     print(" Found '%s'." % message_name)
-    message = Message(message_name, message_comments)
+    message = Message(message_name, package, message_comments)
     message_list.append(message)
 
     # We capture the contents of this message.
@@ -135,27 +126,68 @@ def ParseProtoFile(proto_file):
         if not multiline.endswith(';'):
           continue
         assert len(multiline) < 200
-        option_name = multiline[8:-1].strip().rstrip('0123456789').strip()
-        assert option_name.endswith('=')
-        option_name = option_name[:-1].strip();
+        option = multiline[8:-1].strip().rstrip('0123456789').strip()
+        assert option.endswith('=')
+        option_type, option_name = option[:-1].strip().split();
         print("  Option '%s'." % option_name)
         multiline = None
-        message.AddOption(option_name, option_comments)
+        message.AddOption(option_type, option_name, option_comments)
         option_comments = []
 
   return message_list
 
 
-def GenerateDocumentation(output_dict, proto_file):
-  for message in ParseProtoFile(proto_file):
+def ParseProtoFilesRecursively(root):
+  """Recursively parses all proto files into a list of Message objects."""
+  message_list = []
+  for dirpath, dirnames, filenames in os.walk(root):
+    for name in filenames:
+      if name.endswith('.proto'):
+        path = os.path.join(dirpath, name)
+        print("Found '%s'..." % path)
+        assert not os.path.islink(path)
+        message_list.extend(ParseProtoFile(io.open(path, encoding='UTF-8')))
+  return message_list
+
+
+class ResolutionError(Exception):
+  """Raised when resolving a message name fails."""
+
+
+class Resolver(object):
+  def __init__(self, name_set):
+    self.name_set = set(iter(name_set))
+
+  def Resolve(self, message_name, package_name):
+    if message_name in ('bool', 'double', 'float', 'int32'):
+      return message_name
+    if message_name.startswith('.'):
+      return message_name[1:]
+    package = package_name.split('.')
+    for levels in range(len(package), -1, -1):
+      candidate = '.'.join(package[0:levels]) + '.' + message_name
+      if candidate in self.name_set:
+        return candidate
+    raise ResolutionError(
+        'Resolving %s in %s failed.' % (message_name, package_name))
+
+
+def GenerateDocumentation(output_file, root):
+  """Recursively generates documentation, sorts and writes it."""
+  message_list = ParseProtoFilesRecursively(root)
+  resolver = Resolver(message.name for message in message_list)
+
+  output_dict = {}
+  for message in message_list:
     content = [message.name, '=' * len(message.name), '']
     assert message.name not in output_dict
     output_dict[message.name] = content
     if message.preceding_comments:
       content.extend(preceding_comments)
       content.append('')
-    for option_name, option_comments in message.options:
-      content.append(option_name)
+    for option_type, option_name, option_comments in message.options:
+      content.append(
+          resolver.Resolve(option_type, message.package) + ' ' + option_name)
       if not option_comments:
         option_comments.append(NODOC)
       for comment in option_comments:
@@ -165,13 +197,6 @@ def GenerateDocumentation(output_dict, proto_file):
       content.extend(message.trailing_comments)
       content.append('')
 
-
-def GenerateDocumentationRecursively(output_file, root):
-  """Recursively generates documentation, sorts and writes it."""
-  output_dict = {}
-  def callback(proto_file):
-    GenerateDocumentation(output_dict, proto_file)
-  ForEachProtoFile(root, callback)
   output = ['\n'.join(doc) for key, doc in sorted(list(output_dict.items()))]
   print('\n\n'.join(output), file=output_file)
 
@@ -181,7 +206,7 @@ def main():
   assert not os.path.islink(ROOT) and os.path.isdir(ROOT)
   output_file = io.open(TARGET, mode='w', encoding='UTF-8', newline='\n')
   output_file.write(PREFIX)
-  GenerateDocumentationRecursively(output_file, ROOT)
+  GenerateDocumentation(output_file, ROOT)
   output_file.write(SUFFIX)
   output_file.close()
 

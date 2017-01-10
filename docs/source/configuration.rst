@@ -62,19 +62,19 @@ cartographer.mapping.proto.MapBuilderOptions
 bool use_trajectory_builder_2d
   Not yet documented.
 
-mapping_2d.proto.LocalTrajectoryBuilderOptions trajectory_builder_2d_options
+cartographer.mapping_2d.proto.LocalTrajectoryBuilderOptions trajectory_builder_2d_options
   Not yet documented.
 
 bool use_trajectory_builder_3d
   Not yet documented.
 
-mapping_3d.proto.LocalTrajectoryBuilderOptions trajectory_builder_3d_options
+cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions trajectory_builder_3d_options
   Not yet documented.
 
 int32 num_background_threads
   Number of threads to use for background computations.
 
-SparsePoseGraphOptions sparse_pose_graph_options
+cartographer.mapping.proto.SparsePoseGraphOptions sparse_pose_graph_options
   Not yet documented.
 
 
@@ -85,10 +85,10 @@ int32 optimize_every_n_scans
   Online loop closure: If positive, will run the loop closure while the map
   is built.
 
-mapping.sparse_pose_graph.proto.ConstraintBuilderOptions constraint_builder_options
+cartographer.mapping.sparse_pose_graph.proto.ConstraintBuilderOptions constraint_builder_options
   Options for the constraint builder.
 
-mapping.sparse_pose_graph.proto.OptimizationProblemOptions optimization_problem_options
+cartographer.mapping.sparse_pose_graph.proto.OptimizationProblemOptions optimization_problem_options
   Options for the optimization problem.
 
 int32 max_num_final_iterations
@@ -110,7 +110,7 @@ double sampling_ratio
 double max_constraint_distance
   Threshold for poses to be considered near a submap.
 
-sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
+cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
   Voxel filter used to compute a sparser point cloud for matching.
 
 double min_score
@@ -126,16 +126,16 @@ double lower_covariance_eigenvalue_bound
 bool log_matches
   If enabled, logs information of loop-closing constraints for debugging.
 
-mapping_2d.scan_matching.proto.FastCorrelativeScanMatcherOptions fast_correlative_scan_matcher_options
+cartographer.mapping_2d.scan_matching.proto.FastCorrelativeScanMatcherOptions fast_correlative_scan_matcher_options
   Options for the internally used scan matchers.
 
-mapping_2d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
+cartographer.mapping_2d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
   Not yet documented.
 
-mapping_3d.scan_matching.proto.FastCorrelativeScanMatcherOptions fast_correlative_scan_matcher_options_3d
+cartographer.mapping_3d.scan_matching.proto.FastCorrelativeScanMatcherOptions fast_correlative_scan_matcher_options_3d
   Not yet documented.
 
-mapping_3d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options_3d
+cartographer.mapping_3d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options_3d
   Not yet documented.
 
 
@@ -160,7 +160,7 @@ double consecutive_scan_rotation_penalty_factor
 bool log_solver_summary
   If true, the Ceres solver summary will be logged for every optimization.
 
-common.proto.CeresSolverOptions ceres_solver_options
+cartographer.common.proto.CeresSolverOptions ceres_solver_options
   Not yet documented.
 
 
@@ -207,16 +207,16 @@ bool use_online_correlative_scan_matching
   Whether to solve the online scan matching first using the correlative scan
   matcher to generate a good starting point for Ceres.
 
-sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
+cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
   Voxel filter used to compute a sparser point cloud for matching.
 
-scan_matching.proto.RealTimeCorrelativeScanMatcherOptions real_time_correlative_scan_matcher_options
+cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions real_time_correlative_scan_matcher_options
   Not yet documented.
 
-scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
+cartographer.mapping_2d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
   Not yet documented.
 
-mapping_3d.proto.MotionFilterOptions motion_filter_options
+cartographer.mapping_3d.proto.MotionFilterOptions motion_filter_options
   Not yet documented.
 
 double imu_gravity_time_constant
@@ -230,7 +230,7 @@ double imu_gravity_time_constant
 int32 num_odometry_states
   Maximum number of previous odometry states to keep.
 
-mapping_2d.proto.SubmapsOptions submaps_options
+cartographer.mapping_2d.proto.SubmapsOptions submaps_options
   Not yet documented.
 
 bool use_imu_data
@@ -254,7 +254,7 @@ int32 num_laser_fans
 bool output_debug_images
   If enabled, submap%d.png images are written for debugging.
 
-LaserFanInserterOptions laser_fan_inserter_options
+cartographer.mapping_2d.proto.LaserFanInserterOptions laser_fan_inserter_options
   Not yet documented.
 
 
@@ -273,7 +273,7 @@ double rotation_weight
 double covariance_scale
   Scale applied to the covariance estimate from Ceres.
 
-common.proto.CeresSolverOptions ceres_solver_options
+cartographer.common.proto.CeresSolverOptions ceres_solver_options
   Configure the Ceres solver. See the Ceres documentation for more
   information: https://code.google.com/p/ceres-solver/
 
@@ -318,10 +318,10 @@ bool use_online_correlative_scan_matching
   Whether to solve the online scan matching first using the correlative scan
   matcher to generate a good starting point for Ceres.
 
-mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions real_time_correlative_scan_matcher_options
+cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions real_time_correlative_scan_matcher_options
   Not yet documented.
 
-kalman_filter.proto.PoseTrackerOptions pose_tracker_options
+cartographer.kalman_filter.proto.PoseTrackerOptions pose_tracker_options
   Not yet documented.
 
 double odometer_translational_variance
@@ -409,7 +409,7 @@ int32 num_laser_fans
   number of scans inserted: First for initialization without being matched
   against, then while being matched.
 
-LaserFanInserterOptions laser_fan_inserter_options
+cartographer.mapping_3d.proto.LaserFanInserterOptions laser_fan_inserter_options
   Not yet documented.
 
 
@@ -428,7 +428,7 @@ double covariance_scale
 bool only_optimize_yaw
   Whether only to allow changes to yaw, keeping roll/pitch constant.
 
-common.proto.CeresSolverOptions ceres_solver_options
+cartographer.common.proto.CeresSolverOptions ceres_solver_options
   Configure the Ceres solver. See the Ceres documentation for more
   information: https://code.google.com/p/ceres-solver/
 
