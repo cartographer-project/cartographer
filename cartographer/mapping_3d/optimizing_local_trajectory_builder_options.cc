@@ -23,18 +23,20 @@ proto::OptimizingLocalTrajectoryBuilderOptions
 CreateOptimizingLocalTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::OptimizingLocalTrajectoryBuilderOptions options;
-  options.set_high_resolution_grid_scale(
-      parameter_dictionary->GetDouble("high_resolution_grid_scale"));
-  options.set_low_resolution_grid_scale(
-      parameter_dictionary->GetDouble("low_resolution_grid_scale"));
-  options.set_velocity_scale(parameter_dictionary->GetDouble("velocity_scale"));
-  options.set_translation_scale(
-      parameter_dictionary->GetDouble("translation_scale"));
-  options.set_rotation_scale(parameter_dictionary->GetDouble("rotation_scale"));
-  options.set_odometry_translation_scale(
-      parameter_dictionary->GetDouble("odometry_translation_scale"));
-  options.set_odometry_rotation_scale(
-      parameter_dictionary->GetDouble("odometry_rotation_scale"));
+  options.set_high_resolution_grid_weight(
+      parameter_dictionary->GetDouble("high_resolution_grid_weight"));
+  options.set_low_resolution_grid_weight(
+      parameter_dictionary->GetDouble("low_resolution_grid_weight"));
+  options.set_velocity_weight(
+      parameter_dictionary->GetDouble("velocity_weight"));
+  options.set_translation_weight(
+      parameter_dictionary->GetDouble("translation_weight"));
+  options.set_rotation_weight(
+      parameter_dictionary->GetDouble("rotation_weight"));
+  options.set_odometry_translation_weight(
+      parameter_dictionary->GetDouble("odometry_translation_weight"));
+  options.set_odometry_rotation_weight(
+      parameter_dictionary->GetDouble("odometry_rotation_weight"));
   return options;
 }
 

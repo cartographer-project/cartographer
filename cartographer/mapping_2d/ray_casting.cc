@@ -175,8 +175,9 @@ void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
 
   // Finally, compute and add empty rays based on missing echos in the scan.
   for (const Eigen::Vector3f& missing_echo : laser_fan.misses) {
-    CastRay(begin, superscaled_limits.GetXYIndexOfCellContainingPoint(
-                       missing_echo.x(), missing_echo.y()),
+    CastRay(begin,
+            superscaled_limits.GetXYIndexOfCellContainingPoint(
+                missing_echo.x(), missing_echo.y()),
             miss_visitor);
   }
 }

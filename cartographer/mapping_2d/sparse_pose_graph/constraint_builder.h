@@ -30,11 +30,11 @@
 #include "cartographer/common/math.h"
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
+#include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
 #include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
-#include "cartographer/mapping_2d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_2d/submaps.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
@@ -59,7 +59,7 @@ transform::Rigid2d ComputeSubmapPose(const mapping::Submap& submap);
 // This class is thread-safe.
 class ConstraintBuilder {
  public:
-  using Constraint = mapping::SparsePoseGraph::Constraint2D;
+  using Constraint = mapping::SparsePoseGraph::Constraint;
   using Result = std::vector<Constraint>;
 
   ConstraintBuilder(

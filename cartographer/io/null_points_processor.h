@@ -28,8 +28,8 @@ class NullPointsProcessor : public PointsProcessor {
   NullPointsProcessor() {}
   ~NullPointsProcessor() override {}
 
-  void Process(const PointsBatch& points_batch) override {}
-  void Flush() override {}
+  void Process(std::unique_ptr<PointsBatch> points_batch) override {}
+  FlushResult Flush() override { return FlushResult::kFinished; }
 };
 
 }  // namespace io

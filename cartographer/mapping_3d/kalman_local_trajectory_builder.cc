@@ -46,12 +46,8 @@ KalmanLocalTrajectoryBuilder::KalmanLocalTrajectoryBuilder(
 
 KalmanLocalTrajectoryBuilder::~KalmanLocalTrajectoryBuilder() {}
 
-mapping_3d::Submaps* KalmanLocalTrajectoryBuilder::submaps() {
+const mapping_3d::Submaps* KalmanLocalTrajectoryBuilder::submaps() const {
   return submaps_.get();
-}
-
-kalman_filter::PoseTracker* KalmanLocalTrajectoryBuilder::pose_tracker() const {
-  return pose_tracker_.get();
 }
 
 void KalmanLocalTrajectoryBuilder::AddImuData(
@@ -74,8 +70,9 @@ void KalmanLocalTrajectoryBuilder::AddImuData(
 }
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
-KalmanLocalTrajectoryBuilder::AddLaserFan3D(const common::Time time,
-                                            const sensor::LaserFan& laser_fan) {
+KalmanLocalTrajectoryBuilder::AddRangefinderData(
+    const common::Time time, const Eigen::Vector3f& origin,
+    const sensor::PointCloud& ranges) {
   if (!pose_tracker_) {
     LOG(INFO) << "PoseTracker not yet initialized.";
     return nullptr;
@@ -93,7 +90,8 @@ KalmanLocalTrajectoryBuilder::AddLaserFan3D(const common::Time time,
   const transform::Rigid3f tracking_delta =
       first_pose_prediction_.inverse() * pose_prediction.cast<float>();
   const sensor::LaserFan laser_fan_in_first_tracking =
-      sensor::TransformLaserFan(laser_fan, tracking_delta);
+      sensor::TransformLaserFan(sensor::LaserFan{origin, ranges, {}, {}},
+                                tracking_delta);
   for (const Eigen::Vector3f& laser_return :
        laser_fan_in_first_tracking.returns) {
     const Eigen::Vector3f delta =
@@ -139,9 +137,9 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
   }
 
   transform::Rigid3d pose_prediction;
-  kalman_filter::PoseCovariance covariance_prediction;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose_prediction,
-                                                  &covariance_prediction);
+  kalman_filter::PoseCovariance unused_covariance_prediction;
+  pose_tracker_->GetPoseEstimateMeanAndCovariance(
+      time, &pose_prediction, &unused_covariance_prediction);
 
   transform::Rigid3d initial_ceres_pose = pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
@@ -178,11 +176,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
       time, &scan_matcher_pose_estimate_, &covariance_estimate);
 
   last_pose_estimate_ = {
-      time,
-      {pose_prediction, covariance_prediction},
-      {pose_observation, covariance_observation},
-      {scan_matcher_pose_estimate_, covariance_estimate},
-      scan_matcher_pose_estimate_,
+      time, scan_matcher_pose_estimate_,
       sensor::TransformPointCloud(filtered_laser_fan.returns,
                                   pose_observation.cast<float>())};
 
@@ -190,16 +184,20 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
                           covariance_estimate);
 }
 
-void KalmanLocalTrajectoryBuilder::AddOdometerPose(
-    const common::Time time, const transform::Rigid3d& pose,
-    const kalman_filter::PoseCovariance& covariance) {
+void KalmanLocalTrajectoryBuilder::AddOdometerData(
+    const common::Time time, const transform::Rigid3d& pose) {
   if (!pose_tracker_) {
     pose_tracker_.reset(new kalman_filter::PoseTracker(
         options_.kalman_local_trajectory_builder_options()
             .pose_tracker_options(),
         kalman_filter::PoseTracker::ModelFunction::k3D, time));
   }
-  pose_tracker_->AddOdometerPoseObservation(time, pose, covariance);
+  pose_tracker_->AddOdometerPoseObservation(
+      time, pose, kalman_filter::BuildPoseCovariance(
+                      options_.kalman_local_trajectory_builder_options()
+                          .odometer_translational_variance(),
+                      options_.kalman_local_trajectory_builder_options()
+                          .odometer_rotational_variance()));
 }
 
 const KalmanLocalTrajectoryBuilder::PoseEstimate&

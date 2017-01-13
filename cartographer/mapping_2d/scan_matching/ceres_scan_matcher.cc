@@ -38,14 +38,12 @@ namespace scan_matching {
 proto::CeresScanMatcherOptions CreateCeresScanMatcherOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::CeresScanMatcherOptions options;
-  options.set_occupied_space_cost_functor_weight(
-      parameter_dictionary->GetDouble("occupied_space_cost_functor_weight"));
-  options.set_previous_pose_translation_delta_cost_functor_weight(
-      parameter_dictionary->GetDouble(
-          "previous_pose_translation_delta_cost_functor_weight"));
-  options.set_initial_pose_estimate_rotation_delta_cost_functor_weight(
-      parameter_dictionary->GetDouble(
-          "initial_pose_estimate_rotation_delta_cost_functor_weight"));
+  options.set_occupied_space_weight(
+      parameter_dictionary->GetDouble("occupied_space_weight"));
+  options.set_translation_weight(
+      parameter_dictionary->GetDouble("translation_weight"));
+  options.set_rotation_weight(
+      parameter_dictionary->GetDouble("rotation_weight"));
   options.set_covariance_scale(
       parameter_dictionary->GetDouble("covariance_scale"));
   *options.mutable_ceres_solver_options() =
@@ -75,30 +73,27 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
                                    initial_pose_estimate.translation().y(),
                                    initial_pose_estimate.rotation().angle()};
   ceres::Problem problem;
-  CHECK_GT(options_.occupied_space_cost_functor_weight(), 0.);
+  CHECK_GT(options_.occupied_space_weight(), 0.);
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunctor, ceres::DYNAMIC,
                                       3>(
           new OccupiedSpaceCostFunctor(
-              options_.occupied_space_cost_functor_weight() /
+              options_.occupied_space_weight() /
                   std::sqrt(static_cast<double>(point_cloud.size())),
               point_cloud, probability_grid),
           point_cloud.size()),
       nullptr, ceres_pose_estimate);
-  CHECK_GT(options_.previous_pose_translation_delta_cost_functor_weight(), 0.);
+  CHECK_GT(options_.translation_weight(), 0.);
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor, 2, 3>(
-          new TranslationDeltaCostFunctor(
-              options_.previous_pose_translation_delta_cost_functor_weight(),
-              previous_pose)),
+          new TranslationDeltaCostFunctor(options_.translation_weight(),
+                                          previous_pose)),
       nullptr, ceres_pose_estimate);
-  CHECK_GT(options_.initial_pose_estimate_rotation_delta_cost_functor_weight(),
-           0.);
+  CHECK_GT(options_.rotation_weight(), 0.);
   problem.AddResidualBlock(
-      new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor, 1,
-                                      3>(new RotationDeltaCostFunctor(
-          options_.initial_pose_estimate_rotation_delta_cost_functor_weight(),
-          ceres_pose_estimate[2])),
+      new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor, 1, 3>(
+          new RotationDeltaCostFunctor(options_.rotation_weight(),
+                                       ceres_pose_estimate[2])),
       nullptr, ceres_pose_estimate);
 
   ceres::Solve(ceres_solver_options_, &problem, summary);

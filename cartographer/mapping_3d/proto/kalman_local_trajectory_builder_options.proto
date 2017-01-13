@@ -27,4 +27,7 @@ message KalmanLocalTrajectoryBuilderOptions {
   optional mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
       real_time_correlative_scan_matcher_options = 2;
   optional kalman_filter.proto.PoseTrackerOptions pose_tracker_options = 3;
+
+  optional double odometer_translational_variance = 4;
+  optional double odometer_rotational_variance = 5;
 }

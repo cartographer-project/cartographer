@@ -16,7 +16,6 @@ syntax = "proto2";
 
 package cartographer.mapping_2d.proto;
 
-import "cartographer/kalman_filter/proto/pose_tracker_options.proto";
 import "cartographer/mapping_3d/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping_2d/proto/submaps_options.proto";
@@ -24,13 +23,19 @@ import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.p
 import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 
 message LocalTrajectoryBuilderOptions {
-  // Cropping parameters for the horizontal laser fan.
-  optional float horizontal_laser_min_z = 1;
-  optional float horizontal_laser_max_z = 2;
+  // Laser returns outside these ranges will be dropped.
+  optional float laser_min_range = 14;
+  optional float laser_max_range = 15;
+  optional float laser_min_z = 1;
+  optional float laser_max_z = 2;
+
+  // Laser returns beyond 'laser_max_range' will be inserted with this length as
+  // empty space.
+  optional float laser_missing_echo_ray_length = 16;
 
   // Voxel filter that gets applied to the horizontal laser immediately after
   // cropping.
-  optional float horizontal_laser_voxel_filter_size = 3;
+  optional float laser_voxel_filter_size = 3;
 
   // Whether to solve the online scan matching first using the correlative scan
   // matcher to generate a good starting point for Ceres.
@@ -45,7 +50,18 @@ message LocalTrajectoryBuilderOptions {
   optional scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options = 8;
   optional mapping_3d.proto.MotionFilterOptions motion_filter_options = 13;
-  optional kalman_filter.proto.PoseTrackerOptions pose_tracker_options = 10;
+
+  // Time constant in seconds for the orientation moving average based on
+  // observed gravity via the IMU. It should be chosen so that the error
+  // 1. from acceleration measurements not due to gravity (which gets worse when
+  // the constant is reduced) and
+  // 2. from integration of angular velocities (which gets worse when the
+  // constant is increased) is balanced.
+  optional double imu_gravity_time_constant = 17;
+
+  // Maximum number of previous odometry states to keep.
+  optional int32 num_odometry_states = 18;
+
   optional mapping_2d.proto.SubmapsOptions submaps_options = 11;
 
   // True if IMU data should be expected and used.

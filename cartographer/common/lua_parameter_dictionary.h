@@ -38,33 +38,19 @@ class FileResolver {
   virtual string GetFileContentOrDie(const string& basename) = 0;
 };
 
-// A function that adds new Lua functions to a state. Used to extend the Lua
-// configuration in custom contexts.
-using StateExtensionFunction = std::function<void(lua_State*)>;
-
 // A parameter dictionary that gets loaded from Lua code.
 class LuaParameterDictionary {
  public:
   // Constructs the dictionary from a Lua Table specification.
   LuaParameterDictionary(const string& code,
-                         std::unique_ptr<FileResolver> file_resolver,
-                         StateExtensionFunction state_extension_functon);
+                         std::unique_ptr<FileResolver> file_resolver);
 
   LuaParameterDictionary(const LuaParameterDictionary&) = delete;
   LuaParameterDictionary& operator=(const LuaParameterDictionary&) = delete;
 
   // Constructs a LuaParameterDictionary without reference counting.
   static std::unique_ptr<LuaParameterDictionary> NonReferenceCounted(
-      const string& code, std::unique_ptr<FileResolver> file_resolver,
-      StateExtensionFunction state_extension_functon);
-
-  // Constructs a partial LuaParameterDictionary by extracting the dictionary
-  // with 'key' from 'code' where 'key' refers to an arbitrarily deep dictionary
-  // (e.g. "a.b.c").
-  static std::unique_ptr<LuaParameterDictionary> Partial(
-      const string& code, const string& key,
-      std::unique_ptr<FileResolver> file_resolver,
-      StateExtensionFunction state_extension_functon);
+      const string& code, std::unique_ptr<FileResolver> file_resolver);
 
   ~LuaParameterDictionary();
 
@@ -96,8 +82,7 @@ class LuaParameterDictionary {
  private:
   enum class ReferenceCount { YES, NO };
   LuaParameterDictionary(const string& code, ReferenceCount reference_count,
-                         std::unique_ptr<FileResolver> file_resolver,
-                         StateExtensionFunction state_extension_function);
+                         std::unique_ptr<FileResolver> file_resolver);
 
   // For GetDictionary().
   LuaParameterDictionary(lua_State* L, ReferenceCount reference_count,

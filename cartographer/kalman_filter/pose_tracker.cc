@@ -356,5 +356,20 @@ PoseCovariance PoseCovarianceFromProtoMatrix(
   return covariance;
 }
 
+PoseCovariance BuildPoseCovariance(const double translational_variance,
+                                   const double rotational_variance) {
+  const Eigen::Matrix3d translational =
+      Eigen::Matrix3d::Identity() * translational_variance;
+  const Eigen::Matrix3d rotational =
+      Eigen::Matrix3d::Identity() * rotational_variance;
+  // clang-format off
+  PoseCovariance covariance;
+  covariance <<
+      translational, Eigen::Matrix3d::Zero(),
+      Eigen::Matrix3d::Zero(), rotational;
+  // clang-format on
+  return covariance;
+}
+
 }  // namespace kalman_filter
 }  // namespace cartographer

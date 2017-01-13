@@ -201,7 +201,7 @@ Rigid3<FloatType> operator*(const Rigid3<FloatType>& lhs,
                             const Rigid3<FloatType>& rhs) {
   return Rigid3<FloatType>(
       lhs.rotation() * rhs.translation() + lhs.translation(),
-      lhs.rotation() * rhs.rotation());
+      (lhs.rotation() * rhs.rotation()).normalized());
 }
 
 template <typename FloatType>
@@ -221,6 +221,10 @@ std::ostream& operator<<(std::ostream& os,
 
 using Rigid3d = Rigid3<double>;
 using Rigid3f = Rigid3<float>;
+
+// Converts (roll, pitch, yaw) to a unit length quaternion. Based on the URDF
+// specification http://wiki.ros.org/urdf/XML/joint.
+Eigen::Quaterniond RollPitchYaw(double roll, double pitch, double yaw);
 
 // Returns an transform::Rigid3d given a 'dictionary' containing 'translation'
 // (x, y, z) and 'rotation' which can either we an array of (roll, pitch, yaw)

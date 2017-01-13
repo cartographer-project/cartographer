@@ -53,19 +53,18 @@ class LocalTrajectoryBuilderInterface {
   virtual void AddImuData(common::Time time,
                           const Eigen::Vector3d& linear_acceleration,
                           const Eigen::Vector3d& angular_velocity) = 0;
-  virtual std::unique_ptr<InsertionResult> AddLaserFan3D(
-      common::Time time, const sensor::LaserFan& laser_fan) = 0;
-  virtual void AddOdometerPose(
-      common::Time time, const transform::Rigid3d& pose,
-      const kalman_filter::PoseCovariance& covariance) = 0;
+  virtual std::unique_ptr<InsertionResult> AddRangefinderData(
+      common::Time time, const Eigen::Vector3f& origin,
+      const sensor::PointCloud& ranges) = 0;
+  virtual void AddOdometerData(common::Time time,
+                               const transform::Rigid3d& pose) = 0;
 
   // Register a 'trajectory_node_index' from the SparsePoseGraph corresponding
   // to the latest inserted laser scan. This is used to remember which
   // trajectory node should be used to visualize a Submap.
   virtual void AddTrajectoryNodeIndex(int trajectory_node_index) = 0;
-  virtual mapping_3d::Submaps* submaps() = 0;
+  virtual const mapping_3d::Submaps* submaps() const = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
-  virtual kalman_filter::PoseTracker* pose_tracker() const = 0;
 
  protected:
   LocalTrajectoryBuilderInterface() {}

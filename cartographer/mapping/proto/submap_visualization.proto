@@ -1,0 +1,67 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+import "cartographer/transform/proto/transform.proto";
+
+package cartographer.mapping.proto;
+
+message SubmapList {
+  message SubmapEntry {
+    optional int32 submap_version = 1;
+    optional transform.proto.Rigid3d pose = 3;
+  }
+
+  message TrajectorySubmapList {
+    repeated SubmapEntry submap = 1;
+  }
+
+  repeated TrajectorySubmapList trajectory = 2;
+}
+
+message SubmapQuery {
+  message Request {
+    // Index into 'SubmapList.trajectory(trajectory_id).submap'.
+    optional int32 submap_index = 1;
+    // Index into 'TrajectoryList.trajectory'.
+    optional int32 trajectory_id = 2;
+  }
+
+  message Response {
+    // Version of the given submap, higher means newer.
+    optional int32 submap_version = 2;
+
+    // GZipped map data, in row-major order, starting with (0,0). Each cell
+    // consists of two bytes: value (premultiplied by alpha) and alpha.
+    optional bytes cells = 3;
+
+    // Dimensions of the grid in cells.
+    optional int32 width = 4;
+    optional int32 height = 5;
+
+    // Size of one cell in meters.
+    optional double resolution = 6;
+
+    // Pose of the resolution*width x resolution*height rectangle in the submap
+    // frame.
+    optional transform.proto.Rigid3d slice_pose = 9;
+
+    // Error message in response to malformed requests.
+    optional string error_message = 8;
+  }
+
+  optional Request request = 1;
+  optional Response response = 2;
+}

@@ -14,5 +14,20 @@
 
 sudo: required
 services: docker
+
+# Cache intermediate Docker layers. For a description of how this works, see:
+# https://giorgos.sealabs.net/docker-cache-on-travis-and-docker-112.html
+cache:
+  directories:
+    - /home/travis/docker/
+
+env:
+  - UBUNTU_RELEASE=trusty DOCKER_CACHE_FILE=/home/travis/docker/trusty-cache.tar.gz
+  - UBUNTU_RELEASE=xenial DOCKER_CACHE_FILE=/home/travis/docker/xenial-cache.tar.gz
+
+before_install: scripts/load_docker_cache.sh
+
 install: true
-script: docker build ${TRAVIS_BUILD_DIR} -t cartographer
+script:
+  - docker build ${TRAVIS_BUILD_DIR} -t cartographer:${UBUNTU_RELEASE} -f Dockerfile.${UBUNTU_RELEASE}
+  - scripts/save_docker_cache.sh

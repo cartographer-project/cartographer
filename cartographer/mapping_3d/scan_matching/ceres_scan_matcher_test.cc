@@ -50,9 +50,9 @@ class CeresScanMatcherTest : public ::testing::Test {
 
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
-          occupied_space_cost_functor_weight_0 = 1.,
-          previous_pose_translation_delta_cost_functor_weight = 0.01,
-          initial_pose_estimate_rotation_delta_cost_functor_weight = 0.1,
+          occupied_space_weight_0 = 1.,
+          translation_weight = 0.01,
+          rotation_weight = 0.1,
           covariance_scale = 10.,
           only_optimize_yaw = false,
           ceres_solver_options = {
