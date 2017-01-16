@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/io/file.h"
 #include "cartographer/io/points_processor.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
 
@@ -61,7 +62,7 @@ class PointsProcessorPipelineBuilder {
 // 'builder'.
 void RegisterBuiltInPointsProcessors(
     const mapping::proto::Trajectory& trajectory,
-    PointsProcessorPipelineBuilder* builder);
+    const FileFactory& file_factory, PointsProcessorPipelineBuilder* builder);
 
 }  // namespace io
 }  // namespace cartographer

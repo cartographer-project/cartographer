@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-#include <fstream>
-
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/io/file.h"
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
@@ -26,9 +25,10 @@ namespace io {
 class PlyWritingPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName = "write_ply";
-  PlyWritingPointsProcessor(const string& filename, PointsProcessor* next);
+  PlyWritingPointsProcessor(std::unique_ptr<File> file, PointsProcessor* next);
 
   static std::unique_ptr<PlyWritingPointsProcessor> FromDictionary(
+      const FileFactory& file_factory,
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   ~PlyWritingPointsProcessor() override {}
@@ -45,7 +45,7 @@ class PlyWritingPointsProcessor : public PointsProcessor {
 
   int64 num_points_;
   bool has_colors_;
-  std::ofstream file_;
+  std::unique_ptr<File> file_;
 };
 
 }  // namespace io
