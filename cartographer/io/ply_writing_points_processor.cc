@@ -51,7 +51,8 @@ void WriteBinaryPlyHeader(const bool has_color, const int64 num_points,
   CHECK(file->Write(out.data(), out.size()));
 }
 
-void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point, File* const file) {
+void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point,
+                                   File* const file) {
   char buffer[12];
   memcpy(buffer, &point[0], sizeof(float));
   memcpy(buffer + 4, &point[1], sizeof(float));
