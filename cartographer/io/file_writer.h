@@ -36,7 +36,7 @@ class FileWriter {
   virtual ~FileWriter() {}
 
   // Write 'data' to the beginning of the file. This is required to overwrite
-  // fix sized headers which contain the number of points once we actually know
+  // fixed size headers which contain the number of points once we actually know
   // how many points there are.
   virtual bool WriteHeader(const char* data, size_t len) = 0;
 

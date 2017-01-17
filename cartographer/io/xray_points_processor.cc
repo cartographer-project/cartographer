@@ -92,7 +92,7 @@ void WritePng(const Eigen::MatrixXf& mat, FileWriter* const file_writer) {
   CHECK(file_writer->Close());
 }
 
-void WriteVoxels(const Voxels& voxels, FileWriter* file_writer) {
+void WriteVoxels(const Voxels& voxels, FileWriter* const file_writer) {
   Eigen::Array3i min(std::numeric_limits<int>::max(),
                      std::numeric_limits<int>::max(),
                      std::numeric_limits<int>::max());
@@ -150,7 +150,7 @@ void Insert(const PointsBatch& batch, const transform::Rigid3f& transform,
 XRayPointsProcessor::XRayPointsProcessor(
     const double voxel_size, const transform::Rigid3f& transform,
     const std::vector<mapping::Floor>& floors, const string& output_filename,
-    const FileWriterFactory& file_writer_factory, PointsProcessor* next)
+    const FileWriterFactory& file_writer_factory, PointsProcessor* const next)
     : next_(next),
       file_writer_factory_(file_writer_factory),
       floors_(floors),
