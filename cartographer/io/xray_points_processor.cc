@@ -51,7 +51,7 @@ void TakeLogarithm(Eigen::MatrixXf* mat) {
 cairo_status_t CairoWriteCallback(void* const closure,
                                   const unsigned char* data,
                                   const unsigned int length) {
-  if (static_cast<File*>(closure)->Write(reinterpret_cast<const char*>(data),
+  if (static_cast<FileWriter*>(closure)->Write(reinterpret_cast<const char*>(data),
                                          length)) {
     return CAIRO_STATUS_SUCCESS;
   }
@@ -59,7 +59,7 @@ cairo_status_t CairoWriteCallback(void* const closure,
 }
 
 // Write 'mat' as a pleasing-to-look-at PNG into 'filename'
-void WritePng(const Eigen::MatrixXf& mat, File* const file) {
+void WritePng(const Eigen::MatrixXf& mat, FileWriter* const file_writer) {
   const int stride =
       cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, mat.cols());
   CHECK_EQ(stride % 4, 0);
@@ -87,12 +87,12 @@ void WritePng(const Eigen::MatrixXf& mat, File* const file) {
       cairo_surface_destroy);
   CHECK_EQ(cairo_surface_status(surface.get()), CAIRO_STATUS_SUCCESS);
   CHECK_EQ(cairo_surface_write_to_png_stream(surface.get(), &CairoWriteCallback,
-                                             file),
+                                             file_writer),
            CAIRO_STATUS_SUCCESS);
-  CHECK(file->Close());
+  CHECK(file_writer->Close());
 }
 
-void WriteVoxels(const Voxels& voxels, File* file) {
+void WriteVoxels(const Voxels& voxels, FileWriter* file_writer) {
   Eigen::Array3i min(std::numeric_limits<int>::max(),
                      std::numeric_limits<int>::max(),
                      std::numeric_limits<int>::max());
@@ -123,7 +123,7 @@ void WriteVoxels(const Voxels& voxels, File* file) {
     ++image(pixel.y(), pixel.x());
   }
   TakeLogarithm(&image);
-  WritePng(image, file);
+  WritePng(image, file_writer);
 }
 
 bool ContainedIn(
@@ -150,9 +150,9 @@ void Insert(const PointsBatch& batch, const transform::Rigid3f& transform,
 XRayPointsProcessor::XRayPointsProcessor(
     const double voxel_size, const transform::Rigid3f& transform,
     const std::vector<mapping::Floor>& floors, const string& output_filename,
-    const FileFactory& file_factory, PointsProcessor* next)
+    const FileWriterFactory& file_writer_factory, PointsProcessor* next)
     : next_(next),
-      file_factory_(file_factory),
+      file_writer_factory_(file_writer_factory),
       floors_(floors),
       output_filename_(output_filename),
       transform_(transform) {
@@ -163,7 +163,7 @@ XRayPointsProcessor::XRayPointsProcessor(
 
 std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
     const mapping::proto::Trajectory& trajectory,
-    const FileFactory& file_factory,
+    const FileWriterFactory& file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
   std::vector<mapping::Floor> floors;
@@ -176,7 +176,7 @@ std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
       dictionary->GetDouble("voxel_size"),
       transform::FromDictionary(dictionary->GetDictionary("transform").get())
           .cast<float>(),
-      floors, dictionary->GetString("filename"), file_factory, next);
+      floors, dictionary->GetString("filename"), file_writer_factory, next);
 }
 
 void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
@@ -197,12 +197,12 @@ void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
 PointsProcessor::FlushResult XRayPointsProcessor::Flush() {
   if (floors_.empty()) {
     CHECK_EQ(voxels_.size(), 1);
-    WriteVoxels(voxels_[0], file_factory_(output_filename_ + ".png").get());
+    WriteVoxels(voxels_[0], file_writer_factory_(output_filename_ + ".png").get());
   } else {
     for (size_t i = 0; i < floors_.size(); ++i) {
       WriteVoxels(
           voxels_[i],
-          file_factory_(output_filename_ + std::to_string(i) + ".png").get());
+          file_writer_factory_(output_filename_ + std::to_string(i) + ".png").get());
     }
   }
 

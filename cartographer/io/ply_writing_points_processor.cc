@@ -2,7 +2,7 @@
  * Copyright 2016 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this file_writer except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -33,7 +33,7 @@ namespace {
 // Writes the PLY header claiming 'num_points' will follow it into
 // 'output_file'.
 void WriteBinaryPlyHeader(const bool has_color, const int64 num_points,
-                          File* const file) {
+                          FileWriter* const file_writer) {
   string color_header = !has_color ? "" : "property uchar red\n"
                                           "property uchar green\n"
                                           "property uchar blue\n";
@@ -48,41 +48,41 @@ void WriteBinaryPlyHeader(const bool has_color, const int64 num_points,
          << "property float z\n"
          << color_header << "end_header\n";
   const string out = stream.str();
-  CHECK(file->Write(out.data(), out.size()));
+  CHECK(file_writer->Write(out.data(), out.size()));
 }
 
 void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point,
-                                   File* const file) {
+                                   FileWriter* const file_writer) {
   char buffer[12];
   memcpy(buffer, &point[0], sizeof(float));
   memcpy(buffer + 4, &point[1], sizeof(float));
   memcpy(buffer + 8, &point[2], sizeof(float));
-  CHECK(file->Write(buffer, 12));
+  CHECK(file_writer->Write(buffer, 12));
 }
 
-void WriteBinaryPlyPointColor(const Color& color, File* const file) {
-  CHECK(file->Write(reinterpret_cast<const char*>(color.data()), color.size()));
+void WriteBinaryPlyPointColor(const Color& color, FileWriter* const file_writer) {
+  CHECK(file_writer->Write(reinterpret_cast<const char*>(color.data()), color.size()));
 }
 
 }  // namespace
 
 std::unique_ptr<PlyWritingPointsProcessor>
 PlyWritingPointsProcessor::FromDictionary(
-    const FileFactory& file_factory,
+    const FileWriterFactory& file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
   return common::make_unique<PlyWritingPointsProcessor>(
-      file_factory(dictionary->GetString("filename")), next);
+      file_writer_factory(dictionary->GetString("filename")), next);
 }
 
 PlyWritingPointsProcessor::PlyWritingPointsProcessor(
-    std::unique_ptr<File> file, PointsProcessor* const next)
-    : next_(next), num_points_(0), has_colors_(false), file_(std::move(file)) {}
+    std::unique_ptr<FileWriter> file_writer, PointsProcessor* const next)
+    : next_(next), num_points_(0), has_colors_(false), file_(std::move(file_writer)) {}
 
 PointsProcessor::FlushResult PlyWritingPointsProcessor::Flush() {
   CHECK(file_->SeekToStart());
   WriteBinaryPlyHeader(has_colors_, num_points_, file_.get());
-  CHECK(file_->Close()) << "Closing PLY file failed.";
+  CHECK(file_->Close()) << "Closing PLY file_writer failed.";
 
   switch (next_->Flush()) {
     case FlushResult::kFinished:

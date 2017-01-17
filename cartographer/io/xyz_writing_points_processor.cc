@@ -10,31 +10,31 @@ namespace io {
 
 namespace {
 
-void WriteXyzPoint(const Eigen::Vector3f& point, File* file) {
+void WriteXyzPoint(const Eigen::Vector3f& point, FileWriter* file_writer) {
   std::ostringstream stream;
   stream << std::setprecision(6);
   stream << point.x() << " " << point.y() << " " << point.z() << "\n";
   const string out = stream.str();
-  CHECK(file->Write(out.data(), out.size()));
+  CHECK(file_writer->Write(out.data(), out.size()));
 }
 
 }  // namespace
 
-XyzWriterPointsProcessor::XyzWriterPointsProcessor(std::unique_ptr<File> file,
+XyzWriterPointsProcessor::XyzWriterPointsProcessor(std::unique_ptr<FileWriter> file_writer,
                                                    PointsProcessor* next)
-    : next_(next), file_(std::move(file)) {}
+    : next_(next), file_writer_(std::move(file_writer)) {}
 
 std::unique_ptr<XyzWriterPointsProcessor>
 XyzWriterPointsProcessor::FromDictionary(
-    const FileFactory& file_factory,
+    const FileWriterFactory& file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
   return common::make_unique<XyzWriterPointsProcessor>(
-      file_factory(dictionary->GetString("filename")), next);
+      file_writer_factory(dictionary->GetString("filename")), next);
 }
 
 PointsProcessor::FlushResult XyzWriterPointsProcessor::Flush() {
-  CHECK(file_->Close()) << "Closing XYZ file failed.";
+  CHECK(file_writer_->Close()) << "Closing XYZ file failed.";
   switch (next_->Flush()) {
     case FlushResult::kFinished:
       return FlushResult::kFinished;
@@ -48,7 +48,7 @@ PointsProcessor::FlushResult XyzWriterPointsProcessor::Flush() {
 
 void XyzWriterPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   for (const Eigen::Vector3f& point : batch->points) {
-    WriteXyzPoint(point, file_.get());
+    WriteXyzPoint(point, file_writer_.get());
   }
   next_->Process(std::move(batch));
 }

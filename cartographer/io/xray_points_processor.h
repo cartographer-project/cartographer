@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_IO_XRAY_POINTS_PROCESSOR_H_
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/io/file.h"
+#include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_processor.h"
 #include "cartographer/mapping/detect_floors.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
@@ -36,11 +36,11 @@ class XRayPointsProcessor : public PointsProcessor {
   XRayPointsProcessor(double voxel_size, const transform::Rigid3f& transform,
                       const std::vector<mapping::Floor>& floors,
                       const string& output_filename,
-                      const FileFactory& file_factory, PointsProcessor* next);
+                      const FileWriterFactory& file_writer_factory, PointsProcessor* next);
 
   static std::unique_ptr<XRayPointsProcessor> FromDictionary(
       const mapping::proto::Trajectory& trajectory,
-      const FileFactory& file_factory,
+      const FileWriterFactory& file_writer_factory,
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   ~XRayPointsProcessor() override {}
@@ -50,7 +50,7 @@ class XRayPointsProcessor : public PointsProcessor {
 
  private:
   PointsProcessor* const next_;
-  const FileFactory& file_factory_;
+  const FileWriterFactory& file_writer_factory_;
 
   // If empty, we do not separate into floors.
   std::vector<mapping::Floor> floors_;

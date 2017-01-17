@@ -44,40 +44,40 @@ void RegisterPlainPointsProcessor(
 
 template <typename PointsProcessorType>
 void RegisterFileWritingPointsProcessor(
-    const FileFactory& file_factory,
+    const FileWriterFactory& file_writer_factory,
     PointsProcessorPipelineBuilder* const builder) {
   builder->Register(
       PointsProcessorType::kConfigurationFileActionName,
-      [&file_factory](
+      [&file_writer_factory](
           common::LuaParameterDictionary* const dictionary,
           PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
-        return PointsProcessorType::FromDictionary(file_factory, dictionary,
+        return PointsProcessorType::FromDictionary(file_writer_factory, dictionary,
                                                    next);
       });
 }
 
 void RegisterBuiltInPointsProcessors(
     const mapping::proto::Trajectory& trajectory,
-    const FileFactory& file_factory, PointsProcessorPipelineBuilder* builder) {
+    const FileWriterFactory& file_writer_factory, PointsProcessorPipelineBuilder* builder) {
   RegisterPlainPointsProcessor<CountingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<FixedRatioSamplingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<MinMaxRangeFiteringPointsProcessor>(builder);
   RegisterPlainPointsProcessor<OutlierRemovingPointsProcessor>(builder);
-  RegisterFileWritingPointsProcessor<PcdWritingPointsProcessor>(file_factory,
+  RegisterFileWritingPointsProcessor<PcdWritingPointsProcessor>(file_writer_factory,
                                                                 builder);
-  RegisterFileWritingPointsProcessor<PlyWritingPointsProcessor>(file_factory,
+  RegisterFileWritingPointsProcessor<PlyWritingPointsProcessor>(file_writer_factory,
                                                                 builder);
-  RegisterFileWritingPointsProcessor<XyzWriterPointsProcessor>(file_factory,
+  RegisterFileWritingPointsProcessor<XyzWriterPointsProcessor>(file_writer_factory,
                                                                builder);
 
   // X-Ray is an odd ball since it requires the trajectory to figure out the
   // different building levels we walked on to separate the images.
   builder->Register(
       XRayPointsProcessor::kConfigurationFileActionName,
-      [&trajectory, &file_factory](
+      [&trajectory, &file_writer_factory](
           common::LuaParameterDictionary* const dictionary,
           PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
-        return XRayPointsProcessor::FromDictionary(trajectory, file_factory,
+        return XRayPointsProcessor::FromDictionary(trajectory, file_writer_factory,
                                                    dictionary, next);
       });
 }
