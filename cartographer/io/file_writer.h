@@ -35,9 +35,13 @@ class FileWriter {
 
   virtual ~FileWriter() {}
 
+  // Write 'data' to the beginning of the file. This is required to overwrite
+  // fix sized headers which contain the number of points once we actually know
+  // how many points there are.
+  virtual bool WriteHeader(const char* data, size_t len) = 0;
+
   virtual bool Write(const char* data, size_t len) = 0;
   virtual bool Close() = 0;
-  virtual bool SeekToStart() = 0;
 };
 
 // An Implementation of file using std::ofstream.
@@ -48,8 +52,8 @@ class StreamFileWriter : public FileWriter {
   StreamFileWriter(const string& filename);
 
   bool Write(const char* data, size_t len) override;
+  bool WriteHeader(const char* data, size_t len) override;
   bool Close() override;
-  bool SeekToStart() override;
 
  private:
   std::ofstream out_;

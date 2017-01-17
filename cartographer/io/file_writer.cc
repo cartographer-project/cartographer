@@ -40,13 +40,13 @@ bool StreamFileWriter::Close() {
   return !out_.bad();
 }
 
-bool StreamFileWriter::SeekToStart() {
+bool StreamFileWriter::WriteHeader(const char* const data, const size_t len) {
   if (out_.bad()) {
     return false;
   }
   out_.flush();
   out_.seekp(0);
-  return !out_.bad();
+  return Write(data, len);
 }
 
 }  // namespace io

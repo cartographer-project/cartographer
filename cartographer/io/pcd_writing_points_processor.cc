@@ -53,7 +53,7 @@ void WriteBinaryPcdHeader(const bool has_color, const int64 num_points,
          << "\n"
          << "DATA binary\n";
   const string out = stream.str();
-  file_writer->Write(out.data(), out.size());
+  file_writer->WriteHeader(out.data(), out.size());
 }
 
 void WriteBinaryPcdPointCoordinate(const Eigen::Vector3f& point,
@@ -94,7 +94,6 @@ PcdWritingPointsProcessor::PcdWritingPointsProcessor(
       file_writer_(std::move(file_writer)) {}
 
 PointsProcessor::FlushResult PcdWritingPointsProcessor::Flush() {
-  CHECK(file_writer_->SeekToStart());
   WriteBinaryPcdHeader(has_colors_, num_points_, file_writer_.get());
   CHECK(file_writer_->Close());
 

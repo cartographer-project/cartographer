@@ -48,7 +48,7 @@ void WriteBinaryPlyHeader(const bool has_color, const int64 num_points,
          << "property float z\n"
          << color_header << "end_header\n";
   const string out = stream.str();
-  CHECK(file_writer->Write(out.data(), out.size()));
+  CHECK(file_writer->WriteHeader(out.data(), out.size()));
 }
 
 void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point,
@@ -85,7 +85,6 @@ PlyWritingPointsProcessor::PlyWritingPointsProcessor(
       file_(std::move(file_writer)) {}
 
 PointsProcessor::FlushResult PlyWritingPointsProcessor::Flush() {
-  CHECK(file_->SeekToStart());
   WriteBinaryPlyHeader(has_colors_, num_points_, file_.get());
   CHECK(file_->Close()) << "Closing PLY file_writer failed.";
 
