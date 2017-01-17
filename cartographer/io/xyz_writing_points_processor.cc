@@ -10,7 +10,8 @@ namespace io {
 
 namespace {
 
-void WriteXyzPoint(const Eigen::Vector3f& point, FileWriter* const file_writer) {
+void WriteXyzPoint(const Eigen::Vector3f& point,
+                   FileWriter* const file_writer) {
   std::ostringstream stream;
   stream << std::setprecision(6);
   stream << point.x() << " " << point.y() << " " << point.z() << "\n";
