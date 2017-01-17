@@ -33,7 +33,7 @@ namespace {
 // Writes the PCD header claiming 'num_points' will follow it into
 // 'output_file'.
 void WriteBinaryPcdHeader(const bool has_color, const int64 num_points,
-                          File* file) {
+                          File* const file) {
   string color_header_field = !has_color ? "" : " rgb";
   string color_header_type = !has_color ? "" : " U";
   string color_header_size = !has_color ? "" : " 4";
@@ -56,7 +56,7 @@ void WriteBinaryPcdHeader(const bool has_color, const int64 num_points,
   file->Write(out.data(), out.size());
 }
 
-void WriteBinaryPcdPointCoordinate(const Eigen::Vector3f& point, File* file) {
+void WriteBinaryPcdPointCoordinate(const Eigen::Vector3f& point, File* const file) {
   char buffer[12];
   memcpy(buffer, &point[0], sizeof(float));
   memcpy(buffer + 4, &point[1], sizeof(float));
@@ -64,7 +64,7 @@ void WriteBinaryPcdPointCoordinate(const Eigen::Vector3f& point, File* file) {
   CHECK(file->Write(buffer, 12));
 }
 
-void WriteBinaryPcdPointColor(const Color& color, File* file) {
+void WriteBinaryPcdPointColor(const Color& color, File* const file) {
   char buffer[4];
   buffer[0] = color[2];
   buffer[1] = color[1];

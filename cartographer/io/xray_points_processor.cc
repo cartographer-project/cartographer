@@ -48,8 +48,9 @@ void TakeLogarithm(Eigen::MatrixXf* mat) {
   }
 }
 
-cairo_status_t CairoWriteCallback(void* closure, const unsigned char* data,
-                                  unsigned int length) {
+cairo_status_t CairoWriteCallback(void* const closure,
+                                  const unsigned char* data,
+                                  const unsigned int length) {
   if (static_cast<File*>(closure)->Write(reinterpret_cast<const char*>(data),
                                          length)) {
     return CAIRO_STATUS_SUCCESS;
@@ -58,7 +59,7 @@ cairo_status_t CairoWriteCallback(void* closure, const unsigned char* data,
 }
 
 // Write 'mat' as a pleasing-to-look-at PNG into 'filename'
-void WritePng(const Eigen::MatrixXf& mat, File* file) {
+void WritePng(const Eigen::MatrixXf& mat, File* const file) {
   const int stride =
       cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, mat.cols());
   CHECK_EQ(stride % 4, 0);
@@ -162,8 +163,9 @@ XRayPointsProcessor::XRayPointsProcessor(
 
 std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
     const mapping::proto::Trajectory& trajectory,
-    const FileFactory& file_factory, common::LuaParameterDictionary* dictionary,
-    PointsProcessor* next) {
+    const FileFactory& file_factory,
+    common::LuaParameterDictionary* const dictionary,
+    PointsProcessor* const next) {
   std::vector<mapping::Floor> floors;
   if (dictionary->HasKey("separate_floors") &&
       dictionary->GetBool("separate_floors")) {

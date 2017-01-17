@@ -24,7 +24,7 @@ IoStreamFile::IoStreamFile(const string& filename)
 
 IoStreamFile::~IoStreamFile() {}
 
-bool IoStreamFile::Write(const char* data, size_t len) {
+bool IoStreamFile::Write(const char* const data, const size_t len) {
   if (out_.bad()) {
     return false;
   }

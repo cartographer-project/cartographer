@@ -33,7 +33,7 @@ namespace {
 // Writes the PLY header claiming 'num_points' will follow it into
 // 'output_file'.
 void WriteBinaryPlyHeader(const bool has_color, const int64 num_points,
-                          File* file) {
+                          File* const file) {
   string color_header = !has_color ? "" : "property uchar red\n"
                                           "property uchar green\n"
                                           "property uchar blue\n";
@@ -51,7 +51,7 @@ void WriteBinaryPlyHeader(const bool has_color, const int64 num_points,
   CHECK(file->Write(out.data(), out.size()));
 }
 
-void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point, File* file) {
+void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point, File* const file) {
   char buffer[12];
   memcpy(buffer, &point[0], sizeof(float));
   memcpy(buffer + 4, &point[1], sizeof(float));
@@ -59,7 +59,7 @@ void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point, File* file) {
   CHECK(file->Write(buffer, 12));
 }
 
-void WriteBinaryPlyPointColor(const Color& color, File* file) {
+void WriteBinaryPlyPointColor(const Color& color, File* const file) {
   CHECK(file->Write(reinterpret_cast<const char*>(color.data()), color.size()));
 }
 
