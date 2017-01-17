@@ -17,6 +17,7 @@
 #include "cartographer/io/points_processor_pipeline_builder.h"
 
 #include "cartographer/common/make_unique.h"
+#include "cartographer/io/coloring_points_processor.h"
 #include "cartographer/io/counting_points_processor.h"
 #include "cartographer/io/fixed_ratio_sampling_points_processor.h"
 #include "cartographer/io/min_max_range_filtering_points_processor.h"
@@ -64,6 +65,7 @@ void RegisterBuiltInPointsProcessors(
   RegisterPlainPointsProcessor<FixedRatioSamplingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<MinMaxRangeFiteringPointsProcessor>(builder);
   RegisterPlainPointsProcessor<OutlierRemovingPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<ColoringPointsProcessor>(builder);
   RegisterFileWritingPointsProcessor<PcdWritingPointsProcessor>(
       file_writer_factory, builder);
   RegisterFileWritingPointsProcessor<PlyWritingPointsProcessor>(
