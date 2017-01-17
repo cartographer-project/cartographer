@@ -51,8 +51,8 @@ void TakeLogarithm(Eigen::MatrixXf* mat) {
 cairo_status_t CairoWriteCallback(void* const closure,
                                   const unsigned char* data,
                                   const unsigned int length) {
-  if (static_cast<FileWriter*>(closure)->Write(reinterpret_cast<const char*>(data),
-                                         length)) {
+  if (static_cast<FileWriter*>(closure)->Write(
+          reinterpret_cast<const char*>(data), length)) {
     return CAIRO_STATUS_SUCCESS;
   }
   return CAIRO_STATUS_WRITE_ERROR;
@@ -197,12 +197,14 @@ void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
 PointsProcessor::FlushResult XRayPointsProcessor::Flush() {
   if (floors_.empty()) {
     CHECK_EQ(voxels_.size(), 1);
-    WriteVoxels(voxels_[0], file_writer_factory_(output_filename_ + ".png").get());
+    WriteVoxels(voxels_[0],
+                file_writer_factory_(output_filename_ + ".png").get());
   } else {
     for (size_t i = 0; i < floors_.size(); ++i) {
       WriteVoxels(
           voxels_[i],
-          file_writer_factory_(output_filename_ + std::to_string(i) + ".png").get());
+          file_writer_factory_(output_filename_ + std::to_string(i) + ".png")
+              .get());
     }
   }
 

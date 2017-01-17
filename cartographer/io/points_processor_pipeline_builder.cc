@@ -51,24 +51,25 @@ void RegisterFileWritingPointsProcessor(
       [&file_writer_factory](
           common::LuaParameterDictionary* const dictionary,
           PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
-        return PointsProcessorType::FromDictionary(file_writer_factory, dictionary,
-                                                   next);
+        return PointsProcessorType::FromDictionary(file_writer_factory,
+                                                   dictionary, next);
       });
 }
 
 void RegisterBuiltInPointsProcessors(
     const mapping::proto::Trajectory& trajectory,
-    const FileWriterFactory& file_writer_factory, PointsProcessorPipelineBuilder* builder) {
+    const FileWriterFactory& file_writer_factory,
+    PointsProcessorPipelineBuilder* builder) {
   RegisterPlainPointsProcessor<CountingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<FixedRatioSamplingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<MinMaxRangeFiteringPointsProcessor>(builder);
   RegisterPlainPointsProcessor<OutlierRemovingPointsProcessor>(builder);
-  RegisterFileWritingPointsProcessor<PcdWritingPointsProcessor>(file_writer_factory,
-                                                                builder);
-  RegisterFileWritingPointsProcessor<PlyWritingPointsProcessor>(file_writer_factory,
-                                                                builder);
-  RegisterFileWritingPointsProcessor<XyzWriterPointsProcessor>(file_writer_factory,
-                                                               builder);
+  RegisterFileWritingPointsProcessor<PcdWritingPointsProcessor>(
+      file_writer_factory, builder);
+  RegisterFileWritingPointsProcessor<PlyWritingPointsProcessor>(
+      file_writer_factory, builder);
+  RegisterFileWritingPointsProcessor<XyzWriterPointsProcessor>(
+      file_writer_factory, builder);
 
   // X-Ray is an odd ball since it requires the trajectory to figure out the
   // different building levels we walked on to separate the images.
@@ -77,8 +78,8 @@ void RegisterBuiltInPointsProcessors(
       [&trajectory, &file_writer_factory](
           common::LuaParameterDictionary* const dictionary,
           PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
-        return XRayPointsProcessor::FromDictionary(trajectory, file_writer_factory,
-                                                   dictionary, next);
+        return XRayPointsProcessor::FromDictionary(
+            trajectory, file_writer_factory, dictionary, next);
       });
 }
 

@@ -25,7 +25,8 @@ namespace io {
 class PlyWritingPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName = "write_ply";
-  PlyWritingPointsProcessor(std::unique_ptr<FileWriter> file, PointsProcessor* next);
+  PlyWritingPointsProcessor(std::unique_ptr<FileWriter> file,
+                            PointsProcessor* next);
 
   static std::unique_ptr<PlyWritingPointsProcessor> FromDictionary(
       const FileWriterFactory& file_writer_factory,

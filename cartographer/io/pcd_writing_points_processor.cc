@@ -65,7 +65,8 @@ void WriteBinaryPcdPointCoordinate(const Eigen::Vector3f& point,
   CHECK(file_writer->Write(buffer, 12));
 }
 
-void WriteBinaryPcdPointColor(const Color& color, FileWriter* const file_writer) {
+void WriteBinaryPcdPointColor(const Color& color,
+                              FileWriter* const file_writer) {
   char buffer[4];
   buffer[0] = color[2];
   buffer[1] = color[1];
@@ -87,7 +88,10 @@ PcdWritingPointsProcessor::FromDictionary(
 
 PcdWritingPointsProcessor::PcdWritingPointsProcessor(
     std::unique_ptr<FileWriter> file_writer, PointsProcessor* const next)
-    : next_(next), num_points_(0), has_colors_(false), file_writer_(std::move(file_writer)) {}
+    : next_(next),
+      num_points_(0),
+      has_colors_(false),
+      file_writer_(std::move(file_writer)) {}
 
 PointsProcessor::FlushResult PcdWritingPointsProcessor::Flush() {
   CHECK(file_writer_->SeekToStart());

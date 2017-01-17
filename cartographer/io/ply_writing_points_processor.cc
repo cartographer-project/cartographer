@@ -60,8 +60,10 @@ void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point,
   CHECK(file_writer->Write(buffer, 12));
 }
 
-void WriteBinaryPlyPointColor(const Color& color, FileWriter* const file_writer) {
-  CHECK(file_writer->Write(reinterpret_cast<const char*>(color.data()), color.size()));
+void WriteBinaryPlyPointColor(const Color& color,
+                              FileWriter* const file_writer) {
+  CHECK(file_writer->Write(reinterpret_cast<const char*>(color.data()),
+                           color.size()));
 }
 
 }  // namespace
@@ -77,7 +79,10 @@ PlyWritingPointsProcessor::FromDictionary(
 
 PlyWritingPointsProcessor::PlyWritingPointsProcessor(
     std::unique_ptr<FileWriter> file_writer, PointsProcessor* const next)
-    : next_(next), num_points_(0), has_colors_(false), file_(std::move(file_writer)) {}
+    : next_(next),
+      num_points_(0),
+      has_colors_(false),
+      file_(std::move(file_writer)) {}
 
 PointsProcessor::FlushResult PlyWritingPointsProcessor::Flush() {
   CHECK(file_->SeekToStart());

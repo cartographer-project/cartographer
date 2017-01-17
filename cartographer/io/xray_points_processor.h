@@ -36,7 +36,8 @@ class XRayPointsProcessor : public PointsProcessor {
   XRayPointsProcessor(double voxel_size, const transform::Rigid3f& transform,
                       const std::vector<mapping::Floor>& floors,
                       const string& output_filename,
-                      const FileWriterFactory& file_writer_factory, PointsProcessor* next);
+                      const FileWriterFactory& file_writer_factory,
+                      PointsProcessor* next);
 
   static std::unique_ptr<XRayPointsProcessor> FromDictionary(
       const mapping::proto::Trajectory& trajectory,

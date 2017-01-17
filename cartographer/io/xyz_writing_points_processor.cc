@@ -20,8 +20,8 @@ void WriteXyzPoint(const Eigen::Vector3f& point, FileWriter* file_writer) {
 
 }  // namespace
 
-XyzWriterPointsProcessor::XyzWriterPointsProcessor(std::unique_ptr<FileWriter> file_writer,
-                                                   PointsProcessor* next)
+XyzWriterPointsProcessor::XyzWriterPointsProcessor(
+    std::unique_ptr<FileWriter> file_writer, PointsProcessor* next)
     : next_(next), file_writer_(std::move(file_writer)) {}
 
 std::unique_ptr<XyzWriterPointsProcessor>
