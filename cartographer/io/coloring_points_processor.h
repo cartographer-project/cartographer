@@ -29,8 +29,7 @@ namespace io {
 // Colors points with a fixed color by frame_id.
 class ColoringPointsProcessor : public PointsProcessor {
  public:
-  constexpr static const char* kConfigurationFileActionName =
-      "color_points";
+  constexpr static const char* kConfigurationFileActionName = "color_points";
 
   ColoringPointsProcessor(const Color& color, const string& frame_id,
                           PointsProcessor* next);
@@ -40,10 +39,8 @@ class ColoringPointsProcessor : public PointsProcessor {
 
   ~ColoringPointsProcessor() override{};
 
-  ColoringPointsProcessor(const ColoringPointsProcessor&) =
-      delete;
-  ColoringPointsProcessor& operator=(
-      const ColoringPointsProcessor&) = delete;
+  ColoringPointsProcessor(const ColoringPointsProcessor&) = delete;
+  ColoringPointsProcessor& operator=(const ColoringPointsProcessor&) = delete;
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
