@@ -10,29 +10,32 @@ namespace io {
 
 namespace {
 
-void WriteXyzPoint(const Eigen::Vector3f& point, std::ofstream* output) {
-  (*output) << point.x() << " " << point.y() << " " << point.z() << "\n";
+void WriteXyzPoint(const Eigen::Vector3f& point,
+                   FileWriter* const file_writer) {
+  std::ostringstream stream;
+  stream << std::setprecision(6);
+  stream << point.x() << " " << point.y() << " " << point.z() << "\n";
+  const string out = stream.str();
+  CHECK(file_writer->Write(out.data(), out.size()));
 }
 
 }  // namespace
 
-XyzWriterPointsProcessor::XyzWriterPointsProcessor(const string& filename,
-                                                   PointsProcessor* next)
-    : next_(next), file_(filename, std::ios_base::out | std::ios_base::binary) {
-  file_ << std::setprecision(6);
-}
+XyzWriterPointsProcessor::XyzWriterPointsProcessor(
+    std::unique_ptr<FileWriter> file_writer, PointsProcessor* const next)
+    : next_(next), file_writer_(std::move(file_writer)) {}
 
 std::unique_ptr<XyzWriterPointsProcessor>
 XyzWriterPointsProcessor::FromDictionary(
+    const FileWriterFactory& file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
   return common::make_unique<XyzWriterPointsProcessor>(
-      dictionary->GetString("filename"), next);
+      file_writer_factory(dictionary->GetString("filename")), next);
 }
 
 PointsProcessor::FlushResult XyzWriterPointsProcessor::Flush() {
-  file_.close();
-  CHECK(file_) << "Writing XYZ file failed.";
+  CHECK(file_writer_->Close()) << "Closing XYZ file failed.";
   switch (next_->Flush()) {
     case FlushResult::kFinished:
       return FlushResult::kFinished;
@@ -46,7 +49,7 @@ PointsProcessor::FlushResult XyzWriterPointsProcessor::Flush() {
 
 void XyzWriterPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   for (const Eigen::Vector3f& point : batch->points) {
-    WriteXyzPoint(point, &file_);
+    WriteXyzPoint(point, file_writer_.get());
   }
   next_->Process(std::move(batch));
 }

@@ -18,9 +18,11 @@
 #define CARTOGRAPHER_IO_XYZ_WRITING_POINTS_PROCESSOR_H_
 
 #include <fstream>
+#include <memory>
 #include <string>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
@@ -31,9 +33,10 @@ class XyzWriterPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName = "write_xyz";
 
-  XyzWriterPointsProcessor(const string& filename, PointsProcessor* next);
+  XyzWriterPointsProcessor(std::unique_ptr<FileWriter>, PointsProcessor* next);
 
   static std::unique_ptr<XyzWriterPointsProcessor> FromDictionary(
+      const FileWriterFactory& file_writer_factory,
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   ~XyzWriterPointsProcessor() override {}
@@ -46,7 +49,7 @@ class XyzWriterPointsProcessor : public PointsProcessor {
 
  private:
   PointsProcessor* const next_;
-  std::ofstream file_;
+  std::unique_ptr<FileWriter> file_writer_;
 };
 
 }  // namespace io
