@@ -60,14 +60,14 @@ class XRayPointsProcessor : public PointsProcessor {
     uint32_t count = 0;
   };
 
-  struct ImageData {
+  struct Aggregation {
     mapping_3d::HybridGridBase<bool> voxels;
     std::map<std::pair<int, int>, ColumnData> column_data;
   };
 
-  void WriteVoxels(const ImageData& image_data, FileWriter* const file_writer);
+  void WriteVoxels(const Aggregation& aggregation, FileWriter* const file_writer);
   void Insert(const PointsBatch& batch, const transform::Rigid3f& transform,
-              ImageData* image_data);
+              Aggregation* aggregation);
 
   PointsProcessor* const next_;
   const FileWriterFactory& file_writer_factory_;
@@ -79,7 +79,7 @@ class XRayPointsProcessor : public PointsProcessor {
   const transform::Rigid3f transform_;
 
   // Only has one entry if we do not separate into floors.
-  std::vector<ImageData> images_data_;
+  std::vector<Aggregation> aggregations_;
 };
 
 }  // namespace io

@@ -42,7 +42,9 @@ struct PixelData {
 using PixelDataMatrix =
     Eigen::Matrix<PixelData, Eigen::Dynamic, Eigen::Dynamic>;
 
-double Mix(double a, double b, double t) { return a * (1. - t) + t * b; }
+double Mix(const double a, const double b, const double t) {
+  return a * (1. - t) + t * b;
+}
 
 cairo_status_t CairoWriteCallback(void* const closure,
                                   const unsigned char* data,
@@ -141,7 +143,7 @@ XRayPointsProcessor::XRayPointsProcessor(
       output_filename_(output_filename),
       transform_(transform) {
   for (size_t i = 0; i < (floors_.empty() ? 1 : floors.size()); ++i) {
-    images_data_.emplace_back(ImageData{
+    aggregations_.emplace_back(Aggregation{
         mapping_3d::HybridGridBase<bool>(voxel_size, Eigen::Vector3f::Zero()),
         {}});
   }
@@ -165,7 +167,7 @@ std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
       floors, dictionary->GetString("filename"), file_writer_factory, next);
 }
 
-void XRayPointsProcessor::WriteVoxels(const ImageData& image_data,
+void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
                                       FileWriter* const file_writer) {
   Eigen::Array3i min(std::numeric_limits<int>::max(),
                      std::numeric_limits<int>::max(),
@@ -175,7 +177,7 @@ void XRayPointsProcessor::WriteVoxels(const ImageData& image_data,
                      std::numeric_limits<int>::min());
 
   // Find the maximum and minimum cells.
-  for (mapping_3d::HybridGridBase<bool>::Iterator it(image_data.voxels);
+  for (mapping_3d::HybridGridBase<bool>::Iterator it(aggregation.voxels);
        !it.Done(); it.Next()) {
     const Eigen::Array3i idx = it.GetCellIndex();
     min = min.min(idx);
@@ -193,13 +195,13 @@ void XRayPointsProcessor::WriteVoxels(const ImageData& image_data,
   const int xsize = max[1] - min[1] + 1;
   const int ysize = max[2] - min[2] + 1;
   PixelDataMatrix image = PixelDataMatrix(ysize, xsize);
-  for (mapping_3d::HybridGridBase<bool>::Iterator it(image_data.voxels);
+  for (mapping_3d::HybridGridBase<bool>::Iterator it(aggregation.voxels);
        !it.Done(); it.Next()) {
     const Eigen::Array3i cell_index = it.GetCellIndex();
     const Eigen::Array2i pixel = voxel_index_to_pixel(cell_index);
     PixelData& pixel_data = image(pixel.y(), pixel.x());
     const auto& column_data =
-        image_data.column_data.at(std::make_pair(cell_index[1], cell_index[2]));
+        aggregation.column_data.at(std::make_pair(cell_index[1], cell_index[2]));
     pixel_data.mean_r = column_data.sum_r / column_data.count;
     pixel_data.mean_g = column_data.sum_g / column_data.count;
     pixel_data.mean_b = column_data.sum_b / column_data.count;
@@ -210,15 +212,15 @@ void XRayPointsProcessor::WriteVoxels(const ImageData& image_data,
 
 void XRayPointsProcessor::Insert(const PointsBatch& batch,
                                  const transform::Rigid3f& transform,
-                                 ImageData* image_data) {
+                                 Aggregation* const aggregation) {
   constexpr Color kDefaultColor = {{0, 0, 0}};
   for (size_t i = 0; i < batch.points.size(); ++i) {
     const Eigen::Vector3f camera_point = transform * batch.points[i];
     const Eigen::Array3i cell_index =
-        image_data->voxels.GetCellIndex(camera_point);
-    *image_data->voxels.mutable_value(cell_index) = true;
+        aggregation->voxels.GetCellIndex(camera_point);
+    *aggregation->voxels.mutable_value(cell_index) = true;
     ColumnData& column_data =
-        image_data->column_data[std::make_pair(cell_index[1], cell_index[2])];
+        aggregation->column_data[std::make_pair(cell_index[1], cell_index[2])];
     const auto& color =
         batch.colors.empty() ? kDefaultColor : batch.colors.at(i);
     column_data.sum_r += color[0];
@@ -230,14 +232,14 @@ void XRayPointsProcessor::Insert(const PointsBatch& batch,
 
 void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   if (floors_.empty()) {
-    CHECK_EQ(images_data_.size(), 1);
-    Insert(*batch, transform_, &images_data_[0]);
+    CHECK_EQ(aggregations_.size(), 1);
+    Insert(*batch, transform_, &aggregations_[0]);
   } else {
     for (size_t i = 0; i < floors_.size(); ++i) {
       if (!ContainedIn(batch->time, floors_[i].timespans)) {
         continue;
       }
-      Insert(*batch, transform_, &images_data_[i]);
+      Insert(*batch, transform_, &aggregations_[i]);
     }
   }
   next_->Process(std::move(batch));
@@ -245,13 +247,13 @@ void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
 
 PointsProcessor::FlushResult XRayPointsProcessor::Flush() {
   if (floors_.empty()) {
-    CHECK_EQ(images_data_.size(), 1);
-    WriteVoxels(images_data_[0],
+    CHECK_EQ(aggregations_.size(), 1);
+    WriteVoxels(aggregations_[0],
                 file_writer_factory_(output_filename_ + ".png").get());
   } else {
     for (size_t i = 0; i < floors_.size(); ++i) {
       WriteVoxels(
-          images_data_[i],
+          aggregations_[i],
           file_writer_factory_(output_filename_ + std::to_string(i) + ".png")
               .get());
     }
