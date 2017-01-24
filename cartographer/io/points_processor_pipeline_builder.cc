@@ -20,6 +20,7 @@
 #include "cartographer/io/coloring_points_processor.h"
 #include "cartographer/io/counting_points_processor.h"
 #include "cartographer/io/fixed_ratio_sampling_points_processor.h"
+#include "cartographer/io/intensity_to_color_points_processor.h"
 #include "cartographer/io/min_max_range_filtering_points_processor.h"
 #include "cartographer/io/null_points_processor.h"
 #include "cartographer/io/outlier_removing_points_processor.h"
@@ -66,6 +67,7 @@ void RegisterBuiltInPointsProcessors(
   RegisterPlainPointsProcessor<MinMaxRangeFiteringPointsProcessor>(builder);
   RegisterPlainPointsProcessor<OutlierRemovingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<ColoringPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<IntensityToColorPointsProcessor>(builder);
   RegisterFileWritingPointsProcessor<PcdWritingPointsProcessor>(
       file_writer_factory, builder);
   RegisterFileWritingPointsProcessor<PlyWritingPointsProcessor>(

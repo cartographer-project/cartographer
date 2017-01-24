@@ -26,6 +26,9 @@ void RemovePoints(std::vector<int> to_remove, PointsBatch* batch) {
     if (!batch->colors.empty()) {
       batch->colors.erase(batch->colors.begin() + index);
     }
+    if (!batch->intensities.empty()) {
+      batch->intensities.erase(batch->intensities.begin() + index);
+    }
   }
 }
 
