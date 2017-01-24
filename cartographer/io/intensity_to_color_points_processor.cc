@@ -47,7 +47,7 @@ IntensityToColorPointsProcessor::IntensityToColorPointsProcessor(
 void IntensityToColorPointsProcessor::Process(
     std::unique_ptr<PointsBatch> batch) {
   if (!batch->intensities.empty() &&
-      (batch->frame_id.empty() || batch->frame_id == frame_id_)) {
+      (frame_id_.empty() || batch->frame_id == frame_id_)) {
     batch->colors.clear();
     for (const float intensity : batch->intensities) {
       const uint8_t gray =

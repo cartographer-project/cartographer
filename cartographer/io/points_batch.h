@@ -51,14 +51,14 @@ struct PointsBatch {
   // Trajectory index that produced this point.
   int trajectory_index;
 
-  // The geometry of the points in a metric frame.
+  // Geometry of the points in a metric frame.
   std::vector<Eigen::Vector3f> points;
 
-  // Intensities are optional (might be empty). They represent the by device
-  // information of intensities, i.e. has no predefined meaning. For example
-  // VLP16 give a value of 0 - 100 for non-specular return values and values up
-  // to 255 for specular returns. Hokuyo lasers use a 16 bit value, but values
-  // rarely peak above 4096.
+  // Intensities are optional and may be unspecified. The meaning of these
+  // intensity values varies by device. For example, the VLP16 provides values
+  // in the range [0, 100] for non-specular return values and values up to 255
+  // for specular returns. On the other hand, Hokuyo lasers provide a 16-bit
+  // value that rarely peaks above 4096.
   std::vector<float> intensities;
 
   // Colors are optional. If set, they are RGB values.
