@@ -54,7 +54,7 @@ class IntensityToColorPointsProcessor : public PointsProcessor {
  private:
   const float min_intensity_;
   const float max_intensity_;
-  const string& frame_id_;
+  const string frame_id_;
   PointsProcessor* const next_;
 };
 
