@@ -29,7 +29,7 @@ class PlyWritingPointsProcessor : public PointsProcessor {
                             PointsProcessor* next);
 
   static std::unique_ptr<PlyWritingPointsProcessor> FromDictionary(
-      const FileWriterFactory& file_writer_factory,
+      FileWriterFactory file_writer_factory,
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   ~PlyWritingPointsProcessor() override {}

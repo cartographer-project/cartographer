@@ -79,7 +79,7 @@ void WriteBinaryPcdPointColor(const Color& color,
 
 std::unique_ptr<PcdWritingPointsProcessor>
 PcdWritingPointsProcessor::FromDictionary(
-    const FileWriterFactory& file_writer_factory,
+    FileWriterFactory file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
   return common::make_unique<PcdWritingPointsProcessor>(

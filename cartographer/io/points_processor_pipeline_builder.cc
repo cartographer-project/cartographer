@@ -46,11 +46,11 @@ void RegisterPlainPointsProcessor(
 
 template <typename PointsProcessorType>
 void RegisterFileWritingPointsProcessor(
-    const FileWriterFactory& file_writer_factory,
+    FileWriterFactory file_writer_factory,
     PointsProcessorPipelineBuilder* const builder) {
   builder->Register(
       PointsProcessorType::kConfigurationFileActionName,
-      [&file_writer_factory](
+      [file_writer_factory](
           common::LuaParameterDictionary* const dictionary,
           PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
         return PointsProcessorType::FromDictionary(file_writer_factory,
@@ -60,7 +60,7 @@ void RegisterFileWritingPointsProcessor(
 
 void RegisterBuiltInPointsProcessors(
     const mapping::proto::Trajectory& trajectory,
-    const FileWriterFactory& file_writer_factory,
+    FileWriterFactory file_writer_factory,
     PointsProcessorPipelineBuilder* builder) {
   RegisterPlainPointsProcessor<CountingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<FixedRatioSamplingPointsProcessor>(builder);
@@ -79,7 +79,7 @@ void RegisterBuiltInPointsProcessors(
   // different building levels we walked on to separate the images.
   builder->Register(
       XRayPointsProcessor::kConfigurationFileActionName,
-      [&trajectory, &file_writer_factory](
+      [&trajectory, file_writer_factory](
           common::LuaParameterDictionary* const dictionary,
           PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
         return XRayPointsProcessor::FromDictionary(
