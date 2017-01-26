@@ -110,9 +110,10 @@ void PlyWritingPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
     WriteBinaryPlyHeader(has_colors_, 0, file_.get());
   }
   if (has_colors_) {
-    CHECK(!batch->colors.empty()) << "First PointsBatch had colors, but "
-                                     "encountered one without. frame_id: "
-                                  << batch->frame_id;
+    CHECK_EQ(batch->points.size(), batch->colors.size())
+        << "First PointsBatch had colors, but encountered one without. "
+           "frame_id: "
+        << batch->frame_id;
   }
 
   for (size_t i = 0; i < batch->points.size(); ++i) {
