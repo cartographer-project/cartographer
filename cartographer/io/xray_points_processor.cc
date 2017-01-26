@@ -136,7 +136,7 @@ bool ContainedIn(
 XRayPointsProcessor::XRayPointsProcessor(
     const double voxel_size, const transform::Rigid3f& transform,
     const std::vector<mapping::Floor>& floors, const string& output_filename,
-    const FileWriterFactory& file_writer_factory, PointsProcessor* const next)
+    FileWriterFactory file_writer_factory, PointsProcessor* const next)
     : next_(next),
       file_writer_factory_(file_writer_factory),
       floors_(floors),
@@ -151,7 +151,7 @@ XRayPointsProcessor::XRayPointsProcessor(
 
 std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
     const mapping::proto::Trajectory& trajectory,
-    const FileWriterFactory& file_writer_factory,
+    FileWriterFactory file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
   std::vector<mapping::Floor> floors;
@@ -200,8 +200,8 @@ void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
     const Eigen::Array3i cell_index = it.GetCellIndex();
     const Eigen::Array2i pixel = voxel_index_to_pixel(cell_index);
     PixelData& pixel_data = image(pixel.y(), pixel.x());
-    const auto& column_data =
-        aggregation.column_data.at(std::make_pair(cell_index[1], cell_index[2]));
+    const auto& column_data = aggregation.column_data.at(
+        std::make_pair(cell_index[1], cell_index[2]));
     pixel_data.mean_r = column_data.sum_r / column_data.count;
     pixel_data.mean_g = column_data.sum_g / column_data.count;
     pixel_data.mean_b = column_data.sum_b / column_data.count;

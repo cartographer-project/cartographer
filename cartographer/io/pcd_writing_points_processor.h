@@ -31,7 +31,7 @@ class PcdWritingPointsProcessor : public PointsProcessor {
                             PointsProcessor* next);
 
   static std::unique_ptr<PcdWritingPointsProcessor> FromDictionary(
-      const FileWriterFactory& file_writer_factory,
+      FileWriterFactory file_writer_factory,
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   ~PcdWritingPointsProcessor() override {}
