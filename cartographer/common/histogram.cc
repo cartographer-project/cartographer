@@ -37,8 +37,9 @@ string Histogram::ToString(const int buckets) const {
   const float max = *std::max_element(values_.begin(), values_.end());
   const float mean =
       std::accumulate(values_.begin(), values_.end(), 0.f) / values_.size();
-  string result = "Count: " + std::to_string(values_.size()) + "  Min: " +
-                  std::to_string(min) + "  Max: " + std::to_string(max) +
+  string result = "Count: " + std::to_string(values_.size()) +
+                  "  Min: " + std::to_string(min) +
+                  "  Max: " + std::to_string(max) +
                   "  Mean: " + std::to_string(mean);
   if (min == max) {
     return result;

@@ -64,8 +64,8 @@ void OrderedMultiQueue::Add(const QueueKey& queue_key,
                             std::unique_ptr<Data> data) {
   auto it = queues_.find(queue_key);
   if (it == queues_.end()) {
-    LOG_EVERY_N(WARNING, 1000) << "Ignored data for queue: '" << queue_key
-                               << "'";
+    LOG_EVERY_N(WARNING, 1000)
+        << "Ignored data for queue: '" << queue_key << "'";
     return;
   }
   it->second.queue.Push(std::move(data));

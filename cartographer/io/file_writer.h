@@ -47,7 +47,7 @@ class FileWriter {
 // An Implementation of file using std::ofstream.
 class StreamFileWriter : public FileWriter {
  public:
-  virtual ~StreamFileWriter() override;
+  ~StreamFileWriter() override;
 
   StreamFileWriter(const string& filename);
 
