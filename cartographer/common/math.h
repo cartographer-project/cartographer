@@ -71,7 +71,7 @@ T NormalizeAngleDifference(T difference) {
   // Copy the sign of the value in radians to the value of pi.
   T signed_pi = std::copysign(M_PI,difference);
   // Set the value of difference to the appropriate signed value between pi and -pi.
-  difference = std::fmod(difference + signed_pi,(2 * M_PI)) - signedPI;
+  difference = std::fmod(difference + signed_pi,(2 * M_PI)) - signed_pi;
   return difference;
 }
 
