@@ -68,12 +68,10 @@ constexpr double RadToDeg(double rad) { return 180. * rad / M_PI; }
 // Bring the 'difference' between two angles into [-pi; pi].
 template <typename T>
 T NormalizeAngleDifference(T difference) {
-  while (difference > M_PI) {
-    difference -= T(2. * M_PI);
-  }
-  while (difference < -M_PI) {
-    difference += T(2. * M_PI);
-  }
+  // Copy the sign of the value in radians to the value of pi.
+  T signed_pi = std::copysign(M_PI,difference);
+  // Set the value of difference to the appropriate signed value between pi and -pi.
+  difference = std::fmod(difference + signed_pi,(2 * M_PI)) - signedPI;
   return difference;
 }
 
