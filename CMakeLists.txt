@@ -44,7 +44,9 @@ endif()
 # Install catkin package.xml
 install(FILES package.xml DESTINATION share/cartographer)
 
-set(CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY ${CMAKE_INSTALL_PREFIX}/share/cartographer/configuration_files)
+set(CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY ${CMAKE_INSTALL_PREFIX}/share/cartographer/configuration_files
+  CACHE PATH ".lua configuration files directory")
+
 install(DIRECTORY configuration_files DESTINATION share/cartographer/)
 
 install(DIRECTORY cmake DESTINATION share/cartographer/)
