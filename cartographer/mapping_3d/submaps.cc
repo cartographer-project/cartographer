@@ -82,11 +82,11 @@ void GenerateSegmentForSlice(const sensor::LaserFan& laser_fan,
         segments->push_back(LaserSegment{laser_origin_xy, hit.head<2>(), true});
       } else {
         // Laser hit is above.
-        segments->push_back(LaserSegment{
-            laser_origin_xy,
-            laser_origin_xy +
-                (kSliceHalfHeight - laser_origin_z) / delta_z * delta_xy,
-            false});
+        segments->push_back(
+            LaserSegment{laser_origin_xy,
+                         laser_origin_xy + (kSliceHalfHeight - laser_origin_z) /
+                                               delta_z * delta_xy,
+                         false});
       }
     } else {
       // Laser ray originates above the slice.
@@ -100,10 +100,10 @@ void GenerateSegmentForSlice(const sensor::LaserFan& laser_fan,
             false});
       } else if (hit.z() < kSliceHalfHeight) {
         // Laser return is inside the slice.
-        segments->push_back(LaserSegment{
-            laser_origin_xy +
-                (kSliceHalfHeight - laser_origin_z) / delta_z * delta_xy,
-            hit.head<2>(), true});
+        segments->push_back(
+            LaserSegment{laser_origin_xy + (kSliceHalfHeight - laser_origin_z) /
+                                               delta_z * delta_xy,
+                         hit.head<2>(), true});
       }
     }
   }

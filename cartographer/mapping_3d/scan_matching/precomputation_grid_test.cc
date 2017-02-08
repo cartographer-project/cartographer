@@ -61,10 +61,9 @@ TEST(PrecomputedGridGeneratorTest, TestAgainstNaiveAlgorithm) {
       for (int dx = 0; dx < width; ++dx) {
         for (int dy = 0; dy < width; ++dy) {
           for (int dz = 0; dz < width; ++dz) {
-            max_probability =
-                std::max(max_probability,
-                         hybrid_grid.GetProbability(
-                             Eigen::Array3i(x + dx, y + dy, z + dz)));
+            max_probability = std::max(
+                max_probability, hybrid_grid.GetProbability(
+                                     Eigen::Array3i(x + dx, y + dy, z + dz)));
           }
         }
       }

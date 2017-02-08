@@ -302,8 +302,9 @@ void SparsePoseGraph::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. * (constraint_builder_.GetNumFinishedScans() -
-                             num_finished_scans_at_start) /
+                  << 100. *
+                         (constraint_builder_.GetNumFinishedScans() -
+                          num_finished_scans_at_start) /
                          (trajectory_nodes_.size() -
                           num_finished_scans_at_start)
                   << "%...";

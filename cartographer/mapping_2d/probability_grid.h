@@ -106,9 +106,8 @@ class ProbabilityGrid {
 
   // Returns true if the probability at the specified index is known.
   bool IsKnown(const Eigen::Array2i& xy_index) const {
-    return limits_.Contains(xy_index) &&
-           cells_[GetIndexOfCell(xy_index)] !=
-               mapping::kUnknownProbabilityValue;
+    return limits_.Contains(xy_index) && cells_[GetIndexOfCell(xy_index)] !=
+                                             mapping::kUnknownProbabilityValue;
   }
 
   // Fills in 'offset' and 'limits' to define a subregion of that contains all
