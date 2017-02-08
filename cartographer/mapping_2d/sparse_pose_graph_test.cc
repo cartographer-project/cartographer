@@ -109,7 +109,6 @@ class SparsePoseGraphTest : public ::testing::Test {
                 occupied_space_weight_0 = 20.,
                 translation_weight = 10.,
                 rotation_weight = 1.,
-                covariance_scale = 1.,
                 only_optimize_yaw = true,
                 ceres_solver_options = {
                   use_nonmonotonic_steps = true,
