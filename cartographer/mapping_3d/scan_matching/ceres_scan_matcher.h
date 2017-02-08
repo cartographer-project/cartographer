@@ -22,7 +22,6 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -47,14 +46,13 @@ class CeresScanMatcher {
   CeresScanMatcher& operator=(const CeresScanMatcher&) = delete;
 
   // Aligns 'point_clouds' within the 'hybrid_grids' given an
-  // 'initial_pose_estimate' and returns 'pose_estimate', 'covariance', and
+  // 'initial_pose_estimate' and returns 'pose_estimate', and
   // the solver 'summary'.
   void Match(const transform::Rigid3d& previous_pose,
              const transform::Rigid3d& initial_pose_estimate,
              const std::vector<PointCloudAndHybridGridPointers>&
                  point_clouds_and_hybrid_grids,
              transform::Rigid3d* pose_estimate,
-             kalman_filter::PoseCovariance* covariance,
              ceres::Solver::Summary* summary);
 
  private:

@@ -67,8 +67,6 @@ proto::CeresScanMatcherOptions CreateCeresScanMatcherOptions(
       parameter_dictionary->GetDouble("translation_weight"));
   options.set_rotation_weight(
       parameter_dictionary->GetDouble("rotation_weight"));
-  options.set_covariance_scale(
-      parameter_dictionary->GetDouble("covariance_scale"));
   options.set_only_optimize_yaw(
       parameter_dictionary->GetBool("only_optimize_yaw"));
   *options.mutable_ceres_solver_options() =
@@ -90,7 +88,6 @@ void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
                              const std::vector<PointCloudAndHybridGridPointers>&
                                  point_clouds_and_hybrid_grids,
                              transform::Rigid3d* const pose_estimate,
-                             kalman_filter::PoseCovariance* const covariance,
                              ceres::Solver::Summary* const summary) {
   ceres::Problem problem;
   CeresPose ceres_pose(
@@ -136,10 +133,6 @@ void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
   ceres::Solve(ceres_solver_options_, &problem, summary);
 
   *pose_estimate = ceres_pose.ToRigid();
-
-  // TODO(whess): Remove once the UKF is gone.
-  *covariance = 1e-5 * options_.covariance_scale() *
-                kalman_filter::PoseCovariance::Identity();
 }
 
 }  // namespace scan_matching

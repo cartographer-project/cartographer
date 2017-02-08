@@ -154,7 +154,6 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
   }
 
   transform::Rigid3d pose_observation;
-  kalman_filter::PoseCovariance covariance_observation;
   ceres::Solver::Summary summary;
 
   sensor::AdaptiveVoxelFilter low_resolution_adaptive_voxel_filter(
@@ -166,10 +165,12 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
                                &submaps_->high_resolution_matching_grid()},
                               {&low_resolution_point_cloud_in_tracking,
                                &submaps_->low_resolution_matching_grid()}},
-                             &pose_observation, &covariance_observation,
-                             &summary);
-  pose_tracker_->AddPoseObservation(time, pose_observation,
-                                    covariance_observation);
+                             &pose_observation, &summary);
+  pose_tracker_->AddPoseObservation(
+      time, pose_observation,
+      options_.kalman_local_trajectory_builder_options()
+              .scan_matcher_variance() *
+          kalman_filter::PoseCovariance::Identity());
 
   kalman_filter::PoseCovariance covariance_estimate;
   pose_tracker_->GetPoseEstimateMeanAndCovariance(

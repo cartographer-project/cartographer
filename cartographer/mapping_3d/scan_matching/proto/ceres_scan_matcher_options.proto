@@ -25,9 +25,6 @@ message CeresScanMatcherOptions {
   optional double translation_weight = 2;
   optional double rotation_weight = 3;
 
-  // Scale applied to the covariance estimate from Ceres.
-  optional double covariance_scale = 4;
-
   // Whether only to allow changes to yaw, keeping roll/pitch constant.
   optional bool only_optimize_yaw = 5;
 

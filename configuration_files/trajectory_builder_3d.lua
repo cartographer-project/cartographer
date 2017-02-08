@@ -37,7 +37,6 @@ TRAJECTORY_BUILDER_3D = {
     occupied_space_weight_1 = 30.,
     translation_weight = 0.3,
     rotation_weight = 2e3,
-    covariance_scale = 2.34e-4,
     only_optimize_yaw = false,
     ceres_solver_options = {
       use_nonmonotonic_steps = false,
@@ -84,6 +83,7 @@ TRAJECTORY_BUILDER_3D = {
       rotation_delta_cost_weight = 1e-1,
     },
 
+    scan_matcher_variance = 2.34e-9,
     odometer_translational_variance = 1e-7,
     odometer_rotational_variance = 1e-7,
   },

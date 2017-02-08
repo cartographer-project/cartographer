@@ -55,7 +55,6 @@ SPARSE_POSE_GRAPH = {
       occupied_space_weight_0 = 20.,
       translation_weight = 10.,
       rotation_weight = 1.,
-      covariance_scale = 1e-6,
       only_optimize_yaw = false,
       ceres_solver_options = {
         use_nonmonotonic_steps = false,

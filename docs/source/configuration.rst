@@ -324,6 +324,9 @@ cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOption
 cartographer.kalman_filter.proto.PoseTrackerOptions pose_tracker_options
   Not yet documented.
 
+double scan_matcher_variance
+  Not yet documented.
+
 double odometer_translational_variance
   Not yet documented.
 
@@ -421,9 +424,6 @@ double translation_weight
 
 double rotation_weight
   Not yet documented.
-
-double covariance_scale
-  Scale applied to the covariance estimate from Ceres.
 
 bool only_optimize_yaw
   Whether only to allow changes to yaw, keeping roll/pitch constant.

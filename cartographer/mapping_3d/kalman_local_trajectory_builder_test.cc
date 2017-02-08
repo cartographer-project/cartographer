@@ -69,7 +69,6 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
             occupied_space_weight_1 = 20.,
             translation_weight = 0.1,
             rotation_weight = 0.3,
-            covariance_scale = 1e-1,
             only_optimize_yaw = false,
             ceres_solver_options = {
               use_nonmonotonic_steps = true,
@@ -112,6 +111,7 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
               num_odometry_states = 1,
             },
 
+            scan_matcher_variance = 1e-6,
             odometer_translational_variance = 1e-7,
             odometer_rotational_variance = 1e-7,
           },
