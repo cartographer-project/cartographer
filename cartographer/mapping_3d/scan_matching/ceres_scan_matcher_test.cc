@@ -53,7 +53,6 @@ class CeresScanMatcherTest : public ::testing::Test {
           occupied_space_weight_0 = 1.,
           translation_weight = 0.01,
           rotation_weight = 0.1,
-          covariance_scale = 10.,
           only_optimize_yaw = false,
           ceres_solver_options = {
             use_nonmonotonic_steps = true,
@@ -67,12 +66,11 @@ class CeresScanMatcherTest : public ::testing::Test {
 
   void TestFromInitialPose(const transform::Rigid3d& initial_pose) {
     transform::Rigid3d pose;
-    kalman_filter::PoseCovariance covariance;
 
     ceres::Solver::Summary summary;
     ceres_scan_matcher_->Match(initial_pose, initial_pose,
                                {{&point_cloud_, &hybrid_grid_}}, &pose,
-                               &covariance, &summary);
+                               &summary);
     EXPECT_NEAR(0., summary.final_cost, 1e-2) << summary.FullReport();
     EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 3e-2));
   }
