@@ -193,11 +193,12 @@ void KalmanLocalTrajectoryBuilder::AddOdometerData(
         kalman_filter::PoseTracker::ModelFunction::k3D, time));
   }
   pose_tracker_->AddOdometerPoseObservation(
-      time, pose, kalman_filter::BuildPoseCovariance(
-                      options_.kalman_local_trajectory_builder_options()
-                          .odometer_translational_variance(),
-                      options_.kalman_local_trajectory_builder_options()
-                          .odometer_rotational_variance()));
+      time, pose,
+      kalman_filter::BuildPoseCovariance(
+          options_.kalman_local_trajectory_builder_options()
+              .odometer_translational_variance(),
+          options_.kalman_local_trajectory_builder_options()
+              .odometer_rotational_variance()));
 }
 
 const KalmanLocalTrajectoryBuilder::PoseEstimate&

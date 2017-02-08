@@ -75,11 +75,10 @@ TEST_F(InterpolatedGridTest, MonotonicBehaviorBetweenGridPointsInX) {
         for (double sample = kSampleStep;
              sample < hybrid_grid_.resolution() - 2 * kSampleStep;
              sample += kSampleStep) {
-          EXPECT_LT(0.,
-                    grid_difference *
-                        (interpolated_grid_.GetProbability(
-                             x + sample + kSampleStep, y, z) -
-                         interpolated_grid_.GetProbability(x + sample, y, z)));
+          EXPECT_LT(0., grid_difference * (interpolated_grid_.GetProbability(
+                                               x + sample + kSampleStep, y, z) -
+                                           interpolated_grid_.GetProbability(
+                                               x + sample, y, z)));
         }
       }
     }

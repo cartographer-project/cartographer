@@ -91,9 +91,8 @@ sensor::LaserFan LocalTrajectoryBuilder::TransformAndFilterLaserFan(
         returns_and_misses.returns.push_back(return_);
       } else {
         returns_and_misses.misses.push_back(
-            laser_fan.origin +
-            options_.laser_missing_echo_ray_length() *
-                (return_ - laser_fan.origin).normalized());
+            laser_fan.origin + options_.laser_missing_echo_ray_length() *
+                                   (return_ - laser_fan.origin).normalized());
       }
     }
   }
@@ -101,8 +100,9 @@ sensor::LaserFan LocalTrajectoryBuilder::TransformAndFilterLaserFan(
       sensor::TransformLaserFan(returns_and_misses, tracking_to_tracking_2d),
       options_.laser_min_z(), options_.laser_max_z());
   return sensor::LaserFan{
-      cropped.origin, sensor::VoxelFiltered(cropped.returns,
-                                            options_.laser_voxel_filter_size()),
+      cropped.origin,
+      sensor::VoxelFiltered(cropped.returns,
+                            options_.laser_voxel_filter_size()),
       sensor::VoxelFiltered(cropped.misses,
                             options_.laser_voxel_filter_size())};
 }
