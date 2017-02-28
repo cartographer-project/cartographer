@@ -36,6 +36,10 @@ struct CellLimits {
   CellLimits(int init_num_x_cells, int init_num_y_cells)
       : num_x_cells(init_num_x_cells), num_y_cells(init_num_y_cells) {}
 
+  CellLimits(const proto::CellLimits& cell_limits)
+      : num_x_cells(cell_limits.num_x_cells()),
+        num_y_cells(cell_limits.num_y_cells()) {}
+
   int num_x_cells = 0;
   int num_y_cells = 0;
 };
@@ -45,10 +49,6 @@ inline proto::CellLimits ToProto(const CellLimits& cell_limits) {
   result.set_num_x_cells(cell_limits.num_x_cells);
   result.set_num_y_cells(cell_limits.num_y_cells);
   return result;
-}
-
-inline CellLimits FromProto(const proto::CellLimits& cell_limits) {
-  return CellLimits(cell_limits.num_x_cells(), cell_limits.num_y_cells());
 }
 
 // Iterates in row-major order through a range of xy-indices.

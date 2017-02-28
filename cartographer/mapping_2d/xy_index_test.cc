@@ -23,18 +23,18 @@ namespace mapping_2d {
 namespace {
 
 TEST(XYIndexTest, CellLimitsToProto) {
-  CellLimits limits(1, 2);
-  auto proto = ToProto(limits);
+  const CellLimits limits(1, 2);
+  const auto proto = ToProto(limits);
   EXPECT_EQ(limits.num_x_cells, proto.num_x_cells());
   EXPECT_EQ(limits.num_y_cells, proto.num_y_cells());
 }
 
-TEST(XYIndexTest, CellLimitsFromProto) {
+TEST(XYIndexTest, CellLimitsProtoConstructor) {
   proto::CellLimits limits;
   limits.set_num_x_cells(1);
   limits.set_num_y_cells(2);
 
-  auto native = FromProto(limits);
+  auto native = CellLimits(limits);
   EXPECT_EQ(limits.num_x_cells(), native.num_x_cells);
   EXPECT_EQ(limits.num_y_cells(), native.num_y_cells);
 }
