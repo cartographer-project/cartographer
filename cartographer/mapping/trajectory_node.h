@@ -42,8 +42,8 @@ struct TrajectoryNode {
     sensor::CompressedLaserFan laser_fan_3d;
 
     // Trajectory this node belongs to.
-    // TODO(jmason): The naming here is confusing because 'trajectory' doesn't
-    // seem like a good name for a Submaps*. Sort this out.
+    // TODO(macmason): The naming here is confusing because 'trajectory'
+    // doesn't seem like a good name for a Submaps*. Sort this out.
     const Submaps* trajectory;
 
     // Transform from the 3D 'tracking' frame to the 'pose' frame of the
