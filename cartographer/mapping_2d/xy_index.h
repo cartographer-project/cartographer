@@ -36,7 +36,7 @@ struct CellLimits {
   CellLimits(int init_num_x_cells, int init_num_y_cells)
       : num_x_cells(init_num_x_cells), num_y_cells(init_num_y_cells) {}
 
-  CellLimits(const proto::CellLimits& cell_limits)
+  explicit CellLimits(const proto::CellLimits& cell_limits)
       : num_x_cells(cell_limits.num_x_cells()),
         num_y_cells(cell_limits.num_y_cells()) {}
 

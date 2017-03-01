@@ -47,7 +47,7 @@ class MapLimits {
     CHECK_GT(cell_limits.num_y_cells, 0.);
   }
 
-  MapLimits(const proto::MapLimits map_limits)
+  explicit MapLimits(const proto::MapLimits map_limits)
       : resolution_(map_limits.resolution()),
         max_(map_limits.max_x(), map_limits.max_y()),
         cell_limits_(map_limits.cell_limits()) {}
