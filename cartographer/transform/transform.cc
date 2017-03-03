@@ -76,6 +76,13 @@ proto::Rigid3f ToProto(const transform::Rigid3f& rigid) {
   return proto;
 }
 
+proto::Vector2d ToProto(const Eigen::Vector2d& vector) {
+  proto::Vector2d proto;
+  proto.set_x(vector.x());
+  proto.set_y(vector.y());
+  return proto;
+}
+
 proto::Vector3f ToProto(const Eigen::Vector3f& vector) {
   proto::Vector3f proto;
   proto.set_x(vector.x());

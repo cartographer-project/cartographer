@@ -26,8 +26,8 @@ TEST(MapLimitsTest, ToProto) {
   const MapLimits limits(42., Eigen::Vector2d(3., 0.), CellLimits(2, 3));
   const auto proto = ToProto(limits);
   EXPECT_EQ(limits.resolution(), proto.resolution());
-  EXPECT_EQ(limits.max().x(), proto.max_x());
-  EXPECT_EQ(limits.max().y(), proto.max_y());
+  EXPECT_EQ(limits.max().x(), proto.max().x());
+  EXPECT_EQ(limits.max().y(), proto.max().y());
   EXPECT_EQ(ToProto(limits.cell_limits()).DebugString(),
             proto.cell_limits().DebugString());
 }
@@ -35,15 +35,15 @@ TEST(MapLimitsTest, ToProto) {
 TEST(MapLimitsTest, ProtoConstructor) {
   proto::MapLimits limits;
   limits.set_resolution(1.0);
-  limits.set_max_x(2.0);
-  limits.set_max_y(3.0);
+  limits.mutable_max()->set_x(2.0);
+  limits.mutable_max()->set_y(3.0);
   limits.mutable_cell_limits()->set_num_x_cells(4);
   limits.mutable_cell_limits()->set_num_y_cells(5);
 
   const MapLimits native(limits);
   EXPECT_EQ(limits.resolution(), native.resolution());
-  EXPECT_EQ(limits.max_x(), native.max().x());
-  EXPECT_EQ(limits.max_y(), native.max().y());
+  EXPECT_EQ(limits.max().x(), native.max().x());
+  EXPECT_EQ(limits.max().y(), native.max().y());
   EXPECT_EQ(limits.cell_limits().DebugString(),
             ToProto(native.cell_limits()).DebugString());
 }

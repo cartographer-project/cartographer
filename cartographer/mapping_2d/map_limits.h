@@ -49,7 +49,7 @@ class MapLimits {
 
   explicit MapLimits(const proto::MapLimits& map_limits)
       : resolution_(map_limits.resolution()),
-        max_(map_limits.max_x(), map_limits.max_y()),
+        max_(transform::ToEigen(map_limits.max())),
         cell_limits_(map_limits.cell_limits()) {}
 
   // Returns the cell size in meters. All cells are square and the resolution is
@@ -137,8 +137,7 @@ class MapLimits {
 inline proto::MapLimits ToProto(const MapLimits& map_limits) {
   proto::MapLimits result;
   result.set_resolution(map_limits.resolution());
-  result.set_max_x(map_limits.max().x());
-  result.set_max_y(map_limits.max().y());
+  *result.mutable_max() = transform::ToProto(map_limits.max());
   *result.mutable_cell_limits() = ToProto(map_limits.cell_limits());
   return result;
 }

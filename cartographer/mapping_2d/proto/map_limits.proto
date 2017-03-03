@@ -15,12 +15,12 @@
 syntax = "proto2";
 
 import "cartographer/mapping_2d/proto/cell_limits.proto";
+import "cartographer/transform/proto/transform.proto";
 
 package cartographer.mapping_2d.proto;
 
 message MapLimits {
   optional double resolution = 1;
-  optional double max_x = 2;
-  optional double max_y = 3;
-  optional CellLimits cell_limits = 4;
+  optional cartographer.transform.proto.Vector2d max = 2;
+  optional CellLimits cell_limits = 3;
 }
