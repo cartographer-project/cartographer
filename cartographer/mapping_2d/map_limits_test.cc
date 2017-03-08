@@ -34,9 +34,9 @@ TEST(MapLimitsTest, ToProto) {
 
 TEST(MapLimitsTest, ProtoConstructor) {
   proto::MapLimits limits;
-  limits.set_resolution(1.0);
-  limits.mutable_max()->set_x(2.0);
-  limits.mutable_max()->set_y(3.0);
+  limits.set_resolution(1.);
+  limits.mutable_max()->set_x(2.);
+  limits.mutable_max()->set_y(3.);
   limits.mutable_cell_limits()->set_num_x_cells(4);
   limits.mutable_cell_limits()->set_num_y_cells(5);
 

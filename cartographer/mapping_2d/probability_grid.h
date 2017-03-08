@@ -59,8 +59,7 @@ class ProbabilityGrid {
         min_x_(proto.min_x()),
         min_y_(proto.min_y()) {
     cells_.reserve(proto.cells_size());
-    for (auto cell : proto.cells()) {
-      // TODO(macmason): DCHECK?
+    for (const auto cell : proto.cells()) {
       CHECK_LE(cell, std::numeric_limits<uint16>::max());
       cells_.push_back(cell);
     }
@@ -177,11 +176,11 @@ class ProbabilityGrid {
     proto::ProbabilityGrid result;
     *result.mutable_limits() = cartographer::mapping_2d::ToProto(limits_);
     result.mutable_cells()->Reserve(cells_.size());
-    for (auto cell : cells_) {
+    for (const auto cell : cells_) {
       result.mutable_cells()->Add(cell);
     }
     result.mutable_update_indices()->Reserve(update_indices_.size());
-    for (auto update : update_indices_) {
+    for (const auto update : update_indices_) {
       result.mutable_update_indices()->Add(update);
     }
     result.set_max_x(max_x_);

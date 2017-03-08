@@ -27,7 +27,7 @@ namespace {
 
 TEST(ProbabilityGridTest, ProtoConstructor) {
   proto::ProbabilityGrid proto;
-  const MapLimits limits(1.0, {2.0, 3.0}, CellLimits(4.0, 5.0));
+  const MapLimits limits(1., {2., 3.}, CellLimits(4., 5.));
   *proto.mutable_limits() = ToProto(limits);
   for (int i = 6; i < 12; ++i) {
     proto.mutable_cells()->Add(static_cast<uint16>(i));

@@ -120,7 +120,6 @@ Eigen::Vector2d ToEigen(const proto::Vector2d& vector);
 Eigen::Vector3f ToEigen(const proto::Vector3f& vector);
 Eigen::Vector3d ToEigen(const proto::Vector3d& vector);
 Eigen::Quaterniond ToEigen(const proto::Quaterniond& quaternion);
-
 proto::Rigid2d ToProto(const Rigid2d& transform);
 proto::Rigid2f ToProto(const Rigid2f& transform);
 proto::Rigid3d ToProto(const Rigid3d& rigid);
