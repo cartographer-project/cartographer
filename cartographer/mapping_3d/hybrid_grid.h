@@ -470,6 +470,16 @@ class HybridGrid : public HybridGridBase<uint16> {
   HybridGrid(const float resolution, const Eigen::Vector3f& origin)
       : HybridGridBase<uint16>(resolution, origin) {}
 
+  HybridGrid(const proto::HybridGrid& proto)
+      : HybridGrid(proto.resolution(), transform::ToEigen(proto.origin())) {
+    CHECK_EQ(proto.indices_size(), proto.values_size());
+    for (int i = 0; i < proto.indices_size(); ++i) {
+      // SetProbability does some error checking for us.
+      SetProbability(transform::ToEigen(proto.indices(i)),
+                     mapping::ValueToProbability(proto.values(i)));
+    }
+  }
+
   // Sets the probability of the cell at 'index' to the given 'probability'.
   void SetProbability(const Eigen::Array3i& index, const float probability) {
     *mutable_value(index) = mapping::ProbabilityToValue(probability);

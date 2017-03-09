@@ -16,6 +16,7 @@
 
 #include "cartographer/mapping_3d/hybrid_grid.h"
 
+#include <map>
 #include <random>
 #include <tuple>
 
@@ -220,6 +221,74 @@ TEST(HybridGridTest, ToProto) {
     ASSERT_EQ(index.z(), proto.indices(proto_index).z());
     ASSERT_EQ(entry.second, proto.values(proto_index));
     proto_index++;
+  }
+}
+
+namespace {
+
+struct EigenComparator {
+  bool operator()(const Eigen::Vector3i lhs, const Eigen::Vector3i& rhs) {
+    return (lhs.x() < rhs.x()) || (lhs.x() == rhs.x() && lhs.y() < rhs.y()) ||
+           (lhs.x() == rhs.x() && lhs.y() == rhs.y() && lhs.z() < rhs.z());
+  }
+};
+
+}  // namespace
+
+TEST(HybridGridTest, ProtoConstructor) {
+  proto::HybridGrid proto;
+  proto.set_resolution(1.);
+  proto.mutable_origin()->set_x(2.);
+  proto.mutable_origin()->set_y(3.);
+  proto.mutable_origin()->set_z(4.);
+  int value = 1;
+  for (int i = -1; i <= 1; ++i) {
+    for (int j = -2; j <= 2; ++j) {
+      for (int k = -3; k <= 3; ++k) {
+        auto* index = proto.add_indices();
+        index->set_x(i);
+        index->set_y(j);
+        index->set_z(k);
+        proto.add_values(value);
+        value++;
+      }
+    }
+  }
+
+  const HybridGrid grid(proto);
+  EXPECT_EQ(proto.resolution(), grid.resolution());
+  EXPECT_EQ(proto.origin().x(), grid.origin().x());
+  EXPECT_EQ(proto.origin().y(), grid.origin().y());
+  EXPECT_EQ(proto.origin().z(), grid.origin().z());
+
+  int grid_size = 0;
+  for (auto it = grid.begin(); it != grid.end(); ++it) {
+    grid_size++;
+  }
+  // 105 is the hand-verified number of times we added something.
+  ASSERT_EQ(105, grid_size);
+  ASSERT_EQ(grid_size, proto.indices_size());
+
+  // Use std::map here for ordered iteration.
+  std::map<Eigen::Vector3i, float, EigenComparator> grid_map(grid.begin(),
+                                                             grid.end());
+  std::map<Eigen::Vector3i, float, EigenComparator> proto_map;
+  for (int i = 0; i < proto.indices_size(); ++i) {
+    proto_map[transform::ToEigen(proto.indices(i))] = proto.values(i);
+  }
+
+  auto grid_map_iterator = grid_map.cbegin();
+  auto proto_map_iterator = proto_map.cbegin();
+
+  // Note that the sizes match.
+  while (grid_map_iterator != grid_map.cend()) {
+    // ASSERT rather than EXPECT to avoid hundreds of stack traces.
+    ASSERT_EQ(grid_map_iterator->first.x(), proto_map_iterator->first.x());
+    ASSERT_EQ(grid_map_iterator->first.y(), proto_map_iterator->first.y());
+    ASSERT_EQ(grid_map_iterator->first.z(), proto_map_iterator->first.z());
+    ASSERT_EQ(grid_map_iterator->second, proto_map_iterator->second);
+    grid_map_iterator++;
+    proto_map_iterator++;
   }
 }
 
