@@ -22,6 +22,23 @@ namespace cartographer {
 namespace mapping_2d {
 namespace {
 
+TEST(XYIndexTest, CellLimitsToProto) {
+  const CellLimits limits(1, 2);
+  const auto proto = ToProto(limits);
+  EXPECT_EQ(limits.num_x_cells, proto.num_x_cells());
+  EXPECT_EQ(limits.num_y_cells, proto.num_y_cells());
+}
+
+TEST(XYIndexTest, CellLimitsProtoConstructor) {
+  proto::CellLimits limits;
+  limits.set_num_x_cells(1);
+  limits.set_num_y_cells(2);
+
+  auto native = CellLimits(limits);
+  EXPECT_EQ(limits.num_x_cells(), native.num_x_cells);
+  EXPECT_EQ(limits.num_y_cells(), native.num_y_cells);
+}
+
 TEST(XYIndexTest, XYIndexRangeIterator) {
   const Eigen::Array2i min(1, 2);
   const Eigen::Array2i max(3, 4);

@@ -27,9 +27,10 @@
 
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
-#include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping_2d/map_limits.h"
+#include "cartographer/mapping_2d/proto/probability_grid.pb.h"
 #include "cartographer/mapping_2d/xy_index.h"
+#include "cartographer/mapping/probability_values.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -47,6 +48,22 @@ class ProbabilityGrid {
         max_y_(0),
         min_x_(limits_.cell_limits().num_x_cells - 1),
         min_y_(limits_.cell_limits().num_y_cells - 1) {}
+
+  explicit ProbabilityGrid(const proto::ProbabilityGrid& proto)
+      : limits_(proto.limits()),
+        cells_(),
+        update_indices_(proto.update_indices().begin(),
+                        proto.update_indices().end()),
+        max_x_(proto.max_x()),
+        max_y_(proto.max_y()),
+        min_x_(proto.min_x()),
+        min_y_(proto.min_y()) {
+    cells_.reserve(proto.cells_size());
+    for (const auto cell : proto.cells()) {
+      CHECK_LE(cell, std::numeric_limits<uint16>::max());
+      cells_.push_back(cell);
+    }
+  }
 
   // Returns the limits of this ProbabilityGrid.
   const MapLimits& limits() const { return limits_; }
@@ -106,8 +123,9 @@ class ProbabilityGrid {
 
   // Returns true if the probability at the specified index is known.
   bool IsKnown(const Eigen::Array2i& xy_index) const {
-    return limits_.Contains(xy_index) && cells_[GetIndexOfCell(xy_index)] !=
-                                             mapping::kUnknownProbabilityValue;
+    return limits_.Contains(xy_index) &&
+           cells_[GetIndexOfCell(xy_index)] !=
+               mapping::kUnknownProbabilityValue;
   }
 
   // Fills in 'offset' and 'limits' to define a subregion of that contains all
@@ -154,6 +172,24 @@ class ProbabilityGrid {
     }
   }
 
+  proto::ProbabilityGrid ToProto() {
+    proto::ProbabilityGrid result;
+    *result.mutable_limits() = cartographer::mapping_2d::ToProto(limits_);
+    result.mutable_cells()->Reserve(cells_.size());
+    for (const auto cell : cells_) {
+      result.mutable_cells()->Add(cell);
+    }
+    result.mutable_update_indices()->Reserve(update_indices_.size());
+    for (const auto update : update_indices_) {
+      result.mutable_update_indices()->Add(update);
+    }
+    result.set_max_x(max_x_);
+    result.set_max_y(max_y_);
+    result.set_min_x(min_x_);
+    result.set_min_y(min_y_);
+    return result;
+  }
+
  private:
   // Returns the index of the cell at 'xy_index'.
   int GetIndexOfCell(const Eigen::Array2i& xy_index) const {
@@ -172,7 +208,7 @@ class ProbabilityGrid {
   std::vector<uint16> cells_;  // Highest bit is update marker.
   std::vector<int> update_indices_;
 
-  // Minimum and maximum cell coordinates of know cells to efficiently compute
+  // Minimum and maximum cell coordinates of known cells to efficiently compute
   // cropping limits.
   int max_x_;
   int max_y_;

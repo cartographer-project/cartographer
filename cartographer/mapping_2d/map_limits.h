@@ -23,8 +23,9 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
-#include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/mapping_2d/proto/map_limits.pb.h"
 #include "cartographer/mapping_2d/xy_index.h"
+#include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/sensor/laser.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -45,6 +46,11 @@ class MapLimits {
     CHECK_GT(cell_limits.num_x_cells, 0.);
     CHECK_GT(cell_limits.num_y_cells, 0.);
   }
+
+  explicit MapLimits(const proto::MapLimits& map_limits)
+      : resolution_(map_limits.resolution()),
+        max_(transform::ToEigen(map_limits.max())),
+        cell_limits_(map_limits.cell_limits()) {}
 
   // Returns the cell size in meters. All cells are square and the resolution is
   // the length of one side.
@@ -73,9 +79,8 @@ class MapLimits {
   // Returns true of the ProbabilityGrid contains 'xy_index'.
   bool Contains(const Eigen::Array2i& xy_index) const {
     return (Eigen::Array2i(0, 0) <= xy_index).all() &&
-           (xy_index <
-            Eigen::Array2i(cell_limits_.num_x_cells, cell_limits_.num_y_cells))
-               .all();
+           (xy_index < Eigen::Array2i(cell_limits_.num_x_cells,
+                                      cell_limits_.num_y_cells)).all();
   }
 
   // Computes MapLimits that contain the origin, and all laser rays (both
@@ -128,6 +133,14 @@ class MapLimits {
   Eigen::Vector2d max_;
   CellLimits cell_limits_;
 };
+
+inline proto::MapLimits ToProto(const MapLimits& map_limits) {
+  proto::MapLimits result;
+  result.set_resolution(map_limits.resolution());
+  *result.mutable_max() = transform::ToProto(map_limits.max());
+  *result.mutable_cell_limits() = ToProto(map_limits.cell_limits());
+  return result;
+}
 
 }  // namespace mapping_2d
 }  // namespace cartographer
