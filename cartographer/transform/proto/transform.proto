@@ -42,6 +42,12 @@ message Vector3f {
   optional float z = 3;
 }
 
+message Vector3i {
+  optional int32 x = 1;
+  optional int32 y = 2;
+  optional int32 z = 3;
+}
+
 message Quaterniond {
   optional double x = 1;
   optional double y = 2;
