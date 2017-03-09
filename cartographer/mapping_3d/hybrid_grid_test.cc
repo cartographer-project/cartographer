@@ -177,6 +177,52 @@ TEST(HybridGridTest, TestIteration) {
   }
 }
 
+TEST(HybridGridTest, ToProto) {
+  HybridGrid hybrid_grid(2.f, Eigen::Vector3f(-7.f, -12.f, 0.f));
+
+  auto proto = ToProto(hybrid_grid);
+  EXPECT_EQ(hybrid_grid.resolution(), proto.resolution());
+  EXPECT_EQ(hybrid_grid.origin().x(), proto.origin().x());
+  EXPECT_EQ(hybrid_grid.origin().y(), proto.origin().y());
+  EXPECT_EQ(hybrid_grid.origin().z(), proto.origin().z());
+
+  // Make sure the grid's empty.
+  EXPECT_EQ(0, proto.indices_size());
+  EXPECT_EQ(0, proto.values_size());
+
+  double p = 0.;
+  for (int i = -1; i <= 1; ++i) {
+    for (int j = -2; j <= 2; ++j) {
+      for (int k = -3; k <= 3; ++k) {
+        hybrid_grid.SetProbability({i, j, k}, p);
+        p += 0.001;
+      }
+    }
+  }
+
+  int grid_size = 0;
+  for (auto it = hybrid_grid.begin(); it != hybrid_grid.end(); ++it) {
+    grid_size++;
+  }
+  // 105 is the hand-verified number of times we added something.
+  ASSERT_EQ(105, grid_size);
+
+  proto = ToProto(hybrid_grid);
+  ASSERT_EQ(grid_size, proto.indices_size());
+  ASSERT_EQ(grid_size, proto.values_size());
+
+  int proto_index = 0;
+  for (const auto& entry : hybrid_grid) {
+    Eigen::Vector3i index = entry.first;
+    // ASSERT rather than EXPECT to avoid hundreds of stack traces.
+    ASSERT_EQ(index.x(), proto.indices(proto_index).x());
+    ASSERT_EQ(index.y(), proto.indices(proto_index).y());
+    ASSERT_EQ(index.z(), proto.indices(proto_index).z());
+    ASSERT_EQ(entry.second, proto.values(proto_index));
+    proto_index++;
+  }
+}
+
 }  // namespace
 }  // namespace mapping_3d
 }  // namespace cartographer

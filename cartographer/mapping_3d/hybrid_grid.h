@@ -26,7 +26,9 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping_3d/proto/hybrid_grid.pb.h"
 #include "cartographer/mapping/probability_values.h"
+#include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -514,6 +516,19 @@ class HybridGrid : public HybridGridBase<uint16> {
   // Markers at changed cells.
   std::vector<ValueType*> update_indices_;
 };
+
+inline proto::HybridGrid ToProto(const HybridGrid& grid) {
+  proto::HybridGrid result;
+  result.set_resolution(grid.resolution());
+  *result.mutable_origin() = transform::ToProto(grid.origin());
+  for (const auto it : grid) {
+    // This extra reference squashes an ambiguous overload error.
+    const Eigen::Vector3i& index = it.first;
+    *result.add_indices() = transform::ToProto(index);
+    result.add_values(it.second);
+  }
+  return result;
+}
 
 }  // namespace mapping_3d
 }  // namespace cartographer

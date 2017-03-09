@@ -23,5 +23,7 @@ message HybridGrid {
   optional transform.proto.Vector3f origin = 2;
   // 'indices[i]' is the index of 'values[i]'.
   repeated transform.proto.Vector3i indices = 3;
+  // The entries in 'values' should be uint16s, not int32s, but protos don't
+  // have a uint16 type.
   repeated int32 values = 4 [packed = true];
 }
