@@ -36,10 +36,6 @@ Eigen::Vector3d ToEigen(const proto::Vector3d& vector) {
   return Eigen::Vector3d(vector.x(), vector.y(), vector.z());
 }
 
-Eigen::Vector3i ToEigen(const proto::Vector3i& vector) {
-  return Eigen::Vector3i(vector.x(), vector.y(), vector.z());
-}
-
 Eigen::Quaterniond ToEigen(const proto::Quaterniond& quaternion) {
   return Eigen::Quaterniond(quaternion.w(), quaternion.x(), quaternion.y(),
                             quaternion.z());
@@ -101,14 +97,6 @@ proto::Vector3d ToProto(const Eigen::Vector3d& vector) {
   proto.set_y(vector.y());
   proto.set_z(vector.z());
   return proto;
-}
-
-proto::Vector3i ToProto(const Eigen::Vector3i& vector) {
-  proto::Vector3i result;
-  result.set_x(vector.x());
-  result.set_y(vector.y());
-  result.set_z(vector.z());
-  return result;
 }
 
 proto::Quaternionf ToProto(const Eigen::Quaternionf& quaternion) {

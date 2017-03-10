@@ -472,10 +472,14 @@ class HybridGrid : public HybridGridBase<uint16> {
 
   HybridGrid(const proto::HybridGrid& proto)
       : HybridGrid(proto.resolution(), transform::ToEigen(proto.origin())) {
-    CHECK_EQ(proto.indices_size(), proto.values_size());
-    for (int i = 0; i < proto.indices_size(); ++i) {
+    CHECK_EQ(proto.values_size(), proto.x_indices_size());
+    CHECK_EQ(proto.values_size(), proto.y_indices_size());
+    CHECK_EQ(proto.values_size(), proto.z_indices_size());
+
+    for (int i = 0; i < proto.values_size(); ++i) {
       // SetProbability does some error checking for us.
-      SetProbability(transform::ToEigen(proto.indices(i)),
+      SetProbability(Eigen::Vector3i(proto.x_indices(i), proto.y_indices(i),
+                                     proto.z_indices(i)),
                      mapping::ValueToProbability(proto.values(i)));
     }
   }
@@ -532,9 +536,9 @@ inline proto::HybridGrid ToProto(const HybridGrid& grid) {
   result.set_resolution(grid.resolution());
   *result.mutable_origin() = transform::ToProto(grid.origin());
   for (const auto it : grid) {
-    // This extra reference squashes an ambiguous overload error.
-    const Eigen::Vector3i& index = it.first;
-    *result.add_indices() = transform::ToProto(index);
+    result.add_x_indices(it.first.x());
+    result.add_y_indices(it.first.y());
+    result.add_z_indices(it.first.z());
     result.add_values(it.second);
   }
   return result;

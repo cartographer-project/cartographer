@@ -16,6 +16,7 @@
 
 #include "cartographer/mapping_3d/hybrid_grid.h"
 
+#include <iterator>
 #include <map>
 #include <random>
 #include <tuple>
@@ -126,51 +127,59 @@ TEST(HybridGridTest, GetCenterOfCell) {
   EXPECT_THAT(hybrid_grid.GetCellIndex(center), AllCwiseEqual(index));
 }
 
-TEST(HybridGridTest, TestIteration) {
-  HybridGrid hybrid_grid(2.f, Eigen::Vector3f(-7.f, -12.f, 0.f));
+class RandomHybridGridTest : public ::testing::Test {
+ public:
+  RandomHybridGridTest()
+      : hybrid_grid_(2.f, Eigen::Vector3f(-7.f, -12.f, 0.f)), values_() {
+    std::mt19937 rng(1285120005);
+    std::uniform_real_distribution<float> value_distribution(
+        mapping::kMinProbability, mapping::kMaxProbability);
+    std::uniform_int_distribution<int> xyz_distribution(-3000, 2999);
+    for (int i = 0; i < 10000; ++i) {
+      const auto x = xyz_distribution(rng);
+      const auto y = xyz_distribution(rng);
+      const auto z = xyz_distribution(rng);
+      values_.emplace(std::make_tuple(x, y, z), value_distribution(rng));
+    }
 
-  std::map<std::tuple<int, int, int>, float> values;
-  std::mt19937 rng(1285120005);
-  std::uniform_real_distribution<float> value_distribution(
-      mapping::kMinProbability, mapping::kMaxProbability);
-  std::uniform_int_distribution<int> xyz_distribution(-3000, 2999);
-  for (int i = 0; i < 10000; ++i) {
-    const auto x = xyz_distribution(rng);
-    const auto y = xyz_distribution(rng);
-    const auto z = xyz_distribution(rng);
-    values.emplace(std::make_tuple(x, y, z), value_distribution(rng));
+    for (const auto& pair : values_) {
+      const Eigen::Array3i cell_index(std::get<0>(pair.first),
+                                      std::get<1>(pair.first),
+                                      std::get<2>(pair.first));
+      hybrid_grid_.SetProbability(cell_index, pair.second);
+    }
   }
 
-  for (const auto& pair : values) {
-    const Eigen::Array3i cell_index(std::get<0>(pair.first),
-                                    std::get<1>(pair.first),
-                                    std::get<2>(pair.first));
-    hybrid_grid.SetProbability(cell_index, pair.second);
-  }
+ protected:
+  HybridGrid hybrid_grid_;
+  using ValueMap = std::map<std::tuple<int, int, int>, float>;
+  ValueMap values_;
+};
 
-  for (auto it = HybridGrid::Iterator(hybrid_grid); !it.Done(); it.Next()) {
+TEST_F(RandomHybridGridTest, TestIteration) {
+  for (auto it = HybridGrid::Iterator(hybrid_grid_); !it.Done(); it.Next()) {
     const Eigen::Array3i cell_index = it.GetCellIndex();
     const float iterator_probability =
         mapping::ValueToProbability(it.GetValue());
-    EXPECT_EQ(iterator_probability, hybrid_grid.GetProbability(cell_index));
+    EXPECT_EQ(iterator_probability, hybrid_grid_.GetProbability(cell_index));
     const std::tuple<int, int, int> key =
         std::make_tuple(cell_index[0], cell_index[1], cell_index[2]);
-    EXPECT_TRUE(values.count(key));
-    EXPECT_NEAR(values[key], iterator_probability, 1e-4);
-    values.erase(key);
+    EXPECT_TRUE(values_.count(key));
+    EXPECT_NEAR(values_[key], iterator_probability, 1e-4);
+    values_.erase(key);
   }
 
   // Test that range based loop is equivalent to using the iterator.
-  auto it = HybridGrid::Iterator(hybrid_grid);
-  for (const auto& cell : hybrid_grid) {
+  auto it = HybridGrid::Iterator(hybrid_grid_);
+  for (const auto& cell : hybrid_grid_) {
     ASSERT_FALSE(it.Done());
     EXPECT_THAT(cell.first, AllCwiseEqual(it.GetCellIndex()));
     EXPECT_EQ(cell.second, it.GetValue());
     it.Next();
   }
 
-  // Now 'values' must not contain values.
-  for (const auto& pair : values) {
+  // Now 'values_' must not contain values.
+  for (const auto& pair : values_) {
     const Eigen::Array3i cell_index(std::get<0>(pair.first),
                                     std::get<1>(pair.first),
                                     std::get<2>(pair.first));
@@ -178,118 +187,54 @@ TEST(HybridGridTest, TestIteration) {
   }
 }
 
-TEST(HybridGridTest, ToProto) {
-  HybridGrid hybrid_grid(2.f, Eigen::Vector3f(-7.f, -12.f, 0.f));
+TEST_F(RandomHybridGridTest, ToProto) {
+  const auto proto = ToProto(hybrid_grid_);
+  EXPECT_EQ(hybrid_grid_.resolution(), proto.resolution());
+  EXPECT_EQ(hybrid_grid_.origin().x(), proto.origin().x());
+  EXPECT_EQ(hybrid_grid_.origin().y(), proto.origin().y());
+  EXPECT_EQ(hybrid_grid_.origin().z(), proto.origin().z());
 
-  auto proto = ToProto(hybrid_grid);
-  EXPECT_EQ(hybrid_grid.resolution(), proto.resolution());
-  EXPECT_EQ(hybrid_grid.origin().x(), proto.origin().x());
-  EXPECT_EQ(hybrid_grid.origin().y(), proto.origin().y());
-  EXPECT_EQ(hybrid_grid.origin().z(), proto.origin().z());
+  ASSERT_EQ(proto.x_indices_size(), proto.y_indices_size());
+  ASSERT_EQ(proto.x_indices_size(), proto.z_indices_size());
+  ASSERT_EQ(proto.x_indices_size(), proto.values_size());
 
-  // Make sure the grid's empty.
-  EXPECT_EQ(0, proto.indices_size());
-  EXPECT_EQ(0, proto.values_size());
-
-  double p = 0.;
-  for (int i = -1; i <= 1; ++i) {
-    for (int j = -2; j <= 2; ++j) {
-      for (int k = -3; k <= 3; ++k) {
-        hybrid_grid.SetProbability({i, j, k}, p);
-        p += 0.001;
-      }
-    }
+  ValueMap proto_map;
+  for (int i = 0; i < proto.x_indices_size(); ++i) {
+    proto_map[std::make_tuple(proto.x_indices(i), proto.y_indices(i),
+                              proto.z_indices(i))] = proto.values(i);
   }
 
-  int grid_size = 0;
-  for (auto it = hybrid_grid.begin(); it != hybrid_grid.end(); ++it) {
-    grid_size++;
+  // Get hybrid_grid_ into the same format.
+  ValueMap hybrid_grid_map;
+  for (const auto i : hybrid_grid_) {
+    hybrid_grid_map[std::make_tuple(i.first.x(), i.first.y(), i.first.z())] =
+        i.second;
   }
-  // 105 is the hand-verified number of times we added something.
-  ASSERT_EQ(105, grid_size);
 
-  proto = ToProto(hybrid_grid);
-  ASSERT_EQ(grid_size, proto.indices_size());
-  ASSERT_EQ(grid_size, proto.values_size());
-
-  int proto_index = 0;
-  for (const auto& entry : hybrid_grid) {
-    Eigen::Vector3i index = entry.first;
-    // ASSERT rather than EXPECT to avoid hundreds of stack traces.
-    ASSERT_EQ(index.x(), proto.indices(proto_index).x());
-    ASSERT_EQ(index.y(), proto.indices(proto_index).y());
-    ASSERT_EQ(index.z(), proto.indices(proto_index).z());
-    ASSERT_EQ(entry.second, proto.values(proto_index));
-    proto_index++;
-  }
+  EXPECT_EQ(proto_map, hybrid_grid_map);
 }
 
 namespace {
 
 struct EigenComparator {
-  bool operator()(const Eigen::Vector3i lhs, const Eigen::Vector3i& rhs) {
-    return (lhs.x() < rhs.x()) || (lhs.x() == rhs.x() && lhs.y() < rhs.y()) ||
-           (lhs.x() == rhs.x() && lhs.y() == rhs.y() && lhs.z() < rhs.z());
+  bool operator()(const Eigen::Vector3i& lhs, const Eigen::Vector3i& rhs) {
+    return std::forward_as_tuple(lhs.x(), lhs.y(), lhs.z()) <
+           std::forward_as_tuple(rhs.x(), rhs.y(), rhs.z());
   }
 };
 
 }  // namespace
 
-TEST(HybridGridTest, ProtoConstructor) {
-  proto::HybridGrid proto;
-  proto.set_resolution(1.);
-  proto.mutable_origin()->set_x(2.);
-  proto.mutable_origin()->set_y(3.);
-  proto.mutable_origin()->set_z(4.);
-  int value = 1;
-  for (int i = -1; i <= 1; ++i) {
-    for (int j = -2; j <= 2; ++j) {
-      for (int k = -3; k <= 3; ++k) {
-        auto* index = proto.add_indices();
-        index->set_x(i);
-        index->set_y(j);
-        index->set_z(k);
-        proto.add_values(value);
-        value++;
-      }
-    }
-  }
+TEST_F(RandomHybridGridTest, FromProto) {
+  const HybridGrid constructed_grid(ToProto(hybrid_grid_));
 
-  const HybridGrid grid(proto);
-  EXPECT_EQ(proto.resolution(), grid.resolution());
-  EXPECT_EQ(proto.origin().x(), grid.origin().x());
-  EXPECT_EQ(proto.origin().y(), grid.origin().y());
-  EXPECT_EQ(proto.origin().z(), grid.origin().z());
+  std::map<Eigen::Vector3i, float, EigenComparator> member_map(
+      hybrid_grid_.begin(), hybrid_grid_.end());
 
-  int grid_size = 0;
-  for (auto it = grid.begin(); it != grid.end(); ++it) {
-    grid_size++;
-  }
-  // 105 is the hand-verified number of times we added something.
-  ASSERT_EQ(105, grid_size);
-  ASSERT_EQ(grid_size, proto.indices_size());
+  std::map<Eigen::Vector3i, float, EigenComparator> constructed_map(
+      constructed_grid.begin(), constructed_grid.end());
 
-  // Use std::map here for ordered iteration.
-  std::map<Eigen::Vector3i, float, EigenComparator> grid_map(grid.begin(),
-                                                             grid.end());
-  std::map<Eigen::Vector3i, float, EigenComparator> proto_map;
-  for (int i = 0; i < proto.indices_size(); ++i) {
-    proto_map[transform::ToEigen(proto.indices(i))] = proto.values(i);
-  }
-
-  auto grid_map_iterator = grid_map.cbegin();
-  auto proto_map_iterator = proto_map.cbegin();
-
-  // Note that the sizes match.
-  while (grid_map_iterator != grid_map.cend()) {
-    // ASSERT rather than EXPECT to avoid hundreds of stack traces.
-    ASSERT_EQ(grid_map_iterator->first.x(), proto_map_iterator->first.x());
-    ASSERT_EQ(grid_map_iterator->first.y(), proto_map_iterator->first.y());
-    ASSERT_EQ(grid_map_iterator->first.z(), proto_map_iterator->first.z());
-    ASSERT_EQ(grid_map_iterator->second, proto_map_iterator->second);
-    grid_map_iterator++;
-    proto_map_iterator++;
-  }
+  EXPECT_EQ(member_map, constructed_map);
 }
 
 }  // namespace
