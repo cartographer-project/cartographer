@@ -16,7 +16,6 @@
 
 #include "cartographer/mapping_3d/hybrid_grid.h"
 
-#include <iterator>
 #include <map>
 #include <random>
 #include <tuple>
