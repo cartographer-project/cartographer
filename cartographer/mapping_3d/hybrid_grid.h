@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_3D_HYBRID_GRID_H_
 #define CARTOGRAPHER_MAPPING_3D_HYBRID_GRID_H_
 
+#include <array>
 #include <cmath>
 #include <limits>
 #include <utility>

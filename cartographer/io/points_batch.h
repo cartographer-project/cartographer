@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_IO_POINTS_BATCH_H_
 #define CARTOGRAPHER_IO_POINTS_BATCH_H_
 
+#include <array>
 #include <cstdint>
 #include <vector>
 
