@@ -37,6 +37,9 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
       parameter_dictionary->GetDouble("laser_missing_echo_ray_length"));
   options.set_laser_voxel_filter_size(
       parameter_dictionary->GetDouble("laser_voxel_filter_size"));
+  options.set_laser_decimation_factor(
+      parameter_dictionary->GetDouble("laser_decimation_factor"));
+  CHECK_GE(options.laser_decimation_factor(), 1.);
   options.set_use_online_correlative_scan_matching(
       parameter_dictionary->GetBool("use_online_correlative_scan_matching"));
   *options.mutable_adaptive_voxel_filter_options() =

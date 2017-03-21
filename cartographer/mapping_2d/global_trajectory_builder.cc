@@ -24,7 +24,8 @@ GlobalTrajectoryBuilder::GlobalTrajectoryBuilder(
     SparsePoseGraph* sparse_pose_graph)
     : options_(options),
       sparse_pose_graph_(sparse_pose_graph),
-      local_trajectory_builder_(options) {}
+      local_trajectory_builder_(options),
+      laser_decimation_counter_(0) {}
 
 GlobalTrajectoryBuilder::~GlobalTrajectoryBuilder() {}
 
@@ -35,6 +36,17 @@ const Submaps* GlobalTrajectoryBuilder::submaps() const {
 void GlobalTrajectoryBuilder::AddRangefinderData(
     const common::Time time, const Eigen::Vector3f& origin,
     const sensor::PointCloud& ranges) {
+  // TODO average laser scans instead of discarding them?
+  if (options_.laser_decimation_factor() > 1) {
+    laser_decimation_counter_ += 1;
+    if (laser_decimation_counter_ < options_.laser_decimation_factor()) {
+      return;
+    }
+    else {
+      laser_decimation_counter_ -= options_.laser_decimation_factor();
+    }
+  }
+
   std::unique_ptr<LocalTrajectoryBuilder::InsertionResult> insertion_result =
       local_trajectory_builder_.AddHorizontalRangeData(
           time, sensor::RangeData{origin, ranges, {}, {}});
