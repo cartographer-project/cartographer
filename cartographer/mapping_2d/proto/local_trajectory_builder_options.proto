@@ -70,4 +70,7 @@ message LocalTrajectoryBuilderOptions {
 
   // True if IMU data should be expected and used.
   optional bool use_imu_data = 12;
+
+  // Sampling ratio for rangefinder measurements.
+  optional double rangefinder_sampling_ratio = 21;
 }

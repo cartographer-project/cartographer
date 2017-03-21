@@ -63,4 +63,7 @@ message LocalTrajectoryBuilderOptions {
   optional int32 rotational_histogram_size = 17;
 
   optional SubmapsOptions submaps_options = 8;
+
+  // Sampling ratio for rangefinder measurements.
+  optional double rangefinder_sampling_ratio = 21;
 }

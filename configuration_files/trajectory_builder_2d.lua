@@ -21,6 +21,7 @@ TRAJECTORY_BUILDER_2D = {
   missing_data_ray_length = 5.,
   scans_per_accumulation = 1,
   voxel_filter_size = 0.025,
+  rangefinder_sampling_ratio = 1.,
 
   adaptive_voxel_filter = {
     max_length = 0.5,

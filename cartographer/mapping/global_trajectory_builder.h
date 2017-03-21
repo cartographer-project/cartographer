@@ -32,7 +32,8 @@ class GlobalTrajectoryBuilder
                           SparsePoseGraph* const sparse_pose_graph)
       : trajectory_id_(trajectory_id),
         sparse_pose_graph_(sparse_pose_graph),
-        local_trajectory_builder_(options) {}
+        local_trajectory_builder_(options),
+        rangefinder_sampler_(options.rangefinder_sampling_ratio()) {}
   ~GlobalTrajectoryBuilder() override {}
 
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
@@ -45,6 +46,9 @@ class GlobalTrajectoryBuilder
   void AddRangefinderData(const common::Time time,
                           const Eigen::Vector3f& origin,
                           const sensor::PointCloud& ranges) override {
+    if (!rangefinder_sampler_.Pulse()) {
+      return;
+    }
     std::unique_ptr<typename LocalTrajectoryBuilder::InsertionResult>
         insertion_result = local_trajectory_builder_.AddRangeData(
             time, sensor::RangeData{origin, ranges, {}});
@@ -75,6 +79,8 @@ class GlobalTrajectoryBuilder
   const int trajectory_id_;
   SparsePoseGraph* const sparse_pose_graph_;
   LocalTrajectoryBuilder local_trajectory_builder_;
+
+  common::FixedRatioSampler rangefinder_sampler_;
 };
 
 }  // namespace mapping

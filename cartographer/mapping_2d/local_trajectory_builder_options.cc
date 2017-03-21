@@ -38,6 +38,10 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
       parameter_dictionary->GetInt("scans_per_accumulation"));
   options.set_voxel_filter_size(
       parameter_dictionary->GetDouble("voxel_filter_size"));
+  options.set_rangefinder_sampling_ratio(
+      parameter_dictionary->GetDouble("rangefinder_sampling_ratio"));
+  CHECK_GT(options.rangefinder_sampling_ratio(), 0.);
+  CHECK_LE(options.rangefinder_sampling_ratio(), 1.);
   options.set_use_online_correlative_scan_matching(
       parameter_dictionary->GetBool("use_online_correlative_scan_matching"));
   *options.mutable_adaptive_voxel_filter_options() =
