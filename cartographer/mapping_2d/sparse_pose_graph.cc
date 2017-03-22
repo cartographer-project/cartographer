@@ -311,12 +311,13 @@ void SparsePoseGraph::WaitForAllComputations() {
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone([this, &notification](
-      const sparse_pose_graph::ConstraintBuilder::Result& result) {
-    constraints_.insert(constraints_.end(), result.begin(), result.end());
-    common::MutexLocker locker(&mutex_);
-    notification = true;
-  });
+  constraint_builder_.WhenDone(
+      [this, &notification](
+          const sparse_pose_graph::ConstraintBuilder::Result& result) {
+        constraints_.insert(constraints_.end(), result.begin(), result.end());
+        common::MutexLocker locker(&mutex_);
+        notification = true;
+      });
   locker.Await([&notification]() { return notification; });
 }
 

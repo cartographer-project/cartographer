@@ -94,7 +94,7 @@ void ConstraintBuilder::MaybeAddConstraint(
     ++pending_computations_[current_computation_];
     const int current_computation = current_computation_;
     const auto* const point_cloud =
-        &trajectory_nodes[scan_index].constant_data->laser_fan_3d.returns;
+        &trajectory_nodes[scan_index].constant_data->range_data_3d.returns;
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_index, submap_nodes, &submap->high_resolution_hybrid_grid,
         [=]() EXCLUDES(mutex_) {
@@ -124,7 +124,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
   const auto* const point_cloud =
-      &trajectory_nodes[scan_index].constant_data->laser_fan_3d.returns;
+      &trajectory_nodes[scan_index].constant_data->range_data_3d.returns;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       submap_index, submap_nodes, &submap->high_resolution_hybrid_grid,
       [=]() EXCLUDES(mutex_) {

@@ -68,10 +68,10 @@ class ConstraintBuilder {
   ConstraintBuilder& operator=(const ConstraintBuilder&) = delete;
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_index', and the 'laser_fan_3d.returns' in 'trajectory_nodes' for
+  // 'submap_index', and the 'range_data_3d.returns' in 'trajectory_nodes' for
   // 'scan_index'. The 'initial_relative_pose' is relative to the 'submap'.
   //
-  // The pointees of 'submap' and 'laser_fan_3d.returns' must stay valid until
+  // The pointees of 'submap' and 'range_data_3d.returns' must stay valid until
   // all computations are finished.
   void MaybeAddConstraint(
       int submap_index, const Submap* submap, int scan_index,
@@ -79,15 +79,15 @@ class ConstraintBuilder {
       const transform::Rigid3d& initial_relative_pose);
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_index' and the 'laser_fan_3d.returns' in 'trajectory_nodes' for
+  // 'submap_index' and the 'range_data_3d.returns' in 'trajectory_nodes' for
   // 'scan_index'. This performs full-submap matching.
   //
   // The scan at 'scan_index' should be from trajectory 'scan_trajectory', and
   // the 'submap' should be from 'submap_trajectory'. The
   // 'trajectory_connectivity' is updated if the full-submap match succeeds.
   //
-  // The pointees of 'submap' and 'point_cloud' must stay valid until all
-  // computations are finished.
+  // The pointees of 'submap' and 'range_data_3d.returns' must stay valid until
+  // all computations are finished.
   void MaybeAddGlobalConstraint(
       int submap_index, const Submap* submap, int scan_index,
       const mapping::Submaps* scan_trajectory,

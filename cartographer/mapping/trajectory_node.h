@@ -38,8 +38,8 @@ struct TrajectoryNode {
     // LaserFan in 'pose' frame. Only used in the 2D case.
     sensor::LaserFan laser_fan_2d;
 
-    // LaserFan in 'pose' frame. Only used in the 3D case.
-    sensor::CompressedLaserFan laser_fan_3d;
+    // Range data in 'pose' frame. Only used in the 3D case.
+    sensor::CompressedRangeData range_data_3d;
 
     // Trajectory this node belongs to.
     // TODO(macmason): The naming here is confusing because 'trajectory'

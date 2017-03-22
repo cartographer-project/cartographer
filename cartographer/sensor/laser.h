@@ -25,10 +25,10 @@
 namespace cartographer {
 namespace sensor {
 
-// A 3D variant of LaserFan. Rays begin at 'origin'. 'returns' are the points
-// where laser returns were detected. 'misses' are points in the direction of
-// rays for which no return was detected, and were inserted at a configured
-// distance. It is assumed that between the 'origin' and 'misses' is free space.
+// Rays begin at 'origin'. 'returns' are the points where laser returns were
+// detected. 'misses' are points in the direction of rays for which no return
+// was detected, and were inserted at a configured distance. It is assumed that
+// between the 'origin' and 'misses' is free space.
 struct LaserFan {
   Eigen::Vector3f origin;
   PointCloud returns;
@@ -63,7 +63,7 @@ LaserFan CropLaserFan(const LaserFan& laser_fan, float min_z, float max_z);
 
 // Like LaserFan but with compressed point clouds. The point order changes
 // when converting from LaserFan.
-struct CompressedLaserFan {
+struct CompressedRangeData {
   Eigen::Vector3f origin;
   CompressedPointCloud returns;
   CompressedPointCloud misses;
@@ -72,9 +72,9 @@ struct CompressedLaserFan {
   std::vector<uint8> reflectivities;
 };
 
-CompressedLaserFan Compress(const LaserFan& laser_fan);
+CompressedRangeData Compress(const LaserFan& laser_fan);
 
-LaserFan Decompress(const CompressedLaserFan& compressed_laser_fan);
+LaserFan Decompress(const CompressedRangeData& compressed_range_Data);
 
 }  // namespace sensor
 }  // namespace cartographer

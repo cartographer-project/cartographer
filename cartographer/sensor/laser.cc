@@ -108,22 +108,22 @@ LaserFan CropLaserFan(const LaserFan& laser_fan, const float min_z,
                   Crop(laser_fan.misses, min_z, max_z)};
 }
 
-CompressedLaserFan Compress(const LaserFan& laser_fan) {
+CompressedRangeData Compress(const LaserFan& laser_fan) {
   std::vector<int> new_to_old;
   CompressedPointCloud compressed_returns =
       CompressedPointCloud::CompressAndReturnOrder(laser_fan.returns,
                                                    &new_to_old);
-  return CompressedLaserFan{
+  return CompressedRangeData{
       laser_fan.origin, std::move(compressed_returns),
       CompressedPointCloud(laser_fan.misses),
       ReorderReflectivities(laser_fan.reflectivities, new_to_old)};
 }
 
-LaserFan Decompress(const CompressedLaserFan& compressed_laser_fan) {
-  return LaserFan{compressed_laser_fan.origin,
-                  compressed_laser_fan.returns.Decompress(),
-                  compressed_laser_fan.misses.Decompress(),
-                  compressed_laser_fan.reflectivities};
+LaserFan Decompress(const CompressedRangeData& compressed_range_data) {
+  return LaserFan{compressed_range_data.origin,
+                  compressed_range_data.returns.Decompress(),
+                  compressed_range_data.misses.Decompress(),
+                  compressed_range_data.reflectivities};
 }
 
 }  // namespace sensor
