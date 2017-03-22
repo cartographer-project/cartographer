@@ -146,26 +146,35 @@ TEST(ProbabilityGridTest, GetXYIndexOfCellContainingPoint) {
   const CellLimits& cell_limits = limits.cell_limits();
   ASSERT_EQ(14, cell_limits.num_x_cells);
   ASSERT_EQ(8, cell_limits.num_y_cells);
-  EXPECT_TRUE((Eigen::Array2i(0, 0) ==
-               limits.GetXYIndexOfCellContainingPoint(7, 13)).all());
-  EXPECT_TRUE((Eigen::Array2i(13, 0) ==
-               limits.GetXYIndexOfCellContainingPoint(7, -13)).all());
-  EXPECT_TRUE((Eigen::Array2i(0, 7) ==
-               limits.GetXYIndexOfCellContainingPoint(-7, 13)).all());
-  EXPECT_TRUE((Eigen::Array2i(13, 7) ==
-               limits.GetXYIndexOfCellContainingPoint(-7, -13)).all());
+  EXPECT_TRUE(
+      (Eigen::Array2i(0, 0) == limits.GetXYIndexOfCellContainingPoint(7, 13))
+          .all());
+  EXPECT_TRUE(
+      (Eigen::Array2i(13, 0) == limits.GetXYIndexOfCellContainingPoint(7, -13))
+          .all());
+  EXPECT_TRUE(
+      (Eigen::Array2i(0, 7) == limits.GetXYIndexOfCellContainingPoint(-7, 13))
+          .all());
+  EXPECT_TRUE(
+      (Eigen::Array2i(13, 7) == limits.GetXYIndexOfCellContainingPoint(-7, -13))
+          .all());
 
   // Check around the origin.
-  EXPECT_TRUE((Eigen::Array2i(6, 3) ==
-               limits.GetXYIndexOfCellContainingPoint(0.5, 0.5)).all());
-  EXPECT_TRUE((Eigen::Array2i(6, 3) ==
-               limits.GetXYIndexOfCellContainingPoint(1.5, 1.5)).all());
+  EXPECT_TRUE(
+      (Eigen::Array2i(6, 3) == limits.GetXYIndexOfCellContainingPoint(0.5, 0.5))
+          .all());
+  EXPECT_TRUE(
+      (Eigen::Array2i(6, 3) == limits.GetXYIndexOfCellContainingPoint(1.5, 1.5))
+          .all());
   EXPECT_TRUE((Eigen::Array2i(7, 3) ==
-               limits.GetXYIndexOfCellContainingPoint(0.5, -0.5)).all());
+               limits.GetXYIndexOfCellContainingPoint(0.5, -0.5))
+                  .all());
   EXPECT_TRUE((Eigen::Array2i(6, 4) ==
-               limits.GetXYIndexOfCellContainingPoint(-0.5, 0.5)).all());
+               limits.GetXYIndexOfCellContainingPoint(-0.5, 0.5))
+                  .all());
   EXPECT_TRUE((Eigen::Array2i(7, 4) ==
-               limits.GetXYIndexOfCellContainingPoint(-0.5, -0.5)).all());
+               limits.GetXYIndexOfCellContainingPoint(-0.5, -0.5))
+                  .all());
 }
 
 TEST(ProbabilityGridTest, CorrectCropping) {

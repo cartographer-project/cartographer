@@ -27,10 +27,10 @@
 
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping_2d/map_limits.h"
 #include "cartographer/mapping_2d/proto/probability_grid.pb.h"
 #include "cartographer/mapping_2d/xy_index.h"
-#include "cartographer/mapping/probability_values.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -123,9 +123,8 @@ class ProbabilityGrid {
 
   // Returns true if the probability at the specified index is known.
   bool IsKnown(const Eigen::Array2i& xy_index) const {
-    return limits_.Contains(xy_index) &&
-           cells_[GetIndexOfCell(xy_index)] !=
-               mapping::kUnknownProbabilityValue;
+    return limits_.Contains(xy_index) && cells_[GetIndexOfCell(xy_index)] !=
+                                             mapping::kUnknownProbabilityValue;
   }
 
   // Fills in 'offset' and 'limits' to define a subregion of that contains all
