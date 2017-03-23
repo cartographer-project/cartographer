@@ -29,7 +29,7 @@
 namespace cartographer {
 namespace mapping {
 
-struct Submaps;
+class Submaps;
 
 struct TrajectoryNode {
   struct ConstantData {
