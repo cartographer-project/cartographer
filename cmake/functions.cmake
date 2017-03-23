@@ -99,7 +99,16 @@ macro(google_initialize_cartographer_project)
   elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     google_add_flag(GOOG_CXX_FLAGS "-O3 -g -DNDEBUG")
   elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(FATAL_ERROR "Compiling in debug mode is not supported.")
+    if(FORCE_DEBUG_BUILD)
+      message(WARNING "Building in Debug mode, expect very slow performance.")
+      google_add_flag(GOOG_CXX_FLAGS "-g")
+    else()
+      message(FATAL_ERROR
+        "Compiling in Debug mode is not supported and can cause severely degraded performance. "
+        "You should change the build type to Release. If you want to build in Debug mode anyway, "
+        "call CMake with -DFORCE_DEBUG_BUILD=True"
+      )
+    endif()
   else()
     message(FATAL_ERROR "Unknown CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
   endif()
