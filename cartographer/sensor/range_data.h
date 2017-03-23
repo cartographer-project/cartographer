@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_SENSOR_LASER_H_
-#define CARTOGRAPHER_SENSOR_LASER_H_
+#ifndef CARTOGRAPHER_SENSOR_RANGE_DATA_H_
+#define CARTOGRAPHER_SENSOR_RANGE_DATA_H_
 
 #include "cartographer/common/port.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
@@ -29,7 +29,7 @@ namespace sensor {
 // detected. 'misses' are points in the direction of rays for which no return
 // was detected, and were inserted at a configured distance. It is assumed that
 // between the 'origin' and 'misses' is free space.
-struct LaserFan {
+struct RangeData {
   Eigen::Vector3f origin;
   PointCloud returns;
   PointCloud misses;
@@ -49,20 +49,20 @@ PointCloud ToPointCloud(const proto::LaserScan& proto);
 PointCloudWithIntensities ToPointCloudWithIntensities(
     const proto::LaserScan& proto);
 
-// Converts 'laser_fan' to a proto::LaserFan.
-proto::LaserFan ToProto(const LaserFan& laser_fan);
+// Converts 'range_data' to a proto::RangeData.
+proto::RangeData ToProto(const RangeData& range_data);
 
-// Converts 'proto' to a LaserFan.
-LaserFan FromProto(const proto::LaserFan& proto);
+// Converts 'proto' to a RangeData.
+RangeData FromProto(const proto::RangeData& proto);
 
-LaserFan TransformLaserFan(const LaserFan& laser_fan,
-                           const transform::Rigid3f& transform);
+RangeData TransformRangeData(const RangeData& range_data,
+                             const transform::Rigid3f& transform);
 
-// Crops 'laser_fan' according to the region defined by 'min_z' and 'max_z'.
-LaserFan CropLaserFan(const LaserFan& laser_fan, float min_z, float max_z);
+// Crops 'range_data' according to the region defined by 'min_z' and 'max_z'.
+RangeData CropRangeData(const RangeData& range_data, float min_z, float max_z);
 
-// Like LaserFan but with compressed point clouds. The point order changes
-// when converting from LaserFan.
+// Like RangeData but with compressed point clouds. The point order changes
+// when converting from RangeData.
 struct CompressedRangeData {
   Eigen::Vector3f origin;
   CompressedPointCloud returns;
@@ -72,11 +72,11 @@ struct CompressedRangeData {
   std::vector<uint8> reflectivities;
 };
 
-CompressedRangeData Compress(const LaserFan& laser_fan);
+CompressedRangeData Compress(const RangeData& range_data);
 
-LaserFan Decompress(const CompressedRangeData& compressed_range_Data);
+RangeData Decompress(const CompressedRangeData& compressed_range_Data);
 
 }  // namespace sensor
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_SENSOR_LASER_H_
+#endif  // CARTOGRAPHER_SENSOR_RANGE_DATA_H_

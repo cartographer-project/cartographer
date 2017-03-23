@@ -65,11 +65,11 @@ TEST(MapLimitsTest, ConstructAndGet) {
 TEST(MapLimitsTest, ComputeMapLimits) {
   const mapping::TrajectoryNode::ConstantData constant_data{
       common::FromUniversal(52),
-      sensor::LaserFan{
+      sensor::RangeData{
           Eigen::Vector3f::Zero(),
           {Eigen::Vector3f(-30.f, 1.f, 0.f), Eigen::Vector3f(50.f, -10.f, 0.f)},
           {}},
-      Compress(sensor::LaserFan{Eigen::Vector3f::Zero(), {}, {}, {}}), nullptr,
+      Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}, {}}), nullptr,
       transform::Rigid3d::Identity()};
   const mapping::TrajectoryNode trajectory_node{&constant_data,
                                                 transform::Rigid3d::Identity()};

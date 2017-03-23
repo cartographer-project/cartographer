@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/range_data.h"
 
 #include "cartographer/sensor/proto/sensor.pb.h"
 #include "cartographer/transform/transform.h"
@@ -72,58 +72,58 @@ PointCloudWithIntensities ToPointCloudWithIntensities(
   return point_cloud;
 }
 
-proto::LaserFan ToProto(const LaserFan& laser_fan) {
-  proto::LaserFan proto;
-  *proto.mutable_origin() = transform::ToProto(laser_fan.origin);
-  *proto.mutable_point_cloud() = ToProto(laser_fan.returns);
-  *proto.mutable_missing_echo_point_cloud() = ToProto(laser_fan.misses);
-  std::copy(laser_fan.reflectivities.begin(), laser_fan.reflectivities.end(),
+proto::RangeData ToProto(const RangeData& range_data) {
+  proto::RangeData proto;
+  *proto.mutable_origin() = transform::ToProto(range_data.origin);
+  *proto.mutable_point_cloud() = ToProto(range_data.returns);
+  *proto.mutable_missing_echo_point_cloud() = ToProto(range_data.misses);
+  std::copy(range_data.reflectivities.begin(), range_data.reflectivities.end(),
             RepeatedFieldBackInserter(proto.mutable_reflectivity()));
   return proto;
 }
 
-LaserFan FromProto(const proto::LaserFan& proto) {
-  auto laser_fan = LaserFan{
+RangeData FromProto(const proto::RangeData& proto) {
+  auto range_data = RangeData{
       transform::ToEigen(proto.origin()), ToPointCloud(proto.point_cloud()),
       ToPointCloud(proto.missing_echo_point_cloud()),
   };
   std::copy(proto.reflectivity().begin(), proto.reflectivity().end(),
-            std::back_inserter(laser_fan.reflectivities));
-  return laser_fan;
+            std::back_inserter(range_data.reflectivities));
+  return range_data;
 }
 
-LaserFan TransformLaserFan(const LaserFan& laser_fan,
-                           const transform::Rigid3f& transform) {
-  return LaserFan{
-      transform * laser_fan.origin,
-      TransformPointCloud(laser_fan.returns, transform),
-      TransformPointCloud(laser_fan.misses, transform),
-      laser_fan.reflectivities,
+RangeData TransformRangeData(const RangeData& range_data,
+                             const transform::Rigid3f& transform) {
+  return RangeData{
+      transform * range_data.origin,
+      TransformPointCloud(range_data.returns, transform),
+      TransformPointCloud(range_data.misses, transform),
+      range_data.reflectivities,
   };
 }
 
-LaserFan CropLaserFan(const LaserFan& laser_fan, const float min_z,
-                      const float max_z) {
-  return LaserFan{laser_fan.origin, Crop(laser_fan.returns, min_z, max_z),
-                  Crop(laser_fan.misses, min_z, max_z)};
+RangeData CropRangeData(const RangeData& range_data, const float min_z,
+                        const float max_z) {
+  return RangeData{range_data.origin, Crop(range_data.returns, min_z, max_z),
+                   Crop(range_data.misses, min_z, max_z)};
 }
 
-CompressedRangeData Compress(const LaserFan& laser_fan) {
+CompressedRangeData Compress(const RangeData& range_data) {
   std::vector<int> new_to_old;
   CompressedPointCloud compressed_returns =
-      CompressedPointCloud::CompressAndReturnOrder(laser_fan.returns,
+      CompressedPointCloud::CompressAndReturnOrder(range_data.returns,
                                                    &new_to_old);
   return CompressedRangeData{
-      laser_fan.origin, std::move(compressed_returns),
-      CompressedPointCloud(laser_fan.misses),
-      ReorderReflectivities(laser_fan.reflectivities, new_to_old)};
+      range_data.origin, std::move(compressed_returns),
+      CompressedPointCloud(range_data.misses),
+      ReorderReflectivities(range_data.reflectivities, new_to_old)};
 }
 
-LaserFan Decompress(const CompressedRangeData& compressed_range_data) {
-  return LaserFan{compressed_range_data.origin,
-                  compressed_range_data.returns.Decompress(),
-                  compressed_range_data.misses.Decompress(),
-                  compressed_range_data.reflectivities};
+RangeData Decompress(const CompressedRangeData& compressed_range_data) {
+  return RangeData{compressed_range_data.origin,
+                   compressed_range_data.returns.Decompress(),
+                   compressed_range_data.misses.Decompress(),
+                   compressed_range_data.reflectivities};
 }
 
 }  // namespace sensor

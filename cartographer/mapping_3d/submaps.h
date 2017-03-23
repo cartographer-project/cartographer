@@ -25,20 +25,21 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
 #include "cartographer/mapping_2d/probability_grid.h"
+#include "cartographer/mapping_2d/range_data_inserter.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
-#include "cartographer/mapping_3d/laser_fan_inserter.h"
 #include "cartographer/mapping_3d/proto/submaps_options.pb.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/mapping_3d/range_data_inserter.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace mapping_3d {
 
 void InsertIntoProbabilityGrid(
-    const sensor::LaserFan& laser_fan, const transform::Rigid3f& pose,
-    const float slice_z, const mapping_2d::LaserFanInserter& laser_fan_inserter,
+    const sensor::RangeData& range_data, const transform::Rigid3f& pose,
+    const float slice_z,
+    const mapping_2d::RangeDataInserter& range_data_inserter,
     mapping_2d::ProbabilityGrid* result);
 
 proto::SubmapsOptions CreateSubmapsOptions(
@@ -46,7 +47,7 @@ proto::SubmapsOptions CreateSubmapsOptions(
 
 struct Submap : public mapping::Submap {
   Submap(float high_resolution, float low_resolution,
-         const Eigen::Vector3f& origin, int begin_laser_fan_index);
+         const Eigen::Vector3f& origin, int begin_range_data_index);
 
   HybridGrid high_resolution_hybrid_grid;
   HybridGrid low_resolution_hybrid_grid;
@@ -69,8 +70,8 @@ class Submaps : public mapping::Submaps {
       const transform::Rigid3d& global_submap_pose,
       mapping::proto::SubmapQuery::Response* response) const override;
 
-  // Inserts 'laser_fan' into the Submap collection.
-  void InsertLaserFan(const sensor::LaserFan& laser_fan);
+  // Inserts 'range_data' into the Submap collection.
+  void InsertRangeData(const sensor::RangeData& range_data);
 
   // Returns the 'high_resolution' HybridGrid to be used for matching.
   const HybridGrid& high_resolution_matching_grid() const;
@@ -110,13 +111,13 @@ class Submaps : public mapping::Submaps {
   const proto::SubmapsOptions options_;
 
   std::vector<std::unique_ptr<Submap>> submaps_;
-  LaserFanInserter laser_fan_inserter_;
+  RangeDataInserter range_data_inserter_;
 
-  // Number of LaserFans inserted.
-  int num_laser_fans_ = 0;
+  // Number of RangeData inserted.
+  int num_range_data_ = 0;
 
-  // Number of LaserFans inserted since the last Submap was added.
-  int num_laser_fans_in_last_submap_ = 0;
+  // Number of RangeData inserted since the last Submap was added.
+  int num_range_data_in_last_submap_ = 0;
 };
 
 }  // namespace mapping_3d

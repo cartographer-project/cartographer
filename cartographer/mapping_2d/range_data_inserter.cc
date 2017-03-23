@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
+#include "cartographer/mapping_2d/range_data_inserter.h"
 
 #include <cstdlib>
 
@@ -27,9 +27,9 @@
 namespace cartographer {
 namespace mapping_2d {
 
-proto::LaserFanInserterOptions CreateLaserFanInserterOptions(
+proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::LaserFanInserterOptions options;
+  proto::RangeDataInserterOptions options;
   options.set_hit_probability(
       parameter_dictionary->GetDouble("hit_probability"));
   options.set_miss_probability(
@@ -43,21 +43,21 @@ proto::LaserFanInserterOptions CreateLaserFanInserterOptions(
   return options;
 }
 
-LaserFanInserter::LaserFanInserter(
-    const proto::LaserFanInserterOptions& options)
+RangeDataInserter::RangeDataInserter(
+    const proto::RangeDataInserterOptions& options)
     : options_(options),
       hit_table_(mapping::ComputeLookupTableToApplyOdds(
           mapping::Odds(options.hit_probability()))),
       miss_table_(mapping::ComputeLookupTableToApplyOdds(
           mapping::Odds(options.miss_probability()))) {}
 
-void LaserFanInserter::Insert(const sensor::LaserFan& laser_fan,
-                              ProbabilityGrid* const probability_grid) const {
+void RangeDataInserter::Insert(const sensor::RangeData& range_data,
+                               ProbabilityGrid* const probability_grid) const {
   CHECK_NOTNULL(probability_grid)->StartUpdate();
 
   // By not starting a new update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
-  CastRays(laser_fan, probability_grid->limits(),
+  CastRays(range_data, probability_grid->limits(),
            [this, &probability_grid](const Eigen::Array2i& hit) {
              probability_grid->ApplyLookupTable(hit, hit_table_);
            },

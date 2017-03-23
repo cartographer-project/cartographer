@@ -23,7 +23,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping_3d/submaps.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -35,7 +35,7 @@ class LocalTrajectoryBuilderInterface {
 
   struct InsertionResult {
     common::Time time;
-    sensor::LaserFan laser_fan_in_tracking;
+    sensor::RangeData range_data_in_tracking;
     transform::Rigid3d pose_observation;
     kalman_filter::PoseCovariance covariance_estimate;
     const Submaps* submaps;

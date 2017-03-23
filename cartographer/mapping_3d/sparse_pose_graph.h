@@ -66,12 +66,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
 
-  // Adds a new 'laser_fan_in_tracking' observation at 'time', and a 'pose'
+  // Adds a new 'range_data_in_tracking' observation at 'time', and a 'pose'
   // that will later be optimized. The 'pose' was determined by scan matching
   // against the 'matching_submap' and the scan was inserted into the
   // 'insertion_submaps'. The index into the vector of trajectory nodes as
   // used with GetTrajectoryNodes() is returned.
-  int AddScan(common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
+  int AddScan(common::Time time,
+              const sensor::RangeData& range_data_in_tracking,
               const transform::Rigid3d& pose,
               const kalman_filter::PoseCovariance& pose_covariance,
               const Submaps* submaps, const Submap* matching_submap,

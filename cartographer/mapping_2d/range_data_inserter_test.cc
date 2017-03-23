@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
+#include "cartographer/mapping_2d/range_data_inserter.h"
 
 #include <memory>
 
@@ -28,9 +28,9 @@ namespace cartographer {
 namespace mapping_2d {
 namespace {
 
-class LaserFanInserterTest : public ::testing::Test {
+class RangeDataInserterTest : public ::testing::Test {
  protected:
-  LaserFanInserterTest()
+  RangeDataInserterTest()
       : probability_grid_(
             MapLimits(1., Eigen::Vector2d(1., 5.), CellLimits(5, 5))) {
     auto parameter_dictionary = common::MakeDictionary(
@@ -39,28 +39,28 @@ class LaserFanInserterTest : public ::testing::Test {
         "hit_probability = 0.7, "
         "miss_probability = 0.4, "
         "}");
-    options_ = CreateLaserFanInserterOptions(parameter_dictionary.get());
-    laser_fan_inserter_ = common::make_unique<LaserFanInserter>(options_);
+    options_ = CreateRangeDataInserterOptions(parameter_dictionary.get());
+    range_data_inserter_ = common::make_unique<RangeDataInserter>(options_);
   }
 
   void InsertPointCloud() {
-    sensor::LaserFan laser_fan;
-    laser_fan.returns.emplace_back(-3.5, 0.5, 0.f);
-    laser_fan.returns.emplace_back(-2.5, 1.5, 0.f);
-    laser_fan.returns.emplace_back(-1.5, 2.5, 0.f);
-    laser_fan.returns.emplace_back(-0.5, 3.5, 0.f);
-    laser_fan.origin.x() = -0.5;
-    laser_fan.origin.y() = 0.5;
+    sensor::RangeData range_data;
+    range_data.returns.emplace_back(-3.5, 0.5, 0.f);
+    range_data.returns.emplace_back(-2.5, 1.5, 0.f);
+    range_data.returns.emplace_back(-1.5, 2.5, 0.f);
+    range_data.returns.emplace_back(-0.5, 3.5, 0.f);
+    range_data.origin.x() = -0.5;
+    range_data.origin.y() = 0.5;
     probability_grid_.StartUpdate();
-    laser_fan_inserter_->Insert(laser_fan, &probability_grid_);
+    range_data_inserter_->Insert(range_data, &probability_grid_);
   }
 
   ProbabilityGrid probability_grid_;
-  std::unique_ptr<LaserFanInserter> laser_fan_inserter_;
-  proto::LaserFanInserterOptions options_;
+  std::unique_ptr<RangeDataInserter> range_data_inserter_;
+  proto::RangeDataInserterOptions options_;
 };
 
-TEST_F(LaserFanInserterTest, InsertPointCloud) {
+TEST_F(RangeDataInserterTest, InsertPointCloud) {
   InsertPointCloud();
 
   EXPECT_NEAR(1., probability_grid_.limits().max().x(), 1e-9);
@@ -100,7 +100,7 @@ TEST_F(LaserFanInserterTest, InsertPointCloud) {
   }
 }
 
-TEST_F(LaserFanInserterTest, ProbabilityProgression) {
+TEST_F(RangeDataInserterTest, ProbabilityProgression) {
   InsertPointCloud();
   EXPECT_NEAR(options_.hit_probability(),
               probability_grid_.GetProbability(-3.5, 0.5), 1e-4);

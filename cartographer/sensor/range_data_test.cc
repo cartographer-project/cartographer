@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/range_data.h"
 
 #include <utility>
 #include <vector>
@@ -81,14 +81,14 @@ MATCHER_P(PairApproximatelyEquals, expected,
          arg.second == expected.second;
 }
 
-TEST(LaserTest, Compression) {
-  const LaserFan laser_fan = {
+TEST(RangeDataTest, Compression) {
+  const RangeData range_data = {
       Eigen::Vector3f(1, 1, 1),
       {Eigen::Vector3f(0, 1, 2), Eigen::Vector3f(4, 5, 6),
        Eigen::Vector3f(0, 1, 2)},
       {Eigen::Vector3f(7, 8, 9)},
       {1, 2, 3}};
-  const LaserFan actual = Decompress(Compress(laser_fan));
+  const RangeData actual = Decompress(Compress(range_data));
   EXPECT_TRUE(actual.origin.isApprox(Eigen::Vector3f(1, 1, 1), 1e-6));
   EXPECT_EQ(3, actual.returns.size());
   EXPECT_EQ(1, actual.misses.size());

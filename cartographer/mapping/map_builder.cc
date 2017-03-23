@@ -27,7 +27,7 @@
 #include "cartographer/mapping_2d/global_trajectory_builder.h"
 #include "cartographer/mapping_3d/global_trajectory_builder.h"
 #include "cartographer/mapping_3d/local_trajectory_builder_options.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -141,7 +141,8 @@ string MapBuilder::SubmapToProto(const int trajectory_id,
            " submaps in this trajectory.";
   }
 
-  response->set_submap_version(submaps->Get(submap_index)->end_laser_fan_index);
+  response->set_submap_version(
+      submaps->Get(submap_index)->end_range_data_index);
   const std::vector<transform::Rigid3d> submap_transforms =
       sparse_pose_graph_->GetSubmapTransforms(*submaps);
   CHECK_EQ(submap_transforms.size(), submaps->size());
