@@ -147,7 +147,7 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 
 }  // namespace
 
-void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
+void CastRays(const sensor::RangeData& range_data, const MapLimits& limits,
               const std::function<void(const Eigen::Array2i&)>& hit_visitor,
               const std::function<void(const Eigen::Array2i&)>& miss_visitor) {
   const double superscaled_resolution = limits.resolution() / kSubpixelScale;
@@ -156,15 +156,15 @@ void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
       CellLimits(limits.cell_limits().num_x_cells * kSubpixelScale,
                  limits.cell_limits().num_y_cells * kSubpixelScale));
   const Eigen::Array2i begin =
-      superscaled_limits.GetXYIndexOfCellContainingPoint(laser_fan.origin.x(),
-                                                         laser_fan.origin.y());
+      superscaled_limits.GetXYIndexOfCellContainingPoint(range_data.origin.x(),
+                                                         range_data.origin.y());
 
   // Compute and add the end points.
   std::vector<Eigen::Array2i> ends;
-  ends.reserve(laser_fan.returns.size());
-  for (const Eigen::Vector3f& laser_return : laser_fan.returns) {
-    ends.push_back(superscaled_limits.GetXYIndexOfCellContainingPoint(
-        laser_return.x(), laser_return.y()));
+  ends.reserve(range_data.returns.size());
+  for (const Eigen::Vector3f& hit : range_data.returns) {
+    ends.push_back(
+        superscaled_limits.GetXYIndexOfCellContainingPoint(hit.x(), hit.y()));
     hit_visitor(ends.back() / kSubpixelScale);
   }
 
@@ -173,8 +173,8 @@ void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
     CastRay(begin, end, miss_visitor);
   }
 
-  // Finally, compute and add empty rays based on missing echos in the scan.
-  for (const Eigen::Vector3f& missing_echo : laser_fan.misses) {
+  // Finally, compute and add empty rays based on misses in the scan.
+  for (const Eigen::Vector3f& missing_echo : range_data.misses) {
     CastRay(begin,
             superscaled_limits.GetXYIndexOfCellContainingPoint(
                 missing_echo.x(), missing_echo.y()),

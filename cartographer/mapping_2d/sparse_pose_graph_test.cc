@@ -24,7 +24,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
+#include "cartographer/mapping_2d/range_data_inserter.h"
 #include "cartographer/mapping_2d/submaps.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
@@ -52,9 +52,9 @@ class SparsePoseGraphTest : public ::testing::Test {
           return {
             resolution = 0.05,
             half_length = 21.,
-            num_laser_fans = 1,
+            num_range_data = 1,
             output_debug_images = false,
-            laser_fan_inserter = {
+            range_data_inserter = {
               insert_free_space = true,
               hit_probability = 0.53,
               miss_probability = 0.495,
@@ -155,13 +155,13 @@ class SparsePoseGraphTest : public ::testing::Test {
     for (int insertion_index : submaps_->insertion_indices()) {
       insertion_submaps.push_back(submaps_->Get(insertion_index));
     }
-    const sensor::LaserFan laser_fan{
+    const sensor::RangeData range_data{
         Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
-    submaps_->InsertLaserFan(TransformLaserFan(
-        laser_fan, transform::Embed3D(pose_estimate.cast<float>())));
+    submaps_->InsertRangeData(TransformRangeData(
+        range_data, transform::Embed3D(pose_estimate.cast<float>())));
     sparse_pose_graph_->AddScan(common::FromUniversal(0),
-                                transform::Rigid3d::Identity(), laser_fan,
+                                transform::Rigid3d::Identity(), range_data,
                                 pose_estimate, covariance, submaps_.get(),
                                 matching_submap, insertion_submaps);
   }

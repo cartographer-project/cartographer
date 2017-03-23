@@ -164,22 +164,6 @@ cartographer.common.proto.CeresSolverOptions ceres_solver_options
   Not yet documented.
 
 
-cartographer.mapping_2d.proto.LaserFanInserterOptions
-=====================================================
-
-double hit_probability
-  Probability change for a hit (this will be converted to odds and therefore
-  must be greater than 0.5).
-
-double miss_probability
-  Probability change for a miss (this will be converted to odds and therefore
-  must be less than 0.5).
-
-bool insert_free_space
-  If 'false', free space will not change the probabilities in the occupancy
-  grid.
-
-
 cartographer.mapping_2d.proto.LocalTrajectoryBuilderOptions
 ===========================================================
 
@@ -200,7 +184,7 @@ float laser_missing_echo_ray_length
   empty space.
 
 float laser_voxel_filter_size
-  Voxel filter that gets applied to the horizontal laser immediately after
+  Voxel filter that gets applied to the range data immediately after
   cropping.
 
 bool use_online_correlative_scan_matching
@@ -237,6 +221,22 @@ bool use_imu_data
   True if IMU data should be expected and used.
 
 
+cartographer.mapping_2d.proto.RangeDataInserterOptions
+======================================================
+
+double hit_probability
+  Probability change for a hit (this will be converted to odds and therefore
+  must be greater than 0.5).
+
+double miss_probability
+  Probability change for a miss (this will be converted to odds and therefore
+  must be less than 0.5).
+
+bool insert_free_space
+  If 'false', free space will not change the probabilities in the occupancy
+  grid.
+
+
 cartographer.mapping_2d.proto.SubmapsOptions
 ============================================
 
@@ -246,7 +246,7 @@ double resolution
 double half_length
   Half the width/height of each submap, its "radius".
 
-int32 num_laser_fans
+int32 num_range_data
   Number of scans before adding a new submap. Each submap will get twice the
   number of scans inserted: First for initialization without being matched
   against, then while being matched.
@@ -254,7 +254,7 @@ int32 num_laser_fans
 bool output_debug_images
   If enabled, submap%d.png images are written for debugging.
 
-cartographer.mapping_2d.proto.LaserFanInserterOptions laser_fan_inserter_options
+cartographer.mapping_2d.proto.RangeDataInserterOptions range_data_inserter_options
   Not yet documented.
 
 
@@ -334,22 +334,6 @@ double odometer_rotational_variance
   Not yet documented.
 
 
-cartographer.mapping_3d.proto.LaserFanInserterOptions
-=====================================================
-
-double hit_probability
-  Probability change for a hit (this will be converted to odds and therefore
-  must be greater than 0.5).
-
-double miss_probability
-  Probability change for a miss (this will be converted to odds and therefore
-  must be less than 0.5).
-
-int32 num_free_space_voxels
-  Up to how many free space voxels are updated for scan matching.
-  0 disables free space.
-
-
 cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions
 ===========================================================
 
@@ -392,6 +376,22 @@ double odometry_rotation_weight
   Not yet documented.
 
 
+cartographer.mapping_3d.proto.RangeDataInserterOptions
+======================================================
+
+double hit_probability
+  Probability change for a hit (this will be converted to odds and therefore
+  must be greater than 0.5).
+
+double miss_probability
+  Probability change for a miss (this will be converted to odds and therefore
+  must be less than 0.5).
+
+int32 num_free_space_voxels
+  Up to how many free space voxels are updated for scan matching.
+  0 disables free space.
+
+
 cartographer.mapping_3d.proto.SubmapsOptions
 ============================================
 
@@ -407,12 +407,12 @@ double low_resolution
   Resolution of the 'low_resolution' version of the map in meters used for
   local SLAM only.
 
-int32 num_laser_fans
+int32 num_range_data
   Number of scans before adding a new submap. Each submap will get twice the
   number of scans inserted: First for initialization without being matched
   against, then while being matched.
 
-cartographer.mapping_3d.proto.LaserFanInserterOptions laser_fan_inserter_options
+cartographer.mapping_3d.proto.RangeDataInserterOptions range_data_inserter_options
   Not yet documented.
 
 

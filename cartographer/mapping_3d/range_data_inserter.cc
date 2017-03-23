@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/laser_fan_inserter.h"
+#include "cartographer/mapping_3d/range_data_inserter.h"
 
 #include "Eigen/Core"
 #include "cartographer/mapping/probability_values.h"
@@ -25,13 +25,13 @@ namespace mapping_3d {
 
 namespace {
 
-void InsertLaserMissesIntoGrid(const std::vector<uint16>& miss_table,
-                               const Eigen::Vector3f& origin,
-                               const sensor::PointCloud& laser_returns,
-                               HybridGrid* hybrid_grid,
-                               const int num_free_space_voxels) {
+void InsertMissesIntoGrid(const std::vector<uint16>& miss_table,
+                          const Eigen::Vector3f& origin,
+                          const sensor::PointCloud& returns,
+                          HybridGrid* hybrid_grid,
+                          const int num_free_space_voxels) {
   const Eigen::Array3i origin_cell = hybrid_grid->GetCellIndex(origin);
-  for (const Eigen::Vector3f& hit : laser_returns) {
+  for (const Eigen::Vector3f& hit : returns) {
     const Eigen::Array3i hit_cell = hybrid_grid->GetCellIndex(hit);
 
     const Eigen::Array3i delta = hit_cell - origin_cell;
@@ -54,9 +54,9 @@ void InsertLaserMissesIntoGrid(const std::vector<uint16>& miss_table,
 
 }  // namespace
 
-proto::LaserFanInserterOptions CreateLaserFanInserterOptions(
+proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
     common::LuaParameterDictionary* parameter_dictionary) {
-  proto::LaserFanInserterOptions options;
+  proto::RangeDataInserterOptions options;
   options.set_hit_probability(
       parameter_dictionary->GetDouble("hit_probability"));
   options.set_miss_probability(
@@ -68,27 +68,27 @@ proto::LaserFanInserterOptions CreateLaserFanInserterOptions(
   return options;
 }
 
-LaserFanInserter::LaserFanInserter(
-    const proto::LaserFanInserterOptions& options)
+RangeDataInserter::RangeDataInserter(
+    const proto::RangeDataInserterOptions& options)
     : options_(options),
       hit_table_(mapping::ComputeLookupTableToApplyOdds(
           mapping::Odds(options_.hit_probability()))),
       miss_table_(mapping::ComputeLookupTableToApplyOdds(
           mapping::Odds(options_.miss_probability()))) {}
 
-void LaserFanInserter::Insert(const sensor::LaserFan& laser_fan,
-                              HybridGrid* hybrid_grid) const {
+void RangeDataInserter::Insert(const sensor::RangeData& range_data,
+                               HybridGrid* hybrid_grid) const {
   CHECK_NOTNULL(hybrid_grid)->StartUpdate();
 
-  for (const Eigen::Vector3f& hit : laser_fan.returns) {
+  for (const Eigen::Vector3f& hit : range_data.returns) {
     const Eigen::Array3i hit_cell = hybrid_grid->GetCellIndex(hit);
     hybrid_grid->ApplyLookupTable(hit_cell, hit_table_);
   }
 
   // By not starting a new update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
-  InsertLaserMissesIntoGrid(miss_table_, laser_fan.origin, laser_fan.returns,
-                            hybrid_grid, options_.num_free_space_voxels());
+  InsertMissesIntoGrid(miss_table_, range_data.origin, range_data.returns,
+                       hybrid_grid, options_.num_free_space_voxels());
 }
 
 }  // namespace mapping_3d

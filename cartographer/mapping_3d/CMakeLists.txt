@@ -25,9 +25,9 @@ google_test(mapping_3d_kalman_local_trajectory_builder_test
     kalman_local_trajectory_builder_test.cc
 )
 
-google_test(mapping_3d_laser_fan_inserter_test
+google_test(mapping_3d_range_data_inserter_test
   SRCS
-    laser_fan_inserter_test.cc
+    range_data_inserter_test.cc
 )
 
 google_test(mapping_3d_motion_filter_test

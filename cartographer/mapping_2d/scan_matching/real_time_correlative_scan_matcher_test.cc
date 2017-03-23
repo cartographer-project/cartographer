@@ -23,8 +23,8 @@
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/kalman_filter/pose_tracker.h"
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
 #include "cartographer/mapping_2d/probability_grid.h"
+#include "cartographer/mapping_2d/range_data_inserter.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/transform.h"
 #include "gtest/gtest.h"
@@ -46,8 +46,8 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
           "hit_probability = 0.7, "
           "miss_probability = 0.4, "
           "}");
-      laser_fan_inserter_ = common::make_unique<LaserFanInserter>(
-          CreateLaserFanInserterOptions(parameter_dictionary.get()));
+      range_data_inserter_ = common::make_unique<RangeDataInserter>(
+          CreateRangeDataInserterOptions(parameter_dictionary.get()));
     }
     point_cloud_.emplace_back(0.025f, 0.175f, 0.f);
     point_cloud_.emplace_back(-0.025f, 0.175f, 0.f);
@@ -57,8 +57,8 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
     point_cloud_.emplace_back(-0.125f, 0.075f, 0.f);
     point_cloud_.emplace_back(-0.125f, 0.025f, 0.f);
     probability_grid_.StartUpdate();
-    laser_fan_inserter_->Insert(
-        sensor::LaserFan{Eigen::Vector3f::Zero(), point_cloud_, {}},
+    range_data_inserter_->Insert(
+        sensor::RangeData{Eigen::Vector3f::Zero(), point_cloud_, {}},
         &probability_grid_);
     {
       auto parameter_dictionary = common::MakeDictionary(
@@ -76,7 +76,7 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
   }
 
   ProbabilityGrid probability_grid_;
-  std::unique_ptr<LaserFanInserter> laser_fan_inserter_;
+  std::unique_ptr<RangeDataInserter> range_data_inserter_;
   sensor::PointCloud point_cloud_;
   std::unique_ptr<RealTimeCorrelativeScanMatcher>
       real_time_correlative_scan_matcher_;

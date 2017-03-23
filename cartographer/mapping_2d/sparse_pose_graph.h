@@ -66,13 +66,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
 
-  // Adds a new 'laser_fan_in_pose' observation at 'time', and a 'pose'
+  // Adds a new 'range_data_in_pose' observation at 'time', and a 'pose'
   // that will later be optimized. The 'tracking_to_pose' is remembered so
   // that the optimized pose can be embedded into 3D. The 'pose' was determined
   // by scan matching against the 'matching_submap' and the scan was inserted
   // into the 'insertion_submaps'.
   void AddScan(common::Time time, const transform::Rigid3d& tracking_to_pose,
-               const sensor::LaserFan& laser_fan_in_pose,
+               const sensor::RangeData& range_data_in_pose,
                const transform::Rigid2d& pose,
                const kalman_filter::Pose2DCovariance& pose_covariance,
                const mapping::Submaps* submaps,

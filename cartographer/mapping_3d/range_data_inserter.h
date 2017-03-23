@@ -14,32 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_LASER_FAN_INSERTER_H_
-#define CARTOGRAPHER_MAPPING_3D_LASER_FAN_INSERTER_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_RANGE_DATA_INSERTER_H_
+#define CARTOGRAPHER_MAPPING_3D_RANGE_DATA_INSERTER_H_
 
 #include "cartographer/mapping_3d/hybrid_grid.h"
-#include "cartographer/mapping_3d/proto/laser_fan_inserter_options.pb.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/mapping_3d/proto/range_data_inserter_options.pb.h"
 #include "cartographer/sensor/point_cloud.h"
+#include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
 namespace mapping_3d {
 
-proto::LaserFanInserterOptions CreateLaserFanInserterOptions(
+proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class LaserFanInserter {
+class RangeDataInserter {
  public:
-  explicit LaserFanInserter(const proto::LaserFanInserterOptions& options);
+  explicit RangeDataInserter(const proto::RangeDataInserterOptions& options);
 
-  LaserFanInserter(const LaserFanInserter&) = delete;
-  LaserFanInserter& operator=(const LaserFanInserter&) = delete;
+  RangeDataInserter(const RangeDataInserter&) = delete;
+  RangeDataInserter& operator=(const RangeDataInserter&) = delete;
 
-  // Inserts 'laser_fan' into 'hybrid_grid'.
-  void Insert(const sensor::LaserFan& laser_fan, HybridGrid* hybrid_grid) const;
+  // Inserts 'range_data' into 'hybrid_grid'.
+  void Insert(const sensor::RangeData& range_data,
+              HybridGrid* hybrid_grid) const;
 
  private:
-  const proto::LaserFanInserterOptions options_;
+  const proto::RangeDataInserterOptions options_;
   const std::vector<uint16> hit_table_;
   const std::vector<uint16> miss_table_;
 };
@@ -47,4 +48,4 @@ class LaserFanInserter {
 }  // namespace mapping_3d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_LASER_FAN_INSERTER_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_RANGE_DATA_INSERTER_H_

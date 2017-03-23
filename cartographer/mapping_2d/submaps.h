@@ -25,11 +25,11 @@
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
 #include "cartographer/mapping_2d/map_limits.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/proto/submaps_options.pb.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/mapping_2d/range_data_inserter.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -43,7 +43,7 @@ proto::SubmapsOptions CreateSubmapsOptions(
 
 struct Submap : public mapping::Submap {
   Submap(const MapLimits& limits, const Eigen::Vector2f& origin,
-         int begin_laser_fan_index);
+         int begin_range_data_index);
 
   ProbabilityGrid probability_grid;
 };
@@ -63,8 +63,8 @@ class Submaps : public mapping::Submaps {
       const transform::Rigid3d& global_submap_pose,
       mapping::proto::SubmapQuery::Response* response) const override;
 
-  // Inserts 'laser_fan' into the Submap collection.
-  void InsertLaserFan(const sensor::LaserFan& laser_fan);
+  // Inserts 'range_data' into the Submap collection.
+  void InsertRangeData(const sensor::RangeData& range_data);
 
  private:
   void FinishSubmap(int index);
@@ -73,13 +73,13 @@ class Submaps : public mapping::Submaps {
   const proto::SubmapsOptions options_;
 
   std::vector<std::unique_ptr<Submap>> submaps_;
-  LaserFanInserter laser_fan_inserter_;
+  RangeDataInserter range_data_inserter_;
 
-  // Number of LaserFans inserted.
-  int num_laser_fans_ = 0;
+  // Number of RangeData inserted.
+  int num_range_data_ = 0;
 
-  // Number of LaserFans inserted since the last Submap was added.
-  int num_laser_fans_in_last_submap_ = 0;
+  // Number of RangeData inserted since the last Submap was added.
+  int num_range_data_in_last_submap_ = 0;
 };
 
 }  // namespace mapping_2d

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/laser_fan_inserter.h"
+#include "cartographer/mapping_3d/range_data_inserter.h"
 
 #include <memory>
 #include <vector>
@@ -26,9 +26,9 @@ namespace cartographer {
 namespace mapping_3d {
 namespace {
 
-class LaserFanInserterTest : public ::testing::Test {
+class RangeDataInserterTest : public ::testing::Test {
  protected:
-  LaserFanInserterTest()
+  RangeDataInserterTest()
       : hybrid_grid_(1.f, Eigen::Vector3f(0.5f, 0.5f, 0.5f)) {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
@@ -36,18 +36,18 @@ class LaserFanInserterTest : public ::testing::Test {
         "miss_probability = 0.4, "
         "num_free_space_voxels = 1000, "
         "}");
-    options_ = CreateLaserFanInserterOptions(parameter_dictionary.get());
-    laser_fan_inserter_.reset(new LaserFanInserter(options_));
+    options_ = CreateRangeDataInserterOptions(parameter_dictionary.get());
+    range_data_inserter_.reset(new RangeDataInserter(options_));
   }
 
   void InsertPointCloud() {
     const Eigen::Vector3f origin = Eigen::Vector3f(0.5f, 0.5f, -3.5f);
-    sensor::PointCloud laser_returns = {{-2.5f, -0.5f, 4.5f},
-                                        {-1.5f, 0.5f, 4.5f},
-                                        {-0.5f, 1.5f, 4.5f},
-                                        {0.5f, 2.5f, 4.5f}};
-    laser_fan_inserter_->Insert(sensor::LaserFan{origin, laser_returns, {}},
-                                &hybrid_grid_);
+    sensor::PointCloud returns = {{-2.5f, -0.5f, 4.5f},
+                                  {-1.5f, 0.5f, 4.5f},
+                                  {-0.5f, 1.5f, 4.5f},
+                                  {0.5f, 2.5f, 4.5f}};
+    range_data_inserter_->Insert(sensor::RangeData{origin, returns, {}},
+                                 &hybrid_grid_);
   }
 
   float GetProbability(float x, float y, float z) const {
@@ -60,15 +60,15 @@ class LaserFanInserterTest : public ::testing::Test {
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x, y, z)));
   }
 
-  const proto::LaserFanInserterOptions& options() const { return options_; }
+  const proto::RangeDataInserterOptions& options() const { return options_; }
 
  private:
   HybridGrid hybrid_grid_;
-  std::unique_ptr<LaserFanInserter> laser_fan_inserter_;
-  proto::LaserFanInserterOptions options_;
+  std::unique_ptr<RangeDataInserter> range_data_inserter_;
+  proto::RangeDataInserterOptions options_;
 };
 
-TEST_F(LaserFanInserterTest, InsertPointCloud) {
+TEST_F(RangeDataInserterTest, InsertPointCloud) {
   InsertPointCloud();
   EXPECT_NEAR(options().miss_probability(), GetProbability(0.5f, 0.5f, -3.5f),
               1e-4);
@@ -88,7 +88,7 @@ TEST_F(LaserFanInserterTest, InsertPointCloud) {
   }
 }
 
-TEST_F(LaserFanInserterTest, ProbabilityProgression) {
+TEST_F(RangeDataInserterTest, ProbabilityProgression) {
   InsertPointCloud();
   EXPECT_NEAR(options().hit_probability(), GetProbability(-1.5f, 0.5f, 4.5f),
               1e-4);

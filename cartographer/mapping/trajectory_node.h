@@ -23,7 +23,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -35,8 +35,8 @@ struct TrajectoryNode {
   struct ConstantData {
     common::Time time;
 
-    // LaserFan in 'pose' frame. Only used in the 2D case.
-    sensor::LaserFan laser_fan_2d;
+    // Range data in 'pose' frame. Only used in the 2D case.
+    sensor::RangeData range_data_2d;
 
     // Range data in 'pose' frame. Only used in the 3D case.
     sensor::CompressedRangeData range_data_3d;

@@ -28,7 +28,7 @@
 #include "cartographer/mapping_3d/motion_filter.h"
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_3d/submaps.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -100,12 +100,12 @@ class OptimizingLocalTrajectoryBuilder
 
   void RemoveObsoleteSensorData();
 
-  std::unique_ptr<InsertionResult> AddAccumulatedLaserFan(
+  std::unique_ptr<InsertionResult> AddAccumulatedRangeData(
       common::Time time, const transform::Rigid3d& pose_observation,
-      const sensor::LaserFan& laser_fan_in_tracking);
+      const sensor::RangeData& range_data_in_tracking);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
-      const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
+      const common::Time time, const sensor::RangeData& range_data_in_tracking,
       const transform::Rigid3d& pose_observation);
 
   std::unique_ptr<InsertionResult> MaybeOptimize(common::Time time);

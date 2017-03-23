@@ -64,14 +64,14 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
 }
 
 // An individual submap, which has an initial position 'origin', keeps track of
-// which laser fans where inserted into it, and sets the
+// which range data were inserted into it, and sets the
 // 'finished_probability_grid' to be used for loop closing once the map no
 // longer changes.
 struct Submap {
-  Submap(const Eigen::Vector3f& origin, int begin_laser_fan_index)
+  Submap(const Eigen::Vector3f& origin, int begin_range_data_index)
       : origin(origin),
-        begin_laser_fan_index(begin_laser_fan_index),
-        end_laser_fan_index(begin_laser_fan_index) {}
+        begin_range_data_index(begin_range_data_index),
+        end_range_data_index(begin_range_data_index) {}
 
   transform::Rigid3d local_pose() const {
     return transform::Rigid3d::Translation(origin.cast<double>());
@@ -80,14 +80,14 @@ struct Submap {
   // Origin of this submap.
   Eigen::Vector3f origin;
 
-  // This Submap contains LaserFans with indices in the range
-  // ['begin_laser_fan_index', 'end_laser_fan_index').
-  int begin_laser_fan_index;
-  int end_laser_fan_index;
+  // This Submap contains RangeData with indices in the range
+  // ['begin_range_data_index', 'end_range_data_index').
+  int begin_range_data_index;
+  int end_range_data_index;
 
   // The 'finished_probability_grid' when this submap is finished and will not
   // change anymore. Otherwise, this is nullptr and the next call to
-  // InsertLaserFan() will change the submap.
+  // InsertRangeData() will change the submap.
   const mapping_2d::ProbabilityGrid* finished_probability_grid = nullptr;
 };
 

@@ -22,7 +22,7 @@
 #include <string>
 
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/mapping_3d/laser_fan_inserter.h"
+#include "cartographer/mapping_3d/range_data_inserter.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
 #include "gtest/gtest.h"
@@ -51,20 +51,21 @@ CreateFastCorrelativeScanMatcherTestOptions(const int branch_and_bound_depth) {
   return CreateFastCorrelativeScanMatcherOptions(parameter_dictionary.get());
 }
 
-mapping_3d::proto::LaserFanInserterOptions CreateLaserFanInserterTestOptions() {
+mapping_3d::proto::RangeDataInserterOptions
+CreateRangeDataInserterTestOptions() {
   auto parameter_dictionary = common::MakeDictionary(
       "return { "
       "hit_probability = 0.7, "
       "miss_probability = 0.4, "
       "num_free_space_voxels = 5, "
       "}");
-  return CreateLaserFanInserterOptions(parameter_dictionary.get());
+  return CreateRangeDataInserterOptions(parameter_dictionary.get());
 }
 
 TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
   std::mt19937 prng(42);
   std::uniform_real_distribution<float> distribution(-1.f, 1.f);
-  LaserFanInserter laser_fan_inserter(CreateLaserFanInserterTestOptions());
+  RangeDataInserter range_data_inserter(CreateRangeDataInserterTestOptions());
   constexpr float kMinScore = 0.1f;
   const auto options = CreateFastCorrelativeScanMatcherTestOptions(5);
 
@@ -89,11 +90,12 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
     HybridGrid hybrid_grid(0.05f /* resolution */,
                            Eigen::Vector3f(0.5f, 1.5f, 2.5f) /* origin */);
     hybrid_grid.StartUpdate();
-    laser_fan_inserter.Insert(sensor::LaserFan{expected_pose.translation(),
-                                               sensor::TransformPointCloud(
-                                                   point_cloud, expected_pose),
-                                               {}},
-                              &hybrid_grid);
+    range_data_inserter.Insert(
+        sensor::RangeData{
+            expected_pose.translation(),
+            sensor::TransformPointCloud(point_cloud, expected_pose),
+            {}},
+        &hybrid_grid);
 
     FastCorrelativeScanMatcher fast_correlative_scan_matcher(hybrid_grid, {},
                                                              options);

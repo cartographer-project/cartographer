@@ -69,8 +69,8 @@ message LaserScan {
   repeated Values intensity = 10;
 }
 
-// Proto representation of ::cartographer::sensor::LaserFan
-message LaserFan {
+// Proto representation of ::cartographer::sensor::RangeData
+message RangeData {
   optional transform.proto.Vector3f origin = 1;
   optional PointCloud point_cloud = 2;
   optional PointCloud missing_echo_point_cloud = 3;

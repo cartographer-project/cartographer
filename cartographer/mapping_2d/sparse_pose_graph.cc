@@ -85,7 +85,7 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
 
 void SparsePoseGraph::AddScan(
     common::Time time, const transform::Rigid3d& tracking_to_pose,
-    const sensor::LaserFan& laser_fan_in_pose, const transform::Rigid2d& pose,
+    const sensor::RangeData& range_data_in_pose, const transform::Rigid2d& pose,
     const kalman_filter::Pose2DCovariance& covariance,
     const mapping::Submaps* submaps,
     const mapping::Submap* const matching_submap,
@@ -98,8 +98,8 @@ void SparsePoseGraph::AddScan(
   CHECK_LT(j, std::numeric_limits<int>::max());
 
   constant_node_data_->push_back(mapping::TrajectoryNode::ConstantData{
-      time, laser_fan_in_pose,
-      Compress(sensor::LaserFan{Eigen::Vector3f::Zero(), {}, {}, {}}), submaps,
+      time, range_data_in_pose,
+      Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}, {}}), submaps,
       tracking_to_pose});
   trajectory_nodes_.push_back(mapping::TrajectoryNode{
       &constant_node_data_->back(), optimized_pose,
@@ -167,7 +167,7 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_index, submap_states_[submap_index].submap, scan_index,
         scan_trajectory, submap_trajectory, &trajectory_connectivity_,
-        &trajectory_nodes_[scan_index].constant_data->laser_fan_2d.returns);
+        &trajectory_nodes_[scan_index].constant_data->range_data_2d.returns);
   } else {
     const bool scan_and_submap_trajectories_connected =
         reverse_connected_components_.count(scan_trajectory) > 0 &&
@@ -178,7 +178,7 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
         scan_and_submap_trajectories_connected) {
       constraint_builder_.MaybeAddConstraint(
           submap_index, submap_states_[submap_index].submap, scan_index,
-          &trajectory_nodes_[scan_index].constant_data->laser_fan_2d.returns,
+          &trajectory_nodes_[scan_index].constant_data->range_data_2d.returns,
           relative_pose);
     }
   }

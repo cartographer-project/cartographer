@@ -33,7 +33,7 @@ message LocalTrajectoryBuilderOptions {
   // empty space.
   optional float laser_missing_echo_ray_length = 16;
 
-  // Voxel filter that gets applied to the horizontal laser immediately after
+  // Voxel filter that gets applied to the range data immediately after
   // cropping.
   optional float laser_voxel_filter_size = 3;
 
