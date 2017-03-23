@@ -98,9 +98,7 @@ class SparsePoseGraph {
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
 
-  // Serializes the constraints and the computed trajectory.
-  //
-  // TODO(whess): Support multiple trajectories.
+  // Serializes the constraints and trajectories.
   proto::SparsePoseGraph ToProto();
 };
 
