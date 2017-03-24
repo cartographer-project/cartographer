@@ -22,7 +22,6 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/proto/trajectory.pb.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -66,8 +65,6 @@ struct TrajectoryNodes {
   std::deque<mapping::TrajectoryNode::ConstantData> constant_data;
   std::vector<mapping::TrajectoryNode> trajectory_nodes;
 };
-
-proto::Trajectory ToProto(const std::vector<TrajectoryNode>& nodes);
 
 }  // namespace mapping
 }  // namespace cartographer
