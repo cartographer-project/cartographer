@@ -84,18 +84,15 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   // The proto uses integer 'trajectory_id's, but the sparse pose graph itself
   // doesn't track trajectories directly, so we need to build an integer
   // mapping.
-  const auto trajectory_nodes = GetTrajectoryNodes();
-  std::unordered_map<const Submaps*, size_t> trajectory_indices;
-  for (const auto node : trajectory_nodes) {
-    // emplace() does nothing if the key already exists.
-    trajectory_indices.emplace(node.constant_data->trajectory,
-                               trajectory_indices.size());
-  }
+  std::vector<std::vector<TrajectoryNode>> grouped_nodes;
+  std::vector<std::pair<int, int>> new_indices;
+  GroupTrajectoryNodes(GetTrajectoryNodes(), &grouped_nodes, &new_indices);
 
   for (const auto& constraint : constraints()) {
     auto* const constraint_proto = proto.add_constraint();
     *constraint_proto->mutable_relative_pose() =
         transform::ToProto(constraint.pose.zbar_ij);
+    constraint_proto->mutable_sqrt_lambda()->Reserve(36);
     for (int i = 0; i != 36; ++i) {
       constraint_proto->mutable_sqrt_lambda()->Add(0.);
     }
@@ -103,37 +100,34 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
         constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
         constraint.pose.sqrt_Lambda_ij;
 
-    constraint_proto->mutable_submap_id()->set_submap_index(constraint.i);
     constraint_proto->mutable_submap_id()->set_trajectory_id(
-        trajectory_indices[trajectory_nodes[constraint.i]
-                               .constant_data->trajectory]);
+        new_indices[constraint.i].first);
+    constraint_proto->mutable_submap_id()->set_submap_index(
+        new_indices[constraint.i].second);
 
-    constraint_proto->mutable_scan_id()->set_scan_index(constraint.j);
     constraint_proto->mutable_scan_id()->set_trajectory_id(
-        trajectory_indices[trajectory_nodes[constraint.j]
-                               .constant_data->trajectory]);
+        new_indices[constraint.i].first);
+    constraint_proto->mutable_scan_id()->set_scan_index(
+        new_indices[constraint.j].second);
+
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }
 
-  for (const auto node : trajectory_nodes) {
-    const int trajectory_index =
-        trajectory_indices[node.constant_data->trajectory];
-    // Make sure proto.trajectories(trajectory_index) is valid.
-    while (proto.trajectory_size() <= trajectory_index) {
-      proto.add_trajectory();
+  for (size_t i = 0; i < grouped_nodes.size(); ++i) {
+    auto* trajectory_proto = proto.add_trajectory();
+    for (size_t j = 0; j < grouped_nodes[i].size(); ++j) {
+      auto* node_proto = trajectory_proto->add_node();
+      const auto& node = grouped_nodes[i][j];
+      node_proto->set_timestamp(common::ToUniversal(node.constant_data->time));
+      *node_proto->mutable_pose() =
+          transform::ToProto(node.pose * node.constant_data->tracking_to_pose);
     }
 
-    auto* node_proto = proto.mutable_trajectory(trajectory_index)->add_node();
-    node_proto->set_timestamp(common::ToUniversal(node.constant_data->time));
-    *node_proto->mutable_pose() =
-        transform::ToProto(node.pose * node.constant_data->tracking_to_pose);
-
     const Submaps* const submaps =
-        trajectory_nodes[trajectory_index].constant_data->trajectory;
+        grouped_nodes[i][0].constant_data->trajectory;
     for (const auto& transform : GetSubmapTransforms(*submaps)) {
-      *proto.mutable_trajectory(trajectory_index)
-           ->add_submap()
-           ->mutable_pose() = transform::ToProto(transform);
+      *trajectory_proto->add_submap()->mutable_pose() =
+          transform::ToProto(transform);
     }
   }
 
