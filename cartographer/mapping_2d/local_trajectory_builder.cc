@@ -19,7 +19,7 @@
 #include <limits>
 
 #include "cartographer/common/make_unique.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
 namespace mapping_2d {
@@ -78,28 +78,28 @@ LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
 const Submaps* LocalTrajectoryBuilder::submaps() const { return &submaps_; }
 
-sensor::LaserFan LocalTrajectoryBuilder::TransformAndFilterLaserFan(
+sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
     const transform::Rigid3f& tracking_to_tracking_2d,
-    const sensor::LaserFan& laser_fan) const {
+    const sensor::RangeData& range_data) const {
   // Drop any returns below the minimum range and convert returns beyond the
   // maximum range into misses.
-  sensor::LaserFan returns_and_misses{laser_fan.origin, {}, {}, {}};
-  for (const Eigen::Vector3f& return_ : laser_fan.returns) {
-    const float range = (return_ - laser_fan.origin).norm();
+  sensor::RangeData returns_and_misses{range_data.origin, {}, {}, {}};
+  for (const Eigen::Vector3f& hit : range_data.returns) {
+    const float range = (hit - range_data.origin).norm();
     if (range >= options_.laser_min_range()) {
       if (range <= options_.laser_max_range()) {
-        returns_and_misses.returns.push_back(return_);
+        returns_and_misses.returns.push_back(hit);
       } else {
         returns_and_misses.misses.push_back(
-            laser_fan.origin + options_.laser_missing_echo_ray_length() *
-                                   (return_ - laser_fan.origin).normalized());
+            range_data.origin + options_.laser_missing_echo_ray_length() *
+                                    (hit - range_data.origin).normalized());
       }
     }
   }
-  const sensor::LaserFan cropped = sensor::CropLaserFan(
-      sensor::TransformLaserFan(returns_and_misses, tracking_to_tracking_2d),
+  const sensor::RangeData cropped = sensor::CropRangeData(
+      sensor::TransformRangeData(returns_and_misses, tracking_to_tracking_2d),
       options_.laser_min_z(), options_.laser_max_z());
-  return sensor::LaserFan{
+  return sensor::RangeData{
       cropped.origin,
       sensor::VoxelFiltered(cropped.returns,
                             options_.laser_voxel_filter_size()),
@@ -110,7 +110,7 @@ sensor::LaserFan LocalTrajectoryBuilder::TransformAndFilterLaserFan(
 void LocalTrajectoryBuilder::ScanMatch(
     common::Time time, const transform::Rigid3d& pose_prediction,
     const transform::Rigid3d& tracking_to_tracking_2d,
-    const sensor::LaserFan& laser_fan_in_tracking_2d,
+    const sensor::RangeData& range_data_in_tracking_2d,
     transform::Rigid3d* pose_observation,
     kalman_filter::PoseCovariance* covariance_observation) {
   const ProbabilityGrid& probability_grid =
@@ -123,7 +123,7 @@ void LocalTrajectoryBuilder::ScanMatch(
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.adaptive_voxel_filter_options());
   const sensor::PointCloud filtered_point_cloud_in_tracking_2d =
-      adaptive_voxel_filter.Filter(laser_fan_in_tracking_2d.returns);
+      adaptive_voxel_filter.Filter(range_data_in_tracking_2d.returns);
   if (options_.use_online_correlative_scan_matching()) {
     real_time_correlative_scan_matcher_.Match(
         pose_prediction_2d, filtered_point_cloud_in_tracking_2d,
@@ -149,8 +149,8 @@ void LocalTrajectoryBuilder::ScanMatch(
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
-LocalTrajectoryBuilder::AddHorizontalLaserFan(
-    const common::Time time, const sensor::LaserFan& laser_fan) {
+LocalTrajectoryBuilder::AddHorizontalRangeData(
+    const common::Time time, const sensor::RangeData& range_data) {
   // Initialize IMU tracker now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
     InitializeImuTracker(time);
@@ -177,17 +177,19 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
               -transform::GetYaw(pose_prediction), Eigen::Vector3d::UnitZ())) *
           pose_prediction.rotation());
 
-  const sensor::LaserFan laser_fan_in_tracking_2d = TransformAndFilterLaserFan(
-      tracking_to_tracking_2d.cast<float>(), laser_fan);
+  const sensor::RangeData range_data_in_tracking_2d =
+      TransformAndFilterRangeData(tracking_to_tracking_2d.cast<float>(),
+                                  range_data);
 
-  if (laser_fan_in_tracking_2d.returns.empty()) {
-    LOG(WARNING) << "Dropped empty horizontal laser point cloud.";
+  if (range_data_in_tracking_2d.returns.empty()) {
+    LOG(WARNING) << "Dropped empty horizontal range data.";
     return nullptr;
   }
 
   kalman_filter::PoseCovariance covariance_observation;
   ScanMatch(time, pose_prediction, tracking_to_tracking_2d,
-            laser_fan_in_tracking_2d, &pose_estimate_, &covariance_observation);
+            range_data_in_tracking_2d, &pose_estimate_,
+            &covariance_observation);
   odometry_correction_ = transform::Rigid3d::Identity();
   if (!odometry_state_tracker_.empty()) {
     // We add an odometry state, so that the correction from the scan matching
@@ -217,7 +219,7 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
       pose_estimate_ * tracking_to_tracking_2d.inverse();
   last_pose_estimate_ = {
       time, pose_estimate_,
-      sensor::TransformPointCloud(laser_fan_in_tracking_2d.returns,
+      sensor::TransformPointCloud(range_data_in_tracking_2d.returns,
                                   tracking_2d_to_map.cast<float>())};
 
   const transform::Rigid2d pose_estimate_2d =
@@ -232,13 +234,13 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
   for (int insertion_index : submaps_.insertion_indices()) {
     insertion_submaps.push_back(submaps_.Get(insertion_index));
   }
-  submaps_.InsertLaserFan(
-      TransformLaserFan(laser_fan_in_tracking_2d,
-                        transform::Embed3D(pose_estimate_2d.cast<float>())));
+  submaps_.InsertRangeData(
+      TransformRangeData(range_data_in_tracking_2d,
+                         transform::Embed3D(pose_estimate_2d.cast<float>())));
 
   return common::make_unique<InsertionResult>(InsertionResult{
       time, &submaps_, matching_submap, insertion_submaps,
-      tracking_to_tracking_2d, tracking_2d_to_map, laser_fan_in_tracking_2d,
+      tracking_to_tracking_2d, tracking_2d_to_map, range_data_in_tracking_2d,
       pose_estimate_2d, covariance_observation});
 }
 

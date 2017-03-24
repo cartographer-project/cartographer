@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_LASER_FAN_INSERTER_H_
-#define CARTOGRAPHER_MAPPING_2D_LASER_FAN_INSERTER_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_H_
+#define CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_H_
 
 #include <utility>
 #include <vector>
@@ -23,33 +23,33 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/proto/laser_fan_inserter_options.pb.h"
+#include "cartographer/mapping_2d/proto/range_data_inserter_options.pb.h"
 #include "cartographer/mapping_2d/xy_index.h"
-#include "cartographer/sensor/laser.h"
 #include "cartographer/sensor/point_cloud.h"
+#include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
 namespace mapping_2d {
 
-proto::LaserFanInserterOptions CreateLaserFanInserterOptions(
+proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class LaserFanInserter {
+class RangeDataInserter {
  public:
-  explicit LaserFanInserter(const proto::LaserFanInserterOptions& options);
+  explicit RangeDataInserter(const proto::RangeDataInserterOptions& options);
 
-  LaserFanInserter(const LaserFanInserter&) = delete;
-  LaserFanInserter& operator=(const LaserFanInserter&) = delete;
+  RangeDataInserter(const RangeDataInserter&) = delete;
+  RangeDataInserter& operator=(const RangeDataInserter&) = delete;
 
-  // Inserts 'laser_fan' into 'probability_grid'.
-  void Insert(const sensor::LaserFan& laser_fan,
+  // Inserts 'range_data' into 'probability_grid'.
+  void Insert(const sensor::RangeData& range_data,
               ProbabilityGrid* probability_grid) const;
 
   const std::vector<uint16>& hit_table() const { return hit_table_; }
   const std::vector<uint16>& miss_table() const { return miss_table_; }
 
  private:
-  const proto::LaserFanInserterOptions options_;
+  const proto::RangeDataInserterOptions options_;
   const std::vector<uint16> hit_table_;
   const std::vector<uint16> miss_table_;
 };
@@ -57,4 +57,4 @@ class LaserFanInserter {
 }  // namespace mapping_2d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_LASER_FAN_INSERTER_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_H_

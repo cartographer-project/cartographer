@@ -19,8 +19,8 @@
 
 #include "cartographer/common/time.h"
 #include "cartographer/kalman_filter/pose_tracker.h"
-#include "cartographer/sensor/laser.h"
 #include "cartographer/sensor/point_cloud.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {

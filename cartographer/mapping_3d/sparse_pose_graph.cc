@@ -84,7 +84,7 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
 }
 
 int SparsePoseGraph::AddScan(
-    common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
+    common::Time time, const sensor::RangeData& range_data_in_tracking,
     const transform::Rigid3d& pose,
     const kalman_filter::PoseCovariance& covariance, const Submaps* submaps,
     const Submap* const matching_submap,
@@ -97,8 +97,8 @@ int SparsePoseGraph::AddScan(
   CHECK_LT(j, std::numeric_limits<int>::max());
 
   constant_node_data_->push_back(mapping::TrajectoryNode::ConstantData{
-      time, sensor::LaserFan{Eigen::Vector3f::Zero(), {}, {}},
-      sensor::Compress(laser_fan_in_tracking), submaps,
+      time, sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}},
+      sensor::Compress(range_data_in_tracking), submaps,
       transform::Rigid3d::Identity()});
   trajectory_nodes_.push_back(
       mapping::TrajectoryNode{&constant_node_data_->back(), optimized_pose});
@@ -302,12 +302,13 @@ void SparsePoseGraph::WaitForAllComputations() {
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone([this, &notification](
-      const sparse_pose_graph::ConstraintBuilder::Result& result) {
-    constraints_.insert(constraints_.end(), result.begin(), result.end());
-    common::MutexLocker locker(&mutex_);
-    notification = true;
-  });
+  constraint_builder_.WhenDone(
+      [this, &notification](
+          const sparse_pose_graph::ConstraintBuilder::Result& result) {
+        constraints_.insert(constraints_.end(), result.begin(), result.end());
+        common::MutexLocker locker(&mutex_);
+        notification = true;
+      });
   locker.Await([&notification]() { return notification; });
 }
 

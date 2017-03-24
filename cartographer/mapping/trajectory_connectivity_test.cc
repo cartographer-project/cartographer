@@ -36,9 +36,9 @@ class TrajectoryConnectivityTest : public ::testing::Test {
           return {
             resolution = 0.05,
             half_length = 10.,
-            num_laser_fans = 10,
+            num_range_data = 10,
             output_debug_images = false,
-            laser_fan_inserter = {
+            range_data_inserter = {
               insert_free_space = true,
               hit_probability = 0.53,
               miss_probability = 0.495,

@@ -14,9 +14,9 @@
 
 syntax = "proto2";
 
-package cartographer.mapping_3d.proto;
+package cartographer.mapping_2d.proto;
 
-message LaserFanInserterOptions {
+message RangeDataInserterOptions {
   // Probability change for a hit (this will be converted to odds and therefore
   // must be greater than 0.5).
   optional double hit_probability = 1;
@@ -25,7 +25,7 @@ message LaserFanInserterOptions {
   // must be less than 0.5).
   optional double miss_probability = 2;
 
-  // Up to how many free space voxels are updated for scan matching.
-  // 0 disables free space.
-  optional int32 num_free_space_voxels = 3;
+  // If 'false', free space will not change the probabilities in the occupancy
+  // grid.
+  optional bool insert_free_space = 3;
 }

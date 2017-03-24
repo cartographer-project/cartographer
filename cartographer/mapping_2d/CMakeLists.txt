@@ -14,9 +14,9 @@
 
 add_subdirectory("scan_matching")
 
-google_test(mapping_2d_laser_fan_inserter_test
+google_test(mapping_2d_range_data_inserter_test
   SRCS
-    laser_fan_inserter_test.cc
+    range_data_inserter_test.cc
 )
 
 google_test(mapping_2d_map_limits_test

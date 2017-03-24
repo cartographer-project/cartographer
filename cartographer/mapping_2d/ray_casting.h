@@ -21,16 +21,16 @@
 
 #include "cartographer/mapping_2d/map_limits.h"
 #include "cartographer/mapping_2d/xy_index.h"
-#include "cartographer/sensor/laser.h"
 #include "cartographer/sensor/point_cloud.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace mapping_2d {
 
-// For each ray in 'laser_fan', calls 'hit_visitor' and 'miss_visitor' on the
+// For each ray in 'range_data', calls 'hit_visitor' and 'miss_visitor' on the
 // appropriate cells. Hits are handled before misses.
-void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
+void CastRays(const sensor::RangeData& range_data, const MapLimits& limits,
               const std::function<void(const Eigen::Array2i&)>& hit_visitor,
               const std::function<void(const Eigen::Array2i&)>& miss_visitor);
 

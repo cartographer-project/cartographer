@@ -139,14 +139,14 @@ OptimizingLocalTrajectoryBuilder::AddRangefinderData(
   CHECK_GT(ranges.size(), 0);
 
   // TODO(hrapp): Handle misses.
-  // TODO(hrapp): Where are NaNs in laser_fan_in_tracking coming from?
+  // TODO(hrapp): Where are NaNs in range_data_in_tracking coming from?
   sensor::PointCloud point_cloud;
-  for (const Eigen::Vector3f& laser_return : ranges) {
-    const Eigen::Vector3f delta = laser_return - origin;
+  for (const Eigen::Vector3f& hit : ranges) {
+    const Eigen::Vector3f delta = hit - origin;
     const float range = delta.norm();
     if (range >= options_.laser_min_range()) {
       if (range <= options_.laser_max_range()) {
-        point_cloud.push_back(laser_return);
+        point_cloud.push_back(hit);
       }
     }
   }
@@ -172,7 +172,7 @@ OptimizingLocalTrajectoryBuilder::AddRangefinderData(
       low_resolution_adaptive_voxel_filter.Filter(point_cloud);
 
   if (batches_.empty()) {
-    // First laser ever. Initialize to the origin.
+    // First rangefinder data ever. Initialize to the origin.
     batches_.push_back(
         Batch{time, point_cloud, high_resolution_filtered_points,
               low_resolution_filtered_points,
@@ -299,8 +299,8 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
       interpolation_buffer.Push(odometer_data.time, odometer_data.pose);
     }
     for (size_t i = 1; i < batches_.size(); ++i) {
-      // Only add constraints for this laser if  we have bracketing data from
-      // the odometer.
+      // Only add constraints for this range data if  we have bracketing data
+      // from the odometer.
       if (!(interpolation_buffer.earliest_time() <= batches_[i - 1].time &&
             batches_[i].time <= interpolation_buffer.latest_time())) {
         continue;
@@ -336,43 +336,43 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   num_accumulated_ = 0;
 
   const transform::Rigid3d optimized_pose = batches_.back().state.ToRigid();
-  sensor::LaserFan accumulated_laser_fan_in_tracking = {
+  sensor::RangeData accumulated_range_data_in_tracking = {
       Eigen::Vector3f::Zero(), {}, {}};
 
   for (const auto& batch : batches_) {
     const transform::Rigid3f transform =
         (optimized_pose.inverse() * batch.state.ToRigid()).cast<float>();
     for (const Eigen::Vector3f& point : batch.points) {
-      accumulated_laser_fan_in_tracking.returns.push_back(transform * point);
+      accumulated_range_data_in_tracking.returns.push_back(transform * point);
     }
   }
 
-  return AddAccumulatedLaserFan(time, optimized_pose,
-                                accumulated_laser_fan_in_tracking);
+  return AddAccumulatedRangeData(time, optimized_pose,
+                                 accumulated_range_data_in_tracking);
 }
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
-OptimizingLocalTrajectoryBuilder::AddAccumulatedLaserFan(
+OptimizingLocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const transform::Rigid3d& optimized_pose,
-    const sensor::LaserFan& laser_fan_in_tracking) {
-  const sensor::LaserFan filtered_laser_fan = {
-      laser_fan_in_tracking.origin,
-      sensor::VoxelFiltered(laser_fan_in_tracking.returns,
+    const sensor::RangeData& range_data_in_tracking) {
+  const sensor::RangeData filtered_range_data = {
+      range_data_in_tracking.origin,
+      sensor::VoxelFiltered(range_data_in_tracking.returns,
                             options_.laser_voxel_filter_size()),
-      sensor::VoxelFiltered(laser_fan_in_tracking.misses,
+      sensor::VoxelFiltered(range_data_in_tracking.misses,
                             options_.laser_voxel_filter_size())};
 
-  if (filtered_laser_fan.returns.empty()) {
-    LOG(WARNING) << "Dropped empty laser scanner point cloud.";
+  if (filtered_range_data.returns.empty()) {
+    LOG(WARNING) << "Dropped empty range data.";
     return nullptr;
   }
 
   last_pose_estimate_ = {
       time, optimized_pose,
-      sensor::TransformPointCloud(filtered_laser_fan.returns,
+      sensor::TransformPointCloud(filtered_range_data.returns,
                                   optimized_pose.cast<float>())};
 
-  return InsertIntoSubmap(time, filtered_laser_fan, optimized_pose);
+  return InsertIntoSubmap(time, filtered_range_data, optimized_pose);
 }
 
 const OptimizingLocalTrajectoryBuilder::PoseEstimate&
@@ -387,7 +387,7 @@ void OptimizingLocalTrajectoryBuilder::AddTrajectoryNodeIndex(
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
 OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
-    const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
+    const common::Time time, const sensor::RangeData& range_data_in_tracking,
     const transform::Rigid3d& pose_observation) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
@@ -398,14 +398,14 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
   for (int insertion_index : submaps_->insertion_indices()) {
     insertion_submaps.push_back(submaps_->Get(insertion_index));
   }
-  submaps_->InsertLaserFan(sensor::TransformLaserFan(
-      laser_fan_in_tracking, pose_observation.cast<float>()));
+  submaps_->InsertRangeData(sensor::TransformRangeData(
+      range_data_in_tracking, pose_observation.cast<float>()));
 
   const kalman_filter::PoseCovariance kCovariance =
       1e-7 * kalman_filter::PoseCovariance::Identity();
 
   return std::unique_ptr<InsertionResult>(new InsertionResult{
-      time, laser_fan_in_tracking, pose_observation, kCovariance,
+      time, range_data_in_tracking, pose_observation, kCovariance,
       submaps_.get(), matching_submap, insertion_submaps});
 }
 

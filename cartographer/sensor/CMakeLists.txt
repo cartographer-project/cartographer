@@ -22,9 +22,9 @@ google_test(sensor_compressed_point_cloud_test
     compressed_point_cloud_test.cc
 )
 
-google_test(sensor_laser_test
+google_test(sensor_range_data_test
   SRCS
-    laser_test.cc
+    range_data_test.cc
 )
 
 google_test(sensor_ordered_multi_queue_test

@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_3D_HYBRID_GRID_H_
 #define CARTOGRAPHER_MAPPING_3D_HYBRID_GRID_H_
 
+#include <array>
 #include <cmath>
 #include <limits>
 #include <utility>
@@ -26,8 +27,8 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
-#include "cartographer/mapping_3d/proto/hybrid_grid.pb.h"
 #include "cartographer/mapping/probability_values.h"
+#include "cartographer/mapping_3d/proto/hybrid_grid.pb.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 

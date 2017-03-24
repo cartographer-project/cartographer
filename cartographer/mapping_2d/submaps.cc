@@ -90,42 +90,43 @@ proto::SubmapsOptions CreateSubmapsOptions(
   proto::SubmapsOptions options;
   options.set_resolution(parameter_dictionary->GetDouble("resolution"));
   options.set_half_length(parameter_dictionary->GetDouble("half_length"));
-  options.set_num_laser_fans(
-      parameter_dictionary->GetNonNegativeInt("num_laser_fans"));
+  options.set_num_range_data(
+      parameter_dictionary->GetNonNegativeInt("num_range_data"));
   options.set_output_debug_images(
       parameter_dictionary->GetBool("output_debug_images"));
-  *options.mutable_laser_fan_inserter_options() = CreateLaserFanInserterOptions(
-      parameter_dictionary->GetDictionary("laser_fan_inserter").get());
-  CHECK_GT(options.num_laser_fans(), 0);
+  *options.mutable_range_data_inserter_options() =
+      CreateRangeDataInserterOptions(
+          parameter_dictionary->GetDictionary("range_data_inserter").get());
+  CHECK_GT(options.num_range_data(), 0);
   return options;
 }
 
 Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin,
-               const int begin_laser_fan_index)
+               const int begin_range_data_index)
     : mapping::Submap(Eigen::Vector3f(origin.x(), origin.y(), 0.),
-                      begin_laser_fan_index),
+                      begin_range_data_index),
       probability_grid(limits) {}
 
 Submaps::Submaps(const proto::SubmapsOptions& options)
     : options_(options),
-      laser_fan_inserter_(options.laser_fan_inserter_options()) {
+      range_data_inserter_(options.range_data_inserter_options()) {
   // We always want to have at least one likelihood field which we can return,
   // and will create it at the origin in absence of a better choice.
   AddSubmap(Eigen::Vector2f::Zero());
 }
 
-void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan) {
-  CHECK_LT(num_laser_fans_, std::numeric_limits<int>::max());
-  ++num_laser_fans_;
+void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
+  CHECK_LT(num_range_data_, std::numeric_limits<int>::max());
+  ++num_range_data_;
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
     CHECK(submap->finished_probability_grid == nullptr);
-    laser_fan_inserter_.Insert(laser_fan, &submap->probability_grid);
-    submap->end_laser_fan_index = num_laser_fans_;
+    range_data_inserter_.Insert(range_data, &submap->probability_grid);
+    submap->end_range_data_index = num_range_data_;
   }
-  ++num_laser_fans_in_last_submap_;
-  if (num_laser_fans_in_last_submap_ == options_.num_laser_fans()) {
-    AddSubmap(laser_fan.origin.head<2>());
+  ++num_range_data_in_last_submap_;
+  if (num_range_data_in_last_submap_ == options_.num_range_data()) {
+    AddSubmap(range_data.origin.head<2>());
   }
 }
 
@@ -172,9 +173,9 @@ void Submaps::AddSubmap(const Eigen::Vector2f& origin) {
                 origin.cast<double>() +
                     options_.half_length() * Eigen::Vector2d::Ones(),
                 CellLimits(num_cells_per_dimension, num_cells_per_dimension)),
-      origin, num_laser_fans_));
+      origin, num_range_data_));
   LOG(INFO) << "Added submap " << size();
-  num_laser_fans_in_last_submap_ = 0;
+  num_range_data_in_last_submap_ = 0;
 }
 
 }  // namespace mapping_2d

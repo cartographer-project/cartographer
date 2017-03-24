@@ -42,7 +42,7 @@ KalmanLocalTrajectoryBuilder::KalmanLocalTrajectoryBuilder(
           options_.ceres_scan_matcher_options())),
       num_accumulated_(0),
       first_pose_prediction_(transform::Rigid3f::Identity()),
-      accumulated_laser_fan_{Eigen::Vector3f::Zero(), {}, {}} {}
+      accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}} {}
 
 KalmanLocalTrajectoryBuilder::~KalmanLocalTrajectoryBuilder() {}
 
@@ -84,28 +84,27 @@ KalmanLocalTrajectoryBuilder::AddRangefinderData(
       time, &pose_prediction, &unused_covariance_prediction);
   if (num_accumulated_ == 0) {
     first_pose_prediction_ = pose_prediction.cast<float>();
-    accumulated_laser_fan_ = sensor::LaserFan{Eigen::Vector3f::Zero(), {}, {}};
+    accumulated_range_data_ =
+        sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
   }
 
   const transform::Rigid3f tracking_delta =
       first_pose_prediction_.inverse() * pose_prediction.cast<float>();
-  const sensor::LaserFan laser_fan_in_first_tracking =
-      sensor::TransformLaserFan(sensor::LaserFan{origin, ranges, {}, {}},
-                                tracking_delta);
-  for (const Eigen::Vector3f& laser_return :
-       laser_fan_in_first_tracking.returns) {
-    const Eigen::Vector3f delta =
-        laser_return - laser_fan_in_first_tracking.origin;
+  const sensor::RangeData range_data_in_first_tracking =
+      sensor::TransformRangeData(sensor::RangeData{origin, ranges, {}, {}},
+                                 tracking_delta);
+  for (const Eigen::Vector3f& hit : range_data_in_first_tracking.returns) {
+    const Eigen::Vector3f delta = hit - range_data_in_first_tracking.origin;
     const float range = delta.norm();
     if (range >= options_.laser_min_range()) {
       if (range <= options_.laser_max_range()) {
-        accumulated_laser_fan_.returns.push_back(laser_return);
+        accumulated_range_data_.returns.push_back(hit);
       } else {
         // We insert a ray cropped to 'laser_max_range' as a miss for hits
         // beyond the maximum range. This way the free space up to the maximum
         // range will be updated.
-        accumulated_laser_fan_.misses.push_back(
-            laser_fan_in_first_tracking.origin +
+        accumulated_range_data_.misses.push_back(
+            range_data_in_first_tracking.origin +
             options_.laser_max_range() / range * delta);
       }
     }
@@ -114,25 +113,25 @@ KalmanLocalTrajectoryBuilder::AddRangefinderData(
 
   if (num_accumulated_ >= options_.scans_per_accumulation()) {
     num_accumulated_ = 0;
-    return AddAccumulatedLaserFan(
-        time, sensor::TransformLaserFan(accumulated_laser_fan_,
-                                        tracking_delta.inverse()));
+    return AddAccumulatedRangeData(
+        time, sensor::TransformRangeData(accumulated_range_data_,
+                                         tracking_delta.inverse()));
   }
   return nullptr;
 }
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
-KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
-    const common::Time time, const sensor::LaserFan& laser_fan_in_tracking) {
-  const sensor::LaserFan filtered_laser_fan = {
-      laser_fan_in_tracking.origin,
-      sensor::VoxelFiltered(laser_fan_in_tracking.returns,
+KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
+    const common::Time time, const sensor::RangeData& range_data_in_tracking) {
+  const sensor::RangeData filtered_range_data = {
+      range_data_in_tracking.origin,
+      sensor::VoxelFiltered(range_data_in_tracking.returns,
                             options_.laser_voxel_filter_size()),
-      sensor::VoxelFiltered(laser_fan_in_tracking.misses,
+      sensor::VoxelFiltered(range_data_in_tracking.misses,
                             options_.laser_voxel_filter_size())};
 
-  if (filtered_laser_fan.returns.empty()) {
-    LOG(WARNING) << "Dropped empty laser scanner point cloud.";
+  if (filtered_range_data.returns.empty()) {
+    LOG(WARNING) << "Dropped empty range data.";
     return nullptr;
   }
 
@@ -145,7 +144,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.high_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud filtered_point_cloud_in_tracking =
-      adaptive_voxel_filter.Filter(filtered_laser_fan.returns);
+      adaptive_voxel_filter.Filter(filtered_range_data.returns);
   if (options_.kalman_local_trajectory_builder_options()
           .use_online_correlative_scan_matching()) {
     real_time_correlative_scan_matcher_->Match(
@@ -159,7 +158,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
   sensor::AdaptiveVoxelFilter low_resolution_adaptive_voxel_filter(
       options_.low_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud low_resolution_point_cloud_in_tracking =
-      low_resolution_adaptive_voxel_filter.Filter(filtered_laser_fan.returns);
+      low_resolution_adaptive_voxel_filter.Filter(filtered_range_data.returns);
   ceres_scan_matcher_->Match(scan_matcher_pose_estimate_, initial_ceres_pose,
                              {{&filtered_point_cloud_in_tracking,
                                &submaps_->high_resolution_matching_grid()},
@@ -178,10 +177,10 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedLaserFan(
 
   last_pose_estimate_ = {
       time, scan_matcher_pose_estimate_,
-      sensor::TransformPointCloud(filtered_laser_fan.returns,
+      sensor::TransformPointCloud(filtered_range_data.returns,
                                   pose_observation.cast<float>())};
 
-  return InsertIntoSubmap(time, filtered_laser_fan, pose_observation,
+  return InsertIntoSubmap(time, filtered_range_data, pose_observation,
                           covariance_estimate);
 }
 
@@ -214,7 +213,7 @@ void KalmanLocalTrajectoryBuilder::AddTrajectoryNodeIndex(
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
 KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
-    const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
+    const common::Time time, const sensor::RangeData& range_data_in_tracking,
     const transform::Rigid3d& pose_observation,
     const kalman_filter::PoseCovariance& covariance_estimate) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
@@ -226,10 +225,10 @@ KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
   for (int insertion_index : submaps_->insertion_indices()) {
     insertion_submaps.push_back(submaps_->Get(insertion_index));
   }
-  submaps_->InsertLaserFan(sensor::TransformLaserFan(
-      laser_fan_in_tracking, pose_observation.cast<float>()));
+  submaps_->InsertRangeData(sensor::TransformRangeData(
+      range_data_in_tracking, pose_observation.cast<float>()));
   return std::unique_ptr<InsertionResult>(new InsertionResult{
-      time, laser_fan_in_tracking, pose_observation, covariance_estimate,
+      time, range_data_in_tracking, pose_observation, covariance_estimate,
       submaps_.get(), matching_submap, insertion_submaps});
 }
 

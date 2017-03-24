@@ -28,7 +28,7 @@
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_3d/submaps.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
 
 namespace cartographer {
@@ -58,11 +58,11 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
   const PoseEstimate& pose_estimate() const override;
 
  private:
-  std::unique_ptr<InsertionResult> AddAccumulatedLaserFan(
-      common::Time time, const sensor::LaserFan& laser_fan_in_tracking);
+  std::unique_ptr<InsertionResult> AddAccumulatedRangeData(
+      common::Time time, const sensor::RangeData& range_data_in_tracking);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
-      const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
+      const common::Time time, const sensor::RangeData& range_data_in_tracking,
       const transform::Rigid3d& pose_observation,
       const kalman_filter::PoseCovariance& covariance_estimate);
 
@@ -83,7 +83,7 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
 
   int num_accumulated_;
   transform::Rigid3f first_pose_prediction_;
-  sensor::LaserFan accumulated_laser_fan_;
+  sensor::RangeData accumulated_range_data_;
 };
 
 }  // namespace mapping_3d
