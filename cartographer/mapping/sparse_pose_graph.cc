@@ -38,19 +38,25 @@ proto::SparsePoseGraph::Constraint::Tag ToProto(
   LOG(FATAL) << "Unsupported tag.";
 }
 
-std::vector<std::vector<TrajectoryNode>> SplitTrajectoryNodes(
-    const std::vector<TrajectoryNode>& trajectory_nodes) {
-  std::vector<std::vector<TrajectoryNode>> trajectories;
+void GroupTrajectoryNodes(
+    const std::vector<TrajectoryNode>& trajectory_nodes,
+    std::vector<std::vector<TrajectoryNode>>* grouped_nodes,
+    std::vector<std::pair<int, int>>* new_indices) {
+  CHECK_NOTNULL(grouped_nodes)->clear();
+  CHECK_NOTNULL(new_indices)->clear();
+
   std::unordered_map<const Submaps*, int> trajectory_ids;
-  for (const auto& node : trajectory_nodes) {
+  for (const auto node : trajectory_nodes) {
     const auto* trajectory = node.constant_data->trajectory;
-    if (trajectory_ids.emplace(trajectory, trajectories.size()).second) {
-      trajectories.push_back({node});
+    if (trajectory_ids.emplace(trajectory, grouped_nodes->size()).second) {
+      new_indices->emplace_back(grouped_nodes->size(), 0);
+      grouped_nodes->push_back({node});
     } else {
-      trajectories[trajectory_ids[trajectory]].push_back(node);
+      const int id = trajectory_ids[trajectory];
+      new_indices->emplace_back(id, (*grouped_nodes)[id].size());
+      (*grouped_nodes)[id].push_back(node);
     }
   }
-  return trajectories;
 }
 
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
@@ -75,8 +81,9 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
 proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
 
-  // The proto uses integer 'trajectory_id's, but the SPG itself doesn't track
-  // trajectories directly, so we need to build an integer mapping.
+  // The proto uses integer 'trajectory_id's, but the sparse pose graph itself
+  // doesn't track trajectories directly, so we need to build an integer
+  // mapping.
   const auto trajectory_nodes = GetTrajectoryNodes();
   std::unordered_map<const Submaps*, size_t> trajectory_indices;
   for (const auto node : trajectory_nodes) {
