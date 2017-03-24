@@ -81,9 +81,6 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
 proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
 
-  // The proto uses integer 'trajectory_id's, but the sparse pose graph itself
-  // doesn't track trajectories directly, so we need to build an integer
-  // mapping.
   std::vector<std::vector<TrajectoryNode>> grouped_nodes;
   std::vector<std::pair<int, int>> new_indices;
   GroupTrajectoryNodes(GetTrajectoryNodes(), &grouped_nodes, &new_indices);
