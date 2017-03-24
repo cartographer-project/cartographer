@@ -45,7 +45,7 @@ message SparsePoseGraph {
     // into the submap frame.
     optional transform.proto.Rigid3d relative_pose = 3;
     // 6x6 square root inverse of the covariance matrix. This is stored in
-    // column-major order for ease of Eigen::Map.
+    // column-major order for ease of use with Eigen::Map.
     repeated double sqrt_Lambda = 4 [packed = true];  // NOLINT
     optional Tag tag = 5;
   }
