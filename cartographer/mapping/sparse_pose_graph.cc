@@ -103,25 +103,23 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
         new_indices[constraint.i].second);
 
     constraint_proto->mutable_scan_id()->set_trajectory_id(
-        new_indices[constraint.i].first);
+        new_indices[constraint.j].first);
     constraint_proto->mutable_scan_id()->set_scan_index(
         new_indices[constraint.j].second);
 
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }
 
-  for (size_t i = 0; i < grouped_nodes.size(); ++i) {
+  for (const auto& group : grouped_nodes) {
     auto* trajectory_proto = proto.add_trajectory();
-    for (size_t j = 0; j < grouped_nodes[i].size(); ++j) {
+    for (const auto& node : group) {
       auto* node_proto = trajectory_proto->add_node();
-      const auto& node = grouped_nodes[i][j];
       node_proto->set_timestamp(common::ToUniversal(node.constant_data->time));
       *node_proto->mutable_pose() =
           transform::ToProto(node.pose * node.constant_data->tracking_to_pose);
     }
 
-    const Submaps* const submaps =
-        grouped_nodes[i][0].constant_data->trajectory;
+    const Submaps* const submaps = group[0].constant_data->trajectory;
     for (const auto& transform : GetSubmapTransforms(*submaps)) {
       *trajectory_proto->add_submap()->mutable_pose() =
           transform::ToProto(transform);

@@ -34,12 +34,12 @@ namespace mapping {
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
-// TrajectoryNodes and Constraits are provided in a flat vector, but
-// serialization requires that we group them by trajectory. This groups the
-// elements of 'trajectory_nodes' into 'grouped_nodes' (so that
-// *grouped_nodes[i] contains a complete single trajectory). The re-indexing
-// done is stored in 'new_indices', such that 'trajectory_nodes[i]' landed in
-// '*grouped_nodes[new_indices[i].first][new_indices[i].second]'.
+// TrajectoryNodes are provided in a flat vector, but serialization requires
+// that we group them by trajectory. This groups the elements of
+// 'trajectory_nodes' into 'grouped_nodes' (so that (*grouped_nodes)[i]
+// contains a complete single trajectory). The re-indexing done is stored in
+// 'new_indices', such that 'trajectory_nodes[i]' landed in
+// '(*grouped_nodes)[new_indices[i].first][new_indices[i].second]'.
 void GroupTrajectoryNodes(
     const std::vector<TrajectoryNode>& trajectory_nodes,
     std::vector<std::vector<TrajectoryNode>>* grouped_nodes,
