@@ -51,6 +51,8 @@ class GlobalTrajectoryBuilder
   const proto::LocalTrajectoryBuilderOptions options_;
   SparsePoseGraph* const sparse_pose_graph_;
   LocalTrajectoryBuilder local_trajectory_builder_;
+
+  double laser_decimation_counter_;
 };
 
 }  // namespace mapping_2d
