@@ -258,16 +258,6 @@ void LocalTrajectoryBuilder::AddImuData(
   Predict(time);
   imu_tracker_->AddImuLinearAccelerationObservation(linear_acceleration);
   imu_tracker_->AddImuAngularVelocityObservation(angular_velocity);
-
-  // Log a warning if the backpack inclination exceeds 20 degrees. In these
-  // cases, it's very likely that 2D SLAM will fail.
-  const Eigen::Vector3d gravity_direction =
-      imu_tracker_->orientation() * Eigen::Vector3d::UnitZ();
-  const double inclination = std::acos(gravity_direction.z());
-  constexpr double kMaxInclination = common::DegToRad(20.);
-  LOG_IF_EVERY_N(WARNING, inclination > kMaxInclination, 1000)
-      << "Max inclination exceeded: " << common::RadToDeg(inclination) << " > "
-      << common::RadToDeg(kMaxInclination);
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
