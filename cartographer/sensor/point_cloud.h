@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "Eigen/Core"
-#include "Eigen/Geometry"
 #include "cartographer/sensor/proto/sensor.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "glog/logging.h"
