@@ -71,6 +71,24 @@ class SparsePoseGraph {
     enum Tag { INTRA_SUBMAP, INTER_SUBMAP } tag;
   };
 
+  struct SubmapState {
+    const Submap* submap = nullptr;
+
+    // Indices of the scans that were inserted into this map together with
+    // constraints for them. They are not to be matched again when this submap
+    // becomes 'finished'.
+    std::set<int> scan_indices;
+
+    // Whether in the current state of the background thread this submap is
+    // finished. When this transitions to true, all scans are tried to match
+    // against this submap. Likewise, all new scans are matched against submaps
+    // which are finished.
+    bool finished = false;
+
+    // The trajectory to which this SubmapState belongs.
+    const Submaps* trajectory = nullptr;
+  };
+
   SparsePoseGraph() {}
   virtual ~SparsePoseGraph() {}
 
@@ -102,6 +120,8 @@ class SparsePoseGraph {
 
   // Returns the current optimized trajectory.
   virtual std::vector<TrajectoryNode> GetTrajectoryNodes() = 0;
+
+  virtual std::vector<SubmapState> GetSubmapStates() = 0;
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
