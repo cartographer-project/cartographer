@@ -16,7 +16,9 @@
 
 #include "cartographer/mapping/sparse_pose_graph.h"
 
+#include <algorithm>
 #include <deque>
+#include <vector>
 
 #include "glog/logging.h"
 #include "gmock/gmock.h"
@@ -39,7 +41,7 @@ class FakeSubmaps : public Submaps {
   }
 };
 
-TEST(SparsePoseGraphTest, GroupTrajectoryNodes) {
+TEST(SparsePoseGraphTest, TrajectoryFunctions) {
   std::vector<TrajectoryNode> trajectory_nodes;
   const std::vector<FakeSubmaps> submaps(5);
   std::deque<TrajectoryNode::ConstantData> constant_data;
@@ -54,9 +56,25 @@ TEST(SparsePoseGraphTest, GroupTrajectoryNodes) {
     }
   }
 
+  std::vector<const Submaps*> submap_pointers;
+  for (const auto& submap : submaps) {
+    submap_pointers.push_back(&submap);
+  }
+
+  const auto index_map = IndexTrajectories(submap_pointers);
+  ASSERT_EQ(submaps.size(), index_map.size());
+  for (const auto& kv : index_map) {
+    const auto pointer_iterator =
+        std::find(submap_pointers.begin(), submap_pointers.end(), kv.first);
+    ASSERT_TRUE(pointer_iterator != submap_pointers.end());
+    const auto pointer_index = pointer_iterator - submap_pointers.begin();
+    EXPECT_EQ(kv.second, pointer_index);
+  }
+
   std::vector<std::vector<TrajectoryNode>> grouped_nodes;
   std::vector<std::pair<int, int>> new_indices;
-  GroupTrajectoryNodes(trajectory_nodes, &grouped_nodes, &new_indices);
+  GroupTrajectoryNodes(trajectory_nodes, index_map, &grouped_nodes,
+                       &new_indices);
 
   ASSERT_EQ(grouped_nodes.size(), submaps.size());
   for (size_t i = 0; i < submaps.size(); ++i) {

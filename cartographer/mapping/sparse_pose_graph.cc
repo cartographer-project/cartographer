@@ -16,8 +16,6 @@
 
 #include "cartographer/mapping/sparse_pose_graph.h"
 
-#include <unordered_map>
-
 #include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping/sparse_pose_graph/optimization_problem_options.h"
@@ -38,24 +36,32 @@ proto::SparsePoseGraph::Constraint::Tag ToProto(
   LOG(FATAL) << "Unsupported tag.";
 }
 
+std::unordered_map<const Submaps*, int> IndexTrajectories(
+    const std::vector<const Submaps*>& trajectories) {
+  std::unordered_map<const Submaps*, int> result;
+  for (const auto& trajectory : trajectories) {
+    result.emplace(trajectory, result.size());
+  }
+  return result;
+}
+
 void GroupTrajectoryNodes(
     const std::vector<TrajectoryNode>& trajectory_nodes,
+    const std::unordered_map<const Submaps*, int>& trajectory_indices,
     std::vector<std::vector<TrajectoryNode>>* grouped_nodes,
     std::vector<std::pair<int, int>>* new_indices) {
   CHECK_NOTNULL(grouped_nodes)->clear();
   CHECK_NOTNULL(new_indices)->clear();
 
-  std::unordered_map<const Submaps*, int> trajectory_ids;
-  for (const auto node : trajectory_nodes) {
+  grouped_nodes->resize(trajectory_indices.size());
+
+  for (const auto& node : trajectory_nodes) {
     const auto* trajectory = node.constant_data->trajectory;
-    if (trajectory_ids.emplace(trajectory, grouped_nodes->size()).second) {
-      new_indices->emplace_back(grouped_nodes->size(), 0);
-      grouped_nodes->push_back({node});
-    } else {
-      const int id = trajectory_ids[trajectory];
-      new_indices->emplace_back(id, (*grouped_nodes)[id].size());
-      (*grouped_nodes)[id].push_back(node);
-    }
+    auto index_iterator = trajectory_indices.find(trajectory);
+    CHECK(index_iterator != trajectory_indices.end());
+    const int index = index_iterator->second;
+    new_indices->emplace_back(index, (*grouped_nodes)[index].size());
+    (*grouped_nodes)[index].push_back(node);
   }
 }
 
@@ -81,50 +87,51 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
 proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
 
-  std::vector<std::vector<TrajectoryNode>> grouped_nodes;
-  std::vector<std::pair<int, int>> new_indices;
-  GroupTrajectoryNodes(GetTrajectoryNodes(), &grouped_nodes, &new_indices);
+  // std::vector<std::vector<TrajectoryNode>> grouped_nodes;
+  // std::vector<std::pair<int, int>> new_indices;
+  // GroupTrajectoryNodes(GetTrajectoryNodes(), &grouped_nodes, &new_indices);
 
-  for (const auto& constraint : constraints()) {
-    auto* const constraint_proto = proto.add_constraint();
-    *constraint_proto->mutable_relative_pose() =
-        transform::ToProto(constraint.pose.zbar_ij);
-    constraint_proto->mutable_sqrt_lambda()->Reserve(36);
-    for (int i = 0; i != 36; ++i) {
-      constraint_proto->mutable_sqrt_lambda()->Add(0.);
-    }
-    Eigen::Map<Eigen::Matrix<double, 6, 6>>(
-        constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
-        constraint.pose.sqrt_Lambda_ij;
+  // for (const auto& constraint : constraints()) {
+  //  auto* const constraint_proto = proto.add_constraint();
+  //  *constraint_proto->mutable_relative_pose() =
+  //      transform::ToProto(constraint.pose.zbar_ij);
+  //  constraint_proto->mutable_sqrt_lambda()->Reserve(36);
+  //  for (int i = 0; i != 36; ++i) {
+  //    constraint_proto->mutable_sqrt_lambda()->Add(0.);
+  //  }
+  //  Eigen::Map<Eigen::Matrix<double, 6, 6>>(
+  //      constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
+  //      constraint.pose.sqrt_Lambda_ij;
 
-    constraint_proto->mutable_submap_id()->set_trajectory_id(
-        new_indices[constraint.i].first);
-    constraint_proto->mutable_submap_id()->set_submap_index(
-        new_indices[constraint.i].second);
+  //  constraint_proto->mutable_submap_id()->set_trajectory_id(
+  //      new_indices[constraint.i].first);
+  //  constraint_proto->mutable_submap_id()->set_submap_index(
+  //      new_indices[constraint.i].second);
 
-    constraint_proto->mutable_scan_id()->set_trajectory_id(
-        new_indices[constraint.j].first);
-    constraint_proto->mutable_scan_id()->set_scan_index(
-        new_indices[constraint.j].second);
+  //  constraint_proto->mutable_scan_id()->set_trajectory_id(
+  //      new_indices[constraint.j].first);
+  //  constraint_proto->mutable_scan_id()->set_scan_index(
+  //      new_indices[constraint.j].second);
 
-    constraint_proto->set_tag(mapping::ToProto(constraint.tag));
-  }
+  //  constraint_proto->set_tag(mapping::ToProto(constraint.tag));
+  //}
 
-  for (const auto& group : grouped_nodes) {
-    auto* trajectory_proto = proto.add_trajectory();
-    for (const auto& node : group) {
-      auto* node_proto = trajectory_proto->add_node();
-      node_proto->set_timestamp(common::ToUniversal(node.constant_data->time));
-      *node_proto->mutable_pose() =
-          transform::ToProto(node.pose * node.constant_data->tracking_to_pose);
-    }
+  // for (const auto& group : grouped_nodes) {
+  //  auto* trajectory_proto = proto.add_trajectory();
+  //  for (const auto& node : group) {
+  //    auto* node_proto = trajectory_proto->add_node();
+  //    node_proto->set_timestamp(common::ToUniversal(node.constant_data->time));
+  //    *node_proto->mutable_pose() =
+  //        transform::ToProto(node.pose *
+  //        node.constant_data->tracking_to_pose);
+  //  }
 
-    const Submaps* const submaps = group[0].constant_data->trajectory;
-    for (const auto& transform : GetSubmapTransforms(*submaps)) {
-      *trajectory_proto->add_submap()->mutable_pose() =
-          transform::ToProto(transform);
-    }
-  }
+  //  const Submaps* const submaps = group[0].constant_data->trajectory;
+  //  for (const auto& transform : GetSubmapTransforms(*submaps)) {
+  //    *trajectory_proto->add_submap()->mutable_pose() =
+  //        transform::ToProto(transform);
+  //  }
+  //}
 
   return proto;
 }

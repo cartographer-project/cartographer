@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 #define CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -34,6 +35,11 @@ namespace mapping {
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
+// Construct a mapping from trajectory (ie Submaps*) to an integer. These
+// values are used to track trajectory identity between scans and submaps.
+std::unordered_map<const Submaps*, int> IndexTrajectories(
+    const std::vector<const Submaps*>& trajectories);
+
 // TrajectoryNodes are provided in a flat vector, but serialization requires
 // that we group them by trajectory. This groups the elements of
 // 'trajectory_nodes' into 'grouped_nodes' (so that (*grouped_nodes)[i]
@@ -42,6 +48,7 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
 // '(*grouped_nodes)[new_indices[i].first][new_indices[i].second]'.
 void GroupTrajectoryNodes(
     const std::vector<TrajectoryNode>& trajectory_nodes,
+    const std::unordered_map<const Submaps*, int>& trajectory_indices,
     std::vector<std::vector<TrajectoryNode>>* grouped_nodes,
     std::vector<std::pair<int, int>>* new_indices);
 
