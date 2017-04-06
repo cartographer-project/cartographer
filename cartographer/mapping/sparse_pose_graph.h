@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 #define CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 
+#include <set>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -136,6 +137,14 @@ class SparsePoseGraph {
   // Serializes the constraints and trajectories.
   proto::SparsePoseGraph ToProto();
 };
+
+// Like TrajectoryNodes, SubmapStates arrive in a flat vector, but need to be
+// grouped by trajectory. The arguments are just as in 'GroupTrajectoryNodes'.
+void GroupSubmapStates(
+    const std::vector<SparsePoseGraph::SubmapState>& submap_states,
+    const std::unordered_map<const Submaps*, int>& trajectory_indices,
+    std::vector<std::vector<SparsePoseGraph::SubmapState>>* grouped_submaps,
+    std::vector<std::pair<int, int>>* new_indices);
 
 }  // namespace mapping
 }  // namespace cartographer

@@ -56,12 +56,32 @@ void GroupTrajectoryNodes(
   grouped_nodes->resize(trajectory_indices.size());
 
   for (const auto& node : trajectory_nodes) {
-    const auto* trajectory = node.constant_data->trajectory;
-    auto index_iterator = trajectory_indices.find(trajectory);
+    auto index_iterator =
+        trajectory_indices.find(node.constant_data->trajectory);
     CHECK(index_iterator != trajectory_indices.end());
     const int index = index_iterator->second;
     new_indices->emplace_back(index, (*grouped_nodes)[index].size());
     (*grouped_nodes)[index].push_back(node);
+  }
+}
+
+// TODO(macmason): This function is very nearly a copy of GroupTrajectoryNodes.
+// Consider refactoring them to share an implementation.
+void GroupSubmapStates(
+    const std::vector<SparsePoseGraph::SubmapState>& submap_states,
+    const std::unordered_map<const Submaps*, int>& trajectory_indices,
+    std::vector<std::vector<SparsePoseGraph::SubmapState>>* grouped_submaps,
+    std::vector<std::pair<int, int>>* new_indices) {
+  CHECK_NOTNULL(grouped_submaps)->clear();
+  CHECK_NOTNULL(new_indices)->clear();
+
+  grouped_submaps->resize(trajectory_indices.size());
+  for (const auto& submap_state : submap_states) {
+    auto index_iterator = trajectory_indices.find(submap_state.trajectory);
+    CHECK(index_iterator != trajectory_indices.end());
+    const int index = index_iterator->second;
+    new_indices->emplace_back(index, (*grouped_submaps)[index].size());
+    (*grouped_submaps)[index].push_back(submap_state);
   }
 }
 
@@ -87,51 +107,64 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
 proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
 
-  // std::vector<std::vector<TrajectoryNode>> grouped_nodes;
-  // std::vector<std::pair<int, int>> new_indices;
-  // GroupTrajectoryNodes(GetTrajectoryNodes(), &grouped_nodes, &new_indices);
+  const auto trajectory_nodes = GetTrajectoryNodes();
+  std::vector<const Submaps*> submap_pointers;
+  for (const auto& trajectory_node : trajectory_nodes) {
+    submap_pointers.push_back(trajectory_node.constant_data->trajectory);
+  }
 
-  // for (const auto& constraint : constraints()) {
-  //  auto* const constraint_proto = proto.add_constraint();
-  //  *constraint_proto->mutable_relative_pose() =
-  //      transform::ToProto(constraint.pose.zbar_ij);
-  //  constraint_proto->mutable_sqrt_lambda()->Reserve(36);
-  //  for (int i = 0; i != 36; ++i) {
-  //    constraint_proto->mutable_sqrt_lambda()->Add(0.);
-  //  }
-  //  Eigen::Map<Eigen::Matrix<double, 6, 6>>(
-  //      constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
-  //      constraint.pose.sqrt_Lambda_ij;
+  const auto trajectory_indices = IndexTrajectories(submap_pointers);
 
-  //  constraint_proto->mutable_submap_id()->set_trajectory_id(
-  //      new_indices[constraint.i].first);
-  //  constraint_proto->mutable_submap_id()->set_submap_index(
-  //      new_indices[constraint.i].second);
+  std::vector<std::vector<TrajectoryNode>> grouped_nodes;
+  std::vector<std::pair<int, int>> grouped_node_indices;
+  GroupTrajectoryNodes(trajectory_nodes, trajectory_indices, &grouped_nodes,
+                       &grouped_node_indices);
 
-  //  constraint_proto->mutable_scan_id()->set_trajectory_id(
-  //      new_indices[constraint.j].first);
-  //  constraint_proto->mutable_scan_id()->set_scan_index(
-  //      new_indices[constraint.j].second);
+  std::vector<std::vector<SparsePoseGraph::SubmapState>> grouped_submaps;
+  std::vector<std::pair<int, int>> grouped_submap_indices;
+  GroupSubmapStates(GetSubmapStates(), trajectory_indices, &grouped_submaps,
+                    &grouped_submap_indices);
 
-  //  constraint_proto->set_tag(mapping::ToProto(constraint.tag));
-  //}
+  for (const auto& constraint : constraints()) {
+    auto* const constraint_proto = proto.add_constraint();
+    *constraint_proto->mutable_relative_pose() =
+        transform::ToProto(constraint.pose.zbar_ij);
+    constraint_proto->mutable_sqrt_lambda()->Reserve(36);
+    for (int i = 0; i != 36; ++i) {
+      constraint_proto->mutable_sqrt_lambda()->Add(0.);
+    }
+    Eigen::Map<Eigen::Matrix<double, 6, 6>>(
+        constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
+        constraint.pose.sqrt_Lambda_ij;
 
-  // for (const auto& group : grouped_nodes) {
-  //  auto* trajectory_proto = proto.add_trajectory();
-  //  for (const auto& node : group) {
-  //    auto* node_proto = trajectory_proto->add_node();
-  //    node_proto->set_timestamp(common::ToUniversal(node.constant_data->time));
-  //    *node_proto->mutable_pose() =
-  //        transform::ToProto(node.pose *
-  //        node.constant_data->tracking_to_pose);
-  //  }
+    constraint_proto->mutable_submap_id()->set_trajectory_id(
+        grouped_submap_indices[constraint.i].first);
+    constraint_proto->mutable_submap_id()->set_submap_index(
+        grouped_submap_indices[constraint.i].second);
 
-  //  const Submaps* const submaps = group[0].constant_data->trajectory;
-  //  for (const auto& transform : GetSubmapTransforms(*submaps)) {
-  //    *trajectory_proto->add_submap()->mutable_pose() =
-  //        transform::ToProto(transform);
-  //  }
-  //}
+    constraint_proto->mutable_scan_id()->set_trajectory_id(
+        grouped_node_indices[constraint.j].first);
+    constraint_proto->mutable_scan_id()->set_scan_index(
+        grouped_node_indices[constraint.j].second);
+
+    constraint_proto->set_tag(mapping::ToProto(constraint.tag));
+  }
+
+  for (const auto& group : grouped_nodes) {
+    auto* trajectory_proto = proto.add_trajectory();
+    for (const auto& node : group) {
+      auto* node_proto = trajectory_proto->add_node();
+      node_proto->set_timestamp(common::ToUniversal(node.constant_data->time));
+      *node_proto->mutable_pose() =
+          transform::ToProto(node.pose * node.constant_data->tracking_to_pose);
+    }
+
+    const Submaps* const submaps = group[0].constant_data->trajectory;
+    for (const auto& transform : GetSubmapTransforms(*submaps)) {
+      *trajectory_proto->add_submap()->mutable_pose() =
+          transform::ToProto(transform);
+    }
+  }
 
   return proto;
 }
