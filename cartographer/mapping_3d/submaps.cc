@@ -415,5 +415,11 @@ string Submaps::ComputePixelValues(
   return cell_data;
 }
 
+void Submaps::ToProto(mapping::proto::Submaps* const r) const
+{
+  return;
+}
+
+
 }  // namespace mapping_3d
 }  // namespace cartographer

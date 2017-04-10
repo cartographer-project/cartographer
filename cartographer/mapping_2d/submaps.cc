@@ -178,5 +178,10 @@ void Submaps::AddSubmap(const Eigen::Vector2f& origin) {
   num_range_data_in_last_submap_ = 0;
 }
 
+void Submaps::ToProto(mapping::proto::Submaps* const r) const
+{
+  return;
+}
+
 }  // namespace mapping_2d
 }  // namespace cartographer

@@ -25,6 +25,8 @@
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/mapping/proto/submaps.pb.h"
+#include "cartographer/mapping_2d/proto/submaps.pb.h"
 #include "cartographer/mapping_2d/map_limits.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/proto/submaps_options.pb.h"
@@ -62,9 +64,11 @@ class Submaps : public mapping::Submaps {
       int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
       const transform::Rigid3d& global_submap_pose,
       mapping::proto::SubmapQuery::Response* response) const override;
+  void ToProto(mapping::proto::Submaps* submaps) const override;
 
   // Inserts 'range_data' into the Submap collection.
   void InsertRangeData(const sensor::RangeData& range_data);
+
 
  private:
   void FinishSubmap(int index);
