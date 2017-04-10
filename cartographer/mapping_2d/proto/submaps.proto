@@ -14,18 +14,15 @@
 
 syntax = "proto2";
 
-import "cartographer/transform/proto/transform.proto";
 import "cartographer/mapping/proto/submaps.proto";
 import "cartographer/mapping_2d/proto/probability_grid.proto";
 
 package cartographer.mapping_2d.proto;
 
-message Submap {
-  optional transform.proto.Rigid3d origin = 1; // origin of this submap
-  optional ProbabilityGrid grid = 2;
-}
-
-extend mapping.proto.Submaps
-{
-  repeated Submap submap = 1;
+message ProbabilityGridSubmap {
+  extend mapping.proto.Submap
+  {
+    optional ProbabilityGridSubmap submap = 10;
+  }
+  optional ProbabilityGrid grid = 1;
 }

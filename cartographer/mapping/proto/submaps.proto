@@ -18,6 +18,17 @@ import "cartographer/transform/proto/transform.proto";
 
 package cartographer.mapping.proto;
 
+message Submap {
+  extensions 10 to max;
+
+  enum Type {
+    ProbabilityGridSubmap = 1;
+    HybridSubmap = 2;
+  }
+  required Type type = 1;
+  optional transform.proto.Rigid3d origin = 2; // origin of this submap
+}
+
 message Submaps {
-  extensions 1 to max;
+  repeated Submap submap = 1;
 }

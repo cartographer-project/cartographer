@@ -14,18 +14,15 @@
 
 syntax = "proto2";
 
-import "cartographer/transform/proto/transform.proto";
 import "cartographer/mapping/proto/submaps.proto";
 import "cartographer/mapping_3d/proto/hybrid_grid.proto";
 
 package cartographer.mapping_3d.proto;
 
-message Submap {
-  optional transform.proto.Rigid3d origin = 1; // origin of this submap
-  optional HybridGrid grid = 2;
-}
-
-extend mapping.proto.Submaps
-{
-  repeated Submap submap = 1;
+message HybridGridSubmap {
+  extend mapping.proto.Submap
+  {
+    optional HybridGridSubmap submap = 11;
+  }
+  optional HybridGrid grid = 1;
 }
