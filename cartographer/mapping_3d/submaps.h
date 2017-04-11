@@ -71,7 +71,7 @@ class Submaps : public mapping::Submaps {
       int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
       const transform::Rigid3d& global_submap_pose,
       mapping::proto::SubmapQuery::Response* response) const override;
-  void ToProto(mapping::proto::Submaps* submaps) const override;
+  mapping::proto::Submaps ToProto() override;
 
   // Inserts 'range_data' into the Submap collection.
   void InsertRangeData(const sensor::RangeData& range_data);

@@ -178,9 +178,24 @@ void Submaps::AddSubmap(const Eigen::Vector2f& origin) {
   num_range_data_in_last_submap_ = 0;
 }
 
-void Submaps::ToProto(mapping::proto::Submaps* const r) const
+mapping::proto::Submaps Submaps::ToProto()
 {
-  return;
+  mapping::proto::Submaps proto;
+
+  proto.mutable_submap()->Reserve(submaps_.size());
+  for(auto& submap : submaps_) {
+    // add only finished submaps
+    if(submap->finished_probability_grid != nullptr) {
+      auto* proto_submap = proto.add_submap();
+      proto_submap->set_type(mapping::proto::Submap::ProbabilityGridSubmap);
+      *proto_submap->mutable_origin() = transform::ToProto(submap->origin);
+
+      proto::ProbabilityGridSubmap* grid_submap =
+          proto_submap->MutableExtension(proto::ProbabilityGridSubmap::submap);
+      *grid_submap->mutable_grid() = submap->probability_grid.ToProto();
+    }
+  }
+  return proto;
 }
 
 }  // namespace mapping_2d

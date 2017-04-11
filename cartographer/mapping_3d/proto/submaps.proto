@@ -24,5 +24,8 @@ message HybridGridSubmap {
   {
     optional HybridGridSubmap submap = 11;
   }
-  optional HybridGrid grid = 1;
+  optional HybridGrid high_resolution_grid = 1;
+  optional HybridGrid low_resolution_grid = 2;
+  repeated int32 trajectory_node_indices = 3;
+
 }

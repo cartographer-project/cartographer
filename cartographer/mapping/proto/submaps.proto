@@ -23,10 +23,10 @@ message Submap {
 
   enum Type {
     ProbabilityGridSubmap = 1;
-    HybridSubmap = 2;
+    HybridGridSubmap = 2;
   }
   required Type type = 1;
-  optional transform.proto.Rigid3d origin = 2; // origin of this submap
+  optional transform.proto.Vector3f origin = 2; // origin of this submap
 }
 
 message Submaps {

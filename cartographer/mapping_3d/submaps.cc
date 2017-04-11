@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/mapping_3d/submaps.h"
+#include "cartographer/mapping_3d/hybrid_grid.h"
 
 #include <cmath>
 #include <limits>
@@ -415,9 +416,30 @@ string Submaps::ComputePixelValues(
   return cell_data;
 }
 
-void Submaps::ToProto(mapping::proto::Submaps* const r) const
+mapping::proto::Submaps Submaps::ToProto()
 {
-  return;
+  mapping::proto::Submaps proto;
+
+  proto.mutable_submap()->Reserve(submaps_.size());
+  for(auto& submap : submaps_) {
+    // add only finished submaps
+    if(submap->finished) {
+      auto* proto_submap = proto.add_submap();
+      proto_submap->set_type(mapping::proto::Submap::HybridGridSubmap);
+      *proto_submap->mutable_origin() = transform::ToProto(submap->origin);
+
+      proto::HybridGridSubmap* grid_submap =
+          proto_submap->MutableExtension(proto::HybridGridSubmap::submap);
+      *grid_submap->mutable_high_resolution_grid() =
+          mapping_3d::ToProto(submap->high_resolution_hybrid_grid);
+      *grid_submap->mutable_low_resolution_grid() =
+          mapping_3d::ToProto(submap->low_resolution_hybrid_grid);
+
+      for(const auto index : submap->trajectory_node_indices)
+         grid_submap->mutable_trajectory_node_indices()->Add(index);
+    }
+  }
+  return proto;
 }
 
 
