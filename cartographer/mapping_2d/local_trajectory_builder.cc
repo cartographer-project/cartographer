@@ -228,15 +228,18 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
     return nullptr;
   }
 
+  // indices of submaps_ where new scans are inserted are decided here...
   const mapping::Submap* const matching_submap =
       submaps_.Get(submaps_.matching_index());
   std::vector<const mapping::Submap*> insertion_submaps;
   for (int insertion_index : submaps_.insertion_indices()) {
     insertion_submaps.push_back(submaps_.Get(insertion_index));
   }
+  // ... however, size of submaps_ potentially changes here...
   submaps_.InsertRangeData(
       TransformRangeData(range_data_in_tracking_2d,
                          transform::Embed3D(pose_estimate_2d.cast<float>())));
+  // ... so switching those two blocks would result in different behaviour.
 
   return common::make_unique<InsertionResult>(InsertionResult{
       time, &submaps_, matching_submap, insertion_submaps,
