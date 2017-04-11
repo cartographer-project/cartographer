@@ -36,7 +36,7 @@ proto::SparsePoseGraph::Constraint::Tag ToProto(
   LOG(FATAL) << "Unsupported tag.";
 }
 
-std::unordered_map<const Submaps*, int> IndexTrajectories(
+std::unordered_map<const Submaps*, int> ComputeTrajectoryIds(
     const std::vector<const Submaps*>& trajectories) {
   std::unordered_map<const Submaps*, int> result;
   for (const auto& trajectory : trajectories) {
@@ -47,21 +47,18 @@ std::unordered_map<const Submaps*, int> IndexTrajectories(
 
 void GroupTrajectoryNodes(
     const std::vector<TrajectoryNode>& trajectory_nodes,
-    const std::unordered_map<const Submaps*, int>& trajectory_indices,
+    const std::unordered_map<const Submaps*, int>& trajectory_ids,
     std::vector<std::vector<TrajectoryNode>>* grouped_nodes,
     std::vector<std::pair<int, int>>* new_indices) {
   CHECK_NOTNULL(grouped_nodes)->clear();
   CHECK_NOTNULL(new_indices)->clear();
 
-  grouped_nodes->resize(trajectory_indices.size());
+  grouped_nodes->resize(trajectory_ids.size());
 
   for (const auto& node : trajectory_nodes) {
-    auto index_iterator =
-        trajectory_indices.find(node.constant_data->trajectory);
-    CHECK(index_iterator != trajectory_indices.end());
-    const int index = index_iterator->second;
-    new_indices->emplace_back(index, (*grouped_nodes)[index].size());
-    (*grouped_nodes)[index].push_back(node);
+    const int id = trajectory_ids.at(node.constant_data->trajectory);
+    new_indices->emplace_back(id, (*grouped_nodes)[id].size());
+    (*grouped_nodes)[id].push_back(node);
   }
 }
 
@@ -69,19 +66,15 @@ void GroupTrajectoryNodes(
 // Consider refactoring them to share an implementation.
 void GroupSubmapStates(
     const std::vector<SparsePoseGraph::SubmapState>& submap_states,
-    const std::unordered_map<const Submaps*, int>& trajectory_indices,
-    std::vector<std::vector<SparsePoseGraph::SubmapState>>* grouped_submaps,
+    const std::unordered_map<const Submaps*, int>& trajectory_ids,
     std::vector<std::pair<int, int>>* new_indices) {
-  CHECK_NOTNULL(grouped_submaps)->clear();
   CHECK_NOTNULL(new_indices)->clear();
+  std::vector<int> submap_group_sizes(trajectory_ids.size(), 0);
 
-  grouped_submaps->resize(trajectory_indices.size());
   for (const auto& submap_state : submap_states) {
-    auto index_iterator = trajectory_indices.find(submap_state.trajectory);
-    CHECK(index_iterator != trajectory_indices.end());
-    const int index = index_iterator->second;
-    new_indices->emplace_back(index, (*grouped_submaps)[index].size());
-    (*grouped_submaps)[index].push_back(submap_state);
+    const int id = trajectory_ids.at(submap_state.trajectory);
+    new_indices->emplace_back(id, submap_group_sizes[id]);
+    submap_group_sizes[id]++;
   }
 }
 
@@ -113,17 +106,15 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     submap_pointers.push_back(trajectory_node.constant_data->trajectory);
   }
 
-  const auto trajectory_indices = IndexTrajectories(submap_pointers);
+  const auto trajectory_ids = ComputeTrajectoryIds(submap_pointers);
 
   std::vector<std::vector<TrajectoryNode>> grouped_nodes;
   std::vector<std::pair<int, int>> grouped_node_indices;
-  GroupTrajectoryNodes(trajectory_nodes, trajectory_indices, &grouped_nodes,
+  GroupTrajectoryNodes(trajectory_nodes, trajectory_ids, &grouped_nodes,
                        &grouped_node_indices);
 
-  std::vector<std::vector<SparsePoseGraph::SubmapState>> grouped_submaps;
   std::vector<std::pair<int, int>> grouped_submap_indices;
-  GroupSubmapStates(GetSubmapStates(), trajectory_indices, &grouped_submaps,
-                    &grouped_submap_indices);
+  GroupSubmapStates(GetSubmapStates(), trajectory_ids, &grouped_submap_indices);
 
   for (const auto& constraint : constraints()) {
     auto* const constraint_proto = proto.add_constraint();

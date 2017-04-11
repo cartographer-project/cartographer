@@ -38,7 +38,7 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
 
 // Construct a mapping from trajectory (ie Submaps*) to an integer. These
 // values are used to track trajectory identity between scans and submaps.
-std::unordered_map<const Submaps*, int> IndexTrajectories(
+std::unordered_map<const Submaps*, int> ComputeTrajectoryIds(
     const std::vector<const Submaps*>& trajectories);
 
 // TrajectoryNodes are provided in a flat vector, but serialization requires
@@ -49,7 +49,7 @@ std::unordered_map<const Submaps*, int> IndexTrajectories(
 // '(*grouped_nodes)[new_indices[i].first][new_indices[i].second]'.
 void GroupTrajectoryNodes(
     const std::vector<TrajectoryNode>& trajectory_nodes,
-    const std::unordered_map<const Submaps*, int>& trajectory_indices,
+    const std::unordered_map<const Submaps*, int>& trajectory_ids,
     std::vector<std::vector<TrajectoryNode>>* grouped_nodes,
     std::vector<std::pair<int, int>>* new_indices);
 
@@ -129,6 +129,8 @@ class SparsePoseGraph {
   // Returns the current optimized trajectory.
   virtual std::vector<TrajectoryNode> GetTrajectoryNodes() = 0;
 
+  // TODO(macmason, wohe): Consider replacing this with a GroupSubmapStates,
+  // which would have better separation of concerns.
   virtual std::vector<SubmapState> GetSubmapStates() = 0;
 
   // Returns the collection of constraints.
@@ -142,8 +144,7 @@ class SparsePoseGraph {
 // grouped by trajectory. The arguments are just as in 'GroupTrajectoryNodes'.
 void GroupSubmapStates(
     const std::vector<SparsePoseGraph::SubmapState>& submap_states,
-    const std::unordered_map<const Submaps*, int>& trajectory_indices,
-    std::vector<std::vector<SparsePoseGraph::SubmapState>>* grouped_submaps,
+    const std::unordered_map<const Submaps*, int>& trajectory_ids,
     std::vector<std::pair<int, int>>* new_indices);
 
 }  // namespace mapping

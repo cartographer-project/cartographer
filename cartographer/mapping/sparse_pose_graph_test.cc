@@ -61,7 +61,7 @@ TEST(SparsePoseGraphTest, TrajectoryFunctions) {
     submap_pointers.push_back(&submap);
   }
 
-  const auto index_map = IndexTrajectories(submap_pointers);
+  const auto index_map = ComputeTrajectoryIds(submap_pointers);
   ASSERT_EQ(submaps.size(), index_map.size());
   for (const auto& kv : index_map) {
     const auto pointer_iterator =
