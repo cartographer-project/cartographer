@@ -416,7 +416,7 @@ string Submaps::ComputePixelValues(
   return cell_data;
 }
 
-mapping::proto::Submaps Submaps::ToProto()
+mapping::proto::Submaps Submaps::ToProto() const
 {
   mapping::proto::Submaps proto;
 

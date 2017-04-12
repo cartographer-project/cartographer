@@ -125,7 +125,7 @@ class Submaps {
       proto::SubmapQuery::Response* response) const = 0;
 
   // serialize data
-  virtual mapping::proto::Submaps ToProto() = 0;
+  virtual mapping::proto::Submaps ToProto() const = 0;
 
  protected:
   static void AddProbabilityGridToResponse(

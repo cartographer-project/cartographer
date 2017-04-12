@@ -178,7 +178,7 @@ void Submaps::AddSubmap(const Eigen::Vector2f& origin) {
   num_range_data_in_last_submap_ = 0;
 }
 
-mapping::proto::Submaps Submaps::ToProto()
+mapping::proto::Submaps Submaps::ToProto() const
 {
   mapping::proto::Submaps proto;
 

@@ -37,7 +37,7 @@ class FakeSubmaps : public Submaps {
     LOG(FATAL) << "Not implemented.";
   }
 
-  mapping::proto::Submaps ToProto() override {
+  mapping::proto::Submaps ToProto() const override {
     LOG(FATAL) << "Not implemented.";
     return mapping::proto::Submaps();
   }
