@@ -46,6 +46,8 @@ proto::SubmapsOptions CreateSubmapsOptions(
 struct Submap : public mapping::Submap {
   Submap(const MapLimits& limits, const Eigen::Vector2f& origin,
          int begin_range_data_index);
+  Submap(const Eigen::Vector3f& origin,
+         const mapping_2d::proto::ProbabilityGrid& grid);
 
   ProbabilityGrid probability_grid;
 };
@@ -54,6 +56,8 @@ struct Submap : public mapping::Submap {
 class Submaps : public mapping::Submaps {
  public:
   explicit Submaps(const proto::SubmapsOptions& options);
+  explicit Submaps(const mapping::proto::Submaps& proto,
+                   const mapping_2d::proto::SubmapsOptions& options);
 
   Submaps(const Submaps&) = delete;
   Submaps& operator=(const Submaps&) = delete;

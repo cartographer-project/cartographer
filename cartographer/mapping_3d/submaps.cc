@@ -223,12 +223,44 @@ Submap::Submap(const float high_resolution, const float low_resolution,
       high_resolution_hybrid_grid(high_resolution, origin),
       low_resolution_hybrid_grid(low_resolution, origin) {}
 
-Submaps::Submaps(const proto::SubmapsOptions& options)
+Submap::Submap(const Eigen::Vector3f& origin,
+          const mapping_3d::proto::HybridGrid& high_resolution,
+          const mapping_3d::proto::HybridGrid& low_resolution,
+          const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+            indices)
+    : mapping::Submap(origin, 0),
+      high_resolution_hybrid_grid(high_resolution),
+      low_resolution_hybrid_grid(low_resolution) {
+  trajectory_node_indices.reserve(indices.size());
+  std::copy(indices.begin(), indices.end(), trajectory_node_indices.begin());
+  finished = true;
+}
+
+
+Submaps::Submaps(const mapping_3d::proto::SubmapsOptions& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {
   // We always want to have at least one likelihood field which we can return,
   // and will create it at the origin in absence of a better choice.
   AddSubmap(Eigen::Vector3f::Zero());
+}
+
+Submaps::Submaps(const mapping::proto::Submaps& proto,
+                 const mapping_3d::proto::SubmapsOptions& options)
+    : options_(options),
+      range_data_inserter_(options.range_data_inserter_options()) {
+
+  for (int i = 0; i < proto.submap_size(); i++) {
+    auto proto_submap = proto.submap(i);
+    proto::HybridGridSubmap* grid_submap =
+        proto_submap.MutableExtension(mapping_3d::proto::HybridGridSubmap::submap);
+    submaps_.push_back(common::make_unique<Submap>(
+                         transform::ToEigen(proto_submap.origin()),
+                         grid_submap->high_resolution_grid(),
+                         grid_submap->low_resolution_grid(),
+                         grid_submap->trajectory_node_indices()
+                         ));
+  }
 }
 
 const Submap* Submaps::Get(int index) const {
@@ -441,6 +473,8 @@ mapping::proto::Submaps Submaps::ToProto() const
   }
   return proto;
 }
+
+
 
 
 }  // namespace mapping_3d

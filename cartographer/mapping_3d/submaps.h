@@ -50,6 +50,12 @@ proto::SubmapsOptions CreateSubmapsOptions(
 struct Submap : public mapping::Submap {
   Submap(float high_resolution, float low_resolution,
          const Eigen::Vector3f& origin, int begin_range_data_index);
+  Submap(const Eigen::Vector3f& origin,
+         const mapping_3d::proto::HybridGrid& high_resolution,
+         const mapping_3d::proto::HybridGrid& low_resolution,
+         const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+          indices
+         );
 
   HybridGrid high_resolution_hybrid_grid;
   HybridGrid low_resolution_hybrid_grid;
@@ -61,6 +67,9 @@ struct Submap : public mapping::Submap {
 class Submaps : public mapping::Submaps {
  public:
   explicit Submaps(const proto::SubmapsOptions& options);
+  explicit Submaps(const mapping::proto::Submaps& proto,
+                   const mapping_3d::proto::SubmapsOptions& options);
+
 
   Submaps(const Submaps&) = delete;
   Submaps& operator=(const Submaps&) = delete;
