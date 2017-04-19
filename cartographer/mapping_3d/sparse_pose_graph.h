@@ -95,9 +95,12 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_) override;
   std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
       EXCLUDES(mutex_);
+  std::vector<SubmapState> GetSubmapStates() override;
   std::vector<Constraint> constraints() override;
 
  private:
+  // This is 'mapping::SubmapState', but with the 3D versions of 'submap' and
+  // 'trajectory'.
   struct SubmapState {
     const Submap* submap = nullptr;
 

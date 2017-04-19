@@ -96,27 +96,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_) override;
   std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
       EXCLUDES(mutex_);
+  std::vector<SubmapState> GetSubmapStates() override EXCLUDES(mutex_);
+
   std::vector<Constraint> constraints() override;
 
  private:
-  struct SubmapState {
-    const mapping::Submap* submap = nullptr;
-
-    // Indices of the scans that were inserted into this map together with
-    // constraints for them. They are not to be matched again when this submap
-    // becomes 'finished'.
-    std::set<int> scan_indices;
-
-    // Whether in the current state of the background thread this submap is
-    // finished. When this transitions to true, all scans are tried to match
-    // against this submap. Likewise, all new scans are matched against submaps
-    // which are finished.
-    bool finished = false;
-
-    // The trajectory to which this SubmapState belongs.
-    const mapping::Submaps* trajectory = nullptr;
-  };
-
   // Handles a new work item.
   void AddWorkItem(std::function<void()> work_item) REQUIRES(mutex_);
 

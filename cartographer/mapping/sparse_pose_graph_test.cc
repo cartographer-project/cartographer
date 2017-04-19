@@ -16,7 +16,9 @@
 
 #include "cartographer/mapping/sparse_pose_graph.h"
 
+#include <algorithm>
 #include <deque>
+#include <vector>
 
 #include "glog/logging.h"
 #include "gmock/gmock.h"
@@ -27,6 +29,7 @@ namespace {
 
 class FakeSubmaps : public Submaps {
  public:
+  ~FakeSubmaps() override {}
   const Submap* Get(int) const override { LOG(FATAL) << "Not implemented."; }
 
   int size() const override { LOG(FATAL) << "Not implemented."; }
@@ -38,7 +41,7 @@ class FakeSubmaps : public Submaps {
   }
 };
 
-TEST(SparsePoseGraphTest, SplitTrajectoryNodes) {
+TEST(SparsePoseGraphTest, TrajectoryFunctions) {
   std::vector<TrajectoryNode> trajectory_nodes;
   const std::vector<FakeSubmaps> submaps(5);
   std::deque<TrajectoryNode::ConstantData> constant_data;
@@ -52,14 +55,41 @@ TEST(SparsePoseGraphTest, SplitTrajectoryNodes) {
       trajectory_nodes.push_back(node);
     }
   }
-  std::vector<std::vector<TrajectoryNode>> split_trajectory_nodes =
-      SplitTrajectoryNodes(trajectory_nodes);
-  EXPECT_EQ(split_trajectory_nodes.size(), submaps.size());
+
+  std::vector<const Submaps*> submap_pointers;
+  for (const auto& submap : submaps) {
+    submap_pointers.push_back(&submap);
+  }
+
+  const auto index_map = ComputeTrajectoryIds(submap_pointers);
+  ASSERT_EQ(submaps.size(), index_map.size());
+  for (const auto& kv : index_map) {
+    const auto pointer_iterator =
+        std::find(submap_pointers.begin(), submap_pointers.end(), kv.first);
+    ASSERT_TRUE(pointer_iterator != submap_pointers.end());
+    const auto pointer_index = pointer_iterator - submap_pointers.begin();
+    EXPECT_EQ(kv.second, pointer_index);
+  }
+
+  std::vector<std::vector<TrajectoryNode>> grouped_nodes;
+  std::vector<std::pair<int, int>> new_indices;
+  GroupTrajectoryNodes(trajectory_nodes, index_map, &grouped_nodes,
+                       &new_indices);
+
+  ASSERT_EQ(grouped_nodes.size(), submaps.size());
   for (size_t i = 0; i < submaps.size(); ++i) {
-    EXPECT_EQ(split_trajectory_nodes[i].size(), kNumTrajectoryNodes);
-    for (const auto& node : split_trajectory_nodes[i]) {
+    EXPECT_EQ(grouped_nodes[i].size(), kNumTrajectoryNodes);
+    for (const auto& node : grouped_nodes[i]) {
       EXPECT_EQ(node.constant_data->trajectory, &submaps[i]);
     }
+  }
+
+  ASSERT_EQ(trajectory_nodes.size(), new_indices.size());
+  for (size_t i = 0; i < new_indices.size(); ++i) {
+    const auto index_pair = new_indices[i];
+    EXPECT_EQ(trajectory_nodes[i].constant_data->trajectory,
+              grouped_nodes[index_pair.first][index_pair.second]
+                  .constant_data->trajectory);
   }
 }
 

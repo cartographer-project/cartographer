@@ -16,8 +16,6 @@
 
 #include "cartographer/mapping/sparse_pose_graph.h"
 
-#include <unordered_map>
-
 #include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping/sparse_pose_graph/optimization_problem_options.h"
@@ -38,19 +36,46 @@ proto::SparsePoseGraph::Constraint::Tag ToProto(
   LOG(FATAL) << "Unsupported tag.";
 }
 
-std::vector<std::vector<TrajectoryNode>> SplitTrajectoryNodes(
-    const std::vector<TrajectoryNode>& trajectory_nodes) {
-  std::vector<std::vector<TrajectoryNode>> trajectories;
-  std::unordered_map<const Submaps*, int> trajectory_ids;
-  for (const auto& node : trajectory_nodes) {
-    const auto* trajectory = node.constant_data->trajectory;
-    if (trajectory_ids.emplace(trajectory, trajectories.size()).second) {
-      trajectories.push_back({node});
-    } else {
-      trajectories[trajectory_ids[trajectory]].push_back(node);
-    }
+std::unordered_map<const Submaps*, int> ComputeTrajectoryIds(
+    const std::vector<const Submaps*>& trajectories) {
+  std::unordered_map<const Submaps*, int> result;
+  for (const auto& trajectory : trajectories) {
+    result.emplace(trajectory, result.size());
   }
-  return trajectories;
+  return result;
+}
+
+void GroupTrajectoryNodes(
+    const std::vector<TrajectoryNode>& trajectory_nodes,
+    const std::unordered_map<const Submaps*, int>& trajectory_ids,
+    std::vector<std::vector<TrajectoryNode>>* grouped_nodes,
+    std::vector<std::pair<int, int>>* new_indices) {
+  CHECK_NOTNULL(grouped_nodes)->clear();
+  CHECK_NOTNULL(new_indices)->clear();
+
+  grouped_nodes->resize(trajectory_ids.size());
+
+  for (const auto& node : trajectory_nodes) {
+    const int id = trajectory_ids.at(node.constant_data->trajectory);
+    new_indices->emplace_back(id, (*grouped_nodes)[id].size());
+    (*grouped_nodes)[id].push_back(node);
+  }
+}
+
+// TODO(macmason): This function is very nearly a copy of GroupTrajectoryNodes.
+// Consider refactoring them to share an implementation.
+void GroupSubmapStates(
+    const std::vector<SparsePoseGraph::SubmapState>& submap_states,
+    const std::unordered_map<const Submaps*, int>& trajectory_ids,
+    std::vector<std::pair<int, int>>* new_indices) {
+  CHECK_NOTNULL(new_indices)->clear();
+  std::vector<int> submap_group_sizes(trajectory_ids.size(), 0);
+
+  for (const auto& submap_state : submap_states) {
+    const int id = trajectory_ids.at(submap_state.trajectory);
+    new_indices->emplace_back(id, submap_group_sizes[id]);
+    submap_group_sizes[id]++;
+  }
 }
 
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
@@ -74,32 +99,62 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
 
 proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
+
+  const auto trajectory_nodes = GetTrajectoryNodes();
+  std::vector<const Submaps*> submap_pointers;
+  for (const auto& trajectory_node : trajectory_nodes) {
+    submap_pointers.push_back(trajectory_node.constant_data->trajectory);
+  }
+
+  const auto trajectory_ids = ComputeTrajectoryIds(submap_pointers);
+
+  std::vector<std::vector<TrajectoryNode>> grouped_nodes;
+  std::vector<std::pair<int, int>> grouped_node_indices;
+  GroupTrajectoryNodes(trajectory_nodes, trajectory_ids, &grouped_nodes,
+                       &grouped_node_indices);
+
+  std::vector<std::pair<int, int>> grouped_submap_indices;
+  GroupSubmapStates(GetSubmapStates(), trajectory_ids, &grouped_submap_indices);
+
   for (const auto& constraint : constraints()) {
     auto* const constraint_proto = proto.add_constraint();
     *constraint_proto->mutable_relative_pose() =
         transform::ToProto(constraint.pose.zbar_ij);
+    constraint_proto->mutable_sqrt_lambda()->Reserve(36);
     for (int i = 0; i != 36; ++i) {
       constraint_proto->mutable_sqrt_lambda()->Add(0.);
     }
     Eigen::Map<Eigen::Matrix<double, 6, 6>>(
         constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
         constraint.pose.sqrt_Lambda_ij;
-    // TODO(whess): Support multi-trajectory.
-    constraint_proto->mutable_submap_id()->set_submap_index(constraint.i);
-    constraint_proto->mutable_scan_id()->set_scan_index(constraint.j);
+
+    constraint_proto->mutable_submap_id()->set_trajectory_id(
+        grouped_submap_indices[constraint.i].first);
+    constraint_proto->mutable_submap_id()->set_submap_index(
+        grouped_submap_indices[constraint.i].second);
+
+    constraint_proto->mutable_scan_id()->set_trajectory_id(
+        grouped_node_indices[constraint.j].first);
+    constraint_proto->mutable_scan_id()->set_scan_index(
+        grouped_node_indices[constraint.j].second);
+
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }
 
-  // TODO(whess): Support multi-trajectory.
-  proto::Trajectory* const trajectory = proto.add_trajectory();
-  *trajectory = mapping::ToProto(GetTrajectoryNodes());
-  const std::vector<std::vector<const Submaps*>> components =
-      GetConnectedTrajectories();
-  CHECK_EQ(components.size(), 1);
-  CHECK_EQ(components[0].size(), 1);
-  const Submaps* const submaps = components[0][0];
-  for (const auto& transform : GetSubmapTransforms(*submaps)) {
-    *trajectory->add_submap()->mutable_pose() = transform::ToProto(transform);
+  for (const auto& group : grouped_nodes) {
+    auto* trajectory_proto = proto.add_trajectory();
+    for (const auto& node : group) {
+      auto* node_proto = trajectory_proto->add_node();
+      node_proto->set_timestamp(common::ToUniversal(node.constant_data->time));
+      *node_proto->mutable_pose() =
+          transform::ToProto(node.pose * node.constant_data->tracking_to_pose);
+    }
+
+    const Submaps* const submaps = group[0].constant_data->trajectory;
+    for (const auto& transform : GetSubmapTransforms(*submaps)) {
+      *trajectory_proto->add_submap()->mutable_pose() =
+          transform::ToProto(transform);
+    }
   }
 
   return proto;
