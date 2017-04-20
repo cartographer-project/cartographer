@@ -107,12 +107,36 @@ Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin,
                       begin_range_data_index),
       probability_grid(limits) {}
 
-Submaps::Submaps(const proto::SubmapsOptions& options)
+Submap::Submap(const Eigen::Vector3f& origin,
+               const mapping_2d::proto::ProbabilityGrid& grid)
+  : mapping::Submap(Eigen::Vector3f(origin.x(), origin.y(), 0.),
+                    0),
+    probability_grid(grid) {
+    finished_probability_grid = &probability_grid;
+  }
+
+
+Submaps::Submaps(const mapping_2d::proto::SubmapsOptions& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {
   // We always want to have at least one likelihood field which we can return,
   // and will create it at the origin in absence of a better choice.
   AddSubmap(Eigen::Vector2f::Zero());
+}
+
+Submaps::Submaps(const mapping::proto::Submaps& proto,
+                 const mapping_2d::proto::SubmapsOptions& options)
+    : options_(options),
+      range_data_inserter_(options.range_data_inserter_options()) {
+
+  for (int i = 0; i < proto.submap_size(); i++) {
+    auto proto_submap = proto.submap(i);
+    proto::ProbabilityGridSubmap* grid_submap =
+        proto_submap.MutableExtension(mapping_2d::proto::ProbabilityGridSubmap::submap);
+    submaps_.push_back(common::make_unique<Submap>(
+                         transform::ToEigen(proto_submap.origin()),
+                         grid_submap->grid()));
+  }
 }
 
 void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
@@ -176,6 +200,26 @@ void Submaps::AddSubmap(const Eigen::Vector2f& origin) {
       origin, num_range_data_));
   LOG(INFO) << "Added submap " << size();
   num_range_data_in_last_submap_ = 0;
+}
+
+mapping::proto::Submaps Submaps::ToProto() const
+{
+  mapping::proto::Submaps proto;
+
+  proto.mutable_submap()->Reserve(submaps_.size());
+  for(auto& submap : submaps_) {
+    // add only finished submaps
+    if(submap->finished_probability_grid != nullptr) {
+      auto* proto_submap = proto.add_submap();
+      proto_submap->set_type(mapping::proto::Submap::ProbabilityGridSubmap);
+      *proto_submap->mutable_origin() = transform::ToProto(submap->origin);
+
+      proto::ProbabilityGridSubmap* grid_submap =
+          proto_submap->MutableExtension(proto::ProbabilityGridSubmap::submap);
+      *grid_submap->mutable_grid() = submap->probability_grid.ToProto();
+    }
+  }
+  return proto;
 }
 
 }  // namespace mapping_2d

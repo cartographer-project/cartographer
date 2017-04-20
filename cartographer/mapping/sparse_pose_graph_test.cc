@@ -39,6 +39,11 @@ class FakeSubmaps : public Submaps {
                      proto::SubmapQuery::Response*) const override {
     LOG(FATAL) << "Not implemented.";
   }
+
+  mapping::proto::Submaps ToProto() const override {
+    LOG(FATAL) << "Not implemented.";
+    return mapping::proto::Submaps();
+  }
 };
 
 TEST(SparsePoseGraphTest, TrajectoryFunctions) {

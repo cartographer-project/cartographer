@@ -25,9 +25,11 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
+#include "cartographer/mapping/proto/submaps.pb.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/range_data_inserter.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
+#include "cartographer/mapping_3d/proto/submaps.pb.h"
 #include "cartographer/mapping_3d/proto/submaps_options.pb.h"
 #include "cartographer/mapping_3d/range_data_inserter.h"
 #include "cartographer/sensor/range_data.h"
@@ -48,6 +50,12 @@ proto::SubmapsOptions CreateSubmapsOptions(
 struct Submap : public mapping::Submap {
   Submap(float high_resolution, float low_resolution,
          const Eigen::Vector3f& origin, int begin_range_data_index);
+  Submap(const Eigen::Vector3f& origin,
+         const mapping_3d::proto::HybridGrid& high_resolution,
+         const mapping_3d::proto::HybridGrid& low_resolution,
+         const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+          indices
+         );
 
   HybridGrid high_resolution_hybrid_grid;
   HybridGrid low_resolution_hybrid_grid;
@@ -59,6 +67,9 @@ struct Submap : public mapping::Submap {
 class Submaps : public mapping::Submaps {
  public:
   explicit Submaps(const proto::SubmapsOptions& options);
+  explicit Submaps(const mapping::proto::Submaps& proto,
+                   const mapping_3d::proto::SubmapsOptions& options);
+
 
   Submaps(const Submaps&) = delete;
   Submaps& operator=(const Submaps&) = delete;
@@ -69,6 +80,7 @@ class Submaps : public mapping::Submaps {
       int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
       const transform::Rigid3d& global_submap_pose,
       mapping::proto::SubmapQuery::Response* response) const override;
+  mapping::proto::Submaps ToProto() const override;
 
   // Inserts 'range_data' into the Submap collection.
   void InsertRangeData(const sensor::RangeData& range_data);
@@ -81,6 +93,7 @@ class Submaps : public mapping::Submaps {
 
   // Adds a node to be used when visualizing the submap.
   void AddTrajectoryNodeIndex(int trajectory_node_index);
+
 
  private:
   struct PixelData {
