@@ -135,7 +135,7 @@ void OptimizingLocalTrajectoryBuilder::AddOdometerData(
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
 OptimizingLocalTrajectoryBuilder::AddRangefinderData(
     const common::Time time, const Eigen::Vector3f& origin,
-    const sensor::PointCloud& ranges) {
+    const sensor::PointCloud& ranges, const int next_trajectory_node_index) {
   CHECK_GT(ranges.size(), 0);
 
   // TODO(hrapp): Handle misses.
@@ -188,7 +188,7 @@ OptimizingLocalTrajectoryBuilder::AddRangefinderData(
   ++num_accumulated_;
 
   RemoveObsoleteSensorData();
-  return MaybeOptimize(time);
+  return MaybeOptimize(time, next_trajectory_node_index);
 }
 
 void OptimizingLocalTrajectoryBuilder::RemoveObsoleteSensorData() {
@@ -215,7 +215,8 @@ void OptimizingLocalTrajectoryBuilder::RemoveObsoleteSensorData() {
 }
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
-OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
+OptimizingLocalTrajectoryBuilder::MaybeOptimize(
+    const common::Time time, const int trajectory_node_index) {
   // TODO(hrapp): Make the number of optimizations configurable.
   if (num_accumulated_ < options_.scans_per_accumulation() &&
       num_accumulated_ % 10 != 0) {
@@ -348,13 +349,15 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   }
 
   return AddAccumulatedRangeData(time, optimized_pose,
-                                 accumulated_range_data_in_tracking);
+                                 accumulated_range_data_in_tracking,
+                                 trajectory_node_index);
 }
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
 OptimizingLocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const transform::Rigid3d& optimized_pose,
-    const sensor::RangeData& range_data_in_tracking) {
+    const sensor::RangeData& range_data_in_tracking,
+    const int trajectory_node_index) {
   const sensor::RangeData filtered_range_data = {
       range_data_in_tracking.origin,
       sensor::VoxelFiltered(range_data_in_tracking.returns,
@@ -372,7 +375,8 @@ OptimizingLocalTrajectoryBuilder::AddAccumulatedRangeData(
       sensor::TransformPointCloud(filtered_range_data.returns,
                                   optimized_pose.cast<float>())};
 
-  return InsertIntoSubmap(time, filtered_range_data, optimized_pose);
+  return InsertIntoSubmap(time, filtered_range_data, optimized_pose,
+                          trajectory_node_index);
 }
 
 const OptimizingLocalTrajectoryBuilder::PoseEstimate&
@@ -380,15 +384,11 @@ OptimizingLocalTrajectoryBuilder::pose_estimate() const {
   return last_pose_estimate_;
 }
 
-void OptimizingLocalTrajectoryBuilder::AddTrajectoryNodeIndex(
-    int trajectory_node_index) {
-  submaps_->AddTrajectoryNodeIndex(trajectory_node_index);
-}
-
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
 OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
     const common::Time time, const sensor::RangeData& range_data_in_tracking,
-    const transform::Rigid3d& pose_observation) {
+    const transform::Rigid3d& pose_observation,
+    const int trajectory_node_index) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
   }
@@ -398,8 +398,10 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
   for (int insertion_index : submaps_->insertion_indices()) {
     insertion_submaps.push_back(submaps_->Get(insertion_index));
   }
-  submaps_->InsertRangeData(sensor::TransformRangeData(
-      range_data_in_tracking, pose_observation.cast<float>()));
+  submaps_->InsertRangeData(
+      sensor::TransformRangeData(range_data_in_tracking,
+                                 pose_observation.cast<float>()),
+      trajectory_node_index);
 
   const kalman_filter::PoseCovariance kCovariance =
       1e-7 * kalman_filter::PoseCovariance::Identity();

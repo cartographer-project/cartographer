@@ -261,7 +261,8 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
       AddLinearOnlyImuObservation(node.time, node.pose);
       const auto range_data = GenerateRangeData(node.pose);
       if (local_trajectory_builder_->AddRangefinderData(
-              node.time, range_data.origin, range_data.returns) != nullptr) {
+              node.time, range_data.origin, range_data.returns, num_poses) !=
+          nullptr) {
         const auto pose_estimate = local_trajectory_builder_->pose_estimate();
         EXPECT_THAT(pose_estimate.pose, transform::IsNearly(node.pose, 1e-1));
         ++num_poses;

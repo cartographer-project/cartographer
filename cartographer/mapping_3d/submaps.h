@@ -47,11 +47,12 @@ proto::SubmapsOptions CreateSubmapsOptions(
 
 struct Submap : public mapping::Submap {
   Submap(float high_resolution, float low_resolution,
-         const Eigen::Vector3f& origin, int begin_range_data_index);
+         const Eigen::Vector3f& origin);
 
   HybridGrid high_resolution_hybrid_grid;
   HybridGrid low_resolution_hybrid_grid;
   bool finished = false;
+  // Indices into the nodes of the SparsePoseGraph used to visualize the submap.
   std::vector<int> trajectory_node_indices;
 };
 
@@ -71,16 +72,14 @@ class Submaps : public mapping::Submaps {
       mapping::proto::SubmapQuery::Response* response) const override;
 
   // Inserts 'range_data' into the Submap collection.
-  void InsertRangeData(const sensor::RangeData& range_data);
+  void InsertRangeData(const sensor::RangeData& range_data,
+                       int trajectory_node_index);
 
   // Returns the 'high_resolution' HybridGrid to be used for matching.
   const HybridGrid& high_resolution_matching_grid() const;
 
   // Returns the 'low_resolution' HybridGrid to be used for matching.
   const HybridGrid& low_resolution_matching_grid() const;
-
-  // Adds a node to be used when visualizing the submap.
-  void AddTrajectoryNodeIndex(int trajectory_node_index);
 
  private:
   struct PixelData {
@@ -112,12 +111,6 @@ class Submaps : public mapping::Submaps {
 
   std::vector<std::unique_ptr<Submap>> submaps_;
   RangeDataInserter range_data_inserter_;
-
-  // Number of RangeData inserted.
-  int num_range_data_ = 0;
-
-  // Number of RangeData inserted since the last Submap was added.
-  int num_range_data_in_last_submap_ = 0;
 };
 
 }  // namespace mapping_3d

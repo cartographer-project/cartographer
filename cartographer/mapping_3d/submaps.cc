@@ -217,8 +217,8 @@ proto::SubmapsOptions CreateSubmapsOptions(
 }
 
 Submap::Submap(const float high_resolution, const float low_resolution,
-               const Eigen::Vector3f& origin, const int begin_range_data_index)
-    : mapping::Submap(origin, begin_range_data_index),
+               const Eigen::Vector3f& origin)
+    : mapping::Submap(origin),
       high_resolution_hybrid_grid(high_resolution, origin),
       low_resolution_hybrid_grid(low_resolution, origin) {}
 
@@ -274,9 +274,8 @@ void Submaps::SubmapToProto(
                              global_submap_pose.translation().z())));
 }
 
-void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
-  CHECK_LT(num_range_data_, std::numeric_limits<int>::max());
-  ++num_range_data_;
+void Submaps::InsertRangeData(const sensor::RangeData& range_data,
+                              const int trajectory_node_index) {
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
     range_data_inserter_.Insert(
@@ -285,10 +284,11 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
         &submap->high_resolution_hybrid_grid);
     range_data_inserter_.Insert(range_data,
                                 &submap->low_resolution_hybrid_grid);
-    submap->end_range_data_index = num_range_data_;
+    ++submap->num_range_data;
+    submap->trajectory_node_indices.push_back(trajectory_node_index);
   }
-  ++num_range_data_in_last_submap_;
-  if (num_range_data_in_last_submap_ == options_.num_range_data()) {
+  const Submap* const last_submap = Get(size() - 1);
+  if (last_submap->num_range_data == options_.num_range_data()) {
     AddSubmap(range_data.origin);
   }
 }
@@ -301,16 +301,6 @@ const HybridGrid& Submaps::low_resolution_matching_grid() const {
   return submaps_[matching_index()]->low_resolution_hybrid_grid;
 }
 
-void Submaps::AddTrajectoryNodeIndex(const int trajectory_node_index) {
-  for (int i = 0; i != size(); ++i) {
-    Submap& submap = *submaps_[i];
-    if (submap.end_range_data_index == num_range_data_ &&
-        submap.begin_range_data_index <= num_range_data_ - 1) {
-      submap.trajectory_node_indices.push_back(trajectory_node_index);
-    }
-  }
-}
-
 void Submaps::AddSubmap(const Eigen::Vector3f& origin) {
   if (size() > 1) {
     Submap* submap = submaps_[size() - 2].get();
@@ -318,10 +308,8 @@ void Submaps::AddSubmap(const Eigen::Vector3f& origin) {
     submap->finished = true;
   }
   submaps_.emplace_back(new Submap(options_.high_resolution(),
-                                   options_.low_resolution(), origin,
-                                   num_range_data_));
+                                   options_.low_resolution(), origin));
   LOG(INFO) << "Added submap " << size();
-  num_range_data_in_last_submap_ = 0;
 }
 
 std::vector<Submaps::PixelData> Submaps::AccumulatePixelData(

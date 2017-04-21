@@ -64,14 +64,11 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
 }
 
 // An individual submap, which has an initial position 'origin', keeps track of
-// which range data were inserted into it, and sets the
+// how many range data were inserted into it, and sets the
 // 'finished_probability_grid' to be used for loop closing once the map no
 // longer changes.
 struct Submap {
-  Submap(const Eigen::Vector3f& origin, int begin_range_data_index)
-      : origin(origin),
-        begin_range_data_index(begin_range_data_index),
-        end_range_data_index(begin_range_data_index) {}
+  Submap(const Eigen::Vector3f& origin) : origin(origin) {}
 
   transform::Rigid3d local_pose() const {
     return transform::Rigid3d::Translation(origin.cast<double>());
@@ -80,10 +77,8 @@ struct Submap {
   // Origin of this submap.
   Eigen::Vector3f origin;
 
-  // This Submap contains RangeData with indices in the range
-  // ['begin_range_data_index', 'end_range_data_index').
-  int begin_range_data_index;
-  int end_range_data_index;
+  // Number of RangeData inserted.
+  int num_range_data = 0;
 
   // The 'finished_probability_grid' when this submap is finished and will not
   // change anymore. Otherwise, this is nullptr and the next call to
