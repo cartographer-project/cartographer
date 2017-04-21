@@ -69,15 +69,18 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Adds a new 'range_data_in_tracking' observation at 'time', and a 'pose'
   // that will later be optimized. The 'pose' was determined by scan matching
   // against the 'matching_submap' and the scan was inserted into the
-  // 'insertion_submaps'. The index into the vector of trajectory nodes as
-  // used with GetTrajectoryNodes() is returned.
-  int AddScan(common::Time time,
-              const sensor::RangeData& range_data_in_tracking,
-              const transform::Rigid3d& pose,
-              const kalman_filter::PoseCovariance& pose_covariance,
-              const Submaps* submaps, const Submap* matching_submap,
-              const std::vector<const Submap*>& insertion_submaps)
+  // 'insertion_submaps'.
+  void AddScan(common::Time time,
+               const sensor::RangeData& range_data_in_tracking,
+               const transform::Rigid3d& pose,
+               const kalman_filter::PoseCovariance& pose_covariance,
+               const Submaps* submaps, const Submap* matching_submap,
+               const std::vector<const Submap*>& insertion_submaps)
       EXCLUDES(mutex_);
+
+  // The index into the vector of trajectory nodes as used with
+  // GetTrajectoryNodes() for the next node added with AddScan() is returned.
+  int GetNextTrajectoryNodeIndex() EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
   void AddImuData(const mapping::Submaps* trajectory, common::Time time,

@@ -72,7 +72,7 @@ void KalmanLocalTrajectoryBuilder::AddImuData(
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
 KalmanLocalTrajectoryBuilder::AddRangefinderData(
     const common::Time time, const Eigen::Vector3f& origin,
-    const sensor::PointCloud& ranges) {
+    const sensor::PointCloud& ranges, int next_trajectory_node_index) {
   if (!pose_tracker_) {
     LOG(INFO) << "PoseTracker not yet initialized.";
     return nullptr;
@@ -114,15 +114,18 @@ KalmanLocalTrajectoryBuilder::AddRangefinderData(
   if (num_accumulated_ >= options_.scans_per_accumulation()) {
     num_accumulated_ = 0;
     return AddAccumulatedRangeData(
-        time, sensor::TransformRangeData(accumulated_range_data_,
-                                         tracking_delta.inverse()));
+        time,
+        sensor::TransformRangeData(accumulated_range_data_,
+                                   tracking_delta.inverse()),
+        next_trajectory_node_index);
   }
   return nullptr;
 }
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
 KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
-    const common::Time time, const sensor::RangeData& range_data_in_tracking) {
+    const common::Time time, const sensor::RangeData& range_data_in_tracking,
+    const int trajectory_node_index) {
   const sensor::RangeData filtered_range_data = {
       range_data_in_tracking.origin,
       sensor::VoxelFiltered(range_data_in_tracking.returns,
@@ -181,7 +184,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
                                   pose_observation.cast<float>())};
 
   return InsertIntoSubmap(time, filtered_range_data, pose_observation,
-                          covariance_estimate);
+                          covariance_estimate, trajectory_node_index);
 }
 
 void KalmanLocalTrajectoryBuilder::AddOdometerData(
@@ -206,16 +209,12 @@ KalmanLocalTrajectoryBuilder::pose_estimate() const {
   return last_pose_estimate_;
 }
 
-void KalmanLocalTrajectoryBuilder::AddTrajectoryNodeIndex(
-    int trajectory_node_index) {
-  submaps_->AddTrajectoryNodeIndex(trajectory_node_index);
-}
-
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
 KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
     const common::Time time, const sensor::RangeData& range_data_in_tracking,
     const transform::Rigid3d& pose_observation,
-    const kalman_filter::PoseCovariance& covariance_estimate) {
+    const kalman_filter::PoseCovariance& covariance_estimate,
+    const int trajectory_node_index) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
   }
@@ -225,8 +224,10 @@ KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
   for (int insertion_index : submaps_->insertion_indices()) {
     insertion_submaps.push_back(submaps_->Get(insertion_index));
   }
-  submaps_->InsertRangeData(sensor::TransformRangeData(
-      range_data_in_tracking, pose_observation.cast<float>()));
+  submaps_->InsertRangeData(
+      sensor::TransformRangeData(range_data_in_tracking,
+                                 pose_observation.cast<float>()),
+      trajectory_node_index);
   return std::unique_ptr<InsertionResult>(new InsertionResult{
       time, range_data_in_tracking, pose_observation, covariance_estimate,
       submaps_.get(), matching_submap, insertion_submaps});

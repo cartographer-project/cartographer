@@ -141,8 +141,7 @@ string MapBuilder::SubmapToProto(const int trajectory_id,
            " submaps in this trajectory.";
   }
 
-  response->set_submap_version(
-      submaps->Get(submap_index)->end_range_data_index);
+  response->set_submap_version(submaps->Get(submap_index)->num_range_data);
   const std::vector<transform::Rigid3d> submap_transforms =
       sparse_pose_graph_->GetSubmapTransforms(*submaps);
   CHECK_EQ(submap_transforms.size(), submaps->size());

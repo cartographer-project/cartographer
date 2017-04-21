@@ -101,10 +101,8 @@ proto::SubmapsOptions CreateSubmapsOptions(
   return options;
 }
 
-Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin,
-               const int begin_range_data_index)
-    : mapping::Submap(Eigen::Vector3f(origin.x(), origin.y(), 0.),
-                      begin_range_data_index),
+Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin)
+    : mapping::Submap(Eigen::Vector3f(origin.x(), origin.y(), 0.)),
       probability_grid(limits) {}
 
 Submaps::Submaps(const proto::SubmapsOptions& options)
@@ -116,16 +114,14 @@ Submaps::Submaps(const proto::SubmapsOptions& options)
 }
 
 void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
-  CHECK_LT(num_range_data_, std::numeric_limits<int>::max());
-  ++num_range_data_;
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
     CHECK(submap->finished_probability_grid == nullptr);
     range_data_inserter_.Insert(range_data, &submap->probability_grid);
-    submap->end_range_data_index = num_range_data_;
+    ++submap->num_range_data;
   }
-  ++num_range_data_in_last_submap_;
-  if (num_range_data_in_last_submap_ == options_.num_range_data()) {
+  const Submap* const last_submap = Get(size() - 1);
+  if (last_submap->num_range_data == options_.num_range_data()) {
     AddSubmap(range_data.origin.head<2>());
   }
 }
@@ -173,9 +169,8 @@ void Submaps::AddSubmap(const Eigen::Vector2f& origin) {
                 origin.cast<double>() +
                     options_.half_length() * Eigen::Vector2d::Ones(),
                 CellLimits(num_cells_per_dimension, num_cells_per_dimension)),
-      origin, num_range_data_));
+      origin));
   LOG(INFO) << "Added submap " << size();
-  num_range_data_in_last_submap_ = 0;
 }
 
 }  // namespace mapping_2d

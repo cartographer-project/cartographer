@@ -46,23 +46,17 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
       "},"
       "}");
   Submaps submaps{CreateSubmapsOptions(parameter_dictionary.get())};
-  auto num_inserted = [&submaps](const int i) {
-    return submaps.Get(i)->end_range_data_index -
-           submaps.Get(i)->begin_range_data_index;
-  };
   for (int i = 0; i != 1000; ++i) {
     submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}});
     const int matching = submaps.matching_index();
     // Except for the first, maps should only be returned after enough scans.
     if (matching != 0) {
-      EXPECT_LE(kNumRangeData, num_inserted(matching));
+      EXPECT_LE(kNumRangeData, submaps.Get(matching)->num_range_data);
     }
   }
   for (int i = 0; i != submaps.size() - 2; ++i) {
     // Submaps should not be left without the right number of scans in them.
-    EXPECT_EQ(kNumRangeData * 2, num_inserted(i));
-    EXPECT_EQ(i * kNumRangeData, submaps.Get(i)->begin_range_data_index);
-    EXPECT_EQ((i + 2) * kNumRangeData, submaps.Get(i)->end_range_data_index);
+    EXPECT_EQ(kNumRangeData * 2, submaps.Get(i)->num_range_data);
   }
 }
 

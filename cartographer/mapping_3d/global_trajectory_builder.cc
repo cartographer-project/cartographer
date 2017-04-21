@@ -45,19 +45,18 @@ void GlobalTrajectoryBuilder::AddImuData(
 void GlobalTrajectoryBuilder::AddRangefinderData(
     const common::Time time, const Eigen::Vector3f& origin,
     const sensor::PointCloud& ranges) {
-  auto insertion_result =
-      local_trajectory_builder_->AddRangefinderData(time, origin, ranges);
+  auto insertion_result = local_trajectory_builder_->AddRangefinderData(
+      time, origin, ranges, sparse_pose_graph_->GetNextTrajectoryNodeIndex());
 
   if (insertion_result == nullptr) {
     return;
   }
 
-  const int trajectory_node_index = sparse_pose_graph_->AddScan(
+  sparse_pose_graph_->AddScan(
       insertion_result->time, insertion_result->range_data_in_tracking,
       insertion_result->pose_observation, insertion_result->covariance_estimate,
       insertion_result->submaps, insertion_result->matching_submap,
       insertion_result->insertion_submaps);
-  local_trajectory_builder_->AddTrajectoryNodeIndex(trajectory_node_index);
 }
 
 void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
