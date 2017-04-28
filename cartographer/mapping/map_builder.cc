@@ -154,6 +154,10 @@ int MapBuilder::num_trajectory_builders() const {
   return trajectory_builders_.size();
 }
 
+int MapBuilder::num_available_packets(const int trajectory_id) const {
+  return sensor_collator_.num_available_packets(trajectory_id);
+}
+
 SparsePoseGraph* MapBuilder::sparse_pose_graph() { return sparse_pose_graph_; }
 
 }  // namespace mapping
