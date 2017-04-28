@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/recordio.h"
+#include "cartographer/io/proto_stream.h"
 
 namespace cartographer {
 namespace io {
 
 namespace {
 
+// First eight bytes to identify our proto stream format.
 const size_t kMagic = 0x7b1d1f7b5bf501db;
 
 void WriteSizeAsLittleEndian(size_t size, std::ostream* out) {
@@ -36,39 +37,41 @@ bool ReadSizeAsLittleEndian(std::istream* in, size_t* size) {
     *size >>= 8;
     *size += static_cast<size_t>(in->get()) << 56;
   }
-  return *in;
+  return !in->fail();
 }
 
 }  // namespace
 
-RecordWriter::RecordWriter(const string& filename)
-    : out_(filename, std::ios::out | std::ios::binary) {}
-
-RecordWriter::~RecordWriter() {}
-
-void RecordWriter::Write(const string& uncompressed_data) {
+ProtoStreamWriter::ProtoStreamWriter(const string& filename)
+    : out_(filename, std::ios::out | std::ios::binary) {
   WriteSizeAsLittleEndian(kMagic, &out_);
+}
+
+ProtoStreamWriter::~ProtoStreamWriter() {}
+
+void ProtoStreamWriter::Write(const string& uncompressed_data) {
   string compressed_data;
   common::FastGzipString(uncompressed_data, &compressed_data);
   WriteSizeAsLittleEndian(compressed_data.size(), &out_);
   out_.write(compressed_data.data(), compressed_data.size());
 }
 
-bool RecordWriter::Close() {
+bool ProtoStreamWriter::Close() {
   out_.close();
-  return out_;
+  return !out_.fail();
 }
 
-RecordReader::RecordReader(const string& filename)
-    : in_(filename, std::ios::in | std::ios::binary) {}
-
-RecordReader::~RecordReader() {}
-
-bool RecordReader::Read(string* decompressed_data) {
+ProtoStreamReader::ProtoStreamReader(const string& filename)
+    : in_(filename, std::ios::in | std::ios::binary) {
   size_t magic;
   if (!ReadSizeAsLittleEndian(&in_, &magic) || magic != kMagic) {
-    return false;
+    in_.setstate(std::ios::failbit);
   }
+}
+
+ProtoStreamReader::~ProtoStreamReader() {}
+
+bool ProtoStreamReader::Read(string* decompressed_data) {
   size_t compressed_size;
   if (!ReadSizeAsLittleEndian(&in_, &compressed_size)) {
     return false;

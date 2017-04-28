@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-google_test(io_recordio_test
+google_test(io_proto_stream_test
   SRCS
-    recordio_test.cc
+    proto_stream_test.cc
 )

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_RECORDIO_H_
-#define CARTOGRAPHER_IO_RECORDIO_H_
+#ifndef CARTOGRAPHER_IO_PROTO_STREAM_H_
+#define CARTOGRAPHER_IO_PROTO_STREAM_H_
 
 #include <fstream>
 
@@ -27,14 +27,18 @@ namespace io {
 // A simple writer of a compressed sequence of protocol buffer messages to a
 // file. The format is not intended to be compatible with any other format used
 // outside of Cartographer.
-class RecordWriter {
+//
+// TODO(whess): Compress the file instead of individual messages for better
+// compression performance? Should we use LZ4?
+class ProtoStreamWriter {
  public:
-  RecordWriter(const string& filename);
-  ~RecordWriter();
+  ProtoStreamWriter(const string& filename);
+  ~ProtoStreamWriter();
 
-  RecordWriter(const RecordWriter&) = delete;
-  RecordWriter& operator=(const RecordWriter&) = delete;
+  ProtoStreamWriter(const ProtoStreamWriter&) = delete;
+  ProtoStreamWriter& operator=(const ProtoStreamWriter&) = delete;
 
+  // Serializes, compressed and writes the 'proto' to the file.
   template <typename MessageType>
   void WriteProto(const MessageType& proto) {
     string uncompressed_data;
@@ -42,6 +46,7 @@ class RecordWriter {
     Write(uncompressed_data);
   }
 
+  // This should be called to check whether writing was successful.
   bool Close();
 
  private:
@@ -50,14 +55,14 @@ class RecordWriter {
   std::ofstream out_;
 };
 
-// A reader of the format produced by RecordWriter.
-class RecordReader {
+// A reader of the format produced by ProtoStreamWriter.
+class ProtoStreamReader {
  public:
-  RecordReader(const string& filename);
-  ~RecordReader();
+  ProtoStreamReader(const string& filename);
+  ~ProtoStreamReader();
 
-  RecordReader(const RecordReader&) = delete;
-  RecordReader& operator=(const RecordReader&) = delete;
+  ProtoStreamReader(const ProtoStreamReader&) = delete;
+  ProtoStreamReader& operator=(const ProtoStreamReader&) = delete;
 
   template <typename MessageType>
   bool ReadProto(MessageType* proto) {
@@ -75,4 +80,4 @@ class RecordReader {
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_RECORDIO_H_
+#endif  // CARTOGRAPHER_IO_PROTO_STREAM_H_

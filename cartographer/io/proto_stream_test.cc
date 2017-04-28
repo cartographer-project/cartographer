@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/recordio.h"
+#include "cartographer/io/proto_stream.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -29,11 +29,11 @@ namespace cartographer {
 namespace io {
 namespace {
 
-class RecordioTest : public ::testing::Test {
+class ProtoStreamTest : public ::testing::Test {
  protected:
   void SetUp() override {
     const string tmpdir = P_tmpdir;
-    test_directory_ = tmpdir + "/recordio_test_XXXXXX";
+    test_directory_ = tmpdir + "/proto_stream_test_XXXXXX";
     ASSERT_NE(mkdtemp(&test_directory_[0]), nullptr) << strerror(errno);
   }
 
@@ -42,10 +42,10 @@ class RecordioTest : public ::testing::Test {
   string test_directory_;
 };
 
-TEST_F(RecordioTest, WriteAndReadBack) {
-  const string test_file = test_directory_ + "/test_trajectory.recordio";
+TEST_F(ProtoStreamTest, WriteAndReadBack) {
+  const string test_file = test_directory_ + "/test_trajectory.pbstream";
   {
-    RecordWriter writer(test_file);
+    ProtoStreamWriter writer(test_file);
     for (int i = 0; i != 10; ++i) {
       mapping::proto::Trajectory trajectory;
       trajectory.add_node()->set_timestamp(i);
@@ -54,7 +54,7 @@ TEST_F(RecordioTest, WriteAndReadBack) {
     ASSERT_TRUE(writer.Close());
   }
   {
-    RecordReader reader(test_file);
+    ProtoStreamReader reader(test_file);
     for (int i = 0; i != 10; ++i) {
       mapping::proto::Trajectory trajectory;
       ASSERT_TRUE(reader.ReadProto(&trajectory));
