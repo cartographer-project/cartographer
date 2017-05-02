@@ -88,6 +88,7 @@ macro(google_initialize_cartographer_project)
   google_add_flag(GOOG_CXX_FLAGS "-Werror=missing-braces")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=reorder")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=return-type")
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=switch")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=uninitialized")
 
   if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
