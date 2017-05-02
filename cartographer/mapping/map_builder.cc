@@ -99,6 +99,30 @@ int MapBuilder::AddTrajectoryBuilder(
   return trajectory_id;
 }
 
+int MapBuilder::AddTrajectoryBuilder(
+    const std::unordered_set<string>& expected_sensor_ids,
+    const proto::MapBuilderOptions& trajectory_options) {
+  const int trajectory_id = trajectory_builders_.size();
+  if (options_.use_trajectory_builder_3d()) {
+    trajectory_builders_.push_back(
+        common::make_unique<CollatedTrajectoryBuilder>(
+            &sensor_collator_, trajectory_id, expected_sensor_ids,
+            common::make_unique<mapping_3d::GlobalTrajectoryBuilder>(
+                trajectory_options.trajectory_builder_3d_options(),
+                sparse_pose_graph_3d_.get())));
+  } else {
+    trajectory_builders_.push_back(
+        common::make_unique<CollatedTrajectoryBuilder>(
+            &sensor_collator_, trajectory_id, expected_sensor_ids,
+            common::make_unique<mapping_2d::GlobalTrajectoryBuilder>(
+                trajectory_options.trajectory_builder_2d_options(),
+                sparse_pose_graph_2d_.get())));
+  }
+  trajectory_ids_.emplace(trajectory_builders_.back()->submaps(),
+                          trajectory_id);
+  return trajectory_id;
+}
+
 TrajectoryBuilder* MapBuilder::GetTrajectoryBuilder(
     const int trajectory_id) const {
   return trajectory_builders_.at(trajectory_id).get();

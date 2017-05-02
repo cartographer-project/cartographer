@@ -59,6 +59,10 @@ class MapBuilder {
   int AddTrajectoryBuilder(
       const std::unordered_set<string>& expected_sensor_ids);
 
+  int AddTrajectoryBuilder(
+      const std::unordered_set<string>& expected_sensor_ids,
+      const proto::MapBuilderOptions& trajectory_options);
+
   // Returns the TrajectoryBuilder corresponding to the specified
   // 'trajectory_id'.
   mapping::TrajectoryBuilder* GetTrajectoryBuilder(int trajectory_id) const;
