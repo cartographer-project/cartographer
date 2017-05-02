@@ -240,7 +240,6 @@ void ConstraintBuilder::ComputeConstraint(
             filtered_point_cloud, options_.global_localization_min_score(),
             &score, &pose_estimate)) {
       CHECK_GT(score, options_.global_localization_min_score());
-      //TODO: maybe change return type to bool and compute this line outside in case of success.
       trajectory_connectivity->Connect(scan_trajectory, submap_trajectory);
     } else {
       return;
