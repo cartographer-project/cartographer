@@ -64,6 +64,12 @@ void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
   local_trajectory_builder_->AddOdometerData(time, pose);
 }
 
+void GlobalTrajectoryBuilder::AddLandmarkData(
+    common::Time time, const std::vector<sensor::Landmark>& landmarks,
+    const std::vector<sensor::OrientedLandmark>& oriented_landmarks) {
+  LOG(FATAL) << "Not yet implemented.";
+}
+
 const GlobalTrajectoryBuilder::PoseEstimate&
 GlobalTrajectoryBuilder::pose_estimate() const {
   return local_trajectory_builder_->pose_estimate();

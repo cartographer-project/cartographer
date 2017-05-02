@@ -44,6 +44,9 @@ class GlobalTrajectoryBuilder
                           const sensor::PointCloud& ranges) override;
   void AddOdometerData(common::Time time,
                        const transform::Rigid3d& pose) override;
+  void AddLandmarkData(
+      common::Time time, const std::vector<sensor::Landmark>& landmarks,
+      const std::vector<sensor::OrientedLandmark>& oriented_landmarks) override;
   const PoseEstimate& pose_estimate() const override;
 
  private:

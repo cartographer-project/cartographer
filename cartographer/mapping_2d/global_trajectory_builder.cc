@@ -68,5 +68,11 @@ GlobalTrajectoryBuilder::pose_estimate() const {
   return local_trajectory_builder_.pose_estimate();
 }
 
+void GlobalTrajectoryBuilder::AddLandmarkData(
+    common::Time time, const std::vector<sensor::Landmark>& landmarks,
+    const std::vector<sensor::OrientedLandmark>& oriented_landmarks) {
+  LOG(FATAL) << "Not yet implemented.";
+}
+
 }  // namespace mapping_2d
 }  // namespace cartographer

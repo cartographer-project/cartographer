@@ -46,6 +46,9 @@ class GlobalTrajectoryBuilder
                   const Eigen::Vector3d& angular_velocity) override;
   void AddOdometerData(common::Time time,
                        const transform::Rigid3d& pose) override;
+  void AddLandmarkData(
+      common::Time time, const std::vector<sensor::Landmark>& landmarks,
+      const std::vector<sensor::OrientedLandmark>& oriented_landmarks) override;
 
  private:
   const proto::LocalTrajectoryBuilderOptions options_;

@@ -24,6 +24,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
+#include "cartographer/sensor/landmark.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
 
@@ -57,6 +58,9 @@ class GlobalTrajectoryBuilderInterface {
                           const Eigen::Vector3d& angular_velocity) = 0;
   virtual void AddOdometerData(common::Time time,
                                const transform::Rigid3d& pose) = 0;
+  virtual void AddLandmarkData(
+      common::Time time, const std::vector<sensor::Landmark>& landmarks,
+      const std::vector<sensor::OrientedLandmark>& oriented_landmarks) = 0;
 };
 
 }  // namespace mapping

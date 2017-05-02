@@ -81,6 +81,20 @@ class TrajectoryBuilder {
     AddSensorData(sensor_id,
                   common::make_unique<sensor::Data>(time, odometer_pose));
   }
+
+  // Add observations for non-orientable 'landmarks' and 'oriented_landmarks'
+  // relative to the current tracking frame. This can be used for example for
+  // April tags (oriented), GPS, or visual features (non-oriented).
+  // TODO(hrapp): This is currently just an API proposal. Implementation is
+  // tracked in https://github.com/googlecartographer/cartographer/issues/244.
+  void AddLandmarkData(
+      const string& sensor_id, common::Time time,
+      const std::vector<sensor::Landmark>& landmarks,
+      const std::vector<sensor::OrientedLandmark>& oriented_landmarks) {
+    AddSensorData(sensor_id, common::make_unique<sensor::Data>(
+                                 time, sensor::Data::Landmarks{
+                                           landmarks, oriented_landmarks}));
+  }
 };
 
 }  // namespace mapping
