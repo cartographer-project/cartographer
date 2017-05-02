@@ -74,7 +74,4 @@ message RangeData {
   optional transform.proto.Vector3f origin = 1;
   optional PointCloud point_cloud = 2;
   optional PointCloud missing_echo_point_cloud = 3;
-
-  // Reflectivity values of point_cloud or empty.
-  repeated int32 reflectivity = 4 [packed = true];
 }

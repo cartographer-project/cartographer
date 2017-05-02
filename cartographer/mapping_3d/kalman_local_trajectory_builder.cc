@@ -91,7 +91,7 @@ KalmanLocalTrajectoryBuilder::AddRangefinderData(
   const transform::Rigid3f tracking_delta =
       first_pose_prediction_.inverse() * pose_prediction.cast<float>();
   const sensor::RangeData range_data_in_first_tracking =
-      sensor::TransformRangeData(sensor::RangeData{origin, ranges, {}, {}},
+      sensor::TransformRangeData(sensor::RangeData{origin, ranges, {}},
                                  tracking_delta);
   for (const Eigen::Vector3f& hit : range_data_in_first_tracking.returns) {
     const Eigen::Vector3f delta = hit - range_data_in_first_tracking.origin;

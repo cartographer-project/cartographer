@@ -37,8 +37,7 @@ constexpr int kMaxBitsPerDirection = 23;
 
 // Compressed point cloud into a vector and optionally returns mapping from
 // compressed indices to original indices.
-std::vector<int32> Compress(const PointCloud& point_cloud,
-                            std::vector<int>* new_to_old = nullptr) {
+std::vector<int32> DoCompress(const PointCloud& point_cloud) {
   // Distribute points into blocks.
   struct RasterPoint {
     Eigen::Array3i point;
@@ -66,11 +65,6 @@ std::vector<int32> Compress(const PointCloud& point_cloud,
     block->push_back({raster_point, point_index});
   }
 
-  if (new_to_old != nullptr) {
-    new_to_old->clear();
-    new_to_old->reserve(point_cloud.size());
-  }
-
   // Encode blocks.
   std::vector<int32> result;
   result.reserve(4 * num_blocks + point_cloud.size());
@@ -87,9 +81,6 @@ std::vector<int32> Compress(const PointCloud& point_cloud,
                          raster_point.point.y())
                         << kBitsPerCoordinate) +
                        raster_point.point.x());
-      if (new_to_old != nullptr) {
-        new_to_old->push_back(raster_point.index);
-      }
     }
   }
   CHECK_EQ(num_blocks, 0);
@@ -158,16 +149,15 @@ void CompressedPointCloud::ConstIterator::ReadNextPoint() {
 }
 
 CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
-    : point_data_(Compress(point_cloud)), num_points_(point_cloud.size()) {}
+    : point_data_(DoCompress(point_cloud)), num_points_(point_cloud.size()) {}
 
 CompressedPointCloud::CompressedPointCloud(const std::vector<int32>& point_data,
                                            size_t num_points)
     : point_data_(point_data), num_points_(num_points) {}
 
-CompressedPointCloud CompressedPointCloud::CompressAndReturnOrder(
-    const PointCloud& point_cloud, std::vector<int>* new_to_old) {
-  return CompressedPointCloud(Compress(point_cloud, new_to_old),
-                              point_cloud.size());
+CompressedPointCloud CompressedPointCloud::Compress(
+    const PointCloud& point_cloud) {
+  return CompressedPointCloud(DoCompress(point_cloud), point_cloud.size());
 }
 
 bool CompressedPointCloud::empty() const { return num_points_ == 0; }

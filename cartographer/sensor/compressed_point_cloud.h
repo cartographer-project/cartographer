@@ -40,11 +40,8 @@ class CompressedPointCloud {
   CompressedPointCloud() : num_points_(0) {}
   explicit CompressedPointCloud(const PointCloud& point_cloud);
 
-  // Returns a compressed point cloud and further returns a mapping 'new_to_old'
-  // from the compressed indices to the original indices, i.e., conceptually
-  // compressed[i] = point_cloud[new_to_old[i]].
-  static CompressedPointCloud CompressAndReturnOrder(
-      const PointCloud& point_cloud, std::vector<int>* new_to_old);
+  // Returns a compressed point cloud.
+  static CompressedPointCloud Compress(const PointCloud& point_cloud);
 
   // Returns decompressed point cloud.
   PointCloud Decompress() const;

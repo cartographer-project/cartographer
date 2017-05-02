@@ -99,7 +99,7 @@ void SparsePoseGraph::AddScan(
 
   constant_node_data_->push_back(mapping::TrajectoryNode::ConstantData{
       time, range_data_in_pose,
-      Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}, {}}), submaps,
+      Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}}), submaps,
       tracking_to_pose});
   trajectory_nodes_.push_back(mapping::TrajectoryNode{
       &constant_node_data_->back(), optimized_pose,
@@ -294,25 +294,30 @@ void SparsePoseGraph::WaitForAllComputations() {
   common::MutexLocker locker(&mutex_);
   const int num_finished_scans_at_start =
       constraint_builder_.GetNumFinishedScans();
-  while (!locker.AwaitWithTimeout([this]() REQUIRES(mutex_) {
-    return static_cast<size_t>(constraint_builder_.GetNumFinishedScans()) ==
-           trajectory_nodes_.size();
-  }, common::FromSeconds(1.))) {
+  while (!locker.AwaitWithTimeout(
+      [this]() REQUIRES(mutex_) {
+        return static_cast<size_t>(constraint_builder_.GetNumFinishedScans()) ==
+               trajectory_nodes_.size();
+      },
+      common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. * (constraint_builder_.GetNumFinishedScans() -
-                             num_finished_scans_at_start) /
+                  << 100. *
+                         (constraint_builder_.GetNumFinishedScans() -
+                          num_finished_scans_at_start) /
                          (trajectory_nodes_.size() -
-                          num_finished_scans_at_start) << "%...";
+                          num_finished_scans_at_start)
+                  << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone([this, &notification](
-      const sparse_pose_graph::ConstraintBuilder::Result& result) {
-    constraints_.insert(constraints_.end(), result.begin(), result.end());
-    common::MutexLocker locker(&mutex_);
-    notification = true;
-  });
+  constraint_builder_.WhenDone(
+      [this, &notification](
+          const sparse_pose_graph::ConstraintBuilder::Result& result) {
+        constraints_.insert(constraints_.end(), result.begin(), result.end());
+        common::MutexLocker locker(&mutex_);
+        notification = true;
+      });
   locker.Await([&notification]() { return notification; });
 }
 
@@ -346,13 +351,13 @@ void SparsePoseGraph::RunOptimization() {
       const mapping::Submaps* trajectory =
           trajectory_nodes_[i].constant_data->trajectory;
       if (extrapolation_transforms.count(trajectory) == 0) {
-        extrapolation_transforms[trajectory] =
-            transform::Rigid3d(ExtrapolateSubmapTransforms(submap_transforms_,
-                                                           *trajectory).back() *
-                               ExtrapolateSubmapTransforms(
-                                   optimized_submap_transforms_, *trajectory)
-                                   .back()
-                                   .inverse());
+        extrapolation_transforms[trajectory] = transform::Rigid3d(
+            ExtrapolateSubmapTransforms(submap_transforms_, *trajectory)
+                .back() *
+            ExtrapolateSubmapTransforms(optimized_submap_transforms_,
+                                        *trajectory)
+                .back()
+                .inverse());
       }
       trajectory_nodes_[i].pose =
           extrapolation_transforms[trajectory] * trajectory_nodes_[i].pose;
