@@ -40,9 +40,6 @@ class CompressedPointCloud {
   CompressedPointCloud() : num_points_(0) {}
   explicit CompressedPointCloud(const PointCloud& point_cloud);
 
-  // Returns a compressed point cloud.
-  static CompressedPointCloud Compress(const PointCloud& point_cloud);
-
   // Returns decompressed point cloud.
   PointCloud Decompress() const;
 
@@ -56,7 +53,7 @@ class CompressedPointCloud {
  private:
   CompressedPointCloud(const std::vector<int32>& point_data, size_t num_points);
 
-  const std::vector<int32> point_data_;
+  std::vector<int32> point_data_;
   const size_t num_points_;
 };
 

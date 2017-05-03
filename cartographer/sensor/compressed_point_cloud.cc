@@ -35,9 +35,8 @@ constexpr int kBitsPerCoordinate = 10;
 constexpr int kCoordinateMask = (1 << kBitsPerCoordinate) - 1;
 constexpr int kMaxBitsPerDirection = 23;
 
-// Compressed point cloud into a vector and optionally returns mapping from
-// compressed indices to original indices.
-std::vector<int32> DoCompress(const PointCloud& point_cloud) {
+// Compress point cloud into a vector.
+std::vector<int32> Compress(const PointCloud& point_cloud) {
   // Distribute points into blocks.
   struct RasterPoint {
     Eigen::Array3i point;
@@ -149,16 +148,11 @@ void CompressedPointCloud::ConstIterator::ReadNextPoint() {
 }
 
 CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
-    : point_data_(DoCompress(point_cloud)), num_points_(point_cloud.size()) {}
+    : point_data_(sensor::Compress(point_cloud)), num_points_(point_cloud.size()) {}
 
 CompressedPointCloud::CompressedPointCloud(const std::vector<int32>& point_data,
                                            size_t num_points)
     : point_data_(point_data), num_points_(num_points) {}
-
-CompressedPointCloud CompressedPointCloud::Compress(
-    const PointCloud& point_cloud) {
-  return CompressedPointCloud(DoCompress(point_cloud), point_cloud.size());
-}
 
 bool CompressedPointCloud::empty() const { return num_points_ == 0; }
 

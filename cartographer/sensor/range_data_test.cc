@@ -74,7 +74,7 @@ TEST(LaserTest, ToPointCloudWithInfinityAndNaN) {
   EXPECT_TRUE(point_cloud[1].isApprox(Eigen::Vector3f(-3.f, 0.f, 0.f), 1e-6));
 }
 
-// Custom matcher for eigen::Vector3f entries.
+// Custom matcher for Eigen::Vector3f entries.
 MATCHER_P(ApproximatelyEquals, expected,
           string("is equal to ") + PrintToString(expected)) {
   return (arg - expected).isZero(0.001f);
@@ -92,7 +92,7 @@ TEST(RangeDataTest, Compression) {
   EXPECT_EQ(1, actual.misses.size());
   EXPECT_TRUE(actual.misses[0].isApprox(Eigen::Vector3f(7, 8, 9), 0.001f));
 
-  // Returns and will be reordered, so we compare in an unordered manner.
+  // Returns will be reordered, so we compare in an unordered manner.
   EXPECT_EQ(3, actual.returns.size());
   EXPECT_THAT(actual.returns,
               Contains(ApproximatelyEquals(Eigen::Vector3f(0, 1, 2))));

@@ -89,10 +89,8 @@ RangeData CropRangeData(const RangeData& range_data, const float min_z,
 }
 
 CompressedRangeData Compress(const RangeData& range_data) {
-  CompressedPointCloud compressed_returns =
-      CompressedPointCloud::Compress(range_data.returns);
   return CompressedRangeData{
-      range_data.origin, std::move(compressed_returns),
+      range_data.origin, CompressedPointCloud(range_data.returns),
       CompressedPointCloud(range_data.misses),
   };
 }
