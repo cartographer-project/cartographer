@@ -14,10 +14,3 @@
 
 add_subdirectory("common")
 add_subdirectory("ground_truth")
-add_subdirectory("io")
-add_subdirectory("kalman_filter")
-add_subdirectory("mapping")
-add_subdirectory("mapping_2d")
-add_subdirectory("mapping_3d")
-add_subdirectory("sensor")
-add_subdirectory("transform")
