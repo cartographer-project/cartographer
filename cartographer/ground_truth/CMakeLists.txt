@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 google_binary(cartographer_compute_relations_metrics
   SRCS
     compute_relations_metrics_main.cc
