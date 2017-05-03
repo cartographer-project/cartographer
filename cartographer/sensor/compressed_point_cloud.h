@@ -54,7 +54,7 @@ class CompressedPointCloud {
   CompressedPointCloud(const std::vector<int32>& point_data, size_t num_points);
 
   std::vector<int32> point_data_;
-  const size_t num_points_;
+  size_t num_points_;
 };
 
 // Forward iterator for compressed point clouds.
