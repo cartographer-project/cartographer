@@ -25,7 +25,7 @@
 namespace cartographer {
 namespace sensor {
 
-// Rays begin at 'origin'. 'returns' are the points where laser returns were
+// Rays begin at 'origin'. 'returns' are the points where obstructions were
 // detected. 'misses' are points in the direction of rays for which no return
 // was detected, and were inserted at a configured distance. It is assumed that
 // between the 'origin' and 'misses' is free space.
@@ -34,17 +34,6 @@ struct RangeData {
   PointCloud returns;
   PointCloud misses;
 };
-
-// Builds a PointCloud of returns from 'proto', dropping any beams with ranges
-// outside the valid range described by 'proto'.
-PointCloud ToPointCloud(const proto::LaserScan& proto);
-
-// Like above, but also extracts intensities of ouf the laser scan. The
-// intensities of the laser are device specific and therefore require
-// normalization to be comparable. In case the 'proto' does not contain
-// intensities, this will return all 0. for the intensities.
-PointCloudWithIntensities ToPointCloudWithIntensities(
-    const proto::LaserScan& proto);
 
 // Converts 'range_data' to a proto::RangeData.
 proto::RangeData ToProto(const RangeData& range_data);
