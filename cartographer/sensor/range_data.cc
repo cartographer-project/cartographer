@@ -22,41 +22,6 @@
 namespace cartographer {
 namespace sensor {
 
-PointCloud ToPointCloud(const proto::LaserScan& proto) {
-  return ToPointCloudWithIntensities(proto).points;
-}
-
-PointCloudWithIntensities ToPointCloudWithIntensities(
-    const proto::LaserScan& proto) {
-  CHECK_GE(proto.range_min(), 0.f);
-  CHECK_GE(proto.range_max(), proto.range_min());
-  if (proto.angle_increment() > 0.f) {
-    CHECK_GT(proto.angle_max(), proto.angle_min());
-  } else {
-    CHECK_GT(proto.angle_min(), proto.angle_max());
-  }
-  PointCloudWithIntensities point_cloud;
-  float angle = proto.angle_min();
-  for (int i = 0; i < proto.range_size(); ++i) {
-    const auto& range = proto.range(i);
-    if (range.value_size() > 0) {
-      const float first_echo = range.value(0);
-      if (proto.range_min() <= first_echo && first_echo <= proto.range_max()) {
-        const Eigen::AngleAxisf rotation(angle, Eigen::Vector3f::UnitZ());
-        point_cloud.points.push_back(rotation *
-                                     (first_echo * Eigen::Vector3f::UnitX()));
-        if (proto.intensity_size() > 0) {
-          point_cloud.intensities.push_back(proto.intensity(i).value(0));
-        } else {
-          point_cloud.intensities.push_back(0.f);
-        }
-      }
-    }
-    angle += proto.angle_increment();
-  }
-  return point_cloud;
-}
-
 proto::RangeData ToProto(const RangeData& range_data) {
   proto::RangeData proto;
   *proto.mutable_origin() = transform::ToProto(range_data.origin);
