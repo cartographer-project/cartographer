@@ -174,7 +174,7 @@ void InsertSegmentsIntoProbabilityGrid(const std::vector<RaySegment>& segments,
 // information.
 sensor::RangeData FilterRangeDataByMaxRange(const sensor::RangeData& range_data,
                                             const float max_range) {
-  sensor::RangeData result{range_data.origin, {}, {}, {}};
+  sensor::RangeData result{range_data.origin, {}, {}};
   for (const Eigen::Vector3f& hit : range_data.returns) {
     if ((hit - range_data.origin).norm() <= max_range) {
       result.returns.push_back(hit);

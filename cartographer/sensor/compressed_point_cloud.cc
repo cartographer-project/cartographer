@@ -35,67 +35,6 @@ constexpr int kBitsPerCoordinate = 10;
 constexpr int kCoordinateMask = (1 << kBitsPerCoordinate) - 1;
 constexpr int kMaxBitsPerDirection = 23;
 
-// Compressed point cloud into a vector and optionally returns mapping from
-// compressed indices to original indices.
-std::vector<int32> Compress(const PointCloud& point_cloud,
-                            std::vector<int>* new_to_old = nullptr) {
-  // Distribute points into blocks.
-  struct RasterPoint {
-    Eigen::Array3i point;
-    int index;
-  };
-  using Blocks = mapping_3d::HybridGridBase<std::vector<RasterPoint>>;
-  Blocks blocks(kPrecision, Eigen::Vector3f::Zero());
-  int num_blocks = 0;
-  CHECK_LE(point_cloud.size(), std::numeric_limits<int>::max());
-  for (int point_index = 0; point_index < static_cast<int>(point_cloud.size());
-       ++point_index) {
-    const Eigen::Vector3f& point = point_cloud[point_index];
-    CHECK_LT(point.cwiseAbs().maxCoeff() / kPrecision,
-             1 << kMaxBitsPerDirection)
-        << "Point out of bounds: " << point;
-    Eigen::Array3i raster_point;
-    Eigen::Array3i block_coordinate;
-    for (int i = 0; i < 3; ++i) {
-      raster_point[i] = common::RoundToInt(point[i] / kPrecision);
-      block_coordinate[i] = raster_point[i] >> kBitsPerCoordinate;
-      raster_point[i] &= kCoordinateMask;
-    }
-    auto* const block = blocks.mutable_value(block_coordinate);
-    num_blocks += block->empty();
-    block->push_back({raster_point, point_index});
-  }
-
-  if (new_to_old != nullptr) {
-    new_to_old->clear();
-    new_to_old->reserve(point_cloud.size());
-  }
-
-  // Encode blocks.
-  std::vector<int32> result;
-  result.reserve(4 * num_blocks + point_cloud.size());
-  for (Blocks::Iterator it(blocks); !it.Done(); it.Next(), --num_blocks) {
-    const auto& raster_points = it.GetValue();
-    CHECK_LE(raster_points.size(), std::numeric_limits<int32>::max());
-    result.push_back(raster_points.size());
-    const Eigen::Array3i block_coordinate = it.GetCellIndex();
-    result.push_back(block_coordinate.x());
-    result.push_back(block_coordinate.y());
-    result.push_back(block_coordinate.z());
-    for (const RasterPoint& raster_point : raster_points) {
-      result.push_back((((raster_point.point.z() << kBitsPerCoordinate) +
-                         raster_point.point.y())
-                        << kBitsPerCoordinate) +
-                       raster_point.point.x());
-      if (new_to_old != nullptr) {
-        new_to_old->push_back(raster_point.index);
-      }
-    }
-  }
-  CHECK_EQ(num_blocks, 0);
-  return result;
-}
-
 }  // namespace
 
 CompressedPointCloud::ConstIterator::ConstIterator(
@@ -158,17 +97,57 @@ void CompressedPointCloud::ConstIterator::ReadNextPoint() {
 }
 
 CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
-    : point_data_(Compress(point_cloud)), num_points_(point_cloud.size()) {}
+    : num_points_(point_cloud.size()) {
+  // Distribute points into blocks.
+  struct RasterPoint {
+    Eigen::Array3i point;
+    int index;
+  };
+  using Blocks = mapping_3d::HybridGridBase<std::vector<RasterPoint>>;
+  Blocks blocks(kPrecision, Eigen::Vector3f::Zero());
+  int num_blocks = 0;
+  CHECK_LE(point_cloud.size(), std::numeric_limits<int>::max());
+  for (int point_index = 0; point_index < static_cast<int>(point_cloud.size());
+       ++point_index) {
+    const Eigen::Vector3f& point = point_cloud[point_index];
+    CHECK_LT(point.cwiseAbs().maxCoeff() / kPrecision,
+             1 << kMaxBitsPerDirection)
+        << "Point out of bounds: " << point;
+    Eigen::Array3i raster_point;
+    Eigen::Array3i block_coordinate;
+    for (int i = 0; i < 3; ++i) {
+      raster_point[i] = common::RoundToInt(point[i] / kPrecision);
+      block_coordinate[i] = raster_point[i] >> kBitsPerCoordinate;
+      raster_point[i] &= kCoordinateMask;
+    }
+    auto* const block = blocks.mutable_value(block_coordinate);
+    num_blocks += block->empty();
+    block->push_back({raster_point, point_index});
+  }
+
+  // Encode blocks.
+  point_data_.reserve(4 * num_blocks + point_cloud.size());
+  for (Blocks::Iterator it(blocks); !it.Done(); it.Next(), --num_blocks) {
+    const auto& raster_points = it.GetValue();
+    CHECK_LE(raster_points.size(), std::numeric_limits<int32>::max());
+    point_data_.push_back(raster_points.size());
+    const Eigen::Array3i block_coordinate = it.GetCellIndex();
+    point_data_.push_back(block_coordinate.x());
+    point_data_.push_back(block_coordinate.y());
+    point_data_.push_back(block_coordinate.z());
+    for (const RasterPoint& raster_point : raster_points) {
+      point_data_.push_back((((raster_point.point.z() << kBitsPerCoordinate) +
+                         raster_point.point.y())
+                        << kBitsPerCoordinate) +
+                       raster_point.point.x());
+    }
+  }
+  CHECK_EQ(num_blocks, 0);
+}
 
 CompressedPointCloud::CompressedPointCloud(const std::vector<int32>& point_data,
                                            size_t num_points)
     : point_data_(point_data), num_points_(num_points) {}
-
-CompressedPointCloud CompressedPointCloud::CompressAndReturnOrder(
-    const PointCloud& point_cloud, std::vector<int>* new_to_old) {
-  return CompressedPointCloud(Compress(point_cloud, new_to_old),
-                              point_cloud.size());
-}
 
 bool CompressedPointCloud::empty() const { return num_points_ == 0; }
 

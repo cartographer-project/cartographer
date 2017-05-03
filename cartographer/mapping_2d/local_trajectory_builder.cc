@@ -83,7 +83,7 @@ sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
     const sensor::RangeData& range_data) const {
   // Drop any returns below the minimum range and convert returns beyond the
   // maximum range into misses.
-  sensor::RangeData returns_and_misses{range_data.origin, {}, {}, {}};
+  sensor::RangeData returns_and_misses{range_data.origin, {}, {}};
   for (const Eigen::Vector3f& hit : range_data.returns) {
     const float range = (hit - range_data.origin).norm();
     if (range >= options_.laser_min_range()) {

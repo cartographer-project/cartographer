@@ -22,21 +22,6 @@
 namespace cartographer {
 namespace sensor {
 
-namespace {
-
-// Reorders reflectivities according to index mapping.
-std::vector<uint8> ReorderReflectivities(
-    const std::vector<uint8>& reflectivities,
-    const std::vector<int>& new_to_old) {
-  std::vector<uint8> reordered(reflectivities.size());
-  for (size_t i = 0; i < reordered.size(); ++i) {
-    reordered[i] = reflectivities[new_to_old[i]];
-  }
-  return reordered;
-}
-
-}  // namespace
-
 PointCloud ToPointCloud(const proto::LaserScan& proto) {
   return ToPointCloudWithIntensities(proto).points;
 }
@@ -77,8 +62,6 @@ proto::RangeData ToProto(const RangeData& range_data) {
   *proto.mutable_origin() = transform::ToProto(range_data.origin);
   *proto.mutable_point_cloud() = ToProto(range_data.returns);
   *proto.mutable_missing_echo_point_cloud() = ToProto(range_data.misses);
-  std::copy(range_data.reflectivities.begin(), range_data.reflectivities.end(),
-            RepeatedFieldBackInserter(proto.mutable_reflectivity()));
   return proto;
 }
 
@@ -87,8 +70,6 @@ RangeData FromProto(const proto::RangeData& proto) {
       transform::ToEigen(proto.origin()), ToPointCloud(proto.point_cloud()),
       ToPointCloud(proto.missing_echo_point_cloud()),
   };
-  std::copy(proto.reflectivity().begin(), proto.reflectivity().end(),
-            std::back_inserter(range_data.reflectivities));
   return range_data;
 }
 
@@ -98,7 +79,6 @@ RangeData TransformRangeData(const RangeData& range_data,
       transform * range_data.origin,
       TransformPointCloud(range_data.returns, transform),
       TransformPointCloud(range_data.misses, transform),
-      range_data.reflectivities,
   };
 }
 
@@ -109,21 +89,16 @@ RangeData CropRangeData(const RangeData& range_data, const float min_z,
 }
 
 CompressedRangeData Compress(const RangeData& range_data) {
-  std::vector<int> new_to_old;
-  CompressedPointCloud compressed_returns =
-      CompressedPointCloud::CompressAndReturnOrder(range_data.returns,
-                                                   &new_to_old);
   return CompressedRangeData{
-      range_data.origin, std::move(compressed_returns),
+      range_data.origin, CompressedPointCloud(range_data.returns),
       CompressedPointCloud(range_data.misses),
-      ReorderReflectivities(range_data.reflectivities, new_to_old)};
+  };
 }
 
 RangeData Decompress(const CompressedRangeData& compressed_range_data) {
   return RangeData{compressed_range_data.origin,
                    compressed_range_data.returns.Decompress(),
-                   compressed_range_data.misses.Decompress(),
-                   compressed_range_data.reflectivities};
+                   compressed_range_data.misses.Decompress()};
 }
 
 }  // namespace sensor

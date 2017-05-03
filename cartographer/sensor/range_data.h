@@ -33,9 +33,6 @@ struct RangeData {
   Eigen::Vector3f origin;
   PointCloud returns;
   PointCloud misses;
-
-  // Reflectivity value of returns.
-  std::vector<uint8> reflectivities;
 };
 
 // Builds a PointCloud of returns from 'proto', dropping any beams with ranges
@@ -67,9 +64,6 @@ struct CompressedRangeData {
   Eigen::Vector3f origin;
   CompressedPointCloud returns;
   CompressedPointCloud misses;
-
-  // Reflectivity value of returns.
-  std::vector<uint8> reflectivities;
 };
 
 CompressedRangeData Compress(const RangeData& range_data);

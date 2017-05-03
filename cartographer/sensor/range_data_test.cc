@@ -74,43 +74,30 @@ TEST(LaserTest, ToPointCloudWithInfinityAndNaN) {
   EXPECT_TRUE(point_cloud[1].isApprox(Eigen::Vector3f(-3.f, 0.f, 0.f), 1e-6));
 }
 
-// Custom matcher for pair<eigen::Vector3f, int> entries.
-MATCHER_P(PairApproximatelyEquals, expected,
+// Custom matcher for Eigen::Vector3f entries.
+MATCHER_P(ApproximatelyEquals, expected,
           string("is equal to ") + PrintToString(expected)) {
-  return (arg.first - expected.first).isZero(0.001f) &&
-         arg.second == expected.second;
+  return (arg - expected).isZero(0.001f);
 }
 
 TEST(RangeDataTest, Compression) {
+  const std::vector<Eigen::Vector3f> returns = {Eigen::Vector3f(0, 1, 2),
+                                                Eigen::Vector3f(4, 5, 6),
+                                                Eigen::Vector3f(0, 1, 2)};
   const RangeData range_data = {
-      Eigen::Vector3f(1, 1, 1),
-      {Eigen::Vector3f(0, 1, 2), Eigen::Vector3f(4, 5, 6),
-       Eigen::Vector3f(0, 1, 2)},
-      {Eigen::Vector3f(7, 8, 9)},
-      {1, 2, 3}};
+      Eigen::Vector3f(1, 1, 1), returns, {Eigen::Vector3f(7, 8, 9)}};
   const RangeData actual = Decompress(Compress(range_data));
   EXPECT_TRUE(actual.origin.isApprox(Eigen::Vector3f(1, 1, 1), 1e-6));
   EXPECT_EQ(3, actual.returns.size());
   EXPECT_EQ(1, actual.misses.size());
-  EXPECT_EQ(actual.returns.size(), actual.reflectivities.size());
   EXPECT_TRUE(actual.misses[0].isApprox(Eigen::Vector3f(7, 8, 9), 0.001f));
 
-  // Returns and their corresponding reflectivities will be reordered, so we
-  // pair them up into a vector, and compare in an unordered manner.
-  std::vector<std::pair<Eigen::Vector3f, int>> pairs;
-  for (size_t i = 0; i < actual.returns.size(); ++i) {
-    pairs.emplace_back(actual.returns[i], actual.reflectivities[i]);
-  }
-  EXPECT_EQ(3, pairs.size());
-  EXPECT_THAT(pairs,
-              Contains(PairApproximatelyEquals(std::pair<Eigen::Vector3f, int>(
-                  Eigen::Vector3f(0, 1, 2), 1))));
-  EXPECT_THAT(pairs,
-              Contains(PairApproximatelyEquals(std::pair<Eigen::Vector3f, int>(
-                  Eigen::Vector3f(0, 1, 2), 3))));
-  EXPECT_THAT(pairs,
-              Contains(PairApproximatelyEquals(std::pair<Eigen::Vector3f, int>(
-                  Eigen::Vector3f(4, 5, 6), 2))));
+  // Returns will be reordered, so we compare in an unordered manner.
+  EXPECT_EQ(3, actual.returns.size());
+  EXPECT_THAT(actual.returns,
+              Contains(ApproximatelyEquals(Eigen::Vector3f(0, 1, 2))));
+  EXPECT_THAT(actual.returns,
+              Contains(ApproximatelyEquals(Eigen::Vector3f(4, 5, 6))));
 }
 
 }  // namespace
