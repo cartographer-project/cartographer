@@ -50,25 +50,6 @@ message Matrix {
   repeated double data = 3;
 }
 
-// Modeled after ROS's MultiEchoLaserScan message.
-// http://docs.ros.org/api/sensor_msgs/html/msg/MultiEchoLaserScan.html
-message LaserScan {
-  message Values {
-    repeated float value = 1 [packed = true];
-  }
-
-  optional float angle_min = 2;
-  optional float angle_max = 3;
-  optional float angle_increment = 4;
-  optional float time_increment = 5;
-  optional float scan_time = 6;
-  optional float range_min = 7;
-  optional float range_max = 8;
-
-  repeated Values range = 9;
-  repeated Values intensity = 10;
-}
-
 // Proto representation of ::cartographer::sensor::RangeData
 message RangeData {
   optional transform.proto.Vector3f origin = 1;
