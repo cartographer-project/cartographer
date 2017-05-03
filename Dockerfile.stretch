@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM debian:trusty
-
-# Trusty's base image doesn't ship with sudo.
-RUN apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*
-
+FROM debian:stretch
 COPY scripts/install_debs.sh cartographer/scripts/
 RUN cartographer/scripts/install_debs.sh && rm -rf /var/lib/apt/lists/*
 COPY scripts/install_ceres.sh cartographer/scripts/
