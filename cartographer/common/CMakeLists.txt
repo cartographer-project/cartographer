@@ -15,33 +15,3 @@
 configure_file (
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-
-google_test(common_blocking_queue_test
-  SRCS
-    blocking_queue_test.cc
-)
-
-google_test(common_configuration_files_test
-  SRCS
-    configuration_files_test.cc
-)
-
-google_test(common_fixed_ratio_sampler_test
-  SRCS
-    fixed_ratio_sampler_test.cc
-)
-
-google_test(common_lua_parameter_dictionary_test
-  SRCS
-    lua_parameter_dictionary_test.cc
-)
-
-google_test(common_math_test
-  SRCS
-    math_test.cc
-)
-
-google_test(common_rate_timer_test
-  SRCS
-    rate_timer_test.cc
-)
