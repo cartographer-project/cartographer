@@ -167,23 +167,22 @@ cartographer.common.proto.CeresSolverOptions ceres_solver_options
 cartographer.mapping_2d.proto.LocalTrajectoryBuilderOptions
 ===========================================================
 
-float laser_min_range
-  Laser returns outside these ranges will be dropped.
+float min_range
+  Rangefinder points outside these ranges will be dropped.
 
-float laser_max_range
+float max_range
   Not yet documented.
 
-float laser_min_z
+float min_z
   Not yet documented.
 
-float laser_max_z
+float max_z
   Not yet documented.
 
-float laser_missing_echo_ray_length
-  Laser returns beyond 'laser_max_range' will be inserted with this length as
-  empty space.
+float missing_data_ray_length
+  Points beyond 'max_range' will be inserted with this length as empty space.
 
-float laser_voxel_filter_size
+float voxel_filter_size
   Voxel filter that gets applied to the range data immediately after
   cropping.
 

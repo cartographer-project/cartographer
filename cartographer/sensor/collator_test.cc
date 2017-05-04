@@ -31,7 +31,7 @@ namespace {
 
 TEST(Collator, Ordering) {
   const std::array<string, 4> kSensorId = {
-      {"horizontal_laser", "vertical_laser", "imu", "odometry"}};
+      {"horizontal_rangefinder", "vertical_rangefinder", "imu", "odometry"}};
   Data zero(common::FromUniversal(0), Data::Rangefinder{});
   Data first(common::FromUniversal(100), Data::Rangefinder{});
   Data second(common::FromUniversal(200), Data::Rangefinder{});

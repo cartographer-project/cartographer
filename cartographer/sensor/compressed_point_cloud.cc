@@ -137,9 +137,9 @@ CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
     point_data_.push_back(block_coordinate.z());
     for (const RasterPoint& raster_point : raster_points) {
       point_data_.push_back((((raster_point.point.z() << kBitsPerCoordinate) +
-                         raster_point.point.y())
-                        << kBitsPerCoordinate) +
-                       raster_point.point.x());
+                              raster_point.point.y())
+                             << kBitsPerCoordinate) +
+                            raster_point.point.x());
     }
   }
   CHECK_EQ(num_blocks, 0);

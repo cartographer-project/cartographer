@@ -84,8 +84,8 @@ class MapLimits {
                .all();
   }
 
-  // Computes MapLimits that contain the origin, and all laser rays (both
-  // returns and misses) in the 'trajectory'.
+  // Computes MapLimits that contain the origin, and all rays (both returns and
+  // misses) in the 'trajectory'.
   static MapLimits ComputeMapLimits(
       const double resolution,
       const std::vector<mapping::TrajectoryNode>& trajectory_nodes) {

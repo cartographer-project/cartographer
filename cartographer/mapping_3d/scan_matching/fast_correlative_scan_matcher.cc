@@ -247,7 +247,7 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     const Eigen::Vector3f angle_axis(0.f, 0.f, angles[i]);
     // It's important to apply the 'angle_axis' rotation between the translation
     // and rotation of the 'initial_pose', so that the rotation is around the
-    // origin of the laser scanner, and yaw is in map frame.
+    // origin of the range data, and yaw is in map frame.
     const transform::Rigid3f pose(
         Eigen::Translation3f(initial_pose.translation()) *
         transform::AngleAxisVectorToRotationQuaternion(angle_axis) *
