@@ -14,7 +14,7 @@
 
 FROM ubuntu:xenial
 
-# Xenial's base image doesn't ship with sudo.
+# This base image doesn't ship with sudo.
 RUN apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*
 
 COPY scripts/install_debs.sh cartographer/scripts/

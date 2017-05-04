@@ -43,17 +43,18 @@ list(APPEND GMOCK_INCLUDE_DIRS ${GTEST_INCLUDE_DIRS})
 if(NOT GMOCK_LIBRARIES)
   # If no system-wide gmock found, then find src version.
   # Ubuntu might have this.
-  find_path(GMOCK_SRC_DIR gmock/CMakeLists.txt
+  find_path(GMOCK_SRC_DIR src/gmock.cc
     HINTS
       ENV GMOCK_DIR
-    PATH_SUFFIXES src
     PATHS
-      /usr
+      /usr/src/googletest/googlemock
+      /usr/src/gmock
   )
   if(GMOCK_SRC_DIR)
     # If src version found, build it.
-    add_subdirectory(${GMOCK_SRC_DIR}/gmock "${CMAKE_CURRENT_BINARY_DIR}/gmock")
-    set(GMOCK_INCLUDE_DIRS "${GMOCK_SRC_DIR}/gmock/gtest/include")
+    add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
+    # The next line is needed for Ubuntu Trusty.
+    set(GMOCK_INCLUDE_DIRS "${GMOCK_SRC_DIR}/gtest/include")
     set(GMOCK_LIBRARIES gmock_main)
   endif()
 endif()
