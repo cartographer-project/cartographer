@@ -45,9 +45,9 @@ struct TrajectoryNode {
     // doesn't seem like a good name for a Submaps*. Sort this out.
     const Submaps* trajectory;
 
-    // Transform from the 3D 'tracking' frame to the 'pose' frame of the
-    // laser, which contains roll, pitch and height for 2D. In 3D this is
-    // always identity.
+    // Transform from the 3D 'tracking' frame to the 'pose' frame of the range
+    // data, which contains roll, pitch and height for 2D. In 3D this is always
+    // identity.
     transform::Rigid3d tracking_to_pose;
   };
 

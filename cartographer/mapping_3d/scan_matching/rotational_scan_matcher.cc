@@ -68,11 +68,10 @@ void AddPointCloudSliceToValueVector(
   if (slice.empty()) {
     return;
   }
-  // We compute the angle of the ray from the centroid to a laser return.
-  // If it is orthogonal to the angle we compute between laser returns, we will
-  // add the angle between laser returns to the histogram with the maximum
-  // weight. This is to reject, e.g., the angles observed on the ceiling and
-  // floor.
+  // We compute the angle of the ray from a point to the centroid of the whole
+  // point cloud. If it is orthogonal to the angle we compute between points, we
+  // will add the angle between points to the histogram with the maximum weight.
+  // This is to reject, e.g., the angles observed on the ceiling and floor.
   const Eigen::Vector3f centroid = ComputeCentroid(slice);
   Eigen::Vector3f last_point = slice.front();
   for (const Eigen::Vector3f& point : slice) {
@@ -94,8 +93,8 @@ void AddPointCloudSliceToValueVector(
 }
 
 // A function to sort the points in each slice by angle around the centroid.
-// This is because the returns from different lasers are interleaved in the
-// data.
+// This is because the returns from different rangefinders are interleaved in
+// the data.
 sensor::PointCloud SortSlice(const sensor::PointCloud& slice) {
   struct SortableAnglePointPair {
     bool operator<(const SortableAnglePointPair& rhs) const {

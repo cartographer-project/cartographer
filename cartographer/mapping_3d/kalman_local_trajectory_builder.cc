@@ -96,16 +96,16 @@ KalmanLocalTrajectoryBuilder::AddRangefinderData(
   for (const Eigen::Vector3f& hit : range_data_in_first_tracking.returns) {
     const Eigen::Vector3f delta = hit - range_data_in_first_tracking.origin;
     const float range = delta.norm();
-    if (range >= options_.laser_min_range()) {
-      if (range <= options_.laser_max_range()) {
+    if (range >= options_.min_range()) {
+      if (range <= options_.max_range()) {
         accumulated_range_data_.returns.push_back(hit);
       } else {
-        // We insert a ray cropped to 'laser_max_range' as a miss for hits
-        // beyond the maximum range. This way the free space up to the maximum
-        // range will be updated.
+        // We insert a ray cropped to 'max_range' as a miss for hits beyond the
+        // maximum range. This way the free space up to the maximum range will
+        // be updated.
         accumulated_range_data_.misses.push_back(
             range_data_in_first_tracking.origin +
-            options_.laser_max_range() / range * delta);
+            options_.max_range() / range * delta);
       }
     }
   }
@@ -129,9 +129,9 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
   const sensor::RangeData filtered_range_data = {
       range_data_in_tracking.origin,
       sensor::VoxelFiltered(range_data_in_tracking.returns,
-                            options_.laser_voxel_filter_size()),
+                            options_.voxel_filter_size()),
       sensor::VoxelFiltered(range_data_in_tracking.misses,
-                            options_.laser_voxel_filter_size())};
+                            options_.voxel_filter_size())};
 
   if (filtered_range_data.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";

@@ -27,16 +27,14 @@ namespace mapping_2d {
 proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::LocalTrajectoryBuilderOptions options;
-  options.set_laser_min_range(
-      parameter_dictionary->GetDouble("laser_min_range"));
-  options.set_laser_max_range(
-      parameter_dictionary->GetDouble("laser_max_range"));
-  options.set_laser_min_z(parameter_dictionary->GetDouble("laser_min_z"));
-  options.set_laser_max_z(parameter_dictionary->GetDouble("laser_max_z"));
-  options.set_laser_missing_echo_ray_length(
-      parameter_dictionary->GetDouble("laser_missing_echo_ray_length"));
-  options.set_laser_voxel_filter_size(
-      parameter_dictionary->GetDouble("laser_voxel_filter_size"));
+  options.set_min_range(parameter_dictionary->GetDouble("min_range"));
+  options.set_max_range(parameter_dictionary->GetDouble("max_range"));
+  options.set_min_z(parameter_dictionary->GetDouble("min_z"));
+  options.set_max_z(parameter_dictionary->GetDouble("max_z"));
+  options.set_missing_data_ray_length(
+      parameter_dictionary->GetDouble("missing_data_ray_length"));
+  options.set_voxel_filter_size(
+      parameter_dictionary->GetDouble("voxel_filter_size"));
   options.set_use_online_correlative_scan_matching(
       parameter_dictionary->GetBool("use_online_correlative_scan_matching"));
   *options.mutable_adaptive_voxel_filter_options() =
@@ -86,25 +84,23 @@ sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
   sensor::RangeData returns_and_misses{range_data.origin, {}, {}};
   for (const Eigen::Vector3f& hit : range_data.returns) {
     const float range = (hit - range_data.origin).norm();
-    if (range >= options_.laser_min_range()) {
-      if (range <= options_.laser_max_range()) {
+    if (range >= options_.min_range()) {
+      if (range <= options_.max_range()) {
         returns_and_misses.returns.push_back(hit);
       } else {
         returns_and_misses.misses.push_back(
-            range_data.origin + options_.laser_missing_echo_ray_length() *
+            range_data.origin + options_.missing_data_ray_length() *
                                     (hit - range_data.origin).normalized());
       }
     }
   }
   const sensor::RangeData cropped = sensor::CropRangeData(
       sensor::TransformRangeData(returns_and_misses, tracking_to_tracking_2d),
-      options_.laser_min_z(), options_.laser_max_z());
+      options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
-      sensor::VoxelFiltered(cropped.returns,
-                            options_.laser_voxel_filter_size()),
-      sensor::VoxelFiltered(cropped.misses,
-                            options_.laser_voxel_filter_size())};
+      sensor::VoxelFiltered(cropped.returns, options_.voxel_filter_size()),
+      sensor::VoxelFiltered(cropped.misses, options_.voxel_filter_size())};
 }
 
 void LocalTrajectoryBuilder::ScanMatch(
@@ -158,7 +154,7 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
 
   if (imu_tracker_ == nullptr) {
     // Until we've initialized the IMU tracker with our first IMU message, we
-    // cannot compute the orientation of the laser scanner.
+    // cannot compute the orientation of the rangefinder.
     LOG(INFO) << "ImuTracker not yet initialized.";
     return nullptr;
   }

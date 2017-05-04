@@ -88,8 +88,8 @@ void OutlierRemovingPointsProcessor::ProcessInPhaseOne(
 void OutlierRemovingPointsProcessor::ProcessInPhaseTwo(
     const PointsBatch& batch) {
   // TODO(whess): This samples every 'voxel_size' distance and could be improved
-  // by better ray casting, and also by marking the hits of the current laser
-  // fan to be excluded.
+  // by better ray casting, and also by marking the hits of the current range
+  // data to be excluded.
   for (size_t i = 0; i < batch.points.size(); ++i) {
     const Eigen::Vector3f delta = batch.points[i] - batch.origin;
     const float length = delta.norm();

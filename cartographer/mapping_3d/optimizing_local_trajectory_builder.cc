@@ -144,8 +144,8 @@ OptimizingLocalTrajectoryBuilder::AddRangefinderData(
   for (const Eigen::Vector3f& hit : ranges) {
     const Eigen::Vector3f delta = hit - origin;
     const float range = delta.norm();
-    if (range >= options_.laser_min_range()) {
-      if (range <= options_.laser_max_range()) {
+    if (range >= options_.min_range()) {
+      if (range <= options_.max_range()) {
         point_cloud.push_back(hit);
       }
     }
@@ -361,9 +361,9 @@ OptimizingLocalTrajectoryBuilder::AddAccumulatedRangeData(
   const sensor::RangeData filtered_range_data = {
       range_data_in_tracking.origin,
       sensor::VoxelFiltered(range_data_in_tracking.returns,
-                            options_.laser_voxel_filter_size()),
+                            options_.voxel_filter_size()),
       sensor::VoxelFiltered(range_data_in_tracking.misses,
-                            options_.laser_voxel_filter_size())};
+                            options_.voxel_filter_size())};
 
   if (filtered_range_data.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";
