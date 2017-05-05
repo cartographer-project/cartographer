@@ -56,10 +56,8 @@ namespace mapping_2d {
 // Implements the SPA loop closure method.
 class SparsePoseGraph : public mapping::SparsePoseGraph {
  public:
-  SparsePoseGraph(
-      const mapping::proto::SparsePoseGraphOptions& options,
-      common::ThreadPool* thread_pool,
-      std::deque<mapping::TrajectoryNode::ConstantData>* constant_node_data);
+  SparsePoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
+                  common::ThreadPool* thread_pool);
   ~SparsePoseGraph() override;
 
   SparsePoseGraph(const SparsePoseGraph&) = delete;
@@ -185,7 +183,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   //
   // Deque to keep references valid for the background computation when adding
   // new data.
-  std::deque<mapping::TrajectoryNode::ConstantData>* constant_node_data_;
+  std::deque<mapping::TrajectoryNode::ConstantData> constant_node_data_;
   std::vector<mapping::TrajectoryNode> trajectory_nodes_ GUARDED_BY(mutex_);
 
   // Current submap transforms used for displaying data.
