@@ -30,7 +30,6 @@
 #include "Eigen/Eigenvalues"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/mapping/proto/scan_matching_progress.pb.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/sensor/voxel_filter.h"
@@ -331,7 +330,6 @@ void SparsePoseGraph::RunOptimization() {
   if (!submap_transforms_.empty()) {
     optimization_problem_.Solve(constraints_, &submap_transforms_);
     common::MutexLocker locker(&mutex_);
-    has_new_optimized_poses_ = true;
 
     const auto& node_data = optimization_problem_.node_data();
     const size_t num_optimized_poses = node_data.size();
@@ -365,24 +363,6 @@ void SparsePoseGraph::RunOptimization() {
       }
     }
   }
-}
-
-bool SparsePoseGraph::HasNewOptimizedPoses() {
-  common::MutexLocker locker(&mutex_);
-  if (!has_new_optimized_poses_) {
-    return false;
-  }
-  has_new_optimized_poses_ = false;
-  return true;
-}
-
-mapping::proto::ScanMatchingProgress
-SparsePoseGraph::GetScanMatchingProgress() {
-  mapping::proto::ScanMatchingProgress progress;
-  common::MutexLocker locker(&mutex_);
-  progress.set_num_scans_total(trajectory_nodes_.size());
-  progress.set_num_scans_finished(constraint_builder_.GetNumFinishedScans());
-  return progress;
 }
 
 std::vector<mapping::TrajectoryNode> SparsePoseGraph::GetTrajectoryNodes() {
