@@ -21,9 +21,11 @@
 #include <memory>
 #include <string>
 
+#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -31,6 +33,9 @@
 
 namespace cartographer {
 namespace mapping {
+
+proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
+    common::LuaParameterDictionary* const parameter_dictionary);
 
 // This interface is used for both 2D and 3D SLAM.
 class TrajectoryBuilder {

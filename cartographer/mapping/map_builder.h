@@ -44,8 +44,6 @@ namespace mapping {
 
 proto::MapBuilderOptions CreateMapBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
-proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
-    common::LuaParameterDictionary* const parameter_dictionary);
 
 // Wires up the complete SLAM stack with TrajectoryBuilders (for local submaps)
 // and a SparsePoseGraph for loop closure.
