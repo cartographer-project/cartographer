@@ -26,7 +26,6 @@
 #include "cartographer/mapping/collated_trajectory_builder.h"
 #include "cartographer/mapping_2d/global_trajectory_builder.h"
 #include "cartographer/mapping_3d/global_trajectory_builder.h"
-#include "cartographer/mapping_3d/local_trajectory_builder_options.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -49,18 +48,6 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
       parameter_dictionary->GetDictionary("sparse_pose_graph").get());
   CHECK_NE(options.use_trajectory_builder_2d(),
            options.use_trajectory_builder_3d());
-  return options;
-}
-
-proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
-    common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::TrajectoryBuilderOptions options;
-  *options.mutable_trajectory_builder_2d_options() =
-      mapping_2d::CreateLocalTrajectoryBuilderOptions(
-          parameter_dictionary->GetDictionary("trajectory_builder_2d").get());
-  *options.mutable_trajectory_builder_3d_options() =
-      mapping_3d::CreateLocalTrajectoryBuilderOptions(
-          parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
   return options;
 }
 

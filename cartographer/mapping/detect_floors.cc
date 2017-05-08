@@ -39,14 +39,15 @@ constexpr double kMaxShortSpanLengthMeters = 25.;
 constexpr double kLevelHeightMeters = 2.5;
 constexpr double kMinLevelSeparationMeters = 1.0;
 
-// Indices into 'trajectory.node', so that index.start <= i < index.end.
+// Indices into 'trajectory.node', so that 'start_index' <= i < 'end_index'.
 struct Span {
-  common::Interval<int> index;
+  int start_index;
+  int end_index;
   std::vector<double> z_values;
 
   bool operator<(const Span& other) const {
-    return std::forward_as_tuple(index.start, index.end) <
-           std::forward_as_tuple(other.index.start, other.index.end);
+    return std::forward_as_tuple(start_index, end_index) <
+           std::forward_as_tuple(other.start_index, other.end_index);
   }
 };
 
@@ -81,15 +82,15 @@ std::vector<Span> SliceByAltitudeChange(const proto::Trajectory& trajectory) {
   CHECK_GT(trajectory.node_size(), 0);
 
   std::vector<Span> spans;
-  spans.push_back(Span{{0, 0}, {trajectory.node(0).pose().translation().z()}});
+  spans.push_back(Span{0, 0, {trajectory.node(0).pose().translation().z()}});
   for (int i = 1; i < trajectory.node_size(); ++i) {
     const auto& node = trajectory.node(i);
     const double z = node.pose().translation().z();
     if (std::abs(Median(spans.back().z_values) - z) > kLevelHeightMeters) {
-      spans.push_back(Span{{i, i}, {}});
+      spans.push_back(Span{i, i, {}});
     }
     InsertSorted(z, &spans.back().z_values);
-    spans.back().index.end = i + 1;
+    spans.back().end_index = i + 1;
   }
   return spans;
 }
@@ -97,7 +98,7 @@ std::vector<Span> SliceByAltitudeChange(const proto::Trajectory& trajectory) {
 // Returns the length of 'span' in meters.
 double SpanLength(const proto::Trajectory& trajectory, const Span& span) {
   double length = 0;
-  for (int i = span.index.start + 1; i < span.index.end; ++i) {
+  for (int i = span.start_index + 1; i < span.end_index; ++i) {
     const auto a =
         transform::ToEigen(trajectory.node(i - 1).pose().translation());
     const auto b = transform::ToEigen(trajectory.node(i).pose().translation());
@@ -182,10 +183,10 @@ std::vector<Floor> FindFloors(const proto::Trajectory& trajectory,
         z_values.insert(z_values.end(), span.z_values.begin(),
                         span.z_values.end());
       }
-      floors.back().timespans.push_back(common::Interval<common::Time>{
-          common::FromUniversal(trajectory.node(span.index.start).timestamp()),
+      floors.back().timespans.push_back(Timespan{
+          common::FromUniversal(trajectory.node(span.start_index).timestamp()),
           common::FromUniversal(
-              trajectory.node(span.index.end - 1).timestamp())});
+              trajectory.node(span.end_index - 1).timestamp())});
     }
     std::sort(z_values.begin(), z_values.end());
     floors.back().z = Median(z_values);

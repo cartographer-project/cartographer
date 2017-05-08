@@ -55,8 +55,9 @@ TEST(ConfigurationFilesTest, ValidateTrajectoryBuilderOptions) {
     ::cartographer::common::LuaParameterDictionary lua_parameter_dictionary(
         kCode, std::move(file_resolver));
     ::cartographer::mapping::CreateTrajectoryBuilderOptions(
-         &lua_parameter_dictionary);
-    });
+        &lua_parameter_dictionary);
+  });
 }
+
 }  // namespace
 }  // namespace cartographer_ros
