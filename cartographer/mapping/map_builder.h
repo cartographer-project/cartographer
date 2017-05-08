@@ -17,7 +17,6 @@
 #ifndef CARTOGRAPHER_MAPPING_MAP_BUILDER_H_
 #define CARTOGRAPHER_MAPPING_MAP_BUILDER_H_
 
-#include <deque>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -34,7 +33,6 @@
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
-#include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/sparse_pose_graph.h"
 #include "cartographer/mapping_3d/sparse_pose_graph.h"
 #include "cartographer/sensor/collator.h"
@@ -49,8 +47,7 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 // and a SparsePoseGraph for loop closure.
 class MapBuilder {
  public:
-  MapBuilder(const proto::MapBuilderOptions& options,
-             std::deque<mapping::TrajectoryNode::ConstantData>* constant_data);
+  MapBuilder(const proto::MapBuilderOptions& options);
   ~MapBuilder();
 
   MapBuilder(const MapBuilder&) = delete;

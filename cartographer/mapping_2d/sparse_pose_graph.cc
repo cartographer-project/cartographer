@@ -40,12 +40,10 @@ namespace mapping_2d {
 
 SparsePoseGraph::SparsePoseGraph(
     const mapping::proto::SparsePoseGraphOptions& options,
-    common::ThreadPool* thread_pool,
-    std::deque<mapping::TrajectoryNode::ConstantData>* constant_node_data)
+    common::ThreadPool* thread_pool)
     : options_(options),
       optimization_problem_(options_.optimization_problem_options()),
-      constraint_builder_(options_.constraint_builder_options(), thread_pool),
-      constant_node_data_(constant_node_data) {}
+      constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
 
 SparsePoseGraph::~SparsePoseGraph() {
   WaitForAllComputations();
@@ -96,12 +94,12 @@ void SparsePoseGraph::AddScan(
   const int j = trajectory_nodes_.size();
   CHECK_LT(j, std::numeric_limits<int>::max());
 
-  constant_node_data_->push_back(mapping::TrajectoryNode::ConstantData{
+  constant_node_data_.push_back(mapping::TrajectoryNode::ConstantData{
       time, range_data_in_pose,
       Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}}), submaps,
       tracking_to_pose});
   trajectory_nodes_.push_back(mapping::TrajectoryNode{
-      &constant_node_data_->back(), optimized_pose,
+      &constant_node_data_.back(), optimized_pose,
   });
   trajectory_connectivity_.Add(submaps);
 

@@ -51,18 +51,16 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
   return options;
 }
 
-MapBuilder::MapBuilder(
-    const proto::MapBuilderOptions& options,
-    std::deque<TrajectoryNode::ConstantData>* const constant_data)
+MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
   if (options.use_trajectory_builder_2d()) {
     sparse_pose_graph_2d_ = common::make_unique<mapping_2d::SparsePoseGraph>(
-        options_.sparse_pose_graph_options(), &thread_pool_, constant_data);
+        options_.sparse_pose_graph_options(), &thread_pool_);
     sparse_pose_graph_ = sparse_pose_graph_2d_.get();
   }
   if (options.use_trajectory_builder_3d()) {
     sparse_pose_graph_3d_ = common::make_unique<mapping_3d::SparsePoseGraph>(
-        options_.sparse_pose_graph_options(), &thread_pool_, constant_data);
+        options_.sparse_pose_graph_options(), &thread_pool_);
     sparse_pose_graph_ = sparse_pose_graph_3d_.get();
   }
 }

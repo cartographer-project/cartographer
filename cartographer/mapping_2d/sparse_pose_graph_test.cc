@@ -135,7 +135,7 @@ class SparsePoseGraphTest : public ::testing::Test {
           })text");
       sparse_pose_graph_ = common::make_unique<SparsePoseGraph>(
           mapping::CreateSparsePoseGraphOptions(parameter_dictionary.get()),
-          &thread_pool_, &constant_node_data_);
+          &thread_pool_);
     }
 
     current_pose_ = transform::Rigid2d::Identity();
@@ -172,7 +172,6 @@ class SparsePoseGraphTest : public ::testing::Test {
 
   sensor::PointCloud point_cloud_;
   std::unique_ptr<Submaps> submaps_;
-  std::deque<mapping::TrajectoryNode::ConstantData> constant_node_data_;
   common::ThreadPool thread_pool_;
   std::unique_ptr<SparsePoseGraph> sparse_pose_graph_;
   transform::Rigid2d current_pose_;

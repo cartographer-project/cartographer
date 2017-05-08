@@ -40,13 +40,11 @@ namespace mapping_3d {
 
 SparsePoseGraph::SparsePoseGraph(
     const mapping::proto::SparsePoseGraphOptions& options,
-    common::ThreadPool* thread_pool,
-    std::deque<mapping::TrajectoryNode::ConstantData>* constant_node_data)
+    common::ThreadPool* thread_pool)
     : options_(options),
       optimization_problem_(options_.optimization_problem_options(),
                             sparse_pose_graph::OptimizationProblem::FixZ::kNo),
-      constraint_builder_(options_.constraint_builder_options(), thread_pool),
-      constant_node_data_(constant_node_data) {}
+      constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
 
 SparsePoseGraph::~SparsePoseGraph() {
   WaitForAllComputations();
@@ -95,12 +93,12 @@ void SparsePoseGraph::AddScan(
   const int j = trajectory_nodes_.size();
   CHECK_LT(j, std::numeric_limits<int>::max());
 
-  constant_node_data_->push_back(mapping::TrajectoryNode::ConstantData{
+  constant_node_data_.push_back(mapping::TrajectoryNode::ConstantData{
       time, sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}},
       sensor::Compress(range_data_in_tracking), submaps,
       transform::Rigid3d::Identity()});
   trajectory_nodes_.push_back(
-      mapping::TrajectoryNode{&constant_node_data_->back(), optimized_pose});
+      mapping::TrajectoryNode{&constant_node_data_.back(), optimized_pose});
   trajectory_connectivity_.Add(submaps);
 
   if (submap_indices_.count(insertion_submaps.back()) == 0) {
