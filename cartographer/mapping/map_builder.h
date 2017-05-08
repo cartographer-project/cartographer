@@ -17,7 +17,6 @@
 #ifndef CARTOGRAPHER_MAPPING_MAP_BUILDER_H_
 #define CARTOGRAPHER_MAPPING_MAP_BUILDER_H_
 
-#include <deque>
 #include <memory>
 #include <string>
 #include <unordered_map>
