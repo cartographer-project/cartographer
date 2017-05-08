@@ -42,5 +42,21 @@ TEST(ConfigurationFilesTest, ValidateMapBuilderOptions) {
   });
 }
 
+TEST(ConfigurationFilesTest, ValidateTrajectoryBuilderOptions) {
+  const string kCode = R"text(
+      include "trajectory_builder.lua"
+      TRAJECTORY_BUILDER.trajectory_builder_2d.use_imu_data = false
+      return TRAJECTORY_BUILDER)text";
+  EXPECT_NO_FATAL_FAILURE({
+    auto file_resolver = ::cartographer::common::make_unique<
+        ::cartographer::common::ConfigurationFileResolver>(
+        std::vector<string>{string(::cartographer::common::kSourceDirectory) +
+                            "/configuration_files"});
+    ::cartographer::common::LuaParameterDictionary lua_parameter_dictionary(
+        kCode, std::move(file_resolver));
+    ::cartographer::mapping::CreateTrajectoryBuilderOptions(
+         &lua_parameter_dictionary);
+    });
+}
 }  // namespace
 }  // namespace cartographer_ros
