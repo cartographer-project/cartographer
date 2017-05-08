@@ -41,7 +41,6 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
 #include "cartographer/kalman_filter/pose_tracker.h"
-#include "cartographer/mapping/proto/scan_matching_progress.pb.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_2d/sparse_pose_graph/constraint_builder.h"
@@ -86,8 +85,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                   const Eigen::Vector3d& angular_velocity);
 
   void RunFinalOptimization() override;
-  bool HasNewOptimizedPoses() override;
-  mapping::proto::ScanMatchingProgress GetScanMatchingProgress() override;
   std::vector<std::vector<const mapping::Submaps*>> GetConnectedTrajectories()
       override;
   std::vector<transform::Rigid3d> GetSubmapTransforms(
@@ -178,9 +175,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // before they take part in the background computations.
   std::map<const mapping::Submap*, int> submap_indices_ GUARDED_BY(mutex_);
   std::vector<SubmapState> submap_states_ GUARDED_BY(mutex_);
-
-  // Whether to return true on the next call to HasNewOptimizedPoses().
-  bool has_new_optimized_poses_ GUARDED_BY(mutex_) = false;
 
   // Connectivity structure of our trajectories.
   std::vector<std::vector<const mapping::Submaps*>> connected_components_;

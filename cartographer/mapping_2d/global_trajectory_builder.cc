@@ -37,7 +37,7 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
     const sensor::PointCloud& ranges) {
   std::unique_ptr<LocalTrajectoryBuilder::InsertionResult> insertion_result =
       local_trajectory_builder_.AddHorizontalRangeData(
-          time, sensor::RangeData{origin, ranges, {}, {}});
+          time, sensor::RangeData{origin, ranges, {}});
   if (insertion_result != nullptr) {
     sparse_pose_graph_->AddScan(
         insertion_result->time, insertion_result->tracking_to_tracking_2d,

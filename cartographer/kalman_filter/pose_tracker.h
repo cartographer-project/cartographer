@@ -65,7 +65,7 @@ proto::PoseTrackerOptions CreatePoseTrackerOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
 // A Kalman filter for a 3D state of position and orientation.
-// Includes functions to update from IMU and laser scan matches.
+// Includes functions to update from IMU and range data matches.
 class PoseTracker {
  public:
   enum {

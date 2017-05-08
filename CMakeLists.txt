@@ -86,6 +86,13 @@ list(APPEND ALL_SRCS ${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS})
 add_library(${PROJECT_NAME} ${ALL_SRCS})
 add_subdirectory("cartographer")
 
+foreach(ABS_FIL ${ALL_TESTS})
+  file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${ABS_FIL})
+  get_filename_component(DIR ${REL_FIL} DIRECTORY)
+  get_filename_component(FIL_WE ${REL_FIL} NAME_WE)
+  google_test("${DIR}/${FIL_WE}" ${ABS_FIL})
+endforeach()
+
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${EIGEN3_INCLUDE_DIR}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${EIGEN3_LIBRARIES})

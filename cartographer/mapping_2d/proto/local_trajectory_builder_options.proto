@@ -23,19 +23,18 @@ import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.p
 import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 
 message LocalTrajectoryBuilderOptions {
-  // Laser returns outside these ranges will be dropped.
-  optional float laser_min_range = 14;
-  optional float laser_max_range = 15;
-  optional float laser_min_z = 1;
-  optional float laser_max_z = 2;
+  // Rangefinder points outside these ranges will be dropped.
+  optional float min_range = 14;
+  optional float max_range = 15;
+  optional float min_z = 1;
+  optional float max_z = 2;
 
-  // Laser returns beyond 'laser_max_range' will be inserted with this length as
-  // empty space.
-  optional float laser_missing_echo_ray_length = 16;
+  // Points beyond 'max_range' will be inserted with this length as empty space.
+  optional float missing_data_ray_length = 16;
 
   // Voxel filter that gets applied to the range data immediately after
   // cropping.
-  optional float laser_voxel_filter_size = 3;
+  optional float voxel_filter_size = 3;
 
   // Whether to solve the online scan matching first using the correlative scan
   // matcher to generate a good starting point for Ceres.

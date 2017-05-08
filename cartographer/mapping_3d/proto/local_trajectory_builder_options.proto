@@ -29,16 +29,17 @@ message LocalTrajectoryBuilderOptions {
     OPTIMIZING = 1;
   }
 
-  // Laser limits.
-  optional float laser_min_range = 1;
-  optional float laser_max_range = 2;
+  // Rangefinder points outside these ranges will be dropped.
+  optional float min_range = 1;
+  optional float max_range = 2;
 
   // Number of scans to accumulate into one unwarped, combined scan to use for
   // scan matching.
   optional int32 scans_per_accumulation = 3;
 
-  // Voxel filter that gets applied to the laser before doing anything with it.
-  optional float laser_voxel_filter_size = 4;
+  // Voxel filter that gets applied to the range data immediately after
+  // cropping.
+  optional float voxel_filter_size = 4;
 
   // Voxel filter used to compute a sparser point cloud for matching.
   optional sensor.proto.AdaptiveVoxelFilterOptions
