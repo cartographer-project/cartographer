@@ -30,6 +30,7 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
+#include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
@@ -55,7 +56,8 @@ class MapBuilder {
 
   // Create a new trajectory and return its index.
   int AddTrajectoryBuilder(
-      const std::unordered_set<string>& expected_sensor_ids);
+      const std::unordered_set<string>& expected_sensor_ids,
+      const proto::TrajectoryBuilderOptions& trajectory_options);
 
   // Returns the TrajectoryBuilder corresponding to the specified
   // 'trajectory_id'.

@@ -84,7 +84,15 @@ set_source_files_properties(${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS} PROPERTIES GENER
 list(APPEND ALL_SRCS ${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS})
 
 add_library(${PROJECT_NAME} ${ALL_SRCS})
-add_subdirectory("cartographer")
+
+configure_file(
+  ${PROJECT_SOURCE_DIR}/cartographer/common/config.h.cmake
+  ${PROJECT_BINARY_DIR}/cartographer/common/config.h)
+
+google_binary(cartographer_compute_relations_metrics
+  SRCS
+    cartographer/ground_truth/compute_relations_metrics_main.cc
+)
 
 foreach(ABS_FIL ${ALL_TESTS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${ABS_FIL})

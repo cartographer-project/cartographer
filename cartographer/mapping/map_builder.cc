@@ -26,7 +26,6 @@
 #include "cartographer/mapping/collated_trajectory_builder.h"
 #include "cartographer/mapping_2d/global_trajectory_builder.h"
 #include "cartographer/mapping_3d/global_trajectory_builder.h"
-#include "cartographer/mapping_3d/local_trajectory_builder_options.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -41,14 +40,8 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
   proto::MapBuilderOptions options;
   options.set_use_trajectory_builder_2d(
       parameter_dictionary->GetBool("use_trajectory_builder_2d"));
-  *options.mutable_trajectory_builder_2d_options() =
-      mapping_2d::CreateLocalTrajectoryBuilderOptions(
-          parameter_dictionary->GetDictionary("trajectory_builder_2d").get());
   options.set_use_trajectory_builder_3d(
       parameter_dictionary->GetBool("use_trajectory_builder_3d"));
-  *options.mutable_trajectory_builder_3d_options() =
-      mapping_3d::CreateLocalTrajectoryBuilderOptions(
-          parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
   options.set_num_background_threads(
       parameter_dictionary->GetNonNegativeInt("num_background_threads"));
   *options.mutable_sparse_pose_graph_options() = CreateSparsePoseGraphOptions(
@@ -75,21 +68,24 @@ MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
 MapBuilder::~MapBuilder() {}
 
 int MapBuilder::AddTrajectoryBuilder(
-    const std::unordered_set<string>& expected_sensor_ids) {
+    const std::unordered_set<string>& expected_sensor_ids,
+    const proto::TrajectoryBuilderOptions& trajectory_options) {
   const int trajectory_id = trajectory_builders_.size();
   if (options_.use_trajectory_builder_3d()) {
+    CHECK(trajectory_options.has_trajectory_builder_3d_options());
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
             common::make_unique<mapping_3d::GlobalTrajectoryBuilder>(
-                options_.trajectory_builder_3d_options(),
+                trajectory_options.trajectory_builder_3d_options(),
                 sparse_pose_graph_3d_.get())));
   } else {
+    CHECK(trajectory_options.has_trajectory_builder_2d_options());
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
             common::make_unique<mapping_2d::GlobalTrajectoryBuilder>(
-                options_.trajectory_builder_2d_options(),
+                trajectory_options.trajectory_builder_2d_options(),
                 sparse_pose_graph_2d_.get())));
   }
   trajectory_ids_.emplace(trajectory_builders_.back()->submaps(),

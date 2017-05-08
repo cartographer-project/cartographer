@@ -12,11 +12,10 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-include "sparse_pose_graph.lua"
+include "trajectory_builder_2d.lua"
+include "trajectory_builder_3d.lua"
 
-MAP_BUILDER = {
-  use_trajectory_builder_2d = false,
-  use_trajectory_builder_3d = false,
-  num_background_threads = 4,
-  sparse_pose_graph = SPARSE_POSE_GRAPH,
+TRAJECTORY_BUILDER = {
+  trajectory_builder_2d = TRAJECTORY_BUILDER_2D,
+  trajectory_builder_3d = TRAJECTORY_BUILDER_3D,
 }

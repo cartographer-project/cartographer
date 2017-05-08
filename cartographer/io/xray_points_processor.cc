@@ -120,11 +120,10 @@ void WritePng(const PixelDataMatrix& mat, FileWriter* const file_writer) {
   CHECK(file_writer->Close());
 }
 
-bool ContainedIn(
-    const common::Time& time,
-    const std::vector<common::Interval<common::Time>>& time_intervals) {
-  for (const auto& interval : time_intervals) {
-    if (interval.start <= time && time <= interval.end) {
+bool ContainedIn(const common::Time& time,
+                 const std::vector<mapping::Timespan>& timespans) {
+  for (const mapping::Timespan& timespan : timespans) {
+    if (timespan.start <= time && time <= timespan.end) {
       return true;
     }
   }
