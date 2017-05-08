@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/proto/scan_matching_progress.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/submaps.h"
@@ -106,12 +105,6 @@ class SparsePoseGraph {
   // Computes optimized poses.
   virtual void RunFinalOptimization() = 0;
 
-  // Will once return true whenever new optimized poses are available.
-  virtual bool HasNewOptimizedPoses() = 0;
-
-  // Returns the scan matching progress.
-  virtual proto::ScanMatchingProgress GetScanMatchingProgress() = 0;
-
   // Get the current trajectory clusters.
   virtual std::vector<std::vector<const Submaps*>>
   GetConnectedTrajectories() = 0;
@@ -129,15 +122,16 @@ class SparsePoseGraph {
   // Returns the current optimized trajectory.
   virtual std::vector<TrajectoryNode> GetTrajectoryNodes() = 0;
 
+  // Serializes the constraints and trajectories.
+  proto::SparsePoseGraph ToProto();
+
+ protected:
   // TODO(macmason, wohe): Consider replacing this with a GroupSubmapStates,
   // which would have better separation of concerns.
   virtual std::vector<SubmapState> GetSubmapStates() = 0;
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
-
-  // Serializes the constraints and trajectories.
-  proto::SparsePoseGraph ToProto();
 };
 
 // Like TrajectoryNodes, SubmapStates arrive in a flat vector, but need to be
