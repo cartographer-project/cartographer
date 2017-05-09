@@ -75,7 +75,7 @@ struct Submap {
   }
 
   // Origin of this submap.
-  Eigen::Vector3f origin;
+  const Eigen::Vector3f origin;
 
   // Number of RangeData inserted.
   int num_range_data = 0;
