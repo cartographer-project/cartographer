@@ -64,8 +64,9 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
   if (insertion_submaps.size() == 1) {
     // If we don't already have an entry for this submap, add one.
     if (first_submap_index == next_submap_index) {
-      optimization_problem_.AddSubmap(submap_states_[first_submap_index].trajectory,
-                                      transform::Rigid3d::Identity());
+      optimization_problem_.AddSubmap(
+          submap_states_[first_submap_index].trajectory,
+          transform::Rigid3d::Identity());
     }
     return;
   }

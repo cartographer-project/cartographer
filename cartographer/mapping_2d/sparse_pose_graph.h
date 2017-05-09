@@ -105,7 +105,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
     return iterator->second;
   }
 
-  // Grows the optimization problem to have an entry for every element of 'submaps'.
+  // Grows the optimization problem to have an entry for every element of
+  // 'submaps'.
   void GrowSubmapTransformsAsNeeded(
       const std::vector<const mapping::Submap*>& submaps) REQUIRES(mutex_);
 

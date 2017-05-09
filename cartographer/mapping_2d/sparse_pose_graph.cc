@@ -63,8 +63,9 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
   if (insertion_submaps.size() == 1) {
     // If we don't already have an entry for this submap, add one.
     if (first_submap_index == next_submap_index) {
-      optimization_problem_.AddSubmap(submap_states_[first_submap_index].trajectory,
-                                      transform::Rigid2d::Identity());
+      optimization_problem_.AddSubmap(
+          submap_states_[first_submap_index].trajectory,
+          transform::Rigid2d::Identity());
     }
     return;
   }
@@ -78,7 +79,9 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
         optimization_problem_.submap_data().at(first_submap_index).pose;
     optimization_problem_.AddSubmap(
         submap_states_[first_submap_index].trajectory,
-        first_submap_pose * sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0]).inverse() *
+        first_submap_pose *
+            sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0])
+                .inverse() *
             sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[1]));
   }
 }
@@ -206,7 +209,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   GrowSubmapTransformsAsNeeded(insertion_submaps);
   const int matching_index = GetSubmapIndex(matching_submap);
   const transform::Rigid2d optimized_pose =
-       optimization_problem_.submap_data().at(matching_index).pose *
+      optimization_problem_.submap_data().at(matching_index).pose *
       sparse_pose_graph::ComputeSubmapPose(*matching_submap).inverse() * pose;
   CHECK_EQ(scan_index, optimization_problem_.node_data().size());
   const mapping::TrajectoryNode::ConstantData* const scan_data =

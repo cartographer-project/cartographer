@@ -85,8 +85,7 @@ void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
       max_num_iterations);
 }
 
-void OptimizationProblem::Solve(
-    const std::vector<Constraint>& constraints) {
+void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
