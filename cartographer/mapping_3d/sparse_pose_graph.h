@@ -214,6 +214,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<transform::Rigid3d> optimized_submap_transforms_
       GUARDED_BY(mutex_);
 
+  // Map from submap pointers to trajectory IDs.
   std::unordered_map<const mapping::Submaps*, int> trajectory_ids_
       GUARDED_BY(mutex_);
 };

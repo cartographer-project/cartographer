@@ -379,12 +379,6 @@ std::vector<mapping::TrajectoryNode> SparsePoseGraph::GetTrajectoryNodes() {
   return trajectory_nodes_;
 }
 
-const std::unordered_map<const mapping::Submaps*, int>&
-SparsePoseGraph::trajectory_ids() {
-  common::MutexLocker locker(&mutex_);
-  return trajectory_ids_;
-}
-
 std::vector<mapping::SparsePoseGraph::SubmapState>
 SparsePoseGraph::GetSubmapStates() {
   std::vector<mapping::SparsePoseGraph::SubmapState> result;
@@ -403,6 +397,12 @@ SparsePoseGraph::GetSubmapStates() {
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   common::MutexLocker locker(&mutex_);
   return constraints_;
+}
+
+const std::unordered_map<const mapping::Submaps*, int>&
+SparsePoseGraph::trajectory_ids() {
+  common::MutexLocker locker(&mutex_);
+  return trajectory_ids_;
 }
 
 transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(

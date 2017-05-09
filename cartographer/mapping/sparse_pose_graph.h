@@ -128,8 +128,7 @@ class SparsePoseGraph {
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
 
-  // Construct a mapping from trajectory (ie Submaps*) to an integer. These
-  // values are used to track trajectory identity between scans and submaps.
+  // Returns the mapping from Submaps* to trajectory IDS.
   virtual const std::unordered_map<const Submaps*, int>& trajectory_ids() = 0;
 };
 
