@@ -117,7 +117,7 @@ class SparsePoseGraph {
   // continuous, non-loop-closed frame) into the global map frame (i.e. the
   // discontinuous, loop-closed frame).
   virtual transform::Rigid3d GetLocalToGlobalTransform(
-      const Submaps* trajectory) = 0;
+      const Submaps* submaps) = 0;
 
   // Returns the current optimized trajectory.
   virtual std::vector<TrajectoryNode> GetTrajectoryNodes() = 0;
