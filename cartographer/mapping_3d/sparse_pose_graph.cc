@@ -376,8 +376,7 @@ void SparsePoseGraph::RunOptimization() {
 
 std::vector<mapping::TrajectoryNode> SparsePoseGraph::GetTrajectoryNodes() {
   common::MutexLocker locker(&mutex_);
-  // return trajectory_nodes_;
-  return {};
+  return trajectory_nodes_;
 }
 
 const std::unordered_map<const mapping::Submaps*, int>&
