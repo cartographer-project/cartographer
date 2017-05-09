@@ -42,6 +42,12 @@ struct NodeData {
   transform::Rigid3d point_cloud_pose;
 };
 
+struct SubmapData {
+  // TODO(whess): Keep nodes per trajectory instead.
+  const mapping::Submaps* trajectory;
+  transform::Rigid3d pose;
+};
+
 // Implements the SPA loop closure method.
 class OptimizationProblem {
  public:
@@ -63,20 +69,23 @@ class OptimizationProblem {
                   const Eigen::Vector3d& angular_velocity);
   void AddTrajectoryNode(const mapping::Submaps* trajectory, common::Time time,
                          const transform::Rigid3d& point_cloud_pose);
+  void AddSubmap(const mapping::Submaps* trajectory,
+                 const transform::Rigid3d& submap_pose);
 
   void SetMaxNumIterations(int32 max_num_iterations);
 
   // Computes the optimized poses.
-  void Solve(const std::vector<Constraint>& constraints,
-             std::vector<transform::Rigid3d>* submap_transforms);
+  void Solve(const std::vector<Constraint>& constraints);
 
   const std::vector<NodeData>& node_data() const;
+  const std::vector<SubmapData>& submap_data() const;
 
  private:
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   FixZ fix_z_;
   std::map<const mapping::Submaps*, std::deque<ImuData>> imu_data_;
   std::vector<NodeData> node_data_;
+  std::vector<SubmapData> submap_data_;
   double gravity_constant_ = 9.8;
 };
 

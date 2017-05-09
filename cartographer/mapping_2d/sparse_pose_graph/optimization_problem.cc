@@ -75,14 +75,17 @@ void OptimizationProblem::AddTrajectoryNode(
       NodeData{trajectory, time, initial_point_cloud_pose, point_cloud_pose});
 }
 
+void OptimizationProblem::AddSubmap(const mapping::Submaps* const trajectory,
+                                    const transform::Rigid2d& submap_pose) {
+  submap_data_.push_back(SubmapData{trajectory, submap_pose});
+}
+
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
   options_.mutable_ceres_solver_options()->set_max_num_iterations(
       max_num_iterations);
 }
 
-void OptimizationProblem::Solve(
-    const std::vector<Constraint>& constraints,
-    std::vector<transform::Rigid2d>* const submap_transforms) {
+void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
@@ -92,10 +95,10 @@ void OptimizationProblem::Solve(
   ceres::Problem problem(problem_options);
 
   // Set the starting point.
-  std::vector<std::array<double, 3>> C_submaps(submap_transforms->size());
+  std::vector<std::array<double, 3>> C_submaps(submap_data_.size());
   std::vector<std::array<double, 3>> C_point_clouds(node_data_.size());
-  for (size_t i = 0; i != submap_transforms->size(); ++i) {
-    C_submaps[i] = FromPose((*submap_transforms)[i]);
+  for (size_t i = 0; i != submap_data_.size(); ++i) {
+    C_submaps[i] = FromPose(submap_data_[i].pose);
     problem.AddParameterBlock(C_submaps[i].data(), 3);
   }
   for (size_t j = 0; j != node_data_.size(); ++j) {
@@ -109,7 +112,7 @@ void OptimizationProblem::Solve(
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
     CHECK_GE(constraint.i, 0);
-    CHECK_LT(constraint.i, submap_transforms->size());
+    CHECK_LT(constraint.i, submap_data_.size());
     CHECK_GE(constraint.j, 0);
     CHECK_LT(constraint.j, node_data_.size());
     problem.AddResidualBlock(
@@ -167,8 +170,8 @@ void OptimizationProblem::Solve(
   }
 
   // Store the result.
-  for (size_t i = 0; i != submap_transforms->size(); ++i) {
-    (*submap_transforms)[i] = ToPose(C_submaps[i]);
+  for (size_t i = 0; i != submap_data_.size(); ++i) {
+    submap_data_[i].pose = ToPose(C_submaps[i]);
   }
   for (size_t j = 0; j != node_data_.size(); ++j) {
     node_data_[j].point_cloud_pose = ToPose(C_point_clouds[j]);
@@ -177,6 +180,10 @@ void OptimizationProblem::Solve(
 
 const std::vector<NodeData>& OptimizationProblem::node_data() const {
   return node_data_;
+}
+
+const std::vector<SubmapData>& OptimizationProblem::submap_data() const {
+  return submap_data_;
 }
 
 }  // namespace sparse_pose_graph

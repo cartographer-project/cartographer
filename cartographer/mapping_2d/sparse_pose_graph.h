@@ -105,9 +105,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
     return iterator->second;
   }
 
-  // Grows 'submap_transforms_' to have an entry for every element of 'submaps'.
+  // Grows the optimization problem to have an entry for every element of
+  // 'insertion_submaps'.
   void GrowSubmapTransformsAsNeeded(
-      const std::vector<const mapping::Submap*>& submaps) REQUIRES(mutex_);
+      const std::vector<const mapping::Submap*>& insertion_submaps)
+      REQUIRES(mutex_);
 
   // Adds constraints for a scan, and starts scan matching in the background.
   void ComputeConstraintsForScan(
@@ -167,7 +169,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   sparse_pose_graph::OptimizationProblem optimization_problem_;
   sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_;
-  std::vector<transform::Rigid2d> submap_transforms_;  // (map <- submap)
 
   // Submaps get assigned an index and state as soon as they are seen, even
   // before they take part in the background computations.
