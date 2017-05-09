@@ -79,7 +79,7 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
     const auto& first_submap_pose =
         optimization_problem_.submap_data().at(first_submap_index).pose;
     optimization_problem_.AddSubmap(
-        submap_states_[first_submap_index].trajectory,
+        submap_states_[second_submap_index].trajectory,
         first_submap_pose * insertion_submaps[0]->local_pose().inverse() *
             insertion_submaps[1]->local_pose());
   }
