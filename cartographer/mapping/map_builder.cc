@@ -128,17 +128,17 @@ string MapBuilder::SubmapToProto(const int trajectory_id,
 
   const Submaps* const submaps =
       trajectory_builders_.at(trajectory_id)->submaps();
-  if (submap_index < 0 || submap_index >= submaps->size()) {
+  const std::vector<transform::Rigid3d> submap_transforms =
+      sparse_pose_graph_->GetSubmapTransforms(submaps);
+  if (submap_index < 0 ||
+      static_cast<size_t>(submap_index) >= submap_transforms.size()) {
     return "Requested submap " + std::to_string(submap_index) +
            " from trajectory " + std::to_string(trajectory_id) +
-           " but there are only " + std::to_string(submaps->size()) +
+           " but there are only " + std::to_string(submap_transforms.size()) +
            " submaps in this trajectory.";
   }
 
   response->set_submap_version(submaps->Get(submap_index)->num_range_data);
-  const std::vector<transform::Rigid3d> submap_transforms =
-      sparse_pose_graph_->GetSubmapTransforms(*submaps);
-  CHECK_EQ(submap_transforms.size(), submaps->size());
   submaps->SubmapToProto(submap_index, sparse_pose_graph_->GetTrajectoryNodes(),
                          submap_transforms[submap_index], response);
   return "";

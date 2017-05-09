@@ -71,7 +71,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                const sensor::RangeData& range_data_in_tracking,
                const transform::Rigid3d& pose,
                const kalman_filter::PoseCovariance& pose_covariance,
-               const Submaps* submaps, const Submap* matching_submap,
+               const Submaps* trajectory, const Submap* matching_submap,
                const std::vector<const Submap*>& insertion_submaps)
       EXCLUDES(mutex_);
 
@@ -88,8 +88,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<std::vector<const mapping::Submaps*>> GetConnectedTrajectories()
       override;
   std::vector<transform::Rigid3d> GetSubmapTransforms(
-      const mapping::Submaps& submaps) EXCLUDES(mutex_) override;
-  transform::Rigid3d GetLocalToGlobalTransform(const mapping::Submaps& submaps)
+      const mapping::Submaps* trajectory) EXCLUDES(mutex_) override;
+  transform::Rigid3d GetLocalToGlobalTransform(const mapping::Submaps* submaps)
       EXCLUDES(mutex_) override;
   std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
       EXCLUDES(mutex_);
@@ -159,7 +159,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Adds extrapolated transforms, so that there are transforms for all submaps.
   std::vector<transform::Rigid3d> ExtrapolateSubmapTransforms(
       const std::vector<transform::Rigid3d>& submap_transforms,
-      const mapping::Submaps& submaps) const REQUIRES(mutex_);
+      const mapping::Submaps* trajectory) const REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;

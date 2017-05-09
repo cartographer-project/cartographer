@@ -150,8 +150,8 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
           transform::ToProto(node.pose * node.constant_data->tracking_to_pose);
     }
 
-    const Submaps* const submaps = group[0].constant_data->trajectory;
-    for (const auto& transform : GetSubmapTransforms(*submaps)) {
+    const Submaps* const trajectory = group[0].constant_data->trajectory;
+    for (const auto& transform : GetSubmapTransforms(trajectory)) {
       *trajectory_proto->add_submap()->mutable_pose() =
           transform::ToProto(transform);
     }
