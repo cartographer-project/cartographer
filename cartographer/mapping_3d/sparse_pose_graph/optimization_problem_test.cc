@@ -153,9 +153,6 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
             1e-9 * Eigen::Matrix<double, 6, 6>::Identity()}});
   }
 
-  std::vector<transform::Rigid3d> submap_transforms = {
-      kSubmap0Transform, kSubmap0Transform, kSubmap2Transform};
-
   double translation_error_before = 0.;
   double rotation_error_before = 0.;
   const auto& node_data = optimization_problem_.node_data();
@@ -168,7 +165,10 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
                             node_data[j].point_cloud_pose);
   }
 
-  optimization_problem_.Solve(constraints, &submap_transforms);
+  optimization_problem_.AddSubmap(kTrajectory, kSubmap0Transform);
+  optimization_problem_.AddSubmap(kTrajectory, kSubmap0Transform);
+  optimization_problem_.AddSubmap(kTrajectory, kSubmap2Transform);
+  optimization_problem_.Solve(constraints);
 
   double translation_error_after = 0.;
   double rotation_error_after = 0.;

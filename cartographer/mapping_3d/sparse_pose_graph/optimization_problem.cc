@@ -91,14 +91,17 @@ void OptimizationProblem::AddTrajectoryNode(
   node_data_.push_back(NodeData{trajectory, time, point_cloud_pose});
 }
 
+void OptimizationProblem::AddSubmap(const mapping::Submaps* const trajectory,
+                                    const transform::Rigid3d& submap_pose) {
+  submap_data_.push_back(SubmapData{trajectory, submap_pose});
+}
+
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
   options_.mutable_ceres_solver_options()->set_max_num_iterations(
       max_num_iterations);
 }
 
-void OptimizationProblem::Solve(
-    const std::vector<Constraint>& constraints,
-    std::vector<transform::Rigid3d>* const submap_transforms) {
+void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
@@ -125,7 +128,7 @@ void OptimizationProblem::Solve(
   std::deque<CeresPose> C_submaps;
   std::deque<CeresPose> C_point_clouds;
   // Tie the first submap to the origin.
-  CHECK(!submap_transforms->empty());
+  CHECK(!submap_data_.empty());
   C_submaps.emplace_back(
       transform::Rigid3d::Identity(), translation_parameterization(),
       common::make_unique<ceres::AutoDiffLocalParameterization<
@@ -133,9 +136,9 @@ void OptimizationProblem::Solve(
       &problem);
   problem.SetParameterBlockConstant(C_submaps.back().translation());
 
-  for (size_t i = 1; i != submap_transforms->size(); ++i) {
+  for (size_t i = 1; i != submap_data_.size(); ++i) {
     C_submaps.emplace_back(
-        (*submap_transforms)[i], translation_parameterization(),
+        submap_data_[i].pose, translation_parameterization(),
         common::make_unique<ceres::QuaternionParameterization>(), &problem);
   }
   for (size_t j = 0; j != node_data_.size(); ++j) {
@@ -147,7 +150,7 @@ void OptimizationProblem::Solve(
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
     CHECK_GE(constraint.i, 0);
-    CHECK_LT(constraint.i, submap_transforms->size());
+    CHECK_LT(constraint.i, submap_data_.size());
     CHECK_GE(constraint.j, 0);
     CHECK_LT(constraint.j, node_data_.size());
     problem.AddResidualBlock(
@@ -239,8 +242,8 @@ void OptimizationProblem::Solve(
   }
 
   // Store the result.
-  for (size_t i = 0; i != submap_transforms->size(); ++i) {
-    (*submap_transforms)[i] = C_submaps[i].ToRigid();
+  for (size_t i = 0; i != submap_data_.size(); ++i) {
+    submap_data_[i].pose = C_submaps[i].ToRigid();
   }
   for (size_t j = 0; j != node_data_.size(); ++j) {
     node_data_[j].point_cloud_pose = C_point_clouds[j].ToRigid();
@@ -249,6 +252,10 @@ void OptimizationProblem::Solve(
 
 const std::vector<NodeData>& OptimizationProblem::node_data() const {
   return node_data_;
+}
+
+const std::vector<SubmapData>& OptimizationProblem::submap_data() const {
+  return submap_data_;
 }
 
 }  // namespace sparse_pose_graph
