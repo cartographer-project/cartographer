@@ -91,9 +91,12 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_) override;
   std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
       EXCLUDES(mutex_);
-  std::vector<SubmapState> GetSubmapStates() override EXCLUDES(mutex_);
 
-  std::vector<Constraint> constraints() override;
+ protected:
+  std::vector<SubmapState> GetSubmapStates() override EXCLUDES(mutex_);
+  std::vector<Constraint> constraints() override EXCLUDES(mutex_);
+  const std::unordered_map<const mapping::Submaps*, int>& trajectory_ids()
+      override EXCLUDES(mutex_);
 
  private:
   // Handles a new work item.
@@ -168,7 +171,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Current optimization problem.
   sparse_pose_graph::OptimizationProblem optimization_problem_;
   sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
-  std::vector<Constraint> constraints_;
+  std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
   // Submaps get assigned an index and state as soon as they are seen, even
   // before they take part in the background computations.
@@ -189,6 +192,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Current submap transforms used for displaying data.
   std::vector<transform::Rigid2d> optimized_submap_transforms_
+      GUARDED_BY(mutex_);
+
+  // Map from submap pointers to trajectory IDs.
+  std::unordered_map<const mapping::Submaps*, int> trajectory_ids_
       GUARDED_BY(mutex_);
 };
 

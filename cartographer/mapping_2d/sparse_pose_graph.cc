@@ -97,6 +97,7 @@ void SparsePoseGraph::AddScan(
       GetLocalToGlobalTransform(trajectory) * transform::Embed3D(pose));
 
   common::MutexLocker locker(&mutex_);
+  trajectory_ids_.emplace(trajectory, trajectory_ids_.size());
   const int j = trajectory_nodes_.size();
   CHECK_LT(j, std::numeric_limits<int>::max());
 
@@ -386,12 +387,19 @@ std::vector<mapping::TrajectoryNode> SparsePoseGraph::GetTrajectoryNodes() {
   return trajectory_nodes_;
 }
 
+const std::unordered_map<const mapping::Submaps*, int>&
+SparsePoseGraph::trajectory_ids() {
+  common::MutexLocker locker(&mutex_);
+  return trajectory_ids_;
+}
+
 std::vector<SparsePoseGraph::SubmapState> SparsePoseGraph::GetSubmapStates() {
   common::MutexLocker locker(&mutex_);
   return submap_states_;
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
+  common::MutexLocker locker(&mutex_);
   return constraints_;
 }
 

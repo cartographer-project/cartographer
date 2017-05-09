@@ -56,21 +56,11 @@ TEST(SparsePoseGraphTest, TrajectoryFunctions) {
     }
   }
 
-  std::vector<const Submaps*> submap_pointers;
-  for (const auto& submap : submaps) {
-    submap_pointers.push_back(&submap);
-  }
-
-  const auto index_map = ComputeTrajectoryIds(submap_pointers);
-  ASSERT_EQ(submaps.size(), index_map.size());
-  for (const auto& kv : index_map) {
-    const auto pointer_iterator =
-        std::find(submap_pointers.begin(), submap_pointers.end(), kv.first);
-    ASSERT_TRUE(pointer_iterator != submap_pointers.end());
-    const auto pointer_index = pointer_iterator - submap_pointers.begin();
-    EXPECT_EQ(kv.second, pointer_index);
-  }
-
+  const std::unordered_map<const Submaps*, int> index_map = {{&submaps[0], 0},
+                                                             {&submaps[1], 1},
+                                                             {&submaps[2], 2},
+                                                             {&submaps[3], 3},
+                                                             {&submaps[4], 4}};
   std::vector<std::vector<TrajectoryNode>> grouped_nodes;
   std::vector<std::pair<int, int>> new_indices;
   GroupTrajectoryNodes(trajectory_nodes, index_map, &grouped_nodes,
