@@ -93,9 +93,9 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
         constraint.pose.sqrt_Lambda_ij;
 
     constraint_proto->mutable_submap_id()->set_trajectory_id(
-        constraint.i.trajectory_id);
+        constraint.submap_id.trajectory_id);
     constraint_proto->mutable_submap_id()->set_submap_index(
-        constraint.i.submap_index);
+        constraint.submap_id.submap_index);
 
     constraint_proto->mutable_scan_id()->set_trajectory_id(
         grouped_node_indices[constraint.j].first);

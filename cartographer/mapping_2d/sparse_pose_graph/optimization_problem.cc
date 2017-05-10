@@ -139,8 +139,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
         constraint.tag == Constraint::INTER_SUBMAP
             ? new ceres::HuberLoss(options_.huber_scale())
             : nullptr,
-        C_submaps.at(constraint.i.trajectory_id)
-            .at(constraint.i.submap_index)
+        C_submaps.at(constraint.submap_id.trajectory_id)
+            .at(constraint.submap_id.submap_index)
             .data(),
         C_point_clouds[constraint.j].data());
   }
