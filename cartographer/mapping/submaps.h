@@ -63,10 +63,11 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
   return value;
 }
 
-// NOCOM(#hrapp): document and rename
+// Uniquely identifies a submap using a combination of a unique trajectory ID
+// and a zero-based index of the submap inside that trajectory.
 struct SubmapId {
   int trajectory_id;
-  int submap_index;
+  int submap_index;// Zero-based index of the submap per trajectory.
 
   bool operator<(const SubmapId& other) const {
     return std::forward_as_tuple(trajectory_id, submap_index) <
