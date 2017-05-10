@@ -16,6 +16,7 @@
 
 #include "cartographer/mapping_3d/sparse_pose_graph/optimization_problem.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <map>
@@ -93,7 +94,10 @@ void OptimizationProblem::AddTrajectoryNode(
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
                                     const transform::Rigid3d& submap_pose) {
-  submap_data_.push_back(SubmapData{trajectory_id, submap_pose});
+  CHECK_GE(trajectory_id, 0);
+  submap_data_.resize(
+      std::max(submap_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+  submap_data_[trajectory_id].push_back(SubmapData{submap_pose});
 }
 
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
@@ -125,25 +129,31 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   };
 
   // Set the starting point.
-  // TODO(hrapp): Move ceres data into SubmapData.
-  std::vector<std::deque<CeresPose>> C_submaps(nodes_per_trajectory.size());
-
-  std::deque<CeresPose> C_point_clouds;
-
-  // Tie the first submap to the origin.
   CHECK(!submap_data_.empty());
-  C_submaps[submap_data_[0].trajectory_id].emplace_back(
-      transform::Rigid3d::Identity(), translation_parameterization(),
-      common::make_unique<ceres::AutoDiffLocalParameterization<
-          ConstantYawQuaternionPlus, 4, 2>>(),
-      &problem);
-  problem.SetParameterBlockConstant(
-      C_submaps[submap_data_[0].trajectory_id].back().translation());
-
-  for (size_t i = 1; i != submap_data_.size(); ++i) {
-    C_submaps[submap_data_[i].trajectory_id].emplace_back(
-        submap_data_[i].pose, translation_parameterization(),
-        common::make_unique<ceres::QuaternionParameterization>(), &problem);
+  CHECK(!submap_data_[0].empty());
+  // TODO(hrapp): Move ceres data into SubmapData.
+  std::vector<std::deque<CeresPose>> C_submaps(submap_data_.size());
+  std::deque<CeresPose> C_point_clouds;
+  for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
+       ++trajectory_id) {
+    for (size_t submap_index = 0;
+         submap_index != submap_data_[trajectory_id].size(); ++submap_index) {
+      if (trajectory_id == 0 && submap_index == 0) {
+        // Tie the first submap of the first trajectory to the origin.
+        C_submaps[trajectory_id].emplace_back(
+            transform::Rigid3d::Identity(), translation_parameterization(),
+            common::make_unique<ceres::AutoDiffLocalParameterization<
+                ConstantYawQuaternionPlus, 4, 2>>(),
+            &problem);
+        problem.SetParameterBlockConstant(
+            C_submaps[trajectory_id].back().translation());
+      } else {
+        C_submaps[trajectory_id].emplace_back(
+            submap_data_[trajectory_id][submap_index].pose,
+            translation_parameterization(),
+            common::make_unique<ceres::QuaternionParameterization>(), &problem);
+      }
+    }
   }
   for (size_t j = 0; j != node_data_.size(); ++j) {
     C_point_clouds.emplace_back(
@@ -248,9 +258,13 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   }
 
   // Store the result.
-  for (auto& submap_data : submap_data_) {
-    submap_data.pose = C_submaps[submap_data.trajectory_id].front().ToRigid();
-    C_submaps[submap_data.trajectory_id].pop_front();
+  for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
+       ++trajectory_id) {
+    for (size_t submap_index = 0;
+         submap_index != submap_data_[trajectory_id].size(); ++submap_index) {
+      submap_data_[trajectory_id][submap_index].pose =
+          C_submaps[trajectory_id][submap_index].ToRigid();
+    }
   }
 
   for (size_t j = 0; j != node_data_.size(); ++j) {
@@ -262,7 +276,8 @@ const std::vector<NodeData>& OptimizationProblem::node_data() const {
   return node_data_;
 }
 
-const std::vector<SubmapData>& OptimizationProblem::submap_data() const {
+const std::vector<std::vector<SubmapData>>& OptimizationProblem::submap_data()
+    const {
   return submap_data_;
 }
 
