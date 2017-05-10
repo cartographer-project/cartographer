@@ -35,11 +35,6 @@ namespace mapping {
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
-// Construct a mapping from trajectory (ie Submaps*) to an integer. These
-// values are used to track trajectory identity between scans and submaps.
-std::unordered_map<const Submaps*, int> ComputeTrajectoryIds(
-    const std::vector<const Submaps*>& trajectories);
-
 // TrajectoryNodes are provided in a flat vector, but serialization requires
 // that we group them by trajectory. This groups the elements of
 // 'trajectory_nodes' into 'grouped_nodes' (so that (*grouped_nodes)[i]
@@ -132,6 +127,9 @@ class SparsePoseGraph {
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
+
+  // Returns the mapping from Submaps* to trajectory IDs.
+  virtual const std::unordered_map<const Submaps*, int>& trajectory_ids() = 0;
 };
 
 // Like TrajectoryNodes, SubmapStates arrive in a flat vector, but need to be
