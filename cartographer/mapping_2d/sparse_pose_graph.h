@@ -127,6 +127,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
     return iterator->second;
   }
 
+  mapping::SubmapId GetSubmapId(const mapping::Submap* submap) const
+      REQUIRES(mutex_) {
+    return submap_states_.at(GetSubmapIndex(submap)).id;
+  }
+
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'.
   void GrowSubmapTransformsAsNeeded(
@@ -162,7 +167,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds extrapolated transforms, so that there are transforms for all submaps.
   std::vector<transform::Rigid3d> ExtrapolateSubmapTransforms(
-      const std::vector<transform::Rigid2d>& submap_transforms,
+      const std::vector<std::vector<sparse_pose_graph::SubmapData>>&
+          submap_transforms,
       const mapping::Submaps* trajectory) const REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
@@ -212,8 +218,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<mapping::TrajectoryNode> trajectory_nodes_ GUARDED_BY(mutex_);
 
   // Current submap transforms used for displaying data.
-  std::vector<transform::Rigid2d> optimized_submap_transforms_
-      GUARDED_BY(mutex_);
+  std::vector<std::vector<sparse_pose_graph::SubmapData>>
+      optimized_submap_transforms_ GUARDED_BY(mutex_);
 
   // Map from submap pointers to trajectory IDs.
   std::unordered_map<const mapping::Submaps*, int> trajectory_ids_
