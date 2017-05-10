@@ -82,8 +82,7 @@ class SparsePoseGraph {
   virtual void RunFinalOptimization() = 0;
 
   // Get the current trajectory clusters.
-  virtual std::vector<std::vector<int>>
-  GetConnectedTrajectories() = 0;
+  virtual std::vector<std::vector<int>> GetConnectedTrajectories() = 0;
 
   // Returns the current optimized transforms for the given 'trajectory'.
   virtual std::vector<transform::Rigid3d> GetSubmapTransforms(

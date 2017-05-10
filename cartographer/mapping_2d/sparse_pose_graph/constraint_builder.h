@@ -92,8 +92,8 @@ class ConstraintBuilder {
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
   // computations are finished.
   void MaybeAddGlobalConstraint(
-      const mapping::SubmapId& submap_id, const mapping::Submap* submap, int scan_index,
-      int scan_trajectory_id,
+      const mapping::SubmapId& submap_id, const mapping::Submap* submap,
+      int scan_index, int scan_trajectory_id,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::PointCloud* point_cloud);
 
@@ -137,8 +137,7 @@ class ConstraintBuilder {
   // As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
       const mapping::SubmapId& submap_id, const mapping::Submap* submap,
-      int scan_index, int scan_trajectory_id,
-      bool match_full_submap,
+      int scan_index, int scan_trajectory_id, bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::PointCloud* point_cloud,
       const transform::Rigid2d& initial_relative_pose,

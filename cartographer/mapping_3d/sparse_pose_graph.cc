@@ -412,8 +412,7 @@ transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
              .inverse();
 }
 
-std::vector<std::vector<int>>
-SparsePoseGraph::GetConnectedTrajectories() {
+std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
   common::MutexLocker locker(&mutex_);
   return connected_components_;
 }

@@ -46,38 +46,33 @@ class TrajectoryConnectivity {
   // Connect two trajectories. If either trajectory is untracked, it will be
   // tracked. This function is invariant to the order of its arguments. Repeated
   // calls to Connect increment the connectivity count.
-  void Connect(int trajectory_id_a, int trajectory_id_b)
-      EXCLUDES(lock_);
+  void Connect(int trajectory_id_a, int trajectory_id_b) EXCLUDES(lock_);
 
   // Determines if two trajectories have been (transitively) connected. If
   // either trajectory is not being tracked, returns false. This function is
   // invariant to the order of its arguments.
-  bool TransitivelyConnected(int trajectory_id_a,
-                             int trajectory_id_b) EXCLUDES(lock_);
+  bool TransitivelyConnected(int trajectory_id_a, int trajectory_id_b)
+      EXCLUDES(lock_);
 
   // Return the number of _direct_ connections between trajectory_id_a and
   // trajectory_id_b. If either trajectory is not being tracked, returns 0. This
   // function is invariant to the order of its arguments.
-  int ConnectionCount(int trajectory_id_a, int trajectory_id_b)
-      EXCLUDES(lock_);
+  int ConnectionCount(int trajectory_id_a, int trajectory_id_b) EXCLUDES(lock_);
 
   // The trajectory IDs, grouped by connectivity.
-  std::vector<std::vector<int>> ConnectedComponents()
-      EXCLUDES(lock_);
+  std::vector<std::vector<int>> ConnectedComponents() EXCLUDES(lock_);
 
  private:
   // Find the representative and compresses the path to it.
   int FindSet(int trajectory_id) REQUIRES(lock_);
-  void Union(int trajectory_id_a, int trajectory_id_b)
-      REQUIRES(lock_);
+  void Union(int trajectory_id_a, int trajectory_id_b) REQUIRES(lock_);
 
   common::Mutex lock_;
   // Tracks transitive connectivity using a disjoint set forest, i.e. each
   // entry points towards the representative for the given trajectory.
   std::map<int, int> forest_ GUARDED_BY(lock_);
   // Tracks the number of direct connections between a pair of trajectories.
-  std::map<std::pair<int, int>, int> connection_map_
-      GUARDED_BY(lock_);
+  std::map<std::pair<int, int>, int> connection_map_ GUARDED_BY(lock_);
 };
 
 // Returns a proto encoding connected components according to the

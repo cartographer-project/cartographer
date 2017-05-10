@@ -100,7 +100,7 @@ void ConstraintBuilder::MaybeAddConstraint(
         submap_id, submap_nodes, &submap->high_resolution_hybrid_grid,
         [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, submap, scan_index,
-                            -1, /* scan_trajectory_id */
+                            -1,      /* scan_trajectory_id */
                             false,   /* match_full_submap */
                             nullptr, /* trajectory_connectivity */
                             point_cloud, initial_relative_pose, constraint);
@@ -198,8 +198,7 @@ ConstraintBuilder::GetSubmapScanMatcher(const mapping::SubmapId& submap_id) {
 
 void ConstraintBuilder::ComputeConstraint(
     const mapping::SubmapId& submap_id, const Submap* const submap,
-    const int scan_index, const int scan_trajectory_id,
-    bool match_full_submap,
+    const int scan_index, const int scan_trajectory_id, bool match_full_submap,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
     const sensor::CompressedPointCloud* const compressed_point_cloud,
     const transform::Rigid3d& initial_relative_pose,

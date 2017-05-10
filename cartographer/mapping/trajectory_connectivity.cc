@@ -34,7 +34,7 @@ void TrajectoryConnectivity::Add(const int trajectory_id) {
 }
 
 void TrajectoryConnectivity::Connect(const int trajectory_id_a,
-                                    const int trajectory_id_b) {
+                                     const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
   Union(trajectory_id_a, trajectory_id_b);
   auto sorted_pair =
@@ -60,23 +60,24 @@ int TrajectoryConnectivity::FindSet(const int trajectory_id) {
   return it->second;
 }
 
-bool TrajectoryConnectivity::TransitivelyConnected(
-   const int trajectory_id_a, const int trajectory_id_b) {
+bool TrajectoryConnectivity::TransitivelyConnected(const int trajectory_id_a,
+                                                   const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
 
-  if (forest_.count(trajectory_id_a) == 0 || forest_.count(trajectory_id_b) == 0) {
+  if (forest_.count(trajectory_id_a) == 0 ||
+      forest_.count(trajectory_id_b) == 0) {
     return false;
   }
   return FindSet(trajectory_id_a) == FindSet(trajectory_id_b);
 }
 
-std::vector<std::vector<int>>
-TrajectoryConnectivity::ConnectedComponents() {
+std::vector<std::vector<int>> TrajectoryConnectivity::ConnectedComponents() {
   // Map from cluster exemplar -> growing cluster.
   std::unordered_map<int, std::vector<int>> map;
   common::MutexLocker locker(&lock_);
   for (const auto& trajectory_id_entry : forest_) {
-    map[FindSet(trajectory_id_entry.first)].push_back(trajectory_id_entry.first);
+    map[FindSet(trajectory_id_entry.first)].push_back(
+        trajectory_id_entry.first);
   }
 
   std::vector<std::vector<int>> result;

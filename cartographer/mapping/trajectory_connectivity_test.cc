@@ -34,26 +34,22 @@ TEST(TrajectoryConnectivityTest, TransitivelyConnected) {
   // Make sure nothing's connected until we connect some things.
   for (int trajectory_a; trajectory_a < kNumTrajectories; ++trajectory_a) {
     for (int trajectory_b; trajectory_b < kNumTrajectories; ++trajectory_b) {
-      EXPECT_FALSE(trajectory_connectivity.TransitivelyConnected(
-          trajectory_a, trajectory_b));
+      EXPECT_FALSE(trajectory_connectivity.TransitivelyConnected(trajectory_a,
+                                                                 trajectory_b));
     }
   }
 
   // Connect some stuff up.
   trajectory_connectivity.Connect(0, 1);
-  EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(0,
-                                                             1));
+  EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(0, 1));
   trajectory_connectivity.Connect(8, 9);
-  EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(8,
-                                                             9));
-  EXPECT_FALSE(trajectory_connectivity.TransitivelyConnected(0,
-                                                              9));
+  EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(8, 9));
+  EXPECT_FALSE(trajectory_connectivity.TransitivelyConnected(0, 9));
 
   trajectory_connectivity.Connect(1, 8);
   for (int i : {0, 1}) {
     for (int j : {8, 9}) {
-      EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(
-          i, j));
+      EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(i, j));
     }
   }
 }
@@ -98,12 +94,10 @@ TEST(TrajectoryConnectivityTest, ConnectionCount) {
   for (int i = 0; i < kNumTrajectories; ++i) {
     trajectory_connectivity.Connect(0, 1);
     // Permute the arguments to check invariance.
-    EXPECT_EQ(i + 1, trajectory_connectivity.ConnectionCount(1,
-                                                              0));
+    EXPECT_EQ(i + 1, trajectory_connectivity.ConnectionCount(1, 0));
   }
   for (int i = 1; i < 9; ++i) {
-    EXPECT_EQ(0, trajectory_connectivity.ConnectionCount(i,
-                                                          i + 1));
+    EXPECT_EQ(0, trajectory_connectivity.ConnectionCount(i, i + 1));
   }
 }
 
