@@ -65,7 +65,7 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
     // If we don't already have an entry for this submap, add one.
     if (first_submap_index == next_submap_index) {
       optimization_problem_.AddSubmap(
-          submap_states_[first_submap_index].trajectory,
+          submap_states_[first_submap_index].id.trajectory_id,
           transform::Rigid3d::Identity());
     }
     return;
@@ -79,7 +79,7 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
     const auto& first_submap_pose =
         optimization_problem_.submap_data().at(first_submap_index).pose;
     optimization_problem_.AddSubmap(
-        submap_states_[second_submap_index].trajectory,
+        submap_states_[second_submap_index].id.trajectory_id,
         first_submap_pose * insertion_submaps[0]->local_pose().inverse() *
             insertion_submaps[1]->local_pose());
   }
@@ -95,6 +95,7 @@ void SparsePoseGraph::AddScan(
       GetLocalToGlobalTransform(trajectory) * pose);
 
   common::MutexLocker locker(&mutex_);
+  trajectory_ids_.emplace(trajectory, trajectory_ids_.size());
   const int j = trajectory_nodes_.size();
   CHECK_LT(j, std::numeric_limits<int>::max());
 
@@ -112,6 +113,9 @@ void SparsePoseGraph::AddScan(
     submap_states_.emplace_back();
     submap_states_.back().submap = insertion_submaps.back();
     submap_states_.back().trajectory = trajectory;
+    submap_states_.back().id = mapping::SubmapId{
+        trajectory_ids_.at(trajectory), num_submaps_in_trajectory_[trajectory]};
+    ++num_submaps_in_trajectory_[trajectory];
     CHECK_EQ(submap_states_.size(), submap_indices_.size());
   }
   const Submap* const finished_submap =
@@ -164,11 +168,14 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
       trajectory_nodes_[scan_index].constant_data->trajectory;
   const mapping::Submaps* const submap_trajectory =
       submap_states_[submap_index].trajectory;
+
+  const mapping::SubmapId submap_id = submap_states_[submap_index].id;
+
   // Only globally match against submaps not in this trajectory.
   if (scan_trajectory != submap_trajectory &&
       global_localization_samplers_[scan_trajectory]->Pulse()) {
     constraint_builder_.MaybeAddGlobalConstraint(
-        submap_index, submap_states_[submap_index].submap, scan_index,
+        submap_id, submap_states_[submap_index].submap, scan_index,
         scan_trajectory, submap_trajectory, &trajectory_connectivity_,
         trajectory_nodes_);
   } else {
@@ -180,7 +187,7 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
     if (scan_trajectory == submap_trajectory ||
         scan_and_submap_trajectories_connected) {
       constraint_builder_.MaybeAddConstraint(
-          submap_index, submap_states_[submap_index].submap, scan_index,
+          submap_id, submap_states_[submap_index].submap, scan_index,
           trajectory_nodes_, relative_pose);
     }
   }
@@ -222,7 +229,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     const transform::Rigid3d constraint_transform =
         submap->local_pose().inverse() * pose;
     constraints_.push_back(
-        Constraint{submap_index,
+        Constraint{submap_states_[submap_index].id,
                    scan_index,
                    {constraint_transform,
                     common::ComputeSpdMatrixSqrtInverse(
@@ -377,21 +384,6 @@ void SparsePoseGraph::RunOptimization() {
 std::vector<mapping::TrajectoryNode> SparsePoseGraph::GetTrajectoryNodes() {
   common::MutexLocker locker(&mutex_);
   return trajectory_nodes_;
-}
-
-std::vector<mapping::SparsePoseGraph::SubmapState>
-SparsePoseGraph::GetSubmapStates() {
-  std::vector<mapping::SparsePoseGraph::SubmapState> result;
-  common::MutexLocker locker(&mutex_);
-  for (const auto& submap_state : submap_states_) {
-    mapping::SparsePoseGraph::SubmapState entry;
-    entry.submap = submap_state.submap;
-    entry.scan_indices = submap_state.scan_indices;
-    entry.finished = submap_state.finished;
-    entry.trajectory = submap_state.trajectory;
-    result.push_back(entry);
-  }
-  return result;
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {

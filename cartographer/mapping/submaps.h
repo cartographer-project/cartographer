@@ -63,6 +63,22 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
   return value;
 }
 
+// Uniquely identifies a submap using a combination of a unique trajectory ID
+// and a zero-based index of the submap inside that trajectory.
+struct SubmapId {
+  int trajectory_id;
+  int submap_index;
+
+  bool operator<(const SubmapId& other) const {
+    return std::forward_as_tuple(trajectory_id, submap_index) <
+           std::forward_as_tuple(other.trajectory_id, other.submap_index);
+  }
+};
+
+inline std::ostream& operator<<(std::ostream& os, const SubmapId& v) {
+  return os << "(" << v.trajectory_id << ", " << v.submap_index << ")";
+}
+
 // An individual submap, which has an initial position 'origin', keeps track of
 // how many range data were inserted into it, and sets the
 // 'finished_probability_grid' to be used for loop closing once the map no

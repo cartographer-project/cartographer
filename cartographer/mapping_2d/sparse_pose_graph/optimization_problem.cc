@@ -75,9 +75,9 @@ void OptimizationProblem::AddTrajectoryNode(
       NodeData{trajectory, time, initial_point_cloud_pose, point_cloud_pose});
 }
 
-void OptimizationProblem::AddSubmap(const mapping::Submaps* const trajectory,
+void OptimizationProblem::AddSubmap(const int trajectory_id,
                                     const transform::Rigid2d& submap_pose) {
-  submap_data_.push_back(SubmapData{trajectory, submap_pose});
+  submap_data_.push_back(SubmapData{trajectory_id, submap_pose});
 }
 
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
@@ -95,11 +95,18 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   ceres::Problem problem(problem_options);
 
   // Set the starting point.
-  std::vector<std::array<double, 3>> C_submaps(submap_data_.size());
+  // TODO(hrapp): Move ceres data into SubmapData.
+  std::deque<std::deque<std::array<double, 3>>> C_submaps;
   std::vector<std::array<double, 3>> C_point_clouds(node_data_.size());
   for (size_t i = 0; i != submap_data_.size(); ++i) {
-    C_submaps[i] = FromPose(submap_data_[i].pose);
-    problem.AddParameterBlock(C_submaps[i].data(), 3);
+    while (static_cast<int>(C_submaps.size()) <=
+           submap_data_[i].trajectory_id) {
+      C_submaps.emplace_back();
+    }
+    C_submaps[submap_data_[i].trajectory_id].push_back(
+        FromPose(submap_data_[i].pose));
+    problem.AddParameterBlock(
+        C_submaps[submap_data_[i].trajectory_id].back().data(), 3);
   }
   for (size_t j = 0; j != node_data_.size(); ++j) {
     C_point_clouds[j] = FromPose(node_data_[j].point_cloud_pose);
@@ -107,12 +114,11 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   }
 
   // Fix the pose of the first submap.
-  problem.SetParameterBlockConstant(C_submaps[0].data());
+  problem.SetParameterBlockConstant(
+      C_submaps[submap_data_[0].trajectory_id].front().data());
 
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
-    CHECK_GE(constraint.i, 0);
-    CHECK_LT(constraint.i, submap_data_.size());
     CHECK_GE(constraint.j, 0);
     CHECK_LT(constraint.j, node_data_.size());
     problem.AddResidualBlock(
@@ -122,7 +128,10 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
         constraint.tag == Constraint::INTER_SUBMAP
             ? new ceres::HuberLoss(options_.huber_scale())
             : nullptr,
-        C_submaps[constraint.i].data(), C_point_clouds[constraint.j].data());
+        C_submaps.at(constraint.i.trajectory_id)
+            .at(constraint.i.submap_index)
+            .data(),
+        C_point_clouds[constraint.j].data());
   }
 
   // Add penalties for changes between consecutive scans.
@@ -170,9 +179,11 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   }
 
   // Store the result.
-  for (size_t i = 0; i != submap_data_.size(); ++i) {
-    submap_data_[i].pose = ToPose(C_submaps[i]);
+  for (auto& submap_data : submap_data_) {
+    submap_data.pose = ToPose(C_submaps[submap_data.trajectory_id].front());
+    C_submaps[submap_data.trajectory_id].pop_front();
   }
+
   for (size_t j = 0; j != node_data_.size(); ++j) {
     node_data_[j].point_cloud_pose = ToPose(C_point_clouds[j]);
   }

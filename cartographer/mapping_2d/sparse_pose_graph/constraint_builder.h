@@ -72,17 +72,18 @@ class ConstraintBuilder {
   ConstraintBuilder& operator=(const ConstraintBuilder&) = delete;
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_index', and the 'point_cloud' for 'scan_index'.
+  // 'submap_id', and the 'point_cloud' for 'scan_index'.
   // The 'initial_pose' is relative to the 'submap'.
   //
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
   // computations are finished.
-  void MaybeAddConstraint(int submap_index, const mapping::Submap* submap,
-                          int scan_index, const sensor::PointCloud* point_cloud,
+  void MaybeAddConstraint(const mapping::SubmapId& submap_id,
+                          const mapping::Submap* submap, int scan_index,
+                          const sensor::PointCloud* point_cloud,
                           const transform::Rigid2d& initial_relative_pose);
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_index' and the 'point_cloud' for 'scan_index'. This performs
+  // 'submap_id' and the 'point_cloud' for 'scan_index'. This performs
   // full-submap matching.
   //
   // The scan at 'scan_index' should be from trajectory 'scan_trajectory', and
@@ -92,8 +93,8 @@ class ConstraintBuilder {
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
   // computations are finished.
   void MaybeAddGlobalConstraint(
-      int submap_index, const mapping::Submap* submap, int scan_index,
-      const mapping::Submaps* scan_trajectory,
+      const mapping::SubmapId& submap_id, const mapping::Submap* submap,
+      int scan_index, const mapping::Submaps* scan_trajectory,
       const mapping::Submaps* submap_trajectory,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::PointCloud* point_cloud);
@@ -118,17 +119,17 @@ class ConstraintBuilder {
   // Either schedules the 'work_item', or if needed, schedules the scan matcher
   // construction and queues the 'work_item'.
   void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      int submap_index, const ProbabilityGrid* submap,
+      const mapping::SubmapId& submap_id, const ProbabilityGrid* submap,
       std::function<void()> work_item) REQUIRES(mutex_);
 
   // Constructs the scan matcher for a 'submap', then schedules its work items.
-  void ConstructSubmapScanMatcher(int submap_index,
+  void ConstructSubmapScanMatcher(const mapping::SubmapId& submap_id,
                                   const ProbabilityGrid* submap)
       EXCLUDES(mutex_);
 
   // Returns the scan matcher for a submap, which has to exist.
-  const SubmapScanMatcher* GetSubmapScanMatcher(int submap_index)
-      EXCLUDES(mutex_);
+  const SubmapScanMatcher* GetSubmapScanMatcher(
+      const mapping::SubmapId& submap_id) EXCLUDES(mutex_);
 
   // Runs in a background thread and does computations for an additional
   // constraint, assuming 'submap' and 'point_cloud' do not change anymore.
@@ -137,8 +138,8 @@ class ConstraintBuilder {
   // 'trajectory_connectivity'.
   // As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
-      int submap_index, const mapping::Submap* submap, int scan_index,
-      const mapping::Submaps* scan_trajectory,
+      const mapping::SubmapId& submap_id, const mapping::Submap* submap,
+      int scan_index, const mapping::Submaps* scan_trajectory,
       const mapping::Submaps* submap_trajectory, bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::PointCloud* point_cloud,
@@ -170,13 +171,14 @@ class ConstraintBuilder {
   // keep pointers valid when adding more entries.
   std::deque<std::unique_ptr<Constraint>> constraints_ GUARDED_BY(mutex_);
 
-  // Map of already constructed scan matchers by 'submap_index'.
-  std::map<int, SubmapScanMatcher> submap_scan_matchers_ GUARDED_BY(mutex_);
-
-  // Map by 'submap_index' of scan matchers under construction, and the work
-  // to do once construction is done.
-  std::map<int, std::vector<std::function<void()>>> submap_queued_work_items_
+  // Map of already constructed scan matchers by 'submap_id'.
+  std::map<mapping::SubmapId, SubmapScanMatcher> submap_scan_matchers_
       GUARDED_BY(mutex_);
+
+  // Map by 'submap_id' of scan matchers under construction, and the work
+  // to do once construction is done.
+  std::map<mapping::SubmapId, std::vector<std::function<void()>>>
+      submap_queued_work_items_ GUARDED_BY(mutex_);
 
   common::FixedRatioSampler sampler_;
   const sensor::AdaptiveVoxelFilter adaptive_voxel_filter_;

@@ -44,7 +44,7 @@ struct NodeData {
 
 struct SubmapData {
   // TODO(whess): Keep nodes per trajectory instead.
-  const mapping::Submaps* trajectory;
+  const int trajectory_id;
   transform::Rigid3d pose;
 };
 
@@ -69,8 +69,7 @@ class OptimizationProblem {
                   const Eigen::Vector3d& angular_velocity);
   void AddTrajectoryNode(const mapping::Submaps* trajectory, common::Time time,
                          const transform::Rigid3d& point_cloud_pose);
-  void AddSubmap(const mapping::Submaps* trajectory,
-                 const transform::Rigid3d& submap_pose);
+  void AddSubmap(int trajectory_id, const transform::Rigid3d& submap_pose);
 
   void SetMaxNumIterations(int32 max_num_iterations);
 

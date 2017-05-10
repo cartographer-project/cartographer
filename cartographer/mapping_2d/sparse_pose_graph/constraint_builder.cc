@@ -61,7 +61,7 @@ ConstraintBuilder::~ConstraintBuilder() {
 }
 
 void ConstraintBuilder::MaybeAddConstraint(
-    const int submap_index, const mapping::Submap* const submap,
+    const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
     const int scan_index, const sensor::PointCloud* const point_cloud,
     const transform::Rigid2d& initial_relative_pose) {
   if (initial_relative_pose.translation().norm() >
@@ -76,9 +76,8 @@ void ConstraintBuilder::MaybeAddConstraint(
     ++pending_computations_[current_computation_];
     const int current_computation = current_computation_;
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-        submap_index, submap->finished_probability_grid,
-        [=]() EXCLUDES(mutex_) {
-          ComputeConstraint(submap_index, submap, scan_index,
+        submap_id, submap->finished_probability_grid, [=]() EXCLUDES(mutex_) {
+          ComputeConstraint(submap_id, submap, scan_index,
                             nullptr, /* scan_trajectory */
                             nullptr, /* submap_trajectory */
                             false,   /* match_full_submap */
@@ -90,7 +89,7 @@ void ConstraintBuilder::MaybeAddConstraint(
 }
 
 void ConstraintBuilder::MaybeAddGlobalConstraint(
-    const int submap_index, const mapping::Submap* const submap,
+    const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
     const int scan_index, const mapping::Submaps* scan_trajectory,
     const mapping::Submaps* submap_trajectory,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
@@ -102,8 +101,8 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      submap_index, submap->finished_probability_grid, [=]() EXCLUDES(mutex_) {
-        ComputeConstraint(submap_index, submap, scan_index, submap_trajectory,
+      submap_id, submap->finished_probability_grid, [=]() EXCLUDES(mutex_) {
+        ComputeConstraint(submap_id, submap, scan_index, submap_trajectory,
                           scan_trajectory, true, /* match_full_submap */
                           trajectory_connectivity, point_cloud,
                           transform::Rigid2d::Identity(), constraint);
@@ -130,47 +129,45 @@ void ConstraintBuilder::WhenDone(
 }
 
 void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-    const int submap_index, const ProbabilityGrid* const submap,
+    const mapping::SubmapId& submap_id, const ProbabilityGrid* const submap,
     const std::function<void()> work_item) {
-  if (submap_scan_matchers_[submap_index].fast_correlative_scan_matcher !=
+  if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
       nullptr) {
     thread_pool_->Schedule(work_item);
   } else {
-    submap_queued_work_items_[submap_index].push_back(work_item);
-    if (submap_queued_work_items_[submap_index].size() == 1) {
+    submap_queued_work_items_[submap_id].push_back(work_item);
+    if (submap_queued_work_items_[submap_id].size() == 1) {
       thread_pool_->Schedule(
-          std::bind(std::mem_fn(&ConstraintBuilder::ConstructSubmapScanMatcher),
-                    this, submap_index, submap));
+          [=]() { ConstructSubmapScanMatcher(submap_id, submap); });
     }
   }
 }
 
 void ConstraintBuilder::ConstructSubmapScanMatcher(
-    const int submap_index, const ProbabilityGrid* const submap) {
+    const mapping::SubmapId& submap_id, const ProbabilityGrid* const submap) {
   auto submap_scan_matcher =
       common::make_unique<scan_matching::FastCorrelativeScanMatcher>(
           *submap, options_.fast_correlative_scan_matcher_options());
   common::MutexLocker locker(&mutex_);
-  submap_scan_matchers_[submap_index] = {submap,
-                                         std::move(submap_scan_matcher)};
+  submap_scan_matchers_[submap_id] = {submap, std::move(submap_scan_matcher)};
   for (const std::function<void()>& work_item :
-       submap_queued_work_items_[submap_index]) {
+       submap_queued_work_items_[submap_id]) {
     thread_pool_->Schedule(work_item);
   }
-  submap_queued_work_items_.erase(submap_index);
+  submap_queued_work_items_.erase(submap_id);
 }
 
 const ConstraintBuilder::SubmapScanMatcher*
-ConstraintBuilder::GetSubmapScanMatcher(const int submap_index) {
+ConstraintBuilder::GetSubmapScanMatcher(const mapping::SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
   const SubmapScanMatcher* submap_scan_matcher =
-      &submap_scan_matchers_[submap_index];
+      &submap_scan_matchers_[submap_id];
   CHECK(submap_scan_matcher->fast_correlative_scan_matcher != nullptr);
   return submap_scan_matcher;
 }
 
 void ConstraintBuilder::ComputeConstraint(
-    const int submap_index, const mapping::Submap* const submap,
+    const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
     const int scan_index, const mapping::Submaps* scan_trajectory,
     const mapping::Submaps* submap_trajectory, bool match_full_submap,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
@@ -180,7 +177,7 @@ void ConstraintBuilder::ComputeConstraint(
   const transform::Rigid2d initial_pose =
       ComputeSubmapPose(*submap) * initial_relative_pose;
   const SubmapScanMatcher* const submap_scan_matcher =
-      GetSubmapScanMatcher(submap_index);
+      GetSubmapScanMatcher(submap_id);
   const sensor::PointCloud filtered_point_cloud =
       adaptive_voxel_filter_.Filter(*point_cloud);
 
@@ -231,7 +228,7 @@ void ConstraintBuilder::ComputeConstraint(
   constexpr double kFakePositionCovariance = 1e-6;
   constexpr double kFakeOrientationCovariance = 1e-6;
   constraint->reset(new Constraint{
-      submap_index,
+      submap_id,
       scan_index,
       {transform::Embed3D(constraint_transform),
        common::ComputeSpdMatrixSqrtInverse(
@@ -245,7 +242,7 @@ void ConstraintBuilder::ComputeConstraint(
         initial_pose.inverse() * pose_estimate;
     std::ostringstream info;
     info << "Scan index " << scan_index << " with "
-         << filtered_point_cloud.size() << " points on submap " << submap_index
+         << filtered_point_cloud.size() << " points on submap " << submap_id
          << " differs by translation " << std::fixed << std::setprecision(2)
          << difference.translation().norm() << " rotation "
          << std::setprecision(3) << std::abs(difference.normalized_angle())
