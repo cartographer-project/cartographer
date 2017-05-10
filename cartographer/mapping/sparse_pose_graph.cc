@@ -53,22 +53,6 @@ void GroupTrajectoryNodes(
   }
 }
 
-// TODO(macmason): This function is very nearly a copy of GroupTrajectoryNodes.
-// Consider refactoring them to share an implementation.
-void GroupSubmapStates(
-    const std::vector<SparsePoseGraph::SubmapState>& submap_states,
-    const std::unordered_map<const Submaps*, int>& trajectory_ids,
-    std::vector<std::pair<int, int>>* new_indices) {
-  CHECK_NOTNULL(new_indices)->clear();
-  std::vector<int> submap_group_sizes(trajectory_ids.size(), 0);
-
-  for (const auto& submap_state : submap_states) {
-    const int id = trajectory_ids.at(submap_state.trajectory);
-    new_indices->emplace_back(id, submap_group_sizes[id]);
-    submap_group_sizes[id]++;
-  }
-}
-
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::SparsePoseGraphOptions options;
@@ -96,10 +80,6 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   GroupTrajectoryNodes(GetTrajectoryNodes(), trajectory_ids(), &grouped_nodes,
                        &grouped_node_indices);
 
-  std::vector<std::pair<int, int>> grouped_submap_indices;
-  GroupSubmapStates(GetSubmapStates(), trajectory_ids(),
-                    &grouped_submap_indices);
-
   for (const auto& constraint : constraints()) {
     auto* const constraint_proto = proto.add_constraint();
     *constraint_proto->mutable_relative_pose() =
@@ -113,9 +93,9 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
         constraint.pose.sqrt_Lambda_ij;
 
     constraint_proto->mutable_submap_id()->set_trajectory_id(
-        grouped_submap_indices[constraint.i].first);
+        constraint.i.trajectory_id);
     constraint_proto->mutable_submap_id()->set_submap_index(
-        grouped_submap_indices[constraint.i].second);
+        constraint.i.submap_index);
 
     constraint_proto->mutable_scan_id()->set_trajectory_id(
         grouped_node_indices[constraint.j].first);

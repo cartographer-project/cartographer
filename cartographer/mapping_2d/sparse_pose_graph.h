@@ -93,12 +93,31 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_);
 
  protected:
-  std::vector<SubmapState> GetSubmapStates() override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
   const std::unordered_map<const mapping::Submaps*, int>& trajectory_ids()
       override EXCLUDES(mutex_);
 
  private:
+  struct SubmapState {
+    const mapping::Submap* submap = nullptr;
+
+    // Indices of the scans that were inserted into this map together with
+    // constraints for them. They are not to be matched again when this submap
+    // becomes 'finished'.
+    std::set<int> scan_indices;
+
+    // Whether in the current state of the background thread this submap is
+    // finished. When this transitions to true, all scans are tried to match
+    // against this submap. Likewise, all new scans are matched against submaps
+    // which are finished.
+    bool finished = false;
+
+    // The trajectory to which this SubmapState belongs.
+    const mapping::Submaps* trajectory = nullptr;
+
+    mapping::SubmapId id;
+  };
+
   // Handles a new work item.
   void AddWorkItem(std::function<void()> work_item) REQUIRES(mutex_);
 
@@ -177,6 +196,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // before they take part in the background computations.
   std::map<const mapping::Submap*, int> submap_indices_ GUARDED_BY(mutex_);
   std::vector<SubmapState> submap_states_ GUARDED_BY(mutex_);
+  std::map<const mapping::Submaps*, int> num_submaps_in_trajectory_
+      GUARDED_BY(mutex_);
 
   // Connectivity structure of our trajectories.
   std::vector<std::vector<const mapping::Submaps*>> connected_components_;

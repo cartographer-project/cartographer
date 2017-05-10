@@ -95,14 +95,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_);
 
  protected:
-  std::vector<SubmapState> GetSubmapStates() EXCLUDES(mutex_) override;
-  std::vector<Constraint> constraints() EXCLUDES(mutex_) override;
+  std::vector<Constraint> constraints() override EXCLUDES(mutex_);
   const std::unordered_map<const mapping::Submaps*, int>& trajectory_ids()
-      EXCLUDES(mutex_) override;
+      override EXCLUDES(mutex_);
 
  private:
-  // This is 'mapping::SubmapState', but with the 3D versions of 'submap' and
-  // 'trajectory'.
   struct SubmapState {
     const Submap* submap = nullptr;
 
@@ -119,6 +116,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
     // The trajectory to which this SubmapState belongs.
     const Submaps* trajectory = nullptr;
+
+    mapping::SubmapId id;
   };
 
   // Handles a new work item.
@@ -197,6 +196,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // before they take part in the background computations.
   std::map<const mapping::Submap*, int> submap_indices_ GUARDED_BY(mutex_);
   std::vector<SubmapState> submap_states_ GUARDED_BY(mutex_);
+  std::map<const mapping::Submaps*, int> num_submaps_in_trajectory_
+      GUARDED_BY(mutex_);
 
   // Connectivity structure of our trajectories.
   std::vector<std::vector<const mapping::Submaps*>> connected_components_;

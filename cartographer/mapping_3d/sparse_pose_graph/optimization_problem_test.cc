@@ -107,6 +107,7 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   const transform::Rigid3d kSubmap2Transform = transform::Rigid3d::Rotation(
       Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ()));
   const mapping::Submaps* const kTrajectory = nullptr;
+  const int kTrajectoryId = 0;
 
   struct NoisyNode {
     transform::Rigid3d ground_truth_pose;
@@ -132,13 +133,13 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   std::vector<OptimizationProblem::Constraint> constraints;
   for (int j = 0; j != kNumNodes; ++j) {
     constraints.push_back(OptimizationProblem::Constraint{
-        0, j,
+        mapping::SubmapId{0, 0}, j,
         OptimizationProblem::Constraint::Pose{
             AddNoise(test_data[j].ground_truth_pose, test_data[j].noise),
             Eigen::Matrix<double, 6, 6>::Identity()}});
     // We add an additional independent, but equally noisy observation.
     constraints.push_back(OptimizationProblem::Constraint{
-        1, j,
+        mapping::SubmapId{0, 1}, j,
         OptimizationProblem::Constraint::Pose{
             AddNoise(test_data[j].ground_truth_pose,
                      RandomYawOnlyTransform(0.2, 0.3)),
@@ -146,7 +147,7 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
     // We add very noisy data with high covariance (i.e. small Lambda) to verify
     // it is mostly ignored.
     constraints.push_back(OptimizationProblem::Constraint{
-        2, j,
+        mapping::SubmapId{0, 2}, j,
         OptimizationProblem::Constraint::Pose{
             kSubmap2Transform.inverse() * test_data[j].ground_truth_pose *
                 RandomTransform(1e3, 3.),
@@ -165,9 +166,9 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
                             node_data[j].point_cloud_pose);
   }
 
-  optimization_problem_.AddSubmap(kTrajectory, kSubmap0Transform);
-  optimization_problem_.AddSubmap(kTrajectory, kSubmap0Transform);
-  optimization_problem_.AddSubmap(kTrajectory, kSubmap2Transform);
+  optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
+  optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
+  optimization_problem_.AddSubmap(kTrajectoryId, kSubmap2Transform);
   optimization_problem_.Solve(constraints);
 
   double translation_error_after = 0.;

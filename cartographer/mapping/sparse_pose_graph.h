@@ -58,8 +58,9 @@ class SparsePoseGraph {
       Eigen::Matrix<double, 6, 6> sqrt_Lambda_ij;
     };
 
-    // Submap index.
-    int i;
+    // TODO(hrapp): Rename to 'submap_id' and mention that the paper calls this
+    // 'i'.
+    mapping::SubmapId i;
 
     // Scan index.
     int j;
@@ -71,24 +72,6 @@ class SparsePoseGraph {
     // submap 'i') and inter-submap constraints (where scan 'j' was not inserted
     // into submap 'i').
     enum Tag { INTRA_SUBMAP, INTER_SUBMAP } tag;
-  };
-
-  struct SubmapState {
-    const Submap* submap = nullptr;
-
-    // Indices of the scans that were inserted into this map together with
-    // constraints for them. They are not to be matched again when this submap
-    // becomes 'finished'.
-    std::set<int> scan_indices;
-
-    // Whether in the current state of the background thread this submap is
-    // finished. When this transitions to true, all scans are tried to match
-    // against this submap. Likewise, all new scans are matched against submaps
-    // which are finished.
-    bool finished = false;
-
-    // The trajectory to which this SubmapState belongs.
-    const Submaps* trajectory = nullptr;
   };
 
   SparsePoseGraph() {}
@@ -121,23 +104,12 @@ class SparsePoseGraph {
   proto::SparsePoseGraph ToProto();
 
  protected:
-  // TODO(macmason, wohe): Consider replacing this with a GroupSubmapStates,
-  // which would have better separation of concerns.
-  virtual std::vector<SubmapState> GetSubmapStates() = 0;
-
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
 
   // Returns the mapping from Submaps* to trajectory IDs.
   virtual const std::unordered_map<const Submaps*, int>& trajectory_ids() = 0;
 };
-
-// Like TrajectoryNodes, SubmapStates arrive in a flat vector, but need to be
-// grouped by trajectory. The arguments are just as in 'GroupTrajectoryNodes'.
-void GroupSubmapStates(
-    const std::vector<SparsePoseGraph::SubmapState>& submap_states,
-    const std::unordered_map<const Submaps*, int>& trajectory_ids,
-    std::vector<std::pair<int, int>>* new_indices);
 
 }  // namespace mapping
 }  // namespace cartographer
