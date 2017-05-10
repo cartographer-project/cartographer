@@ -153,9 +153,10 @@ void SparsePoseGraph::AddImuData(const mapping::Submaps* trajectory,
                                  const Eigen::Vector3d& linear_acceleration,
                                  const Eigen::Vector3d& angular_velocity) {
   common::MutexLocker locker(&mutex_);
+  trajectory_ids_.emplace(trajectory, trajectory_ids_.size());
   AddWorkItem([=]() REQUIRES(mutex_) {
-    optimization_problem_.AddImuData(trajectory, time, linear_acceleration,
-                                     angular_velocity);
+    optimization_problem_.AddImuData(trajectory_ids_.at(trajectory), time,
+                                     linear_acceleration, angular_velocity);
   });
 }
 
@@ -225,8 +226,9 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   CHECK_EQ(scan_index, optimization_problem_.node_data().size());
   const mapping::TrajectoryNode::ConstantData* const scan_data =
       trajectory_nodes_[scan_index].constant_data;
-  optimization_problem_.AddTrajectoryNode(scan_data->trajectory,
-                                          scan_data->time, optimized_pose);
+  optimization_problem_.AddTrajectoryNode(
+      trajectory_ids_.at(scan_data->trajectory), scan_data->time,
+      optimized_pose);
   for (const Submap* submap : insertion_submaps) {
     const int submap_index = GetSubmapIndex(submap);
     CHECK(!submap_states_[submap_index].finished);
