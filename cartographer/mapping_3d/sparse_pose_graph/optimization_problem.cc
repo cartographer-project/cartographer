@@ -78,18 +78,21 @@ OptimizationProblem::OptimizationProblem(
 
 OptimizationProblem::~OptimizationProblem() {}
 
-void OptimizationProblem::AddImuData(const mapping::Submaps* const trajectory,
+void OptimizationProblem::AddImuData(const int trajectory_id,
                                      const common::Time time,
                                      const Eigen::Vector3d& linear_acceleration,
                                      const Eigen::Vector3d& angular_velocity) {
-  imu_data_[trajectory].push_back(
+  CHECK_GE(trajectory_id, 0);
+  imu_data_.resize(
+      std::max(submap_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+  imu_data_[trajectory_id].push_back(
       ImuData{time, linear_acceleration, angular_velocity});
 }
 
 void OptimizationProblem::AddTrajectoryNode(
-    const mapping::Submaps* const trajectory, const common::Time time,
+    const int trajectory_id, const common::Time time,
     const transform::Rigid3d& point_cloud_pose) {
-  node_data_.push_back(NodeData{trajectory, time, point_cloud_pose});
+  node_data_.push_back(NodeData{trajectory_id, time, point_cloud_pose});
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
@@ -112,9 +115,9 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   }
 
   // Compute the indices of consecutive nodes for each trajectory.
-  std::map<const mapping::Submaps*, std::vector<size_t>> nodes_per_trajectory;
+  std::vector<std::vector<size_t>> nodes_per_trajectory(submap_data_.size());
   for (size_t j = 0; j != node_data_.size(); ++j) {
-    nodes_per_trajectory[node_data_[j].trajectory].push_back(j);
+    nodes_per_trajectory.at(node_data_[j].trajectory_id).push_back(j);
   }
 
   ceres::Problem::Options problem_options;
@@ -184,10 +187,11 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
 
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
-  for (const auto& trajectory_nodes_pair : nodes_per_trajectory) {
-    const mapping::Submaps* const trajectory = trajectory_nodes_pair.first;
-    const std::vector<size_t>& node_indices = trajectory_nodes_pair.second;
-    const std::deque<ImuData>& imu_data = imu_data_.at(trajectory);
+  for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
+       ++trajectory_id) {
+    const std::vector<size_t>& node_indices =
+        nodes_per_trajectory[trajectory_id];
+    const std::deque<ImuData>& imu_data = imu_data_.at(trajectory_id);
     CHECK(!node_indices.empty());
     CHECK(!imu_data.empty());
 

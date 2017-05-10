@@ -60,20 +60,23 @@ OptimizationProblem::OptimizationProblem(
 
 OptimizationProblem::~OptimizationProblem() {}
 
-void OptimizationProblem::AddImuData(const mapping::Submaps* const trajectory,
+void OptimizationProblem::AddImuData(const int trajectory_id,
                                      const common::Time time,
                                      const Eigen::Vector3d& linear_acceleration,
                                      const Eigen::Vector3d& angular_velocity) {
-  imu_data_[trajectory].push_back(
+  CHECK_GE(trajectory_id, 0);
+  imu_data_.resize(
+      std::max(submap_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+  imu_data_[trajectory_id].push_back(
       mapping_3d::ImuData{time, linear_acceleration, angular_velocity});
 }
 
 void OptimizationProblem::AddTrajectoryNode(
-    const mapping::Submaps* const trajectory, const common::Time time,
+    const int trajectory_id, const common::Time time,
     const transform::Rigid2d& initial_point_cloud_pose,
     const transform::Rigid2d& point_cloud_pose) {
-  node_data_.push_back(
-      NodeData{trajectory, time, initial_point_cloud_pose, point_cloud_pose});
+  node_data_.push_back(NodeData{trajectory_id, time, initial_point_cloud_pose,
+                                point_cloud_pose});
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
@@ -150,15 +153,15 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
 
   // The poses in 'node_data_' are interleaved from multiple trajectories
   // (although the points from a given trajectory are in time order).
-  // 'last_pose_indices[trajectory]' is the index of the most-recent pose on
-  // 'trajectory'.
-  std::map<const mapping::Submaps*, int> last_pose_indices;
+  // 'last_pose_indices[trajectory_id]' is the index of the most-recent pose on
+  // 'trajectory_id'.
+  std::map<int, int> last_pose_indices;
 
   for (size_t j = 0; j != node_data_.size(); ++j) {
-    const mapping::Submaps* trajectory = node_data_[j].trajectory;
+    const int trajectory_id = node_data_[j].trajectory_id;
     // This pose has a predecessor.
-    if (last_pose_indices.count(trajectory) != 0) {
-      const int last_pose_index = last_pose_indices[trajectory];
+    if (last_pose_indices.count(trajectory_id) != 0) {
+      const int last_pose_index = last_pose_indices[trajectory_id];
       constexpr double kUnusedPositionPenalty = 1.;
       constexpr double kUnusedOrientationPenalty = 1.;
       problem.AddResidualBlock(
@@ -173,7 +176,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
           nullptr /* loss function */, C_point_clouds[last_pose_index].data(),
           C_point_clouds[j].data());
     }
-    last_pose_indices[trajectory] = j;
+    last_pose_indices[trajectory_id] = j;
   }
 
   // Solve.

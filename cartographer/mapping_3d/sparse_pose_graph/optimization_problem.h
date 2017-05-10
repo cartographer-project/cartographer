@@ -29,7 +29,6 @@
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/mapping_3d/imu_integration.h"
-#include "cartographer/mapping_3d/submaps.h"
 
 namespace cartographer {
 namespace mapping_3d {
@@ -37,7 +36,7 @@ namespace sparse_pose_graph {
 
 struct NodeData {
   // TODO(whess): Keep nodes per trajectory instead.
-  const mapping::Submaps* trajectory;
+  int trajectory_id;
   common::Time time;
   transform::Rigid3d point_cloud_pose;
 };
@@ -62,10 +61,10 @@ class OptimizationProblem {
   OptimizationProblem(const OptimizationProblem&) = delete;
   OptimizationProblem& operator=(const OptimizationProblem&) = delete;
 
-  void AddImuData(const mapping::Submaps* trajectory, common::Time time,
+  void AddImuData(int trajectory_id, common::Time time,
                   const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
-  void AddTrajectoryNode(const mapping::Submaps* trajectory, common::Time time,
+  void AddTrajectoryNode(int trajectory_id, common::Time time,
                          const transform::Rigid3d& point_cloud_pose);
   void AddSubmap(int trajectory_id, const transform::Rigid3d& submap_pose);
 
@@ -80,7 +79,7 @@ class OptimizationProblem {
  private:
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   FixZ fix_z_;
-  std::map<const mapping::Submaps*, std::deque<ImuData>> imu_data_;
+  std::vector<std::deque<ImuData>> imu_data_;
   std::vector<NodeData> node_data_;
   std::vector<std::vector<SubmapData>> submap_data_;
   double gravity_constant_ = 9.8;

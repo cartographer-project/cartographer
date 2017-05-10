@@ -106,7 +106,6 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   const transform::Rigid3d kSubmap0Transform = transform::Rigid3d::Identity();
   const transform::Rigid3d kSubmap2Transform = transform::Rigid3d::Rotation(
       Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ()));
-  const mapping::Submaps* const kTrajectory = nullptr;
   const int kTrajectoryId = 0;
 
   struct NoisyNode {
@@ -123,10 +122,10 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   for (const NoisyNode& node : test_data) {
     const transform::Rigid3d pose =
         AddNoise(node.ground_truth_pose, node.noise);
-    optimization_problem_.AddImuData(kTrajectory, now,
+    optimization_problem_.AddImuData(kTrajectoryId, now,
                                      Eigen::Vector3d::UnitZ() * 9.81,
                                      Eigen::Vector3d::Zero());
-    optimization_problem_.AddTrajectoryNode(kTrajectory, now, pose);
+    optimization_problem_.AddTrajectoryNode(kTrajectoryId, now, pose);
     now += common::FromSeconds(0.01);
   }
 
