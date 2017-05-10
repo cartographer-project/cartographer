@@ -67,7 +67,7 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
 // and a zero-based index of the submap inside that trajectory.
 struct SubmapId {
   int trajectory_id;
-  int submap_index;// Zero-based index of the submap per trajectory.
+  int submap_index;
 
   bool operator<(const SubmapId& other) const {
     return std::forward_as_tuple(trajectory_id, submap_index) <
