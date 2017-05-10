@@ -189,7 +189,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   // linear acceleration.
   for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
        ++trajectory_id) {
-    const std::vector<size_t>& node_indices = nodes_per_trajectory[trajectory_id];
+    const std::vector<size_t>& node_indices =
+        nodes_per_trajectory[trajectory_id];
     const std::deque<ImuData>& imu_data = imu_data_.at(trajectory_id);
     CHECK(!node_indices.empty());
     CHECK(!imu_data.empty());

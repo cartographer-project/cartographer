@@ -75,8 +75,8 @@ void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
     const transform::Rigid2d& initial_point_cloud_pose,
     const transform::Rigid2d& point_cloud_pose) {
-  node_data_.push_back(
-      NodeData{trajectory_id, time, initial_point_cloud_pose, point_cloud_pose});
+  node_data_.push_back(NodeData{trajectory_id, time, initial_point_cloud_pose,
+                                point_cloud_pose});
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,

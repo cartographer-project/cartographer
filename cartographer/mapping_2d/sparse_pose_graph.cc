@@ -229,7 +229,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   const mapping::TrajectoryNode::ConstantData* const scan_data =
       trajectory_nodes_[scan_index].constant_data;
   optimization_problem_.AddTrajectoryNode(
-      trajectory_ids_.at(scan_data->trajectory), scan_data->time, pose, optimized_pose);
+      trajectory_ids_.at(scan_data->trajectory), scan_data->time, pose,
+      optimized_pose);
   for (const mapping::Submap* submap : insertion_submaps) {
     const int submap_index = GetSubmapIndex(submap);
     CHECK(!submap_states_[submap_index].finished);
