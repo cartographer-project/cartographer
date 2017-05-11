@@ -128,8 +128,8 @@ void SparsePoseGraph::AddScan(
           : nullptr;
 
   // Make sure we have a sampler for this trajectory.
-  if (!global_localization_samplers_[trajectory]) {
-    global_localization_samplers_[trajectory] =
+  if (!global_localization_samplers_[trajectory_id]) {
+    global_localization_samplers_[trajectory_id] =
         common::make_unique<common::FixedRatioSampler>(
             options_.global_sampling_ratio());
   }
@@ -178,7 +178,7 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
 
   // Only globally match against submaps not in this trajectory.
   if (scan_trajectory_id != submap_trajectory_id &&
-      global_localization_samplers_[scan_trajectory]->Pulse()) {
+      global_localization_samplers_[scan_trajectory_id]->Pulse()) {
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap_states_[submap_index].submap, scan_index,
         scan_trajectory_id, &trajectory_connectivity_,
