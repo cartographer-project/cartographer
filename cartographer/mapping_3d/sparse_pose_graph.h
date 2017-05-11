@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-// Implements the loop closure method called Sparse Pose Adjustment (SPA) from
-// Konolige, Kurt, et al. "Efficient sparse pose adjustment for 2d mapping."
-// Intelligent Robots and Systems (IROS), 2010 IEEE/RSJ International Conference
-// on (pp. 22--29). IEEE, 2010.
-//
-// It is extended for submapping in 3D:
-// Each scan has been matched against one or more submaps (adding a constraint
-// for each match), both poses of scans and of submaps are to be optimized.
-// All constraints are between a submap i and a scan j.
-
 #ifndef CARTOGRAPHER_MAPPING_3D_SPARSE_POSE_GRAPH_H_
 #define CARTOGRAPHER_MAPPING_3D_SPARSE_POSE_GRAPH_H_
 
@@ -53,7 +43,15 @@
 namespace cartographer {
 namespace mapping_3d {
 
-// Implements the SPA loop closure method.
+// Implements the loop closure method called Sparse Pose Adjustment (SPA) from
+// Konolige, Kurt, et al. "Efficient sparse pose adjustment for 2d mapping."
+// Intelligent Robots and Systems (IROS), 2010 IEEE/RSJ International Conference
+// on (pp. 22--29). IEEE, 2010.
+//
+// It is extended for submapping in 3D:
+// Each scan has been matched against one or more submaps (adding a constraint
+// for each match), both poses of scans and of submaps are to be optimized.
+// All constraints are between a submap i and a scan j.
 class SparsePoseGraph : public mapping::SparsePoseGraph {
  public:
   SparsePoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
@@ -198,6 +196,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::map<const mapping::Submap*, int> submap_indices_ GUARDED_BY(mutex_);
   std::vector<SubmapState> submap_states_ GUARDED_BY(mutex_);
   std::map<int, int> num_submaps_in_trajectory_ GUARDED_BY(mutex_);
+
+  // Mapping to flat indices to aid the transition to per-trajectory data
+  // structures.
+  std::map<int, int> num_nodes_in_trajectory_ GUARDED_BY(mutex_);
+  std::vector<mapping::NodeId> scan_index_to_node_id_ GUARDED_BY(mutex_);
 
   // Connectivity structure of our trajectories by IDs.
   std::vector<std::vector<int>> connected_components_;

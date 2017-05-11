@@ -72,33 +72,37 @@ class ConstraintBuilder {
   ConstraintBuilder& operator=(const ConstraintBuilder&) = delete;
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_id', and the 'point_cloud' for 'scan_index'.
+  // 'submap_id', and the 'point_cloud' for 'flat_scan_index'.
   // The 'initial_pose' is relative to the 'submap'.
   //
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
   // computations are finished.
   void MaybeAddConstraint(const mapping::SubmapId& submap_id,
-                          const mapping::Submap* submap, int scan_index,
+                          const mapping::Submap* submap,
+                          const mapping::NodeId& node_id,
+                          const int flat_scan_index,
                           const sensor::PointCloud* point_cloud,
                           const transform::Rigid2d& initial_relative_pose);
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_id' and the 'point_cloud' for 'scan_index'. This performs
+  // 'submap_id' and the 'point_cloud' for 'flat_scan_index'. This performs
   // full-submap matching.
   //
-  // The scan at 'scan_index' should be from trajectory 'scan_trajectory_id'.
-  // The 'trajectory_connectivity' is updated if the full-submap match succeeds.
+  // The scan at 'flat_scan_index' should be from trajectory
+  // 'node_id.trajectory_id'. The 'trajectory_connectivity' is updated if the
+  // full-submap match succeeds.
   //
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
   // computations are finished.
   void MaybeAddGlobalConstraint(
       const mapping::SubmapId& submap_id, const mapping::Submap* submap,
-      int scan_index, int scan_trajectory_id,
+      const mapping::NodeId& node_id, const int flat_scan_index,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::PointCloud* point_cloud);
 
-  // Must be called after all computations related to 'scan_index' are added.
-  void NotifyEndOfScan(const int scan_index);
+  // Must be called after all computations related to 'flat_scan_index' are
+  // added.
+  void NotifyEndOfScan(const int flat_scan_index);
 
   // Registers the 'callback' to be called with the results, after all
   // computations triggered by MaybeAddConstraint() have finished.
@@ -132,12 +136,12 @@ class ConstraintBuilder {
   // Runs in a background thread and does computations for an additional
   // constraint, assuming 'submap' and 'point_cloud' do not change anymore.
   // If 'match_full_submap' is true, and global localization succeeds, will
-  // connect 'scan_trajectory_id' and 'submap_id.trajectory_id' in
+  // connect 'node_id.trajectory_id' and 'submap_id.trajectory_id' in
   // 'trajectory_connectivity'.
   // As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
       const mapping::SubmapId& submap_id, const mapping::Submap* submap,
-      int scan_index, int scan_trajectory_id, bool match_full_submap,
+      const mapping::NodeId& node_id, bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::PointCloud* point_cloud,
       const transform::Rigid2d& initial_relative_pose,

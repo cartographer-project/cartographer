@@ -136,7 +136,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   CHECK(!submap_data_[0].empty());
   // TODO(hrapp): Move ceres data into SubmapData.
   std::vector<std::deque<CeresPose>> C_submaps(submap_data_.size());
-  std::deque<CeresPose> C_point_clouds;
+  std::vector<std::deque<CeresPose>> C_nodes(nodes_per_trajectory.size());
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
     for (size_t submap_index = 0;
@@ -158,16 +158,21 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
       }
     }
   }
-  for (size_t j = 0; j != node_data_.size(); ++j) {
-    C_point_clouds.emplace_back(
-        node_data_[j].point_cloud_pose, translation_parameterization(),
-        common::make_unique<ceres::QuaternionParameterization>(), &problem);
+  for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
+       ++trajectory_id) {
+    for (size_t node_index = 0;
+         node_index != nodes_per_trajectory[trajectory_id].size();
+         ++node_index) {
+      C_nodes[trajectory_id].emplace_back(
+          node_data_[nodes_per_trajectory[trajectory_id][node_index]]
+              .point_cloud_pose,
+          translation_parameterization(),
+          common::make_unique<ceres::QuaternionParameterization>(), &problem);
+    }
   }
 
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
-    CHECK_GE(constraint.j, 0);
-    CHECK_LT(constraint.j, node_data_.size());
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<SpaCostFunction, 6, 4, 3, 4, 3>(
             new SpaCostFunction(constraint.pose)),
@@ -181,36 +186,44 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
         C_submaps.at(constraint.submap_id.trajectory_id)
             .at(constraint.submap_id.submap_index)
             .translation(),
-        C_point_clouds[constraint.j].rotation(),
-        C_point_clouds[constraint.j].translation());
+        C_nodes.at(constraint.node_id.trajectory_id)
+            .at(constraint.node_id.node_index)
+            .rotation(),
+        C_nodes.at(constraint.node_id.trajectory_id)
+            .at(constraint.node_id.node_index)
+            .translation());
   }
 
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
   for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
        ++trajectory_id) {
-    const std::vector<size_t>& node_indices =
+    const std::vector<size_t>& flat_indices =
         nodes_per_trajectory[trajectory_id];
     const std::deque<ImuData>& imu_data = imu_data_.at(trajectory_id);
-    CHECK(!node_indices.empty());
+    CHECK(!flat_indices.empty());
     CHECK(!imu_data.empty());
 
     // Skip IMU data before the first node of this trajectory.
     auto it = imu_data.cbegin();
     while ((it + 1) != imu_data.cend() &&
-           (it + 1)->time <= node_data_[node_indices[0]].time) {
+           (it + 1)->time <= node_data_[flat_indices[0]].time) {
       ++it;
     }
 
-    for (size_t j = 1; j < node_indices.size(); ++j) {
+    for (size_t node_index = 1; node_index < flat_indices.size();
+         ++node_index) {
       auto it2 = it;
       const IntegrateImuResult<double> result =
-          IntegrateImu(imu_data, node_data_[node_indices[j - 1]].time,
-                       node_data_[node_indices[j]].time, &it);
-      if (j + 1 < node_indices.size()) {
-        const common::Time first_time = node_data_[node_indices[j - 1]].time;
-        const common::Time second_time = node_data_[node_indices[j]].time;
-        const common::Time third_time = node_data_[node_indices[j + 1]].time;
+          IntegrateImu(imu_data, node_data_[flat_indices[node_index - 1]].time,
+                       node_data_[flat_indices[node_index]].time, &it);
+      if (node_index + 1 < flat_indices.size()) {
+        const common::Time first_time =
+            node_data_[flat_indices[node_index - 1]].time;
+        const common::Time second_time =
+            node_data_[flat_indices[node_index]].time;
+        const common::Time third_time =
+            node_data_[flat_indices[node_index + 1]].time;
         const common::Duration first_duration = second_time - first_time;
         const common::Duration second_duration = third_time - second_time;
         const common::Time first_center = first_time + first_duration / 2;
@@ -235,18 +248,18 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
                     options_.acceleration_weight(), delta_velocity,
                     common::ToSeconds(first_duration),
                     common::ToSeconds(second_duration))),
-            nullptr, C_point_clouds[node_indices[j]].rotation(),
-            C_point_clouds[node_indices[j - 1]].translation(),
-            C_point_clouds[node_indices[j]].translation(),
-            C_point_clouds[node_indices[j + 1]].translation(),
+            nullptr, C_nodes[trajectory_id].at(node_index).rotation(),
+            C_nodes[trajectory_id].at(node_index - 1).translation(),
+            C_nodes[trajectory_id].at(node_index).translation(),
+            C_nodes[trajectory_id].at(node_index + 1).translation(),
             &gravity_constant_);
       }
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4>(
               new RotationCostFunction(options_.rotation_weight(),
                                        result.delta_rotation)),
-          nullptr, C_point_clouds[node_indices[j - 1]].rotation(),
-          C_point_clouds[node_indices[j]].rotation());
+          nullptr, C_nodes[trajectory_id].at(node_index - 1).rotation(),
+          C_nodes[trajectory_id].at(node_index).rotation());
     }
   }
 
@@ -270,9 +283,14 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
           C_submaps[trajectory_id][submap_index].ToRigid();
     }
   }
-
-  for (size_t j = 0; j != node_data_.size(); ++j) {
-    node_data_[j].point_cloud_pose = C_point_clouds[j].ToRigid();
+  for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
+       ++trajectory_id) {
+    for (size_t node_index = 0;
+         node_index != nodes_per_trajectory[trajectory_id].size();
+         ++node_index) {
+      node_data_[nodes_per_trajectory[trajectory_id][node_index]]
+          .point_cloud_pose = C_nodes[trajectory_id][node_index].ToRigid();
+    }
   }
 }
 
