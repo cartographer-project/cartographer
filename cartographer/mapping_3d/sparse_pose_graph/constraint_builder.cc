@@ -30,7 +30,6 @@
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/kalman_filter/pose_tracker.h"
-#include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
 #include "cartographer/transform/transform.h"
