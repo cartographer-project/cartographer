@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/mapping/id.h"
 #include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/submaps.h"
@@ -59,9 +60,7 @@ class SparsePoseGraph {
     };
 
     mapping::SubmapId submap_id;  // 'i' in the paper.
-
-    // Scan index.
-    int j;
+    mapping::NodeId node_id;      // 'j' in the paper.
 
     // Pose of the scan 'j' relative to submap 'i'.
     Pose pose;

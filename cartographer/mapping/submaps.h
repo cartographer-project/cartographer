@@ -14,18 +14,6 @@
  * limitations under the License.
  */
 
-// Submaps is a sequence of maps to which scans are matched and into which scans
-// are inserted.
-//
-// Except during initialization when only a single submap exists, there are
-// always two submaps into which scans are inserted: an old submap that is used
-// for matching, and a new one, which will be used for matching next, that is
-// being initialized.
-//
-// Once a certain number of scans have been inserted, the new submap is
-// considered initialized: the old submap is no longer changed, the "new" submap
-// is now the "old" submap and is used for scan-to-map matching. Moreover,
-// a "new" submap gets inserted.
 #ifndef CARTOGRAPHER_MAPPING_SUBMAPS_H_
 #define CARTOGRAPHER_MAPPING_SUBMAPS_H_
 
@@ -35,6 +23,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/id.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/trajectory_node.h"
@@ -63,22 +52,6 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
   return value;
 }
 
-// Uniquely identifies a submap using a combination of a unique trajectory ID
-// and a zero-based index of the submap inside that trajectory.
-struct SubmapId {
-  int trajectory_id;
-  int submap_index;
-
-  bool operator<(const SubmapId& other) const {
-    return std::forward_as_tuple(trajectory_id, submap_index) <
-           std::forward_as_tuple(other.trajectory_id, other.submap_index);
-  }
-};
-
-inline std::ostream& operator<<(std::ostream& os, const SubmapId& v) {
-  return os << "(" << v.trajectory_id << ", " << v.submap_index << ")";
-}
-
 // An individual submap, which has an initial position 'origin', keeps track of
 // how many range data were inserted into it, and sets the
 // 'finished_probability_grid' to be used for loop closing once the map no
@@ -102,7 +75,18 @@ struct Submap {
   const mapping_2d::ProbabilityGrid* finished_probability_grid = nullptr;
 };
 
-// A container of Submaps.
+// Submaps is a sequence of maps to which scans are matched and into which scans
+// are inserted.
+//
+// Except during initialization when only a single submap exists, there are
+// always two submaps into which scans are inserted: an old submap that is used
+// for matching, and a new one, which will be used for matching next, that is
+// being initialized.
+//
+// Once a certain number of scans have been inserted, the new submap is
+// considered initialized: the old submap is no longer changed, the "new" submap
+// is now the "old" submap and is used for scan-to-map matching. Moreover,
+// a "new" submap gets inserted.
 class Submaps {
  public:
   static constexpr uint8 kUnknownLogOdds = 0;

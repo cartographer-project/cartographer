@@ -132,13 +132,13 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   std::vector<OptimizationProblem::Constraint> constraints;
   for (int j = 0; j != kNumNodes; ++j) {
     constraints.push_back(OptimizationProblem::Constraint{
-        mapping::SubmapId{0, 0}, j,
+        mapping::SubmapId{0, 0}, mapping::NodeId{0, j},
         OptimizationProblem::Constraint::Pose{
             AddNoise(test_data[j].ground_truth_pose, test_data[j].noise),
             Eigen::Matrix<double, 6, 6>::Identity()}});
     // We add an additional independent, but equally noisy observation.
     constraints.push_back(OptimizationProblem::Constraint{
-        mapping::SubmapId{0, 1}, j,
+        mapping::SubmapId{0, 1}, mapping::NodeId{0, j},
         OptimizationProblem::Constraint::Pose{
             AddNoise(test_data[j].ground_truth_pose,
                      RandomYawOnlyTransform(0.2, 0.3)),
@@ -146,7 +146,7 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
     // We add very noisy data with high covariance (i.e. small Lambda) to verify
     // it is mostly ignored.
     constraints.push_back(OptimizationProblem::Constraint{
-        mapping::SubmapId{0, 2}, j,
+        mapping::SubmapId{0, 2}, mapping::NodeId{0, j},
         OptimizationProblem::Constraint::Pose{
             kSubmap2Transform.inverse() * test_data[j].ground_truth_pose *
                 RandomTransform(1e3, 3.),

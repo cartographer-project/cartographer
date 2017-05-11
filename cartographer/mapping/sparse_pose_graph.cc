@@ -98,9 +98,9 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
         constraint.submap_id.submap_index);
 
     constraint_proto->mutable_scan_id()->set_trajectory_id(
-        grouped_node_indices[constraint.j].first);
+        constraint.node_id.trajectory_id);
     constraint_proto->mutable_scan_id()->set_scan_index(
-        grouped_node_indices[constraint.j].second);
+        constraint.node_id.node_index);
 
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }
