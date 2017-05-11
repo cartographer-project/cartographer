@@ -117,7 +117,7 @@ void SparsePoseGraph::AddScan(
                             static_cast<int>(submap_indices_.size()));
     submap_states_.emplace_back();
     submap_states_.back().submap = insertion_submaps.back();
-    submap_states_.back().trajectory = trajectory;
+    submap_states_.back().trajectory_id = trajectory_id;
     submap_states_.back().id = mapping::SubmapId{
         trajectory_id, num_submaps_in_trajectory_[trajectory]};
     ++num_submaps_in_trajectory_[trajectory];
@@ -436,16 +436,17 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
         submap_transforms,
     const mapping::Submaps* const trajectory) const {
   std::vector<transform::Rigid3d> result;
+  auto it = trajectory_ids_.find(trajectory);
+  const int trajectory_id = it == trajectory_ids_.end() ? -1 : it->second;
   size_t flat_index = 0;
   size_t flat_index_of_result_back = -1;
 
   // Submaps for which we have optimized poses.
   for (; flat_index != submap_states_.size(); ++flat_index) {
     const auto& state = submap_states_[flat_index];
-    if (state.trajectory != trajectory) {
+    if (state.trajectory_id != trajectory_id) {
       continue;
     }
-    const int trajectory_id = trajectory_ids_.at(trajectory);
     if (static_cast<size_t>(trajectory_id) >= submap_transforms.size() ||
         result.size() >= submap_transforms.at(trajectory_id).size()) {
       break;
@@ -458,7 +459,7 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
   // Extrapolate to the remaining submaps.
   for (; flat_index != submap_states_.size(); ++flat_index) {
     const auto& state = submap_states_[flat_index];
-    if (state.trajectory != trajectory) {
+    if (state.trajectory_id != trajectory_id) {
       continue;
     }
     if (result.empty()) {
