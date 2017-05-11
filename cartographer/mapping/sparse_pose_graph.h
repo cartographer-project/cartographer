@@ -58,8 +58,7 @@ class SparsePoseGraph {
       Eigen::Matrix<double, 6, 6> sqrt_Lambda_ij;
     };
 
-    // The paper uses 'i' as name for this.
-    mapping::SubmapId submap_id;
+    mapping::SubmapId submap_id; // 'i' in the paper.
 
     // Scan index.
     int j;
