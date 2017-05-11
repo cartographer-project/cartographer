@@ -198,8 +198,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // before they take part in the background computations.
   std::map<const mapping::Submap*, int> submap_indices_ GUARDED_BY(mutex_);
   std::vector<SubmapState> submap_states_ GUARDED_BY(mutex_);
-  std::map<const mapping::Submaps*, int> num_submaps_in_trajectory_
-      GUARDED_BY(mutex_);
+  std::map<int, int> num_submaps_in_trajectory_ GUARDED_BY(mutex_);
 
   // Connectivity structure of our trajectories by IDs.
   std::vector<std::vector<int>> connected_components_;

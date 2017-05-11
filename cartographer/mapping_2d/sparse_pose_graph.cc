@@ -118,8 +118,8 @@ void SparsePoseGraph::AddScan(
     submap_states_.emplace_back();
     submap_states_.back().submap = insertion_submaps.back();
     submap_states_.back().id = mapping::SubmapId{
-        trajectory_id, num_submaps_in_trajectory_[trajectory]};
-    ++num_submaps_in_trajectory_[trajectory];
+        trajectory_id, num_submaps_in_trajectory_[trajectory_id]};
+    ++num_submaps_in_trajectory_[trajectory_id];
     CHECK_EQ(submap_states_.size(), submap_indices_.size());
   }
   const mapping::Submap* const finished_submap =
