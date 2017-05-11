@@ -98,9 +98,8 @@ int TrajectoryConnectivity::ConnectionCount(const int trajectory_id_a,
 proto::TrajectoryConnectivity ToProto(
     std::vector<std::vector<int>> connected_components) {
   proto::TrajectoryConnectivity proto;
-  for (const auto& connected_component : connected_components) {
-    std::sort(connected_components.back().begin(),
-              connected_components.back().end());
+  for (auto& connected_component : connected_components) {
+    std::sort(connected_component.begin(), connected_component.end());
   }
   std::sort(connected_components.begin(), connected_components.end());
   for (const auto& connected_component : connected_components) {
