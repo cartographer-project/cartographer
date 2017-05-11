@@ -224,8 +224,8 @@ void ConstraintBuilder::ComputeConstraint(
             initial_pose.rotation(), filtered_point_cloud, point_cloud,
             options_.global_localization_min_score(), &score, &pose_estimate)) {
       CHECK_GT(score, options_.global_localization_min_score());
-      CHECK_GE(0, scan_trajectory_id);
-      CHECK_GE(0, submap_id.trajectory_id);
+      CHECK_GE(scan_trajectory_id, 0);
+      CHECK_GE(submap_id.trajectory_id, 0);
       trajectory_connectivity->Connect(scan_trajectory_id,
                                        submap_id.trajectory_id);
     } else {

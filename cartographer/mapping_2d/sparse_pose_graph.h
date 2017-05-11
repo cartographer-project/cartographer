@@ -111,9 +111,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
     // which are finished.
     bool finished = false;
 
-    // The ID of the trajectory to which this SubmapState belongs.
-    int trajectory_id = -1;
-
     mapping::SubmapId id;
   };
 

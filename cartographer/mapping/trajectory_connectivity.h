@@ -54,9 +54,9 @@ class TrajectoryConnectivity {
   bool TransitivelyConnected(int trajectory_id_a, int trajectory_id_b)
       EXCLUDES(lock_);
 
-  // Return the number of _direct_ connections between trajectory_id_a and
-  // trajectory_id_b. If either trajectory is not being tracked, returns 0. This
-  // function is invariant to the order of its arguments.
+  // Return the number of _direct_ connections between 'trajectory_id_a' and
+  // 'trajectory_id_b'. If either trajectory is not being tracked, returns 0.
+  // This function is invariant to the order of its arguments.
   int ConnectionCount(int trajectory_id_a, int trajectory_id_b) EXCLUDES(lock_);
 
   // The trajectory IDs, grouped by connectivity.
@@ -75,8 +75,7 @@ class TrajectoryConnectivity {
   std::map<std::pair<int, int>, int> connection_map_ GUARDED_BY(lock_);
 };
 
-// Returns a proto encoding connected components according to the
-// 'trajectory_id' of trajectories.
+// Returns a proto encoding connected components.
 proto::TrajectoryConnectivity ToProto(
     std::vector<std::vector<int>> connected_components);
 

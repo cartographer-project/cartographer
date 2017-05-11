@@ -114,7 +114,6 @@ void SparsePoseGraph::AddScan(
                             static_cast<int>(submap_indices_.size()));
     submap_states_.emplace_back();
     submap_states_.back().submap = insertion_submaps.back();
-    submap_states_.back().trajectory_id = trajectory_id;
     submap_states_.back().id = mapping::SubmapId{
         trajectory_id, num_submaps_in_trajectory_[trajectory]};
     ++num_submaps_in_trajectory_[trajectory];
@@ -174,7 +173,6 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
   const mapping::Submaps* const scan_trajectory =
       trajectory_nodes_[scan_index].constant_data->trajectory;
   const int scan_trajectory_id = trajectory_ids_.at(scan_trajectory);
-  // NOCOM(#hrapp): submap_states_ trajectory still needed?
   const int submap_trajectory_id =
       submap_states_[submap_index].id.trajectory_id;
 
@@ -427,16 +425,18 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
     const std::vector<std::vector<sparse_pose_graph::SubmapData>>&
         submap_transforms,
     const mapping::Submaps* const trajectory) const {
-  std::vector<transform::Rigid3d> result;
-  auto it = trajectory_ids_.find(trajectory);
-  const int trajectory_id = it == trajectory_ids_.end() ? -1 : it->second;
+  if (trajectory_ids_.count(trajectory) == 0) {
+    return {transform::Rigid3d::Identity()};
+  }
+  const int trajectory_id = trajectory_ids_.at(trajectory);
   size_t flat_index = 0;
   size_t flat_index_of_result_back = -1;
 
   // Submaps for which we have optimized poses.
+  std::vector<transform::Rigid3d> result;
   for (; flat_index != submap_states_.size(); ++flat_index) {
     const auto& state = submap_states_[flat_index];
-    if (state.trajectory_id != trajectory_id) {
+    if (state.id.trajectory_id != trajectory_id) {
       continue;
     }
     if (static_cast<size_t>(trajectory_id) >= submap_transforms.size() ||
@@ -451,7 +451,7 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
   // Extrapolate to the remaining submaps.
   for (; flat_index != submap_states_.size(); ++flat_index) {
     const auto& state = submap_states_[flat_index];
-    if (state.trajectory_id != trajectory_id) {
+    if (state.id.trajectory_id != trajectory_id) {
       continue;
     }
     if (result.empty()) {

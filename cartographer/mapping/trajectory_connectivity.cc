@@ -37,8 +37,7 @@ void TrajectoryConnectivity::Connect(const int trajectory_id_a,
                                      const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
   Union(trajectory_id_a, trajectory_id_b);
-  auto sorted_pair =
-      std::minmax(trajectory_id_a, trajectory_id_b, std::less<int>());
+  auto sorted_pair = std::minmax(trajectory_id_a, trajectory_id_b);
   ++connection_map_[sorted_pair];
 }
 
@@ -91,26 +90,20 @@ std::vector<std::vector<int>> TrajectoryConnectivity::ConnectedComponents() {
 int TrajectoryConnectivity::ConnectionCount(const int trajectory_id_a,
                                             const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
-  const auto it = connection_map_.find(
-      std::minmax(trajectory_id_a, trajectory_id_b, std::less<int>()));
+  const auto it =
+      connection_map_.find(std::minmax(trajectory_id_a, trajectory_id_b));
   return it != connection_map_.end() ? it->second : 0;
 }
 
 proto::TrajectoryConnectivity ToProto(
     std::vector<std::vector<int>> connected_components) {
   proto::TrajectoryConnectivity proto;
-  std::vector<std::vector<int>> connected_components_by_indices;
   for (const auto& connected_component : connected_components) {
-    connected_components_by_indices.emplace_back();
-    for (const int trajectory_id : connected_component) {
-      connected_components_by_indices.back().push_back(trajectory_id);
-    }
-    std::sort(connected_components_by_indices.back().begin(),
-              connected_components_by_indices.back().end());
+    std::sort(connected_components.back().begin(),
+              connected_components.back().end());
   }
-  std::sort(connected_components_by_indices.begin(),
-            connected_components_by_indices.end());
-  for (const auto& connected_component : connected_components_by_indices) {
+  std::sort(connected_components.begin(), connected_components.end());
+  for (const auto& connected_component : connected_components) {
     auto* proto_connected_component = proto.add_connected_component();
     for (const int trajectory_id : connected_component) {
       proto_connected_component->add_trajectory_id(trajectory_id);
