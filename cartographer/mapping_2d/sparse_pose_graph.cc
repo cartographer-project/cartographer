@@ -100,8 +100,8 @@ void SparsePoseGraph::AddScan(
   common::MutexLocker locker(&mutex_);
   trajectory_ids_.emplace(trajectory, trajectory_ids_.size());
   const int trajectory_id = trajectory_ids_.at(trajectory);
-  const int scan_index = trajectory_nodes_.size();
-  CHECK_LT(scan_index, std::numeric_limits<int>::max());
+  const int flat_scan_index = trajectory_nodes_.size();
+  CHECK_LT(flat_scan_index, std::numeric_limits<int>::max());
   scan_index_to_node_id_.push_back(
       mapping::NodeId{trajectory_id, num_nodes_in_trajectory_[trajectory_id]});
   ++num_nodes_in_trajectory_[trajectory_id];
@@ -138,7 +138,7 @@ void SparsePoseGraph::AddScan(
   }
 
   AddWorkItem([=]() REQUIRES(mutex_) {
-    ComputeConstraintsForScan(scan_index, matching_submap, insertion_submaps,
+    ComputeConstraintsForScan(flat_scan_index, matching_submap, insertion_submaps,
                               finished_submap, pose, covariance);
   });
 }
