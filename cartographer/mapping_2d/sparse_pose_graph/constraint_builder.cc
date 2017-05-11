@@ -78,8 +78,7 @@ void ConstraintBuilder::MaybeAddConstraint(
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_id, submap->finished_probability_grid, [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, submap, scan_index,
-                            nullptr, /* scan_trajectory */
-                            nullptr, /* submap_trajectory */
+                            -1,      /* scan_trajectory_id */
                             false,   /* match_full_submap */
                             nullptr, /* trajectory_connectivity */
                             point_cloud, initial_relative_pose, constraint);
@@ -90,8 +89,7 @@ void ConstraintBuilder::MaybeAddConstraint(
 
 void ConstraintBuilder::MaybeAddGlobalConstraint(
     const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
-    const int scan_index, const mapping::Submaps* scan_trajectory,
-    const mapping::Submaps* submap_trajectory,
+    const int scan_index, const int scan_trajectory_id,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
     const sensor::PointCloud* const point_cloud) {
   common::MutexLocker locker(&mutex_);
@@ -102,8 +100,8 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   const int current_computation = current_computation_;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       submap_id, submap->finished_probability_grid, [=]() EXCLUDES(mutex_) {
-        ComputeConstraint(submap_id, submap, scan_index, submap_trajectory,
-                          scan_trajectory, true, /* match_full_submap */
+        ComputeConstraint(submap_id, submap, scan_index, scan_trajectory_id,
+                          true, /* match_full_submap */
                           trajectory_connectivity, point_cloud,
                           transform::Rigid2d::Identity(), constraint);
         FinishComputation(current_computation);
@@ -168,8 +166,7 @@ ConstraintBuilder::GetSubmapScanMatcher(const mapping::SubmapId& submap_id) {
 
 void ConstraintBuilder::ComputeConstraint(
     const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
-    const int scan_index, const mapping::Submaps* scan_trajectory,
-    const mapping::Submaps* submap_trajectory, bool match_full_submap,
+    const int scan_index, const int scan_trajectory_id, bool match_full_submap,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
     const sensor::PointCloud* const point_cloud,
     const transform::Rigid2d& initial_relative_pose,
@@ -194,7 +191,10 @@ void ConstraintBuilder::ComputeConstraint(
             filtered_point_cloud, options_.global_localization_min_score(),
             &score, &pose_estimate)) {
       CHECK_GT(score, options_.global_localization_min_score());
-      trajectory_connectivity->Connect(scan_trajectory, submap_trajectory);
+      CHECK_GE(scan_trajectory_id, 0);
+      CHECK_GE(submap_id.trajectory_id, 0);
+      trajectory_connectivity->Connect(scan_trajectory_id,
+                                       submap_id.trajectory_id);
     } else {
       return;
     }

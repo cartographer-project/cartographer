@@ -85,8 +85,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                   const Eigen::Vector3d& angular_velocity);
 
   void RunFinalOptimization() override;
-  std::vector<std::vector<const mapping::Submaps*>> GetConnectedTrajectories()
-      override;
+  std::vector<std::vector<int>> GetConnectedTrajectories() override;
   std::vector<transform::Rigid3d> GetSubmapTransforms(
       const mapping::Submaps* trajectory) EXCLUDES(mutex_) override;
   transform::Rigid3d GetLocalToGlobalTransform(const mapping::Submaps* submaps)
@@ -113,9 +112,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
     // against this submap. Likewise, all new scans are matched against submaps
     // which are finished.
     bool finished = false;
-
-    // The trajectory to which this SubmapState belongs.
-    const Submaps* trajectory = nullptr;
 
     mapping::SubmapId id;
   };
@@ -205,10 +201,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::map<const mapping::Submaps*, int> num_submaps_in_trajectory_
       GUARDED_BY(mutex_);
 
-  // Connectivity structure of our trajectories.
-  std::vector<std::vector<const mapping::Submaps*>> connected_components_;
-  // Trajectory to connected component ID.
-  std::map<const mapping::Submaps*, size_t> reverse_connected_components_;
+  // Connectivity structure of our trajectories by IDs.
+  std::vector<std::vector<int>> connected_components_;
+  // Trajectory ID to connected component ID.
+  std::map<int, size_t> reverse_connected_components_;
 
   // Data that are currently being shown.
   //

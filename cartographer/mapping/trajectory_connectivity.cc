@@ -28,35 +28,30 @@ namespace mapping {
 TrajectoryConnectivity::TrajectoryConnectivity()
     : lock_(), forest_(), connection_map_() {}
 
-void TrajectoryConnectivity::Add(const Submaps* trajectory) {
-  CHECK(trajectory != nullptr);
+void TrajectoryConnectivity::Add(const int trajectory_id) {
   common::MutexLocker locker(&lock_);
-  forest_.emplace(trajectory, trajectory);
+  forest_.emplace(trajectory_id, trajectory_id);
 }
 
-void TrajectoryConnectivity::Connect(const Submaps* trajectory_a,
-                                     const Submaps* trajectory_b) {
-  CHECK(trajectory_a != nullptr);
-  CHECK(trajectory_b != nullptr);
+void TrajectoryConnectivity::Connect(const int trajectory_id_a,
+                                     const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
-  Union(trajectory_a, trajectory_b);
-  auto sorted_pair =
-      std::minmax(trajectory_a, trajectory_b, std::less<const Submaps*>());
+  Union(trajectory_id_a, trajectory_id_b);
+  auto sorted_pair = std::minmax(trajectory_id_a, trajectory_id_b);
   ++connection_map_[sorted_pair];
 }
 
-void TrajectoryConnectivity::Union(const Submaps* const trajectory_a,
-                                   const Submaps* const trajectory_b) {
-  forest_.emplace(trajectory_a, trajectory_a);
-  forest_.emplace(trajectory_b, trajectory_b);
-  const Submaps* const representative_a = FindSet(trajectory_a);
-  const Submaps* const representative_b = FindSet(trajectory_b);
+void TrajectoryConnectivity::Union(const int trajectory_id_a,
+                                   const int trajectory_id_b) {
+  forest_.emplace(trajectory_id_a, trajectory_id_a);
+  forest_.emplace(trajectory_id_b, trajectory_id_b);
+  const int representative_a = FindSet(trajectory_id_a);
+  const int representative_b = FindSet(trajectory_id_b);
   forest_[representative_a] = representative_b;
 }
 
-const Submaps* TrajectoryConnectivity::FindSet(
-    const Submaps* const trajectory) {
-  auto it = forest_.find(trajectory);
+int TrajectoryConnectivity::FindSet(const int trajectory_id) {
+  auto it = forest_.find(trajectory_id);
   CHECK(it != forest_.end());
   if (it->first != it->second) {
     it->second = FindSet(it->second);
@@ -64,28 +59,27 @@ const Submaps* TrajectoryConnectivity::FindSet(
   return it->second;
 }
 
-bool TrajectoryConnectivity::TransitivelyConnected(
-    const Submaps* trajectory_a, const Submaps* trajectory_b) {
-  CHECK(trajectory_a != nullptr);
-  CHECK(trajectory_b != nullptr);
+bool TrajectoryConnectivity::TransitivelyConnected(const int trajectory_id_a,
+                                                   const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
 
-  if (forest_.count(trajectory_a) == 0 || forest_.count(trajectory_b) == 0) {
+  if (forest_.count(trajectory_id_a) == 0 ||
+      forest_.count(trajectory_id_b) == 0) {
     return false;
   }
-  return FindSet(trajectory_a) == FindSet(trajectory_b);
+  return FindSet(trajectory_id_a) == FindSet(trajectory_id_b);
 }
 
-std::vector<std::vector<const Submaps*>>
-TrajectoryConnectivity::ConnectedComponents() {
+std::vector<std::vector<int>> TrajectoryConnectivity::ConnectedComponents() {
   // Map from cluster exemplar -> growing cluster.
-  std::unordered_map<const Submaps*, std::vector<const Submaps*>> map;
+  std::unordered_map<int, std::vector<int>> map;
   common::MutexLocker locker(&lock_);
-  for (const auto& trajectory_entry : forest_) {
-    map[FindSet(trajectory_entry.first)].push_back(trajectory_entry.first);
+  for (const auto& trajectory_id_entry : forest_) {
+    map[FindSet(trajectory_id_entry.first)].push_back(
+        trajectory_id_entry.first);
   }
 
-  std::vector<std::vector<const Submaps*>> result;
+  std::vector<std::vector<int>> result;
   result.reserve(map.size());
   for (auto& pair : map) {
     result.emplace_back(std::move(pair.second));
@@ -93,33 +87,23 @@ TrajectoryConnectivity::ConnectedComponents() {
   return result;
 }
 
-int TrajectoryConnectivity::ConnectionCount(const Submaps* trajectory_a,
-                                            const Submaps* trajectory_b) {
-  CHECK(trajectory_a != nullptr);
-  CHECK(trajectory_b != nullptr);
+int TrajectoryConnectivity::ConnectionCount(const int trajectory_id_a,
+                                            const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
-  const auto it = connection_map_.find(
-      std::minmax(trajectory_a, trajectory_b, std::less<const Submaps*>()));
+  const auto it =
+      connection_map_.find(std::minmax(trajectory_id_a, trajectory_id_b));
   return it != connection_map_.end() ? it->second : 0;
 }
 
 proto::TrajectoryConnectivity ToProto(
-    std::vector<std::vector<const Submaps*>> connected_components,
-    std::unordered_map<const mapping::Submaps*, int> trajectory_indices) {
+    std::vector<std::vector<int>> connected_components) {
   proto::TrajectoryConnectivity proto;
-  std::vector<std::vector<int>> connected_components_by_indices;
   for (const auto& connected_component : connected_components) {
-    connected_components_by_indices.emplace_back();
-    for (const mapping::Submaps* trajectory : connected_component) {
-      connected_components_by_indices.back().push_back(
-          trajectory_indices.at(trajectory));
-    }
-    std::sort(connected_components_by_indices.back().begin(),
-              connected_components_by_indices.back().end());
+    std::sort(connected_components.back().begin(),
+              connected_components.back().end());
   }
-  std::sort(connected_components_by_indices.begin(),
-            connected_components_by_indices.end());
-  for (const auto& connected_component : connected_components_by_indices) {
+  std::sort(connected_components.begin(), connected_components.end());
+  for (const auto& connected_component : connected_components) {
     auto* proto_connected_component = proto.add_connected_component();
     for (const int trajectory_id : connected_component) {
       proto_connected_component->add_trajectory_id(trajectory_id);

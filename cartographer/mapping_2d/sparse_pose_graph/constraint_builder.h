@@ -35,7 +35,7 @@
 #include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
-#include "cartographer/mapping_2d/submaps.h"
+
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -86,16 +86,14 @@ class ConstraintBuilder {
   // 'submap_id' and the 'point_cloud' for 'scan_index'. This performs
   // full-submap matching.
   //
-  // The scan at 'scan_index' should be from trajectory 'scan_trajectory', and
-  // the 'submap' should be from 'submap_trajectory'. The
-  // 'trajectory_connectivity' is updated if the full-submap match succeeds.
+  // The scan at 'scan_index' should be from trajectory 'scan_trajectory_id'.
+  // The 'trajectory_connectivity' is updated if the full-submap match succeeds.
   //
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
   // computations are finished.
   void MaybeAddGlobalConstraint(
       const mapping::SubmapId& submap_id, const mapping::Submap* submap,
-      int scan_index, const mapping::Submaps* scan_trajectory,
-      const mapping::Submaps* submap_trajectory,
+      int scan_index, int scan_trajectory_id,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::PointCloud* point_cloud);
 
@@ -134,13 +132,12 @@ class ConstraintBuilder {
   // Runs in a background thread and does computations for an additional
   // constraint, assuming 'submap' and 'point_cloud' do not change anymore.
   // If 'match_full_submap' is true, and global localization succeeds, will
-  // connect 'scan_trajectory' and 'submap_trajectory' in
+  // connect 'scan_trajectory_id' and 'submap_id.trajectory_id' in
   // 'trajectory_connectivity'.
   // As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
       const mapping::SubmapId& submap_id, const mapping::Submap* submap,
-      int scan_index, const mapping::Submaps* scan_trajectory,
-      const mapping::Submaps* submap_trajectory, bool match_full_submap,
+      int scan_index, int scan_trajectory_id, bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::PointCloud* point_cloud,
       const transform::Rigid2d& initial_relative_pose,

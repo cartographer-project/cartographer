@@ -113,8 +113,7 @@ int MapBuilder::GetTrajectoryId(const Submaps* const trajectory) const {
 }
 
 proto::TrajectoryConnectivity MapBuilder::GetTrajectoryConnectivity() {
-  return ToProto(sparse_pose_graph_->GetConnectedTrajectories(),
-                 trajectory_ids_);
+  return ToProto(sparse_pose_graph_->GetConnectedTrajectories());
 }
 
 string MapBuilder::SubmapToProto(const int trajectory_id,
