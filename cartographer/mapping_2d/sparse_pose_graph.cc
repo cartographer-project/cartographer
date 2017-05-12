@@ -140,8 +140,9 @@ void SparsePoseGraph::AddScan(
   }
 
   AddWorkItem([=]() REQUIRES(mutex_) {
-    ComputeConstraintsForScan(flat_scan_index, matching_submap, insertion_submaps,
-                              finished_submap, pose, covariance);
+    ComputeConstraintsForScan(flat_scan_index, matching_submap,
+                              insertion_submaps, finished_submap, pose,
+                              covariance);
   });
 }
 
@@ -182,7 +183,10 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
   if (scan_trajectory_id != submap_id.trajectory_id &&
       global_localization_samplers_[scan_trajectory_id]->Pulse()) {
     constraint_builder_.MaybeAddGlobalConstraint(
-        submap_id, submap_states_.at(submap_id.trajectory_id).at(submap_id.submap_index).submap,
+        submap_id,
+        submap_states_.at(submap_id.trajectory_id)
+            .at(submap_id.submap_index)
+            .submap,
         scan_index_to_node_id_.at(scan_index), scan_index,
         &trajectory_connectivity_,
         &trajectory_nodes_[scan_index].constant_data->range_data_2d.returns);
@@ -195,7 +199,10 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
     if (scan_trajectory_id == submap_id.trajectory_id ||
         scan_and_submap_trajectories_connected) {
       constraint_builder_.MaybeAddConstraint(
-          submap_id, submap_states_.at(submap_id.trajectory_id).at(submap_id.submap_index).submap,
+          submap_id,
+          submap_states_.at(submap_id.trajectory_id)
+              .at(submap_id.submap_index)
+              .submap,
           scan_index_to_node_id_.at(scan_index), scan_index,
           &trajectory_nodes_[scan_index].constant_data->range_data_2d.returns,
           relative_pose);
@@ -241,7 +248,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   for (const mapping::Submap* submap : insertion_submaps) {
     const mapping::SubmapId submap_id = GetSubmapId(submap);
     CHECK(!submap_states_.at(submap_id.trajectory_id)
-            .at(submap_id.submap_index).finished);
+               .at(submap_id.submap_index)
+               .finished);
     submap_states_.at(submap_id.trajectory_id)
         .at(submap_id.submap_index)
         .scan_indices.emplace(scan_index);
@@ -262,14 +270,12 @@ void SparsePoseGraph::ComputeConstraintsForScan(
         Constraint::INTRA_SUBMAP});
   }
 
-  for (size_t trajectory_id = 0;
-       trajectory_id < submap_states_.size(); ++trajectory_id) {
+  for (size_t trajectory_id = 0; trajectory_id < submap_states_.size();
+       ++trajectory_id) {
     for (size_t submap_index = 0;
          submap_index < submap_states_.at(trajectory_id).size();
          ++submap_index) {
-      if (submap_states_.at(trajectory_id)
-              .at(submap_index)
-              .finished) {
+      if (submap_states_.at(trajectory_id).at(submap_index).finished) {
         CHECK_EQ(submap_states_.at(trajectory_id)
                      .at(submap_index)
                      .scan_indices.count(scan_index),

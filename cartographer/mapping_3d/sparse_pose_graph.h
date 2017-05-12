@@ -187,7 +187,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
-  std::map<const mapping::Submap*, mapping::SubmapId> submap_ids_ GUARDED_BY(mutex_);
+  std::map<const mapping::Submap*, mapping::SubmapId> submap_ids_
+      GUARDED_BY(mutex_);
   std::vector<std::vector<SubmapState>> submap_states_ GUARDED_BY(mutex_);
 
   // Mapping to flat indices to aid the transition to per-trajectory data
