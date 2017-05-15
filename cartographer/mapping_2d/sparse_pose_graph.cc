@@ -215,7 +215,7 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
       submap_states_.at(submap_id.trajectory_id).at(submap_id.submap_index);
   const int num_nodes = scan_index_to_node_id_.size();
   for (int scan_index = 0; scan_index < num_nodes; ++scan_index) {
-    if (submap_state.scan_indices.count(scan_index) == 0) {
+    if (submap_state.node_ids.count(scan_index_to_node_id_[scan_index]) == 0) {
       ComputeConstraint(scan_index, submap_id);
     }
   }
@@ -235,9 +235,10 @@ void SparsePoseGraph::ComputeConstraintsForScan(
           .pose *
       sparse_pose_graph::ComputeSubmapPose(*matching_submap).inverse() * pose;
   CHECK_EQ(scan_index, scan_index_to_node_id_.size());
-  scan_index_to_node_id_.push_back(
-      mapping::NodeId{matching_id.trajectory_id,
-                      num_nodes_in_trajectory_[matching_id.trajectory_id]});
+  const mapping::NodeId node_id{
+      matching_id.trajectory_id,
+      num_nodes_in_trajectory_[matching_id.trajectory_id]};
+  scan_index_to_node_id_.push_back(node_id);
   ++num_nodes_in_trajectory_[matching_id.trajectory_id];
   const mapping::TrajectoryNode::ConstantData* const scan_data =
       trajectory_nodes_[scan_index].constant_data;
@@ -252,7 +253,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
                .finished);
     submap_states_.at(submap_id.trajectory_id)
         .at(submap_id.submap_index)
-        .scan_indices.emplace(scan_index);
+        .node_ids.emplace(node_id);
     // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid2d constraint_transform =
         sparse_pose_graph::ComputeSubmapPose(*submap).inverse() * pose;
@@ -260,7 +261,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     constexpr double kFakeOrientationCovariance = 1e-6;
     constraints_.push_back(Constraint{
         submap_id,
-        scan_index_to_node_id_.at(scan_index),
+        node_id,
         {transform::Embed3D(constraint_transform),
          common::ComputeSpdMatrixSqrtInverse(
              kalman_filter::Embed3D(covariance, kFakePositionCovariance,
@@ -278,7 +279,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       if (submap_states_.at(trajectory_id).at(submap_index).finished) {
         CHECK_EQ(submap_states_.at(trajectory_id)
                      .at(submap_index)
-                     .scan_indices.count(scan_index),
+                     .node_ids.count(node_id),
                  0);
         ComputeConstraint(scan_index,
                           mapping::SubmapId{static_cast<int>(trajectory_id),
@@ -388,9 +389,10 @@ void SparsePoseGraph::RunOptimization() {
   const auto& node_data = optimization_problem_.node_data();
   const size_t num_optimized_poses = scan_index_to_node_id_.size();
   for (size_t i = 0; i != num_optimized_poses; ++i) {
+    const mapping::NodeId node_id = scan_index_to_node_id_[i];
     trajectory_nodes_[i].pose =
-        transform::Embed3D(node_data.at(scan_index_to_node_id_[i].trajectory_id)
-                               .at(scan_index_to_node_id_[i].node_index)
+        transform::Embed3D(node_data.at(node_id.trajectory_id)
+                               .at(node_id.node_index)
                                .point_cloud_pose);
   }
   // Extrapolate all point cloud poses that were added later.
