@@ -108,22 +108,16 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
     // against this submap. Likewise, all new scans are matched against submaps
     // which are finished.
     bool finished = false;
-
-    mapping::SubmapId id;
   };
 
   // Handles a new work item.
   void AddWorkItem(std::function<void()> work_item) REQUIRES(mutex_);
 
-  int GetSubmapIndex(const mapping::Submap* submap) const REQUIRES(mutex_) {
-    const auto iterator = submap_indices_.find(submap);
-    CHECK(iterator != submap_indices_.end());
-    return iterator->second;
-  }
-
   mapping::SubmapId GetSubmapId(const mapping::Submap* submap) const
       REQUIRES(mutex_) {
-    return submap_states_.at(GetSubmapIndex(submap)).id;
+    const auto iterator = submap_ids_.find(submap);
+    CHECK(iterator != submap_ids_.end());
+    return iterator->second;
   }
 
   // Grows the optimization problem to have an entry for every element of
@@ -140,8 +134,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const kalman_filter::Pose2DCovariance& covariance) REQUIRES(mutex_);
 
   // Computes constraints for a scan and submap pair.
-  void ComputeConstraint(const int scan_index, const int submap_index)
-      REQUIRES(mutex_);
+  void ComputeConstraint(const int scan_index,
+                         const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
   // Adds constraints for older scans whenever a new submap is finished.
   void ComputeConstraintsForOldScans(const mapping::Submap* submap)
@@ -191,11 +185,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
-  // Submaps get assigned an index and state as soon as they are seen, even
+  // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
-  std::map<const mapping::Submap*, int> submap_indices_ GUARDED_BY(mutex_);
-  std::vector<SubmapState> submap_states_ GUARDED_BY(mutex_);
-  std::map<int, int> num_submaps_in_trajectory_ GUARDED_BY(mutex_);
+  std::map<const mapping::Submap*, mapping::SubmapId> submap_ids_
+      GUARDED_BY(mutex_);
+  std::vector<std::vector<SubmapState>> submap_states_ GUARDED_BY(mutex_);
 
   // Mapping to flat indices to aid the transition to per-trajectory data
   // structures.
