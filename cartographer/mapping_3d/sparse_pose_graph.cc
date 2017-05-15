@@ -118,9 +118,8 @@ void SparsePoseGraph::AddScan(
     auto& trajectory_submap_states = submap_states_.at(trajectory_id);
     submap_ids_.emplace(
         insertion_submaps.back(),
-        mapping::SubmapId{
-            trajectory_id,
-            static_cast<int>(trajectory_submap_states.size())});
+        mapping::SubmapId{trajectory_id,
+                          static_cast<int>(trajectory_submap_states.size())});
     trajectory_submap_states.emplace_back();
     trajectory_submap_states.back().submap = insertion_submaps.back();
   }
