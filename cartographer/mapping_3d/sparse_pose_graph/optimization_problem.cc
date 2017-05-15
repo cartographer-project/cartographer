@@ -84,7 +84,7 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
                                      const Eigen::Vector3d& angular_velocity) {
   CHECK_GE(trajectory_id, 0);
   imu_data_.resize(
-      std::max(submap_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+      std::max(imu_data_.size(), static_cast<size_t>(trajectory_id) + 1));
   imu_data_[trajectory_id].push_back(
       ImuData{time, linear_acceleration, angular_velocity});
 }
@@ -92,7 +92,10 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
 void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
     const transform::Rigid3d& point_cloud_pose) {
-  node_data_.push_back(NodeData{trajectory_id, time, point_cloud_pose});
+  CHECK_GE(trajectory_id, 0);
+  node_data_.resize(
+      std::max(node_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+  node_data_[trajectory_id].push_back(NodeData{time, point_cloud_pose});
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
@@ -114,12 +117,6 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
     return;
   }
 
-  // Compute the indices of consecutive nodes for each trajectory.
-  std::vector<std::vector<size_t>> nodes_per_trajectory(submap_data_.size());
-  for (size_t j = 0; j != node_data_.size(); ++j) {
-    nodes_per_trajectory.at(node_data_[j].trajectory_id).push_back(j);
-  }
-
   ceres::Problem::Options problem_options;
   ceres::Problem problem(problem_options);
 
@@ -136,7 +133,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   CHECK(!submap_data_[0].empty());
   // TODO(hrapp): Move ceres data into SubmapData.
   std::vector<std::deque<CeresPose>> C_submaps(submap_data_.size());
-  std::vector<std::deque<CeresPose>> C_nodes(nodes_per_trajectory.size());
+  std::vector<std::deque<CeresPose>> C_nodes(node_data_.size());
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
     for (size_t submap_index = 0;
@@ -158,14 +155,12 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
       }
     }
   }
-  for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
+  for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    for (size_t node_index = 0;
-         node_index != nodes_per_trajectory[trajectory_id].size();
+    for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
          ++node_index) {
       C_nodes[trajectory_id].emplace_back(
-          node_data_[nodes_per_trajectory[trajectory_id][node_index]]
-              .point_cloud_pose,
+          node_data_[trajectory_id][node_index].point_cloud_pose,
           translation_parameterization(),
           common::make_unique<ceres::QuaternionParameterization>(), &problem);
     }
@@ -196,34 +191,29 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
 
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
-  for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
+  for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    const std::vector<size_t>& flat_indices =
-        nodes_per_trajectory[trajectory_id];
     const std::deque<ImuData>& imu_data = imu_data_.at(trajectory_id);
-    CHECK(!flat_indices.empty());
     CHECK(!imu_data.empty());
+    // TODO(whess): Add support for empty trajectories.
+    const auto& node_data = node_data_[trajectory_id];
+    CHECK(!node_data.empty());
 
     // Skip IMU data before the first node of this trajectory.
     auto it = imu_data.cbegin();
-    while ((it + 1) != imu_data.cend() &&
-           (it + 1)->time <= node_data_[flat_indices[0]].time) {
+    while ((it + 1) != imu_data.cend() && (it + 1)->time <= node_data[0].time) {
       ++it;
     }
 
-    for (size_t node_index = 1; node_index < flat_indices.size();
-         ++node_index) {
+    for (size_t node_index = 1; node_index < node_data.size(); ++node_index) {
       auto it2 = it;
       const IntegrateImuResult<double> result =
-          IntegrateImu(imu_data, node_data_[flat_indices[node_index - 1]].time,
-                       node_data_[flat_indices[node_index]].time, &it);
-      if (node_index + 1 < flat_indices.size()) {
-        const common::Time first_time =
-            node_data_[flat_indices[node_index - 1]].time;
-        const common::Time second_time =
-            node_data_[flat_indices[node_index]].time;
-        const common::Time third_time =
-            node_data_[flat_indices[node_index + 1]].time;
+          IntegrateImu(imu_data, node_data[node_index - 1].time,
+                       node_data[node_index].time, &it);
+      if (node_index + 1 < node_data.size()) {
+        const common::Time first_time = node_data[node_index - 1].time;
+        const common::Time second_time = node_data[node_index].time;
+        const common::Time third_time = node_data[node_index + 1].time;
         const common::Duration first_duration = second_time - first_time;
         const common::Duration second_duration = third_time - second_time;
         const common::Time first_center = first_time + first_duration / 2;
@@ -283,18 +273,18 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
           C_submaps[trajectory_id][submap_index].ToRigid();
     }
   }
-  for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
+  for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    for (size_t node_index = 0;
-         node_index != nodes_per_trajectory[trajectory_id].size();
+    for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
          ++node_index) {
-      node_data_[nodes_per_trajectory[trajectory_id][node_index]]
-          .point_cloud_pose = C_nodes[trajectory_id][node_index].ToRigid();
+      node_data_[trajectory_id][node_index].point_cloud_pose =
+          C_nodes[trajectory_id][node_index].ToRigid();
     }
   }
 }
 
-const std::vector<NodeData>& OptimizationProblem::node_data() const {
+const std::vector<std::vector<NodeData>>& OptimizationProblem::node_data()
+    const {
   return node_data_;
 }
 
