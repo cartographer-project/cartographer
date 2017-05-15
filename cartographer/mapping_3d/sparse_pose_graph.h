@@ -100,10 +100,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   struct SubmapState {
     const Submap* submap = nullptr;
 
-    // Indices of the scans that were inserted into this map together with
+    // IDs of the scans that were inserted into this map together with
     // constraints for them. They are not to be matched again when this submap
     // becomes 'finished'.
-    std::set<int> scan_indices;
+    std::set<mapping::NodeId> node_ids;
 
     // Whether in the current state of the background thread this submap is
     // finished. When this transitions to true, all scans are tried to match

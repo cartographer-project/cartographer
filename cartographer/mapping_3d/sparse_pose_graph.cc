@@ -211,7 +211,7 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(const Submap* submap) {
       submap_states_.at(submap_id.trajectory_id).at(submap_id.submap_index);
   const int num_nodes = scan_index_to_node_id_.size();
   for (int scan_index = 0; scan_index < num_nodes; ++scan_index) {
-    if (submap_state.scan_indices.count(scan_index) == 0) {
+    if (submap_state.node_ids.count(scan_index_to_node_id_[scan_index]) == 0) {
       ComputeConstraint(scan_index, submap_id);
     }
   }
@@ -248,7 +248,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
                .finished);
     submap_states_.at(submap_id.trajectory_id)
         .at(submap_id.submap_index)
-        .scan_indices.emplace(scan_index);
+        .node_ids.emplace(scan_index_to_node_id_[scan_index]);
     // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid3d constraint_transform =
         submap->local_pose().inverse() * pose;
@@ -270,7 +270,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       if (submap_states_.at(trajectory_id).at(submap_index).finished) {
         CHECK_EQ(submap_states_.at(trajectory_id)
                      .at(submap_index)
-                     .scan_indices.count(scan_index),
+                     .node_ids.count(scan_index_to_node_id_[scan_index]),
                  0);
         ComputeConstraint(scan_index,
                           mapping::SubmapId{static_cast<int>(trajectory_id),
