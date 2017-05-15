@@ -155,7 +155,7 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
 
   double translation_error_before = 0.;
   double rotation_error_before = 0.;
-  const auto& node_data = optimization_problem_.node_data();
+  const auto& node_data = optimization_problem_.node_data().at(0);
   for (int j = 0; j != kNumNodes; ++j) {
     translation_error_before += (test_data[j].ground_truth_pose.translation() -
                                  node_data[j].point_cloud_pose.translation())

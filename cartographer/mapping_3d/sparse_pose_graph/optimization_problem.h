@@ -35,8 +35,6 @@ namespace mapping_3d {
 namespace sparse_pose_graph {
 
 struct NodeData {
-  // TODO(whess): Keep nodes per trajectory instead.
-  int trajectory_id;
   common::Time time;
   transform::Rigid3d point_cloud_pose;
 };
@@ -73,14 +71,14 @@ class OptimizationProblem {
   // Computes the optimized poses.
   void Solve(const std::vector<Constraint>& constraints);
 
-  const std::vector<NodeData>& node_data() const;
+  const std::vector<std::vector<NodeData>>& node_data() const;
   const std::vector<std::vector<SubmapData>>& submap_data() const;
 
  private:
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   FixZ fix_z_;
   std::vector<std::deque<ImuData>> imu_data_;
-  std::vector<NodeData> node_data_;
+  std::vector<std::vector<NodeData>> node_data_;
   std::vector<std::vector<SubmapData>> submap_data_;
   double gravity_constant_ = 9.8;
 };
