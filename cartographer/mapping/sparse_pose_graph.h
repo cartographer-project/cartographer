@@ -99,10 +99,10 @@ class SparsePoseGraph {
   // Serializes the constraints and trajectories.
   proto::SparsePoseGraph ToProto();
 
- protected:
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
 
+ protected:
   // Returns the mapping from Submaps* to trajectory IDs.
   virtual const std::unordered_map<const Submaps*, int>& trajectory_ids() = 0;
 };

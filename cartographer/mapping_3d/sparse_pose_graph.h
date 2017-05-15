@@ -91,8 +91,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
       EXCLUDES(mutex_);
 
- protected:
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
+ protected:
   const std::unordered_map<const mapping::Submaps*, int>& trajectory_ids()
       override EXCLUDES(mutex_);
 
