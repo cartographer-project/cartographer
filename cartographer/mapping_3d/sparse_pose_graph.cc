@@ -415,20 +415,21 @@ void SparsePoseGraph::RunOptimization() {
   }
 }
 
-std::vector<mapping::TrajectoryNode> SparsePoseGraph::GetTrajectoryNodes() {
+std::vector<std::vector<mapping::TrajectoryNode>>
+SparsePoseGraph::GetTrajectoryNodes() {
   common::MutexLocker locker(&mutex_);
-  return trajectory_nodes_;
+  std::vector<std::vector<mapping::TrajectoryNode>> result(
+      trajectory_ids_.size());
+  for (const auto& node : trajectory_nodes_) {
+    result.at(trajectory_ids_.at(node.constant_data->trajectory))
+        .push_back(node);
+  }
+  return result;
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   common::MutexLocker locker(&mutex_);
   return constraints_;
-}
-
-const std::unordered_map<const mapping::Submaps*, int>&
-SparsePoseGraph::trajectory_ids() {
-  common::MutexLocker locker(&mutex_);
-  return trajectory_ids_;
 }
 
 transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(

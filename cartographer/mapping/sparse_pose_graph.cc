@@ -36,23 +36,6 @@ proto::SparsePoseGraph::Constraint::Tag ToProto(
   LOG(FATAL) << "Unsupported tag.";
 }
 
-void GroupTrajectoryNodes(
-    const std::vector<TrajectoryNode>& trajectory_nodes,
-    const std::unordered_map<const Submaps*, int>& trajectory_ids,
-    std::vector<std::vector<TrajectoryNode>>* grouped_nodes,
-    std::vector<std::pair<int, int>>* new_indices) {
-  CHECK_NOTNULL(grouped_nodes)->clear();
-  CHECK_NOTNULL(new_indices)->clear();
-
-  grouped_nodes->resize(trajectory_ids.size());
-
-  for (const auto& node : trajectory_nodes) {
-    const int id = trajectory_ids.at(node.constant_data->trajectory);
-    new_indices->emplace_back(id, (*grouped_nodes)[id].size());
-    (*grouped_nodes)[id].push_back(node);
-  }
-}
-
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::SparsePoseGraphOptions options;
@@ -74,11 +57,6 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
 
 proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
-
-  std::vector<std::vector<TrajectoryNode>> grouped_nodes;
-  std::vector<std::pair<int, int>> grouped_node_indices;
-  GroupTrajectoryNodes(GetTrajectoryNodes(), trajectory_ids(), &grouped_nodes,
-                       &grouped_node_indices);
 
   for (const auto& constraint : constraints()) {
     auto* const constraint_proto = proto.add_constraint();
@@ -105,19 +83,22 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }
 
-  for (const auto& group : grouped_nodes) {
+  for (const auto& trajectory_nodes : GetTrajectoryNodes()) {
     auto* trajectory_proto = proto.add_trajectory();
-    for (const auto& node : group) {
+    for (const auto& node : trajectory_nodes) {
       auto* node_proto = trajectory_proto->add_node();
       node_proto->set_timestamp(common::ToUniversal(node.constant_data->time));
       *node_proto->mutable_pose() =
           transform::ToProto(node.pose * node.constant_data->tracking_to_pose);
     }
 
-    const Submaps* const trajectory = group[0].constant_data->trajectory;
-    for (const auto& transform : GetSubmapTransforms(trajectory)) {
-      *trajectory_proto->add_submap()->mutable_pose() =
-          transform::ToProto(transform);
+    if (!trajectory_nodes.empty()) {
+      const Submaps* const trajectory =
+          trajectory_nodes[0].constant_data->trajectory;
+      for (const auto& transform : GetSubmapTransforms(trajectory)) {
+        *trajectory_proto->add_submap()->mutable_pose() =
+            transform::ToProto(transform);
+      }
     }
   }
 

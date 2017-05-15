@@ -84,51 +84,6 @@ class MapLimits {
                .all();
   }
 
-  // Computes MapLimits that contain the origin, and all rays (both returns and
-  // misses) in the 'trajectory'.
-  static MapLimits ComputeMapLimits(
-      const double resolution,
-      const std::vector<mapping::TrajectoryNode>& trajectory_nodes) {
-    Eigen::AlignedBox2f bounding_box = ComputeMapBoundingBox(trajectory_nodes);
-    // Add some padding to ensure all rays are still contained in the map after
-    // discretization.
-    const float kPadding = 3.f * resolution;
-    bounding_box.min() -= kPadding * Eigen::Vector2f::Ones();
-    bounding_box.max() += kPadding * Eigen::Vector2f::Ones();
-    const Eigen::Vector2d pixel_sizes =
-        bounding_box.sizes().cast<double>() / resolution;
-    return MapLimits(resolution, bounding_box.max().cast<double>(),
-                     CellLimits(common::RoundToInt(pixel_sizes.y()),
-                                common::RoundToInt(pixel_sizes.x())));
-  }
-
-  static Eigen::AlignedBox2f ComputeMapBoundingBox(
-      const std::vector<mapping::TrajectoryNode>& trajectory_nodes) {
-    Eigen::AlignedBox2f bounding_box(Eigen::Vector2f::Zero());
-    for (const auto& node : trajectory_nodes) {
-      const auto& data = *node.constant_data;
-      if (!data.range_data_3d.returns.empty()) {
-        const sensor::RangeData range_data = sensor::TransformRangeData(
-            Decompress(data.range_data_3d), node.pose.cast<float>());
-        bounding_box.extend(range_data.origin.head<2>());
-        for (const Eigen::Vector3f& hit : range_data.returns) {
-          bounding_box.extend(hit.head<2>());
-        }
-      } else {
-        const sensor::RangeData range_data = sensor::TransformRangeData(
-            data.range_data_2d, node.pose.cast<float>());
-        bounding_box.extend(range_data.origin.head<2>());
-        for (const Eigen::Vector3f& hit : range_data.returns) {
-          bounding_box.extend(hit.head<2>());
-        }
-        for (const Eigen::Vector3f& miss : range_data.misses) {
-          bounding_box.extend(miss.head<2>());
-        }
-      }
-    }
-    return bounding_box;
-  }
-
  private:
   double resolution_;
   Eigen::Vector2d max_;

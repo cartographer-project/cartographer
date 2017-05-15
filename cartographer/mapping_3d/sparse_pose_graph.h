@@ -73,8 +73,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                const std::vector<const Submap*>& insertion_submaps)
       EXCLUDES(mutex_);
 
-  // The index into the vector of trajectory nodes as used with
-  // GetTrajectoryNodes() for the next node added with AddScan() is returned.
+  // The index into the flat vector of trajectory nodes used internally for the
+  // next node added with AddScan() is returned.
   int GetNextTrajectoryNodeIndex() EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
@@ -88,13 +88,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const mapping::Submaps* trajectory) EXCLUDES(mutex_) override;
   transform::Rigid3d GetLocalToGlobalTransform(const mapping::Submaps* submaps)
       EXCLUDES(mutex_) override;
-  std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
-      EXCLUDES(mutex_);
-  std::vector<Constraint> constraints() override EXCLUDES(mutex_);
-
- protected:
-  const std::unordered_map<const mapping::Submaps*, int>& trajectory_ids()
+  std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
       override EXCLUDES(mutex_);
+  std::vector<Constraint> constraints() override EXCLUDES(mutex_);
 
  private:
   struct SubmapState {
