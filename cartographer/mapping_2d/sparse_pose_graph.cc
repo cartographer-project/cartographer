@@ -215,7 +215,7 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
       submap_states_.at(submap_id.trajectory_id).at(submap_id.submap_index);
   const int num_nodes = scan_index_to_node_id_.size();
   for (int scan_index = 0; scan_index < num_nodes; ++scan_index) {
-    if (submap_state.scan_indices.count(scan_index) == 0) {
+    if (submap_state.node_ids.count(scan_index_to_node_id_[scan_index]) == 0) {
       ComputeConstraint(scan_index, submap_id);
     }
   }
