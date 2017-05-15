@@ -115,12 +115,12 @@ void SparsePoseGraph::AddScan(
   if (submap_ids_.count(insertion_submaps.back()) == 0) {
     submap_states_.resize(
         std::max<size_t>(submap_states_.size(), trajectory_id + 1));
+    auto& trajectory_submap_states = submap_states_.at(trajectory_id);
     submap_ids_.emplace(
         insertion_submaps.back(),
         mapping::SubmapId{
             trajectory_id,
-            static_cast<int>(submap_states_.at(trajectory_id).size())});
-    auto& trajectory_submap_states = submap_states_.at(trajectory_id);
+            static_cast<int>(trajectory_submap_states.size())});
     trajectory_submap_states.emplace_back();
     trajectory_submap_states.back().submap = insertion_submaps.back();
   }
@@ -461,26 +461,23 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
   }
 
   std::vector<transform::Rigid3d> result;
-  while (result.size() != submap_states_.at(trajectory_id).size()) {
-    const auto& state = submap_states_.at(trajectory_id).at(result.size());
+  for (const auto& state : submap_states_.at(trajectory_id)) {
     if (trajectory_id < submap_transforms.size() &&
         result.size() < submap_transforms.at(trajectory_id).size()) {
       // Submaps for which we have optimized poses.
       result.push_back(
           submap_transforms.at(trajectory_id).at(result.size()).pose);
+    } else if (result.empty()) {
+      result.push_back(transform::Rigid3d::Identity());
     } else {
-      // Extrapolate to the remaining submaps.
-      if (result.empty()) {
-        result.push_back(transform::Rigid3d::Identity());
-      } else {
-        // Accessing local_pose() in Submaps is okay, since the member is const.
-        result.push_back(result.back() *
-                         submap_states_.at(trajectory_id)
-                             .at(result.size() - 1)
-                             .submap->local_pose()
-                             .inverse() *
-                         state.submap->local_pose());
-      }
+      // Extrapolate to the remaining submaps. Accessing local_pose() in Submaps
+      // is okay, since the member is const.
+      result.push_back(result.back() *
+                       submap_states_.at(trajectory_id)
+                           .at(result.size() - 1)
+                           .submap->local_pose()
+                           .inverse() *
+                       state.submap->local_pose());
     }
   }
 
