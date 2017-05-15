@@ -329,11 +329,9 @@ void SparsePoseGraph::HandleScanQueue() {
 void SparsePoseGraph::WaitForAllComputations() {
   bool notification = false;
   common::MutexLocker locker(&mutex_);
-  const double progress_at_start =
-      constraint_builder_.GetProgress();
+  const double progress_at_start = constraint_builder_.GetProgress();
   while (!locker.AwaitWithTimeout(
-      [this]()
-          REQUIRES(mutex_) { return constraint_builder_.IsDone(); },
+      [this]() REQUIRES(mutex_) { return constraint_builder_.IsDone(); },
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)

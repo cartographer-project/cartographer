@@ -89,7 +89,7 @@ void ConstraintBuilder::MaybeAddConstraint(
 
 void ConstraintBuilder::MaybeAddGlobalConstraint(
     const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
-    const mapping::NodeId& node_id, 
+    const mapping::NodeId& node_id,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
     const sensor::PointCloud* const point_cloud) {
   common::MutexLocker locker(&mutex_);

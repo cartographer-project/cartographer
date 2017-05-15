@@ -155,8 +155,8 @@ class ConstraintBuilder {
   std::unique_ptr<std::function<void(const Result&)>> when_done_
       GUARDED_BY(mutex_);
 
-  // 'scheduled_computations_' is the next value added to 'pending_computations_'.
-  // It gets incremented for every scheduled work item.
+  // 'scheduled_computations_' is the next value added to
+  // 'pending_computations_'. It gets incremented for every scheduled work item.
   int64 scheduled_computations_ GUARDED_BY(mutex_) = 0;
   std::set<int64> pending_computations_ GUARDED_BY(mutex_);
 
