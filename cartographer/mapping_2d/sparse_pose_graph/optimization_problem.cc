@@ -66,7 +66,7 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
                                      const Eigen::Vector3d& angular_velocity) {
   CHECK_GE(trajectory_id, 0);
   imu_data_.resize(
-      std::max(submap_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+      std::max(imu_data_.size(), static_cast<size_t>(trajectory_id) + 1));
   imu_data_[trajectory_id].push_back(
       mapping_3d::ImuData{time, linear_acceleration, angular_velocity});
 }
@@ -75,8 +75,11 @@ void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
     const transform::Rigid2d& initial_point_cloud_pose,
     const transform::Rigid2d& point_cloud_pose) {
-  node_data_.push_back(NodeData{trajectory_id, time, initial_point_cloud_pose,
-                                point_cloud_pose});
+  CHECK_GE(trajectory_id, 0);
+  node_data_.resize(
+      std::max(node_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+  node_data_[trajectory_id].push_back(
+      NodeData{time, initial_point_cloud_pose, point_cloud_pose});
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
@@ -98,20 +101,13 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
     return;
   }
 
-  // Compute the indices of consecutive nodes for each trajectory.
-  std::vector<std::vector<size_t>> nodes_per_trajectory(submap_data_.size());
-  for (size_t j = 0; j != node_data_.size(); ++j) {
-    nodes_per_trajectory.at(node_data_[j].trajectory_id).push_back(j);
-  }
-
   ceres::Problem::Options problem_options;
   ceres::Problem problem(problem_options);
 
   // Set the starting point.
   // TODO(hrapp): Move ceres data into SubmapData.
   std::vector<std::deque<std::array<double, 3>>> C_submaps(submap_data_.size());
-  std::vector<std::deque<std::array<double, 3>>> C_nodes(
-      nodes_per_trajectory.size());
+  std::vector<std::deque<std::array<double, 3>>> C_nodes(node_data_.size());
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
     for (size_t submap_index = 0;
@@ -130,15 +126,13 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
       }
     }
   }
-  for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
+  for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    C_nodes[trajectory_id].resize(nodes_per_trajectory[trajectory_id].size());
-    for (size_t node_index = 0;
-         node_index != nodes_per_trajectory[trajectory_id].size();
+    C_nodes[trajectory_id].resize(node_data_[trajectory_id].size());
+    for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
          ++node_index) {
       C_nodes[trajectory_id][node_index] =
-          FromPose(node_data_[nodes_per_trajectory[trajectory_id][node_index]]
-                       .point_cloud_pose);
+          FromPose(node_data_[trajectory_id][node_index].point_cloud_pose);
       problem.AddParameterBlock(C_nodes[trajectory_id][node_index].data(), 3);
     }
   }
@@ -166,28 +160,22 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
       options_.consecutive_scan_translation_penalty_factor(),
       options_.consecutive_scan_rotation_penalty_factor());
 
-  for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
+  for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    if (nodes_per_trajectory[trajectory_id].empty()) {
-      continue;
-    }
-    for (size_t node_index = 1;
-         node_index != nodes_per_trajectory[trajectory_id].size();
+    for (size_t node_index = 1; node_index < node_data_[trajectory_id].size();
          ++node_index) {
       constexpr double kUnusedPositionPenalty = 1.;
       constexpr double kUnusedOrientationPenalty = 1.;
       problem.AddResidualBlock(
-          new ceres::AutoDiffCostFunction<
-              SpaCostFunction, 3, 3, 3>(new SpaCostFunction(Constraint::Pose{
-              transform::Embed3D(
-                  node_data_[nodes_per_trajectory[trajectory_id]
-                                                 [node_index - 1]]
-                      .initial_point_cloud_pose.inverse() *
-                  node_data_[nodes_per_trajectory[trajectory_id][node_index]]
-                      .initial_point_cloud_pose),
-              kalman_filter::Embed3D(consecutive_pose_change_penalty_matrix,
-                                     kUnusedPositionPenalty,
-                                     kUnusedOrientationPenalty)})),
+          new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
+              new SpaCostFunction(Constraint::Pose{
+                  transform::Embed3D(node_data_[trajectory_id][node_index - 1]
+                                         .initial_point_cloud_pose.inverse() *
+                                     node_data_[trajectory_id][node_index]
+                                         .initial_point_cloud_pose),
+                  kalman_filter::Embed3D(consecutive_pose_change_penalty_matrix,
+                                         kUnusedPositionPenalty,
+                                         kUnusedOrientationPenalty)})),
           nullptr /* loss function */,
           C_nodes[trajectory_id][node_index - 1].data(),
           C_nodes[trajectory_id][node_index].data());
@@ -213,18 +201,18 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
           ToPose(C_submaps[trajectory_id][submap_index]);
     }
   }
-  for (size_t trajectory_id = 0; trajectory_id != nodes_per_trajectory.size();
+  for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    for (size_t node_index = 0;
-         node_index != nodes_per_trajectory[trajectory_id].size();
+    for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
          ++node_index) {
-      node_data_[nodes_per_trajectory[trajectory_id][node_index]]
-          .point_cloud_pose = ToPose(C_nodes[trajectory_id][node_index]);
+      node_data_[trajectory_id][node_index].point_cloud_pose =
+          ToPose(C_nodes[trajectory_id][node_index]);
     }
   }
 }
 
-const std::vector<NodeData>& OptimizationProblem::node_data() const {
+const std::vector<std::vector<NodeData>>& OptimizationProblem::node_data()
+    const {
   return node_data_;
 }
 

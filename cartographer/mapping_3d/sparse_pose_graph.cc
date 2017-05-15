@@ -100,9 +100,6 @@ void SparsePoseGraph::AddScan(
   const int trajectory_id = trajectory_ids_.at(trajectory);
   const int flat_scan_index = trajectory_nodes_.size();
   CHECK_LT(flat_scan_index, std::numeric_limits<int>::max());
-  scan_index_to_node_id_.push_back(
-      mapping::NodeId{trajectory_id, num_nodes_in_trajectory_[trajectory_id]});
-  ++num_nodes_in_trajectory_[trajectory_id];
 
   constant_node_data_.push_back(mapping::TrajectoryNode::ConstantData{
       time, sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}},
@@ -167,12 +164,15 @@ void SparsePoseGraph::AddImuData(const mapping::Submaps* trajectory,
 
 void SparsePoseGraph::ComputeConstraint(const int scan_index,
                                         const mapping::SubmapId& submap_id) {
-  const transform::Rigid3d relative_pose =
-      optimization_problem_.submap_data()
-          .at(submap_id.trajectory_id)
-          .at(submap_id.submap_index)
-          .pose.inverse() *
-      optimization_problem_.node_data().at(scan_index).point_cloud_pose;
+  const mapping::NodeId node_id = scan_index_to_node_id_.at(scan_index);
+  const transform::Rigid3d relative_pose = optimization_problem_.submap_data()
+                                               .at(submap_id.trajectory_id)
+                                               .at(submap_id.submap_index)
+                                               .pose.inverse() *
+                                           optimization_problem_.node_data()
+                                               .at(node_id.trajectory_id)
+                                               .at(node_id.node_index)
+                                               .point_cloud_pose;
 
   const mapping::Submaps* const scan_trajectory =
       trajectory_nodes_[scan_index].constant_data->trajectory;
@@ -186,8 +186,7 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
         submap_states_.at(submap_id.trajectory_id)
             .at(submap_id.submap_index)
             .submap,
-        scan_index_to_node_id_.at(scan_index), scan_index,
-        &trajectory_connectivity_, trajectory_nodes_);
+        node_id, scan_index, &trajectory_connectivity_, trajectory_nodes_);
   } else {
     const bool scan_and_submap_trajectories_connected =
         reverse_connected_components_.count(scan_trajectory_id) > 0 &&
@@ -201,22 +200,18 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
           submap_states_.at(submap_id.trajectory_id)
               .at(submap_id.submap_index)
               .submap,
-          scan_index_to_node_id_.at(scan_index), scan_index, trajectory_nodes_,
-          relative_pose);
+          node_id, scan_index, trajectory_nodes_, relative_pose);
     }
   }
 }
 
 void SparsePoseGraph::ComputeConstraintsForOldScans(const Submap* submap) {
   const auto submap_id = GetSubmapId(submap);
-  const auto& node_data = optimization_problem_.node_data();
-  CHECK_GT(node_data.size(), 0);
-  CHECK_LT(node_data.size(), std::numeric_limits<int>::max());
-  const int num_nodes = node_data.size();
+  const auto& submap_state =
+      submap_states_.at(submap_id.trajectory_id).at(submap_id.submap_index);
+  const int num_nodes = scan_index_to_node_id_.size();
   for (int scan_index = 0; scan_index < num_nodes; ++scan_index) {
-    if (submap_states_.at(submap_id.trajectory_id)
-            .at(submap_id.submap_index)
-            .scan_indices.count(scan_index) == 0) {
+    if (submap_state.scan_indices.count(scan_index) == 0) {
       ComputeConstraint(scan_index, submap_id);
     }
   }
@@ -235,12 +230,17 @@ void SparsePoseGraph::ComputeConstraintsForScan(
           .at(matching_id.submap_index)
           .pose *
       matching_submap->local_pose().inverse() * pose;
-  CHECK_EQ(scan_index, optimization_problem_.node_data().size());
+  CHECK_EQ(scan_index, scan_index_to_node_id_.size());
+  scan_index_to_node_id_.push_back(
+      mapping::NodeId{matching_id.trajectory_id,
+                      num_nodes_in_trajectory_[matching_id.trajectory_id]});
+  ++num_nodes_in_trajectory_[matching_id.trajectory_id];
   const mapping::TrajectoryNode::ConstantData* const scan_data =
       trajectory_nodes_[scan_index].constant_data;
-  optimization_problem_.AddTrajectoryNode(
-      trajectory_ids_.at(scan_data->trajectory), scan_data->time,
-      optimized_pose);
+  CHECK_EQ(trajectory_ids_.at(scan_data->trajectory),
+           matching_id.trajectory_id);
+  optimization_problem_.AddTrajectoryNode(matching_id.trajectory_id,
+                                          scan_data->time, optimized_pose);
   for (const Submap* submap : insertion_submaps) {
     const mapping::SubmapId submap_id = GetSubmapId(submap);
     CHECK(!submap_states_.at(submap_id.trajectory_id)
@@ -378,9 +378,12 @@ void SparsePoseGraph::RunOptimization() {
   common::MutexLocker locker(&mutex_);
 
   const auto& node_data = optimization_problem_.node_data();
-  const size_t num_optimized_poses = node_data.size();
+  const size_t num_optimized_poses = scan_index_to_node_id_.size();
   for (size_t i = 0; i != num_optimized_poses; ++i) {
-    trajectory_nodes_[i].pose = node_data[i].point_cloud_pose;
+    trajectory_nodes_[i].pose =
+        node_data.at(scan_index_to_node_id_[i].trajectory_id)
+            .at(scan_index_to_node_id_[i].node_index)
+            .point_cloud_pose;
   }
   // Extrapolate all point cloud poses that were added later.
   std::unordered_map<const mapping::Submaps*, transform::Rigid3d>
@@ -459,6 +462,7 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
     return {transform::Rigid3d::Identity()};
   }
 
+  // Submaps for which we have optimized poses.
   std::vector<transform::Rigid3d> result;
   for (const auto& state : submap_states_.at(trajectory_id)) {
     if (trajectory_id < submap_transforms.size() &&
