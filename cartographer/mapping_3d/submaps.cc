@@ -239,8 +239,7 @@ const Submap* Submaps::Get(int index) const {
 int Submaps::size() const { return submaps_.size(); }
 
 void Submaps::SubmapToProto(
-    int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
-    const transform::Rigid3d& global_submap_pose,
+    int index, const transform::Rigid3d& global_submap_pose,
     mapping::proto::SubmapQuery::Response* const response) const {
   // Generate an X-ray view through the 'hybrid_grid', aligned to the xy-plane
   // in the global map frame.

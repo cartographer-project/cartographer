@@ -138,8 +138,8 @@ string MapBuilder::SubmapToProto(const int trajectory_id,
   }
 
   response->set_submap_version(submaps->Get(submap_index)->num_range_data);
-  submaps->SubmapToProto(submap_index, sparse_pose_graph_->GetTrajectoryNodes(),
-                         submap_transforms[submap_index], response);
+  submaps->SubmapToProto(submap_index, submap_transforms[submap_index],
+                         response);
   return "";
 }
 
