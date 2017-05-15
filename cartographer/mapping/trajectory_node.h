@@ -58,14 +58,6 @@ struct TrajectoryNode {
   transform::Rigid3d pose;
 };
 
-// Users will only be interested in 'trajectory_nodes'. But 'constant_data'
-// is referenced by 'trajectory_nodes'. This struct guarantees that their
-// lifetimes are bound.
-struct TrajectoryNodes {
-  std::deque<mapping::TrajectoryNode::ConstantData> constant_data;
-  std::vector<mapping::TrajectoryNode> trajectory_nodes;
-};
-
 }  // namespace mapping
 }  // namespace cartographer
 

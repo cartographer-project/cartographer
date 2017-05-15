@@ -113,10 +113,9 @@ class Submaps {
   virtual int size() const = 0;
 
   // Fills data about the Submap with 'index' into the 'response'.
-  virtual void SubmapToProto(
-      int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
-      const transform::Rigid3d& global_submap_pose,
-      proto::SubmapQuery::Response* response) const = 0;
+  virtual void SubmapToProto(int index,
+                             const transform::Rigid3d& global_submap_pose,
+                             proto::SubmapQuery::Response* response) const = 0;
 
  protected:
   static void AddProbabilityGridToResponse(
