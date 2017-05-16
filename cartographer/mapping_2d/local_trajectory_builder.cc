@@ -236,9 +236,8 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
                          transform::Embed3D(pose_estimate_2d.cast<float>())));
 
   return common::make_unique<InsertionResult>(InsertionResult{
-      time, &submaps_, matching_submap, insertion_submaps,
-      tracking_to_tracking_2d, tracking_2d_to_map, range_data_in_tracking_2d,
-      pose_estimate_2d, covariance_observation});
+      time, matching_submap, insertion_submaps, tracking_to_tracking_2d,
+      range_data_in_tracking_2d, pose_estimate_2d, covariance_observation});
 }
 
 const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate&

@@ -230,7 +230,7 @@ KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
       trajectory_node_index);
   return std::unique_ptr<InsertionResult>(new InsertionResult{
       time, range_data_in_tracking, pose_observation, covariance_estimate,
-      submaps_.get(), matching_submap, insertion_submaps});
+      matching_submap, insertion_submaps});
 }
 
 }  // namespace mapping_3d

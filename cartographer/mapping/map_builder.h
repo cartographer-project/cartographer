@@ -71,9 +71,6 @@ class MapBuilder {
   // unblocked.
   int GetBlockingTrajectoryId() const;
 
-  // Returns the trajectory ID for 'trajectory'.
-  int GetTrajectoryId(const mapping::Submaps* trajectory) const;
-
   // Returns the trajectory connectivity.
   proto::TrajectoryConnectivity GetTrajectoryConnectivity();
 
@@ -97,7 +94,6 @@ class MapBuilder {
 
   sensor::Collator sensor_collator_;
   std::vector<std::unique_ptr<mapping::TrajectoryBuilder>> trajectory_builders_;
-  std::unordered_map<const mapping::Submaps*, int> trajectory_ids_;
 };
 
 }  // namespace mapping

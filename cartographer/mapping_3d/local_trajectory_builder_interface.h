@@ -38,7 +38,6 @@ class LocalTrajectoryBuilderInterface {
     sensor::RangeData range_data_in_tracking;
     transform::Rigid3d pose_observation;
     kalman_filter::PoseCovariance covariance_estimate;
-    const Submaps* submaps;
     const Submap* matching_submap;
     std::vector<const Submap*> insertion_submaps;
   };
