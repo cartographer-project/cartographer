@@ -84,6 +84,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
   std::vector<transform::Rigid3d> GetSubmapTransforms(
       const mapping::Submaps* trajectory) EXCLUDES(mutex_) override;
+  std::vector<transform::Rigid3d> GetSubmapTransforms(int trajectory_id)
+      EXCLUDES(mutex_) override;
   transform::Rigid3d GetLocalToGlobalTransform(const mapping::Submaps* submaps)
       EXCLUDES(mutex_) override;
   std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
@@ -153,7 +155,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<transform::Rigid3d> ExtrapolateSubmapTransforms(
       const std::vector<std::vector<sparse_pose_graph::SubmapData>>&
           submap_transforms,
-      const mapping::Submaps* trajectory) const REQUIRES(mutex_);
+      size_t trajectory_id) const REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
