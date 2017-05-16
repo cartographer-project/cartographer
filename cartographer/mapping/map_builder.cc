@@ -78,7 +78,7 @@ int MapBuilder::AddTrajectoryBuilder(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
             common::make_unique<mapping_3d::GlobalTrajectoryBuilder>(
                 trajectory_options.trajectory_builder_3d_options(),
-                sparse_pose_graph_3d_.get())));
+                trajectory_id, sparse_pose_graph_3d_.get())));
   } else {
     CHECK(trajectory_options.has_trajectory_builder_2d_options());
     trajectory_builders_.push_back(
@@ -86,10 +86,8 @@ int MapBuilder::AddTrajectoryBuilder(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
             common::make_unique<mapping_2d::GlobalTrajectoryBuilder>(
                 trajectory_options.trajectory_builder_2d_options(),
-                sparse_pose_graph_2d_.get())));
+                trajectory_id, sparse_pose_graph_2d_.get())));
   }
-  trajectory_ids_.emplace(trajectory_builders_.back()->submaps(),
-                          trajectory_id);
   return trajectory_id;
 }
 
@@ -106,12 +104,6 @@ int MapBuilder::GetBlockingTrajectoryId() const {
   return sensor_collator_.GetBlockingTrajectoryId();
 }
 
-int MapBuilder::GetTrajectoryId(const Submaps* const trajectory) const {
-  const auto trajectory_id = trajectory_ids_.find(trajectory);
-  CHECK(trajectory_id != trajectory_ids_.end());
-  return trajectory_id->second;
-}
-
 proto::TrajectoryConnectivity MapBuilder::GetTrajectoryConnectivity() {
   return ToProto(sparse_pose_graph_->GetConnectedTrajectories());
 }
@@ -125,10 +117,8 @@ string MapBuilder::SubmapToProto(const int trajectory_id,
            " trajectories.";
   }
 
-  const Submaps* const submaps =
-      trajectory_builders_.at(trajectory_id)->submaps();
   const std::vector<transform::Rigid3d> submap_transforms =
-      sparse_pose_graph_->GetSubmapTransforms(submaps);
+      sparse_pose_graph_->GetSubmapTransforms(trajectory_id);
   if (submap_index < 0 ||
       static_cast<size_t>(submap_index) >= submap_transforms.size()) {
     return "Requested submap " + std::to_string(submap_index) +
@@ -137,6 +127,8 @@ string MapBuilder::SubmapToProto(const int trajectory_id,
            " submaps in this trajectory.";
   }
 
+  const Submaps* const submaps =
+      trajectory_builders_.at(trajectory_id)->submaps();
   response->set_submap_version(submaps->Get(submap_index)->num_range_data);
   submaps->SubmapToProto(submap_index, submap_transforms[submap_index],
                          response);

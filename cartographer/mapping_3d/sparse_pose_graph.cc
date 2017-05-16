@@ -89,15 +89,13 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
 void SparsePoseGraph::AddScan(
     common::Time time, const sensor::RangeData& range_data_in_tracking,
     const transform::Rigid3d& pose,
-    const kalman_filter::PoseCovariance& covariance,
-    const Submaps* const trajectory, const Submap* const matching_submap,
+    const kalman_filter::PoseCovariance& covariance, const int trajectory_id,
+    const Submap* const matching_submap,
     const std::vector<const Submap*>& insertion_submaps) {
   const transform::Rigid3d optimized_pose(
-      GetLocalToGlobalTransform(trajectory) * pose);
+      GetLocalToGlobalTransform(trajectory_id) * pose);
 
   common::MutexLocker locker(&mutex_);
-  trajectory_ids_.emplace(trajectory, trajectory_ids_.size());
-  const int trajectory_id = trajectory_ids_.at(trajectory);
   const int flat_scan_index = trajectory_nodes_.size();
   CHECK_LT(flat_scan_index, std::numeric_limits<int>::max());
 
@@ -150,15 +148,13 @@ void SparsePoseGraph::AddWorkItem(std::function<void()> work_item) {
   }
 }
 
-void SparsePoseGraph::AddImuData(const mapping::Submaps* trajectory,
-                                 common::Time time,
+void SparsePoseGraph::AddImuData(const int trajectory_id, common::Time time,
                                  const Eigen::Vector3d& linear_acceleration,
                                  const Eigen::Vector3d& angular_velocity) {
   common::MutexLocker locker(&mutex_);
-  trajectory_ids_.emplace(trajectory, trajectory_ids_.size());
   AddWorkItem([=]() REQUIRES(mutex_) {
-    optimization_problem_.AddImuData(trajectory_ids_.at(trajectory), time,
-                                     linear_acceleration, angular_velocity);
+    optimization_problem_.AddImuData(trajectory_id, time, linear_acceleration,
+                                     angular_velocity);
   });
 }
 
@@ -413,9 +409,10 @@ void SparsePoseGraph::RunOptimization() {
 std::vector<std::vector<mapping::TrajectoryNode>>
 SparsePoseGraph::GetTrajectoryNodes() {
   common::MutexLocker locker(&mutex_);
-  std::vector<std::vector<mapping::TrajectoryNode>> result(
-      trajectory_ids_.size());
+  std::vector<std::vector<mapping::TrajectoryNode>> result;
   for (const auto& node : trajectory_nodes_) {
+    result.resize(
+        std::max<size_t>(result.size(), node.constant_data->trajectory_id + 1));
     result.at(node.constant_data->trajectory_id).push_back(node);
   }
   return result;
@@ -427,27 +424,24 @@ std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
 }
 
 transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
-    const mapping::Submaps* const submaps) {
-  const auto extrapolated_submap_transforms = GetSubmapTransforms(submaps);
+    const int trajectory_id) {
+  common::MutexLocker locker(&mutex_);
+  if (submap_states_.size() <= static_cast<size_t>(trajectory_id) ||
+      submap_states_.at(trajectory_id).empty()) {
+    return transform::Rigid3d::Identity();
+  }
+  const auto extrapolated_submap_transforms =
+      ExtrapolateSubmapTransforms(optimized_submap_transforms_, trajectory_id);
   return extrapolated_submap_transforms.back() *
-         submaps->Get(extrapolated_submap_transforms.size() - 1)
-             ->local_pose()
+         submap_states_.at(trajectory_id)
+             .at(extrapolated_submap_transforms.size() - 1)
+             .submap->local_pose()
              .inverse();
 }
 
 std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
   common::MutexLocker locker(&mutex_);
   return connected_components_;
-}
-
-std::vector<transform::Rigid3d> SparsePoseGraph::GetSubmapTransforms(
-    const mapping::Submaps* const trajectory) {
-  common::MutexLocker locker(&mutex_);
-  if (trajectory_ids_.count(trajectory) == 0) {
-    return {transform::Rigid3d::Identity()};
-  }
-  return ExtrapolateSubmapTransforms(optimized_submap_transforms_,
-                                     trajectory_ids_.at(trajectory));
 }
 
 std::vector<transform::Rigid3d> SparsePoseGraph::GetSubmapTransforms(

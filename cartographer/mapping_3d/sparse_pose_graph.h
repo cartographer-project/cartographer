@@ -69,7 +69,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                const sensor::RangeData& range_data_in_tracking,
                const transform::Rigid3d& pose,
                const kalman_filter::PoseCovariance& pose_covariance,
-               const Submaps* trajectory, const Submap* matching_submap,
+               int trajectory_id, const Submap* matching_submap,
                const std::vector<const Submap*>& insertion_submaps)
       EXCLUDES(mutex_);
 
@@ -78,17 +78,15 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   int GetNextTrajectoryNodeIndex() EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
-  void AddImuData(const mapping::Submaps* trajectory, common::Time time,
+  void AddImuData(int trajectory_id, common::Time time,
                   const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
 
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
-  std::vector<transform::Rigid3d> GetSubmapTransforms(
-      const mapping::Submaps* trajectory) EXCLUDES(mutex_) override;
   std::vector<transform::Rigid3d> GetSubmapTransforms(int trajectory_id)
       EXCLUDES(mutex_) override;
-  transform::Rigid3d GetLocalToGlobalTransform(const mapping::Submaps* submaps)
+  transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id)
       EXCLUDES(mutex_) override;
   std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
       override EXCLUDES(mutex_);
@@ -209,10 +207,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Current submap transforms used for displaying data.
   std::vector<std::vector<sparse_pose_graph::SubmapData>>
       optimized_submap_transforms_ GUARDED_BY(mutex_);
-
-  // Map from submap pointers to trajectory IDs.
-  std::unordered_map<const mapping::Submaps*, int> trajectory_ids_
-      GUARDED_BY(mutex_);
 };
 
 }  // namespace mapping_3d

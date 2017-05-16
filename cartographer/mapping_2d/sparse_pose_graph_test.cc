@@ -158,11 +158,12 @@ class SparsePoseGraphTest : public ::testing::Test {
     const sensor::RangeData range_data{
         Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
+    constexpr int kTrajectoryId = 0;
     submaps_->InsertRangeData(TransformRangeData(
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
     sparse_pose_graph_->AddScan(common::FromUniversal(0),
                                 transform::Rigid3d::Identity(), range_data,
-                                pose_estimate, covariance, submaps_.get(),
+                                pose_estimate, covariance, kTrajectoryId,
                                 matching_submap, insertion_submaps);
   }
 

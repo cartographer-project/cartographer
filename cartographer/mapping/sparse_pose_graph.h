@@ -26,7 +26,6 @@
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
-#include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -71,11 +70,6 @@ class SparsePoseGraph {
   // Get the current trajectory clusters.
   virtual std::vector<std::vector<int>> GetConnectedTrajectories() = 0;
 
-  // Returns the current optimized transforms for the given 'trajectory'.
-  // TODO(hrapp): Remove this version.
-  virtual std::vector<transform::Rigid3d> GetSubmapTransforms(
-      const Submaps* trajectory) = 0;
-
   // Returns the current optimized transforms for the given 'trajectory_id'.
   virtual std::vector<transform::Rigid3d> GetSubmapTransforms(
       int trajectory_id) = 0;
@@ -83,8 +77,7 @@ class SparsePoseGraph {
   // Returns the transform converting data in the local map frame (i.e. the
   // continuous, non-loop-closed frame) into the global map frame (i.e. the
   // discontinuous, loop-closed frame).
-  virtual transform::Rigid3d GetLocalToGlobalTransform(
-      const Submaps* submaps) = 0;
+  virtual transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id) = 0;
 
   // Returns the current optimized trajectories.
   virtual std::vector<std::vector<TrajectoryNode>> GetTrajectoryNodes() = 0;

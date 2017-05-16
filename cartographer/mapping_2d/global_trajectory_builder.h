@@ -28,6 +28,7 @@ class GlobalTrajectoryBuilder
     : public mapping::GlobalTrajectoryBuilderInterface {
  public:
   GlobalTrajectoryBuilder(const proto::LocalTrajectoryBuilderOptions& options,
+                          int trajectory_id,
                           SparsePoseGraph* sparse_pose_graph);
   ~GlobalTrajectoryBuilder() override;
 
@@ -49,6 +50,7 @@ class GlobalTrajectoryBuilder
 
  private:
   const proto::LocalTrajectoryBuilderOptions options_;
+  const int trajectory_id_;
   SparsePoseGraph* const sparse_pose_graph_;
   LocalTrajectoryBuilder local_trajectory_builder_;
 };
