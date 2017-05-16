@@ -62,29 +62,6 @@ TEST(MapLimitsTest, ConstructAndGet) {
   EXPECT_EQ(42., limits.resolution());
 }
 
-TEST(MapLimitsTest, ComputeMapLimits) {
-  const mapping::TrajectoryNode::ConstantData constant_data{
-      common::FromUniversal(52),
-      sensor::RangeData{
-          Eigen::Vector3f::Zero(),
-          {Eigen::Vector3f(-30.f, 1.f, 0.f), Eigen::Vector3f(50.f, -10.f, 0.f)},
-          {}},
-      Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}}), nullptr,
-      transform::Rigid3d::Identity()};
-  const mapping::TrajectoryNode trajectory_node{&constant_data,
-                                                transform::Rigid3d::Identity()};
-  constexpr double kResolution = 0.05;
-  const MapLimits limits =
-      MapLimits::ComputeMapLimits(kResolution, {trajectory_node});
-  constexpr float kPaddingAwareTolerance = 5 * kResolution;
-  EXPECT_NEAR(50.f, limits.max().x(), kPaddingAwareTolerance);
-  EXPECT_NEAR(1.f, limits.max().y(), kPaddingAwareTolerance);
-  EXPECT_LT(200, limits.cell_limits().num_x_cells);
-  EXPECT_LT(1600, limits.cell_limits().num_y_cells);
-  EXPECT_GT(400, limits.cell_limits().num_x_cells);
-  EXPECT_GT(2000, limits.cell_limits().num_y_cells);
-}
-
 }  // namespace
 }  // namespace mapping_2d
 }  // namespace cartographer

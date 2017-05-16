@@ -86,13 +86,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const mapping::Submaps* trajectory) EXCLUDES(mutex_) override;
   transform::Rigid3d GetLocalToGlobalTransform(const mapping::Submaps* submaps)
       EXCLUDES(mutex_) override;
-  std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
-      EXCLUDES(mutex_);
-  std::vector<Constraint> constraints() override EXCLUDES(mutex_);
-
- protected:
-  const std::unordered_map<const mapping::Submaps*, int>& trajectory_ids()
+  std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
       override EXCLUDES(mutex_);
+  std::vector<Constraint> constraints() override EXCLUDES(mutex_);
 
  private:
   struct SubmapState {
