@@ -93,9 +93,8 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     }
 
     if (!trajectory_nodes.empty()) {
-      const Submaps* const trajectory =
-          trajectory_nodes[0].constant_data->trajectory;
-      for (const auto& transform : GetSubmapTransforms(trajectory)) {
+      for (const auto& transform : GetSubmapTransforms(
+               trajectory_nodes[0].constant_data->trajectory_id)) {
         *trajectory_proto->add_submap()->mutable_pose() =
             transform::ToProto(transform);
       }

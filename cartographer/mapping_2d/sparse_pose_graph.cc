@@ -105,8 +105,8 @@ void SparsePoseGraph::AddScan(
 
   constant_node_data_.push_back(mapping::TrajectoryNode::ConstantData{
       time, range_data_in_pose,
-      Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}}), trajectory,
-      tracking_to_pose});
+      Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}}),
+      trajectory_id, tracking_to_pose});
   trajectory_nodes_.push_back(mapping::TrajectoryNode{
       &constant_node_data_.back(), optimized_pose,
   });
@@ -174,9 +174,8 @@ void SparsePoseGraph::ComputeConstraint(const int scan_index,
                                                .at(node_id.node_index)
                                                .point_cloud_pose;
 
-  const mapping::Submaps* const scan_trajectory =
-      trajectory_nodes_[scan_index].constant_data->trajectory;
-  const int scan_trajectory_id = trajectory_ids_.at(scan_trajectory);
+  const int scan_trajectory_id =
+      trajectory_nodes_[scan_index].constant_data->trajectory_id;
 
   // Only globally match against submaps not in this trajectory.
   if (scan_trajectory_id != submap_id.trajectory_id &&
@@ -242,8 +241,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   ++num_nodes_in_trajectory_[matching_id.trajectory_id];
   const mapping::TrajectoryNode::ConstantData* const scan_data =
       trajectory_nodes_[scan_index].constant_data;
-  CHECK_EQ(trajectory_ids_.at(scan_data->trajectory),
-           matching_id.trajectory_id);
+  CHECK_EQ(scan_data->trajectory_id, matching_id.trajectory_id);
   optimization_problem_.AddTrajectoryNode(
       matching_id.trajectory_id, scan_data->time, pose, optimized_pose);
   for (const mapping::Submap* submap : insertion_submaps) {
@@ -396,23 +394,21 @@ void SparsePoseGraph::RunOptimization() {
                                .point_cloud_pose);
   }
   // Extrapolate all point cloud poses that were added later.
-  std::unordered_map<const mapping::Submaps*, transform::Rigid3d>
-      extrapolation_transforms;
+  std::unordered_map<int, transform::Rigid3d> extrapolation_transforms;
   for (size_t i = num_optimized_poses; i != trajectory_nodes_.size(); ++i) {
-    const mapping::Submaps* trajectory =
-        trajectory_nodes_[i].constant_data->trajectory;
-    if (extrapolation_transforms.count(trajectory) == 0) {
+    const int trajectory_id = trajectory_nodes_[i].constant_data->trajectory_id;
+    if (extrapolation_transforms.count(trajectory_id) == 0) {
       const auto new_submap_transforms = ExtrapolateSubmapTransforms(
-          optimization_problem_.submap_data(), trajectory);
-      const auto old_submap_transforms =
-          ExtrapolateSubmapTransforms(optimized_submap_transforms_, trajectory);
+          optimization_problem_.submap_data(), trajectory_id);
+      const auto old_submap_transforms = ExtrapolateSubmapTransforms(
+          optimized_submap_transforms_, trajectory_id);
       CHECK_EQ(new_submap_transforms.size(), old_submap_transforms.size());
-      extrapolation_transforms[trajectory] =
+      extrapolation_transforms[trajectory_id] =
           transform::Rigid3d(new_submap_transforms.back() *
                              old_submap_transforms.back().inverse());
     }
     trajectory_nodes_[i].pose =
-        extrapolation_transforms[trajectory] * trajectory_nodes_[i].pose;
+        extrapolation_transforms[trajectory_id] * trajectory_nodes_[i].pose;
   }
   optimized_submap_transforms_ = optimization_problem_.submap_data();
   connected_components_ = trajectory_connectivity_.ConnectedComponents();
@@ -430,8 +426,7 @@ SparsePoseGraph::GetTrajectoryNodes() {
   std::vector<std::vector<mapping::TrajectoryNode>> result(
       trajectory_ids_.size());
   for (const auto& node : trajectory_nodes_) {
-    result.at(trajectory_ids_.at(node.constant_data->trajectory))
-        .push_back(node);
+    result.at(node.constant_data->trajectory_id).push_back(node);
   }
   return result;
 }
@@ -458,17 +453,24 @@ std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
 std::vector<transform::Rigid3d> SparsePoseGraph::GetSubmapTransforms(
     const mapping::Submaps* const trajectory) {
   common::MutexLocker locker(&mutex_);
-  return ExtrapolateSubmapTransforms(optimized_submap_transforms_, trajectory);
+  if (trajectory_ids_.count(trajectory) == 0) {
+    return {transform::Rigid3d::Identity()};
+  }
+  return ExtrapolateSubmapTransforms(optimized_submap_transforms_,
+                                     trajectory_ids_.at(trajectory));
+}
+
+std::vector<transform::Rigid3d> SparsePoseGraph::GetSubmapTransforms(
+    const int trajectory_id) {
+  common::MutexLocker locker(&mutex_);
+  return ExtrapolateSubmapTransforms(optimized_submap_transforms_,
+                                     trajectory_id);
 }
 
 std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
     const std::vector<std::vector<sparse_pose_graph::SubmapData>>&
         submap_transforms,
-    const mapping::Submaps* const trajectory) const {
-  if (trajectory_ids_.count(trajectory) == 0) {
-    return {transform::Rigid3d::Identity()};
-  }
-  const size_t trajectory_id = trajectory_ids_.at(trajectory);
+    const size_t trajectory_id) const {
   if (trajectory_id >= submap_states_.size()) {
     return {transform::Rigid3d::Identity()};
   }

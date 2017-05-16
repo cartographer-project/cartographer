@@ -41,9 +41,7 @@ struct TrajectoryNode {
     sensor::CompressedRangeData range_data_3d;
 
     // Trajectory this node belongs to.
-    // TODO(macmason): The naming here is confusing because 'trajectory'
-    // doesn't seem like a good name for a Submaps*. Sort this out.
-    const Submaps* trajectory;
+    int trajectory_id;
 
     // Transform from the 3D 'tracking' frame to the 'pose' frame of the range
     // data, which contains roll, pitch and height for 2D. In 3D this is always
