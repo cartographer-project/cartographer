@@ -72,7 +72,7 @@ class ConstraintBuilder {
   ConstraintBuilder& operator=(const ConstraintBuilder&) = delete;
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_id', and the 'point_cloud' for 'flat_scan_index'.
+  // 'submap_id', and the 'point_cloud' for 'node_id'.
   // The 'initial_pose' is relative to the 'submap'.
   //
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
@@ -80,36 +80,32 @@ class ConstraintBuilder {
   void MaybeAddConstraint(const mapping::SubmapId& submap_id,
                           const mapping::Submap* submap,
                           const mapping::NodeId& node_id,
-                          const int flat_scan_index,
                           const sensor::PointCloud* point_cloud,
                           const transform::Rigid2d& initial_relative_pose);
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_id' and the 'point_cloud' for 'flat_scan_index'. This performs
+  // 'submap_id' and the 'point_cloud' for 'node_id'. This performs
   // full-submap matching.
   //
-  // The scan at 'flat_scan_index' should be from trajectory
-  // 'node_id.trajectory_id'. The 'trajectory_connectivity' is updated if the
-  // full-submap match succeeds.
+  // The 'trajectory_connectivity' is updated if the full-submap match succeeds.
   //
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
   // computations are finished.
   void MaybeAddGlobalConstraint(
       const mapping::SubmapId& submap_id, const mapping::Submap* submap,
-      const mapping::NodeId& node_id, const int flat_scan_index,
+      const mapping::NodeId& node_id,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::PointCloud* point_cloud);
-
-  // Must be called after all computations related to 'flat_scan_index' are
-  // added.
-  void NotifyEndOfScan(const int flat_scan_index);
 
   // Registers the 'callback' to be called with the results, after all
   // computations triggered by MaybeAddConstraint() have finished.
   void WhenDone(std::function<void(const Result&)> callback);
 
-  // Returns the number of consecutive finished scans.
-  int GetNumFinishedScans();
+  // Returns the total progress between 0. and 1. of all work scheduled so far.
+  double GetProgress();
+
+  // Returns true if all scheduled work was completed.
+  bool IsDone();
 
  private:
   struct SubmapScanMatcher {
@@ -147,9 +143,9 @@ class ConstraintBuilder {
       const transform::Rigid2d& initial_relative_pose,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);
 
-  // Decrements the 'pending_computations_' count. If all computations are done,
-  // runs the 'when_done_' callback and resets the state.
-  void FinishComputation(int computation_index) EXCLUDES(mutex_);
+  // Removes from 'pending_computations_'. If all computations are done, runs
+  // the 'when_done_' callback and resets the state.
+  void FinishComputation(int64 computation_index) EXCLUDES(mutex_);
 
   const mapping::sparse_pose_graph::proto::ConstraintBuilderOptions options_;
   common::ThreadPool* thread_pool_;
@@ -159,14 +155,10 @@ class ConstraintBuilder {
   std::unique_ptr<std::function<void(const Result&)>> when_done_
       GUARDED_BY(mutex_);
 
-  // Index of the scan in reaction to which computations are currently
-  // added. This is always the highest scan index seen so far, even when older
-  // scans are matched against a new submap.
-  int current_computation_ GUARDED_BY(mutex_) = 0;
-
-  // For each added scan, maps to the number of pending computations that were
-  // added for it.
-  std::map<int, int> pending_computations_ GUARDED_BY(mutex_);
+  // 'scheduled_computations_' is the next value added to
+  // 'pending_computations_'. It gets incremented for every scheduled work item.
+  int64 scheduled_computations_ GUARDED_BY(mutex_) = 0;
+  std::set<int64> pending_computations_ GUARDED_BY(mutex_);
 
   // Constraints currently being computed in the background. A deque is used to
   // keep pointers valid when adding more entries.

@@ -84,27 +84,28 @@ void ConstraintBuilder::MaybeAddConstraint(
       options_.max_constraint_distance()) {
     return;
   }
-  if (sampler_.Pulse()) {
-    const auto submap_nodes = ComputeSubmapNodes(
-        trajectory_nodes, submap, flat_scan_index, initial_relative_pose);
-    common::MutexLocker locker(&mutex_);
-    CHECK_LE(flat_scan_index, current_computation_);
-    constraints_.emplace_back();
-    auto* const constraint = &constraints_.back();
-    ++pending_computations_[current_computation_];
-    const int current_computation = current_computation_;
-    const auto* const point_cloud =
-        &trajectory_nodes[flat_scan_index].constant_data->range_data_3d.returns;
-    ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-        submap_id, submap_nodes, &submap->high_resolution_hybrid_grid,
-        [=]() EXCLUDES(mutex_) {
-          ComputeConstraint(submap_id, submap, node_id,
-                            false,   /* match_full_submap */
-                            nullptr, /* trajectory_connectivity */
-                            point_cloud, initial_relative_pose, constraint);
-          FinishComputation(current_computation);
-        });
+  if (!sampler_.Pulse()) {
+    return;
   }
+  const auto submap_nodes = ComputeSubmapNodes(
+      trajectory_nodes, submap, flat_scan_index, initial_relative_pose);
+  common::MutexLocker locker(&mutex_);
+  constraints_.emplace_back();
+  auto* const constraint = &constraints_.back();
+  const int64 current_computation = scheduled_computations_;
+  pending_computations_.insert(current_computation);
+  ++scheduled_computations_;
+  const auto* const point_cloud =
+      &trajectory_nodes[flat_scan_index].constant_data->range_data_3d.returns;
+  ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
+      submap_id, submap_nodes, &submap->high_resolution_hybrid_grid,
+      [=]() EXCLUDES(mutex_) {
+        ComputeConstraint(submap_id, submap, node_id,
+                          false,   /* match_full_submap */
+                          nullptr, /* trajectory_connectivity */
+                          point_cloud, initial_relative_pose, constraint);
+        FinishComputation(current_computation);
+      });
 }
 
 void ConstraintBuilder::MaybeAddGlobalConstraint(
@@ -116,11 +117,11 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
       ComputeSubmapNodes(trajectory_nodes, submap, flat_scan_index,
                          transform::Rigid3d::Identity());
   common::MutexLocker locker(&mutex_);
-  CHECK_LE(flat_scan_index, current_computation_);
   constraints_.emplace_back();
   auto* const constraint = &constraints_.back();
-  ++pending_computations_[current_computation_];
-  const int current_computation = current_computation_;
+  const int64 current_computation = scheduled_computations_;
+  pending_computations_.insert(current_computation);
+  ++scheduled_computations_;
   const auto* const point_cloud =
       &trajectory_nodes[flat_scan_index].constant_data->range_data_3d.returns;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
@@ -134,20 +135,15 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
       });
 }
 
-void ConstraintBuilder::NotifyEndOfScan(const int flat_scan_index) {
-  common::MutexLocker locker(&mutex_);
-  CHECK_EQ(current_computation_, flat_scan_index);
-  ++current_computation_;
-}
-
 void ConstraintBuilder::WhenDone(
     const std::function<void(const ConstraintBuilder::Result&)> callback) {
   common::MutexLocker locker(&mutex_);
   CHECK(when_done_ == nullptr);
   when_done_ =
       common::make_unique<std::function<void(const Result&)>>(callback);
-  ++pending_computations_[current_computation_];
-  const int current_computation = current_computation_;
+  const int64 current_computation = scheduled_computations_;
+  pending_computations_.insert(current_computation);
+  ++scheduled_computations_;
   thread_pool_->Schedule(
       [this, current_computation] { FinishComputation(current_computation); });
 }
@@ -278,14 +274,12 @@ void ConstraintBuilder::ComputeConstraint(
   }
 }
 
-void ConstraintBuilder::FinishComputation(const int computation_index) {
+void ConstraintBuilder::FinishComputation(const int64 computation_index) {
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
     common::MutexLocker locker(&mutex_);
-    if (--pending_computations_[computation_index] == 0) {
-      pending_computations_.erase(computation_index);
-    }
+    pending_computations_.erase(computation_index);
     if (pending_computations_.empty()) {
       CHECK_EQ(submap_queued_work_items_.size(), 0);
       if (when_done_ != nullptr) {
@@ -311,12 +305,18 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
   }
 }
 
-int ConstraintBuilder::GetNumFinishedScans() {
+double ConstraintBuilder::GetProgress() {
   common::MutexLocker locker(&mutex_);
   if (pending_computations_.empty()) {
-    return current_computation_;
+    return 1.;
   }
-  return pending_computations_.begin()->first;
+  return *pending_computations_.begin() /
+         static_cast<double>(scheduled_computations_);
+}
+
+bool ConstraintBuilder::IsDone() {
+  common::MutexLocker locker(&mutex_);
+  return pending_computations_.empty();
 }
 
 }  // namespace sparse_pose_graph

@@ -27,7 +27,6 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/fixed_ratio_sampler.h"
 #include "cartographer/common/histogram.h"
-#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
@@ -94,16 +93,15 @@ class ConstraintBuilder {
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const std::vector<mapping::TrajectoryNode>& trajectory_nodes);
 
-  // Must be called after all computations related to 'flat_scan_index' are
-  // added.
-  void NotifyEndOfScan(int flat_scan_index);
-
   // Registers the 'callback' to be called with the results, after all
   // computations triggered by MaybeAddConstraint() have finished.
   void WhenDone(std::function<void(const Result&)> callback);
 
-  // Returns the number of consecutive finished scans.
-  int GetNumFinishedScans();
+  // Returns the total progress between 0. and 1. of all work scheduled so far.
+  double GetProgress();
+
+  // Returns true if all scheduled work was completed.
+  bool IsDone();
 
  private:
   struct SubmapScanMatcher {
@@ -144,9 +142,9 @@ class ConstraintBuilder {
       const transform::Rigid3d& initial_relative_pose,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);
 
-  // Decrements the 'pending_computations_' count. If all computations are done,
-  // runs the 'when_done_' callback and resets the state.
-  void FinishComputation(int computation_index) EXCLUDES(mutex_);
+  // Removes from 'pending_computations_'. If all computations are done, runs
+  // the 'when_done_' callback and resets the state.
+  void FinishComputation(int64 computation_index) EXCLUDES(mutex_);
 
   const mapping::sparse_pose_graph::proto::ConstraintBuilderOptions options_;
   common::ThreadPool* thread_pool_;
@@ -156,14 +154,10 @@ class ConstraintBuilder {
   std::unique_ptr<std::function<void(const Result&)>> when_done_
       GUARDED_BY(mutex_);
 
-  // Index of the scan in reaction to which computations are currently
-  // added. This is always the highest scan index seen so far, even when older
-  // scans are matched against a new submap.
-  int current_computation_ GUARDED_BY(mutex_) = 0;
-
-  // For each added scan, maps to the number of pending computations that were
-  // added for it.
-  std::map<int, int> pending_computations_ GUARDED_BY(mutex_);
+  // 'scheduled_computations_' is the next value added to
+  // 'pending_computations_'. It gets incremented for every scheduled work item.
+  int64 scheduled_computations_ GUARDED_BY(mutex_) = 0;
+  std::set<int64> pending_computations_ GUARDED_BY(mutex_);
 
   // Constraints currently being computed in the background. A deque is used to
   // keep pointers valid when adding more entries.

@@ -284,7 +284,6 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     ComputeConstraintsForOldScans(finished_submap);
     finished_submap_state.finished = true;
   }
-  constraint_builder_.NotifyEndOfScan(scan_index);
   ++num_scans_since_last_loop_closure_;
   if (options_.optimize_every_n_scans() > 0 &&
       num_scans_since_last_loop_closure_ > options_.optimize_every_n_scans()) {
@@ -324,21 +323,16 @@ void SparsePoseGraph::HandleScanQueue() {
 void SparsePoseGraph::WaitForAllComputations() {
   bool notification = false;
   common::MutexLocker locker(&mutex_);
-  const int num_finished_scans_at_start =
-      constraint_builder_.GetNumFinishedScans();
+  const double progress_at_start = constraint_builder_.GetProgress();
   while (!locker.AwaitWithTimeout(
-      [this]() REQUIRES(mutex_) {
-        return static_cast<size_t>(constraint_builder_.GetNumFinishedScans()) ==
-               trajectory_nodes_.size();
-      },
+      [this]() REQUIRES(mutex_) { return constraint_builder_.IsDone(); },
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
                   << 100. *
-                         (constraint_builder_.GetNumFinishedScans() -
-                          num_finished_scans_at_start) /
-                         (trajectory_nodes_.size() -
-                          num_finished_scans_at_start)
+                         (constraint_builder_.GetProgress() -
+                          progress_at_start) /
+                         (1. - progress_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
