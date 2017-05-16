@@ -49,7 +49,6 @@ class GlobalTrajectoryBuilder
                        const transform::Rigid3d& pose) override;
 
  private:
-  const proto::LocalTrajectoryBuilderOptions options_;
   const int trajectory_id_;
   SparsePoseGraph* const sparse_pose_graph_;
   LocalTrajectoryBuilder local_trajectory_builder_;

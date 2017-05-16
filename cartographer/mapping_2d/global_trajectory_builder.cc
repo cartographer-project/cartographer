@@ -22,8 +22,7 @@ namespace mapping_2d {
 GlobalTrajectoryBuilder::GlobalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions& options,
     const int trajectory_id, SparsePoseGraph* sparse_pose_graph)
-    : options_(options),
-      trajectory_id_(trajectory_id),
+    : trajectory_id_(trajectory_id),
       sparse_pose_graph_(sparse_pose_graph),
       local_trajectory_builder_(options) {}
 

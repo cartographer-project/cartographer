@@ -406,9 +406,9 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
   const kalman_filter::PoseCovariance kCovariance =
       1e-7 * kalman_filter::PoseCovariance::Identity();
 
-  return std::unique_ptr<InsertionResult>(new InsertionResult{
-      time, range_data_in_tracking, pose_observation, kCovariance,
-      submaps_.get(), matching_submap, insertion_submaps});
+  return std::unique_ptr<InsertionResult>(
+      new InsertionResult{time, range_data_in_tracking, pose_observation,
+                          kCovariance, matching_submap, insertion_submaps});
 }
 
 OptimizingLocalTrajectoryBuilder::State

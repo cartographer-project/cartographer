@@ -45,11 +45,9 @@ class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
     common::Time time;
-    const mapping::Submaps* submaps;
     const mapping::Submap* matching_submap;
     std::vector<const mapping::Submap*> insertion_submaps;
     transform::Rigid3d tracking_to_tracking_2d;
-    transform::Rigid3d tracking_2d_to_map;
     sensor::RangeData range_data_in_tracking_2d;
     transform::Rigid2d pose_estimate_2d;
     kalman_filter::PoseCovariance covariance_estimate;
