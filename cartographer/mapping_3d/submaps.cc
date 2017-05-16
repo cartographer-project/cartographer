@@ -273,8 +273,7 @@ void Submaps::SubmapToProto(
                              global_submap_pose.translation().z())));
 }
 
-void Submaps::InsertRangeData(const sensor::RangeData& range_data,
-                              const int trajectory_node_index) {
+void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
     range_data_inserter_.Insert(
@@ -284,7 +283,6 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data,
     range_data_inserter_.Insert(range_data,
                                 &submap->low_resolution_hybrid_grid);
     ++submap->num_range_data;
-    submap->trajectory_node_indices.push_back(trajectory_node_index);
   }
   const Submap* const last_submap = Get(size() - 1);
   if (last_submap->num_range_data == options_.num_range_data()) {

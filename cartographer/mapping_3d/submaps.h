@@ -23,6 +23,7 @@
 
 #include "Eigen/Geometry"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/id.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping_2d/probability_grid.h"
@@ -52,8 +53,6 @@ struct Submap : public mapping::Submap {
   HybridGrid high_resolution_hybrid_grid;
   HybridGrid low_resolution_hybrid_grid;
   bool finished = false;
-  // Indices into the nodes of the SparsePoseGraph used to visualize the submap.
-  std::vector<int> trajectory_node_indices;
 };
 
 // A container of Submaps.
@@ -71,8 +70,7 @@ class Submaps : public mapping::Submaps {
       mapping::proto::SubmapQuery::Response* response) const override;
 
   // Inserts 'range_data' into the Submap collection.
-  void InsertRangeData(const sensor::RangeData& range_data,
-                       int trajectory_node_index);
+  void InsertRangeData(const sensor::RangeData& range_data);
 
   // Returns the 'high_resolution' HybridGrid to be used for matching.
   const HybridGrid& high_resolution_matching_grid() const;
