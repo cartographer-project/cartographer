@@ -129,7 +129,8 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
     max_point_distance = std::max(max_point_distance, point.norm());
   }
   const int linear_window_size =
-      (width_in_voxels_ + 1) / 2 + std::ceil(max_point_distance);
+      (width_in_voxels_ + 1) / 2 +
+      common::RoundToInt(max_point_distance / resolution_ + 0.5f);
   const SearchParameters search_parameters{linear_window_size,
                                            linear_window_size, M_PI};
   return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
