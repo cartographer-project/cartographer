@@ -106,10 +106,9 @@ void SparsePoseGraph::AddScan(
       trajectory_id, tracking_to_pose});
   trajectory_nodes_.resize(
       std::max<size_t>(trajectory_nodes_.size(), trajectory_id + 1));
-  trajectory_nodes_.at(trajectory_id)
-      .push_back(mapping::TrajectoryNode{
-          &constant_node_data_.back(), optimized_pose,
-      });
+  trajectory_nodes_[trajectory_id].push_back(mapping::TrajectoryNode{
+      &constant_node_data_.back(), optimized_pose,
+  });
   ++num_trajectory_nodes_;
   trajectory_connectivity_.Add(trajectory_id);
 
@@ -163,15 +162,6 @@ void SparsePoseGraph::AddImuData(const int trajectory_id, common::Time time,
 
 void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
                                         const mapping::SubmapId& submap_id) {
-  const transform::Rigid2d relative_pose = optimization_problem_.submap_data()
-                                               .at(submap_id.trajectory_id)
-                                               .at(submap_id.submap_index)
-                                               .pose.inverse() *
-                                           optimization_problem_.node_data()
-                                               .at(node_id.trajectory_id)
-                                               .at(node_id.node_index)
-                                               .point_cloud_pose;
-
   // Only globally match against submaps not in this trajectory.
   if (node_id.trajectory_id != submap_id.trajectory_id &&
       global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
@@ -193,6 +183,16 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
             reverse_connected_components_.at(submap_id.trajectory_id);
     if (node_id.trajectory_id == submap_id.trajectory_id ||
         scan_and_submap_trajectories_connected) {
+      const transform::Rigid2d initial_relative_pose =
+          optimization_problem_.submap_data()
+              .at(submap_id.trajectory_id)
+              .at(submap_id.submap_index)
+              .pose.inverse() *
+          optimization_problem_.node_data()
+              .at(node_id.trajectory_id)
+              .at(node_id.node_index)
+              .point_cloud_pose;
+
       constraint_builder_.MaybeAddConstraint(
           submap_id,
           submap_states_.at(submap_id.trajectory_id)
@@ -202,7 +202,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
           &trajectory_nodes_.at(node_id.trajectory_id)
                .at(node_id.node_index)
                .constant_data->range_data_2d.returns,
-          relative_pose);
+          initial_relative_pose);
     }
   }
 }

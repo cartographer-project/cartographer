@@ -105,9 +105,8 @@ void SparsePoseGraph::AddScan(
       transform::Rigid3d::Identity()});
   trajectory_nodes_.resize(
       std::max<size_t>(trajectory_nodes_.size(), trajectory_id + 1));
-  trajectory_nodes_.at(trajectory_id)
-      .push_back(
-          mapping::TrajectoryNode{&constant_node_data_.back(), optimized_pose});
+  trajectory_nodes_[trajectory_id].push_back(
+      mapping::TrajectoryNode{&constant_node_data_.back(), optimized_pose});
   ++num_trajectory_nodes_;
   trajectory_connectivity_.Add(trajectory_id);
 
