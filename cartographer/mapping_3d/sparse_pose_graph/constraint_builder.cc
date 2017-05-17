@@ -236,15 +236,19 @@ void ConstraintBuilder::ComputeConstraint(
       OptimizationProblem::Constraint::INTER_SUBMAP});
 
   if (options_.log_matches()) {
-    const transform::Rigid3d difference =
-        initial_pose.inverse() * pose_estimate;
     std::ostringstream info;
     info << "Node " << node_id << " with " << filtered_point_cloud.size()
-         << " points on submap " << submap_id << " differs by translation "
-         << std::fixed << std::setprecision(2)
-         << difference.translation().norm() << " rotation "
-         << std::setprecision(3) << transform::GetAngle(difference)
-         << " with score " << std::setprecision(1) << 100. * score << "%.";
+         << " points on submap " << submap_id << std::fixed;
+    if (match_full_submap) {
+      info << " matches";
+    } else {
+      const transform::Rigid3d difference =
+          initial_pose.inverse() * pose_estimate;
+      info << " differs by translation " << std::setprecision(2)
+           << difference.translation().norm() << " rotation "
+           << std::setprecision(3) << transform::GetAngle(difference);
+    }
+    info << " with score " << std::setprecision(1) << 100. * score << "%.";
     LOG(INFO) << info.str();
   }
 }
