@@ -68,35 +68,35 @@ class ConstraintBuilder {
   ConstraintBuilder& operator=(const ConstraintBuilder&) = delete;
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_id', and the 'range_data_3d.returns' in 'trajectory_nodes' for
-  // 'flat_scan_index'. The 'initial_relative_pose' is relative to the 'submap'.
+  // 'submap_id', and the 'point_cloud' for 'node_id'.
+  // The 'initial_relative_pose' is relative to the 'submap'.
   //
-  // The pointees of 'submap' and 'range_data_3d.returns' must stay valid until
+  // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddConstraint(
       const mapping::SubmapId& submap_id, const Submap* submap,
-      const mapping::NodeId& node_id, int flat_scan_index,
-      const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
+      const mapping::NodeId& node_id,
+      const sensor::CompressedPointCloud* compressed_point_cloud,
+      const std::vector<mapping::TrajectoryNode>& submap_nodes,
       const transform::Rigid3d& initial_relative_pose);
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_id' and the 'range_data_3d.returns' in 'trajectory_nodes' for
-  // 'flat_scan_index'. This performs full-submap matching.
+  // 'submap_id' and the 'compressed_point_cloud' for 'node_id'.
+  // This performs full-submap matching.
   //
-  // The scan at 'flat_scan_index' should be from 'node_id.trajectory_id'.
   // The 'trajectory_connectivity' is updated if the full-submap match succeeds.
   //
-  // The pointees of 'submap' and 'range_data_3d.returns' must stay valid until
+  // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddGlobalConstraint(
       const mapping::SubmapId& submap_id, const Submap* submap,
-      const mapping::NodeId& node_id, int flat_scan_index,
-      mapping::TrajectoryConnectivity* trajectory_connectivity,
-      const std::vector<mapping::TrajectoryNode>& trajectory_nodes);
+      const mapping::NodeId& node_id,
+      const sensor::CompressedPointCloud* compressed_point_cloud,
+      const std::vector<mapping::TrajectoryNode>& submap_nodes,
+      mapping::TrajectoryConnectivity* trajectory_connectivity);
 
-  // Must be called after all computations related to 'flat_scan_index' are
-  // added.
-  void NotifyEndOfScan(int flat_scan_index);
+  // Must be called after all computations related to one node have been added.
+  void NotifyEndOfScan();
 
   // Registers the 'callback' to be called with the results, after all
   // computations triggered by MaybeAddConstraint() have finished.
@@ -133,14 +133,14 @@ class ConstraintBuilder {
   // Runs in a background thread and does computations for an additional
   // constraint, assuming 'submap' and 'point_cloud' do not change anymore.
   // If 'match_full_submap' is true, and global localization succeeds, will
-  // connect 'scan_trajectory_id' and 'submap_id.trajectory_id' in
+  // connect 'node_id.trajectory_id' and 'submap_id.trajectory_id' in
   // 'trajectory_connectivity'.
   // As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
       const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id, bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
-      const sensor::CompressedPointCloud* const compressed_point_cloud,
+      const sensor::CompressedPointCloud* compressed_point_cloud,
       const transform::Rigid3d& initial_relative_pose,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);
 

@@ -53,8 +53,7 @@ class OptimizingLocalTrajectoryBuilder
                   const Eigen::Vector3d& angular_velocity) override;
   std::unique_ptr<InsertionResult> AddRangefinderData(
       common::Time time, const Eigen::Vector3f& origin,
-      const sensor::PointCloud& ranges,
-      int next_trajectory_node_index) override;
+      const sensor::PointCloud& ranges) override;
   void AddOdometerData(common::Time time,
                        const transform::Rigid3d& pose) override;
   const mapping_3d::Submaps* submaps() const override;
@@ -102,16 +101,13 @@ class OptimizingLocalTrajectoryBuilder
 
   std::unique_ptr<InsertionResult> AddAccumulatedRangeData(
       common::Time time, const transform::Rigid3d& pose_observation,
-      const sensor::RangeData& range_data_in_tracking,
-      const int next_trajectory_node_index);
+      const sensor::RangeData& range_data_in_tracking);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       const common::Time time, const sensor::RangeData& range_data_in_tracking,
-      const transform::Rigid3d& pose_observation,
-      const int next_trajectory_node_index);
+      const transform::Rigid3d& pose_observation);
 
-  std::unique_ptr<InsertionResult> MaybeOptimize(
-      common::Time time, const int next_trajectory_node_index);
+  std::unique_ptr<InsertionResult> MaybeOptimize(common::Time time);
 
   const proto::LocalTrajectoryBuilderOptions options_;
   const ceres::Solver::Options ceres_solver_options_;

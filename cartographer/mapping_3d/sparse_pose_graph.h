@@ -73,10 +73,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                const std::vector<const Submap*>& insertion_submaps)
       EXCLUDES(mutex_);
 
-  // The index into the flat vector of trajectory nodes used internally for the
-  // next node added with AddScan() is returned.
-  int GetNextTrajectoryNodeIndex() EXCLUDES(mutex_);
-
   // Adds new IMU data to be used in the optimization.
   void AddImuData(int trajectory_id, common::Time time,
                   const Eigen::Vector3d& linear_acceleration,
@@ -131,7 +127,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const kalman_filter::PoseCovariance& covariance) REQUIRES(mutex_);
 
   // Computes constraints for a scan and submap pair.
-  void ComputeConstraint(const int scan_index,
+  void ComputeConstraint(const mapping::NodeId& node_id,
                          const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
   // Adds constraints for older scans whenever a new submap is finished.
@@ -202,7 +198,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Deque to keep references valid for the background computation when adding
   // new data.
   std::deque<mapping::TrajectoryNode::ConstantData> constant_node_data_;
-  std::vector<mapping::TrajectoryNode> trajectory_nodes_ GUARDED_BY(mutex_);
+  std::vector<std::vector<mapping::TrajectoryNode>> trajectory_nodes_
+      GUARDED_BY(mutex_);
+  int num_trajectory_nodes_ = 0 GUARDED_BY(mutex_);
 
   // Current submap transforms used for displaying data.
   std::vector<std::vector<sparse_pose_graph::SubmapData>>

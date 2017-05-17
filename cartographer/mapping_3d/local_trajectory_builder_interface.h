@@ -54,7 +54,7 @@ class LocalTrajectoryBuilderInterface {
                           const Eigen::Vector3d& angular_velocity) = 0;
   virtual std::unique_ptr<InsertionResult> AddRangefinderData(
       common::Time time, const Eigen::Vector3f& origin,
-      const sensor::PointCloud& ranges, int next_trajectory_node_index) = 0;
+      const sensor::PointCloud& ranges) = 0;
   virtual void AddOdometerData(common::Time time,
                                const transform::Rigid3d& pose) = 0;
 

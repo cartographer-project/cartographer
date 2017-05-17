@@ -39,25 +39,6 @@ namespace cartographer {
 namespace mapping_3d {
 namespace sparse_pose_graph {
 
-namespace {
-
-std::vector<mapping::TrajectoryNode> ComputeSubmapNodes(
-    const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
-    const Submap* const submap, const int flat_scan_index,
-    const transform::Rigid3d& initial_relative_pose) {
-  std::vector<mapping::TrajectoryNode> submap_nodes;
-  for (const int node_index : submap->trajectory_node_indices) {
-    submap_nodes.push_back(mapping::TrajectoryNode{
-        trajectory_nodes[node_index].constant_data,
-        transform::Rigid3d(initial_relative_pose *
-                           trajectory_nodes[flat_scan_index].pose.inverse() *
-                           trajectory_nodes[node_index].pose)});
-  }
-  return submap_nodes;
-}
-
-}  // namespace
-
 ConstraintBuilder::ConstraintBuilder(
     const mapping::sparse_pose_graph::proto::ConstraintBuilderOptions& options,
     common::ThreadPool* const thread_pool)
@@ -77,31 +58,27 @@ ConstraintBuilder::~ConstraintBuilder() {
 
 void ConstraintBuilder::MaybeAddConstraint(
     const mapping::SubmapId& submap_id, const Submap* const submap,
-    const mapping::NodeId& node_id, const int flat_scan_index,
-    const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
+    const mapping::NodeId& node_id,
+    const sensor::CompressedPointCloud* const compressed_point_cloud,
+    const std::vector<mapping::TrajectoryNode>& submap_nodes,
     const transform::Rigid3d& initial_relative_pose) {
   if (initial_relative_pose.translation().norm() >
       options_.max_constraint_distance()) {
     return;
   }
   if (sampler_.Pulse()) {
-    const auto submap_nodes = ComputeSubmapNodes(
-        trajectory_nodes, submap, flat_scan_index, initial_relative_pose);
     common::MutexLocker locker(&mutex_);
-    CHECK_LE(flat_scan_index, current_computation_);
     constraints_.emplace_back();
     auto* const constraint = &constraints_.back();
     ++pending_computations_[current_computation_];
     const int current_computation = current_computation_;
-    const auto* const point_cloud =
-        &trajectory_nodes[flat_scan_index].constant_data->range_data_3d.returns;
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_id, submap_nodes, &submap->high_resolution_hybrid_grid,
         [=]() EXCLUDES(mutex_) {
-          ComputeConstraint(submap_id, submap, node_id,
-                            false,   /* match_full_submap */
-                            nullptr, /* trajectory_connectivity */
-                            point_cloud, initial_relative_pose, constraint);
+          ComputeConstraint(
+              submap_id, submap, node_id, false, /* match_full_submap */
+              nullptr,                           /* trajectory_connectivity */
+              compressed_point_cloud, initial_relative_pose, constraint);
           FinishComputation(current_computation);
         });
   }
@@ -109,34 +86,28 @@ void ConstraintBuilder::MaybeAddConstraint(
 
 void ConstraintBuilder::MaybeAddGlobalConstraint(
     const mapping::SubmapId& submap_id, const Submap* const submap,
-    const mapping::NodeId& node_id, const int flat_scan_index,
-    mapping::TrajectoryConnectivity* trajectory_connectivity,
-    const std::vector<mapping::TrajectoryNode>& trajectory_nodes) {
-  const auto submap_nodes =
-      ComputeSubmapNodes(trajectory_nodes, submap, flat_scan_index,
-                         transform::Rigid3d::Identity());
+    const mapping::NodeId& node_id,
+    const sensor::CompressedPointCloud* const compressed_point_cloud,
+    const std::vector<mapping::TrajectoryNode>& submap_nodes,
+    mapping::TrajectoryConnectivity* const trajectory_connectivity) {
   common::MutexLocker locker(&mutex_);
-  CHECK_LE(flat_scan_index, current_computation_);
   constraints_.emplace_back();
   auto* const constraint = &constraints_.back();
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
-  const auto* const point_cloud =
-      &trajectory_nodes[flat_scan_index].constant_data->range_data_3d.returns;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       submap_id, submap_nodes, &submap->high_resolution_hybrid_grid,
       [=]() EXCLUDES(mutex_) {
         ComputeConstraint(submap_id, submap, node_id,
                           true, /* match_full_submap */
-                          trajectory_connectivity, point_cloud,
+                          trajectory_connectivity, compressed_point_cloud,
                           transform::Rigid3d::Identity(), constraint);
         FinishComputation(current_computation);
       });
 }
 
-void ConstraintBuilder::NotifyEndOfScan(const int flat_scan_index) {
+void ConstraintBuilder::NotifyEndOfScan() {
   common::MutexLocker locker(&mutex_);
-  CHECK_EQ(current_computation_, flat_scan_index);
   ++current_computation_;
 }
 

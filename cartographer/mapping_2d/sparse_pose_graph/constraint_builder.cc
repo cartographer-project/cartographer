@@ -62,8 +62,7 @@ ConstraintBuilder::~ConstraintBuilder() {
 
 void ConstraintBuilder::MaybeAddConstraint(
     const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
-    const mapping::NodeId& node_id, const int flat_scan_index,
-    const sensor::PointCloud* const point_cloud,
+    const mapping::NodeId& node_id, const sensor::PointCloud* const point_cloud,
     const transform::Rigid2d& initial_relative_pose) {
   if (initial_relative_pose.translation().norm() >
       options_.max_constraint_distance()) {
@@ -71,7 +70,6 @@ void ConstraintBuilder::MaybeAddConstraint(
   }
   if (sampler_.Pulse()) {
     common::MutexLocker locker(&mutex_);
-    CHECK_LE(flat_scan_index, current_computation_);
     constraints_.emplace_back();
     auto* const constraint = &constraints_.back();
     ++pending_computations_[current_computation_];
@@ -89,11 +87,9 @@ void ConstraintBuilder::MaybeAddConstraint(
 
 void ConstraintBuilder::MaybeAddGlobalConstraint(
     const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
-    const mapping::NodeId& node_id, const int flat_scan_index,
-    mapping::TrajectoryConnectivity* trajectory_connectivity,
-    const sensor::PointCloud* const point_cloud) {
+    const mapping::NodeId& node_id, const sensor::PointCloud* const point_cloud,
+    mapping::TrajectoryConnectivity* const trajectory_connectivity) {
   common::MutexLocker locker(&mutex_);
-  CHECK_LE(flat_scan_index, current_computation_);
   constraints_.emplace_back();
   auto* const constraint = &constraints_.back();
   ++pending_computations_[current_computation_];
@@ -108,9 +104,8 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
       });
 }
 
-void ConstraintBuilder::NotifyEndOfScan(const int flat_scan_index) {
+void ConstraintBuilder::NotifyEndOfScan() {
   common::MutexLocker locker(&mutex_);
-  CHECK_EQ(current_computation_, flat_scan_index);
   ++current_computation_;
 }
 
