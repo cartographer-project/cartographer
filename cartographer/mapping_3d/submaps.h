@@ -72,12 +72,6 @@ class Submaps : public mapping::Submaps {
   // Inserts 'range_data' into the Submap collection.
   void InsertRangeData(const sensor::RangeData& range_data);
 
-  // Returns the 'high_resolution' HybridGrid to be used for matching.
-  const HybridGrid& high_resolution_matching_grid() const;
-
-  // Returns the 'low_resolution' HybridGrid to be used for matching.
-  const HybridGrid& low_resolution_matching_grid() const;
-
  private:
   struct PixelData {
     int min_z = INT_MAX;

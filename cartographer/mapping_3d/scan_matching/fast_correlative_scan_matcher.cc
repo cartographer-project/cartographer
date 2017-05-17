@@ -95,7 +95,6 @@ FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
     const proto::FastCorrelativeScanMatcherOptions& options)
     : options_(options),
       resolution_(hybrid_grid.resolution()),
-      origin_(hybrid_grid.origin()),
       width_in_voxels_(hybrid_grid.grid_size()),
       precomputation_grid_stack_(
           common::make_unique<PrecomputationGridStack>(hybrid_grid, options)),
@@ -122,7 +121,7 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
     const sensor::PointCloud& coarse_point_cloud,
     const sensor::PointCloud& fine_point_cloud, const float min_score,
     float* const score, transform::Rigid3d* const pose_estimate) const {
-  const transform::Rigid3d initial_pose_estimate(origin_.cast<double>(),
+  const transform::Rigid3d initial_pose_estimate(Eigen::Vector3d::Zero(),
                                                  gravity_alignment);
   float max_point_distance = 0.f;
   for (const Eigen::Vector3f& point : coarse_point_cloud) {

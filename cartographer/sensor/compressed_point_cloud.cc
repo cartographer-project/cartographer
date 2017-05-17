@@ -104,7 +104,7 @@ CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
     int index;
   };
   using Blocks = mapping_3d::HybridGridBase<std::vector<RasterPoint>>;
-  Blocks blocks(kPrecision, Eigen::Vector3f::Zero());
+  Blocks blocks(kPrecision);
   int num_blocks = 0;
   CHECK_LE(point_cloud.size(), std::numeric_limits<int>::max());
   for (int point_index = 0; point_index < static_cast<int>(point_cloud.size());

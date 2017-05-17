@@ -29,7 +29,7 @@ namespace scan_matching {
 namespace {
 
 TEST(PrecomputedGridGeneratorTest, TestAgainstNaiveAlgorithm) {
-  HybridGrid hybrid_grid(2.f, Eigen::Vector3f(-7.f, -12.f, 0.f));
+  HybridGrid hybrid_grid(2.f);
 
   std::mt19937 rng(23847);
   std::uniform_int_distribution<int> coordinate_distribution(-50, 49);

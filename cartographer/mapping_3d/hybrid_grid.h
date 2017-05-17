@@ -415,20 +415,18 @@ class HybridGridBase : public Grid<ValueType> {
  public:
   using Iterator = typename Grid<ValueType>::Iterator;
 
-  // Creates a new tree-based probability grid around 'origin' which becomes the
-  // center of the cell at index (0, 0, 0). Each voxel has edge length
-  // 'resolution'.
-  HybridGridBase(const float resolution, const Eigen::Vector3f& origin)
-      : resolution_(resolution), origin_(origin) {}
+  // Creates a new tree-based probability grid with voxels having edge length
+  // 'resolution' around the origin which becomes the center of the cell at
+  // index (0, 0, 0).
+  explicit HybridGridBase(const float resolution) : resolution_(resolution) {}
 
   float resolution() const { return resolution_; }
-  Eigen::Vector3f origin() const { return origin_; }
 
   // Returns the index of the cell containing the 'point'. Indices are integer
-  // vectors identifying cells, for this the relative distance from the origin
-  // is rounded to the next multiple of the resolution.
+  // vectors identifying cells, for this the coordinates are rounded to the next
+  // multiple of the resolution.
   Eigen::Array3i GetCellIndex(const Eigen::Vector3f& point) const {
-    Eigen::Array3f index = (point - origin_).array() / resolution_;
+    Eigen::Array3f index = point.array() / resolution_;
     return Eigen::Array3i(common::RoundToInt(index.x()),
                           common::RoundToInt(index.y()),
                           common::RoundToInt(index.z()));
@@ -444,7 +442,7 @@ class HybridGridBase : public Grid<ValueType> {
 
   // Returns the center of the cell at 'index'.
   Eigen::Vector3f GetCenterOfCell(const Eigen::Array3i& index) const {
-    return index.matrix().cast<float>() * resolution_ + origin_;
+    return index.matrix().cast<float>() * resolution_;
   }
 
   // Iterator functions for range-based for loops.
@@ -459,20 +457,17 @@ class HybridGridBase : public Grid<ValueType> {
  private:
   // Edge length of each voxel.
   const float resolution_;
-
-  // Position of the center of the octree.
-  const Eigen::Vector3f origin_;
 };
 
 // A grid containing probability values stored using 15 bits, and an update
 // marker per voxel.
 class HybridGrid : public HybridGridBase<uint16> {
  public:
-  HybridGrid(const float resolution, const Eigen::Vector3f& origin)
-      : HybridGridBase<uint16>(resolution, origin) {}
+  explicit HybridGrid(const float resolution)
+      : HybridGridBase<uint16>(resolution) {}
 
-  HybridGrid(const proto::HybridGrid& proto)
-      : HybridGrid(proto.resolution(), transform::ToEigen(proto.origin())) {
+  explicit HybridGrid(const proto::HybridGrid& proto)
+      : HybridGrid(proto.resolution()) {
     CHECK_EQ(proto.values_size(), proto.x_indices_size());
     CHECK_EQ(proto.values_size(), proto.y_indices_size());
     CHECK_EQ(proto.values_size(), proto.z_indices_size());
@@ -535,7 +530,6 @@ class HybridGrid : public HybridGridBase<uint16> {
 inline proto::HybridGrid ToProto(const HybridGrid& grid) {
   proto::HybridGrid result;
   result.set_resolution(grid.resolution());
-  *result.mutable_origin() = transform::ToProto(grid.origin());
   for (const auto it : grid) {
     result.add_x_indices(it.first.x());
     result.add_y_indices(it.first.y());

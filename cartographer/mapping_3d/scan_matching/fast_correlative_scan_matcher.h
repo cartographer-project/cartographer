@@ -136,7 +136,6 @@ class FastCorrelativeScanMatcher {
 
   const proto::FastCorrelativeScanMatcherOptions options_;
   const float resolution_;
-  const Eigen::Vector3f origin_;
   const int width_in_voxels_;
   std::unique_ptr<PrecomputationGridStack> precomputation_grid_stack_;
   RotationalScanMatcher rotational_scan_matcher_;

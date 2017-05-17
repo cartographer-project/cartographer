@@ -219,8 +219,8 @@ proto::SubmapsOptions CreateSubmapsOptions(
 Submap::Submap(const float high_resolution, const float low_resolution,
                const Eigen::Vector3f& origin)
     : mapping::Submap(origin),
-      high_resolution_hybrid_grid(high_resolution, origin),
-      low_resolution_hybrid_grid(low_resolution, origin) {}
+      high_resolution_hybrid_grid(high_resolution),
+      low_resolution_hybrid_grid(low_resolution) {}
 
 Submaps::Submaps(const proto::SubmapsOptions& options)
     : options_(options),
@@ -250,9 +250,7 @@ void Submaps::SubmapToProto(
   Eigen::Array2i min_index(INT_MAX, INT_MAX);
   Eigen::Array2i max_index(INT_MIN, INT_MIN);
   const std::vector<Eigen::Array4i> voxel_indices_and_probabilities =
-      ExtractVoxelData(hybrid_grid,
-                       (global_submap_pose * Get(index)->local_pose().inverse())
-                           .cast<float>(),
+      ExtractVoxelData(hybrid_grid, global_submap_pose.cast<float>(),
                        &min_index, &max_index);
 
   const int width = max_index.y() - min_index.y() + 1;
@@ -276,11 +274,13 @@ void Submaps::SubmapToProto(
 void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
+    const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
+        range_data, submap->local_pose().inverse().cast<float>());
     range_data_inserter_.Insert(
-        FilterRangeDataByMaxRange(range_data,
+        FilterRangeDataByMaxRange(transformed_range_data,
                                   options_.high_resolution_max_range()),
         &submap->high_resolution_hybrid_grid);
-    range_data_inserter_.Insert(range_data,
+    range_data_inserter_.Insert(transformed_range_data,
                                 &submap->low_resolution_hybrid_grid);
     ++submap->num_range_data;
   }
@@ -288,14 +288,6 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
   if (last_submap->num_range_data == options_.num_range_data()) {
     AddSubmap(range_data.origin);
   }
-}
-
-const HybridGrid& Submaps::high_resolution_matching_grid() const {
-  return submaps_[matching_index()]->high_resolution_hybrid_grid;
-}
-
-const HybridGrid& Submaps::low_resolution_matching_grid() const {
-  return submaps_[matching_index()]->low_resolution_hybrid_grid;
 }
 
 void Submaps::AddSubmap(const Eigen::Vector3f& origin) {
@@ -350,9 +342,9 @@ std::vector<Eigen::Array4i> Submaps::ExtractVoxelData(
       continue;
     }
 
-    const Eigen::Vector3f cell_center_local =
+    const Eigen::Vector3f cell_center_submap =
         hybrid_grid.GetCenterOfCell(it.GetCellIndex());
-    const Eigen::Vector3f cell_center_global = transform * cell_center_local;
+    const Eigen::Vector3f cell_center_global = transform * cell_center_submap;
     const Eigen::Array4i voxel_index_and_probability(
         common::RoundToInt(cell_center_global.x() * resolution_inverse),
         common::RoundToInt(cell_center_global.y() * resolution_inverse),
