@@ -22,5 +22,10 @@ set -o verbose
 set -o pipefail
 
 if [ -f ${DOCKER_CACHE_FILE} ]; then
-  gunzip -c ${DOCKER_CACHE_FILE} | docker load;
+  gunzip -c ${DOCKER_CACHE_FILE} > /tmp/docker_cache_file
+  if [ -s /tmp/docker_cache_file ]; then
+    docker load -i /tmp/docker_cache_file
+  else
+    echo "Warning: skipped loading cache (empty file)."
+  fi
 fi
