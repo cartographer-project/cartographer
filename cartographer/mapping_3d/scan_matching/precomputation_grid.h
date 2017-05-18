@@ -25,7 +25,7 @@ namespace scan_matching {
 
 class PrecomputationGrid : public HybridGridBase<uint8> {
  public:
-  PrecomputationGrid(const float resolution)
+  explicit PrecomputationGrid(const float resolution)
       : HybridGridBase<uint8>(resolution) {}
 
   // Maps values from [0, 255] to [kMinProbability, kMaxProbability].

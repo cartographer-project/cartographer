@@ -239,6 +239,9 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   ceres::Problem problem;
   const Submap* const matching_submap =
       submaps_->Get(submaps_->matching_index());
+  // We transform the states in 'batches_' in place to be in the submap frame as
+  // expected by the OccupiedSpaceCostFunctor. This is reverted after solving
+  // the optimization problem.
   TransformStates(matching_submap->local_pose().inverse());
   for (size_t i = 0; i < batches_.size(); ++i) {
     Batch& batch = batches_[i];
@@ -346,6 +349,8 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
 
   ceres::Solver::Summary summary;
   ceres::Solve(ceres_solver_options_, &problem, &summary);
+  // The optimized states in 'batches_' are in the submap frame and we transform
+  // them in place to be in the local SLAM frame again.
   TransformStates(matching_submap->local_pose());
   if (num_accumulated_ < options_.scans_per_accumulation()) {
     return nullptr;

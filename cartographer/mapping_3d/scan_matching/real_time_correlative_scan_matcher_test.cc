@@ -36,7 +36,7 @@ namespace {
 class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
  protected:
   RealTimeCorrelativeScanMatcherTest()
-      : hybrid_grid_(0.1f /* resolution */),
+      : hybrid_grid_(0.1f),
         expected_pose_(Eigen::Vector3d(-1., 0., 0.),
                        Eigen::Quaterniond::Identity()) {
     for (const auto& point :

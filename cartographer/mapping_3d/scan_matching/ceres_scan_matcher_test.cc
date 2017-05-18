@@ -34,7 +34,7 @@ namespace {
 class CeresScanMatcherTest : public ::testing::Test {
  protected:
   CeresScanMatcherTest()
-      : hybrid_grid_(1.f /* resolution */),
+      : hybrid_grid_(1.f),
         expected_pose_(
             transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., 0.))) {
     for (const auto& point :
