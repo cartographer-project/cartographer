@@ -88,6 +88,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
     const mapping::NodeId& node_id,
     const sensor::CompressedPointCloud* const compressed_point_cloud,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
+    const Eigen::Quaterniond& gravity_alignment,
     mapping::TrajectoryConnectivity* const trajectory_connectivity) {
   common::MutexLocker locker(&mutex_);
   constraints_.emplace_back();
@@ -97,10 +98,10 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       submap_id, submap_nodes, &submap->high_resolution_hybrid_grid,
       [=]() EXCLUDES(mutex_) {
-        ComputeConstraint(submap_id, submap, node_id,
-                          true, /* match_full_submap */
-                          trajectory_connectivity, compressed_point_cloud,
-                          transform::Rigid3d::Identity(), constraint);
+        ComputeConstraint(
+            submap_id, submap, node_id, true, /* match_full_submap */
+            trajectory_connectivity, compressed_point_cloud,
+            transform::Rigid3d::Rotation(gravity_alignment), constraint);
         FinishComputation(current_computation);
       });
 }

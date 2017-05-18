@@ -81,8 +81,8 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
         submap_data.at(trajectory_id).at(first_submap_id.submap_index).pose;
     optimization_problem_.AddSubmap(
         trajectory_id, first_submap_pose *
-                           insertion_submaps[0]->local_pose().inverse() *
-                           insertion_submaps[1]->local_pose());
+                           insertion_submaps[0]->local_pose.inverse() *
+                           insertion_submaps[1]->local_pose);
   }
 }
 
@@ -164,6 +164,12 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
           .at(submap_id.submap_index)
           .pose.inverse();
 
+  const transform::Rigid3d initial_relative_pose =
+      inverse_submap_pose * optimization_problem_.node_data()
+                                .at(node_id.trajectory_id)
+                                .at(node_id.node_index)
+                                .point_cloud_pose;
+
   std::vector<mapping::TrajectoryNode> submap_nodes;
   for (const mapping::NodeId& submap_node_id :
        submap_states_.at(submap_id.trajectory_id)
@@ -181,6 +187,18 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
   // Only globally match against submaps not in this trajectory.
   if (node_id.trajectory_id != submap_id.trajectory_id &&
       global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
+    // In this situation, 'initial_relative_pose' is:
+    //
+    // submap <- global map 2 <- global map 1 <- tracking
+    //               (agreeing on gravity)
+    //
+    // Since they possibly came from two disconnected trajectories, the only
+    // guaranteed connection between the tracking and the submap frames is
+    // an agreement on the direction of gravity. Therefore, excluding yaw,
+    // 'initial_relative_pose.rotation()' is a good estimate of the relative
+    // orientation of the point cloud in the submap frame. Finding the correct
+    // yaw component will be handled by the matching procedure in the
+    // FastCorrelativeScanMatcher, and the given yaw is essentially ignored.
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id,
         submap_states_.at(submap_id.trajectory_id)
@@ -190,7 +208,8 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
         &trajectory_nodes_.at(node_id.trajectory_id)
              .at(node_id.node_index)
              .constant_data->range_data_3d.returns,
-        submap_nodes, &trajectory_connectivity_);
+        submap_nodes, initial_relative_pose.rotation(),
+        &trajectory_connectivity_);
   } else {
     const bool scan_and_submap_trajectories_connected =
         reverse_connected_components_.count(node_id.trajectory_id) > 0 &&
@@ -199,11 +218,6 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
             reverse_connected_components_.at(submap_id.trajectory_id);
     if (node_id.trajectory_id == submap_id.trajectory_id ||
         scan_and_submap_trajectories_connected) {
-      const transform::Rigid3d initial_relative_pose =
-          inverse_submap_pose * optimization_problem_.node_data()
-                                    .at(node_id.trajectory_id)
-                                    .at(node_id.node_index)
-                                    .point_cloud_pose;
       constraint_builder_.MaybeAddConstraint(
           submap_id,
           submap_states_.at(submap_id.trajectory_id)
@@ -242,7 +256,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
           .at(matching_id.trajectory_id)
           .at(matching_id.submap_index)
           .pose *
-      matching_submap->local_pose().inverse() * pose;
+      matching_submap->local_pose.inverse() * pose;
   CHECK_EQ(scan_index, scan_index_to_node_id_.size());
   const mapping::NodeId node_id{
       matching_id.trajectory_id,
@@ -266,7 +280,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
         .node_ids.emplace(node_id);
     // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid3d constraint_transform =
-        submap->local_pose().inverse() * pose;
+        submap->local_pose.inverse() * pose;
     constraints_.push_back(
         Constraint{submap_id,
                    node_id,
@@ -447,8 +461,7 @@ transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
   return extrapolated_submap_transforms.back() *
          submap_states_.at(trajectory_id)
              .at(extrapolated_submap_transforms.size() - 1)
-             .submap->local_pose()
-             .inverse();
+             .submap->local_pose.inverse();
 }
 
 std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
@@ -482,14 +495,13 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
     } else if (result.empty()) {
       result.push_back(transform::Rigid3d::Identity());
     } else {
-      // Extrapolate to the remaining submaps. Accessing local_pose() in Submaps
+      // Extrapolate to the remaining submaps. Accessing 'local_pose' in Submaps
       // is okay, since the member is const.
       result.push_back(result.back() *
                        submap_states_.at(trajectory_id)
                            .at(result.size() - 1)
-                           .submap->local_pose()
-                           .inverse() *
-                       state.submap->local_pose());
+                           .submap->local_pose.inverse() *
+                       state.submap->local_pose);
     }
   }
 
