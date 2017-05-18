@@ -122,6 +122,10 @@ class PoseTracker {
 
   const mapping::OdometryStateTracker::OdometryStates& odometry_states() const;
 
+  Eigen::Quaterniond gravity_orientation() const {
+    return imu_tracker_.orientation();
+  }
+
  private:
   // Returns the distribution required to initialize the KalmanFilter.
   static Distribution KalmanFilterInit();

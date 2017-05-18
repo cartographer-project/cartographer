@@ -143,7 +143,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
   const Submap* const matching_submap =
       submaps_->Get(submaps_->matching_index());
   transform::Rigid3d initial_ceres_pose =
-      matching_submap->local_pose().inverse() * pose_prediction;
+      matching_submap->local_pose.inverse() * pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.high_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud filtered_point_cloud_in_tracking =
@@ -171,7 +171,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
                                &matching_submap->low_resolution_hybrid_grid}},
                              &pose_observation_in_submap, &summary);
   const transform::Rigid3d pose_observation =
-      matching_submap->local_pose() * pose_observation_in_submap;
+      matching_submap->local_pose * pose_observation_in_submap;
   pose_tracker_->AddPoseObservation(
       time, pose_observation,
       options_.kalman_local_trajectory_builder_options()
@@ -227,8 +227,10 @@ KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
   for (int insertion_index : submaps_->insertion_indices()) {
     insertion_submaps.push_back(submaps_->Get(insertion_index));
   }
-  submaps_->InsertRangeData(sensor::TransformRangeData(
-      range_data_in_tracking, pose_observation.cast<float>()));
+  submaps_->InsertRangeData(
+      sensor::TransformRangeData(range_data_in_tracking,
+                                 pose_observation.cast<float>()),
+      pose_tracker_->gravity_orientation());
   return std::unique_ptr<InsertionResult>(new InsertionResult{
       time, range_data_in_tracking, pose_observation, covariance_estimate,
       matching_submap, insertion_submaps});

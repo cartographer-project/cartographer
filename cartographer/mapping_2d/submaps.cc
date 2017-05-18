@@ -102,7 +102,8 @@ proto::SubmapsOptions CreateSubmapsOptions(
 }
 
 Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin)
-    : mapping::Submap(Eigen::Vector3f(origin.x(), origin.y(), 0.)),
+    : mapping::Submap(transform::Rigid3d::Translation(
+          Eigen::Vector3d(origin.x(), origin.y(), 0.))),
       probability_grid(limits) {}
 
 Submaps::Submaps(const proto::SubmapsOptions& options)
@@ -137,7 +138,7 @@ int Submaps::size() const { return submaps_.size(); }
 void Submaps::SubmapToProto(
     const int index, const transform::Rigid3d&,
     mapping::proto::SubmapQuery::Response* const response) const {
-  AddProbabilityGridToResponse(Get(index)->local_pose(),
+  AddProbabilityGridToResponse(Get(index)->local_pose,
                                Get(index)->probability_grid, response);
 }
 

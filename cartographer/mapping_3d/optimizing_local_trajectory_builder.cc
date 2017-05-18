@@ -242,7 +242,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   // We transform the states in 'batches_' in place to be in the submap frame as
   // expected by the OccupiedSpaceCostFunctor. This is reverted after solving
   // the optimization problem.
-  TransformStates(matching_submap->local_pose().inverse());
+  TransformStates(matching_submap->local_pose.inverse());
   for (size_t i = 0; i < batches_.size(); ++i) {
     Batch& batch = batches_[i];
     problem.AddResidualBlock(
@@ -351,7 +351,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   ceres::Solve(ceres_solver_options_, &problem, &summary);
   // The optimized states in 'batches_' are in the submap frame and we transform
   // them in place to be in the local SLAM frame again.
-  TransformStates(matching_submap->local_pose());
+  TransformStates(matching_submap->local_pose);
   if (num_accumulated_ < options_.scans_per_accumulation()) {
     return nullptr;
   }
@@ -416,8 +416,13 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
   for (int insertion_index : submaps_->insertion_indices()) {
     insertion_submaps.push_back(submaps_->Get(insertion_index));
   }
-  submaps_->InsertRangeData(sensor::TransformRangeData(
-      range_data_in_tracking, pose_observation.cast<float>()));
+  // TODO(whess): Use an ImuTracker to track the gravity direction.
+  const Eigen::Quaterniond kFakeGravityOrientation =
+      Eigen::Quaterniond::Identity();
+  submaps_->InsertRangeData(
+      sensor::TransformRangeData(range_data_in_tracking,
+                                 pose_observation.cast<float>()),
+      kFakeGravityOrientation);
 
   const kalman_filter::PoseCovariance kCovariance =
       1e-7 * kalman_filter::PoseCovariance::Identity();

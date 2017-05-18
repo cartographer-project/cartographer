@@ -217,17 +217,20 @@ proto::SubmapsOptions CreateSubmapsOptions(
 }
 
 Submap::Submap(const float high_resolution, const float low_resolution,
-               const Eigen::Vector3f& origin)
-    : mapping::Submap(origin),
+               const transform::Rigid3d& local_pose)
+    : mapping::Submap(local_pose),
       high_resolution_hybrid_grid(high_resolution),
       low_resolution_hybrid_grid(low_resolution) {}
 
 Submaps::Submaps(const proto::SubmapsOptions& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {
-  // We always want to have at least one likelihood field which we can return,
-  // and will create it at the origin in absence of a better choice.
-  AddSubmap(Eigen::Vector3f::Zero());
+  // We always want to have at least one submap which we can return and will
+  // create it at the origin in absence of a better choice.
+  //
+  // TODO(whess): Start with no submaps, so that all of them can be
+  // approximately gravity aligned.
+  AddSubmap(transform::Rigid3d::Identity());
 }
 
 const Submap* Submaps::Get(int index) const {
@@ -271,11 +274,12 @@ void Submaps::SubmapToProto(
                              global_submap_pose.translation().z())));
 }
 
-void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
+void Submaps::InsertRangeData(const sensor::RangeData& range_data,
+                              const Eigen::Quaterniond& gravity_alignment) {
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
     const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
-        range_data, submap->local_pose().inverse().cast<float>());
+        range_data, submap->local_pose.inverse().cast<float>());
     range_data_inserter_.Insert(
         FilterRangeDataByMaxRange(transformed_range_data,
                                   options_.high_resolution_max_range()),
@@ -286,18 +290,19 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
   }
   const Submap* const last_submap = Get(size() - 1);
   if (last_submap->num_range_data == options_.num_range_data()) {
-    AddSubmap(range_data.origin);
+    AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
+                                 gravity_alignment));
   }
 }
 
-void Submaps::AddSubmap(const Eigen::Vector3f& origin) {
+void Submaps::AddSubmap(const transform::Rigid3d& local_pose) {
   if (size() > 1) {
     Submap* submap = submaps_[size() - 2].get();
     CHECK(!submap->finished);
     submap->finished = true;
   }
   submaps_.emplace_back(new Submap(options_.high_resolution(),
-                                   options_.low_resolution(), origin));
+                                   options_.low_resolution(), local_pose));
   LOG(INFO) << "Added submap " << size();
 }
 

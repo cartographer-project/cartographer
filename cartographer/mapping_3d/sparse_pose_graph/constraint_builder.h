@@ -84,7 +84,9 @@ class ConstraintBuilder {
   // 'submap_id' and the 'compressed_point_cloud' for 'node_id'.
   // This performs full-submap matching.
   //
-  // The 'trajectory_connectivity' is updated if the full-submap match succeeds.
+  // The 'gravity_alignment' is the rotation to apply to the point cloud data
+  // to make it approximately gravity aligned. The 'trajectory_connectivity' is
+  // updated if the full-submap match succeeds.
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
@@ -93,6 +95,7 @@ class ConstraintBuilder {
       const mapping::NodeId& node_id,
       const sensor::CompressedPointCloud* compressed_point_cloud,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
+      const Eigen::Quaterniond& gravity_alignment,
       mapping::TrajectoryConnectivity* trajectory_connectivity);
 
   // Must be called after all computations related to one node have been added.
