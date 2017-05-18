@@ -441,8 +441,7 @@ transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
   return extrapolated_submap_transforms.back() *
          submap_states_.at(trajectory_id)
              .at(extrapolated_submap_transforms.size() - 1)
-             .submap->local_pose()
-             .inverse();
+             .submap->local_pose.inverse();
 }
 
 std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
@@ -476,14 +475,13 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
     } else if (result.empty()) {
       result.push_back(transform::Rigid3d::Identity());
     } else {
-      // Extrapolate to the remaining submaps. Accessing local_pose() in Submaps
+      // Extrapolate to the remaining submaps. Accessing 'local_pose' in Submaps
       // is okay, since the member is const.
       result.push_back(result.back() *
                        submap_states_.at(trajectory_id)
                            .at(result.size() - 1)
-                           .submap->local_pose()
-                           .inverse() *
-                       state.submap->local_pose());
+                           .submap->local_pose.inverse() *
+                       state.submap->local_pose);
     }
   }
 

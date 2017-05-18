@@ -32,6 +32,7 @@
 #include "cartographer/mapping_3d/proto/submaps_options.pb.h"
 #include "cartographer/mapping_3d/range_data_inserter.h"
 #include "cartographer/sensor/range_data.h"
+#include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
@@ -48,7 +49,7 @@ proto::SubmapsOptions CreateSubmapsOptions(
 
 struct Submap : public mapping::Submap {
   Submap(float high_resolution, float low_resolution,
-         const Eigen::Vector3f& origin);
+         const transform::Rigid3d& local_pose);
 
   HybridGrid high_resolution_hybrid_grid;
   HybridGrid low_resolution_hybrid_grid;
@@ -69,8 +70,11 @@ class Submaps : public mapping::Submaps {
       int index, const transform::Rigid3d& global_submap_pose,
       mapping::proto::SubmapQuery::Response* response) const override;
 
-  // Inserts 'range_data' into the Submap collection.
-  void InsertRangeData(const sensor::RangeData& range_data);
+  // Inserts 'range_data' into the Submap collection. 'gravity_alignment' is
+  // used for the orientation of new submaps so that the z axis approximately
+  // aligns with gravity.
+  void InsertRangeData(const sensor::RangeData& range_data,
+                       const Eigen::Quaterniond& gravity_alignment);
 
  private:
   struct PixelData {
@@ -81,7 +85,7 @@ class Submaps : public mapping::Submaps {
     float max_probability = 0.5f;
   };
 
-  void AddSubmap(const Eigen::Vector3f& origin);
+  void AddSubmap(const transform::Rigid3d& local_pose);
 
   std::vector<PixelData> AccumulatePixelData(
       const int width, const int height, const Eigen::Array2i& min_index,

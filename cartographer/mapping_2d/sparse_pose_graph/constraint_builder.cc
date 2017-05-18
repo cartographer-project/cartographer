@@ -40,7 +40,7 @@ namespace mapping_2d {
 namespace sparse_pose_graph {
 
 transform::Rigid2d ComputeSubmapPose(const mapping::Submap& submap) {
-  return transform::Project2D(submap.local_pose());
+  return transform::Project2D(submap.local_pose);
 }
 
 ConstraintBuilder::ConstraintBuilder(
