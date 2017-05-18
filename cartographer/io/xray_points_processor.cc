@@ -142,9 +142,8 @@ XRayPointsProcessor::XRayPointsProcessor(
       output_filename_(output_filename),
       transform_(transform) {
   for (size_t i = 0; i < (floors_.empty() ? 1 : floors.size()); ++i) {
-    aggregations_.emplace_back(Aggregation{
-        mapping_3d::HybridGridBase<bool>(voxel_size, Eigen::Vector3f::Zero()),
-        {}});
+    aggregations_.emplace_back(
+        Aggregation{mapping_3d::HybridGridBase<bool>(voxel_size), {}});
   }
 }
 

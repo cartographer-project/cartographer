@@ -176,7 +176,8 @@ OptimizingLocalTrajectoryBuilder::AddRangefinderData(
     batches_.push_back(
         Batch{time, point_cloud, high_resolution_filtered_points,
               low_resolution_filtered_points,
-              State{{{1., 0., 0., 0.}}, {{0., 0., 0.}}, {{0., 0., 0.}}}});
+              State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
+                    Eigen::Vector3d::Zero())});
   } else {
     const Batch& last_batch = batches_.back();
     batches_.push_back(Batch{
@@ -214,6 +215,19 @@ void OptimizingLocalTrajectoryBuilder::RemoveObsoleteSensorData() {
   }
 }
 
+void OptimizingLocalTrajectoryBuilder::TransformStates(
+    const transform::Rigid3d& transform) {
+  for (Batch& batch : batches_) {
+    const transform::Rigid3d new_pose = transform * batch.state.ToRigid();
+    const auto& velocity = batch.state.velocity;
+    const Eigen::Vector3d new_velocity =
+        transform.rotation() *
+        Eigen::Vector3d(velocity[0], velocity[1], velocity[2]);
+    batch.state =
+        State(new_pose.translation(), new_pose.rotation(), new_velocity);
+  }
+}
+
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
 OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   // TODO(hrapp): Make the number of optimizations configurable.
@@ -223,6 +237,12 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   }
 
   ceres::Problem problem;
+  const Submap* const matching_submap =
+      submaps_->Get(submaps_->matching_index());
+  // We transform the states in 'batches_' in place to be in the submap frame as
+  // expected by the OccupiedSpaceCostFunctor. This is reverted after solving
+  // the optimization problem.
+  TransformStates(matching_submap->local_pose().inverse());
   for (size_t i = 0; i < batches_.size(); ++i) {
     Batch& batch = batches_[i];
     problem.AddResidualBlock(
@@ -234,7 +254,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                     std::sqrt(static_cast<double>(
                         batch.high_resolution_filtered_points.size())),
                 batch.high_resolution_filtered_points,
-                submaps_->high_resolution_matching_grid()),
+                matching_submap->high_resolution_hybrid_grid),
             batch.high_resolution_filtered_points.size()),
         nullptr, batch.state.translation.data(), batch.state.rotation.data());
     problem.AddResidualBlock(
@@ -246,15 +266,15 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                     std::sqrt(static_cast<double>(
                         batch.low_resolution_filtered_points.size())),
                 batch.low_resolution_filtered_points,
-                submaps_->low_resolution_matching_grid()),
+                matching_submap->low_resolution_hybrid_grid),
             batch.low_resolution_filtered_points.size()),
         nullptr, batch.state.translation.data(), batch.state.rotation.data());
 
     if (i == 0) {
       problem.SetParameterBlockConstant(batch.state.translation.data());
+      problem.SetParameterBlockConstant(batch.state.rotation.data());
       problem.AddParameterBlock(batch.state.velocity.data(), 3);
       problem.SetParameterBlockConstant(batch.state.velocity.data());
-      problem.SetParameterBlockConstant(batch.state.rotation.data());
     } else {
       problem.SetParameterization(batch.state.rotation.data(),
                                   new ceres::QuaternionParameterization());
@@ -329,6 +349,9 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
 
   ceres::Solver::Summary summary;
   ceres::Solve(ceres_solver_options_, &problem, &summary);
+  // The optimized states in 'batches_' are in the submap frame and we transform
+  // them in place to be in the local SLAM frame again.
+  TransformStates(matching_submap->local_pose());
   if (num_accumulated_ < options_.scans_per_accumulation()) {
     return nullptr;
   }
@@ -433,10 +456,7 @@ OptimizingLocalTrajectoryBuilder::PredictState(const State& start_state,
       start_rotation * result.delta_velocity -
       gravity_constant_ * delta_time_seconds * Eigen::Vector3d::UnitZ();
 
-  return State{
-      {{orientation.w(), orientation.x(), orientation.y(), orientation.z()}},
-      {{position.x(), position.y(), position.z()}},
-      {{velocity.x(), velocity.y(), velocity.z()}}};
+  return State(position, orientation, velocity);
 }
 
 }  // namespace mapping_3d

@@ -68,8 +68,8 @@ class ConstraintBuilder {
   ConstraintBuilder& operator=(const ConstraintBuilder&) = delete;
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_id', and the 'point_cloud' for 'node_id'.
-  // The 'initial_relative_pose' is relative to the 'submap'.
+  // 'submap_id', and the 'point_cloud' for 'node_id'. The 'intial_pose' is
+  // relative to the 'submap'.
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
@@ -78,7 +78,7 @@ class ConstraintBuilder {
       const mapping::NodeId& node_id,
       const sensor::CompressedPointCloud* compressed_point_cloud,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const transform::Rigid3d& initial_relative_pose);
+      const transform::Rigid3d& initial_pose);
 
   // Schedules exploring a new constraint between 'submap' identified by
   // 'submap_id' and the 'compressed_point_cloud' for 'node_id'.
@@ -141,7 +141,7 @@ class ConstraintBuilder {
       const mapping::NodeId& node_id, bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::CompressedPointCloud* compressed_point_cloud,
-      const transform::Rigid3d& initial_relative_pose,
+      const transform::Rigid3d& initial_pose,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);
 
   // Decrements the 'pending_computations_' count. If all computations are done,

@@ -61,9 +61,8 @@ void ConstraintBuilder::MaybeAddConstraint(
     const mapping::NodeId& node_id,
     const sensor::CompressedPointCloud* const compressed_point_cloud,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const transform::Rigid3d& initial_relative_pose) {
-  if (initial_relative_pose.translation().norm() >
-      options_.max_constraint_distance()) {
+    const transform::Rigid3d& initial_pose) {
+  if (initial_pose.translation().norm() > options_.max_constraint_distance()) {
     return;
   }
   if (sampler_.Pulse()) {
@@ -75,10 +74,10 @@ void ConstraintBuilder::MaybeAddConstraint(
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_id, submap_nodes, &submap->high_resolution_hybrid_grid,
         [=]() EXCLUDES(mutex_) {
-          ComputeConstraint(
-              submap_id, submap, node_id, false, /* match_full_submap */
-              nullptr,                           /* trajectory_connectivity */
-              compressed_point_cloud, initial_relative_pose, constraint);
+          ComputeConstraint(submap_id, submap, node_id,
+                            false,   /* match_full_submap */
+                            nullptr, /* trajectory_connectivity */
+                            compressed_point_cloud, initial_pose, constraint);
           FinishComputation(current_computation);
         });
   }
@@ -171,23 +170,19 @@ void ConstraintBuilder::ComputeConstraint(
     const mapping::NodeId& node_id, bool match_full_submap,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
     const sensor::CompressedPointCloud* const compressed_point_cloud,
-    const transform::Rigid3d& initial_relative_pose,
+    const transform::Rigid3d& initial_pose,
     std::unique_ptr<OptimizationProblem::Constraint>* constraint) {
-  const transform::Rigid3d initial_pose =
-      submap->local_pose() * initial_relative_pose;
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_id);
   const sensor::PointCloud point_cloud = compressed_point_cloud->Decompress();
   const sensor::PointCloud filtered_point_cloud =
       adaptive_voxel_filter_.Filter(point_cloud);
 
-  // The 'constraint_transform' (i <- j) is computed from:
-  // - a 'filtered_point_cloud' in j,
-  // - the initial guess 'initial_pose' for (map <- j),
-  // - the result 'pose_estimate' of Match() (map <- j).
-  // - the submap->pose() (map <- i)
+  // The 'constraint_transform' (submap 'i' <- scan 'j') is computed from the
+  // initial guess 'initial_pose' for (submap 'i' <- scan 'j') and a
+  // 'filtered_point_cloud' in 'j'.
   float score = 0.;
-  transform::Rigid3d pose_estimate = transform::Rigid3d::Identity();
+  transform::Rigid3d pose_estimate;
 
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
@@ -220,13 +215,12 @@ void ConstraintBuilder::ComputeConstraint(
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
   ceres::Solver::Summary unused_summary;
+  transform::Rigid3d constraint_transform;
   ceres_scan_matcher_.Match(
       pose_estimate, pose_estimate,
       {{&filtered_point_cloud, submap_scan_matcher->hybrid_grid}},
-      &pose_estimate, &unused_summary);
+      &constraint_transform, &unused_summary);
 
-  const transform::Rigid3d constraint_transform =
-      submap->local_pose().inverse() * pose_estimate;
   constraint->reset(new OptimizationProblem::Constraint{
       submap_id,
       node_id,
@@ -243,7 +237,7 @@ void ConstraintBuilder::ComputeConstraint(
       info << " matches";
     } else {
       const transform::Rigid3d difference =
-          initial_pose.inverse() * pose_estimate;
+          initial_pose.inverse() * constraint_transform;
       info << " differs by translation " << std::setprecision(2)
            << difference.translation().norm() << " rotation "
            << std::setprecision(3) << transform::GetAngle(difference);

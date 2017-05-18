@@ -83,8 +83,7 @@ PointCloud VoxelFiltered(const PointCloud& point_cloud, const float size) {
   return voxel_filter.point_cloud();
 }
 
-VoxelFilter::VoxelFilter(const float size)
-    : voxels_(size, Eigen::Vector3f::Zero()) {}
+VoxelFilter::VoxelFilter(const float size) : voxels_(size) {}
 
 void VoxelFilter::InsertPointCloud(const PointCloud& point_cloud) {
   for (const Eigen::Vector3f& point : point_cloud) {

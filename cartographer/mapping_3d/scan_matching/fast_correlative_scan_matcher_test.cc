@@ -87,8 +87,7 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
         transform::Rigid3f::Rotation(
             Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
 
-    HybridGrid hybrid_grid(0.05f /* resolution */,
-                           Eigen::Vector3f(0.5f, 1.5f, 2.5f) /* origin */);
+    HybridGrid hybrid_grid(0.05f);
     hybrid_grid.StartUpdate();
     range_data_inserter.Insert(
         sensor::RangeData{

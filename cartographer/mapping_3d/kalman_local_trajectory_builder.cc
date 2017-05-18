@@ -140,19 +140,24 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
   pose_tracker_->GetPoseEstimateMeanAndCovariance(
       time, &pose_prediction, &unused_covariance_prediction);
 
-  transform::Rigid3d initial_ceres_pose = pose_prediction;
+  const Submap* const matching_submap =
+      submaps_->Get(submaps_->matching_index());
+  transform::Rigid3d initial_ceres_pose =
+      matching_submap->local_pose().inverse() * pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.high_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud filtered_point_cloud_in_tracking =
       adaptive_voxel_filter.Filter(filtered_range_data.returns);
   if (options_.kalman_local_trajectory_builder_options()
           .use_online_correlative_scan_matching()) {
+    // We take a copy since we use 'intial_ceres_pose' as an output argument.
+    const transform::Rigid3d initial_pose = initial_ceres_pose;
     real_time_correlative_scan_matcher_->Match(
-        pose_prediction, filtered_point_cloud_in_tracking,
-        submaps_->high_resolution_matching_grid(), &initial_ceres_pose);
+        initial_pose, filtered_point_cloud_in_tracking,
+        matching_submap->high_resolution_hybrid_grid, &initial_ceres_pose);
   }
 
-  transform::Rigid3d pose_observation;
+  transform::Rigid3d pose_observation_in_submap;
   ceres::Solver::Summary summary;
 
   sensor::AdaptiveVoxelFilter low_resolution_adaptive_voxel_filter(
@@ -161,10 +166,12 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
       low_resolution_adaptive_voxel_filter.Filter(filtered_range_data.returns);
   ceres_scan_matcher_->Match(scan_matcher_pose_estimate_, initial_ceres_pose,
                              {{&filtered_point_cloud_in_tracking,
-                               &submaps_->high_resolution_matching_grid()},
+                               &matching_submap->high_resolution_hybrid_grid},
                               {&low_resolution_point_cloud_in_tracking,
-                               &submaps_->low_resolution_matching_grid()}},
-                             &pose_observation, &summary);
+                               &matching_submap->low_resolution_hybrid_grid}},
+                             &pose_observation_in_submap, &summary);
+  const transform::Rigid3d pose_observation =
+      matching_submap->local_pose() * pose_observation_in_submap;
   pose_tracker_->AddPoseObservation(
       time, pose_observation,
       options_.kalman_local_trajectory_builder_options()

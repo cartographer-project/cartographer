@@ -36,7 +36,7 @@ OutlierRemovingPointsProcessor::OutlierRemovingPointsProcessor(
     : voxel_size_(voxel_size),
       next_(next),
       state_(State::kPhase1),
-      voxels_(voxel_size_, Eigen::Vector3f::Zero()) {
+      voxels_(voxel_size_) {
   LOG(INFO) << "Marking hits...";
 }
 

@@ -28,8 +28,7 @@ namespace {
 
 class RangeDataInserterTest : public ::testing::Test {
  protected:
-  RangeDataInserterTest()
-      : hybrid_grid_(1.f, Eigen::Vector3f(0.5f, 0.5f, 0.5f)) {
+  RangeDataInserterTest() : hybrid_grid_(1.f) {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
         "hit_probability = 0.7, "
@@ -41,11 +40,9 @@ class RangeDataInserterTest : public ::testing::Test {
   }
 
   void InsertPointCloud() {
-    const Eigen::Vector3f origin = Eigen::Vector3f(0.5f, 0.5f, -3.5f);
-    sensor::PointCloud returns = {{-2.5f, -0.5f, 4.5f},
-                                  {-1.5f, 0.5f, 4.5f},
-                                  {-0.5f, 1.5f, 4.5f},
-                                  {0.5f, 2.5f, 4.5f}};
+    const Eigen::Vector3f origin = Eigen::Vector3f(0.f, 0.f, -4.f);
+    sensor::PointCloud returns = {
+        {-3.f, -1.f, 4.f}, {-2.f, 0.f, 4.f}, {-1.f, 1.f, 4.f}, {0.f, 2.f, 4.f}};
     range_data_inserter_->Insert(sensor::RangeData{origin, returns, {}},
                                  &hybrid_grid_);
   }
@@ -70,19 +67,19 @@ class RangeDataInserterTest : public ::testing::Test {
 
 TEST_F(RangeDataInserterTest, InsertPointCloud) {
   InsertPointCloud();
-  EXPECT_NEAR(options().miss_probability(), GetProbability(0.5f, 0.5f, -3.5f),
+  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -4.f),
               1e-4);
-  EXPECT_NEAR(options().miss_probability(), GetProbability(0.5f, 0.5f, -2.5f),
+  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -3.f),
               1e-4);
-  EXPECT_NEAR(options().miss_probability(), GetProbability(0.5f, 0.5f, -1.5f),
+  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -2.f),
               1e-4);
   for (int x = -4; x <= 4; ++x) {
     for (int y = -4; y <= 4; ++y) {
       if (x < -3 || x > 0 || y != x + 2) {
-        EXPECT_FALSE(IsKnown(x + 0.5f, y + 0.5f, 4.5f));
+        EXPECT_FALSE(IsKnown(x, y, 4.f));
       } else {
-        EXPECT_NEAR(options().hit_probability(),
-                    GetProbability(x + 0.5f, y + 0.5f, 4.5f), 1e-4);
+        EXPECT_NEAR(options().hit_probability(), GetProbability(x, y, 4.f),
+                    1e-4);
       }
     }
   }
@@ -90,22 +87,19 @@ TEST_F(RangeDataInserterTest, InsertPointCloud) {
 
 TEST_F(RangeDataInserterTest, ProbabilityProgression) {
   InsertPointCloud();
-  EXPECT_NEAR(options().hit_probability(), GetProbability(-1.5f, 0.5f, 4.5f),
+  EXPECT_NEAR(options().hit_probability(), GetProbability(-2.f, 0.f, 4.f),
               1e-4);
-  EXPECT_NEAR(options().miss_probability(), GetProbability(-1.5f, 0.5f, 3.5f),
+  EXPECT_NEAR(options().miss_probability(), GetProbability(-2.f, 0.f, 3.f),
               1e-4);
-  EXPECT_NEAR(options().miss_probability(), GetProbability(0.5f, 0.5f, -2.5f),
+  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -3.f),
               1e-4);
 
   for (int i = 0; i < 1000; ++i) {
     InsertPointCloud();
   }
-  EXPECT_NEAR(mapping::kMaxProbability, GetProbability(-1.5f, 0.5f, 4.5f),
-              1e-3);
-  EXPECT_NEAR(mapping::kMinProbability, GetProbability(-1.5f, 0.5f, 3.5f),
-              1e-3);
-  EXPECT_NEAR(mapping::kMinProbability, GetProbability(0.5f, 0.5f, -2.5f),
-              1e-3);
+  EXPECT_NEAR(mapping::kMaxProbability, GetProbability(-2.f, 0.f, 4.f), 1e-3);
+  EXPECT_NEAR(mapping::kMinProbability, GetProbability(-2.f, 0.f, 3.f), 1e-3);
+  EXPECT_NEAR(mapping::kMinProbability, GetProbability(0.f, 0.f, -3.f), 1e-3);
 }
 
 }  // namespace
