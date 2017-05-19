@@ -17,8 +17,10 @@
 #ifndef CARTOGRAPHER_MAPPING_ID_H_
 #define CARTOGRAPHER_MAPPING_ID_H_
 
+#include <algorithm>
 #include <ostream>
 #include <tuple>
+#include <vector>
 
 namespace cartographer {
 namespace mapping {
@@ -54,6 +56,40 @@ struct SubmapId {
 inline std::ostream& operator<<(std::ostream& os, const SubmapId& v) {
   return os << "(" << v.trajectory_id << ", " << v.submap_index << ")";
 }
+
+template <typename ValueType, typename IdType>
+class NestedVectorsById {
+ public:
+  // Appends data to a trajectory, creating trajectories as needed.
+  IdType Append(int trajectory_id, const ValueType& value) {
+    data_.resize(std::max<size_t>(data_.size(), trajectory_id + 1));
+    const IdType id{trajectory_id,
+                    static_cast<int>(data_[trajectory_id].size())};
+    data_[trajectory_id].push_back(value);
+    return id;
+  }
+
+  const ValueType& at(const IdType& id) const {
+    return data_.at(id.trajectory_id).at(GetIndex(id));
+  }
+  ValueType& at(const IdType& id) {
+    return data_.at(id.trajectory_id).at(GetIndex(id));
+  }
+
+  int num_trajectories() const { return static_cast<int>(data_.size()); }
+  int num_indices(int trajectory_id) const {
+    return static_cast<int>(data_.at(trajectory_id).size());
+  }
+
+  // TODO(whess): Remove once no longer needed.
+  const std::vector<std::vector<ValueType>> data() const { return data_; }
+
+ private:
+  static int GetIndex(const NodeId& id) { return id.node_index; }
+  static int GetIndex(const SubmapId& id) { return id.submap_index; }
+
+  std::vector<std::vector<ValueType>> data_;
+};
 
 }  // namespace mapping
 }  // namespace cartographer
