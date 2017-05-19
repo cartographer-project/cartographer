@@ -123,7 +123,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds constraints for a scan, and starts scan matching in the background.
   void ComputeConstraintsForScan(
-      int scan_index, const mapping::Submap* matching_submap,
+      const mapping::Submap* matching_submap,
       std::vector<const mapping::Submap*> insertion_submaps,
       const mapping::Submap* finished_submap, const transform::Rigid2d& pose,
       const kalman_filter::Pose2DCovariance& covariance) REQUIRES(mutex_);
@@ -185,11 +185,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::map<const mapping::Submap*, mapping::SubmapId> submap_ids_
       GUARDED_BY(mutex_);
   std::vector<std::vector<SubmapState>> submap_states_ GUARDED_BY(mutex_);
-
-  // Mapping to flat indices to aid the transition to per-trajectory data
-  // structures.
-  std::map<int, int> num_nodes_in_trajectory_ GUARDED_BY(mutex_);
-  std::vector<mapping::NodeId> scan_index_to_node_id_ GUARDED_BY(mutex_);
 
   // Connectivity structure of our trajectories by IDs.
   std::vector<std::vector<int>> connected_components_;
