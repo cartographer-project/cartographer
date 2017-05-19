@@ -60,7 +60,7 @@ inline std::ostream& operator<<(std::ostream& os, const SubmapId& v) {
 template <typename ValueType, typename IdType>
 class NestedVectorsById {
  public:
-  // Appends data to a trajectory, first creating trajectories as needed.
+  // Appends data to a trajectory, creating trajectories as needed.
   IdType Append(int trajectory_id, const ValueType& value) {
     data_.resize(std::max<size_t>(data_.size(), trajectory_id + 1));
     const IdType id{trajectory_id,
