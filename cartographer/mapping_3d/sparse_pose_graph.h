@@ -149,7 +149,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<transform::Rigid3d> ExtrapolateSubmapTransforms(
       const std::vector<std::vector<sparse_pose_graph::SubmapData>>&
           submap_transforms,
-      size_t trajectory_id) const REQUIRES(mutex_);
+      int trajectory_id) const REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
@@ -181,7 +181,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // before they take part in the background computations.
   std::map<const mapping::Submap*, mapping::SubmapId> submap_ids_
       GUARDED_BY(mutex_);
-  std::vector<std::vector<SubmapState>> submap_states_ GUARDED_BY(mutex_);
+  mapping::NestedVectorsById<SubmapState, mapping::SubmapId> submap_states_
+      GUARDED_BY(mutex_);
 
   // Connectivity structure of our trajectories by IDs.
   std::vector<std::vector<int>> connected_components_;
@@ -193,8 +194,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Deque to keep references valid for the background computation when adding
   // new data.
   std::deque<mapping::TrajectoryNode::ConstantData> constant_node_data_;
-  std::vector<std::vector<mapping::TrajectoryNode>> trajectory_nodes_
-      GUARDED_BY(mutex_);
+  mapping::NestedVectorsById<mapping::TrajectoryNode, mapping::NodeId>
+      trajectory_nodes_ GUARDED_BY(mutex_);
   int num_trajectory_nodes_ = 0 GUARDED_BY(mutex_);
 
   // Current submap transforms used for displaying data.
