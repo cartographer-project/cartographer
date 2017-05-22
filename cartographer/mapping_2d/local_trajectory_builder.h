@@ -19,7 +19,6 @@
 
 #include <memory>
 
-#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping/imu_tracker.h"
@@ -35,9 +34,6 @@
 
 namespace cartographer {
 namespace mapping_2d {
-
-proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
-    common::LuaParameterDictionary* parameter_dictionary);
 
 // Wires up the local SLAM stack (i.e. UKF, scan matching, etc.) without loop
 // closure.

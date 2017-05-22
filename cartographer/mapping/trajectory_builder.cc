@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping/trajectory_builder.h"
 
-#include "cartographer/mapping_2d/local_trajectory_builder.h"
+#include "cartographer/mapping_2d/local_trajectory_builder_options.h"
 #include "cartographer/mapping_3d/local_trajectory_builder_options.h"
 
 namespace cartographer {

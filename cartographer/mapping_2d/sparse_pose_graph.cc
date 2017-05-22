@@ -290,7 +290,10 @@ void SparsePoseGraph::ComputeConstraintsForScan(
 void SparsePoseGraph::HandleScanQueue() {
   constraint_builder_.WhenDone(
       [this](const sparse_pose_graph::ConstraintBuilder::Result& result) {
-        constraints_.insert(constraints_.end(), result.begin(), result.end());
+        {
+          common::MutexLocker locker(&mutex_);
+          constraints_.insert(constraints_.end(), result.begin(), result.end());
+        }
         RunOptimization();
 
         common::MutexLocker locker(&mutex_);
@@ -334,8 +337,8 @@ void SparsePoseGraph::WaitForAllComputations() {
   constraint_builder_.WhenDone(
       [this, &notification](
           const sparse_pose_graph::ConstraintBuilder::Result& result) {
-        constraints_.insert(constraints_.end(), result.begin(), result.end());
         common::MutexLocker locker(&mutex_);
+        constraints_.insert(constraints_.end(), result.begin(), result.end());
         notification = true;
       });
   locker.Await([&notification]() { return notification; });

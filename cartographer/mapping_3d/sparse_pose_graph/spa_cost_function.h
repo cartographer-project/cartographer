@@ -24,6 +24,7 @@
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/transform/rigid_transform.h"
+#include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
 #include "ceres/jet.h"
 

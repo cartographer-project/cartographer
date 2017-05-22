@@ -196,7 +196,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::deque<mapping::TrajectoryNode::ConstantData> constant_node_data_;
   mapping::NestedVectorsById<mapping::TrajectoryNode, mapping::NodeId>
       trajectory_nodes_ GUARDED_BY(mutex_);
-  int num_trajectory_nodes_ = 0 GUARDED_BY(mutex_);
+  int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Current submap transforms used for displaying data.
   std::vector<std::vector<sparse_pose_graph::SubmapData>>
