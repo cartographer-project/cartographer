@@ -32,8 +32,9 @@ TEST(TrajectoryConnectivityTest, TransitivelyConnected) {
   TrajectoryConnectivity trajectory_connectivity;
 
   // Make sure nothing's connected until we connect some things.
-  for (int trajectory_a; trajectory_a < kNumTrajectories; ++trajectory_a) {
-    for (int trajectory_b; trajectory_b < kNumTrajectories; ++trajectory_b) {
+  for (int trajectory_a = 0; trajectory_a < kNumTrajectories; ++trajectory_a) {
+    for (int trajectory_b = 0; trajectory_b < kNumTrajectories;
+         ++trajectory_b) {
       EXPECT_FALSE(trajectory_connectivity.TransitivelyConnected(trajectory_a,
                                                                  trajectory_b));
     }
