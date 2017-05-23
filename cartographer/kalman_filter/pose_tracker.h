@@ -57,10 +57,6 @@ PoseCovariance Embed3D(const Pose2DCovariance& embedded_covariance,
 PoseCovariance BuildPoseCovariance(double translational_variance,
                                    double rotational_variance);
 
-// Deserializes the 'proto_matrix' into a PoseCovariance.
-PoseCovariance PoseCovarianceFromProtoMatrix(
-    const sensor::proto::Matrix& proto_matrix);
-
 proto::PoseTrackerOptions CreatePoseTrackerOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
