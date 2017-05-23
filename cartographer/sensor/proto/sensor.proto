@@ -34,22 +34,6 @@ message CompressedPointCloud {
   repeated int32 point_data = 3 [packed = true];
 }
 
-// Linearized matrix representation in row major format.
-// E.g. the  2x3 matrix:
-//   | 1, 2, 3 |
-//   | 4, 5, 6 |
-// would be represented as
-// {
-//   rows: 2;
-//   cols: 2;
-//   data: [1, 2, 3, 4, 5, 6]
-// }
-message Matrix {
-  optional int32 rows = 1;
-  optional int32 cols = 2;
-  repeated double data = 3;
-}
-
 // Proto representation of ::cartographer::sensor::RangeData
 message RangeData {
   optional transform.proto.Vector3f origin = 1;

@@ -343,19 +343,6 @@ PoseCovariance Embed3D(const Pose2DCovariance& embedded_covariance,
   return covariance;
 }
 
-PoseCovariance PoseCovarianceFromProtoMatrix(
-    const sensor::proto::Matrix& proto_matrix) {
-  PoseCovariance covariance;
-  CHECK_EQ(proto_matrix.rows(), 6);
-  CHECK_EQ(proto_matrix.cols(), 6);
-  for (int i = 0; i < 6; ++i) {
-    for (int j = 0; j < 6; ++j) {
-      covariance(i, j) = proto_matrix.data(i * 6 + j);
-    }
-  }
-  return covariance;
-}
-
 PoseCovariance BuildPoseCovariance(const double translational_variance,
                                    const double rotational_variance) {
   const Eigen::Matrix3d translational =
