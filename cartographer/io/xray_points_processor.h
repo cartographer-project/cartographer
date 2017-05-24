@@ -52,6 +52,8 @@ class XRayPointsProcessor : public PointsProcessor {
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
 
+  Eigen::AlignedBox3i bounding_box() const { return bounding_box_; }
+
  private:
   struct ColumnData {
     double sum_r = 0.;
@@ -81,6 +83,9 @@ class XRayPointsProcessor : public PointsProcessor {
 
   // Only has one entry if we do not separate into floors.
   std::vector<Aggregation> aggregations_;
+
+  // Bounding box containing all cells with data in all 'aggregations_'.
+  Eigen::AlignedBox3i bounding_box_;
 };
 
 }  // namespace io

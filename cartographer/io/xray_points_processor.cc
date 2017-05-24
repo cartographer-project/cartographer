@@ -167,31 +167,22 @@ std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
 
 void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
                                       FileWriter* const file_writer) {
-  Eigen::Array3i min(std::numeric_limits<int>::max(),
-                     std::numeric_limits<int>::max(),
-                     std::numeric_limits<int>::max());
-  Eigen::Array3i max(std::numeric_limits<int>::min(),
-                     std::numeric_limits<int>::min(),
-                     std::numeric_limits<int>::min());
-
-  // Find the maximum and minimum cells.
-  for (mapping_3d::HybridGridBase<bool>::Iterator it(aggregation.voxels);
-       !it.Done(); it.Next()) {
-    const Eigen::Array3i idx = it.GetCellIndex();
-    min = min.min(idx);
-    max = max.max(idx);
+  if (bounding_box_.isEmpty()) {
+    LOG(WARNING) << "Not writing output: bounding box is empty.";
+    return;
   }
 
   // Returns the (x, y) pixel of the given 'index'.
-  const auto voxel_index_to_pixel = [&max, &min](const Eigen::Array3i& index) {
+  const auto voxel_index_to_pixel = [this](const Eigen::Array3i& index) {
     // We flip the y axis, since matrices rows are counted from the top.
-    return Eigen::Array2i(max[1] - index[1], max[2] - index[2]);
+    return Eigen::Array2i(bounding_box_.max()[1] - index[1],
+                          bounding_box_.max()[2] - index[2]);
   };
 
   // Hybrid grid uses X: forward, Y: left, Z: up.
   // For the screen we are using. X: right, Y: up
-  const int xsize = max[1] - min[1] + 1;
-  const int ysize = max[2] - min[2] + 1;
+  const int xsize = bounding_box_.sizes()[1] + 1;
+  const int ysize = bounding_box_.sizes()[2] + 1;
   PixelDataMatrix image = PixelDataMatrix(ysize, xsize);
   for (mapping_3d::HybridGridBase<bool>::Iterator it(aggregation.voxels);
        !it.Done(); it.Next()) {
@@ -217,6 +208,7 @@ void XRayPointsProcessor::Insert(const PointsBatch& batch,
     const Eigen::Array3i cell_index =
         aggregation->voxels.GetCellIndex(camera_point);
     *aggregation->voxels.mutable_value(cell_index) = true;
+    bounding_box_.extend(cell_index.matrix());
     ColumnData& column_data =
         aggregation->column_data[std::make_pair(cell_index[1], cell_index[2])];
     const auto& color =
