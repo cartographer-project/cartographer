@@ -16,7 +16,6 @@
 
 #include "cartographer/mapping/sparse_pose_graph.h"
 
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping/sparse_pose_graph/optimization_problem_options.h"
 #include "cartographer/transform/transform.h"
@@ -44,6 +43,10 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   *options.mutable_constraint_builder_options() =
       sparse_pose_graph::CreateConstraintBuilderOptions(
           parameter_dictionary->GetDictionary("constraint_builder").get());
+  options.set_matcher_translation_weight(
+      parameter_dictionary->GetDouble("matcher_translation_weight"));
+  options.set_matcher_rotation_weight(
+      parameter_dictionary->GetDouble("matcher_rotation_weight"));
   *options.mutable_optimization_problem_options() =
       sparse_pose_graph::CreateOptimizationProblemOptions(
           parameter_dictionary->GetDictionary("optimization_problem").get());
@@ -53,6 +56,20 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   options.set_global_sampling_ratio(
       parameter_dictionary->GetDouble("global_sampling_ratio"));
   return options;
+}
+
+Eigen::Matrix<double, 6, 6> FromTranslationRotationWeights(
+    const double translation_weight, const double rotation_weight) {
+  Eigen::Matrix<double, 6, 6> result;
+  // clang-format off
+  result << translation_weight, 0., 0., 0., 0., 0.,
+            0., translation_weight, 0., 0., 0., 0.,
+            0., 0., translation_weight, 0., 0., 0.,
+            0., 0., 0.,    rotation_weight, 0., 0.,
+            0., 0., 0., 0.,    rotation_weight, 0.,
+            0., 0., 0., 0., 0.,    rotation_weight;
+  // clang-format on
+  return result;
 }
 
 proto::SparsePoseGraph SparsePoseGraph::ToProto() {

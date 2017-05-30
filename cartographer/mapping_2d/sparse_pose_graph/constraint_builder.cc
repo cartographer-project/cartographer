@@ -29,7 +29,6 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
 #include "cartographer/transform/transform.h"
@@ -212,25 +211,20 @@ void ConstraintBuilder::ComputeConstraint(
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
   ceres::Solver::Summary unused_summary;
-  kalman_filter::Pose2DCovariance covariance;
   ceres_scan_matcher_.Match(pose_estimate, pose_estimate, filtered_point_cloud,
                             *submap_scan_matcher->probability_grid,
-                            &pose_estimate, &covariance, &unused_summary);
-  // 'covariance' is unchanged as (submap <- map) is a translation.
+                            &pose_estimate, &unused_summary);
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;
-  constexpr double kFakePositionCovariance = 1e-6;
-  constexpr double kFakeOrientationCovariance = 1e-6;
-  constraint->reset(new Constraint{
-      submap_id,
-      node_id,
-      {transform::Embed3D(constraint_transform),
-       common::ComputeSpdMatrixSqrtInverse(
-           kalman_filter::Embed3D(covariance, kFakePositionCovariance,
-                                  kFakeOrientationCovariance),
-           options_.lower_covariance_eigenvalue_bound())},
-      Constraint::INTER_SUBMAP});
+  constraint->reset(
+      new Constraint{submap_id,
+                     node_id,
+                     {transform::Embed3D(constraint_transform),
+                      mapping::FromTranslationRotationWeights(
+                          options_.loop_closure_translation_weight(),
+                          options_.loop_closure_rotation_weight())},
+                     Constraint::INTER_SUBMAP});
 
   if (options_.log_matches()) {
     std::ostringstream info;
@@ -245,9 +239,7 @@ void ConstraintBuilder::ComputeConstraint(
            << difference.translation().norm() << " rotation "
            << std::setprecision(3) << std::abs(difference.normalized_angle());
     }
-    info << " with score " << std::setprecision(1) << 100. * score
-         << "% covariance trace " << std::scientific << std::setprecision(4)
-         << covariance.trace() << ".";
+    info << " with score " << std::setprecision(1) << 100. * score << "%.";
     LOG(INFO) << info.str();
   }
 }

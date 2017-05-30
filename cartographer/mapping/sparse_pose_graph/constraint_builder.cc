@@ -40,6 +40,10 @@ proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
       parameter_dictionary->GetDouble("global_localization_min_score"));
   options.set_lower_covariance_eigenvalue_bound(
       parameter_dictionary->GetDouble("lower_covariance_eigenvalue_bound"));
+  options.set_loop_closure_translation_weight(
+      parameter_dictionary->GetDouble("loop_closure_translation_weight"));
+  options.set_loop_closure_rotation_weight(
+      parameter_dictionary->GetDouble("loop_closure_rotation_weight"));
   options.set_log_matches(parameter_dictionary->GetBool("log_matches"));
   *options.mutable_fast_correlative_scan_matcher_options() =
       mapping_2d::scan_matching::CreateFastCorrelativeScanMatcherOptions(

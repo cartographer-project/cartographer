@@ -79,6 +79,8 @@ class SparsePoseGraphTest : public ::testing::Test {
               min_score = 0.5,
               global_localization_min_score = 0.6,
               lower_covariance_eigenvalue_bound = 1e-6,
+              loop_closure_translation_weight = 1.,
+              loop_closure_rotation_weight = 1.,
               log_matches = true,
               fast_correlative_scan_matcher = {
                 linear_search_window = 3.,
@@ -89,7 +91,6 @@ class SparsePoseGraphTest : public ::testing::Test {
                 occupied_space_weight = 20.,
                 translation_weight = 10.,
                 rotation_weight = 1.,
-                covariance_scale = 1.,
                 ceres_solver_options = {
                   use_nonmonotonic_steps = true,
                   max_num_iterations = 50,
@@ -117,6 +118,8 @@ class SparsePoseGraphTest : public ::testing::Test {
                 },
               },
             },
+            matcher_translation_weight = 1.,
+            matcher_rotation_weight = 1.,
             optimization_problem = {
               acceleration_weight = 1.,
               rotation_weight = 1e2,
@@ -147,8 +150,6 @@ class SparsePoseGraphTest : public ::testing::Test {
     const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
-    kalman_filter::Pose2DCovariance covariance =
-        kalman_filter::Pose2DCovariance::Identity();
     const mapping::Submap* const matching_submap =
         submaps_->Get(submaps_->matching_index());
     std::vector<const mapping::Submap*> insertion_submaps;
@@ -161,10 +162,9 @@ class SparsePoseGraphTest : public ::testing::Test {
     constexpr int kTrajectoryId = 0;
     submaps_->InsertRangeData(TransformRangeData(
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
-    sparse_pose_graph_->AddScan(common::FromUniversal(0),
-                                transform::Rigid3d::Identity(), range_data,
-                                pose_estimate, covariance, kTrajectoryId,
-                                matching_submap, insertion_submaps);
+    sparse_pose_graph_->AddScan(
+        common::FromUniversal(0), transform::Rigid3d::Identity(), range_data,
+        pose_estimate, kTrajectoryId, matching_submap, insertion_submaps);
   }
 
   void MoveRelative(const transform::Rigid2d& movement) {

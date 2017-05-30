@@ -22,7 +22,6 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -45,14 +44,13 @@ class CeresScanMatcher {
   CeresScanMatcher& operator=(const CeresScanMatcher&) = delete;
 
   // Aligns 'point_cloud' within the 'probability_grid' given an
-  // 'initial_pose_estimate' and returns 'pose_estimate', 'covariance', and
-  // the solver 'summary'.
+  // 'initial_pose_estimate' and returns a 'pose_estimate' and the solver
+  // 'summary'.
   void Match(const transform::Rigid2d& previous_pose,
              const transform::Rigid2d& initial_pose_estimate,
              const sensor::PointCloud& point_cloud,
              const ProbabilityGrid& probability_grid,
              transform::Rigid2d* pose_estimate,
-             kalman_filter::Pose2DCovariance* covariance,
              ceres::Solver::Summary* summary) const;
 
  private:

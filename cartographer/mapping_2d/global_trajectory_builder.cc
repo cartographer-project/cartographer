@@ -42,10 +42,8 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
     sparse_pose_graph_->AddScan(
         insertion_result->time, insertion_result->tracking_to_tracking_2d,
         insertion_result->range_data_in_tracking_2d,
-        insertion_result->pose_estimate_2d,
-        kalman_filter::Project2D(insertion_result->covariance_estimate),
-        trajectory_id_, insertion_result->matching_submap,
-        insertion_result->insertion_submaps);
+        insertion_result->pose_estimate_2d, trajectory_id_,
+        insertion_result->matching_submap, insertion_result->insertion_submaps);
   }
 }
 
