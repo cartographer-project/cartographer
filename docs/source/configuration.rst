@@ -62,13 +62,7 @@ cartographer.mapping.proto.MapBuilderOptions
 bool use_trajectory_builder_2d
   Not yet documented.
 
-cartographer.mapping_2d.proto.LocalTrajectoryBuilderOptions trajectory_builder_2d_options
-  Not yet documented.
-
 bool use_trajectory_builder_3d
-  Not yet documented.
-
-cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions trajectory_builder_3d_options
   Not yet documented.
 
 int32 num_background_threads
@@ -88,6 +82,14 @@ int32 optimize_every_n_scans
 cartographer.mapping.sparse_pose_graph.proto.ConstraintBuilderOptions constraint_builder_options
   Options for the constraint builder.
 
+double matcher_translation_weight
+  Weight used in the optimization problem for the translational component of
+  non-loop-closure scan matcher constraints.
+
+double matcher_rotation_weight
+  Weight used in the optimization problem for the rotational component of
+  non-loop-closure scan matcher constraints.
+
 cartographer.mapping.sparse_pose_graph.proto.OptimizationProblemOptions optimization_problem_options
   Options for the optimization problem.
 
@@ -98,6 +100,16 @@ int32 max_num_final_iterations
 double global_sampling_ratio
   Rate at which we sample a single trajectory's scans for global
   localization.
+
+
+cartographer.mapping.proto.TrajectoryBuilderOptions
+===================================================
+
+cartographer.mapping_2d.proto.LocalTrajectoryBuilderOptions trajectory_builder_2d_options
+  Not yet documented.
+
+cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions trajectory_builder_3d_options
+  Not yet documented.
 
 
 cartographer.mapping.sparse_pose_graph.proto.ConstraintBuilderOptions
@@ -120,8 +132,13 @@ double min_score
 double global_localization_min_score
   Threshold below which global localizations are not trusted.
 
-double lower_covariance_eigenvalue_bound
-  Lower bound for covariance eigenvalues to limit the weight of matches.
+double loop_closure_translation_weight
+  Weight used in the optimization problem for the translational component of
+  loop closure constraints.
+
+double loop_closure_rotation_weight
+  Weight used in the optimization problem for the rotational component of
+  loop closure constraints.
 
 bool log_matches
   If enabled, logs information of loop-closing constraints for debugging.

@@ -62,8 +62,7 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       common::Time time, const sensor::RangeData& range_data_in_tracking,
-      const transform::Rigid3d& pose_observation,
-      const kalman_filter::PoseCovariance& covariance_estimate);
+      const transform::Rigid3d& pose_observation);
 
   const proto::LocalTrajectoryBuilderOptions options_;
   std::unique_ptr<mapping_3d::Submaps> submaps_;

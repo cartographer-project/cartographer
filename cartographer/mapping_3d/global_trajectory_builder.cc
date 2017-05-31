@@ -55,9 +55,8 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
 
   sparse_pose_graph_->AddScan(
       insertion_result->time, insertion_result->range_data_in_tracking,
-      insertion_result->pose_observation, insertion_result->covariance_estimate,
-      trajectory_id_, insertion_result->matching_submap,
-      insertion_result->insertion_submaps);
+      insertion_result->pose_observation, trajectory_id_,
+      insertion_result->matching_submap, insertion_result->insertion_submaps);
 }
 
 void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,

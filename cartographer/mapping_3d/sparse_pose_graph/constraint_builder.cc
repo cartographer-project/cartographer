@@ -225,9 +225,9 @@ void ConstraintBuilder::ComputeConstraint(
   constraint->reset(new OptimizationProblem::Constraint{
       submap_id,
       node_id,
-      {constraint_transform,
-       1. / std::sqrt(options_.lower_covariance_eigenvalue_bound()) *
-           kalman_filter::PoseCovariance::Identity()},
+      {constraint_transform, mapping::FromTranslationRotationWeights(
+                                 options_.loop_closure_translation_weight(),
+                                 options_.loop_closure_rotation_weight())},
       OptimizationProblem::Constraint::INTER_SUBMAP});
 
   if (options_.log_matches()) {

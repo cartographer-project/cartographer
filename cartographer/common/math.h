@@ -82,29 +82,6 @@ T atan2(const Eigen::Matrix<T, 2, 1>& vector) {
   return ceres::atan2(vector.y(), vector.x());
 }
 
-// Computes 'A'^{-1/2} for A being symmetric, positive-semidefinite.
-// Eigenvalues of 'A' are clamped to be at least 'lower_eigenvalue_bound'.
-template <int N>
-Eigen::Matrix<double, N, N> ComputeSpdMatrixSqrtInverse(
-    const Eigen::Matrix<double, N, N>& A, const double lower_eigenvalue_bound) {
-  Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, N, N>>
-      covariance_eigen_solver(A);
-  if (covariance_eigen_solver.info() != Eigen::Success) {
-    LOG(WARNING) << "SelfAdjointEigenSolver failed; A =\n" << A;
-    return Eigen::Matrix<double, N, N>::Identity();
-  }
-  // Since we compute the inverse, we do not allow smaller values to avoid
-  // infinity and NaN.
-  const double relative_lower_bound = lower_eigenvalue_bound;
-  return covariance_eigen_solver.eigenvectors() *
-         covariance_eigen_solver.eigenvalues()
-             .cwiseMax(relative_lower_bound)
-             .cwiseInverse()
-             .cwiseSqrt()
-             .asDiagonal() *
-         covariance_eigen_solver.eigenvectors().inverse();
-}
-
 }  // namespace common
 }  // namespace cartographer
 

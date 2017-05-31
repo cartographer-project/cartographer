@@ -178,17 +178,16 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
               .scan_matcher_variance() *
           kalman_filter::PoseCovariance::Identity());
 
-  kalman_filter::PoseCovariance covariance_estimate;
+  kalman_filter::PoseCovariance unused_covariance_estimate;
   pose_tracker_->GetPoseEstimateMeanAndCovariance(
-      time, &scan_matcher_pose_estimate_, &covariance_estimate);
+      time, &scan_matcher_pose_estimate_, &unused_covariance_estimate);
 
   last_pose_estimate_ = {
       time, scan_matcher_pose_estimate_,
       sensor::TransformPointCloud(filtered_range_data.returns,
                                   pose_observation.cast<float>())};
 
-  return InsertIntoSubmap(time, filtered_range_data, pose_observation,
-                          covariance_estimate);
+  return InsertIntoSubmap(time, filtered_range_data, pose_observation);
 }
 
 void KalmanLocalTrajectoryBuilder::AddOdometerData(
@@ -216,8 +215,7 @@ KalmanLocalTrajectoryBuilder::pose_estimate() const {
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
 KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
     const common::Time time, const sensor::RangeData& range_data_in_tracking,
-    const transform::Rigid3d& pose_observation,
-    const kalman_filter::PoseCovariance& covariance_estimate) {
+    const transform::Rigid3d& pose_observation) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
   }
@@ -231,9 +229,9 @@ KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
       sensor::TransformRangeData(range_data_in_tracking,
                                  pose_observation.cast<float>()),
       pose_tracker_->gravity_orientation());
-  return std::unique_ptr<InsertionResult>(new InsertionResult{
-      time, range_data_in_tracking, pose_observation, covariance_estimate,
-      matching_submap, insertion_submaps});
+  return std::unique_ptr<InsertionResult>(
+      new InsertionResult{time, range_data_in_tracking, pose_observation,
+                          matching_submap, insertion_submaps});
 }
 
 }  // namespace mapping_3d
