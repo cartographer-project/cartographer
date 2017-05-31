@@ -69,8 +69,7 @@ void LocalTrajectoryBuilder::ScanMatch(
     common::Time time, const transform::Rigid3d& pose_prediction,
     const transform::Rigid3d& tracking_to_tracking_2d,
     const sensor::RangeData& range_data_in_tracking_2d,
-    transform::Rigid3d* pose_observation,
-    kalman_filter::PoseCovariance* covariance_observation) {
+    transform::Rigid3d* pose_observation) {
   const ProbabilityGrid& probability_grid =
       submaps_.Get(submaps_.matching_index())->probability_grid;
   transform::Rigid2d pose_prediction_2d =
@@ -89,21 +88,13 @@ void LocalTrajectoryBuilder::ScanMatch(
   }
 
   transform::Rigid2d tracking_2d_to_map;
-  kalman_filter::Pose2DCovariance covariance_observation_2d;
   ceres::Solver::Summary summary;
   ceres_scan_matcher_.Match(pose_prediction_2d, initial_ceres_pose,
                             filtered_point_cloud_in_tracking_2d,
-                            probability_grid, &tracking_2d_to_map,
-                            &covariance_observation_2d, &summary);
+                            probability_grid, &tracking_2d_to_map, &summary);
 
   *pose_observation =
       transform::Embed3D(tracking_2d_to_map) * tracking_to_tracking_2d;
-  // This covariance is used for non-yaw rotation and the fake height of 0.
-  constexpr double kFakePositionCovariance = 1.;
-  constexpr double kFakeOrientationCovariance = 1.;
-  *covariance_observation =
-      kalman_filter::Embed3D(covariance_observation_2d, kFakePositionCovariance,
-                             kFakeOrientationCovariance);
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
@@ -144,10 +135,8 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
     return nullptr;
   }
 
-  kalman_filter::PoseCovariance covariance_observation;
   ScanMatch(time, pose_prediction, tracking_to_tracking_2d,
-            range_data_in_tracking_2d, &pose_estimate_,
-            &covariance_observation);
+            range_data_in_tracking_2d, &pose_estimate_);
   odometry_correction_ = transform::Rigid3d::Identity();
   if (!odometry_state_tracker_.empty()) {
     // We add an odometry state, so that the correction from the scan matching
@@ -199,7 +188,7 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
 
   return common::make_unique<InsertionResult>(InsertionResult{
       time, matching_submap, insertion_submaps, tracking_to_tracking_2d,
-      range_data_in_tracking_2d, pose_estimate_2d, covariance_observation});
+      range_data_in_tracking_2d, pose_estimate_2d});
 }
 
 const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate&

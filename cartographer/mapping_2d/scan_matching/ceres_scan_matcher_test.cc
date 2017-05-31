@@ -47,7 +47,6 @@ class CeresScanMatcherTest : public ::testing::Test {
           occupied_space_weight = 1.,
           translation_weight = 0.1,
           rotation_weight = 1.5,
-          covariance_scale = 10.,
           ceres_solver_options = {
             use_nonmonotonic_steps = true,
             max_num_iterations = 50,
@@ -61,12 +60,11 @@ class CeresScanMatcherTest : public ::testing::Test {
 
   void TestFromInitialPose(const transform::Rigid2d& initial_pose) {
     transform::Rigid2d pose;
-    kalman_filter::Pose2DCovariance covariance;
     const transform::Rigid2d expected_pose =
         transform::Rigid2d::Translation({-0.5, 0.5});
     ceres::Solver::Summary summary;
     ceres_scan_matcher_->Match(initial_pose, initial_pose, point_cloud_,
-                               probability_grid_, &pose, &covariance, &summary);
+                               probability_grid_, &pose, &summary);
     EXPECT_NEAR(0., summary.final_cost, 1e-2) << summary.FullReport();
     EXPECT_THAT(pose, transform::IsNearly(expected_pose, 1e-2))
         << "Actual: " << transform::ToProto(pose).DebugString()

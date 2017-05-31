@@ -35,6 +35,10 @@ namespace mapping {
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
+// TODO(whess): Change to two doubles for performance.
+Eigen::Matrix<double, 6, 6> FromTranslationRotationWeights(
+    double translation_weight, double rotation_weight);
+
 class SparsePoseGraph {
  public:
   // A "constraint" as in the paper by Konolige, Kurt, et al. "Efficient sparse

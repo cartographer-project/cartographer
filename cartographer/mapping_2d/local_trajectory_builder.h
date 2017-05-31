@@ -46,7 +46,6 @@ class LocalTrajectoryBuilder {
     transform::Rigid3d tracking_to_tracking_2d;
     sensor::RangeData range_data_in_tracking_2d;
     transform::Rigid2d pose_estimate_2d;
-    kalman_filter::PoseCovariance covariance_estimate;
   };
 
   explicit LocalTrajectoryBuilder(
@@ -71,13 +70,12 @@ class LocalTrajectoryBuilder {
       const transform::Rigid3f& tracking_to_tracking_2d,
       const sensor::RangeData& range_data) const;
 
-  // Scan match 'range_data_in_tracking_2d' and fill in the
-  // 'pose_observation' and 'covariance_observation' with the result.
+  // Scan matches 'range_data_in_tracking_2d' and fill in the 'pose_observation'
+  // with the result.
   void ScanMatch(common::Time time, const transform::Rigid3d& pose_prediction,
                  const transform::Rigid3d& tracking_to_tracking_2d,
                  const sensor::RangeData& range_data_in_tracking_2d,
-                 transform::Rigid3d* pose_observation,
-                 kalman_filter::PoseCovariance* covariance_observation);
+                 transform::Rigid3d* pose_observation);
 
   // Lazily constructs an ImuTracker.
   void InitializeImuTracker(common::Time time);

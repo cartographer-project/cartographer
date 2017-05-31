@@ -90,8 +90,7 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
 void SparsePoseGraph::AddScan(
     common::Time time, const transform::Rigid3d& tracking_to_pose,
     const sensor::RangeData& range_data_in_pose, const transform::Rigid2d& pose,
-    const kalman_filter::Pose2DCovariance& covariance, const int trajectory_id,
-    const mapping::Submap* const matching_submap,
+    const int trajectory_id, const mapping::Submap* const matching_submap,
     const std::vector<const mapping::Submap*>& insertion_submaps) {
   const transform::Rigid3d optimized_pose(
       GetLocalToGlobalTransform(trajectory_id) * transform::Embed3D(pose));
@@ -128,7 +127,7 @@ void SparsePoseGraph::AddScan(
 
   AddWorkItem([=]() REQUIRES(mutex_) {
     ComputeConstraintsForScan(matching_submap, insertion_submaps,
-                              finished_submap, pose, covariance);
+                              finished_submap, pose);
   });
 }
 
@@ -207,8 +206,7 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
 void SparsePoseGraph::ComputeConstraintsForScan(
     const mapping::Submap* matching_submap,
     std::vector<const mapping::Submap*> insertion_submaps,
-    const mapping::Submap* finished_submap, const transform::Rigid2d& pose,
-    const kalman_filter::Pose2DCovariance& covariance) {
+    const mapping::Submap* finished_submap, const transform::Rigid2d& pose) {
   GrowSubmapTransformsAsNeeded(insertion_submaps);
   const mapping::SubmapId matching_id = GetSubmapId(matching_submap);
   const transform::Rigid2d optimized_pose =
@@ -234,21 +232,16 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     const mapping::SubmapId submap_id = GetSubmapId(submap);
     CHECK(!submap_states_.at(submap_id).finished);
     submap_states_.at(submap_id).node_ids.emplace(node_id);
-    // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid2d constraint_transform =
         sparse_pose_graph::ComputeSubmapPose(*submap).inverse() * pose;
-    constexpr double kFakePositionCovariance = 1e-6;
-    constexpr double kFakeOrientationCovariance = 1e-6;
-    constraints_.push_back(Constraint{
-        submap_id,
-        node_id,
-        {transform::Embed3D(constraint_transform),
-         common::ComputeSpdMatrixSqrtInverse(
-             kalman_filter::Embed3D(covariance, kFakePositionCovariance,
-                                    kFakeOrientationCovariance),
-             options_.constraint_builder_options()
-                 .lower_covariance_eigenvalue_bound())},
-        Constraint::INTRA_SUBMAP});
+    constraints_.push_back(
+        Constraint{submap_id,
+                   node_id,
+                   {transform::Embed3D(constraint_transform),
+                    mapping::FromTranslationRotationWeights(
+                        options_.matcher_translation_weight(),
+                        options_.matcher_rotation_weight())},
+                   Constraint::INTRA_SUBMAP});
   }
 
   for (int trajectory_id = 0; trajectory_id < submap_states_.num_trajectories();

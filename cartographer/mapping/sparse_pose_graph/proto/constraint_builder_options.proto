@@ -42,7 +42,12 @@ message ConstraintBuilderOptions {
   optional double global_localization_min_score = 5;
 
   // Lower bound for covariance eigenvalues to limit the weight of matches.
+  // TODO(whess): Deprecated and only used in 3D. Replace usage and remove.
   optional double lower_covariance_eigenvalue_bound = 7;
+
+  // Weights used in the optimization problem for loop closure constraints.
+  optional double loop_closure_translation_weight = 13;
+  optional double loop_closure_rotation_weight = 14;
 
   // If enabled, logs information of loop-closing constraints for debugging.
   optional bool log_matches = 8;

@@ -39,7 +39,6 @@ TRAJECTORY_BUILDER_2D = {
     occupied_space_weight = 1e1,
     translation_weight = 1e1,
     rotation_weight = 1e2,
-    covariance_scale = 1e-2,
     ceres_solver_options = {
       use_nonmonotonic_steps = false,
       max_num_iterations = 20,
