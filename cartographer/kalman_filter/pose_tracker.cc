@@ -80,8 +80,8 @@ PoseTracker::State ComputeDelta(const PoseTracker::State& origin,
 }
 
 // Build a model matrix for the given time delta.
-PoseTracker::State ModelFunction3D(const PoseTracker::State& state,
-                                   const double delta_t) {
+PoseTracker::State ModelFunction(const PoseTracker::State& state,
+                                 const double delta_t) {
   CHECK_GT(delta_t, 0.);
 
   PoseTracker::State new_state;
@@ -106,18 +106,6 @@ PoseTracker::State ModelFunction3D(const PoseTracker::State& state,
   new_state[PoseTracker::kMapVelocityY] = state[PoseTracker::kMapVelocityY];
   new_state[PoseTracker::kMapVelocityZ] = state[PoseTracker::kMapVelocityZ];
 
-  return new_state;
-}
-
-// A specialization of ModelFunction3D that limits the z-component of position
-// and velocity to 0.
-PoseTracker::State ModelFunction2D(const PoseTracker::State& state,
-                                   const double delta_t) {
-  auto new_state = ModelFunction3D(state, delta_t);
-  new_state[PoseTracker::kMapPositionZ] = 0.;
-  new_state[PoseTracker::kMapVelocityZ] = 0.;
-  new_state[PoseTracker::kMapOrientationX] = 0.;
-  new_state[PoseTracker::kMapOrientationY] = 0.;
   return new_state;
 }
 
@@ -163,10 +151,8 @@ PoseTracker::Distribution PoseTracker::KalmanFilterInit() {
 }
 
 PoseTracker::PoseTracker(const proto::PoseTrackerOptions& options,
-                         const ModelFunction& model_function,
                          const common::Time time)
     : options_(options),
-      model_function_(model_function),
       time_(time),
       kalman_filter_(KalmanFilterInit(), AddDelta, ComputeDelta),
       imu_tracker_(options.imu_gravity_time_constant(), time),
@@ -228,14 +214,7 @@ void PoseTracker::Predict(const common::Time time) {
   }
   kalman_filter_.Predict(
       [this, delta_t](const State& state) -> State {
-        switch (model_function_) {
-          case ModelFunction::k2D:
-            return ModelFunction2D(state, delta_t);
-          case ModelFunction::k3D:
-            return ModelFunction3D(state, delta_t);
-          default:
-            LOG(FATAL);
-        }
+        return ModelFunction(state, delta_t);
       },
       BuildModelNoise(delta_t));
   time_ = time;
@@ -316,31 +295,6 @@ transform::Rigid3d PoseTracker::RigidFromState(
                           state[PoseTracker::kMapOrientationY],
                           state[PoseTracker::kMapOrientationZ])) *
           imu_tracker_.orientation());
-}
-
-Pose2DCovariance Project2D(const PoseCovariance& covariance) {
-  Pose2DCovariance projected_covariance;
-  projected_covariance.block<2, 2>(0, 0) = covariance.block<2, 2>(0, 0);
-  projected_covariance.block<2, 1>(0, 2) = covariance.block<2, 1>(0, 5);
-  projected_covariance.block<1, 2>(2, 0) = covariance.block<1, 2>(5, 0);
-  projected_covariance(2, 2) = covariance(5, 5);
-  return projected_covariance;
-}
-
-PoseCovariance Embed3D(const Pose2DCovariance& embedded_covariance,
-                       const double position_variance,
-                       const double orientation_variance) {
-  PoseCovariance covariance;
-  covariance.setZero();
-  covariance.block<2, 2>(0, 0) = embedded_covariance.block<2, 2>(0, 0);
-  covariance.block<2, 1>(0, 5) = embedded_covariance.block<2, 1>(0, 2);
-  covariance.block<1, 2>(5, 0) = embedded_covariance.block<1, 2>(2, 0);
-  covariance(5, 5) = embedded_covariance(2, 2);
-
-  covariance(2, 2) = position_variance;
-  covariance(3, 3) = orientation_variance;
-  covariance(4, 4) = orientation_variance;
-  return covariance;
 }
 
 PoseCovariance BuildPoseCovariance(const double translational_variance,

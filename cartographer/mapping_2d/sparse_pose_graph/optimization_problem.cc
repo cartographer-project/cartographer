@@ -155,17 +155,10 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   }
 
   // Add penalties for changes between consecutive scans.
-  const Eigen::DiagonalMatrix<double, 3> consecutive_pose_change_penalty_matrix(
-      options_.consecutive_scan_translation_penalty_factor(),
-      options_.consecutive_scan_translation_penalty_factor(),
-      options_.consecutive_scan_rotation_penalty_factor());
-
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
     for (size_t node_index = 1; node_index < node_data_[trajectory_id].size();
          ++node_index) {
-      constexpr double kUnusedPositionPenalty = 1.;
-      constexpr double kUnusedOrientationPenalty = 1.;
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
@@ -173,9 +166,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
                                          .initial_point_cloud_pose.inverse() *
                                      node_data_[trajectory_id][node_index]
                                          .initial_point_cloud_pose),
-                  kalman_filter::Embed3D(consecutive_pose_change_penalty_matrix,
-                                         kUnusedPositionPenalty,
-                                         kUnusedOrientationPenalty)})),
+                  options_.consecutive_scan_translation_penalty_factor(),
+                  options_.consecutive_scan_rotation_penalty_factor()})),
           nullptr /* loss function */,
           C_nodes[trajectory_id][node_index - 1].data(),
           C_nodes[trajectory_id][node_index].data());

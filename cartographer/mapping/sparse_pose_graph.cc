@@ -58,20 +58,6 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   return options;
 }
 
-Eigen::Matrix<double, 6, 6> FromTranslationRotationWeights(
-    const double translation_weight, const double rotation_weight) {
-  Eigen::Matrix<double, 6, 6> result;
-  // clang-format off
-  result << translation_weight, 0., 0., 0., 0., 0.,
-            0., translation_weight, 0., 0., 0., 0.,
-            0., 0., translation_weight, 0., 0., 0.,
-            0., 0., 0.,    rotation_weight, 0., 0.,
-            0., 0., 0., 0.,    rotation_weight, 0.,
-            0., 0., 0., 0., 0.,    rotation_weight;
-  // clang-format on
-  return result;
-}
-
 proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
 
@@ -79,14 +65,9 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     auto* const constraint_proto = proto.add_constraint();
     *constraint_proto->mutable_relative_pose() =
         transform::ToProto(constraint.pose.zbar_ij);
-    constraint_proto->mutable_sqrt_lambda()->Reserve(36);
-    for (int i = 0; i != 36; ++i) {
-      constraint_proto->mutable_sqrt_lambda()->Add(0.);
-    }
-    Eigen::Map<Eigen::Matrix<double, 6, 6>>(
-        constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
-        constraint.pose.sqrt_Lambda_ij;
-
+    constraint_proto->set_translation_weight(
+        constraint.pose.translation_weight);
+    constraint_proto->set_rotation_weight(constraint.pose.rotation_weight);
     constraint_proto->mutable_submap_id()->set_trajectory_id(
         constraint.submap_id.trajectory_id);
     constraint_proto->mutable_submap_id()->set_submap_index(

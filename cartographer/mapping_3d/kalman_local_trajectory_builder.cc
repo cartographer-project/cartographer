@@ -57,7 +57,7 @@ void KalmanLocalTrajectoryBuilder::AddImuData(
     pose_tracker_ = common::make_unique<kalman_filter::PoseTracker>(
         options_.kalman_local_trajectory_builder_options()
             .pose_tracker_options(),
-        kalman_filter::PoseTracker::ModelFunction::k3D, time);
+        time);
   }
 
   pose_tracker_->AddImuLinearAccelerationObservation(time, linear_acceleration);
@@ -196,7 +196,7 @@ void KalmanLocalTrajectoryBuilder::AddOdometerData(
     pose_tracker_.reset(new kalman_filter::PoseTracker(
         options_.kalman_local_trajectory_builder_options()
             .pose_tracker_options(),
-        kalman_filter::PoseTracker::ModelFunction::k3D, time));
+        time));
   }
   pose_tracker_->AddOdometerPoseObservation(
       time, pose,

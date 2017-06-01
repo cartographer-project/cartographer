@@ -44,9 +44,10 @@ message SparsePoseGraph {
     // Pose of the scan relative to submap, i.e. taking data from the scan frame
     // into the submap frame.
     optional transform.proto.Rigid3d relative_pose = 3;
-    // 6x6 square root inverse of the covariance matrix. This is stored in
-    // column-major order for ease of use with Eigen::Map.
-    repeated double sqrt_Lambda = 4 [packed = true];  // NOLINT
+    // Weight of the translational part of the constraint.
+    optional double translation_weight = 6;
+    // Weight of the rotational part of the constraint.
+    optional double rotation_weight = 7;
     optional Tag tag = 5;
   }
 

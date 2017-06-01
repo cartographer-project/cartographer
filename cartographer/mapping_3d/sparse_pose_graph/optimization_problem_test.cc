@@ -134,23 +134,22 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
     constraints.push_back(OptimizationProblem::Constraint{
         mapping::SubmapId{0, 0}, mapping::NodeId{0, j},
         OptimizationProblem::Constraint::Pose{
-            AddNoise(test_data[j].ground_truth_pose, test_data[j].noise),
-            Eigen::Matrix<double, 6, 6>::Identity()}});
+            AddNoise(test_data[j].ground_truth_pose, test_data[j].noise), 1.,
+            1.}});
     // We add an additional independent, but equally noisy observation.
     constraints.push_back(OptimizationProblem::Constraint{
         mapping::SubmapId{0, 1}, mapping::NodeId{0, j},
         OptimizationProblem::Constraint::Pose{
             AddNoise(test_data[j].ground_truth_pose,
                      RandomYawOnlyTransform(0.2, 0.3)),
-            Eigen::Matrix<double, 6, 6>::Identity()}});
-    // We add very noisy data with high covariance (i.e. small Lambda) to verify
-    // it is mostly ignored.
+            1., 1.}});
+    // We add very noisy data with a low weight to verify it is mostly ignored.
     constraints.push_back(OptimizationProblem::Constraint{
         mapping::SubmapId{0, 2}, mapping::NodeId{0, j},
         OptimizationProblem::Constraint::Pose{
             kSubmap2Transform.inverse() * test_data[j].ground_truth_pose *
                 RandomTransform(1e3, 3.),
-            1e-9 * Eigen::Matrix<double, 6, 6>::Identity()}});
+            1e-9, 1e-9}});
   }
 
   double translation_error_before = 0.;
