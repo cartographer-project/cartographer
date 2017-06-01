@@ -35,10 +35,6 @@ namespace mapping {
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
-// TODO(whess): Change to two doubles for performance.
-Eigen::Matrix<double, 6, 6> FromTranslationRotationWeights(
-    double translation_weight, double rotation_weight);
-
 class SparsePoseGraph {
  public:
   // A "constraint" as in the paper by Konolige, Kurt, et al. "Efficient sparse
@@ -47,7 +43,8 @@ class SparsePoseGraph {
   struct Constraint {
     struct Pose {
       transform::Rigid3d zbar_ij;
-      Eigen::Matrix<double, 6, 6> sqrt_Lambda_ij;
+      double translation_weight;
+      double rotation_weight;
     };
 
     mapping::SubmapId submap_id;  // 'i' in the paper.

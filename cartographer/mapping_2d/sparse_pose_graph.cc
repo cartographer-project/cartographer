@@ -234,14 +234,12 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     submap_states_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid2d constraint_transform =
         sparse_pose_graph::ComputeSubmapPose(*submap).inverse() * pose;
-    constraints_.push_back(
-        Constraint{submap_id,
-                   node_id,
-                   {transform::Embed3D(constraint_transform),
-                    mapping::FromTranslationRotationWeights(
-                        options_.matcher_translation_weight(),
-                        options_.matcher_rotation_weight())},
-                   Constraint::INTRA_SUBMAP});
+    constraints_.push_back(Constraint{submap_id,
+                                      node_id,
+                                      {transform::Embed3D(constraint_transform),
+                                       options_.matcher_translation_weight(),
+                                       options_.matcher_rotation_weight()},
+                                      Constraint::INTRA_SUBMAP});
   }
 
   for (int trajectory_id = 0; trajectory_id < submap_states_.num_trajectories();

@@ -47,13 +47,6 @@ struct PoseAndCovariance {
 PoseAndCovariance operator*(const transform::Rigid3d& transform,
                             const PoseAndCovariance& pose_and_covariance);
 
-// Projects a 3D pose covariance into a 2D pose covariance.
-Pose2DCovariance Project2D(const PoseCovariance& embedded_covariance);
-
-// Embeds a 2D pose covariance into a 3D pose covariance.
-PoseCovariance Embed3D(const Pose2DCovariance& embedded_covariance,
-                       double position_variance, double orientation_variance);
-
 PoseCovariance BuildPoseCovariance(double translational_variance,
                                    double rotational_variance);
 
@@ -77,8 +70,6 @@ class PoseTracker {
     kDimension  // We terminate loops with this.
   };
 
-  enum class ModelFunction { k2D, k3D };
-
   using KalmanFilter = UnscentedKalmanFilter<double, kDimension>;
   using State = KalmanFilter::StateType;
   using StateCovariance = Eigen::Matrix<double, kDimension, kDimension>;
@@ -86,8 +77,7 @@ class PoseTracker {
 
   // Create a new Kalman filter starting at the origin with a standard normal
   // distribution at 'time'.
-  PoseTracker(const proto::PoseTrackerOptions& options,
-              const ModelFunction& model_function, common::Time time);
+  PoseTracker(const proto::PoseTrackerOptions& options, common::Time time);
   virtual ~PoseTracker();
 
   // Sets 'pose' and 'covariance' to the mean and covariance of the belief at
@@ -138,7 +128,6 @@ class PoseTracker {
   transform::Rigid3d RigidFromState(const PoseTracker::State& state);
 
   const proto::PoseTrackerOptions options_;
-  const ModelFunction model_function_;
   common::Time time_;
   KalmanFilter kalman_filter_;
   mapping::ImuTracker imu_tracker_;

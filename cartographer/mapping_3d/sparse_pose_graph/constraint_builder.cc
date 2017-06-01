@@ -225,9 +225,8 @@ void ConstraintBuilder::ComputeConstraint(
   constraint->reset(new OptimizationProblem::Constraint{
       submap_id,
       node_id,
-      {constraint_transform, mapping::FromTranslationRotationWeights(
-                                 options_.loop_closure_translation_weight(),
-                                 options_.loop_closure_rotation_weight())},
+      {constraint_transform, options_.loop_closure_translation_weight(),
+       options_.loop_closure_rotation_weight()},
       OptimizationProblem::Constraint::INTER_SUBMAP});
 
   if (options_.log_matches()) {

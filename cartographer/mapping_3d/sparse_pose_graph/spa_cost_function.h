@@ -71,19 +71,23 @@ class SpaCostFunction {
              angle_axis_difference[2]}};
   }
 
-  // Computes the error scaled by 'sqrt_Lambda_ij', storing it in 'e'.
+  // Computes the error scaled by 'translation_weight' and 'rotation_weight',
+  // storing it in 'e'.
   template <typename T>
   static void ComputeScaledError(const Constraint::Pose& pose,
                                  const T* const c_i_rotation,
                                  const T* const c_i_translation,
                                  const T* const c_j_rotation,
                                  const T* const c_j_translation, T* const e) {
-    std::array<T, 6> e_ij =
+    const std::array<T, 6> e_ij =
         ComputeUnscaledError(pose.zbar_ij, c_i_rotation, c_i_translation,
                              c_j_rotation, c_j_translation);
-    (Eigen::Map<Eigen::Matrix<T, 6, 1>>(e)) =
-        pose.sqrt_Lambda_ij.cast<T>() *
-        Eigen::Map<Eigen::Matrix<T, 6, 1>>(e_ij.data());
+    for (int ij : {0, 1, 2}) {
+      e[ij] = e_ij[ij] * T(pose.translation_weight);
+    }
+    for (int ij : {3, 4, 5}) {
+      e[ij] = e_ij[ij] * T(pose.rotation_weight);
+    }
   }
 
   template <typename T>
