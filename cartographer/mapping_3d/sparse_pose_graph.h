@@ -30,7 +30,6 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/constraint_builder.h"
@@ -67,9 +66,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // 'insertion_submaps'.
   void AddScan(common::Time time,
                const sensor::RangeData& range_data_in_tracking,
-               const transform::Rigid3d& pose,
-               const kalman_filter::PoseCovariance& pose_covariance,
-               int trajectory_id, const Submap* matching_submap,
+               const transform::Rigid3d& pose, int trajectory_id,
+               const Submap* matching_submap,
                const std::vector<const Submap*>& insertion_submaps)
       EXCLUDES(mutex_);
 
@@ -120,11 +118,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const std::vector<const Submap*>& insertion_submaps) REQUIRES(mutex_);
 
   // Adds constraints for a scan, and starts scan matching in the background.
-  void ComputeConstraintsForScan(
-      const Submap* matching_submap,
-      std::vector<const Submap*> insertion_submaps,
-      const Submap* finished_submap, const transform::Rigid3d& pose,
-      const kalman_filter::PoseCovariance& covariance) REQUIRES(mutex_);
+  void ComputeConstraintsForScan(const Submap* matching_submap,
+                                 std::vector<const Submap*> insertion_submaps,
+                                 const Submap* finished_submap,
+                                 const transform::Rigid3d& pose)
+      REQUIRES(mutex_);
 
   // Computes constraints for a scan and submap pair.
   void ComputeConstraint(const mapping::NodeId& node_id,

@@ -28,9 +28,12 @@ message SparsePoseGraphOptions {
   optional mapping.sparse_pose_graph.proto.ConstraintBuilderOptions
       constraint_builder_options = 3;
 
-  // Weights used in the optimization problem for non-loop-closure scan matcher
-  // constraints.
+  // Weight used in the optimization problem for the translational component of
+  // non-loop-closure scan matcher constraints.
   optional double matcher_translation_weight = 7;
+
+  // Weight used in the optimization problem for the rotational component of
+  // non-loop-closure scan matcher constraints.
   optional double matcher_rotation_weight = 8;
 
   // Options for the optimization problem.

@@ -88,8 +88,7 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
 
 void SparsePoseGraph::AddScan(
     common::Time time, const sensor::RangeData& range_data_in_tracking,
-    const transform::Rigid3d& pose,
-    const kalman_filter::PoseCovariance& covariance, const int trajectory_id,
+    const transform::Rigid3d& pose, const int trajectory_id,
     const Submap* const matching_submap,
     const std::vector<const Submap*>& insertion_submaps) {
   const transform::Rigid3d optimized_pose(
@@ -124,7 +123,7 @@ void SparsePoseGraph::AddScan(
 
   AddWorkItem([=]() REQUIRES(mutex_) {
     ComputeConstraintsForScan(matching_submap, insertion_submaps,
-                              finished_submap, pose, covariance);
+                              finished_submap, pose);
   });
 }
 
@@ -224,8 +223,7 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(const Submap* submap) {
 
 void SparsePoseGraph::ComputeConstraintsForScan(
     const Submap* matching_submap, std::vector<const Submap*> insertion_submaps,
-    const Submap* finished_submap, const transform::Rigid3d& pose,
-    const kalman_filter::PoseCovariance& covariance) {
+    const Submap* finished_submap, const transform::Rigid3d& pose) {
   GrowSubmapTransformsAsNeeded(insertion_submaps);
   const mapping::SubmapId matching_id = GetSubmapId(matching_submap);
   const transform::Rigid3d optimized_pose =
@@ -251,17 +249,15 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     const mapping::SubmapId submap_id = GetSubmapId(submap);
     CHECK(!submap_states_.at(submap_id).finished);
     submap_states_.at(submap_id).node_ids.emplace(node_id);
-    // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid3d constraint_transform =
         submap->local_pose.inverse() * pose;
-    constraints_.push_back(
-        Constraint{submap_id,
-                   node_id,
-                   {constraint_transform,
-                    common::ComputeSpdMatrixSqrtInverse(
-                        covariance, options_.constraint_builder_options()
-                                        .lower_covariance_eigenvalue_bound())},
-                   Constraint::INTRA_SUBMAP});
+    constraints_.push_back(Constraint{
+        submap_id,
+        node_id,
+        {constraint_transform, mapping::FromTranslationRotationWeights(
+                                   options_.matcher_translation_weight(),
+                                   options_.matcher_rotation_weight())},
+        Constraint::INTRA_SUBMAP});
   }
 
   for (int trajectory_id = 0; trajectory_id < submap_states_.num_trajectories();

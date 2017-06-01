@@ -19,7 +19,6 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_3d/proto/optimizing_local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_3d/rotation_cost_function.h"
 #include "cartographer/mapping_3d/scan_matching/occupied_space_cost_functor.h"
@@ -424,12 +423,9 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
                                  pose_observation.cast<float>()),
       kFakeGravityOrientation);
 
-  const kalman_filter::PoseCovariance kCovariance =
-      1e-7 * kalman_filter::PoseCovariance::Identity();
-
   return std::unique_ptr<InsertionResult>(
       new InsertionResult{time, range_data_in_tracking, pose_observation,
-                          kCovariance, matching_submap, insertion_submaps});
+                          matching_submap, insertion_submaps});
 }
 
 OptimizingLocalTrajectoryBuilder::State
