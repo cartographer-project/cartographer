@@ -97,6 +97,12 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
       wrapped_trajectory_builder_->AddOdometerData(data->time,
                                                    data->odometer_pose);
       return;
+
+    case sensor::Data::Type::kLandmark:
+      wrapped_trajectory_builder_->AddLandmarkData(
+          data->time, data->landmarks.landmarks,
+          data->landmarks.oriented_landmarks);
+      return;
   }
   LOG(FATAL);
 }
