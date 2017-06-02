@@ -18,6 +18,11 @@ Cartographer
 
 |build| |docs| |license|
 
+Announcement: :mega: Next Cartographer Open House Hangout is on Thursday, June 8, 5pm CEST (8am PST) [`Email thread`_, `Hangouts link`_].
+
+.. _Email thread: https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!topic/google-cartographer/K_mPGTeM-DQ
+.. _Hangouts link: https://staging.talkgadget.google.com/hangouts/_/google.com/cartographeropenhouse
+
 Purpose
 =======
 
