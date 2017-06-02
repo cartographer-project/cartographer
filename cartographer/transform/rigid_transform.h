@@ -32,7 +32,6 @@ namespace transform {
 template <typename FloatType>
 class Rigid2 {
  public:
-  using Affine = Eigen::Transform<FloatType, 2, Eigen::Affine>;
   using Vector = Eigen::Matrix<FloatType, 2, 1>;
   using Rotation2D = Eigen::Rotation2D<FloatType>;
 
@@ -125,16 +124,12 @@ using Rigid2f = Rigid2<float>;
 template <typename FloatType>
 class Rigid3 {
  public:
-  using Affine = Eigen::Transform<FloatType, 3, Eigen::Affine>;
   using Vector = Eigen::Matrix<FloatType, 3, 1>;
   using Quaternion = Eigen::Quaternion<FloatType>;
   using AngleAxis = Eigen::AngleAxis<FloatType>;
 
   Rigid3()
       : translation_(Vector::Identity()), rotation_(Quaternion::Identity()) {}
-  // TODO(damonkohler): Remove
-  explicit Rigid3(const Affine& affine)
-      : translation_(affine.translation()), rotation_(affine.rotation()) {}
   Rigid3(const Vector& translation, const Quaternion& rotation)
       : translation_(translation), rotation_(rotation) {}
   Rigid3(const Vector& translation, const AngleAxis& rotation)

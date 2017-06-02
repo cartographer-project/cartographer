@@ -249,9 +249,9 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     // and rotation of the 'initial_pose', so that the rotation is around the
     // origin of the range data, and yaw is in map frame.
     const transform::Rigid3f pose(
-        Eigen::Translation3f(initial_pose.translation()) *
+        initial_pose.translation(),
         transform::AngleAxisVectorToRotationQuaternion(angle_axis) *
-        Eigen::Quaternionf(initial_pose.rotation()));
+            initial_pose.rotation());
     result.push_back(
         DiscretizeScan(search_parameters, coarse_point_cloud, pose));
   }

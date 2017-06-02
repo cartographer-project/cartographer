@@ -51,14 +51,6 @@ constexpr T Pow2(T a) {
   return Power(a, 2);
 }
 
-// Calculates the real part of the square root of 'a'. This is helpful when
-// rounding errors generate a small negative argument. Otherwise std::sqrt
-// returns NaN if its argument is negative.
-template <typename T>
-constexpr T RealSqrt(T a) {
-  return sqrt(std::max(T(0.), a));
-}
-
 // Converts from degrees to radians.
 constexpr double DegToRad(double deg) { return M_PI * deg / 180.; }
 
