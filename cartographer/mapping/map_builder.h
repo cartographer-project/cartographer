@@ -71,9 +71,6 @@ class MapBuilder {
   // unblocked.
   int GetBlockingTrajectoryId() const;
 
-  // Returns the trajectory connectivity.
-  proto::TrajectoryConnectivity GetTrajectoryConnectivity();
-
   // Fills the SubmapQuery::Response corresponding to 'submap_index' from
   // 'trajectory_id'. Returns an error string on failure, or an empty string on
   // success.
