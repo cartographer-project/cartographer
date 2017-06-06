@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 #define CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 
+#include <memory>
 #include <set>
 #include <unordered_map>
 #include <utility>
@@ -24,6 +25,7 @@
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/id.h"
+#include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/trajectory_node.h"
@@ -65,10 +67,14 @@ class SparsePoseGraph {
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
 
+  // Adds a 'trimmer'. It will be used after all data added before it has been
+  // included in the pose graph.
+  virtual void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) = 0;
+
   // Computes optimized poses.
   virtual void RunFinalOptimization() = 0;
 
-  // Get the current trajectory clusters.
+  // Gets the current trajectory clusters.
   virtual std::vector<std::vector<int>> GetConnectedTrajectories() = 0;
 
   // Returns the current optimized transforms for the given 'trajectory_id'.

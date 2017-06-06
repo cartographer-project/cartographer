@@ -21,6 +21,7 @@
 #include <functional>
 #include <limits>
 #include <map>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -30,6 +31,7 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_2d/sparse_pose_graph/constraint_builder.h"
@@ -77,6 +79,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                   const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
 
+  void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
   std::vector<transform::Rigid3d> GetSubmapTransforms(int trajectory_id)
@@ -202,6 +205,24 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Current submap transforms used for displaying data.
   std::vector<std::vector<sparse_pose_graph::SubmapData>>
       optimized_submap_transforms_ GUARDED_BY(mutex_);
+
+  // List of all trimmers to consult when optimizations finish.
+  std::vector<std::unique_ptr<mapping::PoseGraphTrimmer>> trimmers_
+      GUARDED_BY(mutex_);
+
+  // Used to decide which submaps to trim. The 'mutex_' of the pose graph is
+  // held while this class is used.
+  class TrimmingImplementation : public mapping::TrimmingInterface {
+   public:
+    TrimmingImplementation(SparsePoseGraph* parent);
+    ~TrimmingImplementation() override {}
+
+    int num_submaps(int trajectory_id) const override;
+    void MarkSubmapAsTrimmed(const mapping::SubmapId& submap_id) override;
+
+   private:
+    SparsePoseGraph* const parent_;
+  };
 };
 
 }  // namespace mapping_2d

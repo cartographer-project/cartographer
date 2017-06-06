@@ -76,6 +76,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                   const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
 
+  void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override {
+    LOG(FATAL) << "Not yet implemented for 3D.";
+  }
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
   std::vector<transform::Rigid3d> GetSubmapTransforms(int trajectory_id)
