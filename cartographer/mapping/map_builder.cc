@@ -104,10 +104,6 @@ int MapBuilder::GetBlockingTrajectoryId() const {
   return sensor_collator_.GetBlockingTrajectoryId();
 }
 
-proto::TrajectoryConnectivity MapBuilder::GetTrajectoryConnectivity() {
-  return ToProto(sparse_pose_graph_->GetConnectedTrajectories());
-}
-
 string MapBuilder::SubmapToProto(const int trajectory_id,
                                  const int submap_index,
                                  proto::SubmapQuery::Response* const response) {
