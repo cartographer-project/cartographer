@@ -28,15 +28,17 @@ class TrimmingInterface {
  public:
   virtual ~TrimmingInterface() {}
 
-  // TODO(whess): This is all the data necessary for pure localization. To be
-  // expanded as needed for lifelong mapping.
-  virtual int num_submaps(int trajectory_id) = 0;
+  // TODO(whess): This is all the functionality necessary for pure localization.
+  // To be expanded as needed for lifelong mapping.
+  virtual int num_submaps(int trajectory_id) const = 0;
 
+  // Marks 'submap_id' and corresponding intra-submap nodes as trimmed. They
+  // will no longer take part in scan matching, loop closure, visualization.
+  // Submaps and nodes are only marked, the numbering remains unchanged.
   virtual void MarkSubmapAsTrimmed(const SubmapId& submap_id) = 0;
 };
 
 // An interface to implement algorithms that choose how to trim the pose graph.
-// Useful for implementing lifelong mapping or pure localization.
 class PoseGraphTrimmer {
  public:
   virtual ~PoseGraphTrimmer() {}

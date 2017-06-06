@@ -487,7 +487,7 @@ SparsePoseGraph::TrimmingImplementation::TrimmingImplementation(
     : parent_(parent) {}
 
 int SparsePoseGraph::TrimmingImplementation::num_submaps(
-    const int trajectory_id) {
+    const int trajectory_id) const {
   return parent_->optimization_problem_.submap_data().at(trajectory_id).size();
 }
 
