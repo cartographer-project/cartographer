@@ -47,6 +47,21 @@ class PoseGraphTrimmer {
   virtual void Trim(TrimmingInterface* trimming) = 0;
 };
 
+// Keeps the last 'num_submaps_to_keep' of the trajectory with 'trajectory_id'
+// to implement localization without mapping.
+class PureLocalizationTrimmer : public PoseGraphTrimmer {
+ public:
+  PureLocalizationTrimmer(int trajectory_id, int num_submaps_to_keep);
+  ~PureLocalizationTrimmer() override {}
+
+  void Trim(TrimmingInterface* trimming) override;
+
+ private:
+  const int trajectory_id_;
+  const int num_submaps_to_keep_;
+  int num_submaps_trimmed_ = 0;
+};
+
 }  // namespace mapping
 }  // namespace cartographer
 
