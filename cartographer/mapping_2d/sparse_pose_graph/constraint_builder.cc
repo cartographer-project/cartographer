@@ -282,6 +282,12 @@ int ConstraintBuilder::GetNumFinishedScans() {
   return pending_computations_.begin()->first;
 }
 
+void ConstraintBuilder::DeleteScanMatcher(const mapping::SubmapId& submap_id) {
+  common::MutexLocker locker(&mutex_);
+  CHECK(pending_computations_.empty());
+  submap_scan_matchers_.erase(submap_id);
+}
+
 }  // namespace sparse_pose_graph
 }  // namespace mapping_2d
 }  // namespace cartographer

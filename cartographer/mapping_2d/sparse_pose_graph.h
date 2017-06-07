@@ -91,7 +91,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
 
  private:
-  struct SubmapState {
+  // The current state of the submap in the background threads. When this
+  // transitions to kFinished, all scans are tried to match against this submap.
+  // Likewise, all new scans are matched against submaps which are finished.
+  enum class SubmapState { kActive, kFinished, kTrimmed };
+  struct SubmapData {
     const mapping::Submap* submap = nullptr;
 
     // IDs of the scans that were inserted into this map together with
@@ -99,11 +103,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
     // becomes 'finished'.
     std::set<mapping::NodeId> node_ids;
 
-    // Whether in the current state of the background thread this submap is
-    // finished. When this transitions to true, all scans are tried to match
-    // against this submap. Likewise, all new scans are matched against submaps
-    // which are finished.
-    bool finished = false;
+    SubmapState state = SubmapState::kActive;
   };
 
   // Handles a new work item.
@@ -185,7 +185,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // before they take part in the background computations.
   std::map<const mapping::Submap*, mapping::SubmapId> submap_ids_
       GUARDED_BY(mutex_);
-  mapping::NestedVectorsById<SubmapState, mapping::SubmapId> submap_states_
+  mapping::NestedVectorsById<SubmapData, mapping::SubmapId> submap_data_
       GUARDED_BY(mutex_);
 
   // Connectivity structure of our trajectories by IDs.
