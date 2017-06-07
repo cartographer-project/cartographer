@@ -38,7 +38,7 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  const mapping_3d::Submaps* submaps() const override;
+  mapping_3d::Submaps* submaps() override;
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
   void AddRangefinderData(common::Time time, const Eigen::Vector3f& origin,

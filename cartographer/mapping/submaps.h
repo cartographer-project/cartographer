@@ -85,8 +85,6 @@ struct Submap {
 // a "new" submap gets inserted.
 class Submaps {
  public:
-  static constexpr uint8 kUnknownLogOdds = 0;
-
   Submaps();
   virtual ~Submaps();
 
@@ -111,13 +109,7 @@ class Submaps {
   // Fills data about the Submap with 'index' into the 'response'.
   virtual void SubmapToProto(int index,
                              const transform::Rigid3d& global_submap_pose,
-                             proto::SubmapQuery::Response* response) const = 0;
-
- protected:
-  static void AddProbabilityGridToResponse(
-      const transform::Rigid3d& local_submap_pose,
-      const mapping_2d::ProbabilityGrid& probability_grid,
-      proto::SubmapQuery::Response* response);
+                             proto::SubmapQuery::Response* response) = 0;
 };
 
 }  // namespace mapping

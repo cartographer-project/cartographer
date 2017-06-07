@@ -35,7 +35,7 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  const Submaps* submaps() const override;
+  Submaps* submaps() override;
   const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
       const override;
 

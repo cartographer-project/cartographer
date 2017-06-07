@@ -46,7 +46,7 @@ CollatedTrajectoryBuilder::CollatedTrajectoryBuilder(
 
 CollatedTrajectoryBuilder::~CollatedTrajectoryBuilder() {}
 
-const Submaps* CollatedTrajectoryBuilder::submaps() const {
+Submaps* CollatedTrajectoryBuilder::submaps() {
   return wrapped_trajectory_builder_->submaps();
 }
 

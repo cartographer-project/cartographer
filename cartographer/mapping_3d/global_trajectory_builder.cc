@@ -30,7 +30,7 @@ GlobalTrajectoryBuilder::GlobalTrajectoryBuilder(
 
 GlobalTrajectoryBuilder::~GlobalTrajectoryBuilder() {}
 
-const mapping_3d::Submaps* GlobalTrajectoryBuilder::submaps() const {
+mapping_3d::Submaps* GlobalTrajectoryBuilder::submaps() {
   return local_trajectory_builder_->submaps();
 }
 
