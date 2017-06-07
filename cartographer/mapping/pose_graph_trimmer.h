@@ -24,9 +24,9 @@ namespace mapping {
 
 // Implemented by the pose graph to provide thread-safe access to functions for
 // trimming the graph.
-class TrimmingInterface {
+class Trimmable {
  public:
-  virtual ~TrimmingInterface() {}
+  virtual ~Trimmable() {}
 
   // TODO(whess): This is all the functionality necessary for pure localization.
   // To be expanded as needed for lifelong mapping.
@@ -44,7 +44,22 @@ class PoseGraphTrimmer {
   virtual ~PoseGraphTrimmer() {}
 
   // Called once after each pose graph optimization.
-  virtual void Trim(TrimmingInterface* trimming) = 0;
+  virtual void Trim(Trimmable* pose_graph) = 0;
+};
+
+// Keeps the last 'num_submaps_to_keep' of the trajectory with 'trajectory_id'
+// to implement localization without mapping.
+class PureLocalizationTrimmer : public PoseGraphTrimmer {
+ public:
+  PureLocalizationTrimmer(int trajectory_id, int num_submaps_to_keep);
+  ~PureLocalizationTrimmer() override {}
+
+  void Trim(Trimmable* pose_graph) override;
+
+ private:
+  const int trajectory_id_;
+  const int num_submaps_to_keep_;
+  int num_submaps_trimmed_ = 0;
 };
 
 }  // namespace mapping

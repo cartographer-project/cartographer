@@ -396,9 +396,9 @@ void SparsePoseGraph::RunOptimization() {
     }
   }
 
-  TrimmingImplementation trimming(this);
+  TrimmingHandle trimming_handle(this);
   for (auto& trimmer : trimmers_) {
-    trimmer->Trim(&trimming);
+    trimmer->Trim(&trimming_handle);
   }
 }
 
@@ -482,16 +482,15 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
   return result;
 }
 
-SparsePoseGraph::TrimmingImplementation::TrimmingImplementation(
-    SparsePoseGraph* const parent)
+SparsePoseGraph::TrimmingHandle::TrimmingHandle(SparsePoseGraph* const parent)
     : parent_(parent) {}
 
-int SparsePoseGraph::TrimmingImplementation::num_submaps(
+int SparsePoseGraph::TrimmingHandle::num_submaps(
     const int trajectory_id) const {
   return parent_->optimization_problem_.submap_data().at(trajectory_id).size();
 }
 
-void SparsePoseGraph::TrimmingImplementation::MarkSubmapAsTrimmed(
+void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
     const mapping::SubmapId& submap_id) {
   LOG(FATAL) << "Not yet implemented.";
 }

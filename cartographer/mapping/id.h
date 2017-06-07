@@ -47,6 +47,11 @@ struct SubmapId {
   int trajectory_id;
   int submap_index;
 
+  bool operator==(const SubmapId& other) const {
+    return std::forward_as_tuple(trajectory_id, submap_index) ==
+           std::forward_as_tuple(other.trajectory_id, other.submap_index);
+  }
+
   bool operator<(const SubmapId& other) const {
     return std::forward_as_tuple(trajectory_id, submap_index) <
            std::forward_as_tuple(other.trajectory_id, other.submap_index);
