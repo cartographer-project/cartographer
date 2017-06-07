@@ -27,7 +27,7 @@ PureLocalizationTrimmer::PureLocalizationTrimmer(const int trajectory_id,
   CHECK_GE(num_submaps_to_keep, 3);
 }
 
-void PureLocalizationTrimmer::Trim(Trimmable* pose_graph) {
+void PureLocalizationTrimmer::Trim(Trimmable* const pose_graph) {
   const int total_num_submaps = pose_graph->num_submaps(trajectory_id_);
   while (total_num_submaps > num_submaps_trimmed_ + num_submaps_to_keep_) {
     const int submap_index_to_trim_next = num_submaps_trimmed_;
