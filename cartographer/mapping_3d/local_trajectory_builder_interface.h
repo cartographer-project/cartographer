@@ -57,7 +57,7 @@ class LocalTrajectoryBuilderInterface {
   virtual void AddOdometerData(common::Time time,
                                const transform::Rigid3d& pose) = 0;
 
-  virtual const mapping_3d::Submaps* submaps() const = 0;
+  virtual mapping_3d::Submaps* submaps() = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
  protected:

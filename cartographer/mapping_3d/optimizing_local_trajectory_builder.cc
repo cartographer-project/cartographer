@@ -112,7 +112,7 @@ OptimizingLocalTrajectoryBuilder::OptimizingLocalTrajectoryBuilder(
 
 OptimizingLocalTrajectoryBuilder::~OptimizingLocalTrajectoryBuilder() {}
 
-const mapping_3d::Submaps* OptimizingLocalTrajectoryBuilder::submaps() const {
+mapping_3d::Submaps* OptimizingLocalTrajectoryBuilder::submaps() {
   return submaps_.get();
 }
 

@@ -36,13 +36,12 @@ namespace {
 void WriteDebugImage(const string& filename,
                      const ProbabilityGrid& probability_grid) {
   constexpr int kUnknown = 128;
-  const mapping_2d::CellLimits& cell_limits =
-      probability_grid.limits().cell_limits();
+  const CellLimits& cell_limits = probability_grid.limits().cell_limits();
   const int width = cell_limits.num_x_cells;
   const int height = cell_limits.num_y_cells;
   std::vector<uint8_t> rgb;
-  for (const Eigen::Array2i& xy_index : mapping_2d::XYIndexRangeIterator(
-           probability_grid.limits().cell_limits())) {
+  for (const Eigen::Array2i& xy_index :
+       XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
     CHECK(probability_grid.limits().Contains(xy_index));
     const uint8_t value =
         probability_grid.IsKnown(xy_index)
@@ -106,6 +105,49 @@ Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin)
           Eigen::Vector3d(origin.x(), origin.y(), 0.))),
       probability_grid(limits) {}
 
+void Submap::AddProbabilityGridToResponse(
+    mapping::proto::SubmapQuery::Response* response) {
+  Eigen::Array2i offset;
+  CellLimits limits;
+  probability_grid.ComputeCroppedLimits(&offset, &limits);
+
+  string cells;
+  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(limits)) {
+    if (probability_grid.IsKnown(xy_index + offset)) {
+      // We would like to add 'delta' but this is not possible using a value and
+      // alpha. We use premultiplied alpha, so when 'delta' is positive we can
+      // add it by setting 'alpha' to zero. If it is negative, we set 'value' to
+      // zero, and use 'alpha' to subtract. This is only correct when the pixel
+      // is currently white, so walls will look too gray. This should be hard to
+      // detect visually for the user, though.
+      const int delta =
+          128 - mapping::ProbabilityToLogOddsInteger(
+                    probability_grid.GetProbability(xy_index + offset));
+      const uint8 alpha = delta > 0 ? 0 : -delta;
+      const uint8 value = delta > 0 ? delta : 0;
+      cells.push_back(value);
+      cells.push_back((value || alpha) ? alpha : 1);
+    } else {
+      constexpr uint8 kUnknownLogOdds = 0;
+      cells.push_back(static_cast<uint8>(kUnknownLogOdds));  // value
+      cells.push_back(0);                                    // alpha
+    }
+  }
+  common::FastGzipString(cells, response->mutable_cells());
+
+  response->set_width(limits.num_x_cells);
+  response->set_height(limits.num_y_cells);
+  const double resolution = probability_grid.limits().resolution();
+  response->set_resolution(resolution);
+  const double max_x =
+      probability_grid.limits().max().x() - resolution * offset.y();
+  const double max_y =
+      probability_grid.limits().max().y() - resolution * offset.x();
+  *response->mutable_slice_pose() = transform::ToProto(
+      local_pose.inverse() *
+      transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));
+}
+
 Submaps::Submaps(const proto::SubmapsOptions& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {
@@ -137,9 +179,8 @@ int Submaps::size() const { return submaps_.size(); }
 
 void Submaps::SubmapToProto(
     const int index, const transform::Rigid3d&,
-    mapping::proto::SubmapQuery::Response* const response) const {
-  AddProbabilityGridToResponse(Get(index)->local_pose,
-                               Get(index)->probability_grid, response);
+    mapping::proto::SubmapQuery::Response* const response) {
+  submaps_.at(index)->AddProbabilityGridToResponse(response);
 }
 
 void Submaps::FinishSubmap(int index) {

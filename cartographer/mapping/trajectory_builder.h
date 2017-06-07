@@ -59,7 +59,7 @@ class TrajectoryBuilder {
   TrajectoryBuilder(const TrajectoryBuilder&) = delete;
   TrajectoryBuilder& operator=(const TrajectoryBuilder&) = delete;
 
-  virtual const Submaps* submaps() const = 0;
+  virtual Submaps* submaps() = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
   virtual void AddSensorData(const string& sensor_id,

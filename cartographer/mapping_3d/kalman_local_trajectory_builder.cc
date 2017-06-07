@@ -46,7 +46,7 @@ KalmanLocalTrajectoryBuilder::KalmanLocalTrajectoryBuilder(
 
 KalmanLocalTrajectoryBuilder::~KalmanLocalTrajectoryBuilder() {}
 
-const mapping_3d::Submaps* KalmanLocalTrajectoryBuilder::submaps() const {
+mapping_3d::Submaps* KalmanLocalTrajectoryBuilder::submaps() {
   return submaps_.get();
 }
 

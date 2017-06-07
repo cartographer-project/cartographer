@@ -28,7 +28,7 @@ GlobalTrajectoryBuilder::GlobalTrajectoryBuilder(
 
 GlobalTrajectoryBuilder::~GlobalTrajectoryBuilder() {}
 
-const Submaps* GlobalTrajectoryBuilder::submaps() const {
+Submaps* GlobalTrajectoryBuilder::submaps() {
   return local_trajectory_builder_.submaps();
 }
 

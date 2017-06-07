@@ -243,7 +243,7 @@ int Submaps::size() const { return submaps_.size(); }
 
 void Submaps::SubmapToProto(
     int index, const transform::Rigid3d& global_submap_pose,
-    mapping::proto::SubmapQuery::Response* const response) const {
+    mapping::proto::SubmapQuery::Response* const response) {
   // Generate an X-ray view through the 'hybrid_grid', aligned to the xy-plane
   // in the global map frame.
   const HybridGrid& hybrid_grid = Get(index)->high_resolution_hybrid_grid;

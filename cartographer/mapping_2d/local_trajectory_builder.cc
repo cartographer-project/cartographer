@@ -36,7 +36,7 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
-const Submaps* LocalTrajectoryBuilder::submaps() const { return &submaps_; }
+Submaps* LocalTrajectoryBuilder::submaps() { return &submaps_; }
 
 sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
     const transform::Rigid3f& tracking_to_tracking_2d,

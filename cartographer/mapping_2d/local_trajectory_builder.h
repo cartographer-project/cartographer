@@ -63,7 +63,7 @@ class LocalTrajectoryBuilder {
                   const Eigen::Vector3d& angular_velocity);
   void AddOdometerData(common::Time time, const transform::Rigid3d& pose);
 
-  const Submaps* submaps() const;
+  Submaps* submaps();
 
  private:
   sensor::RangeData TransformAndFilterRangeData(

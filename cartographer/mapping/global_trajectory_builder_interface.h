@@ -46,7 +46,7 @@ class GlobalTrajectoryBuilderInterface {
   GlobalTrajectoryBuilderInterface& operator=(
       const GlobalTrajectoryBuilderInterface&) = delete;
 
-  virtual const Submaps* submaps() const = 0;
+  virtual Submaps* submaps() = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
   virtual void AddRangefinderData(common::Time time,
