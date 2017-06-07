@@ -36,12 +36,12 @@ namespace {
 void WriteDebugImage(const string& filename,
                      const ProbabilityGrid& probability_grid) {
   constexpr int kUnknown = 128;
-  const mapping_2d::CellLimits& cell_limits =
+  const CellLimits& cell_limits =
       probability_grid.limits().cell_limits();
   const int width = cell_limits.num_x_cells;
   const int height = cell_limits.num_y_cells;
   std::vector<uint8_t> rgb;
-  for (const Eigen::Array2i& xy_index : mapping_2d::XYIndexRangeIterator(
+  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(
            probability_grid.limits().cell_limits())) {
     CHECK(probability_grid.limits().Contains(xy_index));
     const uint8_t value =
@@ -109,12 +109,11 @@ Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin)
 void Submap::AddProbabilityGridToResponse(
     mapping::proto::SubmapQuery::Response* response) {
   Eigen::Array2i offset;
-  mapping_2d::CellLimits limits;
+  CellLimits limits;
   probability_grid.ComputeCroppedLimits(&offset, &limits);
 
   string cells;
-  for (const Eigen::Array2i& xy_index :
-       mapping_2d::XYIndexRangeIterator(limits)) {
+  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(limits)) {
     if (probability_grid.IsKnown(xy_index + offset)) {
       // We would like to add 'delta' but this is not possible using a value and
       // alpha. We use premultiplied alpha, so when 'delta' is positive we can
