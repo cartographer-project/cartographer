@@ -36,13 +36,12 @@ namespace {
 void WriteDebugImage(const string& filename,
                      const ProbabilityGrid& probability_grid) {
   constexpr int kUnknown = 128;
-  const CellLimits& cell_limits =
-      probability_grid.limits().cell_limits();
+  const CellLimits& cell_limits = probability_grid.limits().cell_limits();
   const int width = cell_limits.num_x_cells;
   const int height = cell_limits.num_y_cells;
   std::vector<uint8_t> rgb;
-  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(
-           probability_grid.limits().cell_limits())) {
+  for (const Eigen::Array2i& xy_index :
+       XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
     CHECK(probability_grid.limits().Contains(xy_index));
     const uint8_t value =
         probability_grid.IsKnown(xy_index)
