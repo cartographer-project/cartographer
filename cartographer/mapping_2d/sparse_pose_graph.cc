@@ -24,6 +24,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string>
 
@@ -492,7 +493,54 @@ int SparsePoseGraph::TrimmingHandle::num_submaps(
 
 void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
     const mapping::SubmapId& submap_id) {
-  LOG(FATAL) << "Not yet implemented.";
+  // Compile all nodes that are still INTRA_SUBMAP constrained once the submap
+  // with 'submap_id' is gone.
+  std::set<mapping::NodeId> nodes_to_retain;
+  for (const Constraint& constraint : parent_->constraints_) {
+    if (constraint.tag == Constraint::Tag::INTRA_SUBMAP &&
+        constraint.submap_id != submap_id) {
+      nodes_to_retain.insert(constraint.node_id);
+    }
+  }
+  // Remove all 'constraints_' related to 'submap_id'.
+  std::set<mapping::NodeId> nodes_to_remove;
+  {
+    std::vector<Constraint> constraints;
+    for (const Constraint& constraint : parent_->constraints_) {
+      if (constraint.submap_id == submap_id) {
+        if (constraint.tag == Constraint::Tag::INTRA_SUBMAP &&
+            nodes_to_retain.count(constraint.node_id) == 0) {
+          // This node will no longer be INTRA_SUBMAP contrained and has to be
+          // removed.
+          nodes_to_remove.insert(constraint.node_id);
+        }
+      } else {
+        constraints.push_back(constraint);
+      }
+    }
+    parent_->constraints_ = std::move(constraints);
+  }
+  // Remove all 'constraints_' related to 'nodes_to_remove'.
+  {
+    std::vector<Constraint> constraints;
+    for (const Constraint& constraint : parent_->constraints_) {
+      if (nodes_to_remove.count(constraint.node_id) == 0) {
+        constraints.push_back(constraint);
+      }
+    }
+    parent_->constraints_ = std::move(constraints);
+  }
+  // TODO(whess): Mark the submap with 'submap_id' as pruned and remove its
+  // data. Also make sure we no longer try to scan match against it.
+
+  // TODO(whess): Mark the 'nodes_to_remove' as pruned and remove their data.
+  // Also make sure we no longer try to scan match against it.
+
+  // TODO(whess): The optimization problem should no longer include the submap
+  // and the removed nodes.
+
+  // TODO(whess): If the first submap is gone, we want to tie the first not yet
+  // trimmed submap to be set fixed to its current pose.
 }
 
 }  // namespace mapping_2d
