@@ -25,9 +25,9 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-class TestTrimmingImplementation : public TrimmingInterface {
+class FakePoseGraph : public Trimmable {
  public:
-  ~TestTrimmingImplementation() override {}
+  ~FakePoseGraph() override {}
 
   int num_submaps(int trajectory_id) const override { return 17; }
 
@@ -44,10 +44,10 @@ class TestTrimmingImplementation : public TrimmingInterface {
 TEST(PureLocalizationTrimmerTest, MarksSubmapsAsExpected) {
   const int kTrajectoryId = 42;
   PureLocalizationTrimmer trimmer(kTrajectoryId, 15);
-  TestTrimmingImplementation trimming;
-  trimmer.Trim(&trimming);
+  FakePoseGraph fake_pose_graph;
+  trimmer.Trim(&fake_pose_graph);
 
-  const auto trimmed_submaps = trimming.trimmed_submaps();
+  const auto trimmed_submaps = fake_pose_graph.trimmed_submaps();
   ASSERT_EQ(2, trimmed_submaps.size());
   EXPECT_EQ((SubmapId{kTrajectoryId, 0}), trimmed_submaps[0]);
   EXPECT_EQ((SubmapId{kTrajectoryId, 1}), trimmed_submaps[1]);

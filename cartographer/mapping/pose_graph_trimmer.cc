@@ -21,17 +21,17 @@
 namespace cartographer {
 namespace mapping {
 
-PureLocalizationTrimmer::PureLocalizationTrimmer(int trajectory_id,
-                                                 int num_submaps_to_keep)
+PureLocalizationTrimmer::PureLocalizationTrimmer(const int trajectory_id,
+                                                 const int num_submaps_to_keep)
     : trajectory_id_(trajectory_id), num_submaps_to_keep_(num_submaps_to_keep) {
-  CHECK_GT(num_submaps_to_keep, 0);
+  CHECK_GE(num_submaps_to_keep, 3);
 }
 
-void PureLocalizationTrimmer::Trim(TrimmingInterface* trimming) {
-  const int total_num_submaps = trimming->num_submaps(trajectory_id_);
+void PureLocalizationTrimmer::Trim(Trimmable* pose_graph) {
+  const int total_num_submaps = pose_graph->num_submaps(trajectory_id_);
   while (total_num_submaps > num_submaps_trimmed_ + num_submaps_to_keep_) {
     const int submap_index_to_trim_next = num_submaps_trimmed_;
-    trimming->MarkSubmapAsTrimmed(
+    pose_graph->MarkSubmapAsTrimmed(
         SubmapId{trajectory_id_, submap_index_to_trim_next});
     ++num_submaps_trimmed_;
   }

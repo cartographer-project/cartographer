@@ -210,12 +210,12 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<std::unique_ptr<mapping::PoseGraphTrimmer>> trimmers_
       GUARDED_BY(mutex_);
 
-  // Used to decide which submaps to trim. The 'mutex_' of the pose graph is
-  // held while this class is used.
-  class TrimmingImplementation : public mapping::TrimmingInterface {
+  // Allows querying and manipulating the pose graph by the 'trimmers_'. The
+  // 'mutex_' of the pose graph is held while this class is used.
+  class TrimmingHandle : public mapping::Trimmable {
    public:
-    TrimmingImplementation(SparsePoseGraph* parent);
-    ~TrimmingImplementation() override {}
+    TrimmingHandle(SparsePoseGraph* parent);
+    ~TrimmingHandle() override {}
 
     int num_submaps(int trajectory_id) const override;
     void MarkSubmapAsTrimmed(const mapping::SubmapId& submap_id) override;
