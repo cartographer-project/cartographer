@@ -33,10 +33,11 @@ std::unique_ptr<sensor::RangeData> RangeDataFromPointsBatch(
 
 HybridGridPointsProcessor::HybridGridPointsProcessor(
     const double voxel_size,
-    std::unique_ptr<mapping_3d::RangeDataInserter> range_data_inserter,
+    const mapping_3d::proto::RangeDataInserterOptions&
+    range_data_inserter_options,
     const string& output_filename, FileWriterFactory file_writer_factory,
     PointsProcessor* const next)
-    : range_data_inserter_(std::move(range_data_inserter)),
+    : range_data_inserter_(range_data_inserter_options),
       output_filename_(output_filename),
       file_writer_factory_(file_writer_factory),
       next_(next) {
@@ -50,9 +51,8 @@ HybridGridPointsProcessor::FromDictionary(
     PointsProcessor* const next) {
   return common::make_unique<HybridGridPointsProcessor>(
       dictionary->GetDouble("voxel_size"),
-      common::make_unique<mapping_3d::RangeDataInserter>(
-          mapping_3d::CreateRangeDataInserterOptions(
-              dictionary->GetDictionary("range_data_inserter").get())),
+      mapping_3d::CreateRangeDataInserterOptions(
+              dictionary->GetDictionary("range_data_inserter").get()),
       dictionary->GetString("filename"), file_writer_factory, next);
 }
 
@@ -62,8 +62,9 @@ void HybridGridPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   if (frame_id_set.find(batch->frame_id) != frame_id_set.end()) {
     std::unique_ptr<sensor::RangeData> range_data_local =
         RangeDataFromPointsBatch(*batch);
-    range_data_inserter_->Insert(*range_data_local, hybrid_grid_.get());
+    range_data_inserter_.Insert(*range_data_local, hybrid_grid_.get());
   }
+
   next_->Process(std::move(batch));
 }
 
