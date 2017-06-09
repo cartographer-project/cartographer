@@ -97,14 +97,15 @@ void SparsePoseGraph::AddScan(
       GetLocalToGlobalTransform(trajectory_id) * transform::Embed3D(pose));
 
   common::MutexLocker locker(&mutex_);
-  constant_node_data_.push_back(mapping::TrajectoryNode::ConstantData{
-      time, range_data_in_pose,
-      Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}}),
-      trajectory_id, tracking_to_pose});
-  trajectory_nodes_.Append(trajectory_id,
-                           mapping::TrajectoryNode{
-                               &constant_node_data_.back(), optimized_pose,
-                           });
+  trajectory_nodes_.Append(
+      trajectory_id,
+      mapping::TrajectoryNode{
+          std::make_shared<const mapping::TrajectoryNode::Data>(
+              mapping::TrajectoryNode::Data{
+                  time, range_data_in_pose,
+                  Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}}),
+                  trajectory_id, tracking_to_pose}),
+          optimized_pose});
   ++num_trajectory_nodes_;
   trajectory_connectivity_.Add(trajectory_id);
 
@@ -224,8 +225,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
                                  .at(matching_id.trajectory_id)
                                  .size())
           : 0};
-  const mapping::TrajectoryNode::ConstantData* const scan_data =
-      trajectory_nodes_.at(node_id).constant_data;
+  const auto& scan_data = trajectory_nodes_.at(node_id).constant_data;
   CHECK_EQ(scan_data->trajectory_id, matching_id.trajectory_id);
   optimization_problem_.AddTrajectoryNode(
       matching_id.trajectory_id, scan_data->time, pose, optimized_pose);
@@ -466,8 +466,8 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
     } else if (result.empty()) {
       result.push_back(transform::Rigid3d::Identity());
     } else {
-      // Extrapolate to the remaining submaps. Accessing 'local_pose' in Submaps
-      // is okay, since the member is const.
+      // Extrapolate to the remaining submaps. Accessing 'local_pose' in
+      // Submaps is okay, since the member is const.
       const mapping::SubmapId previous_submap_id{
           trajectory_id, static_cast<int>(result.size()) - 1};
       result.push_back(
@@ -493,8 +493,8 @@ int SparsePoseGraph::TrimmingHandle::num_submaps(
 
 void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
     const mapping::SubmapId& submap_id) {
-  // TODO(hrapp): We have to make sure that the trajectory has been finished if
-  // we want to delete the last submaps.
+  // TODO(hrapp): We have to make sure that the trajectory has been finished
+  // if we want to delete the last submaps.
   CHECK(parent_->submap_data_.at(submap_id).state == SubmapState::kFinished);
 
   // Compile all nodes that are still INTRA_SUBMAP constrained once the submap
@@ -538,7 +538,6 @@ void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
   // Mark the submap with 'submap_id' as trimmed and remove its data.
   parent_->submap_data_.at(submap_id).state = SubmapState::kTrimmed;
   parent_->constraint_builder_.DeleteScanMatcher(submap_id);
-
   // TODO(hrapp): Make 'Submap' object thread safe and remove submap data in
   // there.
 
@@ -548,8 +547,8 @@ void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
   // TODO(whess): The optimization problem should no longer include the submap
   // and the removed nodes.
 
-  // TODO(whess): If the first submap is gone, we want to tie the first not yet
-  // trimmed submap to be set fixed to its current pose.
+  // TODO(whess): If the first submap is gone, we want to tie the first not
+  // yet trimmed submap to be set fixed to its current pose.
 }
 
 }  // namespace mapping_2d

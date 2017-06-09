@@ -194,10 +194,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::map<int, size_t> reverse_connected_components_;
 
   // Data that are currently being shown.
-  //
-  // Deque to keep references valid for the background computation when adding
-  // new data.
-  std::deque<mapping::TrajectoryNode::ConstantData> constant_node_data_;
   mapping::NestedVectorsById<mapping::TrajectoryNode, mapping::NodeId>
       trajectory_nodes_ GUARDED_BY(mutex_);
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
