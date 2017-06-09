@@ -95,13 +95,15 @@ void SparsePoseGraph::AddScan(
       GetLocalToGlobalTransform(trajectory_id) * pose);
 
   common::MutexLocker locker(&mutex_);
-  constant_node_data_.push_back(mapping::TrajectoryNode::ConstantData{
-      time, sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}},
-      sensor::Compress(range_data_in_tracking), trajectory_id,
-      transform::Rigid3d::Identity()});
   trajectory_nodes_.Append(
       trajectory_id,
-      mapping::TrajectoryNode{&constant_node_data_.back(), optimized_pose});
+      mapping::TrajectoryNode{
+          std::make_shared<const mapping::TrajectoryNode::Data>(
+              mapping::TrajectoryNode::Data{
+                  time, sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}},
+                  sensor::Compress(range_data_in_tracking), trajectory_id,
+                  transform::Rigid3d::Identity()}),
+          optimized_pose});
   ++num_trajectory_nodes_;
   trajectory_connectivity_.Add(trajectory_id);
 
@@ -240,8 +242,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
                                  .at(matching_id.trajectory_id)
                                  .size())
           : 0};
-  const mapping::TrajectoryNode::ConstantData* const scan_data =
-      trajectory_nodes_.at(node_id).constant_data;
+  const auto& scan_data = trajectory_nodes_.at(node_id).constant_data;
   CHECK_EQ(scan_data->trajectory_id, matching_id.trajectory_id);
   optimization_problem_.AddTrajectoryNode(matching_id.trajectory_id,
                                           scan_data->time, optimized_pose);
