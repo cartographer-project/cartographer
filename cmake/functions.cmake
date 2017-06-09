@@ -32,12 +32,8 @@ macro(_common_compile_stuff VISIBILITY)
   target_link_libraries(${NAME} PUBLIC ${PROJECT_NAME})
 endmacro(_common_compile_stuff)
 
-function(google_test NAME)
-  _parse_arguments("${ARGN}")
-
-  add_executable(${NAME}
-    ${ARG_SRCS} ${ARG_HDRS}
-  )
+function(google_test NAME ARG_SRC)
+  add_executable(${NAME} ${ARG_SRC})
   _common_compile_stuff("PRIVATE")
 
   # Make sure that gmock always includes the correct gtest/gtest.h.
@@ -51,9 +47,7 @@ endfunction()
 function(google_binary NAME)
   _parse_arguments("${ARGN}")
 
-  add_executable(${NAME}
-    ${ARG_SRCS} ${ARG_HDRS}
-  )
+  add_executable(${NAME} ${ARG_SRCS})
 
   _common_compile_stuff("PRIVATE")
 
@@ -88,6 +82,7 @@ macro(google_initialize_cartographer_project)
   google_add_flag(GOOG_CXX_FLAGS "-Werror=missing-braces")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=reorder")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=return-type")
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=switch")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=uninitialized")
 
   if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")

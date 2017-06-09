@@ -37,8 +37,6 @@ class LocalTrajectoryBuilderInterface {
     common::Time time;
     sensor::RangeData range_data_in_tracking;
     transform::Rigid3d pose_observation;
-    kalman_filter::PoseCovariance covariance_estimate;
-    const Submaps* submaps;
     const Submap* matching_submap;
     std::vector<const Submap*> insertion_submaps;
   };
@@ -59,11 +57,7 @@ class LocalTrajectoryBuilderInterface {
   virtual void AddOdometerData(common::Time time,
                                const transform::Rigid3d& pose) = 0;
 
-  // Register a 'trajectory_node_index' from the SparsePoseGraph corresponding
-  // to the latest inserted laser scan. This is used to remember which
-  // trajectory node should be used to visualize a Submap.
-  virtual void AddTrajectoryNodeIndex(int trajectory_node_index) = 0;
-  virtual const mapping_3d::Submaps* submaps() const = 0;
+  virtual mapping_3d::Submaps* submaps() = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
  protected:

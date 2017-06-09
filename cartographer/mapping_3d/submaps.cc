@@ -174,7 +174,7 @@ void InsertSegmentsIntoProbabilityGrid(const std::vector<RaySegment>& segments,
 // information.
 sensor::RangeData FilterRangeDataByMaxRange(const sensor::RangeData& range_data,
                                             const float max_range) {
-  sensor::RangeData result{range_data.origin, {}, {}, {}};
+  sensor::RangeData result{range_data.origin, {}, {}};
   for (const Eigen::Vector3f& hit : range_data.returns) {
     if ((hit - range_data.origin).norm() <= max_range) {
       result.returns.push_back(hit);
@@ -217,17 +217,20 @@ proto::SubmapsOptions CreateSubmapsOptions(
 }
 
 Submap::Submap(const float high_resolution, const float low_resolution,
-               const Eigen::Vector3f& origin, const int begin_range_data_index)
-    : mapping::Submap(origin, begin_range_data_index),
-      high_resolution_hybrid_grid(high_resolution, origin),
-      low_resolution_hybrid_grid(low_resolution, origin) {}
+               const transform::Rigid3d& local_pose)
+    : mapping::Submap(local_pose),
+      high_resolution_hybrid_grid(high_resolution),
+      low_resolution_hybrid_grid(low_resolution) {}
 
 Submaps::Submaps(const proto::SubmapsOptions& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {
-  // We always want to have at least one likelihood field which we can return,
-  // and will create it at the origin in absence of a better choice.
-  AddSubmap(Eigen::Vector3f::Zero());
+  // We always want to have at least one submap which we can return and will
+  // create it at the origin in absence of a better choice.
+  //
+  // TODO(whess): Start with no submaps, so that all of them can be
+  // approximately gravity aligned.
+  AddSubmap(transform::Rigid3d::Identity());
 }
 
 const Submap* Submaps::Get(int index) const {
@@ -239,9 +242,8 @@ const Submap* Submaps::Get(int index) const {
 int Submaps::size() const { return submaps_.size(); }
 
 void Submaps::SubmapToProto(
-    int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
-    const transform::Rigid3d& global_submap_pose,
-    mapping::proto::SubmapQuery::Response* const response) const {
+    int index, const transform::Rigid3d& global_submap_pose,
+    mapping::proto::SubmapQuery::Response* const response) {
   // Generate an X-ray view through the 'hybrid_grid', aligned to the xy-plane
   // in the global map frame.
   const HybridGrid& hybrid_grid = Get(index)->high_resolution_hybrid_grid;
@@ -251,9 +253,7 @@ void Submaps::SubmapToProto(
   Eigen::Array2i min_index(INT_MAX, INT_MAX);
   Eigen::Array2i max_index(INT_MIN, INT_MIN);
   const std::vector<Eigen::Array4i> voxel_indices_and_probabilities =
-      ExtractVoxelData(hybrid_grid,
-                       (global_submap_pose * Get(index)->local_pose().inverse())
-                           .cast<float>(),
+      ExtractVoxelData(hybrid_grid, global_submap_pose.cast<float>(),
                        &min_index, &max_index);
 
   const int width = max_index.y() - min_index.y() + 1;
@@ -274,54 +274,36 @@ void Submaps::SubmapToProto(
                              global_submap_pose.translation().z())));
 }
 
-void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
-  CHECK_LT(num_range_data_, std::numeric_limits<int>::max());
-  ++num_range_data_;
+void Submaps::InsertRangeData(const sensor::RangeData& range_data,
+                              const Eigen::Quaterniond& gravity_alignment) {
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
+    const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
+        range_data, submap->local_pose.inverse().cast<float>());
     range_data_inserter_.Insert(
-        FilterRangeDataByMaxRange(range_data,
+        FilterRangeDataByMaxRange(transformed_range_data,
                                   options_.high_resolution_max_range()),
         &submap->high_resolution_hybrid_grid);
-    range_data_inserter_.Insert(range_data,
+    range_data_inserter_.Insert(transformed_range_data,
                                 &submap->low_resolution_hybrid_grid);
-    submap->end_range_data_index = num_range_data_;
+    ++submap->num_range_data;
   }
-  ++num_range_data_in_last_submap_;
-  if (num_range_data_in_last_submap_ == options_.num_range_data()) {
-    AddSubmap(range_data.origin);
-  }
-}
-
-const HybridGrid& Submaps::high_resolution_matching_grid() const {
-  return submaps_[matching_index()]->high_resolution_hybrid_grid;
-}
-
-const HybridGrid& Submaps::low_resolution_matching_grid() const {
-  return submaps_[matching_index()]->low_resolution_hybrid_grid;
-}
-
-void Submaps::AddTrajectoryNodeIndex(const int trajectory_node_index) {
-  for (int i = 0; i != size(); ++i) {
-    Submap& submap = *submaps_[i];
-    if (submap.end_range_data_index == num_range_data_ &&
-        submap.begin_range_data_index <= num_range_data_ - 1) {
-      submap.trajectory_node_indices.push_back(trajectory_node_index);
-    }
+  const Submap* const last_submap = Get(size() - 1);
+  if (last_submap->num_range_data == options_.num_range_data()) {
+    AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
+                                 gravity_alignment));
   }
 }
 
-void Submaps::AddSubmap(const Eigen::Vector3f& origin) {
+void Submaps::AddSubmap(const transform::Rigid3d& local_pose) {
   if (size() > 1) {
     Submap* submap = submaps_[size() - 2].get();
     CHECK(!submap->finished);
     submap->finished = true;
   }
   submaps_.emplace_back(new Submap(options_.high_resolution(),
-                                   options_.low_resolution(), origin,
-                                   num_range_data_));
+                                   options_.low_resolution(), local_pose));
   LOG(INFO) << "Added submap " << size();
-  num_range_data_in_last_submap_ = 0;
 }
 
 std::vector<Submaps::PixelData> Submaps::AccumulatePixelData(
@@ -365,9 +347,9 @@ std::vector<Eigen::Array4i> Submaps::ExtractVoxelData(
       continue;
     }
 
-    const Eigen::Vector3f cell_center_local =
+    const Eigen::Vector3f cell_center_submap =
         hybrid_grid.GetCenterOfCell(it.GetCellIndex());
-    const Eigen::Vector3f cell_center_global = transform * cell_center_local;
+    const Eigen::Vector3f cell_center_global = transform * cell_center_submap;
     const Eigen::Array4i voxel_index_and_probability(
         common::RoundToInt(cell_center_global.x() * resolution_inverse),
         common::RoundToInt(cell_center_global.y() * resolution_inverse),

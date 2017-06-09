@@ -31,13 +31,14 @@ class GlobalTrajectoryBuilder
     : public mapping::GlobalTrajectoryBuilderInterface {
  public:
   GlobalTrajectoryBuilder(const proto::LocalTrajectoryBuilderOptions& options,
+                          int trajectory_id,
                           mapping_3d::SparsePoseGraph* sparse_pose_graph);
   ~GlobalTrajectoryBuilder() override;
 
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  const mapping_3d::Submaps* submaps() const override;
+  mapping_3d::Submaps* submaps() override;
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
   void AddRangefinderData(common::Time time, const Eigen::Vector3f& origin,
@@ -47,6 +48,7 @@ class GlobalTrajectoryBuilder
   const PoseEstimate& pose_estimate() const override;
 
  private:
+  const int trajectory_id_;
   mapping_3d::SparsePoseGraph* const sparse_pose_graph_;
   std::unique_ptr<LocalTrajectoryBuilderInterface> local_trajectory_builder_;
 };

@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/mapping/probability_values.h"
+
 #include "gtest/gtest.h"
 
 namespace cartographer {

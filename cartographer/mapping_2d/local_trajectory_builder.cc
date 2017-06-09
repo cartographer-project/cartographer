@@ -24,46 +24,6 @@
 namespace cartographer {
 namespace mapping_2d {
 
-proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
-    common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::LocalTrajectoryBuilderOptions options;
-  options.set_laser_min_range(
-      parameter_dictionary->GetDouble("laser_min_range"));
-  options.set_laser_max_range(
-      parameter_dictionary->GetDouble("laser_max_range"));
-  options.set_laser_min_z(parameter_dictionary->GetDouble("laser_min_z"));
-  options.set_laser_max_z(parameter_dictionary->GetDouble("laser_max_z"));
-  options.set_laser_missing_echo_ray_length(
-      parameter_dictionary->GetDouble("laser_missing_echo_ray_length"));
-  options.set_laser_voxel_filter_size(
-      parameter_dictionary->GetDouble("laser_voxel_filter_size"));
-  options.set_use_online_correlative_scan_matching(
-      parameter_dictionary->GetBool("use_online_correlative_scan_matching"));
-  *options.mutable_adaptive_voxel_filter_options() =
-      sensor::CreateAdaptiveVoxelFilterOptions(
-          parameter_dictionary->GetDictionary("adaptive_voxel_filter").get());
-  *options.mutable_real_time_correlative_scan_matcher_options() =
-      scan_matching::CreateRealTimeCorrelativeScanMatcherOptions(
-          parameter_dictionary
-              ->GetDictionary("real_time_correlative_scan_matcher")
-              .get());
-  *options.mutable_ceres_scan_matcher_options() =
-      scan_matching::CreateCeresScanMatcherOptions(
-          parameter_dictionary->GetDictionary("ceres_scan_matcher").get());
-  *options.mutable_motion_filter_options() =
-      mapping_3d::CreateMotionFilterOptions(
-          parameter_dictionary->GetDictionary("motion_filter").get());
-  options.set_imu_gravity_time_constant(
-      parameter_dictionary->GetDouble("imu_gravity_time_constant"));
-  options.set_num_odometry_states(
-      parameter_dictionary->GetNonNegativeInt("num_odometry_states"));
-  CHECK_GT(options.num_odometry_states(), 0);
-  *options.mutable_submaps_options() = CreateSubmapsOptions(
-      parameter_dictionary->GetDictionary("submaps").get());
-  options.set_use_imu_data(parameter_dictionary->GetBool("use_imu_data"));
-  return options;
-}
-
 LocalTrajectoryBuilder::LocalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions& options)
     : options_(options),
@@ -76,43 +36,40 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
-const Submaps* LocalTrajectoryBuilder::submaps() const { return &submaps_; }
+Submaps* LocalTrajectoryBuilder::submaps() { return &submaps_; }
 
 sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
     const transform::Rigid3f& tracking_to_tracking_2d,
     const sensor::RangeData& range_data) const {
   // Drop any returns below the minimum range and convert returns beyond the
   // maximum range into misses.
-  sensor::RangeData returns_and_misses{range_data.origin, {}, {}, {}};
+  sensor::RangeData returns_and_misses{range_data.origin, {}, {}};
   for (const Eigen::Vector3f& hit : range_data.returns) {
     const float range = (hit - range_data.origin).norm();
-    if (range >= options_.laser_min_range()) {
-      if (range <= options_.laser_max_range()) {
+    if (range >= options_.min_range()) {
+      if (range <= options_.max_range()) {
         returns_and_misses.returns.push_back(hit);
       } else {
         returns_and_misses.misses.push_back(
-            range_data.origin + options_.laser_missing_echo_ray_length() *
+            range_data.origin + options_.missing_data_ray_length() *
                                     (hit - range_data.origin).normalized());
       }
     }
   }
   const sensor::RangeData cropped = sensor::CropRangeData(
       sensor::TransformRangeData(returns_and_misses, tracking_to_tracking_2d),
-      options_.laser_min_z(), options_.laser_max_z());
+      options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
-      sensor::VoxelFiltered(cropped.returns,
-                            options_.laser_voxel_filter_size()),
-      sensor::VoxelFiltered(cropped.misses,
-                            options_.laser_voxel_filter_size())};
+      sensor::VoxelFiltered(cropped.returns, options_.voxel_filter_size()),
+      sensor::VoxelFiltered(cropped.misses, options_.voxel_filter_size())};
 }
 
 void LocalTrajectoryBuilder::ScanMatch(
     common::Time time, const transform::Rigid3d& pose_prediction,
     const transform::Rigid3d& tracking_to_tracking_2d,
     const sensor::RangeData& range_data_in_tracking_2d,
-    transform::Rigid3d* pose_observation,
-    kalman_filter::PoseCovariance* covariance_observation) {
+    transform::Rigid3d* pose_observation) {
   const ProbabilityGrid& probability_grid =
       submaps_.Get(submaps_.matching_index())->probability_grid;
   transform::Rigid2d pose_prediction_2d =
@@ -131,21 +88,13 @@ void LocalTrajectoryBuilder::ScanMatch(
   }
 
   transform::Rigid2d tracking_2d_to_map;
-  kalman_filter::Pose2DCovariance covariance_observation_2d;
   ceres::Solver::Summary summary;
   ceres_scan_matcher_.Match(pose_prediction_2d, initial_ceres_pose,
                             filtered_point_cloud_in_tracking_2d,
-                            probability_grid, &tracking_2d_to_map,
-                            &covariance_observation_2d, &summary);
+                            probability_grid, &tracking_2d_to_map, &summary);
 
   *pose_observation =
       transform::Embed3D(tracking_2d_to_map) * tracking_to_tracking_2d;
-  // This covariance is used for non-yaw rotation and the fake height of 0.
-  constexpr double kFakePositionCovariance = 1.;
-  constexpr double kFakeOrientationCovariance = 1.;
-  *covariance_observation =
-      kalman_filter::Embed3D(covariance_observation_2d, kFakePositionCovariance,
-                             kFakeOrientationCovariance);
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
@@ -158,7 +107,7 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
 
   if (imu_tracker_ == nullptr) {
     // Until we've initialized the IMU tracker with our first IMU message, we
-    // cannot compute the orientation of the laser scanner.
+    // cannot compute the orientation of the rangefinder.
     LOG(INFO) << "ImuTracker not yet initialized.";
     return nullptr;
   }
@@ -186,10 +135,8 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
     return nullptr;
   }
 
-  kalman_filter::PoseCovariance covariance_observation;
   ScanMatch(time, pose_prediction, tracking_to_tracking_2d,
-            range_data_in_tracking_2d, &pose_estimate_,
-            &covariance_observation);
+            range_data_in_tracking_2d, &pose_estimate_);
   odometry_correction_ = transform::Rigid3d::Identity();
   if (!odometry_state_tracker_.empty()) {
     // We add an odometry state, so that the correction from the scan matching
@@ -201,7 +148,8 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
   }
 
   // Improve the velocity estimate.
-  if (last_scan_match_time_ > common::Time::min()) {
+  if (last_scan_match_time_ > common::Time::min() &&
+      time > last_scan_match_time_) {
     const double delta_t = common::ToSeconds(time - last_scan_match_time_);
     velocity_estimate_ += (pose_estimate_.translation().head<2>() -
                            model_prediction.translation().head<2>()) /
@@ -239,9 +187,8 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
                          transform::Embed3D(pose_estimate_2d.cast<float>())));
 
   return common::make_unique<InsertionResult>(InsertionResult{
-      time, &submaps_, matching_submap, insertion_submaps,
-      tracking_to_tracking_2d, tracking_2d_to_map, range_data_in_tracking_2d,
-      pose_estimate_2d, covariance_observation});
+      time, matching_submap, insertion_submaps, tracking_to_tracking_2d,
+      range_data_in_tracking_2d, pose_estimate_2d});
 }
 
 const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate&

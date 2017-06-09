@@ -53,8 +53,7 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
       const sensor::PointCloud& ranges) override;
   void AddOdometerData(common::Time time,
                        const transform::Rigid3d& pose) override;
-  void AddTrajectoryNodeIndex(int trajectory_node_index) override;
-  const mapping_3d::Submaps* submaps() const override;
+  mapping_3d::Submaps* submaps() override;
   const PoseEstimate& pose_estimate() const override;
 
  private:
@@ -62,9 +61,8 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
       common::Time time, const sensor::RangeData& range_data_in_tracking);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
-      const common::Time time, const sensor::RangeData& range_data_in_tracking,
-      const transform::Rigid3d& pose_observation,
-      const kalman_filter::PoseCovariance& covariance_estimate);
+      common::Time time, const sensor::RangeData& range_data_in_tracking,
+      const transform::Rigid3d& pose_observation);
 
   const proto::LocalTrajectoryBuilderOptions options_;
   std::unique_ptr<mapping_3d::Submaps> submaps_;

@@ -42,10 +42,12 @@ proto::SubmapsOptions CreateSubmapsOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
 struct Submap : public mapping::Submap {
-  Submap(const MapLimits& limits, const Eigen::Vector2f& origin,
-         int begin_range_data_index);
+  Submap(const MapLimits& limits, const Eigen::Vector2f& origin);
 
   ProbabilityGrid probability_grid;
+
+  void AddProbabilityGridToResponse(
+      mapping::proto::SubmapQuery::Response* response);
 };
 
 // A container of Submaps.
@@ -58,10 +60,8 @@ class Submaps : public mapping::Submaps {
 
   const Submap* Get(int index) const override;
   int size() const override;
-  void SubmapToProto(
-      int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
-      const transform::Rigid3d& global_submap_pose,
-      mapping::proto::SubmapQuery::Response* response) const override;
+  void SubmapToProto(int index, const transform::Rigid3d& global_submap_pose,
+                     mapping::proto::SubmapQuery::Response* response) override;
 
   // Inserts 'range_data' into the Submap collection.
   void InsertRangeData(const sensor::RangeData& range_data);
@@ -74,12 +74,6 @@ class Submaps : public mapping::Submaps {
 
   std::vector<std::unique_ptr<Submap>> submaps_;
   RangeDataInserter range_data_inserter_;
-
-  // Number of RangeData inserted.
-  int num_range_data_ = 0;
-
-  // Number of RangeData inserted since the last Submap was added.
-  int num_range_data_in_last_submap_ = 0;
 };
 
 }  // namespace mapping_2d

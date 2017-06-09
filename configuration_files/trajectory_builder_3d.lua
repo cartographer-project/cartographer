@@ -12,13 +12,13 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-MAX_3D_LASER_RANGE = 60.
+MAX_3D_RANGE = 60.
 
 TRAJECTORY_BUILDER_3D = {
-  laser_min_range = 1.,
-  laser_max_range = MAX_3D_LASER_RANGE,
+  min_range = 1.,
+  max_range = MAX_3D_RANGE,
   scans_per_accumulation = 1,
-  laser_voxel_filter_size = 0.15,
+  voxel_filter_size = 0.15,
 
   high_resolution_adaptive_voxel_filter = {
     max_length = 2.,
@@ -29,7 +29,7 @@ TRAJECTORY_BUILDER_3D = {
   low_resolution_adaptive_voxel_filter = {
     max_length = 4.,
     min_num_points = 200,
-    max_range = MAX_3D_LASER_RANGE,
+    max_range = MAX_3D_RANGE,
   },
 
   ceres_scan_matcher = {

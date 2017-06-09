@@ -30,14 +30,12 @@ namespace mapping_3d {
 proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::LocalTrajectoryBuilderOptions options;
-  options.set_laser_min_range(
-      parameter_dictionary->GetDouble("laser_min_range"));
-  options.set_laser_max_range(
-      parameter_dictionary->GetDouble("laser_max_range"));
+  options.set_min_range(parameter_dictionary->GetDouble("min_range"));
+  options.set_max_range(parameter_dictionary->GetDouble("max_range"));
   options.set_scans_per_accumulation(
       parameter_dictionary->GetInt("scans_per_accumulation"));
-  options.set_laser_voxel_filter_size(
-      parameter_dictionary->GetDouble("laser_voxel_filter_size"));
+  options.set_voxel_filter_size(
+      parameter_dictionary->GetDouble("voxel_filter_size"));
   *options.mutable_high_resolution_adaptive_voxel_filter_options() =
       sensor::CreateAdaptiveVoxelFilterOptions(
           parameter_dictionary

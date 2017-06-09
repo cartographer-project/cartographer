@@ -28,9 +28,7 @@ namespace {
 class InterpolatedGridTest : public ::testing::Test {
  protected:
   InterpolatedGridTest()
-      : hybrid_grid_(0.1f /* resolution */,
-                     Eigen::Vector3f(1.5f, 2.5f, 3.5f) /* origin */),
-        interpolated_grid_(hybrid_grid_) {
+      : hybrid_grid_(0.1f), interpolated_grid_(hybrid_grid_) {
     for (const auto& point :
          {Eigen::Vector3f(-3.f, 2.f, 0.f), Eigen::Vector3f(-4.f, 2.f, 0.f),
           Eigen::Vector3f(-5.f, 2.f, 0.f), Eigen::Vector3f(-6.f, 2.f, 0.f),

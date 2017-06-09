@@ -22,7 +22,6 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -59,16 +58,17 @@ class SpaCostFunction {
                                               h[2])}};
   }
 
-  // Computes the error scaled by 'sqrt_Lambda_ij', storing it in 'e'.
+  // Computes the error scaled by 'translation_weight' and 'rotation_weight',
+  // storing it in 'e'.
   template <typename T>
   static void ComputeScaledError(const Constraint::Pose& pose,
                                  const T* const c_i, const T* const c_j,
                                  T* const e) {
-    std::array<T, 3> e_ij =
+    const std::array<T, 3> e_ij =
         ComputeUnscaledError(transform::Project2D(pose.zbar_ij), c_i, c_j);
-    (Eigen::Map<Eigen::Matrix<T, 3, 1>>(e)) =
-        kalman_filter::Project2D(pose.sqrt_Lambda_ij).cast<T>() *
-        Eigen::Map<Eigen::Matrix<T, 3, 1>>(e_ij.data());
+    e[0] = e_ij[0] * T(pose.translation_weight);
+    e[1] = e_ij[1] * T(pose.translation_weight);
+    e[2] = e_ij[2] * T(pose.rotation_weight);
   }
 
   template <typename T>

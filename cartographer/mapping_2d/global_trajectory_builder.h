@@ -28,13 +28,14 @@ class GlobalTrajectoryBuilder
     : public mapping::GlobalTrajectoryBuilderInterface {
  public:
   GlobalTrajectoryBuilder(const proto::LocalTrajectoryBuilderOptions& options,
+                          int trajectory_id,
                           SparsePoseGraph* sparse_pose_graph);
   ~GlobalTrajectoryBuilder() override;
 
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  const Submaps* submaps() const override;
+  Submaps* submaps() override;
   const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
       const override;
 
@@ -48,7 +49,7 @@ class GlobalTrajectoryBuilder
                        const transform::Rigid3d& pose) override;
 
  private:
-  const proto::LocalTrajectoryBuilderOptions options_;
+  const int trajectory_id_;
   SparsePoseGraph* const sparse_pose_graph_;
   LocalTrajectoryBuilder local_trajectory_builder_;
 };

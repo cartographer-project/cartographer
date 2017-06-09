@@ -25,9 +25,6 @@ message CeresScanMatcherOptions {
   optional double translation_weight = 2;
   optional double rotation_weight = 3;
 
-  // Scale applied to the covariance estimate from Ceres.
-  optional double covariance_scale = 4;
-
   // Configure the Ceres solver. See the Ceres documentation for more
   // information: https://code.google.com/p/ceres-solver/
   optional common.proto.CeresSolverOptions ceres_solver_options = 9;

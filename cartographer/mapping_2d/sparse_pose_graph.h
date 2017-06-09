@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-// Implements the loop closure method called Sparse Pose Adjustment (SPA) from
-// Konolige, Kurt, et al. "Efficient sparse pose adjustment for 2d mapping."
-// Intelligent Robots and Systems (IROS), 2010 IEEE/RSJ International Conference
-// on (pp. 22--29). IEEE, 2010.
-//
-// It is extended for submapping:
-// Each scan has been matched against one or more submaps (adding a constraint
-// for each match), both poses of scans and of submaps are to be optimized.
-// All constraints are between a submap i and a scan j.
-
 #ifndef CARTOGRAPHER_MAPPING_2D_SPARSE_POSE_GRAPH_H_
 #define CARTOGRAPHER_MAPPING_2D_SPARSE_POSE_GRAPH_H_
 
@@ -31,6 +21,7 @@
 #include <functional>
 #include <limits>
 #include <map>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -40,8 +31,7 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
-#include "cartographer/mapping/proto/scan_matching_progress.pb.h"
+#include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_2d/sparse_pose_graph/constraint_builder.h"
@@ -54,13 +44,19 @@
 namespace cartographer {
 namespace mapping_2d {
 
-// Implements the SPA loop closure method.
+// Implements the loop closure method called Sparse Pose Adjustment (SPA) from
+// Konolige, Kurt, et al. "Efficient sparse pose adjustment for 2d mapping."
+// Intelligent Robots and Systems (IROS), 2010 IEEE/RSJ International Conference
+// on (pp. 22--29). IEEE, 2010.
+//
+// It is extended for submapping:
+// Each scan has been matched against one or more submaps (adding a constraint
+// for each match), both poses of scans and of submaps are to be optimized.
+// All constraints are between a submap i and a scan j.
 class SparsePoseGraph : public mapping::SparsePoseGraph {
  public:
-  SparsePoseGraph(
-      const mapping::proto::SparsePoseGraphOptions& options,
-      common::ThreadPool* thread_pool,
-      std::deque<mapping::TrajectoryNode::ConstantData>* constant_node_data);
+  SparsePoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
+                  common::ThreadPool* thread_pool);
   ~SparsePoseGraph() override;
 
   SparsePoseGraph(const SparsePoseGraph&) = delete;
@@ -73,73 +69,69 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // into the 'insertion_submaps'.
   void AddScan(common::Time time, const transform::Rigid3d& tracking_to_pose,
                const sensor::RangeData& range_data_in_pose,
-               const transform::Rigid2d& pose,
-               const kalman_filter::Pose2DCovariance& pose_covariance,
-               const mapping::Submaps* submaps,
+               const transform::Rigid2d& pose, int trajectory_id,
                const mapping::Submap* matching_submap,
                const std::vector<const mapping::Submap*>& insertion_submaps)
       EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
-  void AddImuData(const mapping::Submaps* trajectory, common::Time time,
+  void AddImuData(int trajectory_id, common::Time time,
                   const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
 
+  void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
-  bool HasNewOptimizedPoses() override;
-  mapping::proto::ScanMatchingProgress GetScanMatchingProgress() override;
-  std::vector<std::vector<const mapping::Submaps*>> GetConnectedTrajectories()
-      override;
-  std::vector<transform::Rigid3d> GetSubmapTransforms(
-      const mapping::Submaps& submaps) EXCLUDES(mutex_) override;
-  transform::Rigid3d GetLocalToGlobalTransform(const mapping::Submaps& submaps)
+  std::vector<std::vector<int>> GetConnectedTrajectories() override;
+  std::vector<transform::Rigid3d> GetSubmapTransforms(int trajectory_id)
       EXCLUDES(mutex_) override;
-  std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
-      EXCLUDES(mutex_);
-  std::vector<Constraint> constraints() override;
+  transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id)
+      EXCLUDES(mutex_) override;
+  std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
+      override EXCLUDES(mutex_);
+  std::vector<Constraint> constraints() override EXCLUDES(mutex_);
 
  private:
-  struct SubmapState {
+  // The current state of the submap in the background threads. When this
+  // transitions to kFinished, all scans are tried to match against this submap.
+  // Likewise, all new scans are matched against submaps which are finished.
+  enum class SubmapState { kActive, kFinished, kTrimmed };
+  struct SubmapData {
     const mapping::Submap* submap = nullptr;
 
-    // Indices of the scans that were inserted into this map together with
+    // IDs of the scans that were inserted into this map together with
     // constraints for them. They are not to be matched again when this submap
     // becomes 'finished'.
-    std::set<int> scan_indices;
+    std::set<mapping::NodeId> node_ids;
 
-    // Whether in the current state of the background thread this submap is
-    // finished. When this transitions to true, all scans are tried to match
-    // against this submap. Likewise, all new scans are matched against submaps
-    // which are finished.
-    bool finished = false;
-
-    // The trajectory to which this SubmapState belongs.
-    const mapping::Submaps* trajectory = nullptr;
+    SubmapState state = SubmapState::kActive;
   };
 
   // Handles a new work item.
   void AddWorkItem(std::function<void()> work_item) REQUIRES(mutex_);
 
-  int GetSubmapIndex(const mapping::Submap* submap) const REQUIRES(mutex_) {
-    const auto iterator = submap_indices_.find(submap);
-    CHECK(iterator != submap_indices_.end());
+  mapping::SubmapId GetSubmapId(const mapping::Submap* submap) const
+      REQUIRES(mutex_) {
+    const auto iterator = submap_ids_.find(submap);
+    CHECK(iterator != submap_ids_.end());
     return iterator->second;
   }
 
-  // Grows 'submap_transforms_' to have an entry for every element of 'submaps'.
+  // Grows the optimization problem to have an entry for every element of
+  // 'insertion_submaps'.
   void GrowSubmapTransformsAsNeeded(
-      const std::vector<const mapping::Submap*>& submaps) REQUIRES(mutex_);
+      const std::vector<const mapping::Submap*>& insertion_submaps)
+      REQUIRES(mutex_);
 
   // Adds constraints for a scan, and starts scan matching in the background.
   void ComputeConstraintsForScan(
-      int scan_index, const mapping::Submap* matching_submap,
+      const mapping::Submap* matching_submap,
       std::vector<const mapping::Submap*> insertion_submaps,
-      const mapping::Submap* finished_submap, const transform::Rigid2d& pose,
-      const kalman_filter::Pose2DCovariance& covariance) REQUIRES(mutex_);
+      const mapping::Submap* finished_submap, const transform::Rigid2d& pose)
+      REQUIRES(mutex_);
 
   // Computes constraints for a scan and submap pair.
-  void ComputeConstraint(const int scan_index, const int submap_index)
-      REQUIRES(mutex_);
+  void ComputeConstraint(const mapping::NodeId& node_id,
+                         const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
   // Adds constraints for older scans whenever a new submap is finished.
   void ComputeConstraintsForOldScans(const mapping::Submap* submap)
@@ -159,8 +151,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds extrapolated transforms, so that there are transforms for all submaps.
   std::vector<transform::Rigid3d> ExtrapolateSubmapTransforms(
-      const std::vector<transform::Rigid2d>& submap_transforms,
-      const mapping::Submaps& submaps) const REQUIRES(mutex_);
+      const std::vector<std::vector<sparse_pose_graph::SubmapData>>&
+          submap_transforms,
+      int trajectory_id) const REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
@@ -174,8 +167,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   mapping::TrajectoryConnectivity trajectory_connectivity_ GUARDED_BY(mutex_);
 
   // We globally localize a fraction of the scans from each trajectory.
-  std::unordered_map<const mapping::Submaps*,
-                     std::unique_ptr<common::FixedRatioSampler>>
+  std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>
       global_localization_samplers_ GUARDED_BY(mutex_);
 
   // Number of scans added since last loop closure.
@@ -187,32 +179,46 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Current optimization problem.
   sparse_pose_graph::OptimizationProblem optimization_problem_;
   sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
-  std::vector<Constraint> constraints_;
-  std::vector<transform::Rigid2d> submap_transforms_;  // (map <- submap)
+  std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
-  // Submaps get assigned an index and state as soon as they are seen, even
+  // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
-  std::map<const mapping::Submap*, int> submap_indices_ GUARDED_BY(mutex_);
-  std::vector<SubmapState> submap_states_ GUARDED_BY(mutex_);
+  std::map<const mapping::Submap*, mapping::SubmapId> submap_ids_
+      GUARDED_BY(mutex_);
+  mapping::NestedVectorsById<SubmapData, mapping::SubmapId> submap_data_
+      GUARDED_BY(mutex_);
 
-  // Whether to return true on the next call to HasNewOptimizedPoses().
-  bool has_new_optimized_poses_ GUARDED_BY(mutex_) = false;
-
-  // Connectivity structure of our trajectories.
-  std::vector<std::vector<const mapping::Submaps*>> connected_components_;
-  // Trajectory to connected component ID.
-  std::map<const mapping::Submaps*, size_t> reverse_connected_components_;
+  // Connectivity structure of our trajectories by IDs.
+  std::vector<std::vector<int>> connected_components_;
+  // Trajectory ID to connected component ID.
+  std::map<int, size_t> reverse_connected_components_;
 
   // Data that are currently being shown.
-  //
-  // Deque to keep references valid for the background computation when adding
-  // new data.
-  std::deque<mapping::TrajectoryNode::ConstantData>* constant_node_data_;
-  std::vector<mapping::TrajectoryNode> trajectory_nodes_ GUARDED_BY(mutex_);
+  mapping::NestedVectorsById<mapping::TrajectoryNode, mapping::NodeId>
+      trajectory_nodes_ GUARDED_BY(mutex_);
+  int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Current submap transforms used for displaying data.
-  std::vector<transform::Rigid2d> optimized_submap_transforms_
+  std::vector<std::vector<sparse_pose_graph::SubmapData>>
+      optimized_submap_transforms_ GUARDED_BY(mutex_);
+
+  // List of all trimmers to consult when optimizations finish.
+  std::vector<std::unique_ptr<mapping::PoseGraphTrimmer>> trimmers_
       GUARDED_BY(mutex_);
+
+  // Allows querying and manipulating the pose graph by the 'trimmers_'. The
+  // 'mutex_' of the pose graph is held while this class is used.
+  class TrimmingHandle : public mapping::Trimmable {
+   public:
+    TrimmingHandle(SparsePoseGraph* parent);
+    ~TrimmingHandle() override {}
+
+    int num_submaps(int trajectory_id) const override;
+    void MarkSubmapAsTrimmed(const mapping::SubmapId& submap_id) override;
+
+   private:
+    SparsePoseGraph* const parent_;
+  };
 };
 
 }  // namespace mapping_2d

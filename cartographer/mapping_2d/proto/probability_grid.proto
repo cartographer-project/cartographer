@@ -29,4 +29,3 @@ message ProbabilityGrid {
   optional int32 min_x = 6;
   optional int32 min_y = 7;
 }
-

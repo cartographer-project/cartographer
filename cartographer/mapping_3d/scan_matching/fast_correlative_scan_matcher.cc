@@ -95,7 +95,6 @@ FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
     const proto::FastCorrelativeScanMatcherOptions& options)
     : options_(options),
       resolution_(hybrid_grid.resolution()),
-      origin_(hybrid_grid.origin()),
       width_in_voxels_(hybrid_grid.grid_size()),
       precomputation_grid_stack_(
           common::make_unique<PrecomputationGridStack>(hybrid_grid, options)),
@@ -122,14 +121,15 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
     const sensor::PointCloud& coarse_point_cloud,
     const sensor::PointCloud& fine_point_cloud, const float min_score,
     float* const score, transform::Rigid3d* const pose_estimate) const {
-  const transform::Rigid3d initial_pose_estimate(origin_.cast<double>(),
+  const transform::Rigid3d initial_pose_estimate(Eigen::Vector3d::Zero(),
                                                  gravity_alignment);
   float max_point_distance = 0.f;
   for (const Eigen::Vector3f& point : coarse_point_cloud) {
     max_point_distance = std::max(max_point_distance, point.norm());
   }
   const int linear_window_size =
-      (width_in_voxels_ + 1) / 2 + std::ceil(max_point_distance);
+      (width_in_voxels_ + 1) / 2 +
+      common::RoundToInt(max_point_distance / resolution_ + 0.5f);
   const SearchParameters search_parameters{linear_window_size,
                                            linear_window_size, M_PI};
   return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
@@ -247,11 +247,11 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     const Eigen::Vector3f angle_axis(0.f, 0.f, angles[i]);
     // It's important to apply the 'angle_axis' rotation between the translation
     // and rotation of the 'initial_pose', so that the rotation is around the
-    // origin of the laser scanner, and yaw is in map frame.
+    // origin of the range data, and yaw is in map frame.
     const transform::Rigid3f pose(
-        Eigen::Translation3f(initial_pose.translation()) *
+        initial_pose.translation(),
         transform::AngleAxisVectorToRotationQuaternion(angle_axis) *
-        Eigen::Quaternionf(initial_pose.rotation()));
+            initial_pose.rotation());
     result.push_back(
         DiscretizeScan(search_parameters, coarse_point_cloud, pose));
   }

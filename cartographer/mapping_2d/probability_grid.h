@@ -171,7 +171,7 @@ class ProbabilityGrid {
     }
   }
 
-  proto::ProbabilityGrid ToProto() {
+  proto::ProbabilityGrid ToProto() const {
     proto::ProbabilityGrid result;
     *result.mutable_limits() = cartographer::mapping_2d::ToProto(limits_);
     result.mutable_cells()->Reserve(cells_.size());

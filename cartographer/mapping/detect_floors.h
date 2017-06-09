@@ -19,17 +19,21 @@
 
 #include "cartographer/mapping/proto/trajectory.pb.h"
 
-#include "cartographer/common/interval.h"
 #include "cartographer/common/time.h"
 
 namespace cartographer {
 namespace mapping {
 
+struct Timespan {
+  common::Time start;
+  common::Time end;
+};
+
 struct Floor {
   // The spans of time we spent on this floor. Since we might have walked up and
   // down many times in this place, there can be many spans of time we spent on
   // a particular floor.
-  std::vector<common::Interval<common::Time>> timespans;
+  std::vector<Timespan> timespans;
 
   // The median z-value of this floor.
   double z;

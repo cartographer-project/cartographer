@@ -47,10 +47,10 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
   proto::LocalTrajectoryBuilderOptions CreateTrajectoryBuilderOptions() {
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
-          laser_min_range = 0.5,
-          laser_max_range = 50.,
+          min_range = 0.5,
+          max_range = 50.,
           scans_per_accumulation = 1,
-          laser_voxel_filter_size = 0.05,
+          voxel_filter_size = 0.05,
 
           high_resolution_adaptive_voxel_filter = {
             max_length = 0.7,
@@ -191,15 +191,15 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
 
   sensor::RangeData GenerateRangeData(const transform::Rigid3d& pose) {
     // 360 degree rays at 16 angles.
-    sensor::PointCloud directions_in_laser_frame;
+    sensor::PointCloud directions_in_rangefinder_frame;
     for (int r = -8; r != 8; ++r) {
       for (int s = -250; s != 250; ++s) {
-        directions_in_laser_frame.push_back(
+        directions_in_rangefinder_frame.push_back(
             Eigen::AngleAxisf(M_PI * s / 250., Eigen::Vector3f::UnitZ()) *
             Eigen::AngleAxisf(M_PI / 12. * r / 8., Eigen::Vector3f::UnitY()) *
             Eigen::Vector3f::UnitX());
-        // Second orthogonal laser.
-        directions_in_laser_frame.push_back(
+        // Second orthogonal rangefinder.
+        directions_in_rangefinder_frame.push_back(
             Eigen::AngleAxisf(M_PI / 2., Eigen::Vector3f::UnitX()) *
             Eigen::AngleAxisf(M_PI * s / 250., Eigen::Vector3f::UnitZ()) *
             Eigen::AngleAxisf(M_PI / 12. * r / 8., Eigen::Vector3f::UnitY()) *
@@ -210,13 +210,12 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
     // 50 cm radius spheres.
     sensor::PointCloud returns_in_world_frame;
     for (const Eigen::Vector3f& direction_in_world_frame :
-         sensor::TransformPointCloud(directions_in_laser_frame,
+         sensor::TransformPointCloud(directions_in_rangefinder_frame,
                                      pose.cast<float>())) {
-      const Eigen::Vector3f laser_origin =
+      const Eigen::Vector3f origin =
           pose.cast<float>() * Eigen::Vector3f::Zero();
       returns_in_world_frame.push_back(CollideWithBubbles(
-          laser_origin,
-          CollideWithBox(laser_origin, direction_in_world_frame)));
+          origin, CollideWithBox(origin, direction_in_world_frame)));
     }
     return {Eigen::Vector3f::Zero(),
             sensor::TransformPointCloud(returns_in_world_frame,

@@ -68,35 +68,38 @@ class ConstraintBuilder {
   ConstraintBuilder& operator=(const ConstraintBuilder&) = delete;
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_index', and the 'range_data_3d.returns' in 'trajectory_nodes' for
-  // 'scan_index'. The 'initial_relative_pose' is relative to the 'submap'.
+  // 'submap_id', and the 'point_cloud' for 'node_id'. The 'intial_pose' is
+  // relative to the 'submap'.
   //
-  // The pointees of 'submap' and 'range_data_3d.returns' must stay valid until
+  // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddConstraint(
-      int submap_index, const Submap* submap, int scan_index,
-      const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
-      const transform::Rigid3d& initial_relative_pose);
+      const mapping::SubmapId& submap_id, const Submap* submap,
+      const mapping::NodeId& node_id,
+      const sensor::CompressedPointCloud* compressed_point_cloud,
+      const std::vector<mapping::TrajectoryNode>& submap_nodes,
+      const transform::Rigid3d& initial_pose);
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_index' and the 'range_data_3d.returns' in 'trajectory_nodes' for
-  // 'scan_index'. This performs full-submap matching.
+  // 'submap_id' and the 'compressed_point_cloud' for 'node_id'.
+  // This performs full-submap matching.
   //
-  // The scan at 'scan_index' should be from trajectory 'scan_trajectory', and
-  // the 'submap' should be from 'submap_trajectory'. The
-  // 'trajectory_connectivity' is updated if the full-submap match succeeds.
+  // The 'gravity_alignment' is the rotation to apply to the point cloud data
+  // to make it approximately gravity aligned. The 'trajectory_connectivity' is
+  // updated if the full-submap match succeeds.
   //
-  // The pointees of 'submap' and 'range_data_3d.returns' must stay valid until
+  // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddGlobalConstraint(
-      int submap_index, const Submap* submap, int scan_index,
-      const mapping::Submaps* scan_trajectory,
-      const mapping::Submaps* submap_trajectory,
-      mapping::TrajectoryConnectivity* trajectory_connectivity,
-      const std::vector<mapping::TrajectoryNode>& trajectory_nodes);
+      const mapping::SubmapId& submap_id, const Submap* submap,
+      const mapping::NodeId& node_id,
+      const sensor::CompressedPointCloud* compressed_point_cloud,
+      const std::vector<mapping::TrajectoryNode>& submap_nodes,
+      const Eigen::Quaterniond& gravity_alignment,
+      mapping::TrajectoryConnectivity* trajectory_connectivity);
 
-  // Must be called after all computations related to 'scan_index' are added.
-  void NotifyEndOfScan(int scan_index);
+  // Must be called after all computations related to one node have been added.
+  void NotifyEndOfScan();
 
   // Registers the 'callback' to be called with the results, after all
   // computations triggered by MaybeAddConstraint() have finished.
@@ -115,34 +118,33 @@ class ConstraintBuilder {
   // Either schedules the 'work_item', or if needed, schedules the scan matcher
   // construction and queues the 'work_item'.
   void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      int submap_index,
+      const mapping::SubmapId& submap_id,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
       const HybridGrid* submap, std::function<void()> work_item)
       REQUIRES(mutex_);
 
   // Constructs the scan matcher for a 'submap', then schedules its work items.
   void ConstructSubmapScanMatcher(
-      int submap_index,
+      const mapping::SubmapId& submap_id,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
       const HybridGrid* submap) EXCLUDES(mutex_);
 
   // Returns the scan matcher for a submap, which has to exist.
-  const SubmapScanMatcher* GetSubmapScanMatcher(int submap_index)
-      EXCLUDES(mutex_);
+  const SubmapScanMatcher* GetSubmapScanMatcher(
+      const mapping::SubmapId& submap_id) EXCLUDES(mutex_);
 
   // Runs in a background thread and does computations for an additional
   // constraint, assuming 'submap' and 'point_cloud' do not change anymore.
   // If 'match_full_submap' is true, and global localization succeeds, will
-  // connect 'scan_trajectory' and 'submap_trajectory' in
+  // connect 'node_id.trajectory_id' and 'submap_id.trajectory_id' in
   // 'trajectory_connectivity'.
   // As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
-      int submap_index, const Submap* submap, int scan_index,
-      const mapping::Submaps* scan_trajectory,
-      const mapping::Submaps* submap_trajectory, bool match_full_submap,
+      const mapping::SubmapId& submap_id, const Submap* submap,
+      const mapping::NodeId& node_id, bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
-      const sensor::CompressedPointCloud* const compressed_point_cloud,
-      const transform::Rigid3d& initial_relative_pose,
+      const sensor::CompressedPointCloud* compressed_point_cloud,
+      const transform::Rigid3d& initial_pose,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);
 
   // Decrements the 'pending_computations_' count. If all computations are done,
@@ -170,13 +172,14 @@ class ConstraintBuilder {
   // keep pointers valid when adding more entries.
   std::deque<std::unique_ptr<Constraint>> constraints_ GUARDED_BY(mutex_);
 
-  // Map of already constructed scan matchers by 'submap_index'.
-  std::map<int, SubmapScanMatcher> submap_scan_matchers_ GUARDED_BY(mutex_);
-
-  // Map by 'submap_index' of scan matchers under construction, and the work
-  // to do once construction is done.
-  std::map<int, std::vector<std::function<void()>>> submap_queued_work_items_
+  // Map of already constructed scan matchers by 'submap_id'.
+  std::map<mapping::SubmapId, SubmapScanMatcher> submap_scan_matchers_
       GUARDED_BY(mutex_);
+
+  // Map by 'submap_id' of scan matchers under construction, and the work
+  // to do once construction is done.
+  std::map<mapping::SubmapId, std::vector<std::function<void()>>>
+      submap_queued_work_items_ GUARDED_BY(mutex_);
 
   common::FixedRatioSampler sampler_;
   const sensor::AdaptiveVoxelFilter adaptive_voxel_filter_;

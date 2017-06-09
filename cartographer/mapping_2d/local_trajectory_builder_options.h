@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_COMMON_INTERVAL_H_
-#define CARTOGRAPHER_COMMON_INTERVAL_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_OPTIONS_H_
+#define CARTOGRAPHER_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_OPTIONS_H_
+
+#include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/mapping_2d/proto/local_trajectory_builder_options.pb.h"
 
 namespace cartographer {
-namespace common {
+namespace mapping_2d {
 
-template <typename T>
-struct Interval {
-  T start;
-  T end;
-};
+proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
+    common::LuaParameterDictionary* parameter_dictionary);
 
-}  // namespace common
+}  // namespace mapping_2d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_COMMON_INTERVAL_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_OPTIONS_H_

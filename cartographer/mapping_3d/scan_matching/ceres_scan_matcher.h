@@ -46,8 +46,8 @@ class CeresScanMatcher {
   CeresScanMatcher& operator=(const CeresScanMatcher&) = delete;
 
   // Aligns 'point_clouds' within the 'hybrid_grids' given an
-  // 'initial_pose_estimate' and returns 'pose_estimate', and
-  // the solver 'summary'.
+  // 'initial_pose_estimate' and returns a 'pose_estimate' and the solver
+  // 'summary'.
   void Match(const transform::Rigid3d& previous_pose,
              const transform::Rigid3d& initial_pose_estimate,
              const std::vector<PointCloudAndHybridGridPointers>&

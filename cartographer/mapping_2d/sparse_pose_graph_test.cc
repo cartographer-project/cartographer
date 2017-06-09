@@ -78,7 +78,8 @@ class SparsePoseGraphTest : public ::testing::Test {
               },
               min_score = 0.5,
               global_localization_min_score = 0.6,
-              lower_covariance_eigenvalue_bound = 1e-6,
+              loop_closure_translation_weight = 1.,
+              loop_closure_rotation_weight = 1.,
               log_matches = true,
               fast_correlative_scan_matcher = {
                 linear_search_window = 3.,
@@ -89,7 +90,6 @@ class SparsePoseGraphTest : public ::testing::Test {
                 occupied_space_weight = 20.,
                 translation_weight = 10.,
                 rotation_weight = 1.,
-                covariance_scale = 1.,
                 ceres_solver_options = {
                   use_nonmonotonic_steps = true,
                   max_num_iterations = 50,
@@ -117,6 +117,8 @@ class SparsePoseGraphTest : public ::testing::Test {
                 },
               },
             },
+            matcher_translation_weight = 1.,
+            matcher_rotation_weight = 1.,
             optimization_problem = {
               acceleration_weight = 1.,
               rotation_weight = 1e2,
@@ -135,7 +137,7 @@ class SparsePoseGraphTest : public ::testing::Test {
           })text");
       sparse_pose_graph_ = common::make_unique<SparsePoseGraph>(
           mapping::CreateSparsePoseGraphOptions(parameter_dictionary.get()),
-          &thread_pool_, &constant_node_data_);
+          &thread_pool_);
     }
 
     current_pose_ = transform::Rigid2d::Identity();
@@ -147,8 +149,6 @@ class SparsePoseGraphTest : public ::testing::Test {
     const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
-    kalman_filter::Pose2DCovariance covariance =
-        kalman_filter::Pose2DCovariance::Identity();
     const mapping::Submap* const matching_submap =
         submaps_->Get(submaps_->matching_index());
     std::vector<const mapping::Submap*> insertion_submaps;
@@ -158,12 +158,12 @@ class SparsePoseGraphTest : public ::testing::Test {
     const sensor::RangeData range_data{
         Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
+    constexpr int kTrajectoryId = 0;
     submaps_->InsertRangeData(TransformRangeData(
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
-    sparse_pose_graph_->AddScan(common::FromUniversal(0),
-                                transform::Rigid3d::Identity(), range_data,
-                                pose_estimate, covariance, submaps_.get(),
-                                matching_submap, insertion_submaps);
+    sparse_pose_graph_->AddScan(
+        common::FromUniversal(0), transform::Rigid3d::Identity(), range_data,
+        pose_estimate, kTrajectoryId, matching_submap, insertion_submaps);
   }
 
   void MoveRelative(const transform::Rigid2d& movement) {
@@ -172,7 +172,6 @@ class SparsePoseGraphTest : public ::testing::Test {
 
   sensor::PointCloud point_cloud_;
   std::unique_ptr<Submaps> submaps_;
-  std::deque<mapping::TrajectoryNode::ConstantData> constant_node_data_;
   common::ThreadPool thread_pool_;
   std::unique_ptr<SparsePoseGraph> sparse_pose_graph_;
   transform::Rigid2d current_pose_;
@@ -190,12 +189,13 @@ TEST_F(SparsePoseGraphTest, NoMovement) {
   MoveRelative(transform::Rigid2d::Identity());
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  EXPECT_THAT(nodes.size(), ::testing::Eq(3));
-  EXPECT_THAT(nodes[0].pose,
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1));
+  EXPECT_THAT(nodes[0].size(), ::testing::Eq(3));
+  EXPECT_THAT(nodes[0][0].pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
-  EXPECT_THAT(nodes[1].pose,
+  EXPECT_THAT(nodes[0][1].pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
-  EXPECT_THAT(nodes[2].pose,
+  EXPECT_THAT(nodes[0][2].pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
 }
 
@@ -209,8 +209,10 @@ TEST_F(SparsePoseGraphTest, NoOverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1));
   for (int i = 0; i != 4; ++i) {
-    EXPECT_THAT(poses[i], IsNearly(transform::Project2D(nodes[i].pose), 1e-2))
+    EXPECT_THAT(poses[i],
+                IsNearly(transform::Project2D(nodes[0][i].pose), 1e-2))
         << i;
   }
 }
@@ -225,8 +227,10 @@ TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1));
   for (int i = 0; i != 5; ++i) {
-    EXPECT_THAT(poses[i], IsNearly(transform::Project2D(nodes[i].pose), 1e-2))
+    EXPECT_THAT(poses[i],
+                IsNearly(transform::Project2D(nodes[0][i].pose), 1e-2))
         << i;
   }
 }
@@ -248,12 +252,13 @@ TEST_F(SparsePoseGraphTest, OverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1));
   transform::Rigid2d true_movement =
       ground_truth.front().inverse() * ground_truth.back();
   transform::Rigid2d movement_before = poses.front().inverse() * poses.back();
   transform::Rigid2d error_before = movement_before.inverse() * true_movement;
   transform::Rigid3d optimized_movement =
-      nodes.front().pose.inverse() * nodes.back().pose;
+      nodes[0].front().pose.inverse() * nodes[0].back().pose;
   transform::Rigid2d optimized_error =
       transform::Project2D(optimized_movement).inverse() * true_movement;
   EXPECT_THAT(std::abs(optimized_error.normalized_angle()),

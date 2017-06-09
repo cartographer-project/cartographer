@@ -19,7 +19,6 @@
 
 #include <memory>
 
-#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping/imu_tracker.h"
@@ -36,23 +35,17 @@
 namespace cartographer {
 namespace mapping_2d {
 
-proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
-    common::LuaParameterDictionary* parameter_dictionary);
-
 // Wires up the local SLAM stack (i.e. UKF, scan matching, etc.) without loop
 // closure.
 class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
     common::Time time;
-    const mapping::Submaps* submaps;
     const mapping::Submap* matching_submap;
     std::vector<const mapping::Submap*> insertion_submaps;
     transform::Rigid3d tracking_to_tracking_2d;
-    transform::Rigid3d tracking_2d_to_map;
     sensor::RangeData range_data_in_tracking_2d;
     transform::Rigid2d pose_estimate_2d;
-    kalman_filter::PoseCovariance covariance_estimate;
   };
 
   explicit LocalTrajectoryBuilder(
@@ -70,20 +63,19 @@ class LocalTrajectoryBuilder {
                   const Eigen::Vector3d& angular_velocity);
   void AddOdometerData(common::Time time, const transform::Rigid3d& pose);
 
-  const Submaps* submaps() const;
+  Submaps* submaps();
 
  private:
   sensor::RangeData TransformAndFilterRangeData(
       const transform::Rigid3f& tracking_to_tracking_2d,
       const sensor::RangeData& range_data) const;
 
-  // Scan match 'range_data_in_tracking_2d' and fill in the
-  // 'pose_observation' and 'covariance_observation' with the result.
+  // Scan matches 'range_data_in_tracking_2d' and fill in the 'pose_observation'
+  // with the result.
   void ScanMatch(common::Time time, const transform::Rigid3d& pose_prediction,
                  const transform::Rigid3d& tracking_to_tracking_2d,
                  const sensor::RangeData& range_data_in_tracking_2d,
-                 transform::Rigid3d* pose_observation,
-                 kalman_filter::PoseCovariance* covariance_observation);
+                 transform::Rigid3d* pose_observation);
 
   // Lazily constructs an ImuTracker.
   void InitializeImuTracker(common::Time time);

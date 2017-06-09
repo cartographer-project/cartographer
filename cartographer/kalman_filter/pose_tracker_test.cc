@@ -50,29 +50,12 @@ class PoseTrackerTest : public ::testing::Test {
         )text");
     const proto::PoseTrackerOptions options =
         CreatePoseTrackerOptions(parameter_dictionary.get());
-    pose_tracker_ = common::make_unique<PoseTracker>(
-        options, PoseTracker::ModelFunction::k3D, common::FromUniversal(1000));
+    pose_tracker_ =
+        common::make_unique<PoseTracker>(options, common::FromUniversal(1000));
   }
 
   std::unique_ptr<PoseTracker> pose_tracker_;
 };
-
-TEST(CovarianceTest, EmbedAndProjectCovariance) {
-  std::mt19937 prng(42);
-  std::uniform_real_distribution<float> distribution(-10.f, 10.f);
-  for (int i = 0; i < 100; ++i) {
-    Pose2DCovariance covariance;
-    for (int row = 0; row < 3; ++row) {
-      for (int column = 0; column < 3; ++column) {
-        covariance(row, column) = distribution(prng);
-      }
-    }
-    const PoseCovariance embedded_covariance =
-        Embed3D(covariance, distribution(prng), distribution(prng));
-    EXPECT_TRUE(
-        (Project2D(embedded_covariance).array() == covariance.array()).all());
-  }
-}
 
 TEST_F(PoseTrackerTest, SaveAndRestore) {
   std::vector<Rigid3d> poses(3);
