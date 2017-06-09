@@ -45,7 +45,6 @@ class HybridGridPointsProcessor : public PointsProcessor {
   const string output_filename_;
   FileWriterFactory file_writer_factory_;
   PointsProcessor* const next_;
-
 };
 
 }  // namespace io

@@ -26,19 +26,18 @@ std::unique_ptr<sensor::RangeData> RangeDataFromPointsBatch(
   for (const Eigen::Vector3f& point : points_batch.points) {
     range_data->returns.push_back(point);
   }
-
   return range_data;
 }
 
 }  // namespace
 
 HybridGridPointsProcessor::HybridGridPointsProcessor(
-    double voxel_size,
+    const double voxel_size,
     std::unique_ptr<mapping_3d::RangeDataInserter>
     range_data_inserter,
     const string& output_filename,
     FileWriterFactory file_writer_factory,
-    PointsProcessor* next)
+    PointsProcessor* const next)
     : range_data_inserter_(std::move(range_data_inserter)),
       output_filename_(output_filename),
       file_writer_factory_(file_writer_factory),
@@ -74,7 +73,6 @@ void HybridGridPointsProcessor::Process(
         RangeDataFromPointsBatch(*batch);
     range_data_inserter_->Insert(*range_data_local, hybrid_grid_.get());
   }
-
   next_->Process(std::move(batch));
 }
 
@@ -96,7 +94,7 @@ PointsProcessor::FlushResult HybridGridPointsProcessor::Flush() {
     case FlushResult::kFinished:
       return FlushResult::kFinished;
   }
-  LOG(FATAL) << "Failed to receive flush finished";
+  LOG(FATAL) << "Failed to receive FlushResult::kFinished";
 }
 
 }  // namespace io
