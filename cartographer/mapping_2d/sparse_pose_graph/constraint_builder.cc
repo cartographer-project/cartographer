@@ -60,16 +60,6 @@ ConstraintBuilder::~ConstraintBuilder() {
   CHECK(when_done_ == nullptr);
 }
 
-/**
- * In the submap search for the best fit of the scans point_cloud in the vicinity of initial_relative_pose.
- * If the match score is better than the threshold defined in the options add a constraint.
- *
- * @param submap_index
- * @param submap
- * @param scan_index
- * @param point_cloud
- * @param initial_relative_pose The initial guess for submap -> scan transform
- */
 void ConstraintBuilder::MaybeAddConstraint(
     const int submap_index, const mapping::Submap* const submap,
     const int scan_index, const sensor::PointCloud* const point_cloud,
@@ -99,20 +89,6 @@ void ConstraintBuilder::MaybeAddConstraint(
   }
 }
 
-/**
- * In the submap search for the best fit of the scans point_cloud.
- * If the match score is better than the threshold defined in the options add a constraint.
- * By contrast to MaybeAddConstraint, which only searches in the vicinity of the last pose estimate, the whole submap
- * is considered for scan-matching. ("Global")
- * In return the score threshold is typically higher for global matches.
- *
- * @param submap_index
- * @param submap
- * @param scan_index
- * @param scan_trajectory
- * @param submap_trajectory
- * @param trajectory_connectivity
- */
 void ConstraintBuilder::MaybeAddGlobalConstraint(
     const int submap_index, const mapping::Submap* const submap,
     const int scan_index, const mapping::Submaps* scan_trajectory,
@@ -193,23 +169,6 @@ ConstraintBuilder::GetSubmapScanMatcher(const int submap_index) {
   return submap_scan_matcher;
 }
 
-/**
- * Estimate the scans pose in submap (with covariance) using its point_cloud and generate an according constraint.
- * If !match_full_submap a initial_relative_pose guess is used. Then the fast correlative scan matcher is used to
- * estimate the pose. If the estimates score is insufficient with respect to the configured threshold execution is
- * stopped without modifying constraint. Otherwise the pose estimate is further refined by the ceres matcher and
- * constraint is reset to the best quess.
- * @param submap_index
- * @param submap
- * @param scan_index
- * @param scan_trajectory
- * @param submap_trajectory
- * @param match_full_submap
- * @param trajectory_connectivity
- * @param point_cloud
- * @param initial_relative_pose
- * @param constraint
- */
 void ConstraintBuilder::ComputeConstraint(
     const int submap_index, const mapping::Submap* const submap,
     const int scan_index, const mapping::Submaps* scan_trajectory,
@@ -225,11 +184,11 @@ void ConstraintBuilder::ComputeConstraint(
   const sensor::PointCloud filtered_point_cloud =
       adaptive_voxel_filter_.Filter(*point_cloud);
 
-  // The 'constraint_transform' (submap <- scan) is computed from:
-  // - a 'filtered_point_cloud' in scan,
-  // - the initial guess 'initial_pose' for (map <- scan),
-  // - the result 'pose_estimate' of Match() (map <- scan).
-  // - the ComputeSubmapPose() (map <- submap)
+  // The 'constraint_transform' (submap i <- scan j) is computed from:
+  // - a 'filtered_point_cloud' in scan j,
+  // - the initial guess 'initial_pose' for (map <- scan j),
+  // - the result 'pose_estimate' of Match() (map <- scan j).
+  // - the ComputeSubmapPose() (map <- submap i)
   float score = 0.;
   transform::Rigid2d pose_estimate = transform::Rigid2d::Identity();
 

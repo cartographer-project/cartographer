@@ -106,9 +106,9 @@ void SparsePoseGraph::AddScan(
   });
   trajectory_connectivity_.Add(submaps);
 
-  // if the last (i.e. latest) insertion_submap is not in the index
-  // it means we have started a new submap...
   if (submap_indices_.count(insertion_submaps.back()) == 0) {
+      // We grow `submap_states_` as needed. This code assumes that the first
+      // time we see a new submap is as 'insertion_submaps.back()'.
     submap_indices_.emplace(insertion_submaps.back(),
                             static_cast<int>(submap_indices_.size()));
     submap_states_.emplace_back();
@@ -116,14 +116,10 @@ void SparsePoseGraph::AddScan(
     submap_states_.back().trajectory = submaps;
     CHECK_EQ(submap_states_.size(), submap_indices_.size());
   }
-  // ... One call before the first of insertion_submaps was finished
   const mapping::Submap* const finished_submap =
       insertion_submaps.front()->finished_probability_grid != nullptr
           ? insertion_submaps.front()
           : nullptr;
-  // by providing finished_submap (!=nullptr) to ComputeConstraintsForScan
-  // it will be tried to find constraints between old scans and this submap
-  // after adding the current scan j.
 
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[submaps]) {
@@ -221,9 +217,9 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       scan_data->trajectory, scan_data->time, pose, optimized_pose);
   for (const mapping::Submap* submap : insertion_submaps) {
     const int submap_index = GetSubmapIndex(submap);
+    // If this was the last scan added to the submap it will be marked as
+    // finished after adding the respective constraint.
     CHECK(!submap_states_[submap_index].finished);
-    // however probability_grid might be final, so the last ray cast is drawn,
-    // but the respective constraint will be set in the following.
     submap_states_[submap_index].scan_indices.emplace(scan_index);
     // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid2d constraint_transform =
@@ -250,7 +246,6 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       ComputeConstraint(scan_index, submap_index);
     }
   }
-
 
   if (finished_submap != nullptr) {
     const int finished_submap_index = GetSubmapIndex(finished_submap);
