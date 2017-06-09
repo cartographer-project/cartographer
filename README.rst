@@ -18,11 +18,6 @@ Cartographer
 
 |build| |docs| |license|
 
-Announcement: :mega: Next Cartographer Open House Hangout is on Thursday, June 8, 5pm CEST (8am PST) [`Email thread`_, `Hangouts link`_].
-
-.. _Email thread: https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!topic/google-cartographer/K_mPGTeM-DQ
-.. _Hangouts link: https://staging.talkgadget.google.com/hangouts/_/google.com/cartographeropenhouse
-
 Purpose
 =======
 
@@ -34,6 +29,17 @@ configurations.
 
 .. _Cartographer: https://github.com/googlecartographer/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
+
+Open house
+==========
+
+We regularly meet in an open-for-all Google hangout to discuss progress and plans for Cartographer.
+
+The next Cartographer Open House Hangout is on Thursday, June 22, 5pm CEST (8am PST) [`Hangouts link`_].
+
+.. _Hangouts link: https://staging.talkgadget.google.com/hangouts/_/google.com/cartographeropenhouse
+
+- June 8, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170608/slides.pdf>`_
 
 Getting started
 ===============
