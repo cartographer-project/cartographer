@@ -6,9 +6,9 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/make_unique.h"
+#include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_batch.h"
 #include "cartographer/io/points_processor.h"
-#include "cartographer/io/file_writer.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/mapping_3d/range_data_inserter.h"
 #include "cartographer/sensor/range_data.h"
@@ -33,17 +33,14 @@ std::unique_ptr<sensor::RangeData> RangeDataFromPointsBatch(
 
 HybridGridPointsProcessor::HybridGridPointsProcessor(
     const double voxel_size,
-    std::unique_ptr<mapping_3d::RangeDataInserter>
-    range_data_inserter,
-    const string& output_filename,
-    FileWriterFactory file_writer_factory,
+    std::unique_ptr<mapping_3d::RangeDataInserter> range_data_inserter,
+    const string& output_filename, FileWriterFactory file_writer_factory,
     PointsProcessor* const next)
     : range_data_inserter_(std::move(range_data_inserter)),
       output_filename_(output_filename),
       file_writer_factory_(file_writer_factory),
       next_(next) {
-  hybrid_grid_ = common::make_unique<mapping_3d::HybridGrid>(
-      voxel_size);
+  hybrid_grid_ = common::make_unique<mapping_3d::HybridGrid>(voxel_size);
 }
 
 std::unique_ptr<HybridGridPointsProcessor>
@@ -55,19 +52,13 @@ HybridGridPointsProcessor::FromDictionary(
       dictionary->GetDouble("voxel_size"),
       common::make_unique<mapping_3d::RangeDataInserter>(
           mapping_3d::CreateRangeDataInserterOptions(
-               dictionary->GetDictionary("range_data_inserter").get())),
+              dictionary->GetDictionary("range_data_inserter").get())),
       dictionary->GetString("filename"), file_writer_factory, next);
 }
 
-void HybridGridPointsProcessor::Process(
-    std::unique_ptr<PointsBatch> batch) {
+void HybridGridPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   const std::unordered_set<string> frame_id_set = {
-    "vlp16_link_0",
-    "vlp16_link_1",
-    "Front",
-    "Left",
-    "Right"
-  };
+      "vlp16_link_0", "vlp16_link_1", "Front", "Left", "Right"};
   if (frame_id_set.find(batch->frame_id) != frame_id_set.end()) {
     std::unique_ptr<sensor::RangeData> range_data_local =
         RangeDataFromPointsBatch(*batch);
@@ -89,7 +80,7 @@ PointsProcessor::FlushResult HybridGridPointsProcessor::Flush() {
   switch (next_->Flush()) {
     case FlushResult::kRestartStream:
       LOG(FATAL) << "Hybrid grid generation must be configured to occur after "
-          "any stages that require multiple passes.";
+                    "any stages that require multiple passes.";
 
     case FlushResult::kFinished:
       return FlushResult::kFinished;

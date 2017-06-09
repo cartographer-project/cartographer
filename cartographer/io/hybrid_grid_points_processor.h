@@ -23,16 +23,13 @@ class HybridGridPointsProcessor : public PointsProcessor {
       "write_geolocated_hybrid_grid";
   HybridGridPointsProcessor(
       double voxel_size,
-      std::unique_ptr<mapping_3d::RangeDataInserter>
-      range_data_inserter,
-      const string& output_filename,
-      io::FileWriterFactory file_writer_factory,
+      std::unique_ptr<mapping_3d::RangeDataInserter> range_data_inserter,
+      const string& output_filename, io::FileWriterFactory file_writer_factory,
       io::PointsProcessor* next);
 
   static std::unique_ptr<HybridGridPointsProcessor> FromDictionary(
       io::FileWriterFactory file_writer_factory,
-      common::LuaParameterDictionary* dictionary,
-      io::PointsProcessor* next);
+      common::LuaParameterDictionary* dictionary, io::PointsProcessor* next);
 
   ~HybridGridPointsProcessor() override = default;
 
