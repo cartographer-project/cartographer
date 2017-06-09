@@ -153,6 +153,8 @@ void SparsePoseGraph::AddImuData(const int trajectory_id, common::Time time,
 
 void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
                                         const mapping::SubmapId& submap_id) {
+  CHECK(submap_data_.at(submap_id).state == SubmapState::kFinished);
+
   // Only globally match against submaps not in this trajectory.
   if (node_id.trajectory_id != submap_id.trajectory_id &&
       global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
@@ -260,10 +262,10 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     const mapping::SubmapId finished_submap_id = GetSubmapId(finished_submap);
     SubmapData& finished_submap_data = submap_data_.at(finished_submap_id);
     CHECK(finished_submap_data.state == SubmapState::kActive);
+    finished_submap_data.state = SubmapState::kFinished;
     // We have a new completed submap, so we look into adding constraints for
     // old scans.
     ComputeConstraintsForOldScans(finished_submap);
-    finished_submap_data.state = SubmapState::kFinished;
   }
   constraint_builder_.NotifyEndOfScan();
   ++num_scans_since_last_loop_closure_;
