@@ -176,6 +176,8 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
     return nullptr;
   }
 
+  // Querying matching and insertion indices must be done here before calling
+  // InsertRangeData() since the queried values are valid for next insertion.
   const mapping::Submap* const matching_submap =
       submaps_.Get(submaps_.matching_index());
   std::vector<const mapping::Submap*> insertion_submaps;
