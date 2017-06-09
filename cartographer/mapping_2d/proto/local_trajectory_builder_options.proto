@@ -21,6 +21,7 @@ import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping_2d/proto/submaps_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
+import "cartographer/transform/proto/transform.proto";
 
 message LocalTrajectoryBuilderOptions {
   // Rangefinder points outside these ranges will be dropped.
@@ -65,4 +66,7 @@ message LocalTrajectoryBuilderOptions {
 
   // True if IMU data should be expected and used.
   optional bool use_imu_data = 12;
+
+  // Initial pose estimate of a new trajectory
+  optional transform.proto.Rigid3d initial_pose_estimate = 19;
 }
