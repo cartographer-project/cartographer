@@ -61,18 +61,18 @@ class Submap {
   Submap(const transform::Rigid3d& local_pose) : local_pose_(local_pose) {}
   virtual ~Submap() {}
 
+  // Local SLAM pose of this submap.
+  transform::Rigid3d local_pose() const { return local_pose_; }
+
+  // Number of RangeData inserted.
+  size_t num_range_data() const { return num_range_data_; }
+
   // The 'finished_probability_grid' when this submap is finished and will not
   // change anymore. Otherwise, this is nullptr and the next call to
   // InsertRangeData() will change the submap.
   const mapping_2d::ProbabilityGrid* finished_probability_grid() const {
     return finished_probability_grid_;
   }
-
-  // Local SLAM pose of this submap.
-  transform::Rigid3d local_pose() const { return local_pose_; }
-
-  // Number of RangeData inserted.
-  size_t num_range_data() const { return num_range_data_; }
 
   // Fills data into the 'response'.
   virtual void ToResponseProto(
@@ -81,8 +81,8 @@ class Submap {
 
  protected:
   const transform::Rigid3d local_pose_;
-  const mapping_2d::ProbabilityGrid* finished_probability_grid_ = nullptr;
   int num_range_data_ = 0;
+  const mapping_2d::ProbabilityGrid* finished_probability_grid_ = nullptr;
 };
 
 // Submaps is a sequence of maps to which scans are matched and into which scans
