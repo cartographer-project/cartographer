@@ -56,26 +56,36 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
 // track of how many range data were inserted into it, and sets the
 // 'finished_probability_grid' to be used for loop closing once the map no
 // longer changes.
-// TODO(hrapp): This should be a class now.
-struct Submap {
-  Submap(const transform::Rigid3d& local_pose) : local_pose(local_pose) {}
+class Submap {
+ public:
+  Submap(const transform::Rigid3d& local_pose) : local_pose_(local_pose) {}
   virtual ~Submap() {}
 
   // Local SLAM pose of this submap.
-  const transform::Rigid3d local_pose;
+  transform::Rigid3d local_pose() const { return local_pose_; }
 
   // Number of RangeData inserted.
-  int num_range_data = 0;
+  size_t num_range_data() const { return num_range_data_; }
 
   // The 'finished_probability_grid' when this submap is finished and will not
   // change anymore. Otherwise, this is nullptr and the next call to
   // InsertRangeData() will change the submap.
-  const mapping_2d::ProbabilityGrid* finished_probability_grid = nullptr;
+  const mapping_2d::ProbabilityGrid* finished_probability_grid() const {
+    return finished_probability_grid_;
+  }
 
   // Fills data into the 'response'.
   virtual void ToResponseProto(
       const transform::Rigid3d& global_submap_pose,
       proto::SubmapQuery::Response* response) const = 0;
+
+ private:
+  const transform::Rigid3d local_pose_;
+
+ protected:
+  // TODO(hrapp): All of this should be private.
+  int num_range_data_ = 0;
+  const mapping_2d::ProbabilityGrid* finished_probability_grid_ = nullptr;
 };
 
 // Submaps is a sequence of maps to which scans are matched and into which scans

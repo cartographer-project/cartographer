@@ -224,9 +224,9 @@ std::vector<Eigen::Array4i> ExtractVoxelData(
     const HybridGrid& hybrid_grid, const transform::Rigid3f& transform,
     Eigen::Array2i* min_index, Eigen::Array2i* max_index) {
   std::vector<Eigen::Array4i> voxel_indices_and_probabilities;
-  const float resolution_inverse = 1. / hybrid_grid.resolution();
+  const float resolution_inverse = 1.f / hybrid_grid.resolution();
 
-  constexpr double kXrayObstructedCellProbabilityLimit = 0.501;
+  constexpr float kXrayObstructedCellProbabilityLimit = 0.501f;
   for (auto it = HybridGrid::Iterator(hybrid_grid); !it.Done(); it.Next()) {
     const uint16 probability_value = it.GetValue();
     const float probability = mapping::ValueToProbability(probability_value);
@@ -323,22 +323,22 @@ proto::SubmapsOptions CreateSubmapsOptions(
 Submap::Submap(const float high_resolution, const float low_resolution,
                const transform::Rigid3d& local_pose)
     : mapping::Submap(local_pose),
-      high_resolution_hybrid_grid(high_resolution),
-      low_resolution_hybrid_grid(low_resolution) {}
+      high_resolution_hybrid_grid_(high_resolution),
+      low_resolution_hybrid_grid_(low_resolution) {}
 
 void Submap::ToResponseProto(
     const transform::Rigid3d& global_submap_pose,
     mapping::proto::SubmapQuery::Response* const response) const {
   // Generate an X-ray view through the 'hybrid_grid', aligned to the xy-plane
   // in the global map frame.
-  const float resolution = high_resolution_hybrid_grid.resolution();
+  const float resolution = high_resolution_hybrid_grid_.resolution();
   response->set_resolution(resolution);
 
   // Compute a bounding box for the texture.
   Eigen::Array2i min_index(INT_MAX, INT_MAX);
   Eigen::Array2i max_index(INT_MIN, INT_MIN);
   const std::vector<Eigen::Array4i> voxel_indices_and_probabilities =
-      ExtractVoxelData(high_resolution_hybrid_grid,
+      ExtractVoxelData(high_resolution_hybrid_grid_,
                        global_submap_pose.cast<float>(), &min_index,
                        &max_index);
 
@@ -383,17 +383,17 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data,
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
     const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
-        range_data, submap->local_pose.inverse().cast<float>());
+        range_data, submap->local_pose().inverse().cast<float>());
     range_data_inserter_.Insert(
         FilterRangeDataByMaxRange(transformed_range_data,
                                   options_.high_resolution_max_range()),
-        &submap->high_resolution_hybrid_grid);
+        &submap->high_resolution_hybrid_grid_);
     range_data_inserter_.Insert(transformed_range_data,
-                                &submap->low_resolution_hybrid_grid);
-    ++submap->num_range_data;
+                                &submap->low_resolution_hybrid_grid_);
+    ++submap->num_range_data_;
   }
   const Submap* const last_submap = Get(size() - 1);
-  if (last_submap->num_range_data == options_.num_range_data()) {
+  if (last_submap->num_range_data_ == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
                                  gravity_alignment));
   }
@@ -402,8 +402,8 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data,
 void Submaps::AddSubmap(const transform::Rigid3d& local_pose) {
   if (size() > 1) {
     Submap* submap = submaps_[size() - 2].get();
-    CHECK(!submap->finished);
-    submap->finished = true;
+    CHECK(!submap->finished_);
+    submap->finished_ = true;
   }
   submaps_.emplace_back(new Submap(options_.high_resolution(),
                                    options_.low_resolution(), local_pose));

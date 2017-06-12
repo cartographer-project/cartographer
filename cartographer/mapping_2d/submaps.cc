@@ -103,18 +103,18 @@ proto::SubmapsOptions CreateSubmapsOptions(
 Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin)
     : mapping::Submap(transform::Rigid3d::Translation(
           Eigen::Vector3d(origin.x(), origin.y(), 0.))),
-      probability_grid(limits) {}
+      probability_grid_(limits) {}
 
 void Submap::ToResponseProto(
     const transform::Rigid3d&,
     mapping::proto::SubmapQuery::Response* const response) const {
   Eigen::Array2i offset;
   CellLimits limits;
-  probability_grid.ComputeCroppedLimits(&offset, &limits);
+  probability_grid_.ComputeCroppedLimits(&offset, &limits);
 
   string cells;
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(limits)) {
-    if (probability_grid.IsKnown(xy_index + offset)) {
+    if (probability_grid_.IsKnown(xy_index + offset)) {
       // We would like to add 'delta' but this is not possible using a value and
       // alpha. We use premultiplied alpha, so when 'delta' is positive we can
       // add it by setting 'alpha' to zero. If it is negative, we set 'value' to
@@ -123,7 +123,7 @@ void Submap::ToResponseProto(
       // detect visually for the user, though.
       const int delta =
           128 - mapping::ProbabilityToLogOddsInteger(
-                    probability_grid.GetProbability(xy_index + offset));
+                    probability_grid_.GetProbability(xy_index + offset));
       const uint8 alpha = delta > 0 ? 0 : -delta;
       const uint8 value = delta > 0 ? delta : 0;
       cells.push_back(value);
@@ -138,14 +138,14 @@ void Submap::ToResponseProto(
 
   response->set_width(limits.num_x_cells);
   response->set_height(limits.num_y_cells);
-  const double resolution = probability_grid.limits().resolution();
+  const double resolution = probability_grid_.limits().resolution();
   response->set_resolution(resolution);
   const double max_x =
-      probability_grid.limits().max().x() - resolution * offset.y();
+      probability_grid_.limits().max().x() - resolution * offset.y();
   const double max_y =
-      probability_grid.limits().max().y() - resolution * offset.x();
+      probability_grid_.limits().max().y() - resolution * offset.x();
   *response->mutable_slice_pose() = transform::ToProto(
-      local_pose.inverse() *
+      local_pose().inverse() *
       transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));
 }
 
@@ -160,12 +160,12 @@ Submaps::Submaps(const proto::SubmapsOptions& options)
 void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
-    CHECK(submap->finished_probability_grid == nullptr);
-    range_data_inserter_.Insert(range_data, &submap->probability_grid);
-    ++submap->num_range_data;
+    CHECK(submap->finished_probability_grid_ == nullptr);
+    range_data_inserter_.Insert(range_data, &submap->probability_grid_);
+    ++submap->num_range_data_;
   }
   const Submap* const last_submap = Get(size() - 1);
-  if (last_submap->num_range_data == options_.num_range_data()) {
+  if (last_submap->num_range_data_ == options_.num_range_data()) {
     AddSubmap(range_data.origin.head<2>());
   }
 }
@@ -182,14 +182,14 @@ void Submaps::FinishSubmap(int index) {
   // Crop the finished Submap before inserting a new Submap to reduce peak
   // memory usage a bit.
   Submap* submap = submaps_[index].get();
-  CHECK(submap->finished_probability_grid == nullptr);
-  submap->probability_grid =
-      ComputeCroppedProbabilityGrid(submap->probability_grid);
-  submap->finished_probability_grid = &submap->probability_grid;
+  CHECK(submap->finished_probability_grid_ == nullptr);
+  submap->probability_grid_ =
+      ComputeCroppedProbabilityGrid(submap->probability_grid_);
+  submap->finished_probability_grid_ = &submap->probability_grid_;
   if (options_.output_debug_images()) {
     // Output the Submap that won't be changed from now on.
     WriteDebugImage("submap" + std::to_string(index) + ".webp",
-                    submap->probability_grid);
+                    submap->probability_grid_);
   }
 }
 

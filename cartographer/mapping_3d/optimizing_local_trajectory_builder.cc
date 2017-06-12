@@ -241,7 +241,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   // We transform the states in 'batches_' in place to be in the submap frame as
   // expected by the OccupiedSpaceCostFunctor. This is reverted after solving
   // the optimization problem.
-  TransformStates(matching_submap->local_pose.inverse());
+  TransformStates(matching_submap->local_pose().inverse());
   for (size_t i = 0; i < batches_.size(); ++i) {
     Batch& batch = batches_[i];
     problem.AddResidualBlock(
@@ -253,7 +253,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                     std::sqrt(static_cast<double>(
                         batch.high_resolution_filtered_points.size())),
                 batch.high_resolution_filtered_points,
-                matching_submap->high_resolution_hybrid_grid),
+                matching_submap->high_resolution_hybrid_grid()),
             batch.high_resolution_filtered_points.size()),
         nullptr, batch.state.translation.data(), batch.state.rotation.data());
     problem.AddResidualBlock(
@@ -265,7 +265,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                     std::sqrt(static_cast<double>(
                         batch.low_resolution_filtered_points.size())),
                 batch.low_resolution_filtered_points,
-                matching_submap->low_resolution_hybrid_grid),
+                matching_submap->low_resolution_hybrid_grid()),
             batch.low_resolution_filtered_points.size()),
         nullptr, batch.state.translation.data(), batch.state.rotation.data());
 
@@ -350,7 +350,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   ceres::Solve(ceres_solver_options_, &problem, &summary);
   // The optimized states in 'batches_' are in the submap frame and we transform
   // them in place to be in the local SLAM frame again.
-  TransformStates(matching_submap->local_pose);
+  TransformStates(matching_submap->local_pose());
   if (num_accumulated_ < options_.scans_per_accumulation()) {
     return nullptr;
   }

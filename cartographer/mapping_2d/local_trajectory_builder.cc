@@ -71,7 +71,7 @@ void LocalTrajectoryBuilder::ScanMatch(
     const sensor::RangeData& range_data_in_tracking_2d,
     transform::Rigid3d* pose_observation) {
   const ProbabilityGrid& probability_grid =
-      submaps_.Get(submaps_.matching_index())->probability_grid;
+      submaps_.Get(submaps_.matching_index())->probability_grid();
   transform::Rigid2d pose_prediction_2d =
       transform::Project2D(pose_prediction * tracking_to_tracking_2d.inverse());
   // The online correlative scan matcher will refine the initial estimate for
