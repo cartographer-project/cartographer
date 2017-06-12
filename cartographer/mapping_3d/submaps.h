@@ -54,6 +54,10 @@ struct Submap : public mapping::Submap {
   HybridGrid high_resolution_hybrid_grid;
   HybridGrid low_resolution_hybrid_grid;
   bool finished = false;
+
+  void ToResponseProto(
+      const transform::Rigid3d& global_submap_pose,
+      mapping::proto::SubmapQuery::Response* response) const override;
 };
 
 // A container of Submaps.
@@ -66,8 +70,6 @@ class Submaps : public mapping::Submaps {
 
   const Submap* Get(int index) const override;
   int size() const override;
-  void SubmapToProto(int index, const transform::Rigid3d& global_submap_pose,
-                     mapping::proto::SubmapQuery::Response* response) override;
 
   // Inserts 'range_data' into the Submap collection. 'gravity_alignment' is
   // used for the orientation of new submaps so that the z axis approximately
@@ -76,30 +78,7 @@ class Submaps : public mapping::Submaps {
                        const Eigen::Quaterniond& gravity_alignment);
 
  private:
-  struct PixelData {
-    int min_z = INT_MAX;
-    int max_z = INT_MIN;
-    int count = 0;
-    float probability_sum = 0.f;
-    float max_probability = 0.5f;
-  };
-
   void AddSubmap(const transform::Rigid3d& local_pose);
-
-  std::vector<PixelData> AccumulatePixelData(
-      const int width, const int height, const Eigen::Array2i& min_index,
-      const Eigen::Array2i& max_index,
-      const std::vector<Eigen::Array4i>& voxel_indices_and_probabilities) const;
-  // The first three entries of each returned value are a cell_index and the
-  // last is the corresponding probability value. We batch them together like
-  // this to only have one vector and have better cache locality.
-  std::vector<Eigen::Array4i> ExtractVoxelData(
-      const HybridGrid& hybrid_grid, const transform::Rigid3f& transform,
-      Eigen::Array2i* min_index, Eigen::Array2i* max_index) const;
-  // Builds texture data containing interleaved value and alpha for the
-  // visualization from 'accumulated_pixel_data'.
-  string ComputePixelValues(
-      const std::vector<PixelData>& accumulated_pixel_data) const;
 
   const proto::SubmapsOptions options_;
 
