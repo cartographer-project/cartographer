@@ -383,7 +383,7 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data,
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
     const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
-        range_data, submap->local_pose_.inverse().cast<float>());
+        range_data, submap->local_pose().inverse().cast<float>());
     range_data_inserter_.Insert(
         FilterRangeDataByMaxRange(transformed_range_data,
                                   options_.high_resolution_max_range()),

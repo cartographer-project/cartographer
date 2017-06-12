@@ -79,8 +79,11 @@ class Submap {
       const transform::Rigid3d& global_submap_pose,
       proto::SubmapQuery::Response* response) const = 0;
 
- protected:
+ private:
   const transform::Rigid3d local_pose_;
+
+ protected:
+  // TODO(hrapp): All of this should be private.
   int num_range_data_ = 0;
   const mapping_2d::ProbabilityGrid* finished_probability_grid_ = nullptr;
 };

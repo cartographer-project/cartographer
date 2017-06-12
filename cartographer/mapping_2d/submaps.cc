@@ -145,7 +145,7 @@ void Submap::ToResponseProto(
   const double max_y =
       probability_grid_.limits().max().y() - resolution * offset.x();
   *response->mutable_slice_pose() = transform::ToProto(
-      local_pose_.inverse() *
+      local_pose().inverse() *
       transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));
 }
 
