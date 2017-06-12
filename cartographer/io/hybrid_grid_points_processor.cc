@@ -34,12 +34,10 @@ std::unique_ptr<sensor::RangeData> RangeDataFromPointsBatch(
 HybridGridPointsProcessor::HybridGridPointsProcessor(
     const double voxel_size,
     const mapping_3d::proto::RangeDataInserterOptions&
-    range_data_inserter_options,
-    const string& output_filename, FileWriterFactory file_writer_factory,
-    PointsProcessor* const next)
+        range_data_inserter_options,
+    std::unique_ptr<FileWriter> file_writer, PointsProcessor* const next)
     : range_data_inserter_(range_data_inserter_options),
-      output_filename_(output_filename),
-      file_writer_factory_(file_writer_factory),
+      file_writer_(std::move(file_writer)),
       next_(next) {
   hybrid_grid_ = common::make_unique<mapping_3d::HybridGrid>(voxel_size);
 }
@@ -52,31 +50,25 @@ HybridGridPointsProcessor::FromDictionary(
   return common::make_unique<HybridGridPointsProcessor>(
       dictionary->GetDouble("voxel_size"),
       mapping_3d::CreateRangeDataInserterOptions(
-              dictionary->GetDictionary("range_data_inserter").get()),
-      dictionary->GetString("filename"), file_writer_factory, next);
+          dictionary->GetDictionary("range_data_inserter").get()),
+      file_writer_factory(dictionary->GetString("filename")), next);
 }
 
 void HybridGridPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
-  const std::unordered_set<string> frame_id_set = {
-      "vlp16_link_0", "vlp16_link_1", "Front", "Left", "Right"};
-  if (frame_id_set.find(batch->frame_id) != frame_id_set.end()) {
-    std::unique_ptr<sensor::RangeData> range_data_local =
-        RangeDataFromPointsBatch(*batch);
-    range_data_inserter_.Insert(*range_data_local, hybrid_grid_.get());
-  }
+  std::unique_ptr<sensor::RangeData> range_data_local =
+      RangeDataFromPointsBatch(*batch);
+  range_data_inserter_.Insert(*range_data_local, hybrid_grid_.get());
 
   next_->Process(std::move(batch));
 }
 
 PointsProcessor::FlushResult HybridGridPointsProcessor::Flush() {
-  std::unique_ptr<FileWriter> file_writer =
-      file_writer_factory_(output_filename_);
   mapping_3d::proto::HybridGrid hybrid_grid_proto =
       mapping_3d::ToProto(*hybrid_grid_);
   string serialized;
   hybrid_grid_proto.SerializeToString(&serialized);
-  file_writer->Write(serialized.data(), serialized.size());
-  CHECK(file_writer->Close());
+  file_writer_->Write(serialized.data(), serialized.size());
+  CHECK(file_writer_->Close());
 
   switch (next_->Flush()) {
     case FlushResult::kRestartStream:

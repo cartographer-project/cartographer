@@ -26,13 +26,12 @@ class HybridGridPointsProcessor : public PointsProcessor {
   HybridGridPointsProcessor(double voxel_size,
                             const mapping_3d::proto::RangeDataInserterOptions&
                                 range_data_inserter_options,
-                            const string& output_filename,
-                            io::FileWriterFactory file_writer_factory,
-                            io::PointsProcessor* next);
+                            std::unique_ptr<FileWriter> file_writer,
+                            PointsProcessor* next);
 
   static std::unique_ptr<HybridGridPointsProcessor> FromDictionary(
-      io::FileWriterFactory file_writer_factory,
-      common::LuaParameterDictionary* dictionary, io::PointsProcessor* next);
+      FileWriterFactory file_writer_factory,
+      common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   ~HybridGridPointsProcessor() override = default;
 
@@ -42,8 +41,7 @@ class HybridGridPointsProcessor : public PointsProcessor {
  private:
   mapping_3d::RangeDataInserter range_data_inserter_;
   std::unique_ptr<mapping_3d::HybridGrid> hybrid_grid_;
-  const string output_filename_;
-  FileWriterFactory file_writer_factory_;
+  std::unique_ptr<FileWriter> file_writer_;
   PointsProcessor* const next_;
 };
 
