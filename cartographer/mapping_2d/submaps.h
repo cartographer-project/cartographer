@@ -41,8 +41,6 @@ ProbabilityGrid ComputeCroppedProbabilityGrid(
 proto::SubmapsOptions CreateSubmapsOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class Submaps;
-
 class Submap : public mapping::Submap {
  public:
   Submap(const MapLimits& limits, const Eigen::Vector2f& origin);
@@ -54,7 +52,8 @@ class Submap : public mapping::Submap {
       mapping::proto::SubmapQuery::Response* response) const override;
 
  private:
-  friend Submaps;
+  // TODO(hrapp): Remove friend declaration.
+  friend class Submaps;
 
   ProbabilityGrid probability_grid_;
 };

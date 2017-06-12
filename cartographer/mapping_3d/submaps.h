@@ -47,8 +47,6 @@ void InsertIntoProbabilityGrid(
 proto::SubmapsOptions CreateSubmapsOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class Submaps;
-
 class Submap : public mapping::Submap {
  public:
   Submap(float high_resolution, float low_resolution,
@@ -67,7 +65,8 @@ class Submap : public mapping::Submap {
       mapping::proto::SubmapQuery::Response* response) const override;
 
  private:
-  friend Submaps;
+  // TODO(hrapp): Remove friend declaration.
+  friend class Submaps;
 
   HybridGrid high_resolution_hybrid_grid_;
   HybridGrid low_resolution_hybrid_grid_;
