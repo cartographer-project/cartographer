@@ -104,7 +104,7 @@ void SparsePoseGraph::AddScan(
               mapping::TrajectoryNode::Data{
                   time, range_data_in_pose,
                   Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}}),
-                  trajectory_id, tracking_to_pose}),
+                  tracking_to_pose}),
           optimized_pose});
   ++num_trajectory_nodes_;
   trajectory_connectivity_.Add(trajectory_id);
@@ -228,7 +228,6 @@ void SparsePoseGraph::ComputeConstraintsForScan(
                                  .size())
           : 0};
   const auto& scan_data = trajectory_nodes_.at(node_id).constant_data;
-  CHECK_EQ(scan_data->trajectory_id, matching_id.trajectory_id);
   optimization_problem_.AddTrajectoryNode(
       matching_id.trajectory_id, scan_data->time, pose, optimized_pose);
   for (const mapping::Submap* submap : insertion_submaps) {

@@ -40,9 +40,6 @@ struct TrajectoryNode {
     // Range data in 'pose' frame. Only used in the 3D case.
     sensor::CompressedRangeData range_data_3d;
 
-    // Trajectory this node belongs to.
-    int trajectory_id;
-
     // Transform from the 3D 'tracking' frame to the 'pose' frame of the range
     // data, which contains roll, pitch and height for 2D. In 3D this is always
     // identity.
