@@ -47,17 +47,31 @@ void InsertIntoProbabilityGrid(
 proto::SubmapsOptions CreateSubmapsOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-struct Submap : public mapping::Submap {
+class Submaps;
+
+class Submap : public mapping::Submap {
+ public:
   Submap(float high_resolution, float low_resolution,
          const transform::Rigid3d& local_pose);
 
-  HybridGrid high_resolution_hybrid_grid;
-  HybridGrid low_resolution_hybrid_grid;
-  bool finished = false;
+  const HybridGrid& high_resolution_hybrid_grid() const {
+    return high_resolution_hybrid_grid_;
+  }
+  const HybridGrid& low_resolution_hybrid_grid() const {
+    return low_resolution_hybrid_grid_;
+  }
+  const bool finished() const { return finished_; }
 
   void ToResponseProto(
       const transform::Rigid3d& global_submap_pose,
       mapping::proto::SubmapQuery::Response* response) const override;
+
+ private:
+  friend Submaps;
+
+  HybridGrid high_resolution_hybrid_grid_;
+  HybridGrid low_resolution_hybrid_grid_;
+  bool finished_ = false;
 };
 
 // A container of Submaps.

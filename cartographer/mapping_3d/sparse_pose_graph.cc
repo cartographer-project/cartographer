@@ -81,8 +81,8 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
         submap_data.at(trajectory_id).at(first_submap_id.submap_index).pose;
     optimization_problem_.AddSubmap(
         trajectory_id, first_submap_pose *
-                           insertion_submaps[0]->local_pose.inverse() *
-                           insertion_submaps[1]->local_pose);
+                           insertion_submaps[0]->local_pose().inverse() *
+                           insertion_submaps[1]->local_pose());
   }
 }
 
@@ -113,8 +113,9 @@ void SparsePoseGraph::AddScan(
     submap_ids_.emplace(insertion_submaps.back(), submap_id);
     submap_data_.at(submap_id).submap = insertion_submaps.back();
   }
-  const Submap* const finished_submap =
-      insertion_submaps.front()->finished ? insertion_submaps.front() : nullptr;
+  const Submap* const finished_submap = insertion_submaps.front()->finished()
+                                            ? insertion_submaps.front()
+                                            : nullptr;
 
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[trajectory_id]) {
@@ -235,7 +236,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
           .at(matching_id.trajectory_id)
           .at(matching_id.submap_index)
           .pose *
-      matching_submap->local_pose.inverse() * pose;
+      matching_submap->local_pose().inverse() * pose;
   const mapping::NodeId node_id{
       matching_id.trajectory_id,
       static_cast<size_t>(matching_id.trajectory_id) <
@@ -252,7 +253,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     CHECK(submap_data_.at(submap_id).state == SubmapState::kActive);
     submap_data_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid3d constraint_transform =
-        submap->local_pose.inverse() * pose;
+        submap->local_pose().inverse() * pose;
     constraints_.push_back(
         Constraint{submap_id,
                    node_id,
@@ -432,7 +433,8 @@ transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
              .at(mapping::SubmapId{
                  trajectory_id,
                  static_cast<int>(extrapolated_submap_transforms.size()) - 1})
-             .submap->local_pose.inverse();
+             .submap->local_pose()
+             .inverse();
 }
 
 std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
@@ -476,8 +478,8 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
           trajectory_id, static_cast<int>(result.size()) - 1};
       result.push_back(
           result.back() *
-          submap_data_.at(previous_submap_id).submap->local_pose.inverse() *
-          submap_data.submap->local_pose);
+          submap_data_.at(previous_submap_id).submap->local_pose().inverse() *
+          submap_data.submap->local_pose());
     }
   }
 

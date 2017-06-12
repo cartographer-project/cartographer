@@ -143,7 +143,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
   const Submap* const matching_submap =
       submaps_->Get(submaps_->matching_index());
   transform::Rigid3d initial_ceres_pose =
-      matching_submap->local_pose.inverse() * pose_prediction;
+      matching_submap->local_pose().inverse() * pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.high_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud filtered_point_cloud_in_tracking =
@@ -154,7 +154,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
     const transform::Rigid3d initial_pose = initial_ceres_pose;
     real_time_correlative_scan_matcher_->Match(
         initial_pose, filtered_point_cloud_in_tracking,
-        matching_submap->high_resolution_hybrid_grid, &initial_ceres_pose);
+        matching_submap->high_resolution_hybrid_grid(), &initial_ceres_pose);
   }
 
   transform::Rigid3d pose_observation_in_submap;
@@ -166,12 +166,12 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
       low_resolution_adaptive_voxel_filter.Filter(filtered_range_data.returns);
   ceres_scan_matcher_->Match(scan_matcher_pose_estimate_, initial_ceres_pose,
                              {{&filtered_point_cloud_in_tracking,
-                               &matching_submap->high_resolution_hybrid_grid},
+                               &matching_submap->high_resolution_hybrid_grid()},
                               {&low_resolution_point_cloud_in_tracking,
-                               &matching_submap->low_resolution_hybrid_grid}},
+                               &matching_submap->low_resolution_hybrid_grid()}},
                              &pose_observation_in_submap, &summary);
   const transform::Rigid3d pose_observation =
-      matching_submap->local_pose * pose_observation_in_submap;
+      matching_submap->local_pose() * pose_observation_in_submap;
   pose_tracker_->AddPoseObservation(
       time, pose_observation,
       options_.kalman_local_trajectory_builder_options()

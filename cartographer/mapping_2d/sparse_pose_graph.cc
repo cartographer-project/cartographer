@@ -116,7 +116,7 @@ void SparsePoseGraph::AddScan(
     submap_data_.at(submap_id).submap = insertion_submaps.back();
   }
   const mapping::Submap* const finished_submap =
-      insertion_submaps.front()->finished_probability_grid != nullptr
+      insertion_submaps.front()->finished_probability_grid() != nullptr
           ? insertion_submaps.front()
           : nullptr;
 
@@ -430,7 +430,8 @@ transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
              .at(mapping::SubmapId{
                  trajectory_id,
                  static_cast<int>(extrapolated_submap_transforms.size()) - 1})
-             .submap->local_pose.inverse();
+             .submap->local_pose()
+             .inverse();
 }
 
 std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
@@ -474,8 +475,8 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
           trajectory_id, static_cast<int>(result.size()) - 1};
       result.push_back(
           result.back() *
-          submap_data_.at(previous_submap_id).submap->local_pose.inverse() *
-          submap_data.submap->local_pose);
+          submap_data_.at(previous_submap_id).submap->local_pose().inverse() *
+          submap_data.submap->local_pose());
     }
   }
 

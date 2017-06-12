@@ -51,12 +51,12 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
     const int matching = submaps.matching_index();
     // Except for the first, maps should only be returned after enough scans.
     if (matching != 0) {
-      EXPECT_LE(kNumRangeData, submaps.Get(matching)->num_range_data);
+      EXPECT_LE(kNumRangeData, submaps.Get(matching)->num_range_data());
     }
   }
   for (int i = 0; i != submaps.size() - 2; ++i) {
     // Submaps should not be left without the right number of scans in them.
-    EXPECT_EQ(kNumRangeData * 2, submaps.Get(i)->num_range_data);
+    EXPECT_EQ(kNumRangeData * 2, submaps.Get(i)->num_range_data());
   }
 }
 

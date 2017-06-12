@@ -125,7 +125,7 @@ string MapBuilder::SubmapToProto(const int trajectory_id,
 
   const Submap* const submap =
       trajectory_builders_.at(trajectory_id)->submaps()->Get(submap_index);
-  response->set_submap_version(submap->num_range_data);
+  response->set_submap_version(submap->num_range_data());
   submap->ToResponseProto(submap_transforms[submap_index], response);
   return "";
 }
