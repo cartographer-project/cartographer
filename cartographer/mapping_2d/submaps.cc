@@ -105,8 +105,9 @@ Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin)
           Eigen::Vector3d(origin.x(), origin.y(), 0.))),
       probability_grid(limits) {}
 
-void Submap::AddProbabilityGridToResponse(
-    mapping::proto::SubmapQuery::Response* response) {
+void Submap::ToResponseProto(
+    const transform::Rigid3d&,
+    mapping::proto::SubmapQuery::Response* const response) const {
   Eigen::Array2i offset;
   CellLimits limits;
   probability_grid.ComputeCroppedLimits(&offset, &limits);
@@ -176,12 +177,6 @@ const Submap* Submaps::Get(int index) const {
 }
 
 int Submaps::size() const { return submaps_.size(); }
-
-void Submaps::SubmapToProto(
-    const int index, const transform::Rigid3d&,
-    mapping::proto::SubmapQuery::Response* const response) {
-  submaps_.at(index)->AddProbabilityGridToResponse(response);
-}
 
 void Submaps::FinishSubmap(int index) {
   // Crop the finished Submap before inserting a new Submap to reduce peak
