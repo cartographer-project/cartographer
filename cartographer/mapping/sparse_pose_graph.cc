@@ -81,7 +81,10 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }
 
-  for (const auto& trajectory_nodes : GetTrajectoryNodes()) {
+  const auto all_trajectory_nodes = GetTrajectoryNodes();
+  for (size_t trajectory_id = 0; trajectory_id != all_trajectory_nodes.size();
+       ++trajectory_id) {
+    const auto& trajectory_nodes = all_trajectory_nodes[trajectory_id];
     auto* trajectory_proto = proto.add_trajectory();
     for (const auto& node : trajectory_nodes) {
       auto* node_proto = trajectory_proto->add_node();
@@ -91,8 +94,7 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     }
 
     if (!trajectory_nodes.empty()) {
-      for (const auto& transform : GetSubmapTransforms(
-               trajectory_nodes[0].constant_data->trajectory_id)) {
+      for (const auto& transform : GetSubmapTransforms(trajectory_id)) {
         *trajectory_proto->add_submap()->mutable_pose() =
             transform::ToProto(transform);
       }
