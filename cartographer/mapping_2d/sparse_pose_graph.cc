@@ -200,7 +200,8 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
          ++node_index) {
       const mapping::NodeId node_id{static_cast<int>(trajectory_id),
                                     static_cast<int>(node_index)};
-      if (submap_data.node_ids.count(node_id) == 0) {
+      if (!trajectory_nodes_.at(node_id).trimmed() &&
+          submap_data.node_ids.count(node_id) == 0) {
         ComputeConstraint(node_id, submap_id);
       }
     }
@@ -542,14 +543,19 @@ void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
   // TODO(hrapp): Make 'Submap' object thread safe and remove submap data in
   // there.
 
-  // TODO(whess): Mark the 'nodes_to_remove' as pruned and remove their data.
-  // Also make sure we no longer try to scan match against it.
+  // Mark the 'nodes_to_remove' as trimmed and remove their data.
+  for (const mapping::NodeId& node_id : nodes_to_remove) {
+    CHECK(!parent_->trajectory_nodes_.at(node_id).trimmed());
+    parent_->trajectory_nodes_.at(node_id).constant_data.reset();
+  }
 
   // TODO(whess): The optimization problem should no longer include the submap
   // and the removed nodes.
 
   // TODO(whess): If the first submap is gone, we want to tie the first not
   // yet trimmed submap to be set fixed to its current pose.
+
+  // TODO(hrapp): Delete related IMU data.
 }
 
 }  // namespace mapping_2d

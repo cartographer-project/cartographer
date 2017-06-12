@@ -47,9 +47,10 @@ struct TrajectoryNode {
   };
 
   common::Time time() const { return constant_data->time; }
+  bool trimmed() const { return constant_data == nullptr; }
 
   // This must be a shared_ptr. If the data is used for visualization while the
-  // node is being deleted, it must survive until all use finishes.
+  // node is being trimmed, it must survive until all use finishes.
   std::shared_ptr<const Data> constant_data;
 
   transform::Rigid3d pose;
