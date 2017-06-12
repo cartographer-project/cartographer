@@ -16,19 +16,19 @@
 namespace cartographer {
 namespace io {
 
-// Creates a geolocated hybrid grid of the points with voxels being
-// 'voxel_size' big.  'range_data_inserter' options are used to configure
-// the range data ray tracing through the hybrid grid.
+// Creates a hybrid grid of the points with voxels being 'voxel_size'
+// big.  'range_data_inserter' options are used to configure the range
+// data ray tracing through the hybrid grid.
 class HybridGridPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName =
-      "write_geolocated_hybrid_grid";
-  HybridGridPointsProcessor(
-      double voxel_size,
-      const mapping_3d::proto::RangeDataInserterOptions&
-      range_data_inserter_options,
-      const string& output_filename, io::FileWriterFactory file_writer_factory,
-      io::PointsProcessor* next);
+      "write_hybrid_grid";
+  HybridGridPointsProcessor(double voxel_size,
+                            const mapping_3d::proto::RangeDataInserterOptions&
+                                range_data_inserter_options,
+                            const string& output_filename,
+                            io::FileWriterFactory file_writer_factory,
+                            io::PointsProcessor* next);
 
   static std::unique_ptr<HybridGridPointsProcessor> FromDictionary(
       io::FileWriterFactory file_writer_factory,
