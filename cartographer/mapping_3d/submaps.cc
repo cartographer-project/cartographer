@@ -224,9 +224,9 @@ std::vector<Eigen::Array4i> ExtractVoxelData(
     const HybridGrid& hybrid_grid, const transform::Rigid3f& transform,
     Eigen::Array2i* min_index, Eigen::Array2i* max_index) {
   std::vector<Eigen::Array4i> voxel_indices_and_probabilities;
-  const float resolution_inverse = 1. / hybrid_grid.resolution();
+  const float resolution_inverse = 1.f / hybrid_grid.resolution();
 
-  constexpr double kXrayObstructedCellProbabilityLimit = 0.501;
+  constexpr float kXrayObstructedCellProbabilityLimit = 0.501f;
   for (auto it = HybridGrid::Iterator(hybrid_grid); !it.Done(); it.Next()) {
     const uint16 probability_value = it.GetValue();
     const float probability = mapping::ValueToProbability(probability_value);
