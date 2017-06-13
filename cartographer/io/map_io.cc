@@ -19,44 +19,46 @@
 namespace cartographer {
 namespace io {
 
-//constructor takes a pointer to the map_builder
-cartographer::io::MapIO::MapIO(cartographer::mapping::MapBuilder & map_builder){
-};
+//constructor takes a const reference to the map_builder
+cartographer::io::MapIO::MapIO(const cartographer::mapping::MapBuilder
+    &map_builder){}
 
-void MapIO::write(const string file_name){
-  //TODO(brandon-northcutt) Pause optimization so that submaps, trajectories,
+bool MapIO::Write(const string file_name){
+  // TODO(brandon-northcutt) Pause optimization so that submaps, trajectories,
   //  and constraints are immutable for serialization of state.
 
-  //TODO(brandon-northcutt) Get a file handle to send protobufs to.
+  // TODO(brandon-northcutt) Get a file handle to send protobufs to.
 
-  //TODO(brandon-northcutt) Send map_builder_options protobuf to file first, so
+  // TODO(brandon-northcutt) Send map_builder_options protobuf to file first, so
   //  deserialization constructor can create a map builder object as it's first
   //  action.
   
-  //TODO(brandon-northcutt) Serialize all other single copy options protobufs
+  // TODO(brandon-northcutt) Serialize all other single copy options protobufs
   //  ceres_scan_matcher_options, range_data_inserter_options,
   //  sparse_pose_graph_options, real_time_correlative_scan_matcher_options,
   //  kalman_local_trajectory_builder_options, local_trajectory_builder_options,
   //  motion_filter_options, optimizing_local_trajectory_builder_options, 
   //  adaptive_voxel_filter_options,...)
 
-  //TODO(brandon-northcutt) Iterate trajectories { serialize trajectory builder
+  // TODO(brandon-northcutt) Iterate trajectories { serialize trajectory builder
   //  options, serialize sensor configuration proto, serialize all nodes in this
   //  trajectory.
   
-  //TODO(brandon-northcutt) Serialize trajectory connectivity.
+  // TODO(brandon-northcutt) Serialize trajectory connectivity.
 
-  //TODO(brandon-northcutt) Iterate submaps(serialize submap options, serialize
+  // TODO(brandon-northcutt) Iterate submaps(serialize submap options, serialize
   //  probability grids.
   
-  //TODO(brandon-northcutt) Serialize the sparse pose graph,  (Should the SPG
+  // TODO(brandon-northcutt) Serialize the sparse pose graph,  (Should the SPG
   //  proto contain trajectories?)
-};
+  return true;
+}
 
-void MapIO::read(const string file_name){
-  //TODO(brandon-northcutt) Same steps as write but feed protobufs into
+bool MapIO::Read(const string file_name){
+  // TODO(brandon-northcutt) Same steps as write but feed protobufs into
   //  the appropriate constructors.
-};
+  return true;
+}
 
 } // namespace io
 } // namespace cartographer

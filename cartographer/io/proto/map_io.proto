@@ -14,7 +14,7 @@
 
 syntax = "proto2";
 
-package cartographer.mapping.proto;
+package cartographer.io.proto;
 
 import "cartographer/common/proto/ceres_solver_options.proto";
 import "cartographer/kalman_filter/proto/pose_tracker_options.proto";
@@ -51,11 +51,11 @@ import "cartographer/sensor/proto/sensor.proto";
 import "cartographer/transform/proto/transform.proto";
 
 message MapIO {
-  //At most one message type is written to disk at a time.
+  // At most one message type is written to disk at a time.
   oneof map_io_protos {
-      MapBuilderOptions map_builder_options = 1;
-      TrajectoryBuilderOptions trajectory_builder_options = 2;
-      //TODO(brandon-northcutt) Provide the rest of the possible messages needed
+      mapping.proto.MapBuilderOptions map_builder_options = 1;
+      mapping.proto.TrajectoryBuilderOptions trajectory_builder_options = 2;
+      // TODO(brandon-northcutt) Provide the rest of the possible messages needed
       //  for full state serialization.
   }
 }

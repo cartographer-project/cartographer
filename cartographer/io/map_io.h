@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_IO_MAPPING_IO_H_
 
 #include "cartographer/mapping/map_builder.h"
-#include "cartographer/io/file_writer.h"//Re-used filestream wrapper.
+#include "cartographer/io/file_writer.h"
 
 namespace cartographer {
 namespace io {
@@ -26,13 +26,13 @@ namespace io {
 // A class to serialize and deserialize the Cartographer state.
 class MapIO {
 public:
-  MapIO(cartographer::mapping::MapBuilder & map_builder);
+  MapIO(const cartographer::mapping::MapBuilder &map_builder);
   MapIO(const MapIO &) = delete;
   MapIO &operator=(const MapIO &) = delete;
-  //TODO(brandon-northcutt) Write the full Cartographer state to disk.
-  void write(const std::string file_name);
-  //TODO(brandon-northcutt) Read the full cartographer state from disk.
-  void read(const std::string file_name);
+  // TODO(brandon-northcutt) Write the full Cartographer state to disk.
+  bool Write(const std::string file_name);
+  // TODO(brandon-northcutt) Read the full cartographer state from disk.
+  bool Read(const std::string file_name);
 private:
 };
 } // namespace io
