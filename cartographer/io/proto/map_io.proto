@@ -52,7 +52,7 @@ import "cartographer/transform/proto/transform.proto";
 
 message MapIO {
   //At most one message type is written to disk at a time.
-  oneof union {
+  oneof map_io_protos {
       MapBuilderOptions map_builder_options = 1;
       TrajectoryBuilderOptions trajectory_builder_options = 2;
       //TODO(brandon-northcutt) Provide the rest of the possible messages needed
