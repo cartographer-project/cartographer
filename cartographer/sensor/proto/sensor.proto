@@ -23,15 +23,15 @@ import "cartographer/transform/proto/transform.proto";
 // Collection of 3D 'points'.
 message PointCloud {
   // Points as repeated floats for efficiency. All fields have the same size.
-  repeated float x = 3 [packed = true];
-  repeated float y = 4 [packed = true];
-  repeated float z = 5 [packed = true];
+  repeated float x = 3 [ packed = true ];
+  repeated float y = 4 [ packed = true ];
+  repeated float z = 5 [ packed = true ];
 }
 
 // Compressed variant of PointCloud.
 message CompressedPointCloud {
   optional int32 num_points = 1;
-  repeated int32 point_data = 3 [packed = true];
+  repeated int32 point_data = 3 [ packed = true ];
 }
 
 // Proto representation of ::cartographer::sensor::RangeData
@@ -46,4 +46,11 @@ message ImuData {
   optional int64 timestamp = 1;
   optional transform.proto.Vector3d linear_acceleration = 2;
   optional transform.proto.Vector3d angular_velocity = 3;
+}
+
+// Proto representation of ::cartographer::sensor::CompressedRangeData
+message CompressedRangeData {
+  optional transform.proto.Vector3f origin = 1;
+  optional CompressedPointCloud point_cloud = 2;
+  optional CompressedPointCloud missing_echo_point_cloud = 3;
 }
