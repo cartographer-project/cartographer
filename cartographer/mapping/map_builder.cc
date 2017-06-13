@@ -113,7 +113,7 @@ string MapBuilder::SubmapToProto(const int trajectory_id,
            " trajectories.";
   }
 
-  const int num_submaps = sparse_pose_graph_->num_submaps(trajectory_id);
+  const int num_submaps = trajectory_builders_.at(trajectory_id)->num_submaps();
   if (submap_index < 0 || submap_index >= num_submaps) {
     return "Requested submap " + std::to_string(submap_index) +
            " from trajectory " + std::to_string(trajectory_id) +
@@ -121,12 +121,10 @@ string MapBuilder::SubmapToProto(const int trajectory_id,
            " submaps in this trajectory.";
   }
 
-  const Submap* const submap =
-      trajectory_builders_.at(trajectory_id)->submaps()->Get(submap_index);
-  response->set_submap_version(submap->num_range_data());
-  const auto submap_pose = sparse_pose_graph_->GetSubmapTransform(
-      SubmapId{trajectory_id, submap_index});
-  submap->ToResponseProto(submap_pose, response);
+  const auto submap_data =
+      trajectory_builders_.at(trajectory_id)->GetSubmapData(submap_index);
+  CHECK(submap_data.submap != nullptr);
+  submap_data.submap->ToResponseProto(submap_data.pose, response);
   return "";
 }
 

@@ -30,8 +30,15 @@ GlobalTrajectoryBuilder::GlobalTrajectoryBuilder(
 
 GlobalTrajectoryBuilder::~GlobalTrajectoryBuilder() {}
 
-mapping_3d::Submaps* GlobalTrajectoryBuilder::submaps() {
-  return local_trajectory_builder_->submaps();
+int GlobalTrajectoryBuilder::num_submaps() {
+  return sparse_pose_graph_->num_submaps(trajectory_id_);
+}
+
+GlobalTrajectoryBuilder::SubmapData GlobalTrajectoryBuilder::GetSubmapData(
+    const int submap_index) {
+  return {local_trajectory_builder_->submaps()->Get(submap_index),
+          sparse_pose_graph_->GetSubmapTransform(
+              mapping::SubmapId{trajectory_id_, submap_index})};
 }
 
 void GlobalTrajectoryBuilder::AddImuData(
