@@ -17,7 +17,7 @@ namespace cartographer {
 namespace io {
 
 // Creates a hybrid grid of the points with voxels being 'voxel_size'
-// big.  'range_data_inserter' options are used to configure the range
+// big. 'range_data_inserter' options are used to configure the range
 // data ray tracing through the hybrid grid.
 class HybridGridPointsProcessor : public PointsProcessor {
  public:
@@ -28,21 +28,25 @@ class HybridGridPointsProcessor : public PointsProcessor {
                                 range_data_inserter_options,
                             std::unique_ptr<FileWriter> file_writer,
                             PointsProcessor* next);
+  HybridGridPointsProcessor(const HybridGridPointsProcessor&) = delete;
+  HybridGridPointsProcessor& operator=(const HybridGridPointsProcessor&) =
+      delete;
 
   static std::unique_ptr<HybridGridPointsProcessor> FromDictionary(
       FileWriterFactory file_writer_factory,
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
-  ~HybridGridPointsProcessor() override = default;
+  ~HybridGridPointsProcessor() override {}
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
 
  private:
-  mapping_3d::RangeDataInserter range_data_inserter_;
-  std::unique_ptr<mapping_3d::HybridGrid> hybrid_grid_;
-  std::unique_ptr<FileWriter> file_writer_;
   PointsProcessor* const next_;
+
+  mapping_3d::RangeDataInserter range_data_inserter_;
+  mapping_3d::HybridGrid hybrid_grid_;
+  std::unique_ptr<FileWriter> file_writer_;
 };
 
 }  // namespace io
