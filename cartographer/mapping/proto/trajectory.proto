@@ -21,10 +21,12 @@ import "cartographer/transform/proto/transform.proto";
 option java_outer_classname = "TrajectoryOuterClass";
 
 message Trajectory {
-  // NEXT_ID: 7
+  // NEXT_ID: 9
   message Node {
     optional int64 timestamp = 1;
     // Transform from tracking to map frame.
+    optional sensor.proto.RangeData = 7;//2D Range data
+    optional sensor.proto.CompressedRangeData = 8;//3D Range data
     optional transform.proto.Rigid3d pose = 5;
   }
 
