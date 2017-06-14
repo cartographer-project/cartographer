@@ -45,7 +45,7 @@ void HybridGridPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
 }
 
 PointsProcessor::FlushResult HybridGridPointsProcessor::Flush() {
-  mapping_3d::proto::HybridGrid hybrid_grid_proto =
+  const mapping_3d::proto::HybridGrid hybrid_grid_proto =
       mapping_3d::ToProto(hybrid_grid_);
   string serialized;
   hybrid_grid_proto.SerializeToString(&serialized);
