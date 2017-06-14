@@ -149,8 +149,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // optimization being run at a time.
   void RunOptimization() EXCLUDES(mutex_);
 
-  // Adds extrapolated transforms, so that there are transforms for all submaps.
-  std::vector<transform::Rigid3d> ExtrapolateSubmapTransforms(
+  // Computes the local to global frame transform based on the given optimized
+  // 'submap_transforms'.
+  transform::Rigid3d ComputeLocalToGlobalTransform(
       const std::vector<std::vector<sparse_pose_graph::SubmapData>>&
           submap_transforms,
       int trajectory_id) const REQUIRES(mutex_);
