@@ -427,41 +427,32 @@ std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
   return connected_components_;
 }
 
-std::vector<transform::Rigid3d> SparsePoseGraph::GetSubmapTransforms(
-    const int trajectory_id) {
+int SparsePoseGraph::num_submaps(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   if (trajectory_id >= submap_data_.num_trajectories()) {
-    return {transform::Rigid3d::Identity()};
+    return 0;
   }
+  return submap_data_.num_indices(trajectory_id);
+}
 
-  // Submaps for which we have optimized poses.
-  std::vector<transform::Rigid3d> result;
-  for (int submap_index = 0;
-       submap_index != submap_data_.num_indices(trajectory_id);
-       ++submap_index) {
-    const mapping::SubmapId submap_id{trajectory_id, submap_index};
-    const auto& submap_data = submap_data_.at(submap_id);
-    if (static_cast<size_t>(trajectory_id) <
-            optimized_submap_transforms_.size() &&
-        result.size() < optimized_submap_transforms_.at(trajectory_id).size()) {
-      // Submaps for which we have optimized poses.
-      result.push_back(
-          transform::Embed3D(optimized_submap_transforms_.at(trajectory_id)
-                                 .at(result.size())
-                                 .pose));
-    } else {
-      // Extrapolate to the remaining submaps. Accessing 'local_pose' in Submap
-      // is okay, since the member is const.
-      result.push_back(ComputeLocalToGlobalTransform(
-                           optimized_submap_transforms_, trajectory_id) *
-                       submap_data.submap->local_pose());
-    }
+transform::Rigid3d SparsePoseGraph::GetSubmapTransform(
+    const mapping::SubmapId& submap_id) {
+  common::MutexLocker locker(&mutex_);
+  // We already have an optimized pose.
+  if (submap_id.trajectory_id <
+          static_cast<int>(optimized_submap_transforms_.size()) &&
+      submap_id.submap_index < static_cast<int>(optimized_submap_transforms_
+                                                    .at(submap_id.trajectory_id)
+                                                    .size())) {
+    return transform::Embed3D(
+        optimized_submap_transforms_.at(submap_id.trajectory_id)
+            .at(submap_id.submap_index)
+            .pose);
   }
-
-  if (result.empty()) {
-    result.push_back(transform::Rigid3d::Identity());
-  }
-  return result;
+  // We have to extrapolate.
+  return ComputeLocalToGlobalTransform(optimized_submap_transforms_,
+                                       submap_id.trajectory_id) *
+         submap_data_.at(submap_id).submap->local_pose();
 }
 
 transform::Rigid3d SparsePoseGraph::ComputeLocalToGlobalTransform(

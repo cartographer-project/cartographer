@@ -86,9 +86,12 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     }
 
     if (!single_trajectory_nodes.empty()) {
-      for (const auto& transform : GetSubmapTransforms(trajectory_id)) {
+      const int num_submaps_in_trajectory = num_submaps(trajectory_id);
+      for (int submap_index = 0; submap_index != num_submaps_in_trajectory;
+           ++submap_index) {
+        const SubmapId submap_id{static_cast<int>(trajectory_id), submap_index};
         *trajectory_proto->add_submap()->mutable_pose() =
-            transform::ToProto(transform);
+            transform::ToProto(GetSubmapTransform(submap_id));
       }
     }
   }
