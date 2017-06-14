@@ -49,8 +49,8 @@ class SparsePoseGraph {
       double rotation_weight;
     };
 
-    mapping::SubmapId submap_id;  // 'i' in the paper.
-    mapping::NodeId node_id;      // 'j' in the paper.
+    SubmapId submap_id;  // 'i' in the paper.
+    NodeId node_id;      // 'j' in the paper.
 
     // Pose of the scan 'j' relative to submap 'i'.
     Pose pose;
@@ -77,9 +77,11 @@ class SparsePoseGraph {
   // Gets the current trajectory clusters.
   virtual std::vector<std::vector<int>> GetConnectedTrajectories() = 0;
 
-  // Returns the current optimized transforms for the given 'trajectory_id'.
-  virtual std::vector<transform::Rigid3d> GetSubmapTransforms(
-      int trajectory_id) = 0;
+  // Return the number of submaps for the given 'trajectory_id'.
+  virtual int num_submaps(int trajectory_id) = 0;
+
+  // Returns the current optimized transform for the given 'submap_id'.
+  virtual transform::Rigid3d GetSubmapTransform(const SubmapId& submap_id) = 0;
 
   // Returns the transform converting data in the local map frame (i.e. the
   // continuous, non-loop-closed frame) into the global map frame (i.e. the

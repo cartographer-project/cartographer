@@ -82,7 +82,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
-  std::vector<transform::Rigid3d> GetSubmapTransforms(int trajectory_id)
+  int num_submaps(int trajectory_id) EXCLUDES(mutex_) override;
+  transform::Rigid3d GetSubmapTransform(const mapping::SubmapId& submap_id)
       EXCLUDES(mutex_) override;
   transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id)
       EXCLUDES(mutex_) override;
