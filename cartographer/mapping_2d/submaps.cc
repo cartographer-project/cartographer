@@ -108,6 +108,8 @@ Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin)
 void Submap::ToResponseProto(
     const transform::Rigid3d&,
     mapping::proto::SubmapQuery::Response* const response) const {
+  response->set_submap_version(num_range_data());
+
   Eigen::Array2i offset;
   CellLimits limits;
   probability_grid_.ComputeCroppedLimits(&offset, &limits);

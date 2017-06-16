@@ -20,12 +20,14 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
+#include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping {
@@ -37,6 +39,7 @@ namespace mapping {
 class GlobalTrajectoryBuilderInterface {
  public:
   using PoseEstimate = TrajectoryBuilder::PoseEstimate;
+  using SubmapData = TrajectoryBuilder::SubmapData;
 
   GlobalTrajectoryBuilderInterface() {}
   virtual ~GlobalTrajectoryBuilderInterface() {}
@@ -46,7 +49,8 @@ class GlobalTrajectoryBuilderInterface {
   GlobalTrajectoryBuilderInterface& operator=(
       const GlobalTrajectoryBuilderInterface&) = delete;
 
-  virtual Submaps* submaps() = 0;
+  virtual int num_submaps() = 0;
+  virtual SubmapData GetSubmapData(int submap_index) = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
   virtual void AddRangefinderData(common::Time time,

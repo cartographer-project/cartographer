@@ -28,8 +28,6 @@
 namespace cartographer {
 namespace mapping {
 
-class Submaps;
-
 struct TrajectoryNode {
   struct Data {
     common::Time time;

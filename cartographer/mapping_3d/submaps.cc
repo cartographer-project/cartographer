@@ -329,6 +329,7 @@ Submap::Submap(const float high_resolution, const float low_resolution,
 void Submap::ToResponseProto(
     const transform::Rigid3d& global_submap_pose,
     mapping::proto::SubmapQuery::Response* const response) const {
+  response->set_submap_version(num_range_data());
   // Generate an X-ray view through the 'hybrid_grid', aligned to the xy-plane
   // in the global map frame.
   const float resolution = high_resolution_hybrid_grid_.resolution();
