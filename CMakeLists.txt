@@ -89,6 +89,11 @@ configure_file(
   ${PROJECT_SOURCE_DIR}/cartographer/common/config.h.cmake
   ${PROJECT_BINARY_DIR}/cartographer/common/config.h)
 
+google_binary(cartographer_autogenerate_ground_truth
+  SRCS
+    cartographer/ground_truth/autogenerate_ground_truth_main.cc
+)
+
 google_binary(cartographer_compute_relations_metrics
   SRCS
     cartographer/ground_truth/compute_relations_metrics_main.cc
