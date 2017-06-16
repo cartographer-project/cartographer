@@ -31,6 +31,10 @@ namespace cartographer {
 namespace mapping_2d {
 namespace {
 
+// TODO (bradon-northcutt): Source these testing parameters from a common place.
+const static double kPrecision_ = 1e-6;
+
+}  // namespace
 TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
   constexpr int kNumRangeData = 10;
   auto parameter_dictionary = common::MakeDictionary(
@@ -68,6 +72,24 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
   EXPECT_EQ(correct_num_scans, all_submaps.size() - 2);
 }
 
-}  // namespace
+TEST(SubmapsTest, ToFromProto) {
+  Submap expected(MapLimits(1, Eigen::Vector2d(2, 3), CellLimits(100, 110)),
+                  Eigen::Vector2f(4, 5));
+  const auto actual = Submap(ToProto(expected));
+  EXPECT_TRUE(expected.local_pose().translation().isApprox(
+      actual.local_pose().translation(), kPrecision_));
+  EXPECT_TRUE(expected.local_pose().rotation().isApprox(
+      actual.local_pose().rotation(), kPrecision_));
+  EXPECT_EQ(expected.num_range_data(), actual.num_range_data());
+  EXPECT_EQ(expected.finished(), actual.finished());
+  EXPECT_NEAR(expected.probability_grid().limits().resolution(),
+              actual.probability_grid().limits().resolution(), kPrecision_);
+  EXPECT_TRUE(expected.probability_grid().limits().max().isApprox(
+      actual.probability_grid().limits().max(), kPrecision_));
+  EXPECT_EQ(expected.probability_grid().limits().cell_limits().num_x_cells,
+            actual.probability_grid().limits().cell_limits().num_x_cells);
+  // TODO (brandon-northcutt) Verify SubmapID submap_index and trajectory_id
+  // when serializing entire submap vectors.
+}
 }  // namespace mapping_2d
 }  // namespace cartographer

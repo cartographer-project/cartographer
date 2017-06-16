@@ -43,10 +43,11 @@ proto::SubmapsOptions CreateSubmapsOptions(
 
 class Submap : public mapping::Submap {
  public:
-  Submap(const MapLimits& limits, const Eigen::Vector2f& origin);
+  Submap(const MapLimits& limits, const Eigen::Vector2f& local_pose);
+  Submap(const mapping::proto::Submap& proto);
 
   const ProbabilityGrid& probability_grid() const { return probability_grid_; }
-  const bool finished() const { return finished_; }
+  void CropProbabilityGrid();
 
   void ToResponseProto(
       const transform::Rigid3d& global_submap_pose,
@@ -56,11 +57,9 @@ class Submap : public mapping::Submap {
   // submap must not be finished yet.
   void InsertRangeData(const sensor::RangeData& range_data,
                        const RangeDataInserter& range_data_inserter);
-  void Finish();
 
  private:
   ProbabilityGrid probability_grid_;
-  bool finished_ = false;
 };
 
 // Except during initialization when only a single submap exists, there are
@@ -97,6 +96,8 @@ class ActiveSubmaps {
   std::vector<std::shared_ptr<Submap>> submaps_;
   RangeDataInserter range_data_inserter_;
 };
+
+mapping::proto::Submap ToProto(const Submap& submap);
 
 }  // namespace mapping_2d
 }  // namespace cartographer

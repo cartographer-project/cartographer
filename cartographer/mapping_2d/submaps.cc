@@ -64,10 +64,24 @@ proto::SubmapsOptions CreateSubmapsOptions(
   return options;
 }
 
-Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin)
+Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& local_pose)
     : mapping::Submap(transform::Rigid3d::Translation(
-          Eigen::Vector3d(origin.x(), origin.y(), 0.))),
+          Eigen::Vector3d(local_pose.x(), local_pose.y(), 0.))),
       probability_grid_(limits) {}
+
+Submap::Submap(const mapping::proto::Submap& proto)
+    : mapping::Submap(transform::ToRigid3(proto.local_pose()),
+                      proto.num_range_data(), proto.finished()),
+      probability_grid_(ProbabilityGrid(proto.probability_grid())) {}
+
+mapping::proto::Submap ToProto(const Submap& submap) {
+  mapping::proto::Submap proto;
+  *proto.mutable_local_pose() = transform::ToProto(submap.local_pose());
+  proto.set_num_range_data(submap.num_range_data());
+  proto.set_finished(submap.finished());
+  *proto.mutable_probability_grid() = submap.probability_grid().ToProto();
+  return proto;
+}
 
 void Submap::ToResponseProto(
     const transform::Rigid3d&,
@@ -117,15 +131,14 @@ void Submap::ToResponseProto(
 
 void Submap::InsertRangeData(const sensor::RangeData& range_data,
                              const RangeDataInserter& range_data_inserter) {
-  CHECK(!finished_);
+  CHECK(!finished());
   range_data_inserter.Insert(range_data, &probability_grid_);
-  ++num_range_data_;
+  IncrementRangeData();
 }
 
-void Submap::Finish() {
-  CHECK(!finished_);
+void Submap::CropProbabilityGrid() {
+  CHECK(!finished());
   probability_grid_ = ComputeCroppedProbabilityGrid(probability_grid_);
-  finished_ = true;
 }
 
 ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
@@ -153,6 +166,7 @@ int ActiveSubmaps::matching_index() const { return matching_submap_index_; }
 
 void ActiveSubmaps::FinishSubmap() {
   Submap* submap = submaps_.front().get();
+  submap->CropProbabilityGrid();
   submap->Finish();
   ++matching_submap_index_;
   submaps_.erase(submaps_.begin());
