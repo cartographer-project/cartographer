@@ -178,5 +178,17 @@ proto::CompressedPointCloud CompressedPointCloud::ToProto() const {
   return result;
 }
 
+// Proto to CompressedPointCloud
+CompressedPointCloud ToCompressedPointCloud( const proto::CompressedPointCloud&
+proto) {
+  CompressedPointCloud compressed_point_colud;
+  const size_t num_points = proto.point_data_size();
+  std::vector<int32> point_data;
+  for (int i = 0; i != num_points; ++i) {
+    point_data.emplace_back(proto.point_data(i));
+  }
+  return CompressedPointCloud(point_data, num_points);
+}
+
 }  // namespace sensor
 }  // namespace cartographer

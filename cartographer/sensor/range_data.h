@@ -55,6 +55,10 @@ struct CompressedRangeData {
   CompressedPointCloud misses;
 };
 
+//To and From Proto
+proto::CompressedRangeData ToProto(const CompressedRangeData& compressed_range_data);
+CompressedRangeData FromProto(const proto::CompressedRangeData& proto);
+
 CompressedRangeData Compress(const RangeData& range_data);
 
 RangeData Decompress(const CompressedRangeData& compressed_range_Data);

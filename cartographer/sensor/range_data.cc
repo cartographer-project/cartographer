@@ -25,19 +25,35 @@ namespace sensor {
 proto::RangeData ToProto(const RangeData& range_data) {
   proto::RangeData proto;
   *proto.mutable_origin() = transform::ToProto(range_data.origin);
-  *proto.mutable_point_cloud() = ToProto(range_data.returns);
-  *proto.mutable_missing_echo_point_cloud() = ToProto(range_data.misses);
+  *proto.mutable_returns() = ToProto(range_data.returns);
+  *proto.mutable_misses() = ToProto(range_data.misses);
   return proto;
 }
 
 RangeData FromProto(const proto::RangeData& proto) {
   auto range_data = RangeData{
-      transform::ToEigen(proto.origin()), ToPointCloud(proto.point_cloud()),
-      ToPointCloud(proto.missing_echo_point_cloud()),
+      transform::ToEigen(proto.origin()), ToPointCloud(proto.returns()),
+      ToPointCloud(proto.misses()),
   };
   return range_data;
 }
 
+proto::CompressedRangeData ToProto(const CompressedRangeData& compressed_range_data) {
+  proto::CompressedRangeData proto;
+  *proto.mutable_origin() = transform::ToProto(compressed_range_data.origin);
+  *proto.mutable_returns() = compressed_range_data.returns.ToProto();
+  *proto.mutable_misses() = compressed_range_data.misses.ToProto();
+  return proto;
+}
+
+CompressedRangeData FromProto(const proto::CompressedRangeData& proto) {
+  auto compressed_range_data = CompressedRangeData{
+    transform::ToEigen(proto.origin()),
+    ToCompressedPointCloud(proto.returns()),
+    ToCompressedPointCloud(proto.misses()),
+  };
+  return compressed_range_data;
+}
 RangeData TransformRangeData(const RangeData& range_data,
                              const transform::Rigid3f& transform) {
   return RangeData{
