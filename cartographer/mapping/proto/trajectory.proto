@@ -17,17 +17,14 @@ syntax = "proto2";
 package cartographer.mapping.proto;
 
 import "cartographer/transform/proto/transform.proto";
-import "cartographer/sensor/proto/sensor.proto";
 
 option java_outer_classname = "TrajectoryOuterClass";
 
 message Trajectory {
-  // NEXT_ID: 9
+  // NEXT_ID: 7
   message Node {
     optional int64 timestamp = 1;
     // Transform from tracking to map frame.
-    optional sensor.proto.RangeData range_data = 7;//2D Range data
-    optional sensor.proto.CompressedRangeData compressed_range_data = 8;//3D
     optional transform.proto.Rigid3d pose = 5;
   }
 
