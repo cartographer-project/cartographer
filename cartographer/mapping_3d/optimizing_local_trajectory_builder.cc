@@ -236,7 +236,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   }
 
   ceres::Problem problem;
-  const Submap* const matching_submap =
+  std::shared_ptr<const Submap> matching_submap =
       submaps_->Get(submaps_->matching_index());
   // We transform the states in 'batches_' in place to be in the submap frame as
   // expected by the OccupiedSpaceCostFunctor. This is reverted after solving
@@ -409,9 +409,7 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
   }
-  const Submap* const matching_submap =
-      submaps_->Get(submaps_->matching_index());
-  std::vector<const Submap*> insertion_submaps;
+  std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   for (int insertion_index : submaps_->insertion_indices()) {
     insertion_submaps.push_back(submaps_->Get(insertion_index));
   }
@@ -425,7 +423,7 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
 
   return std::unique_ptr<InsertionResult>(
       new InsertionResult{time, range_data_in_tracking, pose_observation,
-                          matching_submap, insertion_submaps});
+                          std::move(insertion_submaps)});
 }
 
 OptimizingLocalTrajectoryBuilder::State
