@@ -176,8 +176,7 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
     return nullptr;
   }
 
-  const Submap* const matching_submap = submaps_.Get(submaps_.matching_index());
-  std::vector<const Submap*> insertion_submaps;
+  std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   for (int insertion_index : submaps_.insertion_indices()) {
     insertion_submaps.push_back(submaps_.Get(insertion_index));
   }
@@ -186,7 +185,7 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
                          transform::Embed3D(pose_estimate_2d.cast<float>())));
 
   return common::make_unique<InsertionResult>(InsertionResult{
-      time, matching_submap, insertion_submaps, tracking_to_tracking_2d,
+      time, std::move(insertion_submaps), tracking_to_tracking_2d,
       range_data_in_tracking_2d, pose_estimate_2d});
 }
 

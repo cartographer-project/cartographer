@@ -54,7 +54,7 @@ class TrajectoryBuilder {
   };
 
   struct SubmapData {
-    const Submap* submap;
+    std::shared_ptr<const Submap> submap;
     transform::Rigid3d pose;
   };
 

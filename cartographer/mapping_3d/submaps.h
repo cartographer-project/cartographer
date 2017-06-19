@@ -92,7 +92,7 @@ class Submaps {
   Submaps(const Submaps&) = delete;
   Submaps& operator=(const Submaps&) = delete;
 
-  const Submap* Get(int index) const;
+  std::shared_ptr<const Submap> Get(int index) const;
   int size() const;
 
   // Returns the index of the newest initialized Submap which can be
@@ -113,10 +113,7 @@ class Submaps {
   void AddSubmap(const transform::Rigid3d& local_pose);
 
   const proto::SubmapsOptions options_;
-
-  // 'submaps_' contains pointers, so that resizing the vector does not
-  // invalidate handed out Submap* pointers.
-  std::vector<std::unique_ptr<Submap>> submaps_;
+  std::vector<std::shared_ptr<Submap>> submaps_;
   RangeDataInserter range_data_inserter_;
 };
 

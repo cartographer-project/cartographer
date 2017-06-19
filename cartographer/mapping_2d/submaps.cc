@@ -166,16 +166,15 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
     range_data_inserter_.Insert(range_data, &submap->probability_grid_);
     ++submap->num_range_data_;
   }
-  const Submap* const last_submap = Get(size() - 1);
-  if (last_submap->num_range_data_ == options_.num_range_data()) {
+  if (submaps_.back()->num_range_data_ == options_.num_range_data()) {
     AddSubmap(range_data.origin.head<2>());
   }
 }
 
-const Submap* Submaps::Get(int index) const {
+std::shared_ptr<const Submap> Submaps::Get(int index) const {
   CHECK_GE(index, 0);
   CHECK_LT(index, size());
-  return submaps_[index].get();
+  return submaps_[index];
 }
 
 int Submaps::size() const { return submaps_.size(); }

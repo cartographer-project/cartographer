@@ -21,6 +21,7 @@
 #include <functional>
 #include <limits>
 #include <map>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -62,16 +63,14 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds a new 'range_data_in_tracking' observation at 'time', and a 'pose'
   // that will later be optimized. The 'pose' was determined by scan matching
-  // against the 'matching_submap' and the scan was inserted into the
-  // 'insertion_submaps'. If not 'nullptr', 'finished_submap' is a freshly
-  // finished submap. It is also contained in 'insertion_submaps' for the last
-  // time.
-  void AddScan(common::Time time,
-               const sensor::RangeData& range_data_in_tracking,
-               const transform::Rigid3d& pose, int trajectory_id,
-               const Submap* matching_submap,
-               const std::vector<const Submap*>& insertion_submaps,
-               const Submap* finished_submap) EXCLUDES(mutex_);
+  // against 'insertion_submaps.front()' and the scan was inserted into the
+  // 'insertion_submaps'. If 'insertion_submaps.front().finished()' is 'true',
+  // this submap was inserted into for the last time.
+  void AddScan(
+      common::Time time, const sensor::RangeData& range_data_in_tracking,
+      const transform::Rigid3d& pose, int trajectory_id,
+      const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
+      EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
   void AddImuData(int trajectory_id, common::Time time,
@@ -98,7 +97,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Likewise, all new scans are matched against submaps which are finished.
   enum class SubmapState { kActive, kFinished, kTrimmed };
   struct SubmapData {
-    const Submap* submap = nullptr;
+    std::shared_ptr<const Submap> submap;
 
     // IDs of the scans that were inserted into this map together with
     // constraints for them. They are not to be matched again when this submap
@@ -114,15 +113,15 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
   std::vector<mapping::SubmapId> GrowSubmapTransformsAsNeeded(
-      int trajectory_id, const std::vector<const Submap*>& insertion_submaps)
+      int trajectory_id,
+      const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       REQUIRES(mutex_);
 
   // Adds constraints for a scan, and starts scan matching in the background.
-  void ComputeConstraintsForScan(int trajectory_id,
-                                 const Submap* matching_submap,
-                                 std::vector<const Submap*> insertion_submaps,
-                                 const Submap* finished_submap,
-                                 const transform::Rigid3d& pose)
+  void ComputeConstraintsForScan(
+      int trajectory_id,
+      std::vector<std::shared_ptr<const Submap>> insertion_submaps,
+      bool newly_finished_submap, const transform::Rigid3d& pose)
       REQUIRES(mutex_);
 
   // Computes constraints for a scan and submap pair.

@@ -37,8 +37,7 @@ class LocalTrajectoryBuilderInterface {
     common::Time time;
     sensor::RangeData range_data_in_tracking;
     transform::Rigid3d pose_observation;
-    const Submap* matching_submap;
-    std::vector<const Submap*> insertion_submaps;
+    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
 
   virtual ~LocalTrajectoryBuilderInterface() {}

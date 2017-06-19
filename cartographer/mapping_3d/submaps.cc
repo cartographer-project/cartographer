@@ -371,10 +371,10 @@ Submaps::Submaps(const proto::SubmapsOptions& options)
   AddSubmap(transform::Rigid3d::Identity());
 }
 
-const Submap* Submaps::Get(int index) const {
+std::shared_ptr<const Submap> Submaps::Get(int index) const {
   CHECK_GE(index, 0);
   CHECK_LT(index, size());
-  return submaps_[index].get();
+  return submaps_[index];
 }
 
 int Submaps::size() const { return submaps_.size(); }
@@ -407,8 +407,7 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data,
                                 &submap->low_resolution_hybrid_grid_);
     ++submap->num_range_data_;
   }
-  const Submap* const last_submap = Get(size() - 1);
-  if (last_submap->num_range_data_ == options_.num_range_data()) {
+  if (submaps_.back()->num_range_data_ == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
                                  gravity_alignment));
   }

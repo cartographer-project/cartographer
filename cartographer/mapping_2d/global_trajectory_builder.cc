@@ -48,16 +48,11 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
   if (insertion_result == nullptr) {
     return;
   }
-  const Submap* const finished_submap =
-      insertion_result->insertion_submaps.front()->finished()
-          ? insertion_result->insertion_submaps.front()
-          : nullptr;
   sparse_pose_graph_->AddScan(
       insertion_result->time, insertion_result->tracking_to_tracking_2d,
       insertion_result->range_data_in_tracking_2d,
       insertion_result->pose_estimate_2d, trajectory_id_,
-      insertion_result->matching_submap, insertion_result->insertion_submaps,
-      finished_submap);
+      std::move(insertion_result->insertion_submaps));
 }
 
 void GlobalTrajectoryBuilder::AddImuData(
