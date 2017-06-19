@@ -46,11 +46,13 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
       local_trajectory_builder_.AddHorizontalRangeData(
           time, sensor::RangeData{origin, ranges, {}});
   if (insertion_result != nullptr) {
+    // NOCOM(#hrapp): do not pass nullptr
     sparse_pose_graph_->AddScan(
         insertion_result->time, insertion_result->tracking_to_tracking_2d,
         insertion_result->range_data_in_tracking_2d,
         insertion_result->pose_estimate_2d, trajectory_id_,
-        insertion_result->matching_submap, insertion_result->insertion_submaps);
+        insertion_result->matching_submap, insertion_result->insertion_submaps,
+        nullptr);
   }
 }
 

@@ -68,8 +68,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                const sensor::RangeData& range_data_in_tracking,
                const transform::Rigid3d& pose, int trajectory_id,
                const Submap* matching_submap,
-               const std::vector<const Submap*>& insertion_submaps)
-      EXCLUDES(mutex_);
+               const std::vector<const Submap*>& insertion_submaps,
+               const Submap* finished_submap) EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
   void AddImuData(int trajectory_id, common::Time time,

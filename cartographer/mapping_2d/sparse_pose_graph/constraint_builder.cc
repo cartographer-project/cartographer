@@ -38,7 +38,7 @@ namespace cartographer {
 namespace mapping_2d {
 namespace sparse_pose_graph {
 
-transform::Rigid2d ComputeSubmapPose(const mapping::Submap& submap) {
+transform::Rigid2d ComputeSubmapPose(const Submap& submap) {
   return transform::Project2D(submap.local_pose());
 }
 
@@ -60,7 +60,7 @@ ConstraintBuilder::~ConstraintBuilder() {
 }
 
 void ConstraintBuilder::MaybeAddConstraint(
-    const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
+    const mapping::SubmapId& submap_id, const Submap* const submap,
     const mapping::NodeId& node_id, const sensor::PointCloud* const point_cloud,
     const transform::Rigid2d& initial_relative_pose) {
   if (initial_relative_pose.translation().norm() >
@@ -85,7 +85,7 @@ void ConstraintBuilder::MaybeAddConstraint(
 }
 
 void ConstraintBuilder::MaybeAddGlobalConstraint(
-    const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
+    const mapping::SubmapId& submap_id, const Submap* const submap,
     const mapping::NodeId& node_id, const sensor::PointCloud* const point_cloud,
     mapping::TrajectoryConnectivity* const trajectory_connectivity) {
   common::MutexLocker locker(&mutex_);
@@ -159,7 +159,7 @@ ConstraintBuilder::GetSubmapScanMatcher(const mapping::SubmapId& submap_id) {
 }
 
 void ConstraintBuilder::ComputeConstraint(
-    const mapping::SubmapId& submap_id, const mapping::Submap* const submap,
+    const mapping::SubmapId& submap_id, const Submap* const submap,
     const mapping::NodeId& node_id, bool match_full_submap,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
     const sensor::PointCloud* const point_cloud,

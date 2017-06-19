@@ -60,10 +60,12 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
     return;
   }
 
-  sparse_pose_graph_->AddScan(
-      insertion_result->time, insertion_result->range_data_in_tracking,
-      insertion_result->pose_observation, trajectory_id_,
-      insertion_result->matching_submap, insertion_result->insertion_submaps);
+  // NOCOM(#hrapp): do not pass nullptr
+  sparse_pose_graph_->AddScan(insertion_result->time,
+                              insertion_result->range_data_in_tracking,
+                              insertion_result->pose_observation,
+                              trajectory_id_, insertion_result->matching_submap,
+                              insertion_result->insertion_submaps, nullptr);
 }
 
 void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
