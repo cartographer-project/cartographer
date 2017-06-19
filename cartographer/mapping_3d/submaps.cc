@@ -379,6 +379,20 @@ const Submap* Submaps::Get(int index) const {
 
 int Submaps::size() const { return submaps_.size(); }
 
+int Submaps::matching_index() const {
+  if (size() > 1) {
+    return size() - 2;
+  }
+  return size() - 1;
+}
+
+std::vector<int> Submaps::insertion_indices() const {
+  if (size() > 1) {
+    return {size() - 2, size() - 1};
+  }
+  return {size() - 1};
+}
+
 void Submaps::InsertRangeData(const sensor::RangeData& range_data,
                               const Eigen::Quaterniond& gravity_alignment) {
   for (const int index : insertion_indices()) {
