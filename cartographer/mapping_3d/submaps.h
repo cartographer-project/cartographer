@@ -113,9 +113,6 @@ class Submaps {
   void AddSubmap(const transform::Rigid3d& local_pose);
 
   const proto::SubmapsOptions options_;
-
-  // 'submaps_' contains pointers, so that resizing the vector does not
-  // invalidate handed out Submap* pointers.
   std::vector<std::shared_ptr<Submap>> submaps_;
   RangeDataInserter range_data_inserter_;
 };

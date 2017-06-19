@@ -63,8 +63,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds a new 'range_data_in_tracking' observation at 'time', and a 'pose'
   // that will later be optimized. The 'pose' was determined by scan matching
-  // against the 'matching_submap' and the scan was inserted into the
-  // 'insertion_submaps'.  If 'insertion_submaps.front().finished()' is 'true',
+  // against 'insertion_submaps.front()' and the scan was inserted into the
+  // 'insertion_submaps'. If 'insertion_submaps.front().finished()' is 'true',
   // this submap was inserted into for the last time.
   void AddScan(
       common::Time time, const sensor::RangeData& range_data_in_tracking,
