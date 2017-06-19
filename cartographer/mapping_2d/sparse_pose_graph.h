@@ -112,19 +112,15 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Handles a new work item.
   void AddWorkItem(std::function<void()> work_item) REQUIRES(mutex_);
 
-  mapping::SubmapId GetSubmapId(const Submap* submap) const REQUIRES(mutex_) {
-    const auto iterator = submap_ids_.find(submap);
-    CHECK(iterator != submap_ids_.end());
-    return iterator->second;
-  }
-
   // Grows the optimization problem to have an entry for every element of
-  // 'insertion_submaps'.
-  void GrowSubmapTransformsAsNeeded(
-      const std::vector<const Submap*>& insertion_submaps) REQUIRES(mutex_);
+  // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
+  std::vector<mapping::SubmapId> GrowSubmapTransformsAsNeeded(
+      int trajectory_id, const std::vector<const Submap*>& insertion_submaps)
+      REQUIRES(mutex_);
 
   // Adds constraints for a scan, and starts scan matching in the background.
-  void ComputeConstraintsForScan(const Submap* matching_submap,
+  void ComputeConstraintsForScan(int trajectory_id,
+                                 const Submap* matching_submap,
                                  std::vector<const Submap*> insertion_submaps,
                                  const Submap* finished_submap,
                                  const transform::Rigid2d& pose)
@@ -135,7 +131,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                          const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
   // Adds constraints for older scans whenever a new submap is finished.
-  void ComputeConstraintsForOldScans(const Submap* submap) REQUIRES(mutex_);
+  void ComputeConstraintsForOldScans(const mapping::SubmapId& submap_id)
+      REQUIRES(mutex_);
 
   // Registers the callback to run the optimization once all constraints have
   // been computed, that will also do all work that queue up in 'scan_queue_'.
@@ -184,7 +181,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
-  std::map<const Submap*, mapping::SubmapId> submap_ids_ GUARDED_BY(mutex_);
   mapping::NestedVectorsById<SubmapData, mapping::SubmapId> submap_data_
       GUARDED_BY(mutex_);
 
