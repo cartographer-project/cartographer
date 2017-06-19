@@ -180,6 +180,20 @@ const Submap* Submaps::Get(int index) const {
 
 int Submaps::size() const { return submaps_.size(); }
 
+int Submaps::matching_index() const {
+  if (size() > 1) {
+    return size() - 2;
+  }
+  return size() - 1;
+}
+
+std::vector<int> Submaps::insertion_indices() const {
+  if (size() > 1) {
+    return {size() - 2, size() - 1};
+  }
+  return {size() - 1};
+}
+
 void Submaps::FinishSubmap(int index) {
   // Crop the finished Submap before inserting a new Submap to reduce peak
   // memory usage a bit.

@@ -80,42 +80,6 @@ class Submap {
   int num_range_data_ = 0;
 };
 
-// Submaps is a sequence of maps to which scans are matched and into which scans
-// are inserted.
-//
-// Except during initialization when only a single submap exists, there are
-// always two submaps into which scans are inserted: an old submap that is used
-// for matching, and a new one, which will be used for matching next, that is
-// being initialized.
-//
-// Once a certain number of scans have been inserted, the new submap is
-// considered initialized: the old submap is no longer changed, the "new" submap
-// is now the "old" submap and is used for scan-to-map matching. Moreover,
-// a "new" submap gets inserted.
-class Submaps {
- public:
-  Submaps();
-  virtual ~Submaps();
-
-  Submaps(const Submaps&) = delete;
-  Submaps& operator=(const Submaps&) = delete;
-
-  // Returns the index of the newest initialized Submap which can be
-  // used for scan-to-map matching.
-  int matching_index() const;
-
-  // Returns the indices of the Submap into which point clouds will
-  // be inserted.
-  std::vector<int> insertion_indices() const;
-
-  // Returns the Submap with the given 'index'. The same 'index' will always
-  // return the same pointer, so that Submaps can be identified by it.
-  virtual const Submap* Get(int index) const = 0;
-
-  // Returns the number of Submaps.
-  virtual int size() const = 0;
-};
-
 }  // namespace mapping
 }  // namespace cartographer
 

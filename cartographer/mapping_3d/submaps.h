@@ -73,16 +73,35 @@ class Submap : public mapping::Submap {
   bool finished_ = false;
 };
 
-// A container of Submaps.
-class Submaps : public mapping::Submaps {
+// Submaps is a sequence of maps to which scans are matched and into which scans
+// are inserted.
+//
+// Except during initialization when only a single submap exists, there are
+// always two submaps into which scans are inserted: an old submap that is used
+// for matching, and a new one, which will be used for matching next, that is
+// being initialized.
+//
+// Once a certain number of scans have been inserted, the new submap is
+// considered initialized: the old submap is no longer changed, the "new" submap
+// is now the "old" submap and is used for scan-to-map matching. Moreover,
+// a "new" submap gets inserted.
+class Submaps {
  public:
   explicit Submaps(const proto::SubmapsOptions& options);
 
   Submaps(const Submaps&) = delete;
   Submaps& operator=(const Submaps&) = delete;
 
-  const Submap* Get(int index) const override;
-  int size() const override;
+  const Submap* Get(int index) const;
+  int size() const;
+
+  // Returns the index of the newest initialized Submap which can be
+  // used for scan-to-map matching.
+  int matching_index() const;
+
+  // Returns the indices of the Submap into which point clouds will
+  // be inserted.
+  std::vector<int> insertion_indices() const;
 
   // Inserts 'range_data' into the Submap collection. 'gravity_alignment' is
   // used for the orientation of new submaps so that the z axis approximately
