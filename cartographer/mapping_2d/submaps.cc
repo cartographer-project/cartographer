@@ -162,7 +162,7 @@ Submaps::Submaps(const proto::SubmapsOptions& options)
 void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
   for (const int index : insertion_indices()) {
     Submap* submap = submaps_[index].get();
-    CHECK(submap->finished_probability_grid_ == nullptr);
+    CHECK(!submap->finished_);
     range_data_inserter_.Insert(range_data, &submap->probability_grid_);
     ++submap->num_range_data_;
   }
@@ -184,10 +184,10 @@ void Submaps::FinishSubmap(int index) {
   // Crop the finished Submap before inserting a new Submap to reduce peak
   // memory usage a bit.
   Submap* submap = submaps_[index].get();
-  CHECK(submap->finished_probability_grid_ == nullptr);
+  CHECK(!submap->finished_);
   submap->probability_grid_ =
       ComputeCroppedProbabilityGrid(submap->probability_grid_);
-  submap->finished_probability_grid_ = &submap->probability_grid_;
+  submap->finished_ = true;
   if (options_.output_debug_images()) {
     // Output the Submap that won't be changed from now on.
     WriteDebugImage("submap" + std::to_string(index) + ".webp",

@@ -55,15 +55,19 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
     const sensor::PointCloud& ranges) {
   auto insertion_result =
       local_trajectory_builder_->AddRangefinderData(time, origin, ranges);
-
   if (insertion_result == nullptr) {
     return;
   }
 
+  const Submap* const finished_submap =
+      insertion_result->insertion_submaps.front()->finished()
+          ? insertion_result->insertion_submaps.front()
+          : nullptr;
   sparse_pose_graph_->AddScan(
       insertion_result->time, insertion_result->range_data_in_tracking,
       insertion_result->pose_observation, trajectory_id_,
-      insertion_result->matching_submap, insertion_result->insertion_submaps);
+      insertion_result->matching_submap, insertion_result->insertion_submaps,
+      finished_submap);
 }
 
 void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,

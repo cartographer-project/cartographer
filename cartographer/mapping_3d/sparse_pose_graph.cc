@@ -90,7 +90,8 @@ void SparsePoseGraph::AddScan(
     common::Time time, const sensor::RangeData& range_data_in_tracking,
     const transform::Rigid3d& pose, const int trajectory_id,
     const Submap* const matching_submap,
-    const std::vector<const Submap*>& insertion_submaps) {
+    const std::vector<const Submap*>& insertion_submaps,
+    const Submap* const finished_submap) {
   const transform::Rigid3d optimized_pose(
       GetLocalToGlobalTransform(trajectory_id) * pose);
 
@@ -113,9 +114,6 @@ void SparsePoseGraph::AddScan(
     submap_ids_.emplace(insertion_submaps.back(), submap_id);
     submap_data_.at(submap_id).submap = insertion_submaps.back();
   }
-  const Submap* const finished_submap = insertion_submaps.front()->finished()
-                                            ? insertion_submaps.front()
-                                            : nullptr;
 
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[trajectory_id]) {

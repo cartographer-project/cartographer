@@ -63,13 +63,15 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Adds a new 'range_data_in_tracking' observation at 'time', and a 'pose'
   // that will later be optimized. The 'pose' was determined by scan matching
   // against the 'matching_submap' and the scan was inserted into the
-  // 'insertion_submaps'.
+  // 'insertion_submaps'. If not 'nullptr', 'finished_submap' is a freshly
+  // finished submap. It is also contained in 'insertion_submaps' for the last
+  // time.
   void AddScan(common::Time time,
                const sensor::RangeData& range_data_in_tracking,
                const transform::Rigid3d& pose, int trajectory_id,
                const Submap* matching_submap,
-               const std::vector<const Submap*>& insertion_submaps)
-      EXCLUDES(mutex_);
+               const std::vector<const Submap*>& insertion_submaps,
+               const Submap* finished_submap) EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
   void AddImuData(int trajectory_id, common::Time time,

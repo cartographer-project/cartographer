@@ -66,13 +66,15 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // that will later be optimized. The 'tracking_to_pose' is remembered so
   // that the optimized pose can be embedded into 3D. The 'pose' was determined
   // by scan matching against the 'matching_submap' and the scan was inserted
-  // into the 'insertion_submaps'.
+  // into the 'insertion_submaps'. If not 'nullptr', 'finished_submap' is a
+  // freshly finished submap. It is also contained in 'insertion_submaps' for
+  // the last time.
   void AddScan(common::Time time, const transform::Rigid3d& tracking_to_pose,
                const sensor::RangeData& range_data_in_pose,
                const transform::Rigid2d& pose, int trajectory_id,
-               const mapping::Submap* matching_submap,
-               const std::vector<const mapping::Submap*>& insertion_submaps)
-      EXCLUDES(mutex_);
+               const Submap* matching_submap,
+               const std::vector<const Submap*>& insertion_submaps,
+               const Submap* finished_submap) EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
   void AddImuData(int trajectory_id, common::Time time,
@@ -97,7 +99,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Likewise, all new scans are matched against submaps which are finished.
   enum class SubmapState { kActive, kFinished, kTrimmed };
   struct SubmapData {
-    const mapping::Submap* submap = nullptr;
+    const Submap* submap = nullptr;
 
     // IDs of the scans that were inserted into this map together with
     // constraints for them. They are not to be matched again when this submap
@@ -110,8 +112,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Handles a new work item.
   void AddWorkItem(std::function<void()> work_item) REQUIRES(mutex_);
 
-  mapping::SubmapId GetSubmapId(const mapping::Submap* submap) const
-      REQUIRES(mutex_) {
+  mapping::SubmapId GetSubmapId(const Submap* submap) const REQUIRES(mutex_) {
     const auto iterator = submap_ids_.find(submap);
     CHECK(iterator != submap_ids_.end());
     return iterator->second;
@@ -120,14 +121,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'.
   void GrowSubmapTransformsAsNeeded(
-      const std::vector<const mapping::Submap*>& insertion_submaps)
-      REQUIRES(mutex_);
+      const std::vector<const Submap*>& insertion_submaps) REQUIRES(mutex_);
 
   // Adds constraints for a scan, and starts scan matching in the background.
-  void ComputeConstraintsForScan(
-      const mapping::Submap* matching_submap,
-      std::vector<const mapping::Submap*> insertion_submaps,
-      const mapping::Submap* finished_submap, const transform::Rigid2d& pose)
+  void ComputeConstraintsForScan(const Submap* matching_submap,
+                                 std::vector<const Submap*> insertion_submaps,
+                                 const Submap* finished_submap,
+                                 const transform::Rigid2d& pose)
       REQUIRES(mutex_);
 
   // Computes constraints for a scan and submap pair.
@@ -135,8 +135,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                          const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
   // Adds constraints for older scans whenever a new submap is finished.
-  void ComputeConstraintsForOldScans(const mapping::Submap* submap)
-      REQUIRES(mutex_);
+  void ComputeConstraintsForOldScans(const Submap* submap) REQUIRES(mutex_);
 
   // Registers the callback to run the optimization once all constraints have
   // been computed, that will also do all work that queue up in 'scan_queue_'.
@@ -185,8 +184,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
-  std::map<const mapping::Submap*, mapping::SubmapId> submap_ids_
-      GUARDED_BY(mutex_);
+  std::map<const Submap*, mapping::SubmapId> submap_ids_ GUARDED_BY(mutex_);
   mapping::NestedVectorsById<SubmapData, mapping::SubmapId> submap_data_
       GUARDED_BY(mutex_);
 

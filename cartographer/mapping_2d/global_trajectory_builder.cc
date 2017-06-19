@@ -45,13 +45,19 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
   std::unique_ptr<LocalTrajectoryBuilder::InsertionResult> insertion_result =
       local_trajectory_builder_.AddHorizontalRangeData(
           time, sensor::RangeData{origin, ranges, {}});
-  if (insertion_result != nullptr) {
-    sparse_pose_graph_->AddScan(
-        insertion_result->time, insertion_result->tracking_to_tracking_2d,
-        insertion_result->range_data_in_tracking_2d,
-        insertion_result->pose_estimate_2d, trajectory_id_,
-        insertion_result->matching_submap, insertion_result->insertion_submaps);
+  if (insertion_result == nullptr) {
+    return;
   }
+  const Submap* const finished_submap =
+      insertion_result->insertion_submaps.front()->finished()
+          ? insertion_result->insertion_submaps.front()
+          : nullptr;
+  sparse_pose_graph_->AddScan(
+      insertion_result->time, insertion_result->tracking_to_tracking_2d,
+      insertion_result->range_data_in_tracking_2d,
+      insertion_result->pose_estimate_2d, trajectory_id_,
+      insertion_result->matching_submap, insertion_result->insertion_submaps,
+      finished_submap);
 }
 
 void GlobalTrajectoryBuilder::AddImuData(
