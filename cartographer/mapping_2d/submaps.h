@@ -46,6 +46,7 @@ class Submap : public mapping::Submap {
   Submap(const MapLimits& limits, const Eigen::Vector2f& origin);
 
   const ProbabilityGrid& probability_grid() const { return probability_grid_; }
+  const bool finished() const { return finished_; }
 
   void ToResponseProto(
       const transform::Rigid3d& global_submap_pose,
@@ -56,6 +57,7 @@ class Submap : public mapping::Submap {
   friend class Submaps;
 
   ProbabilityGrid probability_grid_;
+  bool finished_ = false;
 };
 
 // A container of Submaps.

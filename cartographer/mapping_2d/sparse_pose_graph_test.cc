@@ -161,9 +161,14 @@ class SparsePoseGraphTest : public ::testing::Test {
     constexpr int kTrajectoryId = 0;
     submaps_->InsertRangeData(TransformRangeData(
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
-    sparse_pose_graph_->AddScan(
-        common::FromUniversal(0), transform::Rigid3d::Identity(), range_data,
-        pose_estimate, kTrajectoryId, matching_submap, insertion_submaps);
+
+    const Submap* const finished_submap = insertion_submaps.front()->finished()
+                                              ? insertion_submaps.front()
+                                              : nullptr;
+    sparse_pose_graph_->AddScan(common::FromUniversal(0),
+                                transform::Rigid3d::Identity(), range_data,
+                                pose_estimate, kTrajectoryId, matching_submap,
+                                insertion_submaps, finished_submap);
   }
 
   void MoveRelative(const transform::Rigid2d& movement) {
