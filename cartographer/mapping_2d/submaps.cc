@@ -153,7 +153,6 @@ void Submap::ToResponseProto(
 
 ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
     : options_(options),
-      matching_submap_index_(0),
       range_data_inserter_(options.range_data_inserter_options()) {
   // We always want to have at least one likelihood field which we can return,
   // and will create it at the origin in absence of a better choice.
