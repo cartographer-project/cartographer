@@ -34,9 +34,23 @@ int GlobalTrajectoryBuilder::num_submaps() {
 
 GlobalTrajectoryBuilder::SubmapData GlobalTrajectoryBuilder::GetSubmapData(
     const int submap_index) {
-  return {local_trajectory_builder_.submaps()->Get(submap_index),
-          sparse_pose_graph_->GetSubmapTransform(
-              mapping::SubmapId{trajectory_id_, submap_index})};
+  auto* active_submaps = local_trajectory_builder_.active_submaps();
+  std::shared_ptr<const mapping::Submap> submap;
+  if (submap_index < active_submaps->matching_index()) {
+    // The submap is no longer known to the local trajectory builder, let's ask
+    // the sparse pose graph.
+    submap = sparse_pose_graph_->GetSubmap(
+        mapping::SubmapId{trajectory_id_, submap_index});
+  } else {
+    const int active_submap_index =
+        submap_index - active_submaps->matching_index();
+    CHECK_LE(0, active_submap_index);
+    CHECK_LT(active_submap_index, 2);
+    submap = active_submaps->submaps().at(active_submap_index);
+  }
+  CHECK(submap != nullptr);
+  return {submap, sparse_pose_graph_->GetSubmapTransform(
+                      mapping::SubmapId{trajectory_id_, submap_index})};
 }
 
 void GlobalTrajectoryBuilder::AddRangefinderData(

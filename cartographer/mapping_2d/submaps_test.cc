@@ -17,6 +17,8 @@
 #include "cartographer/mapping_2d/submaps.h"
 
 #include <map>
+#include <memory>
+#include <set>
 #include <string>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
@@ -45,19 +47,26 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
       "miss_probability = 0.495, "
       "},"
       "}");
-  Submaps submaps{CreateSubmapsOptions(parameter_dictionary.get())};
+  ActiveSubmaps submaps{CreateSubmapsOptions(parameter_dictionary.get())};
+  std::set<std::shared_ptr<Submap>> all_submaps;
   for (int i = 0; i != 1000; ++i) {
     submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}});
-    const int matching = submaps.matching_index();
     // Except for the first, maps should only be returned after enough scans.
-    if (matching != 0) {
-      EXPECT_LE(kNumRangeData, submaps.Get(matching)->num_range_data());
+    for (auto submap : submaps.submaps()) {
+      all_submaps.insert(submap);
+    }
+    if (submaps.matching_index() != 0) {
+      EXPECT_LE(kNumRangeData, submaps.submaps().front()->num_range_data());
     }
   }
-  for (int i = 0; i != submaps.size() - 2; ++i) {
-    // Submaps should not be left without the right number of scans in them.
-    EXPECT_EQ(kNumRangeData * 2, submaps.Get(i)->num_range_data());
+  int correct_num_scans = 0;
+  for (const auto& submap : all_submaps) {
+    if (submap->num_range_data() == kNumRangeData * 2) {
+      ++correct_num_scans;
+    }
   }
+  // Submaps should not be left without the right number of scans in them.
+  EXPECT_EQ(correct_num_scans, all_submaps.size() - 2);
 }
 
 }  // namespace

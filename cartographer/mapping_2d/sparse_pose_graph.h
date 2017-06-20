@@ -90,6 +90,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_) override;
   std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
       override EXCLUDES(mutex_);
+  std::shared_ptr<const Submap> GetSubmap(const mapping::SubmapId& submap_id)
+      EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
 
  private:
