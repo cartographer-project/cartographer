@@ -362,7 +362,6 @@ void Submap::ToResponseProto(
 
 ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
     : options_(options),
-      matching_submap_index_(0),
       range_data_inserter_(options.range_data_inserter_options()) {
   // We always want to have at least one submap which we can return and will
   // create it at the origin in absence of a better choice.
@@ -408,7 +407,7 @@ void ActiveSubmaps::AddSubmap(const transform::Rigid3d& local_pose) {
   }
   submaps_.emplace_back(new Submap(options_.high_resolution(),
                                    options_.low_resolution(), local_pose));
-  LOG(INFO) << "Added submap " << matching_submap_index_ + 1;
+  LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
 }
 
 }  // namespace mapping_3d

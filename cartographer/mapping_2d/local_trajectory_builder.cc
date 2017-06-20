@@ -36,10 +36,6 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
-ActiveSubmaps* LocalTrajectoryBuilder::active_submaps() {
-  return &active_submaps_;
-}
-
 sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
     const transform::Rigid3f& tracking_to_tracking_2d,
     const sensor::RangeData& range_data) const {
@@ -180,8 +176,8 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
   }
 
   std::vector<std::shared_ptr<const Submap>> insertion_submaps;
-  for (std::shared_ptr<Submap> ptr : active_submaps_.submaps()) {
-    insertion_submaps.push_back(ptr);
+  for (std::shared_ptr<Submap> submap : active_submaps_.submaps()) {
+    insertion_submaps.push_back(submap);
   }
   active_submaps_.InsertRangeData(
       TransformRangeData(range_data_in_tracking_2d,

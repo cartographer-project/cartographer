@@ -207,7 +207,7 @@ void ActiveSubmaps::AddSubmap(const Eigen::Vector2f& origin) {
                     options_.half_length() * Eigen::Vector2d::Ones(),
                 CellLimits(num_cells_per_dimension, num_cells_per_dimension)),
       origin));
-  LOG(INFO) << "Added submap " << matching_submap_index_ + 1;
+  LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
 }
 
 }  // namespace mapping_2d

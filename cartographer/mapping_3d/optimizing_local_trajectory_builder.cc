@@ -112,10 +112,6 @@ OptimizingLocalTrajectoryBuilder::OptimizingLocalTrajectoryBuilder(
 
 OptimizingLocalTrajectoryBuilder::~OptimizingLocalTrajectoryBuilder() {}
 
-mapping_3d::ActiveSubmaps* OptimizingLocalTrajectoryBuilder::active_submaps() {
-  return &active_submaps_;
-}
-
 void OptimizingLocalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
     const Eigen::Vector3d& angular_velocity) {
@@ -410,8 +406,8 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
     return nullptr;
   }
   std::vector<std::shared_ptr<const Submap>> insertion_submaps;
-  for (std::shared_ptr<Submap> ptr : active_submaps_.submaps()) {
-    insertion_submaps.push_back(ptr);
+  for (std::shared_ptr<Submap> submap : active_submaps_.submaps()) {
+    insertion_submaps.push_back(submap);
   }
   // TODO(whess): Use an ImuTracker to track the gravity direction.
   const Eigen::Quaterniond kFakeGravityOrientation =

@@ -105,7 +105,7 @@ class ActiveSubmaps {
   void AddSubmap(const transform::Rigid3d& local_pose);
 
   const proto::SubmapsOptions options_;
-  int matching_submap_index_;
+  int matching_submap_index_ = 0;
   std::vector<std::shared_ptr<Submap>> submaps_;
   RangeDataInserter range_data_inserter_;
 };

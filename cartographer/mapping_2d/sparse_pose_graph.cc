@@ -427,11 +427,7 @@ SparsePoseGraph::GetTrajectoryNodes() {
 std::shared_ptr<const Submap> SparsePoseGraph::GetSubmap(
     const mapping::SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
-  // Conceptually, this method should only be used to ask for finished submaps.
-  // But since we cannot guarantee that the optimization problem already ran,
-  // submap_data.state can be != kFinished.
-  const auto& submap_data = submap_data_.at(submap_id);
-  return submap_data.submap;
+  return submap_data_.at(submap_id).submap;
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
