@@ -149,6 +149,17 @@ CompressedPointCloud::CompressedPointCloud(const std::vector<int32>& point_data,
                                            size_t num_points)
     : point_data_(point_data), num_points_(num_points) {}
 
+CompressedPointCloud::CompressedPointCloud(
+    const proto::CompressedPointCloud& proto) {
+  const size_t data_size = proto.point_data_size();
+
+  num_points_ = proto.num_points();
+  point_data_.reserve(proto.point_data_size());
+  for (int i = 0; i != data_size; ++i) {
+    point_data_.emplace_back(proto.point_data(i));
+  }
+}
+
 bool CompressedPointCloud::empty() const { return num_points_ == 0; }
 
 size_t CompressedPointCloud::size() const { return num_points_; }
@@ -178,16 +189,9 @@ proto::CompressedPointCloud CompressedPointCloud::ToProto() const {
   return result;
 }
 
-// Proto to CompressedPointCloud
-CompressedPointCloud ToCompressedPointCloud( const proto::CompressedPointCloud&
-proto) {
-  CompressedPointCloud compressed_point_colud;
-  const size_t num_points = proto.point_data_size();
-  std::vector<int32> point_data;
-  for (int i = 0; i != num_points; ++i) {
-    point_data.emplace_back(proto.point_data(i));
-  }
-  return CompressedPointCloud(point_data, num_points);
+CompressedPointCloud ToCompressedPointCloud(
+    const proto::CompressedPointCloud& proto) {
+  return CompressedPointCloud(proto);
 }
 
 }  // namespace sensor
