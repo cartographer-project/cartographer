@@ -424,6 +424,12 @@ SparsePoseGraph::GetTrajectoryNodes() {
   return trajectory_nodes_.data();
 }
 
+std::shared_ptr<const Submap> SparsePoseGraph::GetSubmap(
+    const mapping::SubmapId& submap_id) {
+  common::MutexLocker locker(&mutex_);
+  return submap_data_.at(submap_id).submap;
+}
+
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   common::MutexLocker locker(&mutex_);
   return constraints_;

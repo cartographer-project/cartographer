@@ -31,7 +31,7 @@ namespace mapping_3d {
 KalmanLocalTrajectoryBuilder::KalmanLocalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions& options)
     : options_(options),
-      submaps_(common::make_unique<Submaps>(options.submaps_options())),
+      active_submaps_(options.submaps_options()),
       scan_matcher_pose_estimate_(transform::Rigid3d::Identity()),
       motion_filter_(options.motion_filter_options()),
       real_time_correlative_scan_matcher_(
@@ -45,10 +45,6 @@ KalmanLocalTrajectoryBuilder::KalmanLocalTrajectoryBuilder(
       accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}} {}
 
 KalmanLocalTrajectoryBuilder::~KalmanLocalTrajectoryBuilder() {}
-
-mapping_3d::Submaps* KalmanLocalTrajectoryBuilder::submaps() {
-  return submaps_.get();
-}
 
 void KalmanLocalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
@@ -141,7 +137,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
       time, &pose_prediction, &unused_covariance_prediction);
 
   std::shared_ptr<const Submap> matching_submap =
-      submaps_->Get(submaps_->matching_index());
+      active_submaps_.submaps().front();
   transform::Rigid3d initial_ceres_pose =
       matching_submap->local_pose().inverse() * pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
@@ -220,10 +216,10 @@ KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
     return nullptr;
   }
   std::vector<std::shared_ptr<const Submap>> insertion_submaps;
-  for (int insertion_index : submaps_->insertion_indices()) {
-    insertion_submaps.push_back(submaps_->Get(insertion_index));
+  for (std::shared_ptr<Submap> submap : active_submaps_.submaps()) {
+    insertion_submaps.push_back(submap);
   }
-  submaps_->InsertRangeData(
+  active_submaps_.InsertRangeData(
       sensor::TransformRangeData(range_data_in_tracking,
                                  pose_observation.cast<float>()),
       pose_tracker_->gravity_orientation());

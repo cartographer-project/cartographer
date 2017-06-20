@@ -54,15 +54,12 @@ class Submap : public mapping::Submap {
 
  private:
   // TODO(hrapp): Remove friend declaration.
-  friend class Submaps;
+  friend class ActiveSubmaps;
 
   ProbabilityGrid probability_grid_;
   bool finished_ = false;
 };
 
-// Submaps is a sequence of maps to which scans are matched and into which scans
-// are inserted.
-//
 // Except during initialization when only a single submap exists, there are
 // always two submaps into which scans are inserted: an old submap that is used
 // for matching, and a new one, which will be used for matching next, that is
@@ -70,34 +67,30 @@ class Submap : public mapping::Submap {
 //
 // Once a certain number of scans have been inserted, the new submap is
 // considered initialized: the old submap is no longer changed, the "new" submap
-// is now the "old" submap and is used for scan-to-map matching. Moreover,
-// a "new" submap gets inserted.
-class Submaps {
+// is now the "old" submap and is used for scan-to-map matching. Moreover, a
+// "new" submap gets created. The "old" submap is forgotten by this object.
+class ActiveSubmaps {
  public:
-  explicit Submaps(const proto::SubmapsOptions& options);
+  explicit ActiveSubmaps(const proto::SubmapsOptions& options);
 
-  Submaps(const Submaps&) = delete;
-  Submaps& operator=(const Submaps&) = delete;
-
-  std::shared_ptr<const Submap> Get(int index) const;
-  int size() const;
+  ActiveSubmaps(const ActiveSubmaps&) = delete;
+  ActiveSubmaps& operator=(const ActiveSubmaps&) = delete;
 
   // Returns the index of the newest initialized Submap which can be
   // used for scan-to-map matching.
   int matching_index() const;
 
-  // Returns the indices of the Submap into which point clouds will
-  // be inserted.
-  std::vector<int> insertion_indices() const;
-
   // Inserts 'range_data' into the Submap collection.
   void InsertRangeData(const sensor::RangeData& range_data);
 
+  std::vector<std::shared_ptr<Submap>> submaps() const;
+
  private:
-  void FinishSubmap(int index);
+  void FinishSubmap();
   void AddSubmap(const Eigen::Vector2f& origin);
 
   const proto::SubmapsOptions options_;
+  int matching_submap_index_ = 0;
   std::vector<std::shared_ptr<Submap>> submaps_;
   RangeDataInserter range_data_inserter_;
 };

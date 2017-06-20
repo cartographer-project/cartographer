@@ -34,9 +34,11 @@ int GlobalTrajectoryBuilder::num_submaps() {
 
 GlobalTrajectoryBuilder::SubmapData GlobalTrajectoryBuilder::GetSubmapData(
     const int submap_index) {
-  return {local_trajectory_builder_.submaps()->Get(submap_index),
-          sparse_pose_graph_->GetSubmapTransform(
-              mapping::SubmapId{trajectory_id_, submap_index})};
+  // TODO(hrapp): Get rid of this function and query the sparse pose graph
+  // directly.
+  const mapping::SubmapId submap_id{trajectory_id_, submap_index};
+  return {sparse_pose_graph_->GetSubmap(submap_id),
+          sparse_pose_graph_->GetSubmapTransform(submap_id)};
 }
 
 void GlobalTrajectoryBuilder::AddRangefinderData(

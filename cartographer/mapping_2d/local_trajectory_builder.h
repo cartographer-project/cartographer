@@ -62,8 +62,6 @@ class LocalTrajectoryBuilder {
                   const Eigen::Vector3d& angular_velocity);
   void AddOdometerData(common::Time time, const transform::Rigid3d& pose);
 
-  Submaps* submaps();
-
  private:
   sensor::RangeData TransformAndFilterRangeData(
       const transform::Rigid3f& tracking_to_tracking_2d,
@@ -83,7 +81,7 @@ class LocalTrajectoryBuilder {
   void Predict(common::Time time);
 
   const proto::LocalTrajectoryBuilderOptions options_;
-  Submaps submaps_;
+  ActiveSubmaps active_submaps_;
   mapping::GlobalTrajectoryBuilderInterface::PoseEstimate last_pose_estimate_;
 
   // Current 'pose_estimate_' and 'velocity_estimate_' at 'time_'.

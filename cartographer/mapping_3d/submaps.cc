@@ -360,7 +360,7 @@ void Submap::ToResponseProto(
           global_submap_pose.translation().z())));
 }
 
-Submaps::Submaps(const proto::SubmapsOptions& options)
+ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {
   // We always want to have at least one submap which we can return and will
@@ -371,32 +371,16 @@ Submaps::Submaps(const proto::SubmapsOptions& options)
   AddSubmap(transform::Rigid3d::Identity());
 }
 
-std::shared_ptr<const Submap> Submaps::Get(int index) const {
-  CHECK_GE(index, 0);
-  CHECK_LT(index, size());
-  return submaps_[index];
+std::vector<std::shared_ptr<Submap>> ActiveSubmaps::submaps() const {
+  return submaps_;
 }
 
-int Submaps::size() const { return submaps_.size(); }
+int ActiveSubmaps::matching_index() const { return matching_submap_index_; }
 
-int Submaps::matching_index() const {
-  if (size() > 1) {
-    return size() - 2;
-  }
-  return size() - 1;
-}
-
-std::vector<int> Submaps::insertion_indices() const {
-  if (size() > 1) {
-    return {size() - 2, size() - 1};
-  }
-  return {size() - 1};
-}
-
-void Submaps::InsertRangeData(const sensor::RangeData& range_data,
-                              const Eigen::Quaterniond& gravity_alignment) {
-  for (const int index : insertion_indices()) {
-    Submap* submap = submaps_[index].get();
+void ActiveSubmaps::InsertRangeData(
+    const sensor::RangeData& range_data,
+    const Eigen::Quaterniond& gravity_alignment) {
+  for (auto& submap : submaps_) {
     const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
         range_data, submap->local_pose().inverse().cast<float>());
     range_data_inserter_.Insert(
@@ -413,15 +397,17 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data,
   }
 }
 
-void Submaps::AddSubmap(const transform::Rigid3d& local_pose) {
-  if (size() > 1) {
-    Submap* submap = submaps_[size() - 2].get();
+void ActiveSubmaps::AddSubmap(const transform::Rigid3d& local_pose) {
+  if (submaps_.size() > 1) {
+    Submap* submap = submaps_.front().get();
     CHECK(!submap->finished_);
     submap->finished_ = true;
+    ++matching_submap_index_;
+    submaps_.erase(submaps_.begin());
   }
   submaps_.emplace_back(new Submap(options_.high_resolution(),
                                    options_.low_resolution(), local_pose));
-  LOG(INFO) << "Added submap " << size();
+  LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
 }
 
 }  // namespace mapping_3d

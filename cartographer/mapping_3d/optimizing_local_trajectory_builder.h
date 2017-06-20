@@ -56,7 +56,6 @@ class OptimizingLocalTrajectoryBuilder
       const sensor::PointCloud& ranges) override;
   void AddOdometerData(common::Time time,
                        const transform::Rigid3d& pose) override;
-  mapping_3d::Submaps* submaps() override;
   const PoseEstimate& pose_estimate() const override;
 
  private:
@@ -116,7 +115,7 @@ class OptimizingLocalTrajectoryBuilder
 
   const proto::LocalTrajectoryBuilderOptions options_;
   const ceres::Solver::Options ceres_solver_options_;
-  std::unique_ptr<mapping_3d::Submaps> submaps_;
+  mapping_3d::ActiveSubmaps active_submaps_;
   int num_accumulated_;
 
   std::deque<Batch> batches_;

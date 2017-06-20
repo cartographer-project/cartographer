@@ -151,7 +151,7 @@ void Submap::ToResponseProto(
       transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));
 }
 
-Submaps::Submaps(const proto::SubmapsOptions& options)
+ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {
   // We always want to have at least one likelihood field which we can return,
@@ -159,9 +159,8 @@ Submaps::Submaps(const proto::SubmapsOptions& options)
   AddSubmap(Eigen::Vector2f::Zero());
 }
 
-void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
-  for (const int index : insertion_indices()) {
-    Submap* submap = submaps_[index].get();
+void ActiveSubmaps::InsertRangeData(const sensor::RangeData& range_data) {
+  for (auto& submap : submaps_) {
     CHECK(!submap->finished_);
     range_data_inserter_.Insert(range_data, &submap->probability_grid_);
     ++submap->num_range_data_;
@@ -171,46 +170,32 @@ void Submaps::InsertRangeData(const sensor::RangeData& range_data) {
   }
 }
 
-std::shared_ptr<const Submap> Submaps::Get(int index) const {
-  CHECK_GE(index, 0);
-  CHECK_LT(index, size());
-  return submaps_[index];
+std::vector<std::shared_ptr<Submap>> ActiveSubmaps::submaps() const {
+  return submaps_;
 }
 
-int Submaps::size() const { return submaps_.size(); }
+int ActiveSubmaps::matching_index() const { return matching_submap_index_; }
 
-int Submaps::matching_index() const {
-  if (size() > 1) {
-    return size() - 2;
-  }
-  return size() - 1;
-}
-
-std::vector<int> Submaps::insertion_indices() const {
-  if (size() > 1) {
-    return {size() - 2, size() - 1};
-  }
-  return {size() - 1};
-}
-
-void Submaps::FinishSubmap(int index) {
+void ActiveSubmaps::FinishSubmap() {
   // Crop the finished Submap before inserting a new Submap to reduce peak
   // memory usage a bit.
-  Submap* submap = submaps_[index].get();
+  Submap* submap = submaps_.front().get();
   CHECK(!submap->finished_);
   submap->probability_grid_ =
       ComputeCroppedProbabilityGrid(submap->probability_grid_);
   submap->finished_ = true;
   if (options_.output_debug_images()) {
     // Output the Submap that won't be changed from now on.
-    WriteDebugImage("submap" + std::to_string(index) + ".webp",
-                    submap->probability_grid_);
+    WriteDebugImage("submap" + std::to_string(matching_submap_index_) + ".webp",
+                    submaps_.front()->probability_grid_);
   }
+  ++matching_submap_index_;
+  submaps_.erase(submaps_.begin());
 }
 
-void Submaps::AddSubmap(const Eigen::Vector2f& origin) {
-  if (size() > 1) {
-    FinishSubmap(size() - 2);
+void ActiveSubmaps::AddSubmap(const Eigen::Vector2f& origin) {
+  if (submaps_.size() > 1) {
+    FinishSubmap();
   }
   const int num_cells_per_dimension =
       common::RoundToInt(2. * options_.half_length() / options_.resolution()) +
@@ -221,7 +206,7 @@ void Submaps::AddSubmap(const Eigen::Vector2f& origin) {
                     options_.half_length() * Eigen::Vector2d::Ones(),
                 CellLimits(num_cells_per_dimension, num_cells_per_dimension)),
       origin));
-  LOG(INFO) << "Added submap " << size();
+  LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
 }
 
 }  // namespace mapping_2d

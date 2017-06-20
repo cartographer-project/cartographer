@@ -27,7 +27,7 @@ namespace mapping_2d {
 LocalTrajectoryBuilder::LocalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions& options)
     : options_(options),
-      submaps_(options.submaps_options()),
+      active_submaps_(options.submaps_options()),
       motion_filter_(options_.motion_filter_options()),
       real_time_correlative_scan_matcher_(
           options_.real_time_correlative_scan_matcher_options()),
@@ -35,8 +35,6 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
       odometry_state_tracker_(options_.num_odometry_states()) {}
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
-
-Submaps* LocalTrajectoryBuilder::submaps() { return &submaps_; }
 
 sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
     const transform::Rigid3f& tracking_to_tracking_2d,
@@ -70,8 +68,8 @@ void LocalTrajectoryBuilder::ScanMatch(
     const transform::Rigid3d& tracking_to_tracking_2d,
     const sensor::RangeData& range_data_in_tracking_2d,
     transform::Rigid3d* pose_observation) {
-  const ProbabilityGrid& probability_grid =
-      submaps_.Get(submaps_.matching_index())->probability_grid();
+  std::shared_ptr<const Submap> matching_submap =
+      active_submaps_.submaps().front();
   transform::Rigid2d pose_prediction_2d =
       transform::Project2D(pose_prediction * tracking_to_tracking_2d.inverse());
   // The online correlative scan matcher will refine the initial estimate for
@@ -84,14 +82,15 @@ void LocalTrajectoryBuilder::ScanMatch(
   if (options_.use_online_correlative_scan_matching()) {
     real_time_correlative_scan_matcher_.Match(
         pose_prediction_2d, filtered_point_cloud_in_tracking_2d,
-        probability_grid, &initial_ceres_pose);
+        matching_submap->probability_grid(), &initial_ceres_pose);
   }
 
   transform::Rigid2d tracking_2d_to_map;
   ceres::Solver::Summary summary;
   ceres_scan_matcher_.Match(pose_prediction_2d, initial_ceres_pose,
                             filtered_point_cloud_in_tracking_2d,
-                            probability_grid, &tracking_2d_to_map, &summary);
+                            matching_submap->probability_grid(),
+                            &tracking_2d_to_map, &summary);
 
   *pose_observation =
       transform::Embed3D(tracking_2d_to_map) * tracking_to_tracking_2d;
@@ -177,10 +176,10 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
   }
 
   std::vector<std::shared_ptr<const Submap>> insertion_submaps;
-  for (int insertion_index : submaps_.insertion_indices()) {
-    insertion_submaps.push_back(submaps_.Get(insertion_index));
+  for (std::shared_ptr<Submap> submap : active_submaps_.submaps()) {
+    insertion_submaps.push_back(submap);
   }
-  submaps_.InsertRangeData(
+  active_submaps_.InsertRangeData(
       TransformRangeData(range_data_in_tracking_2d,
                          transform::Embed3D(pose_estimate_2d.cast<float>())));
 
