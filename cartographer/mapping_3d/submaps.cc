@@ -360,6 +360,26 @@ void Submap::ToResponseProto(
           global_submap_pose.translation().z())));
 }
 
+void Submap::InsertRangeData(const sensor::RangeData& range_data,
+                             const RangeDataInserter& range_data_inserter,
+                             const int high_resolution_max_range) {
+  CHECK(!finished_);
+  const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
+      range_data, local_pose().inverse().cast<float>());
+  range_data_inserter.Insert(
+      FilterRangeDataByMaxRange(transformed_range_data,
+                                high_resolution_max_range),
+      &high_resolution_hybrid_grid_);
+  range_data_inserter.Insert(transformed_range_data,
+                             &low_resolution_hybrid_grid_);
+  ++num_range_data_;
+}
+
+void Submap::Finish() {
+  CHECK(!finished_);
+  finished_ = true;
+}
+
 ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {
@@ -381,17 +401,10 @@ void ActiveSubmaps::InsertRangeData(
     const sensor::RangeData& range_data,
     const Eigen::Quaterniond& gravity_alignment) {
   for (auto& submap : submaps_) {
-    const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
-        range_data, submap->local_pose().inverse().cast<float>());
-    range_data_inserter_.Insert(
-        FilterRangeDataByMaxRange(transformed_range_data,
-                                  options_.high_resolution_max_range()),
-        &submap->high_resolution_hybrid_grid_);
-    range_data_inserter_.Insert(transformed_range_data,
-                                &submap->low_resolution_hybrid_grid_);
-    ++submap->num_range_data_;
+    submap->InsertRangeData(range_data, range_data_inserter_,
+                            options_.high_resolution_max_range());
   }
-  if (submaps_.back()->num_range_data_ == options_.num_range_data()) {
+  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
                                  gravity_alignment));
   }
@@ -399,9 +412,7 @@ void ActiveSubmaps::InsertRangeData(
 
 void ActiveSubmaps::AddSubmap(const transform::Rigid3d& local_pose) {
   if (submaps_.size() > 1) {
-    Submap* submap = submaps_.front().get();
-    CHECK(!submap->finished_);
-    submap->finished_ = true;
+    submaps_.front()->Finish();
     ++matching_submap_index_;
     submaps_.erase(submaps_.begin());
   }

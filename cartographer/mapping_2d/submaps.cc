@@ -151,6 +151,19 @@ void Submap::ToResponseProto(
       transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));
 }
 
+void Submap::InsertRangeData(const sensor::RangeData& range_data,
+                             const RangeDataInserter& range_data_inserter) {
+  CHECK(!finished_);
+  range_data_inserter.Insert(range_data, &probability_grid_);
+  ++num_range_data_;
+}
+
+void Submap::Finish() {
+  CHECK(!finished_);
+  probability_grid_ = ComputeCroppedProbabilityGrid(probability_grid_);
+  finished_ = true;
+}
+
 ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {
@@ -161,11 +174,9 @@ ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
 
 void ActiveSubmaps::InsertRangeData(const sensor::RangeData& range_data) {
   for (auto& submap : submaps_) {
-    CHECK(!submap->finished_);
-    range_data_inserter_.Insert(range_data, &submap->probability_grid_);
-    ++submap->num_range_data_;
+    submap->InsertRangeData(range_data, range_data_inserter_);
   }
-  if (submaps_.back()->num_range_data_ == options_.num_range_data()) {
+  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(range_data.origin.head<2>());
   }
 }
@@ -177,17 +188,12 @@ std::vector<std::shared_ptr<Submap>> ActiveSubmaps::submaps() const {
 int ActiveSubmaps::matching_index() const { return matching_submap_index_; }
 
 void ActiveSubmaps::FinishSubmap() {
-  // Crop the finished Submap before inserting a new Submap to reduce peak
-  // memory usage a bit.
   Submap* submap = submaps_.front().get();
-  CHECK(!submap->finished_);
-  submap->probability_grid_ =
-      ComputeCroppedProbabilityGrid(submap->probability_grid_);
-  submap->finished_ = true;
+  submap->Finish();
   if (options_.output_debug_images()) {
     // Output the Submap that won't be changed from now on.
     WriteDebugImage("submap" + std::to_string(matching_submap_index_) + ".webp",
-                    submaps_.front()->probability_grid_);
+                    submaps_.front()->probability_grid());
   }
   ++matching_submap_index_;
   submaps_.erase(submaps_.begin());
@@ -195,6 +201,8 @@ void ActiveSubmaps::FinishSubmap() {
 
 void ActiveSubmaps::AddSubmap(const Eigen::Vector2f& origin) {
   if (submaps_.size() > 1) {
+    // This will crop the finished Submap before inserting a new Submap to
+    // reduce peak memory usage a bit.
     FinishSubmap();
   }
   const int num_cells_per_dimension =
