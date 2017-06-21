@@ -28,19 +28,6 @@ GlobalTrajectoryBuilder::GlobalTrajectoryBuilder(
 
 GlobalTrajectoryBuilder::~GlobalTrajectoryBuilder() {}
 
-int GlobalTrajectoryBuilder::num_submaps() {
-  return sparse_pose_graph_->num_submaps(trajectory_id_);
-}
-
-GlobalTrajectoryBuilder::SubmapData GlobalTrajectoryBuilder::GetSubmapData(
-    const int submap_index) {
-  // TODO(hrapp): Get rid of this function and query the sparse pose graph
-  // directly.
-  const mapping::SubmapId submap_id{trajectory_id_, submap_index};
-  return {sparse_pose_graph_->GetSubmap(submap_id),
-          sparse_pose_graph_->GetSubmapTransform(submap_id)};
-}
-
 void GlobalTrajectoryBuilder::AddRangefinderData(
     const common::Time time, const Eigen::Vector3f& origin,
     const sensor::PointCloud& ranges) {

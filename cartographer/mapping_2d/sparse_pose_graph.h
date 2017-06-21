@@ -84,14 +84,14 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
   int num_submaps(int trajectory_id) EXCLUDES(mutex_) override;
-  transform::Rigid3d GetSubmapTransform(const mapping::SubmapId& submap_id)
-      EXCLUDES(mutex_) override;
+  mapping::SparsePoseGraph::SubmapData GetSubmapData(
+      const mapping::SubmapId& submap_id) EXCLUDES(mutex_) override;
+  std::vector<std::vector<mapping::SparsePoseGraph::SubmapData>>
+  GetAllSubmapData() EXCLUDES(mutex_) override;
   transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id)
       EXCLUDES(mutex_) override;
   std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
       override EXCLUDES(mutex_);
-  std::shared_ptr<const Submap> GetSubmap(const mapping::SubmapId& submap_id)
-      EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
 
  private:
@@ -154,11 +154,14 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
           submap_transforms,
       int trajectory_id) const REQUIRES(mutex_);
 
+  mapping::SparsePoseGraph::SubmapData GetSubmapDataUnderLock(
+      const mapping::SubmapId& submap_id) REQUIRES(mutex_);
+
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
 
   // If it exists, further scans must be added to this queue, and will be
-  // considered later.
+  // considered later
   std::unique_ptr<std::deque<std::function<void()>>> scan_queue_
       GUARDED_BY(mutex_);
 
