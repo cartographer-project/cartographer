@@ -90,8 +90,8 @@ class SparsePoseGraph {
   // 'submap_id'.
   virtual SubmapData GetSubmapData(const SubmapId& submap_id) = 0;
 
-  // Returns all SubmapData for all Submaps, by trajectory.
-  virtual std::vector<std::vector<SubmapData>> GetAllSubmapsData() = 0;
+  // Returns data for all Submaps by trajectory.
+  virtual std::vector<std::vector<SubmapData>> GetAllSubmapData() = 0;
 
   // Returns the transform converting data in the local map frame (i.e. the
   // continuous, non-loop-closed frame) into the global map frame (i.e. the

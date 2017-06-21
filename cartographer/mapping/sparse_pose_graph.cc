@@ -64,7 +64,7 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   std::map<NodeId, NodeId> node_id_remapping;  // Due to trimming.
 
   const auto all_trajectory_nodes = GetTrajectoryNodes();
-  const auto all_submaps_data = GetAllSubmapsData();
+  const auto all_submap_data = GetAllSubmapData();
   for (size_t trajectory_id = 0; trajectory_id != all_trajectory_nodes.size();
        ++trajectory_id) {
     const auto& single_trajectory_nodes = all_trajectory_nodes[trajectory_id];
@@ -87,7 +87,7 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     }
 
     if (!single_trajectory_nodes.empty()) {
-      for (const auto& submap_data : all_submaps_data[trajectory_id]) {
+      for (const auto& submap_data : all_submap_data[trajectory_id]) {
         *trajectory_proto->add_submap()->mutable_pose() =
             transform::ToProto(submap_data.pose);
       }
