@@ -64,6 +64,7 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   std::map<NodeId, NodeId> node_id_remapping;  // Due to trimming.
 
   const auto all_trajectory_nodes = GetTrajectoryNodes();
+  const auto all_submap_data = GetAllSubmapData();
   for (size_t trajectory_id = 0; trajectory_id != all_trajectory_nodes.size();
        ++trajectory_id) {
     const auto& single_trajectory_nodes = all_trajectory_nodes[trajectory_id];
@@ -86,20 +87,19 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     }
 
     if (!single_trajectory_nodes.empty()) {
-      const int num_submaps_in_trajectory = num_submaps(trajectory_id);
-      for (int submap_index = 0; submap_index != num_submaps_in_trajectory;
-           ++submap_index) {
-        const SubmapId submap_id{static_cast<int>(trajectory_id), submap_index};
+      for (const auto& submap_data : all_submap_data[trajectory_id]) {
         *trajectory_proto->add_submap()->mutable_pose() =
-            transform::ToProto(GetSubmapTransform(submap_id));
+            transform::ToProto(submap_data.pose);
       }
     }
   }
 
   for (const auto& constraint : constraints()) {
     auto* const constraint_proto = proto.add_constraint();
-    *constraint_proto->mutable_relative_pose() =
-        transform::ToProto(constraint.pose.zbar_ij);
+    const auto& node = all_trajectory_nodes.at(constraint.node_id.trajectory_id)
+                           .at(constraint.node_id.node_index);
+    *constraint_proto->mutable_relative_pose() = transform::ToProto(
+        constraint.pose.zbar_ij * node.constant_data->tracking_to_pose);
     constraint_proto->set_translation_weight(
         constraint.pose.translation_weight);
     constraint_proto->set_rotation_weight(constraint.pose.rotation_weight);

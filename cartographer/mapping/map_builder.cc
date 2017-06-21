@@ -104,25 +104,25 @@ int MapBuilder::GetBlockingTrajectoryId() const {
   return sensor_collator_.GetBlockingTrajectoryId();
 }
 
-string MapBuilder::SubmapToProto(const int trajectory_id,
-                                 const int submap_index,
+string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
                                  proto::SubmapQuery::Response* const response) {
-  if (trajectory_id < 0 || trajectory_id >= num_trajectory_builders()) {
-    return "Requested submap from trajectory " + std::to_string(trajectory_id) +
-           " but there are only " + std::to_string(num_trajectory_builders()) +
-           " trajectories.";
+  if (submap_id.trajectory_id < 0 ||
+      submap_id.trajectory_id >= num_trajectory_builders()) {
+    return "Requested submap from trajectory " +
+           std::to_string(submap_id.trajectory_id) + " but there are only " +
+           std::to_string(num_trajectory_builders()) + " trajectories.";
   }
 
-  const int num_submaps = trajectory_builders_.at(trajectory_id)->num_submaps();
-  if (submap_index < 0 || submap_index >= num_submaps) {
-    return "Requested submap " + std::to_string(submap_index) +
-           " from trajectory " + std::to_string(trajectory_id) +
+  const int num_submaps =
+      sparse_pose_graph_->num_submaps(submap_id.trajectory_id);
+  if (submap_id.submap_index < 0 || submap_id.submap_index >= num_submaps) {
+    return "Requested submap " + std::to_string(submap_id.submap_index) +
+           " from trajectory " + std::to_string(submap_id.trajectory_id) +
            " but there are only " + std::to_string(num_submaps) +
            " submaps in this trajectory.";
   }
 
-  const auto submap_data =
-      trajectory_builders_.at(trajectory_id)->GetSubmapData(submap_index);
+  const auto submap_data = sparse_pose_graph_->GetSubmapData(submap_id);
   CHECK(submap_data.submap != nullptr);
   submap_data.submap->ToResponseProto(submap_data.pose, response);
   return "";

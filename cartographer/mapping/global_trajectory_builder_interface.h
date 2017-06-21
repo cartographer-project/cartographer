@@ -39,7 +39,6 @@ namespace mapping {
 class GlobalTrajectoryBuilderInterface {
  public:
   using PoseEstimate = TrajectoryBuilder::PoseEstimate;
-  using SubmapData = TrajectoryBuilder::SubmapData;
 
   GlobalTrajectoryBuilderInterface() {}
   virtual ~GlobalTrajectoryBuilderInterface() {}
@@ -49,8 +48,6 @@ class GlobalTrajectoryBuilderInterface {
   GlobalTrajectoryBuilderInterface& operator=(
       const GlobalTrajectoryBuilderInterface&) = delete;
 
-  virtual int num_submaps() = 0;
-  virtual SubmapData GetSubmapData(int submap_index) = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
   virtual void AddRangefinderData(common::Time time,

@@ -25,7 +25,9 @@
 
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
-#include "cartographer/mapping/proto/trajectory.pb.h"
+#include "cartographer/ground_truth/proto/relations.pb.h"
+#include "cartographer/ground_truth/relations_text_file.h"
+#include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "cartographer/transform/transform_interpolation_buffer.h"
@@ -33,31 +35,28 @@
 #include "glog/logging.h"
 
 DEFINE_string(
-    trajectory_filename, "",
-    "Proto containing the trajectory of which to assess the quality.");
+    pose_graph_filename, "",
+    "File with the pose graph proto from which to assess the quality.");
 DEFINE_string(relations_filename, "",
               "Relations file containing the ground truth.");
+DEFINE_bool(read_text_file_with_unix_timestamps, false,
+            "Enable support for the relations text files as in the paper. "
+            "Default is to read from a GroundTruth proto file.");
 
 namespace cartographer {
 namespace ground_truth {
 namespace {
-
-transform::Rigid3d LookupPose(const transform::TransformInterpolationBuffer&
-                                  transform_interpolation_buffer,
-                              const double time) {
-  constexpr int64 kUtsTicksPerSecond = 10000000;
-  common::Time common_time =
-      common::FromUniversal(common::kUtsEpochOffsetFromUnixEpochInSeconds *
-                            kUtsTicksPerSecond) +
-      common::FromSeconds(time);
-  return transform_interpolation_buffer.Lookup(common_time);
-}
 
 struct Error {
   double translational_squared;
   double rotational_squared;
 };
 
+// TODO(whess): This gives different results for the translational error if
+// 'pose1' and 'pose2' are swapped and 'expected' is inverted. Consider a
+// different way to compute translational error. Maybe just look at the
+// absolute difference in translation norms of each relative transform as a
+// lower bound of the translational error.
 Error ComputeError(const transform::Rigid3d& pose1,
                    const transform::Rigid3d& pose2,
                    const transform::Rigid3d& expected) {
@@ -109,33 +108,40 @@ string StatisticsString(const std::vector<Error>& errors) {
          MeanAndStdDevString(squared_rotational_errors_degrees) + " deg^2\n";
 }
 
-void Run(const string& trajectory_filename, const string& relations_filename) {
-  LOG(INFO) << "Reading trajectory from '" << trajectory_filename << "'...";
-  mapping::proto::Trajectory trajectory_proto;
+void Run(const string& pose_graph_filename, const string& relations_filename,
+         const bool read_text_file_with_unix_timestamps) {
+  LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";
+  mapping::proto::SparsePoseGraph pose_graph;
   {
-    std::ifstream trajectory_stream(trajectory_filename.c_str(),
-                                    std::ios::binary);
-    CHECK(trajectory_proto.ParseFromIstream(&trajectory_stream));
+    std::ifstream stream(pose_graph_filename.c_str());
+    CHECK(pose_graph.ParseFromIstream(&stream));
+    CHECK_EQ(pose_graph.trajectory_size(), 1)
+        << "Only pose graphs containing a single trajectory are supported.";
+  }
+  const auto transform_interpolation_buffer =
+      transform::TransformInterpolationBuffer::FromTrajectory(
+          pose_graph.trajectory(0));
+
+  proto::GroundTruth ground_truth;
+  if (read_text_file_with_unix_timestamps) {
+    LOG(INFO) << "Reading relations from '" << relations_filename << "'...";
+    ground_truth = ReadRelationsTextFile(relations_filename);
+  } else {
+    LOG(INFO) << "Reading ground truth from '" << relations_filename << "'...";
+    std::ifstream ground_truth_stream(relations_filename.c_str(),
+                                      std::ios::binary);
+    CHECK(ground_truth.ParseFromIstream(&ground_truth_stream));
   }
 
-  const auto transform_interpolation_buffer =
-      transform::TransformInterpolationBuffer::FromTrajectory(trajectory_proto);
-
-  LOG(INFO) << "Reading relations from '" << relations_filename << "'...";
   std::vector<Error> errors;
-  {
-    std::ifstream relations_stream(relations_filename.c_str());
-    double time1, time2, x, y, z, roll, pitch, yaw;
-    while (relations_stream >> time1 >> time2 >> x >> y >> z >> roll >> pitch >>
-           yaw) {
-      const auto pose1 = LookupPose(*transform_interpolation_buffer, time1);
-      const auto pose2 = LookupPose(*transform_interpolation_buffer, time2);
-      const transform::Rigid3d expected =
-          transform::Rigid3d(transform::Rigid3d::Vector(x, y, z),
-                             transform::RollPitchYaw(roll, pitch, yaw));
-      errors.push_back(ComputeError(pose1, pose2, expected));
-    }
-    CHECK(relations_stream.eof());
+  for (const auto& relation : ground_truth.relation()) {
+    const auto pose1 = transform_interpolation_buffer->Lookup(
+        common::FromUniversal(relation.timestamp1()));
+    const auto pose2 = transform_interpolation_buffer->Lookup(
+        common::FromUniversal(relation.timestamp2()));
+    const transform::Rigid3d expected =
+        transform::ToRigid3(relation.expected());
+    errors.push_back(ComputeError(pose1, pose2, expected));
   }
 
   LOG(INFO) << "Result:\n" << StatisticsString(errors);
@@ -153,16 +159,14 @@ int main(int argc, char** argv) {
       "This program computes the relation based metric described in:\n"
       "R. Kuemmerle, B. Steder, C. Dornhege, M. Ruhnke, G. Grisetti,\n"
       "C. Stachniss, and A. Kleiner, \"On measuring the accuracy of SLAM\n"
-      "algorithms,\" Autonomous Robots, vol. 27, no. 4, pp. 387–407, 2009.\n"
-      "\n"
-      "Note: Timestamps in the relations_file are interpreted relative to\n"
-      "      the Unix epoch.");
+      "algorithms,\" Autonomous Robots, vol. 27, no. 4, pp. 387–407, 2009.");
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  if (FLAGS_trajectory_filename.empty() || FLAGS_relations_filename.empty()) {
+  if (FLAGS_pose_graph_filename.empty() || FLAGS_relations_filename.empty()) {
     google::ShowUsageWithFlagsRestrict(argv[0], "compute_relations_metrics");
     return EXIT_FAILURE;
   }
-  ::cartographer::ground_truth::Run(FLAGS_trajectory_filename,
-                                    FLAGS_relations_filename);
+  ::cartographer::ground_truth::Run(FLAGS_pose_graph_filename,
+                                    FLAGS_relations_filename,
+                                    FLAGS_read_text_file_with_unix_timestamps);
 }

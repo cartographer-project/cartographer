@@ -52,10 +52,13 @@ class Submap : public mapping::Submap {
       const transform::Rigid3d& global_submap_pose,
       mapping::proto::SubmapQuery::Response* response) const override;
 
- private:
-  // TODO(hrapp): Remove friend declaration.
-  friend class ActiveSubmaps;
+  // Insert 'range_data' into this submap using 'range_data_inserter'. The
+  // submap must not be finished yet.
+  void InsertRangeData(const sensor::RangeData& range_data,
+                       const RangeDataInserter& range_data_inserter);
+  void Finish();
 
+ private:
   ProbabilityGrid probability_grid_;
   bool finished_ = false;
 };
