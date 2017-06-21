@@ -508,7 +508,7 @@ mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
   // We have to extrapolate.
   return {submap, ComputeLocalToGlobalTransform(optimized_submap_transforms_,
                                                 submap_id.trajectory_id) *
-                      submap_data.submap->local_pose()};
+                      submap->local_pose()};
 }
 
 }  // namespace mapping_3d

@@ -501,12 +501,10 @@ mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
       submap_id.submap_index < static_cast<int>(optimized_submap_transforms_
                                                     .at(submap_id.trajectory_id)
                                                     .size())) {
-    return {
-      submap, transform::Embed3D(
-                  optimized_submap_transforms_.at(submap_id.trajectory_id)
-                      .at(submap_id.submap_index)
-                      .pose);
-    };
+    return {submap, transform::Embed3D(
+                        optimized_submap_transforms_.at(submap_id.trajectory_id)
+                            .at(submap_id.submap_index)
+                            .pose)};
   }
   // We have to extrapolate.
   return {submap, ComputeLocalToGlobalTransform(optimized_submap_transforms_,
