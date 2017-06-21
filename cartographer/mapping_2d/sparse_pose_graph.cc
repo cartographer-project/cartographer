@@ -494,6 +494,9 @@ transform::Rigid3d SparsePoseGraph::ComputeLocalToGlobalTransform(
 
 mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
     const mapping::SubmapId& submap_id) {
+  if (submap_data_.at(submap_id).state == SubmapState::kTrimmed) {
+    return {};
+  }
   auto submap = submap_data_.at(submap_id).submap;
   // We already have an optimized pose.
   if (submap_id.trajectory_id <
@@ -565,10 +568,12 @@ void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
   }
 
   // Mark the submap with 'submap_id' as trimmed and remove its data.
-  parent_->submap_data_.at(submap_id).state = SubmapState::kTrimmed;
+  auto& submap_data = parent_->submap_data_.at(submap_id);
+  CHECK(submap_data.state == SubmapState::kFinished);
+  submap_data.state = SubmapState::kTrimmed;
+  CHECK(submap_data.submap != nullptr);
+  submap_data.submap.reset();
   parent_->constraint_builder_.DeleteScanMatcher(submap_id);
-  // TODO(hrapp): Make 'Submap' object thread safe and remove submap data in
-  // there.
 
   // Mark the 'nodes_to_remove' as trimmed and remove their data.
   for (const mapping::NodeId& node_id : nodes_to_remove) {
