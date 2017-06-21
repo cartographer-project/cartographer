@@ -160,8 +160,6 @@ void Submap::InsertRangeData(const sensor::RangeData& range_data,
 
 void Submap::Finish() {
   CHECK(!finished_);
-  // Crop the finished Submap before inserting a new Submap to reduce peak
-  // memory usage a bit.
   probability_grid_ = ComputeCroppedProbabilityGrid(probability_grid_);
   finished_ = true;
 }
@@ -178,8 +176,7 @@ void ActiveSubmaps::InsertRangeData(const sensor::RangeData& range_data) {
   for (auto& submap : submaps_) {
     submap->InsertRangeData(range_data, range_data_inserter_);
   }
-  if (submaps_.back()->num_range_data() ==
-      static_cast<size_t>(options_.num_range_data())) {
+  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(range_data.origin.head<2>());
   }
 }
@@ -204,6 +201,8 @@ void ActiveSubmaps::FinishSubmap() {
 
 void ActiveSubmaps::AddSubmap(const Eigen::Vector2f& origin) {
   if (submaps_.size() > 1) {
+    // This will crop the finished Submap before inserting a new Submap to
+    // reduce peak memory usage a bit.
     FinishSubmap();
   }
   const int num_cells_per_dimension =

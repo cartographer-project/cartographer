@@ -65,7 +65,7 @@ class Submap {
   transform::Rigid3d local_pose() const { return local_pose_; }
 
   // Number of RangeData inserted.
-  size_t num_range_data() const { return num_range_data_; }
+  int num_range_data() const { return num_range_data_; }
 
   // Fills data into the 'response'.
   virtual void ToResponseProto(

@@ -404,8 +404,7 @@ void ActiveSubmaps::InsertRangeData(
     submap->InsertRangeData(range_data, range_data_inserter_,
                             options_.high_resolution_max_range());
   }
-  if (submaps_.back()->num_range_data() ==
-      static_cast<size_t>(options_.num_range_data())) {
+  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
                                  gravity_alignment));
   }
