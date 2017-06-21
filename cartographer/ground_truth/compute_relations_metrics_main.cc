@@ -53,7 +53,7 @@ struct Error {
 };
 
 // TODO(whess): This gives different results for the translational error if
-// 'pose1' and 'pose2' are swappedand 'expected' is inverted. Consider a
+// 'pose1' and 'pose2' are swapped and 'expected' is inverted. Consider a
 // different way to compute translational error. Maybe just look at the
 // absolute difference in translation norms of each relative transform as a
 // lower bound of the translational error.

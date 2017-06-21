@@ -25,6 +25,14 @@
 namespace cartographer {
 namespace ground_truth {
 
+// Reads a text file and converts it to a GroundTruth proto. Each line contains:
+// time1 time2 x y z roll pitch yaw
+// using Unix epoch timestamps.
+//
+// This is the format used in the relations files provided for:
+// R. Kuemmerle, B. Steder, C. Dornhege, M. Ruhnke, G. Grisetti, C. Stachniss,
+// and A. Kleiner, "On measuring the accuracy of SLAM algorithms," Autonomous
+// Robots, vol. 27, no. 4, pp. 387–407, 2009.
 proto::GroundTruth ReadRelationsTextFile(const string& relations_filename);
 
 }  // namespace ground_truth
