@@ -53,11 +53,6 @@ class TrajectoryBuilder {
     sensor::PointCloud point_cloud;
   };
 
-  struct SubmapData {
-    std::shared_ptr<const Submap> submap;
-    transform::Rigid3d pose;
-  };
-
   TrajectoryBuilder() {}
   virtual ~TrajectoryBuilder() {}
 
@@ -65,7 +60,6 @@ class TrajectoryBuilder {
   TrajectoryBuilder& operator=(const TrajectoryBuilder&) = delete;
 
   virtual int num_submaps() = 0;
-  virtual SubmapData GetSubmapData(int submap_index) = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
   virtual void AddSensorData(const string& sensor_id,

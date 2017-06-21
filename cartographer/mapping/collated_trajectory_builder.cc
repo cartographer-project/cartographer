@@ -50,11 +50,6 @@ int CollatedTrajectoryBuilder::num_submaps() {
   return wrapped_trajectory_builder_->num_submaps();
 }
 
-TrajectoryBuilder::SubmapData CollatedTrajectoryBuilder::GetSubmapData(
-    const int submap_index) {
-  return wrapped_trajectory_builder_->GetSubmapData(submap_index);
-}
-
 const TrajectoryBuilder::PoseEstimate&
 CollatedTrajectoryBuilder::pose_estimate() const {
   return wrapped_trajectory_builder_->pose_estimate();
