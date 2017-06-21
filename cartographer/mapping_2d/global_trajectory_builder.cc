@@ -28,10 +28,6 @@ GlobalTrajectoryBuilder::GlobalTrajectoryBuilder(
 
 GlobalTrajectoryBuilder::~GlobalTrajectoryBuilder() {}
 
-int GlobalTrajectoryBuilder::num_submaps() {
-  return sparse_pose_graph_->num_submaps(trajectory_id_);
-}
-
 void GlobalTrajectoryBuilder::AddRangefinderData(
     const common::Time time, const Eigen::Vector3f& origin,
     const sensor::PointCloud& ranges) {

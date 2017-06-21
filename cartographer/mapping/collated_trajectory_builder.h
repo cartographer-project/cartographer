@@ -49,7 +49,6 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilder {
   CollatedTrajectoryBuilder& operator=(const CollatedTrajectoryBuilder&) =
       delete;
 
-  int num_submaps() override;
   const PoseEstimate& pose_estimate() const override;
 
   void AddSensorData(const string& sensor_id,

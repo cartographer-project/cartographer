@@ -114,7 +114,7 @@ string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
   }
 
   const int num_submaps =
-      trajectory_builders_.at(submap_id.trajectory_id)->num_submaps();
+      sparse_pose_graph_->num_submaps(submap_id.trajectory_id);
   if (submap_id.submap_index < 0 || submap_id.submap_index >= num_submaps) {
     return "Requested submap " + std::to_string(submap_id.submap_index) +
            " from trajectory " + std::to_string(submap_id.trajectory_id) +

@@ -46,10 +46,6 @@ CollatedTrajectoryBuilder::CollatedTrajectoryBuilder(
 
 CollatedTrajectoryBuilder::~CollatedTrajectoryBuilder() {}
 
-int CollatedTrajectoryBuilder::num_submaps() {
-  return wrapped_trajectory_builder_->num_submaps();
-}
-
 const TrajectoryBuilder::PoseEstimate&
 CollatedTrajectoryBuilder::pose_estimate() const {
   return wrapped_trajectory_builder_->pose_estimate();

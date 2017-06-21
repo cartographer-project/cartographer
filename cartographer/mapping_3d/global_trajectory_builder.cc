@@ -30,10 +30,6 @@ GlobalTrajectoryBuilder::GlobalTrajectoryBuilder(
 
 GlobalTrajectoryBuilder::~GlobalTrajectoryBuilder() {}
 
-int GlobalTrajectoryBuilder::num_submaps() {
-  return sparse_pose_graph_->num_submaps(trajectory_id_);
-}
-
 void GlobalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
     const Eigen::Vector3d& angular_velocity) {
