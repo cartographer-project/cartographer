@@ -98,8 +98,10 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
 
   for (const auto& constraint : constraints()) {
     auto* const constraint_proto = proto.add_constraint();
-    *constraint_proto->mutable_relative_pose() =
-        transform::ToProto(constraint.pose.zbar_ij);
+    const auto& node = all_trajectory_nodes.at(constraint.node_id.trajectory_id)
+                           .at(constraint.node_id.node_index);
+    *constraint_proto->mutable_relative_pose() = transform::ToProto(
+        constraint.pose.zbar_ij * node.constant_data->tracking_to_pose);
     constraint_proto->set_translation_weight(
         constraint.pose.translation_weight);
     constraint_proto->set_rotation_weight(constraint.pose.rotation_weight);
