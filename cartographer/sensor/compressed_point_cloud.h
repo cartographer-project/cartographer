@@ -39,6 +39,7 @@ class CompressedPointCloud {
 
   CompressedPointCloud() : num_points_(0) {}
   explicit CompressedPointCloud(const PointCloud& point_cloud);
+  explicit CompressedPointCloud(const proto::CompressedPointCloud& proto);
 
   // Returns decompressed point cloud.
   PointCloud Decompress() const;
@@ -50,17 +51,11 @@ class CompressedPointCloud {
 
   proto::CompressedPointCloud ToProto() const;
 
-  CompressedPointCloud(const proto::CompressedPointCloud& proto);
 
  private:
-  CompressedPointCloud(const std::vector<int32>& point_data, size_t num_points);
-
   std::vector<int32> point_data_;
   size_t num_points_;
 };
-
-CompressedPointCloud ToCompressedPointCloud(
-    const proto::CompressedPointCloud& proto);
 
 // Forward iterator for compressed point clouds.
 class CompressedPointCloud::ConstIterator

@@ -37,23 +37,6 @@ RangeData FromProto(const proto::RangeData& proto) {
   };
 }
 
-proto::CompressedRangeData ToProto(
-    const CompressedRangeData& compressed_range_data) {
-  proto::CompressedRangeData proto;
-  *proto.mutable_origin() = transform::ToProto(compressed_range_data.origin);
-  *proto.mutable_returns() = compressed_range_data.returns.ToProto();
-  *proto.mutable_misses() = compressed_range_data.misses.ToProto();
-  return proto;
-}
-
-CompressedRangeData FromProto(const proto::CompressedRangeData& proto) {
-  return CompressedRangeData{
-      transform::ToEigen(proto.origin()),
-      ToCompressedPointCloud(proto.returns()),
-      ToCompressedPointCloud(proto.misses()),
-  };
-}
-
 RangeData TransformRangeData(const RangeData& range_data,
                              const transform::Rigid3f& transform) {
   return RangeData{
@@ -67,6 +50,21 @@ RangeData CropRangeData(const RangeData& range_data, const float min_z,
                         const float max_z) {
   return RangeData{range_data.origin, Crop(range_data.returns, min_z, max_z),
                    Crop(range_data.misses, min_z, max_z)};
+}
+
+proto::CompressedRangeData ToProto(
+    const CompressedRangeData& compressed_range_data) {
+  proto::CompressedRangeData proto;
+  *proto.mutable_origin() = transform::ToProto(compressed_range_data.origin);
+  *proto.mutable_returns() = compressed_range_data.returns.ToProto();
+  *proto.mutable_misses() = compressed_range_data.misses.ToProto();
+  return proto;
+}
+CompressedRangeData FromProto(const proto::CompressedRangeData& proto) {
+  return CompressedRangeData{
+      transform::ToEigen(proto.origin()), CompressedPointCloud(proto.returns()),
+      CompressedPointCloud(proto.misses()),
+  };
 }
 
 CompressedRangeData Compress(const RangeData& range_data) {

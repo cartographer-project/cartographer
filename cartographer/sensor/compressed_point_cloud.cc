@@ -145,16 +145,12 @@ CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
   CHECK_EQ(num_blocks, 0);
 }
 
-CompressedPointCloud::CompressedPointCloud(const std::vector<int32>& point_data,
-                                           size_t num_points)
-    : point_data_(point_data), num_points_(num_points) {}
-
 CompressedPointCloud::CompressedPointCloud(
     const proto::CompressedPointCloud& proto) {
-  const size_t data_size = proto.point_data_size();
-
+  CHECK(proto.has_num_points()) << "The compressed point cloud is malformed.";
   num_points_ = proto.num_points();
-  point_data_.reserve(proto.point_data_size());
+  const size_t data_size = proto.point_data_size();
+  point_data_.reserve(data_size);
   for (int i = 0; i != data_size; ++i) {
     point_data_.emplace_back(proto.point_data(i));
   }
@@ -187,11 +183,6 @@ proto::CompressedPointCloud CompressedPointCloud::ToProto() const {
     result.add_point_data(data);
   }
   return result;
-}
-
-CompressedPointCloud ToCompressedPointCloud(
-    const proto::CompressedPointCloud& proto) {
-  return CompressedPointCloud(proto);
 }
 
 }  // namespace sensor

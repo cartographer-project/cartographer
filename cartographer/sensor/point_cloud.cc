@@ -63,6 +63,5 @@ PointCloud ToPointCloud(const proto::PointCloud& proto) {
   return point_cloud;
 }
 
-
 }  // namespace sensor
 }  // namespace cartographer

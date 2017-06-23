@@ -15,10 +15,7 @@
  */
 
 #include "cartographer/sensor/range_data.h"
-
-#include <utility>
 #include <vector>
-
 #include "gmock/gmock.h"
 
 namespace cartographer {
@@ -26,34 +23,129 @@ namespace sensor {
 namespace {
 
 using ::testing::Contains;
+using ::testing::FloatNear;
 using ::testing::PrintToString;
+constexpr float kPrecision = 0.001f;
 
-// Custom matcher for Eigen::Vector3f entries.
+// TODO (brandon-northcutt): place this function in a common location with
+// identical function in compressed_point_cloud_test.cc
 MATCHER_P(ApproximatelyEquals, expected,
           string("is equal to ") + PrintToString(expected)) {
-  return (arg - expected).isZero(0.001f);
+  return (arg - expected).isZero(kPrecision);
 }
 
-TEST(RangeDataTest, Compression) {
-  const std::vector<Eigen::Vector3f> returns = {Eigen::Vector3f(0, 1, 2),
-                                                Eigen::Vector3f(4, 5, 6),
-                                                Eigen::Vector3f(0, 1, 2)};
-  const RangeData range_data = {
-      Eigen::Vector3f(1, 1, 1), returns, {Eigen::Vector3f(7, 8, 9)}};
+class RangeDataTest : public ::testing::Test {
+ protected:
+  RangeDataTest() {
+    origin_ = Eigen::Vector3f(1, 1, 1);
+    returns_.emplace_back(Eigen::Vector3f(0, 1, 2));
+    returns_.emplace_back(Eigen::Vector3f(4, 5, 6));
+    returns_.emplace_back(Eigen::Vector3f(0, 1, 2));
+    misses_.emplace_back(Eigen::Vector3f(7, 8, 9));
+  }
+  void RangeDataToProtoTest() {}
+
+  void CompressedRangeDataToProtoTest() {
+    const CompressedPointCloud compressed_returns(returns_);
+    const CompressedPointCloud compressed_misses(misses_);
+    const CompressedRangeData compressed_range_data = {
+        origin_, compressed_returns, compressed_misses};
+    const auto proto = ToProto(compressed_range_data);
+  }
+  Eigen::Vector3f origin_;
+  std::vector<Eigen::Vector3f> returns_;
+  std::vector<Eigen::Vector3f> misses_;
+};
+
+TEST_F(RangeDataTest, Compression) {
+  const RangeData range_data = {origin_, returns_, misses_};
   const RangeData actual = Decompress(Compress(range_data));
-  EXPECT_TRUE(actual.origin.isApprox(Eigen::Vector3f(1, 1, 1), 1e-6));
+  EXPECT_TRUE(actual.origin.isApprox(origin_, 1e-6));
   EXPECT_EQ(3, actual.returns.size());
   EXPECT_EQ(1, actual.misses.size());
-  EXPECT_TRUE(actual.misses[0].isApprox(Eigen::Vector3f(7, 8, 9), 0.001f));
+  EXPECT_TRUE(actual.misses[0].isApprox(misses_[0], 0.001f));
 
-  // Returns will be reordered, so we compare in an unordered manner.
-  EXPECT_EQ(3, actual.returns.size());
-  EXPECT_THAT(actual.returns,
-              Contains(ApproximatelyEquals(Eigen::Vector3f(0, 1, 2))));
-  EXPECT_THAT(actual.returns,
-              Contains(ApproximatelyEquals(Eigen::Vector3f(4, 5, 6))));
+  // Returns may be reordered, so we compare in an unordered manner.
+  for (uint i = 0; i < returns_.size(); ++i) {
+    EXPECT_THAT(actual.returns, Contains(ApproximatelyEquals(returns_[i])));
+  }
+  for (uint i = 0; i < misses_.size(); ++i) {
+    EXPECT_THAT(actual.misses, Contains(ApproximatelyEquals(misses_[i])));
+  }
 }
 
+TEST_F(RangeDataTest, RangeDataToProto) {
+  const auto proto = ToProto(RangeData{origin_, returns_, misses_});
+
+  EXPECT_TRUE(proto.has_origin());
+  EXPECT_TRUE(proto.has_returns());
+  EXPECT_TRUE(proto.has_misses());
+  EXPECT_EQ(returns_.size(), proto.returns().x_size());
+  EXPECT_EQ(returns_.size(), proto.returns().y_size());
+  EXPECT_EQ(returns_.size(), proto.returns().z_size());
+  EXPECT_EQ(misses_.size(), proto.misses().x_size());
+  EXPECT_EQ(misses_.size(), proto.misses().y_size());
+  EXPECT_EQ(misses_.size(), proto.misses().z_size());
+  EXPECT_NEAR(proto.origin().x(), origin_.x(), kPrecision);
+  EXPECT_NEAR(proto.origin().y(), origin_.y(), kPrecision);
+  EXPECT_NEAR(proto.origin().z(), origin_.z(), kPrecision);
+
+  for (int i = 0; i < proto.returns().x_size(); ++i) {
+    EXPECT_NEAR(proto.returns().x(i), returns_[i].x(), kPrecision);
+    EXPECT_NEAR(proto.returns().y(i), returns_[i].y(), kPrecision);
+    EXPECT_NEAR(proto.returns().z(i), returns_[i].z(), kPrecision);
+  }
+  for (int i = 0; i < proto.misses().x_size(); ++i) {
+    EXPECT_NEAR(proto.misses().x(i), misses_[i].x(), kPrecision);
+    EXPECT_NEAR(proto.misses().y(i), misses_[i].y(), kPrecision);
+    EXPECT_NEAR(proto.misses().z(i), misses_[i].z(), kPrecision);
+  }
+}
+
+TEST_F(RangeDataTest, RangeDataFromProto) {
+  const auto range_data =
+      FromProto(ToProto(RangeData{origin_, returns_, misses_}));
+
+  EXPECT_NEAR(range_data.origin.x(), origin_.x(), kPrecision);
+  EXPECT_NEAR(range_data.origin.y(), origin_.y(), kPrecision);
+  EXPECT_NEAR(range_data.origin.z(), origin_.z(), kPrecision);
+  EXPECT_EQ(returns_.size(), range_data.returns.size());
+  EXPECT_EQ(misses_.size(), range_data.misses.size());
+
+  for (int i = 0; i < range_data.returns.size(); ++i) {
+    EXPECT_NEAR(range_data.returns[i].x(), returns_[i].x(), kPrecision);
+    EXPECT_NEAR(range_data.returns[i].y(), returns_[i].y(), kPrecision);
+    EXPECT_NEAR(range_data.returns[i].z(), returns_[i].z(), kPrecision);
+  }
+  for (int i = 0; i < range_data.misses.size(); ++i) {
+    EXPECT_NEAR(range_data.misses[i].x(), misses_[i].x(), kPrecision);
+    EXPECT_NEAR(range_data.misses[i].y(), misses_[i].y(), kPrecision);
+    EXPECT_NEAR(range_data.misses[i].z(), misses_[i].z(), kPrecision);
+  }
+}
+
+TEST_F(RangeDataTest, CompressedRangeDataToProto) {
+  const auto proto = ToProto(CompressedRangeData{
+      origin_, CompressedPointCloud(returns_), CompressedPointCloud(misses_)});
+
+  EXPECT_TRUE(proto.has_origin());
+  EXPECT_TRUE(proto.has_returns());
+  EXPECT_TRUE(proto.has_misses());
+  EXPECT_NEAR(proto.origin().x(), origin_.x(), kPrecision);
+  EXPECT_NEAR(proto.origin().y(), origin_.y(), kPrecision);
+  EXPECT_NEAR(proto.origin().z(), origin_.z(), kPrecision);
+}
+
+TEST_F(RangeDataTest, CompressedRangeDataFromProto) {
+  const auto compressed_range_data = FromProto(ToProto(CompressedRangeData{
+      origin_, CompressedPointCloud(returns_), CompressedPointCloud(misses_)}));
+
+  EXPECT_NEAR(compressed_range_data.origin.x(), origin_.x(), kPrecision);
+  EXPECT_NEAR(compressed_range_data.origin.y(), origin_.y(), kPrecision);
+  EXPECT_NEAR(compressed_range_data.origin.z(), origin_.z(), kPrecision);
+  EXPECT_EQ(returns_.size(), compressed_range_data.returns.size());
+  EXPECT_EQ(misses_.size(), compressed_range_data.misses.size());
+}
 }  // namespace
 }  // namespace sensor
 }  // namespace cartographer
