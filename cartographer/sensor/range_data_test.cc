@@ -16,6 +16,7 @@
 
 #include "cartographer/sensor/range_data.h"
 #include <vector>
+#include <typeinfo>
 #include "gmock/gmock.h"
 
 namespace cartographer {
@@ -38,10 +39,10 @@ class RangeDataTest : public ::testing::Test {
  protected:
   RangeDataTest() {
     origin_ = Eigen::Vector3f(1, 1, 1);
-    returns_.emplace_back(Eigen::Vector3f(0, 1, 2));
-    returns_.emplace_back(Eigen::Vector3f(4, 5, 6));
-    returns_.emplace_back(Eigen::Vector3f(0, 1, 2));
-    misses_.emplace_back(Eigen::Vector3f(7, 8, 9));
+    returns_.emplace_back(0, 1, 2);
+    returns_.emplace_back(4, 5, 6);
+    returns_.emplace_back(0, 1, 2);
+    misses_.emplace_back(7, 8, 9);
   }
   void RangeDataToProtoTest() {}
 
@@ -49,7 +50,8 @@ class RangeDataTest : public ::testing::Test {
     const CompressedPointCloud compressed_returns(returns_);
     const CompressedPointCloud compressed_misses(misses_);
     const CompressedRangeData compressed_range_data = {
-        origin_, compressed_returns, compressed_misses};
+        origin_, compressed_returns, compressed_misses
+    };
     const auto proto = ToProto(compressed_range_data);
   }
   Eigen::Vector3f origin_;
