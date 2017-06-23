@@ -49,7 +49,7 @@ struct PointsBatch {
   // is unknown.
   string frame_id;
 
-  // Trajectory id that produced this point.
+  // Trajectory ID that produced this point.
   int trajectory_id;
 
   // Geometry of the points in a metric frame.
