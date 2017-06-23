@@ -79,7 +79,7 @@ class TrajectoryConnectivity {
 proto::TrajectoryConnectivity ToProto(
     std::vector<std::vector<int>> connected_components);
 
-// Returns the connected component containing 'trajectory_index'.
+// Returns the connected component containing 'trajectory_id'.
 proto::TrajectoryConnectivity::ConnectedComponent FindConnectedComponent(
     const cartographer::mapping::proto::TrajectoryConnectivity&
         trajectory_connectivity,
