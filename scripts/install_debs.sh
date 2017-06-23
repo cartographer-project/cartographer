@@ -32,7 +32,6 @@ sudo apt-get install -y \
     liblua5.2-dev \
     libprotobuf-dev \
     libsuitesparse-dev \
-    libwebp-dev \
     ninja-build \
     protobuf-compiler \
     python-sphinx

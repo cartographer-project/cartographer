@@ -30,8 +30,5 @@ message SubmapsOptions {
   // against, then while being matched.
   optional int32 num_range_data = 3;
 
-  // If enabled, submap%d.png images are written for debugging.
-  optional bool output_debug_images = 4;
-
   optional RangeDataInserterOptions range_data_inserter_options = 5;
 }

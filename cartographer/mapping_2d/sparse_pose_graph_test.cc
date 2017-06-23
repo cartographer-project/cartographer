@@ -53,7 +53,6 @@ class SparsePoseGraphTest : public ::testing::Test {
             resolution = 0.05,
             half_length = 21.,
             num_range_data = 1,
-            output_debug_images = false,
             range_data_inserter = {
               insert_free_space = true,
               hit_probability = 0.53,

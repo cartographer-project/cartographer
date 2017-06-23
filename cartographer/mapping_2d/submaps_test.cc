@@ -40,7 +40,6 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
       "num_range_data = " +
       std::to_string(kNumRangeData) +
       ", "
-      "output_debug_images = false, "
       "range_data_inserter = {"
       "insert_free_space = true, "
       "hit_probability = 0.53, "

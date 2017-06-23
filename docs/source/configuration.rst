@@ -267,9 +267,6 @@ int32 num_range_data
   number of scans inserted: First for initialization without being matched
   against, then while being matched.
 
-bool output_debug_images
-  If enabled, submap%d.png images are written for debugging.
-
 cartographer.mapping_2d.proto.RangeDataInserterOptions range_data_inserter_options
   Not yet documented.
 
@@ -285,9 +282,6 @@ double translation_weight
 
 double rotation_weight
   Not yet documented.
-
-double covariance_scale
-  Scale applied to the covariance estimate from Ceres.
 
 cartographer.common.proto.CeresSolverOptions ceres_solver_options
   Configure the Ceres solver. See the Ceres documentation for more
