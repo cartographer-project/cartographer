@@ -26,43 +26,9 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "glog/logging.h"
-#include "webp/encode.h"
 
 namespace cartographer {
 namespace mapping_2d {
-
-namespace {
-
-void WriteDebugImage(const string& filename,
-                     const ProbabilityGrid& probability_grid) {
-  constexpr int kUnknown = 128;
-  const CellLimits& cell_limits = probability_grid.limits().cell_limits();
-  const int width = cell_limits.num_x_cells;
-  const int height = cell_limits.num_y_cells;
-  std::vector<uint8_t> rgb;
-  for (const Eigen::Array2i& xy_index :
-       XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
-    CHECK(probability_grid.limits().Contains(xy_index));
-    const uint8_t value =
-        probability_grid.IsKnown(xy_index)
-            ? common::RoundToInt(
-                  (1. - probability_grid.GetProbability(xy_index)) * 255 + 0)
-            : kUnknown;
-    rgb.push_back(value);
-    rgb.push_back(value);
-    rgb.push_back(value);
-  }
-  uint8_t* output = nullptr;
-  size_t output_size =
-      WebPEncodeLosslessRGB(rgb.data(), width, height, 3 * width, &output);
-  std::unique_ptr<uint8_t, void (*)(void*)> output_deleter(output, std::free);
-  std::ofstream output_file(filename, std::ios::out | std::ios::binary);
-  output_file.write(reinterpret_cast<char*>(output), output_size);
-  output_file.close();
-  CHECK(output_file) << "Writing " << filename << " failed.";
-}
-
-}  // namespace
 
 ProbabilityGrid ComputeCroppedProbabilityGrid(
     const ProbabilityGrid& probability_grid) {
@@ -91,8 +57,6 @@ proto::SubmapsOptions CreateSubmapsOptions(
   options.set_half_length(parameter_dictionary->GetDouble("half_length"));
   options.set_num_range_data(
       parameter_dictionary->GetNonNegativeInt("num_range_data"));
-  options.set_output_debug_images(
-      parameter_dictionary->GetBool("output_debug_images"));
   *options.mutable_range_data_inserter_options() =
       CreateRangeDataInserterOptions(
           parameter_dictionary->GetDictionary("range_data_inserter").get());
@@ -190,11 +154,6 @@ int ActiveSubmaps::matching_index() const { return matching_submap_index_; }
 void ActiveSubmaps::FinishSubmap() {
   Submap* submap = submaps_.front().get();
   submap->Finish();
-  if (options_.output_debug_images()) {
-    // Output the Submap that won't be changed from now on.
-    WriteDebugImage("submap" + std::to_string(matching_submap_index_) + ".webp",
-                    submaps_.front()->probability_grid());
-  }
   ++matching_submap_index_;
   submaps_.erase(submaps_.begin());
 }
