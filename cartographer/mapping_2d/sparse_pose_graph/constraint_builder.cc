@@ -172,14 +172,18 @@ void ConstraintBuilder::ComputeConstraint(
   const sensor::PointCloud filtered_point_cloud =
       adaptive_voxel_filter_.Filter(*point_cloud);
 
-  // The 'constraint_transform' (i <- j) is computed from:
-  // - a 'filtered_point_cloud' in j,
-  // - the initial guess 'initial_pose' for (map <- j),
-  // - the result 'pose_estimate' of Match() (map <- j).
-  // - the ComputeSubmapPose() (map <- i)
+  // The 'constraint_transform' (submap i <- scan j) is computed from:
+  // - a 'filtered_point_cloud' in scan j,
+  // - the initial guess 'initial_pose' for (map <- scan j),
+  // - the result 'pose_estimate' of Match() (map <- scan j).
+  // - the ComputeSubmapPose() (map <- submap i)
   float score = 0.;
   transform::Rigid2d pose_estimate = transform::Rigid2d::Identity();
 
+  // Compute 'pose_estimate' in three stages:
+  // 1. Fast estimate using the fast correlative scan matcher.
+  // 2. Prune if the score is too low.
+  // 3. Refine.
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             filtered_point_cloud, options_.global_localization_min_score(),

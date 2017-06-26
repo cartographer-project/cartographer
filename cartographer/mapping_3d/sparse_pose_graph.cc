@@ -118,6 +118,8 @@ void SparsePoseGraph::AddScan(
               .at(mapping::SubmapId{
                   trajectory_id, submap_data_.num_indices(trajectory_id) - 1})
               .submap != insertion_submaps.back()) {
+    // We grow 'submap_data_' as needed. This code assumes that the first
+    // time we see a new submap is as 'insertion_submaps.back()'.
     const mapping::SubmapId submap_id =
         submap_data_.Append(trajectory_id, SubmapData());
     submap_data_.at(submap_id).submap = insertion_submaps.back();
@@ -261,6 +263,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
                                           scan_data->time, optimized_pose);
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const mapping::SubmapId submap_id = submap_ids[i];
+    // Even if this was the last scan added to 'submap_id', the submap will only
+    // be marked as finished in 'submap_data_' further below.
     CHECK(submap_data_.at(submap_id).state == SubmapState::kActive);
     submap_data_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid3d constraint_transform =
