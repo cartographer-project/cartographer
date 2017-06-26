@@ -132,15 +132,16 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
 
   // Set the starting point.
   // TODO(hrapp): Move ceres data into SubmapData.
-  std::vector<std::deque<std::array<double, 3>>> C_submaps(submap_data_.size());
+  std::vector<std::vector<std::array<double, 3>>> C_submaps(submap_data_.size());
   std::vector<std::vector<std::array<double, 3>>> C_nodes(node_data_.size());
   bool first_submap = true;
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
-    for (size_t submap_data_index = 0;
-         submap_data_index != submap_data_[trajectory_id].size(); ++submap_data_index) {
-      C_submaps[trajectory_id].push_back(
-          FromPose(submap_data_[trajectory_id][submap_data_index].pose));
+    // Reserve guarantees that data does not move, so the pointers for Ceres
+    // stay valid.
+    C_submaps[trajectory_id].reserve(submap_data_[trajectory_id].size());
+    for (const SubmapData& submap_data : submap_data_[trajectory_id]) {
+      C_submaps[trajectory_id].push_back(FromPose(submap_data.pose));
       problem.AddParameterBlock(C_submaps[trajectory_id].back().data(), 3);
       if (first_submap) {
         first_submap = false;
