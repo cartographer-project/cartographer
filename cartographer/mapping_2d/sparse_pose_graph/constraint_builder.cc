@@ -180,8 +180,10 @@ void ConstraintBuilder::ComputeConstraint(
   float score = 0.;
   transform::Rigid2d pose_estimate = transform::Rigid2d::Identity();
 
-  // Compute pose_estimate in three stages: Fast estimate, pruning, refinement
-  // First estimate using fast correlative scan matcher; return if score is too low.
+  // Compute 'pose_estimate' in three stages:
+  // 1. Fast estimate using the fast correlative scan matcher.
+  // 2. Prune if the score is too low.
+  // 3. Refine.
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             filtered_point_cloud, options_.global_localization_min_score(),

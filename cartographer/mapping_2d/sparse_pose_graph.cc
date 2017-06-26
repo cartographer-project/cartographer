@@ -235,8 +235,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       matching_id.trajectory_id, scan_data->time, pose, optimized_pose);
   for (const mapping::Submap* submap : insertion_submaps) {
     const mapping::SubmapId submap_id = GetSubmapId(submap);
-    // If this was the last scan added to the 'submap' it will be marked as
-    // finished after adding the respective constraint.
+    // Even if this was the last scan added to 'submap', the submap will only
+    // be marked as finished in 'submap_data_' further below.
     CHECK(submap_data_.at(submap_id).state == SubmapState::kActive);
     submap_data_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid2d constraint_transform =
