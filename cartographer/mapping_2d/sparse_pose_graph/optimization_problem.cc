@@ -175,22 +175,22 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   // Add penalties for changes between consecutive scans.
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    for (size_t trimmed_node_index = 1;
-         trimmed_node_index < node_data_[trajectory_id].size();
-         ++trimmed_node_index) {
+    for (size_t node_data_index = 1;
+         node_data_index < node_data_[trajectory_id].size();
+         ++node_data_index) {
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
                   transform::Embed3D(
-                      node_data_[trajectory_id][trimmed_node_index - 1]
+                      node_data_[trajectory_id][node_data_index - 1]
                           .initial_point_cloud_pose.inverse() *
-                      node_data_[trajectory_id][trimmed_node_index]
+                      node_data_[trajectory_id][node_data_index]
                           .initial_point_cloud_pose),
                   options_.consecutive_scan_translation_penalty_factor(),
                   options_.consecutive_scan_rotation_penalty_factor()})),
           nullptr /* loss function */,
-          C_nodes[trajectory_id][trimmed_node_index - 1].data(),
-          C_nodes[trajectory_id][trimmed_node_index].data());
+          C_nodes[trajectory_id][node_data_index - 1].data(),
+          C_nodes[trajectory_id][node_data_index].data());
     }
   }
 
@@ -215,11 +215,11 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    for (size_t trimmed_node_index = 0;
-         trimmed_node_index != node_data_[trajectory_id].size();
-         ++trimmed_node_index) {
-      node_data_[trajectory_id][trimmed_node_index].point_cloud_pose =
-          ToPose(C_nodes[trajectory_id][trimmed_node_index]);
+    for (size_t node_data_index = 0;
+         node_data_index != node_data_[trajectory_id].size();
+         ++node_data_index) {
+      node_data_[trajectory_id][node_data_index].point_cloud_pose =
+          ToPose(C_nodes[trajectory_id][node_data_index]);
     }
   }
 }

@@ -392,15 +392,15 @@ void SparsePoseGraph::RunOptimization() {
   const auto& node_data = optimization_problem_.node_data();
   for (int trajectory_id = 0;
        trajectory_id != static_cast<int>(node_data.size()); ++trajectory_id) {
-    int trimmed_node_index = 0;
+    int node_data_index = 0;
     const int num_nodes = trajectory_nodes_.num_indices(trajectory_id);
     int node_index = optimization_problem_.num_trimmed_nodes(trajectory_id);
-    for (; trimmed_node_index !=
+    for (; node_data_index !=
            static_cast<int>(node_data[trajectory_id].size());
-         ++trimmed_node_index, ++node_index) {
+         ++node_data_index, ++node_index) {
       const mapping::NodeId node_id{trajectory_id, node_index};
       trajectory_nodes_.at(node_id).pose = transform::Embed3D(
-          node_data[trajectory_id][trimmed_node_index].point_cloud_pose);
+          node_data[trajectory_id][node_data_index].point_cloud_pose);
     }
     // Extrapolate all point cloud poses that were added later.
     const auto local_to_new_global = ComputeLocalToGlobalTransform(
