@@ -207,11 +207,11 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
   const auto& node_data = optimization_problem_.node_data();
   for (size_t trajectory_id = 0; trajectory_id != node_data.size();
        ++trajectory_id) {
-    for (size_t trimmed_node_index = 0;
-         trimmed_node_index != node_data[trajectory_id].size();
-         ++trimmed_node_index) {
+    for (size_t node_data_index = 0;
+         node_data_index != node_data[trajectory_id].size();
+         ++node_data_index) {
       const int node_index =
-          trimmed_node_index +
+          node_data_index +
           optimization_problem_.num_trimmed_nodes(trajectory_id);
       const mapping::NodeId node_id{static_cast<int>(trajectory_id),
                                     static_cast<int>(node_index)};
