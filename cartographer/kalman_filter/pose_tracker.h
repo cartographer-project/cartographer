@@ -36,16 +36,7 @@
 namespace cartographer {
 namespace kalman_filter {
 
-typedef Eigen::Matrix3d Pose2DCovariance;
 typedef Eigen::Matrix<double, 6, 6> PoseCovariance;
-
-struct PoseAndCovariance {
-  transform::Rigid3d pose;
-  PoseCovariance covariance;
-};
-
-PoseAndCovariance operator*(const transform::Rigid3d& transform,
-                            const PoseAndCovariance& pose_and_covariance);
 
 PoseCovariance BuildPoseCovariance(double translational_variance,
                                    double rotational_variance);
@@ -80,11 +71,9 @@ class PoseTracker {
   PoseTracker(const proto::PoseTrackerOptions& options, common::Time time);
   virtual ~PoseTracker();
 
-  // Sets 'pose' and 'covariance' to the mean and covariance of the belief at
-  // 'time' which must be >= to the current time. Must not be nullptr.
-  void GetPoseEstimateMeanAndCovariance(common::Time time,
-                                        transform::Rigid3d* pose,
-                                        PoseCovariance* covariance);
+  // Returns the pose of the mean of the belief at 'time' which must be >= to
+  // the current time.
+  transform::Rigid3d GetPoseEstimateMean(common::Time time);
 
   // Updates from an IMU reading (in the IMU frame).
   void AddImuLinearAccelerationObservation(

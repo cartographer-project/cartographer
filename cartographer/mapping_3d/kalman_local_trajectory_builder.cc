@@ -58,11 +58,6 @@ void KalmanLocalTrajectoryBuilder::AddImuData(
 
   pose_tracker_->AddImuLinearAccelerationObservation(time, linear_acceleration);
   pose_tracker_->AddImuAngularVelocityObservation(time, angular_velocity);
-
-  transform::Rigid3d pose_estimate;
-  kalman_filter::PoseCovariance unused_covariance_estimate;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose_estimate,
-                                                  &unused_covariance_estimate);
 }
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
@@ -74,10 +69,8 @@ KalmanLocalTrajectoryBuilder::AddRangefinderData(
     return nullptr;
   }
 
-  transform::Rigid3d pose_prediction;
-  kalman_filter::PoseCovariance unused_covariance_prediction;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(
-      time, &pose_prediction, &unused_covariance_prediction);
+  const transform::Rigid3d pose_prediction =
+      pose_tracker_->GetPoseEstimateMean(time);
   if (num_accumulated_ == 0) {
     first_pose_prediction_ = pose_prediction.cast<float>();
     accumulated_range_data_ =
@@ -131,10 +124,8 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
     return nullptr;
   }
 
-  transform::Rigid3d pose_prediction;
-  kalman_filter::PoseCovariance unused_covariance_prediction;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(
-      time, &pose_prediction, &unused_covariance_prediction);
+  const transform::Rigid3d pose_prediction =
+      pose_tracker_->GetPoseEstimateMean(time);
 
   std::shared_ptr<const Submap> matching_submap =
       active_submaps_.submaps().front();
@@ -174,9 +165,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
               .scan_matcher_variance() *
           kalman_filter::PoseCovariance::Identity());
 
-  kalman_filter::PoseCovariance unused_covariance_estimate;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(
-      time, &scan_matcher_pose_estimate_, &unused_covariance_estimate);
+  scan_matcher_pose_estimate_ = pose_tracker_->GetPoseEstimateMean(time);
 
   last_pose_estimate_ = {
       time, scan_matcher_pose_estimate_,

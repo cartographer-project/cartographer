@@ -49,9 +49,6 @@ double imu_gravity_time_constant
   Time constant for the orientation moving average based on observed gravity
   via linear acceleration.
 
-double imu_gravity_variance
-  Not yet documented.
-
 int32 num_odometry_states
   Maximum number of previous odometry states to keep.
 

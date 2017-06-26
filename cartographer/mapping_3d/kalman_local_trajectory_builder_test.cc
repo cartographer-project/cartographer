@@ -107,7 +107,6 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
               position_model_variance = 0.000654766,
               velocity_model_variance = 0.053926,
               imu_gravity_time_constant = 1.,
-              imu_gravity_variance = 1e-4,
               num_odometry_states = 1,
             },
 
