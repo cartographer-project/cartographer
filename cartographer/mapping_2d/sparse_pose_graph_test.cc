@@ -53,14 +53,13 @@ class SparsePoseGraphTest : public ::testing::Test {
             resolution = 0.05,
             half_length = 21.,
             num_range_data = 1,
-            output_debug_images = false,
             range_data_inserter = {
               insert_free_space = true,
               hit_probability = 0.53,
               miss_probability = 0.495,
             },
           })text");
-      submaps_ = common::make_unique<Submaps>(
+      active_submaps_ = common::make_unique<ActiveSubmaps>(
           CreateSubmapsOptions(parameter_dictionary.get()));
     }
 
@@ -149,21 +148,20 @@ class SparsePoseGraphTest : public ::testing::Test {
     const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
-    const mapping::Submap* const matching_submap =
-        submaps_->Get(submaps_->matching_index());
-    std::vector<const mapping::Submap*> insertion_submaps;
-    for (int insertion_index : submaps_->insertion_indices()) {
-      insertion_submaps.push_back(submaps_->Get(insertion_index));
+    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+    for (auto submap : active_submaps_->submaps()) {
+      insertion_submaps.push_back(submap);
     }
     const sensor::RangeData range_data{
         Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
     constexpr int kTrajectoryId = 0;
-    submaps_->InsertRangeData(TransformRangeData(
+    active_submaps_->InsertRangeData(TransformRangeData(
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
+
     sparse_pose_graph_->AddScan(
         common::FromUniversal(0), transform::Rigid3d::Identity(), range_data,
-        pose_estimate, kTrajectoryId, matching_submap, insertion_submaps);
+        pose_estimate, kTrajectoryId, std::move(insertion_submaps));
   }
 
   void MoveRelative(const transform::Rigid2d& movement) {
@@ -171,7 +169,7 @@ class SparsePoseGraphTest : public ::testing::Test {
   }
 
   sensor::PointCloud point_cloud_;
-  std::unique_ptr<Submaps> submaps_;
+  std::unique_ptr<ActiveSubmaps> active_submaps_;
   common::ThreadPool thread_pool_;
   std::unique_ptr<SparsePoseGraph> sparse_pose_graph_;
   transform::Rigid2d current_pose_;

@@ -47,27 +47,55 @@ void InsertIntoProbabilityGrid(
 proto::SubmapsOptions CreateSubmapsOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-struct Submap : public mapping::Submap {
+class Submap : public mapping::Submap {
+ public:
   Submap(float high_resolution, float low_resolution,
          const transform::Rigid3d& local_pose);
 
-  HybridGrid high_resolution_hybrid_grid;
-  HybridGrid low_resolution_hybrid_grid;
-  bool finished = false;
+  const HybridGrid& high_resolution_hybrid_grid() const {
+    return high_resolution_hybrid_grid_;
+  }
+  const HybridGrid& low_resolution_hybrid_grid() const {
+    return low_resolution_hybrid_grid_;
+  }
+  const bool finished() const { return finished_; }
+
+  void ToResponseProto(
+      const transform::Rigid3d& global_submap_pose,
+      mapping::proto::SubmapQuery::Response* response) const override;
+
+  // Insert 'range_data' into this submap using 'range_data_inserter'. The
+  // submap must not be finished yet.
+  void InsertRangeData(const sensor::RangeData& range_data,
+                       const RangeDataInserter& range_data_inserter,
+                       int high_resolution_max_range);
+  void Finish();
+
+ private:
+  HybridGrid high_resolution_hybrid_grid_;
+  HybridGrid low_resolution_hybrid_grid_;
+  bool finished_ = false;
 };
 
-// A container of Submaps.
-class Submaps : public mapping::Submaps {
+// Except during initialization when only a single submap exists, there are
+// always two submaps into which scans are inserted: an old submap that is used
+// for matching, and a new one, which will be used for matching next, that is
+// being initialized.
+//
+// Once a certain number of scans have been inserted, the new submap is
+// considered initialized: the old submap is no longer changed, the "new" submap
+// is now the "old" submap and is used for scan-to-map matching. Moreover, a
+// "new" submap gets created. The "old" submap is forgotten by this object.
+class ActiveSubmaps {
  public:
-  explicit Submaps(const proto::SubmapsOptions& options);
+  explicit ActiveSubmaps(const proto::SubmapsOptions& options);
 
-  Submaps(const Submaps&) = delete;
-  Submaps& operator=(const Submaps&) = delete;
+  ActiveSubmaps(const ActiveSubmaps&) = delete;
+  ActiveSubmaps& operator=(const ActiveSubmaps&) = delete;
 
-  const Submap* Get(int index) const override;
-  int size() const override;
-  void SubmapToProto(int index, const transform::Rigid3d& global_submap_pose,
-                     mapping::proto::SubmapQuery::Response* response) override;
+  // Returns the index of the newest initialized Submap which can be
+  // used for scan-to-map matching.
+  int matching_index() const;
 
   // Inserts 'range_data' into the Submap collection. 'gravity_alignment' is
   // used for the orientation of new submaps so that the z axis approximately
@@ -75,37 +103,14 @@ class Submaps : public mapping::Submaps {
   void InsertRangeData(const sensor::RangeData& range_data,
                        const Eigen::Quaterniond& gravity_alignment);
 
- private:
-  struct PixelData {
-    int min_z = INT_MAX;
-    int max_z = INT_MIN;
-    int count = 0;
-    float probability_sum = 0.f;
-    float max_probability = 0.5f;
-  };
+  std::vector<std::shared_ptr<Submap>> submaps() const;
 
+ private:
   void AddSubmap(const transform::Rigid3d& local_pose);
 
-  std::vector<PixelData> AccumulatePixelData(
-      const int width, const int height, const Eigen::Array2i& min_index,
-      const Eigen::Array2i& max_index,
-      const std::vector<Eigen::Array4i>& voxel_indices_and_probabilities) const;
-  // The first three entries of each returned value are a cell_index and the
-  // last is the corresponding probability value. We batch them together like
-  // this to only have one vector and have better cache locality.
-  std::vector<Eigen::Array4i> ExtractVoxelData(
-      const HybridGrid& hybrid_grid, const transform::Rigid3f& transform,
-      Eigen::Array2i* min_index, Eigen::Array2i* max_index) const;
-  // Builds texture data containing interleaved value and alpha for the
-  // visualization from 'accumulated_pixel_data'.
-  string ComputePixelValues(
-      const std::vector<PixelData>& accumulated_pixel_data) const;
-
   const proto::SubmapsOptions options_;
-
-  // 'submaps_' contains pointers, so that resizing the vector does not
-  // invalidate handed out Submap* pointers.
-  std::vector<std::unique_ptr<Submap>> submaps_;
+  int matching_submap_index_ = 0;
+  std::vector<std::shared_ptr<Submap>> submaps_;
   RangeDataInserter range_data_inserter_;
 };
 

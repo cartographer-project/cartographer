@@ -106,15 +106,11 @@ OptimizingLocalTrajectoryBuilder::OptimizingLocalTrajectoryBuilder(
     : options_(options),
       ceres_solver_options_(common::CreateCeresSolverOptions(
           options.ceres_scan_matcher_options().ceres_solver_options())),
-      submaps_(common::make_unique<Submaps>(options.submaps_options())),
+      active_submaps_(options.submaps_options()),
       num_accumulated_(0),
       motion_filter_(options.motion_filter_options()) {}
 
 OptimizingLocalTrajectoryBuilder::~OptimizingLocalTrajectoryBuilder() {}
-
-mapping_3d::Submaps* OptimizingLocalTrajectoryBuilder::submaps() {
-  return submaps_.get();
-}
 
 void OptimizingLocalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
@@ -236,12 +232,12 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   }
 
   ceres::Problem problem;
-  const Submap* const matching_submap =
-      submaps_->Get(submaps_->matching_index());
+  std::shared_ptr<const Submap> matching_submap =
+      active_submaps_.submaps().front();
   // We transform the states in 'batches_' in place to be in the submap frame as
   // expected by the OccupiedSpaceCostFunctor. This is reverted after solving
   // the optimization problem.
-  TransformStates(matching_submap->local_pose.inverse());
+  TransformStates(matching_submap->local_pose().inverse());
   for (size_t i = 0; i < batches_.size(); ++i) {
     Batch& batch = batches_[i];
     problem.AddResidualBlock(
@@ -253,7 +249,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                     std::sqrt(static_cast<double>(
                         batch.high_resolution_filtered_points.size())),
                 batch.high_resolution_filtered_points,
-                matching_submap->high_resolution_hybrid_grid),
+                matching_submap->high_resolution_hybrid_grid()),
             batch.high_resolution_filtered_points.size()),
         nullptr, batch.state.translation.data(), batch.state.rotation.data());
     problem.AddResidualBlock(
@@ -265,7 +261,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                     std::sqrt(static_cast<double>(
                         batch.low_resolution_filtered_points.size())),
                 batch.low_resolution_filtered_points,
-                matching_submap->low_resolution_hybrid_grid),
+                matching_submap->low_resolution_hybrid_grid()),
             batch.low_resolution_filtered_points.size()),
         nullptr, batch.state.translation.data(), batch.state.rotation.data());
 
@@ -350,7 +346,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   ceres::Solve(ceres_solver_options_, &problem, &summary);
   // The optimized states in 'batches_' are in the submap frame and we transform
   // them in place to be in the local SLAM frame again.
-  TransformStates(matching_submap->local_pose);
+  TransformStates(matching_submap->local_pose());
   if (num_accumulated_ < options_.scans_per_accumulation()) {
     return nullptr;
   }
@@ -409,25 +405,23 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
   }
-  // Querying matching and insertion indices must be done here before calling
+  // Querying the active submaps must be done here before calling
   // InsertRangeData() since the queried values are valid for next insertion.
-  const Submap* const matching_submap =
-      submaps_->Get(submaps_->matching_index());
-  std::vector<const Submap*> insertion_submaps;
-  for (int insertion_index : submaps_->insertion_indices()) {
-    insertion_submaps.push_back(submaps_->Get(insertion_index));
+  std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+  for (std::shared_ptr<Submap> submap : active_submaps_.submaps()) {
+    insertion_submaps.push_back(submap);
   }
   // TODO(whess): Use an ImuTracker to track the gravity direction.
   const Eigen::Quaterniond kFakeGravityOrientation =
       Eigen::Quaterniond::Identity();
-  submaps_->InsertRangeData(
+  active_submaps_.InsertRangeData(
       sensor::TransformRangeData(range_data_in_tracking,
                                  pose_observation.cast<float>()),
       kFakeGravityOrientation);
 
   return std::unique_ptr<InsertionResult>(
       new InsertionResult{time, range_data_in_tracking, pose_observation,
-                          matching_submap, insertion_submaps});
+                          std::move(insertion_submaps)});
 }
 
 OptimizingLocalTrajectoryBuilder::State

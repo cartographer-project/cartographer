@@ -44,7 +44,6 @@ class PoseTrackerTest : public ::testing::Test {
             position_model_variance = 1e-8,
             velocity_model_variance = 1e-8,
             imu_gravity_time_constant = 100.,
-            imu_gravity_variance = 1e-9,
             num_odometry_states = 1,
         }
         )text");
@@ -59,9 +58,7 @@ class PoseTrackerTest : public ::testing::Test {
 
 TEST_F(PoseTrackerTest, SaveAndRestore) {
   std::vector<Rigid3d> poses(3);
-  std::vector<PoseCovariance> covariances(3);
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(common::FromUniversal(1500),
-                                                  &poses[0], &covariances[0]);
+  poses[0] = pose_tracker_->GetPoseEstimateMean(common::FromUniversal(1500));
 
   pose_tracker_->AddImuLinearAccelerationObservation(
       common::FromUniversal(2000), Eigen::Vector3d(1, 1, 9));
@@ -72,18 +69,15 @@ TEST_F(PoseTrackerTest, SaveAndRestore) {
   pose_tracker_->AddImuLinearAccelerationObservation(
       common::FromUniversal(3000), observation);
 
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(common::FromUniversal(3500),
-                                                  &poses[1], &covariances[1]);
+  poses[1] = pose_tracker_->GetPoseEstimateMean(common::FromUniversal(3500));
 
   copy_of_pose_tracker.AddImuLinearAccelerationObservation(
       common::FromUniversal(3000), observation);
-  copy_of_pose_tracker.GetPoseEstimateMeanAndCovariance(
-      common::FromUniversal(3500), &poses[2], &covariances[2]);
+  poses[2] =
+      copy_of_pose_tracker.GetPoseEstimateMean(common::FromUniversal(3500));
 
   EXPECT_THAT(poses[0], Not(IsNearly(poses[1], 1e-6)));
-  EXPECT_FALSE((covariances[0].array() == covariances[1].array()).all());
   EXPECT_THAT(poses[1], IsNearly(poses[2], 1e-6));
-  EXPECT_TRUE((covariances[1].array() == covariances[2].array()).all());
 }
 
 TEST_F(PoseTrackerTest, AddImuLinearAccelerationObservation) {
@@ -96,9 +90,7 @@ TEST_F(PoseTrackerTest, AddImuLinearAccelerationObservation) {
   }
 
   {
-    Rigid3d pose;
-    PoseCovariance covariance;
-    pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose, &covariance);
+    const Rigid3d pose = pose_tracker_->GetPoseEstimateMean(time);
     const Eigen::Quaterniond actual = Eigen::Quaterniond(pose.rotation());
     const Eigen::Quaterniond expected = Eigen::Quaterniond::Identity();
     EXPECT_TRUE(actual.isApprox(expected, 1e-3)) << expected.coeffs() << " vs\n"
@@ -113,9 +105,7 @@ TEST_F(PoseTrackerTest, AddImuLinearAccelerationObservation) {
 
   time += std::chrono::milliseconds(5);
 
-  Rigid3d pose;
-  PoseCovariance covariance;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose, &covariance);
+  const Rigid3d pose = pose_tracker_->GetPoseEstimateMean(time);
   const Eigen::Quaterniond actual = Eigen::Quaterniond(pose.rotation());
   const Eigen::Quaterniond expected = Eigen::Quaterniond(
       Eigen::AngleAxisd(M_PI / 2., Eigen::Vector3d::UnitX()));
@@ -133,9 +123,7 @@ TEST_F(PoseTrackerTest, AddImuAngularVelocityObservation) {
   }
 
   {
-    Rigid3d pose;
-    PoseCovariance covariance;
-    pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose, &covariance);
+    const Rigid3d pose = pose_tracker_->GetPoseEstimateMean(time);
     const Eigen::Quaterniond actual = Eigen::Quaterniond(pose.rotation());
     const Eigen::Quaterniond expected = Eigen::Quaterniond::Identity();
     EXPECT_TRUE(actual.isApprox(expected, 1e-3)) << expected.coeffs() << " vs\n"
@@ -153,9 +141,7 @@ TEST_F(PoseTrackerTest, AddImuAngularVelocityObservation) {
 
   time += std::chrono::milliseconds(5);
 
-  Rigid3d pose;
-  PoseCovariance covariance;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose, &covariance);
+  const Rigid3d pose = pose_tracker_->GetPoseEstimateMean(time);
   const Eigen::Quaterniond actual = Eigen::Quaterniond(pose.rotation());
   const Eigen::Quaterniond expected = Eigen::Quaterniond(
       Eigen::AngleAxisd(M_PI / 2., Eigen::Vector3d::UnitX()));
@@ -174,9 +160,7 @@ TEST_F(PoseTrackerTest, AddPoseObservation) {
   }
 
   {
-    Rigid3d actual;
-    PoseCovariance covariance;
-    pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &actual, &covariance);
+    const Rigid3d actual = pose_tracker_->GetPoseEstimateMean(time);
     EXPECT_THAT(actual, IsNearly(Rigid3d::Identity(), 1e-3));
   }
 
@@ -193,9 +177,7 @@ TEST_F(PoseTrackerTest, AddPoseObservation) {
 
   time += std::chrono::milliseconds(15);
 
-  Rigid3d actual;
-  PoseCovariance covariance;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &actual, &covariance);
+  const Rigid3d actual = pose_tracker_->GetPoseEstimateMean(time);
   EXPECT_THAT(actual, IsNearly(expected, 1e-3));
 }
 
@@ -221,13 +203,11 @@ TEST_F(PoseTrackerTest, AddOdometerPoseObservation) {
   odometer_track.push_back(Rigid3d::Translation(Eigen::Vector3d(0., 0.1, 0.2)));
 
   Rigid3d actual;
-  PoseCovariance unused_covariance;
   for (const Rigid3d& pose : odometer_track) {
     time += std::chrono::seconds(1);
     pose_tracker_->AddOdometerPoseObservation(
         time, pose, kOdometerVariance * PoseCovariance::Identity());
-    pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &actual,
-                                                    &unused_covariance);
+    actual = pose_tracker_->GetPoseEstimateMean(time);
     EXPECT_THAT(actual, IsNearly(pose, 1e-2));
   }
   // Sanity check that the test has signal:

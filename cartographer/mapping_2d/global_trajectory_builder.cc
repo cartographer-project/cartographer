@@ -28,23 +28,20 @@ GlobalTrajectoryBuilder::GlobalTrajectoryBuilder(
 
 GlobalTrajectoryBuilder::~GlobalTrajectoryBuilder() {}
 
-Submaps* GlobalTrajectoryBuilder::submaps() {
-  return local_trajectory_builder_.submaps();
-}
-
 void GlobalTrajectoryBuilder::AddRangefinderData(
     const common::Time time, const Eigen::Vector3f& origin,
     const sensor::PointCloud& ranges) {
   std::unique_ptr<LocalTrajectoryBuilder::InsertionResult> insertion_result =
       local_trajectory_builder_.AddHorizontalRangeData(
           time, sensor::RangeData{origin, ranges, {}});
-  if (insertion_result != nullptr) {
-    sparse_pose_graph_->AddScan(
-        insertion_result->time, insertion_result->tracking_to_tracking_2d,
-        insertion_result->range_data_in_tracking_2d,
-        insertion_result->pose_estimate_2d, trajectory_id_,
-        insertion_result->matching_submap, insertion_result->insertion_submaps);
+  if (insertion_result == nullptr) {
+    return;
   }
+  sparse_pose_graph_->AddScan(
+      insertion_result->time, insertion_result->tracking_to_tracking_2d,
+      insertion_result->range_data_in_tracking_2d,
+      insertion_result->pose_estimate_2d, trajectory_id_,
+      std::move(insertion_result->insertion_submaps));
 }
 
 void GlobalTrajectoryBuilder::AddImuData(

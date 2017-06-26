@@ -20,6 +20,8 @@
 
 @PACKAGE_INIT@
 
+set_and_check(CARTOGRAPHER_CMAKE_DIR "@PACKAGE_CARTOGRAPHER_CMAKE_DIR@")
+
 set(CERES_DIR_HINTS @Ceres_DIR@)
 
 if (cartographer_FIND_QUIETLY)
@@ -30,5 +32,4 @@ else ()
    find_package(Ceres HINTS ${CERES_DIR_HINTS})
 endif()
 
-set_and_check(CARTOGRAPHER_CMAKE_DIR "@PACKAGE_CARTOGRAPHER_CMAKE_DIR@")
 include("${CARTOGRAPHER_CMAKE_DIR}/CartographerTargets.cmake")

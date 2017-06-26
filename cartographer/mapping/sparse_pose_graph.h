@@ -28,6 +28,7 @@
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
+#include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -49,8 +50,8 @@ class SparsePoseGraph {
       double rotation_weight;
     };
 
-    mapping::SubmapId submap_id;  // 'i' in the paper.
-    mapping::NodeId node_id;      // 'j' in the paper.
+    SubmapId submap_id;  // 'i' in the paper.
+    NodeId node_id;      // 'j' in the paper.
 
     // Pose of the scan 'j' relative to submap 'i'.
     Pose pose;
@@ -59,6 +60,11 @@ class SparsePoseGraph {
     // submap 'i') and inter-submap constraints (where scan 'j' was not inserted
     // into submap 'i').
     enum Tag { INTRA_SUBMAP, INTER_SUBMAP } tag;
+  };
+
+  struct SubmapData {
+    std::shared_ptr<const Submap> submap;
+    transform::Rigid3d pose;
   };
 
   SparsePoseGraph() {}
@@ -77,9 +83,15 @@ class SparsePoseGraph {
   // Gets the current trajectory clusters.
   virtual std::vector<std::vector<int>> GetConnectedTrajectories() = 0;
 
-  // Returns the current optimized transforms for the given 'trajectory_id'.
-  virtual std::vector<transform::Rigid3d> GetSubmapTransforms(
-      int trajectory_id) = 0;
+  // Return the number of submaps for the given 'trajectory_id'.
+  virtual int num_submaps(int trajectory_id) = 0;
+
+  // Returns the current optimized transform and submap itself for the given
+  // 'submap_id'.
+  virtual SubmapData GetSubmapData(const SubmapId& submap_id) = 0;
+
+  // Returns data for all Submaps by trajectory.
+  virtual std::vector<std::vector<SubmapData>> GetAllSubmapData() = 0;
 
   // Returns the transform converting data in the local map frame (i.e. the
   // continuous, non-loop-closed frame) into the global map frame (i.e. the

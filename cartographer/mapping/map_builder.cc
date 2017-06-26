@@ -104,29 +104,31 @@ int MapBuilder::GetBlockingTrajectoryId() const {
   return sensor_collator_.GetBlockingTrajectoryId();
 }
 
-string MapBuilder::SubmapToProto(const int trajectory_id,
-                                 const int submap_index,
+string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
                                  proto::SubmapQuery::Response* const response) {
-  if (trajectory_id < 0 || trajectory_id >= num_trajectory_builders()) {
-    return "Requested submap from trajectory " + std::to_string(trajectory_id) +
-           " but there are only " + std::to_string(num_trajectory_builders()) +
-           " trajectories.";
+  if (submap_id.trajectory_id < 0 ||
+      submap_id.trajectory_id >= num_trajectory_builders()) {
+    return "Requested submap from trajectory " +
+           std::to_string(submap_id.trajectory_id) + " but there are only " +
+           std::to_string(num_trajectory_builders()) + " trajectories.";
   }
 
-  const std::vector<transform::Rigid3d> submap_transforms =
-      sparse_pose_graph_->GetSubmapTransforms(trajectory_id);
-  if (submap_index < 0 ||
-      static_cast<size_t>(submap_index) >= submap_transforms.size()) {
-    return "Requested submap " + std::to_string(submap_index) +
-           " from trajectory " + std::to_string(trajectory_id) +
-           " but there are only " + std::to_string(submap_transforms.size()) +
+  const int num_submaps =
+      sparse_pose_graph_->num_submaps(submap_id.trajectory_id);
+  if (submap_id.submap_index < 0 || submap_id.submap_index >= num_submaps) {
+    return "Requested submap " + std::to_string(submap_id.submap_index) +
+           " from trajectory " + std::to_string(submap_id.trajectory_id) +
+           " but there are only " + std::to_string(num_submaps) +
            " submaps in this trajectory.";
   }
 
-  Submaps* const submaps = trajectory_builders_.at(trajectory_id)->submaps();
-  response->set_submap_version(submaps->Get(submap_index)->num_range_data);
-  submaps->SubmapToProto(submap_index, submap_transforms[submap_index],
-                         response);
+  const auto submap_data = sparse_pose_graph_->GetSubmapData(submap_id);
+  if (submap_data.submap == nullptr) {
+    return "Requested submap " + std::to_string(submap_id.submap_index) +
+           " from trajectory " + std::to_string(submap_id.trajectory_id) +
+           " but it has been trimmed.";
+  }
+  submap_data.submap->ToResponseProto(submap_data.pose, response);
   return "";
 }
 

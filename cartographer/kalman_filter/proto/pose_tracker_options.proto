@@ -25,7 +25,6 @@ message PoseTrackerOptions {
   // Time constant for the orientation moving average based on observed gravity
   // via linear acceleration.
   optional double imu_gravity_time_constant = 4;
-  optional double imu_gravity_variance = 5;
 
   // Maximum number of previous odometry states to keep.
   optional int32 num_odometry_states = 6;

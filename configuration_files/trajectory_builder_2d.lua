@@ -59,7 +59,6 @@ TRAJECTORY_BUILDER_2D = {
     resolution = 0.05,
     half_length = 200.,
     num_range_data = 90,
-    output_debug_images = false,
     range_data_inserter = {
       insert_free_space = true,
       hit_probability = 0.55,

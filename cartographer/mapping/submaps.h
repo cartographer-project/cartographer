@@ -56,60 +56,28 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
 // track of how many range data were inserted into it, and sets the
 // 'finished_probability_grid' to be used for loop closing once the map no
 // longer changes.
-struct Submap {
-  Submap(const transform::Rigid3d& local_pose) : local_pose(local_pose) {}
+class Submap {
+ public:
+  Submap(const transform::Rigid3d& local_pose) : local_pose_(local_pose) {}
+  virtual ~Submap() {}
 
   // Local SLAM pose of this submap.
-  const transform::Rigid3d local_pose;
+  transform::Rigid3d local_pose() const { return local_pose_; }
 
   // Number of RangeData inserted.
-  int num_range_data = 0;
+  int num_range_data() const { return num_range_data_; }
 
-  // The 'finished_probability_grid' when this submap is finished and will not
-  // change anymore. Otherwise, this is nullptr and the next call to
-  // InsertRangeData() will change the submap.
-  const mapping_2d::ProbabilityGrid* finished_probability_grid = nullptr;
-};
+  // Fills data into the 'response'.
+  virtual void ToResponseProto(
+      const transform::Rigid3d& global_submap_pose,
+      proto::SubmapQuery::Response* response) const = 0;
 
-// Submaps is a sequence of maps to which scans are matched and into which scans
-// are inserted.
-//
-// Except during initialization when only a single submap exists, there are
-// always two submaps into which scans are inserted: an old submap that is used
-// for matching, and a new one, which will be used for matching next, that is
-// being initialized.
-//
-// Once a certain number of scans have been inserted, the new submap is
-// considered initialized: the old submap is no longer changed, the "new" submap
-// is now the "old" submap and is used for scan-to-map matching. Moreover,
-// a "new" submap gets inserted.
-class Submaps {
- public:
-  Submaps();
-  virtual ~Submaps();
+ private:
+  const transform::Rigid3d local_pose_;
 
-  Submaps(const Submaps&) = delete;
-  Submaps& operator=(const Submaps&) = delete;
-
-  // Returns the index of the newest initialized Submap which can be
-  // used for scan-to-map matching.
-  int matching_index() const;
-
-  // Returns the indices of the Submap into which point clouds will
-  // be inserted.
-  std::vector<int> insertion_indices() const;
-
-  // Returns the Submap with the given 'index'. The same 'index' will always
-  // return the same pointer, so that Submaps can be identified by it.
-  virtual const Submap* Get(int index) const = 0;
-
-  // Returns the number of Submaps.
-  virtual int size() const = 0;
-
-  // Fills data about the Submap with 'index' into the 'response'.
-  virtual void SubmapToProto(int index,
-                             const transform::Rigid3d& global_submap_pose,
-                             proto::SubmapQuery::Response* response) = 0;
+ protected:
+  // TODO(hrapp): This should be private.
+  int num_range_data_ = 0;
 };
 
 }  // namespace mapping

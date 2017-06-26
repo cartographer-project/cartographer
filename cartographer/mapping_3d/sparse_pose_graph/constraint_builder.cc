@@ -72,7 +72,7 @@ void ConstraintBuilder::MaybeAddConstraint(
     ++pending_computations_[current_computation_];
     const int current_computation = current_computation_;
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-        submap_id, submap_nodes, &submap->high_resolution_hybrid_grid,
+        submap_id, submap_nodes, &submap->high_resolution_hybrid_grid(),
         [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, submap, node_id,
                             false,   /* match_full_submap */
@@ -96,7 +96,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      submap_id, submap_nodes, &submap->high_resolution_hybrid_grid,
+      submap_id, submap_nodes, &submap->high_resolution_hybrid_grid(),
       [=]() EXCLUDES(mutex_) {
         ComputeConstraint(
             submap_id, submap, node_id, true, /* match_full_submap */

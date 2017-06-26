@@ -31,7 +31,7 @@ namespace mapping_3d {
 KalmanLocalTrajectoryBuilder::KalmanLocalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions& options)
     : options_(options),
-      submaps_(common::make_unique<Submaps>(options.submaps_options())),
+      active_submaps_(options.submaps_options()),
       scan_matcher_pose_estimate_(transform::Rigid3d::Identity()),
       motion_filter_(options.motion_filter_options()),
       real_time_correlative_scan_matcher_(
@@ -46,10 +46,6 @@ KalmanLocalTrajectoryBuilder::KalmanLocalTrajectoryBuilder(
 
 KalmanLocalTrajectoryBuilder::~KalmanLocalTrajectoryBuilder() {}
 
-mapping_3d::Submaps* KalmanLocalTrajectoryBuilder::submaps() {
-  return submaps_.get();
-}
-
 void KalmanLocalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
     const Eigen::Vector3d& angular_velocity) {
@@ -62,11 +58,6 @@ void KalmanLocalTrajectoryBuilder::AddImuData(
 
   pose_tracker_->AddImuLinearAccelerationObservation(time, linear_acceleration);
   pose_tracker_->AddImuAngularVelocityObservation(time, angular_velocity);
-
-  transform::Rigid3d pose_estimate;
-  kalman_filter::PoseCovariance unused_covariance_estimate;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(time, &pose_estimate,
-                                                  &unused_covariance_estimate);
 }
 
 std::unique_ptr<KalmanLocalTrajectoryBuilder::InsertionResult>
@@ -78,10 +69,8 @@ KalmanLocalTrajectoryBuilder::AddRangefinderData(
     return nullptr;
   }
 
-  transform::Rigid3d pose_prediction;
-  kalman_filter::PoseCovariance unused_covariance_prediction;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(
-      time, &pose_prediction, &unused_covariance_prediction);
+  const transform::Rigid3d pose_prediction =
+      pose_tracker_->GetPoseEstimateMean(time);
   if (num_accumulated_ == 0) {
     first_pose_prediction_ = pose_prediction.cast<float>();
     accumulated_range_data_ =
@@ -135,15 +124,13 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
     return nullptr;
   }
 
-  transform::Rigid3d pose_prediction;
-  kalman_filter::PoseCovariance unused_covariance_prediction;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(
-      time, &pose_prediction, &unused_covariance_prediction);
+  const transform::Rigid3d pose_prediction =
+      pose_tracker_->GetPoseEstimateMean(time);
 
-  const Submap* const matching_submap =
-      submaps_->Get(submaps_->matching_index());
+  std::shared_ptr<const Submap> matching_submap =
+      active_submaps_.submaps().front();
   transform::Rigid3d initial_ceres_pose =
-      matching_submap->local_pose.inverse() * pose_prediction;
+      matching_submap->local_pose().inverse() * pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.high_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud filtered_point_cloud_in_tracking =
@@ -154,7 +141,7 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
     const transform::Rigid3d initial_pose = initial_ceres_pose;
     real_time_correlative_scan_matcher_->Match(
         initial_pose, filtered_point_cloud_in_tracking,
-        matching_submap->high_resolution_hybrid_grid, &initial_ceres_pose);
+        matching_submap->high_resolution_hybrid_grid(), &initial_ceres_pose);
   }
 
   transform::Rigid3d pose_observation_in_submap;
@@ -166,21 +153,19 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
       low_resolution_adaptive_voxel_filter.Filter(filtered_range_data.returns);
   ceres_scan_matcher_->Match(scan_matcher_pose_estimate_, initial_ceres_pose,
                              {{&filtered_point_cloud_in_tracking,
-                               &matching_submap->high_resolution_hybrid_grid},
+                               &matching_submap->high_resolution_hybrid_grid()},
                               {&low_resolution_point_cloud_in_tracking,
-                               &matching_submap->low_resolution_hybrid_grid}},
+                               &matching_submap->low_resolution_hybrid_grid()}},
                              &pose_observation_in_submap, &summary);
   const transform::Rigid3d pose_observation =
-      matching_submap->local_pose * pose_observation_in_submap;
+      matching_submap->local_pose() * pose_observation_in_submap;
   pose_tracker_->AddPoseObservation(
       time, pose_observation,
       options_.kalman_local_trajectory_builder_options()
               .scan_matcher_variance() *
           kalman_filter::PoseCovariance::Identity());
 
-  kalman_filter::PoseCovariance unused_covariance_estimate;
-  pose_tracker_->GetPoseEstimateMeanAndCovariance(
-      time, &scan_matcher_pose_estimate_, &unused_covariance_estimate);
+  scan_matcher_pose_estimate_ = pose_tracker_->GetPoseEstimateMean(time);
 
   last_pose_estimate_ = {
       time, scan_matcher_pose_estimate_,
@@ -219,21 +204,19 @@ KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
   }
-  // Querying matching and insertion indices must be done here before calling
+  // Querying the active submaps must be done here before calling
   // InsertRangeData() since the queried values are valid for next insertion.
-  const Submap* const matching_submap =
-      submaps_->Get(submaps_->matching_index());
-  std::vector<const Submap*> insertion_submaps;
-  for (int insertion_index : submaps_->insertion_indices()) {
-    insertion_submaps.push_back(submaps_->Get(insertion_index));
+  std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+  for (std::shared_ptr<Submap> submap : active_submaps_.submaps()) {
+    insertion_submaps.push_back(submap);
   }
-  submaps_->InsertRangeData(
+  active_submaps_.InsertRangeData(
       sensor::TransformRangeData(range_data_in_tracking,
                                  pose_observation.cast<float>()),
       pose_tracker_->gravity_orientation());
   return std::unique_ptr<InsertionResult>(
       new InsertionResult{time, range_data_in_tracking, pose_observation,
-                          matching_submap, insertion_submaps});
+                          std::move(insertion_submaps)});
 }
 
 }  // namespace mapping_3d

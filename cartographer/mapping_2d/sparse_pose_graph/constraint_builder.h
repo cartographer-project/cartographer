@@ -35,7 +35,7 @@
 #include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
-
+#include "cartographer/mapping_2d/submaps.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -47,7 +47,7 @@ namespace sparse_pose_graph {
 
 // Returns (map <- submap) where 'submap' is a coordinate system at the origin
 // of the Submap.
-transform::Rigid2d ComputeSubmapPose(const mapping::Submap& submap);
+transform::Rigid2d ComputeSubmapPose(const Submap& submap);
 
 // Asynchronously computes constraints.
 //
@@ -78,8 +78,7 @@ class ConstraintBuilder {
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
   // computations are finished.
   void MaybeAddConstraint(const mapping::SubmapId& submap_id,
-                          const mapping::Submap* submap,
-                          const mapping::NodeId& node_id,
+                          const Submap* submap, const mapping::NodeId& node_id,
                           const sensor::PointCloud* point_cloud,
                           const transform::Rigid2d& initial_relative_pose);
 
@@ -92,7 +91,7 @@ class ConstraintBuilder {
   // The pointees of 'submap' and 'point_cloud' must stay valid until all
   // computations are finished.
   void MaybeAddGlobalConstraint(
-      const mapping::SubmapId& submap_id, const mapping::Submap* submap,
+      const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id, const sensor::PointCloud* point_cloud,
       mapping::TrajectoryConnectivity* trajectory_connectivity);
 
@@ -138,7 +137,7 @@ class ConstraintBuilder {
   // 'trajectory_connectivity'.
   // As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
-      const mapping::SubmapId& submap_id, const mapping::Submap* submap,
+      const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id, bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::PointCloud* point_cloud,

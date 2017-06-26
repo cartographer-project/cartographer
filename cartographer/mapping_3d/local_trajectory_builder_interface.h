@@ -37,8 +37,7 @@ class LocalTrajectoryBuilderInterface {
     common::Time time;
     sensor::RangeData range_data_in_tracking;
     transform::Rigid3d pose_observation;
-    const Submap* matching_submap;
-    std::vector<const Submap*> insertion_submaps;
+    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
 
   virtual ~LocalTrajectoryBuilderInterface() {}
@@ -57,7 +56,6 @@ class LocalTrajectoryBuilderInterface {
   virtual void AddOdometerData(common::Time time,
                                const transform::Rigid3d& pose) = 0;
 
-  virtual mapping_3d::Submaps* submaps() = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
  protected:

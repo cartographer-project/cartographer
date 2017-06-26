@@ -28,8 +28,6 @@
 namespace cartographer {
 namespace mapping {
 
-class Submaps;
-
 struct TrajectoryNode {
   struct Data {
     common::Time time;
@@ -40,9 +38,6 @@ struct TrajectoryNode {
     // Range data in 'pose' frame. Only used in the 3D case.
     sensor::CompressedRangeData range_data_3d;
 
-    // Trajectory this node belongs to.
-    int trajectory_id;
-
     // Transform from the 3D 'tracking' frame to the 'pose' frame of the range
     // data, which contains roll, pitch and height for 2D. In 3D this is always
     // identity.
@@ -50,9 +45,10 @@ struct TrajectoryNode {
   };
 
   common::Time time() const { return constant_data->time; }
+  bool trimmed() const { return constant_data == nullptr; }
 
   // This must be a shared_ptr. If the data is used for visualization while the
-  // node is being deleted, it must survive until all use finishes.
+  // node is being trimmed, it must survive until all use finishes.
   std::shared_ptr<const Data> constant_data;
 
   transform::Rigid3d pose;
