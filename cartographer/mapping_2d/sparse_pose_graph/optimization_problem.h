@@ -63,6 +63,7 @@ class OptimizationProblem {
   void AddTrajectoryNode(int trajectory_id, common::Time time,
                          const transform::Rigid2d& initial_point_cloud_pose,
                          const transform::Rigid2d& point_cloud_pose);
+  void TrimTrajectoryNode(const mapping::NodeId& node_id);
   void AddSubmap(int trajectory_id, const transform::Rigid2d& submap_pose);
 
   void SetMaxNumIterations(int32 max_num_iterations);
@@ -70,14 +71,21 @@ class OptimizationProblem {
   // Computes the optimized poses.
   void Solve(const std::vector<Constraint>& constraints);
 
-  const std::vector<std::vector<NodeData>>& node_data() const;
+  const std::vector<std::deque<NodeData>>& node_data() const;
   const std::vector<std::vector<SubmapData>>& submap_data() const;
 
+  int num_trimmed_nodes(int trajectory_id) const;
+
  private:
+  struct TrajectoryData {
+    // TODO(hrapp): Remove, once we can relabel constraints.
+    int num_trimmed_nodes = 0;
+  };
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   std::vector<std::deque<mapping_3d::ImuData>> imu_data_;
-  std::vector<std::vector<NodeData>> node_data_;
+  std::vector<std::deque<NodeData>> node_data_;
   std::vector<std::vector<SubmapData>> submap_data_;
+  std::vector<TrajectoryData> trajectory_data_;
 };
 
 }  // namespace sparse_pose_graph
