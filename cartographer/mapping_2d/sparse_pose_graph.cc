@@ -614,12 +614,6 @@ void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
     parent_->trajectory_nodes_.at(node_id).constant_data.reset();
     parent_->optimization_problem_.TrimTrajectoryNode(node_id);
   }
-
-
-  // TODO(whess): The optimization problem should no longer include the submap.
-
-  // TODO(whess): If the first submap is gone, we want to tie the first not
-  // yet trimmed submap to be set fixed to its current pose.
 }
 
 }  // namespace mapping_2d

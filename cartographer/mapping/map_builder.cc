@@ -87,6 +87,8 @@ int MapBuilder::AddTrajectoryBuilder(
             common::make_unique<mapping_2d::GlobalTrajectoryBuilder>(
                 trajectory_options.trajectory_builder_2d_options(),
                 trajectory_id, sparse_pose_graph_2d_.get())));
+    sparse_pose_graph_2d_->AddTrimmer(
+        common::make_unique<PureLocalizationTrimmer>(trajectory_id, 3));
   }
   return trajectory_id;
 }
