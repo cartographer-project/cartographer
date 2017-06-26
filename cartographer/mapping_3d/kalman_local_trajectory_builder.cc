@@ -219,6 +219,8 @@ KalmanLocalTrajectoryBuilder::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
   }
+  // Querying matching and insertion indices must be done here before calling
+  // InsertRangeData() since the queried values are valid for next insertion.
   const Submap* const matching_submap =
       submaps_->Get(submaps_->matching_index());
   std::vector<const Submap*> insertion_submaps;
