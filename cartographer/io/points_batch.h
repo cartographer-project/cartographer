@@ -35,7 +35,7 @@ using Color = std::array<uint8_t, 3>;
 struct PointsBatch {
   PointsBatch() {
     origin = Eigen::Vector3f::Zero();
-    trajectory_index = 0;
+    trajectory_id = 0;
   }
 
   // Time at which this batch has been acquired.
@@ -49,8 +49,8 @@ struct PointsBatch {
   // is unknown.
   string frame_id;
 
-  // Trajectory index that produced this point.
-  int trajectory_index;
+  // Trajectory ID that produced this point.
+  int trajectory_id;
 
   // Geometry of the points in a metric frame.
   std::vector<Eigen::Vector3f> points;
