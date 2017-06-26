@@ -111,17 +111,6 @@ PoseTracker::State ModelFunction(const PoseTracker::State& state,
 
 }  // namespace
 
-PoseAndCovariance operator*(const transform::Rigid3d& transform,
-                            const PoseAndCovariance& pose_and_covariance) {
-  GaussianDistribution<double, 6> distribution(
-      Eigen::Matrix<double, 6, 1>::Zero(), pose_and_covariance.covariance);
-  Eigen::Matrix<double, 6, 6> linear_transform;
-  linear_transform << transform.rotation().matrix(), Eigen::Matrix3d::Zero(),
-      Eigen::Matrix3d::Zero(), transform.rotation().matrix();
-  return {transform * pose_and_covariance.pose,
-          (linear_transform * distribution).GetCovariance()};
-}
-
 proto::PoseTrackerOptions CreatePoseTrackerOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::PoseTrackerOptions options;
@@ -133,8 +122,6 @@ proto::PoseTrackerOptions CreatePoseTrackerOptions(
       parameter_dictionary->GetDouble("velocity_model_variance"));
   options.set_imu_gravity_time_constant(
       parameter_dictionary->GetDouble("imu_gravity_time_constant"));
-  options.set_imu_gravity_variance(
-      parameter_dictionary->GetDouble("imu_gravity_variance"));
   options.set_num_odometry_states(
       parameter_dictionary->GetNonNegativeInt("num_odometry_states"));
   CHECK_GT(options.num_odometry_states(), 0);
@@ -165,20 +152,8 @@ PoseTracker::Distribution PoseTracker::GetBelief(const common::Time time) {
   return kalman_filter_.GetBelief();
 }
 
-void PoseTracker::GetPoseEstimateMeanAndCovariance(const common::Time time,
-                                                   transform::Rigid3d* pose,
-                                                   PoseCovariance* covariance) {
-  const Distribution belief = GetBelief(time);
-  *pose = RigidFromState(belief.GetMean());
-  static_assert(kMapPositionX == 0, "Cannot extract PoseCovariance.");
-  static_assert(kMapPositionY == 1, "Cannot extract PoseCovariance.");
-  static_assert(kMapPositionZ == 2, "Cannot extract PoseCovariance.");
-  static_assert(kMapOrientationX == 3, "Cannot extract PoseCovariance.");
-  static_assert(kMapOrientationY == 4, "Cannot extract PoseCovariance.");
-  static_assert(kMapOrientationZ == 5, "Cannot extract PoseCovariance.");
-  *covariance = belief.GetCovariance().block<6, 6>(0, 0);
-  covariance->block<2, 2>(3, 3) +=
-      options_.imu_gravity_variance() * Eigen::Matrix2d::Identity();
+transform::Rigid3d PoseTracker::GetPoseEstimateMean(const common::Time time) {
+  return RigidFromState(GetBelief(time).GetMean());
 }
 
 const PoseTracker::Distribution PoseTracker::BuildModelNoise(
