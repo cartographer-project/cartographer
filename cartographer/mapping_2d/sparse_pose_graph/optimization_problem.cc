@@ -80,6 +80,22 @@ void OptimizationProblem::AddTrajectoryNode(
       std::max(node_data_.size(), static_cast<size_t>(trajectory_id) + 1));
   node_data_[trajectory_id].push_back(
       NodeData{time, initial_point_cloud_pose, point_cloud_pose});
+  trajectory_data_.resize(std::max(trajectory_data_.size(), node_data_.size()));
+}
+
+void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
+  auto& trajectory_data = trajectory_data_.at(node_id.trajectory_id);
+  // We only allow trimming from the start.
+  CHECK_EQ(trajectory_data.num_trimmed_nodes, node_id.node_index);
+  auto& node_data = node_data_.at(node_id.trajectory_id);
+  CHECK(!node_data.empty());
+  const common::Time node_time = node_data.front().time;
+  auto& imu_data = imu_data_.at(node_id.trajectory_id);
+  while (imu_data.size() > 1 && imu_data[1].time <= node_time) {
+    imu_data.pop_front();
+  }
+  node_data.pop_front();
+  ++trajectory_data.num_trimmed_nodes;
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
@@ -107,7 +123,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   // Set the starting point.
   // TODO(hrapp): Move ceres data into SubmapData.
   std::vector<std::deque<std::array<double, 3>>> C_submaps(submap_data_.size());
-  std::vector<std::deque<std::array<double, 3>>> C_nodes(node_data_.size());
+  std::vector<std::vector<std::array<double, 3>>> C_nodes(node_data_.size());
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
     for (size_t submap_index = 0;
@@ -128,12 +144,12 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    C_nodes[trajectory_id].resize(node_data_[trajectory_id].size());
-    for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
-         ++node_index) {
-      C_nodes[trajectory_id][node_index] =
-          FromPose(node_data_[trajectory_id][node_index].point_cloud_pose);
-      problem.AddParameterBlock(C_nodes[trajectory_id][node_index].data(), 3);
+    // Reserve guarantees that data does not move, so the pointers for Ceres
+    // stay valid.
+    C_nodes[trajectory_id].reserve(node_data_[trajectory_id].size());
+    for (const NodeData& node_data : node_data_[trajectory_id]) {
+      C_nodes[trajectory_id].push_back(FromPose(node_data.point_cloud_pose));
+      problem.AddParameterBlock(C_nodes[trajectory_id].back().data(), 3);
     }
   }
 
@@ -150,27 +166,31 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
             .at(constraint.submap_id.submap_index)
             .data(),
         C_nodes.at(constraint.node_id.trajectory_id)
-            .at(constraint.node_id.node_index)
+            .at(constraint.node_id.node_index -
+                trajectory_data_.at(constraint.node_id.trajectory_id)
+                    .num_trimmed_nodes)
             .data());
   }
 
   // Add penalties for changes between consecutive scans.
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    for (size_t node_index = 1; node_index < node_data_[trajectory_id].size();
-         ++node_index) {
+    for (size_t node_data_index = 1;
+         node_data_index < node_data_[trajectory_id].size();
+         ++node_data_index) {
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
-                  transform::Embed3D(node_data_[trajectory_id][node_index - 1]
-                                         .initial_point_cloud_pose.inverse() *
-                                     node_data_[trajectory_id][node_index]
-                                         .initial_point_cloud_pose),
+                  transform::Embed3D(
+                      node_data_[trajectory_id][node_data_index - 1]
+                          .initial_point_cloud_pose.inverse() *
+                      node_data_[trajectory_id][node_data_index]
+                          .initial_point_cloud_pose),
                   options_.consecutive_scan_translation_penalty_factor(),
                   options_.consecutive_scan_rotation_penalty_factor()})),
           nullptr /* loss function */,
-          C_nodes[trajectory_id][node_index - 1].data(),
-          C_nodes[trajectory_id][node_index].data());
+          C_nodes[trajectory_id][node_data_index - 1].data(),
+          C_nodes[trajectory_id][node_data_index].data());
     }
   }
 
@@ -195,15 +215,16 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
-         ++node_index) {
-      node_data_[trajectory_id][node_index].point_cloud_pose =
-          ToPose(C_nodes[trajectory_id][node_index]);
+    for (size_t node_data_index = 0;
+         node_data_index != node_data_[trajectory_id].size();
+         ++node_data_index) {
+      node_data_[trajectory_id][node_data_index].point_cloud_pose =
+          ToPose(C_nodes[trajectory_id][node_data_index]);
     }
   }
 }
 
-const std::vector<std::vector<NodeData>>& OptimizationProblem::node_data()
+const std::vector<std::deque<NodeData>>& OptimizationProblem::node_data()
     const {
   return node_data_;
 }
@@ -211,6 +232,10 @@ const std::vector<std::vector<NodeData>>& OptimizationProblem::node_data()
 const std::vector<std::vector<SubmapData>>& OptimizationProblem::submap_data()
     const {
   return submap_data_;
+}
+
+int OptimizationProblem::num_trimmed_nodes(int trajectory_id) const {
+  return trajectory_data_.at(trajectory_id).num_trimmed_nodes;
 }
 
 }  // namespace sparse_pose_graph

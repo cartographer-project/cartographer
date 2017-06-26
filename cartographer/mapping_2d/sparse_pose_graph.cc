@@ -190,9 +190,9 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
               .pose.inverse() *
           optimization_problem_.node_data()
               .at(node_id.trajectory_id)
-              .at(node_id.node_index)
+              .at(node_id.node_index - optimization_problem_.num_trimmed_nodes(
+                                           node_id.trajectory_id))
               .point_cloud_pose;
-
       constraint_builder_.MaybeAddConstraint(
           submap_id, submap_data_.at(submap_id).submap.get(), node_id,
           &trajectory_nodes_.at(node_id).constant_data->range_data_2d.returns,
@@ -207,12 +207,16 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
   const auto& node_data = optimization_problem_.node_data();
   for (size_t trajectory_id = 0; trajectory_id != node_data.size();
        ++trajectory_id) {
-    for (size_t node_index = 0; node_index != node_data[trajectory_id].size();
-         ++node_index) {
+    for (size_t node_data_index = 0;
+         node_data_index != node_data[trajectory_id].size();
+         ++node_data_index) {
+      const int node_index =
+          node_data_index +
+          optimization_problem_.num_trimmed_nodes(trajectory_id);
       const mapping::NodeId node_id{static_cast<int>(trajectory_id),
                                     static_cast<int>(node_index)};
-      if (!trajectory_nodes_.at(node_id).trimmed() &&
-          submap_data.node_ids.count(node_id) == 0) {
+      CHECK(!trajectory_nodes_.at(node_id).trimmed());
+      if (submap_data.node_ids.count(node_id) == 0) {
         ComputeConstraint(node_id, submap_id);
       }
     }
@@ -241,7 +245,9 @@ void SparsePoseGraph::ComputeConstraintsForScan(
               optimization_problem_.node_data().size()
           ? static_cast<int>(optimization_problem_.node_data()
                                  .at(matching_id.trajectory_id)
-                                 .size())
+                                 .size()) +
+                optimization_problem_.num_trimmed_nodes(
+                    matching_id.trajectory_id)
           : 0};
   const auto& scan_data = trajectory_nodes_.at(node_id).constant_data;
   optimization_problem_.AddTrajectoryNode(
@@ -386,13 +392,14 @@ void SparsePoseGraph::RunOptimization() {
   const auto& node_data = optimization_problem_.node_data();
   for (int trajectory_id = 0;
        trajectory_id != static_cast<int>(node_data.size()); ++trajectory_id) {
-    int node_index = 0;
+    int node_data_index = 0;
     const int num_nodes = trajectory_nodes_.num_indices(trajectory_id);
-    for (; node_index != static_cast<int>(node_data[trajectory_id].size());
-         ++node_index) {
+    int node_index = optimization_problem_.num_trimmed_nodes(trajectory_id);
+    for (; node_data_index != static_cast<int>(node_data[trajectory_id].size());
+         ++node_data_index, ++node_index) {
       const mapping::NodeId node_id{trajectory_id, node_index};
       trajectory_nodes_.at(node_id).pose = transform::Embed3D(
-          node_data[trajectory_id][node_index].point_cloud_pose);
+          node_data[trajectory_id][node_data_index].point_cloud_pose);
     }
     // Extrapolate all point cloud poses that were added later.
     const auto local_to_new_global = ComputeLocalToGlobalTransform(
@@ -583,15 +590,13 @@ void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
   for (const mapping::NodeId& node_id : nodes_to_remove) {
     CHECK(!parent_->trajectory_nodes_.at(node_id).trimmed());
     parent_->trajectory_nodes_.at(node_id).constant_data.reset();
+    parent_->optimization_problem_.TrimTrajectoryNode(node_id);
   }
 
-  // TODO(whess): The optimization problem should no longer include the submap
-  // and the removed nodes.
+  // TODO(whess): The optimization problem should no longer include the submap.
 
   // TODO(whess): If the first submap is gone, we want to tie the first not
   // yet trimmed submap to be set fixed to its current pose.
-
-  // TODO(hrapp): Delete related IMU data.
 }
 
 }  // namespace mapping_2d
