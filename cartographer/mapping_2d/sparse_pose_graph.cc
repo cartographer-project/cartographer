@@ -530,17 +530,17 @@ mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
     return {};
   }
   auto submap = submap_data_.at(submap_id).submap;
-  // We already have an optimized pose.
   if (submap_id.trajectory_id <
       static_cast<int>(optimized_submap_transforms_.size())) {
-    const size_t submap_index =
+    const size_t submap_data_index =
         submap_id.submap_index -
         num_trimmed_submaps_at_last_optimization_.at(submap_id.trajectory_id);
-    if (submap_index <
+    if (submap_data_index <
         optimized_submap_transforms_.at(submap_id.trajectory_id).size()) {
+      // We already have an optimized pose.
       return {submap, transform::Embed3D(optimized_submap_transforms_
                                              .at(submap_id.trajectory_id)
-                                             .at(submap_index)
+                                             .at(submap_data_index)
                                              .pose)};
     }
   }
