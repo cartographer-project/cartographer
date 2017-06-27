@@ -93,7 +93,6 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
             },
           },
 
-          use = "KALMAN",
           kalman_local_trajectory_builder =  {
             use_online_correlative_scan_matching = false,
             real_time_correlative_scan_matcher = {
@@ -113,15 +112,6 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
             scan_matcher_variance = 1e-6,
             odometer_translational_variance = 1e-7,
             odometer_rotational_variance = 1e-7,
-          },
-          optimizing_local_trajectory_builder = {
-            high_resolution_grid_weight = 5.,
-            low_resolution_grid_weight = 15.,
-            velocity_weight = 4e1,
-            translation_weight = 1e2,
-            rotation_weight = 1e3,
-            odometry_translation_weight = 1e4,
-            odometry_rotation_weight = 1e4,
           },
         }
         )text");

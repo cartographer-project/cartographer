@@ -63,7 +63,6 @@ TRAJECTORY_BUILDER_3D = {
     },
   },
 
-  use = "KALMAN",  -- or "OPTIMIZING".
   kalman_local_trajectory_builder = {
     pose_tracker = {
       orientation_model_variance = 5e-3,
@@ -85,15 +84,5 @@ TRAJECTORY_BUILDER_3D = {
     scan_matcher_variance = 2.34e-9,
     odometer_translational_variance = 1e-7,
     odometer_rotational_variance = 1e-7,
-  },
-
-  optimizing_local_trajectory_builder = {
-    high_resolution_grid_weight = 5.,
-    low_resolution_grid_weight = 15.,
-    velocity_weight = 4e1,
-    translation_weight = 1e2,
-    rotation_weight = 1e3,
-    odometry_translation_weight = 1e4,
-    odometry_rotation_weight = 1e4,
   },
 }

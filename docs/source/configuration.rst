@@ -344,6 +344,38 @@ double odometer_rotational_variance
 cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions
 ===========================================================
 
+float min_range
+  Rangefinder points outside these ranges will be dropped.
+
+float max_range
+  Not yet documented.
+
+int32 scans_per_accumulation
+  Number of scans to accumulate into one unwarped, combined scan to use for
+  scan matching.
+
+float voxel_filter_size
+  Voxel filter that gets applied to the range data immediately after
+  cropping.
+
+cartographer.sensor.proto.AdaptiveVoxelFilterOptions high_resolution_adaptive_voxel_filter_options
+  Voxel filter used to compute a sparser point cloud for matching.
+
+cartographer.sensor.proto.AdaptiveVoxelFilterOptions low_resolution_adaptive_voxel_filter_options
+  Not yet documented.
+
+cartographer.mapping_3d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
+  Not yet documented.
+
+cartographer.mapping_3d.proto.MotionFilterOptions motion_filter_options
+  Not yet documented.
+
+cartographer.mapping_3d.proto.SubmapsOptions submaps_options
+  Not yet documented.
+
+cartographer.mapping_3d.proto.KalmanLocalTrajectoryBuilderOptions kalman_local_trajectory_builder_options
+  Not yet documented.
+
 
 cartographer.mapping_3d.proto.MotionFilterOptions
 =================================================
@@ -356,31 +388,6 @@ double max_distance_meters
 
 double max_angle_radians
   Threshold above which a new scan is inserted based on rotational motion.
-
-
-cartographer.mapping_3d.proto.OptimizingLocalTrajectoryBuilderOptions
-=====================================================================
-
-double high_resolution_grid_weight
-  Not yet documented.
-
-double low_resolution_grid_weight
-  Not yet documented.
-
-double velocity_weight
-  Not yet documented.
-
-double translation_weight
-  Not yet documented.
-
-double rotation_weight
-  Not yet documented.
-
-double odometry_translation_weight
-  Not yet documented.
-
-double odometry_rotation_weight
-  Not yet documented.
 
 
 cartographer.mapping_3d.proto.RangeDataInserterOptions
