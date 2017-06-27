@@ -396,8 +396,15 @@ void SparsePoseGraph::RunOptimization() {
   optimization_problem_.Solve(constraints_);
   common::MutexLocker locker(&mutex_);
 
-  const auto& node_data = optimization_problem_.node_data();
   std::vector<int> num_trimmed_submaps;
+  const auto& submap_data = optimization_problem_.submap_data();
+  for (int trajectory_id = 0;
+       trajectory_id != static_cast<int>(submap_data.size()); ++trajectory_id) {
+    num_trimmed_submaps.push_back(
+        optimization_problem_.num_trimmed_submaps(trajectory_id));
+  }
+
+  const auto& node_data = optimization_problem_.node_data();
   for (int trajectory_id = 0;
        trajectory_id != static_cast<int>(node_data.size()); ++trajectory_id) {
     int node_data_index = 0;
@@ -410,8 +417,6 @@ void SparsePoseGraph::RunOptimization() {
           node_data[trajectory_id][node_data_index].point_cloud_pose);
     }
     // Extrapolate all point cloud poses that were added later.
-    num_trimmed_submaps.push_back(
-        optimization_problem_.num_trimmed_submaps(trajectory_id));
     const auto local_to_new_global =
         ComputeLocalToGlobalTransform(optimization_problem_.submap_data(),
                                       num_trimmed_submaps, trajectory_id);

@@ -112,7 +112,9 @@ void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {
   auto& trajectory_data = trajectory_data_.at(submap_id.trajectory_id);
   // We only allow trimming from the start.
   CHECK_EQ(trajectory_data.num_trimmed_submaps, submap_id.submap_index);
-  submap_data_.at(submap_id.trajectory_id).pop_front();
+  auto& submap_data = submap_data_.at(submap_id.trajectory_id);
+  CHECK(!submap_data.empty());
+  submap_data.pop_front();
   ++trajectory_data.num_trimmed_submaps;
 }
 
@@ -173,7 +175,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
             : nullptr,
         C_submaps.at(constraint.submap_id.trajectory_id)
             .at(constraint.submap_id.submap_index -
-                trajectory_data_.at(constraint.node_id.trajectory_id)
+                trajectory_data_.at(constraint.submap_id.trajectory_id)
                     .num_trimmed_submaps)
             .data(),
         C_nodes.at(constraint.node_id.trajectory_id)
