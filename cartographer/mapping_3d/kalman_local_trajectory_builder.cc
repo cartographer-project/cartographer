@@ -151,12 +151,14 @@ KalmanLocalTrajectoryBuilder::AddAccumulatedRangeData(
       options_.low_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud low_resolution_point_cloud_in_tracking =
       low_resolution_adaptive_voxel_filter.Filter(filtered_range_data.returns);
-  ceres_scan_matcher_->Match(scan_matcher_pose_estimate_, initial_ceres_pose,
-                             {{&filtered_point_cloud_in_tracking,
-                               &matching_submap->high_resolution_hybrid_grid()},
-                              {&low_resolution_point_cloud_in_tracking,
-                               &matching_submap->low_resolution_hybrid_grid()}},
-                             &pose_observation_in_submap, &summary);
+  ceres_scan_matcher_->Match(
+      matching_submap->local_pose().inverse() * scan_matcher_pose_estimate_,
+      initial_ceres_pose,
+      {{&filtered_point_cloud_in_tracking,
+        &matching_submap->high_resolution_hybrid_grid()},
+       {&low_resolution_point_cloud_in_tracking,
+        &matching_submap->low_resolution_hybrid_grid()}},
+      &pose_observation_in_submap, &summary);
   const transform::Rigid3d pose_observation =
       matching_submap->local_pose() * pose_observation_in_submap;
   pose_tracker_->AddPoseObservation(
