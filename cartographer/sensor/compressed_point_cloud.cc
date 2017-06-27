@@ -147,10 +147,10 @@ CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
 
 CompressedPointCloud::CompressedPointCloud(
     const proto::CompressedPointCloud& proto) {
-  CHECK(proto.has_num_points()) << "The compressed point cloud is malformed.";
   num_points_ = proto.num_points();
-  const size_t data_size = proto.point_data_size();
+  const int data_size = proto.point_data_size();
   point_data_.reserve(data_size);
+  // TODO(wohe): Verify that 'point_data_' does not contain malformed data.
   for (int i = 0; i != data_size; ++i) {
     point_data_.emplace_back(proto.point_data(i));
   }
