@@ -65,8 +65,9 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
           trajectory_id,
           sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0]));
     }
-    const mapping::SubmapId submap_id{
-        trajectory_id, static_cast<int>(submap_data[trajectory_id].size()) - 1};
+    CHECK_EQ(optimization_problem_.num_trimmed_submaps(trajectory_id), 0);
+    CHECK_EQ(submap_data[trajectory_id].size(), 1);
+    const mapping::SubmapId submap_id{trajectory_id, 0};
     CHECK(submap_data_.at(submap_id).submap == insertion_submaps.front());
     return {submap_id};
   }
@@ -192,7 +193,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
               .at(submap_id.trajectory_id)
               .at(submap_id.submap_index -
                   optimization_problem_.num_trimmed_submaps(
-                      node_id.trajectory_id))
+                      submap_id.trajectory_id))
               .pose.inverse() *
           optimization_problem_.node_data()
               .at(node_id.trajectory_id)
@@ -417,9 +418,8 @@ void SparsePoseGraph::RunOptimization() {
           node_data[trajectory_id][node_data_index].point_cloud_pose);
     }
     // Extrapolate all point cloud poses that were added later.
-    const auto local_to_new_global =
-        ComputeLocalToGlobalTransform(optimization_problem_.submap_data(),
-                                      num_trimmed_submaps, trajectory_id);
+    const auto local_to_new_global = ComputeLocalToGlobalTransform(
+        submap_data, num_trimmed_submaps, trajectory_id);
     const auto local_to_old_global = ComputeLocalToGlobalTransform(
         optimized_submap_transforms_, num_trimmed_submaps_at_last_optimization_,
         trajectory_id);
@@ -431,7 +431,7 @@ void SparsePoseGraph::RunOptimization() {
           old_global_to_new_global * trajectory_nodes_.at(node_id).pose;
     }
   }
-  optimized_submap_transforms_ = optimization_problem_.submap_data();
+  optimized_submap_transforms_ = submap_data;
   num_trimmed_submaps_at_last_optimization_ = num_trimmed_submaps;
   connected_components_ = trajectory_connectivity_.ConnectedComponents();
   reverse_connected_components_.clear();
@@ -554,10 +554,8 @@ SparsePoseGraph::TrimmingHandle::TrimmingHandle(SparsePoseGraph* const parent)
 
 int SparsePoseGraph::TrimmingHandle::num_submaps(
     const int trajectory_id) const {
-  const int num_trimmed_submaps =
-      parent_->optimization_problem_.num_trimmed_submaps(trajectory_id);
   return parent_->optimization_problem_.submap_data().at(trajectory_id).size() +
-         num_trimmed_submaps;
+         parent_->optimization_problem_.num_trimmed_submaps(trajectory_id);
 }
 
 void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
