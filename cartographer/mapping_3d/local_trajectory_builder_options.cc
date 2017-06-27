@@ -18,7 +18,6 @@
 
 #include "cartographer/mapping_3d/kalman_local_trajectory_builder_options.h"
 #include "cartographer/mapping_3d/motion_filter.h"
-#include "cartographer/mapping_3d/optimizing_local_trajectory_builder_options.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/submaps.h"
 #include "cartographer/sensor/voxel_filter.h"
@@ -57,16 +56,6 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
       CreateKalmanLocalTrajectoryBuilderOptions(
           parameter_dictionary->GetDictionary("kalman_local_trajectory_builder")
               .get());
-  *options.mutable_optimizing_local_trajectory_builder_options() =
-      CreateOptimizingLocalTrajectoryBuilderOptions(
-          parameter_dictionary
-              ->GetDictionary("optimizing_local_trajectory_builder")
-              .get());
-  const string use_string = parameter_dictionary->GetString("use");
-  proto::LocalTrajectoryBuilderOptions::Use use;
-  CHECK(proto::LocalTrajectoryBuilderOptions::Use_Parse(use_string, &use))
-      << "Unknown local_trajectory_builder kind: " << use_string;
-  options.set_use(use);
   return options;
 }
 

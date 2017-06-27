@@ -17,18 +17,12 @@ syntax = "proto2";
 import "cartographer/mapping_3d/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping_3d/proto/kalman_local_trajectory_builder_options.proto";
-import "cartographer/mapping_3d/proto/optimizing_local_trajectory_builder_options.proto";
 import "cartographer/mapping_3d/proto/submaps_options.proto";
 import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.proto";
 
 package cartographer.mapping_3d.proto;
 
 message LocalTrajectoryBuilderOptions {
-  enum Use {
-    KALMAN = 0;
-    OPTIMIZING = 1;
-  }
-
   // Rangefinder points outside these ranges will be dropped.
   optional float min_range = 1;
   optional float max_range = 2;
@@ -52,10 +46,6 @@ message LocalTrajectoryBuilderOptions {
   optional MotionFilterOptions motion_filter_options = 7;
   optional SubmapsOptions submaps_options = 8;
 
-  // Which one of the implementation to instantiate and use.
-  optional Use use = 9;
   optional KalmanLocalTrajectoryBuilderOptions
       kalman_local_trajectory_builder_options = 10;
-  optional OptimizingLocalTrajectoryBuilderOptions
-      optimizing_local_trajectory_builder_options = 11;
 }

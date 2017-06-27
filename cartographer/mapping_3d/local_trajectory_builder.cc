@@ -18,7 +18,6 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping_3d/kalman_local_trajectory_builder.h"
-#include "cartographer/mapping_3d/optimizing_local_trajectory_builder.h"
 
 namespace cartographer {
 namespace mapping_3d {
@@ -26,15 +25,8 @@ namespace mapping_3d {
 std::unique_ptr<LocalTrajectoryBuilderInterface> CreateLocalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions&
         local_trajectory_builder_options) {
-  switch (local_trajectory_builder_options.use()) {
-    case proto::LocalTrajectoryBuilderOptions::KALMAN:
-      return common::make_unique<KalmanLocalTrajectoryBuilder>(
-          local_trajectory_builder_options);
-    case proto::LocalTrajectoryBuilderOptions::OPTIMIZING:
-      return common::make_unique<OptimizingLocalTrajectoryBuilder>(
-          local_trajectory_builder_options);
-  }
-  LOG(FATAL);
+  return common::make_unique<KalmanLocalTrajectoryBuilder>(
+      local_trajectory_builder_options);
 }
 
 }  // namespace mapping_3d
