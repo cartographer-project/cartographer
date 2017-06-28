@@ -22,7 +22,6 @@
 #include "cartographer/common/time.h"
 #include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
-#include "cartographer/mapping_3d/local_trajectory_builder_interface.h"
 #include "cartographer/mapping_3d/motion_filter.h"
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
@@ -30,30 +29,39 @@
 #include "cartographer/mapping_3d/submaps.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
+#include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping_3d {
 
 // Wires up the local SLAM stack (i.e. UKF, scan matching, etc.) without loop
 // closure.
-class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
+class KalmanLocalTrajectoryBuilder {
  public:
+  using PoseEstimate = mapping::GlobalTrajectoryBuilderInterface::PoseEstimate;
+
+  struct InsertionResult {
+    common::Time time;
+    sensor::RangeData range_data_in_tracking;
+    transform::Rigid3d pose_observation;
+    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+  };
+
   explicit KalmanLocalTrajectoryBuilder(
       const proto::LocalTrajectoryBuilderOptions& options);
-  ~KalmanLocalTrajectoryBuilder() override;
+  ~KalmanLocalTrajectoryBuilder();
 
   KalmanLocalTrajectoryBuilder(const KalmanLocalTrajectoryBuilder&) = delete;
   KalmanLocalTrajectoryBuilder& operator=(const KalmanLocalTrajectoryBuilder&) =
       delete;
 
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
-                  const Eigen::Vector3d& angular_velocity) override;
+                  const Eigen::Vector3d& angular_velocity);
   std::unique_ptr<InsertionResult> AddRangefinderData(
       common::Time time, const Eigen::Vector3f& origin,
-      const sensor::PointCloud& ranges) override;
-  void AddOdometerData(common::Time time,
-                       const transform::Rigid3d& pose) override;
-  const PoseEstimate& pose_estimate() const override;
+      const sensor::PointCloud& ranges);
+  void AddOdometerData(common::Time time, const transform::Rigid3d& pose);
+  const PoseEstimate& pose_estimate() const;
 
  private:
   std::unique_ptr<InsertionResult> AddAccumulatedRangeData(

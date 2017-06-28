@@ -134,7 +134,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
 
   // Set the starting point.
   // TODO(hrapp): Move ceres data into SubmapData.
-  std::vector<std::vector<std::array<double, 3>>> C_submaps(submap_data_.size());
+  std::vector<std::vector<std::array<double, 3>>> C_submaps(
+      submap_data_.size());
   std::vector<std::vector<std::array<double, 3>>> C_nodes(node_data_.size());
   bool first_submap = true;
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
@@ -221,7 +222,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
     for (size_t submap_data_index = 0;
-         submap_data_index != submap_data_[trajectory_id].size(); ++submap_data_index) {
+         submap_data_index != submap_data_[trajectory_id].size();
+         ++submap_data_index) {
       submap_data_[trajectory_id][submap_data_index].pose =
           ToPose(C_submaps[trajectory_id][submap_data_index]);
     }

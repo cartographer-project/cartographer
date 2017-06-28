@@ -238,7 +238,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       GrowSubmapTransformsAsNeeded(trajectory_id, insertion_submaps);
   CHECK_EQ(submap_ids.size(), insertion_submaps.size());
   const mapping::SubmapId matching_id = submap_ids.front();
-  const int num_trimmed_submaps = optimization_problem_.num_trimmed_submaps(trajectory_id);
+  const int num_trimmed_submaps =
+      optimization_problem_.num_trimmed_submaps(trajectory_id);
   const transform::Rigid2d optimized_pose =
       optimization_problem_.submap_data()
           .at(matching_id.trajectory_id)
@@ -461,9 +462,9 @@ std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
 transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
     const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
-  return ComputeLocalToGlobalTransform(optimized_submap_transforms_,
-                                       num_trimmed_submaps_at_last_optimization_,
-                                       trajectory_id);
+  return ComputeLocalToGlobalTransform(
+      optimized_submap_transforms_, num_trimmed_submaps_at_last_optimization_,
+      trajectory_id);
 }
 
 std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
