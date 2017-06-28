@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+MAX_3D_RANGE = 60.
+
 SPARSE_POSE_GRAPH = {
   optimize_every_n_scans = 90,
   constraint_builder = {
@@ -47,12 +49,24 @@ SPARSE_POSE_GRAPH = {
       full_resolution_depth = 3,
       rotational_histogram_size = 120,
       min_rotational_score = 0.77,
-      linear_xy_search_window = 4.,
+      linear_xy_search_window = 5.,
       linear_z_search_window = 1.,
       angular_search_window = math.rad(15.),
     },
+    high_resolution_adaptive_voxel_filter = {
+      max_length = 2.,
+      min_num_points = 150,
+      max_range = 15.,
+    },
+
+    low_resolution_adaptive_voxel_filter = {
+      max_length = 4.,
+      min_num_points = 200,
+      max_range = MAX_3D_RANGE,
+    },
     ceres_scan_matcher_3d = {
-      occupied_space_weight_0 = 20.,
+      occupied_space_weight_0 = 5.,
+      occupied_space_weight_1 = 30.,
       translation_weight = 10.,
       rotation_weight = 1.,
       only_optimize_yaw = false,

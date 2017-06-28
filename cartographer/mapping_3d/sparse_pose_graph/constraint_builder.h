@@ -110,7 +110,8 @@ class ConstraintBuilder {
 
  private:
   struct SubmapScanMatcher {
-    const HybridGrid* hybrid_grid;
+    const HybridGrid* high_resolution_hybrid_grid;
+    const HybridGrid* low_resolution_hybrid_grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher>
         fast_correlative_scan_matcher;
   };
@@ -120,14 +121,14 @@ class ConstraintBuilder {
   void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       const mapping::SubmapId& submap_id,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const HybridGrid* submap, std::function<void()> work_item)
+      const Submap* submap, std::function<void()> work_item)
       REQUIRES(mutex_);
 
   // Constructs the scan matcher for a 'submap', then schedules its work items.
   void ConstructSubmapScanMatcher(
       const mapping::SubmapId& submap_id,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const HybridGrid* submap) EXCLUDES(mutex_);
+      const Submap* submap) EXCLUDES(mutex_);
 
   // Returns the scan matcher for a submap, which has to exist.
   const SubmapScanMatcher* GetSubmapScanMatcher(
