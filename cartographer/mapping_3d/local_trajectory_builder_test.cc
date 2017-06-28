@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/kalman_local_trajectory_builder.h"
+#include "cartographer/mapping_3d/local_trajectory_builder.h"
 
 #include <memory>
 #include <random>
@@ -35,7 +35,7 @@ namespace cartographer {
 namespace mapping_3d {
 namespace {
 
-class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
+class LocalTrajectoryBuilderTest : public ::testing::Test {
  protected:
   struct TrajectoryNode {
     common::Time time;
@@ -258,14 +258,13 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
     }
   }
 
-  std::unique_ptr<KalmanLocalTrajectoryBuilder> local_trajectory_builder_;
+  std::unique_ptr<LocalTrajectoryBuilder> local_trajectory_builder_;
   std::vector<Eigen::Vector3f> bubbles_;
 };
 
-TEST_F(KalmanLocalTrajectoryBuilderTest,
-       MoveInsideCubeUsingOnlyCeresScanMatcher) {
+TEST_F(LocalTrajectoryBuilderTest, MoveInsideCubeUsingOnlyCeresScanMatcher) {
   local_trajectory_builder_.reset(
-      new KalmanLocalTrajectoryBuilder(CreateTrajectoryBuilderOptions()));
+      new LocalTrajectoryBuilder(CreateTrajectoryBuilderOptions()));
   VerifyAccuracy(GenerateCorkscrewTrajectory(), 1e-1);
 }
 
