@@ -191,8 +191,12 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
 
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
+  trajectory_data_.resize(imu_data_.size());
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
+    TrajectoryData& trajectory_data = trajectory_data_.at(trajectory_id);
+    problem.AddParameterBlock(trajectory_data.imu_calibration.data(), 4,
+                              new ceres::QuaternionParameterization());
     const std::deque<ImuData>& imu_data = imu_data_.at(trajectory_id);
     CHECK(!imu_data.empty());
     // TODO(whess): Add support for empty trajectories.
@@ -233,7 +237,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
             result_center_to_center.delta_velocity;
         problem.AddResidualBlock(
             new ceres::AutoDiffCostFunction<AccelerationCostFunction, 3, 4, 3,
-                                            3, 3, 1>(
+                                            3, 3, 1, 4>(
                 new AccelerationCostFunction(
                     options_.acceleration_weight(), delta_velocity,
                     common::ToSeconds(first_duration),
@@ -242,14 +246,16 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
             C_nodes[trajectory_id].at(node_index - 1).translation(),
             C_nodes[trajectory_id].at(node_index).translation(),
             C_nodes[trajectory_id].at(node_index + 1).translation(),
-            &gravity_constant_);
+            &trajectory_data.gravity_constant,
+            trajectory_data.imu_calibration.data());
       }
       problem.AddResidualBlock(
-          new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4>(
+          new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4, 4>(
               new RotationCostFunction(options_.rotation_weight(),
                                        result.delta_rotation)),
           nullptr, C_nodes[trajectory_id].at(node_index - 1).rotation(),
-          C_nodes[trajectory_id].at(node_index).rotation());
+          C_nodes[trajectory_id].at(node_index).rotation(),
+          trajectory_data.imu_calibration.data());
     }
   }
 
@@ -261,7 +267,20 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
 
   if (options_.log_solver_summary()) {
     LOG(INFO) << summary.FullReport();
-    LOG(INFO) << "Gravity was: " << gravity_constant_;
+    for (size_t trajectory_id = 0; trajectory_id != trajectory_data_.size();
+         ++trajectory_id) {
+      if (trajectory_id != 0) {
+        LOG(INFO) << "Trajectory " << trajectory_id << ":";
+      }
+      LOG(INFO) << "Gravity was: "
+                << trajectory_data_[trajectory_id].gravity_constant;
+      LOG(INFO) << "IMU correction was: "
+                << common::RadToDeg(
+                       2. *
+                       std::acos(
+                           trajectory_data_[trajectory_id].imu_calibration[0]))
+                << " deg";
+    }
   }
 
   // Store the result.

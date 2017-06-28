@@ -75,12 +75,17 @@ class OptimizationProblem {
   const std::vector<std::vector<SubmapData>>& submap_data() const;
 
  private:
+  struct TrajectoryData {
+    double gravity_constant = 9.8;
+    std::array<double, 4> imu_calibration{{1., 0., 0., 0.}};
+  };
+
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   FixZ fix_z_;
   std::vector<std::deque<ImuData>> imu_data_;
   std::vector<std::vector<NodeData>> node_data_;
   std::vector<std::vector<SubmapData>> submap_data_;
-  double gravity_constant_ = 9.8;
+  std::vector<TrajectoryData> trajectory_data_;
 };
 
 }  // namespace sparse_pose_graph

@@ -41,9 +41,14 @@ class AccelerationCostFunction {
   template <typename T>
   bool operator()(const T* const middle_rotation, const T* const start_position,
                   const T* const middle_position, const T* const end_position,
-                  const T* const gravity_constant, T* residual) const {
+                  const T* const gravity_constant,
+                  const T* const imu_calibration, T* residual) const {
+    const Eigen::Quaternion<T> eigen_imu_calibration(
+        imu_calibration[0], imu_calibration[1], imu_calibration[2],
+        imu_calibration[3]);
     const Eigen::Matrix<T, 3, 1> imu_delta_velocity =
-        ToEigen(middle_rotation) * delta_velocity_imu_frame_.cast<T>() -
+        ToEigen(middle_rotation) * eigen_imu_calibration *
+            delta_velocity_imu_frame_.cast<T>() -
         *gravity_constant *
             (0.5 * (first_delta_time_seconds_ + second_delta_time_seconds_) *
              Eigen::Vector3d::UnitZ())

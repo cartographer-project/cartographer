@@ -36,13 +36,17 @@ class RotationCostFunction {
 
   template <typename T>
   bool operator()(const T* const start_rotation, const T* const end_rotation,
-                  T* residual) const {
+                  const T* const imu_calibration, T* residual) const {
     const Eigen::Quaternion<T> start(start_rotation[0], start_rotation[1],
                                      start_rotation[2], start_rotation[3]);
     const Eigen::Quaternion<T> end(end_rotation[0], end_rotation[1],
                                    end_rotation[2], end_rotation[3]);
+    const Eigen::Quaternion<T> eigen_imu_calibration(
+        imu_calibration[0], imu_calibration[1], imu_calibration[2],
+        imu_calibration[3]);
     const Eigen::Quaternion<T> error =
-        end.conjugate() * start * delta_rotation_imu_frame_.cast<T>();
+        end.conjugate() * start * eigen_imu_calibration *
+        delta_rotation_imu_frame_.cast<T>() * eigen_imu_calibration.conjugate();
     residual[0] = scaling_factor_ * error.x();
     residual[1] = scaling_factor_ * error.y();
     residual[2] = scaling_factor_ * error.z();
