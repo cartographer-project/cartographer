@@ -17,12 +17,11 @@
 #include "cartographer/mapping_3d/local_trajectory_builder.h"
 
 #include "cartographer/common/make_unique.h"
-#include "cartographer/mapping_3d/kalman_local_trajectory_builder.h"
 
 namespace cartographer {
 namespace mapping_3d {
 
-std::unique_ptr<LocalTrajectoryBuilderInterface> CreateLocalTrajectoryBuilder(
+std::unique_ptr<KalmanLocalTrajectoryBuilder> CreateLocalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions&
         local_trajectory_builder_options) {
   return common::make_unique<KalmanLocalTrajectoryBuilder>(
