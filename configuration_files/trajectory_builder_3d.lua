@@ -68,8 +68,7 @@ TRAJECTORY_BUILDER_3D = {
       orientation_model_variance = 5e-3,
       position_model_variance = 0.00654766,
       velocity_model_variance = 0.53926,
-      -- This disables gravity alignment in local SLAM.
-      imu_gravity_time_constant = 1e9,
+      imu_gravity_time_constant = 10.,
       num_odometry_states = 1,
     },
 
