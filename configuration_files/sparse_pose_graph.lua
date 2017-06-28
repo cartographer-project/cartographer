@@ -47,7 +47,7 @@ SPARSE_POSE_GRAPH = {
       full_resolution_depth = 3,
       rotational_histogram_size = 120,
       min_rotational_score = 0.77,
-      linear_xy_search_window = 5.,
+      linear_xy_search_window = 4.,
       linear_z_search_window = 1.,
       angular_search_window = math.rad(15.),
     },

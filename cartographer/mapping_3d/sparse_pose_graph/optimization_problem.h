@@ -77,7 +77,7 @@ class OptimizationProblem {
  private:
   struct TrajectoryData {
     double gravity_constant = 9.8;
-    std::array<double, 4> imu_correction{{1., 0., 0., 0.}};
+    std::array<double, 4> imu_calibration{{1., 0., 0., 0.}};
   };
 
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;

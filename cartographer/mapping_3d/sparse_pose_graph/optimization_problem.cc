@@ -195,7 +195,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
     TrajectoryData& trajectory_data = trajectory_data_.at(trajectory_id);
-    problem.AddParameterBlock(trajectory_data.imu_correction.data(), 4,
+    problem.AddParameterBlock(trajectory_data.imu_calibration.data(), 4,
                               new ceres::QuaternionParameterization());
     const std::deque<ImuData>& imu_data = imu_data_.at(trajectory_id);
     CHECK(!imu_data.empty());
@@ -247,7 +247,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
             C_nodes[trajectory_id].at(node_index).translation(),
             C_nodes[trajectory_id].at(node_index + 1).translation(),
             &trajectory_data.gravity_constant,
-            trajectory_data.imu_correction.data());
+            trajectory_data.imu_calibration.data());
       }
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4, 4>(
@@ -255,7 +255,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
                                        result.delta_rotation)),
           nullptr, C_nodes[trajectory_id].at(node_index - 1).rotation(),
           C_nodes[trajectory_id].at(node_index).rotation(),
-          trajectory_data.imu_correction.data());
+          trajectory_data.imu_calibration.data());
     }
   }
 
@@ -278,7 +278,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
                 << common::RadToDeg(
                        2. *
                        std::acos(
-                           trajectory_data_[trajectory_id].imu_correction[0]))
+                           trajectory_data_[trajectory_id].imu_calibration[0]))
                 << " deg";
     }
   }

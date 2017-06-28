@@ -42,12 +42,12 @@ class AccelerationCostFunction {
   bool operator()(const T* const middle_rotation, const T* const start_position,
                   const T* const middle_position, const T* const end_position,
                   const T* const gravity_constant,
-                  const T* const imu_correction, T* residual) const {
-    const Eigen::Quaternion<T> eigen_imu_correction(
-        imu_correction[0], imu_correction[1], imu_correction[2],
-        imu_correction[3]);
+                  const T* const imu_calibration, T* residual) const {
+    const Eigen::Quaternion<T> eigen_imu_calibration(
+        imu_calibration[0], imu_calibration[1], imu_calibration[2],
+        imu_calibration[3]);
     const Eigen::Matrix<T, 3, 1> imu_delta_velocity =
-        ToEigen(middle_rotation) * eigen_imu_correction *
+        ToEigen(middle_rotation) * eigen_imu_calibration *
             delta_velocity_imu_frame_.cast<T>() -
         *gravity_constant *
             (0.5 * (first_delta_time_seconds_ + second_delta_time_seconds_) *
