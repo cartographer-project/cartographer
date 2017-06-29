@@ -33,10 +33,10 @@ TRAJECTORY_BUILDER_3D = {
   },
 
   ceres_scan_matcher = {
-    occupied_space_weight_0 = 5.,
-    occupied_space_weight_1 = 30.,
-    translation_weight = 0.3,
-    rotation_weight = 2e3,
+    occupied_space_weight_0 = 1.,
+    occupied_space_weight_1 = 6.,
+    translation_weight = 5.,
+    rotation_weight = 4e2,
     only_optimize_yaw = false,
     ceres_solver_options = {
       use_nonmonotonic_steps = false,

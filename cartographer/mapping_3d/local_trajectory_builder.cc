@@ -32,7 +32,6 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions& options)
     : options_(options),
       active_submaps_(options.submaps_options()),
-      scan_matcher_pose_estimate_(transform::Rigid3d::Identity()),
       motion_filter_(options.motion_filter_options()),
       real_time_correlative_scan_matcher_(
           common::make_unique<scan_matching::RealTimeCorrelativeScanMatcher>(
@@ -40,8 +39,9 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
                   .real_time_correlative_scan_matcher_options())),
       ceres_scan_matcher_(common::make_unique<scan_matching::CeresScanMatcher>(
           options_.ceres_scan_matcher_options())),
-      num_accumulated_(0),
-      first_pose_prediction_(transform::Rigid3f::Identity()),
+      odometry_state_tracker_(options_.kalman_local_trajectory_builder_options()
+                                  .pose_tracker_options()
+                                  .num_odometry_states()),
       accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}} {}
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
@@ -49,36 +49,40 @@ LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 void LocalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
     const Eigen::Vector3d& angular_velocity) {
-  if (!pose_tracker_) {
-    pose_tracker_ = common::make_unique<kalman_filter::PoseTracker>(
+  if (!imu_tracker_) {
+    imu_tracker_ = common::make_unique<mapping::ImuTracker>(
         options_.kalman_local_trajectory_builder_options()
-            .pose_tracker_options(),
+            .pose_tracker_options()
+            .imu_gravity_time_constant(),
         time);
+    // Use the accelerometer to gravity align the first pose.
+    imu_tracker_->AddImuLinearAccelerationObservation(linear_acceleration);
+    pose_estimate_ = transform::Rigid3d::Rotation(imu_tracker_->orientation());
   }
 
-  pose_tracker_->AddImuLinearAccelerationObservation(time, linear_acceleration);
-  pose_tracker_->AddImuAngularVelocityObservation(time, angular_velocity);
+  Predict(time);
+  imu_tracker_->AddImuLinearAccelerationObservation(linear_acceleration);
+  imu_tracker_->AddImuAngularVelocityObservation(angular_velocity);
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddRangefinderData(const common::Time time,
                                            const Eigen::Vector3f& origin,
                                            const sensor::PointCloud& ranges) {
-  if (!pose_tracker_) {
-    LOG(INFO) << "PoseTracker not yet initialized.";
+  if (!imu_tracker_) {
+    LOG(INFO) << "ImuTracker not yet initialized.";
     return nullptr;
   }
 
-  const transform::Rigid3d pose_prediction =
-      pose_tracker_->GetPoseEstimateMean(time);
+  Predict(time);
   if (num_accumulated_ == 0) {
-    first_pose_prediction_ = pose_prediction.cast<float>();
+    first_pose_estimate_ = pose_estimate_.cast<float>();
     accumulated_range_data_ =
         sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
   }
 
   const transform::Rigid3f tracking_delta =
-      first_pose_prediction_.inverse() * pose_prediction.cast<float>();
+      first_pose_estimate_.inverse() * pose_estimate_.cast<float>();
   const sensor::RangeData range_data_in_first_tracking =
       sensor::TransformRangeData(sensor::RangeData{origin, ranges, {}},
                                  tracking_delta);
@@ -109,6 +113,24 @@ LocalTrajectoryBuilder::AddRangefinderData(const common::Time time,
   return nullptr;
 }
 
+void LocalTrajectoryBuilder::Predict(const common::Time time) {
+  CHECK(imu_tracker_ != nullptr);
+  CHECK_LE(time_, time);
+  const Eigen::Quaterniond last_orientation = imu_tracker_->orientation();
+  imu_tracker_->Advance(time);
+  if (time_ > common::Time::min()) {
+    const double delta_t = common::ToSeconds(time - time_);
+    // Constant velocity model.
+    const Eigen::Vector3d translation =
+        pose_estimate_.translation() + delta_t * velocity_estimate_;
+    const Eigen::Quaterniond rotation = pose_estimate_.rotation() *
+                                        last_orientation.inverse() *
+                                        imu_tracker_->orientation();
+    pose_estimate_ = transform::Rigid3d(translation, rotation);
+  }
+  time_ = time;
+}
+
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const sensor::RangeData& range_data_in_tracking) {
@@ -124,8 +146,11 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
     return nullptr;
   }
 
-  const transform::Rigid3d pose_prediction =
-      pose_tracker_->GetPoseEstimateMean(time);
+  Predict(time);
+  const transform::Rigid3d odometry_prediction =
+      pose_estimate_ * odometry_correction_;
+  const transform::Rigid3d model_prediction = pose_estimate_;
+  const transform::Rigid3d& pose_prediction = odometry_prediction;
 
   std::shared_ptr<const Submap> matching_submap =
       active_submaps_.submaps().front();
@@ -152,46 +177,62 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   const sensor::PointCloud low_resolution_point_cloud_in_tracking =
       low_resolution_adaptive_voxel_filter.Filter(filtered_range_data.returns);
   ceres_scan_matcher_->Match(
-      matching_submap->local_pose().inverse() * scan_matcher_pose_estimate_,
+      matching_submap->local_pose().inverse() * pose_prediction,
       initial_ceres_pose,
       {{&filtered_point_cloud_in_tracking,
         &matching_submap->high_resolution_hybrid_grid()},
        {&low_resolution_point_cloud_in_tracking,
         &matching_submap->low_resolution_hybrid_grid()}},
       &pose_observation_in_submap, &summary);
-  const transform::Rigid3d pose_observation =
-      matching_submap->local_pose() * pose_observation_in_submap;
-  pose_tracker_->AddPoseObservation(
-      time, pose_observation,
-      options_.kalman_local_trajectory_builder_options()
-              .scan_matcher_variance() *
-          kalman_filter::PoseCovariance::Identity());
+  pose_estimate_ = matching_submap->local_pose() * pose_observation_in_submap;
 
-  scan_matcher_pose_estimate_ = pose_tracker_->GetPoseEstimateMean(time);
+  odometry_correction_ = transform::Rigid3d::Identity();
+  if (!odometry_state_tracker_.empty()) {
+    // We add an odometry state, so that the correction from the scan matching
+    // is not removed by the next odometry data we get.
+    odometry_state_tracker_.AddOdometryState(
+        {time, odometry_state_tracker_.newest().odometer_pose,
+         odometry_state_tracker_.newest().state_pose *
+             odometry_prediction.inverse() * pose_estimate_});
+  }
+
+  // Improve the velocity estimate.
+  if (last_scan_match_time_ > common::Time::min() &&
+      time > last_scan_match_time_) {
+    const double delta_t = common::ToSeconds(time - last_scan_match_time_);
+    velocity_estimate_ +=
+        (pose_estimate_.translation() - model_prediction.translation()) /
+        delta_t;
+  }
+  last_scan_match_time_ = time_;
 
   last_pose_estimate_ = {
-      time, scan_matcher_pose_estimate_,
+      time, pose_estimate_,
       sensor::TransformPointCloud(filtered_range_data.returns,
-                                  pose_observation.cast<float>())};
+                                  pose_estimate_.cast<float>())};
 
-  return InsertIntoSubmap(time, filtered_range_data, pose_observation);
+  return InsertIntoSubmap(time, filtered_range_data, pose_estimate_);
 }
 
-void LocalTrajectoryBuilder::AddOdometerData(const common::Time time,
-                                             const transform::Rigid3d& pose) {
-  if (!pose_tracker_) {
-    pose_tracker_.reset(new kalman_filter::PoseTracker(
-        options_.kalman_local_trajectory_builder_options()
-            .pose_tracker_options(),
-        time));
+void LocalTrajectoryBuilder::AddOdometerData(
+    const common::Time time, const transform::Rigid3d& odometer_pose) {
+  if (imu_tracker_ == nullptr) {
+    // Until we've initialized the IMU tracker we do not want to call Predict().
+    LOG(INFO) << "ImuTracker not yet initialized.";
+    return;
   }
-  pose_tracker_->AddOdometerPoseObservation(
-      time, pose,
-      kalman_filter::BuildPoseCovariance(
-          options_.kalman_local_trajectory_builder_options()
-              .odometer_translational_variance(),
-          options_.kalman_local_trajectory_builder_options()
-              .odometer_rotational_variance()));
+
+  Predict(time);
+  if (!odometry_state_tracker_.empty()) {
+    const auto& previous_odometry_state = odometry_state_tracker_.newest();
+    const transform::Rigid3d delta =
+        previous_odometry_state.odometer_pose.inverse() * odometer_pose;
+    const transform::Rigid3d new_pose =
+        previous_odometry_state.state_pose * delta;
+    odometry_correction_ = pose_estimate_.inverse() * new_pose;
+  }
+  odometry_state_tracker_.AddOdometryState(
+      {time, odometer_pose, pose_estimate_ * odometry_correction_});
 }
 
 const LocalTrajectoryBuilder::PoseEstimate&
@@ -215,7 +256,7 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
   active_submaps_.InsertRangeData(
       sensor::TransformRangeData(range_data_in_tracking,
                                  pose_observation.cast<float>()),
-      pose_tracker_->gravity_orientation());
+      imu_tracker_->orientation());
   return std::unique_ptr<InsertionResult>(
       new InsertionResult{time, range_data_in_tracking, pose_observation,
                           std::move(insertion_submaps)});
