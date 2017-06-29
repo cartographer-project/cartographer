@@ -12,8 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-MAX_3D_RANGE = 60.
-
 SPARSE_POSE_GRAPH = {
   optimize_every_n_scans = 90,
   constraint_builder = {
@@ -58,11 +56,10 @@ SPARSE_POSE_GRAPH = {
       min_num_points = 150,
       max_range = 15.,
     },
-
     low_resolution_adaptive_voxel_filter = {
       max_length = 4.,
       min_num_points = 200,
-      max_range = MAX_3D_RANGE,
+      max_range = 60.,
     },
     ceres_scan_matcher_3d = {
       occupied_space_weight_0 = 5.,
