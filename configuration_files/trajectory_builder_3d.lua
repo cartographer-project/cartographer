@@ -32,6 +32,14 @@ TRAJECTORY_BUILDER_3D = {
     max_range = MAX_3D_RANGE,
   },
 
+  use_online_correlative_scan_matching = false,
+  real_time_correlative_scan_matcher = {
+    linear_search_window = 0.15,
+    angular_search_window = math.rad(1.),
+    translation_delta_cost_weight = 1e-1,
+    rotation_delta_cost_weight = 1e-1,
+  },
+
   ceres_scan_matcher = {
     occupied_space_weight_0 = 1.,
     occupied_space_weight_1 = 6.,
@@ -51,6 +59,9 @@ TRAJECTORY_BUILDER_3D = {
     max_angle_radians = 0.004,
   },
 
+  imu_gravity_time_constant = 10.,
+  num_odometry_states = 1,
+
   submaps = {
     high_resolution = 0.10,
     high_resolution_max_range = 20.,
@@ -61,27 +72,5 @@ TRAJECTORY_BUILDER_3D = {
       miss_probability = 0.49,
       num_free_space_voxels = 2,
     },
-  },
-
-  kalman_local_trajectory_builder = {
-    pose_tracker = {
-      orientation_model_variance = 5e-3,
-      position_model_variance = 0.00654766,
-      velocity_model_variance = 0.53926,
-      imu_gravity_time_constant = 10.,
-      num_odometry_states = 1,
-    },
-
-    use_online_correlative_scan_matching = false,
-    real_time_correlative_scan_matcher = {
-      linear_search_window = 0.15,
-      angular_search_window = math.rad(1.),
-      translation_delta_cost_weight = 1e-1,
-      rotation_delta_cost_weight = 1e-1,
-    },
-
-    scan_matcher_variance = 2.34e-9,
-    odometer_translational_variance = 1e-7,
-    odometer_rotational_variance = 1e-7,
   },
 }

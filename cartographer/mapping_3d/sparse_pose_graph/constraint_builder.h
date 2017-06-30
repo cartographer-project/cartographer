@@ -121,8 +121,7 @@ class ConstraintBuilder {
   void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       const mapping::SubmapId& submap_id,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const Submap* submap, std::function<void()> work_item)
-      REQUIRES(mutex_);
+      const Submap* submap, std::function<void()> work_item) REQUIRES(mutex_);
 
   // Constructs the scan matcher for a 'submap', then schedules its work items.
   void ConstructSubmapScanMatcher(

@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping_3d/local_trajectory_builder_options.h"
 
-#include "cartographer/mapping_3d/kalman_local_trajectory_builder_options.h"
+#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_3d/motion_filter.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/submaps.h"
@@ -45,17 +45,25 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
           parameter_dictionary
               ->GetDictionary("low_resolution_adaptive_voxel_filter")
               .get());
+  options.set_use_online_correlative_scan_matching(
+      parameter_dictionary->GetBool("use_online_correlative_scan_matching"));
+  *options.mutable_real_time_correlative_scan_matcher_options() =
+      mapping_2d::scan_matching::CreateRealTimeCorrelativeScanMatcherOptions(
+          parameter_dictionary
+              ->GetDictionary("real_time_correlative_scan_matcher")
+              .get());
   *options.mutable_ceres_scan_matcher_options() =
       scan_matching::CreateCeresScanMatcherOptions(
           parameter_dictionary->GetDictionary("ceres_scan_matcher").get());
   *options.mutable_motion_filter_options() = CreateMotionFilterOptions(
       parameter_dictionary->GetDictionary("motion_filter").get());
+  options.set_imu_gravity_time_constant(
+      parameter_dictionary->GetDouble("imu_gravity_time_constant"));
+  options.set_num_odometry_states(
+      parameter_dictionary->GetNonNegativeInt("num_odometry_states"));
+  CHECK_GT(options.num_odometry_states(), 0);
   *options.mutable_submaps_options() = mapping_3d::CreateSubmapsOptions(
       parameter_dictionary->GetDictionary("submaps").get());
-  *options.mutable_kalman_local_trajectory_builder_options() =
-      CreateKalmanLocalTrajectoryBuilderOptions(
-          parameter_dictionary->GetDictionary("kalman_local_trajectory_builder")
-              .get());
   return options;
 }
 
