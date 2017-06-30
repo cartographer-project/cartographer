@@ -150,6 +150,8 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
   if (last_scan_match_time_ > common::Time::min() &&
       time > last_scan_match_time_) {
     const double delta_t = common::ToSeconds(time - last_scan_match_time_);
+    // This adds the observed difference in velocity that would have reduced the
+    // error to zero.
     velocity_estimate_ += (pose_estimate_.translation().head<2>() -
                            model_prediction.translation().head<2>()) /
                           delta_t;

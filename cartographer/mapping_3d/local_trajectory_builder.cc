@@ -18,7 +18,6 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/proto/pose_tracker_options.pb.h"
 #include "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_3d/proto/submaps_options.pb.h"
@@ -35,13 +34,10 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
       motion_filter_(options.motion_filter_options()),
       real_time_correlative_scan_matcher_(
           common::make_unique<scan_matching::RealTimeCorrelativeScanMatcher>(
-              options_.kalman_local_trajectory_builder_options()
-                  .real_time_correlative_scan_matcher_options())),
+              options_.real_time_correlative_scan_matcher_options())),
       ceres_scan_matcher_(common::make_unique<scan_matching::CeresScanMatcher>(
           options_.ceres_scan_matcher_options())),
-      odometry_state_tracker_(options_.kalman_local_trajectory_builder_options()
-                                  .pose_tracker_options()
-                                  .num_odometry_states()),
+      odometry_state_tracker_(options_.num_odometry_states()),
       accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}} {}
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
@@ -49,27 +45,26 @@ LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 void LocalTrajectoryBuilder::AddImuData(
     const common::Time time, const Eigen::Vector3d& linear_acceleration,
     const Eigen::Vector3d& angular_velocity) {
-  if (!imu_tracker_) {
+  const bool initial_imu_data = (imu_tracker_ == nullptr);
+  if (initial_imu_data) {
     imu_tracker_ = common::make_unique<mapping::ImuTracker>(
-        options_.kalman_local_trajectory_builder_options()
-            .pose_tracker_options()
-            .imu_gravity_time_constant(),
-        time);
-    // Use the accelerometer to gravity align the first pose.
-    imu_tracker_->AddImuLinearAccelerationObservation(linear_acceleration);
-    pose_estimate_ = transform::Rigid3d::Rotation(imu_tracker_->orientation());
+        options_.imu_gravity_time_constant(), time);
   }
-
   Predict(time);
   imu_tracker_->AddImuLinearAccelerationObservation(linear_acceleration);
   imu_tracker_->AddImuAngularVelocityObservation(angular_velocity);
+  if (initial_imu_data) {
+    // This uses the first accelerometer measurement to approximately align the
+    // first pose to gravity.
+    pose_estimate_ = transform::Rigid3d::Rotation(imu_tracker_->orientation());
+  }
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddRangefinderData(const common::Time time,
                                            const Eigen::Vector3f& origin,
                                            const sensor::PointCloud& ranges) {
-  if (!imu_tracker_) {
+  if (imu_tracker_ == nullptr) {
     LOG(INFO) << "ImuTracker not yet initialized.";
     return nullptr;
   }
@@ -160,8 +155,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       options_.high_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud filtered_point_cloud_in_tracking =
       adaptive_voxel_filter.Filter(filtered_range_data.returns);
-  if (options_.kalman_local_trajectory_builder_options()
-          .use_online_correlative_scan_matching()) {
+  if (options_.use_online_correlative_scan_matching()) {
     // We take a copy since we use 'intial_ceres_pose' as an output argument.
     const transform::Rigid3d initial_pose = initial_ceres_pose;
     real_time_correlative_scan_matcher_->Match(
@@ -200,6 +194,8 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   if (last_scan_match_time_ > common::Time::min() &&
       time > last_scan_match_time_) {
     const double delta_t = common::ToSeconds(time - last_scan_match_time_);
+    // This adds the observed difference in velocity that would have reduced the
+    // error to zero.
     velocity_estimate_ +=
         (pose_estimate_.translation() - model_prediction.translation()) /
         delta_t;

@@ -64,6 +64,14 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
             max_range = 50.,
           },
 
+          use_online_correlative_scan_matching = false,
+          real_time_correlative_scan_matcher = {
+            linear_search_window = 0.2,
+            angular_search_window = math.rad(1.),
+            translation_delta_cost_weight = 1e-1,
+            rotation_delta_cost_weight = 1.,
+          },
+
           ceres_scan_matcher = {
             occupied_space_weight_0 = 5.,
             occupied_space_weight_1 = 20.,
@@ -76,11 +84,16 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
               num_threads = 1,
             },
           },
+
           motion_filter = {
             max_time_seconds = 0.2,
             max_distance_meters = 0.02,
             max_angle_radians = 0.001,
           },
+
+          imu_gravity_time_constant = 1.,
+          num_odometry_states = 1,
+
           submaps = {
             high_resolution = 0.2,
             high_resolution_max_range = 50.,
@@ -91,27 +104,6 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
               miss_probability = 0.4,
               num_free_space_voxels = 0,
             },
-          },
-
-          kalman_local_trajectory_builder =  {
-            use_online_correlative_scan_matching = false,
-            real_time_correlative_scan_matcher = {
-              linear_search_window = 0.2,
-              angular_search_window = math.rad(1.),
-              translation_delta_cost_weight = 1e-1,
-              rotation_delta_cost_weight = 1.,
-            },
-            pose_tracker = {
-              orientation_model_variance = 5e-4,
-              position_model_variance = 0.000654766,
-              velocity_model_variance = 0.053926,
-              imu_gravity_time_constant = 1.,
-              num_odometry_states = 1,
-            },
-
-            scan_matcher_variance = 1e-6,
-            odometer_translational_variance = 1e-7,
-            odometer_rotational_variance = 1e-7,
           },
         }
         )text");

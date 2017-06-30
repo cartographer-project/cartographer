@@ -33,26 +33,6 @@ int32 num_threads
   Not yet documented.
 
 
-cartographer.kalman_filter.proto.PoseTrackerOptions
-===================================================
-
-double position_model_variance
-  Model variances depend linearly on time.
-
-double orientation_model_variance
-  Not yet documented.
-
-double velocity_model_variance
-  Not yet documented.
-
-double imu_gravity_time_constant
-  Time constant for the orientation moving average based on observed gravity
-  via linear acceleration.
-
-int32 num_odometry_states
-  Maximum number of previous odometry states to keep.
-
-
 cartographer.mapping.proto.MapBuilderOptions
 ============================================
 
@@ -206,12 +186,12 @@ float voxel_filter_size
   Voxel filter that gets applied to the range data immediately after
   cropping.
 
+cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
+  Voxel filter used to compute a sparser point cloud for matching.
+
 bool use_online_correlative_scan_matching
   Whether to solve the online scan matching first using the correlative scan
   matcher to generate a good starting point for Ceres.
-
-cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
-  Voxel filter used to compute a sparser point cloud for matching.
 
 cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions real_time_correlative_scan_matcher_options
   Not yet documented.
@@ -324,29 +304,6 @@ double rotation_delta_cost_weight
   Not yet documented.
 
 
-cartographer.mapping_3d.proto.KalmanLocalTrajectoryBuilderOptions
-=================================================================
-
-bool use_online_correlative_scan_matching
-  Whether to solve the online scan matching first using the correlative scan
-  matcher to generate a good starting point for Ceres.
-
-cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions real_time_correlative_scan_matcher_options
-  Not yet documented.
-
-cartographer.kalman_filter.proto.PoseTrackerOptions pose_tracker_options
-  Not yet documented.
-
-double scan_matcher_variance
-  Not yet documented.
-
-double odometer_translational_variance
-  Not yet documented.
-
-double odometer_rotational_variance
-  Not yet documented.
-
-
 cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions
 ===========================================================
 
@@ -370,16 +327,31 @@ cartographer.sensor.proto.AdaptiveVoxelFilterOptions high_resolution_adaptive_vo
 cartographer.sensor.proto.AdaptiveVoxelFilterOptions low_resolution_adaptive_voxel_filter_options
   Not yet documented.
 
+bool use_online_correlative_scan_matching
+  Whether to solve the online scan matching first using the correlative scan
+  matcher to generate a good starting point for Ceres.
+
+cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions real_time_correlative_scan_matcher_options
+  Not yet documented.
+
 cartographer.mapping_3d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
   Not yet documented.
 
 cartographer.mapping_3d.proto.MotionFilterOptions motion_filter_options
   Not yet documented.
 
-cartographer.mapping_3d.proto.SubmapsOptions submaps_options
-  Not yet documented.
+double imu_gravity_time_constant
+  Time constant in seconds for the orientation moving average based on
+  observed gravity via the IMU. It should be chosen so that the error
+  1. from acceleration measurements not due to gravity (which gets worse when
+  the constant is reduced) and
+  2. from integration of angular velocities (which gets worse when the
+  constant is increased) is balanced.
 
-cartographer.mapping_3d.proto.KalmanLocalTrajectoryBuilderOptions kalman_local_trajectory_builder_options
+int32 num_odometry_states
+  Maximum number of previous odometry states to keep.
+
+cartographer.mapping_3d.proto.SubmapsOptions submaps_options
   Not yet documented.
 
 

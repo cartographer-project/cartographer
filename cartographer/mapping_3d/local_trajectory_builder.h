@@ -20,8 +20,9 @@
 #include <memory>
 
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
+#include "cartographer/mapping/imu_tracker.h"
+#include "cartographer/mapping/odometry_state_tracker.h"
 #include "cartographer/mapping_3d/motion_filter.h"
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"

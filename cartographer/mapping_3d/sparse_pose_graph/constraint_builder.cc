@@ -29,7 +29,6 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
 #include "cartographer/transform/transform.h"
@@ -72,8 +71,7 @@ void ConstraintBuilder::MaybeAddConstraint(
     ++pending_computations_[current_computation_];
     const int current_computation = current_computation_;
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-        submap_id, submap_nodes, submap,
-        [=]() EXCLUDES(mutex_) {
+        submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, submap, node_id,
                             false,   /* match_full_submap */
                             nullptr, /* trajectory_connectivity */
@@ -96,8 +94,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      submap_id, submap_nodes, submap,
-      [=]() EXCLUDES(mutex_) {
+      submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
         ComputeConstraint(
             submap_id, submap, node_id, true, /* match_full_submap */
             trajectory_connectivity, compressed_point_cloud,
@@ -232,13 +229,12 @@ void ConstraintBuilder::ComputeConstraint(
 
   ceres::Solver::Summary unused_summary;
   transform::Rigid3d constraint_transform;
-  ceres_scan_matcher_.Match(
-      pose_estimate, pose_estimate,
-      {{&high_resolution_point_cloud,
-        submap_scan_matcher->high_resolution_hybrid_grid},
-       {&low_resolution_point_cloud,
-        submap_scan_matcher->low_resolution_hybrid_grid}},
-      &constraint_transform, &unused_summary);
+  ceres_scan_matcher_.Match(pose_estimate, pose_estimate,
+                            {{&high_resolution_point_cloud,
+                              submap_scan_matcher->high_resolution_hybrid_grid},
+                             {&low_resolution_point_cloud,
+                              submap_scan_matcher->low_resolution_hybrid_grid}},
+                            &constraint_transform, &unused_summary);
 
   constraint->reset(new OptimizationProblem::Constraint{
       submap_id,

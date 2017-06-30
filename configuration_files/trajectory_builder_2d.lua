@@ -21,13 +21,13 @@ TRAJECTORY_BUILDER_2D = {
   missing_data_ray_length = 5.,
   voxel_filter_size = 0.025,
 
-  use_online_correlative_scan_matching = false,
   adaptive_voxel_filter = {
     max_length = 0.5,
     min_num_points = 200,
     max_range = 50.,
   },
 
+  use_online_correlative_scan_matching = false,
   real_time_correlative_scan_matcher = {
     linear_search_window = 0.1,
     angular_search_window = math.rad(20.),
