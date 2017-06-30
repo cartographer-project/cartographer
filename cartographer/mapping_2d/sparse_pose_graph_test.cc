@@ -104,6 +104,16 @@ class SparsePoseGraphTest : public ::testing::Test {
                 linear_z_search_window = 4.,
                 angular_search_window = 0.1,
               },
+              high_resolution_adaptive_voxel_filter = {
+                max_length = 2.,
+                min_num_points = 150,
+                max_range = 15.,
+              },
+              low_resolution_adaptive_voxel_filter = {
+                max_length = 4.,
+                min_num_points = 200,
+                max_range = 60.,
+              },
               ceres_scan_matcher_3d = {
                 occupied_space_weight_0 = 20.,
                 translation_weight = 10.,

@@ -72,7 +72,7 @@ void ConstraintBuilder::MaybeAddConstraint(
     ++pending_computations_[current_computation_];
     const int current_computation = current_computation_;
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-        submap_id, submap_nodes, &submap->high_resolution_hybrid_grid(),
+        submap_id, submap_nodes, submap,
         [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, submap, node_id,
                             false,   /* match_full_submap */
@@ -96,7 +96,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      submap_id, submap_nodes, &submap->high_resolution_hybrid_grid(),
+      submap_id, submap_nodes, submap,
       [=]() EXCLUDES(mutex_) {
         ComputeConstraint(
             submap_id, submap, node_id, true, /* match_full_submap */
@@ -126,7 +126,7 @@ void ConstraintBuilder::WhenDone(
 void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
     const mapping::SubmapId& submap_id,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const HybridGrid* const submap, const std::function<void()> work_item) {
+    const Submap* const submap, const std::function<void()> work_item) {
   if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
       nullptr) {
     thread_pool_->Schedule(work_item);
@@ -143,13 +143,15 @@ void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
 void ConstraintBuilder::ConstructSubmapScanMatcher(
     const mapping::SubmapId& submap_id,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const HybridGrid* const submap) {
+    const Submap* const submap) {
   auto submap_scan_matcher =
       common::make_unique<scan_matching::FastCorrelativeScanMatcher>(
-          *submap, submap_nodes,
+          submap->high_resolution_hybrid_grid(), submap_nodes,
           options_.fast_correlative_scan_matcher_options_3d());
   common::MutexLocker locker(&mutex_);
-  submap_scan_matchers_[submap_id] = {submap, std::move(submap_scan_matcher)};
+  submap_scan_matchers_[submap_id] = {&submap->high_resolution_hybrid_grid(),
+                                      &submap->low_resolution_hybrid_grid(),
+                                      std::move(submap_scan_matcher)};
   for (const std::function<void()>& work_item :
        submap_queued_work_items_[submap_id]) {
     thread_pool_->Schedule(work_item);
@@ -219,11 +221,23 @@ void ConstraintBuilder::ComputeConstraint(
   // Use the CSM estimate as both the initial and previous pose. This has the
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
+  sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
+      options_.high_resolution_adaptive_voxel_filter_options());
+  const sensor::PointCloud high_resolution_point_cloud =
+      adaptive_voxel_filter.Filter(point_cloud);
+  sensor::AdaptiveVoxelFilter low_resolution_adaptive_voxel_filter(
+      options_.low_resolution_adaptive_voxel_filter_options());
+  const sensor::PointCloud low_resolution_point_cloud =
+      low_resolution_adaptive_voxel_filter.Filter(point_cloud);
+
   ceres::Solver::Summary unused_summary;
   transform::Rigid3d constraint_transform;
   ceres_scan_matcher_.Match(
       pose_estimate, pose_estimate,
-      {{&filtered_point_cloud, submap_scan_matcher->hybrid_grid}},
+      {{&high_resolution_point_cloud,
+        submap_scan_matcher->high_resolution_hybrid_grid},
+       {&low_resolution_point_cloud,
+        submap_scan_matcher->low_resolution_hybrid_grid}},
       &constraint_transform, &unused_summary);
 
   constraint->reset(new OptimizationProblem::Constraint{
