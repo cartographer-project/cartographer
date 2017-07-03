@@ -71,7 +71,11 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
 TEST(SubmapsTest, ToFromProto) {
   Submap expected(MapLimits(1., Eigen::Vector2d(2., 3.), CellLimits(100, 110)),
                   Eigen::Vector2f(4.f, 5.f));
-  const auto actual = Submap(expected.ToProto());
+  mapping::proto::Submap proto;
+  expected.ToProto(&proto);
+  EXPECT_TRUE(proto.has_submap_2d());
+  EXPECT_FALSE(proto.has_submap_3d());
+  const auto actual = Submap(proto.submap_2d());
   EXPECT_TRUE(expected.local_pose().translation().isApprox(
       actual.local_pose().translation(), 1e-6));
   EXPECT_TRUE(expected.local_pose().rotation().isApprox(

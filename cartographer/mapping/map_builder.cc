@@ -135,7 +135,24 @@ string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
 void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
   // We serialize the pose graph followed by all the data referenced in it.
   writer->WriteProto(sparse_pose_graph_->ToProto());
-  // TODO(whess): Serialize submaps.
+  // Next we serialize all submap data.
+  const auto submap_data = sparse_pose_graph_->GetAllSubmapData();
+  for (int trajectory_id = 0;
+       trajectory_id != static_cast<int>(submap_data.size()); ++trajectory_id) {
+    for (int submap_index = 0;
+         submap_index != static_cast<int>(submap_data[trajectory_id].size());
+         ++submap_index) {
+      proto::SerializedData proto;
+      auto* const submap_proto = proto.mutable_submap();
+      // TODO(whess): Handle trimmed data.
+      submap_proto->mutable_submap_id()->set_trajectory_id(trajectory_id);
+      submap_proto->mutable_submap_id()->set_submap_index(submap_index);
+      submap_data[trajectory_id][submap_index].submap->ToProto(submap_proto);
+      // TODO(whess): Only enable optionally? Resulting pbstream files will be
+      // a lot larger now.
+      writer->WriteProto(proto);
+    }
+  }
   // TODO(whess): Serialize range data ("scan") for each trajectory node.
   // TODO(whess): Serialize additional sensor data: IMU, odometry.
 }

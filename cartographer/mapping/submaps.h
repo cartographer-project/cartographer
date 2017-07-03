@@ -25,6 +25,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/probability_values.h"
+#include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/probability_grid.h"
@@ -60,6 +61,8 @@ class Submap {
  public:
   Submap(const transform::Rigid3d& local_pose) : local_pose_(local_pose) {}
   virtual ~Submap() {}
+
+  virtual void ToProto(proto::Submap* proto) const = 0;
 
   // Local SLAM pose of this submap.
   transform::Rigid3d local_pose() const { return local_pose_; }

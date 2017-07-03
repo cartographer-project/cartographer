@@ -27,7 +27,11 @@ TEST(SubmapsTest, ToFromProto) {
   const Submap expected(0.05, 0.25,
                         transform::Rigid3d(Eigen::Vector3d(1., 2., 0.),
                                            Eigen::Quaterniond(0., 0., 0., 1.)));
-  const auto actual = Submap(expected.ToProto());
+  mapping::proto::Submap proto;
+  expected.ToProto(&proto);
+  EXPECT_FALSE(proto.has_submap_2d());
+  EXPECT_TRUE(proto.has_submap_3d());
+  const auto actual = Submap(proto.submap_3d());
   EXPECT_TRUE(expected.local_pose().translation().isApprox(
       actual.local_pose().translation(), 1e-6));
   EXPECT_TRUE(expected.local_pose().rotation().isApprox(
