@@ -28,8 +28,8 @@
 
 DEFINE_string(
     pose_graph_filename, "",
-    "File with the proto stream containing the pose graph from which to "
-    "generate ground truth data.");
+    "Proto stream file containing the pose graph used to generate ground truth "
+    "data.");
 DEFINE_string(output_filename, "", "File to write the ground truth proto to.");
 DEFINE_double(min_covered_distance, 100.,
               "Minimum covered distance in meters before a loop closure is "

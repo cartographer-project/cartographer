@@ -37,8 +37,7 @@
 
 DEFINE_string(
     pose_graph_filename, "",
-    "File with the proto stream containing the pose graph from which to "
-    "assess the quality.");
+    "Proto stream file containing the pose graph used to assess quality.");
 DEFINE_string(relations_filename, "",
               "Relations file containing the ground truth.");
 DEFINE_bool(read_text_file_with_unix_timestamps, false,
