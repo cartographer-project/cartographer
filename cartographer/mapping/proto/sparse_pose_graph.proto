@@ -16,8 +16,8 @@ syntax = "proto2";
 
 package cartographer.mapping.proto;
 
-import "cartographer/mapping/proto/trajectory.proto";
 import "cartographer/mapping/proto/submap.proto";
+import "cartographer/mapping/proto/trajectory.proto";
 import "cartographer/transform/proto/transform.proto";
 
 message SparsePoseGraph {
