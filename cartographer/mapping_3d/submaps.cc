@@ -327,21 +327,22 @@ Submap::Submap(const float high_resolution, const float low_resolution,
       low_resolution_hybrid_grid_(low_resolution) {}
 
 Submap::Submap(const mapping::proto::Submap& proto)
-    : mapping::Submap(transform::ToRigid3(proto.local_pose()),
-                      proto.num_range_data(), proto.finished()),
+    : mapping::Submap(transform::ToRigid3(proto.local_pose())),
       high_resolution_hybrid_grid_(proto.high_resolution_hybrid_grid()),
-      low_resolution_hybrid_grid_(proto.low_resolution_hybrid_grid()) {}
+      low_resolution_hybrid_grid_(proto.low_resolution_hybrid_grid()) {
+  SetNumRangeData(proto.num_range_data());
+  finished_ = proto.finished();
+}
 
-mapping::proto::Submap ToProto(const Submap& submap) {
+mapping::proto::Submap Submap::ToProto() const {
   mapping::proto::Submap proto;
-  *proto.mutable_local_pose() = transform::ToProto(submap.local_pose());
-  proto.set_num_range_data(submap.num_range_data());
-  proto.set_finished(submap.finished());
+  *proto.mutable_local_pose() = transform::ToProto(local_pose());
+  proto.set_num_range_data(num_range_data());
+  proto.set_finished(finished_);
   *proto.mutable_high_resolution_hybrid_grid() =
-      ToProto(submap.high_resolution_hybrid_grid());
+      mapping_3d::ToProto(high_resolution_hybrid_grid());
   *proto.mutable_low_resolution_hybrid_grid() =
-      ToProto(submap.low_resolution_hybrid_grid());
-  // TODO (brandon-northcutt) SubmapID submap_id;
+      mapping_3d::ToProto(low_resolution_hybrid_grid());
   return proto;
 }
 
@@ -382,7 +383,7 @@ void Submap::ToResponseProto(
 void Submap::InsertRangeData(const sensor::RangeData& range_data,
                              const RangeDataInserter& range_data_inserter,
                              const int high_resolution_max_range) {
-  CHECK(!finished());
+  CHECK(!finished_);
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data, local_pose().inverse().cast<float>());
   range_data_inserter.Insert(
@@ -391,7 +392,12 @@ void Submap::InsertRangeData(const sensor::RangeData& range_data,
       &high_resolution_hybrid_grid_);
   range_data_inserter.Insert(transformed_range_data,
                              &low_resolution_hybrid_grid_);
-  IncrementRangeData();
+  SetNumRangeData(num_range_data() + 1);
+}
+
+void Submap::Finish() {
+  CHECK(!finished_);
+  finished_ = true;
 }
 
 ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
@@ -426,7 +432,6 @@ void ActiveSubmaps::InsertRangeData(
 
 void ActiveSubmaps::AddSubmap(const transform::Rigid3d& local_pose) {
   if (submaps_.size() > 1) {
-    CHECK(!submaps_.front()->finished());
     submaps_.front()->Finish();
     ++matching_submap_index_;
     submaps_.erase(submaps_.begin());
