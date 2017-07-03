@@ -25,7 +25,6 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/probability_values.h"
-#include "cartographer/mapping/proto/submap.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/probability_grid.h"
@@ -60,12 +59,6 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
 class Submap {
  public:
   Submap(const transform::Rigid3d& local_pose) : local_pose_(local_pose) {}
-  Submap(const transform::Rigid3d& local_pose, const int num_range_data,
-         const bool finished)
-      : local_pose_(local_pose),
-        num_range_data_(num_range_data),
-        finished_(finished) {}
-  Submap(const proto::Submap& proto);
   virtual ~Submap() {}
 
   // Local SLAM pose of this submap.
@@ -73,19 +66,18 @@ class Submap {
 
   // Number of RangeData inserted.
   int num_range_data() const { return num_range_data_; }
-  void IncrementRangeData() { ++num_range_data_; }
-  bool finished() const { return finished_; }
-  void Finish(void) { finished_ = true; }
 
   // Fills data into the 'response'.
   virtual void ToResponseProto(
       const transform::Rigid3d& global_submap_pose,
       proto::SubmapQuery::Response* response) const = 0;
 
+ protected:
+  void SetNumRangeData(int num_range_data) { num_range_data_ = num_range_data; }
+
  private:
   const transform::Rigid3d local_pose_;
   int num_range_data_ = 0;
-  bool finished_ = false;
 };
 }  // namespace mapping
 }  // namespace cartographer
