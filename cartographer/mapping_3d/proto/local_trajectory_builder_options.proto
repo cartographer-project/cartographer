@@ -16,7 +16,7 @@ syntax = "proto2";
 
 import "cartographer/mapping_3d/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
-import "cartographer/mapping_3d/proto/kalman_local_trajectory_builder_options.proto";
+import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 import "cartographer/mapping_3d/proto/submaps_options.proto";
 import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.proto";
 
@@ -41,11 +41,25 @@ message LocalTrajectoryBuilderOptions {
   optional sensor.proto.AdaptiveVoxelFilterOptions
       low_resolution_adaptive_voxel_filter_options = 12;
 
+  // Whether to solve the online scan matching first using the correlative scan
+  // matcher to generate a good starting point for Ceres.
+  optional bool use_online_correlative_scan_matching = 13;
+  optional mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
+      real_time_correlative_scan_matcher_options = 14;
   optional scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options = 6;
   optional MotionFilterOptions motion_filter_options = 7;
-  optional SubmapsOptions submaps_options = 8;
 
-  optional KalmanLocalTrajectoryBuilderOptions
-      kalman_local_trajectory_builder_options = 10;
+  // Time constant in seconds for the orientation moving average based on
+  // observed gravity via the IMU. It should be chosen so that the error
+  // 1. from acceleration measurements not due to gravity (which gets worse when
+  // the constant is reduced) and
+  // 2. from integration of angular velocities (which gets worse when the
+  // constant is increased) is balanced.
+  optional double imu_gravity_time_constant = 15;
+
+  // Maximum number of previous odometry states to keep.
+  optional int32 num_odometry_states = 16;
+
+  optional SubmapsOptions submaps_options = 8;
 }

@@ -36,14 +36,13 @@ message LocalTrajectoryBuilderOptions {
   // cropping.
   optional float voxel_filter_size = 3;
 
-  // Whether to solve the online scan matching first using the correlative scan
-  // matcher to generate a good starting point for Ceres.
-  optional bool use_online_correlative_scan_matching = 5;
-
   // Voxel filter used to compute a sparser point cloud for matching.
   optional sensor.proto.AdaptiveVoxelFilterOptions
       adaptive_voxel_filter_options = 6;
 
+  // Whether to solve the online scan matching first using the correlative scan
+  // matcher to generate a good starting point for Ceres.
+  optional bool use_online_correlative_scan_matching = 5;
   optional scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
       real_time_correlative_scan_matcher_options = 7;
   optional scan_matching.proto.CeresScanMatcherOptions

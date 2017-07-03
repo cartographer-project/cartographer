@@ -20,6 +20,7 @@
 
 #include "cartographer/common/port.h"
 #include "cartographer/ground_truth/proto/relations.pb.h"
+#include "cartographer/io/proto_stream.h"
 #include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/transform/transform.h"
 #include "gflags/gflags.h"
@@ -27,7 +28,8 @@
 
 DEFINE_string(
     pose_graph_filename, "",
-    "File with the pose graph proto from which to generate ground truth data.");
+    "Proto stream file containing the pose graph used to generate ground truth "
+    "data.");
 DEFINE_string(output_filename, "", "File to write the ground truth proto to.");
 DEFINE_double(min_covered_distance, 100.,
               "Minimum covered distance in meters before a loop closure is "
@@ -168,8 +170,8 @@ void Run(const string& pose_graph_filename, const string& output_filename,
   LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";
   mapping::proto::SparsePoseGraph pose_graph;
   {
-    std::ifstream stream(pose_graph_filename.c_str());
-    CHECK(pose_graph.ParseFromIstream(&stream));
+    io::ProtoStreamReader reader(pose_graph_filename);
+    CHECK(reader.ReadProto(&pose_graph));
     CHECK_EQ(pose_graph.trajectory_size(), 1)
         << "Only pose graphs containing a single trajectory are supported.";
   }

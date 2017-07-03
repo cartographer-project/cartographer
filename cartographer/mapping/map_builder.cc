@@ -132,6 +132,14 @@ string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
   return "";
 }
 
+void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
+  // We serialize the pose graph followed by all the data referenced in it.
+  writer->WriteProto(sparse_pose_graph_->ToProto());
+  // TODO(whess): Serialize submaps.
+  // TODO(whess): Serialize range data ("scan") for each trajectory node.
+  // TODO(whess): Serialize additional sensor data: IMU, odometry.
+}
+
 int MapBuilder::num_trajectory_builders() const {
   return trajectory_builders_.size();
 }
