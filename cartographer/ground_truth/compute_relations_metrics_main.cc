@@ -27,6 +27,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/ground_truth/proto/relations.pb.h"
 #include "cartographer/ground_truth/relations_text_file.h"
+#include "cartographer/io/proto_stream.h"
 #include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -36,7 +37,7 @@
 
 DEFINE_string(
     pose_graph_filename, "",
-    "File with the pose graph proto from which to assess the quality.");
+    "Proto stream file containing the pose graph used to assess quality.");
 DEFINE_string(relations_filename, "",
               "Relations file containing the ground truth.");
 DEFINE_bool(read_text_file_with_unix_timestamps, false,
@@ -113,8 +114,8 @@ void Run(const string& pose_graph_filename, const string& relations_filename,
   LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";
   mapping::proto::SparsePoseGraph pose_graph;
   {
-    std::ifstream stream(pose_graph_filename.c_str());
-    CHECK(pose_graph.ParseFromIstream(&stream));
+    io::ProtoStreamReader reader(pose_graph_filename);
+    CHECK(reader.ReadProto(&pose_graph));
     CHECK_EQ(pose_graph.trajectory_size(), 1)
         << "Only pose graphs containing a single trajectory are supported.";
   }
