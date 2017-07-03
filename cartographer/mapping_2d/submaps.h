@@ -45,7 +45,7 @@ proto::SubmapsOptions CreateSubmapsOptions(
 class Submap : public mapping::Submap {
  public:
   Submap(const MapLimits& limits, const Eigen::Vector2f& origin);
-  Submap(const mapping::proto::Submap& proto);
+  explicit Submap(const mapping::proto::Submap& proto);
 
   mapping::proto::Submap ToProto() const;
 
