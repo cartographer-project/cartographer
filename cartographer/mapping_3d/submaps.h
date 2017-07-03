@@ -24,6 +24,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/id.h"
+#include "cartographer/mapping/proto/submap.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping_2d/probability_grid.h"
@@ -51,7 +52,9 @@ class Submap : public mapping::Submap {
  public:
   Submap(float high_resolution, float low_resolution,
          const transform::Rigid3d& local_pose);
-  Submap(const mapping::proto::Submap& proto);
+  explicit Submap(const mapping::proto::Submap& proto);
+
+  mapping::proto::Submap ToProto() const;
 
   const HybridGrid& high_resolution_hybrid_grid() const {
     return high_resolution_hybrid_grid_;
@@ -59,6 +62,7 @@ class Submap : public mapping::Submap {
   const HybridGrid& low_resolution_hybrid_grid() const {
     return low_resolution_hybrid_grid_;
   }
+  bool finished() const { return finished_; }
 
   void ToResponseProto(
       const transform::Rigid3d& global_submap_pose,
@@ -69,13 +73,13 @@ class Submap : public mapping::Submap {
   void InsertRangeData(const sensor::RangeData& range_data,
                        const RangeDataInserter& range_data_inserter,
                        int high_resolution_max_range);
+  void Finish();
 
  private:
   HybridGrid high_resolution_hybrid_grid_;
   HybridGrid low_resolution_hybrid_grid_;
+  bool finished_ = false;
 };
-
-mapping::proto::Submap ToProto(const Submap& submap);
 
 // Except during initialization when only a single submap exists, there are
 // always two submaps into which scans are inserted: an old submap that is used
@@ -113,6 +117,7 @@ class ActiveSubmaps {
   std::vector<std::shared_ptr<Submap>> submaps_;
   RangeDataInserter range_data_inserter_;
 };
+
 }  // namespace mapping_3d
 }  // namespace cartographer
 
