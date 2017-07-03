@@ -16,27 +16,25 @@ syntax = "proto2";
 
 package cartographer.mapping.proto;
 
-option java_outer_classname = "Mapping";
-
 import "cartographer/transform/proto/transform.proto";
 import "cartographer/mapping_2d/proto/probability_grid.proto";
 import "cartographer/mapping_3d/proto/hybrid_grid.proto";
 
 message SubmapId {
-  required int32 trajectory_id = 1;
-  required int32 submap_index = 2;
+  optional int32 trajectory_id = 1;
+  optional int32 submap_index = 2;
 }
 
 message Submap {
-	enum Type {
-		TWO_D = 1;
-		THREE_D = 2;
-	}
-	required Type type = 1;
-  required transform.proto.Rigid3d local_pose = 2;
-  required int32 num_range_data = 3;
-  required bool finished = 4;
-  required SubmapId submap_id = 5;
+  enum Type {
+    TWO_D = 1;
+    THREE_D = 2;
+  }
+  optional Type type = 1;
+  optional transform.proto.Rigid3d local_pose = 2;
+  optional int32 num_range_data = 3;
+  optional bool finished = 4;
+  optional SubmapId submap_id = 5;
   optional mapping_2d.proto.ProbabilityGrid probability_grid = 6;
   optional mapping_3d.proto.HybridGrid high_resolution_hybrid_grid = 7;
   optional mapping_3d.proto.HybridGrid low_resolution_hybrid_grid = 8;
