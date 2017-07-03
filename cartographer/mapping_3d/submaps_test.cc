@@ -15,35 +15,29 @@
  */
 
 #include "cartographer/mapping_3d/submaps.h"
-#include "cartographer/transform/transform.h"
 
+#include "cartographer/transform/transform.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {
 namespace mapping_3d {
 namespace {
 
-// TODO (bradon-northcutt): Source these testing parameters from a common place.
-const static double kPrecision_ = 1e-6;
-
-}  // namespace
-
 TEST(SubmapsTest, ToFromProto) {
   const Submap expected(0.05, 0.25,
-                        transform::Rigid3d(Eigen::Vector3d(1, 2, 0),
-                                           Eigen::Quaterniond(0, 0, 0, 1)));
-  const auto actual = Submap(ToProto(expected));
+                        transform::Rigid3d(Eigen::Vector3d(1., 2., 0.),
+                                           Eigen::Quaterniond(0., 0., 0., 1.)));
+  const auto actual = Submap(expected.ToProto());
   EXPECT_TRUE(expected.local_pose().translation().isApprox(
-      actual.local_pose().translation(), kPrecision_));
+      actual.local_pose().translation(), 1e-6));
   EXPECT_TRUE(expected.local_pose().rotation().isApprox(
-      actual.local_pose().rotation(), kPrecision_));
+      actual.local_pose().rotation(), 1e-6));
   EXPECT_EQ(expected.num_range_data(), actual.num_range_data());
   EXPECT_EQ(expected.finished(), actual.finished());
-  EXPECT_NEAR(expected.high_resolution_hybrid_grid().resolution(), 0.05,
-              kPrecision_);
-  EXPECT_NEAR(expected.low_resolution_hybrid_grid().resolution(), 0.25,
-              kPrecision_);
-  // TODO (brandon-northcutt) Verify SubmapID equality.
+  EXPECT_NEAR(expected.high_resolution_hybrid_grid().resolution(), 0.05, 1e-6);
+  EXPECT_NEAR(expected.low_resolution_hybrid_grid().resolution(), 0.25, 1e-6);
 }
+
+}  // namespace
 }  // namespace mapping_3d
 }  // namespace cartographer
