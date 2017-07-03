@@ -27,6 +27,7 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/thread_pool.h"
+#include "cartographer/io/proto_stream.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
@@ -76,6 +77,9 @@ class MapBuilder {
   // error string on failure, or an empty string on success.
   string SubmapToProto(const SubmapId& submap_id,
                        proto::SubmapQuery::Response* response);
+
+  // Serializes the current state to a proto stream.
+  void SerializeState(io::ProtoStreamWriter* writer);
 
   int num_trajectory_builders() const;
 
