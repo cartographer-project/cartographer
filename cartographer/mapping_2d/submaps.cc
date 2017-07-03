@@ -69,6 +69,22 @@ Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin)
           Eigen::Vector3d(origin.x(), origin.y(), 0.))),
       probability_grid_(limits) {}
 
+Submap::Submap(const mapping::proto::Submap& proto)
+    : mapping::Submap(transform::ToRigid3(proto.local_pose())),
+      probability_grid_(ProbabilityGrid(proto.probability_grid())) {
+  SetNumRangeData(proto.num_range_data());
+  finished_ = proto.finished();
+}
+
+mapping::proto::Submap Submap::ToProto() const {
+  mapping::proto::Submap proto;
+  *proto.mutable_local_pose() = transform::ToProto(local_pose());
+  proto.set_num_range_data(num_range_data());
+  proto.set_finished(finished_);
+  *proto.mutable_probability_grid() = probability_grid_.ToProto();
+  return proto;
+}
+
 void Submap::ToResponseProto(
     const transform::Rigid3d&,
     mapping::proto::SubmapQuery::Response* const response) const {
@@ -119,7 +135,7 @@ void Submap::InsertRangeData(const sensor::RangeData& range_data,
                              const RangeDataInserter& range_data_inserter) {
   CHECK(!finished_);
   range_data_inserter.Insert(range_data, &probability_grid_);
-  ++num_range_data_;
+  SetNumRangeData(num_range_data() + 1);
 }
 
 void Submap::Finish() {

@@ -72,14 +72,13 @@ class Submap {
       const transform::Rigid3d& global_submap_pose,
       proto::SubmapQuery::Response* response) const = 0;
 
+ protected:
+  void SetNumRangeData(int num_range_data) { num_range_data_ = num_range_data; }
+
  private:
   const transform::Rigid3d local_pose_;
-
- protected:
-  // TODO(hrapp): This should be private.
   int num_range_data_ = 0;
 };
-
 }  // namespace mapping
 }  // namespace cartographer
 

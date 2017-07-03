@@ -22,6 +22,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/mapping/proto/submap.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
@@ -44,9 +45,12 @@ proto::SubmapsOptions CreateSubmapsOptions(
 class Submap : public mapping::Submap {
  public:
   Submap(const MapLimits& limits, const Eigen::Vector2f& origin);
+  explicit Submap(const mapping::proto::Submap& proto);
+
+  mapping::proto::Submap ToProto() const;
 
   const ProbabilityGrid& probability_grid() const { return probability_grid_; }
-  const bool finished() const { return finished_; }
+  bool finished() const { return finished_; }
 
   void ToResponseProto(
       const transform::Rigid3d& global_submap_pose,
