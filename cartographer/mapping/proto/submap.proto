@@ -20,22 +20,11 @@ import "cartographer/transform/proto/transform.proto";
 import "cartographer/mapping_2d/proto/probability_grid.proto";
 import "cartographer/mapping_3d/proto/hybrid_grid.proto";
 
-message SubmapId {
-  optional int32 trajectory_id = 1;
-  optional int32 submap_index = 2;  // Submap index in the given trajectory.
-}
-
 message Submap {
-  enum Type {
-    TWO_D = 1;
-    THREE_D = 2;
-  }
-  optional Type type = 1;
-  optional transform.proto.Rigid3d local_pose = 2;
-  optional int32 num_range_data = 3;
-  optional bool finished = 4;
-  optional SubmapId submap_id = 5;
-  optional mapping_2d.proto.ProbabilityGrid probability_grid = 6;
-  optional mapping_3d.proto.HybridGrid high_resolution_hybrid_grid = 7;
-  optional mapping_3d.proto.HybridGrid low_resolution_hybrid_grid = 8;
+  optional transform.proto.Rigid3d local_pose = 1;
+  optional int32 num_range_data = 2;
+  optional bool finished = 3;
+  optional mapping_2d.proto.ProbabilityGrid probability_grid = 4;
+  optional mapping_3d.proto.HybridGrid high_resolution_hybrid_grid = 5;
+  optional mapping_3d.proto.HybridGrid low_resolution_hybrid_grid = 6;
 }
