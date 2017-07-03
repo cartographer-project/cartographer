@@ -22,7 +22,7 @@ import "cartographer/mapping_3d/proto/hybrid_grid.proto";
 
 message SubmapId {
   optional int32 trajectory_id = 1;
-  optional int32 submap_index = 2;
+  optional int32 submap_index = 2;  // Submap index in the given trajectory.
 }
 
 message Submap {
