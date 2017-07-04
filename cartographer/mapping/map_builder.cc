@@ -171,7 +171,9 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   unused_options.mutable_trajectory_builder_2d_options()
       ->set_num_odometry_states(1);
 
-  const int map_trajectory_id = AddTrajectoryBuilder({}, unused_options);
+  const std::unordered_set<string> unused_sensor_ids;
+  const int map_trajectory_id =
+      AddTrajectoryBuilder(unused_sensor_ids, unused_options);
   FinishTrajectory(map_trajectory_id);
   sparse_pose_graph_->FreezeTrajectory(map_trajectory_id);
 
