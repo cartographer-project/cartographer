@@ -71,7 +71,6 @@ class OptimizationProblem {
   // Computes the optimized poses.
   void Solve(const std::vector<Constraint>& constraints);
 
-  const std::vector<std::deque<sensor::ImuData>>& imu_data() const;
   const std::vector<std::vector<NodeData>>& node_data() const;
   const std::vector<std::vector<SubmapData>>& submap_data() const;
 

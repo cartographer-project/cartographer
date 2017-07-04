@@ -239,11 +239,6 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   }
 }
 
-const std::vector<std::deque<sensor::ImuData>>& OptimizationProblem::imu_data()
-    const {
-  return imu_data_;
-}
-
 const std::vector<std::deque<NodeData>>& OptimizationProblem::node_data()
     const {
   return node_data_;

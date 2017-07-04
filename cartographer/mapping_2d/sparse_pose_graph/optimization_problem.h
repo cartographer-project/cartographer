@@ -86,7 +86,6 @@ class OptimizationProblem {
     int num_trimmed_submaps = 0;
   };
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
-  std::vector<std::deque<sensor::ImuData>> imu_data_;
   std::vector<std::deque<NodeData>> node_data_;
   std::vector<std::deque<SubmapData>> submap_data_;
   std::vector<TrajectoryData> trajectory_data_;
