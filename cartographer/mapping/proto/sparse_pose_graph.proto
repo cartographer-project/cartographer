@@ -19,18 +19,18 @@ package cartographer.mapping.proto;
 import "cartographer/mapping/proto/trajectory.proto";
 import "cartographer/transform/proto/transform.proto";
 
+message SubmapId {
+  optional int32 trajectory_id = 1;
+  optional int32 submap_index = 2;  // Submap index in the given trajectory.
+}
+
+message ScanId {
+  optional int32 trajectory_id = 1;
+  optional int32 scan_index = 2;  // Scan index in the given trajectory.
+}
+
 message SparsePoseGraph {
   message Constraint {
-    message SubmapId {
-      optional int32 trajectory_id = 1;
-      optional int32 submap_index = 2;  // Submap index in the given trajectory.
-    }
-
-    message ScanId {
-      optional int32 trajectory_id = 1;
-      optional int32 scan_index = 2;  // Scan index in the given trajectory.
-    }
-
     // Differentiates between intra-submap (where the scan was inserted into the
     // submap) and inter-submap constraints (where the scan was not inserted
     // into the submap).

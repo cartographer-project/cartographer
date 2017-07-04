@@ -24,7 +24,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/id.h"
-#include "cartographer/mapping/proto/submap.pb.h"
+#include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping_2d/probability_grid.h"
@@ -52,9 +52,9 @@ class Submap : public mapping::Submap {
  public:
   Submap(float high_resolution, float low_resolution,
          const transform::Rigid3d& local_pose);
-  explicit Submap(const mapping::proto::Submap& proto);
+  explicit Submap(const mapping::proto::Submap3D& proto);
 
-  mapping::proto::Submap ToProto() const;
+  void ToProto(mapping::proto::Submap* proto) const override;
 
   const HybridGrid& high_resolution_hybrid_grid() const {
     return high_resolution_hybrid_grid_;

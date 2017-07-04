@@ -25,6 +25,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/probability_values.h"
+#include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/probability_grid.h"
@@ -61,6 +62,8 @@ class Submap {
   Submap(const transform::Rigid3d& local_pose) : local_pose_(local_pose) {}
   virtual ~Submap() {}
 
+  virtual void ToProto(proto::Submap* proto) const = 0;
+
   // Local SLAM pose of this submap.
   transform::Rigid3d local_pose() const { return local_pose_; }
 
@@ -73,7 +76,9 @@ class Submap {
       proto::SubmapQuery::Response* response) const = 0;
 
  protected:
-  void SetNumRangeData(int num_range_data) { num_range_data_ = num_range_data; }
+  void SetNumRangeData(const int num_range_data) {
+    num_range_data_ = num_range_data;
+  }
 
  private:
   const transform::Rigid3d local_pose_;

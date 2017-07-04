@@ -326,7 +326,7 @@ Submap::Submap(const float high_resolution, const float low_resolution,
       high_resolution_hybrid_grid_(high_resolution),
       low_resolution_hybrid_grid_(low_resolution) {}
 
-Submap::Submap(const mapping::proto::Submap& proto)
+Submap::Submap(const mapping::proto::Submap3D& proto)
     : mapping::Submap(transform::ToRigid3(proto.local_pose())),
       high_resolution_hybrid_grid_(proto.high_resolution_hybrid_grid()),
       low_resolution_hybrid_grid_(proto.low_resolution_hybrid_grid()) {
@@ -334,16 +334,15 @@ Submap::Submap(const mapping::proto::Submap& proto)
   finished_ = proto.finished();
 }
 
-mapping::proto::Submap Submap::ToProto() const {
-  mapping::proto::Submap proto;
-  *proto.mutable_local_pose() = transform::ToProto(local_pose());
-  proto.set_num_range_data(num_range_data());
-  proto.set_finished(finished_);
-  *proto.mutable_high_resolution_hybrid_grid() =
+void Submap::ToProto(mapping::proto::Submap* const proto) const {
+  auto* const submap_3d = proto->mutable_submap_3d();
+  *submap_3d->mutable_local_pose() = transform::ToProto(local_pose());
+  submap_3d->set_num_range_data(num_range_data());
+  submap_3d->set_finished(finished_);
+  *submap_3d->mutable_high_resolution_hybrid_grid() =
       mapping_3d::ToProto(high_resolution_hybrid_grid());
-  *proto.mutable_low_resolution_hybrid_grid() =
+  *submap_3d->mutable_low_resolution_hybrid_grid() =
       mapping_3d::ToProto(low_resolution_hybrid_grid());
-  return proto;
 }
 
 void Submap::ToResponseProto(
