@@ -72,7 +72,6 @@ class OptimizationProblem {
   // Computes the optimized poses.
   void Solve(const std::vector<Constraint>& constraints);
 
-  const std::vector<std::deque<sensor::ImuData>>& imu_data() const;
   const std::vector<std::deque<NodeData>>& node_data() const;
   const std::vector<std::deque<SubmapData>>& submap_data() const;
 
@@ -86,6 +85,7 @@ class OptimizationProblem {
     int num_trimmed_submaps = 0;
   };
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
+  std::vector<std::deque<sensor::ImuData>> imu_data_;
   std::vector<std::deque<NodeData>> node_data_;
   std::vector<std::deque<SubmapData>> submap_data_;
   std::vector<TrajectoryData> trajectory_data_;
