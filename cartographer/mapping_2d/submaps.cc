@@ -76,7 +76,7 @@ Submap::Submap(const mapping::proto::Submap2D& proto)
   finished_ = proto.finished();
 }
 
-void Submap::ToProto(mapping::proto::Submap* proto) const {
+void Submap::ToProto(mapping::proto::Submap* const proto) const {
   auto* const submap_2d = proto->mutable_submap_2d();
   *submap_2d->mutable_local_pose() = transform::ToProto(local_pose());
   submap_2d->set_num_range_data(num_range_data());

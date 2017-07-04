@@ -20,6 +20,7 @@ import "cartographer/mapping_2d/proto/probability_grid.proto";
 import "cartographer/mapping_3d/proto/hybrid_grid.proto";
 import "cartographer/transform/proto/transform.proto";
 
+// Serialized state of a mapping_2d::Submap.
 message Submap2D {
   optional transform.proto.Rigid3d local_pose = 1;
   optional int32 num_range_data = 2;
@@ -27,6 +28,7 @@ message Submap2D {
   optional mapping_2d.proto.ProbabilityGrid probability_grid = 4;
 }
 
+// Serialized state of a mapping_3d::Submap.
 message Submap3D {
   optional transform.proto.Rigid3d local_pose = 1;
   optional int32 num_range_data = 2;
