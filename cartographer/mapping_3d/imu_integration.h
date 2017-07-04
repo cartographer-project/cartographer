@@ -23,8 +23,8 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/time.h"
-#include "cartographer/transform/transform.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -39,7 +39,8 @@ struct IntegrateImuResult {
 // Returns velocity delta in map frame.
 IntegrateImuResult<double> IntegrateImu(
     const std::deque<sensor::ImuData>& imu_data, const common::Time start_time,
-    const common::Time end_time, std::deque<sensor::ImuData>::const_iterator* it);
+    const common::Time end_time,
+    std::deque<sensor::ImuData>::const_iterator* it);
 
 template <typename T>
 IntegrateImuResult<T> IntegrateImu(

@@ -45,5 +45,5 @@ message RangeData {
 message ImuData {
   optional int64 timestamp = 1;
   optional transform.proto.Vector3d linear_acceleration = 2;
-  optional transform.proto.Vector3d angular_velocity= 3;
+  optional transform.proto.Vector3d angular_velocity = 3;
 }

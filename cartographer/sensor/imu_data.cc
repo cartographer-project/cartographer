@@ -32,13 +32,10 @@ proto::ImuData ToProto(const ImuData& imu_data) {
 }
 
 ImuData FromProto(const proto::ImuData& proto) {
-  auto imu_data = ImuData{
-      common::FromUniversal(proto.timestamp()),
-      transform::ToEigen(proto.linear_acceleration()),
-      transform::ToEigen(proto.angular_velocity())
-  };
-  return imu_data;
+  return ImuData{common::FromUniversal(proto.timestamp()),
+                 transform::ToEigen(proto.linear_acceleration()),
+                 transform::ToEigen(proto.angular_velocity())};
 }
 
-} // sensor
-} // cartographer
+}  // sensor
+}  // cartographer

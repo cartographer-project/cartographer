@@ -22,7 +22,7 @@
 #include "cartographer/sensor/proto/sensor.pb.h"
 
 namespace cartographer {
-namespace sensor{
+namespace sensor {
 
 struct ImuData {
   common::Time time;
@@ -33,10 +33,10 @@ struct ImuData {
 // Converts 'imu_data' to a proto::ImuData.
 proto::ImuData ToProto(const ImuData& imu_data);
 
-// Converts 'proto' to a ImuData.
+// Converts 'proto' to an ImuData.
 ImuData FromProto(const proto::ImuData& proto);
 
-} // namespace sensor
-} // namespace cartographer
+}  // namespace sensor
+}  // namespace cartographer
 
-#endif
+#endif  // CARTOGRAPHER_SENSOR_IMU_DATA_H_
