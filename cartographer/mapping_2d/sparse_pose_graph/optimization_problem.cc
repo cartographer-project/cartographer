@@ -123,7 +123,8 @@ void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
       max_num_iterations);
 }
 
-void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
+void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
+                                const std::set<int>& frozen_trajectories) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
@@ -140,15 +141,17 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   bool first_submap = true;
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
+    const bool frozen = frozen_trajectories.count(trajectory_id);
     // Reserve guarantees that data does not move, so the pointers for Ceres
     // stay valid.
     C_submaps[trajectory_id].reserve(submap_data_[trajectory_id].size());
     for (const SubmapData& submap_data : submap_data_[trajectory_id]) {
       C_submaps[trajectory_id].push_back(FromPose(submap_data.pose));
       problem.AddParameterBlock(C_submaps[trajectory_id].back().data(), 3);
-      if (first_submap) {
+      if (first_submap || frozen) {
         first_submap = false;
-        // Fix the pose of the first submap.
+        // Fix the pose of the first submap or all submaps of a frozen
+        // trajectory.
         problem.SetParameterBlockConstant(
             C_submaps[trajectory_id].back().data());
       }

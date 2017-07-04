@@ -26,6 +26,7 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
+#include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/submaps.h"
@@ -72,6 +73,15 @@ class SparsePoseGraph {
 
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
+
+  // Freezes a trajectory. Poses in this trajectory will not be optimized.
+  virtual void FreezeTrajectory(int trajectory_id) = 0;
+
+  // Adds a 'submap' from a proto with the given 'initial_pose' to the frozen
+  // trajectory with 'trajectory_id'.
+  virtual void AddSubmapFromProto(int trajectory_id,
+                                  const transform::Rigid3d& initial_pose,
+                                  const proto::Submap& submap) = 0;
 
   // Adds a 'trimmer'. It will be used after all data added before it has been
   // included in the pose graph.

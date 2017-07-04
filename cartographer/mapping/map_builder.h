@@ -81,6 +81,9 @@ class MapBuilder {
   // Serializes the current state to a proto stream.
   void SerializeState(io::ProtoStreamWriter* writer);
 
+  // Loads submaps from a proto stream into a new frozen trajectory.
+  void LoadMap(io::ProtoStreamReader* reader);
+
   int num_trajectory_builders() const;
 
   mapping::SparsePoseGraph* sparse_pose_graph();

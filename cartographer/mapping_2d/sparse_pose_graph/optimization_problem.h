@@ -70,7 +70,8 @@ class OptimizationProblem {
   void SetMaxNumIterations(int32 max_num_iterations);
 
   // Computes the optimized poses.
-  void Solve(const std::vector<Constraint>& constraints);
+  void Solve(const std::vector<Constraint>& constraints,
+             const std::set<int>& frozen_trajectories);
 
   const std::vector<std::deque<NodeData>>& node_data() const;
   const std::vector<std::deque<SubmapData>>& submap_data() const;
