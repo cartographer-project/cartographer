@@ -88,6 +88,11 @@ int MapBuilder::AddTrajectoryBuilder(
                 trajectory_options.trajectory_builder_2d_options(),
                 trajectory_id, sparse_pose_graph_2d_.get())));
   }
+  if (trajectory_options.pure_localization()) {
+    constexpr int kSubmapsToKeep = 3;
+    sparse_pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
+        trajectory_id, kSubmapsToKeep));
+  }
   return trajectory_id;
 }
 
