@@ -28,7 +28,6 @@
 #include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/submaps.h"
 #include "cartographer/mapping_3d/motion_filter.h"
-#include "cartographer/sensor/configuration.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
 
