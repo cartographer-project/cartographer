@@ -242,9 +242,6 @@ cartographer.mapping_2d.proto.SubmapsOptions
 double resolution
   Resolution of the map in meters.
 
-double half_length
-  Half the width/height of each submap, its "radius".
-
 int32 num_range_data
   Number of scans before adding a new submap. Each submap will get twice the
   number of scans inserted: First for initialization without being matched

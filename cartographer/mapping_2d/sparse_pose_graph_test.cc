@@ -51,7 +51,6 @@ class SparsePoseGraphTest : public ::testing::Test {
       auto parameter_dictionary = common::MakeDictionary(R"text(
           return {
             resolution = 0.05,
-            half_length = 21.,
             num_range_data = 1,
             range_data_inserter = {
               insert_free_space = true,

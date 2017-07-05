@@ -36,7 +36,6 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
   auto parameter_dictionary = common::MakeDictionary(
       "return {"
       "resolution = 0.05, "
-      "half_length = 10., "
       "num_range_data = " +
       std::to_string(kNumRangeData) +
       ", "
