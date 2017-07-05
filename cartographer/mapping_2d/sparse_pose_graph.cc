@@ -388,16 +388,28 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
 
   std::shared_ptr<const Submap> submap_ptr =
       std::make_shared<const Submap>(submap.submap_2d());
+  const transform::Rigid2d initial_pose_2d = transform::Project2D(initial_pose);
 
   common::MutexLocker locker(&mutex_);
   const mapping::SubmapId submap_id =
       submap_data_.Append(trajectory_id, SubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
-  AddWorkItem([this, submap_id, initial_pose]() REQUIRES(mutex_) {
+  // Immediately show the submap at the optimized pose.
+  CHECK_GE(static_cast<size_t>(submap_data_.num_trajectories()),
+           optimized_submap_transforms_.size());
+  optimized_submap_transforms_.resize(submap_data_.num_trajectories());
+  CHECK_GE(static_cast<size_t>(submap_data_.num_trajectories()),
+           num_trimmed_submaps_at_last_optimization_.size());
+  num_trimmed_submaps_at_last_optimization_.resize(
+      submap_data_.num_trajectories());
+  CHECK_EQ(optimized_submap_transforms_.at(trajectory_id).size(),
+           submap_id.submap_index);
+  optimized_submap_transforms_.at(trajectory_id)
+      .push_back(sparse_pose_graph::SubmapData{initial_pose_2d});
+  AddWorkItem([this, submap_id, initial_pose_2d]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
-    optimization_problem_.AddSubmap(submap_id.trajectory_id,
-                                    transform::Project2D(initial_pose));
+    optimization_problem_.AddSubmap(submap_id.trajectory_id, initial_pose_2d);
   });
 }
 
