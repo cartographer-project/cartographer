@@ -37,5 +37,5 @@ ImuData FromProto(const proto::ImuData& proto) {
                  transform::ToEigen(proto.angular_velocity())};
 }
 
-}  // sensor
-}  // cartographer
+}  // namespace sensor
+}  // namespace cartographer
