@@ -28,10 +28,11 @@ constexpr int kSubpixelScale = 1000;
 // and 'end' are coordinates at subpixel precision. We compute all pixels in
 // which some part of the line segment connecting 'begin' and 'end' lies.
 void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
-             const std::function<void(const Eigen::Array2i&)>& visitor) {
+             const std::vector<uint16>& miss_table,
+             ProbabilityGrid* const probability_grid) {
   // For simplicity, we order 'begin' and 'end' by their x coordinate.
   if (begin.x() > end.x()) {
-    CastRay(end, begin, visitor);
+    CastRay(end, begin, miss_table, probability_grid);
     return;
   }
 
@@ -46,7 +47,7 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
                            std::min(begin.y(), end.y()) / kSubpixelScale);
     const int end_y = std::max(begin.y(), end.y()) / kSubpixelScale;
     for (; current.y() <= end_y; ++current.y()) {
-      visitor(current);
+      probability_grid->ApplyLookupTable(current, miss_table);
     }
     return;
   }
@@ -86,11 +87,11 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
   sub_y += dy * first_pixel;
   if (dy > 0) {
     while (true) {
-      visitor(current);
+      probability_grid->ApplyLookupTable(current, miss_table);
       while (sub_y > denominator) {
         sub_y -= denominator;
         ++current.y();
-        visitor(current);
+        probability_grid->ApplyLookupTable(current, miss_table);
       }
       ++current.x();
       if (sub_y == denominator) {
@@ -105,11 +106,11 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
     }
     // Move from the pixel border on the right to 'end'.
     sub_y += dy * last_pixel;
-    visitor(current);
+    probability_grid->ApplyLookupTable(current, miss_table);
     while (sub_y > denominator) {
       sub_y -= denominator;
       ++current.y();
-      visitor(current);
+      probability_grid->ApplyLookupTable(current, miss_table);
     }
     CHECK_NE(sub_y, denominator);
     CHECK_EQ(current.y(), end.y() / kSubpixelScale);
@@ -118,11 +119,11 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 
   // Same for lines non-ascending in y coordinates.
   while (true) {
-    visitor(current);
+    probability_grid->ApplyLookupTable(current, miss_table);
     while (sub_y < 0) {
       sub_y += denominator;
       --current.y();
-      visitor(current);
+      probability_grid->ApplyLookupTable(current, miss_table);
     }
     ++current.x();
     if (sub_y == 0) {
@@ -135,11 +136,11 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
     sub_y += dy * 2 * kSubpixelScale;
   }
   sub_y += dy * last_pixel;
-  visitor(current);
+  probability_grid->ApplyLookupTable(current, miss_table);
   while (sub_y < 0) {
     sub_y += denominator;
     --current.y();
-    visitor(current);
+    probability_grid->ApplyLookupTable(current, miss_table);
   }
   CHECK_NE(sub_y, 0);
   CHECK_EQ(current.y(), end.y() / kSubpixelScale);
@@ -147,9 +148,12 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 
 }  // namespace
 
-void CastRays(const sensor::RangeData& range_data, const MapLimits& limits,
-              const std::function<void(const Eigen::Array2i&)>& hit_visitor,
-              const std::function<void(const Eigen::Array2i&)>& miss_visitor) {
+void CastRays(const sensor::RangeData& range_data,
+              const std::vector<uint16>& hit_table,
+              const std::vector<uint16>& miss_table,
+              const bool insert_free_space,
+              ProbabilityGrid* const probability_grid) {
+  const MapLimits& limits = probability_grid->limits();
   const double superscaled_resolution = limits.resolution() / kSubpixelScale;
   const MapLimits superscaled_limits(
       superscaled_resolution, limits.max(),
@@ -158,19 +162,22 @@ void CastRays(const sensor::RangeData& range_data, const MapLimits& limits,
   const Eigen::Array2i begin =
       superscaled_limits.GetXYIndexOfCellContainingPoint(range_data.origin.x(),
                                                          range_data.origin.y());
-
   // Compute and add the end points.
   std::vector<Eigen::Array2i> ends;
   ends.reserve(range_data.returns.size());
   for (const Eigen::Vector3f& hit : range_data.returns) {
     ends.push_back(
         superscaled_limits.GetXYIndexOfCellContainingPoint(hit.x(), hit.y()));
-    hit_visitor(ends.back() / kSubpixelScale);
+    probability_grid->ApplyLookupTable(ends.back() / kSubpixelScale, hit_table);
+  }
+
+  if (!insert_free_space) {
+    return;
   }
 
   // Now add the misses.
   for (const Eigen::Array2i& end : ends) {
-    CastRay(begin, end, miss_visitor);
+    CastRay(begin, end, miss_table, probability_grid);
   }
 
   // Finally, compute and add empty rays based on misses in the scan.
@@ -178,7 +185,7 @@ void CastRays(const sensor::RangeData& range_data, const MapLimits& limits,
     CastRay(begin,
             superscaled_limits.GetXYIndexOfCellContainingPoint(
                 missing_echo.x(), missing_echo.y()),
-            miss_visitor);
+            miss_table, probability_grid);
   }
 }
 
