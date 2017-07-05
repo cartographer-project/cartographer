@@ -49,9 +49,12 @@ class ProbabilityGrid {
       : limits_(proto.limits()),
         cells_(),
         update_indices_(proto.update_indices().begin(),
-                        proto.update_indices().end()),
-        known_cells_box_(Eigen::Vector2i(proto.min_x(), proto.min_y()),
-                         Eigen::Vector2i(proto.max_x(), proto.max_y())) {
+                        proto.update_indices().end()) {
+    if (proto.has_min_x()) {
+      known_cells_box_ =
+          Eigen::AlignedBox2i(Eigen::Vector2i(proto.min_x(), proto.min_y()),
+                              Eigen::Vector2i(proto.max_x(), proto.max_y()));
+    }
     cells_.reserve(proto.cells_size());
     for (const auto cell : proto.cells()) {
       CHECK_LE(cell, std::numeric_limits<uint16>::max());
@@ -163,7 +166,9 @@ class ProbabilityGrid {
       }
       cells_ = new_cells;
       limits_ = new_limits;
-      known_cells_box_.translate(Eigen::Vector2i(x_offset, y_offset));
+      if (!known_cells_box_.isEmpty()) {
+        known_cells_box_.translate(Eigen::Vector2i(x_offset, y_offset));
+      }
     }
   }
 
@@ -178,10 +183,12 @@ class ProbabilityGrid {
     for (const auto update : update_indices_) {
       result.mutable_update_indices()->Add(update);
     }
-    result.set_max_x(known_cells_box_.max().x());
-    result.set_max_y(known_cells_box_.max().y());
-    result.set_min_x(known_cells_box_.min().x());
-    result.set_min_y(known_cells_box_.min().y());
+    if (!known_cells_box_.isEmpty()) {
+      result.set_max_x(known_cells_box_.max().x());
+      result.set_max_y(known_cells_box_.max().y());
+      result.set_min_x(known_cells_box_.min().x());
+      result.set_min_y(known_cells_box_.min().y());
+    }
     return result;
   }
 
