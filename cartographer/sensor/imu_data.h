@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Cartographer Authors
+ * Copyright 2017 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,29 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/imu_integration.h"
+#ifndef CARTOGRAPHER_SENSOR_IMU_DATA_H_
+#define CARTOGRAPHER_SENSOR_IMU_DATA_H_
+
+#include "Eigen/Core"
+#include "cartographer/common/time.h"
+#include "cartographer/sensor/proto/sensor.pb.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace sensor {
 
-IntegrateImuResult<double> IntegrateImu(
-    const std::deque<sensor::ImuData>& imu_data, const common::Time start_time,
-    const common::Time end_time,
-    std::deque<sensor::ImuData>::const_iterator* it) {
-  return IntegrateImu<double>(imu_data, Eigen::Affine3d::Identity(),
-                              Eigen::Affine3d::Identity(), start_time, end_time,
-                              it);
-}
+struct ImuData {
+  common::Time time;
+  Eigen::Vector3d linear_acceleration;
+  Eigen::Vector3d angular_velocity;
+};
 
-}  // namespace mapping_3d
+// Converts 'imu_data' to a proto::ImuData.
+proto::ImuData ToProto(const ImuData& imu_data);
+
+// Converts 'proto' to an ImuData.
+ImuData FromProto(const proto::ImuData& proto);
+
+}  // namespace sensor
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_SENSOR_IMU_DATA_H_

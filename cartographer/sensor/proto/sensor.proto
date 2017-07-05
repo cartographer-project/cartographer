@@ -40,3 +40,10 @@ message RangeData {
   optional PointCloud point_cloud = 2;
   optional PointCloud missing_echo_point_cloud = 3;
 }
+
+// Proto representation of ::cartographer::sensor::ImuData
+message ImuData {
+  optional int64 timestamp = 1;
+  optional transform.proto.Vector3d linear_acceleration = 2;
+  optional transform.proto.Vector3d angular_velocity = 3;
+}
