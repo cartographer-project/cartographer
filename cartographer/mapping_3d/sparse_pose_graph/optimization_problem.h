@@ -28,7 +28,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
-#include "cartographer/mapping_3d/imu_integration.h"
+#include "cartographer/sensor/imu_data.h"
 
 namespace cartographer {
 namespace mapping_3d {
@@ -82,7 +82,7 @@ class OptimizationProblem {
 
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   FixZ fix_z_;
-  std::vector<std::deque<ImuData>> imu_data_;
+  std::vector<std::deque<sensor::ImuData>> imu_data_;
   std::vector<std::vector<NodeData>> node_data_;
   std::vector<std::vector<SubmapData>> submap_data_;
   std::vector<TrajectoryData> trajectory_data_;

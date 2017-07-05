@@ -31,6 +31,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping_3d/acceleration_cost_function.h"
 #include "cartographer/mapping_3d/ceres_pose.h"
+#include "cartographer/mapping_3d/imu_integration.h"
 #include "cartographer/mapping_3d/rotation_cost_function.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/spa_cost_function.h"
 #include "cartographer/transform/transform.h"
@@ -86,7 +87,7 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
   imu_data_.resize(
       std::max(imu_data_.size(), static_cast<size_t>(trajectory_id) + 1));
   imu_data_[trajectory_id].push_back(
-      ImuData{time, linear_acceleration, angular_velocity});
+      sensor::ImuData{time, linear_acceleration, angular_velocity});
 }
 
 void OptimizationProblem::AddTrajectoryNode(
@@ -197,7 +198,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
     TrajectoryData& trajectory_data = trajectory_data_.at(trajectory_id);
     problem.AddParameterBlock(trajectory_data.imu_calibration.data(), 4,
                               new ceres::QuaternionParameterization());
-    const std::deque<ImuData>& imu_data = imu_data_.at(trajectory_id);
+    const std::deque<sensor::ImuData>& imu_data = imu_data_.at(trajectory_id);
     CHECK(!imu_data.empty());
     // TODO(whess): Add support for empty trajectories.
     const auto& node_data = node_data_[trajectory_id];

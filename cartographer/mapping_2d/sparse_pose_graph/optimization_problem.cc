@@ -68,7 +68,7 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
   imu_data_.resize(
       std::max(imu_data_.size(), static_cast<size_t>(trajectory_id) + 1));
   imu_data_[trajectory_id].push_back(
-      mapping_3d::ImuData{time, linear_acceleration, angular_velocity});
+      sensor::ImuData{time, linear_acceleration, angular_velocity});
 }
 
 void OptimizationProblem::AddTrajectoryNode(
