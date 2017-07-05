@@ -72,7 +72,6 @@ int MapBuilder::AddTrajectoryBuilder(
     const proto::TrajectoryBuilderOptions& trajectory_options) {
   const int trajectory_id = trajectory_builders_.size();
   const int submaps_to_keep = 10;
-
   if (options_.use_trajectory_builder_3d()) {
     CHECK(trajectory_options.has_trajectory_builder_3d_options());
     trajectory_builders_.push_back(
@@ -90,9 +89,9 @@ int MapBuilder::AddTrajectoryBuilder(
                 trajectory_options.trajectory_builder_2d_options(),
                 trajectory_id, sparse_pose_graph_2d_.get())));
   }
-  if(trajectory_options.pure_localization()) {
+  if (trajectory_options.pure_localization()) {
     sparse_pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
-        PureLocalizationTrimmer(trajectory_id, submaps_to_keep)));
+        trajectory_id, submaps_to_keep));
   }
   return trajectory_id;
 }
