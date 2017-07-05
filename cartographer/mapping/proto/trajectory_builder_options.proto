@@ -24,4 +24,5 @@ message TrajectoryBuilderOptions {
       trajectory_builder_2d_options = 1;
   optional mapping_3d.proto.LocalTrajectoryBuilderOptions
       trajectory_builder_3d_options = 2;
+  optional bool pure_localization = 3;
 }

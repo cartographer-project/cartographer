@@ -31,6 +31,8 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
   *options.mutable_trajectory_builder_3d_options() =
       mapping_3d::CreateLocalTrajectoryBuilderOptions(
           parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
+  options.set_pure_localization(
+      parameter_dictionary->GetBool("pure_localization"));
   return options;
 }
 
