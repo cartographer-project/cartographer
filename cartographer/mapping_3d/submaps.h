@@ -27,7 +27,6 @@
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
-#include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/range_data_inserter.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/mapping_3d/proto/submaps_options.pb.h"
@@ -38,12 +37,6 @@
 
 namespace cartographer {
 namespace mapping_3d {
-
-void InsertIntoProbabilityGrid(
-    const sensor::RangeData& range_data, const transform::Rigid3f& pose,
-    const float slice_z,
-    const mapping_2d::RangeDataInserter& range_data_inserter,
-    mapping_2d::ProbabilityGrid* result);
 
 proto::SubmapsOptions CreateSubmapsOptions(
     common::LuaParameterDictionary* parameter_dictionary);
