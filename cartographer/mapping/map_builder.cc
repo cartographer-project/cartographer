@@ -191,7 +191,7 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
                                              proto.submap());
     }
   }
-  CHECK(reader->ok());
+  CHECK(reader->eof());
 }
 
 int MapBuilder::num_trajectory_builders() const {

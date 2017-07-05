@@ -71,7 +71,7 @@ class ProtoStreamReader {
            proto->ParseFromString(decompressed_data);
   }
 
-  bool ok() const;
+  bool eof() const;
 
  private:
   bool Read(string* decompressed_data);
