@@ -371,6 +371,36 @@ void SparsePoseGraph::WaitForAllComputations() {
   locker.Await([&notification]() { return notification; });
 }
 
+void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
+    CHECK_EQ(frozen_trajectories_.count(trajectory_id), 0);
+    frozen_trajectories_.insert(trajectory_id);
+  });
+}
+
+void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
+                                         const transform::Rigid3d& initial_pose,
+                                         const mapping::proto::Submap& submap) {
+  if (!submap.has_submap_2d()) {
+    return;
+  }
+
+  std::shared_ptr<const Submap> submap_ptr =
+      std::make_shared<const Submap>(submap.submap_2d());
+
+  common::MutexLocker locker(&mutex_);
+  const mapping::SubmapId submap_id =
+      submap_data_.Append(trajectory_id, SubmapData());
+  submap_data_.at(submap_id).submap = submap_ptr;
+  AddWorkItem([this, submap_id, initial_pose]() REQUIRES(mutex_) {
+    CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
+    submap_data_.at(submap_id).state = SubmapState::kFinished;
+    optimization_problem_.AddSubmap(submap_id.trajectory_id,
+                                    transform::Project2D(initial_pose));
+  });
+}
+
 void SparsePoseGraph::AddTrimmer(
     std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) {
   common::MutexLocker locker(&mutex_);
@@ -395,7 +425,7 @@ void SparsePoseGraph::RunOptimization() {
   if (optimization_problem_.submap_data().empty()) {
     return;
   }
-  optimization_problem_.Solve(constraints_);
+  optimization_problem_.Solve(constraints_, frozen_trajectories_);
   common::MutexLocker locker(&mutex_);
 
   std::vector<int> num_trimmed_submaps;

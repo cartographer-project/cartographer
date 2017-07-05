@@ -84,5 +84,7 @@ bool ProtoStreamReader::Read(string* decompressed_data) {
   return true;
 }
 
+bool ProtoStreamReader::ok() const { return !in_.fail(); }
+
 }  // namespace io
 }  // namespace cartographer

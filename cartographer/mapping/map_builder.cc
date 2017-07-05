@@ -157,6 +157,43 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
   // TODO(whess): Serialize additional sensor data: IMU, odometry.
 }
 
+void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
+  proto::SparsePoseGraph pose_graph;
+  CHECK(reader->ReadProto(&pose_graph));
+
+  // TODO(whess): Not all trajectories should be builders, i.e. support should
+  // be added for trajectories without latest pose, options, etc. Appease the
+  // trajectory builder for now.
+  proto::TrajectoryBuilderOptions unused_options;
+  unused_options.mutable_trajectory_builder_2d_options()
+      ->mutable_submaps_options()
+      ->set_resolution(0.05);
+  unused_options.mutable_trajectory_builder_2d_options()
+      ->set_num_odometry_states(1);
+
+  const std::unordered_set<string> unused_sensor_ids;
+  const int map_trajectory_id =
+      AddTrajectoryBuilder(unused_sensor_ids, unused_options);
+  FinishTrajectory(map_trajectory_id);
+  sparse_pose_graph_->FreezeTrajectory(map_trajectory_id);
+
+  for (;;) {
+    proto::SerializedData proto;
+    if (!reader->ReadProto(&proto)) {
+      break;
+    }
+    if (proto.has_submap()) {
+      const transform::Rigid3d submap_pose = transform::ToRigid3(
+          pose_graph.trajectory(proto.submap().submap_id().trajectory_id())
+              .submap(proto.submap().submap_id().submap_index())
+              .pose());
+      sparse_pose_graph_->AddSubmapFromProto(map_trajectory_id, submap_pose,
+                                             proto.submap());
+    }
+  }
+  CHECK(reader->ok());
+}
+
 int MapBuilder::num_trajectory_builders() const {
   return trajectory_builders_.size();
 }
