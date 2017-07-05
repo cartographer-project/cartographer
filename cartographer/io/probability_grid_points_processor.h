@@ -16,7 +16,7 @@
 namespace cartographer {
 namespace io {
 
-// Creates a probability grid of the points with resolution
+// Creates a probability grid with the specified 'resolution'.
 // 'range_data_inserter' options are used to configure the range
 // data ray tracing through the probability grid.
 class ProbabilityGridPointsProcessor : public PointsProcessor {
@@ -30,8 +30,8 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
     std::unique_ptr<FileWriter> file_writer,
     PointsProcessor* next);
   ProbabilityGridPointsProcessor(const ProbabilityGridPointsProcessor&) = delete;
-  ProbabilityGridPointsProcessor& operator=(const ProbabilityGridPointsProcessor&) =
-      delete;
+  ProbabilityGridPointsProcessor& operator=(
+    const ProbabilityGridPointsProcessor&) = delete;
 
   static std::unique_ptr<ProbabilityGridPointsProcessor> FromDictionary(
       FileWriterFactory file_writer_factory,
@@ -44,10 +44,10 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
 
  private:
   PointsProcessor* const next_;
+  std::unique_ptr<FileWriter> file_writer_;
 
   mapping_2d::RangeDataInserter range_data_inserter_;
   mapping_2d::ProbabilityGrid probability_grid_;
-  std::unique_ptr<FileWriter> file_writer_;
 };
 
 }  // namespace io

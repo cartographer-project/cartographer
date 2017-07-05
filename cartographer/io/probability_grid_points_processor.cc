@@ -1,76 +1,146 @@
 #include "cartographer/io/probability_grid_points_processor.h"
 
-#include <memory>
+#include <cmath>
 #include <string>
 
 #include "Eigen/Core"
+#include "cairo/cairo.h"
+#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"
-#include "cartographer/sensor/range_data.h"
-#include "glog/logging.h"
+#include "cartographer/common/math.h"
+#include "cartographer/io/image_utils.h"
 
 namespace cartographer {
 namespace io {
 namespace {
 
-static mapping_2d::ProbabilityGrid Create(
-  double resolution) {
-  double half_length = 200;
-  const int num_cells_per_dimension =
-    cartographer::common::RoundToInt(2. * half_length / resolution) + 1;
-  Eigen::Vector2d max = half_length * Eigen::Vector2d::Ones();
+struct PixelData {
+  uint8_t r = 0;
+  uint8_t g = 0;
+  uint8_t b = 0;
+};
+
+using PixelDataMatrix =
+  Eigen::Matrix<PixelData, Eigen::Dynamic, Eigen::Dynamic>;
+
+cairo_status_t CairoWriteCallback(void* const closure,
+                                  const unsigned char* data,
+                                  const unsigned int length) {
+  if (static_cast<FileWriter*>(closure)->Write(
+        reinterpret_cast<const char*>(data), length)) {
+    return CAIRO_STATUS_SUCCESS;
+  }
+  return CAIRO_STATUS_WRITE_ERROR;
+}
+
+void WriteImage(const PixelDataMatrix& mat, FileWriter* const file_writer) {
+  Image image = CreateImage(mat.cols(), mat.rows());
+
+  for (int y = 0; y < mat.rows(); ++y) {
+    for (int x = 0; x < mat.cols(); ++x) {
+      const PixelData& pixel = mat(y, x);
+      const int r = pixel.r;
+      const int g = pixel.g;
+      const int b = pixel.b;
+      image.pixels[y * image.stride / 4 + x] = (255 << 24) | (r << 16) | (g << 8) | b;
+    }
+  }
+
+  WritePng(&image, file_writer);
+  CHECK(file_writer->Close());
+}
+
+mapping_2d::ProbabilityGrid CreateProbabilityGrid(double resolution) {
+  constexpr int kInitialProbabilityGridSize = 100;
+  Eigen::Vector2d max = 0.5 * kInitialProbabilityGridSize
+    * resolution * Eigen::Vector2d::Ones();
   return mapping_2d::ProbabilityGrid(
     cartographer::mapping_2d::MapLimits(
       resolution, max,
-      mapping_2d::CellLimits(num_cells_per_dimension, num_cells_per_dimension)));
+      mapping_2d::CellLimits(kInitialProbabilityGridSize,
+                             kInitialProbabilityGridSize)));
 }
 
-} // namespace
+}  // namespace
 
 ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
-    const double resolution,
-    const cartographer::mapping_2d::proto::RangeDataInserterOptions&
-        range_data_inserter_options,
-    std::unique_ptr<FileWriter> file_writer, PointsProcessor* const next)
-    : next_(next),
-      range_data_inserter_(range_data_inserter_options),
-      probability_grid_(Create(resolution)),
-      file_writer_(std::move(file_writer)) {}
+  const double resolution,
+    const mapping_2d::proto::RangeDataInserterOptions&
+    range_data_inserter_options,
+  std::unique_ptr<FileWriter> file_writer,
+  PointsProcessor* const next)
+  : next_(next),
+    file_writer_(std::move(file_writer)),
+    range_data_inserter_(range_data_inserter_options),
+    probability_grid_(CreateProbabilityGrid(resolution)) {}
 
 std::unique_ptr<ProbabilityGridPointsProcessor>
 ProbabilityGridPointsProcessor::FromDictionary(
-    FileWriterFactory file_writer_factory,
-    common::LuaParameterDictionary* const dictionary,
-    PointsProcessor* const next) {
+  FileWriterFactory file_writer_factory,
+  common::LuaParameterDictionary* const dictionary,
+  PointsProcessor* const next) {
   return common::make_unique<ProbabilityGridPointsProcessor>(
-      dictionary->GetDouble("resolution"),
+    dictionary->GetDouble("resolution"),
       mapping_2d::CreateRangeDataInserterOptions(
           dictionary->GetDictionary("range_data_inserter").get()),
-      file_writer_factory(dictionary->GetString("filename")), next);
+    file_writer_factory(dictionary->GetString("filename") + ".png"), next);
 }
 
-void ProbabilityGridPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
+void WriteGrid(const mapping_2d::ProbabilityGrid & probability_grid,
+               FileWriter* const file_writer) {
+  Eigen::Array2i offset;
+  mapping_2d::CellLimits cell_limits;
+  probability_grid.ComputeCroppedLimits(&offset, &cell_limits);
+  if (cell_limits.num_x_cells == 0 || cell_limits.num_y_cells == 0)
+  {
+    LOG(WARNING) << "Not writing output: empty probability grid";
+    return;
+  }
+
+  const auto grid_index_to_pixel = [cell_limits](const Eigen::Array2i& index) {
+    return Eigen::Array2i(cell_limits.num_x_cells - index(0) - 1,
+                          cell_limits.num_y_cells - index(1) - 1);
+  };
+  int width = cell_limits.num_y_cells;
+  int height = cell_limits.num_x_cells;
+  PixelDataMatrix image(height, width);
+  for (auto xy_index :
+         cartographer::mapping_2d::XYIndexRangeIterator(cell_limits)) {
+    auto index = xy_index + offset;
+    if (probability_grid.IsKnown(index)) {
+      const Eigen::Array2i pixel = grid_index_to_pixel(xy_index);
+      PixelData& pixel_data = image(pixel.x(), pixel.y());
+      float probability = probability_grid.GetProbability(index);
+      uint8_t value = 255
+        * (probability - mapping::kMinProbability
+           / (mapping::kMaxProbability - mapping::kMinProbability));
+      pixel_data.r = value;
+      pixel_data.g = value;
+      pixel_data.b = value;
+    }
+  }
+
+  WriteImage(image, file_writer);
+}
+
+void ProbabilityGridPointsProcessor::Process(
+  std::unique_ptr<PointsBatch> batch) {
   range_data_inserter_.Insert({batch->origin, batch->points, {}},
                               &probability_grid_);
   next_->Process(std::move(batch));
 }
 
 PointsProcessor::FlushResult ProbabilityGridPointsProcessor::Flush() {
-  const mapping_2d::proto::ProbabilityGrid probability_grid_proto =
-    probability_grid_.ToProto();
-  string serialized;
-  probability_grid_proto.SerializeToString(&serialized);
-  file_writer_->Write(serialized.data(), serialized.size());
-  CHECK(file_writer_->Close());
-
+  WriteGrid(probability_grid_, file_writer_.get());
   switch (next_->Flush()) {
-    case FlushResult::kRestartStream:
-      LOG(FATAL) << "Probability grid generation must be configured to occur after "
-                    "any stages that require multiple passes.";
+  case FlushResult::kRestartStream:
+    LOG(FATAL) << "Image generation must be configured to occur after any "
+      "stages that require multiple passes.";
 
-    case FlushResult::kFinished:
-      return FlushResult::kFinished;
+  case FlushResult::kFinished:
+    return FlushResult::kFinished;
   }
-  LOG(FATAL) << "Failed to receive FlushResult::kFinished";
+  LOG(FATAL);
 }
 
 }  // namespace io
