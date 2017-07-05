@@ -146,7 +146,8 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
   CHECK_EQ(current.y(), end.y() / kSubpixelScale);
 }
 
-void GrowAsNeeded(const sensor::RangeData& range_data, ProbabilityGrid* const probability_grid) {
+void GrowAsNeeded(const sensor::RangeData& range_data,
+                  ProbabilityGrid* const probability_grid) {
   Eigen::AlignedBox2f bounding_box(range_data.origin.head<2>());
   constexpr float kPadding = 1e-6f;
   for (const Eigen::Vector3f& hit : range_data.returns) {

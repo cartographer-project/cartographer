@@ -43,21 +43,18 @@ class ProbabilityGrid {
       : limits_(limits),
         cells_(limits_.cell_limits().num_x_cells *
                    limits_.cell_limits().num_y_cells,
-               mapping::kUnknownProbabilityValue),
-        max_x_(0),
-        max_y_(0),
-        min_x_(limits_.cell_limits().num_x_cells - 1),
-        min_y_(limits_.cell_limits().num_y_cells - 1) {}
+               mapping::kUnknownProbabilityValue) {}
 
   explicit ProbabilityGrid(const proto::ProbabilityGrid& proto)
       : limits_(proto.limits()),
         cells_(),
         update_indices_(proto.update_indices().begin(),
-                        proto.update_indices().end()),
-        max_x_(proto.max_x()),
-        max_y_(proto.max_y()),
-        min_x_(proto.min_x()),
-        min_y_(proto.min_y()) {
+                        proto.update_indices().end()) {
+    if (proto.has_min_x()) {
+      known_cells_box_ =
+          Eigen::AlignedBox2i(Eigen::Vector2i(proto.min_x(), proto.min_y()),
+                              Eigen::Vector2i(proto.max_x(), proto.max_y()));
+    }
     cells_.reserve(proto.cells_size());
     for (const auto cell : proto.cells()) {
       CHECK_LE(cell, std::numeric_limits<uint16>::max());
@@ -83,7 +80,7 @@ class ProbabilityGrid {
     uint16& cell = cells_[GetIndexOfCell(xy_index)];
     CHECK_EQ(cell, mapping::kUnknownProbabilityValue);
     cell = mapping::ProbabilityToValue(probability);
-    UpdateBounds(xy_index);
+    known_cells_box_.extend(xy_index.matrix());
   }
 
   // Applies the 'odds' specified when calling ComputeLookupTableToApplyOdds()
@@ -104,7 +101,7 @@ class ProbabilityGrid {
     update_indices_.push_back(cell_index);
     cell = table[cell];
     DCHECK_GE(cell, mapping::kUpdateMarker);
-    UpdateBounds(xy_index);
+    known_cells_box_.extend(xy_index.matrix());
     return true;
   }
 
@@ -131,9 +128,14 @@ class ProbabilityGrid {
   // known cells.
   void ComputeCroppedLimits(Eigen::Array2i* const offset,
                             CellLimits* const limits) const {
-    *offset = Eigen::Array2i(min_x_, min_y_);
-    *limits = CellLimits(std::max(max_x_, min_x_) - min_x_ + 1,
-                         std::max(max_y_, min_y_) - min_y_ + 1);
+    if (known_cells_box_.isEmpty()) {
+      *offset = Eigen::Array2i::Zero();
+      *limits = CellLimits(1, 1);
+    } else {
+      *offset = known_cells_box_.min().array();
+      *limits = CellLimits(known_cells_box_.sizes().x() + 1,
+                           known_cells_box_.sizes().y() + 1);
+    }
   }
 
   // Grows the map as necessary to include 'x' and 'y'. This changes the meaning
@@ -164,10 +166,9 @@ class ProbabilityGrid {
       }
       cells_ = new_cells;
       limits_ = new_limits;
-      min_x_ += x_offset;
-      min_y_ += y_offset;
-      max_x_ += x_offset;
-      max_y_ += y_offset;
+      if (!known_cells_box_.isEmpty()) {
+        known_cells_box_.translate(Eigen::Vector2i(x_offset, y_offset));
+      }
     }
   }
 
@@ -182,10 +183,12 @@ class ProbabilityGrid {
     for (const auto update : update_indices_) {
       result.mutable_update_indices()->Add(update);
     }
-    result.set_max_x(max_x_);
-    result.set_max_y(max_y_);
-    result.set_min_x(min_x_);
-    result.set_min_y(min_y_);
+    if (!known_cells_box_.isEmpty()) {
+      result.set_max_x(known_cells_box_.max().x());
+      result.set_max_y(known_cells_box_.max().y());
+      result.set_min_x(known_cells_box_.min().x());
+      result.set_min_y(known_cells_box_.min().y());
+    }
     return result;
   }
 
@@ -196,23 +199,12 @@ class ProbabilityGrid {
     return limits_.cell_limits().num_x_cells * xy_index.y() + xy_index.x();
   }
 
-  void UpdateBounds(const Eigen::Array2i& xy_index) {
-    min_x_ = std::min(min_x_, xy_index.x());
-    min_y_ = std::min(min_y_, xy_index.y());
-    max_x_ = std::max(max_x_, xy_index.x());
-    max_y_ = std::max(max_y_, xy_index.y());
-  }
-
   MapLimits limits_;
   std::vector<uint16> cells_;  // Highest bit is update marker.
   std::vector<int> update_indices_;
 
-  // Minimum and maximum cell coordinates of known cells to efficiently compute
-  // cropping limits.
-  int max_x_;
-  int max_y_;
-  int min_x_;
-  int min_y_;
+  // Bounding box of known cells to efficiently compute cropping limits.
+  Eigen::AlignedBox2i known_cells_box_;
 };
 
 }  // namespace mapping_2d
