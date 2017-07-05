@@ -54,7 +54,6 @@ proto::SubmapsOptions CreateSubmapsOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::SubmapsOptions options;
   options.set_resolution(parameter_dictionary->GetDouble("resolution"));
-  options.set_half_length(parameter_dictionary->GetDouble("half_length"));
   options.set_num_range_data(
       parameter_dictionary->GetNonNegativeInt("num_range_data"));
   *options.mutable_range_data_inserter_options() =
@@ -179,14 +178,13 @@ void ActiveSubmaps::AddSubmap(const Eigen::Vector2f& origin) {
     // reduce peak memory usage a bit.
     FinishSubmap();
   }
-  const int num_cells_per_dimension =
-      common::RoundToInt(2. * options_.half_length() / options_.resolution()) +
-      1;
+  constexpr int kInitialSubmapSize = 100;
   submaps_.push_back(common::make_unique<Submap>(
       MapLimits(options_.resolution(),
-                origin.cast<double>() +
-                    options_.half_length() * Eigen::Vector2d::Ones(),
-                CellLimits(num_cells_per_dimension, num_cells_per_dimension)),
+                origin.cast<double>() + 0.5 * kInitialSubmapSize *
+                                            options_.resolution() *
+                                            Eigen::Vector2d::Ones(),
+                CellLimits(kInitialSubmapSize, kInitialSubmapSize)),
       origin));
   LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
 }

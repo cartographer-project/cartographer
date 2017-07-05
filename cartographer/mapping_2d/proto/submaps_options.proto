@@ -22,9 +22,6 @@ message SubmapsOptions {
   // Resolution of the map in meters.
   optional double resolution = 1;
 
-  // Half the width/height of each submap, its "radius".
-  optional double half_length = 2;
-
   // Number of scans before adding a new submap. Each submap will get twice the
   // number of scans inserted: First for initialization without being matched
   // against, then while being matched.

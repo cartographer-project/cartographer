@@ -146,6 +146,21 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
   CHECK_EQ(current.y(), end.y() / kSubpixelScale);
 }
 
+void GrowAsNeeded(const sensor::RangeData& range_data, ProbabilityGrid* const probability_grid) {
+  Eigen::AlignedBox2f bounding_box(range_data.origin.head<2>());
+  constexpr float kPadding = 1e-6f;
+  for (const Eigen::Vector3f& hit : range_data.returns) {
+    bounding_box.extend(hit.head<2>());
+  }
+  for (const Eigen::Vector3f& miss : range_data.misses) {
+    bounding_box.extend(miss.head<2>());
+  }
+  probability_grid->GrowLimits(bounding_box.min().x() - kPadding,
+                               bounding_box.min().y() - kPadding);
+  probability_grid->GrowLimits(bounding_box.max().x() + kPadding,
+                               bounding_box.max().y() + kPadding);
+}
+
 }  // namespace
 
 void CastRays(const sensor::RangeData& range_data,
@@ -153,6 +168,8 @@ void CastRays(const sensor::RangeData& range_data,
               const std::vector<uint16>& miss_table,
               const bool insert_free_space,
               ProbabilityGrid* const probability_grid) {
+  GrowAsNeeded(range_data, probability_grid);
+
   const MapLimits& limits = probability_grid->limits();
   const double superscaled_resolution = limits.resolution() / kSubpixelScale;
   const MapLimits superscaled_limits(
