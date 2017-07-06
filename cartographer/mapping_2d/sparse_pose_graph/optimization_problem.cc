@@ -89,10 +89,12 @@ void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   CHECK_EQ(trajectory_data.num_trimmed_nodes, node_id.node_index);
   auto& node_data = node_data_.at(node_id.trajectory_id);
   CHECK(!node_data.empty());
-  const common::Time node_time = node_data.front().time;
-  auto& imu_data = imu_data_.at(node_id.trajectory_id);
-  while (imu_data.size() > 1 && imu_data[1].time <= node_time) {
-    imu_data.pop_front();
+  if (node_id.trajectory_id < static_cast<int>(imu_data_.size())) {
+    const common::Time node_time = node_data.front().time;
+    auto& imu_data = imu_data_.at(node_id.trajectory_id);
+    while (imu_data.size() > 1 && imu_data[1].time <= node_time) {
+      imu_data.pop_front();
+    }
   }
   node_data.pop_front();
   ++trajectory_data.num_trimmed_nodes;
