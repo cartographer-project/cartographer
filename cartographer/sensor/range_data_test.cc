@@ -16,7 +16,6 @@
 
 #include "cartographer/sensor/range_data.h"
 
-#include <typeinfo>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -27,19 +26,19 @@ namespace {
 
 using ::testing::Contains;
 using ::testing::PrintToString;
-constexpr float kPrecision = 0.001f;
+using ::std::tr1::get;
 
-// TODO (brandon-northcutt): place this function in a common location with
-// identical function in compressed_point_cloud_test.cc
-MATCHER_P(ApproximatelyEquals, expected,
-          string("is equal to ") + PrintToString(expected)) {
-  return (arg - expected).isZero(kPrecision);
+MATCHER(NearPointwise, std::string(negation ? "Doesn't" : "Does") + " match.") {
+  return get<0>(arg).isApprox(get<1>(arg), 0.001f);
+}
+
+MATCHER_P(Near, point, std::string(negation ? "Doesn't" : "Does") + " match.") {
+  return arg.isApprox(point, 0.001f);
 }
 
 class RangeDataTest : public ::testing::Test {
  protected:
-  RangeDataTest() {
-    origin_ = Eigen::Vector3f(1, 1, 1);
+  RangeDataTest() : origin_(Eigen::Vector3f(1, 1, 1)) {
     returns_.emplace_back(0, 1, 2);
     returns_.emplace_back(4, 5, 6);
     returns_.emplace_back(0, 1, 2);
@@ -51,18 +50,18 @@ class RangeDataTest : public ::testing::Test {
 };
 
 TEST_F(RangeDataTest, Compression) {
-  const RangeData range_data = {origin_, returns_, misses_};
-  const RangeData actual = Decompress(Compress(range_data));
-  EXPECT_TRUE(actual.origin.isApprox(origin_, 1e-6));
-  EXPECT_EQ(3, actual.returns.size());
-  EXPECT_EQ(1, actual.misses.size());
+  const RangeData expected_data = {origin_, returns_, misses_};
+  const RangeData actual_data = Decompress(Compress(expected_data));
+  EXPECT_THAT(expected_data.origin, Near(actual_data.origin));
+  EXPECT_EQ(3, actual_data.returns.size());
+  EXPECT_EQ(1, actual_data.misses.size());
 
   // Returns may be reordered, so we compare in an unordered manner.
-  for (const auto& expected : returns_) {
-    EXPECT_THAT(actual.returns, Contains(ApproximatelyEquals(expected)));
+  for (const auto& expected : expected_data.returns) {
+    EXPECT_THAT(actual_data.returns, Contains(Near(expected)));
   }
-  for (const auto& expected : misses_) {
-    EXPECT_THAT(actual.misses, Contains(ApproximatelyEquals(expected)));
+  for (const auto& expected : expected_data.misses) {
+    EXPECT_THAT(actual_data.misses, Contains(Near(expected)));
   }
 }
 
@@ -70,35 +69,20 @@ TEST_F(RangeDataTest, RangeDataToAndFromProto) {
   const auto expected = RangeData{origin_, returns_, misses_};
   const auto actual = FromProto(ToProto(expected));
 
-  EXPECT_TRUE(typeid(expected) == typeid(actual));
-  EXPECT_TRUE(expected.origin.isApprox(actual.origin, kPrecision));
-
-  for (uint i = 0; i < expected.returns.size(); ++i) {
-    EXPECT_TRUE(
-        expected.returns[i].isApprox(actual.returns[i], kPrecision));
-  }
-  for (uint i = 0; i < expected.misses.size(); ++i) {
-    EXPECT_TRUE(
-        expected.misses[i].isApprox(actual.misses[i], kPrecision));
-  }
+  EXPECT_THAT(expected.origin, Near(actual.origin));
+  EXPECT_THAT(expected.returns,
+              testing::Pointwise(NearPointwise(), actual.returns));
+  EXPECT_THAT(expected.misses,
+              testing::Pointwise(NearPointwise(), actual.misses));
 }
 
 TEST_F(RangeDataTest, CompressedRangeDataToAndFromProto) {
   const auto expected = CompressedRangeData{
       origin_, CompressedPointCloud(returns_), CompressedPointCloud(misses_)};
   const auto actual = FromProto(ToProto(expected));
-
-  EXPECT_TRUE(typeid(expected) == typeid(actual));
-  EXPECT_TRUE(expected.origin.isApprox(actual.origin, kPrecision));
-
-  EXPECT_EQ(expected.returns.size(), actual.returns.size());
-  EXPECT_TRUE(expected.returns.empty() == actual.returns.empty());
-  EXPECT_EQ(expected.misses.size(), actual.misses.size());
-  EXPECT_TRUE(expected.misses.empty() == actual.misses.empty());
-
-  for (uint i = 0; i < expected.returns.size(); ++i) {
-    EXPECT_EQ(expected.returns.point_data()[i], actual.returns.point_data()[i]);
-  }
+  EXPECT_THAT(expected.origin, Near(actual.origin));
+  EXPECT_EQ(expected.returns, actual.returns);
+  EXPECT_EQ(expected.misses, actual.misses);
 }
 }  // namespace
 }  // namespace sensor

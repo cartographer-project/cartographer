@@ -49,7 +49,7 @@ class CompressedPointCloud {
   ConstIterator begin() const;
   ConstIterator end() const;
 
-  const std::vector<int32>& point_data() const { return point_data_; };
+  bool operator==(const CompressedPointCloud& right_hand_container) const;
   proto::CompressedPointCloud ToProto() const;
 
  private:

@@ -176,6 +176,12 @@ PointCloud CompressedPointCloud::Decompress() const {
   return decompressed;
 }
 
+bool sensor::CompressedPointCloud::operator==(
+    const sensor::CompressedPointCloud& right_hand_container) const {
+  return point_data_ == right_hand_container.point_data_ &&
+         num_points_ == right_hand_container.num_points_;
+}
+
 proto::CompressedPointCloud CompressedPointCloud::ToProto() const {
   proto::CompressedPointCloud result;
   result.set_num_points(num_points_);
