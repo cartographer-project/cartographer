@@ -16,6 +16,7 @@
 
 #include "cartographer/sensor/range_data.h"
 
+#include <tuple>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -26,10 +27,9 @@ namespace {
 
 using ::testing::Contains;
 using ::testing::PrintToString;
-using ::std::tr1::get;
 
 MATCHER(NearPointwise, std::string(negation ? "Doesn't" : "Does") + " match.") {
-  return get<0>(arg).isApprox(get<1>(arg), 0.001f);
+  return std::get<0>(arg).isApprox(std::get<1>(arg), 0.001f);
 }
 
 MATCHER_P(Near, point, std::string(negation ? "Doesn't" : "Does") + " match.") {
@@ -84,6 +84,7 @@ TEST_F(RangeDataTest, CompressedRangeDataToAndFromProto) {
   EXPECT_EQ(expected.returns, actual.returns);
   EXPECT_EQ(expected.misses, actual.misses);
 }
+
 }  // namespace
 }  // namespace sensor
 }  // namespace cartographer

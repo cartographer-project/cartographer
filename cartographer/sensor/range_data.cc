@@ -60,6 +60,7 @@ proto::CompressedRangeData ToProto(
   *proto.mutable_misses() = compressed_range_data.misses.ToProto();
   return proto;
 }
+
 CompressedRangeData FromProto(const proto::CompressedRangeData& proto) {
   return CompressedRangeData{
       transform::ToEigen(proto.origin()), CompressedPointCloud(proto.returns()),
