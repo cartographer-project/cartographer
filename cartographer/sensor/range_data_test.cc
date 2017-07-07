@@ -16,7 +16,7 @@
 
 #include "cartographer/sensor/range_data.h"
 
-#include <utility>
+#include <tuple>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -28,30 +28,61 @@ namespace {
 using ::testing::Contains;
 using ::testing::PrintToString;
 
-// Custom matcher for Eigen::Vector3f entries.
-MATCHER_P(ApproximatelyEquals, expected,
-          string("is equal to ") + PrintToString(expected)) {
-  return (arg - expected).isZero(0.001f);
+MATCHER(NearPointwise, std::string(negation ? "Doesn't" : "Does") + " match.") {
+  return std::get<0>(arg).isApprox(std::get<1>(arg), 0.001f);
 }
 
-TEST(RangeDataTest, Compression) {
-  const std::vector<Eigen::Vector3f> returns = {Eigen::Vector3f(0, 1, 2),
-                                                Eigen::Vector3f(4, 5, 6),
-                                                Eigen::Vector3f(0, 1, 2)};
-  const RangeData range_data = {
-      Eigen::Vector3f(1, 1, 1), returns, {Eigen::Vector3f(7, 8, 9)}};
-  const RangeData actual = Decompress(Compress(range_data));
-  EXPECT_TRUE(actual.origin.isApprox(Eigen::Vector3f(1, 1, 1), 1e-6));
-  EXPECT_EQ(3, actual.returns.size());
-  EXPECT_EQ(1, actual.misses.size());
-  EXPECT_TRUE(actual.misses[0].isApprox(Eigen::Vector3f(7, 8, 9), 0.001f));
+MATCHER_P(Near, point, std::string(negation ? "Doesn't" : "Does") + " match.") {
+  return arg.isApprox(point, 0.001f);
+}
 
-  // Returns will be reordered, so we compare in an unordered manner.
-  EXPECT_EQ(3, actual.returns.size());
-  EXPECT_THAT(actual.returns,
-              Contains(ApproximatelyEquals(Eigen::Vector3f(0, 1, 2))));
-  EXPECT_THAT(actual.returns,
-              Contains(ApproximatelyEquals(Eigen::Vector3f(4, 5, 6))));
+class RangeDataTest : public ::testing::Test {
+ protected:
+  RangeDataTest() : origin_(Eigen::Vector3f(1, 1, 1)) {
+    returns_.emplace_back(0, 1, 2);
+    returns_.emplace_back(4, 5, 6);
+    returns_.emplace_back(0, 1, 2);
+    misses_.emplace_back(7, 8, 9);
+  }
+  Eigen::Vector3f origin_;
+  std::vector<Eigen::Vector3f> returns_;
+  std::vector<Eigen::Vector3f> misses_;
+};
+
+TEST_F(RangeDataTest, Compression) {
+  const RangeData expected_data = {origin_, returns_, misses_};
+  const RangeData actual_data = Decompress(Compress(expected_data));
+  EXPECT_THAT(expected_data.origin, Near(actual_data.origin));
+  EXPECT_EQ(3, actual_data.returns.size());
+  EXPECT_EQ(1, actual_data.misses.size());
+
+  // Returns may be reordered, so we compare in an unordered manner.
+  for (const auto& expected : expected_data.returns) {
+    EXPECT_THAT(actual_data.returns, Contains(Near(expected)));
+  }
+  for (const auto& expected : expected_data.misses) {
+    EXPECT_THAT(actual_data.misses, Contains(Near(expected)));
+  }
+}
+
+TEST_F(RangeDataTest, RangeDataToAndFromProto) {
+  const auto expected = RangeData{origin_, returns_, misses_};
+  const auto actual = FromProto(ToProto(expected));
+
+  EXPECT_THAT(expected.origin, Near(actual.origin));
+  EXPECT_THAT(expected.returns,
+              testing::Pointwise(NearPointwise(), actual.returns));
+  EXPECT_THAT(expected.misses,
+              testing::Pointwise(NearPointwise(), actual.misses));
+}
+
+TEST_F(RangeDataTest, CompressedRangeDataToAndFromProto) {
+  const auto expected = CompressedRangeData{
+      origin_, CompressedPointCloud(returns_), CompressedPointCloud(misses_)};
+  const auto actual = FromProto(ToProto(expected));
+  EXPECT_THAT(expected.origin, Near(actual.origin));
+  EXPECT_EQ(expected.returns, actual.returns);
+  EXPECT_EQ(expected.misses, actual.misses);
 }
 
 }  // namespace
