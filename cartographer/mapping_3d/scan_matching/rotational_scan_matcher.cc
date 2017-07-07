@@ -150,7 +150,7 @@ RotationalScanMatcher::RotationalScanMatcher(
   for (const mapping::TrajectoryNode& node : nodes) {
     AddValuesToHistogram(
         GetValuesForHistogram(sensor::TransformPointCloud(
-            node.constant_data->range_data_3d.returns.Decompress(),
+            node.constant_data->range_data.returns.Decompress(),
             node.pose.cast<float>())),
         0.f, &histogram_);
   }

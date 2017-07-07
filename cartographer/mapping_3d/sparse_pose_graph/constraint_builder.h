@@ -68,8 +68,8 @@ class ConstraintBuilder {
   ConstraintBuilder& operator=(const ConstraintBuilder&) = delete;
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_id', and the 'point_cloud' for 'node_id'. The 'intial_pose' is
-  // relative to the 'submap'.
+  // 'submap_id', and the 'compressed_point_cloud' for 'node_id'.
+  // The 'initial_pose' is relative to the 'submap'.
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.

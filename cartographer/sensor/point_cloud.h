@@ -42,12 +42,6 @@ PointCloud TransformPointCloud(const PointCloud& point_cloud,
 // by 'min_z' and 'max_z'.
 PointCloud Crop(const PointCloud& point_cloud, float min_z, float max_z);
 
-// Converts 'point_cloud' to a proto::PointCloud.
-proto::PointCloud ToProto(const PointCloud& point_cloud);
-
-// Converts 'proto' to a PointCloud.
-PointCloud ToPointCloud(const proto::PointCloud& proto);
-
 }  // namespace sensor
 }  // namespace cartographer
 

@@ -65,17 +65,6 @@ TEST_F(RangeDataTest, Compression) {
   }
 }
 
-TEST_F(RangeDataTest, RangeDataToAndFromProto) {
-  const auto expected = RangeData{origin_, returns_, misses_};
-  const auto actual = FromProto(ToProto(expected));
-
-  EXPECT_THAT(expected.origin, Near(actual.origin));
-  EXPECT_THAT(expected.returns,
-              testing::Pointwise(NearPointwise(), actual.returns));
-  EXPECT_THAT(expected.misses,
-              testing::Pointwise(NearPointwise(), actual.misses));
-}
-
 TEST_F(RangeDataTest, CompressedRangeDataToAndFromProto) {
   const auto expected = CompressedRangeData{
       origin_, CompressedPointCloud(returns_), CompressedPointCloud(misses_)};

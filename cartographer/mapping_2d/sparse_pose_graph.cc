@@ -113,10 +113,8 @@ void SparsePoseGraph::AddScan(
       trajectory_id,
       mapping::TrajectoryNode{
           std::make_shared<const mapping::TrajectoryNode::Data>(
-              mapping::TrajectoryNode::Data{
-                  time, range_data_in_pose,
-                  Compress(sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}}),
-                  tracking_to_pose}),
+              mapping::TrajectoryNode::Data{time, Compress(range_data_in_pose),
+                                            tracking_to_pose}),
           optimized_pose});
   ++num_trajectory_nodes_;
   trajectory_connectivity_.Add(trajectory_id);
@@ -178,7 +176,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
       global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
-        &trajectory_nodes_.at(node_id).constant_data->range_data_2d.returns,
+        &trajectory_nodes_.at(node_id).constant_data->range_data.returns,
         &trajectory_connectivity_);
   } else {
     const bool scan_and_submap_trajectories_connected =
@@ -202,7 +200,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
               .point_cloud_pose;
       constraint_builder_.MaybeAddConstraint(
           submap_id, submap_data_.at(submap_id).submap.get(), node_id,
-          &trajectory_nodes_.at(node_id).constant_data->range_data_2d.returns,
+          &trajectory_nodes_.at(node_id).constant_data->range_data.returns,
           initial_relative_pose);
     }
   }
