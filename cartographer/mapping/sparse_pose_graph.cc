@@ -120,9 +120,9 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
         submap_id.submap_index);
 
     const NodeId node_id = node_id_remapping.at(constraint.node_id);
-    constraint_proto->mutable_scan_id()->set_trajectory_id(
+    constraint_proto->mutable_node_id()->set_trajectory_id(
         node_id.trajectory_id);
-    constraint_proto->mutable_scan_id()->set_scan_index(node_id.node_index);
+    constraint_proto->mutable_node_id()->set_node_index(node_id.node_index);
 
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }

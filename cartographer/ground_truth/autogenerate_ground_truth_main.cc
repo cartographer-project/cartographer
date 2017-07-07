@@ -61,31 +61,31 @@ std::vector<double> ComputeCoveredDistance(
   return covered_distance;
 }
 
-// We pick the representative scan in the middle of the submap.
+// We pick the representative node in the middle of the submap.
 //
-// TODO(whess): Should we consider all scans inserted into the submap and
+// TODO(whess): Should we consider all nodes inserted into the submap and
 // exclude, e.g. based on large relative linear or angular distance?
-std::vector<int> ComputeSubmapRepresentativeScan(
+std::vector<int> ComputeSubmapRepresentativeNode(
     const mapping::proto::SparsePoseGraph& pose_graph) {
-  std::vector<int> submap_to_scan_index;
+  std::vector<int> submap_to_node_index;
   for (const auto& constraint : pose_graph.constraint()) {
     if (constraint.tag() !=
         mapping::proto::SparsePoseGraph::Constraint::INTRA_SUBMAP) {
       continue;
     }
     CHECK_EQ(constraint.submap_id().trajectory_id(), 0);
-    CHECK_EQ(constraint.scan_id().trajectory_id(), 0);
+    CHECK_EQ(constraint.node_id().trajectory_id(), 0);
 
-    const int next_submap_index = static_cast<int>(submap_to_scan_index.size());
+    const int next_submap_index = static_cast<int>(submap_to_node_index.size());
     const int submap_index = constraint.submap_id().submap_index();
     if (submap_index <= next_submap_index) {
       continue;
     }
 
     CHECK_EQ(submap_index, next_submap_index + 1);
-    submap_to_scan_index.push_back(constraint.scan_id().scan_index());
+    submap_to_node_index.push_back(constraint.node_id().node_index());
   }
-  return submap_to_scan_index;
+  return submap_to_node_index;
 }
 
 proto::GroundTruth GenerateGroundTruth(
@@ -96,8 +96,8 @@ proto::GroundTruth GenerateGroundTruth(
   const std::vector<double> covered_distance =
       ComputeCoveredDistance(trajectory);
 
-  const std::vector<int> submap_to_scan_index =
-      ComputeSubmapRepresentativeScan(pose_graph);
+  const std::vector<int> submap_to_node_index =
+      ComputeSubmapRepresentativeNode(pose_graph);
 
   int num_outliers = 0;
   proto::GroundTruth ground_truth;
@@ -109,41 +109,41 @@ proto::GroundTruth GenerateGroundTruth(
     }
 
     // For some submaps at the very end, we have not chosen a representative
-    // scan, but those should not be part of loop closure anyway.
+    // node, but those should not be part of loop closure anyway.
     CHECK_EQ(constraint.submap_id().trajectory_id(), 0);
-    CHECK_EQ(constraint.scan_id().trajectory_id(), 0);
+    CHECK_EQ(constraint.node_id().trajectory_id(), 0);
     if (constraint.submap_id().submap_index() >=
-        static_cast<int>(submap_to_scan_index.size())) {
+        static_cast<int>(submap_to_node_index.size())) {
       continue;
     }
-    const int matched_scan = constraint.scan_id().scan_index();
-    const int representative_scan =
-        submap_to_scan_index.at(constraint.submap_id().submap_index());
+    const int matched_node = constraint.node_id().node_index();
+    const int representative_node =
+        submap_to_node_index.at(constraint.submap_id().submap_index());
 
     // Covered distance between the two should not be too small.
-    if (std::abs(covered_distance.at(matched_scan) -
-                 covered_distance.at(representative_scan)) <
+    if (std::abs(covered_distance.at(matched_node) -
+                 covered_distance.at(representative_node)) <
         min_covered_distance) {
       continue;
     }
 
-    // Compute the transform between the scans according to the solution and
+    // Compute the transform between the nodes according to the solution and
     // the constraint.
     const transform::Rigid3d solution_pose1 =
-        transform::ToRigid3(trajectory.node(representative_scan).pose());
+        transform::ToRigid3(trajectory.node(representative_node).pose());
     const transform::Rigid3d solution_pose2 =
-        transform::ToRigid3(trajectory.node(matched_scan).pose());
+        transform::ToRigid3(trajectory.node(matched_node).pose());
     const transform::Rigid3d solution =
         solution_pose1.inverse() * solution_pose2;
 
     const transform::Rigid3d submap_solution = transform::ToRigid3(
         trajectory.submap(constraint.submap_id().submap_index()).pose());
-    const transform::Rigid3d submap_solution_to_scan_solution =
+    const transform::Rigid3d submap_solution_to_node_solution =
         solution_pose1.inverse() * submap_solution;
-    const transform::Rigid3d scan_to_submap_constraint =
+    const transform::Rigid3d node_to_submap_constraint =
         transform::ToRigid3(constraint.relative_pose());
     const transform::Rigid3d expected =
-        submap_solution_to_scan_solution * scan_to_submap_constraint;
+        submap_solution_to_node_solution * node_to_submap_constraint;
 
     const transform::Rigid3d error = solution * expected.inverse();
 
@@ -154,8 +154,8 @@ proto::GroundTruth GenerateGroundTruth(
     }
     auto* const new_relation = ground_truth.add_relation();
     new_relation->set_timestamp1(
-        trajectory.node(representative_scan).timestamp());
-    new_relation->set_timestamp2(trajectory.node(matched_scan).timestamp());
+        trajectory.node(representative_node).timestamp());
+    new_relation->set_timestamp2(trajectory.node(matched_node).timestamp());
     *new_relation->mutable_expected() = transform::ToProto(expected);
   }
   LOG(INFO) << "Generated " << ground_truth.relation_size()
