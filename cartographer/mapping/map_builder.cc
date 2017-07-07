@@ -141,25 +141,54 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
   // We serialize the pose graph followed by all the data referenced in it.
   writer->WriteProto(sparse_pose_graph_->ToProto());
   // Next we serialize all submap data.
-  const auto submap_data = sparse_pose_graph_->GetAllSubmapData();
-  for (int trajectory_id = 0;
-       trajectory_id != static_cast<int>(submap_data.size()); ++trajectory_id) {
-    for (int submap_index = 0;
-         submap_index != static_cast<int>(submap_data[trajectory_id].size());
-         ++submap_index) {
-      proto::SerializedData proto;
-      auto* const submap_proto = proto.mutable_submap();
-      // TODO(whess): Handle trimmed data.
-      submap_proto->mutable_submap_id()->set_trajectory_id(trajectory_id);
-      submap_proto->mutable_submap_id()->set_submap_index(submap_index);
-      submap_data[trajectory_id][submap_index].submap->ToProto(submap_proto);
-      // TODO(whess): Only enable optionally? Resulting pbstream files will be
-      // a lot larger now.
-      writer->WriteProto(proto);
+  {
+    const auto submap_data = sparse_pose_graph_->GetAllSubmapData();
+    for (int trajectory_id = 0;
+         trajectory_id != static_cast<int>(submap_data.size());
+         ++trajectory_id) {
+      for (int submap_index = 0;
+           submap_index != static_cast<int>(submap_data[trajectory_id].size());
+           ++submap_index) {
+        proto::SerializedData proto;
+        auto* const submap_proto = proto.mutable_submap();
+        // TODO(whess): Handle trimmed data.
+        submap_proto->mutable_submap_id()->set_trajectory_id(trajectory_id);
+        submap_proto->mutable_submap_id()->set_submap_index(submap_index);
+        submap_data[trajectory_id][submap_index].submap->ToProto(submap_proto);
+        // TODO(whess): Only enable optionally? Resulting pbstream files will be
+        // a lot larger now.
+        writer->WriteProto(proto);
+      }
     }
   }
-  // TODO(whess): Serialize range data ("scan") for each trajectory node.
-  // TODO(whess): Serialize additional sensor data: IMU, odometry.
+  // Next we serialize all range data.
+  {
+    const auto node_data = sparse_pose_graph_->GetTrajectoryNodes();
+    for (int trajectory_id = 0;
+         trajectory_id != static_cast<int>(node_data.size()); ++trajectory_id) {
+      for (int node_index = 0;
+           node_index != static_cast<int>(node_data[trajectory_id].size());
+           ++node_index) {
+        proto::SerializedData proto;
+        auto* const range_data_proto = proto.mutable_range_data();
+        // TODO(whess): Handle trimmed data.
+        range_data_proto->mutable_node_id()->set_trajectory_id(trajectory_id);
+        range_data_proto->mutable_node_id()->set_node_index(node_index);
+        const auto& data = *node_data[trajectory_id][node_index].constant_data;
+        if (!data.range_data_2d.returns.empty()) {
+          *range_data_proto->mutable_range_data_2d() =
+              sensor::ToProto(sensor::Compress(data.range_data_2d));
+        } else {
+          *range_data_proto->mutable_range_data_3d() =
+              sensor::ToProto(data.range_data_3d);
+        }
+        // TODO(whess): Only enable optionally? Resulting pbstream files will be
+        // a lot larger now.
+        writer->WriteProto(proto);
+      }
+    }
+    // TODO(whess): Serialize additional sensor data: IMU, odometry.
+  }
 }
 
 void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
