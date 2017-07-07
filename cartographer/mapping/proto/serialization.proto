@@ -28,8 +28,7 @@ message Submap {
 
 message RangeData {
   optional NodeId node_id = 1;
-  optional sensor.proto.CompressedRangeData range_data_2d = 2;
-  optional sensor.proto.CompressedRangeData range_data_3d = 3;
+  optional sensor.proto.CompressedRangeData range_data = 4;
 }
 
 message SerializedData {

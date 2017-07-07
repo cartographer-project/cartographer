@@ -32,11 +32,8 @@ struct TrajectoryNode {
   struct Data {
     common::Time time;
 
-    // Range data in 'pose' frame. Only used in the 2D case.
-    sensor::RangeData range_data_2d;
-
-    // Range data in 'pose' frame. Only used in the 3D case.
-    sensor::CompressedRangeData range_data_3d;
+    // Range data in 'pose' frame.
+    sensor::CompressedRangeData range_data;
 
     // Transform from the 3D 'tracking' frame to the 'pose' frame of the range
     // data, which contains roll, pitch and height for 2D. In 3D this is always

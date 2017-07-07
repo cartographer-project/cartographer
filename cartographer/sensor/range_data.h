@@ -35,12 +35,6 @@ struct RangeData {
   PointCloud misses;
 };
 
-// Converts 'range_data' to a proto::RangeData.
-proto::RangeData ToProto(const RangeData& range_data);
-
-// Converts 'proto' to a RangeData.
-RangeData FromProto(const proto::RangeData& proto);
-
 RangeData TransformRangeData(const RangeData& range_data,
                              const transform::Rigid3f& transform);
 
