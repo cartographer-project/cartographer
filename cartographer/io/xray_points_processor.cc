@@ -20,11 +20,10 @@
 #include <string>
 
 #include "Eigen/Core"
-#include "cairo/cairo.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/io/image_utils.h"
+#include "cartographer/io/image.h"
 #include "cartographer/mapping/detect_floors.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 
@@ -48,7 +47,7 @@ double Mix(const double a, const double b, const double t) {
 
 // Write 'mat' as a pleasing-to-look-at PNG into 'filename'
 void WriteImage(const PixelDataMatrix& mat, FileWriter* const file_writer) {
-  Image image = CreateImage(mat.cols(), mat.rows());
+  Image image(mat.cols(), mat.rows());
 
   float max = std::numeric_limits<float>::min();
   for (int y = 0; y < mat.rows(); ++y) {
@@ -65,8 +64,7 @@ void WriteImage(const PixelDataMatrix& mat, FileWriter* const file_writer) {
     for (int x = 0; x < mat.cols(); ++x) {
       const PixelData& cell = mat(y, x);
       if (cell.num_occupied_cells_in_column == 0.) {
-        image.pixels[y * image.stride / 4 + x] =
-            (255 << 24) | (255 << 16) | (255 << 8) | 255;
+        image.SetPixel(x, y, {{255, 255, 255}});
         continue;
       }
 
@@ -83,14 +81,14 @@ void WriteImage(const PixelDataMatrix& mat, FileWriter* const file_writer) {
       double mix_g = Mix(1., mean_g_in_column, saturation);
       double mix_b = Mix(1., mean_b_in_column, saturation);
 
-      const int r = common::RoundToInt(mix_r * 255.);
-      const int g = common::RoundToInt(mix_g * 255.);
-      const int b = common::RoundToInt(mix_b * 255.);
-      image.pixels[y * image.stride / 4 + x] = (255 << 24) | (r << 16) | (g << 8) | b;
+      const uint8_t r = common::RoundToInt(mix_r * 255.);
+      const uint8_t g = common::RoundToInt(mix_g * 255.);
+      const uint8_t b = common::RoundToInt(mix_b * 255.);
+      image.SetPixel(x, y, {{r, g, b}});
     }
   }
 
-  WritePng(&image, file_writer);
+  image.WritePng(file_writer);
   CHECK(file_writer->Close());
 }
 

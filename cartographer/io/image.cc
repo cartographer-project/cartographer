@@ -1,12 +1,10 @@
-#include "cartographer/io/image_utils.h"
+#include "cartographer/io/image.h"
 
 #include <memory>
 
 #include "cairo/cairo.h"
-
-#include "glog/logging.h"
-
 #include "cartographer/io/file_writer.h"
+#include "glog/logging.h"
 
 namespace cartographer {
 namespace io {
@@ -29,7 +27,7 @@ cairo_status_t CairoWriteCallback(void* const closure,
 
 constexpr cairo_format_t kCairoFormat = CAIRO_FORMAT_ARGB32;
 
-int stride_for_width(int width)
+int StrideForWidth(int width)
 {
   const int stride = cairo_format_stride_for_width(kCairoFormat, width);
   CHECK_EQ(stride % 4, 0);
@@ -38,14 +36,14 @@ int stride_for_width(int width)
 
 }  // namespace
 
-Image CreateImage(int width, int height)
-{
-  int stride = stride_for_width(width);
-  return { width, height, stride,
-           std::vector<uint32_t>(stride / 4 * height, 0) };
-}
+Image::Image(int width, int height):
+  width_(width),
+  height_(height),
+  stride_(StrideForWidth(width)),
+  pixels_(stride_ / 4 * height, 0)
+{}
 
-void WritePng(Image * const image, FileWriter * const file_writer)
+void Image::WritePng(FileWriter * const file_writer)
 {
   // TODO(hrapp): cairo_image_surface_create_for_data does not take ownership of
   // the data until the surface is finalized. Once it is finalized though,
@@ -54,13 +52,27 @@ void WritePng(Image * const image, FileWriter * const file_writer)
   // the caller.
   UniqueSurfacePtr surface(
     cairo_image_surface_create_for_data(
-      reinterpret_cast<unsigned char*>(image->pixels.data()), kCairoFormat,
-      image->width, image->height, image->stride),
+      reinterpret_cast<unsigned char*>(pixels_.data()), kCairoFormat,
+      width_, height_, stride_),
     cairo_surface_destroy);
   CHECK_EQ(cairo_surface_status(surface.get()), CAIRO_STATUS_SUCCESS);
   CHECK_EQ(cairo_surface_write_to_png_stream(surface.get(), &CairoWriteCallback,
                                              file_writer),
            CAIRO_STATUS_SUCCESS);
+}
+
+const Color Image::GetPixel(int x, int y) const
+{
+  uint32_t value = pixels_[y * stride_ / 4 + x];
+  return {{static_cast<uint8_t>(value >> 16),
+      static_cast<uint8_t>(value >> 8),
+      static_cast<uint8_t>(value)}};
+}
+
+void Image::SetPixel(int x, int y, const Color & color)
+{
+  pixels_[y * stride_ / 4 + x] = (255 << 24) | (color[0] << 16)
+    | (color[1] << 8) | color[2];
 }
 
 }  // namespace io

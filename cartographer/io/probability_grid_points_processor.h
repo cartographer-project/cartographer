@@ -1,8 +1,6 @@
 #ifndef CARTOGRAPHER_IO_PROBABILITY_GRID_POINTS_PROCESSOR_H_
 #define CARTOGRAPHER_IO_PROBABILITY_GRID_POINTS_PROCESSOR_H_
 
-// Library used for inserting range data points into a probability grid.
-
 #include <memory>
 #include <string>
 
@@ -17,6 +15,8 @@ namespace cartographer {
 namespace io {
 
 // Creates a probability grid with the specified 'resolution'.
+// As all points are projected into the x-y plane the z component
+// of the data is ignored.
 // 'range_data_inserter' options are used to configure the range
 // data ray tracing through the probability grid.
 class ProbabilityGridPointsProcessor : public PointsProcessor {
@@ -45,7 +45,6 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
  private:
   PointsProcessor* const next_;
   std::unique_ptr<FileWriter> file_writer_;
-
   mapping_2d::RangeDataInserter range_data_inserter_;
   mapping_2d::ProbabilityGrid probability_grid_;
 };

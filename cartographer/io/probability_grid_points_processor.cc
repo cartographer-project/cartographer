@@ -1,52 +1,54 @@
 #include "cartographer/io/probability_grid_points_processor.h"
 
-#include <cmath>
-#include <string>
-
 #include "Eigen/Core"
-#include "cairo/cairo.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/io/image_utils.h"
+#include "cartographer/io/image.h"
+#include "cartographer/io/points_batch.h"
 
 namespace cartographer {
 namespace io {
 namespace {
 
-struct PixelData {
-  uint8_t r = 0;
-  uint8_t g = 0;
-  uint8_t b = 0;
-};
-
-using PixelDataMatrix =
-  Eigen::Matrix<PixelData, Eigen::Dynamic, Eigen::Dynamic>;
-
-cairo_status_t CairoWriteCallback(void* const closure,
-                                  const unsigned char* data,
-                                  const unsigned int length) {
-  if (static_cast<FileWriter*>(closure)->Write(
-        reinterpret_cast<const char*>(data), length)) {
-    return CAIRO_STATUS_SUCCESS;
+void WriteGrid(const mapping_2d::ProbabilityGrid & probability_grid,
+               FileWriter* const file_writer) {
+  Eigen::Array2i offset;
+  mapping_2d::CellLimits cell_limits;
+  probability_grid.ComputeCroppedLimits(&offset, &cell_limits);
+  if (cell_limits.num_x_cells == 0 || cell_limits.num_y_cells == 0)
+  {
+    LOG(WARNING) << "Not writing output: empty probability grid";
+    return;
   }
-  return CAIRO_STATUS_WRITE_ERROR;
-}
-
-void WriteImage(const PixelDataMatrix& mat, FileWriter* const file_writer) {
-  Image image = CreateImage(mat.cols(), mat.rows());
-
-  for (int y = 0; y < mat.rows(); ++y) {
-    for (int x = 0; x < mat.cols(); ++x) {
-      const PixelData& pixel = mat(y, x);
-      const int r = pixel.r;
-      const int g = pixel.g;
-      const int b = pixel.b;
-      image.pixels[y * image.stride / 4 + x] = (255 << 24) | (r << 16) | (g << 8) | b;
+  const auto grid_index_to_pixel = [cell_limits](const Eigen::Array2i& index) {
+    return Eigen::Array2i(cell_limits.num_y_cells - index(1) - 1,
+                          cell_limits.num_x_cells - index(0) - 1);
+  };
+  const auto compute_color_value = [&probability_grid](
+    const Eigen::Array2i & index) {
+    if (probability_grid.IsKnown(index)) {
+      const float probability = 1.f - probability_grid.GetProbability(index);
+      return static_cast<uint8_t>(
+        255
+        * ((probability - mapping::kMinProbability)
+           / (mapping::kMaxProbability - mapping::kMinProbability)));
+    } else {
+      constexpr uint8_t kUnknownValue = 128;
+      return kUnknownValue;
     }
+  };
+  int width = cell_limits.num_y_cells;
+  int height = cell_limits.num_x_cells;
+  Image image(width, height);
+  for (auto xy_index :
+         cartographer::mapping_2d::XYIndexRangeIterator(cell_limits)) {
+    auto index = xy_index + offset;
+    uint8 value = compute_color_value(index);
+    const Eigen::Array2i pixel = grid_index_to_pixel(xy_index);
+    image.SetPixel(pixel.x(), pixel.y(), {{value, value, value}});
   }
-
-  WritePng(&image, file_writer);
+  image.WritePng(file_writer);
   CHECK(file_writer->Close());
 }
 
@@ -84,43 +86,6 @@ ProbabilityGridPointsProcessor::FromDictionary(
       mapping_2d::CreateRangeDataInserterOptions(
           dictionary->GetDictionary("range_data_inserter").get()),
     file_writer_factory(dictionary->GetString("filename") + ".png"), next);
-}
-
-void WriteGrid(const mapping_2d::ProbabilityGrid & probability_grid,
-               FileWriter* const file_writer) {
-  Eigen::Array2i offset;
-  mapping_2d::CellLimits cell_limits;
-  probability_grid.ComputeCroppedLimits(&offset, &cell_limits);
-  if (cell_limits.num_x_cells == 0 || cell_limits.num_y_cells == 0)
-  {
-    LOG(WARNING) << "Not writing output: empty probability grid";
-    return;
-  }
-
-  const auto grid_index_to_pixel = [cell_limits](const Eigen::Array2i& index) {
-    return Eigen::Array2i(cell_limits.num_x_cells - index(0) - 1,
-                          cell_limits.num_y_cells - index(1) - 1);
-  };
-  int width = cell_limits.num_y_cells;
-  int height = cell_limits.num_x_cells;
-  PixelDataMatrix image(height, width);
-  for (auto xy_index :
-         cartographer::mapping_2d::XYIndexRangeIterator(cell_limits)) {
-    auto index = xy_index + offset;
-    if (probability_grid.IsKnown(index)) {
-      const Eigen::Array2i pixel = grid_index_to_pixel(xy_index);
-      PixelData& pixel_data = image(pixel.x(), pixel.y());
-      float probability = probability_grid.GetProbability(index);
-      uint8_t value = 255
-        * (probability - mapping::kMinProbability
-           / (mapping::kMaxProbability - mapping::kMinProbability));
-      pixel_data.r = value;
-      pixel_data.g = value;
-      pixel_data.b = value;
-    }
-  }
-
-  WriteImage(image, file_writer);
 }
 
 void ProbabilityGridPointsProcessor::Process(
