@@ -172,9 +172,8 @@ class ProbabilityGrid {
     for (const auto cell : cells_) {
       result.mutable_cells()->Add(cell);
     }
-    CHECK(update_indices_.empty()) << "Serialiazing a probability grid during "
-                                      "an update is not supported. Finish the "
-                                      "update first.";
+    CHECK(update_indices_.empty()) << "Serializing a grid during an update is "
+                                      "not supported. Finish the update first.";
     if (!known_cells_box_.isEmpty()) {
       result.set_max_x(known_cells_box_.max().x());
       result.set_max_y(known_cells_box_.max().y());
