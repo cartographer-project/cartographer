@@ -63,23 +63,22 @@ class MapLimits {
   // Returns the limits of the grid in number of cells.
   const CellLimits& cell_limits() const { return cell_limits_; }
 
-  // Returns the index of the cell containing the point ('x', 'y') which may be
-  // outside the map, i.e., negative or too large indices that will return
-  // false for Contains().
-  Eigen::Array2i GetXYIndexOfCellContainingPoint(const double x,
-                                                 const double y) const {
+  // Returns the index of the cell containing the 'point' which may be outside
+  // the map, i.e., negative or too large indices that will return false for
+  // Contains().
+  Eigen::Array2i GetCellIndex(const Eigen::Vector2f& point) const {
     // Index values are row major and the top left has Eigen::Array2i::Zero()
     // and contains (centered_max_x, centered_max_y). We need to flip and
     // rotate.
     return Eigen::Array2i(
-        common::RoundToInt((max_.y() - y) / resolution_ - 0.5),
-        common::RoundToInt((max_.x() - x) / resolution_ - 0.5));
+        common::RoundToInt((max_.y() - point.y()) / resolution_ - 0.5),
+        common::RoundToInt((max_.x() - point.x()) / resolution_ - 0.5));
   }
 
-  // Returns true of the ProbabilityGrid contains 'xy_index'.
-  bool Contains(const Eigen::Array2i& xy_index) const {
-    return (Eigen::Array2i(0, 0) <= xy_index).all() &&
-           (xy_index <
+  // Returns true if the ProbabilityGrid contains 'cell_index'.
+  bool Contains(const Eigen::Array2i& cell_index) const {
+    return (Eigen::Array2i(0, 0) <= cell_index).all() &&
+           (cell_index <
             Eigen::Array2i(cell_limits_.num_x_cells, cell_limits_.num_y_cells))
                .all();
   }

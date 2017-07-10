@@ -156,10 +156,10 @@ void GrowAsNeeded(const sensor::RangeData& range_data,
   for (const Eigen::Vector3f& miss : range_data.misses) {
     bounding_box.extend(miss.head<2>());
   }
-  probability_grid->GrowLimits(bounding_box.min().x() - kPadding,
-                               bounding_box.min().y() - kPadding);
-  probability_grid->GrowLimits(bounding_box.max().x() + kPadding,
-                               bounding_box.max().y() + kPadding);
+  probability_grid->GrowLimits(bounding_box.min() -
+                               kPadding * Eigen::Vector2f::Ones());
+  probability_grid->GrowLimits(bounding_box.max() +
+                               kPadding * Eigen::Vector2f::Ones());
 }
 
 }  // namespace
@@ -178,14 +178,12 @@ void CastRays(const sensor::RangeData& range_data,
       CellLimits(limits.cell_limits().num_x_cells * kSubpixelScale,
                  limits.cell_limits().num_y_cells * kSubpixelScale));
   const Eigen::Array2i begin =
-      superscaled_limits.GetXYIndexOfCellContainingPoint(range_data.origin.x(),
-                                                         range_data.origin.y());
+      superscaled_limits.GetCellIndex(range_data.origin.head<2>());
   // Compute and add the end points.
   std::vector<Eigen::Array2i> ends;
   ends.reserve(range_data.returns.size());
   for (const Eigen::Vector3f& hit : range_data.returns) {
-    ends.push_back(
-        superscaled_limits.GetXYIndexOfCellContainingPoint(hit.x(), hit.y()));
+    ends.push_back(superscaled_limits.GetCellIndex(hit.head<2>()));
     probability_grid->ApplyLookupTable(ends.back() / kSubpixelScale, hit_table);
   }
 
@@ -200,9 +198,7 @@ void CastRays(const sensor::RangeData& range_data,
 
   // Finally, compute and add empty rays based on misses in the scan.
   for (const Eigen::Vector3f& missing_echo : range_data.misses) {
-    CastRay(begin,
-            superscaled_limits.GetXYIndexOfCellContainingPoint(
-                missing_echo.x(), missing_echo.y()),
+    CastRay(begin, superscaled_limits.GetCellIndex(missing_echo.head<2>()),
             miss_table, probability_grid);
   }
 }
