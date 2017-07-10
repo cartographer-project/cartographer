@@ -95,8 +95,8 @@ PointsProcessor::FlushResult ProbabilityGridPointsProcessor::Flush() {
   WriteGrid(probability_grid_, file_writer_.get());
   switch (next_->Flush()) {
     case FlushResult::kRestartStream:
-      LOG(FATAL) << "Image generation must be configured to occur after any "
-                    "stages that require multiple passes.";
+      LOG(FATAL) << "ProbabilityGrid generation must be configured to occur "
+                    "after any stages that require multiple passes.";
 
     case FlushResult::kFinished:
       return FlushResult::kFinished;
