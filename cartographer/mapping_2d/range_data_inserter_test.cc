@@ -45,12 +45,12 @@ class RangeDataInserterTest : public ::testing::Test {
 
   void InsertPointCloud() {
     sensor::RangeData range_data;
-    range_data.returns.emplace_back(-3.5, 0.5, 0.f);
-    range_data.returns.emplace_back(-2.5, 1.5, 0.f);
-    range_data.returns.emplace_back(-1.5, 2.5, 0.f);
-    range_data.returns.emplace_back(-0.5, 3.5, 0.f);
-    range_data.origin.x() = -0.5;
-    range_data.origin.y() = 0.5;
+    range_data.returns.emplace_back(-3.5f, 0.5f, 0.f);
+    range_data.returns.emplace_back(-2.5f, 1.5f, 0.f);
+    range_data.returns.emplace_back(-1.5f, 2.5f, 0.f);
+    range_data.returns.emplace_back(-0.5f, 3.5f, 0.f);
+    range_data.origin.x() = -0.5f;
+    range_data.origin.y() = 0.5f;
     probability_grid_.StartUpdate();
     range_data_inserter_->Insert(range_data, &probability_grid_);
   }
@@ -81,19 +81,19 @@ TEST_F(RangeDataInserterTest, InsertPointCloud) {
        State::HIT}};
   for (int row = 0; row != 5; ++row) {
     for (int column = 0; column != 5; ++column) {
-      Eigen::Array2i xy_index(row, column);
-      EXPECT_TRUE(probability_grid_.limits().Contains(xy_index));
+      Eigen::Array2i cell_index(row, column);
+      EXPECT_TRUE(probability_grid_.limits().Contains(cell_index));
       switch (expected_states[column][row]) {
         case State::UNKNOWN:
-          EXPECT_FALSE(probability_grid_.IsKnown(xy_index));
+          EXPECT_FALSE(probability_grid_.IsKnown(cell_index));
           break;
         case State::MISS:
           EXPECT_NEAR(options_.miss_probability(),
-                      probability_grid_.GetProbability(xy_index), 1e-4);
+                      probability_grid_.GetProbability(cell_index), 1e-4);
           break;
         case State::HIT:
           EXPECT_NEAR(options_.hit_probability(),
-                      probability_grid_.GetProbability(xy_index), 1e-4);
+                      probability_grid_.GetProbability(cell_index), 1e-4);
           break;
       }
     }
@@ -102,18 +102,30 @@ TEST_F(RangeDataInserterTest, InsertPointCloud) {
 
 TEST_F(RangeDataInserterTest, ProbabilityProgression) {
   InsertPointCloud();
-  EXPECT_NEAR(options_.hit_probability(),
-              probability_grid_.GetProbability(-3.5, 0.5), 1e-4);
-  EXPECT_NEAR(options_.miss_probability(),
-              probability_grid_.GetProbability(-2.5, 0.5), 1e-4);
+  EXPECT_NEAR(
+      options_.hit_probability(),
+      probability_grid_.GetProbability(probability_grid_.limits().GetCellIndex(
+          Eigen::Vector2f(-3.5f, 0.5f))),
+      1e-4);
+  EXPECT_NEAR(
+      options_.miss_probability(),
+      probability_grid_.GetProbability(probability_grid_.limits().GetCellIndex(
+          Eigen::Vector2f(-2.5f, 0.5f))),
+      1e-4);
 
   for (int i = 0; i < 1000; ++i) {
     InsertPointCloud();
   }
-  EXPECT_NEAR(mapping::kMaxProbability,
-              probability_grid_.GetProbability(-3.5, 0.5), 1e-3);
-  EXPECT_NEAR(mapping::kMinProbability,
-              probability_grid_.GetProbability(-2.5, 0.5), 1e-3);
+  EXPECT_NEAR(
+      mapping::kMaxProbability,
+      probability_grid_.GetProbability(probability_grid_.limits().GetCellIndex(
+          Eigen::Vector2f(-3.5f, 0.5f))),
+      1e-3);
+  EXPECT_NEAR(
+      mapping::kMinProbability,
+      probability_grid_.GetProbability(probability_grid_.limits().GetCellIndex(
+          Eigen::Vector2f(-2.5f, 0.5f))),
+      1e-3);
 }
 
 }  // namespace

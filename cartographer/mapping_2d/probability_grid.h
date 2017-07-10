@@ -74,54 +74,50 @@ class ProbabilityGrid {
     }
   }
 
-  // Sets the probability of the cell at 'xy_index' to the given 'probability'.
-  // Only allowed if the cell was unknown before.
-  void SetProbability(const Eigen::Array2i& xy_index, const float probability) {
-    uint16& cell = cells_[GetIndexOfCell(xy_index)];
+  // Sets the probability of the cell at 'cell_index' to the given
+  // 'probability'. Only allowed if the cell was unknown before.
+  void SetProbability(const Eigen::Array2i& cell_index,
+                      const float probability) {
+    uint16& cell = cells_[ToFlatIndex(cell_index)];
     CHECK_EQ(cell, mapping::kUnknownProbabilityValue);
     cell = mapping::ProbabilityToValue(probability);
-    known_cells_box_.extend(xy_index.matrix());
+    known_cells_box_.extend(cell_index.matrix());
   }
 
   // Applies the 'odds' specified when calling ComputeLookupTableToApplyOdds()
-  // to the probability of the cell at 'xy_index' if the cell has not already
+  // to the probability of the cell at 'cell_index' if the cell has not already
   // been updated. Multiple updates of the same cell will be ignored until
   // StartUpdate() is called. Returns true if the cell was updated.
   //
   // If this is the first call to ApplyOdds() for the specified cell, its value
   // will be set to probability corresponding to 'odds'.
-  bool ApplyLookupTable(const Eigen::Array2i& xy_index,
+  bool ApplyLookupTable(const Eigen::Array2i& cell_index,
                         const std::vector<uint16>& table) {
     DCHECK_EQ(table.size(), mapping::kUpdateMarker);
-    const int cell_index = GetIndexOfCell(xy_index);
-    uint16& cell = cells_[cell_index];
+    const int flat_index = ToFlatIndex(cell_index);
+    uint16& cell = cells_[flat_index];
     if (cell >= mapping::kUpdateMarker) {
       return false;
     }
-    update_indices_.push_back(cell_index);
+    update_indices_.push_back(flat_index);
     cell = table[cell];
     DCHECK_GE(cell, mapping::kUpdateMarker);
-    known_cells_box_.extend(xy_index.matrix());
+    known_cells_box_.extend(cell_index.matrix());
     return true;
   }
 
-  // Returns the probability of the cell with 'xy_index'.
-  float GetProbability(const Eigen::Array2i& xy_index) const {
-    if (limits_.Contains(xy_index)) {
-      return mapping::ValueToProbability(cells_[GetIndexOfCell(xy_index)]);
+  // Returns the probability of the cell with 'cell_index'.
+  float GetProbability(const Eigen::Array2i& cell_index) const {
+    if (limits_.Contains(cell_index)) {
+      return mapping::ValueToProbability(cells_[ToFlatIndex(cell_index)]);
     }
     return mapping::kMinProbability;
   }
 
-  // Returns the probability of the cell containing the point ('x', 'y').
-  float GetProbability(const double x, const double y) const {
-    return GetProbability(limits_.GetXYIndexOfCellContainingPoint(x, y));
-  }
-
   // Returns true if the probability at the specified index is known.
-  bool IsKnown(const Eigen::Array2i& xy_index) const {
-    return limits_.Contains(xy_index) && cells_[GetIndexOfCell(xy_index)] !=
-                                             mapping::kUnknownProbabilityValue;
+  bool IsKnown(const Eigen::Array2i& cell_index) const {
+    return limits_.Contains(cell_index) &&
+           cells_[ToFlatIndex(cell_index)] != mapping::kUnknownProbabilityValue;
   }
 
   // Fills in 'offset' and 'limits' to define a subregion of that contains all
@@ -138,12 +134,12 @@ class ProbabilityGrid {
     }
   }
 
-  // Grows the map as necessary to include 'x' and 'y'. This changes the meaning
-  // of these coordinates going forward. This method must be called immediately
+  // Grows the map as necessary to include 'point'. This changes the meaning of
+  // these coordinates going forward. This method must be called immediately
   // after 'StartUpdate', before any calls to 'ApplyLookupTable'.
-  void GrowLimits(const double x, const double y) {
+  void GrowLimits(const Eigen::Vector2f& point) {
     CHECK(update_indices_.empty());
-    while (!limits_.Contains(limits_.GetXYIndexOfCellContainingPoint(x, y))) {
+    while (!limits_.Contains(limits_.GetCellIndex(point))) {
       const int x_offset = limits_.cell_limits().num_x_cells / 2;
       const int y_offset = limits_.cell_limits().num_y_cells / 2;
       const MapLimits new_limits(
@@ -193,10 +189,10 @@ class ProbabilityGrid {
   }
 
  private:
-  // Returns the index of the cell at 'xy_index'.
-  int GetIndexOfCell(const Eigen::Array2i& xy_index) const {
-    CHECK(limits_.Contains(xy_index)) << xy_index;
-    return limits_.cell_limits().num_x_cells * xy_index.y() + xy_index.x();
+  // Converts a 'cell_index' into an index into 'cells_'.
+  int ToFlatIndex(const Eigen::Array2i& cell_index) const {
+    CHECK(limits_.Contains(cell_index)) << cell_index;
+    return limits_.cell_limits().num_x_cells * cell_index.y() + cell_index.x();
   }
 
   MapLimits limits_;

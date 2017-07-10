@@ -125,20 +125,21 @@ TEST(ProbabilityGridTest, GetProbability) {
 
   probability_grid.StartUpdate();
   probability_grid.SetProbability(
-      limits.GetXYIndexOfCellContainingPoint(-0.5, 0.5),
+      limits.GetCellIndex(Eigen::Vector2f(-0.5f, 0.5f)),
       mapping::kMaxProbability);
-  EXPECT_NEAR(probability_grid.GetProbability(-0.5, 0.5),
+  EXPECT_NEAR(probability_grid.GetProbability(
+                  limits.GetCellIndex(Eigen::Vector2f(-0.5f, 0.5f))),
               mapping::kMaxProbability, 1e-6);
   for (const Eigen::Array2i& xy_index :
-       {limits.GetXYIndexOfCellContainingPoint(-0.5, 1.5),
-        limits.GetXYIndexOfCellContainingPoint(0.5, 0.5),
-        limits.GetXYIndexOfCellContainingPoint(0.5, 1.5)}) {
+       {limits.GetCellIndex(Eigen::Vector2f(-0.5f, 1.5f)),
+        limits.GetCellIndex(Eigen::Vector2f(0.5f, 0.5f)),
+        limits.GetCellIndex(Eigen::Vector2f(0.5f, 1.5f))}) {
     EXPECT_TRUE(limits.Contains(xy_index));
     EXPECT_FALSE(probability_grid.IsKnown(xy_index));
   }
 }
 
-TEST(ProbabilityGridTest, GetXYIndexOfCellContainingPoint) {
+TEST(ProbabilityGridTest, GetCellIndex) {
   ProbabilityGrid probability_grid(
       MapLimits(2., Eigen::Vector2d(8., 14.), CellLimits(14, 8)));
 
@@ -147,33 +148,33 @@ TEST(ProbabilityGridTest, GetXYIndexOfCellContainingPoint) {
   ASSERT_EQ(14, cell_limits.num_x_cells);
   ASSERT_EQ(8, cell_limits.num_y_cells);
   EXPECT_TRUE(
-      (Eigen::Array2i(0, 0) == limits.GetXYIndexOfCellContainingPoint(7, 13))
+      (Eigen::Array2i(0, 0) == limits.GetCellIndex(Eigen::Vector2f(7.f, 13.f)))
           .all());
+  EXPECT_TRUE((Eigen::Array2i(13, 0) ==
+               limits.GetCellIndex(Eigen::Vector2f(7.f, -13.f)))
+                  .all());
   EXPECT_TRUE(
-      (Eigen::Array2i(13, 0) == limits.GetXYIndexOfCellContainingPoint(7, -13))
+      (Eigen::Array2i(0, 7) == limits.GetCellIndex(Eigen::Vector2f(-7.f, 13.f)))
           .all());
-  EXPECT_TRUE(
-      (Eigen::Array2i(0, 7) == limits.GetXYIndexOfCellContainingPoint(-7, 13))
-          .all());
-  EXPECT_TRUE(
-      (Eigen::Array2i(13, 7) == limits.GetXYIndexOfCellContainingPoint(-7, -13))
-          .all());
+  EXPECT_TRUE((Eigen::Array2i(13, 7) ==
+               limits.GetCellIndex(Eigen::Vector2f(-7.f, -13.f)))
+                  .all());
 
   // Check around the origin.
   EXPECT_TRUE(
-      (Eigen::Array2i(6, 3) == limits.GetXYIndexOfCellContainingPoint(0.5, 0.5))
+      (Eigen::Array2i(6, 3) == limits.GetCellIndex(Eigen::Vector2f(0.5f, 0.5f)))
           .all());
   EXPECT_TRUE(
-      (Eigen::Array2i(6, 3) == limits.GetXYIndexOfCellContainingPoint(1.5, 1.5))
+      (Eigen::Array2i(6, 3) == limits.GetCellIndex(Eigen::Vector2f(1.5f, 1.5f)))
           .all());
   EXPECT_TRUE((Eigen::Array2i(7, 3) ==
-               limits.GetXYIndexOfCellContainingPoint(0.5, -0.5))
+               limits.GetCellIndex(Eigen::Vector2f(0.5f, -0.5f)))
                   .all());
   EXPECT_TRUE((Eigen::Array2i(6, 4) ==
-               limits.GetXYIndexOfCellContainingPoint(-0.5, 0.5))
+               limits.GetCellIndex(Eigen::Vector2f(-0.5f, 0.5f)))
                   .all());
   EXPECT_TRUE((Eigen::Array2i(7, 4) ==
-               limits.GetXYIndexOfCellContainingPoint(-0.5, -0.5))
+               limits.GetCellIndex(Eigen::Vector2f(-0.5f, -0.5f)))
                   .all());
 }
 

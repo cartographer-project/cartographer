@@ -48,14 +48,16 @@ proto::CompressedRangeData ToProto(
 
 CompressedRangeData FromProto(const proto::CompressedRangeData& proto) {
   return CompressedRangeData{
-      transform::ToEigen(proto.origin()), CompressedPointCloud(proto.returns()),
+      transform::ToEigen(proto.origin()),
+      CompressedPointCloud(proto.returns()),
       CompressedPointCloud(proto.misses()),
   };
 }
 
 CompressedRangeData Compress(const RangeData& range_data) {
   return CompressedRangeData{
-      range_data.origin, CompressedPointCloud(range_data.returns),
+      range_data.origin,
+      CompressedPointCloud(range_data.returns),
       CompressedPointCloud(range_data.misses),
   };
 }
