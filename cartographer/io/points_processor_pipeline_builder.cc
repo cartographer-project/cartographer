@@ -79,7 +79,7 @@ void RegisterBuiltInPointsProcessors(
   RegisterFileWritingPointsProcessor<HybridGridPointsProcessor>(
       file_writer_factory, builder);
   RegisterFileWritingPointsProcessor<ProbabilityGridPointsProcessor>(
-    file_writer_factory, builder);
+      file_writer_factory, builder);
 
   // X-Ray is an odd ball since it requires the trajectory to figure out the
   // different building levels we walked on to separate the images.

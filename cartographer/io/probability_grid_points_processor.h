@@ -24,14 +24,14 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
   constexpr static const char* kConfigurationFileActionName =
       "write_probability_grid";
   ProbabilityGridPointsProcessor(
-    double resolution,
-    const mapping_2d::proto::RangeDataInserterOptions&
-    range_data_inserter_options,
-    std::unique_ptr<FileWriter> file_writer,
-    PointsProcessor* next);
-  ProbabilityGridPointsProcessor(const ProbabilityGridPointsProcessor&) = delete;
+      double resolution,
+      const mapping_2d::proto::RangeDataInserterOptions&
+          range_data_inserter_options,
+      std::unique_ptr<FileWriter> file_writer, PointsProcessor* next);
+  ProbabilityGridPointsProcessor(const ProbabilityGridPointsProcessor&) =
+      delete;
   ProbabilityGridPointsProcessor& operator=(
-    const ProbabilityGridPointsProcessor&) = delete;
+      const ProbabilityGridPointsProcessor&) = delete;
 
   static std::unique_ptr<ProbabilityGridPointsProcessor> FromDictionary(
       FileWriterFactory file_writer_factory,
