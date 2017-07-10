@@ -23,7 +23,6 @@ message ProbabilityGrid {
   // These values are actually int16s, but protos don't have a native int16
   // type.
   repeated int32 cells = 2;
-  repeated int32 update_indices = 3;
   optional int32 max_x = 4;
   optional int32 max_y = 5;
   optional int32 min_x = 6;

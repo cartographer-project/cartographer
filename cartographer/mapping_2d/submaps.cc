@@ -40,7 +40,6 @@ ProbabilityGrid ComputeCroppedProbabilityGrid(
       probability_grid.limits().max() -
       resolution * Eigen::Vector2d(offset.y(), offset.x());
   ProbabilityGrid cropped_grid(MapLimits(resolution, max, limits));
-  cropped_grid.StartUpdate();
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(limits)) {
     if (probability_grid.IsKnown(xy_index + offset)) {
       cropped_grid.SetProbability(

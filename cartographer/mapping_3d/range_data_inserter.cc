@@ -78,7 +78,7 @@ RangeDataInserter::RangeDataInserter(
 
 void RangeDataInserter::Insert(const sensor::RangeData& range_data,
                                HybridGrid* hybrid_grid) const {
-  CHECK_NOTNULL(hybrid_grid)->StartUpdate();
+  CHECK_NOTNULL(hybrid_grid);
 
   for (const Eigen::Vector3f& hit : range_data.returns) {
     const Eigen::Array3i hit_cell = hybrid_grid->GetCellIndex(hit);
@@ -89,6 +89,7 @@ void RangeDataInserter::Insert(const sensor::RangeData& range_data,
   // (i.e. no hits will be ignored because of a miss in the same cell).
   InsertMissesIntoGrid(miss_table_, range_data.origin, range_data.returns,
                        hybrid_grid, options_.num_free_space_voxels());
+  hybrid_grid->FinishUpdate();
 }
 
 }  // namespace mapping_3d

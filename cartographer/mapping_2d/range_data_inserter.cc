@@ -53,11 +53,11 @@ RangeDataInserter::RangeDataInserter(
 
 void RangeDataInserter::Insert(const sensor::RangeData& range_data,
                                ProbabilityGrid* const probability_grid) const {
-  // By not starting a new update after hits are inserted, we give hits priority
+  // By not finishing the update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
-  CHECK_NOTNULL(probability_grid)->StartUpdate();
   CastRays(range_data, hit_table_, miss_table_, options_.insert_free_space(),
-           probability_grid);
+           CHECK_NOTNULL(probability_grid));
+  probability_grid->FinishUpdate();
 }
 
 }  // namespace mapping_2d
