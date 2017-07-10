@@ -88,13 +88,13 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
             Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
 
     HybridGrid hybrid_grid(0.05f);
-    hybrid_grid.StartUpdate();
     range_data_inserter.Insert(
         sensor::RangeData{
             expected_pose.translation(),
             sensor::TransformPointCloud(point_cloud, expected_pose),
             {}},
         &hybrid_grid);
+    hybrid_grid.FinishUpdate();
 
     FastCorrelativeScanMatcher fast_correlative_scan_matcher(hybrid_grid, {},
                                                              options);

@@ -32,9 +32,6 @@ TEST(ProbabilityGridTest, ProtoConstructor) {
   for (int i = 6; i < 12; ++i) {
     proto.mutable_cells()->Add(static_cast<uint16>(i));
   }
-  for (int i = 13; i < 18; ++i) {
-    proto.mutable_update_indices()->Add(i);
-  }
   proto.set_max_x(19);
   proto.set_max_y(20);
   proto.set_min_x(21);
@@ -43,8 +40,8 @@ TEST(ProbabilityGridTest, ProtoConstructor) {
   ProbabilityGrid grid(proto);
   EXPECT_EQ(proto.limits().DebugString(), ToProto(grid.limits()).DebugString());
 
-  // TODO(macmason): Figure out how to test the contents of cells_,
-  // update_indices_, and {min, max}_{x, y}_ gracefully.
+  // TODO(macmason): Figure out how to test the contents of cells_ and
+  // {min, max}_{x, y}_ gracefully.
 }
 
 TEST(ProbabilityGridTest, ToProto) {
@@ -55,8 +52,8 @@ TEST(ProbabilityGridTest, ToProto) {
   EXPECT_EQ(ToProto(probability_grid.limits()).DebugString(),
             proto.limits().DebugString());
 
-  // TODO(macmason): Figure out how to test the contents of cells_,
-  // update_indices_, and {min, max}_{x, y}_ gracefully.
+  // TODO(macmason): Figure out how to test the contents of cells_ and
+  // {min, max}_{x, y}_ gracefully.
 }
 
 TEST(ProbabilityGridTest, ApplyOdds) {
@@ -75,36 +72,34 @@ TEST(ProbabilityGridTest, ApplyOdds) {
 
   probability_grid.SetProbability(Eigen::Array2i(1, 0), 0.5);
 
-  probability_grid.StartUpdate();
   probability_grid.ApplyLookupTable(
       Eigen::Array2i(1, 0),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9)));
+  probability_grid.FinishUpdate();
   EXPECT_GT(probability_grid.GetProbability(Eigen::Array2i(1, 0)), 0.5);
 
-  probability_grid.StartUpdate();
   probability_grid.SetProbability(Eigen::Array2i(0, 1), 0.5);
 
-  probability_grid.StartUpdate();
   probability_grid.ApplyLookupTable(
       Eigen::Array2i(0, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.1)));
+  probability_grid.FinishUpdate();
   EXPECT_LT(probability_grid.GetProbability(Eigen::Array2i(0, 1)), 0.5);
 
   // Tests adding odds to an unknown cell.
-  probability_grid.StartUpdate();
   probability_grid.ApplyLookupTable(
       Eigen::Array2i(1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.42)));
   EXPECT_NEAR(probability_grid.GetProbability(Eigen::Array2i(1, 1)), 0.42,
               1e-4);
 
-  // Tests that further updates are ignored if StartUpdate() isn't called.
+  // Tests that further updates are ignored if FinishUpdate() isn't called.
   probability_grid.ApplyLookupTable(
       Eigen::Array2i(1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9)));
   EXPECT_NEAR(probability_grid.GetProbability(Eigen::Array2i(1, 1)), 0.42,
               1e-4);
-  probability_grid.StartUpdate();
+  probability_grid.FinishUpdate();
   probability_grid.ApplyLookupTable(
       Eigen::Array2i(1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9)));
@@ -123,7 +118,6 @@ TEST(ProbabilityGridTest, GetProbability) {
   ASSERT_EQ(2, cell_limits.num_x_cells);
   ASSERT_EQ(2, cell_limits.num_y_cells);
 
-  probability_grid.StartUpdate();
   probability_grid.SetProbability(
       limits.GetCellIndex(Eigen::Vector2f(-0.5f, 0.5f)),
       mapping::kMaxProbability);
@@ -185,7 +179,6 @@ TEST(ProbabilityGridTest, CorrectCropping) {
       mapping::kMinProbability, mapping::kMaxProbability);
   ProbabilityGrid probability_grid(
       MapLimits(0.05, Eigen::Vector2d(10., 10.), CellLimits(400, 400)));
-  probability_grid.StartUpdate();
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(
            Eigen::Array2i(100, 100), Eigen::Array2i(299, 299))) {
     probability_grid.SetProbability(xy_index, value_distribution(rng));

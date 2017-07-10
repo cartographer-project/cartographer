@@ -46,10 +46,7 @@ class ProbabilityGrid {
                mapping::kUnknownProbabilityValue) {}
 
   explicit ProbabilityGrid(const proto::ProbabilityGrid& proto)
-      : limits_(proto.limits()),
-        cells_(),
-        update_indices_(proto.update_indices().begin(),
-                        proto.update_indices().end()) {
+      : limits_(proto.limits()), cells_() {
     if (proto.has_min_x()) {
       known_cells_box_ =
           Eigen::AlignedBox2i(Eigen::Vector2i(proto.min_x(), proto.min_y()),
@@ -65,8 +62,8 @@ class ProbabilityGrid {
   // Returns the limits of this ProbabilityGrid.
   const MapLimits& limits() const { return limits_; }
 
-  // Starts the next update sequence.
-  void StartUpdate() {
+  // Finishes the update sequence.
+  void FinishUpdate() {
     while (!update_indices_.empty()) {
       DCHECK_GE(cells_[update_indices_.back()], mapping::kUpdateMarker);
       cells_[update_indices_.back()] -= mapping::kUpdateMarker;
@@ -87,7 +84,7 @@ class ProbabilityGrid {
   // Applies the 'odds' specified when calling ComputeLookupTableToApplyOdds()
   // to the probability of the cell at 'cell_index' if the cell has not already
   // been updated. Multiple updates of the same cell will be ignored until
-  // StartUpdate() is called. Returns true if the cell was updated.
+  // FinishUpdate() is called. Returns true if the cell was updated.
   //
   // If this is the first call to ApplyOdds() for the specified cell, its value
   // will be set to probability corresponding to 'odds'.
@@ -136,7 +133,7 @@ class ProbabilityGrid {
 
   // Grows the map as necessary to include 'point'. This changes the meaning of
   // these coordinates going forward. This method must be called immediately
-  // after 'StartUpdate', before any calls to 'ApplyLookupTable'.
+  // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
   void GrowLimits(const Eigen::Vector2f& point) {
     CHECK(update_indices_.empty());
     while (!limits_.Contains(limits_.GetCellIndex(point))) {
@@ -175,10 +172,9 @@ class ProbabilityGrid {
     for (const auto cell : cells_) {
       result.mutable_cells()->Add(cell);
     }
-    result.mutable_update_indices()->Reserve(update_indices_.size());
-    for (const auto update : update_indices_) {
-      result.mutable_update_indices()->Add(update);
-    }
+    CHECK(update_indices_.empty()) << "Serialiazing a probability grid during "
+                                      "an update is not supported. Finish the "
+                                      "update first.";
     if (!known_cells_box_.isEmpty()) {
       result.set_max_x(known_cells_box_.max().x());
       result.set_max_y(known_cells_box_.max().y());

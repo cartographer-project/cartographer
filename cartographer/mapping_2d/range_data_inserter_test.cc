@@ -51,8 +51,8 @@ class RangeDataInserterTest : public ::testing::Test {
     range_data.returns.emplace_back(-0.5f, 3.5f, 0.f);
     range_data.origin.x() = -0.5f;
     range_data.origin.y() = 0.5f;
-    probability_grid_.StartUpdate();
     range_data_inserter_->Insert(range_data, &probability_grid_);
+    probability_grid_.FinishUpdate();
   }
 
   ProbabilityGrid probability_grid_;

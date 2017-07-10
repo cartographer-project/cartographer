@@ -40,33 +40,32 @@ TEST(HybridGridTest, ApplyOdds) {
 
   hybrid_grid.SetProbability(Eigen::Array3i(1, 0, 1), 0.5f);
 
-  hybrid_grid.StartUpdate();
   hybrid_grid.ApplyLookupTable(
       Eigen::Array3i(1, 0, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9f)));
+  hybrid_grid.FinishUpdate();
   EXPECT_GT(hybrid_grid.GetProbability(Eigen::Array3i(1, 0, 1)), 0.5f);
 
   hybrid_grid.SetProbability(Eigen::Array3i(0, 1, 0), 0.5f);
 
-  hybrid_grid.StartUpdate();
   hybrid_grid.ApplyLookupTable(
       Eigen::Array3i(0, 1, 0),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.1f)));
+  hybrid_grid.FinishUpdate();
   EXPECT_LT(hybrid_grid.GetProbability(Eigen::Array3i(0, 1, 0)), 0.5f);
 
   // Tests adding odds to an unknown cell.
-  hybrid_grid.StartUpdate();
   hybrid_grid.ApplyLookupTable(
       Eigen::Array3i(1, 1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.42f)));
   EXPECT_NEAR(hybrid_grid.GetProbability(Eigen::Array3i(1, 1, 1)), 0.42f, 1e-4);
 
-  // Tests that further updates are ignored if StartUpdate() isn't called.
+  // Tests that further updates are ignored if FinishUpdate() isn't called.
   hybrid_grid.ApplyLookupTable(
       Eigen::Array3i(1, 1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9f)));
   EXPECT_NEAR(hybrid_grid.GetProbability(Eigen::Array3i(1, 1, 1)), 0.42f, 1e-4);
-  hybrid_grid.StartUpdate();
+  hybrid_grid.FinishUpdate();
   hybrid_grid.ApplyLookupTable(
       Eigen::Array3i(1, 1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9f)));

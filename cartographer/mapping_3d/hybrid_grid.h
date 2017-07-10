@@ -485,8 +485,8 @@ class HybridGrid : public HybridGridBase<uint16> {
     *mutable_value(index) = mapping::ProbabilityToValue(probability);
   }
 
-  // Starts the next update sequence.
-  void StartUpdate() {
+  // Finishes the update sequence.
+  void FinishUpdate() {
     while (!update_indices_.empty()) {
       DCHECK_GE(*update_indices_.back(), mapping::kUpdateMarker);
       *update_indices_.back() -= mapping::kUpdateMarker;
@@ -497,7 +497,7 @@ class HybridGrid : public HybridGridBase<uint16> {
   // Applies the 'odds' specified when calling ComputeLookupTableToApplyOdds()
   // to the probability of the cell at 'index' if the cell has not already been
   // updated. Multiple updates of the same cell will be ignored until
-  // StartUpdate() is called. Returns true if the cell was updated.
+  // FinishUpdate() is called. Returns true if the cell was updated.
   //
   // If this is the first call to ApplyOdds() for the specified cell, its value
   // will be set to probability corresponding to 'odds'.
