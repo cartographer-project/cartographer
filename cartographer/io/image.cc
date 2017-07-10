@@ -58,7 +58,7 @@ void Image::WritePng(FileWriter* const file_writer) {
 }
 
 const Color Image::GetPixel(int x, int y) const {
-  uint32_t value = pixels_[y * stride_ / 4 + x];
+  const uint32_t value = pixels_[y * stride_ / 4 + x];
   return {{static_cast<uint8_t>(value >> 16), static_cast<uint8_t>(value >> 8),
            static_cast<uint8_t>(value)}};
 }

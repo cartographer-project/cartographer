@@ -14,11 +14,10 @@
 namespace cartographer {
 namespace io {
 
-// Creates a probability grid with the specified 'resolution'.
-// As all points are projected into the x-y plane the z component
-// of the data is ignored.
-// 'range_data_inserter' options are used to configure the range
-// data ray tracing through the probability grid.
+// Creates a probability grid with the specified 'resolution'. As all points are
+// projected into the x-y plane the z component of the data is ignored.
+// 'range_data_inserter' options are used to configure the range data ray
+// tracing through the probability grid.
 class ProbabilityGridPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName =

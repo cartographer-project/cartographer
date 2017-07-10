@@ -50,7 +50,7 @@ void WriteGrid(const mapping_2d::ProbabilityGrid& probability_grid,
   CHECK(file_writer->Close());
 }
 
-mapping_2d::ProbabilityGrid CreateProbabilityGrid(double resolution) {
+mapping_2d::ProbabilityGrid CreateProbabilityGrid(const double resolution) {
   constexpr int kInitialProbabilityGridSize = 100;
   Eigen::Vector2d max =
       0.5 * kInitialProbabilityGridSize * resolution * Eigen::Vector2d::Ones();
