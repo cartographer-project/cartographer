@@ -20,11 +20,10 @@
 #include <string>
 
 #include "Eigen/Core"
-#include "cairo/cairo.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/io/cairo_types.h"
+#include "cartographer/io/image.h"
 #include "cartographer/mapping/detect_floors.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 
@@ -46,22 +45,9 @@ double Mix(const double a, const double b, const double t) {
   return a * (1. - t) + t * b;
 }
 
-cairo_status_t CairoWriteCallback(void* const closure,
-                                  const unsigned char* data,
-                                  const unsigned int length) {
-  if (static_cast<FileWriter*>(closure)->Write(
-          reinterpret_cast<const char*>(data), length)) {
-    return CAIRO_STATUS_SUCCESS;
-  }
-  return CAIRO_STATUS_WRITE_ERROR;
-}
-
 // Write 'mat' as a pleasing-to-look-at PNG into 'filename'
-void WritePng(const PixelDataMatrix& mat, FileWriter* const file_writer) {
-  const int stride =
-      cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, mat.cols());
-  CHECK_EQ(stride % 4, 0);
-  std::vector<uint32_t> pixels(stride / 4 * mat.rows(), 0.);
+void WriteImage(const PixelDataMatrix& mat, FileWriter* const file_writer) {
+  Image image(mat.cols(), mat.rows());
 
   float max = std::numeric_limits<float>::min();
   for (int y = 0; y < mat.rows(); ++y) {
@@ -78,8 +64,7 @@ void WritePng(const PixelDataMatrix& mat, FileWriter* const file_writer) {
     for (int x = 0; x < mat.cols(); ++x) {
       const PixelData& cell = mat(y, x);
       if (cell.num_occupied_cells_in_column == 0.) {
-        pixels[y * stride / 4 + x] =
-            (255 << 24) | (255 << 16) | (255 << 8) | 255;
+        image.SetPixel(x, y, {{255, 255, 255}});
         continue;
       }
 
@@ -96,27 +81,14 @@ void WritePng(const PixelDataMatrix& mat, FileWriter* const file_writer) {
       double mix_g = Mix(1., mean_g_in_column, saturation);
       double mix_b = Mix(1., mean_b_in_column, saturation);
 
-      const int r = common::RoundToInt(mix_r * 255.);
-      const int g = common::RoundToInt(mix_g * 255.);
-      const int b = common::RoundToInt(mix_b * 255.);
-      pixels[y * stride / 4 + x] = (255 << 24) | (r << 16) | (g << 8) | b;
+      const uint8_t r = common::RoundToInt(mix_r * 255.);
+      const uint8_t g = common::RoundToInt(mix_g * 255.);
+      const uint8_t b = common::RoundToInt(mix_b * 255.);
+      image.SetPixel(x, y, {{r, g, b}});
     }
   }
 
-  // TODO(hrapp): cairo_image_surface_create_for_data does not take ownership of
-  // the data until the surface is finalized. Once it is finalized though,
-  // cairo_surface_write_to_png fails, complaining that the surface is already
-  // finalized. This makes it pretty hard to pass back ownership of the image to
-  // the caller.
-  cairo::UniqueSurfacePtr surface(
-      cairo_image_surface_create_for_data(
-          reinterpret_cast<unsigned char*>(pixels.data()), CAIRO_FORMAT_ARGB32,
-          mat.cols(), mat.rows(), stride),
-      cairo_surface_destroy);
-  CHECK_EQ(cairo_surface_status(surface.get()), CAIRO_STATUS_SUCCESS);
-  CHECK_EQ(cairo_surface_write_to_png_stream(surface.get(), &CairoWriteCallback,
-                                             file_writer),
-           CAIRO_STATUS_SUCCESS);
+  image.WritePng(file_writer);
   CHECK(file_writer->Close());
 }
 
@@ -196,7 +168,7 @@ void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
     pixel_data.mean_b = column_data.sum_b / column_data.count;
     ++pixel_data.num_occupied_cells_in_column;
   }
-  WritePng(image, file_writer);
+  WriteImage(image, file_writer);
 }
 
 void XRayPointsProcessor::Insert(const PointsBatch& batch,
