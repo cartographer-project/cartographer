@@ -19,7 +19,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
-#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 #include "cartographer/common/make_unique.h"

@@ -185,9 +185,9 @@ void Submap::ToProto(mapping::proto::Submap* const proto) const {
   submap_3d->set_num_range_data(num_range_data());
   submap_3d->set_finished(finished_);
   *submap_3d->mutable_high_resolution_hybrid_grid() =
-      mapping_3d::ToProto(high_resolution_hybrid_grid());
+      high_resolution_hybrid_grid().ToProto();
   *submap_3d->mutable_low_resolution_hybrid_grid() =
-      mapping_3d::ToProto(low_resolution_hybrid_grid());
+      low_resolution_hybrid_grid().ToProto();
 }
 
 void Submap::ToResponseProto(
