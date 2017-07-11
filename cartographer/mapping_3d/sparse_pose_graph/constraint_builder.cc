@@ -181,8 +181,9 @@ void ConstraintBuilder::ComputeConstraint(
   // The 'constraint_transform' (submap i <- scan j) is computed from:
   // - a 'filtered_point_cloud' in scan j and
   // - the initial guess 'initial_pose' (submap i <- scan j).
-  float score = 0.;
+  float score = 0.f;
   transform::Rigid3d pose_estimate;
+  float rotational_score = 0.f;
 
   // Compute 'pose_estimate' in three stages:
   // 1. Fast estimate using the fast correlative scan matcher.
@@ -191,7 +192,8 @@ void ConstraintBuilder::ComputeConstraint(
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             initial_pose.rotation(), filtered_point_cloud, point_cloud,
-            options_.global_localization_min_score(), &score, &pose_estimate)) {
+            options_.global_localization_min_score(), &score, &pose_estimate,
+            &rotational_score)) {
       CHECK_GT(score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
       CHECK_GE(submap_id.trajectory_id, 0);
@@ -203,7 +205,7 @@ void ConstraintBuilder::ComputeConstraint(
   } else {
     if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
             initial_pose, filtered_point_cloud, point_cloud,
-            options_.min_score(), &score, &pose_estimate)) {
+            options_.min_score(), &score, &pose_estimate, &rotational_score)) {
       // We've reported a successful local match.
       CHECK_GT(score, options_.min_score());
     } else {
@@ -213,6 +215,7 @@ void ConstraintBuilder::ComputeConstraint(
   {
     common::MutexLocker locker(&mutex_);
     score_histogram_.Add(score);
+    rotational_score_histogram_.Add(rotational_score);
   }
 
   // Use the CSM estimate as both the initial and previous pose. This has the
@@ -282,6 +285,8 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
           LOG(INFO) << constraints_.size() << " computations resulted in "
                     << result.size() << " additional constraints.";
           LOG(INFO) << "Score histogram:\n" << score_histogram_.ToString(10);
+          LOG(INFO) << "Rotational score histogram:\n"
+                    << rotational_score_histogram_.ToString(10);
         }
         constraints_.clear();
         callback = std::move(when_done_);

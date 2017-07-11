@@ -106,21 +106,23 @@ bool FastCorrelativeScanMatcher::Match(
     const transform::Rigid3d& initial_pose_estimate,
     const sensor::PointCloud& coarse_point_cloud,
     const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate) const {
+    float* const score, transform::Rigid3d* const pose_estimate,
+    float* const rotational_score) const {
   const SearchParameters search_parameters{
       common::RoundToInt(options_.linear_xy_search_window() / resolution_),
       common::RoundToInt(options_.linear_z_search_window() / resolution_),
       options_.angular_search_window()};
-  return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
-                                   coarse_point_cloud, fine_point_cloud,
-                                   min_score, score, pose_estimate);
+  return MatchWithSearchParameters(
+      search_parameters, initial_pose_estimate, coarse_point_cloud,
+      fine_point_cloud, min_score, score, pose_estimate, rotational_score);
 }
 
 bool FastCorrelativeScanMatcher::MatchFullSubmap(
     const Eigen::Quaterniond& gravity_alignment,
     const sensor::PointCloud& coarse_point_cloud,
     const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate) const {
+    float* const score, transform::Rigid3d* const pose_estimate,
+    float* const rotational_score) const {
   const transform::Rigid3d initial_pose_estimate(Eigen::Vector3d::Zero(),
                                                  gravity_alignment);
   float max_point_distance = 0.f;
@@ -132,9 +134,9 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
       common::RoundToInt(max_point_distance / resolution_ + 0.5f);
   const SearchParameters search_parameters{linear_window_size,
                                            linear_window_size, M_PI};
-  return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
-                                   coarse_point_cloud, fine_point_cloud,
-                                   min_score, score, pose_estimate);
+  return MatchWithSearchParameters(
+      search_parameters, initial_pose_estimate, coarse_point_cloud,
+      fine_point_cloud, min_score, score, pose_estimate, rotational_score);
 }
 
 bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
@@ -142,7 +144,8 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
     const transform::Rigid3d& initial_pose_estimate,
     const sensor::PointCloud& coarse_point_cloud,
     const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate) const {
+    float* const score, transform::Rigid3d* const pose_estimate,
+    float* const rotational_score) const {
   CHECK_NOTNULL(score);
   CHECK_NOTNULL(pose_estimate);
 
@@ -158,12 +161,14 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
       precomputation_grid_stack_->max_depth(), min_score);
   if (best_candidate.score > min_score) {
     *score = best_candidate.score;
+    const auto& discrete_scan = discrete_scans[best_candidate.scan_index];
     *pose_estimate =
         (transform::Rigid3f(
              resolution_ * best_candidate.offset.matrix().cast<float>(),
              Eigen::Quaternionf::Identity()) *
-         discrete_scans[best_candidate.scan_index].pose)
+         discrete_scan.pose)
             .cast<double>();
+    *rotational_score = discrete_scan.rotational_score;
     return true;
   }
   return false;
@@ -171,8 +176,8 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
 
 DiscreteScan FastCorrelativeScanMatcher::DiscretizeScan(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
-    const sensor::PointCloud& point_cloud,
-    const transform::Rigid3f& pose) const {
+    const sensor::PointCloud& point_cloud, const transform::Rigid3f& pose,
+    const float rotational_score) const {
   std::vector<std::vector<Eigen::Array3i>> cell_indices_per_depth;
   const PrecomputationGrid& original_grid = precomputation_grid_stack_->Get(0);
   std::vector<Eigen::Array3i> full_resolution_cell_indices;
@@ -210,7 +215,7 @@ DiscreteScan FastCorrelativeScanMatcher::DiscretizeScan(
           low_resolution_cell_at_start - low_resolution_search_window_start);
     }
   }
-  return DiscreteScan{pose, cell_indices_per_depth};
+  return DiscreteScan{pose, cell_indices_per_depth, rotational_score};
 }
 
 std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
@@ -253,7 +258,7 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
         transform::AngleAxisVectorToRotationQuaternion(angle_axis) *
             initial_pose.rotation());
     result.push_back(
-        DiscretizeScan(search_parameters, coarse_point_cloud, pose));
+        DiscretizeScan(search_parameters, coarse_point_cloud, pose, scores[i]));
   }
   return result;
 }

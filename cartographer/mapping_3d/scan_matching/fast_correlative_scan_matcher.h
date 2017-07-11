@@ -46,6 +46,7 @@ struct DiscreteScan {
   transform::Rigid3f pose;
   // Contains a vector of discretized scans for each 'depth'.
   std::vector<std::vector<Eigen::Array3i>> cell_indices_per_depth;
+  float rotational_score;
 };
 
 struct Candidate {
@@ -81,24 +82,27 @@ class FastCorrelativeScanMatcher {
 
   // Aligns 'coarse_point_cloud' within the 'hybrid_grid' given an
   // 'initial_pose_estimate'. If a score above 'min_score' (excluding equality)
-  // is possible, true is returned, and 'score' and 'pose_estimate' are updated
-  // with the result. 'fine_point_cloud' is used to compute the rotational scan
-  // matcher score.
+  // is possible, true is returned, and 'score', 'pose_estimate', and
+  // 'rotational_score' are updated with the result. 'fine_point_cloud' is used
+  // to compute the rotational scan matcher score.
   bool Match(const transform::Rigid3d& initial_pose_estimate,
              const sensor::PointCloud& coarse_point_cloud,
              const sensor::PointCloud& fine_point_cloud, float min_score,
-             float* score, transform::Rigid3d* pose_estimate) const;
+             float* score, transform::Rigid3d* pose_estimate,
+             float* rotational_score) const;
 
   // Aligns 'coarse_point_cloud' within the 'hybrid_grid' given a rotation which
   // is expected to be approximately gravity aligned. If a score above
-  // 'min_score' (excluding equality) is possible, true is returned, and 'score'
-  // and 'pose_estimate' are updated with the result. 'fine_point_cloud' is used
-  // to compute the rotational scan matcher score.
+  // 'min_score' (excluding equality) is possible, true is returned, and
+  // 'score', 'pose_estimate', and 'rotational_score' are updated with the
+  // result. 'fine_point_cloud' is used to compute the rotational scan matcher
+  // score.
   bool MatchFullSubmap(const Eigen::Quaterniond& gravity_alignment,
                        const sensor::PointCloud& coarse_point_cloud,
                        const sensor::PointCloud& fine_point_cloud,
                        float min_score, float* score,
-                       transform::Rigid3d* pose_estimate) const;
+                       transform::Rigid3d* pose_estimate,
+                       float* rotational_score) const;
 
  private:
   struct SearchParameters {
@@ -112,10 +116,11 @@ class FastCorrelativeScanMatcher {
       const transform::Rigid3d& initial_pose_estimate,
       const sensor::PointCloud& coarse_point_cloud,
       const sensor::PointCloud& fine_point_cloud, float min_score, float* score,
-      transform::Rigid3d* pose_estimate) const;
+      transform::Rigid3d* pose_estimate, float* rotational_score) const;
   DiscreteScan DiscretizeScan(const SearchParameters& search_parameters,
                               const sensor::PointCloud& point_cloud,
-                              const transform::Rigid3f& pose) const;
+                              const transform::Rigid3f& pose,
+                              float rotational_score) const;
   std::vector<DiscreteScan> GenerateDiscreteScans(
       const SearchParameters& search_parameters,
       const sensor::PointCloud& coarse_point_cloud,

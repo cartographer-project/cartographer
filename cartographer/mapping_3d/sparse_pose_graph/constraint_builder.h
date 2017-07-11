@@ -185,8 +185,9 @@ class ConstraintBuilder {
   const sensor::AdaptiveVoxelFilter adaptive_voxel_filter_;
   scan_matching::CeresScanMatcher ceres_scan_matcher_;
 
-  // Histogram of scan matcher scores.
+  // Histograms of scan matcher scores.
   common::Histogram score_histogram_ GUARDED_BY(mutex_);
+  common::Histogram rotational_score_histogram_ GUARDED_BY(mutex_);
 };
 
 }  // namespace sparse_pose_graph

@@ -98,12 +98,14 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
 
     FastCorrelativeScanMatcher fast_correlative_scan_matcher(hybrid_grid, {},
                                                              options);
+    float score = 0.f;
     transform::Rigid3d pose_estimate;
-    float score;
+    float rotational_score = 0.f;
     EXPECT_TRUE(fast_correlative_scan_matcher.Match(
         transform::Rigid3d::Identity(), point_cloud, point_cloud, kMinScore,
-        &score, &pose_estimate));
+        &score, &pose_estimate, &rotational_score));
     EXPECT_LT(kMinScore, score);
+    EXPECT_LT(0.09f, rotational_score);
     EXPECT_THAT(expected_pose,
                 transform::IsNearly(pose_estimate.cast<float>(), 0.05f))
         << "Actual: " << transform::ToProto(pose_estimate).DebugString()
