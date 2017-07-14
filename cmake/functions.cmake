@@ -104,6 +104,10 @@ macro(google_initialize_cartographer_project)
         "call CMake with -DFORCE_DEBUG_BUILD=True"
       )
     endif()
+# Support for Debian packaging CMAKE_BUILD_TYPE
+  elseif(CMAKE_BUILD_TYPE STREQUAL "None")
+    message(WARNING "Building with CMAKE_BUILD_TYPE None, "
+        "please make sure you have set CFLAGS and CXXFLAGS according to your needs.")
   else()
     message(FATAL_ERROR "Unknown CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
   endif()
