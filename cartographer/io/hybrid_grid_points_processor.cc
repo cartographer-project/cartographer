@@ -61,6 +61,7 @@ PointsProcessor::FlushResult HybridGridPointsProcessor::Flush() {
       return FlushResult::kFinished;
   }
   LOG(FATAL) << "Failed to receive FlushResult::kFinished";
+  return FlushResult::kFinished;
 }
 
 }  // namespace io
