@@ -39,23 +39,8 @@ LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
     const transform::Rigid3f& tracking_to_tracking_2d,
     const sensor::RangeData& range_data) const {
-  // Drop any returns below the minimum range and convert returns beyond the
-  // maximum range into misses.
-  sensor::RangeData returns_and_misses{range_data.origin, {}, {}};
-  for (const Eigen::Vector3f& hit : range_data.returns) {
-    const float range = (hit - range_data.origin).norm();
-    if (range >= options_.min_range()) {
-      if (range <= options_.max_range()) {
-        returns_and_misses.returns.push_back(hit);
-      } else {
-        returns_and_misses.misses.push_back(
-            range_data.origin + options_.missing_data_ray_length() *
-                                    (hit - range_data.origin).normalized());
-      }
-    }
-  }
   const sensor::RangeData cropped = sensor::CropRangeData(
-      sensor::TransformRangeData(returns_and_misses, tracking_to_tracking_2d),
+      sensor::TransformRangeData(range_data, tracking_to_tracking_2d),
       options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
@@ -112,6 +97,45 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
   }
 
   Predict(time);
+  if (num_accumulated_ == 0) {
+    first_pose_estimate_ = pose_estimate_.cast<float>();
+    accumulated_range_data_ =
+        sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
+  }
+
+  const transform::Rigid3f tracking_delta =
+      first_pose_estimate_.inverse() * pose_estimate_.cast<float>();
+  const sensor::RangeData range_data_in_first_tracking =
+      sensor::TransformRangeData(range_data, tracking_delta);
+  // Drop any returns below the minimum range and convert returns beyond the
+  // maximum range into misses.
+  for (const Eigen::Vector3f& hit : range_data_in_first_tracking.returns) {
+    const Eigen::Vector3f delta = hit - range_data_in_first_tracking.origin;
+    const float range = delta.norm();
+    if (range >= options_.min_range()) {
+      if (range <= options_.max_range()) {
+        accumulated_range_data_.returns.push_back(hit);
+      } else {
+        accumulated_range_data_.misses.push_back(
+            range_data_in_first_tracking.origin +
+            options_.missing_data_ray_length() / range * delta);
+      }
+    }
+  }
+  ++num_accumulated_;
+
+  if (num_accumulated_ >= options_.scans_per_accumulation()) {
+    num_accumulated_ = 0;
+    return AddAccumulatedRangeData(
+        time, sensor::TransformRangeData(accumulated_range_data_,
+                                         tracking_delta.inverse()));
+  }
+  return nullptr;
+}
+
+std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+LocalTrajectoryBuilder::AddAccumulatedRangeData(
+    const common::Time time, const sensor::RangeData& range_data) {
   const transform::Rigid3d odometry_prediction =
       pose_estimate_ * odometry_correction_;
   const transform::Rigid3d model_prediction = pose_estimate_;
@@ -192,7 +216,7 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
       range_data_in_tracking_2d, pose_estimate_2d});
 }
 
-const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate&
+const LocalTrajectoryBuilder::PoseEstimate&
 LocalTrajectoryBuilder::pose_estimate() const {
   return last_pose_estimate_;
 }
