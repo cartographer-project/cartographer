@@ -61,6 +61,9 @@ PointsProcessor::FlushResult HybridGridPointsProcessor::Flush() {
       return FlushResult::kFinished;
   }
   LOG(FATAL) << "Failed to receive FlushResult::kFinished";
+  // The following unreachable return statement is needed to avoid a GCC bug
+  // described at https://gcc.gnu.org/bugzilla/show_bug.cgi?id=81508
+  return FlushResult::kFinished;
 }
 
 }  // namespace io
