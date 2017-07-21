@@ -22,6 +22,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -166,7 +167,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   common::Mutex mutex_;
 
   // If it exists, further scans must be added to this queue, and will be
-  // considered later
+  // considered later.
   std::unique_ptr<std::deque<std::function<void()>>> scan_queue_
       GUARDED_BY(mutex_);
 

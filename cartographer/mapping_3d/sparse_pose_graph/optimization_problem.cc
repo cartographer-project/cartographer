@@ -112,7 +112,8 @@ void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
       max_num_iterations);
 }
 
-void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
+void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
+                                const std::set<int>& frozen_trajectories) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
@@ -137,6 +138,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
   std::vector<std::deque<CeresPose>> C_nodes(node_data_.size());
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
+    const bool frozen = frozen_trajectories.count(trajectory_id);
     for (size_t submap_index = 0;
          submap_index != submap_data_[trajectory_id].size(); ++submap_index) {
       if (trajectory_id == 0 && submap_index == 0) {
@@ -153,6 +155,12 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints) {
             submap_data_[trajectory_id][submap_index].pose,
             translation_parameterization(),
             common::make_unique<ceres::QuaternionParameterization>(), &problem);
+      }
+      if (frozen) {
+        problem.SetParameterBlockConstant(
+            C_submaps[trajectory_id].back().rotation());
+        problem.SetParameterBlockConstant(
+            C_submaps[trajectory_id].back().translation());
       }
     }
   }
