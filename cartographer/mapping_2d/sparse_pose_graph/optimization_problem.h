@@ -77,7 +77,7 @@ class OptimizationProblem {
              const std::set<int>& frozen_trajectories);
 
   const std::vector<std::deque<NodeData>>& node_data() const;
-  const std::vector<std::deque<SubmapData>>& submap_data() const;
+  const std::vector<std::map<int, SubmapData>>& submap_data() const;
 
   int num_trimmed_nodes(int trajectory_id) const;
   int num_trimmed_submaps(int trajectory_id) const;
@@ -92,7 +92,7 @@ class OptimizationProblem {
   std::vector<std::deque<sensor::ImuData>> imu_data_;
   std::vector<std::deque<NodeData>> node_data_;
   std::vector<transform::TransformInterpolationBuffer> odometry_data_;
-  std::vector<std::deque<SubmapData>> submap_data_;
+  std::vector<std::map<int, SubmapData>> submap_data_;
   std::vector<TrajectoryData> trajectory_data_;
 };
 
