@@ -21,8 +21,7 @@ void WriteGrid(const mapping_2d::ProbabilityGrid& probability_grid,
     return;
   }
   const auto grid_index_to_pixel = [cell_limits](const Eigen::Array2i& index) {
-    return Eigen::Array2i(cell_limits.num_y_cells - index(1) - 1,
-                          cell_limits.num_x_cells - index(0) - 1);
+    return Eigen::Array2i(index(0), index(1));
   };
   const auto compute_color_value = [&probability_grid](
                                        const Eigen::Array2i& index) {
@@ -36,8 +35,8 @@ void WriteGrid(const mapping_2d::ProbabilityGrid& probability_grid,
       return kUnknownValue;
     }
   };
-  int width = cell_limits.num_y_cells;
-  int height = cell_limits.num_x_cells;
+  int width = cell_limits.num_x_cells;
+  int height = cell_limits.num_y_cells;
   Image image(width, height);
   for (auto xy_index :
        cartographer::mapping_2d::XYIndexRangeIterator(cell_limits)) {
