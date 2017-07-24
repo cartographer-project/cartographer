@@ -166,12 +166,19 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
+    const bool frozen = frozen_trajectories.count(trajectory_id);
     for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
          ++node_index) {
       C_nodes[trajectory_id].emplace_back(
           node_data_[trajectory_id][node_index].point_cloud_pose,
           translation_parameterization(),
           common::make_unique<ceres::QuaternionParameterization>(), &problem);
+      if (frozen) {
+        problem.SetParameterBlockConstant(
+            C_nodes[trajectory_id].back().rotation());
+        problem.SetParameterBlockConstant(
+            C_nodes[trajectory_id].back().translation());
+      }
     }
   }
 
