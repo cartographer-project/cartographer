@@ -167,7 +167,8 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap2Transform);
-  optimization_problem_.Solve(constraints);
+  const std::set<int> kFrozen;
+  optimization_problem_.Solve(constraints, kFrozen);
 
   double translation_error_after = 0.;
   double rotation_error_after = 0.;

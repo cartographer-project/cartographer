@@ -161,12 +161,16 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
+    const bool frozen = frozen_trajectories.count(trajectory_id);
     // Reserve guarantees that data does not move, so the pointers for Ceres
     // stay valid.
     C_nodes[trajectory_id].reserve(node_data_[trajectory_id].size());
     for (const NodeData& node_data : node_data_[trajectory_id]) {
       C_nodes[trajectory_id].push_back(FromPose(node_data.point_cloud_pose));
       problem.AddParameterBlock(C_nodes[trajectory_id].back().data(), 3);
+      if (frozen) {
+        problem.SetParameterBlockConstant(C_nodes[trajectory_id].back().data());
+      }
     }
   }
 

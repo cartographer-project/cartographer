@@ -20,6 +20,7 @@
 #include <array>
 #include <deque>
 #include <map>
+#include <set>
 #include <vector>
 
 #include "Eigen/Core"

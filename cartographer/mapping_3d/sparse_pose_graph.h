@@ -31,6 +31,7 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/constraint_builder.h"
@@ -77,17 +78,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                   const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
 
-  void FreezeTrajectory(const int trajectory_id) override {
-    LOG(FATAL) << "Not yet implemented for 3D.";
-  }
-  void AddSubmapFromProto(const int trajectory_id,
+  void FreezeTrajectory(int trajectory_id) override;
+  void AddSubmapFromProto(int trajectory_id,
                           const transform::Rigid3d& initial_pose,
                           const mapping::proto::Submap& submap) override {
     LOG(FATAL) << "Not yet implemented for 3D";
   }
-  void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override {
-    LOG(FATAL) << "Not yet implemented for 3D.";
-  }
+  void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
   int num_submaps(int trajectory_id) EXCLUDES(mutex_) override;
@@ -208,6 +205,27 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Current submap transforms used for displaying data.
   std::vector<std::vector<sparse_pose_graph::SubmapData>>
       optimized_submap_transforms_ GUARDED_BY(mutex_);
+
+  // List of all trimmers to consult when optimizations finish.
+  std::vector<std::unique_ptr<mapping::PoseGraphTrimmer>> trimmers_
+      GUARDED_BY(mutex_);
+
+  // Set of all frozen trajectories not being optimized.
+  std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
+
+  // Allows querying and manipulating the pose graph by the 'trimmers_'. The
+  // 'mutex_' of the pose graph is held while this class is used.
+  class TrimmingHandle : public mapping::Trimmable {
+   public:
+    TrimmingHandle(SparsePoseGraph* parent);
+    ~TrimmingHandle() override {}
+
+    int num_submaps(int trajectory_id) const override;
+    void MarkSubmapAsTrimmed(const mapping::SubmapId& submap_id) override;
+
+   private:
+    SparsePoseGraph* const parent_;
+  };
 };
 
 }  // namespace mapping_3d
