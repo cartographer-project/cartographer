@@ -143,7 +143,11 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
   // Set the starting point.
   // TODO(hrapp): Move ceres data into SubmapData.
+<<<<<<< 62aff85c21e29c69cc1a449fd0f745533982ec6d
   std::vector<std::map<int, std::array<double, 3>>> C_submaps(
+=======
+  std::vector<std::map<const int, std::array<double, 3>>> C_submaps(
+>>>>>>> use map instead of deque for submap_data
       submap_data_.size());
   std::vector<std::vector<std::array<double, 3>>> C_nodes(node_data_.size());
   bool first_submap = true;
@@ -152,6 +156,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     const bool frozen = frozen_trajectories.count(trajectory_id);
     // Reserve guarantees that data does not move, so the pointers for Ceres
     // stay valid.
+<<<<<<< 62aff85c21e29c69cc1a449fd0f745533982ec6d
     for (const auto& index_submap_data : submap_data_[trajectory_id]) {
       const int submap_index = index_submap_data.first;
       const SubmapData& submap_data = index_submap_data.second;
@@ -160,6 +165,15 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
               submap_index, FromPose(submap_data.pose));
       problem.AddParameterBlock(
           C_submaps[trajectory_id].at(submap_index).data(), 3);
+=======
+    //C_submaps[trajectory_id].reserve(submap_data_[trajectory_id].size());
+    for (auto& it : submap_data_[trajectory_id]) {
+      const int submap_index = it.first;
+      const SubmapData& submap_data = it.second;
+
+      C_submaps[trajectory_id].insert(std::pair<const int, std::array<double, 3>>(submap_index, FromPose(submap_data.pose)));
+      problem.AddParameterBlock(C_submaps[trajectory_id].at(submap_index).data(), 3);
+>>>>>>> use map instead of deque for submap_data
       if (first_submap || frozen) {
         first_submap = false;
         // Fix the pose of the first submap or all submaps of a frozen
@@ -252,9 +266,14 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // Store the result.
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
+<<<<<<< 62aff85c21e29c69cc1a449fd0f745533982ec6d
     for (auto& index_submap_data : submap_data_[trajectory_id]) {
       index_submap_data.second.pose =
           ToPose(C_submaps[trajectory_id].at(index_submap_data.first));
+=======
+    for(auto& it : submap_data_[trajectory_id]) {
+      submap_data_[trajectory_id][it.first].pose = ToPose(C_submaps[trajectory_id][it.first]);
+>>>>>>> use map instead of deque for submap_data
     }
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
