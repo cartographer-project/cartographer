@@ -239,7 +239,6 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       GrowSubmapTransformsAsNeeded(trajectory_id, insertion_submaps);
   CHECK_EQ(submap_ids.size(), insertion_submaps.size());
   const mapping::SubmapId matching_id = submap_ids.front();
-  const auto submap_data = optimization_problem_.submap_data();
   const transform::Rigid2d optimized_pose =
       optimization_problem_.submap_data()
           .at(matching_id.trajectory_id)
