@@ -33,13 +33,13 @@ class Image {
   void SetPixel(int x, int y, const Color& color);
   void WritePng(FileWriter* const file_writer);
 
- private:
   // Returns a pointer to a cairo surface that contains the current pixel data.
   // The 'Image' object must therefore outlive the returned surface object. It
   // is undefined behavior to call any of the mutating functions while a pointer
   // to this surface is alive.
   UniqueCairoSurfacePtr GetCairoSurface();
 
+ private:
   int width_;
   int height_;
   int stride_;
