@@ -116,8 +116,9 @@ void OptimizationProblem::AddSubmap(const int trajectory_id,
       std::max(trajectory_data_.size(), submap_data_.size()));
 
   auto& trajectory_data = trajectory_data_.at(trajectory_id);
-  submap_data_[trajectory_id].emplace(submap_data_[trajectory_id].size()
-      + trajectory_data.num_trimmed_submaps, SubmapData{submap_pose});
+  submap_data_[trajectory_id].emplace(
+      submap_data_[trajectory_id].size() + trajectory_data.num_trimmed_submaps,
+      SubmapData{submap_pose});
 }
 
 void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {
@@ -157,13 +158,16 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     const bool frozen = frozen_trajectories.count(trajectory_id);
     // Reserve guarantees that data does not move, so the pointers for Ceres
     // stay valid.
-    //C_submaps[trajectory_id].reserve(submap_data_[trajectory_id].size());
+    // C_submaps[trajectory_id].reserve(submap_data_[trajectory_id].size());
     for (auto& it : submap_data_[trajectory_id]) {
       const int submap_index = it.first;
       const SubmapData& submap_data = it.second;
 
-      C_submaps[trajectory_id].insert(std::pair<const int, std::array<double, 3>>(submap_index, FromPose(submap_data.pose)));
-      problem.AddParameterBlock(C_submaps[trajectory_id].at(submap_index).data(), 3);
+      C_submaps[trajectory_id].insert(
+          std::pair<const int, std::array<double, 3>>(
+              submap_index, FromPose(submap_data.pose)));
+      problem.AddParameterBlock(
+          C_submaps[trajectory_id].at(submap_index).data(), 3);
       if (first_submap || frozen) {
         first_submap = false;
         // Fix the pose of the first submap or all submaps of a frozen
@@ -256,8 +260,9 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // Store the result.
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
-    for(auto& it : submap_data_[trajectory_id]) {
-      submap_data_[trajectory_id][it.first].pose = ToPose(C_submaps[trajectory_id][it.first]);
+    for (auto& it : submap_data_[trajectory_id]) {
+      submap_data_[trajectory_id][it.first].pose =
+          ToPose(C_submaps[trajectory_id][it.first]);
     }
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
