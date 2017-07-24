@@ -69,8 +69,7 @@ class XRayPointsProcessor : public PointsProcessor {
 
   void WriteVoxels(const Aggregation& aggregation,
                    FileWriter* const file_writer);
-  void Insert(const PointsBatch& batch, const transform::Rigid3f& transform,
-              Aggregation* aggregation);
+  void Insert(const PointsBatch& batch, Aggregation* aggregation);
 
   PointsProcessor* const next_;
   FileWriterFactory file_writer_factory_;
