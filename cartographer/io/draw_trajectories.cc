@@ -30,11 +30,12 @@ void DrawTrajectory(const mapping::proto::Trajectory& trajectory,
   }
   constexpr double kTrajectoryWidth = 4.;
   constexpr double kTrajectoryEndMarkers = 6.;
+  constexpr double kAlpha = 0.7;
 
   auto cr = ::cartographer::io::MakeUniqueCairoPtr(cairo_create(surface));
 
   cairo_set_source_rgba(cr.get(), color[0] / 255., color[1] / 255.,
-                        color[2] / 255., 1.);
+                        color[2] / 255., kAlpha);
   cairo_set_line_width(cr.get(), kTrajectoryWidth);
 
   for (const auto& node : trajectory.node()) {
@@ -48,7 +49,7 @@ void DrawTrajectory(const mapping::proto::Trajectory& trajectory,
   {
     const Eigen::Array2i pixel =
         pose_to_pixel(transform::ToRigid3(trajectory.node(0).pose()));
-    cairo_set_source_rgba(cr.get(), 0., 255., 0., 1.);
+    cairo_set_source_rgba(cr.get(), 0., 255., 0., kAlpha);
     cairo_arc(cr.get(), pixel.x(), pixel.y(), kTrajectoryEndMarkers, 0,
               2 * M_PI);
     cairo_fill(cr.get());
@@ -56,7 +57,7 @@ void DrawTrajectory(const mapping::proto::Trajectory& trajectory,
   {
     const Eigen::Array2i pixel = pose_to_pixel(transform::ToRigid3(
         trajectory.node(trajectory.node_size() - 1).pose()));
-    cairo_set_source_rgba(cr.get(), 255., 0., 0., 1.);
+    cairo_set_source_rgba(cr.get(), 255., 0., 0., kAlpha);
     cairo_arc(cr.get(), pixel.x(), pixel.y(), kTrajectoryEndMarkers, 0,
               2 * M_PI);
     cairo_fill(cr.get());
