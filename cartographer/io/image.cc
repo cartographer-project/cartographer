@@ -2,18 +2,12 @@
 
 #include <memory>
 
-#include "cairo/cairo.h"
 #include "cartographer/io/file_writer.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace io {
 namespace {
-
-// std::unique_ptr for Cairo surfaces. The surface is destroyed when the
-// std::unique_ptr is reset or destroyed.
-using UniqueSurfacePtr =
-    std::unique_ptr<cairo_surface_t, void (*)(cairo_surface_t*)>;
 
 cairo_status_t CairoWriteCallback(void* const closure,
                                   const unsigned char* data,
@@ -35,6 +29,14 @@ int StrideForWidth(int width) {
 
 }  // namespace
 
+UniqueCairoSurfacePtr MakeUniqueCairoSurfacePtr(cairo_surface_t* surface) {
+  return UniqueCairoSurfacePtr(surface, cairo_surface_destroy);
+}
+
+UniqueCairoPtr MakeUniqueCairoPtr(cairo_t* surface) {
+  return UniqueCairoPtr(surface, cairo_destroy);
+}
+
 Image::Image(int width, int height)
     : width_(width),
       height_(height),
@@ -47,10 +49,7 @@ void Image::WritePng(FileWriter* const file_writer) {
   // cairo_surface_write_to_png fails, complaining that the surface is already
   // finalized. This makes it pretty hard to pass back ownership of the image to
   // the caller.
-  UniqueSurfacePtr surface(cairo_image_surface_create_for_data(
-                               reinterpret_cast<unsigned char*>(pixels_.data()),
-                               kCairoFormat, width_, height_, stride_),
-                           cairo_surface_destroy);
+  UniqueCairoSurfacePtr surface = GetCairoSurface();
   CHECK_EQ(cairo_surface_status(surface.get()), CAIRO_STATUS_SUCCESS);
   CHECK_EQ(cairo_surface_write_to_png_stream(surface.get(), &CairoWriteCallback,
                                              file_writer),
@@ -66,6 +65,12 @@ const Color Image::GetPixel(int x, int y) const {
 void Image::SetPixel(int x, int y, const Color& color) {
   pixels_[y * stride_ / 4 + x] =
       (255 << 24) | (color[0] << 16) | (color[1] << 8) | color[2];
+}
+
+UniqueCairoSurfacePtr Image::GetCairoSurface() {
+  return MakeUniqueCairoSurfacePtr(cairo_image_surface_create_for_data(
+      reinterpret_cast<unsigned char*>(pixels_.data()), kCairoFormat, width_,
+      height_, stride_));
 }
 
 }  // namespace io

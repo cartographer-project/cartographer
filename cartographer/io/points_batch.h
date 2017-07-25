@@ -23,12 +23,10 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
+#include "cartographer/io/color.h"
 
 namespace cartographer {
 namespace io {
-
-// A point's color.
-using Color = std::array<uint8_t, 3>;
 
 // A number of points, captured around the same 'time' and by a
 // sensor at the same 'origin'.
