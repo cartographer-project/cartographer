@@ -22,20 +22,20 @@ namespace io {
 namespace {
 
 // First eight bytes to identify our proto stream format.
-const size_t kMagic = 0x7b1d1f7b5bf501db;
+const uint64 kMagic = 0x7b1d1f7b5bf501db;
 
-void WriteSizeAsLittleEndian(size_t size, std::ostream* out) {
+void WriteSizeAsLittleEndian(uint64 size, std::ostream* out) {
   for (int i = 0; i != 8; ++i) {
     out->put(size & 0xff);
     size >>= 8;
   }
 }
 
-bool ReadSizeAsLittleEndian(std::istream* in, size_t* size) {
+bool ReadSizeAsLittleEndian(std::istream* in, uint64* size) {
   *size = 0;
   for (int i = 0; i != 8; ++i) {
     *size >>= 8;
-    *size += static_cast<size_t>(in->get()) << 56;
+    *size += static_cast<uint64>(in->get()) << 56;
   }
   return !in->fail();
 }
@@ -63,7 +63,7 @@ bool ProtoStreamWriter::Close() {
 
 ProtoStreamReader::ProtoStreamReader(const string& filename)
     : in_(filename, std::ios::in | std::ios::binary) {
-  size_t magic;
+  uint64 magic;
   if (!ReadSizeAsLittleEndian(&in_, &magic) || magic != kMagic) {
     in_.setstate(std::ios::failbit);
   }
@@ -72,7 +72,7 @@ ProtoStreamReader::ProtoStreamReader(const string& filename)
 ProtoStreamReader::~ProtoStreamReader() {}
 
 bool ProtoStreamReader::Read(string* decompressed_data) {
-  size_t compressed_size;
+  uint64 compressed_size;
   if (!ReadSizeAsLittleEndian(&in_, &compressed_size)) {
     return false;
   }
