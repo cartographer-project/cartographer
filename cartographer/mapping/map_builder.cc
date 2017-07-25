@@ -71,7 +71,8 @@ int MapBuilder::AddTrajectoryBuilder(
     const std::unordered_set<string>& expected_sensor_ids,
     const proto::TrajectoryBuilderOptions& trajectory_options) {
   const int trajectory_id = sparse_pose_graph_->NewTrajectory();
-  trajectory_builders_.resize(std::max<size_t>(trajectory_builders_.size(), trajectory_id + 1));
+  trajectory_builders_.resize(
+      std::max<size_t>(trajectory_builders_.size(), trajectory_id + 1));
   if (options_.use_trajectory_builder_3d()) {
     CHECK(trajectory_options.has_trajectory_builder_3d_options());
     trajectory_builders_[trajectory_id] =
