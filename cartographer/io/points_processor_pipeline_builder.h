@@ -61,7 +61,7 @@ class PointsProcessorPipelineBuilder {
 // Register all 'PointsProcessor' that ship with Cartographer with this
 // 'builder'.
 void RegisterBuiltInPointsProcessors(
-    const mapping::proto::Trajectory& trajectory,
+    const std::vector<mapping::proto::Trajectory>& trajectories,
     FileWriterFactory file_writer_factory,
     PointsProcessorPipelineBuilder* builder);
 

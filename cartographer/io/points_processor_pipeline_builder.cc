@@ -60,8 +60,23 @@ void RegisterFileWritingPointsProcessor(
       });
 }
 
+template <typename PointsProcessorType>
+void RegisterFileWritingPointsProcessorWithTrajectories(
+    const std::vector<mapping::proto::Trajectory>& trajectories,
+    FileWriterFactory file_writer_factory,
+    PointsProcessorPipelineBuilder* const builder) {
+  builder->Register(
+      PointsProcessorType::kConfigurationFileActionName,
+      [&trajectories, file_writer_factory](
+          common::LuaParameterDictionary* const dictionary,
+          PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
+        return PointsProcessorType::FromDictionary(
+            trajectories, file_writer_factory, dictionary, next);
+      });
+}
+
 void RegisterBuiltInPointsProcessors(
-    const mapping::proto::Trajectory& trajectory,
+    const std::vector<mapping::proto::Trajectory>& trajectories,
     FileWriterFactory file_writer_factory,
     PointsProcessorPipelineBuilder* builder) {
   RegisterPlainPointsProcessor<CountingPointsProcessor>(builder);
@@ -78,19 +93,11 @@ void RegisterBuiltInPointsProcessors(
       file_writer_factory, builder);
   RegisterFileWritingPointsProcessor<HybridGridPointsProcessor>(
       file_writer_factory, builder);
-  RegisterFileWritingPointsProcessor<ProbabilityGridPointsProcessor>(
-      file_writer_factory, builder);
-
-  // X-Ray is an odd ball since it requires the trajectory to figure out the
-  // different building levels we walked on to separate the images.
-  builder->Register(
-      XRayPointsProcessor::kConfigurationFileActionName,
-      [&trajectory, file_writer_factory](
-          common::LuaParameterDictionary* const dictionary,
-          PointsProcessor* const next) -> std::unique_ptr<PointsProcessor> {
-        return XRayPointsProcessor::FromDictionary(
-            trajectory, file_writer_factory, dictionary, next);
-      });
+  RegisterFileWritingPointsProcessorWithTrajectories<XRayPointsProcessor>(
+      trajectories, file_writer_factory, builder);
+  RegisterFileWritingPointsProcessorWithTrajectories<
+      ProbabilityGridPointsProcessor>(trajectories, file_writer_factory,
+                                      builder);
 }
 
 void PointsProcessorPipelineBuilder::Register(const std::string& name,
