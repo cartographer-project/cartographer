@@ -98,6 +98,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
       override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
+  int NewTrajectory() override;
 
  private:
   // The current state of the submap in the background threads. When this

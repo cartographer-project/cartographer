@@ -70,23 +70,24 @@ MapBuilder::~MapBuilder() {}
 int MapBuilder::AddTrajectoryBuilder(
     const std::unordered_set<string>& expected_sensor_ids,
     const proto::TrajectoryBuilderOptions& trajectory_options) {
-  const int trajectory_id = trajectory_builders_.size();
+  const int trajectory_id = sparse_pose_graph_->NewTrajectory();
+  trajectory_builders_.resize(std::max<size_t>(trajectory_builders_.size(), trajectory_id + 1));
   if (options_.use_trajectory_builder_3d()) {
     CHECK(trajectory_options.has_trajectory_builder_3d_options());
-    trajectory_builders_.push_back(
+    trajectory_builders_[trajectory_id] =
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
             common::make_unique<mapping_3d::GlobalTrajectoryBuilder>(
                 trajectory_options.trajectory_builder_3d_options(),
-                trajectory_id, sparse_pose_graph_3d_.get())));
+                trajectory_id, sparse_pose_graph_3d_.get()));
   } else {
     CHECK(trajectory_options.has_trajectory_builder_2d_options());
-    trajectory_builders_.push_back(
+    trajectory_builders_[trajectory_id] =
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
             common::make_unique<mapping_2d::GlobalTrajectoryBuilder>(
                 trajectory_options.trajectory_builder_2d_options(),
-                trajectory_id, sparse_pose_graph_2d_.get())));
+                trajectory_id, sparse_pose_graph_2d_.get()));
   }
   if (trajectory_options.pure_localization()) {
     constexpr int kSubmapsToKeep = 3;
