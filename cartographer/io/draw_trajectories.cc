@@ -49,7 +49,7 @@ void DrawTrajectory(const mapping::proto::Trajectory& trajectory,
   {
     const Eigen::Array2i pixel =
         pose_to_pixel(transform::ToRigid3(trajectory.node(0).pose()));
-    cairo_set_source_rgba(cr.get(), 0., 255., 0., kAlpha);
+    cairo_set_source_rgba(cr.get(), 0., 1., 0., kAlpha);
     cairo_arc(cr.get(), pixel.x(), pixel.y(), kTrajectoryEndMarkers, 0,
               2 * M_PI);
     cairo_fill(cr.get());
@@ -57,7 +57,7 @@ void DrawTrajectory(const mapping::proto::Trajectory& trajectory,
   {
     const Eigen::Array2i pixel = pose_to_pixel(transform::ToRigid3(
         trajectory.node(trajectory.node_size() - 1).pose()));
-    cairo_set_source_rgba(cr.get(), 255., 0., 0., kAlpha);
+    cairo_set_source_rgba(cr.get(), 1., 0., 0., kAlpha);
     cairo_arc(cr.get(), pixel.x(), pixel.y(), kTrajectoryEndMarkers, 0,
               2 * M_PI);
     cairo_fill(cr.get());
