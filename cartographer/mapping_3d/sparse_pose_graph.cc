@@ -513,5 +513,14 @@ mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
                       submap->local_pose()};
 }
 
+int SparsePoseGraph::NewTrajectory() {
+  CHECK_EQ(submap_data_.num_trajectories(), trajectory_nodes_.num_trajectories());
+  int new_trajectory_id = submap_data_.num_trajectories();
+  submap_data_.Resize(new_trajectory_id + 1);
+  trajectory_nodes_.Resize(new_trajectory_id + 1);
+  CHECK_EQ(submap_data_.num_trajectories(), trajectory_nodes_.num_trajectories());
+  return new_trajectory_id;
+}
+
 }  // namespace mapping_3d
 }  // namespace cartographer

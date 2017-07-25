@@ -22,6 +22,8 @@
 #include <tuple>
 #include <vector>
 
+#include "glog/logging.h"
+
 namespace cartographer {
 namespace mapping {
 
@@ -67,6 +69,11 @@ inline std::ostream& operator<<(std::ostream& os, const SubmapId& v) {
 template <typename ValueType, typename IdType>
 class NestedVectorsById {
  public:
+  int Resize(int new_size) {
+    data_.resize(std::max<size_t>(data_.size(), new_size));
+    return static_cast<int>(data_.size());
+  }
+
   // Appends data to a trajectory, creating trajectories as needed.
   IdType Append(int trajectory_id, const ValueType& value) {
     data_.resize(std::max<size_t>(data_.size(), trajectory_id + 1));
