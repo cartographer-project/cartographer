@@ -32,7 +32,7 @@ using PoseToPixelFunction =
 // 'pose_to_pixel' function must translate a trajectory node's position into the
 // pixel on 'surface'.
 void DrawTrajectory(const mapping::proto::Trajectory& trajectory,
-                    const Color& color, PoseToPixelFunction pose_to_pixel,
+                    const FloatColor& color, PoseToPixelFunction pose_to_pixel,
                     cairo_surface_t* surface);
 
 }  // namespace io

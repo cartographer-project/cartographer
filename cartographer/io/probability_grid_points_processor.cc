@@ -28,11 +28,11 @@ void WriteGrid(
                                        const Eigen::Array2i& index) {
     if (probability_grid.IsKnown(index)) {
       const float probability = 1.f - probability_grid.GetProbability(index);
-      return static_cast<uint8_t>(
+      return static_cast<uint8>(
           255 * ((probability - mapping::kMinProbability) /
                  (mapping::kMaxProbability - mapping::kMinProbability)));
     } else {
-      constexpr uint8_t kUnknownValue = 128;
+      constexpr uint8 kUnknownValue = 128;
       return kUnknownValue;
     }
   };
