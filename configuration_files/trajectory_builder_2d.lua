@@ -37,9 +37,9 @@ TRAJECTORY_BUILDER_2D = {
   },
 
   ceres_scan_matcher = {
-    occupied_space_weight = 1e1,
-    translation_weight = 1e1,
-    rotation_weight = 1e2,
+    occupied_space_weight = 1.,
+    translation_weight = 10.,
+    rotation_weight = 40.,
     ceres_solver_options = {
       use_nonmonotonic_steps = false,
       max_num_iterations = 20,
