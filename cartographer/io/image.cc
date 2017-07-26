@@ -10,9 +10,8 @@ namespace io {
 namespace {
 
 uint32 Uint8ColorToCairo(const Uint8Color& color) {
-  return {static_cast<uint32>(255) << 24 |
-          static_cast<uint32>(color[0]) << 16 |
-          static_cast<uint32>(color[1]) << 8 | color[2]};
+  return static_cast<uint32>(255) << 24 | static_cast<uint32>(color[0]) << 16 |
+         static_cast<uint32>(color[1]) << 8 | color[2];
 }
 
 Uint8Color CairoToUint8Color(uint32 color) {
