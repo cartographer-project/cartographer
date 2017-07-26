@@ -29,7 +29,9 @@ class FakePoseGraph : public Trimmable {
  public:
   ~FakePoseGraph() override {}
 
-  int num_submaps(int trajectory_id) const override { return 17 - trimmed_submaps_.size(); }
+  int num_submaps(int trajectory_id) const override {
+    return 17 - trimmed_submaps_.size();
+  }
 
   void MarkSubmapAsTrimmed(const SubmapId& submap_id) override {
     trimmed_submaps_.push_back(submap_id);
