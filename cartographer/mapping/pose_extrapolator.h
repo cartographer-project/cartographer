@@ -39,7 +39,7 @@ class PoseExtrapolator {
 
   // Returns the time of the last added pose or Time::min() if no pose was added
   // yet.
-  common::Time GetLastTime() const;
+  common::Time GetLastPoseTime() const;
 
   void AddPose(common::Time time, const transform::Rigid3d& pose);
   transform::Rigid3d ExtrapolatePose(common::Time time);

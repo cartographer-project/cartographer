@@ -25,7 +25,7 @@ namespace mapping {
 PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration)
     : pose_queue_duration_(pose_queue_duration) {}
 
-common::Time PoseExtrapolator::GetLastTime() const {
+common::Time PoseExtrapolator::GetLastPoseTime() const {
   if (timed_pose_queue_.empty()) {
     return common::Time::min();
   }
@@ -43,27 +43,33 @@ void PoseExtrapolator::AddPose(const common::Time time,
 
 transform::Rigid3d PoseExtrapolator::ExtrapolatePose(common::Time time) {
   CHECK(!timed_pose_queue_.empty());
-  const TimedPose& last_timed_pose = timed_pose_queue_.back();
-  const auto last_time = last_timed_pose.time;
-  CHECK(time >= last_time);
+  const TimedPose& newest_timed_pose = timed_pose_queue_.back();
+  const auto newest_time = newest_timed_pose.time;
+  const transform::Rigid3d& newest_pose = newest_timed_pose.pose;
+  CHECK(time >= newest_time);
   if (timed_pose_queue_.size() == 1) {
-    return last_timed_pose.pose;
+    return newest_pose;
   }
-  const double queue_delta =
-      common::ToSeconds(last_time - timed_pose_queue_.front().time);
-  const transform::Rigid3d& last_pose = last_timed_pose.pose;
+  const TimedPose& oldest_timed_pose = timed_pose_queue_.front();
+  const auto oldest_time = oldest_timed_pose.time;
+  const transform::Rigid3d& oldest_pose = oldest_timed_pose.pose;
+  const double queue_delta = common::ToSeconds(newest_time - oldest_time);
+  if (queue_delta < 0.001) {  // 1 ms
+    LOG(WARNING) << "Queue too short for extrapolation, returning most recent "
+                    "pose. Queue duration: "
+                 << queue_delta << " ms";
+    return newest_pose;
+  }
   const Eigen::Vector3d linear_velocity =
-      (last_pose.translation() - timed_pose_queue_.front().pose.translation()) /
-      queue_delta;
+      (newest_pose.translation() - oldest_pose.translation()) / queue_delta;
   const Eigen::Vector3d angular_velocity =
       transform::RotationQuaternionToAngleAxisVector(
-          timed_pose_queue_.front().pose.rotation().inverse() *
-          last_pose.rotation()) /
+          oldest_pose.rotation().inverse() * newest_pose.rotation()) /
       queue_delta;
-  const double extrapolation_delta = common::ToSeconds(time - last_time);
+  const double extrapolation_delta = common::ToSeconds(time - newest_time);
   return transform::Rigid3d::Translation(extrapolation_delta *
                                          linear_velocity) *
-         last_pose *
+         newest_pose *
          transform::Rigid3d::Rotation(
              transform::AngleAxisVectorToRotationQuaternion(
                  Eigen::Vector3d(extrapolation_delta * angular_velocity)));
