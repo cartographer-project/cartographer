@@ -5,6 +5,8 @@
 #include <vector>
 
 #include "cairo/cairo.h"
+#include "cartographer/common/port.h"
+#include "cartographer/io/color.h"
 #include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_batch.h"
 
@@ -29,8 +31,8 @@ class Image {
  public:
   Image(int width, int height);
 
-  const Color GetPixel(int x, int y) const;
-  void SetPixel(int x, int y, const Color& color);
+  const Uint8Color GetPixel(int x, int y) const;
+  void SetPixel(int x, int y, const Uint8Color& color);
   void WritePng(FileWriter* const file_writer);
 
   // Returns a pointer to a cairo surface that contains the current pixel data.
@@ -43,7 +45,7 @@ class Image {
   int width_;
   int height_;
   int stride_;
-  std::vector<uint32_t> pixels_;
+  std::vector<uint32> pixels_;
 };
 
 }  // namespace io

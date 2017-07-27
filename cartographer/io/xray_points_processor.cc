@@ -82,10 +82,10 @@ Image IntoImage(const PixelDataMatrix& mat) {
       double mix_g = Mix(1., mean_g_in_column, saturation);
       double mix_b = Mix(1., mean_b_in_column, saturation);
 
-      const uint8_t r = common::RoundToInt(mix_r * 255.);
-      const uint8_t g = common::RoundToInt(mix_g * 255.);
-      const uint8_t b = common::RoundToInt(mix_b * 255.);
-      image.SetPixel(x, y, {{r, g, b}});
+      image.SetPixel(
+          x, y,
+          {{FloatComponentToUint8(mix_r), FloatComponentToUint8(mix_g),
+            FloatComponentToUint8(mix_b)}});
     }
   }
   return image;
@@ -200,7 +200,7 @@ void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
 
 void XRayPointsProcessor::Insert(const PointsBatch& batch,
                                  Aggregation* const aggregation) {
-  constexpr Color kDefaultColor = {{0, 0, 0}};
+  constexpr FloatColor kDefaultColor = {{0.f, 0.f, 0.f}};
   for (size_t i = 0; i < batch.points.size(); ++i) {
     const Eigen::Vector3f camera_point = transform_ * batch.points[i];
     const Eigen::Array3i cell_index =

@@ -23,7 +23,7 @@ namespace cartographer {
 namespace io {
 
 void DrawTrajectory(const mapping::proto::Trajectory& trajectory,
-                    const Color& color, PoseToPixelFunction pose_to_pixel,
+                    const FloatColor& color, PoseToPixelFunction pose_to_pixel,
                     cairo_surface_t* surface) {
   if (trajectory.node_size() == 0) {
     return;
@@ -34,8 +34,7 @@ void DrawTrajectory(const mapping::proto::Trajectory& trajectory,
 
   auto cr = ::cartographer::io::MakeUniqueCairoPtr(cairo_create(surface));
 
-  cairo_set_source_rgba(cr.get(), color[0] / 255., color[1] / 255.,
-                        color[2] / 255., kAlpha);
+  cairo_set_source_rgba(cr.get(), color[0], color[1], color[2], kAlpha);
   cairo_set_line_width(cr.get(), kTrajectoryWidth);
 
   for (const auto& node : trajectory.node()) {
