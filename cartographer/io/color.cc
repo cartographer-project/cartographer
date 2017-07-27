@@ -29,7 +29,6 @@ namespace {
 constexpr float kInitialHue = 0.69f;
 constexpr float kSaturation = 0.85f;
 constexpr float kValue = 0.77f;
-constexpr float kGoldenRatioConjugate = (std::sqrt(5.f) - 1.f) / 2.f;
 
 Color CreateRgba(const float r, const float g, const float b) {
   return Color{{static_cast<uint8_t>(common::RoundToInt(r * 255.)),
@@ -69,6 +68,7 @@ Color GetColor(int id) {
   CHECK_GE(id, 0);
   // Uniform color sampling using the golden ratio from
   // http://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
+  float kGoldenRatioConjugate = (std::sqrt(5.f) - 1.f) / 2.f;
   const float hue = std::fmod(kInitialHue + kGoldenRatioConjugate * id, 1.f);
   return HsvToRgb(hue, kSaturation, kValue);
 }
