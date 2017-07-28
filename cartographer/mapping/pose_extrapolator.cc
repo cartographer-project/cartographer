@@ -39,9 +39,15 @@ void PoseExtrapolator::AddPose(const common::Time time,
          timed_pose_queue_[1].time <= time - pose_queue_duration_) {
     timed_pose_queue_.pop_front();
   }
+  TrimImuData();
 }
 
-transform::Rigid3d PoseExtrapolator::ExtrapolatePose(common::Time time) {
+void PoseExtrapolator::AddImuData(const sensor::ImuData& imu_data) {
+  imu_data_.push_back(imu_data);
+  TrimImuData();
+}
+
+transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
   CHECK(!timed_pose_queue_.empty());
   const TimedPose& newest_timed_pose = timed_pose_queue_.back();
   const auto newest_time = newest_timed_pose.time;
@@ -62,7 +68,7 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(common::Time time) {
   }
   const Eigen::Vector3d linear_velocity =
       (newest_pose.translation() - oldest_pose.translation()) / queue_delta;
-  const Eigen::Vector3d angular_velocity =
+  const Eigen::Vector3d angular_velocity_from_pose =
       transform::RotationQuaternionToAngleAxisVector(
           oldest_pose.rotation().inverse() * newest_pose.rotation()) /
       queue_delta;
@@ -71,8 +77,57 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(common::Time time) {
                                          linear_velocity) *
          newest_pose *
          transform::Rigid3d::Rotation(
-             transform::AngleAxisVectorToRotationQuaternion(
-                 Eigen::Vector3d(extrapolation_delta * angular_velocity)));
+             ExtrapolateRotation(time, angular_velocity_from_pose));
+}
+
+void PoseExtrapolator::TrimImuData() {
+  while (imu_data_.size() > 2 && !timed_pose_queue_.empty() &&
+         imu_data_[1].time <= timed_pose_queue_.back().time) {
+    imu_data_.pop_front();
+  }
+}
+
+Eigen::Quaterniond PoseExtrapolator::RotationFromAngularVelocity(
+    const common::Duration duration, const Eigen::Vector3d& angular_velocity) {
+  return transform::AngleAxisVectorToRotationQuaternion(
+      Eigen::Vector3d(common::ToSeconds(duration) * angular_velocity));
+}
+
+Eigen::Quaterniond PoseExtrapolator::ExtrapolateRotation(
+    const common::Time time,
+    const Eigen::Vector3d& angular_velocity_from_pose) {
+  common::Time current = timed_pose_queue_.back().time;
+  if (imu_data_.empty() || imu_data_.front().time >= time) {
+    return RotationFromAngularVelocity(time - current,
+                                       angular_velocity_from_pose);
+  }
+  // TODO(whess): Use the ImuTracker here?
+  // TODO(whess): Keep the last extrapolated pose.
+  Eigen::Quaterniond current_rotation;
+  auto imu_it = imu_data_.begin();
+  if (imu_it->time > current) {
+    current_rotation = RotationFromAngularVelocity(imu_it->time - current,
+                                                   angular_velocity_from_pose);
+    current = imu_it->time;
+  } else {
+    current_rotation = Eigen::Quaterniond::Identity();
+  }
+  CHECK(imu_it != imu_data_.end());
+  CHECK(imu_it->time <= current);
+  CHECK(current < time);
+  while (current < time) {
+    common::Time next = time;
+    CHECK(imu_it != imu_data_.end());
+    auto next_it = imu_it + 1;
+    if (next_it != imu_data_.end() && next > next_it->time) {
+      next = next_it->time;
+    }
+    current_rotation *=
+        RotationFromAngularVelocity(next - current, imu_it->angular_velocity);
+    current = next;
+    imu_it = next_it;
+  }
+  return current_rotation;
 }
 
 }  // namespace mapping
