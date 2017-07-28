@@ -32,7 +32,12 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
       real_time_correlative_scan_matcher_(
           options_.real_time_correlative_scan_matcher_options()),
       ceres_scan_matcher_(options_.ceres_scan_matcher_options()),
-      odometry_state_tracker_(options_.num_odometry_states()) {}
+      odometry_state_tracker_(options_.num_odometry_states()) {
+  if (options_.has_initial_pose_estimate()) {
+    pose_estimate_ = transform::ToRigid3(options_.initial_pose_estimate());
+    last_pose_estimate_.pose = pose_estimate_;
+  }
+}
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
