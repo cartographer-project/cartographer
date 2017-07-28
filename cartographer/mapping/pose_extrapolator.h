@@ -20,6 +20,7 @@
 #include <deque>
 
 #include "cartographer/common/time.h"
+#include "cartographer/sensor/imu_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -42,15 +43,21 @@ class PoseExtrapolator {
   common::Time GetLastPoseTime() const;
 
   void AddPose(common::Time time, const transform::Rigid3d& pose);
+  void AddImuData(const sensor::ImuData& imu_data);
   transform::Rigid3d ExtrapolatePose(common::Time time);
 
  private:
+  void TrimImuData();
+  Eigen::Quaterniond ExtrapolateRotation(
+      common::Time time, const Eigen::Vector3d& angular_velocity_from_pose);
+
   const common::Duration pose_queue_duration_;
   struct TimedPose {
     common::Time time;
     transform::Rigid3d pose;
   };
   std::deque<TimedPose> timed_pose_queue_;
+  std::deque<sensor::ImuData> imu_data_;
 };
 
 }  // namespace mapping
