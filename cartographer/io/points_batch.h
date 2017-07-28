@@ -61,7 +61,7 @@ struct PointsBatch {
   std::vector<float> intensities;
 
   // Colors are optional. If set, they are RGB values.
-  std::vector<Color> colors;
+  std::vector<FloatColor> colors;
 };
 
 // Removes the indices in 'to_remove' from 'batch'.

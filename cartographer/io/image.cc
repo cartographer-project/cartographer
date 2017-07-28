@@ -9,6 +9,18 @@ namespace cartographer {
 namespace io {
 namespace {
 
+uint32 Uint8ColorToCairo(const Uint8Color& color) {
+  return static_cast<uint32>(255) << 24 | static_cast<uint32>(color[0]) << 16 |
+         static_cast<uint32>(color[1]) << 8 | color[2];
+}
+
+Uint8Color CairoToUint8Color(uint32 color) {
+  uint8 r = color >> 16;
+  uint8 g = color >> 8;
+  uint8 b = color;
+  return {{r, g, b}};
+}
+
 cairo_status_t CairoWriteCallback(void* const closure,
                                   const unsigned char* data,
                                   const unsigned int length) {
@@ -56,15 +68,12 @@ void Image::WritePng(FileWriter* const file_writer) {
            CAIRO_STATUS_SUCCESS);
 }
 
-const Color Image::GetPixel(int x, int y) const {
-  const uint32_t value = pixels_[y * stride_ / 4 + x];
-  return {{static_cast<uint8_t>(value >> 16), static_cast<uint8_t>(value >> 8),
-           static_cast<uint8_t>(value)}};
+const Uint8Color Image::GetPixel(int x, int y) const {
+  return CairoToUint8Color(pixels_[y * stride_ / 4 + x]);
 }
 
-void Image::SetPixel(int x, int y, const Color& color) {
-  pixels_[y * stride_ / 4 + x] =
-      (255 << 24) | (color[0] << 16) | (color[1] << 8) | color[2];
+void Image::SetPixel(int x, int y, const Uint8Color& color) {
+  pixels_[y * stride_ / 4 + x] = Uint8ColorToCairo(color);
 }
 
 UniqueCairoSurfacePtr Image::GetCairoSurface() {
