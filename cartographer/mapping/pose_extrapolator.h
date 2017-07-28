@@ -48,8 +48,6 @@ class PoseExtrapolator {
 
  private:
   void TrimImuData();
-  static Eigen::Quaterniond RotationFromAngularVelocity(
-      common::Duration duration, const Eigen::Vector3d& angular_velocity);
   Eigen::Quaterniond ExtrapolateRotation(
       common::Time time, const Eigen::Vector3d& angular_velocity_from_pose);
 

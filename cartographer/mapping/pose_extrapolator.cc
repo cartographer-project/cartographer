@@ -22,6 +22,16 @@
 namespace cartographer {
 namespace mapping {
 
+namespace {
+
+Eigen::Quaterniond RotationFromAngularVelocity(
+    const common::Duration duration, const Eigen::Vector3d& angular_velocity) {
+  return transform::AngleAxisVectorToRotationQuaternion(
+      Eigen::Vector3d(common::ToSeconds(duration) * angular_velocity));
+}
+
+}  // namespace
+
 PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration)
     : pose_queue_duration_(pose_queue_duration) {}
 
@@ -85,12 +95,6 @@ void PoseExtrapolator::TrimImuData() {
          imu_data_[1].time <= timed_pose_queue_.back().time) {
     imu_data_.pop_front();
   }
-}
-
-Eigen::Quaterniond PoseExtrapolator::RotationFromAngularVelocity(
-    const common::Duration duration, const Eigen::Vector3d& angular_velocity) {
-  return transform::AngleAxisVectorToRotationQuaternion(
-      Eigen::Vector3d(common::ToSeconds(duration) * angular_velocity));
 }
 
 Eigen::Quaterniond PoseExtrapolator::ExtrapolateRotation(
