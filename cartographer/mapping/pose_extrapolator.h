@@ -27,10 +27,11 @@ namespace cartographer {
 namespace mapping {
 
 // Keeps poses for a certain duration to estimate linear and angular velocity,
-// and uses the velocities to extrapolate motion.
+// and uses the velocities to extrapolate motion. Uses IMU data if available to
+// improve the extrapolation of orientation.
 //
-// TODO(whess): Add IMU data and odometry and provide improved extrapolation
-// models making use of all available data.
+// TODO(whess): Add odometry and provide improved extrapolation models making
+// use of all available data.
 class PoseExtrapolator {
  public:
   explicit PoseExtrapolator(common::Duration pose_queue_duration);
@@ -47,9 +48,9 @@ class PoseExtrapolator {
   transform::Rigid3d ExtrapolatePose(common::Time time);
 
  private:
+  void UpdateVelocitiesFromPoses();
   void TrimImuData();
-  Eigen::Quaterniond ExtrapolateRotation(
-      common::Time time, const Eigen::Vector3d& angular_velocity_from_pose);
+  Eigen::Quaterniond ExtrapolateRotation(common::Time time);
 
   const common::Duration pose_queue_duration_;
   struct TimedPose {
@@ -57,6 +58,9 @@ class PoseExtrapolator {
     transform::Rigid3d pose;
   };
   std::deque<TimedPose> timed_pose_queue_;
+  Eigen::Vector3d linear_velocity_from_poses_ = Eigen::Vector3d::Zero();
+  Eigen::Vector3d angular_velocity_from_poses_ = Eigen::Vector3d::Zero();
+
   std::deque<sensor::ImuData> imu_data_;
 };
 
