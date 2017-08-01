@@ -18,8 +18,10 @@
 #define CARTOGRAPHER_MAPPING_POSE_EXTRAPOLATOR_H_
 
 #include <deque>
+#include <memory>
 
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/imu_tracker.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -34,7 +36,8 @@ namespace mapping {
 // use of all available data.
 class PoseExtrapolator {
  public:
-  explicit PoseExtrapolator(common::Duration pose_queue_duration);
+  explicit PoseExtrapolator(common::Duration pose_queue_duration,
+                            double imu_gravity_time_constant);
 
   PoseExtrapolator(const PoseExtrapolator&) = delete;
   PoseExtrapolator& operator=(const PoseExtrapolator&) = delete;
@@ -50,6 +53,7 @@ class PoseExtrapolator {
  private:
   void UpdateVelocitiesFromPoses();
   void TrimImuData();
+  void AdvanceImuTracker(common::Time time, ImuTracker* imu_tracker);
   Eigen::Quaterniond ExtrapolateRotation(common::Time time);
 
   const common::Duration pose_queue_duration_;
@@ -61,7 +65,9 @@ class PoseExtrapolator {
   Eigen::Vector3d linear_velocity_from_poses_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d angular_velocity_from_poses_ = Eigen::Vector3d::Zero();
 
+  const double gravity_time_constant_;
   std::deque<sensor::ImuData> imu_data_;
+  std::unique_ptr<ImuTracker> imu_tracker_;
 };
 
 }  // namespace mapping
