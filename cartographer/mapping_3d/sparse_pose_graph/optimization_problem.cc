@@ -210,14 +210,16 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   trajectory_data_.resize(imu_data_.size());
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
+    const auto& node_data = node_data_[trajectory_id];
+    if (node_data.empty()) {
+      // We skip empty trajectories which might not have any IMU data.
+      continue;
+    }
     TrajectoryData& trajectory_data = trajectory_data_.at(trajectory_id);
     problem.AddParameterBlock(trajectory_data.imu_calibration.data(), 4,
                               new ceres::QuaternionParameterization());
     const std::deque<sensor::ImuData>& imu_data = imu_data_.at(trajectory_id);
     CHECK(!imu_data.empty());
-    // TODO(whess): Add support for empty trajectories.
-    const auto& node_data = node_data_[trajectory_id];
-    CHECK(!node_data.empty());
 
     // Skip IMU data before the first node of this trajectory.
     auto it = imu_data.cbegin();

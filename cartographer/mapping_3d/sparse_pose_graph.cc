@@ -376,6 +376,35 @@ void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   });
 }
 
+void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
+                                         const transform::Rigid3d& initial_pose,
+                                         const mapping::proto::Submap& submap) {
+  if (!submap.has_submap_3d()) {
+    return;
+  }
+
+  std::shared_ptr<const Submap> submap_ptr =
+      std::make_shared<const Submap>(submap.submap_3d());
+
+  common::MutexLocker locker(&mutex_);
+  const mapping::SubmapId submap_id =
+      submap_data_.Append(trajectory_id, SubmapData());
+  submap_data_.at(submap_id).submap = submap_ptr;
+  // Immediately show the submap at the optimized pose.
+  CHECK_GE(static_cast<size_t>(submap_data_.num_trajectories()),
+           optimized_submap_transforms_.size());
+  optimized_submap_transforms_.resize(submap_data_.num_trajectories());
+  CHECK_EQ(optimized_submap_transforms_.at(trajectory_id).size(),
+           submap_id.submap_index);
+  optimized_submap_transforms_.at(trajectory_id)
+      .push_back(sparse_pose_graph::SubmapData{initial_pose});
+  AddWorkItem([this, submap_id, initial_pose]() REQUIRES(mutex_) {
+    CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
+    submap_data_.at(submap_id).state = SubmapState::kFinished;
+    optimization_problem_.AddSubmap(submap_id.trajectory_id, initial_pose);
+  });
+}
+
 void SparsePoseGraph::AddTrimmer(
     std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) {
   common::MutexLocker locker(&mutex_);
