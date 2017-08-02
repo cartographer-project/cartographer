@@ -68,8 +68,8 @@ class RateTimer {
   }
 
   // Records an event that will contribute to the computed rate.
-  void Pulse(common::Time time) {
-    events_.push_back(Event{time, ClockType::now()});
+  void Pulse(common::Time time, typename ClockType::time_point compare_time = ClockType::now()) {
+    events_.push_back(Event{time, compare_time});
     while (events_.size() > 2 &&
            (events_.back().wall_time - events_.front().wall_time) >
                window_duration_) {
