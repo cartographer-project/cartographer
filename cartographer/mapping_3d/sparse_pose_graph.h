@@ -22,6 +22,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -81,9 +82,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(int trajectory_id,
                           const transform::Rigid3d& initial_pose,
-                          const mapping::proto::Submap& submap) override {
-    LOG(FATAL) << "Not yet implemented for 3D";
-  }
+                          const mapping::proto::Submap& submap) override;
   void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
