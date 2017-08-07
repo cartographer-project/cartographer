@@ -147,13 +147,11 @@ void SparsePoseGraph::AddWorkItem(std::function<void()> work_item) {
   }
 }
 
-void SparsePoseGraph::AddImuData(const int trajectory_id, common::Time time,
-                                 const Eigen::Vector3d& linear_acceleration,
-                                 const Eigen::Vector3d& angular_velocity) {
+void SparsePoseGraph::AddImuData(const int trajectory_id,
+                                 const sensor::ImuData& imu_data) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([=]() REQUIRES(mutex_) {
-    optimization_problem_.AddImuData(trajectory_id, time, linear_acceleration,
-                                     angular_velocity);
+    optimization_problem_.AddImuData(trajectory_id, imu_data);
   });
 }
 

@@ -58,8 +58,7 @@ class LocalTrajectoryBuilder {
   const PoseEstimate& pose_estimate() const;
   std::unique_ptr<InsertionResult> AddHorizontalRangeData(
       common::Time, const sensor::RangeData& range_data);
-  void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
-                  const Eigen::Vector3d& angular_velocity);
+  void AddImuData(const sensor::ImuData& imu_data);
   void AddOdometerData(common::Time time, const transform::Rigid3d& pose);
 
  private:

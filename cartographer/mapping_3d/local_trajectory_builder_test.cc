@@ -208,8 +208,8 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
                                    const transform::Rigid3d& expected_pose) {
     const Eigen::Vector3d gravity =
         expected_pose.rotation().inverse() * Eigen::Vector3d(0., 0., 9.81);
-    local_trajectory_builder_->AddImuData(time, gravity,
-                                          Eigen::Vector3d::Zero());
+    local_trajectory_builder_->AddImuData(
+        sensor::ImuData{time, gravity, Eigen::Vector3d::Zero()});
   }
 
   std::vector<TrajectoryNode> GenerateCorkscrewTrajectory() {
