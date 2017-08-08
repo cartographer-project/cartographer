@@ -77,16 +77,17 @@ void PoseExtrapolator::AddOdometryData(
   // TODO(whess): Improve by using more than just the last two odometry poses.
   // TODO(whess): Use odometry to predict orientation if there is no IMU.
   // Compute extrapolation in the tracking frame.
-  const sensor::OdometryData& odometry_data_2 =
+  const sensor::OdometryData& odometry_data_older =
       odometry_data_[odometry_data_.size() - 2];
-  const sensor::OdometryData& odometry_data_1 =
+  const sensor::OdometryData& odometry_data_newer =
       odometry_data_[odometry_data_.size() - 1];
   const Eigen::Vector3d linear_velocity_in_tracking_frame_at_odometry_time_1 =
-      (odometry_data_1.pose.inverse() * odometry_data_2.pose).translation() /
-      common::ToSeconds(odometry_data_2.time - odometry_data_1.time);
+      (odometry_data_newer.pose.inverse() * odometry_data_older.pose)
+          .translation() /
+      common::ToSeconds(odometry_data_older.time - odometry_data_newer.time);
   const Eigen::Quaterniond orientation_at_odometry_time_1 =
       timed_pose_queue_.back().pose.rotation() *
-      ExtrapolateRotation(odometry_data_1.time);
+      ExtrapolateRotation(odometry_data_newer.time);
   linear_velocity_from_odometry_ =
       orientation_at_odometry_time_1 *
       linear_velocity_in_tracking_frame_at_odometry_time_1;
