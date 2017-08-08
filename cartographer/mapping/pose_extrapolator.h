@@ -23,17 +23,15 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/imu_tracker.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping {
 
-// Keeps poses for a certain duration to estimate linear and angular velocity,
-// and uses the velocities to extrapolate motion. Uses IMU data if available to
-// improve the extrapolation of orientation.
-//
-// TODO(whess): Add odometry and provide improved extrapolation models making
-// use of all available data.
+// Keep poses for a certain duration to estimate linear and angular velocity.
+// Uses the velocities to extrapolate motion. Uses IMU and/or odometry data if
+// available to improve the extrapolation.
 class PoseExtrapolator {
  public:
   explicit PoseExtrapolator(common::Duration pose_queue_duration,
@@ -48,13 +46,16 @@ class PoseExtrapolator {
 
   void AddPose(common::Time time, const transform::Rigid3d& pose);
   void AddImuData(const sensor::ImuData& imu_data);
+  void AddOdometryData(const sensor::OdometryData& odometry_data);
   transform::Rigid3d ExtrapolatePose(common::Time time);
 
  private:
   void UpdateVelocitiesFromPoses();
   void TrimImuData();
+  void TrimOdometryData();
   void AdvanceImuTracker(common::Time time, ImuTracker* imu_tracker);
   Eigen::Quaterniond ExtrapolateRotation(common::Time time);
+  Eigen::Vector3d ExtrapolateTranslation(common::Time time);
 
   const common::Duration pose_queue_duration_;
   struct TimedPose {
@@ -68,6 +69,9 @@ class PoseExtrapolator {
   const double gravity_time_constant_;
   std::deque<sensor::ImuData> imu_data_;
   std::unique_ptr<ImuTracker> imu_tracker_;
+
+  std::deque<sensor::OdometryData> odometry_data_;
+  Eigen::Vector3d linear_velocity_from_odometry_ = Eigen::Vector3d::Zero();
 };
 
 }  // namespace mapping

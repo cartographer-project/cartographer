@@ -55,6 +55,7 @@ void PoseExtrapolator::AddPose(const common::Time time,
   UpdateVelocitiesFromPoses();
   AdvanceImuTracker(time, imu_tracker_.get());
   TrimImuData();
+  TrimOdometryData();
 }
 
 void PoseExtrapolator::AddImuData(const sensor::ImuData& imu_data) {
@@ -64,14 +65,41 @@ void PoseExtrapolator::AddImuData(const sensor::ImuData& imu_data) {
   TrimImuData();
 }
 
+void PoseExtrapolator::AddOdometryData(
+    const sensor::OdometryData& odometry_data) {
+  CHECK(timed_pose_queue_.empty() ||
+        odometry_data.time >= timed_pose_queue_.back().time);
+  odometry_data_.push_back(odometry_data);
+  TrimOdometryData();
+  if (odometry_data_.size() < 2 || timed_pose_queue_.empty()) {
+    return;
+  }
+  // TODO(whess): Improve by using more than just the last two odometry poses.
+  // TODO(whess): Use odometry to predict orientation if there is no IMU.
+  // Compute extrapolation in the tracking frame.
+  const sensor::OdometryData& odometry_data_older =
+      odometry_data_[odometry_data_.size() - 2];
+  const sensor::OdometryData& odometry_data_newer =
+      odometry_data_[odometry_data_.size() - 1];
+  const Eigen::Vector3d
+      linear_velocity_in_tracking_frame_at_newer_odometry_time =
+          (odometry_data_newer.pose.inverse() * odometry_data_older.pose)
+              .translation() /
+          common::ToSeconds(odometry_data_older.time -
+                            odometry_data_newer.time);
+  const Eigen::Quaterniond orientation_at_newer_odometry_time =
+      timed_pose_queue_.back().pose.rotation() *
+      ExtrapolateRotation(odometry_data_newer.time);
+  linear_velocity_from_odometry_ =
+      orientation_at_newer_odometry_time *
+      linear_velocity_in_tracking_frame_at_newer_odometry_time;
+}
+
 transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
   // TODO(whess): Keep the last extrapolated pose.
   const TimedPose& newest_timed_pose = timed_pose_queue_.back();
   CHECK_GE(time, newest_timed_pose.time);
-  const double extrapolation_delta =
-      common::ToSeconds(time - newest_timed_pose.time);
-  return transform::Rigid3d::Translation(extrapolation_delta *
-                                         linear_velocity_from_poses_) *
+  return transform::Rigid3d::Translation(ExtrapolateTranslation(time)) *
          newest_timed_pose.pose *
          transform::Rigid3d::Rotation(ExtrapolateRotation(time));
 }
@@ -106,6 +134,13 @@ void PoseExtrapolator::TrimImuData() {
   while (imu_data_.size() > 1 && !timed_pose_queue_.empty() &&
          imu_data_[1].time <= timed_pose_queue_.back().time) {
     imu_data_.pop_front();
+  }
+}
+
+void PoseExtrapolator::TrimOdometryData() {
+  while (odometry_data_.size() > 2 && !timed_pose_queue_.empty() &&
+         odometry_data_[1].time <= timed_pose_queue_.back().time) {
+    odometry_data_.pop_front();
   }
 }
 
@@ -144,6 +179,16 @@ Eigen::Quaterniond PoseExtrapolator::ExtrapolateRotation(
   AdvanceImuTracker(time, &imu_tracker);
   const Eigen::Quaterniond last_orientation = imu_tracker_->orientation();
   return last_orientation.inverse() * imu_tracker.orientation();
+}
+
+Eigen::Vector3d PoseExtrapolator::ExtrapolateTranslation(common::Time time) {
+  const TimedPose& newest_timed_pose = timed_pose_queue_.back();
+  const double extrapolation_delta =
+      common::ToSeconds(time - newest_timed_pose.time);
+  if (odometry_data_.size() < 2) {
+    return extrapolation_delta * linear_velocity_from_poses_;
+  }
+  return extrapolation_delta * linear_velocity_from_odometry_;
 }
 
 }  // namespace mapping
