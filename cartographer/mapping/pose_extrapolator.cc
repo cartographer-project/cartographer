@@ -82,17 +82,17 @@ void PoseExtrapolator::AddOdometryData(
   const sensor::OdometryData& odometry_data_newer =
       odometry_data_[odometry_data_.size() - 1];
   const Eigen::Vector3d
-      linear_velocity_in_tracking_frame_at_last_odometry_time =
+      linear_velocity_in_tracking_frame_at_newer_odometry_time =
           (odometry_data_newer.pose.inverse() * odometry_data_older.pose)
               .translation() /
           common::ToSeconds(odometry_data_older.time -
                             odometry_data_newer.time);
-  const Eigen::Quaterniond orientation_at_last_odometry_time =
+  const Eigen::Quaterniond orientation_at_newer_odometry_time =
       timed_pose_queue_.back().pose.rotation() *
       ExtrapolateRotation(odometry_data_newer.time);
   linear_velocity_from_odometry_ =
-      orientation_at_last_odometry_time *
-      linear_velocity_in_tracking_frame_at_last_odometry_time;
+      orientation_at_newer_odometry_time *
+      linear_velocity_in_tracking_frame_at_newer_odometry_time;
 }
 
 transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
