@@ -29,8 +29,8 @@
 namespace cartographer {
 namespace mapping {
 
-// Keeps poses for a certain duration to estimate linear and angular velocity,
-// and uses the velocities to extrapolate motion. Uses IMU and odometry data if
+// Keep poses for a certain duration to estimate linear and angular velocity.
+// Uses the velocities to extrapolate motion. Uses IMU and/or odometry data if
 // available to improve the extrapolation.
 class PoseExtrapolator {
  public:
