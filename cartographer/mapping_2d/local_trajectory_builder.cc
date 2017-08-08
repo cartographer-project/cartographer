@@ -221,15 +221,14 @@ LocalTrajectoryBuilder::pose_estimate() const {
   return last_pose_estimate_;
 }
 
-void LocalTrajectoryBuilder::AddImuData(
-    const common::Time time, const Eigen::Vector3d& linear_acceleration,
-    const Eigen::Vector3d& angular_velocity) {
+void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
   CHECK(options_.use_imu_data()) << "An unexpected IMU packet was added.";
 
-  InitializeImuTracker(time);
-  Predict(time);
-  imu_tracker_->AddImuLinearAccelerationObservation(linear_acceleration);
-  imu_tracker_->AddImuAngularVelocityObservation(angular_velocity);
+  InitializeImuTracker(imu_data.time);
+  Predict(imu_data.time);
+  imu_tracker_->AddImuLinearAccelerationObservation(
+      imu_data.linear_acceleration);
+  imu_tracker_->AddImuAngularVelocityObservation(imu_data.angular_velocity);
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(

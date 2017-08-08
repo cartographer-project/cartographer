@@ -42,17 +42,16 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
-void LocalTrajectoryBuilder::AddImuData(
-    const common::Time time, const Eigen::Vector3d& linear_acceleration,
-    const Eigen::Vector3d& angular_velocity) {
+void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
   const bool initial_imu_data = (imu_tracker_ == nullptr);
   if (initial_imu_data) {
     imu_tracker_ = common::make_unique<mapping::ImuTracker>(
-        options_.imu_gravity_time_constant(), time);
+        options_.imu_gravity_time_constant(), imu_data.time);
   }
-  Predict(time);
-  imu_tracker_->AddImuLinearAccelerationObservation(linear_acceleration);
-  imu_tracker_->AddImuAngularVelocityObservation(angular_velocity);
+  Predict(imu_data.time);
+  imu_tracker_->AddImuLinearAccelerationObservation(
+      imu_data.linear_acceleration);
+  imu_tracker_->AddImuAngularVelocityObservation(imu_data.angular_velocity);
   if (initial_imu_data) {
     // This uses the first accelerometer measurement to approximately align the
     // first pose to gravity.

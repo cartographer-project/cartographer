@@ -55,8 +55,7 @@ class LocalTrajectoryBuilder {
   LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;
   LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
 
-  void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
-                  const Eigen::Vector3d& angular_velocity);
+  void AddImuData(const sensor::ImuData& imu_data);
   std::unique_ptr<InsertionResult> AddRangefinderData(
       common::Time time, const Eigen::Vector3f& origin,
       const sensor::PointCloud& ranges);
