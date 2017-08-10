@@ -39,7 +39,7 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
 
   static std::unique_ptr<ProbabilityGridPointsProcessor> FromDictionary(
       const std::vector<mapping::proto::Trajectory>& trajectories,
-      const FileWriterFactory& file_writer_factory,
+      FileWriterFactory file_writer_factory,
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   ~ProbabilityGridPointsProcessor() override {}
