@@ -147,13 +147,11 @@ void SparsePoseGraph::AddWorkItem(std::function<void()> work_item) {
   }
 }
 
-void SparsePoseGraph::AddImuData(const int trajectory_id, common::Time time,
-                                 const Eigen::Vector3d& linear_acceleration,
-                                 const Eigen::Vector3d& angular_velocity) {
+void SparsePoseGraph::AddImuData(const int trajectory_id,
+                                 const sensor::ImuData& imu_data) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([=]() REQUIRES(mutex_) {
-    optimization_problem_.AddImuData(trajectory_id, time, linear_acceleration,
-                                     angular_velocity);
+    optimization_problem_.AddImuData(trajectory_id, imu_data);
   });
 }
 
@@ -368,6 +366,52 @@ void SparsePoseGraph::WaitForAllComputations() {
   locker.Await([&notification]() { return notification; });
 }
 
+void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
+    CHECK_EQ(frozen_trajectories_.count(trajectory_id), 0);
+    frozen_trajectories_.insert(trajectory_id);
+  });
+}
+
+void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
+                                         const transform::Rigid3d& initial_pose,
+                                         const mapping::proto::Submap& submap) {
+  if (!submap.has_submap_3d()) {
+    return;
+  }
+
+  std::shared_ptr<const Submap> submap_ptr =
+      std::make_shared<const Submap>(submap.submap_3d());
+
+  common::MutexLocker locker(&mutex_);
+  const mapping::SubmapId submap_id =
+      submap_data_.Append(trajectory_id, SubmapData());
+  submap_data_.at(submap_id).submap = submap_ptr;
+  // Immediately show the submap at the optimized pose.
+  CHECK_GE(static_cast<size_t>(submap_data_.num_trajectories()),
+           optimized_submap_transforms_.size());
+  optimized_submap_transforms_.resize(submap_data_.num_trajectories());
+  CHECK_EQ(optimized_submap_transforms_.at(trajectory_id).size(),
+           submap_id.submap_index);
+  optimized_submap_transforms_.at(trajectory_id)
+      .push_back(sparse_pose_graph::SubmapData{initial_pose});
+  AddWorkItem([this, submap_id, initial_pose]() REQUIRES(mutex_) {
+    CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
+    submap_data_.at(submap_id).state = SubmapState::kFinished;
+    optimization_problem_.AddSubmap(submap_id.trajectory_id, initial_pose);
+  });
+}
+
+void SparsePoseGraph::AddTrimmer(
+    std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) {
+  common::MutexLocker locker(&mutex_);
+  // C++11 does not allow us to move a unique_ptr into a lambda.
+  mapping::PoseGraphTrimmer* const trimmer_ptr = trimmer.release();
+  AddWorkItem([this, trimmer_ptr]()
+                  REQUIRES(mutex_) { trimmers_.emplace_back(trimmer_ptr); });
+}
+
 void SparsePoseGraph::RunFinalOptimization() {
   WaitForAllComputations();
   optimization_problem_.SetMaxNumIterations(
@@ -383,7 +427,7 @@ void SparsePoseGraph::RunOptimization() {
   if (optimization_problem_.submap_data().empty()) {
     return;
   }
-  optimization_problem_.Solve(constraints_);
+  optimization_problem_.Solve(constraints_, frozen_trajectories_);
   common::MutexLocker locker(&mutex_);
 
   const auto& node_data = optimization_problem_.node_data();
@@ -417,6 +461,11 @@ void SparsePoseGraph::RunOptimization() {
     for (const int trajectory_id : connected_components_[i]) {
       reverse_connected_components_.emplace(trajectory_id, i);
     }
+  }
+
+  TrimmingHandle trimming_handle(this);
+  for (auto& trimmer : trimmers_) {
+    trimmer->Trim(&trimming_handle);
   }
 }
 
@@ -511,6 +560,19 @@ mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
   return {submap, ComputeLocalToGlobalTransform(optimized_submap_transforms_,
                                                 submap_id.trajectory_id) *
                       submap->local_pose()};
+}
+
+SparsePoseGraph::TrimmingHandle::TrimmingHandle(SparsePoseGraph* const parent)
+    : parent_(parent) {}
+
+int SparsePoseGraph::TrimmingHandle::num_submaps(
+    const int trajectory_id) const {
+  LOG(FATAL) << "Not yet implemented for 3D.";
+}
+
+void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
+    const mapping::SubmapId& submap_id) {
+  LOG(FATAL) << "Not yet implemented for 3D.";
 }
 
 }  // namespace mapping_3d

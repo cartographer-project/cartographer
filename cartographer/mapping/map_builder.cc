@@ -201,6 +201,8 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
       ->set_resolution(0.05);
   unused_options.mutable_trajectory_builder_2d_options()
       ->set_num_odometry_states(1);
+  unused_options.mutable_trajectory_builder_3d_options()
+      ->set_num_odometry_states(1);
 
   const std::unordered_set<string> unused_sensor_ids;
   const int map_trajectory_id =

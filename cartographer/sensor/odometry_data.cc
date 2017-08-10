@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Cartographer Authors
+ * Copyright 2017 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_COMMON_HISTOGRAM_H_
-#define CARTOGRAPHER_COMMON_HISTOGRAM_H_
+#include "cartographer/sensor/odometry_data.h"
 
-#include <string>
-#include <vector>
-
-#include "cartographer/common/port.h"
+#include "cartographer/transform/transform.h"
 
 namespace cartographer {
-namespace common {
+namespace sensor {
 
-class Histogram {
- public:
-  void Add(float value);
-  string ToString(int buckets) const;
+proto::OdometryData ToProto(const OdometryData& odometry_data) {
+  proto::OdometryData proto;
+  proto.set_timestamp(common::ToUniversal(odometry_data.time));
+  *proto.mutable_pose() = transform::ToProto(odometry_data.pose);
+  return proto;
+}
 
- private:
-  std::vector<float> values_;
-};
+OdometryData FromProto(const proto::OdometryData& proto) {
+  return OdometryData{common::FromUniversal(proto.timestamp()),
+                      transform::ToRigid3(proto.pose())};
+}
 
-}  // namespace common
+}  // namespace sensor
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_COMMON_HISTOGRAM_H_

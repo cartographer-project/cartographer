@@ -20,6 +20,7 @@
 #include <array>
 #include <deque>
 #include <map>
+#include <set>
 #include <vector>
 
 #include "Eigen/Core"
@@ -59,9 +60,7 @@ class OptimizationProblem {
   OptimizationProblem(const OptimizationProblem&) = delete;
   OptimizationProblem& operator=(const OptimizationProblem&) = delete;
 
-  void AddImuData(int trajectory_id, common::Time time,
-                  const Eigen::Vector3d& linear_acceleration,
-                  const Eigen::Vector3d& angular_velocity);
+  void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
   void AddTrajectoryNode(int trajectory_id, common::Time time,
                          const transform::Rigid3d& point_cloud_pose);
   void AddSubmap(int trajectory_id, const transform::Rigid3d& submap_pose);
@@ -69,7 +68,8 @@ class OptimizationProblem {
   void SetMaxNumIterations(int32 max_num_iterations);
 
   // Computes the optimized poses.
-  void Solve(const std::vector<Constraint>& constraints);
+  void Solve(const std::vector<Constraint>& constraints,
+             const std::set<int>& frozen_trajectories);
 
   const std::vector<std::vector<NodeData>>& node_data() const;
   const std::vector<std::vector<SubmapData>>& submap_data() const;

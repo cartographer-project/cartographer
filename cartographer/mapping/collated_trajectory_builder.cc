@@ -79,9 +79,9 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
 
   switch (data->type) {
     case sensor::Data::Type::kImu:
-      wrapped_trajectory_builder_->AddImuData(data->time,
-                                              data->imu.linear_acceleration,
-                                              data->imu.angular_velocity);
+      wrapped_trajectory_builder_->AddImuData(
+          sensor::ImuData{data->time, data->imu.linear_acceleration,
+                          data->imu.angular_velocity});
       return;
 
     case sensor::Data::Type::kRangefinder:

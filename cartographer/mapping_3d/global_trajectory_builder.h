@@ -36,8 +36,7 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
-                  const Eigen::Vector3d& angular_velocity) override;
+  void AddImuData(const sensor::ImuData& imu_data) override;
   void AddRangefinderData(common::Time time, const Eigen::Vector3f& origin,
                           const sensor::PointCloud& ranges) override;
   void AddOdometerData(common::Time time,

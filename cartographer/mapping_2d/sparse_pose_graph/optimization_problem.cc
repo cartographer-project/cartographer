@@ -61,14 +61,11 @@ OptimizationProblem::OptimizationProblem(
 OptimizationProblem::~OptimizationProblem() {}
 
 void OptimizationProblem::AddImuData(const int trajectory_id,
-                                     const common::Time time,
-                                     const Eigen::Vector3d& linear_acceleration,
-                                     const Eigen::Vector3d& angular_velocity) {
+                                     const sensor::ImuData& imu_data) {
   CHECK_GE(trajectory_id, 0);
   imu_data_.resize(
       std::max(imu_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  imu_data_[trajectory_id].push_back(
-      sensor::ImuData{time, linear_acceleration, angular_velocity});
+  imu_data_[trajectory_id].push_back(imu_data);
 }
 
 void OptimizationProblem::AddTrajectoryNode(
@@ -161,12 +158,16 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
+    const bool frozen = frozen_trajectories.count(trajectory_id);
     // Reserve guarantees that data does not move, so the pointers for Ceres
     // stay valid.
     C_nodes[trajectory_id].reserve(node_data_[trajectory_id].size());
     for (const NodeData& node_data : node_data_[trajectory_id]) {
       C_nodes[trajectory_id].push_back(FromPose(node_data.point_cloud_pose));
       problem.AddParameterBlock(C_nodes[trajectory_id].back().data(), 3);
+      if (frozen) {
+        problem.SetParameterBlockConstant(C_nodes[trajectory_id].back().data());
+      }
     }
   }
 

@@ -122,9 +122,9 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   for (const NoisyNode& node : test_data) {
     const transform::Rigid3d pose =
         AddNoise(node.ground_truth_pose, node.noise);
-    optimization_problem_.AddImuData(kTrajectoryId, now,
-                                     Eigen::Vector3d::UnitZ() * 9.81,
-                                     Eigen::Vector3d::Zero());
+    optimization_problem_.AddImuData(
+        kTrajectoryId, sensor::ImuData{now, Eigen::Vector3d::UnitZ() * 9.81,
+                                       Eigen::Vector3d::Zero()});
     optimization_problem_.AddTrajectoryNode(kTrajectoryId, now, pose);
     now += common::FromSeconds(0.01);
   }
@@ -167,7 +167,8 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap2Transform);
-  optimization_problem_.Solve(constraints);
+  const std::set<int> kFrozen;
+  optimization_problem_.Solve(constraints, kFrozen);
 
   double translation_error_after = 0.;
   double rotation_error_after = 0.;

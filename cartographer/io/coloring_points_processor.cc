@@ -30,13 +30,14 @@ ColoringPointsProcessor::FromDictionary(
   const string frame_id = dictionary->GetString("frame_id");
   const std::vector<double> color_values =
       dictionary->GetDictionary("color")->GetArrayValuesAsDoubles();
-  const Color color = {{static_cast<uint8_t>(color_values[0]),
-                        static_cast<uint8_t>(color_values[1]),
-                        static_cast<uint8_t>(color_values[2])}};
-  return common::make_unique<ColoringPointsProcessor>(color, frame_id, next);
+  const Uint8Color color = {{static_cast<uint8>(color_values[0]),
+                             static_cast<uint8>(color_values[1]),
+                             static_cast<uint8>(color_values[2])}};
+  return common::make_unique<ColoringPointsProcessor>(ToFloatColor(color),
+                                                      frame_id, next);
 }
 
-ColoringPointsProcessor::ColoringPointsProcessor(const Color& color,
+ColoringPointsProcessor::ColoringPointsProcessor(const FloatColor& color,
                                                  const string& frame_id,
                                                  PointsProcessor* const next)
     : color_(color), frame_id_(frame_id), next_(next) {}

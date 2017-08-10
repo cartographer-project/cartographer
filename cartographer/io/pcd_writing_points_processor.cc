@@ -65,7 +65,7 @@ void WriteBinaryPcdPointCoordinate(const Eigen::Vector3f& point,
   CHECK(file_writer->Write(buffer, 12));
 }
 
-void WriteBinaryPcdPointColor(const Color& color,
+void WriteBinaryPcdPointColor(const Uint8Color& color,
                               FileWriter* const file_writer) {
   char buffer[4];
   buffer[0] = color[2];
@@ -121,7 +121,8 @@ void PcdWritingPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   for (size_t i = 0; i < batch->points.size(); ++i) {
     WriteBinaryPcdPointCoordinate(batch->points[i], file_writer_.get());
     if (!batch->colors.empty()) {
-      WriteBinaryPcdPointColor(batch->colors[i], file_writer_.get());
+      WriteBinaryPcdPointColor(ToUint8Color(batch->colors[i]),
+                               file_writer_.get());
     }
     ++num_points_;
   }

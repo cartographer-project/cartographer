@@ -28,13 +28,9 @@ GlobalTrajectoryBuilder::GlobalTrajectoryBuilder(
 
 GlobalTrajectoryBuilder::~GlobalTrajectoryBuilder() {}
 
-void GlobalTrajectoryBuilder::AddImuData(
-    const common::Time time, const Eigen::Vector3d& linear_acceleration,
-    const Eigen::Vector3d& angular_velocity) {
-  local_trajectory_builder_.AddImuData(time, linear_acceleration,
-                                       angular_velocity);
-  sparse_pose_graph_->AddImuData(trajectory_id_, time, linear_acceleration,
-                                 angular_velocity);
+void GlobalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
+  local_trajectory_builder_.AddImuData(imu_data);
+  sparse_pose_graph_->AddImuData(trajectory_id_, imu_data);
 }
 
 void GlobalTrajectoryBuilder::AddRangefinderData(

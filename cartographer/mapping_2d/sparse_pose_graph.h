@@ -22,6 +22,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -76,9 +77,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_);
 
   // Adds new IMU data to be used in the optimization.
-  void AddImuData(int trajectory_id, common::Time time,
-                  const Eigen::Vector3d& linear_acceleration,
-                  const Eigen::Vector3d& angular_velocity);
+  void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
 
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(int trajectory_id,
@@ -166,7 +165,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   common::Mutex mutex_;
 
   // If it exists, further scans must be added to this queue, and will be
-  // considered later
+  // considered later.
   std::unique_ptr<std::deque<std::function<void()>>> scan_queue_
       GUARDED_BY(mutex_);
 

@@ -55,8 +55,7 @@ class LocalTrajectoryBuilder {
   LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;
   LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
 
-  void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
-                  const Eigen::Vector3d& angular_velocity);
+  void AddImuData(const sensor::ImuData& imu_data);
   std::unique_ptr<InsertionResult> AddRangefinderData(
       common::Time time, const Eigen::Vector3f& origin,
       const sensor::PointCloud& ranges);
@@ -75,7 +74,7 @@ class LocalTrajectoryBuilder {
       const transform::Rigid3d& pose_observation);
 
   const proto::LocalTrajectoryBuilderOptions options_;
-  mapping_3d::ActiveSubmaps active_submaps_;
+  ActiveSubmaps active_submaps_;
 
   PoseEstimate last_pose_estimate_;
 
