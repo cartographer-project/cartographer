@@ -158,7 +158,7 @@ class SparsePoseGraphTest : public ::testing::Test {
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
-    for (const auto &submap : active_submaps_->submaps()) {
+    for (const auto& submap : active_submaps_->submaps()) {
       insertion_submaps.push_back(submap);
     }
     const sensor::RangeData range_data{
