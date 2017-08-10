@@ -91,7 +91,7 @@ ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
 std::unique_ptr<ProbabilityGridPointsProcessor>
 ProbabilityGridPointsProcessor::FromDictionary(
     const std::vector<mapping::proto::Trajectory>& trajectories,
-    const FileWriterFactory& file_writer_factory,
+    FileWriterFactory file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
   const auto draw_trajectories = (!dictionary->HasKey("draw_trajectories") ||
