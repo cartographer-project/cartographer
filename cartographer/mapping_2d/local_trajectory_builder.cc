@@ -211,7 +211,10 @@ void LocalTrajectoryBuilder::InitializeExtrapolator(const common::Time time) {
   if (extrapolator_ != nullptr) {
     return;
   }
-  constexpr double kExtrapolationEstimationTimeSec = 0.001;  // 1 ms
+  // We derive velocities from poses which are at least 1 ms apart for numerical
+  // stability. Usually poses known to the extrapolator will be further apart
+  // in time and thus the last two are used.
+  constexpr double kExtrapolationEstimationTimeSec = 0.001;
   extrapolator_ = common::make_unique<mapping::PoseExtrapolator>(
       ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
       options_.imu_gravity_time_constant());
