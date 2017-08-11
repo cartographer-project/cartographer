@@ -49,6 +49,16 @@ class PoseExtrapolator {
   void AddOdometryData(const sensor::OdometryData& odometry_data);
   transform::Rigid3d ExtrapolatePose(common::Time time);
 
+  // Must be called after the first IMU data and no pose were added. Estimates
+  // an initial gravity aligned orientation from the linear acceleration of the
+  // first IMU data.
+  void AddInitialGravityAlignedPose();
+
+  // Gravity alignment estimate.
+  Eigen::Quaterniond gravity_orientation() const {
+    return imu_tracker_->orientation();
+  }
+
  private:
   void UpdateVelocitiesFromPoses();
   void TrimImuData();

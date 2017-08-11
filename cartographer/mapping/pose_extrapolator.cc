@@ -95,6 +95,20 @@ void PoseExtrapolator::AddOdometryData(
       linear_velocity_in_tracking_frame_at_newer_odometry_time;
 }
 
+void PoseExtrapolator::AddInitialGravityAlignedPose() {
+  CHECK(timed_pose_queue_.empty());
+  CHECK_EQ(imu_data_.size(), 1);
+  const sensor::ImuData& imu_data = imu_data_.front();
+  imu_tracker_ =
+      common::make_unique<ImuTracker>(gravity_time_constant_, imu_data.time);
+  imu_tracker_->AddImuLinearAccelerationObservation(
+      imu_data.linear_acceleration);
+  imu_tracker_->AddImuAngularVelocityObservation(imu_data.angular_velocity);
+  imu_tracker_->Advance(imu_data.time);
+  AddPose(imu_data.time,
+          transform::Rigid3d::Rotation(imu_tracker_->orientation()));
+}
+
 transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
   // TODO(whess): Keep the last extrapolated pose.
   const TimedPose& newest_timed_pose = timed_pose_queue_.back();
