@@ -30,6 +30,25 @@ PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
     : pose_queue_duration_(pose_queue_duration),
       gravity_time_constant_(gravity_time_constant) {}
 
+std::unique_ptr<PoseExtrapolator> PoseExtrapolator::InitializeWithImu(
+    const common::Duration pose_queue_duration,
+    const double imu_gravity_time_constant, const sensor::ImuData& imu_data) {
+  auto extrapolator = common::make_unique<PoseExtrapolator>(
+      pose_queue_duration, imu_gravity_time_constant);
+  extrapolator->AddImuData(imu_data);
+  extrapolator->imu_tracker_ =
+      common::make_unique<ImuTracker>(imu_gravity_time_constant, imu_data.time);
+  extrapolator->imu_tracker_->AddImuLinearAccelerationObservation(
+      imu_data.linear_acceleration);
+  extrapolator->imu_tracker_->AddImuAngularVelocityObservation(
+      imu_data.angular_velocity);
+  extrapolator->imu_tracker_->Advance(imu_data.time);
+  extrapolator->AddPose(
+      imu_data.time,
+      transform::Rigid3d::Rotation(extrapolator->imu_tracker_->orientation()));
+  return extrapolator;
+}
+
 common::Time PoseExtrapolator::GetLastPoseTime() const {
   if (timed_pose_queue_.empty()) {
     return common::Time::min();
