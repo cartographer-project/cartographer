@@ -88,6 +88,9 @@ cartographer.mapping_2d.proto.LocalTrajectoryBuilderOptions trajectory_builder_2
 cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions trajectory_builder_3d_options
   Not yet documented.
 
+bool pure_localization
+  Not yet documented.
+
 
 cartographer.mapping.sparse_pose_graph.proto.ConstraintBuilderOptions
 =====================================================================
@@ -182,6 +185,10 @@ float max_z
 float missing_data_ray_length
   Points beyond 'max_range' will be inserted with this length as empty space.
 
+int32 scans_per_accumulation
+  Number of scans to accumulate into one unwarped, combined scan to use for
+  scan matching.
+
 float voxel_filter_size
   Voxel filter that gets applied to the range data immediately after
   cropping.
@@ -209,9 +216,6 @@ double imu_gravity_time_constant
   the constant is reduced) and
   2. from integration of angular velocities (which gets worse when the
   constant is increased) is balanced.
-
-int32 num_odometry_states
-  Maximum number of previous odometry states to keep.
 
 cartographer.mapping_2d.proto.SubmapsOptions submaps_options
   Not yet documented.
@@ -344,9 +348,6 @@ double imu_gravity_time_constant
   the constant is reduced) and
   2. from integration of angular velocities (which gets worse when the
   constant is increased) is balanced.
-
-int32 num_odometry_states
-  Maximum number of previous odometry states to keep.
 
 cartographer.mapping_3d.proto.SubmapsOptions submaps_options
   Not yet documented.
