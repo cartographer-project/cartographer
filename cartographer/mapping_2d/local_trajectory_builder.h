@@ -21,8 +21,7 @@
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
-#include "cartographer/mapping/imu_tracker.h"
-#include "cartographer/mapping/odometry_state_tracker.h"
+#include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/mapping_2d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
@@ -75,34 +74,20 @@ class LocalTrajectoryBuilder {
                  const sensor::RangeData& range_data_in_tracking_2d,
                  transform::Rigid3d* pose_observation);
 
-  // Lazily constructs an ImuTracker.
-  void InitializeImuTracker(common::Time time);
-
-  // Updates the current estimate to reflect the given 'time'.
-  void Predict(common::Time time);
+  // Lazily constructs a PoseExtrapolator.
+  void InitializeExtrapolator(common::Time time);
 
   const proto::LocalTrajectoryBuilderOptions options_;
   ActiveSubmaps active_submaps_;
 
   PoseEstimate last_pose_estimate_;
 
-  // Current 'pose_estimate_' and 'velocity_estimate_' at 'time_'.
-  common::Time time_ = common::Time::min();
-  transform::Rigid3d pose_estimate_ = transform::Rigid3d::Identity();
-  Eigen::Vector2d velocity_estimate_ = Eigen::Vector2d::Zero();
-  common::Time last_scan_match_time_ = common::Time::min();
-  // This is the difference between the model (constant velocity, IMU)
-  // prediction 'pose_estimate_' and the odometry prediction. To get the
-  // odometry prediction, right-multiply this to 'pose_estimate_'.
-  transform::Rigid3d odometry_correction_ = transform::Rigid3d::Identity();
-
   mapping_3d::MotionFilter motion_filter_;
   scan_matching::RealTimeCorrelativeScanMatcher
       real_time_correlative_scan_matcher_;
   scan_matching::CeresScanMatcher ceres_scan_matcher_;
 
-  std::unique_ptr<mapping::ImuTracker> imu_tracker_;
-  mapping::OdometryStateTracker odometry_state_tracker_;
+  std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
 
   int num_accumulated_ = 0;
   transform::Rigid3f first_pose_estimate_ = transform::Rigid3f::Identity();
