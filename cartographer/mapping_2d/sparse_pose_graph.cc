@@ -432,8 +432,9 @@ void SparsePoseGraph::RunOptimization() {
   if (optimization_problem_.submap_data().empty()) {
     return;
   }
-  optimization_problem_.Solve(constraints_, frozen_trajectories_);
+
   common::MutexLocker locker(&mutex_);
+  optimization_problem_.Solve(constraints_, frozen_trajectories_);
 
   std::vector<int> num_trimmed_submaps;
   const auto& submap_data = optimization_problem_.submap_data();

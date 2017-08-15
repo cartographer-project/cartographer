@@ -37,9 +37,9 @@ void WriteGrid(
     }
   };
   Image image(cell_limits.num_x_cells, cell_limits.num_y_cells);
-  for (auto xy_index :
+  for (const auto& xy_index :
        cartographer::mapping_2d::XYIndexRangeIterator(cell_limits)) {
-    auto index = xy_index + offset;
+    const auto index = xy_index + offset;
     uint8 value = compute_color_value(index);
     image.SetPixel(xy_index.x(), xy_index.y(), {{value, value, value}});
   }

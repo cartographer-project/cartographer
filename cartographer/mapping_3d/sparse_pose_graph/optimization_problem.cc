@@ -205,6 +205,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
   trajectory_data_.resize(imu_data_.size());
+  CHECK_GE(trajectory_data_.size(), node_data_.size());
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
     const auto& node_data = node_data_[trajectory_id];
