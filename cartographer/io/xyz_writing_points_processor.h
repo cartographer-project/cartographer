@@ -36,7 +36,7 @@ class XyzWriterPointsProcessor : public PointsProcessor {
   XyzWriterPointsProcessor(std::unique_ptr<FileWriter>, PointsProcessor* next);
 
   static std::unique_ptr<XyzWriterPointsProcessor> FromDictionary(
-      FileWriterFactory file_writer_factory,
+      const FileWriterFactory& file_writer_factory,
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
   ~XyzWriterPointsProcessor() override {}

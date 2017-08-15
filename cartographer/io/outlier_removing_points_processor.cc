@@ -41,18 +41,18 @@ OutlierRemovingPointsProcessor::OutlierRemovingPointsProcessor(
 }
 
 void OutlierRemovingPointsProcessor::Process(
-    std::unique_ptr<PointsBatch> points) {
+    std::unique_ptr<PointsBatch> batch) {
   switch (state_) {
     case State::kPhase1:
-      ProcessInPhaseOne(*points);
+      ProcessInPhaseOne(*batch);
       break;
 
     case State::kPhase2:
-      ProcessInPhaseTwo(*points);
+      ProcessInPhaseTwo(*batch);
       break;
 
     case State::kPhase3:
-      ProcessInPhaseThree(std::move(points));
+      ProcessInPhaseThree(std::move(batch));
       break;
   }
 }

@@ -27,7 +27,7 @@ XyzWriterPointsProcessor::XyzWriterPointsProcessor(
 
 std::unique_ptr<XyzWriterPointsProcessor>
 XyzWriterPointsProcessor::FromDictionary(
-    FileWriterFactory file_writer_factory,
+    const FileWriterFactory& file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
   return common::make_unique<XyzWriterPointsProcessor>(

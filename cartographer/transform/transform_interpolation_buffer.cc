@@ -29,7 +29,7 @@ namespace transform {
 
 void TransformInterpolationBuffer::Push(const common::Time time,
                                         const transform::Rigid3d& transform) {
-  if (deque_.size() > 0) {
+  if (!deque_.empty()) {
     CHECK_GE(time, latest_time()) << "New transform is older than latest.";
   }
   deque_.push_back(TimestampedTransform{time, transform});

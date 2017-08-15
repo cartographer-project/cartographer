@@ -148,7 +148,7 @@ void SparsePoseGraph::AddScan(
   });
 }
 
-void SparsePoseGraph::AddWorkItem(std::function<void()> work_item) {
+void SparsePoseGraph::AddWorkItem(const std::function<void()>& work_item) {
   if (scan_queue_ == nullptr) {
     work_item();
   } else {
@@ -433,8 +433,11 @@ void SparsePoseGraph::RunOptimization() {
     return;
   }
 
-  common::MutexLocker locker(&mutex_);
+  // No other thread is accessing the optimization_problem_, constraints_ and
+  // frozen_trajectories_ when executing the Solve. Solve is time consuming, so
+  // not taking the mutex before Solve to avoid blocking foreground processing.
   optimization_problem_.Solve(constraints_, frozen_trajectories_);
+  common::MutexLocker locker(&mutex_);
 
   std::vector<int> num_trimmed_submaps;
   const auto& submap_data = optimization_problem_.submap_data();
