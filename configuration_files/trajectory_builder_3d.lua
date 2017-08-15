@@ -60,7 +60,6 @@ TRAJECTORY_BUILDER_3D = {
   },
 
   imu_gravity_time_constant = 10.,
-  num_odometry_states = 1,
 
   submaps = {
     high_resolution = 0.10,

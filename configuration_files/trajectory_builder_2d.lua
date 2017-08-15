@@ -54,7 +54,6 @@ TRAJECTORY_BUILDER_2D = {
   },
 
   imu_gravity_time_constant = 10.,
-  num_odometry_states = 1000,
 
   submaps = {
     resolution = 0.05,

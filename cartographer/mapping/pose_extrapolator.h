@@ -40,6 +40,10 @@ class PoseExtrapolator {
   PoseExtrapolator(const PoseExtrapolator&) = delete;
   PoseExtrapolator& operator=(const PoseExtrapolator&) = delete;
 
+  static std::unique_ptr<PoseExtrapolator> InitializeWithImu(
+      common::Duration pose_queue_duration, double imu_gravity_time_constant,
+      const sensor::ImuData& imu_data);
+
   // Returns the time of the last added pose or Time::min() if no pose was added
   // yet.
   common::Time GetLastPoseTime() const;
@@ -48,6 +52,11 @@ class PoseExtrapolator {
   void AddImuData(const sensor::ImuData& imu_data);
   void AddOdometryData(const sensor::OdometryData& odometry_data);
   transform::Rigid3d ExtrapolatePose(common::Time time);
+
+  // Gravity alignment estimate.
+  Eigen::Quaterniond gravity_orientation() const {
+    return imu_tracker_->orientation();
+  }
 
  private:
   void UpdateVelocitiesFromPoses();
