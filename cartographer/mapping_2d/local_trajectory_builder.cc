@@ -31,8 +31,7 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
       motion_filter_(options_.motion_filter_options()),
       real_time_correlative_scan_matcher_(
           options_.real_time_correlative_scan_matcher_options()),
-      ceres_scan_matcher_(options_.ceres_scan_matcher_options()),
-      odometry_state_tracker_(options_.num_odometry_states()) {}
+      ceres_scan_matcher_(options_.ceres_scan_matcher_options()) {}
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
@@ -84,27 +83,26 @@ void LocalTrajectoryBuilder::ScanMatch(
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddHorizontalRangeData(
     const common::Time time, const sensor::RangeData& range_data) {
-  // Initialize IMU tracker now if we do not ever use an IMU.
+  // Initialize extrapolator now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
-    InitializeImuTracker(time);
+    InitializeExtrapolator(time);
   }
 
-  if (imu_tracker_ == nullptr) {
-    // Until we've initialized the IMU tracker with our first IMU message, we
+  if (extrapolator_ == nullptr) {
+    // Until we've initialized the extrapolator with our first IMU message, we
     // cannot compute the orientation of the rangefinder.
-    LOG(INFO) << "ImuTracker not yet initialized.";
+    LOG(INFO) << "Extrapolator not yet initialized.";
     return nullptr;
   }
-
-  Predict(time);
   if (num_accumulated_ == 0) {
-    first_pose_estimate_ = pose_estimate_.cast<float>();
+    first_pose_estimate_ = extrapolator_->ExtrapolatePose(time).cast<float>();
     accumulated_range_data_ =
         sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
   }
 
   const transform::Rigid3f tracking_delta =
-      first_pose_estimate_.inverse() * pose_estimate_.cast<float>();
+      first_pose_estimate_.inverse() *
+      extrapolator_->ExtrapolatePose(time).cast<float>();
   const sensor::RangeData range_data_in_first_tracking =
       sensor::TransformRangeData(range_data, tracking_delta);
   // Drop any returns below the minimum range and convert returns beyond the
@@ -136,11 +134,8 @@ LocalTrajectoryBuilder::AddHorizontalRangeData(
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const sensor::RangeData& range_data) {
-  const transform::Rigid3d odometry_prediction =
-      pose_estimate_ * odometry_correction_;
-  const transform::Rigid3d model_prediction = pose_estimate_;
-  // TODO(whess): Prefer IMU over odom orientation if configured?
-  const transform::Rigid3d& pose_prediction = odometry_prediction;
+  const transform::Rigid3d pose_prediction =
+      extrapolator_->ExtrapolatePose(time);
 
   // Computes the rotation without yaw, as defined by GetYaw().
   const transform::Rigid3d tracking_to_tracking_2d =
@@ -158,40 +153,15 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
     return nullptr;
   }
 
+  transform::Rigid3d pose_estimate;
   ScanMatch(time, pose_prediction, tracking_to_tracking_2d,
-            range_data_in_tracking_2d, &pose_estimate_);
-  odometry_correction_ = transform::Rigid3d::Identity();
-  if (!odometry_state_tracker_.empty()) {
-    // We add an odometry state, so that the correction from the scan matching
-    // is not removed by the next odometry data we get.
-    odometry_state_tracker_.AddOdometryState(
-        {time, odometry_state_tracker_.newest().odometer_pose,
-         odometry_state_tracker_.newest().state_pose *
-             odometry_prediction.inverse() * pose_estimate_});
-  }
-
-  // Improve the velocity estimate.
-  if (last_scan_match_time_ > common::Time::min() &&
-      time > last_scan_match_time_) {
-    const double delta_t = common::ToSeconds(time - last_scan_match_time_);
-    // This adds the observed difference in velocity that would have reduced the
-    // error to zero.
-    velocity_estimate_ += (pose_estimate_.translation().head<2>() -
-                           model_prediction.translation().head<2>()) /
-                          delta_t;
-  }
-  last_scan_match_time_ = time_;
-
-  // Remove the untracked z-component which floats around 0 in the UKF.
-  const auto translation = pose_estimate_.translation();
-  pose_estimate_ = transform::Rigid3d(
-      transform::Rigid3d::Vector(translation.x(), translation.y(), 0.),
-      pose_estimate_.rotation());
+            range_data_in_tracking_2d, &pose_estimate);
+  extrapolator_->AddPose(time, pose_estimate);
 
   const transform::Rigid3d tracking_2d_to_map =
-      pose_estimate_ * tracking_to_tracking_2d.inverse();
+      pose_estimate * tracking_to_tracking_2d.inverse();
   last_pose_estimate_ = {
-      time, pose_estimate_,
+      time, pose_estimate,
       sensor::TransformPointCloud(range_data_in_tracking_2d.returns,
                                   tracking_2d_to_map.cast<float>())};
 
@@ -223,64 +193,32 @@ LocalTrajectoryBuilder::pose_estimate() const {
 
 void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
   CHECK(options_.use_imu_data()) << "An unexpected IMU packet was added.";
-
-  InitializeImuTracker(imu_data.time);
-  Predict(imu_data.time);
-  imu_tracker_->AddImuLinearAccelerationObservation(
-      imu_data.linear_acceleration);
-  imu_tracker_->AddImuAngularVelocityObservation(imu_data.angular_velocity);
+  InitializeExtrapolator(imu_data.time);
+  extrapolator_->AddImuData(imu_data);
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
     const common::Time time, const transform::Rigid3d& odometer_pose) {
-  if (imu_tracker_ == nullptr) {
-    // Until we've initialized the IMU tracker we do not want to call Predict().
-    LOG(INFO) << "ImuTracker not yet initialized.";
+  if (extrapolator_ == nullptr) {
+    // Until we've initialized the extrapolator we cannot add odometry data.
+    LOG(INFO) << "Extrapolator not yet initialized.";
     return;
   }
-
-  Predict(time);
-  if (!odometry_state_tracker_.empty()) {
-    const auto& previous_odometry_state = odometry_state_tracker_.newest();
-    const transform::Rigid3d delta =
-        previous_odometry_state.odometer_pose.inverse() * odometer_pose;
-    const transform::Rigid3d new_pose =
-        previous_odometry_state.state_pose * delta;
-    odometry_correction_ = pose_estimate_.inverse() * new_pose;
-  }
-  odometry_state_tracker_.AddOdometryState(
-      {time, odometer_pose, pose_estimate_ * odometry_correction_});
+  extrapolator_->AddOdometryData(sensor::OdometryData{time, odometer_pose});
 }
 
-void LocalTrajectoryBuilder::InitializeImuTracker(const common::Time time) {
-  if (imu_tracker_ == nullptr) {
-    imu_tracker_ = common::make_unique<mapping::ImuTracker>(
-        options_.imu_gravity_time_constant(), time);
+void LocalTrajectoryBuilder::InitializeExtrapolator(const common::Time time) {
+  if (extrapolator_ != nullptr) {
+    return;
   }
-}
-
-void LocalTrajectoryBuilder::Predict(const common::Time time) {
-  CHECK(imu_tracker_ != nullptr);
-  CHECK_LE(time_, time);
-  const double last_yaw = transform::GetYaw(imu_tracker_->orientation());
-  imu_tracker_->Advance(time);
-  if (time_ > common::Time::min()) {
-    const double delta_t = common::ToSeconds(time - time_);
-    // Constant velocity model.
-    const Eigen::Vector3d translation =
-        pose_estimate_.translation() +
-        delta_t *
-            Eigen::Vector3d(velocity_estimate_.x(), velocity_estimate_.y(), 0.);
-    // Use the current IMU tracker roll and pitch for gravity alignment, and
-    // apply its change in yaw.
-    const Eigen::Quaterniond rotation =
-        Eigen::AngleAxisd(
-            transform::GetYaw(pose_estimate_.rotation()) - last_yaw,
-            Eigen::Vector3d::UnitZ()) *
-        imu_tracker_->orientation();
-    pose_estimate_ = transform::Rigid3d(translation, rotation);
-  }
-  time_ = time;
+  // We derive velocities from poses which are at least 1 ms apart for numerical
+  // stability. Usually poses known to the extrapolator will be further apart
+  // in time and thus the last two are used.
+  constexpr double kExtrapolationEstimationTimeSec = 0.001;
+  extrapolator_ = common::make_unique<mapping::PoseExtrapolator>(
+      ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
+      options_.imu_gravity_time_constant());
+  extrapolator_->AddPose(time, transform::Rigid3d::Identity());
 }
 
 }  // namespace mapping_2d

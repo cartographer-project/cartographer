@@ -22,6 +22,7 @@ import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_m
 import "cartographer/mapping_3d/proto/submaps_options.proto";
 import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.proto";
 
+// NEXT ID: 17
 message LocalTrajectoryBuilderOptions {
   // Rangefinder points outside these ranges will be dropped.
   optional float min_range = 1;
@@ -57,9 +58,6 @@ message LocalTrajectoryBuilderOptions {
   // 2. from integration of angular velocities (which gets worse when the
   // constant is increased) is balanced.
   optional double imu_gravity_time_constant = 15;
-
-  // Maximum number of previous odometry states to keep.
-  optional int32 num_odometry_states = 16;
 
   optional SubmapsOptions submaps_options = 8;
 }

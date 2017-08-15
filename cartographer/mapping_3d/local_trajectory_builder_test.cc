@@ -92,7 +92,6 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
           },
 
           imu_gravity_time_constant = 1.,
-          num_odometry_states = 1,
 
           submaps = {
             high_resolution = 0.2,
