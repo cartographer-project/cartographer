@@ -90,22 +90,29 @@ void PoseExtrapolator::AddOdometryData(
         odometry_data.time >= timed_pose_queue_.back().time);
   odometry_data_.push_back(odometry_data);
   TrimOdometryData();
-  if (odometry_data_.size() < 2 || timed_pose_queue_.empty()) {
+  if (odometry_data_.size() < 2) {
     return;
   }
   // TODO(whess): Improve by using more than just the last two odometry poses.
-  // TODO(whess): Use odometry to predict orientation if there is no IMU.
   // Compute extrapolation in the tracking frame.
   const sensor::OdometryData& odometry_data_older =
       odometry_data_[odometry_data_.size() - 2];
   const sensor::OdometryData& odometry_data_newer =
       odometry_data_[odometry_data_.size() - 1];
+  const double odometry_time_delta =
+      common::ToSeconds(odometry_data_older.time - odometry_data_newer.time);
+  const transform::Rigid3d odometry_pose_delta =
+      odometry_data_newer.pose.inverse() * odometry_data_older.pose;
+  angular_velocity_from_odometry_ =
+      transform::RotationQuaternionToAngleAxisVector(
+          odometry_pose_delta.rotation()) /
+      odometry_time_delta;
+  if (timed_pose_queue_.empty()) {
+    return;
+  }
   const Eigen::Vector3d
       linear_velocity_in_tracking_frame_at_newer_odometry_time =
-          (odometry_data_newer.pose.inverse() * odometry_data_older.pose)
-              .translation() /
-          common::ToSeconds(odometry_data_older.time -
-                            odometry_data_newer.time);
+          odometry_pose_delta.translation() / odometry_time_delta;
   const Eigen::Quaterniond orientation_at_newer_odometry_time =
       timed_pose_queue_.back().pose.rotation() *
       ExtrapolateRotation(odometry_data_newer.time);
@@ -171,7 +178,9 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
     // the angular velocities from poses and fake gravity to help 2D stability.
     imu_tracker->Advance(time);
     imu_tracker->AddImuLinearAccelerationObservation(Eigen::Vector3d::UnitZ());
-    imu_tracker->AddImuAngularVelocityObservation(angular_velocity_from_poses_);
+    imu_tracker->AddImuAngularVelocityObservation(
+        odometry_data_.size() < 2 ? angular_velocity_from_poses_
+                                  : angular_velocity_from_odometry_);
     return;
   }
   if (imu_tracker->time() < imu_data_.front().time) {
