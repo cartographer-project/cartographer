@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <cartographer/sensor/odometry_data.h>
+#include <cartographer/transform/transform_interpolation_buffer.h>
 
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/histogram.h"
@@ -212,21 +213,37 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // Add penalties for violating odometry
   for (size_t trajectory_id = 0; trajectory_id != odometry_data_.size();
        ++trajectory_id) {
-    for (size_t odometry_data_index = 1;
+    auto interpolationBuffer = transform::TransformInterpolationBuffer();
+    for (size_t odometry_data_index = 0;
          odometry_data_index < odometry_data_[trajectory_id].size();
          ++odometry_data_index) {
-      problem.AddResidualBlock(
-          new ceres::AutoDiffCostFunction<WarpedSpaCostFunction, 3, 3, 3, 2>(
-              new WarpedSpaCostFunction(Constraint::Pose{
-                  odometry_data_[trajectory_id][odometry_data_index - 1]
-                      .pose.inverse() *
-                  odometry_data_[trajectory_id][odometry_data_index]
-                      .pose,
-                  0.3, 30.})),
-          nullptr /* loss function */,
-          C_nodes[trajectory_id][odometry_data_index - 1].data(),
-          C_nodes[trajectory_id][odometry_data_index].data(),
-          C_odometry[trajectory_id].data());
+      interpolationBuffer.Push(
+          odometry_data_[trajectory_id][odometry_data_index].time,
+          odometry_data_[trajectory_id][odometry_data_index].pose);
+    }
+    for (size_t node_data_index = 1;
+         node_data_index < node_data_[trajectory_id].size();
+         ++node_data_index) {
+      if (interpolationBuffer.Has(
+              node_data_[trajectory_id][node_data_index].time) &&
+          interpolationBuffer.Has(
+              node_data_[trajectory_id][node_data_index - 1].time)) {
+        problem.AddResidualBlock(
+            new ceres::AutoDiffCostFunction<WarpedSpaCostFunction, 3, 3, 3, 2>(
+                new WarpedSpaCostFunction(Constraint::Pose{
+                    interpolationBuffer.Lookup(
+                        node_data_[trajectory_id][node_data_index - 1].time
+                    ).inverse() *
+                    interpolationBuffer.Lookup(
+                        node_data_[trajectory_id][node_data_index].time
+                    ),
+                    options_.consecutive_scan_translation_penalty_factor(),
+                    options_.consecutive_scan_rotation_penalty_factor()})),
+            nullptr /* loss function */,
+            C_nodes[trajectory_id][node_data_index - 1].data(),
+            C_nodes[trajectory_id][node_data_index].data(),
+            C_odometry[trajectory_id].data());
+      }
     }
   }
 
