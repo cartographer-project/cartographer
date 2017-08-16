@@ -40,7 +40,7 @@ class ThreadPool {
   ThreadPool(const ThreadPool&) = delete;
   ThreadPool& operator=(const ThreadPool&) = delete;
 
-  void Schedule(std::function<void()> work_item);
+  void Schedule(const std::function<void()>& work_item);
 
  private:
   void DoWork();

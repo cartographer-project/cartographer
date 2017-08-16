@@ -112,7 +112,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   };
 
   // Handles a new work item.
-  void AddWorkItem(std::function<void()> work_item) REQUIRES(mutex_);
+  void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.

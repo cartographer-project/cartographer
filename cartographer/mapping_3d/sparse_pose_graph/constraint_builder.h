@@ -103,7 +103,7 @@ class ConstraintBuilder {
 
   // Registers the 'callback' to be called with the results, after all
   // computations triggered by MaybeAddConstraint() have finished.
-  void WhenDone(std::function<void(const Result&)> callback);
+  void WhenDone(const std::function<void(const Result&)>& callback);
 
   // Returns the number of consecutive finished scans.
   int GetNumFinishedScans();
@@ -121,7 +121,7 @@ class ConstraintBuilder {
   void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       const mapping::SubmapId& submap_id,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const Submap* submap, std::function<void()> work_item) REQUIRES(mutex_);
+      const Submap* submap, const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Constructs the scan matcher for a 'submap', then schedules its work items.
   void ConstructSubmapScanMatcher(

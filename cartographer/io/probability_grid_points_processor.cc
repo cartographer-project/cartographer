@@ -37,9 +37,9 @@ void WriteGrid(
     }
   };
   Image image(cell_limits.num_x_cells, cell_limits.num_y_cells);
-  for (auto xy_index :
+  for (const auto& xy_index :
        cartographer::mapping_2d::XYIndexRangeIterator(cell_limits)) {
-    auto index = xy_index + offset;
+    const auto index = xy_index + offset;
     uint8 value = compute_color_value(index);
     image.SetPixel(xy_index.x(), xy_index.y(), {{value, value, value}});
   }
@@ -91,7 +91,7 @@ ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
 std::unique_ptr<ProbabilityGridPointsProcessor>
 ProbabilityGridPointsProcessor::FromDictionary(
     const std::vector<mapping::proto::Trajectory>& trajectories,
-    FileWriterFactory file_writer_factory,
+    const FileWriterFactory& file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
   const auto draw_trajectories = (!dictionary->HasKey("draw_trajectories") ||

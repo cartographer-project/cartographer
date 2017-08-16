@@ -54,7 +54,7 @@ proto::CompressedRangeData ToProto(
 CompressedRangeData FromProto(const proto::CompressedRangeData& proto);
 CompressedRangeData Compress(const RangeData& range_data);
 
-RangeData Decompress(const CompressedRangeData& compressed_range_Data);
+RangeData Decompress(const CompressedRangeData& compressed_range_data);
 
 }  // namespace sensor
 }  // namespace cartographer

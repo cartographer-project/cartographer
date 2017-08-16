@@ -50,7 +50,7 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
   for (int i = 0; i != 1000; ++i) {
     submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}});
     // Except for the first, maps should only be returned after enough scans.
-    for (auto submap : submaps.submaps()) {
+    for (const auto& submap : submaps.submaps()) {
       all_submaps.insert(submap);
     }
     if (submaps.matching_index() != 0) {
