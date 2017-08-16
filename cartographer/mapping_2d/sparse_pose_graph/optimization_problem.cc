@@ -212,20 +212,20 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // Add penalties for violating odometry
   for (size_t trajectory_id = 0; trajectory_id != odometry_data_.size();
        ++trajectory_id) {
-    for (size_t node_data_index = 1;
-         node_data_index < node_data_[trajectory_id].size();
-         ++node_data_index) {
+    for (size_t odometry_data_index = 1;
+         odometry_data_index < odometry_data_[trajectory_id].size();
+         ++odometry_data_index) {
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<WarpedSpaCostFunction, 3, 3, 3, 2>(
               new WarpedSpaCostFunction(Constraint::Pose{
-                  odometry_data_[trajectory_id][node_data_index - 1]
+                  odometry_data_[trajectory_id][odometry_data_index - 1]
                       .pose.inverse() *
-                  odometry_data_[trajectory_id][node_data_index]
+                  odometry_data_[trajectory_id][odometry_data_index]
                       .pose,
                   0.3, 30.})),
           nullptr /* loss function */,
-          C_nodes[trajectory_id][node_data_index - 1].data(),
-          C_nodes[trajectory_id][node_data_index].data(),
+          C_nodes[trajectory_id][odometry_data_index - 1].data(),
+          C_nodes[trajectory_id][odometry_data_index].data(),
           C_odometry[trajectory_id].data());
     }
   }
@@ -260,8 +260,12 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
   if (options_.log_solver_summary()) {
     LOG(INFO) << summary.FullReport();
-    LOG(INFO) << "odom scaling factor: " << C_odometry[odometry_data_.size()-1][0] << "" ;
-    LOG(INFO) << "odom rotation factor: " << C_odometry[odometry_data_.size()-1][1] << "" ;
+    if (odometry_data_.size() > 0) {
+      LOG(INFO) << "odom scaling factor: "
+                << C_odometry[odometry_data_.size() - 1][0] << "";
+      LOG(INFO) << "odom rotation factor: "
+                << C_odometry[odometry_data_.size() - 1][1] << "";
+    }
   }
 
   // Store the result.
