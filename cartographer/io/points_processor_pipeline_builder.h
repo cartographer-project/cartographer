@@ -62,7 +62,7 @@ class PointsProcessorPipelineBuilder {
 // 'builder'.
 void RegisterBuiltInPointsProcessors(
     const std::vector<mapping::proto::Trajectory>& trajectories,
-    FileWriterFactory file_writer_factory,
+    const FileWriterFactory& file_writer_factory,
     PointsProcessorPipelineBuilder* builder);
 
 }  // namespace io
