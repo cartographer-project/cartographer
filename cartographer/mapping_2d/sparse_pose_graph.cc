@@ -302,13 +302,16 @@ void SparsePoseGraph::UpdateManualConstraint(mapping::NodeId node_id,
 
 void SparsePoseGraph::InsertManualConstraint(
     const ManualConstraint manual_constraint) {
-  constraints_.push_back(Constraint{
-      mapping::SubmapId{0, 0},
-      manual_constraint.node_id,
-      {manual_constraint.pose,
-       options_.constraint_builder_options().loop_closure_translation_weight(),
-       options_.constraint_builder_options().loop_closure_rotation_weight()},
-      Constraint::MANUAL});
+  constraints_.push_back(Constraint{mapping::SubmapId{0, 0},
+                                    manual_constraint.node_id,
+                                    {manual_constraint.pose,
+                                     10 *
+                                         options_.constraint_builder_options()
+                                             .loop_closure_translation_weight(),
+                                     10 *
+                                         options_.constraint_builder_options()
+                                             .loop_closure_rotation_weight()},
+                                    Constraint::MANUAL});
 }
 
 bool SparsePoseGraph::ScheduleOrPerformManualConstraintInsertion(
