@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cartographer/sensor/odometry_data.h>
 
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/histogram.h"
@@ -66,6 +67,14 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
   imu_data_.resize(
       std::max(imu_data_.size(), static_cast<size_t>(trajectory_id) + 1));
   imu_data_[trajectory_id].push_back(imu_data);
+}
+
+void OptimizationProblem::AddOdometerData(const int trajectory_id,
+                                          const sensor::OdometryData odometry_data) {
+  CHECK_GE(trajectory_id, 0);
+  odometry_data_.resize(
+      std::max(odometry_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+  odometry_data_[trajectory_id].push_back(odometry_data);
 }
 
 void OptimizationProblem::AddTrajectoryNode(
@@ -137,6 +146,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   std::vector<std::vector<std::array<double, 3>>> C_submaps(
       submap_data_.size());
   std::vector<std::vector<std::array<double, 3>>> C_nodes(node_data_.size());
+  std::vector<std::array<double, 2>> C_odometry(odometry_data_.size());
   bool first_submap = true;
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
@@ -170,7 +180,14 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       }
     }
   }
-
+  for (size_t trajectory_id = 0; trajectory_id != odometry_data_.size();
+       ++trajectory_id) {
+    problem.AddParameterBlock(C_odometry[trajectory_id].data(), 2);
+    problem.SetParameterLowerBound(C_odometry[trajectory_id].data(), 0, 0.80);
+    problem.SetParameterUpperBound(C_odometry[trajectory_id].data(), 0, 1.20);
+    problem.SetParameterLowerBound(C_odometry[trajectory_id].data(), 1, 0.95);
+    problem.SetParameterUpperBound(C_odometry[trajectory_id].data(), 1, 1.05);
+  }
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
     problem.AddResidualBlock(
@@ -190,6 +207,27 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                 trajectory_data_.at(constraint.node_id.trajectory_id)
                     .num_trimmed_nodes)
             .data());
+  }
+
+  // Add penalties for violating odometry
+  for (size_t trajectory_id = 0; trajectory_id != odometry_data_.size();
+       ++trajectory_id) {
+    for (size_t node_data_index = 1;
+         node_data_index < node_data_[trajectory_id].size();
+         ++node_data_index) {
+      problem.AddResidualBlock(
+          new ceres::AutoDiffCostFunction<WarpedSpaCostFunction, 3, 3, 3, 2>(
+              new WarpedSpaCostFunction(Constraint::Pose{
+                  odometry_data_[trajectory_id][node_data_index - 1]
+                      .pose.inverse() *
+                  odometry_data_[trajectory_id][node_data_index]
+                      .pose,
+                  0.3, 30.})),
+          nullptr /* loss function */,
+          C_nodes[trajectory_id][node_data_index - 1].data(),
+          C_nodes[trajectory_id][node_data_index].data(),
+          C_odometry[trajectory_id].data());
+    }
   }
 
   // Add penalties for changes between consecutive scans.
@@ -222,6 +260,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
   if (options_.log_solver_summary()) {
     LOG(INFO) << summary.FullReport();
+    LOG(INFO) << "odom scaling factor: " << C_odometry[odometry_data_.size()-1][0] << "" ;
+    LOG(INFO) << "odom rotation factor: " << C_odometry[odometry_data_.size()-1][1] << "" ;
   }
 
   // Store the result.

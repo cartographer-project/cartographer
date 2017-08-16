@@ -97,6 +97,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
 
+  void AddOdometerData(const int trajectory_id,
+                       const sensor::OdometryData data);
+
  private:
   // The current state of the submap in the background threads. When this
   // transitions to kFinished, all scans are tried to match against this submap.

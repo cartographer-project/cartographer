@@ -22,6 +22,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <cartographer/sensor/odometry_data.h>
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
@@ -78,6 +79,9 @@ class OptimizationProblem {
   int num_trimmed_nodes(int trajectory_id) const;
   int num_trimmed_submaps(int trajectory_id) const;
 
+  void AddOdometerData(const int trajectory_id,
+                       const sensor::OdometryData);
+
  private:
   struct TrajectoryData {
     // TODO(hrapp): Remove, once we can relabel constraints.
@@ -87,6 +91,7 @@ class OptimizationProblem {
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   std::vector<std::deque<sensor::ImuData>> imu_data_;
   std::vector<std::deque<NodeData>> node_data_;
+  std::vector<std::deque<sensor::OdometryData>> odometry_data_;
   std::vector<std::deque<SubmapData>> submap_data_;
   std::vector<TrajectoryData> trajectory_data_;
 };
