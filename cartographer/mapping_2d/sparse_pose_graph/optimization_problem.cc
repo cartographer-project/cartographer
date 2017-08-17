@@ -75,7 +75,7 @@ void OptimizationProblem::AddOdometerData(const int trajectory_id,
   CHECK_GE(trajectory_id, 0);
   odometry_data_.resize(
       std::max(odometry_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  odometry_data_[trajectory_id].push_back(odometry_data);
+  odometry_data_[trajectory_id].Push(odometry_data.time, odometry_data.pose);
 }
 
 void OptimizationProblem::AddTrajectoryNode(
@@ -213,28 +213,20 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // Add penalties for violating odometry
   for (size_t trajectory_id = 0; trajectory_id != odometry_data_.size();
        ++trajectory_id) {
-    auto interpolationBuffer = transform::TransformInterpolationBuffer();
-    for (size_t odometry_data_index = 0;
-         odometry_data_index < odometry_data_[trajectory_id].size();
-         ++odometry_data_index) {
-      interpolationBuffer.Push(
-          odometry_data_[trajectory_id][odometry_data_index].time,
-          odometry_data_[trajectory_id][odometry_data_index].pose);
-    }
     for (size_t node_data_index = 1;
          node_data_index < node_data_[trajectory_id].size();
          ++node_data_index) {
-      if (interpolationBuffer.Has(
+      if (odometry_data_[trajectory_id].Has(
               node_data_[trajectory_id][node_data_index].time) &&
-          interpolationBuffer.Has(
+          odometry_data_[trajectory_id].Has(
               node_data_[trajectory_id][node_data_index - 1].time)) {
         problem.AddResidualBlock(
             new ceres::AutoDiffCostFunction<WarpedSpaCostFunction, 3, 3, 3, 2>(
                 new WarpedSpaCostFunction(Constraint::Pose{
-                    interpolationBuffer.Lookup(
+                    odometry_data_[trajectory_id].Lookup(
                         node_data_[trajectory_id][node_data_index - 1].time
                     ).inverse() *
-                    interpolationBuffer.Lookup(
+                        odometry_data_[trajectory_id].Lookup(
                         node_data_[trajectory_id][node_data_index].time
                     ),
                     options_.consecutive_scan_translation_penalty_factor(),

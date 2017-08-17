@@ -23,6 +23,7 @@
 #include <set>
 #include <vector>
 #include <cartographer/sensor/odometry_data.h>
+#include <cartographer/transform/transform_interpolation_buffer.h>
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
@@ -91,7 +92,7 @@ class OptimizationProblem {
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   std::vector<std::deque<sensor::ImuData>> imu_data_;
   std::vector<std::deque<NodeData>> node_data_;
-  std::vector<std::deque<sensor::OdometryData>> odometry_data_;
+  std::vector<transform::TransformInterpolationBuffer> odometry_data_;
   std::vector<std::deque<SubmapData>> submap_data_;
   std::vector<TrajectoryData> trajectory_data_;
 };
