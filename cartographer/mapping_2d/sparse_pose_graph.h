@@ -78,6 +78,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds new IMU data to be used in the optimization.
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  void AddOdometerData(const int trajectory_id,
+                       const sensor::OdometryData data);
 
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(int trajectory_id,
@@ -96,9 +98,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
       override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
-
-  void AddOdometerData(const int trajectory_id,
-                       const sensor::OdometryData data);
 
  private:
   // The current state of the submap in the background threads. When this
