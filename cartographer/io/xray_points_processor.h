@@ -58,9 +58,9 @@ class XRayPointsProcessor : public PointsProcessor {
 
  private:
   struct ColumnData {
-    double sum_r = 0.;
-    double sum_g = 0.;
-    double sum_b = 0.;
+    float sum_r = 0.;
+    float sum_g = 0.;
+    float sum_b = 0.;
     uint32_t count = 0;
   };
 

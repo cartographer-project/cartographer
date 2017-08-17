@@ -35,15 +35,15 @@ namespace {
 
 struct PixelData {
   size_t num_occupied_cells_in_column = 0;
-  double mean_r = 0.;
-  double mean_g = 0.;
-  double mean_b = 0.;
+  float mean_r = 0.;
+  float mean_g = 0.;
+  float mean_b = 0.;
 };
 
 using PixelDataMatrix =
     Eigen::Matrix<PixelData, Eigen::Dynamic, Eigen::Dynamic>;
 
-double Mix(const double a, const double b, const double t) {
+float Mix(const float a, const float b, const float t) {
   return a * (1. - t) + t * b;
 }
 
@@ -74,18 +74,10 @@ Image IntoImage(const PixelDataMatrix& mat) {
       // details like chairs and tables are still well visible.
       const float saturation =
           std::log(cell.num_occupied_cells_in_column) / max;
-      double mean_r_in_column = (cell.mean_r / 255.);
-      double mean_g_in_column = (cell.mean_g / 255.);
-      double mean_b_in_column = (cell.mean_b / 255.);
-
-      double mix_r = Mix(1., mean_r_in_column, saturation);
-      double mix_g = Mix(1., mean_g_in_column, saturation);
-      double mix_b = Mix(1., mean_b_in_column, saturation);
-
-      image.SetPixel(
-          x, y,
-          {{FloatComponentToUint8(mix_r), FloatComponentToUint8(mix_g),
-            FloatComponentToUint8(mix_b)}});
+      const FloatColor color = {{Mix(1.f, cell.mean_r, saturation),
+                                 Mix(1.f, cell.mean_g, saturation),
+                                 Mix(1.f, cell.mean_b, saturation)}};
+      image.SetPixel(x, y, ToUint8Color(color));
     }
   }
   return image;
