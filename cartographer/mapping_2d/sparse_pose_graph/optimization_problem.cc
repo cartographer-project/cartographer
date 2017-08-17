@@ -23,14 +23,14 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <cartographer/sensor/odometry_data.h>
-#include <cartographer/transform/transform_interpolation_buffer.h>
 
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping_2d/sparse_pose_graph/spa_cost_function.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/transform.h"
+#include "cartographer/transform/transform_interpolation_buffer.h"
 #include "ceres/ceres.h"
 #include "glog/logging.h"
 
@@ -70,8 +70,8 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
   imu_data_[trajectory_id].push_back(imu_data);
 }
 
-void OptimizationProblem::AddOdometerData(const int trajectory_id,
-                                          const sensor::OdometryData odometry_data) {
+void OptimizationProblem::AddOdometerData(
+    const int trajectory_id, const sensor::OdometryData odometry_data) {
   CHECK_GE(trajectory_id, 0);
   odometry_data_.resize(
       std::max(odometry_data_.size(), static_cast<size_t>(trajectory_id) + 1));
@@ -210,20 +210,20 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
          ++node_data_index) {
       if (trajectory_id < odometry_data_.size() &&
           odometry_data_[trajectory_id].Has(
-          node_data_[trajectory_id][node_data_index].time) &&
+              node_data_[trajectory_id][node_data_index].time) &&
           odometry_data_[trajectory_id].Has(
               node_data_[trajectory_id][node_data_index - 1].time)) {
         problem.AddResidualBlock(
-            new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
-                new SpaCostFunction(Constraint::Pose{
+            new ceres::AutoDiffCostFunction<
+                SpaCostFunction, 3, 3, 3>(new SpaCostFunction(Constraint::Pose{
+                odometry_data_[trajectory_id]
+                        .Lookup(
+                            node_data_[trajectory_id][node_data_index - 1].time)
+                        .inverse() *
                     odometry_data_[trajectory_id].Lookup(
-                        node_data_[trajectory_id][node_data_index - 1].time
-                    ).inverse() *
-                    odometry_data_[trajectory_id].Lookup(
-                        node_data_[trajectory_id][node_data_index].time
-                    ),
-                    options_.consecutive_scan_translation_penalty_factor(),
-                    options_.consecutive_scan_rotation_penalty_factor()})),
+                        node_data_[trajectory_id][node_data_index].time),
+                options_.consecutive_scan_translation_penalty_factor(),
+                options_.consecutive_scan_rotation_penalty_factor()})),
             nullptr /* loss function */,
             C_nodes[trajectory_id][node_data_index - 1].data(),
             C_nodes[trajectory_id][node_data_index].data());

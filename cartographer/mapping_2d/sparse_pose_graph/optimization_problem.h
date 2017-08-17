@@ -22,8 +22,6 @@
 #include <map>
 #include <set>
 #include <vector>
-#include <cartographer/sensor/odometry_data.h>
-#include <cartographer/transform/transform_interpolation_buffer.h>
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
@@ -32,6 +30,8 @@
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/odometry_data.h"
+#include "cartographer/transform/transform_interpolation_buffer.h"
 
 namespace cartographer {
 namespace mapping_2d {
@@ -80,8 +80,7 @@ class OptimizationProblem {
   int num_trimmed_nodes(int trajectory_id) const;
   int num_trimmed_submaps(int trajectory_id) const;
 
-  void AddOdometerData(const int trajectory_id,
-                       const sensor::OdometryData);
+  void AddOdometerData(const int trajectory_id, const sensor::OdometryData);
 
  private:
   struct TrajectoryData {
