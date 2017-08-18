@@ -290,12 +290,13 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       }
       LOG(INFO) << "Gravity was: "
                 << trajectory_data_[trajectory_id].gravity_constant;
+      const auto& imu_calibration =
+          trajectory_data_[trajectory_id].imu_calibration;
       LOG(INFO) << "IMU correction was: "
-                << common::RadToDeg(
-                       2. *
-                       std::acos(
-                           trajectory_data_[trajectory_id].imu_calibration[0]))
-                << " deg";
+                << common::RadToDeg(2. * std::acos(imu_calibration[0]))
+                << " deg (" << imu_calibration[0] << ", " << imu_calibration[1]
+                << ", " << imu_calibration[2] << ", " << imu_calibration[3]
+                << ")";
     }
   }
 
