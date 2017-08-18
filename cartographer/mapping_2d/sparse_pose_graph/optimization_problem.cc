@@ -208,40 +208,34 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     for (size_t node_data_index = 1;
          node_data_index < node_data_[trajectory_id].size();
          ++node_data_index) {
-      if (trajectory_id < odometry_data_.size() &&
+      bool odometry_available =
+          trajectory_id < odometry_data_.size() &&
           odometry_data_[trajectory_id].Has(
               node_data_[trajectory_id][node_data_index].time) &&
           odometry_data_[trajectory_id].Has(
-              node_data_[trajectory_id][node_data_index - 1].time)) {
-        problem.AddResidualBlock(
-            new ceres::AutoDiffCostFunction<
-                SpaCostFunction, 3, 3, 3>(new SpaCostFunction(Constraint::Pose{
-                odometry_data_[trajectory_id]
+              node_data_[trajectory_id][node_data_index - 1].time);
+      const transform::Rigid3d& relative_pose =
+          odometry_available
+              ? odometry_data_[trajectory_id]
                         .Lookup(
                             node_data_[trajectory_id][node_data_index - 1].time)
                         .inverse() *
                     odometry_data_[trajectory_id].Lookup(
-                        node_data_[trajectory_id][node_data_index].time),
-                options_.consecutive_scan_translation_penalty_factor(),
-                options_.consecutive_scan_rotation_penalty_factor()})),
-            nullptr /* loss function */,
-            C_nodes[trajectory_id][node_data_index - 1].data(),
-            C_nodes[trajectory_id][node_data_index].data());
-      } else {
-        problem.AddResidualBlock(
-            new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
-                new SpaCostFunction(Constraint::Pose{
-                    transform::Embed3D(
-                        node_data_[trajectory_id][node_data_index - 1]
-                            .initial_point_cloud_pose.inverse() *
-                        node_data_[trajectory_id][node_data_index]
-                            .initial_point_cloud_pose),
-                    options_.consecutive_scan_translation_penalty_factor(),
-                    options_.consecutive_scan_rotation_penalty_factor()})),
-            nullptr /* loss function */,
-            C_nodes[trajectory_id][node_data_index - 1].data(),
-            C_nodes[trajectory_id][node_data_index].data());
-      }
+                        node_data_[trajectory_id][node_data_index].time)
+              : transform::Embed3D(
+                    node_data_[trajectory_id][node_data_index - 1]
+                        .initial_point_cloud_pose.inverse() *
+                    node_data_[trajectory_id][node_data_index]
+                        .initial_point_cloud_pose);
+      problem.AddResidualBlock(
+          new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
+              new SpaCostFunction(Constraint::Pose{
+                  relative_pose,
+                  options_.consecutive_scan_translation_penalty_factor(),
+                  options_.consecutive_scan_rotation_penalty_factor()})),
+          nullptr /* loss function */,
+          C_nodes[trajectory_id][node_data_index - 1].data(),
+          C_nodes[trajectory_id][node_data_index].data());
     }
   }
 

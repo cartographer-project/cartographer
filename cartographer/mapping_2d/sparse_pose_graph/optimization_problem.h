@@ -61,7 +61,8 @@ class OptimizationProblem {
   OptimizationProblem& operator=(const OptimizationProblem&) = delete;
 
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
-  void AddOdometerData(const int trajectory_id, const sensor::OdometryData);
+  void AddOdometerData(int trajectory_id,
+                       const sensor::OdometryData odometry_data);
   void AddTrajectoryNode(int trajectory_id, common::Time time,
                          const transform::Rigid2d& initial_point_cloud_pose,
                          const transform::Rigid2d& point_cloud_pose);

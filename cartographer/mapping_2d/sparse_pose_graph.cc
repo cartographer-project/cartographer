@@ -165,7 +165,7 @@ void SparsePoseGraph::AddImuData(const int trajectory_id,
 }
 
 void SparsePoseGraph::AddOdometerData(
-    const int trajectory_id, const sensor::OdometryData odometry_data) {
+    const int trajectory_id, const sensor::OdometryData& odometry_data) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([=]() REQUIRES(mutex_) {
     optimization_problem_.AddOdometerData(trajectory_id, odometry_data);
