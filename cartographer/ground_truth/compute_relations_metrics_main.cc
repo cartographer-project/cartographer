@@ -119,9 +119,8 @@ void Run(const string& pose_graph_filename, const string& relations_filename,
     CHECK_EQ(pose_graph.trajectory_size(), 1)
         << "Only pose graphs containing a single trajectory are supported.";
   }
-  const auto transform_interpolation_buffer =
-      transform::TransformInterpolationBuffer::FromTrajectory(
-          pose_graph.trajectory(0));
+  const transform::TransformInterpolationBuffer transform_interpolation_buffer(
+      pose_graph.trajectory(0));
 
   proto::GroundTruth ground_truth;
   if (read_text_file_with_unix_timestamps) {
@@ -136,9 +135,9 @@ void Run(const string& pose_graph_filename, const string& relations_filename,
 
   std::vector<Error> errors;
   for (const auto& relation : ground_truth.relation()) {
-    const auto pose1 = transform_interpolation_buffer->Lookup(
+    const auto pose1 = transform_interpolation_buffer.Lookup(
         common::FromUniversal(relation.timestamp1()));
-    const auto pose2 = transform_interpolation_buffer->Lookup(
+    const auto pose2 = transform_interpolation_buffer.Lookup(
         common::FromUniversal(relation.timestamp2()));
     const transform::Rigid3d expected =
         transform::ToRigid3(relation.expected());
