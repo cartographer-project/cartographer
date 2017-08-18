@@ -116,6 +116,9 @@ class SparsePoseGraph {
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
+
+  // Prepares a new trajectory index and returns its index
+  virtual int NewTrajectory() = 0;
 };
 
 }  // namespace mapping

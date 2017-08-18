@@ -166,10 +166,11 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
           .pose.inverse();
 
   const transform::Rigid3d initial_relative_pose =
-      inverse_submap_pose * optimization_problem_.node_data()
-                                .at(node_id.trajectory_id)
-                                .at(node_id.node_index)
-                                .point_cloud_pose;
+      inverse_submap_pose *
+      optimization_problem_.node_data()
+          .at(node_id.trajectory_id)
+          .at(node_id.node_index)
+          .point_cloud_pose;
 
   std::vector<mapping::TrajectoryNode> submap_nodes;
   for (const mapping::NodeId& submap_node_id :
@@ -348,21 +349,19 @@ void SparsePoseGraph::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. *
-                         (constraint_builder_.GetNumFinishedScans() -
-                          num_finished_scans_at_start) /
+                  << 100. * (constraint_builder_.GetNumFinishedScans() -
+                             num_finished_scans_at_start) /
                          (num_trajectory_nodes_ - num_finished_scans_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone(
-      [this, &notification](
-          const sparse_pose_graph::ConstraintBuilder::Result& result) {
-        common::MutexLocker locker(&mutex_);
-        constraints_.insert(constraints_.end(), result.begin(), result.end());
-        notification = true;
-      });
+  constraint_builder_.WhenDone([this, &notification](
+      const sparse_pose_graph::ConstraintBuilder::Result& result) {
+    common::MutexLocker locker(&mutex_);
+    constraints_.insert(constraints_.end(), result.begin(), result.end());
+    notification = true;
+  });
   locker.Await([&notification]() { return notification; });
 }
 
@@ -564,6 +563,17 @@ mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
   return {submap, ComputeLocalToGlobalTransform(optimized_submap_transforms_,
                                                 submap_id.trajectory_id) *
                       submap->local_pose()};
+}
+
+int SparsePoseGraph::NewTrajectory() {
+  CHECK_EQ(submap_data_.num_trajectories(),
+           trajectory_nodes_.num_trajectories());
+  int new_trajectory_id = submap_data_.num_trajectories();
+  submap_data_.Resize(new_trajectory_id + 1);
+  trajectory_nodes_.Resize(new_trajectory_id + 1);
+  CHECK_EQ(submap_data_.num_trajectories(),
+           trajectory_nodes_.num_trajectories());
+  return new_trajectory_id;
 }
 
 SparsePoseGraph::TrimmingHandle::TrimmingHandle(SparsePoseGraph* const parent)
