@@ -71,7 +71,7 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
 }
 
 void OptimizationProblem::AddOdometerData(
-    const int trajectory_id, const sensor::OdometryData odometry_data) {
+    const int trajectory_id, const sensor::OdometryData& odometry_data) {
   CHECK_GE(trajectory_id, 0);
   odometry_data_.resize(
       std::max(odometry_data_.size(), static_cast<size_t>(trajectory_id) + 1));
@@ -208,7 +208,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     for (size_t node_data_index = 1;
          node_data_index < node_data_[trajectory_id].size();
          ++node_data_index) {
-      bool odometry_available =
+      const bool odometry_available =
           trajectory_id < odometry_data_.size() &&
           odometry_data_[trajectory_id].Has(
               node_data_[trajectory_id][node_data_index].time) &&
