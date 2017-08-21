@@ -214,7 +214,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
               node_data_[trajectory_id][node_data_index].time) &&
           odometry_data_[trajectory_id].Has(
               node_data_[trajectory_id][node_data_index - 1].time);
-      const transform::Rigid3d& relative_pose =
+      const transform::Rigid3d relative_pose =
           odometry_available
               ? odometry_data_[trajectory_id]
                         .Lookup(
