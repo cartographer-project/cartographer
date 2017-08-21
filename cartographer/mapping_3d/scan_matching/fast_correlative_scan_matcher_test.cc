@@ -103,13 +103,16 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
     float rotational_score = 0.f;
     EXPECT_TRUE(fast_correlative_scan_matcher.Match(
         transform::Rigid3d::Identity(), point_cloud, point_cloud, kMinScore,
-        &score, &pose_estimate, &rotational_score));
+        [](const transform::Rigid3f&){return true;}, &score, &pose_estimate, &rotational_score));
     EXPECT_LT(kMinScore, score);
     EXPECT_LT(0.09f, rotational_score);
     EXPECT_THAT(expected_pose,
                 transform::IsNearly(pose_estimate.cast<float>(), 0.05f))
         << "Actual: " << transform::ToProto(pose_estimate).DebugString()
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
+    EXPECT_FALSE(fast_correlative_scan_matcher.Match(
+                transform::Rigid3d::Identity(), point_cloud, point_cloud, kMinScore,
+                [](const transform::Rigid3f&){return false;}, &score, &pose_estimate, &rotational_score));
   }
 }
 

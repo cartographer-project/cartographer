@@ -29,6 +29,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
+#include "cartographer/mapping_3d/scan_matching/low_resolution_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
 #include "cartographer/transform/transform.h"
@@ -179,12 +180,19 @@ void ConstraintBuilder::ComputeConstraint(
   const sensor::PointCloud point_cloud = compressed_point_cloud->Decompress();
   const sensor::PointCloud high_resolution_point_cloud =
       high_resolution_adaptive_voxel_filter_.Filter(point_cloud);
+  const sensor::PointCloud low_resolution_point_cloud =
+      low_resolution_adaptive_voxel_filter_.Filter(point_cloud);
+
   // The 'constraint_transform' (submap i <- scan j) is computed from:
   // - a 'high_resolution_point_cloud' in scan j and
   // - the initial guess 'initial_pose' (submap i <- scan j).
   float score = 0.f;
   transform::Rigid3d pose_estimate;
   float rotational_score = 0.f;
+
+  const auto low_resolution_matcher = scan_matching::CreateLowResolutionMatcher(
+      submap_scan_matcher->low_resolution_hybrid_grid,
+      &low_resolution_point_cloud, options_.min_low_resolution_score());
 
   // Compute 'pose_estimate' in three stages:
   // 1. Fast estimate using the fast correlative scan matcher.
@@ -193,8 +201,8 @@ void ConstraintBuilder::ComputeConstraint(
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             initial_pose.rotation(), high_resolution_point_cloud, point_cloud,
-            options_.global_localization_min_score(), &score, &pose_estimate,
-            &rotational_score)) {
+            options_.global_localization_min_score(), low_resolution_matcher,
+            &score, &pose_estimate, &rotational_score)) {
       CHECK_GT(score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
       CHECK_GE(submap_id.trajectory_id, 0);
@@ -206,7 +214,8 @@ void ConstraintBuilder::ComputeConstraint(
   } else {
     if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
             initial_pose, high_resolution_point_cloud, point_cloud,
-            options_.min_score(), &score, &pose_estimate, &rotational_score)) {
+            options_.min_score(), low_resolution_matcher, &score,
+            &pose_estimate, &rotational_score)) {
       // We've reported a successful local match.
       CHECK_GT(score, options_.min_score());
     } else {
@@ -222,9 +231,6 @@ void ConstraintBuilder::ComputeConstraint(
   // Use the CSM estimate as both the initial and previous pose. This has the
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
-  const sensor::PointCloud low_resolution_point_cloud =
-      low_resolution_adaptive_voxel_filter_.Filter(point_cloud);
-
   ceres::Solver::Summary unused_summary;
   transform::Rigid3d constraint_transform;
   ceres_scan_matcher_.Match(pose_estimate, pose_estimate,
