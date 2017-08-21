@@ -164,6 +164,14 @@ void SparsePoseGraph::AddImuData(const int trajectory_id,
   });
 }
 
+void SparsePoseGraph::AddOdometerData(
+    const int trajectory_id, const sensor::OdometryData& odometry_data) {
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([=]() REQUIRES(mutex_) {
+    optimization_problem_.AddOdometerData(trajectory_id, odometry_data);
+  });
+}
+
 void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
                                         const mapping::SubmapId& submap_id) {
   CHECK(submap_data_.at(submap_id).state == SubmapState::kFinished);
