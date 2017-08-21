@@ -30,6 +30,7 @@ message ConstraintBuilderOptions {
   // Threshold for poses to be considered near a submap.
   optional double max_constraint_distance = 2;
 
+  // This is only used for 2D.
   // Voxel filter used to compute a sparser point cloud for matching.
   optional sensor.proto.AdaptiveVoxelFilterOptions
       adaptive_voxel_filter_options = 3;
@@ -60,7 +61,7 @@ message ConstraintBuilderOptions {
   optional mapping_3d.scan_matching.proto.FastCorrelativeScanMatcherOptions
       fast_correlative_scan_matcher_options_3d = 10;
 
-  // Voxel filter used for high resolution, 3D loop closure refinement.
+  // Voxel filter used for high resolution, only used for 3D loop closure.
   optional sensor.proto.AdaptiveVoxelFilterOptions
       high_resolution_adaptive_voxel_filter_options = 15;
 

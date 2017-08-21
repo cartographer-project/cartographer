@@ -183,7 +183,8 @@ class ConstraintBuilder {
       submap_queued_work_items_ GUARDED_BY(mutex_);
 
   common::FixedRatioSampler sampler_;
-  const sensor::AdaptiveVoxelFilter adaptive_voxel_filter_;
+  const sensor::AdaptiveVoxelFilter high_resolution_adaptive_voxel_filter_;
+  const sensor::AdaptiveVoxelFilter low_resolution_adaptive_voxel_filter_;
   scan_matching::CeresScanMatcher ceres_scan_matcher_;
 
   // Histograms of scan matcher scores.

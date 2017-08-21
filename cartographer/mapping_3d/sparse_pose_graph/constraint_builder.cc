@@ -44,7 +44,10 @@ ConstraintBuilder::ConstraintBuilder(
     : options_(options),
       thread_pool_(thread_pool),
       sampler_(options.sampling_ratio()),
-      adaptive_voxel_filter_(options.adaptive_voxel_filter_options()),
+      high_resolution_adaptive_voxel_filter_(
+          options.high_resolution_adaptive_voxel_filter_options()),
+      low_resolution_adaptive_voxel_filter_(
+          options.low_resolution_adaptive_voxel_filter_options()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options_3d()) {}
 
 ConstraintBuilder::~ConstraintBuilder() {
@@ -175,11 +178,10 @@ void ConstraintBuilder::ComputeConstraint(
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_id);
   const sensor::PointCloud point_cloud = compressed_point_cloud->Decompress();
-  const sensor::PointCloud filtered_point_cloud =
-      adaptive_voxel_filter_.Filter(point_cloud);
-
+  const sensor::PointCloud high_resolution_point_cloud =
+      high_resolution_adaptive_voxel_filter_.Filter(point_cloud);
   // The 'constraint_transform' (submap i <- scan j) is computed from:
-  // - a 'filtered_point_cloud' in scan j and
+  // - a 'high_resolution_point_cloud' in scan j and
   // - the initial guess 'initial_pose' (submap i <- scan j).
   float score = 0.f;
   transform::Rigid3d pose_estimate;
@@ -191,7 +193,7 @@ void ConstraintBuilder::ComputeConstraint(
   // 3. Refine.
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
-            initial_pose.rotation(), filtered_point_cloud, point_cloud,
+            initial_pose.rotation(), high_resolution_point_cloud, point_cloud,
             options_.global_localization_min_score(), &score, &pose_estimate,
             &rotational_score)) {
       CHECK_GT(score, options_.global_localization_min_score());
@@ -204,7 +206,7 @@ void ConstraintBuilder::ComputeConstraint(
     }
   } else {
     if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
-            initial_pose, filtered_point_cloud, point_cloud,
+            initial_pose, high_resolution_point_cloud, point_cloud,
             options_.min_score(), &score, &pose_estimate, &rotational_score)) {
       // We've reported a successful local match.
       CHECK_GT(score, options_.min_score());
@@ -221,14 +223,8 @@ void ConstraintBuilder::ComputeConstraint(
   // Use the CSM estimate as both the initial and previous pose. This has the
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
-  sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
-      options_.high_resolution_adaptive_voxel_filter_options());
-  const sensor::PointCloud high_resolution_point_cloud =
-      adaptive_voxel_filter.Filter(point_cloud);
-  sensor::AdaptiveVoxelFilter low_resolution_adaptive_voxel_filter(
-      options_.low_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud low_resolution_point_cloud =
-      low_resolution_adaptive_voxel_filter.Filter(point_cloud);
+      low_resolution_adaptive_voxel_filter_.Filter(point_cloud);
 
   ceres::Solver::Summary unused_summary;
   transform::Rigid3d constraint_transform;
@@ -248,7 +244,7 @@ void ConstraintBuilder::ComputeConstraint(
 
   if (options_.log_matches()) {
     std::ostringstream info;
-    info << "Node " << node_id << " with " << filtered_point_cloud.size()
+    info << "Node " << node_id << " with " << high_resolution_point_cloud.size()
          << " points on submap " << submap_id << std::fixed;
     if (match_full_submap) {
       info << " matches";
