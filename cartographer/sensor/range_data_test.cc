@@ -26,7 +26,6 @@ namespace sensor {
 namespace {
 
 using ::testing::Contains;
-using ::testing::PrintToString;
 
 MATCHER(NearPointwise, std::string(negation ? "Doesn't" : "Does") + " match.") {
   return std::get<0>(arg).isApprox(std::get<1>(arg), 0.001f);

@@ -111,7 +111,7 @@ void ConstraintBuilder::NotifyEndOfScan() {
 }
 
 void ConstraintBuilder::WhenDone(
-    const std::function<void(const ConstraintBuilder::Result&)> callback) {
+    const std::function<void(const ConstraintBuilder::Result&)>& callback) {
   common::MutexLocker locker(&mutex_);
   CHECK(when_done_ == nullptr);
   when_done_ =
@@ -124,7 +124,7 @@ void ConstraintBuilder::WhenDone(
 
 void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
     const mapping::SubmapId& submap_id, const ProbabilityGrid* const submap,
-    const std::function<void()> work_item) {
+    const std::function<void()>& work_item) {
   if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
       nullptr) {
     thread_pool_->Schedule(work_item);

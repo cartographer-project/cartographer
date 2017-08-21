@@ -174,7 +174,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   // Querying the active submaps must be done here before calling
   // InsertRangeData() since the queried values are valid for next insertion.
   std::vector<std::shared_ptr<const Submap>> insertion_submaps;
-  for (std::shared_ptr<Submap> submap : active_submaps_.submaps()) {
+  for (const std::shared_ptr<Submap>& submap : active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
   active_submaps_.InsertRangeData(

@@ -28,7 +28,7 @@ HybridGridPointsProcessor::HybridGridPointsProcessor(
 
 std::unique_ptr<HybridGridPointsProcessor>
 HybridGridPointsProcessor::FromDictionary(
-    FileWriterFactory file_writer_factory,
+    const FileWriterFactory& file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
   return common::make_unique<HybridGridPointsProcessor>(

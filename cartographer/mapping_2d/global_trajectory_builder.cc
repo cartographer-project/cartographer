@@ -41,7 +41,7 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
       insertion_result->time, insertion_result->tracking_to_tracking_2d,
       insertion_result->range_data_in_tracking_2d,
       insertion_result->pose_estimate_2d, trajectory_id_,
-      std::move(insertion_result->insertion_submaps));
+      insertion_result->insertion_submaps);
 }
 
 void GlobalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {

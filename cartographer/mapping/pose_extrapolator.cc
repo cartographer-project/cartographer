@@ -30,6 +30,25 @@ PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
     : pose_queue_duration_(pose_queue_duration),
       gravity_time_constant_(gravity_time_constant) {}
 
+std::unique_ptr<PoseExtrapolator> PoseExtrapolator::InitializeWithImu(
+    const common::Duration pose_queue_duration,
+    const double imu_gravity_time_constant, const sensor::ImuData& imu_data) {
+  auto extrapolator = common::make_unique<PoseExtrapolator>(
+      pose_queue_duration, imu_gravity_time_constant);
+  extrapolator->AddImuData(imu_data);
+  extrapolator->imu_tracker_ =
+      common::make_unique<ImuTracker>(imu_gravity_time_constant, imu_data.time);
+  extrapolator->imu_tracker_->AddImuLinearAccelerationObservation(
+      imu_data.linear_acceleration);
+  extrapolator->imu_tracker_->AddImuAngularVelocityObservation(
+      imu_data.angular_velocity);
+  extrapolator->imu_tracker_->Advance(imu_data.time);
+  extrapolator->AddPose(
+      imu_data.time,
+      transform::Rigid3d::Rotation(extrapolator->imu_tracker_->orientation()));
+  return extrapolator;
+}
+
 common::Time PoseExtrapolator::GetLastPoseTime() const {
   if (timed_pose_queue_.empty()) {
     return common::Time::min();
@@ -71,22 +90,29 @@ void PoseExtrapolator::AddOdometryData(
         odometry_data.time >= timed_pose_queue_.back().time);
   odometry_data_.push_back(odometry_data);
   TrimOdometryData();
-  if (odometry_data_.size() < 2 || timed_pose_queue_.empty()) {
+  if (odometry_data_.size() < 2) {
     return;
   }
   // TODO(whess): Improve by using more than just the last two odometry poses.
-  // TODO(whess): Use odometry to predict orientation if there is no IMU.
   // Compute extrapolation in the tracking frame.
   const sensor::OdometryData& odometry_data_older =
       odometry_data_[odometry_data_.size() - 2];
   const sensor::OdometryData& odometry_data_newer =
       odometry_data_[odometry_data_.size() - 1];
+  const double odometry_time_delta =
+      common::ToSeconds(odometry_data_older.time - odometry_data_newer.time);
+  const transform::Rigid3d odometry_pose_delta =
+      odometry_data_newer.pose.inverse() * odometry_data_older.pose;
+  angular_velocity_from_odometry_ =
+      transform::RotationQuaternionToAngleAxisVector(
+          odometry_pose_delta.rotation()) /
+      odometry_time_delta;
+  if (timed_pose_queue_.empty()) {
+    return;
+  }
   const Eigen::Vector3d
       linear_velocity_in_tracking_frame_at_newer_odometry_time =
-          (odometry_data_newer.pose.inverse() * odometry_data_older.pose)
-              .translation() /
-          common::ToSeconds(odometry_data_older.time -
-                            odometry_data_newer.time);
+          odometry_pose_delta.translation() / odometry_time_delta;
   const Eigen::Quaterniond orientation_at_newer_odometry_time =
       timed_pose_queue_.back().pose.rotation() *
       ExtrapolateRotation(odometry_data_newer.time);
@@ -152,7 +178,9 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
     // the angular velocities from poses and fake gravity to help 2D stability.
     imu_tracker->Advance(time);
     imu_tracker->AddImuLinearAccelerationObservation(Eigen::Vector3d::UnitZ());
-    imu_tracker->AddImuAngularVelocityObservation(angular_velocity_from_poses_);
+    imu_tracker->AddImuAngularVelocityObservation(
+        odometry_data_.size() < 2 ? angular_velocity_from_poses_
+                                  : angular_velocity_from_odometry_);
     return;
   }
   if (imu_tracker->time() < imu_data_.front().time) {

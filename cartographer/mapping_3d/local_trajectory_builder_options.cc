@@ -59,9 +59,6 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
       parameter_dictionary->GetDictionary("motion_filter").get());
   options.set_imu_gravity_time_constant(
       parameter_dictionary->GetDouble("imu_gravity_time_constant"));
-  options.set_num_odometry_states(
-      parameter_dictionary->GetNonNegativeInt("num_odometry_states"));
-  CHECK_GT(options.num_odometry_states(), 0);
   *options.mutable_submaps_options() = mapping_3d::CreateSubmapsOptions(
       parameter_dictionary->GetDictionary("submaps").get());
   return options;

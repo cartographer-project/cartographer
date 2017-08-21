@@ -21,8 +21,7 @@
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
-#include "cartographer/mapping/imu_tracker.h"
-#include "cartographer/mapping/odometry_state_tracker.h"
+#include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/mapping_3d/motion_filter.h"
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
@@ -64,8 +63,6 @@ class LocalTrajectoryBuilder {
   const PoseEstimate& pose_estimate() const;
 
  private:
-  void Predict(common::Time time);
-
   std::unique_ptr<InsertionResult> AddAccumulatedRangeData(
       common::Time time, const sensor::RangeData& range_data_in_tracking);
 
@@ -83,17 +80,7 @@ class LocalTrajectoryBuilder {
       real_time_correlative_scan_matcher_;
   std::unique_ptr<scan_matching::CeresScanMatcher> ceres_scan_matcher_;
 
-  // Current 'pose_estimate_' and 'velocity_estimate_' at 'time_'.
-  common::Time time_ = common::Time::min();
-  transform::Rigid3d pose_estimate_ = transform::Rigid3d::Identity();
-  Eigen::Vector3d velocity_estimate_ = Eigen::Vector3d::Zero();
-  common::Time last_scan_match_time_ = common::Time::min();
-  // This is the difference between the model (constant velocity, IMU)
-  // prediction 'pose_estimate_' and the odometry prediction. To get the
-  // odometry prediction, right-multiply this to 'pose_estimate_'.
-  transform::Rigid3d odometry_correction_ = transform::Rigid3d::Identity();
-  std::unique_ptr<mapping::ImuTracker> imu_tracker_;
-  mapping::OdometryStateTracker odometry_state_tracker_;
+  std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
 
   int num_accumulated_ = 0;
   transform::Rigid3f first_pose_estimate_ = transform::Rigid3f::Identity();

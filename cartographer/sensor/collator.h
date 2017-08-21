@@ -42,7 +42,7 @@ class Collator {
   // for each collated sensor data.
   void AddTrajectory(int trajectory_id,
                      const std::unordered_set<string>& expected_sensor_ids,
-                     Callback callback);
+                     const Callback& callback);
 
   // Marks 'trajectory_id' as finished.
   void FinishTrajectory(int trajectory_id);
