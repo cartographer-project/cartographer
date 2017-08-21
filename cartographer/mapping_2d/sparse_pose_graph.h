@@ -78,6 +78,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds new IMU data to be used in the optimization.
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  void AddOdometerData(int trajectory_id,
+                       const sensor::OdometryData& odometry_data);
 
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(int trajectory_id,

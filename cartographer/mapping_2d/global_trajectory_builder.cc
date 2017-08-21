@@ -52,6 +52,8 @@ void GlobalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
 void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
                                               const transform::Rigid3d& pose) {
   local_trajectory_builder_.AddOdometerData(time, pose);
+  sparse_pose_graph_->AddOdometerData(trajectory_id_,
+                                      sensor::OdometryData{time, pose});
 }
 
 const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate&

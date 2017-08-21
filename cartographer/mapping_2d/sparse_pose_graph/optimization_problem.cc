@@ -28,7 +28,9 @@
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping_2d/sparse_pose_graph/spa_cost_function.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/transform.h"
+#include "cartographer/transform/transform_interpolation_buffer.h"
 #include "ceres/ceres.h"
 #include "glog/logging.h"
 
@@ -66,6 +68,14 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
   imu_data_.resize(
       std::max(imu_data_.size(), static_cast<size_t>(trajectory_id) + 1));
   imu_data_[trajectory_id].push_back(imu_data);
+}
+
+void OptimizationProblem::AddOdometerData(
+    const int trajectory_id, const sensor::OdometryData& odometry_data) {
+  CHECK_GE(trajectory_id, 0);
+  odometry_data_.resize(
+      std::max(odometry_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+  odometry_data_[trajectory_id].Push(odometry_data.time, odometry_data.pose);
 }
 
 void OptimizationProblem::AddTrajectoryNode(
@@ -170,7 +180,6 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       }
     }
   }
-
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
     problem.AddResidualBlock(
@@ -192,20 +201,36 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
             .data());
   }
 
-  // Add penalties for changes between consecutive scans.
+  // Add penalties for violating odometry or changes between consecutive scans
+  // if odometry is not available.
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
     for (size_t node_data_index = 1;
          node_data_index < node_data_[trajectory_id].size();
          ++node_data_index) {
+      const bool odometry_available =
+          trajectory_id < odometry_data_.size() &&
+          odometry_data_[trajectory_id].Has(
+              node_data_[trajectory_id][node_data_index].time) &&
+          odometry_data_[trajectory_id].Has(
+              node_data_[trajectory_id][node_data_index - 1].time);
+      const transform::Rigid3d relative_pose =
+          odometry_available
+              ? odometry_data_[trajectory_id]
+                        .Lookup(
+                            node_data_[trajectory_id][node_data_index - 1].time)
+                        .inverse() *
+                    odometry_data_[trajectory_id].Lookup(
+                        node_data_[trajectory_id][node_data_index].time)
+              : transform::Embed3D(
+                    node_data_[trajectory_id][node_data_index - 1]
+                        .initial_point_cloud_pose.inverse() *
+                    node_data_[trajectory_id][node_data_index]
+                        .initial_point_cloud_pose);
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
-                  transform::Embed3D(
-                      node_data_[trajectory_id][node_data_index - 1]
-                          .initial_point_cloud_pose.inverse() *
-                      node_data_[trajectory_id][node_data_index]
-                          .initial_point_cloud_pose),
+                  relative_pose,
                   options_.consecutive_scan_translation_penalty_factor(),
                   options_.consecutive_scan_rotation_penalty_factor()})),
           nullptr /* loss function */,
