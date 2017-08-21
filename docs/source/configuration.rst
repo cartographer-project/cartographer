@@ -103,6 +103,7 @@ double max_constraint_distance
   Threshold for poses to be considered near a submap.
 
 cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
+  This is only used for 2D.
   Voxel filter used to compute a sparser point cloud for matching.
 
 double min_score
@@ -133,7 +134,7 @@ cartographer.mapping_3d.scan_matching.proto.FastCorrelativeScanMatcherOptions fa
   Not yet documented.
 
 cartographer.sensor.proto.AdaptiveVoxelFilterOptions high_resolution_adaptive_voxel_filter_options
-  Voxel filter used for high resolution, 3D loop closure refinement.
+  Voxel filter used for high resolution, only used for 3D loop closure.
 
 cartographer.sensor.proto.AdaptiveVoxelFilterOptions low_resolution_adaptive_voxel_filter_options
   Voxel filter used for low resolution, 3D loop closure refinement.
