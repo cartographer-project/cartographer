@@ -143,7 +143,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
   // Set the starting point.
   // TODO(hrapp): Move ceres data into SubmapData.
-  std::vector<std::map<const int, std::array<double, 3>>> C_submaps(
+  std::vector<std::map<int, std::array<double, 3>>> C_submaps(
       submap_data_.size());
   std::vector<std::vector<std::array<double, 3>>> C_nodes(node_data_.size());
   bool first_submap = true;
