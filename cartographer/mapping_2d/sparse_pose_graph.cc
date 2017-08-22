@@ -72,7 +72,7 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
   CHECK_EQ(2, insertion_submaps.size());
   const mapping::SubmapId last_submap_id{
       trajectory_id,
-      optimization_problem_.next_submap_index(trajectory_id) - 1};
+      submap_data.at(trajectory_id).rbegin()->first};
   if (submap_data_.at(last_submap_id).submap == insertion_submaps.front()) {
     // In this case, 'last_submap_id' is the ID of 'insertions_submaps.front()'
     // and 'insertions_submaps.back()' is new.

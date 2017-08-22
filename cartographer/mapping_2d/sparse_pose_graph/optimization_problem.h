@@ -80,7 +80,6 @@ class OptimizationProblem {
   const std::vector<std::map<int, SubmapData>>& submap_data() const;
 
   int num_trimmed_nodes(int trajectory_id) const;
-  int next_submap_index(int trajectory_id) const;
 
  private:
   struct TrajectoryData {

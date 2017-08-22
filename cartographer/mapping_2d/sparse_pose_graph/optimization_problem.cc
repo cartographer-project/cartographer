@@ -284,11 +284,6 @@ int OptimizationProblem::num_trimmed_nodes(int trajectory_id) const {
   return trajectory_data_.at(trajectory_id).num_trimmed_nodes;
 }
 
-int OptimizationProblem::next_submap_index(int trajectory_id) const {
-  return trajectory_data_.at(trajectory_id).next_submap_index;
-}
-
-
 }  // namespace sparse_pose_graph
 }  // namespace mapping_2d
 }  // namespace cartographer
