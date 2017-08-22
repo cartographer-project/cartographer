@@ -135,14 +135,14 @@ class ConstraintBuilder {
       const mapping::SubmapId& submap_id) EXCLUDES(mutex_);
 
   // Runs in a background thread and does computations for an additional
-  // constraint, assuming 'submap' and 'point_cloud' do not change anymore.
+  // constraint.
   // If 'match_full_submap' is true, and global localization succeeds, will
   // connect 'node_id.trajectory_id' and 'submap_id.trajectory_id' in
   // 'trajectory_connectivity'.
   // As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
-      const mapping::SubmapId& submap_id, const Submap* submap,
-      const mapping::NodeId& node_id, bool match_full_submap,
+      const mapping::SubmapId& submap_id, const mapping::NodeId& node_id,
+      bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
       const sensor::CompressedPointCloud* compressed_point_cloud,
       const transform::Rigid3d& initial_pose,
