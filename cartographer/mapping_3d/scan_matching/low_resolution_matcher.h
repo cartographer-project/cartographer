@@ -17,7 +17,6 @@
 #ifndef CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_LOW_RESOLUTION_MATCHER_H_
 #define CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_LOW_RESOLUTION_MATCHER_H_
 
-#include <cmath>
 #include <functional>
 
 #include "cartographer/mapping_3d/hybrid_grid.h"

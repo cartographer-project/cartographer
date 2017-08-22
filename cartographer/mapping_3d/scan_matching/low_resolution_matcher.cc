@@ -30,7 +30,6 @@ float EvaluateLowResolutionScore(const HybridGrid& low_resolution_grid,
     score += low_resolution_grid.GetProbability(
         low_resolution_grid.GetCellIndex(point));
   }
-
   return score / points.size();
 }
 
@@ -38,7 +37,7 @@ float EvaluateLowResolutionScore(const HybridGrid& low_resolution_grid,
 
 std::function<bool(const transform::Rigid3f&)> CreateLowResolutionMatcher(
     const HybridGrid* low_resolution_grid, const sensor::PointCloud* points,
-    float min_low_resolution_score) {
+    const float min_low_resolution_score) {
   return [=](const transform::Rigid3f& pose) {
     return EvaluateLowResolutionScore(
                *low_resolution_grid,
