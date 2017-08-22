@@ -434,14 +434,7 @@ void SparsePoseGraph::RunOptimization() {
   optimization_problem_.Solve(constraints_, frozen_trajectories_);
   common::MutexLocker locker(&mutex_);
 
-  std::vector<int> next_submap_index;
   const auto& submap_data = optimization_problem_.submap_data();
-  for (int trajectory_id = 0;
-       trajectory_id != static_cast<int>(submap_data.size()); ++trajectory_id) {
-    next_submap_index.push_back(
-        optimization_problem_.next_submap_index(trajectory_id));
-  }
-
   const auto& node_data = optimization_problem_.node_data();
   for (int trajectory_id = 0;
        trajectory_id != static_cast<int>(node_data.size()); ++trajectory_id) {
