@@ -117,19 +117,14 @@ void OptimizationProblem::AddSubmap(const int trajectory_id,
 
   auto& trajectory_data = trajectory_data_.at(trajectory_id);
   submap_data_[trajectory_id].emplace(
-      submap_data_[trajectory_id].size() + trajectory_data.num_trimmed_submaps,
+      trajectory_data.next_submap_index++,
       SubmapData{submap_pose});
 }
 
 void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {
-  auto& trajectory_data = trajectory_data_.at(submap_id.trajectory_id);
-  // We only allow trimming from the start.
-  CHECK_EQ(trajectory_data.num_trimmed_submaps, submap_id.submap_index);
   auto& submap_data = submap_data_.at(submap_id.trajectory_id);
-
   CHECK(submap_data.find(submap_id.submap_index) != submap_data.end());
-  submap_data.erase(submap_id.submap_index);
-  ++trajectory_data.num_trimmed_submaps;
+  CHECK(submap_data.erase(submap_id.submap_index));
 }
 
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
@@ -149,7 +144,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
   // Set the starting point.
   // TODO(hrapp): Move ceres data into SubmapData.
-  std::vector<std::map<const int, std::array<double, 3>>> C_submaps(
+  std::vector<std::map<int, std::array<double, 3>>> C_submaps(
       submap_data_.size());
   std::vector<std::vector<std::array<double, 3>>> C_nodes(node_data_.size());
   bool first_submap = true;
@@ -158,12 +153,11 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     const bool frozen = frozen_trajectories.count(trajectory_id);
     // Reserve guarantees that data does not move, so the pointers for Ceres
     // stay valid.
-    // C_submaps[trajectory_id].reserve(submap_data_[trajectory_id].size());
-    for (auto& it : submap_data_[trajectory_id]) {
-      const int submap_index = it.first;
-      const SubmapData& submap_data = it.second;
+    for (const auto& index_submap_data : submap_data_[trajectory_id]) {
+      const int submap_index = index_submap_data.first;
+      const SubmapData& submap_data = index_submap_data.second;
 
-      C_submaps[trajectory_id].insert(
+      C_submaps[trajectory_id].emplace(
           std::pair<const int, std::array<double, 3>>(
               submap_index, FromPose(submap_data.pose)));
       problem.AddParameterBlock(
@@ -260,9 +254,9 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // Store the result.
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
-    for (auto& it : submap_data_[trajectory_id]) {
-      submap_data_[trajectory_id][it.first].pose =
-          ToPose(C_submaps[trajectory_id][it.first]);
+    for (auto& index_submap_data : submap_data_[trajectory_id]) {
+      index_submap_data.second.pose =
+          ToPose(C_submaps[trajectory_id].at(index_submap_data.first));
     }
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
@@ -290,9 +284,10 @@ int OptimizationProblem::num_trimmed_nodes(int trajectory_id) const {
   return trajectory_data_.at(trajectory_id).num_trimmed_nodes;
 }
 
-int OptimizationProblem::num_trimmed_submaps(int trajectory_id) const {
-  return trajectory_data_.at(trajectory_id).num_trimmed_submaps;
+int OptimizationProblem::next_submap_index(int trajectory_id) const {
+  return trajectory_data_.at(trajectory_id).next_submap_index;
 }
+
 
 }  // namespace sparse_pose_graph
 }  // namespace mapping_2d

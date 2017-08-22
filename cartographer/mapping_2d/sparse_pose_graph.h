@@ -157,8 +157,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   transform::Rigid3d ComputeLocalToGlobalTransform(
       const std::vector<std::map<int, sparse_pose_graph::SubmapData>>&
           submap_transforms,
-      const std::vector<int>& num_trimmed_submaps, int trajectory_id) const
-      REQUIRES(mutex_);
+      int trajectory_id) const REQUIRES(mutex_);
 
   mapping::SparsePoseGraph::SubmapData GetSubmapDataUnderLock(
       const mapping::SubmapId& submap_id) REQUIRES(mutex_);
@@ -205,7 +204,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Current submap transforms used for displaying data.
-  std::vector<int> num_trimmed_submaps_at_last_optimization_ GUARDED_BY(mutex_);
   std::vector<std::map<int, sparse_pose_graph::SubmapData>>
       optimized_submap_transforms_ GUARDED_BY(mutex_);
 

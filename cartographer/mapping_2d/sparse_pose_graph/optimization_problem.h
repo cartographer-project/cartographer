@@ -80,13 +80,13 @@ class OptimizationProblem {
   const std::vector<std::map<int, SubmapData>>& submap_data() const;
 
   int num_trimmed_nodes(int trajectory_id) const;
-  int num_trimmed_submaps(int trajectory_id) const;
+  int next_submap_index(int trajectory_id) const;
 
  private:
   struct TrajectoryData {
     // TODO(hrapp): Remove, once we can relabel constraints.
+    int next_submap_index = 0;
     int num_trimmed_nodes = 0;
-    int num_trimmed_submaps = 0;
   };
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   std::vector<std::deque<sensor::ImuData>> imu_data_;
