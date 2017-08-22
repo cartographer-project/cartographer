@@ -150,8 +150,6 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
     const bool frozen = frozen_trajectories.count(trajectory_id);
-    // Reserve guarantees that data does not move, so the pointers for Ceres
-    // stay valid.
     for (const auto& index_submap_data : submap_data_[trajectory_id]) {
       const int submap_index = index_submap_data.first;
       const SubmapData& submap_data = index_submap_data.second;
