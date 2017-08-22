@@ -96,6 +96,7 @@ cartographer.mapping.sparse_pose_graph.proto.ConstraintBuilderOptions
 =====================================================================
 
 double sampling_ratio
+  Next ID: 18
   A constraint will be added if the proportion of added constraints to
   potential constraints drops below this number.
 
@@ -109,6 +110,10 @@ cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_optio
 double min_score
   Threshold for the scan match score below which a match is not considered.
   Low scores indicate that the scan and map do not look similar.
+
+double min_low_resolution_score
+  Threshold for the score of the low resolution grid below which a match is
+  not considered. Only used for 3D.
 
 double global_localization_min_score
   Threshold below which global localizations are not trusted.

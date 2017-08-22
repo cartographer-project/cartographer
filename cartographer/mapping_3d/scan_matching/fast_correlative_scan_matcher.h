@@ -112,7 +112,7 @@ class FastCorrelativeScanMatcher {
     const int linear_xy_window_size;     // voxels
     const int linear_z_window_size;      // voxels
     const double angular_search_window;  // radians
-    const MatchingFunction* matching_function;
+    const MatchingFunction* const matching_function;
   };
 
   bool MatchWithSearchParameters(

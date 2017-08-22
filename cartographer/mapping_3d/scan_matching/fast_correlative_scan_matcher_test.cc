@@ -22,6 +22,7 @@
 #include <string>
 
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
+#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping_3d/range_data_inserter.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
@@ -100,18 +101,20 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
         &hybrid_grid);
     hybrid_grid.FinishUpdate();
 
-    return std::unique_ptr<FastCorrelativeScanMatcher>(
-        new FastCorrelativeScanMatcher(hybrid_grid, {}, options));
+    return common::make_unique<FastCorrelativeScanMatcher>(
+        hybrid_grid, std::vector<mapping::TrajectoryNode>(), options);
   }
 
   std::mt19937 prng_ = std::mt19937(42);
   std::uniform_real_distribution<float> distribution_ =
       std::uniform_real_distribution<float>(-1.f, 1.f);
   RangeDataInserter range_data_inserter_;
-  const float kMinScore_ = 0.1f;
+  static constexpr float kMinScore = 0.1f;
   const proto::FastCorrelativeScanMatcherOptions options_;
   sensor::PointCloud point_cloud_;
 };
+
+constexpr float FastCorrelativeScanMatcherTest::kMinScore;
 
 TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
   for (int i = 0; i != 20; ++i) {
@@ -124,17 +127,17 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
     transform::Rigid3d pose_estimate;
     float rotational_score = 0.f;
     EXPECT_TRUE(fast_correlative_scan_matcher->Match(
-        transform::Rigid3d::Identity(), point_cloud_, point_cloud_, kMinScore_,
+        transform::Rigid3d::Identity(), point_cloud_, point_cloud_, kMinScore,
         [](const transform::Rigid3f&) { return true; }, &score, &pose_estimate,
         &rotational_score));
-    EXPECT_LT(kMinScore_, score);
+    EXPECT_LT(kMinScore, score);
     EXPECT_LT(0.09f, rotational_score);
     EXPECT_THAT(expected_pose,
                 transform::IsNearly(pose_estimate.cast<float>(), 0.05f))
         << "Actual: " << transform::ToProto(pose_estimate).DebugString()
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
     EXPECT_FALSE(fast_correlative_scan_matcher->Match(
-        transform::Rigid3d::Identity(), point_cloud_, point_cloud_, kMinScore_,
+        transform::Rigid3d::Identity(), point_cloud_, point_cloud_, kMinScore,
         [](const transform::Rigid3f&) { return false; }, &score, &pose_estimate,
         &rotational_score));
   }
@@ -150,17 +153,17 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
   transform::Rigid3d pose_estimate;
   float rotational_score = 0.f;
   EXPECT_TRUE(fast_correlative_scan_matcher->MatchFullSubmap(
-      Eigen::Quaterniond::Identity(), point_cloud_, point_cloud_, kMinScore_,
+      Eigen::Quaterniond::Identity(), point_cloud_, point_cloud_, kMinScore,
       [](const transform::Rigid3f&) { return true; }, &score, &pose_estimate,
       &rotational_score));
-  EXPECT_LT(kMinScore_, score);
+  EXPECT_LT(kMinScore, score);
   EXPECT_LT(0.09f, rotational_score);
   EXPECT_THAT(expected_pose,
               transform::IsNearly(pose_estimate.cast<float>(), 0.05f))
       << "Actual: " << transform::ToProto(pose_estimate).DebugString()
       << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
   EXPECT_FALSE(fast_correlative_scan_matcher->MatchFullSubmap(
-      Eigen::Quaterniond::Identity(), point_cloud_, point_cloud_, kMinScore_,
+      Eigen::Quaterniond::Identity(), point_cloud_, point_cloud_, kMinScore,
       [](const transform::Rigid3f&) { return false; }, &score, &pose_estimate,
       &rotational_score));
 }
