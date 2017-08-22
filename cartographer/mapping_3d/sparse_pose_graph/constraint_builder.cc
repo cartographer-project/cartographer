@@ -75,8 +75,7 @@ void ConstraintBuilder::MaybeAddConstraint(
     const int current_computation = current_computation_;
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
-          ComputeConstraint(submap_id, submap, node_id,
-                            false,   /* match_full_submap */
+          ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
                             nullptr, /* trajectory_connectivity */
                             compressed_point_cloud, initial_pose, constraint);
           FinishComputation(current_computation);
@@ -98,10 +97,10 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   const int current_computation = current_computation_;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
-        ComputeConstraint(
-            submap_id, submap, node_id, true, /* match_full_submap */
-            trajectory_connectivity, compressed_point_cloud,
-            transform::Rigid3d::Rotation(gravity_alignment), constraint);
+        ComputeConstraint(submap_id, node_id, true, /* match_full_submap */
+                          trajectory_connectivity, compressed_point_cloud,
+                          transform::Rigid3d::Rotation(gravity_alignment),
+                          constraint);
         FinishComputation(current_computation);
       });
 }
@@ -169,8 +168,8 @@ ConstraintBuilder::GetSubmapScanMatcher(const mapping::SubmapId& submap_id) {
 }
 
 void ConstraintBuilder::ComputeConstraint(
-    const mapping::SubmapId& submap_id, const Submap* const submap,
-    const mapping::NodeId& node_id, bool match_full_submap,
+    const mapping::SubmapId& submap_id, const mapping::NodeId& node_id,
+    bool match_full_submap,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
     const sensor::CompressedPointCloud* const compressed_point_cloud,
     const transform::Rigid3d& initial_pose,
