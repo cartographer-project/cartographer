@@ -116,14 +116,13 @@ void OptimizationProblem::AddSubmap(const int trajectory_id,
       std::max(trajectory_data_.size(), submap_data_.size()));
 
   auto& trajectory_data = trajectory_data_.at(trajectory_id);
-  submap_data_[trajectory_id].emplace(
-      trajectory_data.next_submap_index++,
-      SubmapData{submap_pose});
+  submap_data_[trajectory_id].emplace(trajectory_data.next_submap_index,
+                                      SubmapData{submap_pose});
+  ++trajectory_data.next_submap_index;
 }
 
 void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {
   auto& submap_data = submap_data_.at(submap_id.trajectory_id);
-  CHECK(submap_data.find(submap_id.submap_index) != submap_data.end());
   CHECK(submap_data.erase(submap_id.submap_index));
 }
 
@@ -158,8 +157,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       const SubmapData& submap_data = index_submap_data.second;
 
       C_submaps[trajectory_id].emplace(
-          std::pair<const int, std::array<double, 3>>(
-              submap_index, FromPose(submap_data.pose)));
+              submap_index, FromPose(submap_data.pose));
       problem.AddParameterBlock(
           C_submaps[trajectory_id].at(submap_index).data(), 3);
       if (first_submap || frozen) {
