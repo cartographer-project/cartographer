@@ -23,6 +23,7 @@ import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.p
 import "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.proto";
 
 message ConstraintBuilderOptions {
+  // Next ID: 18
   // A constraint will be added if the proportion of added constraints to
   // potential constraints drops below this number.
   optional double sampling_ratio = 1;
@@ -38,6 +39,10 @@ message ConstraintBuilderOptions {
   // Threshold for the scan match score below which a match is not considered.
   // Low scores indicate that the scan and map do not look similar.
   optional double min_score = 4;
+
+  // Threshold for the score of the low resolution grid below which a match is
+  // not considered. Only used for 3D.
+  optional double min_low_resolution_score = 17;
 
   // Threshold below which global localizations are not trusted.
   optional double global_localization_min_score = 5;

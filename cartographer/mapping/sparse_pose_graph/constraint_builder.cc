@@ -36,6 +36,8 @@ proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
       sensor::CreateAdaptiveVoxelFilterOptions(
           parameter_dictionary->GetDictionary("adaptive_voxel_filter").get());
   options.set_min_score(parameter_dictionary->GetDouble("min_score"));
+  options.set_min_low_resolution_score(
+      parameter_dictionary->GetDouble("min_low_resolution_score"));
   options.set_global_localization_min_score(
       parameter_dictionary->GetDouble("global_localization_min_score"));
   options.set_loop_closure_translation_weight(

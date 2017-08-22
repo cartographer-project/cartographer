@@ -106,12 +106,13 @@ bool FastCorrelativeScanMatcher::Match(
     const transform::Rigid3d& initial_pose_estimate,
     const sensor::PointCloud& coarse_point_cloud,
     const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate,
+    const MatchingFunction& matching_function, float* const score,
+    transform::Rigid3d* const pose_estimate,
     float* const rotational_score) const {
   const SearchParameters search_parameters{
       common::RoundToInt(options_.linear_xy_search_window() / resolution_),
       common::RoundToInt(options_.linear_z_search_window() / resolution_),
-      options_.angular_search_window()};
+      options_.angular_search_window(), &matching_function};
   return MatchWithSearchParameters(
       search_parameters, initial_pose_estimate, coarse_point_cloud,
       fine_point_cloud, min_score, score, pose_estimate, rotational_score);
@@ -121,7 +122,8 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
     const Eigen::Quaterniond& gravity_alignment,
     const sensor::PointCloud& coarse_point_cloud,
     const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate,
+    const MatchingFunction& matching_function, float* const score,
+    transform::Rigid3d* const pose_estimate,
     float* const rotational_score) const {
   const transform::Rigid3d initial_pose_estimate(Eigen::Vector3d::Zero(),
                                                  gravity_alignment);
@@ -132,8 +134,8 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
   const int linear_window_size =
       (width_in_voxels_ + 1) / 2 +
       common::RoundToInt(max_point_distance / resolution_ + 0.5f);
-  const SearchParameters search_parameters{linear_window_size,
-                                           linear_window_size, M_PI};
+  const SearchParameters search_parameters{
+      linear_window_size, linear_window_size, M_PI, &matching_function};
   return MatchWithSearchParameters(
       search_parameters, initial_pose_estimate, coarse_point_cloud,
       fine_point_cloud, min_score, score, pose_estimate, rotational_score);
@@ -161,14 +163,10 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
       precomputation_grid_stack_->max_depth(), min_score);
   if (best_candidate.score > min_score) {
     *score = best_candidate.score;
-    const auto& discrete_scan = discrete_scans[best_candidate.scan_index];
     *pose_estimate =
-        (transform::Rigid3f(
-             resolution_ * best_candidate.offset.matrix().cast<float>(),
-             Eigen::Quaternionf::Identity()) *
-         discrete_scan.pose)
-            .cast<double>();
-    *rotational_score = discrete_scan.rotational_score;
+        GetPoseFromCandidate(discrete_scans, best_candidate).cast<double>();
+    *rotational_score =
+        discrete_scans[best_candidate.scan_index].rotational_score;
     return true;
   }
   return false;
@@ -334,18 +332,38 @@ FastCorrelativeScanMatcher::ComputeLowestResolutionCandidates(
   return lowest_resolution_candidates;
 }
 
+transform::Rigid3f FastCorrelativeScanMatcher::GetPoseFromCandidate(
+    const std::vector<DiscreteScan>& discrete_scans,
+    const Candidate& candidate) const {
+  return transform::Rigid3f::Translation(
+             resolution_ * candidate.offset.matrix().cast<float>()) *
+         discrete_scans[candidate.scan_index].pose;
+}
+
 Candidate FastCorrelativeScanMatcher::BranchAndBound(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
     const std::vector<DiscreteScan>& discrete_scans,
     const std::vector<Candidate>& candidates, const int candidate_depth,
     float min_score) const {
-  if (candidate_depth == 0) {
-    // Return the best candidate.
-    return *candidates.begin();
-  }
-
   Candidate best_high_resolution_candidate(0, Eigen::Array3i::Zero());
   best_high_resolution_candidate.score = min_score;
+  if (candidate_depth == 0) {
+    for (const Candidate& candidate : candidates) {
+      if (candidate.score <= min_score) {
+        // Return if the candidate is bad because the following candidate will
+        // not have better score.
+        return best_high_resolution_candidate;
+      } else if ((*search_parameters.matching_function)(
+                     GetPoseFromCandidate(discrete_scans, candidate))) {
+        // We found the best candidate that passes the matching function.
+        return candidate;
+      }
+    }
+
+    // All candidates have good scores but none passes the matching function.
+    return best_high_resolution_candidate;
+  }
+
   for (const Candidate& candidate : candidates) {
     if (candidate.score <= min_score) {
       break;

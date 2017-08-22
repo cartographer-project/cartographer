@@ -23,6 +23,7 @@ SPARSE_POSE_GRAPH = {
       max_range = 50.,
     },
     min_score = 0.55,
+    min_low_resolution_score = 0.55,
     global_localization_min_score = 0.6,
     loop_closure_translation_weight = 1.1e4,
     loop_closure_rotation_weight = 1e5,

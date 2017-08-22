@@ -68,6 +68,8 @@ struct Candidate {
   bool operator>(const Candidate& other) const { return score > other.score; }
 };
 
+using MatchingFunction = std::function<bool(const transform::Rigid3f&)>;
+
 class FastCorrelativeScanMatcher {
  public:
   FastCorrelativeScanMatcher(
@@ -88,8 +90,8 @@ class FastCorrelativeScanMatcher {
   bool Match(const transform::Rigid3d& initial_pose_estimate,
              const sensor::PointCloud& coarse_point_cloud,
              const sensor::PointCloud& fine_point_cloud, float min_score,
-             float* score, transform::Rigid3d* pose_estimate,
-             float* rotational_score) const;
+             const MatchingFunction& matching_function, float* score,
+             transform::Rigid3d* pose_estimate, float* rotational_score) const;
 
   // Aligns 'coarse_point_cloud' within the 'hybrid_grid' given a rotation which
   // is expected to be approximately gravity aligned. If a score above
@@ -100,7 +102,8 @@ class FastCorrelativeScanMatcher {
   bool MatchFullSubmap(const Eigen::Quaterniond& gravity_alignment,
                        const sensor::PointCloud& coarse_point_cloud,
                        const sensor::PointCloud& fine_point_cloud,
-                       float min_score, float* score,
+                       float min_score,
+                       const MatchingFunction& matching_function, float* score,
                        transform::Rigid3d* pose_estimate,
                        float* rotational_score) const;
 
@@ -109,6 +112,7 @@ class FastCorrelativeScanMatcher {
     const int linear_xy_window_size;     // voxels
     const int linear_z_window_size;      // voxels
     const double angular_search_window;  // radians
+    const MatchingFunction* const matching_function;
   };
 
   bool MatchWithSearchParameters(
@@ -138,6 +142,9 @@ class FastCorrelativeScanMatcher {
                            const std::vector<DiscreteScan>& discrete_scans,
                            const std::vector<Candidate>& candidates,
                            int candidate_depth, float min_score) const;
+  transform::Rigid3f GetPoseFromCandidate(
+      const std::vector<DiscreteScan>& discrete_scans,
+      const Candidate& candidate) const;
 
   const proto::FastCorrelativeScanMatcherOptions options_;
   const float resolution_;
