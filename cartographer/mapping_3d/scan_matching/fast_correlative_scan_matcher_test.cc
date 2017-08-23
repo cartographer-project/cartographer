@@ -72,6 +72,7 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
         ", "
         "rotational_histogram_size = 30, "
         "min_rotational_score = 0.1, "
+        "min_low_resolution_score = 0.5, "
         "linear_xy_search_window = 0.8, "
         "linear_z_search_window = 0.8, "
         "angular_search_window = 0.3, "
@@ -128,7 +129,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
     float rotational_score = 0.f;
     EXPECT_TRUE(fast_correlative_scan_matcher->Match(
         transform::Rigid3d::Identity(), point_cloud_, point_cloud_, kMinScore,
-        [](const transform::Rigid3f&) { return true; }, &score, &pose_estimate,
+        [](const transform::Rigid3f&) { return 1.f; }, &score, &pose_estimate,
         &rotational_score));
     EXPECT_LT(kMinScore, score);
     EXPECT_LT(0.09f, rotational_score);
@@ -138,7 +139,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
     EXPECT_FALSE(fast_correlative_scan_matcher->Match(
         transform::Rigid3d::Identity(), point_cloud_, point_cloud_, kMinScore,
-        [](const transform::Rigid3f&) { return false; }, &score, &pose_estimate,
+        [](const transform::Rigid3f&) { return 0.f; }, &score, &pose_estimate,
         &rotational_score));
   }
 }
@@ -154,7 +155,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
   float rotational_score = 0.f;
   EXPECT_TRUE(fast_correlative_scan_matcher->MatchFullSubmap(
       Eigen::Quaterniond::Identity(), point_cloud_, point_cloud_, kMinScore,
-      [](const transform::Rigid3f&) { return true; }, &score, &pose_estimate,
+      [](const transform::Rigid3f&) { return 1.f; }, &score, &pose_estimate,
       &rotational_score));
   EXPECT_LT(kMinScore, score);
   EXPECT_LT(0.09f, rotational_score);
@@ -164,7 +165,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
       << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
   EXPECT_FALSE(fast_correlative_scan_matcher->MatchFullSubmap(
       Eigen::Quaterniond::Identity(), point_cloud_, point_cloud_, kMinScore,
-      [](const transform::Rigid3f&) { return false; }, &score, &pose_estimate,
+      [](const transform::Rigid3f&) { return 0.f; }, &score, &pose_estimate,
       &rotational_score));
 }
 

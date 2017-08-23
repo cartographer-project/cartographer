@@ -27,9 +27,8 @@ namespace cartographer {
 namespace mapping_3d {
 namespace scan_matching {
 
-std::function<bool(const transform::Rigid3f&)> CreateLowResolutionMatcher(
-    const HybridGrid* low_resolution_grid, const sensor::PointCloud* points,
-    float min_low_resolution_score);
+std::function<float(const transform::Rigid3f&)> CreateLowResolutionMatcher(
+    const HybridGrid* low_resolution_grid, const sensor::PointCloud* points);
 
 }  // namespace scan_matching
 }  // namespace mapping_3d

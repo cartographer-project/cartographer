@@ -68,7 +68,7 @@ struct Candidate {
   bool operator>(const Candidate& other) const { return score > other.score; }
 };
 
-using MatchingFunction = std::function<bool(const transform::Rigid3f&)>;
+using MatchingFunction = std::function<float(const transform::Rigid3f&)>;
 
 class FastCorrelativeScanMatcher {
  public:

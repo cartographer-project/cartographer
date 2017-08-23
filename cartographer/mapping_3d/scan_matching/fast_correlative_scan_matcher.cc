@@ -45,6 +45,8 @@ CreateFastCorrelativeScanMatcherOptions(
       parameter_dictionary->GetInt("rotational_histogram_size"));
   options.set_min_rotational_score(
       parameter_dictionary->GetDouble("min_rotational_score"));
+  options.set_min_low_resolution_score(
+      parameter_dictionary->GetDouble("min_low_resolution_score"));
   options.set_linear_xy_search_window(
       parameter_dictionary->GetDouble("linear_xy_search_window"));
   options.set_linear_z_search_window(
@@ -354,7 +356,8 @@ Candidate FastCorrelativeScanMatcher::BranchAndBound(
         // not have better score.
         return best_high_resolution_candidate;
       } else if ((*search_parameters.matching_function)(
-                     GetPoseFromCandidate(discrete_scans, candidate))) {
+                     GetPoseFromCandidate(discrete_scans, candidate)) >=
+                 options_.min_low_resolution_score()) {
         // We found the best candidate that passes the matching function.
         return candidate;
       }
