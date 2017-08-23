@@ -86,10 +86,10 @@ class TrajectoryBuilder {
                   common::make_unique<sensor::Data>(time, odometer_pose));
   }
 
-  void AddAbsolutePose(const string& sensor_id, common::Time time,
-                       const transform::Rigid3d& absolute_pose) {
+  void AddFixedFramePose(const string& sensor_id, common::Time time,
+                         const transform::Rigid3d& fixed_frame_pose) {
     AddSensorData(sensor_id,
-                  common::make_unique<sensor::Data>(time, absolute_pose));
+                  common::make_unique<sensor::Data>(time, fixed_frame_pose));
   }
 };
 

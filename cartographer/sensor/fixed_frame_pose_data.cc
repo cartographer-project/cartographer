@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/absolute_pose_data.h"
+#include "cartographer/sensor/fixed_frame_pose_data.h"
 
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace sensor {
 
-proto::AbsolutePoseData ToProto(const AbsolutePoseData& absolute_pose_data) {
-  proto::AbsolutePoseData proto;
-  proto.set_timestamp(common::ToUniversal(absolute_pose_data.time));
-  *proto.mutable_pose() = transform::ToProto(absolute_pose_data.pose);
+proto::FixedFramePoseData ToProto(const FixedFramePoseData& pose_data) {
+  proto::FixedFramePoseData proto;
+  proto.set_timestamp(common::ToUniversal(pose_data.time));
+  *proto.mutable_pose() = transform::ToProto(pose_data.pose);
   return proto;
 }
 
-AbsolutePoseData FromProto(const proto::AbsolutePoseData& proto) {
-  return AbsolutePoseData{common::FromUniversal(proto.timestamp()),
-                          transform::ToRigid3(proto.pose())};
+FixedFramePoseData FromProto(const proto::FixedFramePoseData& proto) {
+  return FixedFramePoseData{common::FromUniversal(proto.timestamp()),
+                            transform::ToRigid3(proto.pose())};
 }
 
 }  // namespace sensor

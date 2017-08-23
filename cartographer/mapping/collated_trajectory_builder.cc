@@ -94,9 +94,9 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
                                                    data->odometer_pose);
       return;
 
-    case sensor::Data::Type::kAbsolutePose:
-      wrapped_trajectory_builder_->AddAbsolutePoseData(
-          sensor::AbsolutePoseData{data->time, data->absolute_pose.pose});
+    case sensor::Data::Type::kFixedFramePose:
+      wrapped_trajectory_builder_->AddFixedFramePoseData(
+          sensor::FixedFramePoseData{data->time, data->fixed_frame_pose.pose});
       return;
   }
   LOG(FATAL);

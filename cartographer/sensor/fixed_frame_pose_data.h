@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_SENSOR_ABSOLUTE_POSE_DATA_H_
-#define CARTOGRAPHER_SENSOR_ABSOLUTE_POSE_DATA_H_
+#ifndef CARTOGRAPHER_SENSOR_FIXED_FRAME_POSE_DATA_H_
+#define CARTOGRAPHER_SENSOR_FIXED_FRAME_POSE_DATA_H_
 
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/proto/sensor.pb.h"
@@ -24,18 +24,18 @@
 namespace cartographer {
 namespace sensor {
 
-struct AbsolutePoseData {
+struct FixedFramePoseData {
   common::Time time;
   transform::Rigid3d pose;
 };
 
-// Converts 'absolute_data' to a proto::AbsolutePoseData.
-proto::AbsolutePoseData ToProto(const AbsolutePoseData& absolute_pose_data);
+// Converts 'pose_data' to a proto::FixedFramePoseData.
+proto::FixedFramePoseData ToProto(const FixedFramePoseData& pose_data);
 
-// Converts 'proto' to an AbsolutePoseData.
-AbsolutePoseData FromProto(const proto::AbsolutePoseData& proto);
+// Converts 'proto' to an FixedFramePoseData.
+FixedFramePoseData FromProto(const proto::FixedFramePoseData& proto);
 
 }  // namespace sensor
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_SENSOR_ABSOLUTE_POSE_DATA_H_
+#endif  // CARTOGRAPHER_SENSOR_FIXED_FRAME_POSE_DATA_H_

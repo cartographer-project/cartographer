@@ -56,9 +56,9 @@ void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
                                       sensor::OdometryData{time, pose});
 }
 
-void GlobalTrajectoryBuilder::AddAbsolutePoseData(
-    const sensor::AbsolutePoseData& absolute_pose) {
-  sparse_pose_graph_->AddAbsolutePoseData(trajectory_id_, absolute_pose);
+void GlobalTrajectoryBuilder::AddFixedFramePoseData(
+    const sensor::FixedFramePoseData& fixed_frame_pose) {
+  sparse_pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);
 }
 
 const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate&
