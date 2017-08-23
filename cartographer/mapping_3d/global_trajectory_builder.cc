@@ -52,6 +52,11 @@ void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
   local_trajectory_builder_.AddOdometerData(time, pose);
 }
 
+void GlobalTrajectoryBuilder::AddAbsolutePoseData(
+    const sensor::AbsolutePoseData& absolute_pose) {
+  sparse_pose_graph_->AddAbsolutePoseData(trajectory_id_, absolute_pose);
+}
+
 const GlobalTrajectoryBuilder::PoseEstimate&
 GlobalTrajectoryBuilder::pose_estimate() const {
   return local_trajectory_builder_.pose_estimate();

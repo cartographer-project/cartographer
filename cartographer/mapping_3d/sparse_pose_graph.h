@@ -38,6 +38,7 @@
 #include "cartographer/mapping_3d/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_3d/submaps.h"
+#include "cartographer/sensor/absolute_pose_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -76,6 +77,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds new IMU data to be used in the optimization.
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  // Adds absolute pose data(gps, pose, etc.) to be used in the optimization.
+  void AddAbsolutePoseData(int trajectory_id,
+                           const sensor::AbsolutePoseData& absolute_pose_data);
 
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(int trajectory_id,

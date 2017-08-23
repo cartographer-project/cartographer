@@ -155,6 +155,11 @@ void SparsePoseGraph::AddImuData(const int trajectory_id,
   });
 }
 
+void SparsePoseGraph::AddAbsolutePoseData(
+    int trajectory_id, const sensor::AbsolutePoseData& absolute_pose_data) {
+  LOG(FATAL) << "Not yet implemented for 3D.";
+}
+
 void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
                                         const mapping::SubmapId& submap_id) {
   CHECK(submap_data_.at(submap_id).state == SubmapState::kFinished);

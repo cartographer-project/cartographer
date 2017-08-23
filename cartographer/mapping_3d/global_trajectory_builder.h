@@ -41,6 +41,8 @@ class GlobalTrajectoryBuilder
                           const sensor::PointCloud& ranges) override;
   void AddOdometerData(common::Time time,
                        const transform::Rigid3d& pose) override;
+  void AddAbsolutePoseData(
+      const sensor::AbsolutePoseData& absolute_pose) override;
   const PoseEstimate& pose_estimate() const override;
 
  private:
