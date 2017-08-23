@@ -41,32 +41,8 @@ CreateFastCorrelativeScanMatcherOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
 class PrecomputationGridStack;
-
-struct DiscreteScan {
-  transform::Rigid3f pose;
-  // Contains a vector of discretized scans for each 'depth'.
-  std::vector<std::vector<Eigen::Array3i>> cell_indices_per_depth;
-  float rotational_score;
-};
-
-struct Candidate {
-  Candidate(const int scan_index, const Eigen::Array3i& offset)
-      : scan_index(scan_index), offset(offset) {}
-
-  // Index into the discrete scans vectors.
-  int scan_index;
-
-  // Linear offset from the initial pose in cell indices. For lower resolution
-  // candidates this is the lowest offset of the 2^depth x 2^depth x 2^depth
-  // block of possibilities.
-  Eigen::Array3i offset;
-
-  // Score, higher is better.
-  float score = 0.f;
-
-  bool operator<(const Candidate& other) const { return score < other.score; }
-  bool operator>(const Candidate& other) const { return score > other.score; }
-};
+struct DiscreteScan;
+struct Candidate;
 
 // Used to compute scores between 0 and 1 how well the given pose matches.
 using MatchingFunction = std::function<float(const transform::Rigid3f&)>;
@@ -85,35 +61,37 @@ class FastCorrelativeScanMatcher {
 
   // Aligns 'coarse_point_cloud' within the 'hybrid_grid' given an
   // 'initial_pose_estimate'. If a score above 'min_score' (excluding equality)
-  // is possible, true is returned, and 'score', 'pose_estimate', and
-  // 'rotational_score' are updated with the result. 'fine_point_cloud' is used
-  // to compute the rotational scan matcher score.
+  // is possible, true is returned, and 'score', 'pose_estimate',
+  // 'rotational_score', and 'low_resolution_score' are updated with the result.
+  // 'fine_point_cloud' is used to compute the rotational scan matcher score.
   bool Match(const transform::Rigid3d& initial_pose_estimate,
              const sensor::PointCloud& coarse_point_cloud,
              const sensor::PointCloud& fine_point_cloud, float min_score,
-             const MatchingFunction& matching_function, float* score,
-             transform::Rigid3d* pose_estimate, float* rotational_score) const;
+             const MatchingFunction& low_resolution_matcher, float* score,
+             transform::Rigid3d* pose_estimate, float* rotational_score,
+             float* low_resolution_score) const;
 
   // Aligns 'coarse_point_cloud' within the 'hybrid_grid' given a rotation which
   // is expected to be approximately gravity aligned. If a score above
   // 'min_score' (excluding equality) is possible, true is returned, and
-  // 'score', 'pose_estimate', and 'rotational_score' are updated with the
-  // result. 'fine_point_cloud' is used to compute the rotational scan matcher
-  // score.
+  // 'score', 'pose_estimate', 'rotational_score', and 'low_resolution_score'
+  // are updated with the result. 'fine_point_cloud' is used to compute the
+  // rotational scan matcher score.
   bool MatchFullSubmap(const Eigen::Quaterniond& gravity_alignment,
                        const sensor::PointCloud& coarse_point_cloud,
                        const sensor::PointCloud& fine_point_cloud,
                        float min_score,
-                       const MatchingFunction& matching_function, float* score,
-                       transform::Rigid3d* pose_estimate,
-                       float* rotational_score) const;
+                       const MatchingFunction& low_resolution_matcher,
+                       float* score, transform::Rigid3d* pose_estimate,
+                       float* rotational_score,
+                       float* low_resolution_score) const;
 
  private:
   struct SearchParameters {
     const int linear_xy_window_size;     // voxels
     const int linear_z_window_size;      // voxels
     const double angular_search_window;  // radians
-    const MatchingFunction* const matching_function;
+    const MatchingFunction* const low_resolution_matcher;
   };
 
   bool MatchWithSearchParameters(
@@ -121,7 +99,8 @@ class FastCorrelativeScanMatcher {
       const transform::Rigid3d& initial_pose_estimate,
       const sensor::PointCloud& coarse_point_cloud,
       const sensor::PointCloud& fine_point_cloud, float min_score, float* score,
-      transform::Rigid3d* pose_estimate, float* rotational_score) const;
+      transform::Rigid3d* pose_estimate, float* rotational_score,
+      float* low_resolution_score) const;
   DiscreteScan DiscretizeScan(const SearchParameters& search_parameters,
                               const sensor::PointCloud& point_cloud,
                               const transform::Rigid3f& pose,

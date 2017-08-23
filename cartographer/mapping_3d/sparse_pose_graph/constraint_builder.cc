@@ -189,6 +189,7 @@ void ConstraintBuilder::ComputeConstraint(
   float score = 0.f;
   transform::Rigid3d pose_estimate;
   float rotational_score = 0.f;
+  float low_resolution_score = 0.f;
 
   const auto low_resolution_matcher = scan_matching::CreateLowResolutionMatcher(
       submap_scan_matcher->low_resolution_hybrid_grid,
@@ -202,7 +203,7 @@ void ConstraintBuilder::ComputeConstraint(
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             initial_pose.rotation(), high_resolution_point_cloud, point_cloud,
             options_.global_localization_min_score(), low_resolution_matcher,
-            &score, &pose_estimate, &rotational_score)) {
+            &score, &pose_estimate, &rotational_score, &low_resolution_score)) {
       CHECK_GT(score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
       CHECK_GE(submap_id.trajectory_id, 0);
@@ -215,7 +216,7 @@ void ConstraintBuilder::ComputeConstraint(
     if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
             initial_pose, high_resolution_point_cloud, point_cloud,
             options_.min_score(), low_resolution_matcher, &score,
-            &pose_estimate, &rotational_score)) {
+            &pose_estimate, &rotational_score, &low_resolution_score)) {
       // We've reported a successful local match.
       CHECK_GT(score, options_.min_score());
     } else {
@@ -226,6 +227,7 @@ void ConstraintBuilder::ComputeConstraint(
     common::MutexLocker locker(&mutex_);
     score_histogram_.Add(score);
     rotational_score_histogram_.Add(rotational_score);
+    low_resolution_score_histogram_.Add(low_resolution_score);
   }
 
   // Use the CSM estimate as both the initial and previous pose. This has the
@@ -288,6 +290,8 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
           LOG(INFO) << "Score histogram:\n" << score_histogram_.ToString(10);
           LOG(INFO) << "Rotational score histogram:\n"
                     << rotational_score_histogram_.ToString(10);
+          LOG(INFO) << "Low resolution score histogram:\n"
+                    << low_resolution_score_histogram_.ToString(10);
         }
         constraints_.clear();
         callback = std::move(when_done_);
