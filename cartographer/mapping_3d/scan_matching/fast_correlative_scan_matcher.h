@@ -68,6 +68,7 @@ struct Candidate {
   bool operator>(const Candidate& other) const { return score > other.score; }
 };
 
+// Used to compute scores between 0 and 1 how well the given pose matches.
 using MatchingFunction = std::function<float(const transform::Rigid3f&)>;
 
 class FastCorrelativeScanMatcher {

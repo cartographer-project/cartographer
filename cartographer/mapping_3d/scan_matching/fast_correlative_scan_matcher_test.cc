@@ -110,12 +110,13 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
   std::uniform_real_distribution<float> distribution_ =
       std::uniform_real_distribution<float>(-1.f, 1.f);
   RangeDataInserter range_data_inserter_;
-  static constexpr float kMinScore = 0.1f;
   const proto::FastCorrelativeScanMatcherOptions options_;
   sensor::PointCloud point_cloud_;
 };
 
-constexpr float FastCorrelativeScanMatcherTest::kMinScore;
+constexpr float kMinScore = 0.1f;
+constexpr float kPassingLowResolutionScore = 1.f;
+constexpr float kFailingLowResolutionScore = 0.f;
 
 TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
   for (int i = 0; i != 20; ++i) {
@@ -129,8 +130,8 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
     float rotational_score = 0.f;
     EXPECT_TRUE(fast_correlative_scan_matcher->Match(
         transform::Rigid3d::Identity(), point_cloud_, point_cloud_, kMinScore,
-        [](const transform::Rigid3f&) { return 1.f; }, &score, &pose_estimate,
-        &rotational_score));
+        [](const transform::Rigid3f&) { return kPassingLowResolutionScore; },
+        &score, &pose_estimate, &rotational_score));
     EXPECT_LT(kMinScore, score);
     EXPECT_LT(0.09f, rotational_score);
     EXPECT_THAT(expected_pose,
@@ -139,8 +140,8 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
     EXPECT_FALSE(fast_correlative_scan_matcher->Match(
         transform::Rigid3d::Identity(), point_cloud_, point_cloud_, kMinScore,
-        [](const transform::Rigid3f&) { return 0.f; }, &score, &pose_estimate,
-        &rotational_score));
+        [](const transform::Rigid3f&) { return kFailingLowResolutionScore; },
+        &score, &pose_estimate, &rotational_score));
   }
 }
 
@@ -155,8 +156,8 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
   float rotational_score = 0.f;
   EXPECT_TRUE(fast_correlative_scan_matcher->MatchFullSubmap(
       Eigen::Quaterniond::Identity(), point_cloud_, point_cloud_, kMinScore,
-      [](const transform::Rigid3f&) { return 1.f; }, &score, &pose_estimate,
-      &rotational_score));
+      [](const transform::Rigid3f&) { return kPassingLowResolutionScore; },
+      &score, &pose_estimate, &rotational_score));
   EXPECT_LT(kMinScore, score);
   EXPECT_LT(0.09f, rotational_score);
   EXPECT_THAT(expected_pose,
@@ -165,8 +166,8 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
       << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
   EXPECT_FALSE(fast_correlative_scan_matcher->MatchFullSubmap(
       Eigen::Quaterniond::Identity(), point_cloud_, point_cloud_, kMinScore,
-      [](const transform::Rigid3f&) { return 0.f; }, &score, &pose_estimate,
-      &rotational_score));
+      [](const transform::Rigid3f&) { return kFailingLowResolutionScore; },
+      &score, &pose_estimate, &rotational_score));
 }
 
 }  // namespace
