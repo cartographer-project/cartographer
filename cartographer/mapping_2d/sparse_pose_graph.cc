@@ -71,8 +71,7 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
   }
   CHECK_EQ(2, insertion_submaps.size());
   const mapping::SubmapId last_submap_id{
-      trajectory_id,
-      submap_data.at(trajectory_id).rbegin()->first};
+      trajectory_id, submap_data.at(trajectory_id).rbegin()->first};
   if (submap_data_.at(last_submap_id).submap == insertion_submaps.front()) {
     // In this case, 'last_submap_id' is the ID of 'insertions_submaps.front()'
     // and 'insertions_submaps.back()' is new.
@@ -193,9 +192,8 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
               .pose.inverse() *
           optimization_problem_.node_data()
               .at(node_id.trajectory_id)
-              .at(node_id.node_index -
-                  optimization_problem_.num_trimmed_nodes(
-                      node_id.trajectory_id))
+              .at(node_id.node_index - optimization_problem_.num_trimmed_nodes(
+                                           node_id.trajectory_id))
               .point_cloud_pose;
       constraint_builder_.MaybeAddConstraint(
           submap_id, submap_data_.at(submap_id).submap.get(), node_id,
@@ -348,19 +346,21 @@ void SparsePoseGraph::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. * (constraint_builder_.GetNumFinishedScans() -
-                             num_finished_scans_at_start) /
+                  << 100. *
+                         (constraint_builder_.GetNumFinishedScans() -
+                          num_finished_scans_at_start) /
                          (num_trajectory_nodes_ - num_finished_scans_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone([this, &notification](
-      const sparse_pose_graph::ConstraintBuilder::Result& result) {
-    common::MutexLocker locker(&mutex_);
-    constraints_.insert(constraints_.end(), result.begin(), result.end());
-    notification = true;
-  });
+  constraint_builder_.WhenDone(
+      [this, &notification](
+          const sparse_pose_graph::ConstraintBuilder::Result& result) {
+        common::MutexLocker locker(&mutex_);
+        constraints_.insert(constraints_.end(), result.begin(), result.end());
+        notification = true;
+      });
   locker.Await([&notification]() { return notification; });
 }
 

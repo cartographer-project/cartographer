@@ -154,8 +154,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       const int submap_index = index_submap_data.first;
       const SubmapData& submap_data = index_submap_data.second;
 
-      C_submaps[trajectory_id].emplace(
-              submap_index, FromPose(submap_data.pose));
+      C_submaps[trajectory_id].emplace(submap_index,
+                                       FromPose(submap_data.pose));
       problem.AddParameterBlock(
           C_submaps[trajectory_id].at(submap_index).data(), 3);
       if (first_submap || frozen) {

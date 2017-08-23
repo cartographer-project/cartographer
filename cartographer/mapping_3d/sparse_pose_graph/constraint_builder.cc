@@ -192,7 +192,7 @@ void ConstraintBuilder::ComputeConstraint(
 
   const auto low_resolution_matcher = scan_matching::CreateLowResolutionMatcher(
       submap_scan_matcher->low_resolution_hybrid_grid,
-      &low_resolution_point_cloud, options_.min_low_resolution_score());
+      &low_resolution_point_cloud);
 
   // Compute 'pose_estimate' in three stages:
   // 1. Fast estimate using the fast correlative scan matcher.
