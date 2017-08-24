@@ -46,6 +46,8 @@ class OptimizationProblemTest : public ::testing::Test {
           huber_scale = 1.,
           consecutive_scan_translation_penalty_factor = 1e-2,
           consecutive_scan_rotation_penalty_factor = 1e-2,
+          fixed_frame_pose_translation_weight = 1e1,
+          fixed_frame_pose_rotation_weight = 1e2,
           log_solver_summary = true,
           ceres_solver_options = {
             use_nonmonotonic_steps = false,

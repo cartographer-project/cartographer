@@ -156,10 +156,16 @@ double rotation_weight
   Scaling parameter for the IMU rotation term.
 
 double consecutive_scan_translation_penalty_factor
-  Penalty factors for changes to the relative pose between consecutive scans.
+  Penalty factors for translation changes to the relative pose between consecutive scans.
 
 double consecutive_scan_rotation_penalty_factor
-  Not yet documented.
+  Penalty factors for rotation changes to the relative pose between consecutive scans.
+
+double fixed_frame_pose_translation_weight
+  Scaling parameter for the FixedFramePose translation.
+
+double fixed_frame_pose_rotation_weight
+  Scaling parameter for the FixedFramePose rotation.
 
 bool log_solver_summary
   If true, the Ceres solver summary will be logged for every optimization.
