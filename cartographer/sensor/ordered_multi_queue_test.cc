@@ -36,20 +36,20 @@ class OrderedMultiQueueTest : public ::testing::Test {
     for (const auto& queue_key : {kFirst, kSecond, kThird}) {
       queue_.AddQueue(queue_key, [this](std::unique_ptr<Data> data) {
         if (!values_.empty()) {
-          EXPECT_GE(data->time, values_.back().time);
+          EXPECT_GE(data->GetTime(), values_.back()->GetTime());
         }
-        values_.push_back(*data);
+        values_.push_back(std::move(data));
       });
     }
   }
 
   std::unique_ptr<Data> MakeImu(const int ordinal) {
-    return common::make_unique<Data>(
-        common::FromUniversal(ordinal),
-        Data::Imu{Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero()});
+    return common::make_unique<DispatchableImuData>(
+        sensor::ImuData{common::FromUniversal(ordinal), Eigen::Vector3d::Zero(),
+                        Eigen::Vector3d::Zero()});
   }
 
-  std::vector<Data> values_;
+  std::vector<std::unique_ptr<Data>> values_;
   OrderedMultiQueue queue_;
 };
 
@@ -73,7 +73,7 @@ TEST_F(OrderedMultiQueueTest, Ordering) {
 
   EXPECT_EQ(11, values_.size());
   for (size_t i = 0; i < values_.size() - 1; ++i) {
-    EXPECT_LE(values_[i].time, values_[i + 1].time);
+    EXPECT_LE(values_[i]->GetTime(), values_[i + 1]->GetTime());
   }
 }
 
@@ -90,7 +90,7 @@ TEST_F(OrderedMultiQueueTest, MarkQueueAsFinished) {
 
   EXPECT_EQ(3, values_.size());
   for (size_t i = 0; i < values_.size(); ++i) {
-    EXPECT_EQ(i + 1, common::ToUniversal(values_[i].time));
+    EXPECT_EQ(i + 1, common::ToUniversal(values_[i]->GetTime()));
   }
 }
 

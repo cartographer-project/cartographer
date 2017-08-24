@@ -66,7 +66,7 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
                      common::FromSeconds(kSensorDataRatesLoggingPeriodSeconds)))
              .first;
   }
-  it->second.Pulse(data->time);
+  it->second.Pulse(data->GetTime());
 
   if (std::chrono::steady_clock::now() - last_logging_time_ >
       common::FromSeconds(kSensorDataRatesLoggingPeriodSeconds)) {
@@ -76,29 +76,7 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
     last_logging_time_ = std::chrono::steady_clock::now();
   }
 
-  switch (data->type) {
-    case sensor::Data::Type::kImu:
-      wrapped_trajectory_builder_->AddImuData(
-          sensor::ImuData{data->time, data->imu.linear_acceleration,
-                          data->imu.angular_velocity});
-      return;
-
-    case sensor::Data::Type::kRangefinder:
-      wrapped_trajectory_builder_->AddRangefinderData(
-          data->time, data->rangefinder.origin, data->rangefinder.ranges);
-      return;
-
-    case sensor::Data::Type::kOdometer:
-      wrapped_trajectory_builder_->AddOdometerData(data->time,
-                                                   data->odometer_pose);
-      return;
-
-    case sensor::Data::Type::kFixedFramePose:
-      wrapped_trajectory_builder_->AddFixedFramePoseData(
-          sensor::FixedFramePoseData{data->time, data->fixed_frame_pose.pose});
-      return;
-  }
-  LOG(FATAL);
+  data->AddToTrajectoryBuilder(wrapped_trajectory_builder_.get());
 }
 
 }  // namespace mapping

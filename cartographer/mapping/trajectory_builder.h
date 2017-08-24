@@ -58,28 +58,30 @@ class TrajectoryBuilder {
                           const Eigen::Vector3f& origin,
                           const sensor::PointCloud& ranges) {
     AddSensorData(sensor_id,
-                  common::make_unique<sensor::Data>(
-                      time, sensor::Data::Rangefinder{origin, ranges}));
+                  common::make_unique<sensor::DispatchableRangefinderData>(
+                      time, origin, ranges));
   }
 
   void AddImuData(const string& sensor_id, common::Time time,
                   const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) {
-    AddSensorData(sensor_id, common::make_unique<sensor::Data>(
-                                 time, sensor::Data::Imu{linear_acceleration,
-                                                         angular_velocity}));
+    AddSensorData(sensor_id, common::make_unique<sensor::DispatchableImuData>(
+                                 sensor::ImuData{time, linear_acceleration,
+                                                 angular_velocity}));
   }
 
   void AddOdometerData(const string& sensor_id, common::Time time,
                        const transform::Rigid3d& odometer_pose) {
     AddSensorData(sensor_id,
-                  common::make_unique<sensor::Data>(time, odometer_pose));
+                  common::make_unique<sensor::DispatchableOdometerData>(
+                      time, odometer_pose));
   }
 
-  void AddFixedFramePose(const string& sensor_id, common::Time time,
-                         const transform::Rigid3d& fixed_frame_pose) {
+  void AddFixedFramePoseData(const string& sensor_id, common::Time time,
+                             const transform::Rigid3d& fixed_frame_pose) {
     AddSensorData(sensor_id,
-                  common::make_unique<sensor::Data>(time, fixed_frame_pose));
+                  common::make_unique<sensor::DispatchableFixedFramePoseData>(
+                      time, fixed_frame_pose));
   }
 };
 
