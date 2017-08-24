@@ -423,32 +423,39 @@ void SparsePoseGraph::RunFinalOptimization() {
           .max_num_iterations());
 }
 
-void SparsePoseGraph::CalculateHistograms() {
-  translational_residual_ = common::Histogram();
+void SparsePoseGraph::CalculateResidualHistograms() {
+  common::Histogram rotational_residual;
+  common::Histogram translational_residual;
+
   for (const Constraint& constraint : constraints_) {
     if (constraint.tag == Constraint::Tag::INTRA_SUBMAP) {
-      // in map frame
-      const cartographer::transform::Rigid3d& optimized_pose_map =
+
+      const cartographer::transform::Rigid3d& optimized_node_to_map =
           trajectory_nodes_.at(constraint.node_id).pose;
-      // in submap frame
-      const cartographer::transform::Rigid3d& original_pose_submap =
+
+      const cartographer::transform::Rigid3d& node_to_submap_constraint =
           constraint.pose.zbar_ij;
-      // find the submap to map transform.
-      const cartographer::transform::Rigid3d& submap_transform =
+
+      const cartographer::transform::Rigid3d& optimized_submap_to_map =
           optimized_submap_transforms_.at(constraint.submap_id.trajectory_id)
               .at(constraint.submap_id.submap_index)
               .pose;
 
-      // original pose in the map frame.
-      const cartographer::transform::Rigid3d original_pose_map =
-          submap_transform * original_pose_submap;
+      const cartographer::transform::Rigid3d optimized_node_to_submap =
+          optimized_submap_to_map.inverse() * optimized_node_to_map;
 
-      translational_residual_.Add(
-          (optimized_pose_map.inverse() * original_pose_map)
-              .translation()
-              .norm());
+      const cartographer::transform::Rigid3d residual =
+          node_to_submap_constraint.inverse() * optimized_node_to_submap;
+
+      rotational_residual.Add(
+          common::NormalizeAngleDifference(transform::GetAngle(residual)));
+      translational_residual.Add(residual.translation().norm());
     }
   }
+  LOG(INFO) << "Translational residuals histogram:\n"
+            << translational_residual.ToString(10);
+  LOG(INFO) << "Rotational residuals histogram:\n"
+            << rotational_residual.ToString(10);
 }
 
 void SparsePoseGraph::RunOptimization() {
@@ -501,7 +508,9 @@ void SparsePoseGraph::RunOptimization() {
   }
 
   // Calculate the histograms for the pose residuals.
-  CalculateHistograms();
+  if (options_.log_residual_histograms()) {
+    CalculateResidualHistograms();
+  }
 }
 
 std::vector<std::vector<mapping::TrajectoryNode>>
