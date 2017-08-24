@@ -38,6 +38,7 @@
 #include "cartographer/mapping_2d/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping_2d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_2d/submaps.h"
+#include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -76,10 +77,12 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       EXCLUDES(mutex_);
 
-  // Adds new IMU data to be used in the optimization.
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
   void AddOdometerData(int trajectory_id,
                        const sensor::OdometryData& odometry_data);
+  void AddFixedFramePoseData(
+      int trajectory_id,
+      const sensor::FixedFramePoseData& fixed_frame_pose_data);
 
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(int trajectory_id,

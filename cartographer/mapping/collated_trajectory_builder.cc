@@ -92,6 +92,11 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
       wrapped_trajectory_builder_->AddOdometerData(data->time,
                                                    data->odometer_pose);
       return;
+
+    case sensor::Data::Type::kFixedFramePose:
+      wrapped_trajectory_builder_->AddFixedFramePoseData(
+          sensor::FixedFramePoseData{data->time, data->fixed_frame_pose.pose});
+      return;
   }
   LOG(FATAL);
 }

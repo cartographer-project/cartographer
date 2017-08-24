@@ -29,7 +29,7 @@ namespace sensor {
 // filled in. It is only used for time ordering sensor data before passing it
 // on.
 struct Data {
-  enum class Type { kImu, kRangefinder, kOdometer };
+  enum class Type { kImu, kRangefinder, kOdometer, kFixedFramePose };
 
   struct Imu {
     Eigen::Vector3d linear_acceleration;
@@ -41,6 +41,10 @@ struct Data {
     PointCloud ranges;
   };
 
+  struct FixedFramePose {
+    transform::Rigid3d pose;
+  };
+
   Data(const common::Time time, const Imu& imu)
       : type(Type::kImu), time(time), imu(imu) {}
 
@@ -50,11 +54,17 @@ struct Data {
   Data(const common::Time time, const transform::Rigid3d& odometer_pose)
       : type(Type::kOdometer), time(time), odometer_pose(odometer_pose) {}
 
+  Data(const common::Time time, const FixedFramePose& fixed_frame_pose)
+      : type(Type::kFixedFramePose),
+        time(time),
+        fixed_frame_pose(fixed_frame_pose) {}
+
   Type type;
   common::Time time;
   Imu imu;
   Rangefinder rangefinder;
   transform::Rigid3d odometer_pose;
+  FixedFramePose fixed_frame_pose;
 };
 
 }  // namespace sensor

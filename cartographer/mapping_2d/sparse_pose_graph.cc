@@ -166,6 +166,12 @@ void SparsePoseGraph::AddOdometerData(
   });
 }
 
+void SparsePoseGraph::AddFixedFramePoseData(
+    const int trajectory_id,
+    const sensor::FixedFramePoseData& fixed_frame_pose_data) {
+  LOG(FATAL) << "Not yet implemented for 2D.";
+}
+
 void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
                                         const mapping::SubmapId& submap_id) {
   CHECK(submap_data_.at(submap_id).state == SubmapState::kFinished);

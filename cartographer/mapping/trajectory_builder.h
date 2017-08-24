@@ -75,6 +75,12 @@ class TrajectoryBuilder {
     AddSensorData(sensor_id,
                   common::make_unique<sensor::Data>(time, odometer_pose));
   }
+
+  void AddFixedFramePose(const string& sensor_id, common::Time time,
+                         const transform::Rigid3d& fixed_frame_pose) {
+    AddSensorData(sensor_id,
+                  common::make_unique<sensor::Data>(time, fixed_frame_pose));
+  }
 };
 
 }  // namespace mapping

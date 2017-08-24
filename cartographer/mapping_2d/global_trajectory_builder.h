@@ -44,6 +44,8 @@ class GlobalTrajectoryBuilder
   void AddImuData(const sensor::ImuData& imu_data) override;
   void AddOdometerData(common::Time time,
                        const transform::Rigid3d& pose) override;
+  void AddFixedFramePoseData(
+      const sensor::FixedFramePoseData& fixed_frame_pose) override;
 
  private:
   const int trajectory_id_;
