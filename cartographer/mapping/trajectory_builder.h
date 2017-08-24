@@ -25,6 +25,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/pose_estimate.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/data.h"
@@ -40,18 +41,7 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
 // This interface is used for both 2D and 3D SLAM.
 class TrajectoryBuilder {
  public:
-  // Represents a newly computed pose. 'pose' is the end-user visualization of
-  // orientation and 'point_cloud' is the point cloud, in the local map frame.
-  struct PoseEstimate {
-    PoseEstimate() = default;
-    PoseEstimate(common::Time time, const transform::Rigid3d& pose,
-                 const sensor::PointCloud& point_cloud)
-        : time(time), pose(pose), point_cloud(point_cloud) {}
-
-    common::Time time = common::Time::min();
-    transform::Rigid3d pose = transform::Rigid3d::Identity();
-    sensor::PointCloud point_cloud;
-  };
+  using PoseEstimate = mapping::PoseEstimate;
 
   TrajectoryBuilder() {}
   virtual ~TrajectoryBuilder() {}

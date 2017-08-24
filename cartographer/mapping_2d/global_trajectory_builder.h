@@ -35,8 +35,7 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
-      const override;
+  const mapping::PoseEstimate& pose_estimate() const override;
 
   // Projects 'ranges' into 2D. Therefore, 'ranges' should be approximately
   // parallel to the ground plane.

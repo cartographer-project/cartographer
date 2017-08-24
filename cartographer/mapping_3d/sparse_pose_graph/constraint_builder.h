@@ -190,6 +190,7 @@ class ConstraintBuilder {
   // Histograms of scan matcher scores.
   common::Histogram score_histogram_ GUARDED_BY(mutex_);
   common::Histogram rotational_score_histogram_ GUARDED_BY(mutex_);
+  common::Histogram low_resolution_score_histogram_ GUARDED_BY(mutex_);
 };
 
 }  // namespace sparse_pose_graph

@@ -30,6 +30,10 @@ message FastCorrelativeScanMatcherOptions {
   // Minimum score for the rotational scan matcher.
   optional double min_rotational_score = 4;
 
+  // Threshold for the score of the low resolution grid below which a match is
+  // not considered. Only used for 3D.
+  optional double min_low_resolution_score = 9;
+
   // Linear search window in the plane orthogonal to gravity in which the best
   // possible scan alignment will be found.
   optional double linear_xy_search_window = 5;

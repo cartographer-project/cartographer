@@ -14,24 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_LOW_RESOLUTION_MATCHER_H_
-#define CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_LOW_RESOLUTION_MATCHER_H_
+#ifndef CARTOGRAPHER_MAPPING_POSE_ESTIMATE_H_
+#define CARTOGRAPHER_MAPPING_POSE_ESTIMATE_H_
 
-#include <functional>
-
-#include "cartographer/mapping_3d/hybrid_grid.h"
+#include "cartographer/common/time.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
-namespace mapping_3d {
-namespace scan_matching {
+namespace mapping {
 
-std::function<float(const transform::Rigid3f&)> CreateLowResolutionMatcher(
-    const HybridGrid* low_resolution_grid, const sensor::PointCloud* points);
+// Represents a newly computed pose. 'pose' is the end-user visualization of
+// orientation and 'point_cloud' is the point cloud, in the local map frame.
+struct PoseEstimate {
+  PoseEstimate() = default;
+  PoseEstimate(common::Time time, const transform::Rigid3d& pose,
+               const sensor::PointCloud& point_cloud)
+      : time(time), pose(pose), point_cloud(point_cloud) {}
 
-}  // namespace scan_matching
-}  // namespace mapping_3d
+  common::Time time = common::Time::min();
+  transform::Rigid3d pose = transform::Rigid3d::Identity();
+  sensor::PointCloud point_cloud;
+};
+
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_LOW_RESOLUTION_MATCHER_H_
+#endif  // CARTOGRAPHER_MAPPING_POSE_ESTIMATE_H_

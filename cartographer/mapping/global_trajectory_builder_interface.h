@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/pose_estimate.h"
 #include "cartographer/mapping/submaps.h"
-#include "cartographer/mapping/trajectory_builder.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -40,8 +40,6 @@ namespace mapping {
 // optimized pose estimates.
 class GlobalTrajectoryBuilderInterface {
  public:
-  using PoseEstimate = TrajectoryBuilder::PoseEstimate;
-
   GlobalTrajectoryBuilderInterface() {}
   virtual ~GlobalTrajectoryBuilderInterface() {}
 
