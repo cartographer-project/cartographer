@@ -33,12 +33,10 @@
 namespace cartographer {
 namespace mapping_2d {
 
-// Wires up the local SLAM stack (i.e. UKF, scan matching, etc.) without loop
-// closure.
+// Wires up the local SLAM stack (i.e. pose extrapolator, scan matching, etc.)
+// without loop closure.
 class LocalTrajectoryBuilder {
  public:
-  using PoseEstimate = mapping::GlobalTrajectoryBuilderInterface::PoseEstimate;
-
   struct InsertionResult {
     common::Time time;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
@@ -54,7 +52,7 @@ class LocalTrajectoryBuilder {
   LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;
   LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
 
-  const PoseEstimate& pose_estimate() const;
+  const mapping::PoseEstimate& pose_estimate() const;
   std::unique_ptr<InsertionResult> AddHorizontalRangeData(
       common::Time, const sensor::RangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
@@ -81,7 +79,7 @@ class LocalTrajectoryBuilder {
   const proto::LocalTrajectoryBuilderOptions options_;
   ActiveSubmaps active_submaps_;
 
-  PoseEstimate last_pose_estimate_;
+  mapping::PoseEstimate last_pose_estimate_;
 
   mapping_3d::MotionFilter motion_filter_;
   scan_matching::RealTimeCorrelativeScanMatcher

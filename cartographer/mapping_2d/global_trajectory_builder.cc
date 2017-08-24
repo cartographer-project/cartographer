@@ -56,8 +56,7 @@ void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
                                       sensor::OdometryData{time, pose});
 }
 
-const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate&
-GlobalTrajectoryBuilder::pose_estimate() const {
+const mapping::PoseEstimate& GlobalTrajectoryBuilder::pose_estimate() const {
   return local_trajectory_builder_.pose_estimate();
 }
 

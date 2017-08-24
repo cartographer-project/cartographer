@@ -41,7 +41,7 @@ class GlobalTrajectoryBuilder
                           const sensor::PointCloud& ranges) override;
   void AddOdometerData(common::Time time,
                        const transform::Rigid3d& pose) override;
-  const PoseEstimate& pose_estimate() const override;
+  const mapping::PoseEstimate& pose_estimate() const override;
 
  private:
   const int trajectory_id_;
