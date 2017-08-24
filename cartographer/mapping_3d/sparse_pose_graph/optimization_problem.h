@@ -29,7 +29,9 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
+#include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/transform/transform_interpolation_buffer.h"
 
 namespace cartographer {
 namespace mapping_3d {
@@ -61,6 +63,9 @@ class OptimizationProblem {
   OptimizationProblem& operator=(const OptimizationProblem&) = delete;
 
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  void AddFixedFramePoseData(
+      int trajectory_id,
+      const sensor::FixedFramePoseData& fixed_frame_pose_data);
   void AddTrajectoryNode(int trajectory_id, common::Time time,
                          const transform::Rigid3d& point_cloud_pose);
   void AddSubmap(int trajectory_id, const transform::Rigid3d& submap_pose);
@@ -86,6 +91,7 @@ class OptimizationProblem {
   std::vector<std::vector<NodeData>> node_data_;
   std::vector<std::vector<SubmapData>> submap_data_;
   std::vector<TrajectoryData> trajectory_data_;
+  std::vector<transform::TransformInterpolationBuffer> fixed_frame_pose_data_;
 };
 
 }  // namespace sparse_pose_graph

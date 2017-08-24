@@ -158,7 +158,11 @@ void SparsePoseGraph::AddImuData(const int trajectory_id,
 void SparsePoseGraph::AddFixedFramePoseData(
     const int trajectory_id,
     const sensor::FixedFramePoseData& fixed_frame_pose_data) {
-  LOG(FATAL) << "Not yet implemented for 3D.";
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([=]() REQUIRES(mutex_) {
+    optimization_problem_.AddFixedFramePoseData(trajectory_id,
+                                                fixed_frame_pose_data);
+  });
 }
 
 void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
