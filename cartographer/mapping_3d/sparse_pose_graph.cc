@@ -423,6 +423,34 @@ void SparsePoseGraph::RunFinalOptimization() {
           .max_num_iterations());
 }
 
+void SparsePoseGraph::CalculateHistograms() {
+  translational_residual_ = common::Histogram();
+  for (const Constraint& constraint : constraints_) {
+    if (constraint.tag == Constraint::Tag::INTRA_SUBMAP) {
+      // in map frame
+      const cartographer::transform::Rigid3d& optimized_pose_map =
+          trajectory_nodes_.at(constraint.node_id).pose;
+      // in submap frame
+      const cartographer::transform::Rigid3d& original_pose_submap =
+          constraint.pose.zbar_ij;
+      // find the submap to map transform.
+      const cartographer::transform::Rigid3d& submap_transform =
+          optimized_submap_transforms_.at(constraint.submap_id.trajectory_id)
+              .at(constraint.submap_id.submap_index)
+              .pose;
+
+      // original pose in the map frame.
+      const cartographer::transform::Rigid3d original_pose_map =
+          submap_transform * original_pose_submap;
+
+      translational_residual_.Add(
+          (optimized_pose_map.inverse() * original_pose_map)
+              .translation()
+              .norm());
+    }
+  }
+}
+
 void SparsePoseGraph::RunOptimization() {
   if (optimization_problem_.submap_data().empty()) {
     return;
@@ -471,6 +499,9 @@ void SparsePoseGraph::RunOptimization() {
   for (auto& trimmer : trimmers_) {
     trimmer->Trim(&trimming_handle);
   }
+
+  // Calculate the histograms for the pose residuals.
+  CalculateHistograms();
 }
 
 std::vector<std::vector<mapping::TrajectoryNode>>

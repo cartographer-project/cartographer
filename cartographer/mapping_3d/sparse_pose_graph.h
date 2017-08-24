@@ -158,6 +158,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   mapping::SparsePoseGraph::SubmapData GetSubmapDataUnderLock(
       const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
+  // Calculates histograms for the translational residual of scan poses.
+  void CalculateHistograms();
+
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
 
@@ -209,6 +212,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Set of all frozen trajectories not being optimized.
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
+
+  // Histograms of scan pose residuals.
+  common::Histogram translational_residual_;
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.
