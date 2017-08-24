@@ -46,8 +46,7 @@ CollatedTrajectoryBuilder::CollatedTrajectoryBuilder(
 
 CollatedTrajectoryBuilder::~CollatedTrajectoryBuilder() {}
 
-const TrajectoryBuilder::PoseEstimate&
-CollatedTrajectoryBuilder::pose_estimate() const {
+const PoseEstimate& CollatedTrajectoryBuilder::pose_estimate() const {
   return wrapped_trajectory_builder_->pose_estimate();
 }
 
