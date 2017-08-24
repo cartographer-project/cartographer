@@ -128,12 +128,14 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
     float score = 0.f;
     transform::Rigid3d pose_estimate;
     float rotational_score = 0.f;
+    float low_resolution_score = 0.f;
     EXPECT_TRUE(fast_correlative_scan_matcher->Match(
         transform::Rigid3d::Identity(), point_cloud_, point_cloud_, kMinScore,
         [](const transform::Rigid3f&) { return kPassingLowResolutionScore; },
-        &score, &pose_estimate, &rotational_score));
+        &score, &pose_estimate, &rotational_score, &low_resolution_score));
     EXPECT_LT(kMinScore, score);
     EXPECT_LT(0.09f, rotational_score);
+    EXPECT_LT(0.99f, low_resolution_score);
     EXPECT_THAT(expected_pose,
                 transform::IsNearly(pose_estimate.cast<float>(), 0.05f))
         << "Actual: " << transform::ToProto(pose_estimate).DebugString()
@@ -141,7 +143,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
     EXPECT_FALSE(fast_correlative_scan_matcher->Match(
         transform::Rigid3d::Identity(), point_cloud_, point_cloud_, kMinScore,
         [](const transform::Rigid3f&) { return kFailingLowResolutionScore; },
-        &score, &pose_estimate, &rotational_score));
+        &score, &pose_estimate, &rotational_score, &low_resolution_score));
   }
 }
 
@@ -154,12 +156,14 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
   float score = 0.f;
   transform::Rigid3d pose_estimate;
   float rotational_score = 0.f;
+  float low_resolution_score = 0.f;
   EXPECT_TRUE(fast_correlative_scan_matcher->MatchFullSubmap(
       Eigen::Quaterniond::Identity(), point_cloud_, point_cloud_, kMinScore,
       [](const transform::Rigid3f&) { return kPassingLowResolutionScore; },
-      &score, &pose_estimate, &rotational_score));
+      &score, &pose_estimate, &rotational_score, &low_resolution_score));
   EXPECT_LT(kMinScore, score);
   EXPECT_LT(0.09f, rotational_score);
+  EXPECT_LT(0.99f, low_resolution_score);
   EXPECT_THAT(expected_pose,
               transform::IsNearly(pose_estimate.cast<float>(), 0.05f))
       << "Actual: " << transform::ToProto(pose_estimate).DebugString()
@@ -167,7 +171,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
   EXPECT_FALSE(fast_correlative_scan_matcher->MatchFullSubmap(
       Eigen::Quaterniond::Identity(), point_cloud_, point_cloud_, kMinScore,
       [](const transform::Rigid3f&) { return kFailingLowResolutionScore; },
-      &score, &pose_estimate, &rotational_score));
+      &score, &pose_estimate, &rotational_score, &low_resolution_score));
 }
 
 }  // namespace
