@@ -173,7 +173,7 @@ void SparsePoseGraph::AddOdometerData(
 }
 
 void SparsePoseGraph::AddFixedFramePoseData(
-    int trajectory_id,
+    const int trajectory_id,
     const sensor::FixedFramePoseData& fixed_frame_pose_data) {
   LOG(FATAL) << "Not yet implemented for 2D.";
 }

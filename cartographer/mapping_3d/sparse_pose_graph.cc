@@ -156,7 +156,7 @@ void SparsePoseGraph::AddImuData(const int trajectory_id,
 }
 
 void SparsePoseGraph::AddFixedFramePoseData(
-    int trajectory_id,
+    const int trajectory_id,
     const sensor::FixedFramePoseData& fixed_frame_pose_data) {
   LOG(FATAL) << "Not yet implemented for 3D.";
 }

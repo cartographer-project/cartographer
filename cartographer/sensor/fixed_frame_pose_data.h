@@ -24,6 +24,8 @@
 namespace cartographer {
 namespace sensor {
 
+// The fixed frame pose data(like gps, pose, etc.) will be used in the
+// optimization.
 struct FixedFramePoseData {
   common::Time time;
   transform::Rigid3d pose;
