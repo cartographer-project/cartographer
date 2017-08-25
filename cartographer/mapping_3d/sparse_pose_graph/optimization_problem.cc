@@ -283,7 +283,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
           options_.fixed_frame_pose_rotation_weight()};
 
       if (!fixed_frame_pose_initialized) {
-        const auto& fixed_frame_pose_in_map =
+        const transform::Rigid3d fixed_frame_pose_in_map =
             node_data[node_index].point_cloud_pose *
             constraint_pose.zbar_ij.inverse();
         C_fixed_frames.emplace_back(
