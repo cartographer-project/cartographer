@@ -286,9 +286,14 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       // non-gravity-aligned fixed frames)
       if (!fixed_frame_pose_initialized) {
         C_fixed_frames.emplace_back(
-            constraint_pose.zbar_ij, nullptr,
+            transform::Rigid3d(
+                constraint_pose.zbar_ij.translation(),
+                Eigen::AngleAxisd(
+                    transform::GetYaw(constraint_pose.zbar_ij.rotation()),
+                    Eigen::Vector3d::UnitZ())),
+            nullptr,
             common::make_unique<ceres::AutoDiffLocalParameterization<
-                ConstantYawQuaternionPlus, 4, 2>>(),
+                YawOnlyQuaternionPlus, 4, 2>>(),
             &problem);
         fixed_frame_pose_initialized = true;
       }
