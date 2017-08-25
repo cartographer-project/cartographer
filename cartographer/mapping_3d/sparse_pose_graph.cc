@@ -94,18 +94,22 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
 
 void SparsePoseGraph::AddScan(
     common::Time time, const sensor::RangeData& range_data_in_tracking,
+    const sensor::PointCloud& high_resolution_point_cloud,
+    const sensor::PointCloud& low_resolution_point_cloud,
     const transform::Rigid3d& pose, const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap>>& insertion_submaps) {
   const transform::Rigid3d optimized_pose(
       GetLocalToGlobalTransform(trajectory_id) * pose);
   common::MutexLocker locker(&mutex_);
   trajectory_nodes_.Append(
-      trajectory_id, mapping::TrajectoryNode{
-                         std::make_shared<const mapping::TrajectoryNode::Data>(
-                             mapping::TrajectoryNode::Data{
-                                 time, sensor::Compress(range_data_in_tracking),
-                                 transform::Rigid3d::Identity()}),
-                         optimized_pose});
+      trajectory_id,
+      mapping::TrajectoryNode{
+          std::make_shared<const mapping::TrajectoryNode::Data>(
+              mapping::TrajectoryNode::Data{
+                  time, sensor::Compress(range_data_in_tracking),
+                  high_resolution_point_cloud, low_resolution_point_cloud,
+                  transform::Rigid3d::Identity()}),
+          optimized_pose});
   ++num_trajectory_nodes_;
   trajectory_connectivity_.Add(trajectory_id);
 
@@ -206,9 +210,8 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
     // FastCorrelativeScanMatcher, and the given yaw is essentially ignored.
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
-        &trajectory_nodes_.at(node_id).constant_data->range_data.returns,
-        submap_nodes, initial_relative_pose.rotation(),
-        &trajectory_connectivity_);
+        trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
+        initial_relative_pose.rotation(), &trajectory_connectivity_);
   } else {
     const bool scan_and_submap_trajectories_connected =
         reverse_connected_components_.count(node_id.trajectory_id) > 0 &&
@@ -219,8 +222,8 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
         scan_and_submap_trajectories_connected) {
       constraint_builder_.MaybeAddConstraint(
           submap_id, submap_data_.at(submap_id).submap.get(), node_id,
-          &trajectory_nodes_.at(node_id).constant_data->range_data.returns,
-          submap_nodes, initial_relative_pose);
+          trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
+          initial_relative_pose);
     }
   }
 }

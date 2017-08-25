@@ -71,6 +71,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // this submap was inserted into for the last time.
   void AddScan(
       common::Time time, const sensor::RangeData& range_data_in_tracking,
+      const sensor::PointCloud& high_resolution_point_cloud,
+      const sensor::PointCloud& low_resolution_point_cloud,
       const transform::Rigid3d& pose, int trajectory_id,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       EXCLUDES(mutex_);

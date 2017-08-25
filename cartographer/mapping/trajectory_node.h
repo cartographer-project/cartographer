@@ -35,6 +35,10 @@ struct TrajectoryNode {
     // Range data in 'pose' frame.
     sensor::CompressedRangeData range_data;
 
+    // Used for loop closure in 3D.
+    sensor::PointCloud high_resolution_point_cloud;
+    sensor::PointCloud low_resolution_point_cloud;
+
     // Transform from the 3D 'tracking' frame to the 'pose' frame of the range
     // data, which contains roll, pitch and height for 2D. In 3D this is always
     // identity.

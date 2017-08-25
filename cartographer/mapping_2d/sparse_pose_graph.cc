@@ -106,7 +106,10 @@ void SparsePoseGraph::AddScan(
       trajectory_id,
       mapping::TrajectoryNode{
           std::make_shared<const mapping::TrajectoryNode::Data>(
-              mapping::TrajectoryNode::Data{time, Compress(range_data_in_pose),
+              mapping::TrajectoryNode::Data{time,
+                                            Compress(range_data_in_pose),
+                                            {},
+                                            {},
                                             tracking_to_pose}),
           optimized_pose});
   ++num_trajectory_nodes_;

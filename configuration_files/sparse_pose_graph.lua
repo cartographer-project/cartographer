@@ -52,16 +52,6 @@ SPARSE_POSE_GRAPH = {
       linear_z_search_window = 1.,
       angular_search_window = math.rad(15.),
     },
-    high_resolution_adaptive_voxel_filter = {
-      max_length = 2.,
-      min_num_points = 150,
-      max_range = 15.,
-    },
-    low_resolution_adaptive_voxel_filter = {
-      max_length = 4.,
-      min_num_points = 200,
-      max_range = 60.,
-    },
     ceres_scan_matcher_3d = {
       occupied_space_weight_0 = 5.,
       occupied_space_weight_1 = 30.,
