@@ -45,3 +45,9 @@ message OdometryData {
   optional int64 timestamp = 1;
   optional transform.proto.Rigid3d pose = 2;
 }
+
+// Proto representation of ::cartographer::sensor::FixedFramePoseData.
+message FixedFramePoseData {
+  optional int64 timestamp = 1;
+  optional transform.proto.Rigid3d pose = 2;
+}

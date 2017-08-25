@@ -35,8 +35,7 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
-      const override;
+  const mapping::PoseEstimate& pose_estimate() const override;
 
   // Projects 'ranges' into 2D. Therefore, 'ranges' should be approximately
   // parallel to the ground plane.
@@ -45,6 +44,8 @@ class GlobalTrajectoryBuilder
   void AddImuData(const sensor::ImuData& imu_data) override;
   void AddOdometerData(common::Time time,
                        const transform::Rigid3d& pose) override;
+  void AddFixedFramePoseData(
+      const sensor::FixedFramePoseData& fixed_frame_pose) override;
 
  private:
   const int trajectory_id_;

@@ -87,6 +87,16 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
   imu_data_[trajectory_id].push_back(imu_data);
 }
 
+void OptimizationProblem::AddFixedFramePoseData(
+    const int trajectory_id,
+    const sensor::FixedFramePoseData& fixed_frame_pose_data) {
+  CHECK_GE(trajectory_id, 0);
+  fixed_frame_pose_data_.resize(std::max(
+      fixed_frame_pose_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+  fixed_frame_pose_data_[trajectory_id].Push(fixed_frame_pose_data.time,
+                                             fixed_frame_pose_data.pose);
+}
+
 void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
     const transform::Rigid3d& point_cloud_pose) {

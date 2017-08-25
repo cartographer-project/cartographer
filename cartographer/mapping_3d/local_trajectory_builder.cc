@@ -175,8 +175,7 @@ void LocalTrajectoryBuilder::AddOdometerData(
   extrapolator_->AddOdometryData(sensor::OdometryData{time, odometer_pose});
 }
 
-const LocalTrajectoryBuilder::PoseEstimate&
-LocalTrajectoryBuilder::pose_estimate() const {
+const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
   return last_pose_estimate_;
 }
 

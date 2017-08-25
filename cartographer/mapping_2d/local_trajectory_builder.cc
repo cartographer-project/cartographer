@@ -186,8 +186,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       range_data_in_tracking_2d, pose_estimate_2d});
 }
 
-const LocalTrajectoryBuilder::PoseEstimate&
-LocalTrajectoryBuilder::pose_estimate() const {
+const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
   return last_pose_estimate_;
 }
 

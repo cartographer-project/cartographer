@@ -99,7 +99,6 @@ cartographer.mapping.sparse_pose_graph.proto.ConstraintBuilderOptions
 =====================================================================
 
 double sampling_ratio
-  Next ID: 18
   A constraint will be added if the proportion of added constraints to
   potential constraints drops below this number.
 
@@ -113,10 +112,6 @@ cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_optio
 double min_score
   Threshold for the scan match score below which a match is not considered.
   Low scores indicate that the scan and map do not look similar.
-
-double min_low_resolution_score
-  Threshold for the score of the low resolution grid below which a match is
-  not considered. Only used for 3D.
 
 double global_localization_min_score
   Threshold below which global localizations are not trusted.
@@ -164,10 +159,16 @@ double rotation_weight
   Scaling parameter for the IMU rotation term.
 
 double consecutive_scan_translation_penalty_factor
-  Penalty factors for changes to the relative pose between consecutive scans.
+  Penalty factors for translation changes to the relative pose between consecutive scans.
 
 double consecutive_scan_rotation_penalty_factor
-  Not yet documented.
+  Penalty factors for rotation changes to the relative pose between consecutive scans.
+
+double fixed_frame_pose_translation_weight
+  Scaling parameter for the FixedFramePose translation.
+
+double fixed_frame_pose_rotation_weight
+  Scaling parameter for the FixedFramePose rotation.
 
 bool log_solver_summary
   If true, the Ceres solver summary will be logged for every optimization.
@@ -447,6 +448,10 @@ int32 rotational_histogram_size
 
 double min_rotational_score
   Minimum score for the rotational scan matcher.
+
+double min_low_resolution_score
+  Threshold for the score of the low resolution grid below which a match is
+  not considered. Only used for 3D.
 
 double linear_xy_search_window
   Linear search window in the plane orthogonal to gravity in which the best

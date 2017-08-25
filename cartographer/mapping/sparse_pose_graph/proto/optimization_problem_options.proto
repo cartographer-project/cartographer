@@ -18,7 +18,7 @@ package cartographer.mapping.sparse_pose_graph.proto;
 
 import "cartographer/common/proto/ceres_solver_options.proto";
 
-// NEXT ID: 11
+// NEXT ID: 13
 message OptimizationProblemOptions {
   // Scaling parameter for Huber loss function.
   optional double huber_scale = 1;
@@ -29,9 +29,17 @@ message OptimizationProblemOptions {
   // Scaling parameter for the IMU rotation term.
   optional double rotation_weight = 9;
 
-  // Penalty factors for changes to the relative pose between consecutive scans.
+  // Penalty factors for translation changes to the relative pose between consecutive scans.
   optional double consecutive_scan_translation_penalty_factor = 2;
+
+  // Penalty factors for rotation changes to the relative pose between consecutive scans.
   optional double consecutive_scan_rotation_penalty_factor = 3;
+
+  // Scaling parameter for the FixedFramePose translation.
+  optional double fixed_frame_pose_translation_weight = 11;
+
+  // Scaling parameter for the FixedFramePose rotation.
+  optional double fixed_frame_pose_rotation_weight = 12;
 
   // If true, the Ceres solver summary will be logged for every optimization.
   optional bool log_solver_summary = 5;

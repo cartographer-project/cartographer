@@ -104,12 +104,12 @@ void OrderedMultiQueue::Dispatch() {
         CannotMakeProgress(it->first);
         return;
       }
-      if (next_data == nullptr || data->time < next_data->time) {
+      if (next_data == nullptr || data->GetTime() < next_data->GetTime()) {
         next_data = data;
         next_queue = &it->second;
         next_queue_key = it->first;
       }
-      CHECK_LE(last_dispatched_time_, next_data->time)
+      CHECK_LE(last_dispatched_time_, next_data->GetTime())
           << "Non-sorted data added to queue: '" << it->first << "'";
       ++it;
     }
@@ -123,9 +123,9 @@ void OrderedMultiQueue::Dispatch() {
     const common::Time common_start_time =
         GetCommonStartTime(next_queue_key.trajectory_id);
 
-    if (next_data->time >= common_start_time) {
+    if (next_data->GetTime() >= common_start_time) {
       // Happy case, we are beyond the 'common_start_time' already.
-      last_dispatched_time_ = next_data->time;
+      last_dispatched_time_ = next_data->GetTime();
       next_queue->callback(next_queue->queue.Pop());
     } else if (next_queue->queue.Size() < 2) {
       if (!next_queue->finished) {
@@ -133,15 +133,15 @@ void OrderedMultiQueue::Dispatch() {
         CannotMakeProgress(next_queue_key);
         return;
       }
-      last_dispatched_time_ = next_data->time;
+      last_dispatched_time_ = next_data->GetTime();
       next_queue->callback(next_queue->queue.Pop());
     } else {
       // We take a peek at the time after next data. If it also is not beyond
       // 'common_start_time' we drop 'next_data', otherwise we just found the
       // first packet to dispatch from this queue.
       std::unique_ptr<Data> next_data_owner = next_queue->queue.Pop();
-      if (next_queue->queue.Peek<Data>()->time > common_start_time) {
-        last_dispatched_time_ = next_data->time;
+      if (next_queue->queue.Peek<Data>()->GetTime() > common_start_time) {
+        last_dispatched_time_ = next_data->GetTime();
         next_queue->callback(std::move(next_data_owner));
       }
     }
@@ -165,8 +165,8 @@ common::Time OrderedMultiQueue::GetCommonStartTime(const int trajectory_id) {
   if (emplace_result.second) {
     for (auto& entry : queues_) {
       if (entry.first.trajectory_id == trajectory_id) {
-        common_start_time =
-            std::max(common_start_time, entry.second.queue.Peek<Data>()->time);
+        common_start_time = std::max(
+            common_start_time, entry.second.queue.Peek<Data>()->GetTime());
       }
     }
     LOG(INFO) << "All sensor data for trajectory " << trajectory_id

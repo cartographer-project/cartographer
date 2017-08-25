@@ -32,62 +32,76 @@ namespace {
 TEST(Collator, Ordering) {
   const std::array<string, 4> kSensorId = {
       {"horizontal_rangefinder", "vertical_rangefinder", "imu", "odometry"}};
-  Data zero(common::FromUniversal(0), Data::Rangefinder{});
-  Data first(common::FromUniversal(100), Data::Rangefinder{});
-  Data second(common::FromUniversal(200), Data::Rangefinder{});
-  Data third(common::FromUniversal(300), Data::Imu{});
-  Data fourth(common::FromUniversal(400), Data::Rangefinder{});
-  Data fifth(common::FromUniversal(500), Data::Rangefinder{});
-  Data sixth(common::FromUniversal(600), transform::Rigid3d::Identity());
+  DispatchableRangefinderData zero(common::FromUniversal(0),
+                                   Eigen::Vector3f::Zero(), {});
+  DispatchableRangefinderData first(common::FromUniversal(100),
+                                    Eigen::Vector3f::Zero(), {});
+  DispatchableRangefinderData second(common::FromUniversal(200),
+                                     Eigen::Vector3f::Zero(), {});
+  DispatchableImuData third(ImuData{common::FromUniversal(300)});
+  DispatchableRangefinderData fourth(common::FromUniversal(400),
+                                     Eigen::Vector3f::Zero(), {});
+  DispatchableRangefinderData fifth(common::FromUniversal(500),
+                                    Eigen::Vector3f::Zero(), {});
+  DispatchableOdometerData sixth(common::FromUniversal(600),
+                                 transform::Rigid3d::Identity());
 
-  std::vector<std::pair<string, Data>> received;
+  std::vector<std::pair<string, common::Time>> received;
   Collator collator;
   collator.AddTrajectory(
       0, std::unordered_set<string>(kSensorId.begin(), kSensorId.end()),
       [&received](const string& sensor_id, std::unique_ptr<Data> data) {
-        received.push_back(std::make_pair(sensor_id, *data));
+        received.push_back(std::make_pair(sensor_id, data->GetTime()));
       });
 
   constexpr int kTrajectoryId = 0;
 
   // Establish a common start time.
-  collator.AddSensorData(kTrajectoryId, kSensorId[0],
-                         common::make_unique<Data>(zero));
-  collator.AddSensorData(kTrajectoryId, kSensorId[1],
-                         common::make_unique<Data>(zero));
-  collator.AddSensorData(kTrajectoryId, kSensorId[2],
-                         common::make_unique<Data>(zero));
-  collator.AddSensorData(kTrajectoryId, kSensorId[3],
-                         common::make_unique<Data>(zero));
+  collator.AddSensorData(
+      kTrajectoryId, kSensorId[0],
+      common::make_unique<DispatchableRangefinderData>(zero));
+  collator.AddSensorData(
+      kTrajectoryId, kSensorId[1],
+      common::make_unique<DispatchableRangefinderData>(zero));
+  collator.AddSensorData(
+      kTrajectoryId, kSensorId[2],
+      common::make_unique<DispatchableRangefinderData>(zero));
+  collator.AddSensorData(
+      kTrajectoryId, kSensorId[3],
+      common::make_unique<DispatchableRangefinderData>(zero));
 
-  collator.AddSensorData(kTrajectoryId, kSensorId[0],
-                         common::make_unique<Data>(first));
+  collator.AddSensorData(
+      kTrajectoryId, kSensorId[0],
+      common::make_unique<DispatchableRangefinderData>(first));
   collator.AddSensorData(kTrajectoryId, kSensorId[3],
-                         common::make_unique<Data>(sixth));
-  collator.AddSensorData(kTrajectoryId, kSensorId[0],
-                         common::make_unique<Data>(fourth));
-  collator.AddSensorData(kTrajectoryId, kSensorId[1],
-                         common::make_unique<Data>(second));
-  collator.AddSensorData(kTrajectoryId, kSensorId[1],
-                         common::make_unique<Data>(fifth));
+                         common::make_unique<DispatchableOdometerData>(sixth));
+  collator.AddSensorData(
+      kTrajectoryId, kSensorId[0],
+      common::make_unique<DispatchableRangefinderData>(fourth));
+  collator.AddSensorData(
+      kTrajectoryId, kSensorId[1],
+      common::make_unique<DispatchableRangefinderData>(second));
+  collator.AddSensorData(
+      kTrajectoryId, kSensorId[1],
+      common::make_unique<DispatchableRangefinderData>(fifth));
   collator.AddSensorData(kTrajectoryId, kSensorId[2],
-                         common::make_unique<Data>(third));
+                         common::make_unique<DispatchableImuData>(third));
 
   ASSERT_EQ(7, received.size());
-  EXPECT_EQ(100, common::ToUniversal(received[4].second.time));
+  EXPECT_EQ(100, common::ToUniversal(received[4].second));
   EXPECT_EQ(kSensorId[0], received[4].first);
-  EXPECT_EQ(200, common::ToUniversal(received[5].second.time));
+  EXPECT_EQ(200, common::ToUniversal(received[5].second));
   EXPECT_EQ(kSensorId[1], received[5].first);
-  EXPECT_EQ(300, common::ToUniversal(received[6].second.time));
+  EXPECT_EQ(300, common::ToUniversal(received[6].second));
   EXPECT_EQ(kSensorId[2], received[6].first);
 
   collator.Flush();
 
   ASSERT_EQ(10, received.size());
   EXPECT_EQ(kSensorId[0], received[7].first);
-  EXPECT_EQ(500, common::ToUniversal(received[8].second.time));
+  EXPECT_EQ(500, common::ToUniversal(received[8].second));
   EXPECT_EQ(kSensorId[1], received[8].first);
-  EXPECT_EQ(600, common::ToUniversal(received[9].second.time));
+  EXPECT_EQ(600, common::ToUniversal(received[9].second));
   EXPECT_EQ(kSensorId[3], received[9].first);
 }
 
