@@ -162,7 +162,9 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       sensor::TransformPointCloud(filtered_range_data.returns,
                                   pose_estimate.cast<float>())};
 
-  return InsertIntoSubmap(time, filtered_range_data, pose_estimate);
+  return InsertIntoSubmap(
+      time, filtered_range_data, filtered_point_cloud_in_tracking,
+      low_resolution_point_cloud_in_tracking, pose_estimate);
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
@@ -182,6 +184,8 @@ const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::InsertIntoSubmap(
     const common::Time time, const sensor::RangeData& range_data_in_tracking,
+    const sensor::PointCloud& high_resolution_point_cloud,
+    const sensor::PointCloud& low_resolution_point_cloud,
     const transform::Rigid3d& pose_observation) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
@@ -196,9 +200,10 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
       sensor::TransformRangeData(range_data_in_tracking,
                                  pose_observation.cast<float>()),
       extrapolator_->gravity_orientation());
-  return std::unique_ptr<InsertionResult>(
-      new InsertionResult{time, range_data_in_tracking, pose_observation,
-                          std::move(insertion_submaps)});
+  return std::unique_ptr<InsertionResult>(new InsertionResult{
+      time, range_data_in_tracking, high_resolution_point_cloud,
+      low_resolution_point_cloud, pose_observation,
+      std::move(insertion_submaps)});
 }
 
 }  // namespace mapping_3d

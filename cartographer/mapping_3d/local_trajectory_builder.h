@@ -41,6 +41,11 @@ class LocalTrajectoryBuilder {
   struct InsertionResult {
     common::Time time;
     sensor::RangeData range_data_in_tracking;
+
+    // Used for loop closure in 3D.
+    sensor::PointCloud high_resolution_point_cloud;
+    sensor::PointCloud low_resolution_point_cloud;
+
     transform::Rigid3d pose_observation;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
@@ -66,6 +71,8 @@ class LocalTrajectoryBuilder {
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       common::Time time, const sensor::RangeData& range_data_in_tracking,
+      const sensor::PointCloud& high_resolution_point_cloud,
+      const sensor::PointCloud& low_resolution_point_cloud,
       const transform::Rigid3d& pose_observation);
 
   const proto::LocalTrajectoryBuilderOptions options_;

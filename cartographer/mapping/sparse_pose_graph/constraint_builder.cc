@@ -55,16 +55,6 @@ proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
           parameter_dictionary
               ->GetDictionary("fast_correlative_scan_matcher_3d")
               .get());
-  *options.mutable_high_resolution_adaptive_voxel_filter_options() =
-      sensor::CreateAdaptiveVoxelFilterOptions(
-          parameter_dictionary
-              ->GetDictionary("high_resolution_adaptive_voxel_filter")
-              .get());
-  *options.mutable_low_resolution_adaptive_voxel_filter_options() =
-      sensor::CreateAdaptiveVoxelFilterOptions(
-          parameter_dictionary
-              ->GetDictionary("low_resolution_adaptive_voxel_filter")
-              .get());
   *options.mutable_ceres_scan_matcher_options_3d() =
       mapping_3d::scan_matching::CreateCeresScanMatcherOptions(
           parameter_dictionary->GetDictionary("ceres_scan_matcher_3d").get());

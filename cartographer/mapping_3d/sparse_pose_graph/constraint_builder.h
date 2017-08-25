@@ -76,7 +76,7 @@ class ConstraintBuilder {
   void MaybeAddConstraint(
       const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id,
-      const sensor::CompressedPointCloud* compressed_point_cloud,
+      const mapping::TrajectoryNode::Data* const constant_data,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
       const transform::Rigid3d& initial_pose);
 
@@ -93,7 +93,7 @@ class ConstraintBuilder {
   void MaybeAddGlobalConstraint(
       const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id,
-      const sensor::CompressedPointCloud* compressed_point_cloud,
+      const mapping::TrajectoryNode::Data* const constant_data,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
       const Eigen::Quaterniond& gravity_alignment,
       mapping::TrajectoryConnectivity* trajectory_connectivity);
@@ -144,7 +144,7 @@ class ConstraintBuilder {
       const mapping::SubmapId& submap_id, const mapping::NodeId& node_id,
       bool match_full_submap,
       mapping::TrajectoryConnectivity* trajectory_connectivity,
-      const sensor::CompressedPointCloud* compressed_point_cloud,
+      const mapping::TrajectoryNode::Data* const constant_data,
       const transform::Rigid3d& initial_pose,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);
 
@@ -183,8 +183,6 @@ class ConstraintBuilder {
       submap_queued_work_items_ GUARDED_BY(mutex_);
 
   common::FixedRatioSampler sampler_;
-  const sensor::AdaptiveVoxelFilter high_resolution_adaptive_voxel_filter_;
-  const sensor::AdaptiveVoxelFilter low_resolution_adaptive_voxel_filter_;
   scan_matching::CeresScanMatcher ceres_scan_matcher_;
 
   // Histograms of scan matcher scores.
