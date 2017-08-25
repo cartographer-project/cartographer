@@ -267,14 +267,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       break;
     }
 
-    // TODO(zhengj, whess): Pick a better initial pose.
-    // TODO(zhengj, whess): Allow choosing rotation parameterization(supports
-    // non-gravity-aligned fixed frames)
-    C_fixed_frames.emplace_back(
-        transform::Rigid3d::Identity(), nullptr,
-        common::make_unique<ceres::AutoDiffLocalParameterization<
-            ConstantYawQuaternionPlus, 4, 2>>(),
-        &problem);
+    bool fixed_frame_pose_initialized = false;
 
     const auto& node_data = node_data_[trajectory_id];
     for (size_t node_index = 0; node_index < node_data.size(); ++node_index) {
@@ -282,16 +275,29 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                .Has(node_data[node_index].time)) {
         continue;
       }
+
       const mapping::SparsePoseGraph::Constraint::Pose constraint_pose{
           fixed_frame_pose_data_.at(trajectory_id)
               .Lookup(node_data[node_index].time),
           options_.fixed_frame_pose_translation_weight(),
           options_.fixed_frame_pose_rotation_weight()};
+
+      // TODO(zhengj, whess): Allow choosing rotation parameterization(supports
+      // non-gravity-aligned fixed frames)
+      if (!fixed_frame_pose_initialized) {
+        C_fixed_frames.emplace_back(
+            constraint_pose.zbar_ij, nullptr,
+            common::make_unique<ceres::AutoDiffLocalParameterization<
+                ConstantYawQuaternionPlus, 4, 2>>(),
+            &problem);
+        fixed_frame_pose_initialized = true;
+      }
+
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 6, 4, 3, 4, 3>(
               new SpaCostFunction(constraint_pose)),
-          nullptr, C_fixed_frames.at(trajectory_id).rotation(),
-          C_fixed_frames.at(trajectory_id).translation(),
+          nullptr, C_fixed_frames.back().rotation(),
+          C_fixed_frames.back().translation(),
           C_nodes.at(trajectory_id).at(node_index).rotation(),
           C_nodes.at(trajectory_id).at(node_index).translation());
     }
