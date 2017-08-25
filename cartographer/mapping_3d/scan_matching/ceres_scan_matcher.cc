@@ -23,7 +23,7 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping_3d/ceres_pose.h"
-#include "cartographer/mapping_3d/rotation_parametrization_functor.h"
+#include "cartographer/mapping_3d/rotation_parameterization.h"
 #include "cartographer/mapping_3d/scan_matching/occupied_space_cost_functor.h"
 #include "cartographer/mapping_3d/scan_matching/rotation_delta_cost_functor.h"
 #include "cartographer/mapping_3d/scan_matching/translation_delta_cost_functor.h"

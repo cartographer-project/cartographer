@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_ROTATION_PARAMETRIZATION_FUNCTOR_H_
-#define CARTOGRAPHER_MAPPING_3D_ROTATION_PARAMETRIZATION_FUNCTOR_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_ROTATION_PARAMETERIZATION_H_
+#define CARTOGRAPHER_MAPPING_3D_ROTATION_PARAMETERIZATION_H_
 
 #include "cartographer/common/math.h"
 #include "ceres/jet.h"
@@ -64,4 +64,4 @@ struct ConstantYawQuaternionPlus {
 }  // namespace mapping_3d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_ROTATION_PARAMETRIZATION_FUNCTOR_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_ROTATION_PARAMETERIZATION_H_
