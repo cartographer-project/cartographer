@@ -33,6 +33,7 @@
 #include "cartographer/mapping_3d/ceres_pose.h"
 #include "cartographer/mapping_3d/imu_integration.h"
 #include "cartographer/mapping_3d/rotation_cost_function.h"
+#include "cartographer/mapping_3d/rotation_parameterization.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/spa_cost_function.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
@@ -43,33 +44,6 @@
 namespace cartographer {
 namespace mapping_3d {
 namespace sparse_pose_graph {
-
-namespace {
-
-struct ConstantYawQuaternionPlus {
-  template <typename T>
-  bool operator()(const T* x, const T* delta, T* x_plus_delta) const {
-    const T delta_norm =
-        ceres::sqrt(common::Pow2(delta[0]) + common::Pow2(delta[1]));
-    const T sin_delta_over_delta =
-        delta_norm < 1e-6 ? T(1.) : ceres::sin(delta_norm) / delta_norm;
-    T q_delta[4];
-    q_delta[0] = delta_norm < 1e-6 ? T(1.) : ceres::cos(delta_norm);
-    q_delta[1] = sin_delta_over_delta * delta[0];
-    q_delta[2] = sin_delta_over_delta * delta[1];
-    q_delta[3] = T(0.);
-    // We apply the 'delta' which is interpreted as an angle-axis rotation
-    // vector in the xy-plane of the submap frame. This way we can align to
-    // gravity because rotations around the z-axis in the submap frame do not
-    // change gravity alignment, while disallowing random rotations of the map
-    // that have nothing to do with gravity alignment (i.e. we disallow steps
-    // just changing "yaw" of the complete map).
-    ceres::QuaternionProduct(x, q_delta, x_plus_delta);
-    return true;
-  }
-};
-
-}  // namespace
 
 OptimizationProblem::OptimizationProblem(
     const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
