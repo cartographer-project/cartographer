@@ -47,4 +47,7 @@ message SparsePoseGraphOptions {
   // Rate at which we sample a single trajectory's scans for global
   // localization.
   optional double global_sampling_ratio = 5;
+
+  // Whether to output histograms for the pose residuals.
+  optional bool log_residual_histograms = 9;
 }

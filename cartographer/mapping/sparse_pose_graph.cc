@@ -55,6 +55,8 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   CHECK_GT(options.max_num_final_iterations(), 0);
   options.set_global_sampling_ratio(
       parameter_dictionary->GetDouble("global_sampling_ratio"));
+  options.set_log_residual_histograms(
+      parameter_dictionary->GetBool("log_residual_histograms"));
   return options;
 }
 

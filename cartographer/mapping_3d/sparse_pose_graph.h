@@ -161,6 +161,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   mapping::SparsePoseGraph::SubmapData GetSubmapDataUnderLock(
       const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
+  // Logs histograms for the translational and rotational residual of scan
+  // poses.
+  void LogResidualHistograms();
+
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
 
