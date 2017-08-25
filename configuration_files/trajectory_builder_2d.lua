@@ -28,6 +28,12 @@ TRAJECTORY_BUILDER_2D = {
     max_range = 50.,
   },
 
+  loop_closure_adaptive_voxel_filter = {
+    max_length = 0.9,
+    min_num_points = 100,
+    max_range = 50.,
+  },
+
   use_online_correlative_scan_matching = false,
   real_time_correlative_scan_matcher = {
     linear_search_window = 0.1,

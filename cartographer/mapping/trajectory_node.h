@@ -35,6 +35,9 @@ struct TrajectoryNode {
     // Range data in 'pose' frame.
     sensor::CompressedRangeData range_data;
 
+    // Used for loop closure in 2D: voxel filtered returns in 'pose' frame.
+    sensor::PointCloud filtered_point_cloud;
+
     // Used for loop closure in 3D.
     sensor::PointCloud high_resolution_point_cloud;
     sensor::PointCloud low_resolution_point_cloud;

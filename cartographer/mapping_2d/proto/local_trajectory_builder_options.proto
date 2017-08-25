@@ -44,6 +44,11 @@ message LocalTrajectoryBuilderOptions {
   optional sensor.proto.AdaptiveVoxelFilterOptions
       adaptive_voxel_filter_options = 6;
 
+  // Voxel filter used to compute a sparser point cloud for finding loop
+  // closures.
+  optional sensor.proto.AdaptiveVoxelFilterOptions
+      loop_closure_adaptive_voxel_filter_options = 20;
+
   // Whether to solve the online scan matching first using the correlative scan
   // matcher to generate a good starting point for Ceres.
   optional bool use_online_correlative_scan_matching = 5;

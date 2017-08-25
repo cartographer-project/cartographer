@@ -102,14 +102,16 @@ void SparsePoseGraph::AddScan(
       GetLocalToGlobalTransform(trajectory_id) * pose);
   common::MutexLocker locker(&mutex_);
   trajectory_nodes_.Append(
-      trajectory_id,
-      mapping::TrajectoryNode{
-          std::make_shared<const mapping::TrajectoryNode::Data>(
-              mapping::TrajectoryNode::Data{
-                  time, sensor::Compress(range_data_in_tracking),
-                  high_resolution_point_cloud, low_resolution_point_cloud,
-                  transform::Rigid3d::Identity()}),
-          optimized_pose});
+      trajectory_id, mapping::TrajectoryNode{
+                         std::make_shared<const mapping::TrajectoryNode::Data>(
+                             mapping::TrajectoryNode::Data{
+                                 time,
+                                 sensor::Compress(range_data_in_tracking),
+                                 {},
+                                 high_resolution_point_cloud,
+                                 low_resolution_point_cloud,
+                                 transform::Rigid3d::Identity()}),
+                         optimized_pose});
   ++num_trajectory_nodes_;
   trajectory_connectivity_.Add(trajectory_id);
 

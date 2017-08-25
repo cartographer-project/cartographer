@@ -32,9 +32,6 @@ proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
   options.set_sampling_ratio(parameter_dictionary->GetDouble("sampling_ratio"));
   options.set_max_constraint_distance(
       parameter_dictionary->GetDouble("max_constraint_distance"));
-  *options.mutable_adaptive_voxel_filter_options() =
-      sensor::CreateAdaptiveVoxelFilterOptions(
-          parameter_dictionary->GetDictionary("adaptive_voxel_filter").get());
   options.set_min_score(parameter_dictionary->GetDouble("min_score"));
   options.set_global_localization_min_score(
       parameter_dictionary->GetDouble("global_localization_min_score"));

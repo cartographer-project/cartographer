@@ -181,9 +181,15 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       TransformRangeData(range_data_in_tracking_2d,
                          transform::Embed3D(pose_estimate_2d.cast<float>())));
 
-  return common::make_unique<InsertionResult>(InsertionResult{
-      time, std::move(insertion_submaps), tracking_to_tracking_2d,
-      range_data_in_tracking_2d, pose_estimate_2d});
+  sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
+      options_.loop_closure_adaptive_voxel_filter_options());
+  const sensor::PointCloud filtered_point_cloud_in_tracking_2d =
+      adaptive_voxel_filter.Filter(range_data_in_tracking_2d.returns);
+
+  return common::make_unique<InsertionResult>(
+      InsertionResult{time, std::move(insertion_submaps),
+                      tracking_to_tracking_2d, range_data_in_tracking_2d,
+                      pose_estimate_2d, filtered_point_cloud_in_tracking_2d});
 }
 
 const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {

@@ -105,10 +105,6 @@ double sampling_ratio
 double max_constraint_distance
   Threshold for poses to be considered near a submap.
 
-cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
-  This is only used for 2D.
-  Voxel filter used to compute a sparser point cloud for matching.
-
 double min_score
   Threshold for the scan match score below which a match is not considered.
   Low scores indicate that the scan and map do not look similar.
@@ -135,12 +131,6 @@ cartographer.mapping_2d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_m
 
 cartographer.mapping_3d.scan_matching.proto.FastCorrelativeScanMatcherOptions fast_correlative_scan_matcher_options_3d
   Not yet documented.
-
-cartographer.sensor.proto.AdaptiveVoxelFilterOptions high_resolution_adaptive_voxel_filter_options
-  Voxel filter used for high resolution, only used for 3D loop closure.
-
-cartographer.sensor.proto.AdaptiveVoxelFilterOptions low_resolution_adaptive_voxel_filter_options
-  Voxel filter used for low resolution, 3D loop closure refinement.
 
 cartographer.mapping_3d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options_3d
   Not yet documented.
@@ -205,6 +195,10 @@ float voxel_filter_size
 
 cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
   Voxel filter used to compute a sparser point cloud for matching.
+
+cartographer.sensor.proto.AdaptiveVoxelFilterOptions loop_closure_adaptive_voxel_filter_options
+  Voxel filter used to compute a sparser point cloud for finding loop
+  closures.
 
 bool use_online_correlative_scan_matching
   Whether to solve the online scan matching first using the correlative scan

@@ -48,7 +48,6 @@ ConstraintBuilder::ConstraintBuilder(
     : options_(options),
       thread_pool_(thread_pool),
       sampler_(options.sampling_ratio()),
-      adaptive_voxel_filter_(options.adaptive_voxel_filter_options()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options()) {}
 
 ConstraintBuilder::~ConstraintBuilder() {
@@ -62,7 +61,7 @@ ConstraintBuilder::~ConstraintBuilder() {
 void ConstraintBuilder::MaybeAddConstraint(
     const mapping::SubmapId& submap_id, const Submap* const submap,
     const mapping::NodeId& node_id,
-    const sensor::CompressedPointCloud* const compressed_point_cloud,
+    const mapping::TrajectoryNode::Data* const constant_data,
     const transform::Rigid2d& initial_relative_pose) {
   if (initial_relative_pose.translation().norm() >
       options_.max_constraint_distance()) {
@@ -76,10 +75,10 @@ void ConstraintBuilder::MaybeAddConstraint(
     const int current_computation = current_computation_;
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_id, &submap->probability_grid(), [=]() EXCLUDES(mutex_) {
-          ComputeConstraint(
-              submap_id, submap, node_id, false, /* match_full_submap */
-              nullptr,                           /* trajectory_connectivity */
-              compressed_point_cloud, initial_relative_pose, constraint);
+          ComputeConstraint(submap_id, submap, node_id,
+                            false,   /* match_full_submap */
+                            nullptr, /* trajectory_connectivity */
+                            constant_data, initial_relative_pose, constraint);
           FinishComputation(current_computation);
         });
   }
@@ -88,7 +87,7 @@ void ConstraintBuilder::MaybeAddConstraint(
 void ConstraintBuilder::MaybeAddGlobalConstraint(
     const mapping::SubmapId& submap_id, const Submap* const submap,
     const mapping::NodeId& node_id,
-    const sensor::CompressedPointCloud* const compressed_point_cloud,
+    const mapping::TrajectoryNode::Data* const constant_data,
     mapping::TrajectoryConnectivity* const trajectory_connectivity) {
   common::MutexLocker locker(&mutex_);
   constraints_.emplace_back();
@@ -99,7 +98,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
       submap_id, &submap->probability_grid(), [=]() EXCLUDES(mutex_) {
         ComputeConstraint(submap_id, submap, node_id,
                           true, /* match_full_submap */
-                          trajectory_connectivity, compressed_point_cloud,
+                          trajectory_connectivity, constant_data,
                           transform::Rigid2d::Identity(), constraint);
         FinishComputation(current_computation);
       });
@@ -164,15 +163,13 @@ void ConstraintBuilder::ComputeConstraint(
     const mapping::SubmapId& submap_id, const Submap* const submap,
     const mapping::NodeId& node_id, bool match_full_submap,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
-    const sensor::CompressedPointCloud* const compressed_point_cloud,
+    const mapping::TrajectoryNode::Data* const constant_data,
     const transform::Rigid2d& initial_relative_pose,
     std::unique_ptr<ConstraintBuilder::Constraint>* constraint) {
   const transform::Rigid2d initial_pose =
       ComputeSubmapPose(*submap) * initial_relative_pose;
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_id);
-  const sensor::PointCloud filtered_point_cloud =
-      adaptive_voxel_filter_.Filter(compressed_point_cloud->Decompress());
 
   // The 'constraint_transform' (submap i <- scan j) is computed from:
   // - a 'filtered_point_cloud' in scan j,
@@ -188,8 +185,8 @@ void ConstraintBuilder::ComputeConstraint(
   // 3. Refine.
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
-            filtered_point_cloud, options_.global_localization_min_score(),
-            &score, &pose_estimate)) {
+            constant_data->filtered_point_cloud,
+            options_.global_localization_min_score(), &score, &pose_estimate)) {
       CHECK_GT(score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
       CHECK_GE(submap_id.trajectory_id, 0);
@@ -200,8 +197,8 @@ void ConstraintBuilder::ComputeConstraint(
     }
   } else {
     if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
-            initial_pose, filtered_point_cloud, options_.min_score(), &score,
-            &pose_estimate)) {
+            initial_pose, constant_data->filtered_point_cloud,
+            options_.min_score(), &score, &pose_estimate)) {
       // We've reported a successful local match.
       CHECK_GT(score, options_.min_score());
     } else {
@@ -217,9 +214,9 @@ void ConstraintBuilder::ComputeConstraint(
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
   ceres::Solver::Summary unused_summary;
-  ceres_scan_matcher_.Match(pose_estimate, pose_estimate, filtered_point_cloud,
-                            *submap_scan_matcher->probability_grid,
-                            &pose_estimate, &unused_summary);
+  ceres_scan_matcher_.Match(
+      pose_estimate, pose_estimate, constant_data->filtered_point_cloud,
+      *submap_scan_matcher->probability_grid, &pose_estimate, &unused_summary);
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;
@@ -232,8 +229,9 @@ void ConstraintBuilder::ComputeConstraint(
 
   if (options_.log_matches()) {
     std::ostringstream info;
-    info << "Node " << node_id << " with " << filtered_point_cloud.size()
-         << " points on submap " << submap_id << std::fixed;
+    info << "Node " << node_id << " with "
+         << constant_data->filtered_point_cloud.size() << " points on submap "
+         << submap_id << std::fixed;
     if (match_full_submap) {
       info << " matches";
     } else {
