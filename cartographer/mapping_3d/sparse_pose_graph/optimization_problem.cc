@@ -259,6 +259,56 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     }
   }
 
+  // Add fixed frame pose constraints.
+  std::deque<CeresPose> C_fixed_frames;
+  for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
+       ++trajectory_id) {
+    if (trajectory_id >= fixed_frame_pose_data_.size()) {
+      break;
+    }
+
+    bool fixed_frame_pose_initialized = false;
+
+    const auto& node_data = node_data_[trajectory_id];
+    for (size_t node_index = 0; node_index < node_data.size(); ++node_index) {
+      if (!fixed_frame_pose_data_.at(trajectory_id)
+               .Has(node_data[node_index].time)) {
+        continue;
+      }
+
+      const mapping::SparsePoseGraph::Constraint::Pose constraint_pose{
+          fixed_frame_pose_data_.at(trajectory_id)
+              .Lookup(node_data[node_index].time),
+          options_.fixed_frame_pose_translation_weight(),
+          options_.fixed_frame_pose_rotation_weight()};
+
+      if (!fixed_frame_pose_initialized) {
+        const transform::Rigid3d fixed_frame_pose_in_map =
+            node_data[node_index].point_cloud_pose *
+            constraint_pose.zbar_ij.inverse();
+        C_fixed_frames.emplace_back(
+            transform::Rigid3d(
+                fixed_frame_pose_in_map.translation(),
+                Eigen::AngleAxisd(
+                    transform::GetYaw(fixed_frame_pose_in_map.rotation()),
+                    Eigen::Vector3d::UnitZ())),
+            nullptr,
+            common::make_unique<ceres::AutoDiffLocalParameterization<
+                YawOnlyQuaternionPlus, 4, 1>>(),
+            &problem);
+        fixed_frame_pose_initialized = true;
+      }
+
+      problem.AddResidualBlock(
+          new ceres::AutoDiffCostFunction<SpaCostFunction, 6, 4, 3, 4, 3>(
+              new SpaCostFunction(constraint_pose)),
+          nullptr, C_fixed_frames.back().rotation(),
+          C_fixed_frames.back().translation(),
+          C_nodes.at(trajectory_id).at(node_index).rotation(),
+          C_nodes.at(trajectory_id).at(node_index).translation());
+    }
+  }
+
   // Solve.
   ceres::Solver::Summary summary;
   ceres::Solve(
