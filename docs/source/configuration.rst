@@ -78,6 +78,9 @@ double global_sampling_ratio
   Rate at which we sample a single trajectory's scans for global
   localization.
 
+bool log_residual_histograms
+  Whether to output histograms for the pose residuals.
+
 
 cartographer.mapping.proto.TrajectoryBuilderOptions
 ===================================================

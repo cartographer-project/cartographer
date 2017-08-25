@@ -48,6 +48,6 @@ message SparsePoseGraphOptions {
   // localization.
   optional double global_sampling_ratio = 5;
 
-  // Whether to calculate and output histograms for the pose residuals.
+  // Whether to output histograms for the pose residuals.
   optional bool log_residual_histograms = 9;
 }
