@@ -282,18 +282,19 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
           options_.fixed_frame_pose_translation_weight(),
           options_.fixed_frame_pose_rotation_weight()};
 
-      // TODO(zhengj, whess): Allow choosing rotation parameterization(supports
-      // non-gravity-aligned fixed frames)
       if (!fixed_frame_pose_initialized) {
+        const auto& fixed_frame_pose_in_map =
+            node_data[node_index].point_cloud_pose *
+            constraint_pose.zbar_ij.inverse();
         C_fixed_frames.emplace_back(
             transform::Rigid3d(
-                constraint_pose.zbar_ij.translation(),
+                fixed_frame_pose_in_map.translation(),
                 Eigen::AngleAxisd(
-                    transform::GetYaw(constraint_pose.zbar_ij.rotation()),
+                    transform::GetYaw(fixed_frame_pose_in_map.rotation()),
                     Eigen::Vector3d::UnitZ())),
             nullptr,
             common::make_unique<ceres::AutoDiffLocalParameterization<
-                YawOnlyQuaternionPlus, 4, 2>>(),
+                YawOnlyQuaternionPlus, 4, 1>>(),
             &problem);
         fixed_frame_pose_initialized = true;
       }
