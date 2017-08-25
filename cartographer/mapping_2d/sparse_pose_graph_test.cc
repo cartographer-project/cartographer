@@ -145,6 +145,7 @@ class SparsePoseGraphTest : public ::testing::Test {
             },
             max_num_final_iterations = 200,
             global_sampling_ratio = 0.01,
+            log_residual_histograms = true,
           })text");
       sparse_pose_graph_ = common::make_unique<SparsePoseGraph>(
           mapping::CreateSparsePoseGraphOptions(parameter_dictionary.get()),

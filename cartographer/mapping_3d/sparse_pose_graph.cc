@@ -433,6 +433,34 @@ void SparsePoseGraph::RunFinalOptimization() {
           .max_num_iterations());
 }
 
+void SparsePoseGraph::LogResidualHistograms() {
+  common::Histogram rotational_residual;
+  common::Histogram translational_residual;
+  for (const Constraint& constraint : constraints_) {
+    if (constraint.tag == Constraint::Tag::INTRA_SUBMAP) {
+      const cartographer::transform::Rigid3d optimized_node_to_map =
+          trajectory_nodes_.at(constraint.node_id).pose;
+      const cartographer::transform::Rigid3d node_to_submap_constraint =
+          constraint.pose.zbar_ij;
+      const cartographer::transform::Rigid3d optimized_submap_to_map =
+          optimized_submap_transforms_.at(constraint.submap_id.trajectory_id)
+              .at(constraint.submap_id.submap_index)
+              .pose;
+      const cartographer::transform::Rigid3d optimized_node_to_submap =
+          optimized_submap_to_map.inverse() * optimized_node_to_map;
+      const cartographer::transform::Rigid3d residual =
+          node_to_submap_constraint.inverse() * optimized_node_to_submap;
+      rotational_residual.Add(
+          common::NormalizeAngleDifference(transform::GetAngle(residual)));
+      translational_residual.Add(residual.translation().norm());
+    }
+  }
+  LOG(INFO) << "Translational residuals histogram:\n"
+            << translational_residual.ToString(10);
+  LOG(INFO) << "Rotational residuals histogram:\n"
+            << rotational_residual.ToString(10);
+}
+
 void SparsePoseGraph::RunOptimization() {
   if (optimization_problem_.submap_data().empty()) {
     return;
@@ -480,6 +508,11 @@ void SparsePoseGraph::RunOptimization() {
   TrimmingHandle trimming_handle(this);
   for (auto& trimmer : trimmers_) {
     trimmer->Trim(&trimming_handle);
+  }
+
+  // Log the histograms for the pose residuals.
+  if (options_.log_residual_histograms()) {
+    LogResidualHistograms();
   }
 }
 
