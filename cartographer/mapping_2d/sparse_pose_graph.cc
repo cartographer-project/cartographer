@@ -239,7 +239,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   const mapping::NodeId node_id{
       matching_id.trajectory_id,
       static_cast<size_t>(matching_id.trajectory_id) <
-              optimization_problem_.node_data().size()
+                  optimization_problem_.node_data().size() &&
+              !optimization_problem_.node_data().empty()
           ? static_cast<int>(optimization_problem_.node_data()
                                  .at(matching_id.trajectory_id)
                                  .rbegin()
@@ -434,13 +435,10 @@ void SparsePoseGraph::RunOptimization() {
   for (int trajectory_id = 0;
        trajectory_id != static_cast<int>(node_data.size()); ++trajectory_id) {
     const int num_nodes = trajectory_nodes_.num_indices(trajectory_id);
-    int last_node_data_index = 0;
-    for (auto it = node_data.at(trajectory_id).begin();
-         it != node_data.at(trajectory_id).end(); ++it) {
-      const mapping::NodeId node_id{trajectory_id, it->first};
+    for (const auto& node_data_index : node_data.at(trajectory_id)) {
+      const mapping::NodeId node_id{trajectory_id, node_data_index.first};
       trajectory_nodes_.at(node_id).pose =
-          transform::Embed3D(it->second.point_cloud_pose);
-      last_node_data_index = it->first;
+          transform::Embed3D(node_data_index.second.point_cloud_pose);
     }
     // Extrapolate all point cloud poses that were added later.
     const auto local_to_new_global =
@@ -449,7 +447,11 @@ void SparsePoseGraph::RunOptimization() {
         optimized_submap_transforms_, trajectory_id);
     const transform::Rigid3d old_global_to_new_global =
         local_to_new_global * local_to_old_global.inverse();
-    for (int node_index = last_node_data_index + 1; node_index < num_nodes;
+    int last_optimized_node_index =
+        node_data.at(trajectory_id).empty()
+            ? 0
+            : node_data.at(trajectory_id).rbegin()->first;
+    for (int node_index = last_optimized_node_index + 1; node_index < num_nodes;
          ++node_index) {
       const mapping::NodeId node_id{trajectory_id, node_index};
       trajectory_nodes_.at(node_id).pose =

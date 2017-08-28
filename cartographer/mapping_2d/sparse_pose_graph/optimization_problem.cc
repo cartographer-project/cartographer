@@ -95,8 +95,33 @@ void OptimizationProblem::AddTrajectoryNode(
 
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   auto& node_data = node_data_.at(node_id.trajectory_id);
+  if (node_id.trajectory_id < static_cast<int>(imu_data_.size())) {
+    auto node_it = node_data.begin();
+    for (; std::next(node_it, 1) != node_data.end(); ++node_it) {
+      if (std::next(node_it, 1)->first == node_id.node_index) {
+        const common::Time prev_node_time = node_it->second.time;
+        const common::Time node_time = std::next(node_it, 1)->second.time;
+
+        auto& imu_data = imu_data_.at(node_id.trajectory_id);
+        auto imu_data_it = imu_data.begin();
+        while (imu_data_it != imu_data.end() &&
+               imu_data_it->time < prev_node_time) {
+          ++imu_data_it;
+        }
+        auto imu_remove_begin = imu_data_it;
+        while (imu_data_it != imu_data.end() &&
+               imu_data_it->time <= node_time) {
+          ++imu_data_it;
+        }
+        auto imu_remove_end = imu_data_it;
+        if (imu_remove_begin != imu_data.end()) {
+          imu_data.erase(imu_remove_begin, imu_remove_end);
+        }
+        break;
+      }
+    }
+  }
   CHECK(node_data.erase(node_id.node_index));
-  // TODO(jihoonl): Remove Imu, odometry data
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
@@ -198,20 +223,22 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // if odometry is not available.
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    if (node_data_[trajectory_id].size() > 1) {
-      for (auto index_node_data = node_data_[trajectory_id].begin();;) {
-        const int node_index = index_node_data->first;
-        const NodeData& node_data = index_node_data->second;
-        ++index_node_data;
-        if (index_node_data == node_data_[trajectory_id].end()) {
+    if (!node_data_[trajectory_id].empty()) {
+      for (auto node_it = node_data_[trajectory_id].begin();;) {
+        const int node_index = node_it->first;
+        const NodeData& node_data = node_it->second;
+        ++node_it;
+        if (node_it == node_data_[trajectory_id].end()) {
           break;
         }
 
-        const int next_node_index = index_node_data->first;
-        const NodeData& next_node_data = index_node_data->second;
+        const int next_node_index = node_it->first;
+        const NodeData& next_node_data = node_it->second;
 
-        const int index_diff = next_node_index - node_index;
-        CHECK_GE(index_diff, 1);
+        if (next_node_index != node_index + 1) {
+          continue;
+        }
+
         const bool odometry_available =
             trajectory_id < odometry_data_.size() &&
             odometry_data_[trajectory_id].Has(
@@ -231,10 +258,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
             new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
                 new SpaCostFunction(Constraint::Pose{
                     relative_pose,
-                    options_.consecutive_scan_translation_penalty_factor() *
-                        index_diff,
-                    options_.consecutive_scan_rotation_penalty_factor() *
-                        index_diff})),
+                    options_.consecutive_scan_translation_penalty_factor(),
+                    options_.consecutive_scan_rotation_penalty_factor()})),
             nullptr /* loss function */,
             C_nodes[trajectory_id][node_index].data(),
             C_nodes[trajectory_id][next_node_index].data());
@@ -263,7 +288,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
        ++trajectory_id) {
     for (auto& index_node_data : node_data_[trajectory_id]) {
       index_node_data.second.point_cloud_pose =
-          ToPose(C_nodes[trajectory_id][index_node_data.first]);
+          ToPose(C_nodes[trajectory_id].at(index_node_data.first));
     }
   }
 }
