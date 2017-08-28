@@ -20,6 +20,7 @@
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping_2d/local_trajectory_builder.h"
 #include "cartographer/mapping_2d/sparse_pose_graph.h"
+#include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
 
 namespace cartographer {
 namespace mapping_2d {
@@ -41,10 +42,9 @@ class GlobalTrajectoryBuilder
   // parallel to the ground plane.
   void AddRangefinderData(common::Time time, const Eigen::Vector3f& origin,
                           const sensor::PointCloud& ranges) override;
-  void AddImuData(const sensor::ImuData& imu_data) override;
-  void AddOdometerData(common::Time time,
-                       const transform::Rigid3d& pose) override;
-  void AddFixedFramePoseData(
+  void AddSensorData(const sensor::ImuData& imu_data) override;
+  void AddSensorData(const sensor::OdometryData& odometry_data) override;
+  void AddSensorData(
       const sensor::FixedFramePoseData& fixed_frame_pose) override;
 
  private:

@@ -27,6 +27,7 @@
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -53,10 +54,9 @@ class GlobalTrajectoryBuilderInterface {
   virtual void AddRangefinderData(common::Time time,
                                   const Eigen::Vector3f& origin,
                                   const sensor::PointCloud& ranges) = 0;
-  virtual void AddImuData(const sensor::ImuData& imu_data) = 0;
-  virtual void AddOdometerData(common::Time time,
-                               const transform::Rigid3d& pose) = 0;
-  virtual void AddFixedFramePoseData(
+  virtual void AddSensorData(const sensor::ImuData& imu_data) = 0;
+  virtual void AddSensorData(const sensor::OdometryData& odometry_data) = 0;
+  virtual void AddSensorData(
       const sensor::FixedFramePoseData& fixed_frame_pose) = 0;
 };
 

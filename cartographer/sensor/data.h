@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_DATA_H_
 #define CARTOGRAPHER_MAPPING_DATA_H_
 
+#include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
@@ -35,20 +36,6 @@ class Data {
   virtual common::Time GetTime() const = 0;
   virtual void AddToTrajectoryBuilder(
       mapping::GlobalTrajectoryBuilderInterface* trajectory_builder) = 0;
-};
-
-class DispatchableImuData : public Data {
- public:
-  DispatchableImuData(const ImuData& imu_data) : imu_data_(imu_data) {}
-
-  common::Time GetTime() const override { return imu_data_.time; }
-  void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface* const
-                                  trajectory_builder) override {
-    trajectory_builder->AddImuData(imu_data_);
-  }
-
- private:
-  const ImuData imu_data_;
 };
 
 class DispatchableRangefinderData : public Data {
@@ -70,38 +57,25 @@ class DispatchableRangefinderData : public Data {
   const PointCloud ranges_;
 };
 
-class DispatchableOdometerData : public Data {
+template <typename DataType>
+class Dispatchable : public Data {
  public:
-  DispatchableOdometerData(const common::Time time,
-                           const transform::Rigid3d& odometer_pose)
-      : time_(time), odometer_pose_(odometer_pose) {}
+  Dispatchable(const DataType& data) : data_(data) {}
 
-  common::Time GetTime() const override { return time_; }
+  common::Time GetTime() const override { return data_.time; }
   void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface* const
                                   trajectory_builder) override {
-    trajectory_builder->AddOdometerData(time_, odometer_pose_);
+    trajectory_builder->AddSensorData(data_);
   }
 
  private:
-  const common::Time time_;
-  const transform::Rigid3d odometer_pose_;
+  const DataType data_;
 };
 
-class DispatchableFixedFramePoseData : public Data {
- public:
-  DispatchableFixedFramePoseData(const common::Time time,
-                                 const transform::Rigid3d& fixed_frame_pose)
-      : fixed_frame_pose_data_{time, fixed_frame_pose} {}
-
-  common::Time GetTime() const override { return fixed_frame_pose_data_.time; }
-  void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface* const
-                                  trajectory_builder) override {
-    trajectory_builder->AddFixedFramePoseData(fixed_frame_pose_data_);
-  }
-
- private:
-  const FixedFramePoseData fixed_frame_pose_data_;
-};
+template <typename DataType>
+std::unique_ptr<Dispatchable<DataType>> MakeDispatchable(const DataType& data) {
+  return common::make_unique<Dispatchable<DataType>>(data);
+}
 
 }  // namespace sensor
 }  // namespace cartographer

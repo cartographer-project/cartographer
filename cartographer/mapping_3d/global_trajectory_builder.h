@@ -30,25 +30,24 @@ class GlobalTrajectoryBuilder
  public:
   GlobalTrajectoryBuilder(const proto::LocalTrajectoryBuilderOptions& options,
                           int trajectory_id,
-                          mapping_3d::SparsePoseGraph* sparse_pose_graph);
+                          SparsePoseGraph* sparse_pose_graph);
   ~GlobalTrajectoryBuilder() override;
 
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  void AddImuData(const sensor::ImuData& imu_data) override;
+  const mapping::PoseEstimate& pose_estimate() const override;
+
   void AddRangefinderData(common::Time time, const Eigen::Vector3f& origin,
                           const sensor::PointCloud& ranges) override;
-  void AddOdometerData(common::Time time,
-                       const transform::Rigid3d& pose) override;
-  void AddFixedFramePoseData(
+  void AddSensorData(const sensor::ImuData& imu_data) override;
+  void AddSensorData(const sensor::OdometryData& odometry_data) override;
+  void AddSensorData(
       const sensor::FixedFramePoseData& fixed_frame_pose) override;
-
-  const mapping::PoseEstimate& pose_estimate() const override;
 
  private:
   const int trajectory_id_;
-  mapping_3d::SparsePoseGraph* const sparse_pose_graph_;
+  SparsePoseGraph* const sparse_pose_graph_;
   LocalTrajectoryBuilder local_trajectory_builder_;
 };
 
