@@ -20,13 +20,16 @@
 #include <memory>
 
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
+#include "cartographer/mapping/pose_estimate.h"
 #include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/mapping_2d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/submaps.h"
 #include "cartographer/mapping_3d/motion_filter.h"
+#include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/odometry_data.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -57,8 +60,7 @@ class LocalTrajectoryBuilder {
   std::unique_ptr<InsertionResult> AddHorizontalRangeData(
       common::Time, const sensor::RangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
-  void AddOdometerData(common::Time time,
-                       const transform::Rigid3d& odometer_pose);
+  void AddOdometerData(const sensor::OdometryData& odometry_data);
 
  private:
   std::unique_ptr<InsertionResult> AddAccumulatedRangeData(

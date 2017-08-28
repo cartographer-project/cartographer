@@ -38,13 +38,13 @@ TEST(Collator, Ordering) {
                                     Eigen::Vector3f::Zero(), {});
   DispatchableRangefinderData second(common::FromUniversal(200),
                                      Eigen::Vector3f::Zero(), {});
-  DispatchableImuData third(ImuData{common::FromUniversal(300)});
+  ImuData third{common::FromUniversal(300)};
   DispatchableRangefinderData fourth(common::FromUniversal(400),
                                      Eigen::Vector3f::Zero(), {});
   DispatchableRangefinderData fifth(common::FromUniversal(500),
                                     Eigen::Vector3f::Zero(), {});
-  DispatchableOdometerData sixth(common::FromUniversal(600),
-                                 transform::Rigid3d::Identity());
+  OdometryData sixth{common::FromUniversal(600),
+                     transform::Rigid3d::Identity()};
 
   std::vector<std::pair<string, common::Time>> received;
   Collator collator;
@@ -73,8 +73,7 @@ TEST(Collator, Ordering) {
   collator.AddSensorData(
       kTrajectoryId, kSensorId[0],
       common::make_unique<DispatchableRangefinderData>(first));
-  collator.AddSensorData(kTrajectoryId, kSensorId[3],
-                         common::make_unique<DispatchableOdometerData>(sixth));
+  collator.AddSensorData(kTrajectoryId, kSensorId[3], MakeDispatchable(sixth));
   collator.AddSensorData(
       kTrajectoryId, kSensorId[0],
       common::make_unique<DispatchableRangefinderData>(fourth));
@@ -84,8 +83,7 @@ TEST(Collator, Ordering) {
   collator.AddSensorData(
       kTrajectoryId, kSensorId[1],
       common::make_unique<DispatchableRangefinderData>(fifth));
-  collator.AddSensorData(kTrajectoryId, kSensorId[2],
-                         common::make_unique<DispatchableImuData>(third));
+  collator.AddSensorData(kTrajectoryId, kSensorId[2], MakeDispatchable(third));
 
   ASSERT_EQ(7, received.size());
   EXPECT_EQ(100, common::ToUniversal(received[4].second));

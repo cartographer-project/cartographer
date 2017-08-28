@@ -45,19 +45,18 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
       insertion_result->insertion_submaps);
 }
 
-void GlobalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
+void GlobalTrajectoryBuilder::AddSensorData(const sensor::ImuData& imu_data) {
   local_trajectory_builder_.AddImuData(imu_data);
   sparse_pose_graph_->AddImuData(trajectory_id_, imu_data);
 }
 
-void GlobalTrajectoryBuilder::AddOdometerData(const common::Time time,
-                                              const transform::Rigid3d& pose) {
-  local_trajectory_builder_.AddOdometerData(time, pose);
-  sparse_pose_graph_->AddOdometerData(trajectory_id_,
-                                      sensor::OdometryData{time, pose});
+void GlobalTrajectoryBuilder::AddSensorData(
+    const sensor::OdometryData& odometry_data) {
+  local_trajectory_builder_.AddOdometerData(odometry_data);
+  sparse_pose_graph_->AddOdometerData(trajectory_id_, odometry_data);
 }
 
-void GlobalTrajectoryBuilder::AddFixedFramePoseData(
+void GlobalTrajectoryBuilder::AddSensorData(
     const sensor::FixedFramePoseData& fixed_frame_pose) {
   sparse_pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);
 }

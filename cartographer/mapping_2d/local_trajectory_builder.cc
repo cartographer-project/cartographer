@@ -203,13 +203,13 @@ void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
-    const common::Time time, const transform::Rigid3d& odometer_pose) {
+    const sensor::OdometryData& odometry_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator we cannot add odometry data.
     LOG(INFO) << "Extrapolator not yet initialized.";
     return;
   }
-  extrapolator_->AddOdometryData(sensor::OdometryData{time, odometer_pose});
+  extrapolator_->AddOdometryData(odometry_data);
 }
 
 void LocalTrajectoryBuilder::InitializeExtrapolator(const common::Time time) {

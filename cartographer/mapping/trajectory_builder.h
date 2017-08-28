@@ -65,23 +65,21 @@ class TrajectoryBuilder {
   void AddImuData(const string& sensor_id, common::Time time,
                   const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) {
-    AddSensorData(sensor_id, common::make_unique<sensor::DispatchableImuData>(
-                                 sensor::ImuData{time, linear_acceleration,
-                                                 angular_velocity}));
+    AddSensorData(sensor_id, sensor::MakeDispatchable(sensor::ImuData{
+                                 time, linear_acceleration, angular_velocity}));
   }
 
   void AddOdometerData(const string& sensor_id, common::Time time,
                        const transform::Rigid3d& odometer_pose) {
-    AddSensorData(sensor_id,
-                  common::make_unique<sensor::DispatchableOdometerData>(
-                      time, odometer_pose));
+    AddSensorData(sensor_id, sensor::MakeDispatchable(
+                                 sensor::OdometryData{time, odometer_pose}));
   }
 
   void AddFixedFramePoseData(const string& sensor_id, common::Time time,
                              const transform::Rigid3d& fixed_frame_pose) {
     AddSensorData(sensor_id,
-                  common::make_unique<sensor::DispatchableFixedFramePoseData>(
-                      time, fixed_frame_pose));
+                  sensor::MakeDispatchable(
+                      sensor::FixedFramePoseData{time, fixed_frame_pose}));
   }
 };
 
