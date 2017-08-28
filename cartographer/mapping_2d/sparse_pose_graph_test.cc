@@ -69,11 +69,6 @@ class SparsePoseGraphTest : public ::testing::Test {
             constraint_builder = {
               sampling_ratio = 1.,
               max_constraint_distance = 6.,
-              adaptive_voxel_filter = {
-                max_length = 1e-2,
-                min_num_points = 1000,
-                max_range = 50.,
-              },
               min_score = 0.5,
               global_localization_min_score = 0.6,
               loop_closure_translation_weight = 1.,
@@ -164,7 +159,7 @@ class SparsePoseGraphTest : public ::testing::Test {
 
     sparse_pose_graph_->AddScan(
         common::FromUniversal(0), transform::Rigid3d::Identity(), range_data,
-        pose_estimate, kTrajectoryId, insertion_submaps);
+        range_data.returns, pose_estimate, kTrajectoryId, insertion_submaps);
   }
 
   void MoveRelative(const transform::Rigid2d& movement) {

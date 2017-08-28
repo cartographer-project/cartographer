@@ -40,6 +40,7 @@ void GlobalTrajectoryBuilder::AddRangefinderData(
   sparse_pose_graph_->AddScan(
       insertion_result->time, insertion_result->tracking_to_tracking_2d,
       insertion_result->range_data_in_tracking_2d,
+      insertion_result->filtered_point_cloud_in_tracking_2d,
       insertion_result->pose_estimate_2d, trajectory_id_,
       insertion_result->insertion_submaps);
 }

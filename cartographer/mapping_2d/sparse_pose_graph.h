@@ -73,6 +73,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   void AddScan(
       common::Time time, const transform::Rigid3d& tracking_to_pose,
       const sensor::RangeData& range_data_in_pose,
+      const sensor::PointCloud& filtered_point_cloud,
       const transform::Rigid2d& pose, int trajectory_id,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       EXCLUDES(mutex_);

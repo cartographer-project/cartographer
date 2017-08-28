@@ -43,6 +43,11 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
   *options.mutable_adaptive_voxel_filter_options() =
       sensor::CreateAdaptiveVoxelFilterOptions(
           parameter_dictionary->GetDictionary("adaptive_voxel_filter").get());
+  *options.mutable_loop_closure_adaptive_voxel_filter_options() =
+      sensor::CreateAdaptiveVoxelFilterOptions(
+          parameter_dictionary
+              ->GetDictionary("loop_closure_adaptive_voxel_filter")
+              .get());
   *options.mutable_real_time_correlative_scan_matcher_options() =
       scan_matching::CreateRealTimeCorrelativeScanMatcherOptions(
           parameter_dictionary

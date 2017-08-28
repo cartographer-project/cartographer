@@ -43,6 +43,7 @@ class LocalTrajectoryBuilder {
     transform::Rigid3d tracking_to_tracking_2d;
     sensor::RangeData range_data_in_tracking_2d;
     transform::Rigid2d pose_estimate_2d;
+    sensor::PointCloud filtered_point_cloud_in_tracking_2d;
   };
 
   explicit LocalTrajectoryBuilder(

@@ -16,7 +16,6 @@ syntax = "proto2";
 
 package cartographer.mapping.sparse_pose_graph.proto;
 
-import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.proto";
 import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.proto";
@@ -29,11 +28,6 @@ message ConstraintBuilderOptions {
 
   // Threshold for poses to be considered near a submap.
   optional double max_constraint_distance = 2;
-
-  // This is only used for 2D.
-  // Voxel filter used to compute a sparser point cloud for matching.
-  optional sensor.proto.AdaptiveVoxelFilterOptions
-      adaptive_voxel_filter_options = 3;
 
   // Threshold for the scan match score below which a match is not considered.
   // Low scores indicate that the scan and map do not look similar.
