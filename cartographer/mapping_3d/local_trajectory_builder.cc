@@ -58,9 +58,8 @@ void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
-LocalTrajectoryBuilder::AddRangefinderData(const common::Time time,
-                                           const Eigen::Vector3f& origin,
-                                           const sensor::PointCloud& ranges) {
+LocalTrajectoryBuilder::AddRangeData(const common::Time time,
+                                     const sensor::RangeData& range_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator with our first IMU message, we
     // cannot compute the orientation of the rangefinder.
@@ -77,8 +76,7 @@ LocalTrajectoryBuilder::AddRangefinderData(const common::Time time,
       first_pose_estimate_.inverse() *
       extrapolator_->ExtrapolatePose(time).cast<float>();
   const sensor::RangeData range_data_in_first_tracking =
-      sensor::TransformRangeData(sensor::RangeData{origin, ranges, {}},
-                                 tracking_delta);
+      sensor::TransformRangeData(range_data, tracking_delta);
   for (const Eigen::Vector3f& hit : range_data_in_first_tracking.returns) {
     const Eigen::Vector3f delta = hit - range_data_in_first_tracking.origin;
     const float range = delta.norm();

@@ -39,6 +39,7 @@
 #include "cartographer/mapping_3d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_3d/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -76,6 +77,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_);
 
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  void AddOdometerData(int trajectory_id,
+                       const sensor::OdometryData& odometry_data);
   void AddFixedFramePoseData(
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data);

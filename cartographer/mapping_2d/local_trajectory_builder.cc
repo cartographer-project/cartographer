@@ -82,7 +82,7 @@ void LocalTrajectoryBuilder::ScanMatch(
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
-LocalTrajectoryBuilder::AddHorizontalRangeData(
+LocalTrajectoryBuilder::AddRangeData(
     const common::Time time, const sensor::RangeData& range_data) {
   // Initialize extrapolator now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
