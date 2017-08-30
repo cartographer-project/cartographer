@@ -16,6 +16,8 @@
 
 #include "cartographer/mapping_3d/local_trajectory_builder.h"
 
+#include <memory>
+
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
@@ -201,9 +203,16 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
                                  pose_observation.cast<float>()),
       extrapolator_->gravity_orientation());
   return std::unique_ptr<InsertionResult>(new InsertionResult{
-      time, range_data_in_tracking, high_resolution_point_cloud,
-      low_resolution_point_cloud, pose_observation,
-      std::move(insertion_submaps)});
+
+      std::make_shared<const mapping::TrajectoryNode::Data>(
+          mapping::TrajectoryNode::Data{
+              time,
+              sensor::Compress(range_data_in_tracking),
+              {},  // 'filtered_point_cloud' is only used in 2D.
+              high_resolution_point_cloud,
+              low_resolution_point_cloud,
+              transform::Rigid3d::Identity()}),
+      pose_observation, std::move(insertion_submaps)});
 }
 
 }  // namespace mapping_3d

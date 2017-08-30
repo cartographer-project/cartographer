@@ -41,12 +41,9 @@ namespace mapping_2d {
 class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
-    common::Time time;
-    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
-    transform::Rigid3d tracking_to_tracking_2d;
-    sensor::RangeData range_data_in_tracking_2d;
+    std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
     transform::Rigid2d pose_estimate_2d;
-    sensor::PointCloud filtered_point_cloud_in_tracking_2d;
+    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
 
   explicit LocalTrajectoryBuilder(

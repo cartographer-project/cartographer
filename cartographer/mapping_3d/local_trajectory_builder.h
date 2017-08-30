@@ -41,13 +41,7 @@ namespace mapping_3d {
 class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
-    common::Time time;
-    sensor::RangeData range_data_in_tracking;
-
-    // Used for loop closure in 3D.
-    sensor::PointCloud high_resolution_point_cloud;
-    sensor::PointCloud low_resolution_point_cloud;
-
+    std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
     transform::Rigid3d pose_observation;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
