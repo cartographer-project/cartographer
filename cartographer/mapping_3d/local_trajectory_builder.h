@@ -54,9 +54,8 @@ class LocalTrajectoryBuilder {
   LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
 
   void AddImuData(const sensor::ImuData& imu_data);
-  std::unique_ptr<InsertionResult> AddRangefinderData(
-      common::Time time, const Eigen::Vector3f& origin,
-      const sensor::PointCloud& ranges);
+  std::unique_ptr<InsertionResult> AddRangeData(
+      common::Time time, const sensor::RangeData& range_data);
   void AddOdometerData(const sensor::OdometryData& odometry_data);
   const mapping::PoseEstimate& pose_estimate() const;
 
