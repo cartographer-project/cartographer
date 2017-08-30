@@ -94,9 +94,7 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
 }
 
 void SparsePoseGraph::AddScan(
-    common::Time time, const transform::Rigid3d& tracking_to_pose,
-    const sensor::RangeData& range_data_in_pose,
-    const sensor::PointCloud& filtered_point_cloud,
+    std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
     const transform::Rigid2d& pose, const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap>>& insertion_submaps) {
   const transform::Rigid3d optimized_pose(
@@ -104,16 +102,7 @@ void SparsePoseGraph::AddScan(
 
   common::MutexLocker locker(&mutex_);
   trajectory_nodes_.Append(
-      trajectory_id,
-      mapping::TrajectoryNode{
-          std::make_shared<const mapping::TrajectoryNode::Data>(
-              mapping::TrajectoryNode::Data{time,
-                                            Compress(range_data_in_pose),
-                                            filtered_point_cloud,
-                                            {},
-                                            {},
-                                            tracking_to_pose}),
-          optimized_pose});
+      trajectory_id, mapping::TrajectoryNode{constant_data, optimized_pose});
   ++num_trajectory_nodes_;
   trajectory_connectivity_.Add(trajectory_id);
 

@@ -17,6 +17,7 @@
 #include "cartographer/mapping_2d/local_trajectory_builder.h"
 
 #include <limits>
+#include <memory>
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/sensor/range_data.h"
@@ -186,10 +187,15 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   const sensor::PointCloud filtered_point_cloud_in_tracking_2d =
       adaptive_voxel_filter.Filter(range_data_in_tracking_2d.returns);
 
-  return common::make_unique<InsertionResult>(
-      InsertionResult{time, std::move(insertion_submaps),
-                      tracking_to_tracking_2d, range_data_in_tracking_2d,
-                      pose_estimate_2d, filtered_point_cloud_in_tracking_2d});
+  return common::make_unique<InsertionResult>(InsertionResult{
+      std::make_shared<const mapping::TrajectoryNode::Data>(
+          mapping::TrajectoryNode::Data{time,
+                                        {},
+                                        filtered_point_cloud_in_tracking_2d,
+                                        {},
+                                        {},
+                                        tracking_to_tracking_2d}),
+      pose_estimate_2d, std::move(insertion_submaps)});
 }
 
 const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {

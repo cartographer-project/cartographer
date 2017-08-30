@@ -158,8 +158,14 @@ class SparsePoseGraphTest : public ::testing::Test {
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
 
     sparse_pose_graph_->AddScan(
-        common::FromUniversal(0), transform::Rigid3d::Identity(), range_data,
-        range_data.returns, pose_estimate, kTrajectoryId, insertion_submaps);
+        std::make_shared<const mapping::TrajectoryNode::Data>(
+            mapping::TrajectoryNode::Data{common::FromUniversal(0),
+                                          Compress(range_data),
+                                          range_data.returns,
+                                          {},
+                                          {},
+                                          transform::Rigid3d::Identity()}),
+        pose_estimate, kTrajectoryId, insertion_submaps);
   }
 
   void MoveRelative(const transform::Rigid2d& movement) {
