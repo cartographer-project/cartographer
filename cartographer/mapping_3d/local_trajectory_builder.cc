@@ -208,7 +208,7 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
           mapping::TrajectoryNode::Data{
               time,
               sensor::Compress(range_data_in_tracking),
-              {},
+              {},  // 'filtered_point_cloud' is only used in 2D.
               high_resolution_point_cloud,
               low_resolution_point_cloud,
               transform::Rigid3d::Identity()}),
