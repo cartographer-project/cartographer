@@ -37,7 +37,7 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
  protected:
   FastCorrelativeScanMatcherTest()
       : range_data_inserter_(CreateRangeDataInserterTestOptions()),
-        options_(CreateFastCorrelativeScanMatcherTestOptions(5)){};
+        options_(CreateFastCorrelativeScanMatcherTestOptions(5)) {}
 
   void SetUp() override {
     point_cloud_ = {

@@ -131,7 +131,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   const sensor::PointCloud filtered_point_cloud_in_tracking =
       adaptive_voxel_filter.Filter(filtered_range_data.returns);
   if (options_.use_online_correlative_scan_matching()) {
-    // We take a copy since we use 'intial_ceres_pose' as an output argument.
+    // We take a copy since we use 'initial_ceres_pose' as an output argument.
     const transform::Rigid3d initial_pose = initial_ceres_pose;
     real_time_correlative_scan_matcher_->Match(
         initial_pose, filtered_point_cloud_in_tracking,

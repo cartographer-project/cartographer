@@ -26,9 +26,9 @@ namespace cartographer {
 namespace mapping {
 
 PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
-                                   double gravity_time_constant)
+                                   double imu_gravity_time_constant)
     : pose_queue_duration_(pose_queue_duration),
-      gravity_time_constant_(gravity_time_constant) {}
+      gravity_time_constant_(imu_gravity_time_constant) {}
 
 std::unique_ptr<PoseExtrapolator> PoseExtrapolator::InitializeWithImu(
     const common::Duration pose_queue_duration,

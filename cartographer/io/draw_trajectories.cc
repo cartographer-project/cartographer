@@ -23,7 +23,8 @@ namespace cartographer {
 namespace io {
 
 void DrawTrajectory(const mapping::proto::Trajectory& trajectory,
-                    const FloatColor& color, PoseToPixelFunction pose_to_pixel,
+                    const FloatColor& color,
+                    const PoseToPixelFunction& pose_to_pixel,
                     cairo_surface_t* surface) {
   if (trajectory.node_size() == 0) {
     return;
