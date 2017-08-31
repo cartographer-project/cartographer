@@ -51,6 +51,7 @@ class FastCorrelativeScanMatcher {
  public:
   FastCorrelativeScanMatcher(
       const HybridGrid& hybrid_grid,
+      const HybridGrid* low_resolution_hybrid_grid,
       const std::vector<mapping::TrajectoryNode>& nodes,
       const proto::FastCorrelativeScanMatcherOptions& options);
   ~FastCorrelativeScanMatcher();
@@ -65,11 +66,9 @@ class FastCorrelativeScanMatcher {
   // 'rotational_score', and 'low_resolution_score' are updated with the result.
   // 'fine_point_cloud' is used to compute the rotational scan matcher score.
   bool Match(const transform::Rigid3d& initial_pose_estimate,
-             const sensor::PointCloud& coarse_point_cloud,
-             const sensor::PointCloud& fine_point_cloud, float min_score,
-             const MatchingFunction& low_resolution_matcher, float* score,
-             transform::Rigid3d* pose_estimate, float* rotational_score,
-             float* low_resolution_score) const;
+             const mapping::TrajectoryNode::Data& constant_data,
+             float min_score, float* score, transform::Rigid3d* pose_estimate,
+             float* rotational_score, float* low_resolution_score) const;
 
   // Aligns 'coarse_point_cloud' within the 'hybrid_grid' given a rotation which
   // is expected to be approximately gravity aligned. If a score above
@@ -78,11 +77,9 @@ class FastCorrelativeScanMatcher {
   // are updated with the result. 'fine_point_cloud' is used to compute the
   // rotational scan matcher score.
   bool MatchFullSubmap(const Eigen::Quaterniond& gravity_alignment,
-                       const sensor::PointCloud& coarse_point_cloud,
-                       const sensor::PointCloud& fine_point_cloud,
-                       float min_score,
-                       const MatchingFunction& low_resolution_matcher,
-                       float* score, transform::Rigid3d* pose_estimate,
+                       const mapping::TrajectoryNode::Data& constant_data,
+                       float min_score, float* score,
+                       transform::Rigid3d* pose_estimate,
                        float* rotational_score,
                        float* low_resolution_score) const;
 
@@ -130,6 +127,7 @@ class FastCorrelativeScanMatcher {
   const float resolution_;
   const int width_in_voxels_;
   std::unique_ptr<PrecomputationGridStack> precomputation_grid_stack_;
+  const HybridGrid* const low_resolution_hybrid_grid_;
   RotationalScanMatcher rotational_scan_matcher_;
 };
 

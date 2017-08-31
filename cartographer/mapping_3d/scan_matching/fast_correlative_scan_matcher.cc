@@ -24,6 +24,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
+#include "cartographer/mapping_3d/scan_matching/low_resolution_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/precomputation_grid.h"
 #include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
 #include "cartographer/transform/transform.h"
@@ -126,6 +127,7 @@ struct Candidate {
 
 FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
     const HybridGrid& hybrid_grid,
+    const HybridGrid* const low_resolution_hybrid_grid,
     const std::vector<mapping::TrajectoryNode>& nodes,
     const proto::FastCorrelativeScanMatcherOptions& options)
     : options_(options),
@@ -133,49 +135,53 @@ FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
       width_in_voxels_(hybrid_grid.grid_size()),
       precomputation_grid_stack_(
           common::make_unique<PrecomputationGridStack>(hybrid_grid, options)),
+      low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
       rotational_scan_matcher_(nodes, options_.rotational_histogram_size()) {}
 
 FastCorrelativeScanMatcher::~FastCorrelativeScanMatcher() {}
 
 bool FastCorrelativeScanMatcher::Match(
     const transform::Rigid3d& initial_pose_estimate,
-    const sensor::PointCloud& coarse_point_cloud,
-    const sensor::PointCloud& fine_point_cloud, const float min_score,
-    const MatchingFunction& low_resolution_matcher, float* const score,
-    transform::Rigid3d* const pose_estimate, float* const rotational_score,
-    float* const low_resolution_score) const {
+    const mapping::TrajectoryNode::Data& constant_data, const float min_score,
+    float* const score, transform::Rigid3d* const pose_estimate,
+    float* const rotational_score, float* const low_resolution_score) const {
+  const auto low_resolution_matcher = scan_matching::CreateLowResolutionMatcher(
+      low_resolution_hybrid_grid_, &constant_data.low_resolution_point_cloud);
   const SearchParameters search_parameters{
       common::RoundToInt(options_.linear_xy_search_window() / resolution_),
       common::RoundToInt(options_.linear_z_search_window() / resolution_),
       options_.angular_search_window(), &low_resolution_matcher};
-  return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
-                                   coarse_point_cloud, fine_point_cloud,
-                                   min_score, score, pose_estimate,
-                                   rotational_score, low_resolution_score);
+  return MatchWithSearchParameters(
+      search_parameters, initial_pose_estimate,
+      constant_data.high_resolution_point_cloud,
+      constant_data.range_data.returns.Decompress(), min_score, score,
+      pose_estimate, rotational_score, low_resolution_score);
 }
 
 bool FastCorrelativeScanMatcher::MatchFullSubmap(
     const Eigen::Quaterniond& gravity_alignment,
-    const sensor::PointCloud& coarse_point_cloud,
-    const sensor::PointCloud& fine_point_cloud, const float min_score,
-    const MatchingFunction& low_resolution_matcher, float* const score,
-    transform::Rigid3d* const pose_estimate, float* const rotational_score,
-    float* const low_resolution_score) const {
+    const mapping::TrajectoryNode::Data& constant_data, const float min_score,
+    float* const score, transform::Rigid3d* const pose_estimate,
+    float* const rotational_score, float* const low_resolution_score) const {
   const transform::Rigid3d initial_pose_estimate(Eigen::Vector3d::Zero(),
                                                  gravity_alignment);
   float max_point_distance = 0.f;
-  for (const Eigen::Vector3f& point : coarse_point_cloud) {
+  for (const Eigen::Vector3f& point :
+       constant_data.high_resolution_point_cloud) {
     max_point_distance = std::max(max_point_distance, point.norm());
   }
   const int linear_window_size =
       (width_in_voxels_ + 1) / 2 +
       common::RoundToInt(max_point_distance / resolution_ + 0.5f);
+  const auto low_resolution_matcher = scan_matching::CreateLowResolutionMatcher(
+      low_resolution_hybrid_grid_, &constant_data.low_resolution_point_cloud);
   const SearchParameters search_parameters{
       linear_window_size, linear_window_size, M_PI, &low_resolution_matcher};
-  return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
-                                   coarse_point_cloud, fine_point_cloud,
-                                   min_score, score, pose_estimate,
-                                   rotational_score, low_resolution_score);
+  return MatchWithSearchParameters(
+      search_parameters, initial_pose_estimate,
+      constant_data.high_resolution_point_cloud,
+      constant_data.range_data.returns.Decompress(), min_score, score,
+      pose_estimate, rotational_score, low_resolution_score);
 }
 
 bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
@@ -269,8 +275,9 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
   }
   const float kSafetyMargin = 1.f - 1e-2f;
   const float angular_step_size =
-      kSafetyMargin * std::acos(1.f - common::Pow2(resolution_) /
-                                          (2.f * common::Pow2(max_scan_range)));
+      kSafetyMargin * std::acos(1.f -
+                                common::Pow2(resolution_) /
+                                    (2.f * common::Pow2(max_scan_range)));
   const int angular_window_size = common::RoundToInt(
       search_parameters.angular_search_window / angular_step_size);
   // TODO(whess): Should there be a small search window for rotations around
