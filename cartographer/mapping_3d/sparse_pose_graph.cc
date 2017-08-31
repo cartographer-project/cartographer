@@ -436,6 +436,7 @@ void SparsePoseGraph::RunFinalOptimization() {
 void SparsePoseGraph::LogResidualHistograms() {
   common::Histogram rotational_residual;
   common::Histogram translational_residual;
+  common::MutexLocker locker(&mutex_);
   for (const Constraint& constraint : constraints_) {
     if (constraint.tag == Constraint::Tag::INTRA_SUBMAP) {
       const cartographer::transform::Rigid3d optimized_node_to_map =
@@ -470,44 +471,46 @@ void SparsePoseGraph::RunOptimization() {
   // frozen_trajectories_ when executing the Solve. Solve is time consuming, so
   // not taking the mutex before Solve to avoid blocking foreground processing.
   optimization_problem_.Solve(constraints_, frozen_trajectories_);
-  common::MutexLocker locker(&mutex_);
+  {
+    common::MutexLocker locker(&mutex_);
 
-  const auto& node_data = optimization_problem_.node_data();
-  for (int trajectory_id = 0;
-       trajectory_id != static_cast<int>(node_data.size()); ++trajectory_id) {
-    int node_index = 0;
-    const int num_nodes = trajectory_nodes_.num_indices(trajectory_id);
-    for (; node_index != static_cast<int>(node_data[trajectory_id].size());
-         ++node_index) {
-      const mapping::NodeId node_id{trajectory_id, node_index};
-      trajectory_nodes_.at(node_id).pose =
-          node_data[trajectory_id][node_index].point_cloud_pose;
+    const auto& node_data = optimization_problem_.node_data();
+    for (int trajectory_id = 0;
+         trajectory_id != static_cast<int>(node_data.size()); ++trajectory_id) {
+      int node_index = 0;
+      const int num_nodes = trajectory_nodes_.num_indices(trajectory_id);
+      for (; node_index != static_cast<int>(node_data[trajectory_id].size());
+           ++node_index) {
+        const mapping::NodeId node_id{trajectory_id, node_index};
+        trajectory_nodes_.at(node_id).pose =
+            node_data[trajectory_id][node_index].point_cloud_pose;
+      }
+      // Extrapolate all point cloud poses that were added later.
+      const auto local_to_new_global = ComputeLocalToGlobalTransform(
+          optimization_problem_.submap_data(), trajectory_id);
+      const auto local_to_old_global = ComputeLocalToGlobalTransform(
+          optimized_submap_transforms_, trajectory_id);
+      const transform::Rigid3d old_global_to_new_global =
+          local_to_new_global * local_to_old_global.inverse();
+      for (; node_index < num_nodes; ++node_index) {
+        const mapping::NodeId node_id{trajectory_id, node_index};
+        trajectory_nodes_.at(node_id).pose =
+            old_global_to_new_global * trajectory_nodes_.at(node_id).pose;
+      }
     }
-    // Extrapolate all point cloud poses that were added later.
-    const auto local_to_new_global = ComputeLocalToGlobalTransform(
-        optimization_problem_.submap_data(), trajectory_id);
-    const auto local_to_old_global = ComputeLocalToGlobalTransform(
-        optimized_submap_transforms_, trajectory_id);
-    const transform::Rigid3d old_global_to_new_global =
-        local_to_new_global * local_to_old_global.inverse();
-    for (; node_index < num_nodes; ++node_index) {
-      const mapping::NodeId node_id{trajectory_id, node_index};
-      trajectory_nodes_.at(node_id).pose =
-          old_global_to_new_global * trajectory_nodes_.at(node_id).pose;
+    optimized_submap_transforms_ = optimization_problem_.submap_data();
+    connected_components_ = trajectory_connectivity_.ConnectedComponents();
+    reverse_connected_components_.clear();
+    for (size_t i = 0; i != connected_components_.size(); ++i) {
+      for (const int trajectory_id : connected_components_[i]) {
+        reverse_connected_components_.emplace(trajectory_id, i);
+      }
     }
-  }
-  optimized_submap_transforms_ = optimization_problem_.submap_data();
-  connected_components_ = trajectory_connectivity_.ConnectedComponents();
-  reverse_connected_components_.clear();
-  for (size_t i = 0; i != connected_components_.size(); ++i) {
-    for (const int trajectory_id : connected_components_[i]) {
-      reverse_connected_components_.emplace(trajectory_id, i);
-    }
-  }
 
-  TrimmingHandle trimming_handle(this);
-  for (auto& trimmer : trimmers_) {
-    trimmer->Trim(&trimming_handle);
+    TrimmingHandle trimming_handle(this);
+    for (auto& trimmer : trimmers_) {
+      trimmer->Trim(&trimming_handle);
+    }
   }
 
   // Log the histograms for the pose residuals.
