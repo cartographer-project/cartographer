@@ -36,7 +36,7 @@ class Rigid2 {
   using Rotation2D = Eigen::Rotation2D<FloatType>;
 
   Rigid2()
-      : translation_(Vector::Identity()), rotation_(Rotation2D::Identity()) {}
+      : translation_(Vector::Zero()), rotation_(Rotation2D::Identity()) {}
   Rigid2(const Vector& translation, const Rotation2D& rotation)
       : translation_(translation), rotation_(rotation) {}
   Rigid2(const Vector& translation, const double rotation)
@@ -55,7 +55,7 @@ class Rigid2 {
   }
 
   static Rigid2<FloatType> Identity() {
-    return Rigid2<FloatType>(Vector::Zero(), Rotation2D::Identity());
+    return Rigid2<FloatType>();
   }
 
   template <typename OtherType>
@@ -129,7 +129,7 @@ class Rigid3 {
   using AngleAxis = Eigen::AngleAxis<FloatType>;
 
   Rigid3()
-      : translation_(Vector::Identity()), rotation_(Quaternion::Identity()) {}
+      : translation_(Vector::Zero()), rotation_(Quaternion::Identity()) {}
   Rigid3(const Vector& translation, const Quaternion& rotation)
       : translation_(translation), rotation_(rotation) {}
   Rigid3(const Vector& translation, const AngleAxis& rotation)
@@ -148,7 +148,7 @@ class Rigid3 {
   }
 
   static Rigid3<FloatType> Identity() {
-    return Rigid3<FloatType>(Vector::Zero(), Quaternion::Identity());
+    return Rigid3<FloatType>();
   }
 
   template <typename OtherType>
