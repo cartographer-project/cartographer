@@ -130,6 +130,13 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
          transform::Rigid3d::Rotation(ExtrapolateRotation(time));
 }
 
+Eigen::Quaterniond PoseExtrapolator::EstimateGravityOrientation(
+    const common::Time time) {
+  ImuTracker imu_tracker = *imu_tracker_;
+  AdvanceImuTracker(time, &imu_tracker);
+  return imu_tracker.orientation();
+}
+
 void PoseExtrapolator::UpdateVelocitiesFromPoses() {
   if (timed_pose_queue_.size() < 2) {
     // We need two poses to estimate velocities.
