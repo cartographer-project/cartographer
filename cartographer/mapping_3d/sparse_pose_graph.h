@@ -166,7 +166,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Logs histograms for the translational and rotational residual of scan
   // poses.
-  void LogResidualHistograms();
+  void LogResidualHistograms() REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
