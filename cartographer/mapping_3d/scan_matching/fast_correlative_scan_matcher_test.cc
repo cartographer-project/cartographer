@@ -148,7 +148,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
         &low_resolution_score));
     EXPECT_LT(kMinScore, score);
     EXPECT_LT(0.09f, rotational_score);
-    EXPECT_LT(0.09f, low_resolution_score);
+    EXPECT_LT(0.14f, low_resolution_score);
     EXPECT_THAT(expected_pose,
                 transform::IsNearly(pose_estimate.cast<float>(), 0.05f))
         << "Actual: " << transform::ToProto(pose_estimate).DebugString()
@@ -177,7 +177,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
       &low_resolution_score));
   EXPECT_LT(kMinScore, score);
   EXPECT_LT(0.09f, rotational_score);
-  EXPECT_LT(0.09f, low_resolution_score);
+  EXPECT_LT(0.14f, low_resolution_score);
   EXPECT_THAT(expected_pose,
               transform::IsNearly(pose_estimate.cast<float>(), 0.05f))
       << "Actual: " << transform::ToProto(pose_estimate).DebugString()
