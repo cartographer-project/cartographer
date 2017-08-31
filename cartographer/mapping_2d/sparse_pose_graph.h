@@ -64,16 +64,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
 
-  // Adds a new 'range_data_in_pose' observation at 'time', and a 'pose' that
-  // will later be optimized. The 'tracking_to_pose' is remembered so that the
-  // optimized pose can be embedded into 3D. The 'pose' was determined by scan
-  // matching against the 'insertion_submaps.front()' and the scan was inserted
-  // into the 'insertion_submaps'. If 'insertion_submaps.front().finished()' is
+  // Adds a new node with 'constant_data' and a 'pose' that will later be
+  // optimized. The 'pose' was determined by scan matching against
+  // 'insertion_submaps.front()' and the scan was inserted into the
+  // 'insertion_submaps'. If 'insertion_submaps.front().finished()' is
   // 'true', this submap was inserted into for the last time.
   void AddScan(
-      common::Time time, const transform::Rigid3d& tracking_to_pose,
-      const sensor::RangeData& range_data_in_pose,
-      const sensor::PointCloud& filtered_point_cloud,
+      std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
       const transform::Rigid2d& pose, int trajectory_id,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       EXCLUDES(mutex_);

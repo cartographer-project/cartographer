@@ -39,6 +39,7 @@
 #include "cartographer/mapping_3d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_3d/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -64,20 +65,20 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
 
-  // Adds a new 'range_data_in_tracking' observation at 'time', and a 'pose'
-  // that will later be optimized. The 'pose' was determined by scan matching
-  // against 'insertion_submaps.front()' and the scan was inserted into the
-  // 'insertion_submaps'. If 'insertion_submaps.front().finished()' is 'true',
-  // this submap was inserted into for the last time.
+  // Adds a new node with 'constant_data' and a 'pose' that will later be
+  // optimized. The 'pose' was determined by scan matching against
+  // 'insertion_submaps.front()' and the scan was inserted into the
+  // 'insertion_submaps'. If 'insertion_submaps.front().finished()' is
+  // 'true', this submap was inserted into for the last time.
   void AddScan(
-      common::Time time, const sensor::RangeData& range_data_in_tracking,
-      const sensor::PointCloud& high_resolution_point_cloud,
-      const sensor::PointCloud& low_resolution_point_cloud,
+      std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
       const transform::Rigid3d& pose, int trajectory_id,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       EXCLUDES(mutex_);
 
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  void AddOdometerData(int trajectory_id,
+                       const sensor::OdometryData& odometry_data);
   void AddFixedFramePoseData(
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data);

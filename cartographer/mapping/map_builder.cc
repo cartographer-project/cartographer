@@ -24,8 +24,9 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
-#include "cartographer/mapping_2d/global_trajectory_builder.h"
-#include "cartographer/mapping_3d/global_trajectory_builder.h"
+#include "cartographer/mapping/global_trajectory_builder.h"
+#include "cartographer/mapping_2d/local_trajectory_builder.h"
+#include "cartographer/mapping_3d/local_trajectory_builder.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -76,7 +77,10 @@ int MapBuilder::AddTrajectoryBuilder(
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
-            common::make_unique<mapping_3d::GlobalTrajectoryBuilder>(
+            common::make_unique<mapping::GlobalTrajectoryBuilder<
+                mapping_3d::LocalTrajectoryBuilder,
+                mapping_3d::proto::LocalTrajectoryBuilderOptions,
+                mapping_3d::SparsePoseGraph>>(
                 trajectory_options.trajectory_builder_3d_options(),
                 trajectory_id, sparse_pose_graph_3d_.get())));
   } else {
@@ -84,7 +88,10 @@ int MapBuilder::AddTrajectoryBuilder(
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
-            common::make_unique<mapping_2d::GlobalTrajectoryBuilder>(
+            common::make_unique<mapping::GlobalTrajectoryBuilder<
+                mapping_2d::LocalTrajectoryBuilder,
+                mapping_2d::proto::LocalTrajectoryBuilderOptions,
+                mapping_2d::SparsePoseGraph>>(
                 trajectory_options.trajectory_builder_2d_options(),
                 trajectory_id, sparse_pose_graph_2d_.get())));
   }

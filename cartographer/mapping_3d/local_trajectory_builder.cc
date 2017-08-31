@@ -16,6 +16,8 @@
 
 #include "cartographer/mapping_3d/local_trajectory_builder.h"
 
+#include <memory>
+
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
@@ -56,9 +58,8 @@ void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
-LocalTrajectoryBuilder::AddRangefinderData(const common::Time time,
-                                           const Eigen::Vector3f& origin,
-                                           const sensor::PointCloud& ranges) {
+LocalTrajectoryBuilder::AddRangeData(const common::Time time,
+                                     const sensor::RangeData& range_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator with our first IMU message, we
     // cannot compute the orientation of the rangefinder.
@@ -75,8 +76,7 @@ LocalTrajectoryBuilder::AddRangefinderData(const common::Time time,
       first_pose_estimate_.inverse() *
       extrapolator_->ExtrapolatePose(time).cast<float>();
   const sensor::RangeData range_data_in_first_tracking =
-      sensor::TransformRangeData(sensor::RangeData{origin, ranges, {}},
-                                 tracking_delta);
+      sensor::TransformRangeData(range_data, tracking_delta);
   for (const Eigen::Vector3f& hit : range_data_in_first_tracking.returns) {
     const Eigen::Vector3f delta = hit - range_data_in_first_tracking.origin;
     const float range = delta.norm();
@@ -201,9 +201,16 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
                                  pose_observation.cast<float>()),
       extrapolator_->gravity_orientation());
   return std::unique_ptr<InsertionResult>(new InsertionResult{
-      time, range_data_in_tracking, high_resolution_point_cloud,
-      low_resolution_point_cloud, pose_observation,
-      std::move(insertion_submaps)});
+
+      std::make_shared<const mapping::TrajectoryNode::Data>(
+          mapping::TrajectoryNode::Data{
+              time,
+              sensor::Compress(range_data_in_tracking),
+              {},  // 'filtered_point_cloud' is only used in 2D.
+              high_resolution_point_cloud,
+              low_resolution_point_cloud,
+              transform::Rigid3d::Identity()}),
+      pose_observation, std::move(insertion_submaps)});
 }
 
 }  // namespace mapping_3d
