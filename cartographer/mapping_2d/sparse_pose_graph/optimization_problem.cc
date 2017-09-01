@@ -95,33 +95,18 @@ void OptimizationProblem::AddTrajectoryNode(
 
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   auto& node_data = node_data_.at(node_id.trajectory_id);
-  if (node_id.trajectory_id < static_cast<int>(imu_data_.size())) {
-    auto node_it = node_data.begin();
-    for (; std::next(node_it, 1) != node_data.end(); ++node_it) {
-      if (std::next(node_it, 1)->first == node_id.node_index) {
-        const common::Time prev_node_time = node_it->second.time;
-        const common::Time node_time = std::next(node_it, 1)->second.time;
+  CHECK(node_data.erase(node_id.node_index));
 
-        auto& imu_data = imu_data_.at(node_id.trajectory_id);
-        auto imu_data_it = imu_data.begin();
-        while (imu_data_it != imu_data.end() &&
-               imu_data_it->time < prev_node_time) {
-          ++imu_data_it;
-        }
-        auto imu_remove_begin = imu_data_it;
-        while (imu_data_it != imu_data.end() &&
-               imu_data_it->time <= node_time) {
-          ++imu_data_it;
-        }
-        auto imu_remove_end = imu_data_it;
-        if (imu_remove_begin != imu_data.end()) {
-          imu_data.erase(imu_remove_begin, imu_remove_end);
-        }
-        break;
-      }
+  if (!node_data.empty() &&
+      node_id.trajectory_id < static_cast<int>(imu_data_.size())) {
+    auto node_it = node_data.begin();
+    const common::Time node_time = node_it->second.time;
+
+    auto& imu_data = imu_data_.at(node_id.trajectory_id);
+    while (imu_data.size() > 1 && imu_data[1].time <= node_time) {
+      imu_data.pop_front();
     }
   }
-  CHECK(node_data.erase(node_id.node_index));
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
@@ -223,47 +208,45 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // if odometry is not available.
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    if (!node_data_[trajectory_id].empty()) {
-      for (auto node_it = node_data_[trajectory_id].begin();;) {
-        const int node_index = node_it->first;
-        const NodeData& node_data = node_it->second;
-        ++node_it;
-        if (node_it == node_data_[trajectory_id].end()) {
-          break;
-        }
+    if (node_data_[trajectory_id].empty()) continue;
 
-        const int next_node_index = node_it->first;
-        const NodeData& next_node_data = node_it->second;
-
-        if (next_node_index != node_index + 1) {
-          continue;
-        }
-
-        const bool odometry_available =
-            trajectory_id < odometry_data_.size() &&
-            odometry_data_[trajectory_id].Has(
-                node_data_[trajectory_id][next_node_index].time) &&
-            odometry_data_[trajectory_id].Has(
-                node_data_[trajectory_id][node_index].time);
-        const transform::Rigid3d relative_pose =
-            odometry_available
-                ? odometry_data_[trajectory_id]
-                          .Lookup(node_data.time)
-                          .inverse() *
-                      odometry_data_[trajectory_id].Lookup(next_node_data.time)
-                : transform::Embed3D(
-                      node_data.initial_point_cloud_pose.inverse() *
-                      next_node_data.initial_point_cloud_pose);
-        problem.AddResidualBlock(
-            new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
-                new SpaCostFunction(Constraint::Pose{
-                    relative_pose,
-                    options_.consecutive_scan_translation_penalty_factor(),
-                    options_.consecutive_scan_rotation_penalty_factor()})),
-            nullptr /* loss function */,
-            C_nodes[trajectory_id][node_index].data(),
-            C_nodes[trajectory_id][next_node_index].data());
+    for (auto node_it = node_data_[trajectory_id].begin();;) {
+      const int node_index = node_it->first;
+      const NodeData& node_data = node_it->second;
+      ++node_it;
+      if (node_it == node_data_[trajectory_id].end()) {
+        break;
       }
+
+      const int next_node_index = node_it->first;
+      const NodeData& next_node_data = node_it->second;
+
+      if (next_node_index != node_index + 1) {
+        continue;
+      }
+
+      const bool odometry_available =
+          trajectory_id < odometry_data_.size() &&
+          odometry_data_[trajectory_id].Has(
+              node_data_[trajectory_id][next_node_index].time) &&
+          odometry_data_[trajectory_id].Has(
+              node_data_[trajectory_id][node_index].time);
+      const transform::Rigid3d relative_pose =
+          odometry_available
+              ? odometry_data_[trajectory_id].Lookup(node_data.time).inverse() *
+                    odometry_data_[trajectory_id].Lookup(next_node_data.time)
+              : transform::Embed3D(
+                    node_data.initial_point_cloud_pose.inverse() *
+                    next_node_data.initial_point_cloud_pose);
+      problem.AddResidualBlock(
+          new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
+              new SpaCostFunction(Constraint::Pose{
+                  relative_pose,
+                  options_.consecutive_scan_translation_penalty_factor(),
+                  options_.consecutive_scan_rotation_penalty_factor()})),
+          nullptr /* loss function */,
+          C_nodes[trajectory_id][node_index].data(),
+          C_nodes[trajectory_id][next_node_index].data());
     }
   }
 

@@ -240,7 +240,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       matching_id.trajectory_id,
       static_cast<size_t>(matching_id.trajectory_id) <
                   optimization_problem_.node_data().size() &&
-              !optimization_problem_.node_data().empty()
+              !optimization_problem_.node_data()[matching_id.trajectory_id].empty()
           ? static_cast<int>(optimization_problem_.node_data()
                                  .at(matching_id.trajectory_id)
                                  .rbegin()
