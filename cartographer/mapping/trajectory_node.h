@@ -32,7 +32,7 @@ struct TrajectoryNode {
   struct Data {
     common::Time time;
 
-    // Range data in 'pose' frame.
+    // Range data in 'tracking' frame. Only used in 3D.
     sensor::CompressedRangeData range_data;
 
     // Used for loop closure in 2D: voxel filtered returns in 'pose' frame.
@@ -42,10 +42,9 @@ struct TrajectoryNode {
     sensor::PointCloud high_resolution_point_cloud;
     sensor::PointCloud low_resolution_point_cloud;
 
-    // Transform from the 3D 'tracking' frame to the 'pose' frame of the range
-    // data, which contains roll, pitch and height for 2D. In 3D this is always
-    // identity.
-    transform::Rigid3d tracking_to_pose;
+    // Transforms the 'tracking' frame into a gravity-aligned 'tracking_2d'
+    // frame. Only used in 2D.
+    transform::Rigid3d tracking_to_tracking_2d;
   };
 
   common::Time time() const { return constant_data->time; }

@@ -213,7 +213,7 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
               {},  // 'filtered_point_cloud' is only used in 2D.
               high_resolution_point_cloud,
               low_resolution_point_cloud,
-              transform::Rigid3d::Identity()}),
+              {}}),  // 'tracking_to_tracking_2d' in only used in 2D.
       pose_observation, std::move(insertion_submaps)});
 }
 
