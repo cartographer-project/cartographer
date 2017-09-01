@@ -73,11 +73,11 @@ void OptimizationProblem::AddFixedFramePoseData(
 
 void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
-    const transform::Rigid3d& point_cloud_pose) {
+    const transform::Rigid3d& initial_pose, const transform::Rigid3d& pose) {
   CHECK_GE(trajectory_id, 0);
   node_data_.resize(
       std::max(node_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  node_data_[trajectory_id].push_back(NodeData{time, point_cloud_pose});
+  node_data_[trajectory_id].push_back(NodeData{time, initial_pose, pose});
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
@@ -151,7 +151,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
          ++node_index) {
       C_nodes[trajectory_id].emplace_back(
-          node_data_[trajectory_id][node_index].point_cloud_pose,
+          node_data_[trajectory_id][node_index].pose,
           translation_parameterization(),
           common::make_unique<ceres::QuaternionParameterization>(), &problem);
       if (frozen) {
@@ -284,8 +284,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
       if (!fixed_frame_pose_initialized) {
         const transform::Rigid3d fixed_frame_pose_in_map =
-            node_data[node_index].point_cloud_pose *
-            constraint_pose.zbar_ij.inverse();
+            node_data[node_index].pose * constraint_pose.zbar_ij.inverse();
         C_fixed_frames.emplace_back(
             transform::Rigid3d(
                 fixed_frame_pose_in_map.translation(),
@@ -347,7 +346,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
        ++trajectory_id) {
     for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
          ++node_index) {
-      node_data_[trajectory_id][node_index].point_cloud_pose =
+      node_data_[trajectory_id][node_index].pose =
           C_nodes[trajectory_id][node_index].ToRigid();
     }
   }

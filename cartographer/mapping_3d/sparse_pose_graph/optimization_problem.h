@@ -39,7 +39,8 @@ namespace sparse_pose_graph {
 
 struct NodeData {
   common::Time time;
-  transform::Rigid3d point_cloud_pose;
+  transform::Rigid3d initial_pose;
+  transform::Rigid3d pose;
 };
 
 struct SubmapData {
@@ -67,7 +68,8 @@ class OptimizationProblem {
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
   void AddTrajectoryNode(int trajectory_id, common::Time time,
-                         const transform::Rigid3d& point_cloud_pose);
+                         const transform::Rigid3d& initial_pose,
+                         const transform::Rigid3d& pose);
   void AddSubmap(int trajectory_id, const transform::Rigid3d& submap_pose);
 
   void SetMaxNumIterations(int32 max_num_iterations);
