@@ -152,8 +152,10 @@ void SparsePoseGraph::AddImuData(const int trajectory_id,
 
 void SparsePoseGraph::AddOdometerData(
     const int trajectory_id, const sensor::OdometryData& odometry_data) {
-  // TODO(cschuet): Add support for handling OdometryData in the optimization
-  // problem.
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([=]() REQUIRES(mutex_) {
+    optimization_problem_.AddOdometerData(trajectory_id, odometry_data);
+  });
 }
 
 void SparsePoseGraph::AddFixedFramePoseData(
@@ -180,7 +182,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
       inverse_submap_pose * optimization_problem_.node_data()
                                 .at(node_id.trajectory_id)
                                 .at(node_id.node_index)
-                                .point_cloud_pose;
+                                .pose;
 
   std::vector<mapping::TrajectoryNode> submap_nodes;
   for (const mapping::NodeId& submap_node_id :
@@ -265,8 +267,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
                                  .size())
           : 0};
   const auto& scan_data = trajectory_nodes_.at(node_id).constant_data;
-  optimization_problem_.AddTrajectoryNode(matching_id.trajectory_id,
-                                          scan_data->time, optimized_pose);
+  optimization_problem_.AddTrajectoryNode(
+      matching_id.trajectory_id, scan_data->time, pose, optimized_pose);
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const mapping::SubmapId submap_id = submap_ids[i];
     // Even if this was the last scan added to 'submap_id', the submap will only
@@ -481,7 +483,7 @@ void SparsePoseGraph::RunOptimization() {
          ++node_index) {
       const mapping::NodeId node_id{trajectory_id, node_index};
       trajectory_nodes_.at(node_id).pose =
-          node_data[trajectory_id][node_index].point_cloud_pose;
+          node_data[trajectory_id][node_index].pose;
     }
     // Extrapolate all point cloud poses that were added later.
     const auto local_to_new_global = ComputeLocalToGlobalTransform(

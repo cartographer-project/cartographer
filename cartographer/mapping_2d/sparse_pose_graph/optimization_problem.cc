@@ -80,13 +80,11 @@ void OptimizationProblem::AddOdometerData(
 
 void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
-    const transform::Rigid2d& initial_point_cloud_pose,
-    const transform::Rigid2d& point_cloud_pose) {
+    const transform::Rigid2d& initial_pose, const transform::Rigid2d& pose) {
   CHECK_GE(trajectory_id, 0);
   node_data_.resize(
       std::max(node_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  node_data_[trajectory_id].push_back(
-      NodeData{time, initial_point_cloud_pose, point_cloud_pose});
+  node_data_[trajectory_id].push_back(NodeData{time, initial_pose, pose});
   trajectory_data_.resize(std::max(trajectory_data_.size(), node_data_.size()));
 }
 
@@ -174,7 +172,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     // stay valid.
     C_nodes[trajectory_id].reserve(node_data_[trajectory_id].size());
     for (const NodeData& node_data : node_data_[trajectory_id]) {
-      C_nodes[trajectory_id].push_back(FromPose(node_data.point_cloud_pose));
+      C_nodes[trajectory_id].push_back(FromPose(node_data.pose));
       problem.AddParameterBlock(C_nodes[trajectory_id].back().data(), 3);
       if (frozen) {
         problem.SetParameterBlockConstant(C_nodes[trajectory_id].back().data());
@@ -223,9 +221,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                         node_data_[trajectory_id][node_data_index].time)
               : transform::Embed3D(
                     node_data_[trajectory_id][node_data_index - 1]
-                        .initial_point_cloud_pose.inverse() *
-                    node_data_[trajectory_id][node_data_index]
-                        .initial_point_cloud_pose);
+                        .initial_pose.inverse() *
+                    node_data_[trajectory_id][node_data_index].initial_pose);
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
@@ -260,7 +257,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     for (size_t node_data_index = 0;
          node_data_index != node_data_[trajectory_id].size();
          ++node_data_index) {
-      node_data_[trajectory_id][node_data_index].point_cloud_pose =
+      node_data_[trajectory_id][node_data_index].pose =
           ToPose(C_nodes[trajectory_id][node_data_index]);
     }
   }
