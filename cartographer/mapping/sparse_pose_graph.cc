@@ -84,8 +84,7 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
         auto* node_proto = trajectory_proto->add_node();
         node_proto->set_timestamp(
             common::ToUniversal(node.constant_data->time));
-        *node_proto->mutable_pose() = transform::ToProto(
-            node.pose * node.constant_data->tracking_to_pose);
+        *node_proto->mutable_pose() = transform::ToProto(node.pose);
       }
     }
 
@@ -107,10 +106,8 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
 
   for (const auto& constraint : constraints()) {
     auto* const constraint_proto = proto.add_constraint();
-    const auto& node = all_trajectory_nodes.at(constraint.node_id.trajectory_id)
-                           .at(constraint.node_id.node_index);
-    *constraint_proto->mutable_relative_pose() = transform::ToProto(
-        constraint.pose.zbar_ij * node.constant_data->tracking_to_pose);
+    *constraint_proto->mutable_relative_pose() =
+        transform::ToProto(constraint.pose.zbar_ij);
     constraint_proto->set_translation_weight(
         constraint.pose.translation_weight);
     constraint_proto->set_rotation_weight(constraint.pose.rotation_weight);
