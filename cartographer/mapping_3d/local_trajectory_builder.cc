@@ -156,15 +156,18 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   const transform::Rigid3d pose_estimate =
       matching_submap->local_pose() * pose_observation_in_submap;
   extrapolator_->AddPose(time, pose_estimate);
+  const Eigen::Quaterniond gravity_alignment =
+      extrapolator_->EstimateGravityOrientation(time);
 
   last_pose_estimate_ = {
       time, pose_estimate,
       sensor::TransformPointCloud(filtered_range_data.returns,
                                   pose_estimate.cast<float>())};
 
-  return InsertIntoSubmap(
-      time, filtered_range_data, filtered_point_cloud_in_tracking,
-      low_resolution_point_cloud_in_tracking, pose_estimate);
+  return InsertIntoSubmap(time, filtered_range_data, gravity_alignment,
+                          filtered_point_cloud_in_tracking,
+                          low_resolution_point_cloud_in_tracking,
+                          pose_estimate);
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
@@ -184,6 +187,7 @@ const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::InsertIntoSubmap(
     const common::Time time, const sensor::RangeData& range_data_in_tracking,
+    const Eigen::Quaterniond& gravity_alignment,
     const sensor::PointCloud& high_resolution_point_cloud,
     const sensor::PointCloud& low_resolution_point_cloud,
     const transform::Rigid3d& pose_observation) {
@@ -199,7 +203,7 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
   active_submaps_.InsertRangeData(
       sensor::TransformRangeData(range_data_in_tracking,
                                  pose_observation.cast<float>()),
-      extrapolator_->gravity_orientation());
+      gravity_alignment);
   return std::unique_ptr<InsertionResult>(new InsertionResult{
 
       std::make_shared<const mapping::TrajectoryNode::Data>(
