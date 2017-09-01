@@ -33,7 +33,7 @@ Technical Overview
 ==================
 * `High level structure of Cartographer`_
 
-.. _High level structure of Cartographer: https://github.com/googlecartographer/cartographer/blob/master/docs/source/High_Level_Structure.pdf
+.. _High level structure of Cartographer: https://github.com/googlecartographer/cartographer/blob/master/docs/source/High_Level_Structure.jpg
 
 Getting started
 ===============
