@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include "cartographer/transform/rigid_transform.h"
-#include "cartographer/transform/rigid_transform_test_helpers.h"
-
 #include <random>
 
+#include "cartographer/transform/rigid_transform.h"
+#include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -28,8 +27,6 @@ namespace {
 template <typename T>
 class RigidTransformTest : public ::testing::Test {
  protected:
-  RigidTransformTest() {}
-
   T eps() {
     return std::numeric_limits<T>::epsilon();
   }
@@ -63,40 +60,40 @@ class RigidTransformTest : public ::testing::Test {
 typedef ::testing::Types<float, double> ScalarTypes;
 TYPED_TEST_CASE(RigidTransformTest, ScalarTypes);
 
-TYPED_TEST(RigidTransformTest, identity2DTest) {
-  const auto pose = TestFixture::GetRandomRigid2();
-  EXPECT_THAT(pose * Rigid2<TypeParam>(), IsNearly(pose, TestFixture::eps()));
-  EXPECT_THAT(Rigid2<TypeParam>() * pose, IsNearly(pose, TestFixture::eps()));
+TYPED_TEST(RigidTransformTest, Identity2DTest) {
+  const auto pose = this->GetRandomRigid2();
+  EXPECT_THAT(pose * Rigid2<TypeParam>(), IsNearly(pose, this->eps()));
+  EXPECT_THAT(Rigid2<TypeParam>() * pose, IsNearly(pose, this->eps()));
   EXPECT_THAT(pose * Rigid2<TypeParam>::Identity(),
-              IsNearly(pose, TestFixture::eps()));
+              IsNearly(pose, this->eps()));
   EXPECT_THAT(Rigid2<TypeParam>::Identity() * pose,
-              IsNearly(pose, TestFixture::eps()));
+              IsNearly(pose, this->eps()));
 }
 
-TYPED_TEST(RigidTransformTest, inverse2DTest) {
-  const auto pose = TestFixture::GetRandomRigid2();
+TYPED_TEST(RigidTransformTest, Inverse2DTest) {
+  const auto pose = this->GetRandomRigid2();
   EXPECT_THAT(pose.inverse() * pose,
-              IsNearly(Rigid2<TypeParam>::Identity(), TestFixture::eps()));
+              IsNearly(Rigid2<TypeParam>::Identity(), this->eps()));
   EXPECT_THAT(pose * pose.inverse(),
-              IsNearly(Rigid2<TypeParam>::Identity(), TestFixture::eps()));
+              IsNearly(Rigid2<TypeParam>::Identity(), this->eps()));
 }
 
-TYPED_TEST(RigidTransformTest, identity3DTest) {
-  const auto pose = TestFixture::GetRandomRigid3();
-  EXPECT_THAT(pose * Rigid3<TypeParam>(), IsNearly(pose, TestFixture::eps()));
-  EXPECT_THAT(Rigid3<TypeParam>() * pose, IsNearly(pose, TestFixture::eps()));
+TYPED_TEST(RigidTransformTest, Identity3DTest) {
+  const auto pose = this->GetRandomRigid3();
+  EXPECT_THAT(pose * Rigid3<TypeParam>(), IsNearly(pose, this->eps()));
+  EXPECT_THAT(Rigid3<TypeParam>() * pose, IsNearly(pose, this->eps()));
   EXPECT_THAT(pose * Rigid3<TypeParam>::Identity(),
-              IsNearly(pose, TestFixture::eps()));
+              IsNearly(pose, this->eps()));
   EXPECT_THAT(Rigid3<TypeParam>::Identity() * pose,
-              IsNearly(pose, TestFixture::eps()));
+              IsNearly(pose, this->eps()));
 }
 
-TYPED_TEST(RigidTransformTest, inverse3DTest) {
-  const auto pose = TestFixture::GetRandomRigid3();
+TYPED_TEST(RigidTransformTest, Inverse3DTest) {
+  const auto pose = this->GetRandomRigid3();
   EXPECT_THAT(pose.inverse() * pose,
-              IsNearly(Rigid3<TypeParam>::Identity(), TestFixture::eps()));
+              IsNearly(Rigid3<TypeParam>::Identity(), this->eps()));
   EXPECT_THAT(pose * pose.inverse(),
-              IsNearly(Rigid3<TypeParam>::Identity(), TestFixture::eps()));
+              IsNearly(Rigid3<TypeParam>::Identity(), this->eps()));
 }
 
 }  // namespace
