@@ -61,6 +61,14 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
   imu_data_[trajectory_id].push_back(imu_data);
 }
 
+void OptimizationProblem::AddOdometerData(
+    const int trajectory_id, const sensor::OdometryData& odometry_data) {
+  CHECK_GE(trajectory_id, 0);
+  odometry_data_.resize(
+      std::max(odometry_data_.size(), static_cast<size_t>(trajectory_id) + 1));
+  odometry_data_[trajectory_id].Push(odometry_data.time, odometry_data.pose);
+}
+
 void OptimizationProblem::AddFixedFramePoseData(
     const int trajectory_id,
     const sensor::FixedFramePoseData& fixed_frame_pose_data) {

@@ -152,8 +152,10 @@ void SparsePoseGraph::AddImuData(const int trajectory_id,
 
 void SparsePoseGraph::AddOdometerData(
     const int trajectory_id, const sensor::OdometryData& odometry_data) {
-  // TODO(cschuet): Add support for handling OdometryData in the optimization
-  // problem.
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([=]() REQUIRES(mutex_) {
+    optimization_problem_.AddOdometerData(trajectory_id, odometry_data);
+  });
 }
 
 void SparsePoseGraph::AddFixedFramePoseData(
