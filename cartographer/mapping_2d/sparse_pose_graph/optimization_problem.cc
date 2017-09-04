@@ -204,7 +204,9 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // if odometry is not available.
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    if (node_data_[trajectory_id].empty()) continue;
+    if (node_data_[trajectory_id].empty()) {
+      continue;
+    }
 
     for (auto node_it = node_data_[trajectory_id].begin();;) {
       const int node_index = node_it->first;
