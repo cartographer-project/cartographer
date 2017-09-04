@@ -65,15 +65,14 @@ class LocalTrajectoryBuilder {
   std::unique_ptr<InsertionResult> AddAccumulatedRangeData(
       common::Time time, const sensor::RangeData& range_data);
   sensor::RangeData TransformAndFilterRangeData(
-      const transform::Rigid3f& tracking_to_tracking_2d,
+      const transform::Rigid3f& gravity_alignment,
       const sensor::RangeData& range_data) const;
 
-  // Scan matches 'range_data_in_tracking_2d' and fill in the 'pose_observation'
-  // with the result.
-  void ScanMatch(common::Time time, const transform::Rigid3d& pose_prediction,
-                 const transform::Rigid3d& tracking_to_tracking_2d,
-                 const sensor::RangeData& range_data_in_tracking_2d,
-                 transform::Rigid3d* pose_observation);
+  // Scan matches 'gravity_aligned_range_data' and fill in the
+  // 'pose_observation' with the result.
+  void ScanMatch(common::Time time, const transform::Rigid2d& pose_prediction,
+                 const sensor::RangeData& gravity_aligned_range_data,
+                 transform::Rigid2d* pose_observation);
 
   // Lazily constructs a PoseExtrapolator.
   void InitializeExtrapolator(common::Time time);

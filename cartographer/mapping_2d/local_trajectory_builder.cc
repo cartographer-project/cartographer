@@ -37,10 +37,10 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
 sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
-    const transform::Rigid3f& tracking_to_tracking_2d,
+    const transform::Rigid3f& gravity_alignment,
     const sensor::RangeData& range_data) const {
   const sensor::RangeData cropped = sensor::CropRangeData(
-      sensor::TransformRangeData(range_data, tracking_to_tracking_2d),
+      sensor::TransformRangeData(range_data, gravity_alignment),
       options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
@@ -49,36 +49,28 @@ sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
 }
 
 void LocalTrajectoryBuilder::ScanMatch(
-    common::Time time, const transform::Rigid3d& pose_prediction,
-    const transform::Rigid3d& tracking_to_tracking_2d,
-    const sensor::RangeData& range_data_in_tracking_2d,
-    transform::Rigid3d* pose_observation) {
+    const common::Time time, const transform::Rigid2d& pose_prediction,
+    const sensor::RangeData& gravity_aligned_range_data,
+    transform::Rigid2d* const pose_observation) {
   std::shared_ptr<const Submap> matching_submap =
       active_submaps_.submaps().front();
-  transform::Rigid2d pose_prediction_2d =
-      transform::Project2D(pose_prediction * tracking_to_tracking_2d.inverse());
   // The online correlative scan matcher will refine the initial estimate for
   // the Ceres scan matcher.
-  transform::Rigid2d initial_ceres_pose = pose_prediction_2d;
+  transform::Rigid2d initial_ceres_pose = pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.adaptive_voxel_filter_options());
-  const sensor::PointCloud filtered_point_cloud_in_tracking_2d =
-      adaptive_voxel_filter.Filter(range_data_in_tracking_2d.returns);
+  const sensor::PointCloud filtered_gravity_aligned_point_cloud =
+      adaptive_voxel_filter.Filter(gravity_aligned_range_data.returns);
   if (options_.use_online_correlative_scan_matching()) {
     real_time_correlative_scan_matcher_.Match(
-        pose_prediction_2d, filtered_point_cloud_in_tracking_2d,
+        pose_prediction, filtered_gravity_aligned_point_cloud,
         matching_submap->probability_grid(), &initial_ceres_pose);
   }
 
-  transform::Rigid2d tracking_2d_to_map;
   ceres::Solver::Summary summary;
-  ceres_scan_matcher_.Match(pose_prediction_2d, initial_ceres_pose,
-                            filtered_point_cloud_in_tracking_2d,
-                            matching_submap->probability_grid(),
-                            &tracking_2d_to_map, &summary);
-
-  *pose_observation =
-      transform::Embed3D(tracking_2d_to_map) * tracking_to_tracking_2d;
+  ceres_scan_matcher_.Match(
+      pose_prediction, initial_ceres_pose, filtered_gravity_aligned_point_cloud,
+      matching_submap->probability_grid(), pose_observation, &summary);
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
@@ -135,40 +127,37 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const sensor::RangeData& range_data) {
-  const transform::Rigid3d pose_prediction =
-      extrapolator_->ExtrapolatePose(time);
-
-  // Computes the rotation without yaw, as defined by GetYaw().
-  const transform::Rigid3d tracking_to_tracking_2d =
-      transform::Rigid3d::Rotation(
-          Eigen::Quaterniond(Eigen::AngleAxisd(
-              -transform::GetYaw(pose_prediction), Eigen::Vector3d::UnitZ())) *
-          pose_prediction.rotation());
-
-  const sensor::RangeData range_data_in_tracking_2d =
-      TransformAndFilterRangeData(tracking_to_tracking_2d.cast<float>(),
-                                  range_data);
-
-  if (range_data_in_tracking_2d.returns.empty()) {
+  // Transforms 'range_data' into a frame where gravity direction is
+  // approximately +z.
+  const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
+      extrapolator_->EstimateGravityOrientation(time));
+  const sensor::RangeData gravity_aligned_range_data =
+      TransformAndFilterRangeData(gravity_alignment.cast<float>(), range_data);
+  if (gravity_aligned_range_data.returns.empty()) {
     LOG(WARNING) << "Dropped empty horizontal range data.";
     return nullptr;
   }
 
-  transform::Rigid3d pose_estimate;
-  ScanMatch(time, pose_prediction, tracking_to_tracking_2d,
-            range_data_in_tracking_2d, &pose_estimate);
+  // Computes a gravity aligned pose prediction.
+  const transform::Rigid3d non_gravity_aligned_pose_prediction =
+      extrapolator_->ExtrapolatePose(time);
+  const transform::Rigid2d pose_prediction = transform::Project2D(
+      non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
+
+  transform::Rigid2d pose_estimate_2d;
+  ScanMatch(time, pose_prediction, gravity_aligned_range_data,
+            &pose_estimate_2d);
+  const transform::Rigid3d pose_estimate =
+      transform::Embed3D(pose_estimate_2d) * gravity_alignment;
   extrapolator_->AddPose(time, pose_estimate);
 
-  const transform::Rigid3d tracking_2d_to_map =
-      pose_estimate * tracking_to_tracking_2d.inverse();
   last_pose_estimate_ = {
       time, pose_estimate,
-      sensor::TransformPointCloud(range_data_in_tracking_2d.returns,
-                                  tracking_2d_to_map.cast<float>())};
+      sensor::TransformPointCloud(
+          gravity_aligned_range_data.returns,
+          transform::Embed3D(pose_estimate_2d.cast<float>()))};
 
-  const transform::Rigid2d pose_estimate_2d =
-      transform::Project2D(tracking_2d_to_map);
-  if (motion_filter_.IsSimilar(time, transform::Embed3D(pose_estimate_2d))) {
+  if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
 
@@ -179,23 +168,23 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
     insertion_submaps.push_back(submap);
   }
   active_submaps_.InsertRangeData(
-      TransformRangeData(range_data_in_tracking_2d,
+      TransformRangeData(gravity_aligned_range_data,
                          transform::Embed3D(pose_estimate_2d.cast<float>())));
 
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.loop_closure_adaptive_voxel_filter_options());
-  const sensor::PointCloud filtered_point_cloud_in_tracking_2d =
-      adaptive_voxel_filter.Filter(range_data_in_tracking_2d.returns);
+  const sensor::PointCloud filtered_gravity_aligned_point_cloud =
+      adaptive_voxel_filter.Filter(gravity_aligned_range_data.returns);
 
   return common::make_unique<InsertionResult>(InsertionResult{
       std::make_shared<const mapping::TrajectoryNode::Data>(
           mapping::TrajectoryNode::Data{
               time,
               {},  // 'range_data' is only used in 3D.
-              filtered_point_cloud_in_tracking_2d,
+              filtered_gravity_aligned_point_cloud,
               {},  // 'high_resolution_point_cloud' is only used in 3D.
               {},  // 'low_resolution_point_cloud' is only used in 3D.
-              tracking_to_tracking_2d}),
+              gravity_alignment}),
       pose_estimate_2d, std::move(insertion_submaps)});
 }
 
