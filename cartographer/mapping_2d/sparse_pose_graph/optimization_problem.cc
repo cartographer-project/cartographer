@@ -87,9 +87,8 @@ void OptimizationProblem::AddTrajectoryNode(
   trajectory_data_.resize(std::max(trajectory_data_.size(), node_data_.size()));
 
   auto& trajectory_data = trajectory_data_.at(trajectory_id);
-  node_data_[trajectory_id].emplace(
-      trajectory_data.next_node_index,
-      NodeData{time, initial_point_cloud_pose, point_cloud_pose});
+  node_data_[trajectory_id].emplace(trajectory_data.next_node_index,
+                                    NodeData{time, initial_pose, pose});
   ++trajectory_data.next_node_index;
 }
 
@@ -175,8 +174,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     for (const auto& index_node_data : node_data_[trajectory_id]) {
       const int node_index = index_node_data.first;
       const NodeData& node_data = index_node_data.second;
-      C_nodes[trajectory_id].emplace(node_index,
-                                     FromPose(node_data.point_cloud_pose));
+      C_nodes[trajectory_id].emplace(node_index, FromPose(node_data.pose));
       problem.AddParameterBlock(C_nodes[trajectory_id].at(node_index).data(),
                                 3);
       if (frozen) {
@@ -198,9 +196,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
             .at(constraint.submap_id.submap_index)
             .data(),
         C_nodes.at(constraint.node_id.trajectory_id)
-            .at(constraint.node_id.node_index -
-                trajectory_data_.at(constraint.node_id.trajectory_id)
-                    .num_trimmed_nodes)
+            .at(constraint.node_id.node_index)
             .data());
   }
 
@@ -235,9 +231,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
           odometry_available
               ? odometry_data_[trajectory_id].Lookup(node_data.time).inverse() *
                     odometry_data_[trajectory_id].Lookup(next_node_data.time)
-              : transform::Embed3D(
-                    node_data.initial_point_cloud_pose.inverse() *
-                    next_node_data.initial_point_cloud_pose);
+              : transform::Embed3D(node_data.initial_pose.inverse() *
+                                   next_node_data.initial_pose);
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
@@ -270,7 +265,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
     for (auto& index_node_data : node_data_[trajectory_id]) {
-      index_node_data.second.point_cloud_pose =
+      index_node_data.second.pose =
           ToPose(C_nodes[trajectory_id].at(index_node_data.first));
     }
   }

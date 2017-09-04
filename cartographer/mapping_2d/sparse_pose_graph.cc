@@ -194,7 +194,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
           optimization_problem_.node_data()
               .at(node_id.trajectory_id)
               .at(node_id.node_index)
-              .point_cloud_pose;
+              .pose;
       constraint_builder_.MaybeAddConstraint(
           submap_id, submap_data_.at(submap_id).submap.get(), node_id,
           trajectory_nodes_.at(node_id).constant_data.get(),
@@ -438,7 +438,7 @@ void SparsePoseGraph::RunOptimization() {
     for (const auto& node_data_index : node_data.at(trajectory_id)) {
       const mapping::NodeId node_id{trajectory_id, node_data_index.first};
       trajectory_nodes_.at(node_id).pose =
-          transform::Embed3D(node_data_index.second.point_cloud_pose);
+          transform::Embed3D(node_data_index.second.pose);
     }
     // Extrapolate all point cloud poses that were added later.
     const auto local_to_new_global =
