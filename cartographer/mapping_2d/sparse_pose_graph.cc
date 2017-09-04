@@ -240,7 +240,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       matching_id.trajectory_id,
       static_cast<size_t>(matching_id.trajectory_id) <
                   optimization_problem_.node_data().size() &&
-              !optimization_problem_.node_data()[matching_id.trajectory_id].empty()
+              !optimization_problem_.node_data()[matching_id.trajectory_id]
+                   .empty()
           ? static_cast<int>(optimization_problem_.node_data()
                                  .at(matching_id.trajectory_id)
                                  .rbegin()
@@ -342,21 +343,19 @@ void SparsePoseGraph::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. *
-                         (constraint_builder_.GetNumFinishedScans() -
-                          num_finished_scans_at_start) /
+                  << 100. * (constraint_builder_.GetNumFinishedScans() -
+                             num_finished_scans_at_start) /
                          (num_trajectory_nodes_ - num_finished_scans_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone(
-      [this, &notification](
-          const sparse_pose_graph::ConstraintBuilder::Result& result) {
-        common::MutexLocker locker(&mutex_);
-        constraints_.insert(constraints_.end(), result.begin(), result.end());
-        notification = true;
-      });
+  constraint_builder_.WhenDone([this, &notification](
+      const sparse_pose_graph::ConstraintBuilder::Result& result) {
+    common::MutexLocker locker(&mutex_);
+    constraints_.insert(constraints_.end(), result.begin(), result.end());
+    notification = true;
+  });
   locker.Await([&notification]() { return notification; });
 }
 
@@ -438,7 +437,8 @@ void SparsePoseGraph::RunOptimization() {
     for (const auto& node_data_index : node_data.at(trajectory_id)) {
       const mapping::NodeId node_id{trajectory_id, node_data_index.first};
       trajectory_nodes_.at(node_id).pose =
-          transform::Embed3D(node_data_index.second.pose);
+          transform::Embed3D(node_data_index.second.pose) *
+          trajectory_nodes_.at(node_id).constant_data->tracking_to_tracking_2d;
     }
     // Extrapolate all point cloud poses that were added later.
     const auto local_to_new_global =
