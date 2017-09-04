@@ -35,16 +35,17 @@ struct TrajectoryNode {
     // Range data in 'tracking' frame. Only used in 3D.
     sensor::CompressedRangeData range_data;
 
-    // Used for loop closure in 2D: voxel filtered returns in 'pose' frame.
-    sensor::PointCloud filtered_point_cloud;
+    // Transform to approximately gravity align the tracking frame as
+    // determined by local SLAM.
+    Eigen::Quaterniond gravity_alignment;
+
+    // Used for loop closure in 2D: voxel filtered returns in the
+    // 'gravity_alignment' frame.
+    sensor::PointCloud filtered_gravity_aligned_point_cloud;
 
     // Used for loop closure in 3D.
     sensor::PointCloud high_resolution_point_cloud;
     sensor::PointCloud low_resolution_point_cloud;
-
-    // Transforms the 'tracking' frame into a gravity-aligned 'tracking_2d'
-    // frame. Only used in 2D.
-    transform::Rigid3d tracking_to_tracking_2d;
   };
 
   common::Time time() const { return constant_data->time; }
