@@ -308,7 +308,7 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
       RotationalScanMatcher::ComputeHistogram(
           sensor::TransformPointCloud(fine_point_cloud, initial_pose),
           options_.rotational_histogram_size()),
-      0.f, angles);
+      0.f /* initial_angle */, angles);
   for (size_t i = 0; i != angles.size(); ++i) {
     if (scores[i] < options_.min_rotational_score()) {
       continue;
