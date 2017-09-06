@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "cartographer/transform/rigid_transform.h"
 
 #include <random>
 
-#include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
+#include "cartographer/transform/transform.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -45,11 +46,9 @@ class RigidTransformTest : public ::testing::Test {
     const T ax = T(0.7) * distribution_(prng_);
     const T ay = T(0.7) * distribution_(prng_);
     const T az = T(0.7) * distribution_(prng_);
-    const T theta = T(0.2) * distribution_(prng_);
-    return transform::Rigid3<T>(
-        typename Rigid3<T>::Vector(x, y, z),
-        typename Rigid3<T>::AngleAxis(
-            theta, typename Rigid3<T>::Vector(ax, ay, az).normalized()));
+    return transform::Rigid3<T>(typename Rigid3<T>::Vector(x, y, z),
+                                AngleAxisVectorToRotationQuaternion(
+                                    typename Rigid3<T>::Vector(ax, ay, az)));
   }
 
   std::mt19937 prng_ = std::mt19937(42);
@@ -57,7 +56,7 @@ class RigidTransformTest : public ::testing::Test {
       std::uniform_real_distribution<T>(-1., 1.);
 };
 
-typedef ::testing::Types<float, double> ScalarTypes;
+using ScalarTypes = ::testing::Types<float, double>;
 TYPED_TEST_CASE(RigidTransformTest, ScalarTypes);
 
 TYPED_TEST(RigidTransformTest, Identity2DTest) {
