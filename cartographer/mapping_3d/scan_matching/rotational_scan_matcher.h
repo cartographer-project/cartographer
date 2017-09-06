@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "Eigen/Geometry"
-#include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
@@ -29,21 +28,25 @@ namespace scan_matching {
 
 class RotationalScanMatcher {
  public:
+  // Computes the histogram for a gravity aligned 'point_cloud'.
+  static Eigen::VectorXf ComputeHistogram(const sensor::PointCloud& point_cloud,
+                                          int histogram_size);
+
+  // Creates a matcher from the given histograms rotated by the given angles.
+  // The angles should be chosen to bring the histograms into approximately the
+  // same frame.
   explicit RotationalScanMatcher(
-      const std::vector<mapping::TrajectoryNode>& nodes, int histogram_size);
+      const std::vector<std::pair<Eigen::VectorXf, float>>&
+          histograms_at_angles);
 
-  RotationalScanMatcher(const RotationalScanMatcher&) = delete;
-  RotationalScanMatcher& operator=(const RotationalScanMatcher&) = delete;
-
-  // Scores how well a 'point_cloud' can be understood as rotated by certain
-  // 'angles' relative to the 'nodes'. Each angle results in a score between
-  // 0 (worst) and 1 (best).
-  std::vector<float> Match(const sensor::PointCloud& point_cloud,
+  // Scores how well 'histogram' rotated by 'initial_angle' can be understood as
+  // further rotated by certain 'angles' relative to the 'nodes'. Each angle
+  // results in a score between 0 (worst) and 1 (best).
+  std::vector<float> Match(const Eigen::VectorXf& histogram,
+                           float initial_angle,
                            const std::vector<float>& angles) const;
 
  private:
-  float MatchHistogram(const Eigen::VectorXf& scan_histogram) const;
-
   Eigen::VectorXf histogram_;
 };
 
