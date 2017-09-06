@@ -33,7 +33,9 @@ class GlobalTrajectoryBuilder
       : trajectory_id_(trajectory_id),
         sparse_pose_graph_(sparse_pose_graph),
         local_trajectory_builder_(options),
-        rangefinder_sampler_(options.rangefinder_sampling_ratio()) {}
+        rangefinder_sampler_(options.rangefinder_sampling_ratio()),
+        odometry_sampler_(options.odometry_sampling_ratio()),
+        imu_sampler_(options.imu_sampling_ratio()) {}
   ~GlobalTrajectoryBuilder() override {}
 
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
@@ -61,11 +63,17 @@ class GlobalTrajectoryBuilder
   }
 
   void AddSensorData(const sensor::ImuData& imu_data) override {
+    if (!imu_sampler_.Pulse()) {
+      return;
+    }
     local_trajectory_builder_.AddImuData(imu_data);
     sparse_pose_graph_->AddImuData(trajectory_id_, imu_data);
   }
 
   void AddSensorData(const sensor::OdometryData& odometry_data) override {
+    if (!odometry_sampler_.Pulse()) {
+      return;
+    }
     local_trajectory_builder_.AddOdometerData(odometry_data);
     sparse_pose_graph_->AddOdometerData(trajectory_id_, odometry_data);
   }
@@ -81,6 +89,8 @@ class GlobalTrajectoryBuilder
   LocalTrajectoryBuilder local_trajectory_builder_;
 
   common::FixedRatioSampler rangefinder_sampler_;
+  common::FixedRatioSampler odometry_sampler_;
+  common::FixedRatioSampler imu_sampler_;
 };
 
 }  // namespace mapping

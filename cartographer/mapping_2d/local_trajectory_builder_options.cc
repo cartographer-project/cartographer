@@ -42,6 +42,14 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
       parameter_dictionary->GetDouble("rangefinder_sampling_ratio"));
   CHECK_GT(options.rangefinder_sampling_ratio(), 0.);
   CHECK_LE(options.rangefinder_sampling_ratio(), 1.);
+  options.set_odometry_sampling_ratio(
+      parameter_dictionary->GetDouble("odometry_sampling_ratio"));
+  CHECK_GT(options.odometry_sampling_ratio(), 0.);
+  CHECK_LE(options.odometry_sampling_ratio(), 1.);
+  options.set_imu_sampling_ratio(
+      parameter_dictionary->GetDouble("imu_sampling_ratio"));
+  CHECK_GT(options.imu_sampling_ratio(), 0.);
+  CHECK_LE(options.imu_sampling_ratio(), 1.);
   options.set_use_online_correlative_scan_matching(
       parameter_dictionary->GetBool("use_online_correlative_scan_matching"));
   *options.mutable_adaptive_voxel_filter_options() =
