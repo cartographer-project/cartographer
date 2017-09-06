@@ -92,6 +92,7 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
           },
 
           imu_gravity_time_constant = 1.,
+          rotational_histogram_size = 120,
 
           submaps = {
             high_resolution = 0.2,

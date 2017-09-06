@@ -24,9 +24,6 @@ message FastCorrelativeScanMatcherOptions {
   // resolution by half each.
   optional int32 full_resolution_depth = 8;
 
-  // Number of histogram buckets for the rotational scan matcher.
-  optional int32 rotational_histogram_size = 3;
-
   // Minimum score for the rotational scan matcher.
   optional double min_rotational_score = 4;
 
