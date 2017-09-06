@@ -172,7 +172,7 @@ void ConstraintBuilder::ComputeConstraint(
       GetSubmapScanMatcher(submap_id);
 
   // The 'constraint_transform' (submap i <- scan j) is computed from:
-  // - a 'filtered_point_cloud' in scan j,
+  // - a 'filtered_gravity_aligned_point_cloud' in scan j,
   // - the initial guess 'initial_pose' for (map <- scan j),
   // - the result 'pose_estimate' of Match() (map <- scan j).
   // - the ComputeSubmapPose() (map <- submap i)
@@ -185,7 +185,7 @@ void ConstraintBuilder::ComputeConstraint(
   // 3. Refine.
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
-            constant_data->filtered_point_cloud,
+            constant_data->filtered_gravity_aligned_point_cloud,
             options_.global_localization_min_score(), &score, &pose_estimate)) {
       CHECK_GT(score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
@@ -197,7 +197,7 @@ void ConstraintBuilder::ComputeConstraint(
     }
   } else {
     if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
-            initial_pose, constant_data->filtered_point_cloud,
+            initial_pose, constant_data->filtered_gravity_aligned_point_cloud,
             options_.min_score(), &score, &pose_estimate)) {
       // We've reported a successful local match.
       CHECK_GT(score, options_.min_score());
@@ -214,9 +214,10 @@ void ConstraintBuilder::ComputeConstraint(
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
   ceres::Solver::Summary unused_summary;
-  ceres_scan_matcher_.Match(
-      pose_estimate, pose_estimate, constant_data->filtered_point_cloud,
-      *submap_scan_matcher->probability_grid, &pose_estimate, &unused_summary);
+  ceres_scan_matcher_.Match(pose_estimate, pose_estimate,
+                            constant_data->filtered_gravity_aligned_point_cloud,
+                            *submap_scan_matcher->probability_grid,
+                            &pose_estimate, &unused_summary);
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;
@@ -230,8 +231,8 @@ void ConstraintBuilder::ComputeConstraint(
   if (options_.log_matches()) {
     std::ostringstream info;
     info << "Node " << node_id << " with "
-         << constant_data->filtered_point_cloud.size() << " points on submap "
-         << submap_id << std::fixed;
+         << constant_data->filtered_gravity_aligned_point_cloud.size()
+         << " points on submap " << submap_id << std::fixed;
     if (match_full_submap) {
       info << " matches";
     } else {

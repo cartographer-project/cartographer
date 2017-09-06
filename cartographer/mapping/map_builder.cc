@@ -183,9 +183,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
         range_data_proto->mutable_node_id()->set_node_index(node_index);
         const auto& data = *node_data[trajectory_id][node_index].constant_data;
         *range_data_proto->mutable_range_data() =
-            sensor::ToProto(sensor::Compress(sensor::TransformRangeData(
-                sensor::Decompress(data.range_data),
-                data.tracking_to_pose.inverse().cast<float>())));
+            sensor::ToProto(data.range_data);
         // TODO(whess): Only enable optionally? Resulting pbstream files will be
         // a lot larger now.
         writer->WriteProto(proto);

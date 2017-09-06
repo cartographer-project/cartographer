@@ -125,6 +125,24 @@ struct Candidate {
   bool operator>(const Candidate& other) const { return score > other.score; }
 };
 
+namespace {
+
+scan_matching::RotationalScanMatcher CreateRotationalScanMatcher(
+    const std::vector<mapping::TrajectoryNode>& nodes,
+    const int histogram_size) {
+  Eigen::VectorXf histogram = Eigen::VectorXf::Zero(histogram_size);
+  for (const mapping::TrajectoryNode& node : nodes) {
+    histogram += scan_matching::RotationalScanMatcher::ComputeHistogram(
+        sensor::TransformPointCloud(
+            node.constant_data->range_data.returns.Decompress(),
+            node.pose.cast<float>()),
+        histogram_size);
+  }
+  return scan_matching::RotationalScanMatcher({{histogram, 0.f}});
+}
+
+}  // namespace
+
 FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
     const HybridGrid& hybrid_grid,
     const HybridGrid* const low_resolution_hybrid_grid,
@@ -136,7 +154,8 @@ FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
       precomputation_grid_stack_(
           common::make_unique<PrecomputationGridStack>(hybrid_grid, options)),
       low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
-      rotational_scan_matcher_(nodes, options_.rotational_histogram_size()) {}
+      rotational_scan_matcher_(CreateRotationalScanMatcher(
+          nodes, options_.rotational_histogram_size())) {}
 
 FastCorrelativeScanMatcher::~FastCorrelativeScanMatcher() {}
 
@@ -286,7 +305,10 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     angles.push_back(rz * angular_step_size);
   }
   const std::vector<float> scores = rotational_scan_matcher_.Match(
-      sensor::TransformPointCloud(fine_point_cloud, initial_pose), angles);
+      RotationalScanMatcher::ComputeHistogram(
+          sensor::TransformPointCloud(fine_point_cloud, initial_pose),
+          options_.rotational_histogram_size()),
+      0.f /* initial_angle */, angles);
   for (size_t i = 0; i != angles.size(); ++i) {
     if (scores[i] < options_.min_rotational_score()) {
       continue;

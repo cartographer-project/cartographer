@@ -114,10 +114,10 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
     return mapping::TrajectoryNode::Data{
         common::FromUniversal(0),
         Compress(sensor::RangeData{Eigen::Vector3f::Zero(), point_cloud_, {}}),
+        Eigen::Quaterniond::Identity(),
         {},
         point_cloud_,
-        low_resolution_point_cloud,
-        transform::Rigid3d::Identity()};
+        low_resolution_point_cloud};
   }
 
   std::mt19937 prng_ = std::mt19937(42);
