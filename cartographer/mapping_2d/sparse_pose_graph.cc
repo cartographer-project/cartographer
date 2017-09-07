@@ -740,9 +740,10 @@ mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
                 optimized_submap_transforms_.at(submap_id).global_pose)};
   }
   // We have to extrapolate.
-  return {submap, ComputeLocalToGlobalTransform(optimized_submap_transforms_,
-                                                submap_id.trajectory_id) *
-                      submap->local_pose()};
+  return {submap,
+          ComputeLocalToGlobalTransform(optimized_submap_transforms_,
+                                        submap_id.trajectory_id) *
+              submap->local_pose()};
 }
 
 SparsePoseGraph::TrimmingHandle::TrimmingHandle(SparsePoseGraph* const parent)
