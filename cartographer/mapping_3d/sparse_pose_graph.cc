@@ -210,7 +210,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
         trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
-        initial_relative_pose.rotation(), &trajectory_connectivity_);
+        initial_relative_pose.rotation());
   } else {
     const bool scan_and_submap_trajectories_connected =
         reverse_connected_components_.count(node_id.trajectory_id) > 0 &&
@@ -328,6 +328,19 @@ void SparsePoseGraph::HandleScanQueue() {
           common::MutexLocker locker(&mutex_);
           constraints_.insert(constraints_.end(), result.begin(), result.end());
         }
+
+        // Update the trajectory connectivity structure with the new
+        // constraints.
+        for (Constraint constraint : result) {
+          int trajectory_id_node = constraint.node_id.trajectory_id;
+          int trajectory_id_submap = constraint.submap_id.trajectory_id;
+          if (constraint.tag ==
+              mapping::SparsePoseGraph::Constraint::INTER_SUBMAP) {
+            trajectory_connectivity_.Connect(trajectory_id_node,
+                                             trajectory_id_submap);
+          }
+        }
+
         RunOptimization();
 
         common::MutexLocker locker(&mutex_);
