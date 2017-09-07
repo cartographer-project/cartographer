@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_TRAJECTORY_CONNECTIVITY_H_
-#define CARTOGRAPHER_MAPPING_TRAJECTORY_CONNECTIVITY_H_
+#ifndef CARTOGRAPHER_MAPPING_CONNECTED_COMPONENTS_H_
+#define CARTOGRAPHER_MAPPING_CONNECTED_COMPONENTS_H_
 
 #include <map>
 #include <unordered_map>
 
 #include "cartographer/common/mutex.h"
-#include "cartographer/mapping/proto/trajectory_connectivity.pb.h"
+#include "cartographer/mapping/proto/connected_components.pb.h"
 #include "cartographer/mapping/submaps.h"
 
 namespace cartographer {
@@ -33,12 +33,12 @@ namespace mapping {
 // connected trajectories i and j?") and the transitive connectivity.
 //
 // This class is thread-safe.
-class TrajectoryConnectivity {
+class ConnectedComponents {
  public:
-  TrajectoryConnectivity();
+  ConnectedComponents();
 
-  TrajectoryConnectivity(const TrajectoryConnectivity&) = delete;
-  TrajectoryConnectivity& operator=(const TrajectoryConnectivity&) = delete;
+  ConnectedComponents(const ConnectedComponents&) = delete;
+  ConnectedComponents& operator=(const ConnectedComponents&) = delete;
 
   // Add a trajectory which is initially connected to only itself.
   void Add(int trajectory_id) EXCLUDES(lock_);
@@ -61,7 +61,7 @@ class TrajectoryConnectivity {
   int ConnectionCount(int trajectory_id_a, int trajectory_id_b) EXCLUDES(lock_);
 
   // The trajectory IDs, grouped by connectivity.
-  std::vector<std::vector<int>> ConnectedComponents() EXCLUDES(lock_);
+  std::vector<std::vector<int>> Components() EXCLUDES(lock_);
 
  private:
   // Find the representative and compresses the path to it.
@@ -77,16 +77,16 @@ class TrajectoryConnectivity {
 };
 
 // Returns a proto encoding connected components.
-proto::TrajectoryConnectivity ToProto(
+proto::ConnectedComponents ToProto(
     std::vector<std::vector<int>> connected_components);
 
 // Returns the connected component containing 'trajectory_id'.
-proto::TrajectoryConnectivity::ConnectedComponent FindConnectedComponent(
-    const cartographer::mapping::proto::TrajectoryConnectivity&
-        trajectory_connectivity,
+proto::ConnectedComponents::ConnectedComponent FindConnectedComponent(
+    const cartographer::mapping::proto::ConnectedComponents&
+        connected_components,
     int trajectory_id);
 
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_TRAJECTORY_CONNECTIVITY_H_
+#endif  // CARTOGRAPHER_MAPPING_CONNECTED_COMPONENTS_H_
