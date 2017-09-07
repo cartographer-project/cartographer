@@ -93,7 +93,7 @@ class FastCorrelativeScanMatcher {
       const SearchParameters& search_parameters,
       const transform::Rigid3d& initial_pose_estimate,
       const sensor::PointCloud& point_cloud,
-      const Eigen::VectorXf& rotational_scan_matcher_data,
+      const Eigen::VectorXf& rotational_scan_matcher_histogram,
       const Eigen::Quaterniond& gravity_alignment, float min_score,
       float* score, transform::Rigid3d* pose_estimate, float* rotational_score,
       float* low_resolution_score) const;
@@ -104,7 +104,7 @@ class FastCorrelativeScanMatcher {
   std::vector<DiscreteScan> GenerateDiscreteScans(
       const SearchParameters& search_parameters,
       const sensor::PointCloud& point_cloud,
-      const Eigen::VectorXf& rotational_scan_matcher_data,
+      const Eigen::VectorXf& rotational_scan_matcher_histogram,
       const Eigen::Quaterniond& gravity_alignment,
       const transform::Rigid3f& initial_pose) const;
   std::vector<Candidate> GenerateLowestResolutionCandidates(

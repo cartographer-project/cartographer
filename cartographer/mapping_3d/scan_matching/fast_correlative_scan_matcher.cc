@@ -130,7 +130,7 @@ std::vector<std::pair<Eigen::VectorXf, float>> HistogramsAtAnglesFromNodes(
   std::vector<std::pair<Eigen::VectorXf, float>> histograms_at_angles;
   for (const auto& node : nodes) {
     histograms_at_angles.emplace_back(
-        node.constant_data->rotational_scan_matcher_data,
+        node.constant_data->rotational_scan_matcher_histogram,
         transform::GetYaw(
             node.pose * transform::Rigid3d::Rotation(
                             node.constant_data->gravity_alignment.inverse())));
@@ -166,12 +166,12 @@ bool FastCorrelativeScanMatcher::Match(
       common::RoundToInt(options_.linear_xy_search_window() / resolution_),
       common::RoundToInt(options_.linear_z_search_window() / resolution_),
       options_.angular_search_window(), &low_resolution_matcher};
-  return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
-                                   constant_data.high_resolution_point_cloud,
-                                   constant_data.rotational_scan_matcher_data,
-                                   constant_data.gravity_alignment, min_score,
-                                   score, pose_estimate, rotational_score,
-                                   low_resolution_score);
+  return MatchWithSearchParameters(
+      search_parameters, initial_pose_estimate,
+      constant_data.high_resolution_point_cloud,
+      constant_data.rotational_scan_matcher_histogram,
+      constant_data.gravity_alignment, min_score, score, pose_estimate,
+      rotational_score, low_resolution_score);
 }
 
 bool FastCorrelativeScanMatcher::MatchFullSubmap(
@@ -193,19 +193,19 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
       low_resolution_hybrid_grid_, &constant_data.low_resolution_point_cloud);
   const SearchParameters search_parameters{
       linear_window_size, linear_window_size, M_PI, &low_resolution_matcher};
-  return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
-                                   constant_data.high_resolution_point_cloud,
-                                   constant_data.rotational_scan_matcher_data,
-                                   constant_data.gravity_alignment, min_score,
-                                   score, pose_estimate, rotational_score,
-                                   low_resolution_score);
+  return MatchWithSearchParameters(
+      search_parameters, initial_pose_estimate,
+      constant_data.high_resolution_point_cloud,
+      constant_data.rotational_scan_matcher_histogram,
+      constant_data.gravity_alignment, min_score, score, pose_estimate,
+      rotational_score, low_resolution_score);
 }
 
 bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
     const transform::Rigid3d& initial_pose_estimate,
     const sensor::PointCloud& point_cloud,
-    const Eigen::VectorXf& rotational_scan_matcher_data,
+    const Eigen::VectorXf& rotational_scan_matcher_histogram,
     const Eigen::Quaterniond& gravity_alignment, const float min_score,
     float* const score, transform::Rigid3d* const pose_estimate,
     float* const rotational_score, float* const low_resolution_score) const {
@@ -213,7 +213,7 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
   CHECK_NOTNULL(pose_estimate);
 
   const std::vector<DiscreteScan> discrete_scans = GenerateDiscreteScans(
-      search_parameters, point_cloud, rotational_scan_matcher_data,
+      search_parameters, point_cloud, rotational_scan_matcher_histogram,
       gravity_alignment, initial_pose_estimate.cast<float>());
 
   const std::vector<Candidate> lowest_resolution_candidates =
@@ -281,7 +281,7 @@ DiscreteScan FastCorrelativeScanMatcher::DiscretizeScan(
 std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
     const sensor::PointCloud& point_cloud,
-    const Eigen::VectorXf& rotational_scan_matcher_data,
+    const Eigen::VectorXf& rotational_scan_matcher_histogram,
     const Eigen::Quaterniond& gravity_alignment,
     const transform::Rigid3f& initial_pose) const {
   std::vector<DiscreteScan> result;
@@ -305,7 +305,7 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     angles.push_back(rz * angular_step_size);
   }
   const std::vector<float> scores = rotational_scan_matcher_.Match(
-      rotational_scan_matcher_data,
+      rotational_scan_matcher_histogram,
       transform::GetYaw(initial_pose.rotation() *
                         gravity_alignment.inverse().cast<float>()),
       angles);

@@ -43,7 +43,7 @@ struct TrajectoryNode {
     // Used for loop closure in 3D.
     sensor::PointCloud high_resolution_point_cloud;
     sensor::PointCloud low_resolution_point_cloud;
-    Eigen::VectorXf rotational_scan_matcher_data;
+    Eigen::VectorXf rotational_scan_matcher_histogram;
   };
 
   common::Time time() const { return constant_data->time; }

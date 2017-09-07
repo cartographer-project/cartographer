@@ -159,7 +159,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   extrapolator_->AddPose(time, pose_estimate);
   const Eigen::Quaterniond gravity_alignment =
       extrapolator_->EstimateGravityOrientation(time);
-  const auto rotational_scan_matcher_data =
+  const auto rotational_scan_matcher_histogram =
       scan_matching::RotationalScanMatcher::ComputeHistogram(
           sensor::TransformPointCloud(
               filtered_range_data.returns,
@@ -174,7 +174,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   return InsertIntoSubmap(time, filtered_range_data, gravity_alignment,
                           filtered_point_cloud_in_tracking,
                           low_resolution_point_cloud_in_tracking,
-                          rotational_scan_matcher_data, pose_estimate);
+                          rotational_scan_matcher_histogram, pose_estimate);
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
@@ -197,7 +197,7 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
     const Eigen::Quaterniond& gravity_alignment,
     const sensor::PointCloud& high_resolution_point_cloud,
     const sensor::PointCloud& low_resolution_point_cloud,
-    const Eigen::VectorXf& rotational_scan_matcher_data,
+    const Eigen::VectorXf& rotational_scan_matcher_histogram,
     const transform::Rigid3d& pose_observation) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
@@ -221,7 +221,7 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
               {},  // 'filtered_point_cloud' is only used in 2D.
               high_resolution_point_cloud,
               low_resolution_point_cloud,
-              rotational_scan_matcher_data}),
+              rotational_scan_matcher_histogram}),
       pose_observation, std::move(insertion_submaps)});
 }
 
