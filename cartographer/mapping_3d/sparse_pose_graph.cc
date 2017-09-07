@@ -323,6 +323,7 @@ void SparsePoseGraph::HandleWorkQueue() {
           common::MutexLocker locker(&mutex_);
           constraints_.insert(constraints_.end(), result.begin(), result.end());
         }
+        RunOptimization();
 
         // Update the trajectory connectivity structure with the new
         // constraints.
@@ -332,7 +333,6 @@ void SparsePoseGraph::HandleWorkQueue() {
           trajectory_connectivity_.Connect(constraint.node_id.trajectory_id,
                                            constraint.submap_id.trajectory_id);
         }
-        RunOptimization();
 
         common::MutexLocker locker(&mutex_);
         num_scans_since_last_loop_closure_ = 0;
@@ -503,7 +503,6 @@ void SparsePoseGraph::RunOptimization() {
     }
   }
   optimized_submap_transforms_ = optimization_problem_.submap_data();
-  connected_components_ = trajectory_connectivity_.ConnectedComponents();
 
   TrimmingHandle trimming_handle(this);
   for (auto& trimmer : trimmers_) {
@@ -535,8 +534,7 @@ transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
 }
 
 std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
-  common::MutexLocker locker(&mutex_);
-  return connected_components_;
+  return trajectory_connectivity_.ConnectedComponents();
 }
 
 int SparsePoseGraph::num_submaps(const int trajectory_id) {

@@ -194,9 +194,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   mapping::NestedVectorsById<SubmapData, mapping::SubmapId> submap_data_
       GUARDED_BY(mutex_);
 
-  // Connectivity structure of our trajectories by IDs.
-  std::vector<std::vector<int>> connected_components_;
-
   // Data that are currently being shown.
   mapping::NestedVectorsById<mapping::TrajectoryNode, mapping::NodeId>
       trajectory_nodes_ GUARDED_BY(mutex_);
