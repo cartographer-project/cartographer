@@ -274,7 +274,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   constraint_builder_.NotifyEndOfScan();
   ++num_scans_since_last_loop_closure_;
   const bool inserted_manual_constraints =
-      ScheduleOrPerformManualConstraintInsertion(false);
+      ScheduleOrPerformManualConstraintInsertion(false /* do not schedule */);
   if ((options_.optimize_every_n_scans() > 0 &&
        num_scans_since_last_loop_closure_ >
            options_.optimize_every_n_scans()) ||
@@ -297,7 +297,7 @@ void SparsePoseGraph::UpdateManualConstraint(mapping::NodeId node_id,
                                              transform::Rigid3d pose) {
   common::MutexLocker locker(&mutex_);
   manual_constraint_queue_.push_back(ManualConstraint{node_id, pose});
-  ScheduleOrPerformManualConstraintInsertion(true);
+  ScheduleOrPerformManualConstraintInsertion(true /* schedule */);
 }
 
 void SparsePoseGraph::InsertManualConstraint(
@@ -318,15 +318,17 @@ bool SparsePoseGraph::ScheduleOrPerformManualConstraintInsertion(
     const bool schedule) {
   int to_be_processed = 0;
   for (const auto& manual_constraint : manual_constraint_queue_) {
-    const int trajectory_id = manual_constraint.node_id.trajectory_id;
-    const int node_id = manual_constraint.node_id.node_index;
+    const auto& node_id = manual_constraint.node_id;
+    const int node_index = node_id.node_index;
     const int next_inserted_node =
-        static_cast<int>(
-            optimization_problem_.node_data().at(trajectory_id).size()) +
-        optimization_problem_.num_trimmed_nodes(trajectory_id);
-    CHECK_GT(node_id,
-             optimization_problem_.num_trimmed_nodes(trajectory_id) - 1);
-    if (node_id < next_inserted_node) {
+        static_cast<int>(optimization_problem_.node_data()
+                             .at(node_id.trajectory_id)
+                             .rbegin()
+                             ->first +
+                         1);
+    // Do not allow adding constraints for trimmed nodes.
+    CHECK(!trajectory_nodes_.at(node_id).trimmed());
+    if (node_index < next_inserted_node) {
       ++to_be_processed;
     } else {
       break;
