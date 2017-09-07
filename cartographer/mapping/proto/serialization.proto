@@ -18,7 +18,7 @@ package cartographer.mapping.proto;
 
 import "cartographer/mapping/proto/sparse_pose_graph.proto";
 import "cartographer/mapping/proto/submap.proto";
-import "cartographer/sensor/proto/sensor.proto";
+import "cartographer/mapping/proto/trajectory_node.proto";
 
 message Submap {
   optional SubmapId submap_id = 1;
@@ -26,13 +26,13 @@ message Submap {
   optional Submap3D submap_3d = 3;
 }
 
-message RangeData {
+message NodeData {
   optional NodeId node_id = 1;
-  optional sensor.proto.CompressedRangeData range_data = 4;
+  optional TrajectoryNode trajectory_node = 5;
 }
 
 message SerializedData {
   optional Submap submap = 1;
-  optional RangeData range_data = 2;
+  optional NodeData node_data = 2;
   // TODO(whess): Add IMU data, odometry.
 }
