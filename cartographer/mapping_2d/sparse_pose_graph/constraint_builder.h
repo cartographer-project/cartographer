@@ -32,7 +32,6 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
-#include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/submaps.h"
@@ -87,15 +86,12 @@ class ConstraintBuilder {
   // 'submap_id' and the 'compressed_point_cloud' for 'node_id'.
   // This performs full-submap matching.
   //
-  // The 'trajectory_connectivity' is updated if the full-submap match succeeds.
-  //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddGlobalConstraint(
       const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id,
-      const mapping::TrajectoryNode::Data* const constant_data,
-      mapping::TrajectoryConnectivity* trajectory_connectivity);
+      const mapping::TrajectoryNode::Data* const constant_data);
 
   // Must be called after all computations related to one node have been added.
   void NotifyEndOfScan();
@@ -134,14 +130,10 @@ class ConstraintBuilder {
 
   // Runs in a background thread and does computations for an additional
   // constraint, assuming 'submap' and 'compressed_point_cloud' do not change
-  // anymore. If 'match_full_submap' is true, and global localization succeeds,
-  // will connect 'node_id.trajectory_id' and 'submap_id.trajectory_id' in
-  // 'trajectory_connectivity'.
-  // As output, it may create a new Constraint in 'constraint'.
+  // anymore. As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
       const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id, bool match_full_submap,
-      mapping::TrajectoryConnectivity* trajectory_connectivity,
       const mapping::TrajectoryNode::Data* const constant_data,
       const transform::Rigid2d& initial_relative_pose,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);

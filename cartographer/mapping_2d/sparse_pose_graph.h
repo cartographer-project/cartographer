@@ -172,7 +172,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       GUARDED_BY(mutex_);
 
   // How our various trajectories are related.
-  mapping::TrajectoryConnectivity trajectory_connectivity_ GUARDED_BY(mutex_);
+  mapping::TrajectoryConnectivity trajectory_connectivity_;
 
   // We globally localize a fraction of the scans from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>

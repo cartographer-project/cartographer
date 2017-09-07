@@ -72,7 +72,6 @@ void ConstraintBuilder::MaybeAddConstraint(
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
-                            nullptr, /* trajectory_connectivity */
                             constant_data, initial_pose, constraint);
           FinishComputation(current_computation);
         });
@@ -84,8 +83,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
     const mapping::NodeId& node_id,
     const mapping::TrajectoryNode::Data* const constant_data,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const Eigen::Quaterniond& gravity_alignment,
-    mapping::TrajectoryConnectivity* const trajectory_connectivity) {
+    const Eigen::Quaterniond& gravity_alignment) {
   common::MutexLocker locker(&mutex_);
   constraints_.emplace_back();
   auto* const constraint = &constraints_.back();
@@ -94,7 +92,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
         ComputeConstraint(submap_id, node_id, true, /* match_full_submap */
-                          trajectory_connectivity, constant_data,
+                          constant_data,
                           transform::Rigid3d::Rotation(gravity_alignment),
                           constraint);
         FinishComputation(current_computation);
@@ -167,7 +165,6 @@ ConstraintBuilder::GetSubmapScanMatcher(const mapping::SubmapId& submap_id) {
 void ConstraintBuilder::ComputeConstraint(
     const mapping::SubmapId& submap_id, const mapping::NodeId& node_id,
     bool match_full_submap,
-    mapping::TrajectoryConnectivity* trajectory_connectivity,
     const mapping::TrajectoryNode::Data* const constant_data,
     const transform::Rigid3d& initial_pose,
     std::unique_ptr<OptimizationProblem::Constraint>* constraint) {
@@ -194,8 +191,6 @@ void ConstraintBuilder::ComputeConstraint(
       CHECK_GT(score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
       CHECK_GE(submap_id.trajectory_id, 0);
-      trajectory_connectivity->Connect(node_id.trajectory_id,
-                                       submap_id.trajectory_id);
     } else {
       return;
     }
