@@ -61,6 +61,10 @@ int TrajectoryConnectivity::FindSet(const int trajectory_id) {
 
 bool TrajectoryConnectivity::TransitivelyConnected(const int trajectory_id_a,
                                                    const int trajectory_id_b) {
+  if (trajectory_id_a == trajectory_id_b) {
+    return true;
+  }
+
   common::MutexLocker locker(&lock_);
 
   if (forest_.count(trajectory_id_a) == 0 ||

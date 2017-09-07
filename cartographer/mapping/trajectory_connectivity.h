@@ -40,7 +40,7 @@ class TrajectoryConnectivity {
   TrajectoryConnectivity(const TrajectoryConnectivity&) = delete;
   TrajectoryConnectivity& operator=(const TrajectoryConnectivity&) = delete;
 
-  // Add a trajectory which is initially connected to nothing.
+  // Add a trajectory which is initially connected to only itself.
   void Add(int trajectory_id) EXCLUDES(lock_);
 
   // Connect two trajectories. If either trajectory is untracked, it will be
@@ -49,8 +49,9 @@ class TrajectoryConnectivity {
   void Connect(int trajectory_id_a, int trajectory_id_b) EXCLUDES(lock_);
 
   // Determines if two trajectories have been (transitively) connected. If
-  // either trajectory is not being tracked, returns false. This function is
-  // invariant to the order of its arguments.
+  // either trajectory is not being tracked, returns false, except when it is
+  // the same trajectory, where it returns true. This function is invariant to
+  // the order of its arguments.
   bool TransitivelyConnected(int trajectory_id_a, int trajectory_id_b)
       EXCLUDES(lock_);
 

@@ -201,8 +201,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Connectivity structure of our trajectories by IDs.
   std::vector<std::vector<int>> connected_components_;
-  // Trajectory ID to connected component ID.
-  std::map<int, size_t> reverse_connected_components_;
 
   // Data that are currently being shown.
   mapping::NestedVectorsById<mapping::TrajectoryNode, mapping::NodeId>

@@ -35,8 +35,9 @@ TEST(TrajectoryConnectivityTest, TransitivelyConnected) {
   for (int trajectory_a = 0; trajectory_a < kNumTrajectories; ++trajectory_a) {
     for (int trajectory_b = 0; trajectory_b < kNumTrajectories;
          ++trajectory_b) {
-      EXPECT_FALSE(trajectory_connectivity.TransitivelyConnected(trajectory_a,
-                                                                 trajectory_b));
+      EXPECT_EQ(trajectory_a == trajectory_b,
+                trajectory_connectivity.TransitivelyConnected(trajectory_a,
+                                                              trajectory_b));
     }
   }
 
@@ -100,6 +101,15 @@ TEST(TrajectoryConnectivityTest, ConnectionCount) {
   for (int i = 1; i < 9; ++i) {
     EXPECT_EQ(0, trajectory_connectivity.ConnectionCount(i, i + 1));
   }
+}
+
+TEST(TrajectoryConnectivityTest, ReflexiveConnectivity) {
+  TrajectoryConnectivity trajectory_connectivity;
+  EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(0, 0));
+  EXPECT_EQ(0, trajectory_connectivity.ConnectionCount(0, 0));
+  trajectory_connectivity.Add(0);
+  EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(0, 0));
+  EXPECT_EQ(0, trajectory_connectivity.ConnectionCount(0, 0));
 }
 
 }  // namespace
