@@ -212,13 +212,8 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
         trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
         initial_relative_pose.rotation());
   } else {
-    const bool scan_and_submap_trajectories_connected =
-        reverse_connected_components_.count(node_id.trajectory_id) > 0 &&
-        reverse_connected_components_.count(submap_id.trajectory_id) > 0 &&
-        reverse_connected_components_.at(node_id.trajectory_id) ==
-            reverse_connected_components_.at(submap_id.trajectory_id);
-    if (node_id.trajectory_id == submap_id.trajectory_id ||
-        scan_and_submap_trajectories_connected) {
+    if (trajectory_connectivity_.TransitivelyConnected(
+            node_id.trajectory_id, submap_id.trajectory_id)) {
       constraint_builder_.MaybeAddConstraint(
           submap_id, submap_data_.at(submap_id).submap.get(), node_id,
           trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
@@ -509,12 +504,6 @@ void SparsePoseGraph::RunOptimization() {
   }
   optimized_submap_transforms_ = optimization_problem_.submap_data();
   connected_components_ = trajectory_connectivity_.ConnectedComponents();
-  reverse_connected_components_.clear();
-  for (size_t i = 0; i != connected_components_.size(); ++i) {
-    for (const int trajectory_id : connected_components_[i]) {
-      reverse_connected_components_.emplace(trajectory_id, i);
-    }
-  }
 
   TrimmingHandle trimming_handle(this);
   for (auto& trimmer : trimmers_) {
