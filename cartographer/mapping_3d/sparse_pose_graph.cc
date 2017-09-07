@@ -331,16 +331,12 @@ void SparsePoseGraph::HandleScanQueue() {
 
         // Update the trajectory connectivity structure with the new
         // constraints.
-        for (Constraint constraint : result) {
-          int trajectory_id_node = constraint.node_id.trajectory_id;
-          int trajectory_id_submap = constraint.submap_id.trajectory_id;
-          if (constraint.tag ==
-              mapping::SparsePoseGraph::Constraint::INTER_SUBMAP) {
-            trajectory_connectivity_.Connect(trajectory_id_node,
-                                             trajectory_id_submap);
-          }
+        for (const Constraint& constraint : result) {
+          CHECK_EQ(constraint.tag,
+                   mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
+          trajectory_connectivity_.Connect(constraint.node_id.trajectory_id,
+                                           constraint.submap_id.trajectory_id);
         }
-
         RunOptimization();
 
         common::MutexLocker locker(&mutex_);
