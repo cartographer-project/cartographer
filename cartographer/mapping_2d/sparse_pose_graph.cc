@@ -48,7 +48,7 @@ SparsePoseGraph::SparsePoseGraph(
 SparsePoseGraph::~SparsePoseGraph() {
   WaitForAllComputations();
   common::MutexLocker locker(&mutex_);
-  CHECK(scan_queue_ == nullptr);
+  CHECK(work_queue_ == nullptr);
 }
 
 std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
@@ -140,10 +140,10 @@ void SparsePoseGraph::AddScan(
 }
 
 void SparsePoseGraph::AddWorkItem(const std::function<void()>& work_item) {
-  if (scan_queue_ == nullptr) {
+  if (work_queue_ == nullptr) {
     work_item();
   } else {
-    scan_queue_->push_back(work_item);
+    work_queue_->push_back(work_item);
   }
 }
 
@@ -298,15 +298,15 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       num_scans_since_last_loop_closure_ > options_.optimize_every_n_scans()) {
     CHECK(!run_loop_closure_);
     run_loop_closure_ = true;
-    // If there is a 'scan_queue_' already, some other thread will take care.
-    if (scan_queue_ == nullptr) {
-      scan_queue_ = common::make_unique<std::deque<std::function<void()>>>();
-      HandleScanQueue();
+    // If there is a 'work_queue_' already, some other thread will take care.
+    if (work_queue_ == nullptr) {
+      work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+      HandleWorkQueue();
     }
   }
 }
 
-void SparsePoseGraph::HandleScanQueue() {
+void SparsePoseGraph::HandleWorkQueue() {
   constraint_builder_.WhenDone(
       [this](const sparse_pose_graph::ConstraintBuilder::Result& result) {
         {
@@ -319,16 +319,16 @@ void SparsePoseGraph::HandleScanQueue() {
         num_scans_since_last_loop_closure_ = 0;
         run_loop_closure_ = false;
         while (!run_loop_closure_) {
-          if (scan_queue_->empty()) {
+          if (work_queue_->empty()) {
             LOG(INFO) << "We caught up. Hooray!";
-            scan_queue_.reset();
+            work_queue_.reset();
             return;
           }
-          scan_queue_->front()();
-          scan_queue_->pop_front();
+          work_queue_->front()();
+          work_queue_->pop_front();
         }
         // We have to optimize again.
-        HandleScanQueue();
+        HandleWorkQueue();
       });
 }
 

@@ -142,8 +142,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       REQUIRES(mutex_);
 
   // Registers the callback to run the optimization once all constraints have
-  // been computed, that will also do all work that queue up in 'scan_queue_'.
-  void HandleScanQueue() REQUIRES(mutex_);
+  // been computed, that will also do all work that queue up in 'work_queue_'.
+  void HandleWorkQueue() REQUIRES(mutex_);
 
   // Waits until we caught up (i.e. nothing is waiting to be scheduled), and
   // all computations have finished.
@@ -166,9 +166,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
 
-  // If it exists, further scans must be added to this queue, and will be
+  // If it exists, further work items must be added to this queue, and will be
   // considered later.
-  std::unique_ptr<std::deque<std::function<void()>>> scan_queue_
+  std::unique_ptr<std::deque<std::function<void()>>> work_queue_
       GUARDED_BY(mutex_);
 
   // How our various trajectories are related.
