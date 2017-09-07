@@ -179,7 +179,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
         trajectory_nodes_.at(node_id).constant_data.get(),
-        &trajectory_connectivity_);
+        &trajectory_connectivity_, best_current_optimized_pose_);
   } else {
     const bool scan_and_submap_trajectories_connected =
         reverse_connected_components_.count(node_id.trajectory_id) > 0 &&
@@ -238,6 +238,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       sparse_pose_graph::ComputeSubmapPose(*insertion_submaps.front())
           .inverse() *
       pose;
+  best_current_optimized_pose_=optimized_pose;
   const mapping::NodeId node_id{
       matching_id.trajectory_id,
       static_cast<size_t>(matching_id.trajectory_id) <

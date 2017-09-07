@@ -219,6 +219,7 @@ bool FastCorrelativeScanMatcher::Match(
 }
 
 bool FastCorrelativeScanMatcher::MatchFullSubmap(
+    const transform::Rigid2d& initial_pose_estimate,
     const sensor::PointCloud& point_cloud, float min_score, float* score,
     transform::Rigid2d* pose_estimate) const {
   // Compute a search window around the center of the submap that includes it
@@ -231,8 +232,9 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
       limits_.max() - 0.5 * limits_.resolution() *
                           Eigen::Vector2d(limits_.cell_limits().num_y_cells,
                                           limits_.cell_limits().num_x_cells));
-  return MatchWithSearchParameters(search_parameters, center, point_cloud,
-                                   min_score, score, pose_estimate);
+  return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
+                                   point_cloud, min_score, score,
+                                   pose_estimate);
 }
 
 bool FastCorrelativeScanMatcher::MatchWithSearchParameters(

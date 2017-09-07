@@ -48,6 +48,11 @@ class LocalTrajectoryBuilder {
 
   explicit LocalTrajectoryBuilder(
       const proto::LocalTrajectoryBuilderOptions& options);
+
+  explicit LocalTrajectoryBuilder(
+      const proto::LocalTrajectoryBuilderOptions& options,
+      const transform::Rigid3d& initialpose_data);
+
   ~LocalTrajectoryBuilder();
 
   LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;

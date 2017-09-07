@@ -88,7 +88,8 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
     const mapping::SubmapId& submap_id, const Submap* const submap,
     const mapping::NodeId& node_id,
     const mapping::TrajectoryNode::Data* const constant_data,
-    mapping::TrajectoryConnectivity* const trajectory_connectivity) {
+    mapping::TrajectoryConnectivity* const trajectory_connectivity,
+    const transform::Rigid2d pose_of_robot) {
   common::MutexLocker locker(&mutex_);
   constraints_.emplace_back();
   auto* const constraint = &constraints_.back();
@@ -99,7 +100,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
         ComputeConstraint(submap_id, submap, node_id,
                           true, /* match_full_submap */
                           trajectory_connectivity, constant_data,
-                          transform::Rigid2d::Identity(), constraint);
+                          pose_of_robot , constraint);
         FinishComputation(current_computation);
       });
 }
@@ -185,6 +186,7 @@ void ConstraintBuilder::ComputeConstraint(
   // 3. Refine.
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
+            initial_pose,
             constant_data->filtered_gravity_aligned_point_cloud,
             options_.global_localization_min_score(), &score, &pose_estimate)) {
       CHECK_GT(score, options_.global_localization_min_score());

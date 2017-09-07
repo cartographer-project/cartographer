@@ -95,8 +95,8 @@ class ConstraintBuilder {
       const mapping::SubmapId& submap_id, const Submap* submap,
       const mapping::NodeId& node_id,
       const mapping::TrajectoryNode::Data* const constant_data,
-      mapping::TrajectoryConnectivity* trajectory_connectivity);
-
+      mapping::TrajectoryConnectivity* trajectory_connectivity,
+      const transform::Rigid2d pose_of_robot);
   // Must be called after all computations related to one node have been added.
   void NotifyEndOfScan();
 

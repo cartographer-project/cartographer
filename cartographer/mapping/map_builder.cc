@@ -103,6 +103,44 @@ int MapBuilder::AddTrajectoryBuilder(
   return trajectory_id;
 }
 
+int MapBuilder::AddTrajectoryBuilderWithInitialpose(
+    const std::unordered_set<string>& expected_sensor_ids,
+    const proto::TrajectoryBuilderOptions& trajectory_options,
+    common::Time time,
+    const transform::Rigid3d& initialpose_data) {
+  const int trajectory_id = trajectory_builders_.size();
+  if (options_.use_trajectory_builder_3d()) {
+    CHECK(trajectory_options.has_trajectory_builder_3d_options());
+    trajectory_builders_.push_back(
+        common::make_unique<CollatedTrajectoryBuilder>(
+            &sensor_collator_, trajectory_id, expected_sensor_ids,
+            common::make_unique<mapping::GlobalTrajectoryBuilder<
+                mapping_3d::LocalTrajectoryBuilder,
+                mapping_3d::proto::LocalTrajectoryBuilderOptions,
+                mapping_3d::SparsePoseGraph>>(
+                trajectory_options.trajectory_builder_3d_options(),
+                trajectory_id, sparse_pose_graph_3d_.get())));
+  } else {
+    CHECK(trajectory_options.has_trajectory_builder_2d_options());
+    trajectory_builders_.push_back(
+        common::make_unique<CollatedTrajectoryBuilder>(
+            &sensor_collator_, trajectory_id, expected_sensor_ids,
+            common::make_unique<mapping::GlobalTrajectoryBuilder<
+                mapping_2d::LocalTrajectoryBuilder,
+                mapping_2d::proto::LocalTrajectoryBuilderOptions,
+                mapping_2d::SparsePoseGraph>>(
+                trajectory_options.trajectory_builder_2d_options(),
+                trajectory_id, sparse_pose_graph_2d_.get(),
+                initialpose_data )));
+  }
+  if (trajectory_options.pure_localization()) {
+    constexpr int kSubmapsToKeep = 3;
+    sparse_pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
+        trajectory_id, kSubmapsToKeep));
+  }
+  return trajectory_id;
+ }
+
 TrajectoryBuilder* MapBuilder::GetTrajectoryBuilder(
     const int trajectory_id) const {
   return trajectory_builders_.at(trajectory_id).get();

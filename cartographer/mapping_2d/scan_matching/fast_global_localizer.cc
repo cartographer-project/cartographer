@@ -45,7 +45,8 @@ bool PerformGlobalLocalization(
   for (auto& matcher : matchers) {
     float score = -1;
     transform::Rigid2d pose_estimate;
-    if (matcher->MatchFullSubmap(filtered_point_cloud, *best_score, &score,
+    if (matcher->MatchFullSubmap(transform::Rigid2d::Identity(),
+                                 filtered_point_cloud, *best_score, &score,
                                  &pose_estimate)) {
       CHECK_GT(score, *best_score) << "MatchFullSubmap lied!";
       *best_score = score;

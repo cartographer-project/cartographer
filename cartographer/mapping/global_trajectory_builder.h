@@ -33,6 +33,14 @@ class GlobalTrajectoryBuilder
       : trajectory_id_(trajectory_id),
         sparse_pose_graph_(sparse_pose_graph),
         local_trajectory_builder_(options) {}
+
+  GlobalTrajectoryBuilder(const LocalTrajectoryBuilderOptions& options,
+                          const int trajectory_id,
+                          SparsePoseGraph* const sparse_pose_graph,
+                          const transform::Rigid3d& initialpose_data)
+      : trajectory_id_(trajectory_id),
+        sparse_pose_graph_(sparse_pose_graph),
+        local_trajectory_builder_(options, initialpose_data) {}
   ~GlobalTrajectoryBuilder() override {}
 
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;

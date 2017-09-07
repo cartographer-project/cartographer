@@ -32,7 +32,19 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
       motion_filter_(options_.motion_filter_options()),
       real_time_correlative_scan_matcher_(
           options_.real_time_correlative_scan_matcher_options()),
-      ceres_scan_matcher_(options_.ceres_scan_matcher_options()) {}
+      ceres_scan_matcher_(options_.ceres_scan_matcher_options()),
+      initialpose_(transform::Rigid3d::Identity()) {}
+
+LocalTrajectoryBuilder::LocalTrajectoryBuilder(
+    const proto::LocalTrajectoryBuilderOptions& options,
+    const transform::Rigid3d& initialpose_data)
+    : options_(options),
+      active_submaps_(options.submaps_options()),
+      motion_filter_(options_.motion_filter_options()),
+      real_time_correlative_scan_matcher_(
+          options_.real_time_correlative_scan_matcher_options()),
+      ceres_scan_matcher_(options_.ceres_scan_matcher_options()),
+      initialpose_(initialpose_data) {}
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
@@ -220,7 +232,7 @@ void LocalTrajectoryBuilder::InitializeExtrapolator(const common::Time time) {
   extrapolator_ = common::make_unique<mapping::PoseExtrapolator>(
       ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
       options_.imu_gravity_time_constant());
-  extrapolator_->AddPose(time, transform::Rigid3d::Identity());
+  extrapolator_->AddPose(time, initialpose_);
 }
 
 }  // namespace mapping_2d

@@ -41,6 +41,18 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
           options_.ceres_scan_matcher_options())),
       accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}} {}
 
+LocalTrajectoryBuilder::LocalTrajectoryBuilder(
+    const proto::LocalTrajectoryBuilderOptions& options,
+    const transform::Rigid3d& initialpose_data)
+    : options_(options),
+      active_submaps_(options.submaps_options()),
+      motion_filter_(options.motion_filter_options()),
+      real_time_correlative_scan_matcher_(
+          common::make_unique<scan_matching::RealTimeCorrelativeScanMatcher>(
+              options_.real_time_correlative_scan_matcher_options())),
+      ceres_scan_matcher_(common::make_unique<scan_matching::CeresScanMatcher>(
+          options_.ceres_scan_matcher_options())),
+      accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}} {}
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
 void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {

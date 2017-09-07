@@ -60,6 +60,13 @@ class MapBuilder {
       const std::unordered_set<string>& expected_sensor_ids,
       const proto::TrajectoryBuilderOptions& trajectory_options);
 
+  // Adding Initial pose during pure localization
+  int AddTrajectoryBuilderWithInitialpose(
+      const std::unordered_set<string>& expected_sensor_ids,
+      const proto::TrajectoryBuilderOptions& trajectory_options,
+      common::Time time,
+      const transform::Rigid3d& initialpose_data);
+
   // Returns the TrajectoryBuilder corresponding to the specified
   // 'trajectory_id'.
   mapping::TrajectoryBuilder* GetTrajectoryBuilder(int trajectory_id) const;

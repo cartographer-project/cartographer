@@ -216,7 +216,8 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
     transform::Rigid2d pose_estimate;
     float score;
     EXPECT_TRUE(fast_correlative_scan_matcher.MatchFullSubmap(
-        point_cloud, kMinScore, &score, &pose_estimate));
+        transform::Rigid2d::Identity(), point_cloud, kMinScore,
+        &score, &pose_estimate));
     EXPECT_LT(kMinScore, score);
     EXPECT_THAT(expected_pose,
                 transform::IsNearly(pose_estimate.cast<float>(), 0.03f))

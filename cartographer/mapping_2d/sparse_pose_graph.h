@@ -215,8 +215,12 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Set of all frozen trajectories not being optimized.
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
 
+  // for searching around the current best pose with repect to the submap
+  transform::Rigid2d best_current_optimized_pose_;
+
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.
+
   class TrimmingHandle : public mapping::Trimmable {
    public:
     TrimmingHandle(SparsePoseGraph* parent);

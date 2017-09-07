@@ -48,6 +48,11 @@ class LocalTrajectoryBuilder {
 
   explicit LocalTrajectoryBuilder(
       const proto::LocalTrajectoryBuilderOptions& options);
+
+  explicit LocalTrajectoryBuilder(
+      const proto::LocalTrajectoryBuilderOptions& options,
+      const transform::Rigid3d& initialpose_data);
+
   ~LocalTrajectoryBuilder();
 
   LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;
@@ -92,6 +97,7 @@ class LocalTrajectoryBuilder {
   int num_accumulated_ = 0;
   transform::Rigid3f first_pose_estimate_ = transform::Rigid3f::Identity();
   sensor::RangeData accumulated_range_data_;
+  transform::Rigid3d initialpose_=transform::Rigid3d::Identity();
 };
 
 }  // namespace mapping_2d
