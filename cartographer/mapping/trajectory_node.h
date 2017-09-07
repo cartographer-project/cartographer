@@ -32,9 +32,6 @@ struct TrajectoryNode {
   struct Data {
     common::Time time;
 
-    // Range data in 'tracking' frame. Only used in 3D.
-    sensor::CompressedRangeData range_data;
-
     // Transform to approximately gravity align the tracking frame as
     // determined by local SLAM.
     Eigen::Quaterniond gravity_alignment;
@@ -46,6 +43,7 @@ struct TrajectoryNode {
     // Used for loop closure in 3D.
     sensor::PointCloud high_resolution_point_cloud;
     sensor::PointCloud low_resolution_point_cloud;
+    Eigen::VectorXf rotational_scan_matcher_histogram;
   };
 
   common::Time time() const { return constant_data->time; }

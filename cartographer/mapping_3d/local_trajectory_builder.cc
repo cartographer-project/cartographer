@@ -24,6 +24,7 @@
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_3d/proto/submaps_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
+#include "cartographer/mapping_3d/scan_matching/rotational_scan_matcher.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -158,6 +159,12 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   extrapolator_->AddPose(time, pose_estimate);
   const Eigen::Quaterniond gravity_alignment =
       extrapolator_->EstimateGravityOrientation(time);
+  const auto rotational_scan_matcher_histogram =
+      scan_matching::RotationalScanMatcher::ComputeHistogram(
+          sensor::TransformPointCloud(
+              filtered_range_data.returns,
+              transform::Rigid3f::Rotation(gravity_alignment.cast<float>())),
+          options_.rotational_histogram_size());
 
   last_pose_estimate_ = {
       time, pose_estimate,
@@ -167,7 +174,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   return InsertIntoSubmap(time, filtered_range_data, gravity_alignment,
                           filtered_point_cloud_in_tracking,
                           low_resolution_point_cloud_in_tracking,
-                          pose_estimate);
+                          rotational_scan_matcher_histogram, pose_estimate);
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
@@ -190,6 +197,7 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
     const Eigen::Quaterniond& gravity_alignment,
     const sensor::PointCloud& high_resolution_point_cloud,
     const sensor::PointCloud& low_resolution_point_cloud,
+    const Eigen::VectorXf& rotational_scan_matcher_histogram,
     const transform::Rigid3d& pose_observation) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
@@ -209,11 +217,11 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
       std::make_shared<const mapping::TrajectoryNode::Data>(
           mapping::TrajectoryNode::Data{
               time,
-              sensor::Compress(range_data_in_tracking),
               gravity_alignment,
               {},  // 'filtered_point_cloud' is only used in 2D.
               high_resolution_point_cloud,
-              low_resolution_point_cloud}),
+              low_resolution_point_cloud,
+              rotational_scan_matcher_histogram}),
       pose_observation, std::move(insertion_submaps)});
 }
 

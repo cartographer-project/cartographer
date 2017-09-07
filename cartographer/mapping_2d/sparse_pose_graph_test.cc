@@ -92,7 +92,6 @@ class SparsePoseGraphTest : public ::testing::Test {
               fast_correlative_scan_matcher_3d = {
                 branch_and_bound_depth = 3,
                 full_resolution_depth = 3,
-                rotational_histogram_size = 30,
                 min_rotational_score = 0.1,
                 min_low_resolution_score = 0.5,
                 linear_xy_search_window = 4.,
@@ -160,9 +159,9 @@ class SparsePoseGraphTest : public ::testing::Test {
     sparse_pose_graph_->AddScan(
         std::make_shared<const mapping::TrajectoryNode::Data>(
             mapping::TrajectoryNode::Data{common::FromUniversal(0),
-                                          Compress(range_data),
                                           Eigen::Quaterniond::Identity(),
                                           range_data.returns,
+                                          {},
                                           {},
                                           {}}),
         transform::Embed3D(pose_estimate), kTrajectoryId, insertion_submaps);

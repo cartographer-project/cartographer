@@ -60,22 +60,20 @@ class FastCorrelativeScanMatcher {
   FastCorrelativeScanMatcher& operator=(const FastCorrelativeScanMatcher&) =
       delete;
 
-  // Aligns 'coarse_point_cloud' within the 'hybrid_grid' given an
-  // 'initial_pose_estimate'. If a score above 'min_score' (excluding equality)
-  // is possible, true is returned, and 'score', 'pose_estimate',
+  // Aligns the node with the given 'constant_data' within the 'hybrid_grid'
+  // given an 'initial_pose_estimate'. If a score above 'min_score' (excluding
+  // equality) is possible, true is returned, and 'score', 'pose_estimate',
   // 'rotational_score', and 'low_resolution_score' are updated with the result.
-  // 'fine_point_cloud' is used to compute the rotational scan matcher score.
   bool Match(const transform::Rigid3d& initial_pose_estimate,
              const mapping::TrajectoryNode::Data& constant_data,
              float min_score, float* score, transform::Rigid3d* pose_estimate,
              float* rotational_score, float* low_resolution_score) const;
 
-  // Aligns 'coarse_point_cloud' within the 'hybrid_grid' given a rotation which
-  // is expected to be approximately gravity aligned. If a score above
-  // 'min_score' (excluding equality) is possible, true is returned, and
-  // 'score', 'pose_estimate', 'rotational_score', and 'low_resolution_score'
-  // are updated with the result. 'fine_point_cloud' is used to compute the
-  // rotational scan matcher score.
+  // Aligns the node with the given 'constant_data' within the 'hybrid_grid'
+  // given a rotation which is expected to be approximately gravity aligned.
+  // If a score above 'min_score' (excluding equality) is possible, true is
+  // returned, and 'score', 'pose_estimate', 'rotational_score', and
+  // 'low_resolution_score' are updated with the result.
   bool MatchFullSubmap(const Eigen::Quaterniond& gravity_alignment,
                        const mapping::TrajectoryNode::Data& constant_data,
                        float min_score, float* score,
@@ -94,9 +92,10 @@ class FastCorrelativeScanMatcher {
   bool MatchWithSearchParameters(
       const SearchParameters& search_parameters,
       const transform::Rigid3d& initial_pose_estimate,
-      const sensor::PointCloud& coarse_point_cloud,
-      const sensor::PointCloud& fine_point_cloud, float min_score, float* score,
-      transform::Rigid3d* pose_estimate, float* rotational_score,
+      const sensor::PointCloud& point_cloud,
+      const Eigen::VectorXf& rotational_scan_matcher_histogram,
+      const Eigen::Quaterniond& gravity_alignment, float min_score,
+      float* score, transform::Rigid3d* pose_estimate, float* rotational_score,
       float* low_resolution_score) const;
   DiscreteScan DiscretizeScan(const SearchParameters& search_parameters,
                               const sensor::PointCloud& point_cloud,
@@ -104,8 +103,9 @@ class FastCorrelativeScanMatcher {
                               float rotational_score) const;
   std::vector<DiscreteScan> GenerateDiscreteScans(
       const SearchParameters& search_parameters,
-      const sensor::PointCloud& coarse_point_cloud,
-      const sensor::PointCloud& fine_point_cloud,
+      const sensor::PointCloud& point_cloud,
+      const Eigen::VectorXf& rotational_scan_matcher_histogram,
+      const Eigen::Quaterniond& gravity_alignment,
       const transform::Rigid3f& initial_pose) const;
   std::vector<Candidate> GenerateLowestResolutionCandidates(
       const SearchParameters& search_parameters, int num_discrete_scans) const;

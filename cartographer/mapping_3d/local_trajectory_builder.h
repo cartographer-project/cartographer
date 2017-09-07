@@ -68,6 +68,7 @@ class LocalTrajectoryBuilder {
       const Eigen::Quaterniond& gravity_alignment,
       const sensor::PointCloud& high_resolution_point_cloud,
       const sensor::PointCloud& low_resolution_point_cloud,
+      const Eigen::VectorXf& rotational_scan_matcher_histogram,
       const transform::Rigid3d& pose_observation);
 
   const proto::LocalTrajectoryBuilderOptions options_;

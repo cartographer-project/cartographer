@@ -70,7 +70,6 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
         "full_resolution_depth = " +
         std::to_string(branch_and_bound_depth) +
         ", "
-        "rotational_histogram_size = 30, "
         "min_rotational_score = 0.1, "
         // Unknown space has kMinProbability = 0.1, so we need to make sure here
         // to pick a larger number otherwise we always find matches.
@@ -106,18 +105,21 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
 
     return common::make_unique<FastCorrelativeScanMatcher>(
         *hybrid_grid_, hybrid_grid_.get(),
-        std::vector<mapping::TrajectoryNode>(), options);
+        std::vector<mapping::TrajectoryNode>(
+            {{std::make_shared<const mapping::TrajectoryNode::Data>(
+                  CreateConstantData(point_cloud_)),
+              pose.cast<double>()}}),
+        options);
   }
 
   mapping::TrajectoryNode::Data CreateConstantData(
       const sensor::PointCloud& low_resolution_point_cloud) {
-    return mapping::TrajectoryNode::Data{
-        common::FromUniversal(0),
-        Compress(sensor::RangeData{Eigen::Vector3f::Zero(), point_cloud_, {}}),
-        Eigen::Quaterniond::Identity(),
-        {},
-        point_cloud_,
-        low_resolution_point_cloud};
+    return mapping::TrajectoryNode::Data{common::FromUniversal(0),
+                                         Eigen::Quaterniond::Identity(),
+                                         {},
+                                         point_cloud_,
+                                         low_resolution_point_cloud,
+                                         Eigen::VectorXf::Zero(10)};
   }
 
   std::mt19937 prng_ = std::mt19937(42);
