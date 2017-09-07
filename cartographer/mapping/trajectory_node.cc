@@ -47,5 +47,24 @@ proto::TrajectoryNode ToProto(const TrajectoryNode::Data& constant_data) {
   return proto;
 }
 
+TrajectoryNode::Data FromProto(const proto::TrajectoryNode& proto) {
+  Eigen::VectorXf rotational_scan_matcher_histogram(
+      proto.rotational_scan_matcher_histogram_size());
+  for (int i = 0; i != proto.rotational_scan_matcher_histogram_size(); ++i) {
+    rotational_scan_matcher_histogram(i) =
+        proto.rotational_scan_matcher_histogram(i);
+  }
+  return TrajectoryNode::Data{
+      common::FromUniversal(proto.timestamp()),
+      transform::ToEigen(proto.gravity_alignment()),
+      sensor::CompressedPointCloud(proto.filtered_gravity_aligned_point_cloud())
+          .Decompress(),
+      sensor::CompressedPointCloud(proto.high_resolution_point_cloud())
+          .Decompress(),
+      sensor::CompressedPointCloud(proto.low_resolution_point_cloud())
+          .Decompress(),
+      rotational_scan_matcher_histogram};
+}
+
 }  // namespace mapping
 }  // namespace cartographer

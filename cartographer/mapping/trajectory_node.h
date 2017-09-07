@@ -58,6 +58,7 @@ struct TrajectoryNode {
 };
 
 proto::TrajectoryNode ToProto(const TrajectoryNode::Data& constant_data);
+TrajectoryNode::Data FromProto(const proto::TrajectoryNode& proto);
 
 }  // namespace mapping
 }  // namespace cartographer
