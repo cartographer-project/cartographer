@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/trajectory_connectivity.h"
+#include "cartographer/mapping/connected_components.h"
 
 #include <algorithm>
 #include <memory>
@@ -28,49 +28,49 @@ namespace {
 
 constexpr int kNumTrajectories = 10;
 
-TEST(TrajectoryConnectivityTest, TransitivelyConnected) {
-  TrajectoryConnectivity trajectory_connectivity;
+TEST(ConnectedComponentsTest, TransitivelyConnected) {
+  ConnectedComponents connected_components;
 
   // Make sure nothing's connected until we connect some things.
   for (int trajectory_a = 0; trajectory_a < kNumTrajectories; ++trajectory_a) {
     for (int trajectory_b = 0; trajectory_b < kNumTrajectories;
          ++trajectory_b) {
       EXPECT_EQ(trajectory_a == trajectory_b,
-                trajectory_connectivity.TransitivelyConnected(trajectory_a,
+                connected_components.TransitivelyConnected(trajectory_a,
                                                               trajectory_b));
     }
   }
 
   // Connect some stuff up.
-  trajectory_connectivity.Connect(0, 1);
-  EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(0, 1));
-  trajectory_connectivity.Connect(8, 9);
-  EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(8, 9));
-  EXPECT_FALSE(trajectory_connectivity.TransitivelyConnected(0, 9));
+  connected_components.Connect(0, 1);
+  EXPECT_TRUE(connected_components.TransitivelyConnected(0, 1));
+  connected_components.Connect(8, 9);
+  EXPECT_TRUE(connected_components.TransitivelyConnected(8, 9));
+  EXPECT_FALSE(connected_components.TransitivelyConnected(0, 9));
 
-  trajectory_connectivity.Connect(1, 8);
+  connected_components.Connect(1, 8);
   for (int i : {0, 1}) {
     for (int j : {8, 9}) {
-      EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(i, j));
+      EXPECT_TRUE(connected_components.TransitivelyConnected(i, j));
     }
   }
 }
 
-TEST(TrajectoryConnectivityTest, EmptyConnectedComponents) {
-  TrajectoryConnectivity trajectory_connectivity;
-  auto connections = trajectory_connectivity.ConnectedComponents();
+TEST(ConnectedComponentsTest, EmptyConnectedComponents) {
+  ConnectedComponents connected_components;
+  auto connections = connected_components.Components();
   EXPECT_EQ(0, connections.size());
 }
 
-TEST(TrajectoryConnectivityTest, ConnectedComponents) {
-  TrajectoryConnectivity trajectory_connectivity;
+TEST(ConnectedComponentsTest, ConnectedComponents) {
+  ConnectedComponents connected_components;
   for (int i = 0; i <= 4; ++i) {
-    trajectory_connectivity.Connect(0, i);
+    connected_components.Connect(0, i);
   }
   for (int i = 5; i <= 9; ++i) {
-    trajectory_connectivity.Connect(5, i);
+    connected_components.Connect(5, i);
   }
-  auto connections = trajectory_connectivity.ConnectedComponents();
+  auto connections = connected_components.Components();
   ASSERT_EQ(2, connections.size());
   // The clustering is arbitrary; we need to figure out which one is which.
   const std::vector<int>* zero_cluster = nullptr;
@@ -91,25 +91,25 @@ TEST(TrajectoryConnectivityTest, ConnectedComponents) {
   }
 }
 
-TEST(TrajectoryConnectivityTest, ConnectionCount) {
-  TrajectoryConnectivity trajectory_connectivity;
+TEST(ConnectedComponentsTest, ConnectionCount) {
+  ConnectedComponents connected_components;
   for (int i = 0; i < kNumTrajectories; ++i) {
-    trajectory_connectivity.Connect(0, 1);
+    connected_components.Connect(0, 1);
     // Permute the arguments to check invariance.
-    EXPECT_EQ(i + 1, trajectory_connectivity.ConnectionCount(1, 0));
+    EXPECT_EQ(i + 1, connected_components.ConnectionCount(1, 0));
   }
   for (int i = 1; i < 9; ++i) {
-    EXPECT_EQ(0, trajectory_connectivity.ConnectionCount(i, i + 1));
+    EXPECT_EQ(0, connected_components.ConnectionCount(i, i + 1));
   }
 }
 
-TEST(TrajectoryConnectivityTest, ReflexiveConnectivity) {
-  TrajectoryConnectivity trajectory_connectivity;
-  EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(0, 0));
-  EXPECT_EQ(0, trajectory_connectivity.ConnectionCount(0, 0));
-  trajectory_connectivity.Add(0);
-  EXPECT_TRUE(trajectory_connectivity.TransitivelyConnected(0, 0));
-  EXPECT_EQ(0, trajectory_connectivity.ConnectionCount(0, 0));
+TEST(ConnectedComponentsTest, ReflexiveConnectivity) {
+  ConnectedComponents connected_components;
+  EXPECT_TRUE(connected_components.TransitivelyConnected(0, 0));
+  EXPECT_EQ(0, connected_components.ConnectionCount(0, 0));
+  connected_components.Add(0);
+  EXPECT_TRUE(connected_components.TransitivelyConnected(0, 0));
+  EXPECT_EQ(0, connected_components.ConnectionCount(0, 0));
 }
 
 }  // namespace

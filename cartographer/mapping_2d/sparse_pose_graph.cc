@@ -104,7 +104,7 @@ void SparsePoseGraph::AddScan(
   trajectory_nodes_.Append(
       trajectory_id, mapping::TrajectoryNode{constant_data, optimized_pose});
   ++num_trajectory_nodes_;
-  trajectory_connectivity_.Add(trajectory_id);
+  connected_components_.Add(trajectory_id);
 
   // Test if the 'insertion_submap.back()' is one we never saw before.
   if (trajectory_id >= submap_data_.num_trajectories() ||
@@ -180,7 +180,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
         trajectory_nodes_.at(node_id).constant_data.get());
   } else {
-    if (trajectory_connectivity_.TransitivelyConnected(
+    if (connected_components_.TransitivelyConnected(
             node_id.trajectory_id, submap_id.trajectory_id)) {
       const transform::Rigid2d initial_relative_pose =
           optimization_problem_.submap_data()
@@ -314,7 +314,7 @@ void SparsePoseGraph::HandleWorkQueue() {
         for (const Constraint& constraint : result) {
           CHECK_EQ(constraint.tag,
                    mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-          trajectory_connectivity_.Connect(constraint.node_id.trajectory_id,
+          connected_components_.Connect(constraint.node_id.trajectory_id,
                                            constraint.submap_id.trajectory_id);
         }
 
@@ -503,7 +503,7 @@ transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
 }
 
 std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
-  return trajectory_connectivity_.ConnectedComponents();
+  return connected_components_.Components();
 }
 
 int SparsePoseGraph::num_submaps(const int trajectory_id) {
