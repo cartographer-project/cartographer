@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <string>
@@ -93,7 +94,12 @@ void OptimizationProblem::AddSubmap(const int trajectory_id,
   CHECK_GE(trajectory_id, 0);
   submap_data_.resize(
       std::max(submap_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  submap_data_[trajectory_id].push_back(SubmapData{submap_pose});
+  trajectory_data_.resize(
+      std::max(trajectory_data_.size(), submap_data_.size()));
+  auto& trajectory_data = trajectory_data_[trajectory_id];
+  submap_data_[trajectory_id].emplace(trajectory_data.next_submap_index,
+                                      SubmapData{submap_pose});
+  ++trajectory_data.next_submap_index;
 }
 
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
@@ -123,33 +129,40 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   CHECK(!submap_data_.empty());
   CHECK(!submap_data_[0].empty());
   // TODO(hrapp): Move ceres data into SubmapData.
-  std::vector<std::deque<CeresPose>> C_submaps(submap_data_.size());
+  std::vector<std::map<int, CeresPose>> C_submaps(submap_data_.size());
   std::vector<std::deque<CeresPose>> C_nodes(node_data_.size());
+  bool first_submap = true;
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
     const bool frozen = frozen_trajectories.count(trajectory_id);
-    for (size_t submap_index = 0;
-         submap_index != submap_data_[trajectory_id].size(); ++submap_index) {
-      if (trajectory_id == 0 && submap_index == 0) {
-        // Tie the first submap of the first trajectory to the origin.
-        C_submaps[trajectory_id].emplace_back(
-            transform::Rigid3d::Identity(), translation_parameterization(),
-            common::make_unique<ceres::AutoDiffLocalParameterization<
-                ConstantYawQuaternionPlus, 4, 2>>(),
-            &problem);
+    for (const auto& index_submap_data : submap_data_[trajectory_id]) {
+      const int submap_index = index_submap_data.first;
+      if (first_submap) {
+        first_submap = false;
+        // Fix the first submap of the first trajectory except for allowing
+        // gravity alignment.
+        C_submaps[trajectory_id].emplace(
+            std::piecewise_construct, std::forward_as_tuple(submap_index),
+            std::forward_as_tuple(
+                index_submap_data.second.pose, translation_parameterization(),
+                common::make_unique<ceres::AutoDiffLocalParameterization<
+                    ConstantYawQuaternionPlus, 4, 2>>(),
+                &problem));
         problem.SetParameterBlockConstant(
-            C_submaps[trajectory_id].back().translation());
+            C_submaps[trajectory_id].at(submap_index).translation());
       } else {
-        C_submaps[trajectory_id].emplace_back(
-            submap_data_[trajectory_id][submap_index].pose,
-            translation_parameterization(),
-            common::make_unique<ceres::QuaternionParameterization>(), &problem);
+        C_submaps[trajectory_id].emplace(
+            std::piecewise_construct, std::forward_as_tuple(submap_index),
+            std::forward_as_tuple(
+                index_submap_data.second.pose, translation_parameterization(),
+                common::make_unique<ceres::QuaternionParameterization>(),
+                &problem));
       }
       if (frozen) {
         problem.SetParameterBlockConstant(
-            C_submaps[trajectory_id].back().rotation());
+            C_submaps[trajectory_id].at(submap_index).rotation());
         problem.SetParameterBlockConstant(
-            C_submaps[trajectory_id].back().translation());
+            C_submaps[trajectory_id].at(submap_index).translation());
       }
     }
   }
@@ -170,7 +183,6 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       }
     }
   }
-
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
     problem.AddResidualBlock(
@@ -321,7 +333,6 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   ceres::Solve(
       common::CreateCeresSolverOptions(options_.ceres_solver_options()),
       &problem, &summary);
-
   if (options_.log_solver_summary()) {
     LOG(INFO) << summary.FullReport();
     for (size_t trajectory_id = 0; trajectory_id != trajectory_data_.size();
@@ -344,10 +355,9 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // Store the result.
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
-    for (size_t submap_index = 0;
-         submap_index != submap_data_[trajectory_id].size(); ++submap_index) {
-      submap_data_[trajectory_id][submap_index].pose =
-          C_submaps[trajectory_id][submap_index].ToRigid();
+    for (auto& index_submap_data : submap_data_[trajectory_id]) {
+      index_submap_data.second.pose =
+          C_submaps[trajectory_id].at(index_submap_data.first).ToRigid();
     }
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
@@ -365,7 +375,7 @@ const std::vector<std::vector<NodeData>>& OptimizationProblem::node_data()
   return node_data_;
 }
 
-const std::vector<std::vector<SubmapData>>& OptimizationProblem::submap_data()
+const std::vector<std::map<int, SubmapData>>& OptimizationProblem::submap_data()
     const {
   return submap_data_;
 }
