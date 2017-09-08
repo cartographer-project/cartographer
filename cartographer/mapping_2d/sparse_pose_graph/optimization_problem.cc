@@ -85,8 +85,7 @@ void OptimizationProblem::AddTrajectoryNode(
   node_data_.resize(
       std::max(node_data_.size(), static_cast<size_t>(trajectory_id) + 1));
   trajectory_data_.resize(std::max(trajectory_data_.size(), node_data_.size()));
-
-  auto& trajectory_data = trajectory_data_.at(trajectory_id);
+  auto& trajectory_data = trajectory_data_[trajectory_id];
   node_data_[trajectory_id].emplace(trajectory_data.next_node_index,
                                     NodeData{time, initial_pose, pose});
   ++trajectory_data.next_node_index;
@@ -98,9 +97,7 @@ void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
 
   if (!node_data.empty() &&
       node_id.trajectory_id < static_cast<int>(imu_data_.size())) {
-    auto node_it = node_data.begin();
-    const common::Time node_time = node_it->second.time;
-
+    const common::Time node_time = node_data.begin()->second.time;
     auto& imu_data = imu_data_.at(node_id.trajectory_id);
     while (imu_data.size() > 1 && imu_data[1].time <= node_time) {
       imu_data.pop_front();
@@ -115,8 +112,7 @@ void OptimizationProblem::AddSubmap(const int trajectory_id,
       std::max(submap_data_.size(), static_cast<size_t>(trajectory_id) + 1));
   trajectory_data_.resize(
       std::max(trajectory_data_.size(), submap_data_.size()));
-
-  auto& trajectory_data = trajectory_data_.at(trajectory_id);
+  auto& trajectory_data = trajectory_data_[trajectory_id];
   submap_data_[trajectory_id].emplace(trajectory_data.next_submap_index,
                                       SubmapData{submap_pose});
   ++trajectory_data.next_submap_index;
