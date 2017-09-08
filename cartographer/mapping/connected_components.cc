@@ -60,7 +60,7 @@ int ConnectedComponents::FindSet(const int trajectory_id) {
 }
 
 bool ConnectedComponents::TransitivelyConnected(const int trajectory_id_a,
-                                                   const int trajectory_id_b) {
+                                                const int trajectory_id_b) {
   if (trajectory_id_a == trajectory_id_b) {
     return true;
   }
@@ -89,6 +89,17 @@ std::vector<std::vector<int>> ConnectedComponents::Components() {
     result.emplace_back(std::move(pair.second));
   }
   return result;
+}
+
+std::vector<int> ConnectedComponents::GetComponent(int trajectory_id) {
+  int set_id = FindSet(trajectory_id);
+  std::vector<int> trajectory_ids;
+  for (const auto& entry : forest_) {
+    if (FindSet(entry.first) == set_id) {
+      trajectory_ids.push_back(entry.first);
+    }
+  }
+  return trajectory_ids;
 }
 
 int ConnectedComponents::ConnectionCount(const int trajectory_id_a,
