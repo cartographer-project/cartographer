@@ -355,7 +355,6 @@ void SparsePoseGraph::HandleWorkQueue() {
         run_loop_closure_ = false;
         while (!run_loop_closure_) {
           if (work_queue_->empty()) {
-            LOG(INFO) << "We caught up. Hooray!";
             work_queue_.reset();
             return;
           }
