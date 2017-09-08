@@ -102,7 +102,7 @@ void SparsePoseGraph::AddScan(
   trajectory_nodes_.Append(
       trajectory_id, mapping::TrajectoryNode{constant_data, optimized_pose});
   ++num_trajectory_nodes_;
-  connected_components_.Add(trajectory_id);
+  trajectory_connectivity_state_.Add(trajectory_id);
 
   // Test if the 'insertion_submap.back()' is one we never saw before.
   if (trajectory_id >= submap_data_.num_trajectories() ||
@@ -212,7 +212,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
         trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
         initial_relative_pose.rotation());
   } else {
-    if (connected_components_.TransitivelyConnected(
+    if (trajectory_connectivity_state_.TransitivelyConnected(
             node_id.trajectory_id, submap_id.trajectory_id)) {
       constraint_builder_.MaybeAddConstraint(
           submap_id, submap_data_.at(submap_id).submap.get(), node_id,
@@ -330,8 +330,14 @@ void SparsePoseGraph::HandleWorkQueue() {
         for (const Constraint& constraint : result) {
           CHECK_EQ(constraint.tag,
                    mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-          connected_components_.Connect(constraint.node_id.trajectory_id,
-                                           constraint.submap_id.trajectory_id);
+          mapping::NodeId last_submap_node_id =
+              *submap_data_.at(constraint.submap_id).node_ids.rbegin();
+          common::Time time = std::max(
+              trajectory_nodes_.at(constraint.node_id).constant_data->time,
+              trajectory_nodes_.at(last_submap_node_id).constant_data->time);
+          trajectory_connectivity_state_.Connect(
+              constraint.node_id.trajectory_id,
+              constraint.submap_id.trajectory_id, time);
         }
 
         common::MutexLocker locker(&mutex_);
@@ -534,7 +540,7 @@ transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
 }
 
 std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
-  return connected_components_.Components();
+  return trajectory_connectivity_state_.Components();
 }
 
 int SparsePoseGraph::num_submaps(const int trajectory_id) {
