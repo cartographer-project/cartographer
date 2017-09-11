@@ -63,6 +63,10 @@ class ConnectedComponents {
   // The trajectory IDs, grouped by connectivity.
   std::vector<std::vector<int>> Components() EXCLUDES(lock_);
 
+  // The list of trajectory IDs that belong to the same connected component as
+  // 'trajectory_id'.
+  std::vector<int> GetComponent(int trajectory_id) EXCLUDES(lock_);
+
  private:
   // Find the representative and compresses the path to it.
   int FindSet(int trajectory_id) REQUIRES(lock_);
