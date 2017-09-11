@@ -19,16 +19,12 @@
 namespace cartographer {
 namespace mapping {
 
-TrajectoryConnectivityState::TrajectoryConnectivityState()
-    : connected_components_(),
-      last_connection_time_map_() {}
-
-void TrajectoryConnectivityState::Add(int trajectory_id) {
+void TrajectoryConnectivityState::Add(const int trajectory_id) {
   connected_components_.Add(trajectory_id);
 }
 
-void TrajectoryConnectivityState::Connect(int trajectory_id_a,
-                                          int trajectory_id_b,
+void TrajectoryConnectivityState::Connect(const int trajectory_id_a,
+                                          const int trajectory_id_b,
                                           const common::Time& time) {
   if (TransitivelyConnected(trajectory_id_a, trajectory_id_b)) {
     // The trajectories are transitively connected, i.e. they belong to the same
@@ -41,7 +37,9 @@ void TrajectoryConnectivityState::Connect(int trajectory_id_a,
   } else {
     // The connection between these two trajectories is about to join to
     // connected components. Here we update all bipartite trajectory pairs for
-    // the two connected components with the connection time.
+    // the two connected components with the connection time. This is to quickly
+    // change to a more efficient loop closure search (by constraining the
+    // search window) when connected components are joined.
     std::vector<int> component_a = connected_components_.GetComponent(trajectory_id_a);
     std::vector<int> component_b = connected_components_.GetComponent(trajectory_id_b);
     for (const auto id_a : component_a) {
@@ -55,8 +53,8 @@ void TrajectoryConnectivityState::Connect(int trajectory_id_a,
 }
 
 bool TrajectoryConnectivityState::TransitivelyConnected(
-    int trajectory_id_a,
-    int trajectory_id_b) {
+    const int trajectory_id_a,
+    const int trajectory_id_b) {
   return connected_components_.TransitivelyConnected(trajectory_id_a,
                                                      trajectory_id_b);
 }
@@ -66,8 +64,8 @@ std::vector<std::vector<int>> TrajectoryConnectivityState::Components() {
 }
 
 common::Time TrajectoryConnectivityState::LastConnectionTime(
-    int trajectory_id_a,
-    int trajectory_id_b) {
+    const int trajectory_id_a,
+    const int trajectory_id_b) {
   auto sorted_pair = std::minmax(trajectory_id_a, trajectory_id_b);
   return last_connection_time_map_[sorted_pair];
 }

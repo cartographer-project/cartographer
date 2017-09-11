@@ -30,7 +30,7 @@ namespace mapping {
 // This class is thread-compatible.
 class TrajectoryConnectivityState {
  public:
-  TrajectoryConnectivityState();
+  TrajectoryConnectivityState() {}
 
   TrajectoryConnectivityState(const TrajectoryConnectivityState&) = delete;
   TrajectoryConnectivityState& operator=(const TrajectoryConnectivityState&) =
@@ -65,7 +65,7 @@ class TrajectoryConnectivityState {
  private:
   ConnectedComponents connected_components_;
 
-  // Tracks the last time a direction connection between two trajectories has
+  // Tracks the last time a direct connection between two trajectories has
   // been added. The exception is when a connection between two trajectories
   // connects two formerly unconnected connected components. In this case all
   // bipartite trajectories entries for these components are updated with the
