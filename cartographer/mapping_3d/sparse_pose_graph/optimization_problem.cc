@@ -86,7 +86,11 @@ void OptimizationProblem::AddTrajectoryNode(
   CHECK_GE(trajectory_id, 0);
   node_data_.resize(
       std::max(node_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  node_data_[trajectory_id].push_back(NodeData{time, initial_pose, pose});
+  trajectory_data_.resize(std::max(trajectory_data_.size(), node_data_.size()));
+  auto& trajectory_data = trajectory_data_[trajectory_id];
+  node_data_[trajectory_id].emplace(trajectory_data.next_node_index,
+                                    NodeData{time, initial_pose, pose});
+  ++trajectory_data.next_node_index;
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
@@ -130,7 +134,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   CHECK(!submap_data_[0].empty());
   // TODO(hrapp): Move ceres data into SubmapData.
   std::vector<std::map<int, CeresPose>> C_submaps(submap_data_.size());
-  std::vector<std::deque<CeresPose>> C_nodes(node_data_.size());
+  std::vector<std::map<int, CeresPose>> C_nodes(node_data_.size());
   bool first_submap = true;
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
@@ -169,17 +173,19 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
     const bool frozen = frozen_trajectories.count(trajectory_id);
-    for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
-         ++node_index) {
-      C_nodes[trajectory_id].emplace_back(
-          node_data_[trajectory_id][node_index].pose,
-          translation_parameterization(),
-          common::make_unique<ceres::QuaternionParameterization>(), &problem);
+    for (const auto& index_node_data : node_data_[trajectory_id]) {
+      const int node_index = index_node_data.first;
+      C_nodes[trajectory_id].emplace(
+          std::piecewise_construct, std::forward_as_tuple(node_index),
+          std::forward_as_tuple(
+              index_node_data.second.pose, translation_parameterization(),
+              common::make_unique<ceres::QuaternionParameterization>(),
+              &problem));
       if (frozen) {
         problem.SetParameterBlockConstant(
-            C_nodes[trajectory_id].back().rotation());
+            C_nodes[trajectory_id].at(node_index).rotation());
         problem.SetParameterBlockConstant(
-            C_nodes[trajectory_id].back().translation());
+            C_nodes[trajectory_id].at(node_index).translation());
       }
     }
   }
@@ -212,8 +218,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   CHECK_GE(trajectory_data_.size(), node_data_.size());
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    const auto& node_data = node_data_[trajectory_id];
-    if (node_data.empty()) {
+    if (node_data_[trajectory_id].empty()) {
       // We skip empty trajectories which might not have any IMU data.
       continue;
     }
@@ -223,29 +228,47 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     const std::deque<sensor::ImuData>& imu_data = imu_data_.at(trajectory_id);
     CHECK(!imu_data.empty());
 
-    // Skip IMU data before the first node of this trajectory.
-    auto it = imu_data.cbegin();
-    while ((it + 1) != imu_data.cend() && (it + 1)->time <= node_data[0].time) {
-      ++it;
-    }
+    auto imu_it = imu_data.cbegin();
+    for (auto node_it = node_data_[trajectory_id].begin();;) {
+      const int first_node_index = node_it->first;
+      const NodeData& first_node_data = node_it->second;
+      ++node_it;
+      if (node_it == node_data_[trajectory_id].end()) {
+        break;
+      }
 
-    for (size_t node_index = 1; node_index < node_data.size(); ++node_index) {
-      auto it2 = it;
-      const IntegrateImuResult<double> result =
-          IntegrateImu(imu_data, node_data[node_index - 1].time,
-                       node_data[node_index].time, &it);
-      if (node_index + 1 < node_data.size()) {
-        const common::Time first_time = node_data[node_index - 1].time;
-        const common::Time second_time = node_data[node_index].time;
-        const common::Time third_time = node_data[node_index + 1].time;
+      const int second_node_index = node_it->first;
+      const NodeData& second_node_data = node_it->second;
+
+      if (second_node_index != first_node_index + 1) {
+        continue;
+      }
+
+      // Skip IMU data before the node.
+      while ((imu_it + 1) != imu_data.cend() &&
+             (imu_it + 1)->time <= first_node_data.time) {
+        ++imu_it;
+      }
+
+      auto imu_it2 = imu_it;
+      const IntegrateImuResult<double> result = IntegrateImu(
+          imu_data, first_node_data.time, second_node_data.time, &imu_it);
+      const auto next_node_it = std::next(node_it);
+      if (next_node_it != node_data_[trajectory_id].end() &&
+          next_node_it->first == second_node_index + 1) {
+        const int third_node_index = next_node_it->first;
+        const NodeData& third_node_data = next_node_it->second;
+        const common::Time first_time = first_node_data.time;
+        const common::Time second_time = second_node_data.time;
+        const common::Time third_time = third_node_data.time;
         const common::Duration first_duration = second_time - first_time;
         const common::Duration second_duration = third_time - second_time;
         const common::Time first_center = first_time + first_duration / 2;
         const common::Time second_center = second_time + second_duration / 2;
         const IntegrateImuResult<double> result_to_first_center =
-            IntegrateImu(imu_data, first_time, first_center, &it2);
+            IntegrateImu(imu_data, first_time, first_center, &imu_it2);
         const IntegrateImuResult<double> result_center_to_center =
-            IntegrateImu(imu_data, first_center, second_center, &it2);
+            IntegrateImu(imu_data, first_center, second_center, &imu_it2);
         // 'delta_velocity' is the change in velocity from the point in time
         // halfway between the first and second poses to halfway between second
         // and third pose. It is computed from IMU data and still contains a
@@ -262,10 +285,10 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                     options_.acceleration_weight(), delta_velocity,
                     common::ToSeconds(first_duration),
                     common::ToSeconds(second_duration))),
-            nullptr, C_nodes[trajectory_id].at(node_index).rotation(),
-            C_nodes[trajectory_id].at(node_index - 1).translation(),
-            C_nodes[trajectory_id].at(node_index).translation(),
-            C_nodes[trajectory_id].at(node_index + 1).translation(),
+            nullptr, C_nodes[trajectory_id].at(second_node_index).rotation(),
+            C_nodes[trajectory_id].at(first_node_index).translation(),
+            C_nodes[trajectory_id].at(second_node_index).translation(),
+            C_nodes[trajectory_id].at(third_node_index).translation(),
             &trajectory_data.gravity_constant,
             trajectory_data.imu_calibration.data());
       }
@@ -273,8 +296,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
           new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4, 4>(
               new RotationCostFunction(options_.rotation_weight(),
                                        result.delta_rotation)),
-          nullptr, C_nodes[trajectory_id].at(node_index - 1).rotation(),
-          C_nodes[trajectory_id].at(node_index).rotation(),
+          nullptr, C_nodes[trajectory_id].at(first_node_index).rotation(),
+          C_nodes[trajectory_id].at(second_node_index).rotation(),
           trajectory_data.imu_calibration.data());
     }
   }
@@ -289,22 +312,21 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
     bool fixed_frame_pose_initialized = false;
 
-    const auto& node_data = node_data_[trajectory_id];
-    for (size_t node_index = 0; node_index < node_data.size(); ++node_index) {
-      if (!fixed_frame_pose_data_.at(trajectory_id)
-               .Has(node_data[node_index].time)) {
+    for (auto& index_node_data : node_data_[trajectory_id]) {
+      const int node_index = index_node_data.first;
+      const NodeData& node_data = index_node_data.second;
+      if (!fixed_frame_pose_data_.at(trajectory_id).Has(node_data.time)) {
         continue;
       }
 
       const mapping::SparsePoseGraph::Constraint::Pose constraint_pose{
-          fixed_frame_pose_data_.at(trajectory_id)
-              .Lookup(node_data[node_index].time),
+          fixed_frame_pose_data_.at(trajectory_id).Lookup(node_data.time),
           options_.fixed_frame_pose_translation_weight(),
           options_.fixed_frame_pose_rotation_weight()};
 
       if (!fixed_frame_pose_initialized) {
         const transform::Rigid3d fixed_frame_pose_in_map =
-            node_data[node_index].pose * constraint_pose.zbar_ij.inverse();
+            node_data.pose * constraint_pose.zbar_ij.inverse();
         C_fixed_frames.emplace_back(
             transform::Rigid3d(
                 fixed_frame_pose_in_map.translation(),
@@ -362,15 +384,14 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    for (size_t node_index = 0; node_index != node_data_[trajectory_id].size();
-         ++node_index) {
-      node_data_[trajectory_id][node_index].pose =
-          C_nodes[trajectory_id][node_index].ToRigid();
+    for (auto& index_node_data : node_data_[trajectory_id]) {
+      index_node_data.second.pose =
+          C_nodes[trajectory_id].at(index_node_data.first).ToRigid();
     }
   }
 }
 
-const std::vector<std::vector<NodeData>>& OptimizationProblem::node_data()
+const std::vector<std::map<int, NodeData>>& OptimizationProblem::node_data()
     const {
   return node_data_;
 }
