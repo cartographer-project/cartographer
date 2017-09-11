@@ -193,13 +193,13 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
         inverse_submap_pose * trajectory_nodes_.at(submap_node_id).pose});
   }
 
-  const common::Time scan_time = trajectory_nodes_.at(node_id).time();
+  const common::Time scan_time = GetLatestScanTime(node_id, submap_id);
   const common::Time last_connection_time =
       trajectory_connectivity_state_.LastConnectionTime(
           node_id.trajectory_id, submap_id.trajectory_id);
   if (node_id.trajectory_id == submap_id.trajectory_id ||
       (scan_time - last_connection_time) <
-          std::chrono::duration<float>(
+          common::FromSeconds(
               options_.global_constraint_search_after_n_seconds())) {
     // If the scan and the submap belong to the same trajectory or if there has
     // been a recent global constraint that ties that scan's trajectory to the
@@ -326,21 +326,23 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   }
 }
 
+common::Time SparsePoseGraph::GetLatestScanTime(
+    const mapping::NodeId& node_id,
+    const mapping::SubmapId& submap_id) const {
+  const mapping::NodeId last_submap_node_id =
+      *submap_data_.at(submap_id).node_ids.rbegin();
+  return std::max(
+      trajectory_nodes_.at(node_id).constant_data->time,
+      trajectory_nodes_.at(last_submap_node_id).constant_data->time);
+}
+
 void SparsePoseGraph::UpdateTrajectoryConnectivity(
     const sparse_pose_graph::ConstraintBuilder::Result& result) {
   for (const Constraint& constraint : result) {
     CHECK_EQ(constraint.tag,
              mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-    CHECK(trajectory_nodes_.at(constraint.node_id).constant_data != nullptr);
-    common::Time time =
-        trajectory_nodes_.at(constraint.node_id).constant_data->time;
-    const SubmapData& submap_data = submap_data_.at(constraint.submap_id);
-    if (!submap_data.node_ids.empty()) {
-      const mapping::NodeId last_submap_node_id =
-          *submap_data_.at(constraint.submap_id).node_ids.rbegin();
-      time = std::max(
-          time, trajectory_nodes_.at(last_submap_node_id).constant_data->time);
-    }
+    common::Time time = GetLatestScanTime(constraint.node_id,
+                                          constraint.submap_id);
     trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
                                            constraint.submap_id.trajectory_id,
                                            time);
