@@ -319,9 +319,9 @@ void SparsePoseGraph::HandleWorkQueue() {
           common::Time time = std::max(
               trajectory_nodes_.at(constraint.node_id).constant_data->time,
               trajectory_nodes_.at(last_submap_node_id).constant_data->time);
-          trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
-                                        constraint.submap_id.trajectory_id,
-                                        time);
+          trajectory_connectivity_state_.Connect(
+              constraint.node_id.trajectory_id,
+              constraint.submap_id.trajectory_id, time);
         }
 
         common::MutexLocker locker(&mutex_);

@@ -45,7 +45,7 @@ class TrajectoryConnectivityState {
   // connected time.
   void Connect(int trajectory_id_a,
                int trajectory_id_b,
-               const common::Time& time);
+               common::Time time);
 
   // Determines if two trajectories have been (transitively) connected. If
   // either trajectory is not being tracked, returns false, except when it is

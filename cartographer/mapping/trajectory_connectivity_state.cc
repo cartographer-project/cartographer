@@ -25,7 +25,7 @@ void TrajectoryConnectivityState::Add(const int trajectory_id) {
 
 void TrajectoryConnectivityState::Connect(const int trajectory_id_a,
                                           const int trajectory_id_b,
-                                          const common::Time& time) {
+                                          const common::Time time) {
   if (TransitivelyConnected(trajectory_id_a, trajectory_id_b)) {
     // The trajectories are transitively connected, i.e. they belong to the same
     // connected component. In this case we only update the last connection time
