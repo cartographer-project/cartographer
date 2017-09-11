@@ -300,6 +300,22 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   }
 }
 
+void SparsePoseGraph::UpdateTrajectoryConnectivity(
+    const sparse_pose_graph::ConstraintBuilder::Result& result) {
+  for (const Constraint& constraint : result) {
+    CHECK_EQ(constraint.tag,
+             mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
+    mapping::NodeId last_submap_node_id =
+        *submap_data_.at(constraint.submap_id).node_ids.rbegin();
+    common::Time time =
+        std::max(trajectory_nodes_.at(constraint.node_id).constant_data->time,
+                 trajectory_nodes_.at(last_submap_node_id).constant_data->time);
+    trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
+                                           constraint.submap_id.trajectory_id,
+                                           time);
+  }
+}
+
 void SparsePoseGraph::HandleWorkQueue() {
   constraint_builder_.WhenDone(
       [this](const sparse_pose_graph::ConstraintBuilder::Result& result) {
@@ -308,21 +324,7 @@ void SparsePoseGraph::HandleWorkQueue() {
           constraints_.insert(constraints_.end(), result.begin(), result.end());
         }
         RunOptimization();
-
-        // Update the trajectory connectivity structure with the new
-        // constraints.
-        for (const Constraint& constraint : result) {
-          CHECK_EQ(constraint.tag,
-                   mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-          mapping::NodeId last_submap_node_id =
-              *submap_data_.at(constraint.submap_id).node_ids.rbegin();
-          common::Time time = std::max(
-              trajectory_nodes_.at(constraint.node_id).constant_data->time,
-              trajectory_nodes_.at(last_submap_node_id).constant_data->time);
-          trajectory_connectivity_state_.Connect(
-              constraint.node_id.trajectory_id,
-              constraint.submap_id.trajectory_id, time);
-        }
+        UpdateTrajectoryConnectivity(result);
 
         common::MutexLocker locker(&mutex_);
         num_scans_since_last_loop_closure_ = 0;

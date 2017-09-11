@@ -153,6 +153,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // optimization being run at a time.
   void RunOptimization() EXCLUDES(mutex_);
 
+  // Updates the trajectory connectivity structure with the new constraints.
+  void UpdateTrajectoryConnectivity(
+      const sparse_pose_graph::ConstraintBuilder::Result& result);
+
   // Computes the local to global frame transform based on the given optimized
   // 'submap_transforms'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
