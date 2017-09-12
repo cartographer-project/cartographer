@@ -181,7 +181,7 @@ class SparsePoseGraphTest : public ::testing::Test {
 TEST_F(SparsePoseGraphTest, EmptyMap) {
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  EXPECT_THAT(nodes.size(), ::testing::Eq(0));
+  EXPECT_THAT(nodes.size(), ::testing::Eq(0u));
 }
 
 TEST_F(SparsePoseGraphTest, NoMovement) {
@@ -190,8 +190,8 @@ TEST_F(SparsePoseGraphTest, NoMovement) {
   MoveRelative(transform::Rigid2d::Identity());
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(nodes.size(), ::testing::Eq(1));
-  EXPECT_THAT(nodes[0].size(), ::testing::Eq(3));
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
+  EXPECT_THAT(nodes[0].size(), ::testing::Eq(3u));
   EXPECT_THAT(nodes[0][0].pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
   EXPECT_THAT(nodes[0][1].pose,
@@ -210,7 +210,7 @@ TEST_F(SparsePoseGraphTest, NoOverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(nodes.size(), ::testing::Eq(1));
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
   for (int i = 0; i != 4; ++i) {
     EXPECT_THAT(poses[i],
                 IsNearly(transform::Project2D(nodes[0][i].pose), 1e-2))
@@ -228,7 +228,7 @@ TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(nodes.size(), ::testing::Eq(1));
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
   for (int i = 0; i != 5; ++i) {
     EXPECT_THAT(poses[i],
                 IsNearly(transform::Project2D(nodes[0][i].pose), 1e-2))
@@ -253,7 +253,7 @@ TEST_F(SparsePoseGraphTest, OverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(nodes.size(), ::testing::Eq(1));
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
   transform::Rigid2d true_movement =
       ground_truth.front().inverse() * ground_truth.back();
   transform::Rigid2d movement_before = poses.front().inverse() * poses.back();
