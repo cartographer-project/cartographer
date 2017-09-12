@@ -198,8 +198,8 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
       trajectory_connectivity_state_.LastConnectionTime(
           node_id.trajectory_id, submap_id.trajectory_id);
   if (node_id.trajectory_id == submap_id.trajectory_id ||
-      (scan_time - last_connection_time) <
-          common::FromSeconds(
+      scan_time <
+          last_connection_time + common::FromSeconds(
               options_.global_constraint_search_after_n_seconds())) {
     // If the scan and the submap belong to the same trajectory or if there has
     // been a recent global constraint that ties that scan's trajectory to the
@@ -341,8 +341,8 @@ void SparsePoseGraph::UpdateTrajectoryConnectivity(
   for (const Constraint& constraint : result) {
     CHECK_EQ(constraint.tag,
              mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-    common::Time time = GetLatestScanTime(constraint.node_id,
-                                          constraint.submap_id);
+    const common::Time time =
+        GetLatestScanTime(constraint.node_id, constraint.submap_id);
     trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
                                            constraint.submap_id.trajectory_id,
                                            time);
