@@ -325,11 +325,15 @@ void SparsePoseGraph::UpdateTrajectoryConnectivity(
   for (const Constraint& constraint : result) {
     CHECK_EQ(constraint.tag,
              mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-    const mapping::NodeId last_submap_node_id =
-        *submap_data_.at(constraint.submap_id).node_ids.rbegin();
-    const common::Time time =
-        std::max(trajectory_nodes_.at(constraint.node_id).constant_data->time,
-                 trajectory_nodes_.at(last_submap_node_id).constant_data->time);
+    common::Time time =
+        trajectory_nodes_.at(constraint.node_id).constant_data->time;
+    const SubmapData& submap_data = submap_data_.at(constraint.submap_id);
+    if (!submap_data.node_ids.empty()) {
+      const mapping::NodeId last_submap_node_id =
+          *submap_data_.at(constraint.submap_id).node_ids.rbegin();
+      time = std::max(
+          time, trajectory_nodes_.at(last_submap_node_id).constant_data->time);
+    }
     trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
                                            constraint.submap_id.trajectory_id,
                                            time);
