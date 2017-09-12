@@ -32,9 +32,9 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/connected_components.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
+#include "cartographer/mapping/trajectory_connectivity_state.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_3d/submaps.h"
@@ -168,6 +168,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // poses.
   void LogResidualHistograms() REQUIRES(mutex_);
 
+  // Updates the trajectory connectivity structure with the new constraints.
+  void UpdateTrajectoryConnectivity(
+      const sparse_pose_graph::ConstraintBuilder::Result& result);
+
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
 
@@ -177,7 +181,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       GUARDED_BY(mutex_);
 
   // How our various trajectories are related.
-  mapping::ConnectedComponents connected_components_;
+  mapping::TrajectoryConnectivityState trajectory_connectivity_state_;
 
   // We globally localize a fraction of the scans from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>
