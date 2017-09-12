@@ -113,7 +113,8 @@ void Submap::ToResponseProto(
       cells.push_back(0);                                    // alpha
     }
   }
-  mapping::proto::SubmapQuery::Response::SubmapTexture* texture = response->add_textures();
+  mapping::proto::SubmapQuery::Response::SubmapTexture* const texture =
+      response->add_textures();
   common::FastGzipString(cells, texture->mutable_cells());
 
   texture->set_width(limits.num_x_cells);

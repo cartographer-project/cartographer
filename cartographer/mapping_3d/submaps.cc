@@ -146,21 +146,20 @@ string ComputePixelValues(
   return cell_data;
 }
 
-void AddTextureToTextureProto(const HybridGrid& grid,
-  const transform::Rigid3d& global_submap_pose,
-  mapping::proto::SubmapQuery::Response::SubmapTexture* const texture) {
+void AddToTextureProto(
+    const HybridGrid& hybrid_grid, const transform::Rigid3d& global_submap_pose,
+    mapping::proto::SubmapQuery::Response::SubmapTexture* const texture) {
   // Generate an X-ray view through the 'hybrid_grid', aligned to the
   // xy-plane in the global map frame.
-  const float resolution = grid.resolution();
+  const float resolution = hybrid_grid.resolution();
   texture->set_resolution(resolution);
 
   // Compute a bounding box for the texture.
   Eigen::Array2i min_index(INT_MAX, INT_MAX);
   Eigen::Array2i max_index(INT_MIN, INT_MIN);
   const std::vector<Eigen::Array4i> voxel_indices_and_probabilities =
-      ExtractVoxelData(grid,
-                       global_submap_pose.cast<float>(), &min_index,
-                       &max_index);
+      ExtractVoxelData(hybrid_grid, global_submap_pose.cast<float>(),
+                       &min_index, &max_index);
 
   const int width = max_index.y() - min_index.y() + 1;
   const int height = max_index.x() - min_index.x() + 1;
@@ -228,10 +227,10 @@ void Submap::ToResponseProto(
     mapping::proto::SubmapQuery::Response* const response) const {
   response->set_submap_version(num_range_data());
 
-  AddTextureToTextureProto(high_resolution_hybrid_grid_,
-      global_submap_pose, response->add_textures());
-  AddTextureToTextureProto(low_resolution_hybrid_grid_,
-      global_submap_pose, response->add_textures());
+  AddToTextureProto(high_resolution_hybrid_grid_, global_submap_pose,
+                    response->add_textures());
+  AddToTextureProto(low_resolution_hybrid_grid_, global_submap_pose,
+                    response->add_textures());
 }
 
 void Submap::InsertRangeData(const sensor::RangeData& range_data,
