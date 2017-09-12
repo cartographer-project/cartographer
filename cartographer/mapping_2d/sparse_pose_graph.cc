@@ -378,6 +378,7 @@ void SparsePoseGraph::WaitForAllComputations() {
 
 void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
+  trajectory_connectivity_state_.Add(trajectory_id);
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(trajectory_id), 0);
     frozen_trajectories_.insert(trajectory_id);
@@ -396,6 +397,7 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   const transform::Rigid2d initial_pose_2d = transform::Project2D(initial_pose);
 
   common::MutexLocker locker(&mutex_);
+  trajectory_connectivity_state_.Add(trajectory_id);
   const mapping::SubmapId submap_id =
       submap_data_.Append(trajectory_id, SubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
