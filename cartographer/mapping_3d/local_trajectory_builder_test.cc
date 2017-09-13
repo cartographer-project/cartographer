@@ -51,9 +51,6 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
           max_range = 50.,
           scans_per_accumulation = 1,
           voxel_filter_size = 0.05,
-          rangefinder_sampling_ratio = 1.,
-          odometry_sampling_ratio = 1.,
-          imu_sampling_ratio = 1.,
 
           high_resolution_adaptive_voxel_filter = {
             max_length = 0.7,

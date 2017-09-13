@@ -22,7 +22,6 @@ import "cartographer/mapping_2d/proto/submaps_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 
-// NEXT ID: 24
 message LocalTrajectoryBuilderOptions {
   // Rangefinder points outside these ranges will be dropped.
   optional float min_range = 14;
@@ -71,9 +70,4 @@ message LocalTrajectoryBuilderOptions {
 
   // True if IMU data should be expected and used.
   optional bool use_imu_data = 12;
-
-  // Sampling ratios for sensor measurements.
-  optional double rangefinder_sampling_ratio = 21;
-  optional double odometry_sampling_ratio = 22;
-  optional double imu_sampling_ratio = 23;
 }
