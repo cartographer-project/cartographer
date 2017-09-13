@@ -325,6 +325,7 @@ void SparsePoseGraph::UpdateTrajectoryConnectivity(
   for (const Constraint& constraint : result) {
     CHECK_EQ(constraint.tag,
              mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
+    CHECK(trajectory_nodes_.at(constraint.node_id).constant_data != nullptr);
     common::Time time =
         trajectory_nodes_.at(constraint.node_id).constant_data->time;
     const SubmapData& submap_data = submap_data_.at(constraint.submap_id);
@@ -348,9 +349,14 @@ void SparsePoseGraph::HandleWorkQueue() {
           constraints_.insert(constraints_.end(), result.begin(), result.end());
         }
         RunOptimization();
-        UpdateTrajectoryConnectivity(result);
 
         common::MutexLocker locker(&mutex_);
+        UpdateTrajectoryConnectivity(result);
+        TrimmingHandle trimming_handle(this);
+        for (auto& trimmer : trimmers_) {
+          trimmer->Trim(&trimming_handle);
+        }
+
         num_scans_since_last_loop_closure_ = 0;
         run_loop_closure_ = false;
         while (!run_loop_closure_) {
@@ -525,11 +531,6 @@ void SparsePoseGraph::RunOptimization() {
     }
   }
   optimized_submap_transforms_ = submap_data;
-
-  TrimmingHandle trimming_handle(this);
-  for (auto& trimmer : trimmers_) {
-    trimmer->Trim(&trimming_handle);
-  }
 
   // Log the histograms for the pose residuals.
   if (options_.log_residual_histograms()) {
