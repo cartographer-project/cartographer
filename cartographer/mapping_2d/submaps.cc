@@ -113,17 +113,19 @@ void Submap::ToResponseProto(
       cells.push_back(0);                                    // alpha
     }
   }
-  common::FastGzipString(cells, response->mutable_cells());
+  mapping::proto::SubmapQuery::Response::SubmapTexture* const texture =
+      response->add_textures();
+  common::FastGzipString(cells, texture->mutable_cells());
 
-  response->set_width(limits.num_x_cells);
-  response->set_height(limits.num_y_cells);
+  texture->set_width(limits.num_x_cells);
+  texture->set_height(limits.num_y_cells);
   const double resolution = probability_grid_.limits().resolution();
-  response->set_resolution(resolution);
+  texture->set_resolution(resolution);
   const double max_x =
       probability_grid_.limits().max().x() - resolution * offset.y();
   const double max_y =
       probability_grid_.limits().max().y() - resolution * offset.x();
-  *response->mutable_slice_pose() = transform::ToProto(
+  *texture->mutable_slice_pose() = transform::ToProto(
       local_pose().inverse() *
       transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));
 }
