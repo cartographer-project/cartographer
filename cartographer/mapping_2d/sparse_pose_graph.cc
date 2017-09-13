@@ -305,11 +305,16 @@ void SparsePoseGraph::UpdateTrajectoryConnectivity(
   for (const Constraint& constraint : result) {
     CHECK_EQ(constraint.tag,
              mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-    mapping::NodeId last_submap_node_id =
-        *submap_data_.at(constraint.submap_id).node_ids.rbegin();
+    CHECK(trajectory_nodes_.at(constraint.node_id).constant_data != nullptr);
     common::Time time =
-        std::max(trajectory_nodes_.at(constraint.node_id).constant_data->time,
-                 trajectory_nodes_.at(last_submap_node_id).constant_data->time);
+        trajectory_nodes_.at(constraint.node_id).constant_data->time;
+    const SubmapData& submap_data = submap_data_.at(constraint.submap_id);
+    if (!submap_data.node_ids.empty()) {
+      const mapping::NodeId last_submap_node_id =
+          *submap_data_.at(constraint.submap_id).node_ids.rbegin();
+      time = std::max(
+          time, trajectory_nodes_.at(last_submap_node_id).constant_data->time);
+    }
     trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
                                            constraint.submap_id.trajectory_id,
                                            time);
@@ -324,9 +329,14 @@ void SparsePoseGraph::HandleWorkQueue() {
           constraints_.insert(constraints_.end(), result.begin(), result.end());
         }
         RunOptimization();
-        UpdateTrajectoryConnectivity(result);
 
         common::MutexLocker locker(&mutex_);
+        UpdateTrajectoryConnectivity(result);
+        TrimmingHandle trimming_handle(this);
+        for (auto& trimmer : trimmers_) {
+          trimmer->Trim(&trimming_handle);
+        }
+
         num_scans_since_last_loop_closure_ = 0;
         run_loop_closure_ = false;
         while (!run_loop_closure_) {
@@ -374,6 +384,7 @@ void SparsePoseGraph::WaitForAllComputations() {
 
 void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
+  trajectory_connectivity_state_.Add(trajectory_id);
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(trajectory_id), 0);
     frozen_trajectories_.insert(trajectory_id);
@@ -392,6 +403,7 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   const transform::Rigid2d initial_pose_2d = transform::Project2D(initial_pose);
 
   common::MutexLocker locker(&mutex_);
+  trajectory_connectivity_state_.Add(trajectory_id);
   const mapping::SubmapId submap_id =
       submap_data_.Append(trajectory_id, SubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
@@ -473,11 +485,6 @@ void SparsePoseGraph::RunOptimization() {
     }
   }
   optimized_submap_transforms_ = submap_data;
-
-  TrimmingHandle trimming_handle(this);
-  for (auto& trimmer : trimmers_) {
-    trimmer->Trim(&trimming_handle);
-  }
 }
 
 std::vector<std::vector<mapping::TrajectoryNode>>

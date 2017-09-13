@@ -84,12 +84,6 @@ class ConnectedComponents {
 proto::ConnectedComponents ToProto(
     std::vector<std::vector<int>> connected_components);
 
-// Returns the connected component containing 'trajectory_id'.
-proto::ConnectedComponents::ConnectedComponent FindConnectedComponent(
-    const cartographer::mapping::proto::ConnectedComponents&
-        connected_components,
-    int trajectory_id);
-
 }  // namespace mapping
 }  // namespace cartographer
 

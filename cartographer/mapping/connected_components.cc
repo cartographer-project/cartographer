@@ -126,22 +126,5 @@ proto::ConnectedComponents ToProto(
   return proto;
 }
 
-proto::ConnectedComponents::ConnectedComponent FindConnectedComponent(
-    const proto::ConnectedComponents& connected_components,
-    const int trajectory_id) {
-  for (const auto& connected_component :
-       connected_components.connected_component()) {
-    if (std::find(connected_component.trajectory_id().begin(),
-                  connected_component.trajectory_id().end(),
-                  trajectory_id) != connected_component.trajectory_id().end()) {
-      return connected_component;
-    }
-  }
-
-  proto::ConnectedComponents::ConnectedComponent connected_component;
-  connected_component.add_trajectory_id(trajectory_id);
-  return connected_component;
-}
-
 }  // namespace mapping
 }  // namespace cartographer
