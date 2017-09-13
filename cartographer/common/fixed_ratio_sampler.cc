@@ -25,7 +25,8 @@ FixedRatioSampler::FixedRatioSampler(const double ratio) : ratio_(ratio) {
   CHECK_GE(ratio, 0.);
   CHECK_LE(ratio, 1.);
   if (ratio < 5e-2) {
-    LOG(WARNING) << "Using a fixed ratio sampler with a small ratio: " << ratio;
+    LOG(WARNING) << "Using a fixed ratio sampler with a very small ratio: "
+                 << ratio;
   }
 }
 
