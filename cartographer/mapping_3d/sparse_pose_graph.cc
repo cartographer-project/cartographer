@@ -329,11 +329,16 @@ void SparsePoseGraph::ComputeConstraintsForScan(
 common::Time SparsePoseGraph::GetLatestScanTime(
     const mapping::NodeId& node_id,
     const mapping::SubmapId& submap_id) const {
-  const mapping::NodeId last_submap_node_id =
-      *submap_data_.at(submap_id).node_ids.rbegin();
-  return std::max(
-      trajectory_nodes_.at(node_id).constant_data->time,
-      trajectory_nodes_.at(last_submap_node_id).constant_data->time);
+  common::Time time =
+      trajectory_nodes_.at(node_id).constant_data->time;
+  const SubmapData& submap_data = submap_data_.at(submap_id);
+  if (!submap_data.node_ids.empty()) {
+    const mapping::NodeId last_submap_node_id =
+        *submap_data_.at(submap_id).node_ids.rbegin();
+    time = std::max(
+        time, trajectory_nodes_.at(last_submap_node_id).constant_data->time);
+  }
+  return time;
 }
 
 void SparsePoseGraph::UpdateTrajectoryConnectivity(
