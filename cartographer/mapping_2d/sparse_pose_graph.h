@@ -155,7 +155,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Updates the trajectory connectivity structure with the new constraints.
   void UpdateTrajectoryConnectivity(
-      const sparse_pose_graph::ConstraintBuilder::Result& result);
+      const sparse_pose_graph::ConstraintBuilder::Result& result)
+      REQUIRES(mutex_);
 
   // Computes the local to global frame transform based on the given optimized
   // 'submap_transforms'.
