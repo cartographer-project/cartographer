@@ -100,9 +100,9 @@ void PoseExtrapolator::AddOdometryData(
   const sensor::OdometryData& odometry_data_newer =
       odometry_data_[odometry_data_.size() - 1];
   const double odometry_time_delta =
-      common::ToSeconds(odometry_data_older.time - odometry_data_newer.time);
+      common::ToSeconds(odometry_data_newer.time - odometry_data_older.time);
   const transform::Rigid3d odometry_pose_delta =
-      odometry_data_newer.pose.inverse() * odometry_data_older.pose;
+      odometry_data_older.pose.inverse() * odometry_data_newer.pose;
   angular_velocity_from_odometry_ =
       transform::RotationQuaternionToAngleAxisVector(
           odometry_pose_delta.rotation()) /
