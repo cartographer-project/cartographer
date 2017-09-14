@@ -95,14 +95,14 @@ void PoseExtrapolator::AddOdometryData(
   }
   // TODO(whess): Improve by using more than just the last two odometry poses.
   // Compute extrapolation in the tracking frame.
-  const sensor::OdometryData& odometry_data_older =
-      odometry_data_[odometry_data_.size() - 2];
-  const sensor::OdometryData& odometry_data_newer =
-      odometry_data_[odometry_data_.size() - 1];
+  const sensor::OdometryData& odometry_data_oldest =
+      odometry_data_.front();
+  const sensor::OdometryData& odometry_data_newest =
+      odometry_data_.back();
   const double odometry_time_delta =
-      common::ToSeconds(odometry_data_older.time - odometry_data_newer.time);
+      common::ToSeconds(odometry_data_oldest.time - odometry_data_newest.time);
   const transform::Rigid3d odometry_pose_delta =
-      odometry_data_newer.pose.inverse() * odometry_data_older.pose;
+      odometry_data_newest.pose.inverse() * odometry_data_oldest.pose;
   angular_velocity_from_odometry_ =
       transform::RotationQuaternionToAngleAxisVector(
           odometry_pose_delta.rotation()) /
@@ -111,14 +111,14 @@ void PoseExtrapolator::AddOdometryData(
     return;
   }
   const Eigen::Vector3d
-      linear_velocity_in_tracking_frame_at_newer_odometry_time =
+      linear_velocity_in_tracking_frame_at_newest_odometry_time =
           odometry_pose_delta.translation() / odometry_time_delta;
-  const Eigen::Quaterniond orientation_at_newer_odometry_time =
+  const Eigen::Quaterniond orientation_at_newest_odometry_time =
       timed_pose_queue_.back().pose.rotation() *
-      ExtrapolateRotation(odometry_data_newer.time);
+      ExtrapolateRotation(odometry_data_newest.time);
   linear_velocity_from_odometry_ =
-      orientation_at_newer_odometry_time *
-      linear_velocity_in_tracking_frame_at_newer_odometry_time;
+      orientation_at_newest_odometry_time *
+      linear_velocity_in_tracking_frame_at_newest_odometry_time;
 }
 
 transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
