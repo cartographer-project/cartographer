@@ -173,29 +173,35 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
                                         const mapping::SubmapId& submap_id) {
   CHECK(submap_data_.at(submap_id).state == SubmapState::kFinished);
 
-  // Only globally match against submaps not in this trajectory.
-  if (node_id.trajectory_id != submap_id.trajectory_id &&
-      global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
+  const common::Time scan_time = GetLatestScanTime(node_id, submap_id);
+  const common::Time last_connection_time =
+      trajectory_connectivity_state_.LastConnectionTime(
+          node_id.trajectory_id, submap_id.trajectory_id);
+  if (node_id.trajectory_id == submap_id.trajectory_id ||
+      scan_time <
+          last_connection_time + common::FromSeconds(
+              options_.global_constraint_search_after_n_seconds())) {
+    // If the scan and the submap belong to the same trajectory or if there has
+    // been a recent global constraint that ties that scan's trajectory to the
+    // submap's trajectory, it suffices to do a match constrained to a local
+    // search window.
+    const transform::Rigid2d initial_relative_pose =
+        optimization_problem_.submap_data()
+            .at(submap_id.trajectory_id)
+            .at(submap_id.submap_index)
+            .pose.inverse() *
+        optimization_problem_.node_data()
+            .at(node_id.trajectory_id)
+            .at(node_id.node_index)
+            .pose;
+    constraint_builder_.MaybeAddConstraint(
+        submap_id, submap_data_.at(submap_id).submap.get(), node_id,
+        trajectory_nodes_.at(node_id).constant_data.get(),
+        initial_relative_pose);
+  } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
         trajectory_nodes_.at(node_id).constant_data.get());
-  } else {
-    if (trajectory_connectivity_state_.TransitivelyConnected(
-            node_id.trajectory_id, submap_id.trajectory_id)) {
-      const transform::Rigid2d initial_relative_pose =
-          optimization_problem_.submap_data()
-              .at(submap_id.trajectory_id)
-              .at(submap_id.submap_index)
-              .pose.inverse() *
-          optimization_problem_.node_data()
-              .at(node_id.trajectory_id)
-              .at(node_id.node_index)
-              .pose;
-      constraint_builder_.MaybeAddConstraint(
-          submap_id, submap_data_.at(submap_id).submap.get(), node_id,
-          trajectory_nodes_.at(node_id).constant_data.get(),
-          initial_relative_pose);
-    }
   }
 }
 
@@ -300,21 +306,28 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   }
 }
 
+common::Time SparsePoseGraph::GetLatestScanTime(
+    const mapping::NodeId& node_id,
+    const mapping::SubmapId& submap_id) const {
+  common::Time time =
+      trajectory_nodes_.at(node_id).constant_data->time;
+  const SubmapData& submap_data = submap_data_.at(submap_id);
+  if (!submap_data.node_ids.empty()) {
+    const mapping::NodeId last_submap_node_id =
+        *submap_data_.at(submap_id).node_ids.rbegin();
+    time = std::max(
+        time, trajectory_nodes_.at(last_submap_node_id).constant_data->time);
+  }
+  return time;
+}
+
 void SparsePoseGraph::UpdateTrajectoryConnectivity(
     const sparse_pose_graph::ConstraintBuilder::Result& result) {
   for (const Constraint& constraint : result) {
     CHECK_EQ(constraint.tag,
              mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-    CHECK(trajectory_nodes_.at(constraint.node_id).constant_data != nullptr);
-    common::Time time =
-        trajectory_nodes_.at(constraint.node_id).constant_data->time;
-    const SubmapData& submap_data = submap_data_.at(constraint.submap_id);
-    if (!submap_data.node_ids.empty()) {
-      const mapping::NodeId last_submap_node_id =
-          *submap_data_.at(constraint.submap_id).node_ids.rbegin();
-      time = std::max(
-          time, trajectory_nodes_.at(last_submap_node_id).constant_data->time);
-    }
+    const common::Time time =
+        GetLatestScanTime(constraint.node_id, constraint.submap_id);
     trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
                                            constraint.submap_id.trajectory_id,
                                            time);
