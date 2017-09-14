@@ -32,9 +32,9 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/connected_components.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
+#include "cartographer/mapping/trajectory_connectivity_state.h"
 #include "cartographer/mapping_2d/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping_2d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_2d/submaps.h"
@@ -99,6 +99,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
       override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
+  common::Time GetLatestScanTime(const mapping::NodeId& node_id,
+                                 const mapping::SubmapId& submap_id) const
+      REQUIRES(mutex_);
 
  private:
   // The current state of the submap in the background threads. When this
@@ -153,6 +156,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // optimization being run at a time.
   void RunOptimization() EXCLUDES(mutex_);
 
+  // Updates the trajectory connectivity structure with the new constraints.
+  void UpdateTrajectoryConnectivity(
+      const sparse_pose_graph::ConstraintBuilder::Result& result)
+      REQUIRES(mutex_);
+
   // Computes the local to global frame transform based on the given optimized
   // 'submap_transforms'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
@@ -172,7 +180,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       GUARDED_BY(mutex_);
 
   // How our various trajectories are related.
-  mapping::ConnectedComponents connected_components_;
+  mapping::TrajectoryConnectivityState trajectory_connectivity_state_;
 
   // We globally localize a fraction of the scans from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>

@@ -32,9 +32,9 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/connected_components.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
+#include "cartographer/mapping/trajectory_connectivity_state.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_3d/submaps.h"
@@ -157,16 +157,25 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Computes the local to global frame transform based on the given optimized
   // 'submap_transforms'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const std::vector<std::vector<sparse_pose_graph::SubmapData>>&
+      const std::vector<std::map<int, sparse_pose_graph::SubmapData>>&
           submap_transforms,
       int trajectory_id) const REQUIRES(mutex_);
 
   mapping::SparsePoseGraph::SubmapData GetSubmapDataUnderLock(
       const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
+  common::Time GetLatestScanTime(const mapping::NodeId& node_id,
+                                 const mapping::SubmapId& submap_id) const
+      REQUIRES(mutex_);
+
   // Logs histograms for the translational and rotational residual of scan
   // poses.
   void LogResidualHistograms() REQUIRES(mutex_);
+
+  // Updates the trajectory connectivity structure with the new constraints.
+  void UpdateTrajectoryConnectivity(
+      const sparse_pose_graph::ConstraintBuilder::Result& result)
+      REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
@@ -177,7 +186,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       GUARDED_BY(mutex_);
 
   // How our various trajectories are related.
-  mapping::ConnectedComponents connected_components_;
+  mapping::TrajectoryConnectivityState trajectory_connectivity_state_;
 
   // We globally localize a fraction of the scans from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>
@@ -205,7 +214,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Current submap transforms used for displaying data.
-  std::vector<std::vector<sparse_pose_graph::SubmapData>>
+  std::vector<std::map<int, sparse_pose_graph::SubmapData>>
       optimized_submap_transforms_ GUARDED_BY(mutex_);
 
   // List of all trimmers to consult when optimizations finish.
