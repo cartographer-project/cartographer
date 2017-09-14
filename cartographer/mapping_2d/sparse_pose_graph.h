@@ -99,6 +99,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
       override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
+  common::Time GetLatestScanTime(const mapping::NodeId& node_id,
+                                 const mapping::SubmapId& submap_id) const
+      REQUIRES(mutex_);
 
  private:
   // The current state of the submap in the background threads. When this
