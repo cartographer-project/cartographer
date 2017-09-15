@@ -41,6 +41,7 @@ struct NodeData {
   common::Time time;
   transform::Rigid2d initial_pose;
   transform::Rigid2d pose;
+  Eigen::Quaterniond gravity_alignment;
 };
 
 struct SubmapData {
@@ -65,7 +66,8 @@ class OptimizationProblem {
                        const sensor::OdometryData& odometry_data);
   void AddTrajectoryNode(int trajectory_id, common::Time time,
                          const transform::Rigid2d& initial_pose,
-                         const transform::Rigid2d& pose);
+                         const transform::Rigid2d& pose,
+                         const Eigen::Quaterniond& gravity_alignment);
   void TrimTrajectoryNode(const mapping::NodeId& node_id);
   void AddSubmap(int trajectory_id, const transform::Rigid2d& submap_pose);
   void TrimSubmap(const mapping::SubmapId& submap_id);
