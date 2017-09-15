@@ -177,14 +177,19 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
                           rotational_scan_matcher_histogram, pose_estimate);
 }
 
-void LocalTrajectoryBuilder::AddOdometerData(
+std::unique_ptr<sensor::OdometryData> LocalTrajectoryBuilder::AddOdometerData(
     const sensor::OdometryData& odometry_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator we cannot add odometry data.
     LOG(INFO) << "Extrapolator not yet initialized.";
-    return;
+    return nullptr;
   }
+  const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
+      extrapolator_->EstimateGravityOrientation(odometry_data.time));
   extrapolator_->AddOdometryData(odometry_data);
+  // Return gravity aligned odometry data.
+  return common::make_unique<sensor::OdometryData>(sensor::OdometryData{
+      odometry_data.time, odometry_data.pose * gravity_alignment.inverse()});
 }
 
 const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
