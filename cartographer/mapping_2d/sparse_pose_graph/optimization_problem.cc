@@ -80,14 +80,16 @@ void OptimizationProblem::AddOdometerData(
 
 void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
-    const transform::Rigid2d& initial_pose, const transform::Rigid2d& pose) {
+    const transform::Rigid2d& initial_pose, const transform::Rigid2d& pose,
+    const Eigen::Quaterniond& gravity_alignment) {
   CHECK_GE(trajectory_id, 0);
   node_data_.resize(
       std::max(node_data_.size(), static_cast<size_t>(trajectory_id) + 1));
   trajectory_data_.resize(std::max(trajectory_data_.size(), node_data_.size()));
   auto& trajectory_data = trajectory_data_[trajectory_id];
-  node_data_[trajectory_id].emplace(trajectory_data.next_node_index,
-                                    NodeData{time, initial_pose, pose});
+  node_data_[trajectory_id].emplace(
+      trajectory_data.next_node_index,
+      NodeData{time, initial_pose, pose, gravity_alignment});
   ++trajectory_data.next_node_index;
 }
 
@@ -227,8 +229,13 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
               node_data_[trajectory_id][node_index].time);
       const transform::Rigid3d relative_pose =
           odometry_available
-              ? odometry_data_[trajectory_id].Lookup(node_data.time).inverse() *
-                    odometry_data_[trajectory_id].Lookup(next_node_data.time)
+              ? transform::Rigid3d::Rotation(node_data.gravity_alignment) *
+                    odometry_data_[trajectory_id]
+                        .Lookup(node_data.time)
+                        .inverse() *
+                    odometry_data_[trajectory_id].Lookup(next_node_data.time) *
+                    transform::Rigid3d::Rotation(
+                        next_node_data.gravity_alignment.inverse())
               : transform::Embed3D(node_data.initial_pose.inverse() *
                                    next_node_data.initial_pose);
       problem.AddResidualBlock(
