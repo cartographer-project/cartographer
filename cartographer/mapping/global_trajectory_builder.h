@@ -62,8 +62,13 @@ class GlobalTrajectoryBuilder
   }
 
   void AddSensorData(const sensor::OdometryData& odometry_data) override {
-    local_trajectory_builder_.AddOdometerData(odometry_data);
-    sparse_pose_graph_->AddOdometerData(trajectory_id_, odometry_data);
+    const std::unique_ptr<sensor::OdometryData> gravity_aligned_odometry_data =
+        local_trajectory_builder_.AddOdometerData(odometry_data);
+    if (gravity_aligned_odometry_data == nullptr) {
+      return;
+    }
+    sparse_pose_graph_->AddOdometerData(trajectory_id_,
+                                        *gravity_aligned_odometry_data);
   }
 
   void AddSensorData(
