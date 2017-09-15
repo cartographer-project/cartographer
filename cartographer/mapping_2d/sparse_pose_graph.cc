@@ -250,9 +250,10 @@ void SparsePoseGraph::ComputeConstraintsForScan(
                                  ->first +
                              1)
           : 0};
-  const auto& scan_data = trajectory_nodes_.at(node_id).constant_data;
-  optimization_problem_.AddTrajectoryNode(
-      matching_id.trajectory_id, scan_data->time, pose, optimized_pose);
+  const auto& node_data = trajectory_nodes_.at(node_id).constant_data;
+  optimization_problem_.AddTrajectoryNode(matching_id.trajectory_id,
+                                          node_data->time, pose, optimized_pose,
+                                          node_data->gravity_alignment);
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const mapping::SubmapId submap_id = submap_ids[i];
     // Even if this was the last scan added to 'submap_id', the submap will only
