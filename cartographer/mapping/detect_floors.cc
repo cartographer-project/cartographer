@@ -37,7 +37,7 @@ using Levels = std::map<int, int>;
 
 constexpr double kMaxShortSpanLengthMeters = 25.;
 constexpr double kLevelHeightMeters = 2.5;
-constexpr double kMinLevelSeparationMeters = 1.0;
+constexpr double kMinLevelSeparationMeters = 1.;
 
 // Indices into 'trajectory.node', so that 'start_index' <= i < 'end_index'.
 struct Span {
