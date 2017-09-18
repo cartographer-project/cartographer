@@ -106,10 +106,10 @@ class BlockingQueue {
   }
 
  private:
-  // Returns true iff the queue is not empty.
+  // Returns true if the queue is not empty.
   bool QueueNotEmptyCondition() REQUIRES(mutex_) { return !deque_.empty(); }
 
-  // Returns true iff the queue is not full.
+  // Returns true if the queue is not full.
   bool QueueNotFullCondition() REQUIRES(mutex_) {
     return queue_size_ == kInfiniteQueueSize || deque_.size() < queue_size_;
   }
