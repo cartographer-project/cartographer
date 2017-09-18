@@ -302,9 +302,14 @@ void SparsePoseGraph::UpdateManualConstraint(mapping::NodeId node_id,
 
 void SparsePoseGraph::InsertManualConstraint(
     const ManualConstraint manual_constraint) {
+  const auto gravity_aligned_pose =
+      manual_constraint.pose *
+      cartographer::transform::Rigid3d::Rotation(
+          trajectory_nodes_.at(manual_constraint.node_id)
+              .constant_data->gravity_alignment.inverse());
   constraints_.push_back(Constraint{mapping::SubmapId{0, 0},
                                     manual_constraint.node_id,
-                                    {manual_constraint.pose,
+                                    {gravity_aligned_pose,
                                      10 *
                                          options_.constraint_builder_options()
                                              .loop_closure_translation_weight(),
