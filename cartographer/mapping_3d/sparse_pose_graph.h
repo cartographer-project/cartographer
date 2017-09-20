@@ -114,6 +114,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
 
+  void UpdateManualConstraint(
+      mapping::NodeId node_id, transform::Rigid3d pose) override;
+
  private:
   // The current state of the submap in the background threads. When this
   // transitions to kFinished, all scans are tried to match against this submap.

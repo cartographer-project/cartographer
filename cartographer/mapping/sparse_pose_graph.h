@@ -153,6 +153,8 @@ class SparsePoseGraph {
                                         int to_trajectory_id,
                                         const transform::Rigid3d& pose,
                                         const common::Time time) = 0;
+
+  virtual void UpdateManualConstraint(mapping::NodeId node_id, transform::Rigid3d pose) = 0;
 };
 
 std::vector<SparsePoseGraph::Constraint> FromProto(

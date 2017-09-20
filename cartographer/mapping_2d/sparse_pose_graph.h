@@ -25,6 +25,7 @@
 #include <set>
 #include <unordered_map>
 #include <vector>
+#include <deque>
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
@@ -113,6 +114,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_);
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
+
+  // Adds a manual constraint into the optimization problem.
+  void UpdateManualConstraint(
+      mapping::NodeId node_id, transform::Rigid3d pose) override;
+
 
  private:
   // The current state of the submap in the background threads. When this
@@ -208,6 +214,19 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Whether the optimization has to be run before more data is added.
   bool run_loop_closure_ GUARDED_BY(mutex_) = false;
+
+  // Schedules optimization (i.e. loop closure) to run.
+  void DispatchOptimization();
+
+  struct ManualConstraint {
+    mapping::NodeId node_id;
+    transform::Rigid3d pose;
+  };
+
+  std::deque<ManualConstraint> manual_constraint_queue_ GUARDED_BY(mutex_) ;
+
+  bool ScheduleOrPerformManualConstraintInsertion(bool schedule);
+  void InsertManualConstraint(ManualConstraint manual_constraint);
 
   // Current optimization problem.
   sparse_pose_graph::OptimizationProblem optimization_problem_;

@@ -273,16 +273,84 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   }
   constraint_builder_.NotifyEndOfScan();
   ++num_scans_since_last_loop_closure_;
-  if (options_.optimize_every_n_scans() > 0 &&
-      num_scans_since_last_loop_closure_ > options_.optimize_every_n_scans()) {
-    CHECK(!run_loop_closure_);
-    run_loop_closure_ = true;
-    // If there is a 'work_queue_' already, some other thread will take care.
-    if (work_queue_ == nullptr) {
-      work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
-      HandleWorkQueue();
+  const bool inserted_manual_constraints =
+      ScheduleOrPerformManualConstraintInsertion(false);
+  if ((options_.optimize_every_n_scans() > 0 &&
+       num_scans_since_last_loop_closure_ >
+           options_.optimize_every_n_scans()) ||
+      inserted_manual_constraints) {
+    DispatchOptimization();
+  }
+}
+
+void SparsePoseGraph::DispatchOptimization() {
+  CHECK(!run_loop_closure_);
+  run_loop_closure_ = true;
+  // If there is a 'work_queue_' already, some other thread will take care.
+  if (work_queue_ == nullptr) {
+    work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+    HandleWorkQueue();
+  }
+}
+
+void SparsePoseGraph::UpdateManualConstraint(mapping::NodeId node_id,
+                                             transform::Rigid3d pose) {
+  common::MutexLocker locker(&mutex_);
+  manual_constraint_queue_.push_back(ManualConstraint{node_id, pose});
+  ScheduleOrPerformManualConstraintInsertion(true);
+}
+
+void SparsePoseGraph::InsertManualConstraint(
+    const ManualConstraint manual_constraint) {
+  constraints_.push_back(Constraint{
+      mapping::SubmapId{0, 0},
+      manual_constraint.node_id,
+      {manual_constraint.pose,
+       options_.constraint_builder_options().loop_closure_translation_weight(),
+       options_.constraint_builder_options().loop_closure_rotation_weight()},
+      Constraint::MANUAL});
+}
+
+bool SparsePoseGraph::ScheduleOrPerformManualConstraintInsertion(
+    const bool schedule) {
+  int to_be_processed = 0;
+  for (const auto& manual_constraint : manual_constraint_queue_) {
+    const int trajectory_id = manual_constraint.node_id.trajectory_id;
+    const int node_id = manual_constraint.node_id.node_index;
+    const int next_inserted_node =
+        static_cast<int>(
+            optimization_problem_.node_data().at(trajectory_id).size()) +
+        optimization_problem_.num_trimmed_nodes(trajectory_id);
+    CHECK_GT(node_id,
+             optimization_problem_.num_trimmed_nodes(trajectory_id) - 1);
+    if (node_id < next_inserted_node) {
+      ++to_be_processed;
+    } else {
+      break;
     }
   }
+
+  bool processed_one = false;
+  while (to_be_processed > 0) {
+    processed_one = true;
+    const auto& manual_constraint = manual_constraint_queue_.front();
+    if (schedule) {
+      AddWorkItem([this, manual_constraint, to_be_processed]()
+                      REQUIRES(mutex_) {
+                        InsertManualConstraint(manual_constraint);
+                        // Dispatch optimization on the last custom constraint,
+                        // when inserting multiple constraints at once.
+                        if (to_be_processed == 1) {
+                          DispatchOptimization();
+                        }
+                      });
+    } else {
+      InsertManualConstraint(manual_constraint);
+    }
+    manual_constraint_queue_.pop_front();
+    to_be_processed--;
+  }
+  return processed_one;
 }
 
 common::Time SparsePoseGraph::GetLatestScanTime(
