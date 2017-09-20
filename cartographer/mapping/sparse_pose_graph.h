@@ -62,7 +62,7 @@ class SparsePoseGraph {
     // Differentiates between intra-submap (where scan 'j' was inserted into
     // submap 'i') and inter-submap constraints (where scan 'j' was not inserted
     // into submap 'i').
-    enum Tag { INTRA_SUBMAP, INTER_SUBMAP } tag;
+    enum Tag { INTRA_SUBMAP, INTER_SUBMAP, MANUAL } tag;
   };
 
   struct SubmapData {
