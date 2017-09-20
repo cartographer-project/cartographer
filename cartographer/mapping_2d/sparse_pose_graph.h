@@ -85,6 +85,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
 
   void FinishTrajectory(int trajectory_id) override;
+
+  virtual void AddManualConstraint(const mapping::NodeId& node_id,
+                                   const mapping::SubmapId& submap_id,
+                                   const Constraint::Pose& pose) override;
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
                           const mapping::proto::Submap& submap) override;
@@ -208,6 +212,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Whether the optimization has to be run before more data is added.
   bool run_loop_closure_ GUARDED_BY(mutex_) = false;
+
+  // Schedules optimization (i.e. loop closure) to run.
+  void DispatchOptimization();
+
+  void InsertManualConstraint(const mapping::NodeId& node_id,
+                              const mapping::SubmapId& submap_id,
+                              const Constraint::Pose& pose);
 
   // Current optimization problem.
   sparse_pose_graph::OptimizationProblem optimization_problem_;

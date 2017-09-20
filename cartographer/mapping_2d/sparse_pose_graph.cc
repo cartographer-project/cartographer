@@ -275,14 +275,57 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   ++num_scans_since_last_loop_closure_;
   if (options_.optimize_every_n_scans() > 0 &&
       num_scans_since_last_loop_closure_ > options_.optimize_every_n_scans()) {
-    CHECK(!run_loop_closure_);
-    run_loop_closure_ = true;
-    // If there is a 'work_queue_' already, some other thread will take care.
-    if (work_queue_ == nullptr) {
-      work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
-      HandleWorkQueue();
-    }
+    DispatchOptimization();
   }
+}
+
+void SparsePoseGraph::DispatchOptimization() {
+  CHECK(!run_loop_closure_);
+  run_loop_closure_ = true;
+  // If there is a 'work_queue_' already, some other thread will take care.
+  if (work_queue_ == nullptr) {
+    work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+    HandleWorkQueue();
+  }
+}
+
+void SparsePoseGraph::AddManualConstraint(const mapping::NodeId& node_id,
+                                          const mapping::SubmapId& submap_id,
+                                          const Constraint::Pose& pose) {
+  // Perform some sanity testing, since these values come from the user.
+  CHECK(node_id.trajectory_id >= 0 && node_id.node_index >= 0 &&
+        submap_id.trajectory_id >= 0 && submap_id.submap_index >= 0 &&
+        pose.rotation_weight >= 0. && pose.translation_weight >= 0.);
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([=]() REQUIRES(mutex_) {
+    InsertManualConstraint(node_id, submap_id, pose);
+    DispatchOptimization();
+  });
+}
+
+void SparsePoseGraph::InsertManualConstraint(const mapping::NodeId& node_id,
+                                             const mapping::SubmapId& submap_id,
+                                             const Constraint::Pose& pose) {
+  // Do not allow adding constraints for trimmed nodes and submaps.
+  if (node_id.trajectory_id < trajectory_nodes_.num_trajectories() &&
+      node_id.node_index <
+          trajectory_nodes_.num_indices(node_id.trajectory_id)) {
+    CHECK(!trajectory_nodes_.at(node_id).trimmed());
+  }
+  if (submap_id.trajectory_id < submap_data_.num_trajectories() &&
+      submap_id.submap_index <
+          submap_data_.num_indices(submap_id.trajectory_id)) {
+    CHECK(submap_data_.at(submap_id).state != SubmapState::kTrimmed);
+  }
+  const auto gravity_aligned_pose =
+      pose.zbar_ij * cartographer::transform::Rigid3d::Rotation(
+                         trajectory_nodes_.at(node_id)
+                             .constant_data->gravity_alignment.inverse());
+  constraints_.push_back(Constraint{
+      submap_id,
+      node_id,
+      {gravity_aligned_pose, pose.translation_weight, pose.rotation_weight},
+      Constraint::MANUAL});
 }
 
 common::Time SparsePoseGraph::GetLatestScanTime(
