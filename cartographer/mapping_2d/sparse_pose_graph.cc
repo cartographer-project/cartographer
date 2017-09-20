@@ -229,6 +229,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     const mapping::NodeId& node_id,
     std::vector<std::shared_ptr<const Submap>> insertion_submaps,
     const bool newly_finished_submap) {
+  CHECK(!run_loop_closure_);
   const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
   const std::vector<mapping::SubmapId> submap_ids = InitializeGlobalSubmapPoses(
       node_id.trajectory_id, constant_data->time, insertion_submaps);
@@ -290,7 +291,6 @@ void SparsePoseGraph::ComputeConstraintsForScan(
 }
 
 void SparsePoseGraph::DispatchOptimization() {
-  CHECK(!run_loop_closure_);
   run_loop_closure_ = true;
   // If there is a 'work_queue_' already, some other thread will take care.
   if (work_queue_ == nullptr) {
@@ -309,6 +309,7 @@ void SparsePoseGraph::AddManualConstraint(const mapping::NodeId& node_id,
   common::MutexLocker locker(&mutex_);
   AddWorkItem([=]() REQUIRES(mutex_) {
     InsertManualConstraint(node_id, submap_id, pose);
+    CHECK(!run_loop_closure_);
     DispatchOptimization();
   });
 }
