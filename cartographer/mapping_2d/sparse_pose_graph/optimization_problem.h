@@ -90,6 +90,8 @@ class OptimizationProblem {
   const mapping::MapById<mapping::NodeId, NodeData>& node_data() const;
   const mapping::MapById<mapping::SubmapId, SubmapData>& submap_data() const;
   const sensor::MapByTime<sensor::ImuData>& imu_data() const;
+  const std::set<mapping::NodeId>& missing_nodes() const;
+  const std::set<mapping::SubmapId>& missing_submaps() const;
 
  private:
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
@@ -97,6 +99,8 @@ class OptimizationProblem {
   mapping::MapById<mapping::NodeId, NodeData> node_data_;
   std::vector<transform::TransformInterpolationBuffer> odometry_data_;
   mapping::MapById<mapping::SubmapId, SubmapData> submap_data_;
+  std::set<mapping::NodeId> missing_nodes_;
+  std::set<mapping::SubmapId> missing_submaps_;
 };
 
 }  // namespace sparse_pose_graph

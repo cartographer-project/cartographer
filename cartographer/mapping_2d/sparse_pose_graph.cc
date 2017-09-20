@@ -74,6 +74,9 @@ std::vector<mapping::SubmapId> SparsePoseGraph::InitializeGlobalSubmapPoses(
     CHECK_EQ(1, submap_data.SizeOfTrajectoryOrZero(trajectory_id));
     const mapping::SubmapId submap_id{trajectory_id, 0};
     CHECK(submap_data_.at(submap_id).submap == insertion_submaps.front());
+    if (optimization_problem_.missing_submaps().count(submap_id)) {
+      DispatchOptimization();
+    }
     return {submap_id};
   }
   CHECK_EQ(2, insertion_submaps.size());
@@ -90,8 +93,12 @@ std::vector<mapping::SubmapId> SparsePoseGraph::InitializeGlobalSubmapPoses(
             sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0])
                 .inverse() *
             sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[1]));
-    return {last_submap_id,
-            mapping::SubmapId{trajectory_id, last_submap_id.submap_index + 1}};
+    const mapping::SubmapId new_submap_id{trajectory_id,
+                                          last_submap_id.submap_index + 1};
+    if (optimization_problem_.missing_submaps().count(new_submap_id)) {
+      DispatchOptimization();
+    }
+    return {last_submap_id, new_submap_id};
   }
   CHECK(submap_data_.at(last_submap_id).submap == insertion_submaps.back());
   const mapping::SubmapId front_submap_id{trajectory_id,
@@ -238,6 +245,9 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   optimization_problem_.AddTrajectoryNode(
       matching_id.trajectory_id, constant_data->time, pose, optimized_pose,
       constant_data->gravity_alignment);
+  if (optimization_problem_.missing_nodes().count(node_id)) {
+    DispatchOptimization();
+  }
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const mapping::SubmapId submap_id = submap_ids[i];
     // Even if this was the last scan added to 'submap_id', the submap will only
