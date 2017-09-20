@@ -273,94 +273,16 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   }
   constraint_builder_.NotifyEndOfScan();
   ++num_scans_since_last_loop_closure_;
-  const bool inserted_manual_constraints =
-      ScheduleOrPerformManualConstraintInsertion(false /* do not schedule */);
-  if ((options_.optimize_every_n_scans() > 0 &&
-       num_scans_since_last_loop_closure_ >
-           options_.optimize_every_n_scans()) ||
-      inserted_manual_constraints) {
-    DispatchOptimization();
-  }
-}
-
-void SparsePoseGraph::DispatchOptimization() {
-  CHECK(!run_loop_closure_);
-  run_loop_closure_ = true;
-  // If there is a 'work_queue_' already, some other thread will take care.
-  if (work_queue_ == nullptr) {
-    work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
-    HandleWorkQueue();
-  }
-}
-
-void SparsePoseGraph::UpdateManualConstraint(mapping::NodeId node_id,
-                                             transform::Rigid3d pose) {
-  common::MutexLocker locker(&mutex_);
-  manual_constraint_queue_.push_back(ManualConstraint{node_id, pose});
-  ScheduleOrPerformManualConstraintInsertion(true /* schedule */);
-}
-
-void SparsePoseGraph::InsertManualConstraint(
-    const ManualConstraint manual_constraint) {
-  const auto gravity_aligned_pose =
-      manual_constraint.pose *
-      cartographer::transform::Rigid3d::Rotation(
-          trajectory_nodes_.at(manual_constraint.node_id)
-              .constant_data->gravity_alignment.inverse());
-  constraints_.push_back(Constraint{mapping::SubmapId{0, 0},
-                                    manual_constraint.node_id,
-                                    {gravity_aligned_pose,
-                                     10 *
-                                         options_.constraint_builder_options()
-                                             .loop_closure_translation_weight(),
-                                     10 *
-                                         options_.constraint_builder_options()
-                                             .loop_closure_rotation_weight()},
-                                    Constraint::MANUAL});
-}
-
-bool SparsePoseGraph::ScheduleOrPerformManualConstraintInsertion(
-    const bool schedule) {
-  int to_be_processed = 0;
-  for (const auto& manual_constraint : manual_constraint_queue_) {
-    const auto& node_id = manual_constraint.node_id;
-    const int node_index = node_id.node_index;
-    const int next_inserted_node =
-        static_cast<int>(optimization_problem_.node_data()
-                             .at(node_id.trajectory_id)
-                             .rbegin()
-                             ->first +
-                         1);
-    // Do not allow adding constraints for trimmed nodes.
-    CHECK(!trajectory_nodes_.at(node_id).trimmed());
-    if (node_index < next_inserted_node) {
-      ++to_be_processed;
-    } else {
-      break;
+  if (options_.optimize_every_n_scans() > 0 &&
+      num_scans_since_last_loop_closure_ > options_.optimize_every_n_scans()) {
+    CHECK(!run_loop_closure_);
+    run_loop_closure_ = true;
+    // If there is a 'work_queue_' already, some other thread will take care.
+    if (work_queue_ == nullptr) {
+      work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+      HandleWorkQueue();
     }
   }
-
-  bool processed_one = false;
-  while (to_be_processed > 0) {
-    processed_one = true;
-    const auto& manual_constraint = manual_constraint_queue_.front();
-    if (schedule) {
-      AddWorkItem([this, manual_constraint, to_be_processed]()
-                      REQUIRES(mutex_) {
-                        InsertManualConstraint(manual_constraint);
-                        // Dispatch optimization on the last custom constraint,
-                        // when inserting multiple constraints at once.
-                        if (to_be_processed == 1) {
-                          DispatchOptimization();
-                        }
-                      });
-    } else {
-      InsertManualConstraint(manual_constraint);
-    }
-    manual_constraint_queue_.pop_front();
-    to_be_processed--;
-  }
-  return processed_one;
 }
 
 common::Time SparsePoseGraph::GetLatestScanTime(
@@ -745,10 +667,9 @@ mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
                 optimized_submap_transforms_.at(submap_id).global_pose)};
   }
   // We have to extrapolate.
-  return {submap,
-          ComputeLocalToGlobalTransform(optimized_submap_transforms_,
-                                        submap_id.trajectory_id) *
-              submap->local_pose()};
+  return {submap, ComputeLocalToGlobalTransform(optimized_submap_transforms_,
+                                                submap_id.trajectory_id) *
+                      submap->local_pose()};
 }
 
 SparsePoseGraph::TrimmingHandle::TrimmingHandle(SparsePoseGraph* const parent)

@@ -238,10 +238,6 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
   }
 }
 
-void SparsePoseGraph::UpdateManualConstraint(mapping::NodeId, transform::Rigid3d) {
-  LOG(FATAL) << "Not implemented.";
-}
-
 void SparsePoseGraph::ComputeConstraintsForScan(
     const mapping::NodeId& node_id,
     std::vector<std::shared_ptr<const Submap>> insertion_submaps,
