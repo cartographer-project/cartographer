@@ -140,6 +140,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);
 
+  void AddPriorityWorkItem(const std::function<void()>& work_item)
+      REQUIRES(mutex_);
+
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
   std::vector<mapping::SubmapId> InitializeGlobalSubmapPoses(
@@ -199,6 +202,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // considered later.
   std::unique_ptr<std::deque<std::function<void()>>> work_queue_
       GUARDED_BY(mutex_);
+
+  int num_priority_work_items_ GUARDED_BY(mutex_) = 0;
 
   // How our various trajectories are related.
   mapping::TrajectoryConnectivityState trajectory_connectivity_state_;

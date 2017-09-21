@@ -159,6 +159,24 @@ void SparsePoseGraph::AddTrajectoryIfNeeded(const int trajectory_id) {
   }
 }
 
+void SparsePoseGraph::AddPriorityWorkItem(
+    const std::function<void()>& work_item) {
+  if (work_queue_ == nullptr) {
+    CHECK_EQ(num_priority_work_items_, 0);
+    work_item();
+  } else {
+    CHECK_GE(num_priority_work_items_, 0);
+    CHECK_LE(num_priority_work_items_, work_queue_->size());
+    work_queue_->insert(work_queue_->begin() + num_priority_work_items_,
+                        [=]() REQUIRES(mutex_) {
+                          work_item();
+                          --num_priority_work_items_;
+                          CHECK_GE(num_priority_work_items_, 0);
+                        });
+    ++num_priority_work_items_;
+  }
+}
+
 void SparsePoseGraph::AddImuData(const int trajectory_id,
                                  const sensor::ImuData& imu_data) {
   common::MutexLocker locker(&mutex_);
@@ -307,7 +325,7 @@ void SparsePoseGraph::AddManualConstraint(const mapping::NodeId& node_id,
         submap_id.trajectory_id >= 0 && submap_id.submap_index >= 0 &&
         pose.rotation_weight >= 0. && pose.translation_weight >= 0.);
   common::MutexLocker locker(&mutex_);
-  AddWorkItem([=]() REQUIRES(mutex_) {
+  AddPriorityWorkItem([=]() REQUIRES(mutex_) {
     InsertManualConstraint(node_id, submap_id, pose);
     CHECK(!run_loop_closure_);
     DispatchOptimization();
