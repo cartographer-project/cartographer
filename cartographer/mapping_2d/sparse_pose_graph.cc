@@ -319,7 +319,7 @@ void SparsePoseGraph::DispatchOptimization() {
   }
 }
 
-void SparsePoseGraph::AddManualConstraint(const mapping::NodeId& node_id,
+void SparsePoseGraph::AddCustomConstraint(const mapping::NodeId& node_id,
                                           const mapping::SubmapId& submap_id,
                                           const Constraint::Pose& pose) {
   // Perform some sanity testing, since these values come from the user.
@@ -328,63 +328,54 @@ void SparsePoseGraph::AddManualConstraint(const mapping::NodeId& node_id,
         pose.rotation_weight >= 0. && pose.translation_weight >= 0.);
   common::MutexLocker locker(&mutex_);
   AddPriorityWorkItem([=]() REQUIRES(mutex_) {
-    InsertManualConstraint(node_id, submap_id, pose);
+    // Do not allow adding custom constraints for trimmed nodes and submaps.
+    if (node_id.trajectory_id < trajectory_nodes_.num_trajectories() &&
+        node_id.node_index <
+            trajectory_nodes_.num_indices(node_id.trajectory_id)) {
+      CHECK(!trajectory_nodes_.at(node_id).trimmed());
+    }
+    if (submap_id.trajectory_id < submap_data_.num_trajectories() &&
+        submap_id.submap_index <
+            submap_data_.num_indices(submap_id.trajectory_id)) {
+      CHECK(submap_data_.at(submap_id).state != SubmapState::kTrimmed);
+    }
+    const auto gravity_aligned_pose =
+        pose.zbar_ij * cartographer::transform::Rigid3d::Rotation(
+                           trajectory_nodes_.at(node_id)
+                               .constant_data->gravity_alignment.inverse());
+    constraints_.push_back(Constraint{
+        submap_id,
+        node_id,
+        {gravity_aligned_pose, pose.translation_weight, pose.rotation_weight},
+        Constraint::Tag::CUSTOM});
+
     CHECK(!run_loop_closure_);
-    // Run optimization if this is the last currently queued manual constraint.
+    // Run optimization if this is the last currently queued custom constraint.
     if (num_priority_work_items_ == 1) {
       DispatchOptimization();
     }
   });
 }
 
-void SparsePoseGraph::RemoveManualConstraint(const mapping::NodeId& node_id,
-                                          const mapping::SubmapId& submap_id) {
+void SparsePoseGraph::RemoveCustomConstraint(
+    const mapping::NodeId& node_id, const mapping::SubmapId& submap_id) {
   CHECK(node_id.trajectory_id >= 0 && node_id.node_index >= 0 &&
-      submap_id.trajectory_id >= 0 && submap_id.submap_index >= 0);
+        submap_id.trajectory_id >= 0 && submap_id.submap_index >= 0);
   common::MutexLocker locker(&mutex_);
   AddPriorityWorkItem([=]() REQUIRES(mutex_) {
-    DeleteManualConstraint(node_id, submap_id);
+    constraints_.erase(
+        std::remove_if(constraints_.begin(), constraints_.end(),
+                       [&](const Constraint& constraint) {
+                         return constraint.node_id == node_id &&
+                                constraint.submap_id == submap_id &&
+                                constraint.tag == Constraint::Tag::CUSTOM;
+                       }));
+
     CHECK(!run_loop_closure_);
     if (num_priority_work_items_ == 1) {
       DispatchOptimization();
     }
   });
-}
-
-void SparsePoseGraph::InsertManualConstraint(const mapping::NodeId& node_id,
-                                             const mapping::SubmapId& submap_id,
-                                             const Constraint::Pose& pose) {
-  // Do not allow adding constraints for trimmed nodes and submaps.
-  if (node_id.trajectory_id < trajectory_nodes_.num_trajectories() &&
-      node_id.node_index <
-          trajectory_nodes_.num_indices(node_id.trajectory_id)) {
-    CHECK(!trajectory_nodes_.at(node_id).trimmed());
-  }
-  if (submap_id.trajectory_id < submap_data_.num_trajectories() &&
-      submap_id.submap_index <
-          submap_data_.num_indices(submap_id.trajectory_id)) {
-    CHECK(submap_data_.at(submap_id).state != SubmapState::kTrimmed);
-  }
-  const auto gravity_aligned_pose =
-      pose.zbar_ij * cartographer::transform::Rigid3d::Rotation(
-                         trajectory_nodes_.at(node_id)
-                             .constant_data->gravity_alignment.inverse());
-  constraints_.push_back(Constraint{
-      submap_id,
-      node_id,
-      {gravity_aligned_pose, pose.translation_weight, pose.rotation_weight},
-      Constraint::MANUAL});
-}
-
-void SparsePoseGraph::DeleteManualConstraint(
-    const mapping::NodeId& node_id, const mapping::SubmapId& submap_id) {
-  constraints_.erase(
-      std::remove_if(constraints_.begin(), constraints_.end(),
-                     [&](const Constraint& constraint) {
-                       return constraint.node_id == node_id &&
-                              constraint.submap_id == submap_id &&
-                              constraint.tag == Constraint::Tag::MANUAL;
-                     }));
 }
 
 common::Time SparsePoseGraph::GetLatestScanTime(

@@ -165,7 +165,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                 .count(constraint.node_id.node_index) == 0) {
       // It should not happen that prematurely added constraints
       // happen to be intra or inter submap constraints.
-      CHECK(constraint.tag == Constraint::Tag::MANUAL);
+      CHECK(constraint.tag == Constraint::Tag::CUSTOM);
       missing_nodes_.insert(constraint.node_id);
       continue;
     }
@@ -173,7 +173,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
             static_cast<int>(submap_data_.size()) ||
         submap_data_.at(constraint.submap_id.trajectory_id)
                 .count(constraint.submap_id.submap_index) == 0) {
-      CHECK(constraint.tag == Constraint::Tag::MANUAL);
+      CHECK(constraint.tag == Constraint::Tag::CUSTOM);
       missing_submaps_.insert(constraint.submap_id);
       continue;
     }

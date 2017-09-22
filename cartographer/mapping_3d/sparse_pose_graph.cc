@@ -175,14 +175,14 @@ void SparsePoseGraph::AddFixedFramePoseData(
   });
 }
 
-void SparsePoseGraph::AddManualConstraint(const mapping::NodeId& node_id,
+void SparsePoseGraph::AddCustomConstraint(const mapping::NodeId& node_id,
                                           const mapping::SubmapId& submap_id,
                                           const Constraint::Pose& pose) {
   LOG(FATAL) << "Not implemented.";
 }
 
-void SparsePoseGraph::RemoveManualConstraint(const mapping::NodeId& node_id,
-                                          const mapping::SubmapId& submap_id) {
+void SparsePoseGraph::RemoveCustomConstraint(
+    const mapping::NodeId& node_id, const mapping::SubmapId& submap_id) {
   LOG(FATAL) << "Not implemented.";
 }
 

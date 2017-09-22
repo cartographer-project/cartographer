@@ -37,7 +37,7 @@ message SparsePoseGraph {
     enum Tag {
       INTRA_SUBMAP = 0;
       INTER_SUBMAP = 1;
-      MANUAL = 2;
+      CUSTOM = 2;
     }
 
     optional SubmapId submap_id = 1;  // Submap ID.
