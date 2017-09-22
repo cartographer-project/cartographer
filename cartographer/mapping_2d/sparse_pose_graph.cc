@@ -164,7 +164,10 @@ void SparsePoseGraph::AddPriorityWorkItem(
     const std::function<void()>& work_item) {
   if (work_queue_ == nullptr) {
     CHECK_EQ(num_priority_work_items_, 0);
+    ++num_priority_work_items_;
     work_item();
+    --num_priority_work_items_;
+    CHECK_EQ(num_priority_work_items_, 0);
   } else {
     CHECK_GE(num_priority_work_items_, 0);
     CHECK_LE(num_priority_work_items_, work_queue_->size());
