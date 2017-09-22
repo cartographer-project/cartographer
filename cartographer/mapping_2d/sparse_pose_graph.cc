@@ -372,7 +372,8 @@ void SparsePoseGraph::RemoveCustomConstraint(
                          return constraint.node_id == node_id &&
                                 constraint.submap_id == submap_id &&
                                 constraint.tag == Constraint::Tag::CUSTOM;
-                       }));
+                       }),
+        constraints_.end());
 
     CHECK(!run_loop_closure_);
     if (num_priority_work_items_ == 1) {
