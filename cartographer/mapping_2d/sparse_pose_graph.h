@@ -89,6 +89,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   virtual void AddManualConstraint(const mapping::NodeId& node_id,
                                    const mapping::SubmapId& submap_id,
                                    const Constraint::Pose& pose) override;
+  virtual void RemoveManualConstraint(const mapping::NodeId& node_id,
+                                   const mapping::SubmapId& submap_id) override;
+
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
                           const mapping::proto::Submap& submap) override;
@@ -224,6 +227,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   void InsertManualConstraint(const mapping::NodeId& node_id,
                               const mapping::SubmapId& submap_id,
                               const Constraint::Pose& pose);
+  void DeleteManualConstraint(const mapping::NodeId& node_id,
+                              const mapping::SubmapId& submap_id);
 
   // Current optimization problem.
   sparse_pose_graph::OptimizationProblem optimization_problem_;

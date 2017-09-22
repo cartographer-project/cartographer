@@ -337,6 +337,20 @@ void SparsePoseGraph::AddManualConstraint(const mapping::NodeId& node_id,
   });
 }
 
+void SparsePoseGraph::RemoveManualConstraint(const mapping::NodeId& node_id,
+                                          const mapping::SubmapId& submap_id) {
+  CHECK(node_id.trajectory_id >= 0 && node_id.node_index >= 0 &&
+      submap_id.trajectory_id >= 0 && submap_id.submap_index >= 0);
+  common::MutexLocker locker(&mutex_);
+  AddPriorityWorkItem([=]() REQUIRES(mutex_) {
+    DeleteManualConstraint(node_id, submap_id);
+    CHECK(!run_loop_closure_);
+    if (num_priority_work_items_ == 1) {
+      DispatchOptimization();
+    }
+  });
+}
+
 void SparsePoseGraph::InsertManualConstraint(const mapping::NodeId& node_id,
                                              const mapping::SubmapId& submap_id,
                                              const Constraint::Pose& pose) {
@@ -360,6 +374,17 @@ void SparsePoseGraph::InsertManualConstraint(const mapping::NodeId& node_id,
       node_id,
       {gravity_aligned_pose, pose.translation_weight, pose.rotation_weight},
       Constraint::MANUAL});
+}
+
+void SparsePoseGraph::DeleteManualConstraint(
+    const mapping::NodeId& node_id, const mapping::SubmapId& submap_id) {
+  constraints_.erase(
+      std::remove_if(constraints_.begin(), constraints_.end(),
+                     [&](const Constraint& constraint) {
+                       return constraint.node_id == node_id &&
+                              constraint.submap_id == submap_id &&
+                              constraint.tag == Constraint::Tag::MANUAL;
+                     }));
 }
 
 common::Time SparsePoseGraph::GetLatestScanTime(

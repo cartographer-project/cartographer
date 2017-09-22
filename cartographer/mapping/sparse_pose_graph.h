@@ -116,10 +116,12 @@ class SparsePoseGraph {
   // included in the pose graph.
   virtual void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) = 0;
 
-  // Adds a manual constraint to the pose graph.
+  // Add and remove manual constraints to/from the pose graph.
   virtual void AddManualConstraint(const mapping::NodeId& node_id,
                                    const mapping::SubmapId& submap_id,
                                    const Constraint::Pose& pose) = 0;
+  virtual void RemoveManualConstraint(const mapping::NodeId& node_id,
+                                      const mapping::SubmapId& submap_id) = 0;
 
   // Computes optimized poses.
   virtual void RunFinalOptimization() = 0;
