@@ -95,7 +95,8 @@ std::vector<mapping::SubmapId> SparsePoseGraph::InitializeGlobalSubmapPoses(
             sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[1]));
     const mapping::SubmapId new_submap_id{trajectory_id,
                                           last_submap_id.submap_index + 1};
-    if (optimization_problem_.missing_submaps().count(new_submap_id)) {
+    if (optimization_problem_.missing_submaps().count(new_submap_id) &&
+        num_priority_work_items_ == 0) {
       DispatchOptimization();
     }
     return {last_submap_id, new_submap_id};
@@ -264,7 +265,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   optimization_problem_.AddTrajectoryNode(
       matching_id.trajectory_id, constant_data->time, pose, optimized_pose,
       constant_data->gravity_alignment);
-  if (optimization_problem_.missing_nodes().count(node_id)) {
+  if (optimization_problem_.missing_nodes().count(node_id) &&
+      num_priority_work_items_ == 0) {
     DispatchOptimization();
   }
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
@@ -328,7 +330,10 @@ void SparsePoseGraph::AddManualConstraint(const mapping::NodeId& node_id,
   AddPriorityWorkItem([=]() REQUIRES(mutex_) {
     InsertManualConstraint(node_id, submap_id, pose);
     CHECK(!run_loop_closure_);
-    DispatchOptimization();
+    // Run optimization if this is the last currently queued manual constraint.
+    if (num_priority_work_items_ == 1) {
+      DispatchOptimization();
+    }
   });
 }
 
