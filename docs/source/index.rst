@@ -31,9 +31,10 @@ configurations.
 
 Technical Overview
 ==================
-* `High level structure of Cartographer`_
+* High level structure of Cartographer
 
-.. _High level structure of Cartographer: https://github.com/googlecartographer/cartographer/blob/master/docs/source/High_Level_Structure.jpg
+.. image:: High_Level_Structure.jpg
+     :target: https://github.com/googlecartographer/cartographer/blob/master/docs/source/High_Level_Structure.jpg
 
 Getting started
 ===============
