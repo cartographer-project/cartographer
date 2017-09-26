@@ -31,6 +31,7 @@
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/transform_interpolation_buffer.h"
 
 namespace cartographer {
@@ -39,7 +40,8 @@ namespace sparse_pose_graph {
 
 struct NodeData {
   common::Time time;
-  transform::Rigid3d point_cloud_pose;
+  transform::Rigid3d initial_pose;
+  transform::Rigid3d pose;
 };
 
 struct SubmapData {
@@ -63,11 +65,14 @@ class OptimizationProblem {
   OptimizationProblem& operator=(const OptimizationProblem&) = delete;
 
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  void AddOdometerData(int trajectory_id,
+                       const sensor::OdometryData& odometry_data);
   void AddFixedFramePoseData(
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
   void AddTrajectoryNode(int trajectory_id, common::Time time,
-                         const transform::Rigid3d& point_cloud_pose);
+                         const transform::Rigid3d& initial_pose,
+                         const transform::Rigid3d& pose);
   void AddSubmap(int trajectory_id, const transform::Rigid3d& submap_pose);
 
   void SetMaxNumIterations(int32 max_num_iterations);
@@ -76,20 +81,23 @@ class OptimizationProblem {
   void Solve(const std::vector<Constraint>& constraints,
              const std::set<int>& frozen_trajectories);
 
-  const std::vector<std::vector<NodeData>>& node_data() const;
-  const std::vector<std::vector<SubmapData>>& submap_data() const;
+  const std::vector<std::map<int, NodeData>>& node_data() const;
+  const std::vector<std::map<int, SubmapData>>& submap_data() const;
 
  private:
   struct TrajectoryData {
     double gravity_constant = 9.8;
     std::array<double, 4> imu_calibration{{1., 0., 0., 0.}};
+    int next_submap_index = 0;
+    int next_node_index = 0;
   };
 
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   FixZ fix_z_;
   std::vector<std::deque<sensor::ImuData>> imu_data_;
-  std::vector<std::vector<NodeData>> node_data_;
-  std::vector<std::vector<SubmapData>> submap_data_;
+  std::vector<std::map<int, NodeData>> node_data_;
+  std::vector<transform::TransformInterpolationBuffer> odometry_data_;
+  std::vector<std::map<int, SubmapData>> submap_data_;
   std::vector<TrajectoryData> trajectory_data_;
   std::vector<transform::TransformInterpolationBuffer> fixed_frame_pose_data_;
 };

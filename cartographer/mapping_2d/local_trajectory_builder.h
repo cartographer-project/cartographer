@@ -41,12 +41,9 @@ namespace mapping_2d {
 class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
-    common::Time time;
+    std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
+    transform::Rigid3d pose_observation;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
-    transform::Rigid3d tracking_to_tracking_2d;
-    sensor::RangeData range_data_in_tracking_2d;
-    transform::Rigid2d pose_estimate_2d;
-    sensor::PointCloud filtered_point_cloud_in_tracking_2d;
   };
 
   explicit LocalTrajectoryBuilder(
@@ -57,7 +54,9 @@ class LocalTrajectoryBuilder {
   LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
 
   const mapping::PoseEstimate& pose_estimate() const;
-  std::unique_ptr<InsertionResult> AddHorizontalRangeData(
+
+  // Range data must be approximately horizontal for 2D SLAM.
+  std::unique_ptr<InsertionResult> AddRangeData(
       common::Time, const sensor::RangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
   void AddOdometerData(const sensor::OdometryData& odometry_data);
@@ -66,15 +65,14 @@ class LocalTrajectoryBuilder {
   std::unique_ptr<InsertionResult> AddAccumulatedRangeData(
       common::Time time, const sensor::RangeData& range_data);
   sensor::RangeData TransformAndFilterRangeData(
-      const transform::Rigid3f& tracking_to_tracking_2d,
+      const transform::Rigid3f& gravity_alignment,
       const sensor::RangeData& range_data) const;
 
-  // Scan matches 'range_data_in_tracking_2d' and fill in the 'pose_observation'
-  // with the result.
-  void ScanMatch(common::Time time, const transform::Rigid3d& pose_prediction,
-                 const transform::Rigid3d& tracking_to_tracking_2d,
-                 const sensor::RangeData& range_data_in_tracking_2d,
-                 transform::Rigid3d* pose_observation);
+  // Scan matches 'gravity_aligned_range_data' and fill in the
+  // 'pose_observation' with the result.
+  void ScanMatch(common::Time time, const transform::Rigid2d& pose_prediction,
+                 const sensor::RangeData& gravity_aligned_range_data,
+                 transform::Rigid2d* pose_observation);
 
   // Lazily constructs a PoseExtrapolator.
   void InitializeExtrapolator(common::Time time);

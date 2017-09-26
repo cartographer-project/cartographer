@@ -41,13 +41,7 @@ namespace mapping_3d {
 class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
-    common::Time time;
-    sensor::RangeData range_data_in_tracking;
-
-    // Used for loop closure in 3D.
-    sensor::PointCloud high_resolution_point_cloud;
-    sensor::PointCloud low_resolution_point_cloud;
-
+    std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
     transform::Rigid3d pose_observation;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
@@ -60,9 +54,8 @@ class LocalTrajectoryBuilder {
   LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
 
   void AddImuData(const sensor::ImuData& imu_data);
-  std::unique_ptr<InsertionResult> AddRangefinderData(
-      common::Time time, const Eigen::Vector3f& origin,
-      const sensor::PointCloud& ranges);
+  std::unique_ptr<InsertionResult> AddRangeData(
+      common::Time time, const sensor::RangeData& range_data);
   void AddOdometerData(const sensor::OdometryData& odometry_data);
   const mapping::PoseEstimate& pose_estimate() const;
 
@@ -72,8 +65,10 @@ class LocalTrajectoryBuilder {
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       common::Time time, const sensor::RangeData& range_data_in_tracking,
+      const Eigen::Quaterniond& gravity_alignment,
       const sensor::PointCloud& high_resolution_point_cloud,
       const sensor::PointCloud& low_resolution_point_cloud,
+      const Eigen::VectorXf& rotational_scan_matcher_histogram,
       const transform::Rigid3d& pose_observation);
 
   const proto::LocalTrajectoryBuilderOptions options_;

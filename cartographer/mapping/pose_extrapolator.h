@@ -54,9 +54,7 @@ class PoseExtrapolator {
   transform::Rigid3d ExtrapolatePose(common::Time time);
 
   // Gravity alignment estimate.
-  Eigen::Quaterniond gravity_orientation() const {
-    return imu_tracker_->orientation();
-  }
+  Eigen::Quaterniond EstimateGravityOrientation(common::Time time);
 
  private:
   void UpdateVelocitiesFromPoses();

@@ -40,7 +40,6 @@ SPARSE_POSE_GRAPH = {
     fast_correlative_scan_matcher_3d = {
       branch_and_bound_depth = 8,
       full_resolution_depth = 3,
-      rotational_histogram_size = 120,
       min_rotational_score = 0.77,
       min_low_resolution_score = 0.55,
       linear_xy_search_window = 5.,
@@ -80,4 +79,5 @@ SPARSE_POSE_GRAPH = {
   max_num_final_iterations = 200,
   global_sampling_ratio = 0.003,
   log_residual_histograms = true,
+  global_constraint_search_after_n_seconds = 10.,
 }

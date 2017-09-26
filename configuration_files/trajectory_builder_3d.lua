@@ -60,6 +60,7 @@ TRAJECTORY_BUILDER_3D = {
   },
 
   imu_gravity_time_constant = 10.,
+  rotational_histogram_size = 120,
 
   submaps = {
     high_resolution = 0.10,

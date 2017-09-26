@@ -18,10 +18,10 @@ package cartographer.mapping.proto;
 
 // This is how proto2 calls the outer class since there is already a message
 // with the same name in the file.
-option java_outer_classname = "TrajectoryConnectivityOuterClass";
+option java_outer_classname = "ConnectedComponentsOuterClass";
 
 // Connectivity structure between trajectories.
-message TrajectoryConnectivity {
+message ConnectedComponents {
   message ConnectedComponent {
     repeated int32 trajectory_id = 1;
   }

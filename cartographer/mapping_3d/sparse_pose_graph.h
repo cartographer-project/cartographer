@@ -34,11 +34,12 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
-#include "cartographer/mapping/trajectory_connectivity.h"
+#include "cartographer/mapping/trajectory_connectivity_state.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping_3d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_3d/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -64,20 +65,20 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
 
-  // Adds a new 'range_data_in_tracking' observation at 'time', and a 'pose'
-  // that will later be optimized. The 'pose' was determined by scan matching
-  // against 'insertion_submaps.front()' and the scan was inserted into the
-  // 'insertion_submaps'. If 'insertion_submaps.front().finished()' is 'true',
-  // this submap was inserted into for the last time.
+  // Adds a new node with 'constant_data' and a 'pose' that will later be
+  // optimized. The 'pose' was determined by scan matching against
+  // 'insertion_submaps.front()' and the scan was inserted into the
+  // 'insertion_submaps'. If 'insertion_submaps.front().finished()' is
+  // 'true', this submap was inserted into for the last time.
   void AddScan(
-      common::Time time, const sensor::RangeData& range_data_in_tracking,
-      const sensor::PointCloud& high_resolution_point_cloud,
-      const sensor::PointCloud& low_resolution_point_cloud,
+      std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
       const transform::Rigid3d& pose, int trajectory_id,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       EXCLUDES(mutex_);
 
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  void AddOdometerData(int trajectory_id,
+                       const sensor::OdometryData& odometry_data);
   void AddFixedFramePoseData(
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
@@ -142,8 +143,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       REQUIRES(mutex_);
 
   // Registers the callback to run the optimization once all constraints have
-  // been computed, that will also do all work that queue up in 'scan_queue_'.
-  void HandleScanQueue() REQUIRES(mutex_);
+  // been computed, that will also do all work that queue up in 'work_queue_'.
+  void HandleWorkQueue() REQUIRES(mutex_);
 
   // Waits until we caught up (i.e. nothing is waiting to be scheduled), and
   // all computations have finished.
@@ -156,27 +157,36 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Computes the local to global frame transform based on the given optimized
   // 'submap_transforms'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const std::vector<std::vector<sparse_pose_graph::SubmapData>>&
+      const std::vector<std::map<int, sparse_pose_graph::SubmapData>>&
           submap_transforms,
       int trajectory_id) const REQUIRES(mutex_);
 
   mapping::SparsePoseGraph::SubmapData GetSubmapDataUnderLock(
       const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
+  common::Time GetLatestScanTime(const mapping::NodeId& node_id,
+                                 const mapping::SubmapId& submap_id) const
+      REQUIRES(mutex_);
+
   // Logs histograms for the translational and rotational residual of scan
   // poses.
-  void LogResidualHistograms();
+  void LogResidualHistograms() REQUIRES(mutex_);
+
+  // Updates the trajectory connectivity structure with the new constraints.
+  void UpdateTrajectoryConnectivity(
+      const sparse_pose_graph::ConstraintBuilder::Result& result)
+      REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
 
-  // If it exists, further scans must be added to this queue, and will be
+  // If it exists, further work items must be added to this queue, and will be
   // considered later.
-  std::unique_ptr<std::deque<std::function<void()>>> scan_queue_
+  std::unique_ptr<std::deque<std::function<void()>>> work_queue_
       GUARDED_BY(mutex_);
 
   // How our various trajectories are related.
-  mapping::TrajectoryConnectivity trajectory_connectivity_ GUARDED_BY(mutex_);
+  mapping::TrajectoryConnectivityState trajectory_connectivity_state_;
 
   // We globally localize a fraction of the scans from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>
@@ -198,18 +208,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   mapping::NestedVectorsById<SubmapData, mapping::SubmapId> submap_data_
       GUARDED_BY(mutex_);
 
-  // Connectivity structure of our trajectories by IDs.
-  std::vector<std::vector<int>> connected_components_;
-  // Trajectory ID to connected component ID.
-  std::map<int, size_t> reverse_connected_components_;
-
   // Data that are currently being shown.
   mapping::NestedVectorsById<mapping::TrajectoryNode, mapping::NodeId>
       trajectory_nodes_ GUARDED_BY(mutex_);
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Current submap transforms used for displaying data.
-  std::vector<std::vector<sparse_pose_graph::SubmapData>>
+  std::vector<std::map<int, sparse_pose_graph::SubmapData>>
       optimized_submap_transforms_ GUARDED_BY(mutex_);
 
   // List of all trimmers to consult when optimizations finish.

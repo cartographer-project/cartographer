@@ -24,8 +24,9 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
-#include "cartographer/mapping_2d/global_trajectory_builder.h"
-#include "cartographer/mapping_3d/global_trajectory_builder.h"
+#include "cartographer/mapping/global_trajectory_builder.h"
+#include "cartographer/mapping_2d/local_trajectory_builder.h"
+#include "cartographer/mapping_3d/local_trajectory_builder.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -76,7 +77,10 @@ int MapBuilder::AddTrajectoryBuilder(
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
-            common::make_unique<mapping_3d::GlobalTrajectoryBuilder>(
+            common::make_unique<mapping::GlobalTrajectoryBuilder<
+                mapping_3d::LocalTrajectoryBuilder,
+                mapping_3d::proto::LocalTrajectoryBuilderOptions,
+                mapping_3d::SparsePoseGraph>>(
                 trajectory_options.trajectory_builder_3d_options(),
                 trajectory_id, sparse_pose_graph_3d_.get())));
   } else {
@@ -84,7 +88,10 @@ int MapBuilder::AddTrajectoryBuilder(
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
-            common::make_unique<mapping_2d::GlobalTrajectoryBuilder>(
+            common::make_unique<mapping::GlobalTrajectoryBuilder<
+                mapping_2d::LocalTrajectoryBuilder,
+                mapping_2d::proto::LocalTrajectoryBuilderOptions,
+                mapping_2d::SparsePoseGraph>>(
                 trajectory_options.trajectory_builder_2d_options(),
                 trajectory_id, sparse_pose_graph_2d_.get())));
   }
@@ -161,7 +168,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
       }
     }
   }
-  // Next we serialize all range data.
+  // Next we serialize all node data.
   {
     const auto node_data = sparse_pose_graph_->GetTrajectoryNodes();
     for (int trajectory_id = 0;
@@ -170,15 +177,12 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
            node_index != static_cast<int>(node_data[trajectory_id].size());
            ++node_index) {
         proto::SerializedData proto;
-        auto* const range_data_proto = proto.mutable_range_data();
+        auto* const node_data_proto = proto.mutable_node_data();
         // TODO(whess): Handle trimmed data.
-        range_data_proto->mutable_node_id()->set_trajectory_id(trajectory_id);
-        range_data_proto->mutable_node_id()->set_node_index(node_index);
-        const auto& data = *node_data[trajectory_id][node_index].constant_data;
-        *range_data_proto->mutable_range_data() =
-            sensor::ToProto(sensor::Compress(sensor::TransformRangeData(
-                sensor::Decompress(data.range_data),
-                data.tracking_to_pose.inverse().cast<float>())));
+        node_data_proto->mutable_node_id()->set_trajectory_id(trajectory_id);
+        node_data_proto->mutable_node_id()->set_node_index(node_index);
+        *node_data_proto->mutable_trajectory_node() =
+            ToProto(*node_data[trajectory_id][node_index].constant_data);
         // TODO(whess): Only enable optionally? Resulting pbstream files will be
         // a lot larger now.
         writer->WriteProto(proto);

@@ -50,4 +50,9 @@ message SparsePoseGraphOptions {
 
   // Whether to output histograms for the pose residuals.
   optional bool log_residual_histograms = 9;
+
+  // If for the duration specified by this option no global contraint has been
+  // added between two trajectories, loop closure searches will be performed
+  // globally rather than in a smaller search window.
+  optional double global_constraint_search_after_n_seconds = 10;
 }

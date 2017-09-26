@@ -39,8 +39,9 @@ namespace sparse_pose_graph {
 
 struct NodeData {
   common::Time time;
-  transform::Rigid2d initial_point_cloud_pose;
-  transform::Rigid2d point_cloud_pose;
+  transform::Rigid2d initial_pose;
+  transform::Rigid2d pose;
+  Eigen::Quaterniond gravity_alignment;
 };
 
 struct SubmapData {
@@ -64,8 +65,9 @@ class OptimizationProblem {
   void AddOdometerData(int trajectory_id,
                        const sensor::OdometryData& odometry_data);
   void AddTrajectoryNode(int trajectory_id, common::Time time,
-                         const transform::Rigid2d& initial_point_cloud_pose,
-                         const transform::Rigid2d& point_cloud_pose);
+                         const transform::Rigid2d& initial_pose,
+                         const transform::Rigid2d& pose,
+                         const Eigen::Quaterniond& gravity_alignment);
   void TrimTrajectoryNode(const mapping::NodeId& node_id);
   void AddSubmap(int trajectory_id, const transform::Rigid2d& submap_pose);
   void TrimSubmap(const mapping::SubmapId& submap_id);
@@ -76,20 +78,18 @@ class OptimizationProblem {
   void Solve(const std::vector<Constraint>& constraints,
              const std::set<int>& frozen_trajectories);
 
-  const std::vector<std::deque<NodeData>>& node_data() const;
+  const std::vector<std::map<int, NodeData>>& node_data() const;
   const std::vector<std::map<int, SubmapData>>& submap_data() const;
-
-  int num_trimmed_nodes(int trajectory_id) const;
 
  private:
   struct TrajectoryData {
     // TODO(hrapp): Remove, once we can relabel constraints.
     int next_submap_index = 0;
-    int num_trimmed_nodes = 0;
+    int next_node_index = 0;
   };
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   std::vector<std::deque<sensor::ImuData>> imu_data_;
-  std::vector<std::deque<NodeData>> node_data_;
+  std::vector<std::map<int, NodeData>> node_data_;
   std::vector<transform::TransformInterpolationBuffer> odometry_data_;
   std::vector<std::map<int, SubmapData>> submap_data_;
   std::vector<TrajectoryData> trajectory_data_;

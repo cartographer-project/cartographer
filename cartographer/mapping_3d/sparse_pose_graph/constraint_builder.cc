@@ -29,7 +29,6 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
-#include "cartographer/mapping_3d/scan_matching/low_resolution_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
 #include "cartographer/transform/transform.h"
@@ -73,7 +72,6 @@ void ConstraintBuilder::MaybeAddConstraint(
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
-                            nullptr, /* trajectory_connectivity */
                             constant_data, initial_pose, constraint);
           FinishComputation(current_computation);
         });
@@ -85,8 +83,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
     const mapping::NodeId& node_id,
     const mapping::TrajectoryNode::Data* const constant_data,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const Eigen::Quaterniond& gravity_alignment,
-    mapping::TrajectoryConnectivity* const trajectory_connectivity) {
+    const Eigen::Quaterniond& gravity_alignment) {
   common::MutexLocker locker(&mutex_);
   constraints_.emplace_back();
   auto* const constraint = &constraints_.back();
@@ -95,7 +92,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
         ComputeConstraint(submap_id, node_id, true, /* match_full_submap */
-                          trajectory_connectivity, constant_data,
+                          constant_data,
                           transform::Rigid3d::Rotation(gravity_alignment),
                           constraint);
         FinishComputation(current_computation);
@@ -142,7 +139,8 @@ void ConstraintBuilder::ConstructSubmapScanMatcher(
     const Submap* const submap) {
   auto submap_scan_matcher =
       common::make_unique<scan_matching::FastCorrelativeScanMatcher>(
-          submap->high_resolution_hybrid_grid(), submap_nodes,
+          submap->high_resolution_hybrid_grid(),
+          &submap->low_resolution_hybrid_grid(), submap_nodes,
           options_.fast_correlative_scan_matcher_options_3d());
   common::MutexLocker locker(&mutex_);
   submap_scan_matchers_[submap_id] = {&submap->high_resolution_hybrid_grid(),
@@ -167,14 +165,11 @@ ConstraintBuilder::GetSubmapScanMatcher(const mapping::SubmapId& submap_id) {
 void ConstraintBuilder::ComputeConstraint(
     const mapping::SubmapId& submap_id, const mapping::NodeId& node_id,
     bool match_full_submap,
-    mapping::TrajectoryConnectivity* trajectory_connectivity,
     const mapping::TrajectoryNode::Data* const constant_data,
     const transform::Rigid3d& initial_pose,
     std::unique_ptr<OptimizationProblem::Constraint>* constraint) {
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_id);
-  const sensor::PointCloud point_cloud =
-      constant_data->range_data.returns.Decompress();
 
   // The 'constraint_transform' (submap i <- scan j) is computed from:
   // - a 'high_resolution_point_cloud' in scan j and
@@ -184,32 +179,24 @@ void ConstraintBuilder::ComputeConstraint(
   float rotational_score = 0.f;
   float low_resolution_score = 0.f;
 
-  const auto low_resolution_matcher = scan_matching::CreateLowResolutionMatcher(
-      submap_scan_matcher->low_resolution_hybrid_grid,
-      &constant_data->low_resolution_point_cloud);
-
   // Compute 'pose_estimate' in three stages:
   // 1. Fast estimate using the fast correlative scan matcher.
   // 2. Prune if the score is too low.
   // 3. Refine.
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
-            initial_pose.rotation(), constant_data->high_resolution_point_cloud,
-            point_cloud, options_.global_localization_min_score(),
-            low_resolution_matcher, &score, &pose_estimate, &rotational_score,
-            &low_resolution_score)) {
+            initial_pose.rotation(), *constant_data,
+            options_.global_localization_min_score(), &score, &pose_estimate,
+            &rotational_score, &low_resolution_score)) {
       CHECK_GT(score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
       CHECK_GE(submap_id.trajectory_id, 0);
-      trajectory_connectivity->Connect(node_id.trajectory_id,
-                                       submap_id.trajectory_id);
     } else {
       return;
     }
   } else {
     if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
-            initial_pose, constant_data->high_resolution_point_cloud,
-            point_cloud, options_.min_score(), low_resolution_matcher, &score,
+            initial_pose, *constant_data, options_.min_score(), &score,
             &pose_estimate, &rotational_score, &low_resolution_score)) {
       // We've reported a successful local match.
       CHECK_GT(score, options_.min_score());

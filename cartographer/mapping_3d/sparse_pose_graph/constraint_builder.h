@@ -31,7 +31,6 @@
 #include "cartographer/common/math.h"
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
-#include "cartographer/mapping/trajectory_connectivity.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
@@ -85,8 +84,7 @@ class ConstraintBuilder {
   // This performs full-submap matching.
   //
   // The 'gravity_alignment' is the rotation to apply to the point cloud data
-  // to make it approximately gravity aligned. The 'trajectory_connectivity' is
-  // updated if the full-submap match succeeds.
+  // to make it approximately gravity aligned.
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
@@ -95,8 +93,7 @@ class ConstraintBuilder {
       const mapping::NodeId& node_id,
       const mapping::TrajectoryNode::Data* const constant_data,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const Eigen::Quaterniond& gravity_alignment,
-      mapping::TrajectoryConnectivity* trajectory_connectivity);
+      const Eigen::Quaterniond& gravity_alignment);
 
   // Must be called after all computations related to one node have been added.
   void NotifyEndOfScan();
@@ -136,14 +133,10 @@ class ConstraintBuilder {
 
   // Runs in a background thread and does computations for an additional
   // constraint.
-  // If 'match_full_submap' is true, and global localization succeeds, will
-  // connect 'node_id.trajectory_id' and 'submap_id.trajectory_id' in
-  // 'trajectory_connectivity'.
   // As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
       const mapping::SubmapId& submap_id, const mapping::NodeId& node_id,
       bool match_full_submap,
-      mapping::TrajectoryConnectivity* trajectory_connectivity,
       const mapping::TrajectoryNode::Data* const constant_data,
       const transform::Rigid3d& initial_pose,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);

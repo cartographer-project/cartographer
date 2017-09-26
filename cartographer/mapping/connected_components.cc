@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/trajectory_connectivity.h"
+#include "cartographer/mapping/connected_components.h"
 
 #include <algorithm>
 #include <unordered_set>
 
-#include "cartographer/mapping/proto/trajectory_connectivity.pb.h"
+#include "cartographer/mapping/proto/connected_components.pb.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping {
 
-TrajectoryConnectivity::TrajectoryConnectivity()
+ConnectedComponents::ConnectedComponents()
     : lock_(), forest_(), connection_map_() {}
 
-void TrajectoryConnectivity::Add(const int trajectory_id) {
+void ConnectedComponents::Add(const int trajectory_id) {
   common::MutexLocker locker(&lock_);
   forest_.emplace(trajectory_id, trajectory_id);
 }
 
-void TrajectoryConnectivity::Connect(const int trajectory_id_a,
+void ConnectedComponents::Connect(const int trajectory_id_a,
                                      const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
   Union(trajectory_id_a, trajectory_id_b);
@@ -41,7 +41,7 @@ void TrajectoryConnectivity::Connect(const int trajectory_id_a,
   ++connection_map_[sorted_pair];
 }
 
-void TrajectoryConnectivity::Union(const int trajectory_id_a,
+void ConnectedComponents::Union(const int trajectory_id_a,
                                    const int trajectory_id_b) {
   forest_.emplace(trajectory_id_a, trajectory_id_a);
   forest_.emplace(trajectory_id_b, trajectory_id_b);
@@ -50,7 +50,7 @@ void TrajectoryConnectivity::Union(const int trajectory_id_a,
   forest_[representative_a] = representative_b;
 }
 
-int TrajectoryConnectivity::FindSet(const int trajectory_id) {
+int ConnectedComponents::FindSet(const int trajectory_id) {
   auto it = forest_.find(trajectory_id);
   CHECK(it != forest_.end());
   if (it->first != it->second) {
@@ -59,8 +59,12 @@ int TrajectoryConnectivity::FindSet(const int trajectory_id) {
   return it->second;
 }
 
-bool TrajectoryConnectivity::TransitivelyConnected(const int trajectory_id_a,
-                                                   const int trajectory_id_b) {
+bool ConnectedComponents::TransitivelyConnected(const int trajectory_id_a,
+                                                const int trajectory_id_b) {
+  if (trajectory_id_a == trajectory_id_b) {
+    return true;
+  }
+
   common::MutexLocker locker(&lock_);
 
   if (forest_.count(trajectory_id_a) == 0 ||
@@ -70,7 +74,7 @@ bool TrajectoryConnectivity::TransitivelyConnected(const int trajectory_id_a,
   return FindSet(trajectory_id_a) == FindSet(trajectory_id_b);
 }
 
-std::vector<std::vector<int>> TrajectoryConnectivity::ConnectedComponents() {
+std::vector<std::vector<int>> ConnectedComponents::Components() {
   // Map from cluster exemplar -> growing cluster.
   std::unordered_map<int, std::vector<int>> map;
   common::MutexLocker locker(&lock_);
@@ -87,17 +91,28 @@ std::vector<std::vector<int>> TrajectoryConnectivity::ConnectedComponents() {
   return result;
 }
 
-int TrajectoryConnectivity::ConnectionCount(const int trajectory_id_a,
-                                            const int trajectory_id_b) {
+std::vector<int> ConnectedComponents::GetComponent(const int trajectory_id) {
+  const int set_id = FindSet(trajectory_id);
+  std::vector<int> trajectory_ids;
+  for (const auto& entry : forest_) {
+    if (FindSet(entry.first) == set_id) {
+      trajectory_ids.push_back(entry.first);
+    }
+  }
+  return trajectory_ids;
+}
+
+int ConnectedComponents::ConnectionCount(const int trajectory_id_a,
+                                         const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
   const auto it =
       connection_map_.find(std::minmax(trajectory_id_a, trajectory_id_b));
   return it != connection_map_.end() ? it->second : 0;
 }
 
-proto::TrajectoryConnectivity ToProto(
+proto::ConnectedComponents ToProto(
     std::vector<std::vector<int>> connected_components) {
-  proto::TrajectoryConnectivity proto;
+  proto::ConnectedComponents proto;
   for (auto& connected_component : connected_components) {
     std::sort(connected_component.begin(), connected_component.end());
   }
@@ -109,23 +124,6 @@ proto::TrajectoryConnectivity ToProto(
     }
   }
   return proto;
-}
-
-proto::TrajectoryConnectivity::ConnectedComponent FindConnectedComponent(
-    const proto::TrajectoryConnectivity& trajectory_connectivity,
-    const int trajectory_id) {
-  for (const auto& connected_component :
-       trajectory_connectivity.connected_component()) {
-    if (std::find(connected_component.trajectory_id().begin(),
-                  connected_component.trajectory_id().end(),
-                  trajectory_id) != connected_component.trajectory_id().end()) {
-      return connected_component;
-    }
-  }
-
-  proto::TrajectoryConnectivity::ConnectedComponent connected_component;
-  connected_component.add_trajectory_id(trajectory_id);
-  return connected_component;
 }
 
 }  // namespace mapping
