@@ -428,7 +428,7 @@ void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
 }
 
 void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
-                                         const transform::Rigid3d& initial_pose,
+                                         const transform::Rigid3d& pose,
                                          const mapping::proto::Submap& submap) {
   if (!submap.has_submap_3d()) {
     return;
@@ -449,12 +449,11 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   CHECK_EQ(optimized_submap_transforms_.at(trajectory_id).size(),
            submap_id.submap_index);
   optimized_submap_transforms_.at(trajectory_id)
-      .emplace(submap_id.submap_index,
-               sparse_pose_graph::SubmapData{initial_pose});
-  AddWorkItem([this, submap_id, initial_pose]() REQUIRES(mutex_) {
+      .emplace(submap_id.submap_index, sparse_pose_graph::SubmapData{pose});
+  AddWorkItem([this, submap_id, pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
-    optimization_problem_.AddSubmap(submap_id.trajectory_id, initial_pose);
+    optimization_problem_.AddSubmap(submap_id.trajectory_id, pose);
   });
 }
 
