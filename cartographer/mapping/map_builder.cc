@@ -201,17 +201,20 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   // TODO(whess): Not all trajectories should be builders, i.e. support should
   // be added for trajectories without latest pose, options, etc. Appease the
   // trajectory builder for now.
-  proto::TrajectoryBuilderOptions unused_options;
-  unused_options.mutable_trajectory_builder_2d_options()
-      ->mutable_submaps_options()
-      ->set_resolution(0.05);
-  unused_options.mutable_trajectory_builder_3d_options();
+  for (int trajectory_id = 0; trajectory_id < pose_graph.trajectory().size();
+       ++trajectory_id) {
+    proto::TrajectoryBuilderOptions unused_options;
+    unused_options.mutable_trajectory_builder_2d_options()
+        ->mutable_submaps_options()
+        ->set_resolution(0.05);
+    unused_options.mutable_trajectory_builder_3d_options();
 
-  const std::unordered_set<string> unused_sensor_ids;
-  const int map_trajectory_id =
-      AddTrajectoryBuilder(unused_sensor_ids, unused_options);
-  FinishTrajectory(map_trajectory_id);
-  sparse_pose_graph_->FreezeTrajectory(map_trajectory_id);
+    const std::unordered_set<string> unused_sensor_ids;
+    CHECK_EQ(AddTrajectoryBuilder(unused_sensor_ids, unused_options),
+             trajectory_id);
+    FinishTrajectory(trajectory_id);
+    sparse_pose_graph_->FreezeTrajectory(trajectory_id);
+  }
 
   for (;;) {
     proto::SerializedData proto;
@@ -226,16 +229,14 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
           transform::ToRigid3(pose_graph_node.initial_pose());
       const transform::Rigid3d pose =
           transform::ToRigid3(pose_graph_node.pose());
-      sparse_pose_graph_->AddNodeFromProto(map_trajectory_id, initial_pose,
-                                           pose, proto.node());
+      sparse_pose_graph_->AddNodeFromProto(initial_pose, pose, proto.node());
     }
     if (proto.has_submap()) {
       const transform::Rigid3d submap_pose = transform::ToRigid3(
           pose_graph.trajectory(proto.submap().submap_id().trajectory_id())
               .submap(proto.submap().submap_id().submap_index())
               .pose());
-      sparse_pose_graph_->AddSubmapFromProto(map_trajectory_id, submap_pose,
-                                             proto.submap());
+      sparse_pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
     }
   }
   CHECK(reader->eof());

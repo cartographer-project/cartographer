@@ -427,13 +427,15 @@ void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   });
 }
 
-void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
-                                         const transform::Rigid3d& pose,
+void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& pose,
                                          const mapping::proto::Submap& submap) {
   if (!submap.has_submap_3d()) {
     return;
   }
 
+  const mapping::SubmapId proto_submap_id = {submap.submap_id().trajectory_id(),
+                                             submap.submap_id().submap_index()};
+  const int trajectory_id = proto_submap_id.trajectory_id;
   std::shared_ptr<const Submap> submap_ptr =
       std::make_shared<const Submap>(submap.submap_3d());
 
@@ -441,6 +443,7 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   trajectory_connectivity_state_.Add(trajectory_id);
   const mapping::SubmapId submap_id =
       submap_data_.Append(trajectory_id, SubmapData());
+  CHECK_EQ(submap_id, proto_submap_id);
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the optimized pose.
   CHECK_GE(static_cast<size_t>(submap_data_.num_trajectories()),
@@ -457,8 +460,7 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   });
 }
 
-void SparsePoseGraph::AddNodeFromProto(int trajectory_id,
-                                       const transform::Rigid3d& initial_pose,
+void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& initial_pose,
                                        const transform::Rigid3d& pose,
                                        const mapping::proto::Node& node) {
   LOG(FATAL) << "Not yet implemented for 3D.";
