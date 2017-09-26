@@ -101,7 +101,8 @@ void SparsePoseGraph::AddScan(
 
   common::MutexLocker locker(&mutex_);
   trajectory_nodes_.Append(
-      trajectory_id, mapping::TrajectoryNode{constant_data, optimized_pose});
+      trajectory_id,
+      mapping::TrajectoryNode{constant_data, pose, optimized_pose});
   ++num_trajectory_nodes_;
   trajectory_connectivity_state_.Add(trajectory_id);
 

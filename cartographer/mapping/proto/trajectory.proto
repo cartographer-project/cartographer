@@ -21,11 +21,12 @@ import "cartographer/transform/proto/transform.proto";
 option java_outer_classname = "TrajectoryOuterClass";
 
 message Trajectory {
-  // NEXT_ID: 7
+  // NEXT_ID: 8
   message Node {
     optional int64 timestamp = 1;
     // Transform from tracking to map frame.
     optional transform.proto.Rigid3d pose = 5;
+    optional transform.proto.Rigid3d initial_pose = 7;
   }
 
   message Submap {

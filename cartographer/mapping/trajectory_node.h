@@ -54,6 +54,7 @@ struct TrajectoryNode {
   // node is being trimmed, it must survive until all use finishes.
   std::shared_ptr<const Data> constant_data;
 
+  const transform::Rigid3d& initial_pose;
   transform::Rigid3d pose;
 };
 
