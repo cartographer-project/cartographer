@@ -458,6 +458,13 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   });
 }
 
+void SparsePoseGraph::AddNodeFromProto(int trajectory_id,
+                                       const transform::Rigid3d& initial_pose,
+                                       const transform::Rigid3d& pose,
+                                       const mapping::proto::Node& node) {
+  LOG(FATAL) << "Not yet implemented for 3D.";
+}
+
 void SparsePoseGraph::AddTrimmer(
     std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) {
   common::MutexLocker locker(&mutex_);
