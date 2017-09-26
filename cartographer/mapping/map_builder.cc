@@ -170,19 +170,21 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
   }
   // Next we serialize all node data.
   {
-    const auto node_data = sparse_pose_graph_->GetTrajectoryNodes();
+    const auto trajectory_nodes = sparse_pose_graph_->GetTrajectoryNodes();
     for (int trajectory_id = 0;
-         trajectory_id != static_cast<int>(node_data.size()); ++trajectory_id) {
+         trajectory_id != static_cast<int>(trajectory_nodes.size());
+         ++trajectory_id) {
       for (int node_index = 0;
-           node_index != static_cast<int>(node_data[trajectory_id].size());
+           node_index !=
+           static_cast<int>(trajectory_nodes[trajectory_id].size());
            ++node_index) {
         proto::SerializedData proto;
-        auto* const node_data_proto = proto.mutable_node_data();
+        auto* const node_proto = proto.mutable_node();
         // TODO(whess): Handle trimmed data.
-        node_data_proto->mutable_node_id()->set_trajectory_id(trajectory_id);
-        node_data_proto->mutable_node_id()->set_node_index(node_index);
-        *node_data_proto->mutable_trajectory_node() =
-            ToProto(*node_data[trajectory_id][node_index].constant_data);
+        node_proto->mutable_node_id()->set_trajectory_id(trajectory_id);
+        node_proto->mutable_node_id()->set_node_index(node_index);
+        *node_proto->mutable_node_data() =
+            ToProto(*trajectory_nodes[trajectory_id][node_index].constant_data);
         // TODO(whess): Only enable optionally? Resulting pbstream files will be
         // a lot larger now.
         writer->WriteProto(proto);

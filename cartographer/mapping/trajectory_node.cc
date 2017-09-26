@@ -24,8 +24,8 @@
 namespace cartographer {
 namespace mapping {
 
-proto::TrajectoryNode ToProto(const TrajectoryNode::Data& constant_data) {
-  proto::TrajectoryNode proto;
+proto::TrajectoryNodeData ToProto(const TrajectoryNode::Data& constant_data) {
+  proto::TrajectoryNodeData proto;
   proto.set_timestamp(common::ToUniversal(constant_data.time));
   *proto.mutable_gravity_alignment() =
       transform::ToProto(constant_data.gravity_alignment);
@@ -47,7 +47,7 @@ proto::TrajectoryNode ToProto(const TrajectoryNode::Data& constant_data) {
   return proto;
 }
 
-TrajectoryNode::Data FromProto(const proto::TrajectoryNode& proto) {
+TrajectoryNode::Data FromProto(const proto::TrajectoryNodeData& proto) {
   Eigen::VectorXf rotational_scan_matcher_histogram(
       proto.rotational_scan_matcher_histogram_size());
   for (int i = 0; i != proto.rotational_scan_matcher_histogram_size(); ++i) {

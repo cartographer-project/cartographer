@@ -20,7 +20,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/proto/trajectory_node.pb.h"
+#include "cartographer/mapping/proto/trajectory_node_data.pb.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -37,7 +37,7 @@ TEST(TrajectoryNodeTest, ToAndFromProto) {
       sensor::CompressedPointCloud({{-1.f, 2.f, 0.f}}).Decompress(),
       Eigen::VectorXf::Unit(20, 4),
   };
-  const proto::TrajectoryNode proto = ToProto(expected);
+  const proto::TrajectoryNodeData proto = ToProto(expected);
   const TrajectoryNode::Data actual = FromProto(proto);
   EXPECT_EQ(expected.time, actual.time);
   EXPECT_TRUE(actual.gravity_alignment.isApprox(expected.gravity_alignment));
