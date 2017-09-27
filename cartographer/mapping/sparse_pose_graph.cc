@@ -35,6 +35,17 @@ proto::SparsePoseGraph::Constraint::Tag ToProto(
   LOG(FATAL) << "Unsupported tag.";
 }
 
+SparsePoseGraph::Constraint::Tag FromProto(
+    const proto::SparsePoseGraph::Constraint::Tag& proto) {
+  switch (proto) {
+    case proto::SparsePoseGraph::Constraint::INTRA_SUBMAP:
+      return SparsePoseGraph::Constraint::Tag::INTRA_SUBMAP;
+    case proto::SparsePoseGraph::Constraint::INTER_SUBMAP:
+      return SparsePoseGraph::Constraint::Tag::INTER_SUBMAP;
+  }
+  LOG(FATAL) << "Unsupported tag.";
+}
+
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::SparsePoseGraphOptions options;
