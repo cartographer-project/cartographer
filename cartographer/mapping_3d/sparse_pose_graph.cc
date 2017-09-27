@@ -440,6 +440,11 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
+void SparsePoseGraph::AddConstraintsFromProto(
+    const std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) {
+  LOG(FATAL) << "Not yet implemented for 3D.";
+}
+
 void SparsePoseGraph::AddTrimmer(
     std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) {
   common::MutexLocker locker(&mutex_);
