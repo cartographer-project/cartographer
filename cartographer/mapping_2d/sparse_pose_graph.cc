@@ -361,6 +361,7 @@ void SparsePoseGraph::HandleWorkQueue() {
           work_queue_->front()();
           work_queue_->pop_front();
         }
+        LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
         // We have to optimize again.
         HandleWorkQueue();
       });
