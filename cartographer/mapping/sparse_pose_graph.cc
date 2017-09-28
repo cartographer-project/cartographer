@@ -44,6 +44,8 @@ SparsePoseGraph::Constraint::Tag FromProto(
       return SparsePoseGraph::Constraint::Tag::INTRA_SUBMAP;
     case proto::SparsePoseGraph::Constraint::INTER_SUBMAP:
       return SparsePoseGraph::Constraint::Tag::INTER_SUBMAP;
+    case proto::SparsePoseGraph::Constraint::CUSTOM:
+      return SparsePoseGraph::Constraint::Tag::CUSTOM;
   }
   LOG(FATAL) << "Unsupported tag.";
 }
