@@ -552,6 +552,12 @@ std::vector<std::deque<sensor::ImuData>> SparsePoseGraph::GetImuData() {
   return optimization_problem_.imu_data();
 }
 
+std::vector<transform::TransformInterpolationBuffer>
+SparsePoseGraph::GetOdometryData() {
+  common::MutexLocker locker(&mutex_);
+  return optimization_problem_.odometry_data();
+}
+
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   std::vector<Constraint> result;
   common::MutexLocker locker(&mutex_);
