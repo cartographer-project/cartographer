@@ -105,5 +105,9 @@ bool TransformInterpolationBuffer::empty() const {
   return timestamped_transforms_.empty();
 }
 
+size_t TransformInterpolationBuffer::size() const {
+  return timestamped_transforms_.size();
+}
+
 }  // namespace transform
 }  // namespace cartographer

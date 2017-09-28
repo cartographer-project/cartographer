@@ -90,8 +90,8 @@ class SparsePoseGraph {
   virtual void AddNodeFromProto(const transform::Rigid3d& global_pose,
                                 const proto::Node& node) = 0;
 
-  // Adds constraints and IMU data from a proto. Trajectory nodes and submaps
-  // have to be deserialized before calling this function.
+  // Adds constraints, IMU and odometry data from a proto. Trajectory nodes and
+  // submaps have to be deserialized before calling this function.
   virtual void AddDataFromProto(
       std::shared_ptr<const proto::SparsePoseGraph> proto) = 0;
 
