@@ -88,7 +88,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                           const mapping::proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
                         const mapping::proto::Node& node) override;
-  void AddConstraintsFromProto(
+  void AddDataFromProto(
       std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) override;
   void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
