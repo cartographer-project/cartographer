@@ -545,6 +545,12 @@ std::vector<std::deque<sensor::ImuData>> SparsePoseGraph::GetImuData() {
   LOG(FATAL) << "Not yet implemented for 3D.";
 }
 
+std::vector<transform::TransformInterpolationBuffer>
+SparsePoseGraph::GetOdometryData() {
+  common::MutexLocker locker(&mutex_);
+  LOG(FATAL) << "Not yet implemented for 3D.";
+}
+
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   common::MutexLocker locker(&mutex_);
   return constraints_;

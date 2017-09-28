@@ -473,6 +473,26 @@ void SparsePoseGraph::AddDataFromProto(
       }
       LOG(INFO) << "Loaded " << trajectory_proto.imu_data_size()
                 << " IMU measurements for trajectory " << trajectory_id;
+
+      if (trajectory_id <
+          static_cast<int>(optimization_problem_.odometry_data().size())) {
+        CHECK_EQ(optimization_problem_.odometry_data().at(trajectory_id).size(),
+                 0);
+      }
+      if (trajectory_proto.has_odometry_data()) {
+        for (const auto& stamped_transform :
+             trajectory_proto.odometry_data().stamped_transform()) {
+          optimization_problem_.AddOdometerData(
+              trajectory_id,
+              {common::FromUniversal(stamped_transform.timestamp()),
+               transform::ToRigid3(stamped_transform.transform())});
+        }
+        CHECK_EQ(optimization_problem_.odometry_data().at(trajectory_id).size(),
+                 trajectory_proto.odometry_data().stamped_transform_size());
+        LOG(INFO) << "Loaded "
+                  << trajectory_proto.odometry_data().stamped_transform_size()
+                  << " odometry measurements for trajectory " << trajectory_id;
+      }
     }
   });
 }
@@ -550,6 +570,12 @@ SparsePoseGraph::GetTrajectoryNodes() {
 std::vector<std::deque<sensor::ImuData>> SparsePoseGraph::GetImuData() {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_.imu_data();
+}
+
+std::vector<transform::TransformInterpolationBuffer>
+SparsePoseGraph::GetOdometryData() {
+  common::MutexLocker locker(&mutex_);
+  return optimization_problem_.odometry_data();
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {

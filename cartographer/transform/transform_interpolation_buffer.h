@@ -59,6 +59,9 @@ class TransformInterpolationBuffer {
   // Serializes buffer content to a proto.
   proto::TransformInterpolationBuffer ToProto() const;
 
+  // Returns the buffer size.
+  size_t size() const;
+
  private:
   struct TimestampedTransform {
     common::Time time;
