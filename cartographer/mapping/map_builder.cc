@@ -239,7 +239,7 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
     }
   }
   CHECK(reader->eof());
-  sparse_pose_graph_->AddConstraintsFromProto(pose_graph);
+  sparse_pose_graph_->AddDataFromProto(pose_graph);
 }
 
 int MapBuilder::num_trajectory_builders() const {

@@ -426,8 +426,8 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
-void SparsePoseGraph::AddConstraintsFromProto(
-    const std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) {
+void SparsePoseGraph::AddDataFromProto(
+    std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([this, proto]() REQUIRES(mutex_) {
     for (const auto& constraint_proto : proto->constraint()) {
@@ -456,6 +456,22 @@ void SparsePoseGraph::AddConstraintsFromProto(
       constraints_.push_back(Constraint{submap_id, node_id, pose, tag});
     }
     LOG(INFO) << "Loaded " << proto->constraint_size() << " constraints.";
+    for (int trajectory_id = 0; trajectory_id < proto->trajectory().size();
+         ++trajectory_id) {
+      const auto& trajectory_proto = proto->trajectory(trajectory_id);
+      if (trajectory_id <
+          static_cast<int>(optimization_problem_.imu_data().size())) {
+        CHECK_EQ(optimization_problem_.imu_data().at(trajectory_id).size(), 0);
+      }
+      for (const auto& imu_data_proto : trajectory_proto.imu_data()) {
+        optimization_problem_.AddImuData(trajectory_id,
+                                         sensor::FromProto(imu_data_proto));
+      }
+      CHECK_EQ(optimization_problem_.imu_data().at(trajectory_id).size(),
+               trajectory_proto.imu_data_size());
+      LOG(INFO) << "Loaded " << trajectory_proto.imu_data_size()
+                << " IMU measurements for trajectory " << trajectory_id;
+    }
   });
 }
 

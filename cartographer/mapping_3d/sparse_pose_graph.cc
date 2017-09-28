@@ -439,8 +439,8 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
-void SparsePoseGraph::AddConstraintsFromProto(
-    const std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) {
+void SparsePoseGraph::AddDataFromProto(
+    std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) {
   LOG(FATAL) << "Not yet implemented for 3D.";
 }
 
