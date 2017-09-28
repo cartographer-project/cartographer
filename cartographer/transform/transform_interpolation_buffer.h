@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/proto/trajectory.pb.h"
+#include "cartographer/transform/proto/transform_interpolation_buffer.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -31,7 +31,7 @@ class TransformInterpolationBuffer {
  public:
   TransformInterpolationBuffer() = default;
   explicit TransformInterpolationBuffer(
-      const mapping::proto::Trajectory& trajectory);
+      const proto::TransformInterpolationBuffer& proto);
 
   // Adds a new transform to the buffer and removes the oldest transform if the
   // buffer size limit is exceeded.
@@ -54,6 +54,9 @@ class TransformInterpolationBuffer {
 
   // Returns true if the buffer is empty.
   bool empty() const;
+
+  // Serializes buffer content to a proto.
+  proto::TransformInterpolationBuffer ToProto() const;
 
  private:
   struct TimestampedTransform {
