@@ -27,10 +27,10 @@ namespace cartographer {
 namespace transform {
 
 TransformInterpolationBuffer::TransformInterpolationBuffer(
-    const proto::TransformInterpolationBuffer& proto) {
-  for (const auto& stamped_transform_proto : proto.stamped_transform()) {
-    Push(common::FromUniversal(stamped_transform_proto.timestamp()),
-         transform::ToRigid3(stamped_transform_proto.transform()));
+    const mapping::proto::Trajectory& trajectory) {
+  for (const mapping::proto::Trajectory::Node& node : trajectory.node()) {
+    Push(common::FromUniversal(node.timestamp()),
+         transform::ToRigid3(node.pose()));
   }
 }
 
