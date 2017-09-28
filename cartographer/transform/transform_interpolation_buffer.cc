@@ -27,11 +27,24 @@ namespace cartographer {
 namespace transform {
 
 TransformInterpolationBuffer::TransformInterpolationBuffer(
-    const mapping::proto::Trajectory& trajectory) {
-  for (const mapping::proto::Trajectory::Node& node : trajectory.node()) {
-    Push(common::FromUniversal(node.timestamp()),
-         transform::ToRigid3(node.pose()));
+    const proto::TransformInterpolationBuffer& proto) {
+  for (const auto& stamped_transform_proto : proto.stamped_transform()) {
+    Push(common::FromUniversal(stamped_transform_proto.timestamp()),
+         transform::ToRigid3(stamped_transform_proto.transform()));
   }
+}
+
+proto::TransformInterpolationBuffer TransformInterpolationBuffer::ToProto()
+    const {
+  proto::TransformInterpolationBuffer proto;
+  for (const auto& stamped_transform : timestamped_transforms_) {
+    auto* stamped_transform_proto = proto.add_stamped_transform();
+    *stamped_transform_proto->mutable_transform() =
+        transform::ToProto(stamped_transform.transform);
+    stamped_transform_proto->set_timestamp(
+        common::ToUniversal(stamped_transform.time));
+  }
+  return proto;
 }
 
 void TransformInterpolationBuffer::Push(const common::Time time,
