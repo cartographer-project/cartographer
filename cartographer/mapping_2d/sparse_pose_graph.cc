@@ -461,6 +461,7 @@ void SparsePoseGraph::AddDataFromProto(
 
     for (int trajectory_id = 0; trajectory_id < proto->trajectory().size();
          ++trajectory_id) {
+      AddTrajectoryIfNeeded(trajectory_id);
       const auto& trajectory_proto = proto->trajectory(trajectory_id);
       if (trajectory_id <
           static_cast<int>(optimization_problem_.imu_data().size())) {
