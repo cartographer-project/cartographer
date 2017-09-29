@@ -90,6 +90,8 @@ class SparsePoseGraph {
   // Computes optimized poses.
   virtual void RunFinalOptimization() = 0;
 
+  virtual void SetInitialTrajectoryPose(const int trajectory_id, const transform::Rigid3d pose) = 0;
+
   // Gets the current trajectory clusters.
   virtual std::vector<std::vector<int>> GetConnectedTrajectories() = 0;
 

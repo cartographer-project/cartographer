@@ -477,6 +477,10 @@ void SparsePoseGraph::RunFinalOptimization() {
           .max_num_iterations());
 }
 
+void SparsePoseGraph::SetInitialTrajectoryPose(const int trajectory_id, const transform::Rigid3d pose) {
+  LOG(WARNING) << "Initial trajectory pose not yet implemented in 3D. Ignoring pose.";
+}
+
 void SparsePoseGraph::LogResidualHistograms() {
   common::Histogram rotational_residual;
   common::Histogram translational_residual;

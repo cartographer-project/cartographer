@@ -62,6 +62,8 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
         submap_data[trajectory_id].empty()) {
       optimization_problem_.AddSubmap(
           trajectory_id,
+          pose_initialization_map.find(trajectory_id) != pose_initialization_map.end() ?
+          transform::Project2D(pose_initialization_map.at(trajectory_id)) :
           sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0]));
     }
     CHECK_EQ(submap_data[trajectory_id].size(), 1);
@@ -320,6 +322,11 @@ common::Time SparsePoseGraph::GetLatestScanTime(
         time, trajectory_nodes_.at(last_submap_node_id).constant_data->time);
   }
   return time;
+}
+
+void SparsePoseGraph::SetInitialTrajectoryPose(const int trajectory_id, const transform::Rigid3d pose){
+  pose_initialization_map[trajectory_id] = pose;
+  trajectory_connectivity_state_.Connect(0, trajectory_id, common::FromUniversal(0));
 }
 
 void SparsePoseGraph::UpdateTrajectoryConnectivity(
