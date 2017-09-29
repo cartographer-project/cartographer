@@ -196,7 +196,8 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
   }
 }
 
-void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
+void MapBuilder::LoadState(io::ProtoStreamReader* const reader,
+                           bool load_frozen_state) {
   const std::shared_ptr<proto::SparsePoseGraph> pose_graph_proto =
       std::make_shared<proto::SparsePoseGraph>();
   CHECK(reader->ReadProto(pose_graph_proto.get()));
@@ -222,7 +223,9 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
         << "Duplicate trajectory ID: " << trajectory_proto.trajectory_id();
     trajectory_proto.set_trajectory_id(new_trajectory_id);
     FinishTrajectory(new_trajectory_id);
-    sparse_pose_graph_->FreezeTrajectory(new_trajectory_id);
+    if (load_frozen_state) {
+      sparse_pose_graph_->FreezeTrajectory(new_trajectory_id);
+    }
   }
 
   // Apply the calculated remapping to constraints in the SparsePoseGraph proto
