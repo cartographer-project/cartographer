@@ -355,13 +355,13 @@ void SparsePoseGraph::HandleWorkQueue() {
         run_loop_closure_ = false;
         while (!run_loop_closure_) {
           if (work_queue_->empty()) {
-            LOG(INFO) << "We caught up. Hooray!";
             work_queue_.reset();
             return;
           }
           work_queue_->front()();
           work_queue_->pop_front();
         }
+        LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
         // We have to optimize again.
         HandleWorkQueue();
       });
