@@ -467,8 +467,10 @@ void SparsePoseGraph::AddDataFromProto(
         optimization_problem_.AddImuData(trajectory_id,
                                          sensor::FromProto(imu_data_proto));
       }
-      CHECK_EQ(optimization_problem_.imu_data().at(trajectory_id).size(),
-               trajectory_proto.imu_data_size());
+      if (trajectory_proto.imu_data_size() > 0) {
+        CHECK_EQ(optimization_problem_.imu_data().at(trajectory_id).size(),
+                 trajectory_proto.imu_data_size());
+      }
       LOG(INFO) << "Loaded " << trajectory_proto.imu_data_size()
                 << " IMU measurements for trajectory " << trajectory_id;
     }
