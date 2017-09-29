@@ -392,7 +392,6 @@ void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& global_pose,
   optimized_submap_transforms_.Insert(
       submap_id, sparse_pose_graph::SubmapData{global_pose_2d});
   AddWorkItem([this, submap_id, global_pose_2d]() REQUIRES(mutex_) {
-    CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
     optimization_problem_.InsertSubmap(submap_id, global_pose_2d);
   });
@@ -412,7 +411,6 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
                            mapping::TrajectoryNode{constant_data, global_pose});
 
   AddWorkItem([this, node_id, global_pose]() REQUIRES(mutex_) {
-    CHECK_EQ(frozen_trajectories_.count(node_id.trajectory_id), 1);
     const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
     const auto gravity_alignment_inverse = transform::Rigid3d::Rotation(
         constant_data->gravity_alignment.inverse());
