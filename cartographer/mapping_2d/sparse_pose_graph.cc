@@ -449,12 +449,16 @@ void SparsePoseGraph::AddDataFromProto(
       CHECK(trajectory_nodes_.at(node_id).constant_data != nullptr);
       CHECK(submap_data_.at(submap_id).submap != nullptr);
 
+      const Constraint constraint{submap_id, node_id, pose, tag};
+      constraints_.push_back(constraint);
       if (tag == Constraint::Tag::INTRA_SUBMAP) {
         submap_data_.at(submap_id).node_ids.emplace(node_id);
+      } else {  // tag == Constraint::Tag::INTER_SUBMAP
+        UpdateTrajectoryConnectivity(constraint);
       }
-      constraints_.push_back(Constraint{submap_id, node_id, pose, tag});
     }
     LOG(INFO) << "Loaded " << proto->constraint_size() << " constraints.";
+
     for (int trajectory_id = 0; trajectory_id < proto->trajectory().size();
          ++trajectory_id) {
       const auto& trajectory_proto = proto->trajectory(trajectory_id);
