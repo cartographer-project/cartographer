@@ -26,3 +26,12 @@ message TrajectoryBuilderOptions {
       trajectory_builder_3d_options = 2;
   optional bool pure_localization = 3;
 }
+
+message TrajectoryBuilderOptionsWithSensorIds {
+  repeated string sensor_id = 1;
+  optional TrajectoryBuilderOptions trajectory_builder_options = 2;
+}
+
+message AllTrajectoryBuilderOptions {
+  repeated TrajectoryBuilderOptionsWithSensorIds options_with_sensor_ids = 1;
+}

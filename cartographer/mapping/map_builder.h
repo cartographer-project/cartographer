@@ -103,6 +103,10 @@ class MapBuilder {
 
   sensor::Collator sensor_collator_;
   std::vector<std::unique_ptr<mapping::TrajectoryBuilder>> trajectory_builders_;
+  // All options used to initialize trajectory builders are stored here.
+  std::vector<
+      std::unique_ptr<const proto::TrajectoryBuilderOptionsWithSensorIds>>
+      all_trajectory_builder_options_;
 };
 
 }  // namespace mapping
