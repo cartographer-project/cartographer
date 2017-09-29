@@ -180,10 +180,11 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
           .pose.inverse();
 
   const transform::Rigid3d initial_relative_pose =
-      inverse_submap_pose * optimization_problem_.node_data()
-                                .at(node_id.trajectory_id)
-                                .at(node_id.node_index)
-                                .pose;
+      inverse_submap_pose *
+      optimization_problem_.node_data()
+          .at(node_id.trajectory_id)
+          .at(node_id.node_index)
+          .pose;
 
   std::vector<mapping::TrajectoryNode> submap_nodes;
   for (const mapping::NodeId& submap_node_id :
@@ -199,8 +200,9 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
           node_id.trajectory_id, submap_id.trajectory_id);
   if (node_id.trajectory_id == submap_id.trajectory_id ||
       scan_time <
-          last_connection_time + common::FromSeconds(
-              options_.global_constraint_search_after_n_seconds())) {
+          last_connection_time +
+              common::FromSeconds(
+                  options_.global_constraint_search_after_n_seconds())) {
     // If the scan and the submap belong to the same trajectory or if there has
     // been a recent global constraint that ties that scan's trajectory to the
     // submap's trajectory, it suffices to do a match constrained to a local
@@ -210,22 +212,22 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
         trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
         initial_relative_pose);
   } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
-      // In this situation, 'initial_relative_pose' is:
-      //
-      // submap <- global map 2 <- global map 1 <- tracking
-      //               (agreeing on gravity)
-      //
-      // Since they possibly came from two disconnected trajectories, the only
-      // guaranteed connection between the tracking and the submap frames is
-      // an agreement on the direction of gravity. Therefore, excluding yaw,
-      // 'initial_relative_pose.rotation()' is a good estimate of the relative
-      // orientation of the point cloud in the submap frame. Finding the correct
-      // yaw component will be handled by the matching procedure in the
-      // FastCorrelativeScanMatcher, and the given yaw is essentially ignored.
-      constraint_builder_.MaybeAddGlobalConstraint(
-          submap_id, submap_data_.at(submap_id).submap.get(), node_id,
-          trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
-          initial_relative_pose.rotation());
+    // In this situation, 'initial_relative_pose' is:
+    //
+    // submap <- global map 2 <- global map 1 <- tracking
+    //               (agreeing on gravity)
+    //
+    // Since they possibly came from two disconnected trajectories, the only
+    // guaranteed connection between the tracking and the submap frames is
+    // an agreement on the direction of gravity. Therefore, excluding yaw,
+    // 'initial_relative_pose.rotation()' is a good estimate of the relative
+    // orientation of the point cloud in the submap frame. Finding the correct
+    // yaw component will be handled by the matching procedure in the
+    // FastCorrelativeScanMatcher, and the given yaw is essentially ignored.
+    constraint_builder_.MaybeAddGlobalConstraint(
+        submap_id, submap_data_.at(submap_id).submap.get(), node_id,
+        trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
+        initial_relative_pose.rotation());
   }
 }
 
@@ -327,10 +329,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
 }
 
 common::Time SparsePoseGraph::GetLatestScanTime(
-    const mapping::NodeId& node_id,
-    const mapping::SubmapId& submap_id) const {
-  common::Time time =
-      trajectory_nodes_.at(node_id).constant_data->time;
+    const mapping::NodeId& node_id, const mapping::SubmapId& submap_id) const {
+  common::Time time = trajectory_nodes_.at(node_id).constant_data->time;
   const SubmapData& submap_data = submap_data_.at(submap_id);
   if (!submap_data.node_ids.empty()) {
     const mapping::NodeId last_submap_node_id =
@@ -399,21 +399,19 @@ void SparsePoseGraph::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. *
-                         (constraint_builder_.GetNumFinishedScans() -
-                          num_finished_scans_at_start) /
+                  << 100. * (constraint_builder_.GetNumFinishedScans() -
+                             num_finished_scans_at_start) /
                          (num_trajectory_nodes_ - num_finished_scans_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone(
-      [this, &notification](
-          const sparse_pose_graph::ConstraintBuilder::Result& result) {
-        common::MutexLocker locker(&mutex_);
-        constraints_.insert(constraints_.end(), result.begin(), result.end());
-        notification = true;
-      });
+  constraint_builder_.WhenDone([this, &notification](
+      const sparse_pose_graph::ConstraintBuilder::Result& result) {
+    common::MutexLocker locker(&mutex_);
+    constraints_.insert(constraints_.end(), result.begin(), result.end());
+    notification = true;
+  });
   locker.Await([&notification]() { return notification; });
 }
 
@@ -477,8 +475,11 @@ void SparsePoseGraph::RunFinalOptimization() {
           .max_num_iterations());
 }
 
-void SparsePoseGraph::SetInitialTrajectoryPose(const int trajectory_id, const transform::Rigid3d pose) {
-  LOG(WARNING) << "Initial trajectory pose not yet implemented in 3D. Ignoring pose.";
+void SparsePoseGraph::SetInitialTrajectoryPose(const int trajectory_id,
+                                               const transform::Rigid3d& pose,
+                                               const common::Time& time) {
+  LOG(WARNING)
+      << "Initial trajectory pose not yet implemented in 3D. Ignoring pose.";
 }
 
 void SparsePoseGraph::LogResidualHistograms() {

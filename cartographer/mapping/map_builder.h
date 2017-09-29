@@ -59,11 +59,11 @@ class MapBuilder {
   int AddTrajectoryBuilder(
       const std::unordered_set<string>& expected_sensor_ids,
       const proto::TrajectoryBuilderOptions& trajectory_options,
-      const transform::Rigid3d& initial_pose);
+      const transform::Rigid3d& initial_pose, const common::Time& time);
 
   int AddTrajectoryBuilder(
-      const std::unordered_set<string> &expected_sensor_ids,
-      const proto::TrajectoryBuilderOptions &trajectory_options);
+      const std::unordered_set<string>& expected_sensor_ids,
+      const proto::TrajectoryBuilderOptions& trajectory_options);
 
   // Returns the TrajectoryBuilder corresponding to the specified
   // 'trajectory_id'.

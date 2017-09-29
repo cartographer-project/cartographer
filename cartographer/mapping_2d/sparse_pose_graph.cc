@@ -62,9 +62,10 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
         submap_data[trajectory_id].empty()) {
       optimization_problem_.AddSubmap(
           trajectory_id,
-          pose_initialization_map.find(trajectory_id) != pose_initialization_map.end() ?
-          transform::Project2D(pose_initialization_map.at(trajectory_id)) :
-          sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0]));
+          pose_initialization_map.find(trajectory_id) !=
+                  pose_initialization_map.end()
+              ? transform::Project2D(pose_initialization_map.at(trajectory_id))
+              : sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0]));
     }
     CHECK_EQ(submap_data[trajectory_id].size(), 1);
     const mapping::SubmapId submap_id{trajectory_id, 0};
@@ -179,10 +180,12 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
   const common::Time last_connection_time =
       trajectory_connectivity_state_.LastConnectionTime(
           node_id.trajectory_id, submap_id.trajectory_id);
+
   if (node_id.trajectory_id == submap_id.trajectory_id ||
       scan_time <
-          last_connection_time + common::FromSeconds(
-              options_.global_constraint_search_after_n_seconds())) {
+          last_connection_time +
+              common::FromSeconds(
+                  options_.global_constraint_search_after_n_seconds())) {
     // If the scan and the submap belong to the same trajectory or if there has
     // been a recent global constraint that ties that scan's trajectory to the
     // submap's trajectory, it suffices to do a match constrained to a local
@@ -310,10 +313,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
 }
 
 common::Time SparsePoseGraph::GetLatestScanTime(
-    const mapping::NodeId& node_id,
-    const mapping::SubmapId& submap_id) const {
-  common::Time time =
-      trajectory_nodes_.at(node_id).constant_data->time;
+    const mapping::NodeId& node_id, const mapping::SubmapId& submap_id) const {
+  common::Time time = trajectory_nodes_.at(node_id).constant_data->time;
   const SubmapData& submap_data = submap_data_.at(submap_id);
   if (!submap_data.node_ids.empty()) {
     const mapping::NodeId last_submap_node_id =
@@ -324,9 +325,16 @@ common::Time SparsePoseGraph::GetLatestScanTime(
   return time;
 }
 
-void SparsePoseGraph::SetInitialTrajectoryPose(const int trajectory_id, const transform::Rigid3d pose){
-  pose_initialization_map[trajectory_id] = pose;
-  trajectory_connectivity_state_.Connect(0, trajectory_id, common::FromUniversal(0));
+void SparsePoseGraph::SetInitialTrajectoryPose(const int trajectory_id,
+                                               const transform::Rigid3d& pose,
+                                               const common::Time& time) {
+  {
+    common::MutexLocker locker(&mutex_);
+    pose_initialization_map[trajectory_id] = pose;
+    trajectory_connectivity_state_.Add(trajectory_id);
+    trajectory_connectivity_state_.Connect(0, trajectory_id,
+                                           time);
+  }
 }
 
 void SparsePoseGraph::UpdateTrajectoryConnectivity(
