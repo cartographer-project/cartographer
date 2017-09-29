@@ -474,8 +474,10 @@ void SparsePoseGraph::AddDataFromProto(
       LOG(INFO) << "Loaded " << trajectory_proto.imu_data_size()
                 << " IMU measurements for trajectory " << trajectory_id;
 
-      if (trajectory_id < static_cast<int>(GetOdometryData().size())) {
-        CHECK_EQ(GetOdometryData().at(trajectory_id).size(), 0);
+      if (trajectory_id <
+          static_cast<int>(optimization_problem_.odometry_data().size())) {
+        CHECK_EQ(optimization_problem_.odometry_data().at(trajectory_id).size(),
+                 0);
       }
       if (trajectory_proto.has_odometry_data()) {
         for (const auto& stamped_transform :
@@ -485,7 +487,7 @@ void SparsePoseGraph::AddDataFromProto(
               {common::FromUniversal(stamped_transform.timestamp()),
                transform::ToRigid3(stamped_transform.transform())});
         }
-        CHECK_EQ(GetOdometryData().at(trajectory_id).size(),
+        CHECK_EQ(optimization_problem_.odometry_data().at(trajectory_id).size(),
                  trajectory_proto.odometry_data().stamped_transform_size());
         LOG(INFO) << "Loaded "
                   << trajectory_proto.odometry_data().stamped_transform_size()
