@@ -289,16 +289,13 @@ common::Time SparsePoseGraph::GetLatestScanTime(
 }
 
 void SparsePoseGraph::UpdateTrajectoryConnectivity(
-    const sparse_pose_graph::ConstraintBuilder::Result& result) {
-  for (const Constraint& constraint : result) {
-    CHECK_EQ(constraint.tag,
-             mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-    const common::Time time =
-        GetLatestScanTime(constraint.node_id, constraint.submap_id);
-    trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
-                                           constraint.submap_id.trajectory_id,
-                                           time);
-  }
+    const Constraint& constraint) {
+  CHECK_EQ(constraint.tag, mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
+  const common::Time time =
+      GetLatestScanTime(constraint.node_id, constraint.submap_id);
+  trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
+                                         constraint.submap_id.trajectory_id,
+                                         time);
 }
 
 void SparsePoseGraph::HandleWorkQueue() {
@@ -311,7 +308,9 @@ void SparsePoseGraph::HandleWorkQueue() {
         RunOptimization();
 
         common::MutexLocker locker(&mutex_);
-        UpdateTrajectoryConnectivity(result);
+        for (const auto& constraint : result) {
+          UpdateTrajectoryConnectivity(constraint);
+        }
         TrimmingHandle trimming_handle(this);
         for (auto& trimmer : trimmers_) {
           trimmer->Trim(&trimming_handle);

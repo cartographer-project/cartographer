@@ -177,8 +177,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       REQUIRES(mutex_);
 
   // Updates the trajectory connectivity structure with the new constraints.
-  void UpdateTrajectoryConnectivity(
-      const sparse_pose_graph::ConstraintBuilder::Result& result)
+  void UpdateTrajectoryConnectivity(const Constraint& constraint)
       REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
