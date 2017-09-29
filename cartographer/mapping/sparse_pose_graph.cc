@@ -110,11 +110,11 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   }
 
   const auto all_imu_data = GetImuData();
-  for (int trajectory_id = 0; trajectory_id < all_imu_data.size();
-       ++trajectory_id) {
-    const auto& single_trajectory_imu_data = all_imu_data.at(trajectory_id);
-    for (const auto& imu_data : single_trajectory_imu_data) {
-      auto* imu_data_proto = trajectory(trajectory_id)->add_imu_data();
+  for (int trajectory_id = 0;
+       trajectory_id < static_cast<int>(all_imu_data.size()); ++trajectory_id) {
+    const auto &single_trajectory_imu_data = all_imu_data.at(trajectory_id);
+    for (const auto &imu_data : single_trajectory_imu_data) {
+      auto *imu_data_proto = trajectory(trajectory_id)->add_imu_data();
       *imu_data_proto = sensor::ToProto(imu_data);
     }
   }
