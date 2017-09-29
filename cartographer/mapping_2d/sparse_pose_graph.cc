@@ -451,10 +451,14 @@ void SparsePoseGraph::AddDataFromProto(
 
       const Constraint constraint{submap_id, node_id, pose, tag};
       constraints_.push_back(constraint);
-      if (tag == Constraint::Tag::INTRA_SUBMAP) {
-        submap_data_.at(submap_id).node_ids.emplace(node_id);
-      } else {  // tag == Constraint::Tag::INTER_SUBMAP
-        UpdateTrajectoryConnectivity(constraint);
+      switch (tag) {
+        case Constraint::Tag::INTRA_SUBMAP:
+          submap_data_.at(submap_id).node_ids.emplace(node_id);
+          break;
+
+        case Constraint::Tag::INTER_SUBMAP:
+          UpdateTrajectoryConnectivity(constraint);
+          break;
       }
     }
     LOG(INFO) << "Loaded " << proto->constraint_size() << " constraints.";
