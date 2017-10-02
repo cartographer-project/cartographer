@@ -286,5 +286,11 @@ int MapBuilder::num_trajectory_builders() const {
 
 SparsePoseGraph* MapBuilder::sparse_pose_graph() { return sparse_pose_graph_; }
 
+const std::vector<
+    std::unique_ptr<const proto::TrajectoryBuilderOptionsWithSensorIds>>&
+MapBuilder::GetAllTrajectoryBuilderOptions() const {
+  return all_trajectory_builder_options_;
+}
+
 }  // namespace mapping
 }  // namespace cartographer

@@ -93,6 +93,10 @@ class MapBuilder {
 
   mapping::SparsePoseGraph* sparse_pose_graph();
 
+  const std::vector<
+      std::unique_ptr<const proto::TrajectoryBuilderOptionsWithSensorIds>>&
+  GetAllTrajectoryBuilderOptions() const;
+
  private:
   const proto::MapBuilderOptions options_;
   common::ThreadPool thread_pool_;
