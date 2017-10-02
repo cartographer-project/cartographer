@@ -648,12 +648,68 @@ SparsePoseGraph::TrimmingHandle::TrimmingHandle(SparsePoseGraph* const parent)
 
 int SparsePoseGraph::TrimmingHandle::num_submaps(
     const int trajectory_id) const {
-  LOG(FATAL) << "Not yet implemented for 3D.";
+  return parent_->optimization_problem_.submap_data().at(trajectory_id).size();
 }
 
 void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
     const mapping::SubmapId& submap_id) {
-  LOG(FATAL) << "Not yet implemented for 3D.";
+  // TODO(hrapp): We have to make sure that the trajectory has been finished
+  // if we want to delete the last submaps.
+  CHECK(parent_->submap_data_.at(submap_id).state == SubmapState::kFinished);
+
+  // Compile all nodes that are still INTRA_SUBMAP constrained once the submap
+  // with 'submap_id' is gone.
+  std::set<mapping::NodeId> nodes_to_retain;
+  for (const Constraint& constraint : parent_->constraints_) {
+    if (constraint.tag == Constraint::Tag::INTRA_SUBMAP &&
+        constraint.submap_id != submap_id) {
+      nodes_to_retain.insert(constraint.node_id);
+    }
+  }
+  // Remove all 'constraints_' related to 'submap_id'.
+  std::set<mapping::NodeId> nodes_to_remove;
+  {
+    std::vector<Constraint> constraints;
+    for (const Constraint& constraint : parent_->constraints_) {
+      if (constraint.submap_id == submap_id) {
+        if (constraint.tag == Constraint::Tag::INTRA_SUBMAP &&
+            nodes_to_retain.count(constraint.node_id) == 0) {
+          // This node will no longer be INTRA_SUBMAP contrained and has to be
+          // removed.
+          nodes_to_remove.insert(constraint.node_id);
+        }
+      } else {
+        constraints.push_back(constraint);
+      }
+    }
+    parent_->constraints_ = std::move(constraints);
+  }
+  // Remove all 'constraints_' related to 'nodes_to_remove'.
+  {
+    std::vector<Constraint> constraints;
+    for (const Constraint& constraint : parent_->constraints_) {
+      if (nodes_to_remove.count(constraint.node_id) == 0) {
+        constraints.push_back(constraint);
+      }
+    }
+    parent_->constraints_ = std::move(constraints);
+  }
+
+  // Mark the submap with 'submap_id' as trimmed and remove its data.
+  auto& submap_data = parent_->submap_data_.at(submap_id);
+  CHECK(submap_data.state == SubmapState::kFinished);
+  submap_data.state = SubmapState::kTrimmed;
+  CHECK(submap_data.submap != nullptr);
+  submap_data.submap.reset();
+  parent_->constraint_builder_.DeleteScanMatcher(submap_id);
+  parent_->optimization_problem_.TrimSubmap(submap_id);
+
+  // Mark the 'nodes_to_remove' as trimmed and remove their data.
+  for (const mapping::NodeId& node_id : nodes_to_remove) {
+    CHECK(!parent_->trajectory_nodes_.at(node_id).trimmed());
+    parent_->trajectory_nodes_.at(node_id).constant_data.reset();
+    parent_->optimization_problem_.TrimTrajectoryNode(node_id);
+  }
 }
 
 }  // namespace mapping_3d

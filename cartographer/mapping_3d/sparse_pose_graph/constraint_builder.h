@@ -105,6 +105,9 @@ class ConstraintBuilder {
   // Returns the number of consecutive finished scans.
   int GetNumFinishedScans();
 
+  // Delete data related to 'submap_id'.
+  void DeleteScanMatcher(const mapping::SubmapId& submap_id);
+
  private:
   struct SubmapScanMatcher {
     const HybridGrid* high_resolution_hybrid_grid;
