@@ -72,8 +72,10 @@ int MapBuilder::AddTrajectoryBuilder(
     const std::unordered_set<string>& expected_sensor_ids,
     const proto::TrajectoryBuilderOptions& trajectory_options,
     const transform::Rigid3d& initial_pose, const common::Time& time) {
-  const int trajectory_id = AddTrajectoryBuilder(expected_sensor_ids, trajectory_options);
-  sparse_pose_graph_->SetInitialTrajectoryPose(trajectory_id, initial_pose, time);
+  const int trajectory_id =
+      AddTrajectoryBuilder(expected_sensor_ids, trajectory_options);
+  sparse_pose_graph_->SetInitialTrajectoryPose(trajectory_id, initial_pose,
+                                               time);
   return trajectory_id;
 }
 
