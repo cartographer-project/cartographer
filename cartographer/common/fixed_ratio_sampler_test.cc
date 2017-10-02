@@ -29,11 +29,10 @@ TEST(FixedRatioSamplerTest, AlwaysTrue) {
   }
 }
 
-TEST(FixedRatioSamplerTest, AlwaysFalse) {
-  FixedRatioSampler fixed_ratio_sampler(0.);
-  for (int i = 0; i < 100; ++i) {
-    EXPECT_FALSE(fixed_ratio_sampler.Pulse());
-  }
+TEST(FixedRatioSamplerTest, NonSensicalRatio) {
+  EXPECT_DEATH(FixedRatioSampler(0.), "ratio");
+  EXPECT_DEATH(FixedRatioSampler(2.), "ratio");
+  EXPECT_DEATH(FixedRatioSampler(-0.1), "ratio");
 }
 
 TEST(FixedRatioSamplerTest, SometimesTrue) {
