@@ -223,7 +223,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   bool run_loop_closure_ GUARDED_BY(mutex_) = false;
 
   // Schedules optimization (i.e. loop closure) to run.
-  void DispatchOptimization();
+  void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
   sparse_pose_graph::OptimizationProblem optimization_problem_;
