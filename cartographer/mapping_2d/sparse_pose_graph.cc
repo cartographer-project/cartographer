@@ -448,7 +448,7 @@ void SparsePoseGraph::WaitForAllComputations() {
   while (!locker.AwaitWithTimeout(
       [this]() REQUIRES(mutex_) {
         return constraint_builder_.GetNumFinishedScans() ==
-               num_trajectory_nodes_;
+               num_trajectory_nodes_ && work_queue_ == nullptr;
       },
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
