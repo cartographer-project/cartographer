@@ -74,7 +74,8 @@ std::vector<mapping::SubmapId> SparsePoseGraph::InitializeGlobalSubmapPoses(
     CHECK_EQ(1, submap_data.SizeOfTrajectoryOrZero(trajectory_id));
     const mapping::SubmapId submap_id{trajectory_id, 0};
     CHECK(submap_data_.at(submap_id).submap == insertion_submaps.front());
-    if (optimization_problem_.missing_submaps().count(submap_id)) {
+    if (optimization_problem_.missing_submaps().count(submap_id) &&
+        num_priority_work_items_ == 0) {
       DispatchOptimization();
     }
     return {submap_id};
@@ -448,7 +449,8 @@ void SparsePoseGraph::WaitForAllComputations() {
   while (!locker.AwaitWithTimeout(
       [this]() REQUIRES(mutex_) {
         return constraint_builder_.GetNumFinishedScans() ==
-               num_trajectory_nodes_ && work_queue_ == nullptr;
+                   num_trajectory_nodes_ &&
+               work_queue_ == nullptr;
       },
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
