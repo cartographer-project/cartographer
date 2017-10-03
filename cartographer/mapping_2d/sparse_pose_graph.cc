@@ -583,14 +583,19 @@ void SparsePoseGraph::AddTrimmer(
 }
 
 void SparsePoseGraph::RunFinalOptimization() {
+  {
+    common::MutexLocker locker(&mutex_);
+    AddWorkItem([this]() REQUIRES(mutex_) {
+      optimization_problem_.SetMaxNumIterations(
+          options_.max_num_final_iterations());
+      DispatchOptimization();
+    });
+  }
   WaitForAllComputations();
-  optimization_problem_.SetMaxNumIterations(
-      options_.max_num_final_iterations());
-  RunOptimization();
-  optimization_problem_.SetMaxNumIterations(
+  /*optimization_problem_.SetMaxNumIterations(
       options_.optimization_problem_options()
           .ceres_solver_options()
-          .max_num_iterations());
+          .max_num_iterations());*/
 }
 
 void SparsePoseGraph::RunOptimization() {
