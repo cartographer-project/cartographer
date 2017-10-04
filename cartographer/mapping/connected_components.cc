@@ -34,7 +34,7 @@ void ConnectedComponents::Add(const int trajectory_id) {
 }
 
 void ConnectedComponents::Connect(const int trajectory_id_a,
-                                     const int trajectory_id_b) {
+                                  const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
   Union(trajectory_id_a, trajectory_id_b);
   auto sorted_pair = std::minmax(trajectory_id_a, trajectory_id_b);
@@ -42,7 +42,7 @@ void ConnectedComponents::Connect(const int trajectory_id_a,
 }
 
 void ConnectedComponents::Union(const int trajectory_id_a,
-                                   const int trajectory_id_b) {
+                                const int trajectory_id_b) {
   forest_.emplace(trajectory_id_a, trajectory_id_a);
   forest_.emplace(trajectory_id_b, trajectory_id_b);
   const int representative_a = FindSet(trajectory_id_a);

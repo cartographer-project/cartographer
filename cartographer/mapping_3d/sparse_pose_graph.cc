@@ -199,8 +199,9 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
           node_id.trajectory_id, submap_id.trajectory_id);
   if (node_id.trajectory_id == submap_id.trajectory_id ||
       scan_time <
-          last_connection_time + common::FromSeconds(
-              options_.global_constraint_search_after_n_seconds())) {
+          last_connection_time +
+              common::FromSeconds(
+                  options_.global_constraint_search_after_n_seconds())) {
     // If the scan and the submap belong to the same trajectory or if there has
     // been a recent global constraint that ties that scan's trajectory to the
     // submap's trajectory, it suffices to do a match constrained to a local
@@ -210,22 +211,22 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
         trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
         initial_relative_pose);
   } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
-      // In this situation, 'initial_relative_pose' is:
-      //
-      // submap <- global map 2 <- global map 1 <- tracking
-      //               (agreeing on gravity)
-      //
-      // Since they possibly came from two disconnected trajectories, the only
-      // guaranteed connection between the tracking and the submap frames is
-      // an agreement on the direction of gravity. Therefore, excluding yaw,
-      // 'initial_relative_pose.rotation()' is a good estimate of the relative
-      // orientation of the point cloud in the submap frame. Finding the correct
-      // yaw component will be handled by the matching procedure in the
-      // FastCorrelativeScanMatcher, and the given yaw is essentially ignored.
-      constraint_builder_.MaybeAddGlobalConstraint(
-          submap_id, submap_data_.at(submap_id).submap.get(), node_id,
-          trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
-          initial_relative_pose.rotation());
+    // In this situation, 'initial_relative_pose' is:
+    //
+    // submap <- global map 2 <- global map 1 <- tracking
+    //               (agreeing on gravity)
+    //
+    // Since they possibly came from two disconnected trajectories, the only
+    // guaranteed connection between the tracking and the submap frames is
+    // an agreement on the direction of gravity. Therefore, excluding yaw,
+    // 'initial_relative_pose.rotation()' is a good estimate of the relative
+    // orientation of the point cloud in the submap frame. Finding the correct
+    // yaw component will be handled by the matching procedure in the
+    // FastCorrelativeScanMatcher, and the given yaw is essentially ignored.
+    constraint_builder_.MaybeAddGlobalConstraint(
+        submap_id, submap_data_.at(submap_id).submap.get(), node_id,
+        trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
+        initial_relative_pose.rotation());
   }
 }
 
@@ -327,10 +328,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
 }
 
 common::Time SparsePoseGraph::GetLatestScanTime(
-    const mapping::NodeId& node_id,
-    const mapping::SubmapId& submap_id) const {
-  common::Time time =
-      trajectory_nodes_.at(node_id).constant_data->time;
+    const mapping::NodeId& node_id, const mapping::SubmapId& submap_id) const {
+  common::Time time = trajectory_nodes_.at(node_id).constant_data->time;
   const SubmapData& submap_data = submap_data_.at(submap_id);
   if (!submap_data.node_ids.empty()) {
     const mapping::NodeId last_submap_node_id =

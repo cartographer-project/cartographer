@@ -37,7 +37,7 @@ TEST(ConnectedComponentsTest, TransitivelyConnected) {
          ++trajectory_b) {
       EXPECT_EQ(trajectory_a == trajectory_b,
                 connected_components.TransitivelyConnected(trajectory_a,
-                                                              trajectory_b));
+                                                           trajectory_b));
     }
   }
 

@@ -179,8 +179,9 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
           node_id.trajectory_id, submap_id.trajectory_id);
   if (node_id.trajectory_id == submap_id.trajectory_id ||
       scan_time <
-          last_connection_time + common::FromSeconds(
-              options_.global_constraint_search_after_n_seconds())) {
+          last_connection_time +
+              common::FromSeconds(
+                  options_.global_constraint_search_after_n_seconds())) {
     // If the scan and the submap belong to the same trajectory or if there has
     // been a recent global constraint that ties that scan's trajectory to the
     // submap's trajectory, it suffices to do a match constrained to a local
@@ -308,10 +309,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
 }
 
 common::Time SparsePoseGraph::GetLatestScanTime(
-    const mapping::NodeId& node_id,
-    const mapping::SubmapId& submap_id) const {
-  common::Time time =
-      trajectory_nodes_.at(node_id).constant_data->time;
+    const mapping::NodeId& node_id, const mapping::SubmapId& submap_id) const {
+  common::Time time = trajectory_nodes_.at(node_id).constant_data->time;
   const SubmapData& submap_data = submap_data_.at(submap_id);
   if (!submap_data.node_ids.empty()) {
     const mapping::NodeId last_submap_node_id =
@@ -380,19 +379,21 @@ void SparsePoseGraph::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. * (constraint_builder_.GetNumFinishedScans() -
-                             num_finished_scans_at_start) /
+                  << 100. *
+                         (constraint_builder_.GetNumFinishedScans() -
+                          num_finished_scans_at_start) /
                          (num_trajectory_nodes_ - num_finished_scans_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone([this, &notification](
-      const sparse_pose_graph::ConstraintBuilder::Result& result) {
-    common::MutexLocker locker(&mutex_);
-    constraints_.insert(constraints_.end(), result.begin(), result.end());
-    notification = true;
-  });
+  constraint_builder_.WhenDone(
+      [this, &notification](
+          const sparse_pose_graph::ConstraintBuilder::Result& result) {
+        common::MutexLocker locker(&mutex_);
+        constraints_.insert(constraints_.end(), result.begin(), result.end());
+        notification = true;
+      });
   locker.Await([&notification]() { return notification; });
 }
 
