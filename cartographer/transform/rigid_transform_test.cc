@@ -28,9 +28,7 @@ namespace {
 template <typename T>
 class RigidTransformTest : public ::testing::Test {
  protected:
-  T eps() {
-    return std::numeric_limits<T>::epsilon();
-  }
+  T eps() { return std::numeric_limits<T>::epsilon(); }
 
   Rigid2<T> GetRandomRigid2() {
     const T x = T(0.7) * distribution_(prng_);

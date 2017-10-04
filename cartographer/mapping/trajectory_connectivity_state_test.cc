@@ -87,5 +87,5 @@ TEST(TrajectoryConnectivityStateTest, JoinTwoComponents) {
   EXPECT_EQ(state.LastConnectionTime(0, 1), common::FromUniversal(123456));
 }
 
-}  // namespace cartographer
 }  // namespace mapping
+}  // namespace cartographer
