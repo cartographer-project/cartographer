@@ -35,7 +35,7 @@ namespace scan_matching {
 //
 // Returns true in the case of successful localization. The output parameters
 // should not be trusted if the function returns false. The 'cutoff' and
-// 'best_score' are in the range [0.0, 1.0].
+// 'best_score' are in the range [0., 1.].
 bool PerformGlobalLocalization(
     float cutoff, const cartographer::sensor::AdaptiveVoxelFilter& voxel_filter,
     const std::vector<

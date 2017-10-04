@@ -187,7 +187,7 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
   unperturbed_point_cloud.emplace_back(0.f, 0.5f, 0.f);
   unperturbed_point_cloud.emplace_back(0.25f, 1.6f, 0.f);
   unperturbed_point_cloud.emplace_back(2.5f, 0.5f, 0.f);
-  unperturbed_point_cloud.emplace_back(2.0f, 1.8f, 0.f);
+  unperturbed_point_cloud.emplace_back(2.f, 1.8f, 0.f);
 
   for (int i = 0; i != 20; ++i) {
     const transform::Rigid2f perturbation(

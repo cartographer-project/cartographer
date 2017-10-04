@@ -99,9 +99,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<std::vector<mapping::TrajectoryNode>> GetTrajectoryNodes()
       override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
-  common::Time GetLatestScanTime(const mapping::NodeId& node_id,
-                                 const mapping::SubmapId& submap_id) const
-      REQUIRES(mutex_);
 
  private:
   // The current state of the submap in the background threads. When this
@@ -156,11 +153,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // optimization being run at a time.
   void RunOptimization() EXCLUDES(mutex_);
 
-  // Updates the trajectory connectivity structure with the new constraints.
-  void UpdateTrajectoryConnectivity(
-      const sparse_pose_graph::ConstraintBuilder::Result& result)
-      REQUIRES(mutex_);
-
   // Computes the local to global frame transform based on the given optimized
   // 'submap_transforms'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
@@ -170,6 +162,15 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   mapping::SparsePoseGraph::SubmapData GetSubmapDataUnderLock(
       const mapping::SubmapId& submap_id) REQUIRES(mutex_);
+
+  common::Time GetLatestScanTime(const mapping::NodeId& node_id,
+                                 const mapping::SubmapId& submap_id) const
+      REQUIRES(mutex_);
+
+  // Updates the trajectory connectivity structure with the new constraints.
+  void UpdateTrajectoryConnectivity(
+      const sparse_pose_graph::ConstraintBuilder::Result& result)
+      REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
   common::Mutex mutex_;
