@@ -93,6 +93,20 @@ void OptimizationProblem::AddTrajectoryNode(
   ++trajectory_data.next_node_index;
 }
 
+void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
+  auto& node_data = node_data_.at(node_id.trajectory_id);
+  CHECK(node_data.erase(node_id.node_index));
+
+  if (!node_data.empty() &&
+      node_id.trajectory_id < static_cast<int>(imu_data_.size())) {
+    const common::Time node_time = node_data.begin()->second.time;
+    auto& imu_data = imu_data_.at(node_id.trajectory_id);
+    while (imu_data.size() > 1 && imu_data[1].time <= node_time) {
+      imu_data.pop_front();
+    }
+  }
+}
+
 void OptimizationProblem::AddSubmap(const int trajectory_id,
                                     const transform::Rigid3d& submap_pose) {
   CHECK_GE(trajectory_id, 0);
@@ -104,6 +118,11 @@ void OptimizationProblem::AddSubmap(const int trajectory_id,
   submap_data_[trajectory_id].emplace(trajectory_data.next_submap_index,
                                       SubmapData{submap_pose});
   ++trajectory_data.next_submap_index;
+}
+
+void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {
+  auto& submap_data = submap_data_.at(submap_id.trajectory_id);
+  CHECK(submap_data.erase(submap_id.submap_index));
 }
 
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {

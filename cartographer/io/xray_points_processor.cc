@@ -127,7 +127,7 @@ std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
                                      ? DrawTrajectories::kYes
                                      : DrawTrajectories::kNo;
   if (separate_floor) {
-    CHECK_EQ(trajectories.size(), 0)
+    CHECK_EQ(trajectories.size(), 1)
         << "Can only detect floors with a single trajectory.";
     floors = mapping::DetectFloors(trajectories.at(0));
   }
