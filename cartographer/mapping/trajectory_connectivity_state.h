@@ -43,16 +43,13 @@ class TrajectoryConnectivityState {
   // tracked. This function is invariant to the order of its arguments. Repeated
   // calls to Connect increment the connectivity count and update the last
   // connected time.
-  void Connect(int trajectory_id_a,
-               int trajectory_id_b,
-               common::Time time);
+  void Connect(int trajectory_id_a, int trajectory_id_b, common::Time time);
 
   // Determines if two trajectories have been (transitively) connected. If
   // either trajectory is not being tracked, returns false, except when it is
   // the same trajectory, where it returns true. This function is invariant to
   // the order of its arguments.
-  bool TransitivelyConnected(int trajectory_id_a,
-                             int trajectory_id_b);
+  bool TransitivelyConnected(int trajectory_id_a, int trajectory_id_b);
 
   // The trajectory IDs, grouped by connectivity.
   std::vector<std::vector<int>> Components();
@@ -71,7 +68,6 @@ class TrajectoryConnectivityState {
   // bipartite trajectories entries for these components are updated with the
   // new connection time.
   std::map<std::pair<int, int>, common::Time> last_connection_time_map_;
-
 };
 
 }  // namespace mapping

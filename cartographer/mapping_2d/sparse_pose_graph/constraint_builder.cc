@@ -76,7 +76,7 @@ void ConstraintBuilder::MaybeAddConstraint(
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_id, &submap->probability_grid(), [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, submap, node_id,
-                            false,   /* match_full_submap */
+                            false, /* match_full_submap */
                             constant_data, initial_relative_pose, constraint);
           FinishComputation(current_computation);
         });
@@ -94,10 +94,9 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   const int current_computation = current_computation_;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       submap_id, &submap->probability_grid(), [=]() EXCLUDES(mutex_) {
-        ComputeConstraint(submap_id, submap, node_id,
-                          true, /* match_full_submap */
-                          constant_data,
-                          transform::Rigid2d::Identity(), constraint);
+        ComputeConstraint(
+            submap_id, submap, node_id, true, /* match_full_submap */
+            constant_data, transform::Rigid2d::Identity(), constraint);
         FinishComputation(current_computation);
       });
 }
