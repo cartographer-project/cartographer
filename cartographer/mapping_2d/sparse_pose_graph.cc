@@ -103,7 +103,8 @@ void SparsePoseGraph::AddScan(
 
   common::MutexLocker locker(&mutex_);
   trajectory_nodes_.Append(
-      trajectory_id, mapping::TrajectoryNode{constant_data, optimized_pose});
+      trajectory_id,
+      mapping::TrajectoryNode{constant_data, pose, optimized_pose});
   ++num_trajectory_nodes_;
   trajectory_connectivity_state_.Add(trajectory_id);
 
@@ -407,21 +408,24 @@ void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   });
 }
 
-void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
-                                         const transform::Rigid3d& initial_pose,
+void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& pose,
                                          const mapping::proto::Submap& submap) {
   if (!submap.has_submap_2d()) {
     return;
   }
 
+  const mapping::SubmapId proto_submap_id = {submap.submap_id().trajectory_id(),
+                                             submap.submap_id().submap_index()};
+  const int trajectory_id = proto_submap_id.trajectory_id;
   std::shared_ptr<const Submap> submap_ptr =
       std::make_shared<const Submap>(submap.submap_2d());
-  const transform::Rigid2d initial_pose_2d = transform::Project2D(initial_pose);
+  const transform::Rigid2d pose_2d = transform::Project2D(pose);
 
   common::MutexLocker locker(&mutex_);
   trajectory_connectivity_state_.Add(trajectory_id);
   const mapping::SubmapId submap_id =
       submap_data_.Append(trajectory_id, SubmapData());
+  CHECK_EQ(submap_id, proto_submap_id);
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the optimized pose.
   CHECK_GE(static_cast<size_t>(submap_data_.num_trajectories()),
@@ -430,12 +434,41 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   CHECK_EQ(optimized_submap_transforms_.at(trajectory_id).size(),
            submap_id.submap_index);
   optimized_submap_transforms_.at(trajectory_id)
-      .emplace(submap_id.submap_index,
-               sparse_pose_graph::SubmapData{initial_pose_2d});
-  AddWorkItem([this, submap_id, initial_pose_2d]() REQUIRES(mutex_) {
+      .emplace(submap_id.submap_index, sparse_pose_graph::SubmapData{pose_2d});
+  AddWorkItem([this, submap_id, pose_2d]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
-    optimization_problem_.AddSubmap(submap_id.trajectory_id, initial_pose_2d);
+    optimization_problem_.AddSubmap(submap_id.trajectory_id, pose_2d);
+  });
+}
+
+void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& initial_pose,
+                                       const transform::Rigid3d& pose,
+                                       const mapping::proto::Node& node) {
+  const mapping::NodeId proto_node_id = {node.node_id().trajectory_id(),
+                                         node.node_id().node_index()};
+  const int trajectory_id = proto_node_id.trajectory_id;
+  std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data =
+      std::make_shared<const mapping::TrajectoryNode::Data>(
+          mapping::FromProto(node.node_data()));
+
+  common::MutexLocker locker(&mutex_);
+  trajectory_connectivity_state_.Add(trajectory_id);
+  const mapping::NodeId node_id = trajectory_nodes_.Append(
+      trajectory_id,
+      mapping::TrajectoryNode{constant_data, initial_pose, pose});
+  CHECK_EQ(node_id, proto_node_id);
+
+  AddWorkItem([this, node_id, initial_pose, pose]() REQUIRES(mutex_) {
+    CHECK_EQ(frozen_trajectories_.count(node_id.trajectory_id), 1);
+    const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
+    const auto gravity_alignment_inverse = transform::Rigid3d::Rotation(
+        constant_data->gravity_alignment.inverse());
+    optimization_problem_.AddTrajectoryNode(
+        node_id.trajectory_id, constant_data->time,
+        transform::Project2D(initial_pose * gravity_alignment_inverse),
+        transform::Project2D(pose * gravity_alignment_inverse),
+        constant_data->gravity_alignment);
   });
 }
 

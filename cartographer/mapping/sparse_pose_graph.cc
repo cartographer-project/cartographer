@@ -87,6 +87,8 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
         auto* node_proto = trajectory_proto->add_node();
         node_proto->set_timestamp(
             common::ToUniversal(node.constant_data->time));
+        *node_proto->mutable_initial_pose() =
+            transform::ToProto(node.initial_pose);
         *node_proto->mutable_pose() = transform::ToProto(node.pose);
       }
     }
