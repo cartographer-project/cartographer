@@ -239,6 +239,7 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
     for (const auto& index_node_data : node_data[trajectory_id]) {
       const mapping::NodeId node_id{static_cast<int>(trajectory_id),
                                     index_node_data.first};
+      CHECK(!trajectory_nodes_.at(node_id).trimmed());
       if (submap_data.node_ids.count(node_id) == 0) {
         ComputeConstraint(node_id, submap_id);
       }
@@ -373,13 +374,13 @@ void SparsePoseGraph::HandleWorkQueue() {
         run_loop_closure_ = false;
         while (!run_loop_closure_) {
           if (work_queue_->empty()) {
-            LOG(INFO) << "We caught up. Hooray!";
             work_queue_.reset();
             return;
           }
           work_queue_->front()();
           work_queue_->pop_front();
         }
+        LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
         // We have to optimize again.
         HandleWorkQueue();
       });
@@ -625,6 +626,9 @@ transform::Rigid3d SparsePoseGraph::ComputeLocalToGlobalTransform(
 
 mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
     const mapping::SubmapId& submap_id) {
+  if (submap_data_.at(submap_id).state == SubmapState::kTrimmed) {
+    return {};
+  }
   auto submap = submap_data_.at(submap_id).submap;
   if (submap_id.trajectory_id <
           static_cast<int>(optimized_submap_transforms_.size()) &&
