@@ -16,10 +16,15 @@
 
 #include "cartographer/common/fixed_ratio_sampler.h"
 
+#include "glog/logging.h"
+
 namespace cartographer {
 namespace common {
 
-FixedRatioSampler::FixedRatioSampler(const double ratio) : ratio_(ratio) {}
+FixedRatioSampler::FixedRatioSampler(const double ratio) : ratio_(ratio) {
+  CHECK_GT(ratio, 0.);
+  CHECK_LE(ratio, 1.);
+}
 
 FixedRatioSampler::~FixedRatioSampler() {}
 
