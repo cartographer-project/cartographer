@@ -22,7 +22,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/proto/trajectory_node.pb.h"
+#include "cartographer/mapping/proto/trajectory_node_data.pb.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -57,8 +57,8 @@ struct TrajectoryNode {
   transform::Rigid3d pose;
 };
 
-proto::TrajectoryNode ToProto(const TrajectoryNode::Data& constant_data);
-TrajectoryNode::Data FromProto(const proto::TrajectoryNode& proto);
+proto::TrajectoryNodeData ToProto(const TrajectoryNode::Data& constant_data);
+TrajectoryNode::Data FromProto(const proto::TrajectoryNodeData& proto);
 
 }  // namespace mapping
 }  // namespace cartographer
