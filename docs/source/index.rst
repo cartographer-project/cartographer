@@ -29,6 +29,13 @@ configurations.
 .. _Cartographer: https://github.com/googlecartographer/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
+Technical Overview
+==================
+* High level structure of Cartographer
+
+.. image:: High_Level_Structure.jpg
+     :target: https://github.com/googlecartographer/cartographer/blob/master/docs/source/High_Level_Structure.jpg
+
 Getting started
 ===============
 
