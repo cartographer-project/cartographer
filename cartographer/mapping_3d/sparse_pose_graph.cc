@@ -694,6 +694,7 @@ int SparsePoseGraph::TrimmingHandle::num_submaps(
 
 void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
     const mapping::SubmapId& submap_id) {
+  common::MutexLocker locker(&parent_->mutex_);
   // TODO(hrapp): We have to make sure that the trajectory has been finished
   // if we want to delete the last submaps.
   CHECK(parent_->submap_data_.at(submap_id).state == SubmapState::kFinished);
