@@ -28,12 +28,18 @@ std::unique_ptr<FrameIdFilteringPointsProcessor>
 FrameIdFilteringPointsProcessor::FromDictionary(
     common::LuaParameterDictionary* dictionary,
     PointsProcessor* next) {
-  std::vector<string> keep_frames = dictionary->GetDictionary("keep_frames")->GetArrayValuesAsStrings();
-  std::vector<string> drop_frames = dictionary->GetDictionary("drop_frames")->GetArrayValuesAsStrings();
+  std::vector<string> keep_frames, drop_frames;
+  if (dictionary->HasKey("keep_frames")) {
+    keep_frames =
+        dictionary->GetDictionary("keep_frames")->GetArrayValuesAsStrings();
+  }
+  if (dictionary->HasKey("drop_frames")) {
+    drop_frames =
+        dictionary->GetDictionary("drop_frames")->GetArrayValuesAsStrings();
+  }
   return common::make_unique<FrameIdFilteringPointsProcessor>(
       std::unordered_set<string>(keep_frames.begin(), keep_frames.end()),
-      std::unordered_set<string>(drop_frames.begin(), drop_frames.end()),
-      next);
+      std::unordered_set<string>(drop_frames.begin(), drop_frames.end()), next);
 }
 
 FrameIdFilteringPointsProcessor::FrameIdFilteringPointsProcessor(
@@ -50,8 +56,8 @@ FrameIdFilteringPointsProcessor::FrameIdFilteringPointsProcessor(
 
 void FrameIdFilteringPointsProcessor::Process(
     std::unique_ptr<PointsBatch> batch) {
-  if (keep_frame_ids_.count(batch->frame_id) ||
-      !drop_frame_ids_.count(batch->frame_id)) {
+  if ((!keep_frame_ids_.empty() && keep_frame_ids_.count(batch->frame_id)) ||
+      (!drop_frame_ids_.empty() && !drop_frame_ids_.count(batch->frame_id))) {
     next_->Process(std::move(batch));
   }
 }
