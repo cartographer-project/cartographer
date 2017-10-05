@@ -223,10 +223,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
       const bool odometry_available =
           trajectory_id < odometry_data_.size() &&
-          odometry_data_[trajectory_id].Has(
-              node_data_[trajectory_id][next_node_index].time) &&
-          odometry_data_[trajectory_id].Has(
-              node_data_[trajectory_id][node_index].time);
+          odometry_data_[trajectory_id].Has(next_node_data.time) &&
+          odometry_data_[trajectory_id].Has(node_data.time);
       const transform::Rigid3d relative_pose =
           odometry_available
               ? transform::Rigid3d::Rotation(node_data.gravity_alignment) *
@@ -245,8 +243,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                   options_.consecutive_scan_translation_penalty_factor(),
                   options_.consecutive_scan_rotation_penalty_factor()})),
           nullptr /* loss function */,
-          C_nodes[trajectory_id][node_index].data(),
-          C_nodes[trajectory_id][next_node_index].data());
+          C_nodes[trajectory_id].at(node_index).data(),
+          C_nodes[trajectory_id].at(next_node_index).data());
     }
   }
 
