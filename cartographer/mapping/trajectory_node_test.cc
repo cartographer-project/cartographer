@@ -36,7 +36,7 @@ TEST(TrajectoryNodeTest, ToAndFromProto) {
       sensor::CompressedPointCloud({{2.f, 3.f, 4.f}}).Decompress(),
       sensor::CompressedPointCloud({{-1.f, 2.f, 0.f}}).Decompress(),
       Eigen::VectorXf::Unit(20, 4),
-  };
+      transform::Rigid3d({1, 2, 3}, Eigen::Quaterniond(4., 5., -6., -7.))};
   const proto::TrajectoryNodeData proto = ToProto(expected);
   const TrajectoryNode::Data actual = FromProto(proto);
   EXPECT_EQ(expected.time, actual.time);
@@ -49,6 +49,10 @@ TEST(TrajectoryNodeTest, ToAndFromProto) {
             actual.low_resolution_point_cloud);
   EXPECT_EQ(expected.rotational_scan_matcher_histogram,
             actual.rotational_scan_matcher_histogram);
+  EXPECT_EQ(expected.initial_pose.translation(),
+            actual.initial_pose.translation());
+  EXPECT_EQ(expected.initial_pose.rotation().coeffs(),
+            actual.initial_pose.rotation().coeffs());
 }
 
 }  // namespace

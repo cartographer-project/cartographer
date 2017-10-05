@@ -96,7 +96,7 @@ void SparsePoseGraph::AddScan(
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
     const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap>>& insertion_submaps) {
-  const transform::Rigid3& pose = constant_data->initial_pose;
+  const transform::Rigid3d& pose = constant_data->initial_pose;
   const transform::Rigid3d optimized_pose(
       GetLocalToGlobalTransform(trajectory_id) * pose);
 
@@ -276,7 +276,6 @@ void SparsePoseGraph::ComputeConstraintsForScan(
           .at(matching_id.submap_index)
           .pose *
       insertion_submaps.front()->local_pose().inverse() * pose;
-
   optimization_problem_.AddTrajectoryNode(
       matching_id.trajectory_id, constant_data->time, pose, optimized_pose);
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
