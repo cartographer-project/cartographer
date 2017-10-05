@@ -46,7 +46,7 @@ struct TrajectoryNode {
     sensor::PointCloud low_resolution_point_cloud;
     Eigen::VectorXf rotational_scan_matcher_histogram;
 
-    // The initial unoptimized pose of the submap.
+    // The initial unoptimized node pose.
     transform::Rigid3d initial_pose;
   };
 
