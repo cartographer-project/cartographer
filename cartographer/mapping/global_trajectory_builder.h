@@ -51,9 +51,8 @@ class GlobalTrajectoryBuilder
     if (insertion_result == nullptr) {
       return;
     }
-    sparse_pose_graph_->AddScan(
-        insertion_result->constant_data, insertion_result->pose_observation,
-        trajectory_id_, insertion_result->insertion_submaps);
+    sparse_pose_graph_->AddScan(insertion_result->constant_data, trajectory_id_,
+                                insertion_result->insertion_submaps);
   }
 
   void AddSensorData(const sensor::ImuData& imu_data) override {

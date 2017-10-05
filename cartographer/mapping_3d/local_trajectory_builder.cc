@@ -221,8 +221,9 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
               {},  // 'filtered_point_cloud' is only used in 2D.
               high_resolution_point_cloud,
               low_resolution_point_cloud,
-              rotational_scan_matcher_histogram}),
-      pose_observation, std::move(insertion_submaps)});
+              rotational_scan_matcher_histogram,
+              pose_observation}),
+      std::move(insertion_submaps)});
 }
 
 }  // namespace mapping_3d

@@ -96,8 +96,9 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
 
 void SparsePoseGraph::AddScan(
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
-    const transform::Rigid3d& pose, const int trajectory_id,
+    const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap>>& insertion_submaps) {
+  const transform::Rigid3& pose = constant_data->initial_pose;
   const transform::Rigid3d optimized_pose(
       GetLocalToGlobalTransform(trajectory_id) * pose);
 
