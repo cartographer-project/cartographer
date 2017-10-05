@@ -28,30 +28,30 @@ std::unique_ptr<FrameIdFilteringPointsProcessor>
 FrameIdFilteringPointsProcessor::FromDictionary(
     common::LuaParameterDictionary* dictionary,
     PointsProcessor* next) {
+  std::vector<string> keep_frames = dictionary->GetDictionary("keep_frames")->GetArrayValuesAsStrings();
+  std::vector<string> drop_frames = dictionary->GetDictionary("drop_frames")->GetArrayValuesAsStrings();
   return common::make_unique<FrameIdFilteringPointsProcessor>(
-      dictionary->GetDictionary("keep_frames")->GetArrayValuesAsStrings(),
-      dictionary->GetDictionary("drop_frames")->GetArrayValuesAsStrings(),
+      std::unordered_set<string>(keep_frames.begin(), keep_frames.end()),
+      std::unordered_set<string>(drop_frames.begin(), drop_frames.end()),
       next);
 }
 
 FrameIdFilteringPointsProcessor::FrameIdFilteringPointsProcessor(
-    const std::vector<string>& keep_frame_ids,
-    const std::vector<string>& drop_frame_ids,
+    const std::unordered_set<string>& keep_frame_ids,
+    const std::unordered_set<string>& drop_frame_ids,
     PointsProcessor* next)
     : keep_frame_ids_(keep_frame_ids),
       drop_frame_ids_(drop_frame_ids),
       next_(next) {
-  CHECK(keep_frame_ids.empty() || drop_frame_ids.empty())
-      << "You may either specify the `keep_frames` property or the "
+  CHECK_NE(keep_frame_ids.empty(), drop_frame_ids.empty())
+      << "You have to specify exactly one of the `keep_frames` property or the "
       << "`drop_frames` property, but not both at the same time.";
 }
 
 void FrameIdFilteringPointsProcessor::Process(
     std::unique_ptr<PointsBatch> batch) {
-  if (std::find(keep_frame_ids_.begin(), keep_frame_ids_.end(),
-                batch->frame_id) != keep_frame_ids_.end() ||
-      std::find(drop_frame_ids_.begin(), drop_frame_ids_.end(),
-                batch->frame_id) == drop_frame_ids_.end()) {
+  if (keep_frame_ids_.count(batch->frame_id) ||
+      !drop_frame_ids_.count(batch->frame_id)) {
     next_->Process(std::move(batch));
   }
 }
