@@ -31,6 +31,13 @@ struct NodeId {
   int trajectory_id;
   int node_index;
 
+  bool operator==(const NodeId& other) const {
+    return std::forward_as_tuple(trajectory_id, node_index) ==
+        std::forward_as_tuple(other.trajectory_id, other.node_index);
+  }
+
+  bool operator!=(const NodeId& other) const { return !operator==(other); }
+
   bool operator<(const NodeId& other) const {
     return std::forward_as_tuple(trajectory_id, node_index) <
            std::forward_as_tuple(other.trajectory_id, other.node_index);
