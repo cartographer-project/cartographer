@@ -164,8 +164,9 @@ class SparsePoseGraphTest : public ::testing::Test {
                                           range_data.returns,
                                           {},
                                           {},
-                                          {}}),
-        transform::Embed3D(pose_estimate), kTrajectoryId, insertion_submaps);
+                                          {},
+                                          transform::Embed3D(pose_estimate)}),
+        kTrajectoryId, insertion_submaps);
   }
 
   void MoveRelative(const transform::Rigid2d& movement) {
