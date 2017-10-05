@@ -21,6 +21,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/trajectory_node_data.pb.h"
+#include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -36,7 +37,8 @@ TEST(TrajectoryNodeTest, ToAndFromProto) {
       sensor::CompressedPointCloud({{2.f, 3.f, 4.f}}).Decompress(),
       sensor::CompressedPointCloud({{-1.f, 2.f, 0.f}}).Decompress(),
       Eigen::VectorXf::Unit(20, 4),
-  };
+      transform::Rigid3d({1., 2., 3.},
+                         Eigen::Quaterniond(4., 5., -6., -7.).normalized())};
   const proto::TrajectoryNodeData proto = ToProto(expected);
   const TrajectoryNode::Data actual = FromProto(proto);
   EXPECT_EQ(expected.time, actual.time);
@@ -49,6 +51,8 @@ TEST(TrajectoryNodeTest, ToAndFromProto) {
             actual.low_resolution_point_cloud);
   EXPECT_EQ(expected.rotational_scan_matcher_histogram,
             actual.rotational_scan_matcher_histogram);
+  EXPECT_THAT(actual.initial_pose,
+              transform::IsNearly(expected.initial_pose, 1e-9));
 }
 
 }  // namespace

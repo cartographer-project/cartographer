@@ -71,7 +71,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // 'true', this submap was inserted into for the last time.
   void AddScan(
       std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
-      const transform::Rigid3d& pose, int trajectory_id,
+      int trajectory_id,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       EXCLUDES(mutex_);
 
@@ -130,8 +130,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   void ComputeConstraintsForScan(
       int trajectory_id,
       std::vector<std::shared_ptr<const Submap>> insertion_submaps,
-      bool newly_finished_submap, const transform::Rigid2d& pose)
-      REQUIRES(mutex_);
+      bool newly_finished_submap) REQUIRES(mutex_);
 
   // Computes constraints for a scan and submap pair.
   void ComputeConstraint(const mapping::NodeId& node_id,

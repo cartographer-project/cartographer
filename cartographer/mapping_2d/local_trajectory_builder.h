@@ -42,7 +42,6 @@ class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
-    transform::Rigid3d pose_observation;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
 

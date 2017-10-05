@@ -184,8 +184,9 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
               filtered_gravity_aligned_point_cloud,
               {},  // 'high_resolution_point_cloud' is only used in 3D.
               {},  // 'low_resolution_point_cloud' is only used in 3D.
-          }),
-      pose_estimate, std::move(insertion_submaps)});
+              {},  // 'rotational_scan_matcher_histogram' is only used in 3D.
+              pose_estimate}),
+      std::move(insertion_submaps)});
 }
 
 const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
