@@ -32,6 +32,11 @@ typedef std::vector<Eigen::Vector3f> PointCloud;
 struct PointCloudWithIntensities {
   PointCloud points;
   std::vector<float> intensities;
+
+  // For each item in 'points', contains the time delta of when it was acquired
+  // after points[0], i.e. the first entry is always 0.f. If timing
+  // information is not available all entries will be 0.f.
+  std::vector<float> offset_seconds;
 };
 
 // Transforms 'point_cloud' according to 'transform'.
