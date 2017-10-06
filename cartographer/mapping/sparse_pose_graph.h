@@ -83,6 +83,8 @@ class SparsePoseGraph {
                                   const transform::Rigid3d& initial_pose,
                                   const proto::Submap& submap) = 0;
 
+  // Adds a 'node' from a proto with the given 'pose' to the frozen trajectory
+  // with 'trajectory_id'.
   virtual void AddNodeFromProto(int trajectory_id,
                                 const transform::Rigid3d& pose,
                                 const proto::Node& node) = 0;
