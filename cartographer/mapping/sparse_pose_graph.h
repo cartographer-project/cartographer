@@ -83,7 +83,8 @@ class SparsePoseGraph {
                                   const transform::Rigid3d& initial_pose,
                                   const proto::Submap& submap) = 0;
 
-  virtual void AddNodeFromProto(const transform::Rigid3d& pose,
+  virtual void AddNodeFromProto(int trajectory_id,
+                                const transform::Rigid3d& pose,
                                 const proto::Node& node) = 0;
 
   // Adds a 'trimmer'. It will be used after all data added before it has been

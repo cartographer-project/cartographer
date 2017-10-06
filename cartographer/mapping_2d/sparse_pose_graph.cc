@@ -439,11 +439,11 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   });
 }
 
-void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& pose,
+void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
+                                       const transform::Rigid3d& pose,
                                        const mapping::proto::Node& node) {
   const mapping::NodeId proto_node_id = {node.node_id().trajectory_id(),
                                          node.node_id().node_index()};
-  const int trajectory_id = proto_node_id.trajectory_id;
   std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data =
       std::make_shared<const mapping::TrajectoryNode::Data>(
           mapping::FromProto(node.node_data()));
@@ -452,7 +452,9 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& pose,
   trajectory_connectivity_state_.Add(trajectory_id);
   const mapping::NodeId node_id = trajectory_nodes_.Append(
       trajectory_id, mapping::TrajectoryNode{constant_data, pose});
-  CHECK_EQ(node_id, proto_node_id);
+  // TODO(whess): Enable this check when MapBuilder handles trimmed data
+  // remapping during serialization.
+  // CHECK_EQ(node_id, proto_node_id);
 
   AddWorkItem([this, node_id, pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(node_id.trajectory_id), 1);
