@@ -86,6 +86,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   void AddSubmapFromProto(int trajectory_id,
                           const transform::Rigid3d& initial_pose,
                           const mapping::proto::Submap& submap) override;
+  void AddNodeFromProto(int trajectory_id, const transform::Rigid3d& pose,
+                        const mapping::proto::Node& node) override;
   void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;

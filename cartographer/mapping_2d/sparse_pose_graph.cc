@@ -439,6 +439,32 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   });
 }
 
+void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
+                                       const transform::Rigid3d& pose,
+                                       const mapping::proto::Node& node) {
+  std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data =
+      std::make_shared<const mapping::TrajectoryNode::Data>(
+          mapping::FromProto(node.node_data()));
+
+  common::MutexLocker locker(&mutex_);
+  trajectory_connectivity_state_.Add(trajectory_id);
+  const mapping::NodeId node_id = trajectory_nodes_.Append(
+      trajectory_id, mapping::TrajectoryNode{constant_data, pose});
+
+  AddWorkItem([this, node_id, pose]() REQUIRES(mutex_) {
+    CHECK_EQ(frozen_trajectories_.count(node_id.trajectory_id), 1);
+    const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
+    const auto gravity_alignment_inverse = transform::Rigid3d::Rotation(
+        constant_data->gravity_alignment.inverse());
+    optimization_problem_.AddTrajectoryNode(
+        node_id.trajectory_id, constant_data->time,
+        transform::Project2D(constant_data->initial_pose *
+                             gravity_alignment_inverse),
+        transform::Project2D(pose * gravity_alignment_inverse),
+        constant_data->gravity_alignment);
+  });
+}
+
 void SparsePoseGraph::AddTrimmer(
     std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) {
   common::MutexLocker locker(&mutex_);

@@ -218,6 +218,15 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
     if (!reader->ReadProto(&proto)) {
       break;
     }
+    if (proto.has_node()) {
+      const auto& pose_graph_node =
+          pose_graph.trajectory(proto.node().node_id().trajectory_id())
+              .node(proto.node().node_id().node_index());
+      const transform::Rigid3d pose =
+          transform::ToRigid3(pose_graph_node.pose());
+      sparse_pose_graph_->AddNodeFromProto(map_trajectory_id, pose,
+                                           proto.node());
+    }
     if (proto.has_submap()) {
       const transform::Rigid3d submap_pose = transform::ToRigid3(
           pose_graph.trajectory(proto.submap().submap_id().trajectory_id())
