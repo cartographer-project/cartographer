@@ -216,7 +216,7 @@ void XRayPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
     Insert(*batch, &aggregations_[0]);
   } else {
     for (size_t i = 0; i < floors_.size(); ++i) {
-      if (!ContainedIn(batch->time, floors_[i].timespans)) {
+      if (!ContainedIn(batch->start_time, floors_[i].timespans)) {
         continue;
       }
       Insert(*batch, &aggregations_[i]);

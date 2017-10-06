@@ -36,8 +36,8 @@ struct PointsBatch {
     trajectory_id = 0;
   }
 
-  // Time at which this batch has been acquired.
-  common::Time time;
+  // Time at which the first point of this batch has been acquired.
+  common::Time start_time;
 
   // Origin of the data, i.e. the location of the sensor in the world at
   // 'time'.
@@ -50,7 +50,7 @@ struct PointsBatch {
   // Trajectory ID that produced this point.
   int trajectory_id;
 
-  // Geometry of the points in a metric frame.
+  // Geometry of the points in the map frame.
   std::vector<Eigen::Vector3f> points;
 
   // Intensities are optional and may be unspecified. The meaning of these
