@@ -91,6 +91,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                         const mapping::proto::Node& node) override;
   void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
+  void SetInitialTrajectoryPose(const int trajectory_id,
+                                const transform::Rigid3d& pose,
+                                const common::Time& time) override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
   int num_submaps(int trajectory_id) EXCLUDES(mutex_) override;
   mapping::SparsePoseGraph::SubmapData GetSubmapData(

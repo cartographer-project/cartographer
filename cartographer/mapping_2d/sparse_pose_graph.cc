@@ -60,9 +60,12 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
     // If we don't already have an entry for the first submap, add one.
     if (static_cast<size_t>(trajectory_id) >= submap_data.size() ||
         submap_data[trajectory_id].empty()) {
-      optimization_problem_.AddSubmap(
-          trajectory_id,
-          sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0]));
+      const transform::Rigid2d& submap_pose =
+          pose_initialization_map.find(trajectory_id) !=
+                  pose_initialization_map.end()
+              ? transform::Project2D(pose_initialization_map.at(trajectory_id))
+              : sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0]);
+      optimization_problem_.AddSubmap(trajectory_id, submap_pose);
     }
     CHECK_EQ(submap_data[trajectory_id].size(), 1);
     const mapping::SubmapId submap_id{trajectory_id, 0};
@@ -178,6 +181,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
   const common::Time last_connection_time =
       trajectory_connectivity_state_.LastConnectionTime(
           node_id.trajectory_id, submap_id.trajectory_id);
+
   if (node_id.trajectory_id == submap_id.trajectory_id ||
       scan_time <
           last_connection_time +
@@ -323,6 +327,15 @@ common::Time SparsePoseGraph::GetLatestScanTime(
         time, trajectory_nodes_.at(last_submap_node_id).constant_data->time);
   }
   return time;
+}
+
+void SparsePoseGraph::SetInitialTrajectoryPose(const int trajectory_id,
+                                               const transform::Rigid3d& pose,
+                                               const common::Time& time) {
+  common::MutexLocker locker(&mutex_);
+  pose_initialization_map[trajectory_id] = pose;
+  trajectory_connectivity_state_.Add(trajectory_id);
+  trajectory_connectivity_state_.Connect(0, trajectory_id, time);
 }
 
 void SparsePoseGraph::UpdateTrajectoryConnectivity(

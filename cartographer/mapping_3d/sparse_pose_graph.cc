@@ -183,10 +183,11 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
           .pose.inverse();
 
   const transform::Rigid3d initial_relative_pose =
-      inverse_submap_pose * optimization_problem_.node_data()
-                                .at(node_id.trajectory_id)
-                                .at(node_id.node_index)
-                                .pose;
+      inverse_submap_pose *
+      optimization_problem_.node_data()
+          .at(node_id.trajectory_id)
+          .at(node_id.node_index)
+          .pose;
 
   std::vector<mapping::TrajectoryNode> submap_nodes;
   for (const mapping::NodeId& submap_node_id :
@@ -403,21 +404,19 @@ void SparsePoseGraph::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. *
-                         (constraint_builder_.GetNumFinishedScans() -
-                          num_finished_scans_at_start) /
+                  << 100. * (constraint_builder_.GetNumFinishedScans() -
+                             num_finished_scans_at_start) /
                          (num_trajectory_nodes_ - num_finished_scans_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone(
-      [this, &notification](
-          const sparse_pose_graph::ConstraintBuilder::Result& result) {
-        common::MutexLocker locker(&mutex_);
-        constraints_.insert(constraints_.end(), result.begin(), result.end());
-        notification = true;
-      });
+  constraint_builder_.WhenDone([this, &notification](
+      const sparse_pose_graph::ConstraintBuilder::Result& result) {
+    common::MutexLocker locker(&mutex_);
+    constraints_.insert(constraints_.end(), result.begin(), result.end());
+    notification = true;
+  });
   locker.Await([&notification]() { return notification; });
 }
 
@@ -500,6 +499,13 @@ void SparsePoseGraph::RunFinalOptimization() {
       options_.optimization_problem_options()
           .ceres_solver_options()
           .max_num_iterations());
+}
+
+void SparsePoseGraph::SetInitialTrajectoryPose(const int trajectory_id,
+                                               const transform::Rigid3d& pose,
+                                               const common::Time& time) {
+  LOG(WARNING)
+      << "Initial trajectory pose not yet implemented in 3D. Ignoring pose.";
 }
 
 void SparsePoseGraph::LogResidualHistograms() {
