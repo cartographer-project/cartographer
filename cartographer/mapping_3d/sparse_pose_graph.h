@@ -122,6 +122,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Handles a new work item.
   void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
 
+  // Adds connectivity and sampler for a trajectory if it does not exist.
+  void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);
+
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
   std::vector<mapping::SubmapId> GrowSubmapTransformsAsNeeded(

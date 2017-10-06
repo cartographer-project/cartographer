@@ -102,10 +102,10 @@ void SparsePoseGraph::AddScan(
       GetLocalToGlobalTransform(trajectory_id) * constant_data->initial_pose);
 
   common::MutexLocker locker(&mutex_);
+  AddTrajectoryIfNeeded(trajectory_id);
   trajectory_nodes_.Append(
       trajectory_id, mapping::TrajectoryNode{constant_data, optimized_pose});
   ++num_trajectory_nodes_;
-  trajectory_connectivity_state_.Add(trajectory_id);
 
   // Test if the 'insertion_submap.back()' is one we never saw before.
   if (trajectory_id >= submap_data_.num_trajectories() ||
@@ -119,13 +119,6 @@ void SparsePoseGraph::AddScan(
     const mapping::SubmapId submap_id =
         submap_data_.Append(trajectory_id, SubmapData());
     submap_data_.at(submap_id).submap = insertion_submaps.back();
-  }
-
-  // Make sure we have a sampler for this trajectory.
-  if (!global_localization_samplers_[trajectory_id]) {
-    global_localization_samplers_[trajectory_id] =
-        common::make_unique<common::FixedRatioSampler>(
-            options_.global_sampling_ratio());
   }
 
   // We have to check this here, because it might have changed by the time we
@@ -142,6 +135,16 @@ void SparsePoseGraph::AddWorkItem(const std::function<void()>& work_item) {
     work_item();
   } else {
     work_queue_->push_back(work_item);
+  }
+}
+
+void SparsePoseGraph::AddTrajectoryIfNeeded(const int trajectory_id) {
+  trajectory_connectivity_state_.Add(trajectory_id);
+  // Make sure we have a sampler for this trajectory.
+  if (!global_localization_samplers_[trajectory_id]) {
+    global_localization_samplers_[trajectory_id] =
+        common::make_unique<common::FixedRatioSampler>(
+            options_.global_sampling_ratio());
   }
 }
 
@@ -232,15 +235,15 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   const mapping::NodeId node_id{
       matching_id.trajectory_id,
       static_cast<size_t>(matching_id.trajectory_id) <
-          optimization_problem_.node_data().size() &&
-          !optimization_problem_.node_data()[matching_id.trajectory_id]
-              .empty()
-      ? static_cast<int>(optimization_problem_.node_data()
-          .at(matching_id.trajectory_id)
-          .rbegin()
-          ->first +
-          1)
-      : 0};
+                  optimization_problem_.node_data().size() &&
+              !optimization_problem_.node_data()[matching_id.trajectory_id]
+                   .empty()
+          ? static_cast<int>(optimization_problem_.node_data()
+                                 .at(matching_id.trajectory_id)
+                                 .rbegin()
+                                 ->first +
+                             1)
+          : 0};
   const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
   const transform::Rigid2d pose = transform::Project2D(
       constant_data->initial_pose *
@@ -419,7 +422,7 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   const transform::Rigid2d initial_pose_2d = transform::Project2D(initial_pose);
 
   common::MutexLocker locker(&mutex_);
-  trajectory_connectivity_state_.Add(trajectory_id);
+  AddTrajectoryIfNeeded(trajectory_id);
   const mapping::SubmapId submap_id =
       submap_data_.Append(trajectory_id, SubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
@@ -447,7 +450,7 @@ void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
           mapping::FromProto(node.node_data()));
 
   common::MutexLocker locker(&mutex_);
-  trajectory_connectivity_state_.Add(trajectory_id);
+  AddTrajectoryIfNeeded(trajectory_id);
   const mapping::NodeId node_id = trajectory_nodes_.Append(
       trajectory_id, mapping::TrajectoryNode{constant_data, pose});
 
