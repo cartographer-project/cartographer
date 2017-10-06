@@ -26,8 +26,7 @@ namespace io {
 
 std::unique_ptr<FrameIdFilteringPointsProcessor>
 FrameIdFilteringPointsProcessor::FromDictionary(
-    common::LuaParameterDictionary* dictionary,
-    PointsProcessor* next) {
+    common::LuaParameterDictionary* dictionary, PointsProcessor* next) {
   std::vector<string> keep_frames, drop_frames;
   if (dictionary->HasKey("keep_frames")) {
     keep_frames =
@@ -44,8 +43,7 @@ FrameIdFilteringPointsProcessor::FromDictionary(
 
 FrameIdFilteringPointsProcessor::FrameIdFilteringPointsProcessor(
     const std::unordered_set<string>& keep_frame_ids,
-    const std::unordered_set<string>& drop_frame_ids,
-    PointsProcessor* next)
+    const std::unordered_set<string>& drop_frame_ids, PointsProcessor* next)
     : keep_frame_ids_(keep_frame_ids),
       drop_frame_ids_(drop_frame_ids),
       next_(next) {

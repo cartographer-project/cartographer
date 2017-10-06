@@ -39,6 +39,7 @@
 #include "cartographer/mapping_2d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_2d/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -120,6 +121,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Handles a new work item.
   void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
+
+  // Adds connectivity and sampler for a trajectory if it does not exist.
+  void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);
 
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
