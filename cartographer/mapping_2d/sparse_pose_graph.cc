@@ -55,7 +55,7 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
     const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap>>& insertion_submaps) {
   CHECK(!insertion_submaps.empty());
-  const auto& submap_data = optimization_problem_.submap_data();
+  auto submap_data = optimization_problem_.submap_data();
   if (insertion_submaps.size() == 1) {
     // If we don't already have an entry for the first submap, add one.
     if (static_cast<size_t>(trajectory_id) >= submap_data.size() ||
@@ -63,6 +63,7 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
       optimization_problem_.AddSubmap(
           trajectory_id,
           sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0]));
+      submap_data = optimization_problem_.submap_data();
     }
     CHECK_EQ(submap_data[trajectory_id].size(), 1);
     const mapping::SubmapId submap_id{trajectory_id, 0};
@@ -499,7 +500,7 @@ void SparsePoseGraph::RunOptimization() {
   optimization_problem_.Solve(constraints_, frozen_trajectories_);
   common::MutexLocker locker(&mutex_);
 
-  const auto& submap_data = optimization_problem_.submap_data();
+  const auto submap_data = optimization_problem_.submap_data();
   const auto& node_data = optimization_problem_.node_data();
   for (int trajectory_id = 0;
        trajectory_id != static_cast<int>(node_data.size()); ++trajectory_id) {
