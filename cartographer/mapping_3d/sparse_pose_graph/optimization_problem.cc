@@ -157,7 +157,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   bool first_submap = true;
   for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
        ++trajectory_id) {
-    const bool frozen = frozen_trajectories.count(trajectory_id);
+    const bool frozen = frozen_trajectories.count(trajectory_id) != 0;
     for (const auto& index_submap_data : submap_data_[trajectory_id]) {
       const int submap_index = index_submap_data.first;
       if (first_submap) {
@@ -191,7 +191,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    const bool frozen = frozen_trajectories.count(trajectory_id);
+    const bool frozen = frozen_trajectories.count(trajectory_id) != 0;
     for (const auto& index_node_data : node_data_[trajectory_id]) {
       const int node_index = index_node_data.first;
       C_nodes[trajectory_id].emplace(

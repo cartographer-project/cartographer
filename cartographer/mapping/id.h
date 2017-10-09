@@ -109,6 +109,7 @@ class NestedVectorsById {
   std::vector<std::vector<ValueType>> data_;
 };
 
+// Like std::map, but indexed by 'IdType' which can be 'NodeId' or 'SubmapId'.
 template <typename IdType, typename DataType>
 class MapById {
  private:
@@ -153,14 +154,16 @@ class MapById {
       return *this;
     }
 
-    bool operator!=(const ConstIterator& it) const {
+    bool operator==(const ConstIterator& it) const {
       if (current_trajectory_ == end_trajectory_ ||
           it.current_trajectory_ == it.end_trajectory_) {
-        return current_trajectory_ != it.current_trajectory_;
+        return current_trajectory_ == it.current_trajectory_;
       }
-      return current_trajectory_ != it.current_trajectory_ ||
-             current_data_ != it.current_data_;
+      return current_trajectory_ == it.current_trajectory_ &&
+             current_data_ == it.current_data_;
     }
+
+    bool operator!=(const ConstIterator& it) const { return !operator==(it); }
 
    private:
     void AdvanceToValidDataIterator() {
@@ -181,7 +184,7 @@ class MapById {
     typename std::map<int, DataType>::const_iterator end_data_;
   };
 
-  // Appends data to a trajectory, creating trajectories as needed.
+  // Appends data to a 'trajectory_id', creating trajectories as needed.
   IdType Append(const int trajectory_id, const DataType& data) {
     CHECK_GE(trajectory_id, 0);
     auto& trajectory = trajectories_[trajectory_id];
@@ -224,6 +227,8 @@ class MapById {
 
   ConstIterator begin() const { return ConstIterator(*this); }
   ConstIterator end() const { return ConstIterator::EndIterator(*this); }
+
+  bool empty() const { return begin() == end(); }
 
  private:
   struct MapByIndex {

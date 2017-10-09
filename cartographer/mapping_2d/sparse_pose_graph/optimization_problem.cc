@@ -138,7 +138,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   bool first_submap = true;
   for (const auto& submap_id_data : submap_data_) {
     const bool frozen =
-        frozen_trajectories.count(submap_id_data.id.trajectory_id);
+        frozen_trajectories.count(submap_id_data.id.trajectory_id) != 0;
     C_submaps.Insert(submap_id_data.id, FromPose(submap_id_data.data.pose));
     problem.AddParameterBlock(C_submaps.at(submap_id_data.id).data(), 3);
     if (first_submap || frozen) {
@@ -150,7 +150,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
-    const bool frozen = frozen_trajectories.count(trajectory_id);
+    const bool frozen = frozen_trajectories.count(trajectory_id) != 0;
     for (const auto& index_node_data : node_data_[trajectory_id]) {
       const int node_index = index_node_data.first;
       const NodeData& node_data = index_node_data.second;
