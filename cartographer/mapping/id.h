@@ -18,9 +18,13 @@
 #define CARTOGRAPHER_MAPPING_ID_H_
 
 #include <algorithm>
+#include <iterator>
+#include <map>
 #include <ostream>
 #include <tuple>
 #include <vector>
+
+#include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping {
@@ -103,6 +107,139 @@ class NestedVectorsById {
   static int GetIndex(const SubmapId& id) { return id.submap_index; }
 
   std::vector<std::vector<ValueType>> data_;
+};
+
+// Like std::map, but indexed by 'IdType' which can be 'NodeId' or 'SubmapId'.
+template <typename IdType, typename DataType>
+class MapById {
+ private:
+  class MapByIndex;
+
+ public:
+  struct IdDataReference {
+    IdType id;
+    const DataType& data;
+  };
+
+  class ConstIterator
+      : public std::iterator<std::forward_iterator_tag, IdDataReference> {
+   public:
+    explicit ConstIterator(const MapById& map_by_id)
+        : current_trajectory_(map_by_id.trajectories_.begin()),
+          end_trajectory_(map_by_id.trajectories_.end()) {
+      if (current_trajectory_ != end_trajectory_) {
+        current_data_ = current_trajectory_->second.data_.begin();
+        end_data_ = current_trajectory_->second.data_.end();
+        AdvanceToValidDataIterator();
+      }
+    }
+
+    static ConstIterator EndIterator(const MapById& map_by_id) {
+      auto it = ConstIterator(map_by_id);
+      it.current_trajectory_ = it.end_trajectory_;
+      return it;
+    }
+
+    IdDataReference operator*() const {
+      CHECK(current_trajectory_ != end_trajectory_);
+      return IdDataReference{
+          IdType{current_trajectory_->first, current_data_->first},
+          current_data_->second};
+    }
+
+    ConstIterator& operator++() {
+      CHECK(current_trajectory_ != end_trajectory_);
+      ++current_data_;
+      AdvanceToValidDataIterator();
+      return *this;
+    }
+
+    bool operator==(const ConstIterator& it) const {
+      if (current_trajectory_ == end_trajectory_ ||
+          it.current_trajectory_ == it.end_trajectory_) {
+        return current_trajectory_ == it.current_trajectory_;
+      }
+      return current_trajectory_ == it.current_trajectory_ &&
+             current_data_ == it.current_data_;
+    }
+
+    bool operator!=(const ConstIterator& it) const { return !operator==(it); }
+
+   private:
+    void AdvanceToValidDataIterator() {
+      CHECK(current_trajectory_ != end_trajectory_);
+      while (current_data_ == end_data_) {
+        ++current_trajectory_;
+        if (current_trajectory_ == end_trajectory_) {
+          return;
+        }
+        current_data_ = current_trajectory_->second.data_.begin();
+        end_data_ = current_trajectory_->second.data_.end();
+      }
+    }
+
+    typename std::map<int, MapByIndex>::const_iterator current_trajectory_;
+    typename std::map<int, MapByIndex>::const_iterator end_trajectory_;
+    typename std::map<int, DataType>::const_iterator current_data_;
+    typename std::map<int, DataType>::const_iterator end_data_;
+  };
+
+  // Appends data to a 'trajectory_id', creating trajectories as needed.
+  IdType Append(const int trajectory_id, const DataType& data) {
+    CHECK_GE(trajectory_id, 0);
+    auto& trajectory = trajectories_[trajectory_id];
+    CHECK(trajectory.can_append_);
+    const int index =
+        trajectory.data_.empty() ? 0 : trajectory.data_.rbegin()->first + 1;
+    trajectory.data_.emplace(index, data);
+    return IdType{trajectory_id, index};
+  }
+
+  // Inserts data (which must not exist already) into a trajectory.
+  void Insert(const IdType& id, const DataType& data) {
+    auto& trajectory = trajectories_[id.trajectory_id];
+    trajectory.can_append_ = false;
+    CHECK(trajectory.data_.emplace(GetIndex(id), data).second);
+  }
+
+  // Removes the data for 'id' which must exist.
+  void Trim(const IdType& id) {
+    auto& trajectory = trajectories_.at(id.trajectory_id);
+    const auto it = trajectory.data_.find(GetIndex(id));
+    CHECK(it != trajectory.data_.end());
+    if (std::next(it) == trajectory.data_.end()) {
+      // We are removing the data with the highest index from this trajectory.
+      // We assume that we will never append to it anymore. If we did, we would
+      // have to make sure that gaps in indices are properly chosen to maintain
+      // correct connectivity.
+      trajectory.can_append_ = false;
+    }
+    trajectory.data_.erase(it);
+  }
+
+  const DataType& at(const IdType& id) const {
+    return trajectories_.at(id.trajectory_id).data_.at(GetIndex(id));
+  }
+
+  DataType& at(const IdType& id) {
+    return trajectories_.at(id.trajectory_id).data_.at(GetIndex(id));
+  }
+
+  ConstIterator begin() const { return ConstIterator(*this); }
+  ConstIterator end() const { return ConstIterator::EndIterator(*this); }
+
+  bool empty() const { return begin() == end(); }
+
+ private:
+  struct MapByIndex {
+    bool can_append_ = true;
+    std::map<int, DataType> data_;
+  };
+
+  static int GetIndex(const NodeId& id) { return id.node_index; }
+  static int GetIndex(const SubmapId& id) { return id.submap_index; }
+
+  std::map<int, MapByIndex> trajectories_;
 };
 
 }  // namespace mapping
