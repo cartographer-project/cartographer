@@ -159,20 +159,14 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   for (const Constraint& constraint : constraints) {
     // Check if the constraint refers to something that has not yet been
     // added to the optimization problem. Skip it if that is the case.
-    if (constraint.node_id.trajectory_id >=
-            static_cast<int>(node_data_.size()) ||
-        node_data_.at(constraint.node_id.trajectory_id)
-                .count(constraint.node_id.node_index) == 0) {
+    if (!node_data_.Contains(constraint.node_id)) {
       // It should not happen that prematurely added constraints
       // happen to be intra or inter submap constraints.
       CHECK(constraint.tag == Constraint::Tag::CUSTOM);
       missing_nodes_.insert(constraint.node_id);
       continue;
     }
-    if (constraint.submap_id.trajectory_id >=
-            static_cast<int>(submap_data_.size()) ||
-        submap_data_.at(constraint.submap_id.trajectory_id)
-                .count(constraint.submap_id.submap_index) == 0) {
+    if (!submap_data_.Contains(constraint.submap_id)) {
       CHECK(constraint.tag == Constraint::Tag::CUSTOM);
       missing_submaps_.insert(constraint.submap_id);
       continue;
