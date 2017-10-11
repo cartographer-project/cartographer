@@ -255,15 +255,9 @@ const std::vector<std::map<int, NodeData>>& OptimizationProblem::node_data()
   return node_data_;
 }
 
-std::vector<std::map<int, SubmapData>> OptimizationProblem::submap_data()
-    const {
-  std::vector<std::map<int, SubmapData>> result;
-  for (const auto& submap_id_data : submap_data_) {
-    result.resize(submap_id_data.id.trajectory_id + 1);
-    result[submap_id_data.id.trajectory_id].emplace(
-        submap_id_data.id.submap_index, submap_id_data.data);
-  }
-  return result;
+const mapping::MapById<mapping::SubmapId, SubmapData>&
+OptimizationProblem::submap_data() const {
+  return submap_data_;
 }
 
 }  // namespace sparse_pose_graph
