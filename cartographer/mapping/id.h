@@ -111,7 +111,8 @@ class NestedVectorsById {
   std::vector<std::vector<ValueType>> data_;
 };
 
-// Like std::map, but indexed by 'IdType' which can be 'NodeId' or 'SubmapId'.
+// Reminiscent of std::map, but indexed by 'IdType' which can be 'NodeId' or
+// 'SubmapId'.
 template <typename IdType, typename DataType>
 class MapById {
  private:
