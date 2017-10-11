@@ -227,7 +227,7 @@ class MapById {
     trajectory.data_.erase(it);
   }
 
-  bool contains(const IdType& id) const {
+  bool Contains(const IdType& id) const {
     return trajectories_.count(id.trajectory_id) != 0 &&
            trajectories_.at(id.trajectory_id).data_.count(GetIndex(id)) != 0;
   }
@@ -240,14 +240,23 @@ class MapById {
     return trajectories_.at(id.trajectory_id).data_.at(GetIndex(id));
   }
 
-  ConstIterator begin(const int trajectory_id) const {
+  // Support querying by trajectory.
+  ConstIterator BeginOfTrajectory(const int trajectory_id) const {
     return ConstIterator(*this, trajectory_id);
   }
-  ConstIterator begin() const { return begin(0); }
-  ConstIterator end(const int trajectory_id) const {
-    return begin(trajectory_id + 1);
+  ConstIterator EndOfTrajectory(const int trajectory_id) const {
+    return BeginOfTrajectory(trajectory_id + 1);
   }
-  ConstIterator end() const { return begin(std::numeric_limits<int>::max()); }
+  size_t SizeOfTrajectoryOrZero(const int trajectory_id) const {
+    return trajectories_.count(trajectory_id)
+               ? trajectories_.at(trajectory_id).data_.size()
+               : 0;
+  }
+
+  ConstIterator begin() const { return BeginOfTrajectory(0); }
+  ConstIterator end() const {
+    return BeginOfTrajectory(std::numeric_limits<int>::max());
+  }
 
   bool empty() const { return begin() == end(); }
 
