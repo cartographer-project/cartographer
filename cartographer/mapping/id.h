@@ -21,10 +21,12 @@
 #include <iterator>
 #include <limits>
 #include <map>
+#include <memory>
 #include <ostream>
 #include <tuple>
 #include <vector>
 
+#include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "glog/logging.h"
 
@@ -129,7 +131,7 @@ class MapById {
     using iterator_category = std::bidirectional_iterator_tag;
     using value_type = IdDataReference;
     using difference_type = int64;
-    using pointer = const IdDataReference*;
+    using pointer = std::unique_ptr<const IdDataReference>;
     using reference = const IdDataReference&;
 
     explicit ConstIterator(const MapById& map_by_id, const int trajectory_id)
@@ -147,6 +149,10 @@ class MapById {
       return IdDataReference{
           IdType{current_trajectory_->first, current_data_->first},
           current_data_->second};
+    }
+
+    std::unique_ptr<const IdDataReference> operator->() const {
+      return common::make_unique<const IdDataReference>(this->operator*());
     }
 
     ConstIterator& operator++() {
