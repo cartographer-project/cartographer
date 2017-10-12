@@ -41,7 +41,7 @@ TEST(IdTest, MapByIdIterator) {
   map_by_id.Append(42, 3);
   map_by_id.Append(0, 0);
   map_by_id.Append(0, 1);
-  EXPECT_EQ(2, (*map_by_id.BeginOfTrajectory(7)).data);
+  EXPECT_EQ(2, map_by_id.BeginOfTrajectory(7)->data);
   EXPECT_TRUE(std::next(map_by_id.BeginOfTrajectory(7)) ==
               map_by_id.EndOfTrajectory(7));
   std::deque<std::pair<NodeId, int>> expected_id_data = {

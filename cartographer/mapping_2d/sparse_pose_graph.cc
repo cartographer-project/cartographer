@@ -72,7 +72,7 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
   CHECK_EQ(2, insertion_submaps.size());
   const auto end_it = submap_data.EndOfTrajectory(trajectory_id);
   CHECK(submap_data.BeginOfTrajectory(trajectory_id) != end_it);
-  const mapping::SubmapId last_submap_id = (*std::prev(end_it)).id;
+  const mapping::SubmapId last_submap_id = std::prev(end_it)->id;
   if (submap_data_.at(last_submap_id).submap == insertion_submaps.front()) {
     // In this case, 'last_submap_id' is the ID of 'insertions_submaps.front()'
     // and 'insertions_submaps.back()' is new.
@@ -596,7 +596,7 @@ transform::Rigid3d SparsePoseGraph::ComputeLocalToGlobalTransform(
   if (begin_it == end_it) {
     return transform::Rigid3d::Identity();
   }
-  const mapping::SubmapId last_optimized_submap_id = (*std::prev(end_it)).id;
+  const mapping::SubmapId last_optimized_submap_id = std::prev(end_it)->id;
   // Accessing 'local_pose' in Submap is okay, since the member is const.
   return transform::Embed3D(
              submap_transforms.at(last_optimized_submap_id).pose) *
