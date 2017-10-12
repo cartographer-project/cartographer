@@ -247,6 +247,8 @@ class MapById {
   ConstIterator EndOfTrajectory(const int trajectory_id) const {
     return BeginOfTrajectory(trajectory_id + 1);
   }
+
+  // Returns 0 if 'trajectory_id' does not exist.
   size_t SizeOfTrajectoryOrZero(const int trajectory_id) const {
     return trajectories_.count(trajectory_id)
                ? trajectories_.at(trajectory_id).data_.size()
