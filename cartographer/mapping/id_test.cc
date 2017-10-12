@@ -17,6 +17,7 @@
 #include "cartographer/mapping/id.h"
 
 #include <deque>
+#include <iterator>
 #include <utility>
 
 #include "gtest/gtest.h"
@@ -40,6 +41,9 @@ TEST(IdTest, MapByIdIterator) {
   map_by_id.Append(42, 3);
   map_by_id.Append(0, 0);
   map_by_id.Append(0, 1);
+  EXPECT_EQ(2, (*map_by_id.BeginOfTrajectory(7)).data);
+  EXPECT_TRUE(std::next(map_by_id.BeginOfTrajectory(7)) ==
+              map_by_id.EndOfTrajectory(7));
   std::deque<std::pair<NodeId, int>> expected_id_data = {
       {NodeId{0, 0}, 0},
       {NodeId{0, 1}, 1},
@@ -53,6 +57,23 @@ TEST(IdTest, MapByIdIterator) {
     expected_id_data.pop_front();
   }
   EXPECT_TRUE(expected_id_data.empty());
+}
+
+TEST(IdTest, MapByIdPrevIterator) {
+  MapById<NodeId, int> map_by_id;
+  map_by_id.Append(42, 42);
+  auto it = map_by_id.end();
+  ASSERT_TRUE(it != map_by_id.begin());
+  std::advance(it, -1);
+  EXPECT_TRUE(it == map_by_id.begin());
+}
+
+TEST(IdTest, InsertIntoMapById) {
+  MapById<NodeId, int> map_by_id;
+  EXPECT_EQ(0, map_by_id.SizeOfTrajectoryOrZero(42));
+  map_by_id.Append(42, 42);
+  map_by_id.Insert(NodeId{42, 5}, 42);
+  EXPECT_EQ(2, map_by_id.SizeOfTrajectoryOrZero(42));
 }
 
 }  // namespace

@@ -80,7 +80,7 @@ class OptimizationProblem {
              const std::set<int>& frozen_trajectories);
 
   const std::vector<std::map<int, NodeData>>& node_data() const;
-  std::vector<std::map<int, SubmapData>> submap_data() const;
+  const mapping::MapById<mapping::SubmapId, SubmapData>& submap_data() const;
 
  private:
   struct TrajectoryData {

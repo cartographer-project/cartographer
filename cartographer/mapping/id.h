@@ -19,11 +19,13 @@
 
 #include <algorithm>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <ostream>
 #include <tuple>
 #include <vector>
 
+#include "cartographer/common/port.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -109,7 +111,8 @@ class NestedVectorsById {
   std::vector<std::vector<ValueType>> data_;
 };
 
-// Like std::map, but indexed by 'IdType' which can be 'NodeId' or 'SubmapId'.
+// Reminiscent of std::map, but indexed by 'IdType' which can be 'NodeId' or
+// 'SubmapId'.
 template <typename IdType, typename DataType>
 class MapById {
  private:
@@ -121,23 +124,22 @@ class MapById {
     const DataType& data;
   };
 
-  class ConstIterator
-      : public std::iterator<std::forward_iterator_tag, IdDataReference> {
+  class ConstIterator {
    public:
-    explicit ConstIterator(const MapById& map_by_id)
-        : current_trajectory_(map_by_id.trajectories_.begin()),
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = IdDataReference;
+    using difference_type = int64;
+    using pointer = const IdDataReference*;
+    using reference = const IdDataReference&;
+
+    explicit ConstIterator(const MapById& map_by_id, const int trajectory_id)
+        : current_trajectory_(
+              map_by_id.trajectories_.lower_bound(trajectory_id)),
           end_trajectory_(map_by_id.trajectories_.end()) {
       if (current_trajectory_ != end_trajectory_) {
         current_data_ = current_trajectory_->second.data_.begin();
-        end_data_ = current_trajectory_->second.data_.end();
         AdvanceToValidDataIterator();
       }
-    }
-
-    static ConstIterator EndIterator(const MapById& map_by_id) {
-      auto it = ConstIterator(map_by_id);
-      it.current_trajectory_ = it.end_trajectory_;
-      return it;
     }
 
     IdDataReference operator*() const {
@@ -151,6 +153,16 @@ class MapById {
       CHECK(current_trajectory_ != end_trajectory_);
       ++current_data_;
       AdvanceToValidDataIterator();
+      return *this;
+    }
+
+    ConstIterator& operator--() {
+      while (current_trajectory_ == end_trajectory_ ||
+             current_data_ == current_trajectory_->second.data_.begin()) {
+        --current_trajectory_;
+        current_data_ = current_trajectory_->second.data_.end();
+      }
+      --current_data_;
       return *this;
     }
 
@@ -168,20 +180,18 @@ class MapById {
    private:
     void AdvanceToValidDataIterator() {
       CHECK(current_trajectory_ != end_trajectory_);
-      while (current_data_ == end_data_) {
+      while (current_data_ == current_trajectory_->second.data_.end()) {
         ++current_trajectory_;
         if (current_trajectory_ == end_trajectory_) {
           return;
         }
         current_data_ = current_trajectory_->second.data_.begin();
-        end_data_ = current_trajectory_->second.data_.end();
       }
     }
 
     typename std::map<int, MapByIndex>::const_iterator current_trajectory_;
     typename std::map<int, MapByIndex>::const_iterator end_trajectory_;
     typename std::map<int, DataType>::const_iterator current_data_;
-    typename std::map<int, DataType>::const_iterator end_data_;
   };
 
   // Appends data to a 'trajectory_id', creating trajectories as needed.
@@ -217,6 +227,11 @@ class MapById {
     trajectory.data_.erase(it);
   }
 
+  bool Contains(const IdType& id) const {
+    return trajectories_.count(id.trajectory_id) != 0 &&
+           trajectories_.at(id.trajectory_id).data_.count(GetIndex(id)) != 0;
+  }
+
   const DataType& at(const IdType& id) const {
     return trajectories_.at(id.trajectory_id).data_.at(GetIndex(id));
   }
@@ -225,8 +240,25 @@ class MapById {
     return trajectories_.at(id.trajectory_id).data_.at(GetIndex(id));
   }
 
-  ConstIterator begin() const { return ConstIterator(*this); }
-  ConstIterator end() const { return ConstIterator::EndIterator(*this); }
+  // Support querying by trajectory.
+  ConstIterator BeginOfTrajectory(const int trajectory_id) const {
+    return ConstIterator(*this, trajectory_id);
+  }
+  ConstIterator EndOfTrajectory(const int trajectory_id) const {
+    return BeginOfTrajectory(trajectory_id + 1);
+  }
+
+  // Returns 0 if 'trajectory_id' does not exist.
+  size_t SizeOfTrajectoryOrZero(const int trajectory_id) const {
+    return trajectories_.count(trajectory_id)
+               ? trajectories_.at(trajectory_id).data_.size()
+               : 0;
+  }
+
+  ConstIterator begin() const { return BeginOfTrajectory(0); }
+  ConstIterator end() const {
+    return BeginOfTrajectory(std::numeric_limits<int>::max());
+  }
 
   bool empty() const { return begin() == end(); }
 

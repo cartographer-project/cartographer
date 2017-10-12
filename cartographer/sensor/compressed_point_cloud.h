@@ -58,9 +58,14 @@ class CompressedPointCloud {
 };
 
 // Forward iterator for compressed point clouds.
-class CompressedPointCloud::ConstIterator
-    : public std::iterator<std::forward_iterator_tag, Eigen::Vector3f> {
+class CompressedPointCloud::ConstIterator {
  public:
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = Eigen::Vector3f;
+  using difference_type = int64;
+  using pointer = const Eigen::Vector3f*;
+  using reference = const Eigen::Vector3f&;
+
   // Creates begin iterator.
   explicit ConstIterator(const CompressedPointCloud* compressed_point_cloud);
 
