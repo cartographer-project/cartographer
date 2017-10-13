@@ -71,7 +71,7 @@ TEST(IdTest, MapByIdTrajectoryRange) {
       {NodeId{0, 1}, 1},
   };
   for (const auto& entry : map_by_id.trajectory(0)) {
-    EXPECT_EQ(expected_data.front().first, entry.id); 
+    EXPECT_EQ(expected_data.front().first, entry.id);
     EXPECT_EQ(expected_data.front().second, entry.data);
     ASSERT_FALSE(expected_data.empty());
     expected_data.pop_front();
