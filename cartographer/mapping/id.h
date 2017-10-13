@@ -113,6 +113,19 @@ class NestedVectorsById {
   std::vector<std::vector<ValueType>> data_;
 };
 
+template <typename IteratorType>
+class Range {
+ public:
+  Range(IteratorType begin, IteratorType end) : begin_(begin), end_(end) {}
+
+  IteratorType begin() { return begin_; }
+  IteratorType end() { return end_; }
+
+ private:
+  IteratorType begin_;
+  IteratorType end_;
+};
+
 // Reminiscent of std::map, but indexed by 'IdType' which can be 'NodeId' or
 // 'SubmapId'.
 template <typename IdType, typename DataType>
@@ -259,6 +272,12 @@ class MapById {
     return trajectories_.count(trajectory_id)
                ? trajectories_.at(trajectory_id).data_.size()
                : 0;
+  }
+
+  // Returns Range object for range-based loops over the nodes of a trajectory.
+  Range<ConstIterator> trajectory(const int trajectory_id) const {
+    return Range<ConstIterator>(BeginOfTrajectory(trajectory_id),
+                                EndOfTrajectory(trajectory_id));
   }
 
   ConstIterator begin() const { return BeginOfTrajectory(0); }
