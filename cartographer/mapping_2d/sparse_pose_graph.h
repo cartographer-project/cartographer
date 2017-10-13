@@ -134,7 +134,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds constraints for a scan, and starts scan matching in the background.
   void ComputeConstraintsForScan(
-      int trajectory_id,
+      const mapping::NodeId& node_id,
       std::vector<std::shared_ptr<const Submap>> insertion_submaps,
       bool newly_finished_submap) REQUIRES(mutex_);
 

@@ -82,25 +82,19 @@ void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
     const transform::Rigid2d& initial_pose, const transform::Rigid2d& pose,
     const Eigen::Quaterniond& gravity_alignment) {
-  CHECK_GE(trajectory_id, 0);
-  node_data_.resize(
-      std::max(node_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  trajectory_data_.resize(std::max(trajectory_data_.size(), node_data_.size()));
-  auto& trajectory_data = trajectory_data_[trajectory_id];
-  node_data_[trajectory_id].emplace(
-      trajectory_data.next_node_index,
-      NodeData{time, initial_pose, pose, gravity_alignment});
-  ++trajectory_data.next_node_index;
+  node_data_.Append(trajectory_id,
+                    NodeData{time, initial_pose, pose, gravity_alignment});
 }
 
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
-  auto& node_data = node_data_.at(node_id.trajectory_id);
-  CHECK(node_data.erase(node_id.node_index));
+  node_data_.Trim(node_id);
 
-  if (!node_data.empty() &&
-      node_id.trajectory_id < static_cast<int>(imu_data_.size())) {
-    const common::Time node_time = node_data.begin()->second.time;
-    auto& imu_data = imu_data_.at(node_id.trajectory_id);
+  const int trajectory_id = node_id.trajectory_id;
+  if (node_data_.SizeOfTrajectoryOrZero(trajectory_id) == 0 &&
+      trajectory_id < static_cast<int>(imu_data_.size())) {
+    const common::Time node_time =
+        node_data_.BeginOfTrajectory(trajectory_id)->data.time;
+    auto& imu_data = imu_data_.at(trajectory_id);
     while (imu_data.size() > 1 && imu_data[1].time <= node_time) {
       imu_data.pop_front();
     }
@@ -134,7 +128,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // Set the starting point.
   // TODO(hrapp): Move ceres data into SubmapData.
   mapping::MapById<mapping::SubmapId, std::array<double, 3>> C_submaps;
-  std::vector<std::map<int, std::array<double, 3>>> C_nodes(node_data_.size());
+  mapping::MapById<mapping::NodeId, std::array<double, 3>> C_nodes;
   bool first_submap = true;
   for (const auto& submap_id_data : submap_data_) {
     const bool frozen =
@@ -148,19 +142,13 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       problem.SetParameterBlockConstant(C_submaps.at(submap_id_data.id).data());
     }
   }
-  for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
-       ++trajectory_id) {
-    const bool frozen = frozen_trajectories.count(trajectory_id) != 0;
-    for (const auto& index_node_data : node_data_[trajectory_id]) {
-      const int node_index = index_node_data.first;
-      const NodeData& node_data = index_node_data.second;
-      C_nodes[trajectory_id].emplace(node_index, FromPose(node_data.pose));
-      problem.AddParameterBlock(C_nodes[trajectory_id].at(node_index).data(),
-                                3);
-      if (frozen) {
-        problem.SetParameterBlockConstant(
-            C_nodes[trajectory_id].at(node_index).data());
-      }
+  for (const auto& node_id_data : node_data_) {
+    const bool frozen =
+        frozen_trajectories.count(node_id_data.id.trajectory_id) != 0;
+    C_nodes.Insert(node_id_data.id, FromPose(node_id_data.data.pose));
+    problem.AddParameterBlock(C_nodes.at(node_id_data.id).data(), 3);
+    if (frozen) {
+      problem.SetParameterBlockConstant(C_nodes.at(node_id_data.id).data());
     }
   }
   // Add cost functions for intra- and inter-submap constraints.
@@ -173,58 +161,52 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
             ? new ceres::HuberLoss(options_.huber_scale())
             : nullptr,
         C_submaps.at(constraint.submap_id).data(),
-        C_nodes.at(constraint.node_id.trajectory_id)
-            .at(constraint.node_id.node_index)
-            .data());
+        C_nodes.at(constraint.node_id).data());
   }
 
   // Add penalties for violating odometry or changes between consecutive scans
   // if odometry is not available.
-  for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
-       ++trajectory_id) {
-    if (node_data_[trajectory_id].empty()) {
-      continue;
-    }
+  for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
+    const int trajectory_id = node_it->id.trajectory_id;
+    const auto trajectory_end = node_data_.EndOfTrajectory(trajectory_id);
 
-    for (auto node_it = node_data_[trajectory_id].begin();;) {
-      const int node_index = node_it->first;
-      const NodeData& node_data = node_it->second;
-      ++node_it;
-      if (node_it == node_data_[trajectory_id].end()) {
-        break;
-      }
+    auto prev_node_it = node_it;
+    for (++node_it; node_it != trajectory_end; ++node_it) {
+      const mapping::NodeId first_node_id = prev_node_it->id;
+      const NodeData& first_node_data = prev_node_it->data;
+      prev_node_it = node_it;
+      const mapping::NodeId second_node_id = node_it->id;
+      const NodeData& second_node_data = node_it->data;
 
-      const int next_node_index = node_it->first;
-      const NodeData& next_node_data = node_it->second;
-
-      if (next_node_index != node_index + 1) {
+      if (second_node_id.node_index != first_node_id.node_index + 1) {
         continue;
       }
 
       const bool odometry_available =
-          trajectory_id < odometry_data_.size() &&
-          odometry_data_[trajectory_id].Has(next_node_data.time) &&
-          odometry_data_[trajectory_id].Has(node_data.time);
+          trajectory_id < static_cast<int>(odometry_data_.size()) &&
+          odometry_data_[trajectory_id].Has(second_node_data.time) &&
+          odometry_data_[trajectory_id].Has(first_node_data.time);
       const transform::Rigid3d relative_pose =
           odometry_available
-              ? transform::Rigid3d::Rotation(node_data.gravity_alignment) *
+              ? transform::Rigid3d::Rotation(
+                    first_node_data.gravity_alignment) *
                     odometry_data_[trajectory_id]
-                        .Lookup(node_data.time)
+                        .Lookup(first_node_data.time)
                         .inverse() *
-                    odometry_data_[trajectory_id].Lookup(next_node_data.time) *
+                    odometry_data_[trajectory_id].Lookup(
+                        second_node_data.time) *
                     transform::Rigid3d::Rotation(
-                        next_node_data.gravity_alignment.inverse())
-              : transform::Embed3D(node_data.initial_pose.inverse() *
-                                   next_node_data.initial_pose);
+                        second_node_data.gravity_alignment.inverse())
+              : transform::Embed3D(first_node_data.initial_pose.inverse() *
+                                   second_node_data.initial_pose);
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
                   relative_pose,
                   options_.consecutive_scan_translation_penalty_factor(),
                   options_.consecutive_scan_rotation_penalty_factor()})),
-          nullptr /* loss function */,
-          C_nodes[trajectory_id].at(node_index).data(),
-          C_nodes[trajectory_id].at(next_node_index).data());
+          nullptr /* loss function */, C_nodes.at(first_node_id).data(),
+          C_nodes.at(second_node_id).data());
     }
   }
 
@@ -241,17 +223,13 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   for (const auto& C_submap_id_data : C_submaps) {
     submap_data_.at(C_submap_id_data.id).pose = ToPose(C_submap_id_data.data);
   }
-  for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
-       ++trajectory_id) {
-    for (auto& index_node_data : node_data_[trajectory_id]) {
-      index_node_data.second.pose =
-          ToPose(C_nodes[trajectory_id].at(index_node_data.first));
-    }
+  for (const auto& C_node_id_data : C_nodes) {
+    node_data_.at(C_node_id_data.id).pose = ToPose(C_node_id_data.data);
   }
 }
 
-const std::vector<std::map<int, NodeData>>& OptimizationProblem::node_data()
-    const {
+const mapping::MapById<mapping::NodeId, NodeData>&
+OptimizationProblem::node_data() const {
   return node_data_;
 }
 

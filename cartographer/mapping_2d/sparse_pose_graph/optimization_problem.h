@@ -79,20 +79,15 @@ class OptimizationProblem {
   void Solve(const std::vector<Constraint>& constraints,
              const std::set<int>& frozen_trajectories);
 
-  const std::vector<std::map<int, NodeData>>& node_data() const;
+  const mapping::MapById<mapping::NodeId, NodeData>& node_data() const;
   const mapping::MapById<mapping::SubmapId, SubmapData>& submap_data() const;
 
  private:
-  struct TrajectoryData {
-    // TODO(hrapp): Remove, once we can relabel constraints.
-    int next_node_index = 0;
-  };
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
   std::vector<std::deque<sensor::ImuData>> imu_data_;
-  std::vector<std::map<int, NodeData>> node_data_;
+  mapping::MapById<mapping::NodeId, NodeData> node_data_;
   std::vector<transform::TransformInterpolationBuffer> odometry_data_;
   mapping::MapById<mapping::SubmapId, SubmapData> submap_data_;
-  std::vector<TrajectoryData> trajectory_data_;
 };
 
 }  // namespace sparse_pose_graph
