@@ -22,7 +22,6 @@
 #include "Eigen/Core"
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/scan_matching/occupied_space_cost_functor.h"
 #include "cartographer/mapping_2d/scan_matching/rotation_delta_cost_functor.h"
@@ -44,8 +43,6 @@ proto::CeresScanMatcherOptions CreateCeresScanMatcherOptions(
       parameter_dictionary->GetDouble("translation_weight"));
   options.set_rotation_weight(
       parameter_dictionary->GetDouble("rotation_weight"));
-  options.set_covariance_scale(
-      parameter_dictionary->GetDouble("covariance_scale"));
   *options.mutable_ceres_solver_options() =
       common::CreateCeresSolverOptionsProto(
           parameter_dictionary->GetDictionary("ceres_solver_options").get());
@@ -67,7 +64,6 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
                              const sensor::PointCloud& point_cloud,
                              const ProbabilityGrid& probability_grid,
                              transform::Rigid2d* const pose_estimate,
-                             kalman_filter::Pose2DCovariance* const covariance,
                              ceres::Solver::Summary* const summary) const {
   double ceres_pose_estimate[3] = {initial_pose_estimate.translation().x(),
                                    initial_pose_estimate.translation().y(),
@@ -100,17 +96,6 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
 
   *pose_estimate = transform::Rigid2d(
       {ceres_pose_estimate[0], ceres_pose_estimate[1]}, ceres_pose_estimate[2]);
-
-  ceres::Covariance::Options options;
-  ceres::Covariance covariance_computer(options);
-  std::vector<std::pair<const double*, const double*>> covariance_blocks;
-  covariance_blocks.emplace_back(ceres_pose_estimate, ceres_pose_estimate);
-  CHECK(covariance_computer.Compute(covariance_blocks, &problem));
-  double ceres_covariance[3 * 3];
-  covariance_computer.GetCovarianceBlock(ceres_pose_estimate,
-                                         ceres_pose_estimate, ceres_covariance);
-  *covariance = Eigen::Map<kalman_filter::Pose2DCovariance>(ceres_covariance);
-  *covariance *= options_.covariance_scale();
 }
 
 }  // namespace scan_matching

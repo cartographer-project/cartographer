@@ -17,7 +17,6 @@
 #ifndef CARTOGRAPHER_MAPPING_MAP_BUILDER_H_
 #define CARTOGRAPHER_MAPPING_MAP_BUILDER_H_
 
-#include <deque>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -28,12 +27,14 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/thread_pool.h"
+#include "cartographer/io/proto_stream.h"
+#include "cartographer/mapping/id.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
+#include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
-#include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/sparse_pose_graph.h"
 #include "cartographer/mapping_3d/sparse_pose_graph.h"
 #include "cartographer/sensor/collator.h"
@@ -48,8 +49,7 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 // and a SparsePoseGraph for loop closure.
 class MapBuilder {
  public:
-  MapBuilder(const proto::MapBuilderOptions& options,
-             std::deque<mapping::TrajectoryNode::ConstantData>* constant_data);
+  MapBuilder(const proto::MapBuilderOptions& options);
   ~MapBuilder();
 
   MapBuilder(const MapBuilder&) = delete;
@@ -57,7 +57,8 @@ class MapBuilder {
 
   // Create a new trajectory and return its index.
   int AddTrajectoryBuilder(
-      const std::unordered_set<string>& expected_sensor_ids);
+      const std::unordered_set<string>& expected_sensor_ids,
+      const proto::TrajectoryBuilderOptions& trajectory_options);
 
   // Returns the TrajectoryBuilder corresponding to the specified
   // 'trajectory_id'.
@@ -72,17 +73,16 @@ class MapBuilder {
   // unblocked.
   int GetBlockingTrajectoryId() const;
 
-  // Returns the trajectory ID for 'trajectory'.
-  int GetTrajectoryId(const mapping::Submaps* trajectory) const;
-
-  // Returns the trajectory connectivity.
-  proto::TrajectoryConnectivity GetTrajectoryConnectivity();
-
-  // Fills the SubmapQuery::Response corresponding to 'submap_index' from
-  // 'trajectory_id'. Returns an error string on failure, or an empty string on
-  // success.
-  string SubmapToProto(int trajectory_id, int submap_index,
+  // Fills the SubmapQuery::Response corresponding to 'submap_id'. Returns an
+  // error string on failure, or an empty string on success.
+  string SubmapToProto(const SubmapId& submap_id,
                        proto::SubmapQuery::Response* response);
+
+  // Serializes the current state to a proto stream.
+  void SerializeState(io::ProtoStreamWriter* writer);
+
+  // Loads submaps from a proto stream into a new frozen trajectory.
+  void LoadMap(io::ProtoStreamReader* reader);
 
   int num_trajectory_builders() const;
 
@@ -98,7 +98,6 @@ class MapBuilder {
 
   sensor::Collator sensor_collator_;
   std::vector<std::unique_ptr<mapping::TrajectoryBuilder>> trajectory_builders_;
-  std::unordered_map<const mapping::Submaps*, int> trajectory_ids_;
 };
 
 }  // namespace mapping

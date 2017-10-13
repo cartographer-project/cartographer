@@ -19,40 +19,30 @@
 
 #include <memory>
 
-#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
-#include "cartographer/mapping/imu_tracker.h"
-#include "cartographer/mapping/odometry_state_tracker.h"
+#include "cartographer/mapping/pose_estimate.h"
+#include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/mapping_2d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/submaps.h"
 #include "cartographer/mapping_3d/motion_filter.h"
-#include "cartographer/sensor/configuration.h"
+#include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/odometry_data.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping_2d {
 
-proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
-    common::LuaParameterDictionary* parameter_dictionary);
-
-// Wires up the local SLAM stack (i.e. UKF, scan matching, etc.) without loop
-// closure.
+// Wires up the local SLAM stack (i.e. pose extrapolator, scan matching, etc.)
+// without loop closure.
 class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
-    common::Time time;
-    const mapping::Submaps* submaps;
-    const mapping::Submap* matching_submap;
-    std::vector<const mapping::Submap*> insertion_submaps;
-    transform::Rigid3d tracking_to_tracking_2d;
-    transform::Rigid3d tracking_2d_to_map;
-    sensor::RangeData range_data_in_tracking_2d;
-    transform::Rigid2d pose_estimate_2d;
-    kalman_filter::PoseCovariance covariance_estimate;
+    std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
+    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
 
   explicit LocalTrajectoryBuilder(
@@ -62,56 +52,45 @@ class LocalTrajectoryBuilder {
   LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;
   LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
 
-  const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
-      const;
-  std::unique_ptr<InsertionResult> AddHorizontalRangeData(
-      common::Time, const sensor::RangeData& range_data);
-  void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
-                  const Eigen::Vector3d& angular_velocity);
-  void AddOdometerData(common::Time time, const transform::Rigid3d& pose);
+  const mapping::PoseEstimate& pose_estimate() const;
 
-  const Submaps* submaps() const;
+  // Range data must be approximately horizontal for 2D SLAM.
+  std::unique_ptr<InsertionResult> AddRangeData(
+      common::Time, const sensor::RangeData& range_data);
+  void AddImuData(const sensor::ImuData& imu_data);
+  void AddOdometerData(const sensor::OdometryData& odometry_data);
 
  private:
+  std::unique_ptr<InsertionResult> AddAccumulatedRangeData(
+      common::Time time, const sensor::RangeData& range_data);
   sensor::RangeData TransformAndFilterRangeData(
-      const transform::Rigid3f& tracking_to_tracking_2d,
+      const transform::Rigid3f& gravity_alignment,
       const sensor::RangeData& range_data) const;
 
-  // Scan match 'range_data_in_tracking_2d' and fill in the
-  // 'pose_observation' and 'covariance_observation' with the result.
-  void ScanMatch(common::Time time, const transform::Rigid3d& pose_prediction,
-                 const transform::Rigid3d& tracking_to_tracking_2d,
-                 const sensor::RangeData& range_data_in_tracking_2d,
-                 transform::Rigid3d* pose_observation,
-                 kalman_filter::PoseCovariance* covariance_observation);
+  // Scan matches 'gravity_aligned_range_data' and fill in the
+  // 'pose_observation' with the result.
+  void ScanMatch(common::Time time, const transform::Rigid2d& pose_prediction,
+                 const sensor::RangeData& gravity_aligned_range_data,
+                 transform::Rigid2d* pose_observation);
 
-  // Lazily constructs an ImuTracker.
-  void InitializeImuTracker(common::Time time);
-
-  // Updates the current estimate to reflect the given 'time'.
-  void Predict(common::Time time);
+  // Lazily constructs a PoseExtrapolator.
+  void InitializeExtrapolator(common::Time time);
 
   const proto::LocalTrajectoryBuilderOptions options_;
-  Submaps submaps_;
-  mapping::GlobalTrajectoryBuilderInterface::PoseEstimate last_pose_estimate_;
+  ActiveSubmaps active_submaps_;
 
-  // Current 'pose_estimate_' and 'velocity_estimate_' at 'time_'.
-  common::Time time_ = common::Time::min();
-  transform::Rigid3d pose_estimate_ = transform::Rigid3d::Identity();
-  Eigen::Vector2d velocity_estimate_ = Eigen::Vector2d::Zero();
-  common::Time last_scan_match_time_ = common::Time::min();
-  // This is the difference between the model (constant velocity, IMU)
-  // prediction 'pose_estimate_' and the odometry prediction. To get the
-  // odometry prediction, right-multiply this to 'pose_estimate_'.
-  transform::Rigid3d odometry_correction_ = transform::Rigid3d::Identity();
+  mapping::PoseEstimate last_pose_estimate_;
 
   mapping_3d::MotionFilter motion_filter_;
   scan_matching::RealTimeCorrelativeScanMatcher
       real_time_correlative_scan_matcher_;
   scan_matching::CeresScanMatcher ceres_scan_matcher_;
 
-  std::unique_ptr<mapping::ImuTracker> imu_tracker_;
-  mapping::OdometryStateTracker odometry_state_tracker_;
+  std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
+
+  int num_accumulated_ = 0;
+  transform::Rigid3f first_pose_estimate_ = transform::Rigid3f::Identity();
+  sensor::RangeData accumulated_range_data_;
 };
 
 }  // namespace mapping_2d

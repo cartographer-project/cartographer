@@ -27,7 +27,7 @@ namespace mapping_3d {
 namespace {
 
 TEST(HybridGridTest, ApplyOdds) {
-  HybridGrid hybrid_grid(1.f, Eigen::Vector3f(-0.5f, -0.5f, -0.5f));
+  HybridGrid hybrid_grid(1.f);
 
   EXPECT_FALSE(hybrid_grid.IsKnown(Eigen::Array3i(0, 0, 0)));
   EXPECT_FALSE(hybrid_grid.IsKnown(Eigen::Array3i(0, 1, 0)));
@@ -40,33 +40,32 @@ TEST(HybridGridTest, ApplyOdds) {
 
   hybrid_grid.SetProbability(Eigen::Array3i(1, 0, 1), 0.5f);
 
-  hybrid_grid.StartUpdate();
   hybrid_grid.ApplyLookupTable(
       Eigen::Array3i(1, 0, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9f)));
+  hybrid_grid.FinishUpdate();
   EXPECT_GT(hybrid_grid.GetProbability(Eigen::Array3i(1, 0, 1)), 0.5f);
 
   hybrid_grid.SetProbability(Eigen::Array3i(0, 1, 0), 0.5f);
 
-  hybrid_grid.StartUpdate();
   hybrid_grid.ApplyLookupTable(
       Eigen::Array3i(0, 1, 0),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.1f)));
+  hybrid_grid.FinishUpdate();
   EXPECT_LT(hybrid_grid.GetProbability(Eigen::Array3i(0, 1, 0)), 0.5f);
 
   // Tests adding odds to an unknown cell.
-  hybrid_grid.StartUpdate();
   hybrid_grid.ApplyLookupTable(
       Eigen::Array3i(1, 1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.42f)));
   EXPECT_NEAR(hybrid_grid.GetProbability(Eigen::Array3i(1, 1, 1)), 0.42f, 1e-4);
 
-  // Tests that further updates are ignored if StartUpdate() isn't called.
+  // Tests that further updates are ignored if FinishUpdate() isn't called.
   hybrid_grid.ApplyLookupTable(
       Eigen::Array3i(1, 1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9f)));
   EXPECT_NEAR(hybrid_grid.GetProbability(Eigen::Array3i(1, 1, 1)), 0.42f, 1e-4);
-  hybrid_grid.StartUpdate();
+  hybrid_grid.FinishUpdate();
   hybrid_grid.ApplyLookupTable(
       Eigen::Array3i(1, 1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9f)));
@@ -74,18 +73,18 @@ TEST(HybridGridTest, ApplyOdds) {
 }
 
 TEST(HybridGridTest, GetProbability) {
-  HybridGrid hybrid_grid(1.f, Eigen::Vector3f(-0.5f, -0.5f, -0.5f));
+  HybridGrid hybrid_grid(1.f);
 
   hybrid_grid.SetProbability(
-      hybrid_grid.GetCellIndex(Eigen::Vector3f(-0.5f, 0.5f, 0.5f)),
+      hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 1.f, 1.f)),
       mapping::kMaxProbability);
   EXPECT_NEAR(hybrid_grid.GetProbability(
-                  hybrid_grid.GetCellIndex(Eigen::Vector3f(-0.5f, 0.5f, 0.5f))),
+                  hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 1.f, 1.f))),
               mapping::kMaxProbability, 1e-6);
   for (const Eigen::Array3i& index :
-       {hybrid_grid.GetCellIndex(Eigen::Vector3f(-0.5f, 1.5, 0.5f)),
-        hybrid_grid.GetCellIndex(Eigen::Vector3f(.5f, 0.5, 0.5f)),
-        hybrid_grid.GetCellIndex(Eigen::Vector3f(0.5f, 1.5, 0.5f))}) {
+       {hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 2.f, 1.f)),
+        hybrid_grid.GetCellIndex(Eigen::Vector3f(1.f, 1.f, 1.f)),
+        hybrid_grid.GetCellIndex(Eigen::Vector3f(1.f, 2.f, 1.f))}) {
     EXPECT_FALSE(hybrid_grid.IsKnown(index));
   }
 }
@@ -93,43 +92,42 @@ TEST(HybridGridTest, GetProbability) {
 MATCHER_P(AllCwiseEqual, index, "") { return (arg == index).all(); }
 
 TEST(HybridGridTest, GetCellIndex) {
-  HybridGrid hybrid_grid(2.f, Eigen::Vector3f(-7.f, -13.f, -2.f));
+  HybridGrid hybrid_grid(2.f);
 
-  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(-7.f, -13.f, -2.f)),
+  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 0.f, 0.f)),
               AllCwiseEqual(Eigen::Array3i(0, 0, 0)));
-  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(-7.f, 13.f, 8.f)),
+  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 26.f, 10.f)),
               AllCwiseEqual(Eigen::Array3i(0, 13, 5)));
-  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(7.f, -13.f, 8.f)),
+  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(14.f, 0.f, 10.f)),
               AllCwiseEqual(Eigen::Array3i(7, 0, 5)));
-  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(7.f, 13.f, -2.f)),
+  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(14.f, 26.f, 0.f)),
               AllCwiseEqual(Eigen::Array3i(7, 13, 0)));
 
   // Check around the origin.
-  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(1.5f, -1.5f, -1.5f)),
+  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(8.5f, 11.5f, 0.5f)),
               AllCwiseEqual(Eigen::Array3i(4, 6, 0)));
-  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(0.5f, -0.5f, -0.5f)),
+  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(7.5f, 12.5f, 1.5f)),
               AllCwiseEqual(Eigen::Array3i(4, 6, 1)));
-  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(-0.5f, 1.5f, 0.5f)),
+  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(6.5f, 14.5f, 2.5f)),
               AllCwiseEqual(Eigen::Array3i(3, 7, 1)));
-  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(-1.5f, 0.5f, 1.5f)),
+  EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(5.5f, 13.5f, 3.5f)),
               AllCwiseEqual(Eigen::Array3i(3, 7, 2)));
 }
 
 TEST(HybridGridTest, GetCenterOfCell) {
-  HybridGrid hybrid_grid(2.f, Eigen::Vector3f(-7.f, -13.f, -2.f));
+  HybridGrid hybrid_grid(2.f);
 
   const Eigen::Array3i index(3, 2, 1);
   const Eigen::Vector3f center = hybrid_grid.GetCenterOfCell(index);
-  EXPECT_NEAR(-1.f, center.x(), 1e-6);
-  EXPECT_NEAR(-9.f, center.y(), 1e-6);
-  EXPECT_NEAR(0.f, center.z(), 1e-6);
+  EXPECT_NEAR(6.f, center.x(), 1e-6);
+  EXPECT_NEAR(4.f, center.y(), 1e-6);
+  EXPECT_NEAR(2.f, center.z(), 1e-6);
   EXPECT_THAT(hybrid_grid.GetCellIndex(center), AllCwiseEqual(index));
 }
 
 class RandomHybridGridTest : public ::testing::Test {
  public:
-  RandomHybridGridTest()
-      : hybrid_grid_(2.f, Eigen::Vector3f(-7.f, -12.f, 0.f)), values_() {
+  RandomHybridGridTest() : hybrid_grid_(2.f), values_() {
     std::mt19937 rng(1285120005);
     std::uniform_real_distribution<float> value_distribution(
         mapping::kMinProbability, mapping::kMaxProbability);
@@ -187,12 +185,8 @@ TEST_F(RandomHybridGridTest, TestIteration) {
 }
 
 TEST_F(RandomHybridGridTest, ToProto) {
-  const auto proto = ToProto(hybrid_grid_);
+  const auto proto = hybrid_grid_.ToProto();
   EXPECT_EQ(hybrid_grid_.resolution(), proto.resolution());
-  EXPECT_EQ(hybrid_grid_.origin().x(), proto.origin().x());
-  EXPECT_EQ(hybrid_grid_.origin().y(), proto.origin().y());
-  EXPECT_EQ(hybrid_grid_.origin().z(), proto.origin().z());
-
   ASSERT_EQ(proto.x_indices_size(), proto.y_indices_size());
   ASSERT_EQ(proto.x_indices_size(), proto.z_indices_size());
   ASSERT_EQ(proto.x_indices_size(), proto.values_size());
@@ -213,8 +207,6 @@ TEST_F(RandomHybridGridTest, ToProto) {
   EXPECT_EQ(proto_map, hybrid_grid_map);
 }
 
-namespace {
-
 struct EigenComparator {
   bool operator()(const Eigen::Vector3i& lhs, const Eigen::Vector3i& rhs) {
     return std::forward_as_tuple(lhs.x(), lhs.y(), lhs.z()) <
@@ -222,10 +214,8 @@ struct EigenComparator {
   }
 };
 
-}  // namespace
-
 TEST_F(RandomHybridGridTest, FromProto) {
-  const HybridGrid constructed_grid(ToProto(hybrid_grid_));
+  const HybridGrid constructed_grid(hybrid_grid_.ToProto());
 
   std::map<Eigen::Vector3i, float, EigenComparator> member_map(
       hybrid_grid_.begin(), hybrid_grid_.end());

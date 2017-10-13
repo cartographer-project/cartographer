@@ -17,8 +17,11 @@
 #ifndef CARTOGRAPHER_MAPPING_DATA_H_
 #define CARTOGRAPHER_MAPPING_DATA_H_
 
+#include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
+#include "cartographer/mapping/global_trajectory_builder_interface.h"
+#include "cartographer/sensor/fixed_frame_pose_data.h"
+#include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -26,37 +29,53 @@
 namespace cartographer {
 namespace sensor {
 
-// This type is a logical union, i.e. only one type of sensor data is actually
-// filled in. It is only used for time ordering sensor data before passing it
-// on.
-struct Data {
-  enum class Type { kImu, kRangefinder, kOdometer };
+class Data {
+ public:
+  virtual ~Data() {}
 
-  struct Imu {
-    Eigen::Vector3d linear_acceleration;
-    Eigen::Vector3d angular_velocity;
-  };
-
-  struct Rangefinder {
-    Eigen::Vector3f origin;
-    PointCloud ranges;
-  };
-
-  Data(const common::Time time, const Imu& imu)
-      : type(Type::kImu), time(time), imu(imu) {}
-
-  Data(const common::Time time, const Rangefinder& rangefinder)
-      : type(Type::kRangefinder), time(time), rangefinder(rangefinder) {}
-
-  Data(const common::Time time, const transform::Rigid3d& odometer_pose)
-      : type(Type::kOdometer), time(time), odometer_pose(odometer_pose) {}
-
-  Type type;
-  common::Time time;
-  Imu imu;
-  Rangefinder rangefinder;
-  transform::Rigid3d odometer_pose;
+  virtual common::Time GetTime() const = 0;
+  virtual void AddToTrajectoryBuilder(
+      mapping::GlobalTrajectoryBuilderInterface* trajectory_builder) = 0;
 };
+
+class DispatchableRangefinderData : public Data {
+ public:
+  DispatchableRangefinderData(const common::Time time,
+                              const Eigen::Vector3f& origin,
+                              const PointCloud& ranges)
+      : time_(time), origin_(origin), ranges_(ranges) {}
+
+  common::Time GetTime() const override { return time_; }
+  void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface* const
+                                  trajectory_builder) override {
+    trajectory_builder->AddRangefinderData(time_, origin_, ranges_);
+  }
+
+ private:
+  const common::Time time_;
+  const Eigen::Vector3f origin_;
+  const PointCloud ranges_;
+};
+
+template <typename DataType>
+class Dispatchable : public Data {
+ public:
+  Dispatchable(const DataType& data) : data_(data) {}
+
+  common::Time GetTime() const override { return data_.time; }
+  void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface* const
+                                  trajectory_builder) override {
+    trajectory_builder->AddSensorData(data_);
+  }
+
+ private:
+  const DataType data_;
+};
+
+template <typename DataType>
+std::unique_ptr<Dispatchable<DataType>> MakeDispatchable(const DataType& data) {
+  return common::make_unique<Dispatchable<DataType>>(data);
+}
 
 }  // namespace sensor
 }  // namespace cartographer

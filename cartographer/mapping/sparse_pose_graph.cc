@@ -16,9 +16,6 @@
 
 #include "cartographer/mapping/sparse_pose_graph.h"
 
-#include <unordered_map>
-
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping/sparse_pose_graph/optimization_problem_options.h"
 #include "cartographer/transform/transform.h"
@@ -38,21 +35,6 @@ proto::SparsePoseGraph::Constraint::Tag ToProto(
   LOG(FATAL) << "Unsupported tag.";
 }
 
-std::vector<std::vector<TrajectoryNode>> SplitTrajectoryNodes(
-    const std::vector<TrajectoryNode>& trajectory_nodes) {
-  std::vector<std::vector<TrajectoryNode>> trajectories;
-  std::unordered_map<const Submaps*, int> trajectory_ids;
-  for (const auto& node : trajectory_nodes) {
-    const auto* trajectory = node.constant_data->trajectory;
-    if (trajectory_ids.emplace(trajectory, trajectories.size()).second) {
-      trajectories.push_back({node});
-    } else {
-      trajectories[trajectory_ids[trajectory]].push_back(node);
-    }
-  }
-  return trajectories;
-}
-
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::SparsePoseGraphOptions options;
@@ -61,6 +43,10 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   *options.mutable_constraint_builder_options() =
       sparse_pose_graph::CreateConstraintBuilderOptions(
           parameter_dictionary->GetDictionary("constraint_builder").get());
+  options.set_matcher_translation_weight(
+      parameter_dictionary->GetDouble("matcher_translation_weight"));
+  options.set_matcher_rotation_weight(
+      parameter_dictionary->GetDouble("matcher_rotation_weight"));
   *options.mutable_optimization_problem_options() =
       sparse_pose_graph::CreateOptimizationProblemOptions(
           parameter_dictionary->GetDictionary("optimization_problem").get());
@@ -69,37 +55,78 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   CHECK_GT(options.max_num_final_iterations(), 0);
   options.set_global_sampling_ratio(
       parameter_dictionary->GetDouble("global_sampling_ratio"));
+  options.set_log_residual_histograms(
+      parameter_dictionary->GetBool("log_residual_histograms"));
+  options.set_global_constraint_search_after_n_seconds(
+      parameter_dictionary->GetDouble(
+          "global_constraint_search_after_n_seconds"));
   return options;
 }
 
 proto::SparsePoseGraph SparsePoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
+
+  std::map<NodeId, NodeId> node_id_remapping;        // Due to trimming.
+  std::map<SubmapId, SubmapId> submap_id_remapping;  // Due to trimming.
+
+  const auto all_trajectory_nodes = GetTrajectoryNodes();
+  const auto all_submap_data = GetAllSubmapData();
+  for (size_t trajectory_id = 0; trajectory_id != all_trajectory_nodes.size();
+       ++trajectory_id) {
+    auto* trajectory_proto = proto.add_trajectory();
+
+    const auto& single_trajectory_nodes = all_trajectory_nodes[trajectory_id];
+    for (size_t old_node_index = 0;
+         old_node_index != single_trajectory_nodes.size(); ++old_node_index) {
+      const auto& node = single_trajectory_nodes[old_node_index];
+      if (!node.trimmed()) {
+        node_id_remapping[NodeId{static_cast<int>(trajectory_id),
+                                 static_cast<int>(old_node_index)}] =
+            NodeId{static_cast<int>(trajectory_id),
+                   static_cast<int>(trajectory_proto->node_size())};
+        auto* node_proto = trajectory_proto->add_node();
+        node_proto->set_timestamp(
+            common::ToUniversal(node.constant_data->time));
+        *node_proto->mutable_pose() = transform::ToProto(node.pose);
+      }
+    }
+
+    const auto& single_trajectory_submap_data = all_submap_data[trajectory_id];
+    for (size_t old_submap_index = 0;
+         old_submap_index != single_trajectory_submap_data.size();
+         ++old_submap_index) {
+      const auto& submap_data = single_trajectory_submap_data[old_submap_index];
+      if (submap_data.submap != nullptr) {
+        submap_id_remapping[SubmapId{static_cast<int>(trajectory_id),
+                                     static_cast<int>(old_submap_index)}] =
+            SubmapId{static_cast<int>(trajectory_id),
+                     static_cast<int>(trajectory_proto->submap_size())};
+        *trajectory_proto->add_submap()->mutable_pose() =
+            transform::ToProto(submap_data.pose);
+      }
+    }
+  }
+
   for (const auto& constraint : constraints()) {
     auto* const constraint_proto = proto.add_constraint();
     *constraint_proto->mutable_relative_pose() =
         transform::ToProto(constraint.pose.zbar_ij);
-    for (int i = 0; i != 36; ++i) {
-      constraint_proto->mutable_sqrt_lambda()->Add(0.);
-    }
-    Eigen::Map<Eigen::Matrix<double, 6, 6>>(
-        constraint_proto->mutable_sqrt_lambda()->mutable_data()) =
-        constraint.pose.sqrt_Lambda_ij;
-    // TODO(whess): Support multi-trajectory.
-    constraint_proto->mutable_submap_id()->set_submap_index(constraint.i);
-    constraint_proto->mutable_scan_id()->set_scan_index(constraint.j);
-    constraint_proto->set_tag(mapping::ToProto(constraint.tag));
-  }
+    constraint_proto->set_translation_weight(
+        constraint.pose.translation_weight);
+    constraint_proto->set_rotation_weight(constraint.pose.rotation_weight);
 
-  // TODO(whess): Support multi-trajectory.
-  proto::Trajectory* const trajectory = proto.add_trajectory();
-  *trajectory = mapping::ToProto(GetTrajectoryNodes());
-  const std::vector<std::vector<const Submaps*>> components =
-      GetConnectedTrajectories();
-  CHECK_EQ(components.size(), 1);
-  CHECK_EQ(components[0].size(), 1);
-  const Submaps* const submaps = components[0][0];
-  for (const auto& transform : GetSubmapTransforms(*submaps)) {
-    *trajectory->add_submap()->mutable_pose() = transform::ToProto(transform);
+    const SubmapId submap_id = submap_id_remapping.at(constraint.submap_id);
+    constraint_proto->mutable_submap_id()->set_trajectory_id(
+        submap_id.trajectory_id);
+    constraint_proto->mutable_submap_id()->set_submap_index(
+        submap_id.submap_index);
+
+    const NodeId node_id = node_id_remapping.at(constraint.node_id);
+    constraint_proto->mutable_node_id()->set_trajectory_id(
+        node_id.trajectory_id);
+    constraint_proto->mutable_node_id()->set_node_index(node_id.node_index);
+
+    constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }
 
   return proto;

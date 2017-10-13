@@ -84,7 +84,29 @@ set_source_files_properties(${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS} PROPERTIES GENER
 list(APPEND ALL_SRCS ${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS})
 
 add_library(${PROJECT_NAME} ${ALL_SRCS})
-add_subdirectory("cartographer")
+
+configure_file(
+  ${PROJECT_SOURCE_DIR}/cartographer/common/config.h.cmake
+  ${PROJECT_BINARY_DIR}/cartographer/common/config.h)
+
+google_binary(cartographer_autogenerate_ground_truth
+  SRCS
+    cartographer/ground_truth/autogenerate_ground_truth_main.cc
+)
+
+google_binary(cartographer_compute_relations_metrics
+  SRCS
+    cartographer/ground_truth/compute_relations_metrics_main.cc
+)
+
+foreach(ABS_FIL ${ALL_TESTS})
+  file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${ABS_FIL})
+  get_filename_component(DIR ${REL_FIL} DIRECTORY)
+  get_filename_component(FIL_WE ${REL_FIL} NAME_WE)
+  # Replace slashes as required for CMP0037.
+  string(REPLACE "/" "." TEST_TARGET_NAME "${DIR}/${FIL_WE}")
+  google_test("${TEST_TARGET_NAME}" ${ABS_FIL})
+endforeach()
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${EIGEN3_INCLUDE_DIR}")
@@ -101,8 +123,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${LUA_LIBRARIES})
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${Boost_INCLUDE_DIRS}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
-
-target_link_libraries(${PROJECT_NAME} PUBLIC webp)
 
 # We expect find_package(Ceres) to have located these for us.
 target_link_libraries(${PROJECT_NAME} PUBLIC glog)

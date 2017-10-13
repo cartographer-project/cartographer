@@ -20,61 +20,34 @@ option java_outer_classname = "Sensor";
 
 import "cartographer/transform/proto/transform.proto";
 
-// Collection of 3D 'points'.
-message PointCloud {
-  // Points as repeated floats for efficiency. All fields have the same size.
-  repeated float x = 3 [packed = true];
-  repeated float y = 4 [packed = true];
-  repeated float z = 5 [packed = true];
-}
-
-// Compressed variant of PointCloud.
+// Compressed collection of a 3D point cloud.
 message CompressedPointCloud {
   optional int32 num_points = 1;
   repeated int32 point_data = 3 [packed = true];
 }
 
-// Linearized matrix representation in row major format.
-// E.g. the  2x3 matrix:
-//   | 1, 2, 3 |
-//   | 4, 5, 6 |
-// would be represented as
-// {
-//   rows: 2;
-//   cols: 2;
-//   data: [1, 2, 3, 4, 5, 6]
-// }
-message Matrix {
-  optional int32 rows = 1;
-  optional int32 cols = 2;
-  repeated double data = 3;
+// Proto representation of ::cartographer::sensor::ImuData.
+message ImuData {
+  optional int64 timestamp = 1;
+  optional transform.proto.Vector3d linear_acceleration = 2;
+  optional transform.proto.Vector3d angular_velocity = 3;
 }
 
-// Modeled after ROS's MultiEchoLaserScan message.
-// http://docs.ros.org/api/sensor_msgs/html/msg/MultiEchoLaserScan.html
-message LaserScan {
-  message Values {
-    repeated float value = 1 [packed = true];
-  }
-
-  optional float angle_min = 2;
-  optional float angle_max = 3;
-  optional float angle_increment = 4;
-  optional float time_increment = 5;
-  optional float scan_time = 6;
-  optional float range_min = 7;
-  optional float range_max = 8;
-
-  repeated Values range = 9;
-  repeated Values intensity = 10;
-}
-
-// Proto representation of ::cartographer::sensor::RangeData
-message RangeData {
+// Proto representation of ::cartographer::sensor::CompressedRangeData.
+message CompressedRangeData {
   optional transform.proto.Vector3f origin = 1;
-  optional PointCloud point_cloud = 2;
-  optional PointCloud missing_echo_point_cloud = 3;
+  optional CompressedPointCloud returns = 2;
+  optional CompressedPointCloud misses = 3;
+}
 
-  // Reflectivity values of point_cloud or empty.
-  repeated int32 reflectivity = 4 [packed = true];
+// Proto representation of ::cartographer::sensor::OdometryData.
+message OdometryData {
+  optional int64 timestamp = 1;
+  optional transform.proto.Rigid3d pose = 2;
+}
+
+// Proto representation of ::cartographer::sensor::FixedFramePoseData.
+message FixedFramePoseData {
+  optional int64 timestamp = 1;
+  optional transform.proto.Rigid3d pose = 2;
 }

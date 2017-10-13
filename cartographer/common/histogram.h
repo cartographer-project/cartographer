@@ -17,7 +17,6 @@
 #ifndef CARTOGRAPHER_COMMON_HISTOGRAM_H_
 #define CARTOGRAPHER_COMMON_HISTOGRAM_H_
 
-#include <map>
 #include <string>
 #include <vector>
 

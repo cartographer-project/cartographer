@@ -32,12 +32,10 @@ namespace transform {
 template <typename FloatType>
 class Rigid2 {
  public:
-  using Affine = Eigen::Transform<FloatType, 2, Eigen::Affine>;
   using Vector = Eigen::Matrix<FloatType, 2, 1>;
   using Rotation2D = Eigen::Rotation2D<FloatType>;
 
-  Rigid2()
-      : translation_(Vector::Identity()), rotation_(Rotation2D::Identity()) {}
+  Rigid2() : translation_(Vector::Zero()), rotation_(Rotation2D::Identity()) {}
   Rigid2(const Vector& translation, const Rotation2D& rotation)
       : translation_(translation), rotation_(rotation) {}
   Rigid2(const Vector& translation, const double rotation)
@@ -55,9 +53,7 @@ class Rigid2 {
     return Rigid2(vector, Rotation2D::Identity());
   }
 
-  static Rigid2<FloatType> Identity() {
-    return Rigid2<FloatType>(Vector::Zero(), Rotation2D::Identity());
-  }
+  static Rigid2<FloatType> Identity() { return Rigid2<FloatType>(); }
 
   template <typename OtherType>
   Rigid2<OtherType> cast() const {
@@ -125,16 +121,11 @@ using Rigid2f = Rigid2<float>;
 template <typename FloatType>
 class Rigid3 {
  public:
-  using Affine = Eigen::Transform<FloatType, 3, Eigen::Affine>;
   using Vector = Eigen::Matrix<FloatType, 3, 1>;
   using Quaternion = Eigen::Quaternion<FloatType>;
   using AngleAxis = Eigen::AngleAxis<FloatType>;
 
-  Rigid3()
-      : translation_(Vector::Identity()), rotation_(Quaternion::Identity()) {}
-  // TODO(damonkohler): Remove
-  explicit Rigid3(const Affine& affine)
-      : translation_(affine.translation()), rotation_(affine.rotation()) {}
+  Rigid3() : translation_(Vector::Zero()), rotation_(Quaternion::Identity()) {}
   Rigid3(const Vector& translation, const Quaternion& rotation)
       : translation_(translation), rotation_(rotation) {}
   Rigid3(const Vector& translation, const AngleAxis& rotation)
@@ -152,9 +143,7 @@ class Rigid3 {
     return Rigid3(vector, Quaternion::Identity());
   }
 
-  static Rigid3<FloatType> Identity() {
-    return Rigid3<FloatType>(Vector::Zero(), Quaternion::Identity());
-  }
+  static Rigid3<FloatType> Identity() { return Rigid3<FloatType>(); }
 
   template <typename OtherType>
   Rigid3<OtherType> cast() const {

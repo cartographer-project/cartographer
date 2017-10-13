@@ -22,12 +22,14 @@ cache:
     - /home/travis/docker/
 
 env:
-  - UBUNTU_RELEASE=trusty DOCKER_CACHE_FILE=/home/travis/docker/trusty-cache.tar.gz
-  - UBUNTU_RELEASE=xenial DOCKER_CACHE_FILE=/home/travis/docker/xenial-cache.tar.gz
+  - LSB_RELEASE=trusty DOCKER_CACHE_FILE=/home/travis/docker/trusty-cache.tar.gz
+  - LSB_RELEASE=xenial DOCKER_CACHE_FILE=/home/travis/docker/xenial-cache.tar.gz
+  - LSB_RELEASE=jessie DOCKER_CACHE_FILE=/home/travis/docker/jessie-cache.tar.gz
+  - LSB_RELEASE=stretch DOCKER_CACHE_FILE=/home/travis/docker/stretch-cache.tar.gz
 
 before_install: scripts/load_docker_cache.sh
 
 install: true
 script:
-  - docker build ${TRAVIS_BUILD_DIR} -t cartographer:${UBUNTU_RELEASE} -f Dockerfile.${UBUNTU_RELEASE}
+  - docker build ${TRAVIS_BUILD_DIR} -t cartographer:${LSB_RELEASE} -f Dockerfile.${LSB_RELEASE}
   - scripts/save_docker_cache.sh

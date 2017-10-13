@@ -36,9 +36,8 @@ namespace {
 class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
  protected:
   RealTimeCorrelativeScanMatcherTest()
-      : hybrid_grid_(0.1f /* resolution */,
-                     Eigen::Vector3f(0.5f, 0.5f, 0.5f) /* origin */),
-        expected_pose_(Eigen::Vector3d(-0.5, 0.5, 0.5),
+      : hybrid_grid_(0.1f),
+        expected_pose_(Eigen::Vector3d(-1., 0., 0.),
                        Eigen::Quaterniond::Identity()) {
     for (const auto& point :
          {Eigen::Vector3f(-3.f, 2.f, 0.f), Eigen::Vector3f(-4.f, 2.f, 0.f),
@@ -82,43 +81,40 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
 
 TEST_F(RealTimeCorrelativeScanMatcherTest, PerfectEstimate) {
   TestFromInitialPose(
-      transform::Rigid3d::Translation(Eigen::Vector3d(-0.5, 0.5, 0.5)));
+      transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., 0.)));
 }
 
 TEST_F(RealTimeCorrelativeScanMatcherTest, AlongX) {
   TestFromInitialPose(
-      transform::Rigid3d::Translation(Eigen::Vector3d(-0.3, 0.5, 0.5)));
+      transform::Rigid3d::Translation(Eigen::Vector3d(-0.8, 0., 0.)));
 }
 
 TEST_F(RealTimeCorrelativeScanMatcherTest, AlongZ) {
   TestFromInitialPose(
-      transform::Rigid3d::Translation(Eigen::Vector3d(-0.5, 0.5, 0.3)));
+      transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., -0.2)));
 }
 
 TEST_F(RealTimeCorrelativeScanMatcherTest, AlongXYZ) {
   TestFromInitialPose(
-      transform::Rigid3d::Translation(Eigen::Vector3d(-0.4, 0.3, 0.7)));
+      transform::Rigid3d::Translation(Eigen::Vector3d(-0.9, -0.2, 0.2)));
 }
 
 TEST_F(RealTimeCorrelativeScanMatcherTest, RotationAroundX) {
-  TestFromInitialPose(
-      transform::Rigid3d::Translation(Eigen::Vector3d(-0.5, 0.5, 0.5)) *
-      transform::Rigid3d::Rotation(
-          Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(1., 0., 0.))));
+  TestFromInitialPose(transform::Rigid3d(
+      Eigen::Vector3d(-1., 0., 0.),
+      Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(1., 0., 0.))));
 }
 
 TEST_F(RealTimeCorrelativeScanMatcherTest, RotationAroundY) {
-  TestFromInitialPose(
-      transform::Rigid3d::Translation(Eigen::Vector3d(-0.5, 0.5, 0.5)) *
-      transform::Rigid3d::Rotation(
-          Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(0., 1., 0.))));
+  TestFromInitialPose(transform::Rigid3d(
+      Eigen::Vector3d(-1., 0., 0.),
+      Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(0., 1., 0.))));
 }
 
 TEST_F(RealTimeCorrelativeScanMatcherTest, RotationAroundYZ) {
-  TestFromInitialPose(
-      transform::Rigid3d::Translation(Eigen::Vector3d(-0.5, 0.5, 0.5)) *
-      transform::Rigid3d::Rotation(
-          Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(0., 1., 1.))));
+  TestFromInitialPose(transform::Rigid3d(
+      Eigen::Vector3d(-1., 0., 0.),
+      Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(0., 1., 1.))));
 }
 
 }  // namespace

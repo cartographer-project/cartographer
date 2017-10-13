@@ -16,7 +16,6 @@ syntax = "proto2";
 
 package cartographer.mapping.sparse_pose_graph.proto;
 
-import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.proto";
 import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.proto";
@@ -30,10 +29,6 @@ message ConstraintBuilderOptions {
   // Threshold for poses to be considered near a submap.
   optional double max_constraint_distance = 2;
 
-  // Voxel filter used to compute a sparser point cloud for matching.
-  optional sensor.proto.AdaptiveVoxelFilterOptions
-      adaptive_voxel_filter_options = 3;
-
   // Threshold for the scan match score below which a match is not considered.
   // Low scores indicate that the scan and map do not look similar.
   optional double min_score = 4;
@@ -41,8 +36,13 @@ message ConstraintBuilderOptions {
   // Threshold below which global localizations are not trusted.
   optional double global_localization_min_score = 5;
 
-  // Lower bound for covariance eigenvalues to limit the weight of matches.
-  optional double lower_covariance_eigenvalue_bound = 7;
+  // Weight used in the optimization problem for the translational component of
+  // loop closure constraints.
+  optional double loop_closure_translation_weight = 13;
+
+  // Weight used in the optimization problem for the rotational component of
+  // loop closure constraints.
+  optional double loop_closure_rotation_weight = 14;
 
   // If enabled, logs information of loop-closing constraints for debugging.
   optional bool log_matches = 8;
@@ -54,6 +54,7 @@ message ConstraintBuilderOptions {
       ceres_scan_matcher_options = 11;
   optional mapping_3d.scan_matching.proto.FastCorrelativeScanMatcherOptions
       fast_correlative_scan_matcher_options_3d = 10;
+
   optional mapping_3d.scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options_3d = 12;
 }

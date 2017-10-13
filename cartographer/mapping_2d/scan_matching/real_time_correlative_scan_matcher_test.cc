@@ -22,7 +22,6 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/make_unique.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/range_data_inserter.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -56,10 +55,10 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
     point_cloud_.emplace_back(-0.125f, 0.125f, 0.f);
     point_cloud_.emplace_back(-0.125f, 0.075f, 0.f);
     point_cloud_.emplace_back(-0.125f, 0.025f, 0.f);
-    probability_grid_.StartUpdate();
     range_data_inserter_->Insert(
         sensor::RangeData{Eigen::Vector3f::Zero(), point_cloud_, {}},
         &probability_grid_);
+    probability_grid_.FinishUpdate();
     {
       auto parameter_dictionary = common::MakeDictionary(
           "return {"

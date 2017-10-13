@@ -22,6 +22,7 @@
 #include <string>
 
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
+#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping_3d/range_data_inserter.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
@@ -32,84 +33,162 @@ namespace mapping_3d {
 namespace scan_matching {
 namespace {
 
-proto::FastCorrelativeScanMatcherOptions
-CreateFastCorrelativeScanMatcherTestOptions(const int branch_and_bound_depth) {
-  auto parameter_dictionary = common::MakeDictionary(
-      "return {"
-      "branch_and_bound_depth = " +
-      std::to_string(branch_and_bound_depth) +
-      ", "
-      "full_resolution_depth = " +
-      std::to_string(branch_and_bound_depth) +
-      ", "
-      "rotational_histogram_size = 30, "
-      "min_rotational_score = 0.1, "
-      "linear_xy_search_window = 0.8, "
-      "linear_z_search_window = 0.8, "
-      "angular_search_window = 0.3, "
-      "}");
-  return CreateFastCorrelativeScanMatcherOptions(parameter_dictionary.get());
-}
+class FastCorrelativeScanMatcherTest : public ::testing::Test {
+ protected:
+  FastCorrelativeScanMatcherTest()
+      : range_data_inserter_(CreateRangeDataInserterTestOptions()),
+        options_(CreateFastCorrelativeScanMatcherTestOptions(5)) {}
 
-mapping_3d::proto::RangeDataInserterOptions
-CreateRangeDataInserterTestOptions() {
-  auto parameter_dictionary = common::MakeDictionary(
-      "return { "
-      "hit_probability = 0.7, "
-      "miss_probability = 0.4, "
-      "num_free_space_voxels = 5, "
-      "}");
-  return CreateRangeDataInserterOptions(parameter_dictionary.get());
-}
+  void SetUp() override {
+    point_cloud_ = {
+        Eigen::Vector3f(4.f, 0.f, 0.f), Eigen::Vector3f(4.5f, 0.f, 0.f),
+        Eigen::Vector3f(5.f, 0.f, 0.f), Eigen::Vector3f(5.5f, 0.f, 0.f),
+        Eigen::Vector3f(0.f, 4.f, 0.f), Eigen::Vector3f(0.f, 4.5f, 0.f),
+        Eigen::Vector3f(0.f, 5.f, 0.f), Eigen::Vector3f(0.f, 5.5f, 0.f),
+        Eigen::Vector3f(0.f, 0.f, 4.f), Eigen::Vector3f(0.f, 0.f, 4.5f),
+        Eigen::Vector3f(0.f, 0.f, 5.f), Eigen::Vector3f(0.f, 0.f, 5.5f)};
+  }
 
-TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
-  std::mt19937 prng(42);
-  std::uniform_real_distribution<float> distribution(-1.f, 1.f);
-  RangeDataInserter range_data_inserter(CreateRangeDataInserterTestOptions());
-  constexpr float kMinScore = 0.1f;
-  const auto options = CreateFastCorrelativeScanMatcherTestOptions(5);
+  transform::Rigid3f GetRandomPose() {
+    const float x = 0.7f * distribution_(prng_);
+    const float y = 0.7f * distribution_(prng_);
+    const float z = 0.7f * distribution_(prng_);
+    const float theta = 0.2f * distribution_(prng_);
+    return transform::Rigid3f::Translation(Eigen::Vector3f(x, y, z)) *
+           transform::Rigid3f::Rotation(
+               Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
+  }
 
-  sensor::PointCloud point_cloud{
-      Eigen::Vector3f(4.f, 0.f, 0.f), Eigen::Vector3f(4.5f, 0.f, 0.f),
-      Eigen::Vector3f(5.f, 0.f, 0.f), Eigen::Vector3f(5.5f, 0.f, 0.f),
-      Eigen::Vector3f(0.f, 4.f, 0.f), Eigen::Vector3f(0.f, 4.5f, 0.f),
-      Eigen::Vector3f(0.f, 5.f, 0.f), Eigen::Vector3f(0.f, 5.5f, 0.f),
-      Eigen::Vector3f(0.f, 0.f, 4.f), Eigen::Vector3f(0.f, 0.f, 4.5f),
-      Eigen::Vector3f(0.f, 0.f, 5.f), Eigen::Vector3f(0.f, 0.f, 5.5f)};
+  static proto::FastCorrelativeScanMatcherOptions
+  CreateFastCorrelativeScanMatcherTestOptions(
+      const int branch_and_bound_depth) {
+    auto parameter_dictionary = common::MakeDictionary(
+        "return {"
+        "branch_and_bound_depth = " +
+        std::to_string(branch_and_bound_depth) +
+        ", "
+        "full_resolution_depth = " +
+        std::to_string(branch_and_bound_depth) +
+        ", "
+        "min_rotational_score = 0.1, "
+        // Unknown space has kMinProbability = 0.1, so we need to make sure here
+        // to pick a larger number otherwise we always find matches.
+        "min_low_resolution_score = 0.15, "
+        "linear_xy_search_window = 0.8, "
+        "linear_z_search_window = 0.8, "
+        "angular_search_window = 0.3, "
+        "}");
+    return CreateFastCorrelativeScanMatcherOptions(parameter_dictionary.get());
+  }
 
+  static mapping_3d::proto::RangeDataInserterOptions
+  CreateRangeDataInserterTestOptions() {
+    auto parameter_dictionary = common::MakeDictionary(
+        "return { "
+        "hit_probability = 0.7, "
+        "miss_probability = 0.4, "
+        "num_free_space_voxels = 5, "
+        "}");
+    return CreateRangeDataInserterOptions(parameter_dictionary.get());
+  }
+
+  std::unique_ptr<FastCorrelativeScanMatcher> GetFastCorrelativeScanMatcher(
+      const proto::FastCorrelativeScanMatcherOptions& options,
+      const transform::Rigid3f& pose) {
+    hybrid_grid_ = common::make_unique<HybridGrid>(0.05f);
+    range_data_inserter_.Insert(
+        sensor::RangeData{pose.translation(),
+                          sensor::TransformPointCloud(point_cloud_, pose),
+                          {}},
+        hybrid_grid_.get());
+    hybrid_grid_->FinishUpdate();
+
+    return common::make_unique<FastCorrelativeScanMatcher>(
+        *hybrid_grid_, hybrid_grid_.get(),
+        std::vector<mapping::TrajectoryNode>(
+            {{std::make_shared<const mapping::TrajectoryNode::Data>(
+                  CreateConstantData(point_cloud_)),
+              pose.cast<double>()}}),
+        options);
+  }
+
+  mapping::TrajectoryNode::Data CreateConstantData(
+      const sensor::PointCloud& low_resolution_point_cloud) {
+    return mapping::TrajectoryNode::Data{common::FromUniversal(0),
+                                         Eigen::Quaterniond::Identity(),
+                                         {},
+                                         point_cloud_,
+                                         low_resolution_point_cloud,
+                                         Eigen::VectorXf::Zero(10)};
+  }
+
+  std::mt19937 prng_ = std::mt19937(42);
+  std::uniform_real_distribution<float> distribution_ =
+      std::uniform_real_distribution<float>(-1.f, 1.f);
+  RangeDataInserter range_data_inserter_;
+  const proto::FastCorrelativeScanMatcherOptions options_;
+  sensor::PointCloud point_cloud_;
+  std::unique_ptr<HybridGrid> hybrid_grid_;
+};
+
+constexpr float kMinScore = 0.1f;
+
+TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
   for (int i = 0; i != 20; ++i) {
-    const float x = 0.7f * distribution(prng);
-    const float y = 0.7f * distribution(prng);
-    const float z = 0.7f * distribution(prng);
-    const float theta = 0.2f * distribution(prng);
-    const auto expected_pose =
-        transform::Rigid3f::Translation(Eigen::Vector3f(x, y, z)) *
-        transform::Rigid3f::Rotation(
-            Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
+    const auto expected_pose = GetRandomPose();
 
-    HybridGrid hybrid_grid(0.05f /* resolution */,
-                           Eigen::Vector3f(0.5f, 1.5f, 2.5f) /* origin */);
-    hybrid_grid.StartUpdate();
-    range_data_inserter.Insert(
-        sensor::RangeData{
-            expected_pose.translation(),
-            sensor::TransformPointCloud(point_cloud, expected_pose),
-            {}},
-        &hybrid_grid);
+    std::unique_ptr<FastCorrelativeScanMatcher> fast_correlative_scan_matcher(
+        GetFastCorrelativeScanMatcher(options_, expected_pose));
 
-    FastCorrelativeScanMatcher fast_correlative_scan_matcher(hybrid_grid, {},
-                                                             options);
+    float score = 0.f;
     transform::Rigid3d pose_estimate;
-    float score;
-    EXPECT_TRUE(fast_correlative_scan_matcher.Match(
-        transform::Rigid3d::Identity(), point_cloud, point_cloud, kMinScore,
-        &score, &pose_estimate));
+    float rotational_score = 0.f;
+    float low_resolution_score = 0.f;
+    EXPECT_TRUE(fast_correlative_scan_matcher->Match(
+        transform::Rigid3d::Identity(), CreateConstantData(point_cloud_),
+        kMinScore, &score, &pose_estimate, &rotational_score,
+        &low_resolution_score));
     EXPECT_LT(kMinScore, score);
+    EXPECT_LT(0.09f, rotational_score);
+    EXPECT_LT(0.14f, low_resolution_score);
     EXPECT_THAT(expected_pose,
                 transform::IsNearly(pose_estimate.cast<float>(), 0.05f))
         << "Actual: " << transform::ToProto(pose_estimate).DebugString()
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
+    EXPECT_FALSE(fast_correlative_scan_matcher->Match(
+        transform::Rigid3d::Identity(),
+        CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore,
+        &score, &pose_estimate, &rotational_score, &low_resolution_score))
+        << low_resolution_score;
   }
+}
+
+TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
+  const auto expected_pose = GetRandomPose();
+
+  std::unique_ptr<FastCorrelativeScanMatcher> fast_correlative_scan_matcher(
+      GetFastCorrelativeScanMatcher(options_, expected_pose));
+
+  float score = 0.f;
+  transform::Rigid3d pose_estimate;
+  float rotational_score = 0.f;
+  float low_resolution_score = 0.f;
+  EXPECT_TRUE(fast_correlative_scan_matcher->MatchFullSubmap(
+      Eigen::Quaterniond::Identity(), CreateConstantData(point_cloud_),
+      kMinScore, &score, &pose_estimate, &rotational_score,
+      &low_resolution_score));
+  EXPECT_LT(kMinScore, score);
+  EXPECT_LT(0.09f, rotational_score);
+  EXPECT_LT(0.14f, low_resolution_score);
+  EXPECT_THAT(expected_pose,
+              transform::IsNearly(pose_estimate.cast<float>(), 0.05f))
+      << "Actual: " << transform::ToProto(pose_estimate).DebugString()
+      << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
+  EXPECT_FALSE(fast_correlative_scan_matcher->MatchFullSubmap(
+      Eigen::Quaterniond::Identity(),
+      CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore,
+      &score, &pose_estimate, &rotational_score, &low_resolution_score))
+      << low_resolution_score;
 }
 
 }  // namespace

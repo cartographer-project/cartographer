@@ -19,9 +19,9 @@
 namespace cartographer {
 namespace transform {
 
-Rigid2d ToRigid2(const proto::Rigid2d& pose) {
-  return Rigid2d({pose.translation().x(), pose.translation().y()},
-                 pose.rotation());
+Rigid2d ToRigid2(const proto::Rigid2d& transform) {
+  return Rigid2d({transform.translation().x(), transform.translation().y()},
+                 transform.rotation());
 }
 
 Eigen::Vector2d ToEigen(const proto::Vector2d& vector) {

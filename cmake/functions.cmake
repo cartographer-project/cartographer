@@ -32,12 +32,8 @@ macro(_common_compile_stuff VISIBILITY)
   target_link_libraries(${NAME} PUBLIC ${PROJECT_NAME})
 endmacro(_common_compile_stuff)
 
-function(google_test NAME)
-  _parse_arguments("${ARGN}")
-
-  add_executable(${NAME}
-    ${ARG_SRCS} ${ARG_HDRS}
-  )
+function(google_test NAME ARG_SRC)
+  add_executable(${NAME} ${ARG_SRC})
   _common_compile_stuff("PRIVATE")
 
   # Make sure that gmock always includes the correct gtest/gtest.h.
@@ -51,9 +47,7 @@ endfunction()
 function(google_binary NAME)
   _parse_arguments("${ARGN}")
 
-  add_executable(${NAME}
-    ${ARG_SRCS} ${ARG_HDRS}
-  )
+  add_executable(${NAME} ${ARG_SRCS})
 
   _common_compile_stuff("PRIVATE")
 
@@ -78,7 +72,7 @@ macro(google_initialize_cartographer_project)
     set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
   endif()
-  set(GOOG_CXX_FLAGS "-pthread -std=c++11 ${GOOG_CXX_FLAGS}")
+  set(GOOG_CXX_FLAGS "-pthread -std=c++11 -fPIC ${GOOG_CXX_FLAGS}")
 
   google_add_flag(GOOG_CXX_FLAGS "-Wall")
   google_add_flag(GOOG_CXX_FLAGS "-Wpedantic")
@@ -88,6 +82,7 @@ macro(google_initialize_cartographer_project)
   google_add_flag(GOOG_CXX_FLAGS "-Werror=missing-braces")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=reorder")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=return-type")
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=switch")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=uninitialized")
 
   if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
@@ -109,6 +104,10 @@ macro(google_initialize_cartographer_project)
         "call CMake with -DFORCE_DEBUG_BUILD=True"
       )
     endif()
+# Support for Debian packaging CMAKE_BUILD_TYPE
+  elseif(CMAKE_BUILD_TYPE STREQUAL "None")
+    message(WARNING "Building with CMAKE_BUILD_TYPE None, "
+        "please make sure you have set CFLAGS and CXXFLAGS according to your needs.")
   else()
     message(FATAL_ERROR "Unknown CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
   endif()

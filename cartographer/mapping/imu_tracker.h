@@ -40,8 +40,11 @@ class ImuTracker {
   void AddImuAngularVelocityObservation(
       const Eigen::Vector3d& imu_angular_velocity);
 
+  // Query the current time.
+  common::Time time() const { return time_; }
+
   // Query the current orientation estimate.
-  Eigen::Quaterniond orientation() { return orientation_; }
+  Eigen::Quaterniond orientation() const { return orientation_; }
 
  private:
   const double imu_gravity_time_constant_;

@@ -17,10 +17,16 @@
 #ifndef CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 #define CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 
+#include <memory>
+#include <set>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/proto/scan_matching_progress.pb.h"
+#include "cartographer/mapping/id.h"
+#include "cartographer/mapping/pose_graph_trimmer.h"
+#include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/submaps.h"
@@ -33,10 +39,6 @@ namespace mapping {
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
-// Splits TrajectoryNodes by ID.
-std::vector<std::vector<TrajectoryNode>> SplitTrajectoryNodes(
-    const std::vector<TrajectoryNode>& trajectory_nodes);
-
 class SparsePoseGraph {
  public:
   // A "constraint" as in the paper by Konolige, Kurt, et al. "Efficient sparse
@@ -45,14 +47,12 @@ class SparsePoseGraph {
   struct Constraint {
     struct Pose {
       transform::Rigid3d zbar_ij;
-      Eigen::Matrix<double, 6, 6> sqrt_Lambda_ij;
+      double translation_weight;
+      double rotation_weight;
     };
 
-    // Submap index.
-    int i;
-
-    // Scan index.
-    int j;
+    SubmapId submap_id;  // 'i' in the paper.
+    NodeId node_id;      // 'j' in the paper.
 
     // Pose of the scan 'j' relative to submap 'i'.
     Pose pose;
@@ -63,45 +63,65 @@ class SparsePoseGraph {
     enum Tag { INTRA_SUBMAP, INTER_SUBMAP } tag;
   };
 
+  struct SubmapData {
+    std::shared_ptr<const Submap> submap;
+    transform::Rigid3d pose;
+  };
+
   SparsePoseGraph() {}
   virtual ~SparsePoseGraph() {}
 
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
 
+  // Freezes a trajectory. Poses in this trajectory will not be optimized.
+  virtual void FreezeTrajectory(int trajectory_id) = 0;
+
+  // Adds a 'submap' from a proto with the given 'initial_pose' to the frozen
+  // trajectory with 'trajectory_id'.
+  virtual void AddSubmapFromProto(int trajectory_id,
+                                  const transform::Rigid3d& initial_pose,
+                                  const proto::Submap& submap) = 0;
+
+  // Adds a 'node' from a proto with the given 'pose' to the frozen trajectory
+  // with 'trajectory_id'.
+  virtual void AddNodeFromProto(int trajectory_id,
+                                const transform::Rigid3d& pose,
+                                const proto::Node& node) = 0;
+
+  // Adds a 'trimmer'. It will be used after all data added before it has been
+  // included in the pose graph.
+  virtual void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) = 0;
+
   // Computes optimized poses.
   virtual void RunFinalOptimization() = 0;
 
-  // Will once return true whenever new optimized poses are available.
-  virtual bool HasNewOptimizedPoses() = 0;
+  // Gets the current trajectory clusters.
+  virtual std::vector<std::vector<int>> GetConnectedTrajectories() = 0;
 
-  // Returns the scan matching progress.
-  virtual proto::ScanMatchingProgress GetScanMatchingProgress() = 0;
+  // Return the number of submaps for the given 'trajectory_id'.
+  virtual int num_submaps(int trajectory_id) = 0;
 
-  // Get the current trajectory clusters.
-  virtual std::vector<std::vector<const Submaps*>>
-  GetConnectedTrajectories() = 0;
+  // Returns the current optimized transform and submap itself for the given
+  // 'submap_id'.
+  virtual SubmapData GetSubmapData(const SubmapId& submap_id) = 0;
 
-  // Returns the current optimized transforms for the given 'submaps'.
-  virtual std::vector<transform::Rigid3d> GetSubmapTransforms(
-      const Submaps& submaps) = 0;
+  // Returns data for all Submaps by trajectory.
+  virtual std::vector<std::vector<SubmapData>> GetAllSubmapData() = 0;
 
   // Returns the transform converting data in the local map frame (i.e. the
   // continuous, non-loop-closed frame) into the global map frame (i.e. the
   // discontinuous, loop-closed frame).
-  virtual transform::Rigid3d GetLocalToGlobalTransform(
-      const Submaps& submaps) = 0;
+  virtual transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id) = 0;
 
-  // Returns the current optimized trajectory.
-  virtual std::vector<TrajectoryNode> GetTrajectoryNodes() = 0;
+  // Returns the current optimized trajectories.
+  virtual std::vector<std::vector<TrajectoryNode>> GetTrajectoryNodes() = 0;
+
+  // Serializes the constraints and trajectories.
+  proto::SparsePoseGraph ToProto();
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
-
-  // Serializes the constraints and the computed trajectory.
-  //
-  // TODO(whess): Support multiple trajectories.
-  proto::SparsePoseGraph ToProto();
 };
 
 }  // namespace mapping

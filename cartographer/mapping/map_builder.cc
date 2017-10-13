@@ -19,14 +19,14 @@
 #include <cmath>
 #include <limits>
 #include <memory>
-#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
-#include "cartographer/mapping_2d/global_trajectory_builder.h"
-#include "cartographer/mapping_3d/global_trajectory_builder.h"
-#include "cartographer/mapping_3d/local_trajectory_builder_options.h"
+#include "cartographer/mapping/global_trajectory_builder.h"
+#include "cartographer/mapping_2d/local_trajectory_builder.h"
+#include "cartographer/mapping_3d/local_trajectory_builder.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -41,14 +41,8 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
   proto::MapBuilderOptions options;
   options.set_use_trajectory_builder_2d(
       parameter_dictionary->GetBool("use_trajectory_builder_2d"));
-  *options.mutable_trajectory_builder_2d_options() =
-      mapping_2d::CreateLocalTrajectoryBuilderOptions(
-          parameter_dictionary->GetDictionary("trajectory_builder_2d").get());
   options.set_use_trajectory_builder_3d(
       parameter_dictionary->GetBool("use_trajectory_builder_3d"));
-  *options.mutable_trajectory_builder_3d_options() =
-      mapping_3d::CreateLocalTrajectoryBuilderOptions(
-          parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
   options.set_num_background_threads(
       parameter_dictionary->GetNonNegativeInt("num_background_threads"));
   *options.mutable_sparse_pose_graph_options() = CreateSparsePoseGraphOptions(
@@ -58,18 +52,16 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
   return options;
 }
 
-MapBuilder::MapBuilder(
-    const proto::MapBuilderOptions& options,
-    std::deque<TrajectoryNode::ConstantData>* const constant_data)
+MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
   if (options.use_trajectory_builder_2d()) {
     sparse_pose_graph_2d_ = common::make_unique<mapping_2d::SparsePoseGraph>(
-        options_.sparse_pose_graph_options(), &thread_pool_, constant_data);
+        options_.sparse_pose_graph_options(), &thread_pool_);
     sparse_pose_graph_ = sparse_pose_graph_2d_.get();
   }
   if (options.use_trajectory_builder_3d()) {
     sparse_pose_graph_3d_ = common::make_unique<mapping_3d::SparsePoseGraph>(
-        options_.sparse_pose_graph_options(), &thread_pool_, constant_data);
+        options_.sparse_pose_graph_options(), &thread_pool_);
     sparse_pose_graph_ = sparse_pose_graph_3d_.get();
   }
 }
@@ -77,25 +69,37 @@ MapBuilder::MapBuilder(
 MapBuilder::~MapBuilder() {}
 
 int MapBuilder::AddTrajectoryBuilder(
-    const std::unordered_set<string>& expected_sensor_ids) {
+    const std::unordered_set<string>& expected_sensor_ids,
+    const proto::TrajectoryBuilderOptions& trajectory_options) {
   const int trajectory_id = trajectory_builders_.size();
   if (options_.use_trajectory_builder_3d()) {
+    CHECK(trajectory_options.has_trajectory_builder_3d_options());
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
-            common::make_unique<mapping_3d::GlobalTrajectoryBuilder>(
-                options_.trajectory_builder_3d_options(),
-                sparse_pose_graph_3d_.get())));
+            common::make_unique<mapping::GlobalTrajectoryBuilder<
+                mapping_3d::LocalTrajectoryBuilder,
+                mapping_3d::proto::LocalTrajectoryBuilderOptions,
+                mapping_3d::SparsePoseGraph>>(
+                trajectory_options.trajectory_builder_3d_options(),
+                trajectory_id, sparse_pose_graph_3d_.get())));
   } else {
+    CHECK(trajectory_options.has_trajectory_builder_2d_options());
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
-            common::make_unique<mapping_2d::GlobalTrajectoryBuilder>(
-                options_.trajectory_builder_2d_options(),
-                sparse_pose_graph_2d_.get())));
+            common::make_unique<mapping::GlobalTrajectoryBuilder<
+                mapping_2d::LocalTrajectoryBuilder,
+                mapping_2d::proto::LocalTrajectoryBuilderOptions,
+                mapping_2d::SparsePoseGraph>>(
+                trajectory_options.trajectory_builder_2d_options(),
+                trajectory_id, sparse_pose_graph_2d_.get())));
   }
-  trajectory_ids_.emplace(trajectory_builders_.back()->submaps(),
-                          trajectory_id);
+  if (trajectory_options.pure_localization()) {
+    constexpr int kSubmapsToKeep = 3;
+    sparse_pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
+        trajectory_id, kSubmapsToKeep));
+  }
   return trajectory_id;
 }
 
@@ -112,43 +116,127 @@ int MapBuilder::GetBlockingTrajectoryId() const {
   return sensor_collator_.GetBlockingTrajectoryId();
 }
 
-int MapBuilder::GetTrajectoryId(const Submaps* const trajectory) const {
-  const auto trajectory_id = trajectory_ids_.find(trajectory);
-  CHECK(trajectory_id != trajectory_ids_.end());
-  return trajectory_id->second;
-}
-
-proto::TrajectoryConnectivity MapBuilder::GetTrajectoryConnectivity() {
-  return ToProto(sparse_pose_graph_->GetConnectedTrajectories(),
-                 trajectory_ids_);
-}
-
-string MapBuilder::SubmapToProto(const int trajectory_id,
-                                 const int submap_index,
+string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
                                  proto::SubmapQuery::Response* const response) {
-  if (trajectory_id < 0 || trajectory_id >= num_trajectory_builders()) {
-    return "Requested submap from trajectory " + std::to_string(trajectory_id) +
-           " but there are only " + std::to_string(num_trajectory_builders()) +
-           " trajectories.";
+  if (submap_id.trajectory_id < 0 ||
+      submap_id.trajectory_id >= num_trajectory_builders()) {
+    return "Requested submap from trajectory " +
+           std::to_string(submap_id.trajectory_id) + " but there are only " +
+           std::to_string(num_trajectory_builders()) + " trajectories.";
   }
 
-  const Submaps* const submaps =
-      trajectory_builders_.at(trajectory_id)->submaps();
-  if (submap_index < 0 || submap_index >= submaps->size()) {
-    return "Requested submap " + std::to_string(submap_index) +
-           " from trajectory " + std::to_string(trajectory_id) +
-           " but there are only " + std::to_string(submaps->size()) +
+  const int num_submaps =
+      sparse_pose_graph_->num_submaps(submap_id.trajectory_id);
+  if (submap_id.submap_index < 0 || submap_id.submap_index >= num_submaps) {
+    return "Requested submap " + std::to_string(submap_id.submap_index) +
+           " from trajectory " + std::to_string(submap_id.trajectory_id) +
+           " but there are only " + std::to_string(num_submaps) +
            " submaps in this trajectory.";
   }
 
-  response->set_submap_version(
-      submaps->Get(submap_index)->end_range_data_index);
-  const std::vector<transform::Rigid3d> submap_transforms =
-      sparse_pose_graph_->GetSubmapTransforms(*submaps);
-  CHECK_EQ(submap_transforms.size(), submaps->size());
-  submaps->SubmapToProto(submap_index, sparse_pose_graph_->GetTrajectoryNodes(),
-                         submap_transforms[submap_index], response);
+  const auto submap_data = sparse_pose_graph_->GetSubmapData(submap_id);
+  if (submap_data.submap == nullptr) {
+    return "Requested submap " + std::to_string(submap_id.submap_index) +
+           " from trajectory " + std::to_string(submap_id.trajectory_id) +
+           " but it has been trimmed.";
+  }
+  submap_data.submap->ToResponseProto(submap_data.pose, response);
   return "";
+}
+
+void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
+  // We serialize the pose graph followed by all the data referenced in it.
+  writer->WriteProto(sparse_pose_graph_->ToProto());
+  // Next we serialize all submap data.
+  {
+    const auto submap_data = sparse_pose_graph_->GetAllSubmapData();
+    for (int trajectory_id = 0;
+         trajectory_id != static_cast<int>(submap_data.size());
+         ++trajectory_id) {
+      for (int submap_index = 0;
+           submap_index != static_cast<int>(submap_data[trajectory_id].size());
+           ++submap_index) {
+        proto::SerializedData proto;
+        auto* const submap_proto = proto.mutable_submap();
+        // TODO(whess): Handle trimmed data.
+        submap_proto->mutable_submap_id()->set_trajectory_id(trajectory_id);
+        submap_proto->mutable_submap_id()->set_submap_index(submap_index);
+        submap_data[trajectory_id][submap_index].submap->ToProto(submap_proto);
+        // TODO(whess): Only enable optionally? Resulting pbstream files will be
+        // a lot larger now.
+        writer->WriteProto(proto);
+      }
+    }
+  }
+  // Next we serialize all node data.
+  {
+    const auto trajectory_nodes = sparse_pose_graph_->GetTrajectoryNodes();
+    for (int trajectory_id = 0;
+         trajectory_id != static_cast<int>(trajectory_nodes.size());
+         ++trajectory_id) {
+      for (int node_index = 0;
+           node_index !=
+           static_cast<int>(trajectory_nodes[trajectory_id].size());
+           ++node_index) {
+        proto::SerializedData proto;
+        auto* const node_proto = proto.mutable_node();
+        // TODO(whess): Handle trimmed data.
+        node_proto->mutable_node_id()->set_trajectory_id(trajectory_id);
+        node_proto->mutable_node_id()->set_node_index(node_index);
+        *node_proto->mutable_node_data() =
+            ToProto(*trajectory_nodes[trajectory_id][node_index].constant_data);
+        // TODO(whess): Only enable optionally? Resulting pbstream files will be
+        // a lot larger now.
+        writer->WriteProto(proto);
+      }
+    }
+    // TODO(whess): Serialize additional sensor data: IMU, odometry.
+  }
+}
+
+void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
+  proto::SparsePoseGraph pose_graph;
+  CHECK(reader->ReadProto(&pose_graph));
+
+  // TODO(whess): Not all trajectories should be builders, i.e. support should
+  // be added for trajectories without latest pose, options, etc. Appease the
+  // trajectory builder for now.
+  proto::TrajectoryBuilderOptions unused_options;
+  unused_options.mutable_trajectory_builder_2d_options()
+      ->mutable_submaps_options()
+      ->set_resolution(0.05);
+  unused_options.mutable_trajectory_builder_3d_options();
+
+  const std::unordered_set<string> unused_sensor_ids;
+  const int map_trajectory_id =
+      AddTrajectoryBuilder(unused_sensor_ids, unused_options);
+  FinishTrajectory(map_trajectory_id);
+  sparse_pose_graph_->FreezeTrajectory(map_trajectory_id);
+
+  for (;;) {
+    proto::SerializedData proto;
+    if (!reader->ReadProto(&proto)) {
+      break;
+    }
+    if (proto.has_node()) {
+      const auto& pose_graph_node =
+          pose_graph.trajectory(proto.node().node_id().trajectory_id())
+              .node(proto.node().node_id().node_index());
+      const transform::Rigid3d pose =
+          transform::ToRigid3(pose_graph_node.pose());
+      sparse_pose_graph_->AddNodeFromProto(map_trajectory_id, pose,
+                                           proto.node());
+    }
+    if (proto.has_submap()) {
+      const transform::Rigid3d submap_pose = transform::ToRigid3(
+          pose_graph.trajectory(proto.submap().submap_id().trajectory_id())
+              .submap(proto.submap().submap_id().submap_index())
+              .pose());
+      sparse_pose_graph_->AddSubmapFromProto(map_trajectory_id, submap_pose,
+                                             proto.submap());
+    }
+  }
+  CHECK(reader->eof());
 }
 
 int MapBuilder::num_trajectory_builders() const {

@@ -24,11 +24,12 @@ message FastCorrelativeScanMatcherOptions {
   // resolution by half each.
   optional int32 full_resolution_depth = 8;
 
-  // Number of histogram buckets for the rotational scan matcher.
-  optional int32 rotational_histogram_size = 3;
-
   // Minimum score for the rotational scan matcher.
   optional double min_rotational_score = 4;
+
+  // Threshold for the score of the low resolution grid below which a match is
+  // not considered. Only used for 3D.
+  optional double min_low_resolution_score = 9;
 
   // Linear search window in the plane orthogonal to gravity in which the best
   // possible scan alignment will be found.

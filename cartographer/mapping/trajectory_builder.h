@@ -21,9 +21,12 @@
 #include <memory>
 #include <string>
 
+#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/pose_estimate.h"
+#include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -32,21 +35,13 @@
 namespace cartographer {
 namespace mapping {
 
+proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
+    common::LuaParameterDictionary* const parameter_dictionary);
+
 // This interface is used for both 2D and 3D SLAM.
 class TrajectoryBuilder {
  public:
-  // Represents a newly computed pose. 'pose' is the end-user visualization of
-  // orientation and 'point_cloud' is the point cloud, in the local map frame.
-  struct PoseEstimate {
-    PoseEstimate() = default;
-    PoseEstimate(common::Time time, const transform::Rigid3d& pose,
-                 const sensor::PointCloud& point_cloud)
-        : time(time), pose(pose), point_cloud(point_cloud) {}
-
-    common::Time time = common::Time::min();
-    transform::Rigid3d pose = transform::Rigid3d::Identity();
-    sensor::PointCloud point_cloud;
-  };
+  using PoseEstimate = mapping::PoseEstimate;
 
   TrajectoryBuilder() {}
   virtual ~TrajectoryBuilder() {}
@@ -54,7 +49,6 @@ class TrajectoryBuilder {
   TrajectoryBuilder(const TrajectoryBuilder&) = delete;
   TrajectoryBuilder& operator=(const TrajectoryBuilder&) = delete;
 
-  virtual const Submaps* submaps() const = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
   virtual void AddSensorData(const string& sensor_id,
@@ -64,22 +58,28 @@ class TrajectoryBuilder {
                           const Eigen::Vector3f& origin,
                           const sensor::PointCloud& ranges) {
     AddSensorData(sensor_id,
-                  common::make_unique<sensor::Data>(
-                      time, sensor::Data::Rangefinder{origin, ranges}));
+                  common::make_unique<sensor::DispatchableRangefinderData>(
+                      time, origin, ranges));
   }
 
   void AddImuData(const string& sensor_id, common::Time time,
                   const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) {
-    AddSensorData(sensor_id, common::make_unique<sensor::Data>(
-                                 time, sensor::Data::Imu{linear_acceleration,
-                                                         angular_velocity}));
+    AddSensorData(sensor_id, sensor::MakeDispatchable(sensor::ImuData{
+                                 time, linear_acceleration, angular_velocity}));
   }
 
   void AddOdometerData(const string& sensor_id, common::Time time,
                        const transform::Rigid3d& odometer_pose) {
+    AddSensorData(sensor_id, sensor::MakeDispatchable(
+                                 sensor::OdometryData{time, odometer_pose}));
+  }
+
+  void AddFixedFramePoseData(const string& sensor_id, common::Time time,
+                             const transform::Rigid3d& fixed_frame_pose) {
     AddSensorData(sensor_id,
-                  common::make_unique<sensor::Data>(time, odometer_pose));
+                  sensor::MakeDispatchable(
+                      sensor::FixedFramePoseData{time, fixed_frame_pose}));
   }
 };
 

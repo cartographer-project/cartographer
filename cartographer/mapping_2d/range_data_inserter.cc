@@ -53,19 +53,11 @@ RangeDataInserter::RangeDataInserter(
 
 void RangeDataInserter::Insert(const sensor::RangeData& range_data,
                                ProbabilityGrid* const probability_grid) const {
-  CHECK_NOTNULL(probability_grid)->StartUpdate();
-
-  // By not starting a new update after hits are inserted, we give hits priority
+  // By not finishing the update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
-  CastRays(range_data, probability_grid->limits(),
-           [this, &probability_grid](const Eigen::Array2i& hit) {
-             probability_grid->ApplyLookupTable(hit, hit_table_);
-           },
-           [this, &probability_grid](const Eigen::Array2i& miss) {
-             if (options_.insert_free_space()) {
-               probability_grid->ApplyLookupTable(miss, miss_table_);
-             }
-           });
+  CastRays(range_data, hit_table_, miss_table_, options_.insert_free_space(),
+           CHECK_NOTNULL(probability_grid));
+  probability_grid->FinishUpdate();
 }
 
 }  // namespace mapping_2d

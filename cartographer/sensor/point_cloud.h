@@ -32,6 +32,11 @@ typedef std::vector<Eigen::Vector3f> PointCloud;
 struct PointCloudWithIntensities {
   PointCloud points;
   std::vector<float> intensities;
+
+  // For each item in 'points', contains the time delta of when it was acquired
+  // after points[0], i.e. the first entry is always 0.f. If timing
+  // information is not available all entries will be 0.f.
+  std::vector<float> offset_seconds;
 };
 
 // Transforms 'point_cloud' according to 'transform'.
@@ -41,12 +46,6 @@ PointCloud TransformPointCloud(const PointCloud& point_cloud,
 // Returns a new point cloud without points that fall outside the region defined
 // by 'min_z' and 'max_z'.
 PointCloud Crop(const PointCloud& point_cloud, float min_z, float max_z);
-
-// Converts 'point_cloud' to a proto::PointCloud.
-proto::PointCloud ToProto(const PointCloud& point_cloud);
-
-// Converts 'proto' to a PointCloud.
-PointCloud ToPointCloud(const proto::PointCloud& proto);
 
 }  // namespace sensor
 }  // namespace cartographer

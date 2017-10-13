@@ -23,6 +23,7 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping_3d/ceres_pose.h"
+#include "cartographer/mapping_3d/rotation_parameterization.h"
 #include "cartographer/mapping_3d/scan_matching/occupied_space_cost_functor.h"
 #include "cartographer/mapping_3d/scan_matching/rotation_delta_cost_functor.h"
 #include "cartographer/mapping_3d/scan_matching/translation_delta_cost_functor.h"
@@ -34,23 +35,6 @@
 namespace cartographer {
 namespace mapping_3d {
 namespace scan_matching {
-namespace {
-
-struct YawOnlyQuaternionPlus {
-  template <typename T>
-  bool operator()(const T* x, const T* delta, T* x_plus_delta) const {
-    const T clamped_delta = common::Clamp(delta[0], T(-0.5), T(0.5));
-    T q_delta[4];
-    q_delta[0] = ceres::sqrt(1. - clamped_delta * clamped_delta);
-    q_delta[1] = T(0.);
-    q_delta[2] = T(0.);
-    q_delta[3] = clamped_delta;
-    ceres::QuaternionProduct(q_delta, x, x_plus_delta);
-    return true;
-  }
-};
-
-}  // namespace
 
 proto::CeresScanMatcherOptions CreateCeresScanMatcherOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {

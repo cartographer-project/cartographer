@@ -38,7 +38,7 @@ bool PerformGlobalLocalization(
   const sensor::PointCloud filtered_point_cloud =
       voxel_filter.Filter(point_cloud);
   bool success = false;
-  if (matchers.size() == 0) {
+  if (matchers.empty()) {
     LOG(WARNING) << "Map not yet large enough to localize in!";
     return false;
   }

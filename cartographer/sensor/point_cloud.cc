@@ -43,25 +43,5 @@ PointCloud Crop(const PointCloud& point_cloud, const float min_z,
   return cropped_point_cloud;
 }
 
-proto::PointCloud ToProto(const PointCloud& point_cloud) {
-  proto::PointCloud proto;
-  for (const auto& point : point_cloud) {
-    proto.add_x(point.x());
-    proto.add_y(point.y());
-    proto.add_z(point.z());
-  }
-  return proto;
-}
-
-PointCloud ToPointCloud(const proto::PointCloud& proto) {
-  PointCloud point_cloud;
-  const int size = std::min({proto.x_size(), proto.y_size(), proto.z_size()});
-  point_cloud.reserve(size);
-  for (int i = 0; i != size; ++i) {
-    point_cloud.emplace_back(proto.x(i), proto.y(i), proto.z(i));
-  }
-  return point_cloud;
-}
-
 }  // namespace sensor
 }  // namespace cartographer

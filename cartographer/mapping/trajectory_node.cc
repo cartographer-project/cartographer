@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Cartographer Authors
+ * Copyright 2017 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,57 @@
 
 #include "cartographer/mapping/trajectory_node.h"
 
+#include "Eigen/Core"
+#include "cartographer/common/time.h"
+#include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace mapping {
 
-proto::Trajectory ToProto(const std::vector<TrajectoryNode>& nodes) {
-  proto::Trajectory trajectory;
-  for (const auto& node : nodes) {
-    const auto& data = *node.constant_data;
-    auto* node_proto = trajectory.add_node();
-    node_proto->set_timestamp(common::ToUniversal(data.time));
-    *node_proto->mutable_pose() =
-        transform::ToProto(node.pose * data.tracking_to_pose);
+proto::TrajectoryNodeData ToProto(const TrajectoryNode::Data& constant_data) {
+  proto::TrajectoryNodeData proto;
+  proto.set_timestamp(common::ToUniversal(constant_data.time));
+  *proto.mutable_gravity_alignment() =
+      transform::ToProto(constant_data.gravity_alignment);
+  *proto.mutable_filtered_gravity_aligned_point_cloud() =
+      sensor::CompressedPointCloud(
+          constant_data.filtered_gravity_aligned_point_cloud)
+          .ToProto();
+  *proto.mutable_high_resolution_point_cloud() =
+      sensor::CompressedPointCloud(constant_data.high_resolution_point_cloud)
+          .ToProto();
+  *proto.mutable_low_resolution_point_cloud() =
+      sensor::CompressedPointCloud(constant_data.low_resolution_point_cloud)
+          .ToProto();
+  for (Eigen::VectorXf::Index i = 0;
+       i != constant_data.rotational_scan_matcher_histogram.size(); ++i) {
+    proto.add_rotational_scan_matcher_histogram(
+        constant_data.rotational_scan_matcher_histogram(i));
   }
-  return trajectory;
+  *proto.mutable_initial_pose() =
+      transform::ToProto(constant_data.initial_pose);
+  return proto;
+}
+
+TrajectoryNode::Data FromProto(const proto::TrajectoryNodeData& proto) {
+  Eigen::VectorXf rotational_scan_matcher_histogram(
+      proto.rotational_scan_matcher_histogram_size());
+  for (int i = 0; i != proto.rotational_scan_matcher_histogram_size(); ++i) {
+    rotational_scan_matcher_histogram(i) =
+        proto.rotational_scan_matcher_histogram(i);
+  }
+  return TrajectoryNode::Data{
+      common::FromUniversal(proto.timestamp()),
+      transform::ToEigen(proto.gravity_alignment()),
+      sensor::CompressedPointCloud(proto.filtered_gravity_aligned_point_cloud())
+          .Decompress(),
+      sensor::CompressedPointCloud(proto.high_resolution_point_cloud())
+          .Decompress(),
+      sensor::CompressedPointCloud(proto.low_resolution_point_cloud())
+          .Decompress(),
+      rotational_scan_matcher_histogram,
+      transform::ToRigid3(proto.initial_pose())};
 }
 
 }  // namespace mapping

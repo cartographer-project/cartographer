@@ -20,8 +20,9 @@ namespace cartographer {
 namespace mapping_3d {
 
 IntegrateImuResult<double> IntegrateImu(
-    const std::deque<ImuData>& imu_data, const common::Time start_time,
-    const common::Time end_time, std::deque<ImuData>::const_iterator* it) {
+    const std::deque<sensor::ImuData>& imu_data, const common::Time start_time,
+    const common::Time end_time,
+    std::deque<sensor::ImuData>::const_iterator* it) {
   return IntegrateImu<double>(imu_data, Eigen::Affine3d::Identity(),
                               Eigen::Affine3d::Identity(), start_time, end_time,
                               it);
