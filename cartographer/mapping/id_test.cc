@@ -59,6 +59,26 @@ TEST(IdTest, MapByIdIterator) {
   EXPECT_TRUE(expected_id_data.empty());
 }
 
+TEST(IdTest, MapByIdTrajectoryRange) {
+  MapById<NodeId, int> map_by_id;
+  map_by_id.Append(7, 2);
+  map_by_id.Append(42, 3);
+  map_by_id.Append(0, 0);
+  map_by_id.Append(0, 1);
+
+  std::deque<std::pair<NodeId, int>> expected_data = {
+      {NodeId{0, 0}, 0},
+      {NodeId{0, 1}, 1},
+  };
+  for (const auto& entry : map_by_id.trajectory(0)) {
+    EXPECT_EQ(expected_data.front().first, entry.id);
+    EXPECT_EQ(expected_data.front().second, entry.data);
+    ASSERT_FALSE(expected_data.empty());
+    expected_data.pop_front();
+  }
+  EXPECT_TRUE(expected_data.empty());
+}
+
 TEST(IdTest, MapByIdPrevIterator) {
   MapById<NodeId, int> map_by_id;
   map_by_id.Append(42, 42);
