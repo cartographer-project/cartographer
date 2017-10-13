@@ -472,8 +472,6 @@ void SparsePoseGraph::RunOptimization() {
   for (auto node_it = node_data.begin(); node_it != node_data.end();) {
     const int trajectory_id = node_it->id.trajectory_id;
     const auto trajectory_end = node_data.EndOfTrajectory(trajectory_id);
-    const int num_nodes =
-        trajectory_nodes_.SizeOfTrajectoryOrZero(trajectory_id);
     for (; node_it != trajectory_end; ++node_it) {
       const mapping::NodeId node_id = node_it->id;
       auto& node = trajectory_nodes_.at(node_id);
@@ -489,6 +487,9 @@ void SparsePoseGraph::RunOptimization() {
     const transform::Rigid3d old_global_to_new_global =
         local_to_new_global * local_to_old_global.inverse();
     const int last_optimized_node_index = std::prev(node_it)->id.node_index;
+    
+    const int num_nodes =
+        trajectory_nodes_.EndOfTrajectory(trajectory_id);
     for (int node_index = last_optimized_node_index + 1; node_index < num_nodes;
          ++node_index) {
       const mapping::NodeId node_id{trajectory_id, node_index};
