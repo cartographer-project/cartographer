@@ -177,8 +177,11 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   proto::SparsePoseGraph pose_graph;
   CHECK(reader->ReadProto(&pose_graph));
 
-  const int map_trajectory_id = AddTrajectoryForDeserialization();
-  sparse_pose_graph_->FreezeTrajectory(map_trajectory_id);
+  for (int trajectory_id = 0; trajectory_id < pose_graph.trajectory().size();
+       ++trajectory_id) {
+    CHECK_EQ(AddTrajectoryForDeserialization(), trajectory_id);
+    sparse_pose_graph_->FreezeTrajectory(trajectory_id);
+  }
 
   MapById<SubmapId, transform::Rigid3d> submap_poses;
   for (const proto::Trajectory& trajectory_proto : pose_graph.trajectory()) {
@@ -208,15 +211,13 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
       const transform::Rigid3d node_pose =
           node_poses.at(NodeId{proto.node().node_id().trajectory_id(),
                                proto.node().node_id().node_index()});
-      sparse_pose_graph_->AddNodeFromProto(map_trajectory_id, node_pose,
-                                           proto.node());
+      sparse_pose_graph_->AddNodeFromProto(node_pose, proto.node());
     }
     if (proto.has_submap()) {
       const transform::Rigid3d submap_pose =
           submap_poses.at(SubmapId{proto.submap().submap_id().trajectory_id(),
                                    proto.submap().submap_id().submap_index()});
-      sparse_pose_graph_->AddSubmapFromProto(map_trajectory_id, submap_pose,
-                                             proto.submap());
+      sparse_pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
     }
   }
   CHECK(reader->eof());

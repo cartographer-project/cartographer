@@ -393,13 +393,15 @@ void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   });
 }
 
-void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
-                                         const transform::Rigid3d& initial_pose,
+void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& pose,
                                          const mapping::proto::Submap& submap) {
   if (!submap.has_submap_3d()) {
     return;
   }
 
+  const mapping::SubmapId proto_submap_id = {submap.submap_id().trajectory_id(),
+                                             submap.submap_id().submap_index()};
+  const int trajectory_id = proto_submap_id.trajectory_id;
   std::shared_ptr<const Submap> submap_ptr =
       std::make_shared<const Submap>(submap.submap_3d());
 
@@ -407,21 +409,26 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   AddTrajectoryIfNeeded(trajectory_id);
   const mapping::SubmapId submap_id =
       submap_data_.Append(trajectory_id, SubmapData());
+  // TODO: remove this check when the optimization problem is refactored to
+  // use MapById for submaps
+  CHECK_EQ(submap_id, proto_submap_id);
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the optimized pose.
   CHECK_EQ(submap_id,
            optimized_submap_transforms_.Append(
-               trajectory_id, sparse_pose_graph::SubmapData{initial_pose}));
-  AddWorkItem([this, submap_id, initial_pose]() REQUIRES(mutex_) {
+               trajectory_id, sparse_pose_graph::SubmapData{pose}));
+  AddWorkItem([this, submap_id, pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
-    optimization_problem_.AddSubmap(submap_id.trajectory_id, initial_pose);
+    optimization_problem_.AddSubmap(submap_id.trajectory_id, pose);
   });
 }
 
-void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
-                                       const transform::Rigid3d& pose,
+void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& pose,
                                        const mapping::proto::Node& node) {
+  const mapping::NodeId proto_node_id = {node.node_id().trajectory_id(),
+                                         node.node_id().node_index()};
+  const int trajectory_id = proto_node_id.trajectory_id;
   std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data =
       std::make_shared<const mapping::TrajectoryNode::Data>(
           mapping::FromProto(node.node_data()));
@@ -430,6 +437,9 @@ void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
   AddTrajectoryIfNeeded(trajectory_id);
   const mapping::NodeId node_id = trajectory_nodes_.Append(
       trajectory_id, mapping::TrajectoryNode{constant_data, pose});
+  // TODO: remove this check when the optimization problem is refactored to
+  // use MapById for trajectory nodes
+  CHECK_EQ(node_id, proto_node_id);
 
   AddWorkItem([this, node_id, pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(node_id.trajectory_id), 1);
