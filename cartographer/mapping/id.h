@@ -116,10 +116,11 @@ class NestedVectorsById {
 template <typename IteratorType>
 class Range {
  public:
-  Range(IteratorType begin, IteratorType end) : begin_(begin), end_(end) {}
+  Range(const IteratorType& begin, const IteratorType& end)
+      : begin_(begin), end_(end) {}
 
-  IteratorType begin() { return begin_; }
-  IteratorType end() { return end_; }
+  IteratorType begin() const { return begin_; }
+  IteratorType end() const { return end_; }
 
  private:
   IteratorType begin_;
