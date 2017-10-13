@@ -20,12 +20,17 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/pose_estimate.h"
 #include "cartographer/mapping/submaps.h"
-#include "cartographer/mapping/trajectory_builder.h"
+#include "cartographer/sensor/fixed_frame_pose_data.h"
+#include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
+#include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping {
@@ -36,8 +41,6 @@ namespace mapping {
 // optimized pose estimates.
 class GlobalTrajectoryBuilderInterface {
  public:
-  using PoseEstimate = TrajectoryBuilder::PoseEstimate;
-
   GlobalTrajectoryBuilderInterface() {}
   virtual ~GlobalTrajectoryBuilderInterface() {}
 
@@ -46,17 +49,15 @@ class GlobalTrajectoryBuilderInterface {
   GlobalTrajectoryBuilderInterface& operator=(
       const GlobalTrajectoryBuilderInterface&) = delete;
 
-  virtual const Submaps* submaps() const = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
   virtual void AddRangefinderData(common::Time time,
                                   const Eigen::Vector3f& origin,
                                   const sensor::PointCloud& ranges) = 0;
-  virtual void AddImuData(common::Time time,
-                          const Eigen::Vector3d& linear_acceleration,
-                          const Eigen::Vector3d& angular_velocity) = 0;
-  virtual void AddOdometerData(common::Time time,
-                               const transform::Rigid3d& pose) = 0;
+  virtual void AddSensorData(const sensor::ImuData& imu_data) = 0;
+  virtual void AddSensorData(const sensor::OdometryData& odometry_data) = 0;
+  virtual void AddSensorData(
+      const sensor::FixedFramePoseData& fixed_frame_pose) = 0;
 };
 
 }  // namespace mapping

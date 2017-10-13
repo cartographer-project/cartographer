@@ -51,16 +51,14 @@ class SparsePoseGraphTest : public ::testing::Test {
       auto parameter_dictionary = common::MakeDictionary(R"text(
           return {
             resolution = 0.05,
-            half_length = 21.,
             num_range_data = 1,
-            output_debug_images = false,
             range_data_inserter = {
               insert_free_space = true,
               hit_probability = 0.53,
               miss_probability = 0.495,
             },
           })text");
-      submaps_ = common::make_unique<Submaps>(
+      active_submaps_ = common::make_unique<ActiveSubmaps>(
           CreateSubmapsOptions(parameter_dictionary.get()));
     }
 
@@ -71,14 +69,10 @@ class SparsePoseGraphTest : public ::testing::Test {
             constraint_builder = {
               sampling_ratio = 1.,
               max_constraint_distance = 6.,
-              adaptive_voxel_filter = {
-                max_length = 1e-2,
-                min_num_points = 1000,
-                max_range = 50.,
-              },
               min_score = 0.5,
               global_localization_min_score = 0.6,
-              lower_covariance_eigenvalue_bound = 1e-6,
+              loop_closure_translation_weight = 1.,
+              loop_closure_rotation_weight = 1.,
               log_matches = true,
               fast_correlative_scan_matcher = {
                 linear_search_window = 3.,
@@ -89,7 +83,6 @@ class SparsePoseGraphTest : public ::testing::Test {
                 occupied_space_weight = 20.,
                 translation_weight = 10.,
                 rotation_weight = 1.,
-                covariance_scale = 1.,
                 ceres_solver_options = {
                   use_nonmonotonic_steps = true,
                   max_num_iterations = 50,
@@ -99,8 +92,8 @@ class SparsePoseGraphTest : public ::testing::Test {
               fast_correlative_scan_matcher_3d = {
                 branch_and_bound_depth = 3,
                 full_resolution_depth = 3,
-                rotational_histogram_size = 30,
                 min_rotational_score = 0.1,
+                min_low_resolution_score = 0.5,
                 linear_xy_search_window = 4.,
                 linear_z_search_window = 4.,
                 angular_search_window = 0.1,
@@ -117,12 +110,16 @@ class SparsePoseGraphTest : public ::testing::Test {
                 },
               },
             },
+            matcher_translation_weight = 1.,
+            matcher_rotation_weight = 1.,
             optimization_problem = {
               acceleration_weight = 1.,
               rotation_weight = 1e2,
               huber_scale = 1.,
               consecutive_scan_translation_penalty_factor = 0.,
               consecutive_scan_rotation_penalty_factor = 0.,
+              fixed_frame_pose_translation_weight = 1e1,
+              fixed_frame_pose_rotation_weight = 1e2,
               log_solver_summary = true,
               ceres_solver_options = {
                 use_nonmonotonic_steps = false,
@@ -132,10 +129,12 @@ class SparsePoseGraphTest : public ::testing::Test {
             },
             max_num_final_iterations = 200,
             global_sampling_ratio = 0.01,
+            log_residual_histograms = true,
+            global_constraint_search_after_n_seconds = 10.0,
           })text");
       sparse_pose_graph_ = common::make_unique<SparsePoseGraph>(
           mapping::CreateSparsePoseGraphOptions(parameter_dictionary.get()),
-          &thread_pool_, &constant_node_data_);
+          &thread_pool_);
     }
 
     current_pose_ = transform::Rigid2d::Identity();
@@ -147,23 +146,27 @@ class SparsePoseGraphTest : public ::testing::Test {
     const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
-    kalman_filter::Pose2DCovariance covariance =
-        kalman_filter::Pose2DCovariance::Identity();
-    const mapping::Submap* const matching_submap =
-        submaps_->Get(submaps_->matching_index());
-    std::vector<const mapping::Submap*> insertion_submaps;
-    for (int insertion_index : submaps_->insertion_indices()) {
-      insertion_submaps.push_back(submaps_->Get(insertion_index));
+    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+    for (const auto& submap : active_submaps_->submaps()) {
+      insertion_submaps.push_back(submap);
     }
     const sensor::RangeData range_data{
         Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
-    submaps_->InsertRangeData(TransformRangeData(
+    constexpr int kTrajectoryId = 0;
+    active_submaps_->InsertRangeData(TransformRangeData(
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
-    sparse_pose_graph_->AddScan(common::FromUniversal(0),
-                                transform::Rigid3d::Identity(), range_data,
-                                pose_estimate, covariance, submaps_.get(),
-                                matching_submap, insertion_submaps);
+
+    sparse_pose_graph_->AddScan(
+        std::make_shared<const mapping::TrajectoryNode::Data>(
+            mapping::TrajectoryNode::Data{common::FromUniversal(0),
+                                          Eigen::Quaterniond::Identity(),
+                                          range_data.returns,
+                                          {},
+                                          {},
+                                          {},
+                                          transform::Embed3D(pose_estimate)}),
+        kTrajectoryId, insertion_submaps);
   }
 
   void MoveRelative(const transform::Rigid2d& movement) {
@@ -171,8 +174,7 @@ class SparsePoseGraphTest : public ::testing::Test {
   }
 
   sensor::PointCloud point_cloud_;
-  std::unique_ptr<Submaps> submaps_;
-  std::deque<mapping::TrajectoryNode::ConstantData> constant_node_data_;
+  std::unique_ptr<ActiveSubmaps> active_submaps_;
   common::ThreadPool thread_pool_;
   std::unique_ptr<SparsePoseGraph> sparse_pose_graph_;
   transform::Rigid2d current_pose_;
@@ -181,7 +183,7 @@ class SparsePoseGraphTest : public ::testing::Test {
 TEST_F(SparsePoseGraphTest, EmptyMap) {
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  EXPECT_THAT(nodes.size(), ::testing::Eq(0));
+  EXPECT_THAT(nodes.size(), ::testing::Eq(0u));
 }
 
 TEST_F(SparsePoseGraphTest, NoMovement) {
@@ -190,12 +192,13 @@ TEST_F(SparsePoseGraphTest, NoMovement) {
   MoveRelative(transform::Rigid2d::Identity());
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  EXPECT_THAT(nodes.size(), ::testing::Eq(3));
-  EXPECT_THAT(nodes[0].pose,
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
+  EXPECT_THAT(nodes[0].size(), ::testing::Eq(3u));
+  EXPECT_THAT(nodes[0][0].pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
-  EXPECT_THAT(nodes[1].pose,
+  EXPECT_THAT(nodes[0][1].pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
-  EXPECT_THAT(nodes[2].pose,
+  EXPECT_THAT(nodes[0][2].pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
 }
 
@@ -209,8 +212,10 @@ TEST_F(SparsePoseGraphTest, NoOverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
   for (int i = 0; i != 4; ++i) {
-    EXPECT_THAT(poses[i], IsNearly(transform::Project2D(nodes[i].pose), 1e-2))
+    EXPECT_THAT(poses[i],
+                IsNearly(transform::Project2D(nodes[0][i].pose), 1e-2))
         << i;
   }
 }
@@ -225,8 +230,10 @@ TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
   for (int i = 0; i != 5; ++i) {
-    EXPECT_THAT(poses[i], IsNearly(transform::Project2D(nodes[i].pose), 1e-2))
+    EXPECT_THAT(poses[i],
+                IsNearly(transform::Project2D(nodes[0][i].pose), 1e-2))
         << i;
   }
 }
@@ -248,12 +255,13 @@ TEST_F(SparsePoseGraphTest, OverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
   transform::Rigid2d true_movement =
       ground_truth.front().inverse() * ground_truth.back();
   transform::Rigid2d movement_before = poses.front().inverse() * poses.back();
   transform::Rigid2d error_before = movement_before.inverse() * true_movement;
   transform::Rigid3d optimized_movement =
-      nodes.front().pose.inverse() * nodes.back().pose;
+      nodes[0].front().pose.inverse() * nodes[0].back().pose;
   transform::Rigid2d optimized_error =
       transform::Project2D(optimized_movement).inverse() * true_movement;
   EXPECT_THAT(std::abs(optimized_error.normalized_angle()),

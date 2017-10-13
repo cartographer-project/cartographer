@@ -16,7 +16,7 @@
 
 #include "cartographer/sensor/range_data.h"
 
-#include <utility>
+#include <tuple>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -26,91 +26,51 @@ namespace sensor {
 namespace {
 
 using ::testing::Contains;
-using ::testing::PrintToString;
 
-TEST(LaserTest, ToPointCloud) {
-  proto::LaserScan laser_scan;
-  for (int i = 0; i < 8; ++i) {
-    laser_scan.add_range()->add_value(1.f);
+MATCHER(NearPointwise, std::string(negation ? "Doesn't" : "Does") + " match.") {
+  return std::get<0>(arg).isApprox(std::get<1>(arg), 0.001f);
+}
+
+MATCHER_P(Near, point, std::string(negation ? "Doesn't" : "Does") + " match.") {
+  return arg.isApprox(point, 0.001f);
+}
+
+class RangeDataTest : public ::testing::Test {
+ protected:
+  RangeDataTest() : origin_(Eigen::Vector3f(1, 1, 1)) {
+    returns_.emplace_back(0, 1, 2);
+    returns_.emplace_back(4, 5, 6);
+    returns_.emplace_back(0, 1, 2);
+    misses_.emplace_back(7, 8, 9);
   }
-  laser_scan.set_angle_min(0.f);
-  laser_scan.set_angle_max(8.f * static_cast<float>(M_PI_4));
-  laser_scan.set_angle_increment(static_cast<float>(M_PI_4));
-  laser_scan.set_range_min(0.f);
-  laser_scan.set_range_max(10.f);
+  Eigen::Vector3f origin_;
+  std::vector<Eigen::Vector3f> returns_;
+  std::vector<Eigen::Vector3f> misses_;
+};
 
-  const auto point_cloud = ToPointCloud(laser_scan);
-  EXPECT_TRUE(point_cloud[0].isApprox(Eigen::Vector3f(1.f, 0.f, 0.f), 1e-6));
-  EXPECT_TRUE(point_cloud[1].isApprox(
-      Eigen::Vector3f(1.f / std::sqrt(2.f), 1.f / std::sqrt(2.f), 0.f), 1e-6));
-  EXPECT_TRUE(point_cloud[2].isApprox(Eigen::Vector3f(0.f, 1.f, 0.f), 1e-6));
-  EXPECT_TRUE(point_cloud[3].isApprox(
-      Eigen::Vector3f(-1.f / std::sqrt(2.f), 1.f / std::sqrt(2.f), 0.f), 1e-6));
-  EXPECT_TRUE(point_cloud[4].isApprox(Eigen::Vector3f(-1.f, 0.f, 0.f), 1e-6));
-  EXPECT_TRUE(point_cloud[5].isApprox(
-      Eigen::Vector3f(-1.f / std::sqrt(2.f), -1.f / std::sqrt(2.f), 0.f),
-      1e-6));
-  EXPECT_TRUE(point_cloud[6].isApprox(Eigen::Vector3f(0.f, -1.f, 0.f), 1e-6));
-  EXPECT_TRUE(point_cloud[7].isApprox(
-      Eigen::Vector3f(1.f / std::sqrt(2.f), -1.f / std::sqrt(2.f), 0.f), 1e-6));
-}
+TEST_F(RangeDataTest, Compression) {
+  const RangeData expected_data = {origin_, returns_, misses_};
+  const RangeData actual_data = Decompress(Compress(expected_data));
+  EXPECT_THAT(expected_data.origin, Near(actual_data.origin));
+  EXPECT_EQ(3, actual_data.returns.size());
+  EXPECT_EQ(1, actual_data.misses.size());
 
-TEST(LaserTest, ToPointCloudWithInfinityAndNaN) {
-  proto::LaserScan laser_scan;
-  laser_scan.add_range()->add_value(1.f);
-  laser_scan.add_range()->add_value(std::numeric_limits<float>::infinity());
-  laser_scan.add_range()->add_value(2.f);
-  laser_scan.add_range()->add_value(std::numeric_limits<float>::quiet_NaN());
-  laser_scan.add_range()->add_value(3.f);
-  laser_scan.set_angle_min(0.f);
-  laser_scan.set_angle_max(3.f * static_cast<float>(M_PI_4));
-  laser_scan.set_angle_increment(static_cast<float>(M_PI_4));
-  laser_scan.set_range_min(2.f);
-  laser_scan.set_range_max(10.f);
-
-  const auto point_cloud = ToPointCloud(laser_scan);
-  ASSERT_EQ(2, point_cloud.size());
-  EXPECT_TRUE(point_cloud[0].isApprox(Eigen::Vector3f(0.f, 2.f, 0.f), 1e-6));
-  EXPECT_TRUE(point_cloud[1].isApprox(Eigen::Vector3f(-3.f, 0.f, 0.f), 1e-6));
-}
-
-// Custom matcher for pair<eigen::Vector3f, int> entries.
-MATCHER_P(PairApproximatelyEquals, expected,
-          string("is equal to ") + PrintToString(expected)) {
-  return (arg.first - expected.first).isZero(0.001f) &&
-         arg.second == expected.second;
-}
-
-TEST(RangeDataTest, Compression) {
-  const RangeData range_data = {
-      Eigen::Vector3f(1, 1, 1),
-      {Eigen::Vector3f(0, 1, 2), Eigen::Vector3f(4, 5, 6),
-       Eigen::Vector3f(0, 1, 2)},
-      {Eigen::Vector3f(7, 8, 9)},
-      {1, 2, 3}};
-  const RangeData actual = Decompress(Compress(range_data));
-  EXPECT_TRUE(actual.origin.isApprox(Eigen::Vector3f(1, 1, 1), 1e-6));
-  EXPECT_EQ(3, actual.returns.size());
-  EXPECT_EQ(1, actual.misses.size());
-  EXPECT_EQ(actual.returns.size(), actual.reflectivities.size());
-  EXPECT_TRUE(actual.misses[0].isApprox(Eigen::Vector3f(7, 8, 9), 0.001f));
-
-  // Returns and their corresponding reflectivities will be reordered, so we
-  // pair them up into a vector, and compare in an unordered manner.
-  std::vector<std::pair<Eigen::Vector3f, int>> pairs;
-  for (size_t i = 0; i < actual.returns.size(); ++i) {
-    pairs.emplace_back(actual.returns[i], actual.reflectivities[i]);
+  // Returns may be reordered, so we compare in an unordered manner.
+  for (const auto& expected : expected_data.returns) {
+    EXPECT_THAT(actual_data.returns, Contains(Near(expected)));
   }
-  EXPECT_EQ(3, pairs.size());
-  EXPECT_THAT(pairs,
-              Contains(PairApproximatelyEquals(std::pair<Eigen::Vector3f, int>(
-                  Eigen::Vector3f(0, 1, 2), 1))));
-  EXPECT_THAT(pairs,
-              Contains(PairApproximatelyEquals(std::pair<Eigen::Vector3f, int>(
-                  Eigen::Vector3f(0, 1, 2), 3))));
-  EXPECT_THAT(pairs,
-              Contains(PairApproximatelyEquals(std::pair<Eigen::Vector3f, int>(
-                  Eigen::Vector3f(4, 5, 6), 2))));
+  for (const auto& expected : expected_data.misses) {
+    EXPECT_THAT(actual_data.misses, Contains(Near(expected)));
+  }
+}
+
+TEST_F(RangeDataTest, CompressedRangeDataToAndFromProto) {
+  const auto expected = CompressedRangeData{
+      origin_, CompressedPointCloud(returns_), CompressedPointCloud(misses_)};
+  const auto actual = FromProto(ToProto(expected));
+  EXPECT_THAT(expected.origin, Near(actual.origin));
+  EXPECT_EQ(expected.returns, actual.returns);
+  EXPECT_EQ(expected.misses, actual.misses);
 }
 
 }  // namespace

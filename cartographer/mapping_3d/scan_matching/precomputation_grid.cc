@@ -48,7 +48,7 @@ Eigen::Array3i CellIndexAtHalfResolution(const Eigen::Array3i& cell_index) {
 }  // namespace
 
 PrecomputationGrid ConvertToPrecomputationGrid(const HybridGrid& hybrid_grid) {
-  PrecomputationGrid result(hybrid_grid.resolution(), hybrid_grid.origin());
+  PrecomputationGrid result(hybrid_grid.resolution());
   for (auto it = HybridGrid::Iterator(hybrid_grid); !it.Done(); it.Next()) {
     const int cell_value = common::RoundToInt(
         (mapping::ValueToProbability(it.GetValue()) -
@@ -64,7 +64,7 @@ PrecomputationGrid ConvertToPrecomputationGrid(const HybridGrid& hybrid_grid) {
 PrecomputationGrid PrecomputeGrid(const PrecomputationGrid& grid,
                                   const bool half_resolution,
                                   const Eigen::Array3i& shift) {
-  PrecomputationGrid result(grid.resolution(), grid.origin());
+  PrecomputationGrid result(grid.resolution());
   for (auto it = PrecomputationGrid::Iterator(grid); !it.Done(); it.Next()) {
     for (int i = 0; i != 8; ++i) {
       // We use this value to update 8 values in the resulting grid, at

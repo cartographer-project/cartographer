@@ -63,70 +63,24 @@ class MapLimits {
   // Returns the limits of the grid in number of cells.
   const CellLimits& cell_limits() const { return cell_limits_; }
 
-  // Returns the index of the cell containing the point ('x', 'y') which may be
-  // outside the map, i.e., negative or too large indices that will return
-  // false for Contains().
-  Eigen::Array2i GetXYIndexOfCellContainingPoint(const double x,
-                                                 const double y) const {
+  // Returns the index of the cell containing the 'point' which may be outside
+  // the map, i.e., negative or too large indices that will return false for
+  // Contains().
+  Eigen::Array2i GetCellIndex(const Eigen::Vector2f& point) const {
     // Index values are row major and the top left has Eigen::Array2i::Zero()
     // and contains (centered_max_x, centered_max_y). We need to flip and
     // rotate.
     return Eigen::Array2i(
-        common::RoundToInt((max_.y() - y) / resolution_ - 0.5),
-        common::RoundToInt((max_.x() - x) / resolution_ - 0.5));
+        common::RoundToInt((max_.y() - point.y()) / resolution_ - 0.5),
+        common::RoundToInt((max_.x() - point.x()) / resolution_ - 0.5));
   }
 
-  // Returns true of the ProbabilityGrid contains 'xy_index'.
-  bool Contains(const Eigen::Array2i& xy_index) const {
-    return (Eigen::Array2i(0, 0) <= xy_index).all() &&
-           (xy_index <
+  // Returns true if the ProbabilityGrid contains 'cell_index'.
+  bool Contains(const Eigen::Array2i& cell_index) const {
+    return (Eigen::Array2i(0, 0) <= cell_index).all() &&
+           (cell_index <
             Eigen::Array2i(cell_limits_.num_x_cells, cell_limits_.num_y_cells))
                .all();
-  }
-
-  // Computes MapLimits that contain the origin, and all laser rays (both
-  // returns and misses) in the 'trajectory'.
-  static MapLimits ComputeMapLimits(
-      const double resolution,
-      const std::vector<mapping::TrajectoryNode>& trajectory_nodes) {
-    Eigen::AlignedBox2f bounding_box = ComputeMapBoundingBox(trajectory_nodes);
-    // Add some padding to ensure all rays are still contained in the map after
-    // discretization.
-    const float kPadding = 3.f * resolution;
-    bounding_box.min() -= kPadding * Eigen::Vector2f::Ones();
-    bounding_box.max() += kPadding * Eigen::Vector2f::Ones();
-    const Eigen::Vector2d pixel_sizes =
-        bounding_box.sizes().cast<double>() / resolution;
-    return MapLimits(resolution, bounding_box.max().cast<double>(),
-                     CellLimits(common::RoundToInt(pixel_sizes.y()),
-                                common::RoundToInt(pixel_sizes.x())));
-  }
-
-  static Eigen::AlignedBox2f ComputeMapBoundingBox(
-      const std::vector<mapping::TrajectoryNode>& trajectory_nodes) {
-    Eigen::AlignedBox2f bounding_box(Eigen::Vector2f::Zero());
-    for (const auto& node : trajectory_nodes) {
-      const auto& data = *node.constant_data;
-      if (!data.range_data_3d.returns.empty()) {
-        const sensor::RangeData range_data = sensor::TransformRangeData(
-            Decompress(data.range_data_3d), node.pose.cast<float>());
-        bounding_box.extend(range_data.origin.head<2>());
-        for (const Eigen::Vector3f& hit : range_data.returns) {
-          bounding_box.extend(hit.head<2>());
-        }
-      } else {
-        const sensor::RangeData range_data = sensor::TransformRangeData(
-            data.range_data_2d, node.pose.cast<float>());
-        bounding_box.extend(range_data.origin.head<2>());
-        for (const Eigen::Vector3f& hit : range_data.returns) {
-          bounding_box.extend(hit.head<2>());
-        }
-        for (const Eigen::Vector3f& miss : range_data.misses) {
-          bounding_box.extend(miss.head<2>());
-        }
-      }
-    }
-    return bounding_box;
   }
 
  private:

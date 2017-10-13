@@ -36,23 +36,23 @@ OutlierRemovingPointsProcessor::OutlierRemovingPointsProcessor(
     : voxel_size_(voxel_size),
       next_(next),
       state_(State::kPhase1),
-      voxels_(voxel_size_, Eigen::Vector3f::Zero()) {
+      voxels_(voxel_size_) {
   LOG(INFO) << "Marking hits...";
 }
 
 void OutlierRemovingPointsProcessor::Process(
-    std::unique_ptr<PointsBatch> points) {
+    std::unique_ptr<PointsBatch> batch) {
   switch (state_) {
     case State::kPhase1:
-      ProcessInPhaseOne(*points);
+      ProcessInPhaseOne(*batch);
       break;
 
     case State::kPhase2:
-      ProcessInPhaseTwo(*points);
+      ProcessInPhaseTwo(*batch);
       break;
 
     case State::kPhase3:
-      ProcessInPhaseThree(std::move(points));
+      ProcessInPhaseThree(std::move(batch));
       break;
   }
 }
@@ -88,8 +88,8 @@ void OutlierRemovingPointsProcessor::ProcessInPhaseOne(
 void OutlierRemovingPointsProcessor::ProcessInPhaseTwo(
     const PointsBatch& batch) {
   // TODO(whess): This samples every 'voxel_size' distance and could be improved
-  // by better ray casting, and also by marking the hits of the current laser
-  // fan to be excluded.
+  // by better ray casting, and also by marking the hits of the current range
+  // data to be excluded.
   for (size_t i = 0; i < batch.points.size(); ++i) {
     const Eigen::Vector3f delta = batch.points[i] - batch.origin;
     const float length = delta.norm();

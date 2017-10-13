@@ -17,6 +17,7 @@
 #include "cartographer/mapping_2d/local_trajectory_builder.h"
 
 #include <limits>
+#include <memory>
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/sensor/range_data.h"
@@ -24,292 +25,202 @@
 namespace cartographer {
 namespace mapping_2d {
 
-proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
-    common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::LocalTrajectoryBuilderOptions options;
-  options.set_laser_min_range(
-      parameter_dictionary->GetDouble("laser_min_range"));
-  options.set_laser_max_range(
-      parameter_dictionary->GetDouble("laser_max_range"));
-  options.set_laser_min_z(parameter_dictionary->GetDouble("laser_min_z"));
-  options.set_laser_max_z(parameter_dictionary->GetDouble("laser_max_z"));
-  options.set_laser_missing_echo_ray_length(
-      parameter_dictionary->GetDouble("laser_missing_echo_ray_length"));
-  options.set_laser_voxel_filter_size(
-      parameter_dictionary->GetDouble("laser_voxel_filter_size"));
-  options.set_use_online_correlative_scan_matching(
-      parameter_dictionary->GetBool("use_online_correlative_scan_matching"));
-  *options.mutable_adaptive_voxel_filter_options() =
-      sensor::CreateAdaptiveVoxelFilterOptions(
-          parameter_dictionary->GetDictionary("adaptive_voxel_filter").get());
-  *options.mutable_real_time_correlative_scan_matcher_options() =
-      scan_matching::CreateRealTimeCorrelativeScanMatcherOptions(
-          parameter_dictionary
-              ->GetDictionary("real_time_correlative_scan_matcher")
-              .get());
-  *options.mutable_ceres_scan_matcher_options() =
-      scan_matching::CreateCeresScanMatcherOptions(
-          parameter_dictionary->GetDictionary("ceres_scan_matcher").get());
-  *options.mutable_motion_filter_options() =
-      mapping_3d::CreateMotionFilterOptions(
-          parameter_dictionary->GetDictionary("motion_filter").get());
-  options.set_imu_gravity_time_constant(
-      parameter_dictionary->GetDouble("imu_gravity_time_constant"));
-  options.set_num_odometry_states(
-      parameter_dictionary->GetNonNegativeInt("num_odometry_states"));
-  CHECK_GT(options.num_odometry_states(), 0);
-  *options.mutable_submaps_options() = CreateSubmapsOptions(
-      parameter_dictionary->GetDictionary("submaps").get());
-  options.set_use_imu_data(parameter_dictionary->GetBool("use_imu_data"));
-  return options;
-}
-
 LocalTrajectoryBuilder::LocalTrajectoryBuilder(
     const proto::LocalTrajectoryBuilderOptions& options)
     : options_(options),
-      submaps_(options.submaps_options()),
+      active_submaps_(options.submaps_options()),
       motion_filter_(options_.motion_filter_options()),
       real_time_correlative_scan_matcher_(
           options_.real_time_correlative_scan_matcher_options()),
-      ceres_scan_matcher_(options_.ceres_scan_matcher_options()),
-      odometry_state_tracker_(options_.num_odometry_states()) {}
+      ceres_scan_matcher_(options_.ceres_scan_matcher_options()) {}
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
-const Submaps* LocalTrajectoryBuilder::submaps() const { return &submaps_; }
-
 sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
-    const transform::Rigid3f& tracking_to_tracking_2d,
+    const transform::Rigid3f& gravity_alignment,
     const sensor::RangeData& range_data) const {
-  // Drop any returns below the minimum range and convert returns beyond the
-  // maximum range into misses.
-  sensor::RangeData returns_and_misses{range_data.origin, {}, {}, {}};
-  for (const Eigen::Vector3f& hit : range_data.returns) {
-    const float range = (hit - range_data.origin).norm();
-    if (range >= options_.laser_min_range()) {
-      if (range <= options_.laser_max_range()) {
-        returns_and_misses.returns.push_back(hit);
-      } else {
-        returns_and_misses.misses.push_back(
-            range_data.origin + options_.laser_missing_echo_ray_length() *
-                                    (hit - range_data.origin).normalized());
-      }
-    }
-  }
   const sensor::RangeData cropped = sensor::CropRangeData(
-      sensor::TransformRangeData(returns_and_misses, tracking_to_tracking_2d),
-      options_.laser_min_z(), options_.laser_max_z());
+      sensor::TransformRangeData(range_data, gravity_alignment),
+      options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
-      sensor::VoxelFiltered(cropped.returns,
-                            options_.laser_voxel_filter_size()),
-      sensor::VoxelFiltered(cropped.misses,
-                            options_.laser_voxel_filter_size())};
+      sensor::VoxelFiltered(cropped.returns, options_.voxel_filter_size()),
+      sensor::VoxelFiltered(cropped.misses, options_.voxel_filter_size())};
 }
 
 void LocalTrajectoryBuilder::ScanMatch(
-    common::Time time, const transform::Rigid3d& pose_prediction,
-    const transform::Rigid3d& tracking_to_tracking_2d,
-    const sensor::RangeData& range_data_in_tracking_2d,
-    transform::Rigid3d* pose_observation,
-    kalman_filter::PoseCovariance* covariance_observation) {
-  const ProbabilityGrid& probability_grid =
-      submaps_.Get(submaps_.matching_index())->probability_grid;
-  transform::Rigid2d pose_prediction_2d =
-      transform::Project2D(pose_prediction * tracking_to_tracking_2d.inverse());
+    const common::Time time, const transform::Rigid2d& pose_prediction,
+    const sensor::RangeData& gravity_aligned_range_data,
+    transform::Rigid2d* const pose_observation) {
+  std::shared_ptr<const Submap> matching_submap =
+      active_submaps_.submaps().front();
   // The online correlative scan matcher will refine the initial estimate for
   // the Ceres scan matcher.
-  transform::Rigid2d initial_ceres_pose = pose_prediction_2d;
+  transform::Rigid2d initial_ceres_pose = pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.adaptive_voxel_filter_options());
-  const sensor::PointCloud filtered_point_cloud_in_tracking_2d =
-      adaptive_voxel_filter.Filter(range_data_in_tracking_2d.returns);
+  const sensor::PointCloud filtered_gravity_aligned_point_cloud =
+      adaptive_voxel_filter.Filter(gravity_aligned_range_data.returns);
   if (options_.use_online_correlative_scan_matching()) {
     real_time_correlative_scan_matcher_.Match(
-        pose_prediction_2d, filtered_point_cloud_in_tracking_2d,
-        probability_grid, &initial_ceres_pose);
+        pose_prediction, filtered_gravity_aligned_point_cloud,
+        matching_submap->probability_grid(), &initial_ceres_pose);
   }
 
-  transform::Rigid2d tracking_2d_to_map;
-  kalman_filter::Pose2DCovariance covariance_observation_2d;
   ceres::Solver::Summary summary;
-  ceres_scan_matcher_.Match(pose_prediction_2d, initial_ceres_pose,
-                            filtered_point_cloud_in_tracking_2d,
-                            probability_grid, &tracking_2d_to_map,
-                            &covariance_observation_2d, &summary);
-
-  *pose_observation =
-      transform::Embed3D(tracking_2d_to_map) * tracking_to_tracking_2d;
-  // This covariance is used for non-yaw rotation and the fake height of 0.
-  constexpr double kFakePositionCovariance = 1.;
-  constexpr double kFakeOrientationCovariance = 1.;
-  *covariance_observation =
-      kalman_filter::Embed3D(covariance_observation_2d, kFakePositionCovariance,
-                             kFakeOrientationCovariance);
+  ceres_scan_matcher_.Match(
+      pose_prediction, initial_ceres_pose, filtered_gravity_aligned_point_cloud,
+      matching_submap->probability_grid(), pose_observation, &summary);
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
-LocalTrajectoryBuilder::AddHorizontalRangeData(
-    const common::Time time, const sensor::RangeData& range_data) {
-  // Initialize IMU tracker now if we do not ever use an IMU.
+LocalTrajectoryBuilder::AddRangeData(const common::Time time,
+                                     const sensor::RangeData& range_data) {
+  // Initialize extrapolator now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
-    InitializeImuTracker(time);
+    InitializeExtrapolator(time);
   }
 
-  if (imu_tracker_ == nullptr) {
-    // Until we've initialized the IMU tracker with our first IMU message, we
-    // cannot compute the orientation of the laser scanner.
-    LOG(INFO) << "ImuTracker not yet initialized.";
+  if (extrapolator_ == nullptr) {
+    // Until we've initialized the extrapolator with our first IMU message, we
+    // cannot compute the orientation of the rangefinder.
+    LOG(INFO) << "Extrapolator not yet initialized.";
     return nullptr;
   }
+  if (num_accumulated_ == 0) {
+    first_pose_estimate_ = extrapolator_->ExtrapolatePose(time).cast<float>();
+    accumulated_range_data_ =
+        sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
+  }
 
-  Predict(time);
-  const transform::Rigid3d odometry_prediction =
-      pose_estimate_ * odometry_correction_;
-  const transform::Rigid3d model_prediction = pose_estimate_;
-  // TODO(whess): Prefer IMU over odom orientation if configured?
-  const transform::Rigid3d& pose_prediction = odometry_prediction;
+  const transform::Rigid3f tracking_delta =
+      first_pose_estimate_.inverse() *
+      extrapolator_->ExtrapolatePose(time).cast<float>();
+  const sensor::RangeData range_data_in_first_tracking =
+      sensor::TransformRangeData(range_data, tracking_delta);
+  // Drop any returns below the minimum range and convert returns beyond the
+  // maximum range into misses.
+  for (const Eigen::Vector3f& hit : range_data_in_first_tracking.returns) {
+    const Eigen::Vector3f delta = hit - range_data_in_first_tracking.origin;
+    const float range = delta.norm();
+    if (range >= options_.min_range()) {
+      if (range <= options_.max_range()) {
+        accumulated_range_data_.returns.push_back(hit);
+      } else {
+        accumulated_range_data_.misses.push_back(
+            range_data_in_first_tracking.origin +
+            options_.missing_data_ray_length() / range * delta);
+      }
+    }
+  }
+  ++num_accumulated_;
 
-  // Computes the rotation without yaw, as defined by GetYaw().
-  const transform::Rigid3d tracking_to_tracking_2d =
-      transform::Rigid3d::Rotation(
-          Eigen::Quaterniond(Eigen::AngleAxisd(
-              -transform::GetYaw(pose_prediction), Eigen::Vector3d::UnitZ())) *
-          pose_prediction.rotation());
+  if (num_accumulated_ >= options_.scans_per_accumulation()) {
+    num_accumulated_ = 0;
+    return AddAccumulatedRangeData(
+        time, sensor::TransformRangeData(accumulated_range_data_,
+                                         tracking_delta.inverse()));
+  }
+  return nullptr;
+}
 
-  const sensor::RangeData range_data_in_tracking_2d =
-      TransformAndFilterRangeData(tracking_to_tracking_2d.cast<float>(),
-                                  range_data);
-
-  if (range_data_in_tracking_2d.returns.empty()) {
+std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+LocalTrajectoryBuilder::AddAccumulatedRangeData(
+    const common::Time time, const sensor::RangeData& range_data) {
+  // Transforms 'range_data' into a frame where gravity direction is
+  // approximately +z.
+  const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
+      extrapolator_->EstimateGravityOrientation(time));
+  const sensor::RangeData gravity_aligned_range_data =
+      TransformAndFilterRangeData(gravity_alignment.cast<float>(), range_data);
+  if (gravity_aligned_range_data.returns.empty()) {
     LOG(WARNING) << "Dropped empty horizontal range data.";
     return nullptr;
   }
 
-  kalman_filter::PoseCovariance covariance_observation;
-  ScanMatch(time, pose_prediction, tracking_to_tracking_2d,
-            range_data_in_tracking_2d, &pose_estimate_,
-            &covariance_observation);
-  odometry_correction_ = transform::Rigid3d::Identity();
-  if (!odometry_state_tracker_.empty()) {
-    // We add an odometry state, so that the correction from the scan matching
-    // is not removed by the next odometry data we get.
-    odometry_state_tracker_.AddOdometryState(
-        {time, odometry_state_tracker_.newest().odometer_pose,
-         odometry_state_tracker_.newest().state_pose *
-             odometry_prediction.inverse() * pose_estimate_});
-  }
+  // Computes a gravity aligned pose prediction.
+  const transform::Rigid3d non_gravity_aligned_pose_prediction =
+      extrapolator_->ExtrapolatePose(time);
+  const transform::Rigid2d pose_prediction = transform::Project2D(
+      non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
-  // Improve the velocity estimate.
-  if (last_scan_match_time_ > common::Time::min()) {
-    const double delta_t = common::ToSeconds(time - last_scan_match_time_);
-    velocity_estimate_ += (pose_estimate_.translation().head<2>() -
-                           model_prediction.translation().head<2>()) /
-                          delta_t;
-  }
-  last_scan_match_time_ = time_;
+  transform::Rigid2d pose_estimate_2d;
+  ScanMatch(time, pose_prediction, gravity_aligned_range_data,
+            &pose_estimate_2d);
+  const transform::Rigid3d pose_estimate =
+      transform::Embed3D(pose_estimate_2d) * gravity_alignment;
+  extrapolator_->AddPose(time, pose_estimate);
 
-  // Remove the untracked z-component which floats around 0 in the UKF.
-  const auto translation = pose_estimate_.translation();
-  pose_estimate_ = transform::Rigid3d(
-      transform::Rigid3d::Vector(translation.x(), translation.y(), 0.),
-      pose_estimate_.rotation());
-
-  const transform::Rigid3d tracking_2d_to_map =
-      pose_estimate_ * tracking_to_tracking_2d.inverse();
   last_pose_estimate_ = {
-      time, pose_estimate_,
-      sensor::TransformPointCloud(range_data_in_tracking_2d.returns,
-                                  tracking_2d_to_map.cast<float>())};
+      time, pose_estimate,
+      sensor::TransformPointCloud(
+          gravity_aligned_range_data.returns,
+          transform::Embed3D(pose_estimate_2d.cast<float>()))};
 
-  const transform::Rigid2d pose_estimate_2d =
-      transform::Project2D(tracking_2d_to_map);
-  if (motion_filter_.IsSimilar(time, transform::Embed3D(pose_estimate_2d))) {
+  if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
 
-  const mapping::Submap* const matching_submap =
-      submaps_.Get(submaps_.matching_index());
-  std::vector<const mapping::Submap*> insertion_submaps;
-  for (int insertion_index : submaps_.insertion_indices()) {
-    insertion_submaps.push_back(submaps_.Get(insertion_index));
+  // Querying the active submaps must be done here before calling
+  // InsertRangeData() since the queried values are valid for next insertion.
+  std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+  for (const std::shared_ptr<Submap>& submap : active_submaps_.submaps()) {
+    insertion_submaps.push_back(submap);
   }
-  submaps_.InsertRangeData(
-      TransformRangeData(range_data_in_tracking_2d,
+  active_submaps_.InsertRangeData(
+      TransformRangeData(gravity_aligned_range_data,
                          transform::Embed3D(pose_estimate_2d.cast<float>())));
 
+  sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
+      options_.loop_closure_adaptive_voxel_filter_options());
+  const sensor::PointCloud filtered_gravity_aligned_point_cloud =
+      adaptive_voxel_filter.Filter(gravity_aligned_range_data.returns);
+
   return common::make_unique<InsertionResult>(InsertionResult{
-      time, &submaps_, matching_submap, insertion_submaps,
-      tracking_to_tracking_2d, tracking_2d_to_map, range_data_in_tracking_2d,
-      pose_estimate_2d, covariance_observation});
+      std::make_shared<const mapping::TrajectoryNode::Data>(
+          mapping::TrajectoryNode::Data{
+              time,
+              gravity_alignment.rotation(),
+              filtered_gravity_aligned_point_cloud,
+              {},  // 'high_resolution_point_cloud' is only used in 3D.
+              {},  // 'low_resolution_point_cloud' is only used in 3D.
+              {},  // 'rotational_scan_matcher_histogram' is only used in 3D.
+              pose_estimate}),
+      std::move(insertion_submaps)});
 }
 
-const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate&
-LocalTrajectoryBuilder::pose_estimate() const {
+const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
   return last_pose_estimate_;
 }
 
-void LocalTrajectoryBuilder::AddImuData(
-    const common::Time time, const Eigen::Vector3d& linear_acceleration,
-    const Eigen::Vector3d& angular_velocity) {
+void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
   CHECK(options_.use_imu_data()) << "An unexpected IMU packet was added.";
-
-  InitializeImuTracker(time);
-  Predict(time);
-  imu_tracker_->AddImuLinearAccelerationObservation(linear_acceleration);
-  imu_tracker_->AddImuAngularVelocityObservation(angular_velocity);
+  InitializeExtrapolator(imu_data.time);
+  extrapolator_->AddImuData(imu_data);
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
-    const common::Time time, const transform::Rigid3d& odometer_pose) {
-  if (imu_tracker_ == nullptr) {
-    // Until we've initialized the IMU tracker we do not want to call Predict().
-    LOG(INFO) << "ImuTracker not yet initialized.";
+    const sensor::OdometryData& odometry_data) {
+  if (extrapolator_ == nullptr) {
+    // Until we've initialized the extrapolator we cannot add odometry data.
+    LOG(INFO) << "Extrapolator not yet initialized.";
     return;
   }
-
-  Predict(time);
-  if (!odometry_state_tracker_.empty()) {
-    const auto& previous_odometry_state = odometry_state_tracker_.newest();
-    const transform::Rigid3d delta =
-        previous_odometry_state.odometer_pose.inverse() * odometer_pose;
-    const transform::Rigid3d new_pose =
-        previous_odometry_state.state_pose * delta;
-    odometry_correction_ = pose_estimate_.inverse() * new_pose;
-  }
-  odometry_state_tracker_.AddOdometryState(
-      {time, odometer_pose, pose_estimate_ * odometry_correction_});
+  extrapolator_->AddOdometryData(odometry_data);
 }
 
-void LocalTrajectoryBuilder::InitializeImuTracker(const common::Time time) {
-  if (imu_tracker_ == nullptr) {
-    imu_tracker_ = common::make_unique<mapping::ImuTracker>(
-        options_.imu_gravity_time_constant(), time);
+void LocalTrajectoryBuilder::InitializeExtrapolator(const common::Time time) {
+  if (extrapolator_ != nullptr) {
+    return;
   }
-}
-
-void LocalTrajectoryBuilder::Predict(const common::Time time) {
-  CHECK(imu_tracker_ != nullptr);
-  CHECK_LE(time_, time);
-  const double last_yaw = transform::GetYaw(imu_tracker_->orientation());
-  imu_tracker_->Advance(time);
-  if (time_ > common::Time::min()) {
-    const double delta_t = common::ToSeconds(time - time_);
-    // Constant velocity model.
-    const Eigen::Vector3d translation =
-        pose_estimate_.translation() +
-        delta_t *
-            Eigen::Vector3d(velocity_estimate_.x(), velocity_estimate_.y(), 0.);
-    // Use the current IMU tracker roll and pitch for gravity alignment, and
-    // apply its change in yaw.
-    const Eigen::Quaterniond rotation =
-        Eigen::AngleAxisd(
-            transform::GetYaw(pose_estimate_.rotation()) - last_yaw,
-            Eigen::Vector3d::UnitZ()) *
-        imu_tracker_->orientation();
-    pose_estimate_ = transform::Rigid3d(translation, rotation);
-  }
-  time_ = time;
+  // We derive velocities from poses which are at least 1 ms apart for numerical
+  // stability. Usually poses known to the extrapolator will be further apart
+  // in time and thus the last two are used.
+  constexpr double kExtrapolationEstimationTimeSec = 0.001;
+  extrapolator_ = common::make_unique<mapping::PoseExtrapolator>(
+      ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
+      options_.imu_gravity_time_constant());
+  extrapolator_->AddPose(time, transform::Rigid3d::Identity());
 }
 
 }  // namespace mapping_2d

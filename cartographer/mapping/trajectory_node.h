@@ -17,57 +17,51 @@
 #ifndef CARTOGRAPHER_MAPPING_TRAJECTORY_NODE_H_
 #define CARTOGRAPHER_MAPPING_TRAJECTORY_NODE_H_
 
-#include <deque>
+#include <memory>
 #include <vector>
 
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/proto/trajectory.pb.h"
+#include "cartographer/mapping/proto/trajectory_node_data.pb.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping {
 
-class Submaps;
-
 struct TrajectoryNode {
-  struct ConstantData {
+  struct Data {
     common::Time time;
 
-    // Range data in 'pose' frame. Only used in the 2D case.
-    sensor::RangeData range_data_2d;
+    // Transform to approximately gravity align the tracking frame as
+    // determined by local SLAM.
+    Eigen::Quaterniond gravity_alignment;
 
-    // Range data in 'pose' frame. Only used in the 3D case.
-    sensor::CompressedRangeData range_data_3d;
+    // Used for loop closure in 2D: voxel filtered returns in the
+    // 'gravity_alignment' frame.
+    sensor::PointCloud filtered_gravity_aligned_point_cloud;
 
-    // Trajectory this node belongs to.
-    // TODO(macmason): The naming here is confusing because 'trajectory'
-    // doesn't seem like a good name for a Submaps*. Sort this out.
-    const Submaps* trajectory;
+    // Used for loop closure in 3D.
+    sensor::PointCloud high_resolution_point_cloud;
+    sensor::PointCloud low_resolution_point_cloud;
+    Eigen::VectorXf rotational_scan_matcher_histogram;
 
-    // Transform from the 3D 'tracking' frame to the 'pose' frame of the
-    // laser, which contains roll, pitch and height for 2D. In 3D this is
-    // always identity.
-    transform::Rigid3d tracking_to_pose;
+    // The initial unoptimized node pose.
+    transform::Rigid3d initial_pose;
   };
 
   common::Time time() const { return constant_data->time; }
+  bool trimmed() const { return constant_data == nullptr; }
 
-  const ConstantData* constant_data;
+  // This must be a shared_ptr. If the data is used for visualization while the
+  // node is being trimmed, it must survive until all use finishes.
+  std::shared_ptr<const Data> constant_data;
 
   transform::Rigid3d pose;
 };
 
-// Users will only be interested in 'trajectory_nodes'. But 'constant_data'
-// is referenced by 'trajectory_nodes'. This struct guarantees that their
-// lifetimes are bound.
-struct TrajectoryNodes {
-  std::deque<mapping::TrajectoryNode::ConstantData> constant_data;
-  std::vector<mapping::TrajectoryNode> trajectory_nodes;
-};
-
-proto::Trajectory ToProto(const std::vector<TrajectoryNode>& nodes);
+proto::TrajectoryNodeData ToProto(const TrajectoryNode::Data& constant_data);
+TrajectoryNode::Data FromProto(const proto::TrajectoryNodeData& proto);
 
 }  // namespace mapping
 }  // namespace cartographer

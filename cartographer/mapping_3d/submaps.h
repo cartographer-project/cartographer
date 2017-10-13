@@ -23,101 +23,92 @@
 
 #include "Eigen/Geometry"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/id.h"
+#include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
-#include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/range_data_inserter.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/mapping_3d/proto/submaps_options.pb.h"
 #include "cartographer/mapping_3d/range_data_inserter.h"
 #include "cartographer/sensor/range_data.h"
+#include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace mapping_3d {
 
-void InsertIntoProbabilityGrid(
-    const sensor::RangeData& range_data, const transform::Rigid3f& pose,
-    const float slice_z,
-    const mapping_2d::RangeDataInserter& range_data_inserter,
-    mapping_2d::ProbabilityGrid* result);
-
 proto::SubmapsOptions CreateSubmapsOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-struct Submap : public mapping::Submap {
-  Submap(float high_resolution, float low_resolution,
-         const Eigen::Vector3f& origin, int begin_range_data_index);
-
-  HybridGrid high_resolution_hybrid_grid;
-  HybridGrid low_resolution_hybrid_grid;
-  bool finished = false;
-  std::vector<int> trajectory_node_indices;
-};
-
-// A container of Submaps.
-class Submaps : public mapping::Submaps {
+class Submap : public mapping::Submap {
  public:
-  explicit Submaps(const proto::SubmapsOptions& options);
+  Submap(float high_resolution, float low_resolution,
+         const transform::Rigid3d& local_pose);
+  explicit Submap(const mapping::proto::Submap3D& proto);
 
-  Submaps(const Submaps&) = delete;
-  Submaps& operator=(const Submaps&) = delete;
+  void ToProto(mapping::proto::Submap* proto) const override;
 
-  const Submap* Get(int index) const override;
-  int size() const override;
-  void SubmapToProto(
-      int index, const std::vector<mapping::TrajectoryNode>& trajectory_nodes,
+  const HybridGrid& high_resolution_hybrid_grid() const {
+    return high_resolution_hybrid_grid_;
+  }
+  const HybridGrid& low_resolution_hybrid_grid() const {
+    return low_resolution_hybrid_grid_;
+  }
+  bool finished() const { return finished_; }
+
+  void ToResponseProto(
       const transform::Rigid3d& global_submap_pose,
       mapping::proto::SubmapQuery::Response* response) const override;
 
-  // Inserts 'range_data' into the Submap collection.
-  void InsertRangeData(const sensor::RangeData& range_data);
-
-  // Returns the 'high_resolution' HybridGrid to be used for matching.
-  const HybridGrid& high_resolution_matching_grid() const;
-
-  // Returns the 'low_resolution' HybridGrid to be used for matching.
-  const HybridGrid& low_resolution_matching_grid() const;
-
-  // Adds a node to be used when visualizing the submap.
-  void AddTrajectoryNodeIndex(int trajectory_node_index);
+  // Insert 'range_data' into this submap using 'range_data_inserter'. The
+  // submap must not be finished yet.
+  void InsertRangeData(const sensor::RangeData& range_data,
+                       const RangeDataInserter& range_data_inserter,
+                       int high_resolution_max_range);
+  void Finish();
 
  private:
-  struct PixelData {
-    int min_z = INT_MAX;
-    int max_z = INT_MIN;
-    int count = 0;
-    float probability_sum = 0.f;
-    float max_probability = 0.5f;
-  };
+  HybridGrid high_resolution_hybrid_grid_;
+  HybridGrid low_resolution_hybrid_grid_;
+  bool finished_ = false;
+};
 
-  void AddSubmap(const Eigen::Vector3f& origin);
+// Except during initialization when only a single submap exists, there are
+// always two submaps into which scans are inserted: an old submap that is used
+// for matching, and a new one, which will be used for matching next, that is
+// being initialized.
+//
+// Once a certain number of scans have been inserted, the new submap is
+// considered initialized: the old submap is no longer changed, the "new" submap
+// is now the "old" submap and is used for scan-to-map matching. Moreover, a
+// "new" submap gets created. The "old" submap is forgotten by this object.
+class ActiveSubmaps {
+ public:
+  explicit ActiveSubmaps(const proto::SubmapsOptions& options);
 
-  std::vector<PixelData> AccumulatePixelData(
-      const int width, const int height, const Eigen::Array2i& min_index,
-      const Eigen::Array2i& max_index,
-      const std::vector<Eigen::Array4i>& voxel_indices_and_probabilities) const;
-  // The first three entries of each returned value are a cell_index and the
-  // last is the corresponding probability value. We batch them together like
-  // this to only have one vector and have better cache locality.
-  std::vector<Eigen::Array4i> ExtractVoxelData(
-      const HybridGrid& hybrid_grid, const transform::Rigid3f& transform,
-      Eigen::Array2i* min_index, Eigen::Array2i* max_index) const;
-  // Builds texture data containing interleaved value and alpha for the
-  // visualization from 'accumulated_pixel_data'.
-  string ComputePixelValues(
-      const std::vector<PixelData>& accumulated_pixel_data) const;
+  ActiveSubmaps(const ActiveSubmaps&) = delete;
+  ActiveSubmaps& operator=(const ActiveSubmaps&) = delete;
+
+  // Returns the index of the newest initialized Submap which can be
+  // used for scan-to-map matching.
+  int matching_index() const;
+
+  // Inserts 'range_data' into the Submap collection. 'gravity_alignment' is
+  // used for the orientation of new submaps so that the z axis approximately
+  // aligns with gravity.
+  void InsertRangeData(const sensor::RangeData& range_data,
+                       const Eigen::Quaterniond& gravity_alignment);
+
+  std::vector<std::shared_ptr<Submap>> submaps() const;
+
+ private:
+  void AddSubmap(const transform::Rigid3d& local_pose);
 
   const proto::SubmapsOptions options_;
-
-  std::vector<std::unique_ptr<Submap>> submaps_;
+  int matching_submap_index_ = 0;
+  std::vector<std::shared_ptr<Submap>> submaps_;
   RangeDataInserter range_data_inserter_;
-
-  // Number of RangeData inserted.
-  int num_range_data_ = 0;
-
-  // Number of RangeData inserted since the last Submap was added.
-  int num_range_data_in_last_submap_ = 0;
 };
 
 }  // namespace mapping_3d

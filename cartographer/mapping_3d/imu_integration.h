@@ -23,17 +23,12 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/time.h"
+#include "cartographer/sensor/imu_data.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping_3d {
-
-struct ImuData {
-  common::Time time;
-  Eigen::Vector3d linear_acceleration;
-  Eigen::Vector3d angular_velocity;
-};
 
 template <typename T>
 struct IntegrateImuResult {
@@ -43,17 +38,18 @@ struct IntegrateImuResult {
 
 // Returns velocity delta in map frame.
 IntegrateImuResult<double> IntegrateImu(
-    const std::deque<ImuData>& imu_data, const common::Time start_time,
-    const common::Time end_time, std::deque<ImuData>::const_iterator* it);
+    const std::deque<sensor::ImuData>& imu_data, const common::Time start_time,
+    const common::Time end_time,
+    std::deque<sensor::ImuData>::const_iterator* it);
 
 template <typename T>
 IntegrateImuResult<T> IntegrateImu(
-    const std::deque<ImuData>& imu_data,
+    const std::deque<sensor::ImuData>& imu_data,
     const Eigen::Transform<T, 3, Eigen::Affine>&
         linear_acceleration_calibration,
     const Eigen::Transform<T, 3, Eigen::Affine>& angular_velocity_calibration,
     const common::Time start_time, const common::Time end_time,
-    std::deque<ImuData>::const_iterator* it) {
+    std::deque<sensor::ImuData>::const_iterator* it) {
   CHECK_LE(start_time, end_time);
   CHECK(*it != imu_data.cend());
   CHECK_LE((*it)->time, start_time);

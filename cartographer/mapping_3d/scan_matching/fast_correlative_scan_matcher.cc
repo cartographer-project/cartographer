@@ -24,6 +24,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
+#include "cartographer/mapping_3d/scan_matching/low_resolution_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/precomputation_grid.h"
 #include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
 #include "cartographer/transform/transform.h"
@@ -41,10 +42,10 @@ CreateFastCorrelativeScanMatcherOptions(
       parameter_dictionary->GetInt("branch_and_bound_depth"));
   options.set_full_resolution_depth(
       parameter_dictionary->GetInt("full_resolution_depth"));
-  options.set_rotational_histogram_size(
-      parameter_dictionary->GetInt("rotational_histogram_size"));
   options.set_min_rotational_score(
       parameter_dictionary->GetDouble("min_rotational_score"));
+  options.set_min_low_resolution_score(
+      parameter_dictionary->GetDouble("min_low_resolution_score"));
   options.set_linear_xy_search_window(
       parameter_dictionary->GetDouble("linear_xy_search_window"));
   options.set_linear_z_search_window(
@@ -89,66 +90,131 @@ class PrecomputationGridStack {
   std::vector<PrecomputationGrid> precomputation_grids_;
 };
 
+struct DiscreteScan {
+  transform::Rigid3f pose;
+  // Contains a vector of discretized scans for each 'depth'.
+  std::vector<std::vector<Eigen::Array3i>> cell_indices_per_depth;
+  float rotational_score;
+};
+
+struct Candidate {
+  Candidate(const int scan_index, const Eigen::Array3i& offset)
+      : scan_index(scan_index), offset(offset) {}
+
+  static Candidate Unsuccessful() {
+    return Candidate(0, Eigen::Array3i::Zero());
+  }
+
+  // Index into the discrete scans vectors.
+  int scan_index;
+
+  // Linear offset from the initial pose in cell indices. For lower resolution
+  // candidates this is the lowest offset of the 2^depth x 2^depth x 2^depth
+  // block of possibilities.
+  Eigen::Array3i offset;
+
+  // Score, higher is better.
+  float score = -std::numeric_limits<float>::infinity();
+
+  // Score of the low resolution matcher.
+  float low_resolution_score = 0.f;
+
+  bool operator<(const Candidate& other) const { return score < other.score; }
+  bool operator>(const Candidate& other) const { return score > other.score; }
+};
+
+namespace {
+
+std::vector<std::pair<Eigen::VectorXf, float>> HistogramsAtAnglesFromNodes(
+    const std::vector<mapping::TrajectoryNode>& nodes) {
+  std::vector<std::pair<Eigen::VectorXf, float>> histograms_at_angles;
+  for (const auto& node : nodes) {
+    histograms_at_angles.emplace_back(
+        node.constant_data->rotational_scan_matcher_histogram,
+        transform::GetYaw(
+            node.pose * transform::Rigid3d::Rotation(
+                            node.constant_data->gravity_alignment.inverse())));
+  }
+  return histograms_at_angles;
+}
+
+}  // namespace
+
 FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
     const HybridGrid& hybrid_grid,
+    const HybridGrid* const low_resolution_hybrid_grid,
     const std::vector<mapping::TrajectoryNode>& nodes,
     const proto::FastCorrelativeScanMatcherOptions& options)
     : options_(options),
       resolution_(hybrid_grid.resolution()),
-      origin_(hybrid_grid.origin()),
       width_in_voxels_(hybrid_grid.grid_size()),
       precomputation_grid_stack_(
           common::make_unique<PrecomputationGridStack>(hybrid_grid, options)),
-      rotational_scan_matcher_(nodes, options_.rotational_histogram_size()) {}
+      low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
+      rotational_scan_matcher_(HistogramsAtAnglesFromNodes(nodes)) {}
 
 FastCorrelativeScanMatcher::~FastCorrelativeScanMatcher() {}
 
 bool FastCorrelativeScanMatcher::Match(
     const transform::Rigid3d& initial_pose_estimate,
-    const sensor::PointCloud& coarse_point_cloud,
-    const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate) const {
+    const mapping::TrajectoryNode::Data& constant_data, const float min_score,
+    float* const score, transform::Rigid3d* const pose_estimate,
+    float* const rotational_score, float* const low_resolution_score) const {
+  const auto low_resolution_matcher = scan_matching::CreateLowResolutionMatcher(
+      low_resolution_hybrid_grid_, &constant_data.low_resolution_point_cloud);
   const SearchParameters search_parameters{
       common::RoundToInt(options_.linear_xy_search_window() / resolution_),
       common::RoundToInt(options_.linear_z_search_window() / resolution_),
-      options_.angular_search_window()};
-  return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
-                                   coarse_point_cloud, fine_point_cloud,
-                                   min_score, score, pose_estimate);
+      options_.angular_search_window(), &low_resolution_matcher};
+  return MatchWithSearchParameters(
+      search_parameters, initial_pose_estimate,
+      constant_data.high_resolution_point_cloud,
+      constant_data.rotational_scan_matcher_histogram,
+      constant_data.gravity_alignment, min_score, score, pose_estimate,
+      rotational_score, low_resolution_score);
 }
 
 bool FastCorrelativeScanMatcher::MatchFullSubmap(
     const Eigen::Quaterniond& gravity_alignment,
-    const sensor::PointCloud& coarse_point_cloud,
-    const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate) const {
-  const transform::Rigid3d initial_pose_estimate(origin_.cast<double>(),
+    const mapping::TrajectoryNode::Data& constant_data, const float min_score,
+    float* const score, transform::Rigid3d* const pose_estimate,
+    float* const rotational_score, float* const low_resolution_score) const {
+  const transform::Rigid3d initial_pose_estimate(Eigen::Vector3d::Zero(),
                                                  gravity_alignment);
   float max_point_distance = 0.f;
-  for (const Eigen::Vector3f& point : coarse_point_cloud) {
+  for (const Eigen::Vector3f& point :
+       constant_data.high_resolution_point_cloud) {
     max_point_distance = std::max(max_point_distance, point.norm());
   }
   const int linear_window_size =
-      (width_in_voxels_ + 1) / 2 + std::ceil(max_point_distance);
-  const SearchParameters search_parameters{linear_window_size,
-                                           linear_window_size, M_PI};
-  return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
-                                   coarse_point_cloud, fine_point_cloud,
-                                   min_score, score, pose_estimate);
+      (width_in_voxels_ + 1) / 2 +
+      common::RoundToInt(max_point_distance / resolution_ + 0.5f);
+  const auto low_resolution_matcher = scan_matching::CreateLowResolutionMatcher(
+      low_resolution_hybrid_grid_, &constant_data.low_resolution_point_cloud);
+  const SearchParameters search_parameters{
+      linear_window_size, linear_window_size, M_PI, &low_resolution_matcher};
+  return MatchWithSearchParameters(
+      search_parameters, initial_pose_estimate,
+      constant_data.high_resolution_point_cloud,
+      constant_data.rotational_scan_matcher_histogram,
+      constant_data.gravity_alignment, min_score, score, pose_estimate,
+      rotational_score, low_resolution_score);
 }
 
 bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
     const transform::Rigid3d& initial_pose_estimate,
-    const sensor::PointCloud& coarse_point_cloud,
-    const sensor::PointCloud& fine_point_cloud, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate) const {
+    const sensor::PointCloud& point_cloud,
+    const Eigen::VectorXf& rotational_scan_matcher_histogram,
+    const Eigen::Quaterniond& gravity_alignment, const float min_score,
+    float* const score, transform::Rigid3d* const pose_estimate,
+    float* const rotational_score, float* const low_resolution_score) const {
   CHECK_NOTNULL(score);
   CHECK_NOTNULL(pose_estimate);
 
   const std::vector<DiscreteScan> discrete_scans = GenerateDiscreteScans(
-      search_parameters, coarse_point_cloud, fine_point_cloud,
-      initial_pose_estimate.cast<float>());
+      search_parameters, point_cloud, rotational_scan_matcher_histogram,
+      gravity_alignment, initial_pose_estimate.cast<float>());
 
   const std::vector<Candidate> lowest_resolution_candidates =
       ComputeLowestResolutionCandidates(search_parameters, discrete_scans);
@@ -159,11 +225,10 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
   if (best_candidate.score > min_score) {
     *score = best_candidate.score;
     *pose_estimate =
-        (transform::Rigid3f(
-             resolution_ * best_candidate.offset.matrix().cast<float>(),
-             Eigen::Quaternionf::Identity()) *
-         discrete_scans[best_candidate.scan_index].pose)
-            .cast<double>();
+        GetPoseFromCandidate(discrete_scans, best_candidate).cast<double>();
+    *rotational_score =
+        discrete_scans[best_candidate.scan_index].rotational_score;
+    *low_resolution_score = best_candidate.low_resolution_score;
     return true;
   }
   return false;
@@ -171,8 +236,8 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
 
 DiscreteScan FastCorrelativeScanMatcher::DiscretizeScan(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
-    const sensor::PointCloud& point_cloud,
-    const transform::Rigid3f& pose) const {
+    const sensor::PointCloud& point_cloud, const transform::Rigid3f& pose,
+    const float rotational_score) const {
   std::vector<std::vector<Eigen::Array3i>> cell_indices_per_depth;
   const PrecomputationGrid& original_grid = precomputation_grid_stack_->Get(0);
   std::vector<Eigen::Array3i> full_resolution_cell_indices;
@@ -210,19 +275,20 @@ DiscreteScan FastCorrelativeScanMatcher::DiscretizeScan(
           low_resolution_cell_at_start - low_resolution_search_window_start);
     }
   }
-  return DiscreteScan{pose, cell_indices_per_depth};
+  return DiscreteScan{pose, cell_indices_per_depth, rotational_score};
 }
 
 std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
-    const sensor::PointCloud& coarse_point_cloud,
-    const sensor::PointCloud& fine_point_cloud,
+    const sensor::PointCloud& point_cloud,
+    const Eigen::VectorXf& rotational_scan_matcher_histogram,
+    const Eigen::Quaterniond& gravity_alignment,
     const transform::Rigid3f& initial_pose) const {
   std::vector<DiscreteScan> result;
   // We set this value to something on the order of resolution to make sure that
   // the std::acos() below is defined.
   float max_scan_range = 3.f * resolution_;
-  for (const Eigen::Vector3f& point : coarse_point_cloud) {
+  for (const Eigen::Vector3f& point : point_cloud) {
     const float range = point.norm();
     max_scan_range = std::max(range, max_scan_range);
   }
@@ -239,7 +305,10 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     angles.push_back(rz * angular_step_size);
   }
   const std::vector<float> scores = rotational_scan_matcher_.Match(
-      sensor::TransformPointCloud(fine_point_cloud, initial_pose), angles);
+      rotational_scan_matcher_histogram,
+      transform::GetYaw(initial_pose.rotation() *
+                        gravity_alignment.inverse().cast<float>()),
+      angles);
   for (size_t i = 0; i != angles.size(); ++i) {
     if (scores[i] < options_.min_rotational_score()) {
       continue;
@@ -247,13 +316,13 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     const Eigen::Vector3f angle_axis(0.f, 0.f, angles[i]);
     // It's important to apply the 'angle_axis' rotation between the translation
     // and rotation of the 'initial_pose', so that the rotation is around the
-    // origin of the laser scanner, and yaw is in map frame.
+    // origin of the range data, and yaw is in map frame.
     const transform::Rigid3f pose(
-        Eigen::Translation3f(initial_pose.translation()) *
+        initial_pose.translation(),
         transform::AngleAxisVectorToRotationQuaternion(angle_axis) *
-        Eigen::Quaternionf(initial_pose.rotation()));
+            initial_pose.rotation());
     result.push_back(
-        DiscretizeScan(search_parameters, coarse_point_cloud, pose));
+        DiscretizeScan(search_parameters, point_cloud, pose, scores[i]));
   }
   return result;
 }
@@ -329,17 +398,42 @@ FastCorrelativeScanMatcher::ComputeLowestResolutionCandidates(
   return lowest_resolution_candidates;
 }
 
+transform::Rigid3f FastCorrelativeScanMatcher::GetPoseFromCandidate(
+    const std::vector<DiscreteScan>& discrete_scans,
+    const Candidate& candidate) const {
+  return transform::Rigid3f::Translation(
+             resolution_ * candidate.offset.matrix().cast<float>()) *
+         discrete_scans[candidate.scan_index].pose;
+}
+
 Candidate FastCorrelativeScanMatcher::BranchAndBound(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
     const std::vector<DiscreteScan>& discrete_scans,
     const std::vector<Candidate>& candidates, const int candidate_depth,
     float min_score) const {
   if (candidate_depth == 0) {
-    // Return the best candidate.
-    return *candidates.begin();
+    for (const Candidate& candidate : candidates) {
+      if (candidate.score <= min_score) {
+        // Return if the candidate is bad because the following candidate will
+        // not have better score.
+        return Candidate::Unsuccessful();
+      }
+      const float low_resolution_score =
+          (*search_parameters.low_resolution_matcher)(
+              GetPoseFromCandidate(discrete_scans, candidate));
+      if (low_resolution_score >= options_.min_low_resolution_score()) {
+        // We found the best candidate that passes the matching function.
+        Candidate best_candidate = candidate;
+        best_candidate.low_resolution_score = low_resolution_score;
+        return best_candidate;
+      }
+    }
+
+    // All candidates have good scores but none passes the matching function.
+    return Candidate::Unsuccessful();
   }
 
-  Candidate best_high_resolution_candidate(0, Eigen::Array3i::Zero());
+  Candidate best_high_resolution_candidate = Candidate::Unsuccessful();
   best_high_resolution_candidate.score = min_score;
   for (const Candidate& candidate : candidates) {
     if (candidate.score <= min_score) {

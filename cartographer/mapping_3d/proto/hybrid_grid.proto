@@ -14,13 +14,10 @@
 
 syntax = "proto2";
 
-import "cartographer/transform/proto/transform.proto";
-
 package cartographer.mapping_3d.proto;
 
 message HybridGrid {
   optional float resolution = 1;
-  optional transform.proto.Vector3f origin = 2;
   // '{x, y, z}_indices[i]' is the index of 'values[i]'.
   repeated sint32 x_indices = 3 [packed = true];
   repeated sint32 y_indices = 4 [packed = true];

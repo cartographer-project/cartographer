@@ -39,12 +39,7 @@ class CompressedPointCloud {
 
   CompressedPointCloud() : num_points_(0) {}
   explicit CompressedPointCloud(const PointCloud& point_cloud);
-
-  // Returns a compressed point cloud and further returns a mapping 'new_to_old'
-  // from the compressed indices to the original indices, i.e., conceptually
-  // compressed[i] = point_cloud[new_to_old[i]].
-  static CompressedPointCloud CompressAndReturnOrder(
-      const PointCloud& point_cloud, std::vector<int>* new_to_old);
+  explicit CompressedPointCloud(const proto::CompressedPointCloud& proto);
 
   // Returns decompressed point cloud.
   PointCloud Decompress() const;
@@ -54,19 +49,23 @@ class CompressedPointCloud {
   ConstIterator begin() const;
   ConstIterator end() const;
 
+  bool operator==(const CompressedPointCloud& right_hand_container) const;
   proto::CompressedPointCloud ToProto() const;
 
  private:
-  CompressedPointCloud(const std::vector<int32>& point_data, size_t num_points);
-
-  const std::vector<int32> point_data_;
-  const size_t num_points_;
+  std::vector<int32> point_data_;
+  size_t num_points_;
 };
 
 // Forward iterator for compressed point clouds.
-class CompressedPointCloud::ConstIterator
-    : public std::iterator<std::forward_iterator_tag, Eigen::Vector3f> {
+class CompressedPointCloud::ConstIterator {
  public:
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = Eigen::Vector3f;
+  using difference_type = int64;
+  using pointer = const Eigen::Vector3f*;
+  using reference = const Eigen::Vector3f&;
+
   // Creates begin iterator.
   explicit ConstIterator(const CompressedPointCloud* compressed_point_cloud);
 

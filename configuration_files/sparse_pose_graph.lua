@@ -17,14 +17,10 @@ SPARSE_POSE_GRAPH = {
   constraint_builder = {
     sampling_ratio = 0.3,
     max_constraint_distance = 15.,
-    adaptive_voxel_filter = {
-      max_length = 0.9,
-      min_num_points = 100,
-      max_range = 50.,
-    },
     min_score = 0.55,
     global_localization_min_score = 0.6,
-    lower_covariance_eigenvalue_bound = 1e-11,
+    loop_closure_translation_weight = 1.1e4,
+    loop_closure_rotation_weight = 1e5,
     log_matches = true,
     fast_correlative_scan_matcher = {
       linear_search_window = 7.,
@@ -35,7 +31,6 @@ SPARSE_POSE_GRAPH = {
       occupied_space_weight = 20.,
       translation_weight = 10.,
       rotation_weight = 1.,
-      covariance_scale = 1e-4,
       ceres_solver_options = {
         use_nonmonotonic_steps = true,
         max_num_iterations = 10,
@@ -45,14 +40,15 @@ SPARSE_POSE_GRAPH = {
     fast_correlative_scan_matcher_3d = {
       branch_and_bound_depth = 8,
       full_resolution_depth = 3,
-      rotational_histogram_size = 120,
       min_rotational_score = 0.77,
-      linear_xy_search_window = 4.,
+      min_low_resolution_score = 0.55,
+      linear_xy_search_window = 5.,
       linear_z_search_window = 1.,
       angular_search_window = math.rad(15.),
     },
     ceres_scan_matcher_3d = {
-      occupied_space_weight_0 = 20.,
+      occupied_space_weight_0 = 5.,
+      occupied_space_weight_1 = 30.,
       translation_weight = 10.,
       rotation_weight = 1.,
       only_optimize_yaw = false,
@@ -63,12 +59,16 @@ SPARSE_POSE_GRAPH = {
       },
     },
   },
+  matcher_translation_weight = 5e2,
+  matcher_rotation_weight = 1.6e3,
   optimization_problem = {
     huber_scale = 1e1,
-    acceleration_weight = 1e4,
-    rotation_weight = 3e6,
+    acceleration_weight = 1e3,
+    rotation_weight = 3e5,
     consecutive_scan_translation_penalty_factor = 1e5,
     consecutive_scan_rotation_penalty_factor = 1e5,
+    fixed_frame_pose_translation_weight = 1e1,
+    fixed_frame_pose_rotation_weight = 1e2,
     log_solver_summary = false,
     ceres_solver_options = {
       use_nonmonotonic_steps = false,
@@ -78,4 +78,6 @@ SPARSE_POSE_GRAPH = {
   },
   max_num_final_iterations = 200,
   global_sampling_ratio = 0.003,
+  log_residual_histograms = true,
+  global_constraint_search_after_n_seconds = 10.,
 }

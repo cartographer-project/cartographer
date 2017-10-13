@@ -45,7 +45,7 @@ ThreadPool::~ThreadPool() {
   }
 }
 
-void ThreadPool::Schedule(std::function<void()> work_item) {
+void ThreadPool::Schedule(const std::function<void()>& work_item) {
   MutexLocker locker(&mutex_);
   CHECK(running_);
   work_queue_.push_back(work_item);

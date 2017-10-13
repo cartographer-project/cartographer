@@ -33,42 +33,13 @@ int32 num_threads
   Not yet documented.
 
 
-cartographer.kalman_filter.proto.PoseTrackerOptions
-===================================================
-
-double position_model_variance
-  Model variances depend linearly on time.
-
-double orientation_model_variance
-  Not yet documented.
-
-double velocity_model_variance
-  Not yet documented.
-
-double imu_gravity_time_constant
-  Time constant for the orientation moving average based on observed gravity
-  via linear acceleration.
-
-double imu_gravity_variance
-  Not yet documented.
-
-int32 num_odometry_states
-  Maximum number of previous odometry states to keep.
-
-
 cartographer.mapping.proto.MapBuilderOptions
 ============================================
 
 bool use_trajectory_builder_2d
   Not yet documented.
 
-cartographer.mapping_2d.proto.LocalTrajectoryBuilderOptions trajectory_builder_2d_options
-  Not yet documented.
-
 bool use_trajectory_builder_3d
-  Not yet documented.
-
-cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions trajectory_builder_3d_options
   Not yet documented.
 
 int32 num_background_threads
@@ -88,6 +59,14 @@ int32 optimize_every_n_scans
 cartographer.mapping.sparse_pose_graph.proto.ConstraintBuilderOptions constraint_builder_options
   Options for the constraint builder.
 
+double matcher_translation_weight
+  Weight used in the optimization problem for the translational component of
+  non-loop-closure scan matcher constraints.
+
+double matcher_rotation_weight
+  Weight used in the optimization problem for the rotational component of
+  non-loop-closure scan matcher constraints.
+
 cartographer.mapping.sparse_pose_graph.proto.OptimizationProblemOptions optimization_problem_options
   Options for the optimization problem.
 
@@ -98,6 +77,22 @@ int32 max_num_final_iterations
 double global_sampling_ratio
   Rate at which we sample a single trajectory's scans for global
   localization.
+
+bool log_residual_histograms
+  Whether to output histograms for the pose residuals.
+
+
+cartographer.mapping.proto.TrajectoryBuilderOptions
+===================================================
+
+cartographer.mapping_2d.proto.LocalTrajectoryBuilderOptions trajectory_builder_2d_options
+  Not yet documented.
+
+cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions trajectory_builder_3d_options
+  Not yet documented.
+
+bool pure_localization
+  Not yet documented.
 
 
 cartographer.mapping.sparse_pose_graph.proto.ConstraintBuilderOptions
@@ -110,9 +105,6 @@ double sampling_ratio
 double max_constraint_distance
   Threshold for poses to be considered near a submap.
 
-cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
-  Voxel filter used to compute a sparser point cloud for matching.
-
 double min_score
   Threshold for the scan match score below which a match is not considered.
   Low scores indicate that the scan and map do not look similar.
@@ -120,8 +112,13 @@ double min_score
 double global_localization_min_score
   Threshold below which global localizations are not trusted.
 
-double lower_covariance_eigenvalue_bound
-  Lower bound for covariance eigenvalues to limit the weight of matches.
+double loop_closure_translation_weight
+  Weight used in the optimization problem for the translational component of
+  loop closure constraints.
+
+double loop_closure_rotation_weight
+  Weight used in the optimization problem for the rotational component of
+  loop closure constraints.
 
 bool log_matches
   If enabled, logs information of loop-closing constraints for debugging.
@@ -152,10 +149,16 @@ double rotation_weight
   Scaling parameter for the IMU rotation term.
 
 double consecutive_scan_translation_penalty_factor
-  Penalty factors for changes to the relative pose between consecutive scans.
+  Penalty factors for translation changes to the relative pose between consecutive scans.
 
 double consecutive_scan_rotation_penalty_factor
-  Not yet documented.
+  Penalty factors for rotation changes to the relative pose between consecutive scans.
+
+double fixed_frame_pose_translation_weight
+  Scaling parameter for the FixedFramePose translation.
+
+double fixed_frame_pose_rotation_weight
+  Scaling parameter for the FixedFramePose rotation.
 
 bool log_solver_summary
   If true, the Ceres solver summary will be logged for every optimization.
@@ -167,32 +170,39 @@ cartographer.common.proto.CeresSolverOptions ceres_solver_options
 cartographer.mapping_2d.proto.LocalTrajectoryBuilderOptions
 ===========================================================
 
-float laser_min_range
-  Laser returns outside these ranges will be dropped.
+float min_range
+  Rangefinder points outside these ranges will be dropped.
 
-float laser_max_range
+float max_range
   Not yet documented.
 
-float laser_min_z
+float min_z
   Not yet documented.
 
-float laser_max_z
+float max_z
   Not yet documented.
 
-float laser_missing_echo_ray_length
-  Laser returns beyond 'laser_max_range' will be inserted with this length as
-  empty space.
+float missing_data_ray_length
+  Points beyond 'max_range' will be inserted with this length as empty space.
 
-float laser_voxel_filter_size
+int32 scans_per_accumulation
+  Number of scans to accumulate into one unwarped, combined scan to use for
+  scan matching.
+
+float voxel_filter_size
   Voxel filter that gets applied to the range data immediately after
   cropping.
+
+cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
+  Voxel filter used to compute a sparser point cloud for matching.
+
+cartographer.sensor.proto.AdaptiveVoxelFilterOptions loop_closure_adaptive_voxel_filter_options
+  Voxel filter used to compute a sparser point cloud for finding loop
+  closures.
 
 bool use_online_correlative_scan_matching
   Whether to solve the online scan matching first using the correlative scan
   matcher to generate a good starting point for Ceres.
-
-cartographer.sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options
-  Voxel filter used to compute a sparser point cloud for matching.
 
 cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions real_time_correlative_scan_matcher_options
   Not yet documented.
@@ -210,9 +220,6 @@ double imu_gravity_time_constant
   the constant is reduced) and
   2. from integration of angular velocities (which gets worse when the
   constant is increased) is balanced.
-
-int32 num_odometry_states
-  Maximum number of previous odometry states to keep.
 
 cartographer.mapping_2d.proto.SubmapsOptions submaps_options
   Not yet documented.
@@ -243,16 +250,10 @@ cartographer.mapping_2d.proto.SubmapsOptions
 double resolution
   Resolution of the map in meters.
 
-double half_length
-  Half the width/height of each submap, its "radius".
-
 int32 num_range_data
   Number of scans before adding a new submap. Each submap will get twice the
   number of scans inserted: First for initialization without being matched
   against, then while being matched.
-
-bool output_debug_images
-  If enabled, submap%d.png images are written for debugging.
 
 cartographer.mapping_2d.proto.RangeDataInserterOptions range_data_inserter_options
   Not yet documented.
@@ -269,9 +270,6 @@ double translation_weight
 
 double rotation_weight
   Not yet documented.
-
-double covariance_scale
-  Scale applied to the covariance estimate from Ceres.
 
 cartographer.common.proto.CeresSolverOptions ceres_solver_options
   Configure the Ceres solver. See the Ceres documentation for more
@@ -311,8 +309,28 @@ double rotation_delta_cost_weight
   Not yet documented.
 
 
-cartographer.mapping_3d.proto.KalmanLocalTrajectoryBuilderOptions
-=================================================================
+cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions
+===========================================================
+
+float min_range
+  Rangefinder points outside these ranges will be dropped.
+
+float max_range
+  Not yet documented.
+
+int32 scans_per_accumulation
+  Number of scans to accumulate into one unwarped, combined scan to use for
+  scan matching.
+
+float voxel_filter_size
+  Voxel filter that gets applied to the range data immediately after
+  cropping.
+
+cartographer.sensor.proto.AdaptiveVoxelFilterOptions high_resolution_adaptive_voxel_filter_options
+  Voxel filter used to compute a sparser point cloud for matching.
+
+cartographer.sensor.proto.AdaptiveVoxelFilterOptions low_resolution_adaptive_voxel_filter_options
+  Not yet documented.
 
 bool use_online_correlative_scan_matching
   Whether to solve the online scan matching first using the correlative scan
@@ -321,21 +339,22 @@ bool use_online_correlative_scan_matching
 cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions real_time_correlative_scan_matcher_options
   Not yet documented.
 
-cartographer.kalman_filter.proto.PoseTrackerOptions pose_tracker_options
+cartographer.mapping_3d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
   Not yet documented.
 
-double scan_matcher_variance
+cartographer.mapping_3d.proto.MotionFilterOptions motion_filter_options
   Not yet documented.
 
-double odometer_translational_variance
+double imu_gravity_time_constant
+  Time constant in seconds for the orientation moving average based on
+  observed gravity via the IMU. It should be chosen so that the error
+  1. from acceleration measurements not due to gravity (which gets worse when
+  the constant is reduced) and
+  2. from integration of angular velocities (which gets worse when the
+  constant is increased) is balanced.
+
+cartographer.mapping_3d.proto.SubmapsOptions submaps_options
   Not yet documented.
-
-double odometer_rotational_variance
-  Not yet documented.
-
-
-cartographer.mapping_3d.proto.LocalTrajectoryBuilderOptions
-===========================================================
 
 
 cartographer.mapping_3d.proto.MotionFilterOptions
@@ -349,31 +368,6 @@ double max_distance_meters
 
 double max_angle_radians
   Threshold above which a new scan is inserted based on rotational motion.
-
-
-cartographer.mapping_3d.proto.OptimizingLocalTrajectoryBuilderOptions
-=====================================================================
-
-double high_resolution_grid_weight
-  Not yet documented.
-
-double low_resolution_grid_weight
-  Not yet documented.
-
-double velocity_weight
-  Not yet documented.
-
-double translation_weight
-  Not yet documented.
-
-double rotation_weight
-  Not yet documented.
-
-double odometry_translation_weight
-  Not yet documented.
-
-double odometry_rotation_weight
-  Not yet documented.
 
 
 cartographer.mapping_3d.proto.RangeDataInserterOptions
@@ -448,6 +442,10 @@ int32 rotational_histogram_size
 
 double min_rotational_score
   Minimum score for the rotational scan matcher.
+
+double min_low_resolution_score
+  Threshold for the score of the low resolution grid below which a match is
+  not considered. Only used for 3D.
 
 double linear_xy_search_window
   Linear search window in the plane orthogonal to gravity in which the best

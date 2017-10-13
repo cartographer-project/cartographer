@@ -116,21 +116,6 @@ TEST(CompressPointCloudTest, CompressesNoGaps) {
   }
 }
 
-TEST(CompressPointCloudTest, CompressesAndReturnsOrder) {
-  PointCloud point_cloud = {
-      Eigen::Vector3f(1.f, 0.f, 0.f), Eigen::Vector3f(-10.f, 0.f, 0.f),
-      Eigen::Vector3f(1.f, 0.f, 0.f), Eigen::Vector3f(-10.f, 0.f, 0.f)};
-  std::vector<int> new_to_old;
-  CompressedPointCloud compressed =
-      CompressedPointCloud::CompressAndReturnOrder(point_cloud, &new_to_old);
-  EXPECT_EQ(point_cloud.size(), new_to_old.size());
-  int i = 0;
-  for (const Eigen::Vector3f& point : compressed) {
-    EXPECT_THAT(point, ApproximatelyEquals(point_cloud[new_to_old[i]]));
-    ++i;
-  }
-}
-
 }  // namespace
 }  // namespace sensor
 }  // namespace cartographer

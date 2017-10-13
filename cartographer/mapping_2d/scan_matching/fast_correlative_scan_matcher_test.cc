@@ -41,7 +41,6 @@ TEST(PrecomputationGridTest, CorrectValues) {
   std::uniform_int_distribution<int> distribution(0, 255);
   ProbabilityGrid probability_grid(
       MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(250, 250)));
-  probability_grid.StartUpdate();
   for (const Eigen::Array2i& xy_index :
        XYIndexRangeIterator(Eigen::Array2i(50, 50), Eigen::Array2i(249, 249))) {
     probability_grid.SetProbability(
@@ -76,7 +75,6 @@ TEST(PrecomputationGridTest, TinyProbabilityGrid) {
   std::uniform_int_distribution<int> distribution(0, 255);
   ProbabilityGrid probability_grid(
       MapLimits(0.05, Eigen::Vector2d(0.1, 0.1), CellLimits(4, 4)));
-  probability_grid.StartUpdate();
   for (const Eigen::Array2i& xy_index :
        XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
     probability_grid.SetProbability(
@@ -151,7 +149,6 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
 
     ProbabilityGrid probability_grid(
         MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
-    probability_grid.StartUpdate();
     range_data_inserter.Insert(
         sensor::RangeData{
             Eigen::Vector3f(expected_pose.translation().x(),
@@ -160,6 +157,7 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
                 point_cloud, transform::Embed3D(expected_pose.cast<float>())),
             {}},
         &probability_grid);
+    probability_grid.FinishUpdate();
 
     FastCorrelativeScanMatcher fast_correlative_scan_matcher(probability_grid,
                                                              options);
@@ -189,7 +187,7 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
   unperturbed_point_cloud.emplace_back(0.f, 0.5f, 0.f);
   unperturbed_point_cloud.emplace_back(0.25f, 1.6f, 0.f);
   unperturbed_point_cloud.emplace_back(2.5f, 0.5f, 0.f);
-  unperturbed_point_cloud.emplace_back(2.0f, 1.8f, 0.f);
+  unperturbed_point_cloud.emplace_back(2.f, 1.8f, 0.f);
 
   for (int i = 0; i != 20; ++i) {
     const transform::Rigid2f perturbation(
@@ -204,7 +202,6 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
 
     ProbabilityGrid probability_grid(
         MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
-    probability_grid.StartUpdate();
     range_data_inserter.Insert(
         sensor::RangeData{
             transform::Embed3D(expected_pose * perturbation).translation(),
@@ -212,6 +209,7 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
                                         transform::Embed3D(expected_pose)),
             {}},
         &probability_grid);
+    probability_grid.FinishUpdate();
 
     FastCorrelativeScanMatcher fast_correlative_scan_matcher(probability_grid,
                                                              options);

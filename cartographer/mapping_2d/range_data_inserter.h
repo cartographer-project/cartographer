@@ -45,9 +45,6 @@ class RangeDataInserter {
   void Insert(const sensor::RangeData& range_data,
               ProbabilityGrid* probability_grid) const;
 
-  const std::vector<uint16>& hit_table() const { return hit_table_; }
-  const std::vector<uint16>& miss_table() const { return miss_table_; }
-
  private:
   const proto::RangeDataInserterOptions options_;
   const std::vector<uint16> hit_table_;
