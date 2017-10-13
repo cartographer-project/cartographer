@@ -209,7 +209,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       GUARDED_BY(mutex_);
 
   // Data that are currently being shown.
-  mapping::NestedVectorsById<mapping::TrajectoryNode, mapping::NodeId>
+  mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
       trajectory_nodes_ GUARDED_BY(mutex_);
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 

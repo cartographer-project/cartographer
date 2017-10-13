@@ -472,7 +472,8 @@ void SparsePoseGraph::RunOptimization() {
   for (auto node_it = node_data.begin(); node_it != node_data.end();) {
     const int trajectory_id = node_it->id.trajectory_id;
     const auto trajectory_end = node_data.EndOfTrajectory(trajectory_id);
-    const int num_nodes = trajectory_nodes_.num_indices(trajectory_id);
+    const int num_nodes =
+        trajectory_nodes_.SizeOfTrajectoryOrZero(trajectory_id);
     for (; node_it != trajectory_end; ++node_it) {
       const mapping::NodeId node_id = node_it->id;
       auto& node = trajectory_nodes_.at(node_id);
@@ -501,7 +502,15 @@ void SparsePoseGraph::RunOptimization() {
 std::vector<std::vector<mapping::TrajectoryNode>>
 SparsePoseGraph::GetTrajectoryNodes() {
   common::MutexLocker locker(&mutex_);
-  return trajectory_nodes_.data();
+  std::vector<std::vector<mapping::TrajectoryNode>> data;
+  for (const auto& trajectory_node : trajectory_nodes_) {
+    data.resize(trajectory_node.id.trajectory_id + 1);
+    data[trajectory_node.id.trajectory_id].resize(
+        trajectory_node.id.node_index);
+    data[trajectory_node.id.trajectory_id][trajectory_node.id.node_index] =
+        trajectory_node.data;
+  }
+  return data;
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
