@@ -161,7 +161,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Computes the local to global frame transform based on the given optimized
   // 'submap_transforms'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const std::vector<std::map<int, sparse_pose_graph::SubmapData>>&
+      const mapping::MapById<mapping::SubmapId, sparse_pose_graph::SubmapData>&
           submap_transforms,
       int trajectory_id) const REQUIRES(mutex_);
 
@@ -218,7 +218,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Current submap transforms used for displaying data.
-  std::vector<std::map<int, sparse_pose_graph::SubmapData>>
+  mapping::MapById<mapping::SubmapId, sparse_pose_graph::SubmapData>
       optimized_submap_transforms_ GUARDED_BY(mutex_);
 
   // List of all trimmers to consult when optimizations finish.

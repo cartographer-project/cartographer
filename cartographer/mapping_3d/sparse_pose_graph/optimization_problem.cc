@@ -110,19 +110,13 @@ void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
 void OptimizationProblem::AddSubmap(const int trajectory_id,
                                     const transform::Rigid3d& submap_pose) {
   CHECK_GE(trajectory_id, 0);
-  submap_data_.resize(
-      std::max(submap_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  trajectory_data_.resize(
-      std::max(trajectory_data_.size(), submap_data_.size()));
-  auto& trajectory_data = trajectory_data_[trajectory_id];
-  submap_data_[trajectory_id].emplace(trajectory_data.next_submap_index,
-                                      SubmapData{submap_pose});
-  ++trajectory_data.next_submap_index;
+  trajectory_data_.resize(std::max(trajectory_data_.size(),
+                                   static_cast<size_t>(trajectory_id) + 1));
+  submap_data_.Append(trajectory_id, SubmapData{submap_pose});
 }
 
 void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {
-  auto& submap_data = submap_data_.at(submap_id.trajectory_id);
-  CHECK(submap_data.erase(submap_id.submap_index));
+  submap_data_.Trim(submap_id);
 }
 
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
@@ -150,43 +144,37 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
   // Set the starting point.
   CHECK(!submap_data_.empty());
-  CHECK(!submap_data_[0].empty());
-  // TODO(hrapp): Move ceres data into SubmapData.
-  std::vector<std::map<int, CeresPose>> C_submaps(submap_data_.size());
+  CHECK(submap_data_.Contains(mapping::SubmapId{0, 0}));
+  mapping::MapById<mapping::SubmapId, CeresPose> C_submaps;
   std::vector<std::map<int, CeresPose>> C_nodes(node_data_.size());
   bool first_submap = true;
-  for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
-       ++trajectory_id) {
-    const bool frozen = frozen_trajectories.count(trajectory_id) != 0;
-    for (const auto& index_submap_data : submap_data_[trajectory_id]) {
-      const int submap_index = index_submap_data.first;
-      if (first_submap) {
-        first_submap = false;
-        // Fix the first submap of the first trajectory except for allowing
-        // gravity alignment.
-        C_submaps[trajectory_id].emplace(
-            std::piecewise_construct, std::forward_as_tuple(submap_index),
-            std::forward_as_tuple(
-                index_submap_data.second.pose, translation_parameterization(),
-                common::make_unique<ceres::AutoDiffLocalParameterization<
-                    ConstantYawQuaternionPlus, 4, 2>>(),
-                &problem));
-        problem.SetParameterBlockConstant(
-            C_submaps[trajectory_id].at(submap_index).translation());
-      } else {
-        C_submaps[trajectory_id].emplace(
-            std::piecewise_construct, std::forward_as_tuple(submap_index),
-            std::forward_as_tuple(
-                index_submap_data.second.pose, translation_parameterization(),
-                common::make_unique<ceres::QuaternionParameterization>(),
-                &problem));
-      }
-      if (frozen) {
-        problem.SetParameterBlockConstant(
-            C_submaps[trajectory_id].at(submap_index).rotation());
-        problem.SetParameterBlockConstant(
-            C_submaps[trajectory_id].at(submap_index).translation());
-      }
+  for (const auto& submap_id_data : submap_data_) {
+    const bool frozen =
+        frozen_trajectories.count(submap_id_data.id.trajectory_id) != 0;
+    if (first_submap) {
+      first_submap = false;
+      // Fix the first submap of the first trajectory except for allowing
+      // gravity alignment.
+      C_submaps.Insert(
+          submap_id_data.id,
+          CeresPose(submap_id_data.data.pose, translation_parameterization(),
+                    common::make_unique<ceres::AutoDiffLocalParameterization<
+                        ConstantYawQuaternionPlus, 4, 2>>(),
+                    &problem));
+      problem.SetParameterBlockConstant(
+          C_submaps.at(submap_id_data.id).translation());
+    } else {
+      C_submaps.Insert(
+          submap_id_data.id,
+          CeresPose(submap_id_data.data.pose, translation_parameterization(),
+                    common::make_unique<ceres::QuaternionParameterization>(),
+                    &problem));
+    }
+    if (frozen) {
+      problem.SetParameterBlockConstant(
+          C_submaps.at(submap_id_data.id).rotation());
+      problem.SetParameterBlockConstant(
+          C_submaps.at(submap_id_data.id).translation());
     }
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
@@ -217,12 +205,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         constraint.tag == Constraint::INTER_SUBMAP
             ? new ceres::HuberLoss(options_.huber_scale())
             : nullptr,
-        C_submaps.at(constraint.submap_id.trajectory_id)
-            .at(constraint.submap_id.submap_index)
-            .rotation(),
-        C_submaps.at(constraint.submap_id.trajectory_id)
-            .at(constraint.submap_id.submap_index)
-            .translation(),
+        C_submaps.at(constraint.submap_id).rotation(),
+        C_submaps.at(constraint.submap_id).translation(),
         C_nodes.at(constraint.node_id.trajectory_id)
             .at(constraint.node_id.node_index)
             .rotation(),
@@ -446,12 +430,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   }
 
   // Store the result.
-  for (size_t trajectory_id = 0; trajectory_id != submap_data_.size();
-       ++trajectory_id) {
-    for (auto& index_submap_data : submap_data_[trajectory_id]) {
-      index_submap_data.second.pose =
-          C_submaps[trajectory_id].at(index_submap_data.first).ToRigid();
-    }
+  for (const auto& C_submap_id_data : C_submaps) {
+    submap_data_.at(C_submap_id_data.id).pose = C_submap_id_data.data.ToRigid();
   }
   for (size_t trajectory_id = 0; trajectory_id != node_data_.size();
        ++trajectory_id) {
@@ -467,8 +447,8 @@ const std::vector<std::map<int, NodeData>>& OptimizationProblem::node_data()
   return node_data_;
 }
 
-const std::vector<std::map<int, SubmapData>>& OptimizationProblem::submap_data()
-    const {
+const mapping::MapById<mapping::SubmapId, SubmapData>&
+OptimizationProblem::submap_data() const {
   return submap_data_;
 }
 
