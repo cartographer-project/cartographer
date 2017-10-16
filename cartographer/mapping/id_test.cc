@@ -126,6 +126,14 @@ TEST(IdTest, InsertIntoMapById) {
   EXPECT_EQ(2, map_by_id.SizeOfTrajectoryOrZero(42));
 }
 
+TEST(IdTest, FindChecked) {
+  MapById<NodeId, int> map_by_id;
+  map_by_id.Append(42, 42);
+  map_by_id.Append(42, 43);
+  map_by_id.Append(42, 44);
+  CHECK_EQ(map_by_id.FindChecked(NodeId{42, 1})->data, 43);
+}
+
 }  // namespace
 }  // namespace mapping
 }  // namespace cartographer
