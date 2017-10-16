@@ -135,7 +135,7 @@ string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
   }
 
   const auto submap_data = sparse_pose_graph_->GetSubmapData(submap_id);
-  if (submap_data.submap == nullptr) {
+  if (submap_data.trimmed()) {
     return "Requested submap " + std::to_string(submap_id.submap_index) +
            " from trajectory " + std::to_string(submap_id.trajectory_id) +
            " but it has been trimmed.";
@@ -145,8 +145,15 @@ string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
 }
 
 void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
+  std::unique_ptr<SparsePoseGraph::SerializationRemapping>
+      serialization_remapping =
+          common::make_unique<SparsePoseGraph::SerializationRemapping>();
   // We serialize the pose graph followed by all the data referenced in it.
-  writer->WriteProto(sparse_pose_graph_->ToProto());
+  // Also save the remapping of submap and node IDs due to trimming so it can
+  // be applied to serialized node and submap data in the proto stream.
+  writer->WriteProto(
+      sparse_pose_graph_->ToProto(serialization_remapping.get()));
+
   // Next we serialize all submap data.
   {
     const auto submap_data = sparse_pose_graph_->GetAllSubmapData();
@@ -156,11 +163,18 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
       for (int submap_index = 0;
            submap_index != static_cast<int>(submap_data[trajectory_id].size());
            ++submap_index) {
+        if (submap_data[trajectory_id][submap_index].trimmed()) {
+          continue;
+        }
         proto::SerializedData proto;
         auto* const submap_proto = proto.mutable_submap();
-        // TODO(whess): Handle trimmed data.
-        submap_proto->mutable_submap_id()->set_trajectory_id(trajectory_id);
-        submap_proto->mutable_submap_id()->set_submap_index(submap_index);
+        const mapping::SubmapId& remapped_submap_id =
+            serialization_remapping->submap_id_remapping.at(
+                mapping::SubmapId{trajectory_id, submap_index});
+        submap_proto->mutable_submap_id()->set_trajectory_id(
+            remapped_submap_id.trajectory_id);
+        submap_proto->mutable_submap_id()->set_submap_index(
+            remapped_submap_id.submap_index);
         submap_data[trajectory_id][submap_index].submap->ToProto(submap_proto);
         // TODO(whess): Only enable optionally? Resulting pbstream files will be
         // a lot larger now.
@@ -178,11 +192,18 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
            node_index !=
            static_cast<int>(trajectory_nodes[trajectory_id].size());
            ++node_index) {
+        if (trajectory_nodes[trajectory_id][node_index].trimmed()) {
+          continue;
+        }
         proto::SerializedData proto;
         auto* const node_proto = proto.mutable_node();
-        // TODO(whess): Handle trimmed data.
-        node_proto->mutable_node_id()->set_trajectory_id(trajectory_id);
-        node_proto->mutable_node_id()->set_node_index(node_index);
+        const mapping::NodeId& remapped_node_id =
+            serialization_remapping->node_id_remapping.at(
+                mapping::NodeId{trajectory_id, node_index});
+        node_proto->mutable_node_id()->set_trajectory_id(
+            remapped_node_id.trajectory_id);
+        node_proto->mutable_node_id()->set_node_index(
+            remapped_node_id.node_index);
         *node_proto->mutable_node_data() =
             ToProto(*trajectory_nodes[trajectory_id][node_index].constant_data);
         // TODO(whess): Only enable optionally? Resulting pbstream files will be

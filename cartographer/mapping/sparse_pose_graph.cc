@@ -63,7 +63,8 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   return options;
 }
 
-proto::SparsePoseGraph SparsePoseGraph::ToProto() {
+proto::SparsePoseGraph SparsePoseGraph::ToProto(
+    SerializationRemapping* serialization_remapping) {
   proto::SparsePoseGraph proto;
 
   std::map<NodeId, NodeId> node_id_remapping;        // Due to trimming.
@@ -96,7 +97,7 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
          old_submap_index != single_trajectory_submap_data.size();
          ++old_submap_index) {
       const auto& submap_data = single_trajectory_submap_data[old_submap_index];
-      if (submap_data.submap != nullptr) {
+      if (!submap_data.trimmed()) {
         submap_id_remapping[SubmapId{static_cast<int>(trajectory_id),
                                      static_cast<int>(old_submap_index)}] =
             SubmapId{static_cast<int>(trajectory_id),
@@ -127,6 +128,11 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     constraint_proto->mutable_node_id()->set_node_index(node_id.node_index);
 
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
+  }
+
+  if (serialization_remapping != nullptr) {
+    *serialization_remapping =
+        SerializationRemapping{node_id_remapping, submap_id_remapping};
   }
 
   return proto;

@@ -66,6 +66,8 @@ class SparsePoseGraph {
   struct SubmapData {
     std::shared_ptr<const Submap> submap;
     transform::Rigid3d pose;
+
+    bool trimmed() const { return submap == nullptr; }
   };
 
   SparsePoseGraph() {}
@@ -117,8 +119,16 @@ class SparsePoseGraph {
   // Returns the current optimized trajectories.
   virtual std::vector<std::vector<TrajectoryNode>> GetTrajectoryNodes() = 0;
 
-  // Serializes the constraints and trajectories.
-  proto::SparsePoseGraph ToProto();
+  struct SerializationRemapping {
+    std::map<NodeId, NodeId> node_id_remapping;
+    std::map<SubmapId, SubmapId> submap_id_remapping;
+  };
+
+  // Serializes the constraints and trajectories. Optionally, store the
+  // remapping of node and submap IDs due to trimming (pass nullptr if
+  // unneeded).
+  proto::SparsePoseGraph ToProto(
+      SerializationRemapping* serialization_remapping);
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
