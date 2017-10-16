@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_TRANSFORM_RIGID_TRANSFORM_H_
 #define CARTOGRAPHER_TRANSFORM_RIGID_TRANSFORM_H_
 
+#include <cmath>
 #include <iostream>
 #include <string>
 
@@ -25,6 +26,7 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
+#include "glog/logging.h"
 
 namespace cartographer {
 namespace transform {
@@ -178,6 +180,13 @@ class Rigid3 {
     out.append(std::to_string(rotation().z()));
     out.append("] }");
     return out;
+  }
+
+  void Check(const string& context) const {
+    CHECK(!std::isnan(translation_.x()) && !std::isnan(translation_.y()) &&
+          !std::isnan(translation_.z()) &&
+          std::abs(FloatType(1) - rotation_.norm()) < FloatType(1e-3))
+        << "Invalid rigid transform '" << context << "': " << *this;
   }
 
  private:

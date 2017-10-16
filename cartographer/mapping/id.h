@@ -226,9 +226,7 @@ class MapById {
         typename std::map<int, MapByIndex>::const_iterator current_trajectory)
         : current_trajectory_(current_trajectory) {}
 
-    int operator*() const {
-      return current_trajectory_->first;
-    }
+    int operator*() const { return current_trajectory_->first; }
 
     ConstTrajectoryIterator& operator++() {
       ++current_trajectory_;
@@ -244,12 +242,13 @@ class MapById {
       return current_trajectory_ == it.current_trajectory_;
     }
 
-    bool operator!=(const ConstTrajectoryIterator& it) const { return !operator==(it); }
+    bool operator!=(const ConstTrajectoryIterator& it) const {
+      return !operator==(it);
+    }
 
    private:
     typename std::map<int, MapByIndex>::const_iterator current_trajectory_;
   };
-
 
   // Appends data to a 'trajectory_id', creating trajectories as needed.
   IdType Append(const int trajectory_id, const DataType& data) {
