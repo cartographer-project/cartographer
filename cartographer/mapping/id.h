@@ -214,6 +214,43 @@ class MapById {
     typename std::map<int, DataType>::const_iterator current_data_;
   };
 
+  class ConstTrajectoryIterator {
+   public:
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = int;
+    using difference_type = int64;
+    using pointer = int*;
+    using reference = const int&;
+
+    explicit ConstTrajectoryIterator(
+        typename std::map<int, MapByIndex>::const_iterator current_trajectory)
+        : current_trajectory_(current_trajectory) {}
+
+    int operator*() const {
+      return current_trajectory_->first;
+    }
+
+    ConstTrajectoryIterator& operator++() {
+      ++current_trajectory_;
+      return *this;
+    }
+
+    ConstTrajectoryIterator& operator--() {
+      --current_trajectory_;
+      return *this;
+    }
+
+    bool operator==(const ConstTrajectoryIterator& it) const {
+      return current_trajectory_ == it.current_trajectory_;
+    }
+
+    bool operator!=(const ConstTrajectoryIterator& it) const { return !operator==(it); }
+
+   private:
+    typename std::map<int, MapByIndex>::const_iterator current_trajectory_;
+  };
+
+
   // Appends data to a 'trajectory_id', creating trajectories as needed.
   IdType Append(const int trajectory_id, const DataType& data) {
     CHECK_GE(trajectory_id, 0);
@@ -279,6 +316,13 @@ class MapById {
   Range<ConstIterator> trajectory(const int trajectory_id) const {
     return Range<ConstIterator>(BeginOfTrajectory(trajectory_id),
                                 EndOfTrajectory(trajectory_id));
+  }
+
+  // Returns Range object for range-based loops over the trajectory IDs.
+  Range<ConstTrajectoryIterator> trajectory_ids() const {
+    return Range<ConstTrajectoryIterator>(
+        ConstTrajectoryIterator(trajectories_.begin()),
+        ConstTrajectoryIterator(trajectories_.end()));
   }
 
   ConstIterator begin() const { return BeginOfTrajectory(0); }
