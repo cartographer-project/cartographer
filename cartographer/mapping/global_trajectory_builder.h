@@ -19,6 +19,8 @@
 
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
 
+#include "glog/logging.h"
+
 namespace cartographer {
 namespace mapping {
 
@@ -61,12 +63,14 @@ class GlobalTrajectoryBuilder
   }
 
   void AddSensorData(const sensor::OdometryData& odometry_data) override {
+    CHECK(odometry_data.pose.IsValid()) << odometry_data.pose;
     local_trajectory_builder_.AddOdometerData(odometry_data);
     sparse_pose_graph_->AddOdometerData(trajectory_id_, odometry_data);
   }
 
   void AddSensorData(
       const sensor::FixedFramePoseData& fixed_frame_pose) override {
+    CHECK(fixed_frame_pose.pose.IsValid()) << fixed_frame_pose.pose;
     sparse_pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);
   }
 
