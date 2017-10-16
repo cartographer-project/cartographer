@@ -68,14 +68,14 @@ CeresScanMatcher::CeresScanMatcher(
 }
 
 void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
-                             const transform::Rigid3d& initial_pose_estimate,
+                             const transform::Rigid3d& local_pose_estimate,
                              const std::vector<PointCloudAndHybridGridPointers>&
                                  point_clouds_and_hybrid_grids,
                              transform::Rigid3d* const pose_estimate,
                              ceres::Solver::Summary* const summary) {
   ceres::Problem problem;
   CeresPose ceres_pose(
-      initial_pose_estimate, nullptr /* translation_parameterization */,
+      local_pose_estimate, nullptr /* translation_parameterization */,
       options_.only_optimize_yaw()
           ? std::unique_ptr<ceres::LocalParameterization>(
                 common::make_unique<ceres::AutoDiffLocalParameterization<
@@ -111,7 +111,7 @@ void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor, 3, 4>(
           new RotationDeltaCostFunctor(options_.rotation_weight(),
-                                       initial_pose_estimate.rotation())),
+                                       local_pose_estimate.rotation())),
       nullptr, ceres_pose.rotation());
 
   ceres::Solve(ceres_solver_options_, &problem, summary);

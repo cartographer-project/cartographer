@@ -207,13 +207,13 @@ FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
 FastCorrelativeScanMatcher::~FastCorrelativeScanMatcher() {}
 
 bool FastCorrelativeScanMatcher::Match(
-    const transform::Rigid2d& initial_pose_estimate,
+    const transform::Rigid2d& local_pose_estimate,
     const sensor::PointCloud& point_cloud, const float min_score, float* score,
     transform::Rigid2d* pose_estimate) const {
   const SearchParameters search_parameters(options_.linear_search_window(),
                                            options_.angular_search_window(),
                                            point_cloud, limits_.resolution());
-  return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
+  return MatchWithSearchParameters(search_parameters, local_pose_estimate,
                                    point_cloud, min_score, score,
                                    pose_estimate);
 }
@@ -237,13 +237,13 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
 
 bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
     SearchParameters search_parameters,
-    const transform::Rigid2d& initial_pose_estimate,
+    const transform::Rigid2d& local_pose_estimate,
     const sensor::PointCloud& point_cloud, float min_score, float* score,
     transform::Rigid2d* pose_estimate) const {
   CHECK_NOTNULL(score);
   CHECK_NOTNULL(pose_estimate);
 
-  const Eigen::Rotation2Dd initial_rotation = initial_pose_estimate.rotation();
+  const Eigen::Rotation2Dd initial_rotation = local_pose_estimate.rotation();
   const sensor::PointCloud rotated_point_cloud = sensor::TransformPointCloud(
       point_cloud,
       transform::Rigid3f::Rotation(Eigen::AngleAxisf(
@@ -252,8 +252,8 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
       GenerateRotatedScans(rotated_point_cloud, search_parameters);
   const std::vector<DiscreteScan> discrete_scans = DiscretizeScans(
       limits_, rotated_scans,
-      Eigen::Translation2f(initial_pose_estimate.translation().x(),
-                           initial_pose_estimate.translation().y()));
+      Eigen::Translation2f(local_pose_estimate.translation().x(),
+                           local_pose_estimate.translation().y()));
   search_parameters.ShrinkToFit(discrete_scans, limits_.cell_limits());
 
   const std::vector<Candidate> lowest_resolution_candidates =
@@ -264,8 +264,8 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
   if (best_candidate.score > min_score) {
     *score = best_candidate.score;
     *pose_estimate = transform::Rigid2d(
-        {initial_pose_estimate.translation().x() + best_candidate.x,
-         initial_pose_estimate.translation().y() + best_candidate.y},
+        {local_pose_estimate.translation().x() + best_candidate.x,
+         local_pose_estimate.translation().y() + best_candidate.y},
         initial_rotation * Eigen::Rotation2Dd(best_candidate.orientation));
     return true;
   }

@@ -58,12 +58,12 @@ class CeresScanMatcherTest : public ::testing::Test {
     ceres_scan_matcher_ = common::make_unique<CeresScanMatcher>(options);
   }
 
-  void TestFromInitialPose(const transform::Rigid2d& initial_pose) {
+  void TestFromInitialPose(const transform::Rigid2d& local_pose) {
     transform::Rigid2d pose;
     const transform::Rigid2d expected_pose =
         transform::Rigid2d::Translation({-0.5, 0.5});
     ceres::Solver::Summary summary;
-    ceres_scan_matcher_->Match(initial_pose, initial_pose, point_cloud_,
+    ceres_scan_matcher_->Match(local_pose, local_pose, point_cloud_,
                                probability_grid_, &pose, &summary);
     EXPECT_NEAR(0., summary.final_cost, 1e-2) << summary.FullReport();
     EXPECT_THAT(pose, transform::IsNearly(expected_pose, 1e-2))

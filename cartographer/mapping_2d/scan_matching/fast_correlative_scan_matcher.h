@@ -107,10 +107,10 @@ class FastCorrelativeScanMatcher {
       delete;
 
   // Aligns 'point_cloud' within the 'probability_grid' given an
-  // 'initial_pose_estimate'. If a score above 'min_score' (excluding equality)
+  // 'local_pose_estimate'. If a score above 'min_score' (excluding equality)
   // is possible, true is returned, and 'score' and 'pose_estimate' are updated
   // with the result.
-  bool Match(const transform::Rigid2d& initial_pose_estimate,
+  bool Match(const transform::Rigid2d& local_pose_estimate,
              const sensor::PointCloud& point_cloud, float min_score,
              float* score, transform::Rigid2d* pose_estimate) const;
 
@@ -123,11 +123,11 @@ class FastCorrelativeScanMatcher {
 
  private:
   // The actual implementation of the scan matcher, called by Match() and
-  // MatchFullSubmap() with appropriate 'initial_pose_estimate' and
+  // MatchFullSubmap() with appropriate 'local_pose_estimate' and
   // 'search_parameters'.
   bool MatchWithSearchParameters(
       SearchParameters search_parameters,
-      const transform::Rigid2d& initial_pose_estimate,
+      const transform::Rigid2d& local_pose_estimate,
       const sensor::PointCloud& point_cloud, float min_score, float* score,
       transform::Rigid2d* pose_estimate) const;
   std::vector<Candidate> ComputeLowestResolutionCandidates(

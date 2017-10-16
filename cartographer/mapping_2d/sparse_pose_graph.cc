@@ -97,13 +97,13 @@ void SparsePoseGraph::AddScan(
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
     const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap>>& insertion_submaps) {
-  const transform::Rigid3d optimized_pose(
-      GetLocalToGlobalTransform(trajectory_id) * constant_data->initial_pose);
+  const transform::Rigid3d global_pose(
+      GetLocalToGlobalTransform(trajectory_id) * constant_data->local_pose);
 
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(trajectory_id);
   const mapping::NodeId node_id = trajectory_nodes_.Append(
-      trajectory_id, mapping::TrajectoryNode{constant_data, optimized_pose});
+      trajectory_id, mapping::TrajectoryNode{constant_data, global_pose});
   ++num_trajectory_nodes_;
 
   // Test if the 'insertion_submap.back()' is one we never saw before.
@@ -222,15 +222,15 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   const mapping::SubmapId matching_id = submap_ids.front();
   const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
   const transform::Rigid2d pose = transform::Project2D(
-      constant_data->initial_pose *
+      constant_data->local_pose *
       transform::Rigid3d::Rotation(constant_data->gravity_alignment.inverse()));
-  const transform::Rigid2d optimized_pose =
+  const transform::Rigid2d global_pose =
       optimization_problem_.submap_data().at(matching_id).pose *
       sparse_pose_graph::ComputeSubmapPose(*insertion_submaps.front())
           .inverse() *
       pose;
   optimization_problem_.AddTrajectoryNode(
-      matching_id.trajectory_id, constant_data->time, pose, optimized_pose,
+      matching_id.trajectory_id, constant_data->time, pose, global_pose,
       constant_data->gravity_alignment);
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const mapping::SubmapId submap_id = submap_ids[i];
@@ -384,7 +384,7 @@ void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
 }
 
 void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
-                                         const transform::Rigid3d& initial_pose,
+                                         const transform::Rigid3d& local_pose,
                                          const mapping::proto::Submap& submap) {
   if (!submap.has_submap_2d()) {
     return;
@@ -392,7 +392,7 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
 
   std::shared_ptr<const Submap> submap_ptr =
       std::make_shared<const Submap>(submap.submap_2d());
-  const transform::Rigid2d initial_pose_2d = transform::Project2D(initial_pose);
+  const transform::Rigid2d local_pose_2d = transform::Project2D(local_pose);
 
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(trajectory_id);
@@ -402,11 +402,11 @@ void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
   // Immediately show the submap at the optimized pose.
   CHECK_EQ(submap_id,
            optimized_submap_transforms_.Append(
-               trajectory_id, sparse_pose_graph::SubmapData{initial_pose_2d}));
-  AddWorkItem([this, submap_id, initial_pose_2d]() REQUIRES(mutex_) {
+               trajectory_id, sparse_pose_graph::SubmapData{local_pose_2d}));
+  AddWorkItem([this, submap_id, local_pose_2d]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
-    optimization_problem_.AddSubmap(submap_id.trajectory_id, initial_pose_2d);
+    optimization_problem_.AddSubmap(submap_id.trajectory_id, local_pose_2d);
   });
 }
 
@@ -429,7 +429,7 @@ void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
         constant_data->gravity_alignment.inverse());
     optimization_problem_.AddTrajectoryNode(
         node_id.trajectory_id, constant_data->time,
-        transform::Project2D(constant_data->initial_pose *
+        transform::Project2D(constant_data->local_pose *
                              gravity_alignment_inverse),
         transform::Project2D(pose * gravity_alignment_inverse),
         constant_data->gravity_alignment);

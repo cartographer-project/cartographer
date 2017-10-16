@@ -29,13 +29,13 @@ namespace scan_matching {
 class TranslationDeltaCostFunctor {
  public:
   // Constructs a new TranslationDeltaCostFunctor from the given
-  // 'initial_pose_estimate' (x, y, theta).
+  // 'local_pose_estimate' (x, y, theta).
   explicit TranslationDeltaCostFunctor(
       const double scaling_factor,
-      const transform::Rigid2d& initial_pose_estimate)
+      const transform::Rigid2d& local_pose_estimate)
       : scaling_factor_(scaling_factor),
-        x_(initial_pose_estimate.translation().x()),
-        y_(initial_pose_estimate.translation().y()) {}
+        x_(local_pose_estimate.translation().x()),
+        y_(local_pose_estimate.translation().y()) {}
 
   TranslationDeltaCostFunctor(const TranslationDeltaCostFunctor&) = delete;
   TranslationDeltaCostFunctor& operator=(const TranslationDeltaCostFunctor&) =

@@ -60,14 +60,14 @@ CeresScanMatcher::CeresScanMatcher(
 CeresScanMatcher::~CeresScanMatcher() {}
 
 void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
-                             const transform::Rigid2d& initial_pose_estimate,
+                             const transform::Rigid2d& local_pose_estimate,
                              const sensor::PointCloud& point_cloud,
                              const ProbabilityGrid& probability_grid,
                              transform::Rigid2d* const pose_estimate,
                              ceres::Solver::Summary* const summary) const {
-  double ceres_pose_estimate[3] = {initial_pose_estimate.translation().x(),
-                                   initial_pose_estimate.translation().y(),
-                                   initial_pose_estimate.rotation().angle()};
+  double ceres_pose_estimate[3] = {local_pose_estimate.translation().x(),
+                                   local_pose_estimate.translation().y(),
+                                   local_pose_estimate.rotation().angle()};
   ceres::Problem problem;
   CHECK_GT(options_.occupied_space_weight(), 0.);
   problem.AddResidualBlock(

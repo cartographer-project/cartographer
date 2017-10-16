@@ -47,7 +47,7 @@ struct TrajectoryNode {
     Eigen::VectorXf rotational_scan_matcher_histogram;
 
     // The initial unoptimized node pose.
-    transform::Rigid3d initial_pose;
+    transform::Rigid3d local_pose;
   };
 
   common::Time time() const { return constant_data->time; }

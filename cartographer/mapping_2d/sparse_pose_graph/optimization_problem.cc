@@ -80,10 +80,10 @@ void OptimizationProblem::AddOdometerData(
 
 void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
-    const transform::Rigid2d& initial_pose, const transform::Rigid2d& pose,
+    const transform::Rigid2d& local_pose, const transform::Rigid2d& pose,
     const Eigen::Quaterniond& gravity_alignment) {
   node_data_.Append(trajectory_id,
-                    NodeData{time, initial_pose, pose, gravity_alignment});
+                    NodeData{time, local_pose, pose, gravity_alignment});
 }
 
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
@@ -197,8 +197,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                         second_node_data.time) *
                     transform::Rigid3d::Rotation(
                         second_node_data.gravity_alignment.inverse())
-              : transform::Embed3D(first_node_data.initial_pose.inverse() *
-                                   second_node_data.initial_pose);
+              : transform::Embed3D(first_node_data.local_pose.inverse() *
+                                   second_node_data.local_pose);
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{

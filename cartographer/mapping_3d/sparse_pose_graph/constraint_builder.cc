@@ -59,8 +59,8 @@ void ConstraintBuilder::MaybeAddConstraint(
     const mapping::NodeId& node_id,
     const mapping::TrajectoryNode::Data* const constant_data,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const transform::Rigid3d& initial_pose) {
-  if (initial_pose.translation().norm() > options_.max_constraint_distance()) {
+    const transform::Rigid3d& local_pose) {
+  if (local_pose.translation().norm() > options_.max_constraint_distance()) {
     return;
   }
   if (sampler_.Pulse()) {
@@ -72,7 +72,7 @@ void ConstraintBuilder::MaybeAddConstraint(
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
-                            constant_data, initial_pose, constraint);
+                            constant_data, local_pose, constraint);
           FinishComputation(current_computation);
         });
   }
@@ -166,14 +166,14 @@ void ConstraintBuilder::ComputeConstraint(
     const mapping::SubmapId& submap_id, const mapping::NodeId& node_id,
     bool match_full_submap,
     const mapping::TrajectoryNode::Data* const constant_data,
-    const transform::Rigid3d& initial_pose,
+    const transform::Rigid3d& local_pose,
     std::unique_ptr<OptimizationProblem::Constraint>* constraint) {
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_id);
 
   // The 'constraint_transform' (submap i <- scan j) is computed from:
   // - a 'high_resolution_point_cloud' in scan j and
-  // - the initial guess 'initial_pose' (submap i <- scan j).
+  // - the initial guess 'local_pose' (submap i <- scan j).
   float score = 0.f;
   transform::Rigid3d pose_estimate;
   float rotational_score = 0.f;
@@ -185,7 +185,7 @@ void ConstraintBuilder::ComputeConstraint(
   // 3. Refine.
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
-            initial_pose.rotation(), *constant_data,
+            local_pose.rotation(), *constant_data,
             options_.global_localization_min_score(), &score, &pose_estimate,
             &rotational_score, &low_resolution_score)) {
       CHECK_GT(score, options_.global_localization_min_score());
@@ -196,7 +196,7 @@ void ConstraintBuilder::ComputeConstraint(
     }
   } else {
     if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
-            initial_pose, *constant_data, options_.min_score(), &score,
+            local_pose, *constant_data, options_.min_score(), &score,
             &pose_estimate, &rotational_score, &low_resolution_score)) {
       // We've reported a successful local match.
       CHECK_GT(score, options_.min_score());
@@ -239,7 +239,7 @@ void ConstraintBuilder::ComputeConstraint(
       info << " matches";
     } else {
       const transform::Rigid3d difference =
-          initial_pose.inverse() * constraint_transform;
+          local_pose.inverse() * constraint_transform;
       info << " differs by translation " << std::setprecision(2)
            << difference.translation().norm() << " rotation "
            << std::setprecision(3) << transform::GetAngle(difference);

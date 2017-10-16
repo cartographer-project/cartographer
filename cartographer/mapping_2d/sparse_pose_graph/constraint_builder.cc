@@ -162,14 +162,14 @@ void ConstraintBuilder::ComputeConstraint(
     const mapping::TrajectoryNode::Data* const constant_data,
     const transform::Rigid2d& initial_relative_pose,
     std::unique_ptr<ConstraintBuilder::Constraint>* constraint) {
-  const transform::Rigid2d initial_pose =
+  const transform::Rigid2d local_pose =
       ComputeSubmapPose(*submap) * initial_relative_pose;
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_id);
 
   // The 'constraint_transform' (submap i <- scan j) is computed from:
   // - a 'filtered_gravity_aligned_point_cloud' in scan j,
-  // - the initial guess 'initial_pose' for (map <- scan j),
+  // - the initial guess 'local_pose' for (map <- scan j),
   // - the result 'pose_estimate' of Match() (map <- scan j).
   // - the ComputeSubmapPose() (map <- submap i)
   float score = 0.;
@@ -191,7 +191,7 @@ void ConstraintBuilder::ComputeConstraint(
     }
   } else {
     if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
-            initial_pose, constant_data->filtered_gravity_aligned_point_cloud,
+            local_pose, constant_data->filtered_gravity_aligned_point_cloud,
             options_.min_score(), &score, &pose_estimate)) {
       // We've reported a successful local match.
       CHECK_GT(score, options_.min_score());
@@ -231,7 +231,7 @@ void ConstraintBuilder::ComputeConstraint(
       info << " matches";
     } else {
       const transform::Rigid2d difference =
-          initial_pose.inverse() * pose_estimate;
+          local_pose.inverse() * pose_estimate;
       info << " differs by translation " << std::setprecision(2)
            << difference.translation().norm() << " rotation "
            << std::setprecision(3) << std::abs(difference.normalized_angle());

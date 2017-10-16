@@ -51,8 +51,8 @@ TEST(TrajectoryNodeTest, ToAndFromProto) {
             actual.low_resolution_point_cloud);
   EXPECT_EQ(expected.rotational_scan_matcher_histogram,
             actual.rotational_scan_matcher_histogram);
-  EXPECT_THAT(actual.initial_pose,
-              transform::IsNearly(expected.initial_pose, 1e-9));
+  EXPECT_THAT(actual.local_pose,
+              transform::IsNearly(expected.local_pose, 1e-9));
 }
 
 }  // namespace

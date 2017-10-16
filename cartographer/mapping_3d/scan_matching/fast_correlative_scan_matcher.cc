@@ -156,7 +156,7 @@ FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
 FastCorrelativeScanMatcher::~FastCorrelativeScanMatcher() {}
 
 bool FastCorrelativeScanMatcher::Match(
-    const transform::Rigid3d& initial_pose_estimate,
+    const transform::Rigid3d& local_pose_estimate,
     const mapping::TrajectoryNode::Data& constant_data, const float min_score,
     float* const score, transform::Rigid3d* const pose_estimate,
     float* const rotational_score, float* const low_resolution_score) const {
@@ -167,7 +167,7 @@ bool FastCorrelativeScanMatcher::Match(
       common::RoundToInt(options_.linear_z_search_window() / resolution_),
       options_.angular_search_window(), &low_resolution_matcher};
   return MatchWithSearchParameters(
-      search_parameters, initial_pose_estimate,
+      search_parameters, local_pose_estimate,
       constant_data.high_resolution_point_cloud,
       constant_data.rotational_scan_matcher_histogram,
       constant_data.gravity_alignment, min_score, score, pose_estimate,
@@ -179,7 +179,7 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
     const mapping::TrajectoryNode::Data& constant_data, const float min_score,
     float* const score, transform::Rigid3d* const pose_estimate,
     float* const rotational_score, float* const low_resolution_score) const {
-  const transform::Rigid3d initial_pose_estimate(Eigen::Vector3d::Zero(),
+  const transform::Rigid3d local_pose_estimate(Eigen::Vector3d::Zero(),
                                                  gravity_alignment);
   float max_point_distance = 0.f;
   for (const Eigen::Vector3f& point :
@@ -194,7 +194,7 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
   const SearchParameters search_parameters{
       linear_window_size, linear_window_size, M_PI, &low_resolution_matcher};
   return MatchWithSearchParameters(
-      search_parameters, initial_pose_estimate,
+      search_parameters, local_pose_estimate,
       constant_data.high_resolution_point_cloud,
       constant_data.rotational_scan_matcher_histogram,
       constant_data.gravity_alignment, min_score, score, pose_estimate,
@@ -203,7 +203,7 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
 
 bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
-    const transform::Rigid3d& initial_pose_estimate,
+    const transform::Rigid3d& local_pose_estimate,
     const sensor::PointCloud& point_cloud,
     const Eigen::VectorXf& rotational_scan_matcher_histogram,
     const Eigen::Quaterniond& gravity_alignment, const float min_score,
@@ -214,7 +214,7 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
 
   const std::vector<DiscreteScan> discrete_scans = GenerateDiscreteScans(
       search_parameters, point_cloud, rotational_scan_matcher_histogram,
-      gravity_alignment, initial_pose_estimate.cast<float>());
+      gravity_alignment, local_pose_estimate.cast<float>());
 
   const std::vector<Candidate> lowest_resolution_candidates =
       ComputeLowestResolutionCandidates(search_parameters, discrete_scans);
@@ -283,7 +283,7 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     const sensor::PointCloud& point_cloud,
     const Eigen::VectorXf& rotational_scan_matcher_histogram,
     const Eigen::Quaterniond& gravity_alignment,
-    const transform::Rigid3f& initial_pose) const {
+    const transform::Rigid3f& local_pose) const {
   std::vector<DiscreteScan> result;
   // We set this value to something on the order of resolution to make sure that
   // the std::acos() below is defined.
@@ -306,7 +306,7 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
   }
   const std::vector<float> scores = rotational_scan_matcher_.Match(
       rotational_scan_matcher_histogram,
-      transform::GetYaw(initial_pose.rotation() *
+      transform::GetYaw(local_pose.rotation() *
                         gravity_alignment.inverse().cast<float>()),
       angles);
   for (size_t i = 0; i != angles.size(); ++i) {
@@ -315,12 +315,12 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     }
     const Eigen::Vector3f angle_axis(0.f, 0.f, angles[i]);
     // It's important to apply the 'angle_axis' rotation between the translation
-    // and rotation of the 'initial_pose', so that the rotation is around the
+    // and rotation of the 'local_pose', so that the rotation is around the
     // origin of the range data, and yaw is in map frame.
     const transform::Rigid3f pose(
-        initial_pose.translation(),
+        local_pose.translation(),
         transform::AngleAxisVectorToRotationQuaternion(angle_axis) *
-            initial_pose.rotation());
+            local_pose.rotation());
     result.push_back(
         DiscretizeScan(search_parameters, point_cloud, pose, scores[i]));
   }
