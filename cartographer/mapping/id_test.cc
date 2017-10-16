@@ -79,6 +79,45 @@ TEST(IdTest, MapByIdTrajectoryRange) {
   EXPECT_TRUE(expected_data.empty());
 }
 
+TEST(IdTest, MapByIdTrajectoryIdRange) {
+  MapById<NodeId, int> map_by_id;
+  map_by_id.Append(7, 2);
+  map_by_id.Append(42, 3);
+  map_by_id.Append(0, 0);
+  map_by_id.Append(0, 1);
+
+  std::deque<int> expected_data = {0, 7, 42};
+  for (int trajectory_id : map_by_id.trajectory_ids()) {
+    EXPECT_EQ(expected_data.front(), trajectory_id);
+    ASSERT_FALSE(expected_data.empty());
+    expected_data.pop_front();
+  }
+  EXPECT_TRUE(expected_data.empty());
+}
+
+TEST(IdTest, MapByIdIterateByTrajectories) {
+  MapById<NodeId, int> map_by_id;
+  map_by_id.Append(7, 2);
+  map_by_id.Append(42, 3);
+  map_by_id.Append(0, 0);
+  map_by_id.Append(0, 1);
+  std::deque<std::pair<NodeId, int>> expected_id_data = {
+      {NodeId{0, 0}, 0},
+      {NodeId{0, 1}, 1},
+      {NodeId{7, 0}, 2},
+      {NodeId{42, 0}, 3},
+  };
+  for (int trajectory_id : map_by_id.trajectory_ids()) {
+    for (const auto& entry : map_by_id.trajectory(trajectory_id)) {
+      EXPECT_EQ(expected_id_data.front().first, entry.id);
+      EXPECT_EQ(expected_id_data.front().second, entry.data);
+      ASSERT_FALSE(expected_id_data.empty());
+      expected_id_data.pop_front();
+    }
+  }
+  EXPECT_TRUE(expected_id_data.empty());
+}
+
 TEST(IdTest, MapByIdPrevIterator) {
   MapById<NodeId, int> map_by_id;
   map_by_id.Append(42, 42);
