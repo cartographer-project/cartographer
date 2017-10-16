@@ -25,18 +25,18 @@ global (map) frame
   This is the frame in which global SLAM results are expressed. It is the fixed
   map frame including all loop closure and optimization results. The transform
   between this frame and any other frame can jump when new optimization results
-  are available. Its z-axis is pointing upwards, i.e. the gravitational
-  acceleration vector is pointing in the -z direction, i.e. the gravitational
-  component measured by an accelerometer is in the +z direction.
+  are available. Its z-axis points upwards, i.e. the gravitational acceleration
+  vector points in the -z direction, i.e. the gravitational component measured
+  by an accelerometer is in the +z direction.
 
 local (map) frame
   This is the frame in which local SLAM results are expressed. It is the fixed
-  map frame excluding loop closures and the pose graph optimization. The
-  transform for a given point in time, between this frame and all other frames
-  will never be changed later, the only exception being the global map frame.
+  map frame excluding loop closures and the pose graph optimization. For a given
+  point in time, the transform between this and the global map frame may change,
+  but the transform between this and all other frames does not change.
 
 tracking frame
-  The frame in which all sensor data is expected to be.
+  The frame in which sensor data is expressed.
 
 
 
