@@ -431,12 +431,9 @@ void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
   AddWorkItem([this, node_id, pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(node_id.trajectory_id), 1);
     const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
-    const auto gravity_alignment_inverse = transform::Rigid3d::Rotation(
-        constant_data->gravity_alignment.inverse());
-    optimization_problem_.AddTrajectoryNode(
-        node_id.trajectory_id, constant_data->time,
-        constant_data->local_pose * gravity_alignment_inverse,
-        pose * gravity_alignment_inverse);
+    optimization_problem_.AddTrajectoryNode(node_id.trajectory_id,
+                                            constant_data->time,
+                                            constant_data->local_pose, pose);
   });
 }
 
@@ -477,9 +474,7 @@ void SparsePoseGraph::RunOptimization() {
     for (const auto& node : node_data.trajectory(trajectory_id)) {
       auto& mutable_trajectory_node = trajectory_nodes_.at(node.id);
       mutable_trajectory_node.global_pose =
-          node.data.pose *
-          transform::Rigid3d::Rotation(
-              mutable_trajectory_node.constant_data->gravity_alignment);
+          node.data.pose;
     }
 
     // Extrapolate all point cloud poses that were not included in the
