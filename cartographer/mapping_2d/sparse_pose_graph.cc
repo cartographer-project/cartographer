@@ -98,7 +98,7 @@ void SparsePoseGraph::AddScan(
     const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap>>& insertion_submaps) {
   const transform::Rigid3d optimized_pose(
-      GetLocalToGlobalTransform(trajectory_id) * constant_data->initial_pose);
+      GetLocalToGlobalTransform(trajectory_id) * constant_data->local_pose);
 
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(trajectory_id);
@@ -222,7 +222,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   const mapping::SubmapId matching_id = submap_ids.front();
   const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
   const transform::Rigid2d pose = transform::Project2D(
-      constant_data->initial_pose *
+      constant_data->local_pose *
       transform::Rigid3d::Rotation(constant_data->gravity_alignment.inverse()));
   const transform::Rigid2d optimized_pose =
       optimization_problem_.submap_data().at(matching_id).pose *
@@ -429,7 +429,7 @@ void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
         constant_data->gravity_alignment.inverse());
     optimization_problem_.AddTrajectoryNode(
         node_id.trajectory_id, constant_data->time,
-        transform::Project2D(constant_data->initial_pose *
+        transform::Project2D(constant_data->local_pose *
                              gravity_alignment_inverse),
         transform::Project2D(pose * gravity_alignment_inverse),
         constant_data->gravity_alignment);
@@ -476,7 +476,7 @@ void SparsePoseGraph::RunOptimization() {
     for (; node_it != trajectory_end; ++node_it) {
       const mapping::NodeId node_id = node_it->id;
       auto& node = trajectory_nodes_.at(node_id);
-      node.pose =
+      node.global_pose =
           transform::Embed3D(node_it->data.pose) *
           transform::Rigid3d::Rotation(node.constant_data->gravity_alignment);
     }
@@ -491,7 +491,7 @@ void SparsePoseGraph::RunOptimization() {
     for (int node_index = last_optimized_node_index + 1; node_index < num_nodes;
          ++node_index) {
       const mapping::NodeId node_id{trajectory_id, node_index};
-      auto& node_pose = trajectory_nodes_.at(node_id).pose;
+      auto& node_pose = trajectory_nodes_.at(node_id).global_pose;
       node_pose = old_global_to_new_global * node_pose;
     }
   }

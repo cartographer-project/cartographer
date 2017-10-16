@@ -95,7 +95,7 @@ void SparsePoseGraph::AddScan(
     const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap>>& insertion_submaps) {
   const transform::Rigid3d optimized_pose(
-      GetLocalToGlobalTransform(trajectory_id) * constant_data->initial_pose);
+      GetLocalToGlobalTransform(trajectory_id) * constant_data->local_pose);
 
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(trajectory_id);
@@ -185,7 +185,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
        submap_data_.at(submap_id).node_ids) {
     submap_nodes.push_back(mapping::TrajectoryNode{
         trajectory_nodes_.at(submap_node_id).constant_data,
-        inverse_submap_pose * trajectory_nodes_.at(submap_node_id).pose});
+        inverse_submap_pose * trajectory_nodes_.at(submap_node_id).global_pose});
   }
 
   const common::Time scan_time = GetLatestScanTime(node_id, submap_id);
@@ -246,7 +246,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   CHECK_EQ(submap_ids.size(), insertion_submaps.size());
   const mapping::SubmapId matching_id = submap_ids.front();
   const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
-  const transform::Rigid3d& pose = constant_data->initial_pose;
+  const transform::Rigid3d& pose = constant_data->local_pose;
   const transform::Rigid3d optimized_pose =
       optimization_problem_.submap_data().at(matching_id).pose *
       insertion_submaps.front()->local_pose().inverse() * pose;
@@ -445,7 +445,7 @@ void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
     const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
     optimization_problem_.AddTrajectoryNode(node_id.trajectory_id,
                                             constant_data->time,
-                                            constant_data->initial_pose, pose);
+                                            constant_data->local_pose, pose);
   });
 }
 
@@ -475,7 +475,7 @@ void SparsePoseGraph::LogResidualHistograms() {
   for (const Constraint& constraint : constraints_) {
     if (constraint.tag == Constraint::Tag::INTRA_SUBMAP) {
       const cartographer::transform::Rigid3d optimized_node_to_map =
-          trajectory_nodes_.at(constraint.node_id).pose;
+          trajectory_nodes_.at(constraint.node_id).global_pose;
       const cartographer::transform::Rigid3d node_to_submap_constraint =
           constraint.pose.zbar_ij;
       const cartographer::transform::Rigid3d optimized_submap_to_map =
@@ -515,7 +515,7 @@ void SparsePoseGraph::RunOptimization() {
     for (; node_it != trajectory_end; ++node_it) {
       const mapping::NodeId node_id = node_it->id;
       auto& node = trajectory_nodes_.at(node_id);
-      node.pose = node_it->data.pose;
+      node.global_pose = node_it->data.pose;
     }
     // Extrapolate all point cloud poses that were added later.
     const auto local_to_new_global =
@@ -528,7 +528,7 @@ void SparsePoseGraph::RunOptimization() {
     for (int node_index = last_optimized_node_index + 1; node_index < num_nodes;
          ++node_index) {
       const mapping::NodeId node_id{trajectory_id, node_index};
-      auto& node_pose = trajectory_nodes_.at(node_id).pose;
+      auto& node_pose = trajectory_nodes_.at(node_id).global_pose;
       node_pose = old_global_to_new_global * node_pose;
     }
   }
