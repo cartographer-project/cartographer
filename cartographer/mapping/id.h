@@ -158,7 +158,7 @@ class MapById {
       }
     }
 
-    explicit ConstIterator(const MapById& map_by_id, const NodeId& id)
+    explicit ConstIterator(const MapById& map_by_id, const IdType& id)
         : current_trajectory_(
               map_by_id.trajectories_.find(id.trajectory_id)),
           end_trajectory_(map_by_id.trajectories_.end()) {
@@ -272,7 +272,7 @@ class MapById {
     return IdType{trajectory_id, index};
   }
 
-  // Returs an iterator to the element at id or throws an exception.
+  // Returns an iterator to the element at 'id' which must exist.
   ConstIterator FindChecked(const IdType& id) {
     return ConstIterator(*this, id);
   }
