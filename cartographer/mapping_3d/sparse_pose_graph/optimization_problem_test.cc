@@ -134,20 +134,20 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   std::vector<OptimizationProblem::Constraint> constraints;
   for (int j = 0; j != kNumNodes; ++j) {
     constraints.push_back(OptimizationProblem::Constraint{
-        mapping::SubmapId{0, 0}, mapping::NodeId{0, j},
+        mapping::SubmapId{kTrajectoryId, 0}, mapping::NodeId{kTrajectoryId, j},
         OptimizationProblem::Constraint::Pose{
             AddNoise(test_data[j].ground_truth_pose, test_data[j].noise), 1.,
             1.}});
     // We add an additional independent, but equally noisy observation.
     constraints.push_back(OptimizationProblem::Constraint{
-        mapping::SubmapId{0, 1}, mapping::NodeId{0, j},
+        mapping::SubmapId{kTrajectoryId, 1}, mapping::NodeId{kTrajectoryId, j},
         OptimizationProblem::Constraint::Pose{
             AddNoise(test_data[j].ground_truth_pose,
                      RandomYawOnlyTransform(0.2, 0.3)),
             1., 1.}});
     // We add very noisy data with a low weight to verify it is mostly ignored.
     constraints.push_back(OptimizationProblem::Constraint{
-        mapping::SubmapId{0, 2}, mapping::NodeId{0, j},
+        mapping::SubmapId{kTrajectoryId, 2}, mapping::NodeId{kTrajectoryId, j},
         OptimizationProblem::Constraint::Pose{
             kSubmap2Transform.inverse() * test_data[j].ground_truth_pose *
                 RandomTransform(1e3, 3.),
@@ -156,13 +156,15 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
 
   double translation_error_before = 0.;
   double rotation_error_before = 0.;
-  const auto& node_data = optimization_problem_.node_data().at(0);
+  const auto& node_data = optimization_problem_.node_data();
   for (int j = 0; j != kNumNodes; ++j) {
-    translation_error_before += (test_data[j].ground_truth_pose.translation() -
-                                 node_data.at(j).pose.translation())
-                                    .norm();
+    translation_error_before +=
+        (test_data[j].ground_truth_pose.translation() -
+         node_data.at(mapping::NodeId{kTrajectoryId, j}).pose.translation())
+            .norm();
     rotation_error_before += transform::GetAngle(
-        test_data[j].ground_truth_pose.inverse() * node_data.at(j).pose);
+        test_data[j].ground_truth_pose.inverse() *
+        node_data.at(mapping::NodeId{kTrajectoryId, j}).pose);
   }
 
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
@@ -174,11 +176,13 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   double translation_error_after = 0.;
   double rotation_error_after = 0.;
   for (int j = 0; j != kNumNodes; ++j) {
-    translation_error_after += (test_data[j].ground_truth_pose.translation() -
-                                node_data.at(j).pose.translation())
-                                   .norm();
+    translation_error_after +=
+        (test_data[j].ground_truth_pose.translation() -
+         node_data.at(mapping::NodeId{kTrajectoryId, j}).pose.translation())
+            .norm();
     rotation_error_after += transform::GetAngle(
-        test_data[j].ground_truth_pose.inverse() * node_data.at(j).pose);
+        test_data[j].ground_truth_pose.inverse() *
+        node_data.at(mapping::NodeId{kTrajectoryId, j}).pose);
   }
 
   EXPECT_GT(0.8 * translation_error_before, translation_error_after);
