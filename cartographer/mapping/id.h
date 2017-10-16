@@ -219,6 +219,8 @@ class MapById {
     using iterator_category = std::bidirectional_iterator_tag;
     using value_type = int;
     using difference_type = int64;
+    using pointer = int*;
+    using reference = const int&;
 
     explicit ConstTrajectoryIterator(
         typename std::map<int, MapByIndex>::const_iterator current_trajectory)
@@ -226,10 +228,6 @@ class MapById {
 
     int operator*() const {
       return current_trajectory_->first;
-    }
-
-    int* operator->() const {
-      return &current_trajectory_->first;
     }
 
     ConstTrajectoryIterator& operator++() {
@@ -320,7 +318,7 @@ class MapById {
                                 EndOfTrajectory(trajectory_id));
   }
 
-  // Returns Range object for range-based loops over the trajectory ids.
+  // Returns Range object for range-based loops over the trajectory IDs.
   Range<ConstTrajectoryIterator> trajectory_ids() const {
     return Range<ConstTrajectoryIterator>(
         ConstTrajectoryIterator(trajectories_.begin()),
