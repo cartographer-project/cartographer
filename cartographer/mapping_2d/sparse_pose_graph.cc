@@ -188,16 +188,17 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
     // been a recent global constraint that ties that scan's trajectory to the
     // submap's trajectory, it suffices to do a match constrained to a local
     // search window.
-    const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
     const transform::Rigid3d initial_relative_pose =
         optimization_problem_.submap_data().at(submap_id).pose.inverse() *
-        optimization_problem_.node_data().at(node_id).pose *
-        transform::Rigid3d::Rotation(
-            constant_data->gravity_alignment.inverse());
+        optimization_problem_.node_data().at(node_id).pose;
     constraint_builder_.MaybeAddConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
         trajectory_nodes_.at(node_id).constant_data.get(),
-        transform::Project2D(initial_relative_pose));
+        transform::Project2D(
+            initial_relative_pose *
+            transform::Rigid3d::Rotation(
+                trajectory_nodes_.at(node_id)
+                    .constant_data->gravity_alignment.inverse())));
   } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
@@ -231,7 +232,8 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       insertion_submaps.front()->local_pose().inverse() *
       constant_data->initial_pose;
   optimization_problem_.AddTrajectoryNode(
-      matching_id.trajectory_id, constant_data->time, pose, optimized_pose);
+      matching_id.trajectory_id, constant_data->time,
+      constant_data->initial_pose, optimized_pose);
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const mapping::SubmapId submap_id = submap_ids[i];
     // Even if this was the last scan added to 'submap_id', the submap will only
@@ -240,7 +242,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     submap_data_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid3d constraint_transform =
         insertion_submaps[i]->local_pose().inverse() *
-        pose;
+        constant_data->initial_pose;
     constraints_.push_back(Constraint{submap_id,
                                       node_id,
                                       {constraint_transform,
@@ -316,7 +318,18 @@ void SparsePoseGraph::HandleWorkQueue() {
       [this](const sparse_pose_graph::ConstraintBuilder::Result& result) {
         {
           common::MutexLocker locker(&mutex_);
-          constraints_.insert(constraints_.end(), result.begin(), result.end());
+          for (const Constraint& constraint : result) {
+            constraints_.push_back(
+                Constraint{constraint.submap_id, constraint.node_id,
+                           Constraint::Pose{
+                               constraint.pose.zbar_ij *
+                                   transform::Rigid3d::Rotation(
+                                       trajectory_nodes_.at(constraint.node_id)
+                                           .constant_data->gravity_alignment),
+                               constraint.pose.translation_weight,
+                               constraint.pose.rotation_weight},
+                           constraint.tag});
+          }
         }
         RunOptimization();
 
@@ -503,6 +516,7 @@ SparsePoseGraph::GetTrajectoryNodes() {
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
+  return constraints_;
   std::vector<Constraint> result;
   common::MutexLocker locker(&mutex_);
   for (const Constraint& constraint : constraints_) {
