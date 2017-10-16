@@ -26,8 +26,9 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-static MapById<NodeId, int> CreateTestMapById() {
-  MapById<NodeId, int> map_by_id;
+template <typename IdType>
+static MapById<IdType, int> CreateTestMapById() {
+  MapById<IdType, int> map_by_id;
   map_by_id.Append(7, 2);
   map_by_id.Append(42, 3);
   map_by_id.Append(0, 0);
@@ -45,7 +46,7 @@ TEST(IdTest, EmptyMapById) {
 }
 
 TEST(IdTest, MapByIdIterator) {
-  MapById<NodeId, int> map_by_id = CreateTestMapById();
+  MapById<NodeId, int> map_by_id = CreateTestMapById<NodeId>();
   EXPECT_EQ(2, map_by_id.BeginOfTrajectory(7)->data);
   EXPECT_TRUE(std::next(map_by_id.BeginOfTrajectory(7)) ==
               map_by_id.EndOfTrajectory(7));
@@ -65,7 +66,7 @@ TEST(IdTest, MapByIdIterator) {
 }
 
 TEST(IdTest, MapByIdTrajectoryRange) {
-  MapById<NodeId, int> map_by_id = CreateTestMapById();
+  MapById<NodeId, int> map_by_id = CreateTestMapById<NodeId>();
   std::deque<std::pair<NodeId, int>> expected_data = {
       {NodeId{0, 0}, 0},
       {NodeId{0, 1}, 1},
@@ -80,7 +81,7 @@ TEST(IdTest, MapByIdTrajectoryRange) {
 }
 
 TEST(IdTest, MapByIdTrajectoryIdRange) {
-  MapById<NodeId, int> map_by_id = CreateTestMapById();
+  MapById<NodeId, int> map_by_id = CreateTestMapById<NodeId>();
   std::deque<int> expected_data = {0, 7, 42};
   for (const int trajectory_id : map_by_id.trajectory_ids()) {
     EXPECT_EQ(expected_data.front(), trajectory_id);
@@ -91,7 +92,7 @@ TEST(IdTest, MapByIdTrajectoryIdRange) {
 }
 
 TEST(IdTest, MapByIdIterateByTrajectories) {
-  MapById<NodeId, int> map_by_id = CreateTestMapById();
+  MapById<NodeId, int> map_by_id = CreateTestMapById<NodeId>();
   std::deque<std::pair<NodeId, int>> expected_id_data = {
       {NodeId{0, 0}, 0},
       {NodeId{0, 1}, 1},
@@ -124,6 +125,22 @@ TEST(IdTest, InsertIntoMapById) {
   map_by_id.Append(42, 42);
   map_by_id.Insert(NodeId{42, 5}, 42);
   EXPECT_EQ(2, map_by_id.SizeOfTrajectoryOrZero(42));
+}
+
+TEST(IdTest, FindCheckedNodeId) {
+  MapById<NodeId, int> map_by_id;
+  map_by_id.Append(42, 42);
+  map_by_id.Append(42, 43);
+  map_by_id.Append(42, 44);
+  CHECK_EQ(map_by_id.FindChecked(NodeId{42, 1})->data, 43);
+}
+
+TEST(IdTest, FindCheckedSubmapId) {
+  MapById<SubmapId, int> map_by_id;
+  map_by_id.Append(42, 42);
+  map_by_id.Append(42, 43);
+  map_by_id.Append(42, 44);
+  CHECK_EQ(map_by_id.FindChecked(SubmapId{42, 1})->data, 43);
 }
 
 }  // namespace
