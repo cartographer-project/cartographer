@@ -57,6 +57,7 @@ struct TrajectoryNode {
   // node is being trimmed, it must survive until all use finishes.
   std::shared_ptr<const Data> constant_data;
 
+  // The node pose in the global SLAM frame.
   transform::Rigid3d global_pose;
 };
 
