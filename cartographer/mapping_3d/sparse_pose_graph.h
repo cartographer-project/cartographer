@@ -85,7 +85,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(int trajectory_id,
-                          const transform::Rigid3d& initial_pose,
+                          const transform::Rigid3d& local_pose,
                           const mapping::proto::Submap& submap) override;
   void AddNodeFromProto(int trajectory_id, const transform::Rigid3d& pose,
                         const mapping::proto::Node& node) override;

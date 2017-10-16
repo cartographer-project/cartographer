@@ -44,10 +44,10 @@ class CeresScanMatcher {
   CeresScanMatcher& operator=(const CeresScanMatcher&) = delete;
 
   // Aligns 'point_cloud' within the 'probability_grid' given an
-  // 'initial_pose_estimate' and returns a 'pose_estimate' and the solver
+  // 'local_pose_estimate' and returns a 'pose_estimate' and the solver
   // 'summary'.
   void Match(const transform::Rigid2d& previous_pose,
-             const transform::Rigid2d& initial_pose_estimate,
+             const transform::Rigid2d& local_pose_estimate,
              const sensor::PointCloud& point_cloud,
              const ProbabilityGrid& probability_grid,
              transform::Rigid2d* pose_estimate,

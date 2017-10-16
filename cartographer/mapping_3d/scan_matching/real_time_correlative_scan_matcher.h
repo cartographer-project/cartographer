@@ -42,9 +42,9 @@ class RealTimeCorrelativeScanMatcher {
       const RealTimeCorrelativeScanMatcher&) = delete;
 
   // Aligns 'point_cloud' within the 'hybrid_grid' given an
-  // 'initial_pose_estimate' then updates 'pose_estimate' with the result and
+  // 'local_pose_estimate' then updates 'pose_estimate' with the result and
   // returns the score.
-  float Match(const transform::Rigid3d& initial_pose_estimate,
+  float Match(const transform::Rigid3d& local_pose_estimate,
               const sensor::PointCloud& point_cloud,
               const HybridGrid& hybrid_grid,
               transform::Rigid3d* pose_estimate) const;

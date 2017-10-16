@@ -63,11 +63,11 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
                     parameter_dictionary.get())));
   }
 
-  void TestFromInitialPose(const transform::Rigid3d& initial_pose) {
+  void TestFromInitialPose(const transform::Rigid3d& local_pose) {
     transform::Rigid3d pose;
 
     const float score = real_time_correlative_scan_matcher_->Match(
-        initial_pose, point_cloud_, hybrid_grid_, &pose);
+        local_pose, point_cloud_, hybrid_grid_, &pose);
     LOG(INFO) << "Score: " << score;
     EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 1e-3));
   }

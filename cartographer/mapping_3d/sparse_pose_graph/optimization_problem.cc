@@ -82,11 +82,11 @@ void OptimizationProblem::AddFixedFramePoseData(
 
 void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
-    const transform::Rigid3d& initial_pose, const transform::Rigid3d& pose) {
+    const transform::Rigid3d& local_pose, const transform::Rigid3d& pose) {
   CHECK_GE(trajectory_id, 0);
   trajectory_data_.resize(std::max(trajectory_data_.size(),
                                    static_cast<size_t>(trajectory_id) + 1));
-  node_data_.Append(trajectory_id, NodeData{time, initial_pose, pose});
+  node_data_.Append(trajectory_id, NodeData{time, local_pose, pose});
 }
 
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
@@ -317,8 +317,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                                          .inverse() *
                                      odometry_data_[trajectory_id].Lookup(
                                          second_node_data.time)
-                               : first_node_data.initial_pose.inverse() *
-                                     second_node_data.initial_pose;
+                               : first_node_data.local_pose.inverse() *
+                                     second_node_data.local_pose;
         problem.AddResidualBlock(
             new ceres::AutoDiffCostFunction<SpaCostFunction, 6, 4, 3, 4, 3>(
                 new SpaCostFunction(Constraint::Pose{

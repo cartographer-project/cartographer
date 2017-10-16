@@ -61,10 +61,10 @@ class FastCorrelativeScanMatcher {
       delete;
 
   // Aligns the node with the given 'constant_data' within the 'hybrid_grid'
-  // given an 'initial_pose_estimate'. If a score above 'min_score' (excluding
+  // given an 'local_pose_estimate'. If a score above 'min_score' (excluding
   // equality) is possible, true is returned, and 'score', 'pose_estimate',
   // 'rotational_score', and 'low_resolution_score' are updated with the result.
-  bool Match(const transform::Rigid3d& initial_pose_estimate,
+  bool Match(const transform::Rigid3d& local_pose_estimate,
              const mapping::TrajectoryNode::Data& constant_data,
              float min_score, float* score, transform::Rigid3d* pose_estimate,
              float* rotational_score, float* low_resolution_score) const;
@@ -91,7 +91,7 @@ class FastCorrelativeScanMatcher {
 
   bool MatchWithSearchParameters(
       const SearchParameters& search_parameters,
-      const transform::Rigid3d& initial_pose_estimate,
+      const transform::Rigid3d& local_pose_estimate,
       const sensor::PointCloud& point_cloud,
       const Eigen::VectorXf& rotational_scan_matcher_histogram,
       const Eigen::Quaterniond& gravity_alignment, float min_score,
@@ -106,7 +106,7 @@ class FastCorrelativeScanMatcher {
       const sensor::PointCloud& point_cloud,
       const Eigen::VectorXf& rotational_scan_matcher_histogram,
       const Eigen::Quaterniond& gravity_alignment,
-      const transform::Rigid3f& initial_pose) const;
+      const transform::Rigid3f& local_pose) const;
   std::vector<Candidate> GenerateLowestResolutionCandidates(
       const SearchParameters& search_parameters, int num_discrete_scans) const;
   void ScoreCandidates(int depth,
