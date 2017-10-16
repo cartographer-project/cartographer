@@ -25,7 +25,9 @@ global (map) frame
   This is the frame in which global SLAM results are expressed. It is the fixed
   map frame including all loop closure and optimization results. The transform
   between this frame and any other frame can jump when new optimization results
-  are available. Its z-axis is pointing upwards.
+  are available. Its z-axis is pointing upwards, i.e. the gravitational
+  acceleration vector is pointing in the -z direction, i.e. the gravitational
+  component measured by an accelerometer is in the +z direction.
 
 local (map) frame
   This is the frame in which local SLAM results are expressed. It is the fixed
