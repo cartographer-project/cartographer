@@ -494,8 +494,7 @@ void SparsePoseGraph::RunOptimization() {
       node_it =
           std::next(trajectory_nodes_.FindChecked(last_optimized_node_id));
     }
-    for (; node_it != trajectory_nodes_.EndOfTrajectory(trajectory_id);
-         ++node_it) {
+    for (;node_it != trajectory_nodes_.EndOfTrajectory(trajectory_id); ++node_it) {
       auto& mutable_trajectory_node = trajectory_nodes_.at(node_it->id);
       mutable_trajectory_node.pose =
           old_global_to_new_global * mutable_trajectory_node.pose;
@@ -512,7 +511,7 @@ SparsePoseGraph::GetTrajectoryNodes() {
     nodes.resize(trajectory_id + 1);
     // TODO(cschuet): Rewrite this to code to allow for holes in the trajectory.
     for (const auto& node : trajectory_nodes_.trajectory(trajectory_id)) {
-      nodes.at(trajectory_id).resize(node.id.node_index);
+      nodes.at(trajectory_id).resize(node.id.node_index + 1);
       nodes.at(trajectory_id).at(node.id.node_index) = node.data;
     }
   }
