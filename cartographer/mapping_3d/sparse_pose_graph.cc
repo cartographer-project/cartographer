@@ -568,18 +568,16 @@ mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapData(
   return GetSubmapDataUnderLock(submap_id);
 }
 
-std::vector<std::vector<mapping::SparsePoseGraph::SubmapData>>
+mapping::MapById<mapping::SubmapId, mapping::SparsePoseGraph::SubmapData>
 SparsePoseGraph::GetAllSubmapData() {
   common::MutexLocker locker(&mutex_);
-  std::vector<std::vector<mapping::SparsePoseGraph::SubmapData>> result;
-  for (const int trajectory_id : submap_data_.trajectory_ids()) {
-    result.resize(trajectory_id + 1);
-    for (const auto& submap_id_data : submap_data_.trajectory(trajectory_id)) {
-      result[trajectory_id].resize(submap_id_data.id.submap_index + 1);
-      result[trajectory_id].back() = GetSubmapDataUnderLock(submap_id_data.id);
-    }
+  mapping::MapById<mapping::SubmapId, mapping::SparsePoseGraph::SubmapData>
+      submaps;
+  for (const auto& submap_id_data : submap_data_) {
+    submaps.Insert(submap_id_data.id,
+                   GetSubmapDataUnderLock(submap_id_data.id));
   }
-  return result;
+  return submaps;
 }
 
 transform::Rigid3d SparsePoseGraph::ComputeLocalToGlobalTransform(
