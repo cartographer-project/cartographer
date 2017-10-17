@@ -469,30 +469,36 @@ void SparsePoseGraph::RunOptimization() {
 
   const auto& submap_data = optimization_problem_.submap_data();
   const auto& node_data = optimization_problem_.node_data();
-  for (auto node_it = node_data.begin(); node_it != node_data.end();) {
-    const int trajectory_id = node_it->id.trajectory_id;
-    const auto trajectory_end = node_data.EndOfTrajectory(trajectory_id);
-    const int num_nodes = trajectory_nodes_.num_indices(trajectory_id);
-    for (; node_it != trajectory_end; ++node_it) {
-      const mapping::NodeId node_id = node_it->id;
-      auto& node = trajectory_nodes_.at(node_id);
-      node.global_pose =
-          transform::Embed3D(node_it->data.pose) *
-          transform::Rigid3d::Rotation(node.constant_data->gravity_alignment);
+  for (int trajectory_id : node_data.trajectory_ids()) {
+    auto last_optimized_node_id = mapping::INVALID_NODE_ID;
+    for (const auto& node : node_data.trajectory(trajectory_id)) {
+      auto& mutable_trajectory_node = trajectory_nodes_.at(node.id);
+      mutable_trajectory_node.pose =
+          transform::Embed3D(node.data.pose) *
+          transform::Rigid3d::Rotation(
+              mutable_trajectory_node.constant_data->gravity_alignment);
+      last_optimized_node_id = node.id;
     }
-    // Extrapolate all point cloud poses that were added later.
+
+    // Extrapolate all point cloud poses that were added after the optimization
+    // problem started running.
     const auto local_to_new_global =
         ComputeLocalToGlobalTransform(submap_data, trajectory_id);
     const auto local_to_old_global = ComputeLocalToGlobalTransform(
         optimized_submap_transforms_, trajectory_id);
     const transform::Rigid3d old_global_to_new_global =
         local_to_new_global * local_to_old_global.inverse();
-    const int last_optimized_node_index = std::prev(node_it)->id.node_index;
-    for (int node_index = last_optimized_node_index + 1; node_index < num_nodes;
-         ++node_index) {
-      const mapping::NodeId node_id{trajectory_id, node_index};
-      auto& node_pose = trajectory_nodes_.at(node_id).global_pose;
-      node_pose = old_global_to_new_global * node_pose;
+
+    auto node_it = trajectory_nodes_.BeginOfTrajectory(trajectory_id);
+    if (last_optimized_node_id != mapping::INVALID_NODE_ID) {
+      node_it =
+          std::next(trajectory_nodes_.FindChecked(last_optimized_node_id));
+    }
+    for (; node_it != trajectory_nodes_.EndOfTrajectory(trajectory_id);
+         ++node_it) {
+      auto& mutable_trajectory_node = trajectory_nodes_.at(node_it->id);
+      mutable_trajectory_node.pose =
+          old_global_to_new_global * mutable_trajectory_node.pose;
     }
   }
   optimized_submap_transforms_ = submap_data;
@@ -501,7 +507,16 @@ void SparsePoseGraph::RunOptimization() {
 std::vector<std::vector<mapping::TrajectoryNode>>
 SparsePoseGraph::GetTrajectoryNodes() {
   common::MutexLocker locker(&mutex_);
-  return trajectory_nodes_.data();
+  std::vector<std::vector<mapping::TrajectoryNode>> nodes;
+  for (int trajectory_id : trajectory_nodes_.trajectory_ids()) {
+    nodes.resize(trajectory_id + 1);
+    // TODO(cschuet): Rewrite this to code to allow for holes in the trajectory.
+    for (const auto& node : trajectory_nodes_.trajectory(trajectory_id)) {
+      nodes.at(trajectory_id).resize(node.id.node_index);
+      nodes.at(trajectory_id).at(node.id.node_index) = node.data;
+    }
+  }
+  return nodes;
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {

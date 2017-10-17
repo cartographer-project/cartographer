@@ -52,6 +52,8 @@ struct NodeId {
   }
 };
 
+const static NodeId INVALID_NODE_ID = NodeId{-1, -1};
+
 inline std::ostream& operator<<(std::ostream& os, const NodeId& v) {
   return os << "(" << v.trajectory_id << ", " << v.node_index << ")";
 }
