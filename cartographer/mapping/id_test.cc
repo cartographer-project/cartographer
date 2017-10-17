@@ -127,20 +127,22 @@ TEST(IdTest, InsertIntoMapById) {
   EXPECT_EQ(2, map_by_id.SizeOfTrajectoryOrZero(42));
 }
 
-TEST(IdTest, FindCheckedNodeId) {
+TEST(IdTest, FindNodeId) {
   MapById<NodeId, int> map_by_id;
   map_by_id.Append(42, 42);
   map_by_id.Append(42, 43);
   map_by_id.Append(42, 44);
-  CHECK_EQ(map_by_id.FindChecked(NodeId{42, 1})->data, 43);
+  CHECK_EQ(map_by_id.find(NodeId{42, 1})->data, 43);
+  EXPECT_TRUE(map_by_id.find(NodeId{42, 3}) == map_by_id.end());
 }
 
-TEST(IdTest, FindCheckedSubmapId) {
+TEST(IdTest, FindSubmapId) {
   MapById<SubmapId, int> map_by_id;
   map_by_id.Append(42, 42);
   map_by_id.Append(42, 43);
   map_by_id.Append(42, 44);
-  CHECK_EQ(map_by_id.FindChecked(SubmapId{42, 1})->data, 43);
+  CHECK_EQ(map_by_id.find(SubmapId{42, 1})->data, 43);
+  EXPECT_TRUE(map_by_id.find(SubmapId{42, 3}) == map_by_id.end());
 }
 
 }  // namespace

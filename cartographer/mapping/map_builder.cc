@@ -125,20 +125,11 @@ string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
            std::to_string(num_trajectory_builders()) + " trajectories.";
   }
 
-  const int num_submaps =
-      sparse_pose_graph_->num_submaps(submap_id.trajectory_id);
-  if (submap_id.submap_index < 0 || submap_id.submap_index >= num_submaps) {
-    return "Requested submap " + std::to_string(submap_id.submap_index) +
-           " from trajectory " + std::to_string(submap_id.trajectory_id) +
-           " but there are only " + std::to_string(num_submaps) +
-           " submaps in this trajectory.";
-  }
-
   const auto submap_data = sparse_pose_graph_->GetSubmapData(submap_id);
   if (submap_data.submap == nullptr) {
     return "Requested submap " + std::to_string(submap_id.submap_index) +
            " from trajectory " + std::to_string(submap_id.trajectory_id) +
-           " but it has been trimmed.";
+           " but it does not exist: maybe it has been trimmed.";
   }
   submap_data.submap->ToResponseProto(submap_data.pose, response);
   return "";

@@ -161,13 +161,15 @@ class MapById {
     }
 
     explicit ConstIterator(const MapById& map_by_id, const IdType& id)
-        : current_trajectory_(
-              map_by_id.trajectories_.find(id.trajectory_id)),
+        : current_trajectory_(map_by_id.trajectories_.find(id.trajectory_id)),
           end_trajectory_(map_by_id.trajectories_.end()) {
-      CHECK(current_trajectory_ != end_trajectory_);
-      current_data_ =
-          current_trajectory_->second.data_.find(MapById::GetIndex(id));
-      CHECK(current_data_ != current_trajectory_->second.data_.end());
+      if (current_trajectory_ != end_trajectory_) {
+        current_data_ =
+            current_trajectory_->second.data_.find(MapById::GetIndex(id));
+        if (current_data_ == current_trajectory_->second.data_.end()) {
+          current_trajectory_ = end_trajectory_;
+        }
+      }
     }
 
     IdDataReference operator*() const {
@@ -273,10 +275,9 @@ class MapById {
     return IdType{trajectory_id, index};
   }
 
-  // Returns an iterator to the element at 'id' which must exist.
-  ConstIterator FindChecked(const IdType& id) {
-    return ConstIterator(*this, id);
-  }
+  // Returns an iterator to the element at 'id' or the end iterator if it does
+  // not exist.
+  ConstIterator find(const IdType& id) { return ConstIterator(*this, id); }
 
   // Inserts data (which must not exist already) into a trajectory.
   void Insert(const IdType& id, const DataType& data) {

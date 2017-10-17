@@ -99,11 +99,9 @@ class SparsePoseGraph {
   // Gets the current trajectory clusters.
   virtual std::vector<std::vector<int>> GetConnectedTrajectories() = 0;
 
-  // Return the number of submaps for the given 'trajectory_id'.
-  virtual int num_submaps(int trajectory_id) = 0;
-
   // Returns the current optimized transform and submap itself for the given
-  // 'submap_id'.
+  // 'submap_id'. Returns 'nullptr' for the 'submap' member if the submap does
+  // not exist (anymore).
   virtual SubmapData GetSubmapData(const SubmapId& submap_id) = 0;
 
   // Returns data for all Submaps by trajectory.

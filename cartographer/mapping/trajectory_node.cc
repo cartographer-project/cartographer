@@ -44,8 +44,7 @@ proto::TrajectoryNodeData ToProto(const TrajectoryNode::Data& constant_data) {
     proto.add_rotational_scan_matcher_histogram(
         constant_data.rotational_scan_matcher_histogram(i));
   }
-  *proto.mutable_local_pose() =
-      transform::ToProto(constant_data.local_pose);
+  *proto.mutable_local_pose() = transform::ToProto(constant_data.local_pose);
   return proto;
 }
 
