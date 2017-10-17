@@ -62,6 +62,17 @@ TEST(TransformInterpolationBufferTest, testLookup) {
                1e-6));
 }
 
+TEST(TransformInterpolationBufferTest, testPopFronts) {
+  TransformInterpolationBuffer buffer;
+  buffer.Push(common::FromUniversal(50), transform::Rigid3d::Identity());
+  buffer.Push(common::FromUniversal(100), transform::Rigid3d::Identity());
+  buffer.Push(common::FromUniversal(150), transform::Rigid3d::Identity());
+
+  const common::Time time = common::FromUniversal(110);
+  buffer.PopFronts(time);
+  EXPECT_EQ(common::FromUniversal(100), buffer.earliest_time());
+}
+
 }  // namespace
 }  // namespace transform
 }  // namespace cartographer
