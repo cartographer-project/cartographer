@@ -79,16 +79,14 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     for (size_t old_node_index = 0;
          old_node_index != single_trajectory_nodes.size(); ++old_node_index) {
       const auto& node = single_trajectory_nodes[old_node_index];
-      if (!node.trimmed()) {
-        node_id_remapping[NodeId{static_cast<int>(trajectory_id),
-                                 static_cast<int>(old_node_index)}] =
-            NodeId{static_cast<int>(trajectory_id),
-                   static_cast<int>(trajectory_proto->node_size())};
-        auto* node_proto = trajectory_proto->add_node();
-        node_proto->set_timestamp(
-            common::ToUniversal(node.constant_data->time));
-        *node_proto->mutable_pose() = transform::ToProto(node.global_pose);
-      }
+      node_id_remapping[NodeId{static_cast<int>(trajectory_id),
+                               static_cast<int>(old_node_index)}] =
+          NodeId{static_cast<int>(trajectory_id),
+                 static_cast<int>(trajectory_proto->node_size())};
+      auto* node_proto = trajectory_proto->add_node();
+      node_proto->set_timestamp(
+          common::ToUniversal(node.constant_data->time));
+      *node_proto->mutable_pose() = transform::ToProto(node.global_pose);
     }
 
     const auto& single_trajectory_submap_data = all_submap_data[trajectory_id];
