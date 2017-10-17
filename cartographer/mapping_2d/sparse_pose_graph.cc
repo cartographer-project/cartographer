@@ -648,9 +648,9 @@ void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
   parent_->constraint_builder_.DeleteScanMatcher(submap_id);
   parent_->optimization_problem_.TrimSubmap(submap_id);
 
-  // Mark the 'nodes_to_remove' as trimmed and remove their data.
+  // Remove the 'nodes_to_remove' from the SPG and the optimization problem.
   for (const mapping::NodeId& node_id : nodes_to_remove) {
-    parent_->trajectory_nodes_.at(node_id).constant_data.reset();
+    parent_->trajectory_nodes_.Trim(node_id);
     parent_->optimization_problem_.TrimTrajectoryNode(node_id);
   }
 }
