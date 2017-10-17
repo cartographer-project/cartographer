@@ -202,7 +202,6 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
   const auto& submap_data = submap_data_.at(submap_id);
   for (const auto& node_id_data : optimization_problem_.node_data()) {
     const mapping::NodeId& node_id = node_id_data.id;
-    CHECK(!trajectory_nodes_.at(node_id).trimmed());
     if (submap_data.node_ids.count(node_id) == 0) {
       ComputeConstraint(node_id, submap_id);
     }
@@ -649,10 +648,10 @@ void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
   parent_->constraint_builder_.DeleteScanMatcher(submap_id);
   parent_->optimization_problem_.TrimSubmap(submap_id);
 
-  // Mark the 'nodes_to_remove' as trimmed and remove their data.
+  // Remove the 'nodes_to_remove' from the sparse pose graph and the
+  // optimization problem.
   for (const mapping::NodeId& node_id : nodes_to_remove) {
-    CHECK(!parent_->trajectory_nodes_.at(node_id).trimmed());
-    parent_->trajectory_nodes_.at(node_id).constant_data.reset();
+    parent_->trajectory_nodes_.Trim(node_id);
     parent_->optimization_problem_.TrimTrajectoryNode(node_id);
   }
 }

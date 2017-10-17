@@ -79,7 +79,7 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     for (size_t old_node_index = 0;
          old_node_index != single_trajectory_nodes.size(); ++old_node_index) {
       const auto& node = single_trajectory_nodes[old_node_index];
-      if (!node.trimmed()) {
+      if (node.constant_data != nullptr) {
         node_id_remapping[NodeId{static_cast<int>(trajectory_id),
                                  static_cast<int>(old_node_index)}] =
             NodeId{static_cast<int>(trajectory_id),
