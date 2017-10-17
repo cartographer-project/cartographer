@@ -31,17 +31,17 @@ message NodeId {
 
 message SparsePoseGraph {
   message Constraint {
-    // Differentiates between intra-submap (where the scan was inserted into the
-    // submap) and inter-submap constraints (where the scan was not inserted
-    // into the submap).
+    // Differentiates between intra-submap (where the range data was inserted
+    // into the submap) and inter-submap constraints (where the range data was
+    // not inserted into the submap).
     enum Tag {
       INTRA_SUBMAP = 0;
       INTER_SUBMAP = 1;
     }
 
     optional SubmapId submap_id = 1;  // Submap ID.
-    optional NodeId node_id = 2;  // Scan ID.
-    // Pose of the scan relative to submap, i.e. taking data from the scan frame
+    optional NodeId node_id = 2;  // Node ID.
+    // Pose of the node relative to submap, i.e. taking data from the node frame
     // into the submap frame.
     optional transform.proto.Rigid3d relative_pose = 3;
     // Weight of the translational part of the constraint.

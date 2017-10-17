@@ -243,7 +243,9 @@ class MapById {
 
   // Returns an iterator to the element at 'id' or the end iterator if it does
   // not exist.
-  ConstIterator find(const IdType& id) { return ConstIterator(*this, id); }
+  ConstIterator find(const IdType& id) const {
+    return ConstIterator(*this, id);
+  }
 
   // Inserts data (which must not exist already) into a trajectory.
   void Insert(const IdType& id, const DataType& data) {

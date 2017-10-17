@@ -140,23 +140,15 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
   writer->WriteProto(sparse_pose_graph_->ToProto());
   // Next we serialize all submap data.
   {
-    const auto submap_data = sparse_pose_graph_->GetAllSubmapData();
-    for (int trajectory_id = 0;
-         trajectory_id != static_cast<int>(submap_data.size());
-         ++trajectory_id) {
-      for (int submap_index = 0;
-           submap_index != static_cast<int>(submap_data[trajectory_id].size());
-           ++submap_index) {
-        proto::SerializedData proto;
-        auto* const submap_proto = proto.mutable_submap();
-        // TODO(whess): Handle trimmed data.
-        submap_proto->mutable_submap_id()->set_trajectory_id(trajectory_id);
-        submap_proto->mutable_submap_id()->set_submap_index(submap_index);
-        submap_data[trajectory_id][submap_index].submap->ToProto(submap_proto);
-        // TODO(whess): Only enable optionally? Resulting pbstream files will be
-        // a lot larger now.
-        writer->WriteProto(proto);
-      }
+    for (const auto& submap_id_data : sparse_pose_graph_->GetAllSubmapData()) {
+      proto::SerializedData proto;
+      auto* const submap_proto = proto.mutable_submap();
+      submap_proto->mutable_submap_id()->set_trajectory_id(
+          submap_id_data.id.trajectory_id);
+      submap_proto->mutable_submap_id()->set_submap_index(
+          submap_id_data.id.submap_index);
+      submap_id_data.data.submap->ToProto(submap_proto);
+      writer->WriteProto(proto);
     }
   }
   // Next we serialize all node data.
@@ -204,6 +196,16 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   FinishTrajectory(map_trajectory_id);
   sparse_pose_graph_->FreezeTrajectory(map_trajectory_id);
 
+  MapById<SubmapId, transform::Rigid3d> submap_poses;
+  for (const proto::Trajectory& trajectory_proto : pose_graph.trajectory()) {
+    for (const proto::Trajectory::Submap& submap_proto :
+         trajectory_proto.submap()) {
+      submap_poses.Insert(SubmapId{trajectory_proto.trajectory_id(),
+                                   submap_proto.submap_index()},
+                          transform::ToRigid3(submap_proto.pose()));
+    }
+  }
+
   for (;;) {
     proto::SerializedData proto;
     if (!reader->ReadProto(&proto)) {
@@ -219,10 +221,9 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
                                            proto.node());
     }
     if (proto.has_submap()) {
-      const transform::Rigid3d submap_pose = transform::ToRigid3(
-          pose_graph.trajectory(proto.submap().submap_id().trajectory_id())
-              .submap(proto.submap().submap_id().submap_index())
-              .pose());
+      const transform::Rigid3d submap_pose =
+          submap_poses.at(SubmapId{proto.submap().submap_id().trajectory_id(),
+                                   proto.submap().submap_id().submap_index()});
       sparse_pose_graph_->AddSubmapFromProto(map_trajectory_id, submap_pose,
                                              proto.submap());
     }
