@@ -510,11 +510,8 @@ void SparsePoseGraph::RunOptimization() {
   const auto& node_data = optimization_problem_.node_data();
   for (const int trajectory_id : node_data.trajectory_ids()) {
     for (const auto& node : node_data.trajectory(trajectory_id)) {
-      auto& mutable_trajectory_node = trajectory_nodes_.at(node.id);
-      mutable_trajectory_node.pose = node.data.pose;
+      trajectory_nodes_.at(node.id).pose = node.data.pose;
     }
-    const mapping::NodeId last_optimized_node_id =
-        std::prev(node_data.EndOfTrajectory(trajectory_id))->id;
 
     // Extrapolate all point cloud poses that were not included in the
     // 'optimization_problem_' yet.
@@ -525,6 +522,8 @@ void SparsePoseGraph::RunOptimization() {
     const transform::Rigid3d old_global_to_new_global =
         local_to_new_global * local_to_old_global.inverse();
 
+    const mapping::NodeId last_optimized_node_id =
+        std::prev(node_data.EndOfTrajectory(trajectory_id))->id;
     auto node_it =
         std::next(trajectory_nodes_.FindChecked(last_optimized_node_id));
       for (; node_it != trajectory_nodes_.EndOfTrajectory(trajectory_id);
@@ -547,7 +546,7 @@ SparsePoseGraph::GetTrajectoryNodes() {
   // TODO(cschuet): Rewrite downstream code and switch to MapById.
   common::MutexLocker locker(&mutex_);
   std::vector<std::vector<mapping::TrajectoryNode>> nodes;
-  for (int trajectory_id : trajectory_nodes_.trajectory_ids()) {
+  for (const int trajectory_id : trajectory_nodes_.trajectory_ids()) {
     nodes.resize(trajectory_id + 1);
     for (const auto& node : trajectory_nodes_.trajectory(trajectory_id)) {
       nodes.at(trajectory_id).resize(node.id.node_index + 1);
