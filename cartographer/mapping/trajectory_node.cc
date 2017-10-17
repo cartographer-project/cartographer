@@ -44,8 +44,8 @@ proto::TrajectoryNodeData ToProto(const TrajectoryNode::Data& constant_data) {
     proto.add_rotational_scan_matcher_histogram(
         constant_data.rotational_scan_matcher_histogram(i));
   }
-  *proto.mutable_initial_pose() =
-      transform::ToProto(constant_data.initial_pose);
+  *proto.mutable_local_pose() =
+      transform::ToProto(constant_data.local_pose);
   return proto;
 }
 
@@ -66,7 +66,7 @@ TrajectoryNode::Data FromProto(const proto::TrajectoryNodeData& proto) {
       sensor::CompressedPointCloud(proto.low_resolution_point_cloud())
           .Decompress(),
       rotational_scan_matcher_histogram,
-      transform::ToRigid3(proto.initial_pose())};
+      transform::ToRigid3(proto.local_pose())};
 }
 
 }  // namespace mapping

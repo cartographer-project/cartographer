@@ -46,8 +46,8 @@ struct TrajectoryNode {
     sensor::PointCloud low_resolution_point_cloud;
     Eigen::VectorXf rotational_scan_matcher_histogram;
 
-    // The initial unoptimized node pose.
-    transform::Rigid3d initial_pose;
+    // The node pose in the local SLAM frame.
+    transform::Rigid3d local_pose;
   };
 
   common::Time time() const { return constant_data->time; }
@@ -57,7 +57,8 @@ struct TrajectoryNode {
   // node is being trimmed, it must survive until all use finishes.
   std::shared_ptr<const Data> constant_data;
 
-  transform::Rigid3d pose;
+  // The node pose in the global SLAM frame.
+  transform::Rigid3d global_pose;
 };
 
 proto::TrajectoryNodeData ToProto(const TrajectoryNode::Data& constant_data);
