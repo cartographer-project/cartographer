@@ -472,7 +472,7 @@ void SparsePoseGraph::RunOptimization() {
   for (const int trajectory_id : node_data.trajectory_ids()) {
     for (const auto& node : node_data.trajectory(trajectory_id)) {
       auto& mutable_trajectory_node = trajectory_nodes_.at(node.id);
-      mutable_trajectory_node.pose =
+      mutable_trajectory_node.global_pose =
           transform::Embed3D(node.data.pose) *
           transform::Rigid3d::Rotation(
               mutable_trajectory_node.constant_data->gravity_alignment);
@@ -494,8 +494,8 @@ void SparsePoseGraph::RunOptimization() {
     for (; node_it != trajectory_nodes_.EndOfTrajectory(trajectory_id);
          ++node_it) {
       auto& mutable_trajectory_node = trajectory_nodes_.at(node_it->id);
-      mutable_trajectory_node.pose =
-          old_global_to_new_global * mutable_trajectory_node.pose;
+      mutable_trajectory_node.global_pose =
+          old_global_to_new_global * mutable_trajectory_node.global_pose;
     }
   }
   optimized_submap_transforms_ = submap_data;

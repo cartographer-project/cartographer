@@ -510,7 +510,7 @@ void SparsePoseGraph::RunOptimization() {
   const auto& node_data = optimization_problem_.node_data();
   for (const int trajectory_id : node_data.trajectory_ids()) {
     for (const auto& node : node_data.trajectory(trajectory_id)) {
-      trajectory_nodes_.at(node.id).pose = node.data.pose;
+      trajectory_nodes_.at(node.id).global_pose = node.data.pose;
     }
 
     // Extrapolate all point cloud poses that were not included in the
@@ -529,8 +529,8 @@ void SparsePoseGraph::RunOptimization() {
       for (; node_it != trajectory_nodes_.EndOfTrajectory(trajectory_id);
          ++node_it) {
       auto& mutable_trajectory_node = trajectory_nodes_.at(node_it->id);
-      mutable_trajectory_node.pose =
-          old_global_to_new_global * mutable_trajectory_node.pose;
+      mutable_trajectory_node.global_pose =
+          old_global_to_new_global * mutable_trajectory_node.global_pose;
     }
   }
   optimized_submap_transforms_ = submap_data;
