@@ -92,7 +92,6 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
-  int num_submaps(int trajectory_id) EXCLUDES(mutex_) override;
   mapping::SparsePoseGraph::SubmapData GetSubmapData(
       const mapping::SubmapId& submap_id) EXCLUDES(mutex_) override;
   std::vector<std::vector<mapping::SparsePoseGraph::SubmapData>>
@@ -107,7 +106,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // The current state of the submap in the background threads. When this
   // transitions to kFinished, all scans are tried to match against this submap.
   // Likewise, all new scans are matched against submaps which are finished.
-  enum class SubmapState { kActive, kFinished, kTrimmed };
+  enum class SubmapState { kActive, kFinished };
   struct SubmapData {
     std::shared_ptr<const Submap> submap;
 
@@ -205,7 +204,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
-  mapping::NestedVectorsById<SubmapData, mapping::SubmapId> submap_data_
+  mapping::MapById<mapping::SubmapId, SubmapData> submap_data_
       GUARDED_BY(mutex_);
 
   // Data that are currently being shown.

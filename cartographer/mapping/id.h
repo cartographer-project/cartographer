@@ -79,40 +79,6 @@ inline std::ostream& operator<<(std::ostream& os, const SubmapId& v) {
   return os << "(" << v.trajectory_id << ", " << v.submap_index << ")";
 }
 
-template <typename ValueType, typename IdType>
-class NestedVectorsById {
- public:
-  // Appends data to a trajectory, creating trajectories as needed.
-  IdType Append(int trajectory_id, const ValueType& value) {
-    data_.resize(std::max<size_t>(data_.size(), trajectory_id + 1));
-    const IdType id{trajectory_id,
-                    static_cast<int>(data_[trajectory_id].size())};
-    data_[trajectory_id].push_back(value);
-    return id;
-  }
-
-  const ValueType& at(const IdType& id) const {
-    return data_.at(id.trajectory_id).at(GetIndex(id));
-  }
-  ValueType& at(const IdType& id) {
-    return data_.at(id.trajectory_id).at(GetIndex(id));
-  }
-
-  int num_trajectories() const { return static_cast<int>(data_.size()); }
-  int num_indices(int trajectory_id) const {
-    return static_cast<int>(data_.at(trajectory_id).size());
-  }
-
-  // TODO(whess): Remove once no longer needed.
-  const std::vector<std::vector<ValueType>> data() const { return data_; }
-
- private:
-  static int GetIndex(const NodeId& id) { return id.node_index; }
-  static int GetIndex(const SubmapId& id) { return id.submap_index; }
-
-  std::vector<std::vector<ValueType>> data_;
-};
-
 template <typename IteratorType>
 class Range {
  public:
@@ -161,13 +127,15 @@ class MapById {
     }
 
     explicit ConstIterator(const MapById& map_by_id, const IdType& id)
-        : current_trajectory_(
-              map_by_id.trajectories_.find(id.trajectory_id)),
+        : current_trajectory_(map_by_id.trajectories_.find(id.trajectory_id)),
           end_trajectory_(map_by_id.trajectories_.end()) {
-      CHECK(current_trajectory_ != end_trajectory_);
-      current_data_ =
-          current_trajectory_->second.data_.find(MapById::GetIndex(id));
-      CHECK(current_data_ != current_trajectory_->second.data_.end());
+      if (current_trajectory_ != end_trajectory_) {
+        current_data_ =
+            current_trajectory_->second.data_.find(MapById::GetIndex(id));
+        if (current_data_ == current_trajectory_->second.data_.end()) {
+          current_trajectory_ = end_trajectory_;
+        }
+      }
     }
 
     IdDataReference operator*() const {
@@ -273,10 +241,9 @@ class MapById {
     return IdType{trajectory_id, index};
   }
 
-  // Returns an iterator to the element at 'id' which must exist.
-  ConstIterator FindChecked(const IdType& id) {
-    return ConstIterator(*this, id);
-  }
+  // Returns an iterator to the element at 'id' or the end iterator if it does
+  // not exist.
+  ConstIterator find(const IdType& id) { return ConstIterator(*this, id); }
 
   // Inserts data (which must not exist already) into a trajectory.
   void Insert(const IdType& id, const DataType& data) {

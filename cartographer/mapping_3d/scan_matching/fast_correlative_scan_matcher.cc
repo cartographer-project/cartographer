@@ -132,8 +132,9 @@ std::vector<std::pair<Eigen::VectorXf, float>> HistogramsAtAnglesFromNodes(
     histograms_at_angles.emplace_back(
         node.constant_data->rotational_scan_matcher_histogram,
         transform::GetYaw(
-            node.global_pose * transform::Rigid3d::Rotation(
-                            node.constant_data->gravity_alignment.inverse())));
+            node.global_pose *
+            transform::Rigid3d::Rotation(
+                node.constant_data->gravity_alignment.inverse())));
   }
   return histograms_at_angles;
 }
