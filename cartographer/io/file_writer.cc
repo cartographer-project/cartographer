@@ -20,7 +20,7 @@ namespace cartographer {
 namespace io {
 
 StreamFileWriter::StreamFileWriter(const string& filename)
-    : out_(filename, std::ios::out | std::ios::binary) {}
+    : filename_(filename), out_(filename, std::ios::out | std::ios::binary) {}
 
 StreamFileWriter::~StreamFileWriter() {}
 
@@ -48,6 +48,8 @@ bool StreamFileWriter::WriteHeader(const char* const data, const size_t len) {
   out_.seekp(0);
   return Write(data, len);
 }
+
+string StreamFileWriter::GetFilename() { return filename_; }
 
 }  // namespace io
 }  // namespace cartographer

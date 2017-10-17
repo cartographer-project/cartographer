@@ -42,6 +42,7 @@ class FileWriter {
 
   virtual bool Write(const char* data, size_t len) = 0;
   virtual bool Close() = 0;
+  virtual string GetFilename() = 0;
 };
 
 // An Implementation of file using std::ofstream.
@@ -54,8 +55,10 @@ class StreamFileWriter : public FileWriter {
   bool Write(const char* data, size_t len) override;
   bool WriteHeader(const char* data, size_t len) override;
   bool Close() override;
+  string GetFilename() override;
 
  private:
+  const string filename_;
   std::ofstream out_;
 };
 

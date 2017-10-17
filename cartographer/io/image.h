@@ -41,6 +41,9 @@ class Image {
   // to this surface is alive.
   UniqueCairoSurfacePtr GetCairoSurface();
 
+  int width() const { return width_; }
+  int height() const { return height_; }
+
  private:
   int width_;
   int height_;
