@@ -52,8 +52,6 @@ struct NodeId {
   }
 };
 
-const static NodeId INVALID_NODE_ID = NodeId{-1, -1};
-
 inline std::ostream& operator<<(std::ostream& os, const NodeId& v) {
   return os << "(" << v.trajectory_id << ", " << v.node_index << ")";
 }
@@ -131,6 +129,8 @@ class Range {
 
 // Reminiscent of std::map, but indexed by 'IdType' which can be 'NodeId' or
 // 'SubmapId'.
+// Note: This container will only ever contain non-empty trajectories. Trimming
+// the last remaining node of a trajectory drops the trajectory.
 template <typename IdType, typename DataType>
 class MapById {
  private:
@@ -298,6 +298,9 @@ class MapById {
       trajectory.can_append_ = false;
     }
     trajectory.data_.erase(it);
+    if (trajectory.data_.empty()) {
+      trajectories_.erase(id.trajectory_id);
+    }
   }
 
   bool Contains(const IdType& id) const {
