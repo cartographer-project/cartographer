@@ -59,6 +59,12 @@ int64 ToUniversal(Time time);
 // For logging and unit tests, outputs the timestamp integer.
 std::ostream& operator<<(std::ostream& os, Time time);
 
+template <class Rep, class Period>
+std::chrono::duration<Rep, Period> abs(std::chrono::duration<Rep, Period> d) {
+  Rep x = d.count();
+  return std::chrono::duration<Rep, Period>(x >= 0 ? x : -x);
+}
+
 }  // namespace common
 }  // namespace cartographer
 

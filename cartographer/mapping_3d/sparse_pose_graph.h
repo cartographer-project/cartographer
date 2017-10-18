@@ -104,6 +104,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
   GetTrajectoryNodes() override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
+  void SetInitialTrajectoryPose(int from_trajectory_id, int to_trajectory_id,
+                                const transform::Rigid3d& pose,
+                                const common::Time& time) override
+      EXCLUDES(mutex_);
 
  private:
   // The current state of the submap in the background threads. When this
@@ -229,6 +233,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Set of all frozen trajectories not being optimized.
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
+
+  // Set of all initial trajectory poses.
+  std::map<int, InitialTrajectoryPose> initial_trajectory_poses_;
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.

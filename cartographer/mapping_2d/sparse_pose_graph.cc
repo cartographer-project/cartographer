@@ -60,9 +60,18 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
   if (insertion_submaps.size() == 1) {
     // If we don't already have an entry for the first submap, add one.
     if (submap_data.SizeOfTrajectoryOrZero(trajectory_id) == 0) {
-      optimization_problem_.AddSubmap(
-          trajectory_id,
-          sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0]));
+      transform::Rigid2d submap_pose =
+          sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0]);
+      if (initial_trajectory_poses_.find(trajectory_id) !=
+          initial_trajectory_poses_.end()) {
+        const InitialTrajectoryPose& initial_pose =
+            initial_trajectory_poses_.at(trajectory_id);
+        submap_pose = transform::Project2D(
+            GetClosestTrajectoryPose(initial_pose.to_trajectory_id,
+                                     initial_pose.time) *
+            initial_pose.relative_pose);
+      }
+      optimization_problem_.AddSubmap(trajectory_id, submap_pose);
     }
     CHECK_EQ(1, submap_data.SizeOfTrajectoryOrZero(trajectory_id));
     const mapping::SubmapId submap_id{trajectory_id, 0};
@@ -547,6 +556,34 @@ std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
         constraint.tag});
   }
   return result;
+}
+
+void SparsePoseGraph::SetInitialTrajectoryPose(int from_trajectory_id,
+                                               int to_trajectory_id,
+                                               const transform::Rigid3d& pose,
+                                               const common::Time& time) {
+  common::MutexLocker locker(&mutex_);
+  initial_trajectory_poses_[from_trajectory_id] =
+      InitialTrajectoryPose{to_trajectory_id, pose, time};
+}
+
+transform::Rigid3d SparsePoseGraph::GetClosestTrajectoryPose(
+    int trajectory_id, const common::Time& time) {
+  common::MutexLocker locker(&mutex_);
+  CHECK(trajectory_nodes_.SizeOfTrajectoryOrZero(trajectory_id) > 0);
+  mapping::NodeId closest_node_id =
+      trajectory_nodes_.BeginOfTrajectory(trajectory_id)->id;
+  common::Duration min_time_diff = common::Duration::max();
+  for (const auto& node_id_data : trajectory_nodes_.trajectory(trajectory_id)) {
+    common::Duration time_diff = common::abs(node_id_data.data.time() - time);
+    if (time_diff < min_time_diff) {
+      min_time_diff = time_diff;
+      closest_node_id = node_id_data.id;
+    } else {
+      break;
+    }
+  }
+  return trajectory_nodes_.at(closest_node_id).global_pose;
 }
 
 transform::Rigid3d SparsePoseGraph::GetLocalToGlobalTransform(
