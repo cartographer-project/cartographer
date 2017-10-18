@@ -77,28 +77,15 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     return trajectory_protos.at(trajectory_id);
   };
 
-  std::map<NodeId, NodeId> node_id_remapping;  // Due to trimming.
-
-  const auto all_trajectory_nodes = GetTrajectoryNodes();
-  for (size_t trajectory_id = 0; trajectory_id != all_trajectory_nodes.size();
-       ++trajectory_id) {
-    auto* const trajectory_proto = trajectory(trajectory_id);
-
-    const auto& single_trajectory_nodes = all_trajectory_nodes[trajectory_id];
-    for (size_t old_node_index = 0;
-         old_node_index != single_trajectory_nodes.size(); ++old_node_index) {
-      const auto& node = single_trajectory_nodes[old_node_index];
-      if (node.constant_data != nullptr) {
-        node_id_remapping[NodeId{static_cast<int>(trajectory_id),
-                                 static_cast<int>(old_node_index)}] =
-            NodeId{static_cast<int>(trajectory_id),
-                   static_cast<int>(trajectory_proto->node_size())};
-        auto* node_proto = trajectory_proto->add_node();
-        node_proto->set_timestamp(
-            common::ToUniversal(node.constant_data->time));
-        *node_proto->mutable_pose() = transform::ToProto(node.global_pose);
-      }
-    }
+  for (const auto& node_id_data : GetTrajectoryNodes()) {
+    CHECK(node_id_data.data.constant_data != nullptr);
+    auto* const node_proto =
+        trajectory(node_id_data.id.trajectory_id)->add_node();
+    node_proto->set_node_index(node_id_data.id.node_index);
+    node_proto->set_timestamp(
+        common::ToUniversal(node_id_data.data.constant_data->time));
+    *node_proto->mutable_pose() =
+        transform::ToProto(node_id_data.data.global_pose);
   }
 
   for (const auto& submap_id_data : GetAllSubmapData()) {
@@ -123,10 +110,10 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     constraint_proto->mutable_submap_id()->set_submap_index(
         constraint.submap_id.submap_index);
 
-    const NodeId node_id = node_id_remapping.at(constraint.node_id);
     constraint_proto->mutable_node_id()->set_trajectory_id(
-        node_id.trajectory_id);
-    constraint_proto->mutable_node_id()->set_node_index(node_id.node_index);
+        constraint.node_id.trajectory_id);
+    constraint_proto->mutable_node_id()->set_node_index(
+        constraint.node_id.node_index);
 
     constraint_proto->set_tag(mapping::ToProto(constraint.tag));
   }

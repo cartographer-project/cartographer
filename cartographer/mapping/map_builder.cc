@@ -153,25 +153,16 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
   }
   // Next we serialize all node data.
   {
-    const auto trajectory_nodes = sparse_pose_graph_->GetTrajectoryNodes();
-    for (int trajectory_id = 0;
-         trajectory_id != static_cast<int>(trajectory_nodes.size());
-         ++trajectory_id) {
-      for (int node_index = 0;
-           node_index !=
-           static_cast<int>(trajectory_nodes[trajectory_id].size());
-           ++node_index) {
-        proto::SerializedData proto;
-        auto* const node_proto = proto.mutable_node();
-        // TODO(whess): Handle trimmed data.
-        node_proto->mutable_node_id()->set_trajectory_id(trajectory_id);
-        node_proto->mutable_node_id()->set_node_index(node_index);
-        *node_proto->mutable_node_data() =
-            ToProto(*trajectory_nodes[trajectory_id][node_index].constant_data);
-        // TODO(whess): Only enable optionally? Resulting pbstream files will be
-        // a lot larger now.
-        writer->WriteProto(proto);
-      }
+    for (const auto& node_id_data : sparse_pose_graph_->GetTrajectoryNodes()) {
+      proto::SerializedData proto;
+      auto* const node_proto = proto.mutable_node();
+      node_proto->mutable_node_id()->set_trajectory_id(
+          node_id_data.id.trajectory_id);
+      node_proto->mutable_node_id()->set_node_index(
+          node_id_data.id.node_index);
+      *node_proto->mutable_node_data() =
+          ToProto(*node_id_data.data.constant_data);
+      writer->WriteProto(proto);
     }
     // TODO(whess): Serialize additional sensor data: IMU, odometry.
   }
@@ -206,18 +197,26 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
     }
   }
 
+  MapById<NodeId, transform::Rigid3d> node_poses;
+  for (const proto::Trajectory& trajectory_proto : pose_graph.trajectory()) {
+    for (const proto::Trajectory::Node& node_proto :
+         trajectory_proto.node()) {
+      node_poses.Insert(NodeId{trajectory_proto.trajectory_id(),
+                               node_proto.node_index()},
+                        transform::ToRigid3(node_proto.pose()));
+    }
+  }
+
   for (;;) {
     proto::SerializedData proto;
     if (!reader->ReadProto(&proto)) {
       break;
     }
     if (proto.has_node()) {
-      const auto& pose_graph_node =
-          pose_graph.trajectory(proto.node().node_id().trajectory_id())
-              .node(proto.node().node_id().node_index());
-      const transform::Rigid3d pose =
-          transform::ToRigid3(pose_graph_node.pose());
-      sparse_pose_graph_->AddNodeFromProto(map_trajectory_id, pose,
+      const transform::Rigid3d node_pose =
+          node_poses.at(NodeId{proto.node().node_id().trajectory_id(),
+                               proto.node().node_id().node_index()});
+      sparse_pose_graph_->AddNodeFromProto(map_trajectory_id, node_pose,
                                            proto.node());
     }
     if (proto.has_submap()) {

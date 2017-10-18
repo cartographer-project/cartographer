@@ -490,19 +490,10 @@ void SparsePoseGraph::RunOptimization() {
   optimized_submap_transforms_ = submap_data;
 }
 
-std::vector<std::vector<mapping::TrajectoryNode>>
+mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
 SparsePoseGraph::GetTrajectoryNodes() {
-  // TODO(cschuet): Rewrite downstream code and switch to MapById.
   common::MutexLocker locker(&mutex_);
-  std::vector<std::vector<mapping::TrajectoryNode>> nodes;
-  for (const int trajectory_id : trajectory_nodes_.trajectory_ids()) {
-    nodes.resize(trajectory_id + 1);
-    for (const auto& node : trajectory_nodes_.trajectory(trajectory_id)) {
-      nodes.at(trajectory_id).resize(node.id.node_index + 1);
-      nodes.at(trajectory_id).at(node.id.node_index) = node.data;
-    }
-  }
-  return nodes;
+  return trajectory_nodes_;
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {

@@ -114,7 +114,7 @@ class SparsePoseGraph {
   virtual transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id) = 0;
 
   // Returns the current optimized trajectories.
-  virtual std::vector<std::vector<TrajectoryNode>> GetTrajectoryNodes() = 0;
+  virtual MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() = 0;
 
   // Serializes the constraints and trajectories.
   proto::SparsePoseGraph ToProto();
