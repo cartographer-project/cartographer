@@ -229,10 +229,10 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   const transform::Rigid3d optimized_pose =
       optimization_problem_.submap_data().at(matching_id).pose *
       insertion_submaps.front()->local_pose().inverse() *
-      constant_data->initial_pose;
+      constant_data->local_pose;
   optimization_problem_.AddTrajectoryNode(
       matching_id.trajectory_id, constant_data->time,
-      constant_data->initial_pose, optimized_pose);
+      constant_data->local_pose, optimized_pose);
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const mapping::SubmapId submap_id = submap_ids[i];
     // Even if this was the last scan added to 'submap_id', the submap will only
@@ -241,7 +241,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     submap_data_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid3d constraint_transform =
         insertion_submaps[i]->local_pose().inverse() *
-        constant_data->initial_pose;
+        constant_data->local_pose;
     constraints_.push_back(Constraint{submap_id,
                                       node_id,
                                       {constraint_transform,
