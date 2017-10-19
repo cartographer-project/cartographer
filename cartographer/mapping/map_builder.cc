@@ -103,6 +103,12 @@ int MapBuilder::AddTrajectoryBuilder(
   return trajectory_id;
 }
 
+int MapBuilder::AddTrajectoryForDeserialization() {
+  const int trajectory_id = trajectory_builders_.size();
+  trajectory_builders_.emplace_back();
+  return trajectory_id;
+}
+
 TrajectoryBuilder* MapBuilder::GetTrajectoryBuilder(
     const int trajectory_id) const {
   return trajectory_builders_.at(trajectory_id).get();
@@ -158,8 +164,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
       auto* const node_proto = proto.mutable_node();
       node_proto->mutable_node_id()->set_trajectory_id(
           node_id_data.id.trajectory_id);
-      node_proto->mutable_node_id()->set_node_index(
-          node_id_data.id.node_index);
+      node_proto->mutable_node_id()->set_node_index(node_id_data.id.node_index);
       *node_proto->mutable_node_data() =
           ToProto(*node_id_data.data.constant_data);
       writer->WriteProto(proto);
@@ -172,19 +177,7 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   proto::SparsePoseGraph pose_graph;
   CHECK(reader->ReadProto(&pose_graph));
 
-  // TODO(whess): Not all trajectories should be builders, i.e. support should
-  // be added for trajectories without latest pose, options, etc. Appease the
-  // trajectory builder for now.
-  proto::TrajectoryBuilderOptions unused_options;
-  unused_options.mutable_trajectory_builder_2d_options()
-      ->mutable_submaps_options()
-      ->set_resolution(0.05);
-  unused_options.mutable_trajectory_builder_3d_options();
-
-  const std::unordered_set<string> unused_sensor_ids;
-  const int map_trajectory_id =
-      AddTrajectoryBuilder(unused_sensor_ids, unused_options);
-  FinishTrajectory(map_trajectory_id);
+  const int map_trajectory_id = AddTrajectoryForDeserialization();
   sparse_pose_graph_->FreezeTrajectory(map_trajectory_id);
 
   MapById<SubmapId, transform::Rigid3d> submap_poses;
@@ -199,11 +192,10 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
 
   MapById<NodeId, transform::Rigid3d> node_poses;
   for (const proto::Trajectory& trajectory_proto : pose_graph.trajectory()) {
-    for (const proto::Trajectory::Node& node_proto :
-         trajectory_proto.node()) {
-      node_poses.Insert(NodeId{trajectory_proto.trajectory_id(),
-                               node_proto.node_index()},
-                        transform::ToRigid3(node_proto.pose()));
+    for (const proto::Trajectory::Node& node_proto : trajectory_proto.node()) {
+      node_poses.Insert(
+          NodeId{trajectory_proto.trajectory_id(), node_proto.node_index()},
+          transform::ToRigid3(node_proto.pose()));
     }
   }
 
