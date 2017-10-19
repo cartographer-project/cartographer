@@ -33,13 +33,6 @@ message ImuData {
   optional transform.proto.Vector3d angular_velocity = 3;
 }
 
-// Proto representation of ::cartographer::sensor::CompressedRangeData.
-message CompressedRangeData {
-  optional transform.proto.Vector3f origin = 1;
-  optional CompressedPointCloud returns = 2;
-  optional CompressedPointCloud misses = 3;
-}
-
 // Proto representation of ::cartographer::sensor::OdometryData.
 message OdometryData {
   optional int64 timestamp = 1;

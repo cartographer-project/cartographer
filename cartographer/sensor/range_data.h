@@ -41,21 +41,6 @@ RangeData TransformRangeData(const RangeData& range_data,
 // Crops 'range_data' according to the region defined by 'min_z' and 'max_z'.
 RangeData CropRangeData(const RangeData& range_data, float min_z, float max_z);
 
-// Like RangeData but with compressed point clouds. The point order changes
-// when converting from RangeData.
-struct CompressedRangeData {
-  Eigen::Vector3f origin;
-  CompressedPointCloud returns;
-  CompressedPointCloud misses;
-};
-
-proto::CompressedRangeData ToProto(
-    const CompressedRangeData& compressed_range_data);
-CompressedRangeData FromProto(const proto::CompressedRangeData& proto);
-CompressedRangeData Compress(const RangeData& range_data);
-
-RangeData Decompress(const CompressedRangeData& compressed_range_data);
-
 }  // namespace sensor
 }  // namespace cartographer
 
