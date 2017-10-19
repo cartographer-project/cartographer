@@ -541,6 +541,10 @@ SparsePoseGraph::GetTrajectoryNodes() {
   return trajectory_nodes_;
 }
 
+std::vector<std::deque<sensor::ImuData>> SparsePoseGraph::GetImuData() {
+  LOG(FATAL) << "Not yet implemented for 3D.";
+}
+
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   common::MutexLocker locker(&mutex_);
   return constraints_;

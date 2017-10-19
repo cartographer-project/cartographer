@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 #define CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 
+#include <deque>
 #include <memory>
 #include <set>
 #include <unordered_map>
@@ -31,6 +32,7 @@
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/sensor/imu_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -123,6 +125,9 @@ class SparsePoseGraph {
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
+
+  // Returns the IMU data.
+  virtual std::vector<std::deque<sensor::ImuData>> GetImuData() = 0;
 };
 
 SparsePoseGraph::Constraint::Tag FromProto(
