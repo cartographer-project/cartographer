@@ -55,13 +55,18 @@ class MapBuilder {
   MapBuilder(const MapBuilder&) = delete;
   MapBuilder& operator=(const MapBuilder&) = delete;
 
-  // Create a new trajectory and return its index.
+  // Creates a new trajectory builder and returns its index.
   int AddTrajectoryBuilder(
       const std::unordered_set<string>& expected_sensor_ids,
       const proto::TrajectoryBuilderOptions& trajectory_options);
 
+  // Creates a new trajectory and returns its index. Querying the trajectory
+  // builder for it will return 'nullptr'.
+  int AddTrajectoryForDeserialization();
+
   // Returns the TrajectoryBuilder corresponding to the specified
-  // 'trajectory_id'.
+  // 'trajectory_id' or 'nullptr' if the trajectory has no corresponding
+  // builder.
   mapping::TrajectoryBuilder* GetTrajectoryBuilder(int trajectory_id) const;
 
   // Marks the TrajectoryBuilder corresponding to 'trajectory_id' as finished,
