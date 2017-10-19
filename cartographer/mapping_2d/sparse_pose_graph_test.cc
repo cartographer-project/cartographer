@@ -173,9 +173,9 @@ class SparsePoseGraphTest : public ::testing::Test {
     MoveRelativeWithNoise(movement, transform::Rigid2d::Identity());
   }
 
-  template <typename T>
-  std::vector<int> ToVector(const T& t) {
-    return std::vector<int>(t.begin(), t.end());
+  template <typename Range>
+  std::vector<int> ToVectorInt(const Range& range) {
+    return std::vector<int>(range.begin(), range.end());
   }
 
   sensor::PointCloud point_cloud_;
@@ -197,8 +197,8 @@ TEST_F(SparsePoseGraphTest, NoMovement) {
   MoveRelative(transform::Rigid2d::Identity());
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(std::vector<int>{0},
-              ::testing::ContainerEq(ToVector(nodes.trajectory_ids())));
+  ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
+              ::testing::ContainerEq(std::vector<int>{0}));
   EXPECT_THAT(nodes.SizeOfTrajectoryOrZero(0), ::testing::Eq(3u));
   EXPECT_THAT(nodes.at(mapping::NodeId{0, 0}).global_pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
@@ -218,8 +218,8 @@ TEST_F(SparsePoseGraphTest, NoOverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(std::vector<int>{0},
-              ::testing::ContainerEq(ToVector(nodes.trajectory_ids())));
+  ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
+              ::testing::ContainerEq(std::vector<int>{0}));
   for (int i = 0; i != 4; ++i) {
     EXPECT_THAT(poses[i],
                 IsNearly(transform::Project2D(
@@ -239,8 +239,8 @@ TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(std::vector<int>{0},
-              ::testing::ContainerEq(ToVector(nodes.trajectory_ids())));
+  ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
+              ::testing::ContainerEq(std::vector<int>{0}));
   for (int i = 0; i != 5; ++i) {
     EXPECT_THAT(poses[i],
                 IsNearly(transform::Project2D(
@@ -267,8 +267,8 @@ TEST_F(SparsePoseGraphTest, OverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(std::vector<int>{0},
-              ::testing::ContainerEq(ToVector(nodes.trajectory_ids())));
+  ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
+              ::testing::ContainerEq(std::vector<int>{0}));
   transform::Rigid2d true_movement =
       ground_truth.front().inverse() * ground_truth.back();
   transform::Rigid2d movement_before = poses.front().inverse() * poses.back();
