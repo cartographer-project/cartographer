@@ -333,15 +333,11 @@ void SparsePoseGraph::AddCustomConstraint(const mapping::NodeId& node_id,
   common::MutexLocker locker(&mutex_);
   AddPriorityWorkItem([=]() REQUIRES(mutex_) {
     // Do not allow adding custom constraints for trimmed nodes and submaps.
-    if (node_id.trajectory_id < trajectory_nodes_.num_trajectories() &&
-        node_id.node_index <
-            trajectory_nodes_.num_indices(node_id.trajectory_id)) {
-      CHECK(!trajectory_nodes_.at(node_id).trimmed());
+    if (trajectory_nodes_.Contains(node_id)) {
+      CHECK(trajectory_nodes_.at(node_id).constant_data != nullptr);
     }
-    if (submap_id.trajectory_id < submap_data_.num_trajectories() &&
-        submap_id.submap_index <
-            submap_data_.num_indices(submap_id.trajectory_id)) {
-      CHECK(submap_data_.at(submap_id).state != SubmapState::kTrimmed);
+    if (submap_data_.Contains(submap_id)) {
+      CHECK(submap_data_.at(submap_id).submap != nullptr);
     }
     const auto gravity_aligned_pose =
         pose.zbar_ij * cartographer::transform::Rigid3d::Rotation(
