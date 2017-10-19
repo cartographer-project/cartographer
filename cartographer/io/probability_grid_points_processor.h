@@ -18,9 +18,7 @@
 #define CARTOGRAPHER_IO_PROBABILITY_GRID_POINTS_PROCESSOR_H_
 
 #include <memory>
-#include <string>
 
-#include "cartographer/common/port.h"
 #include "cartographer/io/file_writer.h"
 #include "cartographer/io/image.h"
 #include "cartographer/io/points_batch.h"
