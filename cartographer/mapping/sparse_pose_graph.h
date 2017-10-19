@@ -105,8 +105,7 @@ class SparsePoseGraph {
   virtual SubmapData GetSubmapData(const SubmapId& submap_id) = 0;
 
   // Returns data for all submaps.
-  virtual mapping::MapById<mapping::SubmapId, SubmapData>
-  GetAllSubmapData() = 0;
+  virtual MapById<SubmapId, SubmapData> GetAllSubmapData() = 0;
 
   // Returns the transform converting data in the local map frame (i.e. the
   // continuous, non-loop-closed frame) into the global map frame (i.e. the
@@ -114,7 +113,7 @@ class SparsePoseGraph {
   virtual transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id) = 0;
 
   // Returns the current optimized trajectories.
-  virtual std::vector<std::vector<TrajectoryNode>> GetTrajectoryNodes() = 0;
+  virtual MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() = 0;
 
   // Serializes the constraints and trajectories.
   proto::SparsePoseGraph ToProto();

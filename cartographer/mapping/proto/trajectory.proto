@@ -21,8 +21,11 @@ import "cartographer/transform/proto/transform.proto";
 option java_outer_classname = "TrajectoryOuterClass";
 
 message Trajectory {
-  // NEXT_ID: 7
+  // NEXT_ID: 8
   message Node {
+    // Index of this node within its trajectory.
+    optional int32 node_index = 7;
+
     optional int64 timestamp = 1;
 
     // Transform from tracking to global map frame.

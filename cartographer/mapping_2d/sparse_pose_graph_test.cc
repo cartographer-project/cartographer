@@ -173,6 +173,11 @@ class SparsePoseGraphTest : public ::testing::Test {
     MoveRelativeWithNoise(movement, transform::Rigid2d::Identity());
   }
 
+  template <typename Range>
+  std::vector<int> ToVectorInt(const Range& range) {
+    return std::vector<int>(range.begin(), range.end());
+  }
+
   sensor::PointCloud point_cloud_;
   std::unique_ptr<ActiveSubmaps> active_submaps_;
   common::ThreadPool thread_pool_;
@@ -183,7 +188,7 @@ class SparsePoseGraphTest : public ::testing::Test {
 TEST_F(SparsePoseGraphTest, EmptyMap) {
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  EXPECT_THAT(nodes.size(), ::testing::Eq(0u));
+  EXPECT_TRUE(nodes.empty());
 }
 
 TEST_F(SparsePoseGraphTest, NoMovement) {
@@ -192,13 +197,14 @@ TEST_F(SparsePoseGraphTest, NoMovement) {
   MoveRelative(transform::Rigid2d::Identity());
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
-  EXPECT_THAT(nodes[0].size(), ::testing::Eq(3u));
-  EXPECT_THAT(nodes[0][0].global_pose,
+  ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
+              ::testing::ContainerEq(std::vector<int>{0}));
+  EXPECT_THAT(nodes.SizeOfTrajectoryOrZero(0), ::testing::Eq(3u));
+  EXPECT_THAT(nodes.at(mapping::NodeId{0, 0}).global_pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
-  EXPECT_THAT(nodes[0][1].global_pose,
+  EXPECT_THAT(nodes.at(mapping::NodeId{0, 1}).global_pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
-  EXPECT_THAT(nodes[0][2].global_pose,
+  EXPECT_THAT(nodes.at(mapping::NodeId{0, 2}).global_pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
 }
 
@@ -212,10 +218,13 @@ TEST_F(SparsePoseGraphTest, NoOverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
+  ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
+              ::testing::ContainerEq(std::vector<int>{0}));
   for (int i = 0; i != 4; ++i) {
     EXPECT_THAT(poses[i],
-                IsNearly(transform::Project2D(nodes[0][i].global_pose), 1e-2))
+                IsNearly(transform::Project2D(
+                             nodes.at(mapping::NodeId{0, i}).global_pose),
+                         1e-2))
         << i;
   }
 }
@@ -230,10 +239,13 @@ TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
+  ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
+              ::testing::ContainerEq(std::vector<int>{0}));
   for (int i = 0; i != 5; ++i) {
     EXPECT_THAT(poses[i],
-                IsNearly(transform::Project2D(nodes[0][i].global_pose), 1e-2))
+                IsNearly(transform::Project2D(
+                             nodes.at(mapping::NodeId{0, i}).global_pose),
+                         1e-2))
         << i;
   }
 }
@@ -255,13 +267,15 @@ TEST_F(SparsePoseGraphTest, OverlappingScans) {
   }
   sparse_pose_graph_->RunFinalOptimization();
   const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
-  ASSERT_THAT(nodes.size(), ::testing::Eq(1u));
+  ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
+              ::testing::ContainerEq(std::vector<int>{0}));
   transform::Rigid2d true_movement =
       ground_truth.front().inverse() * ground_truth.back();
   transform::Rigid2d movement_before = poses.front().inverse() * poses.back();
   transform::Rigid2d error_before = movement_before.inverse() * true_movement;
   transform::Rigid3d optimized_movement =
-      nodes[0].front().global_pose.inverse() * nodes[0].back().global_pose;
+      nodes.BeginOfTrajectory(0)->data.global_pose.inverse() *
+      std::prev(nodes.EndOfTrajectory(0))->data.global_pose;
   transform::Rigid2d optimized_error =
       transform::Project2D(optimized_movement).inverse() * true_movement;
   EXPECT_THAT(std::abs(optimized_error.normalized_angle()),
