@@ -381,13 +381,12 @@ void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& pose,
 
   const mapping::SubmapId proto_submap_id = {submap.submap_id().trajectory_id(),
                                              submap.submap_id().submap_index()};
-  const int trajectory_id = proto_submap_id.trajectory_id;
   std::shared_ptr<const Submap> submap_ptr =
       std::make_shared<const Submap>(submap.submap_2d());
   const transform::Rigid2d pose_2d = transform::Project2D(pose);
 
   common::MutexLocker locker(&mutex_);
-  AddTrajectoryIfNeeded(trajectory_id);
+  AddTrajectoryIfNeeded(proto_submap_id.trajectory_id);
   submap_data_.Insert(proto_submap_id, SubmapData());
   submap_data_.at(proto_submap_id).submap = submap_ptr;
   // Immediately show the submap at the optimized pose.
@@ -404,13 +403,12 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& pose,
                                        const mapping::proto::Node& node) {
   const mapping::NodeId proto_node_id = {node.node_id().trajectory_id(),
                                          node.node_id().node_index()};
-  const int trajectory_id = proto_node_id.trajectory_id;
   std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data =
       std::make_shared<const mapping::TrajectoryNode::Data>(
           mapping::FromProto(node.node_data()));
 
   common::MutexLocker locker(&mutex_);
-  AddTrajectoryIfNeeded(trajectory_id);
+  AddTrajectoryIfNeeded(proto_node_id.trajectory_id);
   trajectory_nodes_.Insert(proto_node_id,
                            mapping::TrajectoryNode{constant_data, pose});
 
