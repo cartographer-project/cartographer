@@ -393,7 +393,7 @@ void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   });
 }
 
-void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& pose,
+void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& global_pose,
                                          const mapping::proto::Submap& submap) {
   if (!submap.has_submap_3d()) {
     return;
@@ -409,16 +409,16 @@ void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& pose,
   submap_data_.Insert(proto_submap_id, SubmapData());
   submap_data_.at(proto_submap_id).submap = submap_ptr;
   // Immediately show the submap at the optimized pose.
-  optimized_submap_transforms_.Insert(proto_submap_id,
-                                      sparse_pose_graph::SubmapData{pose});
-  AddWorkItem([this, proto_submap_id, pose]() REQUIRES(mutex_) {
+  optimized_submap_transforms_.Insert(
+      proto_submap_id, sparse_pose_graph::SubmapData{global_pose});
+  AddWorkItem([this, proto_submap_id, global_pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(proto_submap_id.trajectory_id), 1);
     submap_data_.at(proto_submap_id).state = SubmapState::kFinished;
-    optimization_problem_.InsertSubmap(proto_submap_id, pose);
+    optimization_problem_.InsertSubmap(proto_submap_id, global_pose);
   });
 }
 
-void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& pose,
+void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
                                        const mapping::proto::Node& node) {
   const mapping::NodeId proto_node_id = {node.node_id().trajectory_id(),
                                          node.node_id().node_index()};
@@ -429,14 +429,15 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& pose,
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(proto_node_id.trajectory_id);
   trajectory_nodes_.Insert(proto_node_id,
-                           mapping::TrajectoryNode{constant_data, pose});
+                           mapping::TrajectoryNode{constant_data, global_pose});
 
-  AddWorkItem([this, proto_node_id, pose]() REQUIRES(mutex_) {
+  AddWorkItem([this, proto_node_id, global_pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(proto_node_id.trajectory_id), 1);
     const auto& constant_data =
         trajectory_nodes_.at(proto_node_id).constant_data;
     optimization_problem_.InsertTrajectoryNode(
-        proto_node_id, constant_data->time, constant_data->local_pose, pose);
+        proto_node_id, constant_data->time, constant_data->local_pose,
+        global_pose);
   });
 }
 
