@@ -32,10 +32,13 @@ configurations.
 
 Technical Overview
 ==================
-* High level structure of Cartographer
+* High level system overview of Cartographer
 
-.. image:: High_Level_Structure.jpg
-     :target: https://github.com/googlecartographer/cartographer/blob/master/docs/source/High_Level_Structure.jpg
+.. image:: high_level_system_overview.png
+     :target: https://github.com/googlecartographer/cartographer/blob/master/docs/source/high_level_system_overview.png
+
+.. To make modifications, edit the original Google Sketch and export a png.
+.. https://docs.google.com/drawings/d/1kCJ_dEbSvV83THCUfMikCPw7xFrTkrvRw5r6Ji8C90c/edit?usp=sharing
 
 Getting started
 ===============
