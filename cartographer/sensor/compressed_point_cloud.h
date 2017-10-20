@@ -29,7 +29,7 @@ namespace cartographer {
 namespace sensor {
 
 // A compressed representation of a point cloud consisting of a collection of
-// points (Vector3f).
+// points (Vector3f) without time information.
 // Internally, points are grouped by blocks. Each block encodes a bit of meta
 // data (number of points in block, coordinates of the block) and encodes each
 // point with a fixed bit rate in relation to the block.

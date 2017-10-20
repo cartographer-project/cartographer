@@ -38,6 +38,7 @@ namespace mapping_2d {
 
 // Wires up the local SLAM stack (i.e. pose extrapolator, scan matching, etc.)
 // without loop closure.
+// TODO(gaschler): Add test for this class similar to the 3D test.
 class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
@@ -56,7 +57,7 @@ class LocalTrajectoryBuilder {
 
   // Range data must be approximately horizontal for 2D SLAM.
   std::unique_ptr<InsertionResult> AddRangeData(
-      common::Time, const sensor::RangeData& range_data);
+      common::Time, const sensor::TimedRangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
   void AddOdometerData(const sensor::OdometryData& odometry_data);
 

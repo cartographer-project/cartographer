@@ -56,7 +56,7 @@ class TrajectoryBuilder {
 
   void AddRangefinderData(const string& sensor_id, common::Time time,
                           const Eigen::Vector3f& origin,
-                          const sensor::PointCloud& ranges) {
+                          const sensor::TimedPointCloud& ranges) {
     AddSensorData(sensor_id,
                   common::make_unique<sensor::DispatchableRangefinderData>(
                       time, origin, ranges));

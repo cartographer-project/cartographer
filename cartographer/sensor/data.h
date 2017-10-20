@@ -42,7 +42,7 @@ class DispatchableRangefinderData : public Data {
  public:
   DispatchableRangefinderData(const common::Time time,
                               const Eigen::Vector3f& origin,
-                              const PointCloud& ranges)
+                              const TimedPointCloud& ranges)
       : time_(time), origin_(origin), ranges_(ranges) {}
 
   common::Time GetTime() const override { return time_; }
@@ -54,7 +54,7 @@ class DispatchableRangefinderData : public Data {
  private:
   const common::Time time_;
   const Eigen::Vector3f origin_;
-  const PointCloud ranges_;
+  const TimedPointCloud ranges_;
 };
 
 template <typename DataType>
