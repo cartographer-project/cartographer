@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_TRANSFORM_TRANSFORM_INTERPOLATION_BUFFER_H_
 #define CARTOGRAPHER_TRANSFORM_TRANSFORM_INTERPOLATION_BUFFER_H_
 
-#include <vector>
+#include <deque>
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
@@ -36,6 +36,9 @@ class TransformInterpolationBuffer {
   // Adds a new transform to the buffer and removes the oldest transform if the
   // buffer size limit is exceeded.
   void Push(common::Time time, const transform::Rigid3d& transform);
+
+  // Pops the earlier transforms than the given timefrom the buffer.
+  void PopFronts(common::Time time);
 
   // Returns true if an interpolated transfrom can be computed at 'time'.
   bool Has(common::Time time) const;
@@ -61,7 +64,7 @@ class TransformInterpolationBuffer {
     transform::Rigid3d transform;
   };
 
-  std::vector<TimestampedTransform> timestamped_transforms_;
+  std::deque<TimestampedTransform> timestamped_transforms_;
 };
 
 }  // namespace transform

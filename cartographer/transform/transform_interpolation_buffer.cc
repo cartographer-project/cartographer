@@ -42,6 +42,13 @@ void TransformInterpolationBuffer::Push(const common::Time time,
   timestamped_transforms_.push_back(TimestampedTransform{time, transform});
 }
 
+void TransformInterpolationBuffer::PopFronts(const common::Time time) {
+  while (timestamped_transforms_.size() > 1 &&
+         timestamped_transforms_.at(1).time < time) {
+    timestamped_transforms_.pop_front();
+  }
+}
+
 bool TransformInterpolationBuffer::Has(const common::Time time) const {
   if (timestamped_transforms_.empty()) {
     return false;
