@@ -31,10 +31,26 @@ RangeData TransformRangeData(const RangeData& range_data,
   };
 }
 
+TimedRangeData TransformRangeData(const TimedRangeData& range_data,
+                                  const transform::Rigid3f& transform) {
+  return TimedRangeData{
+      transform * range_data.origin,
+      TransformPointCloud(range_data.returns, transform),
+      TransformPointCloud(range_data.misses, transform),
+  };
+}
+
 RangeData CropRangeData(const RangeData& range_data, const float min_z,
                         const float max_z) {
   return RangeData{range_data.origin, Crop(range_data.returns, min_z, max_z),
                    Crop(range_data.misses, min_z, max_z)};
+}
+
+TimedRangeData CropRangeData(const TimedRangeData& range_data,
+                             const float min_z, const float max_z) {
+  return TimedRangeData{range_data.origin,
+                        Crop(range_data.returns, min_z, max_z),
+                        Crop(range_data.misses, min_z, max_z)};
 }
 
 }  // namespace sensor
