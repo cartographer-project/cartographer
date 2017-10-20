@@ -180,12 +180,12 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   std::map<int, int> trajectory_remapping;
   for (auto& trajectory_proto : *pose_graph.mutable_trajectory()) {
     const int new_trajectory_id = AddTrajectoryForDeserialization();
-    // Also takes care of checking for duplicates.
     CHECK(trajectory_remapping
               .emplace(trajectory_proto.trajectory_id(), new_trajectory_id)
-              .second);
-    sparse_pose_graph_->FreezeTrajectory(new_trajectory_id);
+              .second)
+        << "Duplicate trajectory ID: " << trajectory_proto.trajectory_id();
     trajectory_proto.set_trajectory_id(new_trajectory_id);
+    sparse_pose_graph_->FreezeTrajectory(new_trajectory_id);
   }
 
   // Apply the calculated remapping to constraints in the SparsePoseGraph proto
@@ -221,21 +221,19 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
       break;
     }
     if (proto.has_node()) {
-      const int new_trajectory_id =
-          trajectory_remapping.at(proto.node().node_id().trajectory_id());
       proto.mutable_node()->mutable_node_id()->set_trajectory_id(
-          new_trajectory_id);
-      const transform::Rigid3d node_pose = node_poses.at(
-          NodeId{new_trajectory_id, proto.node().node_id().node_index()});
+          trajectory_remapping.at(proto.node().node_id().trajectory_id()));
+      const transform::Rigid3d node_pose =
+          node_poses.at(NodeId{proto.node().node_id().trajectory_id(),
+                               proto.node().node_id().node_index()});
       sparse_pose_graph_->AddNodeFromProto(node_pose, proto.node());
     }
     if (proto.has_submap()) {
-      const int new_trajectory_id =
-          trajectory_remapping.at(proto.submap().submap_id().trajectory_id());
       proto.mutable_submap()->mutable_submap_id()->set_trajectory_id(
-          new_trajectory_id);
-      const transform::Rigid3d submap_pose = submap_poses.at(SubmapId{
-          new_trajectory_id, proto.submap().submap_id().submap_index()});
+          trajectory_remapping.at(proto.submap().submap_id().trajectory_id()));
+      const transform::Rigid3d submap_pose =
+          submap_poses.at(SubmapId{proto.submap().submap_id().trajectory_id(),
+                                   proto.submap().submap_id().submap_index()});
       sparse_pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
     }
   }
