@@ -177,10 +177,23 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   proto::SparsePoseGraph pose_graph;
   CHECK(reader->ReadProto(&pose_graph));
 
-  for (int trajectory_id = 0; trajectory_id < pose_graph.trajectory().size();
-       ++trajectory_id) {
-    CHECK_EQ(AddTrajectoryForDeserialization(), trajectory_id);
-    sparse_pose_graph_->FreezeTrajectory(trajectory_id);
+  std::map<int, int> trajectory_remapping;
+  for (auto& trajectory_proto : *pose_graph.mutable_trajectory()) {
+    const int new_trajectory_id = AddTrajectoryForDeserialization();
+    // Also takes care of checking for duplicates.
+    CHECK(trajectory_remapping
+              .emplace(trajectory_proto.trajectory_id(), new_trajectory_id)
+              .second);
+    sparse_pose_graph_->FreezeTrajectory(new_trajectory_id);
+    trajectory_proto.set_trajectory_id(new_trajectory_id);
+  }
+
+  // Apply the calculated remapping to constraints in the SparsePoseGraph proto
+  for (auto& constraint_proto : *pose_graph.mutable_constraint()) {
+    constraint_proto.mutable_submap_id()->set_trajectory_id(
+        trajectory_remapping.at(constraint_proto.submap_id().trajectory_id()));
+    constraint_proto.mutable_node_id()->set_trajectory_id(
+        trajectory_remapping.at(constraint_proto.node_id().trajectory_id()));
   }
 
   MapById<SubmapId, transform::Rigid3d> submap_poses;
@@ -208,15 +221,21 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
       break;
     }
     if (proto.has_node()) {
-      const transform::Rigid3d node_pose =
-          node_poses.at(NodeId{proto.node().node_id().trajectory_id(),
-                               proto.node().node_id().node_index()});
+      const int new_trajectory_id =
+          trajectory_remapping.at(proto.node().node_id().trajectory_id());
+      proto.mutable_node()->mutable_node_id()->set_trajectory_id(
+          new_trajectory_id);
+      const transform::Rigid3d node_pose = node_poses.at(
+          NodeId{new_trajectory_id, proto.node().node_id().node_index()});
       sparse_pose_graph_->AddNodeFromProto(node_pose, proto.node());
     }
     if (proto.has_submap()) {
-      const transform::Rigid3d submap_pose =
-          submap_poses.at(SubmapId{proto.submap().submap_id().trajectory_id(),
-                                   proto.submap().submap_id().submap_index()});
+      const int new_trajectory_id =
+          trajectory_remapping.at(proto.submap().submap_id().trajectory_id());
+      proto.mutable_submap()->mutable_submap_id()->set_trajectory_id(
+          new_trajectory_id);
+      const transform::Rigid3d submap_pose = submap_poses.at(SubmapId{
+          new_trajectory_id, proto.submap().submap_id().submap_index()});
       sparse_pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
     }
   }
