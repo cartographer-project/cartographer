@@ -249,6 +249,8 @@ class MapById {
 
   // Inserts data (which must not exist already) into a trajectory.
   void Insert(const IdType& id, const DataType& data) {
+    CHECK_GE(id.trajectory_id, 0);
+    CHECK_GE(GetIndex(id), 0);
     auto& trajectory = trajectories_[id.trajectory_id];
     trajectory.can_append_ = false;
     CHECK(trajectory.data_.emplace(GetIndex(id), data).second);
