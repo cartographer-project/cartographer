@@ -89,6 +89,15 @@ void OptimizationProblem::AddTrajectoryNode(
   node_data_.Append(trajectory_id, NodeData{time, initial_pose, pose});
 }
 
+void OptimizationProblem::InsertTrajectoryNode(
+    const mapping::NodeId& node_id, const common::Time time,
+    const transform::Rigid3d& initial_pose, const transform::Rigid3d& pose) {
+  CHECK_GE(node_id.trajectory_id, 0);
+  trajectory_data_.resize(std::max(
+      trajectory_data_.size(), static_cast<size_t>(node_id.trajectory_id) + 1));
+  node_data_.Insert(node_id, NodeData{time, initial_pose, pose});
+}
+
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   node_data_.Trim(node_id);
 
@@ -110,6 +119,15 @@ void OptimizationProblem::AddSubmap(const int trajectory_id,
   trajectory_data_.resize(std::max(trajectory_data_.size(),
                                    static_cast<size_t>(trajectory_id) + 1));
   submap_data_.Append(trajectory_id, SubmapData{submap_pose});
+}
+
+void OptimizationProblem::InsertSubmap(const mapping::SubmapId& submap_id,
+                                       const transform::Rigid3d& submap_pose) {
+  CHECK_GE(submap_id.trajectory_id, 0);
+  trajectory_data_.resize(
+      std::max(trajectory_data_.size(),
+               static_cast<size_t>(submap_id.trajectory_id) + 1));
+  submap_data_.Insert(submap_id, SubmapData{submap_pose});
 }
 
 void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {

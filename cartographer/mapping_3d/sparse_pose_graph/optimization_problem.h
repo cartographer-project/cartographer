@@ -74,8 +74,13 @@ class OptimizationProblem {
   void AddTrajectoryNode(int trajectory_id, common::Time time,
                          const transform::Rigid3d& initial_pose,
                          const transform::Rigid3d& pose);
+  void InsertTrajectoryNode(const mapping::NodeId& node_id, common::Time time,
+                            const transform::Rigid3d& initial_pose,
+                            const transform::Rigid3d& pose);
   void TrimTrajectoryNode(const mapping::NodeId& node_id);
   void AddSubmap(int trajectory_id, const transform::Rigid3d& submap_pose);
+  void InsertSubmap(const mapping::SubmapId& submap_id,
+                    const transform::Rigid3d& submap_pose);
   void TrimSubmap(const mapping::SubmapId& submap_id);
 
   void SetMaxNumIterations(int32 max_num_iterations);
