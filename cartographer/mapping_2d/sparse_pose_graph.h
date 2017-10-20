@@ -247,7 +247,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
     ~TrimmingHandle() override {}
 
     int num_submaps(int trajectory_id) const override;
-    void MarkSubmapAsTrimmed(const mapping::SubmapId& submap_id) override;
+    void MarkSubmapAsTrimmed(const mapping::SubmapId& submap_id)
+        REQUIRES(parent_->mutex_) override;
 
    private:
     SparsePoseGraph* const parent_;
