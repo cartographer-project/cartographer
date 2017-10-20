@@ -139,6 +139,15 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                : nullptr;
   };
 
+  const auto rotation_parametrization =
+      [this]() -> std::unique_ptr<ceres::LocalParameterization> {
+    if(fix_z_ == FixZ::kYes) {
+              return common::make_unique<ceres::AutoDiffLocalParameterization<
+                    YawOnlyQuaternionPlus, 4, 1>>();
+    }
+    return common::make_unique<ceres::QuaternionParameterization>();
+  };
+
   // Set the starting point.
   CHECK(!submap_data_.empty());
   CHECK(submap_data_.Contains(mapping::SubmapId{0, 0}));
@@ -158,14 +167,17 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                     common::make_unique<ceres::AutoDiffLocalParameterization<
                         ConstantYawQuaternionPlus, 4, 2>>(),
                     &problem));
+      if (fix_z_ == FixZ::kYes) {
+        problem.SetParameterBlockConstant(
+            C_submaps.at(submap_id_data.id).rotation());
+      }
       problem.SetParameterBlockConstant(
           C_submaps.at(submap_id_data.id).translation());
     } else {
       C_submaps.Insert(
           submap_id_data.id,
           CeresPose(submap_id_data.data.pose, translation_parameterization(),
-                    common::make_unique<ceres::QuaternionParameterization>(),
-                    &problem));
+                    rotation_parametrization(), &problem));
     }
     if (frozen) {
       problem.SetParameterBlockConstant(
@@ -180,8 +192,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     C_nodes.Insert(
         node_id_data.id,
         CeresPose(node_id_data.data.pose, translation_parameterization(),
-                  common::make_unique<ceres::QuaternionParameterization>(),
-                  &problem));
+                  rotation_parametrization(), &problem));
     if (frozen) {
       problem.SetParameterBlockConstant(C_nodes.at(node_id_data.id).rotation());
       problem.SetParameterBlockConstant(

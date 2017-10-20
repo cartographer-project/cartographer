@@ -46,8 +46,8 @@ class SpaCostFunction {
       const transform::Rigid3d& zbar_ij, const T* const c_i_rotation,
       const T* const c_i_translation, const T* const c_j_rotation,
       const T* const c_j_translation) {
-    const Eigen::Quaternion<T> R_i_inverse(c_i_rotation[0], -c_i_rotation[1],
-                                           -c_i_rotation[2], -c_i_rotation[3]);
+    const Eigen::Quaternion<T> R_i_inverse(-c_i_rotation[0], c_i_rotation[1],
+                                           c_i_rotation[2], c_i_rotation[3]);
 
     const Eigen::Matrix<T, 3, 1> delta(c_j_translation[0] - c_i_translation[0],
                                        c_j_translation[1] - c_i_translation[1],
@@ -55,14 +55,13 @@ class SpaCostFunction {
     const Eigen::Matrix<T, 3, 1> h_translation = R_i_inverse * delta;
 
     const Eigen::Quaternion<T> h_rotation_inverse =
-        Eigen::Quaternion<T>(c_j_rotation[0], -c_j_rotation[1],
-                             -c_j_rotation[2], -c_j_rotation[3]) *
+        Eigen::Quaternion<T>(-c_j_rotation[0], c_j_rotation[1],
+                             c_j_rotation[2], c_j_rotation[3]) *
         Eigen::Quaternion<T>(c_i_rotation[0], c_i_rotation[1], c_i_rotation[2],
                              c_i_rotation[3]);
 
     const Eigen::Matrix<T, 3, 1> angle_axis_difference =
-        transform::RotationQuaternionToAngleAxisVector(
-            h_rotation_inverse * zbar_ij.rotation().cast<T>());
+        T(2.) * (h_rotation_inverse * zbar_ij.rotation().cast<T>()).vec();
 
     return {{T(zbar_ij.translation().x()) - h_translation[0],
              T(zbar_ij.translation().y()) - h_translation[1],

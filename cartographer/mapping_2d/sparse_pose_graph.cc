@@ -223,9 +223,6 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   CHECK_EQ(submap_ids.size(), insertion_submaps.size());
   const mapping::SubmapId matching_id = submap_ids.front();
   const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
-  const transform::Rigid3d pose =
-      constant_data->local_pose *
-      transform::Rigid3d::Rotation(constant_data->gravity_alignment.inverse());
   const transform::Rigid3d optimized_pose =
       optimization_problem_.submap_data().at(matching_id).pose *
       insertion_submaps.front()->local_pose().inverse() *
