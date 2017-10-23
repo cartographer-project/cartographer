@@ -69,8 +69,14 @@ class OptimizationProblem {
                          const transform::Rigid2d& initial_pose,
                          const transform::Rigid2d& pose,
                          const Eigen::Quaterniond& gravity_alignment);
+  void InsertTrajectoryNode(const mapping::NodeId& node_id, common::Time time,
+                            const transform::Rigid2d& initial_pose,
+                            const transform::Rigid2d& pose,
+                            const Eigen::Quaterniond& gravity_alignment);
   void TrimTrajectoryNode(const mapping::NodeId& node_id);
   void AddSubmap(int trajectory_id, const transform::Rigid2d& submap_pose);
+  void InsertSubmap(const mapping::SubmapId& submap_id,
+                    const transform::Rigid2d& submap_pose);
   void TrimSubmap(const mapping::SubmapId& submap_id);
 
   void SetMaxNumIterations(int32 max_num_iterations);

@@ -77,16 +77,14 @@ class SparsePoseGraph {
   // Freezes a trajectory. Poses in this trajectory will not be optimized.
   virtual void FreezeTrajectory(int trajectory_id) = 0;
 
-  // Adds a 'submap' from a proto with the given 'initial_pose' to the frozen
-  // trajectory with 'trajectory_id'.
-  virtual void AddSubmapFromProto(int trajectory_id,
-                                  const transform::Rigid3d& initial_pose,
+  // Adds a 'submap' from a proto with the given 'global_pose' to the
+  // appropriate frozen trajectory.
+  virtual void AddSubmapFromProto(const transform::Rigid3d& global_pose,
                                   const proto::Submap& submap) = 0;
 
-  // Adds a 'node' from a proto with the given 'pose' to the frozen trajectory
-  // with 'trajectory_id'.
-  virtual void AddNodeFromProto(int trajectory_id,
-                                const transform::Rigid3d& pose,
+  // Adds a 'node' from a proto with the given 'global_pose' to the
+  // appropriate frozen trajectory.
+  virtual void AddNodeFromProto(const transform::Rigid3d& global_pose,
                                 const proto::Node& node) = 0;
 
   // Adds a 'trimmer'. It will be used after all data added before it has been

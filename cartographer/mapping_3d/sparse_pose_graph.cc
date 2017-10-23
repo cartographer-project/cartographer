@@ -393,50 +393,49 @@ void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   });
 }
 
-void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
-                                         const transform::Rigid3d& initial_pose,
+void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& global_pose,
                                          const mapping::proto::Submap& submap) {
   if (!submap.has_submap_3d()) {
     return;
   }
 
+  const mapping::SubmapId submap_id = {submap.submap_id().trajectory_id(),
+                                       submap.submap_id().submap_index()};
   std::shared_ptr<const Submap> submap_ptr =
       std::make_shared<const Submap>(submap.submap_3d());
 
   common::MutexLocker locker(&mutex_);
-  AddTrajectoryIfNeeded(trajectory_id);
-  const mapping::SubmapId submap_id =
-      submap_data_.Append(trajectory_id, SubmapData());
+  AddTrajectoryIfNeeded(submap_id.trajectory_id);
+  submap_data_.Insert(submap_id, SubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the optimized pose.
-  CHECK_EQ(submap_id,
-           optimized_submap_transforms_.Append(
-               trajectory_id, sparse_pose_graph::SubmapData{initial_pose}));
-  AddWorkItem([this, submap_id, initial_pose]() REQUIRES(mutex_) {
+  optimized_submap_transforms_.Insert(
+      submap_id, sparse_pose_graph::SubmapData{global_pose});
+  AddWorkItem([this, submap_id, global_pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
-    optimization_problem_.AddSubmap(submap_id.trajectory_id, initial_pose);
+    optimization_problem_.InsertSubmap(submap_id, global_pose);
   });
 }
 
-void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
-                                       const transform::Rigid3d& pose,
+void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
                                        const mapping::proto::Node& node) {
+  const mapping::NodeId node_id = {node.node_id().trajectory_id(),
+                                   node.node_id().node_index()};
   std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data =
       std::make_shared<const mapping::TrajectoryNode::Data>(
           mapping::FromProto(node.node_data()));
 
   common::MutexLocker locker(&mutex_);
-  AddTrajectoryIfNeeded(trajectory_id);
-  const mapping::NodeId node_id = trajectory_nodes_.Append(
-      trajectory_id, mapping::TrajectoryNode{constant_data, pose});
+  AddTrajectoryIfNeeded(node_id.trajectory_id);
+  trajectory_nodes_.Insert(node_id,
+                           mapping::TrajectoryNode{constant_data, global_pose});
 
-  AddWorkItem([this, node_id, pose]() REQUIRES(mutex_) {
+  AddWorkItem([this, node_id, global_pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(node_id.trajectory_id), 1);
     const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
-    optimization_problem_.AddTrajectoryNode(node_id.trajectory_id,
-                                            constant_data->time,
-                                            constant_data->local_pose, pose);
+    optimization_problem_.InsertTrajectoryNode(
+        node_id, constant_data->time, constant_data->local_pose, global_pose);
   });
 }
 

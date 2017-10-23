@@ -373,55 +373,55 @@ void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   });
 }
 
-void SparsePoseGraph::AddSubmapFromProto(const int trajectory_id,
-                                         const transform::Rigid3d& initial_pose,
+void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& global_pose,
                                          const mapping::proto::Submap& submap) {
   if (!submap.has_submap_2d()) {
     return;
   }
 
+  const mapping::SubmapId submap_id = {submap.submap_id().trajectory_id(),
+                                       submap.submap_id().submap_index()};
   std::shared_ptr<const Submap> submap_ptr =
       std::make_shared<const Submap>(submap.submap_2d());
-  const transform::Rigid2d initial_pose_2d = transform::Project2D(initial_pose);
+  const transform::Rigid2d global_pose_2d = transform::Project2D(global_pose);
 
   common::MutexLocker locker(&mutex_);
-  AddTrajectoryIfNeeded(trajectory_id);
-  const mapping::SubmapId submap_id =
-      submap_data_.Append(trajectory_id, SubmapData());
+  AddTrajectoryIfNeeded(submap_id.trajectory_id);
+  submap_data_.Insert(submap_id, SubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the optimized pose.
-  CHECK_EQ(submap_id,
-           optimized_submap_transforms_.Append(
-               trajectory_id, sparse_pose_graph::SubmapData{initial_pose_2d}));
-  AddWorkItem([this, submap_id, initial_pose_2d]() REQUIRES(mutex_) {
+  optimized_submap_transforms_.Insert(
+      submap_id, sparse_pose_graph::SubmapData{global_pose_2d});
+  AddWorkItem([this, submap_id, global_pose_2d]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
-    optimization_problem_.AddSubmap(submap_id.trajectory_id, initial_pose_2d);
+    optimization_problem_.InsertSubmap(submap_id, global_pose_2d);
   });
 }
 
-void SparsePoseGraph::AddNodeFromProto(const int trajectory_id,
-                                       const transform::Rigid3d& pose,
+void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
                                        const mapping::proto::Node& node) {
+  const mapping::NodeId node_id = {node.node_id().trajectory_id(),
+                                   node.node_id().node_index()};
   std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data =
       std::make_shared<const mapping::TrajectoryNode::Data>(
           mapping::FromProto(node.node_data()));
 
   common::MutexLocker locker(&mutex_);
-  AddTrajectoryIfNeeded(trajectory_id);
-  const mapping::NodeId node_id = trajectory_nodes_.Append(
-      trajectory_id, mapping::TrajectoryNode{constant_data, pose});
+  AddTrajectoryIfNeeded(node_id.trajectory_id);
+  trajectory_nodes_.Insert(node_id,
+                           mapping::TrajectoryNode{constant_data, global_pose});
 
-  AddWorkItem([this, node_id, pose]() REQUIRES(mutex_) {
+  AddWorkItem([this, node_id, global_pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(node_id.trajectory_id), 1);
     const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
     const auto gravity_alignment_inverse = transform::Rigid3d::Rotation(
         constant_data->gravity_alignment.inverse());
-    optimization_problem_.AddTrajectoryNode(
-        node_id.trajectory_id, constant_data->time,
+    optimization_problem_.InsertTrajectoryNode(
+        node_id, constant_data->time,
         transform::Project2D(constant_data->local_pose *
                              gravity_alignment_inverse),
-        transform::Project2D(pose * gravity_alignment_inverse),
+        transform::Project2D(global_pose * gravity_alignment_inverse),
         constant_data->gravity_alignment);
   });
 }
