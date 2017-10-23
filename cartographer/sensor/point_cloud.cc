@@ -32,8 +32,8 @@ PointCloud TransformPointCloud(const PointCloud& point_cloud,
   return result;
 }
 
-TimedPointCloud TransformPointCloud(const TimedPointCloud& point_cloud,
-                                    const transform::Rigid3f& transform) {
+TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
+                                         const transform::Rigid3f& transform) {
   TimedPointCloud result;
   result.reserve(point_cloud.size());
   for (const Eigen::Vector4f& point : point_cloud) {
@@ -45,8 +45,8 @@ TimedPointCloud TransformPointCloud(const TimedPointCloud& point_cloud,
   return result;
 }
 
-PointCloud Crop(const PointCloud& point_cloud, const float min_z,
-                const float max_z) {
+PointCloud CropPointCloud(const PointCloud& point_cloud, const float min_z,
+                          const float max_z) {
   PointCloud cropped_point_cloud;
   for (const auto& point : point_cloud) {
     if (min_z <= point.z() && point.z() <= max_z) {
@@ -56,8 +56,8 @@ PointCloud Crop(const PointCloud& point_cloud, const float min_z,
   return cropped_point_cloud;
 }
 
-TimedPointCloud Crop(const TimedPointCloud& point_cloud, const float min_z,
-                     const float max_z) {
+TimedPointCloud CropTimedPointCloud(const TimedPointCloud& point_cloud,
+                                    const float min_z, const float max_z) {
   TimedPointCloud cropped_point_cloud;
   for (const auto& point : point_cloud) {
     if (min_z <= point.z() && point.z() <= max_z) {

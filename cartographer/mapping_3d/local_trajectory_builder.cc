@@ -78,7 +78,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
       first_pose_estimate_.inverse() *
       extrapolator_->ExtrapolatePose(time).cast<float>();
   const sensor::TimedRangeData range_data_in_first_tracking =
-      sensor::TransformRangeData(range_data, tracking_delta);
+      sensor::TransformTimedRangeData(range_data, tracking_delta);
   for (const Eigen::Vector4f& hit : range_data_in_first_tracking.returns) {
     const Eigen::Vector3f delta =
         hit.head<3>() - range_data_in_first_tracking.origin;

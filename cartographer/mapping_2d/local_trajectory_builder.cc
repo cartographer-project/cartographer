@@ -99,7 +99,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
       extrapolator_->ExtrapolatePose(time).cast<float>();
   // TODO(gaschler): Try to move this common behavior with 3D into helper.
   const sensor::TimedRangeData range_data_in_first_tracking =
-      sensor::TransformRangeData(range_data, tracking_delta);
+      sensor::TransformTimedRangeData(range_data, tracking_delta);
   // Drop any returns below the minimum range and convert returns beyond the
   // maximum range into misses.
   for (const Eigen::Vector4f& hit : range_data_in_first_tracking.returns) {

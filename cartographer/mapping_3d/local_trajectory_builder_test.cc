@@ -199,8 +199,8 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
     // 50 cm radius spheres.
     sensor::TimedPointCloud returns_in_world_frame;
     for (const Eigen::Vector4f& direction_in_world_frame :
-         sensor::TransformPointCloud(directions_in_rangefinder_frame,
-                                     pose.cast<float>())) {
+         sensor::TransformTimedPointCloud(directions_in_rangefinder_frame,
+                                          pose.cast<float>())) {
       const Eigen::Vector3f origin =
           pose.cast<float>() * Eigen::Vector3f::Zero();
       Eigen::Vector4f return_point;
@@ -210,8 +210,8 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
       returns_in_world_frame.push_back(return_point);
     }
     return {Eigen::Vector3f::Zero(),
-            sensor::TransformPointCloud(returns_in_world_frame,
-                                        pose.inverse().cast<float>()),
+            sensor::TransformTimedPointCloud(returns_in_world_frame,
+                                             pose.inverse().cast<float>()),
             {}};
   }
 
