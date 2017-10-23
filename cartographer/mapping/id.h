@@ -348,9 +348,11 @@ class MapById {
           return ConstIterator(*this,
                                IdType{trajectory_id, lower_bound_m->first});
         } else {
+          CHECK(M < R);
           R = M;
         }
       } else {
+        CHECK(lower_bound_m->first > L);
         L = lower_bound_m->first;
       }
       M = L + (R - L) / 2;
