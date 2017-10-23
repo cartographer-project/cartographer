@@ -42,10 +42,10 @@ FixedRatioSamplingPointsProcessor::FixedRatioSamplingPointsProcessor(
 
 void FixedRatioSamplingPointsProcessor::Process(
     std::unique_ptr<PointsBatch> batch) {
-  std::vector<int> to_remove;
+  std::unordered_set<int> to_remove;
   for (size_t i = 0; i < batch->points.size(); ++i) {
     if (!sampler_->Pulse()) {
-      to_remove.push_back(i);
+      to_remove.insert(i);
     }
   }
   RemovePoints(to_remove, batch.get());
