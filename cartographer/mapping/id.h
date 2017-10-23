@@ -18,7 +18,6 @@
 #define CARTOGRAPHER_MAPPING_ID_H_
 
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <limits>
 #include <map>
