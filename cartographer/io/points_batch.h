@@ -19,6 +19,7 @@
 
 #include <array>
 #include <cstdint>
+#include <unordered_set>
 #include <vector>
 
 #include "Eigen/Core"
@@ -65,7 +66,7 @@ struct PointsBatch {
 };
 
 // Removes the indices in 'to_remove' from 'batch'.
-void RemovePoints(std::vector<int> to_remove, PointsBatch* batch);
+void RemovePoints(std::unordered_set<int> to_remove, PointsBatch* batch);
 
 }  // namespace io
 }  // namespace cartographer

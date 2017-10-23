@@ -86,6 +86,15 @@ void OptimizationProblem::AddTrajectoryNode(
                     NodeData{time, initial_pose, pose, gravity_alignment});
 }
 
+void OptimizationProblem::InsertTrajectoryNode(
+    const mapping::NodeId& node_id, const common::Time time,
+    const transform::Rigid2d& initial_pose, const transform::Rigid2d& pose,
+    const Eigen::Quaterniond& gravity_alignment) {
+  node_data_.Insert(node_id,
+                    NodeData{time, initial_pose, pose, gravity_alignment});
+}
+
+
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   node_data_.Trim(node_id);
 
@@ -104,6 +113,11 @@ void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
 void OptimizationProblem::AddSubmap(const int trajectory_id,
                                     const transform::Rigid2d& submap_pose) {
   submap_data_.Append(trajectory_id, SubmapData{submap_pose});
+}
+
+void OptimizationProblem::InsertSubmap(const mapping::SubmapId& submap_id,
+                                       const transform::Rigid2d& submap_pose) {
+  submap_data_.Insert(submap_id, SubmapData{submap_pose});
 }
 
 void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {
