@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_MAPPING_ID_H_
 
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -28,6 +29,7 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
+#include "cartographer/common/time.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -321,6 +323,41 @@ class MapById {
   }
 
   bool empty() const { return begin() == end(); }
+
+  ConstIterator lower_bound(int trajectory_id, const common::Time& time) {
+    if (SizeOfTrajectoryOrZero(trajectory_id) == 0) {
+      return EndOfTrajectory(trajectory_id);
+    }
+
+    const std::map<int, DataType>& trajectory =
+        trajectories_.at(trajectory_id).data_;
+    if (std::prev(trajectory.end())->second.time() < time) {
+      return EndOfTrajectory(trajectory_id);
+    } else if (!(trajectory.begin()->second.time() < time)) {
+      return BeginOfTrajectory(trajectory_id);
+    }
+
+    int L = trajectory.begin()->first;
+    int R = std::prev(trajectory.end())->first;
+    int M = L + (R - L) / 2;
+
+    while (true) {
+      auto lower_bound_m = trajectory.lower_bound(M);
+      if (!(lower_bound_m->second.time() < time)) {
+        if (std::prev(lower_bound_m)->second.time() < time) {
+          return ConstIterator(*this,
+                               IdType{trajectory_id, lower_bound_m->first});
+        } else {
+          R = M;
+        }
+      } else {
+        L = lower_bound_m->first;
+      }
+      M = L + (R - L) / 2;
+    }
+
+    return EndOfTrajectory(trajectory_id);
+  }
 
  private:
   struct MapByIndex {
