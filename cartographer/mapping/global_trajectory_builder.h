@@ -46,10 +46,10 @@ class GlobalTrajectoryBuilder
 
   void AddRangefinderData(const common::Time time,
                           const Eigen::Vector3f& origin,
-                          const sensor::PointCloud& ranges) override {
+                          const sensor::TimedPointCloud& ranges) override {
     std::unique_ptr<typename LocalTrajectoryBuilder::InsertionResult>
         insertion_result = local_trajectory_builder_.AddRangeData(
-            time, sensor::RangeData{origin, ranges, {}});
+            time, sensor::TimedRangeData{origin, ranges, {}});
     if (insertion_result == nullptr) {
       return;
     }

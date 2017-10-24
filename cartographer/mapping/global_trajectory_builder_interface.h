@@ -53,7 +53,7 @@ class GlobalTrajectoryBuilderInterface {
 
   virtual void AddRangefinderData(common::Time time,
                                   const Eigen::Vector3f& origin,
-                                  const sensor::PointCloud& ranges) = 0;
+                                  const sensor::TimedPointCloud& ranges) = 0;
   virtual void AddSensorData(const sensor::ImuData& imu_data) = 0;
   virtual void AddSensorData(const sensor::OdometryData& odometry_data) = 0;
   virtual void AddSensorData(

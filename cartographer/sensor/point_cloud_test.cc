@@ -37,6 +37,18 @@ TEST(PointCloudTest, TransformPointCloud) {
   EXPECT_NEAR(3.5f, transformed_point_cloud[1].y(), 1e-6);
 }
 
+TEST(PointCloudTest, TransformTimedPointCloud) {
+  TimedPointCloud point_cloud;
+  point_cloud.emplace_back(0.5f, 0.5f, 1.f, 0.f);
+  point_cloud.emplace_back(3.5f, 0.5f, 42.f, 0.f);
+  const TimedPointCloud transformed_point_cloud = TransformTimedPointCloud(
+      point_cloud, transform::Embed3D(transform::Rigid2f::Rotation(M_PI_2)));
+  EXPECT_NEAR(-0.5f, transformed_point_cloud[0].x(), 1e-6);
+  EXPECT_NEAR(0.5f, transformed_point_cloud[0].y(), 1e-6);
+  EXPECT_NEAR(-0.5f, transformed_point_cloud[1].x(), 1e-6);
+  EXPECT_NEAR(3.5f, transformed_point_cloud[1].y(), 1e-6);
+}
+
 }  // namespace
 }  // namespace sensor
 }  // namespace cartographer

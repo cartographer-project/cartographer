@@ -27,25 +27,38 @@
 namespace cartographer {
 namespace sensor {
 
+// Stores 3D positions of points.
+// For 2D points, the third entry is 0.f.
 typedef std::vector<Eigen::Vector3f> PointCloud;
 
-struct PointCloudWithIntensities {
-  PointCloud points;
-  std::vector<float> intensities;
+// Stores 3D positions of points with their measurement time in the fourth
+// entry. Time is in seconds, increasing and relative to the moment when
+// 'points[0]' was acquired. If timing is not available, all fourth entries
+// are 0.f. For 2D points, the third entry is 0.f and the fourth entry is time.
+typedef std::vector<Eigen::Vector4f> TimedPointCloud;
 
-  // For each item in 'points', contains the time delta of when it was acquired
-  // after points[0], i.e. the first entry is always 0.f. If timing
-  // information is not available all entries will be 0.f.
-  std::vector<float> offset_seconds;
+struct PointCloudWithIntensities {
+  TimedPointCloud points;
+  std::vector<float> intensities;
 };
 
 // Transforms 'point_cloud' according to 'transform'.
 PointCloud TransformPointCloud(const PointCloud& point_cloud,
                                const transform::Rigid3f& transform);
 
+// Transforms 'point_cloud' according to 'transform'.
+TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
+                                         const transform::Rigid3f& transform);
+
 // Returns a new point cloud without points that fall outside the region defined
 // by 'min_z' and 'max_z'.
-PointCloud Crop(const PointCloud& point_cloud, float min_z, float max_z);
+PointCloud CropPointCloud(const PointCloud& point_cloud, float min_z,
+                          float max_z);
+
+// Returns a new point cloud without points that fall outside the region defined
+// by 'min_z' and 'max_z'.
+TimedPointCloud CropTimedPointCloud(const TimedPointCloud& point_cloud,
+                                    float min_z, float max_z);
 
 }  // namespace sensor
 }  // namespace cartographer

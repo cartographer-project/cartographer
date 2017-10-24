@@ -60,7 +60,7 @@ void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddRangeData(const common::Time time,
-                                     const sensor::RangeData& range_data) {
+                                     const sensor::TimedRangeData& range_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator with our first IMU message, we
     // cannot compute the orientation of the rangefinder.
@@ -73,17 +73,19 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
         sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
   }
 
+  // TODO(gaschler): Take time delta of individual points into account.
   const transform::Rigid3f tracking_delta =
       first_pose_estimate_.inverse() *
       extrapolator_->ExtrapolatePose(time).cast<float>();
-  const sensor::RangeData range_data_in_first_tracking =
-      sensor::TransformRangeData(range_data, tracking_delta);
-  for (const Eigen::Vector3f& hit : range_data_in_first_tracking.returns) {
-    const Eigen::Vector3f delta = hit - range_data_in_first_tracking.origin;
+  const sensor::TimedRangeData range_data_in_first_tracking =
+      sensor::TransformTimedRangeData(range_data, tracking_delta);
+  for (const Eigen::Vector4f& hit : range_data_in_first_tracking.returns) {
+    const Eigen::Vector3f delta =
+        hit.head<3>() - range_data_in_first_tracking.origin;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
-        accumulated_range_data_.returns.push_back(hit);
+        accumulated_range_data_.returns.push_back(hit.head<3>());
       } else {
         // We insert a ray cropped to 'max_range' as a miss for hits beyond the
         // maximum range. This way the free space up to the maximum range will

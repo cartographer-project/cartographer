@@ -35,11 +35,25 @@ struct RangeData {
   PointCloud misses;
 };
 
+// Like 'RangeData', but with 'TimedPointClouds'.
+struct TimedRangeData {
+  Eigen::Vector3f origin;
+  TimedPointCloud returns;
+  TimedPointCloud misses;
+};
+
 RangeData TransformRangeData(const RangeData& range_data,
                              const transform::Rigid3f& transform);
 
+TimedRangeData TransformTimedRangeData(const TimedRangeData& range_data,
+                                       const transform::Rigid3f& transform);
+
 // Crops 'range_data' according to the region defined by 'min_z' and 'max_z'.
 RangeData CropRangeData(const RangeData& range_data, float min_z, float max_z);
+
+// Crops 'range_data' according to the region defined by 'min_z' and 'max_z'.
+TimedRangeData CropTimedRangeData(const TimedRangeData& range_data, float min_z,
+                                  float max_z);
 
 }  // namespace sensor
 }  // namespace cartographer

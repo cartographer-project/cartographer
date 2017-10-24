@@ -54,7 +54,7 @@ class LocalTrajectoryBuilder {
 
   void AddImuData(const sensor::ImuData& imu_data);
   std::unique_ptr<InsertionResult> AddRangeData(
-      common::Time time, const sensor::RangeData& range_data);
+      common::Time time, const sensor::TimedRangeData& range_data);
   void AddOdometerData(const sensor::OdometryData& odometry_data);
   const mapping::PoseEstimate& pose_estimate() const;
 

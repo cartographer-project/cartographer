@@ -75,7 +75,7 @@ void LocalTrajectoryBuilder::ScanMatch(
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddRangeData(const common::Time time,
-                                     const sensor::RangeData& range_data) {
+                                     const sensor::TimedRangeData& range_data) {
   // Initialize extrapolator now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
     InitializeExtrapolator(time);
@@ -93,19 +93,22 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
         sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
   }
 
+  // TODO(gaschler): Take time delta of individual points into account.
   const transform::Rigid3f tracking_delta =
       first_pose_estimate_.inverse() *
       extrapolator_->ExtrapolatePose(time).cast<float>();
-  const sensor::RangeData range_data_in_first_tracking =
-      sensor::TransformRangeData(range_data, tracking_delta);
+  // TODO(gaschler): Try to move this common behavior with 3D into helper.
+  const sensor::TimedRangeData range_data_in_first_tracking =
+      sensor::TransformTimedRangeData(range_data, tracking_delta);
   // Drop any returns below the minimum range and convert returns beyond the
   // maximum range into misses.
-  for (const Eigen::Vector3f& hit : range_data_in_first_tracking.returns) {
-    const Eigen::Vector3f delta = hit - range_data_in_first_tracking.origin;
+  for (const Eigen::Vector4f& hit : range_data_in_first_tracking.returns) {
+    const Eigen::Vector3f delta =
+        hit.head<3>() - range_data_in_first_tracking.origin;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
-        accumulated_range_data_.returns.push_back(hit);
+        accumulated_range_data_.returns.push_back(hit.head<3>());
       } else {
         accumulated_range_data_.misses.push_back(
             range_data_in_first_tracking.origin +
