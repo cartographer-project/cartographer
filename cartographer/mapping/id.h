@@ -323,6 +323,10 @@ class MapById {
 
   bool empty() const { return begin() == end(); }
 
+  // Returns an iterator to the the first element in the container belonging to
+  // trajectory 'trajectory_id' whose time is not considered to go before
+  // 'time', or EndOfTrajectory(trajectory_id) if all keys are considered to go
+  // before 'time'.
   ConstIterator lower_bound(int trajectory_id, const common::Time& time) {
     if (SizeOfTrajectoryOrZero(trajectory_id) == 0) {
       return EndOfTrajectory(trajectory_id);
@@ -336,25 +340,23 @@ class MapById {
       return BeginOfTrajectory(trajectory_id);
     }
 
-    int L = trajectory.begin()->first;
-    int R = std::prev(trajectory.end())->first;
-    int M = L + (R - L) / 2;
-
+    int left = trajectory.begin()->first;
+    int right = std::prev(trajectory.end())->first;
     while (true) {
-      auto lower_bound_m = trajectory.lower_bound(M);
-      if (!(lower_bound_m->second.time() < time)) {
-        if (std::prev(lower_bound_m)->second.time() < time) {
-          return ConstIterator(*this,
-                               IdType{trajectory_id, lower_bound_m->first});
+      const int middle = left + (right - left) / 2;
+      auto lower_bound_middle = trajectory.lower_bound(middle);
+      if (!(lower_bound_middle->second.time() < time)) {
+        if (std::prev(lower_bound_middle)->second.time() < time) {
+          return ConstIterator(
+              *this, IdType{trajectory_id, lower_bound_middle->first});
         } else {
-          CHECK(M < R);
-          R = M;
+          CHECK(middle < right);
+          right = middle;
         }
       } else {
-        CHECK(lower_bound_m->first > L);
-        L = lower_bound_m->first;
+        CHECK(lower_bound_middle->first > left);
+        left = lower_bound_middle->first;
       }
-      M = L + (R - L) / 2;
     }
 
     return EndOfTrajectory(trajectory_id);
