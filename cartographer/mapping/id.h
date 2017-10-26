@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_MAPPING_ID_H_
 
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -327,7 +328,7 @@ class MapById {
   // trajectory 'trajectory_id' whose time is not considered to go before
   // 'time', or EndOfTrajectory(trajectory_id) if all keys are considered to go
   // before 'time'.
-  ConstIterator lower_bound(int trajectory_id, const common::Time& time) {
+  ConstIterator lower_bound(const int trajectory_id, const common::Time& time) {
     if (SizeOfTrajectoryOrZero(trajectory_id) == 0) {
       return EndOfTrajectory(trajectory_id);
     }
@@ -336,30 +337,20 @@ class MapById {
         trajectories_.at(trajectory_id).data_;
     if (std::prev(trajectory.end())->second.time() < time) {
       return EndOfTrajectory(trajectory_id);
-    } else if (!(trajectory.begin()->second.time() < time)) {
-      return BeginOfTrajectory(trajectory_id);
     }
-
-    int left = trajectory.begin()->first;
-    int right = std::prev(trajectory.end())->first;
-    while (true) {
-      const int middle = left + (right - left) / 2;
-      auto lower_bound_middle = trajectory.lower_bound(middle);
-      if (!(lower_bound_middle->second.time() < time)) {
-        if (std::prev(lower_bound_middle)->second.time() < time) {
-          return ConstIterator(
-              *this, IdType{trajectory_id, lower_bound_middle->first});
-        } else {
-          CHECK(middle < right);
-          right = middle;
-        }
+    auto left = trajectory.begin();
+    auto right = std::prev(trajectory.end());
+    while (left != right) {
+      const int middle = left->first + (right->first - left->first) / 2;
+      const auto lower_bound_middle = trajectory.lower_bound(middle);
+      if (lower_bound_middle->second.time() < time) {
+        left = std::next(lower_bound_middle);
       } else {
-        CHECK(lower_bound_middle->first > left);
-        left = lower_bound_middle->first;
+        right = lower_bound_middle;
       }
     }
 
-    return EndOfTrajectory(trajectory_id);
+    return ConstIterator(*this, IdType{trajectory_id, left->first});
   }
 
  private:

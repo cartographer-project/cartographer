@@ -16,8 +16,10 @@
 
 #include "cartographer/mapping/id.h"
 
+#include <algorithm>
 #include <deque>
 #include <iterator>
+#include <random>
 #include <utility>
 
 #include "cartographer/common/time.h"
@@ -184,6 +186,39 @@ TEST(IdTest, LowerBound) {
         (MapById<SubmapId, Data>::ConstIterator(map_by_id, SubmapId{0, 1})));
   CHECK(map_by_id.lower_bound(0, CreateTime(4)) ==
         (MapById<SubmapId, Data>::ConstIterator(map_by_id, SubmapId{0, 2})));
+}
+
+TEST(IdTest, LowerBoundFuzz) {
+  constexpr int MAX_T_INCREMENT = 20;
+  constexpr int MAX_N_NODES = 20;
+  constexpr int N_TESTS = 100;
+
+  std::random_device rd;
+  std::mt19937 rng(rd());
+  std::uniform_int_distribution<int> dt_dist(1, MAX_T_INCREMENT);
+  std::uniform_int_distribution<int> N_dist(1, MAX_N_NODES);
+
+  for (int i = 0; i < N_TESTS; ++i) {
+    const int N = N_dist(rng);
+    int t = 0;
+    MapById<SubmapId, Data> map_by_id;
+    for (int j = 0; j < N; ++j) {
+      t = t + dt_dist(rng);
+      map_by_id.Append(0, Data(t));
+    }
+    std::uniform_int_distribution<int> t0_dist(1, N * MAX_T_INCREMENT + 1);
+    int t0 = t0_dist(rng);
+    auto it = map_by_id.lower_bound(0, CreateTime(t0));
+
+    auto ground_truth = std::lower_bound(
+        map_by_id.BeginOfTrajectory(0), map_by_id.EndOfTrajectory(0),
+        CreateTime(t0),
+        [](MapById<SubmapId, Data>::IdDataReference a, const common::Time& t) {
+          return a.data.time() < t;
+        });
+
+    CHECK(ground_truth == it);
+  }
 }
 
 }  // namespace
