@@ -192,28 +192,29 @@ TEST(IdTest, LowerBound) {
 
 TEST(IdTest, LowerBoundFuzz) {
   constexpr int kMaxTimeIncrement = 20;
-  constexpr int kMaxNumberOfNodes = 20;
-  constexpr int kNumberOfTests = 100;
+  constexpr int kMaxNumNodes = 20;
+  constexpr int kNumTests = 100;
+  constexpr int kTrajectoryId = 1;
 
   std::mt19937 rng;
   std::uniform_int_distribution<int> dt_dist(1, kMaxTimeIncrement);
-  std::uniform_int_distribution<int> N_dist(1, kMaxNumberOfNodes);
+  std::uniform_int_distribution<int> N_dist(1, kMaxNumNodes);
 
-  for (int i = 0; i < kNumberOfTests; ++i) {
+  for (int i = 0; i < kNumTests; ++i) {
     const int N = N_dist(rng);
     int t = 0;
     MapById<SubmapId, Data> map_by_id;
     for (int j = 0; j < N; ++j) {
       t = t + dt_dist(rng);
-      map_by_id.Append(0, Data(t));
+      map_by_id.Append(kTrajectoryId, Data(t));
     }
     std::uniform_int_distribution<int> t0_dist(1, N * kMaxTimeIncrement + 1);
     int t0 = t0_dist(rng);
-    auto it = map_by_id.lower_bound(0, CreateTime(t0));
+    auto it = map_by_id.lower_bound(kTrajectoryId, CreateTime(t0));
 
     auto ground_truth = std::lower_bound(
-        map_by_id.BeginOfTrajectory(0), map_by_id.EndOfTrajectory(0),
-        CreateTime(t0),
+        map_by_id.BeginOfTrajectory(kTrajectoryId),
+        map_by_id.EndOfTrajectory(kTrajectoryId), CreateTime(t0),
         [](MapById<SubmapId, Data>::IdDataReference a, const common::Time& t) {
           return a.data.time() < t;
         });
