@@ -82,20 +82,22 @@ void OptimizationProblem::AddFixedFramePoseData(
 
 void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
-    const transform::Rigid3d& initial_pose, const transform::Rigid3d& pose) {
+    const transform::Rigid3d& local_pose,
+    const transform::Rigid3d& global_pose) {
   CHECK_GE(trajectory_id, 0);
   trajectory_data_.resize(std::max(trajectory_data_.size(),
                                    static_cast<size_t>(trajectory_id) + 1));
-  node_data_.Append(trajectory_id, NodeData{time, initial_pose, pose});
+  node_data_.Append(trajectory_id, NodeData{time, local_pose, global_pose});
 }
 
 void OptimizationProblem::InsertTrajectoryNode(
     const mapping::NodeId& node_id, const common::Time time,
-    const transform::Rigid3d& initial_pose, const transform::Rigid3d& pose) {
+    const transform::Rigid3d& local_pose,
+    const transform::Rigid3d& global_pose) {
   CHECK_GE(node_id.trajectory_id, 0);
   trajectory_data_.resize(std::max(
       trajectory_data_.size(), static_cast<size_t>(node_id.trajectory_id) + 1));
-  node_data_.Insert(node_id, NodeData{time, initial_pose, pose});
+  node_data_.Insert(node_id, NodeData{time, local_pose, global_pose});
 }
 
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
@@ -197,7 +199,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         frozen_trajectories.count(node_id_data.id.trajectory_id) != 0;
     C_nodes.Insert(
         node_id_data.id,
-        CeresPose(node_id_data.data.pose, translation_parameterization(),
+        CeresPose(node_id_data.data.global_pose, translation_parameterization(),
                   common::make_unique<ceres::QuaternionParameterization>(),
                   &problem));
     if (frozen) {
@@ -335,8 +337,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                                          .inverse() *
                                      odometry_data_[trajectory_id].Lookup(
                                          second_node_data.time)
-                               : first_node_data.initial_pose.inverse() *
-                                     second_node_data.initial_pose;
+                               : first_node_data.local_pose.inverse() *
+                                     second_node_data.local_pose;
         problem.AddResidualBlock(
             new ceres::AutoDiffCostFunction<SpaCostFunction, 6, 4, 3, 4, 3>(
                 new SpaCostFunction(Constraint::Pose{
@@ -376,7 +378,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
       if (!fixed_frame_pose_initialized) {
         const transform::Rigid3d fixed_frame_pose_in_map =
-            node_data.pose * constraint_pose.zbar_ij.inverse();
+            node_data.global_pose * constraint_pose.zbar_ij.inverse();
         C_fixed_frames.emplace_back(
             transform::Rigid3d(
                 fixed_frame_pose_in_map.translation(),
@@ -428,7 +430,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     submap_data_.at(C_submap_id_data.id).pose = C_submap_id_data.data.ToRigid();
   }
   for (const auto& C_node_id_data : C_nodes) {
-    node_data_.at(C_node_id_data.id).pose = C_node_id_data.data.ToRigid();
+    node_data_.at(C_node_id_data.id).global_pose =
+        C_node_id_data.data.ToRigid();
   }
 }
 

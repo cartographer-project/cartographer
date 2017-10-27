@@ -94,7 +94,6 @@ void OptimizationProblem::InsertTrajectoryNode(
                     NodeData{time, initial_pose, pose, gravity_alignment});
 }
 
-
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   node_data_.Trim(node_id);
 
