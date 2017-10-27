@@ -16,15 +16,34 @@
 
 #include "cartographer/mapping/id.h"
 
+#include <algorithm>
 #include <deque>
 #include <iterator>
+#include <random>
 #include <utility>
 
+#include "cartographer/common/time.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace mapping {
 namespace {
+
+common::Time CreateTime(const int milliseconds) {
+  return common::Time(common::FromMilliseconds(milliseconds));
+}
+
+class Data {
+ public:
+  Data(int milliseconds) : time_(CreateTime(milliseconds)) {}
+
+  const common::Time& time() const {
+    return time_;
+  }
+
+ private:
+  const common::Time time_;
+};
 
 template <typename IdType>
 static MapById<IdType, int> CreateTestMapById() {
@@ -143,6 +162,65 @@ TEST(IdTest, FindSubmapId) {
   map_by_id.Append(42, 44);
   CHECK_EQ(map_by_id.find(SubmapId{42, 1})->data, 43);
   EXPECT_TRUE(map_by_id.find(SubmapId{42, 3}) == map_by_id.end());
+}
+
+TEST(IdTest, LowerBoundEdgeCases) {
+  MapById<SubmapId, Data> map_by_id;
+  map_by_id.Append(0, Data(1));
+  map_by_id.Append(2, Data(2));
+  CHECK(map_by_id.lower_bound(1, CreateTime(10)) ==
+        map_by_id.EndOfTrajectory(1));
+  CHECK(map_by_id.lower_bound(2, CreateTime(3)) ==
+        map_by_id.EndOfTrajectory(2));
+  CHECK(map_by_id.lower_bound(2, CreateTime(1)) ==
+        map_by_id.BeginOfTrajectory(2));
+}
+
+TEST(IdTest, LowerBound) {
+  MapById<SubmapId, Data> map_by_id;
+  map_by_id.Append(0, Data(1));
+  map_by_id.Append(0, Data(2));
+  map_by_id.Append(0, Data(4));
+  map_by_id.Append(0, Data(5));
+  CHECK(map_by_id.lower_bound(0, CreateTime(3)) ==
+        (MapById<SubmapId, Data>::ConstIterator(map_by_id, SubmapId{0, 2})));
+  CHECK(map_by_id.lower_bound(0, CreateTime(2)) ==
+        (MapById<SubmapId, Data>::ConstIterator(map_by_id, SubmapId{0, 1})));
+  CHECK(map_by_id.lower_bound(0, CreateTime(4)) ==
+        (MapById<SubmapId, Data>::ConstIterator(map_by_id, SubmapId{0, 2})));
+}
+
+TEST(IdTest, LowerBoundFuzz) {
+  constexpr int kMaxTimeIncrement = 20;
+  constexpr int kMaxNumNodes = 20;
+  constexpr int kNumTests = 100;
+  constexpr int kTrajectoryId = 1;
+
+  std::mt19937 rng;
+  std::uniform_int_distribution<int> dt_dist(1, kMaxTimeIncrement);
+  std::uniform_int_distribution<int> N_dist(1, kMaxNumNodes);
+
+  for (int i = 0; i < kNumTests; ++i) {
+    const int N = N_dist(rng);
+    int t = 0;
+    MapById<SubmapId, Data> map_by_id;
+    for (int j = 0; j < N; ++j) {
+      t = t + dt_dist(rng);
+      map_by_id.Append(kTrajectoryId, Data(t));
+    }
+    std::uniform_int_distribution<int> t0_dist(1, N * kMaxTimeIncrement + 1);
+    int t0 = t0_dist(rng);
+    auto it = map_by_id.lower_bound(kTrajectoryId, CreateTime(t0));
+
+    auto ground_truth = std::lower_bound(
+        map_by_id.BeginOfTrajectory(kTrajectoryId),
+        map_by_id.EndOfTrajectory(kTrajectoryId), CreateTime(t0),
+        [](MapById<SubmapId, Data>::IdDataReference a, const common::Time& t) {
+          return a.data.time() < t;
+        });
+
+    CHECK(ground_truth == it);
+  }
 }
 
 }  // namespace
