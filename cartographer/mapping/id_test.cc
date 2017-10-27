@@ -29,17 +29,19 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-common::Time CreateTime(int secs) {
-  return common::Time(std::chrono::seconds(secs));
+common::Time CreateTime(const int milliseconds) {
+  return common::Time(common::FromMilliseconds(milliseconds));
 }
 
-struct Data {
-  Data(int secs) : time_(CreateTime(secs)) {}
+class Data {
+ public:
+  Data(int milliseconds) : time_(CreateTime(milliseconds)) {}
 
   const common::Time& time() const {
     return time_;
   }
 
+ private:
   const common::Time time_;
 };
 
@@ -189,16 +191,15 @@ TEST(IdTest, LowerBound) {
 }
 
 TEST(IdTest, LowerBoundFuzz) {
-  constexpr int MAX_T_INCREMENT = 20;
-  constexpr int MAX_N_NODES = 20;
-  constexpr int N_TESTS = 100;
+  constexpr int kMaxTimeIncrement = 20;
+  constexpr int kMaxNumberOfNodes = 20;
+  constexpr int kNumberOfTests = 100;
 
-  std::random_device rd;
-  std::mt19937 rng(rd());
-  std::uniform_int_distribution<int> dt_dist(1, MAX_T_INCREMENT);
-  std::uniform_int_distribution<int> N_dist(1, MAX_N_NODES);
+  std::mt19937 rng;
+  std::uniform_int_distribution<int> dt_dist(1, kMaxTimeIncrement);
+  std::uniform_int_distribution<int> N_dist(1, kMaxNumberOfNodes);
 
-  for (int i = 0; i < N_TESTS; ++i) {
+  for (int i = 0; i < kNumberOfTests; ++i) {
     const int N = N_dist(rng);
     int t = 0;
     MapById<SubmapId, Data> map_by_id;
@@ -206,7 +207,7 @@ TEST(IdTest, LowerBoundFuzz) {
       t = t + dt_dist(rng);
       map_by_id.Append(0, Data(t));
     }
-    std::uniform_int_distribution<int> t0_dist(1, N * MAX_T_INCREMENT + 1);
+    std::uniform_int_distribution<int> t0_dist(1, N * kMaxTimeIncrement + 1);
     int t0 = t0_dist(rng);
     auto it = map_by_id.lower_bound(0, CreateTime(t0));
 
