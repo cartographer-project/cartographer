@@ -37,9 +37,7 @@ class Data {
  public:
   Data(int milliseconds) : time_(CreateTime(milliseconds)) {}
 
-  const common::Time& time() const {
-    return time_;
-  }
+  const common::Time& time() const { return time_; }
 
  private:
   const common::Time time_;

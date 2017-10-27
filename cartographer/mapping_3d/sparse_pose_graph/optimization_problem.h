@@ -41,8 +41,8 @@ namespace sparse_pose_graph {
 
 struct NodeData {
   common::Time time;
-  transform::Rigid3d initial_pose;
-  transform::Rigid3d pose;
+  transform::Rigid3d local_pose;
+  transform::Rigid3d global_pose;
 };
 
 struct SubmapData {
@@ -72,11 +72,11 @@ class OptimizationProblem {
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
   void AddTrajectoryNode(int trajectory_id, common::Time time,
-                         const transform::Rigid3d& initial_pose,
-                         const transform::Rigid3d& pose);
+                         const transform::Rigid3d& local_pose,
+                         const transform::Rigid3d& global_pose);
   void InsertTrajectoryNode(const mapping::NodeId& node_id, common::Time time,
-                            const transform::Rigid3d& initial_pose,
-                            const transform::Rigid3d& pose);
+                            const transform::Rigid3d& local_pose,
+                            const transform::Rigid3d& global_pose);
   void TrimTrajectoryNode(const mapping::NodeId& node_id);
   void AddSubmap(int trajectory_id, const transform::Rigid3d& submap_pose);
   void InsertSubmap(const mapping::SubmapId& submap_id,

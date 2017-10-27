@@ -175,7 +175,8 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
       optimization_problem_.submap_data().at(submap_id).pose.inverse();
 
   const transform::Rigid3d initial_relative_pose =
-      inverse_submap_pose * optimization_problem_.node_data().at(node_id).pose;
+      inverse_submap_pose *
+      optimization_problem_.node_data().at(node_id).global_pose;
 
   std::vector<mapping::TrajectoryNode> submap_nodes;
   for (const mapping::NodeId& submap_node_id :
@@ -500,7 +501,7 @@ void SparsePoseGraph::RunOptimization() {
   const auto& node_data = optimization_problem_.node_data();
   for (const int trajectory_id : node_data.trajectory_ids()) {
     for (const auto& node : node_data.trajectory(trajectory_id)) {
-      trajectory_nodes_.at(node.id).global_pose = node.data.pose;
+      trajectory_nodes_.at(node.id).global_pose = node.data.global_pose;
     }
 
     // Extrapolate all point cloud poses that were not included in the
