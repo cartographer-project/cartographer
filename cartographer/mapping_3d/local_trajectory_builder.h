@@ -65,10 +65,10 @@ class LocalTrajectoryBuilder {
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       common::Time time, const sensor::RangeData& filtered_range_data_in_local,
       const sensor::RangeData& filtered_range_data_in_tracking,
-      const Eigen::Quaterniond& gravity_alignment,
       const sensor::PointCloud& high_resolution_point_cloud_in_tracking,
       const sensor::PointCloud& low_resolution_point_cloud_in_tracking,
-      const transform::Rigid3d& pose_estimate);
+      const transform::Rigid3d& pose_estimate,
+      const Eigen::Quaterniond& gravity_alignment);
 
   const proto::LocalTrajectoryBuilderOptions options_;
   ActiveSubmaps active_submaps_;

@@ -161,7 +161,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
                          transform::Embed3D(pose_estimate_2d.cast<float>()));
   last_pose_estimate_ = {time, pose_estimate, range_data_in_local.returns};
   return InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
-                          pose_estimate, gravity_alignment);
+                          pose_estimate, gravity_alignment.rotation());
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
@@ -169,7 +169,7 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
     const common::Time time, const sensor::RangeData& range_data_in_local,
     const sensor::RangeData& gravity_aligned_range_data,
     const transform::Rigid3d& pose_estimate,
-    const transform::Rigid3d& gravity_alignment) {
+    const Eigen::Quaterniond& gravity_alignment) {
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
@@ -191,7 +191,7 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
       std::make_shared<const mapping::TrajectoryNode::Data>(
           mapping::TrajectoryNode::Data{
               time,
-              gravity_alignment.rotation(),
+              gravity_alignment,
               filtered_gravity_aligned_point_cloud,
               {},  // 'high_resolution_point_cloud' is only used in 3D.
               {},  // 'low_resolution_point_cloud' is only used in 3D.

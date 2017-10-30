@@ -72,7 +72,7 @@ class LocalTrajectoryBuilder {
       const common::Time time, const sensor::RangeData& range_data_in_local,
       const sensor::RangeData& gravity_aligned_range_data,
       const transform::Rigid3d& pose_estimate,
-      const transform::Rigid3d& gravity_alignment);
+      const Eigen::Quaterniond& gravity_alignment);
 
   // Scan matches 'gravity_aligned_range_data' and fill in the
   // 'pose_observation' with the result.
