@@ -130,8 +130,8 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const sensor::RangeData& range_data) {
-  // Transforms 'range_data' into a frame where gravity direction is
-  // approximately +z.
+  // Transforms 'range_data' from the tracking frame into a frame where gravity
+  // direction is approximately +z.
   const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
       extrapolator_->EstimateGravityOrientation(time));
   const sensor::RangeData gravity_aligned_range_data =
@@ -147,6 +147,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   const transform::Rigid2d pose_prediction = transform::Project2D(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
+  // 'pose_estimate_2d' transforms from gravity-aligned to the local map frame.
   transform::Rigid2d pose_estimate_2d;
   ScanMatch(time, pose_prediction, gravity_aligned_range_data,
             &pose_estimate_2d);
@@ -154,12 +155,21 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       transform::Embed3D(pose_estimate_2d) * gravity_alignment;
   extrapolator_->AddPose(time, pose_estimate);
 
-  last_pose_estimate_ = {
-      time, pose_estimate,
-      sensor::TransformPointCloud(
-          gravity_aligned_range_data.returns,
-          transform::Embed3D(pose_estimate_2d.cast<float>()))};
+  // Range data to be inserted into submap(s).
+  sensor::RangeData range_data_in_local =
+      TransformRangeData(gravity_aligned_range_data,
+                         transform::Embed3D(pose_estimate_2d.cast<float>()));
+  last_pose_estimate_ = {time, pose_estimate, range_data_in_local.returns};
+  return InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
+                          pose_estimate, gravity_alignment);
+}
 
+std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+LocalTrajectoryBuilder::InsertIntoSubmap(
+    const common::Time time, const sensor::RangeData& range_data_in_local,
+    const sensor::RangeData& gravity_aligned_range_data,
+    const transform::Rigid3d& pose_estimate,
+    const transform::Rigid3d& gravity_alignment) {
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
@@ -170,9 +180,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   for (const std::shared_ptr<Submap>& submap : active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
-  active_submaps_.InsertRangeData(
-      TransformRangeData(gravity_aligned_range_data,
-                         transform::Embed3D(pose_estimate_2d.cast<float>())));
+  active_submaps_.InsertRangeData(range_data_in_local);
 
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.loop_closure_adaptive_voxel_filter_options());
