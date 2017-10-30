@@ -62,6 +62,14 @@ TEST(TransformInterpolationBufferTest, testLookup) {
                1e-6));
 }
 
+TEST(TransformInterpolationBufferTest, testLookupSingleTransform) {
+  TransformInterpolationBuffer buffer;
+  const common::Time time = common::FromUniversal(75);
+  buffer.Push(time, transform::Rigid3d::Identity());
+  const transform::Rigid3d interpolated = buffer.Lookup(time);
+  EXPECT_THAT(interpolated, IsNearly(transform::Rigid3d::Identity(), 1e-6));
+}
+
 }  // namespace
 }  // namespace transform
 }  // namespace cartographer

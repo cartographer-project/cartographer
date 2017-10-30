@@ -30,7 +30,7 @@ struct TimestampedTransform {
 
 TimestampedTransform Interpolate(const TimestampedTransform& start,
                                  const TimestampedTransform& end,
-                                 const common::Time& time);
+                                 const common::Time time);
 
 }  // namespace transform
 }  // namespace cartographer

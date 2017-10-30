@@ -21,16 +21,9 @@ namespace transform {
 
 TimestampedTransform Interpolate(const TimestampedTransform& start,
                                  const TimestampedTransform& end,
-                                 const common::Time& time) {
-  CHECK(start.time <= time && time <= end.time) << "Can't interpolate to time "
-                                                << time;
-
-  if (end.time == time) {
-    return end;
-  }
-  if (start.time == time) {
-    return start;
-  }
+                                 const common::Time time) {
+  CHECK_LE(start.time, time);
+  CHECK_GE(end.time, time);
 
   const double duration = common::ToSeconds(end.time - start.time);
   const double factor = common::ToSeconds(time - start.time) / duration;
