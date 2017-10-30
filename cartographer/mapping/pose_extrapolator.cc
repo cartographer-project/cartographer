@@ -75,7 +75,7 @@ void PoseExtrapolator::AddPose(const common::Time time,
   AdvanceImuTracker(time, imu_tracker_.get());
   TrimImuData();
   TrimOdometryData();
-  extrapolating_imu_tracker_.reset(new ImuTracker(*imu_tracker_));
+  extrapolating_imu_tracker_ = common::make_unique<ImuTracker>(*imu_tracker_);
 }
 
 void PoseExtrapolator::AddImuData(const sensor::ImuData& imu_data) {
@@ -209,9 +209,7 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
 
 Eigen::Quaterniond PoseExtrapolator::ExtrapolateRotation(
     const common::Time time) {
-  if (time < extrapolating_imu_tracker_->time()) {
-    extrapolating_imu_tracker_.reset(new ImuTracker(*imu_tracker_));
-  }
+  CHECK_GE(time, extrapolating_imu_tracker_->time());
   AdvanceImuTracker(time, extrapolating_imu_tracker_.get());
   const Eigen::Quaterniond last_orientation = imu_tracker_->orientation();
   return last_orientation.inverse() * extrapolating_imu_tracker_->orientation();
