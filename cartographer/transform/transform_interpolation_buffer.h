@@ -21,6 +21,7 @@
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
+#include "cartographer/transform/proto/transform_interpolation_buffer.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/timestamped_transform.h"
 
@@ -55,6 +56,12 @@ class TransformInterpolationBuffer {
 
   // Returns true if the buffer is empty.
   bool empty() const;
+
+  // Serializes buffer content to a proto.
+  proto::TransformInterpolationBuffer ToProto() const;
+
+  // Returns the buffer size.
+  size_t size() const;
 
  private:
   std::vector<TimestampedTransform> timestamped_transforms_;

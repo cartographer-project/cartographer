@@ -18,6 +18,7 @@
 
 #include "cartographer/mapping/sparse_pose_graph/constraint_builder.h"
 #include "cartographer/mapping/sparse_pose_graph/optimization_problem_options.h"
+#include "cartographer/sensor/imu_data.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -31,6 +32,17 @@ proto::SparsePoseGraph::Constraint::Tag ToProto(
       return proto::SparsePoseGraph::Constraint::INTRA_SUBMAP;
     case SparsePoseGraph::Constraint::Tag::INTER_SUBMAP:
       return proto::SparsePoseGraph::Constraint::INTER_SUBMAP;
+  }
+  LOG(FATAL) << "Unsupported tag.";
+}
+
+SparsePoseGraph::Constraint::Tag FromProto(
+    const proto::SparsePoseGraph::Constraint::Tag& proto) {
+  switch (proto) {
+    case proto::SparsePoseGraph::Constraint::INTRA_SUBMAP:
+      return SparsePoseGraph::Constraint::Tag::INTRA_SUBMAP;
+    case proto::SparsePoseGraph::Constraint::INTER_SUBMAP:
+      return SparsePoseGraph::Constraint::Tag::INTER_SUBMAP;
   }
   LOG(FATAL) << "Unsupported tag.";
 }
@@ -95,6 +107,24 @@ proto::SparsePoseGraph SparsePoseGraph::ToProto() {
     submap_proto->set_submap_index(submap_id_data.id.submap_index);
     *submap_proto->mutable_pose() =
         transform::ToProto(submap_id_data.data.pose);
+  }
+
+  const auto all_imu_data = GetImuData();
+  for (int trajectory_id = 0;
+       trajectory_id < static_cast<int>(all_imu_data.size()); ++trajectory_id) {
+    const auto& single_trajectory_imu_data = all_imu_data.at(trajectory_id);
+    for (const auto& imu_data : single_trajectory_imu_data) {
+      auto* imu_data_proto = trajectory(trajectory_id)->add_imu_data();
+      *imu_data_proto = sensor::ToProto(imu_data);
+    }
+  }
+
+  const auto all_odometry_data = GetOdometryData();
+  for (int trajectory_id = 0;
+       trajectory_id < static_cast<int>(all_odometry_data.size());
+       ++trajectory_id) {
+    *trajectory(trajectory_id)->mutable_odometry_data() =
+        all_odometry_data.at(trajectory_id).ToProto();
   }
 
   for (const auto& constraint : constraints()) {

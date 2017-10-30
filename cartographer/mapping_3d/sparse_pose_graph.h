@@ -88,6 +88,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                           const mapping::proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
                         const mapping::proto::Node& node) override;
+  void AddDataFromProto(
+      std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) override;
   void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
@@ -99,6 +101,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_) override;
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
   GetTrajectoryNodes() override EXCLUDES(mutex_);
+  std::vector<std::deque<sensor::ImuData>> GetImuData() override
+      EXCLUDES(mutex_);
+  std::vector<transform::TransformInterpolationBuffer> GetOdometryData()
+      override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
 
  private:
