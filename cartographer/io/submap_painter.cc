@@ -30,12 +30,12 @@ void CairoPaintSubmapSlices(
   cairo_scale(cr, scale, scale);
 
   for (auto& pair : *submaps) {
-    auto& submap_state = pair.second;
-    if (submap_state.surface == nullptr) {
+    auto& submap_slice = pair.second;
+    if (submap_slice.surface == nullptr) {
       return;
     }
     const Eigen::Matrix4d homo =
-        ToEigen(submap_state.pose * submap_state.slice_pose).matrix();
+        ToEigen(submap_slice.pose * submap_slice.slice_pose).matrix();
 
     cairo_save(cr);
     cairo_matrix_t matrix;
@@ -43,9 +43,9 @@ void CairoPaintSubmapSlices(
                       homo(0, 3), -homo(1, 3));
     cairo_transform(cr, &matrix);
 
-    const double submap_resolution = submap_state.resolution;
+    const double submap_resolution = submap_slice.resolution;
     cairo_scale(cr, submap_resolution, submap_resolution);
-    draw_callback(submap_state);
+    draw_callback(submap_slice);
     cairo_restore(cr);
   }
 }
@@ -66,11 +66,11 @@ PaintSubmapSlicesResult DrawOccupancyGrid(
 
     CairoPaintSubmapSlices(
         1. / resolution, submaps, cr.get(),
-        [&update_bounding_box, &bounding_box](const SubmapSlice& submap_state) {
+        [&update_bounding_box, &bounding_box](const SubmapSlice& submap_slice) {
           update_bounding_box(0, 0);
-          update_bounding_box(submap_state.width, 0);
-          update_bounding_box(0, submap_state.height);
-          update_bounding_box(submap_state.width, submap_state.height);
+          update_bounding_box(submap_slice.width, 0);
+          update_bounding_box(0, submap_slice.height);
+          update_bounding_box(submap_slice.width, submap_slice.height);
         });
   }
 
@@ -90,11 +90,11 @@ PaintSubmapSlicesResult DrawOccupancyGrid(
     cairo_paint(cr.get());
     cairo_translate(cr.get(), origin.x(), origin.y());
     CairoPaintSubmapSlices(1. / resolution, submaps, cr.get(),
-                        [&cr](const SubmapSlice& submap_state) {
-                          cairo_set_source_surface(
-                              cr.get(), submap_state.surface.get(), 0., 0.);
-                          cairo_paint(cr.get());
-                        });
+                           [&cr](const SubmapSlice& submap_slice) {
+                             cairo_set_source_surface(
+                                 cr.get(), submap_slice.surface.get(), 0., 0.);
+                             cairo_paint(cr.get());
+                           });
     cairo_surface_flush(surface.get());
   }
   return PaintSubmapSlicesResult(std::move(surface), origin, size);
