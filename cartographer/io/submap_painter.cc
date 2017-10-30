@@ -62,7 +62,8 @@ PaintSubmapSlicesResult PaintSubmapSlices(
   Eigen::AlignedBox2f bounding_box;
   {
     auto surface = ::cartographer::io::MakeUniqueCairoSurfacePtr(
-        cairo_image_surface_create(PaintSubmapSlicesResult::kCairoFormat, 1, 1));
+        cairo_image_surface_create(PaintSubmapSlicesResult::kCairoFormat, 1,
+                                   1));
     auto cr =
         ::cartographer::io::MakeUniqueCairoPtr(cairo_create(surface.get()));
     const auto update_bounding_box = [&bounding_box, &cr](double x, double y) {
@@ -87,8 +88,9 @@ PaintSubmapSlicesResult PaintSubmapSlices(
   const Eigen::Array2f origin(-bounding_box.min().x() + kPaddingPixel,
                               -bounding_box.min().y() + kPaddingPixel);
 
-  auto surface = ::cartographer::io::MakeUniqueCairoSurfacePtr(
-      cairo_image_surface_create(PaintSubmapSlicesResult::kCairoFormat, size.x(), size.y()));
+  auto surface =
+      ::cartographer::io::MakeUniqueCairoSurfacePtr(cairo_image_surface_create(
+          PaintSubmapSlicesResult::kCairoFormat, size.x(), size.y()));
   {
     auto cr =
         ::cartographer::io::MakeUniqueCairoPtr(cairo_create(surface.get()));
