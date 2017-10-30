@@ -52,30 +52,17 @@ bool TransformInterpolationBuffer::Has(const common::Time time) const {
 transform::Rigid3d TransformInterpolationBuffer::Lookup(
     const common::Time time) const {
   CHECK(Has(time)) << "Missing transform for: " << time;
-  auto start = std::lower_bound(
+  const auto end = std::lower_bound(
       timestamped_transforms_.begin(), timestamped_transforms_.end(), time,
       [](const TimestampedTransform& timestamped_transform,
          const common::Time time) {
         return timestamped_transform.time < time;
       });
-  const auto end = start;
   if (end->time == time) {
     return end->transform;
   }
-  --start;
-  if (start->time == time) {
-    return start->transform;
-  }
-
-  const double duration = common::ToSeconds(end->time - start->time);
-  const double factor = common::ToSeconds(time - start->time) / duration;
-  const Eigen::Vector3d origin =
-      start->transform.translation() +
-      (end->transform.translation() - start->transform.translation()) * factor;
-  const Eigen::Quaterniond rotation =
-      Eigen::Quaterniond(start->transform.rotation())
-          .slerp(factor, Eigen::Quaterniond(end->transform.rotation()));
-  return transform::Rigid3d(origin, rotation);
+  const auto start = std::prev(end);
+  return Interpolate(*start, *end, time).transform;
 }
 
 common::Time TransformInterpolationBuffer::earliest_time() const {
