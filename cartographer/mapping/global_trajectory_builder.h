@@ -47,14 +47,21 @@ class GlobalTrajectoryBuilder
   void AddRangefinderData(const common::Time time,
                           const Eigen::Vector3f& origin,
                           const sensor::TimedPointCloud& ranges) override {
-    std::unique_ptr<typename LocalTrajectoryBuilder::InsertionResult>
-        insertion_result = local_trajectory_builder_.AddRangeData(
+    std::unique_ptr<typename LocalTrajectoryBuilder::MatchingResult>
+        matching_result = local_trajectory_builder_.AddRangeData(
             time, sensor::TimedRangeData{origin, ranges, {}});
-    if (insertion_result == nullptr) {
+    if (matching_result == nullptr) {
+      // The range data has not been fully accumulated yet.
       return;
     }
-    sparse_pose_graph_->AddScan(insertion_result->constant_data, trajectory_id_,
-                                insertion_result->insertion_submaps);
+    std::unique_ptr<mapping::NodeId> node_id;
+    if (matching_result->insertion_result != nullptr) {
+      node_id = ::cartographer::common::make_unique<mapping::NodeId>(
+          sparse_pose_graph_->AddScan(
+              matching_result->insertion_result->constant_data, trajectory_id_,
+              matching_result->insertion_result->insertion_submaps));
+      CHECK_EQ(node_id->trajectory_id, trajectory_id_);
+    }
   }
 
   void AddSensorData(const sensor::ImuData& imu_data) override {
