@@ -90,7 +90,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   if (num_accumulated_ == 0) {
     first_pose_estimate_ = extrapolator_->ExtrapolatePose(time).cast<float>();
     accumulated_range_data_ =
-        sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
+        sensor::RangeData{range_data.origin, {}, {}};
   }
 
   // TODO(gaschler): Take time delta of individual points into account.
