@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_OCCUPANCY_GRID_H_
-#define CARTOGRAPHER_IO_OCCUPANCY_GRID_H_
+#ifndef CARTOGRAPHER_IO_SUBMAP_PAINTER_H_
+#define CARTOGRAPHER_IO_SUBMAP_PAINTER_H_
 
 #include "Eigen/Geometry"
 #include "cairo/cairo.h"
@@ -28,17 +28,17 @@ namespace io {
 
 constexpr cairo_format_t kCairoFormat = CAIRO_FORMAT_ARGB32;
 
-struct OccupancyGridState {
-  OccupancyGridState(::cartographer::io::UniqueCairoSurfacePtr surface,
-                     Eigen::Array2f origin, Eigen::Array2i size)
+struct PaintSubmapSlicesResult {
+  PaintSubmapSlicesResult(::cartographer::io::UniqueCairoSurfacePtr surface,
+                          Eigen::Array2f origin, Eigen::Array2i size)
       : surface(std::move(surface)), origin(origin), size(size) {}
   ::cartographer::io::UniqueCairoSurfacePtr surface;
   Eigen::Array2f origin;
   Eigen::Array2i size;
 };
 
-struct SubmapState {
-  SubmapState()
+struct SubmapSlice {
+  SubmapSlice()
       : surface(::cartographer::io::MakeUniqueCairoSurfacePtr(nullptr)) {}
 
   // Texture data.
@@ -56,16 +56,11 @@ struct SubmapState {
   int metadata_version = -1;
 };
 
-void CairoDrawEachSubmap(
-    const double scale,
-    std::map<::cartographer::mapping::SubmapId, SubmapState>* submaps,
-    cairo_t* cr, std::function<void(const SubmapState&)> draw_callback);
-
-OccupancyGridState DrawOccupancyGrid(
-    std::map<::cartographer::mapping::SubmapId, SubmapState>* submaps,
+PaintSubmapSlicesResult DrawOccupancyGrid(
+    std::map<::cartographer::mapping::SubmapId, SubmapSlice>* submaps,
     const double resolution);
 
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_OCCUPANCY_GRID_H_
+#endif  // CARTOGRAPHER_IO_SUBMAP_PAINTER_H_

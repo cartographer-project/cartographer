@@ -1,6 +1,6 @@
 
 
-#include "cartographer/io/occupancy_grid.h"
+#include "cartographer/io/submap_painter.h"
 
 Eigen::Affine3d ToEigen(const ::cartographer::transform::Rigid3d& rigid3) {
   return Eigen::Translation3d(rigid3.translation()) * rigid3.rotation();
@@ -9,10 +9,10 @@ Eigen::Affine3d ToEigen(const ::cartographer::transform::Rigid3d& rigid3) {
 namespace cartographer {
 namespace io {
 
-void CairoDrawEachSubmap(
+void CairoPaintSubmapSlices(
     const double scale,
-    std::map<::cartographer::mapping::SubmapId, SubmapState>* submaps,
-    cairo_t* cr, std::function<void(const SubmapState&)> draw_callback) {
+    std::map<::cartographer::mapping::SubmapId, SubmapSlice>* submaps,
+    cairo_t* cr, std::function<void(const SubmapSlice&)> draw_callback) {
   cairo_scale(cr, scale, scale);
 
   for (auto& pair : *submaps) {
@@ -36,8 +36,8 @@ void CairoDrawEachSubmap(
   }
 }
 
-OccupancyGridState DrawOccupancyGrid(
-    std::map<::cartographer::mapping::SubmapId, SubmapState>* submaps,
+PaintSubmapSlicesResult DrawOccupancyGrid(
+    std::map<::cartographer::mapping::SubmapId, SubmapSlice>* submaps,
     const double resolution) {
   Eigen::AlignedBox2f bounding_box;
   {
@@ -50,9 +50,9 @@ OccupancyGridState DrawOccupancyGrid(
       bounding_box.extend(Eigen::Vector2f(x, y));
     };
 
-    CairoDrawEachSubmap(
+    CairoPaintSubmapSlices(
         1. / resolution, submaps, cr.get(),
-        [&update_bounding_box, &bounding_box](const SubmapState& submap_state) {
+        [&update_bounding_box, &bounding_box](const SubmapSlice& submap_state) {
           update_bounding_box(0, 0);
           update_bounding_box(submap_state.width, 0);
           update_bounding_box(0, submap_state.height);
@@ -75,15 +75,15 @@ OccupancyGridState DrawOccupancyGrid(
     cairo_set_source_rgba(cr.get(), 0.5, 0.0, 0.0, 1.);
     cairo_paint(cr.get());
     cairo_translate(cr.get(), origin.x(), origin.y());
-    CairoDrawEachSubmap(1. / resolution, submaps, cr.get(),
-                        [&cr](const SubmapState& submap_state) {
+    CairoPaintSubmapSlices(1. / resolution, submaps, cr.get(),
+                        [&cr](const SubmapSlice& submap_state) {
                           cairo_set_source_surface(
                               cr.get(), submap_state.surface.get(), 0., 0.);
                           cairo_paint(cr.get());
                         });
     cairo_surface_flush(surface.get());
   }
-  return OccupancyGridState(std::move(surface), origin, size);
+  return PaintSubmapSlicesResult(std::move(surface), origin, size);
 }
 
 }  // namespace io
