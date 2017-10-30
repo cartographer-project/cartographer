@@ -47,6 +47,7 @@ class PoseExtrapolator {
   // Returns the time of the last added pose or Time::min() if no pose was added
   // yet.
   common::Time GetLastPoseTime() const;
+  common::Time GetLastExtrapolatedTime() const;
 
   void AddPose(common::Time time, const transform::Rigid3d& pose);
   void AddImuData(const sensor::ImuData& imu_data);
@@ -60,8 +61,9 @@ class PoseExtrapolator {
   void UpdateVelocitiesFromPoses();
   void TrimImuData();
   void TrimOdometryData();
-  void AdvanceImuTracker(common::Time time, ImuTracker* imu_tracker);
-  Eigen::Quaterniond ExtrapolateRotation(common::Time time);
+  void AdvanceImuTracker(common::Time time, ImuTracker* imu_tracker) const;
+  Eigen::Quaterniond ExtrapolateRotation(common::Time time,
+                                         ImuTracker* imu_tracker) const;
   Eigen::Vector3d ExtrapolateTranslation(common::Time time);
 
   const common::Duration pose_queue_duration_;
@@ -76,7 +78,8 @@ class PoseExtrapolator {
   const double gravity_time_constant_;
   std::deque<sensor::ImuData> imu_data_;
   std::unique_ptr<ImuTracker> imu_tracker_;
-  std::unique_ptr<ImuTracker> extrapolating_imu_tracker_;
+  std::unique_ptr<ImuTracker> odometry_imu_tracker_;
+  std::unique_ptr<ImuTracker> pose_imu_tracker_;
 
   std::deque<sensor::OdometryData> odometry_data_;
   Eigen::Vector3d linear_velocity_from_odometry_ = Eigen::Vector3d::Zero();
