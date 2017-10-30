@@ -59,23 +59,7 @@ transform::Rigid3d TransformInterpolationBuffer::Lookup(
         return timestamped_transform.time < time;
       });
   const auto end = start;
-  if (end->time == time) {
-    return end->transform;
-  }
-  --start;
-  if (start->time == time) {
-    return start->transform;
-  }
-
-  const double duration = common::ToSeconds(end->time - start->time);
-  const double factor = common::ToSeconds(time - start->time) / duration;
-  const Eigen::Vector3d origin =
-      start->transform.translation() +
-      (end->transform.translation() - start->transform.translation()) * factor;
-  const Eigen::Quaterniond rotation =
-      Eigen::Quaterniond(start->transform.rotation())
-          .slerp(factor, Eigen::Quaterniond(end->transform.rotation()));
-  return transform::Rigid3d(origin, rotation);
+  return Interpolate(*start, *end, time).transform;
 }
 
 common::Time TransformInterpolationBuffer::earliest_time() const {

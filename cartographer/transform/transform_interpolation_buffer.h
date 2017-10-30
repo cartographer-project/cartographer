@@ -22,6 +22,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
 #include "cartographer/transform/rigid_transform.h"
+#include "cartographer/transform/timestamped_transform.h"
 
 namespace cartographer {
 namespace transform {
@@ -56,11 +57,6 @@ class TransformInterpolationBuffer {
   bool empty() const;
 
  private:
-  struct TimestampedTransform {
-    common::Time time;
-    transform::Rigid3d transform;
-  };
-
   std::vector<TimestampedTransform> timestamped_transforms_;
 };
 
