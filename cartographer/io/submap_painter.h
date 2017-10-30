@@ -26,15 +26,17 @@
 namespace cartographer {
 namespace io {
 
-constexpr cairo_format_t kCairoFormat = CAIRO_FORMAT_ARGB32;
-
 struct PaintSubmapSlicesResult {
+  // Data format for 'surface'.
+  static constexpr cairo_format_t kCairoFormat = CAIRO_FORMAT_ARGB32;
+
   PaintSubmapSlicesResult(::cartographer::io::UniqueCairoSurfacePtr surface,
-                          Eigen::Array2f origin, Eigen::Array2i size)
-      : surface(std::move(surface)), origin(origin), size(size) {}
+                          Eigen::Array2f origin)
+      : surface(std::move(surface)), origin(origin) {}
   ::cartographer::io::UniqueCairoSurfacePtr surface;
+
+  // Top left pixel of 'surface' in map frame.
   Eigen::Array2f origin;
-  Eigen::Array2i size;
 };
 
 struct SubmapSlice {
@@ -56,7 +58,7 @@ struct SubmapSlice {
   int metadata_version = -1;
 };
 
-PaintSubmapSlicesResult DrawOccupancyGrid(
+PaintSubmapSlicesResult PaintSubmapSlices(
     std::map<::cartographer::mapping::SubmapId, SubmapSlice>* submaps,
     const double resolution);
 

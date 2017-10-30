@@ -16,12 +16,13 @@
 
 #include "cartographer/io/submap_painter.h"
 
+namespace cartographer {
+namespace io {
+namespace {
+
 Eigen::Affine3d ToEigen(const ::cartographer::transform::Rigid3d& rigid3) {
   return Eigen::Translation3d(rigid3.translation()) * rigid3.rotation();
 }
-
-namespace cartographer {
-namespace io {
 
 void CairoPaintSubmapSlices(
     const double scale,
@@ -45,20 +46,23 @@ void CairoPaintSubmapSlices(
 
     const double submap_resolution = submap_slice.resolution;
     cairo_scale(cr, submap_resolution, submap_resolution);
-    // Invokes caller's callback to utilize for each submap slice data in global
-    // cooridnate frame. e.g) Finds bounding box, Paints submaps.
+
+    // Invokes caller's callback to utilize slice data in global cooridnate
+    // frame. e.g. finds bounding box, paints slices.
     draw_callback(submap_slice);
     cairo_restore(cr);
   }
 }
 
-PaintSubmapSlicesResult DrawOccupancyGrid(
+}  // namespace
+
+PaintSubmapSlicesResult PaintSubmapSlices(
     std::map<::cartographer::mapping::SubmapId, SubmapSlice>* submaps,
     const double resolution) {
   Eigen::AlignedBox2f bounding_box;
   {
     auto surface = ::cartographer::io::MakeUniqueCairoSurfacePtr(
-        cairo_image_surface_create(kCairoFormat, 1, 1));
+        cairo_image_surface_create(PaintSubmapSlicesResult::kCairoFormat, 1, 1));
     auto cr =
         ::cartographer::io::MakeUniqueCairoPtr(cairo_create(surface.get()));
     const auto update_bounding_box = [&bounding_box, &cr](double x, double y) {
@@ -84,7 +88,7 @@ PaintSubmapSlicesResult DrawOccupancyGrid(
                               -bounding_box.min().y() + kPaddingPixel);
 
   auto surface = ::cartographer::io::MakeUniqueCairoSurfacePtr(
-      cairo_image_surface_create(kCairoFormat, size.x(), size.y()));
+      cairo_image_surface_create(PaintSubmapSlicesResult::kCairoFormat, size.x(), size.y()));
   {
     auto cr =
         ::cartographer::io::MakeUniqueCairoPtr(cairo_create(surface.get()));
@@ -99,7 +103,7 @@ PaintSubmapSlicesResult DrawOccupancyGrid(
                            });
     cairo_surface_flush(surface.get());
   }
-  return PaintSubmapSlicesResult(std::move(surface), origin, size);
+  return PaintSubmapSlicesResult(std::move(surface), origin);
 }
 
 }  // namespace io
