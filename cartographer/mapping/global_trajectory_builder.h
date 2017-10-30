@@ -42,10 +42,6 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  const mapping::PoseEstimate& pose_estimate() const override {
-    return local_trajectory_builder_.pose_estimate();
-  }
-
   void AddRangefinderData(const common::Time time,
                           const Eigen::Vector3f& origin,
                           const sensor::TimedPointCloud& ranges) override {

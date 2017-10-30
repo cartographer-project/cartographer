@@ -67,8 +67,6 @@ class LocalTrajectoryBuilder {
   LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;
   LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
 
-  const mapping::PoseEstimate& pose_estimate() const;
-
   // Range data must be approximately horizontal for 2D SLAM.
   std::unique_ptr<MatchingResult> AddRangeData(
       common::Time, const sensor::TimedRangeData& range_data);
@@ -99,8 +97,6 @@ class LocalTrajectoryBuilder {
 
   const proto::LocalTrajectoryBuilderOptions options_;
   ActiveSubmaps active_submaps_;
-
-  mapping::PoseEstimate last_pose_estimate_;
 
   mapping_3d::MotionFilter motion_filter_;
   scan_matching::RealTimeCorrelativeScanMatcher

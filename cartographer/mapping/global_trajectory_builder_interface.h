@@ -49,8 +49,6 @@ class GlobalTrajectoryBuilderInterface {
   GlobalTrajectoryBuilderInterface& operator=(
       const GlobalTrajectoryBuilderInterface&) = delete;
 
-  virtual const PoseEstimate& pose_estimate() const = 0;
-
   virtual void AddRangefinderData(common::Time time,
                                   const Eigen::Vector3f& origin,
                                   const sensor::TimedPointCloud& ranges) = 0;
