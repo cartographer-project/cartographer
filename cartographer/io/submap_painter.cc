@@ -45,6 +45,8 @@ void CairoPaintSubmapSlices(
 
     const double submap_resolution = submap_slice.resolution;
     cairo_scale(cr, submap_resolution, submap_resolution);
+    // Invokes caller's callback to utilize for each submap slice data in global
+    // cooridnate frame. e.g) Finds bounding box, Paints submaps.
     draw_callback(submap_slice);
     cairo_restore(cr);
   }
