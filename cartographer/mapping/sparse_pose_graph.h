@@ -125,8 +125,10 @@ class SparsePoseGraph {
   virtual std::vector<Constraint> constraints() = 0;
 };
 
-SparsePoseGraph::Constraint::Tag FromProto(
-    const proto::SparsePoseGraph::Constraint::Tag& proto);
+std::vector<SparsePoseGraph::Constraint> FromProto(
+    const ::google::protobuf::RepeatedPtrField<
+        ::cartographer::mapping::proto::SparsePoseGraph::Constraint>&
+        constraint_protos);
 
 }  // namespace mapping
 }  // namespace cartographer

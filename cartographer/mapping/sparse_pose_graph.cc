@@ -46,6 +46,29 @@ SparsePoseGraph::Constraint::Tag FromProto(
   LOG(FATAL) << "Unsupported tag.";
 }
 
+std::vector<SparsePoseGraph::Constraint> FromProto(
+    const ::google::protobuf::RepeatedPtrField<
+        ::cartographer::mapping::proto::SparsePoseGraph::Constraint>&
+        constraint_protos) {
+  std::vector<SparsePoseGraph::Constraint> constraints;
+  for (const auto& constraint_proto : constraint_protos) {
+    const mapping::SubmapId submap_id{
+        constraint_proto.submap_id().trajectory_id(),
+        constraint_proto.submap_id().submap_index()};
+    const mapping::NodeId node_id{constraint_proto.node_id().trajectory_id(),
+                                  constraint_proto.node_id().node_index()};
+    const SparsePoseGraph::Constraint::Pose pose{
+        transform::ToRigid3(constraint_proto.relative_pose()),
+        constraint_proto.translation_weight(),
+        constraint_proto.rotation_weight()};
+    const SparsePoseGraph::Constraint::Tag tag =
+        mapping::FromProto(constraint_proto.tag());
+    constraints.push_back(
+        SparsePoseGraph::Constraint{submap_id, node_id, pose, tag});
+  }
+  return constraints;
+}
+
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::SparsePoseGraphOptions options;
