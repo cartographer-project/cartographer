@@ -188,14 +188,6 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
     sparse_pose_graph_->FreezeTrajectory(new_trajectory_id);
   }
 
-  // Apply the calculated remapping to constraints in the SparsePoseGraph proto
-  for (auto& constraint_proto : *pose_graph.mutable_constraint()) {
-    constraint_proto.mutable_submap_id()->set_trajectory_id(
-        trajectory_remapping.at(constraint_proto.submap_id().trajectory_id()));
-    constraint_proto.mutable_node_id()->set_trajectory_id(
-        trajectory_remapping.at(constraint_proto.node_id().trajectory_id()));
-  }
-
   MapById<SubmapId, transform::Rigid3d> submap_poses;
   for (const proto::Trajectory& trajectory_proto : pose_graph.trajectory()) {
     for (const proto::Trajectory::Submap& submap_proto :
@@ -238,7 +230,6 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
     }
   }
   CHECK(reader->eof());
-  sparse_pose_graph_->AddConstraints(FromProto(pose_graph.constraint()));
 }
 
 int MapBuilder::num_trajectory_builders() const {
