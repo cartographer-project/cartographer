@@ -174,12 +174,11 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
 }
 
 void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
-  const std::shared_ptr<proto::SparsePoseGraph> pose_graph =
-      std::make_shared<proto::SparsePoseGraph>();
-  CHECK(reader->ReadProto(pose_graph.get()));
+  proto::SparsePoseGraph pose_graph;
+  CHECK(reader->ReadProto(&pose_graph));
 
   std::map<int, int> trajectory_remapping;
-  for (auto& trajectory_proto : *pose_graph->mutable_trajectory()) {
+  for (auto& trajectory_proto : *pose_graph.mutable_trajectory()) {
     const int new_trajectory_id = AddTrajectoryForDeserialization();
     CHECK(trajectory_remapping
               .emplace(trajectory_proto.trajectory_id(), new_trajectory_id)
@@ -190,7 +189,7 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   }
 
   MapById<SubmapId, transform::Rigid3d> submap_poses;
-  for (const proto::Trajectory& trajectory_proto : pose_graph->trajectory()) {
+  for (const proto::Trajectory& trajectory_proto : pose_graph.trajectory()) {
     for (const proto::Trajectory::Submap& submap_proto :
          trajectory_proto.submap()) {
       submap_poses.Insert(SubmapId{trajectory_proto.trajectory_id(),
@@ -200,7 +199,7 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   }
 
   MapById<NodeId, transform::Rigid3d> node_poses;
-  for (const proto::Trajectory& trajectory_proto : pose_graph->trajectory()) {
+  for (const proto::Trajectory& trajectory_proto : pose_graph.trajectory()) {
     for (const proto::Trajectory::Node& node_proto : trajectory_proto.node()) {
       node_poses.Insert(
           NodeId{trajectory_proto.trajectory_id(), node_proto.node_index()},
