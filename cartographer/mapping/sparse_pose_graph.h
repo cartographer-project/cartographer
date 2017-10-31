@@ -87,9 +87,10 @@ class SparsePoseGraph {
   virtual void AddNodeFromProto(const transform::Rigid3d& global_pose,
                                 const proto::Node& node) = 0;
 
-  // Adds constraints data from a proto. Trajectory nodes and submaps have to be
-  // deserialized before calling this function.
-  virtual void AddConstraints(const std::vector<Constraint>& constraints) = 0;
+  // Adds serialized constraints. The corresponding trajectory nodes and submaps
+  // have to be deserialized before calling this function.
+  virtual void AddSerializedConstraints(
+      const std::vector<Constraint>& constraints) = 0;
 
   // Adds a 'trimmer'. It will be used after all data added before it has been
   // included in the pose graph.

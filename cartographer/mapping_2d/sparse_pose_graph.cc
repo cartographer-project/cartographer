@@ -426,7 +426,7 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
-void SparsePoseGraph::AddConstraints(
+void SparsePoseGraph::AddSerializedConstraints(
     const std::vector<Constraint>& constraints) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([this, constraints]() REQUIRES(mutex_) {

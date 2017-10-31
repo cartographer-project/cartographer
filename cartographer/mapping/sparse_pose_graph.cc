@@ -62,7 +62,7 @@ std::vector<SparsePoseGraph::Constraint> FromProto(
         constraint_proto.translation_weight(),
         constraint_proto.rotation_weight()};
     const SparsePoseGraph::Constraint::Tag tag =
-        mapping::FromProto(constraint_proto.tag());
+        FromProto(constraint_proto.tag());
     constraints.push_back(
         SparsePoseGraph::Constraint{submap_id, node_id, pose, tag});
   }

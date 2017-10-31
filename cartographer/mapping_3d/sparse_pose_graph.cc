@@ -440,7 +440,7 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
-void SparsePoseGraph::AddConstraints(
+void SparsePoseGraph::AddSerializedConstraints(
     const std::vector<Constraint>& constraints) {
   LOG(FATAL) << "Not yet implemented for 3D.";
 }
