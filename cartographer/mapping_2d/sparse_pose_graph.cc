@@ -426,36 +426,30 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
-void SparsePoseGraph::AddConstraintsFromProto(
-    const std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) {
+void SparsePoseGraph::AddConstraints(
+    const std::vector<Constraint>& constraints) {
   common::MutexLocker locker(&mutex_);
-  AddWorkItem([this, proto]() REQUIRES(mutex_) {
-    for (const auto& constraint_proto : proto->constraint()) {
-      const mapping::SubmapId submap_id{
-          constraint_proto.submap_id().trajectory_id(),
-          constraint_proto.submap_id().submap_index()};
-      const mapping::NodeId node_id{constraint_proto.node_id().trajectory_id(),
-                                    constraint_proto.node_id().node_index()};
-      const Constraint::Pose pose{
-          transform::ToRigid3(constraint_proto.relative_pose()) *
-              transform::Rigid3d::Rotation(
-                  trajectory_nodes_.at(node_id)
-                      .constant_data->gravity_alignment.inverse()),
-          constraint_proto.translation_weight(),
-          constraint_proto.rotation_weight()};
-      const Constraint::Tag tag = mapping::FromProto(constraint_proto.tag());
-
-      CHECK(trajectory_nodes_.Contains(node_id));
-      CHECK(submap_data_.Contains(submap_id));
-      CHECK(trajectory_nodes_.at(node_id).constant_data != nullptr);
-      CHECK(submap_data_.at(submap_id).submap != nullptr);
-
-      if (tag == Constraint::Tag::INTRA_SUBMAP) {
-        submap_data_.at(submap_id).node_ids.emplace(node_id);
+  AddWorkItem([this, constraints]() REQUIRES(mutex_) {
+    for (const auto& constraint : constraints) {
+      CHECK(trajectory_nodes_.Contains(constraint.node_id));
+      CHECK(submap_data_.Contains(constraint.submap_id));
+      CHECK(trajectory_nodes_.at(constraint.node_id).constant_data != nullptr);
+      CHECK(submap_data_.at(constraint.submap_id).submap != nullptr);
+      if (constraint.tag == Constraint::Tag::INTRA_SUBMAP) {
+        CHECK(submap_data_.at(constraint.submap_id)
+                  .node_ids.emplace(constraint.node_id)
+                  .second);
       }
-      constraints_.push_back(Constraint{submap_id, node_id, pose, tag});
+      const Constraint::Pose pose = {
+          constraint.pose.zbar_ij *
+              transform::Rigid3d::Rotation(
+                  trajectory_nodes_.at(constraint.node_id)
+                      .constant_data->gravity_alignment.inverse()),
+          constraint.pose.translation_weight, constraint.pose.rotation_weight};
+      constraints_.push_back(Constraint{
+          constraint.submap_id, constraint.node_id, pose, constraint.tag});
     }
-    LOG(INFO) << "Loaded " << proto->constraint_size() << " constraints.";
+    LOG(INFO) << "Loaded " << constraints.size() << " constraints.";
   });
 }
 
