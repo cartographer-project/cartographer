@@ -87,6 +87,11 @@ class SparsePoseGraph {
   virtual void AddNodeFromProto(const transform::Rigid3d& global_pose,
                                 const proto::Node& node) = 0;
 
+  // Adds serialized constraints. The corresponding trajectory nodes and submaps
+  // have to be deserialized before calling this function.
+  virtual void AddSerializedConstraints(
+      const std::vector<Constraint>& constraints) = 0;
+
   // Adds a 'trimmer'. It will be used after all data added before it has been
   // included in the pose graph.
   virtual void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) = 0;
@@ -119,6 +124,11 @@ class SparsePoseGraph {
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
 };
+
+std::vector<SparsePoseGraph::Constraint> FromProto(
+    const ::google::protobuf::RepeatedPtrField<
+        ::cartographer::mapping::proto::SparsePoseGraph::Constraint>&
+        constraint_protos);
 
 }  // namespace mapping
 }  // namespace cartographer

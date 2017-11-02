@@ -441,6 +441,26 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
+void SparsePoseGraph::AddSerializedConstraints(
+    const std::vector<Constraint>& constraints) {
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([this, constraints]() REQUIRES(mutex_) {
+    for (const auto& constraint : constraints) {
+      CHECK(trajectory_nodes_.Contains(constraint.node_id));
+      CHECK(submap_data_.Contains(constraint.submap_id));
+      CHECK(trajectory_nodes_.at(constraint.node_id).constant_data != nullptr);
+      CHECK(submap_data_.at(constraint.submap_id).submap != nullptr);
+      if (constraint.tag == Constraint::Tag::INTRA_SUBMAP) {
+        CHECK(submap_data_.at(constraint.submap_id)
+                  .node_ids.emplace(constraint.node_id)
+                  .second);
+      }
+      constraints_.push_back(constraint);
+    }
+    LOG(INFO) << "Loaded " << constraints.size() << " constraints.";
+  });
+}
+
 void SparsePoseGraph::AddTrimmer(
     std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) {
   common::MutexLocker locker(&mutex_);
