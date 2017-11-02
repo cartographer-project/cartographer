@@ -163,7 +163,6 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   const Eigen::Quaterniond gravity_alignment =
       extrapolator_->EstimateGravityOrientation(time);
 
-  // Range data to be inserted into submap(s).
   sensor::RangeData filtered_range_data_in_local = sensor::TransformRangeData(
       filtered_range_data_in_tracking, pose_estimate.cast<float>());
   last_pose_estimate_ = {time, pose_estimate,

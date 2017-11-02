@@ -147,15 +147,13 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   const transform::Rigid2d pose_prediction = transform::Project2D(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
-  // 'pose_estimate_2d' transforms from gravity-aligned to the local map frame.
-  transform::Rigid2d pose_estimate_2d;
+  transform::Rigid2d pose_estimate_2d;  // local frame <- gravity-aligned frame
   ScanMatch(time, pose_prediction, gravity_aligned_range_data,
             &pose_estimate_2d);
   const transform::Rigid3d pose_estimate =
       transform::Embed3D(pose_estimate_2d) * gravity_alignment;
   extrapolator_->AddPose(time, pose_estimate);
 
-  // Range data to be inserted into submap(s).
   sensor::RangeData range_data_in_local =
       TransformRangeData(gravity_aligned_range_data,
                          transform::Embed3D(pose_estimate_2d.cast<float>()));
