@@ -110,14 +110,14 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const sensor::RangeData& range_data_in_tracking) {
-  const sensor::RangeData filtered_range_data = {
+  const sensor::RangeData filtered_range_data_in_tracking = {
       range_data_in_tracking.origin,
       sensor::VoxelFiltered(range_data_in_tracking.returns,
                             options_.voxel_filter_size()),
       sensor::VoxelFiltered(range_data_in_tracking.misses,
                             options_.voxel_filter_size())};
 
-  if (filtered_range_data.returns.empty()) {
+  if (filtered_range_data_in_tracking.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";
     return nullptr;
   }
@@ -131,13 +131,13 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       matching_submap->local_pose().inverse() * pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.high_resolution_adaptive_voxel_filter_options());
-  const sensor::PointCloud filtered_point_cloud_in_tracking =
-      adaptive_voxel_filter.Filter(filtered_range_data.returns);
+  const sensor::PointCloud high_resolution_point_cloud_in_tracking =
+      adaptive_voxel_filter.Filter(filtered_range_data_in_tracking.returns);
   if (options_.use_online_correlative_scan_matching()) {
     // We take a copy since we use 'initial_ceres_pose' as an output argument.
     const transform::Rigid3d initial_pose = initial_ceres_pose;
     real_time_correlative_scan_matcher_->Match(
-        initial_pose, filtered_point_cloud_in_tracking,
+        initial_pose, high_resolution_point_cloud_in_tracking,
         matching_submap->high_resolution_hybrid_grid(), &initial_ceres_pose);
   }
 
@@ -147,11 +147,12 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   sensor::AdaptiveVoxelFilter low_resolution_adaptive_voxel_filter(
       options_.low_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud low_resolution_point_cloud_in_tracking =
-      low_resolution_adaptive_voxel_filter.Filter(filtered_range_data.returns);
+      low_resolution_adaptive_voxel_filter.Filter(
+          filtered_range_data_in_tracking.returns);
   ceres_scan_matcher_->Match(
       matching_submap->local_pose().inverse() * pose_prediction,
       initial_ceres_pose,
-      {{&filtered_point_cloud_in_tracking,
+      {{&high_resolution_point_cloud_in_tracking,
         &matching_submap->high_resolution_hybrid_grid()},
        {&low_resolution_point_cloud_in_tracking,
         &matching_submap->low_resolution_hybrid_grid()}},
@@ -161,22 +162,15 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   extrapolator_->AddPose(time, pose_estimate);
   const Eigen::Quaterniond gravity_alignment =
       extrapolator_->EstimateGravityOrientation(time);
-  const auto rotational_scan_matcher_histogram =
-      scan_matching::RotationalScanMatcher::ComputeHistogram(
-          sensor::TransformPointCloud(
-              filtered_range_data.returns,
-              transform::Rigid3f::Rotation(gravity_alignment.cast<float>())),
-          options_.rotational_histogram_size());
 
-  last_pose_estimate_ = {
-      time, pose_estimate,
-      sensor::TransformPointCloud(filtered_range_data.returns,
-                                  pose_estimate.cast<float>())};
-
-  return InsertIntoSubmap(time, filtered_range_data, gravity_alignment,
-                          filtered_point_cloud_in_tracking,
-                          low_resolution_point_cloud_in_tracking,
-                          rotational_scan_matcher_histogram, pose_estimate);
+  sensor::RangeData filtered_range_data_in_local = sensor::TransformRangeData(
+      filtered_range_data_in_tracking, pose_estimate.cast<float>());
+  last_pose_estimate_ = {time, pose_estimate,
+                         filtered_range_data_in_local.returns};
+  return InsertIntoSubmap(
+      time, filtered_range_data_in_local, filtered_range_data_in_tracking,
+      high_resolution_point_cloud_in_tracking,
+      low_resolution_point_cloud_in_tracking, pose_estimate, gravity_alignment);
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
@@ -195,13 +189,14 @@ const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
 LocalTrajectoryBuilder::InsertIntoSubmap(
-    const common::Time time, const sensor::RangeData& range_data_in_tracking,
-    const Eigen::Quaterniond& gravity_alignment,
-    const sensor::PointCloud& high_resolution_point_cloud,
-    const sensor::PointCloud& low_resolution_point_cloud,
-    const Eigen::VectorXf& rotational_scan_matcher_histogram,
-    const transform::Rigid3d& pose_observation) {
-  if (motion_filter_.IsSimilar(time, pose_observation)) {
+    const common::Time time,
+    const sensor::RangeData& filtered_range_data_in_local,
+    const sensor::RangeData& filtered_range_data_in_tracking,
+    const sensor::PointCloud& high_resolution_point_cloud_in_tracking,
+    const sensor::PointCloud& low_resolution_point_cloud_in_tracking,
+    const transform::Rigid3d& pose_estimate,
+    const Eigen::Quaterniond& gravity_alignment) {
+  if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
   // Querying the active submaps must be done here before calling
@@ -210,21 +205,24 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
   for (const std::shared_ptr<Submap>& submap : active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
-  active_submaps_.InsertRangeData(
-      sensor::TransformRangeData(range_data_in_tracking,
-                                 pose_observation.cast<float>()),
-      gravity_alignment);
+  active_submaps_.InsertRangeData(filtered_range_data_in_local,
+                                  gravity_alignment);
+  const auto rotational_scan_matcher_histogram =
+      scan_matching::RotationalScanMatcher::ComputeHistogram(
+          sensor::TransformPointCloud(
+              filtered_range_data_in_tracking.returns,
+              transform::Rigid3f::Rotation(gravity_alignment.cast<float>())),
+          options_.rotational_histogram_size());
   return std::unique_ptr<InsertionResult>(new InsertionResult{
-
       std::make_shared<const mapping::TrajectoryNode::Data>(
           mapping::TrajectoryNode::Data{
               time,
               gravity_alignment,
               {},  // 'filtered_point_cloud' is only used in 2D.
-              high_resolution_point_cloud,
-              low_resolution_point_cloud,
+              high_resolution_point_cloud_in_tracking,
+              low_resolution_point_cloud_in_tracking,
               rotational_scan_matcher_histogram,
-              pose_observation}),
+              pose_estimate}),
       std::move(insertion_submaps)});
 }
 
