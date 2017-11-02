@@ -78,7 +78,7 @@ class PoseExtrapolator {
   std::deque<sensor::ImuData> imu_data_;
   std::unique_ptr<ImuTracker> imu_tracker_;
   std::unique_ptr<ImuTracker> odometry_imu_tracker_;
-  std::unique_ptr<ImuTracker> pose_imu_tracker_;
+  std::unique_ptr<ImuTracker> extrapolation_imu_tracker_;
 
   std::deque<sensor::OdometryData> odometry_data_;
   Eigen::Vector3d linear_velocity_from_odometry_ = Eigen::Vector3d::Zero();

@@ -76,7 +76,7 @@ void PoseExtrapolator::AddPose(const common::Time time,
   TrimImuData();
   TrimOdometryData();
   odometry_imu_tracker_ = common::make_unique<ImuTracker>(*imu_tracker_);
-  pose_imu_tracker_ = common::make_unique<ImuTracker>(*imu_tracker_);
+  extrapolation_imu_tracker_ = common::make_unique<ImuTracker>(*imu_tracker_);
 }
 
 void PoseExtrapolator::AddImuData(const sensor::ImuData& imu_data) {
@@ -129,7 +129,7 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
   return transform::Rigid3d::Translation(ExtrapolateTranslation(time)) *
          newest_timed_pose.pose *
          transform::Rigid3d::Rotation(
-             ExtrapolateRotation(time, pose_imu_tracker_.get()));
+             ExtrapolateRotation(time, extrapolation_imu_tracker_.get()));
 }
 
 Eigen::Quaterniond PoseExtrapolator::EstimateGravityOrientation(
