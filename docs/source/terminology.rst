@@ -35,8 +35,20 @@ local (map) frame
   point in time, the transform between this and the global map frame may change,
   but the transform between this and all other frames does not change.
 
+submap frame
+  There is a separate fixed submap frame for each submap.
+
 tracking frame
-  The frame in which sensor data is expressed.
+  The frame in which sensor data is expressed. It is not fixed, i.e. changes
+  over time. It is also different for different trajectories.
+
+gravity-aligned frame
+  Only used in 2D. A frame colocated with the tracking frame but with a
+  different orientation which is approximately aligned with gravity, i.e. the
+  gravitational acceleration vector points approximately in the -z direction. No
+  assumption about yaw (rotation around the z axis between this and the tracking
+  frame) should be made. A different gravity-aligned frame is used for different
+  trajectory nodes.
 
 
 
@@ -44,7 +56,15 @@ Transforms
 ==========
 
 local_pose
-  Transforms data from the tracking frame to the local frame.
+  Transforms data from the tracking frame (or a submap frame, depending on
+  context) to the local frame.
 
 global_pose
-  Transforms data from the tracking frame to the global frame.
+  Transforms data from the tracking frame (or a submap frame, depending on
+  context)  to the global frame.
+
+local_submap_pose
+  Transforms data from a submap frame to the local frame.
+
+global_submap_pose
+  Transforms data from a submap frame to the global frame.
