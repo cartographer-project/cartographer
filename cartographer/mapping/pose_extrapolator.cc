@@ -218,7 +218,7 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
 }
 
 Eigen::Quaterniond PoseExtrapolator::ExtrapolateRotation(
-    const common::Time time, ImuTracker* imu_tracker) const {
+    const common::Time time, ImuTracker* const imu_tracker) const {
   CHECK_GE(time, imu_tracker->time());
   AdvanceImuTracker(time, imu_tracker);
   const Eigen::Quaterniond last_orientation = imu_tracker_->orientation();
