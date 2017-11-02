@@ -70,7 +70,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // 'insertion_submaps.front()' and the scan was inserted into the
   // 'insertion_submaps'. If 'insertion_submaps.front().finished()' is
   // 'true', this submap was inserted into for the last time.
-  void AddScan(
+  mapping::NodeId AddScan(
       std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
       int trajectory_id,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)

@@ -93,7 +93,7 @@ std::vector<mapping::SubmapId> SparsePoseGraph::GrowSubmapTransformsAsNeeded(
   return {front_submap_id, last_submap_id};
 }
 
-void SparsePoseGraph::AddScan(
+mapping::NodeId SparsePoseGraph::AddScan(
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
     const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap>>& insertion_submaps) {
@@ -124,6 +124,7 @@ void SparsePoseGraph::AddScan(
     ComputeConstraintsForScan(node_id, insertion_submaps,
                               newly_finished_submap);
   });
+  return node_id;
 }
 
 void SparsePoseGraph::AddWorkItem(const std::function<void()>& work_item) {
