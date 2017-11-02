@@ -88,6 +88,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                           const mapping::proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
                         const mapping::proto::Node& node) override;
+  void AddDataFromProto(
+      std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) override;
   void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
@@ -99,6 +101,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_) override;
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
   GetTrajectoryNodes() override EXCLUDES(mutex_);
+  std::vector<std::deque<sensor::ImuData>> GetImuData() override
+      EXCLUDES(mutex_);
+  std::vector<transform::TransformInterpolationBuffer> GetOdometryData()
+      override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
 
  private:
@@ -171,8 +177,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       REQUIRES(mutex_);
 
   // Updates the trajectory connectivity structure with the new constraints.
-  void UpdateTrajectoryConnectivity(
-      const sparse_pose_graph::ConstraintBuilder::Result& result)
+  void UpdateTrajectoryConnectivity(const Constraint& constraint)
       REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;

@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 #define CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
 
+#include <deque>
 #include <memory>
 #include <set>
 #include <unordered_map>
@@ -31,7 +32,9 @@
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/sensor/imu_data.h"
 #include "cartographer/transform/rigid_transform.h"
+#include "cartographer/transform/transform_interpolation_buffer.h"
 
 namespace cartographer {
 namespace mapping {
@@ -87,6 +90,11 @@ class SparsePoseGraph {
   virtual void AddNodeFromProto(const transform::Rigid3d& global_pose,
                                 const proto::Node& node) = 0;
 
+  // Adds constraints, IMU and odometry data from a proto. Trajectory nodes and
+  // submaps have to be deserialized before calling this function.
+  virtual void AddDataFromProto(
+      std::shared_ptr<const proto::SparsePoseGraph> proto) = 0;
+
   // Adds a 'trimmer'. It will be used after all data added before it has been
   // included in the pose graph.
   virtual void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) = 0;
@@ -118,7 +126,17 @@ class SparsePoseGraph {
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
+
+  // Returns the IMU data.
+  virtual std::vector<std::deque<sensor::ImuData>> GetImuData() = 0;
+
+  // Returns a copy of the interpolation buffer with the odometry data.
+  virtual std::vector<transform::TransformInterpolationBuffer>
+  GetOdometryData() = 0;
 };
+
+SparsePoseGraph::Constraint::Tag FromProto(
+    const proto::SparsePoseGraph::Constraint::Tag& proto);
 
 }  // namespace mapping
 }  // namespace cartographer

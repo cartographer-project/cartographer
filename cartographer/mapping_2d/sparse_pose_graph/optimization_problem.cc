@@ -251,6 +251,16 @@ OptimizationProblem::submap_data() const {
   return submap_data_;
 }
 
+const std::vector<std::deque<sensor::ImuData>>& OptimizationProblem::imu_data()
+    const {
+  return imu_data_;
+}
+
+const std::vector<transform::TransformInterpolationBuffer>&
+OptimizationProblem::odometry_data() const {
+  return odometry_data_;
+}
+
 }  // namespace sparse_pose_graph
 }  // namespace mapping_2d
 }  // namespace cartographer

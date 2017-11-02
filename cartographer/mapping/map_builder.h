@@ -86,12 +86,16 @@ class MapBuilder {
   // Serializes the current state to a proto stream.
   void SerializeState(io::ProtoStreamWriter* writer);
 
-  // Loads submaps from a proto stream into a new frozen trajectory.
-  void LoadMap(io::ProtoStreamReader* reader);
+  // Loads the SLAM state from a proto stream.
+  void LoadState(io::ProtoStreamReader* reader, bool load_frozen_state);
 
   int num_trajectory_builders() const;
 
   mapping::SparsePoseGraph* sparse_pose_graph();
+
+  const std::vector<
+      std::unique_ptr<const proto::TrajectoryBuilderOptionsWithSensorIds>>&
+  GetAllTrajectoryBuilderOptions() const;
 
  private:
   const proto::MapBuilderOptions options_;
@@ -103,6 +107,10 @@ class MapBuilder {
 
   sensor::Collator sensor_collator_;
   std::vector<std::unique_ptr<mapping::TrajectoryBuilder>> trajectory_builders_;
+  // All options used to initialize trajectory builders are stored here.
+  std::vector<
+      std::unique_ptr<const proto::TrajectoryBuilderOptionsWithSensorIds>>
+      all_trajectory_builder_options_;
 };
 
 }  // namespace mapping

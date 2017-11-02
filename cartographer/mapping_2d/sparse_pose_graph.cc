@@ -290,16 +290,13 @@ common::Time SparsePoseGraph::GetLatestScanTime(
 }
 
 void SparsePoseGraph::UpdateTrajectoryConnectivity(
-    const sparse_pose_graph::ConstraintBuilder::Result& result) {
-  for (const Constraint& constraint : result) {
-    CHECK_EQ(constraint.tag,
-             mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-    const common::Time time =
-        GetLatestScanTime(constraint.node_id, constraint.submap_id);
-    trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
-                                           constraint.submap_id.trajectory_id,
-                                           time);
-  }
+    const Constraint& constraint) {
+  CHECK_EQ(constraint.tag, mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
+  const common::Time time =
+      GetLatestScanTime(constraint.node_id, constraint.submap_id);
+  trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
+                                         constraint.submap_id.trajectory_id,
+                                         time);
 }
 
 void SparsePoseGraph::HandleWorkQueue() {
@@ -312,7 +309,9 @@ void SparsePoseGraph::HandleWorkQueue() {
         RunOptimization();
 
         common::MutexLocker locker(&mutex_);
-        UpdateTrajectoryConnectivity(result);
+        for (const auto& constraint : result) {
+          UpdateTrajectoryConnectivity(constraint);
+        }
         TrimmingHandle trimming_handle(this);
         for (auto& trimmer : trimmers_) {
           trimmer->Trim(&trimming_handle);
@@ -394,7 +393,6 @@ void SparsePoseGraph::AddSubmapFromProto(const transform::Rigid3d& global_pose,
   optimized_submap_transforms_.Insert(
       submap_id, sparse_pose_graph::SubmapData{global_pose_2d});
   AddWorkItem([this, submap_id, global_pose_2d]() REQUIRES(mutex_) {
-    CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
     optimization_problem_.InsertSubmap(submap_id, global_pose_2d);
   });
@@ -414,7 +412,6 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
                            mapping::TrajectoryNode{constant_data, global_pose});
 
   AddWorkItem([this, node_id, global_pose]() REQUIRES(mutex_) {
-    CHECK_EQ(frozen_trajectories_.count(node_id.trajectory_id), 1);
     const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
     const auto gravity_alignment_inverse = transform::Rigid3d::Rotation(
         constant_data->gravity_alignment.inverse());
@@ -424,6 +421,86 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
                              gravity_alignment_inverse),
         transform::Project2D(global_pose * gravity_alignment_inverse),
         constant_data->gravity_alignment);
+  });
+}
+
+void SparsePoseGraph::AddDataFromProto(
+    std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) {
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([this, proto]() REQUIRES(mutex_) {
+    for (const auto& constraint_proto : proto->constraint()) {
+      const mapping::SubmapId submap_id{
+          constraint_proto.submap_id().trajectory_id(),
+          constraint_proto.submap_id().submap_index()};
+      const mapping::NodeId node_id{constraint_proto.node_id().trajectory_id(),
+                                    constraint_proto.node_id().node_index()};
+      const Constraint::Pose pose{
+          transform::ToRigid3(constraint_proto.relative_pose()) *
+              transform::Rigid3d::Rotation(
+                  trajectory_nodes_.at(node_id)
+                      .constant_data->gravity_alignment.inverse()),
+          constraint_proto.translation_weight(),
+          constraint_proto.rotation_weight()};
+      const Constraint::Tag tag = mapping::FromProto(constraint_proto.tag());
+
+      CHECK(trajectory_nodes_.Contains(node_id));
+      CHECK(submap_data_.Contains(submap_id));
+      CHECK(trajectory_nodes_.at(node_id).constant_data != nullptr);
+      CHECK(submap_data_.at(submap_id).submap != nullptr);
+
+      const Constraint constraint{submap_id, node_id, pose, tag};
+      constraints_.push_back(constraint);
+      switch (tag) {
+        case Constraint::Tag::INTRA_SUBMAP:
+          submap_data_.at(submap_id).node_ids.emplace(node_id);
+          break;
+
+        case Constraint::Tag::INTER_SUBMAP:
+          UpdateTrajectoryConnectivity(constraint);
+          break;
+      }
+    }
+    LOG(INFO) << "Loaded " << proto->constraint_size() << " constraints.";
+
+    for (int trajectory_id = 0; trajectory_id < proto->trajectory().size();
+         ++trajectory_id) {
+      AddTrajectoryIfNeeded(trajectory_id);
+      const auto& trajectory_proto = proto->trajectory(trajectory_id);
+      if (trajectory_id <
+          static_cast<int>(optimization_problem_.imu_data().size())) {
+        CHECK_EQ(optimization_problem_.imu_data().at(trajectory_id).size(), 0);
+      }
+      for (const auto& imu_data_proto : trajectory_proto.imu_data()) {
+        optimization_problem_.AddImuData(trajectory_id,
+                                         sensor::FromProto(imu_data_proto));
+      }
+      if (trajectory_proto.imu_data_size() > 0) {
+        CHECK_EQ(optimization_problem_.imu_data().at(trajectory_id).size(),
+                 trajectory_proto.imu_data_size());
+      }
+      LOG(INFO) << "Loaded " << trajectory_proto.imu_data_size()
+                << " IMU measurements for trajectory " << trajectory_id;
+
+      if (trajectory_id <
+          static_cast<int>(optimization_problem_.odometry_data().size())) {
+        CHECK_EQ(optimization_problem_.odometry_data().at(trajectory_id).size(),
+                 0);
+      }
+      if (trajectory_proto.has_odometry_data()) {
+        for (const auto& stamped_transform :
+             trajectory_proto.odometry_data().stamped_transform()) {
+          optimization_problem_.AddOdometerData(
+              trajectory_id,
+              {common::FromUniversal(stamped_transform.timestamp()),
+               transform::ToRigid3(stamped_transform.transform())});
+        }
+        CHECK_EQ(optimization_problem_.odometry_data().at(trajectory_id).size(),
+                 trajectory_proto.odometry_data().stamped_transform_size());
+        LOG(INFO) << "Loaded "
+                  << trajectory_proto.odometry_data().stamped_transform_size()
+                  << " odometry measurements for trajectory " << trajectory_id;
+      }
+    }
   });
 }
 
@@ -495,6 +572,17 @@ mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
 SparsePoseGraph::GetTrajectoryNodes() {
   common::MutexLocker locker(&mutex_);
   return trajectory_nodes_;
+}
+
+std::vector<std::deque<sensor::ImuData>> SparsePoseGraph::GetImuData() {
+  common::MutexLocker locker(&mutex_);
+  return optimization_problem_.imu_data();
+}
+
+std::vector<transform::TransformInterpolationBuffer>
+SparsePoseGraph::GetOdometryData() {
+  common::MutexLocker locker(&mutex_);
+  return optimization_problem_.odometry_data();
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {

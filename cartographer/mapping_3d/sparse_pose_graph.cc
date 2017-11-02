@@ -441,6 +441,11 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
+void SparsePoseGraph::AddDataFromProto(
+    std::shared_ptr<const mapping::proto::SparsePoseGraph> proto) {
+  LOG(FATAL) << "Not yet implemented for 3D.";
+}
+
 void SparsePoseGraph::AddTrimmer(
     std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) {
   common::MutexLocker locker(&mutex_);
@@ -536,6 +541,16 @@ mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
 SparsePoseGraph::GetTrajectoryNodes() {
   common::MutexLocker locker(&mutex_);
   return trajectory_nodes_;
+}
+
+std::vector<std::deque<sensor::ImuData>> SparsePoseGraph::GetImuData() {
+  LOG(FATAL) << "Not yet implemented for 3D.";
+}
+
+std::vector<transform::TransformInterpolationBuffer>
+SparsePoseGraph::GetOdometryData() {
+  common::MutexLocker locker(&mutex_);
+  LOG(FATAL) << "Not yet implemented for 3D.";
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {

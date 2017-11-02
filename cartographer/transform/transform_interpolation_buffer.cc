@@ -34,6 +34,19 @@ TransformInterpolationBuffer::TransformInterpolationBuffer(
   }
 }
 
+proto::TransformInterpolationBuffer TransformInterpolationBuffer::ToProto()
+    const {
+  proto::TransformInterpolationBuffer proto;
+  for (const auto& stamped_transform : timestamped_transforms_) {
+    auto* stamped_transform_proto = proto.add_stamped_transform();
+    *stamped_transform_proto->mutable_transform() =
+        transform::ToProto(stamped_transform.transform);
+    stamped_transform_proto->set_timestamp(
+        common::ToUniversal(stamped_transform.time));
+  }
+  return proto;
+}
+
 void TransformInterpolationBuffer::Push(const common::Time time,
                                         const transform::Rigid3d& transform) {
   if (!timestamped_transforms_.empty()) {
@@ -77,6 +90,10 @@ common::Time TransformInterpolationBuffer::latest_time() const {
 
 bool TransformInterpolationBuffer::empty() const {
   return timestamped_transforms_.empty();
+}
+
+size_t TransformInterpolationBuffer::size() const {
+  return timestamped_transforms_.size();
 }
 
 }  // namespace transform
