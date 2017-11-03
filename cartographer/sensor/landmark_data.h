@@ -24,7 +24,10 @@
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/proto/sensor.pb.h"
+<<<<<<< HEAD
 #include "cartographer/transform/rigid_transform.h"
+=======
+>>>>>>> 9885dceef605c628ecc84dae7f63f3554e5d68f6
 
 namespace cartographer {
 namespace sensor {
