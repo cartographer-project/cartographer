@@ -19,6 +19,7 @@
 #include <cmath>
 
 #include "cartographer/sensor/test_helpers.h"
+#include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
 #include "gtest/gtest.h"
 
@@ -30,28 +31,33 @@ using ::testing::DoubleNear;
 using ::testing::Field;
 
 ::testing::Matcher<const Landmark&> EqualsLandmark(const Landmark& expected) {
-  return ::testing::AllOf(
-      Field(&Landmark::id, expected.id),
-      Field(&Landmark::translation, Near(expected.translation)),
-      Field(&Landmark::alignment, Near(expected.alignment)),
-      Field(&Landmark::weight, DoubleNear(expected.weight, 0.01)));
+  return ::testing::AllOf(Field(&Landmark::id, expected.id),
+                          Field(&Landmark::transform,
+                                transform::IsNearly(expected.transform, 3e-2)),
+                          Field(&Landmark::translation_weight,
+                                DoubleNear(expected.translation_weight, 0.01)),
+                          Field(&Landmark::rotation_weight,
+                                DoubleNear(expected.rotation_weight, 0.01)));
 }
 
 class LandmarkDataTest : public ::testing::Test {
  protected:
   LandmarkDataTest()
-      : landmarks_({{
-                        "ID1",
-                        Eigen::Vector3d{1., 1., 1.},
-                        Eigen::Quaterniond(1., 1., -1., -1.),
-                        1.f,
-                    },
-                    {
-                        "ID2",
-                        Eigen::Vector3d{2., 2., 2.},
-                        Eigen::Quaterniond(2., 2., -2., -2.),
-                        2.f,
-                    }}) {}
+      : landmarks_(
+            {{
+                 "ID1",
+                 transform::Rigid3d(Eigen::Vector3d(1., 1., 1.),
+                                    Eigen::Quaterniond(1., 1., -1., -1.)),
+                 1.f,
+                 3.f,
+             },
+             {
+                 "ID2",
+                 transform::Rigid3d(Eigen::Vector3d(2., 2., 2.),
+                                    Eigen::Quaterniond(2., 2., -2., -2.)),
+                 2.f,
+                 4.f,
+             }}) {}
   std::vector<Landmark> landmarks_;
 };
 

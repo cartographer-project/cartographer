@@ -24,15 +24,16 @@
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/proto/sensor.pb.h"
+#include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace sensor {
 
 struct Landmark {
   string id;
-  Eigen::Vector3d translation;
-  Eigen::Quaterniond alignment;
-  double weight;
+  transform::Rigid3d transform;
+  double translation_weight;
+  double rotation_weight;
 };
 
 struct LandmarkData {

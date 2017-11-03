@@ -49,9 +49,9 @@ message FixedFramePoseData {
 message LandmarkData {
   message Landmark {
     optional string id = 1;
-    optional transform.proto.Vector3d translation = 2;
-    optional transform.proto.Quaterniond alignment = 3;
-    optional double weight = 4;
+    optional transform.proto.Rigid3d transform = 2;
+    optional double translation_weight = 3;
+    optional double rotation_weight = 4;
   }
   optional int64 timestamp = 1;
   repeated Landmark landmarks = 2;
