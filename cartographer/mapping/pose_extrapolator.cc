@@ -57,7 +57,10 @@ common::Time PoseExtrapolator::GetLastPoseTime() const {
 }
 
 common::Time PoseExtrapolator::GetLastExtrapolatedTime() const {
-  return GetLastPoseTime();
+  if (!extrapolation_imu_tracker_) {
+    return common::Time::min();
+  }
+  return extrapolation_imu_tracker_->time();
 }
 
 void PoseExtrapolator::AddPose(const common::Time time,
