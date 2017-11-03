@@ -65,7 +65,7 @@ class Submap {
 
   virtual void ToProto(proto::Submap* proto) const = 0;
 
-  // Pose of this submap in the local frame.
+  // Pose of this submap in the local map frame.
   transform::Rigid3d local_pose() const { return local_pose_; }
 
   // Number of RangeData inserted.

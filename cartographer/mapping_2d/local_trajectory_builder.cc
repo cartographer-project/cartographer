@@ -146,7 +146,8 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   const transform::Rigid2d pose_prediction = transform::Project2D(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
-  transform::Rigid2d pose_estimate_2d;  // local frame <- gravity-aligned frame
+  // local map frame <- gravity-aligned frame
+  transform::Rigid2d pose_estimate_2d;
   ScanMatch(time, pose_prediction, gravity_aligned_range_data,
             &pose_estimate_2d);
   const transform::Rigid3d pose_estimate =
