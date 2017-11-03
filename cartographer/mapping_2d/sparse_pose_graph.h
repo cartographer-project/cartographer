@@ -108,9 +108,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                                 const transform::Rigid3d& pose,
                                 const common::Time& time) override
       EXCLUDES(mutex_);
-  transform::Rigid3d GetClosestTrajectoryPose(int trajectory_id,
-                                              const common::Time& time)
-      EXCLUDES(mutex_);
+  transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
+      int trajectory_id,
+      const common::Time& time) const REQUIRES(mutex_);
 
  private:
   // The current state of the submap in the background threads. When this
