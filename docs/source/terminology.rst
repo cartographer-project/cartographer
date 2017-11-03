@@ -48,7 +48,8 @@ gravity-aligned frame
   gravitational acceleration vector points approximately in the -z direction. No
   assumption about yaw (rotation around the z axis between this and the tracking
   frame) should be made. A different gravity-aligned frame is used for different
-  trajectory nodes.
+  trajectory nodes, e.g. yaw can change arbitrarily between gravity-aligned
+  frames of consecutive nodes.
 
 
 
