@@ -198,8 +198,8 @@ proto::SubmapsOptions CreateSubmapsOptions(
 }
 
 Submap::Submap(const float high_resolution, const float low_resolution,
-               const transform::Rigid3d& local_pose)
-    : mapping::Submap(local_pose),
+               const transform::Rigid3d& local_submap_pose)
+    : mapping::Submap(local_submap_pose),
       high_resolution_hybrid_grid_(high_resolution),
       low_resolution_hybrid_grid_(low_resolution) {}
 
@@ -283,14 +283,15 @@ void ActiveSubmaps::InsertRangeData(
   }
 }
 
-void ActiveSubmaps::AddSubmap(const transform::Rigid3d& local_pose) {
+void ActiveSubmaps::AddSubmap(const transform::Rigid3d& local_submap_pose) {
   if (submaps_.size() > 1) {
     submaps_.front()->Finish();
     ++matching_submap_index_;
     submaps_.erase(submaps_.begin());
   }
   submaps_.emplace_back(new Submap(options_.high_resolution(),
-                                   options_.low_resolution(), local_pose));
+                                   options_.low_resolution(),
+                                   local_submap_pose));
   LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
 }
 

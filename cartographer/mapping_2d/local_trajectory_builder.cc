@@ -89,8 +89,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   }
   if (num_accumulated_ == 0) {
     first_pose_estimate_ = extrapolator_->ExtrapolatePose(time).cast<float>();
-    accumulated_range_data_ =
-        sensor::RangeData{range_data.origin, {}, {}};
+    accumulated_range_data_ = sensor::RangeData{range_data.origin, {}, {}};
   }
 
   // TODO(gaschler): Take time delta of individual points into account.
@@ -147,7 +146,8 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   const transform::Rigid2d pose_prediction = transform::Project2D(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
-  transform::Rigid2d pose_estimate_2d;  // local frame <- gravity-aligned frame
+  // local map frame <- gravity-aligned frame
+  transform::Rigid2d pose_estimate_2d;
   ScanMatch(time, pose_prediction, gravity_aligned_range_data,
             &pose_estimate_2d);
   const transform::Rigid3d pose_estimate =
