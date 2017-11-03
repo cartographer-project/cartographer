@@ -14,33 +14,22 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/range_data.h"
+#ifndef CARTOGRAPHER_SENSOR_TEST_HELPERS_H_
+#define CARTOGRAPHER_SENSOR_TEST_HELPERS_H_
 
+#include <string>
 #include <tuple>
-#include <vector>
 
-#include "cartographer/sensor/test_helpers.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {
 namespace sensor {
-namespace {
 
-using ::testing::Contains;
+MATCHER_P(Near, point, std::string(negation ? "Doesn't" : "Does") + " match.") {
+  return arg.isApprox(point, 0.001f);
+}
 
-class RangeDataTest : public ::testing::Test {
- protected:
-  RangeDataTest() : origin_(Eigen::Vector3f(1, 1, 1)) {
-    returns_.emplace_back(0, 1, 2);
-    returns_.emplace_back(4, 5, 6);
-    returns_.emplace_back(0, 1, 2);
-    misses_.emplace_back(7, 8, 9);
-  }
-  Eigen::Vector3f origin_;
-  std::vector<Eigen::Vector3f> returns_;
-  std::vector<Eigen::Vector3f> misses_;
-};
-
-}  // namespace
 }  // namespace sensor
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_SENSOR_TEST_HELPERS_H_
