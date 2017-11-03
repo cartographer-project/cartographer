@@ -68,6 +68,12 @@ class LocalTrajectoryBuilder {
       const transform::Rigid3f& gravity_alignment,
       const sensor::RangeData& range_data) const;
 
+  std::unique_ptr<InsertionResult> InsertIntoSubmap(
+      common::Time time, const sensor::RangeData& range_data_in_local,
+      const sensor::RangeData& gravity_aligned_range_data,
+      const transform::Rigid3d& pose_estimate,
+      const Eigen::Quaterniond& gravity_alignment);
+
   // Scan matches 'gravity_aligned_range_data' and fill in the
   // 'pose_observation' with the result.
   void ScanMatch(common::Time time, const transform::Rigid2d& pose_prediction,

@@ -47,6 +47,7 @@ class PoseExtrapolator {
   // Returns the time of the last added pose or Time::min() if no pose was added
   // yet.
   common::Time GetLastPoseTime() const;
+  common::Time GetLastExtrapolatedTime() const;
 
   void AddPose(common::Time time, const transform::Rigid3d& pose);
   void AddImuData(const sensor::ImuData& imu_data);

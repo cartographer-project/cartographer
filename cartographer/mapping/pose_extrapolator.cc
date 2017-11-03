@@ -56,6 +56,10 @@ common::Time PoseExtrapolator::GetLastPoseTime() const {
   return timed_pose_queue_.back().time;
 }
 
+common::Time PoseExtrapolator::GetLastExtrapolatedTime() const {
+  return GetLastPoseTime();
+}
+
 void PoseExtrapolator::AddPose(const common::Time time,
                                const transform::Rigid3d& pose) {
   if (imu_tracker_ == nullptr) {
