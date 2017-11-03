@@ -53,18 +53,19 @@ inline uint8 ProbabilityToLogOddsInteger(const float probability) {
   return value;
 }
 
-// An individual submap, which has a 'local_pose' in the local SLAM frame, keeps
+// An individual submap, which has a 'local_pose' in the local map frame, keeps
 // track of how many range data were inserted into it, and sets the
 // 'finished_probability_grid' to be used for loop closing once the map no
 // longer changes.
 class Submap {
  public:
-  Submap(const transform::Rigid3d& local_pose) : local_pose_(local_pose) {}
+  Submap(const transform::Rigid3d& local_submap_pose)
+      : local_pose_(local_submap_pose) {}
   virtual ~Submap() {}
 
   virtual void ToProto(proto::Submap* proto) const = 0;
 
-  // Local SLAM pose of this submap.
+  // Pose of this submap in the local map frame.
   transform::Rigid3d local_pose() const { return local_pose_; }
 
   // Number of RangeData inserted.

@@ -158,8 +158,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // optimization being run at a time.
   void RunOptimization() EXCLUDES(mutex_);
 
-  // Computes the local to global frame transform based on the given optimized
-  // 'submap_transforms'.
+  // Computes the local to global map frame transform based on the given
+  // optimized 'submap_transforms'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
       const mapping::MapById<mapping::SubmapId, sparse_pose_graph::SubmapData>&
           submap_transforms,

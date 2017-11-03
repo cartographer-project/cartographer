@@ -44,7 +44,7 @@ proto::SubmapsOptions CreateSubmapsOptions(
 class Submap : public mapping::Submap {
  public:
   Submap(float high_resolution, float low_resolution,
-         const transform::Rigid3d& local_pose);
+         const transform::Rigid3d& local_submap_pose);
   explicit Submap(const mapping::proto::Submap3D& proto);
 
   void ToProto(mapping::proto::Submap* proto) const override;
@@ -103,7 +103,7 @@ class ActiveSubmaps {
   std::vector<std::shared_ptr<Submap>> submaps() const;
 
  private:
-  void AddSubmap(const transform::Rigid3d& local_pose);
+  void AddSubmap(const transform::Rigid3d& local_submap_pose);
 
   const proto::SubmapsOptions options_;
   int matching_submap_index_ = 0;
