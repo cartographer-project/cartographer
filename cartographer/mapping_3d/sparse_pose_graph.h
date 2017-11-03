@@ -108,6 +108,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                                 const transform::Rigid3d& pose,
                                 const common::Time& time) override
       EXCLUDES(mutex_);
+  transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
+      int trajectory_id,
+      const common::Time& time) const REQUIRES(mutex_);
 
  private:
   // The current state of the submap in the background threads. When this
@@ -235,7 +238,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
 
   // Set of all initial trajectory poses.
-  std::map<int, InitialTrajectoryPose> initial_trajectory_poses_;
+  std::map<int, InitialTrajectoryPose> initial_trajectory_poses_
+      GUARDED_BY(mutex_);
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.

@@ -551,8 +551,8 @@ std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   return result;
 }
 
-void SparsePoseGraph::SetInitialTrajectoryPose(int from_trajectory_id,
-                                               int to_trajectory_id,
+void SparsePoseGraph::SetInitialTrajectoryPose(const int from_trajectory_id,
+                                               const int to_trajectory_id,
                                                const transform::Rigid3d& pose,
                                                const common::Time& time) {
   common::MutexLocker locker(&mutex_);
@@ -616,13 +616,11 @@ transform::Rigid3d SparsePoseGraph::ComputeLocalToGlobalTransform(
   auto begin_it = submap_transforms.BeginOfTrajectory(trajectory_id);
   auto end_it = submap_transforms.EndOfTrajectory(trajectory_id);
   if (begin_it == end_it) {
-    if (initial_trajectory_poses_.find(trajectory_id) !=
-        initial_trajectory_poses_.end()) {
-      const InitialTrajectoryPose& initial_pose =
-          initial_trajectory_poses_.at(trajectory_id);
-      return GetInterpolatedGlobalTrajectoryPose(initial_pose.to_trajectory_id,
-                                      initial_pose.time) *
-             initial_pose.relative_pose;
+    const auto it = initial_trajectory_poses_.find(trajectory_id);
+    if (it != initial_trajectory_poses_.end()) {
+      return GetInterpolatedGlobalTrajectoryPose(it->second.to_trajectory_id,
+                                                 it->second.time) *
+             it->second.relative_pose;
     } else {
       return transform::Rigid3d::Identity();
     }

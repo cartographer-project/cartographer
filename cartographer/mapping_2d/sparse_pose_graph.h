@@ -234,7 +234,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
 
   // Set of all initial trajectory poses.
-  std::map<int, InitialTrajectoryPose> initial_trajectory_poses_;
+  std::map<int, InitialTrajectoryPose> initial_trajectory_poses_
+      GUARDED_BY(mutex_);
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.
