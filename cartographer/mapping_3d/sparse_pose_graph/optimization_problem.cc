@@ -236,7 +236,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       const std::deque<sensor::ImuData>& imu_data = imu_data_.at(trajectory_id);
       CHECK(!imu_data.empty());
 
-      auto imu_it = imu_data.cbegin();
+      auto imu_it = imu_data.begin();
       auto prev_node_it = node_it;
       for (++node_it; node_it != trajectory_end; ++node_it) {
         const mapping::NodeId first_node_id = prev_node_it->id;
@@ -250,8 +250,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         }
 
         // Skip IMU data before the node.
-        while ((imu_it + 1) != imu_data.cend() &&
-               (imu_it + 1)->time <= first_node_data.time) {
+        while (std::next(imu_it) != imu_data.end() &&
+               std::next(imu_it)->time <= first_node_data.time) {
           ++imu_it;
         }
 

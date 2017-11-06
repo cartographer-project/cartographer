@@ -35,7 +35,7 @@ common::Time CreateTime(const int milliseconds) {
 
 class Data {
  public:
-  Data(int milliseconds) : time_(CreateTime(milliseconds)) {}
+  explicit Data(int milliseconds) : time_(CreateTime(milliseconds)) {}
 
   const common::Time& time() const { return time_; }
 
@@ -74,9 +74,9 @@ TEST(IdTest, MapByIdIterator) {
       {NodeId{42, 0}, 3},
   };
   for (const auto& id_data : map_by_id) {
+    ASSERT_FALSE(expected_id_data.empty());
     EXPECT_EQ(expected_id_data.front().first, id_data.id);
     EXPECT_EQ(expected_id_data.front().second, id_data.data);
-    ASSERT_FALSE(expected_id_data.empty());
     expected_id_data.pop_front();
   }
   EXPECT_TRUE(expected_id_data.empty());
@@ -89,9 +89,9 @@ TEST(IdTest, MapByIdTrajectoryRange) {
       {NodeId{0, 1}, 1},
   };
   for (const auto& entry : map_by_id.trajectory(0)) {
+    ASSERT_FALSE(expected_data.empty());
     EXPECT_EQ(expected_data.front().first, entry.id);
     EXPECT_EQ(expected_data.front().second, entry.data);
-    ASSERT_FALSE(expected_data.empty());
     expected_data.pop_front();
   }
   EXPECT_TRUE(expected_data.empty());
@@ -101,8 +101,8 @@ TEST(IdTest, MapByIdTrajectoryIdRange) {
   MapById<NodeId, int> map_by_id = CreateTestMapById<NodeId>();
   std::deque<int> expected_data = {0, 7, 42};
   for (const int trajectory_id : map_by_id.trajectory_ids()) {
-    EXPECT_EQ(expected_data.front(), trajectory_id);
     ASSERT_FALSE(expected_data.empty());
+    EXPECT_EQ(expected_data.front(), trajectory_id);
     expected_data.pop_front();
   }
   EXPECT_TRUE(expected_data.empty());
@@ -118,9 +118,9 @@ TEST(IdTest, MapByIdIterateByTrajectories) {
   };
   for (int trajectory_id : map_by_id.trajectory_ids()) {
     for (const auto& entry : map_by_id.trajectory(trajectory_id)) {
+      ASSERT_FALSE(expected_id_data.empty());
       EXPECT_EQ(expected_id_data.front().first, entry.id);
       EXPECT_EQ(expected_id_data.front().second, entry.data);
-      ASSERT_FALSE(expected_id_data.empty());
       expected_id_data.pop_front();
     }
   }
