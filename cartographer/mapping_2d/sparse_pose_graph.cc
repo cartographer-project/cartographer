@@ -365,6 +365,9 @@ void SparsePoseGraph::WaitForAllComputations() {
   locker.Await([&notification]() { return notification; });
 }
 
+void SparsePoseGraph::FinishTrajectory(const int trajectory_id) {
+}
+
 void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   trajectory_connectivity_state_.Add(trajectory_id);

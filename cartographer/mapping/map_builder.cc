@@ -116,6 +116,7 @@ TrajectoryBuilder* MapBuilder::GetTrajectoryBuilder(
 
 void MapBuilder::FinishTrajectory(const int trajectory_id) {
   sensor_collator_.FinishTrajectory(trajectory_id);
+  sparse_pose_graph_->FinishTrajectory(trajectory_id);
 }
 
 int MapBuilder::GetBlockingTrajectoryId() const {
