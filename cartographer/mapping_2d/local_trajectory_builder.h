@@ -48,7 +48,7 @@ class LocalTrajectoryBuilder {
   // 'MatchingResult' instance which contains the accumulated 'RangeData',
   // the estimated pose, time and an 'InsertionResult' pointer, which is
   // 'nullptr' if the motion filter has blocked the accumulated range data from
-  // insertion; otherwise, it points to an 'InsertionResult' instance.
+  // insertion; otherwise, it points to the corresponding 'InsertionResult'.
   struct InsertionResult {
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
