@@ -55,9 +55,11 @@ class LocalTrajectoryBuilder {
 
   const mapping::PoseEstimate& pose_estimate() const;
 
-  // Range data must be approximately horizontal for 2D SLAM.
+  // Range data must be approximately horizontal for 2D SLAM. `time` is when
+  // the last point in `range_data` was acquired, `range_data` contains the
+  // relative time of point with respect to `time`.
   std::unique_ptr<InsertionResult> AddRangeData(
-      common::Time, const sensor::TimedRangeData& range_data);
+      common::Time time, const sensor::TimedRangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
   void AddOdometerData(const sensor::OdometryData& odometry_data);
 
