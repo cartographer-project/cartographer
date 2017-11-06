@@ -34,6 +34,9 @@ namespace sensor {
 // 'DataType' must contain a 'time' member of type common::Time.
 template <typename DataType>
 class MapByTime {
+ private:
+  using TimeIndexedMap = std::map<common::Time, DataType>;
+
  public:
   // Appends data to a 'trajectory_id', creating trajectories as needed.
   void Append(const int trajectory_id, const DataType& data) {
@@ -105,8 +108,7 @@ class MapByTime {
     using pointer = const DataType*;
     using reference = const DataType&;
 
-    explicit ConstIterator(
-        typename std::map<common::Time, DataType>::const_iterator iterator)
+    explicit ConstIterator(typename TimeIndexedMap::const_iterator iterator)
         : iterator_(iterator) {}
 
     const DataType& operator*() const { return iterator_->second; }
@@ -130,7 +132,44 @@ class MapByTime {
     bool operator!=(const ConstIterator& it) const { return !operator==(it); }
 
    private:
-    typename std::map<common::Time, DataType>::const_iterator iterator_;
+    typename TimeIndexedMap::const_iterator iterator_;
+  };
+
+  class ConstTrajectoryIterator {
+   public:
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = int;
+    using difference_type = int64;
+    using pointer = int*;
+    using reference = const int&;
+
+    explicit ConstTrajectoryIterator(
+        typename std::map<int, TimeIndexedMap>::const_iterator
+            current_trajectory)
+        : current_trajectory_(current_trajectory) {}
+
+    int operator*() const { return current_trajectory_->first; }
+
+    ConstTrajectoryIterator& operator++() {
+      ++current_trajectory_;
+      return *this;
+    }
+
+    ConstTrajectoryIterator& operator--() {
+      --current_trajectory_;
+      return *this;
+    }
+
+    bool operator==(const ConstTrajectoryIterator& it) const {
+      return current_trajectory_ == it.current_trajectory_;
+    }
+
+    bool operator!=(const ConstTrajectoryIterator& it) const {
+      return !operator==(it);
+    }
+
+   private:
+    typename std::map<int, TimeIndexedMap>::const_iterator current_trajectory_;
   };
 
   ConstIterator BeginOfTrajectory(const int trajectory_id) const {
@@ -141,13 +180,20 @@ class MapByTime {
     return ConstIterator(data_.at(trajectory_id).end());
   }
 
+  // Returns Range object for range-based loops over the trajectory IDs.
+  mapping::Range<ConstTrajectoryIterator> trajectory_ids() const {
+    return mapping::Range<ConstTrajectoryIterator>(
+        ConstTrajectoryIterator(data_.begin()),
+        ConstTrajectoryIterator(data_.end()));
+  }
+
   mapping::Range<ConstIterator> trajectory(const int trajectory_id) const {
     return mapping::Range<ConstIterator>(BeginOfTrajectory(trajectory_id),
                                          EndOfTrajectory(trajectory_id));
   }
 
  private:
-  std::map<int, std::map<common::Time, DataType>> data_;
+  std::map<int, TimeIndexedMap> data_;
 };
 
 }  // namespace sensor
