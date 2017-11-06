@@ -1,0 +1,6 @@
+1: Light grey: Pantone Solid Uncoated 7541 U
+2: Light teal: Pantone Solid Uncoated 564 U
+3: Dark teal: Pantone Solid Coated 7473 C
+4: Light green: Pantone Solid Coated 2250 C
+5: Medium green: Pantone Solid Coated 7731 C
+6: Dark green: Pantone Solid Coated 7732 C

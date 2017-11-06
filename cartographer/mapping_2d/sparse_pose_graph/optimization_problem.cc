@@ -64,10 +64,7 @@ OptimizationProblem::~OptimizationProblem() {}
 
 void OptimizationProblem::AddImuData(const int trajectory_id,
                                      const sensor::ImuData& imu_data) {
-  CHECK_GE(trajectory_id, 0);
-  imu_data_.resize(
-      std::max(imu_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  imu_data_[trajectory_id].push_back(imu_data);
+  imu_data_.Append(trajectory_id, imu_data);
 }
 
 void OptimizationProblem::AddOdometerData(
@@ -95,18 +92,8 @@ void OptimizationProblem::InsertTrajectoryNode(
 }
 
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
+  imu_data_.Trim(node_data_, node_id);
   node_data_.Trim(node_id);
-
-  const int trajectory_id = node_id.trajectory_id;
-  if (node_data_.SizeOfTrajectoryOrZero(trajectory_id) == 0 &&
-      trajectory_id < static_cast<int>(imu_data_.size())) {
-    const common::Time node_time =
-        node_data_.BeginOfTrajectory(trajectory_id)->data.time;
-    auto& imu_data = imu_data_.at(trajectory_id);
-    while (imu_data.size() > 1 && imu_data[1].time <= node_time) {
-      imu_data.pop_front();
-    }
-  }
 }
 
 void OptimizationProblem::AddSubmap(const int trajectory_id,
