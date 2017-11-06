@@ -31,6 +31,7 @@
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/map_by_time.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/transform_interpolation_buffer.h"
 
@@ -90,7 +91,7 @@ class OptimizationProblem {
 
  private:
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
-  std::vector<std::deque<sensor::ImuData>> imu_data_;
+  sensor::MapByTime<sensor::ImuData> imu_data_;
   mapping::MapById<mapping::NodeId, NodeData> node_data_;
   std::vector<transform::TransformInterpolationBuffer> odometry_data_;
   mapping::MapById<mapping::SubmapId, SubmapData> submap_data_;
