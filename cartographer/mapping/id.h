@@ -201,7 +201,7 @@ class MapById {
     using iterator_category = std::bidirectional_iterator_tag;
     using value_type = int;
     using difference_type = int64;
-    using pointer = int*;
+    using pointer = const int*;
     using reference = const int&;
 
     explicit ConstTrajectoryIterator(
