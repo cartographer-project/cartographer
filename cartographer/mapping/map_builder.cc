@@ -229,6 +229,22 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
       sparse_pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
     }
   }
+
+  // Add information about which nodes belong to which submap.
+  for (const proto::SparsePoseGraph::Constraint& constraint_proto :
+       pose_graph.constraint()) {
+    if (constraint_proto.tag() !=
+        mapping::proto::SparsePoseGraph::Constraint::INTRA_SUBMAP) {
+      continue;
+    }
+    const NodeId node_id{
+        trajectory_remapping.at(constraint_proto.node_id().trajectory_id()),
+        constraint_proto.node_id().node_index()};
+    const SubmapId submap_id{
+        trajectory_remapping.at(constraint_proto.submap_id().trajectory_id()),
+        constraint_proto.submap_id().submap_index()};
+    sparse_pose_graph_->AddNodeToSubmap(node_id, submap_id);
+  }
   CHECK(reader->eof());
 }
 
