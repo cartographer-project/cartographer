@@ -34,9 +34,6 @@ namespace sensor {
 // 'DataType' must contain a 'time' member of type common::Time.
 template <typename DataType>
 class MapByTime {
- private:
-  using TimeIndexedMap = std::map<common::Time, DataType>;
-
  public:
   // Appends data to a 'trajectory_id', creating trajectories as needed.
   void Append(const int trajectory_id, const DataType& data) {
@@ -108,7 +105,8 @@ class MapByTime {
     using pointer = const DataType*;
     using reference = const DataType&;
 
-    explicit ConstIterator(typename TimeIndexedMap::const_iterator iterator)
+    explicit ConstIterator(
+        typename std::map<common::Time, DataType>::const_iterator iterator)
         : iterator_(iterator) {}
 
     const DataType& operator*() const { return iterator_->second; }
@@ -132,7 +130,7 @@ class MapByTime {
     bool operator!=(const ConstIterator& it) const { return !operator==(it); }
 
    private:
-    typename TimeIndexedMap::const_iterator iterator_;
+    typename std::map<common::Time, DataType>::const_iterator iterator_;
   };
 
   class ConstTrajectoryIterator {
@@ -144,7 +142,7 @@ class MapByTime {
     using reference = const int&;
 
     explicit ConstTrajectoryIterator(
-        typename std::map<int, TimeIndexedMap>::const_iterator
+        typename std::map<int, std::map<common::Time, DataType>>::const_iterator
             current_trajectory)
         : current_trajectory_(current_trajectory) {}
 
@@ -169,7 +167,8 @@ class MapByTime {
     }
 
    private:
-    typename std::map<int, TimeIndexedMap>::const_iterator current_trajectory_;
+    typename std::map<int, std::map<common::Time, DataType>>::const_iterator
+        current_trajectory_;
   };
 
   ConstIterator BeginOfTrajectory(const int trajectory_id) const {
@@ -193,7 +192,7 @@ class MapByTime {
   }
 
  private:
-  std::map<int, TimeIndexedMap> data_;
+  std::map<int, std::map<common::Time, DataType>> data_;
 };
 
 }  // namespace sensor
