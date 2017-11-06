@@ -366,6 +366,8 @@ void SparsePoseGraph::WaitForAllComputations() {
 }
 
 void SparsePoseGraph::FinishTrajectory(const int trajectory_id) {
+  // TODO(jihoonl): Add a logic to notify trimmers to finish the given
+  // trajectory
 }
 
 void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
