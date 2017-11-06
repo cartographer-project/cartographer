@@ -44,3 +44,15 @@ message FixedFramePoseData {
   optional int64 timestamp = 1;
   optional transform.proto.Rigid3d pose = 2;
 }
+
+// Proto representation of ::cartographer::sensor::LandmarkData.
+message LandmarkData {
+  message Landmark {
+    optional bytes id = 1;
+    optional transform.proto.Rigid3d transform = 2;
+    optional double translation_weight = 3;
+    optional double rotation_weight = 4;
+  }
+  optional int64 timestamp = 1;
+  repeated Landmark landmarks = 2;
+}
