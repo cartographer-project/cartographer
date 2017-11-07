@@ -427,6 +427,14 @@ void SparsePoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
+void SparsePoseGraph::AddNodeToSubmap(const mapping::NodeId& node_id,
+                                      const mapping::SubmapId& submap_id) {
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([this, node_id, submap_id]() REQUIRES(mutex_) {
+    submap_data_.at(submap_id).node_ids.insert(node_id);
+  });
+}
+
 void SparsePoseGraph::AddSerializedConstraints(
     const std::vector<Constraint>& constraints) {
   common::MutexLocker locker(&mutex_);

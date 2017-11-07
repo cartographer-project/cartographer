@@ -87,6 +87,11 @@ class SparsePoseGraph {
   virtual void AddNodeFromProto(const transform::Rigid3d& global_pose,
                                 const proto::Node& node) = 0;
 
+  // Adds information that 'node_id' was inserted into 'submap_id'. The submap
+  // has to be deserialized first.
+  virtual void AddNodeToSubmap(const NodeId& node_id,
+                               const SubmapId& submap_id) = 0;
+
   // Adds serialized constraints. The corresponding trajectory nodes and submaps
   // have to be deserialized before calling this function.
   virtual void AddSerializedConstraints(

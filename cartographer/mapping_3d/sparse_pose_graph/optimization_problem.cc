@@ -216,6 +216,11 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
       const int trajectory_id = node_it->id.trajectory_id;
       const auto trajectory_end = node_data_.EndOfTrajectory(trajectory_id);
+      if (frozen_trajectories.count(trajectory_id) != 0) {
+        // We skip frozen trajectories.
+        node_it = trajectory_end;
+        continue;
+      }
       TrajectoryData& trajectory_data = trajectory_data_.at(trajectory_id);
 
       problem.AddParameterBlock(trajectory_data.imu_calibration.data(), 4,
