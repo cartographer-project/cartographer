@@ -106,7 +106,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
   void SetInitialTrajectoryPose(int from_trajectory_id, int to_trajectory_id,
                                 const transform::Rigid3d& pose,
-                                const common::Time& time) override
+                                const common::Time time) override
       EXCLUDES(mutex_);
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id,
@@ -136,8 +136,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
-  std::vector<mapping::SubmapId> GrowSubmapTransformsAsNeeded(
-      int trajectory_id,
+  std::vector<mapping::SubmapId> InitializeGlobalSubmapPoses(
+      int trajectory_id, const common::Time time,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       REQUIRES(mutex_);
 

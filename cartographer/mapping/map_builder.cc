@@ -71,7 +71,7 @@ MapBuilder::~MapBuilder() {}
 int MapBuilder::AddTrajectoryBuilder(
     const std::unordered_set<string>& expected_sensor_ids,
     const proto::TrajectoryBuilderOptions& trajectory_options,
-    const transform::Rigid3d& relative_pose, int to_trajectory_id,
+    const transform::Rigid3d& relative_pose, const int to_trajectory_id,
     const common::Time& time) {
   const int from_trajectory_id =
       AddTrajectoryBuilder(expected_sensor_ids, trajectory_options);

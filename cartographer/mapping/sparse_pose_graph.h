@@ -140,7 +140,7 @@ class SparsePoseGraph {
   virtual void SetInitialTrajectoryPose(int from_trajectory_id,
                                         int to_trajectory_id,
                                         const transform::Rigid3d& pose,
-                                        const common::Time& time) = 0;
+                                        const common::Time time) = 0;
 };
 
 std::vector<SparsePoseGraph::Constraint> FromProto(
