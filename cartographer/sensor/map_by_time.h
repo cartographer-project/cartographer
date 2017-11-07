@@ -97,11 +97,6 @@ class MapByTime {
     return data_.count(trajectory_id) != 0;
   }
 
-  // Returns 0 if 'trajectory_id' does not exist.
-  size_t SizeOfTrajectoryOrZero(const int trajectory_id) const {
-    return data_.count(trajectory_id) ? data_.at(trajectory_id).size() : 0;
-  }
-
   class ConstIterator {
    public:
     using iterator_category = std::bidirectional_iterator_tag;
