@@ -66,7 +66,7 @@ class MapBuilder {
       const std::unordered_set<string>& expected_sensor_ids,
       const proto::TrajectoryBuilderOptions& trajectory_options,
       const transform::Rigid3d& relative_pose, int to_trajectory_id,
-      const common::Time& time);
+      const common::Time time);
 
   // Creates a new trajectory and returns its index. Querying the trajectory
   // builder for it will return 'nullptr'.
