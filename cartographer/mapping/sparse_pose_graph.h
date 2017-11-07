@@ -133,6 +133,10 @@ class SparsePoseGraph {
 
   // Returns the IMU data.
   virtual sensor::MapByTime<sensor::ImuData> GetImuData() = 0;
+
+  // Inserts an IMU measurement.
+  virtual void AddImuData(int trajectory_id,
+                          const sensor::ImuData& imu_data) = 0;
 };
 
 std::vector<SparsePoseGraph::Constraint> FromProto(

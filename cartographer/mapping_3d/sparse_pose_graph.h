@@ -76,7 +76,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       EXCLUDES(mutex_);
 
-  void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  void AddImuData(int trajectory_id, const sensor::ImuData& imu_data) override
+      EXCLUDES(mutex_);
   void AddOdometerData(int trajectory_id,
                        const sensor::OdometryData& odometry_data);
   void AddFixedFramePoseData(
