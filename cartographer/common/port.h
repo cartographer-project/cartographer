@@ -25,6 +25,9 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
+
+namespace cartographer {
+
 using int8 = int8_t;
 using int16 = int16_t;
 using int32 = int32_t;
@@ -36,7 +39,6 @@ using uint64 = uint64_t;
 
 using std::string;
 
-namespace cartographer {
 namespace common {
 
 inline int RoundToInt(const float x) { return std::lround(x); }
