@@ -24,4 +24,5 @@ mkdir build
 cd build
 cmake .. -G Ninja
 ninja
+ninja test
 sudo ninja install
