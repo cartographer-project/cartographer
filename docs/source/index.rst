@@ -66,17 +66,18 @@ On Ubuntu 14.04 (Trusty):
 
 .. literalinclude:: ../../scripts/install_debs.sh
   :language: bash
-  :linenos:
   :lines: 20-
 
 .. literalinclude:: ../../scripts/install_ceres.sh
   :language: bash
-  :linenos:
+  :lines: 20-
+
+.. literalinclude:: ../../scripts/install_proto3.sh
+  :language: bash
   :lines: 20-
 
 .. literalinclude:: ../../scripts/install_cartographer.sh
   :language: bash
-  :linenos:
   :lines: 20-
 
 .. _system-requirements:

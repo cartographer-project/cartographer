@@ -30,7 +30,7 @@ find_package(Boost REQUIRED COMPONENTS iostreams)
 find_package(Ceres REQUIRED COMPONENTS SparseLinearAlgebraLibrary)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(Protobuf REQUIRED 3.0.0)
 
 include(FindPkgConfig)
 PKG_SEARCH_MODULE(CAIRO REQUIRED cairo>=1.12.16)
