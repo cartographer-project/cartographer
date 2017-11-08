@@ -70,6 +70,12 @@ class SparsePoseGraph {
     transform::Rigid3d pose;
   };
 
+  struct InitialTrajectoryPose {
+    int to_trajectory_id;
+    transform::Rigid3d relative_pose;
+    common::Time time;
+  };
+
   SparsePoseGraph() {}
   virtual ~SparsePoseGraph() {}
 
@@ -137,6 +143,13 @@ class SparsePoseGraph {
   // Inserts an IMU measurement.
   virtual void AddImuData(int trajectory_id,
                           const sensor::ImuData& imu_data) = 0;
+  
+  // Sets a relative initial pose 'relative_pose' for 'from_trajectory_id' with
+  // respect to 'to_trajectory_id' at time 'time'.
+  virtual void SetInitialTrajectoryPose(int from_trajectory_id,
+                                        int to_trajectory_id,
+                                        const transform::Rigid3d& pose,
+                                        const common::Time time) = 0;
 };
 
 std::vector<SparsePoseGraph::Constraint> FromProto(
