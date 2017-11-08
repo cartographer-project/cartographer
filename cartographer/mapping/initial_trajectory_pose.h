@@ -17,17 +17,27 @@
 #ifndef CARTOGRAPHER_MAPPING_INITIAL_TRAJECTORY_POSE_H_
 #define CARTOGRAPHER_MAPPING_INITIAL_TRAJECTORY_POSE_H_
 
+#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/proto/initial_trajectory_pose.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping {
+
+proto::InitialTrajectoryPose CreateInitialTrajectoryPose(
+    common::LuaParameterDictionary* const parameter_dictionary);
 
 struct InitialTrajectoryPose {
   int to_trajectory_id;
   transform::Rigid3d relative_pose;
   common::Time time;
 };
+
+InitialTrajectoryPose ToInitialTrajectoryPose(
+    const proto::InitialTrajectoryPose& initial_pose);
+
+proto::InitialTrajectoryPose ToProto(const InitialTrajectoryPose& initial_pose);
 
 }  // namespace mapping
 }  // namespace cartographer

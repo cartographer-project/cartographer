@@ -16,6 +16,7 @@
 
 #include "cartographer/mapping/trajectory_builder.h"
 
+#include "cartographer/mapping/initial_trajectory_pose.h"
 #include "cartographer/mapping_2d/local_trajectory_builder_options.h"
 #include "cartographer/mapping_3d/local_trajectory_builder_options.h"
 
@@ -33,6 +34,12 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
           parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
   options.set_pure_localization(
       parameter_dictionary->GetBool("pure_localization"));
+  if (parameter_dictionary->HasKey("initial_trajectory_pose")) {
+    auto initial_trajectory_pose = CreateInitialTrajectoryPose(
+        parameter_dictionary->GetDictionary("initial_trajectory_pose").get());
+    if (initial_trajectory_pose.to_trajectory_id() >= 0)
+      *options.mutable_initial_trajectory_pose() = initial_trajectory_pose;
+  }
   return options;
 }
 
