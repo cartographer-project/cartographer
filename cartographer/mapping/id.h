@@ -329,7 +329,7 @@ class MapById {
   // 'time', or EndOfTrajectory(trajectory_id) if all keys are considered to go
   // before 'time'.
   ConstIterator lower_bound(const int trajectory_id,
-                            const common::Time& time) const {
+                            const common::Time time) const {
     if (SizeOfTrajectoryOrZero(trajectory_id) == 0) {
       return EndOfTrajectory(trajectory_id);
     }

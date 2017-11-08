@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "cartographer/common/make_unique.h"
+#include "cartographer/common/time.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
 #include "cartographer/mapping/global_trajectory_builder.h"
 #include "cartographer/mapping_2d/local_trajectory_builder.h"
@@ -70,18 +71,6 @@ MapBuilder::~MapBuilder() {}
 
 int MapBuilder::AddTrajectoryBuilder(
     const std::unordered_set<string>& expected_sensor_ids,
-    const proto::TrajectoryBuilderOptions& trajectory_options,
-    const transform::Rigid3d& relative_pose, const int to_trajectory_id,
-    const common::Time time) {
-  const int from_trajectory_id =
-      AddTrajectoryBuilder(expected_sensor_ids, trajectory_options);
-  sparse_pose_graph_->SetInitialTrajectoryPose(
-      from_trajectory_id, to_trajectory_id, relative_pose, time);
-  return from_trajectory_id;
-}
-
-int MapBuilder::AddTrajectoryBuilder(
-    const std::unordered_set<string>& expected_sensor_ids,
     const proto::TrajectoryBuilderOptions& trajectory_options) {
   const int trajectory_id = trajectory_builders_.size();
   if (options_.use_trajectory_builder_3d()) {
@@ -111,6 +100,14 @@ int MapBuilder::AddTrajectoryBuilder(
     constexpr int kSubmapsToKeep = 3;
     sparse_pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
         trajectory_id, kSubmapsToKeep));
+  }
+  if (trajectory_options.has_initial_trajectory_pose()) {
+    const auto initial_trajectory_pose =
+        trajectory_options.initial_trajectory_pose();
+    sparse_pose_graph_->SetInitialTrajectoryPose(
+        trajectory_id, initial_trajectory_pose.to_trajectory_id(),
+        transform::ToRigid3(initial_trajectory_pose.relative_pose()),
+        common::FromUniversal(initial_trajectory_pose.timestamp()));
   }
   return trajectory_id;
 }
