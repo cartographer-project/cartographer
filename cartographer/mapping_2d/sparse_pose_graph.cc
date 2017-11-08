@@ -556,13 +556,11 @@ std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   return result;
 }
 
-void SparsePoseGraph::SetInitialTrajectoryPose(const int from_trajectory_id,
-                                               const int to_trajectory_id,
-                                               const transform::Rigid3d& pose,
-                                               const common::Time time) {
+void SparsePoseGraph::SetInitialTrajectoryPose(
+    const int from_trajectory_id,
+    const mapping::InitialTrajectoryPose& initial_pose) {
   common::MutexLocker locker(&mutex_);
-  initial_trajectory_poses_[from_trajectory_id] =
-      mapping::InitialTrajectoryPose{to_trajectory_id, pose, time};
+  initial_trajectory_poses_[from_trajectory_id] = initial_pose;
 }
 
 transform::Rigid3d SparsePoseGraph::GetInterpolatedGlobalTrajectoryPose(

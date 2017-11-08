@@ -32,7 +32,6 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/initial_trajectory_pose.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity_state.h"
@@ -105,9 +104,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
   GetTrajectoryNodes() override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
-  void SetInitialTrajectoryPose(int from_trajectory_id, int to_trajectory_id,
-                                const transform::Rigid3d& pose,
-                                const common::Time time) override
+  void SetInitialTrajectoryPose(
+      int from_trajectory_id,
+      const mapping::InitialTrajectoryPose& initial_pose) override
       EXCLUDES(mutex_);
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);

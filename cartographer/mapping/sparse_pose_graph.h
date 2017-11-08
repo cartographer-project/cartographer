@@ -25,6 +25,7 @@
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/id.h"
+#include "cartographer/mapping/initial_trajectory_pose.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
@@ -131,10 +132,8 @@ class SparsePoseGraph {
 
   // Sets a relative initial pose 'relative_pose' for 'from_trajectory_id' with
   // respect to 'to_trajectory_id' at time 'time'.
-  virtual void SetInitialTrajectoryPose(int from_trajectory_id,
-                                        int to_trajectory_id,
-                                        const transform::Rigid3d& pose,
-                                        const common::Time time) = 0;
+  virtual void SetInitialTrajectoryPose(
+      int from_trajectory_id, const InitialTrajectoryPose& initial_pose) = 0;
 };
 
 std::vector<SparsePoseGraph::Constraint> FromProto(

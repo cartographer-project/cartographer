@@ -105,9 +105,10 @@ int MapBuilder::AddTrajectoryBuilder(
     const auto& initial_trajectory_pose =
         trajectory_options.initial_trajectory_pose();
     sparse_pose_graph_->SetInitialTrajectoryPose(
-        trajectory_id, initial_trajectory_pose.to_trajectory_id(),
-        transform::ToRigid3(initial_trajectory_pose.relative_pose()),
-        common::FromUniversal(initial_trajectory_pose.timestamp()));
+        trajectory_id,
+        {initial_trajectory_pose.to_trajectory_id(),
+         transform::ToRigid3(initial_trajectory_pose.relative_pose()),
+         common::FromUniversal(initial_trajectory_pose.timestamp())});
   }
   return trajectory_id;
 }
