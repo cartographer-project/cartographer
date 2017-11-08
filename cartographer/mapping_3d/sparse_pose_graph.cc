@@ -387,7 +387,8 @@ void SparsePoseGraph::WaitForAllComputations() {
 }
 
 void SparsePoseGraph::FinishTrajectory(const int trajectory_id) {
-  LOG(FATAL) << "Not yet implemented for 3D.";
+  // TODO(jihoonl): Add a logic to notify trimmers to finish the given
+  // trajectory.
 }
 
 void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {

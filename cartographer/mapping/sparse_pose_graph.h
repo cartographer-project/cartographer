@@ -74,7 +74,7 @@ class SparsePoseGraph {
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
 
-  // Finish a trajectory
+  // Finishes the given trajectory.
   virtual void FinishTrajectory(int trajectory_id) = 0;
 
   // Freezes a trajectory. Poses in this trajectory will not be optimized.
