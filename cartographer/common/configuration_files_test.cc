@@ -23,6 +23,8 @@
 #include "cartographer/mapping/map_builder.h"
 #include "gtest/gtest.h"
 
+using std::string;
+
 namespace cartographer_ros {
 namespace {
 
