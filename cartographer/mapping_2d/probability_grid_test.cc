@@ -32,10 +32,10 @@ TEST(ProbabilityGridTest, ProtoConstructor) {
   for (int i = 6; i < 12; ++i) {
     proto.mutable_cells()->Add(static_cast<uint16>(i));
   }
-  proto.set_max_x(19);
-  proto.set_max_y(20);
-  proto.set_min_x(21);
-  proto.set_min_y(22);
+  proto.mutable_known_cells_box()->set_max_x(19);
+  proto.mutable_known_cells_box()->set_max_y(20);
+  proto.mutable_known_cells_box()->set_min_x(21);
+  proto.mutable_known_cells_box()->set_min_y(22);
 
   ProbabilityGrid grid(proto);
   EXPECT_EQ(proto.limits().DebugString(), ToProto(grid.limits()).DebugString());
