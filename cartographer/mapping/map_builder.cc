@@ -102,7 +102,7 @@ int MapBuilder::AddTrajectoryBuilder(
         trajectory_id, kSubmapsToKeep));
   }
   if (trajectory_options.has_initial_trajectory_pose()) {
-    const auto initial_trajectory_pose =
+    const auto& initial_trajectory_pose =
         trajectory_options.initial_trajectory_pose();
     sparse_pose_graph_->SetInitialTrajectoryPose(
         trajectory_id, initial_trajectory_pose.to_trajectory_id(),
