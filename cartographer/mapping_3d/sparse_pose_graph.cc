@@ -228,7 +228,8 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
         trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
-        initial_relative_pose.rotation());
+        initial_relative_pose.rotation(),
+        optimization_problem_.submap_data().at(submap_id).pose.rotation());
   }
 }
 

@@ -72,7 +72,8 @@ void ConstraintBuilder::MaybeAddConstraint(
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
-                            constant_data, initial_pose, constraint);
+                            constant_data, initial_pose, Eigen::Quaterniond(),
+                            constraint);
           FinishComputation(current_computation);
         });
   }
@@ -83,7 +84,8 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
     const mapping::NodeId& node_id,
     const mapping::TrajectoryNode::Data* const constant_data,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const Eigen::Quaterniond& gravity_alignment) {
+    const Eigen::Quaterniond& gravity_alignment,
+    const Eigen::Quaterniond& pose_alignment) {
   common::MutexLocker locker(&mutex_);
   constraints_.emplace_back();
   auto* const constraint = &constraints_.back();
@@ -94,7 +96,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
         ComputeConstraint(submap_id, node_id, true, /* match_full_submap */
                           constant_data,
                           transform::Rigid3d::Rotation(gravity_alignment),
-                          constraint);
+                          pose_alignment, constraint);
         FinishComputation(current_computation);
       });
 }
@@ -167,6 +169,7 @@ void ConstraintBuilder::ComputeConstraint(
     bool match_full_submap,
     const mapping::TrajectoryNode::Data* const constant_data,
     const transform::Rigid3d& initial_pose,
+    const Eigen::Quaterniond& submap_alignment,
     std::unique_ptr<OptimizationProblem::Constraint>* constraint) {
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_id);
@@ -185,7 +188,7 @@ void ConstraintBuilder::ComputeConstraint(
   // 3. Refine.
   if (match_full_submap) {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
-            initial_pose.rotation(), *constant_data,
+            initial_pose.rotation(), submap_alignment, *constant_data,
             options_.global_localization_min_score(), &score, &pose_estimate,
             &rotational_score, &low_resolution_score)) {
       CHECK_GT(score, options_.global_localization_min_score());

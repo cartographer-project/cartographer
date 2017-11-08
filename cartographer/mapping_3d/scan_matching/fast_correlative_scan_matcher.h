@@ -75,6 +75,7 @@ class FastCorrelativeScanMatcher {
   // returned, and 'score', 'pose_estimate', 'rotational_score', and
   // 'low_resolution_score' are updated with the result.
   bool MatchFullSubmap(const Eigen::Quaterniond& gravity_alignment,
+                       const Eigen::Quaterniond& pose_alignment,
                        const mapping::TrajectoryNode::Data& constant_data,
                        float min_score, float* score,
                        transform::Rigid3d* pose_estimate,
@@ -94,8 +95,9 @@ class FastCorrelativeScanMatcher {
       const transform::Rigid3d& initial_pose_estimate,
       const sensor::PointCloud& point_cloud,
       const Eigen::VectorXf& rotational_scan_matcher_histogram,
-      const Eigen::Quaterniond& gravity_alignment, float min_score,
-      float* score, transform::Rigid3d* pose_estimate, float* rotational_score,
+      const Eigen::Quaterniond& gravity_alignment,
+      const Eigen::Quaterniond& pose_alignment, float min_score, float* score,
+      transform::Rigid3d* pose_estimate, float* rotational_score,
       float* low_resolution_score) const;
   DiscreteScan DiscretizeScan(const SearchParameters& search_parameters,
                               const sensor::PointCloud& point_cloud,
@@ -106,6 +108,7 @@ class FastCorrelativeScanMatcher {
       const sensor::PointCloud& point_cloud,
       const Eigen::VectorXf& rotational_scan_matcher_histogram,
       const Eigen::Quaterniond& gravity_alignment,
+      const Eigen::Quaterniond& pose_alignment,
       const transform::Rigid3f& initial_pose) const;
   std::vector<Candidate> GenerateLowestResolutionCandidates(
       const SearchParameters& search_parameters, int num_discrete_scans) const;

@@ -93,7 +93,8 @@ class ConstraintBuilder {
       const mapping::NodeId& node_id,
       const mapping::TrajectoryNode::Data* const constant_data,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const Eigen::Quaterniond& gravity_alignment);
+      const Eigen::Quaterniond& gravity_alignment,
+      const Eigen::Quaterniond& submap_alignment);
 
   // Must be called after all computations related to one node have been added.
   void NotifyEndOfScan();
@@ -142,6 +143,7 @@ class ConstraintBuilder {
       bool match_full_submap,
       const mapping::TrajectoryNode::Data* const constant_data,
       const transform::Rigid3d& initial_pose,
+      const Eigen::Quaterniond& submap_alignment,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);
 
   // Decrements the 'pending_computations_' count. If all computations are done,
