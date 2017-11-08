@@ -32,6 +32,7 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/initial_trajectory_pose.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity_state.h"
@@ -233,7 +234,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
 
   // Set of all initial trajectory poses.
-  std::map<int, InitialTrajectoryPose> initial_trajectory_poses_
+  std::map<int, mapping::InitialTrajectoryPose> initial_trajectory_poses_
       GUARDED_BY(mutex_);
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The

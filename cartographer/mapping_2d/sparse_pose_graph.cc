@@ -562,7 +562,7 @@ void SparsePoseGraph::SetInitialTrajectoryPose(const int from_trajectory_id,
                                                const common::Time time) {
   common::MutexLocker locker(&mutex_);
   initial_trajectory_poses_[from_trajectory_id] =
-      InitialTrajectoryPose{to_trajectory_id, pose, time};
+      mapping::InitialTrajectoryPose{to_trajectory_id, pose, time};
 }
 
 transform::Rigid3d SparsePoseGraph::GetInterpolatedGlobalTrajectoryPose(

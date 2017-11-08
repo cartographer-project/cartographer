@@ -68,12 +68,6 @@ class SparsePoseGraph {
     transform::Rigid3d pose;
   };
 
-  struct InitialTrajectoryPose {
-    int to_trajectory_id;
-    transform::Rigid3d relative_pose;
-    common::Time time;
-  };
-
   SparsePoseGraph() {}
   virtual ~SparsePoseGraph() {}
 
