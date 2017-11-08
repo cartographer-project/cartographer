@@ -157,7 +157,8 @@ FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
 FastCorrelativeScanMatcher::~FastCorrelativeScanMatcher() {}
 
 bool FastCorrelativeScanMatcher::Match(
-    const transform::Rigid3d& initial_pose_estimate,
+    const transform::Rigid3d& global_node_pose,
+    const transform::Rigid3d& global_submap_pose,
     const mapping::TrajectoryNode::Data& constant_data, const float min_score,
     float* const score, transform::Rigid3d* const pose_estimate,
     float* const rotational_score, float* const low_resolution_score) const {
@@ -167,23 +168,21 @@ bool FastCorrelativeScanMatcher::Match(
       common::RoundToInt(options_.linear_xy_search_window() / resolution_),
       common::RoundToInt(options_.linear_z_search_window() / resolution_),
       options_.angular_search_window(), &low_resolution_matcher};
-  // TODO(gaschler): Use actual submap_alignment.
   return MatchWithSearchParameters(
-      search_parameters, initial_pose_estimate,
+      search_parameters, global_node_pose.cast<float>(),
+      global_submap_pose.cast<float>(),
       constant_data.high_resolution_point_cloud,
       constant_data.rotational_scan_matcher_histogram,
-      constant_data.gravity_alignment, Eigen::Quaterniond(), min_score, score,
-      pose_estimate, rotational_score, low_resolution_score);
+      constant_data.gravity_alignment, min_score, score, pose_estimate,
+      rotational_score, low_resolution_score);
 }
 
 bool FastCorrelativeScanMatcher::MatchFullSubmap(
-    const Eigen::Quaterniond& gravity_alignment,
-    const Eigen::Quaterniond& submap_alignment,
+    const Eigen::Quaterniond& global_node_rotation,
+    const Eigen::Quaterniond& global_submap_rotation,
     const mapping::TrajectoryNode::Data& constant_data, const float min_score,
     float* const score, transform::Rigid3d* const pose_estimate,
     float* const rotational_score, float* const low_resolution_score) const {
-  const transform::Rigid3d initial_pose_estimate(Eigen::Vector3d::Zero(),
-                                                 gravity_alignment);
   float max_point_distance = 0.f;
   for (const Eigen::Vector3f& point :
        constant_data.high_resolution_point_cloud) {
@@ -197,20 +196,22 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
   const SearchParameters search_parameters{
       linear_window_size, linear_window_size, M_PI, &low_resolution_matcher};
   return MatchWithSearchParameters(
-      search_parameters, initial_pose_estimate,
+      search_parameters,
+      transform::Rigid3f::Rotation(global_node_rotation.cast<float>()),
+      transform::Rigid3f::Rotation(global_submap_rotation.cast<float>()),
       constant_data.high_resolution_point_cloud,
       constant_data.rotational_scan_matcher_histogram,
-      constant_data.gravity_alignment, submap_alignment, min_score, score,
-      pose_estimate, rotational_score, low_resolution_score);
+      constant_data.gravity_alignment, min_score, score, pose_estimate,
+      rotational_score, low_resolution_score);
 }
 
 bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
-    const transform::Rigid3d& initial_pose_estimate,
+    const transform::Rigid3f& global_node_pose,
+    const transform::Rigid3f& global_submap_pose,
     const sensor::PointCloud& point_cloud,
     const Eigen::VectorXf& rotational_scan_matcher_histogram,
-    const Eigen::Quaterniond& gravity_alignment,
-    const Eigen::Quaterniond& submap_alignment, const float min_score,
+    const Eigen::Quaterniond& gravity_alignment, const float min_score,
     float* const score, transform::Rigid3d* const pose_estimate,
     float* const rotational_score, float* const low_resolution_score) const {
   CHECK_NOTNULL(score);
@@ -218,7 +219,7 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
 
   const std::vector<DiscreteScan> discrete_scans = GenerateDiscreteScans(
       search_parameters, point_cloud, rotational_scan_matcher_histogram,
-      gravity_alignment, submap_alignment, initial_pose_estimate.cast<float>());
+      gravity_alignment, global_node_pose, global_submap_pose);
 
   const std::vector<Candidate> lowest_resolution_candidates =
       ComputeLowestResolutionCandidates(search_parameters, discrete_scans);
@@ -287,8 +288,8 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     const sensor::PointCloud& point_cloud,
     const Eigen::VectorXf& rotational_scan_matcher_histogram,
     const Eigen::Quaterniond& gravity_alignment,
-    const Eigen::Quaterniond& submap_alignment,
-    const transform::Rigid3f& initial_pose) const {
+    const transform::Rigid3f& global_node_pose,
+    const transform::Rigid3f& global_submap_pose) const {
   std::vector<DiscreteScan> result;
   // We set this value to something on the order of resolution to make sure that
   // the std::acos() below is defined.
@@ -303,15 +304,15 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
                                           (2.f * common::Pow2(max_scan_range)));
   const int angular_window_size = common::RoundToInt(
       search_parameters.angular_search_window / angular_step_size);
-  // TODO(whess): Should there be a small search window for rotations around
-  // x and y?
   std::vector<float> angles;
   for (int rz = -angular_window_size; rz <= angular_window_size; ++rz) {
     angles.push_back(rz * angular_step_size);
   }
+  const transform::Rigid3f node_to_submap =
+      global_submap_pose.inverse() * global_node_pose;
   const std::vector<float> scores = rotational_scan_matcher_.Match(
       rotational_scan_matcher_histogram,
-      transform::GetYaw(initial_pose.rotation() *
+      transform::GetYaw(node_to_submap.rotation() *
                         gravity_alignment.inverse().cast<float>()),
       angles);
   for (size_t i = 0; i != angles.size(); ++i) {
@@ -323,9 +324,10 @@ std::vector<DiscreteScan> FastCorrelativeScanMatcher::GenerateDiscreteScans(
     // and rotation of the 'initial_pose', so that the rotation is around the
     // origin of the range data, and yaw is in map frame.
     const transform::Rigid3f pose(
-        initial_pose.translation(),
-        transform::AngleAxisVectorToRotationQuaternion(angle_axis) *
-            initial_pose.rotation());
+        node_to_submap.translation(),
+        global_submap_pose.rotation().inverse() *
+            transform::AngleAxisVectorToRotationQuaternion(angle_axis) *
+            global_node_pose.rotation());
     result.push_back(
         DiscretizeScan(search_parameters, point_cloud, pose, scores[i]));
   }

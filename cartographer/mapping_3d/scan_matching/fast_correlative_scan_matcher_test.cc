@@ -145,9 +145,9 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
     float rotational_score = 0.f;
     float low_resolution_score = 0.f;
     EXPECT_TRUE(fast_correlative_scan_matcher->Match(
-        transform::Rigid3d::Identity(), CreateConstantData(point_cloud_),
-        kMinScore, &score, &pose_estimate, &rotational_score,
-        &low_resolution_score));
+        transform::Rigid3d::Identity(), transform::Rigid3d::Identity(),
+        CreateConstantData(point_cloud_), kMinScore, &score, &pose_estimate,
+        &rotational_score, &low_resolution_score));
     EXPECT_LT(kMinScore, score);
     EXPECT_LT(0.09f, rotational_score);
     EXPECT_LT(0.14f, low_resolution_score);
@@ -156,7 +156,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
         << "Actual: " << transform::ToProto(pose_estimate).DebugString()
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
     EXPECT_FALSE(fast_correlative_scan_matcher->Match(
-        transform::Rigid3d::Identity(),
+        transform::Rigid3d::Identity(), transform::Rigid3d::Identity(),
         CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore,
         &score, &pose_estimate, &rotational_score, &low_resolution_score))
         << low_resolution_score;
