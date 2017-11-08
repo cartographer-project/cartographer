@@ -14,10 +14,17 @@
 
 syntax = "proto2";
 
+import "cartographer/transform/proto/transform.proto";
 import "cartographer/mapping_2d/proto/local_trajectory_builder_options.proto";
 import "cartographer/mapping_3d/proto/local_trajectory_builder_options.proto";
 
 package cartographer.mapping.proto;
+
+message InitialTrajectoryPose {
+  optional transform.proto.Rigid3d relative_pose = 1;
+  optional int32 to_trajectory_id = 2;
+  optional int64 timestamp = 3;
+}
 
 message TrajectoryBuilderOptions {
   optional mapping_2d.proto.LocalTrajectoryBuilderOptions
@@ -25,4 +32,5 @@ message TrajectoryBuilderOptions {
   optional mapping_3d.proto.LocalTrajectoryBuilderOptions
       trajectory_builder_3d_options = 2;
   optional bool pure_localization = 3;
+  optional InitialTrajectoryPose initial_trajectory_pose = 4;
 }

@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "cartographer/common/make_unique.h"
+#include "cartographer/common/time.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
 #include "cartographer/mapping/global_trajectory_builder.h"
 #include "cartographer/mapping_2d/local_trajectory_builder.h"
@@ -99,6 +100,14 @@ int MapBuilder::AddTrajectoryBuilder(
     constexpr int kSubmapsToKeep = 3;
     sparse_pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
         trajectory_id, kSubmapsToKeep));
+  }
+  if (trajectory_options.has_initial_trajectory_pose()) {
+    const auto& initial_trajectory_pose =
+        trajectory_options.initial_trajectory_pose();
+    sparse_pose_graph_->SetInitialTrajectoryPose(
+        trajectory_id, initial_trajectory_pose.to_trajectory_id(),
+        transform::ToRigid3(initial_trajectory_pose.relative_pose()),
+        common::FromUniversal(initial_trajectory_pose.timestamp()));
   }
   return trajectory_id;
 }
