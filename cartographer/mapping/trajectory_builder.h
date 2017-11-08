@@ -26,6 +26,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/pose_estimate.h"
+#include "cartographer/mapping/proto/initial_trajectory_pose.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/data.h"
