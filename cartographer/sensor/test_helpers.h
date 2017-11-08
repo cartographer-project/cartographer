@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/imu_integration.h"
+#ifndef CARTOGRAPHER_SENSOR_TEST_HELPERS_H_
+#define CARTOGRAPHER_SENSOR_TEST_HELPERS_H_
+
+#include <string>
+#include <tuple>
+
+#include "gmock/gmock.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace sensor {
 
-IntegrateImuResult<double> IntegrateImu(
-    const std::deque<sensor::ImuData>& imu_data, const common::Time start_time,
-    const common::Time end_time,
-    std::deque<sensor::ImuData>::const_iterator* it) {
-  return IntegrateImu<double>(imu_data, Eigen::Affine3d::Identity(),
-                              Eigen::Affine3d::Identity(), start_time, end_time,
-                              it);
+MATCHER_P(Near, point, std::string(negation ? "Doesn't" : "Does") + " match.") {
+  return arg.isApprox(point, 0.001f);
 }
 
-}  // namespace mapping_3d
+}  // namespace sensor
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_SENSOR_TEST_HELPERS_H_

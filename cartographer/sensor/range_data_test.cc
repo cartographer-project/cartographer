@@ -19,6 +19,7 @@
 #include <tuple>
 #include <vector>
 
+#include "cartographer/sensor/test_helpers.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {
@@ -26,14 +27,6 @@ namespace sensor {
 namespace {
 
 using ::testing::Contains;
-
-MATCHER(NearPointwise, std::string(negation ? "Doesn't" : "Does") + " match.") {
-  return std::get<0>(arg).isApprox(std::get<1>(arg), 0.001f);
-}
-
-MATCHER_P(Near, point, std::string(negation ? "Doesn't" : "Does") + " match.") {
-  return arg.isApprox(point, 0.001f);
-}
 
 class RangeDataTest : public ::testing::Test {
  protected:
