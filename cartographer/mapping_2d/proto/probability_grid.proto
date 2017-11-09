@@ -19,12 +19,16 @@ import "cartographer/mapping_2d/proto/map_limits.proto";
 package cartographer.mapping_2d.proto;
 
 message ProbabilityGrid {
+  message CellBox {
+    optional int32 max_x = 1;
+    optional int32 max_y = 2;
+    optional int32 min_x = 3;
+    optional int32 min_y = 4;
+  }
+
   optional MapLimits limits = 1;
   // These values are actually int16s, but protos don't have a native int16
   // type.
   repeated int32 cells = 2;
-  optional int32 max_x = 4;
-  optional int32 max_y = 5;
-  optional int32 min_x = 6;
-  optional int32 min_y = 7;
+  optional CellBox known_cells_box = 8;
 }
