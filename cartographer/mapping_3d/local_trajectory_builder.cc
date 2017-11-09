@@ -170,7 +170,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       time, filtered_range_data_in_local, filtered_range_data_in_tracking,
       high_resolution_point_cloud_in_tracking,
       low_resolution_point_cloud_in_tracking, pose_estimate, gravity_alignment);
-  return std::unique_ptr<MatchingResult>(new MatchingResult{
+  return common::make_unique<MatchingResult>(MatchingResult{
       time, pose_estimate, std::move(filtered_range_data_in_local),
       std::move(insertion_result)});
 }
@@ -215,17 +215,17 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
               filtered_range_data_in_tracking.returns,
               transform::Rigid3f::Rotation(gravity_alignment.cast<float>())),
           options_.rotational_histogram_size());
-  return std::unique_ptr<InsertionResult>(new InsertionResult{
-      std::make_shared<const mapping::TrajectoryNode::Data>(
-          mapping::TrajectoryNode::Data{
-              time,
-              gravity_alignment,
-              {},  // 'filtered_point_cloud' is only used in 2D.
-              high_resolution_point_cloud_in_tracking,
-              low_resolution_point_cloud_in_tracking,
-              rotational_scan_matcher_histogram,
-              pose_estimate}),
-      std::move(insertion_submaps)});
+  return common::make_unique<InsertionResult>(
+      InsertionResult{std::make_shared<const mapping::TrajectoryNode::Data>(
+                          mapping::TrajectoryNode::Data{
+                              time,
+                              gravity_alignment,
+                              {},  // 'filtered_point_cloud' is only used in 2D.
+                              high_resolution_point_cloud_in_tracking,
+                              low_resolution_point_cloud_in_tracking,
+                              rotational_scan_matcher_histogram,
+                              pose_estimate}),
+                      std::move(insertion_submaps)});
 }
 
 }  // namespace mapping_3d

@@ -256,8 +256,8 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
               node.time, sensor::TimedRangeData{
                              range_data.origin, range_data.returns, {}});
       if (matching_result != nullptr) {
-        const auto& pose_estimate = matching_result->local_pose;
-        EXPECT_THAT(pose_estimate, transform::IsNearly(node.pose, 1e-1));
+        EXPECT_THAT(matching_result->local_pose,
+                    transform::IsNearly(node.pose, 1e-1));
         ++num_poses;
         LOG(INFO) << "num_poses: " << num_poses;
       }
