@@ -102,21 +102,22 @@ void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   node_data_.Trim(node_id);
 }
 
-void OptimizationProblem::AddSubmap(const int trajectory_id,
-                                    const transform::Rigid3d& submap_pose) {
+void OptimizationProblem::AddSubmap(
+    const int trajectory_id, const transform::Rigid3d& global_submap_pose) {
   CHECK_GE(trajectory_id, 0);
   trajectory_data_.resize(std::max(trajectory_data_.size(),
                                    static_cast<size_t>(trajectory_id) + 1));
-  submap_data_.Append(trajectory_id, SubmapData{submap_pose});
+  submap_data_.Append(trajectory_id, SubmapData{global_submap_pose});
 }
 
-void OptimizationProblem::InsertSubmap(const mapping::SubmapId& submap_id,
-                                       const transform::Rigid3d& submap_pose) {
+void OptimizationProblem::InsertSubmap(
+    const mapping::SubmapId& submap_id,
+    const transform::Rigid3d& global_submap_pose) {
   CHECK_GE(submap_id.trajectory_id, 0);
   trajectory_data_.resize(
       std::max(trajectory_data_.size(),
                static_cast<size_t>(submap_id.trajectory_id) + 1));
-  submap_data_.Insert(submap_id, SubmapData{submap_pose});
+  submap_data_.Insert(submap_id, SubmapData{global_submap_pose});
 }
 
 void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {
@@ -161,7 +162,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       // gravity alignment.
       C_submaps.Insert(
           submap_id_data.id,
-          CeresPose(submap_id_data.data.pose, translation_parameterization(),
+          CeresPose(submap_id_data.data.global_pose,
+                    translation_parameterization(),
                     common::make_unique<ceres::AutoDiffLocalParameterization<
                         ConstantYawQuaternionPlus, 4, 2>>(),
                     &problem));
@@ -170,7 +172,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     } else {
       C_submaps.Insert(
           submap_id_data.id,
-          CeresPose(submap_id_data.data.pose, translation_parameterization(),
+          CeresPose(submap_id_data.data.global_pose,
+                    translation_parameterization(),
                     common::make_unique<ceres::QuaternionParameterization>(),
                     &problem));
     }
@@ -420,7 +423,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
   // Store the result.
   for (const auto& C_submap_id_data : C_submaps) {
-    submap_data_.at(C_submap_id_data.id).pose = C_submap_id_data.data.ToRigid();
+    submap_data_.at(C_submap_id_data.id).global_pose =
+        C_submap_id_data.data.ToRigid();
   }
   for (const auto& C_node_id_data : C_nodes) {
     node_data_.at(C_node_id_data.id).global_pose =

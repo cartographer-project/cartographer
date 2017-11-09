@@ -96,14 +96,15 @@ void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   node_data_.Trim(node_id);
 }
 
-void OptimizationProblem::AddSubmap(const int trajectory_id,
-                                    const transform::Rigid2d& submap_pose) {
-  submap_data_.Append(trajectory_id, SubmapData{submap_pose});
+void OptimizationProblem::AddSubmap(
+    const int trajectory_id, const transform::Rigid2d& global_submap_pose) {
+  submap_data_.Append(trajectory_id, SubmapData{global_submap_pose});
 }
 
-void OptimizationProblem::InsertSubmap(const mapping::SubmapId& submap_id,
-                                       const transform::Rigid2d& submap_pose) {
-  submap_data_.Insert(submap_id, SubmapData{submap_pose});
+void OptimizationProblem::InsertSubmap(
+    const mapping::SubmapId& submap_id,
+    const transform::Rigid2d& global_submap_pose) {
+  submap_data_.Insert(submap_id, SubmapData{global_submap_pose});
 }
 
 void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {
@@ -133,7 +134,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   for (const auto& submap_id_data : submap_data_) {
     const bool frozen =
         frozen_trajectories.count(submap_id_data.id.trajectory_id) != 0;
-    C_submaps.Insert(submap_id_data.id, FromPose(submap_id_data.data.pose));
+    C_submaps.Insert(submap_id_data.id,
+                     FromPose(submap_id_data.data.global_pose));
     problem.AddParameterBlock(C_submaps.at(submap_id_data.id).data(), 3);
     if (first_submap || frozen) {
       first_submap = false;
@@ -221,7 +223,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
 
   // Store the result.
   for (const auto& C_submap_id_data : C_submaps) {
-    submap_data_.at(C_submap_id_data.id).pose = ToPose(C_submap_id_data.data);
+    submap_data_.at(C_submap_id_data.id).global_pose =
+        ToPose(C_submap_id_data.data);
   }
   for (const auto& C_node_id_data : C_nodes) {
     node_data_.at(C_node_id_data.id).pose = ToPose(C_node_id_data.data);
