@@ -76,6 +76,10 @@ class SparsePoseGraph {
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
 
+  // Inserts an IMU measurement.
+  virtual void AddImuData(int trajectory_id,
+                          const sensor::ImuData& imu_data) = 0;
+
   // Freezes a trajectory. Poses in this trajectory will not be optimized.
   virtual void FreezeTrajectory(int trajectory_id) = 0;
 
@@ -128,15 +132,11 @@ class SparsePoseGraph {
   // Serializes the constraints and trajectories.
   proto::SparsePoseGraph ToProto();
 
-  // Returns the collection of constraints.
-  virtual std::vector<Constraint> constraints() = 0;
-
   // Returns the IMU data.
   virtual sensor::MapByTime<sensor::ImuData> GetImuData() = 0;
 
-  // Inserts an IMU measurement.
-  virtual void AddImuData(int trajectory_id,
-                          const sensor::ImuData& imu_data) = 0;
+  // Returns the collection of constraints.
+  virtual std::vector<Constraint> constraints() = 0;
 };
 
 std::vector<SparsePoseGraph::Constraint> FromProto(

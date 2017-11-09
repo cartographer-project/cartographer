@@ -241,12 +241,7 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
                                    proto.submap().submap_id().submap_index()});
       sparse_pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
     }
-    if (proto.has_imu_data()) {
-      // TODO(ojura): Enable when loading unfrozen trajectories.
-      // sparse_pose_graph_->AddImuData(
-      //    trajectory_remapping.at(proto.imu_data().trajectory_id()),
-      //    sensor::FromProto(proto.imu_data().imu_data()));
-    }
+    // TODO(ojura): Deserialize IMU data when loading unfrozen trajectories.
   }
 
   // Add information about which nodes belong to which submap.

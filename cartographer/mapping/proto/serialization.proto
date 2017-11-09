@@ -34,7 +34,7 @@ message Node {
 
 message ImuData {
   optional int32 trajectory_id = 1;
-  optional cartographer.sensor.proto.ImuData imu_data = 2;
+  optional sensor.proto.ImuData imu_data = 2;
 }
 
 message SerializedData {
