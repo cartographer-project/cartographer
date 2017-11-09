@@ -83,6 +83,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
 
+  void FinishTrajectory(int trajectory_id) override;
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(const transform::Rigid3d& global_pose,
                           const mapping::proto::Submap& submap) override;

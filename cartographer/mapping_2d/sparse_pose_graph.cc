@@ -372,6 +372,11 @@ void SparsePoseGraph::WaitForAllComputations() {
   locker.Await([&notification]() { return notification; });
 }
 
+void SparsePoseGraph::FinishTrajectory(const int trajectory_id) {
+  // TODO(jihoonl): Add a logic to notify trimmers to finish the given
+  // trajectory.
+}
+
 void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   trajectory_connectivity_state_.Add(trajectory_id);
