@@ -68,7 +68,9 @@ class ConstraintBuilder {
 
   // Schedules exploring a new constraint between 'submap' identified by
   // 'submap_id', and the 'compressed_point_cloud' for 'node_id'.
-  // The 'initial_pose' is relative to the 'submap'.
+  //
+  // 'global_node_pose' and 'global_submap_pose' are initial estimates of poses
+  // in the global map frame, i.e. both are gravity aligned.
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
@@ -77,14 +79,15 @@ class ConstraintBuilder {
       const mapping::NodeId& node_id,
       const mapping::TrajectoryNode::Data* const constant_data,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const transform::Rigid3d& initial_pose);
+      const transform::Rigid3d& global_node_pose,
+      const transform::Rigid3d& global_submap_pose);
 
   // Schedules exploring a new constraint between 'submap' identified by
   // 'submap_id' and the 'compressed_point_cloud' for 'node_id'.
   // This performs full-submap matching.
   //
-  // The 'gravity_alignment' is the rotation to apply to the point cloud data
-  // to make it approximately gravity aligned.
+  // 'global_node_rotation' and 'global_submap_rotation' are initial estimates
+  // of roll and pitch, i.e. their yaw is essentially ignored.
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
@@ -93,7 +96,8 @@ class ConstraintBuilder {
       const mapping::NodeId& node_id,
       const mapping::TrajectoryNode::Data* const constant_data,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const Eigen::Quaterniond& gravity_alignment);
+      const Eigen::Quaterniond& global_node_rotation,
+      const Eigen::Quaterniond& global_submap_rotation);
 
   // Must be called after all computations related to one node have been added.
   void NotifyEndOfScan();
@@ -141,7 +145,8 @@ class ConstraintBuilder {
       const mapping::SubmapId& submap_id, const mapping::NodeId& node_id,
       bool match_full_submap,
       const mapping::TrajectoryNode::Data* const constant_data,
-      const transform::Rigid3d& initial_pose,
+      const transform::Rigid3d& global_node_pose,
+      const transform::Rigid3d& global_submap_pose,
       std::unique_ptr<Constraint>* constraint) EXCLUDES(mutex_);
 
   // Decrements the 'pending_computations_' count. If all computations are done,
