@@ -181,10 +181,6 @@ void ConstraintBuilder::ComputeConstraint(
   // - the initial guess 'initial_pose' (submap i <- scan j).
   std::unique_ptr<scan_matching::FastCorrelativeScanMatcher::Result>
       match_result;
-  float score = 0.f;
-  transform::Rigid3d pose_estimate;
-  float rotational_score = 0.f;
-  float low_resolution_score = 0.f;
 
   // Compute 'pose_estimate' in three stages:
   // 1. Fast estimate using the fast correlative scan matcher.
@@ -195,7 +191,7 @@ void ConstraintBuilder::ComputeConstraint(
         submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             global_node_pose.rotation(), global_submap_pose.rotation(),
             *constant_data, options_.global_localization_min_score());
-    if (match_result) {
+    if (match_result != nullptr) {
       CHECK_GT(match_result->score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
       CHECK_GE(submap_id.trajectory_id, 0);
@@ -206,7 +202,7 @@ void ConstraintBuilder::ComputeConstraint(
     match_result = submap_scan_matcher->fast_correlative_scan_matcher->Match(
         global_node_pose, global_submap_pose, *constant_data,
         options_.min_score());
-    if (match_result) {
+    if (match_result != nullptr) {
       // We've reported a successful local match.
       CHECK_GT(match_result->score, options_.min_score());
     } else {
@@ -215,9 +211,9 @@ void ConstraintBuilder::ComputeConstraint(
   }
   {
     common::MutexLocker locker(&mutex_);
-    score_histogram_.Add(score);
-    rotational_score_histogram_.Add(rotational_score);
-    low_resolution_score_histogram_.Add(low_resolution_score);
+    score_histogram_.Add(match_result->score);
+    rotational_score_histogram_.Add(match_result->rotational_score);
+    low_resolution_score_histogram_.Add(match_result->low_resolution_score);
   }
 
   // Use the CSM estimate as both the initial and previous pose. This has the
@@ -225,7 +221,8 @@ void ConstraintBuilder::ComputeConstraint(
   // CSM estimate.
   ceres::Solver::Summary unused_summary;
   transform::Rigid3d constraint_transform;
-  ceres_scan_matcher_.Match(pose_estimate, pose_estimate,
+  ceres_scan_matcher_.Match(match_result->pose_estimate,
+                            match_result->pose_estimate,
                             {{&constant_data->high_resolution_point_cloud,
                               submap_scan_matcher->high_resolution_hybrid_grid},
                              {&constant_data->low_resolution_point_cloud,
@@ -254,7 +251,8 @@ void ConstraintBuilder::ComputeConstraint(
            << difference.translation().norm() << " rotation "
            << std::setprecision(3) << transform::GetAngle(difference);
     }
-    info << " with score " << std::setprecision(1) << 100. * score << "%.";
+    info << " with score " << std::setprecision(1) << 100. * match_result->score
+         << "%.";
     LOG(INFO) << info.str();
   }
 }

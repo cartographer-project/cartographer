@@ -140,7 +140,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
     std::unique_ptr<FastCorrelativeScanMatcher> fast_correlative_scan_matcher(
         GetFastCorrelativeScanMatcher(options_, expected_pose));
 
-    std::unique_ptr<FastCorrelativeScanMatcher::Result> result =
+    const std::unique_ptr<FastCorrelativeScanMatcher::Result> result =
         fast_correlative_scan_matcher->Match(
             transform::Rigid3d::Identity(), transform::Rigid3d::Identity(),
             CreateConstantData(point_cloud_), kMinScore);
@@ -152,10 +152,13 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
                 transform::IsNearly(result->pose_estimate.cast<float>(), 0.05f))
         << "Actual: " << transform::ToProto(result->pose_estimate).DebugString()
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
-    result = fast_correlative_scan_matcher->Match(
-        transform::Rigid3d::Identity(), transform::Rigid3d::Identity(),
-        CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore);
-    EXPECT_THAT(result, testing::IsNull()) << result->low_resolution_score;
+
+    const std::unique_ptr<FastCorrelativeScanMatcher::Result>
+        low_resolution_result = fast_correlative_scan_matcher->Match(
+            transform::Rigid3d::Identity(), transform::Rigid3d::Identity(),
+            CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore);
+    EXPECT_THAT(low_resolution_result, testing::IsNull())
+        << low_resolution_result->low_resolution_score;
   }
 }
 
@@ -177,10 +180,13 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
               transform::IsNearly(result->pose_estimate.cast<float>(), 0.05f))
       << "Actual: " << transform::ToProto(result->pose_estimate).DebugString()
       << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
-  result = fast_correlative_scan_matcher->MatchFullSubmap(
-      Eigen::Quaterniond::Identity(), Eigen::Quaterniond::Identity(),
-      CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore);
-  EXPECT_THAT(result, testing::IsNull()) << result->low_resolution_score;
+
+  const std::unique_ptr<FastCorrelativeScanMatcher::Result>
+      low_resolution_result = fast_correlative_scan_matcher->MatchFullSubmap(
+          Eigen::Quaterniond::Identity(), Eigen::Quaterniond::Identity(),
+          CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore);
+  EXPECT_THAT(low_resolution_result, testing::IsNull())
+      << low_resolution_result->low_resolution_score;
 }
 
 }  // namespace
