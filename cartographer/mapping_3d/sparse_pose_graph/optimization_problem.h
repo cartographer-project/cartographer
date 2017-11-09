@@ -47,7 +47,7 @@ struct NodeData {
 };
 
 struct SubmapData {
-  transform::Rigid3d pose;
+  transform::Rigid3d global_pose;
 };
 
 // Implements the SPA loop closure method.
@@ -79,14 +79,15 @@ class OptimizationProblem {
                             const transform::Rigid3d& local_pose,
                             const transform::Rigid3d& global_pose);
   void TrimTrajectoryNode(const mapping::NodeId& node_id);
-  void AddSubmap(int trajectory_id, const transform::Rigid3d& submap_pose);
+  void AddSubmap(int trajectory_id,
+                 const transform::Rigid3d& global_submap_pose);
   void InsertSubmap(const mapping::SubmapId& submap_id,
-                    const transform::Rigid3d& submap_pose);
+                    const transform::Rigid3d& global_submap_pose);
   void TrimSubmap(const mapping::SubmapId& submap_id);
 
   void SetMaxNumIterations(int32 max_num_iterations);
 
-  // Computes the optimized poses.
+  // Optimizes the global poses.
   void Solve(const std::vector<Constraint>& constraints,
              const std::set<int>& frozen_trajectories);
 

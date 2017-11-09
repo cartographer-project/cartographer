@@ -65,11 +65,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
 
-  // Adds a new node with 'constant_data' and a 'pose' that will later be
-  // optimized. The 'pose' was determined by scan matching against
-  // 'insertion_submaps.front()' and the scan was inserted into the
-  // 'insertion_submaps'. If 'insertion_submaps.front().finished()' is
-  // 'true', this submap was inserted into for the last time.
+  // Adds a new node with 'constant_data'. Its 'constant_data->local_pose' was
+  // determined by scan matching against 'insertion_submaps.front()' and the
+  // scan was inserted into the 'insertion_submaps'. If
+  // 'insertion_submaps.front().finished()' is 'true', data was inserted into
+  // this submap for the last time.
   mapping::NodeId AddScan(
       std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
       int trajectory_id,
@@ -86,7 +86,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   void FinishTrajectory(int trajectory_id) override;
   void FreezeTrajectory(int trajectory_id) override;
-  void AddSubmapFromProto(const transform::Rigid3d& global_pose,
+  void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
                           const mapping::proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
                         const mapping::proto::Node& node) override;
