@@ -47,10 +47,11 @@ class ProbabilityGrid {
 
   explicit ProbabilityGrid(const proto::ProbabilityGrid& proto)
       : limits_(proto.limits()), cells_() {
-    if (proto.has_min_x()) {
+    if (proto.has_known_cells_box()) {
+      const auto& box = proto.known_cells_box();
       known_cells_box_ =
-          Eigen::AlignedBox2i(Eigen::Vector2i(proto.min_x(), proto.min_y()),
-                              Eigen::Vector2i(proto.max_x(), proto.max_y()));
+          Eigen::AlignedBox2i(Eigen::Vector2i(box.min_x(), box.min_y()),
+                              Eigen::Vector2i(box.max_x(), box.max_y()));
     }
     cells_.reserve(proto.cells_size());
     for (const auto cell : proto.cells()) {
@@ -175,10 +176,11 @@ class ProbabilityGrid {
     CHECK(update_indices_.empty()) << "Serializing a grid during an update is "
                                       "not supported. Finish the update first.";
     if (!known_cells_box_.isEmpty()) {
-      result.set_max_x(known_cells_box_.max().x());
-      result.set_max_y(known_cells_box_.max().y());
-      result.set_min_x(known_cells_box_.min().x());
-      result.set_min_y(known_cells_box_.min().y());
+      auto* const box = result.mutable_known_cells_box();
+      box->set_max_x(known_cells_box_.max().x());
+      box->set_max_y(known_cells_box_.max().y());
+      box->set_min_x(known_cells_box_.min().x());
+      box->set_min_y(known_cells_box_.min().y());
     }
     return result;
   }
