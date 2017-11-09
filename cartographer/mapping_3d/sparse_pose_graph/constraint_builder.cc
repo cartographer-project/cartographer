@@ -179,34 +179,36 @@ void ConstraintBuilder::ComputeConstraint(
   // The 'constraint_transform' (submap i <- scan j) is computed from:
   // - a 'high_resolution_point_cloud' in scan j and
   // - the initial guess 'initial_pose' (submap i <- scan j).
+  std::unique_ptr<scan_matching::FastCorrelativeScanMatcher::Result>
+      match_result;
   float score = 0.f;
   transform::Rigid3d pose_estimate;
   float rotational_score = 0.f;
   float low_resolution_score = 0.f;
-  // TODO(gaschler): Match methods should return unique_ptr<struct>.
 
   // Compute 'pose_estimate' in three stages:
   // 1. Fast estimate using the fast correlative scan matcher.
   // 2. Prune if the score is too low.
   // 3. Refine.
   if (match_full_submap) {
-    if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
+    match_result =
+        submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             global_node_pose.rotation(), global_submap_pose.rotation(),
-            *constant_data, options_.global_localization_min_score(), &score,
-            &pose_estimate, &rotational_score, &low_resolution_score)) {
-      CHECK_GT(score, options_.global_localization_min_score());
+            *constant_data, options_.global_localization_min_score());
+    if (match_result) {
+      CHECK_GT(match_result->score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
       CHECK_GE(submap_id.trajectory_id, 0);
     } else {
       return;
     }
   } else {
-    if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
-            global_node_pose, global_submap_pose, *constant_data,
-            options_.min_score(), &score, &pose_estimate, &rotational_score,
-            &low_resolution_score)) {
+    match_result = submap_scan_matcher->fast_correlative_scan_matcher->Match(
+        global_node_pose, global_submap_pose, *constant_data,
+        options_.min_score());
+    if (match_result) {
       // We've reported a successful local match.
-      CHECK_GT(score, options_.min_score());
+      CHECK_GT(match_result->score, options_.min_score());
     } else {
       return;
     }

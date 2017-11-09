@@ -49,6 +49,13 @@ using MatchingFunction = std::function<float(const transform::Rigid3f&)>;
 
 class FastCorrelativeScanMatcher {
  public:
+  struct Result {
+    float score;
+    transform::Rigid3d pose_estimate;
+    float rotational_score;
+    float low_resolution_score;
+  };
+
   FastCorrelativeScanMatcher(
       const HybridGrid& hybrid_grid,
       const HybridGrid* low_resolution_hybrid_grid,
@@ -61,28 +68,23 @@ class FastCorrelativeScanMatcher {
       delete;
 
   // Aligns the node with the given 'constant_data' within the 'hybrid_grid'
-  // given 'global_node_pose' and 'global_submap_pose'. If a score above
-  // 'min_score' (excluding equality) is possible, true is returned, and
-  // 'score', 'pose_estimate', 'rotational_score', and 'low_resolution_score'
-  // are updated with the result.
-  bool Match(const transform::Rigid3d& global_node_pose,
-             const transform::Rigid3d& global_submap_pose,
-             const mapping::TrajectoryNode::Data& constant_data,
-             float min_score, float* score, transform::Rigid3d* pose_estimate,
-             float* rotational_score, float* low_resolution_score) const;
+  // given 'global_node_pose' and 'global_submap_pose'. 'Result' is only
+  // returned if a score above 'min_score' (excluding equality) is possible.
+  std::unique_ptr<Result> Match(
+      const transform::Rigid3d& global_node_pose,
+      const transform::Rigid3d& global_submap_pose,
+      const mapping::TrajectoryNode::Data& constant_data,
+      float min_score) const;
 
   // Aligns the node with the given 'constant_data' within the 'hybrid_grid'
   // given rotations which are expected to be approximately gravity aligned.
-  // If a score above 'min_score' (excluding equality) is possible, true is
-  // returned, and 'score', 'pose_estimate', 'rotational_score', and
-  // 'low_resolution_score' are updated with the result.
-  bool MatchFullSubmap(const Eigen::Quaterniond& global_node_rotation,
-                       const Eigen::Quaterniond& global_submap_rotation,
-                       const mapping::TrajectoryNode::Data& constant_data,
-                       float min_score, float* score,
-                       transform::Rigid3d* pose_estimate,
-                       float* rotational_score,
-                       float* low_resolution_score) const;
+  // 'Result' is only returned if a score above 'min_score' (excluding equality)
+  // is possible.
+  std::unique_ptr<Result> MatchFullSubmap(
+      const Eigen::Quaterniond& global_node_rotation,
+      const Eigen::Quaterniond& global_submap_rotation,
+      const mapping::TrajectoryNode::Data& constant_data,
+      float min_score) const;
 
  private:
   struct SearchParameters {
@@ -92,15 +94,13 @@ class FastCorrelativeScanMatcher {
     const MatchingFunction* const low_resolution_matcher;
   };
 
-  bool MatchWithSearchParameters(
+  std::unique_ptr<Result> MatchWithSearchParameters(
       const SearchParameters& search_parameters,
       const transform::Rigid3f& global_node_pose,
       const transform::Rigid3f& global_submap_pose,
       const sensor::PointCloud& point_cloud,
       const Eigen::VectorXf& rotational_scan_matcher_histogram,
-      const Eigen::Quaterniond& gravity_alignment, float min_score,
-      float* score, transform::Rigid3d* pose_estimate, float* rotational_score,
-      float* low_resolution_score) const;
+      const Eigen::Quaterniond& gravity_alignment, float min_score) const;
   DiscreteScan DiscretizeScan(const SearchParameters& search_parameters,
                               const sensor::PointCloud& point_cloud,
                               const transform::Rigid3f& pose,

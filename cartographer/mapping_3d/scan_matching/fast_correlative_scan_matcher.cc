@@ -156,12 +156,12 @@ FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
 
 FastCorrelativeScanMatcher::~FastCorrelativeScanMatcher() {}
 
-bool FastCorrelativeScanMatcher::Match(
+std::unique_ptr<FastCorrelativeScanMatcher::Result>
+FastCorrelativeScanMatcher::Match(
     const transform::Rigid3d& global_node_pose,
     const transform::Rigid3d& global_submap_pose,
-    const mapping::TrajectoryNode::Data& constant_data, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate,
-    float* const rotational_score, float* const low_resolution_score) const {
+    const mapping::TrajectoryNode::Data& constant_data,
+    const float min_score) const {
   const auto low_resolution_matcher = scan_matching::CreateLowResolutionMatcher(
       low_resolution_hybrid_grid_, &constant_data.low_resolution_point_cloud);
   const SearchParameters search_parameters{
@@ -173,16 +173,15 @@ bool FastCorrelativeScanMatcher::Match(
       global_submap_pose.cast<float>(),
       constant_data.high_resolution_point_cloud,
       constant_data.rotational_scan_matcher_histogram,
-      constant_data.gravity_alignment, min_score, score, pose_estimate,
-      rotational_score, low_resolution_score);
+      constant_data.gravity_alignment, min_score);
 }
 
-bool FastCorrelativeScanMatcher::MatchFullSubmap(
+std::unique_ptr<FastCorrelativeScanMatcher::Result>
+FastCorrelativeScanMatcher::MatchFullSubmap(
     const Eigen::Quaterniond& global_node_rotation,
     const Eigen::Quaterniond& global_submap_rotation,
-    const mapping::TrajectoryNode::Data& constant_data, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate,
-    float* const rotational_score, float* const low_resolution_score) const {
+    const mapping::TrajectoryNode::Data& constant_data,
+    const float min_score) const {
   float max_point_distance = 0.f;
   for (const Eigen::Vector3f& point :
        constant_data.high_resolution_point_cloud) {
@@ -201,22 +200,17 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
       transform::Rigid3f::Rotation(global_submap_rotation.cast<float>()),
       constant_data.high_resolution_point_cloud,
       constant_data.rotational_scan_matcher_histogram,
-      constant_data.gravity_alignment, min_score, score, pose_estimate,
-      rotational_score, low_resolution_score);
+      constant_data.gravity_alignment, min_score);
 }
 
-bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
+std::unique_ptr<FastCorrelativeScanMatcher::Result>
+FastCorrelativeScanMatcher::MatchWithSearchParameters(
     const FastCorrelativeScanMatcher::SearchParameters& search_parameters,
     const transform::Rigid3f& global_node_pose,
     const transform::Rigid3f& global_submap_pose,
     const sensor::PointCloud& point_cloud,
     const Eigen::VectorXf& rotational_scan_matcher_histogram,
-    const Eigen::Quaterniond& gravity_alignment, const float min_score,
-    float* const score, transform::Rigid3d* const pose_estimate,
-    float* const rotational_score, float* const low_resolution_score) const {
-  CHECK_NOTNULL(score);
-  CHECK_NOTNULL(pose_estimate);
-
+    const Eigen::Quaterniond& gravity_alignment, const float min_score) const {
   const std::vector<DiscreteScan> discrete_scans = GenerateDiscreteScans(
       search_parameters, point_cloud, rotational_scan_matcher_histogram,
       gravity_alignment, global_node_pose, global_submap_pose);
@@ -228,15 +222,13 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
       search_parameters, discrete_scans, lowest_resolution_candidates,
       precomputation_grid_stack_->max_depth(), min_score);
   if (best_candidate.score > min_score) {
-    *score = best_candidate.score;
-    *pose_estimate =
-        GetPoseFromCandidate(discrete_scans, best_candidate).cast<double>();
-    *rotational_score =
-        discrete_scans[best_candidate.scan_index].rotational_score;
-    *low_resolution_score = best_candidate.low_resolution_score;
-    return true;
+    return common::make_unique<Result>(Result{
+        best_candidate.score,
+        GetPoseFromCandidate(discrete_scans, best_candidate).cast<double>(),
+        discrete_scans[best_candidate.scan_index].rotational_score,
+        best_candidate.low_resolution_score});
   }
-  return false;
+  return nullptr;
 }
 
 DiscreteScan FastCorrelativeScanMatcher::DiscretizeScan(
