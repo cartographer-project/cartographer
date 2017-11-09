@@ -58,7 +58,7 @@ void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
       options_.imu_gravity_time_constant(), imu_data);
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddRangeData(const common::Time time,
                                      const sensor::TimedRangeData& range_data) {
   if (extrapolator_ == nullptr) {
@@ -106,7 +106,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   return nullptr;
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const sensor::RangeData& range_data_in_tracking) {
   const sensor::RangeData filtered_range_data_in_tracking = {
@@ -164,12 +164,13 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
 
   sensor::RangeData filtered_range_data_in_local = sensor::TransformRangeData(
       filtered_range_data_in_tracking, pose_estimate.cast<float>());
-  last_pose_estimate_ = {time, pose_estimate,
-                         filtered_range_data_in_local.returns};
-  return InsertIntoSubmap(
+  std::unique_ptr<InsertionResult> insertion_result = InsertIntoSubmap(
       time, filtered_range_data_in_local, filtered_range_data_in_tracking,
       high_resolution_point_cloud_in_tracking,
       low_resolution_point_cloud_in_tracking, pose_estimate, gravity_alignment);
+  return std::unique_ptr<MatchingResult>(new MatchingResult{
+      time, pose_estimate, std::move(filtered_range_data_in_local),
+      std::move(insertion_result)});
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
@@ -180,10 +181,6 @@ void LocalTrajectoryBuilder::AddOdometerData(
     return;
   }
   extrapolator_->AddOdometryData(odometry_data);
-}
-
-const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
-  return last_pose_estimate_;
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>

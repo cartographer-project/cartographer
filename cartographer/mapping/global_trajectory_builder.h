@@ -29,32 +29,42 @@ template <typename LocalTrajectoryBuilder,
 class GlobalTrajectoryBuilder
     : public mapping::GlobalTrajectoryBuilderInterface {
  public:
-  GlobalTrajectoryBuilder(const LocalTrajectoryBuilderOptions& options,
-                          const int trajectory_id,
-                          SparsePoseGraph* const sparse_pose_graph)
+  GlobalTrajectoryBuilder(
+      const LocalTrajectoryBuilderOptions& options, const int trajectory_id,
+      SparsePoseGraph* const sparse_pose_graph,
+      const AccumulatedRangeDataCallback& accumulated_range_data_callback)
       : trajectory_id_(trajectory_id),
         sparse_pose_graph_(sparse_pose_graph),
-        local_trajectory_builder_(options) {}
+        local_trajectory_builder_(options),
+        accumulated_range_data_callback_(accumulated_range_data_callback) {}
   ~GlobalTrajectoryBuilder() override {}
 
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  const mapping::PoseEstimate& pose_estimate() const override {
-    return local_trajectory_builder_.pose_estimate();
-  }
-
   void AddRangefinderData(const common::Time time,
                           const Eigen::Vector3f& origin,
                           const sensor::TimedPointCloud& ranges) override {
-    std::unique_ptr<typename LocalTrajectoryBuilder::InsertionResult>
-        insertion_result = local_trajectory_builder_.AddRangeData(
+    std::unique_ptr<typename LocalTrajectoryBuilder::MatchingResult>
+        matching_result = local_trajectory_builder_.AddRangeData(
             time, sensor::TimedRangeData{origin, ranges, {}});
-    if (insertion_result == nullptr) {
+    if (matching_result == nullptr) {
+      // The range data has not been fully accumulated yet.
       return;
     }
-    sparse_pose_graph_->AddScan(insertion_result->constant_data, trajectory_id_,
-                                insertion_result->insertion_submaps);
+    std::unique_ptr<mapping::NodeId> node_id;
+    if (matching_result->insertion_result != nullptr) {
+      node_id = ::cartographer::common::make_unique<mapping::NodeId>(
+          sparse_pose_graph_->AddScan(
+              matching_result->insertion_result->constant_data, trajectory_id_,
+              matching_result->insertion_result->insertion_submaps));
+      CHECK_EQ(node_id->trajectory_id, trajectory_id_);
+    }
+    if (accumulated_range_data_callback_) {
+      accumulated_range_data_callback_(
+          trajectory_id_, matching_result->time, matching_result->local_pose,
+          std::move(matching_result->range_data_in_local), std::move(node_id));
+    }
   }
 
   void AddSensorData(const sensor::ImuData& imu_data) override {
@@ -78,6 +88,7 @@ class GlobalTrajectoryBuilder
   const int trajectory_id_;
   SparsePoseGraph* const sparse_pose_graph_;
   LocalTrajectoryBuilder local_trajectory_builder_;
+  AccumulatedRangeDataCallback accumulated_range_data_callback_;
 };
 
 }  // namespace mapping

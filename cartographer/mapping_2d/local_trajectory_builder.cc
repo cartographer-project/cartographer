@@ -73,7 +73,7 @@ void LocalTrajectoryBuilder::ScanMatch(
       matching_submap->probability_grid(), pose_observation, &summary);
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddRangeData(const common::Time time,
                                      const sensor::TimedRangeData& range_data) {
   // Initialize extrapolator now if we do not ever use an IMU.
@@ -126,7 +126,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   return nullptr;
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const sensor::RangeData& range_data) {
   // Transforms 'range_data' from the tracking frame into a frame where gravity
@@ -157,9 +157,12 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   sensor::RangeData range_data_in_local =
       TransformRangeData(gravity_aligned_range_data,
                          transform::Embed3D(pose_estimate_2d.cast<float>()));
-  last_pose_estimate_ = {time, pose_estimate, range_data_in_local.returns};
-  return InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
-                          pose_estimate, gravity_alignment.rotation());
+  std::unique_ptr<InsertionResult> insertion_result =
+      InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
+                       pose_estimate, gravity_alignment.rotation());
+  return common::make_unique<MatchingResult>(
+      MatchingResult{time, pose_estimate, std::move(range_data_in_local),
+                     std::move(insertion_result)});
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
@@ -196,10 +199,6 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
               {},  // 'rotational_scan_matcher_histogram' is only used in 3D.
               pose_estimate}),
       std::move(insertion_submaps)});
-}
-
-const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
-  return last_pose_estimate_;
 }
 
 void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {

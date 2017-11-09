@@ -40,9 +40,23 @@ namespace mapping_3d {
 // without loop closure.
 class LocalTrajectoryBuilder {
  public:
+  // The following two structs are used for representing the result of adding
+  // range data in local SLAM (using 'LocalTrajectoryBuilder::AddRangeData()').
+  // 'nullptr' is returned for 'MatchingResult' in case if the range data
+  // accumulation is not yet complete. Otherwise, a pointer is returned to a
+  // 'MatchingResult' instance which contains the accumulated 'RangeData',
+  // the estimated pose, time and an 'InsertionResult' pointer, which is
+  // 'nullptr' if the motion filter has blocked the accumulated range data from
+  // insertion; otherwise, it points to an 'InsertionResult' instance.
   struct InsertionResult {
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+  };
+  struct MatchingResult {
+    common::Time time;
+    transform::Rigid3d local_pose;
+    sensor::RangeData range_data_in_local;
+    std::unique_ptr<const InsertionResult> insertion_result;
   };
 
   explicit LocalTrajectoryBuilder(
@@ -53,13 +67,12 @@ class LocalTrajectoryBuilder {
   LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
 
   void AddImuData(const sensor::ImuData& imu_data);
-  std::unique_ptr<InsertionResult> AddRangeData(
+  std::unique_ptr<MatchingResult> AddRangeData(
       common::Time time, const sensor::TimedRangeData& range_data);
   void AddOdometerData(const sensor::OdometryData& odometry_data);
-  const mapping::PoseEstimate& pose_estimate() const;
 
  private:
-  std::unique_ptr<InsertionResult> AddAccumulatedRangeData(
+  std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
       common::Time time, const sensor::RangeData& range_data_in_tracking);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
@@ -72,8 +85,6 @@ class LocalTrajectoryBuilder {
 
   const proto::LocalTrajectoryBuilderOptions options_;
   ActiveSubmaps active_submaps_;
-
-  mapping::PoseEstimate last_pose_estimate_;
 
   MotionFilter motion_filter_;
   std::unique_ptr<scan_matching::RealTimeCorrelativeScanMatcher>
