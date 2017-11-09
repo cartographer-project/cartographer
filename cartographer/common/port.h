@@ -25,7 +25,6 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
-
 namespace cartographer {
 
 using int8 = int8_t;

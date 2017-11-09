@@ -179,19 +179,21 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
                                         const mapping::SubmapId& submap_id) {
   CHECK(submap_data_.at(submap_id).state == SubmapState::kFinished);
 
-  const transform::Rigid3d inverse_submap_pose =
-      optimization_problem_.submap_data().at(submap_id).pose.inverse();
-
-  const transform::Rigid3d initial_relative_pose =
-      inverse_submap_pose *
+  const transform::Rigid3d global_node_pose =
       optimization_problem_.node_data().at(node_id).global_pose;
+
+  const transform::Rigid3d global_submap_pose =
+      optimization_problem_.submap_data().at(submap_id).pose;
+
+  const transform::Rigid3d global_submap_pose_inverse =
+      global_submap_pose.inverse();
 
   std::vector<mapping::TrajectoryNode> submap_nodes;
   for (const mapping::NodeId& submap_node_id :
        submap_data_.at(submap_id).node_ids) {
     submap_nodes.push_back(mapping::TrajectoryNode{
         trajectory_nodes_.at(submap_node_id).constant_data,
-        inverse_submap_pose *
+        global_submap_pose_inverse *
             trajectory_nodes_.at(submap_node_id).global_pose});
   }
 
@@ -211,24 +213,17 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
     constraint_builder_.MaybeAddConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
         trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
-        initial_relative_pose);
+        global_node_pose, global_submap_pose);
   } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
-    // In this situation, 'initial_relative_pose' is:
-    //
-    // submap <- global map 2 <- global map 1 <- tracking
-    //               (agreeing on gravity)
-    //
-    // Since they possibly came from two disconnected trajectories, the only
-    // guaranteed connection between the tracking and the submap frames is
-    // an agreement on the direction of gravity. Therefore, excluding yaw,
-    // 'initial_relative_pose.rotation()' is a good estimate of the relative
-    // orientation of the point cloud in the submap frame. Finding the correct
-    // yaw component will be handled by the matching procedure in the
-    // FastCorrelativeScanMatcher, and the given yaw is essentially ignored.
+    // In this situation, 'global_node_pose' and 'global_submap_pose' have
+    // orientations agreeing on gravity. Their relationship regarding yaw is
+    // arbitrary. Finding the correct yaw component will be handled by the
+    // matching procedure in the FastCorrelativeScanMatcher, and the given yaw
+    // is essentially ignored.
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
         trajectory_nodes_.at(node_id).constant_data.get(), submap_nodes,
-        initial_relative_pose.rotation());
+        global_node_pose.rotation(), global_submap_pose.rotation());
   }
 }
 
