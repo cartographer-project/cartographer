@@ -438,6 +438,11 @@ OptimizationProblem::submap_data() const {
   return submap_data_;
 }
 
+const sensor::MapByTime<sensor::ImuData>& OptimizationProblem::imu_data()
+    const {
+  return imu_data_;
+}
+
 }  // namespace sparse_pose_graph
 }  // namespace mapping_3d
 }  // namespace cartographer

@@ -544,6 +544,11 @@ SparsePoseGraph::GetTrajectoryNodes() {
   return trajectory_nodes_;
 }
 
+sensor::MapByTime<sensor::ImuData> SparsePoseGraph::GetImuData() {
+  common::MutexLocker locker(&mutex_);
+  return optimization_problem_.imu_data();
+}
+
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   std::vector<Constraint> result;
   common::MutexLocker locker(&mutex_);

@@ -31,6 +31,8 @@
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/map_by_time.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -79,6 +81,10 @@ class SparsePoseGraph {
 
   SparsePoseGraph(const SparsePoseGraph&) = delete;
   SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
+
+  // Inserts an IMU measurement.
+  virtual void AddImuData(int trajectory_id,
+                          const sensor::ImuData& imu_data) = 0;
 
   // Finishes the given trajectory.
   virtual void FinishTrajectory(int trajectory_id) = 0;
@@ -134,6 +140,9 @@ class SparsePoseGraph {
 
   // Serializes the constraints and trajectories.
   proto::SparsePoseGraph ToProto();
+
+  // Returns the IMU data.
+  virtual sensor::MapByTime<sensor::ImuData> GetImuData() = 0;
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
