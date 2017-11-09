@@ -76,13 +76,15 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       EXCLUDES(mutex_);
 
-  void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  void AddImuData(int trajectory_id, const sensor::ImuData& imu_data) override
+      EXCLUDES(mutex_);
   void AddOdometerData(int trajectory_id,
                        const sensor::OdometryData& odometry_data);
   void AddFixedFramePoseData(
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
 
+  void FinishTrajectory(int trajectory_id) override;
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(const transform::Rigid3d& global_pose,
                           const mapping::proto::Submap& submap) override;
@@ -103,6 +105,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       EXCLUDES(mutex_) override;
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
   GetTrajectoryNodes() override EXCLUDES(mutex_);
+  sensor::MapByTime<sensor::ImuData> GetImuData() override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
   void SetInitialTrajectoryPose(int from_trajectory_id, int to_trajectory_id,
                                 const transform::Rigid3d& pose,

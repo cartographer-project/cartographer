@@ -388,6 +388,11 @@ void SparsePoseGraph::WaitForAllComputations() {
   locker.Await([&notification]() { return notification; });
 }
 
+void SparsePoseGraph::FinishTrajectory(const int trajectory_id) {
+  // TODO(jihoonl): Add a logic to notify trimmers to finish the given
+  // trajectory.
+}
+
 void SparsePoseGraph::FreezeTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   trajectory_connectivity_state_.Add(trajectory_id);
@@ -566,6 +571,11 @@ mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
 SparsePoseGraph::GetTrajectoryNodes() {
   common::MutexLocker locker(&mutex_);
   return trajectory_nodes_;
+}
+
+sensor::MapByTime<sensor::ImuData> SparsePoseGraph::GetImuData() {
+  common::MutexLocker locker(&mutex_);
+  return optimization_problem_.imu_data();
 }
 
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
