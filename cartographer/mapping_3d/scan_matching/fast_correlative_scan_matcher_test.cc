@@ -168,7 +168,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
   std::unique_ptr<FastCorrelativeScanMatcher> fast_correlative_scan_matcher(
       GetFastCorrelativeScanMatcher(options_, expected_pose));
 
-  std::unique_ptr<FastCorrelativeScanMatcher::Result> result =
+  const std::unique_ptr<FastCorrelativeScanMatcher::Result> result =
       fast_correlative_scan_matcher->MatchFullSubmap(
           Eigen::Quaterniond::Identity(), Eigen::Quaterniond::Identity(),
           CreateConstantData(point_cloud_), kMinScore);
