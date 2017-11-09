@@ -37,7 +37,10 @@ class MockMapBuilder : public cartographer::mapping::MapBuilderInterface {
               &trajectory_options,
           cartographer::mapping::MapBuilderInterface::LocalSlamResultCallback
               local_slam_result_callback));
-  MOCK_METHOD0(AddTrajectoryForDeserialization, int());
+  MOCK_METHOD1(AddTrajectoryForDeserialization,
+               int(const cartographer::mapping::proto::
+                       TrajectoryBuilderOptionsWithSensorIds
+                           &options_with_sensor_ids_proto));
   MOCK_CONST_METHOD1(
       GetTrajectoryBuilder,
       cartographer::mapping::TrajectoryBuilderInterface *(int trajectory_id));
@@ -51,6 +54,11 @@ class MockMapBuilder : public cartographer::mapping::MapBuilderInterface {
   MOCK_METHOD1(LoadMap, void(cartographer::io::ProtoStreamReaderInterface *));
   MOCK_CONST_METHOD0(num_trajectory_builders, int());
   MOCK_METHOD0(pose_graph, cartographer::mapping::PoseGraphInterface *());
+  MOCK_CONST_METHOD0(
+      GetAllTrajectoryBuilderOptions,
+      const std::vector<
+          cartographer::mapping::proto::TrajectoryBuilderOptionsWithSensorIds>
+          &());
 };
 
 }  // namespace testing
