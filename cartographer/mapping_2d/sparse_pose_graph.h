@@ -68,8 +68,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Adds a new node with 'constant_data'. Its 'constant_data->local_pose' was
   // determined by scan matching against 'insertion_submaps.front()' and the
   // scan was inserted into the 'insertion_submaps'. If
-  // 'insertion_submaps.front().finished()' is 'true', this submap was inserted
-  // into for the last time.
+  // 'insertion_submaps.front().finished()' is 'true', data was inserted into
+  // this submap for the last time.
   mapping::NodeId AddScan(
       std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
       int trajectory_id,
