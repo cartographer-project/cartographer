@@ -6,26 +6,26 @@
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software
+// Unless by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping_3d.proto;
 
 message RangeDataInserterOptions {
   // Probability change for a hit (this will be converted to odds and therefore
   // must be greater than 0.5).
-  optional double hit_probability = 1;
+  double hit_probability = 1;
 
   // Probability change for a miss (this will be converted to odds and therefore
   // must be less than 0.5).
-  optional double miss_probability = 2;
+  double miss_probability = 2;
 
   // Up to how many free space voxels are updated for scan matching.
   // 0 disables free space.
-  optional int32 num_free_space_voxels = 3;
+  int32 num_free_space_voxels = 3;
 }

@@ -6,23 +6,23 @@
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software
+// Unless by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 import "cartographer/mapping/proto/sparse_pose_graph_options.proto";
 
 package cartographer.mapping.proto;
 
 message MapBuilderOptions {
-  optional bool use_trajectory_builder_2d = 1;
-  optional bool use_trajectory_builder_3d = 2;
+  bool use_trajectory_builder_2d = 1;
+  bool use_trajectory_builder_3d = 2;
 
   // Number of threads to use for background computations.
-  optional int32 num_background_threads = 3;
-  optional SparsePoseGraphOptions sparse_pose_graph_options = 4;
+  int32 num_background_threads = 3;
+  SparsePoseGraphOptions sparse_pose_graph_options = 4;
 }
