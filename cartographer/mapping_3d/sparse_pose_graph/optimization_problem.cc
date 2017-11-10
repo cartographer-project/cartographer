@@ -459,9 +459,9 @@ transform::Rigid3d OptimizationProblem::ComputeRelativePose(
     const int trajectory_id, const NodeData& first_node_data,
     const NodeData& second_node_data) const {
   if (odometry_data_.HasTrajectory(trajectory_id)) {
-    std::unique_ptr<transform::Rigid3d> first_node_odometry =
+    const std::unique_ptr<transform::Rigid3d> first_node_odometry =
         InterpolateOdometry(trajectory_id, first_node_data.time);
-    std::unique_ptr<transform::Rigid3d> second_node_odometry =
+    const std::unique_ptr<transform::Rigid3d> second_node_odometry =
         InterpolateOdometry(trajectory_id, second_node_data.time);
     if (first_node_odometry != nullptr && second_node_odometry != nullptr) {
       return first_node_odometry->inverse() * (*second_node_odometry);
