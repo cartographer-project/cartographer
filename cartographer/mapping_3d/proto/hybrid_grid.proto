@@ -19,10 +19,10 @@ package cartographer.mapping_3d.proto;
 message HybridGrid {
   float resolution = 1;
   // '{x, y, z}_indices[i]' is the index of 'values[i]'.
-  repeated sint32 x_indices = 3 [packed = true];
-  repeated sint32 y_indices = 4 [packed = true];
-  repeated sint32 z_indices = 5 [packed = true];
+  repeated sint32 x_indices = 3;
+  repeated sint32 y_indices = 4;
+  repeated sint32 z_indices = 5;
   // The entries in 'values' should be uint16s, not int32s, but protos don't
   // have a uint16 type.
-  repeated int32 values = 6 [packed = true];
+  repeated int32 values = 6;
 }
