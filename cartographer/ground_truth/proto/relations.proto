@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.ground_truth.proto;
 
 import "cartographer/transform/proto/transform.proto";
 
 message Relation {
-  optional int64 timestamp1 = 1;
-  optional int64 timestamp2 = 2;
+  int64 timestamp1 = 1;
+  int64 timestamp2 = 2;
 
   // The 'expected' relative transform of the tracking frame from 'timestamp2'
   // to 'timestamp1'.
-  optional transform.proto.Rigid3d expected = 3;
+  transform.proto.Rigid3d expected = 3;
 }
 
 message GroundTruth {

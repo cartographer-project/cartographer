@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping_3d.proto;
 
 message MotionFilterOptions {
   // Threshold above which a new scan is inserted based on time.
-  optional double max_time_seconds = 1;
+  double max_time_seconds = 1;
 
   // Threshold above which a new scan is inserted based on linear motion.
-  optional double max_distance_meters = 2;
+  double max_distance_meters = 2;
 
   // Threshold above which a new scan is inserted based on rotational motion.
-  optional double max_angle_radians = 3;
+  double max_angle_radians = 3;
 }

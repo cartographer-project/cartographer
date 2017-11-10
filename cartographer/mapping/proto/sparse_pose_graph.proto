@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping.proto;
 
@@ -20,13 +20,13 @@ import "cartographer/mapping/proto/trajectory.proto";
 import "cartographer/transform/proto/transform.proto";
 
 message SubmapId {
-  optional int32 trajectory_id = 1;
-  optional int32 submap_index = 2;  // Submap index in the given trajectory.
+  int32 trajectory_id = 1;
+  int32 submap_index = 2;  // Submap index in the given trajectory.
 }
 
 message NodeId {
-  optional int32 trajectory_id = 1;
-  optional int32 node_index = 2;  // Node index in the given trajectory.
+  int32 trajectory_id = 1;
+  int32 node_index = 2;  // Node index in the given trajectory.
 }
 
 message SparsePoseGraph {
@@ -39,16 +39,16 @@ message SparsePoseGraph {
       INTER_SUBMAP = 1;
     }
 
-    optional SubmapId submap_id = 1;  // Submap ID.
-    optional NodeId node_id = 2;  // Node ID.
+    SubmapId submap_id = 1;  // Submap ID.
+    NodeId node_id = 2;  // Node ID.
     // Pose of the node relative to submap, i.e. taking data from the node frame
     // into the submap frame.
-    optional transform.proto.Rigid3d relative_pose = 3;
+    transform.proto.Rigid3d relative_pose = 3;
     // Weight of the translational part of the constraint.
-    optional double translation_weight = 6;
+    double translation_weight = 6;
     // Weight of the rotational part of the constraint.
-    optional double rotation_weight = 7;
-    optional Tag tag = 5;
+    double rotation_weight = 7;
+    Tag tag = 5;
   }
 
   repeated Constraint constraint = 2;

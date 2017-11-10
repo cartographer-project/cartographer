@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping.proto;
 
@@ -22,37 +22,37 @@ import "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_option
 message SparsePoseGraphOptions {
   // Online loop closure: If positive, will run the loop closure while the map
   // is built.
-  optional int32 optimize_every_n_scans = 1;
+  int32 optimize_every_n_scans = 1;
 
   // Options for the constraint builder.
-  optional mapping.sparse_pose_graph.proto.ConstraintBuilderOptions
+  mapping.sparse_pose_graph.proto.ConstraintBuilderOptions
       constraint_builder_options = 3;
 
   // Weight used in the optimization problem for the translational component of
   // non-loop-closure scan matcher constraints.
-  optional double matcher_translation_weight = 7;
+  double matcher_translation_weight = 7;
 
   // Weight used in the optimization problem for the rotational component of
   // non-loop-closure scan matcher constraints.
-  optional double matcher_rotation_weight = 8;
+  double matcher_rotation_weight = 8;
 
   // Options for the optimization problem.
-  optional mapping.sparse_pose_graph.proto.OptimizationProblemOptions
+  mapping.sparse_pose_graph.proto.OptimizationProblemOptions
       optimization_problem_options = 4;
 
   // Number of iterations to use in 'optimization_problem_options' for the final
   // optimization.
-  optional int32 max_num_final_iterations = 6;
+  int32 max_num_final_iterations = 6;
 
   // Rate at which we sample a single trajectory's scans for global
   // localization.
-  optional double global_sampling_ratio = 5;
+  double global_sampling_ratio = 5;
 
   // Whether to output histograms for the pose residuals.
-  optional bool log_residual_histograms = 9;
+  bool log_residual_histograms = 9;
 
   // If for the duration specified by this option no global contraint has been
   // added between two trajectories, loop closure searches will be performed
   // globally rather than in a smaller search window.
-  optional double global_constraint_search_after_n_seconds = 10;
+  double global_constraint_search_after_n_seconds = 10;
 }

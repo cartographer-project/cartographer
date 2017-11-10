@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping_2d.proto;
 
 message RangeDataInserterOptions {
   // Probability change for a hit (this will be converted to odds and therefore
   // must be greater than 0.5).
-  optional double hit_probability = 1;
+  double hit_probability = 1;
 
   // Probability change for a miss (this will be converted to odds and therefore
   // must be less than 0.5).
-  optional double miss_probability = 2;
+  double miss_probability = 2;
 
   // If 'false', free space will not change the probabilities in the occupancy
   // grid.
-  optional bool insert_free_space = 3;
+  bool insert_free_space = 3;
 }

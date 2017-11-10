@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 import "cartographer/mapping_2d/proto/range_data_inserter_options.proto";
 
@@ -20,12 +20,12 @@ package cartographer.mapping_2d.proto;
 
 message SubmapsOptions {
   // Resolution of the map in meters.
-  optional double resolution = 1;
+  double resolution = 1;
 
   // Number of scans before adding a new submap. Each submap will get twice the
   // number of scans inserted: First for initialization without being matched
   // against, then while being matched.
-  optional int32 num_range_data = 3;
+  int32 num_range_data = 3;
 
-  optional RangeDataInserterOptions range_data_inserter_options = 5;
+  RangeDataInserterOptions range_data_inserter_options = 5;
 }

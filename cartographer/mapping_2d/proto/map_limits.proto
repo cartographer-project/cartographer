@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 import "cartographer/mapping_2d/proto/cell_limits.proto";
 import "cartographer/transform/proto/transform.proto";
@@ -20,7 +20,7 @@ import "cartographer/transform/proto/transform.proto";
 package cartographer.mapping_2d.proto;
 
 message MapLimits {
-  optional double resolution = 1;
-  optional cartographer.transform.proto.Vector2d max = 2;
-  optional CellLimits cell_limits = 3;
+  double resolution = 1;
+  cartographer.transform.proto.Vector2d max = 2;
+  CellLimits cell_limits = 3;
 }

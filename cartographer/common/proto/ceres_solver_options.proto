@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.common.proto;
 
 message CeresSolverOptions {
   // Configure the Ceres solver. See the Ceres documentation for more
   // information: https://code.google.com/p/ceres-solver/
-  optional bool use_nonmonotonic_steps = 1;
-  optional int32 max_num_iterations = 2;
-  optional int32 num_threads = 3;
+  bool use_nonmonotonic_steps = 1;
+  int32 max_num_iterations = 2;
+  int32 num_threads = 3;
 }
