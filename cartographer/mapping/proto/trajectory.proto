@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping.proto;
 
@@ -24,24 +24,24 @@ message Trajectory {
   // NEXT_ID: 8
   message Node {
     // Index of this node within its trajectory.
-    optional int32 node_index = 7;
+    int32 node_index = 7;
 
-    optional int64 timestamp = 1;
+    int64 timestamp = 1;
 
     // Transform from tracking to global map frame.
-    optional transform.proto.Rigid3d pose = 5;
+    transform.proto.Rigid3d pose = 5;
   }
 
   message Submap {
     // Index of this submap within its trajectory.
-    optional int32 submap_index = 2;
+    int32 submap_index = 2;
 
     // Transform from submap to global map frame.
-    optional transform.proto.Rigid3d pose = 1;
+    transform.proto.Rigid3d pose = 1;
   }
 
   // ID of this trajectory.
-  optional int32 trajectory_id = 3;
+  int32 trajectory_id = 3;
 
   // Time-ordered sequence of Nodes.
   repeated Node node = 1;

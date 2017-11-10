@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping_2d.proto;
 
@@ -24,39 +24,39 @@ import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_m
 
 message LocalTrajectoryBuilderOptions {
   // Rangefinder points outside these ranges will be dropped.
-  optional float min_range = 14;
-  optional float max_range = 15;
-  optional float min_z = 1;
-  optional float max_z = 2;
+  float min_range = 14;
+  float max_range = 15;
+  float min_z = 1;
+  float max_z = 2;
 
   // Points beyond 'max_range' will be inserted with this length as empty space.
-  optional float missing_data_ray_length = 16;
+  float missing_data_ray_length = 16;
 
   // Number of scans to accumulate into one unwarped, combined scan to use for
   // scan matching.
-  optional int32 scans_per_accumulation = 19;
+  int32 scans_per_accumulation = 19;
 
   // Voxel filter that gets applied to the range data immediately after
   // cropping.
-  optional float voxel_filter_size = 3;
+  float voxel_filter_size = 3;
 
   // Voxel filter used to compute a sparser point cloud for matching.
-  optional sensor.proto.AdaptiveVoxelFilterOptions
+  sensor.proto.AdaptiveVoxelFilterOptions
       adaptive_voxel_filter_options = 6;
 
   // Voxel filter used to compute a sparser point cloud for finding loop
   // closures.
-  optional sensor.proto.AdaptiveVoxelFilterOptions
+  sensor.proto.AdaptiveVoxelFilterOptions
       loop_closure_adaptive_voxel_filter_options = 20;
 
   // Whether to solve the online scan matching first using the correlative scan
   // matcher to generate a good starting point for Ceres.
-  optional bool use_online_correlative_scan_matching = 5;
-  optional scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
+  bool use_online_correlative_scan_matching = 5;
+  scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
       real_time_correlative_scan_matcher_options = 7;
-  optional scan_matching.proto.CeresScanMatcherOptions
+  scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options = 8;
-  optional mapping_3d.proto.MotionFilterOptions motion_filter_options = 13;
+  mapping_3d.proto.MotionFilterOptions motion_filter_options = 13;
 
   // Time constant in seconds for the orientation moving average based on
   // observed gravity via the IMU. It should be chosen so that the error
@@ -64,10 +64,10 @@ message LocalTrajectoryBuilderOptions {
   // the constant is reduced) and
   // 2. from integration of angular velocities (which gets worse when the
   // constant is increased) is balanced.
-  optional double imu_gravity_time_constant = 17;
+  double imu_gravity_time_constant = 17;
 
-  optional mapping_2d.proto.SubmapsOptions submaps_options = 11;
+  mapping_2d.proto.SubmapsOptions submaps_options = 11;
 
   // True if IMU data should be expected and used.
-  optional bool use_imu_data = 12;
+  bool use_imu_data = 12;
 }

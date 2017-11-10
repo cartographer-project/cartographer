@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 import "cartographer/transform/proto/transform.proto";
 
@@ -20,8 +20,8 @@ package cartographer.mapping.proto;
 
 message SubmapList {
   message SubmapEntry {
-    optional int32 submap_version = 1;
-    optional transform.proto.Rigid3d pose = 3;
+    int32 submap_version = 1;
+    transform.proto.Rigid3d pose = 3;
   }
 
   message TrajectorySubmapList {
@@ -34,40 +34,40 @@ message SubmapList {
 message SubmapQuery {
   message Request {
     // Index into 'SubmapList.trajectory(trajectory_id).submap'.
-    optional int32 submap_index = 1;
+    int32 submap_index = 1;
     // Index into 'TrajectoryList.trajectory'.
-    optional int32 trajectory_id = 2;
+    int32 trajectory_id = 2;
   }
 
   message Response {
     // Version of the given submap, higher means newer.
-    optional int32 submap_version = 2;
+    int32 submap_version = 2;
 
     // Texture that visualizes a grid of a submap.
     message SubmapTexture {
       // GZipped map data, in row-major order, starting with (0,0). Each cell
       // consists of two bytes: value (premultiplied by alpha) and alpha.
-      optional bytes cells = 1;
+      bytes cells = 1;
 
       // Dimensions of the grid in cells.
-      optional int32 width = 2;
-      optional int32 height = 3;
+      int32 width = 2;
+      int32 height = 3;
 
       // Size of one cell in meters.
-      optional double resolution = 4;
+      double resolution = 4;
 
       // Pose of the resolution*width x resolution*height rectangle in the
       // submap frame.
-      optional transform.proto.Rigid3d slice_pose = 5;
+      transform.proto.Rigid3d slice_pose = 5;
     }
 
     // When multiple textures are present, high resolution comes first.
     repeated SubmapTexture textures = 10;
 
     // Error message in response to malformed requests.
-    optional string error_message = 8;
+    string error_message = 8;
   }
 
-  optional Request request = 1;
-  optional Response response = 2;
+  Request request = 1;
+  Response response = 2;
 }

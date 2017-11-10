@@ -12,34 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping_3d.scan_matching.proto;
 
 message FastCorrelativeScanMatcherOptions {
   // Number of precomputed grids to use.
-  optional int32 branch_and_bound_depth = 2;
+  int32 branch_and_bound_depth = 2;
 
   // Number of full resolution grids to use, additional grids will reduce the
   // resolution by half each.
-  optional int32 full_resolution_depth = 8;
+  int32 full_resolution_depth = 8;
 
   // Minimum score for the rotational scan matcher.
-  optional double min_rotational_score = 4;
+  double min_rotational_score = 4;
 
   // Threshold for the score of the low resolution grid below which a match is
   // not considered. Only used for 3D.
-  optional double min_low_resolution_score = 9;
+  double min_low_resolution_score = 9;
 
   // Linear search window in the plane orthogonal to gravity in which the best
   // possible scan alignment will be found.
-  optional double linear_xy_search_window = 5;
+  double linear_xy_search_window = 5;
 
   // Linear search window in the gravity direction in which the best possible
   // scan alignment will be found.
-  optional double linear_z_search_window = 6;
+  double linear_z_search_window = 6;
 
   // Minimum angular search window in which the best possible scan alignment
   // will be found.
-  optional double angular_search_window = 7;
+  double angular_search_window = 7;
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping.proto;
 
@@ -22,24 +22,24 @@ import "cartographer/mapping/proto/trajectory_node_data.proto";
 import "cartographer/sensor/proto/sensor.proto";
 
 message Submap {
-  optional SubmapId submap_id = 1;
-  optional Submap2D submap_2d = 2;
-  optional Submap3D submap_3d = 3;
+  SubmapId submap_id = 1;
+  Submap2D submap_2d = 2;
+  Submap3D submap_3d = 3;
 }
 
 message Node {
-  optional NodeId node_id = 1;
-  optional TrajectoryNodeData node_data = 5;
+  NodeId node_id = 1;
+  TrajectoryNodeData node_data = 5;
 }
 
 message ImuData {
-  optional int32 trajectory_id = 1;
-  optional sensor.proto.ImuData imu_data = 2;
+  int32 trajectory_id = 1;
+  sensor.proto.ImuData imu_data = 2;
 }
 
 message SerializedData {
-  optional Submap submap = 1;
-  optional Node node = 2;
-  optional ImuData imu_data = 3;
+  Submap submap = 1;
+  Node node = 2;
+  ImuData imu_data = 3;
   // TODO(whess): Add odometry.
 }

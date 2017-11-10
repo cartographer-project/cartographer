@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.sensor.proto;
 
 message AdaptiveVoxelFilterOptions {
   // 'max_length' of a voxel edge.
-  optional float max_length = 1;
+  float max_length = 1;
 
   // If there are more points and not at least 'min_num_points' remain, the
   // voxel length is reduced trying to get this minimum number of points.
-  optional float min_num_points = 2;
+  float min_num_points = 2;
 
   // Points further away from the origin are removed.
-  optional float max_range = 3;
+  float max_range = 3;
 }

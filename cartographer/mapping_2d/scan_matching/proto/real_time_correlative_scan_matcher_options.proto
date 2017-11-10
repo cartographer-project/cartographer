@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping_2d.scan_matching.proto;
 
 message RealTimeCorrelativeScanMatcherOptions {
   // Minimum linear search window in which the best possible scan alignment
   // will be found.
-  optional double linear_search_window = 1;
+  double linear_search_window = 1;
 
   // Minimum angular search window in which the best possible scan alignment
   // will be found.
-  optional double angular_search_window = 2;
+  double angular_search_window = 2;
 
   // Weights applied to each part of the score.
-  optional double translation_delta_cost_weight = 3;
-  optional double rotation_delta_cost_weight = 4;
+  double translation_delta_cost_weight = 3;
+  double rotation_delta_cost_weight = 4;
 }
