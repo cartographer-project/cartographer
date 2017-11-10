@@ -70,7 +70,7 @@ unset(_lua_append_versions)
 
 # this is a function only to have all the variables inside go away automatically
 function(_lua_set_version_vars)
-    set(LUA_VERSIONS5 5.3 5.2 5.1 5.0)
+    set(LUA_VERSIONS5 5.3 5.2)
 
     if (Lua_FIND_VERSION_EXACT)
         if (Lua_FIND_VERSION_COUNT GREATER 1)
@@ -211,5 +211,10 @@ endif ()
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Lua
                                   REQUIRED_VARS LUA_LIBRARIES LUA_INCLUDE_DIR
                                   VERSION_VAR LUA_VERSION_STRING)
-
 mark_as_advanced(LUA_INCLUDE_DIR LUA_LIBRARY LUA_MATH_LIBRARY)
+
+if (NOT LUA_FOUND)
+  MESSAGE(FATAL_ERROR "Did not find Lua >= 5.2.")
+endif ()
+
+

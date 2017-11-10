@@ -17,9 +17,12 @@
 set -o errexit
 set -o verbose
 
+VERSION="v3.4.1"
+
 # Build and install proto3.
 git clone https://github.com/google/protobuf.git
 cd protobuf
+git checkout tags/${VERSION}
 mkdir build
 cd build
 cmake -G Ninja \
