@@ -107,9 +107,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   GetTrajectoryNodes() override EXCLUDES(mutex_);
   sensor::MapByTime<sensor::ImuData> GetImuData() override EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
-  void SetInitialTrajectoryPose(int from_trajectory_id, int to_trajectory_id,
-                                const transform::Rigid3d& pose,
-                                const common::Time time) override
+  void SetInitialTrajectoryPose(
+      int from_trajectory_id,
+      const mapping::InitialTrajectoryPose& initial_pose) override
       EXCLUDES(mutex_);
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
@@ -236,7 +236,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
 
   // Set of all initial trajectory poses.
-  std::map<int, InitialTrajectoryPose> initial_trajectory_poses_
+  std::map<int, mapping::InitialTrajectoryPose> initial_trajectory_poses_
       GUARDED_BY(mutex_);
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The

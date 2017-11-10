@@ -12,13 +12,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-include "initial_trajectory_pose.lua"
-include "trajectory_builder_2d.lua"
-include "trajectory_builder_3d.lua"
-
-TRAJECTORY_BUILDER = {
-  trajectory_builder_2d = TRAJECTORY_BUILDER_2D,
-  trajectory_builder_3d = TRAJECTORY_BUILDER_3D,
-  pure_localization = false,
-  initial_trajectory_pose = INITIAL_TRAJECTORY_POSE,
+INITIAL_TRAJECTORY_POSE = {
+  relative_pose = {
+    translation = { 0., 0., 0. },
+    rotation = { 0., 0., 0., },
+  },
+  to_trajectory_id = -1,
+  timestamp = 0,
 }
