@@ -58,7 +58,7 @@ void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
       options_.imu_gravity_time_constant(), imu_data);
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddRangeData(const common::Time time,
                                      const sensor::TimedRangeData& range_data) {
   if (extrapolator_ == nullptr) {
@@ -106,7 +106,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   return nullptr;
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const sensor::RangeData& range_data_in_tracking) {
   const sensor::RangeData filtered_range_data_in_tracking = {
@@ -166,10 +166,13 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       filtered_range_data_in_tracking, pose_estimate.cast<float>());
   last_pose_estimate_ = {time, pose_estimate,
                          filtered_range_data_in_local.returns};
-  return InsertIntoSubmap(
+  std::unique_ptr<InsertionResult> insertion_result = InsertIntoSubmap(
       time, filtered_range_data_in_local, filtered_range_data_in_tracking,
       high_resolution_point_cloud_in_tracking,
       low_resolution_point_cloud_in_tracking, pose_estimate, gravity_alignment);
+  return common::make_unique<MatchingResult>(MatchingResult{
+      time, pose_estimate, std::move(filtered_range_data_in_local),
+      std::move(insertion_result)});
 }
 
 void LocalTrajectoryBuilder::AddOdometerData(
@@ -212,17 +215,17 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
               filtered_range_data_in_tracking.returns,
               transform::Rigid3f::Rotation(gravity_alignment.cast<float>())),
           options_.rotational_histogram_size());
-  return std::unique_ptr<InsertionResult>(new InsertionResult{
-      std::make_shared<const mapping::TrajectoryNode::Data>(
-          mapping::TrajectoryNode::Data{
-              time,
-              gravity_alignment,
-              {},  // 'filtered_point_cloud' is only used in 2D.
-              high_resolution_point_cloud_in_tracking,
-              low_resolution_point_cloud_in_tracking,
-              rotational_scan_matcher_histogram,
-              pose_estimate}),
-      std::move(insertion_submaps)});
+  return common::make_unique<InsertionResult>(
+      InsertionResult{std::make_shared<const mapping::TrajectoryNode::Data>(
+                          mapping::TrajectoryNode::Data{
+                              time,
+                              gravity_alignment,
+                              {},  // 'filtered_point_cloud' is only used in 2D.
+                              high_resolution_point_cloud_in_tracking,
+                              low_resolution_point_cloud_in_tracking,
+                              rotational_scan_matcher_histogram,
+                              pose_estimate}),
+                      std::move(insertion_submaps)});
 }
 
 }  // namespace mapping_3d

@@ -45,6 +45,13 @@ class LocalTrajectoryBuilder {
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
+  struct MatchingResult {
+    common::Time time;
+    transform::Rigid3d local_pose;
+    sensor::RangeData range_data_in_local;
+    // 'nullptr' if dropped by the motion filter.
+    std::unique_ptr<const InsertionResult> insertion_result;
+  };
 
   explicit LocalTrajectoryBuilder(
       const proto::LocalTrajectoryBuilderOptions& options);
@@ -55,14 +62,16 @@ class LocalTrajectoryBuilder {
 
   const mapping::PoseEstimate& pose_estimate() const;
 
-  // Range data must be approximately horizontal for 2D SLAM.
-  std::unique_ptr<InsertionResult> AddRangeData(
+  // Returns 'MatchingResult' when range data accumulation completed,
+  // otherwise 'nullptr'. Range data must be approximately horizontal
+  // for 2D SLAM.
+  std::unique_ptr<MatchingResult> AddRangeData(
       common::Time, const sensor::TimedRangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
   void AddOdometerData(const sensor::OdometryData& odometry_data);
 
  private:
-  std::unique_ptr<InsertionResult> AddAccumulatedRangeData(
+  std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
       common::Time time, const sensor::RangeData& range_data);
   sensor::RangeData TransformAndFilterRangeData(
       const transform::Rigid3f& gravity_alignment,
