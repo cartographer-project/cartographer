@@ -31,8 +31,9 @@ proto::SparsePoseGraph::Constraint::Tag ToProto(
       return proto::SparsePoseGraph::Constraint::INTRA_SUBMAP;
     case SparsePoseGraph::Constraint::Tag::INTER_SUBMAP:
       return proto::SparsePoseGraph::Constraint::INTER_SUBMAP;
+    default:
+      LOG(FATAL) << "Unsupported tag.";
   }
-  LOG(FATAL) << "Unsupported tag.";
 }
 
 SparsePoseGraph::Constraint::Tag FromProto(
@@ -42,8 +43,9 @@ SparsePoseGraph::Constraint::Tag FromProto(
       return SparsePoseGraph::Constraint::Tag::INTRA_SUBMAP;
     case proto::SparsePoseGraph::Constraint::INTER_SUBMAP:
       return SparsePoseGraph::Constraint::Tag::INTER_SUBMAP;
+    default:
+      LOG(FATAL) << "Unsupported tag.";
   }
-  LOG(FATAL) << "Unsupported tag.";
 }
 
 std::vector<SparsePoseGraph::Constraint> FromProto(
