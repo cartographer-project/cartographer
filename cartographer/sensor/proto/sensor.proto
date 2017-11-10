@@ -23,7 +23,7 @@ import "cartographer/transform/proto/transform.proto";
 // Compressed collection of a 3D point cloud.
 message CompressedPointCloud {
   int32 num_points = 1;
-  repeated int32 point_data = 3 [packed = true];
+  repeated int32 point_data = 3;
 }
 
 // Proto representation of ::cartographer::sensor::ImuData.
