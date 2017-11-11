@@ -85,6 +85,14 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
 
   void FinishTrajectory(int trajectory_id) override;
+
+  virtual void AddCustomConstraint(const mapping::NodeId& node_id,
+                                   const mapping::SubmapId& submap_id,
+                                   const Constraint::Pose& pose) override;
+  virtual void RemoveCustomConstraint(
+      const mapping::NodeId& node_id,
+      const mapping::SubmapId& submap_id) override;
+
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
                           const mapping::proto::Submap& submap) override;
@@ -135,6 +143,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);
+
+  void AddPriorityWorkItem(const std::function<void()>& work_item)
+      REQUIRES(mutex_);
 
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
@@ -196,6 +207,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   std::unique_ptr<std::deque<std::function<void()>>> work_queue_
       GUARDED_BY(mutex_);
 
+  int num_priority_work_items_ GUARDED_BY(mutex_) = 0;
+
   // How our various trajectories are related.
   mapping::TrajectoryConnectivityState trajectory_connectivity_state_;
 
@@ -208,6 +221,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Whether the optimization has to be run before more data is added.
   bool run_loop_closure_ GUARDED_BY(mutex_) = false;
+
+  // Schedules optimization (i.e. loop closure) to run.
+  void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
   sparse_pose_graph::OptimizationProblem optimization_problem_;

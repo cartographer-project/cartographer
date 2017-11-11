@@ -153,8 +153,24 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       problem.SetParameterBlockConstant(C_nodes.at(node_id_data.id).data());
     }
   }
+  missing_nodes_.clear();
+  missing_submaps_.clear();
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
+    // Check if the constraint refers to something that has not yet been
+    // added to the optimization problem. Skip it if that is the case.
+    if (!node_data_.Contains(constraint.node_id)) {
+      // It should not happen that prematurely added constraints
+      // happen to be intra or inter submap constraints.
+      CHECK(constraint.tag == Constraint::Tag::CUSTOM);
+      missing_nodes_.insert(constraint.node_id);
+      continue;
+    }
+    if (!submap_data_.Contains(constraint.submap_id)) {
+      CHECK(constraint.tag == Constraint::Tag::CUSTOM);
+      missing_submaps_.insert(constraint.submap_id);
+      continue;
+    }
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
             new SpaCostFunction(constraint.pose)),
@@ -244,6 +260,15 @@ OptimizationProblem::submap_data() const {
 const sensor::MapByTime<sensor::ImuData>& OptimizationProblem::imu_data()
     const {
   return imu_data_;
+}
+
+const std::set<mapping::NodeId>& OptimizationProblem::missing_nodes() const {
+  return missing_nodes_;
+}
+
+const std::set<mapping::SubmapId>& OptimizationProblem::missing_submaps()
+    const {
+  return missing_submaps_;
 }
 
 }  // namespace sparse_pose_graph

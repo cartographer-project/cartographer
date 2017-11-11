@@ -62,7 +62,7 @@ class SparsePoseGraph {
     // Differentiates between intra-submap (where scan 'j' was inserted into
     // submap 'i') and inter-submap constraints (where scan 'j' was not inserted
     // into submap 'i').
-    enum Tag { INTRA_SUBMAP, INTER_SUBMAP } tag;
+    enum Tag { INTRA_SUBMAP, INTER_SUBMAP, CUSTOM } tag;
   };
 
   struct SubmapData {
@@ -115,6 +115,13 @@ class SparsePoseGraph {
   // Adds a 'trimmer'. It will be used after all data added before it has been
   // included in the pose graph.
   virtual void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) = 0;
+
+  // Add and remove custom constraints to/from the pose graph.
+  virtual void AddCustomConstraint(const mapping::NodeId& node_id,
+                                   const mapping::SubmapId& submap_id,
+                                   const Constraint::Pose& pose) = 0;
+  virtual void RemoveCustomConstraint(const mapping::NodeId& node_id,
+                                      const mapping::SubmapId& submap_id) = 0;
 
   // Computes optimized poses.
   virtual void RunFinalOptimization() = 0;

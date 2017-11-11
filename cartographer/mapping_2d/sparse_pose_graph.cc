@@ -74,6 +74,10 @@ std::vector<mapping::SubmapId> SparsePoseGraph::InitializeGlobalSubmapPoses(
     CHECK_EQ(1, submap_data.SizeOfTrajectoryOrZero(trajectory_id));
     const mapping::SubmapId submap_id{trajectory_id, 0};
     CHECK(submap_data_.at(submap_id).submap == insertion_submaps.front());
+    if (optimization_problem_.missing_submaps().count(submap_id) &&
+        num_priority_work_items_ == 0) {
+      DispatchOptimization();
+    }
     return {submap_id};
   }
   CHECK_EQ(2, insertion_submaps.size());
@@ -90,8 +94,13 @@ std::vector<mapping::SubmapId> SparsePoseGraph::InitializeGlobalSubmapPoses(
             sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[0])
                 .inverse() *
             sparse_pose_graph::ComputeSubmapPose(*insertion_submaps[1]));
-    return {last_submap_id,
-            mapping::SubmapId{trajectory_id, last_submap_id.submap_index + 1}};
+    const mapping::SubmapId new_submap_id{trajectory_id,
+                                          last_submap_id.submap_index + 1};
+    if (optimization_problem_.missing_submaps().count(new_submap_id) &&
+        num_priority_work_items_ == 0) {
+      DispatchOptimization();
+    }
+    return {last_submap_id, new_submap_id};
   }
   CHECK(submap_data_.at(last_submap_id).submap == insertion_submaps.back());
   const mapping::SubmapId front_submap_id{trajectory_id,
@@ -149,6 +158,27 @@ void SparsePoseGraph::AddTrajectoryIfNeeded(const int trajectory_id) {
     global_localization_samplers_[trajectory_id] =
         common::make_unique<common::FixedRatioSampler>(
             options_.global_sampling_ratio());
+  }
+}
+
+void SparsePoseGraph::AddPriorityWorkItem(
+    const std::function<void()>& work_item) {
+  if (work_queue_ == nullptr) {
+    CHECK_EQ(num_priority_work_items_, 0);
+    ++num_priority_work_items_;
+    work_item();
+    --num_priority_work_items_;
+    CHECK_EQ(num_priority_work_items_, 0);
+  } else {
+    CHECK_GE(num_priority_work_items_, 0);
+    CHECK_LE(num_priority_work_items_, work_queue_->size());
+    work_queue_->insert(work_queue_->begin() + num_priority_work_items_,
+                        [=]() REQUIRES(mutex_) {
+                          work_item();
+                          --num_priority_work_items_;
+                          CHECK_GE(num_priority_work_items_, 0);
+                        });
+    ++num_priority_work_items_;
   }
 }
 
@@ -222,6 +252,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     const mapping::NodeId& node_id,
     std::vector<std::shared_ptr<const Submap>> insertion_submaps,
     const bool newly_finished_submap) {
+  CHECK(!run_loop_closure_);
   const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
   const std::vector<mapping::SubmapId> submap_ids = InitializeGlobalSubmapPoses(
       node_id.trajectory_id, constant_data->time, insertion_submaps);
@@ -238,6 +269,10 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   optimization_problem_.AddTrajectoryNode(
       matching_id.trajectory_id, constant_data->time, pose, optimized_pose,
       constant_data->gravity_alignment);
+  if (optimization_problem_.missing_nodes().count(node_id) &&
+      num_priority_work_items_ == 0) {
+    DispatchOptimization();
+  }
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const mapping::SubmapId submap_id = submap_ids[i];
     // Even if this was the last scan added to 'submap_id', the submap will only
@@ -275,14 +310,73 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   ++num_scans_since_last_loop_closure_;
   if (options_.optimize_every_n_scans() > 0 &&
       num_scans_since_last_loop_closure_ > options_.optimize_every_n_scans()) {
-    CHECK(!run_loop_closure_);
-    run_loop_closure_ = true;
-    // If there is a 'work_queue_' already, some other thread will take care.
-    if (work_queue_ == nullptr) {
-      work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
-      HandleWorkQueue();
-    }
+    DispatchOptimization();
   }
+}
+
+void SparsePoseGraph::DispatchOptimization() {
+  run_loop_closure_ = true;
+  // If there is a 'work_queue_' already, some other thread will take care.
+  if (work_queue_ == nullptr) {
+    work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+    HandleWorkQueue();
+  }
+}
+
+void SparsePoseGraph::AddCustomConstraint(const mapping::NodeId& node_id,
+                                          const mapping::SubmapId& submap_id,
+                                          const Constraint::Pose& pose) {
+  // Perform some sanity testing, since these values come from the user.
+  CHECK(node_id.trajectory_id >= 0 && node_id.node_index >= 0 &&
+        submap_id.trajectory_id >= 0 && submap_id.submap_index >= 0 &&
+        pose.rotation_weight >= 0. && pose.translation_weight >= 0.);
+  common::MutexLocker locker(&mutex_);
+  AddPriorityWorkItem([=]() REQUIRES(mutex_) {
+    // Do not allow adding custom constraints for trimmed nodes and submaps.
+    if (trajectory_nodes_.Contains(node_id)) {
+      CHECK(trajectory_nodes_.at(node_id).constant_data != nullptr);
+    }
+    if (submap_data_.Contains(submap_id)) {
+      CHECK(submap_data_.at(submap_id).submap != nullptr);
+    }
+    const auto gravity_aligned_pose =
+        pose.zbar_ij * cartographer::transform::Rigid3d::Rotation(
+                           trajectory_nodes_.at(node_id)
+                               .constant_data->gravity_alignment.inverse());
+    constraints_.push_back(Constraint{
+        submap_id,
+        node_id,
+        {gravity_aligned_pose, pose.translation_weight, pose.rotation_weight},
+        Constraint::Tag::CUSTOM});
+
+    CHECK(!run_loop_closure_);
+    // Run optimization if this is the last currently queued custom constraint.
+    if (num_priority_work_items_ == 1) {
+      DispatchOptimization();
+    }
+  });
+}
+
+void SparsePoseGraph::RemoveCustomConstraint(
+    const mapping::NodeId& node_id, const mapping::SubmapId& submap_id) {
+  CHECK(node_id.trajectory_id >= 0 && node_id.node_index >= 0 &&
+        submap_id.trajectory_id >= 0 && submap_id.submap_index >= 0);
+  common::MutexLocker locker(&mutex_);
+  AddPriorityWorkItem([=]() REQUIRES(mutex_) {
+    constraints_.erase(
+        std::remove_if(constraints_.begin(), constraints_.end(),
+                       [&](const Constraint& constraint) {
+                         return constraint.node_id == node_id &&
+                                constraint.submap_id == submap_id &&
+                                constraint.tag == Constraint::Tag::CUSTOM;
+                       }),
+        constraints_.end());
+
+    CHECK(!run_loop_closure_);
+    if (num_priority_work_items_ == 1) {
+      DispatchOptimization();
+    }
+  });
 }
 
 common::Time SparsePoseGraph::GetLatestScanTime(
@@ -351,7 +445,8 @@ void SparsePoseGraph::WaitForAllComputations() {
   while (!locker.AwaitWithTimeout(
       [this]() REQUIRES(mutex_) {
         return constraint_builder_.GetNumFinishedScans() ==
-               num_trajectory_nodes_;
+                   num_trajectory_nodes_ &&
+               work_queue_ == nullptr;
       },
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
@@ -488,14 +583,19 @@ void SparsePoseGraph::AddTrimmer(
 }
 
 void SparsePoseGraph::RunFinalOptimization() {
+  {
+    common::MutexLocker locker(&mutex_);
+    AddWorkItem([this]() REQUIRES(mutex_) {
+      optimization_problem_.SetMaxNumIterations(
+          options_.max_num_final_iterations());
+      DispatchOptimization();
+    });
+  }
   WaitForAllComputations();
-  optimization_problem_.SetMaxNumIterations(
-      options_.max_num_final_iterations());
-  RunOptimization();
-  optimization_problem_.SetMaxNumIterations(
+  /*optimization_problem_.SetMaxNumIterations(
       options_.optimization_problem_options()
           .ceres_solver_options()
-          .max_num_iterations());
+          .max_num_iterations());*/
 }
 
 void SparsePoseGraph::RunOptimization() {
