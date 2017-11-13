@@ -73,7 +73,7 @@ PaintSubmapSlicesResult PaintSubmapSlices(
 
     CairoPaintSubmapSlices(
         1. / resolution, submaps, cr.get(),
-        [&update_bounding_box, &bounding_box](const SubmapSlice& submap_slice) {
+        [&update_bounding_box](const SubmapSlice& submap_slice) {
           update_bounding_box(0, 0);
           update_bounding_box(submap_slice.width, 0);
           update_bounding_box(0, submap_slice.height);
