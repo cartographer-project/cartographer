@@ -98,6 +98,7 @@ class OptimizationProblem {
  private:
   std::unique_ptr<transform::Rigid3d> InterpolateOdometry(
       int trajectory_id, common::Time time) const;
+  // Uses odometry if available, otherwise the local SLAM results.
   transform::Rigid3d ComputeRelativePose(
       int trajectory_id, const NodeData& first_node_data,
       const NodeData& second_node_data) const;

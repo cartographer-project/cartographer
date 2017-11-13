@@ -262,7 +262,6 @@ transform::Rigid3d OptimizationProblem::ComputeRelativePose(
                  second_node_data.gravity_alignment.inverse());
     }
   }
-  // No odometry is available here, so we use the local SLAM result.
   return transform::Embed3D(first_node_data.initial_pose.inverse() *
                             second_node_data.initial_pose);
 }

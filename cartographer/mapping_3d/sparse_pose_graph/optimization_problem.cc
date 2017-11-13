@@ -467,7 +467,6 @@ transform::Rigid3d OptimizationProblem::ComputeRelativePose(
       return first_node_odometry->inverse() * (*second_node_odometry);
     }
   }
-  // No odometry is available here, so we use the local SLAM result.
   return first_node_data.local_pose.inverse() * second_node_data.local_pose;
 }
 
