@@ -168,6 +168,10 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
     const int trajectory_id = node_it->id.trajectory_id;
     const auto trajectory_end = node_data_.EndOfTrajectory(trajectory_id);
+    if (frozen_trajectories.count(trajectory_id) != 0) {
+      node_it = trajectory_end;
+      continue;
+    }
 
     auto prev_node_it = node_it;
     for (++node_it; node_it != trajectory_end; ++node_it) {
