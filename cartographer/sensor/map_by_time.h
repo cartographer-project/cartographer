@@ -52,6 +52,9 @@ class MapByTime {
             const mapping::NodeId& node_id) {
     const int trajectory_id = node_id.trajectory_id;
     CHECK_GE(trajectory_id, 0);
+    if (data_.count(trajectory_id) == 0) {
+      return;
+    }
 
     // Data only important between 'gap_start' and 'gap_end' is no longer
     // needed. We retain the first and last data of the gap so that
@@ -68,7 +71,7 @@ class MapByTime {
                                      : common::Time::max();
     CHECK_LT(gap_start, gap_end);
 
-    auto& trajectory = data_[trajectory_id];
+    auto& trajectory = data_.at(trajectory_id);
     auto data_it = trajectory.lower_bound(gap_start);
     auto data_end = trajectory.upper_bound(gap_end);
     if (data_it == data_end) {

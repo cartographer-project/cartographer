@@ -47,6 +47,32 @@ namespace cartographer {
 namespace mapping_3d {
 namespace sparse_pose_graph {
 
+namespace {
+
+// For odometry and fixed frame pose.
+template <typename MapByTimeType>
+std::unique_ptr<transform::Rigid3d> Interpolate(
+    const MapByTimeType& map_by_time, const int trajectory_id,
+    const common::Time time) {
+  const auto it = map_by_time.lower_bound(trajectory_id, time);
+  if (it == map_by_time.EndOfTrajectory(trajectory_id)) {
+    return nullptr;
+  }
+  if (it == map_by_time.BeginOfTrajectory(trajectory_id)) {
+    if (it->time == time) {
+      return common::make_unique<transform::Rigid3d>(it->pose);
+    }
+    return nullptr;
+  }
+  const auto prev_it = std::prev(it);
+  return common::make_unique<transform::Rigid3d>(
+      Interpolate(transform::TimestampedTransform{prev_it->time, prev_it->pose},
+                  transform::TimestampedTransform{it->time, it->pose}, time)
+          .transform);
+}
+
+}  // namespace
+
 OptimizationProblem::OptimizationProblem(
     const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
         options,
@@ -68,11 +94,7 @@ void OptimizationProblem::AddOdometerData(
 void OptimizationProblem::AddFixedFramePoseData(
     const int trajectory_id,
     const sensor::FixedFramePoseData& fixed_frame_pose_data) {
-  CHECK_GE(trajectory_id, 0);
-  fixed_frame_pose_data_.resize(std::max(
-      fixed_frame_pose_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  fixed_frame_pose_data_[trajectory_id].Push(fixed_frame_pose_data.time,
-                                             fixed_frame_pose_data.pose);
+  fixed_frame_pose_data_.Append(trajectory_id, fixed_frame_pose_data);
 }
 
 void OptimizationProblem::AddTrajectoryNode(
@@ -98,6 +120,7 @@ void OptimizationProblem::InsertTrajectoryNode(
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   imu_data_.Trim(node_data_, node_id);
   odometry_data_.Trim(node_data_, node_id);
+  fixed_frame_pose_data_.Trim(node_data_, node_id);
   node_data_.Trim(node_id);
 }
 
@@ -346,23 +369,25 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   std::deque<CeresPose> C_fixed_frames;
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
     const int trajectory_id = node_it->id.trajectory_id;
-    if (trajectory_id >= static_cast<int>(fixed_frame_pose_data_.size())) {
-      break;
-    }
-    bool fixed_frame_pose_initialized = false;
-
     const auto trajectory_end = node_data_.EndOfTrajectory(trajectory_id);
+    if (!fixed_frame_pose_data_.HasTrajectory(trajectory_id)) {
+      node_it = trajectory_end;
+      continue;
+    }
+
+    bool fixed_frame_pose_initialized = false;
     for (; node_it != trajectory_end; ++node_it) {
       const mapping::NodeId node_id = node_it->id;
       const NodeData& node_data = node_it->data;
 
-      if (!fixed_frame_pose_data_.at(trajectory_id).Has(node_data.time)) {
+      const std::unique_ptr<transform::Rigid3d> fixed_frame_pose =
+          Interpolate(fixed_frame_pose_data_, trajectory_id, node_data.time);
+      if (fixed_frame_pose == nullptr) {
         continue;
       }
 
       const mapping::SparsePoseGraph::Constraint::Pose constraint_pose{
-          fixed_frame_pose_data_.at(trajectory_id).Lookup(node_data.time),
-          options_.fixed_frame_pose_translation_weight(),
+          *fixed_frame_pose, options_.fixed_frame_pose_translation_weight(),
           options_.fixed_frame_pose_rotation_weight()};
 
       if (!fixed_frame_pose_initialized) {
@@ -440,33 +465,14 @@ const sensor::MapByTime<sensor::ImuData>& OptimizationProblem::imu_data()
   return imu_data_;
 }
 
-std::unique_ptr<transform::Rigid3d> OptimizationProblem::InterpolateOdometry(
-    const int trajectory_id, const common::Time time) const {
-  const auto it = odometry_data_.lower_bound(trajectory_id, time);
-  if (it == odometry_data_.EndOfTrajectory(trajectory_id)) {
-    return nullptr;
-  }
-  if (it == odometry_data_.BeginOfTrajectory(trajectory_id)) {
-    if (it->time == time) {
-      return common::make_unique<transform::Rigid3d>(it->pose);
-    }
-    return nullptr;
-  }
-  const auto prev_it = std::prev(it);
-  return common::make_unique<transform::Rigid3d>(
-      Interpolate(transform::TimestampedTransform{prev_it->time, prev_it->pose},
-                  transform::TimestampedTransform{it->time, it->pose}, time)
-          .transform);
-}
-
 transform::Rigid3d OptimizationProblem::ComputeRelativePose(
     const int trajectory_id, const NodeData& first_node_data,
     const NodeData& second_node_data) const {
   if (odometry_data_.HasTrajectory(trajectory_id)) {
     const std::unique_ptr<transform::Rigid3d> first_node_odometry =
-        InterpolateOdometry(trajectory_id, first_node_data.time);
+        Interpolate(odometry_data_, trajectory_id, first_node_data.time);
     const std::unique_ptr<transform::Rigid3d> second_node_odometry =
-        InterpolateOdometry(trajectory_id, second_node_data.time);
+        Interpolate(odometry_data_, trajectory_id, second_node_data.time);
     if (first_node_odometry != nullptr && second_node_odometry != nullptr) {
       return first_node_odometry->inverse() * (*second_node_odometry);
     }

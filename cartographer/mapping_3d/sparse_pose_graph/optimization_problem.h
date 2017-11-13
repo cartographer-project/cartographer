@@ -96,8 +96,6 @@ class OptimizationProblem {
   const sensor::MapByTime<sensor::ImuData>& imu_data() const;
 
  private:
-  std::unique_ptr<transform::Rigid3d> InterpolateOdometry(
-      int trajectory_id, common::Time time) const;
   // Uses odometry if available, otherwise the local SLAM results.
   transform::Rigid3d ComputeRelativePose(
       int trajectory_id, const NodeData& first_node_data,
@@ -114,8 +112,8 @@ class OptimizationProblem {
   mapping::MapById<mapping::SubmapId, SubmapData> submap_data_;
   sensor::MapByTime<sensor::ImuData> imu_data_;
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
+  sensor::MapByTime<sensor::FixedFramePoseData> fixed_frame_pose_data_;
   std::vector<TrajectoryData> trajectory_data_;
-  std::vector<transform::TransformInterpolationBuffer> fixed_frame_pose_data_;
 };
 
 }  // namespace sparse_pose_graph
