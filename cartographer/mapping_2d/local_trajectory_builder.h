@@ -84,8 +84,9 @@ class LocalTrajectoryBuilder {
       const Eigen::Quaterniond& gravity_alignment);
 
   // Scan matches 'gravity_aligned_range_data' and fill in the
-  // 'pose_observation' with the result.
-  void ScanMatch(common::Time time, const transform::Rigid2d& pose_prediction,
+  // 'pose_observation' with the result. Return false if failed to match the
+  // data.
+  bool ScanMatch(common::Time time, const transform::Rigid2d& pose_prediction,
                  const sensor::RangeData& gravity_aligned_range_data,
                  transform::Rigid2d* pose_observation);
 
