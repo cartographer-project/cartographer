@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping.proto;
 
@@ -22,17 +22,17 @@ import "cartographer/transform/proto/transform.proto";
 
 // Serialized state of a mapping_2d::Submap.
 message Submap2D {
-  optional transform.proto.Rigid3d local_pose = 1;
-  optional int32 num_range_data = 2;
-  optional bool finished = 3;
-  optional mapping_2d.proto.ProbabilityGrid probability_grid = 4;
+  transform.proto.Rigid3d local_pose = 1;
+  int32 num_range_data = 2;
+  bool finished = 3;
+  mapping_2d.proto.ProbabilityGrid probability_grid = 4;
 }
 
 // Serialized state of a mapping_3d::Submap.
 message Submap3D {
-  optional transform.proto.Rigid3d local_pose = 1;
-  optional int32 num_range_data = 2;
-  optional bool finished = 3;
-  optional mapping_3d.proto.HybridGrid high_resolution_hybrid_grid = 4;
-  optional mapping_3d.proto.HybridGrid low_resolution_hybrid_grid = 5;
+  transform.proto.Rigid3d local_pose = 1;
+  int32 num_range_data = 2;
+  bool finished = 3;
+  mapping_3d.proto.HybridGrid high_resolution_hybrid_grid = 4;
+  mapping_3d.proto.HybridGrid low_resolution_hybrid_grid = 5;
 }

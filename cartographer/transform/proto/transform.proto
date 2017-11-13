@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.transform.proto;
 
@@ -21,57 +21,57 @@ package cartographer.transform.proto;
 // mirror those used in the Eigen library.
 
 message Vector2d {
-  optional double x = 1;
-  optional double y = 2;
+  double x = 1;
+  double y = 2;
 }
 
 message Vector2f {
-  optional float x = 1;
-  optional float y = 2;
+  float x = 1;
+  float y = 2;
 }
 
 message Vector3d {
-  optional double x = 1;
-  optional double y = 2;
-  optional double z = 3;
+  double x = 1;
+  double y = 2;
+  double z = 3;
 }
 
 message Vector3f {
-  optional float x = 1;
-  optional float y = 2;
-  optional float z = 3;
+  float x = 1;
+  float y = 2;
+  float z = 3;
 }
 
 message Quaterniond {
-  optional double x = 1;
-  optional double y = 2;
-  optional double z = 3;
-  optional double w = 4;
+  double x = 1;
+  double y = 2;
+  double z = 3;
+  double w = 4;
 }
 
 message Quaternionf {
-  optional float x = 1;
-  optional float y = 2;
-  optional float z = 3;
-  optional float w = 4;
+  float x = 1;
+  float y = 2;
+  float z = 3;
+  float w = 4;
 }
 
 message Rigid2d {
-  optional Vector2d translation = 1;
-  optional double rotation = 2;
+  Vector2d translation = 1;
+  double rotation = 2;
 }
 
 message Rigid2f {
-  optional Vector2f translation = 1;
-  optional float rotation = 2;
+  Vector2f translation = 1;
+  float rotation = 2;
 }
 
 message Rigid3d {
-  optional Vector3d translation = 1;
-  optional Quaterniond rotation = 2;
+  Vector3d translation = 1;
+  Quaterniond rotation = 2;
 }
 
 message Rigid3f {
-  optional Vector3f translation = 1;
-  optional Quaternionf rotation = 2;
+  Vector3f translation = 1;
+  Quaternionf rotation = 2;
 }

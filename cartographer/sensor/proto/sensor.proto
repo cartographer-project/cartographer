@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.sensor.proto;
 
@@ -22,37 +22,37 @@ import "cartographer/transform/proto/transform.proto";
 
 // Compressed collection of a 3D point cloud.
 message CompressedPointCloud {
-  optional int32 num_points = 1;
+  int32 num_points = 1;
   repeated int32 point_data = 3 [packed = true];
 }
 
 // Proto representation of ::cartographer::sensor::ImuData.
 message ImuData {
-  optional int64 timestamp = 1;
-  optional transform.proto.Vector3d linear_acceleration = 2;
-  optional transform.proto.Vector3d angular_velocity = 3;
+  int64 timestamp = 1;
+  transform.proto.Vector3d linear_acceleration = 2;
+  transform.proto.Vector3d angular_velocity = 3;
 }
 
 // Proto representation of ::cartographer::sensor::OdometryData.
 message OdometryData {
-  optional int64 timestamp = 1;
-  optional transform.proto.Rigid3d pose = 2;
+  int64 timestamp = 1;
+  transform.proto.Rigid3d pose = 2;
 }
 
 // Proto representation of ::cartographer::sensor::FixedFramePoseData.
 message FixedFramePoseData {
-  optional int64 timestamp = 1;
-  optional transform.proto.Rigid3d pose = 2;
+  int64 timestamp = 1;
+  transform.proto.Rigid3d pose = 2;
 }
 
 // Proto representation of ::cartographer::sensor::LandmarkData.
 message LandmarkData {
   message Landmark {
-    optional bytes id = 1;
-    optional transform.proto.Rigid3d transform = 2;
-    optional double translation_weight = 3;
-    optional double rotation_weight = 4;
+    bytes id = 1;
+    transform.proto.Rigid3d transform = 2;
+    double translation_weight = 3;
+    double rotation_weight = 4;
   }
-  optional int64 timestamp = 1;
+  int64 timestamp = 1;
   repeated Landmark landmarks = 2;
 }

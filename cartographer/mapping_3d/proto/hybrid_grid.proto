@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping_3d.proto;
 
 message HybridGrid {
-  optional float resolution = 1;
+  float resolution = 1;
   // '{x, y, z}_indices[i]' is the index of 'values[i]'.
   repeated sint32 x_indices = 3 [packed = true];
   repeated sint32 y_indices = 4 [packed = true];

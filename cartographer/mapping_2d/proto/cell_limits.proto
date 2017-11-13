@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping_2d.proto;
 
 message CellLimits {
-  optional int32 num_x_cells = 1;
-  optional int32 num_y_cells = 2;
+  int32 num_x_cells = 1;
+  int32 num_y_cells = 2;
 }

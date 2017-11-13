@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping_3d.proto;
 
@@ -25,31 +25,31 @@ import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.p
 // NEXT ID: 18
 message LocalTrajectoryBuilderOptions {
   // Rangefinder points outside these ranges will be dropped.
-  optional float min_range = 1;
-  optional float max_range = 2;
+  float min_range = 1;
+  float max_range = 2;
 
   // Number of scans to accumulate into one unwarped, combined scan to use for
   // scan matching.
-  optional int32 scans_per_accumulation = 3;
+  int32 scans_per_accumulation = 3;
 
   // Voxel filter that gets applied to the range data immediately after
   // cropping.
-  optional float voxel_filter_size = 4;
+  float voxel_filter_size = 4;
 
   // Voxel filter used to compute a sparser point cloud for matching.
-  optional sensor.proto.AdaptiveVoxelFilterOptions
+  sensor.proto.AdaptiveVoxelFilterOptions
       high_resolution_adaptive_voxel_filter_options = 5;
-  optional sensor.proto.AdaptiveVoxelFilterOptions
+  sensor.proto.AdaptiveVoxelFilterOptions
       low_resolution_adaptive_voxel_filter_options = 12;
 
   // Whether to solve the online scan matching first using the correlative scan
   // matcher to generate a good starting point for Ceres.
-  optional bool use_online_correlative_scan_matching = 13;
-  optional mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
+  bool use_online_correlative_scan_matching = 13;
+  mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
       real_time_correlative_scan_matcher_options = 14;
-  optional scan_matching.proto.CeresScanMatcherOptions
+  scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options = 6;
-  optional MotionFilterOptions motion_filter_options = 7;
+  MotionFilterOptions motion_filter_options = 7;
 
   // Time constant in seconds for the orientation moving average based on
   // observed gravity via the IMU. It should be chosen so that the error
@@ -57,10 +57,10 @@ message LocalTrajectoryBuilderOptions {
   // the constant is reduced) and
   // 2. from integration of angular velocities (which gets worse when the
   // constant is increased) is balanced.
-  optional double imu_gravity_time_constant = 15;
+  double imu_gravity_time_constant = 15;
 
   // Number of histogram buckets for the rotational scan matcher.
-  optional int32 rotational_histogram_size = 17;
+  int32 rotational_histogram_size = 17;
 
-  optional SubmapsOptions submaps_options = 8;
+  SubmapsOptions submaps_options = 8;
 }
