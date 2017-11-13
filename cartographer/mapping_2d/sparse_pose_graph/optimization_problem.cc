@@ -30,7 +30,6 @@
 #include "cartographer/mapping_2d/sparse_pose_graph/spa_cost_function.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/transform.h"
-#include "cartographer/transform/transform_interpolation_buffer.h"
 #include "ceres/ceres.h"
 #include "glog/logging.h"
 
@@ -69,10 +68,7 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
 
 void OptimizationProblem::AddOdometerData(
     const int trajectory_id, const sensor::OdometryData& odometry_data) {
-  CHECK_GE(trajectory_id, 0);
-  odometry_data_.resize(
-      std::max(odometry_data_.size(), static_cast<size_t>(trajectory_id) + 1));
-  odometry_data_[trajectory_id].Push(odometry_data.time, odometry_data.pose);
+  odometry_data_.Append(trajectory_id, odometry_data);
 }
 
 void OptimizationProblem::AddTrajectoryNode(
@@ -93,6 +89,7 @@ void OptimizationProblem::InsertTrajectoryNode(
 
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   imu_data_.Trim(node_data_, node_id);
+  odometry_data_.Trim(node_data_, node_id);
   node_data_.Trim(node_id);
 }
 
@@ -184,23 +181,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         continue;
       }
 
-      const bool odometry_available =
-          trajectory_id < static_cast<int>(odometry_data_.size()) &&
-          odometry_data_[trajectory_id].Has(second_node_data.time) &&
-          odometry_data_[trajectory_id].Has(first_node_data.time);
       const transform::Rigid3d relative_pose =
-          odometry_available
-              ? transform::Rigid3d::Rotation(
-                    first_node_data.gravity_alignment) *
-                    odometry_data_[trajectory_id]
-                        .Lookup(first_node_data.time)
-                        .inverse() *
-                    odometry_data_[trajectory_id].Lookup(
-                        second_node_data.time) *
-                    transform::Rigid3d::Rotation(
-                        second_node_data.gravity_alignment.inverse())
-              : transform::Embed3D(first_node_data.initial_pose.inverse() *
-                                   second_node_data.initial_pose);
+          ComputeRelativePose(trajectory_id, first_node_data, second_node_data);
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
@@ -244,6 +226,44 @@ OptimizationProblem::submap_data() const {
 const sensor::MapByTime<sensor::ImuData>& OptimizationProblem::imu_data()
     const {
   return imu_data_;
+}
+
+std::unique_ptr<transform::Rigid3d> OptimizationProblem::InterpolateOdometry(
+    const int trajectory_id, const common::Time time) const {
+  const auto it = odometry_data_.lower_bound(trajectory_id, time);
+  if (it == odometry_data_.EndOfTrajectory(trajectory_id)) {
+    return nullptr;
+  }
+  if (it == odometry_data_.BeginOfTrajectory(trajectory_id)) {
+    if (it->time == time) {
+      return common::make_unique<transform::Rigid3d>(it->pose);
+    }
+    return nullptr;
+  }
+  const auto prev_it = std::prev(it);
+  return common::make_unique<transform::Rigid3d>(
+      Interpolate(transform::TimestampedTransform{prev_it->time, prev_it->pose},
+                  transform::TimestampedTransform{it->time, it->pose}, time)
+          .transform);
+}
+
+transform::Rigid3d OptimizationProblem::ComputeRelativePose(
+    const int trajectory_id, const NodeData& first_node_data,
+    const NodeData& second_node_data) const {
+  if (odometry_data_.HasTrajectory(trajectory_id)) {
+    const std::unique_ptr<transform::Rigid3d> first_node_odometry =
+        InterpolateOdometry(trajectory_id, first_node_data.time);
+    const std::unique_ptr<transform::Rigid3d> second_node_odometry =
+        InterpolateOdometry(trajectory_id, second_node_data.time);
+    if (first_node_odometry != nullptr && second_node_odometry != nullptr) {
+      return transform::Rigid3d::Rotation(first_node_data.gravity_alignment) *
+             first_node_odometry->inverse() * (*second_node_odometry) *
+             transform::Rigid3d::Rotation(
+                 second_node_data.gravity_alignment.inverse());
+    }
+  }
+  return transform::Embed3D(first_node_data.initial_pose.inverse() *
+                            second_node_data.initial_pose);
 }
 
 }  // namespace sparse_pose_graph

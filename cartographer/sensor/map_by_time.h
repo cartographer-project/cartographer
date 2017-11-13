@@ -191,6 +191,15 @@ class MapByTime {
                                          EndOfTrajectory(trajectory_id));
   }
 
+  // Returns an iterator to the the first element in the container belonging to
+  // trajectory 'trajectory_id' whose time is not considered to go before
+  // 'time', or EndOfTrajectory(trajectory_id) if all keys are considered to go
+  // before 'time'. 'trajectory_id' must refer to an existing trajectory.
+  ConstIterator lower_bound(const int trajectory_id,
+                            const common::Time time) const {
+    return ConstIterator(data_.at(trajectory_id).lower_bound(time));
+  }
+
  private:
   std::map<int, std::map<common::Time, DataType>> data_;
 };

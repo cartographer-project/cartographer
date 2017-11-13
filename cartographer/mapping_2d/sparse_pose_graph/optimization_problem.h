@@ -33,7 +33,7 @@
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/map_by_time.h"
 #include "cartographer/sensor/odometry_data.h"
-#include "cartographer/transform/transform_interpolation_buffer.h"
+#include "cartographer/transform/timestamped_transform.h"
 
 namespace cartographer {
 namespace mapping_2d {
@@ -92,11 +92,18 @@ class OptimizationProblem {
   const sensor::MapByTime<sensor::ImuData>& imu_data() const;
 
  private:
+  std::unique_ptr<transform::Rigid3d> InterpolateOdometry(
+      int trajectory_id, common::Time time) const;
+  // Uses odometry if available, otherwise the local SLAM results.
+  transform::Rigid3d ComputeRelativePose(
+      int trajectory_id, const NodeData& first_node_data,
+      const NodeData& second_node_data) const;
+
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
-  sensor::MapByTime<sensor::ImuData> imu_data_;
   mapping::MapById<mapping::NodeId, NodeData> node_data_;
-  std::vector<transform::TransformInterpolationBuffer> odometry_data_;
   mapping::MapById<mapping::SubmapId, SubmapData> submap_data_;
+  sensor::MapByTime<sensor::ImuData> imu_data_;
+  sensor::MapByTime<sensor::OdometryData> odometry_data_;
 };
 
 }  // namespace sparse_pose_graph
