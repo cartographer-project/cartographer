@@ -369,12 +369,13 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   std::deque<CeresPose> C_fixed_frames;
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
     const int trajectory_id = node_it->id.trajectory_id;
+    const auto trajectory_end = node_data_.EndOfTrajectory(trajectory_id);
     if (!fixed_frame_pose_data_.HasTrajectory(trajectory_id)) {
+      node_it = trajectory_end;
       continue;
     }
-    bool fixed_frame_pose_initialized = false;
 
-    const auto trajectory_end = node_data_.EndOfTrajectory(trajectory_id);
+    bool fixed_frame_pose_initialized = false;
     for (; node_it != trajectory_end; ++node_it) {
       const mapping::NodeId node_id = node_it->id;
       const NodeData& node_data = node_it->data;
