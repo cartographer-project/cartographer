@@ -102,7 +102,7 @@ class Range {
 template <typename IdType, typename DataType>
 class MapById {
  private:
-  class MapByIndex;
+  struct MapByIndex;
 
  public:
   struct IdDataReference {
