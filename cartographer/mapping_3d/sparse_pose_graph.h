@@ -53,9 +53,9 @@ namespace mapping_3d {
 // on (pp. 22--29). IEEE, 2010.
 //
 // It is extended for submapping in 3D:
-// Each scan has been matched against one or more submaps (adding a constraint
-// for each match), both poses of scans and of submaps are to be optimized.
-// All constraints are between a submap i and a scan j.
+// Each node has been matched against one or more submaps (adding a constraint
+// for each match), both poses of nodes and of submaps are to be optimized.
+// All constraints are between a submap i and a node j.
 class SparsePoseGraph : public mapping::SparsePoseGraph {
  public:
   SparsePoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
@@ -67,10 +67,10 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
   // Adds a new node with 'constant_data'. Its 'constant_data->local_pose' was
   // determined by scan matching against 'insertion_submaps.front()' and the
-  // scan was inserted into the 'insertion_submaps'. If
+  // node data was inserted into the 'insertion_submaps'. If
   // 'insertion_submaps.front().finished()' is 'true', data was inserted into
   // this submap for the last time.
-  mapping::NodeId AddScan(
+  mapping::NodeId AddNode(
       std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
       int trajectory_id,
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
@@ -119,13 +119,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
 
  private:
   // The current state of the submap in the background threads. When this
-  // transitions to kFinished, all scans are tried to match against this submap.
-  // Likewise, all new scans are matched against submaps which are finished.
+  // transitions to kFinished, all nodes are tried to match against this submap.
+  // Likewise, all new nodes are matched against submaps which are finished.
   enum class SubmapState { kActive, kFinished };
   struct SubmapData {
     std::shared_ptr<const Submap> submap;
 
-    // IDs of the scans that were inserted into this map together with
+    // IDs of the nodes that were inserted into this map together with
     // constraints for them. They are not to be matched again when this submap
     // becomes 'finished'.
     std::set<mapping::NodeId> node_ids;
@@ -146,18 +146,18 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
       REQUIRES(mutex_);
 
-  // Adds constraints for a scan, and starts scan matching in the background.
-  void ComputeConstraintsForScan(
+  // Adds constraints for a node, and starts scan matching in the background.
+  void ComputeConstraintsForNode(
       const mapping::NodeId& node_id,
       std::vector<std::shared_ptr<const Submap>> insertion_submaps,
       bool newly_finished_submap) REQUIRES(mutex_);
 
-  // Computes constraints for a scan and submap pair.
+  // Computes constraints for a node and submap pair.
   void ComputeConstraint(const mapping::NodeId& node_id,
                          const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
-  // Adds constraints for older scans whenever a new submap is finished.
-  void ComputeConstraintsForOldScans(const mapping::SubmapId& submap_id)
+  // Adds constraints for older nodes whenever a new submap is finished.
+  void ComputeConstraintsForOldNodes(const mapping::SubmapId& submap_id)
       REQUIRES(mutex_);
 
   // Registers the callback to run the optimization once all constraints have
@@ -182,11 +182,11 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   mapping::SparsePoseGraph::SubmapData GetSubmapDataUnderLock(
       const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
-  common::Time GetLatestScanTime(const mapping::NodeId& node_id,
+  common::Time GetLatestNodeTime(const mapping::NodeId& node_id,
                                  const mapping::SubmapId& submap_id) const
       REQUIRES(mutex_);
 
-  // Logs histograms for the translational and rotational residual of scan
+  // Logs histograms for the translational and rotational residual of node
   // poses.
   void LogResidualHistograms() REQUIRES(mutex_);
 
@@ -205,12 +205,12 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // How our various trajectories are related.
   mapping::TrajectoryConnectivityState trajectory_connectivity_state_;
 
-  // We globally localize a fraction of the scans from each trajectory.
+  // We globally localize a fraction of the nodes from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>
       global_localization_samplers_ GUARDED_BY(mutex_);
 
-  // Number of scans added since last loop closure.
-  int num_scans_since_last_loop_closure_ GUARDED_BY(mutex_) = 0;
+  // Number of nodes added since last loop closure.
+  int num_nodes_since_last_loop_closure_ GUARDED_BY(mutex_) = 0;
 
   // Whether the optimization has to be run before more data is added.
   bool run_loop_closure_ GUARDED_BY(mutex_) = false;

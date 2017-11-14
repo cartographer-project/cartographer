@@ -101,7 +101,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
       });
 }
 
-void ConstraintBuilder::NotifyEndOfScan() {
+void ConstraintBuilder::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
   ++current_computation_;
 }
@@ -167,10 +167,10 @@ void ConstraintBuilder::ComputeConstraint(
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_id);
 
-  // The 'constraint_transform' (submap i <- scan j) is computed from:
-  // - a 'filtered_gravity_aligned_point_cloud' in scan j,
-  // - the initial guess 'initial_pose' for (map <- scan j),
-  // - the result 'pose_estimate' of Match() (map <- scan j).
+  // The 'constraint_transform' (submap i <- node j) is computed from:
+  // - a 'filtered_gravity_aligned_point_cloud' in node j,
+  // - the initial guess 'initial_pose' for (map <- node j),
+  // - the result 'pose_estimate' of Match() (map <- node j).
   // - the ComputeSubmapPose() (map <- submap i)
   float score = 0.;
   transform::Rigid2d pose_estimate = transform::Rigid2d::Identity();
@@ -273,7 +273,7 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
   }
 }
 
-int ConstraintBuilder::GetNumFinishedScans() {
+int ConstraintBuilder::GetNumFinishedNodes() {
   common::MutexLocker locker(&mutex_);
   if (pending_computations_.empty()) {
     return current_computation_;

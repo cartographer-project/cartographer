@@ -31,7 +31,7 @@ namespace cartographer {
 namespace mapping_2d {
 namespace {
 
-TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
+TEST(SubmapsTest, TheRightNumberOfRangeDataAreInserted) {
   constexpr int kNumRangeData = 10;
   auto parameter_dictionary = common::MakeDictionary(
       "return {"
@@ -49,7 +49,8 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
   std::set<std::shared_ptr<Submap>> all_submaps;
   for (int i = 0; i != 1000; ++i) {
     submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}});
-    // Except for the first, maps should only be returned after enough scans.
+    // Except for the first, maps should only be returned after enough range
+    // data.
     for (const auto& submap : submaps.submaps()) {
       all_submaps.insert(submap);
     }
@@ -57,14 +58,14 @@ TEST(SubmapsTest, TheRightNumberOfScansAreInserted) {
       EXPECT_LE(kNumRangeData, submaps.submaps().front()->num_range_data());
     }
   }
-  int correct_num_scans = 0;
+  int correct_num_range_data = 0;
   for (const auto& submap : all_submaps) {
     if (submap->num_range_data() == kNumRangeData * 2) {
-      ++correct_num_scans;
+      ++correct_num_range_data;
     }
   }
-  // Submaps should not be left without the right number of scans in them.
-  EXPECT_EQ(correct_num_scans, all_submaps.size() - 2);
+  // Submaps should not be left without the right number of range data in them.
+  EXPECT_EQ(correct_num_range_data, all_submaps.size() - 2);
 }
 
 TEST(SubmapsTest, ToFromProto) {

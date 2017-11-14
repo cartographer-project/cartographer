@@ -157,7 +157,7 @@ class SparsePoseGraphTest : public ::testing::Test {
     active_submaps_->InsertRangeData(TransformRangeData(
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
 
-    sparse_pose_graph_->AddScan(
+    sparse_pose_graph_->AddNode(
         std::make_shared<const mapping::TrajectoryNode::Data>(
             mapping::TrajectoryNode::Data{common::FromUniversal(0),
                                           Eigen::Quaterniond::Identity(),
@@ -208,7 +208,7 @@ TEST_F(SparsePoseGraphTest, NoMovement) {
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
 }
 
-TEST_F(SparsePoseGraphTest, NoOverlappingScans) {
+TEST_F(SparsePoseGraphTest, NoOverlappingNodes) {
   std::mt19937 rng(0);
   std::uniform_real_distribution<double> distribution(-1., 1.);
   std::vector<transform::Rigid2d> poses;
@@ -229,7 +229,7 @@ TEST_F(SparsePoseGraphTest, NoOverlappingScans) {
   }
 }
 
-TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingScans) {
+TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingNodes) {
   std::mt19937 rng(0);
   std::uniform_real_distribution<double> distribution(-1., 1.);
   std::vector<transform::Rigid2d> poses;
@@ -250,7 +250,7 @@ TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingScans) {
   }
 }
 
-TEST_F(SparsePoseGraphTest, OverlappingScans) {
+TEST_F(SparsePoseGraphTest, OverlappingNodes) {
   std::mt19937 rng(0);
   std::uniform_real_distribution<double> distribution(-1., 1.);
   std::vector<transform::Rigid2d> ground_truth;

@@ -30,7 +30,6 @@
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/point_cloud.h"
-#include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
 namespace mapping {
