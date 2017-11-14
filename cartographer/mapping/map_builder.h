@@ -50,7 +50,7 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 class MapBuilder {
  public:
   using LocalSlamResultCallback =
-      mapping::GlobalTrajectoryBuilderInterface::LocalSlamResultCallback;
+      GlobalTrajectoryBuilderInterface::LocalSlamResultCallback;
 
   MapBuilder(
       const proto::MapBuilderOptions& options,
