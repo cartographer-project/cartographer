@@ -52,9 +52,8 @@ class MapBuilder {
   using LocalSlamResultCallback =
       GlobalTrajectoryBuilderInterface::LocalSlamResultCallback;
 
-  MapBuilder(
-      const proto::MapBuilderOptions& options,
-      const LocalSlamResultCallback& local_slam_result_callback);
+  MapBuilder(const proto::MapBuilderOptions& options,
+             const LocalSlamResultCallback& local_slam_result_callback);
   ~MapBuilder();
 
   MapBuilder(const MapBuilder&) = delete;
