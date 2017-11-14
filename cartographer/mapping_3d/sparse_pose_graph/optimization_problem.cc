@@ -465,8 +465,8 @@ const sensor::MapByTime<sensor::ImuData>& OptimizationProblem::imu_data()
   return imu_data_;
 }
 
-const sensor::MapByTime<sensor::OdometryData>& OptimizationProblem::odometry_data()
-const {
+const sensor::MapByTime<sensor::OdometryData>&
+OptimizationProblem::odometry_data() const {
   return odometry_data_;
 }
 
