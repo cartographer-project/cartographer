@@ -37,9 +37,15 @@ message ImuData {
   sensor.proto.ImuData imu_data = 2;
 }
 
+message OdometryData {
+  int32 trajectory_id = 1;
+  sensor.proto.OdometryData odometry_data = 2;
+}
+
 message SerializedData {
   Submap submap = 1;
   Node node = 2;
   ImuData imu_data = 3;
-  // TODO(whess): Add odometry.
+  OdometryData odometry_data = 4;
+  // TODO(whess): Add fixed frame pose data.
 }

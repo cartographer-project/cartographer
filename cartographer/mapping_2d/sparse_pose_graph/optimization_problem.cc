@@ -232,6 +232,11 @@ const sensor::MapByTime<sensor::ImuData>& OptimizationProblem::imu_data()
   return imu_data_;
 }
 
+const sensor::MapByTime<sensor::OdometryData>&
+OptimizationProblem::odometry_data() const {
+  return odometry_data_;
+}
+
 std::unique_ptr<transform::Rigid3d> OptimizationProblem::InterpolateOdometry(
     const int trajectory_id, const common::Time time) const {
   const auto it = odometry_data_.lower_bound(trajectory_id, time);

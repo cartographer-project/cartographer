@@ -583,6 +583,11 @@ sensor::MapByTime<sensor::ImuData> SparsePoseGraph::GetImuData() {
   return optimization_problem_.imu_data();
 }
 
+sensor::MapByTime<sensor::OdometryData> SparsePoseGraph::GetOdometryData() {
+  common::MutexLocker locker(&mutex_);
+  return optimization_problem_.odometry_data();
+}
+
 std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   common::MutexLocker locker(&mutex_);
   return constraints_;

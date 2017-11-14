@@ -193,7 +193,22 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
       }
     }
   }
-  // TODO(whess): Serialize additional sensor data: odometry.
+  // Next we serialize odometry data from the pose graph.
+  {
+    const auto all_odometry_data = sparse_pose_graph_->GetOdometryData();
+    for (const int trajectory_id : all_odometry_data.trajectory_ids()) {
+      for (const auto& odometry_data :
+           all_odometry_data.trajectory(trajectory_id)) {
+        proto::SerializedData proto;
+        auto* const odometry_data_proto = proto.mutable_odometry_data();
+        odometry_data_proto->set_trajectory_id(trajectory_id);
+        *odometry_data_proto->mutable_odometry_data() =
+            sensor::ToProto(odometry_data);
+        writer->WriteProto(proto);
+      }
+    }
+  }
+  // TODO(whess): Serialize additional sensor data: fixed frame pose data.
 }
 
 void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
@@ -251,7 +266,8 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
                                    proto.submap().submap_id().submap_index()});
       sparse_pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
     }
-    // TODO(ojura): Deserialize IMU data when loading unfrozen trajectories.
+    // TODO(ojura): Deserialize IMU and odometry data when loading unfrozen
+    // trajectories.
   }
 
   // Add information about which nodes belong to which submap.
