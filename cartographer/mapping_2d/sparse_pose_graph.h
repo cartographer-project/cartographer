@@ -35,8 +35,8 @@
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity_state.h"
-#include "cartographer/mapping_2d/sparse_pose_graph/constraint_builder.h"
-#include "cartographer/mapping_2d/sparse_pose_graph/optimization_problem.h"
+#include "cartographer/mapping_2d/pose_graph/constraint_builder.h"
+#include "cartographer/mapping_2d/pose_graph/optimization_problem.h"
 #include "cartographer/mapping_2d/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -175,7 +175,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // Computes the local to global map frame transform based on the given
   // optimized 'submap_transforms'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const mapping::MapById<mapping::SubmapId, sparse_pose_graph::SubmapData>&
+      const mapping::MapById<mapping::SubmapId, pose_graph::SubmapData>&
           submap_transforms,
       int trajectory_id) const REQUIRES(mutex_);
 
@@ -212,8 +212,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   bool run_loop_closure_ GUARDED_BY(mutex_) = false;
 
   // Current optimization problem.
-  sparse_pose_graph::OptimizationProblem optimization_problem_;
-  sparse_pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
+  pose_graph::OptimizationProblem optimization_problem_;
+  pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
   // Submaps get assigned an ID and state as soon as they are seen, even
@@ -227,7 +227,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Current submap transforms used for displaying data.
-  mapping::MapById<mapping::SubmapId, sparse_pose_graph::SubmapData>
+  mapping::MapById<mapping::SubmapId, pose_graph::SubmapData>
       optimized_submap_transforms_ GUARDED_BY(mutex_);
 
   // List of all trimmers to consult when optimizations finish.

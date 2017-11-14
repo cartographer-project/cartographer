@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/sparse_pose_graph/constraint_builder.h"
+#include "cartographer/mapping_2d/pose_graph/constraint_builder.h"
 
 #include <cmath>
 #include <functional>
@@ -36,7 +36,7 @@
 
 namespace cartographer {
 namespace mapping_2d {
-namespace sparse_pose_graph {
+namespace pose_graph {
 
 transform::Rigid2d ComputeSubmapPose(const Submap& submap) {
   return transform::Project2D(submap.local_pose());
@@ -287,6 +287,6 @@ void ConstraintBuilder::DeleteScanMatcher(const mapping::SubmapId& submap_id) {
   submap_scan_matchers_.erase(submap_id);
 }
 
-}  // namespace sparse_pose_graph
+}  // namespace pose_graph
 }  // namespace mapping_2d
 }  // namespace cartographer
