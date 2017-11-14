@@ -29,12 +29,14 @@ template <typename LocalTrajectoryBuilder,
 class GlobalTrajectoryBuilder
     : public mapping::GlobalTrajectoryBuilderInterface {
  public:
-  GlobalTrajectoryBuilder(const LocalTrajectoryBuilderOptions& options,
-                          const int trajectory_id,
-                          SparsePoseGraph* const sparse_pose_graph)
+  GlobalTrajectoryBuilder(
+      const LocalTrajectoryBuilderOptions& options, const int trajectory_id,
+      SparsePoseGraph* const sparse_pose_graph,
+      const LocalSlamResultCallback& local_slam_result_callback)
       : trajectory_id_(trajectory_id),
         sparse_pose_graph_(sparse_pose_graph),
-        local_trajectory_builder_(options) {}
+        local_trajectory_builder_(options),
+        local_slam_result_callback_(local_slam_result_callback) {}
   ~GlobalTrajectoryBuilder() override {}
 
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
@@ -62,6 +64,11 @@ class GlobalTrajectoryBuilder
               matching_result->insertion_result->insertion_submaps));
       CHECK_EQ(node_id->trajectory_id, trajectory_id_);
     }
+    if (local_slam_result_callback_) {
+      local_slam_result_callback_(
+          trajectory_id_, matching_result->time, matching_result->local_pose,
+          std::move(matching_result->range_data_in_local), std::move(node_id));
+    }
   }
 
   void AddSensorData(const sensor::ImuData& imu_data) override {
@@ -85,6 +92,7 @@ class GlobalTrajectoryBuilder
   const int trajectory_id_;
   SparsePoseGraph* const sparse_pose_graph_;
   LocalTrajectoryBuilder local_trajectory_builder_;
+  LocalSlamResultCallback local_slam_result_callback_;
 };
 
 }  // namespace mapping
