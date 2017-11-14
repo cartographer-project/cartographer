@@ -213,7 +213,7 @@ void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
 }
 
 void LocalTrajectoryBuilder::AddOdometryData(
-    const sensor::OdometryData &odometry_data) {
+    const sensor::OdometryData& odometry_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator we cannot add odometry data.
     LOG(INFO) << "Extrapolator not yet initialized.";
