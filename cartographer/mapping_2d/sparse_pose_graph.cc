@@ -299,16 +299,13 @@ common::Time SparsePoseGraph::GetLatestScanTime(
 }
 
 void SparsePoseGraph::UpdateTrajectoryConnectivity(
-    const sparse_pose_graph::ConstraintBuilder::Result& result) {
-  for (const Constraint& constraint : result) {
-    CHECK_EQ(constraint.tag,
-             mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
-    const common::Time time =
-        GetLatestScanTime(constraint.node_id, constraint.submap_id);
-    trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
-                                           constraint.submap_id.trajectory_id,
-                                           time);
-  }
+    const Constraint& constraint) {
+  CHECK_EQ(constraint.tag, mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
+  const common::Time time =
+      GetLatestScanTime(constraint.node_id, constraint.submap_id);
+  trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
+                                         constraint.submap_id.trajectory_id,
+                                         time);
 }
 
 void SparsePoseGraph::HandleWorkQueue() {
@@ -321,7 +318,9 @@ void SparsePoseGraph::HandleWorkQueue() {
         RunOptimization();
 
         common::MutexLocker locker(&mutex_);
-        UpdateTrajectoryConnectivity(result);
+        for (const Constraint& constraint : result) {
+          UpdateTrajectoryConnectivity(constraint);
+        }
         TrimmingHandle trimming_handle(this);
         for (auto& trimmer : trimmers_) {
           trimmer->Trim(&trimming_handle);
@@ -460,10 +459,15 @@ void SparsePoseGraph::AddSerializedConstraints(
       CHECK(submap_data_.Contains(constraint.submap_id));
       CHECK(trajectory_nodes_.at(constraint.node_id).constant_data != nullptr);
       CHECK(submap_data_.at(constraint.submap_id).submap != nullptr);
-      if (constraint.tag == Constraint::Tag::INTRA_SUBMAP) {
-        CHECK(submap_data_.at(constraint.submap_id)
-                  .node_ids.emplace(constraint.node_id)
-                  .second);
+      switch (constraint.tag) {
+        case Constraint::Tag::INTRA_SUBMAP:
+          CHECK(submap_data_.at(constraint.submap_id)
+                    .node_ids.emplace(constraint.node_id)
+                    .second);
+          break;
+        case Constraint::Tag::INTER_SUBMAP:
+          UpdateTrajectoryConnectivity(constraint);
+          break;
       }
       const Constraint::Pose pose = {
           constraint.pose.zbar_ij *

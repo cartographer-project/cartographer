@@ -183,9 +183,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
                                  const mapping::SubmapId& submap_id) const
       REQUIRES(mutex_);
 
-  // Updates the trajectory connectivity structure with the new constraints.
-  void UpdateTrajectoryConnectivity(
-      const sparse_pose_graph::ConstraintBuilder::Result& result)
+  // Updates the trajectory connectivity structure with a new constraint.
+  void UpdateTrajectoryConnectivity(const Constraint& constraint)
       REQUIRES(mutex_);
 
   const mapping::proto::SparsePoseGraphOptions options_;
