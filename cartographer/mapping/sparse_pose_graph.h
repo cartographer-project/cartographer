@@ -33,6 +33,7 @@
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/map_by_time.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -143,6 +144,9 @@ class SparsePoseGraph {
 
   // Returns the IMU data.
   virtual sensor::MapByTime<sensor::ImuData> GetImuData() = 0;
+
+  // Returns the odometry data.
+  virtual sensor::MapByTime<sensor::OdometryData> GetOdometryData() = 0;
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
