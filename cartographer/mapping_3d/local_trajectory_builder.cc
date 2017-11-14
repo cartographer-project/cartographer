@@ -175,8 +175,8 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       std::move(insertion_result)});
 }
 
-void LocalTrajectoryBuilder::AddOdometerData(
-    const sensor::OdometryData& odometry_data) {
+void LocalTrajectoryBuilder::AddOdometryData(
+    const sensor::OdometryData &odometry_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator we cannot add odometry data.
     LOG(INFO) << "Extrapolator not yet initialized.";
