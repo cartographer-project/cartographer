@@ -197,15 +197,18 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
   {
     const auto all_odometry_data = sparse_pose_graph_->GetOdometryData();
     for (const int trajectory_id : all_odometry_data.trajectory_ids()) {
-      for (const auto& odometry_data : all_odometry_data.trajectory(trajectory_id)) {
+      for (const auto& odometry_data :
+           all_odometry_data.trajectory(trajectory_id)) {
         proto::SerializedData proto;
         auto* const odometry_data_proto = proto.mutable_odometry_data();
         odometry_data_proto->set_trajectory_id(trajectory_id);
-        *odometry_data_proto->mutable_odometry_data() = sensor::ToProto(odometry_data);
+        *odometry_data_proto->mutable_odometry_data() =
+            sensor::ToProto(odometry_data);
         writer->WriteProto(proto);
       }
     }
   }
+  // TODO(whess): Serialize additional sensor data: fixed frame pose data.
 }
 
 void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {

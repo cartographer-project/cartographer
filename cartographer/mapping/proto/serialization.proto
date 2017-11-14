@@ -47,4 +47,5 @@ message SerializedData {
   Node node = 2;
   ImuData imu_data = 3;
   OdometryData odometry_data = 4;
+  // TODO(whess): Add fixed frame pose data.
 }

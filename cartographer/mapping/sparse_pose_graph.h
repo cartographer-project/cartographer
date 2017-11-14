@@ -87,6 +87,10 @@ class SparsePoseGraph {
   virtual void AddImuData(int trajectory_id,
                           const sensor::ImuData& imu_data) = 0;
 
+  // Inserts an odometry measurement.
+  virtual void AddOdometerData(int trajectory_id,
+                               const sensor::OdometryData& odometry_data) = 0;
+
   // Finishes the given trajectory.
   virtual void FinishTrajectory(int trajectory_id) = 0;
 
