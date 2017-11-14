@@ -400,8 +400,11 @@ void PoseGraph::AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
   submap_data_.Insert(submap_id, SubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the 'global_submap_pose'.
-  global_submap_poses_.Insert(submap_id,
-                              pose_graph::SubmapData{global_submap_pose_2d});
+  if (mapping::FromProto(submap.pose_type()) ==
+      mapping::PoseGraph::SubmapData::kOptimizedPose) {
+    global_submap_poses_.Insert(submap_id,
+                                pose_graph::SubmapData{global_submap_pose_2d});
+  }
   AddWorkItem([this, submap_id, global_submap_pose_2d]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
@@ -663,12 +666,15 @@ mapping::PoseGraph::SubmapData PoseGraph::GetSubmapDataUnderLock(
   if (global_submap_poses_.Contains(submap_id)) {
     // We already have an optimized pose.
     return {submap,
-            transform::Embed3D(global_submap_poses_.at(submap_id).global_pose)};
+            transform::Embed3D(global_submap_poses_.at(submap_id).global_pose),
+            mapping::PoseGraph::SubmapData::PoseType::kOptimizedPose};
   }
   // We have to extrapolate.
-  return {submap, ComputeLocalToGlobalTransform(global_submap_poses_,
-                                                submap_id.trajectory_id) *
-                      submap->local_pose()};
+  return {submap,
+          ComputeLocalToGlobalTransform(global_submap_poses_,
+                                        submap_id.trajectory_id) *
+              submap->local_pose(),
+          mapping::PoseGraph::SubmapData::PoseType::kExtrapolatedPose};
 }
 
 PoseGraph::TrimmingHandle::TrimmingHandle(PoseGraph* const parent)

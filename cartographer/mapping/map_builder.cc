@@ -171,6 +171,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
       submap_proto->mutable_submap_id()->set_submap_index(
           submap_id_data.id.submap_index);
       submap_id_data.data.submap->ToProto(submap_proto);
+      submap_proto->set_pose_type(ToProto(submap_id_data.data.pose_type));
       writer->WriteProto(proto);
     }
   }

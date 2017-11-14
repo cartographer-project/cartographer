@@ -48,6 +48,29 @@ PoseGraph::Constraint::Tag FromProto(
   LOG(FATAL) << "Unsupported tag.";
 }
 
+proto::SubmapPoseType ToProto(const PoseGraph::SubmapData::PoseType pose_type) {
+  switch (pose_type) {
+    case PoseGraph::SubmapData::kExtrapolatedPose:
+      return proto::SubmapPoseType::kExtrapolatedPose;
+    case PoseGraph::SubmapData::kOptimizedPose:
+      return proto::SubmapPoseType::kOptimizedPose;
+    default:;
+  }
+  LOG(FATAL) << "Invalid pose type.";
+}
+
+PoseGraph::SubmapData::PoseType FromProto(
+    const proto::SubmapPoseType pose_type) {
+  switch (pose_type) {
+    case proto::SubmapPoseType::kExtrapolatedPose:
+      return PoseGraph::SubmapData::PoseType::kExtrapolatedPose;
+    case proto::SubmapPoseType::kOptimizedPose:
+      return PoseGraph::SubmapData::PoseType::kOptimizedPose;
+    default:;
+  }
+  LOG(FATAL) << "Invalid pose type.";
+}
+
 std::vector<PoseGraph::Constraint> FromProto(
     const ::google::protobuf::RepeatedPtrField<proto::PoseGraph::Constraint>&
         constraint_protos) {

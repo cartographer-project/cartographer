@@ -69,6 +69,7 @@ class PoseGraph {
   struct SubmapData {
     std::shared_ptr<const Submap> submap;
     transform::Rigid3d pose;
+    enum PoseType { kOptimizedPose, kExtrapolatedPose } pose_type;
   };
 
   struct InitialTrajectoryPose {
@@ -167,6 +168,9 @@ std::vector<PoseGraph::Constraint> FromProto(
     const ::google::protobuf::RepeatedPtrField<
         ::cartographer::mapping::proto::PoseGraph::Constraint>&
         constraint_protos);
+
+proto::SubmapPoseType ToProto(PoseGraph::SubmapData::PoseType pose_type);
+PoseGraph::SubmapData::PoseType FromProto(proto::SubmapPoseType pose_type);
 
 }  // namespace mapping
 }  // namespace cartographer

@@ -25,6 +25,7 @@ message Submap {
   SubmapId submap_id = 1;
   Submap2D submap_2d = 2;
   Submap3D submap_3d = 3;
+  SubmapPoseType pose_type = 4;
 }
 
 message Node {
