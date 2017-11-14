@@ -69,7 +69,7 @@ class TrajectoryBuilder {
                                  time, linear_acceleration, angular_velocity}));
   }
 
-  void AddOdometerData(const string& sensor_id, common::Time time,
+  void AddOdometryData(const string& sensor_id, common::Time time,
                        const transform::Rigid3d& odometer_pose) {
     AddSensorData(sensor_id, sensor::MakeDispatchable(
                                  sensor::OdometryData{time, odometer_pose}));

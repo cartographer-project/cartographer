@@ -86,7 +86,7 @@ void OptimizationProblem::AddImuData(const int trajectory_id,
   imu_data_.Append(trajectory_id, imu_data);
 }
 
-void OptimizationProblem::AddOdometerData(
+void OptimizationProblem::AddOdometryData(
     const int trajectory_id, const sensor::OdometryData& odometry_data) {
   odometry_data_.Append(trajectory_id, odometry_data);
 }
