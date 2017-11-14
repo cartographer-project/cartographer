@@ -43,7 +43,7 @@ SparsePoseGraph::SparsePoseGraph(
     common::ThreadPool* thread_pool)
     : options_(options),
       optimization_problem_(options_.optimization_problem_options(),
-                            sparse_pose_graph::OptimizationProblem::FixZ::kNo),
+                            pose_graph::OptimizationProblem::FixZ::kNo),
       constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
 
 SparsePoseGraph::~SparsePoseGraph() {
@@ -324,7 +324,7 @@ void SparsePoseGraph::UpdateTrajectoryConnectivity(
 
 void SparsePoseGraph::HandleWorkQueue() {
   constraint_builder_.WhenDone(
-      [this](const sparse_pose_graph::ConstraintBuilder::Result& result) {
+      [this](const pose_graph::ConstraintBuilder::Result& result) {
         {
           common::MutexLocker locker(&mutex_);
           constraints_.insert(constraints_.end(), result.begin(), result.end());
@@ -378,8 +378,8 @@ void SparsePoseGraph::WaitForAllComputations() {
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
   constraint_builder_.WhenDone(
-      [this, &notification](
-          const sparse_pose_graph::ConstraintBuilder::Result& result) {
+      [this,
+       &notification](const pose_graph::ConstraintBuilder::Result& result) {
         common::MutexLocker locker(&mutex_);
         constraints_.insert(constraints_.end(), result.begin(), result.end());
         notification = true;
@@ -419,7 +419,7 @@ void SparsePoseGraph::AddSubmapFromProto(
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the 'global_submap_pose'.
   optimized_submap_transforms_.Insert(
-      submap_id, sparse_pose_graph::SubmapData{global_submap_pose});
+      submap_id, pose_graph::SubmapData{global_submap_pose});
   AddWorkItem([this, submap_id, global_submap_pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
@@ -652,7 +652,7 @@ SparsePoseGraph::GetAllSubmapData() {
 }
 
 transform::Rigid3d SparsePoseGraph::ComputeLocalToGlobalTransform(
-    const mapping::MapById<mapping::SubmapId, sparse_pose_graph::SubmapData>&
+    const mapping::MapById<mapping::SubmapId, pose_graph::SubmapData>&
         submap_transforms,
     const int trajectory_id) const {
   auto begin_it = submap_transforms.BeginOfTrajectory(trajectory_id);
