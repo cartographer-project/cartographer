@@ -55,10 +55,10 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 
 MapBuilder::MapBuilder(
     const proto::MapBuilderOptions& options,
-    const AccumulatedRangeDataCallback& accumulated_range_data_callback)
+    const LocalSlamResultCallback& local_slam_result_callback)
     : options_(options),
       thread_pool_(options.num_background_threads()),
-      accumulated_range_data_callback_(accumulated_range_data_callback) {
+      local_slam_result_callback_(local_slam_result_callback) {
   if (options.use_trajectory_builder_2d()) {
     sparse_pose_graph_2d_ = common::make_unique<mapping_2d::SparsePoseGraph>(
         options_.sparse_pose_graph_options(), &thread_pool_);
@@ -88,7 +88,7 @@ int MapBuilder::AddTrajectoryBuilder(
                 mapping_3d::SparsePoseGraph>>(
                 trajectory_options.trajectory_builder_3d_options(),
                 trajectory_id, sparse_pose_graph_3d_.get(),
-                accumulated_range_data_callback_)));
+                local_slam_result_callback_)));
   } else {
     CHECK(trajectory_options.has_trajectory_builder_2d_options());
     trajectory_builders_.push_back(
@@ -100,7 +100,7 @@ int MapBuilder::AddTrajectoryBuilder(
                 mapping_2d::SparsePoseGraph>>(
                 trajectory_options.trajectory_builder_2d_options(),
                 trajectory_id, sparse_pose_graph_2d_.get(),
-                accumulated_range_data_callback_)));
+                local_slam_result_callback_)));
   }
   if (trajectory_options.pure_localization()) {
     constexpr int kSubmapsToKeep = 3;

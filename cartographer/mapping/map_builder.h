@@ -49,12 +49,12 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 // and a SparsePoseGraph for loop closure.
 class MapBuilder {
  public:
-  using AccumulatedRangeDataCallback =
-      mapping::GlobalTrajectoryBuilderInterface::AccumulatedRangeDataCallback;
+  using LocalSlamResultCallback =
+      mapping::GlobalTrajectoryBuilderInterface::LocalSlamResultCallback;
 
   MapBuilder(
       const proto::MapBuilderOptions& options,
-      const AccumulatedRangeDataCallback& accumulated_range_data_callback);
+      const LocalSlamResultCallback& local_slam_result_callback);
   ~MapBuilder();
 
   MapBuilder(const MapBuilder&) = delete;
@@ -106,7 +106,7 @@ class MapBuilder {
   std::unique_ptr<mapping_3d::SparsePoseGraph> sparse_pose_graph_3d_;
   mapping::SparsePoseGraph* sparse_pose_graph_;
 
-  AccumulatedRangeDataCallback accumulated_range_data_callback_;
+  LocalSlamResultCallback local_slam_result_callback_;
 
   sensor::Collator sensor_collator_;
   std::vector<std::unique_ptr<mapping::TrajectoryBuilder>> trajectory_builders_;
