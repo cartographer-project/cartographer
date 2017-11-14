@@ -68,7 +68,7 @@ class LocalTrajectoryBuilder {
   std::unique_ptr<MatchingResult> AddRangeData(
       common::Time, const sensor::TimedRangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
-  void AddOdometerData(const sensor::OdometryData& odometry_data);
+  void AddOdometryData(const sensor::OdometryData& odometry_data);
 
  private:
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(

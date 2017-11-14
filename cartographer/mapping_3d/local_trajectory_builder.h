@@ -64,7 +64,7 @@ class LocalTrajectoryBuilder {
   // otherwise 'nullptr'.
   std::unique_ptr<MatchingResult> AddRangeData(
       common::Time time, const sensor::TimedRangeData& range_data);
-  void AddOdometerData(const sensor::OdometryData& odometry_data);
+  void AddOdometryData(const sensor::OdometryData& odometry_data);
   const mapping::PoseEstimate& pose_estimate() const;
 
  private:

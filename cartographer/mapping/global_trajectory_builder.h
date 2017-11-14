@@ -71,8 +71,8 @@ class GlobalTrajectoryBuilder
 
   void AddSensorData(const sensor::OdometryData& odometry_data) override {
     CHECK(odometry_data.pose.IsValid()) << odometry_data.pose;
-    local_trajectory_builder_.AddOdometerData(odometry_data);
-    sparse_pose_graph_->AddOdometerData(trajectory_id_, odometry_data);
+    local_trajectory_builder_.AddOdometryData(odometry_data);
+    sparse_pose_graph_->AddOdometryData(trajectory_id_, odometry_data);
   }
 
   void AddSensorData(
