@@ -57,11 +57,11 @@ class SparsePoseGraph {
     SubmapId submap_id;  // 'i' in the paper.
     NodeId node_id;      // 'j' in the paper.
 
-    // Pose of the scan 'j' relative to submap 'i'.
+    // Pose of the node 'j' relative to submap 'i'.
     Pose pose;
 
-    // Differentiates between intra-submap (where scan 'j' was inserted into
-    // submap 'i') and inter-submap constraints (where scan 'j' was not inserted
+    // Differentiates between intra-submap (where node 'j' was inserted into
+    // submap 'i') and inter-submap constraints (where node 'j' was not inserted
     // into submap 'i').
     enum Tag { INTRA_SUBMAP, INTER_SUBMAP } tag;
   };

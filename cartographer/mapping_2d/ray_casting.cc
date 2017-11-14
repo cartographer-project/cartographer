@@ -196,7 +196,7 @@ void CastRays(const sensor::RangeData& range_data,
     CastRay(begin, end, miss_table, probability_grid);
   }
 
-  // Finally, compute and add empty rays based on misses in the scan.
+  // Finally, compute and add empty rays based on misses in the range data.
   for (const Eigen::Vector3f& missing_echo : range_data.misses) {
     CastRay(begin, superscaled_limits.GetCellIndex(missing_echo.head<2>()),
             miss_table, probability_grid);

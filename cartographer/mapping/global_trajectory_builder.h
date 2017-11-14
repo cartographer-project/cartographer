@@ -57,7 +57,7 @@ class GlobalTrajectoryBuilder
     std::unique_ptr<mapping::NodeId> node_id;
     if (matching_result->insertion_result != nullptr) {
       node_id = ::cartographer::common::make_unique<mapping::NodeId>(
-          sparse_pose_graph_->AddScan(
+          sparse_pose_graph_->AddNode(
               matching_result->insertion_result->constant_data, trajectory_id_,
               matching_result->insertion_result->insertion_submaps));
       CHECK_EQ(node_id->trajectory_id, trajectory_id_);

@@ -38,8 +38,8 @@ class SpaCostFunction {
 
   explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
 
-  // Computes the error between the scan-to-submap alignment 'zbar_ij' and the
-  // difference of submap pose 'c_i' and scan pose 'c_j' which are both in an
+  // Computes the error between the node-to-submap alignment 'zbar_ij' and the
+  // difference of submap pose 'c_i' and node pose 'c_j' which are both in an
   // arbitrary common frame.
   template <typename T>
   static std::array<T, 6> ComputeUnscaledError(

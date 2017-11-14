@@ -97,7 +97,7 @@ std::vector<mapping::SubmapId> SparsePoseGraph::InitializeGlobalSubmapPoses(
   return {front_submap_id, last_submap_id};
 }
 
-mapping::NodeId SparsePoseGraph::AddScan(
+mapping::NodeId SparsePoseGraph::AddNode(
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
     const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap>>& insertion_submaps) {
@@ -125,7 +125,7 @@ mapping::NodeId SparsePoseGraph::AddScan(
   // execute the lambda.
   const bool newly_finished_submap = insertion_submaps.front()->finished();
   AddWorkItem([=]() REQUIRES(mutex_) {
-    ComputeConstraintsForScan(node_id, insertion_submaps,
+    ComputeConstraintsForNode(node_id, insertion_submaps,
                               newly_finished_submap);
   });
   return node_id;
@@ -197,17 +197,17 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
             trajectory_nodes_.at(submap_node_id).global_pose});
   }
 
-  const common::Time scan_time = GetLatestScanTime(node_id, submap_id);
+  const common::Time node_time = GetLatestNodeTime(node_id, submap_id);
   const common::Time last_connection_time =
       trajectory_connectivity_state_.LastConnectionTime(
           node_id.trajectory_id, submap_id.trajectory_id);
   if (node_id.trajectory_id == submap_id.trajectory_id ||
-      scan_time <
+      node_time <
           last_connection_time +
               common::FromSeconds(
                   options_.global_constraint_search_after_n_seconds())) {
-    // If the scan and the submap belong to the same trajectory or if there has
-    // been a recent global constraint that ties that scan's trajectory to the
+    // If the node and the submap belong to the same trajectory or if there has
+    // been a recent global constraint that ties that node's trajectory to the
     // submap's trajectory, it suffices to do a match constrained to a local
     // search window.
     constraint_builder_.MaybeAddConstraint(
@@ -227,7 +227,7 @@ void SparsePoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
   }
 }
 
-void SparsePoseGraph::ComputeConstraintsForOldScans(
+void SparsePoseGraph::ComputeConstraintsForOldNodes(
     const mapping::SubmapId& submap_id) {
   const auto& submap_data = submap_data_.at(submap_id);
   for (const auto& node_id_data : optimization_problem_.node_data()) {
@@ -238,7 +238,7 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
   }
 }
 
-void SparsePoseGraph::ComputeConstraintsForScan(
+void SparsePoseGraph::ComputeConstraintsForNode(
     const mapping::NodeId& node_id,
     std::vector<std::shared_ptr<const Submap>> insertion_submaps,
     const bool newly_finished_submap) {
@@ -255,7 +255,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       matching_id.trajectory_id, constant_data->time, local_pose, global_pose);
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const mapping::SubmapId submap_id = submap_ids[i];
-    // Even if this was the last scan added to 'submap_id', the submap will only
+    // Even if this was the last node added to 'submap_id', the submap will only
     // be marked as finished in 'submap_data_' further below.
     CHECK(submap_data_.at(submap_id).state == SubmapState::kActive);
     submap_data_.at(submap_id).node_ids.emplace(node_id);
@@ -282,13 +282,13 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     CHECK(finished_submap_data.state == SubmapState::kActive);
     finished_submap_data.state = SubmapState::kFinished;
     // We have a new completed submap, so we look into adding constraints for
-    // old scans.
-    ComputeConstraintsForOldScans(finished_submap_id);
+    // old nodes.
+    ComputeConstraintsForOldNodes(finished_submap_id);
   }
-  constraint_builder_.NotifyEndOfScan();
-  ++num_scans_since_last_loop_closure_;
+  constraint_builder_.NotifyEndOfNode();
+  ++num_nodes_since_last_loop_closure_;
   if (options_.optimize_every_n_scans() > 0 &&
-      num_scans_since_last_loop_closure_ > options_.optimize_every_n_scans()) {
+      num_nodes_since_last_loop_closure_ > options_.optimize_every_n_scans()) {
     CHECK(!run_loop_closure_);
     run_loop_closure_ = true;
     // If there is a 'work_queue_' already, some other thread will take care.
@@ -299,7 +299,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   }
 }
 
-common::Time SparsePoseGraph::GetLatestScanTime(
+common::Time SparsePoseGraph::GetLatestNodeTime(
     const mapping::NodeId& node_id, const mapping::SubmapId& submap_id) const {
   common::Time time = trajectory_nodes_.at(node_id).constant_data->time;
   const SubmapData& submap_data = submap_data_.at(submap_id);
@@ -316,7 +316,7 @@ void SparsePoseGraph::UpdateTrajectoryConnectivity(
     const Constraint& constraint) {
   CHECK_EQ(constraint.tag, mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
   const common::Time time =
-      GetLatestScanTime(constraint.node_id, constraint.submap_id);
+      GetLatestNodeTime(constraint.node_id, constraint.submap_id);
   trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
                                          constraint.submap_id.trajectory_id,
                                          time);
@@ -340,7 +340,7 @@ void SparsePoseGraph::HandleWorkQueue() {
           trimmer->Trim(&trimming_handle);
         }
 
-        num_scans_since_last_loop_closure_ = 0;
+        num_nodes_since_last_loop_closure_ = 0;
         run_loop_closure_ = false;
         while (!run_loop_closure_) {
           if (work_queue_->empty()) {
@@ -359,20 +359,20 @@ void SparsePoseGraph::HandleWorkQueue() {
 void SparsePoseGraph::WaitForAllComputations() {
   bool notification = false;
   common::MutexLocker locker(&mutex_);
-  const int num_finished_scans_at_start =
-      constraint_builder_.GetNumFinishedScans();
+  const int num_finished_nodes_at_start =
+      constraint_builder_.GetNumFinishedNodes();
   while (!locker.AwaitWithTimeout(
       [this]() REQUIRES(mutex_) {
-        return constraint_builder_.GetNumFinishedScans() ==
+        return constraint_builder_.GetNumFinishedNodes() ==
                num_trajectory_nodes_;
       },
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
                   << 100. *
-                         (constraint_builder_.GetNumFinishedScans() -
-                          num_finished_scans_at_start) /
-                         (num_trajectory_nodes_ - num_finished_scans_at_start)
+                         (constraint_builder_.GetNumFinishedNodes() -
+                          num_finished_nodes_at_start) /
+                         (num_trajectory_nodes_ - num_finished_nodes_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }

@@ -103,7 +103,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
       });
 }
 
-void ConstraintBuilder::NotifyEndOfScan() {
+void ConstraintBuilder::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
   ++current_computation_;
 }
@@ -176,9 +176,9 @@ void ConstraintBuilder::ComputeConstraint(
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_id);
 
-  // The 'constraint_transform' (submap i <- scan j) is computed from:
-  // - a 'high_resolution_point_cloud' in scan j and
-  // - the initial guess 'initial_pose' (submap i <- scan j).
+  // The 'constraint_transform' (submap i <- node j) is computed from:
+  // - a 'high_resolution_point_cloud' in node j and
+  // - the initial guess 'initial_pose' (submap i <- node j).
   std::unique_ptr<scan_matching::FastCorrelativeScanMatcher::Result>
       match_result;
 
@@ -294,7 +294,7 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
   }
 }
 
-int ConstraintBuilder::GetNumFinishedScans() {
+int ConstraintBuilder::GetNumFinishedNodes() {
   common::MutexLocker locker(&mutex_);
   if (pending_computations_.empty()) {
     return current_computation_;

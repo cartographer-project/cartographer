@@ -100,14 +100,14 @@ class ConstraintBuilder {
       const Eigen::Quaterniond& global_submap_rotation);
 
   // Must be called after all computations related to one node have been added.
-  void NotifyEndOfScan();
+  void NotifyEndOfNode();
 
   // Registers the 'callback' to be called with the results, after all
   // computations triggered by MaybeAddConstraint() have finished.
   void WhenDone(const std::function<void(const Result&)>& callback);
 
-  // Returns the number of consecutive finished scans.
-  int GetNumFinishedScans();
+  // Returns the number of consecutive finished nodes.
+  int GetNumFinishedNodes();
 
   // Delete data related to 'submap_id'.
   void DeleteScanMatcher(const mapping::SubmapId& submap_id);
@@ -161,12 +161,12 @@ class ConstraintBuilder {
   std::unique_ptr<std::function<void(const Result&)>> when_done_
       GUARDED_BY(mutex_);
 
-  // Index of the scan in reaction to which computations are currently
-  // added. This is always the highest scan index seen so far, even when older
-  // scans are matched against a new submap.
+  // Index of the node in reaction to which computations are currently
+  // added. This is always the highest node index seen so far, even when older
+  // nodes are matched against a new submap.
   int current_computation_ GUARDED_BY(mutex_) = 0;
 
-  // For each added scan, maps to the number of pending computations that were
+  // For each added node, maps to the number of pending computations that were
   // added for it.
   std::map<int, int> pending_computations_ GUARDED_BY(mutex_);
 

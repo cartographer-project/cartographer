@@ -40,7 +40,7 @@ MotionFilter::MotionFilter(const proto::MotionFilterOptions& options)
 bool MotionFilter::IsSimilar(const common::Time time,
                              const transform::Rigid3d& pose) {
   LOG_IF_EVERY_N(INFO, num_total_ >= 500, 500)
-      << "Motion filter reduced the number of scans to "
+      << "Motion filter reduced the number of nodes to "
       << 100. * num_different_ / num_total_ << "%.";
   ++num_total_;
   if (num_total_ > 1 &&

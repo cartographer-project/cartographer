@@ -327,7 +327,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   }
 
   if (fix_z_ == FixZ::kYes) {
-    // Add penalties for violating odometry or changes between consecutive scans
+    // Add penalties for violating odometry or changes between consecutive nodes
     // if odometry is not available.
     for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
       const int trajectory_id = node_it->id.trajectory_id;
