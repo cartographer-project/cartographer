@@ -318,7 +318,7 @@ void SparsePoseGraph::HandleWorkQueue() {
         RunOptimization();
 
         common::MutexLocker locker(&mutex_);
-        for (const auto& constraint : result) {
+        for (const Constraint& constraint : result) {
           UpdateTrajectoryConnectivity(constraint);
         }
         TrimmingHandle trimming_handle(this);

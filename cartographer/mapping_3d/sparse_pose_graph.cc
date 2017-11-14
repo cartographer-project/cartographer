@@ -320,7 +320,7 @@ void SparsePoseGraph::UpdateTrajectoryConnectivity(
   trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
                                          constraint.submap_id.trajectory_id,
                                          time);
-  }
+}
 
 void SparsePoseGraph::HandleWorkQueue() {
   constraint_builder_.WhenDone(
@@ -332,7 +332,7 @@ void SparsePoseGraph::HandleWorkQueue() {
         RunOptimization();
 
         common::MutexLocker locker(&mutex_);
-        for (const auto& constraint : result) {
+        for (const Constraint& constraint : result) {
           UpdateTrajectoryConnectivity(constraint);
         }
         TrimmingHandle trimming_handle(this);

@@ -187,7 +187,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   // poses.
   void LogResidualHistograms() REQUIRES(mutex_);
 
-  // Updates the trajectory connectivity structure with the new constraints.
+  // Updates the trajectory connectivity structure with a new constraint.
   void UpdateTrajectoryConnectivity(const Constraint& constraint)
       REQUIRES(mutex_);
 
