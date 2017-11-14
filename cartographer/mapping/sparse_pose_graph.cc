@@ -16,8 +16,8 @@
 
 #include "cartographer/mapping/sparse_pose_graph.h"
 
-#include "cartographer/mapping/sparse_pose_graph/constraint_builder.h"
-#include "cartographer/mapping/sparse_pose_graph/optimization_problem_options.h"
+#include "cartographer/mapping/pose_graph/constraint_builder.h"
+#include "cartographer/mapping/pose_graph/optimization_problem_options.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -77,14 +77,14 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   options.set_optimize_every_n_scans(
       parameter_dictionary->GetInt("optimize_every_n_scans"));
   *options.mutable_constraint_builder_options() =
-      sparse_pose_graph::CreateConstraintBuilderOptions(
+      pose_graph::CreateConstraintBuilderOptions(
           parameter_dictionary->GetDictionary("constraint_builder").get());
   options.set_matcher_translation_weight(
       parameter_dictionary->GetDouble("matcher_translation_weight"));
   options.set_matcher_rotation_weight(
       parameter_dictionary->GetDouble("matcher_rotation_weight"));
   *options.mutable_optimization_problem_options() =
-      sparse_pose_graph::CreateOptimizationProblemOptions(
+      pose_graph::CreateOptimizationProblemOptions(
           parameter_dictionary->GetDictionary("optimization_problem").get());
   options.set_max_num_final_iterations(
       parameter_dictionary->GetNonNegativeInt("max_num_final_iterations"));

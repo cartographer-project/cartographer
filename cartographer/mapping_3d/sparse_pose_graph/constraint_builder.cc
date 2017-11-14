@@ -39,7 +39,7 @@ namespace mapping_3d {
 namespace sparse_pose_graph {
 
 ConstraintBuilder::ConstraintBuilder(
-    const mapping::sparse_pose_graph::proto::ConstraintBuilderOptions& options,
+    const mapping::pose_graph::proto::ConstraintBuilderOptions& options,
     common::ThreadPool* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),

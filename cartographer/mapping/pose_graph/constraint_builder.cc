@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/sparse_pose_graph/constraint_builder.h"
+#include "cartographer/mapping/pose_graph/constraint_builder.h"
 
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
@@ -24,7 +24,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace sparse_pose_graph {
+namespace pose_graph {
 
 proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
@@ -58,6 +58,6 @@ proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
   return options;
 }
 
-}  // namespace sparse_pose_graph
+}  // namespace pose_graph
 }  // namespace mapping
 }  // namespace cartographer

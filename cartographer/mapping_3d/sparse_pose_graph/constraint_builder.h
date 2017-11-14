@@ -58,8 +58,7 @@ class ConstraintBuilder {
   using Result = std::vector<Constraint>;
 
   ConstraintBuilder(
-      const mapping::sparse_pose_graph::proto::ConstraintBuilderOptions&
-          options,
+      const mapping::pose_graph::proto::ConstraintBuilderOptions& options,
       common::ThreadPool* thread_pool);
   ~ConstraintBuilder();
 
@@ -153,7 +152,7 @@ class ConstraintBuilder {
   // runs the 'when_done_' callback and resets the state.
   void FinishComputation(int computation_index) EXCLUDES(mutex_);
 
-  const mapping::sparse_pose_graph::proto::ConstraintBuilderOptions options_;
+  const mapping::pose_graph::proto::ConstraintBuilderOptions options_;
   common::ThreadPool* thread_pool_;
   common::Mutex mutex_;
 

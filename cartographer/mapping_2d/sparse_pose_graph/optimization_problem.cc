@@ -55,8 +55,7 @@ transform::Rigid2d ToPose(const std::array<double, 3>& values) {
 }  // namespace
 
 OptimizationProblem::OptimizationProblem(
-    const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
-        options)
+    const mapping::pose_graph::proto::OptimizationProblemOptions& options)
     : options_(options) {}
 
 OptimizationProblem::~OptimizationProblem() {}
