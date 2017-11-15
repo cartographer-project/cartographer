@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_SPARSE_POSE_GRAPH_H_
-#define CARTOGRAPHER_MAPPING_3D_SPARSE_POSE_GRAPH_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_H_
+#define CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_H_
 
 #include <deque>
 #include <functional>
@@ -56,14 +56,14 @@ namespace mapping_3d {
 // Each node has been matched against one or more submaps (adding a constraint
 // for each match), both poses of nodes and of submaps are to be optimized.
 // All constraints are between a submap i and a node j.
-class SparsePoseGraph : public mapping::PoseGraph {
+class PoseGraph : public mapping::PoseGraph {
  public:
-  SparsePoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
-                  common::ThreadPool* thread_pool);
-  ~SparsePoseGraph() override;
+  PoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
+            common::ThreadPool* thread_pool);
+  ~PoseGraph() override;
 
-  SparsePoseGraph(const SparsePoseGraph&) = delete;
-  SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
+  PoseGraph(const PoseGraph&) = delete;
+  PoseGraph& operator=(const PoseGraph&) = delete;
 
   // Adds a new node with 'constant_data'. Its 'constant_data->local_pose' was
   // determined by scan matching against 'insertion_submaps.front()' and the
@@ -249,7 +249,7 @@ class SparsePoseGraph : public mapping::PoseGraph {
   // 'mutex_' of the pose graph is held while this class is used.
   class TrimmingHandle : public mapping::Trimmable {
    public:
-    TrimmingHandle(SparsePoseGraph* parent);
+    TrimmingHandle(PoseGraph* parent);
     ~TrimmingHandle() override {}
 
     int num_submaps(int trajectory_id) const override;
@@ -257,11 +257,11 @@ class SparsePoseGraph : public mapping::PoseGraph {
         REQUIRES(parent_->mutex_) override;
 
    private:
-    SparsePoseGraph* const parent_;
+    PoseGraph* const parent_;
   };
 };
 
 }  // namespace mapping_3d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_SPARSE_POSE_GRAPH_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_H_

@@ -60,14 +60,14 @@ MapBuilder::MapBuilder(
       thread_pool_(options.num_background_threads()),
       local_slam_result_callback_(local_slam_result_callback) {
   if (options.use_trajectory_builder_2d()) {
-    sparse_pose_graph_2d_ = common::make_unique<mapping_2d::SparsePoseGraph>(
+    pose_graph_2d_ = common::make_unique<mapping_2d::PoseGraph>(
         options_.sparse_pose_graph_options(), &thread_pool_);
-    pose_graph_ = sparse_pose_graph_2d_.get();
+    pose_graph_ = pose_graph_2d_.get();
   }
   if (options.use_trajectory_builder_3d()) {
-    sparse_pose_graph_3d_ = common::make_unique<mapping_3d::SparsePoseGraph>(
+    pose_graph_3d_ = common::make_unique<mapping_3d::PoseGraph>(
         options_.sparse_pose_graph_options(), &thread_pool_);
-    pose_graph_ = sparse_pose_graph_3d_.get();
+    pose_graph_ = pose_graph_3d_.get();
   }
 }
 
@@ -85,9 +85,9 @@ int MapBuilder::AddTrajectoryBuilder(
             common::make_unique<mapping::GlobalTrajectoryBuilder<
                 mapping_3d::LocalTrajectoryBuilder,
                 mapping_3d::proto::LocalTrajectoryBuilderOptions,
-                mapping_3d::SparsePoseGraph>>(
+                mapping_3d::PoseGraph>>(
                 trajectory_options.trajectory_builder_3d_options(),
-                trajectory_id, sparse_pose_graph_3d_.get(),
+                trajectory_id, pose_graph_3d_.get(),
                 local_slam_result_callback_)));
   } else {
     CHECK(trajectory_options.has_trajectory_builder_2d_options());
@@ -97,9 +97,9 @@ int MapBuilder::AddTrajectoryBuilder(
             common::make_unique<mapping::GlobalTrajectoryBuilder<
                 mapping_2d::LocalTrajectoryBuilder,
                 mapping_2d::proto::LocalTrajectoryBuilderOptions,
-                mapping_2d::SparsePoseGraph>>(
+                mapping_2d::PoseGraph>>(
                 trajectory_options.trajectory_builder_2d_options(),
-                trajectory_id, sparse_pose_graph_2d_.get(),
+                trajectory_id, pose_graph_2d_.get(),
                 local_slam_result_callback_)));
   }
   if (trajectory_options.pure_localization()) {

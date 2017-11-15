@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/sparse_pose_graph.h"
+#include "cartographer/mapping_2d/pose_graph.h"
 
 #include <cmath>
 #include <memory>
@@ -35,9 +35,9 @@ namespace cartographer {
 namespace mapping_2d {
 namespace {
 
-class SparsePoseGraphTest : public ::testing::Test {
+class PoseGraphTest : public ::testing::Test {
  protected:
-  SparsePoseGraphTest() : thread_pool_(1) {
+  PoseGraphTest() : thread_pool_(1) {
     // Builds a wavy, irregularly circular point cloud that is unique
     // rotationally. This gives us good rotational texture and avoids any
     // possibility of the CeresScanMatcher preferring free space (>
@@ -132,7 +132,7 @@ class SparsePoseGraphTest : public ::testing::Test {
             log_residual_histograms = true,
             global_constraint_search_after_n_seconds = 10.0,
           })text");
-      sparse_pose_graph_ = common::make_unique<SparsePoseGraph>(
+      pose_graph_ = common::make_unique<PoseGraph>(
           mapping::CreateSparsePoseGraphOptions(parameter_dictionary.get()),
           &thread_pool_);
     }
@@ -157,7 +157,7 @@ class SparsePoseGraphTest : public ::testing::Test {
     active_submaps_->InsertRangeData(TransformRangeData(
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
 
-    sparse_pose_graph_->AddNode(
+    pose_graph_->AddNode(
         std::make_shared<const mapping::TrajectoryNode::Data>(
             mapping::TrajectoryNode::Data{common::FromUniversal(0),
                                           Eigen::Quaterniond::Identity(),
@@ -181,22 +181,22 @@ class SparsePoseGraphTest : public ::testing::Test {
   sensor::PointCloud point_cloud_;
   std::unique_ptr<ActiveSubmaps> active_submaps_;
   common::ThreadPool thread_pool_;
-  std::unique_ptr<SparsePoseGraph> sparse_pose_graph_;
+  std::unique_ptr<PoseGraph> pose_graph_;
   transform::Rigid2d current_pose_;
 };
 
-TEST_F(SparsePoseGraphTest, EmptyMap) {
-  sparse_pose_graph_->RunFinalOptimization();
-  const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+TEST_F(PoseGraphTest, EmptyMap) {
+  pose_graph_->RunFinalOptimization();
+  const auto nodes = pose_graph_->GetTrajectoryNodes();
   EXPECT_TRUE(nodes.empty());
 }
 
-TEST_F(SparsePoseGraphTest, NoMovement) {
+TEST_F(PoseGraphTest, NoMovement) {
   MoveRelative(transform::Rigid2d::Identity());
   MoveRelative(transform::Rigid2d::Identity());
   MoveRelative(transform::Rigid2d::Identity());
-  sparse_pose_graph_->RunFinalOptimization();
-  const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+  pose_graph_->RunFinalOptimization();
+  const auto nodes = pose_graph_->GetTrajectoryNodes();
   ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
               ::testing::ContainerEq(std::vector<int>{0}));
   EXPECT_THAT(nodes.SizeOfTrajectoryOrZero(0), ::testing::Eq(3u));
@@ -208,7 +208,7 @@ TEST_F(SparsePoseGraphTest, NoMovement) {
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
 }
 
-TEST_F(SparsePoseGraphTest, NoOverlappingNodes) {
+TEST_F(PoseGraphTest, NoOverlappingNodes) {
   std::mt19937 rng(0);
   std::uniform_real_distribution<double> distribution(-1., 1.);
   std::vector<transform::Rigid2d> poses;
@@ -216,8 +216,8 @@ TEST_F(SparsePoseGraphTest, NoOverlappingNodes) {
     MoveRelative(transform::Rigid2d({0.25 * distribution(rng), 5.}, 0.));
     poses.emplace_back(current_pose_);
   }
-  sparse_pose_graph_->RunFinalOptimization();
-  const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+  pose_graph_->RunFinalOptimization();
+  const auto nodes = pose_graph_->GetTrajectoryNodes();
   ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
               ::testing::ContainerEq(std::vector<int>{0}));
   for (int i = 0; i != 4; ++i) {
@@ -229,7 +229,7 @@ TEST_F(SparsePoseGraphTest, NoOverlappingNodes) {
   }
 }
 
-TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingNodes) {
+TEST_F(PoseGraphTest, ConsecutivelyOverlappingNodes) {
   std::mt19937 rng(0);
   std::uniform_real_distribution<double> distribution(-1., 1.);
   std::vector<transform::Rigid2d> poses;
@@ -237,8 +237,8 @@ TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingNodes) {
     MoveRelative(transform::Rigid2d({0.25 * distribution(rng), 2.}, 0.));
     poses.emplace_back(current_pose_);
   }
-  sparse_pose_graph_->RunFinalOptimization();
-  const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+  pose_graph_->RunFinalOptimization();
+  const auto nodes = pose_graph_->GetTrajectoryNodes();
   ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
               ::testing::ContainerEq(std::vector<int>{0}));
   for (int i = 0; i != 5; ++i) {
@@ -250,7 +250,7 @@ TEST_F(SparsePoseGraphTest, ConsecutivelyOverlappingNodes) {
   }
 }
 
-TEST_F(SparsePoseGraphTest, OverlappingNodes) {
+TEST_F(PoseGraphTest, OverlappingNodes) {
   std::mt19937 rng(0);
   std::uniform_real_distribution<double> distribution(-1., 1.);
   std::vector<transform::Rigid2d> ground_truth;
@@ -265,8 +265,8 @@ TEST_F(SparsePoseGraphTest, OverlappingNodes) {
     ground_truth.emplace_back(current_pose_);
     poses.emplace_back(noise * current_pose_);
   }
-  sparse_pose_graph_->RunFinalOptimization();
-  const auto nodes = sparse_pose_graph_->GetTrajectoryNodes();
+  pose_graph_->RunFinalOptimization();
+  const auto nodes = pose_graph_->GetTrajectoryNodes();
   ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
               ::testing::ContainerEq(std::vector<int>{0}));
   transform::Rigid2d true_movement =
