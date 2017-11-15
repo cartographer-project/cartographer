@@ -29,10 +29,10 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/io/proto_stream.h"
 #include "cartographer/mapping/id.h"
+#include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
-#include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
 #include "cartographer/mapping_2d/sparse_pose_graph.h"
@@ -46,7 +46,7 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
 // Wires up the complete SLAM stack with TrajectoryBuilders (for local submaps)
-// and a SparsePoseGraph for loop closure.
+// and a PoseGraph for loop closure.
 class MapBuilder {
  public:
   using LocalSlamResultCallback =
@@ -95,7 +95,7 @@ class MapBuilder {
 
   int num_trajectory_builders() const;
 
-  mapping::SparsePoseGraph* sparse_pose_graph();
+  mapping::PoseGraph* pose_graph();
 
  private:
   const proto::MapBuilderOptions options_;
@@ -103,7 +103,7 @@ class MapBuilder {
 
   std::unique_ptr<mapping_2d::SparsePoseGraph> sparse_pose_graph_2d_;
   std::unique_ptr<mapping_3d::SparsePoseGraph> sparse_pose_graph_3d_;
-  mapping::SparsePoseGraph* sparse_pose_graph_;
+  mapping::PoseGraph* pose_graph_;
 
   LocalSlamResultCallback local_slam_result_callback_;
 

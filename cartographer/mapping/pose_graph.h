@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
-#define CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
+#ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_H_
+#define CARTOGRAPHER_MAPPING_POSE_GRAPH_H_
 
 #include <memory>
 #include <set>
@@ -42,7 +42,7 @@ namespace mapping {
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
-class SparsePoseGraph {
+class PoseGraph {
  public:
   // A "constraint" as in the paper by Konolige, Kurt, et al. "Efficient sparse
   // pose adjustment for 2d mapping." Intelligent Robots and Systems (IROS),
@@ -77,11 +77,11 @@ class SparsePoseGraph {
     common::Time time;
   };
 
-  SparsePoseGraph() {}
-  virtual ~SparsePoseGraph() {}
+  PoseGraph() {}
+  virtual ~PoseGraph() {}
 
-  SparsePoseGraph(const SparsePoseGraph&) = delete;
-  SparsePoseGraph& operator=(const SparsePoseGraph&) = delete;
+  PoseGraph(const PoseGraph&) = delete;
+  PoseGraph& operator=(const PoseGraph&) = delete;
 
   // Inserts an IMU measurement.
   virtual void AddImuData(int trajectory_id,
@@ -163,7 +163,7 @@ class SparsePoseGraph {
                                         const common::Time time) = 0;
 };
 
-std::vector<SparsePoseGraph::Constraint> FromProto(
+std::vector<PoseGraph::Constraint> FromProto(
     const ::google::protobuf::RepeatedPtrField<
         ::cartographer::mapping::proto::SparsePoseGraph::Constraint>&
         constraint_protos);
@@ -171,4 +171,4 @@ std::vector<SparsePoseGraph::Constraint> FromProto(
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_H_
+#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_H_

@@ -25,16 +25,16 @@ namespace cartographer {
 namespace mapping {
 
 template <typename LocalTrajectoryBuilder,
-          typename LocalTrajectoryBuilderOptions, typename SparsePoseGraph>
+          typename LocalTrajectoryBuilderOptions, typename PoseGraph>
 class GlobalTrajectoryBuilder
     : public mapping::GlobalTrajectoryBuilderInterface {
  public:
   GlobalTrajectoryBuilder(
       const LocalTrajectoryBuilderOptions& options, const int trajectory_id,
-      SparsePoseGraph* const sparse_pose_graph,
+      PoseGraph* const pose_graph,
       const LocalSlamResultCallback& local_slam_result_callback)
       : trajectory_id_(trajectory_id),
-        sparse_pose_graph_(sparse_pose_graph),
+        pose_graph_(pose_graph),
         local_trajectory_builder_(options),
         local_slam_result_callback_(local_slam_result_callback) {}
   ~GlobalTrajectoryBuilder() override {}
@@ -59,7 +59,7 @@ class GlobalTrajectoryBuilder
     std::unique_ptr<mapping::NodeId> node_id;
     if (matching_result->insertion_result != nullptr) {
       node_id = ::cartographer::common::make_unique<mapping::NodeId>(
-          sparse_pose_graph_->AddNode(
+          pose_graph_->AddNode(
               matching_result->insertion_result->constant_data, trajectory_id_,
               matching_result->insertion_result->insertion_submaps));
       CHECK_EQ(node_id->trajectory_id, trajectory_id_);
@@ -73,24 +73,24 @@ class GlobalTrajectoryBuilder
 
   void AddSensorData(const sensor::ImuData& imu_data) override {
     local_trajectory_builder_.AddImuData(imu_data);
-    sparse_pose_graph_->AddImuData(trajectory_id_, imu_data);
+    pose_graph_->AddImuData(trajectory_id_, imu_data);
   }
 
   void AddSensorData(const sensor::OdometryData& odometry_data) override {
     CHECK(odometry_data.pose.IsValid()) << odometry_data.pose;
     local_trajectory_builder_.AddOdometryData(odometry_data);
-    sparse_pose_graph_->AddOdometryData(trajectory_id_, odometry_data);
+    pose_graph_->AddOdometryData(trajectory_id_, odometry_data);
   }
 
   void AddSensorData(
       const sensor::FixedFramePoseData& fixed_frame_pose) override {
     CHECK(fixed_frame_pose.pose.IsValid()) << fixed_frame_pose.pose;
-    sparse_pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);
+    pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);
   }
 
  private:
   const int trajectory_id_;
-  SparsePoseGraph* const sparse_pose_graph_;
+  PoseGraph* const pose_graph_;
   LocalTrajectoryBuilder local_trajectory_builder_;
   LocalSlamResultCallback local_slam_result_callback_;
 };
