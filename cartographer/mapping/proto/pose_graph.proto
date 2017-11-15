@@ -29,7 +29,7 @@ message NodeId {
   int32 node_index = 2;  // Node index in the given trajectory.
 }
 
-message SparsePoseGraph {
+message PoseGraph {
   message Constraint {
     // Differentiates between intra-submap (where the range data was inserted
     // into the submap) and inter-submap constraints (where the range data was

@@ -24,23 +24,23 @@
 namespace cartographer {
 namespace mapping {
 
-proto::SparsePoseGraph::Constraint::Tag ToProto(
+proto::PoseGraph::Constraint::Tag ToProto(
     const PoseGraph::Constraint::Tag& tag) {
   switch (tag) {
     case PoseGraph::Constraint::Tag::INTRA_SUBMAP:
-      return proto::SparsePoseGraph::Constraint::INTRA_SUBMAP;
+      return proto::PoseGraph::Constraint::INTRA_SUBMAP;
     case PoseGraph::Constraint::Tag::INTER_SUBMAP:
-      return proto::SparsePoseGraph::Constraint::INTER_SUBMAP;
+      return proto::PoseGraph::Constraint::INTER_SUBMAP;
   }
   LOG(FATAL) << "Unsupported tag.";
 }
 
 PoseGraph::Constraint::Tag FromProto(
-    const proto::SparsePoseGraph::Constraint::Tag& proto) {
+    const proto::PoseGraph::Constraint::Tag& proto) {
   switch (proto) {
-    case proto::SparsePoseGraph::Constraint::INTRA_SUBMAP:
+    case proto::PoseGraph::Constraint::INTRA_SUBMAP:
       return PoseGraph::Constraint::Tag::INTRA_SUBMAP;
-    case proto::SparsePoseGraph::Constraint::INTER_SUBMAP:
+    case proto::PoseGraph::Constraint::INTER_SUBMAP:
       return PoseGraph::Constraint::Tag::INTER_SUBMAP;
     case ::google::protobuf::kint32max:
     case ::google::protobuf::kint32min:;
@@ -49,8 +49,8 @@ PoseGraph::Constraint::Tag FromProto(
 }
 
 std::vector<PoseGraph::Constraint> FromProto(
-    const ::google::protobuf::RepeatedPtrField<
-        proto::SparsePoseGraph::Constraint>& constraint_protos) {
+    const ::google::protobuf::RepeatedPtrField<proto::PoseGraph::Constraint>&
+        constraint_protos) {
   std::vector<PoseGraph::Constraint> constraints;
   for (const auto& constraint_proto : constraint_protos) {
     const mapping::SubmapId submap_id{
@@ -96,8 +96,8 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   return options;
 }
 
-proto::SparsePoseGraph PoseGraph::ToProto() {
-  proto::SparsePoseGraph proto;
+proto::PoseGraph PoseGraph::ToProto() {
+  proto::PoseGraph proto;
 
   std::map<int, proto::Trajectory* const> trajectory_protos;
   const auto trajectory = [&proto, &trajectory_protos](

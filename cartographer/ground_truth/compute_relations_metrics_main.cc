@@ -28,7 +28,7 @@
 #include "cartographer/ground_truth/proto/relations.pb.h"
 #include "cartographer/ground_truth/relations_text_file.h"
 #include "cartographer/io/proto_stream.h"
-#include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
+#include "cartographer/mapping/proto/pose_graph.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "cartographer/transform/transform_interpolation_buffer.h"
@@ -113,7 +113,7 @@ void Run(const std::string& pose_graph_filename,
          const std::string& relations_filename,
          const bool read_text_file_with_unix_timestamps) {
   LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";
-  mapping::proto::SparsePoseGraph pose_graph;
+  mapping::proto::PoseGraph pose_graph;
   {
     io::ProtoStreamReader reader(pose_graph_filename);
     CHECK(reader.ReadProto(&pose_graph));

@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package cartographer.mapping.proto;
 
-import "cartographer/mapping/proto/sparse_pose_graph.proto";
+import "cartographer/mapping/proto/pose_graph.proto";
 import "cartographer/mapping/proto/submap.proto";
 import "cartographer/mapping/proto/trajectory_node_data.proto";
 import "cartographer/sensor/proto/sensor.proto";

@@ -219,7 +219,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
 }
 
 void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
-  proto::SparsePoseGraph pose_graph;
+  proto::PoseGraph pose_graph;
   CHECK(reader->ReadProto(&pose_graph));
 
   std::map<int, int> trajectory_remapping;
@@ -278,10 +278,10 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   }
 
   // Add information about which nodes belong to which submap.
-  for (const proto::SparsePoseGraph::Constraint& constraint_proto :
+  for (const proto::PoseGraph::Constraint& constraint_proto :
        pose_graph.constraint()) {
     if (constraint_proto.tag() !=
-        mapping::proto::SparsePoseGraph::Constraint::INTRA_SUBMAP) {
+        mapping::proto::PoseGraph::Constraint::INTRA_SUBMAP) {
       continue;
     }
     const NodeId node_id{
