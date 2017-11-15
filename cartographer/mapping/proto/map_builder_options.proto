@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-import "cartographer/mapping/proto/sparse_pose_graph_options.proto";
+import "cartographer/mapping/proto/pose_graph_options.proto";
 
 package cartographer.mapping.proto;
 
@@ -24,5 +24,5 @@ message MapBuilderOptions {
 
   // Number of threads to use for background computations.
   int32 num_background_threads = 3;
-  SparsePoseGraphOptions sparse_pose_graph_options = 4;
+  PoseGraphOptions pose_graph_options = 4;
 }

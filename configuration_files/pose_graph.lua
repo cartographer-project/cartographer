@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-SPARSE_POSE_GRAPH = {
+POSE_GRAPH = {
   optimize_every_n_scans = 90,
   constraint_builder = {
     sampling_ratio = 0.3,

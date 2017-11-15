@@ -133,7 +133,7 @@ class PoseGraphTest : public ::testing::Test {
             global_constraint_search_after_n_seconds = 10.0,
           })text");
       pose_graph_ = common::make_unique<PoseGraph>(
-          mapping::CreateSparsePoseGraphOptions(parameter_dictionary.get()),
+          mapping::CreatePoseGraphOptions(parameter_dictionary.get()),
           &thread_pool_);
     }
 

@@ -39,7 +39,7 @@
 namespace cartographer {
 namespace mapping_2d {
 
-PoseGraph::PoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
+PoseGraph::PoseGraph(const mapping::proto::PoseGraphOptions& options,
                      common::ThreadPool* thread_pool)
     : options_(options),
       optimization_problem_(options_.optimization_problem_options()),
