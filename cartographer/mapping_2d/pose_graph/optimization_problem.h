@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_SPARSE_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_
-#define CARTOGRAPHER_MAPPING_2D_SPARSE_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_
+#define CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_
 
 #include <array>
 #include <deque>
@@ -37,7 +37,7 @@
 
 namespace cartographer {
 namespace mapping_2d {
-namespace sparse_pose_graph {
+namespace pose_graph {
 
 struct NodeData {
   common::Time time;
@@ -106,8 +106,8 @@ class OptimizationProblem {
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
 };
 
-}  // namespace sparse_pose_graph
+}  // namespace pose_graph
 }  // namespace mapping_2d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_SPARSE_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_

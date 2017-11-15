@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_SPARSE_POSE_GRAPH_SPA_COST_FUNCTION_H_
-#define CARTOGRAPHER_MAPPING_2D_SPARSE_POSE_GRAPH_SPA_COST_FUNCTION_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_SPA_COST_FUNCTION_H_
+#define CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_SPA_COST_FUNCTION_H_
 
 #include <array>
 
@@ -30,7 +30,7 @@
 
 namespace cartographer {
 namespace mapping_2d {
-namespace sparse_pose_graph {
+namespace pose_graph {
 
 class SpaCostFunction {
  public:
@@ -81,8 +81,8 @@ class SpaCostFunction {
   const Constraint::Pose pose_;
 };
 
-}  // namespace sparse_pose_graph
+}  // namespace pose_graph
 }  // namespace mapping_2d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_SPARSE_POSE_GRAPH_SPA_COST_FUNCTION_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_SPA_COST_FUNCTION_H_

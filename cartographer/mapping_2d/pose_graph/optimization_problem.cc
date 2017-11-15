@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/sparse_pose_graph/optimization_problem.h"
+#include "cartographer/mapping_2d/pose_graph/optimization_problem.h"
 
 #include <algorithm>
 #include <array>
@@ -27,7 +27,7 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
-#include "cartographer/mapping_2d/sparse_pose_graph/spa_cost_function.h"
+#include "cartographer/mapping_2d/pose_graph/spa_cost_function.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
@@ -35,7 +35,7 @@
 
 namespace cartographer {
 namespace mapping_2d {
-namespace sparse_pose_graph {
+namespace pose_graph {
 
 namespace {
 
@@ -274,6 +274,6 @@ transform::Rigid3d OptimizationProblem::ComputeRelativePose(
                             second_node_data.initial_pose);
 }
 
-}  // namespace sparse_pose_graph
+}  // namespace pose_graph
 }  // namespace mapping_2d
 }  // namespace cartographer
