@@ -35,8 +35,8 @@
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
-#include "cartographer/mapping_2d/sparse_pose_graph.h"
-#include "cartographer/mapping_3d/sparse_pose_graph.h"
+#include "cartographer/mapping_2d/pose_graph.h"
+#include "cartographer/mapping_3d/pose_graph.h"
 #include "cartographer/sensor/collator.h"
 
 namespace cartographer {
@@ -101,8 +101,8 @@ class MapBuilder {
   const proto::MapBuilderOptions options_;
   common::ThreadPool thread_pool_;
 
-  std::unique_ptr<mapping_2d::SparsePoseGraph> sparse_pose_graph_2d_;
-  std::unique_ptr<mapping_3d::SparsePoseGraph> sparse_pose_graph_3d_;
+  std::unique_ptr<mapping_2d::PoseGraph> pose_graph_2d_;
+  std::unique_ptr<mapping_3d::PoseGraph> pose_graph_3d_;
   mapping::PoseGraph* pose_graph_;
 
   LocalSlamResultCallback local_slam_result_callback_;
