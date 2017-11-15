@@ -40,7 +40,8 @@ class XRayPointsProcessor : public PointsProcessor {
   XRayPointsProcessor(
       double voxel_size, const transform::Rigid3f& transform,
       const std::vector<mapping::Floor>& floors,
-      const DrawTrajectories& draw_trajectories, const std::string& output_filename,
+      const DrawTrajectories& draw_trajectories,
+      const std::string& output_filename,
       const std::vector<mapping::proto::Trajectory>& trajectories,
       FileWriterFactory file_writer_factory, PointsProcessor* next);
 

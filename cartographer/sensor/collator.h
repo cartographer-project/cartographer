@@ -31,7 +31,8 @@ namespace sensor {
 
 class Collator {
  public:
-  using Callback = std::function<void(const std::string&, std::unique_ptr<Data>)>;
+  using Callback =
+      std::function<void(const std::string&, std::unique_ptr<Data>)>;
 
   Collator() {}
 

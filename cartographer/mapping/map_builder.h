@@ -85,7 +85,7 @@ class MapBuilder {
   // Fills the SubmapQuery::Response corresponding to 'submap_id'. Returns an
   // error string on failure, or an empty string on success.
   std::string SubmapToProto(const SubmapId& submap_id,
-                       proto::SubmapQuery::Response* response);
+                            proto::SubmapQuery::Response* response);
 
   // Serializes the current state to a proto stream.
   void SerializeState(io::ProtoStreamWriter* writer);

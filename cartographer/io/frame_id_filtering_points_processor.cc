@@ -38,12 +38,14 @@ FrameIdFilteringPointsProcessor::FromDictionary(
   }
   return common::make_unique<FrameIdFilteringPointsProcessor>(
       std::unordered_set<std::string>(keep_frames.begin(), keep_frames.end()),
-      std::unordered_set<std::string>(drop_frames.begin(), drop_frames.end()), next);
+      std::unordered_set<std::string>(drop_frames.begin(), drop_frames.end()),
+      next);
 }
 
 FrameIdFilteringPointsProcessor::FrameIdFilteringPointsProcessor(
     const std::unordered_set<std::string>& keep_frame_ids,
-    const std::unordered_set<std::string>& drop_frame_ids, PointsProcessor* next)
+    const std::unordered_set<std::string>& drop_frame_ids,
+    PointsProcessor* next)
     : keep_frame_ids_(keep_frame_ids),
       drop_frame_ids_(drop_frame_ids),
       next_(next) {

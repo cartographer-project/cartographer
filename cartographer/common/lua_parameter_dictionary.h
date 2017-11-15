@@ -81,7 +81,8 @@ class LuaParameterDictionary {
 
  private:
   enum class ReferenceCount { YES, NO };
-  LuaParameterDictionary(const std::string& code, ReferenceCount reference_count,
+  LuaParameterDictionary(const std::string& code,
+                         ReferenceCount reference_count,
                          std::unique_ptr<FileResolver> file_resolver);
 
   // For GetDictionary().

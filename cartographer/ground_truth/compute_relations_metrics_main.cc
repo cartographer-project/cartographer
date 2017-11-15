@@ -109,7 +109,8 @@ std::string StatisticsString(const std::vector<Error>& errors) {
          MeanAndStdDevString(squared_rotational_errors_degrees) + " deg^2\n";
 }
 
-void Run(const std::string& pose_graph_filename, const std::string& relations_filename,
+void Run(const std::string& pose_graph_filename,
+         const std::string& relations_filename,
          const bool read_text_file_with_unix_timestamps) {
   LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";
   mapping::proto::SparsePoseGraph pose_graph;

@@ -77,7 +77,7 @@ class Rigid2 {
   }
 
   std::string DebugString() const {
-      std::string out;
+    std::string out;
     out.append("{ t: [");
     out.append(std::to_string(translation().x()));
     out.append(", ");

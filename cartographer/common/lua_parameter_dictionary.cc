@@ -297,7 +297,8 @@ std::unique_ptr<LuaParameterDictionary> LuaParameterDictionary::PopDictionary(
   return value;
 }
 
-std::string LuaParameterDictionary::DoToString(const std::string& indent) const {
+std::string LuaParameterDictionary::DoToString(
+    const std::string& indent) const {
   std::string result = "{";
   bool dictionary_is_empty = true;
 
@@ -433,8 +434,9 @@ int LuaParameterDictionary::LuaInclude(lua_State* L) {
   if (std::find(parameter_dictionary->included_files_.begin(),
                 parameter_dictionary->included_files_.end(),
                 filename) != parameter_dictionary->included_files_.end()) {
-    std::string error_msg = "Tried to include " + filename +
-                       " twice. Already included files in order of inclusion: ";
+    std::string error_msg =
+        "Tried to include " + filename +
+        " twice. Already included files in order of inclusion: ";
     for (const std::string& filename : parameter_dictionary->included_files_) {
       error_msg.append(filename);
       error_msg.append("\n");

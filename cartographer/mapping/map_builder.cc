@@ -138,8 +138,9 @@ int MapBuilder::GetBlockingTrajectoryId() const {
   return sensor_collator_.GetBlockingTrajectoryId();
 }
 
-std::string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
-                                 proto::SubmapQuery::Response* const response) {
+std::string MapBuilder::SubmapToProto(
+    const mapping::SubmapId& submap_id,
+    proto::SubmapQuery::Response* const response) {
   if (submap_id.trajectory_id < 0 ||
       submap_id.trajectory_id >= num_trajectory_builders()) {
     return "Requested submap from trajectory " +

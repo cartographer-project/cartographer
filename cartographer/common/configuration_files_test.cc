@@ -34,8 +34,9 @@ TEST(ConfigurationFilesTest, ValidateMapBuilderOptions) {
   EXPECT_NO_FATAL_FAILURE({
     auto file_resolver = ::cartographer::common::make_unique<
         ::cartographer::common::ConfigurationFileResolver>(
-        std::vector<std::string>{std::string(::cartographer::common::kSourceDirectory) +
-                            "/configuration_files"});
+        std::vector<std::string>{
+            std::string(::cartographer::common::kSourceDirectory) +
+            "/configuration_files"});
     ::cartographer::common::LuaParameterDictionary lua_parameter_dictionary(
         kCode, std::move(file_resolver));
     ::cartographer::mapping::CreateMapBuilderOptions(&lua_parameter_dictionary);
@@ -50,8 +51,9 @@ TEST(ConfigurationFilesTest, ValidateTrajectoryBuilderOptions) {
   EXPECT_NO_FATAL_FAILURE({
     auto file_resolver = ::cartographer::common::make_unique<
         ::cartographer::common::ConfigurationFileResolver>(
-        std::vector<std::string>{std::string(::cartographer::common::kSourceDirectory) +
-                            "/configuration_files"});
+        std::vector<std::string>{
+            std::string(::cartographer::common::kSourceDirectory) +
+            "/configuration_files"});
     ::cartographer::common::LuaParameterDictionary lua_parameter_dictionary(
         kCode, std::move(file_resolver));
     ::cartographer::mapping::CreateTrajectoryBuilderOptions(

@@ -32,7 +32,8 @@ ConfigurationFileResolver::ConfigurationFileResolver(
   configuration_files_directories_.push_back(kConfigurationFilesDirectory);
 }
 
-std::string ConfigurationFileResolver::GetFullPathOrDie(const std::string& basename) {
+std::string ConfigurationFileResolver::GetFullPathOrDie(
+    const std::string& basename) {
   for (const auto& path : configuration_files_directories_) {
     const std::string filename = path + "/" + basename;
     std::ifstream stream(filename.c_str());
@@ -44,11 +45,12 @@ std::string ConfigurationFileResolver::GetFullPathOrDie(const std::string& basen
   LOG(FATAL) << "File '" << basename << "' was not found.";
 }
 
-std::string ConfigurationFileResolver::GetFileContentOrDie(const std::string& basename) {
+std::string ConfigurationFileResolver::GetFileContentOrDie(
+    const std::string& basename) {
   const std::string filename = GetFullPathOrDie(basename);
   std::ifstream stream(filename.c_str());
   return std::string((std::istreambuf_iterator<char>(stream)),
-                std::istreambuf_iterator<char>());
+                     std::istreambuf_iterator<char>());
 }
 
 }  // namespace common

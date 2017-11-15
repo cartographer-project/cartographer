@@ -33,7 +33,8 @@ class FrameIdFilteringPointsProcessor : public PointsProcessor {
   constexpr static const char* kConfigurationFileActionName = "frame_id_filter";
   FrameIdFilteringPointsProcessor(
       const std::unordered_set<std::string>& keep_frame_ids,
-      const std::unordered_set<std::string>& drop_frame_ids, PointsProcessor* next);
+      const std::unordered_set<std::string>& drop_frame_ids,
+      PointsProcessor* next);
   static std::unique_ptr<FrameIdFilteringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
   ~FrameIdFilteringPointsProcessor() override {}
