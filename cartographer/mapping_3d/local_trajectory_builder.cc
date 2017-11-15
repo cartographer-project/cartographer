@@ -76,22 +76,23 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   const transform::Rigid3f tracking_delta =
       first_pose_estimate_.inverse() *
       extrapolator_->ExtrapolatePose(time).cast<float>();
-  const sensor::TimedRangeData range_data_in_first_tracking =
-      sensor::TransformTimedRangeData(range_data, tracking_delta);
-  for (const Eigen::Vector4f& hit : range_data_in_first_tracking.returns) {
+  const Eigen::Vector3f origin_in_first_tracking =
+      tracking_delta * range_data.origin;
+  for (const Eigen::Vector4f& hit : range_data.returns) {
+    const Eigen::Vector3f hit_in_first_tracking =
+        tracking_delta * hit.head<3>();
     const Eigen::Vector3f delta =
-        hit.head<3>() - range_data_in_first_tracking.origin;
+        hit_in_first_tracking - origin_in_first_tracking;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
-        accumulated_range_data_.returns.push_back(hit.head<3>());
+        accumulated_range_data_.returns.push_back(hit_in_first_tracking);
       } else {
         // We insert a ray cropped to 'max_range' as a miss for hits beyond the
         // maximum range. This way the free space up to the maximum range will
         // be updated.
         accumulated_range_data_.misses.push_back(
-            range_data_in_first_tracking.origin +
-            options_.max_range() / range * delta);
+            origin_in_first_tracking + options_.max_range() / range * delta);
       }
     }
   }

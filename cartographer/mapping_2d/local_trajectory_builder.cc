@@ -97,20 +97,22 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
       first_pose_estimate_.inverse() *
       extrapolator_->ExtrapolatePose(time).cast<float>();
   // TODO(gaschler): Try to move this common behavior with 3D into helper.
-  const sensor::TimedRangeData range_data_in_first_tracking =
-      sensor::TransformTimedRangeData(range_data, tracking_delta);
+  const Eigen::Vector3f origin_in_first_tracking =
+      tracking_delta * range_data.origin;
   // Drop any returns below the minimum range and convert returns beyond the
   // maximum range into misses.
-  for (const Eigen::Vector4f& hit : range_data_in_first_tracking.returns) {
+  for (const Eigen::Vector4f& hit : range_data.returns) {
+    const Eigen::Vector3f hit_in_first_tracking =
+        tracking_delta * hit.head<3>();
     const Eigen::Vector3f delta =
-        hit.head<3>() - range_data_in_first_tracking.origin;
+        hit_in_first_tracking - origin_in_first_tracking;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
-        accumulated_range_data_.returns.push_back(hit.head<3>());
+        accumulated_range_data_.returns.push_back(hit_in_first_tracking);
       } else {
         accumulated_range_data_.misses.push_back(
-            range_data_in_first_tracking.origin +
+            origin_in_first_tracking +
             options_.missing_data_ray_length() / range * delta);
       }
     }
