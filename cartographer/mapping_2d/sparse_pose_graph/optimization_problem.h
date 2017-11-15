@@ -28,8 +28,8 @@
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
+#include "cartographer/mapping/pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
-#include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/map_by_time.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -56,8 +56,7 @@ class OptimizationProblem {
   using Constraint = mapping::SparsePoseGraph::Constraint;
 
   explicit OptimizationProblem(
-      const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
-          options);
+      const mapping::pose_graph::proto::OptimizationProblemOptions& options);
   ~OptimizationProblem();
 
   OptimizationProblem(const OptimizationProblem&) = delete;
@@ -100,7 +99,7 @@ class OptimizationProblem {
       int trajectory_id, const NodeData& first_node_data,
       const NodeData& second_node_data) const;
 
-  mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
+  mapping::pose_graph::proto::OptimizationProblemOptions options_;
   mapping::MapById<mapping::NodeId, NodeData> node_data_;
   mapping::MapById<mapping::SubmapId, SubmapData> submap_data_;
   sensor::MapByTime<sensor::ImuData> imu_data_;

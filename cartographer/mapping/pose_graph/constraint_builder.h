@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_OPTIMIZATION_PROBLEM_OPTIONS_H_
-#define CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_OPTIMIZATION_PROBLEM_OPTIONS_H_
+#ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_CONSTRAINT_BUILDER_H_
+#define CARTOGRAPHER_MAPPING_POSE_GRAPH_CONSTRAINT_BUILDER_H_
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
+#include "cartographer/mapping/pose_graph/proto/constraint_builder_options.pb.h"
 
 namespace cartographer {
 namespace mapping {
-namespace sparse_pose_graph {
+namespace pose_graph {
 
-proto::OptimizationProblemOptions CreateOptimizationProblemOptions(
+proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-}  // namespace sparse_pose_graph
+}  // namespace pose_graph
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_SPARSE_POSE_GRAPH_OPTIMIZATION_PROBLEM_OPTIONS_H_
+#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_CONSTRAINT_BUILDER_H_

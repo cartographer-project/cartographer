@@ -28,8 +28,8 @@
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
+#include "cartographer/mapping/pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
-#include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/map_by_time.h"
@@ -58,8 +58,7 @@ class OptimizationProblem {
   enum class FixZ { kYes, kNo };
 
   OptimizationProblem(
-      const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
-          options,
+      const mapping::pose_graph::proto::OptimizationProblemOptions& options,
       FixZ fix_z);
   ~OptimizationProblem();
 
@@ -107,7 +106,7 @@ class OptimizationProblem {
     std::array<double, 4> imu_calibration{{1., 0., 0., 0.}};
   };
 
-  mapping::sparse_pose_graph::proto::OptimizationProblemOptions options_;
+  mapping::pose_graph::proto::OptimizationProblemOptions options_;
   FixZ fix_z_;
   mapping::MapById<mapping::NodeId, NodeData> node_data_;
   mapping::MapById<mapping::SubmapId, SubmapData> submap_data_;

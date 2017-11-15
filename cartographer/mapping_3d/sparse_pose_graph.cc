@@ -30,7 +30,7 @@
 #include "Eigen/Eigenvalues"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
+#include "cartographer/mapping/pose_graph/proto/constraint_builder_options.pb.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "glog/logging.h"

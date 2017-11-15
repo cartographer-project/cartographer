@@ -30,8 +30,8 @@
 #include "cartographer/common/math.h"
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
+#include "cartographer/mapping/pose_graph/proto/constraint_builder_options.pb.h"
 #include "cartographer/mapping/sparse_pose_graph.h"
-#include "cartographer/mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/submaps.h"
@@ -62,8 +62,7 @@ class ConstraintBuilder {
   using Result = std::vector<Constraint>;
 
   ConstraintBuilder(
-      const mapping::sparse_pose_graph::proto::ConstraintBuilderOptions&
-          options,
+      const mapping::pose_graph::proto::ConstraintBuilderOptions& options,
       common::ThreadPool* thread_pool);
   ~ConstraintBuilder();
 
@@ -142,7 +141,7 @@ class ConstraintBuilder {
   // runs the 'when_done_' callback and resets the state.
   void FinishComputation(int computation_index) EXCLUDES(mutex_);
 
-  const mapping::sparse_pose_graph::proto::ConstraintBuilderOptions options_;
+  const mapping::pose_graph::proto::ConstraintBuilderOptions options_;
   common::ThreadPool* thread_pool_;
   common::Mutex mutex_;
 

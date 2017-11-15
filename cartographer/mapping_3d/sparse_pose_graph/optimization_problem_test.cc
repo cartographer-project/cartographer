@@ -21,7 +21,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/sparse_pose_graph/optimization_problem_options.h"
+#include "cartographer/mapping/pose_graph/optimization_problem_options.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"
@@ -37,8 +37,7 @@ class OptimizationProblemTest : public ::testing::Test {
       : optimization_problem_(CreateOptions(), OptimizationProblem::FixZ::kNo),
         rng_(45387) {}
 
-  mapping::sparse_pose_graph::proto::OptimizationProblemOptions
-  CreateOptions() {
+  mapping::pose_graph::proto::OptimizationProblemOptions CreateOptions() {
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
           acceleration_weight = 1e-4,
@@ -55,7 +54,7 @@ class OptimizationProblemTest : public ::testing::Test {
             num_threads = 4,
           },
         })text");
-    return mapping::sparse_pose_graph::CreateOptimizationProblemOptions(
+    return mapping::pose_graph::CreateOptimizationProblemOptions(
         parameter_dictionary.get());
   }
 

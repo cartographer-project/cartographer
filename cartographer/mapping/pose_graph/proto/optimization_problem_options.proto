@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package cartographer.mapping.sparse_pose_graph.proto;
+package cartographer.mapping.pose_graph.proto;
 
 import "cartographer/common/proto/ceres_solver_options.proto";
 

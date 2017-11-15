@@ -74,8 +74,7 @@ std::unique_ptr<transform::Rigid3d> Interpolate(
 }  // namespace
 
 OptimizationProblem::OptimizationProblem(
-    const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
-        options,
+    const mapping::pose_graph::proto::OptimizationProblemOptions& options,
     FixZ fix_z)
     : options_(options), fix_z_(fix_z) {}
 
