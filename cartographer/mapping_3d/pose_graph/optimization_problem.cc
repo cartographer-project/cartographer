@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/sparse_pose_graph/optimization_problem.h"
+#include "cartographer/mapping_3d/pose_graph/optimization_problem.h"
 
 #include <algorithm>
 #include <array>
@@ -33,9 +33,9 @@
 #include "cartographer/mapping_3d/acceleration_cost_function.h"
 #include "cartographer/mapping_3d/ceres_pose.h"
 #include "cartographer/mapping_3d/imu_integration.h"
+#include "cartographer/mapping_3d/pose_graph/spa_cost_function.h"
 #include "cartographer/mapping_3d/rotation_cost_function.h"
 #include "cartographer/mapping_3d/rotation_parameterization.h"
-#include "cartographer/mapping_3d/sparse_pose_graph/spa_cost_function.h"
 #include "cartographer/transform/timestamped_transform.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
@@ -45,7 +45,7 @@
 
 namespace cartographer {
 namespace mapping_3d {
-namespace sparse_pose_graph {
+namespace pose_graph {
 
 namespace {
 
@@ -484,6 +484,6 @@ transform::Rigid3d OptimizationProblem::ComputeRelativePose(
   return first_node_data.local_pose.inverse() * second_node_data.local_pose;
 }
 
-}  // namespace sparse_pose_graph
+}  // namespace pose_graph
 }  // namespace mapping_3d
 }  // namespace cartographer

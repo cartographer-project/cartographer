@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_SPARSE_POSE_GRAPH_CONSTRAINT_BUILDER_H_
-#define CARTOGRAPHER_MAPPING_3D_SPARSE_POSE_GRAPH_CONSTRAINT_BUILDER_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_CONSTRAINT_BUILDER_H_
+#define CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_CONSTRAINT_BUILDER_H_
 
 #include <array>
 #include <deque>
@@ -32,9 +32,9 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/mapping_3d/pose_graph/optimization_problem.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
-#include "cartographer/mapping_3d/sparse_pose_graph/optimization_problem.h"
 #include "cartographer/mapping_3d/submaps.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -42,7 +42,7 @@
 
 namespace cartographer {
 namespace mapping_3d {
-namespace sparse_pose_graph {
+namespace pose_graph {
 
 // Asynchronously computes constraints.
 //
@@ -191,8 +191,8 @@ class ConstraintBuilder {
   common::Histogram low_resolution_score_histogram_ GUARDED_BY(mutex_);
 };
 
-}  // namespace sparse_pose_graph
+}  // namespace pose_graph
 }  // namespace mapping_3d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_SPARSE_POSE_GRAPH_CONSTRAINT_BUILDER_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_CONSTRAINT_BUILDER_H_

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/sparse_pose_graph/optimization_problem.h"
+#include "cartographer/mapping_3d/pose_graph/optimization_problem.h"
 
 #include <random>
 
@@ -28,7 +28,7 @@
 
 namespace cartographer {
 namespace mapping_3d {
-namespace sparse_pose_graph {
+namespace pose_graph {
 namespace {
 
 class OptimizationProblemTest : public ::testing::Test {
@@ -189,6 +189,6 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
 }
 
 }  // namespace
-}  // namespace sparse_pose_graph
+}  // namespace pose_graph
 }  // namespace mapping_3d
 }  // namespace cartographer
