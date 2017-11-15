@@ -69,8 +69,7 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder::ScanMatch(
         matching_submap->probability_grid(), &initial_ceres_pose);
   }
 
-  std::unique_ptr<transform::Rigid2d> pose_observation =
-      common::make_unique<transform::Rigid2d>();
+  auto pose_observation = common::make_unique<transform::Rigid2d>();
   ceres::Solver::Summary summary;
   ceres_scan_matcher_.Match(
       pose_prediction, initial_ceres_pose, filtered_gravity_aligned_point_cloud,
