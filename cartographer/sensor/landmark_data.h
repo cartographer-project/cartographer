@@ -30,7 +30,7 @@ namespace cartographer {
 namespace sensor {
 
 struct Landmark {
-  string id;
+  std::string id;
   transform::Rigid3d transform;
   double translation_weight;
   double rotation_weight;

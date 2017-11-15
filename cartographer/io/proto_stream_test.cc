@@ -32,18 +32,18 @@ namespace {
 class ProtoStreamTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    const string tmpdir = P_tmpdir;
+    const std::string tmpdir = P_tmpdir;
     test_directory_ = tmpdir + "/proto_stream_test_XXXXXX";
     ASSERT_NE(mkdtemp(&test_directory_[0]), nullptr) << strerror(errno);
   }
 
   void TearDown() override { remove(test_directory_.c_str()); }
 
-  string test_directory_;
+  std::string test_directory_;
 };
 
 TEST_F(ProtoStreamTest, WriteAndReadBack) {
-  const string test_file = test_directory_ + "/test_trajectory.pbstream";
+  const std::string test_file = test_directory_ + "/test_trajectory.pbstream";
   {
     ProtoStreamWriter writer(test_file);
     for (int i = 0; i != 10; ++i) {

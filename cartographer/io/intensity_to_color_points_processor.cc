@@ -28,7 +28,7 @@ std::unique_ptr<IntensityToColorPointsProcessor>
 IntensityToColorPointsProcessor::FromDictionary(
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
-  const string frame_id =
+  const std::string frame_id =
       dictionary->HasKey("frame_id") ? dictionary->GetString("frame_id") : "";
   const float min_intensity = dictionary->GetDouble("min_intensity");
   const float max_intensity = dictionary->GetDouble("max_intensity");
@@ -38,7 +38,7 @@ IntensityToColorPointsProcessor::FromDictionary(
 
 IntensityToColorPointsProcessor::IntensityToColorPointsProcessor(
     const float min_intensity, const float max_intensity,
-    const string& frame_id, PointsProcessor* const next)
+    const std::string& frame_id, PointsProcessor* const next)
     : min_intensity_(min_intensity),
       max_intensity_(max_intensity),
       frame_id_(frame_id),

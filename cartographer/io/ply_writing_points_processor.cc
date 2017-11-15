@@ -34,7 +34,7 @@ namespace {
 // 'output_file'.
 void WriteBinaryPlyHeader(const bool has_color, const int64 num_points,
                           FileWriter* const file_writer) {
-  string color_header = !has_color ? ""
+  std::string color_header = !has_color ? ""
                                    : "property uchar red\n"
                                      "property uchar green\n"
                                      "property uchar blue\n";
@@ -48,7 +48,7 @@ void WriteBinaryPlyHeader(const bool has_color, const int64 num_points,
          << "property float y\n"
          << "property float z\n"
          << color_header << "end_header\n";
-  const string out = stream.str();
+  const std::string out = stream.str();
   CHECK(file_writer->WriteHeader(out.data(), out.size()));
 }
 

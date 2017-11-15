@@ -27,7 +27,7 @@ std::unique_ptr<ColoringPointsProcessor>
 ColoringPointsProcessor::FromDictionary(
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
-  const string frame_id = dictionary->GetString("frame_id");
+  const std::string frame_id = dictionary->GetString("frame_id");
   const std::vector<double> color_values =
       dictionary->GetDictionary("color")->GetArrayValuesAsDoubles();
   const Uint8Color color = {{static_cast<uint8>(color_values[0]),
@@ -38,7 +38,7 @@ ColoringPointsProcessor::FromDictionary(
 }
 
 ColoringPointsProcessor::ColoringPointsProcessor(const FloatColor& color,
-                                                 const string& frame_id,
+                                                 const std::string& frame_id,
                                                  PointsProcessor* const next)
     : color_(color), frame_id_(frame_id), next_(next) {}
 

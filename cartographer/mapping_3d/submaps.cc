@@ -113,9 +113,9 @@ std::vector<Eigen::Array4i> ExtractVoxelData(
 
 // Builds texture data containing interleaved value and alpha for the
 // visualization from 'accumulated_pixel_data'.
-string ComputePixelValues(
+std::string ComputePixelValues(
     const std::vector<PixelData>& accumulated_pixel_data) {
-  string cell_data;
+  std::string cell_data;
   cell_data.reserve(2 * accumulated_pixel_data.size());
   constexpr float kMinZDifference = 3.f;
   constexpr float kFreeSpaceWeight = 0.15f;
@@ -168,7 +168,7 @@ void AddToTextureProto(
 
   const std::vector<PixelData> accumulated_pixel_data = AccumulatePixelData(
       width, height, min_index, max_index, voxel_indices_and_probabilities);
-  const string cell_data = ComputePixelValues(accumulated_pixel_data);
+  const std::string cell_data = ComputePixelValues(accumulated_pixel_data);
 
   common::FastGzipString(cell_data, texture->mutable_cells());
   *texture->mutable_slice_pose() = transform::ToProto(

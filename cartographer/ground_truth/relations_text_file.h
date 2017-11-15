@@ -33,7 +33,7 @@ namespace ground_truth {
 // R. Kuemmerle, B. Steder, C. Dornhege, M. Ruhnke, G. Grisetti, C. Stachniss,
 // and A. Kleiner, "On measuring the accuracy of SLAM algorithms," Autonomous
 // Robots, vol. 27, no. 4, pp. 387–407, 2009.
-proto::GroundTruth ReadRelationsTextFile(const string& relations_filename);
+proto::GroundTruth ReadRelationsTextFile(const std::string& relations_filename);
 
 }  // namespace ground_truth
 }  // namespace cartographer

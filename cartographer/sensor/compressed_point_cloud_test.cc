@@ -41,7 +41,7 @@ constexpr float kPrecision = 0.001f;
 
 // Matcher for 3-d vectors w.r.t. to the target precision.
 MATCHER_P(ApproximatelyEquals, expected,
-          string("is equal to ") + PrintToString(expected)) {
+          std::string("is equal to ") + PrintToString(expected)) {
   return (arg - expected).isZero(kPrecision);
 }
 

@@ -40,7 +40,7 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilder {
  public:
   CollatedTrajectoryBuilder(
       sensor::Collator* sensor_collator, int trajectory_id,
-      const std::unordered_set<string>& expected_sensor_ids,
+      const std::unordered_set<std::string>& expected_sensor_ids,
       std::unique_ptr<GlobalTrajectoryBuilderInterface>
           wrapped_trajectory_builder);
   ~CollatedTrajectoryBuilder() override;
@@ -51,11 +51,11 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilder {
 
   const PoseEstimate& pose_estimate() const override;
 
-  void AddSensorData(const string& sensor_id,
+  void AddSensorData(const std::string& sensor_id,
                      std::unique_ptr<sensor::Data> data) override;
 
  private:
-  void HandleCollatedSensorData(const string& sensor_id,
+  void HandleCollatedSensorData(const std::string& sensor_id,
                                 std::unique_ptr<sensor::Data> data);
 
   sensor::Collator* const sensor_collator_;
@@ -64,7 +64,7 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilder {
 
   // Time at which we last logged the rates of incoming sensor data.
   std::chrono::steady_clock::time_point last_logging_time_;
-  std::map<string, common::RateTimer<>> rate_timers_;
+  std::map<std::string, common::RateTimer<>> rate_timers_;
 };
 
 }  // namespace mapping

@@ -42,7 +42,7 @@ class FileWriter {
 
   virtual bool Write(const char* data, size_t len) = 0;
   virtual bool Close() = 0;
-  virtual string GetFilename() = 0;
+  virtual std::string GetFilename() = 0;
 };
 
 // An Implementation of file using std::ofstream.
@@ -50,20 +50,20 @@ class StreamFileWriter : public FileWriter {
  public:
   ~StreamFileWriter() override;
 
-  StreamFileWriter(const string& filename);
+  StreamFileWriter(const std::string& filename);
 
   bool Write(const char* data, size_t len) override;
   bool WriteHeader(const char* data, size_t len) override;
   bool Close() override;
-  string GetFilename() override;
+  std::string GetFilename() override;
 
  private:
-  const string filename_;
+  const std::string filename_;
   std::ofstream out_;
 };
 
 using FileWriterFactory =
-    std::function<std::unique_ptr<FileWriter>(const string& filename)>;
+    std::function<std::unique_ptr<FileWriter>(const std::string& filename)>;
 
 }  // namespace io
 }  // namespace cartographer
