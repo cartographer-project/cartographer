@@ -22,7 +22,7 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
-#include "cartographer/mapping/sparse_pose_graph.h"
+#include "cartographer/mapping/pose_graph.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
@@ -34,7 +34,7 @@ namespace pose_graph {
 
 class SpaCostFunction {
  public:
-  using Constraint = mapping::SparsePoseGraph::Constraint;
+  using Constraint = mapping::PoseGraph::Constraint;
 
   explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
 

@@ -54,7 +54,7 @@ namespace pose_graph {
 // This class is thread-safe.
 class ConstraintBuilder {
  public:
-  using Constraint = mapping::SparsePoseGraph::Constraint;
+  using Constraint = mapping::PoseGraph::Constraint;
   using Result = std::vector<Constraint>;
 
   ConstraintBuilder(

@@ -385,7 +385,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         continue;
       }
 
-      const mapping::SparsePoseGraph::Constraint::Pose constraint_pose{
+      const mapping::PoseGraph::Constraint::Pose constraint_pose{
           *fixed_frame_pose, options_.fixed_frame_pose_translation_weight(),
           options_.fixed_frame_pose_rotation_weight()};
 

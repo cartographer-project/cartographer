@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/sparse_pose_graph.h"
+#include "cartographer/mapping/pose_graph.h"
 
 #include "cartographer/mapping/pose_graph/constraint_builder.h"
 #include "cartographer/mapping/pose_graph/optimization_problem_options.h"
@@ -25,48 +25,45 @@ namespace cartographer {
 namespace mapping {
 
 proto::SparsePoseGraph::Constraint::Tag ToProto(
-    const SparsePoseGraph::Constraint::Tag& tag) {
+    const PoseGraph::Constraint::Tag& tag) {
   switch (tag) {
-    case SparsePoseGraph::Constraint::Tag::INTRA_SUBMAP:
+    case PoseGraph::Constraint::Tag::INTRA_SUBMAP:
       return proto::SparsePoseGraph::Constraint::INTRA_SUBMAP;
-    case SparsePoseGraph::Constraint::Tag::INTER_SUBMAP:
+    case PoseGraph::Constraint::Tag::INTER_SUBMAP:
       return proto::SparsePoseGraph::Constraint::INTER_SUBMAP;
   }
   LOG(FATAL) << "Unsupported tag.";
 }
 
-SparsePoseGraph::Constraint::Tag FromProto(
+PoseGraph::Constraint::Tag FromProto(
     const proto::SparsePoseGraph::Constraint::Tag& proto) {
   switch (proto) {
     case proto::SparsePoseGraph::Constraint::INTRA_SUBMAP:
-      return SparsePoseGraph::Constraint::Tag::INTRA_SUBMAP;
+      return PoseGraph::Constraint::Tag::INTRA_SUBMAP;
     case proto::SparsePoseGraph::Constraint::INTER_SUBMAP:
-      return SparsePoseGraph::Constraint::Tag::INTER_SUBMAP;
+      return PoseGraph::Constraint::Tag::INTER_SUBMAP;
     case ::google::protobuf::kint32max:
     case ::google::protobuf::kint32min:;
   }
   LOG(FATAL) << "Unsupported tag.";
 }
 
-std::vector<SparsePoseGraph::Constraint> FromProto(
+std::vector<PoseGraph::Constraint> FromProto(
     const ::google::protobuf::RepeatedPtrField<
-        ::cartographer::mapping::proto::SparsePoseGraph::Constraint>&
-        constraint_protos) {
-  std::vector<SparsePoseGraph::Constraint> constraints;
+        proto::SparsePoseGraph::Constraint>& constraint_protos) {
+  std::vector<PoseGraph::Constraint> constraints;
   for (const auto& constraint_proto : constraint_protos) {
     const mapping::SubmapId submap_id{
         constraint_proto.submap_id().trajectory_id(),
         constraint_proto.submap_id().submap_index()};
     const mapping::NodeId node_id{constraint_proto.node_id().trajectory_id(),
                                   constraint_proto.node_id().node_index()};
-    const SparsePoseGraph::Constraint::Pose pose{
+    const PoseGraph::Constraint::Pose pose{
         transform::ToRigid3(constraint_proto.relative_pose()),
         constraint_proto.translation_weight(),
         constraint_proto.rotation_weight()};
-    const SparsePoseGraph::Constraint::Tag tag =
-        FromProto(constraint_proto.tag());
-    constraints.push_back(
-        SparsePoseGraph::Constraint{submap_id, node_id, pose, tag});
+    const PoseGraph::Constraint::Tag tag = FromProto(constraint_proto.tag());
+    constraints.push_back(PoseGraph::Constraint{submap_id, node_id, pose, tag});
   }
   return constraints;
 }
@@ -99,7 +96,7 @@ proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
   return options;
 }
 
-proto::SparsePoseGraph SparsePoseGraph::ToProto() {
+proto::SparsePoseGraph PoseGraph::ToProto() {
   proto::SparsePoseGraph proto;
 
   std::map<int, proto::Trajectory* const> trajectory_protos;

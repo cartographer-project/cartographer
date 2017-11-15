@@ -297,7 +297,7 @@ common::Time SparsePoseGraph::GetLatestNodeTime(
 
 void SparsePoseGraph::UpdateTrajectoryConnectivity(
     const Constraint& constraint) {
-  CHECK_EQ(constraint.tag, mapping::SparsePoseGraph::Constraint::INTER_SUBMAP);
+  CHECK_EQ(constraint.tag, mapping::PoseGraph::Constraint::INTER_SUBMAP);
   const common::Time time =
       GetLatestNodeTime(constraint.node_id, constraint.submap_id);
   trajectory_connectivity_state_.Connect(constraint.node_id.trajectory_id,
@@ -616,17 +616,16 @@ std::vector<std::vector<int>> SparsePoseGraph::GetConnectedTrajectories() {
   return trajectory_connectivity_state_.Components();
 }
 
-mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapData(
+mapping::PoseGraph::SubmapData SparsePoseGraph::GetSubmapData(
     const mapping::SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
   return GetSubmapDataUnderLock(submap_id);
 }
 
-mapping::MapById<mapping::SubmapId, mapping::SparsePoseGraph::SubmapData>
+mapping::MapById<mapping::SubmapId, mapping::PoseGraph::SubmapData>
 SparsePoseGraph::GetAllSubmapData() {
   common::MutexLocker locker(&mutex_);
-  mapping::MapById<mapping::SubmapId, mapping::SparsePoseGraph::SubmapData>
-      submaps;
+  mapping::MapById<mapping::SubmapId, mapping::PoseGraph::SubmapData> submaps;
   for (const auto& submap_id_data : submap_data_) {
     submaps.Insert(submap_id_data.id,
                    GetSubmapDataUnderLock(submap_id_data.id));
@@ -659,7 +658,7 @@ transform::Rigid3d SparsePoseGraph::ComputeLocalToGlobalTransform(
              .inverse();
 }
 
-mapping::SparsePoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
+mapping::PoseGraph::SubmapData SparsePoseGraph::GetSubmapDataUnderLock(
     const mapping::SubmapId& submap_id) {
   const auto it = submap_data_.find(submap_id);
   if (it == submap_data_.end()) {
@@ -737,8 +736,8 @@ void SparsePoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(
   parent_->constraint_builder_.DeleteScanMatcher(submap_id);
   parent_->optimization_problem_.TrimSubmap(submap_id);
 
-  // Remove the 'nodes_to_remove' from the sparse pose graph and the
-  // optimization problem.
+  // Remove the 'nodes_to_remove' from the pose graph and the optimization
+  // problem.
   for (const mapping::NodeId& node_id : nodes_to_remove) {
     parent_->trajectory_nodes_.Trim(node_id);
     parent_->optimization_problem_.TrimTrajectoryNode(node_id);

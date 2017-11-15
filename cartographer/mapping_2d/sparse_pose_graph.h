@@ -32,8 +32,8 @@
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
-#include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/trajectory_connectivity_state.h"
 #include "cartographer/mapping_2d/pose_graph/constraint_builder.h"
 #include "cartographer/mapping_2d/pose_graph/optimization_problem.h"
@@ -56,7 +56,7 @@ namespace mapping_2d {
 // Each node has been matched against one or more submaps (adding a constraint
 // for each match), both poses of nodes and of submaps are to be optimized.
 // All constraints are between a submap i and a node j.
-class SparsePoseGraph : public mapping::SparsePoseGraph {
+class SparsePoseGraph : public mapping::PoseGraph {
  public:
   SparsePoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
                   common::ThreadPool* thread_pool);
@@ -98,9 +98,9 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
   void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
-  mapping::SparsePoseGraph::SubmapData GetSubmapData(
+  mapping::PoseGraph::SubmapData GetSubmapData(
       const mapping::SubmapId& submap_id) EXCLUDES(mutex_) override;
-  mapping::MapById<mapping::SubmapId, mapping::SparsePoseGraph::SubmapData>
+  mapping::MapById<mapping::SubmapId, mapping::PoseGraph::SubmapData>
   GetAllSubmapData() EXCLUDES(mutex_) override;
   transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id)
       EXCLUDES(mutex_) override;
@@ -179,7 +179,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
           submap_transforms,
       int trajectory_id) const REQUIRES(mutex_);
 
-  mapping::SparsePoseGraph::SubmapData GetSubmapDataUnderLock(
+  mapping::PoseGraph::SubmapData GetSubmapDataUnderLock(
       const mapping::SubmapId& submap_id) REQUIRES(mutex_);
 
   common::Time GetLatestNodeTime(const mapping::NodeId& node_id,
