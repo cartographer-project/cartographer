@@ -61,7 +61,7 @@ class MapBuilder {
 
   // Creates a new trajectory builder and returns its index.
   int AddTrajectoryBuilder(
-      const std::unordered_set<string>& expected_sensor_ids,
+      const std::unordered_set<std::string>& expected_sensor_ids,
       const proto::TrajectoryBuilderOptions& trajectory_options);
 
   // Creates a new trajectory and returns its index. Querying the trajectory
@@ -84,8 +84,8 @@ class MapBuilder {
 
   // Fills the SubmapQuery::Response corresponding to 'submap_id'. Returns an
   // error string on failure, or an empty string on success.
-  string SubmapToProto(const SubmapId& submap_id,
-                       proto::SubmapQuery::Response* response);
+  std::string SubmapToProto(const SubmapId& submap_id,
+                            proto::SubmapQuery::Response* response);
 
   // Serializes the current state to a proto stream.
   void SerializeState(io::ProtoStreamWriter* writer);

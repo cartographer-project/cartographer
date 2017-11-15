@@ -37,7 +37,7 @@ bool FixedRatioSampler::Pulse() {
   return false;
 }
 
-string FixedRatioSampler::DebugString() {
+std::string FixedRatioSampler::DebugString() {
   return std::to_string(num_samples_) + " (" +
          std::to_string(100. * num_samples_ / num_pulses_) + "%)";
 }

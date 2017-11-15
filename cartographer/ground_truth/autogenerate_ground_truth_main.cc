@@ -163,8 +163,8 @@ proto::GroundTruth GenerateGroundTruth(
   return ground_truth;
 }
 
-void Run(const string& pose_graph_filename, const string& output_filename,
-         const double min_covered_distance,
+void Run(const std::string& pose_graph_filename,
+         const std::string& output_filename, const double min_covered_distance,
          const double outlier_threshold_meters,
          const double outlier_threshold_radians) {
   LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";

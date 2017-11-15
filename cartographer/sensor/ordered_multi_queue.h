@@ -33,7 +33,7 @@ namespace sensor {
 
 struct QueueKey {
   int trajectory_id;
-  string sensor_id;
+  std::string sensor_id;
 
   bool operator<(const QueueKey& other) const {
     return std::forward_as_tuple(trajectory_id, sensor_id) <

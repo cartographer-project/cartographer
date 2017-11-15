@@ -46,7 +46,7 @@ struct PointsBatch {
 
   // Sensor that generated this data's 'frame_id' or empty if this information
   // is unknown.
-  string frame_id;
+  std::string frame_id;
 
   // Trajectory ID that produced this point.
   int trajectory_id;

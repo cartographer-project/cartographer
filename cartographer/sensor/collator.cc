@@ -21,7 +21,7 @@ namespace sensor {
 
 void Collator::AddTrajectory(
     const int trajectory_id,
-    const std::unordered_set<string>& expected_sensor_ids,
+    const std::unordered_set<std::string>& expected_sensor_ids,
     const Callback& callback) {
   for (const auto& sensor_id : expected_sensor_ids) {
     const auto queue_key = QueueKey{trajectory_id, sensor_id};
@@ -39,7 +39,8 @@ void Collator::FinishTrajectory(const int trajectory_id) {
   }
 }
 
-void Collator::AddSensorData(const int trajectory_id, const string& sensor_id,
+void Collator::AddSensorData(const int trajectory_id,
+                             const std::string& sensor_id,
                              std::unique_ptr<Data> data) {
   queue_.Add(QueueKey{trajectory_id, sensor_id}, std::move(data));
 }

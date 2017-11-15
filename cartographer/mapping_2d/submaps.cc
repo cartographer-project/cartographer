@@ -91,7 +91,7 @@ void Submap::ToResponseProto(
   CellLimits limits;
   probability_grid_.ComputeCroppedLimits(&offset, &limits);
 
-  string cells;
+  std::string cells;
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(limits)) {
     if (probability_grid_.IsKnown(xy_index + offset)) {
       // We would like to add 'delta' but this is not possible using a value and

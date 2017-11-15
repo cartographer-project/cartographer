@@ -31,7 +31,7 @@ class ColoringPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName = "color_points";
 
-  ColoringPointsProcessor(const FloatColor& color, const string& frame_id,
+  ColoringPointsProcessor(const FloatColor& color, const std::string& frame_id,
                           PointsProcessor* next);
 
   static std::unique_ptr<ColoringPointsProcessor> FromDictionary(
@@ -47,7 +47,7 @@ class ColoringPointsProcessor : public PointsProcessor {
 
  private:
   const FloatColor color_;
-  const string frame_id_;
+  const std::string frame_id_;
   PointsProcessor* const next_;
 };
 

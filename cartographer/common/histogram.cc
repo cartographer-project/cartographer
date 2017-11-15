@@ -28,7 +28,7 @@ namespace common {
 
 void Histogram::Add(const float value) { values_.push_back(value); }
 
-string Histogram::ToString(const int buckets) const {
+std::string Histogram::ToString(const int buckets) const {
   CHECK_GE(buckets, 1);
   if (values_.empty()) {
     return "Count: 0";
@@ -37,10 +37,10 @@ string Histogram::ToString(const int buckets) const {
   const float max = *std::max_element(values_.begin(), values_.end());
   const float mean =
       std::accumulate(values_.begin(), values_.end(), 0.f) / values_.size();
-  string result = "Count: " + std::to_string(values_.size()) +
-                  "  Min: " + std::to_string(min) +
-                  "  Max: " + std::to_string(max) +
-                  "  Mean: " + std::to_string(mean);
+  std::string result = "Count: " + std::to_string(values_.size()) +
+                       "  Min: " + std::to_string(min) +
+                       "  Max: " + std::to_string(max) +
+                       "  Mean: " + std::to_string(mean);
   if (min == max) {
     return result;
   }

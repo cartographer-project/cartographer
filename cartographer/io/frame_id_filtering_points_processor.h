@@ -32,8 +32,9 @@ class FrameIdFilteringPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName = "frame_id_filter";
   FrameIdFilteringPointsProcessor(
-      const std::unordered_set<string>& keep_frame_ids,
-      const std::unordered_set<string>& drop_frame_ids, PointsProcessor* next);
+      const std::unordered_set<std::string>& keep_frame_ids,
+      const std::unordered_set<std::string>& drop_frame_ids,
+      PointsProcessor* next);
   static std::unique_ptr<FrameIdFilteringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
   ~FrameIdFilteringPointsProcessor() override {}
@@ -47,8 +48,8 @@ class FrameIdFilteringPointsProcessor : public PointsProcessor {
   FlushResult Flush() override;
 
  private:
-  const std::unordered_set<string> keep_frame_ids_;
-  const std::unordered_set<string> drop_frame_ids_;
+  const std::unordered_set<std::string> keep_frame_ids_;
+  const std::unordered_set<std::string> drop_frame_ids_;
   PointsProcessor* const next_;
 };
 

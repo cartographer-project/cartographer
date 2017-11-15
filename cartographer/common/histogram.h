@@ -28,7 +28,7 @@ namespace common {
 class Histogram {
  public:
   void Add(float value);
-  string ToString(int buckets) const;
+  std::string ToString(int buckets) const;
 
  private:
   std::vector<float> values_;

@@ -34,15 +34,15 @@ namespace common {
 class FileResolver {
  public:
   virtual ~FileResolver() {}
-  virtual string GetFullPathOrDie(const string& basename) = 0;
-  virtual string GetFileContentOrDie(const string& basename) = 0;
+  virtual std::string GetFullPathOrDie(const std::string& basename) = 0;
+  virtual std::string GetFileContentOrDie(const std::string& basename) = 0;
 };
 
 // A parameter dictionary that gets loaded from Lua code.
 class LuaParameterDictionary {
  public:
   // Constructs the dictionary from a Lua Table specification.
-  LuaParameterDictionary(const string& code,
+  LuaParameterDictionary(const std::string& code,
                          std::unique_ptr<FileResolver> file_resolver);
 
   LuaParameterDictionary(const LuaParameterDictionary&) = delete;
@@ -50,38 +50,39 @@ class LuaParameterDictionary {
 
   // Constructs a LuaParameterDictionary without reference counting.
   static std::unique_ptr<LuaParameterDictionary> NonReferenceCounted(
-      const string& code, std::unique_ptr<FileResolver> file_resolver);
+      const std::string& code, std::unique_ptr<FileResolver> file_resolver);
 
   ~LuaParameterDictionary();
 
   // Returns all available keys.
-  std::vector<string> GetKeys() const;
+  std::vector<std::string> GetKeys() const;
 
   // Returns true if the key is in this dictionary.
-  bool HasKey(const string& key) const;
+  bool HasKey(const std::string& key) const;
 
   // These methods CHECK() that the 'key' exists.
-  string GetString(const string& key);
-  double GetDouble(const string& key);
-  int GetInt(const string& key);
-  bool GetBool(const string& key);
-  std::unique_ptr<LuaParameterDictionary> GetDictionary(const string& key);
+  std::string GetString(const std::string& key);
+  double GetDouble(const std::string& key);
+  int GetInt(const std::string& key);
+  bool GetBool(const std::string& key);
+  std::unique_ptr<LuaParameterDictionary> GetDictionary(const std::string& key);
 
   // Gets an int from the dictionary and CHECK()s that it is non-negative.
-  int GetNonNegativeInt(const string& key);
+  int GetNonNegativeInt(const std::string& key);
 
   // Returns a string representation for this LuaParameterDictionary.
-  string ToString() const;
+  std::string ToString() const;
 
   // Returns the values of the keys '1', '2', '3' as the given types.
   std::vector<double> GetArrayValuesAsDoubles();
-  std::vector<string> GetArrayValuesAsStrings();
+  std::vector<std::string> GetArrayValuesAsStrings();
   std::vector<std::unique_ptr<LuaParameterDictionary>>
   GetArrayValuesAsDictionaries();
 
  private:
   enum class ReferenceCount { YES, NO };
-  LuaParameterDictionary(const string& code, ReferenceCount reference_count,
+  LuaParameterDictionary(const std::string& code,
+                         ReferenceCount reference_count,
                          std::unique_ptr<FileResolver> file_resolver);
 
   // For GetDictionary().
@@ -89,7 +90,7 @@ class LuaParameterDictionary {
                          std::shared_ptr<FileResolver> file_resolver);
 
   // Function that recurses to keep track of indent for ToString().
-  string DoToString(const string& indent) const;
+  std::string DoToString(const std::string& indent) const;
 
   // Pop the top of the stack and CHECKs that the type is correct.
   double PopDouble() const;
@@ -100,7 +101,7 @@ class LuaParameterDictionary {
   // is either quoted to be suitable to be read back by a Lua interpretor or
   // not.
   enum class Quoted { YES, NO };
-  string PopString(Quoted quoted) const;
+  std::string PopString(Quoted quoted) const;
 
   // Creates a LuaParameterDictionary from the Lua table at the top of the
   // stack, either with or without reference counting.
@@ -108,10 +109,10 @@ class LuaParameterDictionary {
       ReferenceCount reference_count) const;
 
   // CHECK() that 'key' is in the dictionary.
-  void CheckHasKey(const string& key) const;
+  void CheckHasKey(const std::string& key) const;
 
   // CHECK() that 'key' is in this dictionary and reference it as being used.
-  void CheckHasKeyAndReference(const string& key);
+  void CheckHasKeyAndReference(const std::string& key);
 
   // If desired, this can be called in the destructor of a derived class. It
   // will CHECK() that all keys defined in the configuration have been used
@@ -135,11 +136,11 @@ class LuaParameterDictionary {
 
   // This is modified with every call to Get* in order to verify that all
   // parameters are read exactly once.
-  std::map<string, int> reference_counts_;
+  std::map<std::string, int> reference_counts_;
 
   // List of all included files in order of inclusion. Used to prevent double
   // inclusion.
-  std::vector<string> included_files_;
+  std::vector<std::string> included_files_;
 };
 
 }  // namespace common

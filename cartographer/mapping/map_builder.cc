@@ -74,7 +74,7 @@ MapBuilder::MapBuilder(
 MapBuilder::~MapBuilder() {}
 
 int MapBuilder::AddTrajectoryBuilder(
-    const std::unordered_set<string>& expected_sensor_ids,
+    const std::unordered_set<std::string>& expected_sensor_ids,
     const proto::TrajectoryBuilderOptions& trajectory_options) {
   const int trajectory_id = trajectory_builders_.size();
   if (options_.use_trajectory_builder_3d()) {
@@ -138,8 +138,9 @@ int MapBuilder::GetBlockingTrajectoryId() const {
   return sensor_collator_.GetBlockingTrajectoryId();
 }
 
-string MapBuilder::SubmapToProto(const mapping::SubmapId& submap_id,
-                                 proto::SubmapQuery::Response* const response) {
+std::string MapBuilder::SubmapToProto(
+    const mapping::SubmapId& submap_id,
+    proto::SubmapQuery::Response* const response) {
   if (submap_id.trajectory_id < 0 ||
       submap_id.trajectory_id >= num_trajectory_builders()) {
     return "Requested submap from trajectory " +

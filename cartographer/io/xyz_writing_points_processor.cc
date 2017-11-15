@@ -15,7 +15,7 @@ void WriteXyzPoint(const Eigen::Vector3f& point,
   std::ostringstream stream;
   stream << std::setprecision(6);
   stream << point.x() << " " << point.y() << " " << point.z() << "\n";
-  const string out = stream.str();
+  const std::string out = stream.str();
   CHECK(file_writer->Write(out.data(), out.size()));
 }
 

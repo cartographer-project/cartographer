@@ -78,7 +78,7 @@ class RateTimer {
   }
 
   // Returns a debug string representation.
-  string DebugString() const {
+  std::string DebugString() const {
     if (events_.size() < 2) {
       return "unknown";
     }
@@ -109,7 +109,7 @@ class RateTimer {
   }
 
   // Returns the average and standard deviation of the deltas.
-  string DeltasDebugString() const {
+  std::string DeltasDebugString() const {
     const auto deltas = ComputeDeltasInSeconds();
     const double sum = std::accumulate(deltas.begin(), deltas.end(), 0.);
     const double mean = sum / deltas.size();

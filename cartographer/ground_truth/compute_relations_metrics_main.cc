@@ -67,7 +67,7 @@ Error ComputeError(const transform::Rigid3d& pose1,
                common::Pow2(transform::GetAngle(error))};
 }
 
-string MeanAndStdDevString(const std::vector<double>& values) {
+std::string MeanAndStdDevString(const std::vector<double>& values) {
   CHECK_GE(values.size(), 2);
   const double mean =
       std::accumulate(values.begin(), values.end(), 0.) / values.size();
@@ -80,10 +80,10 @@ string MeanAndStdDevString(const std::vector<double>& values) {
   std::ostringstream out;
   out << std::fixed << std::setprecision(5) << mean << " +/- "
       << standard_deviation;
-  return string(out.str());
+  return std::string(out.str());
 }
 
-string StatisticsString(const std::vector<Error>& errors) {
+std::string StatisticsString(const std::vector<Error>& errors) {
   std::vector<double> translational_errors;
   std::vector<double> squared_translational_errors;
   std::vector<double> rotational_errors_degrees;
@@ -109,7 +109,8 @@ string StatisticsString(const std::vector<Error>& errors) {
          MeanAndStdDevString(squared_rotational_errors_degrees) + " deg^2\n";
 }
 
-void Run(const string& pose_graph_filename, const string& relations_filename,
+void Run(const std::string& pose_graph_filename,
+         const std::string& relations_filename,
          const bool read_text_file_with_unix_timestamps) {
   LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";
   mapping::proto::SparsePoseGraph pose_graph;

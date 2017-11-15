@@ -76,8 +76,8 @@ class Rigid2 {
     return Rigid2(translation, rotation);
   }
 
-  string DebugString() const {
-    string out;
+  std::string DebugString() const {
+    std::string out;
     out.append("{ t: [");
     out.append(std::to_string(translation().x()));
     out.append(", ");
@@ -161,8 +161,8 @@ class Rigid3 {
     return Rigid3(translation, rotation);
   }
 
-  string DebugString() const {
-    string out;
+  std::string DebugString() const {
+    std::string out;
     out.append("{ t: [");
     out.append(std::to_string(translation().x()));
     out.append(", ");

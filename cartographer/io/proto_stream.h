@@ -32,7 +32,7 @@ namespace io {
 // compression performance? Should we use LZ4?
 class ProtoStreamWriter {
  public:
-  ProtoStreamWriter(const string& filename);
+  ProtoStreamWriter(const std::string& filename);
   ~ProtoStreamWriter();
 
   ProtoStreamWriter(const ProtoStreamWriter&) = delete;
@@ -41,7 +41,7 @@ class ProtoStreamWriter {
   // Serializes, compressed and writes the 'proto' to the file.
   template <typename MessageType>
   void WriteProto(const MessageType& proto) {
-    string uncompressed_data;
+    std::string uncompressed_data;
     proto.SerializeToString(&uncompressed_data);
     Write(uncompressed_data);
   }
@@ -50,7 +50,7 @@ class ProtoStreamWriter {
   bool Close();
 
  private:
-  void Write(const string& uncompressed_data);
+  void Write(const std::string& uncompressed_data);
 
   std::ofstream out_;
 };
@@ -58,7 +58,7 @@ class ProtoStreamWriter {
 // A reader of the format produced by ProtoStreamWriter.
 class ProtoStreamReader {
  public:
-  ProtoStreamReader(const string& filename);
+  ProtoStreamReader(const std::string& filename);
   ~ProtoStreamReader();
 
   ProtoStreamReader(const ProtoStreamReader&) = delete;
@@ -66,7 +66,7 @@ class ProtoStreamReader {
 
   template <typename MessageType>
   bool ReadProto(MessageType* proto) {
-    string decompressed_data;
+    std::string decompressed_data;
     return Read(&decompressed_data) &&
            proto->ParseFromString(decompressed_data);
   }
@@ -74,7 +74,7 @@ class ProtoStreamReader {
   bool eof() const;
 
  private:
-  bool Read(string* decompressed_data);
+  bool Read(std::string* decompressed_data);
 
   std::ifstream in_;
 };

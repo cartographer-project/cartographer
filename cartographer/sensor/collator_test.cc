@@ -30,7 +30,7 @@ namespace sensor {
 namespace {
 
 TEST(Collator, Ordering) {
-  const std::array<string, 4> kSensorId = {
+  const std::array<std::string, 4> kSensorId = {
       {"horizontal_rangefinder", "vertical_rangefinder", "imu", "odometry"}};
   DispatchableRangefinderData zero(common::FromUniversal(0),
                                    Eigen::Vector3f::Zero(), {});
@@ -46,11 +46,11 @@ TEST(Collator, Ordering) {
   OdometryData sixth{common::FromUniversal(600),
                      transform::Rigid3d::Identity()};
 
-  std::vector<std::pair<string, common::Time>> received;
+  std::vector<std::pair<std::string, common::Time>> received;
   Collator collator;
   collator.AddTrajectory(
-      0, std::unordered_set<string>(kSensorId.begin(), kSensorId.end()),
-      [&received](const string& sensor_id, std::unique_ptr<Data> data) {
+      0, std::unordered_set<std::string>(kSensorId.begin(), kSensorId.end()),
+      [&received](const std::string& sensor_id, std::unique_ptr<Data> data) {
         received.push_back(std::make_pair(sensor_id, data->GetTime()));
       });
 
