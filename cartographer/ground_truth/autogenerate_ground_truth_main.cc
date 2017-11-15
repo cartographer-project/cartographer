@@ -21,7 +21,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/ground_truth/proto/relations.pb.h"
 #include "cartographer/io/proto_stream.h"
-#include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
+#include "cartographer/mapping/proto/pose_graph.pb.h"
 #include "cartographer/transform/transform.h"
 #include "gflags/gflags.h"
 #include "glog/logging.h"
@@ -66,11 +66,11 @@ std::vector<double> ComputeCoveredDistance(
 // TODO(whess): Should we consider all nodes inserted into the submap and
 // exclude, e.g. based on large relative linear or angular distance?
 std::vector<int> ComputeSubmapRepresentativeNode(
-    const mapping::proto::SparsePoseGraph& pose_graph) {
+    const mapping::proto::PoseGraph& pose_graph) {
   std::vector<int> submap_to_node_index;
   for (const auto& constraint : pose_graph.constraint()) {
     if (constraint.tag() !=
-        mapping::proto::SparsePoseGraph::Constraint::INTRA_SUBMAP) {
+        mapping::proto::PoseGraph::Constraint::INTRA_SUBMAP) {
       continue;
     }
     CHECK_EQ(constraint.submap_id().trajectory_id(), 0);
@@ -89,7 +89,7 @@ std::vector<int> ComputeSubmapRepresentativeNode(
 }
 
 proto::GroundTruth GenerateGroundTruth(
-    const mapping::proto::SparsePoseGraph& pose_graph,
+    const mapping::proto::PoseGraph& pose_graph,
     const double min_covered_distance, const double outlier_threshold_meters,
     const double outlier_threshold_radians) {
   const mapping::proto::Trajectory& trajectory = pose_graph.trajectory(0);
@@ -104,7 +104,7 @@ proto::GroundTruth GenerateGroundTruth(
   for (const auto& constraint : pose_graph.constraint()) {
     // We're only interested in loop closure constraints.
     if (constraint.tag() ==
-        mapping::proto::SparsePoseGraph::Constraint::INTRA_SUBMAP) {
+        mapping::proto::PoseGraph::Constraint::INTRA_SUBMAP) {
       continue;
     }
 
@@ -168,7 +168,7 @@ void Run(const std::string& pose_graph_filename,
          const double outlier_threshold_meters,
          const double outlier_threshold_radians) {
   LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";
-  mapping::proto::SparsePoseGraph pose_graph;
+  mapping::proto::PoseGraph pose_graph;
   {
     io::ProtoStreamReader reader(pose_graph_filename);
     CHECK(reader.ReadProto(&pose_graph));

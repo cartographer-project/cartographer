@@ -26,8 +26,8 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
+#include "cartographer/mapping/proto/pose_graph.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
-#include "cartographer/mapping/proto/sparse_pose_graph.pb.h"
 #include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
@@ -144,7 +144,7 @@ class PoseGraph {
   virtual MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() = 0;
 
   // Serializes the constraints and trajectories.
-  proto::SparsePoseGraph ToProto();
+  proto::PoseGraph ToProto();
 
   // Returns the IMU data.
   virtual sensor::MapByTime<sensor::ImuData> GetImuData() = 0;
@@ -165,7 +165,7 @@ class PoseGraph {
 
 std::vector<PoseGraph::Constraint> FromProto(
     const ::google::protobuf::RepeatedPtrField<
-        ::cartographer::mapping::proto::SparsePoseGraph::Constraint>&
+        ::cartographer::mapping::proto::PoseGraph::Constraint>&
         constraint_protos);
 
 }  // namespace mapping
