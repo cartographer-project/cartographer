@@ -48,10 +48,9 @@ sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
       sensor::VoxelFiltered(cropped.misses, options_.voxel_filter_size())};
 }
 
-void LocalTrajectoryBuilder::ScanMatch(
+std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder::ScanMatch(
     const common::Time time, const transform::Rigid2d& pose_prediction,
-    const sensor::RangeData& gravity_aligned_range_data,
-    transform::Rigid2d* const pose_observation) {
+    const sensor::RangeData& gravity_aligned_range_data) {
   std::shared_ptr<const Submap> matching_submap =
       active_submaps_.submaps().front();
   // The online correlative scan matcher will refine the initial estimate for
@@ -61,16 +60,21 @@ void LocalTrajectoryBuilder::ScanMatch(
       options_.adaptive_voxel_filter_options());
   const sensor::PointCloud filtered_gravity_aligned_point_cloud =
       adaptive_voxel_filter.Filter(gravity_aligned_range_data.returns);
+  if (filtered_gravity_aligned_point_cloud.empty()) {
+    return nullptr;
+  }
   if (options_.use_online_correlative_scan_matching()) {
     real_time_correlative_scan_matcher_.Match(
         pose_prediction, filtered_gravity_aligned_point_cloud,
         matching_submap->probability_grid(), &initial_ceres_pose);
   }
 
+  auto pose_observation = common::make_unique<transform::Rigid2d>();
   ceres::Solver::Summary summary;
   ceres_scan_matcher_.Match(
       pose_prediction, initial_ceres_pose, filtered_gravity_aligned_point_cloud,
-      matching_submap->probability_grid(), pose_observation, &summary);
+      matching_submap->probability_grid(), pose_observation.get(), &summary);
+  return pose_observation;
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
@@ -149,16 +153,19 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
   // local map frame <- gravity-aligned frame
-  transform::Rigid2d pose_estimate_2d;
-  ScanMatch(time, pose_prediction, gravity_aligned_range_data,
-            &pose_estimate_2d);
+  std::unique_ptr<transform::Rigid2d> pose_estimate_2d =
+      ScanMatch(time, pose_prediction, gravity_aligned_range_data);
+  if (pose_estimate_2d == nullptr) {
+    LOG(WARNING) << "Scan matching failed.";
+    return nullptr;
+  }
   const transform::Rigid3d pose_estimate =
-      transform::Embed3D(pose_estimate_2d) * gravity_alignment;
+      transform::Embed3D(*pose_estimate_2d) * gravity_alignment;
   extrapolator_->AddPose(time, pose_estimate);
 
   sensor::RangeData range_data_in_local =
       TransformRangeData(gravity_aligned_range_data,
-                         transform::Embed3D(pose_estimate_2d.cast<float>()));
+                         transform::Embed3D(pose_estimate_2d->cast<float>()));
   last_pose_estimate_ = {time, pose_estimate, range_data_in_local.returns};
   std::unique_ptr<InsertionResult> insertion_result =
       InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
