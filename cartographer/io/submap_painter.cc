@@ -26,12 +26,12 @@ Eigen::Affine3d ToEigen(const ::cartographer::transform::Rigid3d& rigid3) {
 
 void CairoPaintSubmapSlices(
     const double scale,
-    std::map<::cartographer::mapping::SubmapId, SubmapSlice>* submaps,
+    const std::map<::cartographer::mapping::SubmapId, SubmapSlice>& submaps,
     cairo_t* cr, std::function<void(const SubmapSlice&)> draw_callback) {
   cairo_scale(cr, scale, scale);
 
-  for (auto& pair : *submaps) {
-    auto& submap_slice = pair.second;
+  for (auto& pair : submaps) {
+    const auto& submap_slice = pair.second;
     if (submap_slice.surface == nullptr) {
       return;
     }
@@ -57,13 +57,12 @@ void CairoPaintSubmapSlices(
 }  // namespace
 
 PaintSubmapSlicesResult PaintSubmapSlices(
-    std::map<::cartographer::mapping::SubmapId, SubmapSlice>* submaps,
+    const std::map<::cartographer::mapping::SubmapId, SubmapSlice>& submaps,
     const double resolution) {
   Eigen::AlignedBox2f bounding_box;
   {
     auto surface = ::cartographer::io::MakeUniqueCairoSurfacePtr(
-        cairo_image_surface_create(PaintSubmapSlicesResult::kCairoFormat, 1,
-                                   1));
+        cairo_image_surface_create(::cartographer::io::kCairoFormat, 1, 1));
     auto cr =
         ::cartographer::io::MakeUniqueCairoPtr(cairo_create(surface.get()));
     const auto update_bounding_box = [&bounding_box, &cr](double x, double y) {
@@ -90,7 +89,7 @@ PaintSubmapSlicesResult PaintSubmapSlices(
 
   auto surface =
       ::cartographer::io::MakeUniqueCairoSurfacePtr(cairo_image_surface_create(
-          PaintSubmapSlicesResult::kCairoFormat, size.x(), size.y()));
+          ::cartographer::io::kCairoFormat, size.x(), size.y()));
   {
     auto cr =
         ::cartographer::io::MakeUniqueCairoPtr(cairo_create(surface.get()));
