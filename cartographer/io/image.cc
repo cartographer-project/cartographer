@@ -47,9 +47,7 @@ UniqueCairoPtr MakeUniqueCairoPtr(cairo_t* surface) {
 }
 
 Image::Image(int width, int height)
-    : width_(width),
-      height_(height),
-      pixels_(width * height, 0) {}
+    : width_(width), height_(height), pixels_(width * height, 0) {}
 
 Image::Image(UniqueCairoSurfacePtr surface)
     : width_(cairo_image_surface_get_width(surface.get())),
