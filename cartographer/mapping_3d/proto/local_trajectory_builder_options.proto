@@ -28,9 +28,9 @@ message LocalTrajectoryBuilderOptions {
   float min_range = 1;
   float max_range = 2;
 
-  // Number of scans to accumulate into one unwarped, combined scan to use for
-  // scan matching.
-  int32 scans_per_accumulation = 3;
+  // Number of range data to accumulate into one unwarped, combined range data
+  // to use for scan matching.
+  int32 num_accumulated_range_data = 3;
 
   // Voxel filter that gets applied to the range data immediately after
   // cropping.

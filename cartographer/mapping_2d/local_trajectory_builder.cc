@@ -125,7 +125,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   }
   ++num_accumulated_;
 
-  if (num_accumulated_ >= options_.scans_per_accumulation()) {
+  if (num_accumulated_ >= options_.num_accumulated_range_data()) {
     num_accumulated_ = 0;
     const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
         extrapolator_->EstimateGravityOrientation(time));

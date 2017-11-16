@@ -324,7 +324,7 @@ class MapById {
 
   bool empty() const { return begin() == end(); }
 
-  // Returns an iterator to the the first element in the container belonging to
+  // Returns an iterator to the first element in the container belonging to
   // trajectory 'trajectory_id' whose time is not considered to go before
   // 'time', or EndOfTrajectory(trajectory_id) if all keys are considered to go
   // before 'time'.

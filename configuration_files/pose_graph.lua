@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 POSE_GRAPH = {
-  optimize_every_n_scans = 90,
+  optimize_every_n_nodes = 90,
   constraint_builder = {
     sampling_ratio = 0.3,
     max_constraint_distance = 15.,
@@ -65,8 +65,8 @@ POSE_GRAPH = {
     huber_scale = 1e1,
     acceleration_weight = 1e3,
     rotation_weight = 3e5,
-    consecutive_scan_translation_penalty_factor = 1e5,
-    consecutive_scan_rotation_penalty_factor = 1e5,
+    consecutive_node_translation_weight = 1e5,
+    consecutive_node_rotation_weight = 1e5,
     fixed_frame_pose_translation_weight = 1e1,
     fixed_frame_pose_rotation_weight = 1e2,
     log_solver_summary = false,

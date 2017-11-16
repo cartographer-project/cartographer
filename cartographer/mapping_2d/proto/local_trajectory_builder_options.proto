@@ -32,9 +32,9 @@ message LocalTrajectoryBuilderOptions {
   // Points beyond 'max_range' will be inserted with this length as empty space.
   float missing_data_ray_length = 16;
 
-  // Number of scans to accumulate into one unwarped, combined scan to use for
-  // scan matching.
-  int32 scans_per_accumulation = 19;
+  // Number of range data to accumulate into one unwarped, combined range data
+  // to use for scan matching.
+  int32 num_accumulated_range_data = 19;
 
   // Voxel filter that gets applied to the range data immediately after
   // cropping.
