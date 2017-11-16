@@ -100,8 +100,14 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 
   if (num_accumulated_ >= options_.scans_per_accumulation()) {
     num_accumulated_ = 0;
+    const sensor::RangeData filtered_range_data = {
+        accumulated_range_data_.origin,
+        sensor::VoxelFiltered(accumulated_range_data_.returns,
+                              options_.voxel_filter_size()),
+        sensor::VoxelFiltered(accumulated_range_data_.misses,
+                              options_.voxel_filter_size())};
     return AddAccumulatedRangeData(
-        time, sensor::TransformRangeData(accumulated_range_data_,
+        time, sensor::TransformRangeData(filtered_range_data,
                                          tracking_delta.inverse()));
   }
   return nullptr;
@@ -109,14 +115,8 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 
 std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
-    const common::Time time, const sensor::RangeData& range_data_in_tracking) {
-  const sensor::RangeData filtered_range_data_in_tracking = {
-      range_data_in_tracking.origin,
-      sensor::VoxelFiltered(range_data_in_tracking.returns,
-                            options_.voxel_filter_size()),
-      sensor::VoxelFiltered(range_data_in_tracking.misses,
-                            options_.voxel_filter_size())};
-
+    const common::Time time,
+    const sensor::RangeData& filtered_range_data_in_tracking) {
   if (filtered_range_data_in_tracking.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";
     return nullptr;

@@ -72,9 +72,10 @@ class LocalTrajectoryBuilder {
 
  private:
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
-      common::Time time, const sensor::RangeData& range_data);
-  sensor::RangeData TransformAndFilterRangeData(
-      const transform::Rigid3f& gravity_alignment,
+      common::Time time, const sensor::RangeData& gravity_aligned_range_data,
+      const transform::Rigid3d& gravity_alignment);
+  sensor::RangeData TransformToGravityAlignedFrameAndFilter(
+      const transform::Rigid3f& transform_to_gravity_aligned_frame,
       const sensor::RangeData& range_data) const;
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(

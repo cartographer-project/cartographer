@@ -36,12 +36,14 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
-sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
-    const transform::Rigid3f& gravity_alignment,
+sensor::RangeData
+LocalTrajectoryBuilder::TransformToGravityAlignedFrameAndFilter(
+    const transform::Rigid3f& transform_to_gravity_aligned_frame,
     const sensor::RangeData& range_data) const {
-  const sensor::RangeData cropped = sensor::CropRangeData(
-      sensor::TransformRangeData(range_data, gravity_alignment),
-      options_.min_z(), options_.max_z());
+  const sensor::RangeData cropped =
+      sensor::CropRangeData(sensor::TransformRangeData(
+                                range_data, transform_to_gravity_aligned_frame),
+                            options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
       sensor::VoxelFiltered(cropped.returns, options_.voxel_filter_size()),
@@ -125,22 +127,23 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 
   if (num_accumulated_ >= options_.scans_per_accumulation()) {
     num_accumulated_ = 0;
+    const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
+        extrapolator_->EstimateGravityOrientation(time));
     return AddAccumulatedRangeData(
-        time, sensor::TransformRangeData(accumulated_range_data_,
-                                         tracking_delta.inverse()));
+        time,
+        TransformToGravityAlignedFrameAndFilter(
+            gravity_alignment.cast<float>() * tracking_delta.inverse(),
+            accumulated_range_data_),
+        gravity_alignment);
   }
   return nullptr;
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
-    const common::Time time, const sensor::RangeData& range_data) {
-  // Transforms 'range_data' from the tracking frame into a frame where gravity
-  // direction is approximately +z.
-  const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
-      extrapolator_->EstimateGravityOrientation(time));
-  const sensor::RangeData gravity_aligned_range_data =
-      TransformAndFilterRangeData(gravity_alignment.cast<float>(), range_data);
+    const common::Time time,
+    const sensor::RangeData& gravity_aligned_range_data,
+    const transform::Rigid3d& gravity_alignment) {
   if (gravity_aligned_range_data.returns.empty()) {
     LOG(WARNING) << "Dropped empty horizontal range data.";
     return nullptr;
