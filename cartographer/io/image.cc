@@ -31,8 +31,6 @@ cairo_status_t CairoWriteCallback(void* const closure,
   return CAIRO_STATUS_WRITE_ERROR;
 }
 
-constexpr cairo_format_t kCairoFormat = CAIRO_FORMAT_ARGB32;
-
 int StrideForWidth(int width) {
   const int stride = cairo_format_stride_for_width(kCairoFormat, width);
   CHECK_EQ(stride % 4, 0);

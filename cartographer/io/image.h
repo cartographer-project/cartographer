@@ -29,6 +29,9 @@
 namespace cartographer {
 namespace io {
 
+// The only cairo image format we use for Cartographer.
+constexpr cairo_format_t kCairoFormat = CAIRO_FORMAT_ARGB32;
+
 // std::unique_ptr for Cairo surfaces. The surface is destroyed when the
 // std::unique_ptr is reset or destroyed.
 using UniqueCairoSurfacePtr =

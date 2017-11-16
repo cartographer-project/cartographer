@@ -27,9 +27,6 @@ namespace cartographer {
 namespace io {
 
 struct PaintSubmapSlicesResult {
-  // Data format for 'surface'.
-  static constexpr cairo_format_t kCairoFormat = CAIRO_FORMAT_ARGB32;
-
   PaintSubmapSlicesResult(::cartographer::io::UniqueCairoSurfacePtr surface,
                           Eigen::Array2f origin)
       : surface(std::move(surface)), origin(origin) {}
@@ -59,8 +56,8 @@ struct SubmapSlice {
 };
 
 PaintSubmapSlicesResult PaintSubmapSlices(
-    std::map<::cartographer::mapping::SubmapId, SubmapSlice>* submaps,
-    const double resolution);
+    const std::map<::cartographer::mapping::SubmapId, SubmapSlice>& submaps,
+    double resolution);
 
 }  // namespace io
 }  // namespace cartographer
