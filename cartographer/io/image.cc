@@ -99,7 +99,7 @@ void Image::SetPixel(int x, int y, const Uint8Color& color) {
 UniqueCairoSurfacePtr Image::GetCairoSurface() {
   return MakeUniqueCairoSurfacePtr(cairo_image_surface_create_for_data(
       reinterpret_cast<unsigned char*>(pixels_.data()), kCairoFormat, width_,
-      height_, width_ / 4 /* stride */));
+      height_, width_ * 4 /* stride */));
 }
 
 }  // namespace io
