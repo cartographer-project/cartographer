@@ -38,11 +38,12 @@ LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
 sensor::RangeData
 LocalTrajectoryBuilder::TransformToGravityAlignedFrameAndFilter(
-    const transform::Rigid3f& gravity_alignment,
+    const transform::Rigid3f& transform_to_gravity_aligned_frame,
     const sensor::RangeData& range_data) const {
-  const sensor::RangeData cropped = sensor::CropRangeData(
-      sensor::TransformRangeData(range_data, gravity_alignment),
-      options_.min_z(), options_.max_z());
+  const sensor::RangeData cropped =
+      sensor::CropRangeData(sensor::TransformRangeData(
+                                range_data, transform_to_gravity_aligned_frame),
+                            options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
       sensor::VoxelFiltered(cropped.returns, options_.voxel_filter_size()),
@@ -130,11 +131,10 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
         extrapolator_->EstimateGravityOrientation(time));
     return AddAccumulatedRangeData(
         time,
-        // Transforms 'accumulated_range_data_' into a frame where gravity
-        // direction is approximately +z.
         TransformToGravityAlignedFrameAndFilter(
             gravity_alignment.cast<float>() * tracking_delta.inverse(),
-            accumulated_range_data_));
+            accumulated_range_data_),
+        gravity_alignment);
   }
   return nullptr;
 }
@@ -142,13 +142,12 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time,
-    const sensor::RangeData& gravity_aligned_range_data) {
+    const sensor::RangeData& gravity_aligned_range_data,
+    const transform::Rigid3d& gravity_alignment) {
   if (gravity_aligned_range_data.returns.empty()) {
     LOG(WARNING) << "Dropped empty horizontal range data.";
     return nullptr;
   }
-  const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
-      extrapolator_->EstimateGravityOrientation(time));
 
   // Computes a gravity aligned pose prediction.
   const transform::Rigid3d non_gravity_aligned_pose_prediction =
