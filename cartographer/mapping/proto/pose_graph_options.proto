@@ -19,7 +19,7 @@ package cartographer.mapping.proto;
 import "cartographer/mapping/pose_graph/proto/constraint_builder_options.proto";
 import "cartographer/mapping/pose_graph/proto/optimization_problem_options.proto";
 
-message SparsePoseGraphOptions {
+message PoseGraphOptions {
   // Online loop closure: If positive, will run the loop closure while the map
   // is built.
   int32 optimize_every_n_scans = 1;

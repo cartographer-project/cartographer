@@ -117,12 +117,12 @@ bool use_trajectory_builder_3d
 int32 num_background_threads
   Number of threads to use for background computations.
 
-cartographer.mapping.proto.SparsePoseGraphOptions sparse_pose_graph_options
+cartographer.mapping.proto.PoseGraphOptions pose_graph_options
   Not yet documented.
 
 
-cartographer.mapping.proto.SparsePoseGraphOptions
-=================================================
+cartographer.mapping.proto.PoseGraphOptions
+===========================================
 
 int32 optimize_every_n_scans
   Online loop closure: If positive, will run the loop closure while the map

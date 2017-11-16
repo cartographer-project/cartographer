@@ -27,8 +27,8 @@
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/proto/pose_graph.pb.h"
+#include "cartographer/mapping/proto/pose_graph_options.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
-#include "cartographer/mapping/proto/sparse_pose_graph_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/sensor/imu_data.h"
@@ -39,7 +39,7 @@
 namespace cartographer {
 namespace mapping {
 
-proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
+proto::PoseGraphOptions CreatePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
 class PoseGraph {

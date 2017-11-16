@@ -46,8 +46,8 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
       parameter_dictionary->GetBool("use_trajectory_builder_3d"));
   options.set_num_background_threads(
       parameter_dictionary->GetNonNegativeInt("num_background_threads"));
-  *options.mutable_sparse_pose_graph_options() = CreateSparsePoseGraphOptions(
-      parameter_dictionary->GetDictionary("sparse_pose_graph").get());
+  *options.mutable_pose_graph_options() = CreatePoseGraphOptions(
+      parameter_dictionary->GetDictionary("pose_graph").get());
   CHECK_NE(options.use_trajectory_builder_2d(),
            options.use_trajectory_builder_3d());
   return options;
@@ -61,12 +61,12 @@ MapBuilder::MapBuilder(
       local_slam_result_callback_(local_slam_result_callback) {
   if (options.use_trajectory_builder_2d()) {
     pose_graph_2d_ = common::make_unique<mapping_2d::PoseGraph>(
-        options_.sparse_pose_graph_options(), &thread_pool_);
+        options_.pose_graph_options(), &thread_pool_);
     pose_graph_ = pose_graph_2d_.get();
   }
   if (options.use_trajectory_builder_3d()) {
     pose_graph_3d_ = common::make_unique<mapping_3d::PoseGraph>(
-        options_.sparse_pose_graph_options(), &thread_pool_);
+        options_.pose_graph_options(), &thread_pool_);
     pose_graph_ = pose_graph_3d_.get();
   }
 }

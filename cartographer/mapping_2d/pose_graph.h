@@ -58,7 +58,7 @@ namespace mapping_2d {
 // All constraints are between a submap i and a node j.
 class PoseGraph : public mapping::PoseGraph {
  public:
-  PoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
+  PoseGraph(const mapping::proto::PoseGraphOptions& options,
             common::ThreadPool* thread_pool);
   ~PoseGraph() override;
 
@@ -190,7 +190,7 @@ class PoseGraph : public mapping::PoseGraph {
   void UpdateTrajectoryConnectivity(const Constraint& constraint)
       REQUIRES(mutex_);
 
-  const mapping::proto::SparsePoseGraphOptions options_;
+  const mapping::proto::PoseGraphOptions options_;
   common::Mutex mutex_;
 
   // If it exists, further work items must be added to this queue, and will be
