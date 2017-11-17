@@ -555,6 +555,11 @@ sensor::MapByTime<sensor::OdometryData> PoseGraph::GetOdometryData() {
   return optimization_problem_.odometry_data();
 }
 
+sensor::MapByTime<sensor::FixedFramePoseData>
+PoseGraph::GetFixedFramePoseData() {
+  return {};  // Not implemented yet in 2D.
+}
+
 std::vector<PoseGraph::Constraint> PoseGraph::constraints() {
   std::vector<Constraint> result;
   common::MutexLocker locker(&mutex_);
