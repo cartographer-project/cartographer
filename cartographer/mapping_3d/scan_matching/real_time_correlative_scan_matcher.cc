@@ -68,9 +68,8 @@ RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchTransforms(
   }
   const float kSafetyMargin = 1.f - 1e-3f;
   const float angular_step_size =
-      kSafetyMargin * std::acos(1.f -
-                                common::Pow2(resolution) /
-                                    (2.f * common::Pow2(max_scan_range)));
+      kSafetyMargin * std::acos(1.f - common::Pow2(resolution) /
+                                          (2.f * common::Pow2(max_scan_range)));
   const int angular_window_size =
       common::RoundToInt(options_.angular_search_window() / angular_step_size);
   for (int z = -linear_window_size; z <= linear_window_size; ++z) {

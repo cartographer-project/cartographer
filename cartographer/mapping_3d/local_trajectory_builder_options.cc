@@ -37,20 +37,20 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
       parameter_dictionary->GetDouble("voxel_filter_size"));
   *options.mutable_high_resolution_adaptive_voxel_filter_options() =
       sensor::CreateAdaptiveVoxelFilterOptions(
-          parameter_dictionary->GetDictionary(
-                                  "high_resolution_adaptive_voxel_filter")
+          parameter_dictionary
+              ->GetDictionary("high_resolution_adaptive_voxel_filter")
               .get());
   *options.mutable_low_resolution_adaptive_voxel_filter_options() =
       sensor::CreateAdaptiveVoxelFilterOptions(
-          parameter_dictionary->GetDictionary(
-                                  "low_resolution_adaptive_voxel_filter")
+          parameter_dictionary
+              ->GetDictionary("low_resolution_adaptive_voxel_filter")
               .get());
   options.set_use_online_correlative_scan_matching(
       parameter_dictionary->GetBool("use_online_correlative_scan_matching"));
   *options.mutable_real_time_correlative_scan_matcher_options() =
       mapping_2d::scan_matching::CreateRealTimeCorrelativeScanMatcherOptions(
-          parameter_dictionary->GetDictionary(
-                                  "real_time_correlative_scan_matcher")
+          parameter_dictionary
+              ->GetDictionary("real_time_correlative_scan_matcher")
               .get());
   *options.mutable_ceres_scan_matcher_options() =
       scan_matching::CreateCeresScanMatcherOptions(

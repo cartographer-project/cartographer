@@ -39,8 +39,10 @@ LandmarkData FromProto(const proto::LandmarkData& proto) {
   landmark_data.time = common::FromUniversal(proto.timestamp());
   for (const auto& item : proto.landmarks()) {
     landmark_data.landmarks.push_back({
-        item.id(), transform::ToRigid3(item.transform()),
-        item.translation_weight(), item.rotation_weight(),
+        item.id(),
+        transform::ToRigid3(item.transform()),
+        item.translation_weight(),
+        item.rotation_weight(),
     });
   }
   return landmark_data;

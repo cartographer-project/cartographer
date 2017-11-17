@@ -182,9 +182,9 @@ void ActiveSubmaps::AddSubmap(const Eigen::Vector2f& origin) {
   constexpr int kInitialSubmapSize = 100;
   submaps_.push_back(common::make_unique<Submap>(
       MapLimits(options_.resolution(),
-                origin.cast<double>() +
-                    0.5 * kInitialSubmapSize * options_.resolution() *
-                        Eigen::Vector2d::Ones(),
+                origin.cast<double>() + 0.5 * kInitialSubmapSize *
+                                            options_.resolution() *
+                                            Eigen::Vector2d::Ones(),
                 CellLimits(kInitialSubmapSize, kInitialSubmapSize)),
       origin));
   LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
