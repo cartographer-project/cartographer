@@ -190,8 +190,8 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
   std::map<int, int> trajectory_remapping;
   for (auto& trajectory_proto : *pose_graph.mutable_trajectory()) {
     const int new_trajectory_id = AddTrajectoryForDeserialization();
-    CHECK(trajectory_remapping.emplace(trajectory_proto.trajectory_id(),
-                                       new_trajectory_id)
+    CHECK(trajectory_remapping
+              .emplace(trajectory_proto.trajectory_id(), new_trajectory_id)
               .second)
         << "Duplicate trajectory ID: " << trajectory_proto.trajectory_id();
     trajectory_proto.set_trajectory_id(new_trajectory_id);
