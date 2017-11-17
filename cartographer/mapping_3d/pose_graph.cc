@@ -65,9 +65,9 @@ std::vector<mapping::SubmapId> PoseGraph::InitializeGlobalSubmapPoses(
             initial_trajectory_poses_.at(trajectory_id).to_trajectory_id, time);
       }
       optimization_problem_.AddSubmap(
-          trajectory_id, ComputeLocalToGlobalTransform(
-                             optimized_submap_transforms_, trajectory_id) *
-                             insertion_submaps[0]->local_pose());
+          trajectory_id,
+          ComputeLocalToGlobalTransform(global_submap_poses_, trajectory_id) *
+              insertion_submaps[0]->local_pose());
     }
     CHECK_EQ(1, submap_data.SizeOfTrajectoryOrZero(trajectory_id));
     const mapping::SubmapId submap_id{trajectory_id, 0};
@@ -415,8 +415,8 @@ void PoseGraph::AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
   submap_data_.Insert(submap_id, SubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the 'global_submap_pose'.
-  optimized_submap_transforms_.Insert(
-      submap_id, pose_graph::SubmapData{global_submap_pose});
+  global_submap_poses_.Insert(submap_id,
+                              pose_graph::SubmapData{global_submap_pose});
   AddWorkItem([this, submap_id, global_submap_pose]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
@@ -507,7 +507,7 @@ void PoseGraph::LogResidualHistograms() {
       const cartographer::transform::Rigid3d node_to_submap_constraint =
           constraint.pose.zbar_ij;
       const cartographer::transform::Rigid3d optimized_submap_to_map =
-          optimized_submap_transforms_.at(constraint.submap_id).global_pose;
+          global_submap_poses_.at(constraint.submap_id).global_pose;
       const cartographer::transform::Rigid3d optimized_node_to_submap =
           optimized_submap_to_map.inverse() * optimized_node_to_map;
       const cartographer::transform::Rigid3d residual =
@@ -545,8 +545,8 @@ void PoseGraph::RunOptimization() {
     // 'optimization_problem_' yet.
     const auto local_to_new_global =
         ComputeLocalToGlobalTransform(submap_data, trajectory_id);
-    const auto local_to_old_global = ComputeLocalToGlobalTransform(
-        optimized_submap_transforms_, trajectory_id);
+    const auto local_to_old_global =
+        ComputeLocalToGlobalTransform(global_submap_poses_, trajectory_id);
     const transform::Rigid3d old_global_to_new_global =
         local_to_new_global * local_to_old_global.inverse();
 
@@ -560,7 +560,7 @@ void PoseGraph::RunOptimization() {
           old_global_to_new_global * mutable_trajectory_node.global_pose;
     }
   }
-  optimized_submap_transforms_ = submap_data;
+  global_submap_poses_ = submap_data;
 
   // Log the histograms for the pose residuals.
   if (options_.log_residual_histograms()) {
@@ -621,8 +621,7 @@ transform::Rigid3d PoseGraph::GetInterpolatedGlobalTrajectoryPose(
 transform::Rigid3d PoseGraph::GetLocalToGlobalTransform(
     const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
-  return ComputeLocalToGlobalTransform(optimized_submap_transforms_,
-                                       trajectory_id);
+  return ComputeLocalToGlobalTransform(global_submap_poses_, trajectory_id);
 }
 
 std::vector<std::vector<int>> PoseGraph::GetConnectedTrajectories() {
@@ -648,10 +647,10 @@ PoseGraph::GetAllSubmapData() {
 
 transform::Rigid3d PoseGraph::ComputeLocalToGlobalTransform(
     const mapping::MapById<mapping::SubmapId, pose_graph::SubmapData>&
-        submap_transforms,
+        global_submap_poses,
     const int trajectory_id) const {
-  auto begin_it = submap_transforms.BeginOfTrajectory(trajectory_id);
-  auto end_it = submap_transforms.EndOfTrajectory(trajectory_id);
+  auto begin_it = global_submap_poses.BeginOfTrajectory(trajectory_id);
+  auto end_it = global_submap_poses.EndOfTrajectory(trajectory_id);
   if (begin_it == end_it) {
     const auto it = initial_trajectory_poses_.find(trajectory_id);
     if (it != initial_trajectory_poses_.end()) {
@@ -664,7 +663,7 @@ transform::Rigid3d PoseGraph::ComputeLocalToGlobalTransform(
   }
   const mapping::SubmapId last_optimized_submap_id = std::prev(end_it)->id;
   // Accessing 'local_pose' in Submap is okay, since the member is const.
-  return submap_transforms.at(last_optimized_submap_id).global_pose *
+  return global_submap_poses.at(last_optimized_submap_id).global_pose *
          submap_data_.at(last_optimized_submap_id)
              .submap->local_pose()
              .inverse();
@@ -677,12 +676,12 @@ mapping::PoseGraph::SubmapData PoseGraph::GetSubmapDataUnderLock(
     return {};
   }
   auto submap = it->data.submap;
-  if (optimized_submap_transforms_.Contains(submap_id)) {
+  if (global_submap_poses_.Contains(submap_id)) {
     // We already have an optimized pose.
-    return {submap, optimized_submap_transforms_.at(submap_id).global_pose};
+    return {submap, global_submap_poses_.at(submap_id).global_pose};
   }
   // We have to extrapolate.
-  return {submap, ComputeLocalToGlobalTransform(optimized_submap_transforms_,
+  return {submap, ComputeLocalToGlobalTransform(global_submap_poses_,
                                                 submap_id.trajectory_id) *
                       submap->local_pose()};
 }
