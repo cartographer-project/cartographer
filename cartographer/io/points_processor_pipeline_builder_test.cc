@@ -28,8 +28,8 @@ namespace {
 
 TEST(PointsProcessorPipelineBuilderTest, RegisterBuiltInPointsProcessors) {
   PointsProcessorPipelineBuilder builder;
-  FileWriterFactory dummy_factory =
-      [](const std::string& filename) -> std::unique_ptr<FileWriter> {
+  FileWriterFactory dummy_factory = [](
+      const std::string& filename) -> std::unique_ptr<FileWriter> {
     return nullptr;
   };
   RegisterBuiltInPointsProcessors({}, dummy_factory, &builder);

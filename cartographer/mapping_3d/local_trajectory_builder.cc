@@ -159,11 +159,10 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   }
   ceres_scan_matcher_->Match(
       matching_submap->local_pose().inverse() * pose_prediction,
-      initial_ceres_pose,
-      {{&high_resolution_point_cloud_in_tracking,
-        &matching_submap->high_resolution_hybrid_grid()},
-       {&low_resolution_point_cloud_in_tracking,
-        &matching_submap->low_resolution_hybrid_grid()}},
+      initial_ceres_pose, {{&high_resolution_point_cloud_in_tracking,
+                            &matching_submap->high_resolution_hybrid_grid()},
+                           {&low_resolution_point_cloud_in_tracking,
+                            &matching_submap->low_resolution_hybrid_grid()}},
       &pose_observation_in_submap, &summary);
   const transform::Rigid3d pose_estimate =
       matching_submap->local_pose() * pose_observation_in_submap;

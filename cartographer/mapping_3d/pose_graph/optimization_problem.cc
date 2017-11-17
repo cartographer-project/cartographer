@@ -398,9 +398,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                 Eigen::AngleAxisd(
                     transform::GetYaw(fixed_frame_pose_in_map.rotation()),
                     Eigen::Vector3d::UnitZ())),
-            nullptr,
-            common::make_unique<ceres::AutoDiffLocalParameterization<
-                YawOnlyQuaternionPlus, 4, 1>>(),
+            nullptr, common::make_unique<ceres::AutoDiffLocalParameterization<
+                         YawOnlyQuaternionPlus, 4, 1>>(),
             &problem);
         fixed_frame_pose_initialized = true;
       }
