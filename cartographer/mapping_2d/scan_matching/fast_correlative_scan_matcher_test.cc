@@ -62,8 +62,9 @@ TEST(PrecomputationGridTest, CorrectValues) {
               probability_grid.GetProbability(xy_index + Eigen::Array2i(x, y)));
         }
       }
-      EXPECT_NEAR(max_score, PrecomputationGrid::ToProbability(
-                                 precomputation_grid.GetValue(xy_index)),
+      EXPECT_NEAR(max_score,
+                  PrecomputationGrid::ToProbability(
+                      precomputation_grid.GetValue(xy_index)),
                   1e-4);
     }
   }
@@ -95,8 +96,9 @@ TEST(PrecomputationGridTest, TinyProbabilityGrid) {
               probability_grid.GetProbability(xy_index + Eigen::Array2i(x, y)));
         }
       }
-      EXPECT_NEAR(max_score, PrecomputationGrid::ToProbability(
-                                 precomputation_grid.GetValue(xy_index)),
+      EXPECT_NEAR(max_score,
+                  PrecomputationGrid::ToProbability(
+                      precomputation_grid.GetValue(xy_index)),
                   1e-4);
     }
   }

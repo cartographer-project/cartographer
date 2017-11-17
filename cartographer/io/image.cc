@@ -24,8 +24,8 @@ Uint8Color CairoToUint8Color(uint32 color) {
 cairo_status_t CairoWriteCallback(void* const closure,
                                   const unsigned char* data,
                                   const unsigned int length) {
-  if (static_cast<FileWriter*>(closure)
-          ->Write(reinterpret_cast<const char*>(data), length)) {
+  if (static_cast<FileWriter*>(closure)->Write(
+          reinterpret_cast<const char*>(data), length)) {
     return CAIRO_STATUS_SUCCESS;
   }
   return CAIRO_STATUS_WRITE_ERROR;

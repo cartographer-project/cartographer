@@ -55,8 +55,9 @@ uint8 ProbabilityToColor(float probability_from_grid) {
 }  // namespace
 
 ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
-    const double resolution, const mapping_2d::proto::RangeDataInserterOptions&
-                                 range_data_inserter_options,
+    const double resolution,
+    const mapping_2d::proto::RangeDataInserterOptions&
+        range_data_inserter_options,
     const DrawTrajectories& draw_trajectories,
     std::unique_ptr<FileWriter> file_writer,
     const std::vector<mapping::proto::Trajectory>& trajectories,
@@ -149,8 +150,9 @@ mapping_2d::ProbabilityGrid CreateProbabilityGrid(const double resolution) {
   Eigen::Vector2d max =
       0.5 * kInitialProbabilityGridSize * resolution * Eigen::Vector2d::Ones();
   return mapping_2d::ProbabilityGrid(cartographer::mapping_2d::MapLimits(
-      resolution, max, mapping_2d::CellLimits(kInitialProbabilityGridSize,
-                                              kInitialProbabilityGridSize)));
+      resolution, max,
+      mapping_2d::CellLimits(kInitialProbabilityGridSize,
+                             kInitialProbabilityGridSize)));
 }
 
 }  // namespace io
