@@ -38,9 +38,8 @@ struct IntegrateImuResult {
 
 template <typename T, typename RangeType, typename IteratorType>
 IntegrateImuResult<T> IntegrateImu(
-    const RangeType& imu_data,
-    const Eigen::Transform<T, 3, Eigen::Affine>&
-        linear_acceleration_calibration,
+    const RangeType& imu_data, const Eigen::Transform<T, 3, Eigen::Affine>&
+                                   linear_acceleration_calibration,
     const Eigen::Transform<T, 3, Eigen::Affine>& angular_velocity_calibration,
     const common::Time start_time, const common::Time end_time,
     IteratorType* const it) {

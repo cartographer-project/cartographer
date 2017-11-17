@@ -85,8 +85,7 @@ TEST(IdTest, MapByIdIterator) {
 TEST(IdTest, MapByIdTrajectoryRange) {
   MapById<NodeId, int> map_by_id = CreateTestMapById<NodeId>();
   std::deque<std::pair<NodeId, int>> expected_data = {
-      {NodeId{0, 0}, 0},
-      {NodeId{0, 1}, 1},
+      {NodeId{0, 0}, 0}, {NodeId{0, 1}, 1},
   };
   for (const auto& entry : map_by_id.trajectory(0)) {
     ASSERT_FALSE(expected_data.empty());

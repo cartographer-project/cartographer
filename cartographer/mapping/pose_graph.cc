@@ -101,7 +101,7 @@ proto::PoseGraph PoseGraph::ToProto() {
 
   std::map<int, proto::Trajectory* const> trajectory_protos;
   const auto trajectory = [&proto, &trajectory_protos](
-                              const int trajectory_id) -> proto::Trajectory* {
+      const int trajectory_id) -> proto::Trajectory* {
     if (trajectory_protos.count(trajectory_id) == 0) {
       auto* const trajectory_proto = proto.add_trajectory();
       trajectory_proto->set_trajectory_id(trajectory_id);

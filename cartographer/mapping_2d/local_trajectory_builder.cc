@@ -130,10 +130,9 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
         extrapolator_->EstimateGravityOrientation(time));
     return AddAccumulatedRangeData(
-        time,
-        TransformToGravityAlignedFrameAndFilter(
-            gravity_alignment.cast<float>() * tracking_delta.inverse(),
-            accumulated_range_data_),
+        time, TransformToGravityAlignedFrameAndFilter(
+                  gravity_alignment.cast<float>() * tracking_delta.inverse(),
+                  accumulated_range_data_),
         gravity_alignment);
   }
   return nullptr;

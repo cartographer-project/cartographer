@@ -55,9 +55,9 @@ class BlockingQueue {
   // Like push, but returns false if 'timeout' is reached.
   bool PushWithTimeout(T t, const common::Duration timeout) {
     MutexLocker lock(&mutex_);
-    if (!lock.AwaitWithTimeout(
-            [this]() REQUIRES(mutex_) { return QueueNotFullCondition(); },
-            timeout)) {
+    if (!lock.AwaitWithTimeout([this]() REQUIRES(mutex_) {
+          return QueueNotFullCondition();
+        }, timeout)) {
       return false;
     }
     deque_.push_back(std::move(t));
@@ -77,9 +77,9 @@ class BlockingQueue {
   // Like Pop, but can timeout. Returns nullptr in this case.
   T PopWithTimeout(const common::Duration timeout) {
     MutexLocker lock(&mutex_);
-    if (!lock.AwaitWithTimeout(
-            [this]() REQUIRES(mutex_) { return QueueNotEmptyCondition(); },
-            timeout)) {
+    if (!lock.AwaitWithTimeout([this]() REQUIRES(mutex_) {
+          return QueueNotEmptyCondition();
+        }, timeout)) {
       return nullptr;
     }
     T t = std::move(deque_.front());

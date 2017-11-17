@@ -41,9 +41,8 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
       "write_probability_grid";
   enum class DrawTrajectories { kNo, kYes };
   ProbabilityGridPointsProcessor(
-      double resolution,
-      const mapping_2d::proto::RangeDataInserterOptions&
-          range_data_inserter_options,
+      double resolution, const mapping_2d::proto::RangeDataInserterOptions&
+                             range_data_inserter_options,
       const DrawTrajectories& draw_trajectories,
       std::unique_ptr<FileWriter> file_writer,
       const std::vector<mapping::proto::Trajectory>& trajectorios,

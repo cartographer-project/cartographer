@@ -49,8 +49,8 @@ proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
           parameter_dictionary->GetDictionary("ceres_scan_matcher").get());
   *options.mutable_fast_correlative_scan_matcher_options_3d() =
       mapping_3d::scan_matching::CreateFastCorrelativeScanMatcherOptions(
-          parameter_dictionary
-              ->GetDictionary("fast_correlative_scan_matcher_3d")
+          parameter_dictionary->GetDictionary(
+                                  "fast_correlative_scan_matcher_3d")
               .get());
   *options.mutable_ceres_scan_matcher_options_3d() =
       mapping_3d::scan_matching::CreateCeresScanMatcherOptions(

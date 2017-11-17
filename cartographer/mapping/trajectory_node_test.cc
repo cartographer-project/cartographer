@@ -30,8 +30,7 @@ namespace {
 
 TEST(TrajectoryNodeTest, ToAndFromProto) {
   const TrajectoryNode::Data expected{
-      common::FromUniversal(42),
-      Eigen::Quaterniond(1., 2., -3., -4.),
+      common::FromUniversal(42), Eigen::Quaterniond(1., 2., -3., -4.),
       sensor::CompressedPointCloud({{1.f, 2.f, 0.f}, {0.f, 0.f, 1.f}})
           .Decompress(),
       sensor::CompressedPointCloud({{2.f, 3.f, 4.f}}).Decompress(),
