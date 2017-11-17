@@ -34,8 +34,8 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
   options.set_max_z(parameter_dictionary->GetDouble("max_z"));
   options.set_missing_data_ray_length(
       parameter_dictionary->GetDouble("missing_data_ray_length"));
-  options.set_scans_per_accumulation(
-      parameter_dictionary->GetInt("scans_per_accumulation"));
+  options.set_num_accumulated_range_data(
+      parameter_dictionary->GetInt("num_accumulated_range_data"));
   options.set_voxel_filter_size(
       parameter_dictionary->GetDouble("voxel_filter_size"));
   options.set_use_online_correlative_scan_matching(

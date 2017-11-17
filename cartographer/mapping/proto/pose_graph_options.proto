@@ -22,7 +22,7 @@ import "cartographer/mapping/pose_graph/proto/optimization_problem_options.proto
 message PoseGraphOptions {
   // Online loop closure: If positive, will run the loop closure while the map
   // is built.
-  int32 optimize_every_n_scans = 1;
+  int32 optimize_every_n_nodes = 1;
 
   // Options for the constraint builder.
   mapping.pose_graph.proto.ConstraintBuilderOptions
@@ -44,7 +44,7 @@ message PoseGraphOptions {
   // optimization.
   int32 max_num_final_iterations = 6;
 
-  // Rate at which we sample a single trajectory's scans for global
+  // Rate at which we sample a single trajectory's nodes for global
   // localization.
   double global_sampling_ratio = 5;
 

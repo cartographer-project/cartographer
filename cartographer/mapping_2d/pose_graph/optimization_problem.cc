@@ -189,9 +189,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
               new SpaCostFunction(Constraint::Pose{
-                  relative_pose,
-                  options_.consecutive_scan_translation_penalty_factor(),
-                  options_.consecutive_scan_rotation_penalty_factor()})),
+                  relative_pose, options_.consecutive_node_translation_weight(),
+                  options_.consecutive_node_rotation_weight()})),
           nullptr /* loss function */, C_nodes.at(first_node_id).data(),
           C_nodes.at(second_node_id).data());
     }

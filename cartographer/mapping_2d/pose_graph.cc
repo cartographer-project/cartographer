@@ -269,8 +269,8 @@ void PoseGraph::ComputeConstraintsForNode(
   }
   constraint_builder_.NotifyEndOfNode();
   ++num_nodes_since_last_loop_closure_;
-  if (options_.optimize_every_n_scans() > 0 &&
-      num_nodes_since_last_loop_closure_ > options_.optimize_every_n_scans()) {
+  if (options_.optimize_every_n_nodes() > 0 &&
+      num_nodes_since_last_loop_closure_ > options_.optimize_every_n_nodes()) {
     CHECK(!run_loop_closure_);
     run_loop_closure_ = true;
     // If there is a 'work_queue_' already, some other thread will take care.

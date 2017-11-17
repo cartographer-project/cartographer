@@ -194,7 +194,7 @@ class MapByTime {
                                          EndOfTrajectory(trajectory_id));
   }
 
-  // Returns an iterator to the the first element in the container belonging to
+  // Returns an iterator to the first element in the container belonging to
   // trajectory 'trajectory_id' whose time is not considered to go before
   // 'time', or EndOfTrajectory(trajectory_id) if all keys are considered to go
   // before 'time'. 'trajectory_id' must refer to an existing trajectory.

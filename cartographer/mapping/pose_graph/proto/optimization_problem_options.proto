@@ -29,11 +29,11 @@ message OptimizationProblemOptions {
   // Scaling parameter for the IMU rotation term.
   double rotation_weight = 9;
 
-  // Penalty factors for translation changes to the relative pose between consecutive scans.
-  double consecutive_scan_translation_penalty_factor = 2;
+  // Scaling parameter for translation between consecutive nodes.
+  double consecutive_node_translation_weight = 2;
 
-  // Penalty factors for rotation changes to the relative pose between consecutive scans.
-  double consecutive_scan_rotation_penalty_factor = 3;
+  // Scaling parameter for rotation between consecutive nodes.
+  double consecutive_node_rotation_weight = 3;
 
   // Scaling parameter for the FixedFramePose translation.
   double fixed_frame_pose_translation_weight = 11;
