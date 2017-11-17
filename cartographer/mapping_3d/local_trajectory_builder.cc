@@ -173,8 +173,6 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
 
   sensor::RangeData filtered_range_data_in_local = sensor::TransformRangeData(
       filtered_range_data_in_tracking, pose_estimate.cast<float>());
-  last_pose_estimate_ = {time, pose_estimate,
-                         filtered_range_data_in_local.returns};
   std::unique_ptr<InsertionResult> insertion_result = InsertIntoSubmap(
       time, filtered_range_data_in_local, filtered_range_data_in_tracking,
       high_resolution_point_cloud_in_tracking,
@@ -192,10 +190,6 @@ void LocalTrajectoryBuilder::AddOdometryData(
     return;
   }
   extrapolator_->AddOdometryData(odometry_data);
-}
-
-const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
-  return last_pose_estimate_;
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>

@@ -49,8 +49,6 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilder {
   CollatedTrajectoryBuilder& operator=(const CollatedTrajectoryBuilder&) =
       delete;
 
-  const PoseEstimate& pose_estimate() const override;
-
   void AddSensorData(const std::string& sensor_id,
                      std::unique_ptr<sensor::Data> data) override;
 

@@ -169,7 +169,6 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   sensor::RangeData range_data_in_local =
       TransformRangeData(gravity_aligned_range_data,
                          transform::Embed3D(pose_estimate_2d->cast<float>()));
-  last_pose_estimate_ = {time, pose_estimate, range_data_in_local.returns};
   std::unique_ptr<InsertionResult> insertion_result =
       InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
                        pose_estimate, gravity_alignment.rotation());
@@ -212,10 +211,6 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
               {},  // 'rotational_scan_matcher_histogram' is only used in 3D.
               pose_estimate}),
       std::move(insertion_submaps)});
-}
-
-const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
-  return last_pose_estimate_;
 }
 
 void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {

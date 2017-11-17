@@ -65,7 +65,6 @@ class LocalTrajectoryBuilder {
   std::unique_ptr<MatchingResult> AddRangeData(
       common::Time time, const sensor::TimedRangeData& range_data);
   void AddOdometryData(const sensor::OdometryData& odometry_data);
-  const mapping::PoseEstimate& pose_estimate() const;
 
  private:
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
@@ -82,8 +81,6 @@ class LocalTrajectoryBuilder {
 
   const proto::LocalTrajectoryBuilderOptions options_;
   ActiveSubmaps active_submaps_;
-
-  mapping::PoseEstimate last_pose_estimate_;
 
   MotionFilter motion_filter_;
   std::unique_ptr<scan_matching::RealTimeCorrelativeScanMatcher>
