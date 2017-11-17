@@ -268,9 +268,8 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
     if (pending_computations_.empty()) {
       CHECK_EQ(submap_queued_work_items_.size(), 0);
       if (when_done_ != nullptr) {
-        for (
-            const std::unique_ptr<OptimizationProblem::Constraint>& constraint :
-            constraints_) {
+        for (const std::unique_ptr<OptimizationProblem::Constraint>&
+                 constraint : constraints_) {
           if (constraint != nullptr) {
             result.push_back(*constraint);
           }
