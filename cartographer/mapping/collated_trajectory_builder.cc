@@ -55,11 +55,10 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
     const std::string& sensor_id, std::unique_ptr<sensor::Data> data) {
   auto it = rate_timers_.find(sensor_id);
   if (it == rate_timers_.end()) {
-    it = rate_timers_
-             .emplace(
-                 std::piecewise_construct, std::forward_as_tuple(sensor_id),
-                 std::forward_as_tuple(
-                     common::FromSeconds(kSensorDataRatesLoggingPeriodSeconds)))
+    it = rate_timers_.emplace(std::piecewise_construct,
+                              std::forward_as_tuple(sensor_id),
+                              std::forward_as_tuple(common::FromSeconds(
+                                  kSensorDataRatesLoggingPeriodSeconds)))
              .first;
   }
   it->second.Pulse(data->GetTime());
