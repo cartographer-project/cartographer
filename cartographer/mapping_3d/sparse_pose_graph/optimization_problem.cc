@@ -325,13 +325,14 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
             odometry_data_[trajectory_id].Has(second_node_data.time) &&
             odometry_data_[trajectory_id].Has(first_node_data.time);
         const transform::Rigid3d relative_pose =
-            odometry_available ? odometry_data_[trajectory_id]
-                                         .Lookup(first_node_data.time)
-                                         .inverse() *
-                                     odometry_data_[trajectory_id].Lookup(
-                                         second_node_data.time)
-                               : first_node_data.local_pose.inverse() *
-                                     second_node_data.local_pose;
+            odometry_available
+                ? odometry_data_[trajectory_id]
+                          .Lookup(first_node_data.time)
+                          .inverse() *
+                      odometry_data_[trajectory_id].Lookup(
+                          second_node_data.time)
+                : first_node_data.local_pose.inverse() *
+                      second_node_data.local_pose;
         problem.AddResidualBlock(
             new ceres::AutoDiffCostFunction<SpaCostFunction, 6, 4, 3, 4, 3>(
                 new SpaCostFunction(Constraint::Pose{
@@ -378,9 +379,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                 Eigen::AngleAxisd(
                     transform::GetYaw(fixed_frame_pose_in_map.rotation()),
                     Eigen::Vector3d::UnitZ())),
-            nullptr,
-            common::make_unique<ceres::AutoDiffLocalParameterization<
-                YawOnlyQuaternionPlus, 4, 1>>(),
+            nullptr, common::make_unique<ceres::AutoDiffLocalParameterization<
+                         YawOnlyQuaternionPlus, 4, 1>>(),
             &problem);
         fixed_frame_pose_initialized = true;
       }

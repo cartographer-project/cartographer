@@ -367,29 +367,24 @@ void SparsePoseGraph::WaitForAllComputations() {
   common::MutexLocker locker(&mutex_);
   const int num_finished_scans_at_start =
       constraint_builder_.GetNumFinishedScans();
-  while (!locker.AwaitWithTimeout(
-      [this]() REQUIRES(mutex_) {
-        return constraint_builder_.GetNumFinishedScans() ==
-               num_trajectory_nodes_;
-      },
-      common::FromSeconds(1.))) {
+  while (!locker.AwaitWithTimeout([this]() REQUIRES(mutex_) {
+    return constraint_builder_.GetNumFinishedScans() == num_trajectory_nodes_;
+  }, common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. *
-                         (constraint_builder_.GetNumFinishedScans() -
-                          num_finished_scans_at_start) /
+                  << 100. * (constraint_builder_.GetNumFinishedScans() -
+                             num_finished_scans_at_start) /
                          (num_trajectory_nodes_ - num_finished_scans_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone(
-      [this, &notification](
-          const sparse_pose_graph::ConstraintBuilder::Result& result) {
-        common::MutexLocker locker(&mutex_);
-        constraints_.insert(constraints_.end(), result.begin(), result.end());
-        notification = true;
-      });
+  constraint_builder_.WhenDone([this, &notification](
+      const sparse_pose_graph::ConstraintBuilder::Result& result) {
+    common::MutexLocker locker(&mutex_);
+    constraints_.insert(constraints_.end(), result.begin(), result.end());
+    notification = true;
+  });
   locker.Await([&notification]() { return notification; });
 }
 

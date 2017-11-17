@@ -17,9 +17,8 @@ namespace cartographer {
 namespace io {
 
 HybridGridPointsProcessor::HybridGridPointsProcessor(
-    const double voxel_size,
-    const mapping_3d::proto::RangeDataInserterOptions&
-        range_data_inserter_options,
+    const double voxel_size, const mapping_3d::proto::RangeDataInserterOptions&
+                                 range_data_inserter_options,
     std::unique_ptr<FileWriter> file_writer, PointsProcessor* const next)
     : next_(next),
       range_data_inserter_(range_data_inserter_options),
