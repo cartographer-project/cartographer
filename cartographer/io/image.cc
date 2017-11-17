@@ -31,10 +31,9 @@ cairo_status_t CairoWriteCallback(void* const closure,
   return CAIRO_STATUS_WRITE_ERROR;
 }
 
-int StrideForWidth(int width) {
+void CheckStrideIsAsExpected(int width) {
   const int stride = cairo_format_stride_for_width(kCairoFormat, width);
-  CHECK_EQ(stride % 4, 0);
-  return stride;
+  CHECK_EQ(stride, width * 4);
 }
 
 }  // namespace
@@ -48,10 +47,33 @@ UniqueCairoPtr MakeUniqueCairoPtr(cairo_t* surface) {
 }
 
 Image::Image(int width, int height)
-    : width_(width),
-      height_(height),
-      stride_(StrideForWidth(width)),
-      pixels_(stride_ / 4 * height, 0) {}
+    : width_(width), height_(height), pixels_(width * height, 0) {}
+
+Image::Image(UniqueCairoSurfacePtr surface)
+    : width_(cairo_image_surface_get_width(surface.get())),
+      height_(cairo_image_surface_get_height(surface.get())) {
+  CHECK_EQ(cairo_image_surface_get_format(surface.get()), kCairoFormat);
+  CheckStrideIsAsExpected(width_);
+
+  const uint32* pixel_data =
+      reinterpret_cast<uint32*>(cairo_image_surface_get_data(surface.get()));
+  const int num_pixels = width_ * height_;
+  pixels_.reserve(num_pixels);
+  for (int i = 0; i < num_pixels; ++i) {
+    pixels_.push_back(pixel_data[i]);
+  }
+}
+
+void Image::Rotate90DegreesClockwise() {
+  const auto old_pixels = pixels_;
+  pixels_.clear();
+  for (int x = 0; x < width_; ++x) {
+    for (int y = height_ - 1; y >= 0; --y) {
+      pixels_.push_back(old_pixels.at(y * width_ + x));
+    }
+  }
+  std::swap(width_, height_);
+}
 
 void Image::WritePng(FileWriter* const file_writer) {
   // TODO(hrapp): cairo_image_surface_create_for_data does not take ownership of
@@ -67,17 +89,17 @@ void Image::WritePng(FileWriter* const file_writer) {
 }
 
 const Uint8Color Image::GetPixel(int x, int y) const {
-  return CairoToUint8Color(pixels_[y * stride_ / 4 + x]);
+  return CairoToUint8Color(pixels_[y * width_ + x]);
 }
 
 void Image::SetPixel(int x, int y, const Uint8Color& color) {
-  pixels_[y * stride_ / 4 + x] = Uint8ColorToCairo(color);
+  pixels_[y * width_ + x] = Uint8ColorToCairo(color);
 }
 
 UniqueCairoSurfacePtr Image::GetCairoSurface() {
   return MakeUniqueCairoSurfacePtr(cairo_image_surface_create_for_data(
       reinterpret_cast<unsigned char*>(pixels_.data()), kCairoFormat, width_,
-      height_, stride_));
+      height_, width_ * 4 /* stride */));
 }
 
 }  // namespace io
