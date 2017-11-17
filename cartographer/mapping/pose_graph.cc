@@ -71,8 +71,8 @@ std::vector<PoseGraph::Constraint> FromProto(
 proto::PoseGraphOptions CreatePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::PoseGraphOptions options;
-  options.set_optimize_every_n_scans(
-      parameter_dictionary->GetInt("optimize_every_n_scans"));
+  options.set_optimize_every_n_nodes(
+      parameter_dictionary->GetInt("optimize_every_n_nodes"));
   *options.mutable_constraint_builder_options() =
       pose_graph::CreateConstraintBuilderOptions(
           parameter_dictionary->GetDictionary("constraint_builder").get());

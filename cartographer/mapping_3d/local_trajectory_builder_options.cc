@@ -31,8 +31,8 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
   proto::LocalTrajectoryBuilderOptions options;
   options.set_min_range(parameter_dictionary->GetDouble("min_range"));
   options.set_max_range(parameter_dictionary->GetDouble("max_range"));
-  options.set_scans_per_accumulation(
-      parameter_dictionary->GetInt("scans_per_accumulation"));
+  options.set_num_accumulated_range_data(
+      parameter_dictionary->GetInt("num_accumulated_range_data"));
   options.set_voxel_filter_size(
       parameter_dictionary->GetDouble("voxel_filter_size"));
   *options.mutable_high_resolution_adaptive_voxel_filter_options() =
