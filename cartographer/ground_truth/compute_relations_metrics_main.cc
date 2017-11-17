@@ -117,7 +117,7 @@ transform::Rigid3d LookupTransform(
       transform_interpolation_buffer.earliest_time();
   if (transform_interpolation_buffer.Has(time)) {
     return transform_interpolation_buffer.Lookup(time);
-  } else if (earliest_time < time) {
+  } else if (time < earliest_time) {
     return transform_interpolation_buffer.Lookup(earliest_time);
   }
   return transform_interpolation_buffer.Lookup(
