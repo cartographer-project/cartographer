@@ -17,12 +17,12 @@ syntax = "proto3";
 package cartographer.mapping_3d.proto;
 
 message MotionFilterOptions {
-  // Threshold above which a new scan is inserted based on time.
+  // Threshold above which range data is inserted based on time.
   double max_time_seconds = 1;
 
-  // Threshold above which a new scan is inserted based on linear motion.
+  // Threshold above which range data is inserted based on linear motion.
   double max_distance_meters = 2;
 
-  // Threshold above which a new scan is inserted based on rotational motion.
+  // Threshold above which range data is inserted based on rotational motion.
   double max_angle_radians = 3;
 }

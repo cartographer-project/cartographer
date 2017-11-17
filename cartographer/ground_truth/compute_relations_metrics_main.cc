@@ -109,6 +109,21 @@ std::string StatisticsString(const std::vector<Error>& errors) {
          MeanAndStdDevString(squared_rotational_errors_degrees) + " deg^2\n";
 }
 
+transform::Rigid3d LookupTransform(
+    const transform::TransformInterpolationBuffer&
+        transform_interpolation_buffer,
+    const common::Time time) {
+  const common::Time earliest_time =
+      transform_interpolation_buffer.earliest_time();
+  if (transform_interpolation_buffer.Has(time)) {
+    return transform_interpolation_buffer.Lookup(time);
+  } else if (time < earliest_time) {
+    return transform_interpolation_buffer.Lookup(earliest_time);
+  }
+  return transform_interpolation_buffer.Lookup(
+      transform_interpolation_buffer.latest_time());
+}
+
 void Run(const std::string& pose_graph_filename,
          const std::string& relations_filename,
          const bool read_text_file_with_unix_timestamps) {
@@ -136,10 +151,12 @@ void Run(const std::string& pose_graph_filename,
 
   std::vector<Error> errors;
   for (const auto& relation : ground_truth.relation()) {
-    const auto pose1 = transform_interpolation_buffer.Lookup(
-        common::FromUniversal(relation.timestamp1()));
-    const auto pose2 = transform_interpolation_buffer.Lookup(
-        common::FromUniversal(relation.timestamp2()));
+    const auto pose1 =
+        LookupTransform(transform_interpolation_buffer,
+                        common::FromUniversal(relation.timestamp1()));
+    const auto pose2 =
+        LookupTransform(transform_interpolation_buffer,
+                        common::FromUniversal(relation.timestamp2()));
     const transform::Rigid3d expected =
         transform::ToRigid3(relation.expected());
     errors.push_back(ComputeError(pose1, pose2, expected));

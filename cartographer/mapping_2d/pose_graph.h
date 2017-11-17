@@ -58,7 +58,7 @@ namespace mapping_2d {
 // All constraints are between a submap i and a node j.
 class PoseGraph : public mapping::PoseGraph {
  public:
-  PoseGraph(const mapping::proto::SparsePoseGraphOptions& options,
+  PoseGraph(const mapping::proto::PoseGraphOptions& options,
             common::ThreadPool* thread_pool);
   ~PoseGraph() override;
 
@@ -173,10 +173,10 @@ class PoseGraph : public mapping::PoseGraph {
   void RunOptimization() EXCLUDES(mutex_);
 
   // Computes the local to global map frame transform based on the given
-  // optimized 'submap_transforms'.
+  // 'global_submap_poses'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
       const mapping::MapById<mapping::SubmapId, pose_graph::SubmapData>&
-          submap_transforms,
+          global_submap_poses,
       int trajectory_id) const REQUIRES(mutex_);
 
   mapping::PoseGraph::SubmapData GetSubmapDataUnderLock(
@@ -190,7 +190,7 @@ class PoseGraph : public mapping::PoseGraph {
   void UpdateTrajectoryConnectivity(const Constraint& constraint)
       REQUIRES(mutex_);
 
-  const mapping::proto::SparsePoseGraphOptions options_;
+  const mapping::proto::PoseGraphOptions options_;
   common::Mutex mutex_;
 
   // If it exists, further work items must be added to this queue, and will be
@@ -226,9 +226,9 @@ class PoseGraph : public mapping::PoseGraph {
       GUARDED_BY(mutex_);
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
-  // Current submap transforms used for displaying data.
+  // Global submap poses currently used for displaying data.
   mapping::MapById<mapping::SubmapId, pose_graph::SubmapData>
-      optimized_submap_transforms_ GUARDED_BY(mutex_);
+      global_submap_poses_ GUARDED_BY(mutex_);
 
   // List of all trimmers to consult when optimizations finish.
   std::vector<std::unique_ptr<mapping::PoseGraphTrimmer>> trimmers_
