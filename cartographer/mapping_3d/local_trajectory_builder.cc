@@ -87,30 +87,26 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   }
 
   if (num_accumulated_ == 0) {
-    first_pose_estimate_ = range_data_poses.back();
-    accumulated_range_data_ = sensor::RangeData{range_data.origin, {}, {}};
+    // 'accumulated_range_data_.origin' is not used.
+    accumulated_range_data_ = sensor::RangeData{{}, {}, {}};
   }
 
-  transform::Rigid3f tracking_delta = transform::Rigid3f::Identity();
   for (size_t i = 0; i < range_data.returns.size(); ++i) {
     const Eigen::Vector4f& hit = range_data.returns[i];
-    tracking_delta = first_pose_estimate_.inverse() * range_data_poses[i];
-    const Eigen::Vector3f origin_in_first_tracking =
-        tracking_delta * range_data.origin;
-    const Eigen::Vector3f hit_in_first_tracking =
-        tracking_delta * hit.head<3>();
-    const Eigen::Vector3f delta =
-        hit_in_first_tracking - origin_in_first_tracking;
+    const Eigen::Vector3f origin_in_local =
+        range_data_poses[i] * range_data.origin;
+    const Eigen::Vector3f hit_in_local = range_data_poses[i] * hit.head<3>();
+    const Eigen::Vector3f delta = hit_in_local - origin_in_local;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
-        accumulated_range_data_.returns.push_back(hit_in_first_tracking);
+        accumulated_range_data_.returns.push_back(hit_in_local);
       } else {
         // We insert a ray cropped to 'max_range' as a miss for hits beyond the
         // maximum range. This way the free space up to the maximum range will
         // be updated.
         accumulated_range_data_.misses.push_back(
-            origin_in_first_tracking + options_.max_range() / range * delta);
+            origin_in_local + options_.max_range() / range * delta);
       }
     }
   }
@@ -119,14 +115,14 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   if (num_accumulated_ >= options_.scans_per_accumulation()) {
     num_accumulated_ = 0;
     const sensor::RangeData filtered_range_data = {
-        accumulated_range_data_.origin,
+        range_data_poses.back() * range_data.origin,
         sensor::VoxelFiltered(accumulated_range_data_.returns,
                               options_.voxel_filter_size()),
         sensor::VoxelFiltered(accumulated_range_data_.misses,
                               options_.voxel_filter_size())};
     return AddAccumulatedRangeData(
         time, sensor::TransformRangeData(filtered_range_data,
-                                         tracking_delta.inverse()));
+                                         range_data_poses.back().inverse()));
   }
   return nullptr;
 }
