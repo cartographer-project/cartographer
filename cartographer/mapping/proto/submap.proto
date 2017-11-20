@@ -36,3 +36,8 @@ message Submap3D {
   mapping_3d.proto.HybridGrid high_resolution_hybrid_grid = 4;
   mapping_3d.proto.HybridGrid low_resolution_hybrid_grid = 5;
 }
+
+enum SubmapPoseType {
+  kExtrapolatedPose = 0;
+  kOptimizedPose = 1;
+}
