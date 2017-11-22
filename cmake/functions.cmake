@@ -132,3 +132,11 @@ macro(google_enable_testing)
   enable_testing()
   find_package(GMock REQUIRED)
 endmacro()
+
+macro(list_remove_item REMOVE_FROM TO_REMOVE)
+  if(${TO_REMOVE})
+    list(REMOVE_ITEM ${REMOVE_FROM} ${${TO_REMOVE}})
+    message(WARNING "Unnecessary use of list_remove_item. Consider using "
+      "list(REMOVE_ITEM ${REMOVE_FROM} \${${TO_REMOVE}}.")
+  endif()
+endmacro()
