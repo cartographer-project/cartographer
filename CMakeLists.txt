@@ -59,19 +59,17 @@ file(GLOB_RECURSE ALL_EXECUTABLES "*_main.cc")
 list(REMOVE_ITEM ALL_SRCS ${ALL_TESTS})
 list(REMOVE_ITEM ALL_SRCS ${ALL_EXECUTABLES})
 file(GLOB_RECURSE ALL_GRPC_FILES "cartographer_grpc/*")
-if (NOT ${BUILD_GRPC} AND ALL_GRPC_FILES)
-  list(REMOVE_ITEM ALL_SRCS ${ALL_GRPC_FILES})
-  list(REMOVE_ITEM ALL_TESTS ${ALL_GRPC_FILES})
-  list(REMOVE_ITEM ALL_EXECUTABLES ${ALL_GRPC_FILES})
+if (NOT ${BUILD_GRPC})
+  list_remove_item(ALL_SRCS ALL_GRPC_FILES)
+  list_remove_item(ALL_TESTS ALL_GRPC_FILES)
+  list_remove_item(ALL_EXECUTABLES ALL_GRPC_FILES)
 endif()
 
 file(GLOB_RECURSE ALL_PROTOS "*.proto")
 file(GLOB_RECURSE ALL_GRPC_SERVICES "*_service.proto")
-if (ALL_GRPC_SERVICES)
-  list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_SERVICES})
-  if (NOT ${BUILD_GRPC})
-    list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_FILES})
-  endif()
+list(REMOVE_ITEM ALL_PROTOS ALL_GRPC_SERVICES)
+if (NOT ${BUILD_GRPC})
+  list_remove_item(ALL_PROTOS ALL_GRPC_FILES)
 endif()
 
 set(ALL_PROTO_SRCS)
@@ -123,7 +121,7 @@ if(${BUILD_GRPC})
         --plugin=protoc-gen-grpc=${GRPC_PLUGIN_PATH}
         ${ABS_FIL}
       DEPENDS ${ABS_FIL}
-      COMMENT "Running C++ protocol buffer compiler on ${ABS_FIL}"
+      COMMENT "Running C++ protocol buffer compiler with gRPC support on ${ABS_FIL}"
       VERBATIM
     )
   endforeach()
