@@ -21,6 +21,8 @@ set(CARTOGRAPHER_MINOR_VERSION 0)
 set(CARTOGRAPHER_PATCH_VERSION 0)
 set(CARTOGRAPHER_VERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION}.${CARTOGRAPHER_PATCH_VERSION})
 set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION})
+option(BUILD_GRPC "build Cartographer gRPC support" false)
+set(GRPC_PLUGIN_PATH "/usr/local/bin/grpc_cpp_plugin")
 
 include("${PROJECT_SOURCE_DIR}/cmake/functions.cmake")
 google_initialize_cartographer_project()
@@ -54,10 +56,21 @@ install(DIRECTORY cmake DESTINATION share/cartographer/)
 file(GLOB_RECURSE ALL_SRCS "*.cc" "*.h")
 file(GLOB_RECURSE ALL_TESTS "*_test.cc")
 file(GLOB_RECURSE ALL_EXECUTABLES "*_main.cc")
+file(GLOB_RECURSE ALL_GRPC_FILES "cartographer_grpc/*")
 list(REMOVE_ITEM ALL_SRCS ${ALL_TESTS})
 list(REMOVE_ITEM ALL_SRCS ${ALL_EXECUTABLES})
+if (NOT ${BUILD_GRPC})
+  list(REMOVE_ITEM ALL_SRCS ${ALL_GRPC_FILES})
+endif()
+
 
 file(GLOB_RECURSE ALL_PROTOS "*.proto")
+file(GLOB_RECURSE ALL_GRPC_SERVICES "*_service.proto")
+list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_SERVICES})
+if (NOT ${BUILD_GRPC})
+  list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_FILES})
+endif()
+
 set(ALL_PROTO_SRCS)
 set(ALL_PROTO_HDRS)
 foreach(ABS_FIL ${ALL_PROTOS})
@@ -79,9 +92,41 @@ foreach(ABS_FIL ${ALL_PROTOS})
     VERBATIM
   )
 endforeach()
-
 set_source_files_properties(${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS} PROPERTIES GENERATED TRUE)
 list(APPEND ALL_SRCS ${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS})
+
+if(${BUILD_GRPC})
+  set(ALL_GRPC_SERVICE_SRCS)
+  set(ALL_GRPC_SERVICE_HDRS)
+  foreach(ABS_FIL ${ALL_GRPC_SERVICES})
+    file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${ABS_FIL})
+    get_filename_component(DIR ${REL_FIL} DIRECTORY)
+    get_filename_component(FIL_WE ${REL_FIL} NAME_WE)
+
+    list(APPEND ALL_GRPC_SERVICE_SRCS "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc")
+    list(APPEND ALL_GRPC_SERVICE_HDRS "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h")
+    list(APPEND ALL_GRPC_SERVICE_SRCS "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.cc")
+    list(APPEND ALL_GRPC_SERVICE_HDRS "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.h")
+
+    add_custom_command(
+      OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
+             "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
+             "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.cc"
+             "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.h"
+      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+      ARGS --grpc_out  ${PROJECT_BINARY_DIR}
+        --cpp_out  ${PROJECT_BINARY_DIR}
+        -I ${PROJECT_SOURCE_DIR}
+        --plugin=protoc-gen-grpc=${GRPC_PLUGIN_PATH}
+        ${ABS_FIL}
+      DEPENDS ${ABS_FIL}
+      COMMENT "Running C++ protocol buffer compiler on ${ABS_FIL}"
+      VERBATIM
+    )
+  endforeach()
+  set_source_files_properties(${ALL_GRPC_SERVICE_SRCS} ${ALL_GRPC_SERVICE_HDRS} PROPERTIES GENERATED TRUE)
+  list(APPEND ALL_SRCS ${ALL_GRPC_SERVICE_SRCS} ${ALL_GRPC_SERVICE_HDRS})
+endif()
 
 add_library(${PROJECT_NAME} ${ALL_SRCS})
 
@@ -98,6 +143,19 @@ google_binary(cartographer_compute_relations_metrics
   SRCS
     cartographer/ground_truth/compute_relations_metrics_main.cc
 )
+
+if (${BUILD_GRPC})
+  google_binary(grpc_server
+    SRCS
+      cartographer_grpc/grpc_server_main.cc
+  )
+  target_link_libraries(grpc_server PUBLIC grpc++)
+  google_binary(grpc_client
+    SRCS
+      cartographer_grpc/grpc_client_main.cc
+  )
+  target_link_libraries(grpc_client PUBLIC grpc++)
+endif()
 
 foreach(ABS_FIL ${ALL_TESTS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${ABS_FIL})
