@@ -59,7 +59,7 @@ file(GLOB_RECURSE ALL_EXECUTABLES "*_main.cc")
 list(REMOVE_ITEM ALL_SRCS ${ALL_TESTS})
 list(REMOVE_ITEM ALL_SRCS ${ALL_EXECUTABLES})
 file(GLOB_RECURSE ALL_GRPC_FILES "cartographer_grpc/*")
-if (NOT ${BUILD_GRPC})
+if (NOT ${BUILD_GRPC} AND ALL_GRPC_FILES)
   list(REMOVE_ITEM ALL_SRCS ${ALL_GRPC_FILES})
   list(REMOVE_ITEM ALL_TESTS ${ALL_GRPC_FILES})
   list(REMOVE_ITEM ALL_EXECUTABLES ${ALL_GRPC_FILES})
@@ -67,9 +67,11 @@ endif()
 
 file(GLOB_RECURSE ALL_PROTOS "*.proto")
 file(GLOB_RECURSE ALL_GRPC_SERVICES "*_service.proto")
-list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_SERVICES})
-if (NOT ${BUILD_GRPC})
-  list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_FILES})
+if (ALL_GRPC_SERVICES)
+  list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_SERVICES})
+  if (NOT ${BUILD_GRPC})
+    list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_FILES})
+  endif()
 endif()
 
 set(ALL_PROTO_SRCS)
@@ -144,19 +146,6 @@ google_binary(cartographer_compute_relations_metrics
   SRCS
     cartographer/ground_truth/compute_relations_metrics_main.cc
 )
-
-if (${BUILD_GRPC})
-  google_binary(grpc_server
-    SRCS
-      cartographer_grpc/grpc_server_main.cc
-  )
-  target_link_libraries(grpc_server PUBLIC grpc++)
-  google_binary(grpc_client
-    SRCS
-      cartographer_grpc/grpc_client_main.cc
-  )
-  target_link_libraries(grpc_client PUBLIC grpc++)
-endif()
 
 foreach(ABS_FIL ${ALL_TESTS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${ABS_FIL})
