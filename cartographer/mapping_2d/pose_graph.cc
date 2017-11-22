@@ -321,14 +321,22 @@ void PoseGraph::HandleWorkQueue() {
           trimmer->Trim(&trimming_handle);
         }
 
-        auto to_be_removed = std::find_if(
-            trimmers_.begin(), trimmers_.end(),
-            [&](std::unique_ptr<mapping::PoseGraphTrimmer>& trimmer) {
-              return trimmer->IsFinished();
-            });
+        {
+          auto GetTrimmerToRemove = [&]() {
+            return std::find_if(
+                trimmers_.begin(), trimmers_.end(),
+                [&](std::unique_ptr<mapping::PoseGraphTrimmer>& trimmer) {
+                  return trimmer->IsFinished();
+                });
+          };
 
-        trimmers_.erase(
-            std::remove(trimmers_.begin(), trimmers_.end(), *to_be_removed));
+          auto to_be_removed = GetTrimmerToRemove();
+          while (to_be_removed != trimmers_.end()) {
+            trimmers_.erase(std::remove(trimmers_.begin(), trimmers_.end(),
+                                        *to_be_removed));
+            to_be_removed = GetTrimmerToRemove();
+          }
+        }
         num_nodes_since_last_loop_closure_ = 0;
         run_loop_closure_ = false;
         while (!run_loop_closure_) {
@@ -385,6 +393,12 @@ void PoseGraph::FinishTrajectory(const int trajectory_id) {
       trimmer->FinishTrajectory(trajectory_id);
     }
   });
+
+  // To call Trim() when there is no active trajectory
+  if (work_queue_ == nullptr) {
+    work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+    HandleWorkQueue();
+  }
 }
 
 void PoseGraph::FreezeTrajectory(const int trajectory_id) {
