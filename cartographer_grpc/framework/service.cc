@@ -54,13 +54,16 @@ void Service::StartServing(
 void Service::StopServing() { shutting_down_ = true; }
 
 void Service::HandleEvent(Rpc::State state, Rpc* rpc, bool ok) {
+  rpc->SetRpcStatePending(state, false);
   switch (state) {
     case Rpc::State::NEW_CONNECTION:
       HandleNewConnection(rpc, ok);
       break;
     case Rpc::State::READ:
+      HandleRead(rpc, ok);
       break;
     case Rpc::State::WRITE:
+      HandleWrite(rpc, ok);
       break;
     case Rpc::State::DONE:
       HandleDone(rpc, ok);
@@ -80,7 +83,12 @@ void Service::HandleNewConnection(Rpc* rpc, bool ok) {
     active_rpcs_.Remove(rpc);
   }
 
-  // TODO(cschuet): Request next read for the new connection.
+  if (ok) {
+    // For request-streaming RPCs ask the client to start sending requests.
+    if (rpc->rpc_type() == ::grpc::internal::RpcMethod::CLIENT_STREAMING) {
+      RequestStreamingRead(rpc);
+    }
+  }
 
   // Create new active rpc to handle next connection.
   Rpc* next_rpc = active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
@@ -91,23 +99,62 @@ void Service::HandleNewConnection(Rpc* rpc, bool ok) {
                               rpc->server_completion_queue());
 }
 
-void Service::HandleDone(Rpc* rpc, bool ok) { LOG(FATAL) << "Not implemented"; }
+void Service::HandleRead(Rpc* rpc, bool ok) {
+  if (ok) {
+    rpc->OnRequest();
+    RequestStreamingRead(rpc);
+    return;
+  }
+
+  // Reads completed.
+  rpc->OnReadsDone();
+}
+
+void Service::HandleWrite(Rpc* rpc, bool ok) {
+  if (ok) {
+    LOG(ERROR) << "Write complete.";
+  } else {
+    LOG(ERROR) << "Write failed";
+  }
+
+  if (!rpc->IsRpcStatePending(Rpc::State::DONE)) {
+    LOG(INFO) << "Cleaning up finished rpc " << rpc;
+    active_rpcs_.Remove(rpc);
+  }
+}
+
+void Service::HandleDone(Rpc* rpc, bool ok) {
+  LOG(INFO) << "Finished RPC " << rpc << " with status "
+            << (ok ? "true" : "false");
+  if (!rpc->IsRpcStatePending(Rpc::State::WRITE) &&
+      !rpc->IsRpcStatePending(Rpc::State::READ)) {
+    LOG(INFO) << "Done Cleaning up";
+    active_rpcs_.Remove(rpc);
+  } else {
+    LOG(INFO) << "Write still in flight. Not cleaning up yet.";
+  }
+}
 
 void Service::RequestNextMethodInvocation(
     int method_index, Rpc* rpc,
     ::grpc::ServerCompletionQueue* completion_queue) {
   rpc->server_context()->AsyncNotifyWhenDone(
-      rpc->GetRpcState(Rpc::State::DONE));
+      rpc->SetRpcStatePending(Rpc::State::DONE, true));
   switch (rpc->rpc_type()) {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      RequestAsyncClientStreaming(method_index, rpc->server_context(),
-                                  rpc->streaming_interface(), completion_queue,
-                                  completion_queue,
-                                  rpc->GetRpcState(Rpc::State::NEW_CONNECTION));
+      RequestAsyncClientStreaming(
+          method_index, rpc->server_context(), rpc->streaming_interface(),
+          completion_queue, completion_queue,
+          rpc->SetRpcStatePending(Rpc::State::NEW_CONNECTION, true));
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
   }
+}
+
+void Service::RequestStreamingRead(Rpc* rpc) {
+  rpc->async_reader_interface()->Read(
+      rpc->request(), rpc->SetRpcStatePending(Rpc::State::READ, true));
 }
 
 }  // namespace framework

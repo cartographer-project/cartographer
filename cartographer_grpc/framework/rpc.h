@@ -25,6 +25,7 @@
 #include "google/protobuf/message.h"
 #include "grpc++/grpc++.h"
 #include "grpc++/impl/codegen/async_stream.h"
+#include "grpc++/impl/codegen/async_unary_call.h"
 #include "grpc++/impl/codegen/proto_utils.h"
 #include "grpc++/impl/codegen/service_type.h"
 
@@ -39,17 +40,27 @@ class Rpc {
     const State state;
     Service* service;
     Rpc* rpc;
+    bool pending;
   };
 
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
       const RpcHandlerInfo& rpc_handler_info, Service* service);
+
+  void OnRequest();
+  void OnReadsDone();
+  void Write(std::unique_ptr<::google::protobuf::Message> message);
 
   int method_index() const { return method_index_; }
   ::grpc::ServerCompletionQueue* server_completion_queue();
   ::grpc::internal::RpcMethod::RpcType rpc_type() const;
   ::grpc::ServerContext* server_context() { return &server_context_; }
   ::grpc::internal::ServerAsyncStreamingInterface* streaming_interface();
-  RpcState* GetRpcState(State state);
+  ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
+  async_reader_interface();
+
+  RpcState* SetRpcStatePending(State state, bool pending);
+  bool IsRpcStatePending(State state);
+
   const RpcHandlerInfo& rpc_handler_info() const { return rpc_handler_info_; }
 
   ::google::protobuf::Message* request() { return request_.get(); }
@@ -58,7 +69,8 @@ class Rpc {
  private:
   Rpc(const Rpc&) = delete;
   Rpc& operator=(const Rpc&) = delete;
-  void InitializeResponders(::grpc::internal::RpcMethod::RpcType rpc_type);
+  void InitializeReadersAndWriters(
+      ::grpc::internal::RpcMethod::RpcType rpc_type);
 
   int method_index_;
   ::grpc::ServerCompletionQueue* server_completion_queue_;
@@ -72,6 +84,8 @@ class Rpc {
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
+
+  std::unique_ptr<RpcHandlerInterface> handler_;
 
   std::unique_ptr<::grpc::ServerAsyncReader<google::protobuf::Message,
                                             google::protobuf::Message>>
@@ -98,3 +112,4 @@ class ActiveRpcs {
 }  // namespace cartographer_grpc
 
 #endif  // CARTOGRAPHER_GRPC_FRAMEWORK_RPC_H
+

@@ -40,8 +40,11 @@ class Service : public ::grpc::Service {
   void RequestNextMethodInvocation(
       int method_index, Rpc* rpc,
       ::grpc::ServerCompletionQueue* completion_queue);
+  void RequestStreamingRead(Rpc* rpc);
 
   void HandleNewConnection(Rpc* rpc, bool ok);
+  void HandleRead(Rpc* rpc, bool ok);
+  void HandleWrite(Rpc* rpc, bool ok);
   void HandleDone(Rpc* rpc, bool ok);
 
   std::map<std::string, RpcHandlerInfo> rpc_handler_infos_;
