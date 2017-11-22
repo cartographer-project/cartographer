@@ -45,7 +45,7 @@ Server::Server(const Options& options) : options_(options) {
   // Set up completion queues threads.
   for (size_t i = 0; i < options_.number_of_threads; ++i) {
     completion_queue_threads_.emplace_back(
-        erver_builder_.AddCompletionQueue());
+        server_builder_.AddCompletionQueue());
   }
 }
 
@@ -55,7 +55,7 @@ void Server::AddService(
   // Instantiate and register service.
   const auto result =
       services_.emplace(std::piecewise_construct, std::make_tuple(service_name),
-                        std::make_tuple(rpc_handler_infos));
+                        std::make_tuple(service_name, rpc_handler_infos));
   CHECK(result.second) << "A service named " << service_name
                        << " already exists.";
   server_builder_.RegisterService(&result.first->second);

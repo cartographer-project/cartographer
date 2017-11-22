@@ -17,7 +17,9 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_H
 
+#include "cartographer_grpc/framework/type_traits.h"
 #include "google/protobuf/message.h"
+#include "grpc++/grpc++.h"
 
 namespace cartographer_grpc {
 namespace framework {
@@ -35,6 +37,16 @@ struct RpcHandlerInfo {
   const google::protobuf::Descriptor* request_descriptor;
   const google::protobuf::Descriptor* response_descriptor;
   const RpcHandlerFactory rpc_handler_factory;
+  const grpc::internal::RpcMethod::RpcType rpc_type;
+};
+
+template <typename Incoming, typename Outgoing>
+class RpcHandler : public RpcHandlerInterface {
+ public:
+  using IncomingType = Incoming;
+  using OutgoingType = Outgoing;
+  using RequestType = StripStream<Incoming>;
+  using ResponseType = StripStream<Outgoing>;
 };
 
 }  // namespace framework
