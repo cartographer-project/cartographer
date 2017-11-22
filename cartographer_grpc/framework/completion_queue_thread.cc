@@ -26,10 +26,23 @@ CompletionQueueThread::CompletionQueueThread(
     std::unique_ptr<::grpc::ServerCompletionQueue> completion_queue)
     : completion_queue_(std::move(completion_queue)) {}
 
+::grpc::ServerCompletionQueue* CompletionQueueThread::completion_queue() {
+  return completion_queue_.get();
+}
+
 void CompletionQueueThread::Start(CompletionQueueRunner runner) {
   CHECK(!worker_thread_);
   worker_thread_ = cartographer::common::make_unique<std::thread>(
       [this, runner]() { runner(this->completion_queue_.get()); });
+}
+
+void CompletionQueueThread::Shutdown() {
+  LOG(INFO) << "Shutting down completion queue " << completion_queue_.get();
+  completion_queue_.get()->Shutdown();
+  LOG(INFO) << "Completion queue " << completion_queue_.get() << "shut down.";
+  LOG(INFO) << "Waiting for thread " << worker_thread_.get() << " to join.";
+  worker_thread_.get()->join();
+  LOG(INFO) << "Thread " << worker_thread_.get() << " joined.";
 }
 
 }  // namespace framework

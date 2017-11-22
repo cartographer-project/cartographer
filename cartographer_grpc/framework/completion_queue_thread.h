@@ -32,7 +32,10 @@ class CompletionQueueThread {
   explicit CompletionQueueThread(
       std::unique_ptr<::grpc::ServerCompletionQueue> completion_queue);
 
+  ::grpc::ServerCompletionQueue* completion_queue();
+
   void Start(CompletionQueueRunner runner);
+  void Shutdown();
 
  private:
   std::unique_ptr<::grpc::ServerCompletionQueue> completion_queue_;

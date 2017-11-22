@@ -27,7 +27,7 @@ namespace framework {
 class Rpc;
 class RpcHandlerInterface {
  public:
-  void SetRpc(Rpc* rpc);
+  virtual void SetRpc(Rpc* rpc) = 0;
 };
 
 using RpcHandlerFactory =
@@ -47,6 +47,11 @@ class RpcHandler : public RpcHandlerInterface {
   using OutgoingType = Outgoing;
   using RequestType = StripStream<Incoming>;
   using ResponseType = StripStream<Outgoing>;
+
+  void SetRpc(Rpc* rpc) override { rpc_ = rpc; }
+
+ private:
+  Rpc* rpc_;
 };
 
 }  // namespace framework

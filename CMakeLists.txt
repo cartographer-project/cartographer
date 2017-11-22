@@ -110,9 +110,7 @@ if(${BUILD_GRPC})
     list(APPEND ALL_GRPC_SERVICE_HDRS "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.h")
 
     add_custom_command(
-      OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
-             "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
-             "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.cc"
+      OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.cc"
              "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.h"
       COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
       ARGS --grpc_out  ${PROJECT_BINARY_DIR}
@@ -152,6 +150,9 @@ foreach(ABS_FIL ${ALL_TESTS})
   # Replace slashes as required for CMP0037.
   string(REPLACE "/" "." TEST_TARGET_NAME "${DIR}/${FIL_WE}")
   google_test("${TEST_TARGET_NAME}" ${ABS_FIL})
+  if(${BUILD_GRPC})
+    target_link_libraries("${TEST_TARGET_NAME}" PUBLIC grpc++)
+  endif()
 endforeach()
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC

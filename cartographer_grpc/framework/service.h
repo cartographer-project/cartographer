@@ -34,14 +34,20 @@ class Service : public ::grpc::Service {
           const std::map<std::string, RpcHandlerInfo>& rpc_handlers);
   void StartServing(
       const std::vector<::grpc::ServerCompletionQueue*>& completion_queues);
+  void HandleEvent(Rpc::State state, Rpc* rpc, bool ok);
+  void StopServing();
 
  private:
   void RequestNextMethodInvocation(
       int method_index, Rpc* rpc,
       ::grpc::ServerCompletionQueue* completion_queue);
 
+  void HandleNewConnection(Rpc* rpc, bool ok);
+  void HandleDone(Rpc* rpc, bool ok);
+
   std::map<std::string, RpcHandlerInfo> rpc_handler_infos_;
   ActiveRpcs active_rpcs_;
+  bool shutting_down_ = false;
 };
 
 }  // namespace framework
