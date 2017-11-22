@@ -34,7 +34,19 @@ void PureLocalizationTrimmer::Trim(Trimmable* const pose_graph) {
         SubmapId{trajectory_id_, submap_index_to_trim_next});
     ++num_submaps_trimmed_;
   }
+
+  if (num_submaps_to_keep_ == 0) {
+    finished_ = true;
+  }
 }
+
+void PureLocalizationTrimmer::FinishTrajectory(const int trajectory_id) {
+  if (trajectory_id == trajectory_id_) {
+    num_submaps_to_keep_ = 0;
+  }
+}
+
+bool PureLocalizationTrimmer::IsFinished() { return finished_; }
 
 }  // namespace mapping
 }  // namespace cartographer

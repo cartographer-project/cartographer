@@ -45,6 +45,12 @@ class PoseGraphTrimmer {
 
   // Called once after each pose graph optimization.
   virtual void Trim(Trimmable* pose_graph) = 0;
+
+  // Gets finished trajectory
+  virtual void FinishTrajectory(int trajectory_id) = 0;
+
+  // Checks if this trimmer is terminatable state
+  virtual bool IsFinished() = 0;
 };
 
 // Keeps the last 'num_submaps_to_keep' of the trajectory with 'trajectory_id'
@@ -55,11 +61,14 @@ class PureLocalizationTrimmer : public PoseGraphTrimmer {
   ~PureLocalizationTrimmer() override {}
 
   void Trim(Trimmable* pose_graph) override;
+  void FinishTrajectory(int trajectory_id) override;
+  bool IsFinished() override;
 
  private:
   const int trajectory_id_;
-  const int num_submaps_to_keep_;
+  int num_submaps_to_keep_;
   int num_submaps_trimmed_ = 0;
+  bool finished_ = false;
 };
 
 }  // namespace mapping
