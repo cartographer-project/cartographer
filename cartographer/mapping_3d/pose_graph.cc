@@ -338,6 +338,23 @@ void PoseGraph::HandleWorkQueue() {
           trimmer->Trim(&trimming_handle);
         }
 
+        {
+          auto GetTrimmerToRemove = [&]() {
+            return std::find_if(
+                trimmers_.begin(), trimmers_.end(),
+                [&](std::unique_ptr<mapping::PoseGraphTrimmer>& trimmer) {
+                  return trimmer->IsFinished();
+                });
+          };
+
+          auto to_be_removed = GetTrimmerToRemove();
+          while (to_be_removed != trimmers_.end()) {
+            trimmers_.erase(std::remove(trimmers_.begin(), trimmers_.end(),
+                                        *to_be_removed));
+            to_be_removed = GetTrimmerToRemove();
+          }
+        }
+
         num_nodes_since_last_loop_closure_ = 0;
         run_loop_closure_ = false;
         while (!run_loop_closure_) {
@@ -367,27 +384,39 @@ void PoseGraph::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. *
-                         (constraint_builder_.GetNumFinishedNodes() -
-                          num_finished_nodes_at_start) /
+                  << 100. * (constraint_builder_.GetNumFinishedNodes() -
+                             num_finished_nodes_at_start) /
                          (num_trajectory_nodes_ - num_finished_nodes_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone(
-      [this,
-       &notification](const pose_graph::ConstraintBuilder::Result& result) {
-        common::MutexLocker locker(&mutex_);
-        constraints_.insert(constraints_.end(), result.begin(), result.end());
-        notification = true;
-      });
+  constraint_builder_.WhenDone([this, &notification](
+      const pose_graph::ConstraintBuilder::Result& result) {
+    common::MutexLocker locker(&mutex_);
+    constraints_.insert(constraints_.end(), result.begin(), result.end());
+    notification = true;
+  });
   locker.Await([&notification]() { return notification; });
 }
 
 void PoseGraph::FinishTrajectory(const int trajectory_id) {
-  // TODO(jihoonl): Add a logic to notify trimmers to finish the given
-  // trajectory.
+  AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
+    const auto& submap_data = optimization_problem_.submap_data();
+    for (auto submap_id_data : submap_data.trajectory(trajectory_id)) {
+      submap_data_.at(submap_id_data.id).state = SubmapState::kFinished;
+    }
+
+    for (auto& trimmer : trimmers_) {
+      trimmer->FinishTrajectory(trajectory_id);
+    }
+  });
+
+  // To call Trim() when there is no active trajectory
+  if (work_queue_ == nullptr) {
+    work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+    HandleWorkQueue();
+  }
 }
 
 void PoseGraph::FreezeTrajectory(const int trajectory_id) {
