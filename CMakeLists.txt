@@ -210,8 +210,12 @@ install(
 )
 
 # Install source headers.
-file(GLOB_RECURSE hdrs "*.h")
-foreach(HDR ${hdrs})
+file(GLOB_RECURSE HDRS "*.h")
+file(GLOB_RECURSE INTERNAL_HDRS "cartographer/internal/*.h")
+list(REMOVE_ITEM HDRS ${INTERNAL_HDRS})  # Do not install internal headers.
+file(GLOB_RECURSE INTERNAL_HDRS "cartographer_grpc/internal/*.h")
+list_remove_item(HDRS INTERNAL_HDRS)
+foreach(HDR ${HDRS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${HDR})
   get_filename_component(INSTALL_DIR ${REL_FIL} DIRECTORY)
   install(
@@ -223,8 +227,8 @@ foreach(HDR ${hdrs})
 endforeach()
 
 # Install generated headers.
-file(GLOB_RECURSE hdrs "*.h.in")
-foreach(HDR ${hdrs})
+file(GLOB_RECURSE HDRS "*.h.in")
+foreach(HDR ${HDRS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${HDR})
   get_filename_component(DIR ${REL_FIL} DIRECTORY)
   get_filename_component(FILE_WE ${REL_FIL} NAME_WE)
