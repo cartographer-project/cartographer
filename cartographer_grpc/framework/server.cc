@@ -19,8 +19,6 @@
 #include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 
-#include "cartographer/common/make_unique.h"
-
 namespace cartographer_grpc {
 namespace framework {
 
@@ -47,7 +45,7 @@ Server::Server(const Options& options) : options_(options) {
   // Set up completion queues threads.
   for (size_t i = 0; i < options_.number_of_threads; ++i) {
     completion_queue_threads_.emplace_back(
-        server_builder_.AddCompletionQueue());
+        erver_builder_.AddCompletionQueue());
   }
 }
 
