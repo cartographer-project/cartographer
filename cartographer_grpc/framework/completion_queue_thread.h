@@ -14,29 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_FRAMEWORK_SERVICE_H
-#define CARTOGRAPHER_GRPC_FRAMEWORK_SERVICE_H
+#ifndef CARTOGRAPHER_COMPLETION_QUEUE_THREAD_H
+#define CARTOGRAPHER_COMPLETION_QUEUE_THREAD_H
 
-#include <grpc++/impl/codegen/service_type.h>
-
-#include "cartographer_grpc/framework/rpc_handler.h"
+#include <grpc++/grpc++.h>
+#include <memory>
+#include <thread>
 
 namespace cartographer_grpc {
 namespace framework {
 
-// A 'Service' represents a generic service for gRPC asynchronous methods and is
-// responsible for managing the lifetime of active RPCs issued against methods
-// of the service and distributing incoming gRPC events to their respective
-// 'Rpc' handler objects.
-class Service : public ::grpc::Service {
+class CompletionQueueThread {
  public:
-  Service(const std::map<std::string, RpcHandlerInfo>& rpc_handlers);
+  CompletionQueueThread(
+      std::unique_ptr<::grpc::ServerCompletionQueue> completion_queue);
+
+  using CompletionQueueRunner =
+      std::function<void(::grpc::ServerCompletionQueue*)>;
+  void Start(CompletionQueueRunner runner);
 
  private:
-  std::map<std::string, RpcHandlerInfo> rpc_handlers_;
+  std::unique_ptr<::grpc::ServerCompletionQueue> completion_queue_;
+  std::unique_ptr<std::thread> worker_thread_;
 };
 
 }  // namespace framework
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_FRAMEWORK_SERVICE_H
+#endif  // CARTOGRAPHER_COMPLETION_QUEUE_THREAD_H

@@ -1,11 +1,29 @@
+/*
+ * Copyright 2017 The Cartographer Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "cartographer_grpc/framework/server.h"
 
 #include "glog/logging.h"
 
+#include "cartographer/common/make_unique.h"
+
 namespace cartographer_grpc {
 namespace framework {
 
-void Server::Builder::SetNumberOfThreads(size_t number_of_threads) {
+void Server::Builder::SetNumberOfThreads(const size_t number_of_threads) {
   options_.number_of_threads = number_of_threads;
 }
 
@@ -21,15 +39,16 @@ std::unique_ptr<Server> Server::Builder::Build() {
   return server;
 }
 
-Server::Builder Server::NewBuidler() { return Builder(); }
+Server::Builder Server::NewBuilder() { return Builder(); }
 
 Server::Server(const Options& options) : options_(options) {
   server_builder_.AddListeningPort(options_.server_address,
                                    grpc::InsecureServerCredentials());
 
-  // Set up completion queues; one for each thread.
+  // Set up completion queues threads.
   for (size_t i = 0; i < options_.number_of_threads; ++i) {
-    completion_queues_.push_back(server_builder_.AddCompletionQueue());
+    completion_queue_threads_.emplace_back(
+        server_builder_.AddCompletionQueue());
   }
 }
 
@@ -37,10 +56,12 @@ void Server::AddService(
     const std::string& service_name,
     const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos) {
   // Instantiate and register service.
-  auto result = services_.insert(std::make_pair(
-      service_name, std::unique_ptr<Service>(new Service(rpc_handler_infos))));
-  CHECK(result.second) << "Failed to construct service " << service_name;
-  server_builder_.RegisterService(result.first->second.get());
+  auto result =
+      services_.emplace(std::piecewise_construct, std::make_tuple(service_name),
+                        std::make_tuple(rpc_handler_infos));
+  CHECK(result.second) << "A service named " << service_name
+                       << " already exists.";
+  server_builder_.RegisterService(&result.first->second);
 }
 
 }  // namespace framework

@@ -23,6 +23,8 @@
 #include <string>
 #include <thread>
 
+#include "cartographer/common/make_unique.h"
+#include "cartographer_grpc/framework/completion_queue_thread.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "cartographer_grpc/framework/service.h"
 
@@ -44,19 +46,19 @@ class Server {
   class Builder {
    public:
     std::unique_ptr<Server> Build();
-    void SetNumberOfThreads(size_t number_of_threads);
+    void SetNumberOfThreads(std::size_t number_of_threads);
     void SetServerAddress(const std::string& server_address);
 
-    template <typename RpcHandler, typename Service>
+    template <typename RpcHandlerType, typename ServiceType>
     void RegisterHandler(const std::string& method_name) {
-      rpc_handlers_[Service::service_full_name()].emplace(
+      rpc_handlers_[ServiceType::service_full_name()].emplace(
           method_name,
           RpcHandlerInfo{
-              RpcHandler::RequestType::default_instance().GetDescriptor(),
-              RpcHandler::ResponseType::default_instance().GetDescriptor(),
+              RpcHandlerType::RequestType::default_instance().GetDescriptor(),
+              RpcHandlerType::ResponseType::default_instance().GetDescriptor(),
               [](Rpc* rpc) {
-                std::unique_ptr<RpcHandlerInterface> rpc_handler(
-                    new RpcHandler);
+                std::unique_ptr<RpcHandlerInterface> rpc_handler =
+                    cartographer::common::make_unique<RpcHandlerType>();
                 rpc_handler->SetRpc(rpc);
                 return rpc_handler;
               }});
@@ -65,16 +67,21 @@ class Server {
    private:
     Builder() = default;
     Options options_;
-    std::map<std::string, std::map<std::string, RpcHandlerInfo>> rpc_handlers_;
+    using ServiceInfo = std::map<std::string, RpcHandlerInfo>;
+    std::map<std::string, ServiceInfo> rpc_handlers_;
     friend class Server;
   };
   friend class Builder;
 
   // Constructs a new 'Builder' for a 'Server'.
-  Builder NewBuidler();
+  Builder NewBuilder();
   void StartAndWait();
 
+ private:
   Server(const Options& options);
+  Server(const Server&) = delete;
+  Server& operator=(const Server&) = delete;
+
   void AddService(
       const std::string& service_name,
       const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos);
@@ -85,14 +92,11 @@ class Server {
   ::grpc::ServerBuilder server_builder_;
   std::unique_ptr<::grpc::Server> server_;
 
-  // Event queues and threads. There is a 1:1 correspondence between queues and
-  // threads.
-  std::vector<std::unique_ptr<::grpc::ServerCompletionQueue>>
-      completion_queues_;
-  std::vector<std::thread> pool_;
+  // Threads processing the completion queues.
+  std::vector<CompletionQueueThread> completion_queue_threads_;
 
   // Map of service names to services.
-  std::map<std::string, std::unique_ptr<Service>> services_;
+  std::map<std::string, Service> services_;
 };
 
 }  // namespace framework

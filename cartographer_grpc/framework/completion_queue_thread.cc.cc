@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
-#include "cartographer_grpc/framework/server.h"
+#include "cartographer_grpc/framework/completion_queue_thread.h"
+
+#include "cartographer/common/make_unique.h"
+#include "glog/logging.h"
 
 namespace cartographer_grpc {
 namespace framework {
 
-Service::Service(const std::map<std::string, RpcHandlerInfo>& rpc_handlers)
-    : rpc_handlers_(rpc_handlers) {}
+CompletionQueueThread::CompletionQueueThread(
+    std::unique_ptr<::grpc::ServerCompletionQueue> completion_queue)
+    : completion_queue_(std::move(completion_queue)) {}
+
+void CompletionQueueThread::Start(CompletionQueueRunner runner) {
+  CHECK(!worker_thread_);
+  worker_thread_ = cartographer::common::make_unique<std::thread>(
+      [this, runner]() { runner(this->completion_queue_.get()); });
+}
 
 }  // namespace framework
 }  // namespace cartographer_grpc
