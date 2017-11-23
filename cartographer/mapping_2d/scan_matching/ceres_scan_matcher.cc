@@ -59,7 +59,7 @@ CeresScanMatcher::CeresScanMatcher(
 
 CeresScanMatcher::~CeresScanMatcher() {}
 
-void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
+void CeresScanMatcher::Match(const Eigen::Vector2d& target_translation,
                              const transform::Rigid2d& initial_pose_estimate,
                              const sensor::PointCloud& point_cloud,
                              const ProbabilityGrid& probability_grid,
@@ -83,7 +83,7 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor, 2, 3>(
           new TranslationDeltaCostFunctor(options_.translation_weight(),
-                                          previous_pose.translation())),
+                                          target_translation)),
       nullptr, ceres_pose_estimate);
   CHECK_GT(options_.rotation_weight(), 0.);
   problem.AddResidualBlock(
