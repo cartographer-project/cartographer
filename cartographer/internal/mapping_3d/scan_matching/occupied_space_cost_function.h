@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTOR_H_
-#define CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTOR_H_
+#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTION_H_
+#define CARTOGRAPHER_INTERNAL_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTION_H_
 
 #include "Eigen/Core"
 #include "cartographer/mapping_3d/hybrid_grid.h"
@@ -28,22 +28,21 @@ namespace cartographer {
 namespace mapping_3d {
 namespace scan_matching {
 
-// Computes the cost of inserting occupied space described by the point cloud
-// into the map. The cost increases with the amount of free space that would be
-// replaced by occupied space.
-class OccupiedSpaceCostFunctor {
+// Computes a cost for matching the 'point_cloud' to the 'hybrid_grid' with a
+// 'translation' and 'rotation'. The cost increases when points fall into less
+// occupied space, i.e. at voxels with lower values.
+class OccupiedSpaceCostFunction {
  public:
-  // Creates an OccupiedSpaceCostFunctor using the specified grid, 'rotation' to
-  // add to all poses, and point cloud.
-  OccupiedSpaceCostFunctor(const double scaling_factor,
-                           const sensor::PointCloud& point_cloud,
-                           const HybridGrid& hybrid_grid)
+  OccupiedSpaceCostFunction(const double scaling_factor,
+                            const sensor::PointCloud& point_cloud,
+                            const HybridGrid& hybrid_grid)
       : scaling_factor_(scaling_factor),
         point_cloud_(point_cloud),
         interpolated_grid_(hybrid_grid) {}
 
-  OccupiedSpaceCostFunctor(const OccupiedSpaceCostFunctor&) = delete;
-  OccupiedSpaceCostFunctor& operator=(const OccupiedSpaceCostFunctor&) = delete;
+  OccupiedSpaceCostFunction(const OccupiedSpaceCostFunction&) = delete;
+  OccupiedSpaceCostFunction& operator=(const OccupiedSpaceCostFunction&) =
+      delete;
 
   template <typename T>
   bool operator()(const T* const translation, const T* const rotation,
@@ -78,4 +77,4 @@ class OccupiedSpaceCostFunctor {
 }  // namespace mapping_3d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTOR_H_
+#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTION_H_
