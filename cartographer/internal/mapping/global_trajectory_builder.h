@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
-#define CARTOGRAPHER_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
+#ifndef CARTOGRAPHER_INTERNAL_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
+#define CARTOGRAPHER_INTERNAL_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
 
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
 
@@ -94,4 +94,4 @@ class GlobalTrajectoryBuilder
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
+#endif  // CARTOGRAPHER_INTERNAL_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
