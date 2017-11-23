@@ -31,7 +31,6 @@
 namespace cartographer_grpc {
 namespace framework {
 
-class Connection;
 class Server {
  private:
   // All options that configure server behaviour such as number of threads,

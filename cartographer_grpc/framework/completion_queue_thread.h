@@ -26,11 +26,12 @@ namespace framework {
 
 class CompletionQueueThread {
  public:
+  using CompletionQueueRunner =
+      std::function<void(::grpc::ServerCompletionQueue*)>;
+
   explicit CompletionQueueThread(
       std::unique_ptr<::grpc::ServerCompletionQueue> completion_queue);
 
-  using CompletionQueueRunner =
-      std::function<void(::grpc::ServerCompletionQueue*)>;
   void Start(CompletionQueueRunner runner);
 
  private:
