@@ -22,9 +22,9 @@
 
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/make_unique.h"
+#include "cartographer/internal/mapping_3d/scan_matching/occupied_space_cost_function.h"
 #include "cartographer/mapping_3d/ceres_pose.h"
 #include "cartographer/mapping_3d/rotation_parameterization.h"
-#include "cartographer/mapping_3d/scan_matching/occupied_space_cost_functor.h"
 #include "cartographer/mapping_3d/scan_matching/rotation_delta_cost_functor.h"
 #include "cartographer/mapping_3d/scan_matching/translation_delta_cost_functor.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -93,9 +93,9 @@ void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
         *point_clouds_and_hybrid_grids[i].first;
     const HybridGrid& hybrid_grid = *point_clouds_and_hybrid_grids[i].second;
     problem.AddResidualBlock(
-        new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunctor,
+        new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction,
                                         ceres::DYNAMIC, 3, 4>(
-            new OccupiedSpaceCostFunctor(
+            new OccupiedSpaceCostFunction(
                 options_.occupied_space_weight(i) /
                     std::sqrt(static_cast<double>(point_cloud.size())),
                 point_cloud, hybrid_grid),
