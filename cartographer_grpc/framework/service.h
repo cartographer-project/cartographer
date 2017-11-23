@@ -17,9 +17,8 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_SERVICE_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_SERVICE_H
 
-#include <grpc++/impl/codegen/service_type.h>
-
 #include "cartographer_grpc/framework/rpc_handler.h"
+#include "grpc++/impl/codegen/service_type.h"
 
 namespace cartographer_grpc {
 namespace framework {

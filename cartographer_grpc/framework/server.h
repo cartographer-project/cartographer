@@ -17,7 +17,6 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_SERVER_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_SERVER_H
 
-#include <grpc++/grpc++.h>
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -27,6 +26,7 @@
 #include "cartographer_grpc/framework/completion_queue_thread.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "cartographer_grpc/framework/service.h"
+#include "grpc++/grpc++.h"
 
 namespace cartographer_grpc {
 namespace framework {
@@ -45,6 +45,8 @@ class Server {
   // This 'Builder' is the only way to construct a 'Server'.
   class Builder {
    public:
+    Builder() = default;
+
     std::unique_ptr<Server> Build();
     void SetNumberOfThreads(std::size_t number_of_threads);
     void SetServerAddress(const std::string& server_address);
@@ -56,7 +58,7 @@ class Server {
           RpcHandlerInfo{
               RpcHandlerType::RequestType::default_instance().GetDescriptor(),
               RpcHandlerType::ResponseType::default_instance().GetDescriptor(),
-              [](Rpc* rpc) {
+              [](Rpc* const rpc) {
                 std::unique_ptr<RpcHandlerInterface> rpc_handler =
                     cartographer::common::make_unique<RpcHandlerType>();
                 rpc_handler->SetRpc(rpc);
@@ -65,16 +67,14 @@ class Server {
     }
 
    private:
-    Builder() = default;
-    Options options_;
     using ServiceInfo = std::map<std::string, RpcHandlerInfo>;
+
+    Options options_;
     std::map<std::string, ServiceInfo> rpc_handlers_;
-    friend class Server;
   };
   friend class Builder;
 
-  // Constructs a new 'Builder' for a 'Server'.
-  Builder NewBuilder();
+  // Starts a server and waits for its termination.
   void StartAndWait();
 
  private:

@@ -16,9 +16,8 @@
 
 #include "cartographer_grpc/framework/server.h"
 
-#include "glog/logging.h"
-
 #include "cartographer/common/make_unique.h"
+#include "glog/logging.h"
 
 namespace cartographer_grpc {
 namespace framework {
@@ -39,8 +38,6 @@ std::unique_ptr<Server> Server::Builder::Build() {
   return server;
 }
 
-Server::Builder Server::NewBuilder() { return Builder(); }
-
 Server::Server(const Options& options) : options_(options) {
   server_builder_.AddListeningPort(options_.server_address,
                                    grpc::InsecureServerCredentials());
@@ -56,7 +53,7 @@ void Server::AddService(
     const std::string& service_name,
     const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos) {
   // Instantiate and register service.
-  auto result =
+  const auto result =
       services_.emplace(std::piecewise_construct, std::make_tuple(service_name),
                         std::make_tuple(rpc_handler_infos));
   CHECK(result.second) << "A service named " << service_name

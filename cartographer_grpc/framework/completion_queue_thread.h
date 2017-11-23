@@ -26,7 +26,7 @@ namespace framework {
 
 class CompletionQueueThread {
  public:
-  CompletionQueueThread(
+  explicit CompletionQueueThread(
       std::unique_ptr<::grpc::ServerCompletionQueue> completion_queue);
 
   using CompletionQueueRunner =

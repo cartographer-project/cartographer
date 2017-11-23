@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_H
 
-#include <google/protobuf/message.h>
+#include "google/protobuf/message.h"
 
 namespace cartographer_grpc {
 namespace framework {
