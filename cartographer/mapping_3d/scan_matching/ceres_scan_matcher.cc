@@ -106,7 +106,7 @@ void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor, 3, 3>(
           new TranslationDeltaCostFunctor(options_.translation_weight(),
-                                          previous_pose)),
+                                          previous_pose.translation())),
       nullptr, ceres_pose.translation());
   CHECK_GT(options_.rotation_weight(), 0.);
   problem.AddResidualBlock(
