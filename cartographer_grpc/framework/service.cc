@@ -53,29 +53,14 @@ void Service::RequestNextMethodInvocation(
     int method_index, Rpc* rpc,
     ::grpc::ServerCompletionQueue* completion_queue) {
   switch (rpc->rpc_type()) {
-    case ::grpc::internal::RpcMethod::NORMAL_RPC:
-      RequestAsyncUnary(method_index, rpc->server_context(), rpc->request(),
-                        rpc->responder(), completion_queue, completion_queue,
-                        rpc->GetState(Rpc::State::NEW_CONNECTION)->GetTag());
-      break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       RequestAsyncClientStreaming(
           method_index, rpc->server_context(), rpc->responder(),
           completion_queue, completion_queue,
           rpc->GetState(Rpc::State::NEW_CONNECTION)->GetTag());
       break;
-    case ::grpc::internal::RpcMethod::SERVER_STREAMING:
-      RequestAsyncServerStreaming(
-          method_index, rpc->server_context(), rpc->request(), rpc->responder(),
-          completion_queue, completion_queue,
-          rpc->GetState(Rpc::State::NEW_CONNECTION)->GetTag());
-      break;
-    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      RequestAsyncBidiStreaming(
-          method_index, rpc->server_context(), rpc->responder(),
-          completion_queue, completion_queue,
-          rpc->GetState(Rpc::State::NEW_CONNECTION)->GetTag());
-      break;
+    default:
+      LOG(FATAL) << "No RPC type not implemented.";
   }
 }
 
