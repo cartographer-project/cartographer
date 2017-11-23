@@ -83,7 +83,8 @@ class PoseGraph : public mapping::PoseGraph {
       EXCLUDES(mutex_);
   void AddFixedFramePoseData(
       int trajectory_id,
-      const sensor::FixedFramePoseData& fixed_frame_pose_data) override;
+      const sensor::FixedFramePoseData& fixed_frame_pose_data) override
+      EXCLUDES(mutex_);
 
   void FinishTrajectory(int trajectory_id) override;
   void FreezeTrajectory(int trajectory_id) override;
