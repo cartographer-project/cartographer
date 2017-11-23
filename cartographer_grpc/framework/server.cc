@@ -19,6 +19,8 @@
 #include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 
+#include "cartographer/common/make_unique.h"
+
 namespace cartographer_grpc {
 namespace framework {
 
