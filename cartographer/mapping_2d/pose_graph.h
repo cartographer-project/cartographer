@@ -109,8 +109,8 @@ class PoseGraph : public mapping::PoseGraph {
   sensor::MapByTime<sensor::ImuData> GetImuData() override EXCLUDES(mutex_);
   sensor::MapByTime<sensor::OdometryData> GetOdometryData() override
       EXCLUDES(mutex_);
-  sensor::MapByTime<sensor::FixedFramePoseData> GetFixedFramePoseData()
-      override EXCLUDES(mutex_);
+  sensor::MapByTime<sensor::FixedFramePoseData> GetFixedFramePoseData() override
+      EXCLUDES(mutex_);
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
   void SetInitialTrajectoryPose(int from_trajectory_id, int to_trajectory_id,
                                 const transform::Rigid3d& pose,
