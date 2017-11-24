@@ -62,7 +62,9 @@ class Server {
                     cartographer::common::make_unique<RpcHandlerType>();
                 rpc_handler->SetRpc(rpc);
                 return rpc_handler;
-              }});
+              },
+              RpcType<typename RpcHandlerType::Incoming,
+                      typename RpcHandlerType::Outgoing>::value});
     }
 
    private:
