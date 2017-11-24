@@ -81,4 +81,4 @@ class ActiveRpcs {
 }  // namespace framework
 }  // namespace cartographer_grpc
 
-#endif //CARTOGRAPHER_GRPC_FRAMEWORK_RPC_H
+#endif  // CARTOGRAPHER_GRPC_FRAMEWORK_RPC_H

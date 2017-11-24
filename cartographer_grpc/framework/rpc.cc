@@ -23,8 +23,7 @@ namespace cartographer_grpc {
 namespace framework {
 
 Rpc::Rpc(const RpcHandlerInfo& rpc_handler_info)
-    : rpc_handler_info_(rpc_handler_info) {
-}
+    : rpc_handler_info_(rpc_handler_info) {}
 
 ::grpc::internal::RpcMethod::RpcType Rpc::rpc_type() const {
   return rpc_handler_info_.rpc_type;
