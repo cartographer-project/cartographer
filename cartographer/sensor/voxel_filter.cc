@@ -43,7 +43,7 @@ PointCloud AdaptivelyVoxelFiltered(
     // 'point_cloud' is already sparse enough.
     return point_cloud;
   }
-  PointCloud result = VoxelFiltered(point_cloud, options.max_length());
+  PointCloud result = VoxelFilter(options.max_length()).Filter(point_cloud);
   if (result.size() >= options.min_num_points()) {
     // Filtering with 'max_length' resulted in a sufficiently dense point cloud.
     return result;
@@ -54,14 +54,15 @@ PointCloud AdaptivelyVoxelFiltered(
   for (float high_length = options.max_length();
        high_length > 1e-2f * options.max_length(); high_length /= 2.f) {
     float low_length = high_length / 2.f;
-    result = VoxelFiltered(point_cloud, low_length);
+    result = VoxelFilter(low_length).Filter(point_cloud);
     if (result.size() >= options.min_num_points()) {
       // Binary search to find the right amount of filtering. 'low_length' gave
       // a sufficiently dense 'result', 'high_length' did not. We stop when the
       // edge length is at most 10% off.
       while ((high_length - low_length) / low_length > 1e-1f) {
         const float mid_length = (low_length + high_length) / 2.f;
-        const PointCloud candidate = VoxelFiltered(point_cloud, mid_length);
+        const PointCloud candidate =
+            VoxelFilter(mid_length).Filter(point_cloud);
         if (candidate.size() >= options.min_num_points()) {
           low_length = mid_length;
           result = candidate;
@@ -77,25 +78,32 @@ PointCloud AdaptivelyVoxelFiltered(
 
 }  // namespace
 
-PointCloud VoxelFiltered(const PointCloud& point_cloud, const float size) {
-  VoxelFilter voxel_filter(size);
-  voxel_filter.InsertPointCloud(point_cloud);
-  return voxel_filter.point_cloud();
-}
-
 VoxelFilter::VoxelFilter(const float size) : voxels_(size) {}
 
-void VoxelFilter::InsertPointCloud(const PointCloud& point_cloud) {
-  for (const Eigen::Vector3f& point : point_cloud) {
+PointCloud VoxelFilter::Filter(const PointCloud& point_cloud) {
+  PointCloud results;
+  for (const auto& point : point_cloud) {
     auto* const value = voxels_.mutable_value(voxels_.GetCellIndex(point));
     if (*value == 0) {
-      point_cloud_.push_back(point);
+      results.push_back(point);
       *value = 1;
     }
   }
+  return results;
 }
 
-const PointCloud& VoxelFilter::point_cloud() const { return point_cloud_; }
+TimedPointCloud VoxelFilter::Filter(const TimedPointCloud& point_cloud) {
+  TimedPointCloud results;
+  for (const auto& point : point_cloud) {
+    auto* const value =
+        voxels_.mutable_value(voxels_.GetCellIndex(point.head<3>()));
+    if (*value == 0) {
+      results.push_back(point);
+      *value = 1;
+    }
+  }
+  return results;
+}
 
 proto::AdaptiveVoxelFilterOptions CreateAdaptiveVoxelFilterOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {

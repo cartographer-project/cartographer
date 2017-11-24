@@ -31,7 +31,7 @@ TEST(VoxelFilterTest, ReturnsTheFirstPointInEachVoxel) {
                             {0.1f, -0.1f, 0.1f},
                             {0.3f, -0.1f, 0.f},
                             {0.f, 0.f, 0.1f}};
-  EXPECT_THAT(VoxelFiltered(point_cloud, 0.3f),
+  EXPECT_THAT(VoxelFilter(0.3f).Filter(point_cloud),
               ContainerEq(PointCloud{point_cloud[0], point_cloud[2]}));
 }
 

@@ -46,8 +46,8 @@ LocalTrajectoryBuilder::TransformToGravityAlignedFrameAndFilter(
                             options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
-      sensor::VoxelFiltered(cropped.returns, options_.voxel_filter_size()),
-      sensor::VoxelFiltered(cropped.misses, options_.voxel_filter_size())};
+      sensor::VoxelFilter(options_.voxel_filter_size()).Filter(cropped.returns),
+      sensor::VoxelFilter(options_.voxel_filter_size()).Filter(cropped.misses)};
 }
 
 std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder::ScanMatch(
