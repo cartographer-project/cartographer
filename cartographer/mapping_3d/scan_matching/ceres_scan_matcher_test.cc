@@ -67,7 +67,7 @@ class CeresScanMatcherTest : public ::testing::Test {
     transform::Rigid3d pose;
 
     ceres::Solver::Summary summary;
-    ceres_scan_matcher_->Match(initial_pose, initial_pose,
+    ceres_scan_matcher_->Match(initial_pose.translation(), initial_pose,
                                {{&point_cloud_, &hybrid_grid_}}, &pose,
                                &summary);
     EXPECT_NEAR(0., summary.final_cost, 1e-2) << summary.FullReport();

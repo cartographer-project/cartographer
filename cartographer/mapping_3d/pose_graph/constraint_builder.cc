@@ -221,7 +221,7 @@ void ConstraintBuilder::ComputeConstraint(
   // CSM estimate.
   ceres::Solver::Summary unused_summary;
   transform::Rigid3d constraint_transform;
-  ceres_scan_matcher_.Match(match_result->pose_estimate,
+  ceres_scan_matcher_.Match(match_result->pose_estimate.translation(),
                             match_result->pose_estimate,
                             {{&constant_data->high_resolution_point_cloud,
                               submap_scan_matcher->high_resolution_hybrid_grid},
