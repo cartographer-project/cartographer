@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright 2016 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:trusty
-COPY scripts/install_debs.sh cartographer/scripts/
-RUN cartographer/scripts/install_debs.sh && rm -rf /var/lib/apt/lists/*
-COPY scripts/install_ceres.sh cartographer/scripts/
-RUN cartographer/scripts/install_ceres.sh && rm -rf ceres-solver
-COPY scripts/install_proto3.sh cartographer/scripts/
-RUN cartographer/scripts/install_proto3.sh && rm -rf protobuf
-COPY scripts/install_grpc.sh cartographer/scripts/
-RUN cartographer/scripts/install_grpc.sh && rm -rf grpc
-COPY . cartographer
-RUN cartographer/scripts/install_cartographer_with_grpc.sh && rm -rf cartographer
+set -o errexit
+set -o verbose
+
+# Build and install Cartographer.
+cd cartographer
+mkdir build
+cd build
+cmake .. -DBUILD_GRPC=ON -G Ninja
+ninja
+ninja test
+sudo ninja install

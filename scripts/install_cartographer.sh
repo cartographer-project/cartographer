@@ -21,7 +21,7 @@ set -o verbose
 cd cartographer
 mkdir build
 cd build
-cmake .. -DBUILD_GRPC=ON -G Ninja
+cmake .. -G Ninja
 ninja
 ninja test
 sudo ninja install
