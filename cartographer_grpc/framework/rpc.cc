@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 The Cartographer Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "cartographer_grpc/framework/rpc.h"
 
 #include "glog/logging.h"
@@ -33,30 +49,31 @@ Rpc::RpcState* Rpc::GetState(State state) {
   LOG(FATAL) << "Never reached.";
 }
 
+ActiveRpcs::ActiveRpcs() : lock_() {}
+
 ActiveRpcs::~ActiveRpcs() {
-  std::lock_guard<std::mutex> lock(mu_);
+  cartographer::common::MutexLocker locker(&lock_);
   if (!rpcs_.empty()) {
     LOG(FATAL) << "RPCs still in flight!";
   }
 }
 
 Rpc* ActiveRpcs::Add(std::unique_ptr<Rpc> rpc) {
-  std::lock_guard<std::mutex> lock(mu_);
+  cartographer::common::MutexLocker locker(&lock_);
   const auto result = rpcs_.emplace(rpc.release());
   CHECK(result.second) << "RPC already active.";
   return *result.first;
 }
 
 bool ActiveRpcs::Remove(Rpc* rpc) {
-  std::lock_guard<std::mutex> lock(mu_);
+  cartographer::common::MutexLocker locker(&lock_);
   auto it = rpcs_.find(rpc);
   if (it != rpcs_.end()) {
     delete rpc;
     rpcs_.erase(it);
     return true;
-  } else {
-    return false;
   }
+  return false;
 }
 
 }  // namespace framework

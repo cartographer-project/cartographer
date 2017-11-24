@@ -22,7 +22,7 @@
 namespace cartographer_grpc {
 namespace framework {
 
-Service::Service(const std::string service_name,
+Service::Service(const std::string& service_name,
                  const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos)
     : rpc_handler_infos_(rpc_handler_infos) {
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
@@ -37,7 +37,7 @@ Service::Service(const std::string service_name,
 }
 
 void Service::StartServing(
-    std::vector<::grpc::ServerCompletionQueue*> completion_queues) {
+    const std::vector<::grpc::ServerCompletionQueue*>& completion_queues) {
   int i = 0;
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
     for (auto completion_queue : completion_queues) {
@@ -54,13 +54,13 @@ void Service::RequestNextMethodInvocation(
     ::grpc::ServerCompletionQueue* completion_queue) {
   switch (rpc->rpc_type()) {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      RequestAsyncClientStreaming(
-          method_index, rpc->server_context(), rpc->responder(),
-          completion_queue, completion_queue,
-          rpc->GetState(Rpc::State::NEW_CONNECTION)->GetTag());
+      RequestAsyncClientStreaming(method_index, rpc->server_context(),
+                                  rpc->responder(), completion_queue,
+                                  completion_queue,
+                                  rpc->GetState(Rpc::State::NEW_CONNECTION));
       break;
     default:
-      LOG(FATAL) << "No RPC type not implemented.";
+      LOG(FATAL) << "RPC type not implemented.";
   }
 }
 

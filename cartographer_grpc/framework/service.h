@@ -30,10 +30,10 @@ namespace framework {
 // 'Rpc' handler objects.
 class Service : public ::grpc::Service {
  public:
-  Service(const std::string service_name,
+  Service(const std::string& service_name,
           const std::map<std::string, RpcHandlerInfo>& rpc_handlers);
   void StartServing(
-      std::vector<::grpc::ServerCompletionQueue*> completion_queues);
+      const std::vector<::grpc::ServerCompletionQueue*>& completion_queues);
 
  private:
   void RequestNextMethodInvocation(

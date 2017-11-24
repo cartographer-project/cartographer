@@ -18,9 +18,9 @@
 #define CARTOGRAPHER_GRPC_FRAMEWORK_RPC_H
 
 #include <memory>
-#include <mutex>
 #include <unordered_set>
 
+#include "cartographer/common/mutex.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "grpc++/grpc++.h"
 
@@ -34,7 +34,6 @@ class Rpc {
   struct RpcState {
     const State state;
     Rpc* rpc;
-    void* GetTag() { return reinterpret_cast<void*>(this); }
   };
 
   Rpc(const RpcHandlerInfo& rpc_handler_info);
@@ -64,18 +63,18 @@ class Rpc {
 };
 
 // This class keeps track of all in-flight RPCs for a 'Service'. Make sure that
-// all RPCs have been terminated and remove from this object before allowing to
-// to go out of scope.
+// all RPCs have been terminated and removed from this object before it goes out
+// of scope.
 class ActiveRpcs {
  public:
-  ActiveRpcs() = default;
-  ~ActiveRpcs();
+  ActiveRpcs();
+  ~ActiveRpcs() EXCLUDES(lock_);
 
-  Rpc* Add(std::unique_ptr<Rpc> rpc);
-  bool Remove(Rpc* rpc);
+  Rpc* Add(std::unique_ptr<Rpc> rpc) EXCLUDES(lock_);
+  bool Remove(Rpc* rpc) EXCLUDES(lock_);
 
  private:
-  std::mutex mu_;
+  cartographer::common::Mutex lock_;
   std::unordered_set<Rpc*> rpcs_;
 };
 
