@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/local_trajectory_builder.h"
+#include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
 
 #include <memory>
 
