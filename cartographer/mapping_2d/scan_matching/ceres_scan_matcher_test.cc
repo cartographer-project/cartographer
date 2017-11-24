@@ -63,8 +63,9 @@ class CeresScanMatcherTest : public ::testing::Test {
     const transform::Rigid2d expected_pose =
         transform::Rigid2d::Translation({-0.5, 0.5});
     ceres::Solver::Summary summary;
-    ceres_scan_matcher_->Match(initial_pose, initial_pose, point_cloud_,
-                               probability_grid_, &pose, &summary);
+    ceres_scan_matcher_->Match(initial_pose.translation(), initial_pose,
+                               point_cloud_, probability_grid_, &pose,
+                               &summary);
     EXPECT_NEAR(0., summary.final_cost, 1e-2) << summary.FullReport();
     EXPECT_THAT(pose, transform::IsNearly(expected_pose, 1e-2))
         << "Actual: " << transform::ToProto(pose).DebugString()

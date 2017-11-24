@@ -208,7 +208,7 @@ void ConstraintBuilder::ComputeConstraint(
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
   ceres::Solver::Summary unused_summary;
-  ceres_scan_matcher_.Match(pose_estimate, pose_estimate,
+  ceres_scan_matcher_.Match(pose_estimate.translation(), pose_estimate,
                             constant_data->filtered_gravity_aligned_point_cloud,
                             *submap_scan_matcher->probability_grid,
                             &pose_estimate, &unused_summary);

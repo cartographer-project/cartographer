@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_MOTION_FILTER_H_
-#define CARTOGRAPHER_MAPPING_3D_MOTION_FILTER_H_
+#ifndef CARTOGRAPHER_INTERNAL_MAPPING_MOTION_FILTER_H_
+#define CARTOGRAPHER_INTERNAL_MAPPING_MOTION_FILTER_H_
 
 #include <limits>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping_3d/proto/motion_filter_options.pb.h"
+#include "cartographer/mapping/proto/motion_filter_options.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
 proto::MotionFilterOptions CreateMotionFilterOptions(
     common::LuaParameterDictionary* parameter_dictionary);
@@ -48,7 +48,7 @@ class MotionFilter {
   transform::Rigid3d last_pose_;
 };
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_MOTION_FILTER_H_
+#endif  // CARTOGRAPHER_INTERNAL_MAPPING_MOTION_FILTER_H_

@@ -121,6 +121,19 @@ cartographer.mapping.proto.PoseGraphOptions pose_graph_options
   Not yet documented.
 
 
+cartographer.mapping.proto.MotionFilterOptions
+==============================================
+
+double max_time_seconds
+  Threshold above which range data is inserted based on time.
+
+double max_distance_meters
+  Threshold above which range data is inserted based on linear motion.
+
+double max_angle_radians
+  Threshold above which range data is inserted based on rotational motion.
+
+
 cartographer.mapping.proto.PoseGraphOptions
 ===========================================
 
@@ -215,7 +228,7 @@ cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOption
 cartographer.mapping_2d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
   Not yet documented.
 
-cartographer.mapping_3d.proto.MotionFilterOptions motion_filter_options
+cartographer.mapping.proto.MotionFilterOptions motion_filter_options
   Not yet documented.
 
 double imu_gravity_time_constant
@@ -347,7 +360,7 @@ cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOption
 cartographer.mapping_3d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
   Not yet documented.
 
-cartographer.mapping_3d.proto.MotionFilterOptions motion_filter_options
+cartographer.mapping.proto.MotionFilterOptions motion_filter_options
   Not yet documented.
 
 double imu_gravity_time_constant
@@ -363,19 +376,6 @@ int32 rotational_histogram_size
 
 cartographer.mapping_3d.proto.SubmapsOptions submaps_options
   Not yet documented.
-
-
-cartographer.mapping_3d.proto.MotionFilterOptions
-=================================================
-
-double max_time_seconds
-  Threshold above which range data is inserted based on time.
-
-double max_distance_meters
-  Threshold above which range data is inserted based on linear motion.
-
-double max_angle_radians
-  Threshold above which range data is inserted based on rotational motion.
 
 
 cartographer.mapping_3d.proto.RangeDataInserterOptions

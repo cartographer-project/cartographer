@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package cartographer.mapping_3d.proto;
 
-import "cartographer/mapping_3d/proto/motion_filter_options.proto";
+import "cartographer/mapping/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 import "cartographer/mapping_3d/proto/submaps_options.proto";
@@ -49,7 +49,7 @@ message LocalTrajectoryBuilderOptions {
       real_time_correlative_scan_matcher_options = 14;
   scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options = 6;
-  MotionFilterOptions motion_filter_options = 7;
+  mapping.proto.MotionFilterOptions motion_filter_options = 7;
 
   // Time constant in seconds for the orientation moving average based on
   // observed gravity via the IMU. It should be chosen so that the error

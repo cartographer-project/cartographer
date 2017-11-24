@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_H_
-#define CARTOGRAPHER_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_H_
+#ifndef CARTOGRAPHER_INTERNAL_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_H_
+#define CARTOGRAPHER_INTERNAL_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_H_
 
 #include <memory>
 
 #include "cartographer/common/time.h"
+#include "cartographer/internal/mapping/motion_filter.h"
 #include "cartographer/mapping/pose_estimate.h"
 #include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/mapping_2d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/submaps.h"
-#include "cartographer/mapping_3d/motion_filter.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/range_data.h"
@@ -94,7 +94,7 @@ class LocalTrajectoryBuilder {
   const proto::LocalTrajectoryBuilderOptions options_;
   ActiveSubmaps active_submaps_;
 
-  mapping_3d::MotionFilter motion_filter_;
+  mapping::MotionFilter motion_filter_;
   scan_matching::RealTimeCorrelativeScanMatcher
       real_time_correlative_scan_matcher_;
   scan_matching::CeresScanMatcher ceres_scan_matcher_;
@@ -109,4 +109,4 @@ class LocalTrajectoryBuilder {
 }  // namespace mapping_2d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_H_
+#endif  // CARTOGRAPHER_INTERNAL_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_H_
