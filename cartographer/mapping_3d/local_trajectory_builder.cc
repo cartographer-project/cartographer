@@ -157,18 +157,14 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
     LOG(WARNING) << "Dropped empty low resolution point cloud data.";
     return nullptr;
   }
-  // Equals '(matching_submap->local_pose().inverse() *
-  // pose_prediction).translation()'.
-  const Eigen::Vector3d target_translation =
-      matching_submap->local_pose().rotation().inverse() *
-      (-matching_submap->local_pose().translation() +
-       pose_prediction.translation());
-  ceres_scan_matcher_->Match(target_translation, initial_ceres_pose,
-                             {{&high_resolution_point_cloud_in_tracking,
-                               &matching_submap->high_resolution_hybrid_grid()},
-                              {&low_resolution_point_cloud_in_tracking,
-                               &matching_submap->low_resolution_hybrid_grid()}},
-                             &pose_observation_in_submap, &summary);
+  ceres_scan_matcher_->Match(
+      (matching_submap->local_pose().inverse() * pose_prediction).translation(),
+      initial_ceres_pose,
+      {{&high_resolution_point_cloud_in_tracking,
+        &matching_submap->high_resolution_hybrid_grid()},
+       {&low_resolution_point_cloud_in_tracking,
+        &matching_submap->low_resolution_hybrid_grid()}},
+      &pose_observation_in_submap, &summary);
   const transform::Rigid3d pose_estimate =
       matching_submap->local_pose() * pose_observation_in_submap;
   extrapolator_->AddPose(time, pose_estimate);
