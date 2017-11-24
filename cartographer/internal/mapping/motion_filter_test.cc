@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/motion_filter.h"
+#include "cartographer/internal/mapping/motion_filter.h"
 
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace {
 
 class MotionFilterTest : public ::testing::Test {
@@ -105,5 +105,5 @@ TEST_F(MotionFilterTest, RotationalMotion) {
 }
 
 }  // namespace
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
