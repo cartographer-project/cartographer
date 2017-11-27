@@ -86,6 +86,7 @@ class PoseGraph : public mapping::PoseGraph {
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
 
   void FinishTrajectory(int trajectory_id) override;
+  bool IsTrajectoryFinished(int trajectory_id) override;
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
                           const mapping::proto::Submap& submap) override;
@@ -237,6 +238,9 @@ class PoseGraph : public mapping::PoseGraph {
   // Set of all frozen trajectories not being optimized.
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
 
+  // Set of all finished trajectories.
+  std::set<int> finished_trajectories_ GUARDED_BY(mutex_);
+
   // Set of all initial trajectory poses.
   std::map<int, InitialTrajectoryPose> initial_trajectory_poses_
       GUARDED_BY(mutex_);
@@ -251,6 +255,7 @@ class PoseGraph : public mapping::PoseGraph {
     int num_submaps(int trajectory_id) const override;
     void MarkSubmapAsTrimmed(const mapping::SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
+    bool IsFinished(int trajectory_id) const override;
 
    private:
     PoseGraph* const parent_;

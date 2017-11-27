@@ -36,6 +36,10 @@ class Trimmable {
   // will no longer take part in scan matching, loop closure, visualization.
   // Submaps and nodes are only marked, the numbering remains unchanged.
   virtual void MarkSubmapAsTrimmed(const SubmapId& submap_id) = 0;
+
+  // Check if the given trajectory is finished or not
+  virtual bool IsFinished(int trajectory_id) const = 0;
+
 };
 
 // An interface to implement algorithms that choose how to trim the pose graph.
@@ -45,9 +49,6 @@ class PoseGraphTrimmer {
 
   // Called once after each pose graph optimization.
   virtual void Trim(Trimmable* pose_graph) = 0;
-
-  // Gets finished trajectory
-  virtual void FinishTrajectory(int trajectory_id) = 0;
 
   // Checks if this trimmer is terminatable state
   virtual bool IsFinished() = 0;
@@ -61,7 +62,6 @@ class PureLocalizationTrimmer : public PoseGraphTrimmer {
   ~PureLocalizationTrimmer() override {}
 
   void Trim(Trimmable* pose_graph) override;
-  void FinishTrajectory(int trajectory_id) override;
   bool IsFinished() override;
 
  private:
