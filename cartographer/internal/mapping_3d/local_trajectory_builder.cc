@@ -74,15 +74,18 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
       time + common::FromSeconds(range_data.returns.front()[3]);
   if (time_first_point < extrapolator_->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
-    // TODO(gaschler): Use points between GetLastPoseTime() and time.
     return nullptr;
   }
 
-  std::vector<transform::Rigid3f> range_data_poses;
-  range_data_poses.reserve(range_data.returns.size());
-  for (const Eigen::Vector4f& hit : range_data.returns) {
+  sensor::TimedPointCloud hits =
+      sensor::VoxelFilter(0.5f * options_.voxel_filter_size())
+          .Filter(range_data.returns);
+
+  std::vector<transform::Rigid3f> hits_poses;
+  hits_poses.reserve(hits.size());
+  for (const Eigen::Vector4f& hit : hits) {
     const common::Time time_point = time + common::FromSeconds(hit[3]);
-    range_data_poses.push_back(
+    hits_poses.push_back(
         extrapolator_->ExtrapolatePose(time_point).cast<float>());
   }
 
@@ -91,11 +94,9 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     accumulated_range_data_ = sensor::RangeData{{}, {}, {}};
   }
 
-  for (size_t i = 0; i < range_data.returns.size(); ++i) {
-    const Eigen::Vector4f& hit = range_data.returns[i];
-    const Eigen::Vector3f origin_in_local =
-        range_data_poses[i] * range_data.origin;
-    const Eigen::Vector3f hit_in_local = range_data_poses[i] * hit.head<3>();
+  for (size_t i = 0; i < hits.size(); ++i) {
+    const Eigen::Vector3f hit_in_local = hits_poses[i] * hits[i].head<3>();
+    const Eigen::Vector3f origin_in_local = hits_poses[i] * range_data.origin;
     const Eigen::Vector3f delta = hit_in_local - origin_in_local;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
@@ -114,15 +115,17 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 
   if (num_accumulated_ >= options_.num_accumulated_range_data()) {
     num_accumulated_ = 0;
+    transform::Rigid3f current_pose =
+        extrapolator_->ExtrapolatePose(time).cast<float>();
     const sensor::RangeData filtered_range_data = {
-        range_data_poses.back() * range_data.origin,
+        current_pose * range_data.origin,
         sensor::VoxelFilter(options_.voxel_filter_size())
-        .Filter(accumulated_range_data_.returns),
+            .Filter(accumulated_range_data_.returns),
         sensor::VoxelFilter(options_.voxel_filter_size())
-        .Filter(accumulated_range_data_.misses)};
+            .Filter(accumulated_range_data_.misses)};
     return AddAccumulatedRangeData(
         time, sensor::TransformRangeData(filtered_range_data,
-                                         range_data_poses.back().inverse()));
+                                         current_pose.inverse()));
   }
   return nullptr;
 }
