@@ -37,13 +37,15 @@ Service::Service(const std::string& service_name,
 }
 
 void Service::StartServing(
-    const std::vector<::grpc::ServerCompletionQueue*>& completion_queues) {
+    std::vector<CompletionQueueThread>& completion_queue_threads) {
   int i = 0;
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
-    for (auto completion_queue : completion_queues) {
+    for (auto& completion_queue_thread : completion_queue_threads) {
       Rpc* rpc = active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
-          i, completion_queue, rpc_handler_info.second, this));
-      RequestNextMethodInvocation(i, rpc, completion_queue);
+          i, completion_queue_thread.completion_queue(),
+          rpc_handler_info.second, this));
+      RequestNextMethodInvocation(i, rpc,
+                                  completion_queue_thread.completion_queue());
     }
     ++i;
   }
@@ -77,6 +79,8 @@ void Service::HandleNewConnection(Rpc* rpc, bool ok) {
     LOG(ERROR) << "Failed to establish connection for unknown reason.";
     active_rpcs_.Remove(rpc);
   }
+
+  // TODO(cschuet): Request next read for the new connection.
 
   // Create new active rpc to handle next connection.
   Rpc* next_rpc = active_rpcs_.Add(cartographer::common::make_unique<Rpc>(

@@ -75,15 +75,9 @@ void Server::Start() {
   // Start the gRPC server process.
   server_ = server_builder_.BuildAndStart();
 
-  // Collect all completion queues.
-  std::vector<::grpc::ServerCompletionQueue*> completion_queues;
-  for (auto& completion_queue_threads : completion_queue_threads_) {
-    completion_queues.emplace_back(completion_queue_threads.completion_queue());
-  }
-
   // Start serving all services on all completion queues.
   for (auto& service : services_) {
-    service.second.StartServing(completion_queues);
+    service.second.StartServing(completion_queue_threads_);
   }
 
   // Start threads to process all completion queues.

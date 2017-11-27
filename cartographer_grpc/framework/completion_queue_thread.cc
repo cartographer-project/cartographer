@@ -39,10 +39,7 @@ void CompletionQueueThread::Start(CompletionQueueRunner runner) {
 void CompletionQueueThread::Shutdown() {
   LOG(INFO) << "Shutting down completion queue " << completion_queue_.get();
   completion_queue_.get()->Shutdown();
-  LOG(INFO) << "Completion queue " << completion_queue_.get() << "shut down.";
-  LOG(INFO) << "Waiting for thread " << worker_thread_.get() << " to join.";
   worker_thread_.get()->join();
-  LOG(INFO) << "Thread " << worker_thread_.get() << " joined.";
 }
 
 }  // namespace framework
