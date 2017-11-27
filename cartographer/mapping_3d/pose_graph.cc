@@ -337,23 +337,11 @@ void PoseGraph::HandleWorkQueue() {
         for (auto& trimmer : trimmers_) {
           trimmer->Trim(&trimming_handle);
         }
-
-        {
-          auto GetTrimmerToRemove = [&]() {
-            return std::find_if(
-                trimmers_.begin(), trimmers_.end(),
-                [&](std::unique_ptr<mapping::PoseGraphTrimmer>& trimmer) {
-                  return trimmer->IsFinished();
-                });
-          };
-
-          auto to_be_removed = GetTrimmerToRemove();
-          while (to_be_removed != trimmers_.end()) {
-            trimmers_.erase(std::remove(trimmers_.begin(), trimmers_.end(),
-                                        *to_be_removed));
-            to_be_removed = GetTrimmerToRemove();
-          }
-        }
+        trimmers_.erase(std::remove_if(
+            trimmers_.begin(), trimmers_.end(),
+            [](std::unique_ptr<mapping::PoseGraphTrimmer>& trimmer) {
+              return trimmer->IsFinished();
+            }));
 
         num_nodes_since_last_loop_closure_ = 0;
         run_loop_closure_ = false;
