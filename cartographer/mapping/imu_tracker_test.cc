@@ -16,66 +16,76 @@
 
 #include "cartographer/mapping/imu_tracker.h"
 
+#include "cartographer/common/make_unique.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace mapping {
 namespace {
 
-const int kSteps = 10;
 const double kDuration = 3.f;
 const double kPrecision = 1e-8;
+const int kSteps = 10;
 
-TEST(ImuTrackerTest, IntegrateYawRotation) {
-  common::Time time = common::FromUniversal(12345678);
-  const Eigen::Vector3d angular_velocity(0, 0, 0.3);
-  const Eigen::Vector3d linear_acceleration(0, 0, 9.9);
-  ImuTracker imu_tracker(0.1 * kDuration, time);
-  EXPECT_NEAR(0., imu_tracker.orientation().angularDistance(Eigen::Quaterniond::Identity()), kPrecision);
-  for (int i = 0; i < kSteps; ++i) {
-    imu_tracker.AddImuLinearAccelerationObservation(linear_acceleration);
-    imu_tracker.AddImuAngularVelocityObservation(angular_velocity);
-    time += common::FromSeconds(kDuration / kSteps);
-    imu_tracker.Advance(time);
+class ImuTrackerTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    imu_tracker_ = common::make_unique<ImuTracker>(0.1 * kDuration, time_);
+    angular_velocity_ = Eigen::Vector3d(0, 0, 0);
+    linear_acceleration_ = Eigen::Vector3d(0, 0, 9.9);
+    EXPECT_NEAR(0.,
+                imu_tracker_->orientation().angularDistance(
+                    Eigen::Quaterniond::Identity()),
+                kPrecision);
   }
+
+  void AdvanceImu() {
+    for (int i = 0; i < kSteps; ++i) {
+      imu_tracker_->AddImuLinearAccelerationObservation(linear_acceleration_);
+      imu_tracker_->AddImuAngularVelocityObservation(angular_velocity_);
+      time_ += common::FromSeconds(kDuration / kSteps);
+      imu_tracker_->Advance(time_);
+    }
+    EXPECT_EQ(time_, imu_tracker_->time());
+  }
+
+  Eigen::Vector3d angular_velocity_;
+  std::unique_ptr<ImuTracker> imu_tracker_;
+  Eigen::Vector3d linear_acceleration_;
+  common::Time time_ = common::FromUniversal(12345678);
+};
+
+TEST_F(ImuTrackerTest, IntegrateYawRotation) {
+  angular_velocity_ = Eigen::Vector3d(0, 0, 0.3);
+  AdvanceImu();
   Eigen::Quaterniond expected_orientation(Eigen::AngleAxisd(
-      kDuration * angular_velocity.norm(), angular_velocity.normalized()));
-  EXPECT_NEAR(0., imu_tracker.orientation().angularDistance(expected_orientation), kPrecision);
-  EXPECT_EQ(time, imu_tracker.time());
+      kDuration * angular_velocity_.norm(), angular_velocity_.normalized()));
+  EXPECT_NEAR(0.,
+              imu_tracker_->orientation().angularDistance(expected_orientation),
+              kPrecision);
 }
 
-TEST(ImuTrackerTest, IntegrateFullRotation) {
-  common::Time time = common::FromUniversal(12345678);
-  const Eigen::Vector3d angular_velocity(0.1, 0.4, 0.1);
-  const Eigen::Vector3d linear_acceleration(0, 0, 9.9);
+TEST_F(ImuTrackerTest, IntegrateFullRotation) {
+  angular_velocity_ = Eigen::Vector3d(0.1, 0.4, 0.1);
   // Effectively disables gravity vector tracking.
-  ImuTracker imu_tracker(1e10 * kDuration, time);
-  EXPECT_NEAR(0., imu_tracker.orientation().angularDistance(Eigen::Quaterniond::Identity()), kPrecision);
-  for (int i = 0; i < kSteps; ++i) {
-    imu_tracker.AddImuLinearAccelerationObservation(linear_acceleration);
-    imu_tracker.AddImuAngularVelocityObservation(angular_velocity);
-    time += common::FromSeconds(kDuration / kSteps);
-    imu_tracker.Advance(time);
-  }
+  imu_tracker_.reset(new ImuTracker(1e10 * kDuration, time_));
+  AdvanceImu();
   Eigen::Quaterniond expected_orientation(Eigen::AngleAxisd(
-      kDuration * angular_velocity.norm(), angular_velocity.normalized()));
-  EXPECT_NEAR(0., imu_tracker.orientation().angularDistance(expected_orientation), kPrecision);
-  EXPECT_EQ(time, imu_tracker.time());
+      kDuration * angular_velocity_.norm(), angular_velocity_.normalized()));
+  EXPECT_NEAR(0.,
+              imu_tracker_->orientation().angularDistance(expected_orientation),
+              kPrecision);
 }
 
-TEST(ImuTrackerTest, LearnGravityVector) {
-  common::Time time = common::FromUniversal(12345678);
-  const Eigen::Vector3d linear_acceleration(0.5, 0.3, 9.5);
-  ImuTracker imu_tracker(0.1 * kDuration, time);
-  EXPECT_NEAR(0., imu_tracker.orientation().angularDistance(Eigen::Quaterniond::Identity()), kPrecision);
-  for (int i = 0; i < kSteps; ++i) {
-    imu_tracker.AddImuLinearAccelerationObservation(linear_acceleration);
-    time += common::FromSeconds(kDuration / kSteps);
-    imu_tracker.Advance(time);
-  }
+TEST_F(ImuTrackerTest, LearnGravityVector) {
+  linear_acceleration_ = Eigen::Vector3d(0.5, 0.3, 9.5);
+  AdvanceImu();
   Eigen::Quaterniond expected_orientation;
-  expected_orientation.setFromTwoVectors(linear_acceleration, Eigen::Vector3d::UnitZ());
-  EXPECT_NEAR(0., imu_tracker.orientation().angularDistance(expected_orientation), kPrecision);
+  expected_orientation.setFromTwoVectors(linear_acceleration_,
+                                         Eigen::Vector3d::UnitZ());
+  EXPECT_NEAR(0.,
+              imu_tracker_->orientation().angularDistance(expected_orientation),
+              kPrecision);
 }
 
 }  // namespace
