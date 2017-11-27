@@ -37,7 +37,7 @@ class Trimmable {
   // Submaps and nodes are only marked, the numbering remains unchanged.
   virtual void MarkSubmapAsTrimmed(const SubmapId& submap_id) = 0;
 
-  // Check if the given trajectory is finished or not.
+  // Checks if the given trajectory is finished or not.
   virtual bool IsFinished(int trajectory_id) const = 0;
 };
 
@@ -49,7 +49,7 @@ class PoseGraphTrimmer {
   // Called once after each pose graph optimization.
   virtual void Trim(Trimmable* pose_graph) = 0;
 
-  // Checks if this trimmer is terminatable state.
+  // Checks if this trimmer is in a terminatable state.
   virtual bool IsFinished() = 0;
 };
 
