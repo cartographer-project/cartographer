@@ -23,14 +23,15 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-const double kDuration = 3.f;
-const double kPrecision = 1e-8;
-const int kSteps = 10;
+constexpr double kDuration = 3.f;
+constexpr double kGravityTimeConstant = 0.1 * kDuration;
+constexpr double kPrecision = 1e-8;
+constexpr int kSteps = 10;
 
 class ImuTrackerTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    imu_tracker_ = common::make_unique<ImuTracker>(0.1 * kDuration, time_);
+    imu_tracker_ = common::make_unique<ImuTracker>(kGravityTimeConstant, time_);
     angular_velocity_ = Eigen::Vector3d(0, 0, 0);
     linear_acceleration_ = Eigen::Vector3d(0, 0, 9.9);
     EXPECT_NEAR(0.,
@@ -67,7 +68,8 @@ TEST_F(ImuTrackerTest, IntegrateYawRotation) {
 
 TEST_F(ImuTrackerTest, IntegrateFullRotation) {
   angular_velocity_ = Eigen::Vector3d(0.1, 0.4, 0.1);
-  // Effectively disables gravity vector tracking.
+  // Using a huge gravity time constant effectively disables gravity vector
+  // tracking.
   imu_tracker_.reset(new ImuTracker(1e10 * kDuration, time_));
   AdvanceImu();
   Eigen::Quaterniond expected_orientation(Eigen::AngleAxisd(
