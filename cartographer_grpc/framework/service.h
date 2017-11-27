@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_SERVICE_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_SERVICE_H
 
+#include "cartographer_grpc/framework/rpc.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "grpc++/impl/codegen/service_type.h"
 
@@ -29,10 +30,18 @@ namespace framework {
 // 'Rpc' handler objects.
 class Service : public ::grpc::Service {
  public:
-  Service(const std::map<std::string, RpcHandlerInfo>& rpc_handlers);
+  Service(const std::string& service_name,
+          const std::map<std::string, RpcHandlerInfo>& rpc_handlers);
+  void StartServing(
+      const std::vector<::grpc::ServerCompletionQueue*>& completion_queues);
 
  private:
-  std::map<std::string, RpcHandlerInfo> rpc_handlers_;
+  void RequestNextMethodInvocation(
+      int method_index, Rpc* rpc,
+      ::grpc::ServerCompletionQueue* completion_queue);
+
+  std::map<std::string, RpcHandlerInfo> rpc_handler_infos_;
+  ActiveRpcs active_rpcs_;
 };
 
 }  // namespace framework

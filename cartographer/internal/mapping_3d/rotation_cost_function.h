@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_ROTATION_COST_FUNCTION_H_
-#define CARTOGRAPHER_MAPPING_3D_ROTATION_COST_FUNCTION_H_
+#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_ROTATION_COST_FUNCTION_H_
+#define CARTOGRAPHER_INTERNAL_MAPPING_3D_ROTATION_COST_FUNCTION_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
@@ -61,4 +61,4 @@ class RotationCostFunction {
 }  // namespace mapping_3d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_ROTATION_COST_FUNCTION_H_
+#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_ROTATION_COST_FUNCTION_H_
