@@ -37,9 +37,7 @@ class FakePoseGraph : public Trimmable {
     trimmed_submaps_.push_back(submap_id);
   }
 
-  bool IsFinished(int trajectory_id) const override {
-    return false;
-  }
+  bool IsFinished(int trajectory_id) const override { return false; }
 
   std::vector<SubmapId> trimmed_submaps() { return trimmed_submaps_; }
 

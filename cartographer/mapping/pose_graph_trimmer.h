@@ -39,7 +39,6 @@ class Trimmable {
 
   // Check if the given trajectory is finished or not
   virtual bool IsFinished(int trajectory_id) const = 0;
-
 };
 
 // An interface to implement algorithms that choose how to trim the pose graph.
