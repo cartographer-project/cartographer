@@ -76,14 +76,14 @@ PointCloud AdaptivelyVoxelFiltered(
   return result;
 }
 
-}  // namespace
-
-VoxelFilter::VoxelFilter(const float size) : voxels_(size) {}
-
-PointCloud VoxelFilter::Filter(const PointCloud& point_cloud) {
-  PointCloud results;
+template <typename PointCloudType>
+PointCloudType FilterPointCloudUsingVoxels(
+    const PointCloudType& point_cloud,
+    mapping_3d::HybridGridBase<uint8>* voxels) {
+  PointCloudType results;
   for (const auto& point : point_cloud) {
-    auto* const value = voxels_.mutable_value(voxels_.GetCellIndex(point));
+    auto* const value =
+        voxels->mutable_value(voxels->GetCellIndex(point.template head<3>()));
     if (*value == 0) {
       results.push_back(point);
       *value = 1;
@@ -92,17 +92,16 @@ PointCloud VoxelFilter::Filter(const PointCloud& point_cloud) {
   return results;
 }
 
-TimedPointCloud VoxelFilter::Filter(const TimedPointCloud& point_cloud) {
-  TimedPointCloud results;
-  for (const auto& point : point_cloud) {
-    auto* const value =
-        voxels_.mutable_value(voxels_.GetCellIndex(point.head<3>()));
-    if (*value == 0) {
-      results.push_back(point);
-      *value = 1;
-    }
-  }
-  return results;
+}  // namespace
+
+VoxelFilter::VoxelFilter(const float size) : voxels_(size) {}
+
+PointCloud VoxelFilter::Filter(const PointCloud& point_cloud) {
+  return FilterPointCloudUsingVoxels(point_cloud, &voxels_);
+}
+
+TimedPointCloud VoxelFilter::Filter(const TimedPointCloud& timed_point_cloud) {
+  return FilterPointCloudUsingVoxels(timed_point_cloud, &voxels_);
 }
 
 proto::AdaptiveVoxelFilterOptions CreateAdaptiveVoxelFilterOptions(
