@@ -20,9 +20,9 @@
 #include <memory>
 
 #include "cartographer/common/time.h"
+#include "cartographer/internal/mapping/motion_filter.h"
 #include "cartographer/mapping/pose_estimate.h"
 #include "cartographer/mapping/pose_extrapolator.h"
-#include "cartographer/mapping_3d/motion_filter.h"
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/real_time_correlative_scan_matcher.h"
@@ -82,7 +82,7 @@ class LocalTrajectoryBuilder {
   const proto::LocalTrajectoryBuilderOptions options_;
   ActiveSubmaps active_submaps_;
 
-  MotionFilter motion_filter_;
+  mapping::MotionFilter motion_filter_;
   std::unique_ptr<scan_matching::RealTimeCorrelativeScanMatcher>
       real_time_correlative_scan_matcher_;
   std::unique_ptr<scan_matching::CeresScanMatcher> ceres_scan_matcher_;
