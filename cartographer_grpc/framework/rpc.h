@@ -48,7 +48,7 @@ class Rpc {
   ::grpc::internal::RpcMethod::RpcType rpc_type() const;
   Service* service() { return service_; }
   ::grpc::ServerContext* server_context() { return &server_context_; }
-  ::grpc::internal::ServerAsyncStreamingInterface* responder();
+  ::grpc::internal::ServerAsyncStreamingInterface* streaming_interface();
   RpcState* GetRpcState(State state);
   const RpcHandlerInfo& rpc_handler_info() const { return rpc_handler_info_; }
 

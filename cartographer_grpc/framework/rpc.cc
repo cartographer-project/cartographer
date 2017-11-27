@@ -40,7 +40,7 @@ Rpc::Rpc(int method_index,
   return rpc_handler_info_.rpc_type;
 }
 
-::grpc::internal::ServerAsyncStreamingInterface* Rpc::responder() {
+::grpc::internal::ServerAsyncStreamingInterface* Rpc::streaming_interface() {
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       return server_async_reader_.get();

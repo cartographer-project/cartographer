@@ -101,7 +101,7 @@ void Service::RequestNextMethodInvocation(
   switch (rpc->rpc_type()) {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       RequestAsyncClientStreaming(method_index, rpc->server_context(),
-                                  rpc->responder(), completion_queue,
+                                  rpc->streaming_interface(), completion_queue,
                                   completion_queue,
                                   rpc->GetRpcState(Rpc::State::NEW_CONNECTION));
       break;
