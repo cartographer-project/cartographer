@@ -28,7 +28,10 @@ Rpc::Rpc(int method_index,
     : method_index_(method_index),
       server_completion_queue_(server_completion_queue),
       rpc_handler_info_(rpc_handler_info),
-      service_(service) {
+      new_connection_state_{State::NEW_CONNECTION, service, this},
+      read_state_{State::READ, service, this},
+      write_state_{State::WRITE, service, this},
+      done_state_{State::DONE, service, this} {
   InitializeResponders(rpc_handler_info_.rpc_type);
 }
 

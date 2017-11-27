@@ -72,6 +72,7 @@ if (NOT ${BUILD_GRPC})
   list_remove_item(ALL_PROTOS ALL_GRPC_FILES)
 endif()
 
+# TODO(cschuet): Move proto compilation to separate function.
 set(ALL_PROTO_SRCS)
 set(ALL_PROTO_HDRS)
 foreach(ABS_FIL ${ALL_PROTOS})

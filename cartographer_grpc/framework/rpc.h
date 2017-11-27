@@ -37,6 +37,7 @@ class Rpc {
   enum class State { NEW_CONNECTION = 0, READ, WRITE, DONE };
   struct RpcState {
     const State state;
+    Service* service;
     Rpc* rpc;
   };
 
@@ -46,7 +47,6 @@ class Rpc {
   int method_index() const { return method_index_; }
   ::grpc::ServerCompletionQueue* server_completion_queue();
   ::grpc::internal::RpcMethod::RpcType rpc_type() const;
-  Service* service() { return service_; }
   ::grpc::ServerContext* server_context() { return &server_context_; }
   ::grpc::internal::ServerAsyncStreamingInterface* streaming_interface();
   RpcState* GetRpcState(State state);
@@ -63,13 +63,12 @@ class Rpc {
   int method_index_;
   ::grpc::ServerCompletionQueue* server_completion_queue_;
   RpcHandlerInfo rpc_handler_info_;
-  Service* service_;
   ::grpc::ServerContext server_context_;
 
-  RpcState new_connection_state_ = RpcState{State::NEW_CONNECTION, this};
-  RpcState read_state_ = RpcState{State::READ, this};
-  RpcState write_state_ = RpcState{State::WRITE, this};
-  RpcState done_state_ = RpcState{State::DONE, this};
+  RpcState new_connection_state_;
+  RpcState read_state_;
+  RpcState write_state_;
+  RpcState done_state_;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
