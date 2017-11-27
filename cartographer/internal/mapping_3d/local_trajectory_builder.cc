@@ -102,10 +102,10 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     num_accumulated_ = 0;
     const sensor::RangeData filtered_range_data = {
         accumulated_range_data_.origin,
-        sensor::VoxelFiltered(accumulated_range_data_.returns,
-                              options_.voxel_filter_size()),
-        sensor::VoxelFiltered(accumulated_range_data_.misses,
-                              options_.voxel_filter_size())};
+        sensor::VoxelFilter(options_.voxel_filter_size())
+            .Filter(accumulated_range_data_.returns),
+        sensor::VoxelFilter(options_.voxel_filter_size())
+            .Filter(accumulated_range_data_.misses)};
     return AddAccumulatedRangeData(
         time, sensor::TransformRangeData(filtered_range_data,
                                          tracking_delta.inverse()));
