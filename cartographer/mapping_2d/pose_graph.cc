@@ -320,6 +320,13 @@ void PoseGraph::HandleWorkQueue() {
         for (auto& trimmer : trimmers_) {
           trimmer->Trim(&trimming_handle);
         }
+        trimmers_.erase(
+            std::remove_if(
+                trimmers_.begin(), trimmers_.end(),
+                [](std::unique_ptr<mapping::PoseGraphTrimmer>& trimmer) {
+                  return trimmer->IsFinished();
+                }),
+            trimmers_.end());
 
         num_nodes_since_last_loop_closure_ = 0;
         run_loop_closure_ = false;
@@ -369,8 +376,21 @@ void PoseGraph::WaitForAllComputations() {
 }
 
 void PoseGraph::FinishTrajectory(const int trajectory_id) {
-  // TODO(jihoonl): Add a logic to notify trimmers to finish the given
-  // trajectory.
+  AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
+    CHECK_EQ(finished_trajectories_.count(trajectory_id), 0);
+    finished_trajectories_.insert(trajectory_id);
+
+    auto submap_data = optimization_problem_.submap_data();
+    for (auto submap_id_data : submap_data) {
+      submap_data_.at(submap_id_data.id).state = SubmapState::kFinished;
+    }
+    // TODO(jihoonl): Refactor HandleWorkQueue() logic from
+    // ComputeConstraintsForNode and call from here
+  });
+}
+
+bool PoseGraph::IsTrajectoryFinished(const int trajectory_id) {
+  return finished_trajectories_.count(trajectory_id) > 0;
 }
 
 void PoseGraph::FreezeTrajectory(const int trajectory_id) {
@@ -682,6 +702,10 @@ PoseGraph::TrimmingHandle::TrimmingHandle(PoseGraph* const parent)
 int PoseGraph::TrimmingHandle::num_submaps(const int trajectory_id) const {
   const auto& submap_data = parent_->optimization_problem_.submap_data();
   return submap_data.SizeOfTrajectoryOrZero(trajectory_id);
+}
+
+bool PoseGraph::TrimmingHandle::IsFinished(const int trajectory_id) const {
+  return parent_->IsTrajectoryFinished(trajectory_id);
 }
 
 void PoseGraph::TrimmingHandle::MarkSubmapAsTrimmed(

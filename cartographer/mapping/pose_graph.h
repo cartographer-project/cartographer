@@ -100,6 +100,9 @@ class PoseGraph {
   // Finishes the given trajectory.
   virtual void FinishTrajectory(int trajectory_id) = 0;
 
+  // Checks if the given trajectory is finished.
+  virtual bool IsTrajectoryFinished(int trajectory_id) = 0;
+
   // Freezes a trajectory. Poses in this trajectory will not be optimized.
   virtual void FreezeTrajectory(int trajectory_id) = 0;
 
