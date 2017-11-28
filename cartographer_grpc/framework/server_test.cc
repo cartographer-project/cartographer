@@ -30,14 +30,12 @@ namespace {
 class GetServerOptionsHandler
     : public RpcHandler<Stream<proto::GetSumRequest>, proto::GetSumResponse> {
  public:
-  GetServerOptionsHandler() = default;
-
-  void OnRequest(const proto::GetSumRequest* request) override {
-    sum_ += request->input();
+  void OnRequest(const proto::GetSumRequest& request) override {
+    sum_ += request.input();
   }
 
   void OnReadsDone() override {
-    std::unique_ptr<proto::GetSumResponse> response(new proto::GetSumResponse);
+    auto response = cartographer::common::make_unique<proto::GetSumResponse>();
     response->set_output(sum_);
     Send(std::move(response));
   }
@@ -47,7 +45,7 @@ class GetServerOptionsHandler
 };
 
 const std::string kServerAddress = "localhost:50051";
-const size_t kNumThreads = 1;
+const std::size_t kNumThreads = 1;
 
 class ServerTest : public ::testing::Test {
  protected:
@@ -73,20 +71,20 @@ TEST_F(ServerTest, ProcessRpcStreamTest) {
 
   auto channel =
       grpc::CreateChannel(kServerAddress, grpc::InsecureChannelCredentials());
-  std::unique_ptr<proto::Math::Stub> stub_(proto::Math::NewStub(channel));
+  std::unique_ptr<proto::Math::Stub> stub(proto::Math::NewStub(channel));
   grpc::ClientContext context;
   proto::GetSumResponse result;
   std::unique_ptr<grpc::ClientWriter<proto::GetSumRequest> > writer(
-      stub_->GetSum(&context, &result));
+      stub->GetSum(&context, &result));
   for (int i = 0; i < 3; ++i) {
     proto::GetSumRequest request;
     request.set_input(i);
-    CHECK(writer->Write(request));
+    EXPECT_TRUE(writer->Write(request));
   }
   writer->WritesDone();
   grpc::Status status = writer->Finish();
-  CHECK(status.ok());
-  CHECK_EQ(result.output(), 3);
+  EXPECT_TRUE(status.ok());
+  EXPECT_EQ(result.output(), 3);
 
   server_->Shutdown();
 }

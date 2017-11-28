@@ -21,7 +21,7 @@
 #include <unordered_set>
 
 #include "cartographer/common/mutex.h"
-#include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/framework/rpc_handler_interface.h"
 #include "google/protobuf/message.h"
 #include "grpc++/grpc++.h"
 #include "grpc++/impl/codegen/async_stream.h"
