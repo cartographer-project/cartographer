@@ -15,6 +15,7 @@
  */
 
 #include "cartographer_grpc/framework/rpc.h"
+#include "cartographer_grpc/framework/service.h"
 
 #include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
@@ -28,10 +29,11 @@ Rpc::Rpc(int method_index,
     : method_index_(method_index),
       server_completion_queue_(server_completion_queue),
       rpc_handler_info_(rpc_handler_info),
-      new_connection_state_{State::NEW_CONNECTION, service, this, false},
-      read_state_{State::READ, service, this, false},
-      write_state_{State::WRITE, service, this, false},
-      done_state_{State::DONE, service, this, false},
+      service_(service),
+      new_connection_state_{State::NEW_CONNECTION, this, false},
+      read_state_{State::READ, this, false},
+      write_state_{State::WRITE, this, false},
+      done_state_{State::DONE, this, false},
       handler_(rpc_handler_info_.rpc_handler_factory(this)) {
   InitializeReadersAndWriters(rpc_handler_info_.rpc_type);
 
@@ -42,26 +44,50 @@ Rpc::Rpc(int method_index,
   response_.reset(::google::protobuf::MessageFactory::generated_factory()
                       ->GetPrototype(rpc_handler_info_.response_descriptor)
                       ->New());
-
-  handler_->SetRpc(this);
 }
 
-void Rpc::OnRequest() { handler_->OnRequestInternal(request()); }
+std::unique_ptr<Rpc> Rpc::Clone() {
+  return cartographer::common::make_unique<Rpc>(
+      method_index_, server_completion_queue_, rpc_handler_info_, service_);
+}
+
+void Rpc::OnRequest() { handler_->OnRequestInternal(request_.get()); }
 
 void Rpc::OnReadsDone() { handler_->OnReadsDone(); }
 
+void Rpc::RequestNextMethodInvocation() {
+  done_state_.pending = true;
+  new_connection_state_.pending = true;
+  server_context_.AsyncNotifyWhenDone(&done_state_);
+  switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+      service_->RequestAsyncClientStreaming(
+          method_index_, &server_context_, streaming_interface(),
+          server_completion_queue_, server_completion_queue_,
+          &new_connection_state_);
+      break;
+    default:
+      LOG(FATAL) << "RPC type not implemented.";
+  }
+}
+
+void Rpc::RequestStreamingReadIfNeeded() {
+  // For request-streaming RPCs ask the client to start sending requests.
+  switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+      read_state_.pending = true;
+      async_reader_interface()->Read(request_.get(), &read_state_);
+      break;
+    default:
+      LOG(FATAL) << "RPC type not implemented.";
+  }
+}
+
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   response_ = std::move(message);
+  write_state_.pending = true;
   server_async_reader_->Finish(*response_.get(), ::grpc::Status::OK,
-                               SetRpcStatePending(State::WRITE, true));
-}
-
-::grpc::ServerCompletionQueue* Rpc::server_completion_queue() {
-  return server_completion_queue_;
-}
-
-::grpc::internal::RpcMethod::RpcType Rpc::rpc_type() const {
-  return rpc_handler_info_.rpc_type;
+                               &write_state_);
 }
 
 ::grpc::internal::ServerAsyncStreamingInterface* Rpc::streaming_interface() {
@@ -85,34 +111,16 @@ Rpc::async_reader_interface() {
   LOG(FATAL) << "Never reached.";
 }
 
-Rpc::RpcState* Rpc::SetRpcStatePending(State state, bool pending) {
+Rpc::RpcState* Rpc::GetRpcState(State state) {
   switch (state) {
     case State::NEW_CONNECTION:
-      new_connection_state_.pending = pending;
       return &new_connection_state_;
     case State::READ:
-      read_state_.pending = pending;
       return &read_state_;
     case State::WRITE:
-      write_state_.pending = pending;
       return &write_state_;
     case State::DONE:
-      done_state_.pending = pending;
       return &done_state_;
-  }
-  LOG(FATAL) << "Never reached.";
-}
-
-bool Rpc::IsRpcStatePending(State state) {
-  switch (state) {
-    case State::NEW_CONNECTION:
-      return new_connection_state_.pending;
-    case State::READ:
-      return read_state_.pending;
-    case State::WRITE:
-      return write_state_.pending;
-    case State::DONE:
-      return done_state_.pending;
   }
   LOG(FATAL) << "Never reached.";
 }

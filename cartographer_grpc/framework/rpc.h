@@ -38,33 +38,20 @@ class Rpc {
   enum class State { NEW_CONNECTION = 0, READ, WRITE, DONE };
   struct RpcState {
     const State state;
-    Service* service;
     Rpc* rpc;
     bool pending;
   };
 
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
       const RpcHandlerInfo& rpc_handler_info, Service* service);
-
+  std::unique_ptr<Rpc> Clone();
   void OnRequest();
   void OnReadsDone();
+  void RequestNextMethodInvocation();
+  void RequestStreamingReadIfNeeded();
   void Write(std::unique_ptr<::google::protobuf::Message> message);
-
-  int method_index() const { return method_index_; }
-  ::grpc::ServerCompletionQueue* server_completion_queue();
-  ::grpc::internal::RpcMethod::RpcType rpc_type() const;
-  ::grpc::ServerContext* server_context() { return &server_context_; }
-  ::grpc::internal::ServerAsyncStreamingInterface* streaming_interface();
-  ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
-  async_reader_interface();
-
-  RpcState* SetRpcStatePending(State state, bool pending);
-  bool IsRpcStatePending(State state);
-
-  const RpcHandlerInfo& rpc_handler_info() const { return rpc_handler_info_; }
-
-  ::google::protobuf::Message* request() { return request_.get(); }
-  ::google::protobuf::Message* response() { return response_.get(); }
+  Service* service() { return service_; }
+  RpcState* GetRpcState(State state);
 
  private:
   Rpc(const Rpc&) = delete;
@@ -72,9 +59,14 @@ class Rpc {
   void InitializeReadersAndWriters(
       ::grpc::internal::RpcMethod::RpcType rpc_type);
 
+  ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
+  async_reader_interface();
+  ::grpc::internal::ServerAsyncStreamingInterface* streaming_interface();
+
   int method_index_;
   ::grpc::ServerCompletionQueue* server_completion_queue_;
   RpcHandlerInfo rpc_handler_info_;
+  Service* service_;
   ::grpc::ServerContext server_context_;
 
   RpcState new_connection_state_;

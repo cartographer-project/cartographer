@@ -44,8 +44,7 @@ void Service::StartServing(
       Rpc* rpc = active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
           i, completion_queue_thread.completion_queue(),
           rpc_handler_info.second, this));
-      RequestNextMethodInvocation(i, rpc,
-                                  completion_queue_thread.completion_queue());
+      rpc->RequestNextMethodInvocation();
     }
     ++i;
   }
@@ -54,7 +53,7 @@ void Service::StartServing(
 void Service::StopServing() { shutting_down_ = true; }
 
 void Service::HandleEvent(Rpc::State state, Rpc* rpc, bool ok) {
-  rpc->SetRpcStatePending(state, false);
+  rpc->GetRpcState(state)->pending = false;
   switch (state) {
     case Rpc::State::NEW_CONNECTION:
       HandleNewConnection(rpc, ok);
@@ -87,24 +86,18 @@ void Service::HandleNewConnection(Rpc* rpc, bool ok) {
 
   if (ok) {
     // For request-streaming RPCs ask the client to start sending requests.
-    if (rpc->rpc_type() == ::grpc::internal::RpcMethod::CLIENT_STREAMING) {
-      RequestStreamingRead(rpc);
-    }
+    rpc->RequestStreamingReadIfNeeded();
   }
 
-  // Create new active rpc to handle next connection.
-  Rpc* next_rpc = active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
-      rpc->method_index(), rpc->server_completion_queue(),
-      rpc->rpc_handler_info(), this));
-
-  RequestNextMethodInvocation(rpc->method_index(), next_rpc,
-                              rpc->server_completion_queue());
+  // Create new active rpc to handle next connection and register it for the
+  // incoming connection.
+  active_rpcs_.Add(rpc->Clone())->RequestNextMethodInvocation();
 }
 
 void Service::HandleRead(Rpc* rpc, bool ok) {
   if (ok) {
     rpc->OnRequest();
-    RequestStreamingRead(rpc);
+    rpc->RequestStreamingReadIfNeeded();
     return;
   }
 
@@ -123,33 +116,11 @@ void Service::HandleWrite(Rpc* rpc, bool ok) {
 void Service::HandleDone(Rpc* rpc, bool ok) { CleanUpAsNeeded(rpc); }
 
 void Service::CleanUpAsNeeded(Rpc* rpc) {
-  if (!rpc->IsRpcStatePending(Rpc::State::DONE) &&
-      !rpc->IsRpcStatePending(Rpc::State::READ) &&
-      !rpc->IsRpcStatePending(Rpc::State::WRITE)) {
+  if (!rpc->GetRpcState(Rpc::State::DONE)->pending &&
+      !rpc->GetRpcState(Rpc::State::READ)->pending &&
+      !rpc->GetRpcState(Rpc::State::WRITE)->pending) {
     active_rpcs_.Remove(rpc);
   }
-}
-
-void Service::RequestNextMethodInvocation(
-    int method_index, Rpc* rpc,
-    ::grpc::ServerCompletionQueue* completion_queue) {
-  rpc->server_context()->AsyncNotifyWhenDone(
-      rpc->SetRpcStatePending(Rpc::State::DONE, true));
-  switch (rpc->rpc_type()) {
-    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      RequestAsyncClientStreaming(
-          method_index, rpc->server_context(), rpc->streaming_interface(),
-          completion_queue, completion_queue,
-          rpc->SetRpcStatePending(Rpc::State::NEW_CONNECTION, true));
-      break;
-    default:
-      LOG(FATAL) << "RPC type not implemented.";
-  }
-}
-
-void Service::RequestStreamingRead(Rpc* rpc) {
-  rpc->async_reader_interface()->Read(
-      rpc->request(), rpc->SetRpcStatePending(Rpc::State::READ, true));
 }
 
 }  // namespace framework

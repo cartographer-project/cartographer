@@ -66,7 +66,8 @@ void Server::RunCompletionQueue(
   void* tag;
   while (completion_queue->Next(&tag, &ok)) {
     auto* rpc_state = static_cast<Rpc::RpcState*>(tag);
-    rpc_state->service->HandleEvent(rpc_state->state, rpc_state->rpc, ok);
+    rpc_state->rpc->service()->HandleEvent(rpc_state->state, rpc_state->rpc,
+                                           ok);
   }
 }
 
