@@ -47,6 +47,8 @@ class Service : public ::grpc::Service {
   void HandleWrite(Rpc* rpc, bool ok);
   void HandleDone(Rpc* rpc, bool ok);
 
+  void CleanUpAsNeeded(Rpc* rpc);
+
   std::map<std::string, RpcHandlerInfo> rpc_handler_infos_;
   ActiveRpcs active_rpcs_;
   bool shutting_down_ = false;

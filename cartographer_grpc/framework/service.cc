@@ -73,7 +73,9 @@ void Service::HandleEvent(Rpc::State state, Rpc* rpc, bool ok) {
 
 void Service::HandleNewConnection(Rpc* rpc, bool ok) {
   if (shutting_down_) {
-    LOG(WARNING) << "Server shutting down. Refusing to handle new RPCs.";
+    if (ok) {
+      LOG(WARNING) << "Server shutting down. Refusing to handle new RPCs.";
+    }
     active_rpcs_.Remove(rpc);
     return;
   }
@@ -111,27 +113,20 @@ void Service::HandleRead(Rpc* rpc, bool ok) {
 }
 
 void Service::HandleWrite(Rpc* rpc, bool ok) {
-  if (ok) {
-    LOG(ERROR) << "Write complete.";
-  } else {
+  if (!ok) {
     LOG(ERROR) << "Write failed";
   }
 
-  if (!rpc->IsRpcStatePending(Rpc::State::DONE)) {
-    LOG(INFO) << "Cleaning up finished rpc " << rpc;
-    active_rpcs_.Remove(rpc);
-  }
+  CleanUpAsNeeded(rpc);
 }
 
-void Service::HandleDone(Rpc* rpc, bool ok) {
-  LOG(INFO) << "Finished RPC " << rpc << " with status "
-            << (ok ? "true" : "false");
-  if (!rpc->IsRpcStatePending(Rpc::State::WRITE) &&
-      !rpc->IsRpcStatePending(Rpc::State::READ)) {
-    LOG(INFO) << "Done Cleaning up";
+void Service::HandleDone(Rpc* rpc, bool ok) { CleanUpAsNeeded(rpc); }
+
+void Service::CleanUpAsNeeded(Rpc* rpc) {
+  if (!rpc->IsRpcStatePending(Rpc::State::DONE) &&
+      !rpc->IsRpcStatePending(Rpc::State::READ) &&
+      !rpc->IsRpcStatePending(Rpc::State::WRITE)) {
     active_rpcs_.Remove(rpc);
-  } else {
-    LOG(INFO) << "Write still in flight. Not cleaning up yet.";
   }
 }
 

@@ -33,12 +33,10 @@ class GetServerOptionsHandler
   GetServerOptionsHandler() = default;
 
   void OnRequest(const proto::GetSumRequest* request) override {
-    LOG(INFO) << "Got " << request->input();
     sum_ += request->input();
   }
 
   void OnReadsDone() override {
-    LOG(INFO) << "Reads done.";
     std::unique_ptr<proto::GetSumResponse> response(new proto::GetSumResponse);
     response->set_output(sum_);
     Send(std::move(response));
@@ -88,7 +86,7 @@ TEST_F(ServerTest, ProcessRpcStreamTest) {
   writer->WritesDone();
   grpc::Status status = writer->Finish();
   CHECK(status.ok());
-  LOG(INFO) << "Received " << result.DebugString();
+  CHECK_EQ(result.output(), 3);
 
   server_->Shutdown();
 }

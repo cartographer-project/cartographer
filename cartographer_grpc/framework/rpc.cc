@@ -52,7 +52,6 @@ void Rpc::OnReadsDone() { handler_->OnReadsDone(); }
 
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   response_ = std::move(message);
-  LOG(INFO) << "Calling finish";
   server_async_reader_->Finish(*response_.get(), ::grpc::Status::OK,
                                SetRpcStatePending(State::WRITE, true));
 }
