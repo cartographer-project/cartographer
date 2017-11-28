@@ -27,7 +27,7 @@ namespace framework {
 class Rpc;
 class RpcHandlerInterface {
  public:
-  virtual void ~RpcHandlerInterface() = default;
+  virtual ~RpcHandlerInterface() = default;
   virtual void SetRpc(Rpc* rpc) = 0;
 };
 
