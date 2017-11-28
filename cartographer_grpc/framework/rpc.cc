@@ -16,25 +16,44 @@
 
 #include "cartographer_grpc/framework/rpc.h"
 
+#include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
-#include "grpc++/impl/codegen/service_type.h"
 
 namespace cartographer_grpc {
 namespace framework {
 
-Rpc::Rpc(const RpcHandlerInfo& rpc_handler_info)
-    : rpc_handler_info_(rpc_handler_info) {}
+Rpc::Rpc(int method_index,
+         ::grpc::ServerCompletionQueue* server_completion_queue,
+         const RpcHandlerInfo& rpc_handler_info, Service* service)
+    : method_index_(method_index),
+      server_completion_queue_(server_completion_queue),
+      rpc_handler_info_(rpc_handler_info),
+      new_connection_state_{State::NEW_CONNECTION, service, this},
+      read_state_{State::READ, service, this},
+      write_state_{State::WRITE, service, this},
+      done_state_{State::DONE, service, this} {
+  InitializeResponders(rpc_handler_info_.rpc_type);
+}
+
+::grpc::ServerCompletionQueue* Rpc::server_completion_queue() {
+  return server_completion_queue_;
+}
 
 ::grpc::internal::RpcMethod::RpcType Rpc::rpc_type() const {
   return rpc_handler_info_.rpc_type;
 }
 
-::grpc::internal::ServerAsyncStreamingInterface* Rpc::responder() {
-  LOG(FATAL) << "Not yet implemented";
-  return nullptr;
+::grpc::internal::ServerAsyncStreamingInterface* Rpc::streaming_interface() {
+  switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+      return server_async_reader_.get();
+    default:
+      LOG(FATAL) << "RPC type not implemented.";
+  }
+  LOG(FATAL) << "Never reached.";
 }
 
-Rpc::RpcState* Rpc::GetState(State state) {
+Rpc::RpcState* Rpc::GetRpcState(State state) {
   switch (state) {
     case State::NEW_CONNECTION:
       return &new_connection_state_;
@@ -49,6 +68,19 @@ Rpc::RpcState* Rpc::GetState(State state) {
 }
 
 ActiveRpcs::ActiveRpcs() : lock_() {}
+
+void Rpc::InitializeResponders(::grpc::internal::RpcMethod::RpcType rpc_type) {
+  switch (rpc_type) {
+    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+      server_async_reader_ =
+          cartographer::common::make_unique<::grpc::ServerAsyncReader<
+              google::protobuf::Message, google::protobuf::Message>>(
+              &server_context_);
+      break;
+    default:
+      LOG(FATAL) << "RPC type not implemented.";
+  }
+}
 
 ActiveRpcs::~ActiveRpcs() {
   cartographer::common::MutexLocker locker(&lock_);

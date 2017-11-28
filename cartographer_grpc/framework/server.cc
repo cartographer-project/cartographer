@@ -16,7 +16,6 @@
 
 #include "cartographer_grpc/framework/server.h"
 
-#include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
@@ -59,6 +58,52 @@ void Server::AddService(
   CHECK(result.second) << "A service named " << service_name
                        << " already exists.";
   server_builder_.RegisterService(&result.first->second);
+}
+
+void Server::RunCompletionQueue(
+    ::grpc::ServerCompletionQueue* completion_queue) {
+  bool ok;
+  void* tag;
+  while (completion_queue->Next(&tag, &ok)) {
+    auto* rpc_state = static_cast<Rpc::RpcState*>(tag);
+    rpc_state->service->HandleEvent(rpc_state->state, rpc_state->rpc, ok);
+  }
+}
+
+void Server::Start() {
+  // Start the gRPC server process.
+  server_ = server_builder_.BuildAndStart();
+
+  // Start serving all services on all completion queues.
+  for (auto& service : services_) {
+    service.second.StartServing(completion_queue_threads_);
+  }
+
+  // Start threads to process all completion queues.
+  for (auto& completion_queue_threads : completion_queue_threads_) {
+    completion_queue_threads.Start(Server::RunCompletionQueue);
+  }
+}
+
+void Server::Shutdown() {
+  LOG(INFO) << "Shutting down server.";
+
+  // Tell the services to stop serving RPCs.
+  for (auto& service : services_) {
+    service.second.StopServing();
+  }
+
+  // Shut down the gRPC server waiting for RPCs to finish until the hard
+  // deadline; then force a shutdown.
+  server_->Shutdown();
+
+  // Shut down the server completion queues and wait for the processing threads
+  // to join.
+  for (auto& completion_queue_threads : completion_queue_threads_) {
+    completion_queue_threads.Shutdown();
+  }
+
+  LOG(INFO) << "Shutdown complete.";
 }
 
 }  // namespace framework
