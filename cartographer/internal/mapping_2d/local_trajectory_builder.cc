@@ -113,29 +113,26 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   }
 
   if (num_accumulated_ == 0) {
-    first_pose_estimate_ = range_data_poses.back();
-    accumulated_range_data_ = sensor::RangeData{range_data.origin, {}, {}};
+    // 'accumulated_range_data_.origin' is uninitialized until the last
+    // accumulation.
+    accumulated_range_data_ = sensor::RangeData{{}, {}, {}};
   }
 
-  transform::Rigid3f tracking_delta = transform::Rigid3f::Identity();
   // Drop any returns below the minimum range and convert returns beyond the
   // maximum range into misses.
   for (size_t i = 0; i < range_data.returns.size(); ++i) {
     const Eigen::Vector4f& hit = range_data.returns[i];
-    tracking_delta = first_pose_estimate_.inverse() * range_data_poses[i];
-    const Eigen::Vector3f origin_in_first_tracking =
-        tracking_delta * range_data.origin;
-    const Eigen::Vector3f hit_in_first_tracking =
-        tracking_delta * hit.head<3>();
-    const Eigen::Vector3f delta =
-        hit_in_first_tracking - origin_in_first_tracking;
+    const Eigen::Vector3f origin_in_local =
+        range_data_poses[i] * range_data.origin;
+    const Eigen::Vector3f hit_in_local = range_data_poses[i] * hit.head<3>();
+    const Eigen::Vector3f delta = hit_in_local - origin_in_local;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
-        accumulated_range_data_.returns.push_back(hit_in_first_tracking);
+        accumulated_range_data_.returns.push_back(hit_in_local);
       } else {
         accumulated_range_data_.misses.push_back(
-            origin_in_first_tracking +
+            origin_in_local +
             options_.missing_data_ray_length() / range * delta);
       }
     }
@@ -146,10 +143,12 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     num_accumulated_ = 0;
     const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
         extrapolator_->EstimateGravityOrientation(time));
+    accumulated_range_data_.origin =
+        range_data_poses.back() * range_data.origin;
     return AddAccumulatedRangeData(
         time,
         TransformToGravityAlignedFrameAndFilter(
-            gravity_alignment.cast<float>() * tracking_delta.inverse(),
+            gravity_alignment.cast<float>() * range_data_poses.back().inverse(),
             accumulated_range_data_),
         gravity_alignment);
   }
