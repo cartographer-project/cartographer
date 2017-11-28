@@ -52,6 +52,9 @@ class MapByTime {
             const mapping::NodeId& node_id) {
     const int trajectory_id = node_id.trajectory_id;
     CHECK_GE(trajectory_id, 0);
+    if (data_.count(trajectory_id) == 0) {
+      return;
+    }
 
     // Data only important between 'gap_start' and 'gap_end' is no longer
     // needed. We retain the first and last data of the gap so that
@@ -68,7 +71,7 @@ class MapByTime {
                                      : common::Time::max();
     CHECK_LT(gap_start, gap_end);
 
-    auto& trajectory = data_[trajectory_id];
+    auto& trajectory = data_.at(trajectory_id);
     auto data_it = trajectory.lower_bound(gap_start);
     auto data_end = trajectory.upper_bound(gap_end);
     if (data_it == data_end) {
@@ -189,6 +192,15 @@ class MapByTime {
   mapping::Range<ConstIterator> trajectory(const int trajectory_id) const {
     return mapping::Range<ConstIterator>(BeginOfTrajectory(trajectory_id),
                                          EndOfTrajectory(trajectory_id));
+  }
+
+  // Returns an iterator to the the first element in the container belonging to
+  // trajectory 'trajectory_id' whose time is not considered to go before
+  // 'time', or EndOfTrajectory(trajectory_id) if all keys are considered to go
+  // before 'time'. 'trajectory_id' must refer to an existing trajectory.
+  ConstIterator lower_bound(const int trajectory_id,
+                            const common::Time time) const {
+    return ConstIterator(data_.at(trajectory_id).lower_bound(time));
   }
 
  private:

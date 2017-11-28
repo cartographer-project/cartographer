@@ -45,6 +45,13 @@ class LocalTrajectoryBuilder {
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
+  struct MatchingResult {
+    common::Time time;
+    transform::Rigid3d local_pose;
+    sensor::RangeData range_data_in_local;
+    // 'nullptr' if dropped by the motion filter.
+    std::unique_ptr<const InsertionResult> insertion_result;
+  };
 
   explicit LocalTrajectoryBuilder(
       const proto::LocalTrajectoryBuilderOptions& options);
@@ -55,19 +62,22 @@ class LocalTrajectoryBuilder {
 
   const mapping::PoseEstimate& pose_estimate() const;
 
-  // Range data must be approximately horizontal for 2D SLAM. `time` is when
-  // the last point in `range_data` was acquired, `range_data` contains the
-  // relative time of point with respect to `time`.
-  std::unique_ptr<InsertionResult> AddRangeData(
-      common::Time time, const sensor::TimedRangeData& range_data);
+  // Returns 'MatchingResult' when range data accumulation completed,
+  // otherwise 'nullptr'. Range data must be approximately horizontal
+  // for 2D SLAM. `time` is when the last point in `range_data` was 
+  // acquired, `range_data` contains the relative time of point with 
+  // respect to `time`.
+  std::unique_ptr<MatchingResult> AddRangeData(
+      common::Time, const sensor::TimedRangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
-  void AddOdometerData(const sensor::OdometryData& odometry_data);
+  void AddOdometryData(const sensor::OdometryData& odometry_data);
 
  private:
-  std::unique_ptr<InsertionResult> AddAccumulatedRangeData(
-      common::Time time, const sensor::RangeData& range_data);
-  sensor::RangeData TransformAndFilterRangeData(
-      const transform::Rigid3f& gravity_alignment,
+  std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
+      common::Time time, const sensor::RangeData& gravity_aligned_range_data,
+      const transform::Rigid3d& gravity_alignment);
+  sensor::RangeData TransformToGravityAlignedFrameAndFilter(
+      const transform::Rigid3f& transform_to_gravity_aligned_frame,
       const sensor::RangeData& range_data) const;
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
@@ -76,11 +86,11 @@ class LocalTrajectoryBuilder {
       const transform::Rigid3d& pose_estimate,
       const Eigen::Quaterniond& gravity_alignment);
 
-  // Scan matches 'gravity_aligned_range_data' and fill in the
-  // 'pose_observation' with the result.
-  void ScanMatch(common::Time time, const transform::Rigid2d& pose_prediction,
-                 const sensor::RangeData& gravity_aligned_range_data,
-                 transform::Rigid2d* pose_observation);
+  // Scan matches 'gravity_aligned_range_data' and returns the observed pose,
+  // or nullptr on failure.
+  std::unique_ptr<transform::Rigid2d> ScanMatch(
+      common::Time time, const transform::Rigid2d& pose_prediction,
+      const sensor::RangeData& gravity_aligned_range_data);
 
   // Lazily constructs a PoseExtrapolator.
   void InitializeExtrapolator(common::Time time);

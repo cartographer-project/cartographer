@@ -88,6 +88,15 @@ TEST(MapByTimeTest, Trimming) {
   EXPECT_FALSE(map_by_time.HasTrajectory(42));
 }
 
+TEST(MapByTimeTest, TrimmingDoesNotCreateTrajectory) {
+  MapByTime<Data> map_by_time;
+  EXPECT_FALSE(map_by_time.HasTrajectory(42));
+  mapping::MapById<mapping::NodeId, NodeData> map_by_id;
+  map_by_id.Append(42, NodeData{CreateTime(42)});
+  map_by_time.Trim(map_by_id, mapping::NodeId{42, 0});
+  EXPECT_FALSE(map_by_time.HasTrajectory(42));
+}
+
 }  // namespace
 }  // namespace sensor
 }  // namespace cartographer

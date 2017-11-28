@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping.proto;
 
@@ -21,12 +21,12 @@ import "cartographer/transform/proto/transform.proto";
 
 // Serialized state of a mapping::TrajectoryNode::Data.
 message TrajectoryNodeData {
-  optional int64 timestamp = 1;
-  optional transform.proto.Quaterniond gravity_alignment = 2;
-  optional sensor.proto.CompressedPointCloud
+  int64 timestamp = 1;
+  transform.proto.Quaterniond gravity_alignment = 2;
+  sensor.proto.CompressedPointCloud
       filtered_gravity_aligned_point_cloud = 3;
-  optional sensor.proto.CompressedPointCloud high_resolution_point_cloud = 4;
-  optional sensor.proto.CompressedPointCloud low_resolution_point_cloud = 5;
+  sensor.proto.CompressedPointCloud high_resolution_point_cloud = 4;
+  sensor.proto.CompressedPointCloud low_resolution_point_cloud = 5;
   repeated float rotational_scan_matcher_histogram = 6;
-  optional transform.proto.Rigid3d local_pose = 7;
+  transform.proto.Rigid3d local_pose = 7;
 }

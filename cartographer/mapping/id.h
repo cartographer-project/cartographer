@@ -102,7 +102,7 @@ class Range {
 template <typename IdType, typename DataType>
 class MapById {
  private:
-  class MapByIndex;
+  struct MapByIndex;
 
  public:
   struct IdDataReference {
@@ -328,7 +328,8 @@ class MapById {
   // trajectory 'trajectory_id' whose time is not considered to go before
   // 'time', or EndOfTrajectory(trajectory_id) if all keys are considered to go
   // before 'time'.
-  ConstIterator lower_bound(const int trajectory_id, const common::Time& time) {
+  ConstIterator lower_bound(const int trajectory_id,
+                            const common::Time time) const {
     if (SizeOfTrajectoryOrZero(trajectory_id) == 0) {
       return EndOfTrajectory(trajectory_id);
     }

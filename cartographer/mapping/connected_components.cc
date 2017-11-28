@@ -92,6 +92,7 @@ std::vector<std::vector<int>> ConnectedComponents::Components() {
 }
 
 std::vector<int> ConnectedComponents::GetComponent(const int trajectory_id) {
+  common::MutexLocker locker(&lock_);
   const int set_id = FindSet(trajectory_id);
   std::vector<int> trajectory_ids;
   for (const auto& entry : forest_) {

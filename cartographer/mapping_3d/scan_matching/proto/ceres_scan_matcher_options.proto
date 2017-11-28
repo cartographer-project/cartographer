@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package cartographer.mapping_3d.scan_matching.proto;
 
@@ -22,13 +22,13 @@ import "cartographer/common/proto/ceres_solver_options.proto";
 message CeresScanMatcherOptions {
   // Scaling parameters for each cost functor.
   repeated double occupied_space_weight = 1;
-  optional double translation_weight = 2;
-  optional double rotation_weight = 3;
+  double translation_weight = 2;
+  double rotation_weight = 3;
 
   // Whether only to allow changes to yaw, keeping roll/pitch constant.
-  optional bool only_optimize_yaw = 5;
+  bool only_optimize_yaw = 5;
 
   // Configure the Ceres solver. See the Ceres documentation for more
   // information: https://code.google.com/p/ceres-solver/
-  optional common.proto.CeresSolverOptions ceres_solver_options = 6;
+  common.proto.CeresSolverOptions ceres_solver_options = 6;
 }

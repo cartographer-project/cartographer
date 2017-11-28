@@ -125,7 +125,7 @@ PointsProcessorPipelineBuilder::CreatePipeline(
 
   // We construct the pipeline starting at the back.
   for (auto it = configurations.rbegin(); it != configurations.rend(); it++) {
-    const string action = (*it)->GetString("action");
+    const std::string action = (*it)->GetString("action");
     auto factory_it = factories_.find(action);
     CHECK(factory_it != factories_.end())
         << "Unknown action '" << action

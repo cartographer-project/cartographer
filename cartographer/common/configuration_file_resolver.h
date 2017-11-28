@@ -34,13 +34,13 @@ namespace common {
 class ConfigurationFileResolver : public FileResolver {
  public:
   explicit ConfigurationFileResolver(
-      const std::vector<string>& configuration_files_directories);
+      const std::vector<std::string>& configuration_files_directories);
 
-  string GetFullPathOrDie(const string& basename) override;
-  string GetFileContentOrDie(const string& basename) override;
+  std::string GetFullPathOrDie(const std::string& basename) override;
+  std::string GetFileContentOrDie(const std::string& basename) override;
 
  private:
-  std::vector<string> configuration_files_directories_;
+  std::vector<std::string> configuration_files_directories_;
 };
 
 }  // namespace common

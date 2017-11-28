@@ -103,7 +103,7 @@ def ParseProtoFile(proto_file):
 
     # We capture the contents of this message.
     option_comments = []
-    multiline = None
+    multiline = ''
     for line in line_iter:
       line = line.strip()
       if '}' in line:
@@ -116,21 +116,17 @@ def ParseProtoFile(proto_file):
           option_comments.append(comment)
       else:
         assert not line.startswith('required')
-        if multiline is None:
-          if line.startswith('optional'):
-            multiline = line
-          else:
-            continue
-        else:
-          multiline += ' ' + line
+        multiline += ' ' + line
         if not multiline.endswith(';'):
           continue
         assert len(multiline) < 200
-        option = multiline[8:-1].strip().rstrip('0123456789').strip()
+        option = multiline[:-1].strip().rstrip('0123456789').strip()
         assert option.endswith('=')
+        if option.startswith('repeated'):
+          option = option[8:]
         option_type, option_name = option[:-1].strip().split();
         print("  Option '%s'." % option_name)
-        multiline = None
+        multiline = ''
         message.AddOption(option_type, option_name, option_comments)
         option_comments = []
 
@@ -186,6 +182,11 @@ def GenerateDocumentation(output_file, root):
       content.extend(preceding_comments)
       content.append('')
     for option_type, option_name, option_comments in message.options:
+      # TODO(whess): For now we exclude InitialTrajectoryPose from the
+      # documentation. It is documented itself (since it has no Options suffix)
+      # and is not parsed from the Lua files.
+      if option_type in ('InitialTrajectoryPose',):
+        continue
       content.append(
           resolver.Resolve(option_type, message.package) + ' ' + option_name)
       if not option_comments:

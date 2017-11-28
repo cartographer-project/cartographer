@@ -99,7 +99,7 @@ int LuaChoose(lua_State* L) {
 
 // Pushes a value to the Lua stack.
 void PushValue(lua_State* L, const int key) { lua_pushinteger(L, key); }
-void PushValue(lua_State* L, const string& key) {
+void PushValue(lua_State* L, const std::string& key) {
   lua_pushstring(L, key.c_str());
 }
 
@@ -147,18 +147,18 @@ void GetArrayValues(lua_State* L, const std::function<void()>& pop_value) {
 
 std::unique_ptr<LuaParameterDictionary>
 LuaParameterDictionary::NonReferenceCounted(
-    const string& code, std::unique_ptr<FileResolver> file_resolver) {
+    const std::string& code, std::unique_ptr<FileResolver> file_resolver) {
   return std::unique_ptr<LuaParameterDictionary>(new LuaParameterDictionary(
       code, ReferenceCount::NO, std::move(file_resolver)));
 }
 
 LuaParameterDictionary::LuaParameterDictionary(
-    const string& code, std::unique_ptr<FileResolver> file_resolver)
+    const std::string& code, std::unique_ptr<FileResolver> file_resolver)
     : LuaParameterDictionary(code, ReferenceCount::YES,
                              std::move(file_resolver)) {}
 
 LuaParameterDictionary::LuaParameterDictionary(
-    const string& code, ReferenceCount reference_count,
+    const std::string& code, ReferenceCount reference_count,
     std::unique_ptr<FileResolver> file_resolver)
     : L_(luaL_newstate()),
       index_into_reference_table_(-1),
@@ -206,9 +206,9 @@ LuaParameterDictionary::~LuaParameterDictionary() {
   }
 }
 
-std::vector<string> LuaParameterDictionary::GetKeys() const {
+std::vector<std::string> LuaParameterDictionary::GetKeys() const {
   CheckTableIsAtTopOfStack(L_);
-  std::vector<string> keys;
+  std::vector<std::string> keys;
 
   lua_pushnil(L_);  // Push the first key
   while (lua_next(L_, -2) != 0) {
@@ -220,28 +220,28 @@ std::vector<string> LuaParameterDictionary::GetKeys() const {
   return keys;
 }
 
-bool LuaParameterDictionary::HasKey(const string& key) const {
+bool LuaParameterDictionary::HasKey(const std::string& key) const {
   return HasKeyOfType(L_, key);
 }
 
-string LuaParameterDictionary::GetString(const string& key) {
+std::string LuaParameterDictionary::GetString(const std::string& key) {
   CheckHasKeyAndReference(key);
   GetValueFromLuaTable(L_, key);
   return PopString(Quoted::NO);
 }
 
-string LuaParameterDictionary::PopString(Quoted quoted) const {
+std::string LuaParameterDictionary::PopString(Quoted quoted) const {
   CHECK(lua_isstring(L_, -1)) << "Top of stack is not a string value.";
   if (quoted == Quoted::YES) {
     QuoteStringOnStack(L_);
   }
 
-  const string value = lua_tostring(L_, -1);
+  const std::string value = lua_tostring(L_, -1);
   lua_pop(L_, 1);
   return value;
 }
 
-double LuaParameterDictionary::GetDouble(const string& key) {
+double LuaParameterDictionary::GetDouble(const std::string& key) {
   CheckHasKeyAndReference(key);
   GetValueFromLuaTable(L_, key);
   return PopDouble();
@@ -254,7 +254,7 @@ double LuaParameterDictionary::PopDouble() const {
   return value;
 }
 
-int LuaParameterDictionary::GetInt(const string& key) {
+int LuaParameterDictionary::GetInt(const std::string& key) {
   CheckHasKeyAndReference(key);
   GetValueFromLuaTable(L_, key);
   return PopInt();
@@ -267,7 +267,7 @@ int LuaParameterDictionary::PopInt() const {
   return value;
 }
 
-bool LuaParameterDictionary::GetBool(const string& key) {
+bool LuaParameterDictionary::GetBool(const std::string& key) {
   CheckHasKeyAndReference(key);
   GetValueFromLuaTable(L_, key);
   return PopBool();
@@ -281,7 +281,7 @@ bool LuaParameterDictionary::PopBool() const {
 }
 
 std::unique_ptr<LuaParameterDictionary> LuaParameterDictionary::GetDictionary(
-    const string& key) {
+    const std::string& key) {
   CheckHasKeyAndReference(key);
   GetValueFromLuaTable(L_, key);
   return PopDictionary(reference_count_);
@@ -297,12 +297,13 @@ std::unique_ptr<LuaParameterDictionary> LuaParameterDictionary::PopDictionary(
   return value;
 }
 
-string LuaParameterDictionary::DoToString(const string& indent) const {
-  string result = "{";
+std::string LuaParameterDictionary::DoToString(
+    const std::string& indent) const {
+  std::string result = "{";
   bool dictionary_is_empty = true;
 
   const auto top_of_stack_to_string = [this, indent,
-                                       &dictionary_is_empty]() -> string {
+                                       &dictionary_is_empty]() -> std::string {
     dictionary_is_empty = false;
 
     const int value_type = lua_type(L_, -1);
@@ -346,10 +347,10 @@ string LuaParameterDictionary::DoToString(const string& indent) const {
   }
 
   // String keys.
-  std::vector<string> keys = GetKeys();
+  std::vector<std::string> keys = GetKeys();
   if (!keys.empty()) {
     std::sort(keys.begin(), keys.end());
-    for (const string& key : keys) {
+    for (const std::string& key : keys) {
       GetValueFromLuaTable(L_, key);
       result.append("\n");
       result.append(indent);
@@ -370,7 +371,7 @@ string LuaParameterDictionary::DoToString(const string& indent) const {
   return result;
 }
 
-string LuaParameterDictionary::ToString() const { return DoToString(""); }
+std::string LuaParameterDictionary::ToString() const { return DoToString(""); }
 
 std::vector<double> LuaParameterDictionary::GetArrayValuesAsDoubles() {
   std::vector<double> values;
@@ -387,19 +388,19 @@ LuaParameterDictionary::GetArrayValuesAsDictionaries() {
   return values;
 }
 
-std::vector<string> LuaParameterDictionary::GetArrayValuesAsStrings() {
-  std::vector<string> values;
+std::vector<std::string> LuaParameterDictionary::GetArrayValuesAsStrings() {
+  std::vector<std::string> values;
   GetArrayValues(L_,
                  [&values, this] { values.push_back(PopString(Quoted::NO)); });
   return values;
 }
 
-void LuaParameterDictionary::CheckHasKey(const string& key) const {
+void LuaParameterDictionary::CheckHasKey(const std::string& key) const {
   CHECK(HasKey(key)) << "Key '" << key << "' not in dictionary:\n"
                      << ToString();
 }
 
-void LuaParameterDictionary::CheckHasKeyAndReference(const string& key) {
+void LuaParameterDictionary::CheckHasKeyAndReference(const std::string& key) {
   CheckHasKey(key);
   reference_counts_[key]++;
 }
@@ -414,7 +415,7 @@ void LuaParameterDictionary::CheckAllKeysWereUsedExactlyOnceAndReset() {
   reference_counts_.clear();
 }
 
-int LuaParameterDictionary::GetNonNegativeInt(const string& key) {
+int LuaParameterDictionary::GetNonNegativeInt(const std::string& key) {
   const int temp = GetInt(key);  // Will increase reference count.
   CHECK_GE(temp, 0) << temp << " is negative.";
   return temp;
@@ -427,15 +428,16 @@ int LuaParameterDictionary::LuaInclude(lua_State* L) {
   CHECK(lua_isstring(L, -1)) << "include takes a filename.";
 
   LuaParameterDictionary* parameter_dictionary = GetDictionaryFromRegistry(L);
-  const string basename = lua_tostring(L, -1);
-  const string filename =
+  const std::string basename = lua_tostring(L, -1);
+  const std::string filename =
       parameter_dictionary->file_resolver_->GetFullPathOrDie(basename);
   if (std::find(parameter_dictionary->included_files_.begin(),
                 parameter_dictionary->included_files_.end(),
                 filename) != parameter_dictionary->included_files_.end()) {
-    string error_msg = "Tried to include " + filename +
-                       " twice. Already included files in order of inclusion: ";
-    for (const string& filename : parameter_dictionary->included_files_) {
+    std::string error_msg =
+        "Tried to include " + filename +
+        " twice. Already included files in order of inclusion: ";
+    for (const std::string& filename : parameter_dictionary->included_files_) {
       error_msg.append(filename);
       error_msg.append("\n");
     }
@@ -445,7 +447,7 @@ int LuaParameterDictionary::LuaInclude(lua_State* L) {
   lua_pop(L, 1);
   CHECK_EQ(lua_gettop(L), 0);
 
-  const string content =
+  const std::string content =
       parameter_dictionary->file_resolver_->GetFileContentOrDie(basename);
   CheckForLuaErrors(
       L, luaL_loadbuffer(L, content.c_str(), content.size(), filename.c_str()));
@@ -460,7 +462,7 @@ int LuaParameterDictionary::LuaRead(lua_State* L) {
   CHECK(lua_isstring(L, -1)) << "read takes a filename.";
 
   LuaParameterDictionary* parameter_dictionary = GetDictionaryFromRegistry(L);
-  const string file_content =
+  const std::string file_content =
       parameter_dictionary->file_resolver_->GetFileContentOrDie(
           lua_tostring(L, -1));
   lua_pushstring(L, file_content.c_str());

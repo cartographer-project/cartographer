@@ -30,8 +30,6 @@ sudo apt-get install -y \
     libgflags-dev \
     libgoogle-glog-dev \
     liblua5.2-dev \
-    libprotobuf-dev \
     libsuitesparse-dev \
     ninja-build \
-    protobuf-compiler \
     python-sphinx

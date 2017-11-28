@@ -251,12 +251,13 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
     for (const TrajectoryNode& node : expected_trajectory) {
       AddLinearOnlyImuObservation(node.time, node.pose);
       const auto range_data = GenerateRangeData(node.pose);
-      if (local_trajectory_builder_->AddRangeData(
-              node.time,
-              sensor::TimedRangeData{
-                  range_data.origin, range_data.returns, {}}) != nullptr) {
-        const auto pose_estimate = local_trajectory_builder_->pose_estimate();
-        EXPECT_THAT(pose_estimate.pose, transform::IsNearly(node.pose, 1e-1));
+      const std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
+          matching_result = local_trajectory_builder_->AddRangeData(
+              node.time, sensor::TimedRangeData{
+                             range_data.origin, range_data.returns, {}});
+      if (matching_result != nullptr) {
+        EXPECT_THAT(matching_result->local_pose,
+                    transform::IsNearly(node.pose, 1e-1));
         ++num_poses;
         LOG(INFO) << "num_poses: " << num_poses;
       }

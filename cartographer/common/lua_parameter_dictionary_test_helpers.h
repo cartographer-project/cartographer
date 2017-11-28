@@ -37,16 +37,17 @@ class DummyFileResolver : public FileResolver {
 
   ~DummyFileResolver() override {}
 
-  string GetFileContentOrDie(const string& unused_basename) override {
+  std::string GetFileContentOrDie(const std::string& unused_basename) override {
     LOG(FATAL) << "Not implemented";
   }
 
-  string GetFullPathOrDie(const string& unused_basename) override {
+  std::string GetFullPathOrDie(const std::string& unused_basename) override {
     LOG(FATAL) << "Not implemented";
   }
 };
 
-std::unique_ptr<LuaParameterDictionary> MakeDictionary(const string& code) {
+std::unique_ptr<LuaParameterDictionary> MakeDictionary(
+    const std::string& code) {
   return common::make_unique<LuaParameterDictionary>(
       code, common::make_unique<DummyFileResolver>());
 }

@@ -40,7 +40,8 @@ proto::CeresScanMatcherOptions CreateCeresScanMatcherOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::CeresScanMatcherOptions options;
   for (int i = 0;; ++i) {
-    const string lua_identifier = "occupied_space_weight_" + std::to_string(i);
+    const std::string lua_identifier =
+        "occupied_space_weight_" + std::to_string(i);
     if (!parameter_dictionary->HasKey(lua_identifier)) {
       break;
     }

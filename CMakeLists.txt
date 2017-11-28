@@ -30,7 +30,7 @@ find_package(Boost REQUIRED COMPONENTS iostreams)
 find_package(Ceres REQUIRED COMPONENTS SparseLinearAlgebraLibrary)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(Protobuf 3.0.0 REQUIRED)
 
 include(FindPkgConfig)
 PKG_SEARCH_MODULE(CAIRO REQUIRED cairo>=1.12.16)
@@ -181,7 +181,7 @@ file(GLOB_RECURSE hdrs "*.h.in")
 foreach(HDR ${hdrs})
   file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${HDR})
   get_filename_component(DIR ${REL_FIL} DIRECTORY)
-  get_filename_component(FIL_WE ${REL_FIL} NAME_WE)
+  get_filename_component(FILE_WE ${REL_FIL} NAME_WE)
   install(
     FILES
       ${PROJECT_BINARY_DIR}/${DIR}/${FILE_WE}

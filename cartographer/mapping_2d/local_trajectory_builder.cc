@@ -36,22 +36,23 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
 
 LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
 
-sensor::RangeData LocalTrajectoryBuilder::TransformAndFilterRangeData(
-    const transform::Rigid3f& gravity_alignment,
+sensor::RangeData
+LocalTrajectoryBuilder::TransformToGravityAlignedFrameAndFilter(
+    const transform::Rigid3f& transform_to_gravity_aligned_frame,
     const sensor::RangeData& range_data) const {
-  const sensor::RangeData cropped = sensor::CropRangeData(
-      sensor::TransformRangeData(range_data, gravity_alignment),
-      options_.min_z(), options_.max_z());
+  const sensor::RangeData cropped =
+      sensor::CropRangeData(sensor::TransformRangeData(
+                                range_data, transform_to_gravity_aligned_frame),
+                            options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
       sensor::VoxelFiltered(cropped.returns, options_.voxel_filter_size()),
       sensor::VoxelFiltered(cropped.misses, options_.voxel_filter_size())};
 }
 
-void LocalTrajectoryBuilder::ScanMatch(
+std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder::ScanMatch(
     const common::Time time, const transform::Rigid2d& pose_prediction,
-    const sensor::RangeData& gravity_aligned_range_data,
-    transform::Rigid2d* const pose_observation) {
+    const sensor::RangeData& gravity_aligned_range_data) {
   std::shared_ptr<const Submap> matching_submap =
       active_submaps_.submaps().front();
   // The online correlative scan matcher will refine the initial estimate for
@@ -61,19 +62,24 @@ void LocalTrajectoryBuilder::ScanMatch(
       options_.adaptive_voxel_filter_options());
   const sensor::PointCloud filtered_gravity_aligned_point_cloud =
       adaptive_voxel_filter.Filter(gravity_aligned_range_data.returns);
+  if (filtered_gravity_aligned_point_cloud.empty()) {
+    return nullptr;
+  }
   if (options_.use_online_correlative_scan_matching()) {
     real_time_correlative_scan_matcher_.Match(
         pose_prediction, filtered_gravity_aligned_point_cloud,
         matching_submap->probability_grid(), &initial_ceres_pose);
   }
 
+  auto pose_observation = common::make_unique<transform::Rigid2d>();
   ceres::Solver::Summary summary;
   ceres_scan_matcher_.Match(
       pose_prediction, initial_ceres_pose, filtered_gravity_aligned_point_cloud,
-      matching_submap->probability_grid(), pose_observation, &summary);
+      matching_submap->probability_grid(), pose_observation.get(), &summary);
+  return pose_observation;
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddRangeData(const common::Time time,
                                      const sensor::TimedRangeData& range_data) {
   // Initialize extrapolator now if we do not ever use an IMU.
@@ -138,22 +144,23 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 
   if (num_accumulated_ >= options_.scans_per_accumulation()) {
     num_accumulated_ = 0;
+    const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
+        extrapolator_->EstimateGravityOrientation(time));
     return AddAccumulatedRangeData(
-        time, sensor::TransformRangeData(accumulated_range_data_,
-                                         tracking_delta.inverse()));
+        time,
+        TransformToGravityAlignedFrameAndFilter(
+            gravity_alignment.cast<float>() * tracking_delta.inverse(),
+            accumulated_range_data_),
+        gravity_alignment);
   }
   return nullptr;
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
+std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
-    const common::Time time, const sensor::RangeData& range_data) {
-  // Transforms 'range_data' from the tracking frame into a frame where gravity
-  // direction is approximately +z.
-  const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
-      extrapolator_->EstimateGravityOrientation(time));
-  const sensor::RangeData gravity_aligned_range_data =
-      TransformAndFilterRangeData(gravity_alignment.cast<float>(), range_data);
+    const common::Time time,
+    const sensor::RangeData& gravity_aligned_range_data,
+    const transform::Rigid3d& gravity_alignment) {
   if (gravity_aligned_range_data.returns.empty()) {
     LOG(WARNING) << "Dropped empty horizontal range data.";
     return nullptr;
@@ -166,19 +173,26 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
   // local map frame <- gravity-aligned frame
-  transform::Rigid2d pose_estimate_2d;
-  ScanMatch(time, pose_prediction, gravity_aligned_range_data,
-            &pose_estimate_2d);
+  std::unique_ptr<transform::Rigid2d> pose_estimate_2d =
+      ScanMatch(time, pose_prediction, gravity_aligned_range_data);
+  if (pose_estimate_2d == nullptr) {
+    LOG(WARNING) << "Scan matching failed.";
+    return nullptr;
+  }
   const transform::Rigid3d pose_estimate =
-      transform::Embed3D(pose_estimate_2d) * gravity_alignment;
+      transform::Embed3D(*pose_estimate_2d) * gravity_alignment;
   extrapolator_->AddPose(time, pose_estimate);
 
   sensor::RangeData range_data_in_local =
       TransformRangeData(gravity_aligned_range_data,
-                         transform::Embed3D(pose_estimate_2d.cast<float>()));
+                         transform::Embed3D(pose_estimate_2d->cast<float>()));
   last_pose_estimate_ = {time, pose_estimate, range_data_in_local.returns};
-  return InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
-                          pose_estimate, gravity_alignment.rotation());
+  std::unique_ptr<InsertionResult> insertion_result =
+      InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
+                       pose_estimate, gravity_alignment.rotation());
+  return common::make_unique<MatchingResult>(
+      MatchingResult{time, pose_estimate, std::move(range_data_in_local),
+                     std::move(insertion_result)});
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
@@ -227,7 +241,7 @@ void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
   extrapolator_->AddImuData(imu_data);
 }
 
-void LocalTrajectoryBuilder::AddOdometerData(
+void LocalTrajectoryBuilder::AddOdometryData(
     const sensor::OdometryData& odometry_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator we cannot add odometry data.

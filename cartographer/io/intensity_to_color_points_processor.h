@@ -35,7 +35,7 @@ class IntensityToColorPointsProcessor : public PointsProcessor {
   // with this value for each point that comes from the sensor with 'frame_id'.
   // If 'frame_id' is empty, this applies to all points.
   IntensityToColorPointsProcessor(float min_intensity, float max_intensity,
-                                  const string& frame_id,
+                                  const std::string& frame_id,
                                   PointsProcessor* next);
 
   static std::unique_ptr<IntensityToColorPointsProcessor> FromDictionary(
@@ -54,7 +54,7 @@ class IntensityToColorPointsProcessor : public PointsProcessor {
  private:
   const float min_intensity_;
   const float max_intensity_;
-  const string frame_id_;
+  const std::string frame_id_;
   PointsProcessor* const next_;
 };
 

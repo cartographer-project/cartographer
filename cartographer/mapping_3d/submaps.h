@@ -75,11 +75,11 @@ class Submap : public mapping::Submap {
 };
 
 // Except during initialization when only a single submap exists, there are
-// always two submaps into which scans are inserted: an old submap that is used
-// for matching, and a new one, which will be used for matching next, that is
-// being initialized.
+// always two submaps into which range data is inserted: an old submap that is
+// used for matching, and a new one, which will be used for matching next, that
+// is being initialized.
 //
-// Once a certain number of scans have been inserted, the new submap is
+// Once a certain number of range data have been inserted, the new submap is
 // considered initialized: the old submap is no longer changed, the "new" submap
 // is now the "old" submap and is used for scan-to-map matching. Moreover, a
 // "new" submap gets created. The "old" submap is forgotten by this object.

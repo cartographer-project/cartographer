@@ -1,0 +1,56 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cartographer.mapping.proto;
+
+import "cartographer/mapping/proto/trajectory.proto";
+import "cartographer/transform/proto/transform.proto";
+
+message SubmapId {
+  int32 trajectory_id = 1;
+  int32 submap_index = 2;  // Submap index in the given trajectory.
+}
+
+message NodeId {
+  int32 trajectory_id = 1;
+  int32 node_index = 2;  // Node index in the given trajectory.
+}
+
+message PoseGraph {
+  message Constraint {
+    // Differentiates between intra-submap (where the range data was inserted
+    // into the submap) and inter-submap constraints (where the range data was
+    // not inserted into the submap).
+    enum Tag {
+      INTRA_SUBMAP = 0;
+      INTER_SUBMAP = 1;
+    }
+
+    SubmapId submap_id = 1;  // Submap ID.
+    NodeId node_id = 2;  // Node ID.
+    // Pose of the node relative to submap, i.e. taking data from the node frame
+    // into the submap frame.
+    transform.proto.Rigid3d relative_pose = 3;
+    // Weight of the translational part of the constraint.
+    double translation_weight = 6;
+    // Weight of the rotational part of the constraint.
+    double rotation_weight = 7;
+    Tag tag = 5;
+  }
+
+  repeated Constraint constraint = 2;
+  repeated Trajectory trajectory = 4;
+}
