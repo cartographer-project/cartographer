@@ -46,10 +46,6 @@ CollatedTrajectoryBuilder::CollatedTrajectoryBuilder(
 
 CollatedTrajectoryBuilder::~CollatedTrajectoryBuilder() {}
 
-const PoseEstimate& CollatedTrajectoryBuilder::pose_estimate() const {
-  return wrapped_trajectory_builder_->pose_estimate();
-}
-
 void CollatedTrajectoryBuilder::AddSensorData(
     const std::string& sensor_id, std::unique_ptr<sensor::Data> data) {
   sensor_collator_->AddSensorData(trajectory_id_, sensor_id, std::move(data));

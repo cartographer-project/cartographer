@@ -65,7 +65,7 @@ class PoseGraphTest : public ::testing::Test {
     {
       auto parameter_dictionary = common::MakeDictionary(R"text(
           return {
-            optimize_every_n_scans = 1000,
+            optimize_every_n_nodes = 1000,
             constraint_builder = {
               sampling_ratio = 1.,
               max_constraint_distance = 6.,
@@ -116,8 +116,8 @@ class PoseGraphTest : public ::testing::Test {
               acceleration_weight = 1.,
               rotation_weight = 1e2,
               huber_scale = 1.,
-              consecutive_scan_translation_penalty_factor = 0.,
-              consecutive_scan_rotation_penalty_factor = 0.,
+              consecutive_node_translation_weight = 0.,
+              consecutive_node_rotation_weight = 0.,
               fixed_frame_pose_translation_weight = 1e1,
               fixed_frame_pose_rotation_weight = 1e2,
               log_solver_summary = true,

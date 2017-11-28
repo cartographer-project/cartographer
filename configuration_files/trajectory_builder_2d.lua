@@ -19,7 +19,7 @@ TRAJECTORY_BUILDER_2D = {
   min_z = -0.8,
   max_z = 2.,
   missing_data_ray_length = 5.,
-  scans_per_accumulation = 1,
+  num_accumulated_range_data = 1,
   voxel_filter_size = 0.025,
 
   adaptive_voxel_filter = {

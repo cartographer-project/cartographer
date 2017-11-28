@@ -30,11 +30,11 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping_3d/acceleration_cost_function.h"
+#include "cartographer/internal/mapping_3d/acceleration_cost_function.h"
+#include "cartographer/internal/mapping_3d/rotation_cost_function.h"
 #include "cartographer/mapping_3d/ceres_pose.h"
 #include "cartographer/mapping_3d/imu_integration.h"
 #include "cartographer/mapping_3d/pose_graph/spa_cost_function.h"
-#include "cartographer/mapping_3d/rotation_cost_function.h"
 #include "cartographer/mapping_3d/rotation_parameterization.h"
 #include "cartographer/transform/timestamped_transform.h"
 #include "cartographer/transform/transform.h"
@@ -354,8 +354,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
             new ceres::AutoDiffCostFunction<SpaCostFunction, 6, 4, 3, 4, 3>(
                 new SpaCostFunction(Constraint::Pose{
                     relative_pose,
-                    options_.consecutive_scan_translation_penalty_factor(),
-                    options_.consecutive_scan_rotation_penalty_factor()})),
+                    options_.consecutive_node_translation_weight(),
+                    options_.consecutive_node_rotation_weight()})),
             nullptr /* loss function */, C_nodes.at(first_node_id).rotation(),
             C_nodes.at(first_node_id).translation(),
             C_nodes.at(second_node_id).rotation(),

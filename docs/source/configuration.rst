@@ -86,11 +86,11 @@ double acceleration_weight
 double rotation_weight
   Scaling parameter for the IMU rotation term.
 
-double consecutive_scan_translation_penalty_factor
-  Penalty factors for translation changes to the relative pose between consecutive scans.
+double consecutive_node_translation_weight
+  Scaling parameter for translation between consecutive nodes.
 
-double consecutive_scan_rotation_penalty_factor
-  Penalty factors for rotation changes to the relative pose between consecutive scans.
+double consecutive_node_rotation_weight
+  Scaling parameter for rotation between consecutive nodes.
 
 double fixed_frame_pose_translation_weight
   Scaling parameter for the FixedFramePose translation.
@@ -121,10 +121,23 @@ cartographer.mapping.proto.PoseGraphOptions pose_graph_options
   Not yet documented.
 
 
+cartographer.mapping.proto.MotionFilterOptions
+==============================================
+
+double max_time_seconds
+  Threshold above which range data is inserted based on time.
+
+double max_distance_meters
+  Threshold above which range data is inserted based on linear motion.
+
+double max_angle_radians
+  Threshold above which range data is inserted based on rotational motion.
+
+
 cartographer.mapping.proto.PoseGraphOptions
 ===========================================
 
-int32 optimize_every_n_scans
+int32 optimize_every_n_nodes
   Online loop closure: If positive, will run the loop closure while the map
   is built.
 
@@ -147,7 +160,7 @@ int32 max_num_final_iterations
   optimization.
 
 double global_sampling_ratio
-  Rate at which we sample a single trajectory's scans for global
+  Rate at which we sample a single trajectory's nodes for global
   localization.
 
 bool log_residual_histograms
@@ -190,9 +203,9 @@ float max_z
 float missing_data_ray_length
   Points beyond 'max_range' will be inserted with this length as empty space.
 
-int32 scans_per_accumulation
-  Number of scans to accumulate into one unwarped, combined scan to use for
-  scan matching.
+int32 num_accumulated_range_data
+  Number of range data to accumulate into one unwarped, combined range data
+  to use for scan matching.
 
 float voxel_filter_size
   Voxel filter that gets applied to the range data immediately after
@@ -215,7 +228,7 @@ cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOption
 cartographer.mapping_2d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
   Not yet documented.
 
-cartographer.mapping_3d.proto.MotionFilterOptions motion_filter_options
+cartographer.mapping.proto.MotionFilterOptions motion_filter_options
   Not yet documented.
 
 double imu_gravity_time_constant
@@ -256,9 +269,9 @@ double resolution
   Resolution of the map in meters.
 
 int32 num_range_data
-  Number of scans before adding a new submap. Each submap will get twice the
-  number of scans inserted: First for initialization without being matched
-  against, then while being matched.
+  Number of range data before adding a new submap. Each submap will get twice
+  the number of range data inserted: First for initialization without being
+  matched against, then while being matched.
 
 cartographer.mapping_2d.proto.RangeDataInserterOptions range_data_inserter_options
   Not yet documented.
@@ -323,9 +336,9 @@ float min_range
 float max_range
   Not yet documented.
 
-int32 scans_per_accumulation
-  Number of scans to accumulate into one unwarped, combined scan to use for
-  scan matching.
+int32 num_accumulated_range_data
+  Number of range data to accumulate into one unwarped, combined range data
+  to use for scan matching.
 
 float voxel_filter_size
   Voxel filter that gets applied to the range data immediately after
@@ -347,7 +360,7 @@ cartographer.mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOption
 cartographer.mapping_3d.scan_matching.proto.CeresScanMatcherOptions ceres_scan_matcher_options
   Not yet documented.
 
-cartographer.mapping_3d.proto.MotionFilterOptions motion_filter_options
+cartographer.mapping.proto.MotionFilterOptions motion_filter_options
   Not yet documented.
 
 double imu_gravity_time_constant
@@ -363,19 +376,6 @@ int32 rotational_histogram_size
 
 cartographer.mapping_3d.proto.SubmapsOptions submaps_options
   Not yet documented.
-
-
-cartographer.mapping_3d.proto.MotionFilterOptions
-=================================================
-
-double max_time_seconds
-  Threshold above which a new scan is inserted based on time.
-
-double max_distance_meters
-  Threshold above which a new scan is inserted based on linear motion.
-
-double max_angle_radians
-  Threshold above which a new scan is inserted based on rotational motion.
 
 
 cartographer.mapping_3d.proto.RangeDataInserterOptions
@@ -410,9 +410,9 @@ double low_resolution
   local SLAM only.
 
 int32 num_range_data
-  Number of scans before adding a new submap. Each submap will get twice the
-  number of scans inserted: First for initialization without being matched
-  against, then while being matched.
+  Number of range data before adding a new submap. Each submap will get twice
+  the number of range data inserted: First for initialization without being
+  matched against, then while being matched.
 
 cartographer.mapping_3d.proto.RangeDataInserterOptions range_data_inserter_options
   Not yet documented.

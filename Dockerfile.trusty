@@ -19,5 +19,7 @@ COPY scripts/install_ceres.sh cartographer/scripts/
 RUN cartographer/scripts/install_ceres.sh && rm -rf ceres-solver
 COPY scripts/install_proto3.sh cartographer/scripts/
 RUN cartographer/scripts/install_proto3.sh && rm -rf protobuf
+COPY scripts/install_grpc.sh cartographer/scripts/
+RUN cartographer/scripts/install_grpc.sh && rm -rf grpc
 COPY . cartographer
-RUN cartographer/scripts/install_cartographer.sh && rm -rf cartographer
+RUN cartographer/scripts/install_cartographer_with_grpc.sh && rm -rf cartographer

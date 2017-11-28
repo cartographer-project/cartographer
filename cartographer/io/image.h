@@ -29,6 +29,9 @@
 namespace cartographer {
 namespace io {
 
+// The only cairo image format we use for Cartographer.
+constexpr cairo_format_t kCairoFormat = CAIRO_FORMAT_ARGB32;
+
 // std::unique_ptr for Cairo surfaces. The surface is destroyed when the
 // std::unique_ptr is reset or destroyed.
 using UniqueCairoSurfacePtr =
@@ -45,11 +48,15 @@ UniqueCairoPtr MakeUniqueCairoPtr(cairo_t* surface);
 
 class Image {
  public:
+  explicit Image(UniqueCairoSurfacePtr surface);
   Image(int width, int height);
 
   const Uint8Color GetPixel(int x, int y) const;
   void SetPixel(int x, int y, const Uint8Color& color);
   void WritePng(FileWriter* const file_writer);
+
+  // Rotates the image in place.
+  void Rotate90DegreesClockwise();
 
   // Returns a pointer to a cairo surface that contains the current pixel data.
   // The 'Image' object must therefore outlive the returned surface object. It
@@ -63,7 +70,6 @@ class Image {
  private:
   int width_;
   int height_;
-  int stride_;
   std::vector<uint32> pixels_;
 };
 

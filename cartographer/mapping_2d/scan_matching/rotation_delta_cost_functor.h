@@ -18,20 +18,19 @@
 #define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_ROTATION_DELTA_COST_FUNCTOR_H_
 
 #include "Eigen/Core"
-#include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace mapping_2d {
 namespace scan_matching {
 
-// Computes the cost of rotating the initial pose estimate. Cost increases with
-// the solution's distance from the initial estimate.
+// Computes the cost of rotating 'pose' to 'target_angle'. Cost increases with
+// the solution's distance from 'target_angle'.
 class RotationDeltaCostFunctor {
  public:
   // Constructs a new RotationDeltaCostFunctor for the given 'angle'.
   explicit RotationDeltaCostFunctor(const double scaling_factor,
-                                    const double angle)
-      : scaling_factor_(scaling_factor), angle_(angle) {}
+                                    const double target_angle)
+      : scaling_factor_(scaling_factor), angle_(target_angle) {}
 
   RotationDeltaCostFunctor(const RotationDeltaCostFunctor&) = delete;
   RotationDeltaCostFunctor& operator=(const RotationDeltaCostFunctor&) = delete;

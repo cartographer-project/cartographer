@@ -25,10 +25,6 @@
 namespace cartographer {
 namespace sensor {
 
-// Returns a voxel filtered copy of 'point_cloud' where 'size' is the length
-// a voxel edge.
-PointCloud VoxelFiltered(const PointCloud& point_cloud, float size);
-
 // Voxel filter for point clouds. For each voxel, the assembled point cloud
 // contains the first point that fell into it from any of the inserted point
 // clouds.
@@ -40,15 +36,14 @@ class VoxelFilter {
   VoxelFilter(const VoxelFilter&) = delete;
   VoxelFilter& operator=(const VoxelFilter&) = delete;
 
-  // Inserts a point cloud into the voxel filter.
-  void InsertPointCloud(const PointCloud& point_cloud);
+  // Returns a voxel filtered copy of 'point_cloud'.
+  PointCloud Filter(const PointCloud& point_cloud);
 
-  // Returns the filtered point cloud representing the occupied voxels.
-  const PointCloud& point_cloud() const;
+  // Same for TimedPointCloud.
+  TimedPointCloud Filter(const TimedPointCloud& timed_point_cloud);
 
  private:
   mapping_3d::HybridGridBase<uint8> voxels_;
-  PointCloud point_cloud_;
 };
 
 proto::AdaptiveVoxelFilterOptions CreateAdaptiveVoxelFilterOptions(

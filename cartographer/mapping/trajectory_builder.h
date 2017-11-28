@@ -40,15 +40,11 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
 // This interface is used for both 2D and 3D SLAM.
 class TrajectoryBuilder {
  public:
-  using PoseEstimate = mapping::PoseEstimate;
-
   TrajectoryBuilder() {}
   virtual ~TrajectoryBuilder() {}
 
   TrajectoryBuilder(const TrajectoryBuilder&) = delete;
   TrajectoryBuilder& operator=(const TrajectoryBuilder&) = delete;
-
-  virtual const PoseEstimate& pose_estimate() const = 0;
 
   virtual void AddSensorData(const std::string& sensor_id,
                              std::unique_ptr<sensor::Data> data) = 0;

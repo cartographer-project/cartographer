@@ -133,10 +133,12 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
   // TODO(whess): Keep the last extrapolated pose.
   const TimedPose& newest_timed_pose = timed_pose_queue_.back();
   CHECK_GE(time, newest_timed_pose.time);
-  return transform::Rigid3d::Translation(ExtrapolateTranslation(time)) *
-         newest_timed_pose.pose *
-         transform::Rigid3d::Rotation(
-             ExtrapolateRotation(time, extrapolation_imu_tracker_.get()));
+  const Eigen::Vector3d translation =
+      ExtrapolateTranslation(time) + newest_timed_pose.pose.translation();
+  const Eigen::Quaterniond rotation =
+      newest_timed_pose.pose.rotation() *
+      ExtrapolateRotation(time, extrapolation_imu_tracker_.get());
+  return transform::Rigid3d(translation, rotation);
 }
 
 Eigen::Quaterniond PoseExtrapolator::EstimateGravityOrientation(

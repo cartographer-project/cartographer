@@ -18,25 +18,23 @@
 #define CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_TRANSLATION_DELTA_COST_FUNCTOR_H_
 
 #include "Eigen/Core"
-#include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping_3d {
 namespace scan_matching {
 
-// Computes the cost of translating the initial pose estimate. Cost increases
-// with the solution's distance from the initial estimate.
+// Computes the cost of translating 'translation' to 'target_translation'.
+// Cost increases with the solution's distance from 'target_translation'.
 class TranslationDeltaCostFunctor {
  public:
   // Constructs a new TranslationDeltaCostFunctor from the given
-  // 'initial_pose_estimate'.
+  // 'target_translation'.
   explicit TranslationDeltaCostFunctor(
-      const double scaling_factor,
-      const transform::Rigid3d& initial_pose_estimate)
+      const double scaling_factor, const Eigen::Vector3d& target_translation)
       : scaling_factor_(scaling_factor),
-        x_(initial_pose_estimate.translation().x()),
-        y_(initial_pose_estimate.translation().y()),
-        z_(initial_pose_estimate.translation().z()) {}
+        x_(target_translation.x()),
+        y_(target_translation.y()),
+        z_(target_translation.z()) {}
 
   TranslationDeltaCostFunctor(const TranslationDeltaCostFunctor&) = delete;
   TranslationDeltaCostFunctor& operator=(const TranslationDeltaCostFunctor&) =

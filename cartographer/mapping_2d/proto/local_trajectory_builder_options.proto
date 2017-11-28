@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package cartographer.mapping_2d.proto;
 
-import "cartographer/mapping_3d/proto/motion_filter_options.proto";
+import "cartographer/mapping/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping_2d/proto/submaps_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.proto";
@@ -32,9 +32,9 @@ message LocalTrajectoryBuilderOptions {
   // Points beyond 'max_range' will be inserted with this length as empty space.
   float missing_data_ray_length = 16;
 
-  // Number of scans to accumulate into one unwarped, combined scan to use for
-  // scan matching.
-  int32 scans_per_accumulation = 19;
+  // Number of range data to accumulate into one unwarped, combined range data
+  // to use for scan matching.
+  int32 num_accumulated_range_data = 19;
 
   // Voxel filter that gets applied to the range data immediately after
   // cropping.
@@ -56,7 +56,7 @@ message LocalTrajectoryBuilderOptions {
       real_time_correlative_scan_matcher_options = 7;
   scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options = 8;
-  mapping_3d.proto.MotionFilterOptions motion_filter_options = 13;
+  mapping.proto.MotionFilterOptions motion_filter_options = 13;
 
   // Time constant in seconds for the orientation moving average based on
   // observed gravity via the IMU. It should be chosen so that the error

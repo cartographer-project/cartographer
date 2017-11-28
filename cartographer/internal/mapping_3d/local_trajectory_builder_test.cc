@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/local_trajectory_builder.h"
+#include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
 
 #include <memory>
 #include <random>
@@ -49,7 +49,7 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
         return {
           min_range = 0.5,
           max_range = 50.,
-          scans_per_accumulation = 1,
+          num_accumulated_range_data = 1,
           voxel_filter_size = 0.05,
 
           high_resolution_adaptive_voxel_filter = {

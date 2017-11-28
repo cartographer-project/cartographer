@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/motion_filter.h"
+#include "cartographer/internal/mapping/motion_filter.h"
 
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
 proto::MotionFilterOptions CreateMotionFilterOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
@@ -57,5 +57,5 @@ bool MotionFilter::IsSimilar(const common::Time time,
   return false;
 }
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

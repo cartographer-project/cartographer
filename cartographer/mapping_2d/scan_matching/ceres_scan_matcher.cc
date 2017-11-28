@@ -22,8 +22,8 @@
 #include "Eigen/Core"
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/internal/mapping_2d/scan_matching/occupied_space_cost_function.h"
 #include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/scan_matching/occupied_space_cost_functor.h"
 #include "cartographer/mapping_2d/scan_matching/rotation_delta_cost_functor.h"
 #include "cartographer/mapping_2d/scan_matching/translation_delta_cost_functor.h"
 #include "cartographer/transform/transform.h"
@@ -59,7 +59,7 @@ CeresScanMatcher::CeresScanMatcher(
 
 CeresScanMatcher::~CeresScanMatcher() {}
 
-void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
+void CeresScanMatcher::Match(const Eigen::Vector2d& target_translation,
                              const transform::Rigid2d& initial_pose_estimate,
                              const sensor::PointCloud& point_cloud,
                              const ProbabilityGrid& probability_grid,
@@ -71,9 +71,9 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
   ceres::Problem problem;
   CHECK_GT(options_.occupied_space_weight(), 0.);
   problem.AddResidualBlock(
-      new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunctor, ceres::DYNAMIC,
+      new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction, ceres::DYNAMIC,
                                       3>(
-          new OccupiedSpaceCostFunctor(
+          new OccupiedSpaceCostFunction(
               options_.occupied_space_weight() /
                   std::sqrt(static_cast<double>(point_cloud.size())),
               point_cloud, probability_grid),
@@ -83,7 +83,7 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor, 2, 3>(
           new TranslationDeltaCostFunctor(options_.translation_weight(),
-                                          previous_pose)),
+                                          target_translation)),
       nullptr, ceres_pose_estimate);
   CHECK_GT(options_.rotation_weight(), 0.);
   problem.AddResidualBlock(

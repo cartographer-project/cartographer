@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/local_trajectory_builder.h"
+#include "cartographer/internal/mapping_2d/local_trajectory_builder.h"
 
 #include <limits>
 #include <memory>
@@ -46,8 +46,8 @@ LocalTrajectoryBuilder::TransformToGravityAlignedFrameAndFilter(
                             options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
-      sensor::VoxelFiltered(cropped.returns, options_.voxel_filter_size()),
-      sensor::VoxelFiltered(cropped.misses, options_.voxel_filter_size())};
+      sensor::VoxelFilter(options_.voxel_filter_size()).Filter(cropped.returns),
+      sensor::VoxelFilter(options_.voxel_filter_size()).Filter(cropped.misses)};
 }
 
 std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder::ScanMatch(
@@ -73,9 +73,10 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder::ScanMatch(
 
   auto pose_observation = common::make_unique<transform::Rigid2d>();
   ceres::Solver::Summary summary;
-  ceres_scan_matcher_.Match(
-      pose_prediction, initial_ceres_pose, filtered_gravity_aligned_point_cloud,
-      matching_submap->probability_grid(), pose_observation.get(), &summary);
+  ceres_scan_matcher_.Match(pose_prediction.translation(), initial_ceres_pose,
+                            filtered_gravity_aligned_point_cloud,
+                            matching_submap->probability_grid(),
+                            pose_observation.get(), &summary);
   return pose_observation;
 }
 
@@ -142,7 +143,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   }
   ++num_accumulated_;
 
-  if (num_accumulated_ >= options_.scans_per_accumulation()) {
+  if (num_accumulated_ >= options_.num_accumulated_range_data()) {
     num_accumulated_ = 0;
     const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
         extrapolator_->EstimateGravityOrientation(time));
@@ -186,7 +187,6 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   sensor::RangeData range_data_in_local =
       TransformRangeData(gravity_aligned_range_data,
                          transform::Embed3D(pose_estimate_2d->cast<float>()));
-  last_pose_estimate_ = {time, pose_estimate, range_data_in_local.returns};
   std::unique_ptr<InsertionResult> insertion_result =
       InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
                        pose_estimate, gravity_alignment.rotation());
@@ -229,10 +229,6 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
               {},  // 'rotational_scan_matcher_histogram' is only used in 3D.
               pose_estimate}),
       std::move(insertion_submaps)});
-}
-
-const mapping::PoseEstimate& LocalTrajectoryBuilder::pose_estimate() const {
-  return last_pose_estimate_;
 }
 
 void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
