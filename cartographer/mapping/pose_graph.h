@@ -31,6 +31,7 @@
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/map_by_time.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -90,6 +91,11 @@ class PoseGraph {
   // Inserts an odometry measurement.
   virtual void AddOdometryData(int trajectory_id,
                                const sensor::OdometryData& odometry_data) = 0;
+
+  // Inserts a fixed frame pose measurement.
+  virtual void AddFixedFramePoseData(
+      int trajectory_id,
+      const sensor::FixedFramePoseData& fixed_frame_pose_data) = 0;
 
   // Finishes the given trajectory.
   virtual void FinishTrajectory(int trajectory_id) = 0;
@@ -151,6 +157,10 @@ class PoseGraph {
 
   // Returns the odometry data.
   virtual sensor::MapByTime<sensor::OdometryData> GetOdometryData() = 0;
+
+  // Returns the fixed frame pose data.
+  virtual sensor::MapByTime<sensor::FixedFramePoseData>
+  GetFixedFramePoseData() = 0;
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
