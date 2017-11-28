@@ -321,43 +321,44 @@ void PoseGraph::UpdateTrajectoryConnectivity(const Constraint& constraint) {
 }
 
 void PoseGraph::HandleWorkQueue() {
-  constraint_builder_.WhenDone([this](
-      const pose_graph::ConstraintBuilder::Result& result) {
-    {
-      common::MutexLocker locker(&mutex_);
-      constraints_.insert(constraints_.end(), result.begin(), result.end());
-    }
-    RunOptimization();
+  constraint_builder_.WhenDone(
+      [this](const pose_graph::ConstraintBuilder::Result& result) {
+        {
+          common::MutexLocker locker(&mutex_);
+          constraints_.insert(constraints_.end(), result.begin(), result.end());
+        }
+        RunOptimization();
 
-    common::MutexLocker locker(&mutex_);
-    for (const Constraint& constraint : result) {
-      UpdateTrajectoryConnectivity(constraint);
-    }
-    TrimmingHandle trimming_handle(this);
-    for (auto& trimmer : trimmers_) {
-      trimmer->Trim(&trimming_handle);
-    }
-    trimmers_.erase(
-        std::remove_if(trimmers_.begin(), trimmers_.end(),
-                       [](std::unique_ptr<mapping::PoseGraphTrimmer>& trimmer) {
-                         return trimmer->IsFinished();
-                       }),
-        trimmers_.end());
+        common::MutexLocker locker(&mutex_);
+        for (const Constraint& constraint : result) {
+          UpdateTrajectoryConnectivity(constraint);
+        }
+        TrimmingHandle trimming_handle(this);
+        for (auto& trimmer : trimmers_) {
+          trimmer->Trim(&trimming_handle);
+        }
+        trimmers_.erase(
+            std::remove_if(
+                trimmers_.begin(), trimmers_.end(),
+                [](std::unique_ptr<mapping::PoseGraphTrimmer>& trimmer) {
+                  return trimmer->IsFinished();
+                }),
+            trimmers_.end());
 
-    num_nodes_since_last_loop_closure_ = 0;
-    run_loop_closure_ = false;
-    while (!run_loop_closure_) {
-      if (work_queue_->empty()) {
-        work_queue_.reset();
-        return;
-      }
-      work_queue_->front()();
-      work_queue_->pop_front();
-    }
-    LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
-    // We have to optimize again.
-    HandleWorkQueue();
-  });
+        num_nodes_since_last_loop_closure_ = 0;
+        run_loop_closure_ = false;
+        while (!run_loop_closure_) {
+          if (work_queue_->empty()) {
+            work_queue_.reset();
+            return;
+          }
+          work_queue_->front()();
+          work_queue_->pop_front();
+        }
+        LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
+        // We have to optimize again.
+        HandleWorkQueue();
+      });
 }
 
 void PoseGraph::WaitForAllComputations() {
@@ -373,19 +374,21 @@ void PoseGraph::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. * (constraint_builder_.GetNumFinishedNodes() -
-                             num_finished_nodes_at_start) /
+                  << 100. *
+                         (constraint_builder_.GetNumFinishedNodes() -
+                          num_finished_nodes_at_start) /
                          (num_trajectory_nodes_ - num_finished_nodes_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone([this, &notification](
-      const pose_graph::ConstraintBuilder::Result& result) {
-    common::MutexLocker locker(&mutex_);
-    constraints_.insert(constraints_.end(), result.begin(), result.end());
-    notification = true;
-  });
+  constraint_builder_.WhenDone(
+      [this,
+       &notification](const pose_graph::ConstraintBuilder::Result& result) {
+        common::MutexLocker locker(&mutex_);
+        constraints_.insert(constraints_.end(), result.begin(), result.end());
+        notification = true;
+      });
   locker.Await([&notification]() { return notification; });
 }
 
