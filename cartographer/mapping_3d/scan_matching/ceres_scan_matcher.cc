@@ -68,7 +68,7 @@ CeresScanMatcher::CeresScanMatcher(
   ceres_solver_options_.linear_solver_type = ceres::DENSE_QR;
 }
 
-void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
+void CeresScanMatcher::Match(const Eigen::Vector3d& target_translation,
                              const transform::Rigid3d& initial_pose_estimate,
                              const std::vector<PointCloudAndHybridGridPointers>&
                                  point_clouds_and_hybrid_grids,
@@ -106,7 +106,7 @@ void CeresScanMatcher::Match(const transform::Rigid3d& previous_pose,
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor, 3, 3>(
           new TranslationDeltaCostFunctor(options_.translation_weight(),
-                                          previous_pose.translation())),
+                                          target_translation)),
       nullptr, ceres_pose.translation());
   CHECK_GT(options_.rotation_weight(), 0.);
   problem.AddResidualBlock(

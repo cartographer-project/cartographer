@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/local_trajectory_builder.h"
+#include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
 
 #include <memory>
 
@@ -102,10 +102,10 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     num_accumulated_ = 0;
     const sensor::RangeData filtered_range_data = {
         accumulated_range_data_.origin,
-        sensor::VoxelFiltered(accumulated_range_data_.returns,
-                              options_.voxel_filter_size()),
-        sensor::VoxelFiltered(accumulated_range_data_.misses,
-                              options_.voxel_filter_size())};
+        sensor::VoxelFilter(options_.voxel_filter_size())
+            .Filter(accumulated_range_data_.returns),
+        sensor::VoxelFilter(options_.voxel_filter_size())
+            .Filter(accumulated_range_data_.misses)};
     return AddAccumulatedRangeData(
         time, sensor::TransformRangeData(filtered_range_data,
                                          tracking_delta.inverse()));
@@ -158,7 +158,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
     return nullptr;
   }
   ceres_scan_matcher_->Match(
-      matching_submap->local_pose().inverse() * pose_prediction,
+      (matching_submap->local_pose().inverse() * pose_prediction).translation(),
       initial_ceres_pose,
       {{&high_resolution_point_cloud_in_tracking,
         &matching_submap->high_resolution_hybrid_grid()},

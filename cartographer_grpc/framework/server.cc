@@ -55,7 +55,7 @@ void Server::AddService(
   // Instantiate and register service.
   const auto result =
       services_.emplace(std::piecewise_construct, std::make_tuple(service_name),
-                        std::make_tuple(rpc_handler_infos));
+                        std::make_tuple(service_name, rpc_handler_infos));
   CHECK(result.second) << "A service named " << service_name
                        << " already exists.";
   server_builder_.RegisterService(&result.first->second);
