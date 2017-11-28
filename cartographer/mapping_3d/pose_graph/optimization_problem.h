@@ -94,6 +94,8 @@ class OptimizationProblem {
   const mapping::MapById<mapping::SubmapId, SubmapData>& submap_data() const;
   const sensor::MapByTime<sensor::ImuData>& imu_data() const;
   const sensor::MapByTime<sensor::OdometryData>& odometry_data() const;
+  const sensor::MapByTime<sensor::FixedFramePoseData>& fixed_frame_pose_data()
+      const;
 
  private:
   // Uses odometry if available, otherwise the local SLAM results.
