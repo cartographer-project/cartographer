@@ -67,7 +67,6 @@ Rpc::RpcState* Rpc::GetRpcState(State state) {
   LOG(FATAL) << "Never reached.";
 }
 
-
 ActiveRpcs::ActiveRpcs() : lock_() {}
 
 void Rpc::InitializeResponders(::grpc::internal::RpcMethod::RpcType rpc_type) {

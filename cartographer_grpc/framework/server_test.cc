@@ -44,4 +44,3 @@ TEST(ServerTest, StartServerTest) {
 }  // namespace
 }  // namespace framework
 }  // namespace cartographer_grpc
-
