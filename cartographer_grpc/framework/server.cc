@@ -97,7 +97,8 @@ void Server::Shutdown() {
   // deadline; then force a shutdown.
   server_->Shutdown();
 
-  // Shut down the server completion queues.
+  // Shut down the server completion queues and wait for the processing threads
+  // to join.
   for (auto& completion_queue_threads : completion_queue_threads_) {
     completion_queue_threads.Shutdown();
   }

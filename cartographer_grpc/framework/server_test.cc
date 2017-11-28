@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Cartographer Authors
+ * Copyright 2017 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,7 @@ namespace framework {
 namespace {
 
 class GetServerOptionsHandler
-    : public RpcHandler<Stream<proto::Request>, proto::Response> {
- public:
-  GetServerOptionsHandler() = default;
-};
+    : public RpcHandler<Stream<proto::Request>, proto::Response> {};
 
 TEST(ServerTest, StartServerTest) {
   Server::Builder server_builder;

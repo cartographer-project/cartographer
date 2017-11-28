@@ -48,7 +48,7 @@ Rpc::Rpc(int method_index,
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       return server_async_reader_.get();
     default:
-      LOG(FATAL) << "No RPC type not implemented.";
+      LOG(FATAL) << "RPC type not implemented.";
   }
   LOG(FATAL) << "Never reached.";
 }
@@ -79,7 +79,7 @@ void Rpc::InitializeResponders(::grpc::internal::RpcMethod::RpcType rpc_type) {
               &server_context_);
       break;
     default:
-      LOG(FATAL) << "No RPC type not implemented.";
+      LOG(FATAL) << "RPC type not implemented.";
   }
 }
 

@@ -38,7 +38,6 @@ class Server {
   struct Options {
     size_t number_of_threads = 4;
     std::string server_address = "0.0.0.0:50051";
-    std::chrono::seconds termination_timeout = std::chrono::seconds(3);
   };
 
  public:
@@ -79,7 +78,7 @@ class Server {
   // Starts a server starts serving the registered services.
   void Start();
 
-  // Initiates a server shutdown.
+  // Shuts down the server and all of its services.
   void Shutdown();
 
  private:
