@@ -110,12 +110,12 @@ void Service::HandleWrite(Rpc* rpc, bool ok) {
     LOG(ERROR) << "Write failed";
   }
 
-  CleanUpAsNeeded(rpc);
+  RemoveIfNotPending(rpc);
 }
 
-void Service::HandleDone(Rpc* rpc, bool ok) { CleanUpAsNeeded(rpc); }
+void Service::HandleDone(Rpc* rpc, bool ok) { RemoveIfNotPending(rpc); }
 
-void Service::CleanUpAsNeeded(Rpc* rpc) {
+void Service::RemoveIfNotPending(Rpc* rpc) {
   if (!rpc->GetRpcState(Rpc::State::DONE)->pending &&
       !rpc->GetRpcState(Rpc::State::READ)->pending &&
       !rpc->GetRpcState(Rpc::State::WRITE)->pending) {
