@@ -101,7 +101,6 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
       time + common::FromSeconds(range_data.returns.front()[3]);
   if (time_first_point < extrapolator_->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
-    // TODO(gaschler): Use points between GetLastPoseTime() and time.
     return nullptr;
   }
 
