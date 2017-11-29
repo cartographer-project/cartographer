@@ -76,9 +76,16 @@ class ServerTest : public ::testing::Test {
     server_builder.RegisterHandler<GetSumHandler, proto::Math>("GetSum");
     server_builder.RegisterHandler<GetSquareHandler, proto::Math>("GetSquare");
     server_ = server_builder.Build();
+
+    client_channel_ =
+        grpc::CreateChannel(kServerAddress, grpc::InsecureChannelCredentials());
+    stub_ = proto::Math::NewStub(client_channel_);
   }
 
   std::unique_ptr<Server> server_;
+  std::shared_ptr<grpc::Channel> client_channel_;
+  std::unique_ptr<proto::Math::Stub> stub_;
+  grpc::ClientContext client_context_;
 };
 
 TEST_F(ServerTest, StartAndStopServerTest) {
@@ -91,13 +98,9 @@ TEST_F(ServerTest, ProcessRpcStreamTest) {
       cartographer::common::make_unique<MathServerContext>());
   server_->Start();
 
-  auto channel =
-      grpc::CreateChannel(kServerAddress, grpc::InsecureChannelCredentials());
-  std::unique_ptr<proto::Math::Stub> stub(proto::Math::NewStub(channel));
-  grpc::ClientContext context;
   proto::GetSumResponse result;
   std::unique_ptr<grpc::ClientWriter<proto::GetSumRequest> > writer(
-      stub->GetSum(&context, &result));
+      stub_->GetSum(&client_context_, &result));
   for (int i = 0; i < 3; ++i) {
     proto::GetSumRequest request;
     request.set_input(i);
@@ -114,14 +117,11 @@ TEST_F(ServerTest, ProcessRpcStreamTest) {
 TEST_F(ServerTest, ProcessUnaryRpcTest) {
   server_->Start();
 
-  auto channel =
-      grpc::CreateChannel(kServerAddress, grpc::InsecureChannelCredentials());
-  std::unique_ptr<proto::Math::Stub> stub(proto::Math::NewStub(channel));
   grpc::ClientContext context;
   proto::GetSquareResponse result;
   proto::GetSquareRequest request;
   request.set_input(11);
-  grpc::Status status = stub->GetSquare(&context, request, &result);
+  grpc::Status status = stub_->GetSquare(&context, request, &result);
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(result.output(), 121);
 
