@@ -95,4 +95,3 @@ TEST_F(ServerTest, ProcessRpcStreamTest) {
 }  // namespace
 }  // namespace framework
 }  // namespace cartographer_grpc
-

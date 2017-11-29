@@ -109,4 +109,3 @@ void Server::Shutdown() {
 
 }  // namespace framework
 }  // namespace cartographer_grpc
-
