@@ -21,6 +21,7 @@
 #include <unordered_set>
 
 #include "cartographer/common/mutex.h"
+#include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/rpc_handler_interface.h"
 #include "google/protobuf/message.h"
 #include "grpc++/grpc++.h"
@@ -47,6 +48,7 @@ class Rpc {
   };
 
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
+      ExecutionContext* execution_context,
       const RpcHandlerInfo& rpc_handler_info, Service* service);
   std::unique_ptr<Rpc> Clone();
   void OnRequest();
@@ -69,6 +71,7 @@ class Rpc {
 
   int method_index_;
   ::grpc::ServerCompletionQueue* server_completion_queue_;
+  ExecutionContext* execution_context_;
   RpcHandlerInfo rpc_handler_info_;
   Service* service_;
   ::grpc::ServerContext server_context_;

@@ -16,6 +16,7 @@
 
 #include "cartographer_grpc/framework/server.h"
 
+#include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/proto/math_service.grpc.pb.h"
 #include "cartographer_grpc/framework/proto/math_service.pb.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
@@ -27,10 +28,16 @@ namespace cartographer_grpc {
 namespace framework {
 namespace {
 
+class MathServerContext : public ExecutionContext {
+ public:
+  int additional_increment() { return 10; }
+};
+
 class GetServerOptionsHandler
     : public RpcHandler<Stream<proto::GetSumRequest>, proto::GetSumResponse> {
  public:
   void OnRequest(const proto::GetSumRequest& request) override {
+    sum_ += GetContext<MathServerContext>()->additional_increment();
     sum_ += request.input();
   }
 
@@ -70,6 +77,8 @@ TEST_F(ServerTest, StartAndStopServerTest) {
 }
 
 TEST_F(ServerTest, ProcessRpcStreamTest) {
+  server_->SetExecutionContext(
+      cartographer::common::make_unique<MathServerContext>());
   server_->Start();
 
   auto channel =
@@ -87,7 +96,7 @@ TEST_F(ServerTest, ProcessRpcStreamTest) {
   writer->WritesDone();
   grpc::Status status = writer->Finish();
   EXPECT_TRUE(status.ok());
-  EXPECT_EQ(result.output(), 3);
+  EXPECT_EQ(result.output(), 33);
 
   server_->Shutdown();
 }

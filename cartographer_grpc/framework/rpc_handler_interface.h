@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_INTERFACE_H_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_INTERFACE_H_H
 
+#include "cartographer_grpc/framework/execution_context.h"
 #include "google/protobuf/message.h"
 #include "grpc++/grpc++.h"
 
@@ -27,14 +28,15 @@ class Rpc;
 class RpcHandlerInterface {
  public:
   virtual ~RpcHandlerInterface() = default;
+  virtual void SetExecutionContext(ExecutionContext* execution_context) = 0;
   virtual void SetRpc(Rpc* rpc) = 0;
   virtual void OnRequestInternal(
       const ::google::protobuf::Message* request) = 0;
   virtual void OnReadsDone() = 0;
 };
 
-using RpcHandlerFactory =
-    std::function<std::unique_ptr<RpcHandlerInterface>(Rpc*)>;
+using RpcHandlerFactory = std::function<std::unique_ptr<RpcHandlerInterface>(
+    Rpc*, ExecutionContext*)>;
 
 struct RpcHandlerInfo {
   const google::protobuf::Descriptor* request_descriptor;

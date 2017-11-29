@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_H
 
+#include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/rpc.h"
 #include "cartographer_grpc/framework/rpc_handler_interface.h"
 #include "cartographer_grpc/framework/type_traits.h"
@@ -35,6 +36,9 @@ class RpcHandler : public RpcHandlerInterface {
   using RequestType = StripStream<Incoming>;
   using ResponseType = StripStream<Outgoing>;
 
+  void SetExecutionContext(ExecutionContext* execution_context) {
+    execution_context_ = execution_context;
+  }
   void SetRpc(Rpc* rpc) override { rpc_ = rpc; }
   void OnRequestInternal(const ::google::protobuf::Message* request) override {
     DCHECK(dynamic_cast<const RequestType*>(request));
@@ -44,9 +48,14 @@ class RpcHandler : public RpcHandlerInterface {
   void Send(std::unique_ptr<ResponseType> response) {
     rpc_->Write(std::move(response));
   }
+  template <typename T>
+  ExecutionContext::Synchronized<T> GetContext() {
+    return {execution_context_->lock(), execution_context_};
+  }
 
  private:
   Rpc* rpc_;
+  ExecutionContext* execution_context_;
 };
 
 }  // namespace framework

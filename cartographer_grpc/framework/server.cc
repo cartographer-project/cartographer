@@ -77,7 +77,8 @@ void Server::Start() {
 
   // Start serving all services on all completion queues.
   for (auto& service : services_) {
-    service.second.StartServing(completion_queue_threads_);
+    service.second.StartServing(completion_queue_threads_,
+                                execution_context_.get());
   }
 
   // Start threads to process all completion queues.
@@ -105,6 +106,14 @@ void Server::Shutdown() {
   }
 
   LOG(INFO) << "Shutdown complete.";
+}
+
+void Server::SetExecutionContext(
+    std::unique_ptr<ExecutionContext> execution_context) {
+  // After the server has been started the 'ExecutionHandle' cannot be changed
+  // anymore.
+  CHECK(!server_);
+  execution_context_ = std::move(execution_context);
 }
 
 }  // namespace framework

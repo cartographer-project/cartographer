@@ -24,6 +24,7 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/completion_queue_thread.h"
+#include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "cartographer_grpc/framework/service.h"
 #include "grpc++/grpc++.h"
@@ -57,10 +58,11 @@ class Server {
           RpcHandlerInfo{
               RpcHandlerType::RequestType::default_instance().GetDescriptor(),
               RpcHandlerType::ResponseType::default_instance().GetDescriptor(),
-              [](Rpc* const rpc) {
+              [](Rpc* const rpc, ExecutionContext* const execution_context) {
                 std::unique_ptr<RpcHandlerInterface> rpc_handler =
                     cartographer::common::make_unique<RpcHandlerType>();
                 rpc_handler->SetRpc(rpc);
+                rpc_handler->SetExecutionContext(execution_context);
                 return rpc_handler;
               },
               RpcType<typename RpcHandlerType::IncomingType,
@@ -80,6 +82,9 @@ class Server {
 
   // Shuts down the server and all of its services.
   void Shutdown();
+
+  // Sets the server-wide context object shared between RPC handlers.
+  void SetExecutionContext(std::unique_ptr<ExecutionContext> execution_context);
 
  private:
   Server(const Options& options);
@@ -104,6 +109,10 @@ class Server {
 
   // Map of service names to services.
   std::map<std::string, Service> services_;
+
+  // A context object that is shared between all implementations of
+  // 'RpcHandler'.
+  std::unique_ptr<ExecutionContext> execution_context_;
 };
 
 }  // namespace framework

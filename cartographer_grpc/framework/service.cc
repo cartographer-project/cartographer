@@ -37,12 +37,13 @@ Service::Service(const std::string& service_name,
 }
 
 void Service::StartServing(
-    std::vector<CompletionQueueThread>& completion_queue_threads) {
+    std::vector<CompletionQueueThread>& completion_queue_threads,
+    ExecutionContext* execution_context) {
   int i = 0;
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
     for (auto& completion_queue_thread : completion_queue_threads) {
       Rpc* rpc = active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
-          i, completion_queue_thread.completion_queue(),
+          i, completion_queue_thread.completion_queue(), execution_context,
           rpc_handler_info.second, this));
       rpc->RequestNextMethodInvocation();
     }
