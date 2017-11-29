@@ -117,11 +117,10 @@ TEST_F(ServerTest, ProcessRpcStreamTest) {
 TEST_F(ServerTest, ProcessUnaryRpcTest) {
   server_->Start();
 
-  grpc::ClientContext context;
   proto::GetSquareResponse result;
   proto::GetSquareRequest request;
   request.set_input(11);
-  grpc::Status status = stub_->GetSquare(&context, request, &result);
+  grpc::Status status = stub_->GetSquare(&client_context_, request, &result);
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(result.output(), 121);
 
