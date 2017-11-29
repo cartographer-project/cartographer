@@ -36,7 +36,7 @@ Rpc::Rpc(int method_index,
       read_event_{Event::READ, this, false},
       write_event_{Event::WRITE, this, false},
       done_event_{Event::DONE, this, false},
-      handler_(rpc_handler_info_.rpc_handler_factory(this)) {
+      handler_(rpc_handler_info_.rpc_handler_factory(this, execution_context)) {
   InitializeReadersAndWriters(rpc_handler_info_.rpc_type);
 
   // Initialize the prototypical request and response messages.
@@ -50,7 +50,8 @@ Rpc::Rpc(int method_index,
 
 std::unique_ptr<Rpc> Rpc::Clone() {
   return cartographer::common::make_unique<Rpc>(
-      method_index_, server_completion_queue_, rpc_handler_info_, service_);
+      method_index_, server_completion_queue_, execution_context_,
+      rpc_handler_info_, service_);
 }
 
 void Rpc::OnRequest() { handler_->OnRequestInternal(request_.get()); }
