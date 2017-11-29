@@ -118,4 +118,3 @@ void Server::SetExecutionContext(
 
 }  // namespace framework
 }  // namespace cartographer_grpc
-
