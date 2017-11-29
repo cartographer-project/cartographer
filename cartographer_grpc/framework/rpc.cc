@@ -25,9 +25,11 @@ namespace framework {
 
 Rpc::Rpc(int method_index,
          ::grpc::ServerCompletionQueue* server_completion_queue,
+         ExecutionContext* execution_context,
          const RpcHandlerInfo& rpc_handler_info, Service* service)
     : method_index_(method_index),
       server_completion_queue_(server_completion_queue),
+      execution_context_(execution_context),
       rpc_handler_info_(rpc_handler_info),
       service_(service),
       new_connection_event_{Event::NEW_CONNECTION, this, false},
