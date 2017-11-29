@@ -44,8 +44,7 @@ void Service::StartServing(
       Rpc* rpc = active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
           i, completion_queue_thread.completion_queue(),
           rpc_handler_info.second, this));
-      RequestNextMethodInvocation(i, rpc,
-                                  completion_queue_thread.completion_queue());
+      rpc->RequestNextMethodInvocation();
     }
     ++i;
   }
@@ -53,16 +52,19 @@ void Service::StartServing(
 
 void Service::StopServing() { shutting_down_ = true; }
 
-void Service::HandleEvent(Rpc::State state, Rpc* rpc, bool ok) {
-  switch (state) {
-    case Rpc::State::NEW_CONNECTION:
+void Service::HandleEvent(Rpc::Event event, Rpc* rpc, bool ok) {
+  rpc->GetRpcEvent(event)->pending = false;
+  switch (event) {
+    case Rpc::Event::NEW_CONNECTION:
       HandleNewConnection(rpc, ok);
       break;
-    case Rpc::State::READ:
+    case Rpc::Event::READ:
+      HandleRead(rpc, ok);
       break;
-    case Rpc::State::WRITE:
+    case Rpc::Event::WRITE:
+      HandleWrite(rpc, ok);
       break;
-    case Rpc::State::DONE:
+    case Rpc::Event::DONE:
       HandleDone(rpc, ok);
       break;
   }
@@ -70,7 +72,9 @@ void Service::HandleEvent(Rpc::State state, Rpc* rpc, bool ok) {
 
 void Service::HandleNewConnection(Rpc* rpc, bool ok) {
   if (shutting_down_) {
-    LOG(WARNING) << "Server shutting down. Refusing to handle new RPCs.";
+    if (ok) {
+      LOG(WARNING) << "Server shutting down. Refusing to handle new RPCs.";
+    }
     active_rpcs_.Remove(rpc);
     return;
   }
@@ -80,33 +84,42 @@ void Service::HandleNewConnection(Rpc* rpc, bool ok) {
     active_rpcs_.Remove(rpc);
   }
 
-  // TODO(cschuet): Request next read for the new connection.
+  if (ok) {
+    // For request-streaming RPCs ask the client to start sending requests.
+    rpc->RequestStreamingReadIfNeeded();
+  }
 
-  // Create new active rpc to handle next connection.
-  Rpc* next_rpc = active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
-      rpc->method_index(), rpc->server_completion_queue(),
-      rpc->rpc_handler_info(), this));
-
-  RequestNextMethodInvocation(rpc->method_index(), next_rpc,
-                              rpc->server_completion_queue());
+  // Create new active rpc to handle next connection and register it for the
+  // incoming connection.
+  active_rpcs_.Add(rpc->Clone())->RequestNextMethodInvocation();
 }
 
-void Service::HandleDone(Rpc* rpc, bool ok) { LOG(FATAL) << "Not implemented"; }
+void Service::HandleRead(Rpc* rpc, bool ok) {
+  if (ok) {
+    rpc->OnRequest();
+    rpc->RequestStreamingReadIfNeeded();
+    return;
+  }
 
-void Service::RequestNextMethodInvocation(
-    int method_index, Rpc* rpc,
-    ::grpc::ServerCompletionQueue* completion_queue) {
-  rpc->server_context()->AsyncNotifyWhenDone(
-      rpc->GetRpcState(Rpc::State::DONE));
-  switch (rpc->rpc_type()) {
-    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      RequestAsyncClientStreaming(method_index, rpc->server_context(),
-                                  rpc->streaming_interface(), completion_queue,
-                                  completion_queue,
-                                  rpc->GetRpcState(Rpc::State::NEW_CONNECTION));
-      break;
-    default:
-      LOG(FATAL) << "RPC type not implemented.";
+  // Reads completed.
+  rpc->OnReadsDone();
+}
+
+void Service::HandleWrite(Rpc* rpc, bool ok) {
+  if (!ok) {
+    LOG(ERROR) << "Write failed";
+  }
+
+  RemoveIfNotPending(rpc);
+}
+
+void Service::HandleDone(Rpc* rpc, bool ok) { RemoveIfNotPending(rpc); }
+
+void Service::RemoveIfNotPending(Rpc* rpc) {
+  if (!rpc->GetRpcEvent(Rpc::Event::DONE)->pending &&
+      !rpc->GetRpcEvent(Rpc::Event::READ)->pending &&
+      !rpc->GetRpcEvent(Rpc::Event::WRITE)->pending) {
+    active_rpcs_.Remove(rpc);
   }
 }
 

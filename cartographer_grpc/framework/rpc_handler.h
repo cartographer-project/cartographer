@@ -17,29 +17,15 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_H
 
+#include "cartographer_grpc/framework/rpc.h"
+#include "cartographer_grpc/framework/rpc_handler_interface.h"
 #include "cartographer_grpc/framework/type_traits.h"
+#include "glog/logging.h"
 #include "google/protobuf/message.h"
 #include "grpc++/grpc++.h"
 
 namespace cartographer_grpc {
 namespace framework {
-
-class Rpc;
-class RpcHandlerInterface {
- public:
-  virtual ~RpcHandlerInterface() = default;
-  virtual void SetRpc(Rpc* rpc) = 0;
-};
-
-using RpcHandlerFactory =
-    std::function<std::unique_ptr<RpcHandlerInterface>(Rpc*)>;
-
-struct RpcHandlerInfo {
-  const google::protobuf::Descriptor* request_descriptor;
-  const google::protobuf::Descriptor* response_descriptor;
-  const RpcHandlerFactory rpc_handler_factory;
-  const grpc::internal::RpcMethod::RpcType rpc_type;
-};
 
 template <typename Incoming, typename Outgoing>
 class RpcHandler : public RpcHandlerInterface {
@@ -50,6 +36,14 @@ class RpcHandler : public RpcHandlerInterface {
   using ResponseType = StripStream<Outgoing>;
 
   void SetRpc(Rpc* rpc) override { rpc_ = rpc; }
+  void OnRequestInternal(const ::google::protobuf::Message* request) override {
+    DCHECK(dynamic_cast<const RequestType*>(request));
+    OnRequest(static_cast<const RequestType&>(*request));
+  }
+  virtual void OnRequest(const RequestType& request) = 0;
+  void Send(std::unique_ptr<ResponseType> response) {
+    rpc_->Write(std::move(response));
+  }
 
  private:
   Rpc* rpc_;

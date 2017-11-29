@@ -15,6 +15,7 @@
  */
 
 #include "cartographer_grpc/framework/rpc.h"
+#include "cartographer_grpc/framework/service.h"
 
 #include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
@@ -28,19 +29,65 @@ Rpc::Rpc(int method_index,
     : method_index_(method_index),
       server_completion_queue_(server_completion_queue),
       rpc_handler_info_(rpc_handler_info),
-      new_connection_state_{State::NEW_CONNECTION, service, this},
-      read_state_{State::READ, service, this},
-      write_state_{State::WRITE, service, this},
-      done_state_{State::DONE, service, this} {
-  InitializeResponders(rpc_handler_info_.rpc_type);
+      service_(service),
+      new_connection_event_{Event::NEW_CONNECTION, this, false},
+      read_event_{Event::READ, this, false},
+      write_event_{Event::WRITE, this, false},
+      done_event_{Event::DONE, this, false},
+      handler_(rpc_handler_info_.rpc_handler_factory(this)) {
+  InitializeReadersAndWriters(rpc_handler_info_.rpc_type);
+
+  // Initialize the prototypical request and response messages.
+  request_.reset(::google::protobuf::MessageFactory::generated_factory()
+                     ->GetPrototype(rpc_handler_info_.request_descriptor)
+                     ->New());
+  response_.reset(::google::protobuf::MessageFactory::generated_factory()
+                      ->GetPrototype(rpc_handler_info_.response_descriptor)
+                      ->New());
 }
 
-::grpc::ServerCompletionQueue* Rpc::server_completion_queue() {
-  return server_completion_queue_;
+std::unique_ptr<Rpc> Rpc::Clone() {
+  return cartographer::common::make_unique<Rpc>(
+      method_index_, server_completion_queue_, rpc_handler_info_, service_);
 }
 
-::grpc::internal::RpcMethod::RpcType Rpc::rpc_type() const {
-  return rpc_handler_info_.rpc_type;
+void Rpc::OnRequest() { handler_->OnRequestInternal(request_.get()); }
+
+void Rpc::OnReadsDone() { handler_->OnReadsDone(); }
+
+void Rpc::RequestNextMethodInvocation() {
+  done_event_.pending = true;
+  new_connection_event_.pending = true;
+  server_context_.AsyncNotifyWhenDone(&done_event_);
+  switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+      service_->RequestAsyncClientStreaming(
+          method_index_, &server_context_, streaming_interface(),
+          server_completion_queue_, server_completion_queue_,
+          &new_connection_event_);
+      break;
+    default:
+      LOG(FATAL) << "RPC type not implemented.";
+  }
+}
+
+void Rpc::RequestStreamingReadIfNeeded() {
+  // For request-streaming RPCs ask the client to start sending requests.
+  switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+      read_event_.pending = true;
+      async_reader_interface()->Read(request_.get(), &read_event_);
+      break;
+    default:
+      LOG(FATAL) << "RPC type not implemented.";
+  }
+}
+
+void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
+  response_ = std::move(message);
+  write_event_.pending = true;
+  server_async_reader_->Finish(*response_.get(), ::grpc::Status::OK,
+                               &write_event_);
 }
 
 ::grpc::internal::ServerAsyncStreamingInterface* Rpc::streaming_interface() {
@@ -53,23 +100,35 @@ Rpc::Rpc(int method_index,
   LOG(FATAL) << "Never reached.";
 }
 
-Rpc::RpcState* Rpc::GetRpcState(State state) {
-  switch (state) {
-    case State::NEW_CONNECTION:
-      return &new_connection_state_;
-    case State::READ:
-      return &read_state_;
-    case State::WRITE:
-      return &write_state_;
-    case State::DONE:
-      return &done_state_;
+::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
+Rpc::async_reader_interface() {
+  switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+      return server_async_reader_.get();
+    default:
+      LOG(FATAL) << "RPC type not implemented.";
+  }
+  LOG(FATAL) << "Never reached.";
+}
+
+Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
+  switch (event) {
+    case Event::NEW_CONNECTION:
+      return &new_connection_event_;
+    case Event::READ:
+      return &read_event_;
+    case Event::WRITE:
+      return &write_event_;
+    case Event::DONE:
+      return &done_event_;
   }
   LOG(FATAL) << "Never reached.";
 }
 
 ActiveRpcs::ActiveRpcs() : lock_() {}
 
-void Rpc::InitializeResponders(::grpc::internal::RpcMethod::RpcType rpc_type) {
+void Rpc::InitializeReadersAndWriters(
+    ::grpc::internal::RpcMethod::RpcType rpc_type) {
   switch (rpc_type) {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       server_async_reader_ =

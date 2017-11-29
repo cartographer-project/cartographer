@@ -21,10 +21,11 @@
 #include <unordered_set>
 
 #include "cartographer/common/mutex.h"
-#include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/framework/rpc_handler_interface.h"
 #include "google/protobuf/message.h"
 #include "grpc++/grpc++.h"
 #include "grpc++/impl/codegen/async_stream.h"
+#include "grpc++/impl/codegen/async_unary_call.h"
 #include "grpc++/impl/codegen/proto_utils.h"
 #include "grpc++/impl/codegen/service_type.h"
 
@@ -34,44 +35,53 @@ namespace framework {
 class Service;
 class Rpc {
  public:
-  enum class State { NEW_CONNECTION = 0, READ, WRITE, DONE };
-  struct RpcState {
-    const State state;
-    Service* service;
+  enum class Event { NEW_CONNECTION = 0, READ, WRITE, DONE };
+  struct RpcEvent {
+    const Event event;
     Rpc* rpc;
+    // Indicates whether the event is pending completion. E.g. 'event = READ'
+    // and 'pending = true' means that a read has been requested but hasn't
+    // completed yet. While 'pending = false' indicates, that the read has
+    // completed and currently no read is in-flight.
+    bool pending;
   };
 
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
       const RpcHandlerInfo& rpc_handler_info, Service* service);
-
-  int method_index() const { return method_index_; }
-  ::grpc::ServerCompletionQueue* server_completion_queue();
-  ::grpc::internal::RpcMethod::RpcType rpc_type() const;
-  ::grpc::ServerContext* server_context() { return &server_context_; }
-  ::grpc::internal::ServerAsyncStreamingInterface* streaming_interface();
-  RpcState* GetRpcState(State state);
-  const RpcHandlerInfo& rpc_handler_info() const { return rpc_handler_info_; }
-
-  ::google::protobuf::Message* request() { return request_.get(); }
-  ::google::protobuf::Message* response() { return response_.get(); }
+  std::unique_ptr<Rpc> Clone();
+  void OnRequest();
+  void OnReadsDone();
+  void RequestNextMethodInvocation();
+  void RequestStreamingReadIfNeeded();
+  void Write(std::unique_ptr<::google::protobuf::Message> message);
+  Service* service() { return service_; }
+  RpcEvent* GetRpcEvent(Event event);
 
  private:
   Rpc(const Rpc&) = delete;
   Rpc& operator=(const Rpc&) = delete;
-  void InitializeResponders(::grpc::internal::RpcMethod::RpcType rpc_type);
+  void InitializeReadersAndWriters(
+      ::grpc::internal::RpcMethod::RpcType rpc_type);
+
+  ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
+  async_reader_interface();
+  ::grpc::internal::ServerAsyncStreamingInterface* streaming_interface();
 
   int method_index_;
   ::grpc::ServerCompletionQueue* server_completion_queue_;
   RpcHandlerInfo rpc_handler_info_;
+  Service* service_;
   ::grpc::ServerContext server_context_;
 
-  RpcState new_connection_state_;
-  RpcState read_state_;
-  RpcState write_state_;
-  RpcState done_state_;
+  RpcEvent new_connection_event_;
+  RpcEvent read_event_;
+  RpcEvent write_event_;
+  RpcEvent done_event_;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
+
+  std::unique_ptr<RpcHandlerInterface> handler_;
 
   std::unique_ptr<::grpc::ServerAsyncReader<google::protobuf::Message,
                                             google::protobuf::Message>>
