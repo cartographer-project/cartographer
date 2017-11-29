@@ -26,13 +26,11 @@ Service::Service(const std::string& service_name,
                  const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos)
     : rpc_handler_infos_(rpc_handler_infos) {
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
-    std::string fully_qualified_method_name =
-        "/" + service_name + "/" + rpc_handler_info.first;
     // The 'handler' below is set to 'nullptr' indicating that we want to
     // handle this method asynchronously.
     this->AddMethod(new grpc::internal::RpcServiceMethod(
-        fully_qualified_method_name.c_str(), rpc_handler_info.second.rpc_type,
-        nullptr /* handler */));
+        rpc_handler_info.second.fully_qualified_name.c_str(),
+        rpc_handler_info.second.rpc_type, nullptr /* handler */));
   }
 }
 

@@ -69,6 +69,12 @@ void Rpc::RequestNextMethodInvocation() {
           server_completion_queue_, server_completion_queue_,
           &new_connection_event_);
       break;
+    case ::grpc::internal::RpcMethod::NORMAL_RPC:
+      service_->RequestAsyncUnary(
+          method_index_, &server_context_, request_.get(),
+          streaming_interface(), server_completion_queue_,
+          server_completion_queue_, &new_connection_event_);
+      break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
   }
@@ -81,6 +87,13 @@ void Rpc::RequestStreamingReadIfNeeded() {
       read_event_.pending = true;
       async_reader_interface()->Read(request_.get(), &read_event_);
       break;
+    case ::grpc::internal::RpcMethod::NORMAL_RPC:
+      // For NORMAL_RPC we don't have to do anything here, since gRPC
+      // automatically issues a READ request and places the request into the
+      // 'Message' we provided to 'RequestAsyncUnary' above.
+      OnRequest();
+      OnReadsDone();
+      break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
   }
@@ -89,14 +102,26 @@ void Rpc::RequestStreamingReadIfNeeded() {
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   response_ = std::move(message);
   write_event_.pending = true;
-  server_async_reader_->Finish(*response_.get(), ::grpc::Status::OK,
-                               &write_event_);
+  switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+      server_async_reader_->Finish(*response_.get(), ::grpc::Status::OK,
+                                   &write_event_);
+      break;
+    case ::grpc::internal::RpcMethod::NORMAL_RPC:
+      server_async_response_writer_->Finish(*response_.get(),
+                                            ::grpc::Status::OK, &write_event_);
+      break;
+    default:
+      LOG(FATAL) << "RPC type not implemented.";
+  }
 }
 
 ::grpc::internal::ServerAsyncStreamingInterface* Rpc::streaming_interface() {
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       return server_async_reader_.get();
+    case ::grpc::internal::RpcMethod::NORMAL_RPC:
+      return server_async_response_writer_.get();
     default:
       LOG(FATAL) << "RPC type not implemented.";
   }
@@ -108,6 +133,8 @@ Rpc::async_reader_interface() {
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       return server_async_reader_.get();
+    case ::grpc::internal::RpcMethod::NORMAL_RPC:
+      LOG(FATAL) << "For NORMAL_RPC no streaming interface exists.";
     default:
       LOG(FATAL) << "RPC type not implemented.";
   }
@@ -138,6 +165,11 @@ void Rpc::InitializeReadersAndWriters(
           cartographer::common::make_unique<::grpc::ServerAsyncReader<
               google::protobuf::Message, google::protobuf::Message>>(
               &server_context_);
+      break;
+    case ::grpc::internal::RpcMethod::NORMAL_RPC:
+      server_async_response_writer_ = cartographer::common::make_unique<
+          ::grpc::ServerAsyncResponseWriter<google::protobuf::Message>>(
+          &server_context_);
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";

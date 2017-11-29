@@ -86,6 +86,8 @@ class Rpc {
 
   std::unique_ptr<RpcHandlerInterface> handler_;
 
+  std::unique_ptr<::grpc::ServerAsyncResponseWriter<google::protobuf::Message>>
+      server_async_response_writer_;
   std::unique_ptr<::grpc::ServerAsyncReader<google::protobuf::Message,
                                             google::protobuf::Message>>
       server_async_reader_;
