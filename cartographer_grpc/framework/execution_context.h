@@ -17,7 +17,6 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_EXECUTION_CONTEXT_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_EXECUTION_CONTEXT_H
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/mutex.h"
 #include "glog/logging.h"
 
@@ -34,20 +33,20 @@ class ExecutionContext {
   // This non-movable, non-copyable class is used to broker access from various
   // RPC handlers to the shared 'ExecutionContext'. Handles automatically lock
   // the context they point to.
-  template <typename T>
-  class Handle {
+  template <typename ContextType>
+  class Synchronized {
    public:
-    T* operator->() { return static_cast<T*>(execution_context_); }
-    Handle(cartographer::common::Mutex* lock,
-           ExecutionContext* execution_context)
-        : locker_(cartographer::common::make_unique<
-                  cartographer::common::MutexLocker>(lock)),
-          execution_context_(execution_context) {}
-    Handle(const Handle&) = delete;
-    Handle(Handle&&) = delete;
+    ContextType* operator->() {
+      return static_cast<ContextType*>(execution_context_);
+    }
+    Synchronized(cartographer::common::Mutex* lock,
+                 ExecutionContext* execution_context)
+        : locker_(lock), execution_context_(execution_context) {}
+    Synchronized(const Synchronized&) = delete;
+    Synchronized(Synchronized&&) = delete;
 
    private:
-    std::unique_ptr<cartographer::common::MutexLocker> locker_;
+    cartographer::common::MutexLocker locker_;
     ExecutionContext* execution_context_;
   };
   cartographer::common::Mutex* lock() { return &lock_; }

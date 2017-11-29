@@ -28,16 +28,16 @@ namespace cartographer_grpc {
 namespace framework {
 namespace {
 
-class MyContext : public ExecutionContext {
+class MathServerContext : public ExecutionContext {
  public:
-  int GetOffset() { return 10; }
+  int additional_increment() { return 10; }
 };
 
 class GetServerOptionsHandler
     : public RpcHandler<Stream<proto::GetSumRequest>, proto::GetSumResponse> {
  public:
   void OnRequest(const proto::GetSumRequest& request) override {
-    sum_ += GetContext<MyContext>()->GetOffset();
+    sum_ += GetContext<MathServerContext>()->additional_increment();
     sum_ += request.input();
   }
 
@@ -77,7 +77,8 @@ TEST_F(ServerTest, StartAndStopServerTest) {
 }
 
 TEST_F(ServerTest, ProcessRpcStreamTest) {
-  server_->SetExecutionContext(cartographer::common::make_unique<MyContext>());
+  server_->SetExecutionContext(
+      cartographer::common::make_unique<MathServerContext>());
   server_->Start();
 
   auto channel =

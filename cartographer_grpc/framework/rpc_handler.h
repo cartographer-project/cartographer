@@ -49,7 +49,7 @@ class RpcHandler : public RpcHandlerInterface {
     rpc_->Write(std::move(response));
   }
   template <typename T>
-  ExecutionContext::Handle<T> GetContext() {
+  ExecutionContext::Synchronized<T> GetContext() {
     return {execution_context_->lock(), execution_context_};
   }
 
