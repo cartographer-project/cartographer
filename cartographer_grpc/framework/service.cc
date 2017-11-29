@@ -52,19 +52,19 @@ void Service::StartServing(
 
 void Service::StopServing() { shutting_down_ = true; }
 
-void Service::HandleEvent(Rpc::State state, Rpc* rpc, bool ok) {
-  rpc->GetRpcState(state)->pending = false;
-  switch (state) {
-    case Rpc::State::NEW_CONNECTION:
+void Service::HandleEvent(Rpc::Event event, Rpc* rpc, bool ok) {
+  rpc->GetRpcEvent(event)->pending = false;
+  switch (event) {
+    case Rpc::Event::NEW_CONNECTION:
       HandleNewConnection(rpc, ok);
       break;
-    case Rpc::State::READ:
+    case Rpc::Event::READ:
       HandleRead(rpc, ok);
       break;
-    case Rpc::State::WRITE:
+    case Rpc::Event::WRITE:
       HandleWrite(rpc, ok);
       break;
-    case Rpc::State::DONE:
+    case Rpc::Event::DONE:
       HandleDone(rpc, ok);
       break;
   }
@@ -116,9 +116,9 @@ void Service::HandleWrite(Rpc* rpc, bool ok) {
 void Service::HandleDone(Rpc* rpc, bool ok) { RemoveIfNotPending(rpc); }
 
 void Service::RemoveIfNotPending(Rpc* rpc) {
-  if (!rpc->GetRpcState(Rpc::State::DONE)->pending &&
-      !rpc->GetRpcState(Rpc::State::READ)->pending &&
-      !rpc->GetRpcState(Rpc::State::WRITE)->pending) {
+  if (!rpc->GetRpcEvent(Rpc::Event::DONE)->pending &&
+      !rpc->GetRpcEvent(Rpc::Event::READ)->pending &&
+      !rpc->GetRpcEvent(Rpc::Event::WRITE)->pending) {
     active_rpcs_.Remove(rpc);
   }
 }

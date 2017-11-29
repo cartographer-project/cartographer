@@ -36,7 +36,7 @@ class Service : public ::grpc::Service {
   Service(const std::string& service_name,
           const std::map<std::string, RpcHandlerInfo>& rpc_handlers);
   void StartServing(std::vector<CompletionQueueThread>& completion_queues);
-  void HandleEvent(Rpc::State state, Rpc* rpc, bool ok);
+  void HandleEvent(Rpc::Event event, Rpc* rpc, bool ok);
   void StopServing();
 
  private:

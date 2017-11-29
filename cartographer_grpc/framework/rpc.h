@@ -35,10 +35,14 @@ namespace framework {
 class Service;
 class Rpc {
  public:
-  enum class State { NEW_CONNECTION = 0, READ, WRITE, DONE };
-  struct RpcState {
-    const State state;
+  enum class Event { NEW_CONNECTION = 0, READ, WRITE, DONE };
+  struct RpcEvent {
+    const Event event;
     Rpc* rpc;
+    // Indicates whether the event is pending completion. E.g. 'event = READ'
+    // and 'pending = true' means that a read has been requested but hasn't
+    // completed yet. While 'pending = false' indicates, that the read has
+    // completed and currently no read is in-flight.
     bool pending;
   };
 
@@ -51,7 +55,7 @@ class Rpc {
   void RequestStreamingReadIfNeeded();
   void Write(std::unique_ptr<::google::protobuf::Message> message);
   Service* service() { return service_; }
-  RpcState* GetRpcState(State state);
+  RpcEvent* GetRpcEvent(Event event);
 
  private:
   Rpc(const Rpc&) = delete;
@@ -69,10 +73,10 @@ class Rpc {
   Service* service_;
   ::grpc::ServerContext server_context_;
 
-  RpcState new_connection_state_;
-  RpcState read_state_;
-  RpcState write_state_;
-  RpcState done_state_;
+  RpcEvent new_connection_event_;
+  RpcEvent read_event_;
+  RpcEvent write_event_;
+  RpcEvent done_event_;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;

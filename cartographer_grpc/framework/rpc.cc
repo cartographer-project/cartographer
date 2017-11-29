@@ -30,10 +30,10 @@ Rpc::Rpc(int method_index,
       server_completion_queue_(server_completion_queue),
       rpc_handler_info_(rpc_handler_info),
       service_(service),
-      new_connection_state_{State::NEW_CONNECTION, this, false},
-      read_state_{State::READ, this, false},
-      write_state_{State::WRITE, this, false},
-      done_state_{State::DONE, this, false},
+      new_connection_event_{Event::NEW_CONNECTION, this, false},
+      read_event_{Event::READ, this, false},
+      write_event_{Event::WRITE, this, false},
+      done_event_{Event::DONE, this, false},
       handler_(rpc_handler_info_.rpc_handler_factory(this)) {
   InitializeReadersAndWriters(rpc_handler_info_.rpc_type);
 
@@ -56,15 +56,15 @@ void Rpc::OnRequest() { handler_->OnRequestInternal(request_.get()); }
 void Rpc::OnReadsDone() { handler_->OnReadsDone(); }
 
 void Rpc::RequestNextMethodInvocation() {
-  done_state_.pending = true;
-  new_connection_state_.pending = true;
-  server_context_.AsyncNotifyWhenDone(&done_state_);
+  done_event_.pending = true;
+  new_connection_event_.pending = true;
+  server_context_.AsyncNotifyWhenDone(&done_event_);
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       service_->RequestAsyncClientStreaming(
           method_index_, &server_context_, streaming_interface(),
           server_completion_queue_, server_completion_queue_,
-          &new_connection_state_);
+          &new_connection_event_);
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -75,8 +75,8 @@ void Rpc::RequestStreamingReadIfNeeded() {
   // For request-streaming RPCs ask the client to start sending requests.
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      read_state_.pending = true;
-      async_reader_interface()->Read(request_.get(), &read_state_);
+      read_event_.pending = true;
+      async_reader_interface()->Read(request_.get(), &read_event_);
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -85,9 +85,9 @@ void Rpc::RequestStreamingReadIfNeeded() {
 
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   response_ = std::move(message);
-  write_state_.pending = true;
+  write_event_.pending = true;
   server_async_reader_->Finish(*response_.get(), ::grpc::Status::OK,
-                               &write_state_);
+                               &write_event_);
 }
 
 ::grpc::internal::ServerAsyncStreamingInterface* Rpc::streaming_interface() {
@@ -111,16 +111,16 @@ Rpc::async_reader_interface() {
   LOG(FATAL) << "Never reached.";
 }
 
-Rpc::RpcState* Rpc::GetRpcState(State state) {
-  switch (state) {
-    case State::NEW_CONNECTION:
-      return &new_connection_state_;
-    case State::READ:
-      return &read_state_;
-    case State::WRITE:
-      return &write_state_;
-    case State::DONE:
-      return &done_state_;
+Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
+  switch (event) {
+    case Event::NEW_CONNECTION:
+      return &new_connection_event_;
+    case Event::READ:
+      return &read_event_;
+    case Event::WRITE:
+      return &write_event_;
+    case Event::DONE:
+      return &done_event_;
   }
   LOG(FATAL) << "Never reached.";
 }

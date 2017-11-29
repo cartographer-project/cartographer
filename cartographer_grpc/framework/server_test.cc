@@ -44,6 +44,9 @@ class GetServerOptionsHandler
   int sum_ = 0;
 };
 
+// TODO(cschuet): Due to the hard-coded part these tests will become flaky when
+// run in parallel. It would be nice to find a way to solve that. gRPC also
+// allows to communicate over UNIX domain sockets.
 const std::string kServerAddress = "localhost:50051";
 const std::size_t kNumThreads = 1;
 
