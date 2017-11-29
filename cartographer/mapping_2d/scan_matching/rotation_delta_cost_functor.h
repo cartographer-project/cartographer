@@ -27,13 +27,11 @@ namespace scan_matching {
 // the solution's distance from 'target_angle'.
 class RotationDeltaCostFunctor {
  public:
-  // Constructs a new RotationDeltaCostFunctor for the given 'angle'.
-  explicit RotationDeltaCostFunctor(const double scaling_factor,
-                                    const double target_angle)
-      : scaling_factor_(scaling_factor), angle_(target_angle) {}
-
-  RotationDeltaCostFunctor(const RotationDeltaCostFunctor&) = delete;
-  RotationDeltaCostFunctor& operator=(const RotationDeltaCostFunctor&) = delete;
+  static ceres::CostFunction* CreateAutoDiffCostFunction(
+      const double scaling_factor, const double target_angle) {
+    return new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor, 1, 3>(
+        new RotationDeltaCostFunctor(scaling_factor, target_angle));
+  }
 
   template <typename T>
   bool operator()(const T* const pose, T* residual) const {
@@ -42,6 +40,14 @@ class RotationDeltaCostFunctor {
   }
 
  private:
+  // Constructs a new RotationDeltaCostFunctor for the given 'angle'.
+  explicit RotationDeltaCostFunctor(const double scaling_factor,
+                                    const double target_angle)
+      : scaling_factor_(scaling_factor), angle_(target_angle) {}
+
+  RotationDeltaCostFunctor(const RotationDeltaCostFunctor&) = delete;
+  RotationDeltaCostFunctor& operator=(const RotationDeltaCostFunctor&) = delete;
+
   const double scaling_factor_;
   const double angle_;
 };

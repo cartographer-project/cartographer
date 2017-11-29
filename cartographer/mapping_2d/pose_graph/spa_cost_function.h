@@ -36,7 +36,11 @@ class SpaCostFunction {
  public:
   using Constraint = mapping::PoseGraph::Constraint;
 
-  explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
+  static ceres::CostFunction* CreateAutoDiffCostFunction(
+      const Constraint::Pose& pose) {
+    return new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
+        new SpaCostFunction(pose));
+  }
 
   // Computes the error between the node-to-submap alignment 'zbar_ij' and the
   // difference of submap pose 'c_i' and node pose 'c_j' which are both in an
@@ -78,6 +82,8 @@ class SpaCostFunction {
   }
 
  private:
+  explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
+
   const Constraint::Pose pose_;
 };
 
