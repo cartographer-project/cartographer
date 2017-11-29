@@ -62,7 +62,7 @@ class LocalTrajectoryBuilder {
   void AddImuData(const sensor::ImuData& imu_data);
   // Returns 'MatchingResult' when range data accumulation completed,
   // otherwise 'nullptr'. `time` is when the last point in `range_data`
-  // was acquired, `range_data` contains the relative time of point with 
+  // was acquired, `range_data` contains the relative time of point with
   // respect to `time`.
   std::unique_ptr<MatchingResult> AddRangeData(
       common::Time time, const sensor::TimedRangeData& range_data);

@@ -62,8 +62,8 @@ class LocalTrajectoryBuilder {
 
   // Returns 'MatchingResult' when range data accumulation completed,
   // otherwise 'nullptr'. Range data must be approximately horizontal
-  // for 2D SLAM. `time` is when the last point in `range_data` was 
-  // acquired, `range_data` contains the relative time of point with 
+  // for 2D SLAM. `time` is when the last point in `range_data` was
+  // acquired, `range_data` contains the relative time of point with
   // respect to `time`.
   std::unique_ptr<MatchingResult> AddRangeData(
       common::Time, const sensor::TimedRangeData& range_data);
