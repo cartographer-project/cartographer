@@ -36,7 +36,7 @@ namespace framework {
 class Service;
 class Rpc {
  public:
-  enum class Event { NEW_CONNECTION = 0, READ, WRITE, DONE };
+  enum class Event { NEW_CONNECTION = 0, READ, WRITE, FINISH, DONE };
   struct RpcEvent {
     const Event event;
     Rpc* rpc;
@@ -79,6 +79,7 @@ class Rpc {
   RpcEvent new_connection_event_;
   RpcEvent read_event_;
   RpcEvent write_event_;
+  RpcEvent finish_event_;
   RpcEvent done_event_;
 
   std::unique_ptr<google::protobuf::Message> request_;
@@ -86,6 +87,8 @@ class Rpc {
 
   std::unique_ptr<RpcHandlerInterface> handler_;
 
+  std::unique_ptr<::grpc::ServerAsyncResponseWriter<google::protobuf::Message>>
+      server_async_response_writer_;
   std::unique_ptr<::grpc::ServerAsyncReader<google::protobuf::Message,
                                             google::protobuf::Message>>
       server_async_reader_;

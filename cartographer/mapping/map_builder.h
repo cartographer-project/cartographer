@@ -17,24 +17,13 @@
 #ifndef CARTOGRAPHER_MAPPING_MAP_BUILDER_H_
 #define CARTOGRAPHER_MAPPING_MAP_BUILDER_H_
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#include "cartographer/mapping/map_builder_interface.h"
 
-#include "Eigen/Geometry"
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/port.h"
+#include <memory>
+#include <unordered_map>
+
 #include "cartographer/common/thread_pool.h"
-#include "cartographer/io/proto_stream.h"
-#include "cartographer/mapping/id.h"
-#include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
-#include "cartographer/mapping/proto/submap_visualization.pb.h"
-#include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
-#include "cartographer/mapping/submaps.h"
-#include "cartographer/mapping/trajectory_builder.h"
 #include "cartographer/mapping_2d/pose_graph.h"
 #include "cartographer/mapping_3d/pose_graph.h"
 #include "cartographer/sensor/collator.h"
@@ -47,50 +36,36 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 
 // Wires up the complete SLAM stack with TrajectoryBuilders (for local submaps)
 // and a PoseGraph for loop closure.
-class MapBuilder {
+class MapBuilder : public MapBuilderInterface {
  public:
-  using LocalSlamResultCallback =
-      GlobalTrajectoryBuilderInterface::LocalSlamResultCallback;
-
   MapBuilder(const proto::MapBuilderOptions& options,
              const LocalSlamResultCallback& local_slam_result_callback);
-  ~MapBuilder();
+  ~MapBuilder() override;
 
   MapBuilder(const MapBuilder&) = delete;
   MapBuilder& operator=(const MapBuilder&) = delete;
 
-  // Creates a new trajectory builder and returns its index.
   int AddTrajectoryBuilder(
       const std::unordered_set<std::string>& expected_sensor_ids,
-      const proto::TrajectoryBuilderOptions& trajectory_options);
+      const proto::TrajectoryBuilderOptions& trajectory_options) override;
 
-  // Creates a new trajectory and returns its index. Querying the trajectory
-  // builder for it will return 'nullptr'.
-  int AddTrajectoryForDeserialization();
+  int AddTrajectoryForDeserialization() override;
 
-  // Returns the TrajectoryBuilder corresponding to the specified
-  // 'trajectory_id' or 'nullptr' if the trajectory has no corresponding
-  // builder.
-  mapping::TrajectoryBuilder* GetTrajectoryBuilder(int trajectory_id) const;
+  mapping::TrajectoryBuilder* GetTrajectoryBuilder(
+      int trajectory_id) const override;
 
-  // Marks the TrajectoryBuilder corresponding to 'trajectory_id' as finished,
-  // i.e. no further sensor data is expected.
-  void FinishTrajectory(int trajectory_id);
+  void FinishTrajectory(int trajectory_id) override;
 
-  // Fills the SubmapQuery::Response corresponding to 'submap_id'. Returns an
-  // error string on failure, or an empty string on success.
   std::string SubmapToProto(const SubmapId& submap_id,
-                            proto::SubmapQuery::Response* response);
+                            proto::SubmapQuery::Response* response) override;
 
-  // Serializes the current state to a proto stream.
-  void SerializeState(io::ProtoStreamWriter* writer);
+  void SerializeState(io::ProtoStreamWriter* writer) override;
 
-  // Loads submaps from a proto stream into a new frozen trajectory.
-  void LoadMap(io::ProtoStreamReader* reader);
+  void LoadMap(io::ProtoStreamReader* reader) override;
 
-  int num_trajectory_builders() const;
+  int num_trajectory_builders() const override;
 
-  mapping::PoseGraph* pose_graph();
+  mapping::PoseGraph* pose_graph() override;
 
  private:
   const proto::MapBuilderOptions options_;

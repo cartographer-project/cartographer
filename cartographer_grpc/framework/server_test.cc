@@ -33,7 +33,7 @@ class MathServerContext : public ExecutionContext {
   int additional_increment() { return 10; }
 };
 
-class GetServerOptionsHandler
+class GetSumHandler
     : public RpcHandler<Stream<proto::GetSumRequest>, proto::GetSumResponse> {
  public:
   void OnRequest(const proto::GetSumRequest& request) override {
@@ -51,6 +51,16 @@ class GetServerOptionsHandler
   int sum_ = 0;
 };
 
+class GetSquareHandler
+    : public RpcHandler<proto::GetSquareRequest, proto::GetSquareResponse> {
+  void OnRequest(const proto::GetSquareRequest& request) override {
+    auto response =
+        cartographer::common::make_unique<proto::GetSquareResponse>();
+    response->set_output(request.input() * request.input());
+    Send(std::move(response));
+  }
+};
+
 // TODO(cschuet): Due to the hard-coded part these tests will become flaky when
 // run in parallel. It would be nice to find a way to solve that. gRPC also
 // allows to communicate over UNIX domain sockets.
@@ -63,12 +73,19 @@ class ServerTest : public ::testing::Test {
     Server::Builder server_builder;
     server_builder.SetServerAddress(kServerAddress);
     server_builder.SetNumberOfThreads(kNumThreads);
-    server_builder.RegisterHandler<GetServerOptionsHandler, proto::Math>(
-        "GetSum");
+    server_builder.RegisterHandler<GetSumHandler, proto::Math>("GetSum");
+    server_builder.RegisterHandler<GetSquareHandler, proto::Math>("GetSquare");
     server_ = server_builder.Build();
+
+    client_channel_ =
+        grpc::CreateChannel(kServerAddress, grpc::InsecureChannelCredentials());
+    stub_ = proto::Math::NewStub(client_channel_);
   }
 
   std::unique_ptr<Server> server_;
+  std::shared_ptr<grpc::Channel> client_channel_;
+  std::unique_ptr<proto::Math::Stub> stub_;
+  grpc::ClientContext client_context_;
 };
 
 TEST_F(ServerTest, StartAndStopServerTest) {
@@ -81,13 +98,9 @@ TEST_F(ServerTest, ProcessRpcStreamTest) {
       cartographer::common::make_unique<MathServerContext>());
   server_->Start();
 
-  auto channel =
-      grpc::CreateChannel(kServerAddress, grpc::InsecureChannelCredentials());
-  std::unique_ptr<proto::Math::Stub> stub(proto::Math::NewStub(channel));
-  grpc::ClientContext context;
   proto::GetSumResponse result;
   std::unique_ptr<grpc::ClientWriter<proto::GetSumRequest> > writer(
-      stub->GetSum(&context, &result));
+      stub_->GetSum(&client_context_, &result));
   for (int i = 0; i < 3; ++i) {
     proto::GetSumRequest request;
     request.set_input(i);
@@ -97,6 +110,19 @@ TEST_F(ServerTest, ProcessRpcStreamTest) {
   grpc::Status status = writer->Finish();
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(result.output(), 33);
+
+  server_->Shutdown();
+}
+
+TEST_F(ServerTest, ProcessUnaryRpcTest) {
+  server_->Start();
+
+  proto::GetSquareResponse result;
+  proto::GetSquareRequest request;
+  request.set_input(11);
+  grpc::Status status = stub_->GetSquare(&client_context_, request, &result);
+  EXPECT_TRUE(status.ok());
+  EXPECT_EQ(result.output(), 121);
 
   server_->Shutdown();
 }
