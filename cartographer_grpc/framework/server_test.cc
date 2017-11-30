@@ -51,6 +51,24 @@ class GetSumHandler
   int sum_ = 0;
 };
 
+class GetRunningSumHandler
+    : public RpcHandler<Stream<proto::GetSumRequest>, Stream<proto::GetSumResponse>> {
+ public:
+  void OnRequest(const proto::GetSumRequest& request) override {
+    sum_ += request.input();
+    auto response = cartographer::common::make_unique<proto::GetSumResponse>();
+    response->set_output(sum_);
+    Send(std::move(response));
+  }
+
+  void OnReadsDone() override {
+    // Something like WritesDone();
+  }
+
+ private:
+  int sum_ = 0;
+};
+
 class GetSquareHandler
     : public RpcHandler<proto::GetSquareRequest, proto::GetSquareResponse> {
   void OnRequest(const proto::GetSquareRequest& request) override {
@@ -75,6 +93,7 @@ class ServerTest : public ::testing::Test {
     server_builder.SetNumberOfThreads(kNumThreads);
     server_builder.RegisterHandler<GetSumHandler, proto::Math>("GetSum");
     server_builder.RegisterHandler<GetSquareHandler, proto::Math>("GetSquare");
+    server_builder.RegisterHandler<GetRunningSumHandler, proto::Math>("GetRunningSum");
     server_ = server_builder.Build();
 
     client_channel_ =
