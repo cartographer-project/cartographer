@@ -26,13 +26,11 @@ Service::Service(const std::string& service_name,
                  const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos)
     : rpc_handler_infos_(rpc_handler_infos) {
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
-    std::string fully_qualified_method_name =
-        "/" + service_name + "/" + rpc_handler_info.first;
     // The 'handler' below is set to 'nullptr' indicating that we want to
     // handle this method asynchronously.
     this->AddMethod(new grpc::internal::RpcServiceMethod(
-        fully_qualified_method_name.c_str(), rpc_handler_info.second.rpc_type,
-        nullptr /* handler */));
+        rpc_handler_info.second.fully_qualified_name.c_str(),
+        rpc_handler_info.second.rpc_type, nullptr /* handler */));
   }
 }
 
@@ -64,6 +62,9 @@ void Service::HandleEvent(Rpc::Event event, Rpc* rpc, bool ok) {
       break;
     case Rpc::Event::WRITE:
       HandleWrite(rpc, ok);
+      break;
+    case Rpc::Event::FINISH:
+      HandleFinish(rpc, ok);
       break;
     case Rpc::Event::DONE:
       HandleDone(rpc, ok);
@@ -114,12 +115,21 @@ void Service::HandleWrite(Rpc* rpc, bool ok) {
   RemoveIfNotPending(rpc);
 }
 
+void Service::HandleFinish(Rpc* rpc, bool ok) {
+  if (!ok) {
+    LOG(ERROR) << "Finish failed";
+  }
+
+  RemoveIfNotPending(rpc);
+}
+
 void Service::HandleDone(Rpc* rpc, bool ok) { RemoveIfNotPending(rpc); }
 
 void Service::RemoveIfNotPending(Rpc* rpc) {
   if (!rpc->GetRpcEvent(Rpc::Event::DONE)->pending &&
       !rpc->GetRpcEvent(Rpc::Event::READ)->pending &&
-      !rpc->GetRpcEvent(Rpc::Event::WRITE)->pending) {
+      !rpc->GetRpcEvent(Rpc::Event::WRITE)->pending &&
+      !rpc->GetRpcEvent(Rpc::Event::FINISH)->pending) {
     active_rpcs_.Remove(rpc);
   }
 }

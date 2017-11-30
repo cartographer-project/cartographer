@@ -32,7 +32,7 @@ class RpcHandlerInterface {
   virtual void SetRpc(Rpc* rpc) = 0;
   virtual void OnRequestInternal(
       const ::google::protobuf::Message* request) = 0;
-  virtual void OnReadsDone() = 0;
+  virtual void OnReadsDone(){};
 };
 
 using RpcHandlerFactory = std::function<std::unique_ptr<RpcHandlerInterface>(
@@ -43,6 +43,7 @@ struct RpcHandlerInfo {
   const google::protobuf::Descriptor* response_descriptor;
   const RpcHandlerFactory rpc_handler_factory;
   const grpc::internal::RpcMethod::RpcType rpc_type;
+  const std::string fully_qualified_name;
 };
 
 }  // namespace framework
