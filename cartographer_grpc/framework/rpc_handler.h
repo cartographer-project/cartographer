@@ -45,6 +45,7 @@ class RpcHandler : public RpcHandlerInterface {
     OnRequest(static_cast<const RequestType&>(*request));
   }
   virtual void OnRequest(const RequestType& request) = 0;
+  void Finish(::grpc::Status status) { rpc_->Finish(status); }
   void Send(std::unique_ptr<ResponseType> response) {
     rpc_->Write(std::move(response));
   }

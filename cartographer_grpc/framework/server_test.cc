@@ -55,14 +55,20 @@ class GetRunningSumHandler
     : public RpcHandler<Stream<proto::GetSumRequest>, Stream<proto::GetSumResponse>> {
  public:
   void OnRequest(const proto::GetSumRequest& request) override {
+    LOG(INFO) << "Received " << request.DebugString();
     sum_ += request.input();
     auto response = cartographer::common::make_unique<proto::GetSumResponse>();
+    response->set_output(sum_);
+    Send(std::move(response));
+
+    response = cartographer::common::make_unique<proto::GetSumResponse>();
     response->set_output(sum_);
     Send(std::move(response));
   }
 
   void OnReadsDone() override {
-    // Something like WritesDone();
+    LOG(INFO) << "Reads Done.";
+    Finish(::grpc::Status::OK);
   }
 
  private:
@@ -142,6 +148,25 @@ TEST_F(ServerTest, ProcessUnaryRpcTest) {
   grpc::Status status = stub_->GetSquare(&client_context_, request, &result);
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(result.output(), 121);
+
+  server_->Shutdown();
+}
+
+TEST_F(ServerTest, ProcessBidiStreamingRpcTest) {
+  server_->Start();
+
+  auto reader_writer = stub_->GetRunningSum(&client_context_);
+  for (int i = 0; i < 3; ++i) {
+    proto::GetSumRequest request;
+    request.set_input(i);
+    EXPECT_TRUE(reader_writer->Write(request));
+  }
+  reader_writer->WritesDone();
+  proto::GetSumResponse response;
+  while (reader_writer->Read(&response)) {
+    LOG(INFO) << "GOT: " << response.DebugString();
+  }
+  LOG(INFO) << "Writes done.";
 
   server_->Shutdown();
 }
