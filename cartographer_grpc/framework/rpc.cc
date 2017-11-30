@@ -35,6 +35,7 @@ Rpc::Rpc(int method_index,
       new_connection_event_{Event::NEW_CONNECTION, this, false},
       read_event_{Event::READ, this, false},
       write_event_{Event::WRITE, this, false},
+      finish_event_{Event::FINISH, this, false},
       done_event_{Event::DONE, this, false},
       handler_(rpc_handler_info_.rpc_handler_factory(this, execution_context)) {
   InitializeReadersAndWriters(rpc_handler_info_.rpc_type);
@@ -101,15 +102,16 @@ void Rpc::RequestStreamingReadIfNeeded() {
 
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   response_ = std::move(message);
-  write_event_.pending = true;
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       server_async_reader_->Finish(*response_.get(), ::grpc::Status::OK,
-                                   &write_event_);
+                                   &finish_event_);
+      finish_event_.pending = true;
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       server_async_response_writer_->Finish(*response_.get(),
-                                            ::grpc::Status::OK, &write_event_);
+                                            ::grpc::Status::OK, &finish_event_);
+      finish_event_.pending = true;
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -149,6 +151,8 @@ Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
       return &read_event_;
     case Event::WRITE:
       return &write_event_;
+    case Event::FINISH:
+      return &finish_event_;
     case Event::DONE:
       return &done_event_;
   }

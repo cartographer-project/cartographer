@@ -63,6 +63,9 @@ void Service::HandleEvent(Rpc::Event event, Rpc* rpc, bool ok) {
     case Rpc::Event::WRITE:
       HandleWrite(rpc, ok);
       break;
+    case Rpc::Event::FINISH:
+      HandleFinish(rpc, ok);
+      break;
     case Rpc::Event::DONE:
       HandleDone(rpc, ok);
       break;
@@ -112,12 +115,21 @@ void Service::HandleWrite(Rpc* rpc, bool ok) {
   RemoveIfNotPending(rpc);
 }
 
+void Service::HandleFinish(Rpc* rpc, bool ok) {
+  if (!ok) {
+    LOG(ERROR) << "Finish failed";
+  }
+
+  RemoveIfNotPending(rpc);
+}
+
 void Service::HandleDone(Rpc* rpc, bool ok) { RemoveIfNotPending(rpc); }
 
 void Service::RemoveIfNotPending(Rpc* rpc) {
   if (!rpc->GetRpcEvent(Rpc::Event::DONE)->pending &&
       !rpc->GetRpcEvent(Rpc::Event::READ)->pending &&
-      !rpc->GetRpcEvent(Rpc::Event::WRITE)->pending) {
+      !rpc->GetRpcEvent(Rpc::Event::WRITE)->pending &&
+      !rpc->GetRpcEvent(Rpc::Event::FINISH)->pending) {
     active_rpcs_.Remove(rpc);
   }
 }
