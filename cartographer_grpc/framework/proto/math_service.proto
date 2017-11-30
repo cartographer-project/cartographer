@@ -16,15 +16,15 @@ syntax = "proto3";
 
 package cartographer_grpc.framework.proto;
 
-message Request {
+message GetSumRequest {
   int32 input = 1;
 }
 
-message Response {
+message GetSumResponse {
   int32 output = 1;
 }
 
 // Provides information about the gRPC server.
 service Math {
-  rpc GetSum(stream Request) returns (Response);
+  rpc GetSum(stream GetSumRequest) returns (GetSumResponse);
 }
