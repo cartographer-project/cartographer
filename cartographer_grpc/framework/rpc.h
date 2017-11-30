@@ -104,8 +104,11 @@ class Rpc {
                                                   google::protobuf::Message>>
       server_async_reader_writer_;
 
-  std::queue<std::unique_ptr<google::protobuf::Message>> send_queue_;
-  ::grpc::Status finish_status_;
+  struct SendItem {
+    std::unique_ptr<google::protobuf::Message> msg;
+    ::grpc::Status status;
+  };
+  std::queue<SendItem> send_queue_;
 };
 
 // This class keeps track of all in-flight RPCs for a 'Service'. Make sure that

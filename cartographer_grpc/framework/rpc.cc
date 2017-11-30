@@ -22,6 +22,23 @@
 
 namespace cartographer_grpc {
 namespace framework {
+namespace {
+
+// Finishes the gRPC for non-response-streaming RPCs, i.e. NORMAL_RPC and
+// CLIENT_STREAMING. If no 'msg' is passed, we consider it and error case as the
+// server is not honoring the gRPC call signature.
+template <typename Responder>
+void SendUnaryFinish(Responder* responder, ::grpc::Status status,
+                     const google::protobuf::Message* msg,
+                     Rpc::RpcEvent* rpc_event) {
+  if (msg) {
+    responder->Finish(*msg, status, rpc_event);
+  } else {
+    responder->FinishWithError(status, rpc_event);
+  }
+}
+
+}  // namespace
 
 Rpc::Rpc(int method_index,
          ::grpc::ServerCompletionQueue* server_completion_queue,
@@ -60,10 +77,19 @@ void Rpc::OnRequest() { handler_->OnRequestInternal(request_.get()); }
 void Rpc::OnReadsDone() { handler_->OnReadsDone(); }
 
 void Rpc::RequestNextMethodInvocation() {
+  // Ask gRPC to notify us when the connection terminates.
   done_event_.pending = true;
-  new_connection_event_.pending = true;
   server_context_.AsyncNotifyWhenDone(&done_event_);
+
+  // Ask gRPC to notify us when a new connection has been established.
+  new_connection_event_.pending = true;
   switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+      service_->RequestAsyncBidiStreaming(
+          method_index_, &server_context_, streaming_interface(),
+          server_completion_queue_, server_completion_queue_,
+          &new_connection_event_);
+      break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       service_->RequestAsyncClientStreaming(
           method_index_, &server_context_, streaming_interface(),
@@ -75,12 +101,6 @@ void Rpc::RequestNextMethodInvocation() {
           method_index_, &server_context_, request_.get(),
           streaming_interface(), server_completion_queue_,
           server_completion_queue_, &new_connection_event_);
-      break;
-    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      service_->RequestAsyncBidiStreaming(
-          method_index_, &server_context_, streaming_interface(),
-          server_completion_queue_, server_completion_queue_,
-          &new_connection_event_);
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -109,15 +129,17 @@ void Rpc::RequestStreamingReadIfNeeded() {
 
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+      // For BIDI_STREAMING enqueue the message into the send queue and
+      // start write operations if none are currently in-flight.
+      send_queue_.emplace(SendItem{std::move(message), ::grpc::Status::OK});
+      PerformWriteIfNeeded();
+      break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       SendFinish(::grpc::Status::OK, std::move(message));
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       SendFinish(::grpc::Status::OK, std::move(message));
-      break;
-    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      send_queue_.push(std::move(message));
-      PerformWriteIfNeeded();
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -127,29 +149,22 @@ void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
 void Rpc::SendFinish(::grpc::Status status,
                      std::unique_ptr<::google::protobuf::Message> message) {
   switch (rpc_handler_info_.rpc_type) {
-    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      finish_event_.pending = true;
-      if (message) {
-        response_ = std::move(message);
-        server_async_reader_->Finish(*response_.get(), status, &finish_event_);
-      } else {
-        server_async_reader_->FinishWithError(status, &finish_event_);
-      }
-      break;
-    case ::grpc::internal::RpcMethod::NORMAL_RPC:
-      finish_event_.pending = true;
-      if (message) {
-        response_ = std::move(message);
-        server_async_response_writer_->Finish(*response_.get(), status,
-                                              &finish_event_);
-      } else {
-        server_async_response_writer_->FinishWithError(status, &finish_event_);
-      }
-      break;
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       CHECK(!message);
       finish_event_.pending = true;
       server_async_reader_writer_->Finish(status, &finish_event_);
+      break;
+    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+      finish_event_.pending = true;
+      response_ = std::move(message);
+      SendUnaryFinish(server_async_reader_.get(), status, response_.get(),
+                      &finish_event_);
+      break;
+    case ::grpc::internal::RpcMethod::NORMAL_RPC:
+      finish_event_.pending = true;
+      response_ = std::move(message);
+      SendUnaryFinish(server_async_response_writer_.get(), status,
+                      response_.get(), &finish_event_);
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -165,9 +180,7 @@ void Rpc::Finish(::grpc::Status status) {
       SendFinish(status, nullptr /* message */);
       break;
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      LOG(INFO) << "Enqueuing Finish " << (int)status.error_code();
-      finish_status_ = status;
-      send_queue_.push(nullptr /* message */);
+      send_queue_.emplace(SendItem{nullptr, status});
       PerformWriteIfNeeded();
       break;
     default:
@@ -183,8 +196,9 @@ void Rpc::PerformWriteIfNeeded() {
   // Make sure not other send operations are in-flight.
   CHECK(!finish_event_.pending);
 
-  response_ = std::move(send_queue_.front());
+  SendItem send_item = std::move(send_queue_.front());
   send_queue_.pop();
+  response_ = std::move(send_item.msg);
 
   if (response_) {
     write_event_.pending = true;
@@ -192,7 +206,7 @@ void Rpc::PerformWriteIfNeeded() {
   } else {
     CHECK(send_queue_.empty());
     LOG(INFO) << "Sending Finish";
-    SendFinish(finish_status_, nullptr /* message */);
+    SendFinish(send_item.status, nullptr /* message */);
   }
 }
 
