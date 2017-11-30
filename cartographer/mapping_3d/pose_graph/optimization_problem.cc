@@ -300,13 +300,12 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                result_to_first_center.delta_rotation) *
               result_center_to_center.delta_velocity;
           problem.AddResidualBlock(
-              new ceres::AutoDiffCostFunction<AccelerationCostFunction, 3, 4, 3,
-                                              3, 3, 1, 4>(
-                  new AccelerationCostFunction(
-                      options_.acceleration_weight(), delta_velocity,
-                      common::ToSeconds(first_duration),
-                      common::ToSeconds(second_duration))),
-              nullptr, C_nodes.at(second_node_id).rotation(),
+              AccelerationCostFunction::CreateAutoDiffCostFunction(
+                  options_.acceleration_weight(), delta_velocity,
+                  common::ToSeconds(first_duration),
+                  common::ToSeconds(second_duration)),
+              nullptr /* loss function */,
+              C_nodes.at(second_node_id).rotation(),
               C_nodes.at(first_node_id).translation(),
               C_nodes.at(second_node_id).translation(),
               C_nodes.at(third_node_id).translation(),
@@ -314,10 +313,9 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
               trajectory_data.imu_calibration.data());
         }
         problem.AddResidualBlock(
-            new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4, 4>(
-                new RotationCostFunction(options_.rotation_weight(),
-                                         result.delta_rotation)),
-            nullptr, C_nodes.at(first_node_id).rotation(),
+            RotationCostFunction::CreateAutoDiffCostFunction(
+                options_.rotation_weight(), result.delta_rotation),
+            nullptr /* loss function */, C_nodes.at(first_node_id).rotation(),
             C_nodes.at(second_node_id).rotation(),
             trajectory_data.imu_calibration.data());
       }
