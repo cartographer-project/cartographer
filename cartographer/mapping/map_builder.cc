@@ -134,10 +134,6 @@ void MapBuilder::FinishTrajectory(const int trajectory_id) {
   pose_graph_->FinishTrajectory(trajectory_id);
 }
 
-int MapBuilder::GetBlockingTrajectoryId() const {
-  return sensor_collator_.GetBlockingTrajectoryId();
-}
-
 std::string MapBuilder::SubmapToProto(
     const mapping::SubmapId& submap_id,
     proto::SubmapQuery::Response* const response) {

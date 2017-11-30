@@ -77,11 +77,6 @@ class MapBuilder {
   // i.e. no further sensor data is expected.
   void FinishTrajectory(int trajectory_id);
 
-  // Must only be called if at least one unfinished trajectory exists. Returns
-  // the ID of the trajectory that needs more data before the MapBuilder is
-  // unblocked.
-  int GetBlockingTrajectoryId() const;
-
   // Fills the SubmapQuery::Response corresponding to 'submap_id'. Returns an
   // error string on failure, or an empty string on success.
   std::string SubmapToProto(const SubmapId& submap_id,
