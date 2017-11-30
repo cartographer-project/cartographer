@@ -36,6 +36,24 @@ class SpaCostFunction {
  public:
   using Constraint = mapping::PoseGraph::Constraint;
 
+  static ceres::CostFunction* CreateAutoDiffCostFunction(
+      const Constraint::Pose& pose) {
+    return new ceres::AutoDiffCostFunction<
+        SpaCostFunction, 6 /* residuals */, 4 /* rotation variables */,
+        3 /* translation variables */, 4 /* rotation variables */,
+        3 /* translation variables */>(new SpaCostFunction(pose));
+  }
+
+  template <typename T>
+  bool operator()(const T* const c_i_rotation, const T* const c_i_translation,
+                  const T* const c_j_rotation, const T* const c_j_translation,
+                  T* const e) const {
+    ComputeScaledError(pose_, c_i_rotation, c_i_translation, c_j_rotation,
+                       c_j_translation, e);
+    return true;
+  }
+
+ private:
   explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
 
   // Computes the error between the node-to-submap alignment 'zbar_ij' and the
@@ -90,16 +108,6 @@ class SpaCostFunction {
     }
   }
 
-  template <typename T>
-  bool operator()(const T* const c_i_rotation, const T* const c_i_translation,
-                  const T* const c_j_rotation, const T* const c_j_translation,
-                  T* const e) const {
-    ComputeScaledError(pose_, c_i_rotation, c_i_translation, c_j_rotation,
-                       c_j_translation, e);
-    return true;
-  }
-
- private:
   const Constraint::Pose pose_;
 };
 

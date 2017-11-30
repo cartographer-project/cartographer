@@ -30,18 +30,13 @@ namespace scan_matching {
 // Cost increases with the solution's distance from 'target_rotation'.
 class RotationDeltaCostFunctor {
  public:
-  // Constructs a new RotationDeltaCostFunctor from the given 'target_rotation'.
-  explicit RotationDeltaCostFunctor(const double scaling_factor,
-                                    const Eigen::Quaterniond& target_rotation)
-      : scaling_factor_(scaling_factor) {
-    target_rotation_inverse_[0] = target_rotation.w();
-    target_rotation_inverse_[1] = -target_rotation.x();
-    target_rotation_inverse_[2] = -target_rotation.y();
-    target_rotation_inverse_[3] = -target_rotation.z();
+  static ceres::CostFunction* CreateAutoDiffCostFunction(
+      const double scaling_factor, const Eigen::Quaterniond& target_rotation) {
+    return new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor,
+                                           3 /* residuals */,
+                                           4 /* rotation variables */>(
+        new RotationDeltaCostFunctor(scaling_factor, target_rotation));
   }
-
-  RotationDeltaCostFunctor(const RotationDeltaCostFunctor&) = delete;
-  RotationDeltaCostFunctor& operator=(const RotationDeltaCostFunctor&) = delete;
 
   template <typename T>
   bool operator()(const T* const rotation_quaternion, T* residual) const {
@@ -60,6 +55,19 @@ class RotationDeltaCostFunctor {
   }
 
  private:
+  // Constructs a new RotationDeltaCostFunctor from the given 'target_rotation'.
+  explicit RotationDeltaCostFunctor(const double scaling_factor,
+                                    const Eigen::Quaterniond& target_rotation)
+      : scaling_factor_(scaling_factor) {
+    target_rotation_inverse_[0] = target_rotation.w();
+    target_rotation_inverse_[1] = -target_rotation.x();
+    target_rotation_inverse_[2] = -target_rotation.y();
+    target_rotation_inverse_[3] = -target_rotation.z();
+  }
+
+  RotationDeltaCostFunctor(const RotationDeltaCostFunctor&) = delete;
+  RotationDeltaCostFunctor& operator=(const RotationDeltaCostFunctor&) = delete;
+
   const double scaling_factor_;
   double target_rotation_inverse_[4];
 };
