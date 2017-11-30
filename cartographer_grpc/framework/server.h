@@ -19,6 +19,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <thread>
 
@@ -53,6 +54,9 @@ class Server {
 
     template <typename RpcHandlerType, typename ServiceType>
     void RegisterHandler(const std::string& method_name) {
+      std::stringstream fully_qualified_name;
+      fully_qualified_name << "/" << ServiceType::service_full_name() << "/"
+                           << method_name;
       rpc_handlers_[ServiceType::service_full_name()].emplace(
           method_name,
           RpcHandlerInfo{
@@ -66,7 +70,8 @@ class Server {
                 return rpc_handler;
               },
               RpcType<typename RpcHandlerType::IncomingType,
-                      typename RpcHandlerType::OutgoingType>::value});
+                      typename RpcHandlerType::OutgoingType>::value,
+              fully_qualified_name.str()});
     }
 
    private:

@@ -45,6 +45,7 @@ class Service : public ::grpc::Service {
   void HandleNewConnection(Rpc* rpc, bool ok);
   void HandleRead(Rpc* rpc, bool ok);
   void HandleWrite(Rpc* rpc, bool ok);
+  void HandleFinish(Rpc* rpc, bool ok);
   void HandleDone(Rpc* rpc, bool ok);
 
   void RemoveIfNotPending(Rpc* rpc);
