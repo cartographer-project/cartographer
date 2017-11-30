@@ -65,8 +65,9 @@ void Server::RunCompletionQueue(
   bool ok;
   void* tag;
   while (completion_queue->Next(&tag, &ok)) {
-    auto* rpc_state = static_cast<Rpc::RpcState*>(tag);
-    rpc_state->service->HandleEvent(rpc_state->state, rpc_state->rpc, ok);
+    auto* rpc_event = static_cast<Rpc::RpcEvent*>(tag);
+    rpc_event->rpc->service()->HandleEvent(rpc_event->event, rpc_event->rpc,
+                                           ok);
   }
 }
 
@@ -76,7 +77,8 @@ void Server::Start() {
 
   // Start serving all services on all completion queues.
   for (auto& service : services_) {
-    service.second.StartServing(completion_queue_threads_);
+    service.second.StartServing(completion_queue_threads_,
+                                execution_context_.get());
   }
 
   // Start threads to process all completion queues.
@@ -104,6 +106,14 @@ void Server::Shutdown() {
   }
 
   LOG(INFO) << "Shutdown complete.";
+}
+
+void Server::SetExecutionContext(
+    std::unique_ptr<ExecutionContext> execution_context) {
+  // After the server has been started the 'ExecutionHandle' cannot be changed
+  // anymore.
+  CHECK(!server_);
+  execution_context_ = std::move(execution_context);
 }
 
 }  // namespace framework
