@@ -41,7 +41,6 @@ class RotationDeltaCostFunctor {
   }
 
  private:
-  // Constructs a new RotationDeltaCostFunctor for the given 'angle'.
   explicit RotationDeltaCostFunctor(const double scaling_factor,
                                     const double target_angle)
       : scaling_factor_(scaling_factor), angle_(target_angle) {}
