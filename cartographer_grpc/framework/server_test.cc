@@ -16,6 +16,8 @@
 
 #include "cartographer_grpc/framework/server.h"
 
+#include <stack>
+
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/proto/math_service.grpc.pb.h"
 #include "cartographer_grpc/framework/proto/math_service.pb.h"
@@ -55,8 +57,8 @@ class GetRunningSumHandler
     : public RpcHandler<Stream<proto::GetSumRequest>, Stream<proto::GetSumResponse>> {
  public:
   void OnRequest(const proto::GetSumRequest& request) override {
-    LOG(INFO) << "Received " << request.DebugString();
     sum_ += request.input();
+
     auto response = cartographer::common::make_unique<proto::GetSumResponse>();
     response->set_output(sum_);
     Send(std::move(response));
@@ -67,7 +69,6 @@ class GetRunningSumHandler
   }
 
   void OnReadsDone() override {
-    LOG(INFO) << "Reads Done.";
     Finish(::grpc::Status::OK);
   }
 
@@ -163,10 +164,13 @@ TEST_F(ServerTest, ProcessBidiStreamingRpcTest) {
   }
   reader_writer->WritesDone();
   proto::GetSumResponse response;
+
+  std::list<int> expected_responses = {0, 0, 1, 1, 3, 3};
   while (reader_writer->Read(&response)) {
-    LOG(INFO) << "GOT: " << response.DebugString();
+    EXPECT_EQ(expected_responses.front(), response.output());
+    expected_responses.pop_front();
   }
-  LOG(INFO) << "Writes done.";
+  EXPECT_TRUE(expected_responses.empty());
 
   server_->Shutdown();
 }

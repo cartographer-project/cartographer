@@ -25,8 +25,8 @@ namespace framework {
 namespace {
 
 // Finishes the gRPC for non-response-streaming RPCs, i.e. NORMAL_RPC and
-// CLIENT_STREAMING. If no 'msg' is passed, we consider it and error case as the
-// server is not honoring the gRPC call signature.
+// CLIENT_STREAMING. If no 'msg' is passed, we signal an error to the client as
+// the server is not honoring the gRPC call signature.
 template <typename Responder>
 void SendUnaryFinish(Responder* responder, ::grpc::Status status,
                      const google::protobuf::Message* msg,
@@ -205,7 +205,6 @@ void Rpc::PerformWriteIfNeeded() {
     async_writer_interface()->Write(*response_.get(), &write_event_);
   } else {
     CHECK(send_queue_.empty());
-    LOG(INFO) << "Sending Finish";
     SendFinish(send_item.status, nullptr /* message */);
   }
 }

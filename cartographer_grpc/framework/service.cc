@@ -110,8 +110,6 @@ void Service::HandleRead(Rpc* rpc, bool ok) {
 }
 
 void Service::HandleWrite(Rpc* rpc, bool ok) {
-  LOG(INFO) << "HandleWrite ok=" << (ok ? "True" : "False");
-
   if (!ok) {
     LOG(ERROR) << "Write failed";
   }
@@ -123,8 +121,6 @@ void Service::HandleWrite(Rpc* rpc, bool ok) {
 }
 
 void Service::HandleFinish(Rpc* rpc, bool ok) {
-  LOG(INFO) << "HandleFinish ok=" << (ok ? "True" : "False");
-
   if (!ok) {
     LOG(ERROR) << "Finish failed";
   }
@@ -140,20 +136,6 @@ void Service::RemoveIfNotPending(Rpc* rpc) {
       !rpc->GetRpcEvent(Rpc::Event::WRITE)->pending &&
       !rpc->GetRpcEvent(Rpc::Event::FINISH)->pending) {
     active_rpcs_.Remove(rpc);
-  } else {
-    LOG(INFO) << "Not removing: ";
-    LOG(INFO) << "DONE pending: "
-              << (rpc->GetRpcEvent(Rpc::Event::DONE)->pending ? "True"
-                                                              : "False");
-    LOG(INFO) << "READ pending: "
-              << (rpc->GetRpcEvent(Rpc::Event::READ)->pending ? "True"
-                                                              : "False");
-    LOG(INFO) << "WRITE pending: "
-              << (rpc->GetRpcEvent(Rpc::Event::WRITE)->pending ? "True"
-                                                               : "False");
-    LOG(INFO) << "FINISH pending: "
-              << (rpc->GetRpcEvent(Rpc::Event::FINISH)->pending ? "True"
-                                                                : "False");
   }
 }
 
