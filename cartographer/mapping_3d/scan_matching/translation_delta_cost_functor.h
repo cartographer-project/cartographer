@@ -27,6 +27,23 @@ namespace scan_matching {
 // Cost increases with the solution's distance from 'target_translation'.
 class TranslationDeltaCostFunctor {
  public:
+  static ceres::CostFunction* CreateAutoDiffCostFunction(
+      const double scaling_factor, const Eigen::Vector3d& target_translation) {
+    return new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor,
+                                           3 /* residuals */,
+                                           3 /* translation variables */>(
+        new TranslationDeltaCostFunctor(scaling_factor, target_translation));
+  }
+
+  template <typename T>
+  bool operator()(const T* const translation, T* residual) const {
+    residual[0] = scaling_factor_ * (translation[0] - x_);
+    residual[1] = scaling_factor_ * (translation[1] - y_);
+    residual[2] = scaling_factor_ * (translation[2] - z_);
+    return true;
+  }
+
+ private:
   // Constructs a new TranslationDeltaCostFunctor from the given
   // 'target_translation'.
   explicit TranslationDeltaCostFunctor(
@@ -40,15 +57,6 @@ class TranslationDeltaCostFunctor {
   TranslationDeltaCostFunctor& operator=(const TranslationDeltaCostFunctor&) =
       delete;
 
-  template <typename T>
-  bool operator()(const T* const translation, T* residual) const {
-    residual[0] = scaling_factor_ * (translation[0] - x_);
-    residual[1] = scaling_factor_ * (translation[1] - y_);
-    residual[2] = scaling_factor_ * (translation[2] - z_);
-    return true;
-  }
-
- private:
   const double scaling_factor_;
   const double x_;
   const double y_;
