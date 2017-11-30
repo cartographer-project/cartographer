@@ -37,7 +37,8 @@ class OccupiedSpaceCostFunction {
       const double scaling_factor, const sensor::PointCloud& point_cloud,
       const ProbabilityGrid& probability_grid) {
     return new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction,
-                                           ceres::DYNAMIC, 3>(
+                                           ceres::DYNAMIC /* residuals */,
+                                           3 /* pose variables */>(
         new OccupiedSpaceCostFunction(scaling_factor, point_cloud,
                                       probability_grid),
         point_cloud.size());

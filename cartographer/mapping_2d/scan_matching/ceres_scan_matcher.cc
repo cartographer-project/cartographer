@@ -75,17 +75,17 @@ void CeresScanMatcher::Match(const Eigen::Vector2d& target_translation,
           options_.occupied_space_weight() /
               std::sqrt(static_cast<double>(point_cloud.size())),
           point_cloud, probability_grid),
-      nullptr, ceres_pose_estimate);
+      nullptr /* loss function */, ceres_pose_estimate);
   CHECK_GT(options_.translation_weight(), 0.);
   problem.AddResidualBlock(
       TranslationDeltaCostFunctor::CreateAutoDiffCostFunction(
           options_.translation_weight(), target_translation),
-      nullptr, ceres_pose_estimate);
+      nullptr /* loss function */, ceres_pose_estimate);
   CHECK_GT(options_.rotation_weight(), 0.);
   problem.AddResidualBlock(
       RotationDeltaCostFunctor::CreateAutoDiffCostFunction(
           options_.rotation_weight(), ceres_pose_estimate[2]),
-      nullptr, ceres_pose_estimate);
+      nullptr /* loss function */, ceres_pose_estimate);
 
   ceres::Solve(ceres_solver_options_, &problem, summary);
 

@@ -29,7 +29,8 @@ class TranslationDeltaCostFunctor {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor, const Eigen::Vector2d& target_translation) {
-    return new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor, 2, 3>(
+    return new ceres::AutoDiffCostFunction<
+        TranslationDeltaCostFunctor, 2 /* residuals */, 3 /* pose variables */>(
         new TranslationDeltaCostFunctor(scaling_factor, target_translation));
   }
 

@@ -29,7 +29,8 @@ class RotationDeltaCostFunctor {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor, const double target_angle) {
-    return new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor, 1, 3>(
+    return new ceres::AutoDiffCostFunction<
+        RotationDeltaCostFunctor, 1 /* residuals */, 3 /* pose variables */>(
         new RotationDeltaCostFunctor(scaling_factor, target_angle));
   }
 

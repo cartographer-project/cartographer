@@ -38,7 +38,9 @@ class SpaCostFunction {
 
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const Constraint::Pose& pose) {
-    return new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
+    return new ceres::AutoDiffCostFunction<SpaCostFunction, 3 /* residuals */,
+                                           3 /* pose variables */,
+                                           3 /* pose variables */>(
         new SpaCostFunction(pose));
   }
 
