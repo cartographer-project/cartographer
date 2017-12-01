@@ -120,6 +120,8 @@ class PoseGraphTest : public ::testing::Test {
               consecutive_node_rotation_weight = 0.,
               fixed_frame_pose_translation_weight = 1e1,
               fixed_frame_pose_rotation_weight = 1e2,
+              landmark_translation_weight = 1e1,
+              landmark_rotation_weight = 1e2,
               log_solver_summary = true,
               ceres_solver_options = {
                 use_nonmonotonic_steps = false,

@@ -98,6 +98,14 @@ double fixed_frame_pose_translation_weight
 double fixed_frame_pose_rotation_weight
   Scaling parameter for the FixedFramePose rotation.
 
+double landmark_translation_weight
+  Scaling parameter for the Landmark translation.
+
+double landmark_rotation_weight
+  Scaling parameter for the Landmark rotation.
+
+
+
 bool log_solver_summary
   If true, the Ceres solver summary will be logged for every optimization.
 
