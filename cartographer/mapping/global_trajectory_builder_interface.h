@@ -25,6 +25,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/pose_estimate.h"
 #include "cartographer/mapping/submaps.h"
+#include "cartographer/sensor/landmark_data.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -56,6 +57,8 @@ class GlobalTrajectoryBuilderInterface {
   virtual void AddSensorData(const sensor::OdometryData& odometry_data) = 0;
   virtual void AddSensorData(
       const sensor::FixedFramePoseData& fixed_frame_pose) = 0;
+  virtual void AddSensorData(
+      const sensor::LandmarkData& landmark_data) = 0;
 
   // A callback which is called after local SLAM processes an accumulated
   // 'sensor::RangeData'. If the data was inserted into a submap, reports the

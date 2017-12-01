@@ -76,6 +76,11 @@ class TrajectoryBuilder {
                   sensor::MakeDispatchable(
                       sensor::FixedFramePoseData{time, fixed_frame_pose}));
   }
+
+  void AddLandmarkData(const std::string& sensor_id, sensor::LandmarkData& landmark_data) {
+    AddSensorData(sensor_id,
+                  sensor::MakeDispatchable(landmark_data));
+  }
 };
 
 }  // namespace mapping

@@ -84,6 +84,12 @@ class GlobalTrajectoryBuilder
     pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);
   }
 
+  void AddSensorData(
+      const sensor::LandmarkData& landmark_data) override {
+    // TODO(timethy): Check if all poses are valid
+    pose_graph_->AddLandmarkData(trajectory_id_, landmark_data);
+  }
+
  private:
   const int trajectory_id_;
   PoseGraph* const pose_graph_;

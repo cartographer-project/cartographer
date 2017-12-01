@@ -38,6 +38,7 @@
 #include "cartographer/mapping_2d/pose_graph/constraint_builder.h"
 #include "cartographer/mapping_2d/pose_graph/optimization_problem.h"
 #include "cartographer/mapping_2d/submaps.h"
+#include "cartographer/sensor/landmark_data.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -80,6 +81,10 @@ class PoseGraph : public mapping::PoseGraph {
       EXCLUDES(mutex_);
   void AddOdometryData(int trajectory_id,
                        const sensor::OdometryData& odometry_data) override
+      EXCLUDES(mutex_);
+  void AddLandmarkData(
+      int trajectory_id,
+      const sensor::LandmarkData& landmark_data) override
       EXCLUDES(mutex_);
   void AddFixedFramePoseData(
       int trajectory_id,
