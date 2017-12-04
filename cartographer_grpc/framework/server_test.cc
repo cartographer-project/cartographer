@@ -16,8 +16,6 @@
 
 #include "cartographer_grpc/framework/server.h"
 
-#include <stack>
-
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/proto/math_service.grpc.pb.h"
 #include "cartographer_grpc/framework/proto/math_service.pb.h"
@@ -59,10 +57,10 @@ class GetRunningSumHandler
   void OnRequest(const proto::GetSumRequest& request) override {
     sum_ += request.input();
 
+    // Respond twice to demonstrate bidirectional streaming.
     auto response = cartographer::common::make_unique<proto::GetSumResponse>();
     response->set_output(sum_);
     Send(std::move(response));
-
     response = cartographer::common::make_unique<proto::GetSumResponse>();
     response->set_output(sum_);
     Send(std::move(response));

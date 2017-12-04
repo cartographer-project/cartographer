@@ -24,17 +24,17 @@ namespace cartographer_grpc {
 namespace framework {
 namespace {
 
-// Finishes the gRPC for non-response-streaming RPCs, i.e. NORMAL_RPC and
+// Finishes the gRPC for non-streaming response RPCs, i.e. NORMAL_RPC and
 // CLIENT_STREAMING. If no 'msg' is passed, we signal an error to the client as
 // the server is not honoring the gRPC call signature.
-template <typename Responder>
-void SendUnaryFinish(Responder* responder, ::grpc::Status status,
+template <typename ReaderWriter>
+void SendUnaryFinish(ReaderWriter* reader_writer, ::grpc::Status status,
                      const google::protobuf::Message* msg,
                      Rpc::RpcEvent* rpc_event) {
   if (msg) {
-    responder->Finish(*msg, status, rpc_event);
+    reader_writer->Finish(*msg, status, rpc_event);
   } else {
-    responder->FinishWithError(status, rpc_event);
+    reader_writer->FinishWithError(status, rpc_event);
   }
 }
 
@@ -81,7 +81,8 @@ void Rpc::RequestNextMethodInvocation() {
   done_event_.pending = true;
   server_context_.AsyncNotifyWhenDone(&done_event_);
 
-  // Ask gRPC to notify us when a new connection has been established.
+  // Make sure after terminating the connection, gRPC notifies us with this
+  // event.
   new_connection_event_.pending = true;
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
@@ -131,37 +132,35 @@ void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       // For BIDI_STREAMING enqueue the message into the send queue and
-      // start write operations if none are currently in-flight.
+      // start write operations if none are currently in flight.
       send_queue_.emplace(SendItem{std::move(message), ::grpc::Status::OK});
       PerformWriteIfNeeded();
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      SendFinish(::grpc::Status::OK, std::move(message));
+      SendFinish(std::move(message), ::grpc::Status::OK);
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
-      SendFinish(::grpc::Status::OK, std::move(message));
+      SendFinish(std::move(message), ::grpc::Status::OK);
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
   }
 }
 
-void Rpc::SendFinish(::grpc::Status status,
-                     std::unique_ptr<::google::protobuf::Message> message) {
+void Rpc::SendFinish(std::unique_ptr<::google::protobuf::Message> message,
+                     ::grpc::Status status) {
+  finish_event_.pending = true;
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       CHECK(!message);
-      finish_event_.pending = true;
       server_async_reader_writer_->Finish(status, &finish_event_);
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      finish_event_.pending = true;
       response_ = std::move(message);
       SendUnaryFinish(server_async_reader_.get(), status, response_.get(),
                       &finish_event_);
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
-      finish_event_.pending = true;
       response_ = std::move(message);
       SendUnaryFinish(server_async_response_writer_.get(), status,
                       response_.get(), &finish_event_);
@@ -173,15 +172,15 @@ void Rpc::SendFinish(::grpc::Status status,
 
 void Rpc::Finish(::grpc::Status status) {
   switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+      send_queue_.emplace(SendItem{nullptr /* msg */, status});
+      PerformWriteIfNeeded();
+      break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      SendFinish(status, nullptr /* message */);
+      SendFinish(nullptr /* message */, status);
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
-      SendFinish(status, nullptr /* message */);
-      break;
-    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      send_queue_.emplace(SendItem{nullptr, status});
-      PerformWriteIfNeeded();
+      SendFinish(nullptr /* message */, status);
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -205,18 +204,18 @@ void Rpc::PerformWriteIfNeeded() {
     async_writer_interface()->Write(*response_.get(), &write_event_);
   } else {
     CHECK(send_queue_.empty());
-    SendFinish(send_item.status, nullptr /* message */);
+    SendFinish(nullptr /* message */, send_item.status);
   }
 }
 
 ::grpc::internal::ServerAsyncStreamingInterface* Rpc::streaming_interface() {
   switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+      return server_async_reader_writer_.get();
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       return server_async_reader_.get();
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       return server_async_response_writer_.get();
-    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      return server_async_reader_writer_.get();
     default:
       LOG(FATAL) << "RPC type not implemented.";
   }
@@ -226,12 +225,12 @@ void Rpc::PerformWriteIfNeeded() {
 ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
 Rpc::async_reader_interface() {
   switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+      return server_async_reader_writer_.get();
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       return server_async_reader_.get();
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       LOG(FATAL) << "For NORMAL_RPC no streaming reader interface exists.";
-    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      return server_async_reader_writer_.get();
     default:
       LOG(FATAL) << "RPC type not implemented.";
   }
@@ -241,13 +240,13 @@ Rpc::async_reader_interface() {
 ::grpc::internal::AsyncWriterInterface<::google::protobuf::Message>*
 Rpc::async_writer_interface() {
   switch (rpc_handler_info_.rpc_type) {
+    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+      return server_async_reader_writer_.get();
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       LOG(FATAL) << "For NORMAL_RPC and CLIENT_STREAMING no streaming writer "
                     "interface exists.";
       break;
-    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      return server_async_reader_writer_.get();
     default:
       LOG(FATAL) << "RPC type not implemented.";
   }
@@ -256,16 +255,16 @@ Rpc::async_writer_interface() {
 
 Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
   switch (event) {
+    case Event::DONE:
+      return &done_event_;
+    case Event::FINISH:
+      return &finish_event_;
     case Event::NEW_CONNECTION:
       return &new_connection_event_;
     case Event::READ:
       return &read_event_;
     case Event::WRITE:
       return &write_event_;
-    case Event::FINISH:
-      return &finish_event_;
-    case Event::DONE:
-      return &done_event_;
   }
   LOG(FATAL) << "Never reached.";
 }
@@ -275,6 +274,12 @@ ActiveRpcs::ActiveRpcs() : lock_() {}
 void Rpc::InitializeReadersAndWriters(
     ::grpc::internal::RpcMethod::RpcType rpc_type) {
   switch (rpc_type) {
+    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+      server_async_reader_writer_ =
+          cartographer::common::make_unique<::grpc::ServerAsyncReaderWriter<
+              google::protobuf::Message, google::protobuf::Message>>(
+              &server_context_);
+      break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       server_async_reader_ =
           cartographer::common::make_unique<::grpc::ServerAsyncReader<
@@ -285,12 +290,6 @@ void Rpc::InitializeReadersAndWriters(
       server_async_response_writer_ = cartographer::common::make_unique<
           ::grpc::ServerAsyncResponseWriter<google::protobuf::Message>>(
           &server_context_);
-      break;
-    case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      server_async_reader_writer_ =
-          cartographer::common::make_unique<::grpc::ServerAsyncReaderWriter<
-              google::protobuf::Message, google::protobuf::Message>>(
-              &server_context_);
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";

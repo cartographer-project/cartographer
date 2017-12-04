@@ -63,12 +63,17 @@ class Rpc {
   RpcEvent* GetRpcEvent(Event event);
 
  private:
+  struct SendItem {
+    std::unique_ptr<google::protobuf::Message> msg;
+    ::grpc::Status status;
+  };
+
   Rpc(const Rpc&) = delete;
   Rpc& operator=(const Rpc&) = delete;
   void InitializeReadersAndWriters(
       ::grpc::internal::RpcMethod::RpcType rpc_type);
-  void SendFinish(::grpc::Status status,
-                  std::unique_ptr<::google::protobuf::Message> message);
+  void SendFinish(std::unique_ptr<::google::protobuf::Message> message,
+                  ::grpc::Status status);
 
   ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
   async_reader_interface();
@@ -104,10 +109,6 @@ class Rpc {
                                                   google::protobuf::Message>>
       server_async_reader_writer_;
 
-  struct SendItem {
-    std::unique_ptr<google::protobuf::Message> msg;
-    ::grpc::Status status;
-  };
   std::queue<SendItem> send_queue_;
 };
 
