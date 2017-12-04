@@ -1,0 +1,78 @@
+// Copyright 2017 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+import "cartographer/mapping/proto/trajectory_builder_options.proto";
+import "cartographer/sensor/proto/sensor.proto";
+import "google/protobuf/empty.proto";
+
+package cartographer_grpc.proto;
+
+message AddTrajectoryRequest {
+  cartographer.mapping.proto.TrajectoryBuilderOptions
+      trajectory_builder_options = 1;
+}
+
+message SensorMetadata {
+  int32 trajectory_id = 1;
+  string sensor_id = 2;
+}
+
+message AddTrajectoryResponse {
+  int32 trajectory_id = 1;
+}
+
+message AddOdometryDataRequest {
+  SensorMetadata sensor_metadata = 1;
+  cartographer.sensor.proto.OdometryData odometry_data = 2;
+}
+
+message AddImuDataRequest {
+  SensorMetadata sensor_metadata = 1;
+  cartographer.sensor.proto.ImuData imu_data = 2;
+}
+
+message AddRangefinderDataRequest {
+  SensorMetadata sensor_metadata = 1;
+  cartographer.sensor.proto.CompressedPointCloud rangefinder_data = 2;
+}
+
+message FinishTrajectoryRequest {
+  int32 trajectory_id = 1;
+}
+
+service Cartographer {
+  // Starts a new trajectory and returns its index.
+  rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
+
+  // Adds odometry data from the sensor with id 'sensor_metadata.sensor_id' to
+  // the trajectory corresponding to 'sensor_metadata.trajectory_id'.
+  rpc AddOdometryData(stream AddOdometryDataRequest)
+      returns (google.protobuf.Empty);
+
+  // Adds IMU data from the sensor with id 'sensor_metadata.sensor_id' to
+  // the trajectory corresponding to 'sensor_metadata.trajectory_id'.
+  rpc AddImuData(stream AddImuDataRequest) returns (google.protobuf.Empty);
+
+  // Adds range-finder data from the sensor with id 'sensor_metadata.sensor_id'
+  // to the trajectory corresponding to 'sensor_metadata.trajectory_id'.
+  rpc AddRangefinderData(stream AddRangefinderDataRequest)
+      returns (google.protobuf.Empty);
+
+  // Marks a trajectory corresponding to 'trajectory_id' as finished,
+  // i.e. no further sensor data is expected.
+  rpc FinishTrajectory(FinishTrajectoryRequest) returns (google.protobuf.Empty);
+}
+
