@@ -36,4 +36,5 @@ message GetSquareResponse {
 service Math {
   rpc GetSum(stream GetSumRequest) returns (GetSumResponse);
   rpc GetSquare(GetSquareRequest) returns (GetSquareResponse);
+  rpc GetRunningSum(stream GetSumRequest) returns (stream GetSumResponse);
 }

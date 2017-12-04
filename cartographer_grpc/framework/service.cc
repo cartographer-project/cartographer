@@ -105,12 +105,17 @@ void Service::HandleRead(Rpc* rpc, bool ok) {
 
   // Reads completed.
   rpc->OnReadsDone();
+
+  RemoveIfNotPending(rpc);
 }
 
 void Service::HandleWrite(Rpc* rpc, bool ok) {
   if (!ok) {
     LOG(ERROR) << "Write failed";
   }
+
+  // Send the next message or potentially finish the connection.
+  rpc->PerformWriteIfNeeded();
 
   RemoveIfNotPending(rpc);
 }

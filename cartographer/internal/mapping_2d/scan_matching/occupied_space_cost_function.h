@@ -33,16 +33,16 @@ namespace scan_matching {
 // at pixels with lower values.
 class OccupiedSpaceCostFunction {
  public:
-  OccupiedSpaceCostFunction(const double scaling_factor,
-                            const sensor::PointCloud& point_cloud,
-                            const ProbabilityGrid& probability_grid)
-      : scaling_factor_(scaling_factor),
-        point_cloud_(point_cloud),
-        probability_grid_(probability_grid) {}
-
-  OccupiedSpaceCostFunction(const OccupiedSpaceCostFunction&) = delete;
-  OccupiedSpaceCostFunction& operator=(const OccupiedSpaceCostFunction&) =
-      delete;
+  static ceres::CostFunction* CreateAutoDiffCostFunction(
+      const double scaling_factor, const sensor::PointCloud& point_cloud,
+      const ProbabilityGrid& probability_grid) {
+    return new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction,
+                                           ceres::DYNAMIC /* residuals */,
+                                           3 /* pose variables */>(
+        new OccupiedSpaceCostFunction(scaling_factor, point_cloud,
+                                      probability_grid),
+        point_cloud.size());
+  }
 
   template <typename T>
   bool operator()(const T* const pose, T* residual) const {
@@ -104,6 +104,17 @@ class OccupiedSpaceCostFunction {
    private:
     const ProbabilityGrid& probability_grid_;
   };
+
+  OccupiedSpaceCostFunction(const double scaling_factor,
+                            const sensor::PointCloud& point_cloud,
+                            const ProbabilityGrid& probability_grid)
+      : scaling_factor_(scaling_factor),
+        point_cloud_(point_cloud),
+        probability_grid_(probability_grid) {}
+
+  OccupiedSpaceCostFunction(const OccupiedSpaceCostFunction&) = delete;
+  OccupiedSpaceCostFunction& operator=(const OccupiedSpaceCostFunction&) =
+      delete;
 
   const double scaling_factor_;
   const sensor::PointCloud& point_cloud_;
