@@ -33,16 +33,15 @@ namespace scan_matching {
 // occupied space, i.e. at voxels with lower values.
 class OccupiedSpaceCostFunction {
  public:
-  OccupiedSpaceCostFunction(const double scaling_factor,
-                            const sensor::PointCloud& point_cloud,
-                            const HybridGrid& hybrid_grid)
-      : scaling_factor_(scaling_factor),
-        point_cloud_(point_cloud),
-        interpolated_grid_(hybrid_grid) {}
-
-  OccupiedSpaceCostFunction(const OccupiedSpaceCostFunction&) = delete;
-  OccupiedSpaceCostFunction& operator=(const OccupiedSpaceCostFunction&) =
-      delete;
+  static ceres::CostFunction* CreateAutoDiffCostFunction(
+      const double scaling_factor, const sensor::PointCloud& point_cloud,
+      const HybridGrid& hybrid_grid) {
+    return new ceres::AutoDiffCostFunction<
+        OccupiedSpaceCostFunction, ceres::DYNAMIC /* residuals */,
+        3 /* translation variables */, 4 /* rotation variables */>(
+        new OccupiedSpaceCostFunction(scaling_factor, point_cloud, hybrid_grid),
+        point_cloud.size());
+  }
 
   template <typename T>
   bool operator()(const T* const translation, const T* const rotation,
@@ -53,6 +52,18 @@ class OccupiedSpaceCostFunction {
                              rotation[3]));
     return Evaluate(transform, residual);
   }
+
+ private:
+  OccupiedSpaceCostFunction(const double scaling_factor,
+                            const sensor::PointCloud& point_cloud,
+                            const HybridGrid& hybrid_grid)
+      : scaling_factor_(scaling_factor),
+        point_cloud_(point_cloud),
+        interpolated_grid_(hybrid_grid) {}
+
+  OccupiedSpaceCostFunction(const OccupiedSpaceCostFunction&) = delete;
+  OccupiedSpaceCostFunction& operator=(const OccupiedSpaceCostFunction&) =
+      delete;
 
   template <typename T>
   bool Evaluate(const transform::Rigid3<T>& transform,
@@ -67,7 +78,6 @@ class OccupiedSpaceCostFunction {
     return true;
   }
 
- private:
   const double scaling_factor_;
   const sensor::PointCloud& point_cloud_;
   const InterpolatedGrid interpolated_grid_;

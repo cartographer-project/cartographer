@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_GRPC_FRAMEWORK_RPC_H
 
 #include <memory>
+#include <queue>
 #include <unordered_set>
 
 #include "cartographer/common/mutex.h"
@@ -55,18 +56,30 @@ class Rpc {
   void OnReadsDone();
   void RequestNextMethodInvocation();
   void RequestStreamingReadIfNeeded();
+  void PerformWriteIfNeeded();
   void Write(std::unique_ptr<::google::protobuf::Message> message);
+  void Finish(::grpc::Status status);
   Service* service() { return service_; }
   RpcEvent* GetRpcEvent(Event event);
 
  private:
+  struct SendItem {
+    std::unique_ptr<google::protobuf::Message> msg;
+    ::grpc::Status status;
+  };
+
   Rpc(const Rpc&) = delete;
   Rpc& operator=(const Rpc&) = delete;
   void InitializeReadersAndWriters(
       ::grpc::internal::RpcMethod::RpcType rpc_type);
+  void SendFinish(std::unique_ptr<::google::protobuf::Message> message,
+                  ::grpc::Status status);
 
   ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
   async_reader_interface();
+  ::grpc::internal::AsyncWriterInterface<::google::protobuf::Message>*
+  async_writer_interface();
+
   ::grpc::internal::ServerAsyncStreamingInterface* streaming_interface();
 
   int method_index_;
@@ -92,6 +105,11 @@ class Rpc {
   std::unique_ptr<::grpc::ServerAsyncReader<google::protobuf::Message,
                                             google::protobuf::Message>>
       server_async_reader_;
+  std::unique_ptr<::grpc::ServerAsyncReaderWriter<google::protobuf::Message,
+                                                  google::protobuf::Message>>
+      server_async_reader_writer_;
+
+  std::queue<SendItem> send_queue_;
 };
 
 // This class keeps track of all in-flight RPCs for a 'Service'. Make sure that

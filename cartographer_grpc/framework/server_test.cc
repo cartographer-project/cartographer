@@ -51,6 +51,29 @@ class GetSumHandler
   int sum_ = 0;
 };
 
+class GetRunningSumHandler
+    : public RpcHandler<Stream<proto::GetSumRequest>, Stream<proto::GetSumResponse>> {
+ public:
+  void OnRequest(const proto::GetSumRequest& request) override {
+    sum_ += request.input();
+
+    // Respond twice to demonstrate bidirectional streaming.
+    auto response = cartographer::common::make_unique<proto::GetSumResponse>();
+    response->set_output(sum_);
+    Send(std::move(response));
+    response = cartographer::common::make_unique<proto::GetSumResponse>();
+    response->set_output(sum_);
+    Send(std::move(response));
+  }
+
+  void OnReadsDone() override {
+    Finish(::grpc::Status::OK);
+  }
+
+ private:
+  int sum_ = 0;
+};
+
 class GetSquareHandler
     : public RpcHandler<proto::GetSquareRequest, proto::GetSquareResponse> {
   void OnRequest(const proto::GetSquareRequest& request) override {
@@ -75,6 +98,7 @@ class ServerTest : public ::testing::Test {
     server_builder.SetNumberOfThreads(kNumThreads);
     server_builder.RegisterHandler<GetSumHandler, proto::Math>("GetSum");
     server_builder.RegisterHandler<GetSquareHandler, proto::Math>("GetSquare");
+    server_builder.RegisterHandler<GetRunningSumHandler, proto::Math>("GetRunningSum");
     server_ = server_builder.Build();
 
     client_channel_ =
@@ -123,6 +147,28 @@ TEST_F(ServerTest, ProcessUnaryRpcTest) {
   grpc::Status status = stub_->GetSquare(&client_context_, request, &result);
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(result.output(), 121);
+
+  server_->Shutdown();
+}
+
+TEST_F(ServerTest, ProcessBidiStreamingRpcTest) {
+  server_->Start();
+
+  auto reader_writer = stub_->GetRunningSum(&client_context_);
+  for (int i = 0; i < 3; ++i) {
+    proto::GetSumRequest request;
+    request.set_input(i);
+    EXPECT_TRUE(reader_writer->Write(request));
+  }
+  reader_writer->WritesDone();
+  proto::GetSumResponse response;
+
+  std::list<int> expected_responses = {0, 0, 1, 1, 3, 3};
+  while (reader_writer->Read(&response)) {
+    EXPECT_EQ(expected_responses.front(), response.output());
+    expected_responses.pop_front();
+  }
+  EXPECT_TRUE(expected_responses.empty());
 
   server_->Shutdown();
 }

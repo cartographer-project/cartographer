@@ -93,27 +93,23 @@ void CeresScanMatcher::Match(const Eigen::Vector3d& target_translation,
         *point_clouds_and_hybrid_grids[i].first;
     const HybridGrid& hybrid_grid = *point_clouds_and_hybrid_grids[i].second;
     problem.AddResidualBlock(
-        new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction,
-                                        ceres::DYNAMIC, 3, 4>(
-            new OccupiedSpaceCostFunction(
-                options_.occupied_space_weight(i) /
-                    std::sqrt(static_cast<double>(point_cloud.size())),
-                point_cloud, hybrid_grid),
-            point_cloud.size()),
-        nullptr, ceres_pose.translation(), ceres_pose.rotation());
+        OccupiedSpaceCostFunction::CreateAutoDiffCostFunction(
+            options_.occupied_space_weight(i) /
+                std::sqrt(static_cast<double>(point_cloud.size())),
+            point_cloud, hybrid_grid),
+        nullptr /* loss function */, ceres_pose.translation(),
+        ceres_pose.rotation());
   }
   CHECK_GT(options_.translation_weight(), 0.);
   problem.AddResidualBlock(
-      new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor, 3, 3>(
-          new TranslationDeltaCostFunctor(options_.translation_weight(),
-                                          target_translation)),
-      nullptr, ceres_pose.translation());
+      TranslationDeltaCostFunctor::CreateAutoDiffCostFunction(
+          options_.translation_weight(), target_translation),
+      nullptr /* loss function */, ceres_pose.translation());
   CHECK_GT(options_.rotation_weight(), 0.);
   problem.AddResidualBlock(
-      new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor, 3, 4>(
-          new RotationDeltaCostFunctor(options_.rotation_weight(),
-                                       initial_pose_estimate.rotation())),
-      nullptr, ceres_pose.rotation());
+      RotationDeltaCostFunctor::CreateAutoDiffCostFunction(
+          options_.rotation_weight(), initial_pose_estimate.rotation()),
+      nullptr /* loss function */, ceres_pose.rotation());
 
   ceres::Solve(ceres_solver_options_, &problem, summary);
 
