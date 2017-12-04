@@ -38,8 +38,7 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 // and a PoseGraph for loop closure.
 class MapBuilder : public MapBuilderInterface {
  public:
-  MapBuilder(const proto::MapBuilderOptions& options,
-             const LocalSlamResultCallback& local_slam_result_callback);
+  MapBuilder(const proto::MapBuilderOptions& options);
   ~MapBuilder() override;
 
   MapBuilder(const MapBuilder&) = delete;
@@ -47,7 +46,8 @@ class MapBuilder : public MapBuilderInterface {
 
   int AddTrajectoryBuilder(
       const std::unordered_set<std::string>& expected_sensor_ids,
-      const proto::TrajectoryBuilderOptions& trajectory_options) override;
+      const proto::TrajectoryBuilderOptions& trajectory_options,
+      LocalSlamResultCallback local_slam_result_callback) override;
 
   int AddTrajectoryForDeserialization() override;
 
@@ -74,8 +74,6 @@ class MapBuilder : public MapBuilderInterface {
   std::unique_ptr<mapping_2d::PoseGraph> pose_graph_2d_;
   std::unique_ptr<mapping_3d::PoseGraph> pose_graph_3d_;
   mapping::PoseGraph* pose_graph_;
-
-  LocalSlamResultCallback local_slam_result_callback_;
 
   sensor::Collator sensor_collator_;
   std::vector<std::unique_ptr<mapping::TrajectoryBuilder>> trajectory_builders_;
