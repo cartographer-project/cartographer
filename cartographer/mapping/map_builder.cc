@@ -53,12 +53,8 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
   return options;
 }
 
-MapBuilder::MapBuilder(
-    const proto::MapBuilderOptions& options,
-    const LocalSlamResultCallback& local_slam_result_callback)
-    : options_(options),
-      thread_pool_(options.num_background_threads()),
-      local_slam_result_callback_(local_slam_result_callback) {
+MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
+    : options_(options), thread_pool_(options.num_background_threads()) {
   if (options.use_trajectory_builder_2d()) {
     pose_graph_2d_ = common::make_unique<mapping_2d::PoseGraph>(
         options_.pose_graph_options(), &thread_pool_);
@@ -75,7 +71,8 @@ MapBuilder::~MapBuilder() {}
 
 int MapBuilder::AddTrajectoryBuilder(
     const std::unordered_set<std::string>& expected_sensor_ids,
-    const proto::TrajectoryBuilderOptions& trajectory_options) {
+    const proto::TrajectoryBuilderOptions& trajectory_options,
+    LocalSlamResultCallback local_slam_result_callback) {
   const int trajectory_id = trajectory_builders_.size();
   if (options_.use_trajectory_builder_3d()) {
     CHECK(trajectory_options.has_trajectory_builder_3d_options());
@@ -88,7 +85,7 @@ int MapBuilder::AddTrajectoryBuilder(
                 mapping_3d::PoseGraph>>(
                 trajectory_options.trajectory_builder_3d_options(),
                 trajectory_id, pose_graph_3d_.get(),
-                local_slam_result_callback_)));
+                local_slam_result_callback)));
   } else {
     CHECK(trajectory_options.has_trajectory_builder_2d_options());
     trajectory_builders_.push_back(
@@ -100,7 +97,7 @@ int MapBuilder::AddTrajectoryBuilder(
                 mapping_2d::PoseGraph>>(
                 trajectory_options.trajectory_builder_2d_options(),
                 trajectory_id, pose_graph_2d_.get(),
-                local_slam_result_callback_)));
+                local_slam_result_callback)));
   }
   if (trajectory_options.pure_localization()) {
     constexpr int kSubmapsToKeep = 3;

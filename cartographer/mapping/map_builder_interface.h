@@ -51,7 +51,8 @@ class MapBuilderInterface {
   // Creates a new trajectory builder and returns its index.
   virtual int AddTrajectoryBuilder(
       const std::unordered_set<std::string>& expected_sensor_ids,
-      const proto::TrajectoryBuilderOptions& trajectory_options) = 0;
+      const proto::TrajectoryBuilderOptions& trajectory_options,
+      LocalSlamResultCallback local_slam_result_callback) = 0;
 
   // Creates a new trajectory and returns its index. Querying the trajectory
   // builder for it will return 'nullptr'.
