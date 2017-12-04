@@ -26,17 +26,19 @@ namespace mapping_3d {
 // Penalizes differences between IMU data and optimized accelerations.
 class AccelerationCostFunction {
  public:
-  AccelerationCostFunction(const double scaling_factor,
-                           const Eigen::Vector3d& delta_velocity_imu_frame,
-                           const double first_delta_time_seconds,
-                           const double second_delta_time_seconds)
-      : scaling_factor_(scaling_factor),
-        delta_velocity_imu_frame_(delta_velocity_imu_frame),
-        first_delta_time_seconds_(first_delta_time_seconds),
-        second_delta_time_seconds_(second_delta_time_seconds) {}
-
-  AccelerationCostFunction(const AccelerationCostFunction&) = delete;
-  AccelerationCostFunction& operator=(const AccelerationCostFunction&) = delete;
+  static ceres::CostFunction* CreateAutoDiffCostFunction(
+      const double scaling_factor,
+      const Eigen::Vector3d& delta_velocity_imu_frame,
+      const double first_delta_time_seconds,
+      const double second_delta_time_seconds) {
+    return new ceres::AutoDiffCostFunction<
+        AccelerationCostFunction, 3 /* residuals */, 4 /* rotation variables */,
+        3 /* position variables */, 3 /* position variables */,
+        3 /* position variables */, 1 /* gravity variables */,
+        4 /* rotation variables */>(new AccelerationCostFunction(
+        scaling_factor, delta_velocity_imu_frame, first_delta_time_seconds,
+        second_delta_time_seconds));
+  }
 
   template <typename T>
   bool operator()(const T* const middle_rotation, const T* const start_position,
@@ -69,6 +71,18 @@ class AccelerationCostFunction {
   }
 
  private:
+  AccelerationCostFunction(const double scaling_factor,
+                           const Eigen::Vector3d& delta_velocity_imu_frame,
+                           const double first_delta_time_seconds,
+                           const double second_delta_time_seconds)
+      : scaling_factor_(scaling_factor),
+        delta_velocity_imu_frame_(delta_velocity_imu_frame),
+        first_delta_time_seconds_(first_delta_time_seconds),
+        second_delta_time_seconds_(second_delta_time_seconds) {}
+
+  AccelerationCostFunction(const AccelerationCostFunction&) = delete;
+  AccelerationCostFunction& operator=(const AccelerationCostFunction&) = delete;
+
   template <typename T>
   static Eigen::Quaternion<T> ToEigen(const T* const quaternion) {
     return Eigen::Quaternion<T>(quaternion[0], quaternion[1], quaternion[2],
