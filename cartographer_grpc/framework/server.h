@@ -85,6 +85,11 @@ class Server {
   // Starts a server starts serving the registered services.
   void Start();
 
+  // Waits for the server to shut down. Note: The server must be either shutting
+  // down or some other thread must call 'Shutdown()' for this function to ever
+  // return.
+  void WaitForShutdown();
+
   // Shuts down the server and all of its services.
   void Shutdown();
 
