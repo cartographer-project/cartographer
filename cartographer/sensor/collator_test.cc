@@ -23,6 +23,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/proto/sensor.pb.h"
+#include "cartographer/sensor/timed_point_cloud_data.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -32,17 +33,17 @@ namespace {
 TEST(Collator, Ordering) {
   const std::array<std::string, 4> kSensorId = {
       {"horizontal_rangefinder", "vertical_rangefinder", "imu", "odometry"}};
-  DispatchableRangefinderData zero(common::FromUniversal(0),
-                                   Eigen::Vector3f::Zero(), {});
-  DispatchableRangefinderData first(common::FromUniversal(100),
-                                    Eigen::Vector3f::Zero(), {});
-  DispatchableRangefinderData second(common::FromUniversal(200),
-                                     Eigen::Vector3f::Zero(), {});
+  TimedPointCloudData zero{
+      common::FromUniversal(0), Eigen::Vector3f::Zero(), {}};
+  TimedPointCloudData first{
+      common::FromUniversal(100), Eigen::Vector3f::Zero(), {}};
+  TimedPointCloudData second{
+      common::FromUniversal(200), Eigen::Vector3f::Zero(), {}};
   ImuData third{common::FromUniversal(300)};
-  DispatchableRangefinderData fourth(common::FromUniversal(400),
-                                     Eigen::Vector3f::Zero(), {});
-  DispatchableRangefinderData fifth(common::FromUniversal(500),
-                                    Eigen::Vector3f::Zero(), {});
+  TimedPointCloudData fourth{
+      common::FromUniversal(400), Eigen::Vector3f::Zero(), {}};
+  TimedPointCloudData fifth{
+      common::FromUniversal(500), Eigen::Vector3f::Zero(), {}};
   OdometryData sixth{common::FromUniversal(600),
                      transform::Rigid3d::Identity()};
 
@@ -57,33 +58,17 @@ TEST(Collator, Ordering) {
   constexpr int kTrajectoryId = 0;
 
   // Establish a common start time.
-  collator.AddSensorData(
-      kTrajectoryId, kSensorId[0],
-      common::make_unique<DispatchableRangefinderData>(zero));
-  collator.AddSensorData(
-      kTrajectoryId, kSensorId[1],
-      common::make_unique<DispatchableRangefinderData>(zero));
-  collator.AddSensorData(
-      kTrajectoryId, kSensorId[2],
-      common::make_unique<DispatchableRangefinderData>(zero));
-  collator.AddSensorData(
-      kTrajectoryId, kSensorId[3],
-      common::make_unique<DispatchableRangefinderData>(zero));
+  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[0], zero));
+  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[1], zero));
+  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[2], zero));
+  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[3], zero));
 
-  collator.AddSensorData(
-      kTrajectoryId, kSensorId[0],
-      common::make_unique<DispatchableRangefinderData>(first));
-  collator.AddSensorData(kTrajectoryId, kSensorId[3], MakeDispatchable(sixth));
-  collator.AddSensorData(
-      kTrajectoryId, kSensorId[0],
-      common::make_unique<DispatchableRangefinderData>(fourth));
-  collator.AddSensorData(
-      kTrajectoryId, kSensorId[1],
-      common::make_unique<DispatchableRangefinderData>(second));
-  collator.AddSensorData(
-      kTrajectoryId, kSensorId[1],
-      common::make_unique<DispatchableRangefinderData>(fifth));
-  collator.AddSensorData(kTrajectoryId, kSensorId[2], MakeDispatchable(third));
+  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[0], first));
+  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[3], sixth));
+  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[0], fourth));
+  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[1], second));
+  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[1], fifth));
+  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[2], third));
 
   ASSERT_EQ(7, received.size());
   EXPECT_EQ(100, common::ToUniversal(received[4].second));

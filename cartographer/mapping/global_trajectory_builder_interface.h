@@ -29,6 +29,7 @@
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
+#include "cartographer/sensor/timed_point_cloud_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -48,13 +49,16 @@ class GlobalTrajectoryBuilderInterface {
   GlobalTrajectoryBuilderInterface& operator=(
       const GlobalTrajectoryBuilderInterface&) = delete;
 
-  virtual void AddRangefinderData(common::Time time,
-                                  const Eigen::Vector3f& origin,
-                                  const sensor::TimedPointCloud& ranges) = 0;
-  virtual void AddSensorData(const sensor::ImuData& imu_data) = 0;
-  virtual void AddSensorData(const sensor::OdometryData& odometry_data) = 0;
-  virtual void AddSensorData(
-      const sensor::FixedFramePoseData& fixed_frame_pose) = 0;
+  virtual void
+  AddSensorData(const std::string &sensor_id,
+                const sensor::TimedPointCloudData &timed_point_cloud_data) = 0;
+  virtual void AddSensorData(const std::string &sensor_id,
+                             const sensor::ImuData &imu_data) = 0;
+  virtual void AddSensorData(const std::string &sensor_id,
+                             const sensor::OdometryData &odometry_data) = 0;
+  virtual void
+  AddSensorData(const std::string &sensor_id,
+                const sensor::FixedFramePoseData &fixed_frame_pose) = 0;
 
   // A callback which is called after local SLAM processes an accumulated
   // 'sensor::RangeData'. If the data was inserted into a submap, reports the

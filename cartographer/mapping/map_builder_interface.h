@@ -62,8 +62,8 @@ class MapBuilderInterface {
   // Returns the TrajectoryBuilder corresponding to the specified
   // 'trajectory_id' or 'nullptr' if the trajectory has no corresponding
   // builder.
-  virtual mapping::TrajectoryBuilder* GetTrajectoryBuilder(
-      int trajectory_id) const = 0;
+  virtual mapping::GlobalTrajectoryBuilderInterface *
+  GetTrajectoryBuilder(int trajectory_id) const = 0;
 
   // Marks the TrajectoryBuilder corresponding to 'trajectory_id' as finished,
   // i.e. no further sensor data is expected.
