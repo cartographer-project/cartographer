@@ -58,11 +58,8 @@ TEST(Collator, Ordering) {
   constexpr int kTrajectoryId = 0;
 
   // Establish a common start time.
-  LOG(INFO) << "1";
   collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[0], zero));
-  LOG(INFO) << "2";
   collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[1], zero));
-  LOG(INFO) << "3";
   collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[2], zero));
   collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[3], zero));
 
