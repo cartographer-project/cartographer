@@ -21,8 +21,9 @@ import "google/protobuf/empty.proto";
 package cartographer_grpc.proto;
 
 message AddTrajectoryRequest {
+  repeated string expected_sensor_ids = 1;
   cartographer.mapping.proto.TrajectoryBuilderOptions
-      trajectory_builder_options = 1;
+      trajectory_builder_options = 2;
 }
 
 message SensorMetadata {
