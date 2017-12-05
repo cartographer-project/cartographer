@@ -49,10 +49,39 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilder {
   CollatedTrajectoryBuilder& operator=(const CollatedTrajectoryBuilder&) =
       delete;
 
-  void AddSensorData(const std::string& sensor_id,
-                     std::unique_ptr<sensor::Data> data) override;
+  void AddRangefinderData(const std::string& sensor_id, common::Time time,
+                          const Eigen::Vector3f& origin,
+                          const sensor::TimedPointCloud& ranges) override {
+    AddSensorData(sensor_id,
+                  common::make_unique<sensor::DispatchableRangefinderData>(
+                      time, origin, ranges));
+  }
+
+  void AddImuData(const std::string& sensor_id, common::Time time,
+                  const Eigen::Vector3d& linear_acceleration,
+                  const Eigen::Vector3d& angular_velocity) override {
+    AddSensorData(sensor_id, sensor::MakeDispatchable(sensor::ImuData{
+                                 time, linear_acceleration, angular_velocity}));
+  }
+
+  void AddOdometerData(const std::string& sensor_id, common::Time time,
+                       const transform::Rigid3d& odometer_pose) override {
+    AddSensorData(sensor_id, sensor::MakeDispatchable(
+                                 sensor::OdometryData{time, odometer_pose}));
+  }
+
+  void AddFixedFramePoseData(
+      const std::string& sensor_id, common::Time time,
+      const transform::Rigid3d& fixed_frame_pose) override {
+    AddSensorData(sensor_id,
+                  sensor::MakeDispatchable(
+                      sensor::FixedFramePoseData{time, fixed_frame_pose}));
+  }
 
  private:
+  void AddSensorData(const std::string& sensor_id,
+                     std::unique_ptr<sensor::Data> data);
+
   void HandleCollatedSensorData(const std::string& sensor_id,
                                 std::unique_ptr<sensor::Data> data);
 
