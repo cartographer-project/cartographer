@@ -121,8 +121,8 @@ int MapBuilder::AddTrajectoryForDeserialization() {
   return trajectory_id;
 }
 
-TrajectoryBuilder* MapBuilder::GetTrajectoryBuilder(
-    const int trajectory_id) const {
+GlobalTrajectoryBuilderInterface *
+MapBuilder::GetTrajectoryBuilder(const int trajectory_id) const {
   return trajectory_builders_.at(trajectory_id).get();
 }
 

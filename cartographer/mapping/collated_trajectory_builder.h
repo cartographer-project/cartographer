@@ -36,8 +36,8 @@ namespace mapping {
 
 // Handles collating sensor data using a sensor::Collator, then passing it on to
 // a mapping::GlobalTrajectoryBuilderInterface which is common for 2D and 3D.
-class CollatedTrajectoryBuilder : public TrajectoryBuilder {
- public:
+class CollatedTrajectoryBuilder : public GlobalTrajectoryBuilderInterface {
+public:
   CollatedTrajectoryBuilder(
       sensor::Collator* sensor_collator, int trajectory_id,
       const std::unordered_set<std::string>& expected_sensor_ids,
@@ -49,33 +49,29 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilder {
   CollatedTrajectoryBuilder& operator=(const CollatedTrajectoryBuilder&) =
       delete;
 
-  void AddRangefinderData(const std::string& sensor_id, common::Time time,
-                          const Eigen::Vector3f& origin,
-                          const sensor::TimedPointCloud& ranges) override {
+  void AddSensorData(
+      const std::string &sensor_id,
+      const sensor::TimedPointCloudData &timed_point_cloud_data) override {
     AddSensorData(sensor_id,
-                  common::make_unique<sensor::DispatchableRangefinderData>(
-                      time, origin, ranges));
+                  sensor::MakeDispatchable(sensor_id, timed_point_cloud_data));
   }
 
-  void AddImuData(const std::string& sensor_id, common::Time time,
-                  const Eigen::Vector3d& linear_acceleration,
-                  const Eigen::Vector3d& angular_velocity) override {
-    AddSensorData(sensor_id, sensor::MakeDispatchable(sensor::ImuData{
-                                 time, linear_acceleration, angular_velocity}));
+  void AddSensorData(const std::string &sensor_id,
+                     const sensor::ImuData &imu_data) override {
+    AddSensorData(sensor_id, sensor::MakeDispatchable(sensor_id, imu_data));
   }
 
-  void AddOdometerData(const std::string& sensor_id, common::Time time,
-                       const transform::Rigid3d& odometer_pose) override {
-    AddSensorData(sensor_id, sensor::MakeDispatchable(
-                                 sensor::OdometryData{time, odometer_pose}));
-  }
-
-  void AddFixedFramePoseData(
-      const std::string& sensor_id, common::Time time,
-      const transform::Rigid3d& fixed_frame_pose) override {
+  void AddSensorData(const std::string &sensor_id,
+                     const sensor::OdometryData &odometry_data) override {
     AddSensorData(sensor_id,
-                  sensor::MakeDispatchable(
-                      sensor::FixedFramePoseData{time, fixed_frame_pose}));
+                  sensor::MakeDispatchable(sensor_id, odometry_data));
+  }
+
+  void AddSensorData(
+      const std::string &sensor_id,
+      const sensor::FixedFramePoseData &fixed_frame_pose_data) override {
+    AddSensorData(sensor_id,
+                  sensor::MakeDispatchable(sensor_id, fixed_frame_pose_data));
   }
 
  private:
