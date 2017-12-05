@@ -15,6 +15,8 @@
  */
 #include "cartographer_grpc/map_builder_server.h"
 
+#include "cartographer_grpc/handlers/add_imu_data_handler.h"
+#include "cartographer_grpc/handlers/add_odometry_data_handler.h"
 #include "cartographer_grpc/handlers/add_trajectory_handler.h"
 #include "cartographer_grpc/handlers/finish_trajectory_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
@@ -22,20 +24,41 @@
 
 namespace cartographer_grpc {
 
+MapBuilderServer::MapBuilderContext::MapBuilderContext(
+    const cartographer::mapping::proto::MapBuilderOptions& map_builder_options,
+    cartographer::common::BlockingQueue<QueuedSensorData>* sensor_data_queue)
+    : map_builder_(map_builder_options),
+      sensor_data_queue_(sensor_data_queue) {}
+
+cartographer::mapping::MapBuilder&
+MapBuilderServer::MapBuilderContext::map_builder() {
+  return map_builder_;
+}
+cartographer::common::BlockingQueue<MapBuilderServer::QueuedSensorData>&
+MapBuilderServer::MapBuilderContext::sensor_data_queue() {
+  return *sensor_data_queue_;
+}
+
 MapBuilderServer::MapBuilderServer(
-    const proto::MapBuilderServerOptions& map_builder_server_options)
-    : map_builder_(map_builder_server_options.map_builder_options()) {
+    const proto::MapBuilderServerOptions& map_builder_server_options) {
   framework::Server::Builder server_builder;
   server_builder.SetServerAddress(map_builder_server_options.server_address());
   server_builder.SetNumberOfThreads(
       map_builder_server_options.num_grpc_threads());
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler,
                                  proto::MapBuilderService>("AddTrajectory");
+  server_builder.RegisterHandler<handlers::AddOdometryDataHandler,
+                                 proto::MapBuilderService>("AddOdometryData");
+  server_builder
+      .RegisterHandler<handlers::AddImuDataHandler, proto::MapBuilderService>(
+          "AddImuData");
   server_builder.RegisterHandler<handlers::FinishTrajectoryHandler,
                                  proto::MapBuilderService>("FinishTrajectory");
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
-      cartographer::common::make_unique<MapBuilderContext>(&map_builder_));
+      cartographer::common::make_unique<MapBuilderContext>(
+          map_builder_server_options.map_builder_options(),
+          &sensor_data_queue_));
 }
 
 void MapBuilderServer::Start() {

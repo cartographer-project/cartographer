@@ -17,6 +17,8 @@
 #ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_H
 #define CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_H
 
+#include <string>
+
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/mapping/map_builder.h"
 #include "cartographer/sensor/data.h"
@@ -28,14 +30,24 @@ namespace cartographer_grpc {
 
 class MapBuilderServer {
  public:
+  struct QueuedSensorData {
+    int trajectory_id;
+    std::string sensor_id;
+    std::unique_ptr<cartographer::sensor::Data> data;
+  };
+
   class MapBuilderContext : public framework::ExecutionContext {
    public:
-    MapBuilderContext(cartographer::mapping::MapBuilder* map_builder)
-        : map_builder_(map_builder) {}
-    cartographer::mapping::MapBuilder& map_builder() { return *map_builder_; }
+    MapBuilderContext(const cartographer::mapping::proto::MapBuilderOptions&
+                          map_builder_options,
+                      cartographer::common::BlockingQueue<QueuedSensorData>*
+                          sensor_data_queue);
+    cartographer::mapping::MapBuilder& map_builder();
+    cartographer::common::BlockingQueue<QueuedSensorData>& sensor_data_queue();
 
    private:
-    cartographer::mapping::MapBuilder* map_builder_;
+    cartographer::mapping::MapBuilder map_builder_;
+    cartographer::common::BlockingQueue<QueuedSensorData>* sensor_data_queue_;
   };
 
   MapBuilderServer(
@@ -59,7 +71,7 @@ class MapBuilderServer {
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> slam_thread_;
   std::unique_ptr<framework::Server> grpc_server_;
-  cartographer::mapping::MapBuilder map_builder_;
+  cartographer::common::BlockingQueue<QueuedSensorData> sensor_data_queue_;
 };
 
 }  // namespace cartographer_grpc
