@@ -15,6 +15,8 @@
  */
 #include "cartographer_grpc/map_builder_server.h"
 
+#include "cartographer_grpc/handlers/add_trajectory_handler.h"
+#include "cartographer_grpc/handlers/finish_trajectory_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "glog/logging.h"
 
@@ -27,6 +29,10 @@ MapBuilderServer::MapBuilderServer(
   server_builder.SetServerAddress(map_builder_server_options.server_address());
   server_builder.SetNumberOfThreads(
       map_builder_server_options.num_grpc_threads());
+  server_builder.RegisterHandler<handlers::AddTrajectoryHandler,
+                                 proto::MapBuilderService>("AddTrajectory");
+  server_builder.RegisterHandler<handlers::FinishTrajectoryHandler,
+                                 proto::MapBuilderService>("FinishTrajectory");
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
       cartographer::common::make_unique<MapBuilderContext>(&map_builder_));
