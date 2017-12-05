@@ -58,8 +58,6 @@ class MapBuilderTest : public ::testing::Test {
   std::unique_ptr<MapBuilderInterface> map_builder_;
 };
 
-TEST_F(MapBuilderTest, SetUp) { EXPECT_TRUE(map_builder_.get() != nullptr); }
-
 TEST_F(MapBuilderTest, TrajectoryAddFinish) {
   const std::string kRangeSensorId = "lidar";
   const std::string kTrajectoryBuilderLua = R"text(
@@ -71,14 +69,10 @@ TEST_F(MapBuilderTest, TrajectoryAddFinish) {
       ResolveLuaParameters(kTrajectoryBuilderLua);
   proto::TrajectoryBuilderOptions trajectory_options =
       CreateTrajectoryBuilderOptions(trajectory_builder_parameters.get());
-  MapBuilderInterface::LocalSlamResultCallback callback =
-      [](const int trajectory_id, const ::cartographer::common::Time time,
-         const ::cartographer::transform::Rigid3d local_pose,
-         ::cartographer::sensor::RangeData range_data_in_local,
-         const std::unique_ptr<const ::cartographer::mapping::NodeId>) {};
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
-      expected_sensor_ids, trajectory_options, callback);
-  EXPECT_EQ(map_builder_->num_trajectory_builders(), 1);
+      expected_sensor_ids, trajectory_options,
+      nullptr /* local_slam_result_callback */);
+  EXPECT_EQ(1, map_builder_->num_trajectory_builders());
   EXPECT_TRUE(map_builder_->GetTrajectoryBuilder(trajectory_id) != nullptr);
   EXPECT_TRUE(map_builder_->pose_graph() != nullptr);
   map_builder_->FinishTrajectory(trajectory_id);
