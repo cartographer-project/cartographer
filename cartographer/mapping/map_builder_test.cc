@@ -16,6 +16,7 @@
 
 #include "cartographer/mapping/map_builder.h"
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -23,36 +24,66 @@
 #include "cartographer/common/configuration_file_resolver.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/make_unique.h"
+#include "cartographer/mapping/trajectory_builder.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace mapping {
 namespace {
 
+std::unique_ptr<::cartographer::common::LuaParameterDictionary>
+ResolveLuaParameters(const std::string& lua_code) {
+  auto file_resolver = ::cartographer::common::make_unique<
+      ::cartographer::common::ConfigurationFileResolver>(
+      std::vector<std::string>{
+          std::string(::cartographer::common::kSourceDirectory) +
+          "/configuration_files"});
+  return common::make_unique<::cartographer::common::LuaParameterDictionary>(
+      lua_code, std::move(file_resolver));
+}
+
 class MapBuilderTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    const std::string kCode = R"text(
+    const std::string kMapBuilderLua = R"text(
       include "map_builder.lua"
       MAP_BUILDER.use_trajectory_builder_2d = true
       return MAP_BUILDER)text";
-    auto file_resolver = ::cartographer::common::make_unique<
-        ::cartographer::common::ConfigurationFileResolver>(
-        std::vector<std::string>{
-            std::string(::cartographer::common::kSourceDirectory) +
-            "/configuration_files"});
-    ::cartographer::common::LuaParameterDictionary parameter_dictionary(
-        kCode, std::move(file_resolver));
+    auto parameter_dictionary = ResolveLuaParameters(kMapBuilderLua);
     proto::MapBuilderOptions options =
-        CreateMapBuilderOptions(&parameter_dictionary);
+        CreateMapBuilderOptions(parameter_dictionary.get());
     map_builder_ = common::make_unique<MapBuilder>(options);
   }
 
   std::unique_ptr<MapBuilderInterface> map_builder_;
-  common::Time time_ = common::FromUniversal(12345678);
 };
 
 TEST_F(MapBuilderTest, SetUp) { EXPECT_TRUE(map_builder_.get() != nullptr); }
+
+TEST_F(MapBuilderTest, TrajectoryAddFinish) {
+  const std::string kRangeSensorId = "lidar";
+  const std::string kTrajectoryBuilderLua = R"text(
+      include "trajectory_builder.lua"
+      TRAJECTORY_BUILDER.trajectory_builder_2d.use_imu_data = false
+      return TRAJECTORY_BUILDER)text";
+  const std::unordered_set<std::string> expected_sensor_ids = {kRangeSensorId};
+  auto trajectory_builder_parameters =
+      ResolveLuaParameters(kTrajectoryBuilderLua);
+  proto::TrajectoryBuilderOptions trajectory_options =
+      CreateTrajectoryBuilderOptions(trajectory_builder_parameters.get());
+  MapBuilderInterface::LocalSlamResultCallback callback =
+      [](const int trajectory_id, const ::cartographer::common::Time time,
+         const ::cartographer::transform::Rigid3d local_pose,
+         ::cartographer::sensor::RangeData range_data_in_local,
+         const std::unique_ptr<const ::cartographer::mapping::NodeId>) {};
+  int trajectory_id = map_builder_->AddTrajectoryBuilder(
+      expected_sensor_ids, trajectory_options, callback);
+  EXPECT_EQ(map_builder_->num_trajectory_builders(), 1);
+  EXPECT_TRUE(map_builder_->GetTrajectoryBuilder(trajectory_id) != nullptr);
+  EXPECT_TRUE(map_builder_->pose_graph() != nullptr);
+  map_builder_->FinishTrajectory(trajectory_id);
+  EXPECT_TRUE(map_builder_->pose_graph()->IsTrajectoryFinished(trajectory_id));
+}
 
 }  // namespace
 }  // namespace mapping
