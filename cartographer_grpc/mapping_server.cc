@@ -86,3 +86,4 @@ void MappingServer::StartSlamThread() {
 }
 
 }  // namespace cartographer_grpc
+
