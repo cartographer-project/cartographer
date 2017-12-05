@@ -31,12 +31,11 @@ class FinishTrajectoryHandler
                                    google::protobuf::Empty> {
  public:
   void OnRequest(const proto::FinishTrajectoryRequest& request) override {
-    auto response =
-        cartographer::common::make_unique<google::protobuf::Empty>();
     GetContext<MapBuilderServer::MapBuilderContext>()
         ->map_builder()
         .FinishTrajectory(request.trajectory_id());
-    Send(std::move(response));
+    Send(std::move(
+        cartographer::common::make_unique<google::protobuf::Empty>()));
   }
 };
 
