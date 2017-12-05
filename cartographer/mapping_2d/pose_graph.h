@@ -172,6 +172,9 @@ class PoseGraph : public mapping::PoseGraph {
   // all computations have finished.
   void WaitForAllComputations() EXCLUDES(mutex_);
 
+  // Dispatches a worker thread
+  void DispatchWorker();
+
   // Runs the optimization. Callers have to make sure, that there is only one
   // optimization being run at a time.
   void RunOptimization() EXCLUDES(mutex_);
