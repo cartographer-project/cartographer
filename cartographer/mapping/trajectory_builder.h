@@ -37,32 +37,6 @@ namespace mapping {
 proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
-// This interface is used for both 2D and 3D SLAM.
-class TrajectoryBuilder {
- public:
-  TrajectoryBuilder() {}
-  virtual ~TrajectoryBuilder() {}
-
-  TrajectoryBuilder(const TrajectoryBuilder&) = delete;
-  TrajectoryBuilder& operator=(const TrajectoryBuilder&) = delete;
-
-  virtual void AddRangefinderData(const std::string& sensor_id,
-                                  common::Time time,
-                                  const Eigen::Vector3f& origin,
-                                  const sensor::TimedPointCloud& ranges) = 0;
-
-  virtual void AddImuData(const std::string& sensor_id, common::Time time,
-                          const Eigen::Vector3d& linear_acceleration,
-                          const Eigen::Vector3d& angular_velocity) = 0;
-
-  virtual void AddOdometerData(const std::string& sensor_id, common::Time time,
-                               const transform::Rigid3d& odometer_pose) = 0;
-
-  virtual void AddFixedFramePoseData(
-      const std::string& sensor_id, common::Time time,
-      const transform::Rigid3d& fixed_frame_pose) = 0;
-};
-
 }  // namespace mapping
 }  // namespace cartographer
 

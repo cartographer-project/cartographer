@@ -31,41 +31,28 @@ namespace sensor {
 
 class Data {
  public:
-  virtual ~Data() {}
+   Data(const std::string &sensor_id) : sensor_id_(sensor_id) {}
+   virtual ~Data() {}
 
-  virtual common::Time GetTime() const = 0;
-  virtual void AddToTrajectoryBuilder(
-      mapping::GlobalTrajectoryBuilderInterface* trajectory_builder) = 0;
-};
+   virtual common::Time GetTime() const = 0;
+   const std::string &GetSensorId() const { return sensor_id_; }
+   virtual void AddToTrajectoryBuilder(
+       mapping::GlobalTrajectoryBuilderInterface *trajectory_builder) = 0;
 
-class DispatchableRangefinderData : public Data {
- public:
-  DispatchableRangefinderData(const common::Time time,
-                              const Eigen::Vector3f& origin,
-                              const TimedPointCloud& ranges)
-      : time_(time), origin_(origin), ranges_(ranges) {}
-
-  common::Time GetTime() const override { return time_; }
-  void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface* const
-                                  trajectory_builder) override {
-    trajectory_builder->AddRangefinderData(time_, origin_, ranges_);
-  }
-
- private:
-  const common::Time time_;
-  const Eigen::Vector3f origin_;
-  const TimedPointCloud ranges_;
+ protected:
+   const std::string sensor_id_;
 };
 
 template <typename DataType>
 class Dispatchable : public Data {
  public:
-  Dispatchable(const DataType& data) : data_(data) {}
+   Dispatchable(const std::string &sensor_id, const DataType &data)
+       : Data(sensor_id), data_(data) {}
 
-  common::Time GetTime() const override { return data_.time; }
-  void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface* const
-                                  trajectory_builder) override {
-    trajectory_builder->AddSensorData(data_);
+   common::Time GetTime() const override { return data_.time; }
+   void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface
+                                   *const trajectory_builder) override {
+     trajectory_builder->AddSensorData(sensor_id_, data_);
   }
 
  private:
@@ -73,8 +60,9 @@ class Dispatchable : public Data {
 };
 
 template <typename DataType>
-std::unique_ptr<Dispatchable<DataType>> MakeDispatchable(const DataType& data) {
-  return common::make_unique<Dispatchable<DataType>>(data);
+std::unique_ptr<Dispatchable<DataType>>
+MakeDispatchable(const std::string &sensor_id, const DataType &data) {
+  return common::make_unique<Dispatchable<DataType>>(sensor_id, data);
 }
 
 }  // namespace sensor
