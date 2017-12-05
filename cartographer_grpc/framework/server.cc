@@ -87,7 +87,7 @@ void Server::Start() {
   }
 }
 
-void Server::Wait() {
+void Server::WaitForShutdown() {
   if (!server_) {
     return;
   }

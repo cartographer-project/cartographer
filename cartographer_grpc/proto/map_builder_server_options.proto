@@ -18,7 +18,7 @@ import "cartographer/mapping/proto/map_builder_options.proto";
 
 package cartographer_grpc.proto;
 
-message MappingServerOptions {
+message MapBuilderServerOptions {
   string server_address = 1;
   int32 num_grpc_threads = 2;
   cartographer.mapping.proto.MapBuilderOptions map_builder_options = 3;

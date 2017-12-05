@@ -13,63 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cartographer_grpc/mapping_server.h"
+#include "cartographer_grpc/map_builder_server.h"
 
 #include "cartographer_grpc/proto/cartographer_service.grpc.pb.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
 
-MappingServer::MappingServer(
-    const proto::MappingServerOptions& mapping_server_options)
-    : map_builder_(mapping_server_options.map_builder_options()) {
+MapBuilderServer::MapBuilderServer(
+    const proto::MapBuilderServerOptions& map_builder_server_options)
+    : map_builder_(map_builder_server_options.map_builder_options()) {
   framework::Server::Builder server_builder;
-  server_builder.SetServerAddress(mapping_server_options.server_address());
-  server_builder.SetNumberOfThreads(mapping_server_options.num_grpc_threads());
-  server_ = server_builder.Build();
-  server_->SetExecutionContext(
-      cartographer::common::make_unique<SlamExecutionContext>(&map_builder_));
+  server_builder.SetServerAddress(map_builder_server_options.server_address());
+  server_builder.SetNumberOfThreads(
+      map_builder_server_options.num_grpc_threads());
+  grpc_server_ = server_builder.Build();
+  grpc_server_->SetExecutionContext(
+      cartographer::common::make_unique<MapBuilderContext>(&map_builder_));
 }
 
-void MappingServer::Start() {
+void MapBuilderServer::Start() {
   shutting_down_ = false;
-
-  // Start the SLAM processing thread.
   StartSlamThread();
-
-  // Start the gRPC server.
-  server_->Start();
+  grpc_server_->Start();
 }
 
-void MappingServer::Wait() {
-  // Wait for the gRPC server to shut down.
-  server_->Wait();
-
-  // Wait for the SLAM processing thread to terminate.
+void MapBuilderServer::WaitForShutdown() {
+  grpc_server_->WaitForShutdown();
   if (slam_thread_) {
     slam_thread_->join();
   }
 }
 
-void MappingServer::Shutdown() {
+void MapBuilderServer::Shutdown() {
   shutting_down_ = true;
-
-  // Shut down the gRPC server.
-  server_->Shutdown();
-
-  // Wait for the SLAM processing thread to terminate.
+  grpc_server_->Shutdown();
   if (slam_thread_) {
     slam_thread_->join();
   }
 }
 
-void MappingServer::ProcessSensorDataQueue() {
+void MapBuilderServer::ProcessSensorDataQueue() {
   while (!shutting_down_) {
-    // TODO (cschuet): Implement this.
+    // TODO(cschuet): Implement this.
   }
 }
 
-void MappingServer::StartSlamThread() {
+void MapBuilderServer::StartSlamThread() {
   CHECK(!slam_thread_);
 
   // Start the SLAM processing thread.
@@ -78,4 +68,3 @@ void MappingServer::StartSlamThread() {
 }
 
 }  // namespace cartographer_grpc
-

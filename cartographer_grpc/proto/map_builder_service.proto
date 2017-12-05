@@ -54,7 +54,7 @@ message FinishTrajectoryRequest {
   int32 trajectory_id = 1;
 }
 
-service Cartographer {
+service MapBuilderService {
   // Starts a new trajectory and returns its index.
   rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
 
@@ -76,4 +76,3 @@ service Cartographer {
   // i.e. no further sensor data is expected.
   rpc FinishTrajectory(FinishTrajectoryRequest) returns (google.protobuf.Empty);
 }
-

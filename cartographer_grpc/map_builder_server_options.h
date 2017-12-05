@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAPPING_SERVER_OPTIONS_H_H
-#define CARTOGRAPHER_GRPC_MAPPING_SERVER_OPTIONS_H_H
+#ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_OPTIONS_H
+#define CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_OPTIONS_H
 
 #include <string>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer_grpc/proto/mapping_server_options.pb.h"
+#include "cartographer_grpc/proto/map_builder_server_options.pb.h"
 
 namespace cartographer_grpc {
 
-proto::MappingServerOptions CreateMappingServerOptions(
+proto::MapBuilderServerOptions CreateMapBuilderServerOptions(
     ::cartographer::common::LuaParameterDictionary* lua_parameter_dictionary);
 
-proto::MappingServerOptions LoadMappingServerOptions(
+proto::MapBuilderServerOptions LoadMapBuilderServerOptions(
     const std::string& configuration_directory,
     const std::string& configuration_basename);
 
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_MAPPING_SERVER_OPTIONS_H_H
+#endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_OPTIONS_H

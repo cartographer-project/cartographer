@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAPPING_SERVER_H
-#define CARTOGRAPHER_GRPC_MAPPING_SERVER_H
+#ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_H
+#define CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_H
 
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/mapping/map_builder.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/server.h"
-#include "cartographer_grpc/proto/mapping_server_options.pb.h"
+#include "cartographer_grpc/proto/map_builder_server_options.pb.h"
 
 namespace cartographer_grpc {
 
-class MappingServer {
+class MapBuilderServer {
  public:
-  class SlamExecutionContext : public framework::ExecutionContext {
+  class MapBuilderContext : public framework::ExecutionContext {
    public:
-    SlamExecutionContext(cartographer::mapping::MapBuilder* map_builder)
+    MapBuilderContext(cartographer::mapping::MapBuilder* map_builder)
         : map_builder_(map_builder) {}
     cartographer::mapping::MapBuilder& map_builder() { return *map_builder_; }
 
@@ -38,17 +38,18 @@ class MappingServer {
     cartographer::mapping::MapBuilder* map_builder_;
   };
 
-  MappingServer(const proto::MappingServerOptions& mapping_server_options);
+  MapBuilderServer(
+      const proto::MapBuilderServerOptions& map_builder_server_options);
 
-  // Starts the gRPC server and the SLAM processing thread.
+  // Starts the gRPC server and the SLAM thread.
   void Start();
 
-  // Waits for the mapping server to shut down. Note: The server must be either
-  // shutting down or some other thread must call 'Shutdown()' for this function
-  // to ever return.
-  void Wait();
+  // Waits for the 'MapBuilderServer' to shut down. Note: The server must be
+  // either shutting down or some other thread must call 'Shutdown()' for this
+  // function to ever return.
+  void WaitForShutdown();
 
-  // Shuts down the gRPC server and the SLAM processing thread.
+  // Shuts down the gRPC server and the SLAM thread.
   void Shutdown();
 
  private:
@@ -57,10 +58,10 @@ class MappingServer {
 
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> slam_thread_;
-  std::unique_ptr<framework::Server> server_;
+  std::unique_ptr<framework::Server> grpc_server_;
   cartographer::mapping::MapBuilder map_builder_;
 };
 
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_MAPPING_SERVER_H
+#endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_H
