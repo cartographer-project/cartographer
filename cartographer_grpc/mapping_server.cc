@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 #include "cartographer_grpc/mapping_server.h"
-#include <cartographer_grpc/handlers/finish_trajectory_handler.h>
 
-#include "cartographer_grpc/handlers/add_trajectory_handler.h"
 #include "cartographer_grpc/proto/cartographer_service.grpc.pb.h"
 #include "glog/logging.h"
 
@@ -28,12 +26,6 @@ MappingServer::MappingServer(
   framework::Server::Builder server_builder;
   server_builder.SetServerAddress(mapping_server_options.server_address());
   server_builder.SetNumberOfThreads(mapping_server_options.num_grpc_threads());
-  server_builder
-      .RegisterHandler<handlers::AddTrajectoryHandler, proto::Cartographer>(
-          "AddTrajectory");
-  server_builder
-      .RegisterHandler<handlers::FinishTrajectoryHandler, proto::Cartographer>(
-          "FinishTrajectory");
   server_ = server_builder.Build();
   server_->SetExecutionContext(
       cartographer::common::make_unique<SlamExecutionContext>(&map_builder_));
