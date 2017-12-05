@@ -15,7 +15,7 @@
  */
 #include "cartographer_grpc/map_builder_server.h"
 
-#include "cartographer_grpc/proto/cartographer_service.grpc.pb.h"
+#include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
