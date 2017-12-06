@@ -28,7 +28,6 @@
 #include "cartographer/mapping/pose_estimate.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
-#include "cartographer/sensor/data.h"
 #include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {

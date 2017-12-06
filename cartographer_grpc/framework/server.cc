@@ -87,6 +87,14 @@ void Server::Start() {
   }
 }
 
+void Server::WaitForShutdown() {
+  if (!server_) {
+    return;
+  }
+
+  server_->Wait();
+}
+
 void Server::Shutdown() {
   LOG(INFO) << "Shutting down server.";
 
