@@ -19,11 +19,7 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
-#include "cartographer/mapping/trajectory_builder.h"
-#include "cartographer/sensor/fixed_frame_pose_data.h"
-#include "cartographer/sensor/imu_data.h"
-#include "cartographer/sensor/odometry_data.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -33,13 +29,13 @@ namespace sensor {
 
 class Data {
  public:
-   Data(const std::string &sensor_id) : sensor_id_(sensor_id) {}
-   virtual ~Data() {}
+  explicit Data(const std::string &sensor_id) : sensor_id_(sensor_id) {}
+  virtual ~Data() {}
 
-   virtual common::Time GetTime() const = 0;
-   const std::string &GetSensorId() const { return sensor_id_; }
-   virtual void AddToTrajectoryBuilder(
-       mapping::GlobalTrajectoryBuilderInterface *trajectory_builder) = 0;
+  virtual common::Time GetTime() const = 0;
+  const std::string &GetSensorId() const { return sensor_id_; }
+  virtual void AddToTrajectoryBuilder(
+      mapping::TrajectoryBuilderInterface *trajectory_builder) = 0;
 
  protected:
    const std::string sensor_id_;
@@ -48,17 +44,14 @@ class Data {
 template <typename DataType>
 class Dispatchable : public Data {
  public:
-   Dispatchable(const std::string &sensor_id, const DataType &data)
-       : Data(sensor_id), data_(data) {}
+  Dispatchable(const std::string &sensor_id, const DataType &data)
+      : Data(sensor_id), data_(data) {}
 
-   common::Time GetTime() const override { return data_.time; }
-   void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface
-                                   *const trajectory_builder) override {
-     trajectory_builder->AddSensorData(sensor_id_, data_);
-  }
+  common::Time GetTime() const override { return data_.time; }
   void AddToTrajectoryBuilder(
-      mapping::TrajectoryBuilder* const trajectory_builder,
-      const std::string& sensor_id) override;
+      mapping::TrajectoryBuilderInterface *const trajectory_builder) override {
+    trajectory_builder->AddSensorData(sensor_id_, data_);
+  }
 
  private:
   const DataType data_;

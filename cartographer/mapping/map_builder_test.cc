@@ -24,7 +24,7 @@
 #include "cartographer/common/configuration_file_resolver.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/make_unique.h"
-#include "cartographer/mapping/trajectory_builder.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {

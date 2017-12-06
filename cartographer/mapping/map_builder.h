@@ -51,8 +51,8 @@ class MapBuilder : public MapBuilderInterface {
 
   int AddTrajectoryForDeserialization() override;
 
-  mapping::GlobalTrajectoryBuilderInterface *
-  GetTrajectoryBuilder(int trajectory_id) const override;
+  mapping::TrajectoryBuilderInterface* GetTrajectoryBuilder(
+      int trajectory_id) const override;
 
   void FinishTrajectory(int trajectory_id) override;
 
@@ -76,7 +76,7 @@ class MapBuilder : public MapBuilderInterface {
   mapping::PoseGraph* pose_graph_;
 
   sensor::Collator sensor_collator_;
-  std::vector<std::unique_ptr<mapping::GlobalTrajectoryBuilderInterface>>
+  std::vector<std::unique_ptr<mapping::TrajectoryBuilderInterface>>
       trajectory_builders_;
 };
 

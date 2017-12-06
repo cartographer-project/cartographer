@@ -49,7 +49,7 @@ class Collator {
   void FinishTrajectory(int trajectory_id);
 
   // Adds 'data' for 'trajectory_id' to be collated. 'data' must contain valid
-  // sensor data. Sensor packets with matching 'sensor_id' must be added in time
+  // sensor data. Sensor packets with matching sensor ID must be added in time
   // order.
   void AddSensorData(int trajectory_id, std::unique_ptr<Data> data);
 

@@ -31,7 +31,7 @@
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
-#include "cartographer/mapping/trajectory_builder.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 
 namespace cartographer {
 namespace mapping {
@@ -41,7 +41,7 @@ namespace mapping {
 class MapBuilderInterface {
  public:
   using LocalSlamResultCallback =
-      GlobalTrajectoryBuilderInterface::LocalSlamResultCallback;
+      TrajectoryBuilderInterface::LocalSlamResultCallback;
 
   MapBuilderInterface(){};
   virtual ~MapBuilderInterface(){};
@@ -59,11 +59,11 @@ class MapBuilderInterface {
   // builder for it will return 'nullptr'.
   virtual int AddTrajectoryForDeserialization() = 0;
 
-  // Returns the TrajectoryBuilder corresponding to the specified
+  // Returns the 'TrajectoryBuilderInterface' corresponding to the specified
   // 'trajectory_id' or 'nullptr' if the trajectory has no corresponding
   // builder.
-  virtual mapping::GlobalTrajectoryBuilderInterface *
-  GetTrajectoryBuilder(int trajectory_id) const = 0;
+  virtual mapping::TrajectoryBuilderInterface* GetTrajectoryBuilder(
+      int trajectory_id) const = 0;
 
   // Marks the TrajectoryBuilder corresponding to 'trajectory_id' as finished,
   // i.e. no further sensor data is expected.

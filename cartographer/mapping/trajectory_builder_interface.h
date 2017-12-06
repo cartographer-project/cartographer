@@ -14,51 +14,52 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_GLOBAL_TRAJECTORY_BUILDER_INTERFACE_H_
-#define CARTOGRAPHER_MAPPING_GLOBAL_TRAJECTORY_BUILDER_INTERFACE_H_
+#ifndef CARTOGRAPHER_MAPPING_TRAJECTORY_BUILDER_INTERFACE_H_
+#define CARTOGRAPHER_MAPPING_TRAJECTORY_BUILDER_INTERFACE_H_
 
 #include <functional>
 #include <memory>
 #include <string>
-#include <vector>
 
+#include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/common/make_unique.h"
+#include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
-#include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping {
+
+proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
+    common::LuaParameterDictionary* const parameter_dictionary);
 
 // This interface is used for both 2D and 3D SLAM. Implementations wire up a
 // global SLAM stack, i.e. local SLAM for initial pose estimates, scan matching
 // to detect loop closure, and a sparse pose graph optimization to compute
 // optimized pose estimates.
-class GlobalTrajectoryBuilderInterface {
+class TrajectoryBuilderInterface {
  public:
-  GlobalTrajectoryBuilderInterface() {}
-  virtual ~GlobalTrajectoryBuilderInterface() {}
+  TrajectoryBuilderInterface() {}
+  virtual ~TrajectoryBuilderInterface() {}
 
-  GlobalTrajectoryBuilderInterface(const GlobalTrajectoryBuilderInterface&) =
+  TrajectoryBuilderInterface(const TrajectoryBuilderInterface&) = delete;
+  TrajectoryBuilderInterface& operator=(const TrajectoryBuilderInterface&) =
       delete;
-  GlobalTrajectoryBuilderInterface& operator=(
-      const GlobalTrajectoryBuilderInterface&) = delete;
 
-  virtual void
-  AddSensorData(const std::string &sensor_id,
-                const sensor::TimedPointCloudData &timed_point_cloud_data) = 0;
-  virtual void AddSensorData(const std::string &sensor_id,
-                             const sensor::ImuData &imu_data) = 0;
-  virtual void AddSensorData(const std::string &sensor_id,
-                             const sensor::OdometryData &odometry_data) = 0;
-  virtual void
-  AddSensorData(const std::string &sensor_id,
-                const sensor::FixedFramePoseData &fixed_frame_pose) = 0;
+  virtual void AddSensorData(
+      const std::string& sensor_id,
+      const sensor::TimedPointCloudData& timed_point_cloud_data) = 0;
+  virtual void AddSensorData(const std::string& sensor_id,
+                             const sensor::ImuData& imu_data) = 0;
+  virtual void AddSensorData(const std::string& sensor_id,
+                             const sensor::OdometryData& odometry_data) = 0;
+  virtual void AddSensorData(
+      const std::string& sensor_id,
+      const sensor::FixedFramePoseData& fixed_frame_pose) = 0;
 
   // A callback which is called after local SLAM processes an accumulated
   // 'sensor::RangeData'. If the data was inserted into a submap, reports the
@@ -73,4 +74,4 @@ class GlobalTrajectoryBuilderInterface {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_GLOBAL_TRAJECTORY_BUILDER_INTERFACE_H_
+#endif  // CARTOGRAPHER_MAPPING_TRAJECTORY_BUILDER_INTERFACE_H_

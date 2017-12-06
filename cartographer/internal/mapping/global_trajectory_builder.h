@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_INTERNAL_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
 #define CARTOGRAPHER_INTERNAL_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
 
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 
 #include "glog/logging.h"
 
@@ -26,8 +26,7 @@ namespace mapping {
 
 template <typename LocalTrajectoryBuilder,
           typename LocalTrajectoryBuilderOptions, typename PoseGraph>
-class GlobalTrajectoryBuilder
-    : public mapping::GlobalTrajectoryBuilderInterface {
+class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
  public:
   GlobalTrajectoryBuilder(
       const LocalTrajectoryBuilderOptions& options, const int trajectory_id,
