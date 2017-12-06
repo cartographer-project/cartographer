@@ -72,7 +72,7 @@ void CollatedTrajectoryBuilder::HandleCollatedSensorData(
     last_logging_time_ = std::chrono::steady_clock::now();
   }
 
-  data->AddToTrajectoryBuilder(wrapped_trajectory_builder_.get());
+  data->AddToGlobalTrajectoryBuilder(wrapped_trajectory_builder_.get());
 }
 
 }  // namespace mapping
