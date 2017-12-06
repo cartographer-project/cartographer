@@ -22,6 +22,7 @@ set(CARTOGRAPHER_PATCH_VERSION 0)
 set(CARTOGRAPHER_VERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION}.${CARTOGRAPHER_PATCH_VERSION})
 set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION})
 option(BUILD_GRPC "build Cartographer gRPC support" false)
+# TODO(gaschler): Make this an option.
 set(GRPC_PLUGIN_PATH "/usr/local/bin/grpc_cpp_plugin")
 
 include("${PROJECT_SOURCE_DIR}/cmake/functions.cmake")
@@ -53,23 +54,29 @@ install(DIRECTORY configuration_files DESTINATION share/cartographer/)
 
 install(DIRECTORY cmake DESTINATION share/cartographer/)
 
-file(GLOB_RECURSE ALL_SRCS "*.cc" "*.h")
+file(GLOB_RECURSE ALL_LIBRARY_HDRS "*.h")
+file(GLOB_RECURSE ALL_LIBRARY_SRCS "*.cc")
 file(GLOB_RECURSE ALL_TESTS "*_test.cc")
 file(GLOB_RECURSE ALL_EXECUTABLES "*_main.cc")
-list(REMOVE_ITEM ALL_SRCS ${ALL_TESTS})
-list(REMOVE_ITEM ALL_SRCS ${ALL_EXECUTABLES})
+list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_TESTS})
+list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_EXECUTABLES})
 file(GLOB_RECURSE ALL_GRPC_FILES "cartographer_grpc/*")
 if (NOT ${BUILD_GRPC})
-  list_remove_item(ALL_SRCS ALL_GRPC_FILES)
-  list_remove_item(ALL_TESTS ALL_GRPC_FILES)
-  list_remove_item(ALL_EXECUTABLES ALL_GRPC_FILES)
+  list(REMOVE_ITEM ALL_LIBRARY_HDRS ${ALL_GRPC_FILES})
+  list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_GRPC_FILES})
+  list(REMOVE_ITEM ALL_TESTS ${ALL_GRPC_FILES})
+  list(REMOVE_ITEM ALL_EXECUTABLES ${ALL_GRPC_FILES})
 endif()
+set(INSTALL_SOURCE_HDRS ${ALL_LIBRARY_HDRS})
+file(GLOB_RECURSE INTERNAL_HDRS "cartographer/internal/*.h"
+  "cartographer_grpc/internal/*.h")
+list(REMOVE_ITEM INSTALL_SOURCE_HDRS ${INTERNAL_HDRS})
 
 file(GLOB_RECURSE ALL_PROTOS "*.proto")
 file(GLOB_RECURSE ALL_GRPC_SERVICES "*_service.proto")
 list(REMOVE_ITEM ALL_PROTOS ALL_GRPC_SERVICES)
 if (NOT ${BUILD_GRPC})
-  list_remove_item(ALL_PROTOS ALL_GRPC_FILES)
+  list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_FILES})
 endif()
 
 # TODO(cschuet): Move proto compilation to separate function.
@@ -95,7 +102,9 @@ foreach(ABS_FIL ${ALL_PROTOS})
   )
 endforeach()
 set_source_files_properties(${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS} PROPERTIES GENERATED TRUE)
-list(APPEND ALL_SRCS ${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS})
+list(APPEND ALL_LIBRARY_HDRS ${ALL_PROTO_HDRS})
+list(APPEND ALL_LIBRARY_SRCS ${ALL_PROTO_SRCS})
+set(INSTALL_GENERATED_HDRS ${ALL_PROTO_HDRS})
 
 if(${BUILD_GRPC})
   set(ALL_GRPC_SERVICE_SRCS)
@@ -125,10 +134,11 @@ if(${BUILD_GRPC})
     )
   endforeach()
   set_source_files_properties(${ALL_GRPC_SERVICE_SRCS} ${ALL_GRPC_SERVICE_HDRS} PROPERTIES GENERATED TRUE)
-  list(APPEND ALL_SRCS ${ALL_GRPC_SERVICE_SRCS} ${ALL_GRPC_SERVICE_HDRS})
+  list(APPEND ALL_LIBRARY_HDRS ${ALL_GRPC_SERVICE_HDRS})
+  list(APPEND ALL_LIBRARY_SRCS ${ALL_GRPC_SERVICE_SRCS})
 endif()
 
-add_library(${PROJECT_NAME} ${ALL_SRCS})
+add_library(${PROJECT_NAME} ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/cartographer/common/config.h.cmake
@@ -211,46 +221,21 @@ install(
   RUNTIME DESTINATION bin
 )
 
-# Install source headers.
-file(GLOB_RECURSE HDRS "*.h")
-file(GLOB_RECURSE INTERNAL_HDRS "cartographer/internal/*.h")
-list(REMOVE_ITEM HDRS ${INTERNAL_HDRS})  # Do not install internal headers.
-file(GLOB_RECURSE INTERNAL_HDRS "cartographer_grpc/internal/*.h")
-list_remove_item(HDRS INTERNAL_HDRS)
-foreach(HDR ${HDRS})
-  file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${HDR})
-  get_filename_component(INSTALL_DIR ${REL_FIL} DIRECTORY)
-  install(
-    FILES
-      ${HDR}
-    DESTINATION
-      include/${INSTALL_DIR}
-  )
-endforeach()
-
-# Install generated headers.
-file(GLOB_RECURSE HDRS "*.h.in")
-foreach(HDR ${HDRS})
+foreach(HDR ${INSTALL_SOURCE_HDRS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${HDR})
   get_filename_component(DIR ${REL_FIL} DIRECTORY)
-  get_filename_component(FILE_WE ${REL_FIL} NAME_WE)
   install(
-    FILES
-      ${PROJECT_BINARY_DIR}/${DIR}/${FILE_WE}
-    DESTINATION
-      include/${DIR}
+    FILES ${HDR}
+    DESTINATION include/${DIR}
   )
 endforeach()
 
-# Install proto headers.
-foreach(HDR ${ALL_PROTO_HDRS})
+foreach(HDR ${INSTALL_GENERATED_HDRS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_BINARY_DIR} ${HDR})
   get_filename_component(DIR ${REL_FIL} DIRECTORY)
   install(
-    FILES
-      ${HDR}
-    DESTINATION
-      include/${DIR}
+    FILES ${HDR}
+    DESTINATION include/${DIR}
   )
 endforeach()
 
