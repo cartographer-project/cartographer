@@ -20,8 +20,10 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
+#include "cartographer/mapping/trajectory_builder.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -34,8 +36,11 @@ class Data {
   virtual ~Data() {}
 
   virtual common::Time GetTime() const = 0;
-  virtual void AddToTrajectoryBuilder(
+  virtual void AddToGlobalTrajectoryBuilder(
       mapping::GlobalTrajectoryBuilderInterface* trajectory_builder) = 0;
+  virtual void AddToTrajectoryBuilder(
+      mapping::TrajectoryBuilder* const trajectory_builder,
+      const std::string& sensor_id) = 0;
 };
 
 class DispatchableRangefinderData : public Data {
@@ -46,9 +51,15 @@ class DispatchableRangefinderData : public Data {
       : time_(time), origin_(origin), ranges_(ranges) {}
 
   common::Time GetTime() const override { return time_; }
-  void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface* const
-                                  trajectory_builder) override {
+  void AddToGlobalTrajectoryBuilder(
+      mapping::GlobalTrajectoryBuilderInterface* const trajectory_builder)
+      override {
     trajectory_builder->AddRangefinderData(time_, origin_, ranges_);
+  }
+  void AddToTrajectoryBuilder(
+      mapping::TrajectoryBuilder* const trajectory_builder,
+      const std::string& sensor_id) override {
+    trajectory_builder->AddRangefinderData(sensor_id, time_, origin_, ranges_);
   }
 
  private:
@@ -63,10 +74,14 @@ class Dispatchable : public Data {
   Dispatchable(const DataType& data) : data_(data) {}
 
   common::Time GetTime() const override { return data_.time; }
-  void AddToTrajectoryBuilder(mapping::GlobalTrajectoryBuilderInterface* const
-                                  trajectory_builder) override {
+  void AddToGlobalTrajectoryBuilder(
+      mapping::GlobalTrajectoryBuilderInterface* const trajectory_builder)
+      override {
     trajectory_builder->AddSensorData(data_);
   }
+  void AddToTrajectoryBuilder(
+      mapping::TrajectoryBuilder* const trajectory_builder,
+      const std::string& sensor_id) override;
 
  private:
   const DataType data_;

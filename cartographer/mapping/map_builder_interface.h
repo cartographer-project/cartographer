@@ -25,6 +25,7 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/io/proto_stream.h"
+#include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
