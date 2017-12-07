@@ -174,9 +174,8 @@ void PoseGraph::AddFixedFramePoseData(
   });
 }
 
-void PoseGraph::AddLandmarkData(
-    const int trajectory_id,
-    const sensor::LandmarkData& landmark_data) {
+void PoseGraph::AddLandmarkData(const int trajectory_id,
+                                const sensor::LandmarkData& landmark_data) {
   LOG(FATAL) << "Not yet implemented for 3D.";
 }
 
