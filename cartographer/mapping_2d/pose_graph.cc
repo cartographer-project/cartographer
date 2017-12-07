@@ -388,8 +388,8 @@ void PoseGraph::FinishTrajectory(const int trajectory_id) {
     for (auto submap_id_data : submap_data) {
       submap_data_.at(submap_id_data.id).state = SubmapState::kFinished;
     }
-  CHECK(!run_loop_closure_);
-  DispatchOptimization();
+    CHECK(!run_loop_closure_);
+    DispatchOptimization();
   });
 }
 
