@@ -43,8 +43,8 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
       std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder);
   ~CollatedTrajectoryBuilder() override;
 
-  CollatedTrajectoryBuilder(const CollatedTrajectoryBuilder&) = delete;
-  CollatedTrajectoryBuilder& operator=(const CollatedTrajectoryBuilder&) =
+  CollatedTrajectoryBuilder(const CollatedTrajectoryBuilder &) = delete;
+  CollatedTrajectoryBuilder &operator=(const CollatedTrajectoryBuilder &) =
       delete;
 
   void AddSensorData(
@@ -72,10 +72,10 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
  private:
   void AddSensorData(std::unique_ptr<sensor::Data> data);
 
-  void HandleCollatedSensorData(const std::string& sensor_id,
+  void HandleCollatedSensorData(const std::string &sensor_id,
                                 std::unique_ptr<sensor::Data> data);
 
-  sensor::Collator* const sensor_collator_;
+  sensor::Collator *const sensor_collator_;
   const int trajectory_id_;
   std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder_;
 

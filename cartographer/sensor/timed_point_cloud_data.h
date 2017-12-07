@@ -30,7 +30,7 @@ struct TimedPointCloudData {
   sensor::TimedPointCloud ranges;
 };
 
-} // namespace sensor
-} // namespace cartographer
+}  // namespace sensor
+}  // namespace cartographer
 
-#endif // CARTOGRAPHER_SENSOR_TIMED_POINT_CLOUD_DATA_H_
+#endif  // CARTOGRAPHER_SENSOR_TIMED_POINT_CLOUD_DATA_H_
