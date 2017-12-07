@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/pose_estimate.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
