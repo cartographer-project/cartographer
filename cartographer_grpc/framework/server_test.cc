@@ -51,8 +51,8 @@ class GetSumHandler
   int sum_ = 0;
 };
 
-class GetRunningSumHandler
-    : public RpcHandler<Stream<proto::GetSumRequest>, Stream<proto::GetSumResponse>> {
+class GetRunningSumHandler : public RpcHandler<Stream<proto::GetSumRequest>,
+                                               Stream<proto::GetSumResponse>> {
  public:
   void OnRequest(const proto::GetSumRequest& request) override {
     sum_ += request.input();
@@ -66,9 +66,7 @@ class GetRunningSumHandler
     Send(std::move(response));
   }
 
-  void OnReadsDone() override {
-    Finish(::grpc::Status::OK);
-  }
+  void OnReadsDone() override { Finish(::grpc::Status::OK); }
 
  private:
   int sum_ = 0;
@@ -98,7 +96,8 @@ class ServerTest : public ::testing::Test {
     server_builder.SetNumberOfThreads(kNumThreads);
     server_builder.RegisterHandler<GetSumHandler, proto::Math>("GetSum");
     server_builder.RegisterHandler<GetSquareHandler, proto::Math>("GetSquare");
-    server_builder.RegisterHandler<GetRunningSumHandler, proto::Math>("GetRunningSum");
+    server_builder.RegisterHandler<GetRunningSumHandler, proto::Math>(
+        "GetRunningSum");
     server_ = server_builder.Build();
 
     client_channel_ =
@@ -123,7 +122,7 @@ TEST_F(ServerTest, ProcessRpcStreamTest) {
   server_->Start();
 
   proto::GetSumResponse result;
-  std::unique_ptr<grpc::ClientWriter<proto::GetSumRequest> > writer(
+  std::unique_ptr<grpc::ClientWriter<proto::GetSumRequest>> writer(
       stub_->GetSum(&client_context_, &result));
   for (int i = 0; i < 3; ++i) {
     proto::GetSumRequest request;
