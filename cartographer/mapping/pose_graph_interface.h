@@ -17,6 +17,8 @@
 #ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_INTERFACE_H_
 #define CARTOGRAPHER_MAPPING_POSE_GRAPH_INTERFACE_H_
 
+#include <vector>
+
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/submaps.h"
 
@@ -53,6 +55,9 @@ class PoseGraphInterface {
   };
 
   virtual ~PoseGraphInterface() {}
+
+  PoseGraphInterface(const PoseGraphInterface&) = delete;
+  PoseGraphInterface& operator=(const PoseGraphInterface&) = delete;
 
   // Computes optimized poses.
   virtual void RunFinalOptimization() = 0;
