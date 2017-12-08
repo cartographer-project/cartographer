@@ -38,11 +38,7 @@ class Data {
       mapping::TrajectoryBuilderInterface *trajectory_builder) = 0;
 
  protected:
-<<<<<<< HEAD
   const std::string sensor_id_;
-=======
-   const std::string sensor_id_;
->>>>>>> Introduce TrajectoryBuilderInterface.
 };
 
 template <typename DataType>
@@ -62,13 +58,8 @@ class Dispatchable : public Data {
 };
 
 template <typename DataType>
-<<<<<<< HEAD
 std::unique_ptr<Dispatchable<DataType>> MakeDispatchable(
     const std::string &sensor_id, const DataType &data) {
-=======
-std::unique_ptr<Dispatchable<DataType>>
-MakeDispatchable(const std::string &sensor_id, const DataType &data) {
->>>>>>> Introduce TrajectoryBuilderInterface.
   return common::make_unique<Dispatchable<DataType>>(sensor_id, data);
 }
 
