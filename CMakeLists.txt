@@ -154,6 +154,13 @@ google_binary(cartographer_compute_relations_metrics
     cartographer/ground_truth/compute_relations_metrics_main.cc
 )
 
+if(${BUILD_GRPC})
+  google_binary(cartographer_grpc_server
+    SRCS
+      cartographer_grpc/map_builder_server_main.cc
+  )
+endif()
+
 foreach(ABS_FIL ${ALL_TESTS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${ABS_FIL})
   get_filename_component(DIR ${REL_FIL} DIRECTORY)
@@ -195,6 +202,9 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 # TODO(hrapp): This should not explicitly list pthread and use
 # PROTOBUF_LIBRARIES, but that failed on first try.
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} pthread)
+if(${BUILD_GRPC})
+  target_link_libraries(${PROJECT_NAME} PUBLIC grpc++)
+endif()
 
 # Add the binary directory first, so that port.h is included after it has
 # been generated.
