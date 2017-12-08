@@ -38,44 +38,44 @@ namespace mapping {
 class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
  public:
   CollatedTrajectoryBuilder(
-      sensor::Collator *sensor_collator, int trajectory_id,
-      const std::unordered_set<std::string> &expected_sensor_ids,
+      sensor::Collator* sensor_collator, int trajectory_id,
+      const std::unordered_set<std::string>& expected_sensor_ids,
       std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder);
   ~CollatedTrajectoryBuilder() override;
 
-  CollatedTrajectoryBuilder(const CollatedTrajectoryBuilder &) = delete;
-  CollatedTrajectoryBuilder &operator=(const CollatedTrajectoryBuilder &) =
+  CollatedTrajectoryBuilder(const CollatedTrajectoryBuilder&) = delete;
+  CollatedTrajectoryBuilder& operator=(const CollatedTrajectoryBuilder&) =
       delete;
 
   void AddSensorData(
-      const std::string &sensor_id,
-      const sensor::TimedPointCloudData &timed_point_cloud_data) override {
+      const std::string& sensor_id,
+      const sensor::TimedPointCloudData& timed_point_cloud_data) override {
     AddSensorData(sensor::MakeDispatchable(sensor_id, timed_point_cloud_data));
   }
 
-  void AddSensorData(const std::string &sensor_id,
-                     const sensor::ImuData &imu_data) override {
+  void AddSensorData(const std::string& sensor_id,
+                     const sensor::ImuData& imu_data) override {
     AddSensorData(sensor::MakeDispatchable(sensor_id, imu_data));
   }
 
-  void AddSensorData(const std::string &sensor_id,
-                     const sensor::OdometryData &odometry_data) override {
+  void AddSensorData(const std::string& sensor_id,
+                     const sensor::OdometryData& odometry_data) override {
     AddSensorData(sensor::MakeDispatchable(sensor_id, odometry_data));
   }
 
   void AddSensorData(
-      const std::string &sensor_id,
-      const sensor::FixedFramePoseData &fixed_frame_pose_data) override {
+      const std::string& sensor_id,
+      const sensor::FixedFramePoseData& fixed_frame_pose_data) override {
     AddSensorData(sensor::MakeDispatchable(sensor_id, fixed_frame_pose_data));
   }
 
  private:
   void AddSensorData(std::unique_ptr<sensor::Data> data);
 
-  void HandleCollatedSensorData(const std::string &sensor_id,
+  void HandleCollatedSensorData(const std::string& sensor_id,
                                 std::unique_ptr<sensor::Data> data);
 
-  sensor::Collator *const sensor_collator_;
+  sensor::Collator* const sensor_collator_;
   const int trajectory_id_;
   std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder_;
 
