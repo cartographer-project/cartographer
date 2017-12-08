@@ -351,8 +351,9 @@ void PoseGraph::WaitForAllComputations() {
       constraint_builder_.GetNumFinishedNodes();
   while (!locker.AwaitWithTimeout(
       [this]() REQUIRES(mutex_) {
-        return constraint_builder_.GetNumFinishedNodes() ==
-               num_trajectory_nodes_;
+        return ((constraint_builder_.GetNumFinishedNodes() ==
+                 num_trajectory_nodes_) &&
+                !work_queue_);
       },
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;

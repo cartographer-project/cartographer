@@ -60,7 +60,7 @@ class PoseGraphInterface {
   PoseGraphInterface(const PoseGraphInterface&) = delete;
   PoseGraphInterface& operator=(const PoseGraphInterface&) = delete;
 
-  // Computes optimized poses.
+  // Computes optimized poses and waits for all computations to finish.
   virtual void RunFinalOptimization() = 0;
 
   // Returns data for all submaps.
