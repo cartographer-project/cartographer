@@ -54,6 +54,7 @@ class PoseGraphInterface {
     transform::Rigid3d pose;
   };
 
+  PoseGraphInterface() {}
   virtual ~PoseGraphInterface() {}
 
   PoseGraphInterface(const PoseGraphInterface&) = delete;

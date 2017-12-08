@@ -43,8 +43,8 @@ class MapBuilderInterface {
   using LocalSlamResultCallback =
       GlobalTrajectoryBuilderInterface::LocalSlamResultCallback;
 
-  MapBuilderInterface(){};
-  virtual ~MapBuilderInterface(){};
+  MapBuilderInterface() {}
+  virtual ~MapBuilderInterface() {}
 
   MapBuilderInterface(const MapBuilderInterface&) = delete;
   MapBuilderInterface& operator=(const MapBuilderInterface&) = delete;
