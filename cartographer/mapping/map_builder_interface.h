@@ -27,7 +27,7 @@
 #include "cartographer/io/proto_stream.h"
 #include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping/id.h"
-#include "cartographer/mapping/pose_graph.h"
+#include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
@@ -43,8 +43,8 @@ class MapBuilderInterface {
   using LocalSlamResultCallback =
       GlobalTrajectoryBuilderInterface::LocalSlamResultCallback;
 
-  MapBuilderInterface(){};
-  virtual ~MapBuilderInterface(){};
+  MapBuilderInterface() {}
+  virtual ~MapBuilderInterface() {}
 
   MapBuilderInterface(const MapBuilderInterface&) = delete;
   MapBuilderInterface& operator=(const MapBuilderInterface&) = delete;
@@ -82,7 +82,7 @@ class MapBuilderInterface {
 
   virtual int num_trajectory_builders() const = 0;
 
-  virtual mapping::PoseGraph* pose_graph() = 0;
+  virtual mapping::PoseGraphInterface* pose_graph() = 0;
 };
 
 }  // namespace mapping
