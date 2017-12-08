@@ -25,13 +25,12 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/io/proto_stream.h"
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
-#include "cartographer/mapping/trajectory_builder.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 
 namespace cartographer {
 namespace mapping {
@@ -41,7 +40,7 @@ namespace mapping {
 class MapBuilderInterface {
  public:
   using LocalSlamResultCallback =
-      GlobalTrajectoryBuilderInterface::LocalSlamResultCallback;
+      TrajectoryBuilderInterface::LocalSlamResultCallback;
 
   MapBuilderInterface() {}
   virtual ~MapBuilderInterface() {}
@@ -59,10 +58,10 @@ class MapBuilderInterface {
   // builder for it will return 'nullptr'.
   virtual int AddTrajectoryForDeserialization() = 0;
 
-  // Returns the TrajectoryBuilder corresponding to the specified
+  // Returns the 'TrajectoryBuilderInterface' corresponding to the specified
   // 'trajectory_id' or 'nullptr' if the trajectory has no corresponding
   // builder.
-  virtual mapping::TrajectoryBuilder* GetTrajectoryBuilder(
+  virtual mapping::TrajectoryBuilderInterface* GetTrajectoryBuilder(
       int trajectory_id) const = 0;
 
   // Marks the TrajectoryBuilder corresponding to 'trajectory_id' as finished,

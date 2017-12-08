@@ -44,9 +44,10 @@ class OrderedMultiQueueTest : public ::testing::Test {
   }
 
   std::unique_ptr<Data> MakeImu(const int ordinal) {
-    return MakeDispatchable(sensor::ImuData{common::FromUniversal(ordinal),
-                                            Eigen::Vector3d::Zero(),
-                                            Eigen::Vector3d::Zero()});
+    return MakeDispatchable(
+        "imu",
+        sensor::ImuData{common::FromUniversal(ordinal), Eigen::Vector3d::Zero(),
+                        Eigen::Vector3d::Zero()});
   }
 
   std::vector<std::unique_ptr<Data>> values_;
