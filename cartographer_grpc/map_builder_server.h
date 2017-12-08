@@ -30,7 +30,6 @@ class MapBuilderServer {
  public:
    struct SensorData {
      int trajectory_id;
-     std::string sensor_id;
      std::unique_ptr<cartographer::sensor::Data> sensor_data;
    };
 

@@ -43,8 +43,7 @@ MapBuilderServer::MapBuilderContext::sensor_data_queue() {
 void MapBuilderServer::MapBuilderContext::AddSensorData(
     const SensorData& sensor_data) {
   sensor_data.sensor_data->AddToTrajectoryBuilder(
-      map_builder_->GetTrajectoryBuilder(sensor_data.trajectory_id),
-      sensor_data.sensor_id);
+      map_builder_->GetTrajectoryBuilder(sensor_data.trajectory_id));
 }
 
 MapBuilderServer::MapBuilderServer(
