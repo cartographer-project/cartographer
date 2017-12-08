@@ -97,11 +97,8 @@ class Server {
   void SetExecutionContext(std::unique_ptr<ExecutionContext> execution_context);
 
   template <typename T>
-  T* GetUnsynchronizedContext() {
-    if (!execution_context_) {
-      return nullptr;
-    }
-    return static_cast<T*>(execution_context_.get());
+  ExecutionContext::Synchronized<T> GetContext() {
+    return {execution_context_->lock(), execution_context_.get()};
   }
 
  private:
