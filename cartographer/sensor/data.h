@@ -20,8 +20,6 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {

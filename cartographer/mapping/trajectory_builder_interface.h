@@ -44,6 +44,15 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
 // optimized pose estimates.
 class TrajectoryBuilderInterface {
  public:
+  // A callback which is called after local SLAM processes an accumulated
+  // 'sensor::RangeData'. If the data was inserted into a submap, reports the
+  // assigned 'NodeId', otherwise 'nullptr' if the data was filtered out.
+  using LocalSlamResultCallback =
+      std::function<void(int /* trajectory ID */, common::Time,
+                         transform::Rigid3d /* local pose estimate */,
+                         sensor::RangeData /* in local frame */,
+                         std::unique_ptr<const mapping::NodeId>)>;
+
   TrajectoryBuilderInterface() {}
   virtual ~TrajectoryBuilderInterface() {}
 
@@ -61,15 +70,6 @@ class TrajectoryBuilderInterface {
   virtual void AddSensorData(
       const std::string& sensor_id,
       const sensor::FixedFramePoseData& fixed_frame_pose) = 0;
-
-  // A callback which is called after local SLAM processes an accumulated
-  // 'sensor::RangeData'. If the data was inserted into a submap, reports the
-  // assigned 'NodeId', otherwise 'nullptr' if the data was filtered out.
-  using LocalSlamResultCallback =
-      std::function<void(int /* trajectory ID */, common::Time,
-                         transform::Rigid3d /* local pose estimate */,
-                         sensor::RangeData /* in local frame */,
-                         std::unique_ptr<const mapping::NodeId>)>;
 };
 
 }  // namespace mapping
