@@ -30,7 +30,7 @@ class AddOdometryDataHandler
     : public framework::RpcHandler<
           framework::Stream<proto::AddOdometryDataRequest>,
           google::protobuf::Empty> {
-public:
+ public:
   void OnRequest(const proto::AddOdometryDataRequest &request) override {
     // Note: The 'BlockingQueue' returned by 'sensor_data_queue()' is already
     // thread-safe. Therefore it suffices to get an unsynchronized reference to
@@ -49,7 +49,7 @@ public:
   }
 };
 
-} // namespace handlers
-} // namespace cartographer_grpc
+}  // namespace handlers
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_HANDLERS_ADD_ODOMETRY_DATA_HANDLER_H
+#endif  // CARTOGRAPHER_GRPC_HANDLERS_ADD_ODOMETRY_DATA_HANDLER_H

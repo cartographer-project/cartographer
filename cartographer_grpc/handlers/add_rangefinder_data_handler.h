@@ -41,7 +41,8 @@ class AddRangefinderDataHandler
             request.sensor_metadata().trajectory_id(),
             cartographer::sensor::MakeDispatchable(
                 request.sensor_metadata().sensor_id(),
-                cartographer::sensor::FromProto(request.timed_point_cloud_data()))});
+                cartographer::sensor::FromProto(
+                    request.timed_point_cloud_data()))});
   }
 
   void OnReadsDone() {
@@ -49,7 +50,7 @@ class AddRangefinderDataHandler
   }
 };
 
-} // namespace handlers
-} // namespace cartographer_grpc
+}  // namespace handlers
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_HANDLERS_ADD_RANGEFINDER_DATA_HANDLER_H
+#endif  // CARTOGRAPHER_GRPC_HANDLERS_ADD_RANGEFINDER_DATA_HANDLER_H

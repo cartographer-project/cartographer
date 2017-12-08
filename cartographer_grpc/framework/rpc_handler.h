@@ -53,11 +53,12 @@ class RpcHandler : public RpcHandlerInterface {
   ExecutionContext::Synchronized<T> GetContext() {
     return {execution_context_->lock(), execution_context_};
   }
-  template <typename T> T *GetUnsynchronizedContext() {
+  template <typename T>
+  T* GetUnsynchronizedContext() {
     return static_cast<T*>(execution_context_);
   }
 
-private:
+ private:
   Rpc* rpc_;
   ExecutionContext* execution_context_;
 };

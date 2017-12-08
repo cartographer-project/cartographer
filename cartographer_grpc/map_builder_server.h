@@ -28,23 +28,23 @@ namespace cartographer_grpc {
 
 class MapBuilderServer {
  public:
-   struct SensorData {
-     int trajectory_id;
-     std::unique_ptr<cartographer::sensor::Data> sensor_data;
-   };
+  struct SensorData {
+    int trajectory_id;
+    std::unique_ptr<cartographer::sensor::Data> sensor_data;
+  };
 
-   class MapBuilderContext : public framework::ExecutionContext {
+  class MapBuilderContext : public framework::ExecutionContext {
    public:
-     MapBuilderContext(
-         cartographer::mapping::MapBuilder *map_builder,
-         cartographer::common::BlockingQueue<SensorData> *sensor_data_queue);
-     cartographer::mapping::MapBuilder &map_builder();
-     cartographer::common::BlockingQueue<SensorData> &sensor_data_queue();
-     void AddSensorData(const SensorData &sensor_data);
+    MapBuilderContext(
+        cartographer::mapping::MapBuilder *map_builder,
+        cartographer::common::BlockingQueue<SensorData> *sensor_data_queue);
+    cartographer::mapping::MapBuilder &map_builder();
+    cartographer::common::BlockingQueue<SensorData> &sensor_data_queue();
+    void AddSensorData(const SensorData &sensor_data);
 
-    private:
-     cartographer::mapping::MapBuilder *map_builder_;
-     cartographer::common::BlockingQueue<SensorData> *sensor_data_queue_;
+   private:
+    cartographer::mapping::MapBuilder *map_builder_;
+    cartographer::common::BlockingQueue<SensorData> *sensor_data_queue_;
   };
 
   MapBuilderServer(
