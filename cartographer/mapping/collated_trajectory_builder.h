@@ -34,7 +34,7 @@ namespace cartographer {
 namespace mapping {
 
 // Handles collating sensor data using a sensor::Collator, then passing it on to
-// a mapping::GlobalTrajectoryBuilderInterface which is common for 2D and 3D.
+// a mapping::TrajectoryBuilderInterface which is common for 2D and 3D.
 class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
  public:
   CollatedTrajectoryBuilder(
