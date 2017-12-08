@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
   FLAGS_logtostderr = true;
   google::SetUsageMessage(
       "\n\n"
-          "This program offers a MapBuilder service via a gRPC interface.\n");
+      "This program offers a MapBuilder service via a gRPC interface.\n");
   google::ParseCommandLineFlags(&argc, &argv, true);
   if (FLAGS_configuration_directory.empty() ||
       FLAGS_configuration_basename.empty()) {
