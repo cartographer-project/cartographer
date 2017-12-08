@@ -19,13 +19,7 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
-#include "cartographer/mapping/trajectory_builder.h"
-#include "cartographer/sensor/fixed_frame_pose_data.h"
-#include "cartographer/sensor/imu_data.h"
-#include "cartographer/sensor/odometry_data.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/sensor/range_data.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -33,63 +27,38 @@ namespace sensor {
 
 class Data {
  public:
+  explicit Data(const std::string &sensor_id) : sensor_id_(sensor_id) {}
   virtual ~Data() {}
 
   virtual common::Time GetTime() const = 0;
-  virtual void AddToGlobalTrajectoryBuilder(
-      mapping::GlobalTrajectoryBuilderInterface* trajectory_builder) = 0;
+  const std::string &GetSensorId() const { return sensor_id_; }
   virtual void AddToTrajectoryBuilder(
-      mapping::TrajectoryBuilder* const trajectory_builder,
-      const std::string& sensor_id) = 0;
-};
+      mapping::TrajectoryBuilderInterface *trajectory_builder) = 0;
 
-class DispatchableRangefinderData : public Data {
- public:
-  DispatchableRangefinderData(const common::Time time,
-                              const Eigen::Vector3f& origin,
-                              const TimedPointCloud& ranges)
-      : time_(time), origin_(origin), ranges_(ranges) {}
-
-  common::Time GetTime() const override { return time_; }
-  void AddToGlobalTrajectoryBuilder(
-      mapping::GlobalTrajectoryBuilderInterface* const trajectory_builder)
-      override {
-    trajectory_builder->AddRangefinderData(time_, origin_, ranges_);
-  }
-  void AddToTrajectoryBuilder(
-      mapping::TrajectoryBuilder* const trajectory_builder,
-      const std::string& sensor_id) override {
-    trajectory_builder->AddRangefinderData(sensor_id, time_, origin_, ranges_);
-  }
-
- private:
-  const common::Time time_;
-  const Eigen::Vector3f origin_;
-  const TimedPointCloud ranges_;
+ protected:
+  const std::string sensor_id_;
 };
 
 template <typename DataType>
 class Dispatchable : public Data {
  public:
-  Dispatchable(const DataType& data) : data_(data) {}
+  Dispatchable(const std::string &sensor_id, const DataType &data)
+      : Data(sensor_id), data_(data) {}
 
   common::Time GetTime() const override { return data_.time; }
-  void AddToGlobalTrajectoryBuilder(
-      mapping::GlobalTrajectoryBuilderInterface* const trajectory_builder)
-      override {
-    trajectory_builder->AddSensorData(data_);
-  }
   void AddToTrajectoryBuilder(
-      mapping::TrajectoryBuilder* const trajectory_builder,
-      const std::string& sensor_id) override;
+      mapping::TrajectoryBuilderInterface *const trajectory_builder) override {
+    trajectory_builder->AddSensorData(sensor_id_, data_);
+  }
 
  private:
   const DataType data_;
 };
 
 template <typename DataType>
-std::unique_ptr<Dispatchable<DataType>> MakeDispatchable(const DataType& data) {
-  return common::make_unique<Dispatchable<DataType>>(data);
+std::unique_ptr<Dispatchable<DataType>> MakeDispatchable(
+    const std::string &sensor_id, const DataType &data) {
+  return common::make_unique<Dispatchable<DataType>>(sensor_id, data);
 }
 
 }  // namespace sensor
