@@ -97,7 +97,7 @@ void MapBuilderServer::ProcessSensorDataQueue() {
   LOG(INFO) << "Starting SLAM thread.";
   while (!shutting_down_) {
     SensorData sensor_data = sensor_data_queue_.Pop();
-    grpc_server_->GetContext<MapBuilderContext>()->AddSensorData(sensor_data);
+    grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()->AddSensorData(sensor_data);
   }
 }
 
