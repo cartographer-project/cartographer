@@ -28,18 +28,28 @@ namespace cartographer_grpc {
 
 class MapBuilderServer {
  public:
-  class MapBuilderContext : public framework::ExecutionContext {
-   public:
-    MapBuilderContext(cartographer::mapping::MapBuilder* map_builder)
-        : map_builder_(map_builder) {}
-    cartographer::mapping::MapBuilder& map_builder() { return *map_builder_; }
+   struct SensorData {
+     int trajectory_id;
+     std::string sensor_id;
+     std::unique_ptr<cartographer::sensor::Data> sensor_data;
+   };
 
-   private:
-    cartographer::mapping::MapBuilder* map_builder_;
+   class MapBuilderContext : public framework::ExecutionContext {
+   public:
+     MapBuilderContext(
+         cartographer::mapping::MapBuilder *map_builder,
+         cartographer::common::BlockingQueue<SensorData> *sensor_data_queue);
+     cartographer::mapping::MapBuilder &map_builder();
+     cartographer::common::BlockingQueue<SensorData> &sensor_data_queue();
+     void AddSensorData(const SensorData &sensor_data);
+
+    private:
+     cartographer::mapping::MapBuilder *map_builder_;
+     cartographer::common::BlockingQueue<SensorData> *sensor_data_queue_;
   };
 
   MapBuilderServer(
-      const proto::MapBuilderServerOptions& map_builder_server_options);
+      const proto::MapBuilderServerOptions &map_builder_server_options);
 
   // Starts the gRPC server and the SLAM thread.
   void Start();
@@ -60,6 +70,7 @@ class MapBuilderServer {
   std::unique_ptr<std::thread> slam_thread_;
   std::unique_ptr<framework::Server> grpc_server_;
   cartographer::mapping::MapBuilder map_builder_;
+  cartographer::common::BlockingQueue<SensorData> sensor_data_queue_;
 };
 
 }  // namespace cartographer_grpc
