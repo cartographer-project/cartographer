@@ -266,16 +266,16 @@ Rpc::async_writer_interface() {
 
 Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
   switch (event) {
-	case Event::DONE:
-	  return &done_event_;
-	case Event::FINISH:
-	  return &finish_event_;
-	case Event::NEW_CONNECTION:
-	  return &new_connection_event_;
-	case Event::READ:
-	  return &read_event_;
-	case Event::WRITE:
-	  return &write_event_;
+    case Event::DONE:
+      return &done_event_;
+    case Event::FINISH:
+      return &finish_event_;
+    case Event::NEW_CONNECTION:
+      return &new_connection_event_;
+    case Event::READ:
+      return &read_event_;
+    case Event::WRITE:
+      return &write_event_;
   }
   LOG(FATAL) << "Never reached.";
 }

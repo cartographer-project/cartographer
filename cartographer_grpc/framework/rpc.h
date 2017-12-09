@@ -58,7 +58,8 @@ class Rpc {
   void RequestNextMethodInvocation();
   void RequestStreamingReadIfNeeded();
   void PerformWriteIfNeeded() EXCLUDES(lock_);
-  void Write(std::unique_ptr<::google::protobuf::Message> message) EXCLUDES(lock_);
+  void Write(std::unique_ptr<::google::protobuf::Message> message)
+      EXCLUDES(lock_);
   void Finish(::grpc::Status status) EXCLUDES(lock_);
   Service* service() { return service_; }
   void UpdateRpcEventState(Event event, bool pending) EXCLUDES(lock_);
