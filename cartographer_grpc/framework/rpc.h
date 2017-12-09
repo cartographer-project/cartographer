@@ -56,11 +56,12 @@ class Rpc {
   void OnReadsDone();
   void RequestNextMethodInvocation();
   void RequestStreamingReadIfNeeded();
-  void PerformWriteIfNeeded();
-  void Write(std::unique_ptr<::google::protobuf::Message> message);
-  void Finish(::grpc::Status status);
+  void PerformWriteIfNeeded() EXCLUDES(lock_);
+  void Write(std::unique_ptr<::google::protobuf::Message> message) EXCLUDES(lock_);
+  void Finish(::grpc::Status status) EXCLUDES(lock_);
   Service* service() { return service_; }
-  RpcEvent* GetRpcEvent(Event event);
+  void UpdateRpcEventState(Event event, bool pending) EXCLUDES(lock_);
+  bool IsRpcEventPending(Event event) EXCLUDES(lock_);
 
  private:
   struct SendItem {
@@ -70,8 +71,10 @@ class Rpc {
 
   Rpc(const Rpc&) = delete;
   Rpc& operator=(const Rpc&) = delete;
+  RpcEvent* GetRpcEvent(Event event);
   void InitializeReadersAndWriters(
       ::grpc::internal::RpcMethod::RpcType rpc_type);
+  void PerformWriteIfNeededUnlocked();
   void SendFinish(std::unique_ptr<::google::protobuf::Message> message,
                   ::grpc::Status status);
 
@@ -110,6 +113,8 @@ class Rpc {
       server_async_reader_writer_;
 
   std::queue<SendItem> send_queue_;
+
+  cartographer::common::Mutex lock_;
 };
 
 // This class keeps track of all in-flight RPCs for a 'Service'. Make sure that

@@ -129,12 +129,13 @@ void Rpc::RequestStreamingReadIfNeeded() {
 }
 
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
+  cartographer::common::MutexLocker locker(&lock_);
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       // For BIDI_STREAMING enqueue the message into the send queue and
       // start write operations if none are currently in flight.
       send_queue_.emplace(SendItem{std::move(message), ::grpc::Status::OK});
-      PerformWriteIfNeeded();
+      PerformWriteIfNeededUnlocked();
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       SendFinish(std::move(message), ::grpc::Status::OK);
@@ -171,10 +172,11 @@ void Rpc::SendFinish(std::unique_ptr<::google::protobuf::Message> message,
 }
 
 void Rpc::Finish(::grpc::Status status) {
+  cartographer::common::MutexLocker locker(&lock_);
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       send_queue_.emplace(SendItem{nullptr /* msg */, status});
-      PerformWriteIfNeeded();
+      PerformWriteIfNeededUnlocked();
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       SendFinish(nullptr /* message */, status);
@@ -187,7 +189,7 @@ void Rpc::Finish(::grpc::Status status) {
   }
 }
 
-void Rpc::PerformWriteIfNeeded() {
+void Rpc::PerformWriteIfNeededUnlocked() {
   if (send_queue_.empty() || write_event_.pending) {
     return;
   }
@@ -206,6 +208,11 @@ void Rpc::PerformWriteIfNeeded() {
     CHECK(send_queue_.empty());
     SendFinish(nullptr /* message */, send_item.status);
   }
+}
+
+void Rpc::PerformWriteIfNeeded() {
+  cartographer::common::MutexLocker locker(&lock_);
+  PerformWriteIfNeededUnlocked();
 }
 
 ::grpc::internal::ServerAsyncStreamingInterface* Rpc::streaming_interface() {
@@ -255,18 +262,28 @@ Rpc::async_writer_interface() {
 
 Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
   switch (event) {
-    case Event::DONE:
-      return &done_event_;
-    case Event::FINISH:
-      return &finish_event_;
-    case Event::NEW_CONNECTION:
-      return &new_connection_event_;
-    case Event::READ:
-      return &read_event_;
-    case Event::WRITE:
-      return &write_event_;
+	case Event::DONE:
+	  return &done_event_;
+	case Event::FINISH:
+	  return &finish_event_;
+	case Event::NEW_CONNECTION:
+	  return &new_connection_event_;
+	case Event::READ:
+	  return &read_event_;
+	case Event::WRITE:
+	  return &write_event_;
   }
   LOG(FATAL) << "Never reached.";
+}
+
+void Rpc::UpdateRpcEventState(Event event, bool pending) {
+  cartographer::common::MutexLocker locker(&lock_);
+  GetRpcEvent(event)->pending = pending;
+}
+
+bool Rpc::IsRpcEventPending(Event event) {
+  cartographer::common::MutexLocker locker(&lock_);
+  return GetRpcEvent(event)->pending;
 }
 
 ActiveRpcs::ActiveRpcs() : lock_() {}
