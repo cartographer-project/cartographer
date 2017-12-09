@@ -42,6 +42,13 @@ message Vector3f {
   float z = 3;
 }
 
+message Vector4f {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+  float t = 4;
+}
+
 message Quaterniond {
   double x = 1;
   double y = 2;
