@@ -19,7 +19,7 @@
 
 #include <memory>
 #include <queue>
-#include <unordered_set>
+#include <unordered_map>
 
 #include "cartographer/common/mutex.h"
 #include "cartographer_grpc/framework/execution_context.h"
@@ -52,6 +52,7 @@ class Rpc {
       ExecutionContext* execution_context,
       const RpcHandlerInfo& rpc_handler_info, Service* service);
   std::unique_ptr<Rpc> Clone();
+  std::shared_ptr<Rpc> GetSharedPtr();
   void OnRequest();
   void OnReadsDone();
   void RequestNextMethodInvocation();
@@ -126,11 +127,12 @@ class ActiveRpcs {
   ~ActiveRpcs() EXCLUDES(lock_);
 
   Rpc* Add(std::unique_ptr<Rpc> rpc) EXCLUDES(lock_);
+  std::shared_ptr<Rpc> Get(Rpc* rpc) EXCLUDES(lock_);
   bool Remove(Rpc* rpc) EXCLUDES(lock_);
 
  private:
   cartographer::common::Mutex lock_;
-  std::unordered_set<Rpc*> rpcs_;
+  std::unordered_map<Rpc*, std::shared_ptr<Rpc>> rpcs_;
 };
 
 }  // namespace framework

@@ -72,6 +72,10 @@ std::unique_ptr<Rpc> Rpc::Clone() {
       rpc_handler_info_, service_);
 }
 
+std::shared_ptr<Rpc> Rpc::GetSharedPtr() {
+  return service_->active_rpcs_.Get(this);
+}
+
 void Rpc::OnRequest() { handler_->OnRequestInternal(request_.get()); }
 
 void Rpc::OnReadsDone() { handler_->OnReadsDone(); }
@@ -322,16 +326,23 @@ ActiveRpcs::~ActiveRpcs() {
 
 Rpc* ActiveRpcs::Add(std::unique_ptr<Rpc> rpc) {
   cartographer::common::MutexLocker locker(&lock_);
-  const auto result = rpcs_.emplace(rpc.release());
+  std::shared_ptr<Rpc> shared_rpc = std::move(rpc);
+  const auto result = rpcs_.emplace(shared_rpc.get(), shared_rpc);
   CHECK(result.second) << "RPC already active.";
-  return *result.first;
+  return shared_rpc.get();
+}
+
+std::shared_ptr<Rpc> ActiveRpcs::Get(Rpc* rpc) EXCLUDES(lock_) {
+  cartographer::common::MutexLocker locker(&lock_);
+  auto it = rpcs_.find(rpc);
+  CHECK(it != rpcs_.end()) << "RPC " << rpc << " not found.";
+  return it->second;
 }
 
 bool ActiveRpcs::Remove(Rpc* rpc) {
   cartographer::common::MutexLocker locker(&lock_);
   auto it = rpcs_.find(rpc);
   if (it != rpcs_.end()) {
-    delete rpc;
     rpcs_.erase(it);
     return true;
   }
