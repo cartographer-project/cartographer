@@ -32,17 +32,14 @@ class AddRangefinderDataHandler
           google::protobuf::Empty> {
  public:
   void OnRequest(const proto::AddRangefinderDataRequest &request) override {
-    // Note: The 'BlockingQueue' returned by 'sensor_data_queue()' is already
+    // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
     // thread-safe. Therefore it suffices to get an unsynchronized reference to
     // the 'MapBuilderContext'.
     GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
-        ->sensor_data_queue()
-        .Push(MapBuilderServer::SensorData{
+        ->EnqueueSensorData(
             request.sensor_metadata().trajectory_id(),
-            cartographer::sensor::MakeDispatchable(
-                request.sensor_metadata().sensor_id(),
-                cartographer::sensor::FromProto(
-                    request.timed_point_cloud_data()))});
+            request.sensor_metadata().sensor_id(),
+            cartographer::sensor::FromProto(request.timed_point_cloud_data()));
   }
 
   void OnReadsDone() {

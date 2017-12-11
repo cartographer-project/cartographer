@@ -40,9 +40,17 @@ class MapBuilderServer {
         cartographer::common::BlockingQueue<SensorData> *sensor_data_queue);
     cartographer::mapping::MapBuilder &map_builder();
     cartographer::common::BlockingQueue<SensorData> &sensor_data_queue();
-    void AddSensorData(const SensorData &sensor_data);
+    void AddSensorDataToTrajectory(const SensorData &sensor_data);
 
-   private:
+    template <typename SensorDataType>
+    void EnqueueSensorData(int trajectory_id, const std::string &sensor_id,
+                           const SensorDataType &sensor_data) {
+      sensor_data_queue_->Push(MapBuilderServer::SensorData{
+          trajectory_id,
+          cartographer::sensor::MakeDispatchable(sensor_id, sensor_data)});
+    }
+
+  private:
     cartographer::mapping::MapBuilder *map_builder_;
     cartographer::common::BlockingQueue<SensorData> *sensor_data_queue_;
   };

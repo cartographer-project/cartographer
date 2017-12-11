@@ -30,11 +30,11 @@ namespace framework {
 // 'RpcHandler::GetContext<MyContext>()'.
 class ExecutionContext {
  public:
-  // This non-movable, non-copyable class is used to broker access from various
-  // RPC handlers to the shared 'ExecutionContext'. Handles automatically lock
-  // the context they point to.
-  template <typename ContextType>
-  class Synchronized {
+   virtual ~ExecutionContext() = default;
+   // This non-movable, non-copyable class is used to broker access from various
+   // RPC handlers to the shared 'ExecutionContext'. Handles automatically lock
+   // the context they point to.
+   template <typename ContextType> class Synchronized {
    public:
     ContextType* operator->() {
       return static_cast<ContextType*>(execution_context_);

@@ -35,13 +35,14 @@ cartographer::mapping::MapBuilder&
 MapBuilderServer::MapBuilderContext::map_builder() {
   return *map_builder_;
 }
+
 cartographer::common::BlockingQueue<MapBuilderServer::SensorData>&
 MapBuilderServer::MapBuilderContext::sensor_data_queue() {
   return *sensor_data_queue_;
 }
 
-void MapBuilderServer::MapBuilderContext::AddSensorData(
-    const SensorData& sensor_data) {
+void MapBuilderServer::MapBuilderContext::AddSensorDataToTrajectory(
+    const SensorData &sensor_data) {
   sensor_data.sensor_data->AddToTrajectoryBuilder(
       map_builder_->GetTrajectoryBuilder(sensor_data.trajectory_id));
 }
@@ -96,7 +97,8 @@ void MapBuilderServer::ProcessSensorDataQueue() {
   LOG(INFO) << "Starting SLAM thread.";
   while (!shutting_down_) {
     SensorData sensor_data = sensor_data_queue_.Pop();
-    grpc_server_->GetContext<MapBuilderContext>()->AddSensorData(sensor_data);
+    grpc_server_->GetContext<MapBuilderContext>()->AddSensorDataToTrajectory(
+        sensor_data);
   }
 }
 
