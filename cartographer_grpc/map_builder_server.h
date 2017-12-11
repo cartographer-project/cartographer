@@ -50,7 +50,7 @@ class MapBuilderServer {
           cartographer::sensor::MakeDispatchable(sensor_id, sensor_data)});
     }
 
-  private:
+   private:
     cartographer::mapping::MapBuilder *map_builder_;
     cartographer::common::BlockingQueue<SensorData> *sensor_data_queue_;
   };
