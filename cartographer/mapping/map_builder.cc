@@ -53,12 +53,8 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
   return options;
 }
 
-MapBuilder::MapBuilder(
-    const proto::MapBuilderOptions& options,
-    const LocalSlamResultCallback& local_slam_result_callback)
-    : options_(options),
-      thread_pool_(options.num_background_threads()),
-      local_slam_result_callback_(local_slam_result_callback) {
+MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
+    : options_(options), thread_pool_(options.num_background_threads()) {
   if (options.use_trajectory_builder_2d()) {
     pose_graph_2d_ = common::make_unique<mapping_2d::PoseGraph>(
         options_.pose_graph_options(), &thread_pool_);
@@ -75,7 +71,8 @@ MapBuilder::~MapBuilder() {}
 
 int MapBuilder::AddTrajectoryBuilder(
     const std::unordered_set<std::string>& expected_sensor_ids,
-    const proto::TrajectoryBuilderOptions& trajectory_options) {
+    const proto::TrajectoryBuilderOptions& trajectory_options,
+    LocalSlamResultCallback local_slam_result_callback) {
   const int trajectory_id = trajectory_builders_.size();
   if (options_.use_trajectory_builder_3d()) {
     CHECK(trajectory_options.has_trajectory_builder_3d_options());
@@ -88,7 +85,7 @@ int MapBuilder::AddTrajectoryBuilder(
                 mapping_3d::PoseGraph>>(
                 trajectory_options.trajectory_builder_3d_options(),
                 trajectory_id, pose_graph_3d_.get(),
-                local_slam_result_callback_)));
+                local_slam_result_callback)));
   } else {
     CHECK(trajectory_options.has_trajectory_builder_2d_options());
     trajectory_builders_.push_back(
@@ -100,7 +97,7 @@ int MapBuilder::AddTrajectoryBuilder(
                 mapping_2d::PoseGraph>>(
                 trajectory_options.trajectory_builder_2d_options(),
                 trajectory_id, pose_graph_2d_.get(),
-                local_slam_result_callback_)));
+                local_slam_result_callback)));
   }
   if (trajectory_options.pure_localization()) {
     constexpr int kSubmapsToKeep = 3;
@@ -124,7 +121,7 @@ int MapBuilder::AddTrajectoryForDeserialization() {
   return trajectory_id;
 }
 
-TrajectoryBuilder* MapBuilder::GetTrajectoryBuilder(
+TrajectoryBuilderInterface* MapBuilder::GetTrajectoryBuilder(
     const int trajectory_id) const {
   return trajectory_builders_.at(trajectory_id).get();
 }
@@ -132,10 +129,6 @@ TrajectoryBuilder* MapBuilder::GetTrajectoryBuilder(
 void MapBuilder::FinishTrajectory(const int trajectory_id) {
   sensor_collator_.FinishTrajectory(trajectory_id);
   pose_graph_->FinishTrajectory(trajectory_id);
-}
-
-int MapBuilder::GetBlockingTrajectoryId() const {
-  return sensor_collator_.GetBlockingTrajectoryId();
 }
 
 std::string MapBuilder::SubmapToProto(
@@ -215,7 +208,22 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
       }
     }
   }
-  // TODO(whess): Serialize additional sensor data: fixed frame pose data.
+  // Next we serialize all fixed frame pose data from the pose graph.
+  {
+    const auto all_fixed_frame_pose_data = pose_graph_->GetFixedFramePoseData();
+    for (const int trajectory_id : all_fixed_frame_pose_data.trajectory_ids()) {
+      for (const auto& fixed_frame_pose_data :
+           all_fixed_frame_pose_data.trajectory(trajectory_id)) {
+        proto::SerializedData proto;
+        auto* const fixed_frame_pose_data_proto =
+            proto.mutable_fixed_frame_pose_data();
+        fixed_frame_pose_data_proto->set_trajectory_id(trajectory_id);
+        *fixed_frame_pose_data_proto->mutable_fixed_frame_pose_data() =
+            sensor::ToProto(fixed_frame_pose_data);
+        writer->WriteProto(proto);
+      }
+    }
+  }
 }
 
 void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
@@ -273,8 +281,8 @@ void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
                                    proto.submap().submap_id().submap_index()});
       pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
     }
-    // TODO(ojura): Deserialize IMU and odometry data when loading unfrozen
-    // trajectories.
+    // TODO(ojura): Deserialize IMU, odometry and fixed frame pose data when
+    // loading unfrozen trajectories.
   }
 
   // Add information about which nodes belong to which submap.
@@ -299,7 +307,7 @@ int MapBuilder::num_trajectory_builders() const {
   return trajectory_builders_.size();
 }
 
-PoseGraph* MapBuilder::pose_graph() { return pose_graph_; }
+PoseGraphInterface* MapBuilder::pose_graph() { return pose_graph_; }
 
 }  // namespace mapping
 }  // namespace cartographer

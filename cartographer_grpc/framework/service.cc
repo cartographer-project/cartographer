@@ -26,41 +26,116 @@ Service::Service(const std::string& service_name,
                  const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos)
     : rpc_handler_infos_(rpc_handler_infos) {
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
-    std::string fully_qualified_method_name =
-        "/" + service_name + "/" + rpc_handler_info.first;
     // The 'handler' below is set to 'nullptr' indicating that we want to
     // handle this method asynchronously.
     this->AddMethod(new grpc::internal::RpcServiceMethod(
-        fully_qualified_method_name.c_str(), rpc_handler_info.second.rpc_type,
-        nullptr /* handler */));
+        rpc_handler_info.second.fully_qualified_name.c_str(),
+        rpc_handler_info.second.rpc_type, nullptr /* handler */));
   }
 }
 
 void Service::StartServing(
-    const std::vector<::grpc::ServerCompletionQueue*>& completion_queues) {
+    std::vector<CompletionQueueThread>& completion_queue_threads,
+    ExecutionContext* execution_context) {
   int i = 0;
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
-    for (auto completion_queue : completion_queues) {
-      Rpc* rpc = active_rpcs_.Add(
-          cartographer::common::make_unique<Rpc>(rpc_handler_info.second));
-      RequestNextMethodInvocation(i, rpc, completion_queue);
+    for (auto& completion_queue_thread : completion_queue_threads) {
+      Rpc* rpc = active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
+          i, completion_queue_thread.completion_queue(), execution_context,
+          rpc_handler_info.second, this));
+      rpc->RequestNextMethodInvocation();
     }
     ++i;
   }
 }
 
-void Service::RequestNextMethodInvocation(
-    int method_index, Rpc* rpc,
-    ::grpc::ServerCompletionQueue* completion_queue) {
-  switch (rpc->rpc_type()) {
-    case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      RequestAsyncClientStreaming(method_index, rpc->server_context(),
-                                  rpc->responder(), completion_queue,
-                                  completion_queue,
-                                  rpc->GetState(Rpc::State::NEW_CONNECTION));
+void Service::StopServing() { shutting_down_ = true; }
+
+void Service::HandleEvent(Rpc::Event event, Rpc* rpc, bool ok) {
+  rpc->GetRpcEvent(event)->pending = false;
+  switch (event) {
+    case Rpc::Event::NEW_CONNECTION:
+      HandleNewConnection(rpc, ok);
       break;
-    default:
-      LOG(FATAL) << "RPC type not implemented.";
+    case Rpc::Event::READ:
+      HandleRead(rpc, ok);
+      break;
+    case Rpc::Event::WRITE:
+      HandleWrite(rpc, ok);
+      break;
+    case Rpc::Event::FINISH:
+      HandleFinish(rpc, ok);
+      break;
+    case Rpc::Event::DONE:
+      HandleDone(rpc, ok);
+      break;
+  }
+}
+
+void Service::HandleNewConnection(Rpc* rpc, bool ok) {
+  if (shutting_down_) {
+    if (ok) {
+      LOG(WARNING) << "Server shutting down. Refusing to handle new RPCs.";
+    }
+    active_rpcs_.Remove(rpc);
+    return;
+  }
+
+  if (!ok) {
+    LOG(ERROR) << "Failed to establish connection for unknown reason.";
+    active_rpcs_.Remove(rpc);
+  }
+
+  if (ok) {
+    // For request-streaming RPCs ask the client to start sending requests.
+    rpc->RequestStreamingReadIfNeeded();
+  }
+
+  // Create new active rpc to handle next connection and register it for the
+  // incoming connection.
+  active_rpcs_.Add(rpc->Clone())->RequestNextMethodInvocation();
+}
+
+void Service::HandleRead(Rpc* rpc, bool ok) {
+  if (ok) {
+    rpc->OnRequest();
+    rpc->RequestStreamingReadIfNeeded();
+    return;
+  }
+
+  // Reads completed.
+  rpc->OnReadsDone();
+
+  RemoveIfNotPending(rpc);
+}
+
+void Service::HandleWrite(Rpc* rpc, bool ok) {
+  if (!ok) {
+    LOG(ERROR) << "Write failed";
+  }
+
+  // Send the next message or potentially finish the connection.
+  rpc->PerformWriteIfNeeded();
+
+  RemoveIfNotPending(rpc);
+}
+
+void Service::HandleFinish(Rpc* rpc, bool ok) {
+  if (!ok) {
+    LOG(ERROR) << "Finish failed";
+  }
+
+  RemoveIfNotPending(rpc);
+}
+
+void Service::HandleDone(Rpc* rpc, bool ok) { RemoveIfNotPending(rpc); }
+
+void Service::RemoveIfNotPending(Rpc* rpc) {
+  if (!rpc->GetRpcEvent(Rpc::Event::DONE)->pending &&
+      !rpc->GetRpcEvent(Rpc::Event::READ)->pending &&
+      !rpc->GetRpcEvent(Rpc::Event::WRITE)->pending &&
+      !rpc->GetRpcEvent(Rpc::Event::FINISH)->pending) {
+    active_rpcs_.Remove(rpc);
   }
 }
 

@@ -18,11 +18,18 @@
 #define CARTOGRAPHER_GRPC_FRAMEWORK_RPC_H
 
 #include <memory>
+#include <queue>
 #include <unordered_set>
 
 #include "cartographer/common/mutex.h"
-#include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/framework/execution_context.h"
+#include "cartographer_grpc/framework/rpc_handler_interface.h"
+#include "google/protobuf/message.h"
 #include "grpc++/grpc++.h"
+#include "grpc++/impl/codegen/async_stream.h"
+#include "grpc++/impl/codegen/async_unary_call.h"
+#include "grpc++/impl/codegen/proto_utils.h"
+#include "grpc++/impl/codegen/service_type.h"
 
 namespace cartographer_grpc {
 namespace framework {
@@ -30,36 +37,79 @@ namespace framework {
 class Service;
 class Rpc {
  public:
-  enum class State { NEW_CONNECTION = 0, READ, WRITE, DONE };
-  struct RpcState {
-    const State state;
+  enum class Event { NEW_CONNECTION = 0, READ, WRITE, FINISH, DONE };
+  struct RpcEvent {
+    const Event event;
     Rpc* rpc;
+    // Indicates whether the event is pending completion. E.g. 'event = READ'
+    // and 'pending = true' means that a read has been requested but hasn't
+    // completed yet. While 'pending = false' indicates, that the read has
+    // completed and currently no read is in-flight.
+    bool pending;
   };
 
-  Rpc(const RpcHandlerInfo& rpc_handler_info);
-
-  ::grpc::internal::RpcMethod::RpcType rpc_type() const;
-  ::grpc::ServerContext* server_context() { return &server_context_; }
-  ::grpc::internal::ServerAsyncStreamingInterface* responder();
-  RpcState* GetState(State state);
-
-  ::google::protobuf::Message* request() { return request_.get(); }
-  ::google::protobuf::Message* response() { return response_.get(); }
+  Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
+      ExecutionContext* execution_context,
+      const RpcHandlerInfo& rpc_handler_info, Service* service);
+  std::unique_ptr<Rpc> Clone();
+  void OnRequest();
+  void OnReadsDone();
+  void RequestNextMethodInvocation();
+  void RequestStreamingReadIfNeeded();
+  void PerformWriteIfNeeded();
+  void Write(std::unique_ptr<::google::protobuf::Message> message);
+  void Finish(::grpc::Status status);
+  Service* service() { return service_; }
+  RpcEvent* GetRpcEvent(Event event);
 
  private:
+  struct SendItem {
+    std::unique_ptr<google::protobuf::Message> msg;
+    ::grpc::Status status;
+  };
+
   Rpc(const Rpc&) = delete;
   Rpc& operator=(const Rpc&) = delete;
+  void InitializeReadersAndWriters(
+      ::grpc::internal::RpcMethod::RpcType rpc_type);
+  void SendFinish(std::unique_ptr<::google::protobuf::Message> message,
+                  ::grpc::Status status);
 
+  ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
+  async_reader_interface();
+  ::grpc::internal::AsyncWriterInterface<::google::protobuf::Message>*
+  async_writer_interface();
+
+  ::grpc::internal::ServerAsyncStreamingInterface* streaming_interface();
+
+  int method_index_;
+  ::grpc::ServerCompletionQueue* server_completion_queue_;
+  ExecutionContext* execution_context_;
   RpcHandlerInfo rpc_handler_info_;
+  Service* service_;
   ::grpc::ServerContext server_context_;
 
-  RpcState new_connection_state_ = RpcState{State::NEW_CONNECTION, this};
-  RpcState read_state_ = RpcState{State::READ, this};
-  RpcState write_state_ = RpcState{State::WRITE, this};
-  RpcState done_state_ = RpcState{State::DONE, this};
+  RpcEvent new_connection_event_;
+  RpcEvent read_event_;
+  RpcEvent write_event_;
+  RpcEvent finish_event_;
+  RpcEvent done_event_;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
+
+  std::unique_ptr<RpcHandlerInterface> handler_;
+
+  std::unique_ptr<::grpc::ServerAsyncResponseWriter<google::protobuf::Message>>
+      server_async_response_writer_;
+  std::unique_ptr<::grpc::ServerAsyncReader<google::protobuf::Message,
+                                            google::protobuf::Message>>
+      server_async_reader_;
+  std::unique_ptr<::grpc::ServerAsyncReaderWriter<google::protobuf::Message,
+                                                  google::protobuf::Message>>
+      server_async_reader_writer_;
+
+  std::queue<SendItem> send_queue_;
 };
 
 // This class keeps track of all in-flight RPCs for a 'Service'. Make sure that

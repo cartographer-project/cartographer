@@ -49,10 +49,9 @@ class Collator {
   void FinishTrajectory(int trajectory_id);
 
   // Adds 'data' for 'trajectory_id' to be collated. 'data' must contain valid
-  // sensor data. Sensor packets with matching 'sensor_id' must be added in time
-  // order.
-  void AddSensorData(int trajectory_id, const std::string& sensor_id,
-                     std::unique_ptr<Data> data);
+  // sensor data. Sensor packets with matching 'data.sensor_id_' must be added
+  // in time order.
+  void AddSensorData(int trajectory_id, std::unique_ptr<Data> data);
 
   // Dispatches all queued sensor packets. May only be called once.
   // AddSensorData may not be called after Flush.

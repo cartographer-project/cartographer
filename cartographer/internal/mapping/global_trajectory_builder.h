@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_INTERNAL_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
 #define CARTOGRAPHER_INTERNAL_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
 
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 
 #include "glog/logging.h"
 
@@ -26,8 +26,7 @@ namespace mapping {
 
 template <typename LocalTrajectoryBuilder,
           typename LocalTrajectoryBuilderOptions, typename PoseGraph>
-class GlobalTrajectoryBuilder
-    : public mapping::GlobalTrajectoryBuilderInterface {
+class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
  public:
   GlobalTrajectoryBuilder(
       const LocalTrajectoryBuilderOptions& options, const int trajectory_id,
@@ -42,12 +41,15 @@ class GlobalTrajectoryBuilder
   GlobalTrajectoryBuilder(const GlobalTrajectoryBuilder&) = delete;
   GlobalTrajectoryBuilder& operator=(const GlobalTrajectoryBuilder&) = delete;
 
-  void AddRangefinderData(const common::Time time,
-                          const Eigen::Vector3f& origin,
-                          const sensor::TimedPointCloud& ranges) override {
+  void AddSensorData(
+      const std::string& sensor_id,
+      const sensor::TimedPointCloudData& timed_point_cloud_data) override {
     std::unique_ptr<typename LocalTrajectoryBuilder::MatchingResult>
         matching_result = local_trajectory_builder_.AddRangeData(
-            time, sensor::TimedRangeData{origin, ranges, {}});
+            timed_point_cloud_data.time,
+            sensor::TimedRangeData{timed_point_cloud_data.origin,
+                                   timed_point_cloud_data.ranges,
+                                   {}});
     if (matching_result == nullptr) {
       // The range data has not been fully accumulated yet.
       return;
@@ -67,18 +69,21 @@ class GlobalTrajectoryBuilder
     }
   }
 
-  void AddSensorData(const sensor::ImuData& imu_data) override {
+  void AddSensorData(const std::string& sensor_id,
+                     const sensor::ImuData& imu_data) override {
     local_trajectory_builder_.AddImuData(imu_data);
     pose_graph_->AddImuData(trajectory_id_, imu_data);
   }
 
-  void AddSensorData(const sensor::OdometryData& odometry_data) override {
+  void AddSensorData(const std::string& sensor_id,
+                     const sensor::OdometryData& odometry_data) override {
     CHECK(odometry_data.pose.IsValid()) << odometry_data.pose;
     local_trajectory_builder_.AddOdometryData(odometry_data);
     pose_graph_->AddOdometryData(trajectory_id_, odometry_data);
   }
 
   void AddSensorData(
+      const std::string& sensor_id,
       const sensor::FixedFramePoseData& fixed_frame_pose) override {
     CHECK(fixed_frame_pose.pose.IsValid()) << fixed_frame_pose.pose;
     pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);

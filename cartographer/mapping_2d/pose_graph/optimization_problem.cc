@@ -152,8 +152,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
     problem.AddResidualBlock(
-        new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
-            new SpaCostFunction(constraint.pose)),
+        SpaCostFunction::CreateAutoDiffCostFunction(constraint.pose),
         // Only loop closure constraints should have a loss function.
         constraint.tag == Constraint::INTER_SUBMAP
             ? new ceres::HuberLoss(options_.huber_scale())
@@ -187,10 +186,9 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       const transform::Rigid3d relative_pose =
           ComputeRelativePose(trajectory_id, first_node_data, second_node_data);
       problem.AddResidualBlock(
-          new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
-              new SpaCostFunction(Constraint::Pose{
-                  relative_pose, options_.consecutive_node_translation_weight(),
-                  options_.consecutive_node_rotation_weight()})),
+          SpaCostFunction::CreateAutoDiffCostFunction(Constraint::Pose{
+              relative_pose, options_.consecutive_node_translation_weight(),
+              options_.consecutive_node_rotation_weight()}),
           nullptr /* loss function */, C_nodes.at(first_node_id).data(),
           C_nodes.at(second_node_id).data());
     }

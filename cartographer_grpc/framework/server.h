@@ -19,11 +19,13 @@
 
 #include <cstddef>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <thread>
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/completion_queue_thread.h"
+#include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "cartographer_grpc/framework/service.h"
 #include "grpc++/grpc++.h"
@@ -52,19 +54,24 @@ class Server {
 
     template <typename RpcHandlerType, typename ServiceType>
     void RegisterHandler(const std::string& method_name) {
+      std::stringstream fully_qualified_name;
+      fully_qualified_name << "/" << ServiceType::service_full_name() << "/"
+                           << method_name;
       rpc_handlers_[ServiceType::service_full_name()].emplace(
           method_name,
           RpcHandlerInfo{
               RpcHandlerType::RequestType::default_instance().GetDescriptor(),
               RpcHandlerType::ResponseType::default_instance().GetDescriptor(),
-              [](Rpc* const rpc) {
+              [](Rpc* const rpc, ExecutionContext* const execution_context) {
                 std::unique_ptr<RpcHandlerInterface> rpc_handler =
                     cartographer::common::make_unique<RpcHandlerType>();
                 rpc_handler->SetRpc(rpc);
+                rpc_handler->SetExecutionContext(execution_context);
                 return rpc_handler;
               },
-              RpcType<typename RpcHandlerType::Incoming,
-                      typename RpcHandlerType::Outgoing>::value});
+              RpcType<typename RpcHandlerType::IncomingType,
+                      typename RpcHandlerType::OutgoingType>::value,
+              fully_qualified_name.str()});
     }
 
    private:
@@ -75,8 +82,19 @@ class Server {
   };
   friend class Builder;
 
-  // Starts a server and waits for its termination.
-  void StartAndWait();
+  // Starts a server starts serving the registered services.
+  void Start();
+
+  // Waits for the server to shut down. Note: The server must be either shutting
+  // down or some other thread must call 'Shutdown()' for this function to ever
+  // return.
+  void WaitForShutdown();
+
+  // Shuts down the server and all of its services.
+  void Shutdown();
+
+  // Sets the server-wide context object shared between RPC handlers.
+  void SetExecutionContext(std::unique_ptr<ExecutionContext> execution_context);
 
  private:
   Server(const Options& options);
@@ -86,6 +104,9 @@ class Server {
   void AddService(
       const std::string& service_name,
       const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos);
+
+  static void RunCompletionQueue(
+      ::grpc::ServerCompletionQueue* completion_queue);
 
   Options options_;
 
@@ -98,6 +119,10 @@ class Server {
 
   // Map of service names to services.
   std::map<std::string, Service> services_;
+
+  // A context object that is shared between all implementations of
+  // 'RpcHandler'.
+  std::unique_ptr<ExecutionContext> execution_context_;
 };
 
 }  // namespace framework

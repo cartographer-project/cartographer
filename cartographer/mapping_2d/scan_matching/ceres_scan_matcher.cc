@@ -71,26 +71,21 @@ void CeresScanMatcher::Match(const Eigen::Vector2d& target_translation,
   ceres::Problem problem;
   CHECK_GT(options_.occupied_space_weight(), 0.);
   problem.AddResidualBlock(
-      new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction, ceres::DYNAMIC,
-                                      3>(
-          new OccupiedSpaceCostFunction(
-              options_.occupied_space_weight() /
-                  std::sqrt(static_cast<double>(point_cloud.size())),
-              point_cloud, probability_grid),
-          point_cloud.size()),
-      nullptr, ceres_pose_estimate);
+      OccupiedSpaceCostFunction::CreateAutoDiffCostFunction(
+          options_.occupied_space_weight() /
+              std::sqrt(static_cast<double>(point_cloud.size())),
+          point_cloud, probability_grid),
+      nullptr /* loss function */, ceres_pose_estimate);
   CHECK_GT(options_.translation_weight(), 0.);
   problem.AddResidualBlock(
-      new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor, 2, 3>(
-          new TranslationDeltaCostFunctor(options_.translation_weight(),
-                                          target_translation)),
-      nullptr, ceres_pose_estimate);
+      TranslationDeltaCostFunctor::CreateAutoDiffCostFunction(
+          options_.translation_weight(), target_translation),
+      nullptr /* loss function */, ceres_pose_estimate);
   CHECK_GT(options_.rotation_weight(), 0.);
   problem.AddResidualBlock(
-      new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor, 1, 3>(
-          new RotationDeltaCostFunctor(options_.rotation_weight(),
-                                       ceres_pose_estimate[2])),
-      nullptr, ceres_pose_estimate);
+      RotationDeltaCostFunctor::CreateAutoDiffCostFunction(
+          options_.rotation_weight(), ceres_pose_estimate[2]),
+      nullptr /* loss function */, ceres_pose_estimate);
 
   ceres::Solve(ceres_solver_options_, &problem, summary);
 

@@ -25,9 +25,8 @@
 
 #include "cartographer/common/port.h"
 #include "cartographer/common/rate_timer.h"
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
 #include "cartographer/mapping/submaps.h"
-#include "cartographer/mapping/trajectory_builder.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/sensor/collator.h"
 #include "cartographer/sensor/data.h"
 
@@ -35,30 +34,50 @@ namespace cartographer {
 namespace mapping {
 
 // Handles collating sensor data using a sensor::Collator, then passing it on to
-// a mapping::GlobalTrajectoryBuilderInterface which is common for 2D and 3D.
-class CollatedTrajectoryBuilder : public TrajectoryBuilder {
+// a mapping::TrajectoryBuilderInterface which is common for 2D and 3D.
+class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
  public:
   CollatedTrajectoryBuilder(
       sensor::Collator* sensor_collator, int trajectory_id,
       const std::unordered_set<std::string>& expected_sensor_ids,
-      std::unique_ptr<GlobalTrajectoryBuilderInterface>
-          wrapped_trajectory_builder);
+      std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder);
   ~CollatedTrajectoryBuilder() override;
 
   CollatedTrajectoryBuilder(const CollatedTrajectoryBuilder&) = delete;
   CollatedTrajectoryBuilder& operator=(const CollatedTrajectoryBuilder&) =
       delete;
 
+  void AddSensorData(
+      const std::string& sensor_id,
+      const sensor::TimedPointCloudData& timed_point_cloud_data) override {
+    AddSensorData(sensor::MakeDispatchable(sensor_id, timed_point_cloud_data));
+  }
+
   void AddSensorData(const std::string& sensor_id,
-                     std::unique_ptr<sensor::Data> data) override;
+                     const sensor::ImuData& imu_data) override {
+    AddSensorData(sensor::MakeDispatchable(sensor_id, imu_data));
+  }
+
+  void AddSensorData(const std::string& sensor_id,
+                     const sensor::OdometryData& odometry_data) override {
+    AddSensorData(sensor::MakeDispatchable(sensor_id, odometry_data));
+  }
+
+  void AddSensorData(
+      const std::string& sensor_id,
+      const sensor::FixedFramePoseData& fixed_frame_pose_data) override {
+    AddSensorData(sensor::MakeDispatchable(sensor_id, fixed_frame_pose_data));
+  }
 
  private:
+  void AddSensorData(std::unique_ptr<sensor::Data> data);
+
   void HandleCollatedSensorData(const std::string& sensor_id,
                                 std::unique_ptr<sensor::Data> data);
 
   sensor::Collator* const sensor_collator_;
   const int trajectory_id_;
-  std::unique_ptr<GlobalTrajectoryBuilderInterface> wrapped_trajectory_builder_;
+  std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder_;
 
   // Time at which we last logged the rates of incoming sensor data.
   std::chrono::steady_clock::time_point last_logging_time_;

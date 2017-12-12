@@ -26,13 +26,14 @@ namespace mapping_3d {
 // Penalizes differences between IMU data and optimized orientations.
 class RotationCostFunction {
  public:
-  RotationCostFunction(const double scaling_factor,
-                       const Eigen::Quaterniond& delta_rotation_imu_frame)
-      : scaling_factor_(scaling_factor),
-        delta_rotation_imu_frame_(delta_rotation_imu_frame) {}
-
-  RotationCostFunction(const RotationCostFunction&) = delete;
-  RotationCostFunction& operator=(const RotationCostFunction&) = delete;
+  static ceres::CostFunction* CreateAutoDiffCostFunction(
+      const double scaling_factor,
+      const Eigen::Quaterniond& delta_rotation_imu_frame) {
+    return new ceres::AutoDiffCostFunction<
+        RotationCostFunction, 3 /* residuals */, 4 /* rotation variables */,
+        4 /* rotation variables */, 4 /* rotation variables */
+        >(new RotationCostFunction(scaling_factor, delta_rotation_imu_frame));
+  }
 
   template <typename T>
   bool operator()(const T* const start_rotation, const T* const end_rotation,
@@ -54,6 +55,14 @@ class RotationCostFunction {
   }
 
  private:
+  RotationCostFunction(const double scaling_factor,
+                       const Eigen::Quaterniond& delta_rotation_imu_frame)
+      : scaling_factor_(scaling_factor),
+        delta_rotation_imu_frame_(delta_rotation_imu_frame) {}
+
+  RotationCostFunction(const RotationCostFunction&) = delete;
+  RotationCostFunction& operator=(const RotationCostFunction&) = delete;
+
   const double scaling_factor_;
   const Eigen::Quaterniond delta_rotation_imu_frame_;
 };
