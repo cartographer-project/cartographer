@@ -25,9 +25,7 @@ PoseGraphStub::PoseGraphStub(std::shared_ptr<grpc::Channel> client_channel,
                              proto::MapBuilderService::Stub* stub)
     : client_channel_(client_channel), stub_(stub) {}
 
-void PoseGraphStub::RunFinalOptimization() {
-  LOG(FATAL) << "Not implemented";
-}
+void PoseGraphStub::RunFinalOptimization() { LOG(FATAL) << "Not implemented"; }
 
 cartographer::mapping::MapById<
     cartographer::mapping::SubmapId,
