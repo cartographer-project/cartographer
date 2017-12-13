@@ -87,10 +87,11 @@ class Rpc {
   Service* service_;
   ::grpc::ServerContext server_context_;
 
-  // Indicates whether the event is pending completion. E.g. 'event = READ'
-  // and 'pending = true' means that a read has been requested but hasn't
-  // completed yet. While 'pending = false' indicates, that the read has
-  // completed and currently no read is in-flight.
+  // These state variables indicate whether the corresponding event is currently
+  // pending completion, e.g. 'read_event_pending_ = true' means that a read has
+  // been requested but hasn't completed yet. While
+  // 'read_event_pending_ = false' indicates, that the read has completed and
+  // currently no read is in-flight.
   bool new_connection_event_pending_;
   bool read_event_pending_;
   bool write_event_pending_;
