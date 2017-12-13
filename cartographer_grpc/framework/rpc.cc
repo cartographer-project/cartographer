@@ -261,9 +261,9 @@ bool* Rpc::GetEventState(Event event) {
     case Event::DONE:
       return &done_event_pending_;
     case Event::FINISH:
-      return  &finish_event_pending_;
+      return &finish_event_pending_;
     case Event::NEW_CONNECTION:
-      return  &new_connection_event_pending_;
+      return &new_connection_event_pending_;
     case Event::READ:
       return &read_event_pending_;
     case Event::WRITE:
@@ -276,9 +276,7 @@ void Rpc::SetRpcEventState(Event event, bool pending) {
   *GetEventState(event) = pending;
 }
 
-bool Rpc::IsRpcEventPending(Event event) {
-  return *GetEventState(event);
-}
+bool Rpc::IsRpcEventPending(Event event) { return *GetEventState(event); }
 
 bool Rpc::IsNoEventPending() {
   return !IsRpcEventPending(Rpc::Event::DONE) &&
