@@ -68,6 +68,7 @@ void Server::RunCompletionQueue(
     auto* rpc_event = static_cast<Rpc::RpcEvent*>(tag);
     rpc_event->rpc->service()->HandleEvent(rpc_event->event, rpc_event->rpc,
                                            ok);
+    delete rpc_event;
   }
 }
 

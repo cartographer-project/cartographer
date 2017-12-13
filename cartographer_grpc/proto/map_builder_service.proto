@@ -47,7 +47,7 @@ message AddImuDataRequest {
 
 message AddRangefinderDataRequest {
   SensorMetadata sensor_metadata = 1;
-  cartographer.sensor.proto.CompressedPointCloud rangefinder_data = 2;
+  cartographer.sensor.proto.TimedPointCloudData timed_point_cloud_data = 2;
 }
 
 message FinishTrajectoryRequest {

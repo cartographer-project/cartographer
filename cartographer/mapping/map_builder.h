@@ -23,6 +23,7 @@
 #include <unordered_map>
 
 #include "cartographer/common/thread_pool.h"
+#include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/mapping_2d/pose_graph.h"
 #include "cartographer/mapping_3d/pose_graph.h"
@@ -51,7 +52,7 @@ class MapBuilder : public MapBuilderInterface {
 
   int AddTrajectoryForDeserialization() override;
 
-  mapping::TrajectoryBuilder* GetTrajectoryBuilder(
+  mapping::TrajectoryBuilderInterface* GetTrajectoryBuilder(
       int trajectory_id) const override;
 
   void FinishTrajectory(int trajectory_id) override;
@@ -65,7 +66,7 @@ class MapBuilder : public MapBuilderInterface {
 
   int num_trajectory_builders() const override;
 
-  mapping::PoseGraph* pose_graph() override;
+  mapping::PoseGraphInterface* pose_graph() override;
 
  private:
   const proto::MapBuilderOptions options_;
@@ -76,7 +77,8 @@ class MapBuilder : public MapBuilderInterface {
   mapping::PoseGraph* pose_graph_;
 
   sensor::Collator sensor_collator_;
-  std::vector<std::unique_ptr<mapping::TrajectoryBuilder>> trajectory_builders_;
+  std::vector<std::unique_ptr<mapping::TrajectoryBuilderInterface>>
+      trajectory_builders_;
 };
 
 }  // namespace mapping

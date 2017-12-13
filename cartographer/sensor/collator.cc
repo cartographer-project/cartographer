@@ -40,9 +40,9 @@ void Collator::FinishTrajectory(const int trajectory_id) {
 }
 
 void Collator::AddSensorData(const int trajectory_id,
-                             const std::string& sensor_id,
                              std::unique_ptr<Data> data) {
-  queue_.Add(QueueKey{trajectory_id, sensor_id}, std::move(data));
+  QueueKey queue_key{trajectory_id, data->GetSensorId()};
+  queue_.Add(std::move(queue_key), std::move(data));
 }
 
 void Collator::Flush() { queue_.Flush(); }

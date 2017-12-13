@@ -23,7 +23,7 @@
 #include "cartographer/mapping/map_builder.h"
 #include "gtest/gtest.h"
 
-namespace cartographer_ros {
+namespace cartographer {
 namespace {
 
 TEST(ConfigurationFilesTest, ValidateMapBuilderOptions) {
@@ -62,4 +62,4 @@ TEST(ConfigurationFilesTest, ValidateTrajectoryBuilderOptions) {
 }
 
 }  // namespace
-}  // namespace cartographer_ros
+}  // namespace cartographer

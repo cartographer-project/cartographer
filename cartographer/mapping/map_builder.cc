@@ -121,7 +121,7 @@ int MapBuilder::AddTrajectoryForDeserialization() {
   return trajectory_id;
 }
 
-TrajectoryBuilder* MapBuilder::GetTrajectoryBuilder(
+TrajectoryBuilderInterface* MapBuilder::GetTrajectoryBuilder(
     const int trajectory_id) const {
   return trajectory_builders_.at(trajectory_id).get();
 }
@@ -307,7 +307,7 @@ int MapBuilder::num_trajectory_builders() const {
   return trajectory_builders_.size();
 }
 
-PoseGraph* MapBuilder::pose_graph() { return pose_graph_; }
+PoseGraphInterface* MapBuilder::pose_graph() { return pose_graph_; }
 
 }  // namespace mapping
 }  // namespace cartographer
