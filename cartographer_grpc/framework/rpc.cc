@@ -79,7 +79,7 @@ void Rpc::OnReadsDone() { handler_->OnReadsDone(); }
 void Rpc::RequestNextMethodInvocation() {
   // Ask gRPC to notify us when the connection terminates.
   done_event_.pending = true;
-  server_context_.AsyncNotifyWhenDone(&done_event_);
+  server_context_.AsyncNotifyWhenDone(new RpcEvent{Event::DONE, this, false});
 
   // Make sure after terminating the connection, gRPC notifies us with this
   // event.
@@ -89,19 +89,19 @@ void Rpc::RequestNextMethodInvocation() {
       service_->RequestAsyncBidiStreaming(
           method_index_, &server_context_, streaming_interface(),
           server_completion_queue_, server_completion_queue_,
-          &new_connection_event_);
+          new RpcEvent{Event::NEW_CONNECTION, this, false});
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       service_->RequestAsyncClientStreaming(
           method_index_, &server_context_, streaming_interface(),
           server_completion_queue_, server_completion_queue_,
-          &new_connection_event_);
+          new RpcEvent{Event::NEW_CONNECTION, this, false});
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       service_->RequestAsyncUnary(
           method_index_, &server_context_, request_.get(),
           streaming_interface(), server_completion_queue_,
-          server_completion_queue_, &new_connection_event_);
+          server_completion_queue_, new RpcEvent{Event::NEW_CONNECTION, this, false});
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -114,7 +114,7 @@ void Rpc::RequestStreamingReadIfNeeded() {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       read_event_.pending = true;
-      async_reader_interface()->Read(request_.get(), &read_event_);
+      async_reader_interface()->Read(request_.get(), new RpcEvent{Event::READ, this, false});
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       // For NORMAL_RPC we don't have to do anything here, since gRPC
@@ -153,17 +153,17 @@ void Rpc::SendFinish(std::unique_ptr<::google::protobuf::Message> message,
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       CHECK(!message);
-      server_async_reader_writer_->Finish(status, &finish_event_);
+      server_async_reader_writer_->Finish(status, new RpcEvent{Event::FINISH, this, false});
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       response_ = std::move(message);
       SendUnaryFinish(server_async_reader_.get(), status, response_.get(),
-                      &finish_event_);
+                      new RpcEvent{Event::FINISH, this, false});
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       response_ = std::move(message);
       SendUnaryFinish(server_async_response_writer_.get(), status,
-                      response_.get(), &finish_event_);
+                      response_.get(), new RpcEvent{Event::FINISH, this, false});
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -201,7 +201,7 @@ void Rpc::PerformWriteIfNeeded() {
 
   if (response_) {
     write_event_.pending = true;
-    async_writer_interface()->Write(*response_.get(), &write_event_);
+    async_writer_interface()->Write(*response_.get(), new RpcEvent{Event::WRITE, this, false});
   } else {
     CHECK(send_queue_.empty());
     SendFinish(nullptr /* message */, send_item.status);
