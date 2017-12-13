@@ -28,7 +28,9 @@ namespace mapping {
 PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
                                    double imu_gravity_time_constant)
     : pose_queue_duration_(pose_queue_duration),
-      gravity_time_constant_(imu_gravity_time_constant) {}
+      gravity_time_constant_(imu_gravity_time_constant),
+      cached_extrapolated_pose_{common::Time::min(),
+                                transform::Rigid3d::Identity()} {}
 
 std::unique_ptr<PoseExtrapolator> PoseExtrapolator::InitializeWithImu(
     const common::Duration pose_queue_duration,
@@ -130,15 +132,18 @@ void PoseExtrapolator::AddOdometryData(
 }
 
 transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
-  // TODO(whess): Keep the last extrapolated pose.
   const TimedPose& newest_timed_pose = timed_pose_queue_.back();
   CHECK_GE(time, newest_timed_pose.time);
-  const Eigen::Vector3d translation =
-      ExtrapolateTranslation(time) + newest_timed_pose.pose.translation();
-  const Eigen::Quaterniond rotation =
-      newest_timed_pose.pose.rotation() *
-      ExtrapolateRotation(time, extrapolation_imu_tracker_.get());
-  return transform::Rigid3d(translation, rotation);
+  if (cached_extrapolated_pose_.time != time) {
+    const Eigen::Vector3d translation =
+        ExtrapolateTranslation(time) + newest_timed_pose.pose.translation();
+    const Eigen::Quaterniond rotation =
+        newest_timed_pose.pose.rotation() *
+        ExtrapolateRotation(time, extrapolation_imu_tracker_.get());
+    cached_extrapolated_pose_ =
+        TimedPose{time, transform::Rigid3d{translation, rotation}};
+  }
+  return cached_extrapolated_pose_.pose;
 }
 
 Eigen::Quaterniond PoseExtrapolator::EstimateGravityOrientation(

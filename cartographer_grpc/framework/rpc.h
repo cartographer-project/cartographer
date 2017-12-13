@@ -41,11 +41,6 @@ class Rpc {
   struct RpcEvent {
     const Event event;
     Rpc* rpc;
-    // Indicates whether the event is pending completion. E.g. 'event = READ'
-    // and 'pending = true' means that a read has been requested but hasn't
-    // completed yet. While 'pending = false' indicates, that the read has
-    // completed and currently no read is in-flight.
-    bool pending;
   };
 
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
@@ -60,7 +55,9 @@ class Rpc {
   void Write(std::unique_ptr<::google::protobuf::Message> message);
   void Finish(::grpc::Status status);
   Service* service() { return service_; }
-  RpcEvent* GetRpcEvent(Event event);
+  void SetRpcEventState(Event event, bool pending);
+  bool IsRpcEventPending(Event event);
+  bool IsAnyEventPending();
 
  private:
   struct SendItem {
@@ -74,6 +71,7 @@ class Rpc {
       ::grpc::internal::RpcMethod::RpcType rpc_type);
   void SendFinish(std::unique_ptr<::google::protobuf::Message> message,
                   ::grpc::Status status);
+  bool* GetRpcEventState(Event event);
 
   ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
   async_reader_interface();
@@ -89,11 +87,15 @@ class Rpc {
   Service* service_;
   ::grpc::ServerContext server_context_;
 
-  RpcEvent new_connection_event_;
-  RpcEvent read_event_;
-  RpcEvent write_event_;
-  RpcEvent finish_event_;
-  RpcEvent done_event_;
+  // These state variables indicate whether the corresponding event is currently
+  // pending completion, e.g. 'read_event_pending_ = true' means that a read has
+  // been requested but hasn't completed yet. 'read_event_pending_ = false'
+  // indicates that the read has completed and currently no read is in-flight.
+  bool new_connection_event_pending_ = false;
+  bool read_event_pending_ = false;
+  bool write_event_pending_ = false;
+  bool finish_event_pending_ = false;
+  bool done_event_pending_ = false;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
