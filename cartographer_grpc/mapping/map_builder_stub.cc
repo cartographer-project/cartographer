@@ -15,6 +15,7 @@
  */
 
 #include "cartographer_grpc/mapping/map_builder_stub.h"
+
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "glog/logging.h"
 
