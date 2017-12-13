@@ -30,9 +30,9 @@ namespace framework {
 // 'RpcHandler::GetContext<MyContext>()'.
 class ExecutionContext {
  public:
+  // Automatically locks an ExecutionContext for shared use by RPC handlers.
   // This non-movable, non-copyable class is used to broker access from various
-  // RPC handlers to the shared 'ExecutionContext'. Handles automatically lock
-  // the context they point to.
+  // RPC handlers to the shared 'ExecutionContext'.
   template <typename ContextType>
   class Synchronized {
    public:
@@ -49,6 +49,7 @@ class ExecutionContext {
     cartographer::common::MutexLocker locker_;
     ExecutionContext* execution_context_;
   };
+  virtual ~ExecutionContext() = default;
   cartographer::common::Mutex* lock() { return &lock_; }
 
  private:

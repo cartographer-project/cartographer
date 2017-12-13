@@ -96,6 +96,11 @@ class Server {
   // Sets the server-wide context object shared between RPC handlers.
   void SetExecutionContext(std::unique_ptr<ExecutionContext> execution_context);
 
+  template <typename T>
+  ExecutionContext::Synchronized<T> GetContext() {
+    return {execution_context_->lock(), execution_context_.get()};
+  }
+
  private:
   Server(const Options& options);
   Server(const Server&) = delete;
