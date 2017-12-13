@@ -67,32 +67,47 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     LOG(INFO) << "IMU not yet initialized.";
     return nullptr;
   }
-  if (num_accumulated_ == 0) {
-    first_pose_estimate_ = extrapolator_->ExtrapolatePose(time).cast<float>();
-    accumulated_range_data_ = sensor::RangeData{range_data.origin, {}, {}};
+
+  CHECK(!range_data.returns.empty());
+  CHECK_EQ(range_data.returns.back()[3], 0);
+  const common::Time time_first_point =
+      time + common::FromSeconds(range_data.returns.front()[3]);
+  if (time_first_point < extrapolator_->GetLastPoseTime()) {
+    LOG(INFO) << "Extrapolator is still initializing.";
+    return nullptr;
   }
 
-  // TODO(gaschler): Take time delta of individual points into account.
-  const transform::Rigid3f tracking_delta =
-      first_pose_estimate_.inverse() *
-      extrapolator_->ExtrapolatePose(time).cast<float>();
-  const Eigen::Vector3f origin_in_first_tracking =
-      tracking_delta * range_data.origin;
-  for (const Eigen::Vector4f& hit : range_data.returns) {
-    const Eigen::Vector3f hit_in_first_tracking =
-        tracking_delta * hit.head<3>();
-    const Eigen::Vector3f delta =
-        hit_in_first_tracking - origin_in_first_tracking;
+  sensor::TimedPointCloud hits =
+      sensor::VoxelFilter(0.5f * options_.voxel_filter_size())
+          .Filter(range_data.returns);
+
+  std::vector<transform::Rigid3f> hits_poses;
+  hits_poses.reserve(hits.size());
+  for (const Eigen::Vector4f& hit : hits) {
+    const common::Time time_point = time + common::FromSeconds(hit[3]);
+    hits_poses.push_back(
+        extrapolator_->ExtrapolatePose(time_point).cast<float>());
+  }
+
+  if (num_accumulated_ == 0) {
+    // 'accumulated_range_data_.origin' is not used.
+    accumulated_range_data_ = sensor::RangeData{{}, {}, {}};
+  }
+
+  for (size_t i = 0; i < hits.size(); ++i) {
+    const Eigen::Vector3f hit_in_local = hits_poses[i] * hits[i].head<3>();
+    const Eigen::Vector3f origin_in_local = hits_poses[i] * range_data.origin;
+    const Eigen::Vector3f delta = hit_in_local - origin_in_local;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
-        accumulated_range_data_.returns.push_back(hit_in_first_tracking);
+        accumulated_range_data_.returns.push_back(hit_in_local);
       } else {
         // We insert a ray cropped to 'max_range' as a miss for hits beyond the
         // maximum range. This way the free space up to the maximum range will
         // be updated.
         accumulated_range_data_.misses.push_back(
-            origin_in_first_tracking + options_.max_range() / range * delta);
+            origin_in_local + options_.max_range() / range * delta);
       }
     }
   }
@@ -100,15 +115,17 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 
   if (num_accumulated_ >= options_.num_accumulated_range_data()) {
     num_accumulated_ = 0;
+    transform::Rigid3f current_pose =
+        extrapolator_->ExtrapolatePose(time).cast<float>();
     const sensor::RangeData filtered_range_data = {
-        accumulated_range_data_.origin,
+        current_pose * range_data.origin,
         sensor::VoxelFilter(options_.voxel_filter_size())
             .Filter(accumulated_range_data_.returns),
         sensor::VoxelFilter(options_.voxel_filter_size())
             .Filter(accumulated_range_data_.misses)};
     return AddAccumulatedRangeData(
         time, sensor::TransformRangeData(filtered_range_data,
-                                         tracking_delta.inverse()));
+                                         current_pose.inverse()));
   }
   return nullptr;
 }

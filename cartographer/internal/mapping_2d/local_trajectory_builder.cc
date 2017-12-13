@@ -94,32 +94,45 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     LOG(INFO) << "Extrapolator not yet initialized.";
     return nullptr;
   }
-  if (num_accumulated_ == 0) {
-    first_pose_estimate_ = extrapolator_->ExtrapolatePose(time).cast<float>();
-    accumulated_range_data_ = sensor::RangeData{range_data.origin, {}, {}};
+
+  CHECK(!range_data.returns.empty());
+  CHECK_EQ(range_data.returns.back()[3], 0);
+  const common::Time time_first_point =
+      time + common::FromSeconds(range_data.returns.front()[3]);
+  if (time_first_point < extrapolator_->GetLastPoseTime()) {
+    LOG(INFO) << "Extrapolator is still initializing.";
+    return nullptr;
   }
 
-  // TODO(gaschler): Take time delta of individual points into account.
-  const transform::Rigid3f tracking_delta =
-      first_pose_estimate_.inverse() *
-      extrapolator_->ExtrapolatePose(time).cast<float>();
-  // TODO(gaschler): Try to move this common behavior with 3D into helper.
-  const Eigen::Vector3f origin_in_first_tracking =
-      tracking_delta * range_data.origin;
+  std::vector<transform::Rigid3f> range_data_poses;
+  range_data_poses.reserve(range_data.returns.size());
+  for (const Eigen::Vector4f& hit : range_data.returns) {
+    const common::Time time_point = time + common::FromSeconds(hit[3]);
+    range_data_poses.push_back(
+        extrapolator_->ExtrapolatePose(time_point).cast<float>());
+  }
+
+  if (num_accumulated_ == 0) {
+    // 'accumulated_range_data_.origin' is uninitialized until the last
+    // accumulation.
+    accumulated_range_data_ = sensor::RangeData{{}, {}, {}};
+  }
+
   // Drop any returns below the minimum range and convert returns beyond the
   // maximum range into misses.
-  for (const Eigen::Vector4f& hit : range_data.returns) {
-    const Eigen::Vector3f hit_in_first_tracking =
-        tracking_delta * hit.head<3>();
-    const Eigen::Vector3f delta =
-        hit_in_first_tracking - origin_in_first_tracking;
+  for (size_t i = 0; i < range_data.returns.size(); ++i) {
+    const Eigen::Vector4f& hit = range_data.returns[i];
+    const Eigen::Vector3f origin_in_local =
+        range_data_poses[i] * range_data.origin;
+    const Eigen::Vector3f hit_in_local = range_data_poses[i] * hit.head<3>();
+    const Eigen::Vector3f delta = hit_in_local - origin_in_local;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
-        accumulated_range_data_.returns.push_back(hit_in_first_tracking);
+        accumulated_range_data_.returns.push_back(hit_in_local);
       } else {
         accumulated_range_data_.misses.push_back(
-            origin_in_first_tracking +
+            origin_in_local +
             options_.missing_data_ray_length() / range * delta);
       }
     }
@@ -130,10 +143,12 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     num_accumulated_ = 0;
     const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
         extrapolator_->EstimateGravityOrientation(time));
+    accumulated_range_data_.origin =
+        range_data_poses.back() * range_data.origin;
     return AddAccumulatedRangeData(
         time,
         TransformToGravityAlignedFrameAndFilter(
-            gravity_alignment.cast<float>() * tracking_delta.inverse(),
+            gravity_alignment.cast<float>() * range_data_poses.back().inverse(),
             accumulated_range_data_),
         gravity_alignment);
   }
@@ -238,6 +253,7 @@ void LocalTrajectoryBuilder::InitializeExtrapolator(const common::Time time) {
   // stability. Usually poses known to the extrapolator will be further apart
   // in time and thus the last two are used.
   constexpr double kExtrapolationEstimationTimeSec = 0.001;
+  // TODO(gaschler): Consider using InitializeWithImu as 3D does.
   extrapolator_ = common::make_unique<mapping::PoseExtrapolator>(
       ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
       options_.imu_gravity_time_constant());
