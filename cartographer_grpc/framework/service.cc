@@ -131,7 +131,7 @@ void Service::HandleFinish(Rpc* rpc, bool ok) {
 void Service::HandleDone(Rpc* rpc, bool ok) { RemoveIfNotPending(rpc); }
 
 void Service::RemoveIfNotPending(Rpc* rpc) {
-  if (rpc->IsNoEventPending()) {
+  if (!rpc->IsAnyEventPending()) {
     active_rpcs_.Remove(rpc);
   }
 }

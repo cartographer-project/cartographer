@@ -49,11 +49,6 @@ Rpc::Rpc(int method_index,
       execution_context_(execution_context),
       rpc_handler_info_(rpc_handler_info),
       service_(service),
-      new_connection_event_pending_(false),
-      read_event_pending_(false),
-      write_event_pending_(false),
-      finish_event_pending_(false),
-      done_event_pending_(false),
       handler_(rpc_handler_info_.rpc_handler_factory(this, execution_context)) {
   InitializeReadersAndWriters(rpc_handler_info_.rpc_type);
 
@@ -256,7 +251,7 @@ Rpc::async_writer_interface() {
   LOG(FATAL) << "Never reached.";
 }
 
-bool* Rpc::GetEventState(Event event) {
+bool* Rpc::GetRpcEventState(Event event) {
   switch (event) {
     case Event::DONE:
       return &done_event_pending_;
@@ -273,16 +268,16 @@ bool* Rpc::GetEventState(Event event) {
 }
 
 void Rpc::SetRpcEventState(Event event, bool pending) {
-  *GetEventState(event) = pending;
+  *GetRpcEventState(event) = pending;
 }
 
-bool Rpc::IsRpcEventPending(Event event) { return *GetEventState(event); }
+bool Rpc::IsRpcEventPending(Event event) { return *GetRpcEventState(event); }
 
-bool Rpc::IsNoEventPending() {
-  return !IsRpcEventPending(Rpc::Event::DONE) &&
-         !IsRpcEventPending(Rpc::Event::READ) &&
-         !IsRpcEventPending(Rpc::Event::WRITE) &&
-         !IsRpcEventPending(Rpc::Event::FINISH);
+bool Rpc::IsAnyEventPending() {
+  return IsRpcEventPending(Rpc::Event::DONE) ||
+         IsRpcEventPending(Rpc::Event::READ) ||
+         IsRpcEventPending(Rpc::Event::WRITE) ||
+         IsRpcEventPending(Rpc::Event::FINISH);
 }
 
 ActiveRpcs::ActiveRpcs() : lock_() {}

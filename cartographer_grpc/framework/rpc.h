@@ -57,7 +57,7 @@ class Rpc {
   Service* service() { return service_; }
   void SetRpcEventState(Event event, bool pending);
   bool IsRpcEventPending(Event event);
-  bool IsNoEventPending();
+  bool IsAnyEventPending();
 
  private:
   struct SendItem {
@@ -71,7 +71,7 @@ class Rpc {
       ::grpc::internal::RpcMethod::RpcType rpc_type);
   void SendFinish(std::unique_ptr<::google::protobuf::Message> message,
                   ::grpc::Status status);
-  bool* GetEventState(Event event);
+  bool* GetRpcEventState(Event event);
 
   ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
   async_reader_interface();
@@ -89,14 +89,13 @@ class Rpc {
 
   // These state variables indicate whether the corresponding event is currently
   // pending completion, e.g. 'read_event_pending_ = true' means that a read has
-  // been requested but hasn't completed yet. While
-  // 'read_event_pending_ = false' indicates, that the read has completed and
-  // currently no read is in-flight.
-  bool new_connection_event_pending_;
-  bool read_event_pending_;
-  bool write_event_pending_;
-  bool finish_event_pending_;
-  bool done_event_pending_;
+  // been requested but hasn't completed yet. 'read_event_pending_ = false'
+  // indicates that the read has completed and currently no read is in-flight.
+  bool new_connection_event_pending_ = false;
+  bool read_event_pending_ = false;
+  bool write_event_pending_ = false;
+  bool finish_event_pending_ = false;
+  bool done_event_pending_ = false;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
