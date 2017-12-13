@@ -52,7 +52,7 @@ void Service::StartServing(
 void Service::StopServing() { shutting_down_ = true; }
 
 void Service::HandleEvent(Rpc::Event event, Rpc* rpc, bool ok) {
-  rpc->GetRpcEvent(event)->pending = false;
+  rpc->SetRpcEventState(event, false);
   switch (event) {
     case Rpc::Event::NEW_CONNECTION:
       HandleNewConnection(rpc, ok);
@@ -131,10 +131,7 @@ void Service::HandleFinish(Rpc* rpc, bool ok) {
 void Service::HandleDone(Rpc* rpc, bool ok) { RemoveIfNotPending(rpc); }
 
 void Service::RemoveIfNotPending(Rpc* rpc) {
-  if (!rpc->GetRpcEvent(Rpc::Event::DONE)->pending &&
-      !rpc->GetRpcEvent(Rpc::Event::READ)->pending &&
-      !rpc->GetRpcEvent(Rpc::Event::WRITE)->pending &&
-      !rpc->GetRpcEvent(Rpc::Event::FINISH)->pending) {
+  if (!rpc->IsAnyEventPending()) {
     active_rpcs_.Remove(rpc);
   }
 }
