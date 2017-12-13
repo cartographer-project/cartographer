@@ -21,8 +21,12 @@
 namespace cartographer_grpc {
 namespace framework {
 
-void Server::Builder::SetNumberOfThreads(const size_t number_of_threads) {
-  options_.number_of_threads = number_of_threads;
+void Server::Builder::SetNumGrpcThreads(const size_t num_grpc_threads) {
+  options_.num_grpc_threads = num_grpc_threads;
+}
+
+void Server::Builder::SetNumEventThreads(const std::size_t num_event_threads) {
+  options_.num_event_threads = num_event_threads;
 }
 
 void Server::Builder::SetServerAddress(const std::string& server_address) {
@@ -41,8 +45,13 @@ Server::Server(const Options& options) : options_(options) {
   server_builder_.AddListeningPort(options_.server_address,
                                    grpc::InsecureServerCredentials());
 
+  // Set up event queue threads.
+  for (size_t i = 0; i < options_.num_event_threads; ++i) {
+    event_queue_threads_.emplace_back();
+  }
+
   // Set up completion queues threads.
-  for (size_t i = 0; i < options_.number_of_threads; ++i) {
+  for (size_t i = 0; i < options_.num_grpc_threads; ++i) {
     completion_queue_threads_.emplace_back(
         server_builder_.AddCompletionQueue());
   }
@@ -54,7 +63,8 @@ void Server::AddService(
   // Instantiate and register service.
   const auto result =
       services_.emplace(std::piecewise_construct, std::make_tuple(service_name),
-                        std::make_tuple(service_name, rpc_handler_infos));
+                        std::make_tuple(service_name, rpc_handler_infos,
+                                        options_.num_event_threads));
   CHECK(result.second) << "A service named " << service_name
                        << " already exists.";
   server_builder_.RegisterService(&result.first->second);
@@ -66,12 +76,31 @@ void Server::RunCompletionQueue(
   void* tag;
   while (completion_queue->Next(&tag, &ok)) {
     auto* rpc_event = static_cast<Rpc::RpcEvent*>(tag);
-    if (auto rpc = rpc_event->rpc.lock()) {
-      rpc->service()->HandleEvent(rpc_event->event, rpc.get(), ok);
-    } else {
-      LOG(WARNING) << "Ignoring stale event.";
+    rpc_event->ok = ok;
+    event_queue_threads_.at(rpc_event->event_queue_id).event_queue()->Push(rpc_event);
+  }
+}
+
+void Server::ProcessRpcEvent(Rpc::RpcEvent* rpc_event) {
+  if (auto rpc = rpc_event->rpc.lock()) {
+        rpc->service()->HandleEvent(rpc_event->event, rpc.get(), rpc_event->ok);
+      } else {
+        LOG(WARNING) << "Ignoring stale event.";
+      }
+      delete rpc_event;
+}
+
+void Server::RunEventQueue(EventQueue* event_queue) {
+  while(!shutting_down_) {
+    Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(cartographer::common::FromMilliseconds(100));
+    if (rpc_event) {
+      ProcessRpcEvent(rpc_event);
     }
-    delete rpc_event;
+  }
+
+  // Finish processing the rest of the items.
+  while(Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(cartographer::common::FromMilliseconds(100))) {
+    ProcessRpcEvent(rpc_event);
   }
 }
 
@@ -85,9 +114,18 @@ void Server::Start() {
                                 execution_context_.get());
   }
 
+  // Start threads to process all event queues.
+  for (auto& event_queue_thread : event_queue_threads_) {
+    event_queue_thread.Start([this](EventQueue* event_queue){
+      RunEventQueue(event_queue);
+    });
+  }
+
   // Start threads to process all completion queues.
   for (auto& completion_queue_threads : completion_queue_threads_) {
-    completion_queue_threads.Start(Server::RunCompletionQueue);
+    completion_queue_threads.Start([this](::grpc::ServerCompletionQueue* completion_queue) {
+      RunCompletionQueue(completion_queue);
+    });
   }
 }
 
@@ -101,6 +139,7 @@ void Server::WaitForShutdown() {
 
 void Server::Shutdown() {
   LOG(INFO) << "Shutting down server.";
+  shutting_down_ = true;
 
   // Tell the services to stop serving RPCs.
   for (auto& service : services_) {
@@ -115,6 +154,10 @@ void Server::Shutdown() {
   // to join.
   for (auto& completion_queue_threads : completion_queue_threads_) {
     completion_queue_threads.Shutdown();
+  }
+
+  for (auto& event_queue_thread : event_queue_threads_) {
+    event_queue_thread.Shutdown();
   }
 
   LOG(INFO) << "Shutdown complete.";

@@ -42,11 +42,13 @@ void SendUnaryFinish(ReaderWriter* reader_writer, ::grpc::Status status,
 
 Rpc::Rpc(int method_index,
          ::grpc::ServerCompletionQueue* server_completion_queue,
+          int event_queue_id,
          ExecutionContext* execution_context,
          const RpcHandlerInfo& rpc_handler_info, Service* service,
          WeakPtrFactory weak_ptr_factory)
     : method_index_(method_index),
       server_completion_queue_(server_completion_queue),
+      event_queue_id_(event_queue_id),
       execution_context_(execution_context),
       rpc_handler_info_(rpc_handler_info),
       service_(service),
@@ -65,7 +67,7 @@ Rpc::Rpc(int method_index,
 
 std::unique_ptr<Rpc> Rpc::Clone() {
   return cartographer::common::make_unique<Rpc>(
-      method_index_, server_completion_queue_, execution_context_,
+      method_index_, server_completion_queue_, event_queue_id_, execution_context_,
       rpc_handler_info_, service_, weak_ptr_factory_);
 }
 

@@ -35,7 +35,8 @@ class Service : public ::grpc::Service {
   friend class Rpc;
 
   Service(const std::string& service_name,
-          const std::map<std::string, RpcHandlerInfo>& rpc_handlers);
+          const std::map<std::string, RpcHandlerInfo>& rpc_handlers,
+          size_t num_event_queues);
   void StartServing(std::vector<CompletionQueueThread>& completion_queues,
                     ExecutionContext* execution_context);
   void HandleEvent(Rpc::Event event, Rpc* rpc, bool ok);
@@ -51,6 +52,7 @@ class Service : public ::grpc::Service {
   void RemoveIfNotPending(Rpc* rpc);
 
   std::map<std::string, RpcHandlerInfo> rpc_handler_infos_;
+  size_t num_event_queues_;
   ActiveRpcs active_rpcs_;
   bool shutting_down_ = false;
 };
