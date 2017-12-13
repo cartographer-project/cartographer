@@ -49,11 +49,11 @@ Rpc::Rpc(int method_index,
       execution_context_(execution_context),
       rpc_handler_info_(rpc_handler_info),
       service_(service),
-      new_connection_event_{Event::NEW_CONNECTION, this, false},
-      read_event_{Event::READ, this, false},
-      write_event_{Event::WRITE, this, false},
-      finish_event_{Event::FINISH, this, false},
-      done_event_{Event::DONE, this, false},
+      new_connection_event_pending_(false),
+      read_event_pending_(false),
+      write_event_pending_(false),
+      finish_event_pending_(false),
+      done_event_pending_(false),
       handler_(rpc_handler_info_.rpc_handler_factory(this, execution_context)) {
   InitializeReadersAndWriters(rpc_handler_info_.rpc_type);
 
@@ -78,30 +78,30 @@ void Rpc::OnReadsDone() { handler_->OnReadsDone(); }
 
 void Rpc::RequestNextMethodInvocation() {
   // Ask gRPC to notify us when the connection terminates.
-  done_event_.pending = true;
-  server_context_.AsyncNotifyWhenDone(new RpcEvent{Event::DONE, this, false});
+  SetRpcEventState(Event::DONE, true);
+  server_context_.AsyncNotifyWhenDone(new RpcEvent{Event::DONE, this});
 
   // Make sure after terminating the connection, gRPC notifies us with this
   // event.
-  new_connection_event_.pending = true;
+  SetRpcEventState(Event::NEW_CONNECTION, true);
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       service_->RequestAsyncBidiStreaming(
           method_index_, &server_context_, streaming_interface(),
           server_completion_queue_, server_completion_queue_,
-          new RpcEvent{Event::NEW_CONNECTION, this, false});
+          new RpcEvent{Event::NEW_CONNECTION, this});
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       service_->RequestAsyncClientStreaming(
           method_index_, &server_context_, streaming_interface(),
           server_completion_queue_, server_completion_queue_,
-          new RpcEvent{Event::NEW_CONNECTION, this, false});
+          new RpcEvent{Event::NEW_CONNECTION, this});
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       service_->RequestAsyncUnary(
           method_index_, &server_context_, request_.get(),
           streaming_interface(), server_completion_queue_,
-          server_completion_queue_, new RpcEvent{Event::NEW_CONNECTION, this, false});
+          server_completion_queue_, new RpcEvent{Event::NEW_CONNECTION, this});
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -113,8 +113,9 @@ void Rpc::RequestStreamingReadIfNeeded() {
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      read_event_.pending = true;
-      async_reader_interface()->Read(request_.get(), new RpcEvent{Event::READ, this, false});
+      SetRpcEventState(Event::READ, true);
+      async_reader_interface()->Read(request_.get(),
+                                     new RpcEvent{Event::READ, this});
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       // For NORMAL_RPC we don't have to do anything here, since gRPC
@@ -149,21 +150,22 @@ void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
 
 void Rpc::SendFinish(std::unique_ptr<::google::protobuf::Message> message,
                      ::grpc::Status status) {
-  finish_event_.pending = true;
+  SetRpcEventState(Event::FINISH, true);
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       CHECK(!message);
-      server_async_reader_writer_->Finish(status, new RpcEvent{Event::FINISH, this, false});
+      server_async_reader_writer_->Finish(status,
+                                          new RpcEvent{Event::FINISH, this});
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       response_ = std::move(message);
       SendUnaryFinish(server_async_reader_.get(), status, response_.get(),
-                      new RpcEvent{Event::FINISH, this, false});
+                      new RpcEvent{Event::FINISH, this});
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       response_ = std::move(message);
       SendUnaryFinish(server_async_response_writer_.get(), status,
-                      response_.get(), new RpcEvent{Event::FINISH, this, false});
+                      response_.get(), new RpcEvent{Event::FINISH, this});
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -188,20 +190,21 @@ void Rpc::Finish(::grpc::Status status) {
 }
 
 void Rpc::PerformWriteIfNeeded() {
-  if (send_queue_.empty() || write_event_.pending) {
+  if (send_queue_.empty() || IsRpcEventPending(Event::WRITE)) {
     return;
   }
 
   // Make sure not other send operations are in-flight.
-  CHECK(!finish_event_.pending);
+  CHECK(!IsRpcEventPending(Event::FINISH));
 
   SendItem send_item = std::move(send_queue_.front());
   send_queue_.pop();
   response_ = std::move(send_item.msg);
 
   if (response_) {
-    write_event_.pending = true;
-    async_writer_interface()->Write(*response_.get(), new RpcEvent{Event::WRITE, this, false});
+    SetRpcEventState(Event::WRITE, true);
+    async_writer_interface()->Write(*response_.get(),
+                                    new RpcEvent{Event::WRITE, this});
   } else {
     CHECK(send_queue_.empty());
     SendFinish(nullptr /* message */, send_item.status);
@@ -252,11 +255,12 @@ Rpc::async_writer_interface() {
   }
   LOG(FATAL) << "Never reached.";
 }
-
-Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
+/*
+Rpc::RpcEvent* Rpc::GetRpcEventInternal(Event event) {
   switch (event) {
     case Event::DONE:
-      return &done_event_;
+      LOG(INFO) << "Accessing done";
+      return &done2_event_;
     case Event::FINISH:
       return &finish_event_;
     case Event::NEW_CONNECTION:
@@ -267,6 +271,60 @@ Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
       return &write_event_;
   }
   LOG(FATAL) << "Never reached.";
+}*/
+
+void Rpc::SetRpcEventState(Event event, bool pending) {
+  switch (event) {
+    case Event::DONE:
+      done_event_pending_ = pending;
+      break;
+      // return &done_event_;
+    case Event::FINISH:
+      finish_event_pending_ = pending;
+      break;
+      // return &finish_event_;
+    case Event::NEW_CONNECTION:
+      new_connection_event_pending_ = pending;
+      break;
+      // return &new_connection_event_;
+    case Event::READ:
+      read_event_pending_ = pending;
+      break;
+      // return &read_event_;
+    case Event::WRITE:
+      write_event_pending_ = pending;
+      break;
+      // return &write_event_;
+  }
+}
+
+bool Rpc::IsRpcEventPending(Event event) {
+  bool is_pending = false;
+  switch (event) {
+    case Event::DONE:
+      is_pending = done_event_pending_;
+      break;
+    case Event::FINISH:
+      is_pending = finish_event_pending_;
+      break;
+    case Event::NEW_CONNECTION:
+      is_pending = new_connection_event_pending_;
+      break;
+    case Event::READ:
+      is_pending = read_event_pending_;
+      break;
+    case Event::WRITE:
+      is_pending = write_event_pending_;
+      break;
+  }
+  return is_pending;
+}
+
+bool Rpc::IsNoEventPending() {
+  return !IsRpcEventPending(Rpc::Event::DONE) &&
+         !IsRpcEventPending(Rpc::Event::READ) &&
+         !IsRpcEventPending(Rpc::Event::WRITE) &&
+         !IsRpcEventPending(Rpc::Event::FINISH);
 }
 
 ActiveRpcs::ActiveRpcs() : lock_() {}

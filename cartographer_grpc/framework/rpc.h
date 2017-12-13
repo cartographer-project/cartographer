@@ -41,11 +41,6 @@ class Rpc {
   struct RpcEvent {
     const Event event;
     Rpc* rpc;
-    // Indicates whether the event is pending completion. E.g. 'event = READ'
-    // and 'pending = true' means that a read has been requested but hasn't
-    // completed yet. While 'pending = false' indicates, that the read has
-    // completed and currently no read is in-flight.
-    bool pending;
   };
 
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
@@ -60,9 +55,12 @@ class Rpc {
   void Write(std::unique_ptr<::google::protobuf::Message> message);
   void Finish(::grpc::Status status);
   Service* service() { return service_; }
-  RpcEvent* GetRpcEvent(Event event);
+  void SetRpcEventState(Event event, bool pending);
+  bool IsRpcEventPending(Event event);
+  bool IsNoEventPending();
 
  private:
+  // RpcEvent* GetRpcEventInternal(Event event);
   struct SendItem {
     std::unique_ptr<google::protobuf::Message> msg;
     ::grpc::Status status;
@@ -89,11 +87,15 @@ class Rpc {
   Service* service_;
   ::grpc::ServerContext server_context_;
 
-  RpcEvent new_connection_event_;
-  RpcEvent read_event_;
-  RpcEvent write_event_;
-  RpcEvent finish_event_;
-  RpcEvent done_event_;
+  // Indicates whether the event is pending completion. E.g. 'event = READ'
+  // and 'pending = true' means that a read has been requested but hasn't
+  // completed yet. While 'pending = false' indicates, that the read has
+  // completed and currently no read is in-flight.
+  bool new_connection_event_pending_;
+  bool read_event_pending_;
+  bool write_event_pending_;
+  bool finish_event_pending_;
+  bool done_event_pending_;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
