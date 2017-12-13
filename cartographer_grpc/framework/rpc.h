@@ -60,7 +60,6 @@ class Rpc {
   bool IsNoEventPending();
 
  private:
-  // RpcEvent* GetRpcEventInternal(Event event);
   struct SendItem {
     std::unique_ptr<google::protobuf::Message> msg;
     ::grpc::Status status;
@@ -72,6 +71,7 @@ class Rpc {
       ::grpc::internal::RpcMethod::RpcType rpc_type);
   void SendFinish(std::unique_ptr<::google::protobuf::Message> message,
                   ::grpc::Status status);
+  bool* GetEventState(Event event);
 
   ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
   async_reader_interface();

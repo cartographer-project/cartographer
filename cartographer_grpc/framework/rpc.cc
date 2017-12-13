@@ -255,69 +255,29 @@ Rpc::async_writer_interface() {
   }
   LOG(FATAL) << "Never reached.";
 }
-/*
-Rpc::RpcEvent* Rpc::GetRpcEventInternal(Event event) {
+
+bool* Rpc::GetEventState(Event event) {
   switch (event) {
     case Event::DONE:
-      LOG(INFO) << "Accessing done";
-      return &done2_event_;
+      return &done_event_pending_;
     case Event::FINISH:
-      return &finish_event_;
+      return  &finish_event_pending_;
     case Event::NEW_CONNECTION:
-      return &new_connection_event_;
+      return  &new_connection_event_pending_;
     case Event::READ:
-      return &read_event_;
+      return &read_event_pending_;
     case Event::WRITE:
-      return &write_event_;
+      return &write_event_pending_;
   }
   LOG(FATAL) << "Never reached.";
-}*/
+}
 
 void Rpc::SetRpcEventState(Event event, bool pending) {
-  switch (event) {
-    case Event::DONE:
-      done_event_pending_ = pending;
-      break;
-      // return &done_event_;
-    case Event::FINISH:
-      finish_event_pending_ = pending;
-      break;
-      // return &finish_event_;
-    case Event::NEW_CONNECTION:
-      new_connection_event_pending_ = pending;
-      break;
-      // return &new_connection_event_;
-    case Event::READ:
-      read_event_pending_ = pending;
-      break;
-      // return &read_event_;
-    case Event::WRITE:
-      write_event_pending_ = pending;
-      break;
-      // return &write_event_;
-  }
+  *GetEventState(event) = pending;
 }
 
 bool Rpc::IsRpcEventPending(Event event) {
-  bool is_pending = false;
-  switch (event) {
-    case Event::DONE:
-      is_pending = done_event_pending_;
-      break;
-    case Event::FINISH:
-      is_pending = finish_event_pending_;
-      break;
-    case Event::NEW_CONNECTION:
-      is_pending = new_connection_event_pending_;
-      break;
-    case Event::READ:
-      is_pending = read_event_pending_;
-      break;
-    case Event::WRITE:
-      is_pending = write_event_pending_;
-      break;
-  }
-  return is_pending;
+  return *GetEventState(event);
 }
 
 bool Rpc::IsNoEventPending() {
