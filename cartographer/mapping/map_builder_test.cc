@@ -33,9 +33,9 @@ namespace {
 
 constexpr char kRangeSensorId[] = "range";
 constexpr char kIMUSensorId[] = "imu";
-constexpr double kDuration = 4.;
-constexpr double kTimeStep = 0.1;
-constexpr double kTravelDistance = 1.2;
+constexpr double kDuration = 4.;  // Seconds.
+constexpr double kTimeStep = 0.1;  // Seconds.
+constexpr double kTravelDistance = 1.2;  // Meters.
 
 std::vector<sensor::TimedPointCloudData> GenerateFakeRangeMeasurements() {
   std::vector<sensor::TimedPointCloudData> measurements;
