@@ -66,8 +66,11 @@ void Server::RunCompletionQueue(
   void* tag;
   while (completion_queue->Next(&tag, &ok)) {
     auto* rpc_event = static_cast<Rpc::RpcEvent*>(tag);
-    rpc_event->rpc->service()->HandleEvent(rpc_event->event, rpc_event->rpc,
-                                           ok);
+    if (auto rpc = rpc_event->rpc.lock()) {
+      rpc->service()->HandleEvent(rpc_event->event, rpc.get(), ok);
+    } else {
+      LOG(WARNING) << "Ignoring stale event.";
+    }
     delete rpc_event;
   }
 }

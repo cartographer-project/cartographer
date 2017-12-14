@@ -37,15 +37,17 @@ namespace framework {
 class Service;
 class Rpc {
  public:
+  using WeakPtrFactory = std::function<std::weak_ptr<Rpc>(Rpc*)>;
   enum class Event { NEW_CONNECTION = 0, READ, WRITE, FINISH, DONE };
   struct RpcEvent {
     const Event event;
-    Rpc* rpc;
+    std::weak_ptr<Rpc> rpc;
   };
 
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
       ExecutionContext* execution_context,
-      const RpcHandlerInfo& rpc_handler_info, Service* service);
+      const RpcHandlerInfo& rpc_handler_info, Service* service,
+      WeakPtrFactory weak_ptr_factory);
   std::unique_ptr<Rpc> Clone();
   void OnRequest();
   void OnReadsDone();
@@ -85,6 +87,7 @@ class Rpc {
   ExecutionContext* execution_context_;
   RpcHandlerInfo rpc_handler_info_;
   Service* service_;
+  WeakPtrFactory weak_ptr_factory_;
   ::grpc::ServerContext server_context_;
 
   // These state variables indicate whether the corresponding event is currently
@@ -122,12 +125,15 @@ class ActiveRpcs {
   ActiveRpcs();
   ~ActiveRpcs() EXCLUDES(lock_);
 
-  Rpc* Add(std::unique_ptr<Rpc> rpc) EXCLUDES(lock_);
+  std::shared_ptr<Rpc> Add(std::unique_ptr<Rpc> rpc) EXCLUDES(lock_);
   bool Remove(Rpc* rpc) EXCLUDES(lock_);
+  Rpc::WeakPtrFactory GetWeakPtrFactory();
 
  private:
+  std::weak_ptr<Rpc> GetWeakPtr(Rpc* rpc);
+
   cartographer::common::Mutex lock_;
-  std::unordered_set<Rpc*> rpcs_;
+  std::map<Rpc*, std::shared_ptr<Rpc>> rpcs_;
 };
 
 }  // namespace framework
