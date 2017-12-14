@@ -61,7 +61,9 @@ class LocalTrajectoryBuilder {
 
   // Returns 'MatchingResult' when range data accumulation completed,
   // otherwise 'nullptr'. Range data must be approximately horizontal
-  // for 2D SLAM.
+  // for 2D SLAM. `time` is when the last point in `range_data` was
+  // acquired, `range_data` contains the relative time of point with
+  // respect to `time`.
   std::unique_ptr<MatchingResult> AddRangeData(
       common::Time, const sensor::TimedRangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
@@ -101,7 +103,6 @@ class LocalTrajectoryBuilder {
   std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
 
   int num_accumulated_ = 0;
-  transform::Rigid3f first_pose_estimate_ = transform::Rigid3f::Identity();
   sensor::RangeData accumulated_range_data_;
 };
 

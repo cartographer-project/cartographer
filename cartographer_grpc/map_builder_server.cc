@@ -13,14 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "cartographer_grpc/map_builder_server.h"
 
+#include "cartographer_grpc/handlers/add_imu_data_handler.h"
+#include "cartographer_grpc/handlers/add_odometry_data_handler.h"
+#include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
 #include "cartographer_grpc/handlers/add_trajectory_handler.h"
 #include "cartographer_grpc/handlers/finish_trajectory_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
+
+MapBuilderServer::MapBuilderContext::MapBuilderContext(
+    cartographer::mapping::MapBuilder* map_builder,
+    cartographer::common::BlockingQueue<SensorData>* sensor_data_queue)
+    : map_builder_(map_builder), sensor_data_queue_(sensor_data_queue) {}
+
+cartographer::mapping::MapBuilder&
+MapBuilderServer::MapBuilderContext::map_builder() {
+  return *map_builder_;
+}
+
+cartographer::common::BlockingQueue<MapBuilderServer::SensorData>&
+MapBuilderServer::MapBuilderContext::sensor_data_queue() {
+  return *sensor_data_queue_;
+}
+
+void MapBuilderServer::MapBuilderContext::AddSensorDataToTrajectory(
+    const SensorData& sensor_data) {
+  sensor_data.sensor_data->AddToTrajectoryBuilder(
+      map_builder_->GetTrajectoryBuilder(sensor_data.trajectory_id));
+}
 
 MapBuilderServer::MapBuilderServer(
     const proto::MapBuilderServerOptions& map_builder_server_options)
@@ -31,11 +56,20 @@ MapBuilderServer::MapBuilderServer(
       map_builder_server_options.num_grpc_threads());
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler,
                                  proto::MapBuilderService>("AddTrajectory");
+  server_builder.RegisterHandler<handlers::AddOdometryDataHandler,
+                                 proto::MapBuilderService>("AddOdometryData");
+  server_builder
+      .RegisterHandler<handlers::AddImuDataHandler, proto::MapBuilderService>(
+          "AddImuData");
+  server_builder.RegisterHandler<handlers::AddRangefinderDataHandler,
+                                 proto::MapBuilderService>(
+      "AddRangefinderData");
   server_builder.RegisterHandler<handlers::FinishTrajectoryHandler,
                                  proto::MapBuilderService>("FinishTrajectory");
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
-      cartographer::common::make_unique<MapBuilderContext>(&map_builder_));
+      cartographer::common::make_unique<MapBuilderContext>(
+          &map_builder_, &sensor_data_queue_));
 }
 
 void MapBuilderServer::Start() {
@@ -60,8 +94,11 @@ void MapBuilderServer::Shutdown() {
 }
 
 void MapBuilderServer::ProcessSensorDataQueue() {
+  LOG(INFO) << "Starting SLAM thread.";
   while (!shutting_down_) {
-    // TODO(cschuet): Implement this.
+    SensorData sensor_data = sensor_data_queue_.Pop();
+    grpc_server_->GetContext<MapBuilderContext>()->AddSensorDataToTrajectory(
+        sensor_data);
   }
 }
 
