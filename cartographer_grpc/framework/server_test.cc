@@ -93,7 +93,8 @@ class ServerTest : public ::testing::Test {
   void SetUp() override {
     Server::Builder server_builder;
     server_builder.SetServerAddress(kServerAddress);
-    server_builder.SetNumberOfThreads(kNumThreads);
+    server_builder.SetNumGrpcThreads(kNumThreads);
+    server_builder.SetNumEventThreads(kNumThreads);
     server_builder.RegisterHandler<GetSumHandler, proto::Math>("GetSum");
     server_builder.RegisterHandler<GetSquareHandler, proto::Math>("GetSquare");
     server_builder.RegisterHandler<GetRunningSumHandler, proto::Math>(

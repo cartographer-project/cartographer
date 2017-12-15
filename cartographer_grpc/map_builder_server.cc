@@ -52,8 +52,10 @@ MapBuilderServer::MapBuilderServer(
     : map_builder_(map_builder_server_options.map_builder_options()) {
   framework::Server::Builder server_builder;
   server_builder.SetServerAddress(map_builder_server_options.server_address());
-  server_builder.SetNumberOfThreads(
+  server_builder.SetNumGrpcThreads(
       map_builder_server_options.num_grpc_threads());
+  server_builder.SetNumEventThreads(
+      map_builder_server_options.num_event_threads());
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler,
                                  proto::MapBuilderService>("AddTrajectory");
   server_builder.RegisterHandler<handlers::AddOdometryDataHandler,
