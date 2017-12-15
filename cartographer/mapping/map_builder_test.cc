@@ -21,9 +21,7 @@
 #include <vector>
 
 #include "cartographer/common/config.h"
-#include "cartographer/common/configuration_file_resolver.h"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
+#include "cartographer/internal/mapping/test_helpers.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "gtest/gtest.h"
 
@@ -61,17 +59,6 @@ std::vector<sensor::TimedPointCloudData> GenerateFakeRangeMeasurements() {
   return measurements;
 }
 
-std::unique_ptr<::cartographer::common::LuaParameterDictionary>
-ResolveLuaParameters(const std::string& lua_code) {
-  auto file_resolver = ::cartographer::common::make_unique<
-      ::cartographer::common::ConfigurationFileResolver>(
-      std::vector<std::string>{
-          std::string(::cartographer::common::kSourceDirectory) +
-          "/configuration_files"});
-  return common::make_unique<::cartographer::common::LuaParameterDictionary>(
-      lua_code, std::move(file_resolver));
-}
-
 class MapBuilderTest : public ::testing::Test {
  protected:
   void SetUp() override {
@@ -81,7 +68,7 @@ class MapBuilderTest : public ::testing::Test {
       MAP_BUILDER.use_trajectory_builder_2d = true
       MAP_BUILDER.pose_graph.optimize_every_n_nodes = 0
       return MAP_BUILDER)text";
-    auto map_builder_parameters = ResolveLuaParameters(kMapBuilderLua);
+    auto map_builder_parameters = test::ResolveLuaParameters(kMapBuilderLua);
     map_builder_options_ =
         CreateMapBuilderOptions(map_builder_parameters.get());
     // Multiple submaps are created because of a small 'num_range_data'.
@@ -92,7 +79,7 @@ class MapBuilderTest : public ::testing::Test {
       TRAJECTORY_BUILDER.trajectory_builder_3d.submaps.num_range_data = 4
       return TRAJECTORY_BUILDER)text";
     auto trajectory_builder_parameters =
-        ResolveLuaParameters(kTrajectoryBuilderLua);
+        test::ResolveLuaParameters(kTrajectoryBuilderLua);
     trajectory_builder_options_ =
         CreateTrajectoryBuilderOptions(trajectory_builder_parameters.get());
   }
