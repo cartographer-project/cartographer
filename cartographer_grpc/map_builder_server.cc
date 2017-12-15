@@ -16,6 +16,7 @@
 
 #include "cartographer_grpc/map_builder_server.h"
 
+#include "cartographer_grpc/handlers/add_fixed_frame_pose_data_handler.h"
 #include "cartographer_grpc/handlers/add_imu_data_handler.h"
 #include "cartographer_grpc/handlers/add_odometry_data_handler.h"
 #include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
@@ -66,6 +67,9 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::AddRangefinderDataHandler,
                                  proto::MapBuilderService>(
       "AddRangefinderData");
+  server_builder.RegisterHandler<handlers::AddFixedFramePoseDataHandler,
+                                 proto::MapBuilderService>(
+      "AddFixedFramePoseData");
   server_builder.RegisterHandler<handlers::FinishTrajectoryHandler,
                                  proto::MapBuilderService>("FinishTrajectory");
   grpc_server_ = server_builder.Build();
