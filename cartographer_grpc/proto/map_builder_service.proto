@@ -50,6 +50,11 @@ message AddRangefinderDataRequest {
   cartographer.sensor.proto.TimedPointCloudData timed_point_cloud_data = 2;
 }
 
+message AddFixedFramePoseDataRequest {
+  SensorMetadata sensor_metadata = 1;
+  cartographer.sensor.proto.FixedFramePoseData fixed_frame_pose_data = 2;
+}
+
 message FinishTrajectoryRequest {
   int32 trajectory_id = 1;
 }
@@ -63,13 +68,15 @@ service MapBuilderService {
   rpc AddOdometryData(stream AddOdometryDataRequest)
       returns (google.protobuf.Empty);
 
-  // Adds IMU data from the sensor with id 'sensor_metadata.sensor_id' to
-  // the trajectory corresponding to 'sensor_metadata.trajectory_id'.
+  // Same for IMU data.
   rpc AddImuData(stream AddImuDataRequest) returns (google.protobuf.Empty);
 
-  // Adds range-finder data from the sensor with id 'sensor_metadata.sensor_id'
-  // to the trajectory corresponding to 'sensor_metadata.trajectory_id'.
+  // Same for range-finder data.
   rpc AddRangefinderData(stream AddRangefinderDataRequest)
+      returns (google.protobuf.Empty);
+
+  // Same for fixed-frame pose data.
+  rpc AddFixedFramePoseData(stream AddFixedFramePoseDataRequest)
       returns (google.protobuf.Empty);
 
   // Marks a trajectory corresponding to 'trajectory_id' as finished,
