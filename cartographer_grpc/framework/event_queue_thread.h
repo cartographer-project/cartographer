@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_EVENT_QUEUE_THREAD_H
-#define CARTOGRAPHER_EVENT_QUEUE_THREAD_H
+#ifndef CARTOGRAPHER_GRPC_FRAMEWORK_EVENT_QUEUE_THREAD_H
+#define CARTOGRAPHER_GRPC_FRAMEWORK_EVENT_QUEUE_THREAD_H
 
 #include <memory>
 #include <thread>
@@ -41,10 +41,10 @@ class EventQueueThread {
 
  private:
   std::unique_ptr<EventQueue> event_queue_;
-  std::unique_ptr<std::thread> worker_thread_;
+  std::unique_ptr<std::thread> thread_;
 };
 
 }  // namespace framework
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_EVENT_QUEUE_THREAD_H
+#endif  // CARTOGRAPHER_GRPC_FRAMEWORK_EVENT_QUEUE_THREAD_H

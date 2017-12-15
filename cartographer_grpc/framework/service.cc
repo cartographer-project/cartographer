@@ -98,7 +98,7 @@ void Service::HandleNewConnection(Rpc* rpc, bool ok) {
   }
 
   // Create new active rpc to handle next connection and register it for the
-  // incoming connection. Randomly choose an event queue for the new RPC.
+  // incoming connection. Assign event queue in a round-robin fashion.
   std::unique_ptr<Rpc> new_rpc = rpc->Clone();
   new_rpc->SetEventQueue(event_queue_selector_());
   active_rpcs_.Add(std::move(new_rpc))->RequestNextMethodInvocation();

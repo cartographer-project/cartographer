@@ -20,6 +20,11 @@
 
 namespace cartographer_grpc {
 namespace framework {
+namespace {
+
+const cartographer::common::Duration kPopEventTimeout = cartographer::common::FromMilliseconds(100);
+
+}  // namespace
 
 void Server::Builder::SetNumGrpcThreads(const size_t num_grpc_threads) {
   options_.num_grpc_threads = num_grpc_threads;
@@ -46,9 +51,7 @@ Server::Server(const Options& options) : options_(options) {
                                    grpc::InsecureServerCredentials());
 
   // Set up event queue threads.
-  for (size_t i = 0; i < options_.num_event_threads; ++i) {
-    event_queue_threads_.emplace_back();
-  }
+  event_queue_threads_ = std::vector<EventQueueThread>(options_.num_event_threads);
 
   // Set up completion queues threads.
   for (size_t i = 0; i < options_.num_grpc_threads; ++i) {
@@ -77,7 +80,11 @@ void Server::RunCompletionQueue(
   while (completion_queue->Next(&tag, &ok)) {
     auto* rpc_event = static_cast<Rpc::RpcEvent*>(tag);
     rpc_event->ok = ok;
-    rpc_event->event_queue->Push(rpc_event);
+    if (auto rpc = rpc_event->rpc.lock()) {
+      rpc->event_queue()->Push(rpc_event);
+    } else {
+      LOG(WARNING) << "Ignoring stale event.";
+    }
   }
 }
 
@@ -91,24 +98,22 @@ void Server::ProcessRpcEvent(Rpc::RpcEvent* rpc_event) {
 }
 
 EventQueue* Server::SelectNextEventQueueRoundRobin() {
-  ++current_event_queue_id_;
+  cartographer::common::MutexLocker locker(&current_event_queue_id_lock_);
   current_event_queue_id_ =
-      current_event_queue_id_ % options_.num_event_threads;
+      (current_event_queue_id_ + 1) % options_.num_event_threads;
   return event_queue_threads_.at(current_event_queue_id_).event_queue();
 }
 
 void Server::RunEventQueue(EventQueue* event_queue) {
-  while (!shutting_down_) {
-    Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(
-        cartographer::common::FromMilliseconds(100));
+  while(!shutting_down_) {
+    Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(kPopEventTimeout);
     if (rpc_event) {
       ProcessRpcEvent(rpc_event);
     }
   }
 
   // Finish processing the rest of the items.
-  while (Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(
-             cartographer::common::FromMilliseconds(100))) {
+  while(Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(kPopEventTimeout)) {
     ProcessRpcEvent(rpc_event);
   }
 }

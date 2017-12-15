@@ -39,8 +39,8 @@ class Server {
   // All options that configure server behaviour such as number of threads,
   // ports etc.
   struct Options {
-    size_t num_grpc_threads = 2;
-    size_t num_event_threads = 2;
+    size_t num_grpc_threads;
+    size_t num_event_threads;
     std::string server_address = "0.0.0.0:50051";
   };
 
@@ -129,6 +129,8 @@ class Server {
 
   // Threads processing RPC events.
   std::vector<EventQueueThread> event_queue_threads_;
+  cartographer::common::Mutex current_event_queue_id_lock_;
+  int current_event_queue_id_ = 0;
 
   // Map of service names to services.
   std::map<std::string, Service> services_;
@@ -136,8 +138,6 @@ class Server {
   // A context object that is shared between all implementations of
   // 'RpcHandler'.
   std::unique_ptr<ExecutionContext> execution_context_;
-
-  int current_event_queue_id_ = 0;
 };
 
 }  // namespace framework

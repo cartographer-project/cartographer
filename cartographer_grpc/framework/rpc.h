@@ -45,7 +45,6 @@ class Rpc {
   struct RpcEvent {
     const Event event;
     std::weak_ptr<Rpc> rpc;
-    EventQueue* event_queue;
     bool ok;
   };
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
@@ -65,6 +64,7 @@ class Rpc {
   bool IsRpcEventPending(Event event);
   bool IsAnyEventPending();
   void SetEventQueue(EventQueue* event_queue) { event_queue_ = event_queue; }
+  EventQueue* event_queue() { return event_queue_; }
 
  private:
   struct SendItem {

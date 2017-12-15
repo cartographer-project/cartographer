@@ -29,14 +29,15 @@ EventQueueThread::EventQueueThread() {
 EventQueue* EventQueueThread::event_queue() { return event_queue_.get(); }
 
 void EventQueueThread::Start(EventQueueRunner runner) {
-  CHECK(!worker_thread_);
-  worker_thread_ = cartographer::common::make_unique<std::thread>(
-      [this, runner]() { runner(this->event_queue_.get()); });
+  CHECK(!thread_);
+  EventQueue* event_queue = event_queue_.get();
+  thread_ = cartographer::common::make_unique<std::thread>(
+      [event_queue, runner]() { runner(event_queue); });
 }
 
 void EventQueueThread::Shutdown() {
   LOG(INFO) << "Shutting down event queue " << event_queue_.get();
-  worker_thread_->join();
+  thread_->join();
 }
 
 }  // namespace framework
