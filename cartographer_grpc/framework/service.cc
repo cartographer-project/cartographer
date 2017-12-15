@@ -70,9 +70,6 @@ void Service::HandleEvent(Rpc::Event event, Rpc* rpc, bool ok) {
     case Rpc::Event::WRITE:
       HandleWrite(rpc, ok);
       break;
-    case Rpc::Event::WRITE_NEEDED:
-      HandleWriteNeeded(rpc, ok);
-      break;
     case Rpc::Event::FINISH:
       HandleFinish(rpc, ok);
       break;
@@ -117,15 +114,6 @@ void Service::HandleRead(Rpc* rpc, bool ok) {
 
   // Reads completed.
   rpc->OnReadsDone();
-
-  RemoveIfNotPending(rpc);
-}
-
-void Service::HandleWriteNeeded(Rpc* rpc, bool ok) {
-  CHECK(ok);
-
-  // Send the next message or potentially finish the connection.
-  rpc->PerformWriteIfNeeded();
 
   RemoveIfNotPending(rpc);
 }
