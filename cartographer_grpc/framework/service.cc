@@ -26,9 +26,9 @@ namespace framework {
 
 Service::Service(const std::string& service_name,
                  const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos,
-                 size_t num_event_queues)
+                 EventQueueSelector event_queue_selector)
     : rpc_handler_infos_(rpc_handler_infos),
-      num_event_queues_(num_event_queues) {
+      event_queue_selector_(event_queue_selector) {
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
     // The 'handler' below is set to 'nullptr' indicating that we want to
     // handle this method asynchronously.
@@ -44,10 +44,10 @@ void Service::StartServing(
   int i = 0;
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
     for (auto& completion_queue_thread : completion_queue_threads) {
-      int event_queue_id = rand() % num_event_queues_;
       std::shared_ptr<Rpc> rpc =
           active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
-              i, completion_queue_thread.completion_queue(), event_queue_id, execution_context,
+              i, completion_queue_thread.completion_queue(),
+              event_queue_selector_(), execution_context,
               rpc_handler_info.second, this, active_rpcs_.GetWeakPtrFactory()));
       rpc->RequestNextMethodInvocation();
     }
@@ -100,7 +100,7 @@ void Service::HandleNewConnection(Rpc* rpc, bool ok) {
   // Create new active rpc to handle next connection and register it for the
   // incoming connection. Randomly choose an event queue for the new RPC.
   std::unique_ptr<Rpc> new_rpc = rpc->Clone();
-  new_rpc->SetEventQueueId(rand() % num_event_queues_);
+  new_rpc->SetEventQueue(event_queue_selector_());
   active_rpcs_.Add(std::move(new_rpc))->RequestNextMethodInvocation();
 }
 

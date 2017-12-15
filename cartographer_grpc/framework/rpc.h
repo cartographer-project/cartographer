@@ -39,17 +39,17 @@ class Service;
 class Rpc {
  public:
   struct RpcEvent;
+  using EventQueue = cartographer::common::BlockingQueue<RpcEvent*>;
   using WeakPtrFactory = std::function<std::weak_ptr<Rpc>(Rpc*)>;
   enum class Event { NEW_CONNECTION = 0, READ, WRITE, FINISH, DONE };
   struct RpcEvent {
     const Event event;
     std::weak_ptr<Rpc> rpc;
-    int event_queue_id;
+    EventQueue* event_queue;
     bool ok;
   };
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
-      int event_queue_id,
-      ExecutionContext* execution_context,
+      EventQueue* event_queue, ExecutionContext* execution_context,
       const RpcHandlerInfo& rpc_handler_info, Service* service,
       WeakPtrFactory weak_ptr_factory);
   std::unique_ptr<Rpc> Clone();
@@ -64,7 +64,7 @@ class Rpc {
   void SetRpcEventState(Event event, bool pending);
   bool IsRpcEventPending(Event event);
   bool IsAnyEventPending();
-  void SetEventQueueId(int event_queue_id) { event_queue_id_ = event_queue_id; }
+  void SetEventQueue(EventQueue* event_queue) { event_queue_ = event_queue; }
 
  private:
   struct SendItem {
@@ -89,7 +89,7 @@ class Rpc {
 
   int method_index_;
   ::grpc::ServerCompletionQueue* server_completion_queue_;
-  int event_queue_id_;
+  EventQueue* event_queue_;
   ExecutionContext* execution_context_;
   RpcHandlerInfo rpc_handler_info_;
   Service* service_;

@@ -108,17 +108,14 @@ class Server {
   Server(const Options& options);
   Server(const Server&) = delete;
   Server& operator=(const Server&) = delete;
-
   void AddService(
       const std::string& service_name,
       const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos);
-
   void RunCompletionQueue(
       ::grpc::ServerCompletionQueue* completion_queue);
-
   void RunEventQueue(EventQueue* event_queue);
-
   void ProcessRpcEvent(Rpc::RpcEvent* rpc_event);
+  EventQueue* SelectNextEventQueueRoundRobin();
 
   Options options_;
 
@@ -140,6 +137,8 @@ class Server {
   // A context object that is shared between all implementations of
   // 'RpcHandler'.
   std::unique_ptr<ExecutionContext> execution_context_;
+
+  int current_event_queue_id_ = 0;
 };
 
 }  // namespace framework

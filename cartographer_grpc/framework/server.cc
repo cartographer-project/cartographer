@@ -61,10 +61,10 @@ void Server::AddService(
     const std::string& service_name,
     const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos) {
   // Instantiate and register service.
-  const auto result =
-      services_.emplace(std::piecewise_construct, std::make_tuple(service_name),
-                        std::make_tuple(service_name, rpc_handler_infos,
-                                        options_.num_event_threads));
+  const auto result = services_.emplace(
+      std::piecewise_construct, std::make_tuple(service_name),
+      std::make_tuple(service_name, rpc_handler_infos,
+                      [this]() { return SelectNextEventQueueRoundRobin(); }));
   CHECK(result.second) << "A service named " << service_name
                        << " already exists.";
   server_builder_.RegisterService(&result.first->second);
@@ -77,7 +77,7 @@ void Server::RunCompletionQueue(
   while (completion_queue->Next(&tag, &ok)) {
     auto* rpc_event = static_cast<Rpc::RpcEvent*>(tag);
     rpc_event->ok = ok;
-    event_queue_threads_.at(rpc_event->event_queue_id).event_queue()->Push(rpc_event);
+    rpc_event->event_queue->Push(rpc_event);
   }
 }
 
@@ -88,6 +88,13 @@ void Server::ProcessRpcEvent(Rpc::RpcEvent* rpc_event) {
         LOG(WARNING) << "Ignoring stale event.";
       }
       delete rpc_event;
+}
+
+EventQueue* Server::SelectNextEventQueueRoundRobin() {
+  ++current_event_queue_id_;
+  current_event_queue_id_ =
+      current_event_queue_id_ % options_.num_event_threads;
+  return event_queue_threads_.at(current_event_queue_id_).event_queue();
 }
 
 void Server::RunEventQueue(EventQueue* event_queue) {
