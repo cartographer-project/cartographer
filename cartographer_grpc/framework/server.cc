@@ -83,11 +83,11 @@ void Server::RunCompletionQueue(
 
 void Server::ProcessRpcEvent(Rpc::RpcEvent* rpc_event) {
   if (auto rpc = rpc_event->rpc.lock()) {
-        rpc->service()->HandleEvent(rpc_event->event, rpc.get(), rpc_event->ok);
-      } else {
-        LOG(WARNING) << "Ignoring stale event.";
-      }
-      delete rpc_event;
+    rpc->service()->HandleEvent(rpc_event->event, rpc.get(), rpc_event->ok);
+  } else {
+    LOG(WARNING) << "Ignoring stale event.";
+  }
+  delete rpc_event;
 }
 
 EventQueue* Server::SelectNextEventQueueRoundRobin() {
@@ -98,15 +98,17 @@ EventQueue* Server::SelectNextEventQueueRoundRobin() {
 }
 
 void Server::RunEventQueue(EventQueue* event_queue) {
-  while(!shutting_down_) {
-    Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(cartographer::common::FromMilliseconds(100));
+  while (!shutting_down_) {
+    Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(
+        cartographer::common::FromMilliseconds(100));
     if (rpc_event) {
       ProcessRpcEvent(rpc_event);
     }
   }
 
   // Finish processing the rest of the items.
-  while(Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(cartographer::common::FromMilliseconds(100))) {
+  while (Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(
+             cartographer::common::FromMilliseconds(100))) {
     ProcessRpcEvent(rpc_event);
   }
 }
@@ -123,16 +125,16 @@ void Server::Start() {
 
   // Start threads to process all event queues.
   for (auto& event_queue_thread : event_queue_threads_) {
-    event_queue_thread.Start([this](EventQueue* event_queue){
-      RunEventQueue(event_queue);
-    });
+    event_queue_thread.Start(
+        [this](EventQueue* event_queue) { RunEventQueue(event_queue); });
   }
 
   // Start threads to process all completion queues.
   for (auto& completion_queue_threads : completion_queue_threads_) {
-    completion_queue_threads.Start([this](::grpc::ServerCompletionQueue* completion_queue) {
-      RunCompletionQueue(completion_queue);
-    });
+    completion_queue_threads.Start(
+        [this](::grpc::ServerCompletionQueue* completion_queue) {
+          RunCompletionQueue(completion_queue);
+        });
   }
 }
 

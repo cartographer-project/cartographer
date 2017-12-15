@@ -30,7 +30,7 @@ proto::MapBuilderServerOptions CreateMapBuilderServerOptions(
   map_builder_server_options.set_num_grpc_threads(
       lua_parameter_dictionary->GetInt("num_grpc_threads"));
   map_builder_server_options.set_num_event_threads(
-        lua_parameter_dictionary->GetInt("num_event_threads"));
+      lua_parameter_dictionary->GetInt("num_event_threads"));
   *map_builder_server_options.mutable_map_builder_options() =
       cartographer::mapping::CreateMapBuilderOptions(
           lua_parameter_dictionary->GetDictionary("map_builder").get());

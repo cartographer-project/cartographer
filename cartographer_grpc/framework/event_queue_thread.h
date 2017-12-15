@@ -30,8 +30,7 @@ using EventQueue = cartographer::common::BlockingQueue<Rpc::RpcEvent*>;
 
 class EventQueueThread {
  public:
-  using EventQueueRunner =
-      std::function<void(EventQueue*)>;
+  using EventQueueRunner = std::function<void(EventQueue*)>;
 
   EventQueueThread();
 

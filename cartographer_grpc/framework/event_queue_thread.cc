@@ -26,9 +26,7 @@ EventQueueThread::EventQueueThread() {
   event_queue_ = cartographer::common::make_unique<EventQueue>();
 }
 
-EventQueue* EventQueueThread::event_queue() {
-  return event_queue_.get();
-}
+EventQueue* EventQueueThread::event_queue() { return event_queue_.get(); }
 
 void EventQueueThread::Start(EventQueueRunner runner) {
   CHECK(!worker_thread_);
