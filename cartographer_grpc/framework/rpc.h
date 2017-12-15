@@ -21,6 +21,7 @@
 #include <queue>
 #include <unordered_set>
 
+#include "cartographer/common/blocking_queue.h"
 #include "cartographer/common/mutex.h"
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/rpc_handler_interface.h"
@@ -37,15 +38,19 @@ namespace framework {
 class Service;
 class Rpc {
  public:
+  struct RpcEvent;
+  using EventQueue = cartographer::common::BlockingQueue<RpcEvent*>;
+  using WeakPtrFactory = std::function<std::weak_ptr<Rpc>(Rpc*)>;
   enum class Event { NEW_CONNECTION = 0, READ, WRITE, FINISH, DONE };
   struct RpcEvent {
     const Event event;
-    Rpc* rpc;
+    std::weak_ptr<Rpc> rpc;
+    bool ok;
   };
-
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
-      ExecutionContext* execution_context,
-      const RpcHandlerInfo& rpc_handler_info, Service* service);
+      EventQueue* event_queue, ExecutionContext* execution_context,
+      const RpcHandlerInfo& rpc_handler_info, Service* service,
+      WeakPtrFactory weak_ptr_factory);
   std::unique_ptr<Rpc> Clone();
   void OnRequest();
   void OnReadsDone();
@@ -58,6 +63,8 @@ class Rpc {
   void SetRpcEventState(Event event, bool pending);
   bool IsRpcEventPending(Event event);
   bool IsAnyEventPending();
+  void SetEventQueue(EventQueue* event_queue) { event_queue_ = event_queue; }
+  EventQueue* event_queue() { return event_queue_; }
 
  private:
   struct SendItem {
@@ -82,9 +89,11 @@ class Rpc {
 
   int method_index_;
   ::grpc::ServerCompletionQueue* server_completion_queue_;
+  EventQueue* event_queue_;
   ExecutionContext* execution_context_;
   RpcHandlerInfo rpc_handler_info_;
   Service* service_;
+  WeakPtrFactory weak_ptr_factory_;
   ::grpc::ServerContext server_context_;
 
   // These state variables indicate whether the corresponding event is currently
@@ -122,12 +131,15 @@ class ActiveRpcs {
   ActiveRpcs();
   ~ActiveRpcs() EXCLUDES(lock_);
 
-  Rpc* Add(std::unique_ptr<Rpc> rpc) EXCLUDES(lock_);
+  std::shared_ptr<Rpc> Add(std::unique_ptr<Rpc> rpc) EXCLUDES(lock_);
   bool Remove(Rpc* rpc) EXCLUDES(lock_);
+  Rpc::WeakPtrFactory GetWeakPtrFactory();
 
  private:
+  std::weak_ptr<Rpc> GetWeakPtr(Rpc* rpc);
+
   cartographer::common::Mutex lock_;
-  std::unordered_set<Rpc*> rpcs_;
+  std::map<Rpc*, std::shared_ptr<Rpc>> rpcs_;
 };
 
 }  // namespace framework

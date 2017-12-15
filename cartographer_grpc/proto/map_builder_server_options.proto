@@ -21,5 +21,6 @@ package cartographer_grpc.proto;
 message MapBuilderServerOptions {
   string server_address = 1;
   int32 num_grpc_threads = 2;
-  cartographer.mapping.proto.MapBuilderOptions map_builder_options = 3;
+  int32 num_event_threads = 3;
+  cartographer.mapping.proto.MapBuilderOptions map_builder_options = 4;
 }
