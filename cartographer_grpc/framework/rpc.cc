@@ -115,8 +115,7 @@ void Rpc::RequestStreamingReadIfNeeded() {
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       SetRpcEventState(Event::READ, true);
       async_reader_interface()->Read(
-          request_.get(),
-          new RpcEvent{Event::READ, weak_ptr_factory_(this)});
+          request_.get(), new RpcEvent{Event::READ, weak_ptr_factory_(this)});
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       // For NORMAL_RPC we don't have to do anything here, since gRPC
@@ -156,20 +155,18 @@ void Rpc::SendFinish(std::unique_ptr<::google::protobuf::Message> message,
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       CHECK(!message);
       server_async_reader_writer_->Finish(
-          status,
-          new RpcEvent{Event::FINISH, weak_ptr_factory_(this)});
+          status, new RpcEvent{Event::FINISH, weak_ptr_factory_(this)});
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       response_ = std::move(message);
-      SendUnaryFinish(
-          server_async_reader_.get(), status, response_.get(),
-          new RpcEvent{Event::FINISH, weak_ptr_factory_(this)});
+      SendUnaryFinish(server_async_reader_.get(), status, response_.get(),
+                      new RpcEvent{Event::FINISH, weak_ptr_factory_(this)});
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       response_ = std::move(message);
-      SendUnaryFinish(
-          server_async_response_writer_.get(), status, response_.get(),
-          new RpcEvent{Event::FINISH, weak_ptr_factory_(this)});
+      SendUnaryFinish(server_async_response_writer_.get(), status,
+                      response_.get(),
+                      new RpcEvent{Event::FINISH, weak_ptr_factory_(this)});
       break;
     default:
       LOG(FATAL) << "RPC type not implemented.";
@@ -208,8 +205,7 @@ void Rpc::PerformWriteIfNeeded() {
   if (response_) {
     SetRpcEventState(Event::WRITE, true);
     async_writer_interface()->Write(
-        *response_.get(),
-        new RpcEvent{Event::WRITE, weak_ptr_factory_(this)});
+        *response_.get(), new RpcEvent{Event::WRITE, weak_ptr_factory_(this)});
   } else {
     CHECK(send_queue_.empty());
     SendFinish(nullptr /* message */, send_item.status);

@@ -22,7 +22,8 @@ namespace cartographer_grpc {
 namespace framework {
 namespace {
 
-const cartographer::common::Duration kPopEventTimeout = cartographer::common::FromMilliseconds(100);
+const cartographer::common::Duration kPopEventTimeout =
+    cartographer::common::FromMilliseconds(100);
 
 }  // namespace
 
@@ -51,7 +52,8 @@ Server::Server(const Options& options) : options_(options) {
                                    grpc::InsecureServerCredentials());
 
   // Set up event queue threads.
-  event_queue_threads_ = std::vector<EventQueueThread>(options_.num_event_threads);
+  event_queue_threads_ =
+      std::vector<EventQueueThread>(options_.num_event_threads);
 
   // Set up completion queues threads.
   for (size_t i = 0; i < options_.num_grpc_threads; ++i) {
@@ -105,7 +107,7 @@ EventQueue* Server::SelectNextEventQueueRoundRobin() {
 }
 
 void Server::RunEventQueue(EventQueue* event_queue) {
-  while(!shutting_down_) {
+  while (!shutting_down_) {
     Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(kPopEventTimeout);
     if (rpc_event) {
       ProcessRpcEvent(rpc_event);
@@ -113,7 +115,8 @@ void Server::RunEventQueue(EventQueue* event_queue) {
   }
 
   // Finish processing the rest of the items.
-  while(Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(kPopEventTimeout)) {
+  while (Rpc::RpcEvent* rpc_event =
+             event_queue->PopWithTimeout(kPopEventTimeout)) {
     ProcessRpcEvent(rpc_event);
   }
 }
