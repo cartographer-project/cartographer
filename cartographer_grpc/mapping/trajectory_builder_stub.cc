@@ -16,15 +16,25 @@
 
 #include "cartographer_grpc/mapping/trajectory_builder_stub.h"
 
+#include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
 namespace mapping {
 
 TrajectoryBuilderStub::TrajectoryBuilderStub(
-    std::shared_ptr<grpc::Channel> client_channel,
-    proto::MapBuilderService::Stub* stub)
-    : client_channel_(client_channel), stub_(stub) {}
+    std::shared_ptr<grpc::Channel> client_channel, const int trajectory_id)
+    : client_channel_(client_channel), trajectory_id_(trajectory_id) {
+  stub_ = proto::MapBuilderService::NewStub(client_channel_);
+  CHECK(stub_) << "Failed to create stub.";
+  imu_writer_.client_writer =
+      stub_->AddImuData(&imu_writer_.client_context, &imu_writer_.response);
+  CHECK(imu_writer_.client_writer) << "Failed to create client writer.";
+}
+
+TrajectoryBuilderStub::~TrajectoryBuilderStub() {
+  CHECK(imu_writer_.client_writer->Finish().ok());
+}
 
 void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id,
@@ -35,7 +45,13 @@ void TrajectoryBuilderStub::AddSensorData(
 void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id,
     const cartographer::sensor::ImuData& imu_data) {
-  LOG(FATAL) << "Not implemented";
+  proto::SensorMetadata sensor_metadata;
+  sensor_metadata.set_sensor_id(sensor_id);
+  sensor_metadata.set_trajectory_id(trajectory_id_);
+  proto::AddImuDataRequest request;
+  *request.mutable_sensor_metadata() = sensor_metadata;
+  *request.mutable_imu_data() = cartographer::sensor::ToProto(imu_data);
+  imu_writer_.client_writer->Write(request);
 }
 
 void TrajectoryBuilderStub::AddSensorData(
