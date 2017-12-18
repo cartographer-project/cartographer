@@ -206,6 +206,7 @@ TEST_F(ServerTest, ProcessBidiStreamingRpcTest) {
     expected_responses.pop_front();
   }
   EXPECT_TRUE(expected_responses.empty());
+  EXPECT_TRUE(reader_writer->Finish().ok());
 
   server_->Shutdown();
 }
@@ -249,6 +250,7 @@ TEST_F(ServerTest, ProcessServerStreamingRpcTest) {
     EXPECT_EQ(response.output(), i);
   }
   EXPECT_FALSE(reader->Read(&response));
+  EXPECT_TRUE(reader->Finish().ok());
 
   server_->Shutdown();
 }
