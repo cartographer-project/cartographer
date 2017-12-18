@@ -132,6 +132,8 @@ class Rpc {
   std::unique_ptr<::grpc::ServerAsyncReaderWriter<google::protobuf::Message,
                                                   google::protobuf::Message>>
       server_async_reader_writer_;
+  std::unique_ptr<::grpc::ServerAsyncWriter<google::protobuf::Message>>
+      server_async_writer_;
 
   cartographer::common::Mutex send_queue_lock_;
   std::queue<SendItem> send_queue_;

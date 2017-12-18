@@ -101,6 +101,21 @@ class GetEchoHandler
   }
 };
 
+class GetSequenceHandler
+    : public RpcHandler<proto::GetSequenceRequest,
+                        Stream<proto::GetSequenceResponse>> {
+ public:
+  void OnRequest(const proto::GetSequenceRequest& request) override {
+    for (int i = 0; i < request.input(); ++i) {
+      auto response =
+          cartographer::common::make_unique<proto::GetSequenceResponse>();
+      response->set_output(i);
+      Send(std::move(response));
+    }
+    Finish(::grpc::Status::OK);
+  }
+};
+
 // TODO(cschuet): Due to the hard-coded part these tests will become flaky when
 // run in parallel. It would be nice to find a way to solve that. gRPC also
 // allows to communicate over UNIX domain sockets.
@@ -119,6 +134,8 @@ class ServerTest : public ::testing::Test {
     server_builder.RegisterHandler<GetRunningSumHandler, proto::Math>(
         "GetRunningSum");
     server_builder.RegisterHandler<GetEchoHandler, proto::Math>("GetEcho");
+    server_builder.RegisterHandler<GetSequenceHandler, proto::Math>(
+        "GetSequence");
     server_ = server_builder.Build();
 
     client_channel_ =
@@ -215,6 +232,23 @@ TEST_F(ServerTest, WriteFromOtherThread) {
   response_thread.join();
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(result.output(), 13);
+
+  server_->Shutdown();
+}
+
+TEST_F(ServerTest, ProcessServerStreamingRpcTest) {
+  server_->Start();
+
+  proto::GetSequenceRequest request;
+  request.set_input(12);
+  auto reader = stub_->GetSequence(&client_context_, request);
+
+  proto::GetSequenceResponse response;
+  for (int i = 0; i < 12; ++i) {
+    EXPECT_TRUE(reader->Read(&response));
+    EXPECT_EQ(response.output(), i);
+  }
+  EXPECT_FALSE(reader->Read(&response));
 
   server_->Shutdown();
 }
