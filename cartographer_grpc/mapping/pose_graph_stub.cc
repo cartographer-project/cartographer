@@ -30,7 +30,7 @@ void PoseGraphStub::RunFinalOptimization() { LOG(FATAL) << "Not implemented"; }
 cartographer::mapping::MapById<
     cartographer::mapping::SubmapId,
     cartographer::mapping::PoseGraphInterface::SubmapData>
-GetAllSubmapData() {
+PoseGraphStub::GetAllSubmapData() {
   LOG(FATAL) << "Not implemented";
 }
 
@@ -41,7 +41,7 @@ cartographer::transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(
 
 cartographer::mapping::MapById<cartographer::mapping::NodeId,
                                cartographer::mapping::TrajectoryNode>
-GetTrajectoryNodes() {
+PoseGraphStub::GetTrajectoryNodes() {
   LOG(FATAL) << "Not implemented";
 }
 
