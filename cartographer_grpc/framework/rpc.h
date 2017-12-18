@@ -36,12 +36,20 @@ namespace cartographer_grpc {
 namespace framework {
 
 class Service;
+// TODO(cschuet): Add a unittest that tests the logic of this class.
 class Rpc {
  public:
   struct RpcEvent;
   using EventQueue = cartographer::common::BlockingQueue<RpcEvent*>;
   using WeakPtrFactory = std::function<std::weak_ptr<Rpc>(Rpc*)>;
-  enum class Event { NEW_CONNECTION = 0, READ, WRITE, FINISH, DONE };
+  enum class Event {
+    NEW_CONNECTION = 0,
+    READ,
+    WRITE_NEEDED,
+    WRITE,
+    FINISH,
+    DONE
+  };
   struct RpcEvent {
     const Event event;
     std::weak_ptr<Rpc> rpc;
@@ -56,7 +64,7 @@ class Rpc {
   void OnReadsDone();
   void RequestNextMethodInvocation();
   void RequestStreamingReadIfNeeded();
-  void PerformWriteIfNeeded();
+  void HandleSendQueue();
   void Write(std::unique_ptr<::google::protobuf::Message> message);
   void Finish(::grpc::Status status);
   Service* service() { return service_; }
@@ -76,9 +84,12 @@ class Rpc {
   Rpc& operator=(const Rpc&) = delete;
   void InitializeReadersAndWriters(
       ::grpc::internal::RpcMethod::RpcType rpc_type);
-  void SendFinish(std::unique_ptr<::google::protobuf::Message> message,
-                  ::grpc::Status status);
   bool* GetRpcEventState(Event event);
+  void EnqueueMessage(SendItem&& send_item);
+  void PerformFinish(std::unique_ptr<::google::protobuf::Message> message,
+                     ::grpc::Status status);
+  void PerformWrite(std::unique_ptr<::google::protobuf::Message> message,
+                    ::grpc::Status status);
 
   ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
   async_reader_interface();
@@ -102,6 +113,7 @@ class Rpc {
   // indicates that the read has completed and currently no read is in-flight.
   bool new_connection_event_pending_ = false;
   bool read_event_pending_ = false;
+  bool write_needed_event_pending_ = false;
   bool write_event_pending_ = false;
   bool finish_event_pending_ = false;
   bool done_event_pending_ = false;
@@ -120,6 +132,7 @@ class Rpc {
                                                   google::protobuf::Message>>
       server_async_reader_writer_;
 
+  cartographer::common::Mutex send_queue_lock_;
   std::queue<SendItem> send_queue_;
 };
 
