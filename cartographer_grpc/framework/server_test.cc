@@ -30,11 +30,11 @@ namespace cartographer_grpc {
 namespace framework {
 namespace {
 
-using EchoCallback = std::function<bool()>;
+using EchoResponder = std::function<bool()>;
 class MathServerContext : public ExecutionContext {
  public:
   int additional_increment() { return 10; }
-  std::promise<EchoCallback> echo_writer_;
+  std::promise<EchoResponder> echo_responder;
 };
 
 class GetSumHandler
@@ -91,7 +91,7 @@ class GetEchoHandler
   void OnRequest(const proto::GetEchoRequest& request) override {
     int value = request.input();
     Writer writer = GetWriter();
-    GetContext<MathServerContext>()->echo_writer_.set_value([writer, value]() {
+    GetContext<MathServerContext>()->echo_responder.set_value([writer, value]() {
       auto response =
           cartographer::common::make_unique<proto::GetEchoResponse>();
       response->set_output(value);
@@ -203,10 +203,11 @@ TEST_F(ServerTest, WriteFromOtherThread) {
 
   Server* server = server_.get();
   std::thread response_thread([server]() {
-    std::future<EchoCallback> writer_future =
-        server->GetContext<MathServerContext>()->echo_writer_.get_future();
-    writer_future.wait();
-    CHECK(writer_future.get()());
+    std::future<EchoResponder> responder_future =
+        server->GetContext<MathServerContext>()->echo_responder.get_future();
+    responder_future.wait();
+    auto responder = responder_future.get();
+    CHECK(responder());
   });
 
   grpc::Status status = stub_->GetEcho(&client_context_, request, &result);
