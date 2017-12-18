@@ -18,7 +18,9 @@
 #define CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_H
 
 #include "cartographer/common/blocking_queue.h"
+#include "cartographer/common/time.h"
 #include "cartographer/mapping/map_builder.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/server.h"
@@ -28,26 +30,38 @@ namespace cartographer_grpc {
 
 class MapBuilderServer {
  public:
+  using LocalSlamSubscriptionCallback = std::function<void(
+      int /* trajectory ID */, cartographer::common::Time,
+      cartographer::transform::Rigid3d /* local pose estimate */,
+      std::shared_ptr<
+          const cartographer::sensor::RangeData> /* in local frame */,
+      std::unique_ptr<const cartographer::mapping::NodeId>)>;
   struct SensorData {
     int trajectory_id;
     std::unique_ptr<cartographer::sensor::Data> sensor_data;
   };
+  struct SubscriptionId {
+    const int trajectory_id;
+    const int subscription_index;
+  };
 
   class MapBuilderContext : public framework::ExecutionContext {
    public:
-    MapBuilderContext(
-        cartographer::mapping::MapBuilder* map_builder,
-        cartographer::common::BlockingQueue<std::unique_ptr<SensorData>>*
-            sensor_data_queue);
+    MapBuilderContext(MapBuilderServer* map_builder_server);
     cartographer::mapping::MapBuilder& map_builder();
     cartographer::common::BlockingQueue<std::unique_ptr<SensorData>>&
     sensor_data_queue();
+    cartographer::mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
+    GetLocalSlamResultCallbackForSubscriptions();
     void AddSensorDataToTrajectory(const SensorData& sensor_data);
+    SubscriptionId SubscribeLocalSlamResults(
+        int trajectory_id, LocalSlamSubscriptionCallback callback);
+    void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
 
     template <typename SensorDataType>
     void EnqueueSensorData(int trajectory_id, const std::string& sensor_id,
                            const SensorDataType& sensor_data) {
-      sensor_data_queue_->Push(
+      map_builder_server_->sensor_data_queue_.Push(
           cartographer::common::make_unique<MapBuilderServer::SensorData>(
               MapBuilderServer::SensorData{
                   trajectory_id, cartographer::sensor::MakeDispatchable(
@@ -55,10 +69,9 @@ class MapBuilderServer {
     }
 
    private:
-    cartographer::mapping::MapBuilder* map_builder_;
-    cartographer::common::BlockingQueue<std::unique_ptr<SensorData>>*
-        sensor_data_queue_;
+    MapBuilderServer* map_builder_server_;
   };
+  friend MapBuilderContext;
 
   MapBuilderServer(
       const proto::MapBuilderServerOptions& map_builder_server_options);
@@ -75,8 +88,19 @@ class MapBuilderServer {
   void Shutdown();
 
  private:
+  using LocalSlamResultHandlerSubscriptions =
+      std::map<int /* subscription_index */, LocalSlamSubscriptionCallback>;
+
   void ProcessSensorDataQueue();
   void StartSlamThread();
+  void OnLocalSlamResult(
+      int trajectory_id, cartographer::common::Time time,
+      cartographer::transform::Rigid3d local_pose,
+      cartographer::sensor::RangeData range_data,
+      std::unique_ptr<const cartographer::mapping::NodeId> node_id);
+  SubscriptionId SubscribeLocalSlamResults(
+      int trajectory_id, LocalSlamSubscriptionCallback callback);
+  void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
 
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> slam_thread_;
@@ -84,6 +108,10 @@ class MapBuilderServer {
   cartographer::mapping::MapBuilder map_builder_;
   cartographer::common::BlockingQueue<std::unique_ptr<SensorData>>
       sensor_data_queue_;
+  cartographer::common::Mutex local_slam_subscriptions_lock_;
+  int current_subscription_index_ = 0;
+  std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>
+      local_slam_subscriptions_ GUARDED_BY(local_slam_subscriptions_lock_);
 };
 
 }  // namespace cartographer_grpc
