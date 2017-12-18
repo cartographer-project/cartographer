@@ -64,7 +64,7 @@ class Rpc {
   void OnReadsDone();
   void RequestNextMethodInvocation();
   void RequestStreamingReadIfNeeded();
-  void PerformWriteIfNeeded();
+  void HandleSendQueue();
   void Write(std::unique_ptr<::google::protobuf::Message> message);
   void Finish(::grpc::Status status);
   Service* service() { return service_; }

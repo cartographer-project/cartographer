@@ -142,7 +142,7 @@ void Rpc::Finish(::grpc::Status status) {
       new RpcEvent{Event::WRITE_NEEDED, weak_ptr_factory_(this), true});
 }
 
-void Rpc::PerformWriteIfNeeded() {
+void Rpc::HandleSendQueue() {
   SendItem send_item;
   {
     cartographer::common::MutexLocker locker(&send_queue_lock_);
@@ -229,7 +229,7 @@ bool* Rpc::GetRpcEventState(Event event) {
 
 void Rpc::EnqueueMessage(SendItem&& send_item) {
   cartographer::common::MutexLocker locker(&send_queue_lock_);
-  send_queue_.emplace(SendItem{std::move(send_item.msg), send_item.status});
+  send_queue_.emplace(std::move(send_item));
 }
 
 void Rpc::PerformFinish(std::unique_ptr<::google::protobuf::Message> message,
@@ -260,14 +260,14 @@ void Rpc::PerformFinish(std::unique_ptr<::google::protobuf::Message> message,
 
 void Rpc::PerformWrite(std::unique_ptr<::google::protobuf::Message> message,
                        ::grpc::Status status) {
+  CHECK(message) << "PerformWrite must be called with a non-null message";
   CHECK_NE(rpc_handler_info_.rpc_type, ::grpc::internal::RpcMethod::NORMAL_RPC);
   CHECK_NE(rpc_handler_info_.rpc_type,
            ::grpc::internal::RpcMethod::CLIENT_STREAMING);
   SetRpcEventState(Event::WRITE, true);
   response_ = std::move(message);
   async_writer_interface()->Write(
-      *response_.get(),
-      new RpcEvent{Event::WRITE, weak_ptr_factory_(this), true});
+      *response_, new RpcEvent{Event::WRITE, weak_ptr_factory_(this), true});
 }
 
 void Rpc::SetRpcEventState(Event event, bool pending) {

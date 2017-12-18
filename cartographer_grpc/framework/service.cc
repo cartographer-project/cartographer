@@ -124,7 +124,7 @@ void Service::HandleWrite(Rpc* rpc, bool ok) {
   }
 
   // Send the next message or potentially finish the connection.
-  rpc->PerformWriteIfNeeded();
+  rpc->HandleSendQueue();
 
   RemoveIfNotPending(rpc);
 }
