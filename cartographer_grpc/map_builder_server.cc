@@ -26,10 +26,17 @@
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
+namespace {
+
+const cartographer::common::Duration kPopTimeout =
+    cartographer::common::FromMilliseconds(100);
+
+}  // namespace
 
 MapBuilderServer::MapBuilderContext::MapBuilderContext(
     cartographer::mapping::MapBuilder* map_builder,
-    cartographer::common::BlockingQueue<SensorData>* sensor_data_queue)
+    cartographer::common::BlockingQueue<std::unique_ptr<SensorData>>*
+        sensor_data_queue)
     : map_builder_(map_builder), sensor_data_queue_(sensor_data_queue) {}
 
 cartographer::mapping::MapBuilder&
@@ -37,7 +44,8 @@ MapBuilderServer::MapBuilderContext::map_builder() {
   return *map_builder_;
 }
 
-cartographer::common::BlockingQueue<MapBuilderServer::SensorData>&
+cartographer::common::BlockingQueue<
+    std::unique_ptr<MapBuilderServer::SensorData>>&
 MapBuilderServer::MapBuilderContext::sensor_data_queue() {
   return *sensor_data_queue_;
 }
@@ -102,9 +110,12 @@ void MapBuilderServer::Shutdown() {
 void MapBuilderServer::ProcessSensorDataQueue() {
   LOG(INFO) << "Starting SLAM thread.";
   while (!shutting_down_) {
-    SensorData sensor_data = sensor_data_queue_.Pop();
-    grpc_server_->GetContext<MapBuilderContext>()->AddSensorDataToTrajectory(
-        sensor_data);
+    std::unique_ptr<SensorData> sensor_data =
+        sensor_data_queue_.PopWithTimeout(kPopTimeout);
+    if (sensor_data) {
+      grpc_server_->GetContext<MapBuilderContext>()->AddSensorDataToTrajectory(
+          *sensor_data);
+    }
   }
 }
 
