@@ -91,12 +91,13 @@ class GetEchoHandler
   void OnRequest(const proto::GetEchoRequest& request) override {
     int value = request.input();
     Writer writer = GetWriter();
-    GetContext<MathServerContext>()->echo_responder.set_value([writer, value]() {
-      auto response =
-          cartographer::common::make_unique<proto::GetEchoResponse>();
-      response->set_output(value);
-      return writer(std::move(response));
-    });
+    GetContext<MathServerContext>()->echo_responder.set_value(
+        [writer, value]() {
+          auto response =
+              cartographer::common::make_unique<proto::GetEchoResponse>();
+          response->set_output(value);
+          return writer(std::move(response));
+        });
   }
 };
 
