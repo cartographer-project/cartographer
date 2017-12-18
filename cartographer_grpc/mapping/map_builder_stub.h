@@ -53,7 +53,6 @@ class MapBuilderStub : public cartographer::mapping::MapBuilderInterface {
   cartographer::mapping::PoseGraphInterface* pose_graph() override;
 
  private:
-  grpc::ClientContext client_context_;
   std::shared_ptr<grpc::Channel> client_channel_;
   std::unique_ptr<proto::MapBuilderService::Stub> service_stub_;
   PoseGraphStub pose_graph_stub_;
