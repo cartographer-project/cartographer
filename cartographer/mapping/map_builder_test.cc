@@ -121,7 +121,7 @@ TEST_F(MapBuilderTest, TrajectoryAddFinish2D) {
   const std::unordered_set<std::string> expected_sensor_ids = {kRangeSensorId};
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
       expected_sensor_ids, trajectory_builder_options_,
-      nullptr /* local_slam_result_callback */);
+      nullptr /* GetLocalSlamResultCallbackForSubscriptions */);
   EXPECT_EQ(1, map_builder_->num_trajectory_builders());
   EXPECT_TRUE(map_builder_->GetTrajectoryBuilder(trajectory_id) != nullptr);
   EXPECT_TRUE(map_builder_->pose_graph() != nullptr);
@@ -136,7 +136,7 @@ TEST_F(MapBuilderTest, TrajectoryAddFinish3D) {
   const std::unordered_set<std::string> expected_sensor_ids = {kRangeSensorId};
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
       expected_sensor_ids, trajectory_builder_options_,
-      nullptr /* local_slam_result_callback */);
+      nullptr /* GetLocalSlamResultCallbackForSubscriptions */);
   EXPECT_EQ(1, map_builder_->num_trajectory_builders());
   EXPECT_TRUE(map_builder_->GetTrajectoryBuilder(trajectory_id) != nullptr);
   EXPECT_TRUE(map_builder_->pose_graph() != nullptr);

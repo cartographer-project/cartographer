@@ -34,26 +34,40 @@ const cartographer::common::Duration kPopTimeout =
 }  // namespace
 
 MapBuilderServer::MapBuilderContext::MapBuilderContext(
-    cartographer::mapping::MapBuilder* map_builder,
-    cartographer::common::BlockingQueue<std::unique_ptr<SensorData>>*
-        sensor_data_queue)
-    : map_builder_(map_builder), sensor_data_queue_(sensor_data_queue) {}
+    MapBuilderServer* map_builder_server)
+    : map_builder_server_(map_builder_server) {}
 
 cartographer::mapping::MapBuilder&
 MapBuilderServer::MapBuilderContext::map_builder() {
-  return *map_builder_;
+  return map_builder_server_->map_builder_;
 }
 
 cartographer::common::BlockingQueue<
     std::unique_ptr<MapBuilderServer::SensorData>>&
 MapBuilderServer::MapBuilderContext::sensor_data_queue() {
-  return *sensor_data_queue_;
+  return map_builder_server_->sensor_data_queue_;
+}
+
+cartographer::mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
+MapBuilderServer::MapBuilderContext::
+    GetLocalSlamResultCallbackForSubscriptions() {
+  MapBuilderServer* map_builder_server = map_builder_server_;
+  return [map_builder_server](
+             int trajectory_id, cartographer::common::Time time,
+             cartographer::transform::Rigid3d local_pose,
+             cartographer::sensor::RangeData range_data,
+             std::unique_ptr<const cartographer::mapping::NodeId> node_id) {
+    map_builder_server->OnLocalSlamResult(trajectory_id, time, local_pose,
+                                          std::move(range_data),
+                                          std::move(node_id));
+  };
 }
 
 void MapBuilderServer::MapBuilderContext::AddSensorDataToTrajectory(
     const SensorData& sensor_data) {
   sensor_data.sensor_data->AddToTrajectoryBuilder(
-      map_builder_->GetTrajectoryBuilder(sensor_data.trajectory_id));
+      map_builder_server_->map_builder_.GetTrajectoryBuilder(
+          sensor_data.trajectory_id));
 }
 
 MapBuilderServer::MapBuilderServer(
@@ -82,8 +96,7 @@ MapBuilderServer::MapBuilderServer(
                                  proto::MapBuilderService>("FinishTrajectory");
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
-      cartographer::common::make_unique<MapBuilderContext>(
-          &map_builder_, &sensor_data_queue_));
+      cartographer::common::make_unique<MapBuilderContext>(this));
 }
 
 void MapBuilderServer::Start() {
@@ -125,6 +138,41 @@ void MapBuilderServer::StartSlamThread() {
   // Start the SLAM processing thread.
   slam_thread_ = cartographer::common::make_unique<std::thread>(
       [this]() { this->ProcessSensorDataQueue(); });
+}
+
+void MapBuilderServer::OnLocalSlamResult(
+    int trajectory_id, cartographer::common::Time time,
+    cartographer::transform::Rigid3d local_pose,
+    cartographer::sensor::RangeData range_data,
+    std::unique_ptr<const cartographer::mapping::NodeId> node_id) {
+  auto shared_range_data =
+      std::make_shared<cartographer::sensor::RangeData>(std::move(range_data));
+  cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
+  for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
+    auto copy_of_node_id =
+        node_id ? cartographer::common::make_unique<
+                      const cartographer::mapping::NodeId>(*node_id)
+                : nullptr;
+    LocalSlamSubscriptionCallback callback = entry.second;
+    callback(trajectory_id, time, local_pose, shared_range_data,
+             std::move(copy_of_node_id));
+  }
+}
+
+MapBuilderServer::SubscriptionId MapBuilderServer::SubscribeLocalSlamResults(
+    int trajectory_id, LocalSlamSubscriptionCallback callback) {
+  cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
+  local_slam_subscriptions_[trajectory_id].emplace(current_subscription_index_,
+                                                   callback);
+  return SubscriptionId{trajectory_id, current_subscription_index_++};
+}
+
+void MapBuilderServer::UnsubscribeLocalSlamResults(
+    const SubscriptionId& subscription_id) {
+  cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
+  CHECK_EQ(local_slam_subscriptions_[subscription_id.trajectory_id].erase(
+               subscription_id.subscription_index),
+           1u);
 }
 
 }  // namespace cartographer_grpc
