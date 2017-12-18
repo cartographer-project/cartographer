@@ -39,7 +39,7 @@ MapBuilderServer::MapBuilderContext::MapBuilderContext(
 
 cartographer::mapping::MapBuilder&
 MapBuilderServer::MapBuilderContext::map_builder() {
-  return map_builder_server_->map_builder_;
+  return *map_builder_server_->map_builder_;
 }
 
 cartographer::common::BlockingQueue<
@@ -66,13 +66,14 @@ MapBuilderServer::MapBuilderContext::
 void MapBuilderServer::MapBuilderContext::AddSensorDataToTrajectory(
     const SensorData& sensor_data) {
   sensor_data.sensor_data->AddToTrajectoryBuilder(
-      map_builder_server_->map_builder_.GetTrajectoryBuilder(
+      map_builder_server_->map_builder_->GetTrajectoryBuilder(
           sensor_data.trajectory_id));
 }
 
 MapBuilderServer::MapBuilderServer(
-    const proto::MapBuilderServerOptions& map_builder_server_options)
-    : map_builder_(map_builder_server_options.map_builder_options()) {
+    const proto::MapBuilderServerOptions& map_builder_server_options,
+    std::unique_ptr<cartographer::mapping::MapBuilder> map_builder)
+    : map_builder_(std::move(map_builder)) {
   framework::Server::Builder server_builder;
   server_builder.SetServerAddress(map_builder_server_options.server_address());
   server_builder.SetNumGrpcThreads(
