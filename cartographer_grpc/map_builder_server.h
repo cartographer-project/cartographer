@@ -41,7 +41,7 @@ class MapBuilderServer {
             sensor_data_queue);
     cartographer::mapping::MapBuilder& map_builder();
     cartographer::common::BlockingQueue<std::unique_ptr<SensorData>>&
-        sensor_data_queue();
+    sensor_data_queue();
     void AddSensorDataToTrajectory(const SensorData& sensor_data);
 
     template <typename SensorDataType>
