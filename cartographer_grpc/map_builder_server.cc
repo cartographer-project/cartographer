@@ -49,7 +49,8 @@ MapBuilderServer::MapBuilderContext::sensor_data_queue() {
 }
 
 cartographer::mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
-MapBuilderServer::MapBuilderContext::local_slam_result_callback() {
+MapBuilderServer::MapBuilderContext::
+    GetLocalSlamResultCallbackForSubscriptions() {
   MapBuilderServer* map_builder_server = map_builder_server_;
   return [map_builder_server](
              int trajectory_id, cartographer::common::Time time,
@@ -144,19 +145,22 @@ void MapBuilderServer::OnLocalSlamResult(
     cartographer::transform::Rigid3d local_pose,
     cartographer::sensor::RangeData range_data,
     std::unique_ptr<const cartographer::mapping::NodeId> node_id) {
-  std::shared_ptr<cartographer::sensor::RangeData> shared_range_data =
+  auto shared_range_data =
       std::make_shared<cartographer::sensor::RangeData>(std::move(range_data));
   cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
   for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
-    entry.second(trajectory_id, time, local_pose, shared_range_data,
-                 (node_id ? cartographer::common::make_unique<
-                                const cartographer::mapping::NodeId>(*node_id)
-                          : nullptr));
+    auto copy_of_node_id =
+        node_id ? cartographer::common::make_unique<
+                      const cartographer::mapping::NodeId>(*node_id)
+                : nullptr;
+    LocalSlamSubscriptionCallback callback = entry.second;
+    callback(trajectory_id, time, local_pose, shared_range_data,
+             std::move(copy_of_node_id));
   }
 }
 
 MapBuilderServer::SubscriptionId MapBuilderServer::SubscribeLocalSlamResults(
-    int trajectory_id, LocalSlamResultCallback callback) {
+    int trajectory_id, LocalSlamSubscriptionCallback callback) {
   cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
   local_slam_subscriptions_[trajectory_id].emplace(current_subscription_index_,
                                                    callback);

@@ -32,7 +32,7 @@ class AddTrajectoryHandler
   void OnRequest(const proto::AddTrajectoryRequest& request) override {
     auto local_slam_result_callback =
         GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
-            ->local_slam_result_callback();
+            ->GetLocalSlamResultCallbackForSubscriptions();
     const int trajectory_id =
         GetContext<MapBuilderServer::MapBuilderContext>()
             ->map_builder()

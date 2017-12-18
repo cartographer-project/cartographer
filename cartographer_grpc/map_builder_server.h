@@ -30,7 +30,7 @@ namespace cartographer_grpc {
 
 class MapBuilderServer {
  public:
-  using LocalSlamResultCallback = std::function<void(
+  using LocalSlamSubscriptionCallback = std::function<void(
       int /* trajectory ID */, cartographer::common::Time,
       cartographer::transform::Rigid3d /* local pose estimate */,
       std::shared_ptr<
@@ -52,10 +52,10 @@ class MapBuilderServer {
     cartographer::common::BlockingQueue<std::unique_ptr<SensorData>>&
     sensor_data_queue();
     cartographer::mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
-    local_slam_result_callback();
+    GetLocalSlamResultCallbackForSubscriptions();
     void AddSensorDataToTrajectory(const SensorData& sensor_data);
-    SubscriptionId SubscribeLocalSlamResults(int trajectory_id,
-                                             LocalSlamResultCallback callback);
+    SubscriptionId SubscribeLocalSlamResults(
+        int trajectory_id, LocalSlamSubscriptionCallback callback);
     void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
 
     template <typename SensorDataType>
@@ -89,7 +89,7 @@ class MapBuilderServer {
 
  private:
   using LocalSlamResultHandlerSubscriptions =
-      std::map<int /* subscription_index */, LocalSlamResultCallback>;
+      std::map<int /* subscription_index */, LocalSlamSubscriptionCallback>;
 
   void ProcessSensorDataQueue();
   void StartSlamThread();
@@ -98,8 +98,8 @@ class MapBuilderServer {
       cartographer::transform::Rigid3d local_pose,
       cartographer::sensor::RangeData range_data,
       std::unique_ptr<const cartographer::mapping::NodeId> node_id);
-  SubscriptionId SubscribeLocalSlamResults(int trajectory_id,
-                                           LocalSlamResultCallback callback);
+  SubscriptionId SubscribeLocalSlamResults(
+      int trajectory_id, LocalSlamSubscriptionCallback callback);
   void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
 
   bool shutting_down_ = false;
@@ -111,7 +111,7 @@ class MapBuilderServer {
   cartographer::common::Mutex local_slam_subscriptions_lock_;
   int current_subscription_index_ = 0;
   std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>
-      local_slam_subscriptions_;
+      local_slam_subscriptions_ GUARDED_BY(local_slam_subscriptions_lock_);
 };
 
 }  // namespace cartographer_grpc
