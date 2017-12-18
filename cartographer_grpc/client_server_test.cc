@@ -44,8 +44,11 @@ class ClientServerTest : public ::testing::Test {
         cartographer::mapping::test::ResolveLuaParameters(kMapBuilderServerLua);
     auto map_builder_server_options =
         CreateMapBuilderServerOptions(map_builder_server_parameters.get());
+    auto map_builder =
+        cartographer::common::make_unique<cartographer::mapping::MapBuilder>(
+            map_builder_server_options.map_builder_options());
     server_ = cartographer::common::make_unique<MapBuilderServer>(
-        map_builder_server_options);
+        map_builder_server_options, std::move(map_builder));
     EXPECT_TRUE(server_ != nullptr);
   }
 
