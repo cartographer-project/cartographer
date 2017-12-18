@@ -34,7 +34,11 @@ void Run(const std::string& configuration_directory,
   proto::MapBuilderServerOptions map_builder_server_options =
       LoadMapBuilderServerOptions(configuration_directory,
                                   configuration_basename);
-  MapBuilderServer map_builder_server(map_builder_server_options);
+  auto map_builder =
+      cartographer::common::make_unique<cartographer::mapping::MapBuilder>(
+          map_builder_server_options.map_builder_options());
+  MapBuilderServer map_builder_server(map_builder_server_options,
+                                      std::move(map_builder));
   map_builder_server.Start();
   map_builder_server.WaitForShutdown();
 }

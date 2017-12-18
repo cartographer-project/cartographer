@@ -33,6 +33,7 @@ int MapBuilderStub::AddTrajectoryBuilder(
     const cartographer::mapping::proto::TrajectoryBuilderOptions&
         trajectory_options,
     LocalSlamResultCallback local_slam_result_callback) {
+  grpc::ClientContext client_context;
   proto::AddTrajectoryRequest request;
   proto::AddTrajectoryResponse result;
   *request.mutable_trajectory_builder_options() = trajectory_options;
@@ -40,7 +41,7 @@ int MapBuilderStub::AddTrajectoryBuilder(
     *request.add_expected_sensor_ids() = sensor_id;
   }
   grpc::Status status =
-      service_stub_->AddTrajectory(&client_context_, request, &result);
+      service_stub_->AddTrajectory(&client_context, request, &result);
   CHECK(status.ok());
 
   // Construct trajectory builder stub.
@@ -62,11 +63,12 @@ MapBuilderStub::GetTrajectoryBuilder(int trajectory_id) const {
 }
 
 void MapBuilderStub::FinishTrajectory(int trajectory_id) {
+  grpc::ClientContext client_context;
   proto::FinishTrajectoryRequest request;
   google::protobuf::Empty response;
   request.set_trajectory_id(trajectory_id);
   grpc::Status status =
-      service_stub_->FinishTrajectory(&client_context_, request, &response);
+      service_stub_->FinishTrajectory(&client_context, request, &response);
   CHECK(status.ok());
   trajectory_builder_stubs_.erase(trajectory_id);
 }
