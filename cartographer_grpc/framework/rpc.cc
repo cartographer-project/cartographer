@@ -263,8 +263,6 @@ void Rpc::PerformFinish(std::unique_ptr<::google::protobuf::Message> message,
       server_async_writer_->Finish(
           status, new RpcEvent{Event::FINISH, weak_ptr_factory_(this), true});
       break;
-    default:
-      LOG(FATAL) << "RPC type not implemented.";
   }
 }
 
