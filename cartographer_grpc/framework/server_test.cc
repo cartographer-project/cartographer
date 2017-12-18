@@ -16,6 +16,8 @@
 
 #include "cartographer_grpc/framework/server.h"
 
+#include <future>
+
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/proto/math_service.grpc.pb.h"
 #include "cartographer_grpc/framework/proto/math_service.pb.h"
@@ -28,9 +30,11 @@ namespace cartographer_grpc {
 namespace framework {
 namespace {
 
+using EchoResponder = std::function<bool()>;
 class MathServerContext : public ExecutionContext {
  public:
   int additional_increment() { return 10; }
+  std::promise<EchoResponder> echo_responder;
 };
 
 class GetSumHandler
@@ -82,6 +86,21 @@ class GetSquareHandler
   }
 };
 
+class GetEchoHandler
+    : public RpcHandler<proto::GetEchoRequest, proto::GetEchoResponse> {
+  void OnRequest(const proto::GetEchoRequest& request) override {
+    int value = request.input();
+    Writer writer = GetWriter();
+    GetContext<MathServerContext>()->echo_responder.set_value(
+        [writer, value]() {
+          auto response =
+              cartographer::common::make_unique<proto::GetEchoResponse>();
+          response->set_output(value);
+          return writer(std::move(response));
+        });
+  }
+};
+
 // TODO(cschuet): Due to the hard-coded part these tests will become flaky when
 // run in parallel. It would be nice to find a way to solve that. gRPC also
 // allows to communicate over UNIX domain sockets.
@@ -99,6 +118,7 @@ class ServerTest : public ::testing::Test {
     server_builder.RegisterHandler<GetSquareHandler, proto::Math>("GetSquare");
     server_builder.RegisterHandler<GetRunningSumHandler, proto::Math>(
         "GetRunningSum");
+    server_builder.RegisterHandler<GetEchoHandler, proto::Math>("GetEcho");
     server_ = server_builder.Build();
 
     client_channel_ =
@@ -169,6 +189,32 @@ TEST_F(ServerTest, ProcessBidiStreamingRpcTest) {
     expected_responses.pop_front();
   }
   EXPECT_TRUE(expected_responses.empty());
+
+  server_->Shutdown();
+}
+
+TEST_F(ServerTest, WriteFromOtherThread) {
+  server_->SetExecutionContext(
+      cartographer::common::make_unique<MathServerContext>());
+  server_->Start();
+
+  proto::GetEchoResponse result;
+  proto::GetEchoRequest request;
+  request.set_input(13);
+
+  Server* server = server_.get();
+  std::thread response_thread([server]() {
+    std::future<EchoResponder> responder_future =
+        server->GetContext<MathServerContext>()->echo_responder.get_future();
+    responder_future.wait();
+    auto responder = responder_future.get();
+    CHECK(responder());
+  });
+
+  grpc::Status status = stub_->GetEcho(&client_context_, request, &result);
+  response_thread.join();
+  EXPECT_TRUE(status.ok());
+  EXPECT_EQ(result.output(), 13);
 
   server_->Shutdown();
 }

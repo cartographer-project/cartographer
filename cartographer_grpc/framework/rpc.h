@@ -73,6 +73,7 @@ class Rpc {
   bool IsAnyEventPending();
   void SetEventQueue(EventQueue* event_queue) { event_queue_ = event_queue; }
   EventQueue* event_queue() { return event_queue_; }
+  std::weak_ptr<Rpc> GetWeakPtr();
 
  private:
   struct SendItem {
