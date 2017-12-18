@@ -283,6 +283,8 @@ bool Rpc::IsAnyEventPending() {
          IsRpcEventPending(Rpc::Event::FINISH);
 }
 
+std::weak_ptr<Rpc> Rpc::GetWeakPtr() { return weak_ptr_factory_(this); }
+
 ActiveRpcs::ActiveRpcs() : lock_() {}
 
 void Rpc::InitializeReadersAndWriters(
