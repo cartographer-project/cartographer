@@ -42,8 +42,17 @@ class ClientServerTest : public ::testing::Test {
       return MAP_BUILDER_SERVER)text";
     auto map_builder_server_parameters =
         cartographer::mapping::test::ResolveLuaParameters(kMapBuilderServerLua);
-    auto map_builder_server_options =
+    map_builder_server_options_ =
         CreateMapBuilderServerOptions(map_builder_server_parameters.get());
+    const std::string kTrajectoryBuilderLua = R"text(
+      include "trajectory_builder.lua"
+      return TRAJECTORY_BUILDER)text";
+    auto trajectory_builder_parameters =
+        cartographer::mapping::test::ResolveLuaParameters(
+            kTrajectoryBuilderLua);
+    trajectory_builder_options_ =
+        cartographer::mapping::CreateTrajectoryBuilderOptions(
+            trajectory_builder_parameters.get());
     auto map_builder =
         cartographer::common::make_unique<cartographer::mapping::MapBuilder>(
             map_builder_server_options.map_builder_options());
@@ -52,12 +61,36 @@ class ClientServerTest : public ::testing::Test {
     EXPECT_TRUE(server_ != nullptr);
   }
 
+  void InitializeStub() {
+    stub_ = cartographer::common::make_unique<mapping::MapBuilderStub>(
+        map_builder_server_options_.server_address());
+    EXPECT_TRUE(stub_ != nullptr);
+  }
+
+  proto::MapBuilderServerOptions map_builder_server_options_;
+  cartographer::mapping::proto::TrajectoryBuilderOptions
+      trajectory_builder_options_;
   std::unique_ptr<MapBuilderServer> server_;
   std::unique_ptr<mapping::MapBuilderStub> stub_;
 };
 
 TEST_F(ClientServerTest, StartAndStopServer) {
   server_->Start();
+  server_->Shutdown();
+}
+
+TEST_F(ClientServerTest, StartAndStop) {
+  server_->Start();
+  InitializeStub();
+  server_->Shutdown();
+}
+
+TEST_F(ClientServerTest, AddTrajectoryBuilder) {
+  server_->Start();
+  InitializeStub();
+  int trajectory_id = stub_->AddTrajectoryBuilder(
+      {"sensor"}, trajectory_builder_options_, nullptr);
+  stub_->FinishTrajectory(trajectory_id);
   server_->Shutdown();
 }
 
