@@ -36,6 +36,7 @@ namespace cartographer_grpc {
 namespace framework {
 
 class Service;
+// TODO(cschuet): Add a unittest that tests the logic of this class.
 class Rpc {
  public:
   struct RpcEvent;
