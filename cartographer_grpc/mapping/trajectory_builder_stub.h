@@ -28,8 +28,8 @@ class TrajectoryBuilderStub
     : public cartographer::mapping::TrajectoryBuilderInterface {
  public:
   TrajectoryBuilderStub(std::shared_ptr<grpc::Channel> client_channel,
-                        proto::MapBuilderService::Stub* stub);
-
+                        const int trajectory_id);
+  ~TrajectoryBuilderStub() override;
   TrajectoryBuilderStub(const TrajectoryBuilderStub&) = delete;
   TrajectoryBuilderStub& operator=(const TrajectoryBuilderStub&) = delete;
 
@@ -46,8 +46,22 @@ class TrajectoryBuilderStub
                          fixed_frame_pose) override;
 
  private:
+  template <typename RequestType>
+  struct SensorClientWriter {
+    grpc::ClientContext client_context;
+    std::unique_ptr<grpc::ClientWriter<RequestType>> client_writer;
+    google::protobuf::Empty response;
+  };
+
+  proto::SensorMetadata CreateSensorMetadata(const std::string& sensor_id);
+
   std::shared_ptr<grpc::Channel> client_channel_;
-  proto::MapBuilderService::Stub* stub_;
+  const int trajectory_id_;
+  std::unique_ptr<proto::MapBuilderService::Stub> stub_;
+  SensorClientWriter<proto::AddRangefinderDataRequest> rangefinder_writer_;
+  SensorClientWriter<proto::AddImuDataRequest> imu_writer_;
+  SensorClientWriter<proto::AddOdometryDataRequest> odometry_writer_;
+  SensorClientWriter<proto::AddFixedFramePoseDataRequest> fixed_frame_writer_;
 };
 
 }  // namespace mapping
