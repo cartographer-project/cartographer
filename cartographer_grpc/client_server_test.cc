@@ -35,9 +35,6 @@ constexpr char kSensorId[] = "sensor";
 
 class MockMapBuilder : public cartographer::mapping::MapBuilderInterface {
  public:
-  MockMapBuilder() = default;
-  ~MockMapBuilder() override = default;
-
   MOCK_METHOD3(AddTrajectoryBuilder,
                int(const std::unordered_set<std::string>& expected_sensor_ids,
                    const cartographer::mapping::proto::TrajectoryBuilderOptions&
@@ -121,13 +118,6 @@ class ClientServerTest : public ::testing::Test {
 TEST_F(ClientServerTest, StartAndStopServer) {
   InitializeRealServer();
   server_->Start();
-  server_->Shutdown();
-}
-
-TEST_F(ClientServerTest, StartAndStop) {
-  InitializeRealServer();
-  server_->Start();
-  InitializeStub();
   server_->Shutdown();
 }
 
