@@ -33,6 +33,13 @@ message TimedPointCloudData {
   repeated transform.proto.Vector4f point_data = 3;
 }
 
+// Proto representation of ::cartographer::sensor::RangeData.
+message RangeData {
+  transform.proto.Vector3f origin = 1;
+  repeated transform.proto.Vector3f returns = 2;
+  repeated transform.proto.Vector3f misses = 3;
+}
+
 // Proto representation of ::cartographer::sensor::ImuData.
 message ImuData {
   int64 timestamp = 1;

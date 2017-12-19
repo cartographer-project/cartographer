@@ -55,6 +55,12 @@ RangeData CropRangeData(const RangeData& range_data, float min_z, float max_z);
 TimedRangeData CropTimedRangeData(const TimedRangeData& range_data, float min_z,
                                   float max_z);
 
+// Converts 'range_data' to a proto::RangeData.
+proto::RangeData ToProto(const RangeData& range_data);
+
+// Converts 'proto' to RangeData.
+RangeData FromProto(const proto::RangeData& proto);
+
 }  // namespace sensor
 }  // namespace cartographer
 

@@ -14,8 +14,10 @@
 
 syntax = "proto3";
 
+import "cartographer/mapping/proto/pose_graph.proto";
 import "cartographer/mapping/proto/trajectory_builder_options.proto";
 import "cartographer/sensor/proto/sensor.proto";
+import "cartographer/transform/proto/transform.proto";
 import "google/protobuf/empty.proto";
 
 package cartographer_grpc.proto;
@@ -59,6 +61,18 @@ message FinishTrajectoryRequest {
   int32 trajectory_id = 1;
 }
 
+message ReceiveLocalSlamResultsRequest {
+  int32 trajectory_id = 1;
+}
+
+message ReceiveLocalSlamResultsResponse {
+  int32 trajectory_id = 1;
+  int64 timestamp = 2;
+  cartographer.transform.proto.Rigid3d local_pose = 3;
+  cartographer.sensor.proto.RangeData range_data = 4;
+  cartographer.mapping.proto.NodeId node_id = 5;
+}
+
 service MapBuilderService {
   // Starts a new trajectory and returns its index.
   rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
@@ -78,6 +92,11 @@ service MapBuilderService {
   // Same for fixed-frame pose data.
   rpc AddFixedFramePoseData(stream AddFixedFramePoseDataRequest)
       returns (google.protobuf.Empty);
+
+  // Requests the server to send a stream of local SLAM results for the given
+  // 'trajectory_id'.
+  rpc ReceiveLocalSlamResults(ReceiveLocalSlamResultsRequest)
+      returns (stream ReceiveLocalSlamResultsResponse);
 
   // Marks a trajectory corresponding to 'trajectory_id' as finished,
   // i.e. no further sensor data is expected.

@@ -33,6 +33,7 @@ class RpcHandlerInterface {
   virtual void OnRequestInternal(
       const ::google::protobuf::Message* request) = 0;
   virtual void OnReadsDone(){};
+  virtual void OnFinish(){};
 };
 
 using RpcHandlerFactory = std::function<std::unique_ptr<RpcHandlerInterface>(
