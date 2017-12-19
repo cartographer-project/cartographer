@@ -48,7 +48,7 @@ class MapBuilderServer {
   class MapBuilderContext : public framework::ExecutionContext {
    public:
     MapBuilderContext(MapBuilderServer* map_builder_server);
-    cartographer::mapping::MapBuilder& map_builder();
+    cartographer::mapping::MapBuilderInterface& map_builder();
     cartographer::common::BlockingQueue<std::unique_ptr<SensorData>>&
     sensor_data_queue();
     cartographer::mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
@@ -75,7 +75,7 @@ class MapBuilderServer {
 
   MapBuilderServer(
       const proto::MapBuilderServerOptions& map_builder_server_options,
-      std::unique_ptr<cartographer::mapping::MapBuilder> map_builder);
+      std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder);
 
   // Starts the gRPC server and the SLAM thread.
   void Start();
@@ -106,7 +106,7 @@ class MapBuilderServer {
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> slam_thread_;
   std::unique_ptr<framework::Server> grpc_server_;
-  std::unique_ptr<cartographer::mapping::MapBuilder> map_builder_;
+  std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder_;
   cartographer::common::BlockingQueue<std::unique_ptr<SensorData>>
       sensor_data_queue_;
   cartographer::common::Mutex local_slam_subscriptions_lock_;

@@ -38,7 +38,7 @@ MapBuilderServer::MapBuilderContext::MapBuilderContext(
     MapBuilderServer* map_builder_server)
     : map_builder_server_(map_builder_server) {}
 
-cartographer::mapping::MapBuilder&
+cartographer::mapping::MapBuilderInterface&
 MapBuilderServer::MapBuilderContext::map_builder() {
   return *map_builder_server_->map_builder_;
 }
@@ -85,7 +85,7 @@ void MapBuilderServer::MapBuilderContext::UnsubscribeLocalSlamResults(
 
 MapBuilderServer::MapBuilderServer(
     const proto::MapBuilderServerOptions& map_builder_server_options,
-    std::unique_ptr<cartographer::mapping::MapBuilder> map_builder)
+    std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder)
     : map_builder_(std::move(map_builder)) {
   framework::Server::Builder server_builder;
   server_builder.SetServerAddress(map_builder_server_options.server_address());
