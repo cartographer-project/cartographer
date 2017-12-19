@@ -93,7 +93,7 @@ service MapBuilderService {
   rpc AddFixedFramePoseData(stream AddFixedFramePoseDataRequest)
       returns (google.protobuf.Empty);
 
-  // Request a server-side stream of local SLAM results for the given
+  // Requests the server to send a stream of local SLAM results for the given
   // 'trajectory_id'.
   rpc ReceiveLocalSlamResults(ReceiveLocalSlamResultsRequest)
       returns (stream ReceiveLocalSlamResultsResponse);

@@ -70,12 +70,14 @@ proto::RangeData ToProto(const RangeData& range_data) {
 
 RangeData FromProto(const proto::RangeData& proto) {
   PointCloud returns;
+  returns.reserve(proto.returns().size());
   std::transform(
       proto.returns().begin(), proto.returns().end(),
       std::back_inserter(returns),
       static_cast<Eigen::Vector3f (*)(const transform::proto::Vector3f&)>(
           transform::ToEigen));
   PointCloud misses;
+  misses.reserve(proto.misses().size());
   std::transform(
       proto.misses().begin(), proto.misses().end(), std::back_inserter(misses),
       static_cast<Eigen::Vector3f (*)(const transform::proto::Vector3f&)>(

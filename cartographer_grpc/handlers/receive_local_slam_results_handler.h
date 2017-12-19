@@ -33,7 +33,6 @@ class ReceiveLocalSlamResultsHandler
   void OnRequest(
       const proto::ReceiveLocalSlamResultsRequest& request) override {
     auto writer = GetWriter();
-
     MapBuilderServer::SubscriptionId subscription_id =
         GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
             ->SubscribeLocalSlamResults(
