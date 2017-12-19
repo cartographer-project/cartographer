@@ -40,10 +40,19 @@ message GetEchoResponse {
   int32 output = 1;
 }
 
+message GetSequenceRequest {
+  int32 input = 1;
+}
+
+message GetSequenceResponse {
+  int32 output = 1;
+}
+
 // Provides information about the gRPC server.
 service Math {
   rpc GetSum(stream GetSumRequest) returns (GetSumResponse);
   rpc GetSquare(GetSquareRequest) returns (GetSquareResponse);
   rpc GetRunningSum(stream GetSumRequest) returns (stream GetSumResponse);
   rpc GetEcho(GetEchoRequest) returns (GetEchoResponse);
+  rpc GetSequence(GetSequenceRequest) returns (stream GetSequenceResponse);
 }
