@@ -62,6 +62,7 @@ class Rpc {
   std::unique_ptr<Rpc> Clone();
   void OnRequest();
   void OnReadsDone();
+  void OnFinish();
   void RequestNextMethodInvocation();
   void RequestStreamingReadIfNeeded();
   void HandleSendQueue();

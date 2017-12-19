@@ -74,6 +74,8 @@ void Rpc::OnRequest() { handler_->OnRequestInternal(request_.get()); }
 
 void Rpc::OnReadsDone() { handler_->OnReadsDone(); }
 
+void Rpc::OnFinish() { handler_->OnFinish(); }
+
 void Rpc::RequestNextMethodInvocation() {
   // Ask gRPC to notify us when the connection terminates.
   SetRpcEventState(Event::DONE, true);
