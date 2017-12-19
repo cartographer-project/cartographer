@@ -125,7 +125,7 @@ void Rpc::RequestStreamingReadIfNeeded() {
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
     case ::grpc::internal::RpcMethod::SERVER_STREAMING:
-      // For NORMAL_RPC and SERVER_STREAMING we don't have to do anything here,
+      // For NORMAL_RPC and SERVER_STREAMING we don't need to queue an event,
       // since gRPC automatically issues a READ request and places the request
       // into the 'Message' we provided to 'RequestAsyncUnary' above.
       OnRequest();
