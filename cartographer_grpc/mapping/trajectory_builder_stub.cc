@@ -31,15 +31,19 @@ TrajectoryBuilderStub::TrajectoryBuilderStub(
 
 TrajectoryBuilderStub::~TrajectoryBuilderStub() {
   if (rangefinder_writer_.client_writer) {
+    CHECK(rangefinder_writer_.client_writer->WritesDone());
     CHECK(rangefinder_writer_.client_writer->Finish().ok());
   }
   if (imu_writer_.client_writer) {
+    CHECK(imu_writer_.client_writer->WritesDone());
     CHECK(imu_writer_.client_writer->Finish().ok());
   }
   if (odometry_writer_.client_writer) {
+    CHECK(odometry_writer_.client_writer->WritesDone());
     CHECK(odometry_writer_.client_writer->Finish().ok());
   }
   if (fixed_frame_writer_.client_writer) {
+    CHECK(fixed_frame_writer_.client_writer->WritesDone());
     CHECK(fixed_frame_writer_.client_writer->Finish().ok());
   }
 }
