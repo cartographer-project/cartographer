@@ -34,37 +34,46 @@ class ReceiveLocalSlamResultsHandler
       const proto::ReceiveLocalSlamResultsRequest& request) override {
     auto writer = GetWriter();
 
+    MapBuilderServer::SubscriptionId subscription_id =
+        GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+            ->SubscribeLocalSlamResults(
+                request.trajectory_id(),
+                [writer](int trajectory_id, cartographer::common::Time time,
+                         cartographer::transform::Rigid3d local_pose,
+                         std::shared_ptr<const cartographer::sensor::RangeData>
+                             range_data,
+                         std::unique_ptr<const cartographer::mapping::NodeId>
+                             node_id) {
+                  writer(GenerateResponse(trajectory_id, time, local_pose,
+                                          range_data, std::move(node_id)));
+                });
+
     subscription_id_ =
         cartographer::common::make_unique<MapBuilderServer::SubscriptionId>(
-            GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
-                ->SubscribeLocalSlamResults(
-                    request.trajectory_id(),
-                    [writer](
-                        int trajectory_id, cartographer::common::Time time,
-                        cartographer::transform::Rigid3d local_pose,
-                        std::shared_ptr<const cartographer::sensor::RangeData>
-                            range_data,
-                        std::unique_ptr<const cartographer::mapping::NodeId>
-                            node_id) {
-                      auto response = cartographer::common::make_unique<
-                          proto::ReceiveLocalSlamResultsResponse>();
-                      response->set_trajectory_id(trajectory_id);
-                      response->set_timestamp(
-                          cartographer::common::ToUniversal(time));
-                      *response->mutable_local_pose() =
-                          cartographer::transform::ToProto(local_pose);
-                      if (range_data) {
-                        *response->mutable_range_data() =
-                            cartographer::sensor::ToProto(*range_data);
-                      }
-                      if (node_id) {
-                        response->mutable_node_id()->set_trajectory_id(
-                            node_id->trajectory_id);
-                        response->mutable_node_id()->set_node_index(
-                            node_id->node_index);
-                      }
-                      writer(std::move(response));
-                    }));
+            subscription_id);
+  }
+
+  static std::unique_ptr<proto::ReceiveLocalSlamResultsResponse>
+  GenerateResponse(
+      int trajectory_id, cartographer::common::Time time,
+      const cartographer::transform::Rigid3d& local_pose,
+      std::shared_ptr<const cartographer::sensor::RangeData> range_data,
+      std::unique_ptr<const cartographer::mapping::NodeId> node_id) {
+    auto response = cartographer::common::make_unique<
+        proto::ReceiveLocalSlamResultsResponse>();
+    response->set_trajectory_id(trajectory_id);
+    response->set_timestamp(cartographer::common::ToUniversal(time));
+    *response->mutable_local_pose() =
+        cartographer::transform::ToProto(local_pose);
+    if (range_data) {
+      *response->mutable_range_data() =
+          cartographer::sensor::ToProto(*range_data);
+    }
+    if (node_id) {
+      response->mutable_node_id()->set_trajectory_id(node_id->trajectory_id);
+      response->mutable_node_id()->set_node_index(node_id->node_index);
+    }
+    return response;
   }
 
   void OnFinish() override {
