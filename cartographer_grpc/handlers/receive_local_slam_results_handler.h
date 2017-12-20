@@ -39,7 +39,14 @@ class ReceiveLocalSlamResultsHandler
                 request.trajectory_id(),
                 [writer](std::unique_ptr<MapBuilderServer::LocalSlamResult>
                              local_slam_result) {
-                  writer(GenerateResponse(std::move(local_slam_result)));
+                  if (local_slam_result) {
+                    writer.Write(
+                        GenerateResponse(std::move(local_slam_result)));
+                  } else {
+                    // Callback with 'nullptr' signals that the trajectory
+                    // finished.
+                    writer.WritesDone();
+                  }
                 });
 
     subscription_id_ =
