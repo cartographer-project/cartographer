@@ -49,7 +49,8 @@ int MapBuilderStub::AddTrajectoryBuilder(
       std::piecewise_construct, std::forward_as_tuple(result.trajectory_id()),
       std::forward_as_tuple(cartographer::common::make_unique<
                             cartographer_grpc::mapping::TrajectoryBuilderStub>(
-          client_channel_, result.trajectory_id())));
+          client_channel_, result.trajectory_id(),
+          local_slam_result_callback)));
   return result.trajectory_id();
 }
 
