@@ -96,7 +96,7 @@ class GetEchoHandler
           auto response =
               cartographer::common::make_unique<proto::GetEchoResponse>();
           response->set_output(value);
-          return writer(std::move(response));
+          return writer.Write(std::move(response));
         });
   }
 };

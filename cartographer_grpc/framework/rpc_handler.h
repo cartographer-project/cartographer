@@ -35,7 +35,28 @@ class RpcHandler : public RpcHandlerInterface {
   using OutgoingType = Outgoing;
   using RequestType = StripStream<Incoming>;
   using ResponseType = StripStream<Outgoing>;
-  using Writer = std::function<bool(std::unique_ptr<ResponseType>)>;
+
+  class Writer {
+   public:
+    explicit Writer(std::weak_ptr<Rpc> rpc) : rpc_(std::move(rpc)) {}
+    bool Write(std::unique_ptr<ResponseType> message) const {
+      if (auto rpc = rpc_.lock()) {
+        rpc->Write(std::move(message));
+        return true;
+      }
+      return false;
+    }
+    bool WritesDone() const {
+      if (auto rpc = rpc_.lock()) {
+        rpc->Finish(::grpc::Status::OK);
+        return true;
+      }
+      return false;
+    }
+
+   private:
+    const std::weak_ptr<Rpc> rpc_;
+  };
 
   void SetExecutionContext(ExecutionContext* execution_context) {
     execution_context_ = execution_context;
@@ -58,16 +79,7 @@ class RpcHandler : public RpcHandlerInterface {
   T* GetUnsynchronizedContext() {
     return dynamic_cast<T*>(execution_context_);
   }
-  Writer GetWriter() {
-    std::weak_ptr<Rpc> weak_ptr_rpc = rpc_->GetWeakPtr();
-    return [weak_ptr_rpc](std::unique_ptr<ResponseType> message) {
-      if (auto rpc = weak_ptr_rpc.lock()) {
-        rpc->Write(std::move(message));
-        return true;
-      }
-      return false;
-    };
-  }
+  Writer GetWriter() { return Writer(rpc_->GetWeakPtr()); }
 
  private:
   Rpc* rpc_;

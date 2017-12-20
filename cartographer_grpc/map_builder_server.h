@@ -37,6 +37,7 @@ class MapBuilderServer {
     std::shared_ptr<const cartographer::sensor::RangeData> range_data;
     std::unique_ptr<const cartographer::mapping::NodeId> node_id;
   };
+  // Calling with 'nullptr' signals subscribers that the subscription has ended.
   using LocalSlamSubscriptionCallback =
       std::function<void(std::unique_ptr<LocalSlamResult>)>;
   struct SensorData {
@@ -60,6 +61,7 @@ class MapBuilderServer {
     SubscriptionId SubscribeLocalSlamResults(
         int trajectory_id, LocalSlamSubscriptionCallback callback);
     void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
+    void NotifyFinishTrajectory(int trajectory_id);
 
     template <typename SensorDataType>
     void EnqueueSensorData(int trajectory_id, const std::string& sensor_id,
@@ -105,6 +107,7 @@ class MapBuilderServer {
   SubscriptionId SubscribeLocalSlamResults(
       int trajectory_id, LocalSlamSubscriptionCallback callback);
   void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
+  void NotifyFinishTrajectory(int trajectory_id);
 
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> slam_thread_;
