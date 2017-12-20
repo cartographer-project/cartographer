@@ -79,6 +79,8 @@ void Rpc::OnFinish() { handler_->OnFinish(); }
 void Rpc::RequestNextMethodInvocation() {
   // Ask gRPC to notify us when the connection terminates.
   SetRpcEventState(Event::DONE, true);
+  // TODO(gaschler): Asan reports direct leak of this new from both calls
+  // StartServing and HandleNewConnection.
   server_context_.AsyncNotifyWhenDone(
       new RpcEvent{Event::DONE, weak_ptr_factory_(this), true});
 
