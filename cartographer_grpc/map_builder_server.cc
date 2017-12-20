@@ -22,6 +22,7 @@
 #include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
 #include "cartographer_grpc/handlers/add_trajectory_handler.h"
 #include "cartographer_grpc/handlers/finish_trajectory_handler.h"
+#include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "glog/logging.h"
 
@@ -37,7 +38,7 @@ MapBuilderServer::MapBuilderContext::MapBuilderContext(
     MapBuilderServer* map_builder_server)
     : map_builder_server_(map_builder_server) {}
 
-cartographer::mapping::MapBuilder&
+cartographer::mapping::MapBuilderInterface&
 MapBuilderServer::MapBuilderContext::map_builder() {
   return *map_builder_server_->map_builder_;
 }
@@ -70,9 +71,21 @@ void MapBuilderServer::MapBuilderContext::AddSensorDataToTrajectory(
           sensor_data.trajectory_id));
 }
 
+MapBuilderServer::SubscriptionId
+MapBuilderServer::MapBuilderContext::SubscribeLocalSlamResults(
+    int trajectory_id, LocalSlamSubscriptionCallback callback) {
+  return map_builder_server_->SubscribeLocalSlamResults(trajectory_id,
+                                                        callback);
+}
+
+void MapBuilderServer::MapBuilderContext::UnsubscribeLocalSlamResults(
+    const SubscriptionId& subscription_id) {
+  map_builder_server_->UnsubscribeLocalSlamResults(subscription_id);
+}
+
 MapBuilderServer::MapBuilderServer(
     const proto::MapBuilderServerOptions& map_builder_server_options,
-    std::unique_ptr<cartographer::mapping::MapBuilder> map_builder)
+    std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder)
     : map_builder_(std::move(map_builder)) {
   framework::Server::Builder server_builder;
   server_builder.SetServerAddress(map_builder_server_options.server_address());
@@ -95,6 +108,9 @@ MapBuilderServer::MapBuilderServer(
       "AddFixedFramePoseData");
   server_builder.RegisterHandler<handlers::FinishTrajectoryHandler,
                                  proto::MapBuilderService>("FinishTrajectory");
+  server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler,
+                                 proto::MapBuilderService>(
+      "ReceiveLocalSlamResults");
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
       cartographer::common::make_unique<MapBuilderContext>(this));
@@ -155,8 +171,9 @@ void MapBuilderServer::OnLocalSlamResult(
                       const cartographer::mapping::NodeId>(*node_id)
                 : nullptr;
     LocalSlamSubscriptionCallback callback = entry.second;
-    callback(trajectory_id, time, local_pose, shared_range_data,
-             std::move(copy_of_node_id));
+    callback(cartographer::common::make_unique<LocalSlamResult>(
+        LocalSlamResult{trajectory_id, time, local_pose, shared_range_data,
+                        std::move(copy_of_node_id)}));
   }
 }
 

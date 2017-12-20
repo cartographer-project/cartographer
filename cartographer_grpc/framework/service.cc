@@ -134,6 +134,8 @@ void Service::HandleFinish(Rpc* rpc, bool ok) {
     LOG(ERROR) << "Finish failed";
   }
 
+  rpc->OnFinish();
+
   RemoveIfNotPending(rpc);
 }
 
