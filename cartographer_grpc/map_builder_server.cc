@@ -202,6 +202,7 @@ void MapBuilderServer::NotifyFinishTrajectory(int trajectory_id) {
   cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
   for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
     LocalSlamSubscriptionCallback callback = entry.second;
+    // 'nullptr' signals subscribers that the trajectory finished.
     callback(nullptr);
   }
 }

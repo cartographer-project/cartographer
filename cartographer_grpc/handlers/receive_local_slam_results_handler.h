@@ -43,6 +43,8 @@ class ReceiveLocalSlamResultsHandler
                     writer.Write(
                         GenerateResponse(std::move(local_slam_result)));
                   } else {
+                    // Callback with 'nullptr' signals that the trajectory
+                    // finished.
                     writer.WritesDone();
                   }
                 });
