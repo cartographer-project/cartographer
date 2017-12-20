@@ -67,7 +67,7 @@ class BlockingQueue {
   // Pops the next value from the queue. Blocks until a value is available.
   T Pop() {
     MutexLocker lock(&mutex_);
-    lock.Await([this]() REQUIRES(mutex_) { return QueueNotEmptyCondition(); });
+    lock.Await([this]() REQUIRES(mutex_) { return !QueueEmptyCondition(); });
 
     T t = std::move(deque_.front());
     deque_.pop_front();
@@ -78,7 +78,7 @@ class BlockingQueue {
   T PopWithTimeout(const common::Duration timeout) {
     MutexLocker lock(&mutex_);
     if (!lock.AwaitWithTimeout(
-            [this]() REQUIRES(mutex_) { return QueueNotEmptyCondition(); },
+            [this]() REQUIRES(mutex_) { return !QueueEmptyCondition(); },
             timeout)) {
       return nullptr;
     }
@@ -105,9 +105,15 @@ class BlockingQueue {
     return deque_.size();
   }
 
+  // Blocks until the queue is empty.
+  void WaitUntilEmpty() {
+    MutexLocker lock(&mutex_);
+    lock.Await([this]() REQUIRES(mutex_) { return QueueEmptyCondition(); });
+  }
+
  private:
-  // Returns true iff the queue is not empty.
-  bool QueueNotEmptyCondition() REQUIRES(mutex_) { return !deque_.empty(); }
+  // Returns true iff the queue is empty.
+  bool QueueEmptyCondition() REQUIRES(mutex_) { return deque_.empty(); }
 
   // Returns true iff the queue is not full.
   bool QueueNotFullCondition() REQUIRES(mutex_) {

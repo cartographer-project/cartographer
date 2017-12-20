@@ -30,12 +30,16 @@ namespace cartographer_grpc {
 
 class MapBuilderServer {
  public:
-  using LocalSlamSubscriptionCallback = std::function<void(
-      int /* trajectory ID */, cartographer::common::Time,
-      cartographer::transform::Rigid3d /* local pose estimate */,
-      std::shared_ptr<
-          const cartographer::sensor::RangeData> /* in local frame */,
-      std::unique_ptr<const cartographer::mapping::NodeId>)>;
+  struct LocalSlamResult {
+    int trajectory_id;
+    cartographer::common::Time time;
+    cartographer::transform::Rigid3d local_pose;
+    std::shared_ptr<const cartographer::sensor::RangeData> range_data;
+    std::unique_ptr<const cartographer::mapping::NodeId> node_id;
+  };
+  // Calling with 'nullptr' signals subscribers that the subscription has ended.
+  using LocalSlamSubscriptionCallback =
+      std::function<void(std::unique_ptr<LocalSlamResult>)>;
   struct SensorData {
     int trajectory_id;
     std::unique_ptr<cartographer::sensor::Data> sensor_data;
@@ -57,6 +61,7 @@ class MapBuilderServer {
     SubscriptionId SubscribeLocalSlamResults(
         int trajectory_id, LocalSlamSubscriptionCallback callback);
     void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
+    void NotifyFinishTrajectory(int trajectory_id);
 
     template <typename SensorDataType>
     void EnqueueSensorData(int trajectory_id, const std::string& sensor_id,
@@ -102,6 +107,7 @@ class MapBuilderServer {
   SubscriptionId SubscribeLocalSlamResults(
       int trajectory_id, LocalSlamSubscriptionCallback callback);
   void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
+  void NotifyFinishTrajectory(int trajectory_id);
 
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> slam_thread_;

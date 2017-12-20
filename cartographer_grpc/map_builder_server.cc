@@ -83,6 +83,11 @@ void MapBuilderServer::MapBuilderContext::UnsubscribeLocalSlamResults(
   map_builder_server_->UnsubscribeLocalSlamResults(subscription_id);
 }
 
+void MapBuilderServer::MapBuilderContext::NotifyFinishTrajectory(
+    int trajectory_id) {
+  map_builder_server_->NotifyFinishTrajectory(trajectory_id);
+}
+
 MapBuilderServer::MapBuilderServer(
     const proto::MapBuilderServerOptions& map_builder_server_options,
     std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder)
@@ -171,8 +176,9 @@ void MapBuilderServer::OnLocalSlamResult(
                       const cartographer::mapping::NodeId>(*node_id)
                 : nullptr;
     LocalSlamSubscriptionCallback callback = entry.second;
-    callback(trajectory_id, time, local_pose, shared_range_data,
-             std::move(copy_of_node_id));
+    callback(cartographer::common::make_unique<LocalSlamResult>(
+        LocalSlamResult{trajectory_id, time, local_pose, shared_range_data,
+                        std::move(copy_of_node_id)}));
   }
 }
 
@@ -190,6 +196,15 @@ void MapBuilderServer::UnsubscribeLocalSlamResults(
   CHECK_EQ(local_slam_subscriptions_[subscription_id.trajectory_id].erase(
                subscription_id.subscription_index),
            1u);
+}
+
+void MapBuilderServer::NotifyFinishTrajectory(int trajectory_id) {
+  cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
+  for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
+    LocalSlamSubscriptionCallback callback = entry.second;
+    // 'nullptr' signals subscribers that the trajectory finished.
+    callback(nullptr);
+  }
 }
 
 }  // namespace cartographer_grpc

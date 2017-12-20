@@ -23,13 +23,30 @@ namespace cartographer_grpc {
 namespace mapping {
 
 TrajectoryBuilderStub::TrajectoryBuilderStub(
-    std::shared_ptr<grpc::Channel> client_channel, const int trajectory_id)
+    std::shared_ptr<grpc::Channel> client_channel, const int trajectory_id,
+    LocalSlamResultCallback local_slam_result_callback)
     : client_channel_(client_channel), trajectory_id_(trajectory_id) {
   stub_ = proto::MapBuilderService::NewStub(client_channel_);
   CHECK(stub_) << "Failed to create stub.";
+  if (local_slam_result_callback) {
+    proto::ReceiveLocalSlamResultsRequest request;
+    request.set_trajectory_id(trajectory_id);
+    local_slam_result_reader_.client_reader = stub_->ReceiveLocalSlamResults(
+        &local_slam_result_reader_.client_context, request);
+    auto* client_reader_ptr = local_slam_result_reader_.client_reader.get();
+    local_slam_result_reader_.thread =
+        cartographer::common::make_unique<std::thread>(
+            [client_reader_ptr, local_slam_result_callback]() {
+              RunLocalSlamResultReader(client_reader_ptr,
+                                       local_slam_result_callback);
+            });
+  }
 }
 
 TrajectoryBuilderStub::~TrajectoryBuilderStub() {
+  if (local_slam_result_reader_.thread) {
+    local_slam_result_reader_.thread->join();
+  }
   if (rangefinder_writer_.client_writer) {
     CHECK(rangefinder_writer_.client_writer->WritesDone());
     CHECK(rangefinder_writer_.client_writer->Finish().ok());
@@ -113,6 +130,31 @@ proto::SensorMetadata TrajectoryBuilderStub::CreateSensorMetadata(
   sensor_metadata.set_sensor_id(sensor_id);
   sensor_metadata.set_trajectory_id(trajectory_id_);
   return sensor_metadata;
+}
+
+void TrajectoryBuilderStub::RunLocalSlamResultReader(
+    grpc::ClientReader<proto::ReceiveLocalSlamResultsResponse>* client_reader,
+    LocalSlamResultCallback local_slam_result_callback) {
+  proto::ReceiveLocalSlamResultsResponse response;
+  while (client_reader->Read(&response)) {
+    int trajectory_id = response.trajectory_id();
+    cartographer::common::Time time =
+        cartographer::common::FromUniversal(response.timestamp());
+    cartographer::transform::Rigid3d local_pose =
+        cartographer::transform::ToRigid3(response.local_pose());
+    cartographer::sensor::RangeData range_data =
+        cartographer::sensor::FromProto(response.range_data());
+    auto node_id =
+        response.has_node_id()
+            ? cartographer::common::make_unique<cartographer::mapping::NodeId>(
+                  cartographer::mapping::NodeId{
+                      response.node_id().trajectory_id(),
+                      response.node_id().node_index()})
+            : nullptr;
+    local_slam_result_callback(trajectory_id, time, local_pose, range_data,
+                               std::move(node_id));
+  }
+  client_reader->Finish();
 }
 
 }  // namespace mapping
