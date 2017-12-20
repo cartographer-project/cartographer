@@ -105,6 +105,12 @@ class BlockingQueue {
     return deque_.size();
   }
 
+  // Blocks until the queue is empty.
+  void WaitUntilEmpty() {
+    MutexLocker lock(&mutex_);
+    lock.Await([this]() REQUIRES(mutex_) { return !QueueNotEmptyCondition(); });
+  }
+
  private:
   // Returns true iff the queue is not empty.
   bool QueueNotEmptyCondition() REQUIRES(mutex_) { return !deque_.empty(); }
