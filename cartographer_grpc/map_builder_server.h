@@ -30,12 +30,15 @@ namespace cartographer_grpc {
 
 class MapBuilderServer {
  public:
-  using LocalSlamSubscriptionCallback = std::function<void(
-      int /* trajectory ID */, cartographer::common::Time,
-      cartographer::transform::Rigid3d /* local pose estimate */,
-      std::shared_ptr<
-          const cartographer::sensor::RangeData> /* in local frame */,
-      std::unique_ptr<const cartographer::mapping::NodeId>)>;
+  struct LocalSlamResult {
+    int trajectory_id;
+    cartographer::common::Time time;
+    cartographer::transform::Rigid3d local_pose;
+    std::shared_ptr<const cartographer::sensor::RangeData> range_data;
+    std::unique_ptr<const cartographer::mapping::NodeId> node_id;
+  };
+  using LocalSlamSubscriptionCallback =
+      std::function<void(std::unique_ptr<LocalSlamResult>)>;
   struct SensorData {
     int trajectory_id;
     std::unique_ptr<cartographer::sensor::Data> sensor_data;

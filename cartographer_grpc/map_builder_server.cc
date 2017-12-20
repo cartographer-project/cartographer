@@ -171,8 +171,9 @@ void MapBuilderServer::OnLocalSlamResult(
                       const cartographer::mapping::NodeId>(*node_id)
                 : nullptr;
     LocalSlamSubscriptionCallback callback = entry.second;
-    callback(trajectory_id, time, local_pose, shared_range_data,
-             std::move(copy_of_node_id));
+    callback(cartographer::common::make_unique<LocalSlamResult>(
+        LocalSlamResult{trajectory_id, time, local_pose, shared_range_data,
+                        std::move(copy_of_node_id)}));
   }
 }
 
