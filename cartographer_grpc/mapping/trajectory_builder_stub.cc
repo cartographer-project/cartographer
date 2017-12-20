@@ -37,26 +37,8 @@ TrajectoryBuilderStub::TrajectoryBuilderStub(
     local_slam_result_reader_.thread =
         cartographer::common::make_unique<std::thread>(
             [client_reader_ptr, local_slam_result_callback]() {
-              proto::ReceiveLocalSlamResultsResponse response;
-              while (client_reader_ptr->Read(&response)) {
-                int trajectory_id = response.trajectory_id();
-                cartographer::common::Time time =
-                    cartographer::common::FromUniversal(response.timestamp());
-                cartographer::transform::Rigid3d local_pose =
-                    cartographer::transform::ToRigid3(response.local_pose());
-                cartographer::sensor::RangeData range_data =
-                    cartographer::sensor::FromProto(response.range_data());
-                auto node_id = response.has_node_id()
-                                   ? cartographer::common::make_unique<
-                                         cartographer::mapping::NodeId>(
-                                         cartographer::mapping::NodeId{
-                                             response.node_id().trajectory_id(),
-                                             response.node_id().node_index()})
-                                   : nullptr;
-                local_slam_result_callback(trajectory_id, time, local_pose,
-                                           range_data, std::move(node_id));
-              }
-              client_reader_ptr->Finish();
+              RunLocalSlamResultReader(client_reader_ptr,
+                                       local_slam_result_callback);
             });
   }
 }
@@ -148,6 +130,31 @@ proto::SensorMetadata TrajectoryBuilderStub::CreateSensorMetadata(
   sensor_metadata.set_sensor_id(sensor_id);
   sensor_metadata.set_trajectory_id(trajectory_id_);
   return sensor_metadata;
+}
+
+void TrajectoryBuilderStub::RunLocalSlamResultReader(
+    grpc::ClientReader<proto::ReceiveLocalSlamResultsResponse>* client_reader,
+    LocalSlamResultCallback local_slam_result_callback) {
+  proto::ReceiveLocalSlamResultsResponse response;
+  while (client_reader->Read(&response)) {
+    int trajectory_id = response.trajectory_id();
+    cartographer::common::Time time =
+        cartographer::common::FromUniversal(response.timestamp());
+    cartographer::transform::Rigid3d local_pose =
+        cartographer::transform::ToRigid3(response.local_pose());
+    cartographer::sensor::RangeData range_data =
+        cartographer::sensor::FromProto(response.range_data());
+    auto node_id =
+        response.has_node_id()
+            ? cartographer::common::make_unique<cartographer::mapping::NodeId>(
+                  cartographer::mapping::NodeId{
+                      response.node_id().trajectory_id(),
+                      response.node_id().node_index()})
+            : nullptr;
+    local_slam_result_callback(trajectory_id, time, local_pose, range_data,
+                               std::move(node_id));
+  }
+  client_reader->Finish();
 }
 
 }  // namespace mapping
