@@ -95,10 +95,6 @@ UniqueCairoSurfacePtr DrawTexture(const std::vector<char>& intensity,
                                   int height,
                                   std::vector<uint32_t>* cairo_data);
 
-/*
-std::unique_ptr<std::map<::cartographer::mapping::SubmapId, SubmapSlice>>
-*/
-
 }  // namespace io
 }  // namespace cartographer
 
