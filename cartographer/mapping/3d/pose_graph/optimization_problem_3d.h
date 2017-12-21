@@ -105,8 +105,7 @@ class OptimizationProblem3D {
       const;
 
  private:
-  // Uses odometry if available, otherwise the local SLAM results.
-  transform::Rigid3d ComputeRelativePose(
+  std::unique_ptr<transform::Rigid3d> OdometryBetween(
       int trajectory_id, const NodeData& first_node_data,
       const NodeData& second_node_data) const;
 

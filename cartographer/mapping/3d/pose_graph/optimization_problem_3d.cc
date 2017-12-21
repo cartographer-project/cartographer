@@ -418,8 +418,8 @@ void OptimizationProblem3D::Solve(
   }
 
   if (fix_z_ == FixZ::kYes) {
-    // Add penalties for violating odometry or changes between consecutive nodes
-    // if odometry is not available.
+    // Add penalties for violating odometry (if available) and changes between
+    // consecutive nodes.
     for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
       const int trajectory_id = node_it->id.trajectory_id;
       const auto trajectory_end = node_data_.EndOfTrajectory(trajectory_id);
@@ -440,12 +440,29 @@ void OptimizationProblem3D::Solve(
           continue;
         }
 
-        const transform::Rigid3d relative_pose = ComputeRelativePose(
-            trajectory_id, first_node_data, second_node_data);
+        // Add a relative pose constraint based on the odometry (if available).
+        const std::unique_ptr<transform::Rigid3d> relative_odometry =
+            OdometryBetween(trajectory_id, first_node_data, second_node_data);
+        if (relative_odometry != nullptr) {
+            problem.AddResidualBlock(
+            SpaCostFunction::CreateAutoDiffCostFunction(
+                Constraint::Pose{(*relative_odometry),
+                                 options_.odometry_translation_weight(),
+                                 options_.odometry_rotation_weight()}),
+            nullptr /* loss function */, C_nodes.at(first_node_id).rotation(),
+            C_nodes.at(first_node_id).translation(),
+            C_nodes.at(second_node_id).rotation(),
+            C_nodes.at(second_node_id).translation());
+        }
+
+        // Add a relative pose constraint based on the initial poses.
+        const transform::Rigid3d relative_initial_pose =
+            first_node_data.local_pose.inverse() * second_node_data.local_pose;
         problem.AddResidualBlock(
-            SpaCostFunction3D::CreateAutoDiffCostFunction(Constraint::Pose{
-                relative_pose, options_.consecutive_node_translation_weight(),
-                options_.consecutive_node_rotation_weight()}),
+            SpaCostFunction::CreateAutoDiffCostFunction(
+                Constraint::Pose{relative_initial_pose,
+                                 options_.initial_pose_translation_weight(),
+                                 options_.initial_pose_rotation_weight()}),
             nullptr /* loss function */, C_nodes.at(first_node_id).rotation(),
             C_nodes.at(first_node_id).translation(),
             C_nodes.at(second_node_id).rotation(),
@@ -587,7 +604,7 @@ const std::map<int, TrajectoryData>& OptimizationProblem3D::trajectory_data()
   return trajectory_data_;
 }
 
-transform::Rigid3d OptimizationProblem3D::ComputeRelativePose(
+std::unique_ptr<transform::Rigid3d> OptimizationProblem::OdometryBetween(
     const int trajectory_id, const NodeData& first_node_data,
     const NodeData& second_node_data) const {
   if (odometry_data_.HasTrajectory(trajectory_id)) {
@@ -596,10 +613,12 @@ transform::Rigid3d OptimizationProblem3D::ComputeRelativePose(
     const std::unique_ptr<transform::Rigid3d> second_node_odometry =
         Interpolate(odometry_data_, trajectory_id, second_node_data.time);
     if (first_node_odometry != nullptr && second_node_odometry != nullptr) {
-      return first_node_odometry->inverse() * (*second_node_odometry);
+      const transform::Rigid3d relative_odometry =
+          first_node_odometry->inverse() * (*second_node_odometry);
+      return common::make_unique<transform::Rigid3d>(relative_odometry);
     }
   }
-  return first_node_data.local_pose.inverse() * second_node_data.local_pose;
+  return nullptr;
 }
 
 }  // namespace pose_graph
