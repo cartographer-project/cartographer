@@ -19,7 +19,7 @@
 
 #include <memory>
 
-#include "common/make_unique.h"
+#include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 
 namespace cartographer {
