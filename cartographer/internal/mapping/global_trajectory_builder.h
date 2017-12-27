@@ -85,7 +85,10 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
   void AddSensorData(
       const std::string& sensor_id,
       const sensor::FixedFramePoseData& fixed_frame_pose) override {
-    CHECK(fixed_frame_pose.pose.IsValid()) << fixed_frame_pose.pose;
+    if (fixed_frame_pose.pose.has_value()) {
+      CHECK(fixed_frame_pose.pose.value().IsValid())
+          << fixed_frame_pose.pose.value();
+    }
     pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);
   }
 

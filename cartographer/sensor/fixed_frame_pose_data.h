@@ -17,6 +17,9 @@
 #ifndef CARTOGRAPHER_SENSOR_FIXED_FRAME_POSE_DATA_H_
 #define CARTOGRAPHER_SENSOR_FIXED_FRAME_POSE_DATA_H_
 
+#include <memory>
+
+#include "cartographer/common/optional.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/proto/sensor.pb.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -24,11 +27,11 @@
 namespace cartographer {
 namespace sensor {
 
-// The fixed frame pose data(like gps, pose, etc.) will be used in the
+// The fixed frame pose data (like GPS, pose, etc.) will be used in the
 // optimization.
 struct FixedFramePoseData {
   common::Time time;
-  transform::Rigid3d pose;
+  common::optional<transform::Rigid3d> pose;
 };
 
 // Converts 'pose_data' to a proto::FixedFramePoseData.
