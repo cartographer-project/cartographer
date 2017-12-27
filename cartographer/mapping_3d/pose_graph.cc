@@ -398,9 +398,8 @@ void PoseGraph::FinishTrajectory(const int trajectory_id) {
     CHECK_EQ(finished_trajectories_.count(trajectory_id), 0);
     finished_trajectories_.insert(trajectory_id);
 
-    auto submap_data = optimization_problem_.submap_data();
-    for (auto submap_id_data : submap_data) {
-      submap_data_.at(submap_id_data.id).state = SubmapState::kFinished;
+    for (const auto& submap : submap_data_.trajectory(trajectory_id)) {
+      submap_data_.at(submap.id).state = SubmapState::kFinished;
     }
     // TODO(jihoonl): Refactor HandleWorkQueue() logic from
     // ComputeConstraintsForNode and call from here
