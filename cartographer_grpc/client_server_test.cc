@@ -110,6 +110,16 @@ class ClientServerTest : public ::testing::Test {
     trajectory_builder_options_ =
         cartographer::mapping::CreateTrajectoryBuilderOptions(
             trajectory_builder_parameters.get());
+    local_slam_result_callback_ =
+        [this](int, cartographer::common::Time,
+               cartographer::transform::Rigid3d local_pose,
+               cartographer::sensor::RangeData,
+               std::unique_ptr<const cartographer::mapping::NodeId>) {
+          std::unique_lock<std::mutex> lock(local_slam_result_mutex_);
+          local_slam_result_poses_.push_back(local_pose);
+          lock.unlock();
+          local_slam_result_condition_.notify_all();
+        };
   }
 
   void InitializeRealServer() {
@@ -136,6 +146,12 @@ class ClientServerTest : public ::testing::Test {
     EXPECT_TRUE(stub_ != nullptr);
   }
 
+  void WaitForLocalSlamResults(size_t size) {
+    std::unique_lock<std::mutex> lock(local_slam_result_mutex_);
+    local_slam_result_condition_.wait(
+        lock, [&] { return local_slam_result_poses_.size() >= size; });
+  }
+
   proto::MapBuilderServerOptions map_builder_server_options_;
   MockMapBuilder* mock_map_builder_;
   std::unique_ptr<MockTrajectoryBuilder> mock_trajectory_builder_;
@@ -143,6 +159,11 @@ class ClientServerTest : public ::testing::Test {
       trajectory_builder_options_;
   std::unique_ptr<MapBuilderServer> server_;
   std::unique_ptr<mapping::MapBuilderStub> stub_;
+  TrajectoryBuilderInterface::LocalSlamResultCallback
+      local_slam_result_callback_;
+  std::condition_variable local_slam_result_condition_;
+  std::mutex local_slam_result_mutex_;
+  std::vector<cartographer::transform::Rigid3d> local_slam_result_poses_;
 };
 
 TEST_F(ClientServerTest, StartAndStopServer) {
@@ -232,22 +253,9 @@ TEST_F(ClientServerTest, LocalSlam2D) {
   InitializeRealServer();
   server_->Start();
   InitializeStub();
-  std::condition_variable condition;
-  std::mutex mutex;
-  std::vector<cartographer::transform::Rigid3d> local_slam_result_poses;
-  TrajectoryBuilderInterface::LocalSlamResultCallback callback =
-      [&local_slam_result_poses, &condition, &mutex](
-          int, cartographer::common::Time,
-          cartographer::transform::Rigid3d local_pose,
-          cartographer::sensor::RangeData,
-          std::unique_ptr<const cartographer::mapping::NodeId>) {
-        std::unique_lock<std::mutex> lock(mutex);
-        local_slam_result_poses.push_back(local_pose);
-        lock.unlock();
-        condition.notify_all();
-      };
-  int trajectory_id = stub_->AddTrajectoryBuilder(
-      {kRangeSensorId}, trajectory_builder_options_, callback);
+  int trajectory_id =
+      stub_->AddTrajectoryBuilder({kRangeSensorId}, trajectory_builder_options_,
+                                  local_slam_result_callback_);
   TrajectoryBuilderInterface* trajectory_stub =
       stub_->GetTrajectoryBuilder(trajectory_id);
   const auto measurements =
@@ -256,17 +264,12 @@ TEST_F(ClientServerTest, LocalSlam2D) {
   for (const auto& measurement : measurements) {
     trajectory_stub->AddSensorData(kRangeSensorId, measurement);
   }
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    condition.wait(lock, [&] {
-      return local_slam_result_poses.size() >= measurements.size();
-    });
-  }
+  WaitForLocalSlamResults(measurements.size());
   stub_->FinishTrajectory(trajectory_id);
-  EXPECT_EQ(local_slam_result_poses.size(), measurements.size());
+  EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,
-              (local_slam_result_poses.back().translation() -
-               local_slam_result_poses.front().translation())
+              (local_slam_result_poses_.back().translation() -
+               local_slam_result_poses_.front().translation())
                   .norm(),
               0.1 * kTravelDistance);
   server_->Shutdown();
