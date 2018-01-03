@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include <condition_variable>
+#include <mutex>
+
 #include "cartographer/internal/mapping/test_helpers.h"
 #include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/map_builder_server_options.h"
@@ -229,14 +232,19 @@ TEST_F(ClientServerTest, LocalSlam2D) {
   InitializeRealServer();
   server_->Start();
   InitializeStub();
+  std::condition_variable condition;
+  std::mutex mutex;
   std::vector<cartographer::transform::Rigid3d> local_slam_result_poses;
   TrajectoryBuilderInterface::LocalSlamResultCallback callback =
-      [&local_slam_result_poses](
+      [&local_slam_result_poses, &condition, &mutex](
           int, cartographer::common::Time,
           cartographer::transform::Rigid3d local_pose,
           cartographer::sensor::RangeData,
           std::unique_ptr<const cartographer::mapping::NodeId>) {
+        std::unique_lock<std::mutex> lock(mutex);
         local_slam_result_poses.push_back(local_pose);
+        lock.unlock();
+        condition.notify_all();
       };
   int trajectory_id = stub_->AddTrajectoryBuilder(
       {kRangeSensorId}, trajectory_builder_options_, callback);
@@ -248,7 +256,12 @@ TEST_F(ClientServerTest, LocalSlam2D) {
   for (const auto& measurement : measurements) {
     trajectory_stub->AddSensorData(kRangeSensorId, measurement);
   }
-  server_->WaitUntilIdle();
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    condition.wait(lock, [&] {
+      return local_slam_result_poses.size() >= measurements.size();
+    });
+  }
   stub_->FinishTrajectory(trajectory_id);
   EXPECT_EQ(local_slam_result_poses.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,
