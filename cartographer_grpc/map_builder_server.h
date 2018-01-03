@@ -90,6 +90,9 @@ class MapBuilderServer {
   // function to ever return.
   void WaitForShutdown();
 
+  // Waits until all computation is finished (for testing).
+  void WaitUntilIdle();
+
   // Shuts down the gRPC server and the SLAM thread.
   void Shutdown();
 

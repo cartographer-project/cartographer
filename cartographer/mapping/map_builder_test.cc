@@ -35,30 +35,6 @@ constexpr double kDuration = 4.;         // Seconds.
 constexpr double kTimeStep = 0.1;        // Seconds.
 constexpr double kTravelDistance = 1.2;  // Meters.
 
-std::vector<sensor::TimedPointCloudData> GenerateFakeRangeMeasurements() {
-  std::vector<sensor::TimedPointCloudData> measurements;
-  sensor::TimedPointCloud point_cloud;
-  for (double angle = 0.; angle < M_PI; angle += 0.01) {
-    constexpr double kRadius = 5;
-    point_cloud.emplace_back(kRadius * std::cos(angle),
-                             kRadius * std::sin(angle), 0., 0.);
-  }
-  const Eigen::Vector3f kDirection = Eigen::Vector3f(2., 1., 0.).normalized();
-  const Eigen::Vector3f kVelocity = kTravelDistance / kDuration * kDirection;
-  for (double elapsed_time = 0.; elapsed_time < kDuration;
-       elapsed_time += kTimeStep) {
-    common::Time time =
-        common::FromUniversal(123) + common::FromSeconds(elapsed_time);
-    transform::Rigid3f pose =
-        transform::Rigid3f::Translation(elapsed_time * kVelocity);
-    sensor::TimedPointCloud ranges =
-        sensor::TransformTimedPointCloud(point_cloud, pose.inverse());
-    measurements.emplace_back(
-        sensor::TimedPointCloudData{time, Eigen::Vector3f::Zero(), ranges});
-  }
-  return measurements;
-}
-
 class MapBuilderTest : public ::testing::Test {
  protected:
   void SetUp() override {
@@ -153,7 +129,8 @@ TEST_F(MapBuilderTest, LocalSlam2D) {
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
-  const auto measurements = GenerateFakeRangeMeasurements();
+  const auto measurements = test::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
     trajectory_builder->AddSensorData(kRangeSensorId, measurement);
   }
@@ -177,7 +154,8 @@ TEST_F(MapBuilderTest, LocalSlam3D) {
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
-  const auto measurements = GenerateFakeRangeMeasurements();
+  const auto measurements = test::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
     trajectory_builder->AddSensorData(kRangeSensorId, measurement);
     trajectory_builder->AddSensorData(
@@ -204,7 +182,8 @@ TEST_F(MapBuilderTest, GlobalSlam2D) {
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
-  const auto measurements = GenerateFakeRangeMeasurements();
+  const auto measurements = test::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
     trajectory_builder->AddSensorData(kRangeSensorId, measurement);
   }

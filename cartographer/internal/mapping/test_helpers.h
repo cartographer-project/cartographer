@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/sensor/timed_point_cloud_data.h"
 
 namespace cartographer {
 namespace mapping {
@@ -27,6 +28,10 @@ namespace test {
 
 std::unique_ptr<::cartographer::common::LuaParameterDictionary>
 ResolveLuaParameters(const std::string& lua_code);
+
+std::vector<cartographer::sensor::TimedPointCloudData>
+GenerateFakeRangeMeasurements(double travel_distance, double duration,
+                              double time_step);
 
 }  // namespace test
 }  // namespace mapping
