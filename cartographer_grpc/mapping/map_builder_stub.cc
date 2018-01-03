@@ -97,5 +97,14 @@ cartographer::mapping::PoseGraphInterface* MapBuilderStub::pose_graph() {
   return &pose_graph_stub_;
 }
 
+::grpc::Status MapBuilderStub::GetStatus() {
+  // TODO(cschuet): Write proper implementation once the 'GetStatus' gRPC method
+  // has been implemented.
+  grpc::ClientContext client_context;
+  google::protobuf::Empty request;
+  google::protobuf::Empty response;
+  return service_stub_->GetStatus(&client_context, request, &response);
+}
+
 }  // namespace mapping
 }  // namespace cartographer_grpc
