@@ -21,6 +21,7 @@
 #include <queue>
 #include <unordered_set>
 
+#include "cartographer/common/blocking_queue.h"
 #include "cartographer/common/mutex.h"
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/rpc_handler_interface.h"
@@ -35,29 +36,45 @@ namespace cartographer_grpc {
 namespace framework {
 
 class Service;
+// TODO(cschuet): Add a unittest that tests the logic of this class.
 class Rpc {
  public:
-  enum class Event { NEW_CONNECTION = 0, READ, WRITE, FINISH, DONE };
+  struct RpcEvent;
+  using EventQueue = cartographer::common::BlockingQueue<RpcEvent*>;
+  using WeakPtrFactory = std::function<std::weak_ptr<Rpc>(Rpc*)>;
+  enum class Event {
+    NEW_CONNECTION = 0,
+    READ,
+    WRITE_NEEDED,
+    WRITE,
+    FINISH,
+    DONE
+  };
   struct RpcEvent {
     const Event event;
-    Rpc* rpc;
+    std::weak_ptr<Rpc> rpc;
+    bool ok;
   };
-
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
-      ExecutionContext* execution_context,
-      const RpcHandlerInfo& rpc_handler_info, Service* service);
+      EventQueue* event_queue, ExecutionContext* execution_context,
+      const RpcHandlerInfo& rpc_handler_info, Service* service,
+      WeakPtrFactory weak_ptr_factory);
   std::unique_ptr<Rpc> Clone();
   void OnRequest();
   void OnReadsDone();
+  void OnFinish();
   void RequestNextMethodInvocation();
   void RequestStreamingReadIfNeeded();
-  void PerformWriteIfNeeded();
+  void HandleSendQueue();
   void Write(std::unique_ptr<::google::protobuf::Message> message);
   void Finish(::grpc::Status status);
   Service* service() { return service_; }
   void SetRpcEventState(Event event, bool pending);
   bool IsRpcEventPending(Event event);
   bool IsAnyEventPending();
+  void SetEventQueue(EventQueue* event_queue) { event_queue_ = event_queue; }
+  EventQueue* event_queue() { return event_queue_; }
+  std::weak_ptr<Rpc> GetWeakPtr();
 
  private:
   struct SendItem {
@@ -69,9 +86,12 @@ class Rpc {
   Rpc& operator=(const Rpc&) = delete;
   void InitializeReadersAndWriters(
       ::grpc::internal::RpcMethod::RpcType rpc_type);
-  void SendFinish(std::unique_ptr<::google::protobuf::Message> message,
-                  ::grpc::Status status);
   bool* GetRpcEventState(Event event);
+  void EnqueueMessage(SendItem&& send_item);
+  void PerformFinish(std::unique_ptr<::google::protobuf::Message> message,
+                     ::grpc::Status status);
+  void PerformWrite(std::unique_ptr<::google::protobuf::Message> message,
+                    ::grpc::Status status);
 
   ::grpc::internal::AsyncReaderInterface<::google::protobuf::Message>*
   async_reader_interface();
@@ -82,9 +102,11 @@ class Rpc {
 
   int method_index_;
   ::grpc::ServerCompletionQueue* server_completion_queue_;
+  EventQueue* event_queue_;
   ExecutionContext* execution_context_;
   RpcHandlerInfo rpc_handler_info_;
   Service* service_;
+  WeakPtrFactory weak_ptr_factory_;
   ::grpc::ServerContext server_context_;
 
   // These state variables indicate whether the corresponding event is currently
@@ -93,6 +115,7 @@ class Rpc {
   // indicates that the read has completed and currently no read is in-flight.
   bool new_connection_event_pending_ = false;
   bool read_event_pending_ = false;
+  bool write_needed_event_pending_ = false;
   bool write_event_pending_ = false;
   bool finish_event_pending_ = false;
   bool done_event_pending_ = false;
@@ -110,7 +133,10 @@ class Rpc {
   std::unique_ptr<::grpc::ServerAsyncReaderWriter<google::protobuf::Message,
                                                   google::protobuf::Message>>
       server_async_reader_writer_;
+  std::unique_ptr<::grpc::ServerAsyncWriter<google::protobuf::Message>>
+      server_async_writer_;
 
+  cartographer::common::Mutex send_queue_lock_;
   std::queue<SendItem> send_queue_;
 };
 
@@ -122,12 +148,15 @@ class ActiveRpcs {
   ActiveRpcs();
   ~ActiveRpcs() EXCLUDES(lock_);
 
-  Rpc* Add(std::unique_ptr<Rpc> rpc) EXCLUDES(lock_);
+  std::shared_ptr<Rpc> Add(std::unique_ptr<Rpc> rpc) EXCLUDES(lock_);
   bool Remove(Rpc* rpc) EXCLUDES(lock_);
+  Rpc::WeakPtrFactory GetWeakPtrFactory();
 
  private:
+  std::weak_ptr<Rpc> GetWeakPtr(Rpc* rpc);
+
   cartographer::common::Mutex lock_;
-  std::unordered_set<Rpc*> rpcs_;
+  std::map<Rpc*, std::shared_ptr<Rpc>> rpcs_;
 };
 
 }  // namespace framework

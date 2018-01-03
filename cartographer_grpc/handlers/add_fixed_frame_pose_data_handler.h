@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_HANDLERS_FINISH_TRAJECTORY_HANDLER_H
-#define CARTOGRAPHER_GRPC_HANDLERS_FINISH_TRAJECTORY_HANDLER_H
+#ifndef CARTOGRAPHER_GRPC_HANDLERS_ADD_FIXED_FRAME_POSE_DATA_HANDLER_H
+#define CARTOGRAPHER_GRPC_HANDLERS_ADD_FIXED_FRAME_POSE_DATA_HANDLER_H
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
@@ -26,22 +26,28 @@
 namespace cartographer_grpc {
 namespace handlers {
 
-class FinishTrajectoryHandler
-    : public framework::RpcHandler<proto::FinishTrajectoryRequest,
-                                   google::protobuf::Empty> {
+class AddFixedFramePoseDataHandler
+    : public framework::RpcHandler<
+          framework::Stream<proto::AddFixedFramePoseDataRequest>,
+          google::protobuf::Empty> {
  public:
-  void OnRequest(const proto::FinishTrajectoryRequest& request) override {
-    GetContext<MapBuilderServer::MapBuilderContext>()
-        ->map_builder()
-        .FinishTrajectory(request.trajectory_id());
+  void OnRequest(const proto::AddFixedFramePoseDataRequest &request) override {
+    // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
+    // thread-safe. Therefore it suffices to get an unsynchronized reference to
+    // the 'MapBuilderContext'.
     GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
-        ->NotifyFinishTrajectory(request.trajectory_id());
-    Send(std::move(
-        cartographer::common::make_unique<google::protobuf::Empty>()));
+        ->EnqueueSensorData(
+            request.sensor_metadata().trajectory_id(),
+            request.sensor_metadata().sensor_id(),
+            cartographer::sensor::FromProto(request.fixed_frame_pose_data()));
+  }
+
+  void OnReadsDone() {
+    Send(cartographer::common::make_unique<google::protobuf::Empty>());
   }
 };
 
 }  // namespace handlers
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_HANDLERS_FINISH_TRAJECTORY_HANDLER_H
+#endif  // CARTOGRAPHER_GRPC_HANDLERS_ADD_FIXED_FRAME_POSE_DATA_HANDLER_H

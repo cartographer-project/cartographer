@@ -30,6 +30,9 @@ class AddTrajectoryHandler
                                    proto::AddTrajectoryResponse> {
  public:
   void OnRequest(const proto::AddTrajectoryRequest& request) override {
+    auto local_slam_result_callback =
+        GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+            ->GetLocalSlamResultCallbackForSubscriptions();
     const int trajectory_id =
         GetContext<MapBuilderServer::MapBuilderContext>()
             ->map_builder()
@@ -37,7 +40,7 @@ class AddTrajectoryHandler
                                       request.expected_sensor_ids().begin(),
                                       request.expected_sensor_ids().end()),
                                   request.trajectory_builder_options(),
-                                  nullptr /* local_slam_result_callback */);
+                                  local_slam_result_callback);
     auto response =
         cartographer::common::make_unique<proto::AddTrajectoryResponse>();
     response->set_trajectory_id(trajectory_id);

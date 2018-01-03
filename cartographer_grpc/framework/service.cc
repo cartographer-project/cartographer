@@ -16,6 +16,8 @@
 
 #include "cartographer_grpc/framework/server.h"
 
+#include <cstdlib>
+
 #include "glog/logging.h"
 #include "grpc++/impl/codegen/proto_utils.h"
 
@@ -23,8 +25,10 @@ namespace cartographer_grpc {
 namespace framework {
 
 Service::Service(const std::string& service_name,
-                 const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos)
-    : rpc_handler_infos_(rpc_handler_infos) {
+                 const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos,
+                 EventQueueSelector event_queue_selector)
+    : rpc_handler_infos_(rpc_handler_infos),
+      event_queue_selector_(event_queue_selector) {
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
     // The 'handler' below is set to 'nullptr' indicating that we want to
     // handle this method asynchronously.
@@ -40,9 +44,11 @@ void Service::StartServing(
   int i = 0;
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
     for (auto& completion_queue_thread : completion_queue_threads) {
-      Rpc* rpc = active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
-          i, completion_queue_thread.completion_queue(), execution_context,
-          rpc_handler_info.second, this));
+      std::shared_ptr<Rpc> rpc =
+          active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
+              i, completion_queue_thread.completion_queue(),
+              event_queue_selector_(), execution_context,
+              rpc_handler_info.second, this, active_rpcs_.GetWeakPtrFactory()));
       rpc->RequestNextMethodInvocation();
     }
     ++i;
@@ -60,6 +66,7 @@ void Service::HandleEvent(Rpc::Event event, Rpc* rpc, bool ok) {
     case Rpc::Event::READ:
       HandleRead(rpc, ok);
       break;
+    case Rpc::Event::WRITE_NEEDED:
     case Rpc::Event::WRITE:
       HandleWrite(rpc, ok);
       break;
@@ -92,8 +99,10 @@ void Service::HandleNewConnection(Rpc* rpc, bool ok) {
   }
 
   // Create new active rpc to handle next connection and register it for the
-  // incoming connection.
-  active_rpcs_.Add(rpc->Clone())->RequestNextMethodInvocation();
+  // incoming connection. Assign event queue in a round-robin fashion.
+  std::unique_ptr<Rpc> new_rpc = rpc->Clone();
+  new_rpc->SetEventQueue(event_queue_selector_());
+  active_rpcs_.Add(std::move(new_rpc))->RequestNextMethodInvocation();
 }
 
 void Service::HandleRead(Rpc* rpc, bool ok) {
@@ -115,7 +124,7 @@ void Service::HandleWrite(Rpc* rpc, bool ok) {
   }
 
   // Send the next message or potentially finish the connection.
-  rpc->PerformWriteIfNeeded();
+  rpc->HandleSendQueue();
 
   RemoveIfNotPending(rpc);
 }
@@ -124,6 +133,8 @@ void Service::HandleFinish(Rpc* rpc, bool ok) {
   if (!ok) {
     LOG(ERROR) << "Finish failed";
   }
+
+  rpc->OnFinish();
 
   RemoveIfNotPending(rpc);
 }

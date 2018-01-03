@@ -25,6 +25,7 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/completion_queue_thread.h"
+#include "cartographer_grpc/framework/event_queue_thread.h"
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "cartographer_grpc/framework/service.h"
@@ -38,7 +39,8 @@ class Server {
   // All options that configure server behaviour such as number of threads,
   // ports etc.
   struct Options {
-    size_t number_of_threads = 4;
+    size_t num_grpc_threads;
+    size_t num_event_threads;
     std::string server_address = "0.0.0.0:50051";
   };
 
@@ -49,7 +51,8 @@ class Server {
     Builder() = default;
 
     std::unique_ptr<Server> Build();
-    void SetNumberOfThreads(std::size_t number_of_threads);
+    void SetNumGrpcThreads(std::size_t num_grpc_threads);
+    void SetNumEventThreads(std::size_t num_event_threads);
     void SetServerAddress(const std::string& server_address);
 
     template <typename RpcHandlerType, typename ServiceType>
@@ -105,15 +108,17 @@ class Server {
   Server(const Options& options);
   Server(const Server&) = delete;
   Server& operator=(const Server&) = delete;
-
   void AddService(
       const std::string& service_name,
       const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos);
-
-  static void RunCompletionQueue(
-      ::grpc::ServerCompletionQueue* completion_queue);
+  void RunCompletionQueue(::grpc::ServerCompletionQueue* completion_queue);
+  void RunEventQueue(EventQueue* event_queue);
+  void ProcessRpcEvent(Rpc::RpcEvent* rpc_event);
+  EventQueue* SelectNextEventQueueRoundRobin();
 
   Options options_;
+
+  bool shutting_down_ = false;
 
   // gRPC objects needed to build a server.
   ::grpc::ServerBuilder server_builder_;
@@ -121,6 +126,11 @@ class Server {
 
   // Threads processing the completion queues.
   std::vector<CompletionQueueThread> completion_queue_threads_;
+
+  // Threads processing RPC events.
+  std::vector<EventQueueThread> event_queue_threads_;
+  cartographer::common::Mutex current_event_queue_id_lock_;
+  int current_event_queue_id_ = 0;
 
   // Map of service names to services.
   std::map<std::string, Service> services_;
