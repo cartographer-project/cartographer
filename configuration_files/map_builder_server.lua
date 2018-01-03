@@ -16,6 +16,7 @@ include "map_builder.lua"
 
 options = {
   server_address = "0.0.0.0:50051",
+  num_event_threads = 4,
   num_grpc_threads = 4,
   map_builder = MAP_BUILDER,
 }
