@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_GET_STATUS_HANDLER_H
 #define CARTOGRAPHER_GRPC_HANDLERS_GET_STATUS_HANDLER_H
 
@@ -25,9 +24,8 @@
 namespace cartographer_grpc {
 namespace handlers {
 
-class GetStatusHandler
-    : public framework::RpcHandler<google::protobuf::Empty,
-                                   google::protobuf::Empty> {
+class GetStatusHandler : public framework::RpcHandler<google::protobuf::Empty,
+                                                      google::protobuf::Empty> {
  public:
   void OnRequest(const google::protobuf::Empty& request) override {
     // TODO(cschuet): Implement this handler.
@@ -39,4 +37,4 @@ class GetStatusHandler
 }  // namespace handlers
 }  // namespace cartographer_grpc
 
-#endif //CARTOGRAPHER_GRPC_HANDLERS_GET_STATUS_HANDLER_H
+#endif  // CARTOGRAPHER_GRPC_HANDLERS_GET_STATUS_HANDLER_H

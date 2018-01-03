@@ -117,9 +117,9 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler,
                                  proto::MapBuilderService>(
       "ReceiveLocalSlamResults");
-  server_builder.RegisterHandler<handlers::GetStatusHandler,
-                                 proto::MapBuilderService>(
-      "GetStatus");
+  server_builder
+      .RegisterHandler<handlers::GetStatusHandler, proto::MapBuilderService>(
+          "GetStatus");
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
       cartographer::common::make_unique<MapBuilderContext>(this));
