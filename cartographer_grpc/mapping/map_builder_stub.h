@@ -51,6 +51,7 @@ class MapBuilderStub : public cartographer::mapping::MapBuilderInterface {
   void LoadMap(cartographer::io::ProtoStreamReader* reader) override;
   int num_trajectory_builders() const override;
   cartographer::mapping::PoseGraphInterface* pose_graph() override;
+  ::grpc::Status GetStatus();
 
  private:
   std::shared_ptr<grpc::Channel> client_channel_;
