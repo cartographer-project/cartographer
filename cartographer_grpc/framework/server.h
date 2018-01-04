@@ -113,7 +113,6 @@ class Server {
       const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos);
   void RunCompletionQueue(::grpc::ServerCompletionQueue* completion_queue);
   void RunEventQueue(EventQueue* event_queue);
-  void ProcessRpcEvent(Rpc::RpcEvent* rpc_event);
   EventQueue* SelectNextEventQueueRoundRobin();
 
   Options options_;

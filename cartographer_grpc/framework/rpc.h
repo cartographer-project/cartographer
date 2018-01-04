@@ -50,6 +50,7 @@ class Rpc {
     FINISH,
     DONE
   };
+
   struct RpcEvent {
     explicit RpcEvent(Event event) : event(event), ok(false) {}
     virtual ~RpcEvent(){};
@@ -59,6 +60,7 @@ class Rpc {
     const Event event;
     bool ok;
   };
+
   struct RawRpcEvent : public RpcEvent {
     RawRpcEvent(Event event, Rpc* rpc)
         : RpcEvent(event), rpc_ptr(rpc), pending(false) {}
@@ -68,6 +70,7 @@ class Rpc {
     Rpc* rpc_ptr;
     bool pending;
   };
+
   struct WeakRpcEvent : public RpcEvent {
     WeakRpcEvent(Event event, std::weak_ptr<Rpc> rpc)
         : RpcEvent(event), rpc(rpc) {

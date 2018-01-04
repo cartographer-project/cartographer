@@ -86,8 +86,6 @@ void Server::RunCompletionQueue(
   }
 }
 
-void Server::ProcessRpcEvent(Rpc::RpcEvent* rpc_event) { rpc_event->Handle(); }
-
 EventQueue* Server::SelectNextEventQueueRoundRobin() {
   cartographer::common::MutexLocker locker(&current_event_queue_id_lock_);
   current_event_queue_id_ =
@@ -99,14 +97,14 @@ void Server::RunEventQueue(EventQueue* event_queue) {
   while (!shutting_down_) {
     Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(kPopEventTimeout);
     if (rpc_event) {
-      ProcessRpcEvent(rpc_event);
+      rpc_event->Handle();
     }
   }
 
   // Finish processing the rest of the items.
   while (Rpc::RpcEvent* rpc_event =
              event_queue->PopWithTimeout(kPopEventTimeout)) {
-    ProcessRpcEvent(rpc_event);
+    rpc_event->Handle();
   }
 }
 

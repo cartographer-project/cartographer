@@ -99,7 +99,7 @@ void Rpc::RequestNextMethodInvocation() {
   SetRpcEventState(Event::DONE, true);
   // TODO(gaschler): Asan reports direct leak of this new from both calls
   // StartServing and HandleNewConnection.
-  server_context_.AsyncNotifyWhenDone(&done_event_);
+  server_context_.AsyncNotifyWhenDone(GetRpcEvent(Event::DONE));
 
   // Make sure after terminating the connection, gRPC notifies us with this
   // event.
