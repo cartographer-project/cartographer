@@ -82,22 +82,11 @@ void Server::RunCompletionQueue(
   while (completion_queue->Next(&tag, &ok)) {
     auto* rpc_event = static_cast<Rpc::RpcEvent*>(tag);
     rpc_event->ok = ok;
-    if (auto rpc = rpc_event->rpc.lock()) {
-      rpc->event_queue()->Push(rpc_event);
-    } else {
-      LOG(WARNING) << "Ignoring stale event.";
-    }
+    rpc_event->PushToEventQueue();
   }
 }
 
-void Server::ProcessRpcEvent(Rpc::RpcEvent* rpc_event) {
-  if (auto rpc = rpc_event->rpc.lock()) {
-    rpc->service()->HandleEvent(rpc_event->event, rpc.get(), rpc_event->ok);
-  } else {
-    LOG(WARNING) << "Ignoring stale event.";
-  }
-  delete rpc_event;
-}
+void Server::ProcessRpcEvent(Rpc::RpcEvent* rpc_event) { rpc_event->Handle(); }
 
 EventQueue* Server::SelectNextEventQueueRoundRobin() {
   cartographer::common::MutexLocker locker(&current_event_queue_id_lock_);

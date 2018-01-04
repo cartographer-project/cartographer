@@ -40,6 +40,19 @@ void SendUnaryFinish(ReaderWriter* reader_writer, ::grpc::Status status,
 
 }  // namespace
 
+void Rpc::RawRpcEvent::Handle() {
+  rpc_ptr->service()->HandleEvent(event, rpc_ptr, ok);
+}
+
+void Rpc::WeakRpcEvent::Handle() {
+  if (auto rpc_shared = rpc.lock()) {
+    rpc_shared->service()->HandleEvent(event, rpc_shared.get(), ok);
+  } else {
+    LOG(WARNING) << "Ignoring stale event.";
+  }
+  delete this;
+}
+
 Rpc::Rpc(int method_index,
          ::grpc::ServerCompletionQueue* server_completion_queue,
          EventQueue* event_queue, ExecutionContext* execution_context,
@@ -52,13 +65,11 @@ Rpc::Rpc(int method_index,
       rpc_handler_info_(rpc_handler_info),
       service_(service),
       weak_ptr_factory_(weak_ptr_factory),
-      new_connection_event_{Event::NEW_CONNECTION, weak_ptr_factory(this),
-                            false, false},
-      read_event_{Event::READ, weak_ptr_factory(this), false, false},
-      write_needed_event_{Event::WRITE_NEEDED, weak_ptr_factory(this), false, false},
-      write_event_{Event::WRITE, weak_ptr_factory(this), false, false},
-      finish_event_{Event::FINISH, weak_ptr_factory(this), false, false},
-      done_event_{Event::DONE, weak_ptr_factory(this), false, false},
+      new_connection_event_(Event::NEW_CONNECTION, this),
+      read_event_(Event::READ, this),
+      write_event_(Event::WRITE, this),
+      finish_event_(Event::FINISH, this),
+      done_event_(Event::DONE, this),
       handler_(rpc_handler_info_.rpc_handler_factory(this, execution_context)) {
   InitializeReadersAndWriters(rpc_handler_info_.rpc_type);
 
@@ -98,27 +109,25 @@ void Rpc::RequestNextMethodInvocation() {
       service_->RequestAsyncBidiStreaming(
           method_index_, &server_context_, streaming_interface(),
           server_completion_queue_, server_completion_queue_,
-          new RpcEvent{Event::NEW_CONNECTION, weak_ptr_factory_(this), true});
+          GetRpcEvent(Event::NEW_CONNECTION));
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       service_->RequestAsyncClientStreaming(
           method_index_, &server_context_, streaming_interface(),
           server_completion_queue_, server_completion_queue_,
-          new RpcEvent{Event::NEW_CONNECTION, weak_ptr_factory_(this), true});
+          GetRpcEvent(Event::NEW_CONNECTION));
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       service_->RequestAsyncUnary(
           method_index_, &server_context_, request_.get(),
           streaming_interface(), server_completion_queue_,
-          server_completion_queue_,
-          new RpcEvent{Event::NEW_CONNECTION, weak_ptr_factory_(this), true});
+          server_completion_queue_, GetRpcEvent(Event::NEW_CONNECTION));
       break;
     case ::grpc::internal::RpcMethod::SERVER_STREAMING:
       service_->RequestAsyncServerStreaming(
           method_index_, &server_context_, request_.get(),
           streaming_interface(), server_completion_queue_,
-          server_completion_queue_,
-          new RpcEvent{Event::NEW_CONNECTION, weak_ptr_factory_(this), true});
+          server_completion_queue_, GetRpcEvent(Event::NEW_CONNECTION));
       break;
   }
 }
@@ -129,9 +138,7 @@ void Rpc::RequestStreamingReadIfNeeded() {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       SetRpcEventState(Event::READ, true);
-      async_reader_interface()->Read(
-          request_.get(),
-          new RpcEvent{Event::READ, weak_ptr_factory_(this), true});
+      async_reader_interface()->Read(request_.get(), GetRpcEvent(Event::READ));
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
     case ::grpc::internal::RpcMethod::SERVER_STREAMING:
@@ -146,14 +153,15 @@ void Rpc::RequestStreamingReadIfNeeded() {
 
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   EnqueueMessage(SendItem{std::move(message), ::grpc::Status::OK});
+  // Perhaps move to CreateEvent.
   event_queue_->Push(
-      new RpcEvent{Event::WRITE_NEEDED, weak_ptr_factory_(this), true});
+      new WeakRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this)));
 }
 
 void Rpc::Finish(::grpc::Status status) {
   EnqueueMessage(SendItem{nullptr /* message */, status});
   event_queue_->Push(
-      new RpcEvent{Event::WRITE_NEEDED, weak_ptr_factory_(this), true});
+      new WeakRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this)));
 }
 
 void Rpc::HandleSendQueue() {
@@ -224,14 +232,15 @@ Rpc::async_writer_interface() {
   LOG(FATAL) << "Never reached.";
 }
 
-Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
+Rpc::RawRpcEvent* Rpc::GetRpcEvent(Event event) {
   switch (event) {
     case Event::NEW_CONNECTION:
       return &new_connection_event_;
     case Event::READ:
       return &read_event_;
     case Event::WRITE_NEEDED:
-      return &write_needed_event_;
+      LOG(FATAL) << "Rpc does not store Event::WRITE_NEEDED.";
+      break;
     case Event::WRITE:
       return &write_event_;
     case Event::FINISH:
@@ -257,25 +266,21 @@ void Rpc::PerformFinish(std::unique_ptr<::google::protobuf::Message> message,
   switch (rpc_handler_info_.rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       CHECK(!message);
-      server_async_reader_writer_->Finish(
-          status, new RpcEvent{Event::FINISH, weak_ptr_factory_(this), true});
+      server_async_reader_writer_->Finish(status, GetRpcEvent(Event::FINISH));
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
       response_ = std::move(message);
-      SendUnaryFinish(
-          server_async_reader_.get(), status, response_.get(),
-          new RpcEvent{Event::FINISH, weak_ptr_factory_(this), true});
+      SendUnaryFinish(server_async_reader_.get(), status, response_.get(),
+                      GetRpcEvent(Event::FINISH));
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
       response_ = std::move(message);
-      SendUnaryFinish(
-          server_async_response_writer_.get(), status, response_.get(),
-          new RpcEvent{Event::FINISH, weak_ptr_factory_(this), true});
+      SendUnaryFinish(server_async_response_writer_.get(), status,
+                      response_.get(), GetRpcEvent(Event::FINISH));
       break;
     case ::grpc::internal::RpcMethod::SERVER_STREAMING:
       CHECK(!message);
-      server_async_writer_->Finish(
-          status, new RpcEvent{Event::FINISH, weak_ptr_factory_(this), true});
+      server_async_writer_->Finish(status, GetRpcEvent(Event::FINISH));
       break;
   }
 }
@@ -288,11 +293,13 @@ void Rpc::PerformWrite(std::unique_ptr<::google::protobuf::Message> message,
            ::grpc::internal::RpcMethod::CLIENT_STREAMING);
   SetRpcEventState(Event::WRITE, true);
   response_ = std::move(message);
-  async_writer_interface()->Write(
-      *response_, new RpcEvent{Event::WRITE, weak_ptr_factory_(this), true});
+  async_writer_interface()->Write(*response_, GetRpcEvent(Event::WRITE));
 }
 
 void Rpc::SetRpcEventState(Event event, bool pending) {
+  if (event == Event::WRITE_NEEDED) {
+    return;
+  }
   *GetRpcEventState(event) = pending;
 }
 

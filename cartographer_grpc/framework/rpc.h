@@ -51,11 +51,39 @@ class Rpc {
     DONE
   };
   struct RpcEvent {
+    explicit RpcEvent(Event event) : event(event), ok(false) {}
+    virtual ~RpcEvent(){};
+    virtual void PushToEventQueue() = 0;
+    virtual void Handle() = 0;
+
     const Event event;
-    std::weak_ptr<Rpc> rpc;
     bool ok;
+  };
+  struct RawRpcEvent : public RpcEvent {
+    RawRpcEvent(Event event, Rpc* rpc)
+        : RpcEvent(event), rpc_ptr(rpc), pending(false) {}
+    void PushToEventQueue() override { rpc_ptr->event_queue()->Push(this); }
+    void Handle() override;
+
+    Rpc* rpc_ptr;
     bool pending;
   };
+  struct WeakRpcEvent : public RpcEvent {
+    WeakRpcEvent(Event event, std::weak_ptr<Rpc> rpc)
+        : RpcEvent(event), rpc(rpc) {
+      ok = true;
+    }
+    void PushToEventQueue() override {
+      if (std::shared_ptr<Rpc> rpc_shared = rpc.lock()) {
+        rpc_shared->event_queue()->Push(this);
+      }
+    }
+    // WeakRpcEvent must not be used after Handle().
+    void Handle() override;
+
+    std::weak_ptr<Rpc> rpc;
+  };
+
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
       EventQueue* event_queue, ExecutionContext* execution_context,
       const RpcHandlerInfo& rpc_handler_info, Service* service,
@@ -76,7 +104,7 @@ class Rpc {
   void SetEventQueue(EventQueue* event_queue) { event_queue_ = event_queue; }
   EventQueue* event_queue() { return event_queue_; }
   std::weak_ptr<Rpc> GetWeakPtr();
-  RpcEvent* GetRpcEvent(Event event);
+  RawRpcEvent* GetRpcEvent(Event event);
 
  private:
   struct SendItem {
@@ -111,12 +139,11 @@ class Rpc {
   WeakPtrFactory weak_ptr_factory_;
   ::grpc::ServerContext server_context_;
 
-  RpcEvent new_connection_event_;
-  RpcEvent read_event_;
-  RpcEvent write_needed_event_;
-  RpcEvent write_event_;
-  RpcEvent finish_event_;
-  RpcEvent done_event_;
+  RawRpcEvent new_connection_event_;
+  RawRpcEvent read_event_;
+  RawRpcEvent write_event_;
+  RawRpcEvent finish_event_;
+  RawRpcEvent done_event_;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
