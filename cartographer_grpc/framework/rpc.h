@@ -54,6 +54,7 @@ class Rpc {
     const Event event;
     std::weak_ptr<Rpc> rpc;
     bool ok;
+    bool pending;
   };
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
       EventQueue* event_queue, ExecutionContext* execution_context,
@@ -110,18 +111,9 @@ class Rpc {
   WeakPtrFactory weak_ptr_factory_;
   ::grpc::ServerContext server_context_;
 
-  // These state variables indicate whether the corresponding event is currently
-  // pending completion, e.g. 'read_event_pending_ = true' means that a read has
-  // been requested but hasn't completed yet. 'read_event_pending_ = false'
-  // indicates that the read has completed and currently no read is in-flight.
-  bool new_connection_event_pending_ = false;
-  bool read_event_pending_ = false;
-  bool write_needed_event_pending_ = false;
-  bool write_event_pending_ = false;
-  bool finish_event_pending_ = false;
-  bool done_event_pending_ = false;
   RpcEvent new_connection_event_;
   RpcEvent read_event_;
+  RpcEvent write_needed_event_;
   RpcEvent write_event_;
   RpcEvent finish_event_;
   RpcEvent done_event_;

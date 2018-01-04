@@ -52,11 +52,13 @@ Rpc::Rpc(int method_index,
       rpc_handler_info_(rpc_handler_info),
       service_(service),
       weak_ptr_factory_(weak_ptr_factory),
-      new_connection_event_{Event::NEW_CONNECTION, this, false},
-      read_event_{Event::READ, this, false},
-      write_event_{Event::WRITE, this, false},
-      finish_event_{Event::FINISH, this, false},
-      done_event_{Event::DONE, this, false},
+      new_connection_event_{Event::NEW_CONNECTION, weak_ptr_factory(this),
+                            false, false},
+      read_event_{Event::READ, weak_ptr_factory(this), false, false},
+      write_needed_event_{Event::WRITE_NEEDED, weak_ptr_factory(this), false, false},
+      write_event_{Event::WRITE, weak_ptr_factory(this), false, false},
+      finish_event_{Event::FINISH, weak_ptr_factory(this), false, false},
+      done_event_{Event::DONE, weak_ptr_factory(this), false, false},
       handler_(rpc_handler_info_.rpc_handler_factory(this, execution_context)) {
   InitializeReadersAndWriters(rpc_handler_info_.rpc_type);
 
@@ -238,6 +240,10 @@ Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
       return &done_event_;
   }
   LOG(FATAL) << "Never reached.";
+}
+
+bool* Rpc::GetRpcEventState(Event event) {
+  return &GetRpcEvent(event)->pending;
 }
 
 void Rpc::EnqueueMessage(SendItem&& send_item) {
