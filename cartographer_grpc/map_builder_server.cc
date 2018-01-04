@@ -207,4 +207,9 @@ void MapBuilderServer::NotifyFinishTrajectory(int trajectory_id) {
   }
 }
 
+void MapBuilderServer::WaitUntilIdle() {
+  sensor_data_queue_.WaitUntilEmpty();
+  map_builder_->pose_graph()->RunFinalOptimization();
+}
+
 }  // namespace cartographer_grpc
