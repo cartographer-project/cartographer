@@ -52,6 +52,11 @@ Rpc::Rpc(int method_index,
       rpc_handler_info_(rpc_handler_info),
       service_(service),
       weak_ptr_factory_(weak_ptr_factory),
+      new_connection_event_{Event::NEW_CONNECTION, this, false},
+      read_event_{Event::READ, this, false},
+      write_event_{Event::WRITE, this, false},
+      finish_event_{Event::FINISH, this, false},
+      done_event_{Event::DONE, this, false},
       handler_(rpc_handler_info_.rpc_handler_factory(this, execution_context)) {
   InitializeReadersAndWriters(rpc_handler_info_.rpc_type);
 
@@ -81,8 +86,7 @@ void Rpc::RequestNextMethodInvocation() {
   SetRpcEventState(Event::DONE, true);
   // TODO(gaschler): Asan reports direct leak of this new from both calls
   // StartServing and HandleNewConnection.
-  server_context_.AsyncNotifyWhenDone(
-      new RpcEvent{Event::DONE, weak_ptr_factory_(this), true});
+  server_context_.AsyncNotifyWhenDone(&done_event_);
 
   // Make sure after terminating the connection, gRPC notifies us with this
   // event.
@@ -218,20 +222,20 @@ Rpc::async_writer_interface() {
   LOG(FATAL) << "Never reached.";
 }
 
-bool* Rpc::GetRpcEventState(Event event) {
+Rpc::RpcEvent* Rpc::GetRpcEvent(Event event) {
   switch (event) {
     case Event::NEW_CONNECTION:
-      return &new_connection_event_pending_;
+      return &new_connection_event_;
     case Event::READ:
-      return &read_event_pending_;
+      return &read_event_;
     case Event::WRITE_NEEDED:
-      return &write_needed_event_pending_;
+      return &write_needed_event_;
     case Event::WRITE:
-      return &write_event_pending_;
+      return &write_event_;
     case Event::FINISH:
-      return &finish_event_pending_;
+      return &finish_event_;
     case Event::DONE:
-      return &done_event_pending_;
+      return &done_event_;
   }
   LOG(FATAL) << "Never reached.";
 }

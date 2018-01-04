@@ -75,6 +75,7 @@ class Rpc {
   void SetEventQueue(EventQueue* event_queue) { event_queue_ = event_queue; }
   EventQueue* event_queue() { return event_queue_; }
   std::weak_ptr<Rpc> GetWeakPtr();
+  RpcEvent* GetRpcEvent(Event event);
 
  private:
   struct SendItem {
@@ -119,6 +120,11 @@ class Rpc {
   bool write_event_pending_ = false;
   bool finish_event_pending_ = false;
   bool done_event_pending_ = false;
+  RpcEvent new_connection_event_;
+  RpcEvent read_event_;
+  RpcEvent write_event_;
+  RpcEvent finish_event_;
+  RpcEvent done_event_;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
