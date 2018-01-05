@@ -30,7 +30,7 @@ namespace {
 template <typename ReaderWriter>
 void SendUnaryFinish(ReaderWriter* reader_writer, ::grpc::Status status,
                      const google::protobuf::Message* msg,
-                     Rpc::RpcEvent* rpc_event) {
+                     Rpc::EventBase* rpc_event) {
   if (msg) {
     reader_writer->Finish(*msg, status, rpc_event);
   } else {
@@ -40,14 +40,14 @@ void SendUnaryFinish(ReaderWriter* reader_writer, ::grpc::Status status,
 
 }  // namespace
 
-void Rpc::RawRpcEvent::Handle() {
+void Rpc::CompletionQueueRpcEvent::Handle() {
   pending = false;
   rpc_ptr->service()->HandleEvent(event, rpc_ptr, ok);
 }
 
-void Rpc::WeakRpcEvent::Handle() {
+void Rpc::InternalRpcEvent::Handle() {
   if (auto rpc_shared = rpc.lock()) {
-    rpc_shared->service()->HandleEvent(event, rpc_shared.get(), ok);
+    rpc_shared->service()->HandleEvent(event, rpc_shared.get(), true);
   } else {
     LOG(WARNING) << "Ignoring stale event.";
   }
@@ -155,13 +155,13 @@ void Rpc::RequestStreamingReadIfNeeded() {
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   EnqueueMessage(SendItem{std::move(message), ::grpc::Status::OK});
   event_queue_->Push(
-      new WeakRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this)));
+      new InternalRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this)));
 }
 
 void Rpc::Finish(::grpc::Status status) {
   EnqueueMessage(SendItem{nullptr /* message */, status});
   event_queue_->Push(
-      new WeakRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this)));
+      new InternalRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this)));
 }
 
 void Rpc::HandleSendQueue() {
@@ -232,7 +232,7 @@ Rpc::async_writer_interface() {
   LOG(FATAL) << "Never reached.";
 }
 
-Rpc::RawRpcEvent* Rpc::GetRpcEvent(Event event) {
+Rpc::CompletionQueueRpcEvent* Rpc::GetRpcEvent(Event event) {
   switch (event) {
     case Event::NEW_CONNECTION:
       return &new_connection_event_;

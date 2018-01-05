@@ -39,8 +39,6 @@ class Service;
 // TODO(cschuet): Add a unittest that tests the logic of this class.
 class Rpc {
  public:
-  struct RpcEvent;
-  using EventQueue = cartographer::common::BlockingQueue<RpcEvent*>;
   using WeakPtrFactory = std::function<std::weak_ptr<Rpc>(Rpc*)>;
   enum class Event {
     NEW_CONNECTION = 0,
@@ -51,37 +49,33 @@ class Rpc {
     DONE
   };
 
-  struct RpcEvent {
-    explicit RpcEvent(Event event) : event(event), ok(false) {}
-    virtual ~RpcEvent(){};
-    virtual void PushToEventQueue() = 0;
+  struct EventBase {
+    explicit EventBase(Event event) : event(event) {}
+    virtual ~EventBase(){};
     virtual void Handle() = 0;
 
     const Event event;
-    bool ok;
   };
 
-  struct RawRpcEvent : public RpcEvent {
-    RawRpcEvent(Event event, Rpc* rpc)
-        : RpcEvent(event), rpc_ptr(rpc), pending(false) {}
-    void PushToEventQueue() override { rpc_ptr->event_queue()->Push(this); }
+  using EventQueue = cartographer::common::BlockingQueue<EventBase*>;
+
+  // Flows through gRPC's CompletionQueue and then our EventQueue.
+  struct CompletionQueueRpcEvent : public EventBase {
+    CompletionQueueRpcEvent(Event event, Rpc* rpc)
+        : EventBase(event), rpc_ptr(rpc), ok(false), pending(false) {}
+    void PushToEventQueue() { rpc_ptr->event_queue()->Push(this); }
     void Handle() override;
 
     Rpc* rpc_ptr;
+    bool ok;
     bool pending;
   };
 
-  struct WeakRpcEvent : public RpcEvent {
-    WeakRpcEvent(Event event, std::weak_ptr<Rpc> rpc)
-        : RpcEvent(event), rpc(rpc) {
-      ok = true;
-    }
-    void PushToEventQueue() override {
-      if (std::shared_ptr<Rpc> rpc_shared = rpc.lock()) {
-        rpc_shared->event_queue()->Push(this);
-      }
-    }
-    // WeakRpcEvent must not be used after Handle().
+  // Flows only through our EventQueue.
+  struct InternalRpcEvent : public EventBase {
+    InternalRpcEvent(Event event, std::weak_ptr<Rpc> rpc)
+        : EventBase(event), rpc(rpc) {}
+    // InternalRpcEvent must not be used after Handle().
     void Handle() override;
 
     std::weak_ptr<Rpc> rpc;
@@ -117,7 +111,7 @@ class Rpc {
   Rpc& operator=(const Rpc&) = delete;
   void InitializeReadersAndWriters(
       ::grpc::internal::RpcMethod::RpcType rpc_type);
-  RawRpcEvent* GetRpcEvent(Event event);
+  CompletionQueueRpcEvent* GetRpcEvent(Event event);
   bool* GetRpcEventState(Event event);
   void SetRpcEventState(Event event, bool pending);
   void EnqueueMessage(SendItem&& send_item);
@@ -142,11 +136,11 @@ class Rpc {
   WeakPtrFactory weak_ptr_factory_;
   ::grpc::ServerContext server_context_;
 
-  RawRpcEvent new_connection_event_;
-  RawRpcEvent read_event_;
-  RawRpcEvent write_event_;
-  RawRpcEvent finish_event_;
-  RawRpcEvent done_event_;
+  CompletionQueueRpcEvent new_connection_event_;
+  CompletionQueueRpcEvent read_event_;
+  CompletionQueueRpcEvent write_event_;
+  CompletionQueueRpcEvent finish_event_;
+  CompletionQueueRpcEvent done_event_;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
@@ -167,6 +161,8 @@ class Rpc {
   cartographer::common::Mutex send_queue_lock_;
   std::queue<SendItem> send_queue_;
 };
+
+using EventQueue = Rpc::EventQueue;
 
 // This class keeps track of all in-flight RPCs for a 'Service'. Make sure that
 // all RPCs have been terminated and removed from this object before it goes out

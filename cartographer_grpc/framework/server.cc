@@ -80,7 +80,7 @@ void Server::RunCompletionQueue(
   bool ok;
   void* tag;
   while (completion_queue->Next(&tag, &ok)) {
-    auto* rpc_event = static_cast<Rpc::RpcEvent*>(tag);
+    auto* rpc_event = static_cast<Rpc::CompletionQueueRpcEvent*>(tag);
     rpc_event->ok = ok;
     rpc_event->PushToEventQueue();
   }
@@ -95,14 +95,14 @@ EventQueue* Server::SelectNextEventQueueRoundRobin() {
 
 void Server::RunEventQueue(EventQueue* event_queue) {
   while (!shutting_down_) {
-    Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(kPopEventTimeout);
+    Rpc::EventBase* rpc_event = event_queue->PopWithTimeout(kPopEventTimeout);
     if (rpc_event) {
       rpc_event->Handle();
     }
   }
 
   // Finish processing the rest of the items.
-  while (Rpc::RpcEvent* rpc_event =
+  while (Rpc::EventBase* rpc_event =
              event_queue->PopWithTimeout(kPopEventTimeout)) {
     rpc_event->Handle();
   }
