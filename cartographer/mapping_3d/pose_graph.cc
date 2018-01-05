@@ -675,14 +675,14 @@ PoseGraph::GetAllSubmapData() {
 mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapPose>
 PoseGraph::GetAllSubmapPoses() {
   common::MutexLocker locker(&mutex_);
-  mapping::MapById<mapping::SubmapId, SubmapPose> submaps;
+  mapping::MapById<mapping::SubmapId, SubmapPose> submap_poses;
   for (const auto& submap_id_data : submap_data_) {
     auto submap_data = GetSubmapDataUnderLock(submap_id_data.id);
-    submaps.Insert(submap_id_data.id,
+    submap_poses.Insert(submap_id_data.id,
                    mapping::PoseGraph::SubmapPose{
                        submap_data.submap->num_range_data(), submap_data.pose});
   }
-  return submaps;
+  return submap_poses;
 }
 
 transform::Rigid3d PoseGraph::ComputeLocalToGlobalTransform(
