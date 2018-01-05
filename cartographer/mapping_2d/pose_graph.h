@@ -215,6 +215,9 @@ class PoseGraph : public mapping::PoseGraph {
   // Whether the optimization has to be run before more data is added.
   bool run_loop_closure_ GUARDED_BY(mutex_) = false;
 
+  // Schedules optimization (i.e. loop closure) to run.
+  void DispatchOptimization() REQUIRES(mutex_);
+
   // Current optimization problem.
   pose_graph::OptimizationProblem optimization_problem_;
   pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);

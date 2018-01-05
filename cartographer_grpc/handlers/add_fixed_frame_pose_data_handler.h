@@ -42,7 +42,7 @@ class AddFixedFramePoseDataHandler
             cartographer::sensor::FromProto(request.fixed_frame_pose_data()));
   }
 
-  void OnReadsDone() {
+  void OnReadsDone() override {
     Send(cartographer::common::make_unique<google::protobuf::Empty>());
   }
 };

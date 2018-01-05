@@ -41,7 +41,7 @@ class AddImuDataHandler
             cartographer::sensor::FromProto(request.imu_data()));
   }
 
-  void OnReadsDone() {
+  void OnReadsDone() override {
     Send(cartographer::common::make_unique<google::protobuf::Empty>());
   }
 };
