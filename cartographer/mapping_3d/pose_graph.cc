@@ -702,9 +702,10 @@ PoseGraph::GetAllSubmapPoses() {
   mapping::MapById<mapping::SubmapId, SubmapPose> submap_poses;
   for (const auto& submap_id_data : submap_data_) {
     auto submap_data = GetSubmapDataUnderLock(submap_id_data.id);
-    submap_poses.Insert(submap_id_data.id,
-                   mapping::PoseGraph::SubmapPose{
-                       submap_data.submap->num_range_data(), submap_data.pose});
+    submap_poses.Insert(
+        submap_id_data.id,
+        mapping::PoseGraph::SubmapPose{submap_data.submap->num_range_data(),
+                                       submap_data.pose});
   }
   return submap_poses;
 }
