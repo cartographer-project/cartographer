@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_ID_H_
 #define CARTOGRAPHER_MAPPING_ID_H_
 
+#include <cartographer/mapping/proto/pose_graph.pb.h>
 #include <algorithm>
 #include <iostream>
 #include <iterator>
