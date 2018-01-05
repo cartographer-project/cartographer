@@ -1,0 +1,96 @@
+# Copyright 2018 The Cartographer Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Top-level proto and C++ targets for Cartographer.
+
+load("@com_github_antonovvk_bazel_rules//:config.bzl", "cc_fix_config")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+licenses(["notice"])  # Apache 2.0
+
+proto_library(
+    name = "protos",
+    srcs = glob([
+        "**/*.proto",
+    ]),
+    deps = [
+        "@com_google_protobuf//:empty_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "cc_protos",
+    deps = [":protos"],
+)
+
+cc_fix_config(
+    name = "common_config_h",
+    cmake = True,
+    files = {"common/config.h.cmake": "common/config.h"},
+    values = {
+        "CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY": "todo_set_config_dir_in_cartographer.BUILD",
+        "PROJECT_SOURCE_DIR": "todo_set_project_source_dir_in_cartographer.BUILD",
+    },
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "cartographer",
+    srcs = glob(
+        [
+            "**/*.cc",
+        ],
+        exclude = [
+            "**/*_main.cc",
+            "**/*_test.cc",
+        ],
+    ),
+    hdrs = [
+        "common/config.h",
+    ] + glob([
+        "**/*.h",
+    ]),
+    includes = ["."],
+    deps = [
+        ":cc_protos",
+        "@boost//:iostreams",
+        "@com_google_glog//:glog",
+        "@org_cairographics_cairo//:cairo",
+        "@org_ceres_solver_ceres_solver//:ceres",
+        "@org_lua_lua//:lua",
+        "@org_tuxfamily_eigen//:eigen",
+    ],
+)
+
+# TODO(rodrigoq): these tests need to read the configuration files, but they're
+# not able to find them.
+EXCLUDED_TESTS = [
+    "common/configuration_files_test.cc",
+    "mapping/map_builder_test.cc",
+]
+
+[cc_test(
+    name = src.replace("/", "_").replace(".cc", ""),
+    srcs = [src],
+    deps = [
+        ":cartographer",
+        "@com_google_googletest//:gtest_main",
+    ],
+) for src in glob(
+    ["**/*_test.cc"],
+    exclude = EXCLUDED_TESTS,
+)]
