@@ -75,7 +75,8 @@ std::unique_ptr<transform::Rigid3d> Interpolate(
     const sensor::MapByTime<sensor::FixedFramePoseData>& map_by_time,
     const int trajectory_id, const common::Time time) {
   const auto it = map_by_time.lower_bound(trajectory_id, time);
-  if (it == map_by_time.EndOfTrajectory(trajectory_id) || !it->pose.has_value()) {
+  if (it == map_by_time.EndOfTrajectory(trajectory_id) ||
+      !it->pose.has_value()) {
     return nullptr;
   }
   if (it == map_by_time.BeginOfTrajectory(trajectory_id)) {
@@ -418,8 +419,9 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
                 Eigen::AngleAxisd(
                     transform::GetYaw(fixed_frame_pose_in_map.rotation()),
                     Eigen::Vector3d::UnitZ())),
-            nullptr, common::make_unique<ceres::AutoDiffLocalParameterization<
-                         YawOnlyQuaternionPlus, 4, 1>>(),
+            nullptr,
+            common::make_unique<ceres::AutoDiffLocalParameterization<
+                YawOnlyQuaternionPlus, 4, 1>>(),
             &problem);
         fixed_frame_pose_initialized = true;
       }
