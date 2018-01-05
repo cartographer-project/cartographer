@@ -104,8 +104,8 @@ class PoseGraph : public mapping::PoseGraph {
       const mapping::SubmapId& submap_id) EXCLUDES(mutex_) override;
   mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapData>
   GetAllSubmapData() EXCLUDES(mutex_) override;
-  mapping::MapById<mapping::SubmapId, SubmapPose>
-  GetAllSubmapPoses() EXCLUDES(mutex_) override;
+  mapping::MapById<mapping::SubmapId, SubmapPose> GetAllSubmapPoses()
+      EXCLUDES(mutex_) override;
   transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id)
       EXCLUDES(mutex_) override;
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
