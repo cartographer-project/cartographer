@@ -36,8 +36,7 @@ class FinishTrajectoryHandler
         .FinishTrajectory(request.trajectory_id());
     GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
         ->NotifyFinishTrajectory(request.trajectory_id());
-    Send(std::move(
-        cartographer::common::make_unique<google::protobuf::Empty>()));
+    Send(cartographer::common::make_unique<google::protobuf::Empty>());
   }
 };
 

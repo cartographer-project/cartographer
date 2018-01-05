@@ -42,7 +42,7 @@ class AddOdometryDataHandler
             cartographer::sensor::FromProto(request.odometry_data()));
   }
 
-  void OnReadsDone() {
+  void OnReadsDone() override {
     Send(cartographer::common::make_unique<google::protobuf::Empty>());
   }
 };
