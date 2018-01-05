@@ -42,7 +42,7 @@ class AddRangefinderDataHandler
             cartographer::sensor::FromProto(request.timed_point_cloud_data()));
   }
 
-  void OnReadsDone() {
+  void OnReadsDone() override {
     Send(cartographer::common::make_unique<google::protobuf::Empty>());
   }
 };
