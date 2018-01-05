@@ -16,7 +16,6 @@
 
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/optional.h"
 #include "cartographer/transform/transform.h"
 
