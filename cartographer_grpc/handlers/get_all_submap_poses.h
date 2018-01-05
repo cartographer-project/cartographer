@@ -31,10 +31,7 @@ class GetAllSubmapPosesHandler
                                    proto::GetAllSubmapPosesResponse> {
  public:
   void OnRequest(const google::protobuf::Empty& request) override {
-    cartographer::mapping::MapById<
-        cartographer::mapping::SubmapId,
-        cartographer::mapping::PoseGraphInterface::SubmapPose>
-        submap_poses = GetContext<MapBuilderServer::MapBuilderContext>()
+    auto submap_poses = GetContext<MapBuilderServer::MapBuilderContext>()
                            ->map_builder()
                            .pose_graph()
                            ->GetAllSubmapPoses();
