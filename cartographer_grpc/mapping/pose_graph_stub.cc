@@ -41,6 +41,10 @@ PoseGraphStub::GetAllSubmapPoses() {
   LOG(FATAL) << "Not implemented";
 }
 
+cartographer::mapping::MapById<cartographer::mapping::SubmapId, cartographer::mapping::PoseGraphInterface::SubmapPose> PoseGraphStub::GetAllSubmapPoses() {
+  LOG(FATAL) << "Not implemented";
+};
+
 cartographer::transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(
     int trajectory_id) {
   LOG(FATAL) << "Not implemented";

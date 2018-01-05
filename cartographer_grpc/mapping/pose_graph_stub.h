@@ -37,6 +37,7 @@ class PoseGraphStub : public cartographer::mapping::PoseGraphInterface {
   GetAllSubmapData() override;
   cartographer::mapping::MapById<cartographer::mapping::SubmapId, SubmapPose>
   GetAllSubmapPoses() override;
+  cartographer::mapping::MapById<cartographer::mapping::SubmapId, SubmapPose> GetAllSubmapPoses() override;
   cartographer::transform::Rigid3d GetLocalToGlobalTransform(
       int trajectory_id) override;
   cartographer::mapping::MapById<cartographer::mapping::NodeId,
