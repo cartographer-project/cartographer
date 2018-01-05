@@ -286,15 +286,19 @@ void PoseGraph::ComputeConstraintsForNode(
   }
   constraint_builder_.NotifyEndOfNode();
   ++num_nodes_since_last_loop_closure_;
+  CHECK(!run_loop_closure_);
   if (options_.optimize_every_n_nodes() > 0 &&
       num_nodes_since_last_loop_closure_ > options_.optimize_every_n_nodes()) {
-    CHECK(!run_loop_closure_);
-    run_loop_closure_ = true;
-    // If there is a 'work_queue_' already, some other thread will take care.
-    if (work_queue_ == nullptr) {
-      work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
-      HandleWorkQueue();
-    }
+    DispatchOptimization();
+  }
+}
+
+void PoseGraph::DispatchOptimization() {
+  run_loop_closure_ = true;
+  // If there is a 'work_queue_' already, some other thread will take care.
+  if (work_queue_ == nullptr) {
+    work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+    HandleWorkQueue();
   }
 }
 
@@ -401,8 +405,8 @@ void PoseGraph::FinishTrajectory(const int trajectory_id) {
     for (const auto& submap : submap_data_.trajectory(trajectory_id)) {
       submap_data_.at(submap.id).state = SubmapState::kFinished;
     }
-    // TODO(jihoonl): Refactor HandleWorkQueue() logic from
-    // ComputeConstraintsForNode and call from here
+    CHECK(!run_loop_closure_);
+    DispatchOptimization();
   });
 }
 
@@ -507,14 +511,21 @@ void PoseGraph::AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) {
 }
 
 void PoseGraph::RunFinalOptimization() {
+  {
+    common::MutexLocker locker(&mutex_);
+    AddWorkItem([this]() REQUIRES(mutex_) {
+      optimization_problem_.SetMaxNumIterations(
+          options_.max_num_final_iterations());
+      DispatchOptimization();
+    });
+    AddWorkItem([this]() REQUIRES(mutex_) {
+      optimization_problem_.SetMaxNumIterations(
+          options_.optimization_problem_options()
+              .ceres_solver_options()
+              .max_num_iterations());
+    });
+  }
   WaitForAllComputations();
-  optimization_problem_.SetMaxNumIterations(
-      options_.max_num_final_iterations());
-  RunOptimization();
-  optimization_problem_.SetMaxNumIterations(
-      options_.optimization_problem_options()
-          .ceres_solver_options()
-          .max_num_iterations());
 }
 
 void PoseGraph::LogResidualHistograms() {
