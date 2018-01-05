@@ -32,9 +32,9 @@ class GetAllSubmapPosesHandler
  public:
   void OnRequest(const google::protobuf::Empty& request) override {
     auto submap_poses = GetContext<MapBuilderServer::MapBuilderContext>()
-                           ->map_builder()
-                           .pose_graph()
-                           ->GetAllSubmapPoses();
+                            ->map_builder()
+                            .pose_graph()
+                            ->GetAllSubmapPoses();
 
     auto response =
         cartographer::common::make_unique<proto::GetAllSubmapPosesResponse>();
