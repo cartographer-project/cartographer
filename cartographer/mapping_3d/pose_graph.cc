@@ -660,13 +660,30 @@ mapping::PoseGraph::SubmapData PoseGraph::GetSubmapData(
   return GetSubmapDataUnderLock(submap_id);
 }
 
-mapping::MapById<mapping::SubmapId, mapping::PoseGraph::SubmapData>
+mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapData>
 PoseGraph::GetAllSubmapData() {
   common::MutexLocker locker(&mutex_);
-  mapping::MapById<mapping::SubmapId, mapping::PoseGraph::SubmapData> submaps;
+  mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapData> submaps;
   for (const auto& submap_id_data : submap_data_) {
     submaps.Insert(submap_id_data.id,
                    GetSubmapDataUnderLock(submap_id_data.id));
+  }
+  return submaps;
+}
+
+mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapPose>
+PoseGraph::GetAllSubmapPoses() {
+  common::MutexLocker locker(&mutex_);
+  mapping::MapById<mapping::SubmapId, SubmapPose> submaps;
+  for (const auto& submap_id_data : submap_data_) {
+
+    auto submap_data = GetSubmapDataUnderLock(submap_id_data.id);
+    submaps.Insert(submap_id_data.id,
+                   mapping::PoseGraph::SubmapPose{
+                       submap_data.submap->num_range_data(),
+                       submap_data.pose
+                   }
+    );
   }
   return submaps;
 }

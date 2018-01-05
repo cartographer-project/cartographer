@@ -49,6 +49,11 @@ class PoseGraphInterface {
     enum Tag { INTRA_SUBMAP, INTER_SUBMAP } tag;
   };
 
+  struct SubmapPose {
+    int version;
+    transform::Rigid3d pose;
+  };
+
   struct SubmapData {
     std::shared_ptr<const Submap> submap;
     transform::Rigid3d pose;
@@ -65,6 +70,9 @@ class PoseGraphInterface {
 
   // Returns data for all submaps.
   virtual MapById<SubmapId, SubmapData> GetAllSubmapData() = 0;
+
+  // Returns the global poses for all submaps.
+  virtual MapById<SubmapId, SubmapPose> GetAllSubmapPoses() = 0;
 
   // Returns the transform converting data in the local map frame (i.e. the
   // continuous, non-loop-closed frame) into the global map frame (i.e. the
