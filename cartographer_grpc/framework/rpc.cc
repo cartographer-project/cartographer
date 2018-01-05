@@ -41,6 +41,7 @@ void SendUnaryFinish(ReaderWriter* reader_writer, ::grpc::Status status,
 }  // namespace
 
 void Rpc::RawRpcEvent::Handle() {
+  pending = false;
   rpc_ptr->service()->HandleEvent(event, rpc_ptr, ok);
 }
 
@@ -153,7 +154,6 @@ void Rpc::RequestStreamingReadIfNeeded() {
 
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   EnqueueMessage(SendItem{std::move(message), ::grpc::Status::OK});
-  // Perhaps move to CreateEvent.
   event_queue_->Push(
       new WeakRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this)));
 }
@@ -297,9 +297,8 @@ void Rpc::PerformWrite(std::unique_ptr<::google::protobuf::Message> message,
 }
 
 void Rpc::SetRpcEventState(Event event, bool pending) {
-  if (event == Event::WRITE_NEEDED) {
-    return;
-  }
+  // TODO(gaschler): Since the only usage is setting this true at creation,
+  // consider removing this method.
   *GetRpcEventState(event) = pending;
 }
 

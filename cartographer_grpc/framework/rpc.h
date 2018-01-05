@@ -101,13 +101,11 @@ class Rpc {
   void Write(std::unique_ptr<::google::protobuf::Message> message);
   void Finish(::grpc::Status status);
   Service* service() { return service_; }
-  void SetRpcEventState(Event event, bool pending);
   bool IsRpcEventPending(Event event);
   bool IsAnyEventPending();
   void SetEventQueue(EventQueue* event_queue) { event_queue_ = event_queue; }
   EventQueue* event_queue() { return event_queue_; }
   std::weak_ptr<Rpc> GetWeakPtr();
-  RawRpcEvent* GetRpcEvent(Event event);
 
  private:
   struct SendItem {
@@ -119,7 +117,9 @@ class Rpc {
   Rpc& operator=(const Rpc&) = delete;
   void InitializeReadersAndWriters(
       ::grpc::internal::RpcMethod::RpcType rpc_type);
+  RawRpcEvent* GetRpcEvent(Event event);
   bool* GetRpcEventState(Event event);
+  void SetRpcEventState(Event event, bool pending);
   void EnqueueMessage(SendItem&& send_item);
   void PerformFinish(std::unique_ptr<::google::protobuf::Message> message,
                      ::grpc::Status status);
