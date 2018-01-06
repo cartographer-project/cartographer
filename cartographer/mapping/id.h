@@ -77,7 +77,7 @@ struct SubmapId {
            std::forward_as_tuple(other.trajectory_id, other.submap_index);
   }
 
-  void ToProto(proto::SubmapId *proto) const {
+  void ToProto(proto::SubmapId* proto) const {
     proto->set_trajectory_id(trajectory_id);
     proto->set_submap_index(submap_index);
   }

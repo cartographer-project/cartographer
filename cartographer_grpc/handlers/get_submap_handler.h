@@ -29,7 +29,7 @@ namespace handlers {
 class GetSubmapHandler
     : public framework::RpcHandler<proto::GetSubmapRequest,
                                    proto::GetSubmapResponse> {
-public:
+ public:
   void OnRequest(const proto::GetSubmapRequest &request) override {
     auto response =
         cartographer::common::make_unique<proto::GetSubmapResponse>();
@@ -42,7 +42,7 @@ public:
   }
 };
 
-} // namespace handlers
-} // namespace cartographer_grpc
+}  // namespace handlers
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_HANDLERS_GET_SUBMAP_HANDLER_H
+#endif  // CARTOGRAPHER_GRPC_HANDLERS_GET_SUBMAP_HANDLER_H

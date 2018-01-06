@@ -75,9 +75,9 @@ void MapBuilderStub::FinishTrajectory(int trajectory_id) {
 }
 
 std::string MapBuilderStub::SubmapToProto(
-    const cartographer::mapping::SubmapId &submap_id,
-    cartographer::mapping::proto::SubmapQuery::Response
-        *submap_query_response) {
+    const cartographer::mapping::SubmapId& submap_id,
+    cartographer::mapping::proto::SubmapQuery::Response*
+        submap_query_response) {
   grpc::ClientContext client_context;
   proto::GetSubmapRequest request;
   submap_id.ToProto(request.mutable_submap_id());
