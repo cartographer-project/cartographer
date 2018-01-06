@@ -51,7 +51,6 @@ void Rpc::InternalRpcEvent::Handle() {
   } else {
     LOG(WARNING) << "Ignoring stale event.";
   }
-  delete this;
 }
 
 Rpc::Rpc(int method_index,
@@ -155,13 +154,17 @@ void Rpc::RequestStreamingReadIfNeeded() {
 void Rpc::Write(std::unique_ptr<::google::protobuf::Message> message) {
   EnqueueMessage(SendItem{std::move(message), ::grpc::Status::OK});
   event_queue_->Push(
-      new InternalRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this)));
+      UniqueEventPtr(
+          new InternalRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this))
+          ));
 }
 
 void Rpc::Finish(::grpc::Status status) {
   EnqueueMessage(SendItem{nullptr /* message */, status});
   event_queue_->Push(
-      new InternalRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this)));
+      UniqueEventPtr(
+      new InternalRpcEvent(Event::WRITE_NEEDED, weak_ptr_factory_(this))
+  ));
 }
 
 void Rpc::HandleSendQueue() {

@@ -57,13 +57,31 @@ class Rpc {
     const Event event;
   };
 
-  using EventQueue = cartographer::common::BlockingQueue<EventBase*>;
+
+  class EventDeleter {
+   public:
+    EventDeleter() : needs_deletion_(true) {}
+    EventDeleter(bool needs_deletion) : needs_deletion_(needs_deletion) {}
+    void operator()(EventBase* e) {
+      if (e != nullptr && needs_deletion_) {
+        delete e;
+      }
+    }
+
+   private:
+    bool needs_deletion_;
+  };
+
+  using UniqueEventPtr = std::unique_ptr<EventBase, EventDeleter>;
+  using EventQueue = cartographer::common::BlockingQueue<UniqueEventPtr>;
 
   // Flows through gRPC's CompletionQueue and then our EventQueue.
   struct CompletionQueueRpcEvent : public EventBase {
     CompletionQueueRpcEvent(Event event, Rpc* rpc)
         : EventBase(event), rpc_ptr(rpc), ok(false), pending(false) {}
-    void PushToEventQueue() { rpc_ptr->event_queue()->Push(this); }
+    void PushToEventQueue() {
+      rpc_ptr->event_queue()->Push(UniqueEventPtr(this, EventDeleter(false)));
+    }
     void Handle() override;
 
     Rpc* rpc_ptr;
