@@ -75,9 +75,16 @@ void MapBuilderStub::FinishTrajectory(int trajectory_id) {
 }
 
 std::string MapBuilderStub::SubmapToProto(
-    const cartographer::mapping::SubmapId& submap_id,
-    cartographer::mapping::proto::SubmapQuery::Response* response) {
-  LOG(FATAL) << "Not implemented";
+    const cartographer::mapping::SubmapId &submap_id,
+    cartographer::mapping::proto::SubmapQuery::Response
+        *submap_query_response) {
+  grpc::ClientContext client_context;
+  proto::GetSubmapRequest request;
+  submap_id.ToProto(request.mutable_submap_id());
+  proto::GetSubmapResponse response;
+  CHECK(service_stub_->GetSubmap(&client_context, request, &response).ok());
+  submap_query_response->CopyFrom(response.submap_query_response());
+  return response.error_msg();
 }
 
 void MapBuilderStub::SerializeState(
