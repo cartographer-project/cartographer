@@ -82,6 +82,9 @@ class PoseGraphInterface {
   // Returns the current optimized trajectories.
   virtual MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() = 0;
 
+  // Returns the current optimized trajectory poses.
+  virtual MapById<NodeId, TrajectoryNodePose> GetTrajectoryNodePoses() = 0;
+
   // Checks if the given trajectory is finished.
   virtual bool IsTrajectoryFinished(int trajectory_id) = 0;
 
