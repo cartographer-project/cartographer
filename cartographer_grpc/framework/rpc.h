@@ -59,16 +59,18 @@ class Rpc {
 
   class EventDeleter {
    public:
-    EventDeleter() : needs_deletion_(true) {}
-    EventDeleter(bool needs_deletion) : needs_deletion_(needs_deletion) {}
+    enum Action { DELETE = 0, DO_NOT_DELETE };
+
+    EventDeleter() : action_(DELETE) {}
+    explicit EventDeleter(Action action) : action_(action) {}
     void operator()(EventBase* e) {
-      if (e != nullptr && needs_deletion_) {
+      if (e != nullptr && action_ == DELETE) {
         delete e;
       }
     }
 
    private:
-    bool needs_deletion_;
+    Action action_;
   };
 
   using UniqueEventPtr = std::unique_ptr<EventBase, EventDeleter>;
@@ -79,7 +81,8 @@ class Rpc {
     CompletionQueueRpcEvent(Event event, Rpc* rpc)
         : EventBase(event), rpc_ptr(rpc), ok(false), pending(false) {}
     void PushToEventQueue() {
-      rpc_ptr->event_queue()->Push(UniqueEventPtr(this, EventDeleter(false)));
+      rpc_ptr->event_queue()->Push(
+          UniqueEventPtr(this, EventDeleter(EventDeleter::DO_NOT_DELETE)));
     }
     void Handle() override;
 
@@ -92,7 +95,6 @@ class Rpc {
   struct InternalRpcEvent : public EventBase {
     InternalRpcEvent(Event event, std::weak_ptr<Rpc> rpc)
         : EventBase(event), rpc(rpc) {}
-    // InternalRpcEvent must not be used after Handle().
     void Handle() override;
 
     std::weak_ptr<Rpc> rpc;
