@@ -38,7 +38,23 @@ cartographer::mapping::MapById<
     cartographer::mapping::SubmapId,
     cartographer::mapping::PoseGraphInterface::SubmapPose>
 PoseGraphStub::GetAllSubmapPoses() {
-  LOG(FATAL) << "Not implemented";
+  grpc::ClientContext client_context;
+  google::protobuf::Empty request;
+  proto::GetAllSubmapPosesResponse response;
+  stub_->GetAllSubmapPoses(&client_context, request, &response);
+  cartographer::mapping::MapById<
+      cartographer::mapping::SubmapId,
+      cartographer::mapping::PoseGraphInterface::SubmapPose>
+      submap_poses;
+  for (const auto& submap_pose : response.submap_poses()) {
+    submap_poses.Insert(
+        cartographer::mapping::SubmapId{submap_pose.submap_id().trajectory_id(),
+                                        submap_pose.submap_id().submap_index()},
+        cartographer::mapping::PoseGraphInterface::SubmapPose{
+            submap_pose.submap_version(),
+            cartographer::transform::ToRigid3(submap_pose.global_pose())});
+  }
+  return submap_poses;
 }
 
 cartographer::transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(
