@@ -23,6 +23,7 @@
 #include "cartographer_grpc/handlers/add_trajectory_handler.h"
 #include "cartographer_grpc/handlers/finish_trajectory_handler.h"
 #include "cartographer_grpc/handlers/get_all_submap_poses.h"
+#include "cartographer_grpc/handlers/get_local_to_global_transform_handler.h"
 #include "cartographer_grpc/handlers/get_submap_handler.h"
 #include "cartographer_grpc/handlers/get_trajectory_node_poses_handler.h"
 #include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
@@ -127,6 +128,9 @@ MapBuilderServer::MapBuilderServer(
       "GetTrajectoryNodePoses");
   server_builder.RegisterHandler<handlers::GetAllSubmapPosesHandler,
                                  proto::MapBuilderService>("GetAllSubmapPoses");
+  server_builder.RegisterHandler<handlers::GetLocalToGlobalTransformHandler,
+                                 proto::MapBuilderService>(
+      "GetLocalToGlobalTransform");
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
       cartographer::common::make_unique<MapBuilderContext>(this));

@@ -59,7 +59,13 @@ PoseGraphStub::GetAllSubmapPoses() {
 
 cartographer::transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(
     int trajectory_id) {
-  LOG(FATAL) << "Not implemented";
+  grpc::ClientContext client_context;
+  proto::GetLocalToGlobalTransformRequest request;
+  request.set_trajectory_id(trajectory_id);
+  proto::GetLocalToGlobalTransformResponse response;
+  CHECK(stub_->GetLocalToGlobalTransform(&client_context, request, &response)
+            .ok());
+  return cartographer::transform::ToRigid3(response.local_to_global());
 }
 
 cartographer::mapping::MapById<cartographer::mapping::NodeId,

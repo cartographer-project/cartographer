@@ -103,6 +103,14 @@ message GetAllSubmapPosesResponse {
   repeated SubmapPose submap_poses = 1;
 }
 
+message GetLocalToGlobalTransformRequest {
+  int32 trajectory_id = 1;
+}
+
+message GetLocalToGlobalTransformResponse {
+  cartographer.transform.proto.Rigid3d local_to_global = 1;
+}
+
 service MapBuilderService {
   // Starts a new trajectory and returns its index.
   rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
@@ -142,4 +150,8 @@ service MapBuilderService {
   // Returns the current optimized submap poses.
   rpc GetAllSubmapPoses(google.protobuf.Empty)
       returns (GetAllSubmapPosesResponse);
+
+  // Returns the current local-to-global transform for the trajectory.
+  rpc GetLocalToGlobalTransform(GetLocalToGlobalTransformRequest)
+      returns (GetLocalToGlobalTransformResponse);
 }
