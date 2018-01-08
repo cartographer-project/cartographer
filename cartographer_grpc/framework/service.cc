@@ -58,7 +58,6 @@ void Service::StartServing(
 void Service::StopServing() { shutting_down_ = true; }
 
 void Service::HandleEvent(Rpc::Event event, Rpc* rpc, bool ok) {
-  rpc->SetRpcEventState(event, false);
   switch (event) {
     case Rpc::Event::NEW_CONNECTION:
       HandleNewConnection(rpc, ok);
