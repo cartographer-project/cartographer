@@ -83,6 +83,16 @@ message GetSubmapResponse {
   string error_msg = 2;
 }
 
+message TrajectoryNodePose {
+  cartographer.mapping.proto.NodeId node_id = 1;
+  cartographer.transform.proto.Rigid3d global_pose = 2;
+  bool has_constant_data = 3;
+}
+
+message GetTrajectoryNodePosesResponse {
+  repeated TrajectoryNodePose node_poses = 1;
+}
+
 service MapBuilderService {
   // Starts a new trajectory and returns its index.
   rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
@@ -114,4 +124,8 @@ service MapBuilderService {
 
   // Retrieves a single submap.
   rpc GetSubmap(GetSubmapRequest) returns (GetSubmapResponse);
+
+  // Returns the current optimized trajectory poses.
+  rpc GetTrajectoryNodePoses(google.protobuf.Empty)
+      returns (GetTrajectoryNodePosesResponse);
 }
