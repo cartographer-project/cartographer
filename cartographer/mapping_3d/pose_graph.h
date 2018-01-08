@@ -110,6 +110,8 @@ class PoseGraph : public mapping::PoseGraph {
       EXCLUDES(mutex_) override;
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
   GetTrajectoryNodes() override EXCLUDES(mutex_);
+  mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose>
+  GetTrajectoryNodePoses() override EXCLUDES(mutex_);
   sensor::MapByTime<sensor::ImuData> GetImuData() override EXCLUDES(mutex_);
   sensor::MapByTime<sensor::OdometryData> GetOdometryData() override
       EXCLUDES(mutex_);

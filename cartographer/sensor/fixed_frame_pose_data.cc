@@ -16,6 +16,7 @@
 
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 
+#include "cartographer/common/optional.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
@@ -24,13 +25,18 @@ namespace sensor {
 proto::FixedFramePoseData ToProto(const FixedFramePoseData& pose_data) {
   proto::FixedFramePoseData proto;
   proto.set_timestamp(common::ToUniversal(pose_data.time));
-  *proto.mutable_pose() = transform::ToProto(pose_data.pose);
+  if (pose_data.pose.has_value()) {
+    *proto.mutable_pose() = transform::ToProto(pose_data.pose.value());
+  }
   return proto;
 }
 
 FixedFramePoseData FromProto(const proto::FixedFramePoseData& proto) {
   return FixedFramePoseData{common::FromUniversal(proto.timestamp()),
-                            transform::ToRigid3(proto.pose())};
+                            proto.has_pose()
+                                ? common::optional<transform::Rigid3d>(
+                                      transform::ToRigid3(proto.pose()))
+                                : common::optional<transform::Rigid3d>()};
 }
 
 }  // namespace sensor

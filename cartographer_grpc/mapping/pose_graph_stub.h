@@ -42,6 +42,9 @@ class PoseGraphStub : public cartographer::mapping::PoseGraphInterface {
   cartographer::mapping::MapById<cartographer::mapping::NodeId,
                                  cartographer::mapping::TrajectoryNode>
   GetTrajectoryNodes() override;
+  cartographer::mapping::MapById<cartographer::mapping::NodeId,
+                                 cartographer::mapping::TrajectoryNodePose>
+  GetTrajectoryNodePoses() override;
   bool IsTrajectoryFinished(int trajectory_id) override;
   std::vector<Constraint> constraints() override;
 

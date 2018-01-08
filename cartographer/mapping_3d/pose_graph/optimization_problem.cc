@@ -49,11 +49,10 @@ namespace pose_graph {
 
 namespace {
 
-// For odometry and fixed frame pose.
-template <typename MapByTimeType>
+// For odometry.
 std::unique_ptr<transform::Rigid3d> Interpolate(
-    const MapByTimeType& map_by_time, const int trajectory_id,
-    const common::Time time) {
+    const sensor::MapByTime<sensor::OdometryData>& map_by_time,
+    const int trajectory_id, const common::Time time) {
   const auto it = map_by_time.lower_bound(trajectory_id, time);
   if (it == map_by_time.EndOfTrajectory(trajectory_id)) {
     return nullptr;
@@ -69,6 +68,33 @@ std::unique_ptr<transform::Rigid3d> Interpolate(
       Interpolate(transform::TimestampedTransform{prev_it->time, prev_it->pose},
                   transform::TimestampedTransform{it->time, it->pose}, time)
           .transform);
+}
+
+// For fixed frame pose.
+std::unique_ptr<transform::Rigid3d> Interpolate(
+    const sensor::MapByTime<sensor::FixedFramePoseData>& map_by_time,
+    const int trajectory_id, const common::Time time) {
+  const auto it = map_by_time.lower_bound(trajectory_id, time);
+  if (it == map_by_time.EndOfTrajectory(trajectory_id) ||
+      !it->pose.has_value()) {
+    return nullptr;
+  }
+  if (it == map_by_time.BeginOfTrajectory(trajectory_id)) {
+    if (it->time == time) {
+      return common::make_unique<transform::Rigid3d>(it->pose.value());
+    }
+    return nullptr;
+  }
+  const auto prev_it = std::prev(it);
+  if (prev_it->pose.has_value()) {
+    return common::make_unique<transform::Rigid3d>(
+        Interpolate(transform::TimestampedTransform{prev_it->time,
+                                                    prev_it->pose.value()},
+                    transform::TimestampedTransform{it->time, it->pose.value()},
+                    time)
+            .transform);
+  }
+  return nullptr;
 }
 
 }  // namespace

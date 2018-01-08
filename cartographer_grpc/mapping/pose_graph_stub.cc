@@ -52,6 +52,12 @@ PoseGraphStub::GetTrajectoryNodes() {
   LOG(FATAL) << "Not implemented";
 }
 
+cartographer::mapping::MapById<cartographer::mapping::NodeId,
+                               cartographer::mapping::TrajectoryNodePose>
+PoseGraphStub::GetTrajectoryNodePoses() {
+  LOG(FATAL) << "Not implemented";
+}
+
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
   LOG(FATAL) << "Not implemented";
 }
