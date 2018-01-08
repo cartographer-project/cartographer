@@ -55,7 +55,22 @@ PoseGraphStub::GetTrajectoryNodes() {
 cartographer::mapping::MapById<cartographer::mapping::NodeId,
                                cartographer::mapping::TrajectoryNodePose>
 PoseGraphStub::GetTrajectoryNodePoses() {
-  LOG(FATAL) << "Not implemented";
+  grpc::ClientContext client_context;
+  google::protobuf::Empty request;
+  proto::GetTrajectoryNodePosesResponse response;
+  stub_->GetTrajectoryNodePoses(&client_context, request, &response);
+  cartographer::mapping::MapById<cartographer::mapping::NodeId,
+                                 cartographer::mapping::TrajectoryNodePose>
+      node_poses;
+  for (const auto& node_pose : response.node_poses()) {
+    node_poses.Insert(
+        cartographer::mapping::NodeId{node_pose.node_id().trajectory_id(),
+                                      node_pose.node_id().node_index()},
+        cartographer::mapping::TrajectoryNodePose{
+            node_pose.has_constant_data(),
+            cartographer::transform::ToRigid3(node_pose.global_pose())});
+  }
+  return node_poses;
 }
 
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
