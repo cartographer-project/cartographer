@@ -575,6 +575,19 @@ PoseGraph::GetTrajectoryNodes() {
   return trajectory_nodes_;
 }
 
+mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose>
+PoseGraph::GetTrajectoryNodePoses() {
+  mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose> node_poses;
+  common::MutexLocker locker(&mutex_);
+  for (const auto& node_id_data : trajectory_nodes_) {
+    node_poses.Insert(
+        node_id_data.id,
+        mapping::TrajectoryNodePose{node_id_data.data.constant_data != nullptr,
+                                    node_id_data.data.global_pose});
+  }
+  return node_poses;
+}
+
 sensor::MapByTime<sensor::ImuData> PoseGraph::GetImuData() {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_.imu_data();

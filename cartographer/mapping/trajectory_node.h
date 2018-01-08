@@ -29,6 +29,14 @@
 namespace cartographer {
 namespace mapping {
 
+struct TrajectoryNodePose {
+  // Indicates whether the node has constant data set.
+  bool has_constant_data;
+
+  // The node pose in the global SLAM frame.
+  transform::Rigid3d global_pose;
+};
+
 struct TrajectoryNode {
   struct Data {
     common::Time time;

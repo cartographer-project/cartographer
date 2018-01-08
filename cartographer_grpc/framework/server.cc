@@ -80,23 +80,10 @@ void Server::RunCompletionQueue(
   bool ok;
   void* tag;
   while (completion_queue->Next(&tag, &ok)) {
-    auto* rpc_event = static_cast<Rpc::RpcEvent*>(tag);
+    auto* rpc_event = static_cast<Rpc::CompletionQueueRpcEvent*>(tag);
     rpc_event->ok = ok;
-    if (auto rpc = rpc_event->rpc.lock()) {
-      rpc->event_queue()->Push(rpc_event);
-    } else {
-      LOG(WARNING) << "Ignoring stale event.";
-    }
+    rpc_event->PushToEventQueue();
   }
-}
-
-void Server::ProcessRpcEvent(Rpc::RpcEvent* rpc_event) {
-  if (auto rpc = rpc_event->rpc.lock()) {
-    rpc->service()->HandleEvent(rpc_event->event, rpc.get(), rpc_event->ok);
-  } else {
-    LOG(WARNING) << "Ignoring stale event.";
-  }
-  delete rpc_event;
 }
 
 EventQueue* Server::SelectNextEventQueueRoundRobin() {
@@ -108,16 +95,17 @@ EventQueue* Server::SelectNextEventQueueRoundRobin() {
 
 void Server::RunEventQueue(EventQueue* event_queue) {
   while (!shutting_down_) {
-    Rpc::RpcEvent* rpc_event = event_queue->PopWithTimeout(kPopEventTimeout);
+    Rpc::UniqueEventPtr rpc_event =
+        event_queue->PopWithTimeout(kPopEventTimeout);
     if (rpc_event) {
-      ProcessRpcEvent(rpc_event);
+      rpc_event->Handle();
     }
   }
 
   // Finish processing the rest of the items.
-  while (Rpc::RpcEvent* rpc_event =
+  while (Rpc::UniqueEventPtr rpc_event =
              event_queue->PopWithTimeout(kPopEventTimeout)) {
-    ProcessRpcEvent(rpc_event);
+    rpc_event->Handle();
   }
 }
 

@@ -39,8 +39,6 @@ class Service;
 // TODO(cschuet): Add a unittest that tests the logic of this class.
 class Rpc {
  public:
-  struct RpcEvent;
-  using EventQueue = cartographer::common::BlockingQueue<RpcEvent*>;
   using WeakPtrFactory = std::function<std::weak_ptr<Rpc>(Rpc*)>;
   enum class Event {
     NEW_CONNECTION = 0,
@@ -50,11 +48,61 @@ class Rpc {
     FINISH,
     DONE
   };
-  struct RpcEvent {
+
+  struct EventBase {
+    explicit EventBase(Event event) : event(event) {}
+    virtual ~EventBase(){};
+    virtual void Handle() = 0;
+
     const Event event;
-    std::weak_ptr<Rpc> rpc;
-    bool ok;
   };
+
+  class EventDeleter {
+   public:
+    enum Action { DELETE = 0, DO_NOT_DELETE };
+
+    // The default action 'DELETE' is used implicitly, for instance for a
+    // new UniqueEventPtr or a UniqueEventPtr that is created by
+    // 'return nullptr'.
+    EventDeleter() : action_(DELETE) {}
+    explicit EventDeleter(Action action) : action_(action) {}
+    void operator()(EventBase* e) {
+      if (e != nullptr && action_ == DELETE) {
+        delete e;
+      }
+    }
+
+   private:
+    Action action_;
+  };
+
+  using UniqueEventPtr = std::unique_ptr<EventBase, EventDeleter>;
+  using EventQueue = cartographer::common::BlockingQueue<UniqueEventPtr>;
+
+  // Flows through gRPC's CompletionQueue and then our EventQueue.
+  struct CompletionQueueRpcEvent : public EventBase {
+    CompletionQueueRpcEvent(Event event, Rpc* rpc)
+        : EventBase(event), rpc_ptr(rpc), ok(false), pending(false) {}
+    void PushToEventQueue() {
+      rpc_ptr->event_queue()->Push(
+          UniqueEventPtr(this, EventDeleter(EventDeleter::DO_NOT_DELETE)));
+    }
+    void Handle() override;
+
+    Rpc* rpc_ptr;
+    bool ok;
+    bool pending;
+  };
+
+  // Flows only through our EventQueue.
+  struct InternalRpcEvent : public EventBase {
+    InternalRpcEvent(Event event, std::weak_ptr<Rpc> rpc)
+        : EventBase(event), rpc(rpc) {}
+    void Handle() override;
+
+    std::weak_ptr<Rpc> rpc;
+  };
+
   Rpc(int method_index, ::grpc::ServerCompletionQueue* server_completion_queue,
       EventQueue* event_queue, ExecutionContext* execution_context,
       const RpcHandlerInfo& rpc_handler_info, Service* service,
@@ -69,7 +117,6 @@ class Rpc {
   void Write(std::unique_ptr<::google::protobuf::Message> message);
   void Finish(::grpc::Status status);
   Service* service() { return service_; }
-  void SetRpcEventState(Event event, bool pending);
   bool IsRpcEventPending(Event event);
   bool IsAnyEventPending();
   void SetEventQueue(EventQueue* event_queue) { event_queue_ = event_queue; }
@@ -86,7 +133,9 @@ class Rpc {
   Rpc& operator=(const Rpc&) = delete;
   void InitializeReadersAndWriters(
       ::grpc::internal::RpcMethod::RpcType rpc_type);
+  CompletionQueueRpcEvent* GetRpcEvent(Event event);
   bool* GetRpcEventState(Event event);
+  void SetRpcEventState(Event event, bool pending);
   void EnqueueMessage(SendItem&& send_item);
   void PerformFinish(std::unique_ptr<::google::protobuf::Message> message,
                      ::grpc::Status status);
@@ -109,16 +158,11 @@ class Rpc {
   WeakPtrFactory weak_ptr_factory_;
   ::grpc::ServerContext server_context_;
 
-  // These state variables indicate whether the corresponding event is currently
-  // pending completion, e.g. 'read_event_pending_ = true' means that a read has
-  // been requested but hasn't completed yet. 'read_event_pending_ = false'
-  // indicates that the read has completed and currently no read is in-flight.
-  bool new_connection_event_pending_ = false;
-  bool read_event_pending_ = false;
-  bool write_needed_event_pending_ = false;
-  bool write_event_pending_ = false;
-  bool finish_event_pending_ = false;
-  bool done_event_pending_ = false;
+  CompletionQueueRpcEvent new_connection_event_;
+  CompletionQueueRpcEvent read_event_;
+  CompletionQueueRpcEvent write_event_;
+  CompletionQueueRpcEvent finish_event_;
+  CompletionQueueRpcEvent done_event_;
 
   std::unique_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
@@ -139,6 +183,8 @@ class Rpc {
   cartographer::common::Mutex send_queue_lock_;
   std::queue<SendItem> send_queue_;
 };
+
+using EventQueue = Rpc::EventQueue;
 
 // This class keeps track of all in-flight RPCs for a 'Service'. Make sure that
 // all RPCs have been terminated and removed from this object before it goes out
