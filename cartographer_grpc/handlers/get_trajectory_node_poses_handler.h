@@ -35,7 +35,6 @@ class GetTrajectoryNodePosesHandler
                           ->map_builder()
                           .pose_graph()
                           ->GetTrajectoryNodePoses();
-
     auto response = cartographer::common::make_unique<
         proto::GetTrajectoryNodePosesResponse>();
     for (const auto& node_id_pose : node_poses) {
