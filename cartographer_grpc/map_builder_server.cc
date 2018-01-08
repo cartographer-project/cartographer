@@ -22,13 +22,10 @@
 #include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
 #include "cartographer_grpc/handlers/add_trajectory_handler.h"
 #include "cartographer_grpc/handlers/finish_trajectory_handler.h"
-<<<<<<< HEAD
 #include "cartographer_grpc/handlers/get_submap_handler.h"
 #include "cartographer_grpc/handlers/get_trajectory_node_poses_handler.h"
-=======
 #include "cartographer_grpc/handlers/get_all_submap_poses.h"
->>>>>>> Add GetAllSubmapPoses to gRPC interface.
-    #include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
+#include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "glog/logging.h"
 

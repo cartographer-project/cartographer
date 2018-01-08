@@ -35,7 +35,6 @@ class GetAllSubmapPosesHandler
                             ->map_builder()
                             .pose_graph()
                             ->GetAllSubmapPoses();
-
     auto response =
         cartographer::common::make_unique<proto::GetAllSubmapPosesResponse>();
     for (const auto& submap_id_pose : submap_poses) {
