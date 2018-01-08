@@ -95,7 +95,8 @@ EventQueue* Server::SelectNextEventQueueRoundRobin() {
 
 void Server::RunEventQueue(EventQueue* event_queue) {
   while (!shutting_down_) {
-    Rpc::UniqueEventPtr rpc_event = event_queue->PopWithTimeout(kPopEventTimeout);
+    Rpc::UniqueEventPtr rpc_event =
+        event_queue->PopWithTimeout(kPopEventTimeout);
     if (rpc_event) {
       rpc_event->Handle();
     }

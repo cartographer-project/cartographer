@@ -57,7 +57,6 @@ class Rpc {
     const Event event;
   };
 
-
   class EventDeleter {
    public:
     EventDeleter() : needs_deletion_(true) {}
