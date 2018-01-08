@@ -74,7 +74,9 @@ message ReceiveLocalSlamResultsResponse {
   cartographer.mapping.proto.NodeId node_id = 5;
 }
 
-message GetSubmapRequest { cartographer.mapping.proto.SubmapId submap_id = 1; }
+message GetSubmapRequest {
+  cartographer.mapping.proto.SubmapId submap_id = 1;
+}
 
 message GetSubmapResponse {
   cartographer.mapping.proto.SubmapQuery.Response submap_query_response = 1;
