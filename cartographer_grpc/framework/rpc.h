@@ -61,6 +61,9 @@ class Rpc {
    public:
     enum Action { DELETE = 0, DO_NOT_DELETE };
 
+    // The default action 'DELETE' is used implicitly, for instance for a
+    // new UniqueEventPtr or a UniqueEventPtr that is created by
+    // 'return nullptr'.
     EventDeleter() : action_(DELETE) {}
     explicit EventDeleter(Action action) : action_(action) {}
     void operator()(EventBase* e) {
