@@ -61,6 +61,7 @@ cartographer::transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(
     int trajectory_id) {
   grpc::ClientContext client_context;
   proto::GetLocalToGlobalTransformRequest request;
+  request.set_trajectory_id(trajectory_id);
   proto::GetLocalToGlobalTransformResponse response;
   CHECK(stub_->GetLocalToGlobalTransform(&client_context, request, &response)
             .ok());
