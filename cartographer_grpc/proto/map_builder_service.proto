@@ -15,6 +15,7 @@
 syntax = "proto3";
 
 import "cartographer/mapping/proto/pose_graph.proto";
+import "cartographer/mapping/proto/submap_visualization.proto";
 import "cartographer/mapping/proto/trajectory_builder_options.proto";
 import "cartographer/sensor/proto/sensor.proto";
 import "cartographer/transform/proto/transform.proto";
@@ -73,6 +74,15 @@ message ReceiveLocalSlamResultsResponse {
   cartographer.mapping.proto.NodeId node_id = 5;
 }
 
+message GetSubmapRequest {
+  cartographer.mapping.proto.SubmapId submap_id = 1;
+}
+
+message GetSubmapResponse {
+  cartographer.mapping.proto.SubmapQuery.Response submap_query_response = 1;
+  string error_msg = 2;
+}
+
 service MapBuilderService {
   // Starts a new trajectory and returns its index.
   rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
@@ -101,4 +111,7 @@ service MapBuilderService {
   // Marks a trajectory corresponding to 'trajectory_id' as finished,
   // i.e. no further sensor data is expected.
   rpc FinishTrajectory(FinishTrajectoryRequest) returns (google.protobuf.Empty);
+
+  // Retrieves a single submap.
+  rpc GetSubmap(GetSubmapRequest) returns (GetSubmapResponse);
 }

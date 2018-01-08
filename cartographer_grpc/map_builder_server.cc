@@ -22,6 +22,7 @@
 #include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
 #include "cartographer_grpc/handlers/add_trajectory_handler.h"
 #include "cartographer_grpc/handlers/finish_trajectory_handler.h"
+#include "cartographer_grpc/handlers/get_submap_handler.h"
 #include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "glog/logging.h"
@@ -116,6 +117,9 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler,
                                  proto::MapBuilderService>(
       "ReceiveLocalSlamResults");
+  server_builder
+      .RegisterHandler<handlers::GetSubmapHandler, proto::MapBuilderService>(
+          "GetSubmap");
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
       cartographer::common::make_unique<MapBuilderContext>(this));
