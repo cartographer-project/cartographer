@@ -61,7 +61,10 @@ MapBuilderServer::MapBuilderContext::
              int trajectory_id, cartographer::common::Time time,
              cartographer::transform::Rigid3d local_pose,
              cartographer::sensor::RangeData range_data,
-             std::unique_ptr<const cartographer::mapping::NodeId> node_id) {
+             std::unique_ptr<const cartographer::mapping::NodeId> node_id,
+             std::unique_ptr<const cartographer::mapping::
+                                 TrajectoryBuilderInterface::InsertionResult>
+                 insertion_result) {
     map_builder_server->OnLocalSlamResult(trajectory_id, time, local_pose,
                                           std::move(range_data),
                                           std::move(node_id));
