@@ -75,29 +75,39 @@ int MapBuilder::AddTrajectoryBuilder(
     LocalSlamResultCallback local_slam_result_callback) {
   const int trajectory_id = trajectory_builders_.size();
   if (options_.use_trajectory_builder_3d()) {
-    CHECK(trajectory_options.has_trajectory_builder_3d_options());
+    std::unique_ptr<mapping_3d::LocalTrajectoryBuilder>
+        local_trajectory_builder;
+    if (trajectory_options.has_trajectory_builder_3d_options()) {
+      local_trajectory_builder =
+          common::make_unique<mapping_3d::LocalTrajectoryBuilder>(
+              trajectory_options.trajectory_builder_3d_options());
+    }
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
             common::make_unique<mapping::GlobalTrajectoryBuilder<
                 mapping_3d::LocalTrajectoryBuilder,
                 mapping_3d::proto::LocalTrajectoryBuilderOptions,
-                mapping_3d::PoseGraph>>(
-                trajectory_options.trajectory_builder_3d_options(),
-                trajectory_id, pose_graph_3d_.get(),
-                local_slam_result_callback)));
+                mapping_3d::PoseGraph>>(std::move(local_trajectory_builder),
+                                        trajectory_id, pose_graph_3d_.get(),
+                                        local_slam_result_callback)));
   } else {
-    CHECK(trajectory_options.has_trajectory_builder_2d_options());
+    std::unique_ptr<mapping_2d::LocalTrajectoryBuilder>
+        local_trajectory_builder;
+    if (trajectory_options.has_trajectory_builder_2d_options()) {
+      local_trajectory_builder =
+          common::make_unique<mapping_2d::LocalTrajectoryBuilder>(
+              trajectory_options.trajectory_builder_2d_options());
+    }
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             &sensor_collator_, trajectory_id, expected_sensor_ids,
             common::make_unique<mapping::GlobalTrajectoryBuilder<
                 mapping_2d::LocalTrajectoryBuilder,
                 mapping_2d::proto::LocalTrajectoryBuilderOptions,
-                mapping_2d::PoseGraph>>(
-                trajectory_options.trajectory_builder_2d_options(),
-                trajectory_id, pose_graph_2d_.get(),
-                local_slam_result_callback)));
+                mapping_2d::PoseGraph>>(std::move(local_trajectory_builder),
+                                        trajectory_id, pose_graph_2d_.get(),
+                                        local_slam_result_callback)));
   }
   if (trajectory_options.pure_localization()) {
     constexpr int kSubmapsToKeep = 3;
