@@ -59,19 +59,20 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
       return;
     }
     std::unique_ptr<mapping::NodeId> node_id;
+    std::unique_ptr<InsertionResult> insertion_result;
     if (matching_result->insertion_result != nullptr) {
       node_id = ::cartographer::common::make_unique<mapping::NodeId>(
           pose_graph_->AddNode(
               matching_result->insertion_result->constant_data, trajectory_id_,
               matching_result->insertion_result->insertion_submaps));
       CHECK_EQ(node_id->trajectory_id, trajectory_id_);
-    }
-    auto insertion_result = common::make_unique<InsertionResult>();
-    insertion_result->constant_data =
-        matching_result->insertion_result->constant_data;
-    for (const auto& insertion_submap :
-         matching_result->insertion_result->insertion_submaps) {
-      insertion_result->insertion_submaps.push_back(insertion_submap);
+      insertion_result = common::make_unique<InsertionResult>();
+      insertion_result->constant_data =
+          matching_result->insertion_result->constant_data;
+      for (const auto& insertion_submap :
+           matching_result->insertion_result->insertion_submaps) {
+        insertion_result->insertion_submaps.push_back(insertion_submap);
+      }
     }
     if (local_slam_result_callback_) {
       local_slam_result_callback_(
