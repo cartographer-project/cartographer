@@ -111,6 +111,10 @@ message GetLocalToGlobalTransformResponse {
   cartographer.transform.proto.Rigid3d local_to_global = 1;
 }
 
+message GetConstraintsResponse {
+  repeated cartographer.mapping.proto.PoseGraph.Constraint constraints = 1;
+}
+
 service MapBuilderService {
   // Starts a new trajectory and returns its index.
   rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
@@ -154,4 +158,7 @@ service MapBuilderService {
   // Returns the current local-to-global transform for the trajectory.
   rpc GetLocalToGlobalTransform(GetLocalToGlobalTransformRequest)
       returns (GetLocalToGlobalTransformResponse);
+
+  // Returns the list of constraints in the current optimization problem.
+  rpc GetConstraints(google.protobuf.Empty) returns (GetConstraintsResponse);
 }

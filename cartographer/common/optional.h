@@ -45,6 +45,20 @@ class optional {
     return *value_;
   }
 
+  optional<T>& operator=(const T& other_value) {
+    this->value_ = common::make_unique<T>(other_value);
+    return *this;
+  }
+
+  optional<T>& operator=(const optional<T>& other) {
+    if (!other.has_value()) {
+      this->value_ = nullptr;
+    } else {
+      this->value_ = common::make_unique<T>(other.value());
+    }
+    return *this;
+  }
+
  private:
   std::unique_ptr<T> value_;
 };
