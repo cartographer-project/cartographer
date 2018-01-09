@@ -50,7 +50,7 @@ TEST(OptionalTest, AssignmentOperator) {
   a = b;
   EXPECT_TRUE(a.has_value());
   EXPECT_EQ(4, a.value());
-  a = 3; 
+  a = 3;
   EXPECT_TRUE(a.has_value());
   EXPECT_EQ(3, a.value());
 }
