@@ -151,9 +151,9 @@ void TrajectoryBuilderStub::RunLocalSlamResultReader(
                       response.node_id().trajectory_id(),
                       response.node_id().node_index()})
             : nullptr;
-    local_slam_result_callback(
-        trajectory_id, time, local_pose, range_data, std::move(node_id),
-        nullptr /* insertion_result*/);
+    local_slam_result_callback(trajectory_id, time, local_pose, range_data,
+                               std::move(node_id),
+                               nullptr /* insertion_result*/);
   }
   client_reader->Finish();
 }
