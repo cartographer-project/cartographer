@@ -49,17 +49,16 @@ class Submap : public mapping::Submap {
 
   void ToProto(mapping::proto::Submap* proto) const override;
 
+  void ToResponseProto(
+      const transform::Rigid3d& global_submap_pose,
+      mapping::proto::SubmapQuery::Response* response) const override;
+
   const HybridGrid& high_resolution_hybrid_grid() const {
     return high_resolution_hybrid_grid_;
   }
   const HybridGrid& low_resolution_hybrid_grid() const {
     return low_resolution_hybrid_grid_;
   }
-  bool finished() const { return finished_; }
-
-  void ToResponseProto(
-      const transform::Rigid3d& global_submap_pose,
-      mapping::proto::SubmapQuery::Response* response) const override;
 
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
@@ -71,7 +70,6 @@ class Submap : public mapping::Submap {
  private:
   HybridGrid high_resolution_hybrid_grid_;
   HybridGrid low_resolution_hybrid_grid_;
-  bool finished_ = false;
 };
 
 // Except during initialization when only a single submap exists, there are
