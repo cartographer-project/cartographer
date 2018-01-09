@@ -67,8 +67,7 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
         matching_result->insertion_result->constant_data;
     for (const auto& insertion_submap :
          matching_result->insertion_result->insertion_submaps) {
-      insertion_result->insertion_submaps.push_back(
-          std::static_pointer_cast<const Submap>(insertion_submap));
+      insertion_result->insertion_submaps.push_back(insertion_submap);
     }
     if (local_slam_result_callback_) {
       local_slam_result_callback_(
