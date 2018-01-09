@@ -96,6 +96,24 @@ proto::PoseGraphOptions CreatePoseGraphOptions(
   return options;
 }
 
+proto::PoseGraph::Constraint ToProto(const PoseGraph::Constraint& constraint) {
+  proto::PoseGraph::Constraint constraint_proto;
+  *constraint_proto.mutable_relative_pose() =
+      transform::ToProto(constraint.pose.zbar_ij);
+  constraint_proto.set_translation_weight(constraint.pose.translation_weight);
+  constraint_proto.set_rotation_weight(constraint.pose.rotation_weight);
+  constraint_proto.mutable_submap_id()->set_trajectory_id(
+      constraint.submap_id.trajectory_id);
+  constraint_proto.mutable_submap_id()->set_submap_index(
+      constraint.submap_id.submap_index);
+  constraint_proto.mutable_node_id()->set_trajectory_id(
+      constraint.node_id.trajectory_id);
+  constraint_proto.mutable_node_id()->set_node_index(
+      constraint.node_id.node_index);
+  constraint_proto.set_tag(mapping::ToProto(constraint.tag));
+  return constraint_proto;
+}
+
 proto::PoseGraph PoseGraph::ToProto() {
   proto::PoseGraph proto;
 
@@ -130,25 +148,10 @@ proto::PoseGraph PoseGraph::ToProto() {
         transform::ToProto(submap_id_data.data.pose);
   }
 
-  for (const auto& constraint : constraints()) {
-    auto* const constraint_proto = proto.add_constraint();
-    *constraint_proto->mutable_relative_pose() =
-        transform::ToProto(constraint.pose.zbar_ij);
-    constraint_proto->set_translation_weight(
-        constraint.pose.translation_weight);
-    constraint_proto->set_rotation_weight(constraint.pose.rotation_weight);
-
-    constraint_proto->mutable_submap_id()->set_trajectory_id(
-        constraint.submap_id.trajectory_id);
-    constraint_proto->mutable_submap_id()->set_submap_index(
-        constraint.submap_id.submap_index);
-
-    constraint_proto->mutable_node_id()->set_trajectory_id(
-        constraint.node_id.trajectory_id);
-    constraint_proto->mutable_node_id()->set_node_index(
-        constraint.node_id.node_index);
-
-    constraint_proto->set_tag(mapping::ToProto(constraint.tag));
+  auto constraints_copy = constraints();
+  proto.mutable_constraint()->Reserve(constraints_copy.size());
+  for (const auto& constraint : constraints_copy) {
+    *proto.add_constraint() = cartographer::mapping::ToProto(constraint);
   }
 
   return proto;
