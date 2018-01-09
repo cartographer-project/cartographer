@@ -148,7 +148,9 @@ proto::PoseGraph PoseGraph::ToProto() {
         transform::ToProto(submap_id_data.data.pose);
   }
 
-  for (const auto& constraint : constraints()) {
+  auto constraints_copy = constraints();
+  proto.mutable_constraint()->Reserve(constraints_copy.size());
+  for (const auto& constraint : constraints_copy) {
     *proto.add_constraint() = cartographer::mapping::ToProto(constraint);
   }
 

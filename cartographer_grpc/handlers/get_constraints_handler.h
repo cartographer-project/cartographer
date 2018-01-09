@@ -38,6 +38,7 @@ class GetConstraintsHandler
                            ->constraints();
     auto response =
         cartographer::common::make_unique<proto::GetConstraintsResponse>();
+    response->mutable_constraints()->Reserve(constraints.size());
     for (const auto& constraint : constraints) {
       *response->add_constraints() = cartographer::mapping::ToProto(constraint);
     }
