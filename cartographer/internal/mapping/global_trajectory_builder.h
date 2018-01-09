@@ -28,6 +28,8 @@ template <typename LocalTrajectoryBuilder,
           typename LocalTrajectoryBuilderOptions, typename PoseGraph>
 class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
  public:
+  // Passing a 'nullptr' for 'local_trajectory_builder' is acceptable, but no
+  // 'TimedPointCloudData' may be added in that case.
   GlobalTrajectoryBuilder(
       std::unique_ptr<LocalTrajectoryBuilder> local_trajectory_builder,
       const int trajectory_id, PoseGraph* const pose_graph,
@@ -45,7 +47,7 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
       const std::string& sensor_id,
       const sensor::TimedPointCloudData& timed_point_cloud_data) override {
     CHECK(local_trajectory_builder_)
-        << "Cannot add TimedPointCloudData without a LocalTrajectoryBuilder";
+        << "Cannot add TimedPointCloudData without a LocalTrajectoryBuilder.";
     std::unique_ptr<typename LocalTrajectoryBuilder::MatchingResult>
         matching_result = local_trajectory_builder_->AddRangeData(
             timed_point_cloud_data.time,
