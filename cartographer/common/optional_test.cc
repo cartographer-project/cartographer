@@ -44,6 +44,17 @@ TEST(OptionalTest, CreateFromOtherOptional) {
   EXPECT_EQ(5, b.value());
 }
 
+TEST(OptionalTest, AssignmentOperator) {
+  optional<int> a(5);
+  optional<int> b(4);
+  a = b;
+  EXPECT_TRUE(a.has_value());
+  EXPECT_EQ(4, a.value());
+  a = 3; 
+  EXPECT_TRUE(a.has_value());
+  EXPECT_EQ(3, a.value());
+}
+
 }  // namespace
 }  // namespace common
 }  // namespace cartographer
