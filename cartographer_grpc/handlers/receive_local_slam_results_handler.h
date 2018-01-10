@@ -69,12 +69,8 @@ class ReceiveLocalSlamResultsHandler
           cartographer::sensor::ToProto(*local_slam_result->range_data);
     }
     if (local_slam_result->insertion_result) {
-      response->mutable_insertion_result()
-          ->mutable_node_id()
-          ->set_trajectory_id(
-              local_slam_result->insertion_result->node_id.trajectory_id);
-      response->mutable_insertion_result()->mutable_node_id()->set_node_index(
-          local_slam_result->insertion_result->node_id.node_index);
+      local_slam_result->insertion_result->node_id.ToProto(
+          response->mutable_insertion_result()->mutable_node_id());
     }
     return response;
   }

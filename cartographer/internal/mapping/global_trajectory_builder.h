@@ -58,16 +58,14 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
       // The range data has not been fully accumulated yet.
       return;
     }
-    std::unique_ptr<mapping::NodeId> node_id;
     std::unique_ptr<InsertionResult> insertion_result;
     if (matching_result->insertion_result != nullptr) {
-      node_id = ::cartographer::common::make_unique<mapping::NodeId>(
-          pose_graph_->AddNode(
-              matching_result->insertion_result->constant_data, trajectory_id_,
-              matching_result->insertion_result->insertion_submaps));
-      CHECK_EQ(node_id->trajectory_id, trajectory_id_);
+      auto node_id = pose_graph_->AddNode(
+          matching_result->insertion_result->constant_data, trajectory_id_,
+          matching_result->insertion_result->insertion_submaps);
+      CHECK_EQ(node_id.trajectory_id, trajectory_id_);
       insertion_result = common::make_unique<InsertionResult>(InsertionResult{
-          *node_id, matching_result->insertion_result->constant_data,
+          node_id, matching_result->insertion_result->constant_data,
           std::vector<std::shared_ptr<const Submap>>(
               matching_result->insertion_result->insertion_submaps.begin(),
               matching_result->insertion_result->insertion_submaps.end())});
