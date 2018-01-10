@@ -52,7 +52,7 @@ class TrajectoryBuilderStub
       std::unique_ptr<cartographer::mapping::LocalSlamResultData>
           local_slam_result_data) override;
 
-private:
+ private:
   template <typename RequestType>
   struct SensorClientWriter {
     grpc::ClientContext client_context;

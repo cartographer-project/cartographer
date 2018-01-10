@@ -22,10 +22,10 @@
 namespace cartographer_grpc {
 
 class DataUploader {
-public:
+ public:
   DataUploader(const std::string &server_address);
 };
 
-} // namespace cartographer_grpc
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_DATA_UPLOADER_H
+#endif  // CARTOGRAPHER_GRPC_DATA_UPLOADER_H

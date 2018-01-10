@@ -48,4 +48,4 @@ std::unique_ptr<Dispatchable<DataType>> MakeDispatchable(
 }  // namespace sensor
 }  // namespace cartographer
 
-#endif // CARTOGRAPHER_SENSOR_MAPPING_DISPATCHABLE_H_
+#endif  // CARTOGRAPHER_SENSOR_MAPPING_DISPATCHABLE_H_

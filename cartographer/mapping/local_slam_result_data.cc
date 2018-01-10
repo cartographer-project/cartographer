@@ -36,7 +36,6 @@ void LocalSlamResult2D::AddToTrajectoryBuilder(
 
 void LocalSlamResult2D::AddToPoseGraph(int trajectory_id,
                                        mapping::PoseGraph *pose_graph) const {
-
   DCHECK(dynamic_cast<mapping_2d::PoseGraph *>(pose_graph));
   mapping_2d::PoseGraph *pose_graph_2d =
       static_cast<mapping_2d::PoseGraph *>(pose_graph);
@@ -61,5 +60,5 @@ void LocalSlamResult3D::AddToPoseGraph(int trajectory_id,
   pose_graph_3d->AddNode(constant_data, trajectory_id, insertion_submaps);
 }
 
-} // namespace mapping
-} // namespace cartographer
+}  // namespace mapping
+}  // namespace cartographer

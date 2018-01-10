@@ -20,4 +20,4 @@ namespace cartographer_grpc {
 
 DataUploader::DataUploader(const std::string &data_uploader) {}
 
-} // namespace cartographer_grpc
+}  // namespace cartographer_grpc

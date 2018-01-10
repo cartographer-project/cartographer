@@ -82,7 +82,7 @@ class MockTrajectoryBuilder
   // Some of the platforms we run on may ship with a version of gmock which does
   // not yet support move-only types.
   MOCK_METHOD1(DoAddLocalSlamResultData,
-               void(cartographer::mapping::LocalSlamResultData *));
+               void(cartographer::mapping::LocalSlamResultData*));
   void AddLocalSlamResultData(
       std::unique_ptr<cartographer::mapping::LocalSlamResultData>
           local_slam_result_data) override {
