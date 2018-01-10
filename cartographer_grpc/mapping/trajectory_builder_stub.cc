@@ -16,6 +16,7 @@
 
 #include "cartographer_grpc/mapping/trajectory_builder_stub.h"
 
+#include "cartographer/mapping/pose_graph_data.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "glog/logging.h"
 
@@ -122,6 +123,11 @@ void TrajectoryBuilderStub::AddSensorData(
   *request.mutable_fixed_frame_pose_data() =
       cartographer::sensor::ToProto(fixed_frame_pose);
   fixed_frame_writer_.client_writer->Write(request);
+}
+
+void TrajectoryBuilderStub::AddPoseGraphData(
+    const cartographer::mapping::PoseGraphData& pose_graph_data) {
+  LOG(FATAL) << "Not implemented";
 }
 
 proto::SensorMetadata TrajectoryBuilderStub::CreateSensorMetadata(

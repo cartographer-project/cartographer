@@ -19,6 +19,7 @@
 
 #include "cartographer/mapping/trajectory_builder_interface.h"
 
+#include "cartographer/mapping/pose_graph_data.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -98,6 +99,11 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
           << fixed_frame_pose.pose.value();
     }
     pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);
+  }
+
+  void AddPoseGraphData(
+      const mapping::PoseGraphData& pose_graph_data) override {
+    pose_graph_data.AddToPoseGraph(trajectory_id_, pose_graph_);
   }
 
  private:

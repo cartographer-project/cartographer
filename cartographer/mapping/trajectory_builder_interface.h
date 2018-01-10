@@ -35,6 +35,8 @@
 namespace cartographer {
 namespace mapping {
 
+class PoseGraphData;
+
 proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
@@ -70,6 +72,8 @@ class TrajectoryBuilderInterface {
   virtual void AddSensorData(
       const std::string& sensor_id,
       const sensor::FixedFramePoseData& fixed_frame_pose) = 0;
+  virtual void AddPoseGraphData(
+      const mapping::PoseGraphData& pose_graph_data) = 0;
 };
 
 }  // namespace mapping

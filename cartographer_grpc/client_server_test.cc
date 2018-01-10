@@ -18,6 +18,7 @@
 #include <mutex>
 
 #include "cartographer/internal/mapping/test_helpers.h"
+#include "cartographer/mapping/pose_graph_data.h"
 #include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/map_builder_server_options.h"
 #include "cartographer_grpc/mapping/map_builder_stub.h"
@@ -77,6 +78,8 @@ class MockTrajectoryBuilder
   MOCK_METHOD2(AddSensorData,
                void(const std::string&,
                     const cartographer::sensor::FixedFramePoseData&));
+  MOCK_METHOD1(AddPoseGraphData,
+               void(const cartographer::mapping::PoseGraphData&));
 };
 
 class ClientServerTest : public ::testing::Test {
