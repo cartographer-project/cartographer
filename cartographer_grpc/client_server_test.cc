@@ -78,8 +78,14 @@ class MockTrajectoryBuilder
   MOCK_METHOD2(AddSensorData,
                void(const std::string&,
                     const cartographer::sensor::FixedFramePoseData&));
-  MOCK_METHOD1(AddPoseGraphData,
-               void(const cartographer::mapping::PoseGraphData&));
+
+  // Some of the platforms we run on may ship with a version of gmock which does
+  // not yet support move-only types.
+  MOCK_METHOD1(DoAddPoseGraphData, void(cartographer::mapping::PoseGraphData*));
+  void AddPoseGraphData(std::unique_ptr<cartographer::mapping::PoseGraphData>
+                            pose_graph_data) override {
+    DoAddPoseGraphData(pose_graph_data.get());
+  }
 };
 
 class ClientServerTest : public ::testing::Test {

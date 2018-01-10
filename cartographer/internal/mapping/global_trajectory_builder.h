@@ -102,8 +102,8 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
   }
 
   void AddPoseGraphData(
-      const mapping::PoseGraphData& pose_graph_data) override {
-    pose_graph_data.AddToPoseGraph(trajectory_id_, pose_graph_);
+      std::unique_ptr<mapping::PoseGraphData> pose_graph_data) override {
+    pose_graph_data->AddToPoseGraph(trajectory_id_, pose_graph_);
   }
 
  private:

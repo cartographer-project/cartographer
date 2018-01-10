@@ -26,7 +26,7 @@
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
-#include "cartographer/sensor/data.h"
+#include "cartographer/sensor/dispatchable.h"
 
 namespace cartographer {
 namespace sensor {

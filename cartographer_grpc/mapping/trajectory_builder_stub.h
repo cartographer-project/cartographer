@@ -48,8 +48,8 @@ class TrajectoryBuilderStub
   void AddSensorData(const std::string& sensor_id,
                      const cartographer::sensor::FixedFramePoseData&
                          fixed_frame_pose) override;
-  void AddPoseGraphData(
-      const cartographer::mapping::PoseGraphData& pose_graph_data) override;
+  void AddPoseGraphData(std::unique_ptr<cartographer::mapping::PoseGraphData>
+                            pose_graph_data) override;
 
  private:
   template <typename RequestType>

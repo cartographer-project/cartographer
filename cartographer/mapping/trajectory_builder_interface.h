@@ -25,6 +25,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/pose_graph_data.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
@@ -34,8 +35,6 @@
 
 namespace cartographer {
 namespace mapping {
-
-class PoseGraphData;
 
 proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
@@ -73,7 +72,7 @@ class TrajectoryBuilderInterface {
       const std::string& sensor_id,
       const sensor::FixedFramePoseData& fixed_frame_pose) = 0;
   virtual void AddPoseGraphData(
-      const mapping::PoseGraphData& pose_graph_data) = 0;
+      std::unique_ptr<mapping::PoseGraphData> pose_graph_data) = 0;
 };
 
 }  // namespace mapping

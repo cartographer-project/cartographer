@@ -126,7 +126,7 @@ void TrajectoryBuilderStub::AddSensorData(
 }
 
 void TrajectoryBuilderStub::AddPoseGraphData(
-    const cartographer::mapping::PoseGraphData& pose_graph_data) {
+    std::unique_ptr<cartographer::mapping::PoseGraphData> pose_graph_data) {
   LOG(FATAL) << "Not implemented";
 }
 

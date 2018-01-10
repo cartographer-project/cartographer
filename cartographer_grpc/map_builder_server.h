@@ -21,7 +21,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/map_builder.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
-#include "cartographer/sensor/data.h"
+#include "cartographer/sensor/dispatchable.h"
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/server.h"
 #include "cartographer_grpc/proto/map_builder_server_options.pb.h"

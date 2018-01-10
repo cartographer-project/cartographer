@@ -24,29 +24,27 @@
 namespace cartographer {
 namespace mapping {
 
+class TrajectoryBuilderInterface;
 class PoseGraphData : public cartographer::sensor::Data {
  public:
-  PoseGraphData(const std::string& sensor_id) : Data(sensor_id) {}
+  PoseGraphData(const std::string& sensor_id, common::Time time);
 
-  void AddToTrajectoryBuilder(
-      mapping::TrajectoryBuilderInterface* const trajectory_builder) override {
-    trajectory_builder->AddPoseGraphData(*this);
-  }
-
+  common::Time GetTime() const override { return time_; }
   virtual void AddToPoseGraph(int trajectory_id,
                               mapping::PoseGraph* pose_graph) const = 0;
+
+ private:
+  common::Time time_;
 };
 
 class LocalSlamResult2D : public PoseGraphData {
  public:
-  LocalSlamResult2D(const std::string& sensor_id) : PoseGraphData(sensor_id) {}
+  LocalSlamResult2D(const std::string& sensor_id, common::Time time);
 
+  void AddToTrajectoryBuilder(
+      mapping::TrajectoryBuilderInterface* const trajectory_builder) override;
   void AddToPoseGraph(int trajectory_id,
-                      mapping::PoseGraph* pose_graph) const override {
-    mapping_2d::PoseGraph* pose_graph_2d =
-        static_cast<mapping_2d::PoseGraph*>(pose_graph);
-    pose_graph_2d->AddNode(constant_data, trajectory_id, insertion_submaps);
-  }
+                      mapping::PoseGraph* pose_graph) const override;
 
  private:
   std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
@@ -55,14 +53,12 @@ class LocalSlamResult2D : public PoseGraphData {
 
 class LocalSlamResult3D : public PoseGraphData {
  public:
-  LocalSlamResult3D(const std::string& sensor_id) : PoseGraphData(sensor_id) {}
+  LocalSlamResult3D(const std::string& sensor_id, common::Time time);
 
+  void AddToTrajectoryBuilder(
+      mapping::TrajectoryBuilderInterface* const trajectory_builder) override;
   void AddToPoseGraph(int trajectory_id,
-                      mapping::PoseGraph* pose_graph) const override {
-    mapping_3d::PoseGraph* pose_graph_3d =
-        static_cast<mapping_3d::PoseGraph*>(pose_graph);
-    pose_graph_3d->AddNode(constant_data, trajectory_id, insertion_submaps);
-  }
+                      mapping::PoseGraph* pose_graph) const override;
 
  private:
   std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
