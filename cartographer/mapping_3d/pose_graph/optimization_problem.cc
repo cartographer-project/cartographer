@@ -409,28 +409,29 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
           fixed_frame_pose_in_map = trajectory_data.fixed_frame.value();
         } else {
           fixed_frame_pose_in_map =
-            node_data.global_pose * constraint_pose.zbar_ij.inverse();
+              node_data.global_pose * constraint_pose.zbar_ij.inverse();
         }
         C_fixed_frames.emplace(
-          std::piecewise_construct,
-          std::forward_as_tuple(trajectory_id),
-            std::forward_as_tuple(transform::Rigid3d(
-                fixed_frame_pose_in_map.translation(),
-                Eigen::AngleAxisd(
-                    transform::GetYaw(fixed_frame_pose_in_map.rotation()),
-                    Eigen::Vector3d::UnitZ())),
-            nullptr,
-            common::make_unique<ceres::AutoDiffLocalParameterization<
-                YawOnlyQuaternionPlus, 4, 1>>(),
-            &problem));
+            std::piecewise_construct, std::forward_as_tuple(trajectory_id),
+            std::forward_as_tuple(
+                transform::Rigid3d(
+                    fixed_frame_pose_in_map.translation(),
+                    Eigen::AngleAxisd(
+                        transform::GetYaw(fixed_frame_pose_in_map.rotation()),
+                        Eigen::Vector3d::UnitZ())),
+                nullptr,
+                common::make_unique<ceres::AutoDiffLocalParameterization<
+                    YawOnlyQuaternionPlus, 4, 1>>(),
+                &problem));
         fixed_frame_pose_initialized = true;
       }
 
       problem.AddResidualBlock(
           SpaCostFunction::CreateAutoDiffCostFunction(constraint_pose),
-          nullptr /* loss function */, C_fixed_frames.at(trajectory_id).rotation(),
-          C_fixed_frames.at(trajectory_id).translation(), C_nodes.at(node_id).rotation(),
-          C_nodes.at(node_id).translation());
+          nullptr /* loss function */,
+          C_fixed_frames.at(trajectory_id).rotation(),
+          C_fixed_frames.at(trajectory_id).translation(),
+          C_nodes.at(node_id).rotation(), C_nodes.at(node_id).translation());
     }
   }
 
@@ -467,7 +468,8 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         C_node_id_data.data.ToRigid();
   }
   for (const auto& C_fixed_frame : C_fixed_frames) {
-    trajectory_data_.at(C_fixed_frame.first).fixed_frame = C_fixed_frame.second.ToRigid();
+    trajectory_data_.at(C_fixed_frame.first).fixed_frame =
+        C_fixed_frame.second.ToRigid();
   }
 }
 
