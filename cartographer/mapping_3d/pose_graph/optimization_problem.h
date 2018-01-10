@@ -18,7 +18,6 @@
 #define CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_
 
 #include <array>
-#include <deque>
 #include <map>
 #include <set>
 #include <vector>
@@ -115,7 +114,7 @@ class OptimizationProblem {
   sensor::MapByTime<sensor::ImuData> imu_data_;
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
   sensor::MapByTime<sensor::FixedFramePoseData> fixed_frame_pose_data_;
-  std::vector<TrajectoryData> trajectory_data_;
+  std::map<int, TrajectoryData> trajectory_data_;
 };
 
 }  // namespace pose_graph

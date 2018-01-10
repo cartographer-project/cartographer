@@ -126,20 +126,16 @@ void OptimizationProblem::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
     const transform::Rigid3d& local_pose,
     const transform::Rigid3d& global_pose) {
-  CHECK_GE(trajectory_id, 0);
-  trajectory_data_.resize(std::max(trajectory_data_.size(),
-                                   static_cast<size_t>(trajectory_id) + 1));
   node_data_.Append(trajectory_id, NodeData{time, local_pose, global_pose});
+  trajectory_data_[trajectory_id];
 }
 
 void OptimizationProblem::InsertTrajectoryNode(
     const mapping::NodeId& node_id, const common::Time time,
     const transform::Rigid3d& local_pose,
     const transform::Rigid3d& global_pose) {
-  CHECK_GE(node_id.trajectory_id, 0);
-  trajectory_data_.resize(std::max(
-      trajectory_data_.size(), static_cast<size_t>(node_id.trajectory_id) + 1));
   node_data_.Insert(node_id, NodeData{time, local_pose, global_pose});
+  trajectory_data_[node_id.trajectory_id];
 }
 
 void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
@@ -147,23 +143,19 @@ void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   odometry_data_.Trim(node_data_, node_id);
   fixed_frame_pose_data_.Trim(node_data_, node_id);
   node_data_.Trim(node_id);
+  if (node_data_.SizeOfTrajectoryOrZero(node_id.trajectory_id) == 0) {
+    trajectory_data_.erase(node_id.trajectory_id);
+  }
 }
 
 void OptimizationProblem::AddSubmap(
     const int trajectory_id, const transform::Rigid3d& global_submap_pose) {
-  CHECK_GE(trajectory_id, 0);
-  trajectory_data_.resize(std::max(trajectory_data_.size(),
-                                   static_cast<size_t>(trajectory_id) + 1));
   submap_data_.Append(trajectory_id, SubmapData{global_submap_pose});
 }
 
 void OptimizationProblem::InsertSubmap(
     const mapping::SubmapId& submap_id,
     const transform::Rigid3d& global_submap_pose) {
-  CHECK_GE(submap_id.trajectory_id, 0);
-  trajectory_data_.resize(
-      std::max(trajectory_data_.size(),
-               static_cast<size_t>(submap_id.trajectory_id) + 1));
   submap_data_.Insert(submap_id, SubmapData{global_submap_pose});
 }
 
@@ -441,15 +433,14 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       &problem, &summary);
   if (options_.log_solver_summary()) {
     LOG(INFO) << summary.FullReport();
-    for (size_t trajectory_id = 0; trajectory_id != trajectory_data_.size();
-         ++trajectory_id) {
+    for (const auto& trajectory_id_and_data : trajectory_data_) {
+      const int trajectory_id = trajectory_id_and_data.first;
+      const TrajectoryData& trajectory_data = trajectory_id_and_data.second;
       if (trajectory_id != 0) {
         LOG(INFO) << "Trajectory " << trajectory_id << ":";
       }
-      LOG(INFO) << "Gravity was: "
-                << trajectory_data_[trajectory_id].gravity_constant;
-      const auto& imu_calibration =
-          trajectory_data_[trajectory_id].imu_calibration;
+      LOG(INFO) << "Gravity was: " << trajectory_data.gravity_constant;
+      const auto& imu_calibration = trajectory_data.imu_calibration;
       LOG(INFO) << "IMU correction was: "
                 << common::RadToDeg(2. * std::acos(imu_calibration[0]))
                 << " deg (" << imu_calibration[0] << ", " << imu_calibration[1]
