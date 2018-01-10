@@ -16,6 +16,7 @@
 
 #include "cartographer_grpc/mapping/pose_graph_stub.h"
 
+#include "cartographer/mapping/pose_graph.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
@@ -101,7 +102,11 @@ bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
 
 std::vector<cartographer::mapping::PoseGraphInterface::Constraint>
 PoseGraphStub::constraints() {
-  LOG(FATAL) << "Not implemented";
+  grpc::ClientContext client_context;
+  google::protobuf::Empty request;
+  proto::GetConstraintsResponse response;
+  stub_->GetConstraints(&client_context, request, &response);
+  return cartographer::mapping::FromProto(response.constraints());
 }
 
 }  // namespace mapping

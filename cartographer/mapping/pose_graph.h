@@ -134,6 +134,7 @@ std::vector<PoseGraph::Constraint> FromProto(
     const ::google::protobuf::RepeatedPtrField<
         ::cartographer::mapping::proto::PoseGraph::Constraint>&
         constraint_protos);
+proto::PoseGraph::Constraint ToProto(const PoseGraph::Constraint& constraint);
 
 }  // namespace mapping
 }  // namespace cartographer
