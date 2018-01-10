@@ -18,7 +18,7 @@
 #include <mutex>
 
 #include "cartographer/internal/mapping/test_helpers.h"
-#include "cartographer/mapping/pose_graph_data.h"
+#include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/map_builder_server_options.h"
 #include "cartographer_grpc/mapping/map_builder_stub.h"
@@ -81,10 +81,12 @@ class MockTrajectoryBuilder
 
   // Some of the platforms we run on may ship with a version of gmock which does
   // not yet support move-only types.
-  MOCK_METHOD1(DoAddPoseGraphData, void(cartographer::mapping::PoseGraphData*));
-  void AddPoseGraphData(std::unique_ptr<cartographer::mapping::PoseGraphData>
-                            pose_graph_data) override {
-    DoAddPoseGraphData(pose_graph_data.get());
+  MOCK_METHOD1(DoAddLocalSlamResultData,
+               void(cartographer::mapping::LocalSlamResultData *));
+  void AddLocalSlamResultData(
+      std::unique_ptr<cartographer::mapping::LocalSlamResultData>
+          local_slam_result_data) override {
+    DoAddLocalSlamResultData(local_slam_result_data.get());
   }
 };
 

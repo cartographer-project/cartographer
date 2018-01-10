@@ -19,7 +19,7 @@
 
 #include <thread>
 
-#include "cartographer/mapping/pose_graph.h"
+#include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "grpc++/grpc++.h"
@@ -48,10 +48,11 @@ class TrajectoryBuilderStub
   void AddSensorData(const std::string& sensor_id,
                      const cartographer::sensor::FixedFramePoseData&
                          fixed_frame_pose) override;
-  void AddPoseGraphData(std::unique_ptr<cartographer::mapping::PoseGraphData>
-                            pose_graph_data) override;
+  void AddLocalSlamResultData(
+      std::unique_ptr<cartographer::mapping::LocalSlamResultData>
+          local_slam_result_data) override;
 
- private:
+private:
   template <typename RequestType>
   struct SensorClientWriter {
     grpc::ClientContext client_context;

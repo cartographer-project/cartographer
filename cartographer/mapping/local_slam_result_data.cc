@@ -14,49 +14,52 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/pose_graph_data.h"
-
+#include "local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 
 namespace cartographer {
 namespace mapping {
 
-PoseGraphData::PoseGraphData(const std::string& sensor_id, common::Time time)
+LocalSlamResultData::LocalSlamResultData(const std::string &sensor_id,
+                                         common::Time time)
     : Data(sensor_id), time_(time) {}
 
-LocalSlamResult2D::LocalSlamResult2D(const std::string& sensor_id,
+LocalSlamResult2D::LocalSlamResult2D(const std::string &sensor_id,
                                      common::Time time)
-    : PoseGraphData(sensor_id, time) {}
+    : LocalSlamResultData(sensor_id, time) {}
 
 void LocalSlamResult2D::AddToTrajectoryBuilder(
-    mapping::TrajectoryBuilderInterface* const trajectory_builder) {
-  trajectory_builder->AddPoseGraphData(
+    mapping::TrajectoryBuilderInterface *const trajectory_builder) {
+  trajectory_builder->AddLocalSlamResultData(
       common::make_unique<LocalSlamResult2D>(*this));
 }
 
 void LocalSlamResult2D::AddToPoseGraph(int trajectory_id,
-                                       mapping::PoseGraph* pose_graph) const {
-  mapping_2d::PoseGraph* pose_graph_2d =
-      static_cast<mapping_2d::PoseGraph*>(pose_graph);
+                                       mapping::PoseGraph *pose_graph) const {
+
+  DCHECK(dynamic_cast<mapping_2d::PoseGraph *>(pose_graph));
+  mapping_2d::PoseGraph *pose_graph_2d =
+      static_cast<mapping_2d::PoseGraph *>(pose_graph);
   pose_graph_2d->AddNode(constant_data, trajectory_id, insertion_submaps);
 }
 
-LocalSlamResult3D::LocalSlamResult3D(const std::string& sensor_id,
+LocalSlamResult3D::LocalSlamResult3D(const std::string &sensor_id,
                                      common::Time time)
-    : PoseGraphData(sensor_id, time) {}
+    : LocalSlamResultData(sensor_id, time) {}
 
 void LocalSlamResult3D::AddToTrajectoryBuilder(
-    mapping::TrajectoryBuilderInterface* const trajectory_builder) {
-  trajectory_builder->AddPoseGraphData(
+    mapping::TrajectoryBuilderInterface *const trajectory_builder) {
+  trajectory_builder->AddLocalSlamResultData(
       common::make_unique<LocalSlamResult3D>(*this));
 }
 
 void LocalSlamResult3D::AddToPoseGraph(int trajectory_id,
-                                       mapping::PoseGraph* pose_graph) const {
-  mapping_3d::PoseGraph* pose_graph_3d =
-      static_cast<mapping_3d::PoseGraph*>(pose_graph);
+                                       mapping::PoseGraph *pose_graph) const {
+  DCHECK(dynamic_cast<mapping_3d::PoseGraph *>(pose_graph));
+  mapping_3d::PoseGraph *pose_graph_3d =
+      static_cast<mapping_3d::PoseGraph *>(pose_graph);
   pose_graph_3d->AddNode(constant_data, trajectory_id, insertion_submaps);
 }
 
-}  // namespace mapping
-}  // namespace cartographer
+} // namespace mapping
+} // namespace cartographer

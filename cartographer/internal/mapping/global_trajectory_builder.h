@@ -19,7 +19,7 @@
 
 #include "cartographer/mapping/trajectory_builder_interface.h"
 
-#include "cartographer/mapping/pose_graph_data.h"
+#include "cartographer/mapping/local_slam_result_data.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -106,9 +106,11 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
     pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);
   }
 
-  void AddPoseGraphData(
-      std::unique_ptr<mapping::PoseGraphData> pose_graph_data) override {
-    pose_graph_data->AddToPoseGraph(trajectory_id_, pose_graph_);
+  void AddLocalSlamResultData(std::unique_ptr<mapping::LocalSlamResultData>
+                                  local_slam_result_data) override {
+    CHECK(!local_trajectory_builder_) << "Can't add LocalSlamResultData with "
+                                         "local_trajectory_builder_ present.";
+    local_slam_result_data->AddToPoseGraph(trajectory_id_, pose_graph_);
   }
 
  private:

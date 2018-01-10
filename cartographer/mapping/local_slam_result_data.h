@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_DATA_H
-#define CARTOGRAPHER_MAPPING_POSE_GRAPH_DATA_H
+#ifndef CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
+#define CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
 
 #include "cartographer/mapping_2d/pose_graph.h"
 #include "cartographer/mapping_3d/pose_graph.h"
@@ -25,47 +25,47 @@ namespace cartographer {
 namespace mapping {
 
 class TrajectoryBuilderInterface;
-class PoseGraphData : public cartographer::sensor::Data {
- public:
-  PoseGraphData(const std::string& sensor_id, common::Time time);
+class LocalSlamResultData : public cartographer::sensor::Data {
+public:
+  LocalSlamResultData(const std::string &sensor_id, common::Time time);
 
   common::Time GetTime() const override { return time_; }
   virtual void AddToPoseGraph(int trajectory_id,
-                              mapping::PoseGraph* pose_graph) const = 0;
+                              mapping::PoseGraph *pose_graph) const = 0;
 
- private:
+private:
   common::Time time_;
 };
 
-class LocalSlamResult2D : public PoseGraphData {
- public:
-  LocalSlamResult2D(const std::string& sensor_id, common::Time time);
+class LocalSlamResult2D : public LocalSlamResultData {
+public:
+  LocalSlamResult2D(const std::string &sensor_id, common::Time time);
 
   void AddToTrajectoryBuilder(
-      mapping::TrajectoryBuilderInterface* const trajectory_builder) override;
+      mapping::TrajectoryBuilderInterface *const trajectory_builder) override;
   void AddToPoseGraph(int trajectory_id,
-                      mapping::PoseGraph* pose_graph) const override;
+                      mapping::PoseGraph *pose_graph) const override;
 
- private:
+private:
   std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
   std::vector<std::shared_ptr<const mapping_2d::Submap>> insertion_submaps;
 };
 
-class LocalSlamResult3D : public PoseGraphData {
- public:
-  LocalSlamResult3D(const std::string& sensor_id, common::Time time);
+class LocalSlamResult3D : public LocalSlamResultData {
+public:
+  LocalSlamResult3D(const std::string &sensor_id, common::Time time);
 
   void AddToTrajectoryBuilder(
-      mapping::TrajectoryBuilderInterface* const trajectory_builder) override;
+      mapping::TrajectoryBuilderInterface *const trajectory_builder) override;
   void AddToPoseGraph(int trajectory_id,
-                      mapping::PoseGraph* pose_graph) const override;
+                      mapping::PoseGraph *pose_graph) const override;
 
- private:
+private:
   std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
   std::vector<std::shared_ptr<const mapping_3d::Submap>> insertion_submaps;
 };
 
-}  // namespace mapping
-}  // namespace cartographer
+} // namespace mapping
+} // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_DATA_H
+#endif // CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H

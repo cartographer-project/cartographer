@@ -16,7 +16,7 @@
 
 #include "cartographer_grpc/mapping/trajectory_builder_stub.h"
 
-#include "cartographer/mapping/pose_graph_data.h"
+#include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "glog/logging.h"
 
@@ -125,8 +125,9 @@ void TrajectoryBuilderStub::AddSensorData(
   fixed_frame_writer_.client_writer->Write(request);
 }
 
-void TrajectoryBuilderStub::AddPoseGraphData(
-    std::unique_ptr<cartographer::mapping::PoseGraphData> pose_graph_data) {
+void TrajectoryBuilderStub::AddLocalSlamResultData(
+    std::unique_ptr<cartographer::mapping::LocalSlamResultData>
+        local_slam_result_data) {
   LOG(FATAL) << "Not implemented";
 }
 
