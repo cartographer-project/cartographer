@@ -24,6 +24,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "cartographer/common/optional.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
@@ -105,6 +106,7 @@ class OptimizationProblem {
   struct TrajectoryData {
     double gravity_constant = 9.8;
     std::array<double, 4> imu_calibration{{1., 0., 0., 0.}};
+    common::optional<transform::Rigid3d> fixed_frame;
   };
 
   mapping::pose_graph::proto::OptimizationProblemOptions options_;
