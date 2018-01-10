@@ -66,18 +66,16 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
               matching_result->insertion_result->constant_data, trajectory_id_,
               matching_result->insertion_result->insertion_submaps));
       CHECK_EQ(node_id->trajectory_id, trajectory_id_);
-      insertion_result = common::make_unique<InsertionResult>();
-      insertion_result->constant_data =
-          matching_result->insertion_result->constant_data;
-      for (const auto& insertion_submap :
-           matching_result->insertion_result->insertion_submaps) {
-        insertion_result->insertion_submaps.push_back(insertion_submap);
-      }
+      insertion_result = common::make_unique<InsertionResult>(InsertionResult{
+          *node_id, matching_result->insertion_result->constant_data,
+          std::vector<std::shared_ptr<const Submap>>(
+              matching_result->insertion_result->insertion_submaps.begin(),
+              matching_result->insertion_result->insertion_submaps.end())});
     }
     if (local_slam_result_callback_) {
       local_slam_result_callback_(
           trajectory_id_, matching_result->time, matching_result->local_pose,
-          std::move(matching_result->range_data_in_local), std::move(node_id),
+          std::move(matching_result->range_data_in_local),
           std::move(insertion_result));
     }
   }

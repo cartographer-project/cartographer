@@ -115,7 +115,6 @@ class ClientServerTest : public ::testing::Test {
             int, cartographer::common::Time,
             cartographer::transform::Rigid3d local_pose,
             cartographer::sensor::RangeData,
-            std::unique_ptr<const cartographer::mapping::NodeId>,
             std::unique_ptr<const cartographer::mapping::
                                 TrajectoryBuilderInterface::InsertionResult>) {
           std::unique_lock<std::mutex> lock(local_slam_result_mutex_);

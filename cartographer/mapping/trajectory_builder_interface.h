@@ -45,7 +45,8 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
 class TrajectoryBuilderInterface {
  public:
   struct InsertionResult {
-    std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
+    NodeId node_id;
+    std::shared_ptr<const TrajectoryNode::Data> constant_data;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
 
@@ -56,7 +57,6 @@ class TrajectoryBuilderInterface {
       std::function<void(int /* trajectory ID */, common::Time,
                          transform::Rigid3d /* local pose estimate */,
                          sensor::RangeData /* in local frame */,
-                         std::unique_ptr<const mapping::NodeId>,
                          std::unique_ptr<const InsertionResult>)>;
 
   TrajectoryBuilderInterface() {}
