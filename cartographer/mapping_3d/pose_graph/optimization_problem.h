@@ -18,13 +18,13 @@
 #define CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_
 
 #include <array>
-#include <deque>
 #include <map>
 #include <set>
 #include <vector>
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "cartographer/common/optional.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
@@ -106,6 +106,7 @@ class OptimizationProblem {
   struct TrajectoryData {
     double gravity_constant = 9.8;
     std::array<double, 4> imu_calibration{{1., 0., 0., 0.}};
+    common::optional<transform::Rigid3d> fixed_frame;
   };
 
   mapping::pose_graph::proto::OptimizationProblemOptions options_;
@@ -115,7 +116,7 @@ class OptimizationProblem {
   sensor::MapByTime<sensor::ImuData> imu_data_;
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
   sensor::MapByTime<sensor::FixedFramePoseData> fixed_frame_pose_data_;
-  std::vector<TrajectoryData> trajectory_data_;
+  std::map<int, TrajectoryData> trajectory_data_;
 };
 
 }  // namespace pose_graph

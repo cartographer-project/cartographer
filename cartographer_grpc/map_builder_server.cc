@@ -62,10 +62,12 @@ MapBuilderServer::MapBuilderContext::
              int trajectory_id, cartographer::common::Time time,
              cartographer::transform::Rigid3d local_pose,
              cartographer::sensor::RangeData range_data,
-             std::unique_ptr<const cartographer::mapping::NodeId> node_id) {
+             std::unique_ptr<const cartographer::mapping::
+                                 TrajectoryBuilderInterface::InsertionResult>
+                 insertion_result) {
     map_builder_server->OnLocalSlamResult(trajectory_id, time, local_pose,
                                           std::move(range_data),
-                                          std::move(node_id));
+                                          std::move(insertion_result));
   };
 }
 
@@ -184,19 +186,23 @@ void MapBuilderServer::OnLocalSlamResult(
     int trajectory_id, cartographer::common::Time time,
     cartographer::transform::Rigid3d local_pose,
     cartographer::sensor::RangeData range_data,
-    std::unique_ptr<const cartographer::mapping::NodeId> node_id) {
+    std::unique_ptr<const cartographer::mapping::TrajectoryBuilderInterface::
+                        InsertionResult>
+        insertion_result) {
   auto shared_range_data =
       std::make_shared<cartographer::sensor::RangeData>(std::move(range_data));
   cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
   for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
-    auto copy_of_node_id =
-        node_id ? cartographer::common::make_unique<
-                      const cartographer::mapping::NodeId>(*node_id)
-                : nullptr;
+    auto copy_of_insertion_result =
+        insertion_result
+            ? cartographer::common::make_unique<
+                  const cartographer::mapping::TrajectoryBuilderInterface::
+                      InsertionResult>(*insertion_result)
+            : nullptr;
     LocalSlamSubscriptionCallback callback = entry.second;
     callback(cartographer::common::make_unique<LocalSlamResult>(
         LocalSlamResult{trajectory_id, time, local_pose, shared_range_data,
-                        std::move(copy_of_node_id)}));
+                        std::move(copy_of_insertion_result)}));
   }
 }
 

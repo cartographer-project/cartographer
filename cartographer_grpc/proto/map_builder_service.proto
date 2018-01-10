@@ -66,12 +66,16 @@ message ReceiveLocalSlamResultsRequest {
   int32 trajectory_id = 1;
 }
 
+message LocalSlamInsertionResult {
+  cartographer.mapping.proto.NodeId node_id = 1;
+}
+
 message ReceiveLocalSlamResultsResponse {
   int32 trajectory_id = 1;
   int64 timestamp = 2;
   cartographer.transform.proto.Rigid3d local_pose = 3;
   cartographer.sensor.proto.RangeData range_data = 4;
-  cartographer.mapping.proto.NodeId node_id = 5;
+  LocalSlamInsertionResult insertion_result = 5;
 }
 
 message GetSubmapRequest {

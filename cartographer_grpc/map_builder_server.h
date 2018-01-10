@@ -35,7 +35,9 @@ class MapBuilderServer {
     cartographer::common::Time time;
     cartographer::transform::Rigid3d local_pose;
     std::shared_ptr<const cartographer::sensor::RangeData> range_data;
-    std::unique_ptr<const cartographer::mapping::NodeId> node_id;
+    std::unique_ptr<const cartographer::mapping::TrajectoryBuilderInterface::
+                        InsertionResult>
+        insertion_result;
   };
   // Calling with 'nullptr' signals subscribers that the subscription has ended.
   using LocalSlamSubscriptionCallback =
@@ -106,7 +108,9 @@ class MapBuilderServer {
       int trajectory_id, cartographer::common::Time time,
       cartographer::transform::Rigid3d local_pose,
       cartographer::sensor::RangeData range_data,
-      std::unique_ptr<const cartographer::mapping::NodeId> node_id);
+      std::unique_ptr<const cartographer::mapping::TrajectoryBuilderInterface::
+                          InsertionResult>
+          insertion_result);
   SubscriptionId SubscribeLocalSlamResults(
       int trajectory_id, LocalSlamSubscriptionCallback callback);
   void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
