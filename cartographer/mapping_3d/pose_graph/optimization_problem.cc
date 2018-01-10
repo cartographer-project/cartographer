@@ -378,7 +378,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   }
 
   // Add fixed frame pose constraints.
-  std::deque<CeresPose> C_fixed_frames;
+  std::map<int, CeresPose> C_fixed_frames;
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
     const int trajectory_id = node_it->id.trajectory_id;
     const auto trajectory_end = node_data_.EndOfTrajectory(trajectory_id);
@@ -387,6 +387,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
       continue;
     }
 
+    const TrajectoryData& trajectory_data = trajectory_data_.at(trajectory_id);
     bool fixed_frame_pose_initialized = false;
     for (; node_it != trajectory_end; ++node_it) {
       const mapping::NodeId node_id = node_it->id;
@@ -403,26 +404,34 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
           options_.fixed_frame_pose_rotation_weight()};
 
       if (!fixed_frame_pose_initialized) {
-        const transform::Rigid3d fixed_frame_pose_in_map =
-            node_data.global_pose * constraint_pose.zbar_ij.inverse();
-        C_fixed_frames.emplace_back(
-            transform::Rigid3d(
-                fixed_frame_pose_in_map.translation(),
-                Eigen::AngleAxisd(
-                    transform::GetYaw(fixed_frame_pose_in_map.rotation()),
-                    Eigen::Vector3d::UnitZ())),
-            nullptr,
-            common::make_unique<ceres::AutoDiffLocalParameterization<
-                YawOnlyQuaternionPlus, 4, 1>>(),
-            &problem);
+        transform::Rigid3d fixed_frame_pose_in_map;
+        if (trajectory_data.fixed_frame.has_value()) {
+          fixed_frame_pose_in_map = trajectory_data.fixed_frame.value();
+        } else {
+          fixed_frame_pose_in_map =
+              node_data.global_pose * constraint_pose.zbar_ij.inverse();
+        }
+        C_fixed_frames.emplace(
+            std::piecewise_construct, std::forward_as_tuple(trajectory_id),
+            std::forward_as_tuple(
+                transform::Rigid3d(
+                    fixed_frame_pose_in_map.translation(),
+                    Eigen::AngleAxisd(
+                        transform::GetYaw(fixed_frame_pose_in_map.rotation()),
+                        Eigen::Vector3d::UnitZ())),
+                nullptr,
+                common::make_unique<ceres::AutoDiffLocalParameterization<
+                    YawOnlyQuaternionPlus, 4, 1>>(),
+                &problem));
         fixed_frame_pose_initialized = true;
       }
 
       problem.AddResidualBlock(
           SpaCostFunction::CreateAutoDiffCostFunction(constraint_pose),
-          nullptr /* loss function */, C_fixed_frames.back().rotation(),
-          C_fixed_frames.back().translation(), C_nodes.at(node_id).rotation(),
-          C_nodes.at(node_id).translation());
+          nullptr /* loss function */,
+          C_fixed_frames.at(trajectory_id).rotation(),
+          C_fixed_frames.at(trajectory_id).translation(),
+          C_nodes.at(node_id).rotation(), C_nodes.at(node_id).translation());
     }
   }
 
@@ -457,6 +466,10 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   for (const auto& C_node_id_data : C_nodes) {
     node_data_.at(C_node_id_data.id).global_pose =
         C_node_id_data.data.ToRigid();
+  }
+  for (const auto& C_fixed_frame : C_fixed_frames) {
+    trajectory_data_.at(C_fixed_frame.first).fixed_frame =
+        C_fixed_frame.second.ToRigid();
   }
 }
 
