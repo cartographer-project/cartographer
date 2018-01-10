@@ -144,15 +144,15 @@ void TrajectoryBuilderStub::RunLocalSlamResultReader(
         cartographer::transform::ToRigid3(response.local_pose());
     cartographer::sensor::RangeData range_data =
         cartographer::sensor::FromProto(response.range_data());
-    auto node_id =
-        response.has_node_id()
-            ? cartographer::common::make_unique<cartographer::mapping::NodeId>(
-                  cartographer::mapping::NodeId{
-                      response.node_id().trajectory_id(),
-                      response.node_id().node_index()})
+    auto insertion_result =
+        response.has_insertion_result()
+            ? cartographer::common::make_unique<InsertionResult>(
+                  InsertionResult{cartographer::mapping::NodeId{
+                      response.insertion_result().node_id().trajectory_id(),
+                      response.insertion_result().node_id().node_index()}})
             : nullptr;
     local_slam_result_callback(trajectory_id, time, local_pose, range_data,
-                               std::move(node_id));
+                               std::move(insertion_result));
   }
   client_reader->Finish();
 }

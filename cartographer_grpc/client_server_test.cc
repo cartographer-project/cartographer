@@ -111,10 +111,12 @@ class ClientServerTest : public ::testing::Test {
         cartographer::mapping::CreateTrajectoryBuilderOptions(
             trajectory_builder_parameters.get());
     local_slam_result_callback_ =
-        [this](int, cartographer::common::Time,
-               cartographer::transform::Rigid3d local_pose,
-               cartographer::sensor::RangeData,
-               std::unique_ptr<const cartographer::mapping::NodeId>) {
+        [this](
+            int, cartographer::common::Time,
+            cartographer::transform::Rigid3d local_pose,
+            cartographer::sensor::RangeData,
+            std::unique_ptr<const cartographer::mapping::
+                                TrajectoryBuilderInterface::InsertionResult>) {
           std::unique_lock<std::mutex> lock(local_slam_result_mutex_);
           local_slam_result_poses_.push_back(local_pose);
           lock.unlock();

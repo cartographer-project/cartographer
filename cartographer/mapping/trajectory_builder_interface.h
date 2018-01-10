@@ -44,6 +44,12 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
 // optimized pose estimates.
 class TrajectoryBuilderInterface {
  public:
+  struct InsertionResult {
+    NodeId node_id;
+    std::shared_ptr<const TrajectoryNode::Data> constant_data;
+    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+  };
+
   // A callback which is called after local SLAM processes an accumulated
   // 'sensor::RangeData'. If the data was inserted into a submap, reports the
   // assigned 'NodeId', otherwise 'nullptr' if the data was filtered out.
@@ -51,7 +57,7 @@ class TrajectoryBuilderInterface {
       std::function<void(int /* trajectory ID */, common::Time,
                          transform::Rigid3d /* local pose estimate */,
                          sensor::RangeData /* in local frame */,
-                         std::unique_ptr<const mapping::NodeId>)>;
+                         std::unique_ptr<const InsertionResult>)>;
 
   TrajectoryBuilderInterface() {}
   virtual ~TrajectoryBuilderInterface() {}
