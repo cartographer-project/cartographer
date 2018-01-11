@@ -28,7 +28,7 @@
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/sensor/collator.h"
-#include "cartographer/sensor/data.h"
+#include "cartographer/sensor/dispatchable.h"
 
 namespace cartographer {
 namespace mapping {
@@ -50,27 +50,31 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
   void AddSensorData(
       const std::string& sensor_id,
       const sensor::TimedPointCloudData& timed_point_cloud_data) override {
-    AddSensorData(sensor::MakeDispatchable(sensor_id, timed_point_cloud_data));
+    AddData(sensor::MakeDispatchable(sensor_id, timed_point_cloud_data));
   }
 
   void AddSensorData(const std::string& sensor_id,
                      const sensor::ImuData& imu_data) override {
-    AddSensorData(sensor::MakeDispatchable(sensor_id, imu_data));
+    AddData(sensor::MakeDispatchable(sensor_id, imu_data));
   }
 
   void AddSensorData(const std::string& sensor_id,
                      const sensor::OdometryData& odometry_data) override {
-    AddSensorData(sensor::MakeDispatchable(sensor_id, odometry_data));
+    AddData(sensor::MakeDispatchable(sensor_id, odometry_data));
   }
 
   void AddSensorData(
       const std::string& sensor_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data) override {
-    AddSensorData(sensor::MakeDispatchable(sensor_id, fixed_frame_pose_data));
+    AddData(sensor::MakeDispatchable(sensor_id, fixed_frame_pose_data));
+  }
+  void AddLocalSlamResultData(std::unique_ptr<mapping::LocalSlamResultData>
+                                  local_slam_result_data) override {
+    AddData(std::move(local_slam_result_data));
   }
 
  private:
-  void AddSensorData(std::unique_ptr<sensor::Data> data);
+  void AddData(std::unique_ptr<sensor::Data> data);
 
   void HandleCollatedSensorData(const std::string& sensor_id,
                                 std::unique_ptr<sensor::Data> data);

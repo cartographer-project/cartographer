@@ -45,8 +45,7 @@ CollatedTrajectoryBuilder::CollatedTrajectoryBuilder(
 
 CollatedTrajectoryBuilder::~CollatedTrajectoryBuilder() {}
 
-void CollatedTrajectoryBuilder::AddSensorData(
-    std::unique_ptr<sensor::Data> data) {
+void CollatedTrajectoryBuilder::AddData(std::unique_ptr<sensor::Data> data) {
   sensor_collator_->AddSensorData(trajectory_id_, std::move(data));
 }
 
