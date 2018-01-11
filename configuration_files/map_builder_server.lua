@@ -18,5 +18,6 @@ MAP_BUILDER_SERVER = {
   server_address = "0.0.0.0:50051",
   num_event_threads = 4,
   num_grpc_threads = 4,
+  server_address = "localhost:50052",
   map_builder = MAP_BUILDER,
 }

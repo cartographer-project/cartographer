@@ -34,6 +34,8 @@ proto::MapBuilderServerOptions CreateMapBuilderServerOptions(
   *map_builder_server_options.mutable_map_builder_options() =
       cartographer::mapping::CreateMapBuilderOptions(
           lua_parameter_dictionary->GetDictionary("map_builder").get());
+  map_builder_server_options.set_uplink_server_address(
+      lua_parameter_dictionary->GetString("uplink_server_address"));
   return map_builder_server_options;
 }
 

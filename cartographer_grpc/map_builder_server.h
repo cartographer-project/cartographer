@@ -26,6 +26,7 @@
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/server.h"
 #include "cartographer_grpc/proto/map_builder_server_options.pb.h"
+#include "cartographer_grpc/uplink.h"
 
 namespace cartographer_grpc {
 
@@ -69,6 +70,7 @@ class MapBuilderServer {
     ProcessLocalSlamResultData(
         const std::string& sensor_id, cartographer::common::Time time,
         const cartographer::mapping::proto::LocalSlamResultData& proto);
+    Uplink* uplink() { return map_builder_server_->uplink_.get(); }
 
     template <typename DataType>
     void EnqueueSensorData(int trajectory_id, const std::string& sensor_id,
@@ -150,6 +152,7 @@ class MapBuilderServer {
   int current_subscription_index_ = 0;
   std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>
       local_slam_subscriptions_ GUARDED_BY(local_slam_subscriptions_lock_);
+  std::unique_ptr<Uplink> uplink_;
 };
 
 }  // namespace cartographer_grpc
