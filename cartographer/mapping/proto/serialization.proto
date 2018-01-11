@@ -56,6 +56,7 @@ message SerializedData {
 }
 
 message LocalSlamResultData {
-  TrajectoryNodeData node_data = 1;
-  repeated Submap submaps = 2;
+  int64 timestamp = 1;
+  TrajectoryNodeData node_data = 2;
+  repeated Submap submaps = 3;
 }
