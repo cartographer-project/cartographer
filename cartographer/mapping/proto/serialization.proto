@@ -54,3 +54,8 @@ message SerializedData {
   OdometryData odometry_data = 4;
   FixedFramePoseData fixed_frame_pose_data = 5;
 }
+
+message LocalSlamResultData {
+  TrajectoryNodeData node_data = 1;
+  repeated Submap submaps = 2;
+}

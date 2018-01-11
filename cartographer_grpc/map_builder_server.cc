@@ -18,6 +18,7 @@
 
 #include "cartographer_grpc/handlers/add_fixed_frame_pose_data_handler.h"
 #include "cartographer_grpc/handlers/add_imu_data_handler.h"
+#include "cartographer_grpc/handlers/add_local_slam_result_data_handler.h"
 #include "cartographer_grpc/handlers/add_odometry_data_handler.h"
 #include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
 #include "cartographer_grpc/handlers/add_trajectory_handler.h"
@@ -48,8 +49,7 @@ MapBuilderServer::MapBuilderContext::map_builder() {
   return *map_builder_server_->map_builder_;
 }
 
-cartographer::common::BlockingQueue<
-    std::unique_ptr<MapBuilderServer::SensorData>>&
+cartographer::common::BlockingQueue<std::unique_ptr<MapBuilderServer::Data>>&
 MapBuilderServer::MapBuilderContext::sensor_data_queue() {
   return map_builder_server_->sensor_data_queue_;
 }
@@ -72,8 +72,8 @@ MapBuilderServer::MapBuilderContext::
 }
 
 void MapBuilderServer::MapBuilderContext::AddSensorDataToTrajectory(
-    const SensorData& sensor_data) {
-  sensor_data.sensor_data->AddToTrajectoryBuilder(
+    const Data& sensor_data) {
+  sensor_data.data->AddToTrajectoryBuilder(
       map_builder_server_->map_builder_->GetTrajectoryBuilder(
           sensor_data.trajectory_id));
 }
@@ -93,6 +93,128 @@ void MapBuilderServer::MapBuilderContext::UnsubscribeLocalSlamResults(
 void MapBuilderServer::MapBuilderContext::NotifyFinishTrajectory(
     int trajectory_id) {
   map_builder_server_->NotifyFinishTrajectory(trajectory_id);
+}
+
+std::shared_ptr<cartographer::mapping_2d::Submap> MapBuilderServer::MapBuilderContext::GetSubmap2D(const cartographer::mapping::proto::Submap& proto) {
+  CHECK(proto.has_submap_2d());
+  cartographer::mapping::SubmapId submap_id{
+      proto.submap_id().trajectory_id(),
+      proto.submap_id().submap_index()
+  };
+  std::shared_ptr<cartographer::mapping_2d::Submap> submap_2d_ptr;
+  auto submap_it = unfinished_submaps_.find(submap_id);
+  if (submap_it == unfinished_submaps_.end()) {
+    // Seeing a submap for the first time it should never be finished.
+    CHECK(!proto.submap_2d().finished());
+    submap_2d_ptr =
+        std::make_shared<cartographer::mapping_2d::Submap>(proto.submap_2d());
+    unfinished_submaps_.Insert(submap_id, submap_2d_ptr);
+    submap_it = unfinished_submaps_.find(submap_id);
+  } else {
+    submap_2d_ptr = std::dynamic_pointer_cast<cartographer::mapping_2d::Submap>(submap_it->data);
+    CHECK(submap_2d_ptr);
+
+    // Update submap with information in incoming request.
+    *submap_2d_ptr = std::move(cartographer::mapping_2d::Submap(proto.submap_2d()));
+  }
+  return submap_2d_ptr;
+}
+
+std::shared_ptr<cartographer::mapping_3d::Submap> MapBuilderServer::MapBuilderContext::GetSubmap3D(const cartographer::mapping::proto::Submap& proto) {
+  CHECK(proto.has_submap_3d());
+  cartographer::mapping::SubmapId submap_id{
+      proto.submap_id().trajectory_id(),
+      proto.submap_id().submap_index()
+  };
+  std::shared_ptr<cartographer::mapping_3d::Submap> submap_3d_ptr;
+  auto submap_it = unfinished_submaps_.find(submap_id);
+  if (submap_it == unfinished_submaps_.end()) {
+    // Seeing a submap for the first time it should never be finished.
+    CHECK(!proto.submap_3d().finished());
+    submap_3d_ptr =
+        std::make_shared<cartographer::mapping_3d::Submap>(proto.submap_3d());
+    unfinished_submaps_.Insert(submap_id, submap_3d_ptr);
+    submap_it = unfinished_submaps_.find(submap_id);
+  } else {
+    submap_3d_ptr = std::dynamic_pointer_cast<cartographer::mapping_3d::Submap>(submap_it->data);
+    CHECK(submap_3d_ptr);
+
+    // Update submap with information in incoming request.
+    *submap_3d_ptr = cartographer::mapping_3d::Submap(proto.submap_3d());
+  }
+  return submap_3d_ptr;
+}
+
+std::unique_ptr<cartographer::mapping::LocalSlamResultData> MapBuilderServer::MapBuilderContext::BuildLocalSlamResultData(
+    const std::string&  sensor_id,
+    cartographer::common::Time time,
+    const cartographer::mapping::proto::LocalSlamResultData& proto) {
+
+
+  CHECK_GE(proto.submaps().size(), 0);
+  CHECK(proto.submaps(0).has_submap_2d() || proto.submaps(0).has_submap_3d());
+  if (proto.submaps(0).has_submap_2d()) {
+    std::vector<std::shared_ptr<cartographer::mapping_2d::Submap>> submaps;
+    for (const auto& submap_proto : proto.submaps()) {
+      submaps.push_back(GetSubmap2D(submap_proto));
+    }
+    return cartographer::common::make_unique<cartographer::mapping::LocalSlamResult2D>(
+        sensor_id,
+        time,
+        std::make_shared<cartographer::mapping::TrajectoryNode>(cartographer::mapping::FromProto(proto.node_data())),
+        submaps);
+  } else {
+    std::vector<std::shared_ptr<cartographer::mapping_3d::Submap>> submaps;
+    for (const auto& submap_proto : proto.submaps()) {
+      submaps.push_back(GetSubmap3D(submap_proto));
+    }
+    return cartographer::common::make_unique<cartographer::mapping::LocalSlamResult2D>(
+        sensor_id,
+        time,
+        std::make_shared<cartographer::mapping::TrajectoryNode>(cartographer::mapping::FromProto(proto.node_data())),
+        submaps);
+  }
+
+
+/*
+  for (const auto& submap_proto : proto.submaps()) {
+    cartographer::mapping::SubmapId submap_id{
+        submap_proto.submap_id().trajectory_id(),
+        submap_proto.submap_id().submap_index()
+    };
+
+    // Must contain either a 2D or 3D submap.
+    CHECK(submap_proto.has_submap_2d() || submap_proto.has_submap_3d());
+    if (submap_proto.has_submap_2d()) {
+      std::shared_ptr<cartographer::mapping_2d::Submap> submap_2d_ptr;
+      auto submap_it = unfinished_submaps_.find(submap_id);
+      if (submap_it == unfinished_submaps_.end()) {
+        // Seeing a submap for the first time it should never be finished.
+        CHECK(!submap_proto.submap_2d().finished());
+        submap_2d_ptr =
+            std::make_shared<cartographer::mapping_2d::Submap>(
+                submap_proto.submap_2d());
+        unfinished_submaps_.Insert(submap_id, submap_2d_ptr);
+        submap_it = unfinished_submaps_.find(submap_id);
+      } else {
+        submap_2d_ptr = std::dynamic_pointer_cast<cartographer::mapping_2d::Submap>(submap_it->data);
+        CHECK(submap_2d_ptr);
+
+        // Update submap with information in incoming request.
+        *submap_2d_ptr = cartographer::mapping_2d::Submap(
+            submap_proto.submap_2d());
+      }
+      return cartographer::common::make_unique<cartographer::mapping::LocalSlamResult2D>(
+          sensor_id,
+          time,
+          std::make_shared<cartographer::mapping::TrajectoryNode>(cartographer::mapping::FromProto(proto.node_data())),
+
+      );
+    } else {
+
+    }
+  }*/
+  return nullptr;
 }
 
 MapBuilderServer::MapBuilderServer(
@@ -118,6 +240,9 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::AddFixedFramePoseDataHandler,
                                  proto::MapBuilderService>(
       "AddFixedFramePoseData");
+  server_builder.RegisterHandler<handlers::AddLocalSlamResultDataHandler,
+                                 proto::MapBuilderService>(
+      "AddLocalSlamResultData");
   server_builder.RegisterHandler<handlers::FinishTrajectoryHandler,
                                  proto::MapBuilderService>("FinishTrajectory");
   server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler,
@@ -165,7 +290,7 @@ void MapBuilderServer::Shutdown() {
 void MapBuilderServer::ProcessSensorDataQueue() {
   LOG(INFO) << "Starting SLAM thread.";
   while (!shutting_down_) {
-    std::unique_ptr<SensorData> sensor_data =
+    std::unique_ptr<Data> sensor_data =
         sensor_data_queue_.PopWithTimeout(kPopTimeout);
     if (sensor_data) {
       grpc_server_->GetContext<MapBuilderContext>()->AddSensorDataToTrajectory(

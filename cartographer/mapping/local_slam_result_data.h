@@ -39,7 +39,10 @@ class LocalSlamResultData : public cartographer::sensor::Data {
 
 class LocalSlamResult2D : public LocalSlamResultData {
  public:
-  LocalSlamResult2D(const std::string &sensor_id, common::Time time);
+  LocalSlamResult2D(
+      const std::string &sensor_id, common::Time time,
+      std::shared_ptr<const mapping::TrajectoryNode::Data> node_data,
+      std::vector<std::shared_ptr<const mapping_2d::Submap>> insertion_submaps);
 
   void AddToTrajectoryBuilder(
       mapping::TrajectoryBuilderInterface *const trajectory_builder) override;
@@ -47,13 +50,16 @@ class LocalSlamResult2D : public LocalSlamResultData {
                       mapping::PoseGraph *pose_graph) const override;
 
  private:
-  std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
-  std::vector<std::shared_ptr<const mapping_2d::Submap>> insertion_submaps;
+  std::shared_ptr<const mapping::TrajectoryNode::Data> node_data_;
+  std::vector<std::shared_ptr<const mapping_2d::Submap>> insertion_submaps_;
 };
 
 class LocalSlamResult3D : public LocalSlamResultData {
  public:
-  LocalSlamResult3D(const std::string &sensor_id, common::Time time);
+  LocalSlamResult3D(
+      const std::string &sensor_id, common::Time time,
+      std::shared_ptr<const mapping::TrajectoryNode::Data> node_data,
+      std::vector<std::shared_ptr<const mapping_3d::Submap>> insertion_submaps);
 
   void AddToTrajectoryBuilder(
       mapping::TrajectoryBuilderInterface *const trajectory_builder) override;
@@ -61,8 +67,8 @@ class LocalSlamResult3D : public LocalSlamResultData {
                       mapping::PoseGraph *pose_graph) const override;
 
  private:
-  std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
-  std::vector<std::shared_ptr<const mapping_3d::Submap>> insertion_submaps;
+  std::shared_ptr<const mapping::TrajectoryNode::Data> node_data_;
+  std::vector<std::shared_ptr<const mapping_3d::Submap>> insertion_submaps_;
 };
 
 }  // namespace mapping
