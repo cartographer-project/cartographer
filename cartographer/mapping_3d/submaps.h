@@ -50,10 +50,10 @@ class Submap : public mapping::Submap {
   void ToProto(mapping::proto::Submap* proto) const override;
 
   const HybridGrid& high_resolution_hybrid_grid() const {
-    return high_resolution_hybrid_grid_;
+    return *high_resolution_hybrid_grid_;
   }
   const HybridGrid& low_resolution_hybrid_grid() const {
-    return low_resolution_hybrid_grid_;
+    return *low_resolution_hybrid_grid_;
   }
   bool finished() const { return finished_; }
 
@@ -69,8 +69,8 @@ class Submap : public mapping::Submap {
   void Finish();
 
  private:
-  HybridGrid high_resolution_hybrid_grid_;
-  HybridGrid low_resolution_hybrid_grid_;
+  std::unique_ptr<HybridGrid> high_resolution_hybrid_grid_;
+  std::unique_ptr<HybridGrid> low_resolution_hybrid_grid_;
   bool finished_ = false;
 };
 

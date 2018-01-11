@@ -200,13 +200,17 @@ proto::SubmapsOptions CreateSubmapsOptions(
 Submap::Submap(const float high_resolution, const float low_resolution,
                const transform::Rigid3d& local_submap_pose)
     : mapping::Submap(local_submap_pose),
-      high_resolution_hybrid_grid_(high_resolution),
-      low_resolution_hybrid_grid_(low_resolution) {}
+      high_resolution_hybrid_grid_(
+          common::make_unique<HybridGrid>(high_resolution)),
+      low_resolution_hybrid_grid_(
+          common::make_unique<HybridGrid>(low_resolution)) {}
 
 Submap::Submap(const mapping::proto::Submap3D& proto)
     : mapping::Submap(transform::ToRigid3(proto.local_pose())),
-      high_resolution_hybrid_grid_(proto.high_resolution_hybrid_grid()),
-      low_resolution_hybrid_grid_(proto.low_resolution_hybrid_grid()) {
+      high_resolution_hybrid_grid_(
+          common::make_unique<HybridGrid>(proto.high_resolution_hybrid_grid())),
+      low_resolution_hybrid_grid_(
+          common::make_unique<HybridGrid>(proto.low_resolution_hybrid_grid())) {
   SetNumRangeData(proto.num_range_data());
   finished_ = proto.finished();
 }
@@ -227,9 +231,9 @@ void Submap::ToResponseProto(
     mapping::proto::SubmapQuery::Response* const response) const {
   response->set_submap_version(num_range_data());
 
-  AddToTextureProto(high_resolution_hybrid_grid_, global_submap_pose,
+  AddToTextureProto(*high_resolution_hybrid_grid_, global_submap_pose,
                     response->add_textures());
-  AddToTextureProto(low_resolution_hybrid_grid_, global_submap_pose,
+  AddToTextureProto(*low_resolution_hybrid_grid_, global_submap_pose,
                     response->add_textures());
 }
 
@@ -242,9 +246,9 @@ void Submap::InsertRangeData(const sensor::RangeData& range_data,
   range_data_inserter.Insert(
       FilterRangeDataByMaxRange(transformed_range_data,
                                 high_resolution_max_range),
-      &high_resolution_hybrid_grid_);
+      high_resolution_hybrid_grid_.get());
   range_data_inserter.Insert(transformed_range_data,
-                             &low_resolution_hybrid_grid_);
+                             low_resolution_hybrid_grid_.get());
   SetNumRangeData(num_range_data() + 1);
 }
 
