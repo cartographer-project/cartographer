@@ -48,6 +48,7 @@ class Submap : public mapping::Submap {
   explicit Submap(const mapping::proto::Submap2D& proto);
 
   void ToProto(mapping::proto::Submap* proto) const override;
+  void UpdateFromProto(const mapping::proto::Submap& proto) override;
 
   const ProbabilityGrid& probability_grid() const { return probability_grid_; }
   bool finished() const { return finished_; }

@@ -82,6 +82,16 @@ void Submap::ToProto(mapping::proto::Submap* const proto) const {
   *submap_2d->mutable_probability_grid() = probability_grid_.ToProto();
 }
 
+void Submap::UpdateFromProto(const mapping::proto::Submap& proto) {
+  CHECK(proto.has_submap_2d());
+  const auto& submap2d = proto.submap_2d();
+  SetNumRangeData(submap2d.num_range_data());
+  finished_ = submap2d.finished();
+  if (submap2d.has_probability_grid()) {
+    probability_grid_ = ProbabilityGrid(submap2d.probability_grid());
+  }
+}
+
 void Submap::ToResponseProto(
     const transform::Rigid3d&,
     mapping::proto::SubmapQuery::Response* const response) const {

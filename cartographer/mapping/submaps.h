@@ -64,6 +64,7 @@ class Submap {
   virtual ~Submap() {}
 
   virtual void ToProto(proto::Submap* proto) const = 0;
+  virtual void UpdateFromProto(const proto::Submap& proto) = 0;
 
   // Pose of this submap in the local map frame.
   transform::Rigid3d local_pose() const { return local_pose_; }

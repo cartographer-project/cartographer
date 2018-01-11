@@ -115,7 +115,7 @@ std::shared_ptr<cartographer::mapping_2d::Submap> MapBuilderServer::MapBuilderCo
     CHECK(submap_2d_ptr);
 
     // Update submap with information in incoming request.
-    *submap_2d_ptr = std::move(cartographer::mapping_2d::Submap(proto.submap_2d()));
+    submap_2d_ptr->UpdateFromProto(proto);
   }
   return submap_2d_ptr;
 }
@@ -140,7 +140,7 @@ std::shared_ptr<cartographer::mapping_3d::Submap> MapBuilderServer::MapBuilderCo
     CHECK(submap_3d_ptr);
 
     // Update submap with information in incoming request.
-    *submap_3d_ptr = cartographer::mapping_3d::Submap(proto.submap_3d());
+    submap_3d_ptr->UpdateFromProto(proto);
   }
   return submap_3d_ptr;
 }
@@ -154,67 +154,30 @@ std::unique_ptr<cartographer::mapping::LocalSlamResultData> MapBuilderServer::Ma
   CHECK_GE(proto.submaps().size(), 0);
   CHECK(proto.submaps(0).has_submap_2d() || proto.submaps(0).has_submap_3d());
   if (proto.submaps(0).has_submap_2d()) {
-    std::vector<std::shared_ptr<cartographer::mapping_2d::Submap>> submaps;
+    std::vector<std::shared_ptr<const cartographer::mapping_2d::Submap>>
+        submaps;
     for (const auto& submap_proto : proto.submaps()) {
       submaps.push_back(GetSubmap2D(submap_proto));
     }
-    return cartographer::common::make_unique<cartographer::mapping::LocalSlamResult2D>(
-        sensor_id,
-        time,
-        std::make_shared<cartographer::mapping::TrajectoryNode>(cartographer::mapping::FromProto(proto.node_data())),
+    return cartographer::common::make_unique<
+        cartographer::mapping::LocalSlamResult2D>(
+        sensor_id, time,
+        std::make_shared<const cartographer::mapping::TrajectoryNode::Data>(
+            cartographer::mapping::FromProto(proto.node_data())),
         submaps);
   } else {
-    std::vector<std::shared_ptr<cartographer::mapping_3d::Submap>> submaps;
+    std::vector<std::shared_ptr<const cartographer::mapping_3d::Submap>>
+        submaps;
     for (const auto& submap_proto : proto.submaps()) {
       submaps.push_back(GetSubmap3D(submap_proto));
     }
-    return cartographer::common::make_unique<cartographer::mapping::LocalSlamResult2D>(
-        sensor_id,
-        time,
-        std::make_shared<cartographer::mapping::TrajectoryNode>(cartographer::mapping::FromProto(proto.node_data())),
+    return cartographer::common::make_unique<
+        cartographer::mapping::LocalSlamResult3D>(
+        sensor_id, time,
+        std::make_shared<const cartographer::mapping::TrajectoryNode::Data>(
+            cartographer::mapping::FromProto(proto.node_data())),
         submaps);
   }
-
-
-/*
-  for (const auto& submap_proto : proto.submaps()) {
-    cartographer::mapping::SubmapId submap_id{
-        submap_proto.submap_id().trajectory_id(),
-        submap_proto.submap_id().submap_index()
-    };
-
-    // Must contain either a 2D or 3D submap.
-    CHECK(submap_proto.has_submap_2d() || submap_proto.has_submap_3d());
-    if (submap_proto.has_submap_2d()) {
-      std::shared_ptr<cartographer::mapping_2d::Submap> submap_2d_ptr;
-      auto submap_it = unfinished_submaps_.find(submap_id);
-      if (submap_it == unfinished_submaps_.end()) {
-        // Seeing a submap for the first time it should never be finished.
-        CHECK(!submap_proto.submap_2d().finished());
-        submap_2d_ptr =
-            std::make_shared<cartographer::mapping_2d::Submap>(
-                submap_proto.submap_2d());
-        unfinished_submaps_.Insert(submap_id, submap_2d_ptr);
-        submap_it = unfinished_submaps_.find(submap_id);
-      } else {
-        submap_2d_ptr = std::dynamic_pointer_cast<cartographer::mapping_2d::Submap>(submap_it->data);
-        CHECK(submap_2d_ptr);
-
-        // Update submap with information in incoming request.
-        *submap_2d_ptr = cartographer::mapping_2d::Submap(
-            submap_proto.submap_2d());
-      }
-      return cartographer::common::make_unique<cartographer::mapping::LocalSlamResult2D>(
-          sensor_id,
-          time,
-          std::make_shared<cartographer::mapping::TrajectoryNode>(cartographer::mapping::FromProto(proto.node_data())),
-
-      );
-    } else {
-
-    }
-  }*/
-  return nullptr;
 }
 
 MapBuilderServer::MapBuilderServer(

@@ -226,6 +226,22 @@ void Submap::ToProto(mapping::proto::Submap* const proto) const {
       low_resolution_hybrid_grid().ToProto();
 }
 
+void Submap::UpdateFromProto(const mapping::proto::Submap& proto) {
+  CHECK(proto.has_submap_3d());
+  const auto& submap3d = proto.submap_3d();
+  SetNumRangeData(submap3d.num_range_data());
+  finished_ = submap3d.finished();
+  high_resolution_hybrid_grid_ =
+      submap3d.has_high_resolution_hybrid_grid()
+          ? common::make_unique<HybridGrid>(
+                submap3d.high_resolution_hybrid_grid())
+          : nullptr;
+  low_resolution_hybrid_grid_ = submap3d.has_low_resolution_hybrid_grid()
+                                    ? common::make_unique<HybridGrid>(
+                                          submap3d.low_resolution_hybrid_grid())
+                                    : nullptr;
+}
+
 void Submap::ToResponseProto(
     const transform::Rigid3d& global_submap_pose,
     mapping::proto::SubmapQuery::Response* const response) const {
