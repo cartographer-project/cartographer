@@ -23,44 +23,31 @@
 #include <unordered_set>
 #include <vector>
 
+#include "cartographer/sensor/collator_interface.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/ordered_multi_queue.h"
 
 namespace cartographer {
 namespace sensor {
 
-class Collator {
+class Collator : public CollatorInterface {
  public:
-  using Callback =
-      std::function<void(const std::string&, std::unique_ptr<Data>)>;
-
   Collator() {}
 
   Collator(const Collator&) = delete;
   Collator& operator=(const Collator&) = delete;
 
-  // Adds a trajectory to produce sorted sensor output for. Calls 'callback'
-  // for each collated sensor data.
   void AddTrajectory(int trajectory_id,
                      const std::unordered_set<std::string>& expected_sensor_ids,
-                     const Callback& callback);
+                     const Callback& callback) override;
 
-  // Marks 'trajectory_id' as finished.
-  void FinishTrajectory(int trajectory_id);
+  void FinishTrajectory(int trajectory_id) override;
 
-  // Adds 'data' for 'trajectory_id' to be collated. 'data' must contain valid
-  // sensor data. Sensor packets with matching 'data.sensor_id_' must be added
-  // in time order.
-  void AddSensorData(int trajectory_id, std::unique_ptr<Data> data);
+  void AddSensorData(int trajectory_id, std::unique_ptr<Data> data) override;
 
-  // Dispatches all queued sensor packets. May only be called once.
-  // AddSensorData may not be called after Flush.
-  void Flush();
+  void Flush() override;
 
-  // Must only be called if at least one unfinished trajectory exists. Returns
-  // the ID of the trajectory that needs more data before the Collator is
-  // unblocked.
-  int GetBlockingTrajectoryId() const;
+  int GetBlockingTrajectoryId() const override;
 
  private:
   // Queue keys are a pair of trajectory ID and sensor identifier.
