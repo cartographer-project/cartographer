@@ -65,9 +65,9 @@ class MapBuilderServer {
         int trajectory_id, LocalSlamSubscriptionCallback callback);
     void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
     void NotifyFinishTrajectory(int trajectory_id);
-    std::unique_ptr<cartographer::mapping::LocalSlamResultData> BuildLocalSlamResultData(
-        const std::string&  sensor_id,
-        cartographer::common::Time time,
+    std::unique_ptr<cartographer::mapping::LocalSlamResultData>
+    BuildLocalSlamResultData(
+        const std::string& sensor_id, cartographer::common::Time time,
         const cartographer::mapping::proto::LocalSlamResultData& proto);
 
     template <typename DataType>
@@ -91,8 +91,10 @@ class MapBuilderServer {
     }
 
    private:
-    std::shared_ptr<cartographer::mapping_2d::Submap> GetSubmap2D(const cartographer::mapping::proto::Submap& proto);
-    std::shared_ptr<cartographer::mapping_3d::Submap> GetSubmap3D(const cartographer::mapping::proto::Submap& proto);
+    std::shared_ptr<cartographer::mapping_2d::Submap> GetSubmap2D(
+        const cartographer::mapping::proto::Submap& proto);
+    std::shared_ptr<cartographer::mapping_3d::Submap> GetSubmap3D(
+        const cartographer::mapping::proto::Submap& proto);
 
     MapBuilderServer* map_builder_server_;
     cartographer::mapping::MapById<
