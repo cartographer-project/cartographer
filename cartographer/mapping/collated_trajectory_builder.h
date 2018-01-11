@@ -27,18 +27,18 @@
 #include "cartographer/common/rate_timer.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
-#include "cartographer/sensor/collator.h"
+#include "cartographer/sensor/collator_interface.h"
 #include "cartographer/sensor/dispatchable.h"
 
 namespace cartographer {
 namespace mapping {
 
-// Handles collating sensor data using a sensor::Collator, then passing it on to
+// Collates sensor data using a sensor::CollatorInterface, then passes it on to
 // a mapping::TrajectoryBuilderInterface which is common for 2D and 3D.
 class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
  public:
   CollatedTrajectoryBuilder(
-      sensor::Collator* sensor_collator, int trajectory_id,
+      sensor::CollatorInterface* sensor_collator, int trajectory_id,
       const std::unordered_set<std::string>& expected_sensor_ids,
       std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder);
   ~CollatedTrajectoryBuilder() override;
@@ -79,7 +79,7 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
   void HandleCollatedSensorData(const std::string& sensor_id,
                                 std::unique_ptr<sensor::Data> data);
 
-  sensor::Collator* const sensor_collator_;
+  sensor::CollatorInterface* const sensor_collator_;
   const int trajectory_id_;
   std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder_;
 
