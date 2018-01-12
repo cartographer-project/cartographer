@@ -27,6 +27,20 @@ namespace {
 
 class OrderedMultiQueueTest : public ::testing::Test {
  protected:
+  struct QueueKey {
+    int trajectory_id;
+    std::string sensor_id;
+
+    bool operator<(const QueueKey& other) const {
+      return std::forward_as_tuple(trajectory_id, sensor_id) <
+             std::forward_as_tuple(other.trajectory_id, other.sensor_id);
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const QueueKey& key) {
+      return out << '(' << key.trajectory_id << ", " << key.sensor_id << ')';
+    }
+  };
+
   // These are keys are chosen so that they sort first, second, third.
   const QueueKey kFirst{1, "a"};
   const QueueKey kSecond{1, "b"};
@@ -51,7 +65,7 @@ class OrderedMultiQueueTest : public ::testing::Test {
   }
 
   std::vector<std::unique_ptr<Data>> values_;
-  OrderedMultiQueue queue_;
+  OrderedMultiQueue<QueueKey> queue_;
 };
 
 TEST_F(OrderedMultiQueueTest, Ordering) {

@@ -50,8 +50,22 @@ class Collator : public CollatorInterface {
   int GetBlockingTrajectoryId() const override;
 
  private:
+  struct QueueKey {
+    int trajectory_id;
+    std::string sensor_id;
+
+    bool operator<(const QueueKey& other) const {
+      return std::forward_as_tuple(trajectory_id, sensor_id) <
+             std::forward_as_tuple(other.trajectory_id, other.sensor_id);
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const QueueKey& key) {
+      return out << '(' << key.trajectory_id << ", " << key.sensor_id << ')';
+    }
+  };
+
   // Queue keys are a pair of trajectory ID and sensor identifier.
-  OrderedMultiQueue queue_;
+  OrderedMultiQueue<QueueKey> queue_;
 
   // Map of trajectory ID to all associated QueueKeys.
   std::unordered_map<int, std::vector<QueueKey>> queue_keys_;
