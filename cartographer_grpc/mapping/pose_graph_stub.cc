@@ -109,5 +109,9 @@ PoseGraphStub::constraints() {
   return cartographer::mapping::FromProto(response.constraints());
 }
 
+cartographer::mapping::proto::PoseGraph PoseGraphStub::ToProto() {
+  LOG(FATAL) << "Not implemented";
+}
+
 }  // namespace mapping
 }  // namespace cartographer_grpc

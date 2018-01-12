@@ -90,6 +90,9 @@ class PoseGraphInterface {
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
+
+  // Serializes the constraints and trajectories.
+  virtual proto::PoseGraph ToProto() = 0;
 };
 
 }  // namespace mapping
