@@ -47,6 +47,7 @@ class PoseGraphStub : public cartographer::mapping::PoseGraphInterface {
   GetTrajectoryNodePoses() override;
   bool IsTrajectoryFinished(int trajectory_id) override;
   std::vector<Constraint> constraints() override;
+  cartographer::mapping::proto::PoseGraph ToProto() override;
 
  private:
   std::shared_ptr<grpc::Channel> client_channel_;

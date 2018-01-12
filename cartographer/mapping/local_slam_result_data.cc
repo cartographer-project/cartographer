@@ -24,9 +24,14 @@ LocalSlamResultData::LocalSlamResultData(const std::string &sensor_id,
                                          common::Time time)
     : Data(sensor_id), time_(time) {}
 
-LocalSlamResult2D::LocalSlamResult2D(const std::string &sensor_id,
-                                     common::Time time)
-    : LocalSlamResultData(sensor_id, time) {}
+LocalSlamResult2D::LocalSlamResult2D(
+    const std::string &sensor_id, common::Time time,
+    std::shared_ptr<const mapping::TrajectoryNode::Data> node_data,
+    const std::vector<std::shared_ptr<const mapping_2d::Submap>>
+        &insertion_submaps)
+    : LocalSlamResultData(sensor_id, time),
+      node_data_(node_data),
+      insertion_submaps_(insertion_submaps) {}
 
 void LocalSlamResult2D::AddToTrajectoryBuilder(
     mapping::TrajectoryBuilderInterface *const trajectory_builder) {
@@ -39,12 +44,17 @@ void LocalSlamResult2D::AddToPoseGraph(int trajectory_id,
   DCHECK(dynamic_cast<mapping_2d::PoseGraph *>(pose_graph));
   mapping_2d::PoseGraph *pose_graph_2d =
       static_cast<mapping_2d::PoseGraph *>(pose_graph);
-  pose_graph_2d->AddNode(constant_data, trajectory_id, insertion_submaps);
+  pose_graph_2d->AddNode(node_data_, trajectory_id, insertion_submaps_);
 }
 
-LocalSlamResult3D::LocalSlamResult3D(const std::string &sensor_id,
-                                     common::Time time)
-    : LocalSlamResultData(sensor_id, time) {}
+LocalSlamResult3D::LocalSlamResult3D(
+    const std::string &sensor_id, common::Time time,
+    std::shared_ptr<const mapping::TrajectoryNode::Data> node_data,
+    const std::vector<std::shared_ptr<const mapping_3d::Submap>>
+        &insertion_submaps)
+    : LocalSlamResultData(sensor_id, time),
+      node_data_(node_data),
+      insertion_submaps_(insertion_submaps) {}
 
 void LocalSlamResult3D::AddToTrajectoryBuilder(
     mapping::TrajectoryBuilderInterface *const trajectory_builder) {
@@ -57,7 +67,7 @@ void LocalSlamResult3D::AddToPoseGraph(int trajectory_id,
   DCHECK(dynamic_cast<mapping_3d::PoseGraph *>(pose_graph));
   mapping_3d::PoseGraph *pose_graph_3d =
       static_cast<mapping_3d::PoseGraph *>(pose_graph);
-  pose_graph_3d->AddNode(constant_data, trajectory_id, insertion_submaps);
+  pose_graph_3d->AddNode(node_data_, trajectory_id, insertion_submaps_);
 }
 
 }  // namespace mapping

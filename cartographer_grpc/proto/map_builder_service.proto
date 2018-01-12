@@ -15,6 +15,7 @@
 syntax = "proto3";
 
 import "cartographer/mapping/proto/pose_graph.proto";
+import "cartographer/mapping/proto/serialization.proto";
 import "cartographer/mapping/proto/submap_visualization.proto";
 import "cartographer/mapping/proto/trajectory_builder_options.proto";
 import "cartographer/sensor/proto/sensor.proto";
@@ -119,6 +120,11 @@ message GetConstraintsResponse {
   repeated cartographer.mapping.proto.PoseGraph.Constraint constraints = 1;
 }
 
+message AddLocalSlamResultDataRequest {
+  SensorMetadata sensor_metadata = 1;
+  cartographer.mapping.proto.LocalSlamResultData local_slam_result_data = 2;
+}
+
 service MapBuilderService {
   // Starts a new trajectory and returns its index.
   rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
@@ -137,6 +143,10 @@ service MapBuilderService {
 
   // Same for fixed-frame pose data.
   rpc AddFixedFramePoseData(stream AddFixedFramePoseDataRequest)
+      returns (google.protobuf.Empty);
+
+  // Adds a local SLAM result.
+  rpc AddLocalSlamResultData(stream AddLocalSlamResultDataRequest)
       returns (google.protobuf.Empty);
 
   // Requests the server to send a stream of local SLAM results for the given

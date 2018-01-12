@@ -22,7 +22,8 @@ namespace cartographer {
 namespace common {
 
 FixedRatioSampler::FixedRatioSampler(const double ratio) : ratio_(ratio) {
-  CHECK_GT(ratio, 0.);
+  CHECK_GE(ratio, 0.);
+  LOG_IF(WARNING, ratio == 0.) << "FixedRatioSampler is dropping all data.";
   CHECK_LE(ratio, 1.);
 }
 
