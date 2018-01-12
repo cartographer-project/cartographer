@@ -70,7 +70,9 @@ class MapBuilderServer {
     ProcessLocalSlamResultData(
         const std::string& sensor_id, cartographer::common::Time time,
         const cartographer::mapping::proto::LocalSlamResultData& proto);
-    DataUploader* uplink() { return map_builder_server_->uplink_.get(); }
+    DataUploader* data_uploader() {
+      return map_builder_server_->data_uploader_.get();
+    }
 
     template <typename DataType>
     void EnqueueSensorData(int trajectory_id, const std::string& sensor_id,
@@ -152,7 +154,7 @@ class MapBuilderServer {
   int current_subscription_index_ = 0;
   std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>
       local_slam_subscriptions_ GUARDED_BY(local_slam_subscriptions_lock_);
-  std::unique_ptr<DataUploader> uplink_;
+  std::unique_ptr<DataUploader> data_uploader_;
 };
 
 }  // namespace cartographer_grpc
