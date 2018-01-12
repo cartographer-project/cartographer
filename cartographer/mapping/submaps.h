@@ -77,7 +77,6 @@ class Submap {
       const transform::Rigid3d& global_submap_pose,
       proto::SubmapQuery::Response* response) const = 0;
 
- protected:
   void SetNumRangeData(const int num_range_data) {
     num_range_data_ = num_range_data;
   }

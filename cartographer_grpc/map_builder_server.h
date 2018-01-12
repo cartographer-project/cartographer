@@ -66,14 +66,14 @@ class MapBuilderServer {
     void UnsubscribeLocalSlamResults(const SubscriptionId& subscription_id);
     void NotifyFinishTrajectory(int trajectory_id);
     std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-    BuildLocalSlamResultData(
+    ProcessLocalSlamResultData(
         const std::string& sensor_id, cartographer::common::Time time,
         const cartographer::mapping::proto::LocalSlamResultData& proto);
 
     template <typename DataType>
     void EnqueueSensorData(int trajectory_id, const std::string& sensor_id,
                            const DataType& data) {
-      map_builder_server_->sensor_data_queue_.Push(
+      map_builder_server_->incoming_data_queue_.Push(
           cartographer::common::make_unique<MapBuilderServer::Data>(
               MapBuilderServer::Data{
                   trajectory_id,
@@ -84,16 +84,16 @@ class MapBuilderServer {
         int trajectory_id, const std::string& sensor_id,
         std::unique_ptr<cartographer::mapping::LocalSlamResultData>
             local_slam_result_data) {
-      map_builder_server_->sensor_data_queue_.Push(
+      map_builder_server_->incoming_data_queue_.Push(
           cartographer::common::make_unique<MapBuilderServer::Data>(
               MapBuilderServer::Data{trajectory_id,
                                      std::move(local_slam_result_data)}));
     }
 
    private:
-    std::shared_ptr<cartographer::mapping_2d::Submap> GetSubmap2D(
+    std::shared_ptr<cartographer::mapping_2d::Submap> UpdateSubmap2D(
         const cartographer::mapping::proto::Submap& proto);
-    std::shared_ptr<cartographer::mapping_3d::Submap> GetSubmap3D(
+    std::shared_ptr<cartographer::mapping_3d::Submap> UpdateSubmap3D(
         const cartographer::mapping::proto::Submap& proto);
 
     MapBuilderServer* map_builder_server_;
@@ -144,7 +144,8 @@ class MapBuilderServer {
   std::unique_ptr<std::thread> slam_thread_;
   std::unique_ptr<framework::Server> grpc_server_;
   std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder_;
-  cartographer::common::BlockingQueue<std::unique_ptr<Data>> sensor_data_queue_;
+  cartographer::common::BlockingQueue<std::unique_ptr<Data>>
+      incoming_data_queue_;
   cartographer::common::Mutex local_slam_subscriptions_lock_;
   int current_subscription_index_ = 0;
   std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>

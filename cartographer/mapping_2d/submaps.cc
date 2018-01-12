@@ -84,11 +84,11 @@ void Submap::ToProto(mapping::proto::Submap* const proto) const {
 
 void Submap::UpdateFromProto(const mapping::proto::Submap& proto) {
   CHECK(proto.has_submap_2d());
-  const auto& submap2d = proto.submap_2d();
-  SetNumRangeData(submap2d.num_range_data());
-  finished_ = submap2d.finished();
-  if (submap2d.has_probability_grid()) {
-    probability_grid_ = ProbabilityGrid(submap2d.probability_grid());
+  const auto& submap_2d = proto.submap_2d();
+  SetNumRangeData(submap_2d.num_range_data());
+  finished_ = submap_2d.finished();
+  if (submap_2d.has_probability_grid()) {
+    probability_grid_ = ProbabilityGrid(submap_2d.probability_grid());
   }
 }
 

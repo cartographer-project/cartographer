@@ -35,7 +35,7 @@ class AddLocalSlamResultDataHandler
   void OnRequest(const proto::AddLocalSlamResultDataRequest& request) override {
     auto local_slam_result_data =
         GetContext<MapBuilderServer::MapBuilderContext>()
-            ->BuildLocalSlamResultData(
+            ->ProcessLocalSlamResultData(
                 request.sensor_metadata().sensor_id(),
                 cartographer::common::FromUniversal(
                     request.local_slam_result_data().timestamp()),

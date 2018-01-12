@@ -51,7 +51,7 @@ MapBuilderServer::MapBuilderContext::map_builder() {
 
 cartographer::common::BlockingQueue<std::unique_ptr<MapBuilderServer::Data>>&
 MapBuilderServer::MapBuilderContext::sensor_data_queue() {
-  return map_builder_server_->sensor_data_queue_;
+  return map_builder_server_->incoming_data_queue_;
 }
 
 cartographer::mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
@@ -96,7 +96,7 @@ void MapBuilderServer::MapBuilderContext::NotifyFinishTrajectory(
 }
 
 std::shared_ptr<cartographer::mapping_2d::Submap>
-MapBuilderServer::MapBuilderContext::GetSubmap2D(
+MapBuilderServer::MapBuilderContext::UpdateSubmap2D(
     const cartographer::mapping::proto::Submap& proto) {
   CHECK(proto.has_submap_2d());
   cartographer::mapping::SubmapId submap_id{proto.submap_id().trajectory_id(),
@@ -109,20 +109,27 @@ MapBuilderServer::MapBuilderContext::GetSubmap2D(
     submap_2d_ptr =
         std::make_shared<cartographer::mapping_2d::Submap>(proto.submap_2d());
     unfinished_submaps_.Insert(submap_id, submap_2d_ptr);
-    submap_it = unfinished_submaps_.find(submap_id);
   } else {
     submap_2d_ptr = std::dynamic_pointer_cast<cartographer::mapping_2d::Submap>(
         submap_it->data);
     CHECK(submap_2d_ptr);
-
-    // Update submap with information in incoming request.
     submap_2d_ptr->UpdateFromProto(proto);
+
+    // If the submap was just finished by the recent update, remove it from the
+    // list of unfinished submaps.
+    if (submap_2d_ptr->finished()) {
+      unfinished_submaps_.Trim(submap_id);
+    } else {
+      // If the submap is unfinished set the 'num_range_data' to 0 since we
+      // haven't changed the HybridGrid.
+      submap_2d_ptr->SetNumRangeData(0);
+    }
   }
   return submap_2d_ptr;
 }
 
 std::shared_ptr<cartographer::mapping_3d::Submap>
-MapBuilderServer::MapBuilderContext::GetSubmap3D(
+MapBuilderServer::MapBuilderContext::UpdateSubmap3D(
     const cartographer::mapping::proto::Submap& proto) {
   CHECK(proto.has_submap_3d());
   cartographer::mapping::SubmapId submap_id{proto.submap_id().trajectory_id(),
@@ -143,12 +150,22 @@ MapBuilderServer::MapBuilderContext::GetSubmap3D(
 
     // Update submap with information in incoming request.
     submap_3d_ptr->UpdateFromProto(proto);
+
+    // If the submap was just finished by the recent update, remove it from the
+    // list of unfinished submaps.
+    if (submap_3d_ptr->finished()) {
+      unfinished_submaps_.Trim(submap_id);
+    } else {
+      // If the submap is unfinished set the 'num_range_data' to 0 since we
+      // haven't changed the HybridGrid.
+      submap_3d_ptr->SetNumRangeData(0);
+    }
   }
   return submap_3d_ptr;
 }
 
 std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-MapBuilderServer::MapBuilderContext::BuildLocalSlamResultData(
+MapBuilderServer::MapBuilderContext::ProcessLocalSlamResultData(
     const std::string& sensor_id, cartographer::common::Time time,
     const cartographer::mapping::proto::LocalSlamResultData& proto) {
   CHECK_GE(proto.submaps().size(), 0);
@@ -157,7 +174,7 @@ MapBuilderServer::MapBuilderContext::BuildLocalSlamResultData(
     std::vector<std::shared_ptr<const cartographer::mapping_2d::Submap>>
         submaps;
     for (const auto& submap_proto : proto.submaps()) {
-      submaps.push_back(GetSubmap2D(submap_proto));
+      submaps.push_back(UpdateSubmap2D(submap_proto));
     }
     return cartographer::common::make_unique<
         cartographer::mapping::LocalSlamResult2D>(
@@ -169,14 +186,14 @@ MapBuilderServer::MapBuilderContext::BuildLocalSlamResultData(
     std::vector<std::shared_ptr<const cartographer::mapping_3d::Submap>>
         submaps;
     for (const auto& submap_proto : proto.submaps()) {
-      submaps.push_back(GetSubmap3D(submap_proto));
+      submaps.push_back(UpdateSubmap3D(submap_proto));
     }
     return cartographer::common::make_unique<
         cartographer::mapping::LocalSlamResult3D>(
         sensor_id, time,
         std::make_shared<const cartographer::mapping::TrajectoryNode::Data>(
             cartographer::mapping::FromProto(proto.node_data())),
-        submaps);
+        std::move(submaps));
   }
 }
 
@@ -254,7 +271,7 @@ void MapBuilderServer::ProcessSensorDataQueue() {
   LOG(INFO) << "Starting SLAM thread.";
   while (!shutting_down_) {
     std::unique_ptr<Data> sensor_data =
-        sensor_data_queue_.PopWithTimeout(kPopTimeout);
+        incoming_data_queue_.PopWithTimeout(kPopTimeout);
     if (sensor_data) {
       grpc_server_->GetContext<MapBuilderContext>()->AddSensorDataToTrajectory(
           *sensor_data);
@@ -320,7 +337,7 @@ void MapBuilderServer::NotifyFinishTrajectory(int trajectory_id) {
 }
 
 void MapBuilderServer::WaitUntilIdle() {
-  sensor_data_queue_.WaitUntilEmpty();
+  incoming_data_queue_.WaitUntilEmpty();
   map_builder_->pose_graph()->RunFinalOptimization();
 }
 
