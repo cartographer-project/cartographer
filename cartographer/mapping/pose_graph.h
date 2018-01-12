@@ -109,8 +109,7 @@ class PoseGraph : public PoseGraphInterface {
   // not exist (anymore).
   virtual SubmapData GetSubmapData(const SubmapId& submap_id) = 0;
 
-  // Serializes the constraints and trajectories.
-  proto::PoseGraph ToProto();
+  proto::PoseGraph ToProto() override;
 
   // Returns the IMU data.
   virtual sensor::MapByTime<sensor::ImuData> GetImuData() = 0;
