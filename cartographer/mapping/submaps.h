@@ -64,6 +64,7 @@ class Submap {
   virtual ~Submap() {}
 
   virtual void ToProto(proto::Submap* proto) const = 0;
+  virtual void UpdateFromProto(const proto::Submap& proto) = 0;
 
   // Pose of this submap in the local map frame.
   transform::Rigid3d local_pose() const { return local_pose_; }
@@ -76,7 +77,6 @@ class Submap {
       const transform::Rigid3d& global_submap_pose,
       proto::SubmapQuery::Response* response) const = 0;
 
- protected:
   void SetNumRangeData(const int num_range_data) {
     num_range_data_ = num_range_data;
   }
