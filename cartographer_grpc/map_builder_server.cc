@@ -208,7 +208,7 @@ MapBuilderServer::MapBuilderServer(
   server_builder.SetNumEventThreads(
       map_builder_server_options.num_event_threads());
   if (!map_builder_server_options.uplink_server_address().empty()) {
-    uplink_ = cartographer::common::make_unique<Uplink>(
+    uplink_ = cartographer::common::make_unique<DataUploader>(
         map_builder_server_options.uplink_server_address());
   }
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler,

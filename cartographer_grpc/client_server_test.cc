@@ -104,6 +104,7 @@ class ClientServerTest : public ::testing::Test {
         num_event_threads = 1,
         num_grpc_threads = 1,
         map_builder = MAP_BUILDER,
+        uplink_server_address = "",
       }
       return MAP_BUILDER_SERVER)text";
     auto map_builder_server_parameters =

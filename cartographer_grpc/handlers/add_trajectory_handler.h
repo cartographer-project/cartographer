@@ -44,10 +44,18 @@ class AddTrajectoryHandler
                                   local_slam_result_callback);
     if (GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
             ->uplink()) {
+      auto trajectory_builder_options = request.trajectory_builder_options();
+
+      // Clear the trajectory builder options to convey to the cloud
+      // Cartographer instance that does not need to instantiate a
+      // 'LocalTrajectoryBuilder'.
+      trajectory_builder_options.clear_trajectory_builder_2d_options();
+      trajectory_builder_options.clear_trajectory_builder_3d_options();
+
       GetContext<MapBuilderServer::MapBuilderContext>()
           ->uplink()
           ->AddTrajectory(trajectory_id, expected_sensor_ids,
-                          request.trajectory_builder_options());
+                          trajectory_builder_options);
     }
 
     auto response =

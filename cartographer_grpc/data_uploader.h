@@ -17,13 +17,30 @@
 #ifndef CARTOGRAPHER_GRPC_DATA_UPLOADER_H
 #define CARTOGRAPHER_GRPC_DATA_UPLOADER_H
 
+#include <map>
 #include <string>
+#include <unordered_set>
+
+#include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
+#include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
+#include "grpc++/grpc++.h"
 
 namespace cartographer_grpc {
 
 class DataUploader {
  public:
-  DataUploader(const std::string &server_address);
+  DataUploader(const std::string& server_address);
+  void AddTrajectory(
+      int local_trajectory_id,
+      const std::unordered_set<std::string>& expected_sensor_ids,
+      const cartographer::mapping::proto::TrajectoryBuilderOptions&
+          trajectory_options);
+  void FinishTrajectory(int local_trajectory_id);
+
+ private:
+  std::shared_ptr<grpc::Channel> client_channel_;
+  std::unique_ptr<proto::MapBuilderService::Stub> service_stub_;
+  std::map<int, int> local_to_cloud_trajectory_id_map_;
 };
 
 }  // namespace cartographer_grpc
