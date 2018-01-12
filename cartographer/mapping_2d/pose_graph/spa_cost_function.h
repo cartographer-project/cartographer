@@ -50,9 +50,6 @@ class SpaCostFunction {
     return true;
   }
 
- private:
-  explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
-
   // Computes the error between the node-to-submap alignment 'zbar_ij' and the
   // difference of submap pose 'c_i' and node pose 'c_j' which are both in an
   // arbitrary common frame.
@@ -85,6 +82,9 @@ class SpaCostFunction {
     e[1] = e_ij[1] * T(pose.translation_weight);
     e[2] = e_ij[2] * T(pose.rotation_weight);
   }
+
+ private:
+  explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
 
   const Constraint::Pose pose_;
 };
