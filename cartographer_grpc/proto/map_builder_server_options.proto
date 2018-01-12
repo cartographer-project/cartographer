@@ -23,4 +23,5 @@ message MapBuilderServerOptions {
   int32 num_grpc_threads = 2;
   int32 num_event_threads = 3;
   cartographer.mapping.proto.MapBuilderOptions map_builder_options = 4;
+  string uplink_server_address = 5;
 }

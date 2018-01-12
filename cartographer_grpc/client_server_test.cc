@@ -99,12 +99,9 @@ class ClientServerTest : public ::testing::Test {
       include "map_builder_server.lua"
       MAP_BUILDER.use_trajectory_builder_2d = true
       MAP_BUILDER.pose_graph.optimize_every_n_nodes = 0
-      MAP_BUILDER_SERVER = {
-        server_address = "0.0.0.0:50051",
-        num_event_threads = 1,
-        num_grpc_threads = 1,
-        map_builder = MAP_BUILDER,
-      }
+      MAP_BUILDER_SERVER.num_event_threads = 1
+      MAP_BUILDER_SERVER.num_grpc_threads = 1
+      MAP_BUILDER_SERVER.uplink_server_address = ""
       return MAP_BUILDER_SERVER)text";
     auto map_builder_server_parameters =
         cartographer::mapping::test::ResolveLuaParameters(kMapBuilderServerLua);

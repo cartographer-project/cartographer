@@ -36,6 +36,12 @@ class FinishTrajectoryHandler
         .FinishTrajectory(request.trajectory_id());
     GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
         ->NotifyFinishTrajectory(request.trajectory_id());
+    if (GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+            ->data_uploader()) {
+      GetContext<MapBuilderServer::MapBuilderContext>()
+          ->data_uploader()
+          ->FinishTrajectory(request.trajectory_id());
+    }
     Send(cartographer::common::make_unique<google::protobuf::Empty>());
   }
 };

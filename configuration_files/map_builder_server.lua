@@ -15,8 +15,9 @@
 include "map_builder.lua"
 
 MAP_BUILDER_SERVER = {
-  server_address = "0.0.0.0:50051",
+  map_builder = MAP_BUILDER,
   num_event_threads = 4,
   num_grpc_threads = 4,
-  map_builder = MAP_BUILDER,
+  server_address = "0.0.0.0:50051",
+  uplink_server_address = "localhost:50052",
 }

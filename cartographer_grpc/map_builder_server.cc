@@ -207,6 +207,10 @@ MapBuilderServer::MapBuilderServer(
       map_builder_server_options.num_grpc_threads());
   server_builder.SetNumEventThreads(
       map_builder_server_options.num_event_threads());
+  if (!map_builder_server_options.uplink_server_address().empty()) {
+    data_uploader_ = cartographer::common::make_unique<DataUploader>(
+        map_builder_server_options.uplink_server_address());
+  }
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler,
                                  proto::MapBuilderService>("AddTrajectory");
   server_builder.RegisterHandler<handlers::AddOdometryDataHandler,
