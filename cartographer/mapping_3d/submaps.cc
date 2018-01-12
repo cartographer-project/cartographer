@@ -231,14 +231,14 @@ void Submap::UpdateFromProto(const mapping::proto::Submap& proto) {
   const auto& submap_3d = proto.submap_3d();
   SetNumRangeData(submap_3d.num_range_data());
   finished_ = submap_3d.finished();
-  if (submap_3d.has_low_resolution_hybrid_grid()) {
+  if (submap_3d.has_high_resolution_hybrid_grid()) {
     high_resolution_hybrid_grid_ =
         submap_3d.has_high_resolution_hybrid_grid()
             ? common::make_unique<HybridGrid>(
                   submap_3d.high_resolution_hybrid_grid())
             : nullptr;
   }
-  if (submap_3d.has_high_resolution_hybrid_grid()) {
+  if (submap_3d.has_low_resolution_hybrid_grid()) {
     low_resolution_hybrid_grid_ =
         submap_3d.has_low_resolution_hybrid_grid()
             ? common::make_unique<HybridGrid>(
