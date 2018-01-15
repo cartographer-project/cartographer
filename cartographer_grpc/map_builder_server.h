@@ -23,9 +23,9 @@
 #include "cartographer/mapping/map_builder.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/sensor/dispatchable.h"
-#include "cartographer_grpc/data_uploader.h"
 #include "cartographer_grpc/framework/execution_context.h"
 #include "cartographer_grpc/framework/server.h"
+#include "cartographer_grpc/local_trajectory_uploader.h"
 #include "cartographer_grpc/proto/map_builder_server_options.pb.h"
 
 namespace cartographer_grpc {
@@ -70,8 +70,8 @@ class MapBuilderServer {
     ProcessLocalSlamResultData(
         const std::string& sensor_id, cartographer::common::Time time,
         const cartographer::mapping::proto::LocalSlamResultData& proto);
-    DataUploader* data_uploader() {
-      return map_builder_server_->data_uploader_.get();
+    LocalTrajectoryUploader* local_trajectory_uploader() {
+      return map_builder_server_->local_trajectory_uploader_.get();
     }
 
     template <typename DataType>
@@ -154,7 +154,7 @@ class MapBuilderServer {
   int current_subscription_index_ = 0;
   std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>
       local_slam_subscriptions_ GUARDED_BY(local_slam_subscriptions_lock_);
-  std::unique_ptr<DataUploader> data_uploader_;
+  std::unique_ptr<LocalTrajectoryUploader> local_trajectory_uploader_;
 };
 
 }  // namespace cartographer_grpc

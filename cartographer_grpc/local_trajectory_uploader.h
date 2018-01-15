@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_DATA_UPLOADER_H
-#define CARTOGRAPHER_GRPC_DATA_UPLOADER_H
+#ifndef CARTOGRAPHER_GRPC_LOCAL_TRAJECTORY_UPLOADER_H
+#define CARTOGRAPHER_GRPC_LOCAL_TRAJECTORY_UPLOADER_H
 
 #include <map>
 #include <string>
@@ -28,9 +28,9 @@
 
 namespace cartographer_grpc {
 
-class DataUploader {
+class LocalTrajectoryUploader {
  public:
-  DataUploader(const std::string& server_address);
+  LocalTrajectoryUploader(const std::string& server_address);
   void AddTrajectory(
       int local_trajectory_id,
       const std::unordered_set<std::string>& expected_sensor_ids,
@@ -51,4 +51,4 @@ class DataUploader {
 
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_DATA_UPLOADER_H
+#endif  // CARTOGRAPHER_GRPC_LOCAL_TRAJECTORY_UPLOADER_H

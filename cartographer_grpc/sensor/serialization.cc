@@ -14,40 +14,54 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAPPING_SERIALIZATION_H
-#define CARTOGRAPHER_GRPC_MAPPING_SERIALIZATION_H
-
-#include "cartographer/sensor/fixed_frame_pose_data.h"
-#include "cartographer/sensor/imu_data.h"
-#include "cartographer/sensor/odometry_data.h"
-#include "cartographer/sensor/timed_point_cloud_data.h"
-#include "cartographer_grpc/proto/map_builder_service.pb.h"
+#include "serialization.h"
 
 namespace cartographer_grpc {
 namespace mapping {
 
-void CreateSensorMetadata(const std::string& sensor_id, int trajectory_id,
-                          proto::SensorMetadata* proto);
+void CreateSensorMetadata(const std::string& sensor_id, const int trajectory_id,
+                          proto::SensorMetadata* proto) {
+  proto->set_sensor_id(sensor_id);
+  proto->set_trajectory_id(trajectory_id);
+}
+
 void CreateAddFixedFramePoseDataRequest(
     const std::string& sensor_id, int trajectory_id,
     const cartographer::sensor::proto::FixedFramePoseData&
         fixed_frame_pose_data,
-    proto::AddFixedFramePoseDataRequest* proto);
+    proto::AddFixedFramePoseDataRequest* proto) {
+  CreateSensorMetadata(sensor_id, trajectory_id,
+                       proto->mutable_sensor_metadata());
+  *proto->mutable_fixed_frame_pose_data() = fixed_frame_pose_data;
+}
+
 void CreateAddImuDataRequest(
-    const std::string& sensor_id, int trajectory_id,
+    const std::string& sensor_id, const int trajectory_id,
     const cartographer::sensor::proto::ImuData& imu_data,
-    proto::AddImuDataRequest* proto);
+    proto::AddImuDataRequest* proto) {
+  CreateSensorMetadata(sensor_id, trajectory_id,
+                       proto->mutable_sensor_metadata());
+  *proto->mutable_imu_data() = imu_data;
+}
+
 void CreateAddOdometryDataRequest(
     const std::string& sensor_id, int trajectory_id,
     const cartographer::sensor::proto::OdometryData& odometry_data,
-    proto::AddOdometryDataRequest* proto);
+    proto::AddOdometryDataRequest* proto) {
+  CreateSensorMetadata(sensor_id, trajectory_id,
+                       proto->mutable_sensor_metadata());
+  *proto->mutable_odometry_data() = odometry_data;
+}
+
 void CreateAddRangeFinderDataRequest(
     const std::string& sensor_id, int trajectory_id,
     const cartographer::sensor::proto::TimedPointCloudData&
         timed_point_cloud_data,
-    proto::AddRangefinderDataRequest* proto);
+    proto::AddRangefinderDataRequest* proto) {
+  CreateSensorMetadata(sensor_id, trajectory_id,
+                       proto->mutable_sensor_metadata());
+  *proto->mutable_timed_point_cloud_data() = timed_point_cloud_data;
+}
 
 }  // namespace mapping
 }  // namespace cartographer_grpc
-
-#endif  // CARTOGRAPHER_GRPC_MAPPING_SERIALIZATION_H
