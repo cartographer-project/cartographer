@@ -53,25 +53,25 @@ class LocalTrajectoryUploader {
       std::unique_ptr<google::protobuf::Message> data_request);
 
  private:
-   void ProcessSendQueue();
-   void ProcessFixedFramePoseDataMessage(
-       const proto::AddFixedFramePoseDataRequest *data_request);
-   void ProcessImuDataMessage(const proto::AddImuDataRequest *data_request);
-   void ProcessOdometryDataMessage(
-       const proto::AddOdometryDataRequest *data_request);
+  void ProcessSendQueue();
+  void ProcessFixedFramePoseDataMessage(
+      const proto::AddFixedFramePoseDataRequest* data_request);
+  void ProcessImuDataMessage(const proto::AddImuDataRequest* data_request);
+  void ProcessOdometryDataMessage(
+      const proto::AddOdometryDataRequest* data_request);
 
-   std::shared_ptr<grpc::Channel> client_channel_;
-   std::unique_ptr<proto::MapBuilderService::Stub> service_stub_;
-   std::map<int, int> local_to_cloud_trajectory_id_map_;
-   cartographer::common::BlockingQueue<
-       std::unique_ptr<google::protobuf::Message>>
-       send_queue_;
-   bool shutting_down_ = false;
-   std::unique_ptr<std::thread> upload_thread_;
-   mapping::ClientWriter<proto::AddImuDataRequest> imu_writer_;
-   mapping::ClientWriter<proto::AddOdometryDataRequest> odometry_writer_;
-   mapping::ClientWriter<proto::AddFixedFramePoseDataRequest>
-       fixed_frame_pose_writer_;
+  std::shared_ptr<grpc::Channel> client_channel_;
+  std::unique_ptr<proto::MapBuilderService::Stub> service_stub_;
+  std::map<int, int> local_to_cloud_trajectory_id_map_;
+  cartographer::common::BlockingQueue<
+      std::unique_ptr<google::protobuf::Message>>
+      send_queue_;
+  bool shutting_down_ = false;
+  std::unique_ptr<std::thread> upload_thread_;
+  mapping::ClientWriter<proto::AddImuDataRequest> imu_writer_;
+  mapping::ClientWriter<proto::AddOdometryDataRequest> odometry_writer_;
+  mapping::ClientWriter<proto::AddFixedFramePoseDataRequest>
+      fixed_frame_pose_writer_;
 };
 
 }  // namespace cartographer_grpc
