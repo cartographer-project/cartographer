@@ -47,8 +47,8 @@ void Collator::AddSensorData(const int trajectory_id,
 
 void Collator::Flush() { queue_.Flush(); }
 
-int Collator::GetBlockingTrajectoryId() const {
-  return queue_.GetBlocker().trajectory_id;
+common::optional<int> Collator::GetBlockingTrajectoryId() const {
+  return common::optional<int>(queue_.GetBlocker().trajectory_id);
 }
 
 }  // namespace sensor
