@@ -58,4 +58,9 @@ void DataUploader::FinishTrajectory(int local_trajectory_id) {
   CHECK(status.ok());
 }
 
+void DataUploader::EnqueueDataRequest(
+    std::unique_ptr<google::protobuf::Message> data_request) {
+  send_queue_.Push(std::move(data_request));
+}
+
 }  // namespace cartographer_grpc

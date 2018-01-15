@@ -18,8 +18,10 @@
 #define CARTOGRAPHER_GRPC_HANDLERS_ADD_IMU_DATA_HANDLER_H
 
 #include "cartographer/common/make_unique.h"
+#include "cartographer/sensor/imu_data.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "cartographer_grpc/map_builder_server.h"
+#include "cartographer_grpc/mapping/serialization.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -39,6 +41,21 @@ class AddImuDataHandler
             request.sensor_metadata().trajectory_id(),
             request.sensor_metadata().sensor_id(),
             cartographer::sensor::FromProto(request.imu_data()));
+
+    // The 'BlockingQueue' in 'DataUploader' is thread-safe. Therefore it
+    // suffices to get an unsynchronized reference to the 'MapBuilderContext'.
+    if (GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+            ->data_uploader()) {
+      auto data_request =
+          cartographer::common::make_unique<proto::AddImuDataRequest>();
+      mapping::CreateAddImuDataRequest(
+          request.sensor_metadata().sensor_id(),
+          request.sensor_metadata().trajectory_id(), request.imu_data(),
+          data_request.get());
+      GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+          ->data_uploader()
+          ->EnqueueDataRequest(std::move(data_request));
+    }
   }
 
   void OnReadsDone() override {

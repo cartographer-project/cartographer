@@ -66,7 +66,6 @@ class TrajectoryBuilderStub
     std::unique_ptr<std::thread> thread;
   };
 
-  proto::SensorMetadata CreateSensorMetadata(const std::string& sensor_id);
   static void RunLocalSlamResultReader(
       grpc::ClientReader<proto::ReceiveLocalSlamResultsResponse>* client_reader,
       LocalSlamResultCallback local_slam_result_callback);

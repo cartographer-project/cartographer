@@ -40,6 +40,21 @@ class AddOdometryDataHandler
             request.sensor_metadata().trajectory_id(),
             request.sensor_metadata().sensor_id(),
             cartographer::sensor::FromProto(request.odometry_data()));
+
+    // The 'BlockingQueue' in 'DataUploader' is thread-safe. Therefore it
+    // suffices to get an unsynchronized reference to the 'MapBuilderContext'.
+    if (GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+            ->data_uploader()) {
+      auto data_request =
+          cartographer::common::make_unique<proto::AddOdometryDataRequest>();
+      mapping::CreateAddOdometryDataRequest(
+          request.sensor_metadata().sensor_id(),
+          request.sensor_metadata().trajectory_id(), request.odometry_data(),
+          data_request.get());
+      GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+          ->data_uploader()
+          ->EnqueueDataRequest(std::move(data_request));
+    }
   }
 
   void OnReadsDone() override {
