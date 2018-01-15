@@ -16,15 +16,122 @@
 
 #include "cartographer_grpc/local_trajectory_uploader.h"
 
+#include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
+namespace {
+
+const cartographer::common::Duration kPopTimeout =
+    cartographer::common::FromMilliseconds(100);
+const std::string kFixedFramePoseDataMessageName =
+    "cartographer_grpc.proto.AddFixedFramePoseDataRequest";
+const std::string kImuDataMessageName =
+    "cartographer_grpc.proto.AddImuDataRequest";
+const std::string kOdometryDataMessageName =
+    "cartographer_grpc.proto.AddOdometryDataRequest";
+
+} // namespace
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
     const std::string& server_address)
     : client_channel_(grpc::CreateChannel(server_address,
                                           grpc::InsecureChannelCredentials())),
       service_stub_(proto::MapBuilderService::NewStub(client_channel_)) {}
+
+LocalTrajectoryUploader::~LocalTrajectoryUploader() {
+  if (upload_thread_) {
+    upload_thread_->join();
+  }
+  if (imu_writer_.client_writer) {
+    CHECK(imu_writer_.client_writer->WritesDone());
+    CHECK(imu_writer_.client_writer->Finish().ok());
+  }
+  if (odometry_writer_.client_writer) {
+    CHECK(odometry_writer_.client_writer->WritesDone());
+    CHECK(odometry_writer_.client_writer->Finish().ok());
+  }
+  if (fixed_frame_pose_writer_.client_writer) {
+    CHECK(fixed_frame_pose_writer_.client_writer->WritesDone());
+    CHECK(fixed_frame_pose_writer_.client_writer->Finish().ok());
+  }
+}
+
+void LocalTrajectoryUploader::Start() {
+  CHECK(!shutting_down_);
+  CHECK(!upload_thread_);
+  upload_thread_ = cartographer::common::make_unique<std::thread>(
+      [this]() { this->ProcessSendQueue(); });
+}
+
+void LocalTrajectoryUploader::Shutdown() {
+  CHECK(!shutting_down_);
+  CHECK(upload_thread_);
+  shutting_down_ = true;
+  upload_thread_->join();
+}
+
+void LocalTrajectoryUploader::ProcessSendQueue() {
+  LOG(INFO) << "Starting SLAM thread.";
+  while (!shutting_down_) {
+    auto data_message = send_queue_.PopWithTimeout(kPopTimeout);
+    if (data_message) {
+      const std::string type_name = data_message->GetTypeName();
+      if (type_name == kFixedFramePoseDataMessageName) {
+        DCHECK(dynamic_cast<const proto::AddFixedFramePoseDataRequest *>(
+            data_message.get()));
+        ProcessFixedFramePoseDataMessage(
+            static_cast<const proto::AddFixedFramePoseDataRequest *>(
+                data_message.get()));
+      } else if (type_name == kImuDataMessageName) {
+        DCHECK(
+            dynamic_cast<const proto::AddImuDataRequest *>(data_message.get()));
+        ProcessImuDataMessage(
+            static_cast<const proto::AddImuDataRequest *>(data_message.get()));
+      } else if (type_name == kOdometryDataMessageName) {
+        DCHECK(dynamic_cast<const proto::AddOdometryDataRequest *>(
+            data_message.get()));
+        ProcessOdometryDataMessage(
+            static_cast<const proto::AddOdometryDataRequest *>(
+                data_message.get()));
+      } else {
+        LOG(FATAL) << "Unknown message type: " << type_name;
+      }
+    }
+  }
+}
+
+void LocalTrajectoryUploader::ProcessFixedFramePoseDataMessage(
+    const proto::AddFixedFramePoseDataRequest *data_request) {
+  if (!fixed_frame_pose_writer_.client_writer) {
+    fixed_frame_pose_writer_.client_writer =
+        service_stub_->AddFixedFramePoseData(
+            &fixed_frame_pose_writer_.client_context,
+            &fixed_frame_pose_writer_.response);
+    CHECK(fixed_frame_pose_writer_.client_writer);
+  }
+  fixed_frame_pose_writer_.client_writer->Write(*data_request);
+}
+
+void LocalTrajectoryUploader::ProcessImuDataMessage(
+    const proto::AddImuDataRequest *data_request) {
+  if (!imu_writer_.client_writer) {
+    imu_writer_.client_writer = service_stub_->AddImuData(
+        &imu_writer_.client_context, &imu_writer_.response);
+    CHECK(imu_writer_.client_writer);
+  }
+  imu_writer_.client_writer->Write(*data_request);
+}
+
+void LocalTrajectoryUploader::ProcessOdometryDataMessage(
+    const proto::AddOdometryDataRequest *data_request) {
+  if (!odometry_writer_.client_writer) {
+    odometry_writer_.client_writer = service_stub_->AddOdometryData(
+        &odometry_writer_.client_context, &odometry_writer_.response);
+    CHECK(odometry_writer_.client_writer);
+  }
+  odometry_writer_.client_writer->Write(*data_request);
+}
 
 void LocalTrajectoryUploader::AddTrajectory(
     int local_trajectory_id,
@@ -64,4 +171,4 @@ void LocalTrajectoryUploader::EnqueueDataRequest(
   send_queue_.Push(std::move(data_request));
 }
 
-}  // namespace cartographer_grpc
+} // namespace cartographer_grpc
