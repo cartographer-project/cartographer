@@ -40,9 +40,6 @@ LocalTrajectoryUploader::LocalTrajectoryUploader(
       service_stub_(proto::MapBuilderService::NewStub(client_channel_)) {}
 
 LocalTrajectoryUploader::~LocalTrajectoryUploader() {
-  if (upload_thread_) {
-    upload_thread_->join();
-  }
   if (imu_writer_.client_writer) {
     CHECK(imu_writer_.client_writer->WritesDone());
     CHECK(imu_writer_.client_writer->Finish().ok());
