@@ -25,13 +25,14 @@
 namespace cartographer_grpc {
 namespace mapping {
 
-template <typename RequestType> struct ClientWriter {
+template <typename RequestType>
+struct ClientWriter {
   grpc::ClientContext client_context;
   std::unique_ptr<grpc::ClientWriter<RequestType>> client_writer;
   google::protobuf::Empty response;
 };
 
-} // namespace mapping
-} // namespace cartographer_grpc
+}  // namespace mapping
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_MAPPING_CLIENT_WRITER_H_
+#endif  // CARTOGRAPHER_GRPC_MAPPING_CLIENT_WRITER_H_

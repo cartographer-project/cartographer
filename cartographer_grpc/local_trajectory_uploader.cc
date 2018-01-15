@@ -31,10 +31,10 @@ const std::string kImuDataMessageName =
 const std::string kOdometryDataMessageName =
     "cartographer_grpc.proto.AddOdometryDataRequest";
 
-} // namespace
+}  // namespace
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
-    const std::string& server_address)
+    const std::string &server_address)
     : client_channel_(grpc::CreateChannel(server_address,
                                           grpc::InsecureChannelCredentials())),
       service_stub_(proto::MapBuilderService::NewStub(client_channel_)) {}
@@ -132,14 +132,14 @@ void LocalTrajectoryUploader::ProcessOdometryDataMessage(
 
 void LocalTrajectoryUploader::AddTrajectory(
     int local_trajectory_id,
-    const std::unordered_set<std::string>& expected_sensor_ids,
-    const cartographer::mapping::proto::TrajectoryBuilderOptions&
-        trajectory_options) {
+    const std::unordered_set<std::string> &expected_sensor_ids,
+    const cartographer::mapping::proto::TrajectoryBuilderOptions
+        &trajectory_options) {
   grpc::ClientContext client_context;
   proto::AddTrajectoryRequest request;
   proto::AddTrajectoryResponse result;
   *request.mutable_trajectory_builder_options() = trajectory_options;
-  for (const auto& sensor_id : expected_sensor_ids) {
+  for (const auto &sensor_id : expected_sensor_ids) {
     *request.add_expected_sensor_ids() = sensor_id;
   }
   grpc::Status status =
@@ -168,4 +168,4 @@ void LocalTrajectoryUploader::EnqueueDataRequest(
   send_queue_.Push(std::move(data_request));
 }
 
-} // namespace cartographer_grpc
+}  // namespace cartographer_grpc
