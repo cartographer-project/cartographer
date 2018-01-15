@@ -18,6 +18,7 @@
 
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
+#include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
@@ -75,9 +76,9 @@ void TrajectoryBuilderStub::AddSensorData(
     CHECK(rangefinder_writer_.client_writer);
   }
   proto::AddRangefinderDataRequest request;
-  *request.mutable_sensor_metadata() = CreateSensorMetadata(sensor_id);
-  *request.mutable_timed_point_cloud_data() =
-      cartographer::sensor::ToProto(timed_point_cloud_data);
+  CreateAddRangeFinderDataRequest(
+      sensor_id, trajectory_id_,
+      cartographer::sensor::ToProto(timed_point_cloud_data), &request);
   rangefinder_writer_.client_writer->Write(request);
 }
 
@@ -90,8 +91,8 @@ void TrajectoryBuilderStub::AddSensorData(
     CHECK(imu_writer_.client_writer);
   }
   proto::AddImuDataRequest request;
-  *request.mutable_sensor_metadata() = CreateSensorMetadata(sensor_id);
-  *request.mutable_imu_data() = cartographer::sensor::ToProto(imu_data);
+  CreateAddImuDataRequest(sensor_id, trajectory_id_,
+                          cartographer::sensor::ToProto(imu_data), &request);
   imu_writer_.client_writer->Write(request);
 }
 
@@ -104,9 +105,9 @@ void TrajectoryBuilderStub::AddSensorData(
     CHECK(odometry_writer_.client_writer);
   }
   proto::AddOdometryDataRequest request;
-  *request.mutable_sensor_metadata() = CreateSensorMetadata(sensor_id);
-  *request.mutable_odometry_data() =
-      cartographer::sensor::ToProto(odometry_data);
+  CreateAddOdometryDataRequest(sensor_id, trajectory_id_,
+                               cartographer::sensor::ToProto(odometry_data),
+                               &request);
   odometry_writer_.client_writer->Write(request);
 }
 
@@ -119,9 +120,9 @@ void TrajectoryBuilderStub::AddSensorData(
     CHECK(fixed_frame_writer_.client_writer);
   }
   proto::AddFixedFramePoseDataRequest request;
-  *request.mutable_sensor_metadata() = CreateSensorMetadata(sensor_id);
-  *request.mutable_fixed_frame_pose_data() =
-      cartographer::sensor::ToProto(fixed_frame_pose);
+  CreateAddFixedFramePoseDataRequest(
+      sensor_id, trajectory_id_,
+      cartographer::sensor::ToProto(fixed_frame_pose), &request);
   fixed_frame_writer_.client_writer->Write(request);
 }
 
@@ -129,14 +130,6 @@ void TrajectoryBuilderStub::AddLocalSlamResultData(
     std::unique_ptr<cartographer::mapping::LocalSlamResultData>
         local_slam_result_data) {
   LOG(FATAL) << "Not implemented";
-}
-
-proto::SensorMetadata TrajectoryBuilderStub::CreateSensorMetadata(
-    const std::string& sensor_id) {
-  proto::SensorMetadata sensor_metadata;
-  sensor_metadata.set_sensor_id(sensor_id);
-  sensor_metadata.set_trajectory_id(trajectory_id_);
-  return sensor_metadata;
 }
 
 void TrajectoryBuilderStub::RunLocalSlamResultReader(

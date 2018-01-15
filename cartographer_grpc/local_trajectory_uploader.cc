@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-#include "cartographer_grpc/data_uploader.h"
+#include "cartographer_grpc/local_trajectory_uploader.h"
 
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
 
-DataUploader::DataUploader(const std::string& server_address)
+LocalTrajectoryUploader::LocalTrajectoryUploader(
+    const std::string& server_address)
     : client_channel_(grpc::CreateChannel(server_address,
                                           grpc::InsecureChannelCredentials())),
       service_stub_(proto::MapBuilderService::NewStub(client_channel_)) {}
 
-void DataUploader::AddTrajectory(
+void LocalTrajectoryUploader::AddTrajectory(
     int local_trajectory_id,
     const std::unordered_set<std::string>& expected_sensor_ids,
     const cartographer::mapping::proto::TrajectoryBuilderOptions&
@@ -45,7 +46,7 @@ void DataUploader::AddTrajectory(
       result.trajectory_id();
 }
 
-void DataUploader::FinishTrajectory(int local_trajectory_id) {
+void LocalTrajectoryUploader::FinishTrajectory(int local_trajectory_id) {
   CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 1);
   int cloud_trajectory_id =
       local_to_cloud_trajectory_id_map_[local_trajectory_id];
@@ -56,6 +57,11 @@ void DataUploader::FinishTrajectory(int local_trajectory_id) {
   grpc::Status status =
       service_stub_->FinishTrajectory(&client_context, request, &response);
   CHECK(status.ok());
+}
+
+void LocalTrajectoryUploader::EnqueueDataRequest(
+    std::unique_ptr<google::protobuf::Message> data_request) {
+  send_queue_.Push(std::move(data_request));
 }
 
 }  // namespace cartographer_grpc
