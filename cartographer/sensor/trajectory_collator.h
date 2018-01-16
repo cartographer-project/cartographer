@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Cartographer Authors
+ * Copyright 2018 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_SENSOR_COLLATOR_H_
-#define CARTOGRAPHER_SENSOR_COLLATOR_H_
+#ifndef CARTOGRAPHER_SENSOR_TRAJECTORY_COLLATOR_H_
+#define CARTOGRAPHER_SENSOR_TRAJECTORY_COLLATOR_H_
 
 #include <memory>
 #include <unordered_map>
@@ -27,14 +27,18 @@
 namespace cartographer {
 namespace sensor {
 
-// Waits to see at least one data item for all sensor ids on all unfinished
-// trajectories and dispatches data in merge-sorted order.
-class Collator : public CollatorInterface {
+// Waits to see at least one data item for all sensor ids and dispatches data
+// in merge-sorted order. Contrary to 'Collator', it does not wait for other
+// trajectories.
+// Also contrary to 'Collator', whose output is deterministic, the sequence in
+// which data is dispatched is not sorted, so non-deterministic input sequences
+// will result in non-deterministic output.
+class TrajectoryCollator : public CollatorInterface {
  public:
-  Collator() {}
+  TrajectoryCollator() {}
 
-  Collator(const Collator&) = delete;
-  Collator& operator=(const Collator&) = delete;
+  TrajectoryCollator(const TrajectoryCollator&) = delete;
+  TrajectoryCollator& operator=(const TrajectoryCollator&) = delete;
 
   void AddTrajectory(int trajectory_id,
                      const std::unordered_set<std::string>& expected_sensor_ids,
@@ -46,30 +50,32 @@ class Collator : public CollatorInterface {
 
   void Flush() override;
 
-  common::optional<int> GetBlockingTrajectoryId() const override;
+  // TODO(gaschler): Make the return value optional so this collator can return
+  // nullopt.
+  int GetBlockingTrajectoryId() const override;
 
  private:
   struct QueueKey {
-    int trajectory_id;
+    int trajectory_id;  // Needed only for
+                        // OrderedMultiQueue::GetCommonStartTime.
     std::string sensor_id;
 
     bool operator<(const QueueKey& other) const {
-      return std::forward_as_tuple(trajectory_id, sensor_id) <
-             std::forward_as_tuple(other.trajectory_id, other.sensor_id);
+      return sensor_id < other.sensor_id;
     }
 
     friend std::ostream& operator<<(std::ostream& out, const QueueKey& key) {
-      return out << '(' << key.trajectory_id << ", " << key.sensor_id << ')';
+      return out << '(' << key.sensor_id << ')';
     }
   };
 
-  OrderedMultiQueue<QueueKey> queue_;
+  std::unordered_map<int, OrderedMultiQueue<QueueKey>> trajectory_to_queue_;
 
   // Map of trajectory ID to all associated QueueKeys.
-  std::unordered_map<int, std::vector<QueueKey>> queue_keys_;
+  std::unordered_map<int, std::vector<QueueKey>> trajectory_to_queue_keys_;
 };
 
 }  // namespace sensor
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_SENSOR_COLLATOR_H_
+#endif  // CARTOGRAPHER_SENSOR_TRAJECTORY_COLLATOR_H_
