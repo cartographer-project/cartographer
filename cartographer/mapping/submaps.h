@@ -64,7 +64,7 @@ class Submap {
   virtual ~Submap() {}
 
   virtual void ToProto(proto::Submap* proto,
-                       bool include_loop_closure_data) const = 0;
+                       bool include_probability_grid_data) const = 0;
   virtual void UpdateFromProto(const proto::Submap& proto) = 0;
 
   // Pose of this submap in the local map frame.

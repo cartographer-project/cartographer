@@ -216,12 +216,12 @@ Submap::Submap(const mapping::proto::Submap3D& proto)
 }
 
 void Submap::ToProto(mapping::proto::Submap* const proto,
-                     bool include_loop_closure_data) const {
+                     bool include_probability_grid_data) const {
   auto* const submap_3d = proto->mutable_submap_3d();
   *submap_3d->mutable_local_pose() = transform::ToProto(local_pose());
   submap_3d->set_num_range_data(num_range_data());
   submap_3d->set_finished(finished_);
-  if (include_loop_closure_data) {
+  if (include_probability_grid_data) {
     *submap_3d->mutable_high_resolution_hybrid_grid() =
         high_resolution_hybrid_grid().ToProto();
     *submap_3d->mutable_low_resolution_hybrid_grid() =

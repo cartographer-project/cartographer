@@ -48,7 +48,7 @@ class Submap : public mapping::Submap {
   explicit Submap(const mapping::proto::Submap3D& proto);
 
   void ToProto(mapping::proto::Submap* proto,
-               bool include_loop_closure_data) const override;
+               bool include_probability_grid_data) const override;
   void UpdateFromProto(const mapping::proto::Submap& proto) override;
 
   const HybridGrid& high_resolution_hybrid_grid() const {
