@@ -24,7 +24,7 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 
 namespace cartographer_grpc {
-namespace mapping {
+namespace sensor {
 
 void CreateSensorMetadata(const std::string& sensor_id, int trajectory_id,
                           proto::SensorMetadata* proto);
@@ -47,7 +47,7 @@ void CreateAddRangeFinderDataRequest(
         timed_point_cloud_data,
     proto::AddRangefinderDataRequest* proto);
 
-}  // namespace mapping
+}  // namespace sensor
 }  // namespace cartographer_grpc
 
 #endif  // CARTOGRAPHER_GRPC_SENSOR_SERIALIZATION_H
