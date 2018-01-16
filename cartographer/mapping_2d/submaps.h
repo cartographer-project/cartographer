@@ -47,15 +47,15 @@ class Submap : public mapping::Submap {
   Submap(const MapLimits& limits, const Eigen::Vector2f& origin);
   explicit Submap(const mapping::proto::Submap2D& proto);
 
-  void ToProto(mapping::proto::Submap* proto) const override;
+  void ToProto(mapping::proto::Submap* proto,
+               bool include_probability_grid_data) const override;
   void UpdateFromProto(const mapping::proto::Submap& proto) override;
-
-  const ProbabilityGrid& probability_grid() const { return probability_grid_; }
-  bool finished() const { return finished_; }
 
   void ToResponseProto(
       const transform::Rigid3d& global_submap_pose,
       mapping::proto::SubmapQuery::Response* response) const override;
+
+  const ProbabilityGrid& probability_grid() const { return probability_grid_; }
 
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
@@ -65,7 +65,6 @@ class Submap : public mapping::Submap {
 
  private:
   ProbabilityGrid probability_grid_;
-  bool finished_ = false;
 };
 
 // Except during initialization when only a single submap exists, there are

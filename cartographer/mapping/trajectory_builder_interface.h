@@ -25,7 +25,6 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
@@ -38,6 +37,8 @@ namespace mapping {
 
 proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
+
+class LocalSlamResultData;
 
 // This interface is used for both 2D and 3D SLAM. Implementations wire up a
 // global SLAM stack, i.e. local SLAM for initial pose estimates, scan matching
