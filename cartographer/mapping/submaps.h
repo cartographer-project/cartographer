@@ -85,9 +85,7 @@ class Submap {
     num_range_data_ = num_range_data;
   }
 
-  void SetFinished(bool finished) {
-    finished_ = finished;
-  }
+  void SetFinished(bool finished) { finished_ = finished; }
 
  private:
   const transform::Rigid3d local_pose_;
