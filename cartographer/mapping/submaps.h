@@ -67,25 +67,32 @@ class Submap {
                        bool include_probability_grid_data) const = 0;
   virtual void UpdateFromProto(const proto::Submap& proto) = 0;
 
+  // Fills data into the 'response'.
+  virtual void ToResponseProto(
+      const transform::Rigid3d& global_submap_pose,
+      proto::SubmapQuery::Response* response) const = 0;
+
   // Pose of this submap in the local map frame.
   transform::Rigid3d local_pose() const { return local_pose_; }
 
   // Number of RangeData inserted.
   int num_range_data() const { return num_range_data_; }
 
-  // Fills data into the 'response'.
-  virtual void ToResponseProto(
-      const transform::Rigid3d& global_submap_pose,
-      proto::SubmapQuery::Response* response) const = 0;
+  // Whether the submap is finished or not.
+  bool finished() const { return finished_; }
 
   void SetNumRangeData(const int num_range_data) {
     num_range_data_ = num_range_data;
   }
 
+  void SetFinished(bool finished) { finished_ = finished; }
+
  private:
   const transform::Rigid3d local_pose_;
   int num_range_data_ = 0;
+  bool finished_ = false;
 };
+
 }  // namespace mapping
 }  // namespace cartographer
 

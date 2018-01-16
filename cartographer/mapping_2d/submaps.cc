@@ -71,7 +71,7 @@ Submap::Submap(const mapping::proto::Submap2D& proto)
     : mapping::Submap(transform::ToRigid3(proto.local_pose())),
       probability_grid_(ProbabilityGrid(proto.probability_grid())) {
   SetNumRangeData(proto.num_range_data());
-  finished_ = proto.finished();
+  SetFinished(proto.finished());
 }
 
 void Submap::ToProto(mapping::proto::Submap* const proto,
@@ -79,7 +79,7 @@ void Submap::ToProto(mapping::proto::Submap* const proto,
   auto* const submap_2d = proto->mutable_submap_2d();
   *submap_2d->mutable_local_pose() = transform::ToProto(local_pose());
   submap_2d->set_num_range_data(num_range_data());
-  submap_2d->set_finished(finished_);
+  submap_2d->set_finished(finished());
   if (include_probability_grid_data) {
     *submap_2d->mutable_probability_grid() = probability_grid_.ToProto();
   }
@@ -89,7 +89,7 @@ void Submap::UpdateFromProto(const mapping::proto::Submap& proto) {
   CHECK(proto.has_submap_2d());
   const auto& submap_2d = proto.submap_2d();
   SetNumRangeData(submap_2d.num_range_data());
-  finished_ = submap_2d.finished();
+  SetFinished(submap_2d.finished());
   if (submap_2d.has_probability_grid()) {
     probability_grid_ = ProbabilityGrid(submap_2d.probability_grid());
   }
@@ -145,15 +145,15 @@ void Submap::ToResponseProto(
 
 void Submap::InsertRangeData(const sensor::RangeData& range_data,
                              const RangeDataInserter& range_data_inserter) {
-  CHECK(!finished_);
+  CHECK(!finished());
   range_data_inserter.Insert(range_data, &probability_grid_);
   SetNumRangeData(num_range_data() + 1);
 }
 
 void Submap::Finish() {
-  CHECK(!finished_);
+  CHECK(!finished());
   probability_grid_ = ComputeCroppedProbabilityGrid(probability_grid_);
-  finished_ = true;
+  SetFinished(true);
 }
 
 ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
