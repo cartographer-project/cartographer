@@ -72,7 +72,7 @@ TEST(SubmapsTest, ToFromProto) {
   Submap expected(MapLimits(1., Eigen::Vector2d(2., 3.), CellLimits(100, 110)),
                   Eigen::Vector2f(4.f, 5.f));
   mapping::proto::Submap proto;
-  expected.ToProto(&proto);
+  expected.ToProto(&proto, true /* include_probability_grid_data */);
   EXPECT_TRUE(proto.has_submap_2d());
   EXPECT_FALSE(proto.has_submap_3d());
   const auto actual = Submap(proto.submap_2d());
