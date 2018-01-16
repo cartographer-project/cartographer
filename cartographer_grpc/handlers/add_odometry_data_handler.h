@@ -48,7 +48,7 @@ class AddOdometryDataHandler
             ->local_trajectory_uploader()) {
       auto data_request =
           cartographer::common::make_unique<proto::AddOdometryDataRequest>();
-      mapping::CreateAddOdometryDataRequest(
+      sensor::CreateAddOdometryDataRequest(
           request.sensor_metadata().sensor_id(),
           request.sensor_metadata().trajectory_id(), request.odometry_data(),
           data_request.get());

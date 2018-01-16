@@ -48,10 +48,9 @@ class AddImuDataHandler
             ->local_trajectory_uploader()) {
       auto data_request =
           cartographer::common::make_unique<proto::AddImuDataRequest>();
-      mapping::CreateAddImuDataRequest(
-          request.sensor_metadata().sensor_id(),
-          request.sensor_metadata().trajectory_id(), request.imu_data(),
-          data_request.get());
+      sensor::CreateAddImuDataRequest(request.sensor_metadata().sensor_id(),
+                                      request.sensor_metadata().trajectory_id(),
+                                      request.imu_data(), data_request.get());
       GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
           ->local_trajectory_uploader()
           ->EnqueueDataRequest(std::move(data_request));
