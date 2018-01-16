@@ -63,7 +63,8 @@ class Submap {
       : local_pose_(local_submap_pose) {}
   virtual ~Submap() {}
 
-  virtual void ToProto(proto::Submap* proto) const = 0;
+  virtual void ToProto(proto::Submap* proto,
+                       bool include_probability_grid_data) const = 0;
   virtual void UpdateFromProto(const proto::Submap& proto) = 0;
 
   // Fills data into the 'response'.

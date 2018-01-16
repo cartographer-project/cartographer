@@ -173,7 +173,8 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
           submap_id_data.id.trajectory_id);
       submap_proto->mutable_submap_id()->set_submap_index(
           submap_id_data.id.submap_index);
-      submap_id_data.data.submap->ToProto(submap_proto);
+      submap_id_data.data.submap->ToProto(
+          submap_proto, true /* include_probability_grid_data */);
       writer->WriteProto(proto);
     }
   }

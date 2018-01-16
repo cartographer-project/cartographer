@@ -28,7 +28,7 @@ TEST(SubmapsTest, ToFromProto) {
                         transform::Rigid3d(Eigen::Vector3d(1., 2., 0.),
                                            Eigen::Quaterniond(0., 0., 0., 1.)));
   mapping::proto::Submap proto;
-  expected.ToProto(&proto);
+  expected.ToProto(&proto, true /* include_probability_grid_data */);
   EXPECT_FALSE(proto.has_submap_2d());
   EXPECT_TRUE(proto.has_submap_3d());
   const auto actual = Submap(proto.submap_3d());

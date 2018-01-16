@@ -17,7 +17,7 @@
 #include "serialization.h"
 
 namespace cartographer_grpc {
-namespace mapping {
+namespace sensor {
 
 void CreateSensorMetadata(const std::string& sensor_id, const int trajectory_id,
                           proto::SensorMetadata* proto) {
@@ -63,5 +63,5 @@ void CreateAddRangeFinderDataRequest(
   *proto->mutable_timed_point_cloud_data() = timed_point_cloud_data;
 }
 
-}  // namespace mapping
+}  // namespace sensor
 }  // namespace cartographer_grpc
