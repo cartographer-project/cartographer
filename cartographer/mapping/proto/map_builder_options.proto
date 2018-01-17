@@ -25,4 +25,6 @@ message MapBuilderOptions {
   // Number of threads to use for background computations.
   int32 num_background_threads = 3;
   PoseGraphOptions pose_graph_options = 4;
+  // Sort sensor input independently for each trajectory.
+  bool collate_by_trajectory = 5;
 }

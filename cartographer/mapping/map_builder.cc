@@ -28,7 +28,9 @@
 #include "cartographer/internal/mapping_2d/local_trajectory_builder.h"
 #include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
+#include "cartographer/sensor/collator.h"
 #include "cartographer/sensor/range_data.h"
+#include "cartographer/sensor/trajectory_collator.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -65,6 +67,11 @@ MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
         options_.pose_graph_options(), &thread_pool_);
     pose_graph_ = pose_graph_3d_.get();
   }
+  if (options.collate_by_trajectory()) {
+    sensor_collator_ = common::make_unique<sensor::TrajectoryCollator>();
+  } else {
+    sensor_collator_ = common::make_unique<sensor::Collator>();
+  }
 }
 
 MapBuilder::~MapBuilder() {}
@@ -84,7 +91,7 @@ int MapBuilder::AddTrajectoryBuilder(
     }
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
-            &sensor_collator_, trajectory_id, expected_sensor_ids,
+            sensor_collator_.get(), trajectory_id, expected_sensor_ids,
             common::make_unique<mapping::GlobalTrajectoryBuilder<
                 mapping_3d::LocalTrajectoryBuilder,
                 mapping_3d::proto::LocalTrajectoryBuilderOptions,
@@ -101,7 +108,7 @@ int MapBuilder::AddTrajectoryBuilder(
     }
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
-            &sensor_collator_, trajectory_id, expected_sensor_ids,
+            sensor_collator_.get(), trajectory_id, expected_sensor_ids,
             common::make_unique<mapping::GlobalTrajectoryBuilder<
                 mapping_2d::LocalTrajectoryBuilder,
                 mapping_2d::proto::LocalTrajectoryBuilderOptions,
@@ -137,7 +144,7 @@ TrajectoryBuilderInterface* MapBuilder::GetTrajectoryBuilder(
 }
 
 void MapBuilder::FinishTrajectory(const int trajectory_id) {
-  sensor_collator_.FinishTrajectory(trajectory_id);
+  sensor_collator_->FinishTrajectory(trajectory_id);
   pose_graph_->FinishTrajectory(trajectory_id);
 }
 

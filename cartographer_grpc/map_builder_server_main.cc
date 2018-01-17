@@ -34,6 +34,10 @@ void Run(const std::string& configuration_directory,
   proto::MapBuilderServerOptions map_builder_server_options =
       LoadMapBuilderServerOptions(configuration_directory,
                                   configuration_basename);
+  // TODO(gaschler): Remove this override when parameter is imported from lua
+  // config.
+  map_builder_server_options.mutable_map_builder_options()
+      ->set_collate_by_trajectory(true);
   auto map_builder =
       cartographer::common::make_unique<cartographer::mapping::MapBuilder>(
           map_builder_server_options.map_builder_options());
