@@ -244,6 +244,8 @@ void ConstraintBuilder::ComputeConstraint(
     if (match_full_submap) {
       info << " matches";
     } else {
+      // Compute the difference between (submap i <- node j) according to loop
+      // closure ('constraint_transform') and according to global SLAM state.
       const transform::Rigid3d difference = global_node_pose.inverse() *
                                             global_submap_pose *
                                             constraint_transform;
