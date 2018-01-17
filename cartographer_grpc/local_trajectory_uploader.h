@@ -25,7 +25,7 @@
 
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
-#include "cartographer_grpc/mapping/client_writer.h"
+#include "cartographer_grpc/framework/client_writer.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "grpc++/grpc++.h"
 
@@ -33,7 +33,7 @@ namespace cartographer_grpc {
 
 class LocalTrajectoryUploader {
  public:
-  LocalTrajectoryUploader(const std::string& server_address);
+  LocalTrajectoryUploader(const std::string& uplink_server_address);
   ~LocalTrajectoryUploader();
 
   // Starts the upload thread.
@@ -68,10 +68,10 @@ class LocalTrajectoryUploader {
       send_queue_;
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> upload_thread_;
-  mapping::ClientWriter<proto::AddImuDataRequest> imu_writer_;
-  mapping::ClientWriter<proto::AddOdometryDataRequest> odometry_writer_;
-  mapping::ClientWriter<proto::AddFixedFramePoseDataRequest>
+  framework::ClientWriter<proto::AddFixedFramePoseDataRequest>
       fixed_frame_pose_writer_;
+  framework::ClientWriter<proto::AddImuDataRequest> imu_writer_;
+  framework::ClientWriter<proto::AddOdometryDataRequest> odometry_writer_;
 };
 
 }  // namespace cartographer_grpc

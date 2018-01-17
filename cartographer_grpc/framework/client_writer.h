@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Cartographer Authors
+ * Copyright 2018 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAPPING_CLIENT_WRITER_H_
-#define CARTOGRAPHER_GRPC_MAPPING_CLIENT_WRITER_H_
+#ifndef CARTOGRAPHER_GRPC_FRAMEWORK_CLIENT_WRITER_H_
+#define CARTOGRAPHER_GRPC_FRAMEWORK_CLIENT_WRITER_H_
 
 #include <memory>
 
@@ -23,7 +23,7 @@
 #include "grpc++/grpc++.h"
 
 namespace cartographer_grpc {
-namespace mapping {
+namespace framework {
 
 template <typename RequestType>
 struct ClientWriter {
@@ -32,7 +32,7 @@ struct ClientWriter {
   google::protobuf::Empty response;
 };
 
-}  // namespace mapping
+}  // namespace framework
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_MAPPING_CLIENT_WRITER_H_
+#endif  // CARTOGRAPHER_GRPC_FRAMEWORK_CLIENT_WRITER_H_

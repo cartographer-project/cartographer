@@ -17,6 +17,7 @@
 #include "cartographer_grpc/local_trajectory_uploader.h"
 
 #include "cartographer/common/make_unique.h"
+#include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
@@ -24,18 +25,12 @@ namespace {
 
 const cartographer::common::Duration kPopTimeout =
     cartographer::common::FromMilliseconds(100);
-const std::string kFixedFramePoseDataMessageName =
-    "cartographer_grpc.proto.AddFixedFramePoseDataRequest";
-const std::string kImuDataMessageName =
-    "cartographer_grpc.proto.AddImuDataRequest";
-const std::string kOdometryDataMessageName =
-    "cartographer_grpc.proto.AddOdometryDataRequest";
 
 }  // namespace
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
-    const std::string &server_address)
-    : client_channel_(grpc::CreateChannel(server_address,
+    const std::string &uplink_server_address)
+    : client_channel_(grpc::CreateChannel(uplink_server_address,
                                           grpc::InsecureChannelCredentials())),
       service_stub_(proto::MapBuilderService::NewStub(client_channel_)) {}
 
@@ -69,30 +64,24 @@ void LocalTrajectoryUploader::Shutdown() {
 }
 
 void LocalTrajectoryUploader::ProcessSendQueue() {
-  LOG(INFO) << "Starting SLAM thread.";
+  LOG(INFO) << "Starting uploader thread.";
   while (!shutting_down_) {
     auto data_message = send_queue_.PopWithTimeout(kPopTimeout);
     if (data_message) {
-      const std::string type_name = data_message->GetTypeName();
-      if (type_name == kFixedFramePoseDataMessageName) {
-        DCHECK(dynamic_cast<const proto::AddFixedFramePoseDataRequest *>(
-            data_message.get()));
-        ProcessFixedFramePoseDataMessage(
-            static_cast<const proto::AddFixedFramePoseDataRequest *>(
-                data_message.get()));
-      } else if (type_name == kImuDataMessageName) {
-        DCHECK(
-            dynamic_cast<const proto::AddImuDataRequest *>(data_message.get()));
-        ProcessImuDataMessage(
-            static_cast<const proto::AddImuDataRequest *>(data_message.get()));
-      } else if (type_name == kOdometryDataMessageName) {
-        DCHECK(dynamic_cast<const proto::AddOdometryDataRequest *>(
-            data_message.get()));
-        ProcessOdometryDataMessage(
-            static_cast<const proto::AddOdometryDataRequest *>(
-                data_message.get()));
+      if (const auto *fixed_frame_pose_data =
+              dynamic_cast<const proto::AddFixedFramePoseDataRequest *>(
+                  data_message.get())) {
+        ProcessFixedFramePoseDataMessage(fixed_frame_pose_data);
+      } else if (const auto *imu_data =
+                     dynamic_cast<const proto::AddImuDataRequest *>(
+                         data_message.get())) {
+        ProcessImuDataMessage(imu_data);
+      } else if (const auto *odometry_data =
+                     dynamic_cast<const proto::AddOdometryDataRequest *>(
+                         data_message.get())) {
+        ProcessOdometryDataMessage(odometry_data);
       } else {
-        LOG(FATAL) << "Unknown message type: " << type_name;
+        LOG(FATAL) << "Unknown message type: " << data_message->GetTypeName();
       }
     }
   }
