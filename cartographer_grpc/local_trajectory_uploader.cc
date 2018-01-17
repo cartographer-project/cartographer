@@ -16,26 +16,119 @@
 
 #include "cartographer_grpc/local_trajectory_uploader.h"
 
+#include "cartographer/common/make_unique.h"
+#include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
+namespace {
+
+const cartographer::common::Duration kPopTimeout =
+    cartographer::common::FromMilliseconds(100);
+
+}  // namespace
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
-    const std::string& server_address)
-    : client_channel_(grpc::CreateChannel(server_address,
+    const std::string &uplink_server_address)
+    : client_channel_(grpc::CreateChannel(uplink_server_address,
                                           grpc::InsecureChannelCredentials())),
       service_stub_(proto::MapBuilderService::NewStub(client_channel_)) {}
 
+LocalTrajectoryUploader::~LocalTrajectoryUploader() {
+  if (imu_writer_.client_writer) {
+    CHECK(imu_writer_.client_writer->WritesDone());
+    CHECK(imu_writer_.client_writer->Finish().ok());
+  }
+  if (odometry_writer_.client_writer) {
+    CHECK(odometry_writer_.client_writer->WritesDone());
+    CHECK(odometry_writer_.client_writer->Finish().ok());
+  }
+  if (fixed_frame_pose_writer_.client_writer) {
+    CHECK(fixed_frame_pose_writer_.client_writer->WritesDone());
+    CHECK(fixed_frame_pose_writer_.client_writer->Finish().ok());
+  }
+}
+
+void LocalTrajectoryUploader::Start() {
+  CHECK(!shutting_down_);
+  CHECK(!upload_thread_);
+  upload_thread_ = cartographer::common::make_unique<std::thread>(
+      [this]() { this->ProcessSendQueue(); });
+}
+
+void LocalTrajectoryUploader::Shutdown() {
+  CHECK(!shutting_down_);
+  CHECK(upload_thread_);
+  shutting_down_ = true;
+  upload_thread_->join();
+}
+
+void LocalTrajectoryUploader::ProcessSendQueue() {
+  LOG(INFO) << "Starting uploader thread.";
+  while (!shutting_down_) {
+    auto data_message = send_queue_.PopWithTimeout(kPopTimeout);
+    if (data_message) {
+      if (const auto *fixed_frame_pose_data =
+              dynamic_cast<const proto::AddFixedFramePoseDataRequest *>(
+                  data_message.get())) {
+        ProcessFixedFramePoseDataMessage(fixed_frame_pose_data);
+      } else if (const auto *imu_data =
+                     dynamic_cast<const proto::AddImuDataRequest *>(
+                         data_message.get())) {
+        ProcessImuDataMessage(imu_data);
+      } else if (const auto *odometry_data =
+                     dynamic_cast<const proto::AddOdometryDataRequest *>(
+                         data_message.get())) {
+        ProcessOdometryDataMessage(odometry_data);
+      } else {
+        LOG(FATAL) << "Unknown message type: " << data_message->GetTypeName();
+      }
+    }
+  }
+}
+
+void LocalTrajectoryUploader::ProcessFixedFramePoseDataMessage(
+    const proto::AddFixedFramePoseDataRequest *data_request) {
+  if (!fixed_frame_pose_writer_.client_writer) {
+    fixed_frame_pose_writer_.client_writer =
+        service_stub_->AddFixedFramePoseData(
+            &fixed_frame_pose_writer_.client_context,
+            &fixed_frame_pose_writer_.response);
+    CHECK(fixed_frame_pose_writer_.client_writer);
+  }
+  fixed_frame_pose_writer_.client_writer->Write(*data_request);
+}
+
+void LocalTrajectoryUploader::ProcessImuDataMessage(
+    const proto::AddImuDataRequest *data_request) {
+  if (!imu_writer_.client_writer) {
+    imu_writer_.client_writer = service_stub_->AddImuData(
+        &imu_writer_.client_context, &imu_writer_.response);
+    CHECK(imu_writer_.client_writer);
+  }
+  imu_writer_.client_writer->Write(*data_request);
+}
+
+void LocalTrajectoryUploader::ProcessOdometryDataMessage(
+    const proto::AddOdometryDataRequest *data_request) {
+  if (!odometry_writer_.client_writer) {
+    odometry_writer_.client_writer = service_stub_->AddOdometryData(
+        &odometry_writer_.client_context, &odometry_writer_.response);
+    CHECK(odometry_writer_.client_writer);
+  }
+  odometry_writer_.client_writer->Write(*data_request);
+}
+
 void LocalTrajectoryUploader::AddTrajectory(
     int local_trajectory_id,
-    const std::unordered_set<std::string>& expected_sensor_ids,
-    const cartographer::mapping::proto::TrajectoryBuilderOptions&
-        trajectory_options) {
+    const std::unordered_set<std::string> &expected_sensor_ids,
+    const cartographer::mapping::proto::TrajectoryBuilderOptions
+        &trajectory_options) {
   grpc::ClientContext client_context;
   proto::AddTrajectoryRequest request;
   proto::AddTrajectoryResponse result;
   *request.mutable_trajectory_builder_options() = trajectory_options;
-  for (const auto& sensor_id : expected_sensor_ids) {
+  for (const auto &sensor_id : expected_sensor_ids) {
     *request.add_expected_sensor_ids() = sensor_id;
   }
   grpc::Status status =
