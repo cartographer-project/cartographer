@@ -253,6 +253,9 @@ MapBuilderServer::MapBuilderServer(
 
 void MapBuilderServer::Start() {
   shutting_down_ = false;
+  if (local_trajectory_uploader_) {
+    local_trajectory_uploader_->Start();
+  }
   StartSlamThread();
   grpc_server_->Start();
 }
@@ -261,6 +264,9 @@ void MapBuilderServer::WaitForShutdown() {
   grpc_server_->WaitForShutdown();
   if (slam_thread_) {
     slam_thread_->join();
+  }
+  if (local_trajectory_uploader_) {
+    local_trajectory_uploader_->Shutdown();
   }
 }
 

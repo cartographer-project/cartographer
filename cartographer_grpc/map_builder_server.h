@@ -112,7 +112,7 @@ class MapBuilderServer {
       const proto::MapBuilderServerOptions& map_builder_server_options,
       std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder);
 
-  // Starts the gRPC server and the SLAM thread.
+  // Starts the gRPC server, the 'LocalTrajectoryUploader' and the SLAM thread.
   void Start();
 
   // Waits for the 'MapBuilderServer' to shut down. Note: The server must be
@@ -123,7 +123,8 @@ class MapBuilderServer {
   // Waits until all computation is finished (for testing).
   void WaitUntilIdle();
 
-  // Shuts down the gRPC server and the SLAM thread.
+  // Shuts down the gRPC server, the 'LocalTrajectoryUploader' and the SLAM
+  // thread.
   void Shutdown();
 
  private:
