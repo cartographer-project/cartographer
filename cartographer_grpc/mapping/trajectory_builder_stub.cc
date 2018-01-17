@@ -76,7 +76,7 @@ void TrajectoryBuilderStub::AddSensorData(
     CHECK(rangefinder_writer_.client_writer);
   }
   proto::AddRangefinderDataRequest request;
-  CreateAddRangeFinderDataRequest(
+  sensor::CreateAddRangeFinderDataRequest(
       sensor_id, trajectory_id_,
       cartographer::sensor::ToProto(timed_point_cloud_data), &request);
   rangefinder_writer_.client_writer->Write(request);
@@ -91,8 +91,9 @@ void TrajectoryBuilderStub::AddSensorData(
     CHECK(imu_writer_.client_writer);
   }
   proto::AddImuDataRequest request;
-  CreateAddImuDataRequest(sensor_id, trajectory_id_,
-                          cartographer::sensor::ToProto(imu_data), &request);
+  sensor::CreateAddImuDataRequest(sensor_id, trajectory_id_,
+                                  cartographer::sensor::ToProto(imu_data),
+                                  &request);
   imu_writer_.client_writer->Write(request);
 }
 
@@ -105,9 +106,9 @@ void TrajectoryBuilderStub::AddSensorData(
     CHECK(odometry_writer_.client_writer);
   }
   proto::AddOdometryDataRequest request;
-  CreateAddOdometryDataRequest(sensor_id, trajectory_id_,
-                               cartographer::sensor::ToProto(odometry_data),
-                               &request);
+  sensor::CreateAddOdometryDataRequest(
+      sensor_id, trajectory_id_, cartographer::sensor::ToProto(odometry_data),
+      &request);
   odometry_writer_.client_writer->Write(request);
 }
 
@@ -120,7 +121,7 @@ void TrajectoryBuilderStub::AddSensorData(
     CHECK(fixed_frame_writer_.client_writer);
   }
   proto::AddFixedFramePoseDataRequest request;
-  CreateAddFixedFramePoseDataRequest(
+  sensor::CreateAddFixedFramePoseDataRequest(
       sensor_id, trajectory_id_,
       cartographer::sensor::ToProto(fixed_frame_pose), &request);
   fixed_frame_writer_.client_writer->Write(request);

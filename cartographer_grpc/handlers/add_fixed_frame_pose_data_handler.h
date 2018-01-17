@@ -49,7 +49,7 @@ class AddFixedFramePoseDataHandler
             ->local_trajectory_uploader()) {
       auto data_request = cartographer::common::make_unique<
           proto::AddFixedFramePoseDataRequest>();
-      mapping::CreateAddFixedFramePoseDataRequest(
+      sensor::CreateAddFixedFramePoseDataRequest(
           request.sensor_metadata().sensor_id(),
           request.sensor_metadata().trajectory_id(),
           request.fixed_frame_pose_data(), data_request.get());

@@ -47,7 +47,7 @@ class Collator : public CollatorInterface {
 
   void Flush() override;
 
-  int GetBlockingTrajectoryId() const override;
+  common::optional<int> GetBlockingTrajectoryId() const override;
 
  private:
   // Queue keys are a pair of trajectory ID and sensor identifier.
