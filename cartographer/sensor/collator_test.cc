@@ -19,10 +19,11 @@
 #include <array>
 #include <memory>
 
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
-#include "cartographer/sensor/proto/sensor.pb.h"
+#include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/odometry_data.h"
+#include "cartographer/sensor/test_helpers.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 #include "gtest/gtest.h"
 
@@ -30,62 +31,151 @@ namespace cartographer {
 namespace sensor {
 namespace {
 
+using test::CollatorInput;
+using test::CollatorOutput;
+
 TEST(Collator, Ordering) {
+  const int kTrajectoryId = 0;
   const std::array<std::string, 4> kSensorId = {
       {"horizontal_rangefinder", "vertical_rangefinder", "imu", "odometry"}};
-  TimedPointCloudData zero{
-      common::FromUniversal(0), Eigen::Vector3f::Zero(), {}};
-  TimedPointCloudData first{
-      common::FromUniversal(100), Eigen::Vector3f::Zero(), {}};
-  TimedPointCloudData second{
-      common::FromUniversal(200), Eigen::Vector3f::Zero(), {}};
-  ImuData third{common::FromUniversal(300)};
-  TimedPointCloudData fourth{
-      common::FromUniversal(400), Eigen::Vector3f::Zero(), {}};
-  TimedPointCloudData fifth{
-      common::FromUniversal(500), Eigen::Vector3f::Zero(), {}};
-  OdometryData sixth{common::FromUniversal(600),
-                     transform::Rigid3d::Identity()};
 
-  std::vector<std::pair<std::string, common::Time>> received;
+  std::vector<CollatorInput> input_data;
+  // Send each sensor_id once to establish a common start time.
+  input_data.push_back(
+      CollatorInput::CreateTimedPointCloudData(kTrajectoryId, kSensorId[0], 0));
+  input_data.push_back(
+      CollatorInput::CreateTimedPointCloudData(kTrajectoryId, kSensorId[1], 0));
+  input_data.push_back(
+      CollatorInput::CreateImuData(kTrajectoryId, kSensorId[2], 0));
+  input_data.push_back(
+      CollatorInput::CreateOdometryData(kTrajectoryId, kSensorId[3], 0));
+
+  input_data.push_back(CollatorInput::CreateTimedPointCloudData(
+      kTrajectoryId, kSensorId[0], 100));
+  input_data.push_back(CollatorInput::CreateTimedPointCloudData(
+      kTrajectoryId, kSensorId[1], 200));
+  input_data.push_back(
+      CollatorInput::CreateImuData(kTrajectoryId, kSensorId[2], 300));
+  input_data.push_back(CollatorInput::CreateTimedPointCloudData(
+      kTrajectoryId, kSensorId[0], 400));
+  input_data.push_back(CollatorInput::CreateTimedPointCloudData(
+      kTrajectoryId, kSensorId[1], 500));
+  input_data.push_back(
+      CollatorInput::CreateOdometryData(kTrajectoryId, kSensorId[3], 600));
+
+  std::vector<CollatorOutput> received;
   Collator collator;
   collator.AddTrajectory(
-      0, std::unordered_set<std::string>(kSensorId.begin(), kSensorId.end()),
-      [&received](const std::string& sensor_id, std::unique_ptr<Data> data) {
-        received.push_back(std::make_pair(sensor_id, data->GetTime()));
+      kTrajectoryId,
+      std::unordered_set<std::string>(kSensorId.begin(), kSensorId.end()),
+      [&received, kTrajectoryId](const std::string& sensor_id,
+                                 std::unique_ptr<Data> data) {
+        received.push_back(CollatorOutput(kTrajectoryId, data->GetSensorId(),
+                                          data->GetTime()));
       });
 
-  constexpr int kTrajectoryId = 0;
+  input_data[0].MoveToCollator(&collator);
+  input_data[1].MoveToCollator(&collator);
+  input_data[2].MoveToCollator(&collator);
+  input_data[3].MoveToCollator(&collator);
 
-  // Establish a common start time.
-  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[0], zero));
-  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[1], zero));
-  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[2], zero));
-  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[3], zero));
-
-  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[0], first));
-  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[3], sixth));
-  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[0], fourth));
-  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[1], second));
-  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[1], fifth));
-  collator.AddSensorData(kTrajectoryId, MakeDispatchable(kSensorId[2], third));
+  input_data[4].MoveToCollator(&collator);
+  input_data[9].MoveToCollator(&collator);
+  input_data[7].MoveToCollator(&collator);
+  input_data[5].MoveToCollator(&collator);
+  input_data[8].MoveToCollator(&collator);
+  input_data[6].MoveToCollator(&collator);
+  EXPECT_EQ(kTrajectoryId, collator.GetBlockingTrajectoryId().value());
 
   ASSERT_EQ(7, received.size());
-  EXPECT_EQ(100, common::ToUniversal(received[4].second));
-  EXPECT_EQ(kSensorId[0], received[4].first);
-  EXPECT_EQ(200, common::ToUniversal(received[5].second));
-  EXPECT_EQ(kSensorId[1], received[5].first);
-  EXPECT_EQ(300, common::ToUniversal(received[6].second));
-  EXPECT_EQ(kSensorId[2], received[6].first);
+  EXPECT_EQ(input_data[4].expected_output, received[4]);
+  EXPECT_EQ(input_data[5].expected_output, received[5]);
+  EXPECT_EQ(input_data[6].expected_output, received[6]);
 
+  collator.FinishTrajectory(kTrajectoryId);
   collator.Flush();
+  ASSERT_EQ(input_data.size(), received.size());
+  for (size_t i = 4; i < input_data.size(); ++i) {
+    EXPECT_EQ(input_data[i].expected_output, received[i]);
+  }
+}
 
-  ASSERT_EQ(10, received.size());
-  EXPECT_EQ(kSensorId[0], received[7].first);
-  EXPECT_EQ(500, common::ToUniversal(received[8].second));
-  EXPECT_EQ(kSensorId[1], received[8].first);
-  EXPECT_EQ(600, common::ToUniversal(received[9].second));
-  EXPECT_EQ(kSensorId[3], received[9].first);
+TEST(Collator, OrderingMultipleTrajectories) {
+  const int kTrajectoryId[] = {8, 5};
+  const std::array<std::string, 2> kSensorId = {{"my_points", "some_imu"}};
+
+  std::vector<CollatorInput> input_data;
+  // Send each sensor_id once to establish a common start time.
+  input_data.push_back(CollatorInput::CreateTimedPointCloudData(
+      kTrajectoryId[0], kSensorId[0], 0));
+  input_data.push_back(
+      CollatorInput::CreateImuData(kTrajectoryId[0], kSensorId[1], 0));
+  input_data.push_back(CollatorInput::CreateTimedPointCloudData(
+      kTrajectoryId[1], kSensorId[0], 0));
+  input_data.push_back(
+      CollatorInput::CreateImuData(kTrajectoryId[1], kSensorId[1], 0));
+
+  input_data.push_back(CollatorInput::CreateTimedPointCloudData(
+      kTrajectoryId[0], kSensorId[0], 100));
+  input_data.push_back(
+      CollatorInput::CreateImuData(kTrajectoryId[1], kSensorId[1], 200));
+  input_data.push_back(
+      CollatorInput::CreateImuData(kTrajectoryId[0], kSensorId[1], 300));
+  input_data.push_back(CollatorInput::CreateTimedPointCloudData(
+      kTrajectoryId[1], kSensorId[0], 400));
+  input_data.push_back(CollatorInput::CreateTimedPointCloudData(
+      kTrajectoryId[1], kSensorId[0], 400));
+  input_data.push_back(CollatorInput::CreateTimedPointCloudData(
+      kTrajectoryId[1], kSensorId[0], 500));
+  input_data.push_back(
+      CollatorInput::CreateImuData(kTrajectoryId[1], kSensorId[1], 600));
+
+  std::vector<CollatorOutput> received;
+  Collator collator;
+  collator.AddTrajectory(
+      kTrajectoryId[0],
+      std::unordered_set<std::string>(kSensorId.begin(), kSensorId.end()),
+      [&received, kTrajectoryId](const std::string& sensor_id,
+                                 std::unique_ptr<Data> data) {
+        received.push_back(CollatorOutput(kTrajectoryId[0], data->GetSensorId(),
+                                          data->GetTime()));
+      });
+  collator.AddTrajectory(
+      kTrajectoryId[1],
+      std::unordered_set<std::string>(kSensorId.begin(), kSensorId.end()),
+      [&received, kTrajectoryId](const std::string& sensor_id,
+                                 std::unique_ptr<Data> data) {
+        received.push_back(CollatorOutput(kTrajectoryId[1], data->GetSensorId(),
+                                          data->GetTime()));
+      });
+
+  input_data[0].MoveToCollator(&collator);
+  input_data[1].MoveToCollator(&collator);
+  input_data[2].MoveToCollator(&collator);
+  input_data[3].MoveToCollator(&collator);
+
+  input_data[4].MoveToCollator(&collator);
+  input_data[6].MoveToCollator(&collator);
+  EXPECT_EQ(kTrajectoryId[1], collator.GetBlockingTrajectoryId().value());
+  input_data[7].MoveToCollator(&collator);
+  input_data[8].MoveToCollator(&collator);
+  EXPECT_EQ(kTrajectoryId[1], collator.GetBlockingTrajectoryId().value());
+  input_data[5].MoveToCollator(&collator);
+  EXPECT_EQ(kTrajectoryId[0], collator.GetBlockingTrajectoryId().value());
+  input_data[10].MoveToCollator(&collator);
+  input_data[9].MoveToCollator(&collator);
+  EXPECT_EQ(kTrajectoryId[0], collator.GetBlockingTrajectoryId().value());
+
+  ASSERT_EQ(5, received.size());
+  EXPECT_EQ(input_data[4].expected_output, received[4]);
+
+  collator.FinishTrajectory(kTrajectoryId[0]);
+  collator.FinishTrajectory(kTrajectoryId[1]);
+  collator.Flush();
+  ASSERT_EQ(input_data.size(), received.size());
+  for (size_t i = 4; i < input_data.size(); ++i) {
+    EXPECT_EQ(input_data[i].expected_output, received[i]);
+  }
 }
 
 }  // namespace
