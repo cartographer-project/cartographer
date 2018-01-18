@@ -106,6 +106,11 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
     pose_graph_->AddFixedFramePoseData(trajectory_id_, fixed_frame_pose);
   }
 
+  void AddSensorData(const std::string& sensor_id,
+                     const sensor::LandmarkData& landmark_data) override {
+    pose_graph_->AddLandmarkData(trajectory_id_, landmark_data);
+  }
+
   void AddLocalSlamResultData(std::unique_ptr<mapping::LocalSlamResultData>
                                   local_slam_result_data) override {
     CHECK(!local_trajectory_builder_) << "Can't add LocalSlamResultData with "

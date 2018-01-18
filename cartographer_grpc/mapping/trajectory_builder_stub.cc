@@ -127,6 +127,12 @@ void TrajectoryBuilderStub::AddSensorData(
   fixed_frame_writer_.client_writer->Write(request);
 }
 
+void TrajectoryBuilderStub::AddSensorData(
+    const std::string& sensor_id,
+    const cartographer::sensor::LandmarkData& landmark_data) {
+  LOG(FATAL) << "Not implemented";
+}
+
 void TrajectoryBuilderStub::AddLocalSlamResultData(
     std::unique_ptr<cartographer::mapping::LocalSlamResultData>
         local_slam_result_data) {

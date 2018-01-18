@@ -174,6 +174,12 @@ void PoseGraph::AddFixedFramePoseData(
   });
 }
 
+void PoseGraph::AddLandmarkData(int trajectory_id,
+                                const sensor::LandmarkData& landmark_data)
+    EXCLUDES(mutex_) {
+  LOG(FATAL) << "Not yet implemented.";
+}
+
 void PoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
                                   const mapping::SubmapId& submap_id) {
   CHECK(submap_data_.at(submap_id).state == SubmapState::kFinished);
