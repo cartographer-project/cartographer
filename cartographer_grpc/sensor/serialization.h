@@ -35,23 +35,19 @@ void CreateAddFixedFramePoseDataRequest(
     const cartographer::sensor::proto::FixedFramePoseData&
         fixed_frame_pose_data,
     proto::AddFixedFramePoseDataRequest* proto);
-
 void CreateAddImuDataRequest(
     const std::string& sensor_id, int trajectory_id,
     const cartographer::sensor::proto::ImuData& imu_data,
     proto::AddImuDataRequest* proto);
-
 void CreateAddOdometryDataRequest(
     const std::string& sensor_id, int trajectory_id,
     const cartographer::sensor::proto::OdometryData& odometry_data,
     proto::AddOdometryDataRequest* proto);
-
 void CreateAddRangeFinderDataRequest(
     const std::string& sensor_id, int trajectory_id,
     const cartographer::sensor::proto::TimedPointCloudData&
         timed_point_cloud_data,
     proto::AddRangefinderDataRequest* proto);
-
 void CreateAddLandmarkDataRequest(
     const std::string& sensor_id, int trajectory_id,
     const cartographer::sensor::proto::LandmarkData& landmark_data,
