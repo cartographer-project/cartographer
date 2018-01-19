@@ -18,6 +18,7 @@
 
 #include "cartographer_grpc/handlers/add_fixed_frame_pose_data_handler.h"
 #include "cartographer_grpc/handlers/add_imu_data_handler.h"
+#include "cartographer_grpc/handlers/add_landmark_data_handler.h"
 #include "cartographer_grpc/handlers/add_local_slam_result_data_handler.h"
 #include "cartographer_grpc/handlers/add_odometry_data_handler.h"
 #include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
@@ -225,6 +226,8 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::AddFixedFramePoseDataHandler,
                                  proto::MapBuilderService>(
       "AddFixedFramePoseData");
+  server_builder.RegisterHandler<handlers::AddLandmarkDataHandler,
+                                 proto::MapBuilderService>("AddLandmarkData");
   server_builder.RegisterHandler<handlers::AddLocalSlamResultDataHandler,
                                  proto::MapBuilderService>(
       "AddLocalSlamResultData");

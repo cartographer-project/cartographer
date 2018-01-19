@@ -59,6 +59,11 @@ message AddFixedFramePoseDataRequest {
   cartographer.sensor.proto.FixedFramePoseData fixed_frame_pose_data = 2;
 }
 
+message AddLandmarkDataRequest {
+  SensorMetadata sensor_metadata = 1;
+  cartographer.sensor.proto.LandmarkData landmark_data = 2;
+}
+
 message FinishTrajectoryRequest {
   int32 trajectory_id = 1;
 }
@@ -143,6 +148,10 @@ service MapBuilderService {
 
   // Same for fixed-frame pose data.
   rpc AddFixedFramePoseData(stream AddFixedFramePoseDataRequest)
+      returns (google.protobuf.Empty);
+
+  // Same for landmark data.
+  rpc AddLandmarkData(stream AddLandmarkDataRequest)
       returns (google.protobuf.Empty);
 
   // Adds a local SLAM result.

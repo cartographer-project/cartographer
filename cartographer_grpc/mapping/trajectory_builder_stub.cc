@@ -130,7 +130,16 @@ void TrajectoryBuilderStub::AddSensorData(
 void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id,
     const cartographer::sensor::LandmarkData& landmark_data) {
-  LOG(FATAL) << "Not implemented";
+  if (!landmark_writer_.client_writer) {
+    landmark_writer_.client_writer = stub_->AddLandmarkData(
+        &landmark_writer_.client_context, &landmark_writer_.response);
+    CHECK(landmark_writer_.client_writer);
+  }
+  proto::AddLandmarkDataRequest request;
+  sensor::CreateAddLandmarkDataRequest(
+      sensor_id, trajectory_id_, cartographer::sensor::ToProto(landmark_data),
+      &request);
+  landmark_writer_.client_writer->Write(request);
 }
 
 void TrajectoryBuilderStub::AddLocalSlamResultData(

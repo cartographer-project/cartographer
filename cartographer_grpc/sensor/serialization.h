@@ -19,6 +19,7 @@
 
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/landmark_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
@@ -28,6 +29,7 @@ namespace sensor {
 
 void CreateSensorMetadata(const std::string& sensor_id, int trajectory_id,
                           proto::SensorMetadata* proto);
+
 void CreateAddFixedFramePoseDataRequest(
     const std::string& sensor_id, int trajectory_id,
     const cartographer::sensor::proto::FixedFramePoseData&
@@ -46,6 +48,10 @@ void CreateAddRangeFinderDataRequest(
     const cartographer::sensor::proto::TimedPointCloudData&
         timed_point_cloud_data,
     proto::AddRangefinderDataRequest* proto);
+void CreateAddLandmarkDataRequest(
+    const std::string& sensor_id, int trajectory_id,
+    const cartographer::sensor::proto::LandmarkData& landmark_data,
+    proto::AddLandmarkDataRequest* proto);
 
 }  // namespace sensor
 }  // namespace cartographer_grpc

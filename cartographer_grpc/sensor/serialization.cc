@@ -63,5 +63,14 @@ void CreateAddRangeFinderDataRequest(
   *proto->mutable_timed_point_cloud_data() = timed_point_cloud_data;
 }
 
+void CreateAddLandmarkDataRequest(
+    const std::string& sensor_id, int trajectory_id,
+    const cartographer::sensor::proto::LandmarkData& landmark_data,
+    proto::AddLandmarkDataRequest* proto) {
+  CreateSensorMetadata(sensor_id, trajectory_id,
+                       proto->mutable_sensor_metadata());
+  *proto->mutable_landmark_data() = landmark_data;
+}
+
 }  // namespace sensor
 }  // namespace cartographer_grpc
