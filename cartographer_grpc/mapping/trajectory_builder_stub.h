@@ -49,6 +49,9 @@ class TrajectoryBuilderStub
   void AddSensorData(const std::string& sensor_id,
                      const cartographer::sensor::FixedFramePoseData&
                          fixed_frame_pose) override;
+  void AddSensorData(
+      const std::string& sensor_id,
+      const cartographer::sensor::LandmarkData& landmark_data) override;
   void AddLocalSlamResultData(
       std::unique_ptr<cartographer::mapping::LocalSlamResultData>
           local_slam_result_data) override;

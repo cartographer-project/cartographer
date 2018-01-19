@@ -78,6 +78,8 @@ class MockTrajectoryBuilder
   MOCK_METHOD2(AddSensorData,
                void(const std::string&,
                     const cartographer::sensor::FixedFramePoseData&));
+  MOCK_METHOD2(AddSensorData, void(const std::string&,
+                                   const cartographer::sensor::LandmarkData&));
 
   // Some of the platforms we run on may ship with a version of gmock which does
   // not yet support move-only types.

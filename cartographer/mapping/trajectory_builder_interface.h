@@ -29,6 +29,7 @@
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/landmark_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 
@@ -78,7 +79,8 @@ class TrajectoryBuilderInterface {
   virtual void AddSensorData(
       const std::string& sensor_id,
       const sensor::FixedFramePoseData& fixed_frame_pose) = 0;
-
+  virtual void AddSensorData(const std::string& sensor_id,
+                             const sensor::LandmarkData& landmark_data) = 0;
   // Allows to directly add local SLAM results to the 'PoseGraph'. Note that it
   // is invalid to add local SLAM results for a trajectory that has a
   // 'LocalTrajectoryBuilder'.

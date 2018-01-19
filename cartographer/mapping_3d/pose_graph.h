@@ -85,6 +85,9 @@ class PoseGraph : public mapping::PoseGraph {
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data) override
       EXCLUDES(mutex_);
+  void AddLandmarkData(int trajectory_id,
+                       const sensor::LandmarkData& landmark_data) override
+      EXCLUDES(mutex_);
 
   void FinishTrajectory(int trajectory_id) override;
   bool IsTrajectoryFinished(int trajectory_id) override;
