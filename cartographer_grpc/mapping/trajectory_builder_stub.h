@@ -76,6 +76,7 @@ class TrajectoryBuilderStub
   framework::ClientWriter<proto::AddOdometryDataRequest> odometry_writer_;
   framework::ClientWriter<proto::AddFixedFramePoseDataRequest>
       fixed_frame_writer_;
+  framework::ClientWriter<proto::AddLandmarkDataRequest> landmark_writer_;
   LocalSlamResultReader local_slam_result_reader_;
 };
 
