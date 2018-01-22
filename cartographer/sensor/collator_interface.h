@@ -24,6 +24,7 @@
 
 #include "cartographer/common/optional.h"
 #include "cartographer/sensor/data.h"
+#include "cartographer/sensor/id.h"
 
 namespace cartographer {
 namespace sensor {
@@ -42,7 +43,7 @@ class CollatorInterface {
   // for each collated sensor data.
   virtual void AddTrajectory(
       int trajectory_id,
-      const std::unordered_set<std::string>& expected_sensor_ids,
+      const std::unordered_set<SensorId>& expected_sensor_ids,
       const Callback& callback) = 0;
 
   // Marks 'trajectory_id' as finished.

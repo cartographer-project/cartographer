@@ -46,7 +46,7 @@ class MapBuilder : public MapBuilderInterface {
   MapBuilder& operator=(const MapBuilder&) = delete;
 
   int AddTrajectoryBuilder(
-      const std::unordered_set<std::string>& expected_sensor_ids,
+      const std::unordered_set<sensor::SensorId>& expected_sensor_ids,
       const proto::TrajectoryBuilderOptions& trajectory_options,
       LocalSlamResultCallback local_slam_result_callback) override;
 

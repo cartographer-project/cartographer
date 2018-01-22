@@ -31,6 +31,7 @@
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
+#include "cartographer/sensor/id.h"
 
 namespace cartographer {
 namespace mapping {
@@ -50,7 +51,7 @@ class MapBuilderInterface {
 
   // Creates a new trajectory builder and returns its index.
   virtual int AddTrajectoryBuilder(
-      const std::unordered_set<std::string>& expected_sensor_ids,
+      const std::unordered_set<sensor::SensorId>& expected_sensor_ids,
       const proto::TrajectoryBuilderOptions& trajectory_options,
       LocalSlamResultCallback local_slam_result_callback) = 0;
 

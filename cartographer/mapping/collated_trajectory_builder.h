@@ -30,6 +30,7 @@
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/sensor/collator_interface.h"
 #include "cartographer/sensor/dispatchable.h"
+#include "cartographer/sensor/id.h"
 
 namespace cartographer {
 namespace mapping {
@@ -40,7 +41,7 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
  public:
   CollatedTrajectoryBuilder(
       sensor::CollatorInterface* sensor_collator, int trajectory_id,
-      const std::unordered_set<std::string>& expected_sensor_ids,
+      const std::unordered_set<sensor::SensorId>& expected_sensor_ids,
       std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder);
   ~CollatedTrajectoryBuilder() override;
 
