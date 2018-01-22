@@ -31,7 +31,7 @@
 /* #undef CAIRO_CAN_TEST_SVG_SURFACE */
 
 /* Define to 1 if the Win32 Printing backend can be tested (needs ghostscript)
-   */
+ */
 /* #undef CAIRO_CAN_TEST_WIN32_PRINTING_SURFACE */
 
 /* Define to 1 if dlsym is available */
@@ -303,14 +303,15 @@
 /* #undef IPC_RMID_DEFERRED_RELEASE */
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+ */
 #define LT_OBJDIR ".libs/"
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "http://bugs.freedesktop.org/enter_bug.cgi?product=cairo"
+#define PACKAGE_BUGREPORT \
+  "http://bugs.freedesktop.org/enter_bug.cgi?product=cairo"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME USE_cairo_INSTEAD
@@ -350,25 +351,24 @@
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
-# define _ALL_SOURCE 1
+#define _ALL_SOURCE 1
 #endif
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE
-# define _GNU_SOURCE 1
+#define _GNU_SOURCE 1
 #endif
 /* Enable threading extensions on Solaris.  */
 #ifndef _POSIX_PTHREAD_SEMANTICS
-# define _POSIX_PTHREAD_SEMANTICS 1
+#define _POSIX_PTHREAD_SEMANTICS 1
 #endif
 /* Enable extensions on HP NonStop.  */
 #ifndef _TANDEM_SOURCE
-# define _TANDEM_SOURCE 1
+#define _TANDEM_SOURCE 1
 #endif
 /* Enable general extensions on Solaris.  */
 #ifndef __EXTENSIONS__
-# define __EXTENSIONS__ 1
+#define __EXTENSIONS__ 1
 #endif
-
 
 /* Define to the value your compiler uses to support the warn-unused-result
    attribute */
@@ -377,15 +377,14 @@
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
 #if defined AC_APPLE_UNIVERSAL_BUILD
-# if defined __BIG_ENDIAN__
-#  define WORDS_BIGENDIAN 1
-# endif
-#else
-# ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
-# endif
+#if defined __BIG_ENDIAN__
+#define WORDS_BIGENDIAN 1
 #endif
-
+#else
+#ifndef WORDS_BIGENDIAN
+/* #  undef WORDS_BIGENDIAN */
+#endif
+#endif
 
 /* Deal with multiple architecture compiles on Mac OS X */
 #ifdef __APPLE_CC__
@@ -398,13 +397,12 @@
 #endif
 #endif
 
-
 /* Define to 1 if the X Window System is missing or not being used. */
 /* #undef X_DISPLAY_MISSING */
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
+#define _DARWIN_USE_64_BIT_INODE 1
 #endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
