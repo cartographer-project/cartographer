@@ -34,17 +34,13 @@ namespace io {
 class ProtoStreamWriter {
  public:
   ProtoStreamWriter(const std::string& filename);
-  ~ProtoStreamWriter();
+  ~ProtoStreamWriter() = default;
 
   ProtoStreamWriter(const ProtoStreamWriter&) = delete;
   ProtoStreamWriter& operator=(const ProtoStreamWriter&) = delete;
 
   // Serializes, compressed and writes the 'proto' to the file.
-  void WriteProto(const google::protobuf::Message& proto) {
-    std::string uncompressed_data;
-    proto.SerializeToString(&uncompressed_data);
-    Write(uncompressed_data);
-  }
+  void WriteProto(const google::protobuf::Message& proto);
 
   // This should be called to check whether writing was successful.
   bool Close();
@@ -59,16 +55,12 @@ class ProtoStreamWriter {
 class ProtoStreamReader {
  public:
   ProtoStreamReader(const std::string& filename);
-  ~ProtoStreamReader();
+  ~ProtoStreamReader() = default;
 
   ProtoStreamReader(const ProtoStreamReader&) = delete;
   ProtoStreamReader& operator=(const ProtoStreamReader&) = delete;
 
-  bool ReadProto(google::protobuf::Message* proto) {
-    std::string decompressed_data;
-    return Read(&decompressed_data) &&
-           proto->ParseFromString(decompressed_data);
-  }
+  bool ReadProto(google::protobuf::Message* proto);
 
   bool eof() const;
 
