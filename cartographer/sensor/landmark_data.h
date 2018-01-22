@@ -31,7 +31,7 @@ namespace sensor {
 
 struct Landmark {
   std::string id;
-  transform::Rigid3d transform;
+  transform::Rigid3d landmark_to_tracking_transform;
   double translation_weight;
   double rotation_weight;
 };
