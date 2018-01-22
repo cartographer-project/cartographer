@@ -77,7 +77,7 @@ class MapBuilderInterface {
   virtual void SerializeState(io::ProtoStreamWriter* writer) = 0;
 
   // Loads submaps from a proto stream into a new frozen trajectory.
-  virtual void LoadMap(io::ProtoStreamReader* reader) = 0;
+  virtual void LoadMap(io::ProtoStreamReaderInterface* reader) = 0;
 
   virtual int num_trajectory_builders() const = 0;
 
