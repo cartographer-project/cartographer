@@ -61,10 +61,7 @@ class ProtoStreamReader : public ProtoStreamReaderInterface {
   ProtoStreamReader(const ProtoStreamReader&) = delete;
   ProtoStreamReader& operator=(const ProtoStreamReader&) = delete;
 
-  // Deserialize compressed proto from the pb stream.
   bool ReadProto(google::protobuf::Message* proto) override;
-
-  // 'End-of-file' marker for the pb stream.
   bool eof() const override;
 
  private:
