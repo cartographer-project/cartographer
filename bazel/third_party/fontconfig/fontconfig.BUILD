@@ -19,7 +19,7 @@ licenses(["notice"])  # BSD-like
 
 genrule(
     name = "config_h",
-    srcs = ["@com_github_googlecartographer_cartographer//third_party/fontconfig:config.h"],
+    srcs = ["@com_github_googlecartographer_cartographer//bazel/third_party/fontconfig:config.h"],
     outs = ["fontconfig_internal/config.h"],
     cmd = "cp $< $@",
 )

@@ -19,7 +19,7 @@ licenses(["notice"])  # X11/MIT
 
 genrule(
     name = "config_h",
-    srcs = ["@com_github_googlecartographer_cartographer//third_party/pixman:config.h"],
+    srcs = ["@com_github_googlecartographer_cartographer//bazel/third_party/pixman:config.h"],
     outs = ["pixman_internal/config.h"],
     cmd = "cp $< $@",
 )

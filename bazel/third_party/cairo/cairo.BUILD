@@ -19,14 +19,14 @@ licenses(["reciprocal"])  # MPL 1.1
 
 genrule(
     name = "config_h",
-    srcs = ["@com_github_googlecartographer_cartographer//third_party/cairo:config.h"],
+    srcs = ["@com_github_googlecartographer_cartographer//bazel/third_party/cairo:config.h"],
     outs = ["cairo_internal/config.h"],
     cmd = "cp $< $@",
 )
 
 genrule(
     name = "cairo_features_h",
-    srcs = ["@com_github_googlecartographer_cartographer//third_party/cairo:cairo-features.h"],
+    srcs = ["@com_github_googlecartographer_cartographer//bazel/third_party/cairo:cairo-features.h"],
     outs = ["src/cairo-features.h"],
     cmd = "cp $< $@",
 )

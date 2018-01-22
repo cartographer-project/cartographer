@@ -14,7 +14,7 @@
 
 workspace(name = "com_github_googlecartographer_cartographer")
 
-load("//:repositories.bzl", "cartographer_repositories")
+load("//:bazel/repositories.bzl", "cartographer_repositories")
 
 cartographer_repositories()
 
