@@ -12,16 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:xenial
-
-# This base image doesn't ship with sudo.
-RUN apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*
-
-COPY scripts/install_debs_cmake.sh cartographer/scripts/
-RUN cartographer/scripts/install_debs_cmake.sh && rm -rf /var/lib/apt/lists/*
-COPY scripts/install_ceres.sh cartographer/scripts/
-RUN cartographer/scripts/install_ceres.sh && rm -rf ceres-solver
-COPY scripts/install_proto3.sh cartographer/scripts/
-RUN cartographer/scripts/install_proto3.sh && rm -rf protobuf
+FROM ubuntu:trusty
+COPY scripts/install_debs_bazel.sh cartographer/scripts/
+RUN cartographer/scripts/install_debs_bazel.sh && rm -rf /var/lib/apt/lists/*
 COPY . cartographer
-RUN cartographer/scripts/install_cartographer_cmake.sh && rm -rf cartographer
+RUN cartographer/scripts/install_cartographer_bazel.sh && rm -rf cartographer
