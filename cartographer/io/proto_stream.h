@@ -20,6 +20,7 @@
 #include <fstream>
 
 #include "cartographer/common/port.h"
+#include "google/protobuf/message.h"
 
 namespace cartographer {
 namespace io {
@@ -39,8 +40,7 @@ class ProtoStreamWriter {
   ProtoStreamWriter& operator=(const ProtoStreamWriter&) = delete;
 
   // Serializes, compressed and writes the 'proto' to the file.
-  template <typename MessageType>
-  void WriteProto(const MessageType& proto) {
+  void WriteProto(const google::protobuf::Message& proto) {
     std::string uncompressed_data;
     proto.SerializeToString(&uncompressed_data);
     Write(uncompressed_data);
@@ -64,8 +64,7 @@ class ProtoStreamReader {
   ProtoStreamReader(const ProtoStreamReader&) = delete;
   ProtoStreamReader& operator=(const ProtoStreamReader&) = delete;
 
-  template <typename MessageType>
-  bool ReadProto(MessageType* proto) {
+  bool ReadProto(google::protobuf::Message* proto) {
     std::string decompressed_data;
     return Read(&decompressed_data) &&
            proto->ParseFromString(decompressed_data);
