@@ -27,18 +27,17 @@
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/dispatchable.h"
-#include "cartographer/sensor/id.h"
 
 namespace cartographer {
 namespace sensor {
 
 struct QueueKey {
   int trajectory_id;
-  SensorId sensor_id;
+  std::string sensor_id;
 
   bool operator<(const QueueKey& other) const {
-    return std::forward_as_tuple(trajectory_id, sensor_id.type, sensor_id.id) <
-           std::forward_as_tuple(other.trajectory_id, other.sensor_id.type, other.sensor_id.id);
+    return std::forward_as_tuple(trajectory_id, sensor_id) <
+           std::forward_as_tuple(other.trajectory_id, other.sensor_id);
   }
 };
 
