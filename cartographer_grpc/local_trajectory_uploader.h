@@ -19,12 +19,13 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <thread>
-#include <unordered_set>
 
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer_grpc/framework/client_writer.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "grpc++/grpc++.h"
@@ -33,6 +34,8 @@ namespace cartographer_grpc {
 
 class LocalTrajectoryUploader {
  public:
+  using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
+
   LocalTrajectoryUploader(const std::string& uplink_server_address);
   ~LocalTrajectoryUploader();
 
@@ -44,8 +47,7 @@ class LocalTrajectoryUploader {
   void Shutdown();
 
   void AddTrajectory(
-      int local_trajectory_id,
-      const std::unordered_set<std::string>& expected_sensor_ids,
+      int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
       const cartographer::mapping::proto::TrajectoryBuilderOptions&
           trajectory_options);
   void FinishTrajectory(int local_trajectory_id);

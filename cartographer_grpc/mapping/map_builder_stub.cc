@@ -17,6 +17,7 @@
 #include "cartographer_grpc/mapping/map_builder_stub.h"
 
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
+#include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
@@ -29,7 +30,7 @@ MapBuilderStub::MapBuilderStub(const std::string& server_address)
       pose_graph_stub_(client_channel_, service_stub_.get()) {}
 
 int MapBuilderStub::AddTrajectoryBuilder(
-    const std::unordered_set<std::string>& expected_sensor_ids,
+    const std::set<SensorId>& expected_sensor_ids,
     const cartographer::mapping::proto::TrajectoryBuilderOptions&
         trajectory_options,
     LocalSlamResultCallback local_slam_result_callback) {
@@ -38,7 +39,7 @@ int MapBuilderStub::AddTrajectoryBuilder(
   proto::AddTrajectoryResponse result;
   *request.mutable_trajectory_builder_options() = trajectory_options;
   for (const auto& sensor_id : expected_sensor_ids) {
-    *request.add_expected_sensor_ids() = sensor_id;
+    *request.add_expected_sensor_ids() = sensor::ToProto(sensor_id);
   }
   grpc::Status status =
       service_stub_->AddTrajectory(&client_context, request, &result);

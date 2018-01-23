@@ -24,8 +24,22 @@ import "google/protobuf/empty.proto";
 
 package cartographer_grpc.proto;
 
+enum SensorType {
+  RANGE = 0;
+  IMU = 1;
+  ODOMETRY = 2;
+  FIXED_FRAME_POSE = 3;
+  LANDMARK = 4;
+  LOCAL_SLAM_RESULT = 5;
+}
+
+message SensorId {
+  string id = 1;
+  SensorType type = 2;
+}
+
 message AddTrajectoryRequest {
-  repeated string expected_sensor_ids = 1;
+  repeated SensorId expected_sensor_ids = 3;
   cartographer.mapping.proto.TrajectoryBuilderOptions
       trajectory_builder_options = 2;
 }
