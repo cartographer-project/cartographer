@@ -244,7 +244,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
   }
 }
 
-void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
+void MapBuilder::LoadMap(io::ProtoStreamReaderInterface* const reader) {
   proto::PoseGraph pose_graph;
   CHECK(reader->ReadProto(&pose_graph));
 

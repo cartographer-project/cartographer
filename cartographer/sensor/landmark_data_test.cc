@@ -31,13 +31,14 @@ using ::testing::DoubleNear;
 using ::testing::Field;
 
 ::testing::Matcher<const Landmark&> EqualsLandmark(const Landmark& expected) {
-  return ::testing::AllOf(Field(&Landmark::id, expected.id),
-                          Field(&Landmark::transform,
-                                transform::IsNearly(expected.transform, 1e-2)),
-                          Field(&Landmark::translation_weight,
-                                DoubleNear(expected.translation_weight, 0.01)),
-                          Field(&Landmark::rotation_weight,
-                                DoubleNear(expected.rotation_weight, 0.01)));
+  return ::testing::AllOf(
+      Field(&Landmark::id, expected.id),
+      Field(&Landmark::landmark_to_tracking_transform,
+            transform::IsNearly(expected.landmark_to_tracking_transform, 1e-2)),
+      Field(&Landmark::translation_weight,
+            DoubleNear(expected.translation_weight, 0.01)),
+      Field(&Landmark::rotation_weight,
+            DoubleNear(expected.rotation_weight, 0.01)));
 }
 
 class LandmarkDataTest : public ::testing::Test {

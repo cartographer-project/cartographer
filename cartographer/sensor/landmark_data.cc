@@ -27,7 +27,8 @@ proto::LandmarkData ToProto(const LandmarkData& landmark_data) {
   for (const Landmark& landmark : landmark_data.landmarks) {
     auto* item = proto.add_landmarks();
     item->set_id(landmark.id);
-    *item->mutable_transform() = transform::ToProto(landmark.transform);
+    *item->mutable_landmark_to_tracking_transform() =
+        transform::ToProto(landmark.landmark_to_tracking_transform);
     item->set_translation_weight(landmark.translation_weight);
     item->set_rotation_weight(landmark.rotation_weight);
   }
@@ -40,7 +41,7 @@ LandmarkData FromProto(const proto::LandmarkData& proto) {
   for (const auto& item : proto.landmarks()) {
     landmark_data.landmarks.push_back({
         item.id(),
-        transform::ToRigid3(item.transform()),
+        transform::ToRigid3(item.landmark_to_tracking_transform()),
         item.translation_weight(),
         item.rotation_weight(),
     });

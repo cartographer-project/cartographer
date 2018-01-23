@@ -20,6 +20,7 @@
 #include <fstream>
 
 #include "cartographer/common/port.h"
+#include "cartographer/io/proto_stream_interface.h"
 #include "google/protobuf/message.h"
 
 namespace cartographer {
@@ -52,17 +53,16 @@ class ProtoStreamWriter {
 };
 
 // A reader of the format produced by ProtoStreamWriter.
-class ProtoStreamReader {
+class ProtoStreamReader : public ProtoStreamReaderInterface {
  public:
-  ProtoStreamReader(const std::string& filename);
+  explicit ProtoStreamReader(const std::string& filename);
   ~ProtoStreamReader() = default;
 
   ProtoStreamReader(const ProtoStreamReader&) = delete;
   ProtoStreamReader& operator=(const ProtoStreamReader&) = delete;
 
-  bool ReadProto(google::protobuf::Message* proto);
-
-  bool eof() const;
+  bool ReadProto(google::protobuf::Message* proto) override;
+  bool eof() const override;
 
  private:
   bool Read(std::string* decompressed_data);
