@@ -37,7 +37,7 @@ CollatedTrajectoryBuilder::CollatedTrajectoryBuilder(
       wrapped_trajectory_builder_(std::move(wrapped_trajectory_builder)),
       last_logging_time_(std::chrono::steady_clock::now()) {
   std::unordered_set<std::string> expected_sensor_id_strings;
-  for (auto sensor_id : expected_sensor_ids) {
+  for (const auto& sensor_id : expected_sensor_ids) {
     expected_sensor_id_strings.insert(sensor_id.id);
   }
   sensor_collator_->AddTrajectory(
