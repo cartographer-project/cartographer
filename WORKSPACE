@@ -23,3 +23,7 @@ cartographer_repositories()
 load("@com_github_nelhage_boost//:boost/boost.bzl", "boost_deps")
 
 boost_deps()
+
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+
+grpc_deps()
