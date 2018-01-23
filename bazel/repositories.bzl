@@ -207,6 +207,28 @@ def cartographer_repositories():
       ],
   )
 
+  _maybe(native.http_archive,
+      name = "com_github_grpc_grpc",
+      sha256 = "2fdde7d64e6fb1a397bf2aa23aeddcdcf276652d9e48270e94eb0dc94d7c1345",
+      strip_prefix = "grpc-20e7074e4101b4fdbae1764caa952301b38957c4",
+      urls = [
+          "https://mirror.bazel.build/github.com/grpc/grpc/archive/20e7074e4101b4fdbae1764caa952301b38957c4.tar.gz",
+          "https://github.com/grpc/grpc/archive/20e7074e4101b4fdbae1764caa952301b38957c4.tar.gz",
+      ],
+  )
+
+  # TODO(rodrigoq): remove these binds once grpc#14140 has been merged, as well
+  # as removing `use_external` in cartographer_grpc/BUILD.bazel.
+  # https://github.com/grpc/grpc/pull/14140
+  native.bind(
+      name = "grpc_cpp_plugin",
+      actual = "@com_github_grpc_grpc//:grpc_cpp_plugin",
+  )
+  native.bind(
+      name = "grpc++_codegen_proto",
+      actual = "@com_github_grpc_grpc//:grpc++_codegen_proto",
+  )
+
 
 def _maybe(repo_rule, name, **kwargs):
   if name not in native.existing_rules():
