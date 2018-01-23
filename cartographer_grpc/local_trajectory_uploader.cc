@@ -128,7 +128,7 @@ void LocalTrajectoryUploader::AddTrajectory(
   proto::AddTrajectoryRequest request;
   proto::AddTrajectoryResponse result;
   *request.mutable_trajectory_builder_options() = trajectory_options;
-  for (const auto &sensor_id : expected_sensor_ids) {
+  for (const SensorId &sensor_id : expected_sensor_ids) {
     *request.add_expected_sensor_ids() = sensor::ToProto(sensor_id);
   }
   grpc::Status status =

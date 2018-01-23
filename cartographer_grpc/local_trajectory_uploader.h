@@ -34,7 +34,7 @@ namespace cartographer_grpc {
 
 class LocalTrajectoryUploader {
  public:
-  using SensorId = cartographer::mapping::MapBuilderInterface::SensorId;
+  using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
 
   LocalTrajectoryUploader(const std::string& uplink_server_address);
   ~LocalTrajectoryUploader();
