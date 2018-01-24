@@ -75,6 +75,11 @@ class TrajectoryBuilderInterface {
     SensorType type;
     std::string id;
 
+    bool operator==(const SensorId& other) const {
+         return std::forward_as_tuple(type, id) ==
+            std::forward_as_tuple(other.type, other.id);
+    }
+
     bool operator<(const SensorId& other) const {
       return std::forward_as_tuple(type, id) <
              std::forward_as_tuple(other.type, other.id);
