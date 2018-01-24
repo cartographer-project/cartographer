@@ -39,7 +39,8 @@ class LoadMapHandler
       case proto::LoadMapRequest::kSerializedData:
         reader_.AddProto(request.serialized_data());
         break;
-      default: {}
+      default:
+        LOG(FATAL) << "Unhandled proto::LoadMapRequest case.";
     }
   }
 
