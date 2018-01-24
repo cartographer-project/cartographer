@@ -94,7 +94,21 @@ void MapBuilderStub::SerializeState(
 
 void MapBuilderStub::LoadMap(
     cartographer::io::ProtoStreamReaderInterface* reader) {
-  LOG(FATAL) << "Not implemented";
+  framework::ClientWriter<proto::LoadMapRequest> load_map_writer;
+  // Request with a PoseGraph proto is sent first.
+  {
+    proto::LoadMapRequest request;
+    CHECK(reader->ReadProto(request.mutable_pose_graph()));
+    CHECK(load_map_writer.client_writer->Write(request));
+  }
+
+  // Multiple requests with SerializedData are sent after.
+  proto::LoadMapRequest request;
+  while (reader->ReadProto(request.mutable_serialized_data())) {
+    CHECK(load_map_writer.client_writer->Write(request));
+  }
+  CHECK(reader->eof());
+  CHECK(load_map_writer.client_writer->WritesDone());
 }
 
 int MapBuilderStub::num_trajectory_builders() const {
