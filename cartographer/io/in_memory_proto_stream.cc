@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/inmemory_proto_stream.h"
+#include "cartographer/io/in_memory_proto_stream.h"
 
 namespace cartographer {
 namespace io {
