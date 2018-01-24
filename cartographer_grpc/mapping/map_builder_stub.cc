@@ -95,6 +95,10 @@ void MapBuilderStub::SerializeState(
 void MapBuilderStub::LoadMap(
     cartographer::io::ProtoStreamReaderInterface* reader) {
   framework::ClientWriter<proto::LoadMapRequest> load_map_writer;
+  load_map_writer.client_writer = service_stub_->LoadMap(
+      &load_map_writer.client_context, &load_map_writer.response);
+  CHECK(load_map_writer.client_writer);
+
   // Request with a PoseGraph proto is sent first.
   {
     proto::LoadMapRequest request;
@@ -107,6 +111,7 @@ void MapBuilderStub::LoadMap(
   while (reader->ReadProto(request.mutable_serialized_data())) {
     CHECK(load_map_writer.client_writer->Write(request));
   }
+
   CHECK(reader->eof());
   CHECK(load_map_writer.client_writer->WritesDone());
 }
