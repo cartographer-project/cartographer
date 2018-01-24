@@ -14,6 +14,8 @@
 
 # Bazel build support for third-party packages.
 
+licenses(["notice"])  # Apache 2.0
+
 exports_files(
     glob(["*.BUILD"]),
     visibility = ["//visibility:public"],
