@@ -16,6 +16,8 @@
 # and mapping (SLAM) in 2D and 3D across multiple platforms and sensor
 # configurations.
 
+licenses(["notice"])  # Apache 2.0
+
 package(default_visibility = ["//visibility:public"])
 
 exports_files(["LICENSE"])
