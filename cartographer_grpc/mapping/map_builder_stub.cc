@@ -98,7 +98,7 @@ void MapBuilderStub::LoadMap(
 }
 
 int MapBuilderStub::num_trajectory_builders() const {
-  LOG(FATAL) << "Not implemented";
+  return trajectory_builder_stubs_.size();
 }
 
 cartographer::mapping::PoseGraphInterface* MapBuilderStub::pose_graph() {
