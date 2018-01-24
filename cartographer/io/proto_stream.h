@@ -20,6 +20,7 @@
 #include <fstream>
 
 #include "cartographer/common/port.h"
+#include "cartographer/io/proto_stream_interface.h"
 #include "google/protobuf/message.h"
 
 namespace cartographer {
@@ -34,17 +35,13 @@ namespace io {
 class ProtoStreamWriter {
  public:
   ProtoStreamWriter(const std::string& filename);
-  ~ProtoStreamWriter();
+  ~ProtoStreamWriter() = default;
 
   ProtoStreamWriter(const ProtoStreamWriter&) = delete;
   ProtoStreamWriter& operator=(const ProtoStreamWriter&) = delete;
 
   // Serializes, compressed and writes the 'proto' to the file.
-  void WriteProto(const google::protobuf::Message& proto) {
-    std::string uncompressed_data;
-    proto.SerializeToString(&uncompressed_data);
-    Write(uncompressed_data);
-  }
+  void WriteProto(const google::protobuf::Message& proto);
 
   // This should be called to check whether writing was successful.
   bool Close();
@@ -56,21 +53,16 @@ class ProtoStreamWriter {
 };
 
 // A reader of the format produced by ProtoStreamWriter.
-class ProtoStreamReader {
+class ProtoStreamReader : public ProtoStreamReaderInterface {
  public:
-  ProtoStreamReader(const std::string& filename);
-  ~ProtoStreamReader();
+  explicit ProtoStreamReader(const std::string& filename);
+  ~ProtoStreamReader() = default;
 
   ProtoStreamReader(const ProtoStreamReader&) = delete;
   ProtoStreamReader& operator=(const ProtoStreamReader&) = delete;
 
-  bool ReadProto(google::protobuf::Message* proto) {
-    std::string decompressed_data;
-    return Read(&decompressed_data) &&
-           proto->ParseFromString(decompressed_data);
-  }
-
-  bool eof() const;
+  bool ReadProto(google::protobuf::Message* proto) override;
+  bool eof() const override;
 
  private:
   bool Read(std::string* decompressed_data);

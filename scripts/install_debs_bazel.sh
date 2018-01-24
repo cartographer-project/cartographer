@@ -1,4 +1,6 @@
-# Copyright 2018 The Cartographer Authors
+#!/bin/sh
+
+# Copyright 2016 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-workspace(name = "com_github_googlecartographer_cartographer")
+set -o errexit
+set -o verbose
 
-load("//:bazel/repositories.bzl", "cartographer_repositories")
-
-cartographer_repositories()
-
-# This can't be inside cartographer_repositories() because of:
-# https://github.com/bazelbuild/bazel/issues/1550
-load("@com_github_nelhage_boost//:boost/boost.bzl", "boost_deps")
-
-boost_deps()
-
-load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
-
-grpc_deps()
+# Install the required libraries that are available as debs.
+sudo apt-get update
+sudo apt-get install -y \
+    wget \
+    pkg-config \
+    zip \
+    g++ \
+    zlib1g-dev \
+    unzip \
+    python
+wget https://github.com/bazelbuild/bazel/releases/download/0.9.0/bazel-0.9.0-installer-linux-x86_64.sh
+chmod +x bazel-0.9.0-installer-linux-x86_64.sh
+./bazel-0.9.0-installer-linux-x86_64.sh
+export PATH="$PATH:$HOME/bin"

@@ -93,7 +93,8 @@ void MapBuilderStub::SerializeState(
   LOG(FATAL) << "Not implemented";
 }
 
-void MapBuilderStub::LoadMap(cartographer::io::ProtoStreamReader* reader) {
+void MapBuilderStub::LoadMap(
+    cartographer::io::ProtoStreamReaderInterface* reader) {
   LOG(FATAL) << "Not implemented";
 }
 

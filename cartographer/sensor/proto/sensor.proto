@@ -63,7 +63,7 @@ message FixedFramePoseData {
 message LandmarkData {
   message Landmark {
     bytes id = 1;
-    transform.proto.Rigid3d transform = 2;
+    transform.proto.Rigid3d landmark_to_tracking_transform = 2;
     double translation_weight = 3;
     double rotation_weight = 4;
   }

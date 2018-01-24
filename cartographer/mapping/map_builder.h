@@ -62,7 +62,7 @@ class MapBuilder : public MapBuilderInterface {
 
   void SerializeState(io::ProtoStreamWriter* writer) override;
 
-  void LoadMap(io::ProtoStreamReader* reader) override;
+  void LoadMap(io::ProtoStreamReaderInterface* reader) override;
 
   int num_trajectory_builders() const override;
 
