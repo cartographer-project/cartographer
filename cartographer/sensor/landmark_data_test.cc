@@ -30,21 +30,22 @@ namespace {
 using ::testing::DoubleNear;
 using ::testing::Field;
 
-::testing::Matcher<const Landmark&> EqualsLandmark(const Landmark& expected) {
+::testing::Matcher<const LandmarkObservation&> EqualsLandmark(
+    const LandmarkObservation& expected) {
   return ::testing::AllOf(
-      Field(&Landmark::id, expected.id),
-      Field(&Landmark::landmark_to_tracking_transform,
+      Field(&LandmarkObservation::id, expected.id),
+      Field(&LandmarkObservation::landmark_to_tracking_transform,
             transform::IsNearly(expected.landmark_to_tracking_transform, 1e-2)),
-      Field(&Landmark::translation_weight,
+      Field(&LandmarkObservation::translation_weight,
             DoubleNear(expected.translation_weight, 0.01)),
-      Field(&Landmark::rotation_weight,
+      Field(&LandmarkObservation::rotation_weight,
             DoubleNear(expected.rotation_weight, 0.01)));
 }
 
 class LandmarkDataTest : public ::testing::Test {
  protected:
   LandmarkDataTest()
-      : landmarks_(
+      : observations_(
             {{
                  "ID1",
                  transform::Rigid3d(Eigen::Vector3d(1., 1., 1.),
@@ -59,16 +60,16 @@ class LandmarkDataTest : public ::testing::Test {
                  2.f,
                  4.f,
              }}) {}
-  std::vector<Landmark> landmarks_;
+  std::vector<LandmarkObservation> observations_;
 };
 
 TEST_F(LandmarkDataTest, LandmarkDataToAndFromProto) {
-  const auto expected = LandmarkData{common::FromUniversal(50), landmarks_};
+  const auto expected = LandmarkData{common::FromUniversal(50), observations_};
   const auto actual = FromProto(ToProto(expected));
   EXPECT_EQ(expected.time, actual.time);
-  EXPECT_THAT(actual.landmarks,
-              ElementsAre(EqualsLandmark(expected.landmarks[0]),
-                          EqualsLandmark(expected.landmarks[1])));
+  EXPECT_THAT(actual.landmark_observations,
+              ElementsAre(EqualsLandmark(expected.landmark_observations[0]),
+                          EqualsLandmark(expected.landmark_observations[1])));
 }
 
 }  // namespace
