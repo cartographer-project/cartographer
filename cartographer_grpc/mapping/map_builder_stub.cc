@@ -88,7 +88,7 @@ std::string MapBuilderStub::SubmapToProto(
 }
 
 void MapBuilderStub::SerializeState(
-    cartographer::io::ProtoStreamWriter* writer) {
+    cartographer::io::ProtoStreamWriterInterface* writer) {
   LOG(FATAL) << "Not implemented";
 }
 
