@@ -192,6 +192,10 @@ service MapBuilderService {
   // Returns the list of constraints in the current optimization problem.
   rpc GetConstraints(google.protobuf.Empty) returns (GetConstraintsResponse);
 
+  // Requests a PoseGraph to call RunFinalOptimization.
+  rpc RunFinalOptimization(google.protobuf.Empty)
+      returns (google.protobuf.Empty);
+
   // Adds map data in the order defined by ProtoStreamReader.
   rpc LoadMap(stream LoadMapRequest) returns (google.protobuf.Empty);
 }
