@@ -43,7 +43,8 @@ void LoadMapHandler::OnRequest(const proto::LoadMapRequest& request) {
 }
 
 void LoadMapHandler::OnReadsDone() {
-  GetContext<MapBuilderContextInterface>()->map_builder().LoadMap(&reader_);
+  GetContext<MapBuilderContextInterface>()->map_builder().LoadState(&reader_,
+                                                                    true);
   Send(cartographer::common::make_unique<google::protobuf::Empty>());
 }
 

@@ -115,8 +115,12 @@ void MapBuilderStub::SerializeState(
   CHECK(writer->Close());
 }
 
-void MapBuilderStub::LoadMap(
-    cartographer::io::ProtoStreamReaderInterface* reader) {
+void MapBuilderStub::LoadState(
+    cartographer::io::ProtoStreamReaderInterface* reader,
+    const bool load_frozen_state) {
+  if (!load_frozen_state) {
+    LOG(FATAL) << "Not implemented";
+  }
   framework::Client<handlers::LoadMapHandler> client(client_channel_);
   // Request with a PoseGraph proto is sent first.
   {

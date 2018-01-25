@@ -63,8 +63,8 @@ class MapBuilder : public MapBuilderInterface {
 
   void SerializeState(io::ProtoStreamWriterInterface* writer) override;
 
-  // Loads the SLAM state from a proto stream.
-  void LoadState(io::ProtoStreamReaderInterface* reader, bool load_frozen_state);
+  void LoadState(io::ProtoStreamReaderInterface* reader,
+                 bool load_frozen_state) override;
 
   int num_trajectory_builders() const override;
 
