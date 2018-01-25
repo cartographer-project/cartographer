@@ -36,7 +36,8 @@ class ForwardingProtoStreamWriter
   using WriterCallback =
       std::function<bool(const google::protobuf::Message* proto)>;
 
-  explicit ForwardingProtoStreamWriter(WriterCallback writer_callback);
+  explicit ForwardingProtoStreamWriter(WriterCallback writer_callback)
+      : writer_callback_(writer_callback) {}
   ~ForwardingProtoStreamWriter() = default;
 
   void WriteProto(const google::protobuf::Message& proto) override;
