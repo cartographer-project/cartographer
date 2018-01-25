@@ -34,3 +34,12 @@ message TrajectoryBuilderOptions {
   bool pure_localization = 3;
   InitialTrajectoryPose initial_trajectory_pose = 4;
 }
+
+message TrajectoryBuilderOptionsWithSensorIds {
+  repeated string sensor_id = 1;
+  TrajectoryBuilderOptions trajectory_builder_options = 2;
+}
+
+message AllTrajectoryBuilderOptions {
+  repeated TrajectoryBuilderOptionsWithSensorIds options_with_sensor_ids = 1;
+}

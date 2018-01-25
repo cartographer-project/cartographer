@@ -56,7 +56,9 @@ class MapBuilderInterface {
 
   // Creates a new trajectory and returns its index. Querying the trajectory
   // builder for it will return 'nullptr'.
-  virtual int AddTrajectoryForDeserialization() = 0;
+  virtual int AddTrajectoryForDeserialization(
+      const proto::TrajectoryBuilderOptionsWithSensorIds&
+          options_with_sensor_ids_proto) = 0;
 
   // Returns the 'TrajectoryBuilderInterface' corresponding to the specified
   // 'trajectory_id' or 'nullptr' if the trajectory has no corresponding

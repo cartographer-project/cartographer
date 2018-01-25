@@ -54,7 +54,9 @@ int MapBuilderStub::AddTrajectoryBuilder(
   return result.trajectory_id();
 }
 
-int MapBuilderStub::AddTrajectoryForDeserialization() {
+int MapBuilderStub::AddTrajectoryForDeserialization(
+    const cartographer::mapping::proto::TrajectoryBuilderOptionsWithSensorIds&
+        options_with_sensor_ids_proto) {
   LOG(FATAL) << "Not implemented";
 }
 

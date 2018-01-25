@@ -48,7 +48,10 @@ class MockMapBuilder : public cartographer::mapping::MapBuilderInterface {
                    const cartographer::mapping::proto::TrajectoryBuilderOptions&
                        trajectory_options,
                    LocalSlamResultCallback local_slam_result_callback));
-  MOCK_METHOD0(AddTrajectoryForDeserialization, int());
+  MOCK_METHOD1(AddTrajectoryForDeserialization,
+               int(const cartographer::mapping::proto::
+                       TrajectoryBuilderOptionsWithSensorIds&
+                           options_with_sensor_ids_proto));
   MOCK_CONST_METHOD1(GetTrajectoryBuilder,
                      TrajectoryBuilderInterface*(int trajectory_id));
   MOCK_METHOD1(FinishTrajectory, void(int trajectory_id));
