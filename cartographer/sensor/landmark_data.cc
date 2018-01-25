@@ -24,13 +24,13 @@ namespace sensor {
 proto::LandmarkData ToProto(const LandmarkData& landmark_data) {
   proto::LandmarkData proto;
   proto.set_timestamp(common::ToUniversal(landmark_data.time));
-  for (const Landmark& landmark : landmark_data.landmarks) {
-    auto* item = proto.add_landmarks();
-    item->set_id(landmark.id);
+  for (const auto& observation : landmark_data.landmark_observations) {
+    auto* item = proto.add_landmark_observations();
+    item->set_id(observation.id);
     *item->mutable_landmark_to_tracking_transform() =
-        transform::ToProto(landmark.landmark_to_tracking_transform);
-    item->set_translation_weight(landmark.translation_weight);
-    item->set_rotation_weight(landmark.rotation_weight);
+        transform::ToProto(observation.landmark_to_tracking_transform);
+    item->set_translation_weight(observation.translation_weight);
+    item->set_rotation_weight(observation.rotation_weight);
   }
   return proto;
 }
@@ -38,8 +38,8 @@ proto::LandmarkData ToProto(const LandmarkData& landmark_data) {
 LandmarkData FromProto(const proto::LandmarkData& proto) {
   LandmarkData landmark_data;
   landmark_data.time = common::FromUniversal(proto.timestamp());
-  for (const auto& item : proto.landmarks()) {
-    landmark_data.landmarks.push_back({
+  for (const auto& item : proto.landmark_observations()) {
+    landmark_data.landmark_observations.push_back({
         item.id(),
         transform::ToRigid3(item.landmark_to_tracking_transform()),
         item.translation_weight(),
