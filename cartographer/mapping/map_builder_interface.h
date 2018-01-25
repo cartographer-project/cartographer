@@ -74,7 +74,7 @@ class MapBuilderInterface {
                                     proto::SubmapQuery::Response* response) = 0;
 
   // Serializes the current state to a proto stream.
-  virtual void SerializeState(io::ProtoStreamWriter* writer) = 0;
+  virtual void SerializeState(io::ProtoStreamWriterInterface* writer) = 0;
 
   // Loads submaps from a proto stream into a new frozen trajectory.
   virtual void LoadMap(io::ProtoStreamReaderInterface* reader) = 0;

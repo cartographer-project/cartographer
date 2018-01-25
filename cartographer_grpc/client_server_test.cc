@@ -56,7 +56,8 @@ class MockMapBuilder : public cartographer::mapping::MapBuilderInterface {
       SubmapToProto,
       std::string(const cartographer::mapping::SubmapId&,
                   cartographer::mapping::proto::SubmapQuery::Response*));
-  MOCK_METHOD1(SerializeState, void(cartographer::io::ProtoStreamWriter*));
+  MOCK_METHOD1(SerializeState,
+               void(cartographer::io::ProtoStreamWriterInterface*));
   MOCK_METHOD1(LoadMap, void(cartographer::io::ProtoStreamReaderInterface*));
   MOCK_CONST_METHOD0(num_trajectory_builders, int());
   MOCK_METHOD0(pose_graph, PoseGraphInterface*());
