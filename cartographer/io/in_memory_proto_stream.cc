@@ -16,8 +16,17 @@
 
 #include "cartographer/io/in_memory_proto_stream.h"
 
+#include "glog/logging.h"
+
 namespace cartographer {
 namespace io {
+
+void ForwardingProtoStreamWriter::WriteProto(
+    const google::protobuf::Message& proto) {
+  CHECK(writer_callback_(&proto));
+}
+
+bool ForwardingProtoStreamWriter::Close() { return writer_callback_(nullptr); }
 
 bool InMemoryProtoStreamReader::ReadProto(google::protobuf::Message* proto) {
   if (eof()) return false;

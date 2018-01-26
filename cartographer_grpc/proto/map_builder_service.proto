@@ -24,8 +24,22 @@ import "google/protobuf/empty.proto";
 
 package cartographer_grpc.proto;
 
+enum SensorType {
+  RANGE = 0;
+  IMU = 1;
+  ODOMETRY = 2;
+  FIXED_FRAME_POSE = 3;
+  LANDMARK = 4;
+  LOCAL_SLAM_RESULT = 5;
+}
+
+message SensorId {
+  string id = 1;
+  SensorType type = 2;
+}
+
 message AddTrajectoryRequest {
-  repeated string expected_sensor_ids = 1;
+  repeated SensorId expected_sensor_ids = 3;
   cartographer.mapping.proto.TrajectoryBuilderOptions
       trajectory_builder_options = 2;
 }
@@ -191,6 +205,10 @@ service MapBuilderService {
 
   // Returns the list of constraints in the current optimization problem.
   rpc GetConstraints(google.protobuf.Empty) returns (GetConstraintsResponse);
+
+  // Requests a PoseGraph to call RunFinalOptimization.
+  rpc RunFinalOptimization(google.protobuf.Empty)
+      returns (google.protobuf.Empty);
 
   // Adds map data in the order defined by ProtoStreamReader.
   rpc LoadMap(stream LoadMapRequest) returns (google.protobuf.Empty);

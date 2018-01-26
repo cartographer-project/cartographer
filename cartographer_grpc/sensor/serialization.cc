@@ -72,5 +72,69 @@ void CreateAddLandmarkDataRequest(
   *proto->mutable_landmark_data() = landmark_data;
 }
 
+proto::SensorId ToProto(
+    const cartographer::mapping::TrajectoryBuilderInterface::SensorId&
+        sensor_id) {
+  using SensorType =
+      cartographer::mapping::TrajectoryBuilderInterface::SensorId::SensorType;
+  proto::SensorType type;
+  switch (sensor_id.type) {
+    case SensorType::RANGE:
+      type = proto::SensorType::RANGE;
+      break;
+    case SensorType::IMU:
+      type = proto::SensorType::IMU;
+      break;
+    case SensorType::ODOMETRY:
+      type = proto::SensorType::ODOMETRY;
+      break;
+    case SensorType::FIXED_FRAME_POSE:
+      type = proto::SensorType::FIXED_FRAME_POSE;
+      break;
+    case SensorType::LANDMARK:
+      type = proto::SensorType::LANDMARK;
+      break;
+    case SensorType::LOCAL_SLAM_RESULT:
+      type = proto::SensorType::LOCAL_SLAM_RESULT;
+      break;
+    default:
+      LOG(FATAL) << "unknown SensorType";
+  }
+  proto::SensorId proto;
+  proto.set_type(type);
+  proto.set_id(sensor_id.id);
+  return proto;
+}
+
+cartographer::mapping::TrajectoryBuilderInterface::SensorId FromProto(
+    const proto::SensorId& proto) {
+  using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
+  using SensorType = SensorId::SensorType;
+  SensorType type;
+  switch (proto.type()) {
+    case proto::SensorType::RANGE:
+      type = SensorType::RANGE;
+      break;
+    case proto::SensorType::IMU:
+      type = SensorType::IMU;
+      break;
+    case proto::SensorType::ODOMETRY:
+      type = SensorType::ODOMETRY;
+      break;
+    case proto::SensorType::FIXED_FRAME_POSE:
+      type = SensorType::FIXED_FRAME_POSE;
+      break;
+    case proto::SensorType::LANDMARK:
+      type = SensorType::LANDMARK;
+      break;
+    case proto::SensorType::LOCAL_SLAM_RESULT:
+      type = SensorType::LOCAL_SLAM_RESULT;
+      break;
+    default:
+      LOG(FATAL) << "unknown proto::SensorType";
+  }
+  return SensorId{type, proto.id()};
+}
+
 }  // namespace sensor
 }  // namespace cartographer_grpc

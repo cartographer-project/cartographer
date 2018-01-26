@@ -32,7 +32,7 @@ namespace io {
 //
 // TODO(whess): Compress the file instead of individual messages for better
 // compression performance? Should we use LZ4?
-class ProtoStreamWriter {
+class ProtoStreamWriter : public ProtoStreamWriterInterface {
  public:
   ProtoStreamWriter(const std::string& filename);
   ~ProtoStreamWriter() = default;
@@ -40,11 +40,8 @@ class ProtoStreamWriter {
   ProtoStreamWriter(const ProtoStreamWriter&) = delete;
   ProtoStreamWriter& operator=(const ProtoStreamWriter&) = delete;
 
-  // Serializes, compressed and writes the 'proto' to the file.
-  void WriteProto(const google::protobuf::Message& proto);
-
-  // This should be called to check whether writing was successful.
-  bool Close();
+  void WriteProto(const google::protobuf::Message& proto) override;
+  bool Close() override;
 
  private:
   void Write(const std::string& uncompressed_data);

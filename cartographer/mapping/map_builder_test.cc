@@ -25,12 +25,14 @@
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "gtest/gtest.h"
 
+using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
+
 namespace cartographer {
 namespace mapping {
 namespace {
 
-constexpr char kRangeSensorId[] = "range";
-constexpr char kIMUSensorId[] = "imu";
+const SensorId kRangeSensorId{SensorId::SensorType::RANGE, "range"};
+const SensorId kIMUSensorId{SensorId::SensorType::IMU, "imu"};
 constexpr double kDuration = 4.;         // Seconds.
 constexpr double kTimeStep = 0.1;        // Seconds.
 constexpr double kTravelDistance = 1.2;  // Meters.
@@ -96,9 +98,8 @@ class MapBuilderTest : public ::testing::Test {
 
 TEST_F(MapBuilderTest, TrajectoryAddFinish2D) {
   BuildMapBuilder();
-  const std::unordered_set<std::string> expected_sensor_ids = {kRangeSensorId};
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
-      expected_sensor_ids, trajectory_builder_options_,
+      {kRangeSensorId}, trajectory_builder_options_,
       nullptr /* GetLocalSlamResultCallbackForSubscriptions */);
   EXPECT_EQ(1, map_builder_->num_trajectory_builders());
   EXPECT_TRUE(map_builder_->GetTrajectoryBuilder(trajectory_id) != nullptr);
@@ -111,9 +112,8 @@ TEST_F(MapBuilderTest, TrajectoryAddFinish2D) {
 TEST_F(MapBuilderTest, TrajectoryAddFinish3D) {
   SetOptionsTo3D();
   BuildMapBuilder();
-  const std::unordered_set<std::string> expected_sensor_ids = {kRangeSensorId};
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
-      expected_sensor_ids, trajectory_builder_options_,
+      {kRangeSensorId}, trajectory_builder_options_,
       nullptr /* GetLocalSlamResultCallbackForSubscriptions */);
   EXPECT_EQ(1, map_builder_->num_trajectory_builders());
   EXPECT_TRUE(map_builder_->GetTrajectoryBuilder(trajectory_id) != nullptr);
@@ -125,16 +125,15 @@ TEST_F(MapBuilderTest, TrajectoryAddFinish3D) {
 
 TEST_F(MapBuilderTest, LocalSlam2D) {
   BuildMapBuilder();
-  const std::unordered_set<std::string> expected_sensor_ids = {kRangeSensorId};
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
-      expected_sensor_ids, trajectory_builder_options_,
+      {kRangeSensorId}, trajectory_builder_options_,
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
   const auto measurements = test::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
-    trajectory_builder->AddSensorData(kRangeSensorId, measurement);
+    trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
   }
   map_builder_->FinishTrajectory(trajectory_id);
   map_builder_->pose_graph()->RunFinalOptimization();
@@ -149,19 +148,17 @@ TEST_F(MapBuilderTest, LocalSlam2D) {
 TEST_F(MapBuilderTest, LocalSlam3D) {
   SetOptionsTo3D();
   BuildMapBuilder();
-  const std::unordered_set<std::string> expected_sensor_ids = {kRangeSensorId,
-                                                               kIMUSensorId};
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
-      expected_sensor_ids, trajectory_builder_options_,
+      {kRangeSensorId, kIMUSensorId}, trajectory_builder_options_,
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
   const auto measurements = test::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
-    trajectory_builder->AddSensorData(kRangeSensorId, measurement);
+    trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
     trajectory_builder->AddSensorData(
-        kIMUSensorId,
+        kIMUSensorId.id,
         sensor::ImuData{measurement.time, Eigen::Vector3d(0., 0., 9.8),
                         Eigen::Vector3d::Zero()});
   }
@@ -178,16 +175,15 @@ TEST_F(MapBuilderTest, LocalSlam3D) {
 TEST_F(MapBuilderTest, GlobalSlam2D) {
   SetOptionsEnableGlobalOptimization();
   BuildMapBuilder();
-  const std::unordered_set<std::string> expected_sensor_ids = {kRangeSensorId};
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
-      expected_sensor_ids, trajectory_builder_options_,
+      {kRangeSensorId}, trajectory_builder_options_,
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
   const auto measurements = test::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
-    trajectory_builder->AddSensorData(kRangeSensorId, measurement);
+    trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
   }
   map_builder_->FinishTrajectory(trajectory_id);
   map_builder_->pose_graph()->RunFinalOptimization();
