@@ -118,7 +118,7 @@ class ClientServerTest : public ::testing::Test {
   }
 
   proto::MapBuilderServerOptions map_builder_server_options_;
-  testing::MockMapBuilder *mock_map_builder_;
+  testing::MockMapBuilder* mock_map_builder_;
   std::unique_ptr<testing::MockTrajectoryBuilder> mock_trajectory_builder_;
   cartographer::mapping::proto::TrajectoryBuilderOptions
       trajectory_builder_options_;
@@ -203,10 +203,10 @@ TEST_F(ClientServerTest, AddSensorDataWithMock) {
   cartographer::sensor::ImuData imu_data{
       cartographer::common::FromUniversal(42), Eigen::Vector3d(0., 0., 9.8),
       Eigen::Vector3d::Zero()};
-  EXPECT_CALL(
-      *mock_trajectory_builder_,
-      AddSensorData(::testing::StrEq(kSensorId.id),
-                    ::testing::Matcher<const cartographer::sensor::ImuData&>(_)))
+  EXPECT_CALL(*mock_trajectory_builder_,
+              AddSensorData(
+                  ::testing::StrEq(kSensorId.id),
+                  ::testing::Matcher<const cartographer::sensor::ImuData&>(_)))
       .WillOnce(::testing::Return());
   trajectory_stub->AddSensorData(kSensorId.id, imu_data);
   EXPECT_CALL(*mock_map_builder_, FinishTrajectory(trajectory_id));

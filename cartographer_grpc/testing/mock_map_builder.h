@@ -29,10 +29,10 @@ namespace cartographer_grpc {
 namespace testing {
 
 class MockMapBuilder : public cartographer::mapping::MapBuilderInterface {
-public:
+ public:
   MOCK_METHOD3(
       AddTrajectoryBuilder,
-	  int(const std::set<SensorId>& expected_sensor_ids,
+      int(const std::set<SensorId> &expected_sensor_ids,
           const cartographer::mapping::proto::TrajectoryBuilderOptions
               &trajectory_options,
           cartographer::mapping::MapBuilderInterface::LocalSlamResultCallback
@@ -53,7 +53,7 @@ public:
   MOCK_METHOD0(pose_graph, cartographer::mapping::PoseGraphInterface *());
 };
 
-} // namespace testing
-} // namespace cartographer_grpc
+}  // namespace testing
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_TESTING_MOCK_MAP_BUILDER_H
+#endif  // CARTOGRAPHER_GRPC_TESTING_MOCK_MAP_BUILDER_H

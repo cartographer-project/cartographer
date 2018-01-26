@@ -27,7 +27,7 @@ namespace testing {
 
 class MockTrajectoryBuilder
     : public cartographer::mapping::TrajectoryBuilderInterface {
-public:
+ public:
   MockTrajectoryBuilder() = default;
   ~MockTrajectoryBuilder() override = default;
 
@@ -55,7 +55,7 @@ public:
   }
 };
 
-} // namespace testing
-} // namespace cartographer_grpc
+}  // namespace testing
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_TESTING_MOCK_TRAJECTORY_BUILDER_CONTEXT_H
+#endif  // CARTOGRAPHER_GRPC_TESTING_MOCK_TRAJECTORY_BUILDER_CONTEXT_H
