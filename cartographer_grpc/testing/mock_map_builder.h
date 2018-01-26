@@ -32,7 +32,7 @@ class MockMapBuilder : public cartographer::mapping::MapBuilderInterface {
 public:
   MOCK_METHOD3(
       AddTrajectoryBuilder,
-      int(const std::unordered_set<std::string> &expected_sensor_ids,
+	  int(const std::set<SensorId>& expected_sensor_ids,
           const cartographer::mapping::proto::TrajectoryBuilderOptions
               &trajectory_options,
           cartographer::mapping::MapBuilderInterface::LocalSlamResultCallback
