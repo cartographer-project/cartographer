@@ -22,6 +22,8 @@
 #include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/map_builder_server_options.h"
 #include "cartographer_grpc/mapping/map_builder_stub.h"
+#include "cartographer_grpc/testing/mock_map_builder.h"
+#include "cartographer_grpc/testing/mock_trajectory_builder.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -41,58 +43,6 @@ const SensorId kRangeSensorId{SensorId::SensorType::RANGE, "range"};
 constexpr double kDuration = 4.;         // Seconds.
 constexpr double kTimeStep = 0.1;        // Seconds.
 constexpr double kTravelDistance = 1.2;  // Meters.
-
-class MockMapBuilder : public cartographer::mapping::MapBuilderInterface {
- public:
-  MOCK_METHOD3(AddTrajectoryBuilder,
-               int(const std::set<SensorId>& expected_sensor_ids,
-                   const cartographer::mapping::proto::TrajectoryBuilderOptions&
-                       trajectory_options,
-                   LocalSlamResultCallback local_slam_result_callback));
-  MOCK_METHOD0(AddTrajectoryForDeserialization, int());
-  MOCK_CONST_METHOD1(GetTrajectoryBuilder,
-                     TrajectoryBuilderInterface*(int trajectory_id));
-  MOCK_METHOD1(FinishTrajectory, void(int trajectory_id));
-  MOCK_METHOD2(
-      SubmapToProto,
-      std::string(const cartographer::mapping::SubmapId&,
-                  cartographer::mapping::proto::SubmapQuery::Response*));
-  MOCK_METHOD1(SerializeState,
-               void(cartographer::io::ProtoStreamWriterInterface*));
-  MOCK_METHOD1(LoadMap, void(cartographer::io::ProtoStreamReaderInterface*));
-  MOCK_CONST_METHOD0(num_trajectory_builders, int());
-  MOCK_METHOD0(pose_graph, PoseGraphInterface*());
-};
-
-class MockTrajectoryBuilder
-    : public cartographer::mapping::TrajectoryBuilderInterface {
- public:
-  MockTrajectoryBuilder() = default;
-  ~MockTrajectoryBuilder() override = default;
-
-  MOCK_METHOD2(AddSensorData,
-               void(const std::string&,
-                    const cartographer::sensor::TimedPointCloudData&));
-  MOCK_METHOD2(AddSensorData,
-               void(const std::string&, const cartographer::sensor::ImuData&));
-  MOCK_METHOD2(AddSensorData, void(const std::string&,
-                                   const cartographer::sensor::OdometryData&));
-  MOCK_METHOD2(AddSensorData,
-               void(const std::string&,
-                    const cartographer::sensor::FixedFramePoseData&));
-  MOCK_METHOD2(AddSensorData, void(const std::string&,
-                                   const cartographer::sensor::LandmarkData&));
-
-  // Some of the platforms we run on may ship with a version of gmock which does
-  // not yet support move-only types.
-  MOCK_METHOD1(DoAddLocalSlamResultData,
-               void(cartographer::mapping::LocalSlamResultData*));
-  void AddLocalSlamResultData(
-      std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-          local_slam_result_data) override {
-    DoAddLocalSlamResultData(local_slam_result_data.get());
-  }
-};
 
 class ClientServerTest : public ::testing::Test {
  protected:
@@ -145,13 +95,14 @@ class ClientServerTest : public ::testing::Test {
   }
 
   void InitializeServerWithMockMapBuilder() {
-    auto mock_map_builder = cartographer::common::make_unique<MockMapBuilder>();
+    auto mock_map_builder =
+        cartographer::common::make_unique<testing::MockMapBuilder>();
     mock_map_builder_ = mock_map_builder.get();
     server_ = cartographer::common::make_unique<MapBuilderServer>(
         map_builder_server_options_, std::move(mock_map_builder));
     EXPECT_TRUE(server_ != nullptr);
     mock_trajectory_builder_ =
-        cartographer::common::make_unique<MockTrajectoryBuilder>();
+        cartographer::common::make_unique<testing::MockTrajectoryBuilder>();
   }
 
   void InitializeStub() {
@@ -167,8 +118,8 @@ class ClientServerTest : public ::testing::Test {
   }
 
   proto::MapBuilderServerOptions map_builder_server_options_;
-  MockMapBuilder* mock_map_builder_;
-  std::unique_ptr<MockTrajectoryBuilder> mock_trajectory_builder_;
+  testing::MockMapBuilder* mock_map_builder_;
+  std::unique_ptr<testing::MockTrajectoryBuilder> mock_trajectory_builder_;
   cartographer::mapping::proto::TrajectoryBuilderOptions
       trajectory_builder_options_;
   std::unique_ptr<MapBuilderServer> server_;
@@ -203,10 +154,10 @@ TEST_F(ClientServerTest, AddTrajectoryBuilderWithMock) {
   std::set<SensorId> expected_sensor_ids = {kSensorId};
   EXPECT_CALL(
       *mock_map_builder_,
-      AddTrajectoryBuilder(testing::ContainerEq(expected_sensor_ids), _, _))
-      .WillOnce(testing::Return(3));
+      AddTrajectoryBuilder(::testing::ContainerEq(expected_sensor_ids), _, _))
+      .WillOnce(::testing::Return(3));
   EXPECT_CALL(*mock_map_builder_, GetTrajectoryBuilder(_))
-      .WillRepeatedly(testing::Return(nullptr));
+      .WillRepeatedly(::testing::Return(nullptr));
   int trajectory_id = stub_->AddTrajectoryBuilder(
       expected_sensor_ids, trajectory_builder_options_, nullptr);
   EXPECT_EQ(trajectory_id, 3);
@@ -240,23 +191,23 @@ TEST_F(ClientServerTest, AddSensorDataWithMock) {
   std::set<SensorId> expected_sensor_ids = {kSensorId};
   EXPECT_CALL(
       *mock_map_builder_,
-      AddTrajectoryBuilder(testing::ContainerEq(expected_sensor_ids), _, _))
-      .WillOnce(testing::Return(3));
+      AddTrajectoryBuilder(::testing::ContainerEq(expected_sensor_ids), _, _))
+      .WillOnce(::testing::Return(3));
   int trajectory_id = stub_->AddTrajectoryBuilder(
       expected_sensor_ids, trajectory_builder_options_, nullptr);
   EXPECT_EQ(trajectory_id, 3);
   EXPECT_CALL(*mock_map_builder_, GetTrajectoryBuilder(_))
-      .WillRepeatedly(testing::Return(mock_trajectory_builder_.get()));
+      .WillRepeatedly(::testing::Return(mock_trajectory_builder_.get()));
   cartographer::mapping::TrajectoryBuilderInterface* trajectory_stub =
       stub_->GetTrajectoryBuilder(trajectory_id);
   cartographer::sensor::ImuData imu_data{
       cartographer::common::FromUniversal(42), Eigen::Vector3d(0., 0., 9.8),
       Eigen::Vector3d::Zero()};
-  EXPECT_CALL(
-      *mock_trajectory_builder_,
-      AddSensorData(testing::StrEq(kSensorId.id),
-                    testing::Matcher<const cartographer::sensor::ImuData&>(_)))
-      .WillOnce(testing::Return());
+  EXPECT_CALL(*mock_trajectory_builder_,
+              AddSensorData(
+                  ::testing::StrEq(kSensorId.id),
+                  ::testing::Matcher<const cartographer::sensor::ImuData&>(_)))
+      .WillOnce(::testing::Return());
   trajectory_stub->AddSensorData(kSensorId.id, imu_data);
   EXPECT_CALL(*mock_map_builder_, FinishTrajectory(trajectory_id));
   stub_->FinishTrajectory(trajectory_id);
