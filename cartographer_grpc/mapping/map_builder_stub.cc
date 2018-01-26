@@ -89,17 +89,36 @@ std::string MapBuilderStub::SubmapToProto(
 }
 
 void MapBuilderStub::SerializeState(
-    cartographer::io::ProtoStreamWriter* writer) {
+    cartographer::io::ProtoStreamWriterInterface* writer) {
   LOG(FATAL) << "Not implemented";
 }
 
 void MapBuilderStub::LoadMap(
     cartographer::io::ProtoStreamReaderInterface* reader) {
-  LOG(FATAL) << "Not implemented";
+  framework::ClientWriter<proto::LoadMapRequest> load_map_writer;
+  load_map_writer.client_writer = service_stub_->LoadMap(
+      &load_map_writer.client_context, &load_map_writer.response);
+  CHECK(load_map_writer.client_writer);
+
+  // Request with a PoseGraph proto is sent first.
+  {
+    proto::LoadMapRequest request;
+    CHECK(reader->ReadProto(request.mutable_pose_graph()));
+    CHECK(load_map_writer.client_writer->Write(request));
+  }
+
+  // Multiple requests with SerializedData are sent after.
+  proto::LoadMapRequest request;
+  while (reader->ReadProto(request.mutable_serialized_data())) {
+    CHECK(load_map_writer.client_writer->Write(request));
+  }
+
+  CHECK(reader->eof());
+  CHECK(load_map_writer.client_writer->WritesDone());
 }
 
 int MapBuilderStub::num_trajectory_builders() const {
-  LOG(FATAL) << "Not implemented";
+  return trajectory_builder_stubs_.size();
 }
 
 cartographer::mapping::PoseGraphInterface* MapBuilderStub::pose_graph() {

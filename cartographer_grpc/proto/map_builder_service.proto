@@ -102,6 +102,13 @@ message GetSubmapRequest {
   cartographer.mapping.proto.SubmapId submap_id = 1;
 }
 
+message LoadMapRequest {
+  oneof map_chunk {
+    cartographer.mapping.proto.PoseGraph pose_graph = 1;
+    cartographer.mapping.proto.SerializedData serialized_data = 2;
+  }
+}
+
 message GetSubmapResponse {
   cartographer.mapping.proto.SubmapQuery.Response submap_query_response = 1;
   string error_msg = 2;
@@ -198,4 +205,11 @@ service MapBuilderService {
 
   // Returns the list of constraints in the current optimization problem.
   rpc GetConstraints(google.protobuf.Empty) returns (GetConstraintsResponse);
+
+  // Requests a PoseGraph to call RunFinalOptimization.
+  rpc RunFinalOptimization(google.protobuf.Empty)
+      returns (google.protobuf.Empty);
+
+  // Adds map data in the order defined by ProtoStreamReader.
+  rpc LoadMap(stream LoadMapRequest) returns (google.protobuf.Empty);
 }

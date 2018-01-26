@@ -168,7 +168,7 @@ std::string MapBuilder::SubmapToProto(
   return "";
 }
 
-void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
+void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   // We serialize the pose graph followed by all the data referenced in it.
   writer->WriteProto(pose_graph_->ToProto());
   // Next we serialize all submap data.
