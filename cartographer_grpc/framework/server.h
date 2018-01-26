@@ -41,7 +41,7 @@ class Server {
   struct Options {
     size_t num_grpc_threads;
     size_t num_event_threads;
-    std::string server_address = "0.0.0.0:50051";
+    std::string server_address;
   };
 
  public:
