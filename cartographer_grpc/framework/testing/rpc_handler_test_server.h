@@ -40,8 +40,68 @@ template <class RpcHandlerType>
 class RpcHandlerTestServer : public Server {
  public:
   RpcHandlerTestServer() : Server(Options{1, 1, kServerAddress}) {
+    // Register the handler under test.
     this->AddService(kServiceName, {{kMethodName, GetRpcHandlerInfo()}});
+
+    // Starts the server and instantiates the handler under test.
     this->Start();
+
+    // Depending on the RPC type might already trigger a NEW_CONNECTION
+    // event in the handler under test.
+    InstantiateReadersAndWriters();
+  }
+
+  // Parses a request message from the passed string and issues the
+  // request against the handler, waits for the handler to complete
+  // processing before returning.
+  void SendMessage(const std::string &serialized_message) {
+    auto message = cartographer::common::make_unique<
+        typename RpcHandlerType::RequestType>();
+    switch (rpc_method_.method_type()) {
+      case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+        CHECK(client_writer_->Write(*message)) << "Write failed.";
+        break;
+      case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+      case ::grpc::internal::RpcMethod::SERVER_STREAMING:
+      case ::grpc::internal::RpcMethod::NORMAL_RPC:
+        LOG(FATAL) << "Not implemented";
+        break;
+    }
+    WaitForHandlerCompletion(RpcHandlerWrapper::ON_REQUEST);
+  }
+
+  // Sends a WRITES_DONE event to the handler, waits for the handler
+  // to finish processing the READS_DONE event before returning.
+  void SendWritesDone() {
+    auto message = cartographer::common::make_unique<
+        typename RpcHandlerType::RequestType>();
+    switch (rpc_method_.method_type()) {
+      case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+        CHECK(client_writer_->WritesDone()) << "WritesDone failed.";
+        break;
+      case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+      case ::grpc::internal::RpcMethod::SERVER_STREAMING:
+      case ::grpc::internal::RpcMethod::NORMAL_RPC:
+        LOG(FATAL) << "Not implemented";
+        break;
+    }
+    WaitForHandlerCompletion(RpcHandlerWrapper::ON_READS_DONE);
+  }
+
+  // Sends a FINISH event to the handler under test, waits for the
+  // handler to finish processing the event before returning.
+  void SendFinish() {
+    switch (rpc_method_.method_type()) {
+      case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+        CHECK(client_writer_->Finish()) << "Finish failed.";
+        break;
+      case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+      case ::grpc::internal::RpcMethod::SERVER_STREAMING:
+      case ::grpc::internal::RpcMethod::NORMAL_RPC:
+        LOG(FATAL) << "Not implemented";
+        break;
+    }
+    WaitForHandlerCompletion(RpcHandlerWrapper::ON_FINISH);
   }
 
  private:
@@ -50,6 +110,10 @@ class RpcHandlerTestServer : public Server {
   using HandlerInstantiator =
       std::function<std::unique_ptr<RpcHandlerInterface>(
           Rpc *const rpc, ExecutionContext *const execution_context)>;
+
+  void WaitForHandlerCompletion(RpcHandlerWrapper::RpcHandlerEvent event) {
+    CHECK_EQ(rpc_handler_event_queue_.Pop(), event);
+  }
 
   void InstantiateReadersAndWriters() {
     switch (rpc_method_.method_type()) {
