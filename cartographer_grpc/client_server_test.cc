@@ -30,13 +30,14 @@ using cartographer::mapping::MapBuilder;
 using cartographer::mapping::MapBuilderInterface;
 using cartographer::mapping::PoseGraphInterface;
 using cartographer::mapping::TrajectoryBuilderInterface;
+using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
 using testing::_;
 
 namespace cartographer_grpc {
 namespace {
 
-constexpr char kSensorId[] = "sensor";
-constexpr char kRangeSensorId[] = "range";
+const SensorId kSensorId{SensorId::SensorType::IMU, "sensor"};
+const SensorId kRangeSensorId{SensorId::SensorType::RANGE, "range"};
 constexpr double kDuration = 4.;         // Seconds.
 constexpr double kTimeStep = 0.1;        // Seconds.
 constexpr double kTravelDistance = 1.2;  // Meters.
@@ -44,7 +45,7 @@ constexpr double kTravelDistance = 1.2;  // Meters.
 class MockMapBuilder : public cartographer::mapping::MapBuilderInterface {
  public:
   MOCK_METHOD3(AddTrajectoryBuilder,
-               int(const std::unordered_set<std::string>& expected_sensor_ids,
+               int(const std::set<SensorId>& expected_sensor_ids,
                    const cartographer::mapping::proto::TrajectoryBuilderOptions&
                        trajectory_options,
                    LocalSlamResultCallback local_slam_result_callback));
@@ -199,7 +200,7 @@ TEST_F(ClientServerTest, AddTrajectoryBuilderWithMock) {
   InitializeServerWithMockMapBuilder();
   server_->Start();
   InitializeStub();
-  std::unordered_set<std::string> expected_sensor_ids = {kSensorId};
+  std::set<SensorId> expected_sensor_ids = {kSensorId};
   EXPECT_CALL(
       *mock_map_builder_,
       AddTrajectoryBuilder(testing::ContainerEq(expected_sensor_ids), _, _))
@@ -227,7 +228,7 @@ TEST_F(ClientServerTest, AddSensorData) {
   cartographer::sensor::ImuData imu_data{
       cartographer::common::FromUniversal(42), Eigen::Vector3d(0., 0., 9.8),
       Eigen::Vector3d::Zero()};
-  trajectory_stub->AddSensorData(kSensorId, imu_data);
+  trajectory_stub->AddSensorData(kSensorId.id, imu_data);
   stub_->FinishTrajectory(trajectory_id);
   server_->Shutdown();
 }
@@ -236,7 +237,7 @@ TEST_F(ClientServerTest, AddSensorDataWithMock) {
   InitializeServerWithMockMapBuilder();
   server_->Start();
   InitializeStub();
-  std::unordered_set<std::string> expected_sensor_ids = {kSensorId};
+  std::set<SensorId> expected_sensor_ids = {kSensorId};
   EXPECT_CALL(
       *mock_map_builder_,
       AddTrajectoryBuilder(testing::ContainerEq(expected_sensor_ids), _, _))
@@ -253,10 +254,10 @@ TEST_F(ClientServerTest, AddSensorDataWithMock) {
       Eigen::Vector3d::Zero()};
   EXPECT_CALL(
       *mock_trajectory_builder_,
-      AddSensorData(testing::StrEq(kSensorId),
+      AddSensorData(testing::StrEq(kSensorId.id),
                     testing::Matcher<const cartographer::sensor::ImuData&>(_)))
       .WillOnce(testing::Return());
-  trajectory_stub->AddSensorData(kSensorId, imu_data);
+  trajectory_stub->AddSensorData(kSensorId.id, imu_data);
   EXPECT_CALL(*mock_map_builder_, FinishTrajectory(trajectory_id));
   stub_->FinishTrajectory(trajectory_id);
   server_->Shutdown();
@@ -275,7 +276,7 @@ TEST_F(ClientServerTest, LocalSlam2D) {
       cartographer::mapping::test::GenerateFakeRangeMeasurements(
           kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
-    trajectory_stub->AddSensorData(kRangeSensorId, measurement);
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
   }
   WaitForLocalSlamResults(measurements.size());
   stub_->FinishTrajectory(trajectory_id);

@@ -18,6 +18,7 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
+#include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
@@ -120,16 +121,15 @@ void LocalTrajectoryUploader::ProcessOdometryDataMessage(
 }
 
 void LocalTrajectoryUploader::AddTrajectory(
-    int local_trajectory_id,
-    const std::unordered_set<std::string> &expected_sensor_ids,
+    int local_trajectory_id, const std::set<SensorId> &expected_sensor_ids,
     const cartographer::mapping::proto::TrajectoryBuilderOptions
         &trajectory_options) {
   grpc::ClientContext client_context;
   proto::AddTrajectoryRequest request;
   proto::AddTrajectoryResponse result;
   *request.mutable_trajectory_builder_options() = trajectory_options;
-  for (const auto &sensor_id : expected_sensor_ids) {
-    *request.add_expected_sensor_ids() = sensor_id;
+  for (const SensorId &sensor_id : expected_sensor_ids) {
+    *request.add_expected_sensor_ids() = sensor::ToProto(sensor_id);
   }
   grpc::Status status =
       service_stub_->AddTrajectory(&client_context, request, &result);
