@@ -102,8 +102,8 @@ std::unique_ptr<MsgType> MakeMsg(Values &&... values) {
   return std::move(msg);
 }
 
-} // namespace testing
-} // namespace framework
-} // namespace cartographer_grpc
+}  // namespace testing
+}  // namespace framework
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_FRAMEWORK_TESTING_MSG_HELPERS_H
+#endif  // CARTOGRAPHER_GRPC_FRAMEWORK_TESTING_MSG_HELPERS_H
