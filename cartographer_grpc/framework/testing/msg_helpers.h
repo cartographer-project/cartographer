@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_FRAMEWORK_MSG_HELPERS_H
-#define CARTOGRAPHER_GRPC_FRAMEWORK_MSG_HELPERS_H
+#ifndef CARTOGRAPHER_GRPC_FRAMEWORK_TESTING_MSG_HELPERS_H
+#define CARTOGRAPHER_GRPC_FRAMEWORK_TESTING_MSG_HELPERS_H
 
 namespace cartographer_grpc {
 namespace framework {
@@ -106,4 +106,4 @@ std::unique_ptr<MsgType> MakeMsg(Values &&... values) {
 } // namespace framework
 } // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_FRAMEWORK_MSG_HELPERS_H
+#endif // CARTOGRAPHER_GRPC_FRAMEWORK_TESTING_MSG_HELPERS_H
