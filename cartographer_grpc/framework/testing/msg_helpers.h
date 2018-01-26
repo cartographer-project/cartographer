@@ -21,6 +21,17 @@ namespace cartographer_grpc {
 namespace framework {
 namespace testing {
 
+/**
+ * This file contains helper functions that make the instantiation of proto
+ * message convenient. Example:
+ *
+ *  auto add_imu_data_request = MakeMsg<proto::AddImuDataRequest>(
+ *      MakeMsg<proto::SensorMetadata>(0, "sensor_id"),
+ *      MakeMsg<cartographer::sensor::proto::ImuData>(
+ *          (int64_t) 0,
+ *          MakeMsg<cartographer::transform::proto::Vector3d>(3.0, 4.0, 5.0),
+ *          MakeMsg<cartographer::transform::proto::Vector3d>(3.0, 4.0, 5.0)));
+ */
 template <typename T>
 void SetField(google::protobuf::Message *msg,
               const google::protobuf::FieldDescriptor *field, T &value) {
