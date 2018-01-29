@@ -42,10 +42,8 @@ class RpcHandlerTestServer : public Server {
   RpcHandlerTestServer() : Server(Options{1, 1, kServerAddress}) {
     // Register the handler under test.
     this->AddService(kServiceName, {{kMethodName, GetRpcHandlerInfo()}});
-
     // Starts the server and instantiates the handler under test.
     this->Start();
-
     // Depending on the RPC type might already trigger a NEW_CONNECTION
     // event in the handler under test.
     InstantiateReadersAndWriters();
@@ -56,9 +54,10 @@ class RpcHandlerTestServer : public Server {
   // Parses a request message from the passed string and issues the
   // request against the handler, waits for the handler to complete
   // processing before returning.
-  void SendMessage(const std::string &serialized_message) {
+  void SendWrite(const std::string &serialized_message) {
     auto message = cartographer::common::make_unique<
         typename RpcHandlerType::RequestType>();
+    message->ParseFromString(serialized_message);
     switch (rpc_method_.method_type()) {
       case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
         CHECK(client_writer_->Write(*message)) << "Write failed.";
@@ -145,27 +144,24 @@ class RpcHandlerTestServer : public Server {
     ::grpc::internal::RpcMethod::RpcType rpc_type =
         RpcType<typename RpcHandlerType::IncomingType,
                 typename RpcHandlerType::OutgoingType>::value;
-    return RpcHandlerInfo{
-        RpcHandlerType::RequestType::default_instance().GetDescriptor(),
-        RpcHandlerType::ResponseType::default_instance().GetDescriptor(),
-        GetHandlerInstantiator(), rpc_type, kFullyQualifiedMethodName};
-  }
-
-  HandlerInstantiator GetHandlerInstantiator() {
-    return [this](Rpc *const rpc, ExecutionContext *const execution_context) {
+    auto event_callback =
+        [this](RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent event) {
+          rpc_handler_event_queue_.Push(event);
+        };
+    auto handler_instantiator = [this](
+                                    Rpc *const rpc,
+                                    ExecutionContext *const execution_context) {
       std::unique_ptr<RpcHandlerInterface> rpc_handler =
           cartographer::common::make_unique<RpcHandlerWrapper<RpcHandlerType>>(
-              GetEventPublisher());
+              event_callback);
       rpc_handler->SetRpc(rpc);
       rpc_handler->SetExecutionContext(execution_context);
       return rpc_handler;
     };
-  }
-
-  RpcHandlerWrapper<RpcHandlerType>::EventPublisher GetEventPublisher() {
-    return [this](RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent event) {
-      rpc_handler_event_queue_.Push(event);
-    };
+    return RpcHandlerInfo{
+        RpcHandlerType::RequestType::default_instance().GetDescriptor(),
+        RpcHandlerType::ResponseType::default_instance().GetDescriptor(),
+        handler_instantiator, rpc_type, kFullyQualifiedMethodName};
   }
 
   ::grpc::internal::RpcMethod rpc_method_;

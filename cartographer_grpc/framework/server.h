@@ -84,6 +84,7 @@ class Server {
     std::map<std::string, ServiceInfo> rpc_handlers_;
   };
   friend class Builder;
+  virtual ~Server() = default;
 
   // Starts a server starts serving the registered services.
   void Start();
@@ -106,12 +107,13 @@ class Server {
 
  protected:
   Server(const Options& options);
-  Server(const Server&) = delete;
-  virtual ~Server() = default;
-  Server& operator=(const Server&) = delete;
   void AddService(
       const std::string& service_name,
       const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos);
+
+ private:
+  Server(const Server&) = delete;
+  Server& operator=(const Server&) = delete;
   void RunCompletionQueue(::grpc::ServerCompletionQueue* completion_queue);
   void RunEventQueue(Rpc::EventQueue* event_queue);
   Rpc::EventQueue* SelectNextEventQueueRoundRobin();

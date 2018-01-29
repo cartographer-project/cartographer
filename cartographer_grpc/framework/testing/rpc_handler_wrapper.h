@@ -27,28 +27,28 @@ template <class RpcHandlerType>
 class RpcHandlerWrapper : public RpcHandlerType {
  public:
   enum RpcHandlerEvent { ON_REQUEST, ON_READS_DONE, ON_FINISH };
-  using EventPublisher = std::function<void(RpcHandlerEvent)>;
+  using EventCallback = std::function<void(RpcHandlerEvent)>;
 
-  RpcHandlerWrapper(EventPublisher event_publisher)
-      : event_publisher_(event_publisher) {}
+  RpcHandlerWrapper(EventCallback event_callback)
+      : event_callback_(event_callback) {}
 
   void OnRequest(const typename RpcHandlerType::RequestType &request) override {
     RpcHandlerType::OnRequest(request);
-    event_publisher_(ON_REQUEST);
+    event_callback_(ON_REQUEST);
   }
 
   void OnReadsDone() override {
     RpcHandlerType::OnReadsDone();
-    event_publisher_(ON_READS_DONE);
+    event_callback_(ON_READS_DONE);
   }
 
   void OnFinish() override {
     RpcHandlerType::OnFinish();
-    event_publisher_(ON_FINISH);
+    event_callback_(ON_FINISH);
   }
 
  private:
-  EventPublisher event_publisher_;
+  EventCallback event_callback_;
 };
 
 }  // namespace testing
