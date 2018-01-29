@@ -72,6 +72,28 @@ void CreateAddLandmarkDataRequest(
   *proto->mutable_landmark_data() = landmark_data;
 }
 
+void CreateAddLocalSlamResultDataRequest(
+    const std::string& sensor_id, int trajectory_id,
+    cartographer::common::Time time, int starting_submap_index,
+    const cartographer::mapping::TrajectoryBuilderInterface::InsertionResult&
+        insertion_result,
+    proto::AddLocalSlamResultDataRequest* proto) {
+  sensor::CreateSensorMetadata(sensor_id, trajectory_id,
+                               proto->mutable_sensor_metadata());
+  proto->mutable_local_slam_result_data()->set_timestamp(
+      cartographer::common::ToUniversal(time));
+  *proto->mutable_local_slam_result_data()->mutable_node_data() =
+      cartographer::mapping::ToProto(*insertion_result.constant_data);
+  for (const auto& insertion_submap : insertion_result.insertion_submaps) {
+    // We only send the probability grid up if the submap is finished.
+    auto* submap = proto->mutable_local_slam_result_data()->add_submaps();
+    insertion_submap->ToProto(submap, insertion_submap->finished());
+    submap->mutable_submap_id()->set_trajectory_id(trajectory_id);
+    submap->mutable_submap_id()->set_submap_index(starting_submap_index);
+    ++starting_submap_index;
+  }
+}
+
 proto::SensorId ToProto(
     const cartographer::mapping::TrajectoryBuilderInterface::SensorId&
         sensor_id) {

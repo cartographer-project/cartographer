@@ -69,18 +69,21 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
   while (!shutting_down_) {
     auto data_message = send_queue_.PopWithTimeout(kPopTimeout);
     if (data_message) {
-      if (const auto *fixed_frame_pose_data =
-              dynamic_cast<const proto::AddFixedFramePoseDataRequest *>(
+      if (auto *fixed_frame_pose_data =
+              dynamic_cast<proto::AddFixedFramePoseDataRequest *>(
                   data_message.get())) {
         ProcessFixedFramePoseDataMessage(fixed_frame_pose_data);
-      } else if (const auto *imu_data =
-                     dynamic_cast<const proto::AddImuDataRequest *>(
-                         data_message.get())) {
+      } else if (auto *imu_data = dynamic_cast<proto::AddImuDataRequest *>(
+                     data_message.get())) {
         ProcessImuDataMessage(imu_data);
-      } else if (const auto *odometry_data =
-                     dynamic_cast<const proto::AddOdometryDataRequest *>(
+      } else if (auto *odometry_data =
+                     dynamic_cast<proto::AddOdometryDataRequest *>(
                          data_message.get())) {
         ProcessOdometryDataMessage(odometry_data);
+      } else if (auto *local_slam_result_data =
+                     dynamic_cast<proto::AddLocalSlamResultDataRequest *>(
+                         data_message.get())) {
+        ProcessLocalSlamResultDataMessage(local_slam_result_data);
       } else {
         LOG(FATAL) << "Unknown message type: " << data_message->GetTypeName();
       }
@@ -88,8 +91,15 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
   }
 }
 
+void LocalTrajectoryUploader::TranslateTrajectoryId(
+    proto::SensorMetadata *sensor_metadata) {
+  int cloud_trajectory_id =
+      local_to_cloud_trajectory_id_map_.at(sensor_metadata->trajectory_id());
+  sensor_metadata->set_trajectory_id(cloud_trajectory_id);
+}
+
 void LocalTrajectoryUploader::ProcessFixedFramePoseDataMessage(
-    const proto::AddFixedFramePoseDataRequest *data_request) {
+    proto::AddFixedFramePoseDataRequest *data_request) {
   if (!fixed_frame_pose_writer_.client_writer) {
     fixed_frame_pose_writer_.client_writer =
         service_stub_->AddFixedFramePoseData(
@@ -97,27 +107,50 @@ void LocalTrajectoryUploader::ProcessFixedFramePoseDataMessage(
             &fixed_frame_pose_writer_.response);
     CHECK(fixed_frame_pose_writer_.client_writer);
   }
+  TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   fixed_frame_pose_writer_.client_writer->Write(*data_request);
 }
 
 void LocalTrajectoryUploader::ProcessImuDataMessage(
-    const proto::AddImuDataRequest *data_request) {
+    proto::AddImuDataRequest *data_request) {
   if (!imu_writer_.client_writer) {
     imu_writer_.client_writer = service_stub_->AddImuData(
         &imu_writer_.client_context, &imu_writer_.response);
     CHECK(imu_writer_.client_writer);
   }
+  TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   imu_writer_.client_writer->Write(*data_request);
 }
 
 void LocalTrajectoryUploader::ProcessOdometryDataMessage(
-    const proto::AddOdometryDataRequest *data_request) {
+    proto::AddOdometryDataRequest *data_request) {
   if (!odometry_writer_.client_writer) {
     odometry_writer_.client_writer = service_stub_->AddOdometryData(
         &odometry_writer_.client_context, &odometry_writer_.response);
     CHECK(odometry_writer_.client_writer);
   }
+  TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   odometry_writer_.client_writer->Write(*data_request);
+}
+
+void LocalTrajectoryUploader::ProcessLocalSlamResultDataMessage(
+    proto::AddLocalSlamResultDataRequest *data_request) {
+  if (!local_slam_result_writer_.client_writer) {
+    local_slam_result_writer_.client_writer =
+        service_stub_->AddLocalSlamResultData(
+            &local_slam_result_writer_.client_context,
+            &local_slam_result_writer_.response);
+    CHECK(local_slam_result_writer_.client_writer);
+  }
+  TranslateTrajectoryId(data_request->mutable_sensor_metadata());
+  // A submap also holds a trajectory id that must be translated to uplink's
+  // trajectory id.
+  for (cartographer::mapping::proto::Submap &mutable_submap :
+       *data_request->mutable_local_slam_result_data()->mutable_submaps()) {
+    mutable_submap.mutable_submap_id()->set_trajectory_id(
+        data_request->sensor_metadata().trajectory_id());
+  }
+  local_slam_result_writer_.client_writer->Write(*data_request);
 }
 
 void LocalTrajectoryUploader::AddTrajectory(
@@ -129,8 +162,13 @@ void LocalTrajectoryUploader::AddTrajectory(
   proto::AddTrajectoryResponse result;
   *request.mutable_trajectory_builder_options() = trajectory_options;
   for (const SensorId &sensor_id : expected_sensor_ids) {
-    *request.add_expected_sensor_ids() = sensor::ToProto(sensor_id);
+    // Range sensors are not forwarded, but combined into a LocalSlamResult.
+    if (sensor_id.type != SensorId::SensorType::RANGE) {
+      *request.add_expected_sensor_ids() = sensor::ToProto(sensor_id);
+    }
   }
+  *request.add_expected_sensor_ids() =
+      sensor::ToProto(GetLocalSlamResultSensorId(local_trajectory_id));
   grpc::Status status =
       service_stub_->AddTrajectory(&client_context, request, &result);
   CHECK(status.ok());

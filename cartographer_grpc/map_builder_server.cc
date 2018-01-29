@@ -33,6 +33,7 @@
 #include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
 #include "cartographer_grpc/handlers/run_final_optimization.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
+#include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
@@ -171,7 +172,7 @@ std::unique_ptr<cartographer::mapping::LocalSlamResultData>
 MapBuilderServer::MapBuilderContext::ProcessLocalSlamResultData(
     const std::string& sensor_id, cartographer::common::Time time,
     const cartographer::mapping::proto::LocalSlamResultData& proto) {
-  CHECK_GE(proto.submaps().size(), 0);
+  CHECK_GE(proto.submaps().size(), 1);
   CHECK(proto.submaps(0).has_submap_2d() || proto.submaps(0).has_submap_3d());
   if (proto.submaps(0).has_submap_2d()) {
     std::vector<std::shared_ptr<const cartographer::mapping_2d::Submap>>
@@ -318,6 +319,29 @@ void MapBuilderServer::OnLocalSlamResult(
         insertion_result) {
   auto shared_range_data =
       std::make_shared<cartographer::sensor::RangeData>(std::move(range_data));
+
+  // If there is an uplink server and a submap insertion happened, enqueue this
+  // local SLAM result for uploading.
+  if (insertion_result &&
+      grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
+          ->local_trajectory_uploader()) {
+    auto data_request = cartographer::common::make_unique<
+        proto::AddLocalSlamResultDataRequest>();
+    auto sensor_id = grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
+                         ->local_trajectory_uploader()
+                         ->GetLocalSlamResultSensorId(trajectory_id);
+    sensor::CreateAddLocalSlamResultDataRequest(
+        sensor_id.id, trajectory_id, time, starting_submap_index_,
+        *insertion_result, data_request.get());
+    // TODO(cschuet): Make this more robust.
+    if (insertion_result->insertion_submaps.front()->finished()) {
+      ++starting_submap_index_;
+    }
+    grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
+        ->local_trajectory_uploader()
+        ->EnqueueDataRequest(std::move(data_request));
+  }
+
   cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
   for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
     auto copy_of_insertion_result =

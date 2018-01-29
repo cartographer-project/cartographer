@@ -51,16 +51,25 @@ class LocalTrajectoryUploader {
       const cartographer::mapping::proto::TrajectoryBuilderOptions&
           trajectory_options);
   void FinishTrajectory(int local_trajectory_id);
+
+  // Enqueue an Add*DataRequest message to be uploaded.
   void EnqueueDataRequest(
       std::unique_ptr<google::protobuf::Message> data_request);
 
+  SensorId GetLocalSlamResultSensorId(int local_trajectory_id) const {
+    return SensorId{SensorId::SensorType::LOCAL_SLAM_RESULT,
+                    "local_slam_result_" + std::to_string(local_trajectory_id)};
+  }
+
  private:
   void ProcessSendQueue();
+  void TranslateTrajectoryId(proto::SensorMetadata* sensor_metadata);
   void ProcessFixedFramePoseDataMessage(
-      const proto::AddFixedFramePoseDataRequest* data_request);
-  void ProcessImuDataMessage(const proto::AddImuDataRequest* data_request);
-  void ProcessOdometryDataMessage(
-      const proto::AddOdometryDataRequest* data_request);
+      proto::AddFixedFramePoseDataRequest* data_request);
+  void ProcessImuDataMessage(proto::AddImuDataRequest* data_request);
+  void ProcessLocalSlamResultDataMessage(
+      proto::AddLocalSlamResultDataRequest* data_request);
+  void ProcessOdometryDataMessage(proto::AddOdometryDataRequest* data_request);
 
   std::shared_ptr<grpc::Channel> client_channel_;
   std::unique_ptr<proto::MapBuilderService::Stub> service_stub_;
@@ -73,6 +82,8 @@ class LocalTrajectoryUploader {
   framework::ClientWriter<proto::AddFixedFramePoseDataRequest>
       fixed_frame_pose_writer_;
   framework::ClientWriter<proto::AddImuDataRequest> imu_writer_;
+  framework::ClientWriter<proto::AddLocalSlamResultDataRequest>
+      local_slam_result_writer_;
   framework::ClientWriter<proto::AddOdometryDataRequest> odometry_writer_;
 };
 

@@ -105,6 +105,11 @@ class Server {
     return {execution_context_->lock(), execution_context_.get()};
   }
 
+  template <typename T>
+  T* GetUnsynchronizedContext() {
+    return dynamic_cast<T*>(execution_context_.get());
+  }
+
  protected:
   Server(const Options& options);
   void AddService(

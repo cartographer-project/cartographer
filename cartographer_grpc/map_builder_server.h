@@ -156,6 +156,7 @@ class MapBuilderServer {
   std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>
       local_slam_subscriptions_ GUARDED_BY(local_slam_subscriptions_lock_);
   std::unique_ptr<LocalTrajectoryUploader> local_trajectory_uploader_;
+  int starting_submap_index_ = 0;
 };
 
 }  // namespace cartographer_grpc
