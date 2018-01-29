@@ -63,7 +63,7 @@ class LocalTrajectoryUploader {
 
  private:
   void ProcessSendQueue();
-  void ProcessSensorMetadata(proto::SensorMetadata* sensor_metadata);
+  void TranslateTrajectoryId(proto::SensorMetadata* sensor_metadata);
   void ProcessFixedFramePoseDataMessage(
       proto::AddFixedFramePoseDataRequest* data_request);
   void ProcessImuDataMessage(proto::AddImuDataRequest* data_request);

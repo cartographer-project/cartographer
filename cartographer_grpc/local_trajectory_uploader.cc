@@ -91,7 +91,7 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
   }
 }
 
-void LocalTrajectoryUploader::ProcessSensorMetadata(
+void LocalTrajectoryUploader::TranslateTrajectoryId(
     proto::SensorMetadata *sensor_metadata) {
   int cloud_trajectory_id =
       local_to_cloud_trajectory_id_map_.at(sensor_metadata->trajectory_id());
@@ -107,7 +107,7 @@ void LocalTrajectoryUploader::ProcessFixedFramePoseDataMessage(
             &fixed_frame_pose_writer_.response);
     CHECK(fixed_frame_pose_writer_.client_writer);
   }
-  ProcessSensorMetadata(data_request->mutable_sensor_metadata());
+  TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   fixed_frame_pose_writer_.client_writer->Write(*data_request);
 }
 
@@ -118,7 +118,7 @@ void LocalTrajectoryUploader::ProcessImuDataMessage(
         &imu_writer_.client_context, &imu_writer_.response);
     CHECK(imu_writer_.client_writer);
   }
-  ProcessSensorMetadata(data_request->mutable_sensor_metadata());
+  TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   imu_writer_.client_writer->Write(*data_request);
 }
 
@@ -129,7 +129,7 @@ void LocalTrajectoryUploader::ProcessOdometryDataMessage(
         &odometry_writer_.client_context, &odometry_writer_.response);
     CHECK(odometry_writer_.client_writer);
   }
-  ProcessSensorMetadata(data_request->mutable_sensor_metadata());
+  TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   odometry_writer_.client_writer->Write(*data_request);
 }
 
@@ -142,7 +142,9 @@ void LocalTrajectoryUploader::ProcessLocalSlamResultDataMessage(
             &local_slam_result_writer_.response);
     CHECK(local_slam_result_writer_.client_writer);
   }
-  ProcessSensorMetadata(data_request->mutable_sensor_metadata());
+  TranslateTrajectoryId(data_request->mutable_sensor_metadata());
+  // A submap also holds a trajectory id that must be translated to uplink's
+  // trajectory id.
   for (cartographer::mapping::proto::Submap &mutable_submap :
        *data_request->mutable_local_slam_result_data()->mutable_submaps()) {
     mutable_submap.mutable_submap_id()->set_trajectory_id(

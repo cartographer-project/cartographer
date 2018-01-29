@@ -333,6 +333,7 @@ void MapBuilderServer::OnLocalSlamResult(
     sensor::CreateAddLocalSlamResultDataRequest(
         sensor_id.id, trajectory_id, time, starting_submap_index_,
         *insertion_result, data_request.get());
+    // TODO(cschuet): Make this more robust.
     if (insertion_result->insertion_submaps.front()->finished()) {
       ++starting_submap_index_;
     }
