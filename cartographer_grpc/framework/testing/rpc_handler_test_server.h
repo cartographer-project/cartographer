@@ -51,9 +51,7 @@ class RpcHandlerTestServer : public Server {
     InstantiateReadersAndWriters();
   }
 
-  ~RpcHandlerTestServer() {
-      this->Shutdown();
-  };
+  ~RpcHandlerTestServer() { this->Shutdown(); };
 
   // Parses a request message from the passed string and issues the
   // request against the handler, waits for the handler to complete
