@@ -104,6 +104,11 @@ class Server {
     return {execution_context_->lock(), execution_context_.get()};
   }
 
+  template <typename T>
+  T* GetUnsynchronizedContext() {
+    return dynamic_cast<T*>(execution_context_.get());
+  }
+
  private:
   Server(const Options& options);
   Server(const Server&) = delete;
