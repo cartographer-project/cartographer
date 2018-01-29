@@ -104,9 +104,10 @@ class Server {
     return {execution_context_->lock(), execution_context_.get()};
   }
 
- private:
+ protected:
   Server(const Options& options);
   Server(const Server&) = delete;
+  virtual ~Server() = default;
   Server& operator=(const Server&) = delete;
   void AddService(
       const std::string& service_name,
