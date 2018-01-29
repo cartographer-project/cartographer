@@ -41,7 +41,7 @@ class Server {
   struct Options {
     size_t num_grpc_threads;
     size_t num_event_threads;
-    std::string server_address = "0.0.0.0:50051";
+    std::string server_address;
   };
 
  public:
@@ -84,6 +84,7 @@ class Server {
     std::map<std::string, ServiceInfo> rpc_handlers_;
   };
   friend class Builder;
+  virtual ~Server() = default;
 
   // Starts a server starts serving the registered services.
   void Start();
@@ -104,13 +105,15 @@ class Server {
     return {execution_context_->lock(), execution_context_.get()};
   }
 
- private:
+ protected:
   Server(const Options& options);
-  Server(const Server&) = delete;
-  Server& operator=(const Server&) = delete;
   void AddService(
       const std::string& service_name,
       const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos);
+
+ private:
+  Server(const Server&) = delete;
+  Server& operator=(const Server&) = delete;
   void RunCompletionQueue(::grpc::ServerCompletionQueue* completion_queue);
   void RunEventQueue(Rpc::EventQueue* event_queue);
   Rpc::EventQueue* SelectNextEventQueueRoundRobin();
