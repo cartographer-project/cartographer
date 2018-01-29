@@ -108,9 +108,6 @@ class RpcHandlerTestServer : public Server {
  private:
   using ClientWriter = ::grpc::internal::ClientWriterFactory<
       typename RpcHandlerType::RequestType>;
-  using HandlerInstantiator =
-      std::function<std::unique_ptr<RpcHandlerInterface>(
-          Rpc *const rpc, ExecutionContext *const execution_context)>;
 
   void WaitForHandlerCompletion(RpcHandlerWrapper::RpcHandlerEvent event) {
     CHECK_EQ(rpc_handler_event_queue_.Pop(), event);
