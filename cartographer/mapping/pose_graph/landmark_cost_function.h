@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
-#define CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
+#ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
+#define CARTOGRAPHER_MAPPING_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
-#include "cartographer/mapping/pose_graph.h"
+#include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping_3d/pose_graph/spa_cost_function.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -27,7 +27,7 @@
 #include "ceres/jet.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace pose_graph {
 
 template <typename T>
@@ -102,7 +102,7 @@ class LandmarkCostFunction {
     // TODO(pifon2a): Move functions common for all cost functions outside of
     // SpaCostFunction scope.
     const std::array<T, 6> unscaled_error =
-        SpaCostFunction::ComputeUnscaledError(
+        mapping_3d::pose_graph::SpaCostFunction::ComputeUnscaledError(
             landmark_to_tracking_transform_, interpolated_pose_rotation.data(),
             interpolated_pose_translation, landmark_rotation,
             landmark_translation);
@@ -134,7 +134,7 @@ class LandmarkCostFunction {
 };
 
 }  // namespace pose_graph
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
+#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_

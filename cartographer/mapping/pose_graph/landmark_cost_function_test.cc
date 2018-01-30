@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/pose_graph/landmark_cost_function.h"
+#include "cartographer/mapping/pose_graph/landmark_cost_function.h"
 #include "cartographer/transform/rigid_transform.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace pose_graph {
 namespace {
 
@@ -62,5 +62,5 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
 
 }  // namespace
 }  // namespace pose_graph
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
