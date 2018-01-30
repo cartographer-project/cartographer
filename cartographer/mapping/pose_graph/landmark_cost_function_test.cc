@@ -29,7 +29,7 @@ using ::testing::DoubleEq;
 using ::testing::ElementsAre;
 
 using LandmarkObservation =
-    mapping::PoseGraph::LandmarkNode::LandmarkObservation;
+    mapping::PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
 TEST(LandmarkCostFunctionTest, SmokeTest) {
   auto* cost_function = LandmarkCostFunction::CreateAutoDiffCostFunction(
