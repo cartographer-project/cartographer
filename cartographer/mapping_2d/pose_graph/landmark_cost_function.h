@@ -78,6 +78,8 @@ class LandmarkCostFunction {
             common::ToSeconds(observation.time - prev_node_time) /
             common::ToSeconds(next_node_time - prev_node_time)) {}
 
+  // TODO(pifon): Make sure that this relative pose is properly aligned w.r.t.
+  // gravity.
   const transform::Rigid2d landmark_to_tracking_transform_;
   const double translation_weight_;
   const double rotation_weight_;
