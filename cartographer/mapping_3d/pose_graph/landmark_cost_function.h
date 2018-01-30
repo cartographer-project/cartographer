@@ -39,6 +39,12 @@ std::array<T, 4> SlerpQuaternions(const T* const prev_rotation,
                       prev_rotation[1] * next_rotation[1] +
                       prev_rotation[2] * next_rotation[2] +
                       prev_rotation[3] * next_rotation[3];
+  // If numerical error brings 'cos_theta' outside of [-1., 1.] interval, then
+  // the quaternions are likely to be collinear.
+  if (cos_theta >= T(1.0) || cos_theta <= T(-1.0)) {
+    return {{next_rotation[0], next_rotation[1], next_rotation[2],
+             next_rotation[3]}};
+  }
   const T theta = acos(abs(cos_theta));
   const T sin_theta = sin(theta);
   const T prev_scale = sin((T(1.0) - factor) * theta) / sin_theta;
