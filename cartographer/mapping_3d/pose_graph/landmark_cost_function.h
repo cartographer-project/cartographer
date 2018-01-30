@@ -30,6 +30,27 @@ namespace cartographer {
 namespace mapping_3d {
 namespace pose_graph {
 
+template <typename T>
+std::array<T, 4> SlerpQuaternions(const T* const prev_rotation,
+                                  const T* const next_rotation, T factor) {
+  // Angle 'theta' is the half-angle "between" quaternions. It can be computed
+  // as the arccosine of their dot product.
+  const T cos_theta = prev_rotation[0] * next_rotation[0] +
+                      prev_rotation[1] * next_rotation[1] +
+                      prev_rotation[2] * next_rotation[2] +
+                      prev_rotation[3] * next_rotation[3];
+  const T theta = acos(abs(cos_theta));
+  const T sin_theta = sin(theta);
+  const T prev_scale = sin((T(1.0) - factor) * theta) / sin_theta;
+  const T next_scale =
+      sin(factor * theta) * (cos_theta < T(0) ? T(-1.0) : T(1.0)) / sin_theta;
+
+  return {{prev_scale * prev_rotation[0] + next_scale * next_rotation[0],
+           prev_scale * prev_rotation[1] + next_scale * next_rotation[1],
+           prev_scale * prev_rotation[2] + next_scale * next_rotation[2],
+           prev_scale * prev_rotation[3] + next_scale * next_rotation[3]}};
+}
+
 // Cost function measuring the weighted error between the observed pose given by
 // the landmark measurement and the linearly interpolated pose.
 class LandmarkCostFunction {
@@ -69,23 +90,14 @@ class LandmarkCostFunction {
             interpolation_parameter_ *
                 (next_node_translation[2] - prev_node_translation[2])};
 
-    const Eigen::Quaternion<T> prev_quaternion(
-        prev_node_rotation[0], prev_node_rotation[1], prev_node_rotation[2],
-        prev_node_rotation[3]);
-    const Eigen::Quaternion<T> next_quaternion(
-        next_node_rotation[0], next_node_rotation[1], next_node_rotation[2],
-        next_node_rotation[3]);
-    const Eigen::Quaternion<T> interpolated_quaternion =
-        prev_quaternion.slerp(T(interpolation_parameter_), next_quaternion);
-    const T interpolated_pose_rotation[4] = {
-        interpolated_quaternion.w(), interpolated_quaternion.x(),
-        interpolated_quaternion.y(), interpolated_quaternion.z()};
+    std::array<T, 4> interpolated_pose_rotation = SlerpQuaternions(
+        prev_node_rotation, next_node_rotation, T(interpolation_parameter_));
 
     // TODO(pifon2a): Move functions common for all cost functions outside of
     // SpaCostFunction scope.
     const std::array<T, 6> unscaled_error =
         SpaCostFunction::ComputeUnscaledError(
-            landmark_to_tracking_transform_, interpolated_pose_rotation,
+            landmark_to_tracking_transform_, interpolated_pose_rotation.data(),
             interpolated_pose_translation, landmark_rotation,
             landmark_translation);
 
