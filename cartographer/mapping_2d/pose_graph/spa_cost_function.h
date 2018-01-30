@@ -57,7 +57,7 @@ class SpaCostFunction {
   static void ComputeScaledError(const Constraint::Pose& pose,
                                  const T* const c_i, const T* const c_j,
                                  T* const e) {
-    const std::array<T, 3> e_ij = mapping::pose_graph::ComputeUnscaledError2D(
+    const std::array<T, 3> e_ij = mapping::pose_graph::ComputeUnscaledError2d(
         transform::Project2D(pose.zbar_ij), c_i, c_j);
     e[0] = e_ij[0] * T(pose.translation_weight);
     e[1] = e_ij[1] * T(pose.translation_weight);

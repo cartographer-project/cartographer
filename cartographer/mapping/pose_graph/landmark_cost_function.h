@@ -99,7 +99,7 @@ class LandmarkCostFunction {
     std::array<T, 4> interpolated_pose_rotation = SlerpQuaternions(
         prev_node_rotation, next_node_rotation, T(interpolation_parameter_));
 
-    const std::array<T, 6> unscaled_error = ComputeUnscaledError3D(
+    const std::array<T, 6> unscaled_error = ComputeUnscaledError3d(
         landmark_to_tracking_transform_, interpolated_pose_rotation.data(),
         interpolated_pose_translation, landmark_rotation, landmark_translation);
 

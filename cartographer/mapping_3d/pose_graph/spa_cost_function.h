@@ -62,7 +62,7 @@ class SpaCostFunction {
                                  const T* const c_i_translation,
                                  const T* const c_j_rotation,
                                  const T* const c_j_translation, T* const e) {
-    const std::array<T, 6> e_ij = mapping::pose_graph::ComputeUnscaledError3D(
+    const std::array<T, 6> e_ij = mapping::pose_graph::ComputeUnscaledError3d(
         pose.zbar_ij, c_i_rotation, c_i_translation, c_j_rotation,
         c_j_translation);
     for (int ij : {0, 1, 2}) {

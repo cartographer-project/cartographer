@@ -26,21 +26,25 @@ namespace cartographer {
 namespace mapping {
 namespace pose_graph {
 
-// Computes the error between the node-to-submap alignment 'zbar_ij' and the
-// difference of submap pose 'c_i' and node pose 'c_j' which are both in an
-// arbitrary common frame.
+// Computes the error between the given relative pose and the difference of
+// poses 'start' and 'end' which are both in an arbitrary common frame.
+//
+// 'start' and 'end' poses have the format [x, y, rotation].
 template <typename T>
-static std::array<T, 3> ComputeUnscaledError2D(
-    const transform::Rigid2d& zbar_ij, const T* const c_i, const T* const c_j);
+static std::array<T, 3> ComputeUnscaledError2d(
+    const transform::Rigid2d& relative_pose, const T* const start,
+    const T* const end);
 
-// Computes the error between the node-to-submap alignment 'zbar_ij' and the
-// difference of submap pose 'c_i' and node pose 'c_j' which are both in an
-// arbitrary common frame.
+// Computes the error between the given relative pose and the difference of
+// poses 'start' and 'end' which are both in an arbitrary common frame.
+//
+// 'start' and 'end' translation has the format [x, y, z].
+// 'start' and 'end' rotation are quaternions in the format [w, n_1, n_2, n_3].
 template <typename T>
-static std::array<T, 6> ComputeUnscaledError3D(
-    const transform::Rigid3d& zbar_ij, const T* const c_i_rotation,
-    const T* const c_i_translation, const T* const c_j_rotation,
-    const T* const c_j_translation);
+static std::array<T, 6> ComputeUnscaledError3d(
+    const transform::Rigid3d& relative_pose, const T* const start_rotation,
+    const T* const start_translation, const T* const end_rotation,
+    const T* const end_translation);
 
 }  // namespace pose_graph
 }  // namespace mapping
