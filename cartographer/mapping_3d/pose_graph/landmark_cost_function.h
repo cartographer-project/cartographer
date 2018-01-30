@@ -30,9 +30,8 @@ namespace cartographer {
 namespace mapping_3d {
 namespace pose_graph {
 
-// Cost function measuring weighted error between the observed relative pose
-// given by sensor and relative pose computed from the linearly interpolated
-// pose of the robot at the moment of observation.
+// Cost function measuring the weighted error between the observed pose given by
+// the landmark measurement and the linearly interpolated pose.
 class LandmarkCostFunction {
  public:
   using LandmarkObservation =
@@ -43,12 +42,12 @@ class LandmarkCostFunction {
       common::Time next_node_time) {
     return new ceres::AutoDiffCostFunction<
         LandmarkCostFunction, 6 /* residuals */,
-        3 /* previous node translation variables */,
         4 /* previous node rotation variables */,
-        3 /* next node translation variables */,
+        3 /* previous node translation variables */,
         4 /* next node rotation variables */,
-        3 /* landmark translation variables */,
-        4 /* landmark rotation variables */>(
+        3 /* next node translation variables */,
+        4 /* landmark rotation variables */,
+        3 /* landmark translation variables */>(
         new LandmarkCostFunction(observation, prev_node_time, next_node_time));
   }
 
@@ -76,7 +75,6 @@ class LandmarkCostFunction {
     const Eigen::Quaternion<T> next_quaternion(
         next_node_rotation[0], next_node_rotation[1], next_node_rotation[2],
         next_node_rotation[3]);
-
     const Eigen::Quaternion<T> interpolated_quaternion =
         prev_quaternion.slerp(T(interpolation_parameter_), next_quaternion);
     const T interpolated_pose_rotation[4] = {

@@ -27,9 +27,8 @@ namespace cartographer {
 namespace mapping_2d {
 namespace pose_graph {
 
-// Cost function measuring weighted error between the observed relative pose
-// given by sensor and relative pose computed from the linearly interpolated
-// pose of the robot at the moment of observation.
+// Cost function measuring the weighted error between the observed pose given by
+// the landmark measurement and the linearly interpolated pose.
 class LandmarkCostFunction {
  public:
   using LandmarkObservation =
@@ -62,7 +61,6 @@ class LandmarkCostFunction {
     const std::array<T, 3> unscaled_error =
         SpaCostFunction::ComputeUnscaledError(landmark_to_tracking_transform_,
                                               interpolated_pose, landmark_pose);
-
     e[0] = T(translation_weight_) * unscaled_error[0];
     e[1] = T(translation_weight_) * unscaled_error[1];
     e[2] = T(rotation_weight_) * unscaled_error[2];
