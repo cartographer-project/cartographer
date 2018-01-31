@@ -28,6 +28,12 @@ class Rpc;
 class RpcHandlerInterface {
  public:
   virtual ~RpcHandlerInterface() = default;
+  // Returns the fully qualified name of the gRPC method this handler is
+  // implementing. The fully qualified name has the structure
+  // '/<<full service name>>/<<method name>>', where the service name is the
+  // fully qualified proto package name of the service and method name the name
+  // of the method as defined in the service definition of the proto.
+  virtual std::string method_name() const = 0;
   virtual void SetExecutionContext(ExecutionContext* execution_context) = 0;
   virtual void SetRpc(Rpc* rpc) = 0;
   virtual void OnRequestInternal(

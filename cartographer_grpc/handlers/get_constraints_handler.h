@@ -31,6 +31,9 @@ class GetConstraintsHandler
     : public framework::RpcHandler<google::protobuf::Empty,
                                    proto::GetConstraintsResponse> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/GetConstraints";
+  }
   void OnRequest(const google::protobuf::Empty& request) override {
     auto constraints = GetContext<MapBuilderServer::MapBuilderContext>()
                            ->map_builder()

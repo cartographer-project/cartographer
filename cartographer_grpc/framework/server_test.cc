@@ -23,6 +23,7 @@
 #include "cartographer_grpc/framework/proto/math_service.pb.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "glog/logging.h"
+#include "google/protobuf/descriptor.h"
 #include "grpc++/grpc++.h"
 #include "gtest/gtest.h"
 
@@ -40,6 +41,9 @@ class MathServerContext : public ExecutionContext {
 class GetSumHandler
     : public RpcHandler<Stream<proto::GetSumRequest>, proto::GetSumResponse> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.framework.proto.Math/GetSum";
+  }
   void OnRequest(const proto::GetSumRequest& request) override {
     sum_ += GetContext<MathServerContext>()->additional_increment();
     sum_ += request.input();
@@ -58,6 +62,9 @@ class GetSumHandler
 class GetRunningSumHandler : public RpcHandler<Stream<proto::GetSumRequest>,
                                                Stream<proto::GetSumResponse>> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.framework.proto.Math/GetRunningSum";
+  }
   void OnRequest(const proto::GetSumRequest& request) override {
     sum_ += request.input();
 
@@ -78,6 +85,10 @@ class GetRunningSumHandler : public RpcHandler<Stream<proto::GetSumRequest>,
 
 class GetSquareHandler
     : public RpcHandler<proto::GetSquareRequest, proto::GetSquareResponse> {
+ public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.framework.proto.Math/GetSquare";
+  }
   void OnRequest(const proto::GetSquareRequest& request) override {
     auto response =
         cartographer::common::make_unique<proto::GetSquareResponse>();
@@ -88,6 +99,10 @@ class GetSquareHandler
 
 class GetEchoHandler
     : public RpcHandler<proto::GetEchoRequest, proto::GetEchoResponse> {
+ public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.framework.proto.Math/GetEcho";
+  }
   void OnRequest(const proto::GetEchoRequest& request) override {
     int value = request.input();
     Writer writer = GetWriter();
@@ -105,6 +120,9 @@ class GetSequenceHandler
     : public RpcHandler<proto::GetSequenceRequest,
                         Stream<proto::GetSequenceResponse>> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.framework.proto.Math/GetSequence";
+  }
   void OnRequest(const proto::GetSequenceRequest& request) override {
     for (int i = 0; i < request.input(); ++i) {
       auto response =
@@ -129,13 +147,11 @@ class ServerTest : public ::testing::Test {
     server_builder.SetServerAddress(kServerAddress);
     server_builder.SetNumGrpcThreads(kNumThreads);
     server_builder.SetNumEventThreads(kNumThreads);
-    server_builder.RegisterHandler<GetSumHandler, proto::Math>("GetSum");
-    server_builder.RegisterHandler<GetSquareHandler, proto::Math>("GetSquare");
-    server_builder.RegisterHandler<GetRunningSumHandler, proto::Math>(
-        "GetRunningSum");
-    server_builder.RegisterHandler<GetEchoHandler, proto::Math>("GetEcho");
-    server_builder.RegisterHandler<GetSequenceHandler, proto::Math>(
-        "GetSequence");
+    server_builder.RegisterHandler<GetSumHandler>();
+    server_builder.RegisterHandler<GetSquareHandler>();
+    server_builder.RegisterHandler<GetRunningSumHandler>();
+    server_builder.RegisterHandler<GetEchoHandler>();
+    server_builder.RegisterHandler<GetSequenceHandler>();
     server_ = server_builder.Build();
 
     client_channel_ =
