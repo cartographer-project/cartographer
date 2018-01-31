@@ -58,7 +58,7 @@ class LandmarkCostFunction {
                   const T* const next_node_translation,
                   const T* const landmark_rotation,
                   const T* const landmark_translation, T* const e) const {
-    std::array<T, 3> interpolated_pose_translation{
+    const std::array<T, 3> interpolated_pose_translation{
         {prev_node_translation[0] +
              interpolation_parameter_ *
                  (next_node_translation[0] - prev_node_translation[0]),
@@ -68,7 +68,7 @@ class LandmarkCostFunction {
          prev_node_translation[2] +
              interpolation_parameter_ *
                  (next_node_translation[2] - prev_node_translation[2])}};
-    std::array<T, 4> interpolated_pose_rotation = SlerpQuaternions(
+    const std::array<T, 4> interpolated_pose_rotation = SlerpQuaternions(
         prev_node_rotation, next_node_rotation, T(interpolation_parameter_));
 
     const std::array<T, 6> error = ScaleError(
