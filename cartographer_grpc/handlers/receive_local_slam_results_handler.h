@@ -36,12 +36,13 @@ class ReceiveLocalSlamResultsHandler
   void OnRequest(
       const proto::ReceiveLocalSlamResultsRequest& request) override {
     auto writer = GetWriter();
-    MapBuilderServer::SubscriptionId subscription_id =
-        GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+    MapBuilderContextInterface::SubscriptionId subscription_id =
+        GetUnsynchronizedContext<MapBuilderContext>()
             ->SubscribeLocalSlamResults(
                 request.trajectory_id(),
-                [writer](std::unique_ptr<MapBuilderServer::LocalSlamResult>
-                             local_slam_result) {
+                [writer](
+                    std::unique_ptr<MapBuilderContextInterface::LocalSlamResult>
+                        local_slam_result) {
                   if (local_slam_result) {
                     writer.Write(
                         GenerateResponse(std::move(local_slam_result)));
@@ -52,14 +53,13 @@ class ReceiveLocalSlamResultsHandler
                   }
                 });
 
-    subscription_id_ =
-        cartographer::common::make_unique<MapBuilderServer::SubscriptionId>(
-            subscription_id);
+    subscription_id_ = cartographer::common::make_unique<
+        MapBuilderContextInterface::SubscriptionId>(subscription_id);
   }
 
   static std::unique_ptr<proto::ReceiveLocalSlamResultsResponse>
-  GenerateResponse(
-      std::unique_ptr<MapBuilderServer::LocalSlamResult> local_slam_result) {
+  GenerateResponse(std::unique_ptr<MapBuilderContextInterface::LocalSlamResult>
+                       local_slam_result) {
     auto response = cartographer::common::make_unique<
         proto::ReceiveLocalSlamResultsResponse>();
     response->set_trajectory_id(local_slam_result->trajectory_id);
@@ -80,13 +80,13 @@ class ReceiveLocalSlamResultsHandler
 
   void OnFinish() override {
     if (subscription_id_) {
-      GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+      GetUnsynchronizedContext<MapBuilderContext>()
           ->UnsubscribeLocalSlamResults(*subscription_id_);
     }
   }
 
  private:
-  std::unique_ptr<MapBuilderServer::SubscriptionId> subscription_id_;
+  std::unique_ptr<MapBuilderContextInterface::SubscriptionId> subscription_id_;
 };
 
 }  // namespace handlers

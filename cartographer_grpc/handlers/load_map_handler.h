@@ -48,8 +48,7 @@ class LoadMapHandler
   }
 
   void OnReadsDone() override {
-    GetContext<MapBuilderServer::MapBuilderContext>()->map_builder().LoadMap(
-        &reader_);
+    GetContext<MapBuilderContext>()->map_builder().LoadMap(&reader_);
     Send(cartographer::common::make_unique<google::protobuf::Empty>());
   }
 
