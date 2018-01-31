@@ -157,7 +157,6 @@ class ServerTest : public ::testing::Test {
 
     client_channel_ =
         grpc::CreateChannel(kServerAddress, grpc::InsecureChannelCredentials());
-    stub_ = proto::Math::NewStub(client_channel_);
   }
 
   std::unique_ptr<Server> server_;
