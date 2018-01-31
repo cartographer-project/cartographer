@@ -23,6 +23,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/pose_graph.h"
+#include "cartographer/mapping/pose_graph/cost_helpers.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
@@ -50,34 +51,14 @@ class SpaCostFunction {
     return true;
   }
 
-  // Computes the error between the node-to-submap alignment 'zbar_ij' and the
-  // difference of submap pose 'c_i' and node pose 'c_j' which are both in an
-  // arbitrary common frame.
-  template <typename T>
-  static std::array<T, 3> ComputeUnscaledError(
-      const transform::Rigid2d& zbar_ij, const T* const c_i,
-      const T* const c_j) {
-    const T cos_theta_i = cos(c_i[2]);
-    const T sin_theta_i = sin(c_i[2]);
-    const T delta_x = c_j[0] - c_i[0];
-    const T delta_y = c_j[1] - c_i[1];
-    const T h[3] = {cos_theta_i * delta_x + sin_theta_i * delta_y,
-                    -sin_theta_i * delta_x + cos_theta_i * delta_y,
-                    c_j[2] - c_i[2]};
-    return {{T(zbar_ij.translation().x()) - h[0],
-             T(zbar_ij.translation().y()) - h[1],
-             common::NormalizeAngleDifference(T(zbar_ij.rotation().angle()) -
-                                              h[2])}};
-  }
-
   // Computes the error scaled by 'translation_weight' and 'rotation_weight',
   // storing it in 'e'.
   template <typename T>
   static void ComputeScaledError(const Constraint::Pose& pose,
                                  const T* const c_i, const T* const c_j,
                                  T* const e) {
-    const std::array<T, 3> e_ij =
-        ComputeUnscaledError(transform::Project2D(pose.zbar_ij), c_i, c_j);
+    const std::array<T, 3> e_ij = mapping::pose_graph::ComputeUnscaledError2d(
+        transform::Project2D(pose.zbar_ij), c_i, c_j);
     e[0] = e_ij[0] * T(pose.translation_weight);
     e[1] = e_ij[1] * T(pose.translation_weight);
     e[2] = e_ij[2] * T(pose.rotation_weight);

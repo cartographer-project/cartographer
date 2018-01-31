@@ -30,6 +30,9 @@ class GetSubmapHandler
     : public framework::RpcHandler<proto::GetSubmapRequest,
                                    proto::GetSubmapResponse> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/GetSubmap";
+  }
   void OnRequest(const proto::GetSubmapRequest &request) override {
     auto response =
         cartographer::common::make_unique<proto::GetSubmapResponse>();

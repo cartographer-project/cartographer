@@ -31,6 +31,9 @@ class LoadMapHandler
     : public framework::RpcHandler<framework::Stream<proto::LoadMapRequest>,
                                    google::protobuf::Empty> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/LoadMap";
+  }
   void OnRequest(const proto::LoadMapRequest& request) override {
     switch (request.map_chunk_case()) {
       case proto::LoadMapRequest::kPoseGraph:

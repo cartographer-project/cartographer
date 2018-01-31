@@ -19,8 +19,8 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "cartographer/mapping/pose_graph/cost_helpers.h"
 #include "cartographer/mapping/pose_graph_interface.h"
-#include "cartographer/mapping_3d/pose_graph/spa_cost_function.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
@@ -62,7 +62,7 @@ std::array<T, 4> SlerpQuaternions(const T* const prev_rotation,
 class LandmarkCostFunction {
  public:
   using LandmarkObservation =
-      mapping::PoseGraph::LandmarkNode::LandmarkObservation;
+      mapping::PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const LandmarkObservation& observation, common::Time prev_node_time,
@@ -99,13 +99,9 @@ class LandmarkCostFunction {
     std::array<T, 4> interpolated_pose_rotation = SlerpQuaternions(
         prev_node_rotation, next_node_rotation, T(interpolation_parameter_));
 
-    // TODO(pifon2a): Move functions common for all cost functions outside of
-    // SpaCostFunction scope.
-    const std::array<T, 6> unscaled_error =
-        mapping_3d::pose_graph::SpaCostFunction::ComputeUnscaledError(
-            landmark_to_tracking_transform_, interpolated_pose_rotation.data(),
-            interpolated_pose_translation, landmark_rotation,
-            landmark_translation);
+    const std::array<T, 6> unscaled_error = ComputeUnscaledError3d(
+        landmark_to_tracking_transform_, interpolated_pose_rotation.data(),
+        interpolated_pose_translation, landmark_rotation, landmark_translation);
 
     e[0] = T(translation_weight_) * unscaled_error[0];
     e[1] = T(translation_weight_) * unscaled_error[1];

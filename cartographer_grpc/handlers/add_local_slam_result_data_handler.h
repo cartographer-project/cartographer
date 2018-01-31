@@ -32,6 +32,9 @@ class AddLocalSlamResultDataHandler
           framework::Stream<proto::AddLocalSlamResultDataRequest>,
           google::protobuf::Empty> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/AddLocalSlamResultData";
+  }
   void OnRequest(const proto::AddLocalSlamResultDataRequest& request) override {
     auto local_slam_result_data =
         GetContext<MapBuilderServer::MapBuilderContext>()

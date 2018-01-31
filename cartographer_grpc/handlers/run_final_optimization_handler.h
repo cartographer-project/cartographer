@@ -31,6 +31,9 @@ class RunFinalOptimizationHandler
     : public framework::RpcHandler<google::protobuf::Empty,
                                    google::protobuf::Empty> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/RunFinalOptimization";
+  }
   void OnRequest(const google::protobuf::Empty& request) override {
     GetContext<MapBuilderServer::MapBuilderContext>()
         ->map_builder()
