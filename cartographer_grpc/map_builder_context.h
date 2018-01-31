@@ -17,7 +17,9 @@
 #ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_H
 #define CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_H
 
-#include "cartographer_grpc/framework/execution_context.h"
+#include "cartographer/mapping_2d/submaps.h"
+#include "cartographer/mapping_3d/submaps.h"
+#include "cartographer_grpc/map_builder_context_interface.h"
 
 namespace cartographer_grpc {
 
@@ -39,25 +41,14 @@ class MapBuilderContext : public MapBuilderContextInterface {
   ProcessLocalSlamResultData(
       const std::string& sensor_id, cartographer::common::Time time,
       const cartographer::mapping::proto::LocalSlamResultData& proto) override;
-  LocalTrajectoryUploader* local_trajectory_uploader() override {
-    return map_builder_server_->local_trajectory_uploader_.get();
-  }
-
-  void EnqueueSensorData(int trajectory_id,
-                         std::unique_ptr<cartographer::sensor::Data> data) {
-    map_builder_server_->incoming_data_queue_.Push(
-        cartographer::common::make_unique<Data>(
-            Data{trajectory_id, std::move(data)}));
-  }
-
+  LocalTrajectoryUploader* local_trajectory_uploader() override;
+  void EnqueueSensorData(
+      int trajectory_id,
+      std::unique_ptr<cartographer::sensor::Data> data) override;
   void EnqueueLocalSlamResultData(
       int trajectory_id, const std::string& sensor_id,
       std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-          local_slam_result_data) {
-    map_builder_server_->incoming_data_queue_.Push(
-        cartographer::common::make_unique<Data>(
-            Data{trajectory_id, std::move(local_slam_result_data)}));
-  }
+          local_slam_result_data) override;
 
  private:
   std::shared_ptr<cartographer::mapping_2d::Submap> UpdateSubmap2D(

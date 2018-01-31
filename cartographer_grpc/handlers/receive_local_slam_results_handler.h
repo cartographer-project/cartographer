@@ -37,7 +37,7 @@ class ReceiveLocalSlamResultsHandler
       const proto::ReceiveLocalSlamResultsRequest& request) override {
     auto writer = GetWriter();
     MapBuilderContextInterface::SubscriptionId subscription_id =
-        GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+        GetUnsynchronizedContext<MapBuilderContext>()
             ->SubscribeLocalSlamResults(
                 request.trajectory_id(),
                 [writer](
@@ -80,7 +80,7 @@ class ReceiveLocalSlamResultsHandler
 
   void OnFinish() override {
     if (subscription_id_) {
-      GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+      GetUnsynchronizedContext<MapBuilderContext>()
           ->UnsubscribeLocalSlamResults(*subscription_id_);
     }
   }

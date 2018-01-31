@@ -35,7 +35,7 @@ class GetConstraintsHandler
     return "/cartographer_grpc.proto.MapBuilderService/GetConstraints";
   }
   void OnRequest(const google::protobuf::Empty& request) override {
-    auto constraints = GetContext<MapBuilderServer::MapBuilderContext>()
+    auto constraints = GetContext<MapBuilderContext>()
                            ->map_builder()
                            .pose_graph()
                            ->constraints();

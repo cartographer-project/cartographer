@@ -17,10 +17,17 @@
 #ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_INTERFACE_H
 #define CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_INTERFACE_H
 
+#include "cartographer/common/blocking_queue.h"
+#include "cartographer/mapping/map_builder_interface.h"
+#include "cartographer/sensor/data.h"
+#include "cartographer/sensor/range_data.h"
+#include "cartographer/transform/rigid_transform.h"
 #include "cartographer_grpc/framework/execution_context.h"
+#include "cartographer_grpc/local_trajectory_uploader.h"
 
 namespace cartographer_grpc {
 
+class MapBuilderServer;
 class MapBuilderContextInterface : public framework::ExecutionContext {
  public:
   struct LocalSlamResult {
@@ -57,7 +64,7 @@ class MapBuilderContextInterface : public framework::ExecutionContext {
   virtual cartographer::mapping::TrajectoryBuilderInterface::
       LocalSlamResultCallback
       GetLocalSlamResultCallbackForSubscriptions() = 0;
-  virtual void AddSensorDataToTrajectory(const Data& sensor_data);
+  virtual void AddSensorDataToTrajectory(const Data& sensor_data) = 0;
   virtual SubscriptionId SubscribeLocalSlamResults(
       int trajectory_id, LocalSlamSubscriptionCallback callback) = 0;
   virtual void UnsubscribeLocalSlamResults(
