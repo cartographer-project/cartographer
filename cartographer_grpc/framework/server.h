@@ -17,7 +17,6 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_SERVER_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_SERVER_H
 
-#include <cartographer_grpc/proto/map_builder_service.pb.h>
 #include <cstddef>
 #include <memory>
 #include <sstream>
