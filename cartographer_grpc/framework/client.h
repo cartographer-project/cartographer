@@ -138,9 +138,7 @@ class Client {
             typename RpcHandlerType::ResponseType>::Create(channel_.get(),
                                                            rpc_method_,
                                                            &client_context_,
-                                                           request
-
-                                                           ));
+                                                           request));
   }
 
   grpc::Status MakeBlockingUnaryCall(

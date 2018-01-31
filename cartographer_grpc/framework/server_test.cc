@@ -162,8 +162,6 @@ class ServerTest : public ::testing::Test {
 
   std::unique_ptr<Server> server_;
   std::shared_ptr<grpc::Channel> client_channel_;
-  std::unique_ptr<proto::Math::Stub> stub_;
-  grpc::ClientContext client_context_;
 };
 
 TEST_F(ServerTest, StartAndStopServerTest) {
