@@ -62,7 +62,7 @@ class Server {
       std::string method_name;
       std::tie(service_full_name, method_name) =
           ParseMethodFullName(method_full_name);
-      CheckHandlerCompatiblity<RpcHandlerType>(service_full_name, method_name);
+      CheckHandlerCompatibility<RpcHandlerType>(service_full_name, method_name);
       rpc_handlers_[service_full_name].emplace(
           method_name,
           RpcHandlerInfo{
@@ -93,7 +93,7 @@ class Server {
     ParseMethodFullName(const std::string& method_full_name);
 
     template <typename RpcHandlerType>
-    void CheckHandlerCompatiblity(const std::string& service_full_name,
+    void CheckHandlerCompatibility(const std::string& service_full_name,
                                   const std::string& method_name) {
       const auto* pool = google::protobuf::DescriptorPool::generated_pool();
       const auto* service = pool->FindServiceByName(service_full_name);
