@@ -64,6 +64,7 @@ cc_library(
     ] + glob([
         "**/*.h",
     ]),
+    copts = ["-Wno-sign-compare"],
     includes = ["."],
     deps = [
         ":cc_protos",

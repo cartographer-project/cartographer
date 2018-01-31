@@ -81,6 +81,7 @@ cc_library(
     hdrs = glob([
         "**/*.h",
     ]),
+    copts = ["-Wno-sign-compare"],
     includes = ["."],
     deps = [
         ":cc_protos",
