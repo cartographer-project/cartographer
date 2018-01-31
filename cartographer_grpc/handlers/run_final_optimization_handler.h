@@ -35,7 +35,7 @@ class RunFinalOptimizationHandler
     return "/cartographer_grpc.proto.MapBuilderService/RunFinalOptimization";
   }
   void OnRequest(const google::protobuf::Empty& request) override {
-    GetContext<MapBuilderServer::MapBuilderContext>()
+    GetContext<MapBuilderContext>()
         ->map_builder()
         .pose_graph()
         ->RunFinalOptimization();
