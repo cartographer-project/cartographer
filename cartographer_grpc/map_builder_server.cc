@@ -31,7 +31,7 @@
 #include "cartographer_grpc/handlers/get_trajectory_node_poses_handler.h"
 #include "cartographer_grpc/handlers/load_map_handler.h"
 #include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
-#include "cartographer_grpc/handlers/run_final_optimization.h"
+#include "cartographer_grpc/handlers/run_final_optimization_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
@@ -216,48 +216,22 @@ MapBuilderServer::MapBuilderServer(
         cartographer::common::make_unique<LocalTrajectoryUploader>(
             map_builder_server_options.uplink_server_address());
   }
-  server_builder.RegisterHandler<handlers::AddTrajectoryHandler,
-                                 proto::MapBuilderService>("AddTrajectory");
-  server_builder.RegisterHandler<handlers::AddOdometryDataHandler,
-                                 proto::MapBuilderService>("AddOdometryData");
-  server_builder
-      .RegisterHandler<handlers::AddImuDataHandler, proto::MapBuilderService>(
-          "AddImuData");
-  server_builder.RegisterHandler<handlers::AddRangefinderDataHandler,
-                                 proto::MapBuilderService>(
-      "AddRangefinderData");
-  server_builder.RegisterHandler<handlers::AddFixedFramePoseDataHandler,
-                                 proto::MapBuilderService>(
-      "AddFixedFramePoseData");
-  server_builder.RegisterHandler<handlers::AddLandmarkDataHandler,
-                                 proto::MapBuilderService>("AddLandmarkData");
-  server_builder.RegisterHandler<handlers::AddLocalSlamResultDataHandler,
-                                 proto::MapBuilderService>(
-      "AddLocalSlamResultData");
-  server_builder.RegisterHandler<handlers::FinishTrajectoryHandler,
-                                 proto::MapBuilderService>("FinishTrajectory");
-  server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler,
-                                 proto::MapBuilderService>(
-      "ReceiveLocalSlamResults");
-  server_builder
-      .RegisterHandler<handlers::GetSubmapHandler, proto::MapBuilderService>(
-          "GetSubmap");
-  server_builder.RegisterHandler<handlers::GetTrajectoryNodePosesHandler,
-                                 proto::MapBuilderService>(
-      "GetTrajectoryNodePoses");
-  server_builder.RegisterHandler<handlers::GetAllSubmapPosesHandler,
-                                 proto::MapBuilderService>("GetAllSubmapPoses");
-  server_builder.RegisterHandler<handlers::GetLocalToGlobalTransformHandler,
-                                 proto::MapBuilderService>(
-      "GetLocalToGlobalTransform");
-  server_builder.RegisterHandler<handlers::GetConstraintsHandler,
-                                 proto::MapBuilderService>("GetConstraints");
-  server_builder
-      .RegisterHandler<handlers::LoadMapHandler, proto::MapBuilderService>(
-          "LoadMap");
-  server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler,
-                                 proto::MapBuilderService>(
-      "RunFinalOptimization");
+  server_builder.RegisterHandler<handlers::AddTrajectoryHandler>();
+  server_builder.RegisterHandler<handlers::AddOdometryDataHandler>();
+  server_builder.RegisterHandler<handlers::AddImuDataHandler>();
+  server_builder.RegisterHandler<handlers::AddRangefinderDataHandler>();
+  server_builder.RegisterHandler<handlers::AddFixedFramePoseDataHandler>();
+  server_builder.RegisterHandler<handlers::AddLandmarkDataHandler>();
+  server_builder.RegisterHandler<handlers::AddLocalSlamResultDataHandler>();
+  server_builder.RegisterHandler<handlers::FinishTrajectoryHandler>();
+  server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler>();
+  server_builder.RegisterHandler<handlers::GetSubmapHandler>();
+  server_builder.RegisterHandler<handlers::GetTrajectoryNodePosesHandler>();
+  server_builder.RegisterHandler<handlers::GetAllSubmapPosesHandler>();
+  server_builder.RegisterHandler<handlers::GetLocalToGlobalTransformHandler>();
+  server_builder.RegisterHandler<handlers::GetConstraintsHandler>();
+  server_builder.RegisterHandler<handlers::LoadMapHandler>();
+  server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler>();
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
       cartographer::common::make_unique<MapBuilderContext>(this));

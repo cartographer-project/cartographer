@@ -55,12 +55,14 @@ class Server {
     void SetNumEventThreads(std::size_t num_event_threads);
     void SetServerAddress(const std::string& server_address);
 
-    template <typename RpcHandlerType, typename ServiceType>
-    void RegisterHandler(const std::string& method_name) {
-      std::stringstream fully_qualified_name;
-      fully_qualified_name << "/" << ServiceType::service_full_name() << "/"
-                           << method_name;
-      rpc_handlers_[ServiceType::service_full_name()].emplace(
+    template <typename RpcHandlerType>
+    void RegisterHandler() {
+      std::string method_full_name = GetMethodFullName<RpcHandlerType>();
+      std::string service_full_name;
+      std::string method_name;
+      std::tie(service_full_name, method_name) =
+          ParseMethodFullName(method_full_name);
+      rpc_handlers_[service_full_name].emplace(
           method_name,
           RpcHandlerInfo{
               RpcHandlerType::RequestType::default_instance().GetDescriptor(),
@@ -74,11 +76,20 @@ class Server {
               },
               RpcType<typename RpcHandlerType::IncomingType,
                       typename RpcHandlerType::OutgoingType>::value,
-              fully_qualified_name.str()});
+              method_full_name});
     }
 
    private:
     using ServiceInfo = std::map<std::string, RpcHandlerInfo>;
+
+    template <typename RpcHandlerType>
+    std::string GetMethodFullName() {
+      auto handler = cartographer::common::make_unique<const RpcHandlerType>();
+      return handler->method_name();
+    }
+    std::tuple<std::string /* service_full_name */,
+               std::string /* method_name */>
+    ParseMethodFullName(const std::string& method_full_name);
 
     Options options_;
     std::map<std::string, ServiceInfo> rpc_handlers_;

@@ -31,6 +31,9 @@ class AddImuDataHandler
     : public framework::RpcHandler<framework::Stream<proto::AddImuDataRequest>,
                                    google::protobuf::Empty> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/AddImuData";
+  }
   void OnRequest(const proto::AddImuDataRequest &request) override {
     // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
     // thread-safe. Therefore it suffices to get an unsynchronized reference to
