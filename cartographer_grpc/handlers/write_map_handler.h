@@ -30,6 +30,9 @@ class WriteMapHandler
     : public framework::RpcHandler<google::protobuf::Empty,
                                    framework::Stream<proto::WriteMapResponse>> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/WriteMap";
+  }
   void OnRequest(const google::protobuf::Empty& request) override {
     auto writer = GetWriter();
     cartographer::io::ForwardingProtoStreamWriter proto_stream_writer(
