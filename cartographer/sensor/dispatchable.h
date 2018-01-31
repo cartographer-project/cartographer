@@ -34,8 +34,9 @@ class Dispatchable : public Data {
       mapping::TrajectoryBuilderInterface *const trajectory_builder) override {
     trajectory_builder->AddSensorData(sensor_id_, data_);
   }
+  const DataType &data() const { return data_; }
 
- private:
+private:
   const DataType data_;
 };
 
