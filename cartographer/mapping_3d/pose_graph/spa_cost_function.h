@@ -49,28 +49,15 @@ class SpaCostFunction {
   bool operator()(const T* const c_i_rotation, const T* const c_i_translation,
                   const T* const c_j_rotation, const T* const c_j_translation,
                   T* const e) const {
-    ComputeScaledError(pose_, c_i_rotation, c_i_translation, c_j_rotation,
-                       c_j_translation, e);
-    return true;
-  }
+    using mapping::pose_graph::ComputeUnscaledError;
+    using mapping::pose_graph::ScaleError;
 
-  // Computes the error scaled by 'translation_weight' and 'rotation_weight',
-  // storing it in 'e'.
-  template <typename T>
-  static void ComputeScaledError(const Constraint::Pose& pose,
-                                 const T* const c_i_rotation,
-                                 const T* const c_i_translation,
-                                 const T* const c_j_rotation,
-                                 const T* const c_j_translation, T* const e) {
-    const std::array<T, 6> e_ij = mapping::pose_graph::ComputeUnscaledError3d(
-        pose.zbar_ij, c_i_rotation, c_i_translation, c_j_rotation,
-        c_j_translation);
-    for (int ij : {0, 1, 2}) {
-      e[ij] = e_ij[ij] * T(pose.translation_weight);
-    }
-    for (int ij : {3, 4, 5}) {
-      e[ij] = e_ij[ij] * T(pose.rotation_weight);
-    }
+    const std::array<T, 6> error = ScaleError(
+        ComputeUnscaledError(pose_.zbar_ij, c_i_rotation, c_i_translation,
+                             c_j_rotation, c_j_translation),
+        T(pose_.translation_weight), T(pose_.rotation_weight));
+    std::copy(std::begin(error), std::end(error), e);
+    return true;
   }
 
  private:

@@ -57,7 +57,8 @@ class Server {
 
     template <typename RpcHandlerType>
     void RegisterHandler() {
-      std::string method_full_name = GetMethodFullName<RpcHandlerType>();
+      std::string method_full_name =
+          RpcHandlerInterface::Instantiate<RpcHandlerType>()->method_name();
       std::string service_full_name;
       std::string method_name;
       std::tie(service_full_name, method_name) =
@@ -83,11 +84,6 @@ class Server {
    private:
     using ServiceInfo = std::map<std::string, RpcHandlerInfo>;
 
-    template <typename RpcHandlerType>
-    std::string GetMethodFullName() {
-      auto handler = cartographer::common::make_unique<const RpcHandlerType>();
-      return handler->method_name();
-    }
     std::tuple<std::string /* service_full_name */,
                std::string /* method_name */>
     ParseMethodFullName(const std::string& method_full_name);

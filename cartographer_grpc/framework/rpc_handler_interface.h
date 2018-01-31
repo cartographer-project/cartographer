@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_INTERFACE_H_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_RPC_HANDLER_INTERFACE_H_H
 
+#include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/execution_context.h"
 #include "google/protobuf/message.h"
 #include "grpc++/grpc++.h"
@@ -40,6 +41,10 @@ class RpcHandlerInterface {
       const ::google::protobuf::Message* request) = 0;
   virtual void OnReadsDone(){};
   virtual void OnFinish(){};
+  template <class RpcHandlerType>
+  static std::unique_ptr<RpcHandlerType> Instantiate() {
+    return cartographer::common::make_unique<RpcHandlerType>();
+  }
 };
 
 using RpcHandlerFactory = std::function<std::unique_ptr<RpcHandlerInterface>(

@@ -47,21 +47,14 @@ class SpaCostFunction {
 
   template <typename T>
   bool operator()(const T* const c_i, const T* const c_j, T* e) const {
-    ComputeScaledError(pose_, c_i, c_j, e);
-    return true;
-  }
+    using mapping::pose_graph::ComputeUnscaledError;
+    using mapping::pose_graph::ScaleError;
 
-  // Computes the error scaled by 'translation_weight' and 'rotation_weight',
-  // storing it in 'e'.
-  template <typename T>
-  static void ComputeScaledError(const Constraint::Pose& pose,
-                                 const T* const c_i, const T* const c_j,
-                                 T* const e) {
-    const std::array<T, 3> e_ij = mapping::pose_graph::ComputeUnscaledError2d(
-        transform::Project2D(pose.zbar_ij), c_i, c_j);
-    e[0] = e_ij[0] * T(pose.translation_weight);
-    e[1] = e_ij[1] * T(pose.translation_weight);
-    e[2] = e_ij[2] * T(pose.rotation_weight);
+    const std::array<T, 3> error = ScaleError(
+        ComputeUnscaledError(transform::Project2D(pose_.zbar_ij), c_i, c_j),
+        T(pose_.translation_weight), T(pose_.rotation_weight));
+    std::copy(std::begin(error), std::end(error), e);
+    return true;
   }
 
  private:
