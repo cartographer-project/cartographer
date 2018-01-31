@@ -166,6 +166,13 @@ class ServerTest : public ::testing::Test {
 };
 
 TEST_F(ServerTest, StartAndStopServerTest) {
+  auto* pool = google::protobuf::DescriptorPool::generated_pool();
+  CHECK(pool->FindMessageTypeByName(
+      "cartographer_grpc.framework.proto.GetSumRequest"));
+  CHECK(pool->FindServiceByName("cartographer_grpc.framework.proto.Math"));
+  CHECK(
+      pool->FindMethodByName("cartographer_grpc.framework.proto.Math.GetSum"));
+
   server_->Start();
   server_->Shutdown();
 }
