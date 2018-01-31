@@ -36,7 +36,7 @@ class Dispatchable : public Data {
   }
   const DataType &data() const { return data_; }
 
-private:
+ private:
   const DataType data_;
 };
 

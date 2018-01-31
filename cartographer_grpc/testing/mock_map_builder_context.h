@@ -29,7 +29,7 @@ namespace cartographer_grpc {
 namespace testing {
 
 class MockMapBuilderContext : public MapBuilderContextInterface {
-public:
+ public:
   MOCK_METHOD0(map_builder, cartographer::mapping::MapBuilderInterface &());
   MOCK_METHOD0(sensor_data_queue,
                cartographer::common::BlockingQueue<
@@ -60,9 +60,9 @@ public:
   MOCK_METHOD0(local_trajectory_uploader, LocalTrajectoryUploaderInterface *());
 
   MOCK_METHOD2(DoEnqueueSensorData, void(int, cartographer::sensor::Data *));
-  void
-  EnqueueSensorData(int trajectory_id,
-                    std::unique_ptr<cartographer::sensor::Data> data) override {
+  void EnqueueSensorData(
+      int trajectory_id,
+      std::unique_ptr<cartographer::sensor::Data> data) override {
     DoEnqueueSensorData(trajectory_id, data.get());
   }
   MOCK_METHOD3(DoEnqueueLocalSlamResultData,
@@ -77,7 +77,7 @@ public:
   }
 };
 
-} // namespace testing
-} // namespace cartographer_grpc
+}  // namespace testing
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_TESTING_MOCK_MAP_BUILDER_CONTEXT_H
+#endif  // CARTOGRAPHER_GRPC_TESTING_MOCK_MAP_BUILDER_CONTEXT_H

@@ -82,9 +82,9 @@ class Server {
     }
     static std::tuple<std::string /* service_full_name */,
                       std::string /* method_name */>
-    ParseMethodFullName(const std::string &method_full_name);
+    ParseMethodFullName(const std::string& method_full_name);
 
-  private:
+   private:
     using ServiceInfo = std::map<std::string, RpcHandlerInfo>;
 
     template <typename RpcHandlerType>

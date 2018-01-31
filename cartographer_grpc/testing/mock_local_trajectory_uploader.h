@@ -28,7 +28,7 @@ namespace cartographer_grpc {
 namespace testing {
 
 class MockLocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
-public:
+ public:
   MOCK_METHOD1(DoEnqueueDataRequest, void(google::protobuf::Message *));
   void EnqueueDataRequest(
       std::unique_ptr<google::protobuf::Message> data_request) override {
@@ -42,7 +42,7 @@ public:
   MOCK_CONST_METHOD1(GetLocalSlamResultSensorId, SensorId(int));
 };
 
-} // namespace testing
-} // namespace cartographer_grpc
+}  // namespace testing
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_TESTING_MOCK_LOCAL_TRAJECTORY_UPLOADER_H
+#endif  // CARTOGRAPHER_GRPC_TESTING_MOCK_LOCAL_TRAJECTORY_UPLOADER_H

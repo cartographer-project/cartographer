@@ -36,8 +36,9 @@ namespace {
 const std::string kServerAddress = "localhost:50051";
 }  // namespace
 
-template <typename RpcHandlerType> class RpcHandlerTestServer : public Server {
-public:
+template <typename RpcHandlerType>
+class RpcHandlerTestServer : public Server {
+ public:
   RpcHandlerTestServer(std::unique_ptr<ExecutionContext> execution_context)
       : Server(Options{1, 1, kServerAddress}),
         channel_(grpc::CreateChannel(kServerAddress,
@@ -90,24 +91,26 @@ public:
   }
 
  private:
-   using ClientWriter = ::grpc::internal::ClientWriterFactory<
-       typename RpcHandlerType::RequestType>;
+  using ClientWriter = ::grpc::internal::ClientWriterFactory<
+      typename RpcHandlerType::RequestType>;
 
-   void WaitForHandlerCompletion(
-       typename RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent event) {
-     CHECK_EQ(rpc_handler_event_queue_.Pop(), event);
+  void WaitForHandlerCompletion(
+      typename RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent event) {
+    CHECK_EQ(rpc_handler_event_queue_.Pop(), event);
   }
 
   RpcHandlerInfo GetRpcHandlerInfo(const std::string &method_full_name) {
     ::grpc::internal::RpcMethod::RpcType rpc_type =
         RpcType<typename RpcHandlerType::IncomingType,
                 typename RpcHandlerType::OutgoingType>::value;
-    auto event_callback = [this](
-        typename RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent event) {
-      rpc_handler_event_queue_.Push(event);
-    };
+    auto event_callback =
+        [this](
+            typename RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent event) {
+          rpc_handler_event_queue_.Push(event);
+        };
     auto handler_instantiator = [event_callback](
-        Rpc *const rpc, ExecutionContext *const execution_context) {
+                                    Rpc *const rpc,
+                                    ExecutionContext *const execution_context) {
       std::unique_ptr<RpcHandlerInterface> rpc_handler =
           cartographer::common::make_unique<RpcHandlerWrapper<RpcHandlerType>>(
               event_callback);

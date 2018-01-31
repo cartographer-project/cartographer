@@ -40,7 +40,7 @@ using ProtoPredicateType =
     std::function<bool(const google::protobuf::Message &)>;
 
 class AddImuDataHandlerTest : public Test {
-public:
+ public:
   AddImuDataHandlerTest()
       : test_server_(cartographer::common::make_unique<
                      testing::MockMapBuilderContext>()),
@@ -61,7 +61,7 @@ public:
         .WillRepeatedly(Return(mock_local_trajectory_uploader_.get()));
   }
 
-protected:
+ protected:
   framework::testing::RpcHandlerTestServer<AddImuDataHandler> test_server_;
   testing::MockMapBuilderContext *mock_map_builder_context_;
   std::unique_ptr<testing::MockLocalTrajectoryUploader>
@@ -153,6 +153,6 @@ TEST_F(AddImuDataHandlerTest, WithMockLocalSlamUploader) {
   test_server_.SendFinish();
 }
 
-} // namespace
-} // namespace handlers
-} // namespace cartographer_grpc
+}  // namespace
+}  // namespace handlers
+}  // namespace cartographer_grpc
