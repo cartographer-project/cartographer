@@ -236,7 +236,6 @@ TEST_F(ServerTest, WriteFromOtherThread) {
   });
 
   Client<GetEchoHandler> client(client_channel_);
-  proto::GetEchoResponse result;
   proto::GetEchoRequest request;
   request.set_input(13);
   EXPECT_TRUE(client.Write(request));
