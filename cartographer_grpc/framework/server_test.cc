@@ -204,22 +204,21 @@ TEST_F(ServerTest, ProcessUnaryRpcTest) {
 TEST_F(ServerTest, ProcessBidiStreamingRpcTest) {
   server_->Start();
 
-  auto reader_writer = stub_->GetRunningSum(&client_context_);
+  Client<GetRunningSumHandler> client(client_channel_);
   for (int i = 0; i < 3; ++i) {
     proto::GetSumRequest request;
     request.set_input(i);
-    EXPECT_TRUE(reader_writer->Write(request));
+    EXPECT_TRUE(client.Write(request));
   }
-  reader_writer->WritesDone();
+  client.WritesDone();
   proto::GetSumResponse response;
-
   std::list<int> expected_responses = {0, 0, 1, 1, 3, 3};
-  while (reader_writer->Read(&response)) {
+  while (client.Read(&response)) {
     EXPECT_EQ(expected_responses.front(), response.output());
     expected_responses.pop_front();
   }
   EXPECT_TRUE(expected_responses.empty());
-  EXPECT_TRUE(reader_writer->Finish().ok());
+  EXPECT_TRUE(client.Finish().ok());
 
   server_->Shutdown();
 }
@@ -228,10 +227,6 @@ TEST_F(ServerTest, WriteFromOtherThread) {
   server_->SetExecutionContext(
       cartographer::common::make_unique<MathServerContext>());
   server_->Start();
-
-  proto::GetEchoResponse result;
-  proto::GetEchoRequest request;
-  request.set_input(13);
 
   Server* server = server_.get();
   std::thread response_thread([server]() {
@@ -242,10 +237,13 @@ TEST_F(ServerTest, WriteFromOtherThread) {
     CHECK(responder());
   });
 
-  grpc::Status status = stub_->GetEcho(&client_context_, request, &result);
+  Client<GetEchoHandler> client(client_channel_);
+  proto::GetEchoResponse result;
+  proto::GetEchoRequest request;
+  request.set_input(13);
+  EXPECT_TRUE(client.Write(request));
   response_thread.join();
-  EXPECT_TRUE(status.ok());
-  EXPECT_EQ(result.output(), 13);
+  EXPECT_EQ(client.response().output(), 13);
 
   server_->Shutdown();
 }
@@ -253,6 +251,20 @@ TEST_F(ServerTest, WriteFromOtherThread) {
 TEST_F(ServerTest, ProcessServerStreamingRpcTest) {
   server_->Start();
 
+  Client<GetSequenceHandler> client(client_channel_);
+  proto::GetSequenceRequest request;
+  request.set_input(12);
+
+  client.Write(request);
+  proto::GetSequenceResponse response;
+  for (int i = 0; i < 12; ++i) {
+    EXPECT_TRUE(client.Read(&response));
+    EXPECT_EQ(response.output(), i);
+  }
+  EXPECT_FALSE(client.Read(&response));
+  EXPECT_TRUE(client.Finish().ok());
+
+  /*
   proto::GetSequenceRequest request;
   request.set_input(12);
   auto reader = stub_->GetSequence(&client_context_, request);
@@ -264,7 +276,7 @@ TEST_F(ServerTest, ProcessServerStreamingRpcTest) {
   }
   EXPECT_FALSE(reader->Read(&response));
   EXPECT_TRUE(reader->Finish().ok());
-
+*/
   server_->Shutdown();
 }
 

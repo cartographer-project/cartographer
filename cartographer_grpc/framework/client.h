@@ -34,12 +34,16 @@ class Client {
         rpc_method_(rpc_method_name_.c_str(),
                     RpcType<typename RpcHandlerType::IncomingType,
                             typename RpcHandlerType::OutgoingType>::value,
-                    channel_) {
+                    channel_) {}
+
+  bool Read(typename RpcHandlerType::ResponseType* response) {
     switch (rpc_method_.method_type()) {
-      case grpc::internal::RpcMethod::NORMAL_RPC:
-        break;
-      case grpc::internal::RpcMethod::CLIENT_STREAMING:
-        break;
+      case grpc::internal::RpcMethod::BIDI_STREAMING:
+        InstantiateClientReaderWriterIfNeeded();
+        return client_reader_writer_->Read(response);
+      case grpc::internal::RpcMethod::SERVER_STREAMING:
+        CHECK(client_reader_);
+        return client_reader_->Read(response);
       default:
         LOG(FATAL) << "Not implemented.";
     }
@@ -52,9 +56,14 @@ class Client {
       case grpc::internal::RpcMethod::CLIENT_STREAMING:
         InstantiateClientWriterIfNeeded();
         return client_writer_->Write(request);
-      default:
-        LOG(FATAL) << "Not implemented.";
+      case grpc::internal::RpcMethod::BIDI_STREAMING:
+        InstantiateClientReaderWriterIfNeeded();
+        return client_reader_writer_->Write(request);
+      case grpc::internal::RpcMethod::SERVER_STREAMING:
+        InstantiateClientReader(request);
+        return true;
     }
+    LOG(FATAL) << "Not reached.";
   }
 
   bool WritesDone() {
@@ -62,6 +71,9 @@ class Client {
       case grpc::internal::RpcMethod::CLIENT_STREAMING:
         InstantiateClientWriterIfNeeded();
         return client_writer_->WritesDone();
+      case grpc::internal::RpcMethod::BIDI_STREAMING:
+        InstantiateClientReaderWriterIfNeeded();
+        return client_reader_writer_->WritesDone();
       default:
         LOG(FATAL) << "Not implemented.";
     }
@@ -72,6 +84,12 @@ class Client {
       case grpc::internal::RpcMethod::CLIENT_STREAMING:
         InstantiateClientWriterIfNeeded();
         return client_writer_->Finish();
+      case grpc::internal::RpcMethod::BIDI_STREAMING:
+        InstantiateClientReaderWriterIfNeeded();
+        return client_reader_writer_->Finish();
+      case grpc::internal::RpcMethod::SERVER_STREAMING:
+        CHECK(client_reader_);
+        return client_reader_->Finish();
       default:
         LOG(FATAL) << "Not implemented.";
     }
@@ -98,6 +116,33 @@ class Client {
     }
   }
 
+  void InstantiateClientReaderWriterIfNeeded() {
+    CHECK_EQ(rpc_method_.method_type(),
+             grpc::internal::RpcMethod::BIDI_STREAMING);
+    if (!client_reader_writer_) {
+      client_reader_writer_.reset(
+          grpc::internal::ClientReaderWriterFactory<
+              typename RpcHandlerType::RequestType,
+              typename RpcHandlerType::ResponseType>::Create(channel_.get(),
+                                                             rpc_method_,
+                                                             &client_context_));
+    }
+  }
+
+  void InstantiateClientReader(
+      const typename RpcHandlerType::RequestType& request) {
+    CHECK_EQ(rpc_method_.method_type(),
+             grpc::internal::RpcMethod::SERVER_STREAMING);
+    client_reader_.reset(
+        grpc::internal::ClientReaderFactory<
+            typename RpcHandlerType::ResponseType>::Create(channel_.get(),
+                                                           rpc_method_,
+                                                           &client_context_,
+                                                           request
+
+                                                           ));
+  }
+
   grpc::Status MakeBlockingUnaryCall(
       const typename RpcHandlerType::RequestType& request,
       typename RpcHandlerType::ResponseType* response) {
@@ -113,8 +158,13 @@ class Client {
 
   std::unique_ptr<grpc::ClientWriter<typename RpcHandlerType::RequestType>>
       client_writer_;
-  std::unique_ptr < grpc::ClientReaderWriter
-      typename RpcHandlerType::ResponseType response_;
+  std::unique_ptr<
+      grpc::ClientReaderWriter<typename RpcHandlerType::RequestType,
+                               typename RpcHandlerType::ResponseType>>
+      client_reader_writer_;
+  std::unique_ptr<grpc::ClientReader<typename RpcHandlerType::ResponseType>>
+      client_reader_;
+  typename RpcHandlerType::ResponseType response_;
 };
 
 }  // namespace framework
