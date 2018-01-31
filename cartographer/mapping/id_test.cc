@@ -221,6 +221,41 @@ TEST(IdTest, LowerBoundFuzz) {
   }
 }
 
+struct DataStruct {
+  const common::Time time;
+};
+
+TEST(IdTest, LowerBoundFuzzWithStruct) {
+  constexpr int kMaxTimeIncrement = 20;
+  constexpr int kMaxNumNodes = 20;
+  constexpr int kNumTests = 100;
+  constexpr int kTrajectoryId = 1;
+
+  std::mt19937 rng;
+  std::uniform_int_distribution<int> dt_dist(1, kMaxTimeIncrement);
+  std::uniform_int_distribution<int> N_dist(1, kMaxNumNodes);
+
+  for (int i = 0; i < kNumTests; ++i) {
+    const int N = N_dist(rng);
+    int t = 0;
+    MapById<SubmapId, DataStruct> map_by_id;
+    for (int j = 0; j < N; ++j) {
+      t = t + dt_dist(rng);
+      map_by_id.Append(kTrajectoryId, DataStruct{CreateTime(t)});
+    }
+    std::uniform_int_distribution<int> t0_dist(1, N * kMaxTimeIncrement + 1);
+    int t0 = t0_dist(rng);
+    auto it = map_by_id.lower_bound(kTrajectoryId, CreateTime(t0));
+
+    auto ground_truth = std::lower_bound(
+        map_by_id.BeginOfTrajectory(kTrajectoryId),
+        map_by_id.EndOfTrajectory(kTrajectoryId), CreateTime(t0),
+        [](MapById<SubmapId, DataStruct>::IdDataReference a,
+           const common::Time& t) { return a.data.time < t; });
+
+    CHECK(ground_truth == it);
+  }
+}
 }  // namespace
 }  // namespace mapping
 }  // namespace cartographer
