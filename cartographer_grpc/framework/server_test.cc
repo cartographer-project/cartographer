@@ -264,19 +264,6 @@ TEST_F(ServerTest, ProcessServerStreamingRpcTest) {
   EXPECT_FALSE(client.Read(&response));
   EXPECT_TRUE(client.Finish().ok());
 
-  /*
-  proto::GetSequenceRequest request;
-  request.set_input(12);
-  auto reader = stub_->GetSequence(&client_context_, request);
-
-  proto::GetSequenceResponse response;
-  for (int i = 0; i < 12; ++i) {
-    EXPECT_TRUE(reader->Read(&response));
-    EXPECT_EQ(response.output(), i);
-  }
-  EXPECT_FALSE(reader->Read(&response));
-  EXPECT_TRUE(reader->Finish().ok());
-*/
   server_->Shutdown();
 }
 
