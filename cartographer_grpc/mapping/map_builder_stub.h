@@ -36,7 +36,7 @@ class MapBuilderStub : public cartographer::mapping::MapBuilderInterface {
   MapBuilderStub& operator=(const MapBuilderStub&) = delete;
 
   int AddTrajectoryBuilder(
-      const std::unordered_set<std::string>& expected_sensor_ids,
+      const std::set<SensorId>& expected_sensor_ids,
       const cartographer::mapping::proto::TrajectoryBuilderOptions&
           trajectory_options,
       LocalSlamResultCallback local_slam_result_callback) override;

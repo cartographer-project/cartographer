@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_HANDLERS_GET_CONSTRAINTS_HANDLER_H
-#define CARTOGRAPHER_GRPC_HANDLERS_GET_CONSTRAINTS_HANDLER_H
+#ifndef CARTOGRAPHER_GRPC_HANDLERS_RUN_FINAL_OPTIMIZATION_H
+#define CARTOGRAPHER_GRPC_HANDLERS_RUN_FINAL_OPTIMIZATION_H
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/pose_graph.h"
@@ -27,29 +27,23 @@
 namespace cartographer_grpc {
 namespace handlers {
 
-class GetConstraintsHandler
+class RunFinalOptimizationHandler
     : public framework::RpcHandler<google::protobuf::Empty,
-                                   proto::GetConstraintsResponse> {
+                                   google::protobuf::Empty> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/GetConstraints";
+    return "/cartographer_grpc.proto.MapBuilderService/RunFinalOptimization";
   }
   void OnRequest(const google::protobuf::Empty& request) override {
-    auto constraints = GetContext<MapBuilderServer::MapBuilderContext>()
-                           ->map_builder()
-                           .pose_graph()
-                           ->constraints();
-    auto response =
-        cartographer::common::make_unique<proto::GetConstraintsResponse>();
-    response->mutable_constraints()->Reserve(constraints.size());
-    for (const auto& constraint : constraints) {
-      *response->add_constraints() = cartographer::mapping::ToProto(constraint);
-    }
-    Send(std::move(response));
+    GetContext<MapBuilderServer::MapBuilderContext>()
+        ->map_builder()
+        .pose_graph()
+        ->RunFinalOptimization();
+    Send(cartographer::common::make_unique<google::protobuf::Empty>());
   }
 };
 
 }  // namespace handlers
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_HANDLERS_GET_CONSTRAINTS_HANDLER_H
+#endif  // CARTOGRAPHER_GRPC_HANDLERS_RUN_FINAL_OPTIMIZATION_H

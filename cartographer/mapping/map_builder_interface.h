@@ -17,8 +17,8 @@
 #ifndef CARTOGRAPHER_MAPPING_MAP_BUILDER_INTERFACE_H_
 #define CARTOGRAPHER_MAPPING_MAP_BUILDER_INTERFACE_H_
 
+#include <set>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 #include "Eigen/Geometry"
@@ -42,6 +42,8 @@ class MapBuilderInterface {
   using LocalSlamResultCallback =
       TrajectoryBuilderInterface::LocalSlamResultCallback;
 
+  using SensorId = TrajectoryBuilderInterface::SensorId;
+
   MapBuilderInterface() {}
   virtual ~MapBuilderInterface() {}
 
@@ -50,7 +52,7 @@ class MapBuilderInterface {
 
   // Creates a new trajectory builder and returns its index.
   virtual int AddTrajectoryBuilder(
-      const std::unordered_set<std::string>& expected_sensor_ids,
+      const std::set<SensorId>& expected_sensor_ids,
       const proto::TrajectoryBuilderOptions& trajectory_options,
       LocalSlamResultCallback local_slam_result_callback) = 0;
 

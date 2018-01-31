@@ -24,6 +24,10 @@ class GetLocalToGlobalTransformHandler
     : public framework::RpcHandler<proto::GetLocalToGlobalTransformRequest,
                                    proto::GetLocalToGlobalTransformResponse> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/"
+           "GetLocalToGlobalTransform";
+  }
   void OnRequest(
       const proto::GetLocalToGlobalTransformRequest& request) override {
     auto response = cartographer::common::make_unique<

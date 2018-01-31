@@ -177,7 +177,17 @@ void PoseGraph::AddFixedFramePoseData(
 void PoseGraph::AddLandmarkData(int trajectory_id,
                                 const sensor::LandmarkData& landmark_data)
     EXCLUDES(mutex_) {
-  LOG(FATAL) << "Not yet implemented.";
+  common::MutexLocker locker(&mutex_);
+  for (const auto& observation : landmark_data.landmark_observations) {
+    landmark_nodes_[observation.id].landmark_observations.emplace_back(
+        PoseGraph::LandmarkNode::LandmarkObservation{
+            trajectory_id,
+            landmark_data.time,
+            observation.landmark_to_tracking_transform,
+            observation.translation_weight,
+            observation.rotation_weight,
+        });
+  }
 }
 
 void PoseGraph::ComputeConstraint(const mapping::NodeId& node_id,

@@ -41,7 +41,7 @@ class Server {
   struct Options {
     size_t num_grpc_threads;
     size_t num_event_threads;
-    std::string server_address = "0.0.0.0:50051";
+    std::string server_address;
   };
 
  public:
@@ -55,12 +55,16 @@ class Server {
     void SetNumEventThreads(std::size_t num_event_threads);
     void SetServerAddress(const std::string& server_address);
 
-    template <typename RpcHandlerType, typename ServiceType>
-    void RegisterHandler(const std::string& method_name) {
-      std::stringstream fully_qualified_name;
-      fully_qualified_name << "/" << ServiceType::service_full_name() << "/"
-                           << method_name;
-      rpc_handlers_[ServiceType::service_full_name()].emplace(
+    template <typename RpcHandlerType>
+    void RegisterHandler() {
+      std::string method_full_name =
+          RpcHandlerInterface::Instantiate<RpcHandlerType>()->method_name();
+      std::string service_full_name;
+      std::string method_name;
+      std::tie(service_full_name, method_name) =
+          ParseMethodFullName(method_full_name);
+      CheckHandlerCompatibility<RpcHandlerType>(service_full_name, method_name);
+      rpc_handlers_[service_full_name].emplace(
           method_name,
           RpcHandlerInfo{
               RpcHandlerType::RequestType::default_instance().GetDescriptor(),
@@ -74,16 +78,59 @@ class Server {
               },
               RpcType<typename RpcHandlerType::IncomingType,
                       typename RpcHandlerType::OutgoingType>::value,
-              fully_qualified_name.str()});
+              method_full_name});
     }
 
    private:
     using ServiceInfo = std::map<std::string, RpcHandlerInfo>;
 
+    std::tuple<std::string /* service_full_name */,
+               std::string /* method_name */>
+    ParseMethodFullName(const std::string& method_full_name);
+
+    template <typename RpcHandlerType>
+    void CheckHandlerCompatibility(const std::string& service_full_name,
+                                   const std::string& method_name) {
+      const auto* pool = google::protobuf::DescriptorPool::generated_pool();
+      const auto* service = pool->FindServiceByName(service_full_name);
+      CHECK(service) << "Unknown service " << service_full_name;
+      const auto* method_descriptor = service->FindMethodByName(method_name);
+      CHECK(method_descriptor) << "Unknown method " << method_name
+                               << " in service " << service_full_name;
+      const auto* request_type = method_descriptor->input_type();
+      CHECK_EQ(RpcHandlerType::RequestType::default_instance().GetDescriptor(),
+               request_type);
+      const auto* response_type = method_descriptor->output_type();
+      CHECK_EQ(RpcHandlerType::ResponseType::default_instance().GetDescriptor(),
+               response_type);
+      const auto rpc_type =
+          RpcType<typename RpcHandlerType::IncomingType,
+                  typename RpcHandlerType::OutgoingType>::value;
+      switch (rpc_type) {
+        case ::grpc::internal::RpcMethod::NORMAL_RPC:
+          CHECK(!method_descriptor->client_streaming());
+          CHECK(!method_descriptor->server_streaming());
+          break;
+        case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
+          CHECK(method_descriptor->client_streaming());
+          CHECK(!method_descriptor->server_streaming());
+          break;
+        case ::grpc::internal::RpcMethod::SERVER_STREAMING:
+          CHECK(!method_descriptor->client_streaming());
+          CHECK(method_descriptor->server_streaming());
+          break;
+        case ::grpc::internal::RpcMethod::BIDI_STREAMING:
+          CHECK(method_descriptor->client_streaming());
+          CHECK(method_descriptor->server_streaming());
+          break;
+      }
+    }
+
     Options options_;
     std::map<std::string, ServiceInfo> rpc_handlers_;
   };
   friend class Builder;
+  virtual ~Server() = default;
 
   // Starts a server starts serving the registered services.
   void Start();
@@ -104,13 +151,20 @@ class Server {
     return {execution_context_->lock(), execution_context_.get()};
   }
 
- private:
+  template <typename T>
+  T* GetUnsynchronizedContext() {
+    return dynamic_cast<T*>(execution_context_.get());
+  }
+
+ protected:
   Server(const Options& options);
-  Server(const Server&) = delete;
-  Server& operator=(const Server&) = delete;
   void AddService(
       const std::string& service_name,
       const std::map<std::string, RpcHandlerInfo>& rpc_handler_infos);
+
+ private:
+  Server(const Server&) = delete;
+  Server& operator=(const Server&) = delete;
   void RunCompletionQueue(::grpc::ServerCompletionQueue* completion_queue);
   void RunEventQueue(Rpc::EventQueue* event_queue);
   Rpc::EventQueue* SelectNextEventQueueRoundRobin();

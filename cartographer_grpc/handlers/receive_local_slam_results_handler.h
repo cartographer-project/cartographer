@@ -30,6 +30,9 @@ class ReceiveLocalSlamResultsHandler
           proto::ReceiveLocalSlamResultsRequest,
           framework::Stream<proto::ReceiveLocalSlamResultsResponse>> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/ReceiveLocalSlamResults";
+  }
   void OnRequest(
       const proto::ReceiveLocalSlamResultsRequest& request) override {
     auto writer = GetWriter();

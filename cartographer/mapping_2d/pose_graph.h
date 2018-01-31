@@ -39,6 +39,7 @@
 #include "cartographer/mapping_2d/pose_graph/optimization_problem.h"
 #include "cartographer/mapping_2d/submaps.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
+#include "cartographer/sensor/landmark_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -243,6 +244,10 @@ class PoseGraph : public mapping::PoseGraph {
   // Global submap poses currently used for displaying data.
   mapping::MapById<mapping::SubmapId, pose_graph::SubmapData>
       global_submap_poses_ GUARDED_BY(mutex_);
+
+  // Global landmark poses with all observations.
+  std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
+      landmark_nodes_ GUARDED_BY(mutex_);
 
   // List of all trimmers to consult when optimizations finish.
   std::vector<std::unique_ptr<mapping::PoseGraphTrimmer>> trimmers_

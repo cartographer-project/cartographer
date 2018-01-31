@@ -49,6 +49,18 @@ class PoseGraphInterface {
     enum Tag { INTRA_SUBMAP, INTER_SUBMAP } tag;
   };
 
+  struct LandmarkNode {
+    struct LandmarkObservation {
+      int trajectory_id;
+      common::Time time;
+      transform::Rigid3d landmark_to_tracking_transform;
+      double translation_weight;
+      double rotation_weight;
+    };
+    std::vector<LandmarkObservation> landmark_observations;
+    transform::Rigid3d global_landmark_pose;
+  };
+
   struct SubmapPose {
     int version;
     transform::Rigid3d pose;

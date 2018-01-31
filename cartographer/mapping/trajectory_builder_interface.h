@@ -62,6 +62,30 @@ class TrajectoryBuilderInterface {
                          sensor::RangeData /* in local frame */,
                          std::unique_ptr<const InsertionResult>)>;
 
+  struct SensorId {
+    enum class SensorType {
+      RANGE = 0,
+      IMU,
+      ODOMETRY,
+      FIXED_FRAME_POSE,
+      LANDMARK,
+      LOCAL_SLAM_RESULT
+    };
+
+    SensorType type;
+    std::string id;
+
+    bool operator==(const SensorId& other) const {
+      return std::forward_as_tuple(type, id) ==
+             std::forward_as_tuple(other.type, other.id);
+    }
+
+    bool operator<(const SensorId& other) const {
+      return std::forward_as_tuple(type, id) <
+             std::forward_as_tuple(other.type, other.id);
+    }
+  };
+
   TrajectoryBuilderInterface() {}
   virtual ~TrajectoryBuilderInterface() {}
 

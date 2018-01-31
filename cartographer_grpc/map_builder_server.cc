@@ -32,7 +32,9 @@
 #include "cartographer_grpc/handlers/load_map_handler.h"
 #include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
 #include "cartographer_grpc/handlers/write_map_handler.h"
+#include "cartographer_grpc/handlers/run_final_optimization_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
+#include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
@@ -171,7 +173,7 @@ std::unique_ptr<cartographer::mapping::LocalSlamResultData>
 MapBuilderServer::MapBuilderContext::ProcessLocalSlamResultData(
     const std::string& sensor_id, cartographer::common::Time time,
     const cartographer::mapping::proto::LocalSlamResultData& proto) {
-  CHECK_GE(proto.submaps().size(), 0);
+  CHECK_GE(proto.submaps().size(), 1);
   CHECK(proto.submaps(0).has_submap_2d() || proto.submaps(0).has_submap_3d());
   if (proto.submaps(0).has_submap_2d()) {
     std::vector<std::shared_ptr<const cartographer::mapping_2d::Submap>>
@@ -215,48 +217,23 @@ MapBuilderServer::MapBuilderServer(
         cartographer::common::make_unique<LocalTrajectoryUploader>(
             map_builder_server_options.uplink_server_address());
   }
-  server_builder.RegisterHandler<handlers::AddTrajectoryHandler,
-                                 proto::MapBuilderService>("AddTrajectory");
-  server_builder.RegisterHandler<handlers::AddOdometryDataHandler,
-                                 proto::MapBuilderService>("AddOdometryData");
-  server_builder
-      .RegisterHandler<handlers::AddImuDataHandler, proto::MapBuilderService>(
-          "AddImuData");
-  server_builder.RegisterHandler<handlers::AddRangefinderDataHandler,
-                                 proto::MapBuilderService>(
-      "AddRangefinderData");
-  server_builder.RegisterHandler<handlers::AddFixedFramePoseDataHandler,
-                                 proto::MapBuilderService>(
-      "AddFixedFramePoseData");
-  server_builder.RegisterHandler<handlers::AddLandmarkDataHandler,
-                                 proto::MapBuilderService>("AddLandmarkData");
-  server_builder.RegisterHandler<handlers::AddLocalSlamResultDataHandler,
-                                 proto::MapBuilderService>(
-      "AddLocalSlamResultData");
-  server_builder.RegisterHandler<handlers::FinishTrajectoryHandler,
-                                 proto::MapBuilderService>("FinishTrajectory");
-  server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler,
-                                 proto::MapBuilderService>(
-      "ReceiveLocalSlamResults");
-  server_builder
-      .RegisterHandler<handlers::GetSubmapHandler, proto::MapBuilderService>(
-          "GetSubmap");
-  server_builder.RegisterHandler<handlers::GetTrajectoryNodePosesHandler,
-                                 proto::MapBuilderService>(
-      "GetTrajectoryNodePoses");
-  server_builder.RegisterHandler<handlers::GetAllSubmapPosesHandler,
-                                 proto::MapBuilderService>("GetAllSubmapPoses");
-  server_builder.RegisterHandler<handlers::GetLocalToGlobalTransformHandler,
-                                 proto::MapBuilderService>(
-      "GetLocalToGlobalTransform");
-  server_builder.RegisterHandler<handlers::GetConstraintsHandler,
-                                 proto::MapBuilderService>("GetConstraints");
-  server_builder
-      .RegisterHandler<handlers::LoadMapHandler, proto::MapBuilderService>(
-          "LoadMap");
-  server_builder
-      .RegisterHandler<handlers::WriteMapHandler, proto::MapBuilderService>(
-          "WriteMap");
+  server_builder.RegisterHandler<handlers::AddTrajectoryHandler>();
+  server_builder.RegisterHandler<handlers::AddOdometryDataHandler>();
+  server_builder.RegisterHandler<handlers::AddImuDataHandler>();
+  server_builder.RegisterHandler<handlers::AddRangefinderDataHandler>();
+  server_builder.RegisterHandler<handlers::AddFixedFramePoseDataHandler>();
+  server_builder.RegisterHandler<handlers::AddLandmarkDataHandler>();
+  server_builder.RegisterHandler<handlers::AddLocalSlamResultDataHandler>();
+  server_builder.RegisterHandler<handlers::FinishTrajectoryHandler>();
+  server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler>();
+  server_builder.RegisterHandler<handlers::GetSubmapHandler>();
+  server_builder.RegisterHandler<handlers::GetTrajectoryNodePosesHandler>();
+  server_builder.RegisterHandler<handlers::GetAllSubmapPosesHandler>();
+  server_builder.RegisterHandler<handlers::GetLocalToGlobalTransformHandler>();
+  server_builder.RegisterHandler<handlers::GetConstraintsHandler>();
+  server_builder.RegisterHandler<handlers::LoadMapHandler>();
+  server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler>();
+  server_builder.RegisterHandler<handlers::WriteMapHandler>();
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
       cartographer::common::make_unique<MapBuilderContext>(this));
@@ -318,6 +295,29 @@ void MapBuilderServer::OnLocalSlamResult(
         insertion_result) {
   auto shared_range_data =
       std::make_shared<cartographer::sensor::RangeData>(std::move(range_data));
+
+  // If there is an uplink server and a submap insertion happened, enqueue this
+  // local SLAM result for uploading.
+  if (insertion_result &&
+      grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
+          ->local_trajectory_uploader()) {
+    auto data_request = cartographer::common::make_unique<
+        proto::AddLocalSlamResultDataRequest>();
+    auto sensor_id = grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
+                         ->local_trajectory_uploader()
+                         ->GetLocalSlamResultSensorId(trajectory_id);
+    sensor::CreateAddLocalSlamResultDataRequest(
+        sensor_id.id, trajectory_id, time, starting_submap_index_,
+        *insertion_result, data_request.get());
+    // TODO(cschuet): Make this more robust.
+    if (insertion_result->insertion_submaps.front()->finished()) {
+      ++starting_submap_index_;
+    }
+    grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
+        ->local_trajectory_uploader()
+        ->EnqueueDataRequest(std::move(data_request));
+  }
+
   cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
   for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
     auto copy_of_insertion_result =
