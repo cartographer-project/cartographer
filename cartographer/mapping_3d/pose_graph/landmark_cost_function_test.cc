@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/pose_graph/landmark_cost_function.h"
+#include "cartographer/mapping_3d/pose_graph/landmark_cost_function.h"
 #include "cartographer/transform/rigid_transform.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping {
+namespace mapping_3d {
 namespace pose_graph {
 namespace {
 
@@ -32,6 +32,11 @@ using LandmarkObservation =
     mapping::PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
 TEST(LandmarkCostFunctionTest, SmokeTest) {
+  NodeData prev_node;
+  prev_node.time = common::FromUniversal(0);
+  NodeData next_node;
+  next_node.time = common::FromUniversal(10);
+
   auto* cost_function = LandmarkCostFunction::CreateAutoDiffCostFunction(
       LandmarkObservation{
           0 /* trajectory ID */,
@@ -40,7 +45,7 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
           1. /* translation_weight */,
           2. /* rotation_weight */,
       },
-      common::FromUniversal(0), common::FromUniversal(10));
+      prev_node, next_node);
 
   std::array<double, 4> prev_node_rotation{{1., 0., 0., 0.}};
   std::array<double, 3> prev_node_translation{{0., 0., 0.}};
@@ -62,5 +67,5 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
 
 }  // namespace
 }  // namespace pose_graph
-}  // namespace mapping
+}  // namespace mapping_3d
 }  // namespace cartographer

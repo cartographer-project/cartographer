@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
-#define CARTOGRAPHER_MAPPING_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
+#define CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/mapping/pose_graph/cost_helpers.h"
 #include "cartographer/mapping/pose_graph_interface.h"
+#include "cartographer/mapping_3d/pose_graph/optimization_problem.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
 #include "ceres/jet.h"
 
 namespace cartographer {
-namespace mapping {
+namespace mapping_3d {
 namespace pose_graph {
 
 // Cost function measuring the weighted error between the observed pose given by
@@ -38,8 +39,8 @@ class LandmarkCostFunction {
       mapping::PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
   static ceres::CostFunction* CreateAutoDiffCostFunction(
-      const LandmarkObservation& observation, common::Time prev_node_time,
-      common::Time next_node_time) {
+      const LandmarkObservation& observation, const NodeData& prev_node,
+      const NodeData& next_node) {
     return new ceres::AutoDiffCostFunction<
         LandmarkCostFunction, 6 /* residuals */,
         4 /* previous node rotation variables */,
@@ -48,7 +49,7 @@ class LandmarkCostFunction {
         3 /* next node translation variables */,
         4 /* landmark rotation variables */,
         3 /* landmark translation variables */>(
-        new LandmarkCostFunction(observation, prev_node_time, next_node_time));
+        new LandmarkCostFunction(observation, prev_node, next_node));
   }
 
   template <typename T>
@@ -58,6 +59,10 @@ class LandmarkCostFunction {
                   const T* const next_node_translation,
                   const T* const landmark_rotation,
                   const T* const landmark_translation, T* const e) const {
+    using mapping::pose_graph::ComputeUnscaledError;
+    using mapping::pose_graph::ScaleError;
+    using mapping::pose_graph::SlerpQuaternions;
+
     const std::array<T, 3> interpolated_pose_translation{
         {prev_node_translation[0] +
              interpolation_parameter_ *
@@ -83,14 +88,14 @@ class LandmarkCostFunction {
 
  private:
   LandmarkCostFunction(const LandmarkObservation& observation,
-                       common::Time prev_node_time, common::Time next_node_time)
+                       const NodeData& prev_node, const NodeData& next_node)
       : landmark_to_tracking_transform_(
             observation.landmark_to_tracking_transform),
         translation_weight_(observation.translation_weight),
         rotation_weight_(observation.rotation_weight),
         interpolation_parameter_(
-            common::ToSeconds(observation.time - prev_node_time) /
-            common::ToSeconds(next_node_time - prev_node_time)) {}
+            common::ToSeconds(observation.time - prev_node.time) /
+            common::ToSeconds(next_node.time - prev_node.time)) {}
 
   const transform::Rigid3d landmark_to_tracking_transform_;
   const double translation_weight_;
@@ -99,7 +104,7 @@ class LandmarkCostFunction {
 };
 
 }  // namespace pose_graph
-}  // namespace mapping
+}  // namespace mapping_3d
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
