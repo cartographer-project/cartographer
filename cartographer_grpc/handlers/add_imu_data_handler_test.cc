@@ -60,22 +60,22 @@ using ProtoPredicateType =
 
 class AddImuDataHandlerTest : public Test {
  public:
-   void SetUp() override {
-     test_server_ = cartographer::common::make_unique<
-         framework::testing::RpcHandlerTestServer<AddImuDataHandler>>(
-         cartographer::common::make_unique<testing::MockMapBuilderContext>());
-     mock_map_builder_context_ =
-         test_server_
-             ->GetUnsynchronizedContext<testing::MockMapBuilderContext>();
-     mock_local_trajectory_uploader_ = cartographer::common::make_unique<
-         testing::MockLocalTrajectoryUploader>();
-     EXPECT_TRUE(
-         google::protobuf::TextFormat::ParseFromString(kMessage, &request_));
-   }
+  void SetUp() override {
+    test_server_ = cartographer::common::make_unique<
+        framework::testing::RpcHandlerTestServer<AddImuDataHandler>>(
+        cartographer::common::make_unique<testing::MockMapBuilderContext>());
+    mock_map_builder_context_ =
+        test_server_
+            ->GetUnsynchronizedContext<testing::MockMapBuilderContext>();
+    mock_local_trajectory_uploader_ = cartographer::common::make_unique<
+        testing::MockLocalTrajectoryUploader>();
+    EXPECT_TRUE(
+        google::protobuf::TextFormat::ParseFromString(kMessage, &request_));
+  }
 
-   void SetNoLocalTrajectoryUploader() {
-     EXPECT_CALL(*mock_map_builder_context_, local_trajectory_uploader())
-         .WillOnce(Return(nullptr));
+  void SetNoLocalTrajectoryUploader() {
+    EXPECT_CALL(*mock_map_builder_context_, local_trajectory_uploader())
+        .WillOnce(Return(nullptr));
   }
 
   void SetMockLocalTrajectoryUploader() {
@@ -84,12 +84,12 @@ class AddImuDataHandlerTest : public Test {
   }
 
  protected:
-   std::unique_ptr<framework::testing::RpcHandlerTestServer<AddImuDataHandler>>
-       test_server_;
-   testing::MockMapBuilderContext *mock_map_builder_context_;
-   std::unique_ptr<testing::MockLocalTrajectoryUploader>
-       mock_local_trajectory_uploader_;
-   proto::AddImuDataRequest request_;
+  std::unique_ptr<framework::testing::RpcHandlerTestServer<AddImuDataHandler>>
+      test_server_;
+  testing::MockMapBuilderContext *mock_map_builder_context_;
+  std::unique_ptr<testing::MockLocalTrajectoryUploader>
+      mock_local_trajectory_uploader_;
+  proto::AddImuDataRequest request_;
 };
 
 DataPredicateType DataPredicate(const proto::AddImuDataRequest &proto) {
