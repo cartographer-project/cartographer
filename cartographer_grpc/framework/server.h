@@ -94,7 +94,7 @@ class Server {
 
     template <typename RpcHandlerType>
     void CheckHandlerCompatibility(const std::string& service_full_name,
-                                  const std::string& method_name) {
+                                   const std::string& method_name) {
       const auto* pool = google::protobuf::DescriptorPool::generated_pool();
       const auto* service = pool->FindServiceByName(service_full_name);
       CHECK(service) << "Unknown service " << service_full_name;
