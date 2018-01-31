@@ -62,7 +62,6 @@ class Server {
       std::string method_name;
       std::tie(service_full_name, method_name) =
           ParseMethodFullName(method_full_name);
-
       rpc_handlers_[service_full_name].emplace(
           method_name,
           RpcHandlerInfo{
@@ -88,8 +87,9 @@ class Server {
       auto handler = cartographer::common::make_unique<const RpcHandlerType>();
       return handler->method_name();
     }
-    std::tuple<std::string, std::string> ParseMethodFullName(
-        const std::string& method_full_name);
+    std::tuple<std::string /* service_full_name */,
+               std::string /* method_name */>
+    ParseMethodFullName(const std::string& method_full_name);
 
     Options options_;
     std::map<std::string, ServiceInfo> rpc_handlers_;
