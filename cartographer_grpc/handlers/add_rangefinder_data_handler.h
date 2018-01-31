@@ -39,10 +39,11 @@ class AddRangefinderDataHandler
     // thread-safe. Therefore it suffices to get an unsynchronized reference to
     // the 'MapBuilderContext'.
     GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
-        ->EnqueueSensorData(
-            request.sensor_metadata().trajectory_id(),
-            request.sensor_metadata().sensor_id(),
-            cartographer::sensor::FromProto(request.timed_point_cloud_data()));
+        ->EnqueueSensorData(request.sensor_metadata().trajectory_id(),
+                            cartographer::sensor::MakeDispatchable(
+                                request.sensor_metadata().sensor_id(),
+                                cartographer::sensor::FromProto(
+                                    request.timed_point_cloud_data())));
   }
 
   void OnReadsDone() override {

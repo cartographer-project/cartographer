@@ -41,8 +41,9 @@ class AddLandmarkDataHandler
     GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
         ->EnqueueSensorData(
             request.sensor_metadata().trajectory_id(),
-            request.sensor_metadata().sensor_id(),
-            cartographer::sensor::FromProto(request.landmark_data()));
+            cartographer::sensor::MakeDispatchable(
+                request.sensor_metadata().sensor_id(),
+                cartographer::sensor::FromProto(request.landmark_data())));
 
     // The 'BlockingQueue' in 'LocalTrajectoryUploader' is thread-safe.
     // Therefore it suffices to get an unsynchronized reference to the

@@ -53,7 +53,8 @@ MapBuilderServer::MapBuilderContext::map_builder() {
   return *map_builder_server_->map_builder_;
 }
 
-cartographer::common::BlockingQueue<std::unique_ptr<MapBuilderServer::Data>>&
+cartographer::common::BlockingQueue<
+    std::unique_ptr<MapBuilderContextInterface::Data>>&
 MapBuilderServer::MapBuilderContext::sensor_data_queue() {
   return map_builder_server_->incoming_data_queue_;
 }
@@ -82,7 +83,7 @@ void MapBuilderServer::MapBuilderContext::AddSensorDataToTrajectory(
           sensor_data.trajectory_id));
 }
 
-MapBuilderServer::SubscriptionId
+MapBuilderContextInterface::SubscriptionId
 MapBuilderServer::MapBuilderContext::SubscribeLocalSlamResults(
     int trajectory_id, LocalSlamSubscriptionCallback callback) {
   return map_builder_server_->SubscribeLocalSlamResults(trajectory_id,
@@ -267,7 +268,7 @@ void MapBuilderServer::Shutdown() {
 void MapBuilderServer::ProcessSensorDataQueue() {
   LOG(INFO) << "Starting SLAM thread.";
   while (!shutting_down_) {
-    std::unique_ptr<Data> sensor_data =
+    std::unique_ptr<MapBuilderContextInterface::Data> sensor_data =
         incoming_data_queue_.PopWithTimeout(kPopTimeout);
     if (sensor_data) {
       grpc_server_->GetContext<MapBuilderContext>()->AddSensorDataToTrajectory(
@@ -324,23 +325,29 @@ void MapBuilderServer::OnLocalSlamResult(
                   const cartographer::mapping::TrajectoryBuilderInterface::
                       InsertionResult>(*insertion_result)
             : nullptr;
-    LocalSlamSubscriptionCallback callback = entry.second;
-    callback(cartographer::common::make_unique<LocalSlamResult>(
-        LocalSlamResult{trajectory_id, time, local_pose, shared_range_data,
-                        std::move(copy_of_insertion_result)}));
+    MapBuilderContextInterface::LocalSlamSubscriptionCallback callback =
+        entry.second;
+    callback(cartographer::common::make_unique<
+             MapBuilderContextInterface::LocalSlamResult>(
+        MapBuilderContextInterface::LocalSlamResult{
+            trajectory_id, time, local_pose, shared_range_data,
+            std::move(copy_of_insertion_result)}));
   }
 }
 
-MapBuilderServer::SubscriptionId MapBuilderServer::SubscribeLocalSlamResults(
-    int trajectory_id, LocalSlamSubscriptionCallback callback) {
+MapBuilderContextInterface::SubscriptionId
+MapBuilderServer::SubscribeLocalSlamResults(
+    int trajectory_id,
+    MapBuilderContextInterface::LocalSlamSubscriptionCallback callback) {
   cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
   local_slam_subscriptions_[trajectory_id].emplace(current_subscription_index_,
                                                    callback);
-  return SubscriptionId{trajectory_id, current_subscription_index_++};
+  return MapBuilderContextInterface::SubscriptionId{
+      trajectory_id, current_subscription_index_++};
 }
 
 void MapBuilderServer::UnsubscribeLocalSlamResults(
-    const SubscriptionId& subscription_id) {
+    const MapBuilderContextInterface::SubscriptionId& subscription_id) {
   cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
   CHECK_EQ(local_slam_subscriptions_[subscription_id.trajectory_id].erase(
                subscription_id.subscription_index),
@@ -350,7 +357,8 @@ void MapBuilderServer::UnsubscribeLocalSlamResults(
 void MapBuilderServer::NotifyFinishTrajectory(int trajectory_id) {
   cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
   for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
-    LocalSlamSubscriptionCallback callback = entry.second;
+    MapBuilderContextInterface::LocalSlamSubscriptionCallback callback =
+        entry.second;
     // 'nullptr' signals subscribers that the trajectory finished.
     callback(nullptr);
   }
