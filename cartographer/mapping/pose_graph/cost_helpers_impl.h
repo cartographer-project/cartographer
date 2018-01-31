@@ -39,6 +39,16 @@ static std::array<T, 3> ComputeUnscaledError2d(
 }
 
 template <typename T>
+std::array<T, 3> ScaleError(std::array<T, 3> error, T translation_weight,
+                            T rotation_weight) {
+  std::array<T, 3> scaled_error(std::move(error));
+  scaled_error[0] *= translation_weight;
+  scaled_error[1] *= translation_weight;
+  scaled_error[2] *= rotation_weight;
+  return scaled_error;
+}
+
+template <typename T>
 static std::array<T, 6> ComputeUnscaledError3d(
     const transform::Rigid3d& relative_pose, const T* const start_rotation,
     const T* const start_translation, const T* const end_rotation,
@@ -67,6 +77,43 @@ static std::array<T, 6> ComputeUnscaledError3d(
            T(relative_pose.translation().z()) - h_translation[2],
            angle_axis_difference[0], angle_axis_difference[1],
            angle_axis_difference[2]}};
+}
+
+template <typename T>
+std::array<T, 6> ScaleError(std::array<T, 6> error, T translation_weight,
+                            T rotation_weight) {
+  std::array<T, 6> scaled_error(std::move(error));
+  scaled_error[0] *= translation_weight;
+  scaled_error[1] *= translation_weight;
+  scaled_error[2] *= translation_weight;
+  scaled_error[3] *= rotation_weight;
+  scaled_error[4] *= rotation_weight;
+  scaled_error[5] *= rotation_weight;
+  return scaled_error;
+}
+
+template <typename T>
+std::array<T, 4> SlerpQuaternions(const T* const start, const T* const end,
+                                  T factor) {
+  // Angle 'theta' is the half-angle "between" quaternions. It can be computed
+  // as the arccosine of their dot product.
+  const T cos_theta = start[0] * end[0] + start[1] * end[1] +
+                      start[2] * end[2] + start[3] * end[3];
+  // If numerical error brings 'cos_theta' outside of [-1., 1.] interval, then
+  // the quaternions are likely to be collinear.
+  if (cos_theta >= T(1.0) || cos_theta <= T(-1.0)) {
+    return {{end[0], end[1], end[2], end[3]}};
+  }
+  const T theta = acos(abs(cos_theta));
+  const T sin_theta = sin(theta);
+  const T prev_scale = sin((T(1.0) - factor) * theta) / sin_theta;
+  const T next_scale =
+      sin(factor * theta) * (cos_theta < T(0) ? T(-1.0) : T(1.0)) / sin_theta;
+
+  return {{prev_scale * start[0] + next_scale * end[0],
+           prev_scale * start[1] + next_scale * end[1],
+           prev_scale * start[2] + next_scale * end[2],
+           prev_scale * start[3] + next_scale * end[3]}};
 }
 
 }  // namespace pose_graph
