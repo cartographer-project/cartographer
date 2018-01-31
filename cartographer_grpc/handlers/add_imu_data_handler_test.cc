@@ -23,8 +23,12 @@
 #include "google/protobuf/util/message_differencer.h"
 #include "gtest/gtest.h"
 
-using testing::_;
+using ::testing::_;
+using ::testing::Eq;
 using ::testing::Pointee;
+using ::testing::Return;
+using ::testing::Test;
+using ::testing::Truly;
 
 namespace cartographer_grpc {
 namespace handlers {
@@ -35,7 +39,7 @@ using DataPredicateType =
 using ProtoPredicateType =
     std::function<bool(const google::protobuf::Message &)>;
 
-class AddImuDataHandlerTest : public ::testing::Test {
+class AddImuDataHandlerTest : public Test {
 public:
   AddImuDataHandlerTest()
       : test_server_(cartographer::common::make_unique<
@@ -49,13 +53,12 @@ public:
 
   void SetNoLocalTrajectoryUploader() {
     EXPECT_CALL(*mock_map_builder_context_, local_trajectory_uploader())
-        .WillOnce(::testing::Return(nullptr));
+        .WillOnce(Return(nullptr));
   }
 
   void SetMockLocalTrajectoryUploader() {
     EXPECT_CALL(*mock_map_builder_context_, local_trajectory_uploader())
-        .WillRepeatedly(
-            ::testing::Return(mock_local_trajectory_uploader_.get()));
+        .WillRepeatedly(Return(mock_local_trajectory_uploader_.get()));
   }
 
 protected:
@@ -108,11 +111,9 @@ TEST_F(AddImuDataHandlerTest, NoLocalSlamUploader) {
 		  )PROTO",
                                                             &request));
 
-  EXPECT_CALL(
-      *mock_map_builder_context_,
-      DoEnqueueSensorData(
-          ::testing::Eq(request.sensor_metadata().trajectory_id()),
-          ::testing::Pointee(::testing::Truly(DataPredicate(request)))));
+  EXPECT_CALL(*mock_map_builder_context_,
+              DoEnqueueSensorData(Eq(request.sensor_metadata().trajectory_id()),
+                                  Pointee(Truly(DataPredicate(request)))));
   test_server_.SendWrite(request);
   test_server_.SendWritesDone();
   test_server_.SendFinish();
@@ -142,14 +143,11 @@ TEST_F(AddImuDataHandlerTest, WithMockLocalSlamUploader) {
 		  )PROTO",
                                                             &request));
 
-  EXPECT_CALL(
-      *mock_map_builder_context_,
-      DoEnqueueSensorData(
-          ::testing::Eq(request.sensor_metadata().trajectory_id()),
-          ::testing::Pointee(::testing::Truly(DataPredicate(request)))));
+  EXPECT_CALL(*mock_map_builder_context_,
+              DoEnqueueSensorData(Eq(request.sensor_metadata().trajectory_id()),
+                                  Pointee(Truly(DataPredicate(request)))));
   EXPECT_CALL(*mock_local_trajectory_uploader_,
-              DoEnqueueDataRequest(::testing::Pointee(
-                  ::testing::Truly(ProtoPredicate(&request)))));
+              DoEnqueueDataRequest(Pointee(Truly(ProtoPredicate(&request)))));
   test_server_.SendWrite(request);
   test_server_.SendWritesDone();
   test_server_.SendFinish();
