@@ -92,6 +92,8 @@ std::array<T, 6> ScaleError(std::array<T, 6> error, T translation_weight,
   return scaled_error;
 }
 
+//  Eigen implementation of slerp is not compatible with Ceres on all supported
+//  platforms. Our own implementation is used instead.
 template <typename T>
 std::array<T, 4> SlerpQuaternions(const T* const start, const T* const end,
                                   T factor) {
@@ -99,17 +101,18 @@ std::array<T, 4> SlerpQuaternions(const T* const start, const T* const end,
   // as the arccosine of their dot product.
   const T cos_theta = start[0] * end[0] + start[1] * end[1] +
                       start[2] * end[2] + start[3] * end[3];
-  // If numerical error brings 'cos_theta' outside of [-1., 1.] interval, then
-  // the quaternions are likely to be collinear.
-  if (cos_theta >= T(1.0) || cos_theta <= T(-1.0)) {
-    return {{end[0], end[1], end[2], end[3]}};
+  const T abs_cos_theta = abs(cos_theta);
+  // If numerical error brings 'cos_theta' outside [-1 + epsilon, 1 - epsilon]
+  // interval, then the quaternions are likely to be collinear.
+  T prev_scale = T(1.) - factor;
+  T next_scale = factor;
+  if (abs_cos_theta < T(1. - 1e-5)) {
+    const T theta = acos(abs_cos_theta);
+    const T sin_theta = sin(theta);
+    prev_scale = sin(prev_scale * theta) / sin_theta;
+    next_scale = sin(next_scale * theta) / sin_theta;
   }
-  const T theta = acos(abs(cos_theta));
-  const T sin_theta = sin(theta);
-  const T prev_scale = sin((T(1.0) - factor) * theta) / sin_theta;
-  const T next_scale =
-      sin(factor * theta) * (cos_theta < T(0) ? T(-1.0) : T(1.0)) / sin_theta;
-
+  if (cos_theta < T(0.)) next_scale = -next_scale;
   return {{prev_scale * start[0] + next_scale * end[0],
            prev_scale * start[1] + next_scale * end[1],
            prev_scale * start[2] + next_scale * end[2],
