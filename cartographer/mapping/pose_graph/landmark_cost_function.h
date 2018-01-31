@@ -72,10 +72,10 @@ class LandmarkCostFunction {
         prev_node_rotation, next_node_rotation, T(interpolation_parameter_));
 
     const std::array<T, 6> error = ScaleError(
-        ComputeUnscaledError3d(landmark_to_tracking_transform_,
-                               interpolated_pose_rotation.data(),
-                               interpolated_pose_translation.data(),
-                               landmark_rotation, landmark_translation),
+        ComputeUnscaledError(landmark_to_tracking_transform_,
+                             interpolated_pose_rotation.data(),
+                             interpolated_pose_translation.data(),
+                             landmark_rotation, landmark_translation),
         T(translation_weight_), T(rotation_weight_));
     std::copy(std::begin(error), std::end(error), e);
     return true;

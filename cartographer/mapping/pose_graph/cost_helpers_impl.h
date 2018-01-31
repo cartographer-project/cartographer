@@ -22,7 +22,7 @@ namespace mapping {
 namespace pose_graph {
 
 template <typename T>
-static std::array<T, 3> ComputeUnscaledError2d(
+static std::array<T, 3> ComputeUnscaledError(
     const transform::Rigid2d& relative_pose, const T* const start,
     const T* const end) {
   const T cos_theta_i = cos(start[2]);
@@ -49,7 +49,7 @@ std::array<T, 3> ScaleError(std::array<T, 3> error, T translation_weight,
 }
 
 template <typename T>
-static std::array<T, 6> ComputeUnscaledError3d(
+static std::array<T, 6> ComputeUnscaledError(
     const transform::Rigid3d& relative_pose, const T* const start_rotation,
     const T* const start_translation, const T* const end_rotation,
     const T* const end_translation) {

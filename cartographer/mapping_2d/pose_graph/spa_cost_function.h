@@ -47,11 +47,11 @@ class SpaCostFunction {
 
   template <typename T>
   bool operator()(const T* const c_i, const T* const c_j, T* e) const {
-    using mapping::pose_graph::ComputeUnscaledError2d;
+    using mapping::pose_graph::ComputeUnscaledError;
     using mapping::pose_graph::ScaleError;
 
     const std::array<T, 3> error = ScaleError(
-        ComputeUnscaledError2d(transform::Project2D(pose_.zbar_ij), c_i, c_j),
+        ComputeUnscaledError(transform::Project2D(pose_.zbar_ij), c_i, c_j),
         T(pose_.translation_weight), T(pose_.rotation_weight));
     std::copy(std::begin(error), std::end(error), e);
     return true;
