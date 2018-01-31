@@ -30,6 +30,9 @@ class AddTrajectoryHandler
     : public framework::RpcHandler<proto::AddTrajectoryRequest,
                                    proto::AddTrajectoryResponse> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/AddTrajectory";
+  }
   void OnRequest(const proto::AddTrajectoryRequest& request) override {
     auto local_slam_result_callback =
         GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()

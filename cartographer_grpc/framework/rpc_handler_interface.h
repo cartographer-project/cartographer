@@ -28,6 +28,9 @@ class Rpc;
 class RpcHandlerInterface {
  public:
   virtual ~RpcHandlerInterface() = default;
+  // Returns the fully qualified name of the gRPC method this handler is
+  // implementing.
+  virtual std::string method_name() const = 0;
   virtual void SetExecutionContext(ExecutionContext* execution_context) = 0;
   virtual void SetRpc(Rpc* rpc) = 0;
   virtual void OnRequestInternal(

@@ -31,6 +31,9 @@ class AddLandmarkDataHandler
           framework::Stream<proto::AddLandmarkDataRequest>,
           google::protobuf::Empty> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/AddLandmarkData";
+  }
   void OnRequest(const proto::AddLandmarkDataRequest &request) override {
     // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
     // thread-safe. Therefore it suffices to get an unsynchronized reference to
