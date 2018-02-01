@@ -94,12 +94,12 @@ DataPredicateType BuildDataPredicateEquals<proto::AddRangefinderDataRequest>(
   };
 }
 
-ProtoPredicateType
-BuildProtoPredicateEquals(const google::protobuf::Message *proto) {
+ProtoPredicateType BuildProtoPredicateEquals(
+    const google::protobuf::Message *proto) {
   return [proto](const google::protobuf::Message &message) {
     return google::protobuf::util::MessageDifferencer::Equals(*proto, message);
   };
 }
 
-} // namespace testing
-} // namespace cartographer_grpc
+}  // namespace testing
+}  // namespace cartographer_grpc

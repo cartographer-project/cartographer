@@ -48,10 +48,10 @@ template <>
 DataPredicateType BuildDataPredicateEquals<proto::AddRangefinderDataRequest>(
     const proto::AddRangefinderDataRequest &proto);
 
-ProtoPredicateType
-BuildProtoPredicateEquals(const google::protobuf::Message *proto);
+ProtoPredicateType BuildProtoPredicateEquals(
+    const google::protobuf::Message *proto);
 
-} // namespace testing
-} // namespace cartographer_grpc
+}  // namespace testing
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_TESTING_TEST_HELPERS_H
+#endif  // CARTOGRAPHER_GRPC_TESTING_TEST_HELPERS_H
