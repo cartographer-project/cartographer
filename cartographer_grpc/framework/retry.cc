@@ -111,5 +111,5 @@ bool RetryWithStrategy(std::function<bool()> op, std::function<void()> reset,
   return false;
 }
 
-} // namespace framework
-} // namespace cartographer_grpc
+}  // namespace framework
+}  // namespace cartographer_grpc

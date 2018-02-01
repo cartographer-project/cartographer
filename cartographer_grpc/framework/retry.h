@@ -46,7 +46,7 @@ bool RetryWithStrategy(std::function<bool()> op, RetryStrategy retry_strategy);
 bool RetryWithStrategy(std::function<bool()> op, std::function<void()> reset,
                        RetryStrategy retry_strategy);
 
-} // namespace framework
-} // namespace cartographer_grpc
+}  // namespace framework
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_FRAMEWORK_RETRY_H
+#endif  // CARTOGRAPHER_GRPC_FRAMEWORK_RETRY_H
