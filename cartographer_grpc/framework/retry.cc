@@ -35,10 +35,7 @@ RetryStrategy CreateRetryStrategy(RetryIndicator retry_indicator,
 
 RetryIndicator CreateLimitedRetryIndicator(int max_attempts) {
   return [max_attempts](int failed_attempts) {
-    if (failed_attempts >= max_attempts) {
-      return false;
-    }
-    return true;
+    return failed_attempts < max_attempts;
   };
 }
 
@@ -61,7 +58,8 @@ RetryStrategy CreateLimitedBackoffStrategy(Duration min_delay,
       CreateBackoffDelayCalculator(min_delay, backoff_factor));
 }
 
-bool RetryWithStrategy(std::function<bool()> op, RetryStrategy retry_strategy) {
+bool RetryWithStrategy(RetryStrategy retry_strategy,
+		std::function<bool()> op, std::function<void()> reset) {
   optional<Duration> delay;
   int failed_attemps = 0;
   for (;;) {
@@ -81,32 +79,9 @@ bool RetryWithStrategy(std::function<bool()> op, RetryStrategy retry_strategy) {
                      .count()
               << " milliseconds.";
     std::this_thread::sleep_for(delay.value());
-  }
-  return false;
-}
-
-bool RetryWithStrategy(std::function<bool()> op, std::function<void()> reset,
-                       RetryStrategy retry_strategy) {
-  optional<Duration> delay;
-  int failed_attemps = 0;
-  for (;;) {
-    if (op()) {
-      return true;
+    if (reset) {
+      reset();
     }
-    if (!retry_strategy) {
-      return false;
-    }
-    delay = retry_strategy(++failed_attemps);
-    if (!delay.has_value()) {
-      break;
-    }
-    LOG(INFO) << "Retrying after "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(
-                     delay.value())
-                     .count()
-              << " milliseconds.";
-    std::this_thread::sleep_for(delay.value());
-    reset();
   }
   return false;
 }

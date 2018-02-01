@@ -72,8 +72,9 @@ class Client {
 
    bool Write(const typename RpcHandlerType::RequestType &request) {
      return RetryWithStrategy(
+    	 retry_strategy_,
          std::bind(&Client<RpcHandlerType>::WriteImpl, this, request),
-         std::bind(&Client<RpcHandlerType>::Reset, this), retry_strategy_);
+         std::bind(&Client<RpcHandlerType>::Reset, this));
    }
 
    bool WritesDone() {
