@@ -52,6 +52,10 @@ LocalTrajectoryUploader::~LocalTrajectoryUploader() {
     CHECK(add_local_slam_result_client_->WritesDone());
     CHECK(add_local_slam_result_client_->Finish().ok());
   }
+  if (add_landmark_client_) {
+    CHECK(add_landmark_client_->WritesDone());
+    CHECK(add_landmark_client_->Finish().ok());
+  }
 }
 
 void LocalTrajectoryUploader::Start() {
@@ -88,6 +92,10 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
                      dynamic_cast<proto::AddLocalSlamResultDataRequest *>(
                          data_message.get())) {
         ProcessLocalSlamResultDataMessage(local_slam_result_data);
+      } else if (auto *landmark_data =
+                     dynamic_cast<proto::AddLandmarkDataRequest *>(
+                         data_message.get())) {
+        ProcessLandmarkDataMessage(landmark_data);
       } else {
         LOG(FATAL) << "Unknown message type: " << data_message->GetTypeName();
       }
@@ -131,6 +139,16 @@ void LocalTrajectoryUploader::ProcessOdometryDataMessage(
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   CHECK(add_odometry_client_->Write(*data_request));
+}
+
+void LocalTrajectoryUploader::ProcessLandmarkDataMessage(
+    proto::AddLandmarkDataRequest *data_request) {
+  if (!add_landmark_client_) {
+    add_landmark_client_ = cartographer::common::make_unique<
+        framework::Client<handlers::AddLandmarkDataHandler>>(client_channel_);
+  }
+  TranslateTrajectoryId(data_request->mutable_sensor_metadata());
+  CHECK(add_landmark_client_->Write(*data_request));
 }
 
 void LocalTrajectoryUploader::ProcessLocalSlamResultDataMessage(

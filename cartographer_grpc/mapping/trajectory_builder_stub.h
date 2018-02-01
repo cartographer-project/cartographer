@@ -63,7 +63,7 @@ class TrajectoryBuilderStub
           local_slam_result_data) override;
 
  private:
-  static void RunLocalSlamResultReader(
+  static void RunLocalSlamResultsReader(
       framework::Client<handlers::ReceiveLocalSlamResultsHandler>*
           client_reader,
       LocalSlamResultCallback local_slam_result_callback);

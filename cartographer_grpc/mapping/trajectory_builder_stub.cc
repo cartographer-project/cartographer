@@ -40,8 +40,8 @@ TrajectoryBuilderStub::TrajectoryBuilderStub(
         cartographer::common::make_unique<std::thread>(
             [receive_local_slam_results_client_ptr,
              local_slam_result_callback]() {
-              RunLocalSlamResultReader(receive_local_slam_results_client_ptr,
-                                       local_slam_result_callback);
+              RunLocalSlamResultsReader(receive_local_slam_results_client_ptr,
+                                        local_slam_result_callback);
             });
   }
 }
@@ -150,7 +150,7 @@ void TrajectoryBuilderStub::AddLocalSlamResultData(
   LOG(FATAL) << "Not implemented";
 }
 
-void TrajectoryBuilderStub::RunLocalSlamResultReader(
+void TrajectoryBuilderStub::RunLocalSlamResultsReader(
     framework::Client<handlers::ReceiveLocalSlamResultsHandler>* client,
     LocalSlamResultCallback local_slam_result_callback) {
   proto::ReceiveLocalSlamResultsResponse response;

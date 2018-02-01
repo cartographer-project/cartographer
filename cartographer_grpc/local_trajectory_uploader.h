@@ -29,6 +29,7 @@
 #include "cartographer_grpc/framework/client.h"
 #include "cartographer_grpc/handlers/add_fixed_frame_pose_data_handler.h"
 #include "cartographer_grpc/handlers/add_imu_data_handler.h"
+#include "cartographer_grpc/handlers/add_landmark_data_handler.h"
 #include "cartographer_grpc/handlers/add_local_slam_result_data_handler.h"
 #include "cartographer_grpc/handlers/add_odometry_data_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
@@ -89,6 +90,7 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   void ProcessLocalSlamResultDataMessage(
       proto::AddLocalSlamResultDataRequest* data_request);
   void ProcessOdometryDataMessage(proto::AddOdometryDataRequest* data_request);
+  void ProcessLandmarkDataMessage(proto::AddLandmarkDataRequest* data_request);
 
   std::shared_ptr<grpc::Channel> client_channel_;
   std::map<int, int> local_to_cloud_trajectory_id_map_;
@@ -105,6 +107,8 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
       add_local_slam_result_client_;
   std::unique_ptr<framework::Client<handlers::AddOdometryDataHandler>>
       add_odometry_client_;
+  std::unique_ptr<framework::Client<handlers::AddLandmarkDataHandler>>
+      add_landmark_client_;
 };
 
 }  // namespace cartographer_grpc
