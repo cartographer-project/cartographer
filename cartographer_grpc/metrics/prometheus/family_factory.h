@@ -20,8 +20,8 @@
 #include <memory>
 #include <string>
 
-#include "prometheus/registry.h"
 #include "cartographer/metrics/family_factory.h"
+#include "prometheus/registry.h"
 
 namespace cartographer_grpc {
 namespace metrics {

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "gflags/gflags.h"
-#include "glog/logging.h"
-#include "prometheus/exposer.h"
 #include "cartographer/metrics/register.h"
 #include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/map_builder_server_options.h"
 #include "cartographer_grpc/metrics/prometheus/family_factory.h"
+#include "gflags/gflags.h"
+#include "glog/logging.h"
+#include "prometheus/exposer.h"
 
 DEFINE_string(configuration_directory, "",
               "First directory in which configuration files are searched, "

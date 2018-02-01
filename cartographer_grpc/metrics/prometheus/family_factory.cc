@@ -1,8 +1,8 @@
 #include "cartographer_grpc/metrics/prometheus/family_factory.h"
 
+#include "cartographer/common/make_unique.h"
 #include "prometheus/family.h"
 #include "prometheus/histogram.h"
-#include "cartographer/common/make_unique.h"
 
 namespace cartographer_grpc {
 namespace metrics {

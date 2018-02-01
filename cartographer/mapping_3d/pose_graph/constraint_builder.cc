@@ -26,7 +26,6 @@
 #include <string>
 
 #include "Eigen/Eigenvalues"
-#include "glog/logging.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
@@ -34,6 +33,7 @@
 #include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
 #include "cartographer/metrics/histogram.h"
 #include "cartographer/transform/transform.h"
+#include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping_3d {
