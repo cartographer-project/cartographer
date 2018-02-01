@@ -35,6 +35,22 @@
 
 namespace cartographer {
 namespace mapping {
+namespace internal {
+
+template <class T>
+auto GetTimeImpl(const T& t, int) -> decltype(t.time()) {
+  return t.time();
+}
+template <class T>
+auto GetTimeImpl(const T& t, unsigned) -> decltype(t.time) {
+  return t.time;
+}
+template <class T>
+common::Time GetTime(const T& t) {
+  return GetTimeImpl(t, 0);
+}
+
+}  // namespace internal
 
 // Uniquely identifies a trajectory node using a combination of a unique
 // trajectory ID and a zero-based index of the node inside that trajectory.
@@ -347,7 +363,7 @@ class MapById {
 
     const std::map<int, DataType>& trajectory =
         trajectories_.at(trajectory_id).data_;
-    if (std::prev(trajectory.end())->second.time() < time) {
+    if (internal::GetTime(std::prev(trajectory.end())->second) < time) {
       return EndOfTrajectory(trajectory_id);
     }
     auto left = trajectory.begin();
@@ -355,7 +371,7 @@ class MapById {
     while (left != right) {
       const int middle = left->first + (right->first - left->first) / 2;
       const auto lower_bound_middle = trajectory.lower_bound(middle);
-      if (lower_bound_middle->second.time() < time) {
+      if (internal::GetTime(lower_bound_middle->second) < time) {
         left = std::next(lower_bound_middle);
       } else {
         right = lower_bound_middle;
