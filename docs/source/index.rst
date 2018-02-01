@@ -65,7 +65,7 @@ with the standalone library. Currently, it is the best available reference.
 
 On Ubuntu 14.04 (Trusty):
 
-.. literalinclude:: ../../scripts/install_debs.sh
+.. literalinclude:: ../../scripts/install_debs_cmake.sh
   :language: bash
   :lines: 20-
 
@@ -77,7 +77,7 @@ On Ubuntu 14.04 (Trusty):
   :language: bash
   :lines: 20-
 
-.. literalinclude:: ../../scripts/install_cartographer.sh
+.. literalinclude:: ../../scripts/install_cartographer_cmake.sh
   :language: bash
   :lines: 20-
 

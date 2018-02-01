@@ -17,6 +17,7 @@
 #include "cartographer_grpc/mapping/map_builder_stub.h"
 
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
+#include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
@@ -29,7 +30,7 @@ MapBuilderStub::MapBuilderStub(const std::string& server_address)
       pose_graph_stub_(client_channel_, service_stub_.get()) {}
 
 int MapBuilderStub::AddTrajectoryBuilder(
-    const std::unordered_set<std::string>& expected_sensor_ids,
+    const std::set<SensorId>& expected_sensor_ids,
     const cartographer::mapping::proto::TrajectoryBuilderOptions&
         trajectory_options,
     LocalSlamResultCallback local_slam_result_callback) {
@@ -38,7 +39,7 @@ int MapBuilderStub::AddTrajectoryBuilder(
   proto::AddTrajectoryResponse result;
   *request.mutable_trajectory_builder_options() = trajectory_options;
   for (const auto& sensor_id : expected_sensor_ids) {
-    *request.add_expected_sensor_ids() = sensor_id;
+    *request.add_expected_sensor_ids() = sensor::ToProto(sensor_id);
   }
   grpc::Status status =
       service_stub_->AddTrajectory(&client_context, request, &result);
@@ -88,16 +89,36 @@ std::string MapBuilderStub::SubmapToProto(
 }
 
 void MapBuilderStub::SerializeState(
-    cartographer::io::ProtoStreamWriter* writer) {
+    cartographer::io::ProtoStreamWriterInterface* writer) {
   LOG(FATAL) << "Not implemented";
 }
 
-void MapBuilderStub::LoadMap(cartographer::io::ProtoStreamReader* reader) {
-  LOG(FATAL) << "Not implemented";
+void MapBuilderStub::LoadMap(
+    cartographer::io::ProtoStreamReaderInterface* reader) {
+  framework::ClientWriter<proto::LoadMapRequest> load_map_writer;
+  load_map_writer.client_writer = service_stub_->LoadMap(
+      &load_map_writer.client_context, &load_map_writer.response);
+  CHECK(load_map_writer.client_writer);
+
+  // Request with a PoseGraph proto is sent first.
+  {
+    proto::LoadMapRequest request;
+    CHECK(reader->ReadProto(request.mutable_pose_graph()));
+    CHECK(load_map_writer.client_writer->Write(request));
+  }
+
+  // Multiple requests with SerializedData are sent after.
+  proto::LoadMapRequest request;
+  while (reader->ReadProto(request.mutable_serialized_data())) {
+    CHECK(load_map_writer.client_writer->Write(request));
+  }
+
+  CHECK(reader->eof());
+  CHECK(load_map_writer.client_writer->WritesDone());
 }
 
 int MapBuilderStub::num_trajectory_builders() const {
-  LOG(FATAL) << "Not implemented";
+  return trajectory_builder_stubs_.size();
 }
 
 cartographer::mapping::PoseGraphInterface* MapBuilderStub::pose_graph() {

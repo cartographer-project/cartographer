@@ -47,13 +47,17 @@ ProtoStreamWriter::ProtoStreamWriter(const std::string& filename)
   WriteSizeAsLittleEndian(kMagic, &out_);
 }
 
-ProtoStreamWriter::~ProtoStreamWriter() {}
-
 void ProtoStreamWriter::Write(const std::string& uncompressed_data) {
   std::string compressed_data;
   common::FastGzipString(uncompressed_data, &compressed_data);
   WriteSizeAsLittleEndian(compressed_data.size(), &out_);
   out_.write(compressed_data.data(), compressed_data.size());
+}
+
+void ProtoStreamWriter::WriteProto(const google::protobuf::Message& proto) {
+  std::string uncompressed_data;
+  proto.SerializeToString(&uncompressed_data);
+  Write(uncompressed_data);
 }
 
 bool ProtoStreamWriter::Close() {
@@ -69,8 +73,6 @@ ProtoStreamReader::ProtoStreamReader(const std::string& filename)
   }
 }
 
-ProtoStreamReader::~ProtoStreamReader() {}
-
 bool ProtoStreamReader::Read(std::string* decompressed_data) {
   uint64 compressed_size;
   if (!ReadSizeAsLittleEndian(&in_, &compressed_size)) {
@@ -82,6 +84,11 @@ bool ProtoStreamReader::Read(std::string* decompressed_data) {
   }
   common::FastGunzipString(compressed_data, decompressed_data);
   return true;
+}
+
+bool ProtoStreamReader::ReadProto(google::protobuf::Message* proto) {
+  std::string decompressed_data;
+  return Read(&decompressed_data) && proto->ParseFromString(decompressed_data);
 }
 
 bool ProtoStreamReader::eof() const { return in_.eof(); }

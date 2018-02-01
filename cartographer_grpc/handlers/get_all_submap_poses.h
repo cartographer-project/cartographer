@@ -30,8 +30,11 @@ class GetAllSubmapPosesHandler
     : public framework::RpcHandler<google::protobuf::Empty,
                                    proto::GetAllSubmapPosesResponse> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/GetAllSubmapPoses";
+  }
   void OnRequest(const google::protobuf::Empty& request) override {
-    auto submap_poses = GetContext<MapBuilderServer::MapBuilderContext>()
+    auto submap_poses = GetContext<MapBuilderContext>()
                             ->map_builder()
                             .pose_graph()
                             ->GetAllSubmapPoses();

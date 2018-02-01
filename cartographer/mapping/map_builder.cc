@@ -77,7 +77,7 @@ MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
 MapBuilder::~MapBuilder() {}
 
 int MapBuilder::AddTrajectoryBuilder(
-    const std::unordered_set<std::string>& expected_sensor_ids,
+    const std::set<SensorId>& expected_sensor_ids,
     const proto::TrajectoryBuilderOptions& trajectory_options,
     LocalSlamResultCallback local_slam_result_callback) {
   const int trajectory_id = trajectory_builders_.size();
@@ -168,7 +168,7 @@ std::string MapBuilder::SubmapToProto(
   return "";
 }
 
-void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
+void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   // We serialize the pose graph followed by all the data referenced in it.
   writer->WriteProto(pose_graph_->ToProto());
   // Next we serialize all submap data.
@@ -244,7 +244,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriter* const writer) {
   }
 }
 
-void MapBuilder::LoadMap(io::ProtoStreamReader* const reader) {
+void MapBuilder::LoadMap(io::ProtoStreamReaderInterface* const reader) {
   proto::PoseGraph pose_graph;
   CHECK(reader->ReadProto(&pose_graph));
 

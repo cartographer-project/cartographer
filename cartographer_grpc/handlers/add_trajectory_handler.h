@@ -21,6 +21,7 @@
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
+#include "cartographer_grpc/sensor/serialization.h"
 
 namespace cartographer_grpc {
 namespace handlers {
@@ -29,20 +30,23 @@ class AddTrajectoryHandler
     : public framework::RpcHandler<proto::AddTrajectoryRequest,
                                    proto::AddTrajectoryResponse> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/AddTrajectory";
+  }
   void OnRequest(const proto::AddTrajectoryRequest& request) override {
     auto local_slam_result_callback =
-        GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+        GetUnsynchronizedContext<MapBuilderContext>()
             ->GetLocalSlamResultCallbackForSubscriptions();
-    std::unordered_set<std::string> expected_sensor_ids(
-        request.expected_sensor_ids().begin(),
-        request.expected_sensor_ids().end());
+    std::set<cartographer::mapping::TrajectoryBuilderInterface::SensorId>
+        expected_sensor_ids;
+    for (const auto& sensor_id : request.expected_sensor_ids()) {
+      expected_sensor_ids.insert(sensor::FromProto(sensor_id));
+    }
     const int trajectory_id =
-        GetContext<MapBuilderServer::MapBuilderContext>()
-            ->map_builder()
-            .AddTrajectoryBuilder(expected_sensor_ids,
-                                  request.trajectory_builder_options(),
-                                  local_slam_result_callback);
-    if (GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+        GetContext<MapBuilderContext>()->map_builder().AddTrajectoryBuilder(
+            expected_sensor_ids, request.trajectory_builder_options(),
+            local_slam_result_callback);
+    if (GetUnsynchronizedContext<MapBuilderContext>()
             ->local_trajectory_uploader()) {
       auto trajectory_builder_options = request.trajectory_builder_options();
 
@@ -52,7 +56,7 @@ class AddTrajectoryHandler
       trajectory_builder_options.clear_trajectory_builder_2d_options();
       trajectory_builder_options.clear_trajectory_builder_3d_options();
 
-      GetContext<MapBuilderServer::MapBuilderContext>()
+      GetContext<MapBuilderContext>()
           ->local_trajectory_uploader()
           ->AddTrajectory(trajectory_id, expected_sensor_ids,
                           trajectory_builder_options);

@@ -24,12 +24,16 @@ class GetLocalToGlobalTransformHandler
     : public framework::RpcHandler<proto::GetLocalToGlobalTransformRequest,
                                    proto::GetLocalToGlobalTransformResponse> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/"
+           "GetLocalToGlobalTransform";
+  }
   void OnRequest(
       const proto::GetLocalToGlobalTransformRequest& request) override {
     auto response = cartographer::common::make_unique<
         proto::GetLocalToGlobalTransformResponse>();
     auto local_to_global =
-        GetContext<MapBuilderServer::MapBuilderContext>()
+        GetContext<MapBuilderContext>()
             ->map_builder()
             .pose_graph()
             ->GetLocalToGlobalTransform(request.trajectory_id());

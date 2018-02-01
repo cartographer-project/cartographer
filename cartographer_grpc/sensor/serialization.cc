@@ -72,5 +72,91 @@ void CreateAddLandmarkDataRequest(
   *proto->mutable_landmark_data() = landmark_data;
 }
 
+void CreateAddLocalSlamResultDataRequest(
+    const std::string& sensor_id, int trajectory_id,
+    cartographer::common::Time time, int starting_submap_index,
+    const cartographer::mapping::TrajectoryBuilderInterface::InsertionResult&
+        insertion_result,
+    proto::AddLocalSlamResultDataRequest* proto) {
+  sensor::CreateSensorMetadata(sensor_id, trajectory_id,
+                               proto->mutable_sensor_metadata());
+  proto->mutable_local_slam_result_data()->set_timestamp(
+      cartographer::common::ToUniversal(time));
+  *proto->mutable_local_slam_result_data()->mutable_node_data() =
+      cartographer::mapping::ToProto(*insertion_result.constant_data);
+  for (const auto& insertion_submap : insertion_result.insertion_submaps) {
+    // We only send the probability grid up if the submap is finished.
+    auto* submap = proto->mutable_local_slam_result_data()->add_submaps();
+    insertion_submap->ToProto(submap, insertion_submap->finished());
+    submap->mutable_submap_id()->set_trajectory_id(trajectory_id);
+    submap->mutable_submap_id()->set_submap_index(starting_submap_index);
+    ++starting_submap_index;
+  }
+}
+
+proto::SensorId ToProto(
+    const cartographer::mapping::TrajectoryBuilderInterface::SensorId&
+        sensor_id) {
+  using SensorType =
+      cartographer::mapping::TrajectoryBuilderInterface::SensorId::SensorType;
+  proto::SensorType type;
+  switch (sensor_id.type) {
+    case SensorType::RANGE:
+      type = proto::SensorType::RANGE;
+      break;
+    case SensorType::IMU:
+      type = proto::SensorType::IMU;
+      break;
+    case SensorType::ODOMETRY:
+      type = proto::SensorType::ODOMETRY;
+      break;
+    case SensorType::FIXED_FRAME_POSE:
+      type = proto::SensorType::FIXED_FRAME_POSE;
+      break;
+    case SensorType::LANDMARK:
+      type = proto::SensorType::LANDMARK;
+      break;
+    case SensorType::LOCAL_SLAM_RESULT:
+      type = proto::SensorType::LOCAL_SLAM_RESULT;
+      break;
+    default:
+      LOG(FATAL) << "unknown SensorType";
+  }
+  proto::SensorId proto;
+  proto.set_type(type);
+  proto.set_id(sensor_id.id);
+  return proto;
+}
+
+cartographer::mapping::TrajectoryBuilderInterface::SensorId FromProto(
+    const proto::SensorId& proto) {
+  using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
+  using SensorType = SensorId::SensorType;
+  SensorType type;
+  switch (proto.type()) {
+    case proto::SensorType::RANGE:
+      type = SensorType::RANGE;
+      break;
+    case proto::SensorType::IMU:
+      type = SensorType::IMU;
+      break;
+    case proto::SensorType::ODOMETRY:
+      type = SensorType::ODOMETRY;
+      break;
+    case proto::SensorType::FIXED_FRAME_POSE:
+      type = SensorType::FIXED_FRAME_POSE;
+      break;
+    case proto::SensorType::LANDMARK:
+      type = SensorType::LANDMARK;
+      break;
+    case proto::SensorType::LOCAL_SLAM_RESULT:
+      type = SensorType::LOCAL_SLAM_RESULT;
+      break;
+    default:
+      LOG(FATAL) << "unknown proto::SensorType";
+  }
+  return SensorId{type, proto.id()};
+}
+
 }  // namespace sensor
 }  // namespace cartographer_grpc

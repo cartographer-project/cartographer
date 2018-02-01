@@ -30,15 +30,17 @@ class FinishTrajectoryHandler
     : public framework::RpcHandler<proto::FinishTrajectoryRequest,
                                    google::protobuf::Empty> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/FinishTrajectory";
+  }
   void OnRequest(const proto::FinishTrajectoryRequest& request) override {
-    GetContext<MapBuilderServer::MapBuilderContext>()
-        ->map_builder()
-        .FinishTrajectory(request.trajectory_id());
-    GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
-        ->NotifyFinishTrajectory(request.trajectory_id());
-    if (GetUnsynchronizedContext<MapBuilderServer::MapBuilderContext>()
+    GetContext<MapBuilderContext>()->map_builder().FinishTrajectory(
+        request.trajectory_id());
+    GetUnsynchronizedContext<MapBuilderContext>()->NotifyFinishTrajectory(
+        request.trajectory_id());
+    if (GetUnsynchronizedContext<MapBuilderContext>()
             ->local_trajectory_uploader()) {
-      GetContext<MapBuilderServer::MapBuilderContext>()
+      GetContext<MapBuilderContext>()
           ->local_trajectory_uploader()
           ->FinishTrajectory(request.trajectory_id());
     }

@@ -36,7 +36,7 @@ class MapBuilderStub : public cartographer::mapping::MapBuilderInterface {
   MapBuilderStub& operator=(const MapBuilderStub&) = delete;
 
   int AddTrajectoryBuilder(
-      const std::unordered_set<std::string>& expected_sensor_ids,
+      const std::set<SensorId>& expected_sensor_ids,
       const cartographer::mapping::proto::TrajectoryBuilderOptions&
           trajectory_options,
       LocalSlamResultCallback local_slam_result_callback) override;
@@ -47,8 +47,9 @@ class MapBuilderStub : public cartographer::mapping::MapBuilderInterface {
   std::string SubmapToProto(
       const cartographer::mapping::SubmapId& submap_id,
       cartographer::mapping::proto::SubmapQuery::Response* response) override;
-  void SerializeState(cartographer::io::ProtoStreamWriter* writer) override;
-  void LoadMap(cartographer::io::ProtoStreamReader* reader) override;
+  void SerializeState(
+      cartographer::io::ProtoStreamWriterInterface* writer) override;
+  void LoadMap(cartographer::io::ProtoStreamReaderInterface* reader) override;
   int num_trajectory_builders() const override;
   cartographer::mapping::PoseGraphInterface* pose_graph() override;
 

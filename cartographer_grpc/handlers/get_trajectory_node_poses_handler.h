@@ -30,8 +30,11 @@ class GetTrajectoryNodePosesHandler
     : public framework::RpcHandler<google::protobuf::Empty,
                                    proto::GetTrajectoryNodePosesResponse> {
  public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/GetTrajectoryNodePoses";
+  }
   void OnRequest(const google::protobuf::Empty& request) override {
-    auto node_poses = GetContext<MapBuilderServer::MapBuilderContext>()
+    auto node_poses = GetContext<MapBuilderContext>()
                           ->map_builder()
                           .pose_graph()
                           ->GetTrajectoryNodePoses();
