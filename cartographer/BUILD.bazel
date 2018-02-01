@@ -42,7 +42,7 @@ cc_fix_config(
     cmake = True,
     files = {"common/config.h.cmake": "common/config.h"},
     values = {
-        "CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY": "todo_set_config_dir_in_cartographer.BUILD",
+        "CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY": "configuration_files",
         "PROJECT_SOURCE_DIR": "todo_set_project_source_dir_in_cartographer.BUILD",
     },
     visibility = ["//visibility:private"],
@@ -77,21 +77,14 @@ cc_library(
     ],
 )
 
-# TODO(rodrigoq): these tests need to read the configuration files, but they're
-# not able to find them.
-EXCLUDED_TESTS = [
-    "common/configuration_files_test.cc",
-    "mapping/map_builder_test.cc",
-]
-
 [cc_test(
     name = src.replace("/", "_").replace(".cc", ""),
     srcs = [src],
+    data = ["//:configuration_files"],
     deps = [
         ":cartographer",
         "@com_google_googletest//:gtest_main",
     ],
 ) for src in glob(
     ["**/*_test.cc"],
-    exclude = EXCLUDED_TESTS,
 )]
