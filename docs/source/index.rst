@@ -21,6 +21,7 @@ Cartographer
    :hidden:
 
    configuration
+   evaluation
    terminology
 
 `Cartographer`_ is a system that provides real-time simultaneous localization
