@@ -115,8 +115,8 @@ if(${BUILD_GRPC})
     list(APPEND ALL_GRPC_SERVICE_HDRS "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h")
 
     add_custom_command(
-      OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.cc"
-             "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.grpc.pb.h"
+      OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
+             "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
       COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
       ARGS --cpp_out  ${PROJECT_BINARY_DIR}
         -I ${PROJECT_SOURCE_DIR}
