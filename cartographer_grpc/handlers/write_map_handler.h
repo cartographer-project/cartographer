@@ -56,9 +56,8 @@ class WriteMapHandler
           writer.Write(std::move(response));
           return true;
         });
-    GetContext<MapBuilderContextInterface>()
-        ->map_builder()
-        .SerializeState(&proto_stream_writer);
+    GetContext<MapBuilderContextInterface>()->map_builder().SerializeState(
+        &proto_stream_writer);
   }
 };
 
