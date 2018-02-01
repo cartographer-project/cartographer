@@ -17,12 +17,9 @@
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_WRITE_MAP_HANDLER_H
 #define CARTOGRAPHER_GRPC_HANDLERS_WRITE_MAP_HANDLER_H
 
-#include "cartographer/common/make_unique.h"
-#include "cartographer/io/in_memory_proto_stream.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_context_interface.h"
-#include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
+#include "google/protobuf/empty.pb.h"
 
 namespace cartographer_grpc {
 namespace handlers {
@@ -34,31 +31,7 @@ class WriteMapHandler
   std::string method_name() const override {
     return "/cartographer_grpc.proto.MapBuilderService/WriteMap";
   }
-  void OnRequest(const google::protobuf::Empty& request) override {
-    auto writer = GetWriter();
-    cartographer::io::ForwardingProtoStreamWriter proto_stream_writer(
-        [writer](const google::protobuf::Message* proto) {
-          if (!proto) {
-            writer.WritesDone();
-            return true;
-          }
-
-          auto response =
-              cartographer::common::make_unique<proto::WriteMapResponse>();
-          if (proto->GetTypeName() == "cartographer.mapping.proto.PoseGraph") {
-            response->mutable_pose_graph()->CopyFrom(*proto);
-          } else if (proto->GetTypeName() ==
-                     "cartographer.mapping.proto.SerializedData") {
-            response->mutable_serialized_data()->CopyFrom(*proto);
-          } else {
-            LOG(FATAL) << "Unsupported message type: " << proto->GetTypeName();
-          }
-          writer.Write(std::move(response));
-          return true;
-        });
-    GetContext<MapBuilderContextInterface>()->map_builder().SerializeState(
-        &proto_stream_writer);
-  }
+  void OnRequest(const google::protobuf::Empty& request) override;
 };
 
 }  // namespace handlers

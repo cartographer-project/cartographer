@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
-#define CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
+#include "cartographer_grpc/handlers/run_final_optimization_handler.h"
 
+#include "cartographer/common/make_unique.h"
+#include "cartographer/mapping/map_builder_interface.h"
+#include "cartographer/mapping/pose_graph.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/map_builder_context_interface.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer_grpc {
 namespace handlers {
 
-class AddLandmarkDataHandler
-    : public framework::RpcHandler<
-          framework::Stream<proto::AddLandmarkDataRequest>,
-          google::protobuf::Empty> {
- public:
-  std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/AddLandmarkData";
-  }
-  void OnRequest(const proto::AddLandmarkDataRequest &request) override;
-  void OnReadsDone() override;
-};
+void RunFinalOptimizationHandler::OnRequest(
+    const google::protobuf::Empty& request) {
+  GetContext<MapBuilderContextInterface>()
+      ->map_builder()
+      .pose_graph()
+      ->RunFinalOptimization();
+  Send(cartographer::common::make_unique<google::protobuf::Empty>());
+}
 
 }  // namespace handlers
 }  // namespace cartographer_grpc
-
-#endif  // CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H

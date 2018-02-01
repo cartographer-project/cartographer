@@ -17,11 +17,8 @@
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_ADD_IMU_DATA_HANDLER_H
 #define CARTOGRAPHER_GRPC_HANDLERS_ADD_IMU_DATA_HANDLER_H
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
-#include "cartographer_grpc/sensor/serialization.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer_grpc {
@@ -34,35 +31,8 @@ class AddImuDataHandler
   std::string method_name() const override {
     return "/cartographer_grpc.proto.MapBuilderService/AddImuData";
   }
-  void OnRequest(const proto::AddImuDataRequest &request) override {
-    // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
-    // thread-safe. Therefore it suffices to get an unsynchronized reference to
-    // the 'MapBuilderContext'.
-    GetUnsynchronizedContext<MapBuilderContextInterface>()->EnqueueSensorData(
-        request.sensor_metadata().trajectory_id(),
-        cartographer::sensor::MakeDispatchable(
-            request.sensor_metadata().sensor_id(),
-            cartographer::sensor::FromProto(request.imu_data())));
-
-    // The 'BlockingQueue' in 'LocalTrajectoryUploader' is thread-safe.
-    // Therefore it suffices to get an unsynchronized reference to the
-    // 'MapBuilderContext'.
-    if (GetUnsynchronizedContext<MapBuilderContextInterface>()
-            ->local_trajectory_uploader()) {
-      auto data_request =
-          cartographer::common::make_unique<proto::AddImuDataRequest>();
-      sensor::CreateAddImuDataRequest(request.sensor_metadata().sensor_id(),
-                                      request.sensor_metadata().trajectory_id(),
-                                      request.imu_data(), data_request.get());
-      GetUnsynchronizedContext<MapBuilderContextInterface>()
-          ->local_trajectory_uploader()
-          ->EnqueueDataRequest(std::move(data_request));
-    }
-  }
-
-  void OnReadsDone() override {
-    Send(cartographer::common::make_unique<google::protobuf::Empty>());
-  }
+  void OnRequest(const proto::AddImuDataRequest &request) override;
+  void OnReadsDone() override;
 };
 
 }  // namespace handlers

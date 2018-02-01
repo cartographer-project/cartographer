@@ -17,10 +17,8 @@
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_LOAD_MAP_HANDLER_H
 #define CARTOGRAPHER_GRPC_HANDLERS_LOAD_MAP_HANDLER_H
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer/io/in_memory_proto_stream.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -34,23 +32,8 @@ class LoadMapHandler
   std::string method_name() const override {
     return "/cartographer_grpc.proto.MapBuilderService/LoadMap";
   }
-  void OnRequest(const proto::LoadMapRequest& request) override {
-    switch (request.map_chunk_case()) {
-      case proto::LoadMapRequest::kPoseGraph:
-        reader_.AddProto(request.pose_graph());
-        break;
-      case proto::LoadMapRequest::kSerializedData:
-        reader_.AddProto(request.serialized_data());
-        break;
-      default:
-        LOG(FATAL) << "Unhandled proto::LoadMapRequest case.";
-    }
-  }
-
-  void OnReadsDone() override {
-    GetContext<MapBuilderContext>()->map_builder().LoadMap(&reader_);
-    Send(cartographer::common::make_unique<google::protobuf::Empty>());
-  }
+  void OnRequest(const proto::LoadMapRequest& request) override;
+  void OnReadsDone() override;
 
  private:
   cartographer::io::InMemoryProtoStreamReader reader_;
