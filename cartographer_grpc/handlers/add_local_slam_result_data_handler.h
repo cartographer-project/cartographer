@@ -37,16 +37,15 @@ class AddLocalSlamResultDataHandler
   }
   void OnRequest(const proto::AddLocalSlamResultDataRequest& request) override {
     auto local_slam_result_data =
-        GetContext<MapBuilderServer::MapBuilderContext>()
-            ->ProcessLocalSlamResultData(
-                request.sensor_metadata().sensor_id(),
-                cartographer::common::FromUniversal(
-                    request.local_slam_result_data().timestamp()),
-                request.local_slam_result_data());
-    GetContext<MapBuilderServer::MapBuilderContext>()
-        ->EnqueueLocalSlamResultData(request.sensor_metadata().trajectory_id(),
-                                     request.sensor_metadata().sensor_id(),
-                                     std::move(local_slam_result_data));
+        GetContext<MapBuilderContext>()->ProcessLocalSlamResultData(
+            request.sensor_metadata().sensor_id(),
+            cartographer::common::FromUniversal(
+                request.local_slam_result_data().timestamp()),
+            request.local_slam_result_data());
+    GetContext<MapBuilderContext>()->EnqueueLocalSlamResultData(
+        request.sensor_metadata().trajectory_id(),
+        request.sensor_metadata().sensor_id(),
+        std::move(local_slam_result_data));
   }
 
   void OnReadsDone() override {

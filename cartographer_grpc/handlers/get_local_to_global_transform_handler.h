@@ -33,7 +33,7 @@ class GetLocalToGlobalTransformHandler
     auto response = cartographer::common::make_unique<
         proto::GetLocalToGlobalTransformResponse>();
     auto local_to_global =
-        GetContext<MapBuilderServer::MapBuilderContext>()
+        GetContext<MapBuilderContext>()
             ->map_builder()
             .pose_graph()
             ->GetLocalToGlobalTransform(request.trajectory_id());
