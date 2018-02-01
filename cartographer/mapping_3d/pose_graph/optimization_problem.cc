@@ -251,7 +251,6 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         C_nodes.at(constraint.node_id).rotation(),
         C_nodes.at(constraint.node_id).translation());
   }
-
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
   if (fix_z_ == FixZ::kNo) {
@@ -400,7 +399,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         continue;
       }
 
-      const mapping::PoseGraph::Constraint::Pose constraint_pose{
+      const Constraint::Pose constraint_pose{
           *fixed_frame_pose, options_.fixed_frame_pose_translation_weight(),
           options_.fixed_frame_pose_rotation_weight()};
 
@@ -435,7 +434,6 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
           C_nodes.at(node_id).rotation(), C_nodes.at(node_id).translation());
     }
   }
-
   // Solve.
   ceres::Solver::Summary summary;
   ceres::Solve(
@@ -472,7 +470,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
     trajectory_data_.at(C_fixed_frame.first).fixed_frame =
         C_fixed_frame.second.ToRigid();
   }
-}
+}  // namespace pose_graph
 
 const mapping::MapById<mapping::NodeId, NodeData>&
 OptimizationProblem::node_data() const {

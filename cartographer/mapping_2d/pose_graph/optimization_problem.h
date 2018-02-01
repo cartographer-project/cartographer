@@ -28,8 +28,8 @@
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
-#include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph/proto/optimization_problem_options.pb.h"
+#include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/map_by_time.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -53,7 +53,7 @@ struct SubmapData {
 // Implements the SPA loop closure method.
 class OptimizationProblem {
  public:
-  using Constraint = mapping::PoseGraph::Constraint;
+  using Constraint = mapping::PoseGraphInterface::Constraint;
 
   explicit OptimizationProblem(
       const mapping::pose_graph::proto::OptimizationProblemOptions& options);
