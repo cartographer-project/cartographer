@@ -23,6 +23,10 @@
 #include "google/protobuf/util/message_differencer.h"
 #include "gtest/gtest.h"
 
+namespace cartographer_grpc {
+namespace handlers {
+namespace {
+
 using ::testing::_;
 using ::testing::Eq;
 using ::testing::Pointee;
@@ -30,28 +34,24 @@ using ::testing::Return;
 using ::testing::Test;
 using ::testing::Truly;
 
-namespace cartographer_grpc {
-namespace handlers {
-namespace {
-
 const std::string kMessage = R"PROTO(
-sensor_metadata {
-  trajectory_id: 1
-  sensor_id: "sensor_id"
-}
-imu_data {
-  timestamp: 2
-  linear_acceleration {
-	x: 3
-	y: 4
-	z: 5
+  sensor_metadata {
+    trajectory_id: 1
+    sensor_id: "sensor_id"
   }
-  angular_velocity {
-	x: 6
-	y: 7
-	z: 8
-  }
-})PROTO";
+  imu_data {
+    timestamp: 2
+    linear_acceleration {
+      x: 3
+      y: 4
+      z: 5
+    }
+    angular_velocity {
+      x: 6
+      y: 7
+      z: 8
+    }
+  })PROTO";
 
 using DataPredicateType =
     std::function<bool(const cartographer::sensor::Data &)>;
@@ -92,7 +92,8 @@ class AddImuDataHandlerTest : public Test {
   proto::AddImuDataRequest request_;
 };
 
-DataPredicateType DataPredicate(const proto::AddImuDataRequest &proto) {
+DataPredicateType BuildDataPredicateEquals(
+    const proto::AddImuDataRequest &proto) {
   return [proto](const cartographer::sensor::Data &data) {
     const auto *dispatchable =
         dynamic_cast<const cartographer::sensor::Dispatchable<
@@ -105,7 +106,8 @@ DataPredicateType DataPredicate(const proto::AddImuDataRequest &proto) {
   };
 }
 
-ProtoPredicateType ProtoPredicate(const google::protobuf::Message *proto) {
+ProtoPredicateType BuildProtoPredicateEquals(
+    const google::protobuf::Message *proto) {
   return [proto](const google::protobuf::Message &message) {
     return google::protobuf::util::MessageDifferencer::Equals(*proto, message);
   };
@@ -116,7 +118,7 @@ TEST_F(AddImuDataHandlerTest, NoLocalSlamUploader) {
   EXPECT_CALL(
       *mock_map_builder_context_,
       DoEnqueueSensorData(Eq(request_.sensor_metadata().trajectory_id()),
-                          Pointee(Truly(DataPredicate(request_)))));
+                          Pointee(Truly(BuildDataPredicateEquals(request_)))));
   test_server_->SendWrite(request_);
   test_server_->SendWritesDone();
   test_server_->SendFinish();
@@ -127,9 +129,10 @@ TEST_F(AddImuDataHandlerTest, WithMockLocalSlamUploader) {
   EXPECT_CALL(
       *mock_map_builder_context_,
       DoEnqueueSensorData(Eq(request_.sensor_metadata().trajectory_id()),
-                          Pointee(Truly(DataPredicate(request_)))));
+                          Pointee(Truly(BuildDataPredicateEquals(request_)))));
   EXPECT_CALL(*mock_local_trajectory_uploader_,
-              DoEnqueueDataRequest(Pointee(Truly(ProtoPredicate(&request_)))));
+              DoEnqueueDataRequest(
+                  Pointee(Truly(BuildProtoPredicateEquals(&request_)))));
   test_server_->SendWrite(request_);
   test_server_->SendWritesDone();
   test_server_->SendFinish();

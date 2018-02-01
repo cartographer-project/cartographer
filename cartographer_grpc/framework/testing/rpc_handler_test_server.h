@@ -44,19 +44,16 @@ class RpcHandlerTestServer : public Server {
         channel_(grpc::CreateChannel(kServerAddress,
                                      grpc::InsecureChannelCredentials())),
         client_(channel_) {
-    std::string method_full_name =
+    std::string method_full_name_under_test =
         RpcHandlerInterface::Instantiate<RpcHandlerType>()->method_name();
     std::string service_full_name;
     std::string method_name;
     std::tie(service_full_name, method_name) =
-        Server::Builder::ParseMethodFullName(method_full_name);
-
-    // Register the handler under test and set the ExecutionContext.
-    this->AddService(service_full_name,
-                     {{method_name, GetRpcHandlerInfo(method_full_name)}});
+        Server::Builder::ParseMethodFullName(method_full_name_under_test);
+    this->AddService(
+        service_full_name,
+        {{method_name, GetRpcHandlerInfo(method_full_name_under_test)}});
     this->SetExecutionContext(std::move(execution_context));
-
-    // Starts the server and instantiates the handler under test.
     this->Start();
   }
 

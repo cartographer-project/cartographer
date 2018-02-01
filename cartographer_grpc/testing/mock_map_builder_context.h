@@ -23,8 +23,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using testing::_;
-
 namespace cartographer_grpc {
 namespace testing {
 
