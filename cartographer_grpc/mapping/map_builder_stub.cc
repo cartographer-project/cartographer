@@ -90,7 +90,14 @@ std::string MapBuilderStub::SubmapToProto(
 
 void MapBuilderStub::SerializeState(
     cartographer::io::ProtoStreamWriterInterface* writer) {
-  LOG(FATAL) << "Not implemented";
+  grpc::ClientContext client_context;
+  google::protobuf::Empty request;
+  auto reader = service_stub_->WriteMap(&client_context, request);
+  proto::WriteMapResponse response;
+  while (reader->Read(&response)) {
+    writer->WriteProto(response);
+  }
+  CHECK(writer->Close());
 }
 
 void MapBuilderStub::LoadMap(
