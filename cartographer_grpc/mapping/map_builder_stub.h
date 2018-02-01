@@ -22,7 +22,6 @@
 #include "cartographer/mapping/map_builder_interface.h"
 #include "cartographer_grpc/mapping/pose_graph_stub.h"
 #include "cartographer_grpc/mapping/trajectory_builder_stub.h"
-#include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "grpc++/grpc++.h"
 
 namespace cartographer_grpc {
@@ -55,7 +54,6 @@ class MapBuilderStub : public cartographer::mapping::MapBuilderInterface {
 
  private:
   std::shared_ptr<grpc::Channel> client_channel_;
-  std::unique_ptr<proto::MapBuilderService::Stub> service_stub_;
   PoseGraphStub pose_graph_stub_;
   std::map<int, std::unique_ptr<TrajectoryBuilderStub>>
       trajectory_builder_stubs_;

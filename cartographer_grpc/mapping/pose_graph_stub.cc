@@ -15,22 +15,26 @@
  */
 
 #include "cartographer_grpc/mapping/pose_graph_stub.h"
-
 #include "cartographer/mapping/pose_graph.h"
+#include "cartographer_grpc/framework/client.h"
+#include "cartographer_grpc/handlers/get_all_submap_poses.h"
+#include "cartographer_grpc/handlers/get_constraints_handler.h"
+#include "cartographer_grpc/handlers/get_local_to_global_transform_handler.h"
+#include "cartographer_grpc/handlers/get_trajectory_node_poses_handler.h"
+#include "cartographer_grpc/handlers/run_final_optimization_handler.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
 namespace mapping {
 
-PoseGraphStub::PoseGraphStub(std::shared_ptr<grpc::Channel> client_channel,
-                             proto::MapBuilderService::Stub* stub)
-    : client_channel_(client_channel), stub_(stub) {}
+PoseGraphStub::PoseGraphStub(std::shared_ptr<grpc::Channel> client_channel)
+    : client_channel_(client_channel) {}
 
 void PoseGraphStub::RunFinalOptimization() {
-  grpc::ClientContext client_context;
   google::protobuf::Empty request;
-  google::protobuf::Empty response;
-  CHECK(stub_->RunFinalOptimization(&client_context, request, &response).ok());
+  framework::Client<handlers::RunFinalOptimizationHandler> client(
+      client_channel_);
+  CHECK(client.Write(request));
 }
 
 cartographer::mapping::MapById<
@@ -44,15 +48,14 @@ cartographer::mapping::MapById<
     cartographer::mapping::SubmapId,
     cartographer::mapping::PoseGraphInterface::SubmapPose>
 PoseGraphStub::GetAllSubmapPoses() {
-  grpc::ClientContext client_context;
   google::protobuf::Empty request;
-  proto::GetAllSubmapPosesResponse response;
-  stub_->GetAllSubmapPoses(&client_context, request, &response);
+  framework::Client<handlers::GetAllSubmapPosesHandler> client(client_channel_);
+  CHECK(client.Write(request));
   cartographer::mapping::MapById<
       cartographer::mapping::SubmapId,
       cartographer::mapping::PoseGraphInterface::SubmapPose>
       submap_poses;
-  for (const auto& submap_pose : response.submap_poses()) {
+  for (const auto& submap_pose : client.response().submap_poses()) {
     submap_poses.Insert(
         cartographer::mapping::SubmapId{submap_pose.submap_id().trajectory_id(),
                                         submap_pose.submap_id().submap_index()},
@@ -65,13 +68,12 @@ PoseGraphStub::GetAllSubmapPoses() {
 
 cartographer::transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(
     int trajectory_id) {
-  grpc::ClientContext client_context;
   proto::GetLocalToGlobalTransformRequest request;
   request.set_trajectory_id(trajectory_id);
-  proto::GetLocalToGlobalTransformResponse response;
-  CHECK(stub_->GetLocalToGlobalTransform(&client_context, request, &response)
-            .ok());
-  return cartographer::transform::ToRigid3(response.local_to_global());
+  framework::Client<handlers::GetLocalToGlobalTransformHandler> client(
+      client_channel_);
+  CHECK(client.Write(request));
+  return cartographer::transform::ToRigid3(client.response().local_to_global());
 }
 
 cartographer::mapping::MapById<cartographer::mapping::NodeId,
@@ -83,14 +85,14 @@ PoseGraphStub::GetTrajectoryNodes() {
 cartographer::mapping::MapById<cartographer::mapping::NodeId,
                                cartographer::mapping::TrajectoryNodePose>
 PoseGraphStub::GetTrajectoryNodePoses() {
-  grpc::ClientContext client_context;
   google::protobuf::Empty request;
-  proto::GetTrajectoryNodePosesResponse response;
-  stub_->GetTrajectoryNodePoses(&client_context, request, &response);
+  framework::Client<handlers::GetTrajectoryNodePosesHandler> client(
+      client_channel_);
+  CHECK(client.Write(request));
   cartographer::mapping::MapById<cartographer::mapping::NodeId,
                                  cartographer::mapping::TrajectoryNodePose>
       node_poses;
-  for (const auto& node_pose : response.node_poses()) {
+  for (const auto& node_pose : client.response().node_poses()) {
     node_poses.Insert(
         cartographer::mapping::NodeId{node_pose.node_id().trajectory_id(),
                                       node_pose.node_id().node_index()},
@@ -107,11 +109,10 @@ bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
 
 std::vector<cartographer::mapping::PoseGraphInterface::Constraint>
 PoseGraphStub::constraints() {
-  grpc::ClientContext client_context;
   google::protobuf::Empty request;
-  proto::GetConstraintsResponse response;
-  stub_->GetConstraints(&client_context, request, &response);
-  return cartographer::mapping::FromProto(response.constraints());
+  framework::Client<handlers::GetConstraintsHandler> client(client_channel_);
+  CHECK(client.Write(request));
+  return cartographer::mapping::FromProto(client.response().constraints());
 }
 
 cartographer::mapping::proto::PoseGraph PoseGraphStub::ToProto() {
