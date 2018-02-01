@@ -23,7 +23,7 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/internal/mapping_3d/scan_matching/occupied_space_cost_function.h"
-#include "cartographer/mapping_3d/ceres_pose.h"
+#include "cartographer/mapping/pose_graph/ceres_pose.h"
 #include "cartographer/mapping_3d/rotation_parameterization.h"
 #include "cartographer/mapping_3d/scan_matching/rotation_delta_cost_functor.h"
 #include "cartographer/mapping_3d/scan_matching/translation_delta_cost_functor.h"
@@ -75,7 +75,7 @@ void CeresScanMatcher::Match(const Eigen::Vector3d& target_translation,
                              transform::Rigid3d* const pose_estimate,
                              ceres::Solver::Summary* const summary) {
   ceres::Problem problem;
-  CeresPose ceres_pose(
+  mapping::pose_graph::CeresPose ceres_pose(
       initial_pose_estimate, nullptr /* translation_parameterization */,
       options_.only_optimize_yaw()
           ? std::unique_ptr<ceres::LocalParameterization>(

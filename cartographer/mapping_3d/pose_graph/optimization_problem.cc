@@ -32,7 +32,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/internal/mapping_3d/acceleration_cost_function.h"
 #include "cartographer/internal/mapping_3d/rotation_cost_function.h"
-#include "cartographer/mapping_3d/ceres_pose.h"
+#include "cartographer/mapping/pose_graph/ceres_pose.h"
 #include "cartographer/mapping_3d/imu_integration.h"
 #include "cartographer/mapping_3d/pose_graph/spa_cost_function.h"
 #include "cartographer/mapping_3d/rotation_parameterization.h"
@@ -46,8 +46,9 @@
 namespace cartographer {
 namespace mapping_3d {
 namespace pose_graph {
-
 namespace {
+
+using ::cartographer::mapping::pose_graph::CeresPose;
 
 // For odometry.
 std::unique_ptr<transform::Rigid3d> Interpolate(
