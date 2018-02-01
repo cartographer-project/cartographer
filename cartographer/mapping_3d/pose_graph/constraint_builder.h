@@ -36,6 +36,7 @@
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
 #include "cartographer/mapping_3d/submaps.h"
+#include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/voxel_filter.h"
@@ -56,6 +57,8 @@ class ConstraintBuilder {
  public:
   using Constraint = mapping::PoseGraph::Constraint;
   using Result = std::vector<Constraint>;
+
+  static void RegisterMetrics(metrics::FamilyFactory* registry);
 
   ConstraintBuilder(
       const mapping::pose_graph::proto::ConstraintBuilderOptions& options,

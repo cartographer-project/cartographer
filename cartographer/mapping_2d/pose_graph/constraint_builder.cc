@@ -31,12 +31,29 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
+#include "cartographer/metrics/histogram.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping_2d {
 namespace pose_graph {
+
+static auto gScoresMetric = metrics::Histogram::Null();
+static auto gRotationalScoresMetric = metrics::Histogram::Null();
+static auto gLowResolutionScoresMetric = metrics::Histogram::Null();
+
+void ConstraintBuilder::RegisterMetrics(metrics::FamilyFactory* factory) {
+  metrics::HistogramFamily* scores = factory->NewHistogramFamily(
+      "/mapping_2d/pose_graph/constraint_builder/scores",
+      "Constraint scores built");
+  auto boundaries = metrics::Histogram::FixedWidth(0.05, 20);
+  gScoresMetric = scores->Add({{"kind", "score"}}, boundaries);
+  gRotationalScoresMetric =
+      scores->Add({{"kind", "rotational_score"}}, boundaries);
+  gLowResolutionScoresMetric =
+      scores->Add({{"kind", "low_resolution_score"}}, boundaries);
+}
 
 transform::Rigid2d ComputeSubmapPose(const Submap& submap) {
   return transform::Project2D(submap.local_pose());
