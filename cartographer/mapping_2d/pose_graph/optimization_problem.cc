@@ -160,7 +160,6 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         C_submaps.at(constraint.submap_id).data(),
         C_nodes.at(constraint.node_id).data());
   }
-
   // Add penalties for violating odometry or changes between consecutive nodes
   // if odometry is not available.
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
@@ -211,7 +210,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   for (const auto& C_node_id_data : C_nodes) {
     node_data_.at(C_node_id_data.id).pose = ToPose(C_node_id_data.data);
   }
-}
+}  // namespace pose_graph
 
 const mapping::MapById<mapping::NodeId, NodeData>&
 OptimizationProblem::node_data() const {
