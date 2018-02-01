@@ -32,6 +32,7 @@
 #include "cartographer_grpc/handlers/load_map_handler.h"
 #include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
 #include "cartographer_grpc/handlers/run_final_optimization_handler.h"
+#include "cartographer_grpc/handlers/write_map_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.grpc.pb.h"
 #include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
@@ -75,6 +76,7 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::GetConstraintsHandler>();
   server_builder.RegisterHandler<handlers::LoadMapHandler>();
   server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler>();
+  server_builder.RegisterHandler<handlers::WriteMapHandler>();
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
       cartographer::common::make_unique<MapBuilderContext>(this));
