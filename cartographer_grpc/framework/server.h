@@ -80,13 +80,12 @@ class Server {
                       typename RpcHandlerType::OutgoingType>::value,
               method_full_name});
     }
+    static std::tuple<std::string /* service_full_name */,
+                      std::string /* method_name */>
+    ParseMethodFullName(const std::string& method_full_name);
 
    private:
     using ServiceInfo = std::map<std::string, RpcHandlerInfo>;
-
-    std::tuple<std::string /* service_full_name */,
-               std::string /* method_name */>
-    ParseMethodFullName(const std::string& method_full_name);
 
     template <typename RpcHandlerType>
     void CheckHandlerCompatibility(const std::string& service_full_name,

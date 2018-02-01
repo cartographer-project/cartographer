@@ -32,10 +32,27 @@
 
 namespace cartographer_grpc {
 
-class LocalTrajectoryUploader {
+class LocalTrajectoryUploaderInterface {
  public:
   using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
 
+  virtual ~LocalTrajectoryUploaderInterface() = default;
+
+  // Enqueue an Add*DataRequest message to be uploaded.
+  virtual void EnqueueDataRequest(
+      std::unique_ptr<google::protobuf::Message> data_request) = 0;
+  virtual void AddTrajectory(
+      int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
+      const cartographer::mapping::proto::TrajectoryBuilderOptions&
+          trajectory_options) = 0;
+  virtual void FinishTrajectory(int local_trajectory_id) = 0;
+
+  virtual SensorId GetLocalSlamResultSensorId(
+      int local_trajectory_id) const = 0;
+};
+
+class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
+ public:
   LocalTrajectoryUploader(const std::string& uplink_server_address);
   ~LocalTrajectoryUploader();
 
@@ -49,14 +66,12 @@ class LocalTrajectoryUploader {
   void AddTrajectory(
       int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
       const cartographer::mapping::proto::TrajectoryBuilderOptions&
-          trajectory_options);
-  void FinishTrajectory(int local_trajectory_id);
-
-  // Enqueue an Add*DataRequest message to be uploaded.
+          trajectory_options) override;
+  void FinishTrajectory(int local_trajectory_id) override;
   void EnqueueDataRequest(
-      std::unique_ptr<google::protobuf::Message> data_request);
+      std::unique_ptr<google::protobuf::Message> data_request) override;
 
-  SensorId GetLocalSlamResultSensorId(int local_trajectory_id) const {
+  SensorId GetLocalSlamResultSensorId(int local_trajectory_id) const override {
     return SensorId{SensorId::SensorType::LOCAL_SLAM_RESULT,
                     "local_slam_result_" + std::to_string(local_trajectory_id)};
   }

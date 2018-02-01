@@ -38,7 +38,7 @@ class AddImuDataHandler
     // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
     // thread-safe. Therefore it suffices to get an unsynchronized reference to
     // the 'MapBuilderContext'.
-    GetUnsynchronizedContext<MapBuilderContext>()->EnqueueSensorData(
+    GetUnsynchronizedContext<MapBuilderContextInterface>()->EnqueueSensorData(
         request.sensor_metadata().trajectory_id(),
         cartographer::sensor::MakeDispatchable(
             request.sensor_metadata().sensor_id(),
@@ -47,14 +47,14 @@ class AddImuDataHandler
     // The 'BlockingQueue' in 'LocalTrajectoryUploader' is thread-safe.
     // Therefore it suffices to get an unsynchronized reference to the
     // 'MapBuilderContext'.
-    if (GetUnsynchronizedContext<MapBuilderContext>()
+    if (GetUnsynchronizedContext<MapBuilderContextInterface>()
             ->local_trajectory_uploader()) {
       auto data_request =
           cartographer::common::make_unique<proto::AddImuDataRequest>();
       sensor::CreateAddImuDataRequest(request.sensor_metadata().sensor_id(),
                                       request.sensor_metadata().trajectory_id(),
                                       request.imu_data(), data_request.get());
-      GetUnsynchronizedContext<MapBuilderContext>()
+      GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()
           ->EnqueueDataRequest(std::move(data_request));
     }

@@ -172,7 +172,8 @@ MapBuilderContext::ProcessLocalSlamResultData(
   }
 }
 
-LocalTrajectoryUploader* MapBuilderContext::local_trajectory_uploader() {
+LocalTrajectoryUploaderInterface*
+MapBuilderContext::local_trajectory_uploader() {
   return map_builder_server_->local_trajectory_uploader_.get();
 }
 
