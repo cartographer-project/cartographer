@@ -58,8 +58,8 @@ RetryStrategy CreateLimitedBackoffStrategy(Duration min_delay,
       CreateBackoffDelayCalculator(min_delay, backoff_factor));
 }
 
-bool RetryWithStrategy(RetryStrategy retry_strategy,
-		std::function<bool()> op, std::function<void()> reset) {
+bool RetryWithStrategy(RetryStrategy retry_strategy, std::function<bool()> op,
+                       std::function<void()> reset) {
   optional<Duration> delay;
   int failed_attemps = 0;
   for (;;) {

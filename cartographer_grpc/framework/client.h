@@ -30,88 +30,88 @@ namespace framework {
 template <typename RpcHandlerType>
 class Client {
  public:
-   Client(std::shared_ptr<grpc::Channel> channel, RetryStrategy retry_strategy)
-       : channel_(channel),
-         client_context_(
-             cartographer::common::make_unique<grpc::ClientContext>()),
-         rpc_method_name_(
-             RpcHandlerInterface::Instantiate<RpcHandlerType>()->method_name()),
-         rpc_method_(rpc_method_name_.c_str(),
-                     RpcType<typename RpcHandlerType::IncomingType,
-                             typename RpcHandlerType::OutgoingType>::value,
-                     channel_),
-         retry_strategy_(retry_strategy) {
-     CHECK(!retry_strategy ||
-           rpc_method_.method_type() == ::grpc::internal::RpcMethod::NORMAL_RPC)
-         << "Retry is currently only support for NORMAL_RPC.";
-   }
+  Client(std::shared_ptr<grpc::Channel> channel, RetryStrategy retry_strategy)
+      : channel_(channel),
+        client_context_(
+            cartographer::common::make_unique<grpc::ClientContext>()),
+        rpc_method_name_(
+            RpcHandlerInterface::Instantiate<RpcHandlerType>()->method_name()),
+        rpc_method_(rpc_method_name_.c_str(),
+                    RpcType<typename RpcHandlerType::IncomingType,
+                            typename RpcHandlerType::OutgoingType>::value,
+                    channel_),
+        retry_strategy_(retry_strategy) {
+    CHECK(!retry_strategy ||
+          rpc_method_.method_type() == ::grpc::internal::RpcMethod::NORMAL_RPC)
+        << "Retry is currently only support for NORMAL_RPC.";
+  }
 
-   Client(std::shared_ptr<grpc::Channel> channel)
-       : channel_(channel),
-         client_context_(
-             cartographer::common::make_unique<grpc::ClientContext>()),
-         rpc_method_name_(
-             RpcHandlerInterface::Instantiate<RpcHandlerType>()->method_name()),
-         rpc_method_(rpc_method_name_.c_str(),
-                     RpcType<typename RpcHandlerType::IncomingType,
-                             typename RpcHandlerType::OutgoingType>::value,
-                     channel_) {}
+  Client(std::shared_ptr<grpc::Channel> channel)
+      : channel_(channel),
+        client_context_(
+            cartographer::common::make_unique<grpc::ClientContext>()),
+        rpc_method_name_(
+            RpcHandlerInterface::Instantiate<RpcHandlerType>()->method_name()),
+        rpc_method_(rpc_method_name_.c_str(),
+                    RpcType<typename RpcHandlerType::IncomingType,
+                            typename RpcHandlerType::OutgoingType>::value,
+                    channel_) {}
 
-   bool Read(typename RpcHandlerType::ResponseType *response) {
-     switch (rpc_method_.method_type()) {
-     case grpc::internal::RpcMethod::BIDI_STREAMING:
-       InstantiateClientReaderWriterIfNeeded();
-       return client_reader_writer_->Read(response);
-     case grpc::internal::RpcMethod::SERVER_STREAMING:
-       CHECK(client_reader_);
-       return client_reader_->Read(response);
-     default:
-       LOG(FATAL) << "Not implemented.";
-     }
-   }
+  bool Read(typename RpcHandlerType::ResponseType *response) {
+    switch (rpc_method_.method_type()) {
+      case grpc::internal::RpcMethod::BIDI_STREAMING:
+        InstantiateClientReaderWriterIfNeeded();
+        return client_reader_writer_->Read(response);
+      case grpc::internal::RpcMethod::SERVER_STREAMING:
+        CHECK(client_reader_);
+        return client_reader_->Read(response);
+      default:
+        LOG(FATAL) << "Not implemented.";
+    }
+  }
 
-   bool Write(const typename RpcHandlerType::RequestType &request) {
-     return RetryWithStrategy(
-    	 retry_strategy_,
-         std::bind(&Client<RpcHandlerType>::WriteImpl, this, request),
-         std::bind(&Client<RpcHandlerType>::Reset, this));
-   }
+  bool Write(const typename RpcHandlerType::RequestType &request) {
+    return RetryWithStrategy(
+        retry_strategy_,
+        std::bind(&Client<RpcHandlerType>::WriteImpl, this, request),
+        std::bind(&Client<RpcHandlerType>::Reset, this));
+  }
 
-   bool WritesDone() {
-     switch (rpc_method_.method_type()) {
-     case grpc::internal::RpcMethod::CLIENT_STREAMING:
-       InstantiateClientWriterIfNeeded();
-       return client_writer_->WritesDone();
-     case grpc::internal::RpcMethod::BIDI_STREAMING:
-       InstantiateClientReaderWriterIfNeeded();
-       return client_reader_writer_->WritesDone();
-     default:
-       LOG(FATAL) << "Not implemented.";
-     }
-   }
+  bool WritesDone() {
+    switch (rpc_method_.method_type()) {
+      case grpc::internal::RpcMethod::CLIENT_STREAMING:
+        InstantiateClientWriterIfNeeded();
+        return client_writer_->WritesDone();
+      case grpc::internal::RpcMethod::BIDI_STREAMING:
+        InstantiateClientReaderWriterIfNeeded();
+        return client_reader_writer_->WritesDone();
+      default:
+        LOG(FATAL) << "Not implemented.";
+    }
+  }
 
-   grpc::Status Finish() {
-     switch (rpc_method_.method_type()) {
-     case grpc::internal::RpcMethod::CLIENT_STREAMING:
-       InstantiateClientWriterIfNeeded();
-       return client_writer_->Finish();
-     case grpc::internal::RpcMethod::BIDI_STREAMING:
-       InstantiateClientReaderWriterIfNeeded();
-       return client_reader_writer_->Finish();
-     case grpc::internal::RpcMethod::SERVER_STREAMING:
-       CHECK(client_reader_);
-       return client_reader_->Finish();
-     default:
-       LOG(FATAL) << "Not implemented.";
-     }
-   }
+  grpc::Status Finish() {
+    switch (rpc_method_.method_type()) {
+      case grpc::internal::RpcMethod::CLIENT_STREAMING:
+        InstantiateClientWriterIfNeeded();
+        return client_writer_->Finish();
+      case grpc::internal::RpcMethod::BIDI_STREAMING:
+        InstantiateClientReaderWriterIfNeeded();
+        return client_reader_writer_->Finish();
+      case grpc::internal::RpcMethod::SERVER_STREAMING:
+        CHECK(client_reader_);
+        return client_reader_->Finish();
+      default:
+        LOG(FATAL) << "Not implemented.";
+    }
+  }
 
-   const typename RpcHandlerType::ResponseType &response() {
-     CHECK(rpc_method_.method_type() == grpc::internal::RpcMethod::NORMAL_RPC ||
-           rpc_method_.method_type() ==
-               grpc::internal::RpcMethod::CLIENT_STREAMING);
-     return response_;
-   }
+  const typename RpcHandlerType::ResponseType &response() {
+    CHECK(rpc_method_.method_type() == grpc::internal::RpcMethod::NORMAL_RPC ||
+          rpc_method_.method_type() ==
+              grpc::internal::RpcMethod::CLIENT_STREAMING);
+    return response_;
+  }
 
  private:
   void Reset() {
