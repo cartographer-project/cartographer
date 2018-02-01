@@ -15,8 +15,9 @@
  */
 
 #include "cartographer_grpc/local_trajectory_uploader.h"
-
 #include "cartographer/common/make_unique.h"
+#include "cartographer_grpc/handlers/add_trajectory_handler.h"
+#include "cartographer_grpc/handlers/finish_trajectory_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
@@ -31,22 +32,29 @@ const cartographer::common::Duration kPopTimeout =
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
     const std::string &uplink_server_address)
-    : client_channel_(grpc::CreateChannel(uplink_server_address,
-                                          grpc::InsecureChannelCredentials())),
-      service_stub_(proto::MapBuilderService::NewStub(client_channel_)) {}
+    : client_channel_(grpc::CreateChannel(
+          uplink_server_address, grpc::InsecureChannelCredentials())) {}
 
 LocalTrajectoryUploader::~LocalTrajectoryUploader() {
-  if (imu_writer_.client_writer) {
-    CHECK(imu_writer_.client_writer->WritesDone());
-    CHECK(imu_writer_.client_writer->Finish().ok());
+  if (add_imu_client_) {
+    CHECK(add_imu_client_->WritesDone());
+    CHECK(add_imu_client_->Finish().ok());
   }
-  if (odometry_writer_.client_writer) {
-    CHECK(odometry_writer_.client_writer->WritesDone());
-    CHECK(odometry_writer_.client_writer->Finish().ok());
+  if (add_odometry_client_) {
+    CHECK(add_odometry_client_->WritesDone());
+    CHECK(add_odometry_client_->Finish().ok());
   }
-  if (fixed_frame_pose_writer_.client_writer) {
-    CHECK(fixed_frame_pose_writer_.client_writer->WritesDone());
-    CHECK(fixed_frame_pose_writer_.client_writer->Finish().ok());
+  if (add_fixed_frame_pose_client_) {
+    CHECK(add_fixed_frame_pose_client_->WritesDone());
+    CHECK(add_fixed_frame_pose_client_->Finish().ok());
+  }
+  if (add_local_slam_result_client_) {
+    CHECK(add_local_slam_result_client_->WritesDone());
+    CHECK(add_local_slam_result_client_->Finish().ok());
+  }
+  if (add_landmark_client_) {
+    CHECK(add_landmark_client_->WritesDone());
+    CHECK(add_landmark_client_->Finish().ok());
   }
 }
 
@@ -84,6 +92,10 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
                      dynamic_cast<proto::AddLocalSlamResultDataRequest *>(
                          data_message.get())) {
         ProcessLocalSlamResultDataMessage(local_slam_result_data);
+      } else if (auto *landmark_data =
+                     dynamic_cast<proto::AddLandmarkDataRequest *>(
+                         data_message.get())) {
+        ProcessLandmarkDataMessage(landmark_data);
       } else {
         LOG(FATAL) << "Unknown message type: " << data_message->GetTypeName();
       }
@@ -100,47 +112,51 @@ void LocalTrajectoryUploader::TranslateTrajectoryId(
 
 void LocalTrajectoryUploader::ProcessFixedFramePoseDataMessage(
     proto::AddFixedFramePoseDataRequest *data_request) {
-  if (!fixed_frame_pose_writer_.client_writer) {
-    fixed_frame_pose_writer_.client_writer =
-        service_stub_->AddFixedFramePoseData(
-            &fixed_frame_pose_writer_.client_context,
-            &fixed_frame_pose_writer_.response);
-    CHECK(fixed_frame_pose_writer_.client_writer);
+  if (!add_fixed_frame_pose_client_) {
+    add_fixed_frame_pose_client_ = cartographer::common::make_unique<
+        framework::Client<handlers::AddFixedFramePoseDataHandler>>(
+        client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
-  fixed_frame_pose_writer_.client_writer->Write(*data_request);
+  CHECK(add_fixed_frame_pose_client_->Write(*data_request));
 }
 
 void LocalTrajectoryUploader::ProcessImuDataMessage(
     proto::AddImuDataRequest *data_request) {
-  if (!imu_writer_.client_writer) {
-    imu_writer_.client_writer = service_stub_->AddImuData(
-        &imu_writer_.client_context, &imu_writer_.response);
-    CHECK(imu_writer_.client_writer);
+  if (!add_imu_client_) {
+    add_imu_client_ = cartographer::common::make_unique<
+        framework::Client<handlers::AddImuDataHandler>>(client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
-  imu_writer_.client_writer->Write(*data_request);
+  CHECK(add_imu_client_->Write(*data_request));
 }
 
 void LocalTrajectoryUploader::ProcessOdometryDataMessage(
     proto::AddOdometryDataRequest *data_request) {
-  if (!odometry_writer_.client_writer) {
-    odometry_writer_.client_writer = service_stub_->AddOdometryData(
-        &odometry_writer_.client_context, &odometry_writer_.response);
-    CHECK(odometry_writer_.client_writer);
+  if (!add_odometry_client_) {
+    add_odometry_client_ = cartographer::common::make_unique<
+        framework::Client<handlers::AddOdometryDataHandler>>(client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
-  odometry_writer_.client_writer->Write(*data_request);
+  CHECK(add_odometry_client_->Write(*data_request));
+}
+
+void LocalTrajectoryUploader::ProcessLandmarkDataMessage(
+    proto::AddLandmarkDataRequest *data_request) {
+  if (!add_landmark_client_) {
+    add_landmark_client_ = cartographer::common::make_unique<
+        framework::Client<handlers::AddLandmarkDataHandler>>(client_channel_);
+  }
+  TranslateTrajectoryId(data_request->mutable_sensor_metadata());
+  CHECK(add_landmark_client_->Write(*data_request));
 }
 
 void LocalTrajectoryUploader::ProcessLocalSlamResultDataMessage(
     proto::AddLocalSlamResultDataRequest *data_request) {
-  if (!local_slam_result_writer_.client_writer) {
-    local_slam_result_writer_.client_writer =
-        service_stub_->AddLocalSlamResultData(
-            &local_slam_result_writer_.client_context,
-            &local_slam_result_writer_.response);
-    CHECK(local_slam_result_writer_.client_writer);
+  if (!add_local_slam_result_client_) {
+    add_local_slam_result_client_ = cartographer::common::make_unique<
+        framework::Client<handlers::AddLocalSlamResultDataHandler>>(
+        client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   // A submap also holds a trajectory id that must be translated to uplink's
@@ -150,16 +166,14 @@ void LocalTrajectoryUploader::ProcessLocalSlamResultDataMessage(
     mutable_submap.mutable_submap_id()->set_trajectory_id(
         data_request->sensor_metadata().trajectory_id());
   }
-  local_slam_result_writer_.client_writer->Write(*data_request);
+  CHECK(add_local_slam_result_client_->Write(*data_request));
 }
 
 void LocalTrajectoryUploader::AddTrajectory(
     int local_trajectory_id, const std::set<SensorId> &expected_sensor_ids,
     const cartographer::mapping::proto::TrajectoryBuilderOptions
         &trajectory_options) {
-  grpc::ClientContext client_context;
   proto::AddTrajectoryRequest request;
-  proto::AddTrajectoryResponse result;
   *request.mutable_trajectory_builder_options() = trajectory_options;
   for (const SensorId &sensor_id : expected_sensor_ids) {
     // Range sensors are not forwarded, but combined into a LocalSlamResult.
@@ -169,25 +183,21 @@ void LocalTrajectoryUploader::AddTrajectory(
   }
   *request.add_expected_sensor_ids() =
       sensor::ToProto(GetLocalSlamResultSensorId(local_trajectory_id));
-  grpc::Status status =
-      service_stub_->AddTrajectory(&client_context, request, &result);
-  CHECK(status.ok());
+  framework::Client<handlers::AddTrajectoryHandler> client(client_channel_);
+  CHECK(client.Write(request));
   CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 0);
   local_to_cloud_trajectory_id_map_[local_trajectory_id] =
-      result.trajectory_id();
+      client.response().trajectory_id();
 }
 
 void LocalTrajectoryUploader::FinishTrajectory(int local_trajectory_id) {
   CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 1);
   int cloud_trajectory_id =
       local_to_cloud_trajectory_id_map_[local_trajectory_id];
-  grpc::ClientContext client_context;
   proto::FinishTrajectoryRequest request;
-  google::protobuf::Empty response;
   request.set_trajectory_id(cloud_trajectory_id);
-  grpc::Status status =
-      service_stub_->FinishTrajectory(&client_context, request, &response);
-  CHECK(status.ok());
+  framework::Client<handlers::FinishTrajectoryHandler> client(client_channel_);
+  CHECK(client.Write(request));
 }
 
 void LocalTrajectoryUploader::EnqueueDataRequest(

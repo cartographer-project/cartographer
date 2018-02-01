@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
-#define CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
+#include "cartographer_grpc/handlers/get_local_to_global_transform_handler.h"
 
 #include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/map_builder_context_interface.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer_grpc {
 namespace handlers {
 
-class AddLandmarkDataHandler
-    : public framework::RpcHandler<
-          framework::Stream<proto::AddLandmarkDataRequest>,
-          google::protobuf::Empty> {
- public:
-  std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/AddLandmarkData";
-  }
-  void OnRequest(const proto::AddLandmarkDataRequest &request) override;
-  void OnReadsDone() override;
-};
+void GetLocalToGlobalTransformHandler::OnRequest(
+    const proto::GetLocalToGlobalTransformRequest& request) {
+  auto response = cartographer::common::make_unique<
+      proto::GetLocalToGlobalTransformResponse>();
+  auto local_to_global =
+      GetContext<MapBuilderContextInterface>()
+          ->map_builder()
+          .pose_graph()
+          ->GetLocalToGlobalTransform(request.trajectory_id());
+  *response->mutable_local_to_global() =
+      cartographer::transform::ToProto(local_to_global);
+  Send(std::move(response));
+}
 
 }  // namespace handlers
 }  // namespace cartographer_grpc
-
-#endif  // CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H

@@ -14,29 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
-#define CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
+#include "cartographer_grpc/handlers/finish_trajectory_handler.h"
 
+#include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/map_builder_context_interface.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer_grpc {
 namespace handlers {
 
-class AddLandmarkDataHandler
-    : public framework::RpcHandler<
-          framework::Stream<proto::AddLandmarkDataRequest>,
-          google::protobuf::Empty> {
- public:
-  std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/AddLandmarkData";
+void FinishTrajectoryHandler::OnRequest(
+    const proto::FinishTrajectoryRequest& request) {
+  GetContext<MapBuilderContextInterface>()->map_builder().FinishTrajectory(
+      request.trajectory_id());
+  GetUnsynchronizedContext<MapBuilderContextInterface>()
+      ->NotifyFinishTrajectory(request.trajectory_id());
+  if (GetUnsynchronizedContext<MapBuilderContextInterface>()
+          ->local_trajectory_uploader()) {
+    GetContext<MapBuilderContextInterface>()
+        ->local_trajectory_uploader()
+        ->FinishTrajectory(request.trajectory_id());
   }
-  void OnRequest(const proto::AddLandmarkDataRequest &request) override;
-  void OnReadsDone() override;
-};
+  Send(cartographer::common::make_unique<google::protobuf::Empty>());
+}
 
 }  // namespace handlers
 }  // namespace cartographer_grpc
-
-#endif  // CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H

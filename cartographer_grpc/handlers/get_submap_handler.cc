@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
-#define CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
+#include "cartographer_grpc/handlers/get_submap_handler.h"
 
+#include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/map_builder_context_interface.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer_grpc {
 namespace handlers {
 
-class AddLandmarkDataHandler
-    : public framework::RpcHandler<
-          framework::Stream<proto::AddLandmarkDataRequest>,
-          google::protobuf::Empty> {
- public:
-  std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/AddLandmarkData";
-  }
-  void OnRequest(const proto::AddLandmarkDataRequest &request) override;
-  void OnReadsDone() override;
-};
+void GetSubmapHandler::OnRequest(const proto::GetSubmapRequest &request) {
+  auto response = cartographer::common::make_unique<proto::GetSubmapResponse>();
+  response->set_error_msg(
+      GetContext<MapBuilderContextInterface>()->map_builder().SubmapToProto(
+          cartographer::mapping::SubmapId{request.submap_id().trajectory_id(),
+                                          request.submap_id().submap_index()},
+          response->mutable_submap_query_response()));
+  Send(std::move(response));
+}
 
 }  // namespace handlers
 }  // namespace cartographer_grpc
-
-#endif  // CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H

@@ -151,6 +151,13 @@ message AddLocalSlamResultDataRequest {
   cartographer.mapping.proto.LocalSlamResultData local_slam_result_data = 2;
 }
 
+message WriteMapResponse {
+  oneof map_chunk {
+    cartographer.mapping.proto.PoseGraph pose_graph = 1;
+    cartographer.mapping.proto.SerializedData serialized_data = 2;
+  }
+}
+
 service MapBuilderService {
   // Starts a new trajectory and returns its index.
   rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
@@ -212,4 +219,7 @@ service MapBuilderService {
 
   // Adds map data in the order defined by ProtoStreamReader.
   rpc LoadMap(stream LoadMapRequest) returns (google.protobuf.Empty);
+
+  // Receives map data in the order defined by ProtoStreamWriter.
+  rpc WriteMap(google.protobuf.Empty) returns (stream WriteMapResponse);
 }

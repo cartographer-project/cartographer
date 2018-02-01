@@ -74,7 +74,7 @@ class MapBuilderContextInterface : public framework::ExecutionContext {
   ProcessLocalSlamResultData(
       const std::string& sensor_id, cartographer::common::Time time,
       const cartographer::mapping::proto::LocalSlamResultData& proto) = 0;
-  virtual LocalTrajectoryUploader* local_trajectory_uploader() = 0;
+  virtual LocalTrajectoryUploaderInterface* local_trajectory_uploader() = 0;
   virtual void EnqueueSensorData(
       int trajectory_id, std::unique_ptr<cartographer::sensor::Data> data) = 0;
   virtual void EnqueueLocalSlamResultData(

@@ -41,7 +41,7 @@ class MapBuilderContext : public MapBuilderContextInterface {
   ProcessLocalSlamResultData(
       const std::string& sensor_id, cartographer::common::Time time,
       const cartographer::mapping::proto::LocalSlamResultData& proto) override;
-  LocalTrajectoryUploader* local_trajectory_uploader() override;
+  LocalTrajectoryUploaderInterface* local_trajectory_uploader() override;
   void EnqueueSensorData(
       int trajectory_id,
       std::unique_ptr<cartographer::sensor::Data> data) override;

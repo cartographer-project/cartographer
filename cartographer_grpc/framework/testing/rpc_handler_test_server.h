@@ -21,131 +21,91 @@
 #include <string>
 
 #include "cartographer/common/blocking_queue.h"
+#include "cartographer_grpc/framework/client.h"
+#include "cartographer_grpc/framework/rpc_handler_interface.h"
 #include "cartographer_grpc/framework/server.h"
 #include "cartographer_grpc/framework/testing/rpc_handler_wrapper.h"
+#include "grpc++/grpc++.h"
+#include "gtest/gtest.h"
 
 namespace cartographer_grpc {
 namespace framework {
 namespace testing {
 
 namespace {
-const std::string kMethodName = "method";
-const std::string kServiceName = "service";
-const std::string kFullyQualifiedMethodName =
-    "/" + kServiceName + "/" + kMethodName;
 const std::string kServerAddress = "localhost:50051";
 }  // namespace
 
-template <class RpcHandlerType>
+template <typename RpcHandlerType>
 class RpcHandlerTestServer : public Server {
  public:
-  RpcHandlerTestServer() : Server(Options{1, 1, kServerAddress}) {
-    // Register the handler under test.
-    this->AddService(kServiceName, {{kMethodName, GetRpcHandlerInfo()}});
-    // Starts the server and instantiates the handler under test.
+  RpcHandlerTestServer(std::unique_ptr<ExecutionContext> execution_context)
+      : Server(Options{1, 1, kServerAddress}),
+        channel_(grpc::CreateChannel(kServerAddress,
+                                     grpc::InsecureChannelCredentials())),
+        client_(channel_) {
+    std::string method_full_name_under_test =
+        RpcHandlerInterface::Instantiate<RpcHandlerType>()->method_name();
+    std::string service_full_name;
+    std::string method_name;
+    std::tie(service_full_name, method_name) =
+        Server::Builder::ParseMethodFullName(method_full_name_under_test);
+    this->AddService(
+        service_full_name,
+        {{method_name, GetRpcHandlerInfo(method_full_name_under_test)}});
+    this->SetExecutionContext(std::move(execution_context));
     this->Start();
-    // Depending on the RPC type might already trigger a NEW_CONNECTION
-    // event in the handler under test.
-    InstantiateReadersAndWriters();
   }
 
   ~RpcHandlerTestServer() { this->Shutdown(); };
+
+  void SendWrite(const typename RpcHandlerType::RequestType &message) {
+    EXPECT_TRUE(client_.Write(message));
+    WaitForHandlerCompletion(RpcHandlerWrapper<RpcHandlerType>::ON_REQUEST);
+  }
 
   // Parses a request message from the passed string and issues the
   // request against the handler, waits for the handler to complete
   // processing before returning.
   void SendWrite(const std::string &serialized_message) {
-    auto message = cartographer::common::make_unique<
-        typename RpcHandlerType::RequestType>();
-    message->ParseFromString(serialized_message);
-    switch (rpc_method_.method_type()) {
-      case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-        CHECK(client_writer_->Write(*message)) << "Write failed.";
-        break;
-      case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      case ::grpc::internal::RpcMethod::SERVER_STREAMING:
-      case ::grpc::internal::RpcMethod::NORMAL_RPC:
-        LOG(FATAL) << "Not implemented";
-        break;
-    }
-    WaitForHandlerCompletion(RpcHandlerWrapper::ON_REQUEST);
+    typename RpcHandlerType::RequestType message;
+    message.ParseFromString(serialized_message);
+    Write(message);
   }
 
   // Sends a WRITES_DONE event to the handler, waits for the handler
   // to finish processing the READS_DONE event before returning.
   void SendWritesDone() {
-    auto message = cartographer::common::make_unique<
-        typename RpcHandlerType::RequestType>();
-    switch (rpc_method_.method_type()) {
-      case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-        CHECK(client_writer_->WritesDone()) << "WritesDone failed.";
-        break;
-      case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      case ::grpc::internal::RpcMethod::SERVER_STREAMING:
-      case ::grpc::internal::RpcMethod::NORMAL_RPC:
-        LOG(FATAL) << "Not implemented";
-        break;
-    }
-    WaitForHandlerCompletion(RpcHandlerWrapper::ON_READS_DONE);
+    EXPECT_TRUE(client_.WritesDone());
+    WaitForHandlerCompletion(RpcHandlerWrapper<RpcHandlerType>::ON_READS_DONE);
   }
 
   // Sends a FINISH event to the handler under test, waits for the
   // handler to finish processing the event before returning.
   void SendFinish() {
-    switch (rpc_method_.method_type()) {
-      case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-        CHECK(client_writer_->Finish()) << "Finish failed.";
-        break;
-      case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-      case ::grpc::internal::RpcMethod::SERVER_STREAMING:
-      case ::grpc::internal::RpcMethod::NORMAL_RPC:
-        LOG(FATAL) << "Not implemented";
-        break;
-    }
-    WaitForHandlerCompletion(RpcHandlerWrapper::ON_FINISH);
+    EXPECT_TRUE(client_.Finish().ok());
+    WaitForHandlerCompletion(RpcHandlerWrapper<RpcHandlerType>::ON_FINISH);
   }
 
  private:
   using ClientWriter = ::grpc::internal::ClientWriterFactory<
       typename RpcHandlerType::RequestType>;
 
-  void WaitForHandlerCompletion(RpcHandlerWrapper::RpcHandlerEvent event) {
+  void WaitForHandlerCompletion(
+      typename RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent event) {
     CHECK_EQ(rpc_handler_event_queue_.Pop(), event);
   }
 
-  void InstantiateReadersAndWriters() {
-    switch (rpc_method_.method_type()) {
-      case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-        if (!response_) {
-          response_ = cartographer::common::make_unique<
-              typename RpcHandlerType::ResponseType>();
-        }
-        if (!client_writer_) {
-          client_writer_ = CreateClientWriter();
-        }
-        break;
-      case ::grpc::internal::RpcMethod::SERVER_STREAMING:
-      case ::grpc::internal::RpcMethod::NORMAL_RPC:
-      case ::grpc::internal::RpcMethod::BIDI_STREAMING:
-        LOG(FATAL) << "Not implemented";
-        break;
-    }
-  }
-
-  std::unique_ptr<ClientWriter> CreateClientWriter() {
-    return std::unique_ptr<ClientWriter>(ClientWriter::Create(
-        channel_.get(), rpc_method_, &context_, response_.get()));
-  }
-
-  RpcHandlerInfo GetRpcHandlerInfo() {
+  RpcHandlerInfo GetRpcHandlerInfo(const std::string &method_full_name) {
     ::grpc::internal::RpcMethod::RpcType rpc_type =
         RpcType<typename RpcHandlerType::IncomingType,
                 typename RpcHandlerType::OutgoingType>::value;
     auto event_callback =
-        [this](RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent event) {
+        [this](
+            typename RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent event) {
           rpc_handler_event_queue_.Push(event);
         };
-    auto handler_instantiator = [this](
+    auto handler_instantiator = [event_callback](
                                     Rpc *const rpc,
                                     ExecutionContext *const execution_context) {
       std::unique_ptr<RpcHandlerInterface> rpc_handler =
@@ -158,16 +118,13 @@ class RpcHandlerTestServer : public Server {
     return RpcHandlerInfo{
         RpcHandlerType::RequestType::default_instance().GetDescriptor(),
         RpcHandlerType::ResponseType::default_instance().GetDescriptor(),
-        handler_instantiator, rpc_type, kFullyQualifiedMethodName};
+        handler_instantiator, rpc_type, method_full_name};
   }
 
-  ::grpc::internal::RpcMethod rpc_method_;
-  ::grpc::ClientContext context_;
-  std::shared_ptr<::grpc::ChannelInterface> channel_;
-  std::unique_ptr<::grpc::ClientWriter<typename RpcHandlerType::RequestType>>
-      client_writer_;
-  std::unique_ptr<typename RpcHandlerType::ResponseType> response_;
-  cartographer::common::BlockingQueue<RpcHandlerWrapper::RpcHandlerEvent>
+  std::shared_ptr<::grpc::Channel> channel_;
+  cartographer_grpc::framework::Client<RpcHandlerType> client_;
+  cartographer::common::BlockingQueue<
+      typename RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent>
       rpc_handler_event_queue_;
 };
 

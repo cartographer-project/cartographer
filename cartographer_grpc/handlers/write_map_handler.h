@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_FRAMEWORK_CLIENT_WRITER_H_
-#define CARTOGRAPHER_GRPC_FRAMEWORK_CLIENT_WRITER_H_
+#ifndef CARTOGRAPHER_GRPC_HANDLERS_WRITE_MAP_HANDLER_H
+#define CARTOGRAPHER_GRPC_HANDLERS_WRITE_MAP_HANDLER_H
 
-#include <memory>
-
+#include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
-#include "grpc++/grpc++.h"
 
 namespace cartographer_grpc {
-namespace framework {
+namespace handlers {
 
-template <typename RequestType>
-struct ClientWriter {
-  grpc::ClientContext client_context;
-  std::unique_ptr<grpc::ClientWriter<RequestType>> client_writer;
-  google::protobuf::Empty response;
+class WriteMapHandler
+    : public framework::RpcHandler<google::protobuf::Empty,
+                                   framework::Stream<proto::WriteMapResponse>> {
+ public:
+  std::string method_name() const override {
+    return "/cartographer_grpc.proto.MapBuilderService/WriteMap";
+  }
+  void OnRequest(const google::protobuf::Empty& request) override;
 };
 
-}  // namespace framework
+}  // namespace handlers
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_FRAMEWORK_CLIENT_WRITER_H_
+#endif  // CARTOGRAPHER_GRPC_HANDLERS_WRITE_MAP_HANDLER_H
