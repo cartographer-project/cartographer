@@ -17,6 +17,8 @@
 #ifndef CARTOGRAPHER_GRPC_FRAMEWORK_CLIENT_H
 #define CARTOGRAPHER_GRPC_FRAMEWORK_CLIENT_H
 
+#include "cartographer_grpc/framework/rpc_handler_interface.h"
+#include "cartographer_grpc/framework/type_traits.h"
 #include "grpc++/grpc++.h"
 #include "grpc++/impl/codegen/client_unary_call.h"
 #include "grpc++/impl/codegen/sync_stream.h"
