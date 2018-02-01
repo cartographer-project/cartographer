@@ -20,7 +20,6 @@
 
 #include "cartographer_grpc/framework/client.h"
 #include "cartographer_grpc/framework/execution_context.h"
-#include "cartographer_grpc/framework/proto/math_service.grpc.pb.h"
 #include "cartographer_grpc/framework/proto/math_service.pb.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "glog/logging.h"
