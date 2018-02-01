@@ -31,8 +31,9 @@
 #include "cartographer/common/math.h"
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
+#include "cartographer/mapping/pose_graph/proto/constraint_builder_options.pb.h"
+#include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping/trajectory_node.h"
-#include "cartographer/mapping_3d/pose_graph/optimization_problem.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
 #include "cartographer/mapping_3d/submaps.h"
@@ -54,7 +55,7 @@ namespace pose_graph {
 // This class is thread-safe.
 class ConstraintBuilder {
  public:
-  using Constraint = mapping::PoseGraph::Constraint;
+  using Constraint = mapping::PoseGraphInterface::Constraint;
   using Result = std::vector<Constraint>;
 
   ConstraintBuilder(
