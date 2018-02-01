@@ -17,9 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_ADD_RANGEFINDER_DATA_HANDLER_H
 #define CARTOGRAPHER_GRPC_HANDLERS_ADD_RANGEFINDER_DATA_HANDLER_H
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -34,20 +32,8 @@ class AddRangefinderDataHandler
   std::string method_name() const override {
     return "/cartographer_grpc.proto.MapBuilderService/AddRangefinderData";
   }
-  void OnRequest(const proto::AddRangefinderDataRequest &request) override {
-    // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
-    // thread-safe. Therefore it suffices to get an unsynchronized reference to
-    // the 'MapBuilderContext'.
-    GetUnsynchronizedContext<MapBuilderContext>()->EnqueueSensorData(
-        request.sensor_metadata().trajectory_id(),
-        cartographer::sensor::MakeDispatchable(
-            request.sensor_metadata().sensor_id(),
-            cartographer::sensor::FromProto(request.timed_point_cloud_data())));
-  }
-
-  void OnReadsDone() override {
-    Send(cartographer::common::make_unique<google::protobuf::Empty>());
-  }
+  void OnRequest(const proto::AddRangefinderDataRequest &request) override;
+  void OnReadsDone() override;
 };
 
 }  // namespace handlers

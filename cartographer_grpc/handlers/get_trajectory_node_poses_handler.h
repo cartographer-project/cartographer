@@ -17,9 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_GET_TRAJECTORY_NODE_POSES_HANDLER_H
 #define CARTOGRAPHER_GRPC_HANDLERS_GET_TRAJECTORY_NODE_POSES_HANDLER_H
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -33,22 +31,7 @@ class GetTrajectoryNodePosesHandler
   std::string method_name() const override {
     return "/cartographer_grpc.proto.MapBuilderService/GetTrajectoryNodePoses";
   }
-  void OnRequest(const google::protobuf::Empty& request) override {
-    auto node_poses = GetContext<MapBuilderContext>()
-                          ->map_builder()
-                          .pose_graph()
-                          ->GetTrajectoryNodePoses();
-    auto response = cartographer::common::make_unique<
-        proto::GetTrajectoryNodePosesResponse>();
-    for (const auto& node_id_pose : node_poses) {
-      auto* node_pose = response->add_node_poses();
-      node_id_pose.id.ToProto(node_pose->mutable_node_id());
-      *node_pose->mutable_global_pose() =
-          cartographer::transform::ToProto(node_id_pose.data.global_pose);
-      node_pose->set_has_constant_data(node_id_pose.data.has_constant_data);
-    }
-    Send(std::move(response));
-  }
+  void OnRequest(const google::protobuf::Empty& request) override;
 };
 
 }  // namespace handlers

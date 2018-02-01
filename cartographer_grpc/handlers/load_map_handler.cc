@@ -14,29 +14,35 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
-#define CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
+#include "cartographer_grpc/handlers/load_map_handler.h"
 
+#include "cartographer/common/make_unique.h"
+#include "cartographer/io/in_memory_proto_stream.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/map_builder_context_interface.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer_grpc {
 namespace handlers {
 
-class AddLandmarkDataHandler
-    : public framework::RpcHandler<
-          framework::Stream<proto::AddLandmarkDataRequest>,
-          google::protobuf::Empty> {
- public:
-  std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/AddLandmarkData";
+void LoadMapHandler::OnRequest(const proto::LoadMapRequest& request) {
+  switch (request.map_chunk_case()) {
+    case proto::LoadMapRequest::kPoseGraph:
+      reader_.AddProto(request.pose_graph());
+      break;
+    case proto::LoadMapRequest::kSerializedData:
+      reader_.AddProto(request.serialized_data());
+      break;
+    default:
+      LOG(FATAL) << "Unhandled proto::LoadMapRequest case.";
   }
-  void OnRequest(const proto::AddLandmarkDataRequest &request) override;
-  void OnReadsDone() override;
-};
+}
+
+void LoadMapHandler::OnReadsDone() {
+  GetContext<MapBuilderContextInterface>()->map_builder().LoadMap(&reader_);
+  Send(cartographer::common::make_unique<google::protobuf::Empty>());
+}
 
 }  // namespace handlers
 }  // namespace cartographer_grpc
-
-#endif  // CARTOGRAPHER_GRPC_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H

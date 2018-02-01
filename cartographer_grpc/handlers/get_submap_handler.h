@@ -17,9 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_GET_SUBMAP_HANDLER_H
 #define CARTOGRAPHER_GRPC_HANDLERS_GET_SUBMAP_HANDLER_H
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -33,16 +31,7 @@ class GetSubmapHandler
   std::string method_name() const override {
     return "/cartographer_grpc.proto.MapBuilderService/GetSubmap";
   }
-  void OnRequest(const proto::GetSubmapRequest &request) override {
-    auto response =
-        cartographer::common::make_unique<proto::GetSubmapResponse>();
-    response->set_error_msg(
-        GetContext<MapBuilderContext>()->map_builder().SubmapToProto(
-            cartographer::mapping::SubmapId{request.submap_id().trajectory_id(),
-                                            request.submap_id().submap_index()},
-            response->mutable_submap_query_response()));
-    Send(std::move(response));
-  }
+  void OnRequest(const proto::GetSubmapRequest &request) override;
 };
 
 }  // namespace handlers

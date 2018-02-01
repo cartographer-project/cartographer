@@ -17,10 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_GET_CONSTRAINTS_HANDLER_H
 #define CARTOGRAPHER_GRPC_HANDLERS_GET_CONSTRAINTS_HANDLER_H
 
-#include "cartographer/common/make_unique.h"
-#include "cartographer/mapping/pose_graph.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -34,19 +31,7 @@ class GetConstraintsHandler
   std::string method_name() const override {
     return "/cartographer_grpc.proto.MapBuilderService/GetConstraints";
   }
-  void OnRequest(const google::protobuf::Empty& request) override {
-    auto constraints = GetContext<MapBuilderContext>()
-                           ->map_builder()
-                           .pose_graph()
-                           ->constraints();
-    auto response =
-        cartographer::common::make_unique<proto::GetConstraintsResponse>();
-    response->mutable_constraints()->Reserve(constraints.size());
-    for (const auto& constraint : constraints) {
-      *response->add_constraints() = cartographer::mapping::ToProto(constraint);
-    }
-    Send(std::move(response));
-  }
+  void OnRequest(const google::protobuf::Empty& request) override;
 };
 
 }  // namespace handlers
