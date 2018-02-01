@@ -103,12 +103,6 @@ cc_binary(
     ],
 )
 
-# TODO(rodrigoq): these tests need to read the configuration files, but they're
-# not able to find them.
-EXCLUDED_TESTS = [
-    "client_server_test.cc",
-]
-
 # This service is only used by the tests.
 cc_grpc_library(
     name = "framework_proto_math_service_grpc_cc",
@@ -125,6 +119,7 @@ cc_grpc_library(
 [cc_test(
     name = src.replace("/", "_").replace(".cc", ""),
     srcs = [src],
+    data = ["//:configuration_files"],
     deps = [
         ":cartographer_grpc",
         ":framework_proto_math_service_grpc_cc",
@@ -132,5 +127,4 @@ cc_grpc_library(
     ],
 ) for src in glob(
     ["**/*_test.cc"],
-    exclude = EXCLUDED_TESTS,
 )]
