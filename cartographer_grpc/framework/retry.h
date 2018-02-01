@@ -44,7 +44,7 @@ RetryStrategy CreateLimitedBackoffStrategy(Duration min_delay,
 
 bool RetryWithStrategy(RetryStrategy retry_strategy, std::function<bool()> op, std::function<void()> reset = nullptr);
 
-} // namespace framework
-} // namespace cartographer_grpc
+}  // namespace framework
+}  // namespace cartographer_grpc
 
-#endif // CARTOGRAPHER_GRPC_FRAMEWORK_RETRY_H
+#endif  // CARTOGRAPHER_GRPC_FRAMEWORK_RETRY_H

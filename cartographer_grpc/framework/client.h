@@ -114,25 +114,25 @@ class Client {
    }
 
  private:
-   void Reset() {
-     client_context_ = cartographer::common::make_unique<grpc::ClientContext>();
-   }
+  void Reset() {
+    client_context_ = cartographer::common::make_unique<grpc::ClientContext>();
+  }
 
-   bool WriteImpl(const typename RpcHandlerType::RequestType &request) {
-     switch (rpc_method_.method_type()) {
-     case grpc::internal::RpcMethod::NORMAL_RPC:
-       return MakeBlockingUnaryCall(request, &response_).ok();
-     case grpc::internal::RpcMethod::CLIENT_STREAMING:
-       InstantiateClientWriterIfNeeded();
-       return client_writer_->Write(request);
-     case grpc::internal::RpcMethod::BIDI_STREAMING:
-       InstantiateClientReaderWriterIfNeeded();
-       return client_reader_writer_->Write(request);
-     case grpc::internal::RpcMethod::SERVER_STREAMING:
-       InstantiateClientReader(request);
-       return true;
-     }
-     LOG(FATAL) << "Not reached.";
+  bool WriteImpl(const typename RpcHandlerType::RequestType &request) {
+    switch (rpc_method_.method_type()) {
+      case grpc::internal::RpcMethod::NORMAL_RPC:
+        return MakeBlockingUnaryCall(request, &response_).ok();
+      case grpc::internal::RpcMethod::CLIENT_STREAMING:
+        InstantiateClientWriterIfNeeded();
+        return client_writer_->Write(request);
+      case grpc::internal::RpcMethod::BIDI_STREAMING:
+        InstantiateClientReaderWriterIfNeeded();
+        return client_reader_writer_->Write(request);
+      case grpc::internal::RpcMethod::SERVER_STREAMING:
+        InstantiateClientReader(request);
+        return true;
+    }
+    LOG(FATAL) << "Not reached.";
   }
 
   void InstantiateClientWriterIfNeeded() {
@@ -162,7 +162,7 @@ class Client {
   }
 
   void InstantiateClientReader(
-      const typename RpcHandlerType::RequestType& request) {
+      const typename RpcHandlerType::RequestType &request) {
     CHECK_EQ(rpc_method_.method_type(),
              grpc::internal::RpcMethod::SERVER_STREAMING);
     client_reader_.reset(
@@ -172,8 +172,8 @@ class Client {
   }
 
   grpc::Status MakeBlockingUnaryCall(
-      const typename RpcHandlerType::RequestType& request,
-      typename RpcHandlerType::ResponseType* response) {
+      const typename RpcHandlerType::RequestType &request,
+      typename RpcHandlerType::ResponseType *response) {
     CHECK_EQ(rpc_method_.method_type(), grpc::internal::RpcMethod::NORMAL_RPC);
     return ::grpc::internal::BlockingUnaryCall(
         channel_.get(), rpc_method_, client_context_.get(), request, response);

@@ -86,5 +86,5 @@ bool RetryWithStrategy(RetryStrategy retry_strategy,
   return false;
 }
 
-} // namespace framework
-} // namespace cartographer_grpc
+}  // namespace framework
+}  // namespace cartographer_grpc
