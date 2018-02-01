@@ -122,7 +122,7 @@ if(${BUILD_GRPC})
         -I ${PROJECT_SOURCE_DIR}
         ${ABS_FIL}
       DEPENDS ${ABS_FIL}
-      COMMENT "Running C++ protocol buffer compiler with gRPC support on ${ABS_FIL}"
+      COMMENT "Running C++ protocol buffer compiler on ${ABS_FIL}"
       VERBATIM
     )
   endforeach()
