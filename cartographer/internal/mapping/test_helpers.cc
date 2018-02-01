@@ -43,9 +43,11 @@ GenerateFakeRangeMeasurements(double travel_distance, double duration,
   std::vector<cartographer::sensor::TimedPointCloudData> measurements;
   cartographer::sensor::TimedPointCloud point_cloud;
   for (double angle = 0.; angle < M_PI; angle += 0.01) {
-    constexpr double kRadius = 5;
-    point_cloud.emplace_back(kRadius * std::cos(angle),
-                             kRadius * std::sin(angle), 0., 0.);
+    for (double height : {-0.4, -0.2, 0.0, 0.2, 0.4}) {
+      constexpr double kRadius = 5;
+      point_cloud.emplace_back(kRadius * std::cos(angle),
+                               kRadius * std::sin(angle), height, 0.);
+    }
   }
   const Eigen::Vector3f kDirection = Eigen::Vector3f(2., 1., 0.).normalized();
   const Eigen::Vector3f kVelocity = travel_distance / duration * kDirection;
