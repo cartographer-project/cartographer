@@ -20,6 +20,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/io/in_memory_proto_stream.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/map_builder_context_interface.h"
 #include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 
@@ -55,7 +56,7 @@ class WriteMapHandler
           writer.Write(std::move(response));
           return true;
         });
-    GetContext<MapBuilderServer::MapBuilderContext>()
+    GetContext<MapBuilderContextInterface>()
         ->map_builder()
         .SerializeState(&proto_stream_writer);
   }
