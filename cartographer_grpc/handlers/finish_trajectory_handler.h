@@ -17,9 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_FINISH_TRAJECTORY_HANDLER_H
 #define CARTOGRAPHER_GRPC_HANDLERS_FINISH_TRAJECTORY_HANDLER_H
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -33,19 +31,7 @@ class FinishTrajectoryHandler
   std::string method_name() const override {
     return "/cartographer_grpc.proto.MapBuilderService/FinishTrajectory";
   }
-  void OnRequest(const proto::FinishTrajectoryRequest& request) override {
-    GetContext<MapBuilderContext>()->map_builder().FinishTrajectory(
-        request.trajectory_id());
-    GetUnsynchronizedContext<MapBuilderContext>()->NotifyFinishTrajectory(
-        request.trajectory_id());
-    if (GetUnsynchronizedContext<MapBuilderContext>()
-            ->local_trajectory_uploader()) {
-      GetContext<MapBuilderContext>()
-          ->local_trajectory_uploader()
-          ->FinishTrajectory(request.trajectory_id());
-    }
-    Send(cartographer::common::make_unique<google::protobuf::Empty>());
-  }
+  void OnRequest(const proto::FinishTrajectoryRequest& request) override;
 };
 
 }  // namespace handlers

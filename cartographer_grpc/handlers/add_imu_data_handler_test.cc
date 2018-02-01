@@ -16,6 +16,7 @@
 
 #include "cartographer_grpc/handlers/add_imu_data_handler.h"
 #include "cartographer/common/make_unique.h"
+#include "cartographer/sensor/dispatchable.h"
 #include "cartographer_grpc/framework/testing/rpc_handler_test_server.h"
 #include "cartographer_grpc/testing/mock_local_trajectory_uploader.h"
 #include "cartographer_grpc/testing/mock_map_builder_context.h"

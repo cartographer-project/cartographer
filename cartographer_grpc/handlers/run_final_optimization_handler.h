@@ -17,10 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_RUN_FINAL_OPTIMIZATION_H
 #define CARTOGRAPHER_GRPC_HANDLERS_RUN_FINAL_OPTIMIZATION_H
 
-#include "cartographer/common/make_unique.h"
-#include "cartographer/mapping/pose_graph.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -34,13 +31,7 @@ class RunFinalOptimizationHandler
   std::string method_name() const override {
     return "/cartographer_grpc.proto.MapBuilderService/RunFinalOptimization";
   }
-  void OnRequest(const google::protobuf::Empty& request) override {
-    GetContext<MapBuilderContext>()
-        ->map_builder()
-        .pose_graph()
-        ->RunFinalOptimization();
-    Send(cartographer::common::make_unique<google::protobuf::Empty>());
-  }
+  void OnRequest(const google::protobuf::Empty& request) override;
 };
 
 }  // namespace handlers

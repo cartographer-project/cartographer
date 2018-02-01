@@ -17,10 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_HANDLERS_ADD_LOCAL_SLAM_RESULT_DATA_HANDLER_H
 #define CARTOGRAPHER_GRPC_HANDLERS_ADD_LOCAL_SLAM_RESULT_DATA_HANDLER_H
 
-#include "cartographer/common/make_unique.h"
-#include "cartographer/mapping/trajectory_node.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -35,22 +32,8 @@ class AddLocalSlamResultDataHandler
   std::string method_name() const override {
     return "/cartographer_grpc.proto.MapBuilderService/AddLocalSlamResultData";
   }
-  void OnRequest(const proto::AddLocalSlamResultDataRequest& request) override {
-    auto local_slam_result_data =
-        GetContext<MapBuilderContext>()->ProcessLocalSlamResultData(
-            request.sensor_metadata().sensor_id(),
-            cartographer::common::FromUniversal(
-                request.local_slam_result_data().timestamp()),
-            request.local_slam_result_data());
-    GetContext<MapBuilderContext>()->EnqueueLocalSlamResultData(
-        request.sensor_metadata().trajectory_id(),
-        request.sensor_metadata().sensor_id(),
-        std::move(local_slam_result_data));
-  }
-
-  void OnReadsDone() override {
-    Send(cartographer::common::make_unique<google::protobuf::Empty>());
-  }
+  void OnRequest(const proto::AddLocalSlamResultDataRequest& request) override;
+  void OnReadsDone() override;
 };
 
 }  // namespace handlers
