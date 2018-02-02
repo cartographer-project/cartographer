@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer_grpc/handlers/add_imu_data_handler.h"
+#include "cartographer_grpc/handlers/add_landmark_data_handler.h"
 #include "cartographer_grpc/testing/add_data_handler_test.h"
 #include "cartographer_grpc/testing/test_helpers.h"
 #include "google/protobuf/text_format.h"
@@ -34,24 +34,33 @@ const std::string kMessage = R"PROTO(
     trajectory_id: 1
     sensor_id: "sensor_id"
   }
-  imu_data {
+  landmark_data {
     timestamp: 2
-    linear_acceleration {
-      x: 3
-      y: 4
-      z: 5
-    }
-    angular_velocity {
-      x: 6
-      y: 7
-      z: 8
-    }
+    landmark_observations {
+      id: "3"
+      landmark_to_tracking_transform {
+        translation {
+          x: 4
+          y: 5
+          z: 6
+		}
+		rotation {
+		  x: 7
+		  y: 8
+		  z: 9
+		  w: 10
+		}
+      }
+      translation_weight: 11.0
+      rotation_weight: 12.0
+	}
   })PROTO";
 
-using AddImuDataHandlerTest = testing::AddDataHandlerTest<AddImuDataHandler>;
+using AddLandmarkDataHandlerTest =
+    testing::AddDataHandlerTest<AddLandmarkDataHandler>;
 
-TEST_F(AddImuDataHandlerTest, NoLocalSlamUploader) {
-  proto::AddImuDataRequest request;
+TEST_F(AddLandmarkDataHandlerTest, NoLocalSlamUploader) {
+  proto::AddLandmarkDataRequest request;
   EXPECT_TRUE(
       google::protobuf::TextFormat::ParseFromString(kMessage, &request));
   SetNoLocalTrajectoryUploader();
@@ -64,8 +73,8 @@ TEST_F(AddImuDataHandlerTest, NoLocalSlamUploader) {
   test_server_->SendFinish();
 }
 
-TEST_F(AddImuDataHandlerTest, WithMockLocalSlamUploader) {
-  proto::AddImuDataRequest request;
+TEST_F(AddLandmarkDataHandlerTest, WithMockLocalSlamUploader) {
+  proto::AddLandmarkDataRequest request;
   EXPECT_TRUE(
       google::protobuf::TextFormat::ParseFromString(kMessage, &request));
   SetMockLocalTrajectoryUploader();

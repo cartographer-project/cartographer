@@ -20,6 +20,7 @@
 #include "cartographer_grpc/framework/retry.h"
 #include "cartographer_grpc/framework/rpc_handler_interface.h"
 #include "cartographer_grpc/framework/type_traits.h"
+#include "glog/logging.h"
 #include "grpc++/grpc++.h"
 #include "grpc++/impl/codegen/client_unary_call.h"
 #include "grpc++/impl/codegen/sync_stream.h"
