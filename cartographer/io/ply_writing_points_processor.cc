@@ -66,7 +66,8 @@ void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point,
 
 void WriteBinaryIntensity(const float intensity,
                           FileWriter* const file_writer) {
-  CHECK(file_writer->Write(&intensity, sizeof(float)));
+  CHECK(file_writer->Write(reinterpret_cast<const char *>(&intensity),
+                           sizeof(float)));
 }
 
 void WriteBinaryPlyPointColor(const Uint8Color& color,
