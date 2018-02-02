@@ -46,6 +46,7 @@ class PlyWritingPointsProcessor : public PointsProcessor {
 
   int64 num_points_;
   bool has_colors_;
+  bool has_intensities_;
   std::unique_ptr<FileWriter> file_;
 };
 
