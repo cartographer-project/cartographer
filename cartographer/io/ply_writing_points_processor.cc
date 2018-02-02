@@ -57,6 +57,7 @@ void WriteBinaryPlyHeader(const bool has_color, const bool has_intensities,
 
 void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point,
                                    FileWriter* const file_writer) {
+  // TODO(sirver): This ignores endianness.
   char buffer[12];
   memcpy(buffer, &point[0], sizeof(float));
   memcpy(buffer + 4, &point[1], sizeof(float));
@@ -66,6 +67,7 @@ void WriteBinaryPlyPointCoordinate(const Eigen::Vector3f& point,
 
 void WriteBinaryIntensity(const float intensity,
                           FileWriter* const file_writer) {
+  // TODO(sirver): This ignores endianness.
   CHECK(file_writer->Write(reinterpret_cast<const char*>(&intensity),
                            sizeof(float)));
 }
