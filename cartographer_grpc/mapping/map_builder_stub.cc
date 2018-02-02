@@ -42,7 +42,10 @@ int MapBuilderStub::AddTrajectoryBuilder(
   for (const auto& sensor_id : expected_sensor_ids) {
     *request.add_expected_sensor_ids() = sensor::ToProto(sensor_id);
   }
-  framework::Client<handlers::AddTrajectoryHandler> client(client_channel_);
+  framework::Client<handlers::AddTrajectoryHandler> client(
+      client_channel_,
+      framework::CreateLimitedBackoffStrategy(
+          cartographer::common::FromMilliseconds(100), 2.f, 5));
   CHECK(client.Write(request));
 
   // Construct trajectory builder stub.

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer_grpc/handlers/add_imu_data_handler.h"
+#include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
 #include "cartographer_grpc/testing/add_data_handler_test.h"
 #include "cartographer_grpc/testing/test_helpers.h"
 #include "google/protobuf/text_format.h"
@@ -34,48 +34,32 @@ const std::string kMessage = R"PROTO(
     trajectory_id: 1
     sensor_id: "sensor_id"
   }
-  imu_data {
+  timed_point_cloud_data {
     timestamp: 2
-    linear_acceleration {
-      x: 3
-      y: 4
-      z: 5
+    origin {
+      x: 3.f
+      y: 4.f
+      z: 5.f
     }
-    angular_velocity {
-      x: 6
-      y: 7
-      z: 8
+    point_data {
+      x: 6.f
+      y: 7.f
+      z: 8.f
+      t: 9.f
     }
   })PROTO";
 
-using AddImuDataHandlerTest = testing::AddDataHandlerTest<AddImuDataHandler>;
+using AddRangefinderDataHandlerTest =
+    testing::AddDataHandlerTest<AddRangefinderDataHandler>;
 
-TEST_F(AddImuDataHandlerTest, NoLocalSlamUploader) {
-  proto::AddImuDataRequest request;
+TEST_F(AddRangefinderDataHandlerTest, NoLocalSlamUploader) {
+  proto::AddRangefinderDataRequest request;
   EXPECT_TRUE(
       google::protobuf::TextFormat::ParseFromString(kMessage, &request));
-  SetNoLocalTrajectoryUploader();
   EXPECT_CALL(*mock_map_builder_context_,
               DoEnqueueSensorData(
                   Eq(request.sensor_metadata().trajectory_id()),
                   Pointee(Truly(testing::BuildDataPredicateEquals(request)))));
-  test_server_->SendWrite(request);
-  test_server_->SendWritesDone();
-  test_server_->SendFinish();
-}
-
-TEST_F(AddImuDataHandlerTest, WithMockLocalSlamUploader) {
-  proto::AddImuDataRequest request;
-  EXPECT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(kMessage, &request));
-  SetMockLocalTrajectoryUploader();
-  EXPECT_CALL(*mock_map_builder_context_,
-              DoEnqueueSensorData(
-                  Eq(request.sensor_metadata().trajectory_id()),
-                  Pointee(Truly(testing::BuildDataPredicateEquals(request)))));
-  EXPECT_CALL(*mock_local_trajectory_uploader_,
-              DoEnqueueDataRequest(Pointee(
-                  Truly(testing::BuildProtoPredicateEquals(&request)))));
   test_server_->SendWrite(request);
   test_server_->SendWritesDone();
   test_server_->SendFinish();

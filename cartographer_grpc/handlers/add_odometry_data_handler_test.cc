@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer_grpc/handlers/add_imu_data_handler.h"
+#include "cartographer_grpc/handlers/add_odometry_data_handler.h"
 #include "cartographer_grpc/testing/add_data_handler_test.h"
 #include "cartographer_grpc/testing/test_helpers.h"
 #include "google/protobuf/text_format.h"
@@ -34,24 +34,28 @@ const std::string kMessage = R"PROTO(
     trajectory_id: 1
     sensor_id: "sensor_id"
   }
-  imu_data {
+  odometry_data {
     timestamp: 2
-    linear_acceleration {
-      x: 3
-      y: 4
-      z: 5
-    }
-    angular_velocity {
-      x: 6
-      y: 7
-      z: 8
+    pose {
+      translation {
+        x: 3
+        y: 4
+        z: 5
+      }
+      rotation {
+        x: 6
+        y: 7
+        z: 8
+        w: 9
+      }
     }
   })PROTO";
 
-using AddImuDataHandlerTest = testing::AddDataHandlerTest<AddImuDataHandler>;
+using AddOdometryDataHandlerTest =
+    testing::AddDataHandlerTest<AddOdometryDataHandler>;
 
-TEST_F(AddImuDataHandlerTest, NoLocalSlamUploader) {
-  proto::AddImuDataRequest request;
+TEST_F(AddOdometryDataHandlerTest, NoLocalSlamUploader) {
+  proto::AddOdometryDataRequest request;
   EXPECT_TRUE(
       google::protobuf::TextFormat::ParseFromString(kMessage, &request));
   SetNoLocalTrajectoryUploader();
@@ -64,8 +68,8 @@ TEST_F(AddImuDataHandlerTest, NoLocalSlamUploader) {
   test_server_->SendFinish();
 }
 
-TEST_F(AddImuDataHandlerTest, WithMockLocalSlamUploader) {
-  proto::AddImuDataRequest request;
+TEST_F(AddOdometryDataHandlerTest, WithMockLocalSlamUploader) {
+  proto::AddOdometryDataRequest request;
   EXPECT_TRUE(
       google::protobuf::TextFormat::ParseFromString(kMessage, &request));
   SetMockLocalTrajectoryUploader();
