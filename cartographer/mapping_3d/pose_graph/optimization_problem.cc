@@ -34,6 +34,7 @@
 #include "cartographer/internal/mapping_3d/rotation_cost_function.h"
 #include "cartographer/mapping/pose_graph/ceres_pose.h"
 #include "cartographer/mapping_3d/imu_integration.h"
+#include "cartographer/mapping_3d/pose_graph/landmark_cost_function.h"
 #include "cartographer/mapping_3d/pose_graph/spa_cost_function.h"
 #include "cartographer/mapping_3d/rotation_parameterization.h"
 #include "cartographer/transform/timestamped_transform.h"
@@ -49,6 +50,7 @@ namespace pose_graph {
 namespace {
 
 using ::cartographer::mapping::pose_graph::CeresPose;
+using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
 
 // For odometry.
 std::unique_ptr<transform::Rigid3d> Interpolate(
@@ -96,6 +98,45 @@ std::unique_ptr<transform::Rigid3d> Interpolate(
             .transform);
   }
   return nullptr;
+}
+
+void AddLandmarkCostFunctions(
+    const std::map<std::string, LandmarkNode>& landmark_nodes,
+    const mapping::MapById<mapping::NodeId, NodeData>& node_data,
+    mapping::MapById<mapping::NodeId, CeresPose>* C_nodes,
+    std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem) {
+  for (const auto& landmark_node : landmark_nodes) {
+    for (const auto& observation : landmark_node.second.landmark_observations) {
+      const std::string& landmark_id = landmark_node.first;
+      // Find the trajectory nodes before and after the landmark observation.
+      auto prev =
+          node_data.lower_bound(observation.trajectory_id, observation.time);
+      if (prev == node_data.BeginOfTrajectory(observation.trajectory_id)) {
+        continue;
+      }
+      auto next = std::next(prev);
+      if (next == node_data.EndOfTrajectory(observation.trajectory_id)) {
+        continue;
+      }
+      // Add parameter blocks for the landmark ID if they were not added before.
+      if (!C_landmarks->count(landmark_id)) {
+        C_landmarks->emplace(
+            landmark_id,
+            CeresPose(landmark_node.second.global_landmark_pose,
+                      nullptr /* translation_parametrization */,
+                      common::make_unique<ceres::QuaternionParameterization>(),
+                      problem));
+      }
+      problem->AddResidualBlock(
+          LandmarkCostFunction::CreateAutoDiffCostFunction(
+              observation, prev->data, next->data),
+          nullptr /* loss function */, C_nodes->at(prev->id).rotation(),
+          C_nodes->at(prev->id).translation(), C_nodes->at(next->id).rotation(),
+          C_nodes->at(next->id).translation(),
+          C_landmarks->at(landmark_id).rotation(),
+          C_landmarks->at(landmark_id).translation());
+    }
+  }
 }
 
 }  // namespace
@@ -169,8 +210,10 @@ void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
       max_num_iterations);
 }
 
-void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
-                                const std::set<int>& frozen_trajectories) {
+void OptimizationProblem::Solve(
+    const std::vector<Constraint>& constraints,
+    const std::set<int>& frozen_trajectories,
+    const std::map<std::string, LandmarkNode>& landmark_nodes) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
@@ -192,6 +235,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   CHECK(submap_data_.Contains(mapping::SubmapId{0, 0}));
   mapping::MapById<mapping::SubmapId, CeresPose> C_submaps;
   mapping::MapById<mapping::NodeId, CeresPose> C_nodes;
+  std::map<std::string, CeresPose> C_landmarks;
   bool first_submap = true;
   for (const auto& submap_id_data : submap_data_) {
     const bool frozen =
@@ -251,6 +295,9 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         C_nodes.at(constraint.node_id).rotation(),
         C_nodes.at(constraint.node_id).translation());
   }
+  // Add cost  functions for landmarks.
+  AddLandmarkCostFunctions(landmark_nodes, node_data_, &C_nodes, &C_landmarks,
+                           &problem);
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
   if (fix_z_ == FixZ::kNo) {
@@ -480,6 +527,11 @@ OptimizationProblem::node_data() const {
 const mapping::MapById<mapping::SubmapId, SubmapData>&
 OptimizationProblem::submap_data() const {
   return submap_data_;
+}
+
+const std::map<std::string, transform::Rigid3d>&
+OptimizationProblem::landmark_data() const {
+  return landmark_data_;
 }
 
 const sensor::MapByTime<sensor::ImuData>& OptimizationProblem::imu_data()
