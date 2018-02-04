@@ -15,7 +15,7 @@
  */
 
 #include "cartographer_grpc/handlers/add_odometry_data_handler.h"
-#include "cartographer_grpc/testing/add_data_handler_test.h"
+#include "cartographer_grpc/testing/handler_test.h"
 #include "cartographer_grpc/testing/test_helpers.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
@@ -51,8 +51,7 @@ const std::string kMessage = R"PROTO(
     }
   })PROTO";
 
-using AddOdometryDataHandlerTest =
-    testing::AddDataHandlerTest<AddOdometryDataHandler>;
+using AddOdometryDataHandlerTest = testing::HandlerTest<AddOdometryDataHandler>;
 
 TEST_F(AddOdometryDataHandlerTest, NoLocalSlamUploader) {
   proto::AddOdometryDataRequest request;

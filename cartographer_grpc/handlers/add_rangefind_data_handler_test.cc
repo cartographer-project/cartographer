@@ -15,7 +15,7 @@
  */
 
 #include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
-#include "cartographer_grpc/testing/add_data_handler_test.h"
+#include "cartographer_grpc/testing/handler_test.h"
 #include "cartographer_grpc/testing/test_helpers.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
@@ -50,7 +50,7 @@ const std::string kMessage = R"PROTO(
   })PROTO";
 
 using AddRangefinderDataHandlerTest =
-    testing::AddDataHandlerTest<AddRangefinderDataHandler>;
+    testing::HandlerTest<AddRangefinderDataHandler>;
 
 TEST_F(AddRangefinderDataHandlerTest, NoLocalSlamUploader) {
   proto::AddRangefinderDataRequest request;

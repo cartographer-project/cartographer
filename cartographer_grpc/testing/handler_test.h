@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_TESTING_ADD_DATA_HANDLER_TEST_H
-#define CARTOGRAPHER_GRPC_TESTING_ADD_DATA_HANDLER_TEST_H
+#ifndef CARTOGRAPHER_GRPC_TESTING_HANDLER_TEST_H
+#define CARTOGRAPHER_GRPC_TESTING_HANDLER_TEST_H
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/testing/rpc_handler_test_server.h"
@@ -29,9 +29,8 @@ namespace testing {
 using ::testing::Return;
 using ::testing::Test;
 
-template <typename HandlerType>
-class AddDataHandlerTest : public Test {
- public:
+template <typename HandlerType> class HandlerTest : public Test {
+public:
   void SetUp() override {
     test_server_ = cartographer::common::make_unique<
         framework::testing::RpcHandlerTestServer<HandlerType>>(
@@ -53,14 +52,14 @@ class AddDataHandlerTest : public Test {
         .WillRepeatedly(Return(mock_local_trajectory_uploader_.get()));
   }
 
- protected:
+protected:
   std::unique_ptr<framework::testing::RpcHandlerTestServer<HandlerType>>
       test_server_;
   MockMapBuilderContext *mock_map_builder_context_;
   std::unique_ptr<MockLocalTrajectoryUploader> mock_local_trajectory_uploader_;
 };
 
-}  // namespace testing
-}  // namespace cartographer_grpc
+} // namespace testing
+} // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_TESTING_ADD_DATA_HANDLER_TEST_H
+#endif // CARTOGRAPHER_GRPC_TESTING_HANDLER_TEST_H
