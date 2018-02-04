@@ -91,7 +91,7 @@ class RpcHandlerTestServer : public Server {
     return client_.response();
   }
 
-private:
+ private:
   using ClientWriter = ::grpc::internal::ClientWriterFactory<
       typename RpcHandlerType::RequestType>;
 

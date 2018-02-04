@@ -26,13 +26,13 @@ namespace cartographer_grpc {
 namespace handlers {
 namespace {
 
+using ::testing::_;
 using ::testing::ContainerEq;
 using ::testing::Eq;
 using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::Test;
 using ::testing::Truly;
-using ::testing::_;
 
 const std::string kMessage = R"PROTO(
     expected_sensor_ids {
@@ -71,7 +71,7 @@ const std::string kMessage = R"PROTO(
 
 class AddTrajectoryHandlerTest
     : public testing::HandlerTest<AddTrajectoryHandler> {
-public:
+ public:
   void SetUp() override {
     testing::HandlerTest<AddTrajectoryHandler>::SetUp();
     mock_map_builder_ =
@@ -83,7 +83,7 @@ public:
         .WillOnce(ReturnRef(*mock_map_builder_));
   }
 
-protected:
+ protected:
   std::set<cartographer::mapping::TrajectoryBuilderInterface::SensorId>
   ParseSensorIds(const proto::AddTrajectoryRequest &request) {
     std::set<cartographer::mapping::TrajectoryBuilderInterface::SensorId>
@@ -135,6 +135,6 @@ TEST_F(AddTrajectoryHandlerTest, WithLocalSlamUploader) {
   EXPECT_EQ(test_server_->response().trajectory_id(), 13);
 }
 
-} // namespace
-} // namespace handlers
-} // namespace cartographer_grpc
+}  // namespace
+}  // namespace handlers
+}  // namespace cartographer_grpc
