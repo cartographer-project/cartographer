@@ -129,12 +129,24 @@ int MapBuilder::AddTrajectoryBuilder(
         transform::ToRigid3(initial_trajectory_pose.relative_pose()),
         common::FromUniversal(initial_trajectory_pose.timestamp()));
   }
+  proto::TrajectoryBuilderOptionsWithSensorIds options_with_sensor_ids_proto;
+  for (const auto& sensor_id : expected_sensor_ids) {
+    *options_with_sensor_ids_proto.add_sensor_id() = ToProto(sensor_id);
+  }
+  *options_with_sensor_ids_proto.mutable_trajectory_builder_options() =
+      trajectory_options;
+  all_trajectory_builder_options_.push_back(options_with_sensor_ids_proto);
+  CHECK_EQ(trajectory_builders_.size(), all_trajectory_builder_options_.size());
   return trajectory_id;
 }
 
-int MapBuilder::AddTrajectoryForDeserialization() {
+int MapBuilder::AddTrajectoryForDeserialization(
+    const proto::TrajectoryBuilderOptionsWithSensorIds&
+        options_with_sensor_ids_proto) {
   const int trajectory_id = trajectory_builders_.size();
   trajectory_builders_.emplace_back();
+  all_trajectory_builder_options_.push_back(options_with_sensor_ids_proto);
+  CHECK_EQ(trajectory_builders_.size(), all_trajectory_builder_options_.size());
   return trajectory_id;
 }
 
@@ -171,6 +183,18 @@ std::string MapBuilder::SubmapToProto(
 void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   // We serialize the pose graph followed by all the data referenced in it.
   writer->WriteProto(pose_graph_->ToProto());
+  // Serialize trajectory builder options.
+  {
+    proto::AllTrajectoryBuilderOptions all_builder_options_proto;
+    for (const auto& options_with_sensor_ids :
+         all_trajectory_builder_options_) {
+      *all_builder_options_proto.add_options_with_sensor_ids() =
+          options_with_sensor_ids;
+    }
+    CHECK_EQ(all_trajectory_builder_options_.size(),
+             all_builder_options_proto.options_with_sensor_ids_size());
+    writer->WriteProto(all_builder_options_proto);
+  }
   // Next we serialize all submap data.
   {
     for (const auto& submap_id_data : pose_graph_->GetAllSubmapData()) {
@@ -245,12 +269,20 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
 }
 
 void MapBuilder::LoadMap(io::ProtoStreamReaderInterface* const reader) {
-  proto::PoseGraph pose_graph;
-  CHECK(reader->ReadProto(&pose_graph));
+  proto::PoseGraph pose_graph_proto;
+  CHECK(reader->ReadProto(&pose_graph_proto));
+  proto::AllTrajectoryBuilderOptions all_builder_options_proto;
+  CHECK(reader->ReadProto(&all_builder_options_proto));
+  CHECK_EQ(pose_graph_proto.trajectory_size(),
+           all_builder_options_proto.options_with_sensor_ids_size());
 
   std::map<int, int> trajectory_remapping;
-  for (auto& trajectory_proto : *pose_graph.mutable_trajectory()) {
-    const int new_trajectory_id = AddTrajectoryForDeserialization();
+  for (auto& trajectory_proto : *pose_graph_proto.mutable_trajectory()) {
+    const auto& options_with_sensor_ids_proto =
+        all_builder_options_proto.options_with_sensor_ids(
+            trajectory_proto.trajectory_id());
+    const int new_trajectory_id =
+        AddTrajectoryForDeserialization(options_with_sensor_ids_proto);
     CHECK(trajectory_remapping
               .emplace(trajectory_proto.trajectory_id(), new_trajectory_id)
               .second)
@@ -260,7 +292,8 @@ void MapBuilder::LoadMap(io::ProtoStreamReaderInterface* const reader) {
   }
 
   MapById<SubmapId, transform::Rigid3d> submap_poses;
-  for (const proto::Trajectory& trajectory_proto : pose_graph.trajectory()) {
+  for (const proto::Trajectory& trajectory_proto :
+       pose_graph_proto.trajectory()) {
     for (const proto::Trajectory::Submap& submap_proto :
          trajectory_proto.submap()) {
       submap_poses.Insert(SubmapId{trajectory_proto.trajectory_id(),
@@ -270,7 +303,8 @@ void MapBuilder::LoadMap(io::ProtoStreamReaderInterface* const reader) {
   }
 
   MapById<NodeId, transform::Rigid3d> node_poses;
-  for (const proto::Trajectory& trajectory_proto : pose_graph.trajectory()) {
+  for (const proto::Trajectory& trajectory_proto :
+       pose_graph_proto.trajectory()) {
     for (const proto::Trajectory::Node& node_proto : trajectory_proto.node()) {
       node_poses.Insert(
           NodeId{trajectory_proto.trajectory_id(), node_proto.node_index()},
@@ -305,7 +339,7 @@ void MapBuilder::LoadMap(io::ProtoStreamReaderInterface* const reader) {
 
   // Add information about which nodes belong to which submap.
   for (const proto::PoseGraph::Constraint& constraint_proto :
-       pose_graph.constraint()) {
+       pose_graph_proto.constraint()) {
     if (constraint_proto.tag() !=
         mapping::proto::PoseGraph::Constraint::INTRA_SUBMAP) {
       continue;
@@ -326,6 +360,11 @@ int MapBuilder::num_trajectory_builders() const {
 }
 
 PoseGraphInterface* MapBuilder::pose_graph() { return pose_graph_; }
+
+const std::vector<proto::TrajectoryBuilderOptionsWithSensorIds>&
+MapBuilder::GetAllTrajectoryBuilderOptions() const {
+  return all_trajectory_builder_options_;
+}
 
 }  // namespace mapping
 }  // namespace cartographer

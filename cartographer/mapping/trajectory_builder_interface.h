@@ -112,6 +112,10 @@ class TrajectoryBuilderInterface {
       std::unique_ptr<mapping::LocalSlamResultData> local_slam_result_data) = 0;
 };
 
+proto::SensorId ToProto(const TrajectoryBuilderInterface::SensorId& sensor_id);
+TrajectoryBuilderInterface::SensorId FromProto(
+    const proto::SensorId& sensor_id_proto);
+
 }  // namespace mapping
 }  // namespace cartographer
 
