@@ -27,6 +27,8 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
+#include "cartographer/mapping/pose_graph/ceres_pose.h"
+#include "cartographer/mapping_2d/pose_graph/landmark_cost_function.h"
 #include "cartographer/mapping_2d/pose_graph/spa_cost_function.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/transform.h"
@@ -39,6 +41,9 @@ namespace pose_graph {
 
 namespace {
 
+using ::cartographer::mapping::pose_graph::CeresPose;
+using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
+
 // Converts a pose into the 3 optimization variable format used for Ceres:
 // translation in x and y, followed by the rotation angle representing the
 // orientation.
@@ -50,6 +55,63 @@ std::array<double, 3> FromPose(const transform::Rigid2d& pose) {
 // Converts a pose as represented for Ceres back to an transform::Rigid2d pose.
 transform::Rigid2d ToPose(const std::array<double, 3>& values) {
   return transform::Rigid2d({values[0], values[1]}, values[2]);
+}
+
+// Selects a trajectory node closest in time to the landmark observation and
+// applies a relative transform from it.
+transform::Rigid3d GetInitialLandmarkPose(
+    const LandmarkNode::LandmarkObservation& observation,
+    const NodeData& prev_node, const NodeData& next_node) {
+  const NodeData& closest_node =
+      observation.time - prev_node.time < next_node.time - observation.time
+          ? prev_node
+          : next_node;
+  return transform::Embed3D(closest_node.pose) *
+         transform::Rigid3d::Rotation(closest_node.gravity_alignment) *
+         observation.landmark_to_tracking_transform;
+}
+
+void AddLandmarkCostFunctions(
+    const std::map<std::string, LandmarkNode>& landmark_nodes,
+    const mapping::MapById<mapping::NodeId, NodeData>& node_data,
+    mapping::MapById<mapping::NodeId, std::array<double, 3>>* C_nodes,
+    std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem) {
+  for (const auto& landmark_node : landmark_nodes) {
+    for (const auto& observation : landmark_node.second.landmark_observations) {
+      const std::string& landmark_id = landmark_node.first;
+      // Find the trajectory nodes before and after the landmark observation.
+      auto next =
+          node_data.lower_bound(observation.trajectory_id, observation.time);
+      // The landmark observation was made before the trajectory was created.
+      if (next == node_data.BeginOfTrajectory(observation.trajectory_id)) {
+        continue;
+      }
+      // The landmark observation was made, but the next trajectory node has
+      // not been added yet.
+      if (next == node_data.EndOfTrajectory(observation.trajectory_id)) {
+        continue;
+      }
+      auto prev = std::prev(next);
+      // Add parameter blocks for the landmark ID if they were not added before.
+      if (!C_landmarks->count(landmark_id)) {
+        const transform::Rigid3d starting_point =
+            landmark_node.second.global_landmark_pose.has_value()
+                ? landmark_node.second.global_landmark_pose.value()
+                : GetInitialLandmarkPose(observation, prev->data, next->data);
+        C_landmarks->emplace(
+            landmark_id,
+            CeresPose(starting_point, nullptr /* translation_parametrization */,
+                      common::make_unique<ceres::QuaternionParameterization>(),
+                      problem));
+      }
+      problem->AddResidualBlock(
+          LandmarkCostFunction::CreateAutoDiffCostFunction(
+              observation, prev->data, next->data),
+          nullptr /* loss function */, C_nodes->at(prev->id).data(),
+          C_nodes->at(next->id).data(), C_landmarks->at(landmark_id).rotation(),
+          C_landmarks->at(landmark_id).translation());
+    }
+  }
 }
 
 }  // namespace
@@ -112,8 +174,10 @@ void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
       max_num_iterations);
 }
 
-void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
-                                const std::set<int>& frozen_trajectories) {
+void OptimizationProblem::Solve(
+    const std::vector<Constraint>& constraints,
+    const std::set<int>& frozen_trajectories,
+    const std::map<std::string, LandmarkNode>& landmark_nodes) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
@@ -126,6 +190,7 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
   // TODO(hrapp): Move ceres data into SubmapData.
   mapping::MapById<mapping::SubmapId, std::array<double, 3>> C_submaps;
   mapping::MapById<mapping::NodeId, std::array<double, 3>> C_nodes;
+  std::map<std::string, CeresPose> C_landmarks;
   bool first_submap = true;
   for (const auto& submap_id_data : submap_data_) {
     const bool frozen =
@@ -160,6 +225,9 @@ void OptimizationProblem::Solve(const std::vector<Constraint>& constraints,
         C_submaps.at(constraint.submap_id).data(),
         C_nodes.at(constraint.node_id).data());
   }
+  // Add cost  functions for landmarks.
+  AddLandmarkCostFunctions(landmark_nodes, node_data_, &C_nodes, &C_landmarks,
+                           &problem);
   // Add penalties for violating odometry or changes between consecutive nodes
   // if odometry is not available.
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
@@ -220,6 +288,11 @@ OptimizationProblem::node_data() const {
 const mapping::MapById<mapping::SubmapId, SubmapData>&
 OptimizationProblem::submap_data() const {
   return submap_data_;
+}
+
+const std::map<std::string, transform::Rigid2d>&
+OptimizationProblem::landmark_data() const {
+  return landmark_data_;
 }
 
 const sensor::MapByTime<sensor::ImuData>& OptimizationProblem::imu_data()

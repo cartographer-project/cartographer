@@ -550,7 +550,8 @@ void PoseGraph::RunOptimization() {
   // frozen_trajectories_ when executing the Solve. Solve is time consuming,
   // so not taking the mutex before Solve to avoid blocking foreground
   // processing.
-  optimization_problem_.Solve(constraints_, frozen_trajectories_);
+  optimization_problem_.Solve(constraints_, frozen_trajectories_,
+                              landmark_nodes_);
   common::MutexLocker locker(&mutex_);
 
   const auto& submap_data = optimization_problem_.submap_data();
