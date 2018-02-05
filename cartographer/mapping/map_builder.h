@@ -50,7 +50,9 @@ class MapBuilder : public MapBuilderInterface {
       const proto::TrajectoryBuilderOptions& trajectory_options,
       LocalSlamResultCallback local_slam_result_callback) override;
 
-  int AddTrajectoryForDeserialization() override;
+  int AddTrajectoryForDeserialization(
+      const proto::TrajectoryBuilderOptionsWithSensorIds&
+          options_with_sensor_ids_proto) override;
 
   mapping::TrajectoryBuilderInterface* GetTrajectoryBuilder(
       int trajectory_id) const override;
@@ -68,6 +70,9 @@ class MapBuilder : public MapBuilderInterface {
 
   mapping::PoseGraphInterface* pose_graph() override;
 
+  const std::vector<proto::TrajectoryBuilderOptionsWithSensorIds>&
+  GetAllTrajectoryBuilderOptions() const override;
+
  private:
   const proto::MapBuilderOptions options_;
   common::ThreadPool thread_pool_;
@@ -79,6 +84,8 @@ class MapBuilder : public MapBuilderInterface {
   std::unique_ptr<sensor::CollatorInterface> sensor_collator_;
   std::vector<std::unique_ptr<mapping::TrajectoryBuilderInterface>>
       trajectory_builders_;
+  std::vector<proto::TrajectoryBuilderOptionsWithSensorIds>
+      all_trajectory_builder_options_;
 };
 
 }  // namespace mapping

@@ -34,3 +34,26 @@ message TrajectoryBuilderOptions {
   bool pure_localization = 3;
   InitialTrajectoryPose initial_trajectory_pose = 4;
 }
+
+message SensorId {
+  enum SensorType {
+    RANGE = 0;
+    IMU = 1;
+    ODOMETRY = 2;
+    FIXED_FRAME_POSE = 3;
+    LANDMARK = 4;
+    LOCAL_SLAM_RESULT = 5;
+  }
+
+  SensorType type = 1;
+  string id = 2;
+}
+
+message TrajectoryBuilderOptionsWithSensorIds {
+  repeated SensorId sensor_id = 1;
+  TrajectoryBuilderOptions trajectory_builder_options = 2;
+}
+
+message AllTrajectoryBuilderOptions {
+  repeated TrajectoryBuilderOptionsWithSensorIds options_with_sensor_ids = 1;
+}
