@@ -14,8 +14,6 @@
 
 # Top-level proto and C++ targets for Cartographer's gRPC server.
 
-load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
-
 licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//visibility:public"])
@@ -25,9 +23,6 @@ proto_library(
     srcs = glob(
         [
             "**/*.proto",
-        ],
-        exclude = [
-            "**/*_service.proto",
         ],
     ),
     deps = [
@@ -53,20 +48,6 @@ proto_library(
     ],
 )
 
-# TODO(rodrigoq): this doesn't work when it is in an external repository. If
-# you want to use it, you can vendor cartographer in your main workspace.
-cc_grpc_library(
-    name = "proto_map_builder_service_grpc_cc",
-    srcs = ["proto/map_builder_service.proto"],
-    generate_mock = False,
-    proto_only = False,
-    use_external = True,
-    well_known_protos = True,
-    deps = [
-        ":cc_protos",
-    ],
-)
-
 cc_library(
     name = "cartographer_grpc",
     srcs = glob(
@@ -85,7 +66,6 @@ cc_library(
     includes = ["."],
     deps = [
         ":cc_protos",
-        ":proto_map_builder_service_grpc_cc",
         "//cartographer",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_glog//:glog",
@@ -103,26 +83,12 @@ cc_binary(
     ],
 )
 
-# This service is only used by the tests.
-cc_grpc_library(
-    name = "framework_proto_math_service_grpc_cc",
-    srcs = ["framework/proto/math_service.proto"],
-    generate_mock = False,
-    proto_only = False,
-    use_external = True,
-    well_known_protos = True,
-    deps = [
-        ":cc_protos",
-    ],
-)
-
 [cc_test(
     name = src.replace("/", "_").replace(".cc", ""),
     srcs = [src],
     data = ["//:configuration_files"],
     deps = [
         ":cartographer_grpc",
-        ":framework_proto_math_service_grpc_cc",
         "@com_google_googletest//:gtest_main",
     ],
 ) for src in glob(
