@@ -15,7 +15,7 @@
  */
 
 #include "cartographer_grpc/handlers/add_fixed_frame_pose_data_handler.h"
-#include "cartographer_grpc/testing/add_data_handler_test.h"
+#include "cartographer_grpc/testing/handler_test.h"
 #include "cartographer_grpc/testing/test_helpers.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
@@ -52,7 +52,7 @@ const std::string kMessage = R"PROTO(
   })PROTO";
 
 using AddFixedFramePoseDataHandlerTest =
-    testing::AddDataHandlerTest<AddFixedFramePoseDataHandler>;
+    testing::HandlerTest<AddFixedFramePoseDataHandler>;
 
 TEST_F(AddFixedFramePoseDataHandlerTest, NoLocalSlamUploader) {
   proto::AddFixedFramePoseDataRequest request;

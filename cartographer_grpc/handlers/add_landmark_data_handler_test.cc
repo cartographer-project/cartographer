@@ -15,7 +15,7 @@
  */
 
 #include "cartographer_grpc/handlers/add_landmark_data_handler.h"
-#include "cartographer_grpc/testing/add_data_handler_test.h"
+#include "cartographer_grpc/testing/handler_test.h"
 #include "cartographer_grpc/testing/test_helpers.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
@@ -56,8 +56,7 @@ const std::string kMessage = R"PROTO(
 	}
   })PROTO";
 
-using AddLandmarkDataHandlerTest =
-    testing::AddDataHandlerTest<AddLandmarkDataHandler>;
+using AddLandmarkDataHandlerTest = testing::HandlerTest<AddLandmarkDataHandler>;
 
 TEST_F(AddLandmarkDataHandlerTest, NoLocalSlamUploader) {
   proto::AddLandmarkDataRequest request;

@@ -87,6 +87,10 @@ class RpcHandlerTestServer : public Server {
     WaitForHandlerCompletion(RpcHandlerWrapper<RpcHandlerType>::ON_FINISH);
   }
 
+  const typename RpcHandlerType::ResponseType &response() {
+    return client_.response();
+  }
+
  private:
   using ClientWriter = ::grpc::internal::ClientWriterFactory<
       typename RpcHandlerType::RequestType>;

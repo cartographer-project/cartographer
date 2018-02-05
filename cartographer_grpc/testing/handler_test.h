@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_TESTING_ADD_DATA_HANDLER_TEST_H
-#define CARTOGRAPHER_GRPC_TESTING_ADD_DATA_HANDLER_TEST_H
+#ifndef CARTOGRAPHER_GRPC_TESTING_HANDLER_TEST_H
+#define CARTOGRAPHER_GRPC_TESTING_HANDLER_TEST_H
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer_grpc/framework/testing/rpc_handler_test_server.h"
@@ -30,7 +30,7 @@ using ::testing::Return;
 using ::testing::Test;
 
 template <typename HandlerType>
-class AddDataHandlerTest : public Test {
+class HandlerTest : public Test {
  public:
   void SetUp() override {
     test_server_ = cartographer::common::make_unique<
@@ -63,4 +63,4 @@ class AddDataHandlerTest : public Test {
 }  // namespace testing
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_TESTING_ADD_DATA_HANDLER_TEST_H
+#endif  // CARTOGRAPHER_GRPC_TESTING_HANDLER_TEST_H
