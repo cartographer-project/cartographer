@@ -71,20 +71,20 @@ How-To
 
 Given a serialized state of a fully optimized trajectory (here: ``optimized.pbstream`` file), the ground truth relations can be generated with the following command:
 
-.. code-block::
+.. code-block:: bash
   
   cd <build>  # (directory where Cartographer's binaries are located)
   ./cartographer_autogenerate_ground_truth -pose_graph_filename optimized.pbstream -output_filename relations.pbstream -min_covered_distance 100 -outlier_threshold_meters 0.15 -outlier_threshold_radians 0.02
 
 Then, a non-optimized trajectory ``test.pbstream`` can be evaluated against the generated relations with:
 
-.. code-block::
+.. code-block:: bash
 
   ./cartographer_compute_relations_metrics -relations_filename relations.pbstream -pose_graph_filename test.pbstream
 
 This will produce output in this form:
 
-.. code-block::
+.. code-block:: none
 
   Abs translational error 0.01944 +/- 0.01819 m
   Sqr translational error 0.00071 +/- 0.00189 m^2
