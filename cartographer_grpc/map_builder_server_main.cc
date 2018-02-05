@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+#include "cartographer/metrics/register.h"
 #include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/map_builder_server_options.h"
+#include "cartographer_grpc/metrics/prometheus/family_factory.h"
 #include "gflags/gflags.h"
 #include "glog/logging.h"
+#include "prometheus/exposer.h"
 
 DEFINE_string(configuration_directory, "",
               "First directory in which configuration files are searched, "
@@ -31,6 +34,11 @@ namespace cartographer_grpc {
 
 void Run(const std::string& configuration_directory,
          const std::string& configuration_basename) {
+  metrics::prometheus::FamilyFactory registry;
+  cartographer::metrics::RegisterAllMetrics(&registry);
+  ::prometheus::Exposer exposer("0.0.0.0:9100");
+  exposer.RegisterCollectable(registry.GetCollectable());
+
   proto::MapBuilderServerOptions map_builder_server_options =
       LoadMapBuilderServerOptions(configuration_directory,
                                   configuration_basename);
