@@ -87,7 +87,7 @@ class RpcHandlerTestServer : public Server {
     WaitForHandlerCompletion(RpcHandlerWrapper<RpcHandlerType>::ON_FINISH);
   }
 
-  const typename RpcHandlerType::ResponseType &response() {
+  const typename RpcHandlerType::ResponseType& response() {
     return client_.response();
   }
 
