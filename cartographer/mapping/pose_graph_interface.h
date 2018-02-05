@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "cartographer/common/optional.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/submaps.h"
 
@@ -58,7 +59,7 @@ class PoseGraphInterface {
       double rotation_weight;
     };
     std::vector<LandmarkObservation> landmark_observations;
-    transform::Rigid3d global_landmark_pose;
+    common::optional<transform::Rigid3d> global_landmark_pose;
   };
 
   struct SubmapPose {

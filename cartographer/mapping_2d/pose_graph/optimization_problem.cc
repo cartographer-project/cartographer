@@ -57,6 +57,20 @@ transform::Rigid2d ToPose(const std::array<double, 3>& values) {
   return transform::Rigid2d({values[0], values[1]}, values[2]);
 }
 
+// Selects a trajectory node closest in time to the landmark observation and
+// applies a relative transform from it.
+transform::Rigid3d GetInitialLandmarkPose(
+    const LandmarkNode::LandmarkObservation& observation,
+    const NodeData& prev_node, const NodeData& next_node) {
+  const NodeData& closest_node =
+      observation.time - prev_node.time < next_node.time - observation.time
+          ? prev_node
+          : next_node;
+  return transform::Embed3D(closest_node.pose) *
+         transform::Rigid3d::Rotation(closest_node.gravity_alignment) *
+         observation.landmark_to_tracking_transform;
+}
+
 void AddLandmarkCostFunctions(
     const std::map<std::string, LandmarkNode>& landmark_nodes,
     const mapping::MapById<mapping::NodeId, NodeData>& node_data,
@@ -66,21 +80,27 @@ void AddLandmarkCostFunctions(
     for (const auto& observation : landmark_node.second.landmark_observations) {
       const std::string& landmark_id = landmark_node.first;
       // Find the trajectory nodes before and after the landmark observation.
-      auto prev =
+      auto next =
           node_data.lower_bound(observation.trajectory_id, observation.time);
-      if (prev == node_data.BeginOfTrajectory(observation.trajectory_id)) {
+      // The landmark observation was made before the trajectory was created.
+      if (next == node_data.BeginOfTrajectory(observation.trajectory_id)) {
         continue;
       }
-      auto next = std::next(prev);
+      // The landmark observation was made, but the next trajectory node has
+      // not been added yet.
       if (next == node_data.EndOfTrajectory(observation.trajectory_id)) {
         continue;
       }
+      auto prev = std::prev(next);
       // Add parameter blocks for the landmark ID if they were not added before.
       if (!C_landmarks->count(landmark_id)) {
+        const transform::Rigid3d starting_point =
+            landmark_node.second.global_landmark_pose.has_value()
+                ? landmark_node.second.global_landmark_pose.value()
+                : GetInitialLandmarkPose(observation, prev->data, next->data);
         C_landmarks->emplace(
             landmark_id,
-            CeresPose(landmark_node.second.global_landmark_pose,
-                      nullptr /* translation_parametrization */,
+            CeresPose(starting_point, nullptr /* translation_parametrization */,
                       common::make_unique<ceres::QuaternionParameterization>(),
                       problem));
       }
