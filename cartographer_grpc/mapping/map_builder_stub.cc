@@ -59,7 +59,9 @@ int MapBuilderStub::AddTrajectoryBuilder(
   return client.response().trajectory_id();
 }
 
-int MapBuilderStub::AddTrajectoryForDeserialization() {
+int MapBuilderStub::AddTrajectoryForDeserialization(
+    const cartographer::mapping::proto::TrajectoryBuilderOptionsWithSensorIds&
+        options_with_sensor_ids_proto) {
   LOG(FATAL) << "Not implemented";
 }
 
@@ -126,6 +128,12 @@ int MapBuilderStub::num_trajectory_builders() const {
 
 cartographer::mapping::PoseGraphInterface* MapBuilderStub::pose_graph() {
   return &pose_graph_stub_;
+}
+
+const std::vector<
+    cartographer::mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
+MapBuilderStub::GetAllTrajectoryBuilderOptions() const {
+  LOG(FATAL) << "Not implemented";
 }
 
 }  // namespace mapping
