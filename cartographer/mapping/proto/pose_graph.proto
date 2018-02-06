@@ -51,6 +51,12 @@ message PoseGraph {
     Tag tag = 5;
   }
 
+  message Landmark {
+    string landmark_id = 1;
+    transform.proto.Rigid3d global_pose = 2;
+  }
+
   repeated Constraint constraint = 2;
   repeated Trajectory trajectory = 4;
+  repeated Landmark landmarks = 5;
 }
