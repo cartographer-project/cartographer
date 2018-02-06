@@ -116,6 +116,8 @@ class PoseGraph : public mapping::PoseGraph {
   GetTrajectoryNodes() override EXCLUDES(mutex_);
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose>
   GetTrajectoryNodePoses() override EXCLUDES(mutex_);
+  std::map<std::string, transform::Rigid3d> GetLandmarkPoses() override
+      EXCLUDES(mutex_);
   sensor::MapByTime<sensor::ImuData> GetImuData() override EXCLUDES(mutex_);
   sensor::MapByTime<sensor::OdometryData> GetOdometryData() override
       EXCLUDES(mutex_);

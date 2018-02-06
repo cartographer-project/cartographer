@@ -26,6 +26,7 @@
 #include "cartographer_grpc/handlers/finish_trajectory_handler.h"
 #include "cartographer_grpc/handlers/get_all_submap_poses.h"
 #include "cartographer_grpc/handlers/get_constraints_handler.h"
+#include "cartographer_grpc/handlers/get_landmark_poses_handler.h"
 #include "cartographer_grpc/handlers/get_local_to_global_transform_handler.h"
 #include "cartographer_grpc/handlers/get_submap_handler.h"
 #include "cartographer_grpc/handlers/get_trajectory_node_poses_handler.h"
@@ -70,6 +71,7 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler>();
   server_builder.RegisterHandler<handlers::GetSubmapHandler>();
   server_builder.RegisterHandler<handlers::GetTrajectoryNodePosesHandler>();
+  server_builder.RegisterHandler<handlers::GetLandmarkPosesHandler>();
   server_builder.RegisterHandler<handlers::GetAllSubmapPosesHandler>();
   server_builder.RegisterHandler<handlers::GetLocalToGlobalTransformHandler>();
   server_builder.RegisterHandler<handlers::GetConstraintsHandler>();

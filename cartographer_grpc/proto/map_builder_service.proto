@@ -124,6 +124,15 @@ message GetTrajectoryNodePosesResponse {
   repeated TrajectoryNodePose node_poses = 1;
 }
 
+message LandmarkPose {
+  string landmark_id = 1;
+  cartographer.transform.proto.Rigid3d global_pose = 2;
+}
+
+message GetLandmarkPosesResponse {
+  repeated LandmarkPose landmark_poses = 1;
+}
+
 message SubmapPose {
   cartographer.mapping.proto.SubmapId submap_id = 1;
   int32 submap_version = 2;
@@ -201,6 +210,10 @@ service MapBuilderService {
   // Returns the current optimized trajectory poses.
   rpc GetTrajectoryNodePoses(google.protobuf.Empty)
       returns (GetTrajectoryNodePosesResponse);
+
+  // Returns the current optimized landmark poses.
+  rpc GetLandmarkPoses(google.protobuf.Empty)
+      returns (GetLandmarkPosesResponse);
 
   // Returns the current optimized submap poses.
   rpc GetAllSubmapPoses(google.protobuf.Empty)

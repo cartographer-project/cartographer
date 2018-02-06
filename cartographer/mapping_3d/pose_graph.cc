@@ -635,6 +635,16 @@ PoseGraph::GetTrajectoryNodePoses() {
   return node_poses;
 }
 
+std::map<std::string, transform::Rigid3d> PoseGraph::GetLandmarkPoses() {
+  std::map<std::string, transform::Rigid3d> landmark_poses;
+  for (const auto& landmark : landmark_nodes_) {
+    if (!landmark.second.global_landmark_pose.has_value()) continue;
+    landmark_poses[landmark.first] =
+        landmark.second.global_landmark_pose.value();
+  }
+  return landmark_poses;
+}
+
 sensor::MapByTime<sensor::ImuData> PoseGraph::GetImuData() {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_.imu_data();
