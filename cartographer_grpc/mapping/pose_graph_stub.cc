@@ -19,6 +19,7 @@
 #include "cartographer_grpc/framework/client.h"
 #include "cartographer_grpc/handlers/get_all_submap_poses.h"
 #include "cartographer_grpc/handlers/get_constraints_handler.h"
+#include "cartographer_grpc/handlers/get_landmark_poses_handler.h"
 #include "cartographer_grpc/handlers/get_local_to_global_transform_handler.h"
 #include "cartographer_grpc/handlers/get_trajectory_node_poses_handler.h"
 #include "cartographer_grpc/handlers/run_final_optimization_handler.h"
@@ -101,6 +102,19 @@ PoseGraphStub::GetTrajectoryNodePoses() {
             cartographer::transform::ToRigid3(node_pose.global_pose())});
   }
   return node_poses;
+}
+
+std::map<std::string, cartographer::transform::Rigid3d>
+PoseGraphStub::GetLandmarkPoses() {
+  google::protobuf::Empty request;
+  framework::Client<handlers::GetLandmarkPosesHandler> client(client_channel_);
+  CHECK(client.Write(request));
+  std::map<std::string, cartographer::transform::Rigid3d> landmark_poses;
+  for (const auto& landmark_pose : client.response().landmark_poses()) {
+    landmark_poses[landmark_pose.landmark_id()] =
+        cartographer::transform::ToRigid3(landmark_pose.global_pose());
+  }
+  return landmark_poses;
 }
 
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {

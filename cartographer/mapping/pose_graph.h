@@ -37,7 +37,6 @@
 #include "cartographer/sensor/landmark_data.h"
 #include "cartographer/sensor/map_by_time.h"
 #include "cartographer/sensor/odometry_data.h"
-#include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping {
