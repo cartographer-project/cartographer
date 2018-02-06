@@ -37,15 +37,10 @@ const std::string kMessage = R"PROTO(
   timed_point_cloud_data {
     timestamp: 2
     origin {
-      x: 3.f
-      y: 4.f
-      z: 5.f
+      x: 3.f y: 4.f z: 5.f
     }
     point_data {
-      x: 6.f
-      y: 7.f
-      z: 8.f
-      t: 9.f
+      x: 6.f y: 7.f z: 8.f t: 9.f
     }
   })PROTO";
 

@@ -38,7 +38,7 @@ const std::string kMessage = R"PROTO(
         x: 1 y: 2 z: 3
       }
       rotation {
-        w:1 x: 0 y: 0 z: 0
+        w: 1 x: 0 y: 0 z: 0
       }
     }
   }
@@ -49,7 +49,7 @@ const std::string kMessage = R"PROTO(
         x: 3 y: 2 z: 1
       }
       rotation {
-        w:0 x: 1 y: 0 z: 0
+        w: 0 x: 1 y: 0 z: 0
       }
     }
   }
