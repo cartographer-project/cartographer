@@ -609,6 +609,7 @@ PoseGraph::GetTrajectoryNodePoses() {
 std::map<std::string, transform::Rigid3d> PoseGraph::GetLandmarkPoses() {
   std::map<std::string, transform::Rigid3d> landmark_poses;
   for (const auto& landmark : landmark_nodes_) {
+    // Landmark without value has not been optimized yet.
     if (!landmark.second.global_landmark_pose.has_value()) continue;
     landmark_poses[landmark.first] =
         landmark.second.global_landmark_pose.value();
