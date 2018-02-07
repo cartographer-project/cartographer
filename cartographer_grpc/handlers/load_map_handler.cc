@@ -31,6 +31,9 @@ void LoadMapHandler::OnRequest(const proto::LoadMapRequest& request) {
     case proto::LoadMapRequest::kPoseGraph:
       reader_.AddProto(request.pose_graph());
       break;
+    case proto::LoadMapRequest::kAllTrajectoryBuilderOptions:
+      reader_.AddProto(request.all_trajectory_builder_options());
+      break;
     case proto::LoadMapRequest::kSerializedData:
       reader_.AddProto(request.serialized_data());
       break;

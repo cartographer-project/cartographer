@@ -40,6 +40,9 @@ void WriteMapHandler::OnRequest(const google::protobuf::Empty& request) {
         if (proto->GetTypeName() == "cartographer.mapping.proto.PoseGraph") {
           response->mutable_pose_graph()->CopyFrom(*proto);
         } else if (proto->GetTypeName() ==
+                   "cartographer.mapping.proto.AllTrajectoryBuilderOptions") {
+          response->mutable_all_trajectory_builder_options()->CopyFrom(*proto);
+        } else if (proto->GetTypeName() ==
                    "cartographer.mapping.proto.SerializedData") {
           response->mutable_serialized_data()->CopyFrom(*proto);
         } else {

@@ -97,7 +97,20 @@ void MapBuilderStub::SerializeState(
   CHECK(client.Write(request));
   proto::WriteMapResponse response;
   while (client.Read(&response)) {
-    writer->WriteProto(response);
+    // writer->WriteProto(response);
+    switch (response.map_chunk_case()) {
+      case proto::WriteMapResponse::kPoseGraph:
+        writer->WriteProto(response.pose_graph());
+        break;
+      case proto::WriteMapResponse::kAllTrajectoryBuilderOptions:
+        writer->WriteProto(response.all_trajectory_builder_options());
+        break;
+      case proto::WriteMapResponse::kSerializedData:
+        writer->WriteProto(response.serialized_data());
+        break;
+      default:
+        LOG(FATAL) << "Unhandled message type";
+    }
   }
   CHECK(writer->Close());
 }
@@ -109,6 +122,7 @@ void MapBuilderStub::LoadMap(
   {
     proto::LoadMapRequest request;
     CHECK(reader->ReadProto(request.mutable_pose_graph()));
+    CHECK(reader->ReadProto(request.mutable_all_trajectory_builder_options()));
     CHECK(client.Write(request));
   }
   // Multiple requests with SerializedData are sent after.
