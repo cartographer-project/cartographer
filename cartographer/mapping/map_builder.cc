@@ -278,6 +278,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
       writer->WriteProto(proto);
     }
   }
+  // TODO(pifon2a, ojura): serialize landmarks
 }
 
 void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
@@ -379,6 +380,7 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
             sensor::FromProto(
                 proto.fixed_frame_pose_data().fixed_frame_pose_data()));
       }
+      // TODO(pifon2a, ojura): deserialize landmarks
     }
   }
 
