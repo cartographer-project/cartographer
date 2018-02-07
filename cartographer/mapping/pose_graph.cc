@@ -154,6 +154,13 @@ proto::PoseGraph PoseGraph::ToProto() {
     *proto.add_constraint() = cartographer::mapping::ToProto(constraint);
   }
 
+  auto landmarks_copy = GetLandmarkPoses();
+  proto.mutable_landmarks()->Reserve(landmarks_copy.size());
+  for (const auto& id_pose : landmarks_copy) {
+    auto* landmark_proto = proto.add_landmarks();
+    landmark_proto->set_landmark_id(id_pose.first);
+    *landmark_proto->mutable_global_pose() = transform::ToProto(id_pose.second);
+  }
   return proto;
 }
 
