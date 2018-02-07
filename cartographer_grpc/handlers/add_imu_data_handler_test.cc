@@ -37,14 +37,10 @@ const std::string kMessage = R"PROTO(
   imu_data {
     timestamp: 2
     linear_acceleration {
-      x: 3
-      y: 4
-      z: 5
+      x: 3 y: 4 z: 5
     }
     angular_velocity {
-      x: 6
-      y: 7
-      z: 8
+      x: 6 y: 7 z: 8
     }
   })PROTO";
 

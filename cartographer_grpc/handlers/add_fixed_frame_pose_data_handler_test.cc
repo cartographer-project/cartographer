@@ -38,15 +38,10 @@ const std::string kMessage = R"PROTO(
     timestamp: 2
     pose {
       translation {
-        x: 3
-        y: 4
-        z: 5
+        x: 3 y: 4 z: 5
       }
       rotation {
-        x: 6
-        y: 7
-        z: 8
-        w: 9
+        w: 6 x: 7 y: 8 z: 9
       }
     }
   })PROTO";
