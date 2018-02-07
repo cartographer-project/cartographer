@@ -52,15 +52,10 @@ const std::string kMessage = R"PROTO(
       initial_trajectory_pose {
         relative_pose {
           translation {
-            x: 1
-            y: 2
-            z: 3
+            x: 1 y: 2 z: 3
           }
           rotation {
-            x: 4
-            y: 5
-            z: 6
-            w: 7
+            w: 4 x: 5 y: 6 z: 7
           }
         }
         to_trajectory_id: 8
