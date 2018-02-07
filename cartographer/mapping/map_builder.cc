@@ -372,6 +372,13 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
             trajectory_remapping.at(proto.odometry_data().trajectory_id()),
             sensor::FromProto(proto.odometry_data().odometry_data()));
       }
+      if (proto.has_fixed_frame_pose_data()) {
+        pose_graph_->AddFixedFramePoseData(
+            trajectory_remapping.at(
+                proto.fixed_frame_pose_data().trajectory_id()),
+            sensor::FromProto(
+                proto.fixed_frame_pose_data().fixed_frame_pose_data()));
+      }
     }
   }
 
