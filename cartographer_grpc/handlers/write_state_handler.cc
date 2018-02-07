@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer_grpc/handlers/write_map_handler.h"
+#include "cartographer_grpc/handlers/write_state_handler.h"
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/io/in_memory_proto_stream.h"
@@ -26,7 +26,7 @@
 namespace cartographer_grpc {
 namespace handlers {
 
-void WriteMapHandler::OnRequest(const google::protobuf::Empty& request) {
+void WriteStateHandler::OnRequest(const google::protobuf::Empty& request) {
   auto writer = GetWriter();
   cartographer::io::ForwardingProtoStreamWriter proto_stream_writer(
       [writer](const google::protobuf::Message* proto) {
@@ -36,7 +36,7 @@ void WriteMapHandler::OnRequest(const google::protobuf::Empty& request) {
         }
 
         auto response =
-            cartographer::common::make_unique<proto::WriteMapResponse>();
+            cartographer::common::make_unique<proto::WriteStateResponse>();
         if (proto->GetTypeName() == "cartographer.mapping.proto.PoseGraph") {
           response->mutable_pose_graph()->CopyFrom(*proto);
         } else if (proto->GetTypeName() ==

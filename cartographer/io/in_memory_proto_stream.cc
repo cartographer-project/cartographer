@@ -30,8 +30,8 @@ bool ForwardingProtoStreamWriter::Close() { return writer_callback_(nullptr); }
 
 bool InMemoryProtoStreamReader::ReadProto(google::protobuf::Message* proto) {
   if (eof()) return false;
-  proto->CopyFrom(*map_chunks_.front());
-  map_chunks_.pop();
+  proto->CopyFrom(*state_chunks_.front());
+  state_chunks_.pop();
   return true;
 }
 
