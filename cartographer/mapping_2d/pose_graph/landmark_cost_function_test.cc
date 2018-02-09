@@ -49,17 +49,21 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
       },
       prev_node, next_node);
 
-  std::array<double, 3> prev_node_pose{{2., 0., 0.}};
-  std::array<double, 3> next_node_pose{{0., 2., 0.}};
-  std::array<double, 4> landmark_rotation{{1., 0., 0., 0.}};
-  std::array<double, 3> landmark_translation{{1., 2., 1.}};
-  const double* parameter_blocks[] = {
-      prev_node_pose.data(), next_node_pose.data(), landmark_rotation.data(),
-      landmark_translation.data()};
+  const std::array<double, 3> prev_node_pose{{2., 0., 0.}};
+  const std::array<double, 3> next_node_pose{{0., 2., 0.}};
+  const std::array<double, 4> landmark_rotation{{1., 0., 0., 0.}};
+  const std::array<double, 3> landmark_translation{{1., 2., 1.}};
+  const std::array<const double*, 4> parameter_blocks{
+      {prev_node_pose.data(), next_node_pose.data(), landmark_rotation.data(),
+       landmark_translation.data()}};
 
   std::array<double, 6> residuals;
-  cost_function->Evaluate(parameter_blocks, residuals.data(), nullptr);
+  std::array<std::array<double, 13>, 6> jacobians;
+  std::array<double*, 6> jacobians_ptrs;
+  for (int i = 0; i < 6; ++i) jacobians_ptrs[i] = jacobians[i].data();
 
+  cost_function->Evaluate(parameter_blocks.data(), residuals.data(),
+                          jacobians_ptrs.data());
   EXPECT_THAT(residuals, ElementsAre(DoubleEq(1.), DoubleEq(0.), DoubleEq(0.),
                                      DoubleEq(0.), DoubleEq(0.), DoubleEq(0.)));
 }
