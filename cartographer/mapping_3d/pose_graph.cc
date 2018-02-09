@@ -608,6 +608,9 @@ void PoseGraph::RunOptimization() {
           old_global_to_new_global * mutable_trajectory_node.global_pose;
     }
   }
+  for (const auto& landmark : optimization_problem_.landmark_data()) {
+    landmark_nodes_[landmark.first].global_landmark_pose = landmark.second;
+  }
   global_submap_poses_ = submap_data;
 
   // Log the histograms for the pose residuals.
