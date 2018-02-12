@@ -53,8 +53,8 @@ install(DIRECTORY configuration_files DESTINATION share/cartographer/)
 
 install(DIRECTORY cmake DESTINATION share/cartographer/)
 
-file(GLOB_RECURSE ALL_LIBRARY_HDRS "cartographer*/*.h")
-file(GLOB_RECURSE ALL_LIBRARY_SRCS "cartographer*/*.cc")
+file(GLOB_RECURSE ALL_LIBRARY_HDRS "cartographer*/*.h" "bazel/*.h")
+file(GLOB_RECURSE ALL_LIBRARY_SRCS "cartographer*/*.cc" "bazel/*.cc")
 file(GLOB_RECURSE ALL_TESTS "cartographer*/*_test.cc")
 file(GLOB_RECURSE ALL_EXECUTABLES "cartographer*/*_main.cc")
 list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_TESTS})
