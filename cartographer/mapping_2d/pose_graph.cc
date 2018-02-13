@@ -80,8 +80,8 @@ std::vector<mapping::SubmapId> PoseGraph::InitializeGlobalSubmapPoses(
   CHECK(submap_data.BeginOfTrajectory(trajectory_id) != end_it);
   const mapping::SubmapId last_submap_id = std::prev(end_it)->id;
   if (submap_data_.at(last_submap_id).submap == insertion_submaps.front()) {
-    // In this case, 'last_submap_id' is the ID of 'insertions_submaps.front()'
-    // and 'insertions_submaps.back()' is new.
+    // In this case, 'last_submap_id' is the ID of
+    // 'insertions_submaps.front()' and 'insertions_submaps.back()' is new.
     const auto& first_submap_pose = submap_data.at(last_submap_id).global_pose;
     optimization_problem_.AddSubmap(
         trajectory_id,
@@ -583,6 +583,9 @@ void PoseGraph::RunOptimization() {
       mutable_trajectory_node.global_pose =
           old_global_to_new_global * mutable_trajectory_node.global_pose;
     }
+  }
+  for (const auto& landmark : optimization_problem_.landmark_data()) {
+    landmark_nodes_[landmark.first].global_landmark_pose = landmark.second;
   }
   global_submap_poses_ = submap_data;
 }

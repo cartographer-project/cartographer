@@ -278,7 +278,10 @@ void OptimizationProblem::Solve(
   for (const auto& C_node_id_data : C_nodes) {
     node_data_.at(C_node_id_data.id).pose = ToPose(C_node_id_data.data);
   }
-}  // namespace pose_graph
+  for (const auto& C_landmark : C_landmarks) {
+    landmark_data_[C_landmark.first] = C_landmark.second.ToRigid();
+  }
+}
 
 const mapping::MapById<mapping::NodeId, NodeData>&
 OptimizationProblem::node_data() const {
@@ -290,7 +293,7 @@ OptimizationProblem::submap_data() const {
   return submap_data_;
 }
 
-const std::map<std::string, transform::Rigid2d>&
+const std::map<std::string, transform::Rigid3d>&
 OptimizationProblem::landmark_data() const {
   return landmark_data_;
 }

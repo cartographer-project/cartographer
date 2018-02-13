@@ -90,7 +90,7 @@ class OptimizationProblem {
 
   const mapping::MapById<mapping::NodeId, NodeData>& node_data() const;
   const mapping::MapById<mapping::SubmapId, SubmapData>& submap_data() const;
-  const std::map<std::string, transform::Rigid2d>& landmark_data() const;
+  const std::map<std::string, transform::Rigid3d>& landmark_data() const;
   const sensor::MapByTime<sensor::ImuData>& imu_data() const;
   const sensor::MapByTime<sensor::OdometryData>& odometry_data() const;
 
@@ -105,7 +105,7 @@ class OptimizationProblem {
   mapping::pose_graph::proto::OptimizationProblemOptions options_;
   mapping::MapById<mapping::NodeId, NodeData> node_data_;
   mapping::MapById<mapping::SubmapId, SubmapData> submap_data_;
-  std::map<std::string, transform::Rigid2d> landmark_data_;
+  std::map<std::string, transform::Rigid3d> landmark_data_;
   sensor::MapByTime<sensor::ImuData> imu_data_;
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
 };

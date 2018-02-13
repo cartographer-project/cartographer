@@ -535,7 +535,10 @@ void OptimizationProblem::Solve(
     trajectory_data_.at(C_fixed_frame.first).fixed_frame =
         C_fixed_frame.second.ToRigid();
   }
-}  // namespace pose_graph
+  for (const auto& C_landmark : C_landmarks) {
+    landmark_data_[C_landmark.first] = C_landmark.second.ToRigid();
+  }
+}
 
 const mapping::MapById<mapping::NodeId, NodeData>&
 OptimizationProblem::node_data() const {
