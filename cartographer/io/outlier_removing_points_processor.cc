@@ -94,7 +94,7 @@ void OutlierRemovingPointsProcessor::ProcessInPhaseTwo(
     const Eigen::Vector3f delta = batch.points[i] - batch.origin;
     const float length = delta.norm();
     for (float x = 0; x < length; x += voxel_size_) {
-      const auto index =
+      const Eigen::Array3i index =
           voxels_.GetCellIndex(batch.origin + (x / length) * delta);
       if (voxels_.value(index).hits > 0) {
         ++voxels_.mutable_value(index)->rays;
@@ -108,7 +108,8 @@ void OutlierRemovingPointsProcessor::ProcessInPhaseThree(
   constexpr double kMissPerHitLimit = 3;
   std::unordered_set<int> to_remove;
   for (size_t i = 0; i < batch->points.size(); ++i) {
-    const auto voxel = voxels_.value(voxels_.GetCellIndex(batch->points[i]));
+    const VoxelData voxel =
+        voxels_.value(voxels_.GetCellIndex(batch->points[i]));
     if (!(voxel.rays < kMissPerHitLimit * voxel.hits)) {
       to_remove.insert(i);
     }

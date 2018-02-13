@@ -229,7 +229,7 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
   }
   active_submaps_.InsertRangeData(filtered_range_data_in_local,
                                   gravity_alignment);
-  const auto rotational_scan_matcher_histogram =
+  const Eigen::VectorXf rotational_scan_matcher_histogram =
       scan_matching::RotationalScanMatcher::ComputeHistogram(
           sensor::TransformPointCloud(
               filtered_range_data_in_tracking.returns,

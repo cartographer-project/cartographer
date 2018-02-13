@@ -149,7 +149,8 @@ void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
   }
 
   // Returns the (x, y) pixel of the given 'index'.
-  const auto voxel_index_to_pixel = [this](const Eigen::Array3i& index) {
+  const auto voxel_index_to_pixel =
+      [this](const Eigen::Array3i& index) -> Eigen::Array2i {
     // We flip the y axis, since matrices rows are counted from the top.
     return Eigen::Array2i(bounding_box_.max()[1] - index[1],
                           bounding_box_.max()[2] - index[2]);
