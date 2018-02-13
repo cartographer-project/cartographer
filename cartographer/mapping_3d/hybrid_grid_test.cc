@@ -208,7 +208,8 @@ TEST_F(RandomHybridGridTest, ToProto) {
 }
 
 struct EigenComparator {
-  bool operator()(const Eigen::Vector3i& lhs, const Eigen::Vector3i& rhs) {
+  bool operator()(const Eigen::Vector3i& lhs,
+                  const Eigen::Vector3i& rhs) const {
     return std::forward_as_tuple(lhs.x(), lhs.y(), lhs.z()) <
            std::forward_as_tuple(rhs.x(), rhs.y(), rhs.z());
   }
