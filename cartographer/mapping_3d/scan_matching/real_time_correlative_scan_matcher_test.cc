@@ -39,7 +39,7 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
       : hybrid_grid_(0.1f),
         expected_pose_(Eigen::Vector3d(-1., 0., 0.),
                        Eigen::Quaterniond::Identity()) {
-    for (const auto& point :
+    for (const Eigen::Vector3f& point :
          {Eigen::Vector3f(-3.f, 2.f, 0.f), Eigen::Vector3f(-4.f, 2.f, 0.f),
           Eigen::Vector3f(-5.f, 2.f, 0.f), Eigen::Vector3f(-6.f, 2.f, 0.f),
           Eigen::Vector3f(-6.f, 3.f, 1.f), Eigen::Vector3f(-6.f, 4.f, 2.f),

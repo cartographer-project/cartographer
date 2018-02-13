@@ -134,9 +134,9 @@ std::unique_ptr<Image> DrawProbabilityGrid(
   }
   auto image = common::make_unique<Image>(cell_limits.num_x_cells,
                                           cell_limits.num_y_cells);
-  for (const auto& xy_index :
+  for (const Eigen::Array2i& xy_index :
        cartographer::mapping_2d::XYIndexRangeIterator(cell_limits)) {
-    const auto index = xy_index + *offset;
+    const Eigen::Array2i index = xy_index + *offset;
     constexpr uint8 kUnknownValue = 128;
     const uint8 value =
         probability_grid.IsKnown(index)

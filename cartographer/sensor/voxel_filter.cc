@@ -81,7 +81,7 @@ PointCloudType FilterPointCloudUsingVoxels(
     const PointCloudType& point_cloud,
     mapping_3d::HybridGridBase<uint8>* voxels) {
   PointCloudType results;
-  for (const auto& point : point_cloud) {
+  for (const typename PointCloudType::value_type& point : point_cloud) {
     auto* const value =
         voxels->mutable_value(voxels->GetCellIndex(point.template head<3>()));
     if (*value == 0) {
