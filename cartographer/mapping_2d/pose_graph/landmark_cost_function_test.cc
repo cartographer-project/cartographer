@@ -15,8 +15,10 @@
  */
 
 #include "cartographer/mapping_2d/pose_graph/landmark_cost_function.h"
-#include "cartographer/transform/rigid_transform.h"
 
+#include <memory>
+
+#include "cartographer/transform/rigid_transform.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -39,15 +41,16 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
   next_node.time = common::FromUniversal(10);
   next_node.gravity_alignment = Eigen::Quaterniond::Identity();
 
-  auto* cost_function = LandmarkCostFunction::CreateAutoDiffCostFunction(
-      LandmarkObservation{
-          0 /* trajectory ID */,
-          common::FromUniversal(5) /* time */,
-          transform::Rigid3d::Translation(Eigen::Vector3d(1., 1., 1.)),
-          1. /* translation_weight */,
-          2. /* rotation_weight */,
-      },
-      prev_node, next_node);
+  std::unique_ptr<ceres::CostFunction> cost_function(
+      LandmarkCostFunction::CreateAutoDiffCostFunction(
+          LandmarkObservation{
+              0 /* trajectory ID */,
+              common::FromUniversal(5) /* time */,
+              transform::Rigid3d::Translation(Eigen::Vector3d(1., 1., 1.)),
+              1. /* translation_weight */,
+              2. /* rotation_weight */,
+          },
+          prev_node, next_node));
 
   const std::array<double, 3> prev_node_pose{{2., 0., 0.}};
   const std::array<double, 3> next_node_pose{{0., 2., 0.}};
