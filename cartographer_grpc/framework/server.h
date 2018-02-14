@@ -35,7 +35,7 @@ namespace cartographer_grpc {
 namespace framework {
 
 class Server {
- private:
+ protected:
   // All options that configure server behaviour such as number of threads,
   // ports etc.
   struct Options {
