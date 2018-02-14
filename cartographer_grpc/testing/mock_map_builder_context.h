@@ -69,7 +69,7 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
   void EnqueueLocalSlamResultData(
       int trajectory_id, const std::string &sensor_id,
       std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-          local_slam_result_data) {
+          local_slam_result_data) override {
     DoEnqueueLocalSlamResultData(trajectory_id, sensor_id,
                                  local_slam_result_data.get());
   }
