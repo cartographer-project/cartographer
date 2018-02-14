@@ -66,6 +66,7 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
                           jacobians_ptrs.data());
   EXPECT_THAT(residuals, ElementsAre(DoubleEq(1.), DoubleEq(0.), DoubleEq(0.),
                                      DoubleEq(0.), DoubleEq(0.), DoubleEq(0.)));
+  delete cost_function;
 }
 
 }  // namespace
