@@ -298,6 +298,7 @@ void PoseGraph2D::DispatchOptimization() {
     HandleWorkQueue();
   }
 }
+
 common::Time PoseGraph2D::GetLatestNodeTime(const NodeId& node_id,
                                             const SubmapId& submap_id) const {
   common::Time time = trajectory_nodes_.at(node_id).constant_data->time;
