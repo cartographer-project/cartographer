@@ -178,16 +178,15 @@ void PoseGraph::AddLandmarkData(int trajectory_id,
                                 const sensor::LandmarkData& landmark_data)
     EXCLUDES(mutex_) {
   common::MutexLocker locker(&mutex_);
-  for (const auto& observation : landmark_data.landmark_observations) {
-    landmark_nodes_[observation.id].landmark_observations.emplace_back(
-        PoseGraph::LandmarkNode::LandmarkObservation{
-            trajectory_id,
-            landmark_data.time,
-            observation.landmark_to_tracking_transform,
-            observation.translation_weight,
-            observation.rotation_weight,
-        });
-  }
+  AddWorkItem([=]() REQUIRES(mutex_) {
+    for (const auto& observation : landmark_data.landmark_observations) {
+      landmark_nodes_[observation.id].landmark_observations.emplace_back(
+          PoseGraph::LandmarkNode::LandmarkObservation{
+              trajectory_id, landmark_data.time,
+              observation.landmark_to_tracking_transform,
+              observation.translation_weight, observation.rotation_weight});
+    }
+  });
 }
 
 void PoseGraph::ComputeConstraint(const mapping::NodeId& node_id,
@@ -575,9 +574,10 @@ void PoseGraph::RunOptimization() {
     return;
   }
 
-  // No other thread is accessing the optimization_problem_, constraints_ and
-  // frozen_trajectories_ when executing the Solve. Solve is time consuming, so
-  // not taking the mutex before Solve to avoid blocking foreground processing.
+  // No other thread is accessing the optimization_problem_, constraints_,
+  // frozen_trajectories_ and landmark_nodes_ when executing the Solve. Solve
+  // is time consuming, so not taking the mutex before Solve to avoid blocking
+  // foreground processing.
   optimization_problem_.Solve(constraints_, frozen_trajectories_,
                               landmark_nodes_);
   common::MutexLocker locker(&mutex_);
