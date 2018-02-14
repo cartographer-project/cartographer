@@ -101,7 +101,8 @@ std::array<T, 4> SlerpQuaternions(const T* const start, const T* const end,
   // as the arccosine of their dot product.
   const T cos_theta = start[0] * end[0] + start[1] * end[1] +
                       start[2] * end[2] + start[3] * end[3];
-  const T abs_cos_theta = abs(cos_theta);
+  // Avoid using ::abs which would cast to integer.
+  const T abs_cos_theta = ceres::abs(cos_theta);
   // If numerical error brings 'cos_theta' outside [-1 + epsilon, 1 - epsilon]
   // interval, then the quaternions are likely to be collinear.
   T prev_scale = T(1.) - factor;
