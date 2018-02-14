@@ -163,7 +163,7 @@ foreach(ABS_FIL ${ALL_TESTS})
   string(REPLACE "/" "." TEST_TARGET_NAME "${DIR}/${FIL_WE}")
   google_test("${TEST_TARGET_NAME}" ${ABS_FIL})
   if(${BUILD_GRPC})
-    target_link_libraries("${TEST_TARGET_NAME}" PUBLIC grpc++)
+    target_link_libraries("${TEST_TARGET_NAME}" PUBLIC grpc++ prometheus-cpp)
   endif()
 endforeach()
 
@@ -197,7 +197,7 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 # PROTOBUF_LIBRARIES, but that failed on first try.
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} pthread)
 if(${BUILD_GRPC})
-  target_link_libraries(${PROJECT_NAME} PUBLIC grpc++)
+  target_link_libraries(${PROJECT_NAME} PUBLIC grpc++ prometheus-cpp)
 endif()
 
 # Add the binary directory first, so that port.h is included after it has
