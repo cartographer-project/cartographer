@@ -38,7 +38,7 @@ using testing::_;
 namespace cartographer_grpc {
 namespace {
 
-const SensorId kSensorId{SensorId::SensorType::IMU, "sensor"};
+const SensorId kImuSensorId{SensorId::SensorType::IMU, "imu"};
 const SensorId kRangeSensorId{SensorId::SensorType::RANGE, "range"};
 constexpr double kDuration = 4.;         // Seconds.
 constexpr double kTimeStep = 0.1;        // Seconds.
@@ -142,7 +142,7 @@ TEST_F(ClientServerTest, AddTrajectoryBuilder) {
   server_->Start();
   InitializeStub();
   int trajectory_id = stub_->AddTrajectoryBuilder(
-      {kSensorId}, trajectory_builder_options_, nullptr);
+      {kImuSensorId}, trajectory_builder_options_, nullptr);
   stub_->FinishTrajectory(trajectory_id);
   server_->Shutdown();
 }
@@ -151,7 +151,7 @@ TEST_F(ClientServerTest, AddTrajectoryBuilderWithMock) {
   InitializeServerWithMockMapBuilder();
   server_->Start();
   InitializeStub();
-  std::set<SensorId> expected_sensor_ids = {kSensorId};
+  std::set<SensorId> expected_sensor_ids = {kImuSensorId};
   EXPECT_CALL(
       *mock_map_builder_,
       AddTrajectoryBuilder(::testing::ContainerEq(expected_sensor_ids), _, _))
@@ -173,13 +173,13 @@ TEST_F(ClientServerTest, AddSensorData) {
   server_->Start();
   InitializeStub();
   int trajectory_id = stub_->AddTrajectoryBuilder(
-      {kSensorId}, trajectory_builder_options_, nullptr);
+      {kImuSensorId}, trajectory_builder_options_, nullptr);
   TrajectoryBuilderInterface* trajectory_stub =
       stub_->GetTrajectoryBuilder(trajectory_id);
   cartographer::sensor::ImuData imu_data{
       cartographer::common::FromUniversal(42), Eigen::Vector3d(0., 0., 9.8),
       Eigen::Vector3d::Zero()};
-  trajectory_stub->AddSensorData(kSensorId.id, imu_data);
+  trajectory_stub->AddSensorData(kImuSensorId.id, imu_data);
   stub_->FinishTrajectory(trajectory_id);
   server_->Shutdown();
 }
@@ -188,7 +188,7 @@ TEST_F(ClientServerTest, AddSensorDataWithMock) {
   InitializeServerWithMockMapBuilder();
   server_->Start();
   InitializeStub();
-  std::set<SensorId> expected_sensor_ids = {kSensorId};
+  std::set<SensorId> expected_sensor_ids = {kImuSensorId};
   EXPECT_CALL(
       *mock_map_builder_,
       AddTrajectoryBuilder(::testing::ContainerEq(expected_sensor_ids), _, _))
@@ -205,10 +205,10 @@ TEST_F(ClientServerTest, AddSensorDataWithMock) {
       Eigen::Vector3d::Zero()};
   EXPECT_CALL(*mock_trajectory_builder_,
               AddSensorData(
-                  ::testing::StrEq(kSensorId.id),
+                  ::testing::StrEq(kImuSensorId.id),
                   ::testing::Matcher<const cartographer::sensor::ImuData&>(_)))
       .WillOnce(::testing::Return());
-  trajectory_stub->AddSensorData(kSensorId.id, imu_data);
+  trajectory_stub->AddSensorData(kImuSensorId.id, imu_data);
   EXPECT_CALL(*mock_map_builder_, FinishTrajectory(trajectory_id));
   stub_->FinishTrajectory(trajectory_id);
   server_->Shutdown();
@@ -232,6 +232,50 @@ TEST_F(ClientServerTest, LocalSlam2D) {
   WaitForLocalSlamResults(measurements.size());
   stub_->FinishTrajectory(trajectory_id);
   EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
+  EXPECT_NEAR(kTravelDistance,
+              (local_slam_result_poses_.back().translation() -
+               local_slam_result_poses_.front().translation())
+                  .norm(),
+              0.1 * kTravelDistance);
+  server_->Shutdown();
+}
+
+TEST_F(ClientServerTest, GlobalSlam3D) {
+  map_builder_server_options_.mutable_map_builder_options()
+      ->set_use_trajectory_builder_2d(false);
+  map_builder_server_options_.mutable_map_builder_options()
+      ->set_use_trajectory_builder_3d(true);
+  map_builder_server_options_.mutable_map_builder_options()
+      ->mutable_pose_graph_options()
+      ->set_optimize_every_n_nodes(3);
+  trajectory_builder_options_.mutable_trajectory_builder_3d_options()
+      ->mutable_motion_filter_options()
+      ->set_max_distance_meters(0);
+  trajectory_builder_options_.mutable_trajectory_builder_3d_options()
+      ->mutable_motion_filter_options()
+      ->set_max_angle_radians(0);
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+  int trajectory_id = stub_->AddTrajectoryBuilder(
+      {kRangeSensorId, kImuSensorId}, trajectory_builder_options_,
+      local_slam_result_callback_);
+  TrajectoryBuilderInterface* trajectory_stub =
+      stub_->GetTrajectoryBuilder(trajectory_id);
+  const auto measurements =
+      cartographer::mapping::test::GenerateFakeRangeMeasurements(
+          kTravelDistance, kDuration, kTimeStep);
+  for (const auto& measurement : measurements) {
+    cartographer::sensor::ImuData imu_data{
+        measurement.time - cartographer::common::FromSeconds(kTimeStep / 2),
+        Eigen::Vector3d(0., 0., 9.8), Eigen::Vector3d::Zero()};
+    trajectory_stub->AddSensorData(kImuSensorId.id, imu_data);
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
+  }
+  // First range data will not call back while initializing PoseExtrapolator, so
+  // expect one less.
+  WaitForLocalSlamResults(measurements.size() - 1);
+  stub_->FinishTrajectory(trajectory_id);
   EXPECT_NEAR(kTravelDistance,
               (local_slam_result_poses_.back().translation() -
                local_slam_result_poses_.front().translation())
