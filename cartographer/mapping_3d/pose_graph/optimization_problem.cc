@@ -120,17 +120,22 @@ void AddLandmarkCostFunctions(
   for (const auto& landmark_node : landmark_nodes) {
     for (const auto& observation : landmark_node.second.landmark_observations) {
       const std::string& landmark_id = landmark_node.first;
+      const auto& begin_of_trajectory =
+          node_data.BeginOfTrajectory(observation.trajectory_id);
+      // The landmark observation was made before the trajectory was created.
+      if (observation.time < begin_of_trajectory->data.time) {
+        continue;
+      }
       // Find the trajectory nodes before and after the landmark observation.
       auto next =
           node_data.lower_bound(observation.trajectory_id, observation.time);
-      // The landmark observation was made before the trajectory was created.
-      if (next == node_data.BeginOfTrajectory(observation.trajectory_id)) {
-        continue;
-      }
       // The landmark observation was made, but the next trajectory node has
       // not been added yet.
       if (next == node_data.EndOfTrajectory(observation.trajectory_id)) {
         continue;
+      }
+      if (next == begin_of_trajectory) {
+        next = std::next(next);
       }
       auto prev = std::prev(next);
       // Add parameter blocks for the landmark ID if they were not added before.
