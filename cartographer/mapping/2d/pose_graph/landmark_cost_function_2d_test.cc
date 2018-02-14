@@ -41,7 +41,7 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
   next_node.time = common::FromUniversal(10);
   next_node.gravity_alignment = Eigen::Quaterniond::Identity();
 
-  std::unique_ptr<ceres::CostFunction> cost_function(
+  std::unique_ptr<ceres::CostFunction> cost_function_observation_from_tracking(
       LandmarkCostFunction2D::CreateAutoDiffCostFunction(
           LandmarkObservation{
               0 /* trajectory ID */,
@@ -49,6 +49,18 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
               transform::Rigid3d::Translation(Eigen::Vector3d(1., 1., 1.)),
               1. /* translation_weight */,
               2. /* rotation_weight */,
+              true
+          },
+          prev_node, next_node));
+  std::unique_ptr<ceres::CostFunction> cost_function_observation_from_landmark(
+      LandmarkCostFunction2D::CreateAutoDiffCostFunction(
+          LandmarkObservation{
+              0 /* trajectory ID */,
+              common::FromUniversal(5) /* time */,
+              transform::Rigid3d::Translation(Eigen::Vector3d(-1., -1., -1.)),
+              1. /* translation_weight */,
+              2. /* rotation_weight */,
+              false
           },
           prev_node, next_node));
 
@@ -65,9 +77,13 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
   std::array<double*, 6> jacobians_ptrs;
   for (int i = 0; i < 6; ++i) jacobians_ptrs[i] = jacobians[i].data();
 
-  cost_function->Evaluate(parameter_blocks.data(), residuals.data(),
-                          jacobians_ptrs.data());
+  cost_function_observation_from_tracking->Evaluate(
+      parameter_blocks.data(), residuals.data(), jacobians_ptrs.data());
   EXPECT_THAT(residuals, ElementsAre(DoubleEq(1.), DoubleEq(0.), DoubleEq(0.),
+                                     DoubleEq(0.), DoubleEq(0.), DoubleEq(0.)));
+  cost_function_observation_from_landmark->Evaluate(
+      parameter_blocks.data(), residuals.data(), jacobians_ptrs.data());
+  EXPECT_THAT(residuals, ElementsAre(DoubleEq(-1.), DoubleEq(0.), DoubleEq(0.),
                                      DoubleEq(0.), DoubleEq(0.), DoubleEq(0.)));
 }
 

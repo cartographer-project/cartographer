@@ -66,6 +66,7 @@ message LandmarkData {
     transform.proto.Rigid3d landmark_to_tracking_transform = 2;
     double translation_weight = 3;
     double rotation_weight = 4;
+    bool observed_from_tracking = 5;
   }
   int64 timestamp = 1;
   repeated LandmarkObservation landmark_observations = 2;

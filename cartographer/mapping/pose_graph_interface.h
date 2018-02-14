@@ -58,6 +58,7 @@ class PoseGraphInterface {
       transform::Rigid3d landmark_to_tracking_transform;
       double translation_weight;
       double rotation_weight;
+      bool observed_from_tracking;
     };
     std::vector<LandmarkObservation> landmark_observations;
     common::optional<transform::Rigid3d> global_landmark_pose;

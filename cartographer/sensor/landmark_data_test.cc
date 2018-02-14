@@ -52,6 +52,7 @@ class LandmarkDataTest : public ::testing::Test {
                                     Eigen::Quaterniond(1., 1., -1., -1.)),
                  1.f,
                  3.f,
+                 true
              },
              {
                  "ID2",
@@ -59,6 +60,7 @@ class LandmarkDataTest : public ::testing::Test {
                                     Eigen::Quaterniond(2., 2., -2., -2.)),
                  2.f,
                  4.f,
+                 false
              }}) {}
   std::vector<LandmarkObservation> observations_;
 };

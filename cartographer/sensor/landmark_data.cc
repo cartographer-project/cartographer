@@ -31,6 +31,7 @@ proto::LandmarkData ToProto(const LandmarkData& landmark_data) {
         transform::ToProto(observation.landmark_to_tracking_transform);
     item->set_translation_weight(observation.translation_weight);
     item->set_rotation_weight(observation.rotation_weight);
+    item->set_observed_from_tracking(observation.observed_from_tracking);
   }
   return proto;
 }
@@ -44,6 +45,7 @@ LandmarkData FromProto(const proto::LandmarkData& proto) {
         transform::ToRigid3(item.landmark_to_tracking_transform()),
         item.translation_weight(),
         item.rotation_weight(),
+        item.observed_from_tracking()
     });
   }
   return landmark_data;

@@ -74,10 +74,15 @@ class LandmarkCostFunction3D {
         prev_node_rotation, next_node_rotation, T(interpolation_parameter_));
 
     const std::array<T, 6> error = ScaleError(
-        ComputeUnscaledError(landmark_to_tracking_transform_,
-                             interpolated_pose_rotation.data(),
-                             interpolated_pose_translation.data(),
-                             landmark_rotation, landmark_translation),
+        observed_from_tracking_
+            ? ComputeUnscaledError(landmark_to_tracking_transform_,
+                                   interpolated_pose_rotation.data(),
+                                   interpolated_pose_translation.data(),
+                                   landmark_rotation, landmark_translation)
+            : ComputeUnscaledError(landmark_to_tracking_transform_,
+                                   landmark_rotation, landmark_translation,
+                                   interpolated_pose_rotation.data(),
+                                   interpolated_pose_translation.data()),
         T(translation_weight_), T(rotation_weight_));
     std::copy(std::begin(error), std::end(error), e);
     return true;
@@ -93,12 +98,14 @@ class LandmarkCostFunction3D {
         rotation_weight_(observation.rotation_weight),
         interpolation_parameter_(
             common::ToSeconds(observation.time - prev_node.time) /
-            common::ToSeconds(next_node.time - prev_node.time)) {}
+            common::ToSeconds(next_node.time - prev_node.time)),
+        observed_from_tracking_(observation.observed_from_tracking) {}
 
   const transform::Rigid3d landmark_to_tracking_transform_;
   const double translation_weight_;
   const double rotation_weight_;
   const double interpolation_parameter_;
+  const bool observed_from_tracking_;
 };
 
 }  // namespace pose_graph
