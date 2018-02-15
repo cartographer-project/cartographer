@@ -153,6 +153,7 @@ if(${BUILD_GRPC})
     SRCS
       cartographer_grpc/map_builder_server_main.cc
   )
+  target_link_libraries(cartographer_grpc_server PUBLIC grpc++ prometheus-cpp)
 endif()
 
 foreach(ABS_FIL ${ALL_TESTS})

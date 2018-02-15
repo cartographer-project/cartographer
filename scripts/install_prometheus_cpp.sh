@@ -24,6 +24,6 @@ cd prometheus-cpp
 git submodule update --init
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 sudo make install
