@@ -217,6 +217,15 @@ def cartographer_repositories():
       ],
   )
 
+  _maybe(native.http_archive,
+      name = "prometheus_cpp",
+      sha256 = "701789ff0cc3a5ea7ba78d31b2d18265969f1c7d669f83800fffd8f39c4fa1bb",
+      strip_prefix = "prometheus-cpp-743722db96465aa867bf569eb455ad82dab9f819",
+      urls = [
+          "https://github.com/jupp0r/prometheus-cpp/archive/743722db96465aa867bf569eb455ad82dab9f819.tar.gz",
+      ],
+  )
+
   # TODO(rodrigoq): remove these binds once grpc#14140 has been merged, as well
   # as removing `use_external` in cartographer_grpc/BUILD.bazel.
   # https://github.com/grpc/grpc/pull/14140
