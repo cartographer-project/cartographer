@@ -18,6 +18,7 @@ set -o errexit
 set -o verbose
 
 VERSION="v0.2"
+# Digest: a5d981dab82ad6b90f78141eb189694d69c3fe0f
 
 git clone --branch ${VERSION} --depth 1 https://github.com/jupp0r/prometheus-cpp.git
 cd prometheus-cpp
