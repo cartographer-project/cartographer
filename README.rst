@@ -30,13 +30,24 @@ configurations.
 .. _Cartographer: https://github.com/googlecartographer/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
+Getting started
+===============
+
+* Learn to use Cartographer at `our Read the Docs site`_.
+* You can ask a question by `creating an issue`_.
+
+.. _our Read the Docs site: https://google-cartographer.readthedocs.io
+.. _creating an issue: https://github.com/googlecartographer/cartographer_ros/issues/new?labels=question
+
 Open house
 ==========
 
 We regularly meet in an open-for-all Google hangout to discuss progress and plans for Cartographer.
+You can join the `mailing list`_ to receive announcements.
 
-The next Cartographer Open House Hangout is on Thursday, February 22, 5pm CET (8am PT) [`Hangouts link`_].
+The next Cartographer Open House Hangout is on **Thursday, February 22, 5pm CET (8am PT)** [`Hangouts link`_].
 
+.. _mailing list: https://groups.google.com/forum/#!forum/google-cartographer
 .. _Hangouts link: https://staging.talkgadget.google.com/hangouts/_/google.com/cartographeropenhouse
 
 - February 8, 2018: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/180208/slides.pdf>`_
@@ -53,15 +64,6 @@ The next Cartographer Open House Hangout is on Thursday, February 22, 5pm CET (8
 - July 6, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170706/slides.pdf>`_
 - June 22, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170622/sildes.pdf>`_
 - June 8, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170608/slides.pdf>`_
-
-Getting started
-===============
-
-* Learn to use Cartographer at `our Read the Docs site`_.
-* Please join the `mailing list`_ and ask questions.
-
-.. _our Read the Docs site: https://google-cartographer.readthedocs.io
-.. _mailing list: https://groups.google.com/forum/#!forum/google-cartographer
 
 Contributing
 ============
