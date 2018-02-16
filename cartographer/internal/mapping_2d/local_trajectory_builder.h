@@ -65,14 +65,16 @@ class LocalTrajectoryBuilder {
   // acquired, `range_data` contains the relative time of point with
   // respect to `time`.
   std::unique_ptr<MatchingResult> AddRangeData(
-      common::Time, const sensor::TimedRangeData& range_data);
+      const std::string& sensor_id, common::Time,
+      const sensor::TimedRangeData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
   void AddOdometryData(const sensor::OdometryData& odometry_data);
 
  private:
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
       common::Time time, const sensor::RangeData& gravity_aligned_range_data,
-      const transform::Rigid3d& gravity_alignment);
+      const transform::Rigid3d& gravity_alignment,
+      mapping::PoseExtrapolator* extrapolator);
   sensor::RangeData TransformToGravityAlignedFrameAndFilter(
       const transform::Rigid3f& transform_to_gravity_aligned_frame,
       const sensor::RangeData& range_data) const;
@@ -90,7 +92,7 @@ class LocalTrajectoryBuilder {
       const sensor::RangeData& gravity_aligned_range_data);
 
   // Lazily constructs a PoseExtrapolator.
-  void InitializeExtrapolator(common::Time time);
+  void InitializeExtrapolator(const std::string& sensor_id, common::Time time);
 
   const proto::LocalTrajectoryBuilderOptions options_;
   ActiveSubmaps active_submaps_;
@@ -100,7 +102,8 @@ class LocalTrajectoryBuilder {
       real_time_correlative_scan_matcher_;
   scan_matching::CeresScanMatcher ceres_scan_matcher_;
 
-  std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
+  std::map<std::string, std::unique_ptr<mapping::PoseExtrapolator>>
+      sensor_to_extrapolator_;
 
   int num_accumulated_ = 0;
   sensor::RangeData accumulated_range_data_;

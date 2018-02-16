@@ -20,6 +20,7 @@
 #include <deque>
 #include <memory>
 
+#include "cartographer/common/optional.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/imu_tracker.h"
 #include "cartographer/sensor/imu_data.h"
@@ -34,6 +35,11 @@ namespace mapping {
 // available to improve the extrapolation.
 class PoseExtrapolator {
  public:
+  struct TimedPose {
+    common::Time time;
+    transform::Rigid3d pose;
+  };
+
   explicit PoseExtrapolator(common::Duration pose_queue_duration,
                             double imu_gravity_time_constant);
 
@@ -44,6 +50,12 @@ class PoseExtrapolator {
       common::Duration pose_queue_duration, double imu_gravity_time_constant,
       const sensor::ImuData& imu_data);
 
+  common::optional<TimedPose> GetLastPose() const {
+    if (timed_pose_queue_.empty()) {
+      return {};
+    }
+    return common::optional<TimedPose>{timed_pose_queue_.back()};
+  }
   // Returns the time of the last added pose or Time::min() if no pose was added
   // yet.
   common::Time GetLastPoseTime() const;
@@ -67,10 +79,6 @@ class PoseExtrapolator {
   Eigen::Vector3d ExtrapolateTranslation(common::Time time);
 
   const common::Duration pose_queue_duration_;
-  struct TimedPose {
-    common::Time time;
-    transform::Rigid3d pose;
-  };
   std::deque<TimedPose> timed_pose_queue_;
   Eigen::Vector3d linear_velocity_from_poses_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d angular_velocity_from_poses_ = Eigen::Vector3d::Zero();

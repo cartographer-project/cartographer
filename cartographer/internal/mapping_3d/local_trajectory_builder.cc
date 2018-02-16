@@ -59,8 +59,11 @@ void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
-LocalTrajectoryBuilder::AddRangeData(const common::Time time,
+LocalTrajectoryBuilder::AddRangeData(const std::string& sensor_id,
+                                     const common::Time time,
                                      const sensor::TimedRangeData& range_data) {
+  LOG(FATAL)
+      << "LocalTrajectoryBuilder::AddRangeData sensor_id not implemented";
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator with our first IMU message, we
     // cannot compute the orientation of the rangefinder.
