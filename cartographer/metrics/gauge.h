@@ -36,13 +36,6 @@ class Gauge {
   virtual void Set(double value) = 0;
 };
 
-class GaugeFamily {
- public:
-  virtual ~GaugeFamily() = default;
-
-  virtual Gauge* Add(const std::map<std::string, std::string>& labels) = 0;
-};
-
 }  // namespace metrics
 }  // namespace cartographer
 

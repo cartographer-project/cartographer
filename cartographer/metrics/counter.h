@@ -33,13 +33,6 @@ class Counter {
   virtual void Increment(double by_value) = 0;
 };
 
-class CounterFamily {
- public:
-  virtual ~CounterFamily() = default;
-
-  virtual Counter* Add(const std::map<std::string, std::string>& labels) = 0;
-};
-
 }  // namespace metrics
 }  // namespace cartographer
 

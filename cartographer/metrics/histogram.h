@@ -38,13 +38,6 @@ class Histogram {
   virtual void Observe(double value) = 0;
 };
 
-class HistogramFamily {
- public:
-  virtual ~HistogramFamily() = default;
-
-  virtual Histogram* Add(const std::map<std::string, std::string>& labels) = 0;
-};
-
 }  // namespace metrics
 }  // namespace cartographer
 

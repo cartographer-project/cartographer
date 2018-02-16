@@ -27,15 +27,23 @@
 namespace cartographer {
 namespace metrics {
 
+template <typename MetricType>
+class Family {
+ public:
+  virtual ~Family() = default;
+
+  virtual MetricType* Add(const std::map<std::string, std::string>& labels) = 0;
+};
+
 class FamilyFactory {
  public:
   virtual ~FamilyFactory() = default;
 
-  virtual CounterFamily* NewCounterFamily(const std::string& name,
-                                          const std::string& description) = 0;
-  virtual GaugeFamily* NewGaugeFamily(const std::string& name,
-                                      const std::string& description) = 0;
-  virtual HistogramFamily* NewHistogramFamily(
+  virtual Family<Counter>* NewCounterFamily(const std::string& name,
+                                            const std::string& description) = 0;
+  virtual Family<Gauge>* NewGaugeFamily(const std::string& name,
+                                        const std::string& description) = 0;
+  virtual Family<Histogram>* NewHistogramFamily(
       const std::string& name, const std::string& description,
       const Histogram::BucketBoundaries& boundaries) = 0;
 };
