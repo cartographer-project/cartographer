@@ -91,7 +91,7 @@ class PoseGraph : public PoseGraphInterface {
   virtual void AddNodeFromProto(const transform::Rigid3d& global_pose,
                                 const proto::Node& node) = 0;
 
-  // Sets the trajectory data for the optimization problem from a proto.
+  // Sets the trajectory data from a proto.
   virtual void SetTrajectoryDataFromProto(
       const mapping::proto::TrajectoryData& data) = 0;
 
@@ -125,7 +125,7 @@ class PoseGraph : public PoseGraphInterface {
   // Returns the odometry data.
   virtual sensor::MapByTime<sensor::OdometryData> GetOdometryData() = 0;
 
-  // Returns the trajectory data from the optimization problem.
+  // Returns the trajectory data.
   virtual std::map<int, TrajectoryData> GetTrajectoryData() = 0;
 
   // Returns the fixed frame pose data.

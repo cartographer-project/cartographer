@@ -266,7 +266,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
       }
     }
   }
-  // Next we serialize all trajectory data from the optimization problem.
+  // Next we serialize all trajectory data.
   {
     const auto all_trajectory_data = pose_graph_->GetTrajectoryData();
     for (const auto& trajectory_data : all_trajectory_data) {
