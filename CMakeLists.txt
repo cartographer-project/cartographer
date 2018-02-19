@@ -22,6 +22,7 @@ set(CARTOGRAPHER_PATCH_VERSION 0)
 set(CARTOGRAPHER_VERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION}.${CARTOGRAPHER_PATCH_VERSION})
 set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION})
 option(BUILD_GRPC "build Cartographer gRPC support" false)
+option(BUILD_PROMETHEUS "build Prometheus monitoring support" false)
 
 include("${PROJECT_SOURCE_DIR}/cmake/functions.cmake")
 google_initialize_cartographer_project()
@@ -153,7 +154,10 @@ if(${BUILD_GRPC})
     SRCS
       cartographer_grpc/map_builder_server_main.cc
   )
-  target_link_libraries(cartographer_grpc_server PUBLIC grpc++ prometheus-cpp)
+  target_link_libraries(cartographer_grpc_server PUBLIC grpc++)
+  if(${BUILD_PROMETHEUS})
+    target_link_libraries(cartographer_grpc_server PUBLIC prometheus-cpp)
+  endif()
 endif()
 
 foreach(ABS_FIL ${ALL_TESTS})
@@ -164,7 +168,10 @@ foreach(ABS_FIL ${ALL_TESTS})
   string(REPLACE "/" "." TEST_TARGET_NAME "${DIR}/${FIL_WE}")
   google_test("${TEST_TARGET_NAME}" ${ABS_FIL})
   if(${BUILD_GRPC})
-    target_link_libraries("${TEST_TARGET_NAME}" PUBLIC grpc++ prometheus-cpp)
+    target_link_libraries("${TEST_TARGET_NAME}" PUBLIC grpc++)
+  endif()
+  if(${BUILD_PROMETHEUS})
+    target_link_libraries(${PROJECT_NAME} PUBLIC prometheus-cpp)
   endif()
 endforeach()
 
@@ -198,7 +205,11 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 # PROTOBUF_LIBRARIES, but that failed on first try.
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} pthread)
 if(${BUILD_GRPC})
-  target_link_libraries(${PROJECT_NAME} PUBLIC grpc++ prometheus-cpp)
+  target_link_libraries(${PROJECT_NAME} PUBLIC grpc++)
+endif()
+if(${BUILD_PROMETHEUS})
+  target_link_libraries(${PROJECT_NAME} PUBLIC prometheus-cpp)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE USE_PROMETHEUS=1)
 endif()
 
 # Add the binary directory first, so that port.h is included after it has
