@@ -355,6 +355,11 @@ void MapBuilder::LoadMap(io::ProtoStreamReaderInterface* const reader) {
                                    proto.submap().submap_id().submap_index()});
       pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
     }
+    if (proto.has_trajectory_data()) {
+      proto.mutable_trajectory_data()->set_trajectory_id(
+          trajectory_remapping.at(proto.trajectory_data().trajectory_id()));
+      pose_graph_->SetTrajectoryDataFromProto(proto.trajectory_data());
+    }
     // TODO(ojura): Deserialize IMU, odometry and fixed frame pose data when
     // loading unfrozen trajectories.
   }

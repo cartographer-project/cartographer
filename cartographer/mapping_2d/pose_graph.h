@@ -97,6 +97,7 @@ class PoseGraph : public mapping::PoseGraph {
                           const mapping::proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
                         const mapping::proto::Node& node) override;
+  void SetTrajectoryDataFromProto(const mapping::proto::TrajectoryData& data) override;
   void AddNodeToSubmap(const mapping::NodeId& node_id,
                        const mapping::SubmapId& submap_id) override;
   void AddSerializedConstraints(

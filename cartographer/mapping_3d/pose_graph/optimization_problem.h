@@ -75,6 +75,7 @@ class OptimizationProblem {
   void AddTrajectoryNode(int trajectory_id, common::Time time,
                          const transform::Rigid3d& local_pose,
                          const transform::Rigid3d& global_pose);
+  void SetTrajectoryData(int trajectory_id, const mapping::PoseGraphInterface::TrajectoryData& trajectory_data);
   void InsertTrajectoryNode(const mapping::NodeId& node_id, common::Time time,
                             const transform::Rigid3d& local_pose,
                             const transform::Rigid3d& global_pose);

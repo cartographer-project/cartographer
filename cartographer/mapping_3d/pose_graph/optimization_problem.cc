@@ -196,6 +196,10 @@ void OptimizationProblem::AddTrajectoryNode(
   trajectory_data_[trajectory_id];
 }
 
+void OptimizationProblem::SetTrajectoryData(int trajectory_id, const TrajectoryData& trajectory_data) {
+  trajectory_data_[trajectory_id] = trajectory_data;
+}
+
 void OptimizationProblem::InsertTrajectoryNode(
     const mapping::NodeId& node_id, const common::Time time,
     const transform::Rigid3d& local_pose,
