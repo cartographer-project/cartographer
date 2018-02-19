@@ -28,8 +28,6 @@
 #include "cartographer/internal/mapping_2d/local_trajectory_builder.h"
 #include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
-#include "cartographer/mapping_2d/pose_graph_2d.h"
-#include "cartographer/mapping_3d/pose_graph.h"
 #include "cartographer/sensor/collator.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/trajectory_collator.h"
