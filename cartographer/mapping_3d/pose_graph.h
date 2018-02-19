@@ -96,6 +96,8 @@ class PoseGraph : public mapping::PoseGraph {
                           const mapping::proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
                         const mapping::proto::Node& node) override;
+  void SetTrajectoryDataFromProto(
+      const mapping::proto::TrajectoryData& data) override;
   void AddNodeToSubmap(const mapping::NodeId& node_id,
                        const mapping::SubmapId& submap_id) override;
   void AddSerializedConstraints(
@@ -122,6 +124,8 @@ class PoseGraph : public mapping::PoseGraph {
       EXCLUDES(mutex_);
   sensor::MapByTime<sensor::FixedFramePoseData> GetFixedFramePoseData() override
       EXCLUDES(mutex_);
+  std::map<int, TrajectoryData> GetTrajectoryData() override;
+
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);
   void SetInitialTrajectoryPose(int from_trajectory_id, int to_trajectory_id,
                                 const transform::Rigid3d& pose,

@@ -474,6 +474,11 @@ void PoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
+void PoseGraph::SetTrajectoryDataFromProto(
+    const mapping::proto::TrajectoryData& data) {
+  // Not implemented yet in 2D.
+}
+
 void PoseGraph::AddNodeToSubmap(const mapping::NodeId& node_id,
                                 const mapping::SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
@@ -627,6 +632,11 @@ sensor::MapByTime<sensor::ImuData> PoseGraph::GetImuData() {
 sensor::MapByTime<sensor::OdometryData> PoseGraph::GetOdometryData() {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_.odometry_data();
+}
+
+std::map<int, mapping::PoseGraphInterface::TrajectoryData>
+PoseGraph::GetTrajectoryData() {
+  return {};  // Not implemented yet in 2D.
 }
 
 sensor::MapByTime<sensor::FixedFramePoseData>
