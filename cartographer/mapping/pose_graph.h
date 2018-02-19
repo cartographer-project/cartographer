@@ -92,7 +92,8 @@ class PoseGraph : public PoseGraphInterface {
                                 const proto::Node& node) = 0;
 
   // Sets the trajectory data for the optimization problem from a proto.
-  virtual void SetTrajectoryDataFromProto(const mapping::proto::TrajectoryData& data) = 0;
+  virtual void SetTrajectoryDataFromProto(
+      const mapping::proto::TrajectoryData& data) = 0;
 
   // Adds information that 'node_id' was inserted into 'submap_id'. The submap
   // has to be deserialized first.

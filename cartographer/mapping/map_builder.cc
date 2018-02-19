@@ -273,17 +273,17 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
       proto::SerializedData proto;
       auto* const trajectory_data_proto = proto.mutable_trajectory_data();
       trajectory_data_proto->set_trajectory_id(trajectory_data.first);
-      trajectory_data_proto->set_gravity_constant(trajectory_data.second.gravity_constant);
-      *trajectory_data_proto->mutable_imu_calibration() =
-        transform::ToProto(Eigen::Quaterniond(
-              trajectory_data.second.imu_calibration[0],
-              trajectory_data.second.imu_calibration[1],
-              trajectory_data.second.imu_calibration[2],
-              trajectory_data.second.imu_calibration[3]
-      ));
+      trajectory_data_proto->set_gravity_constant(
+          trajectory_data.second.gravity_constant);
+      *trajectory_data_proto->mutable_imu_calibration() = transform::ToProto(
+          Eigen::Quaterniond(trajectory_data.second.imu_calibration[0],
+                             trajectory_data.second.imu_calibration[1],
+                             trajectory_data.second.imu_calibration[2],
+                             trajectory_data.second.imu_calibration[3]));
       if (trajectory_data.second.fixed_frame_origin_in_map.has_value()) {
         *trajectory_data_proto->mutable_fixed_frame_origin_in_map() =
-          transform::ToProto(trajectory_data.second.fixed_frame_origin_in_map.value());
+            transform::ToProto(
+                trajectory_data.second.fixed_frame_origin_in_map.value());
       }
       writer->WriteProto(proto);
     }

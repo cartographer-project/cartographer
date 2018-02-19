@@ -474,7 +474,8 @@ void PoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
-void PoseGraph::SetTrajectoryDataFromProto(const mapping::proto::TrajectoryData& data) {
+void PoseGraph::SetTrajectoryDataFromProto(
+    const mapping::proto::TrajectoryData& data) {
   // Not implemented yet in 2D.
 }
 
@@ -633,7 +634,8 @@ sensor::MapByTime<sensor::OdometryData> PoseGraph::GetOdometryData() {
   return optimization_problem_.odometry_data();
 }
 
-std::map<int, mapping::PoseGraphInterface::TrajectoryData> PoseGraph::GetTrajectoryData() {
+std::map<int, mapping::PoseGraphInterface::TrajectoryData>
+PoseGraph::GetTrajectoryData() {
   return {};  // Not implemented yet in 2D.
 }
 

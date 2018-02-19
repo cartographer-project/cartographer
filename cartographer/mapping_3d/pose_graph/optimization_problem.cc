@@ -51,7 +51,8 @@ namespace {
 
 using ::cartographer::mapping::pose_graph::CeresPose;
 using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
-using TrajectoryData = ::cartographer::mapping::PoseGraphInterface::TrajectoryData;
+using TrajectoryData =
+    ::cartographer::mapping::PoseGraphInterface::TrajectoryData;
 
 // For odometry.
 std::unique_ptr<transform::Rigid3d> Interpolate(
@@ -196,7 +197,8 @@ void OptimizationProblem::AddTrajectoryNode(
   trajectory_data_[trajectory_id];
 }
 
-void OptimizationProblem::SetTrajectoryData(int trajectory_id, const TrajectoryData& trajectory_data) {
+void OptimizationProblem::SetTrajectoryData(
+    int trajectory_id, const TrajectoryData& trajectory_data) {
   trajectory_data_[trajectory_id] = trajectory_data;
 }
 
@@ -481,7 +483,8 @@ void OptimizationProblem::Solve(
       if (!fixed_frame_pose_initialized) {
         transform::Rigid3d fixed_frame_pose_in_map;
         if (trajectory_data.fixed_frame_origin_in_map.has_value()) {
-          fixed_frame_pose_in_map = trajectory_data.fixed_frame_origin_in_map.value();
+          fixed_frame_pose_in_map =
+              trajectory_data.fixed_frame_origin_in_map.value();
         } else {
           fixed_frame_pose_in_map =
               node_data.global_pose * constraint_pose.zbar_ij.inverse();
@@ -580,7 +583,8 @@ OptimizationProblem::fixed_frame_pose_data() const {
   return fixed_frame_pose_data_;
 }
 
-const std::map<int, TrajectoryData>& OptimizationProblem::trajectory_data() const {
+const std::map<int, TrajectoryData>& OptimizationProblem::trajectory_data()
+    const {
   return trajectory_data_;
 }
 

@@ -485,19 +485,22 @@ void PoseGraph::AddNodeFromProto(const transform::Rigid3d& global_pose,
   });
 }
 
-void PoseGraph::SetTrajectoryDataFromProto(const mapping::proto::TrajectoryData& data) {
+void PoseGraph::SetTrajectoryDataFromProto(
+    const mapping::proto::TrajectoryData& data) {
   TrajectoryData trajectory_data;
   trajectory_data.gravity_constant = data.gravity_constant();
-  trajectory_data.imu_calibration = {{data.imu_calibration().w(), data.imu_calibration().x(), data.imu_calibration().y(), data.imu_calibration().z()}};
+  trajectory_data.imu_calibration = {
+      {data.imu_calibration().w(), data.imu_calibration().x(),
+       data.imu_calibration().y(), data.imu_calibration().z()}};
   if (data.has_fixed_frame_origin_in_map()) {
-    trajectory_data.fixed_frame_origin_in_map = transform::ToRigid3(data.fixed_frame_origin_in_map());
+    trajectory_data.fixed_frame_origin_in_map =
+        transform::ToRigid3(data.fixed_frame_origin_in_map());
   }
 
   const int trajectory_id = data.trajectory_id();
   common::MutexLocker locker(&mutex_);
   AddWorkItem([this, trajectory_id, trajectory_data]() REQUIRES(mutex_) {
-    optimization_problem_.SetTrajectoryData(
-        trajectory_id, trajectory_data);
+    optimization_problem_.SetTrajectoryData(trajectory_id, trajectory_data);
   });
 }
 
@@ -682,7 +685,8 @@ PoseGraph::GetFixedFramePoseData() {
   return optimization_problem_.fixed_frame_pose_data();
 }
 
-std::map<int, mapping::PoseGraphInterface::TrajectoryData> PoseGraph::GetTrajectoryData() {
+std::map<int, mapping::PoseGraphInterface::TrajectoryData>
+PoseGraph::GetTrajectoryData() {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_.trajectory_data();
 }
