@@ -63,9 +63,8 @@ void LocalSlamResult3D::AddToTrajectoryBuilder(
 
 void LocalSlamResult3D::AddToPoseGraph(int trajectory_id,
                                        mapping::PoseGraph* pose_graph) const {
-  DCHECK(dynamic_cast<mapping_3d::PoseGraph*>(pose_graph));
-  mapping_3d::PoseGraph* pose_graph_3d =
-      static_cast<mapping_3d::PoseGraph*>(pose_graph);
+  DCHECK(dynamic_cast<PoseGraph3D*>(pose_graph));
+  PoseGraph3D* pose_graph_3d = static_cast<PoseGraph3D*>(pose_graph);
   pose_graph_3d->AddNode(node_data_, trajectory_id, insertion_submaps_);
 }
 
