@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_H_
-#define CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_2D_H_
 
 #include <deque>
 #include <functional>
@@ -46,7 +46,7 @@
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
 // Implements the loop closure method called Sparse Pose Adjustment (SPA) from
 // Konolige, Kurt, et al. "Efficient sparse pose adjustment for 2d mapping."
@@ -57,25 +57,24 @@ namespace mapping_2d {
 // Each node has been matched against one or more submaps (adding a constraint
 // for each match), both poses of nodes and of submaps are to be optimized.
 // All constraints are between a submap i and a node j.
-class PoseGraph : public mapping::PoseGraph {
+class PoseGraph2D : public PoseGraph {
  public:
-  PoseGraph(const mapping::proto::PoseGraphOptions& options,
-            common::ThreadPool* thread_pool);
-  ~PoseGraph() override;
+  PoseGraph2D(const proto::PoseGraphOptions& options,
+              common::ThreadPool* thread_pool);
+  ~PoseGraph2D() override;
 
-  PoseGraph(const PoseGraph&) = delete;
-  PoseGraph& operator=(const PoseGraph&) = delete;
+  PoseGraph2D(const PoseGraph2D&) = delete;
+  PoseGraph2D& operator=(const PoseGraph2D&) = delete;
 
   // Adds a new node with 'constant_data'. Its 'constant_data->local_pose' was
   // determined by scan matching against 'insertion_submaps.front()' and the
   // node data was inserted into the 'insertion_submaps'. If
   // 'insertion_submaps.front().finished()' is 'true', data was inserted into
   // this submap for the last time.
-  mapping::NodeId AddNode(
-      std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data,
-      int trajectory_id,
-      const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
-      EXCLUDES(mutex_);
+  NodeId AddNode(std::shared_ptr<const TrajectoryNode::Data> constant_data,
+                 int trajectory_id,
+                 const std::vector<std::shared_ptr<const mapping_2d::Submap>>&
+                     insertion_submaps) EXCLUDES(mutex_);
 
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data) override
       EXCLUDES(mutex_);
@@ -94,30 +93,28 @@ class PoseGraph : public mapping::PoseGraph {
   bool IsTrajectoryFinished(int trajectory_id) override;
   void FreezeTrajectory(int trajectory_id) override;
   void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
-                          const mapping::proto::Submap& submap) override;
+                          const proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
-                        const mapping::proto::Node& node) override;
-  void SetTrajectoryDataFromProto(
-      const mapping::proto::TrajectoryData& data) override;
-  void AddNodeToSubmap(const mapping::NodeId& node_id,
-                       const mapping::SubmapId& submap_id) override;
+                        const proto::Node& node) override;
+  void SetTrajectoryDataFromProto(const proto::TrajectoryData& data) override;
+  void AddNodeToSubmap(const NodeId& node_id,
+                       const SubmapId& submap_id) override;
   void AddSerializedConstraints(
       const std::vector<Constraint>& constraints) override;
-  void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
+  void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
-  mapping::PoseGraph::SubmapData GetSubmapData(
-      const mapping::SubmapId& submap_id) EXCLUDES(mutex_) override;
-  mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapData>
-  GetAllSubmapData() EXCLUDES(mutex_) override;
-  mapping::MapById<mapping::SubmapId, SubmapPose> GetAllSubmapPoses()
+  PoseGraph::SubmapData GetSubmapData(const SubmapId& submap_id)
       EXCLUDES(mutex_) override;
+  MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
+      EXCLUDES(mutex_) override;
+  MapById<SubmapId, SubmapPose> GetAllSubmapPoses() EXCLUDES(mutex_) override;
   transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id)
       EXCLUDES(mutex_) override;
-  mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
-  GetTrajectoryNodes() override EXCLUDES(mutex_);
-  mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose>
-  GetTrajectoryNodePoses() override EXCLUDES(mutex_);
+  MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() override
+      EXCLUDES(mutex_);
+  MapById<NodeId, TrajectoryNodePose> GetTrajectoryNodePoses() override
+      EXCLUDES(mutex_);
   std::map<std::string, transform::Rigid3d> GetLandmarkPoses() override
       EXCLUDES(mutex_);
   sensor::MapByTime<sensor::ImuData> GetImuData() override EXCLUDES(mutex_);
@@ -140,12 +137,12 @@ class PoseGraph : public mapping::PoseGraph {
   // Likewise, all new nodes are matched against submaps which are finished.
   enum class SubmapState { kActive, kFinished };
   struct SubmapData {
-    std::shared_ptr<const Submap> submap;
+    std::shared_ptr<const mapping_2d::Submap> submap;
 
     // IDs of the nodes that were inserted into this map together with
     // constraints for them. They are not to be matched again when this submap
     // becomes 'finished'.
-    std::set<mapping::NodeId> node_ids;
+    std::set<NodeId> node_ids;
 
     SubmapState state = SubmapState::kActive;
   };
@@ -158,23 +155,23 @@ class PoseGraph : public mapping::PoseGraph {
 
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
-  std::vector<mapping::SubmapId> InitializeGlobalSubmapPoses(
+  std::vector<SubmapId> InitializeGlobalSubmapPoses(
       int trajectory_id, const common::Time time,
-      const std::vector<std::shared_ptr<const Submap>>& insertion_submaps)
-      REQUIRES(mutex_);
+      const std::vector<std::shared_ptr<const mapping_2d::Submap>>&
+          insertion_submaps) REQUIRES(mutex_);
 
   // Adds constraints for a node, and starts scan matching in the background.
   void ComputeConstraintsForNode(
-      const mapping::NodeId& node_id,
-      std::vector<std::shared_ptr<const Submap>> insertion_submaps,
+      const NodeId& node_id,
+      std::vector<std::shared_ptr<const mapping_2d::Submap>> insertion_submaps,
       bool newly_finished_submap) REQUIRES(mutex_);
 
   // Computes constraints for a node and submap pair.
-  void ComputeConstraint(const mapping::NodeId& node_id,
-                         const mapping::SubmapId& submap_id) REQUIRES(mutex_);
+  void ComputeConstraint(const NodeId& node_id, const SubmapId& submap_id)
+      REQUIRES(mutex_);
 
   // Adds constraints for older nodes whenever a new submap is finished.
-  void ComputeConstraintsForOldNodes(const mapping::SubmapId& submap_id)
+  void ComputeConstraintsForOldNodes(const SubmapId& submap_id)
       REQUIRES(mutex_);
 
   // Registers the callback to run the optimization once all constraints have
@@ -192,22 +189,22 @@ class PoseGraph : public mapping::PoseGraph {
   // Computes the local to global map frame transform based on the given
   // 'global_submap_poses'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const mapping::MapById<mapping::SubmapId, pose_graph::SubmapData>&
+      const MapById<SubmapId, mapping_2d::pose_graph::SubmapData>&
           global_submap_poses,
       int trajectory_id) const REQUIRES(mutex_);
 
-  mapping::PoseGraph::SubmapData GetSubmapDataUnderLock(
-      const mapping::SubmapId& submap_id) REQUIRES(mutex_);
+  PoseGraph::SubmapData GetSubmapDataUnderLock(const SubmapId& submap_id)
+      REQUIRES(mutex_);
 
-  common::Time GetLatestNodeTime(const mapping::NodeId& node_id,
-                                 const mapping::SubmapId& submap_id) const
+  common::Time GetLatestNodeTime(const NodeId& node_id,
+                                 const SubmapId& submap_id) const
       REQUIRES(mutex_);
 
   // Updates the trajectory connectivity structure with a new constraint.
   void UpdateTrajectoryConnectivity(const Constraint& constraint)
       REQUIRES(mutex_);
 
-  const mapping::proto::PoseGraphOptions options_;
+  const proto::PoseGraphOptions options_;
   common::Mutex mutex_;
 
   // If it exists, further work items must be added to this queue, and will be
@@ -216,7 +213,7 @@ class PoseGraph : public mapping::PoseGraph {
       GUARDED_BY(mutex_);
 
   // How our various trajectories are related.
-  mapping::TrajectoryConnectivityState trajectory_connectivity_state_;
+  TrajectoryConnectivityState trajectory_connectivity_state_;
 
   // We globally localize a fraction of the nodes from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>
@@ -232,31 +229,29 @@ class PoseGraph : public mapping::PoseGraph {
   void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
-  pose_graph::OptimizationProblem optimization_problem_;
-  pose_graph::ConstraintBuilder constraint_builder_ GUARDED_BY(mutex_);
+  mapping_2d::pose_graph::OptimizationProblem optimization_problem_;
+  mapping_2d::pose_graph::ConstraintBuilder constraint_builder_
+      GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
   // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
-  mapping::MapById<mapping::SubmapId, SubmapData> submap_data_
-      GUARDED_BY(mutex_);
+  MapById<SubmapId, SubmapData> submap_data_ GUARDED_BY(mutex_);
 
   // Data that are currently being shown.
-  mapping::MapById<mapping::NodeId, mapping::TrajectoryNode> trajectory_nodes_
-      GUARDED_BY(mutex_);
+  MapById<NodeId, TrajectoryNode> trajectory_nodes_ GUARDED_BY(mutex_);
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Global submap poses currently used for displaying data.
-  mapping::MapById<mapping::SubmapId, pose_graph::SubmapData>
-      global_submap_poses_ GUARDED_BY(mutex_);
+  MapById<SubmapId, mapping_2d::pose_graph::SubmapData> global_submap_poses_
+      GUARDED_BY(mutex_);
 
   // Global landmark poses with all observations.
   std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
       landmark_nodes_ GUARDED_BY(mutex_);
 
   // List of all trimmers to consult when optimizations finish.
-  std::vector<std::unique_ptr<mapping::PoseGraphTrimmer>> trimmers_
-      GUARDED_BY(mutex_);
+  std::vector<std::unique_ptr<PoseGraphTrimmer>> trimmers_ GUARDED_BY(mutex_);
 
   // Set of all frozen trajectories not being optimized.
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
@@ -270,22 +265,22 @@ class PoseGraph : public mapping::PoseGraph {
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.
-  class TrimmingHandle : public mapping::Trimmable {
+  class TrimmingHandle : public Trimmable {
    public:
-    TrimmingHandle(PoseGraph* parent);
+    TrimmingHandle(PoseGraph2D* parent);
     ~TrimmingHandle() override {}
 
     int num_submaps(int trajectory_id) const override;
-    void MarkSubmapAsTrimmed(const mapping::SubmapId& submap_id)
+    void MarkSubmapAsTrimmed(const SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
     bool IsFinished(int trajectory_id) const override;
 
    private:
-    PoseGraph* const parent_;
+    PoseGraph2D* const parent_;
   };
 };
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_2D_H_
