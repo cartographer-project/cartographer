@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/pose_graph.h"
+#include "cartographer/mapping_2d/pose_graph_2d.h"
 
 #include <cmath>
 #include <memory>
@@ -32,12 +32,12 @@
 #include "gmock/gmock.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace {
 
-class PoseGraphTest : public ::testing::Test {
+class PoseGraph2DTest : public ::testing::Test {
  protected:
-  PoseGraphTest() : thread_pool_(1) {
+  PoseGraph2DTest() : thread_pool_(1) {
     // Builds a wavy, irregularly circular point cloud that is unique
     // rotationally. This gives us good rotational texture and avoids any
     // possibility of the CeresScanMatcher preferring free space (>
@@ -58,8 +58,8 @@ class PoseGraphTest : public ::testing::Test {
               miss_probability = 0.495,
             },
           })text");
-      active_submaps_ = common::make_unique<ActiveSubmaps>(
-          CreateSubmapsOptions(parameter_dictionary.get()));
+      active_submaps_ = common::make_unique<mapping_2d::ActiveSubmaps>(
+          mapping_2d::CreateSubmapsOptions(parameter_dictionary.get()));
     }
 
     {
@@ -132,9 +132,8 @@ class PoseGraphTest : public ::testing::Test {
             log_residual_histograms = true,
             global_constraint_search_after_n_seconds = 10.0,
           })text");
-      pose_graph_ = common::make_unique<PoseGraph>(
-          mapping::CreatePoseGraphOptions(parameter_dictionary.get()),
-          &thread_pool_);
+      pose_graph_ = common::make_unique<PoseGraph2D>(
+          CreatePoseGraphOptions(parameter_dictionary.get()), &thread_pool_);
     }
 
     current_pose_ = transform::Rigid2d::Identity();
@@ -146,7 +145,7 @@ class PoseGraphTest : public ::testing::Test {
     const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
-    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+    std::vector<std::shared_ptr<const mapping_2d::Submap>> insertion_submaps;
     for (const auto& submap : active_submaps_->submaps()) {
       insertion_submaps.push_back(submap);
     }
@@ -158,14 +157,14 @@ class PoseGraphTest : public ::testing::Test {
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
 
     pose_graph_->AddNode(
-        std::make_shared<const mapping::TrajectoryNode::Data>(
-            mapping::TrajectoryNode::Data{common::FromUniversal(0),
-                                          Eigen::Quaterniond::Identity(),
-                                          range_data.returns,
-                                          {},
-                                          {},
-                                          {},
-                                          transform::Embed3D(pose_estimate)}),
+        std::make_shared<const TrajectoryNode::Data>(
+            TrajectoryNode::Data{common::FromUniversal(0),
+                                 Eigen::Quaterniond::Identity(),
+                                 range_data.returns,
+                                 {},
+                                 {},
+                                 {},
+                                 transform::Embed3D(pose_estimate)}),
         kTrajectoryId, insertion_submaps);
   }
 
@@ -179,19 +178,19 @@ class PoseGraphTest : public ::testing::Test {
   }
 
   sensor::PointCloud point_cloud_;
-  std::unique_ptr<ActiveSubmaps> active_submaps_;
+  std::unique_ptr<mapping_2d::ActiveSubmaps> active_submaps_;
   common::ThreadPool thread_pool_;
-  std::unique_ptr<PoseGraph> pose_graph_;
+  std::unique_ptr<PoseGraph2D> pose_graph_;
   transform::Rigid2d current_pose_;
 };
 
-TEST_F(PoseGraphTest, EmptyMap) {
+TEST_F(PoseGraph2DTest, EmptyMap) {
   pose_graph_->RunFinalOptimization();
   const auto nodes = pose_graph_->GetTrajectoryNodes();
   EXPECT_TRUE(nodes.empty());
 }
 
-TEST_F(PoseGraphTest, NoMovement) {
+TEST_F(PoseGraph2DTest, NoMovement) {
   MoveRelative(transform::Rigid2d::Identity());
   MoveRelative(transform::Rigid2d::Identity());
   MoveRelative(transform::Rigid2d::Identity());
@@ -200,15 +199,15 @@ TEST_F(PoseGraphTest, NoMovement) {
   ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
               ::testing::ContainerEq(std::vector<int>{0}));
   EXPECT_THAT(nodes.SizeOfTrajectoryOrZero(0), ::testing::Eq(3u));
-  EXPECT_THAT(nodes.at(mapping::NodeId{0, 0}).global_pose,
+  EXPECT_THAT(nodes.at(NodeId{0, 0}).global_pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
-  EXPECT_THAT(nodes.at(mapping::NodeId{0, 1}).global_pose,
+  EXPECT_THAT(nodes.at(NodeId{0, 1}).global_pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
-  EXPECT_THAT(nodes.at(mapping::NodeId{0, 2}).global_pose,
+  EXPECT_THAT(nodes.at(NodeId{0, 2}).global_pose,
               transform::IsNearly(transform::Rigid3d::Identity(), 1e-2));
 }
 
-TEST_F(PoseGraphTest, NoOverlappingNodes) {
+TEST_F(PoseGraph2DTest, NoOverlappingNodes) {
   std::mt19937 rng(0);
   std::uniform_real_distribution<double> distribution(-1., 1.);
   std::vector<transform::Rigid2d> poses;
@@ -221,15 +220,15 @@ TEST_F(PoseGraphTest, NoOverlappingNodes) {
   ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
               ::testing::ContainerEq(std::vector<int>{0}));
   for (int i = 0; i != 4; ++i) {
-    EXPECT_THAT(poses[i],
-                IsNearly(transform::Project2D(
-                             nodes.at(mapping::NodeId{0, i}).global_pose),
-                         1e-2))
+    EXPECT_THAT(
+        poses[i],
+        IsNearly(transform::Project2D(nodes.at(NodeId{0, i}).global_pose),
+                 1e-2))
         << i;
   }
 }
 
-TEST_F(PoseGraphTest, ConsecutivelyOverlappingNodes) {
+TEST_F(PoseGraph2DTest, ConsecutivelyOverlappingNodes) {
   std::mt19937 rng(0);
   std::uniform_real_distribution<double> distribution(-1., 1.);
   std::vector<transform::Rigid2d> poses;
@@ -242,15 +241,15 @@ TEST_F(PoseGraphTest, ConsecutivelyOverlappingNodes) {
   ASSERT_THAT(ToVectorInt(nodes.trajectory_ids()),
               ::testing::ContainerEq(std::vector<int>{0}));
   for (int i = 0; i != 5; ++i) {
-    EXPECT_THAT(poses[i],
-                IsNearly(transform::Project2D(
-                             nodes.at(mapping::NodeId{0, i}).global_pose),
-                         1e-2))
+    EXPECT_THAT(
+        poses[i],
+        IsNearly(transform::Project2D(nodes.at(NodeId{0, i}).global_pose),
+                 1e-2))
         << i;
   }
 }
 
-TEST_F(PoseGraphTest, OverlappingNodes) {
+TEST_F(PoseGraph2DTest, OverlappingNodes) {
   std::mt19937 rng(0);
   std::uniform_real_distribution<double> distribution(-1., 1.);
   std::vector<transform::Rigid2d> ground_truth;
@@ -285,5 +284,5 @@ TEST_F(PoseGraphTest, OverlappingNodes) {
 }
 
 }  // namespace
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

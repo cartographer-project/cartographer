@@ -28,6 +28,8 @@
 #include "cartographer/internal/mapping_2d/local_trajectory_builder.h"
 #include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
+#include "cartographer/mapping_2d/pose_graph_2d.h"
+#include "cartographer/mapping_3d/pose_graph.h"
 #include "cartographer/sensor/collator.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/sensor/trajectory_collator.h"
@@ -58,7 +60,7 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
   if (options.use_trajectory_builder_2d()) {
-    pose_graph_2d_ = common::make_unique<mapping_2d::PoseGraph>(
+    pose_graph_2d_ = common::make_unique<PoseGraph2D>(
         options_.pose_graph_options(), &thread_pool_);
     pose_graph_ = pose_graph_2d_.get();
   }
@@ -73,8 +75,6 @@ MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     sensor_collator_ = common::make_unique<sensor::Collator>();
   }
 }
-
-MapBuilder::~MapBuilder() {}
 
 int MapBuilder::AddTrajectoryBuilder(
     const std::set<SensorId>& expected_sensor_ids,
@@ -111,10 +111,9 @@ int MapBuilder::AddTrajectoryBuilder(
             sensor_collator_.get(), trajectory_id, expected_sensor_ids,
             common::make_unique<mapping::GlobalTrajectoryBuilder<
                 mapping_2d::LocalTrajectoryBuilder,
-                mapping_2d::proto::LocalTrajectoryBuilderOptions,
-                mapping_2d::PoseGraph>>(std::move(local_trajectory_builder),
-                                        trajectory_id, pose_graph_2d_.get(),
-                                        local_slam_result_callback)));
+                mapping_2d::proto::LocalTrajectoryBuilderOptions, PoseGraph2D>>(
+                std::move(local_trajectory_builder), trajectory_id,
+                pose_graph_2d_.get(), local_slam_result_callback)));
   }
   if (trajectory_options.pure_localization()) {
     constexpr int kSubmapsToKeep = 3;
