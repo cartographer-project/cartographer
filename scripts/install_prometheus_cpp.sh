@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright 2017 The Cartographer Authors
+# Copyright 2018 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@
 set -o errexit
 set -o verbose
 
-# Build and install Cartographer.
-cd cartographer
+VERSION="v0.2"
+# Digest: a5d981dab82ad6b90f78141eb189694d69c3fe0f
+
+git clone --branch ${VERSION} --depth 1 https://github.com/jupp0r/prometheus-cpp.git
+cd prometheus-cpp
+git submodule update --init
 mkdir build
 cd build
-cmake .. -DBUILD_GRPC=ON -DBUILD_PROMETHEUS=ON -G Ninja
-ninja
-CTEST_OUTPUT_ON_FAILURE=1 ninja test
-sudo ninja install
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+sudo make install
