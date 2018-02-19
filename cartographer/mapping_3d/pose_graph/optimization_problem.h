@@ -75,6 +75,9 @@ class OptimizationProblem {
   void AddTrajectoryNode(int trajectory_id, common::Time time,
                          const transform::Rigid3d& local_pose,
                          const transform::Rigid3d& global_pose);
+  void SetTrajectoryData(
+      int trajectory_id,
+      const mapping::PoseGraphInterface::TrajectoryData& trajectory_data);
   void InsertTrajectoryNode(const mapping::NodeId& node_id, common::Time time,
                             const transform::Rigid3d& local_pose,
                             const transform::Rigid3d& global_pose);
@@ -99,18 +102,14 @@ class OptimizationProblem {
   const sensor::MapByTime<sensor::OdometryData>& odometry_data() const;
   const sensor::MapByTime<sensor::FixedFramePoseData>& fixed_frame_pose_data()
       const;
+  const std::map<int, mapping::PoseGraphInterface::TrajectoryData>&
+  trajectory_data() const;
 
  private:
   // Uses odometry if available, otherwise the local SLAM results.
   transform::Rigid3d ComputeRelativePose(
       int trajectory_id, const NodeData& first_node_data,
       const NodeData& second_node_data) const;
-
-  struct TrajectoryData {
-    double gravity_constant = 9.8;
-    std::array<double, 4> imu_calibration{{1., 0., 0., 0.}};
-    common::optional<transform::Rigid3d> fixed_frame;
-  };
 
   mapping::pose_graph::proto::OptimizationProblemOptions options_;
   FixZ fix_z_;
@@ -120,7 +119,7 @@ class OptimizationProblem {
   sensor::MapByTime<sensor::ImuData> imu_data_;
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
   sensor::MapByTime<sensor::FixedFramePoseData> fixed_frame_pose_data_;
-  std::map<int, TrajectoryData> trajectory_data_;
+  std::map<int, mapping::PoseGraphInterface::TrajectoryData> trajectory_data_;
 };
 
 }  // namespace pose_graph
