@@ -73,7 +73,7 @@ TEST(MetricsTest, CollectCounter) {
           testing::ElementsAre(testing::Property(
               &io::prometheus::client::LabelPair::value, kLabelValue))));
   EXPECT_THAT(collected[0].metric(0).counter().value(),
-              testing::Eq(expected_value));
+              testing::DoubleEq(expected_value));
 }
 
 TEST(MetricsTest, CollectGauge) {
@@ -102,7 +102,7 @@ TEST(MetricsTest, CollectGauge) {
           testing::ElementsAre(testing::Property(
               &io::prometheus::client::LabelPair::value, kLabelValue))));
   EXPECT_THAT(collected[0].metric(0).gauge().value(),
-              testing::Eq(expected_value));
+              testing::DoubleEq(expected_value));
 }
 
 TEST(MetricsTest, CollectHistogram) {
