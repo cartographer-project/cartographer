@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright 2018 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-workspace(name = "com_github_googlecartographer_cartographer")
+set -o errexit
+set -o verbose
 
-load("//:bazel/repositories.bzl", "cartographer_repositories")
+VERSION="v0.2"
+# Digest: a5d981dab82ad6b90f78141eb189694d69c3fe0f
 
-cartographer_repositories()
-
-# This can't be inside cartographer_repositories() because of:
-# https://github.com/bazelbuild/bazel/issues/1550
-load("@com_github_nelhage_boost//:boost/boost.bzl", "boost_deps")
-
-boost_deps()
-
-load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
-
-grpc_deps()
-
-load("@com_github_jupp0r_prometheus_cpp//:repositories.bzl", "load_prometheus_client_model", "load_civetweb")
-
-load_prometheus_client_model()
-
-load_civetweb()
+git clone --branch ${VERSION} --depth 1 https://github.com/jupp0r/prometheus-cpp.git
+cd prometheus-cpp
+git submodule update --init
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+sudo make install
