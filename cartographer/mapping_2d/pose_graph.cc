@@ -629,6 +629,10 @@ sensor::MapByTime<sensor::OdometryData> PoseGraph::GetOdometryData() {
   return optimization_problem_.odometry_data();
 }
 
+std::map<int, mapping::PoseGraphInterface::TrajectoryData> PoseGraph::GetTrajectoryData() {
+  return {};  // Not implemented yet in 2D.
+}
+
 sensor::MapByTime<sensor::FixedFramePoseData>
 PoseGraph::GetFixedFramePoseData() {
   return {};  // Not implemented yet in 2D.

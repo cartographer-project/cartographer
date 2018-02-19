@@ -665,6 +665,11 @@ PoseGraph::GetFixedFramePoseData() {
   return optimization_problem_.fixed_frame_pose_data();
 }
 
+std::map<int, mapping::PoseGraphInterface::TrajectoryData> PoseGraph::GetTrajectoryData() {
+  common::MutexLocker locker(&mutex_);
+  return optimization_problem_.trajectory_data();
+}
+
 std::vector<PoseGraph::Constraint> PoseGraph::constraints() {
   common::MutexLocker locker(&mutex_);
   return constraints_;

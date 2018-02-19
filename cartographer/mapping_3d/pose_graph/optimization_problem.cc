@@ -51,6 +51,7 @@ namespace {
 
 using ::cartographer::mapping::pose_graph::CeresPose;
 using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
+using TrajectoryData = ::cartographer::mapping::PoseGraphInterface::TrajectoryData;
 
 // For odometry.
 std::unique_ptr<transform::Rigid3d> Interpolate(
@@ -475,8 +476,8 @@ void OptimizationProblem::Solve(
 
       if (!fixed_frame_pose_initialized) {
         transform::Rigid3d fixed_frame_pose_in_map;
-        if (trajectory_data.fixed_frame.has_value()) {
-          fixed_frame_pose_in_map = trajectory_data.fixed_frame.value();
+        if (trajectory_data.fixed_frame_origin_in_map.has_value()) {
+          fixed_frame_pose_in_map = trajectory_data.fixed_frame_origin_in_map.value();
         } else {
           fixed_frame_pose_in_map =
               node_data.global_pose * constraint_pose.zbar_ij.inverse();
@@ -537,7 +538,7 @@ void OptimizationProblem::Solve(
         C_node_id_data.data.ToRigid();
   }
   for (const auto& C_fixed_frame : C_fixed_frames) {
-    trajectory_data_.at(C_fixed_frame.first).fixed_frame =
+    trajectory_data_.at(C_fixed_frame.first).fixed_frame_origin_in_map =
         C_fixed_frame.second.ToRigid();
   }
   for (const auto& C_landmark : C_landmarks) {
@@ -573,6 +574,10 @@ OptimizationProblem::odometry_data() const {
 const sensor::MapByTime<sensor::FixedFramePoseData>&
 OptimizationProblem::fixed_frame_pose_data() const {
   return fixed_frame_pose_data_;
+}
+
+const std::map<int, TrajectoryData>& OptimizationProblem::trajectory_data() const {
+  return trajectory_data_;
 }
 
 transform::Rigid3d OptimizationProblem::ComputeRelativePose(
