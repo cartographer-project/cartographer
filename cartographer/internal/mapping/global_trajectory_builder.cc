@@ -26,8 +26,7 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-template <typename LocalTrajectoryBuilder,
-          typename LocalTrajectoryBuilderOptions, typename PoseGraph>
+template <typename LocalTrajectoryBuilder, typename PoseGraph>
 class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
  public:
   // Passing a 'nullptr' for 'local_trajectory_builder' is acceptable, but no
@@ -135,8 +134,7 @@ std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder2D(
     const TrajectoryBuilderInterface::LocalSlamResultCallback&
         local_slam_result_callback) {
   return common::make_unique<GlobalTrajectoryBuilder<
-      mapping_2d::LocalTrajectoryBuilder,
-      mapping_2d::proto::LocalTrajectoryBuilderOptions, mapping::PoseGraph2D>>(
+      mapping_2d::LocalTrajectoryBuilder, mapping::PoseGraph2D>>(
       std::move(local_trajectory_builder), trajectory_id, pose_graph,
       local_slam_result_callback);
 }
@@ -148,8 +146,7 @@ std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder3D(
     const TrajectoryBuilderInterface::LocalSlamResultCallback&
         local_slam_result_callback) {
   return common::make_unique<GlobalTrajectoryBuilder<
-      mapping_3d::LocalTrajectoryBuilder,
-      mapping_3d::proto::LocalTrajectoryBuilderOptions, mapping::PoseGraph3D>>(
+      mapping_3d::LocalTrajectoryBuilder, mapping::PoseGraph3D>>(
       std::move(local_trajectory_builder), trajectory_id, pose_graph,
       local_slam_result_callback);
 }
