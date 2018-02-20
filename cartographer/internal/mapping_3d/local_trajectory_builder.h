@@ -64,7 +64,8 @@ class LocalTrajectoryBuilder {
   // was acquired, `range_data` contains the relative time of point with
   // respect to `time`.
   std::unique_ptr<MatchingResult> AddRangeData(
-      common::Time time, const sensor::TimedRangeData& range_data);
+      const std::string& sensor_id, common::Time time,
+      const sensor::TimedRangeData& range_data);
   void AddOdometryData(const sensor::OdometryData& odometry_data);
 
  private:

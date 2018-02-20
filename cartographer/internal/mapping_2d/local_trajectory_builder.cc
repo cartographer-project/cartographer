@@ -81,14 +81,22 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder::ScanMatch(
 }
 
 std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
-LocalTrajectoryBuilder::AddRangeData(const common::Time time,
+LocalTrajectoryBuilder::AddRangeData(const std::string& sensor_id,
+                                     const common::Time time,
                                      const sensor::TimedRangeData& range_data) {
   // Initialize extrapolator now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
-    InitializeExtrapolator(time);
+    InitializeExtrapolator(sensor_id, time);
   }
 
-  if (extrapolator_ == nullptr) {
+  if (sensor_to_extrapolator_.count(sensor_id) == 0) {
+    // Request initialization by AddImuData.
+    sensor_to_extrapolator_[sensor_id] == nullptr;
+  }
+  mapping::PoseExtrapolator* extrapolator =
+      sensor_to_extrapolator_.at(sensor_id).get();
+
+  if (extrapolator == nullptr) {
     // Until we've initialized the extrapolator with our first IMU message, we
     // cannot compute the orientation of the rangefinder.
     LOG(INFO) << "Extrapolator not yet initialized.";
@@ -99,7 +107,22 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   CHECK_EQ(range_data.returns.back()[3], 0);
   const common::Time time_first_point =
       time + common::FromSeconds(range_data.returns.front()[3]);
-  if (time_first_point < extrapolator_->GetLastPoseTime()) {
+  // Learn from other extrapolators.
+  for (auto& it : sensor_to_extrapolator_) {
+    mapping::PoseExtrapolator* other = it.second.get();
+    if (other == nullptr) {
+      continue;
+    }
+    if (extrapolator->GetLastPoseTime() < other->GetLastPoseTime() &&
+        other->GetLastPoseTime() < time_first_point) {
+      auto timed_pose = other->GetLastPose();
+      if (!timed_pose.has_value()) {
+        continue;
+      }
+      extrapolator->AddPose(timed_pose.value().time, timed_pose.value().pose);
+    }
+  }
+  if (time_first_point < extrapolator->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
     return nullptr;
   }
@@ -109,7 +132,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   for (const Eigen::Vector4f& hit : range_data.returns) {
     const common::Time time_point = time + common::FromSeconds(hit[3]);
     range_data_poses.push_back(
-        extrapolator_->ExtrapolatePose(time_point).cast<float>());
+        extrapolator->ExtrapolatePose(time_point).cast<float>());
   }
 
   if (num_accumulated_ == 0) {
@@ -142,7 +165,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   if (num_accumulated_ >= options_.num_accumulated_range_data()) {
     num_accumulated_ = 0;
     const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
-        extrapolator_->EstimateGravityOrientation(time));
+        extrapolator->EstimateGravityOrientation(time));
     accumulated_range_data_.origin =
         range_data_poses.back() * range_data.origin;
     return AddAccumulatedRangeData(
@@ -150,7 +173,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
         TransformToGravityAlignedFrameAndFilter(
             gravity_alignment.cast<float>() * range_data_poses.back().inverse(),
             accumulated_range_data_),
-        gravity_alignment);
+        gravity_alignment, extrapolator);
   }
   return nullptr;
 }
@@ -159,7 +182,8 @@ std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
 LocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time,
     const sensor::RangeData& gravity_aligned_range_data,
-    const transform::Rigid3d& gravity_alignment) {
+    const transform::Rigid3d& gravity_alignment,
+    mapping::PoseExtrapolator* extrapolator) {
   if (gravity_aligned_range_data.returns.empty()) {
     LOG(WARNING) << "Dropped empty horizontal range data.";
     return nullptr;
@@ -167,7 +191,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
 
   // Computes a gravity aligned pose prediction.
   const transform::Rigid3d non_gravity_aligned_pose_prediction =
-      extrapolator_->ExtrapolatePose(time);
+      extrapolator->ExtrapolatePose(time);
   const transform::Rigid2d pose_prediction = transform::Project2D(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
@@ -180,7 +204,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   }
   const transform::Rigid3d pose_estimate =
       transform::Embed3D(*pose_estimate_2d) * gravity_alignment;
-  extrapolator_->AddPose(time, pose_estimate);
+  extrapolator->AddPose(time, pose_estimate);
 
   sensor::RangeData range_data_in_local =
       TransformRangeData(gravity_aligned_range_data,
@@ -231,22 +255,28 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
 
 void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
   CHECK(options_.use_imu_data()) << "An unexpected IMU packet was added.";
-  InitializeExtrapolator(imu_data.time);
-  extrapolator_->AddImuData(imu_data);
+  for (auto& it : sensor_to_extrapolator_) {
+    InitializeExtrapolator(it.first, imu_data.time);
+    it.second->AddImuData(imu_data);
+  }
 }
 
 void LocalTrajectoryBuilder::AddOdometryData(
     const sensor::OdometryData& odometry_data) {
-  if (extrapolator_ == nullptr) {
-    // Until we've initialized the extrapolator we cannot add odometry data.
-    LOG(INFO) << "Extrapolator not yet initialized.";
-    return;
+  for (auto& it : sensor_to_extrapolator_) {
+    if (it.second == nullptr) {
+      // Until we've initialized the extrapolator we cannot add odometry data.
+      LOG(INFO) << "Extrapolator not yet initialized.";
+      return;
+    }
+    it.second->AddOdometryData(odometry_data);
   }
-  extrapolator_->AddOdometryData(odometry_data);
 }
 
-void LocalTrajectoryBuilder::InitializeExtrapolator(const common::Time time) {
-  if (extrapolator_ != nullptr) {
+void LocalTrajectoryBuilder::InitializeExtrapolator(
+    const std::string& sensor_id, const common::Time time) {
+  if (sensor_to_extrapolator_.count(sensor_id) != 0 &&
+      sensor_to_extrapolator_.at(sensor_id) != nullptr) {
     return;
   }
   // We derive velocities from poses which are at least 1 ms apart for numerical
@@ -254,10 +284,12 @@ void LocalTrajectoryBuilder::InitializeExtrapolator(const common::Time time) {
   // in time and thus the last two are used.
   constexpr double kExtrapolationEstimationTimeSec = 0.001;
   // TODO(gaschler): Consider using InitializeWithImu as 3D does.
-  extrapolator_ = common::make_unique<mapping::PoseExtrapolator>(
-      ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
-      options_.imu_gravity_time_constant());
-  extrapolator_->AddPose(time, transform::Rigid3d::Identity());
+  sensor_to_extrapolator_[sensor_id] =
+      cartographer::common::make_unique<mapping::PoseExtrapolator>(
+          ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
+          options_.imu_gravity_time_constant());
+  sensor_to_extrapolator_.at(sensor_id)->AddPose(
+      time, transform::Rigid3d::Identity());
 }
 
 }  // namespace mapping_2d
