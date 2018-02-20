@@ -53,8 +53,7 @@ PoseGraph2D::~PoseGraph2D() {
 
 std::vector<SubmapId> PoseGraph2D::InitializeGlobalSubmapPoses(
     const int trajectory_id, const common::Time time,
-    const std::vector<std::shared_ptr<const mapping_2d::Submap>>&
-        insertion_submaps) {
+    const std::vector<std::shared_ptr<const Submap2D>>& insertion_submaps) {
   CHECK(!insertion_submaps.empty());
   const auto& submap_data = optimization_problem_.submap_data();
   if (insertion_submaps.size() == 1) {
@@ -103,8 +102,7 @@ std::vector<SubmapId> PoseGraph2D::InitializeGlobalSubmapPoses(
 NodeId PoseGraph2D::AddNode(
     std::shared_ptr<const TrajectoryNode::Data> constant_data,
     const int trajectory_id,
-    const std::vector<std::shared_ptr<const mapping_2d::Submap>>&
-        insertion_submaps) {
+    const std::vector<std::shared_ptr<const Submap2D>>& insertion_submaps) {
   const transform::Rigid3d optimized_pose(
       GetLocalToGlobalTransform(trajectory_id) * constant_data->local_pose);
 
@@ -234,7 +232,7 @@ void PoseGraph2D::ComputeConstraintsForOldNodes(const SubmapId& submap_id) {
 
 void PoseGraph2D::ComputeConstraintsForNode(
     const NodeId& node_id,
-    std::vector<std::shared_ptr<const mapping_2d::Submap>> insertion_submaps,
+    std::vector<std::shared_ptr<const Submap2D>> insertion_submaps,
     const bool newly_finished_submap) {
   const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
   const std::vector<SubmapId> submap_ids = InitializeGlobalSubmapPoses(
@@ -431,8 +429,8 @@ void PoseGraph2D::AddSubmapFromProto(
 
   const SubmapId submap_id = {submap.submap_id().trajectory_id(),
                               submap.submap_id().submap_index()};
-  std::shared_ptr<const mapping_2d::Submap> submap_ptr =
-      std::make_shared<const mapping_2d::Submap>(submap.submap_2d());
+  std::shared_ptr<const Submap2D> submap_ptr =
+      std::make_shared<const Submap2D>(submap.submap_2d());
   const transform::Rigid2d global_submap_pose_2d =
       transform::Project2D(global_submap_pose);
 

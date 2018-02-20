@@ -29,7 +29,7 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
 struct CellLimits {
   CellLimits() = default;
@@ -108,7 +108,7 @@ class XYIndexRangeIterator
   Eigen::Array2i xy_index_;
 };
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_2D_XY_INDEX_H_

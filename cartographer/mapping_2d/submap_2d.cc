@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/submaps.h"
+#include "cartographer/mapping_2d/submap_2d.h"
 
 #include <cinttypes>
 #include <cmath>
@@ -28,7 +28,7 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
 ProbabilityGrid ComputeCroppedProbabilityGrid(
     const ProbabilityGrid& probability_grid) {
@@ -49,33 +49,33 @@ ProbabilityGrid ComputeCroppedProbabilityGrid(
   return cropped_grid;
 }
 
-proto::SubmapsOptions CreateSubmapsOptions(
+proto::SubmapsOptions2D CreateSubmapsOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::SubmapsOptions options;
+  proto::SubmapsOptions2D options;
   options.set_resolution(parameter_dictionary->GetDouble("resolution"));
   options.set_num_range_data(
       parameter_dictionary->GetNonNegativeInt("num_range_data"));
   *options.mutable_range_data_inserter_options() =
-      CreateRangeDataInserterOptions(
+      CreateRangeDataInserterOptions2D(
           parameter_dictionary->GetDictionary("range_data_inserter").get());
   CHECK_GT(options.num_range_data(), 0);
   return options;
 }
 
-Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin)
-    : mapping::Submap(transform::Rigid3d::Translation(
+Submap2D::Submap2D(const MapLimits& limits, const Eigen::Vector2f& origin)
+    : Submap(transform::Rigid3d::Translation(
           Eigen::Vector3d(origin.x(), origin.y(), 0.))),
       probability_grid_(limits) {}
 
-Submap::Submap(const mapping::proto::Submap2D& proto)
-    : mapping::Submap(transform::ToRigid3(proto.local_pose())),
+Submap2D::Submap2D(const proto::Submap2D& proto)
+    : Submap(transform::ToRigid3(proto.local_pose())),
       probability_grid_(ProbabilityGrid(proto.probability_grid())) {
   SetNumRangeData(proto.num_range_data());
   SetFinished(proto.finished());
 }
 
-void Submap::ToProto(mapping::proto::Submap* const proto,
-                     bool include_probability_grid_data) const {
+void Submap2D::ToProto(proto::Submap* const proto,
+                       bool include_probability_grid_data) const {
   auto* const submap_2d = proto->mutable_submap_2d();
   *submap_2d->mutable_local_pose() = transform::ToProto(local_pose());
   submap_2d->set_num_range_data(num_range_data());
@@ -85,7 +85,7 @@ void Submap::ToProto(mapping::proto::Submap* const proto,
   }
 }
 
-void Submap::UpdateFromProto(const mapping::proto::Submap& proto) {
+void Submap2D::UpdateFromProto(const proto::Submap& proto) {
   CHECK(proto.has_submap_2d());
   const auto& submap_2d = proto.submap_2d();
   SetNumRangeData(submap_2d.num_range_data());
@@ -95,9 +95,9 @@ void Submap::UpdateFromProto(const mapping::proto::Submap& proto) {
   }
 }
 
-void Submap::ToResponseProto(
+void Submap2D::ToResponseProto(
     const transform::Rigid3d&,
-    mapping::proto::SubmapQuery::Response* const response) const {
+    proto::SubmapQuery::Response* const response) const {
   response->set_submap_version(num_range_data());
 
   Eigen::Array2i offset;
@@ -114,7 +114,7 @@ void Submap::ToResponseProto(
       // is currently white, so walls will look too gray. This should be hard to
       // detect visually for the user, though.
       const int delta =
-          128 - mapping::ProbabilityToLogOddsInteger(
+          128 - ProbabilityToLogOddsInteger(
                     probability_grid_.GetProbability(xy_index + offset));
       const uint8 alpha = delta > 0 ? 0 : -delta;
       const uint8 value = delta > 0 ? delta : 0;
@@ -126,7 +126,7 @@ void Submap::ToResponseProto(
       cells.push_back(0);                                    // alpha
     }
   }
-  mapping::proto::SubmapQuery::Response::SubmapTexture* const texture =
+  proto::SubmapQuery::Response::SubmapTexture* const texture =
       response->add_textures();
   common::FastGzipString(cells, texture->mutable_cells());
 
@@ -143,20 +143,20 @@ void Submap::ToResponseProto(
       transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));
 }
 
-void Submap::InsertRangeData(const sensor::RangeData& range_data,
-                             const RangeDataInserter& range_data_inserter) {
+void Submap2D::InsertRangeData(const sensor::RangeData& range_data,
+                               const RangeDataInserter2D& range_data_inserter) {
   CHECK(!finished());
   range_data_inserter.Insert(range_data, &probability_grid_);
   SetNumRangeData(num_range_data() + 1);
 }
 
-void Submap::Finish() {
+void Submap2D::Finish() {
   CHECK(!finished());
   probability_grid_ = ComputeCroppedProbabilityGrid(probability_grid_);
   SetFinished(true);
 }
 
-ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
+ActiveSubmaps2D::ActiveSubmaps2D(const proto::SubmapsOptions2D& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {
   // We always want to have at least one likelihood field which we can return,
@@ -164,7 +164,7 @@ ActiveSubmaps::ActiveSubmaps(const proto::SubmapsOptions& options)
   AddSubmap(Eigen::Vector2f::Zero());
 }
 
-void ActiveSubmaps::InsertRangeData(const sensor::RangeData& range_data) {
+void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
   for (auto& submap : submaps_) {
     submap->InsertRangeData(range_data, range_data_inserter_);
   }
@@ -173,27 +173,27 @@ void ActiveSubmaps::InsertRangeData(const sensor::RangeData& range_data) {
   }
 }
 
-std::vector<std::shared_ptr<Submap>> ActiveSubmaps::submaps() const {
+std::vector<std::shared_ptr<Submap2D>> ActiveSubmaps2D::submaps() const {
   return submaps_;
 }
 
-int ActiveSubmaps::matching_index() const { return matching_submap_index_; }
+int ActiveSubmaps2D::matching_index() const { return matching_submap_index_; }
 
-void ActiveSubmaps::FinishSubmap() {
-  Submap* submap = submaps_.front().get();
+void ActiveSubmaps2D::FinishSubmap() {
+  Submap2D* submap = submaps_.front().get();
   submap->Finish();
   ++matching_submap_index_;
   submaps_.erase(submaps_.begin());
 }
 
-void ActiveSubmaps::AddSubmap(const Eigen::Vector2f& origin) {
+void ActiveSubmaps2D::AddSubmap(const Eigen::Vector2f& origin) {
   if (submaps_.size() > 1) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
     FinishSubmap();
   }
   constexpr int kInitialSubmapSize = 100;
-  submaps_.push_back(common::make_unique<Submap>(
+  submaps_.push_back(common::make_unique<Submap2D>(
       MapLimits(options_.resolution(),
                 origin.cast<double>() + 0.5 * kInitialSubmapSize *
                                             options_.resolution() *
@@ -203,5 +203,5 @@ void ActiveSubmaps::AddSubmap(const Eigen::Vector2f& origin) {
   LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
 }
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

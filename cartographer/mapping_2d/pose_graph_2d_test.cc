@@ -24,8 +24,8 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping_2d/range_data_inserter.h"
-#include "cartographer/mapping_2d/submaps.h"
+#include "cartographer/mapping_2d/range_data_inserter_2d.h"
+#include "cartographer/mapping_2d/submap_2d.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
@@ -58,8 +58,8 @@ class PoseGraph2DTest : public ::testing::Test {
               miss_probability = 0.495,
             },
           })text");
-      active_submaps_ = common::make_unique<mapping_2d::ActiveSubmaps>(
-          mapping_2d::CreateSubmapsOptions(parameter_dictionary.get()));
+      active_submaps_ = common::make_unique<ActiveSubmaps2D>(
+          mapping::CreateSubmapsOptions2D(parameter_dictionary.get()));
     }
 
     {
@@ -145,7 +145,7 @@ class PoseGraph2DTest : public ::testing::Test {
     const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
-    std::vector<std::shared_ptr<const mapping_2d::Submap>> insertion_submaps;
+    std::vector<std::shared_ptr<const Submap2D>> insertion_submaps;
     for (const auto& submap : active_submaps_->submaps()) {
       insertion_submaps.push_back(submap);
     }
@@ -178,7 +178,7 @@ class PoseGraph2DTest : public ::testing::Test {
   }
 
   sensor::PointCloud point_cloud_;
-  std::unique_ptr<mapping_2d::ActiveSubmaps> active_submaps_;
+  std::unique_ptr<ActiveSubmaps2D> active_submaps_;
   common::ThreadPool thread_pool_;
   std::unique_ptr<PoseGraph2D> pose_graph_;
   transform::Rigid2d current_pose_;

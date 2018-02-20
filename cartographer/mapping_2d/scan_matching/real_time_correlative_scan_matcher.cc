@@ -91,7 +91,7 @@ RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchCandidates(
 double RealTimeCorrelativeScanMatcher::Match(
     const transform::Rigid2d& initial_pose_estimate,
     const sensor::PointCloud& point_cloud,
-    const ProbabilityGrid& probability_grid,
+    const mapping::ProbabilityGrid& probability_grid,
     transform::Rigid2d* pose_estimate) const {
   CHECK_NOTNULL(pose_estimate);
 
@@ -125,7 +125,7 @@ double RealTimeCorrelativeScanMatcher::Match(
 }
 
 void RealTimeCorrelativeScanMatcher::ScoreCandidates(
-    const ProbabilityGrid& probability_grid,
+    const mapping::ProbabilityGrid& probability_grid,
     const std::vector<DiscreteScan>& discrete_scans,
     const SearchParameters& search_parameters,
     std::vector<Candidate>* const candidates) const {

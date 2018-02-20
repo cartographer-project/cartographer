@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace {
 
 using Eigen::Array2i;
@@ -75,35 +75,29 @@ TEST(ProbabilityGridTest, ApplyOdds) {
 
   probability_grid.SetProbability(Array2i(1, 0), 0.5);
 
-  probability_grid.ApplyLookupTable(
-      Array2i(1, 0),
-      mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9)));
+  probability_grid.ApplyLookupTable(Array2i(1, 0),
+                                    ComputeLookupTableToApplyOdds(Odds(0.9)));
   probability_grid.FinishUpdate();
   EXPECT_GT(probability_grid.GetProbability(Array2i(1, 0)), 0.5);
 
   probability_grid.SetProbability(Array2i(0, 1), 0.5);
-
-  probability_grid.ApplyLookupTable(
-      Array2i(0, 1),
-      mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.1)));
+  probability_grid.ApplyLookupTable(Array2i(0, 1),
+                                    ComputeLookupTableToApplyOdds(Odds(0.1)));
   probability_grid.FinishUpdate();
   EXPECT_LT(probability_grid.GetProbability(Array2i(0, 1)), 0.5);
 
   // Tests adding odds to an unknown cell.
-  probability_grid.ApplyLookupTable(
-      Array2i(1, 1),
-      mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.42)));
+  probability_grid.ApplyLookupTable(Array2i(1, 1),
+                                    ComputeLookupTableToApplyOdds(Odds(0.42)));
   EXPECT_NEAR(probability_grid.GetProbability(Array2i(1, 1)), 0.42, 1e-4);
 
   // Tests that further updates are ignored if FinishUpdate() isn't called.
-  probability_grid.ApplyLookupTable(
-      Array2i(1, 1),
-      mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9)));
+  probability_grid.ApplyLookupTable(Array2i(1, 1),
+                                    ComputeLookupTableToApplyOdds(Odds(0.9)));
   EXPECT_NEAR(probability_grid.GetProbability(Array2i(1, 1)), 0.42, 1e-4);
   probability_grid.FinishUpdate();
-  probability_grid.ApplyLookupTable(
-      Array2i(1, 1),
-      mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9)));
+  probability_grid.ApplyLookupTable(Array2i(1, 1),
+                                    ComputeLookupTableToApplyOdds(Odds(0.9)));
   EXPECT_GT(probability_grid.GetProbability(Array2i(1, 1)), 0.42);
 }
 
@@ -120,10 +114,10 @@ TEST(ProbabilityGridTest, GetProbability) {
   ASSERT_EQ(2, cell_limits.num_y_cells);
 
   probability_grid.SetProbability(limits.GetCellIndex(Vector2f(-0.5f, 0.5f)),
-                                  mapping::kMaxProbability);
+                                  kMaxProbability);
   EXPECT_NEAR(probability_grid.GetProbability(
                   limits.GetCellIndex(Vector2f(-0.5f, 0.5f))),
-              mapping::kMaxProbability, 1e-6);
+              kMaxProbability, 1e-6);
   for (const Array2i& xy_index : {limits.GetCellIndex(Vector2f(-0.5f, 1.5f)),
                                   limits.GetCellIndex(Vector2f(0.5f, 0.5f)),
                                   limits.GetCellIndex(Vector2f(0.5f, 1.5f))}) {
@@ -165,8 +159,8 @@ TEST(ProbabilityGridTest, GetCellIndex) {
 TEST(ProbabilityGridTest, CorrectCropping) {
   // Create a probability grid with random values.
   std::mt19937 rng(42);
-  std::uniform_real_distribution<float> value_distribution(
-      mapping::kMinProbability, mapping::kMaxProbability);
+  std::uniform_real_distribution<float> value_distribution(kMinProbability,
+                                                           kMaxProbability);
   ProbabilityGrid probability_grid(
       MapLimits(0.05, Eigen::Vector2d(10., 10.), CellLimits(400, 400)));
   for (const Array2i& xy_index :
@@ -182,5 +176,5 @@ TEST(ProbabilityGridTest, CorrectCropping) {
 }
 
 }  // namespace
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

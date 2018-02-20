@@ -25,7 +25,7 @@
 #include "cartographer/mapping_2d/xy_index.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
 // Represents a 2D grid of probabilities.
 class ProbabilityGrid {
@@ -81,7 +81,7 @@ class ProbabilityGrid {
   Eigen::AlignedBox2i known_cells_box_;
 };
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_2D_PROBABILITY_GRID_H_

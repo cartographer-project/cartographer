@@ -24,7 +24,7 @@
 
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/range_data_inserter.h"
+#include "cartographer/mapping_2d/range_data_inserter_2d.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
 #include "gtest/gtest.h"
@@ -39,10 +39,10 @@ TEST(PrecomputationGridTest, CorrectValues) {
   // represented by uint8 values.
   std::mt19937 prng(42);
   std::uniform_int_distribution<int> distribution(0, 255);
-  ProbabilityGrid probability_grid(
-      MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(250, 250)));
-  for (const Eigen::Array2i& xy_index :
-       XYIndexRangeIterator(Eigen::Array2i(50, 50), Eigen::Array2i(249, 249))) {
+  mapping::ProbabilityGrid probability_grid(mapping::MapLimits(
+      0.05, Eigen::Vector2d(5., 5.), mapping::CellLimits(250, 250)));
+  for (const Eigen::Array2i& xy_index : mapping::XYIndexRangeIterator(
+           Eigen::Array2i(50, 50), Eigen::Array2i(249, 249))) {
     probability_grid.SetProbability(
         xy_index, PrecomputationGrid::ToProbability(distribution(prng)));
   }
@@ -52,8 +52,8 @@ TEST(PrecomputationGridTest, CorrectValues) {
     PrecomputationGrid precomputation_grid(
         probability_grid, probability_grid.limits().cell_limits(), width,
         &reusable_intermediate_grid);
-    for (const Eigen::Array2i& xy_index :
-         XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
+    for (const Eigen::Array2i& xy_index : mapping::XYIndexRangeIterator(
+             probability_grid.limits().cell_limits())) {
       float max_score = -std::numeric_limits<float>::infinity();
       for (int y = 0; y != width; ++y) {
         for (int x = 0; x != width; ++x) {
@@ -73,10 +73,10 @@ TEST(PrecomputationGridTest, CorrectValues) {
 TEST(PrecomputationGridTest, TinyProbabilityGrid) {
   std::mt19937 prng(42);
   std::uniform_int_distribution<int> distribution(0, 255);
-  ProbabilityGrid probability_grid(
-      MapLimits(0.05, Eigen::Vector2d(0.1, 0.1), CellLimits(4, 4)));
+  mapping::ProbabilityGrid probability_grid(mapping::MapLimits(
+      0.05, Eigen::Vector2d(0.1, 0.1), mapping::CellLimits(4, 4)));
   for (const Eigen::Array2i& xy_index :
-       XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
+       mapping::XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
     probability_grid.SetProbability(
         xy_index, PrecomputationGrid::ToProbability(distribution(prng)));
   }
@@ -86,8 +86,8 @@ TEST(PrecomputationGridTest, TinyProbabilityGrid) {
     PrecomputationGrid precomputation_grid(
         probability_grid, probability_grid.limits().cell_limits(), width,
         &reusable_intermediate_grid);
-    for (const Eigen::Array2i& xy_index :
-         XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
+    for (const Eigen::Array2i& xy_index : mapping::XYIndexRangeIterator(
+             probability_grid.limits().cell_limits())) {
       float max_score = -std::numeric_limits<float>::infinity();
       for (int y = 0; y != width; ++y) {
         for (int x = 0; x != width; ++x) {
@@ -116,21 +116,22 @@ CreateFastCorrelativeScanMatcherTestOptions(const int branch_and_bound_depth) {
   return CreateFastCorrelativeScanMatcherOptions(parameter_dictionary.get());
 }
 
-mapping_2d::proto::RangeDataInserterOptions
-CreateRangeDataInserterTestOptions() {
+mapping::proto::RangeDataInserterOptions2D
+CreateRangeDataInserterTestOptions2D() {
   auto parameter_dictionary = common::MakeDictionary(R"text(
       return {
         insert_free_space = true,
         hit_probability = 0.7,
         miss_probability = 0.4,
       })text");
-  return mapping_2d::CreateRangeDataInserterOptions(parameter_dictionary.get());
+  return mapping::CreateRangeDataInserterOptions2D(parameter_dictionary.get());
 }
 
 TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
   std::mt19937 prng(42);
   std::uniform_real_distribution<float> distribution(-1.f, 1.f);
-  RangeDataInserter range_data_inserter(CreateRangeDataInserterTestOptions());
+  mapping::RangeDataInserter2D range_data_inserter(
+      CreateRangeDataInserterTestOptions2D());
   constexpr float kMinScore = 0.1f;
   const auto options = CreateFastCorrelativeScanMatcherTestOptions(3);
 
@@ -147,8 +148,8 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
         {2. * distribution(prng), 2. * distribution(prng)},
         0.5 * distribution(prng));
 
-    ProbabilityGrid probability_grid(
-        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
+    mapping::ProbabilityGrid probability_grid(mapping::MapLimits(
+        0.05, Eigen::Vector2d(5., 5.), mapping::CellLimits(200, 200)));
     range_data_inserter.Insert(
         sensor::RangeData{
             Eigen::Vector3f(expected_pose.translation().x(),
@@ -177,7 +178,8 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
 TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
   std::mt19937 prng(42);
   std::uniform_real_distribution<float> distribution(-1.f, 1.f);
-  RangeDataInserter range_data_inserter(CreateRangeDataInserterTestOptions());
+  mapping::RangeDataInserter2D range_data_inserter(
+      CreateRangeDataInserterTestOptions2D());
   constexpr float kMinScore = 0.1f;
   const auto options = CreateFastCorrelativeScanMatcherTestOptions(6);
 
@@ -200,8 +202,8 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
                            0.5 * distribution(prng)) *
         perturbation.inverse();
 
-    ProbabilityGrid probability_grid(
-        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
+    mapping::ProbabilityGrid probability_grid(mapping::MapLimits(
+        0.05, Eigen::Vector2d(5., 5.), mapping::CellLimits(200, 200)));
     range_data_inserter.Insert(
         sensor::RangeData{
             transform::Embed3D(expected_pose * perturbation).translation(),

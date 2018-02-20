@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace {
 
 TEST(MapLimitsTest, ToProto) {
@@ -63,5 +63,5 @@ TEST(MapLimitsTest, ConstructAndGet) {
 }
 
 }  // namespace
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

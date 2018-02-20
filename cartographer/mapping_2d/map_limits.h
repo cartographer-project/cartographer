@@ -33,7 +33,7 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
 // Defines the limits of a grid map. This class must remain inlined for
 // performance reasons.
@@ -97,7 +97,7 @@ inline proto::MapLimits ToProto(const MapLimits& map_limits) {
   return result;
 }
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_2D_MAP_LIMITS_H_
