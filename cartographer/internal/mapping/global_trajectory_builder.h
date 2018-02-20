@@ -17,18 +17,29 @@
 #ifndef CARTOGRAPHER_INTERNAL_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
 #define CARTOGRAPHER_INTERNAL_MAPPING_GLOBAL_TRAJECTORY_BUILDER_H_
 
-#include "cartographer/mapping/trajectory_builder_interface.h"
+#include <memory>
 
+#include "cartographer/internal/mapping_2d/local_trajectory_builder.h"
+#include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
 #include "cartographer/mapping/local_slam_result_data.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
+#include "cartographer/mapping_2d/pose_graph_2d.h"
+#include "cartographer/mapping_3d/pose_graph_3d.h"
 
 namespace cartographer {
 namespace mapping {
 
-template <typename LocalTrajectoryBuilder,
-          typename LocalTrajectoryBuilderOptions, typename PoseGraph>
-std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder(
-    std::unique_ptr<LocalTrajectoryBuilder> local_trajectory_builder,
-    const int trajectory_id, PoseGraph* const pose_graph,
+std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder2D(
+    std::unique_ptr<mapping_2d::LocalTrajectoryBuilder>
+        local_trajectory_builder,
+    const int trajectory_id, mapping::PoseGraph2D* const pose_graph,
+    const TrajectoryBuilderInterface::LocalSlamResultCallback&
+        local_slam_result_callback);
+
+std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder3D(
+    std::unique_ptr<mapping_3d::LocalTrajectoryBuilder>
+        local_trajectory_builder,
+    const int trajectory_id, mapping::PoseGraph3D* const pose_graph,
     const TrajectoryBuilderInterface::LocalSlamResultCallback&
         local_slam_result_callback);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Cartographer Authors
+ * Copyright 2018 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,15 @@
 
 #include "cartographer/internal/mapping/global_trajectory_builder.h"
 
+#include <memory>
+
+#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping {
-
-// TODO(gaschler): Namespace?
+namespace {
 
 template <typename LocalTrajectoryBuilder,
           typename LocalTrajectoryBuilderOptions, typename PoseGraph>
@@ -124,16 +126,31 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
   LocalSlamResultCallback local_slam_result_callback_;
 };
 
-template <typename LocalTrajectoryBuilder,
-          typename LocalTrajectoryBuilderOptions, typename PoseGraph>
-std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder(
-    std::unique_ptr<LocalTrajectoryBuilder> local_trajectory_builder,
-    const int trajectory_id, PoseGraph* const pose_graph,
+}  // namespace
+
+std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder2D(
+    std::unique_ptr<mapping_2d::LocalTrajectoryBuilder>
+        local_trajectory_builder,
+    const int trajectory_id, mapping::PoseGraph2D* const pose_graph,
     const TrajectoryBuilderInterface::LocalSlamResultCallback&
         local_slam_result_callback) {
   return common::make_unique<GlobalTrajectoryBuilder<
-      LocalTrajectoryBuilder, LocalTrajectoryBuilderOptions, PoseGraph>>(
-      local_trajectory_builder, trajectory_id, pose_graph,
+      mapping_2d::LocalTrajectoryBuilder,
+      mapping_2d::proto::LocalTrajectoryBuilderOptions, mapping::PoseGraph2D>>(
+      std::move(local_trajectory_builder), trajectory_id, pose_graph,
+      local_slam_result_callback);
+}
+
+std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder3D(
+    std::unique_ptr<mapping_3d::LocalTrajectoryBuilder>
+        local_trajectory_builder,
+    const int trajectory_id, mapping::PoseGraph3D* const pose_graph,
+    const TrajectoryBuilderInterface::LocalSlamResultCallback&
+        local_slam_result_callback) {
+  return common::make_unique<GlobalTrajectoryBuilder<
+      mapping_3d::LocalTrajectoryBuilder,
+      mapping_3d::proto::LocalTrajectoryBuilderOptions, mapping::PoseGraph3D>>(
+      std::move(local_trajectory_builder), trajectory_id, pose_graph,
       local_slam_result_callback);
 }
 
