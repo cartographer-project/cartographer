@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
 
 #include "cartographer/mapping_2d/pose_graph_2d.h"
-#include "cartographer/mapping_3d/pose_graph.h"
+#include "cartographer/mapping_3d/pose_graph_3d.h"
 #include "cartographer/sensor/data.h"
 
 namespace cartographer {
@@ -31,7 +31,7 @@ class LocalSlamResultData : public cartographer::sensor::Data {
 
   common::Time GetTime() const override { return time_; }
   virtual void AddToPoseGraph(int trajectory_id,
-                              mapping::PoseGraph* pose_graph) const = 0;
+                              PoseGraph* pose_graph) const = 0;
 
  private:
   common::Time time_;
@@ -41,17 +41,16 @@ class LocalSlamResult2D : public LocalSlamResultData {
  public:
   LocalSlamResult2D(
       const std::string& sensor_id, common::Time time,
-      std::shared_ptr<const mapping::TrajectoryNode::Data> node_data,
+      std::shared_ptr<const TrajectoryNode::Data> node_data,
       const std::vector<std::shared_ptr<const mapping_2d::Submap>>&
           insertion_submaps);
 
   void AddToTrajectoryBuilder(
-      mapping::TrajectoryBuilderInterface* const trajectory_builder) override;
-  void AddToPoseGraph(int trajectory_id,
-                      mapping::PoseGraph* pose_graph) const override;
+      TrajectoryBuilderInterface* const trajectory_builder) override;
+  void AddToPoseGraph(int trajectory_id, PoseGraph* pose_graph) const override;
 
  private:
-  std::shared_ptr<const mapping::TrajectoryNode::Data> node_data_;
+  std::shared_ptr<const TrajectoryNode::Data> node_data_;
   std::vector<std::shared_ptr<const mapping_2d::Submap>> insertion_submaps_;
 };
 
@@ -59,17 +58,16 @@ class LocalSlamResult3D : public LocalSlamResultData {
  public:
   LocalSlamResult3D(
       const std::string& sensor_id, common::Time time,
-      std::shared_ptr<const mapping::TrajectoryNode::Data> node_data,
+      std::shared_ptr<const TrajectoryNode::Data> node_data,
       const std::vector<std::shared_ptr<const mapping_3d::Submap>>&
           insertion_submaps);
 
   void AddToTrajectoryBuilder(
-      mapping::TrajectoryBuilderInterface* const trajectory_builder) override;
-  void AddToPoseGraph(int trajectory_id,
-                      mapping::PoseGraph* pose_graph) const override;
+      TrajectoryBuilderInterface* const trajectory_builder) override;
+  void AddToPoseGraph(int trajectory_id, PoseGraph* pose_graph) const override;
 
  private:
-  std::shared_ptr<const mapping::TrajectoryNode::Data> node_data_;
+  std::shared_ptr<const TrajectoryNode::Data> node_data_;
   std::vector<std::shared_ptr<const mapping_3d::Submap>> insertion_submaps_;
 };
 

@@ -25,7 +25,7 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/mapping_2d/pose_graph_2d.h"
-#include "cartographer/mapping_3d/pose_graph.h"
+#include "cartographer/mapping_3d/pose_graph_3d.h"
 #include "cartographer/sensor/collator_interface.h"
 
 namespace cartographer {
@@ -77,7 +77,7 @@ class MapBuilder : public MapBuilderInterface {
   common::ThreadPool thread_pool_;
 
   std::unique_ptr<PoseGraph2D> pose_graph_2d_;
-  std::unique_ptr<mapping_3d::PoseGraph> pose_graph_3d_;
+  std::unique_ptr<PoseGraph3D> pose_graph_3d_;
   mapping::PoseGraph* pose_graph_;
 
   std::unique_ptr<sensor::CollatorInterface> sensor_collator_;
