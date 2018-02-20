@@ -217,7 +217,7 @@ if(${BUILD_GRPC})
 endif()
 if(${BUILD_PROMETHEUS})
   target_link_libraries(${PROJECT_NAME} PUBLIC prometheus-cpp)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE USE_PROMETHEUS=1)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC USE_PROMETHEUS=1)
 endif()
 
 # Add the binary directory first, so that port.h is included after it has
