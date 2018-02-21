@@ -297,7 +297,6 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
     common::MutexLocker locker(&mutex_);
-    kQueueLengthMetric->Set(constraints_.size());
     if (--pending_computations_[computation_index] == 0) {
       pending_computations_.erase(computation_index);
     }
@@ -323,6 +322,7 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
         when_done_.reset();
       }
     }
+    kQueueLengthMetric->Set(constraints_.size());
   }
   if (callback != nullptr) {
     (*callback)(result);
@@ -355,9 +355,9 @@ void ConstraintBuilder::RegisterMetrics(metrics::FamilyFactory* factory) {
       counts->Add({{"search_region", "global"}, {"matcher", "searched"}});
   kGlobalConstraintsFoundMetric =
       counts->Add({{"search_region", "global"}, {"matcher", "found"}});
-  auto* queues = factory->NewGaugeFamily(
-      "/mapping_3d/pose_graph/constraint_builder/queues", "Queue lengths");
-  kQueueLengthMetric = queues->Add({{}});
+  auto* queue_length = factory->NewGaugeFamily(
+      "/mapping_3d/pose_graph/constraint_builder/queue_length", "Queue length");
+  kQueueLengthMetric = queue_length->Add({{}});
   auto boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = factory->NewHistogramFamily(
       "/mapping_3d/pose_graph/constraint_builder/scores",
