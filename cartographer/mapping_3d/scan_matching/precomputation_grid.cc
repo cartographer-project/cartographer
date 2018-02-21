@@ -47,9 +47,11 @@ Eigen::Array3i CellIndexAtHalfResolution(const Eigen::Array3i& cell_index) {
 
 }  // namespace
 
-PrecomputationGrid ConvertToPrecomputationGrid(const HybridGrid& hybrid_grid) {
+PrecomputationGrid ConvertToPrecomputationGrid(
+    const mapping::HybridGrid& hybrid_grid) {
   PrecomputationGrid result(hybrid_grid.resolution());
-  for (auto it = HybridGrid::Iterator(hybrid_grid); !it.Done(); it.Next()) {
+  for (auto it = mapping::HybridGrid::Iterator(hybrid_grid); !it.Done();
+       it.Next()) {
     const int cell_value = common::RoundToInt(
         (mapping::ValueToProbability(it.GetValue()) -
          mapping::kMinProbability) *

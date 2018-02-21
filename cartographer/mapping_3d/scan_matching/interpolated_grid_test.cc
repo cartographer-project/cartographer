@@ -43,7 +43,7 @@ class InterpolatedGridTest : public ::testing::Test {
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x, y, z)));
   }
 
-  HybridGrid hybrid_grid_;
+  mapping::HybridGrid hybrid_grid_;
   InterpolatedGrid interpolated_grid_;
 };
 

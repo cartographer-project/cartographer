@@ -14,16 +14,16 @@
 
 syntax = "proto3";
 
-package cartographer.mapping_3d.proto;
+package cartographer.mapping.proto;
 
 import "cartographer/mapping/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
-import "cartographer/mapping_3d/proto/submaps_options.proto";
+import "cartographer/mapping_3d/proto/submaps_options_3d.proto";
 import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.proto";
 
 // NEXT ID: 18
-message LocalTrajectoryBuilderOptions {
+message LocalTrajectoryBuilderOptions3D {
   // Rangefinder points outside these ranges will be dropped.
   float min_range = 1;
   float max_range = 2;
@@ -47,7 +47,7 @@ message LocalTrajectoryBuilderOptions {
   bool use_online_correlative_scan_matching = 13;
   mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
       real_time_correlative_scan_matcher_options = 14;
-  scan_matching.proto.CeresScanMatcherOptions
+  mapping_3d.scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options = 6;
   mapping.proto.MotionFilterOptions motion_filter_options = 7;
 
@@ -62,5 +62,5 @@ message LocalTrajectoryBuilderOptions {
   // Number of histogram buckets for the rotational scan matcher.
   int32 rotational_histogram_size = 17;
 
-  SubmapsOptions submaps_options = 8;
+  SubmapsOptions3D submaps_options = 8;
 }

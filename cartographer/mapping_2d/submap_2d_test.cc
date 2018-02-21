@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/submaps.h"
+#include "cartographer/mapping_2d/submap_2d.h"
 
 #include <map>
 #include <memory>
@@ -28,10 +28,10 @@
 #include "gmock/gmock.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace {
 
-TEST(SubmapsTest, TheRightNumberOfRangeDataAreInserted) {
+TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
   constexpr int kNumRangeData = 10;
   auto parameter_dictionary = common::MakeDictionary(
       "return {"
@@ -45,8 +45,8 @@ TEST(SubmapsTest, TheRightNumberOfRangeDataAreInserted) {
       "miss_probability = 0.495, "
       "},"
       "}");
-  ActiveSubmaps submaps{CreateSubmapsOptions(parameter_dictionary.get())};
-  std::set<std::shared_ptr<Submap>> all_submaps;
+  ActiveSubmaps2D submaps{CreateSubmapsOptions2D(parameter_dictionary.get())};
+  std::set<std::shared_ptr<Submap2D>> all_submaps;
   for (int i = 0; i != 1000; ++i) {
     submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}});
     // Except for the first, maps should only be returned after enough range
@@ -68,14 +68,15 @@ TEST(SubmapsTest, TheRightNumberOfRangeDataAreInserted) {
   EXPECT_EQ(correct_num_range_data, all_submaps.size() - 2);
 }
 
-TEST(SubmapsTest, ToFromProto) {
-  Submap expected(MapLimits(1., Eigen::Vector2d(2., 3.), CellLimits(100, 110)),
-                  Eigen::Vector2f(4.f, 5.f));
-  mapping::proto::Submap proto;
+TEST(Submap2DTest, ToFromProto) {
+  Submap2D expected(
+      MapLimits(1., Eigen::Vector2d(2., 3.), CellLimits(100, 110)),
+      Eigen::Vector2f(4.f, 5.f));
+  proto::Submap proto;
   expected.ToProto(&proto, true /* include_probability_grid_data */);
   EXPECT_TRUE(proto.has_submap_2d());
   EXPECT_FALSE(proto.has_submap_3d());
-  const auto actual = Submap(proto.submap_2d());
+  const auto actual = Submap2D(proto.submap_2d());
   EXPECT_TRUE(expected.local_pose().translation().isApprox(
       actual.local_pose().translation(), 1e-6));
   EXPECT_TRUE(expected.local_pose().rotation().isApprox(
@@ -91,5 +92,5 @@ TEST(SubmapsTest, ToFromProto) {
 }
 
 }  // namespace
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

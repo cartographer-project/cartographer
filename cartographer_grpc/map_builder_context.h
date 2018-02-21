@@ -17,8 +17,8 @@
 #ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_H
 #define CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_H
 
-#include "cartographer/mapping_2d/submaps.h"
-#include "cartographer/mapping_3d/submaps.h"
+#include "cartographer/mapping_2d/submap_2d.h"
+#include "cartographer/mapping_3d/submap_3d.h"
 #include "cartographer_grpc/map_builder_context_interface.h"
 
 namespace cartographer_grpc {
@@ -51,9 +51,9 @@ class MapBuilderContext : public MapBuilderContextInterface {
           local_slam_result_data) override;
 
  private:
-  std::shared_ptr<cartographer::mapping_2d::Submap> UpdateSubmap2D(
+  std::shared_ptr<cartographer::mapping::Submap2D> UpdateSubmap2D(
       const cartographer::mapping::proto::Submap& proto);
-  std::shared_ptr<cartographer::mapping_3d::Submap> UpdateSubmap3D(
+  std::shared_ptr<cartographer::mapping::Submap3D> UpdateSubmap3D(
       const cartographer::mapping::proto::Submap& proto);
 
   MapBuilderServer* map_builder_server_;

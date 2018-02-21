@@ -50,7 +50,7 @@ struct SearchParameters {
 
   // Tightens the search window as much as possible.
   void ShrinkToFit(const std::vector<DiscreteScan>& scans,
-                   const CellLimits& cell_limits);
+                   const mapping::CellLimits& cell_limits);
 
   int num_angular_perturbations;
   double angular_perturbation_step_size;
@@ -67,7 +67,8 @@ std::vector<sensor::PointCloud> GenerateRotatedScans(
 // Translates and discretizes the rotated scans into a vector of integer
 // indices.
 std::vector<DiscreteScan> DiscretizeScans(
-    const MapLimits& map_limits, const std::vector<sensor::PointCloud>& scans,
+    const mapping::MapLimits& map_limits,
+    const std::vector<sensor::PointCloud>& scans,
     const Eigen::Translation2f& initial_translation);
 
 // A possible solution.

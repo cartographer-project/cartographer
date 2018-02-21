@@ -46,13 +46,13 @@ class RealTimeCorrelativeScanMatcher {
   // returns the score.
   float Match(const transform::Rigid3d& initial_pose_estimate,
               const sensor::PointCloud& point_cloud,
-              const HybridGrid& hybrid_grid,
+              const mapping::HybridGrid& hybrid_grid,
               transform::Rigid3d* pose_estimate) const;
 
  private:
   std::vector<transform::Rigid3f> GenerateExhaustiveSearchTransforms(
       float resolution, const sensor::PointCloud& point_cloud) const;
-  float ScoreCandidate(const HybridGrid& hybrid_grid,
+  float ScoreCandidate(const mapping::HybridGrid& hybrid_grid,
                        const sensor::PointCloud& transformed_point_cloud,
                        const transform::Rigid3f& transform) const;
 

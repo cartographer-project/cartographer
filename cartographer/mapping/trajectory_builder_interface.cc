@@ -17,8 +17,8 @@
 #include "cartographer/mapping/trajectory_builder_interface.h"
 
 #include "cartographer/mapping/local_slam_result_data.h"
-#include "cartographer/mapping_2d/local_trajectory_builder_options.h"
-#include "cartographer/mapping_3d/local_trajectory_builder_options.h"
+#include "cartographer/mapping_2d/local_trajectory_builder_options_2d.h"
+#include "cartographer/mapping_3d/local_trajectory_builder_options_3d.h"
 
 namespace cartographer {
 namespace mapping {
@@ -27,10 +27,10 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::TrajectoryBuilderOptions options;
   *options.mutable_trajectory_builder_2d_options() =
-      mapping_2d::CreateLocalTrajectoryBuilderOptions(
+      CreateLocalTrajectoryBuilderOptions2D(
           parameter_dictionary->GetDictionary("trajectory_builder_2d").get());
   *options.mutable_trajectory_builder_3d_options() =
-      mapping_3d::CreateLocalTrajectoryBuilderOptions(
+      CreateLocalTrajectoryBuilderOptions3D(
           parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
   options.set_pure_localization(
       parameter_dictionary->GetBool("pure_localization"));

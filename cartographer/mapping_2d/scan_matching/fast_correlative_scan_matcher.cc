@@ -89,8 +89,9 @@ CreateFastCorrelativeScanMatcherOptions(
 }
 
 PrecomputationGrid::PrecomputationGrid(
-    const ProbabilityGrid& probability_grid, const CellLimits& limits,
-    const int width, std::vector<float>* reusable_intermediate_grid)
+    const mapping::ProbabilityGrid& probability_grid,
+    const mapping::CellLimits& limits, const int width,
+    std::vector<float>* reusable_intermediate_grid)
     : offset_(-width + 1, -width + 1),
       wide_limits_(limits.num_x_cells + width - 1,
                    limits.num_y_cells + width - 1),
@@ -170,13 +171,13 @@ uint8 PrecomputationGrid::ComputeCellValue(const float probability) const {
 class PrecomputationGridStack {
  public:
   PrecomputationGridStack(
-      const ProbabilityGrid& probability_grid,
+      const mapping::ProbabilityGrid& probability_grid,
       const proto::FastCorrelativeScanMatcherOptions& options) {
     CHECK_GE(options.branch_and_bound_depth(), 1);
     const int max_width = 1 << (options.branch_and_bound_depth() - 1);
     precomputation_grids_.reserve(options.branch_and_bound_depth());
     std::vector<float> reusable_intermediate_grid;
-    const CellLimits limits = probability_grid.limits().cell_limits();
+    const mapping::CellLimits limits = probability_grid.limits().cell_limits();
     reusable_intermediate_grid.reserve((limits.num_x_cells + max_width - 1) *
                                        limits.num_y_cells);
     for (int i = 0; i != options.branch_and_bound_depth(); ++i) {
@@ -197,7 +198,7 @@ class PrecomputationGridStack {
 };
 
 FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
-    const ProbabilityGrid& probability_grid,
+    const mapping::ProbabilityGrid& probability_grid,
     const proto::FastCorrelativeScanMatcherOptions& options)
     : options_(options),
       limits_(probability_grid.limits()),

@@ -23,7 +23,7 @@
 #include "gmock/gmock.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace {
 
 TEST(HybridGridTest, ApplyOdds) {
@@ -40,35 +40,30 @@ TEST(HybridGridTest, ApplyOdds) {
 
   hybrid_grid.SetProbability(Eigen::Array3i(1, 0, 1), 0.5f);
 
-  hybrid_grid.ApplyLookupTable(
-      Eigen::Array3i(1, 0, 1),
-      mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9f)));
+  hybrid_grid.ApplyLookupTable(Eigen::Array3i(1, 0, 1),
+                               ComputeLookupTableToApplyOdds(Odds(0.9f)));
   hybrid_grid.FinishUpdate();
   EXPECT_GT(hybrid_grid.GetProbability(Eigen::Array3i(1, 0, 1)), 0.5f);
 
   hybrid_grid.SetProbability(Eigen::Array3i(0, 1, 0), 0.5f);
 
-  hybrid_grid.ApplyLookupTable(
-      Eigen::Array3i(0, 1, 0),
-      mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.1f)));
+  hybrid_grid.ApplyLookupTable(Eigen::Array3i(0, 1, 0),
+                               ComputeLookupTableToApplyOdds(Odds(0.1f)));
   hybrid_grid.FinishUpdate();
   EXPECT_LT(hybrid_grid.GetProbability(Eigen::Array3i(0, 1, 0)), 0.5f);
 
   // Tests adding odds to an unknown cell.
-  hybrid_grid.ApplyLookupTable(
-      Eigen::Array3i(1, 1, 1),
-      mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.42f)));
+  hybrid_grid.ApplyLookupTable(Eigen::Array3i(1, 1, 1),
+                               ComputeLookupTableToApplyOdds(Odds(0.42f)));
   EXPECT_NEAR(hybrid_grid.GetProbability(Eigen::Array3i(1, 1, 1)), 0.42f, 1e-4);
 
   // Tests that further updates are ignored if FinishUpdate() isn't called.
-  hybrid_grid.ApplyLookupTable(
-      Eigen::Array3i(1, 1, 1),
-      mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9f)));
+  hybrid_grid.ApplyLookupTable(Eigen::Array3i(1, 1, 1),
+                               ComputeLookupTableToApplyOdds(Odds(0.9f)));
   EXPECT_NEAR(hybrid_grid.GetProbability(Eigen::Array3i(1, 1, 1)), 0.42f, 1e-4);
   hybrid_grid.FinishUpdate();
-  hybrid_grid.ApplyLookupTable(
-      Eigen::Array3i(1, 1, 1),
-      mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9f)));
+  hybrid_grid.ApplyLookupTable(Eigen::Array3i(1, 1, 1),
+                               ComputeLookupTableToApplyOdds(Odds(0.9f)));
   EXPECT_GT(hybrid_grid.GetProbability(Eigen::Array3i(1, 1, 1)), 0.42f);
 }
 
@@ -77,10 +72,10 @@ TEST(HybridGridTest, GetProbability) {
 
   hybrid_grid.SetProbability(
       hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 1.f, 1.f)),
-      mapping::kMaxProbability);
+      kMaxProbability);
   EXPECT_NEAR(hybrid_grid.GetProbability(
                   hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 1.f, 1.f))),
-              mapping::kMaxProbability, 1e-6);
+              kMaxProbability, 1e-6);
   for (const Eigen::Array3i& index :
        {hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 2.f, 1.f)),
         hybrid_grid.GetCellIndex(Eigen::Vector3f(1.f, 1.f, 1.f)),
@@ -129,8 +124,8 @@ class RandomHybridGridTest : public ::testing::Test {
  public:
   RandomHybridGridTest() : hybrid_grid_(2.f), values_() {
     std::mt19937 rng(1285120005);
-    std::uniform_real_distribution<float> value_distribution(
-        mapping::kMinProbability, mapping::kMaxProbability);
+    std::uniform_real_distribution<float> value_distribution(kMinProbability,
+                                                             kMaxProbability);
     std::uniform_int_distribution<int> xyz_distribution(-3000, 2999);
     for (int i = 0; i < 10000; ++i) {
       const auto x = xyz_distribution(rng);
@@ -156,8 +151,7 @@ class RandomHybridGridTest : public ::testing::Test {
 TEST_F(RandomHybridGridTest, TestIteration) {
   for (auto it = HybridGrid::Iterator(hybrid_grid_); !it.Done(); it.Next()) {
     const Eigen::Array3i cell_index = it.GetCellIndex();
-    const float iterator_probability =
-        mapping::ValueToProbability(it.GetValue());
+    const float iterator_probability = ValueToProbability(it.GetValue());
     EXPECT_EQ(iterator_probability, hybrid_grid_.GetProbability(cell_index));
     const std::tuple<int, int, int> key =
         std::make_tuple(cell_index[0], cell_index[1], cell_index[2]);
@@ -228,5 +222,5 @@ TEST_F(RandomHybridGridTest, FromProto) {
 }
 
 }  // namespace
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

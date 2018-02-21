@@ -30,6 +30,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
@@ -48,8 +49,8 @@ CreateFastCorrelativeScanMatcherOptions(
 // y0 <= y < y0.
 class PrecomputationGrid {
  public:
-  PrecomputationGrid(const ProbabilityGrid& probability_grid,
-                     const CellLimits& limits, int width,
+  PrecomputationGrid(const mapping::ProbabilityGrid& probability_grid,
+                     const mapping::CellLimits& limits, int width,
                      std::vector<float>* reusable_intermediate_grid);
 
   // Returns a value between 0 and 255 to represent probabilities between
@@ -86,7 +87,7 @@ class PrecomputationGrid {
   const Eigen::Array2i offset_;
 
   // Size of the precomputation grid.
-  const CellLimits wide_limits_;
+  const mapping::CellLimits wide_limits_;
 
   // Probabilites mapped to 0 to 255.
   std::vector<uint8> cells_;
@@ -98,7 +99,7 @@ class PrecomputationGridStack;
 class FastCorrelativeScanMatcher {
  public:
   FastCorrelativeScanMatcher(
-      const ProbabilityGrid& probability_grid,
+      const mapping::ProbabilityGrid& probability_grid,
       const proto::FastCorrelativeScanMatcherOptions& options);
   ~FastCorrelativeScanMatcher();
 
@@ -145,7 +146,7 @@ class FastCorrelativeScanMatcher {
                            int candidate_depth, float min_score) const;
 
   const proto::FastCorrelativeScanMatcherOptions options_;
-  MapLimits limits_;
+  mapping::MapLimits limits_;
   std::unique_ptr<PrecomputationGridStack> precomputation_grid_stack_;
 };
 

@@ -111,7 +111,7 @@ XRayPointsProcessor::XRayPointsProcessor(
       transform_(transform) {
   for (size_t i = 0; i < (floors_.empty() ? 1 : floors.size()); ++i) {
     aggregations_.emplace_back(
-        Aggregation{mapping_3d::HybridGridBase<bool>(voxel_size), {}});
+        Aggregation{mapping::HybridGridBase<bool>(voxel_size), {}});
   }
 }
 
@@ -161,7 +161,7 @@ void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
   const int xsize = bounding_box_.sizes()[1] + 1;
   const int ysize = bounding_box_.sizes()[2] + 1;
   PixelDataMatrix pixel_data_matrix = PixelDataMatrix(ysize, xsize);
-  for (mapping_3d::HybridGridBase<bool>::Iterator it(aggregation.voxels);
+  for (mapping::HybridGridBase<bool>::Iterator it(aggregation.voxels);
        !it.Done(); it.Next()) {
     const Eigen::Array3i cell_index = it.GetCellIndex();
     const Eigen::Array2i pixel = voxel_index_to_pixel(cell_index);

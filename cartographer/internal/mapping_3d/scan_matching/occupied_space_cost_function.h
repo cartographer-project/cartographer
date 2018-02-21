@@ -35,7 +35,7 @@ class OccupiedSpaceCostFunction {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor, const sensor::PointCloud& point_cloud,
-      const HybridGrid& hybrid_grid) {
+      const mapping::HybridGrid& hybrid_grid) {
     return new ceres::AutoDiffCostFunction<
         OccupiedSpaceCostFunction, ceres::DYNAMIC /* residuals */,
         3 /* translation variables */, 4 /* rotation variables */>(
@@ -56,7 +56,7 @@ class OccupiedSpaceCostFunction {
  private:
   OccupiedSpaceCostFunction(const double scaling_factor,
                             const sensor::PointCloud& point_cloud,
-                            const HybridGrid& hybrid_grid)
+                            const mapping::HybridGrid& hybrid_grid)
       : scaling_factor_(scaling_factor),
         point_cloud_(point_cloud),
         interpolated_grid_(hybrid_grid) {}

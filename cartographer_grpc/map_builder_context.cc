@@ -70,22 +70,22 @@ void MapBuilderContext::NotifyFinishTrajectory(int trajectory_id) {
   map_builder_server_->NotifyFinishTrajectory(trajectory_id);
 }
 
-std::shared_ptr<cartographer::mapping_2d::Submap>
+std::shared_ptr<cartographer::mapping::Submap2D>
 MapBuilderContext::UpdateSubmap2D(
     const cartographer::mapping::proto::Submap& proto) {
   CHECK(proto.has_submap_2d());
   cartographer::mapping::SubmapId submap_id{proto.submap_id().trajectory_id(),
                                             proto.submap_id().submap_index()};
-  std::shared_ptr<cartographer::mapping_2d::Submap> submap_2d_ptr;
+  std::shared_ptr<cartographer::mapping::Submap2D> submap_2d_ptr;
   auto submap_it = unfinished_submaps_.find(submap_id);
   if (submap_it == unfinished_submaps_.end()) {
     // Seeing a submap for the first time it should never be finished.
     CHECK(!proto.submap_2d().finished());
     submap_2d_ptr =
-        std::make_shared<cartographer::mapping_2d::Submap>(proto.submap_2d());
+        std::make_shared<cartographer::mapping::Submap2D>(proto.submap_2d());
     unfinished_submaps_.Insert(submap_id, submap_2d_ptr);
   } else {
-    submap_2d_ptr = std::dynamic_pointer_cast<cartographer::mapping_2d::Submap>(
+    submap_2d_ptr = std::dynamic_pointer_cast<cartographer::mapping::Submap2D>(
         submap_it->data);
     CHECK(submap_2d_ptr);
     submap_2d_ptr->UpdateFromProto(proto);
@@ -103,23 +103,23 @@ MapBuilderContext::UpdateSubmap2D(
   return submap_2d_ptr;
 }
 
-std::shared_ptr<cartographer::mapping_3d::Submap>
+std::shared_ptr<cartographer::mapping::Submap3D>
 MapBuilderContext::UpdateSubmap3D(
     const cartographer::mapping::proto::Submap& proto) {
   CHECK(proto.has_submap_3d());
   cartographer::mapping::SubmapId submap_id{proto.submap_id().trajectory_id(),
                                             proto.submap_id().submap_index()};
-  std::shared_ptr<cartographer::mapping_3d::Submap> submap_3d_ptr;
+  std::shared_ptr<cartographer::mapping::Submap3D> submap_3d_ptr;
   auto submap_it = unfinished_submaps_.find(submap_id);
   if (submap_it == unfinished_submaps_.end()) {
     // Seeing a submap for the first time it should never be finished.
     CHECK(!proto.submap_3d().finished());
     submap_3d_ptr =
-        std::make_shared<cartographer::mapping_3d::Submap>(proto.submap_3d());
+        std::make_shared<cartographer::mapping::Submap3D>(proto.submap_3d());
     unfinished_submaps_.Insert(submap_id, submap_3d_ptr);
     submap_it = unfinished_submaps_.find(submap_id);
   } else {
-    submap_3d_ptr = std::dynamic_pointer_cast<cartographer::mapping_3d::Submap>(
+    submap_3d_ptr = std::dynamic_pointer_cast<cartographer::mapping::Submap3D>(
         submap_it->data);
     CHECK(submap_3d_ptr);
 
@@ -146,8 +146,7 @@ MapBuilderContext::ProcessLocalSlamResultData(
   CHECK_GE(proto.submaps().size(), 1);
   CHECK(proto.submaps(0).has_submap_2d() || proto.submaps(0).has_submap_3d());
   if (proto.submaps(0).has_submap_2d()) {
-    std::vector<std::shared_ptr<const cartographer::mapping_2d::Submap>>
-        submaps;
+    std::vector<std::shared_ptr<const cartographer::mapping::Submap2D>> submaps;
     for (const auto& submap_proto : proto.submaps()) {
       submaps.push_back(UpdateSubmap2D(submap_proto));
     }
@@ -158,8 +157,7 @@ MapBuilderContext::ProcessLocalSlamResultData(
             cartographer::mapping::FromProto(proto.node_data())),
         submaps);
   } else {
-    std::vector<std::shared_ptr<const cartographer::mapping_3d::Submap>>
-        submaps;
+    std::vector<std::shared_ptr<const cartographer::mapping::Submap3D>> submaps;
     for (const auto& submap_proto : proto.submaps()) {
       submaps.push_back(UpdateSubmap3D(submap_proto));
     }

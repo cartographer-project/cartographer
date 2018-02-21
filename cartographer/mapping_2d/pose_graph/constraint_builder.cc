@@ -49,7 +49,7 @@ static auto* kQueueLengthMetric = metrics::Gauge::Null();
 static auto* kConstraintScoresMetric = metrics::Histogram::Null();
 static auto* kGlobalConstraintScoresMetric = metrics::Histogram::Null();
 
-transform::Rigid2d ComputeSubmapPose(const Submap& submap) {
+transform::Rigid2d ComputeSubmapPose(const mapping::Submap2D& submap) {
   return transform::Project2D(submap.local_pose());
 }
 
@@ -70,7 +70,7 @@ ConstraintBuilder::~ConstraintBuilder() {
 }
 
 void ConstraintBuilder::MaybeAddConstraint(
-    const mapping::SubmapId& submap_id, const Submap* const submap,
+    const mapping::SubmapId& submap_id, const mapping::Submap2D* const submap,
     const mapping::NodeId& node_id,
     const mapping::TrajectoryNode::Data* const constant_data,
     const transform::Rigid2d& initial_relative_pose) {
@@ -96,7 +96,7 @@ void ConstraintBuilder::MaybeAddConstraint(
 }
 
 void ConstraintBuilder::MaybeAddGlobalConstraint(
-    const mapping::SubmapId& submap_id, const Submap* const submap,
+    const mapping::SubmapId& submap_id, const mapping::Submap2D* const submap,
     const mapping::NodeId& node_id,
     const mapping::TrajectoryNode::Data* const constant_data) {
   common::MutexLocker locker(&mutex_);
@@ -132,7 +132,8 @@ void ConstraintBuilder::WhenDone(
 }
 
 void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-    const mapping::SubmapId& submap_id, const ProbabilityGrid* const submap,
+    const mapping::SubmapId& submap_id,
+    const mapping::ProbabilityGrid* const submap,
     const std::function<void()>& work_item) {
   if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
       nullptr) {
@@ -147,7 +148,8 @@ void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
 }
 
 void ConstraintBuilder::ConstructSubmapScanMatcher(
-    const mapping::SubmapId& submap_id, const ProbabilityGrid* const submap) {
+    const mapping::SubmapId& submap_id,
+    const mapping::ProbabilityGrid* const submap) {
   auto submap_scan_matcher =
       common::make_unique<scan_matching::FastCorrelativeScanMatcher>(
           *submap, options_.fast_correlative_scan_matcher_options());
@@ -170,7 +172,7 @@ ConstraintBuilder::GetSubmapScanMatcher(const mapping::SubmapId& submap_id) {
 }
 
 void ConstraintBuilder::ComputeConstraint(
-    const mapping::SubmapId& submap_id, const Submap* const submap,
+    const mapping::SubmapId& submap_id, const mapping::Submap2D* const submap,
     const mapping::NodeId& node_id, bool match_full_submap,
     const mapping::TrajectoryNode::Data* const constant_data,
     const transform::Rigid2d& initial_relative_pose,

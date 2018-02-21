@@ -21,6 +21,7 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/make_unique.h"
+#include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
@@ -34,8 +35,8 @@ namespace {
 class CeresScanMatcherTest : public ::testing::Test {
  protected:
   CeresScanMatcherTest()
-      : probability_grid_(
-            MapLimits(1., Eigen::Vector2d(10., 10.), CellLimits(20, 20))) {
+      : probability_grid_(mapping::MapLimits(1., Eigen::Vector2d(10., 10.),
+                                             mapping::CellLimits(20, 20))) {
     probability_grid_.SetProbability(
         probability_grid_.limits().GetCellIndex(Eigen::Vector2f(-3.5f, 2.5f)),
         mapping::kMaxProbability);
@@ -72,7 +73,7 @@ class CeresScanMatcherTest : public ::testing::Test {
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
   }
 
-  ProbabilityGrid probability_grid_;
+  mapping::ProbabilityGrid probability_grid_;
   sensor::PointCloud point_cloud_;
   std::unique_ptr<CeresScanMatcher> ceres_scan_matcher_;
 };

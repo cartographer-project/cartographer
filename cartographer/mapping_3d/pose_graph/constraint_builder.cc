@@ -72,7 +72,7 @@ ConstraintBuilder::~ConstraintBuilder() {
 }
 
 void ConstraintBuilder::MaybeAddConstraint(
-    const mapping::SubmapId& submap_id, const Submap* const submap,
+    const mapping::SubmapId& submap_id, const mapping::Submap3D* const submap,
     const mapping::NodeId& node_id,
     const mapping::TrajectoryNode::Data* const constant_data,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
@@ -100,7 +100,7 @@ void ConstraintBuilder::MaybeAddConstraint(
 }
 
 void ConstraintBuilder::MaybeAddGlobalConstraint(
-    const mapping::SubmapId& submap_id, const Submap* const submap,
+    const mapping::SubmapId& submap_id, const mapping::Submap3D* const submap,
     const mapping::NodeId& node_id,
     const mapping::TrajectoryNode::Data* const constant_data,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
@@ -142,7 +142,8 @@ void ConstraintBuilder::WhenDone(
 void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
     const mapping::SubmapId& submap_id,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const Submap* const submap, const std::function<void()>& work_item) {
+    const mapping::Submap3D* const submap,
+    const std::function<void()>& work_item) {
   if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
       nullptr) {
     thread_pool_->Schedule(work_item);
@@ -159,7 +160,7 @@ void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
 void ConstraintBuilder::ConstructSubmapScanMatcher(
     const mapping::SubmapId& submap_id,
     const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const Submap* const submap) {
+    const mapping::Submap3D* const submap) {
   auto submap_scan_matcher =
       common::make_unique<scan_matching::FastCorrelativeScanMatcher>(
           submap->high_resolution_hybrid_grid(),

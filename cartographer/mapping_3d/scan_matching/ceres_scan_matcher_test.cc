@@ -74,7 +74,7 @@ class CeresScanMatcherTest : public ::testing::Test {
     EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 3e-2));
   }
 
-  HybridGrid hybrid_grid_;
+  mapping::HybridGrid hybrid_grid_;
   transform::Rigid3d expected_pose_;
   sensor::PointCloud point_cloud_;
   proto::CeresScanMatcherOptions options_;

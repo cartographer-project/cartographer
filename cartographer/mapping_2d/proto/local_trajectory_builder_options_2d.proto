@@ -14,15 +14,15 @@
 
 syntax = "proto3";
 
-package cartographer.mapping_2d.proto;
+package cartographer.mapping.proto;
 
 import "cartographer/mapping/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
-import "cartographer/mapping_2d/proto/submaps_options.proto";
+import "cartographer/mapping_2d/proto/submaps_options_2d.proto";
 import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.proto";
 import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 
-message LocalTrajectoryBuilderOptions {
+message LocalTrajectoryBuilderOptions2D {
   // Rangefinder points outside these ranges will be dropped.
   float min_range = 14;
   float max_range = 15;
@@ -41,8 +41,7 @@ message LocalTrajectoryBuilderOptions {
   float voxel_filter_size = 3;
 
   // Voxel filter used to compute a sparser point cloud for matching.
-  sensor.proto.AdaptiveVoxelFilterOptions
-      adaptive_voxel_filter_options = 6;
+  sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options = 6;
 
   // Voxel filter used to compute a sparser point cloud for finding loop
   // closures.
@@ -52,11 +51,12 @@ message LocalTrajectoryBuilderOptions {
   // Whether to solve the online scan matching first using the correlative scan
   // matcher to generate a good starting point for Ceres.
   bool use_online_correlative_scan_matching = 5;
-  scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
-      real_time_correlative_scan_matcher_options = 7;
-  scan_matching.proto.CeresScanMatcherOptions
+  cartographer.mapping_2d.scan_matching.proto
+      .RealTimeCorrelativeScanMatcherOptions
+          real_time_correlative_scan_matcher_options = 7;
+  cartographer.mapping_2d.scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options = 8;
-  mapping.proto.MotionFilterOptions motion_filter_options = 13;
+  MotionFilterOptions motion_filter_options = 13;
 
   // Time constant in seconds for the orientation moving average based on
   // observed gravity via the IMU. It should be chosen so that the error
@@ -66,7 +66,7 @@ message LocalTrajectoryBuilderOptions {
   // constant is increased) is balanced.
   double imu_gravity_time_constant = 17;
 
-  mapping_2d.proto.SubmapsOptions submaps_options = 11;
+  SubmapsOptions2D submaps_options = 11;
 
   // True if IMU data should be expected and used.
   bool use_imu_data = 12;

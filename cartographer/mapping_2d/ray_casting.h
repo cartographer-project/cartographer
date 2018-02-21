@@ -26,7 +26,7 @@
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
 // For each ray in 'range_data', inserts hits and misses into
 // 'probability_grid'. Hits are handled before misses.
@@ -35,7 +35,7 @@ void CastRays(const sensor::RangeData& range_data,
               const std::vector<uint16>& miss_table, bool insert_free_space,
               ProbabilityGrid* probability_grid);
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_2D_RAY_CASTING_H_

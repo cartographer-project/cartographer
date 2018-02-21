@@ -25,8 +25,8 @@
 #include "cartographer/io/points_processor.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
 #include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/proto/range_data_inserter_options.pb.h"
-#include "cartographer/mapping_2d/range_data_inserter.h"
+#include "cartographer/mapping_2d/proto/range_data_inserter_options_2d.pb.h"
+#include "cartographer/mapping_2d/range_data_inserter_2d.h"
 
 namespace cartographer {
 namespace io {
@@ -42,7 +42,7 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
   enum class DrawTrajectories { kNo, kYes };
   ProbabilityGridPointsProcessor(
       double resolution,
-      const mapping_2d::proto::RangeDataInserterOptions&
+      const mapping::proto::RangeDataInserterOptions2D&
           range_data_inserter_options,
       const DrawTrajectories& draw_trajectories,
       std::unique_ptr<FileWriter> file_writer,
@@ -68,19 +68,18 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
   const std::vector<mapping::proto::Trajectory> trajectories_;
   std::unique_ptr<FileWriter> file_writer_;
   PointsProcessor* const next_;
-  mapping_2d::RangeDataInserter range_data_inserter_;
-  mapping_2d::ProbabilityGrid probability_grid_;
+  mapping::RangeDataInserter2D range_data_inserter_;
+  mapping::ProbabilityGrid probability_grid_;
 };
 
 // Draws 'probability_grid' into an image and fills in 'offset' with the cropped
 // map limits. Returns 'nullptr' if probability_grid was empty.
 std::unique_ptr<Image> DrawProbabilityGrid(
-    const mapping_2d::ProbabilityGrid& probability_grid,
-    Eigen::Array2i* offset);
+    const mapping::ProbabilityGrid& probability_grid, Eigen::Array2i* offset);
 
 // Create an initially empty probability grid with 'resolution' and a small
 // size, suitable for a PointsBatchProcessor.
-mapping_2d::ProbabilityGrid CreateProbabilityGrid(const double resolution);
+mapping::ProbabilityGrid CreateProbabilityGrid(const double resolution);
 
 }  // namespace io
 }  // namespace cartographer
