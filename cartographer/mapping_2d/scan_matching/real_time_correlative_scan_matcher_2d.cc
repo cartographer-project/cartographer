@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
+#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
 
 #include <algorithm>
 #include <cmath>
@@ -30,32 +30,15 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 
-proto::RealTimeCorrelativeScanMatcherOptions
-CreateRealTimeCorrelativeScanMatcherOptions(
-    common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::RealTimeCorrelativeScanMatcherOptions options;
-  options.set_linear_search_window(
-      parameter_dictionary->GetDouble("linear_search_window"));
-  options.set_angular_search_window(
-      parameter_dictionary->GetDouble("angular_search_window"));
-  options.set_translation_delta_cost_weight(
-      parameter_dictionary->GetDouble("translation_delta_cost_weight"));
-  options.set_rotation_delta_cost_weight(
-      parameter_dictionary->GetDouble("rotation_delta_cost_weight"));
-  CHECK_GE(options.translation_delta_cost_weight(), 0.);
-  CHECK_GE(options.rotation_delta_cost_weight(), 0.);
-  return options;
-}
-
-RealTimeCorrelativeScanMatcher::RealTimeCorrelativeScanMatcher(
+RealTimeCorrelativeScanMatcher2D::RealTimeCorrelativeScanMatcher2D(
     const proto::RealTimeCorrelativeScanMatcherOptions& options)
     : options_(options) {}
 
 std::vector<Candidate>
-RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchCandidates(
+RealTimeCorrelativeScanMatcher2D::GenerateExhaustiveSearchCandidates(
     const SearchParameters& search_parameters) const {
   int num_candidates = 0;
   for (int scan_index = 0; scan_index != search_parameters.num_scans;
@@ -88,10 +71,10 @@ RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchCandidates(
   return candidates;
 }
 
-double RealTimeCorrelativeScanMatcher::Match(
+double RealTimeCorrelativeScanMatcher2D::Match(
     const transform::Rigid2d& initial_pose_estimate,
     const sensor::PointCloud& point_cloud,
-    const mapping::ProbabilityGrid& probability_grid,
+    const ProbabilityGrid& probability_grid,
     transform::Rigid2d* pose_estimate) const {
   CHECK_NOTNULL(pose_estimate);
 
@@ -124,8 +107,8 @@ double RealTimeCorrelativeScanMatcher::Match(
   return best_candidate.score;
 }
 
-void RealTimeCorrelativeScanMatcher::ScoreCandidates(
-    const mapping::ProbabilityGrid& probability_grid,
+void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
+    const ProbabilityGrid& probability_grid,
     const std::vector<DiscreteScan>& discrete_scans,
     const SearchParameters& search_parameters,
     std::vector<Candidate>* const candidates) const {
@@ -152,5 +135,5 @@ void RealTimeCorrelativeScanMatcher::ScoreCandidates(
 }
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

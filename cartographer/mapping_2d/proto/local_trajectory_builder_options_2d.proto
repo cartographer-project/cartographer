@@ -19,8 +19,8 @@ package cartographer.mapping.proto;
 import "cartographer/mapping/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping_2d/proto/submaps_options_2d.proto";
-import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.proto";
-import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
+import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options_2d.proto";
+import "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 
 message LocalTrajectoryBuilderOptions2D {
   // Rangefinder points outside these ranges will be dropped.
@@ -51,10 +51,9 @@ message LocalTrajectoryBuilderOptions2D {
   // Whether to solve the online scan matching first using the correlative scan
   // matcher to generate a good starting point for Ceres.
   bool use_online_correlative_scan_matching = 5;
-  cartographer.mapping_2d.scan_matching.proto
-      .RealTimeCorrelativeScanMatcherOptions
-          real_time_correlative_scan_matcher_options = 7;
-  cartographer.mapping_2d.scan_matching.proto.CeresScanMatcherOptions
+  cartographer.mapping.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
+      real_time_correlative_scan_matcher_options = 7;
+  cartographer.mapping.scan_matching.proto.CeresScanMatcherOptions2D
       ceres_scan_matcher_options = 8;
   MotionFilterOptions motion_filter_options = 13;
 

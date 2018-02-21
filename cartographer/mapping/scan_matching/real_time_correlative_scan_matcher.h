@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2018 The Cartographer Authors
  *
@@ -14,18 +15,22 @@
  * limitations under the License.
  */
 
-#include "cartographer/metrics/register.h"
+#ifndef CARTOGRAPHER_MAPPING_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
+#define CARTOGRAPHER_MAPPING_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
 
-#include "cartographer/mapping_2d/pose_graph/constraint_builder_2d.h"
-#include "cartographer/mapping_3d/pose_graph/constraint_builder.h"
+#include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
 
 namespace cartographer {
-namespace metrics {
+namespace mapping {
+namespace scan_matching {
 
-void RegisterAllMetrics(FamilyFactory* registry) {
-  mapping::pose_graph::ConstraintBuilder2D::RegisterMetrics(registry);
-  mapping_3d::pose_graph::ConstraintBuilder::RegisterMetrics(registry);
-}
+proto::RealTimeCorrelativeScanMatcherOptions
+CreateRealTimeCorrelativeScanMatcherOptions(
+    common::LuaParameterDictionary* const parameter_dictionary);
 
-}  // namespace metrics
+}  // namespace scan_matching
+}  // namespace mapping
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_MAPPING_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_

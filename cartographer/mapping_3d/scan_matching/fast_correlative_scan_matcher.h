@@ -15,7 +15,7 @@
  */
 
 // This is an implementation of a 3D branch-and-bound algorithm similar to
-// mapping_2d::FastCorrelativeScanMatcher.
+// FastCorrelativeScanMatcher2D.
 
 #ifndef CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_FAST_CORRELATIVE_SCAN_MATCHER_H_
 #define CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_FAST_CORRELATIVE_SCAN_MATCHER_H_
@@ -26,7 +26,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/trajectory_node.h"
-#include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
+#include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher_2d.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/rotational_scan_matcher.h"

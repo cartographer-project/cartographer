@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_TRANSLATION_DELTA_COST_FUNCTOR_H_
-#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_TRANSLATION_DELTA_COST_FUNCTOR_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_TRANSLATION_DELTA_COST_FUNCTOR_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_TRANSLATION_DELTA_COST_FUNCTOR_2D_H_
 
 #include "Eigen/Core"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 
 // Computes the cost of translating 'pose' to 'target_translation'.
 // Cost increases with the solution's distance from 'target_translation'.
-class TranslationDeltaCostFunctor {
+class TranslationDeltaCostFunctor2D {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor, const Eigen::Vector2d& target_translation) {
-    return new ceres::AutoDiffCostFunction<
-        TranslationDeltaCostFunctor, 2 /* residuals */, 3 /* pose variables */>(
-        new TranslationDeltaCostFunctor(scaling_factor, target_translation));
+    return new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor2D,
+                                           2 /* residuals */,
+                                           3 /* pose variables */>(
+        new TranslationDeltaCostFunctor2D(scaling_factor, target_translation));
   }
 
   template <typename T>
@@ -42,17 +43,17 @@ class TranslationDeltaCostFunctor {
   }
 
  private:
-  // Constructs a new TranslationDeltaCostFunctor from the given
+  // Constructs a new TranslationDeltaCostFunctor2D from the given
   // 'target_translation' (x, y).
-  explicit TranslationDeltaCostFunctor(
+  explicit TranslationDeltaCostFunctor2D(
       const double scaling_factor, const Eigen::Vector2d& target_translation)
       : scaling_factor_(scaling_factor),
         x_(target_translation.x()),
         y_(target_translation.y()) {}
 
-  TranslationDeltaCostFunctor(const TranslationDeltaCostFunctor&) = delete;
-  TranslationDeltaCostFunctor& operator=(const TranslationDeltaCostFunctor&) =
-      delete;
+  TranslationDeltaCostFunctor2D(const TranslationDeltaCostFunctor2D&) = delete;
+  TranslationDeltaCostFunctor2D& operator=(
+      const TranslationDeltaCostFunctor2D&) = delete;
 
   const double scaling_factor_;
   const double x_;
@@ -60,7 +61,7 @@ class TranslationDeltaCostFunctor {
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_TRANSLATION_DELTA_COST_FUNCTOR_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_TRANSLATION_DELTA_COST_FUNCTOR_2D_H_

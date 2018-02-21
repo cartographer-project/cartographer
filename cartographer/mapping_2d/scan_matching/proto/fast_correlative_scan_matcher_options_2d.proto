@@ -14,18 +14,17 @@
 
 syntax = "proto3";
 
-package cartographer.mapping_2d.scan_matching.proto;
+package cartographer.mapping.scan_matching.proto;
 
-message RealTimeCorrelativeScanMatcherOptions {
+message FastCorrelativeScanMatcherOptions2D {
   // Minimum linear search window in which the best possible scan alignment
   // will be found.
-  double linear_search_window = 1;
+  double linear_search_window = 3;
 
   // Minimum angular search window in which the best possible scan alignment
   // will be found.
-  double angular_search_window = 2;
+  double angular_search_window = 4;
 
-  // Weights applied to each part of the score.
-  double translation_delta_cost_weight = 3;
-  double rotation_delta_cost_weight = 4;
+  // Number of precomputed grids to use.
+  int32 branch_and_bound_depth = 2;
 }

@@ -14,49 +14,50 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
-#define CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_LANDMARK_COST_FUNCTION_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_LANDMARK_COST_FUNCTION_2D_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/mapping/pose_graph/cost_helpers.h"
 #include "cartographer/mapping/pose_graph_interface.h"
-#include "cartographer/mapping_2d/pose_graph/optimization_problem.h"
+#include "cartographer/mapping_2d/pose_graph/optimization_problem_2d.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
 #include "ceres/jet.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace pose_graph {
 
 // Cost function measuring the weighted error between the observed pose given by
 // the landmark measurement and the linearly interpolated pose of embedded in 3D
 // space node poses.
-class LandmarkCostFunction {
+class LandmarkCostFunction2D {
  public:
   using LandmarkObservation =
-      mapping::PoseGraphInterface::LandmarkNode::LandmarkObservation;
+      PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
   static ceres::CostFunction* CreateAutoDiffCostFunction(
-      const LandmarkObservation& observation, const NodeData& prev_node,
-      const NodeData& next_node) {
+      const LandmarkObservation& observation,
+      const OptimizationProblem2D::NodeData& prev_node,
+      const OptimizationProblem2D::NodeData& next_node) {
     return new ceres::AutoDiffCostFunction<
-        LandmarkCostFunction, 6 /* residuals */,
+        LandmarkCostFunction2D, 6 /* residuals */,
         3 /* previous node pose variables */, 3 /* next node pose variables */,
         4 /* landmark rotation variables */,
         3 /* landmark translation variables */>(
-        new LandmarkCostFunction(observation, prev_node, next_node));
+        new LandmarkCostFunction2D(observation, prev_node, next_node));
   }
 
   template <typename T>
   bool operator()(const T* const prev_node_pose, const T* const next_node_pose,
                   const T* const landmark_rotation,
                   const T* const landmark_translation, T* const e) const {
-    using mapping::pose_graph::ComputeUnscaledError;
-    using mapping::pose_graph::ScaleError;
-    using mapping::pose_graph::SlerpQuaternions;
+    using pose_graph::ComputeUnscaledError;
+    using pose_graph::ScaleError;
+    using pose_graph::SlerpQuaternions;
 
     const std::array<T, 3> interpolated_pose_translation{
         {prev_node_pose[0] +
@@ -102,8 +103,9 @@ class LandmarkCostFunction {
   }
 
  private:
-  LandmarkCostFunction(const LandmarkObservation& observation,
-                       const NodeData& prev_node, const NodeData& next_node)
+  LandmarkCostFunction2D(const LandmarkObservation& observation,
+                         const OptimizationProblem2D::NodeData& prev_node,
+                         const OptimizationProblem2D::NodeData& next_node)
       : landmark_to_tracking_transform_(
             observation.landmark_to_tracking_transform),
         prev_node_gravity_alignment_(prev_node.gravity_alignment),
@@ -123,7 +125,7 @@ class LandmarkCostFunction {
 };
 
 }  // namespace pose_graph
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_LANDMARK_COST_FUNCTION_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_LANDMARK_COST_FUNCTION_2D_H_

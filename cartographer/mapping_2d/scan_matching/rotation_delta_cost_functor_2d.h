@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_ROTATION_DELTA_COST_FUNCTOR_H_
-#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_ROTATION_DELTA_COST_FUNCTOR_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_ROTATION_DELTA_COST_FUNCTOR_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_ROTATION_DELTA_COST_FUNCTOR_2D_H_
 
 #include "Eigen/Core"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 
 // Computes the cost of rotating 'pose' to 'target_angle'. Cost increases with
 // the solution's distance from 'target_angle'.
-class RotationDeltaCostFunctor {
+class RotationDeltaCostFunctor2D {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor, const double target_angle) {
     return new ceres::AutoDiffCostFunction<
-        RotationDeltaCostFunctor, 1 /* residuals */, 3 /* pose variables */>(
-        new RotationDeltaCostFunctor(scaling_factor, target_angle));
+        RotationDeltaCostFunctor2D, 1 /* residuals */, 3 /* pose variables */>(
+        new RotationDeltaCostFunctor2D(scaling_factor, target_angle));
   }
 
   template <typename T>
@@ -41,19 +41,20 @@ class RotationDeltaCostFunctor {
   }
 
  private:
-  explicit RotationDeltaCostFunctor(const double scaling_factor,
-                                    const double target_angle)
+  explicit RotationDeltaCostFunctor2D(const double scaling_factor,
+                                      const double target_angle)
       : scaling_factor_(scaling_factor), angle_(target_angle) {}
 
-  RotationDeltaCostFunctor(const RotationDeltaCostFunctor&) = delete;
-  RotationDeltaCostFunctor& operator=(const RotationDeltaCostFunctor&) = delete;
+  RotationDeltaCostFunctor2D(const RotationDeltaCostFunctor2D&) = delete;
+  RotationDeltaCostFunctor2D& operator=(const RotationDeltaCostFunctor2D&) =
+      delete;
 
   const double scaling_factor_;
   const double angle_;
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_ROTATION_DELTA_COST_FUNCTOR_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_ROTATION_DELTA_COST_FUNCTOR_2D_H_

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
+#include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher_2d.h"
 
 #include <algorithm>
 #include <cmath>
@@ -30,7 +30,7 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
@@ -39,10 +39,10 @@ TEST(PrecomputationGridTest, CorrectValues) {
   // represented by uint8 values.
   std::mt19937 prng(42);
   std::uniform_int_distribution<int> distribution(0, 255);
-  mapping::ProbabilityGrid probability_grid(mapping::MapLimits(
-      0.05, Eigen::Vector2d(5., 5.), mapping::CellLimits(250, 250)));
-  for (const Eigen::Array2i& xy_index : mapping::XYIndexRangeIterator(
-           Eigen::Array2i(50, 50), Eigen::Array2i(249, 249))) {
+  ProbabilityGrid probability_grid(
+      MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(250, 250)));
+  for (const Eigen::Array2i& xy_index :
+       XYIndexRangeIterator(Eigen::Array2i(50, 50), Eigen::Array2i(249, 249))) {
     probability_grid.SetProbability(
         xy_index, PrecomputationGrid::ToProbability(distribution(prng)));
   }
@@ -52,8 +52,8 @@ TEST(PrecomputationGridTest, CorrectValues) {
     PrecomputationGrid precomputation_grid(
         probability_grid, probability_grid.limits().cell_limits(), width,
         &reusable_intermediate_grid);
-    for (const Eigen::Array2i& xy_index : mapping::XYIndexRangeIterator(
-             probability_grid.limits().cell_limits())) {
+    for (const Eigen::Array2i& xy_index :
+         XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
       float max_score = -std::numeric_limits<float>::infinity();
       for (int y = 0; y != width; ++y) {
         for (int x = 0; x != width; ++x) {
@@ -73,10 +73,10 @@ TEST(PrecomputationGridTest, CorrectValues) {
 TEST(PrecomputationGridTest, TinyProbabilityGrid) {
   std::mt19937 prng(42);
   std::uniform_int_distribution<int> distribution(0, 255);
-  mapping::ProbabilityGrid probability_grid(mapping::MapLimits(
-      0.05, Eigen::Vector2d(0.1, 0.1), mapping::CellLimits(4, 4)));
+  ProbabilityGrid probability_grid(
+      MapLimits(0.05, Eigen::Vector2d(0.1, 0.1), CellLimits(4, 4)));
   for (const Eigen::Array2i& xy_index :
-       mapping::XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
+       XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
     probability_grid.SetProbability(
         xy_index, PrecomputationGrid::ToProbability(distribution(prng)));
   }
@@ -86,8 +86,8 @@ TEST(PrecomputationGridTest, TinyProbabilityGrid) {
     PrecomputationGrid precomputation_grid(
         probability_grid, probability_grid.limits().cell_limits(), width,
         &reusable_intermediate_grid);
-    for (const Eigen::Array2i& xy_index : mapping::XYIndexRangeIterator(
-             probability_grid.limits().cell_limits())) {
+    for (const Eigen::Array2i& xy_index :
+         XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
       float max_score = -std::numeric_limits<float>::infinity();
       for (int y = 0; y != width; ++y) {
         for (int x = 0; x != width; ++x) {
@@ -104,8 +104,9 @@ TEST(PrecomputationGridTest, TinyProbabilityGrid) {
   }
 }
 
-proto::FastCorrelativeScanMatcherOptions
-CreateFastCorrelativeScanMatcherTestOptions(const int branch_and_bound_depth) {
+proto::FastCorrelativeScanMatcherOptions2D
+CreateFastCorrelativeScanMatcherTestOptions2D(
+    const int branch_and_bound_depth) {
   auto parameter_dictionary =
       common::MakeDictionary(R"text(
       return {
@@ -113,7 +114,7 @@ CreateFastCorrelativeScanMatcherTestOptions(const int branch_and_bound_depth) {
          angular_search_window = 1.,
          branch_and_bound_depth = )text" +
                              std::to_string(branch_and_bound_depth) + "}");
-  return CreateFastCorrelativeScanMatcherOptions(parameter_dictionary.get());
+  return CreateFastCorrelativeScanMatcherOptions2D(parameter_dictionary.get());
 }
 
 mapping::proto::RangeDataInserterOptions2D
@@ -130,10 +131,10 @@ CreateRangeDataInserterTestOptions2D() {
 TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
   std::mt19937 prng(42);
   std::uniform_real_distribution<float> distribution(-1.f, 1.f);
-  mapping::RangeDataInserter2D range_data_inserter(
+  RangeDataInserter2D range_data_inserter(
       CreateRangeDataInserterTestOptions2D());
   constexpr float kMinScore = 0.1f;
-  const auto options = CreateFastCorrelativeScanMatcherTestOptions(3);
+  const auto options = CreateFastCorrelativeScanMatcherTestOptions2D(3);
 
   sensor::PointCloud point_cloud;
   point_cloud.emplace_back(-2.5f, 0.5f, 0.f);
@@ -148,8 +149,8 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
         {2. * distribution(prng), 2. * distribution(prng)},
         0.5 * distribution(prng));
 
-    mapping::ProbabilityGrid probability_grid(mapping::MapLimits(
-        0.05, Eigen::Vector2d(5., 5.), mapping::CellLimits(200, 200)));
+    ProbabilityGrid probability_grid(
+        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
     range_data_inserter.Insert(
         sensor::RangeData{
             Eigen::Vector3f(expected_pose.translation().x(),
@@ -160,8 +161,8 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
         &probability_grid);
     probability_grid.FinishUpdate();
 
-    FastCorrelativeScanMatcher fast_correlative_scan_matcher(probability_grid,
-                                                             options);
+    FastCorrelativeScanMatcher2D fast_correlative_scan_matcher(probability_grid,
+                                                               options);
     transform::Rigid2d pose_estimate;
     float score;
     EXPECT_TRUE(fast_correlative_scan_matcher.Match(
@@ -178,10 +179,10 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
 TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
   std::mt19937 prng(42);
   std::uniform_real_distribution<float> distribution(-1.f, 1.f);
-  mapping::RangeDataInserter2D range_data_inserter(
+  RangeDataInserter2D range_data_inserter(
       CreateRangeDataInserterTestOptions2D());
   constexpr float kMinScore = 0.1f;
-  const auto options = CreateFastCorrelativeScanMatcherTestOptions(6);
+  const auto options = CreateFastCorrelativeScanMatcherTestOptions2D(6);
 
   sensor::PointCloud unperturbed_point_cloud;
   unperturbed_point_cloud.emplace_back(-2.5f, 0.5f, 0.f);
@@ -202,8 +203,8 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
                            0.5 * distribution(prng)) *
         perturbation.inverse();
 
-    mapping::ProbabilityGrid probability_grid(mapping::MapLimits(
-        0.05, Eigen::Vector2d(5., 5.), mapping::CellLimits(200, 200)));
+    ProbabilityGrid probability_grid(
+        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
     range_data_inserter.Insert(
         sensor::RangeData{
             transform::Embed3D(expected_pose * perturbation).translation(),
@@ -213,8 +214,8 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
         &probability_grid);
     probability_grid.FinishUpdate();
 
-    FastCorrelativeScanMatcher fast_correlative_scan_matcher(probability_grid,
-                                                             options);
+    FastCorrelativeScanMatcher2D fast_correlative_scan_matcher(probability_grid,
+                                                               options);
     transform::Rigid2d pose_estimate;
     float score;
     EXPECT_TRUE(fast_correlative_scan_matcher.MatchFullSubmap(
@@ -229,5 +230,5 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

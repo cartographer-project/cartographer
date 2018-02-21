@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CORRELATIVE_SCAN_MATCHER_H_
-#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CORRELATIVE_SCAN_MATCHER_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CORRELATIVE_SCAN_MATCHER_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CORRELATIVE_SCAN_MATCHER_2D_H_
 
 #include <vector>
 
@@ -26,7 +26,7 @@
 #include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 
 typedef std::vector<Eigen::Array2i> DiscreteScan;
@@ -50,7 +50,7 @@ struct SearchParameters {
 
   // Tightens the search window as much as possible.
   void ShrinkToFit(const std::vector<DiscreteScan>& scans,
-                   const mapping::CellLimits& cell_limits);
+                   const CellLimits& cell_limits);
 
   int num_angular_perturbations;
   double angular_perturbation_step_size;
@@ -67,8 +67,7 @@ std::vector<sensor::PointCloud> GenerateRotatedScans(
 // Translates and discretizes the rotated scans into a vector of integer
 // indices.
 std::vector<DiscreteScan> DiscretizeScans(
-    const mapping::MapLimits& map_limits,
-    const std::vector<sensor::PointCloud>& scans,
+    const MapLimits& map_limits, const std::vector<sensor::PointCloud>& scans,
     const Eigen::Translation2f& initial_translation);
 
 // A possible solution.
@@ -104,7 +103,7 @@ struct Candidate {
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CORRELATIVE_SCAN_MATCHER_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CORRELATIVE_SCAN_MATCHER_2D_H_

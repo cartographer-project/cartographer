@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/internal/mapping_2d/local_trajectory_builder.h"
+#include "cartographer/internal/mapping_2d/local_trajectory_builder_2d.h"
 
 #include <limits>
 #include <memory>
@@ -23,10 +23,10 @@
 #include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
-LocalTrajectoryBuilder::LocalTrajectoryBuilder(
-    const mapping::proto::LocalTrajectoryBuilderOptions2D& options)
+LocalTrajectoryBuilder2D::LocalTrajectoryBuilder2D(
+    const proto::LocalTrajectoryBuilderOptions2D& options)
     : options_(options),
       active_submaps_(options.submaps_options()),
       motion_filter_(options_.motion_filter_options()),
@@ -34,10 +34,10 @@ LocalTrajectoryBuilder::LocalTrajectoryBuilder(
           options_.real_time_correlative_scan_matcher_options()),
       ceres_scan_matcher_(options_.ceres_scan_matcher_options()) {}
 
-LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
+LocalTrajectoryBuilder2D::~LocalTrajectoryBuilder2D() {}
 
 sensor::RangeData
-LocalTrajectoryBuilder::TransformToGravityAlignedFrameAndFilter(
+LocalTrajectoryBuilder2D::TransformToGravityAlignedFrameAndFilter(
     const transform::Rigid3f& transform_to_gravity_aligned_frame,
     const sensor::RangeData& range_data) const {
   const sensor::RangeData cropped =
@@ -50,10 +50,10 @@ LocalTrajectoryBuilder::TransformToGravityAlignedFrameAndFilter(
       sensor::VoxelFilter(options_.voxel_filter_size()).Filter(cropped.misses)};
 }
 
-std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder::ScanMatch(
+std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     const common::Time time, const transform::Rigid2d& pose_prediction,
     const sensor::RangeData& gravity_aligned_range_data) {
-  std::shared_ptr<const mapping::Submap2D> matching_submap =
+  std::shared_ptr<const Submap2D> matching_submap =
       active_submaps_.submaps().front();
   // The online correlative scan matcher will refine the initial estimate for
   // the Ceres scan matcher.
@@ -80,9 +80,9 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder::ScanMatch(
   return pose_observation;
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
-LocalTrajectoryBuilder::AddRangeData(const common::Time time,
-                                     const sensor::TimedRangeData& range_data) {
+std::unique_ptr<LocalTrajectoryBuilder2D::MatchingResult>
+LocalTrajectoryBuilder2D::AddRangeData(
+    const common::Time time, const sensor::TimedRangeData& range_data) {
   // Initialize extrapolator now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
     InitializeExtrapolator(time);
@@ -155,8 +155,8 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   return nullptr;
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
-LocalTrajectoryBuilder::AddAccumulatedRangeData(
+std::unique_ptr<LocalTrajectoryBuilder2D::MatchingResult>
+LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
     const common::Time time,
     const sensor::RangeData& gravity_aligned_range_data,
     const transform::Rigid3d& gravity_alignment) {
@@ -193,8 +193,8 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
                      std::move(insertion_result)});
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
-LocalTrajectoryBuilder::InsertIntoSubmap(
+std::unique_ptr<LocalTrajectoryBuilder2D::InsertionResult>
+LocalTrajectoryBuilder2D::InsertIntoSubmap(
     const common::Time time, const sensor::RangeData& range_data_in_local,
     const sensor::RangeData& gravity_aligned_range_data,
     const transform::Rigid3d& pose_estimate,
@@ -205,9 +205,8 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
 
   // Querying the active submaps must be done here before calling
   // InsertRangeData() since the queried values are valid for next insertion.
-  std::vector<std::shared_ptr<const mapping::Submap2D>> insertion_submaps;
-  for (const std::shared_ptr<mapping::Submap2D>& submap :
-       active_submaps_.submaps()) {
+  std::vector<std::shared_ptr<const Submap2D>> insertion_submaps;
+  for (const std::shared_ptr<Submap2D>& submap : active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
   active_submaps_.InsertRangeData(range_data_in_local);
@@ -218,25 +217,24 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
       adaptive_voxel_filter.Filter(gravity_aligned_range_data.returns);
 
   return common::make_unique<InsertionResult>(InsertionResult{
-      std::make_shared<const mapping::TrajectoryNode::Data>(
-          mapping::TrajectoryNode::Data{
-              time,
-              gravity_alignment,
-              filtered_gravity_aligned_point_cloud,
-              {},  // 'high_resolution_point_cloud' is only used in 3D.
-              {},  // 'low_resolution_point_cloud' is only used in 3D.
-              {},  // 'rotational_scan_matcher_histogram' is only used in 3D.
-              pose_estimate}),
+      std::make_shared<const TrajectoryNode::Data>(TrajectoryNode::Data{
+          time,
+          gravity_alignment,
+          filtered_gravity_aligned_point_cloud,
+          {},  // 'high_resolution_point_cloud' is only used in 3D.
+          {},  // 'low_resolution_point_cloud' is only used in 3D.
+          {},  // 'rotational_scan_matcher_histogram' is only used in 3D.
+          pose_estimate}),
       std::move(insertion_submaps)});
 }
 
-void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
+void LocalTrajectoryBuilder2D::AddImuData(const sensor::ImuData& imu_data) {
   CHECK(options_.use_imu_data()) << "An unexpected IMU packet was added.";
   InitializeExtrapolator(imu_data.time);
   extrapolator_->AddImuData(imu_data);
 }
 
-void LocalTrajectoryBuilder::AddOdometryData(
+void LocalTrajectoryBuilder2D::AddOdometryData(
     const sensor::OdometryData& odometry_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator we cannot add odometry data.
@@ -246,7 +244,7 @@ void LocalTrajectoryBuilder::AddOdometryData(
   extrapolator_->AddOdometryData(odometry_data);
 }
 
-void LocalTrajectoryBuilder::InitializeExtrapolator(const common::Time time) {
+void LocalTrajectoryBuilder2D::InitializeExtrapolator(const common::Time time) {
   if (extrapolator_ != nullptr) {
     return;
   }
@@ -255,11 +253,11 @@ void LocalTrajectoryBuilder::InitializeExtrapolator(const common::Time time) {
   // in time and thus the last two are used.
   constexpr double kExtrapolationEstimationTimeSec = 0.001;
   // TODO(gaschler): Consider using InitializeWithImu as 3D does.
-  extrapolator_ = common::make_unique<mapping::PoseExtrapolator>(
+  extrapolator_ = common::make_unique<PoseExtrapolator>(
       ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
       options_.imu_gravity_time_constant());
   extrapolator_->AddPose(time, transform::Rigid3d::Identity());
 }
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

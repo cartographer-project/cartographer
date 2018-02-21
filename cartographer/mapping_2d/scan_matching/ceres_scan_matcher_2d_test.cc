@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
+#include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher_2d.h"
 
 #include <memory>
 
@@ -28,18 +28,18 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
 class CeresScanMatcherTest : public ::testing::Test {
  protected:
   CeresScanMatcherTest()
-      : probability_grid_(mapping::MapLimits(1., Eigen::Vector2d(10., 10.),
-                                             mapping::CellLimits(20, 20))) {
+      : probability_grid_(
+            MapLimits(1., Eigen::Vector2d(10., 10.), CellLimits(20, 20))) {
     probability_grid_.SetProbability(
         probability_grid_.limits().GetCellIndex(Eigen::Vector2f(-3.5f, 2.5f)),
-        mapping::kMaxProbability);
+        kMaxProbability);
 
     point_cloud_.emplace_back(-3.f, 2.f, 0.f);
 
@@ -54,9 +54,9 @@ class CeresScanMatcherTest : public ::testing::Test {
             num_threads = 1,
           },
         })text");
-    const proto::CeresScanMatcherOptions options =
-        CreateCeresScanMatcherOptions(parameter_dictionary.get());
-    ceres_scan_matcher_ = common::make_unique<CeresScanMatcher>(options);
+    const proto::CeresScanMatcherOptions2D options =
+        CreateCeresScanMatcherOptions2D(parameter_dictionary.get());
+    ceres_scan_matcher_ = common::make_unique<CeresScanMatcher2D>(options);
   }
 
   void TestFromInitialPose(const transform::Rigid2d& initial_pose) {
@@ -73,9 +73,9 @@ class CeresScanMatcherTest : public ::testing::Test {
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
   }
 
-  mapping::ProbabilityGrid probability_grid_;
+  ProbabilityGrid probability_grid_;
   sensor::PointCloud point_cloud_;
-  std::unique_ptr<CeresScanMatcher> ceres_scan_matcher_;
+  std::unique_ptr<CeresScanMatcher2D> ceres_scan_matcher_;
 };
 
 TEST_F(CeresScanMatcherTest, testPerfectEstimate) {
@@ -96,5 +96,5 @@ TEST_F(CeresScanMatcherTest, testOptimizeAlongXY) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

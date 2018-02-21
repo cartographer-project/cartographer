@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
+#include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher_2d.h"
 
 #include <algorithm>
 #include <cmath>
@@ -30,9 +30,8 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
-
 namespace {
 
 // A collection of values which can be added and later removed, and the maximum
@@ -75,10 +74,10 @@ class SlidingWindowMaximum {
 
 }  // namespace
 
-proto::FastCorrelativeScanMatcherOptions
-CreateFastCorrelativeScanMatcherOptions(
+proto::FastCorrelativeScanMatcherOptions2D
+CreateFastCorrelativeScanMatcherOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::FastCorrelativeScanMatcherOptions options;
+  proto::FastCorrelativeScanMatcherOptions2D options;
   options.set_linear_search_window(
       parameter_dictionary->GetDouble("linear_search_window"));
   options.set_angular_search_window(
@@ -89,9 +88,8 @@ CreateFastCorrelativeScanMatcherOptions(
 }
 
 PrecomputationGrid::PrecomputationGrid(
-    const mapping::ProbabilityGrid& probability_grid,
-    const mapping::CellLimits& limits, const int width,
-    std::vector<float>* reusable_intermediate_grid)
+    const ProbabilityGrid& probability_grid, const CellLimits& limits,
+    const int width, std::vector<float>* reusable_intermediate_grid)
     : offset_(-width + 1, -width + 1),
       wide_limits_(limits.num_x_cells + width - 1,
                    limits.num_y_cells + width - 1),
@@ -160,9 +158,9 @@ PrecomputationGrid::PrecomputationGrid(
 }
 
 uint8 PrecomputationGrid::ComputeCellValue(const float probability) const {
-  const int cell_value = common::RoundToInt(
-      (probability - mapping::kMinProbability) *
-      (255.f / (mapping::kMaxProbability - mapping::kMinProbability)));
+  const int cell_value =
+      common::RoundToInt((probability - kMinProbability) *
+                         (255.f / (kMaxProbability - kMinProbability)));
   CHECK_GE(cell_value, 0);
   CHECK_LE(cell_value, 255);
   return cell_value;
@@ -171,13 +169,13 @@ uint8 PrecomputationGrid::ComputeCellValue(const float probability) const {
 class PrecomputationGridStack {
  public:
   PrecomputationGridStack(
-      const mapping::ProbabilityGrid& probability_grid,
-      const proto::FastCorrelativeScanMatcherOptions& options) {
+      const ProbabilityGrid& probability_grid,
+      const proto::FastCorrelativeScanMatcherOptions2D& options) {
     CHECK_GE(options.branch_and_bound_depth(), 1);
     const int max_width = 1 << (options.branch_and_bound_depth() - 1);
     precomputation_grids_.reserve(options.branch_and_bound_depth());
     std::vector<float> reusable_intermediate_grid;
-    const mapping::CellLimits limits = probability_grid.limits().cell_limits();
+    const CellLimits limits = probability_grid.limits().cell_limits();
     reusable_intermediate_grid.reserve((limits.num_x_cells + max_width - 1) *
                                        limits.num_y_cells);
     for (int i = 0; i != options.branch_and_bound_depth(); ++i) {
@@ -197,17 +195,17 @@ class PrecomputationGridStack {
   std::vector<PrecomputationGrid> precomputation_grids_;
 };
 
-FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
-    const mapping::ProbabilityGrid& probability_grid,
-    const proto::FastCorrelativeScanMatcherOptions& options)
+FastCorrelativeScanMatcher2D::FastCorrelativeScanMatcher2D(
+    const ProbabilityGrid& probability_grid,
+    const proto::FastCorrelativeScanMatcherOptions2D& options)
     : options_(options),
       limits_(probability_grid.limits()),
       precomputation_grid_stack_(
           new PrecomputationGridStack(probability_grid, options)) {}
 
-FastCorrelativeScanMatcher::~FastCorrelativeScanMatcher() {}
+FastCorrelativeScanMatcher2D::~FastCorrelativeScanMatcher2D() {}
 
-bool FastCorrelativeScanMatcher::Match(
+bool FastCorrelativeScanMatcher2D::Match(
     const transform::Rigid2d& initial_pose_estimate,
     const sensor::PointCloud& point_cloud, const float min_score, float* score,
     transform::Rigid2d* pose_estimate) const {
@@ -219,7 +217,7 @@ bool FastCorrelativeScanMatcher::Match(
                                    pose_estimate);
 }
 
-bool FastCorrelativeScanMatcher::MatchFullSubmap(
+bool FastCorrelativeScanMatcher2D::MatchFullSubmap(
     const sensor::PointCloud& point_cloud, float min_score, float* score,
     transform::Rigid2d* pose_estimate) const {
   // Compute a search window around the center of the submap that includes it
@@ -236,7 +234,7 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
                                    min_score, score, pose_estimate);
 }
 
-bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
+bool FastCorrelativeScanMatcher2D::MatchWithSearchParameters(
     SearchParameters search_parameters,
     const transform::Rigid2d& initial_pose_estimate,
     const sensor::PointCloud& point_cloud, float min_score, float* score,
@@ -274,7 +272,7 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
 }
 
 std::vector<Candidate>
-FastCorrelativeScanMatcher::ComputeLowestResolutionCandidates(
+FastCorrelativeScanMatcher2D::ComputeLowestResolutionCandidates(
     const std::vector<DiscreteScan>& discrete_scans,
     const SearchParameters& search_parameters) const {
   std::vector<Candidate> lowest_resolution_candidates =
@@ -286,7 +284,7 @@ FastCorrelativeScanMatcher::ComputeLowestResolutionCandidates(
 }
 
 std::vector<Candidate>
-FastCorrelativeScanMatcher::GenerateLowestResolutionCandidates(
+FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
     const SearchParameters& search_parameters) const {
   const int linear_step_size = 1 << precomputation_grid_stack_->max_depth();
   int num_candidates = 0;
@@ -323,7 +321,7 @@ FastCorrelativeScanMatcher::GenerateLowestResolutionCandidates(
   return candidates;
 }
 
-void FastCorrelativeScanMatcher::ScoreCandidates(
+void FastCorrelativeScanMatcher2D::ScoreCandidates(
     const PrecomputationGrid& precomputation_grid,
     const std::vector<DiscreteScan>& discrete_scans,
     const SearchParameters& search_parameters,
@@ -343,7 +341,7 @@ void FastCorrelativeScanMatcher::ScoreCandidates(
   std::sort(candidates->begin(), candidates->end(), std::greater<Candidate>());
 }
 
-Candidate FastCorrelativeScanMatcher::BranchAndBound(
+Candidate FastCorrelativeScanMatcher2D::BranchAndBound(
     const std::vector<DiscreteScan>& discrete_scans,
     const SearchParameters& search_parameters,
     const std::vector<Candidate>& candidates, const int candidate_depth,
@@ -389,5 +387,5 @@ Candidate FastCorrelativeScanMatcher::BranchAndBound(
 }
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

@@ -17,7 +17,7 @@
 #include "cartographer/mapping_3d/local_trajectory_builder_options_3d.h"
 
 #include "cartographer/internal/mapping/motion_filter.h"
-#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
+#include "cartographer/mapping/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/submap_3d.h"
 #include "cartographer/sensor/voxel_filter.h"
@@ -48,7 +48,7 @@ proto::LocalTrajectoryBuilderOptions3D CreateLocalTrajectoryBuilderOptions3D(
   options.set_use_online_correlative_scan_matching(
       parameter_dictionary->GetBool("use_online_correlative_scan_matching"));
   *options.mutable_real_time_correlative_scan_matcher_options() =
-      mapping_2d::scan_matching::CreateRealTimeCorrelativeScanMatcherOptions(
+      mapping::scan_matching::CreateRealTimeCorrelativeScanMatcherOptions(
           parameter_dictionary
               ->GetDictionary("real_time_correlative_scan_matcher")
               .get());

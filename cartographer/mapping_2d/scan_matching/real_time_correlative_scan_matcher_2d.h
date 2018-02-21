@@ -33,43 +33,40 @@
 // This can be made even faster by transforming the scan exactly once over some
 // discretized range.
 
-#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
-#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_2D_H_
 
 #include <iostream>
 #include <memory>
 #include <vector>
 
 #include "Eigen/Core"
+#include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
+#include "cartographer/mapping/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher.h"
-#include "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
+#include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher_2d.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 
-proto::RealTimeCorrelativeScanMatcherOptions
-CreateRealTimeCorrelativeScanMatcherOptions(
-    common::LuaParameterDictionary* const parameter_dictionary);
-
 // An implementation of "Real-Time Correlative Scan Matching" by Olson.
-class RealTimeCorrelativeScanMatcher {
+class RealTimeCorrelativeScanMatcher2D {
  public:
-  explicit RealTimeCorrelativeScanMatcher(
+  explicit RealTimeCorrelativeScanMatcher2D(
       const proto::RealTimeCorrelativeScanMatcherOptions& options);
 
-  RealTimeCorrelativeScanMatcher(const RealTimeCorrelativeScanMatcher&) =
+  RealTimeCorrelativeScanMatcher2D(const RealTimeCorrelativeScanMatcher2D&) =
       delete;
-  RealTimeCorrelativeScanMatcher& operator=(
-      const RealTimeCorrelativeScanMatcher&) = delete;
+  RealTimeCorrelativeScanMatcher2D& operator=(
+      const RealTimeCorrelativeScanMatcher2D&) = delete;
 
   // Aligns 'point_cloud' within the 'probability_grid' given an
   // 'initial_pose_estimate' then updates 'pose_estimate' with the result and
   // returns the score.
   double Match(const transform::Rigid2d& initial_pose_estimate,
                const sensor::PointCloud& point_cloud,
-               const mapping::ProbabilityGrid& probability_grid,
+               const ProbabilityGrid& probability_grid,
                transform::Rigid2d* pose_estimate) const;
 
   // Computes the score for each Candidate in a collection. The cost is computed
@@ -77,7 +74,7 @@ class RealTimeCorrelativeScanMatcher {
   // http://ceres-solver.org/modeling.html
   //
   // Visible for testing.
-  void ScoreCandidates(const mapping::ProbabilityGrid& probability_grid,
+  void ScoreCandidates(const ProbabilityGrid& probability_grid,
                        const std::vector<DiscreteScan>& discrete_scans,
                        const SearchParameters& search_parameters,
                        std::vector<Candidate>* candidates) const;
@@ -90,7 +87,7 @@ class RealTimeCorrelativeScanMatcher {
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_2D_H_

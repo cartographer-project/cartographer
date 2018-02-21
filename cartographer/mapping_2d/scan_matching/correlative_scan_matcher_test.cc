@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher.h"
+#include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher_2d.h"
 
 #include "cartographer/sensor/point_cloud.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
@@ -79,8 +79,8 @@ TEST(DiscretizeScans, DiscretizeScans) {
   point_cloud.emplace_back(-0.125f, 0.125f, 0.f);
   point_cloud.emplace_back(-0.125f, 0.075f, 0.f);
   point_cloud.emplace_back(-0.125f, 0.025f, 0.f);
-  const mapping::MapLimits map_limits(0.05, Eigen::Vector2d(0.05, 0.25),
-                                      mapping::CellLimits(6, 6));
+  const MapLimits map_limits(0.05, Eigen::Vector2d(0.05, 0.25),
+                             CellLimits(6, 6));
   const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud, SearchParameters(0, 0, 0., 0.));
   const std::vector<DiscreteScan> discrete_scans =
@@ -98,5 +98,5 @@ TEST(DiscretizeScans, DiscretizeScans) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
