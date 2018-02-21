@@ -78,8 +78,7 @@ PointCloud AdaptivelyVoxelFiltered(
 
 template <typename PointCloudType>
 PointCloudType FilterPointCloudUsingVoxels(
-    const PointCloudType& point_cloud,
-    mapping_3d::HybridGridBase<uint8>* voxels) {
+    const PointCloudType& point_cloud, mapping::HybridGridBase<uint8>* voxels) {
   PointCloudType results;
   for (const typename PointCloudType::value_type& point : point_cloud) {
     auto* const value =

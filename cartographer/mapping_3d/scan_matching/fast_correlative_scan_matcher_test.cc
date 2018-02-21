@@ -23,7 +23,7 @@
 
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/make_unique.h"
-#include "cartographer/mapping_3d/range_data_inserter.h"
+#include "cartographer/mapping_3d/range_data_inserter_3d.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
 #include "gtest/gtest.h"
@@ -81,7 +81,7 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
     return CreateFastCorrelativeScanMatcherOptions(parameter_dictionary.get());
   }
 
-  static mapping_3d::proto::RangeDataInserterOptions
+  static mapping::proto::RangeDataInserterOptions3D
   CreateRangeDataInserterTestOptions() {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
@@ -89,13 +89,14 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
         "miss_probability = 0.4, "
         "num_free_space_voxels = 5, "
         "}");
-    return CreateRangeDataInserterOptions(parameter_dictionary.get());
+    return mapping::CreateRangeDataInserterOptions3D(
+        parameter_dictionary.get());
   }
 
   std::unique_ptr<FastCorrelativeScanMatcher> GetFastCorrelativeScanMatcher(
       const proto::FastCorrelativeScanMatcherOptions& options,
       const transform::Rigid3f& pose) {
-    hybrid_grid_ = common::make_unique<HybridGrid>(0.05f);
+    hybrid_grid_ = common::make_unique<mapping::HybridGrid>(0.05f);
     range_data_inserter_.Insert(
         sensor::RangeData{pose.translation(),
                           sensor::TransformPointCloud(point_cloud_, pose),
@@ -125,10 +126,10 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
   std::mt19937 prng_ = std::mt19937(42);
   std::uniform_real_distribution<float> distribution_ =
       std::uniform_real_distribution<float>(-1.f, 1.f);
-  RangeDataInserter range_data_inserter_;
+  mapping::RangeDataInserter3D range_data_inserter_;
   const proto::FastCorrelativeScanMatcherOptions options_;
   sensor::PointCloud point_cloud_;
-  std::unique_ptr<HybridGrid> hybrid_grid_;
+  std::unique_ptr<mapping::HybridGrid> hybrid_grid_;
 };
 
 constexpr float kMinScore = 0.1f;

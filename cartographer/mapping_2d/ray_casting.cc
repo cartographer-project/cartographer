@@ -17,8 +17,7 @@
 #include "cartographer/mapping_2d/ray_casting.h"
 
 namespace cartographer {
-namespace mapping_2d {
-
+namespace mapping {
 namespace {
 
 // Factor for subpixel accuracy of start and end point.
@@ -203,5 +202,5 @@ void CastRays(const sensor::RangeData& range_data,
   }
 }
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

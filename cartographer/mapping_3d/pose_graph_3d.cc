@@ -55,8 +55,7 @@ PoseGraph3D::~PoseGraph3D() {
 
 std::vector<SubmapId> PoseGraph3D::InitializeGlobalSubmapPoses(
     const int trajectory_id, const common::Time time,
-    const std::vector<std::shared_ptr<const mapping_3d::Submap>>&
-        insertion_submaps) {
+    const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps) {
   CHECK(!insertion_submaps.empty());
   const auto& submap_data = optimization_problem_.submap_data();
   if (insertion_submaps.size() == 1) {
@@ -102,8 +101,7 @@ std::vector<SubmapId> PoseGraph3D::InitializeGlobalSubmapPoses(
 NodeId PoseGraph3D::AddNode(
     std::shared_ptr<const TrajectoryNode::Data> constant_data,
     const int trajectory_id,
-    const std::vector<std::shared_ptr<const mapping_3d::Submap>>&
-        insertion_submaps) {
+    const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps) {
   const transform::Rigid3d optimized_pose(
       GetLocalToGlobalTransform(trajectory_id) * constant_data->local_pose);
 
@@ -255,7 +253,7 @@ void PoseGraph3D::ComputeConstraintsForOldNodes(const SubmapId& submap_id) {
 
 void PoseGraph3D::ComputeConstraintsForNode(
     const NodeId& node_id,
-    std::vector<std::shared_ptr<const mapping_3d::Submap>> insertion_submaps,
+    std::vector<std::shared_ptr<const Submap3D>> insertion_submaps,
     const bool newly_finished_submap) {
   const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
   const std::vector<SubmapId> submap_ids = InitializeGlobalSubmapPoses(
@@ -446,8 +444,8 @@ void PoseGraph3D::AddSubmapFromProto(
 
   const SubmapId submap_id = {submap.submap_id().trajectory_id(),
                               submap.submap_id().submap_index()};
-  std::shared_ptr<const mapping_3d::Submap> submap_ptr =
-      std::make_shared<const mapping_3d::Submap>(submap.submap_3d());
+  std::shared_ptr<const Submap3D> submap_ptr =
+      std::make_shared<const Submap3D>(submap.submap_3d());
 
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(submap_id.trajectory_id);
@@ -483,7 +481,7 @@ void PoseGraph3D::AddNodeFromProto(const transform::Rigid3d& global_pose,
 }
 
 void PoseGraph3D::SetTrajectoryDataFromProto(
-    const mapping::proto::TrajectoryData& data) {
+    const proto::TrajectoryData& data) {
   TrajectoryData trajectory_data;
   trajectory_data.gravity_constant = data.gravity_constant();
   trajectory_data.imu_calibration = {
@@ -680,7 +678,7 @@ PoseGraph3D::GetFixedFramePoseData() {
   return optimization_problem_.fixed_frame_pose_data();
 }
 
-std::map<int, mapping::PoseGraphInterface::TrajectoryData>
+std::map<int, PoseGraphInterface::TrajectoryData>
 PoseGraph3D::GetTrajectoryData() {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_.trajectory_data();

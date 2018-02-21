@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_SUBMAPS_H_
-#define CARTOGRAPHER_MAPPING_2D_SUBMAPS_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_SUBMAP_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_SUBMAP_2D_H_
 
 #include <memory>
 #include <vector>
@@ -28,39 +28,38 @@
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_2d/map_limits.h"
 #include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/proto/submaps_options.pb.h"
-#include "cartographer/mapping_2d/range_data_inserter.h"
+#include "cartographer/mapping_2d/proto/submaps_options_2d.pb.h"
+#include "cartographer/mapping_2d/range_data_inserter_2d.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
 ProbabilityGrid ComputeCroppedProbabilityGrid(
     const ProbabilityGrid& probability_grid);
 
-proto::SubmapsOptions CreateSubmapsOptions(
+proto::SubmapsOptions2D CreateSubmapsOptions2D(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class Submap : public mapping::Submap {
+class Submap2D : public Submap {
  public:
-  Submap(const MapLimits& limits, const Eigen::Vector2f& origin);
-  explicit Submap(const mapping::proto::Submap2D& proto);
+  Submap2D(const MapLimits& limits, const Eigen::Vector2f& origin);
+  explicit Submap2D(const proto::Submap2D& proto);
 
-  void ToProto(mapping::proto::Submap* proto,
+  void ToProto(proto::Submap* proto,
                bool include_probability_grid_data) const override;
-  void UpdateFromProto(const mapping::proto::Submap& proto) override;
+  void UpdateFromProto(const proto::Submap& proto) override;
 
-  void ToResponseProto(
-      const transform::Rigid3d& global_submap_pose,
-      mapping::proto::SubmapQuery::Response* response) const override;
+  void ToResponseProto(const transform::Rigid3d& global_submap_pose,
+                       proto::SubmapQuery::Response* response) const override;
 
   const ProbabilityGrid& probability_grid() const { return probability_grid_; }
 
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
   void InsertRangeData(const sensor::RangeData& range_data,
-                       const RangeDataInserter& range_data_inserter);
+                       const RangeDataInserter2D& range_data_inserter);
   void Finish();
 
  private:
@@ -76,12 +75,12 @@ class Submap : public mapping::Submap {
 // considered initialized: the old submap is no longer changed, the "new" submap
 // is now the "old" submap and is used for scan-to-map matching. Moreover, a
 // "new" submap gets created. The "old" submap is forgotten by this object.
-class ActiveSubmaps {
+class ActiveSubmaps2D {
  public:
-  explicit ActiveSubmaps(const proto::SubmapsOptions& options);
+  explicit ActiveSubmaps2D(const proto::SubmapsOptions2D& options);
 
-  ActiveSubmaps(const ActiveSubmaps&) = delete;
-  ActiveSubmaps& operator=(const ActiveSubmaps&) = delete;
+  ActiveSubmaps2D(const ActiveSubmaps2D&) = delete;
+  ActiveSubmaps2D& operator=(const ActiveSubmaps2D&) = delete;
 
   // Returns the index of the newest initialized Submap which can be
   // used for scan-to-map matching.
@@ -90,19 +89,19 @@ class ActiveSubmaps {
   // Inserts 'range_data' into the Submap collection.
   void InsertRangeData(const sensor::RangeData& range_data);
 
-  std::vector<std::shared_ptr<Submap>> submaps() const;
+  std::vector<std::shared_ptr<Submap2D>> submaps() const;
 
  private:
   void FinishSubmap();
   void AddSubmap(const Eigen::Vector2f& origin);
 
-  const proto::SubmapsOptions options_;
+  const proto::SubmapsOptions2D options_;
   int matching_submap_index_ = 0;
-  std::vector<std::shared_ptr<Submap>> submaps_;
-  RangeDataInserter range_data_inserter_;
+  std::vector<std::shared_ptr<Submap2D>> submaps_;
+  RangeDataInserter2D range_data_inserter_;
 };
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_SUBMAPS_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_SUBMAP_2D_H_

@@ -34,7 +34,7 @@ namespace scan_matching {
 // continuously differentiable.
 class InterpolatedGrid {
  public:
-  explicit InterpolatedGrid(const HybridGrid& hybrid_grid)
+  explicit InterpolatedGrid(const mapping::HybridGrid& hybrid_grid)
       : hybrid_grid_(hybrid_grid) {}
 
   InterpolatedGrid(const InterpolatedGrid&) = delete;
@@ -145,7 +145,7 @@ class InterpolatedGrid {
     return CenterOfLowerVoxel(jet_x.a, jet_y.a, jet_z.a);
   }
 
-  const HybridGrid& hybrid_grid_;
+  const mapping::HybridGrid& hybrid_grid_;
 };
 
 }  // namespace scan_matching

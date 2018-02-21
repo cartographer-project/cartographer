@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_H_
-#define CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_2D_H_
 
 #include <utility>
 #include <vector>
@@ -23,35 +23,36 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/proto/range_data_inserter_options.pb.h"
+#include "cartographer/mapping_2d/proto/range_data_inserter_options_2d.pb.h"
 #include "cartographer/mapping_2d/xy_index.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
-proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
+proto::RangeDataInserterOptions2D CreateRangeDataInserterOptions2D(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class RangeDataInserter {
+class RangeDataInserter2D {
  public:
-  explicit RangeDataInserter(const proto::RangeDataInserterOptions& options);
+  explicit RangeDataInserter2D(
+      const proto::RangeDataInserterOptions2D& options);
 
-  RangeDataInserter(const RangeDataInserter&) = delete;
-  RangeDataInserter& operator=(const RangeDataInserter&) = delete;
+  RangeDataInserter2D(const RangeDataInserter2D&) = delete;
+  RangeDataInserter2D& operator=(const RangeDataInserter2D&) = delete;
 
   // Inserts 'range_data' into 'probability_grid'.
   void Insert(const sensor::RangeData& range_data,
               ProbabilityGrid* probability_grid) const;
 
  private:
-  const proto::RangeDataInserterOptions options_;
+  const proto::RangeDataInserterOptions2D options_;
   const std::vector<uint16> hit_table_;
   const std::vector<uint16> miss_table_;
 };
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_2D_H_

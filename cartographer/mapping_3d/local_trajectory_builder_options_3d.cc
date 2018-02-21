@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/local_trajectory_builder_options.h"
+#include "cartographer/mapping_3d/local_trajectory_builder_options_3d.h"
 
 #include "cartographer/internal/mapping/motion_filter.h"
 #include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
-#include "cartographer/mapping_3d/submaps.h"
+#include "cartographer/mapping_3d/submap_3d.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
-proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
-    common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::LocalTrajectoryBuilderOptions options;
+proto::LocalTrajectoryBuilderOptions3D CreateLocalTrajectoryBuilderOptions3D(
+    common::LuaParameterDictionary* parameter_dictionary) {
+  proto::LocalTrajectoryBuilderOptions3D options;
   options.set_min_range(parameter_dictionary->GetDouble("min_range"));
   options.set_max_range(parameter_dictionary->GetDouble("max_range"));
   options.set_num_accumulated_range_data(
@@ -53,18 +53,18 @@ proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
               ->GetDictionary("real_time_correlative_scan_matcher")
               .get());
   *options.mutable_ceres_scan_matcher_options() =
-      scan_matching::CreateCeresScanMatcherOptions(
+      mapping_3d::scan_matching::CreateCeresScanMatcherOptions(
           parameter_dictionary->GetDictionary("ceres_scan_matcher").get());
-  *options.mutable_motion_filter_options() = mapping::CreateMotionFilterOptions(
+  *options.mutable_motion_filter_options() = CreateMotionFilterOptions(
       parameter_dictionary->GetDictionary("motion_filter").get());
   options.set_imu_gravity_time_constant(
       parameter_dictionary->GetDouble("imu_gravity_time_constant"));
   options.set_rotational_histogram_size(
       parameter_dictionary->GetInt("rotational_histogram_size"));
-  *options.mutable_submaps_options() = mapping_3d::CreateSubmapsOptions(
+  *options.mutable_submaps_options() = CreateSubmapsOptions3D(
       parameter_dictionary->GetDictionary("submaps").get());
   return options;
 }
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_OPTIONS_H_
-#define CARTOGRAPHER_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_OPTIONS_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_OPTIONS_3D_H_
+#define CARTOGRAPHER_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_OPTIONS_3D_H_
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
+#include "cartographer/mapping_3d/proto/local_trajectory_builder_options_3d.pb.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
-proto::LocalTrajectoryBuilderOptions CreateLocalTrajectoryBuilderOptions(
+proto::LocalTrajectoryBuilderOptions3D CreateLocalTrajectoryBuilderOptions3D(
     common::LuaParameterDictionary* parameter_dictionary);
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_OPTIONS_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_OPTIONS_3D_H_

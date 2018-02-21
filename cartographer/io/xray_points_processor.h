@@ -66,7 +66,7 @@ class XRayPointsProcessor : public PointsProcessor {
   };
 
   struct Aggregation {
-    mapping_3d::HybridGridBase<bool> voxels;
+    mapping::HybridGridBase<bool> voxels;
     std::map<std::pair<int, int>, ColumnData> column_data;
   };
 

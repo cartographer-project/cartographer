@@ -122,6 +122,11 @@ void MapBuilderStub::LoadMap(
   {
     proto::LoadMapRequest request;
     CHECK(reader->ReadProto(request.mutable_pose_graph()));
+    CHECK(client.Write(request));
+  }
+  // Request with an AllTrajectoryBuilderOptions should be second.
+  {
+    proto::LoadMapRequest request;
     CHECK(reader->ReadProto(request.mutable_all_trajectory_builder_options()));
     CHECK(client.Write(request));
   }

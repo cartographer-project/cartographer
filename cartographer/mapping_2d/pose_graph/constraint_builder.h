@@ -34,9 +34,8 @@
 #include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
-#include "cartographer/mapping_2d/submaps.h"
-#include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
-#include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
+#include "cartographer/mapping_2d/submap_2d.h"
+#include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/voxel_filter.h"
 
@@ -46,7 +45,7 @@ namespace pose_graph {
 
 // Returns (map <- submap) where 'submap' is a coordinate system at the origin
 // of the Submap.
-transform::Rigid2d ComputeSubmapPose(const Submap& submap);
+transform::Rigid2d ComputeSubmapPose(const mapping::Submap2D& submap);
 
 // Asynchronously computes constraints.
 //
@@ -76,7 +75,7 @@ class ConstraintBuilder {
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddConstraint(
-      const mapping::SubmapId& submap_id, const Submap* submap,
+      const mapping::SubmapId& submap_id, const mapping::Submap2D* submap,
       const mapping::NodeId& node_id,
       const mapping::TrajectoryNode::Data* const constant_data,
       const transform::Rigid2d& initial_relative_pose);
@@ -88,7 +87,7 @@ class ConstraintBuilder {
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddGlobalConstraint(
-      const mapping::SubmapId& submap_id, const Submap* submap,
+      const mapping::SubmapId& submap_id, const mapping::Submap2D* submap,
       const mapping::NodeId& node_id,
       const mapping::TrajectoryNode::Data* const constant_data);
 
@@ -105,9 +104,11 @@ class ConstraintBuilder {
   // Delete data related to 'submap_id'.
   void DeleteScanMatcher(const mapping::SubmapId& submap_id);
 
+  static void RegisterMetrics(metrics::FamilyFactory* family_factory);
+
  private:
   struct SubmapScanMatcher {
-    const ProbabilityGrid* probability_grid;
+    const mapping::ProbabilityGrid* probability_grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher>
         fast_correlative_scan_matcher;
   };
@@ -115,12 +116,13 @@ class ConstraintBuilder {
   // Either schedules the 'work_item', or if needed, schedules the scan matcher
   // construction and queues the 'work_item'.
   void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      const mapping::SubmapId& submap_id, const ProbabilityGrid* submap,
+      const mapping::SubmapId& submap_id,
+      const mapping::ProbabilityGrid* submap,
       const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Constructs the scan matcher for a 'submap', then schedules its work items.
   void ConstructSubmapScanMatcher(const mapping::SubmapId& submap_id,
-                                  const ProbabilityGrid* submap)
+                                  const mapping::ProbabilityGrid* submap)
       EXCLUDES(mutex_);
 
   // Returns the scan matcher for a submap, which has to exist.
@@ -131,7 +133,7 @@ class ConstraintBuilder {
   // constraint, assuming 'submap' and 'compressed_point_cloud' do not change
   // anymore. As output, it may create a new Constraint in 'constraint'.
   void ComputeConstraint(
-      const mapping::SubmapId& submap_id, const Submap* submap,
+      const mapping::SubmapId& submap_id, const mapping::Submap2D* submap,
       const mapping::NodeId& node_id, bool match_full_submap,
       const mapping::TrajectoryNode::Data* const constant_data,
       const transform::Rigid2d& initial_relative_pose,

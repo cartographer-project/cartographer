@@ -26,7 +26,7 @@ namespace cartographer {
 namespace mapping_2d {
 
 LocalTrajectoryBuilder::LocalTrajectoryBuilder(
-    const proto::LocalTrajectoryBuilderOptions& options)
+    const mapping::proto::LocalTrajectoryBuilderOptions2D& options)
     : options_(options),
       active_submaps_(options.submaps_options()),
       motion_filter_(options_.motion_filter_options()),
@@ -53,7 +53,7 @@ LocalTrajectoryBuilder::TransformToGravityAlignedFrameAndFilter(
 std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder::ScanMatch(
     const common::Time time, const transform::Rigid2d& pose_prediction,
     const sensor::RangeData& gravity_aligned_range_data) {
-  std::shared_ptr<const Submap> matching_submap =
+  std::shared_ptr<const mapping::Submap2D> matching_submap =
       active_submaps_.submaps().front();
   // The online correlative scan matcher will refine the initial estimate for
   // the Ceres scan matcher.
@@ -205,8 +205,9 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
 
   // Querying the active submaps must be done here before calling
   // InsertRangeData() since the queried values are valid for next insertion.
-  std::vector<std::shared_ptr<const Submap>> insertion_submaps;
-  for (const std::shared_ptr<Submap>& submap : active_submaps_.submaps()) {
+  std::vector<std::shared_ptr<const mapping::Submap2D>> insertion_submaps;
+  for (const std::shared_ptr<mapping::Submap2D>& submap :
+       active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
   active_submaps_.InsertRangeData(range_data_in_local);
