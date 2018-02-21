@@ -98,5 +98,5 @@ TEST(DiscretizeScans, DiscretizeScans) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
