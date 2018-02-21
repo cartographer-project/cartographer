@@ -30,6 +30,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"

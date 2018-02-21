@@ -20,6 +20,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping_2d/ray_casting.h"
 #include "cartographer/mapping_2d/xy_index.h"
 #include "glog/logging.h"
