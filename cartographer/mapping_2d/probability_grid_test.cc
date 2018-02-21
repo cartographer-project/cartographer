@@ -17,13 +17,16 @@
 #include "cartographer/mapping_2d/probability_grid.h"
 
 #include <random>
-#include <vector>
 
+#include "cartographer/mapping/probability_values.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace mapping_2d {
 namespace {
+
+using Eigen::Array2i;
+using Eigen::Vector2f;
 
 TEST(ProbabilityGridTest, ProtoConstructor) {
   proto::ProbabilityGrid proto;
@@ -61,49 +64,47 @@ TEST(ProbabilityGridTest, ApplyOdds) {
       MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)));
   const MapLimits& limits = probability_grid.limits();
 
-  EXPECT_TRUE(limits.Contains(Eigen::Array2i(0, 0)));
-  EXPECT_TRUE(limits.Contains(Eigen::Array2i(0, 1)));
-  EXPECT_TRUE(limits.Contains(Eigen::Array2i(1, 0)));
-  EXPECT_TRUE(limits.Contains(Eigen::Array2i(1, 1)));
-  EXPECT_FALSE(probability_grid.IsKnown(Eigen::Array2i(0, 0)));
-  EXPECT_FALSE(probability_grid.IsKnown(Eigen::Array2i(0, 1)));
-  EXPECT_FALSE(probability_grid.IsKnown(Eigen::Array2i(1, 0)));
-  EXPECT_FALSE(probability_grid.IsKnown(Eigen::Array2i(1, 1)));
+  EXPECT_TRUE(limits.Contains(Array2i(0, 0)));
+  EXPECT_TRUE(limits.Contains(Array2i(0, 1)));
+  EXPECT_TRUE(limits.Contains(Array2i(1, 0)));
+  EXPECT_TRUE(limits.Contains(Array2i(1, 1)));
+  EXPECT_FALSE(probability_grid.IsKnown(Array2i(0, 0)));
+  EXPECT_FALSE(probability_grid.IsKnown(Array2i(0, 1)));
+  EXPECT_FALSE(probability_grid.IsKnown(Array2i(1, 0)));
+  EXPECT_FALSE(probability_grid.IsKnown(Array2i(1, 1)));
 
-  probability_grid.SetProbability(Eigen::Array2i(1, 0), 0.5);
+  probability_grid.SetProbability(Array2i(1, 0), 0.5);
 
   probability_grid.ApplyLookupTable(
-      Eigen::Array2i(1, 0),
+      Array2i(1, 0),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9)));
   probability_grid.FinishUpdate();
-  EXPECT_GT(probability_grid.GetProbability(Eigen::Array2i(1, 0)), 0.5);
+  EXPECT_GT(probability_grid.GetProbability(Array2i(1, 0)), 0.5);
 
-  probability_grid.SetProbability(Eigen::Array2i(0, 1), 0.5);
+  probability_grid.SetProbability(Array2i(0, 1), 0.5);
 
   probability_grid.ApplyLookupTable(
-      Eigen::Array2i(0, 1),
+      Array2i(0, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.1)));
   probability_grid.FinishUpdate();
-  EXPECT_LT(probability_grid.GetProbability(Eigen::Array2i(0, 1)), 0.5);
+  EXPECT_LT(probability_grid.GetProbability(Array2i(0, 1)), 0.5);
 
   // Tests adding odds to an unknown cell.
   probability_grid.ApplyLookupTable(
-      Eigen::Array2i(1, 1),
+      Array2i(1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.42)));
-  EXPECT_NEAR(probability_grid.GetProbability(Eigen::Array2i(1, 1)), 0.42,
-              1e-4);
+  EXPECT_NEAR(probability_grid.GetProbability(Array2i(1, 1)), 0.42, 1e-4);
 
   // Tests that further updates are ignored if FinishUpdate() isn't called.
   probability_grid.ApplyLookupTable(
-      Eigen::Array2i(1, 1),
+      Array2i(1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9)));
-  EXPECT_NEAR(probability_grid.GetProbability(Eigen::Array2i(1, 1)), 0.42,
-              1e-4);
+  EXPECT_NEAR(probability_grid.GetProbability(Array2i(1, 1)), 0.42, 1e-4);
   probability_grid.FinishUpdate();
   probability_grid.ApplyLookupTable(
-      Eigen::Array2i(1, 1),
+      Array2i(1, 1),
       mapping::ComputeLookupTableToApplyOdds(mapping::Odds(0.9)));
-  EXPECT_GT(probability_grid.GetProbability(Eigen::Array2i(1, 1)), 0.42);
+  EXPECT_GT(probability_grid.GetProbability(Array2i(1, 1)), 0.42);
 }
 
 TEST(ProbabilityGridTest, GetProbability) {
@@ -118,16 +119,14 @@ TEST(ProbabilityGridTest, GetProbability) {
   ASSERT_EQ(2, cell_limits.num_x_cells);
   ASSERT_EQ(2, cell_limits.num_y_cells);
 
-  probability_grid.SetProbability(
-      limits.GetCellIndex(Eigen::Vector2f(-0.5f, 0.5f)),
-      mapping::kMaxProbability);
+  probability_grid.SetProbability(limits.GetCellIndex(Vector2f(-0.5f, 0.5f)),
+                                  mapping::kMaxProbability);
   EXPECT_NEAR(probability_grid.GetProbability(
-                  limits.GetCellIndex(Eigen::Vector2f(-0.5f, 0.5f))),
+                  limits.GetCellIndex(Vector2f(-0.5f, 0.5f))),
               mapping::kMaxProbability, 1e-6);
-  for (const Eigen::Array2i& xy_index :
-       {limits.GetCellIndex(Eigen::Vector2f(-0.5f, 1.5f)),
-        limits.GetCellIndex(Eigen::Vector2f(0.5f, 0.5f)),
-        limits.GetCellIndex(Eigen::Vector2f(0.5f, 1.5f))}) {
+  for (const Array2i& xy_index : {limits.GetCellIndex(Vector2f(-0.5f, 1.5f)),
+                                  limits.GetCellIndex(Vector2f(0.5f, 0.5f)),
+                                  limits.GetCellIndex(Vector2f(0.5f, 1.5f))}) {
     EXPECT_TRUE(limits.Contains(xy_index));
     EXPECT_FALSE(probability_grid.IsKnown(xy_index));
   }
@@ -142,34 +141,25 @@ TEST(ProbabilityGridTest, GetCellIndex) {
   ASSERT_EQ(14, cell_limits.num_x_cells);
   ASSERT_EQ(8, cell_limits.num_y_cells);
   EXPECT_TRUE(
-      (Eigen::Array2i(0, 0) == limits.GetCellIndex(Eigen::Vector2f(7.f, 13.f)))
-          .all());
-  EXPECT_TRUE((Eigen::Array2i(13, 0) ==
-               limits.GetCellIndex(Eigen::Vector2f(7.f, -13.f)))
-                  .all());
+      (Array2i(0, 0) == limits.GetCellIndex(Vector2f(7.f, 13.f))).all());
   EXPECT_TRUE(
-      (Eigen::Array2i(0, 7) == limits.GetCellIndex(Eigen::Vector2f(-7.f, 13.f)))
-          .all());
-  EXPECT_TRUE((Eigen::Array2i(13, 7) ==
-               limits.GetCellIndex(Eigen::Vector2f(-7.f, -13.f)))
-                  .all());
+      (Array2i(13, 0) == limits.GetCellIndex(Vector2f(7.f, -13.f))).all());
+  EXPECT_TRUE(
+      (Array2i(0, 7) == limits.GetCellIndex(Vector2f(-7.f, 13.f))).all());
+  EXPECT_TRUE(
+      (Array2i(13, 7) == limits.GetCellIndex(Vector2f(-7.f, -13.f))).all());
 
   // Check around the origin.
   EXPECT_TRUE(
-      (Eigen::Array2i(6, 3) == limits.GetCellIndex(Eigen::Vector2f(0.5f, 0.5f)))
-          .all());
+      (Array2i(6, 3) == limits.GetCellIndex(Vector2f(0.5f, 0.5f))).all());
   EXPECT_TRUE(
-      (Eigen::Array2i(6, 3) == limits.GetCellIndex(Eigen::Vector2f(1.5f, 1.5f)))
-          .all());
-  EXPECT_TRUE((Eigen::Array2i(7, 3) ==
-               limits.GetCellIndex(Eigen::Vector2f(0.5f, -0.5f)))
-                  .all());
-  EXPECT_TRUE((Eigen::Array2i(6, 4) ==
-               limits.GetCellIndex(Eigen::Vector2f(-0.5f, 0.5f)))
-                  .all());
-  EXPECT_TRUE((Eigen::Array2i(7, 4) ==
-               limits.GetCellIndex(Eigen::Vector2f(-0.5f, -0.5f)))
-                  .all());
+      (Array2i(6, 3) == limits.GetCellIndex(Vector2f(1.5f, 1.5f))).all());
+  EXPECT_TRUE(
+      (Array2i(7, 3) == limits.GetCellIndex(Vector2f(0.5f, -0.5f))).all());
+  EXPECT_TRUE(
+      (Array2i(6, 4) == limits.GetCellIndex(Vector2f(-0.5f, 0.5f))).all());
+  EXPECT_TRUE(
+      (Array2i(7, 4) == limits.GetCellIndex(Vector2f(-0.5f, -0.5f))).all());
 }
 
 TEST(ProbabilityGridTest, CorrectCropping) {
@@ -179,14 +169,14 @@ TEST(ProbabilityGridTest, CorrectCropping) {
       mapping::kMinProbability, mapping::kMaxProbability);
   ProbabilityGrid probability_grid(
       MapLimits(0.05, Eigen::Vector2d(10., 10.), CellLimits(400, 400)));
-  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(
-           Eigen::Array2i(100, 100), Eigen::Array2i(299, 299))) {
+  for (const Array2i& xy_index :
+       XYIndexRangeIterator(Array2i(100, 100), Array2i(299, 299))) {
     probability_grid.SetProbability(xy_index, value_distribution(rng));
   }
-  Eigen::Array2i offset;
+  Array2i offset;
   CellLimits limits;
   probability_grid.ComputeCroppedLimits(&offset, &limits);
-  EXPECT_TRUE((offset == Eigen::Array2i(100, 100)).all());
+  EXPECT_TRUE((offset == Array2i(100, 100)).all());
   EXPECT_EQ(limits.num_x_cells, 200);
   EXPECT_EQ(limits.num_y_cells, 200);
 }

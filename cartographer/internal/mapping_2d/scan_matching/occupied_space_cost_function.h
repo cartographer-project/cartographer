@@ -19,6 +19,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "ceres/ceres.h"

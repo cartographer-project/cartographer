@@ -23,6 +23,7 @@
 #include "cartographer/io/draw_trajectories.h"
 #include "cartographer/io/image.h"
 #include "cartographer/io/points_batch.h"
+#include "cartographer/mapping/probability_values.h"
 
 namespace cartographer {
 namespace io {
