@@ -43,7 +43,7 @@ class VoxelFilter {
   TimedPointCloud Filter(const TimedPointCloud& timed_point_cloud);
 
  private:
-  mapping_3d::HybridGridBase<uint8> voxels_;
+  mapping::HybridGridBase<uint8> voxels_;
 };
 
 proto::AdaptiveVoxelFilterOptions CreateAdaptiveVoxelFilterOptions(

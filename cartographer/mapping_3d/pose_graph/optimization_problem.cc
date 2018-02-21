@@ -279,7 +279,7 @@ void OptimizationProblem::Solve(
           CeresPose(submap_id_data.data.global_pose,
                     translation_parameterization(),
                     common::make_unique<ceres::AutoDiffLocalParameterization<
-                        ConstantYawQuaternionPlus, 4, 2>>(),
+                        mapping::ConstantYawQuaternionPlus, 4, 2>>(),
                     &problem));
       problem.SetParameterBlockConstant(
           C_submaps.at(submap_id_data.id).translation());
@@ -499,7 +499,7 @@ void OptimizationProblem::Solve(
                         Eigen::Vector3d::UnitZ())),
                 nullptr,
                 common::make_unique<ceres::AutoDiffLocalParameterization<
-                    YawOnlyQuaternionPlus, 4, 1>>(),
+                    mapping::YawOnlyQuaternionPlus, 4, 1>>(),
                 &problem));
         fixed_frame_pose_initialized = true;
       }

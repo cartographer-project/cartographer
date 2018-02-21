@@ -25,7 +25,7 @@ message Submap2D {
   transform.proto.Rigid3d local_pose = 1;
   int32 num_range_data = 2;
   bool finished = 3;
-  mapping.proto.ProbabilityGrid probability_grid = 4;
+  ProbabilityGrid probability_grid = 4;
 }
 
 // Serialized state of a mapping_3d::Submap.
@@ -33,6 +33,6 @@ message Submap3D {
   transform.proto.Rigid3d local_pose = 1;
   int32 num_range_data = 2;
   bool finished = 3;
-  mapping_3d.proto.HybridGrid high_resolution_hybrid_grid = 4;
-  mapping_3d.proto.HybridGrid low_resolution_hybrid_grid = 5;
+  HybridGrid high_resolution_hybrid_grid = 4;
+  HybridGrid low_resolution_hybrid_grid = 5;
 }

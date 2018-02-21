@@ -58,7 +58,7 @@ CreateFastCorrelativeScanMatcherOptions(
 class PrecomputationGridStack {
  public:
   PrecomputationGridStack(
-      const HybridGrid& hybrid_grid,
+      const mapping::HybridGrid& hybrid_grid,
       const proto::FastCorrelativeScanMatcherOptions& options) {
     CHECK_GE(options.branch_and_bound_depth(), 1);
     CHECK_GE(options.full_resolution_depth(), 1);
@@ -142,8 +142,8 @@ std::vector<std::pair<Eigen::VectorXf, float>> HistogramsAtAnglesFromNodes(
 }  // namespace
 
 FastCorrelativeScanMatcher::FastCorrelativeScanMatcher(
-    const HybridGrid& hybrid_grid,
-    const HybridGrid* const low_resolution_hybrid_grid,
+    const mapping::HybridGrid& hybrid_grid,
+    const mapping::HybridGrid* const low_resolution_hybrid_grid,
     const std::vector<mapping::TrajectoryNode>& nodes,
     const proto::FastCorrelativeScanMatcherOptions& options)
     : options_(options),

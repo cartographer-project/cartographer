@@ -33,7 +33,7 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
 // Converts an 'index' with each dimension from 0 to 2^'bits' - 1 to a flat
 // z-major index.
@@ -475,20 +475,20 @@ class HybridGrid : public HybridGridBase<uint16> {
       // SetProbability does some error checking for us.
       SetProbability(Eigen::Vector3i(proto.x_indices(i), proto.y_indices(i),
                                      proto.z_indices(i)),
-                     mapping::ValueToProbability(proto.values(i)));
+                     ValueToProbability(proto.values(i)));
     }
   }
 
   // Sets the probability of the cell at 'index' to the given 'probability'.
   void SetProbability(const Eigen::Array3i& index, const float probability) {
-    *mutable_value(index) = mapping::ProbabilityToValue(probability);
+    *mutable_value(index) = ProbabilityToValue(probability);
   }
 
   // Finishes the update sequence.
   void FinishUpdate() {
     while (!update_indices_.empty()) {
-      DCHECK_GE(*update_indices_.back(), mapping::kUpdateMarker);
-      *update_indices_.back() -= mapping::kUpdateMarker;
+      DCHECK_GE(*update_indices_.back(), kUpdateMarker);
+      *update_indices_.back() -= kUpdateMarker;
       update_indices_.pop_back();
     }
   }
@@ -502,20 +502,20 @@ class HybridGrid : public HybridGridBase<uint16> {
   // will be set to probability corresponding to 'odds'.
   bool ApplyLookupTable(const Eigen::Array3i& index,
                         const std::vector<uint16>& table) {
-    DCHECK_EQ(table.size(), mapping::kUpdateMarker);
+    DCHECK_EQ(table.size(), kUpdateMarker);
     uint16* const cell = mutable_value(index);
-    if (*cell >= mapping::kUpdateMarker) {
+    if (*cell >= kUpdateMarker) {
       return false;
     }
     update_indices_.push_back(cell);
     *cell = table[*cell];
-    DCHECK_GE(*cell, mapping::kUpdateMarker);
+    DCHECK_GE(*cell, kUpdateMarker);
     return true;
   }
 
   // Returns the probability of the cell with 'index'.
   float GetProbability(const Eigen::Array3i& index) const {
-    return mapping::ValueToProbability(value(index));
+    return ValueToProbability(value(index));
   }
 
   // Returns true if the probability at the specified 'index' is known.
@@ -540,7 +540,7 @@ class HybridGrid : public HybridGridBase<uint16> {
   std::vector<ValueType*> update_indices_;
 };
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_3D_HYBRID_GRID_H_

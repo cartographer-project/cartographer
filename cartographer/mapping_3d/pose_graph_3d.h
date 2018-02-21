@@ -37,7 +37,7 @@
 #include "cartographer/mapping/trajectory_connectivity_state.h"
 #include "cartographer/mapping_3d/pose_graph/constraint_builder.h"
 #include "cartographer/mapping_3d/pose_graph/optimization_problem.h"
-#include "cartographer/mapping_3d/submaps.h"
+#include "cartographer/mapping_3d/submap_3d.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/landmark_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -70,10 +70,11 @@ class PoseGraph3D : public PoseGraph {
   // node data was inserted into the 'insertion_submaps'. If
   // 'insertion_submaps.front().finished()' is 'true', data was inserted into
   // this submap for the last time.
-  NodeId AddNode(std::shared_ptr<const TrajectoryNode::Data> constant_data,
-                 int trajectory_id,
-                 const std::vector<std::shared_ptr<const mapping_3d::Submap>>&
-                     insertion_submaps) EXCLUDES(mutex_);
+  NodeId AddNode(
+      std::shared_ptr<const TrajectoryNode::Data> constant_data,
+      int trajectory_id,
+      const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps)
+      EXCLUDES(mutex_);
 
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data) override
       EXCLUDES(mutex_);
@@ -94,10 +95,10 @@ class PoseGraph3D : public PoseGraph {
   void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
                           const proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
-                        const mapping::proto::Node& node) override;
+                        const proto::Node& node) override;
   void SetTrajectoryDataFromProto(const proto::TrajectoryData& data) override;
-  void AddNodeToSubmap(const mapping::NodeId& node_id,
-                       const mapping::SubmapId& submap_id) override;
+  void AddNodeToSubmap(const NodeId& node_id,
+                       const SubmapId& submap_id) override;
   void AddSerializedConstraints(
       const std::vector<Constraint>& constraints) override;
   void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) override;
@@ -137,7 +138,7 @@ class PoseGraph3D : public PoseGraph {
   // Likewise, all new nodes are matched against submaps which are finished.
   enum class SubmapState { kActive, kFinished };
   struct SubmapData {
-    std::shared_ptr<const mapping_3d::Submap> submap;
+    std::shared_ptr<const Submap3D> submap;
 
     // IDs of the nodes that were inserted into this map together with
     // constraints for them. They are not to be matched again when this submap
@@ -157,13 +158,13 @@ class PoseGraph3D : public PoseGraph {
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
   std::vector<SubmapId> InitializeGlobalSubmapPoses(
       int trajectory_id, const common::Time time,
-      const std::vector<std::shared_ptr<const mapping_3d::Submap>>&
-          insertion_submaps) REQUIRES(mutex_);
+      const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps)
+      REQUIRES(mutex_);
 
   // Adds constraints for a node, and starts scan matching in the background.
   void ComputeConstraintsForNode(
       const NodeId& node_id,
-      std::vector<std::shared_ptr<const mapping_3d::Submap>> insertion_submaps,
+      std::vector<std::shared_ptr<const Submap3D>> insertion_submaps,
       bool newly_finished_submap) REQUIRES(mutex_);
 
   // Computes constraints for a node and submap pair.
