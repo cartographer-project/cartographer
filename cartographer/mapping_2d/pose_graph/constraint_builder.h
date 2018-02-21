@@ -35,6 +35,7 @@
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/submap_2d.h"
+#include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/voxel_filter.h"
 
@@ -102,6 +103,8 @@ class ConstraintBuilder {
 
   // Delete data related to 'submap_id'.
   void DeleteScanMatcher(const mapping::SubmapId& submap_id);
+
+  static void RegisterMetrics(metrics::FamilyFactory* family_factory);
 
  private:
   struct SubmapScanMatcher {

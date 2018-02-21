@@ -31,12 +31,29 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
+#include "cartographer/metrics/counter.h"
+#include "cartographer/metrics/gauge.h"
+#include "cartographer/metrics/histogram.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping_3d {
 namespace pose_graph {
+
+static auto* kConstraintsSearchedMetric = metrics::Counter::Null();
+static auto* kConstraintsFoundMetric = metrics::Counter::Null();
+static auto* kGlobalConstraintsSearchedMetric = metrics::Counter::Null();
+static auto* kGlobalConstraintsFoundMetric = metrics::Counter::Null();
+static auto* kQueueLengthMetric = metrics::Gauge::Null();
+static auto* kConstraintScoresMetric = metrics::Histogram::Null();
+static auto* kConstraintRotationalScoresMetric = metrics::Histogram::Null();
+static auto* kConstraintLowResolutionScoresMetric = metrics::Histogram::Null();
+static auto* kGlobalConstraintScoresMetric = metrics::Histogram::Null();
+static auto* kGlobalConstraintRotationalScoresMetric =
+    metrics::Histogram::Null();
+static auto* kGlobalConstraintLowResolutionScoresMetric =
+    metrics::Histogram::Null();
 
 ConstraintBuilder::ConstraintBuilder(
     const mapping::pose_graph::proto::ConstraintBuilderOptions& options,
@@ -68,6 +85,7 @@ void ConstraintBuilder::MaybeAddConstraint(
   if (sampler_.Pulse()) {
     common::MutexLocker locker(&mutex_);
     constraints_.emplace_back();
+    kQueueLengthMetric->Set(constraints_.size());
     auto* const constraint = &constraints_.back();
     ++pending_computations_[current_computation_];
     const int current_computation = current_computation_;
@@ -90,6 +108,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
     const Eigen::Quaterniond& global_submap_rotation) {
   common::MutexLocker locker(&mutex_);
   constraints_.emplace_back();
+  kQueueLengthMetric->Set(constraints_.size());
   auto* const constraint = &constraints_.back();
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
@@ -188,6 +207,7 @@ void ConstraintBuilder::ComputeConstraint(
   // 2. Prune if the score is too low.
   // 3. Refine.
   if (match_full_submap) {
+    kGlobalConstraintsSearchedMetric->Increment();
     match_result =
         submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             global_node_pose.rotation(), global_submap_pose.rotation(),
@@ -196,16 +216,29 @@ void ConstraintBuilder::ComputeConstraint(
       CHECK_GT(match_result->score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
       CHECK_GE(submap_id.trajectory_id, 0);
+      kGlobalConstraintsFoundMetric->Increment();
+      kGlobalConstraintScoresMetric->Observe(match_result->score);
+      kGlobalConstraintRotationalScoresMetric->Observe(
+          match_result->rotational_score);
+      kGlobalConstraintLowResolutionScoresMetric->Observe(
+          match_result->low_resolution_score);
     } else {
       return;
     }
   } else {
+    kConstraintsSearchedMetric->Increment();
     match_result = submap_scan_matcher->fast_correlative_scan_matcher->Match(
         global_node_pose, global_submap_pose, *constant_data,
         options_.min_score());
     if (match_result != nullptr) {
       // We've reported a successful local match.
       CHECK_GT(match_result->score, options_.min_score());
+      kConstraintsFoundMetric->Increment();
+      kConstraintScoresMetric->Observe(match_result->score);
+      kConstraintRotationalScoresMetric->Observe(
+          match_result->rotational_score);
+      kConstraintLowResolutionScoresMetric->Observe(
+          match_result->low_resolution_score);
     } else {
       return;
     }
@@ -290,6 +323,7 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
         when_done_.reset();
       }
     }
+    kQueueLengthMetric->Set(constraints_.size());
   }
   if (callback != nullptr) {
     (*callback)(result);
@@ -308,6 +342,39 @@ void ConstraintBuilder::DeleteScanMatcher(const mapping::SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
   CHECK(pending_computations_.empty());
   submap_scan_matchers_.erase(submap_id);
+}
+
+void ConstraintBuilder::RegisterMetrics(metrics::FamilyFactory* factory) {
+  auto* counts = factory->NewCounterFamily(
+      "/mapping_3d/pose_graph/constraint_builder/constraints",
+      "Constraints computed");
+  kConstraintsSearchedMetric =
+      counts->Add({{"search_region", "local"}, {"matcher", "searched"}});
+  kConstraintsFoundMetric =
+      counts->Add({{"search_region", "local"}, {"matcher", "found"}});
+  kGlobalConstraintsSearchedMetric =
+      counts->Add({{"search_region", "global"}, {"matcher", "searched"}});
+  kGlobalConstraintsFoundMetric =
+      counts->Add({{"search_region", "global"}, {"matcher", "found"}});
+  auto* queue_length = factory->NewGaugeFamily(
+      "/mapping_3d/pose_graph/constraint_builder/queue_length", "Queue length");
+  kQueueLengthMetric = queue_length->Add({{}});
+  auto boundaries = metrics::Histogram::FixedWidth(0.05, 20);
+  auto* scores = factory->NewHistogramFamily(
+      "/mapping_3d/pose_graph/constraint_builder/scores",
+      "Constraint scores built", boundaries);
+  kConstraintScoresMetric =
+      scores->Add({{"search_region", "local"}, {"kind", "score"}});
+  kConstraintRotationalScoresMetric =
+      scores->Add({{"search_region", "local"}, {"kind", "rotational_score"}});
+  kConstraintLowResolutionScoresMetric = scores->Add(
+      {{"search_region", "local"}, {"kind", "low_resolution_score"}});
+  kGlobalConstraintScoresMetric =
+      scores->Add({{"search_region", "global"}, {"kind", "score"}});
+  kGlobalConstraintRotationalScoresMetric =
+      scores->Add({{"search_region", "global"}, {"kind", "rotational_score"}});
+  kGlobalConstraintLowResolutionScoresMetric = scores->Add(
+      {{"search_region", "global"}, {"kind", "low_resolution_score"}});
 }
 
 }  // namespace pose_graph

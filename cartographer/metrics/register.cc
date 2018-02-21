@@ -22,8 +22,9 @@
 namespace cartographer {
 namespace metrics {
 
-void RegisterAllMetrics(FamilyFactory *registry) {
-  // TODO(gaschler): Register classes that instrument metrics.
+void RegisterAllMetrics(FamilyFactory* registry) {
+  mapping_2d::pose_graph::ConstraintBuilder::RegisterMetrics(registry);
+  mapping_3d::pose_graph::ConstraintBuilder::RegisterMetrics(registry);
 }
 
 }  // namespace metrics
