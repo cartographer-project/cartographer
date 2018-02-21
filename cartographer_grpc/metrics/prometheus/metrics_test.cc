@@ -131,6 +131,17 @@ TEST(MetricsTest, CollectHistogram) {
   EXPECT_EQ(collected[0].metric(0).histogram().bucket(0).cumulative_count(), 1);
 }
 
+TEST(MetricsTest, RunExposerServer) {
+  FamilyFactory registry;
+  Algorithm::RegisterMetrics(&registry);
+  cartographer::metrics::RegisterAllMetrics(&registry);
+  ::prometheus::Exposer exposer("0.0.0.0:9100");
+  exposer.RegisterCollectable(registry.GetCollectable());
+
+  Algorithm algorithm;
+  algorithm.Run();
+}
+
 }  // namespace
 }  // namespace prometheus
 }  // namespace metrics
