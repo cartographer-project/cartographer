@@ -71,30 +71,25 @@ TEST(PoseExtrapolatorTest, EstimateGravityOrientationWithIMU) {
                            angular_velocity};
   auto extrapolator = PoseExtrapolator::InitializeWithImu(
       common::FromSeconds(kPoseQueueDuration), kGravityTimeConstant, imu_data);
-  {
-    Eigen::Quaterniond expected_orientation;
-    expected_orientation.setFromTwoVectors(initial_gravity_acceleration,
-                                           Eigen::Vector3d::UnitZ());
-    EXPECT_NEAR(0.,
-                extrapolator->EstimateGravityOrientation(current_time)
-                    .angularDistance(expected_orientation),
-                kPrecision);
-  }
+  Eigen::Quaterniond expected_orientation;
+  expected_orientation.setFromTwoVectors(initial_gravity_acceleration,
+                                         Eigen::Vector3d::UnitZ());
+  EXPECT_NEAR(0.,
+              extrapolator->EstimateGravityOrientation(current_time)
+                  .angularDistance(expected_orientation),
+              kPrecision);
   Eigen::Vector3d gravity_acceleration(1.6, 2.0, 8.0);
   for (int i = 0; i < 10; ++i) {
     current_time += common::FromSeconds(kGravityTimeConstant);
     extrapolator->AddImuData(
         sensor::ImuData{current_time, gravity_acceleration, angular_velocity});
   }
-  {
-    Eigen::Quaterniond expected_orientation;
-    expected_orientation.setFromTwoVectors(gravity_acceleration,
-                                           Eigen::Vector3d::UnitZ());
-    EXPECT_NEAR(0.,
-                extrapolator->EstimateGravityOrientation(current_time)
-                    .angularDistance(expected_orientation),
-                kPrecision);
-  }
+  expected_orientation.setFromTwoVectors(gravity_acceleration,
+                                         Eigen::Vector3d::UnitZ());
+  EXPECT_NEAR(0.,
+              extrapolator->EstimateGravityOrientation(current_time)
+                  .angularDistance(expected_orientation),
+              kPrecision);
 }
 
 TEST(PoseExtrapolatorTest, ExtrapolateWithPoses) {

@@ -40,8 +40,8 @@ Eigen::Transform<T, 3, Eigen::Affine> ToEigen(const Rigid3<T>& rigid3) {
 }
 
 MATCHER_P2(IsNearly, rigid, epsilon,
-           std::string(std::string(negation ? "isn't" : "is") +
-                       std::string(" nearly ") + rigid.DebugString())) {
+           std::string(std::string(negation ? "isn't nearly " : "is nearly ") +
+                       rigid.DebugString())) {
   return ToEigen(arg).isApprox(ToEigen(rigid), epsilon);
 }
 
