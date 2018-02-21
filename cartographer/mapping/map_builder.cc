@@ -90,11 +90,9 @@ int MapBuilder::AddTrajectoryBuilder(
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             sensor_collator_.get(), trajectory_id, expected_sensor_ids,
-            common::make_unique<mapping::GlobalTrajectoryBuilder<
-                mapping_3d::LocalTrajectoryBuilder,
-                mapping_3d::proto::LocalTrajectoryBuilderOptions, PoseGraph3D>>(
-                std::move(local_trajectory_builder), trajectory_id,
-                pose_graph_3d_.get(), local_slam_result_callback)));
+            CreateGlobalTrajectoryBuilder3D(std::move(local_trajectory_builder),
+                                            trajectory_id, pose_graph_3d_.get(),
+                                            local_slam_result_callback)));
   } else {
     std::unique_ptr<mapping_2d::LocalTrajectoryBuilder>
         local_trajectory_builder;
@@ -106,11 +104,9 @@ int MapBuilder::AddTrajectoryBuilder(
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             sensor_collator_.get(), trajectory_id, expected_sensor_ids,
-            common::make_unique<mapping::GlobalTrajectoryBuilder<
-                mapping_2d::LocalTrajectoryBuilder,
-                mapping_2d::proto::LocalTrajectoryBuilderOptions, PoseGraph2D>>(
-                std::move(local_trajectory_builder), trajectory_id,
-                pose_graph_2d_.get(), local_slam_result_callback)));
+            CreateGlobalTrajectoryBuilder2D(std::move(local_trajectory_builder),
+                                            trajectory_id, pose_graph_2d_.get(),
+                                            local_slam_result_callback)));
   }
   if (trajectory_options.pure_localization()) {
     constexpr int kSubmapsToKeep = 3;
