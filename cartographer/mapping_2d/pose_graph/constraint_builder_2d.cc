@@ -305,7 +305,7 @@ void ConstraintBuilder2D::DeleteScanMatcher(const SubmapId& submap_id) {
   submap_scan_matchers_.erase(submap_id);
 }
 
-void ConstraintBuilder::RegisterMetrics(metrics::FamilyFactory* factory) {
+void ConstraintBuilder2D::RegisterMetrics(metrics::FamilyFactory* factory) {
   auto* counts = factory->NewCounterFamily(
       "/mapping_2d/pose_graph/constraint_builder/constraints",
       "Constraints computed");

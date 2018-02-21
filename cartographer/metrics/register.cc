@@ -23,7 +23,7 @@ namespace cartographer {
 namespace metrics {
 
 void RegisterAllMetrics(FamilyFactory* registry) {
-  mapping_2d::pose_graph::ConstraintBuilder::RegisterMetrics(registry);
+  mapping::pose_graph::ConstraintBuilder2D::RegisterMetrics(registry);
   mapping_3d::pose_graph::ConstraintBuilder::RegisterMetrics(registry);
 }
 
