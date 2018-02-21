@@ -21,8 +21,8 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
-#include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
-#include "cartographer/mapping_3d/proto/submaps_options.pb.h"
+#include "cartographer/mapping_3d/proto/local_trajectory_builder_options_3d.pb.h"
+#include "cartographer/mapping_3d/proto/submaps_options_3d.pb.h"
 #include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/scan_matching/rotational_scan_matcher.h"
 #include "glog/logging.h"
@@ -31,7 +31,7 @@ namespace cartographer {
 namespace mapping_3d {
 
 LocalTrajectoryBuilder::LocalTrajectoryBuilder(
-    const proto::LocalTrajectoryBuilderOptions& options)
+    const mapping::proto::LocalTrajectoryBuilderOptions3D& options)
     : options_(options),
       active_submaps_(options.submaps_options()),
       motion_filter_(options.motion_filter_options()),
@@ -142,7 +142,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
   const transform::Rigid3d pose_prediction =
       extrapolator_->ExtrapolatePose(time);
 
-  std::shared_ptr<const Submap> matching_submap =
+  std::shared_ptr<const mapping::Submap3D> matching_submap =
       active_submaps_.submaps().front();
   transform::Rigid3d initial_ceres_pose =
       matching_submap->local_pose().inverse() * pose_prediction;
@@ -223,8 +223,9 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
   }
   // Querying the active submaps must be done here before calling
   // InsertRangeData() since the queried values are valid for next insertion.
-  std::vector<std::shared_ptr<const Submap>> insertion_submaps;
-  for (const std::shared_ptr<Submap>& submap : active_submaps_.submaps()) {
+  std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps;
+  for (const std::shared_ptr<mapping::Submap3D>& submap :
+       active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
   active_submaps_.InsertRangeData(filtered_range_data_in_local,

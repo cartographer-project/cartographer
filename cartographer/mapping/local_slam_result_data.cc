@@ -49,7 +49,7 @@ void LocalSlamResult2D::AddToPoseGraph(int trajectory_id,
 LocalSlamResult3D::LocalSlamResult3D(
     const std::string& sensor_id, common::Time time,
     std::shared_ptr<const mapping::TrajectoryNode::Data> node_data,
-    const std::vector<std::shared_ptr<const mapping_3d::Submap>>&
+    const std::vector<std::shared_ptr<const mapping::Submap3D>>&
         insertion_submaps)
     : LocalSlamResultData(sensor_id, time),
       node_data_(node_data),

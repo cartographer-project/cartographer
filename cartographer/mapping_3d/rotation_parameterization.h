@@ -22,7 +22,7 @@
 #include "ceres/rotation.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
 struct YawOnlyQuaternionPlus {
   template <typename T>
@@ -61,7 +61,7 @@ struct ConstantYawQuaternionPlus {
   }
 };
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_3D_ROTATION_PARAMETERIZATION_H_

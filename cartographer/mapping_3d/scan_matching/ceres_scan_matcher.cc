@@ -80,7 +80,7 @@ void CeresScanMatcher::Match(const Eigen::Vector3d& target_translation,
       options_.only_optimize_yaw()
           ? std::unique_ptr<ceres::LocalParameterization>(
                 common::make_unique<ceres::AutoDiffLocalParameterization<
-                    YawOnlyQuaternionPlus, 4, 1>>())
+                    mapping::YawOnlyQuaternionPlus, 4, 1>>())
           : std::unique_ptr<ceres::LocalParameterization>(
                 common::make_unique<ceres::QuaternionParameterization>()),
       &problem);
@@ -91,7 +91,8 @@ void CeresScanMatcher::Match(const Eigen::Vector3d& target_translation,
     CHECK_GT(options_.occupied_space_weight(i), 0.);
     const sensor::PointCloud& point_cloud =
         *point_clouds_and_hybrid_grids[i].first;
-    const HybridGrid& hybrid_grid = *point_clouds_and_hybrid_grids[i].second;
+    const mapping::HybridGrid& hybrid_grid =
+        *point_clouds_and_hybrid_grids[i].second;
     problem.AddResidualBlock(
         OccupiedSpaceCostFunction::CreateAutoDiffCostFunction(
             options_.occupied_space_weight(i) /

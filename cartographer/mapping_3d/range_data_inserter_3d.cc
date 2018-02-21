@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/range_data_inserter.h"
+#include "cartographer/mapping_3d/range_data_inserter_3d.h"
 
 #include "Eigen/Core"
 #include "cartographer/mapping/probability_values.h"
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_3d {
-
+namespace mapping {
 namespace {
 
 void InsertMissesIntoGrid(const std::vector<uint16>& miss_table,
@@ -54,9 +53,9 @@ void InsertMissesIntoGrid(const std::vector<uint16>& miss_table,
 
 }  // namespace
 
-proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
+proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
     common::LuaParameterDictionary* parameter_dictionary) {
-  proto::RangeDataInserterOptions options;
+  proto::RangeDataInserterOptions3D options;
   options.set_hit_probability(
       parameter_dictionary->GetDouble("hit_probability"));
   options.set_miss_probability(
@@ -68,16 +67,16 @@ proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
   return options;
 }
 
-RangeDataInserter::RangeDataInserter(
-    const proto::RangeDataInserterOptions& options)
+RangeDataInserter3D::RangeDataInserter3D(
+    const proto::RangeDataInserterOptions3D& options)
     : options_(options),
-      hit_table_(mapping::ComputeLookupTableToApplyOdds(
-          mapping::Odds(options_.hit_probability()))),
-      miss_table_(mapping::ComputeLookupTableToApplyOdds(
-          mapping::Odds(options_.miss_probability()))) {}
+      hit_table_(
+          ComputeLookupTableToApplyOdds(Odds(options_.hit_probability()))),
+      miss_table_(
+          ComputeLookupTableToApplyOdds(Odds(options_.miss_probability()))) {}
 
-void RangeDataInserter::Insert(const sensor::RangeData& range_data,
-                               HybridGrid* hybrid_grid) const {
+void RangeDataInserter3D::Insert(const sensor::RangeData& range_data,
+                                 HybridGrid* hybrid_grid) const {
   CHECK_NOTNULL(hybrid_grid);
 
   for (const Eigen::Vector3f& hit : range_data.returns) {
@@ -92,5 +91,5 @@ void RangeDataInserter::Insert(const sensor::RangeData& range_data,
   hybrid_grid->FinishUpdate();
 }
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

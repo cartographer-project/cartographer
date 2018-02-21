@@ -16,7 +16,7 @@ syntax = "proto3";
 
 import "cartographer/transform/proto/transform.proto";
 import "cartographer/mapping_2d/proto/local_trajectory_builder_options_2d.proto";
-import "cartographer/mapping_3d/proto/local_trajectory_builder_options.proto";
+import "cartographer/mapping_3d/proto/local_trajectory_builder_options_3d.proto";
 
 package cartographer.mapping.proto;
 
@@ -28,8 +28,7 @@ message InitialTrajectoryPose {
 
 message TrajectoryBuilderOptions {
   LocalTrajectoryBuilderOptions2D trajectory_builder_2d_options = 1;
-  mapping_3d.proto.LocalTrajectoryBuilderOptions
-      trajectory_builder_3d_options = 2;
+  LocalTrajectoryBuilderOptions3D trajectory_builder_3d_options = 2;
   bool pure_localization = 3;
   InitialTrajectoryPose initial_trajectory_pose = 4;
 }

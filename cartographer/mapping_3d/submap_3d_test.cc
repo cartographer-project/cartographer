@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/submaps.h"
+#include "cartographer/mapping_3d/submap_3d.h"
 
 #include "cartographer/transform/transform.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace {
 
 TEST(SubmapsTest, ToFromProto) {
-  const Submap expected(0.05, 0.25,
-                        transform::Rigid3d(Eigen::Vector3d(1., 2., 0.),
-                                           Eigen::Quaterniond(0., 0., 0., 1.)));
-  mapping::proto::Submap proto;
+  const Submap3D expected(
+      0.05, 0.25,
+      transform::Rigid3d(Eigen::Vector3d(1., 2., 0.),
+                         Eigen::Quaterniond(0., 0., 0., 1.)));
+  proto::Submap proto;
   expected.ToProto(&proto, true /* include_probability_grid_data */);
   EXPECT_FALSE(proto.has_submap_2d());
   EXPECT_TRUE(proto.has_submap_3d());
-  const auto actual = Submap(proto.submap_3d());
+  const auto actual = Submap3D(proto.submap_3d());
   EXPECT_TRUE(expected.local_pose().translation().isApprox(
       actual.local_pose().translation(), 1e-6));
   EXPECT_TRUE(expected.local_pose().rotation().isApprox(
@@ -43,5 +44,5 @@ TEST(SubmapsTest, ToFromProto) {
 }
 
 }  // namespace
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
