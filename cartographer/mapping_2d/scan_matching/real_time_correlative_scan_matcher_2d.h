@@ -42,16 +42,13 @@
 
 #include "Eigen/Core"
 #include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
+#include "cartographer/mapping/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher_2d.h"
 
 namespace cartographer {
 namespace mapping {
 namespace scan_matching {
-
-proto::RealTimeCorrelativeScanMatcherOptions
-CreateRealTimeCorrelativeScanMatcherOptions(
-    common::LuaParameterDictionary* const parameter_dictionary);
 
 // An implementation of "Real-Time Correlative Scan Matching" by Olson.
 class RealTimeCorrelativeScanMatcher2D {

@@ -17,7 +17,7 @@
 #include "cartographer/mapping_3d/local_trajectory_builder_options_3d.h"
 
 #include "cartographer/internal/mapping/motion_filter.h"
-#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
+#include "cartographer/mapping/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/submap_3d.h"
 #include "cartographer/sensor/voxel_filter.h"
