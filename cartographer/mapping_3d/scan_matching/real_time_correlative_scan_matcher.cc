@@ -28,8 +28,8 @@ namespace mapping_3d {
 namespace scan_matching {
 
 RealTimeCorrelativeScanMatcher::RealTimeCorrelativeScanMatcher(
-    const mapping_2d::scan_matching::proto::
-        RealTimeCorrelativeScanMatcherOptions& options)
+    const mapping::scan_matching::proto::RealTimeCorrelativeScanMatcherOptions&
+        options)
     : options_(options) {}
 
 float RealTimeCorrelativeScanMatcher::Match(

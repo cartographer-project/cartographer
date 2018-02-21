@@ -18,7 +18,7 @@ package cartographer.mapping.proto;
 
 import "cartographer/mapping/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
-import "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
+import "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 import "cartographer/mapping_3d/proto/submaps_options_3d.proto";
 import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.proto";
 
@@ -45,7 +45,7 @@ message LocalTrajectoryBuilderOptions3D {
   // Whether to solve the online scan matching first using the correlative scan
   // matcher to generate a good starting point for Ceres.
   bool use_online_correlative_scan_matching = 13;
-  mapping_2d.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
+  mapping.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
       real_time_correlative_scan_matcher_options = 14;
   mapping_3d.scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options = 6;

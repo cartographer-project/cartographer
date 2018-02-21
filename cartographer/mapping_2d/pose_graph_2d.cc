@@ -86,9 +86,8 @@ std::vector<SubmapId> PoseGraph2D::InitializeGlobalSubmapPoses(
     optimization_problem_.AddSubmap(
         trajectory_id,
         first_submap_pose *
-            mapping_2d::pose_graph::ComputeSubmapPose(*insertion_submaps[0])
-                .inverse() *
-            mapping_2d::pose_graph::ComputeSubmapPose(*insertion_submaps[1]));
+            pose_graph::ComputeSubmapPose(*insertion_submaps[0]).inverse() *
+            pose_graph::ComputeSubmapPose(*insertion_submaps[1]));
     return {last_submap_id,
             SubmapId{trajectory_id, last_submap_id.submap_index + 1}};
   }
@@ -244,8 +243,7 @@ void PoseGraph2D::ComputeConstraintsForNode(
       transform::Rigid3d::Rotation(constant_data->gravity_alignment.inverse()));
   const transform::Rigid2d optimized_pose =
       optimization_problem_.submap_data().at(matching_id).global_pose *
-      mapping_2d::pose_graph::ComputeSubmapPose(*insertion_submaps.front())
-          .inverse() *
+      pose_graph::ComputeSubmapPose(*insertion_submaps.front()).inverse() *
       pose;
   optimization_problem_.AddTrajectoryNode(
       matching_id.trajectory_id, constant_data->time, pose, optimized_pose,
@@ -257,9 +255,7 @@ void PoseGraph2D::ComputeConstraintsForNode(
     CHECK(submap_data_.at(submap_id).state == SubmapState::kActive);
     submap_data_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid2d constraint_transform =
-        mapping_2d::pose_graph::ComputeSubmapPose(*insertion_submaps[i])
-            .inverse() *
-        pose;
+        pose_graph::ComputeSubmapPose(*insertion_submaps[i]).inverse() * pose;
     constraints_.push_back(Constraint{submap_id,
                                       node_id,
                                       {transform::Embed3D(constraint_transform),
@@ -325,7 +321,7 @@ void PoseGraph2D::UpdateTrajectoryConnectivity(const Constraint& constraint) {
 
 void PoseGraph2D::HandleWorkQueue() {
   constraint_builder_.WhenDone(
-      [this](const mapping_2d::pose_graph::ConstraintBuilder::Result& result) {
+      [this](const pose_graph::ConstraintBuilder2D::Result& result) {
         {
           common::MutexLocker locker(&mutex_);
           constraints_.insert(constraints_.end(), result.begin(), result.end());
@@ -386,8 +382,8 @@ void PoseGraph2D::WaitForAllComputations() {
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
   constraint_builder_.WhenDone(
-      [this, &notification](
-          const mapping_2d::pose_graph::ConstraintBuilder::Result& result) {
+      [this,
+       &notification](const pose_graph::ConstraintBuilder2D::Result& result) {
         common::MutexLocker locker(&mutex_);
         constraints_.insert(constraints_.end(), result.begin(), result.end());
         notification = true;
@@ -440,7 +436,8 @@ void PoseGraph2D::AddSubmapFromProto(
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the 'global_submap_pose'.
   global_submap_poses_.Insert(
-      submap_id, mapping_2d::pose_graph::SubmapData{global_submap_pose_2d});
+      submap_id,
+      pose_graph::OptimizationProblem2D::SubmapData{global_submap_pose_2d});
   AddWorkItem([this, submap_id, global_submap_pose_2d]() REQUIRES(mutex_) {
     CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
@@ -728,7 +725,7 @@ PoseGraph2D::GetAllSubmapPoses() {
 }
 
 transform::Rigid3d PoseGraph2D::ComputeLocalToGlobalTransform(
-    const MapById<SubmapId, mapping_2d::pose_graph::SubmapData>&
+    const MapById<SubmapId, pose_graph::OptimizationProblem2D::SubmapData>&
         global_submap_poses,
     const int trajectory_id) const {
   auto begin_it = global_submap_poses.BeginOfTrajectory(trajectory_id);

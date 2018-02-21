@@ -14,17 +14,18 @@
 
 syntax = "proto3";
 
-package cartographer.mapping_2d.scan_matching.proto;
+package cartographer.mapping.scan_matching.proto;
 
-message FastCorrelativeScanMatcherOptions {
-  // Minimum linear search window in which the best possible scan alignment
-  // will be found.
-  double linear_search_window = 3;
+import "cartographer/common/proto/ceres_solver_options.proto";
 
-  // Minimum angular search window in which the best possible scan alignment
-  // will be found.
-  double angular_search_window = 4;
+// NEXT ID: 10
+message CeresScanMatcherOptions2D {
+  // Scaling parameters for each cost functor.
+  double occupied_space_weight = 1;
+  double translation_weight = 2;
+  double rotation_weight = 3;
 
-  // Number of precomputed grids to use.
-  int32 branch_and_bound_depth = 2;
+  // Configure the Ceres solver. See the Ceres documentation for more
+  // information: https://code.google.com/p/ceres-solver/
+  common.proto.CeresSolverOptions ceres_solver_options = 9;
 }

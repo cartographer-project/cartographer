@@ -23,8 +23,8 @@
 #include "cartographer/internal/mapping/motion_filter.h"
 #include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/mapping_2d/proto/local_trajectory_builder_options_2d.pb.h"
-#include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
-#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
+#include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher_2d.h"
+#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
 #include "cartographer/mapping_2d/submap_2d.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -33,16 +33,16 @@
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
 // Wires up the local SLAM stack (i.e. pose extrapolator, scan matching, etc.)
 // without loop closure.
 // TODO(gaschler): Add test for this class similar to the 3D test.
-class LocalTrajectoryBuilder {
+class LocalTrajectoryBuilder2D {
  public:
   struct InsertionResult {
-    std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
-    std::vector<std::shared_ptr<const mapping::Submap2D>> insertion_submaps;
+    std::shared_ptr<const TrajectoryNode::Data> constant_data;
+    std::vector<std::shared_ptr<const Submap2D>> insertion_submaps;
   };
   struct MatchingResult {
     common::Time time;
@@ -52,12 +52,12 @@ class LocalTrajectoryBuilder {
     std::unique_ptr<const InsertionResult> insertion_result;
   };
 
-  explicit LocalTrajectoryBuilder(
-      const mapping::proto::LocalTrajectoryBuilderOptions2D& options);
-  ~LocalTrajectoryBuilder();
+  explicit LocalTrajectoryBuilder2D(
+      const proto::LocalTrajectoryBuilderOptions2D& options);
+  ~LocalTrajectoryBuilder2D();
 
-  LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;
-  LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
+  LocalTrajectoryBuilder2D(const LocalTrajectoryBuilder2D&) = delete;
+  LocalTrajectoryBuilder2D& operator=(const LocalTrajectoryBuilder2D&) = delete;
 
   // Returns 'MatchingResult' when range data accumulation completed,
   // otherwise 'nullptr'. Range data must be approximately horizontal
@@ -92,21 +92,21 @@ class LocalTrajectoryBuilder {
   // Lazily constructs a PoseExtrapolator.
   void InitializeExtrapolator(common::Time time);
 
-  const mapping::proto::LocalTrajectoryBuilderOptions2D options_;
-  mapping::ActiveSubmaps2D active_submaps_;
+  const proto::LocalTrajectoryBuilderOptions2D options_;
+  ActiveSubmaps2D active_submaps_;
 
-  mapping::MotionFilter motion_filter_;
-  scan_matching::RealTimeCorrelativeScanMatcher
+  MotionFilter motion_filter_;
+  scan_matching::RealTimeCorrelativeScanMatcher2D
       real_time_correlative_scan_matcher_;
-  scan_matching::CeresScanMatcher ceres_scan_matcher_;
+  scan_matching::CeresScanMatcher2D ceres_scan_matcher_;
 
-  std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
+  std::unique_ptr<PoseExtrapolator> extrapolator_;
 
   int num_accumulated_ = 0;
   sensor::RangeData accumulated_range_data_;
 };
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_INTERNAL_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_H_

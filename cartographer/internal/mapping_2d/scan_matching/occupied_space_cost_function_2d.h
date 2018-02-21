@@ -26,22 +26,22 @@
 #include "ceres/cubic_interpolation.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 
 // Computes a cost for matching the 'point_cloud' to the 'probability_grid' with
 // a 'pose'. The cost increases when points fall into less occupied space, i.e.
 // at pixels with lower values.
-class OccupiedSpaceCostFunction {
+class OccupiedSpaceCostFunction2D {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor, const sensor::PointCloud& point_cloud,
-      const mapping::ProbabilityGrid& probability_grid) {
-    return new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction,
+      const ProbabilityGrid& probability_grid) {
+    return new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction2D,
                                            ceres::DYNAMIC /* residuals */,
                                            3 /* pose variables */>(
-        new OccupiedSpaceCostFunction(scaling_factor, point_cloud,
-                                      probability_grid),
+        new OccupiedSpaceCostFunction2D(scaling_factor, point_cloud,
+                                        probability_grid),
         point_cloud.size());
   }
 
@@ -55,7 +55,7 @@ class OccupiedSpaceCostFunction {
 
     const GridArrayAdapter adapter(probability_grid_);
     ceres::BiCubicInterpolator<GridArrayAdapter> interpolator(adapter);
-    const mapping::MapLimits& limits = probability_grid_.limits();
+    const MapLimits& limits = probability_grid_.limits();
 
     for (size_t i = 0; i < point_cloud_.size(); ++i) {
       // Note that this is a 2D point. The third component is a scaling factor.
@@ -79,13 +79,13 @@ class OccupiedSpaceCostFunction {
    public:
     enum { DATA_DIMENSION = 1 };
 
-    explicit GridArrayAdapter(const mapping::ProbabilityGrid& probability_grid)
+    explicit GridArrayAdapter(const ProbabilityGrid& probability_grid)
         : probability_grid_(probability_grid) {}
 
     void GetValue(const int row, const int column, double* const value) const {
       if (row < kPadding || column < kPadding || row >= NumRows() - kPadding ||
           column >= NumCols() - kPadding) {
-        *value = mapping::kMinProbability;
+        *value = kMinProbability;
       } else {
         *value = static_cast<double>(probability_grid_.GetProbability(
             Eigen::Array2i(column - kPadding, row - kPadding)));
@@ -103,27 +103,27 @@ class OccupiedSpaceCostFunction {
     }
 
    private:
-    const mapping::ProbabilityGrid& probability_grid_;
+    const ProbabilityGrid& probability_grid_;
   };
 
-  OccupiedSpaceCostFunction(const double scaling_factor,
-                            const sensor::PointCloud& point_cloud,
-                            const mapping::ProbabilityGrid& probability_grid)
+  OccupiedSpaceCostFunction2D(const double scaling_factor,
+                              const sensor::PointCloud& point_cloud,
+                              const ProbabilityGrid& probability_grid)
       : scaling_factor_(scaling_factor),
         point_cloud_(point_cloud),
         probability_grid_(probability_grid) {}
 
-  OccupiedSpaceCostFunction(const OccupiedSpaceCostFunction&) = delete;
-  OccupiedSpaceCostFunction& operator=(const OccupiedSpaceCostFunction&) =
+  OccupiedSpaceCostFunction2D(const OccupiedSpaceCostFunction2D&) = delete;
+  OccupiedSpaceCostFunction2D& operator=(const OccupiedSpaceCostFunction2D&) =
       delete;
 
   const double scaling_factor_;
   const sensor::PointCloud& point_cloud_;
-  const mapping::ProbabilityGrid& probability_grid_;
+  const ProbabilityGrid& probability_grid_;
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_INTERNAL_MAPPING_2D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTION_H_

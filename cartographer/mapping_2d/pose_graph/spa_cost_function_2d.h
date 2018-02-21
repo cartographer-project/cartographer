@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_SPA_COST_FUNCTION_H_
-#define CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_SPA_COST_FUNCTION_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_SPA_COST_FUNCTION_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_SPA_COST_FUNCTION_2D_H_
 
 #include <array>
 
@@ -30,25 +30,23 @@
 #include "ceres/jet.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace pose_graph {
 
-class SpaCostFunction {
+class SpaCostFunction2D {
  public:
-  using Constraint = mapping::PoseGraph::Constraint;
-
   static ceres::CostFunction* CreateAutoDiffCostFunction(
-      const Constraint::Pose& pose) {
-    return new ceres::AutoDiffCostFunction<SpaCostFunction, 3 /* residuals */,
+      const PoseGraph::Constraint::Pose& pose) {
+    return new ceres::AutoDiffCostFunction<SpaCostFunction2D, 3 /* residuals */,
                                            3 /* pose variables */,
                                            3 /* pose variables */>(
-        new SpaCostFunction(pose));
+        new SpaCostFunction2D(pose));
   }
 
   template <typename T>
   bool operator()(const T* const c_i, const T* const c_j, T* e) const {
-    using mapping::pose_graph::ComputeUnscaledError;
-    using mapping::pose_graph::ScaleError;
+    using pose_graph::ComputeUnscaledError;
+    using pose_graph::ScaleError;
 
     const std::array<T, 3> error = ScaleError(
         ComputeUnscaledError(transform::Project2D(pose_.zbar_ij), c_i, c_j),
@@ -58,13 +56,14 @@ class SpaCostFunction {
   }
 
  private:
-  explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
+  explicit SpaCostFunction2D(const PoseGraph::Constraint::Pose& pose)
+      : pose_(pose) {}
 
-  const Constraint::Pose pose_;
+  const PoseGraph::Constraint::Pose pose_;
 };
 
 }  // namespace pose_graph
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_SPA_COST_FUNCTION_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_POSE_GRAPH_SPA_COST_FUNCTION_2D_H_

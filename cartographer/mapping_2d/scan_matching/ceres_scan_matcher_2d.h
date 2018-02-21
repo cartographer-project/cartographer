@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CERES_SCAN_MATCHER_H_
-#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CERES_SCAN_MATCHER_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CERES_SCAN_MATCHER_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CERES_SCAN_MATCHER_2D_H_
 
 #include <memory>
 #include <vector>
@@ -23,25 +23,25 @@
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
+#include "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options_2d.pb.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "ceres/ceres.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 
-proto::CeresScanMatcherOptions CreateCeresScanMatcherOptions(
+proto::CeresScanMatcherOptions2D CreateCeresScanMatcherOptions2D(
     common::LuaParameterDictionary* parameter_dictionary);
 
 // Align scans with an existing map using Ceres.
-class CeresScanMatcher {
+class CeresScanMatcher2D {
  public:
-  explicit CeresScanMatcher(const proto::CeresScanMatcherOptions& options);
-  virtual ~CeresScanMatcher();
+  explicit CeresScanMatcher2D(const proto::CeresScanMatcherOptions2D& options);
+  virtual ~CeresScanMatcher2D();
 
-  CeresScanMatcher(const CeresScanMatcher&) = delete;
-  CeresScanMatcher& operator=(const CeresScanMatcher&) = delete;
+  CeresScanMatcher2D(const CeresScanMatcher2D&) = delete;
+  CeresScanMatcher2D& operator=(const CeresScanMatcher2D&) = delete;
 
   // Aligns 'point_cloud' within the 'probability_grid' given an
   // 'initial_pose_estimate' and returns a 'pose_estimate' and the solver
@@ -49,17 +49,17 @@ class CeresScanMatcher {
   void Match(const Eigen::Vector2d& target_translation,
              const transform::Rigid2d& initial_pose_estimate,
              const sensor::PointCloud& point_cloud,
-             const mapping::ProbabilityGrid& probability_grid,
+             const ProbabilityGrid& probability_grid,
              transform::Rigid2d* pose_estimate,
              ceres::Solver::Summary* summary) const;
 
  private:
-  const proto::CeresScanMatcherOptions options_;
+  const proto::CeresScanMatcherOptions2D options_;
   ceres::Solver::Options ceres_solver_options_;
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CERES_SCAN_MATCHER_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CERES_SCAN_MATCHER_2D_H_

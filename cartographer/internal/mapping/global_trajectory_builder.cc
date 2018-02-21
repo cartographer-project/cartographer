@@ -48,7 +48,7 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
       const std::string& sensor_id,
       const sensor::TimedPointCloudData& timed_point_cloud_data) override {
     CHECK(local_trajectory_builder_)
-        << "Cannot add TimedPointCloudData without a LocalTrajectoryBuilder.";
+        << "Cannot add TimedPointCloudData without a LocalTrajectoryBuilder2D.";
     std::unique_ptr<typename LocalTrajectoryBuilder::MatchingResult>
         matching_result = local_trajectory_builder_->AddRangeData(
             timed_point_cloud_data.time,
@@ -128,13 +128,12 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
 }  // namespace
 
 std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder2D(
-    std::unique_ptr<mapping_2d::LocalTrajectoryBuilder>
-        local_trajectory_builder,
+    std::unique_ptr<LocalTrajectoryBuilder2D> local_trajectory_builder,
     const int trajectory_id, mapping::PoseGraph2D* const pose_graph,
     const TrajectoryBuilderInterface::LocalSlamResultCallback&
         local_slam_result_callback) {
-  return common::make_unique<GlobalTrajectoryBuilder<
-      mapping_2d::LocalTrajectoryBuilder, mapping::PoseGraph2D>>(
+  return common::make_unique<
+      GlobalTrajectoryBuilder<LocalTrajectoryBuilder2D, mapping::PoseGraph2D>>(
       std::move(local_trajectory_builder), trajectory_id, pose_graph,
       local_slam_result_callback);
 }

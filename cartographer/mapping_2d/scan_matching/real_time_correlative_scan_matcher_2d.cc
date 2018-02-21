@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
+#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
 
 #include <algorithm>
 #include <cmath>
@@ -30,7 +30,7 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 
 proto::RealTimeCorrelativeScanMatcherOptions
@@ -50,12 +50,12 @@ CreateRealTimeCorrelativeScanMatcherOptions(
   return options;
 }
 
-RealTimeCorrelativeScanMatcher::RealTimeCorrelativeScanMatcher(
+RealTimeCorrelativeScanMatcher2D::RealTimeCorrelativeScanMatcher2D(
     const proto::RealTimeCorrelativeScanMatcherOptions& options)
     : options_(options) {}
 
 std::vector<Candidate>
-RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchCandidates(
+RealTimeCorrelativeScanMatcher2D::GenerateExhaustiveSearchCandidates(
     const SearchParameters& search_parameters) const {
   int num_candidates = 0;
   for (int scan_index = 0; scan_index != search_parameters.num_scans;
@@ -88,10 +88,10 @@ RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchCandidates(
   return candidates;
 }
 
-double RealTimeCorrelativeScanMatcher::Match(
+double RealTimeCorrelativeScanMatcher2D::Match(
     const transform::Rigid2d& initial_pose_estimate,
     const sensor::PointCloud& point_cloud,
-    const mapping::ProbabilityGrid& probability_grid,
+    const ProbabilityGrid& probability_grid,
     transform::Rigid2d* pose_estimate) const {
   CHECK_NOTNULL(pose_estimate);
 
@@ -124,8 +124,8 @@ double RealTimeCorrelativeScanMatcher::Match(
   return best_candidate.score;
 }
 
-void RealTimeCorrelativeScanMatcher::ScoreCandidates(
-    const mapping::ProbabilityGrid& probability_grid,
+void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
+    const ProbabilityGrid& probability_grid,
     const std::vector<DiscreteScan>& discrete_scans,
     const SearchParameters& search_parameters,
     std::vector<Candidate>* const candidates) const {
@@ -152,5 +152,5 @@ void RealTimeCorrelativeScanMatcher::ScoreCandidates(
 }
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

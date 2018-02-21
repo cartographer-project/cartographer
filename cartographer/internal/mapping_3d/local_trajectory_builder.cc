@@ -20,7 +20,7 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
+#include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options_3d.pb.h"
 #include "cartographer/mapping_3d/proto/submaps_options_3d.pb.h"
 #include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"

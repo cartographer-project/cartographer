@@ -17,8 +17,8 @@
 #include "cartographer/mapping_2d/local_trajectory_builder_options_2d.h"
 
 #include "cartographer/internal/mapping/motion_filter.h"
-#include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
-#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
+#include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher_2d.h"
+#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
 #include "cartographer/mapping_2d/submap_2d.h"
 #include "cartographer/sensor/voxel_filter.h"
 
@@ -49,12 +49,12 @@ proto::LocalTrajectoryBuilderOptions2D CreateLocalTrajectoryBuilderOptions2D(
               ->GetDictionary("loop_closure_adaptive_voxel_filter")
               .get());
   *options.mutable_real_time_correlative_scan_matcher_options() =
-      mapping_2d::scan_matching::CreateRealTimeCorrelativeScanMatcherOptions(
+      mapping::scan_matching::CreateRealTimeCorrelativeScanMatcherOptions(
           parameter_dictionary
               ->GetDictionary("real_time_correlative_scan_matcher")
               .get());
   *options.mutable_ceres_scan_matcher_options() =
-      mapping_2d::scan_matching::CreateCeresScanMatcherOptions(
+      mapping::scan_matching::CreateCeresScanMatcherOptions2D(
           parameter_dictionary->GetDictionary("ceres_scan_matcher").get());
   *options.mutable_motion_filter_options() = mapping::CreateMotionFilterOptions(
       parameter_dictionary->GetDictionary("motion_filter").get());

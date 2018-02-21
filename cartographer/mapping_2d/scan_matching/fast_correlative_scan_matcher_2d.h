@@ -22,8 +22,8 @@
 // precomputation done for a given map. However, this map is immutable after
 // construction.
 
-#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_FAST_CORRELATIVE_SCAN_MATCHER_H_
-#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_FAST_CORRELATIVE_SCAN_MATCHER_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_FAST_CORRELATIVE_SCAN_MATCHER_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_FAST_CORRELATIVE_SCAN_MATCHER_2D_H_
 
 #include <memory>
 #include <vector>
@@ -32,16 +32,16 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher.h"
-#include "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
+#include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher_2d.h"
+#include "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options_2d.pb.h"
 #include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 
-proto::FastCorrelativeScanMatcherOptions
-CreateFastCorrelativeScanMatcherOptions(
+proto::FastCorrelativeScanMatcherOptions2D
+CreateFastCorrelativeScanMatcherOptions2D(
     common::LuaParameterDictionary* parameter_dictionary);
 
 // A precomputed grid that contains in each cell (x0, y0) the maximum
@@ -49,8 +49,8 @@ CreateFastCorrelativeScanMatcherOptions(
 // y0 <= y < y0.
 class PrecomputationGrid {
  public:
-  PrecomputationGrid(const mapping::ProbabilityGrid& probability_grid,
-                     const mapping::CellLimits& limits, int width,
+  PrecomputationGrid(const ProbabilityGrid& probability_grid,
+                     const CellLimits& limits, int width,
                      std::vector<float>* reusable_intermediate_grid);
 
   // Returns a value between 0 and 255 to represent probabilities between
@@ -74,9 +74,8 @@ class PrecomputationGrid {
 
   // Maps values from [0, 255] to [kMinProbability, kMaxProbability].
   static float ToProbability(float value) {
-    return mapping::kMinProbability +
-           value *
-               ((mapping::kMaxProbability - mapping::kMinProbability) / 255.f);
+    return kMinProbability +
+           value * ((kMaxProbability - kMinProbability) / 255.f);
   }
 
  private:
@@ -87,7 +86,7 @@ class PrecomputationGrid {
   const Eigen::Array2i offset_;
 
   // Size of the precomputation grid.
-  const mapping::CellLimits wide_limits_;
+  const CellLimits wide_limits_;
 
   // Probabilites mapped to 0 to 255.
   std::vector<uint8> cells_;
@@ -96,15 +95,15 @@ class PrecomputationGrid {
 class PrecomputationGridStack;
 
 // An implementation of "Real-Time Correlative Scan Matching" by Olson.
-class FastCorrelativeScanMatcher {
+class FastCorrelativeScanMatcher2D {
  public:
-  FastCorrelativeScanMatcher(
-      const mapping::ProbabilityGrid& probability_grid,
-      const proto::FastCorrelativeScanMatcherOptions& options);
-  ~FastCorrelativeScanMatcher();
+  FastCorrelativeScanMatcher2D(
+      const ProbabilityGrid& probability_grid,
+      const proto::FastCorrelativeScanMatcherOptions2D& options);
+  ~FastCorrelativeScanMatcher2D();
 
-  FastCorrelativeScanMatcher(const FastCorrelativeScanMatcher&) = delete;
-  FastCorrelativeScanMatcher& operator=(const FastCorrelativeScanMatcher&) =
+  FastCorrelativeScanMatcher2D(const FastCorrelativeScanMatcher2D&) = delete;
+  FastCorrelativeScanMatcher2D& operator=(const FastCorrelativeScanMatcher2D&) =
       delete;
 
   // Aligns 'point_cloud' within the 'probability_grid' given an
@@ -145,13 +144,13 @@ class FastCorrelativeScanMatcher {
                            const std::vector<Candidate>& candidates,
                            int candidate_depth, float min_score) const;
 
-  const proto::FastCorrelativeScanMatcherOptions options_;
-  mapping::MapLimits limits_;
+  const proto::FastCorrelativeScanMatcherOptions2D options_;
+  MapLimits limits_;
   std::unique_ptr<PrecomputationGridStack> precomputation_grid_stack_;
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_FAST_CORRELATIVE_SCAN_MATCHER_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_FAST_CORRELATIVE_SCAN_MATCHER_2D_H_
