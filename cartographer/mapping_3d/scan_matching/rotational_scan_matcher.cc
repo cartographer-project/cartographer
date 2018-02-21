@@ -23,7 +23,7 @@
 #include "cartographer/common/port.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 
 namespace {

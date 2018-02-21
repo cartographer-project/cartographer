@@ -21,7 +21,7 @@
 #include "Eigen/Geometry"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
 // Penalizes differences between IMU data and optimized accelerations.
 class AccelerationCostFunction {
@@ -95,7 +95,7 @@ class AccelerationCostFunction {
   const double second_delta_time_seconds_;
 };
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_ACCELERATION_COST_FUNCTION_H_

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/scan_matching/rotation_delta_cost_functor.h"
+#include "cartographer/mapping_3d/scan_matching/rotation_delta_cost_functor_3d.h"
 
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
@@ -29,8 +29,8 @@ double ComputeRotationDeltaSquaredCost(
     const Eigen::Quaterniond& rotation, const double scaling_factor,
     const Eigen::Quaterniond& target_rotation) {
   std::unique_ptr<ceres::CostFunction> cost_function(
-      RotationDeltaCostFunctor::CreateAutoDiffCostFunction(scaling_factor,
-                                                           target_rotation));
+      RotationDeltaCostFunctor3D::CreateAutoDiffCostFunction(scaling_factor,
+                                                             target_rotation));
   const std::array<double, 4> parameter_quaternion = {
       {rotation.w(), rotation.x(), rotation.y(), rotation.z()}};
   const std::vector<const double*> parameters = {parameter_quaternion.data()};
@@ -81,5 +81,5 @@ TEST(RotationDeltaCostFunctorTest, ComputesCorrectCost) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/pose_graph/optimization_problem.h"
+#include "cartographer/mapping_3d/pose_graph/optimization_problem_3d.h"
 
 #include <random>
 
@@ -27,17 +27,18 @@
 #include "gmock/gmock.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace pose_graph {
 namespace {
 
-class OptimizationProblemTest : public ::testing::Test {
+class OptimizationProblem3DTest : public ::testing::Test {
  protected:
-  OptimizationProblemTest()
-      : optimization_problem_(CreateOptions(), OptimizationProblem::FixZ::kNo),
+  OptimizationProblem3DTest()
+      : optimization_problem_(CreateOptions(),
+                              OptimizationProblem3D::FixZ::kNo),
         rng_(45387) {}
 
-  mapping::pose_graph::proto::OptimizationProblemOptions CreateOptions() {
+  pose_graph::proto::OptimizationProblemOptions CreateOptions() {
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
           acceleration_weight = 1e-4,
@@ -54,7 +55,7 @@ class OptimizationProblemTest : public ::testing::Test {
             num_threads = 4,
           },
         })text");
-    return mapping::pose_graph::CreateOptimizationProblemOptions(
+    return pose_graph::CreateOptimizationProblemOptions(
         parameter_dictionary.get());
   }
 
@@ -90,7 +91,7 @@ class OptimizationProblemTest : public ::testing::Test {
                                   Eigen::Vector3d(0., 0., rz)));
   }
 
-  OptimizationProblem optimization_problem_;
+  OptimizationProblem3D optimization_problem_;
   std::mt19937 rng_;
 };
 
@@ -102,7 +103,7 @@ transform::Rigid3d AddNoise(const transform::Rigid3d& transform,
                             noisy_rotation);
 }
 
-TEST_F(OptimizationProblemTest, ReducesNoise) {
+TEST_F(OptimizationProblem3DTest, ReducesNoise) {
   constexpr int kNumNodes = 100;
   const transform::Rigid3d kSubmap0Transform = transform::Rigid3d::Identity();
   const transform::Rigid3d kSubmap2Transform = transform::Rigid3d::Rotation(
@@ -130,24 +131,24 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
     now += common::FromSeconds(0.01);
   }
 
-  std::vector<OptimizationProblem::Constraint> constraints;
+  std::vector<OptimizationProblem3D::Constraint> constraints;
   for (int j = 0; j != kNumNodes; ++j) {
-    constraints.push_back(OptimizationProblem::Constraint{
-        mapping::SubmapId{kTrajectoryId, 0}, mapping::NodeId{kTrajectoryId, j},
-        OptimizationProblem::Constraint::Pose{
+    constraints.push_back(OptimizationProblem3D::Constraint{
+        SubmapId{kTrajectoryId, 0}, NodeId{kTrajectoryId, j},
+        OptimizationProblem3D::Constraint::Pose{
             AddNoise(test_data[j].ground_truth_pose, test_data[j].noise), 1.,
             1.}});
     // We add an additional independent, but equally noisy observation.
-    constraints.push_back(OptimizationProblem::Constraint{
-        mapping::SubmapId{kTrajectoryId, 1}, mapping::NodeId{kTrajectoryId, j},
-        OptimizationProblem::Constraint::Pose{
+    constraints.push_back(OptimizationProblem3D::Constraint{
+        SubmapId{kTrajectoryId, 1}, NodeId{kTrajectoryId, j},
+        OptimizationProblem3D::Constraint::Pose{
             AddNoise(test_data[j].ground_truth_pose,
                      RandomYawOnlyTransform(0.2, 0.3)),
             1., 1.}});
     // We add very noisy data with a low weight to verify it is mostly ignored.
-    constraints.push_back(OptimizationProblem::Constraint{
-        mapping::SubmapId{kTrajectoryId, 2}, mapping::NodeId{kTrajectoryId, j},
-        OptimizationProblem::Constraint::Pose{
+    constraints.push_back(OptimizationProblem3D::Constraint{
+        SubmapId{kTrajectoryId, 2}, NodeId{kTrajectoryId, j},
+        OptimizationProblem3D::Constraint::Pose{
             kSubmap2Transform.inverse() * test_data[j].ground_truth_pose *
                 RandomTransform(1e3, 3.),
             1e-9, 1e-9}});
@@ -157,13 +158,13 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   double rotation_error_before = 0.;
   const auto& node_data = optimization_problem_.node_data();
   for (int j = 0; j != kNumNodes; ++j) {
-    translation_error_before += (test_data[j].ground_truth_pose.translation() -
-                                 node_data.at(mapping::NodeId{kTrajectoryId, j})
-                                     .global_pose.translation())
-                                    .norm();
-    rotation_error_before += transform::GetAngle(
-        test_data[j].ground_truth_pose.inverse() *
-        node_data.at(mapping::NodeId{kTrajectoryId, j}).global_pose);
+    translation_error_before +=
+        (test_data[j].ground_truth_pose.translation() -
+         node_data.at(NodeId{kTrajectoryId, j}).global_pose.translation())
+            .norm();
+    rotation_error_before +=
+        transform::GetAngle(test_data[j].ground_truth_pose.inverse() *
+                            node_data.at(NodeId{kTrajectoryId, j}).global_pose);
   }
 
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
@@ -175,13 +176,13 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
   double translation_error_after = 0.;
   double rotation_error_after = 0.;
   for (int j = 0; j != kNumNodes; ++j) {
-    translation_error_after += (test_data[j].ground_truth_pose.translation() -
-                                node_data.at(mapping::NodeId{kTrajectoryId, j})
-                                    .global_pose.translation())
-                                   .norm();
-    rotation_error_after += transform::GetAngle(
-        test_data[j].ground_truth_pose.inverse() *
-        node_data.at(mapping::NodeId{kTrajectoryId, j}).global_pose);
+    translation_error_after +=
+        (test_data[j].ground_truth_pose.translation() -
+         node_data.at(NodeId{kTrajectoryId, j}).global_pose.translation())
+            .norm();
+    rotation_error_after +=
+        transform::GetAngle(test_data[j].ground_truth_pose.inverse() *
+                            node_data.at(NodeId{kTrajectoryId, j}).global_pose);
   }
 
   EXPECT_GT(0.8 * translation_error_before, translation_error_after);
@@ -190,5 +191,5 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
 
 }  // namespace
 }  // namespace pose_graph
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

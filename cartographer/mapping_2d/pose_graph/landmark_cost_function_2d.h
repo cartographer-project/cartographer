@@ -55,10 +55,6 @@ class LandmarkCostFunction2D {
   bool operator()(const T* const prev_node_pose, const T* const next_node_pose,
                   const T* const landmark_rotation,
                   const T* const landmark_translation, T* const e) const {
-    using pose_graph::ComputeUnscaledError;
-    using pose_graph::ScaleError;
-    using pose_graph::SlerpQuaternions;
-
     const std::array<T, 3> interpolated_pose_translation{
         {prev_node_pose[0] +
              interpolation_parameter_ * (next_node_pose[0] - prev_node_pose[0]),

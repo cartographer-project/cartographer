@@ -14,29 +14,31 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
+#include "cartographer/mapping_3d/scan_matching/real_time_correlative_scan_matcher_3d.h"
 
 #include <memory>
 
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
+#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
+#include "cartographer/transform/transform.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
-class CeresScanMatcherTest : public ::testing::Test {
+class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
  protected:
-  CeresScanMatcherTest()
-      : hybrid_grid_(1.f),
-        expected_pose_(
-            transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., 0.))) {
+  RealTimeCorrelativeScanMatcherTest()
+      : hybrid_grid_(0.1f),
+        expected_pose_(Eigen::Vector3d(-1., 0., 0.),
+                       Eigen::Quaterniond::Identity()) {
     for (const Eigen::Vector3f& point :
          {Eigen::Vector3f(-3.f, 2.f, 0.f), Eigen::Vector3f(-4.f, 2.f, 0.f),
           Eigen::Vector3f(-5.f, 2.f, 0.f), Eigen::Vector3f(-6.f, 2.f, 0.f),
@@ -49,73 +51,72 @@ class CeresScanMatcherTest : public ::testing::Test {
 
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
-          occupied_space_weight_0 = 1.,
-          translation_weight = 0.01,
-          rotation_weight = 0.1,
-          only_optimize_yaw = false,
-          ceres_solver_options = {
-            use_nonmonotonic_steps = true,
-            max_num_iterations = 10,
-            num_threads = 1,
-          },
+          linear_search_window = 0.3,
+          angular_search_window = math.rad(1.),
+          translation_delta_cost_weight = 1e-1,
+          rotation_delta_cost_weight = 1.,
         })text");
-    options_ = CreateCeresScanMatcherOptions(parameter_dictionary.get());
-    ceres_scan_matcher_.reset(new CeresScanMatcher(options_));
+    real_time_correlative_scan_matcher_.reset(
+        new RealTimeCorrelativeScanMatcher3D(
+            CreateRealTimeCorrelativeScanMatcherOptions(
+                parameter_dictionary.get())));
   }
 
   void TestFromInitialPose(const transform::Rigid3d& initial_pose) {
     transform::Rigid3d pose;
 
-    ceres::Solver::Summary summary;
-    ceres_scan_matcher_->Match(initial_pose.translation(), initial_pose,
-                               {{&point_cloud_, &hybrid_grid_}}, &pose,
-                               &summary);
-    EXPECT_NEAR(0., summary.final_cost, 1e-2) << summary.FullReport();
-    EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 3e-2));
+    const float score = real_time_correlative_scan_matcher_->Match(
+        initial_pose, point_cloud_, hybrid_grid_, &pose);
+    LOG(INFO) << "Score: " << score;
+    EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 1e-3));
   }
 
-  mapping::HybridGrid hybrid_grid_;
+  HybridGrid hybrid_grid_;
   transform::Rigid3d expected_pose_;
   sensor::PointCloud point_cloud_;
-  proto::CeresScanMatcherOptions options_;
-  std::unique_ptr<CeresScanMatcher> ceres_scan_matcher_;
+  std::unique_ptr<RealTimeCorrelativeScanMatcher3D>
+      real_time_correlative_scan_matcher_;
 };
 
-TEST_F(CeresScanMatcherTest, PerfectEstimate) {
+TEST_F(RealTimeCorrelativeScanMatcherTest, PerfectEstimate) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., 0.)));
 }
 
-TEST_F(CeresScanMatcherTest, AlongX) {
-  ceres_scan_matcher_.reset(new CeresScanMatcher(options_));
+TEST_F(RealTimeCorrelativeScanMatcherTest, AlongX) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-0.8, 0., 0.)));
 }
 
-TEST_F(CeresScanMatcherTest, AlongZ) {
+TEST_F(RealTimeCorrelativeScanMatcherTest, AlongZ) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., -0.2)));
 }
 
-TEST_F(CeresScanMatcherTest, AlongXYZ) {
+TEST_F(RealTimeCorrelativeScanMatcherTest, AlongXYZ) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-0.9, -0.2, 0.2)));
 }
 
-TEST_F(CeresScanMatcherTest, FullPoseCorrection) {
-  // We try to find the rotation around z...
-  const auto additional_transform = transform::Rigid3d::Rotation(
-      Eigen::AngleAxisd(0.05, Eigen::Vector3d(0., 0., 1.)));
-  point_cloud_ = sensor::TransformPointCloud(
-      point_cloud_, additional_transform.cast<float>());
-  expected_pose_ = expected_pose_ * additional_transform.inverse();
-  // ...starting initially with rotation around x.
-  TestFromInitialPose(
-      transform::Rigid3d(Eigen::Vector3d(-0.95, -0.05, 0.05),
-                         Eigen::AngleAxisd(0.05, Eigen::Vector3d(1., 0., 0.))));
+TEST_F(RealTimeCorrelativeScanMatcherTest, RotationAroundX) {
+  TestFromInitialPose(transform::Rigid3d(
+      Eigen::Vector3d(-1., 0., 0.),
+      Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(1., 0., 0.))));
+}
+
+TEST_F(RealTimeCorrelativeScanMatcherTest, RotationAroundY) {
+  TestFromInitialPose(transform::Rigid3d(
+      Eigen::Vector3d(-1., 0., 0.),
+      Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(0., 1., 0.))));
+}
+
+TEST_F(RealTimeCorrelativeScanMatcherTest, RotationAroundYZ) {
+  TestFromInitialPose(transform::Rigid3d(
+      Eigen::Vector3d(-1., 0., 0.),
+      Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(0., 1., 1.))));
 }
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

@@ -35,8 +35,8 @@
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/trajectory_connectivity_state.h"
-#include "cartographer/mapping_3d/pose_graph/constraint_builder.h"
-#include "cartographer/mapping_3d/pose_graph/optimization_problem.h"
+#include "cartographer/mapping_3d/pose_graph/constraint_builder_3d.h"
+#include "cartographer/mapping_3d/pose_graph/optimization_problem_3d.h"
 #include "cartographer/mapping_3d/submap_3d.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/landmark_data.h"
@@ -190,7 +190,7 @@ class PoseGraph3D : public PoseGraph {
   // Computes the local to global map frame transform based on the given
   // 'global_submap_poses'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const MapById<SubmapId, mapping_3d::pose_graph::SubmapData>&
+      const MapById<SubmapId, pose_graph::OptimizationProblem3D::SubmapData>&
           global_submap_poses,
       int trajectory_id) const REQUIRES(mutex_);
 
@@ -234,9 +234,8 @@ class PoseGraph3D : public PoseGraph {
   void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
-  mapping_3d::pose_graph::OptimizationProblem optimization_problem_;
-  mapping_3d::pose_graph::ConstraintBuilder constraint_builder_
-      GUARDED_BY(mutex_);
+  pose_graph::OptimizationProblem3D optimization_problem_;
+  pose_graph::ConstraintBuilder3D constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
   // Submaps get assigned an ID and state as soon as they are seen, even
@@ -248,8 +247,8 @@ class PoseGraph3D : public PoseGraph {
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Global submap poses currently used for displaying data.
-  MapById<SubmapId, mapping_3d::pose_graph::SubmapData> global_submap_poses_
-      GUARDED_BY(mutex_);
+  MapById<SubmapId, pose_graph::OptimizationProblem3D::SubmapData>
+      global_submap_poses_ GUARDED_BY(mutex_);
 
   // Global landmark poses with all observations.
   std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>

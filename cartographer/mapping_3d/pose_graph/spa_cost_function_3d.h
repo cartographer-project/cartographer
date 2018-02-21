@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_SPA_COST_FUNCTION_H_
-#define CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_SPA_COST_FUNCTION_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_SPA_COST_FUNCTION_3D_H_
+#define CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_SPA_COST_FUNCTION_3D_H_
 
 #include <array>
 
@@ -30,28 +30,23 @@
 #include "ceres/jet.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace pose_graph {
 
-class SpaCostFunction {
+class SpaCostFunction3D {
  public:
-  using Constraint = mapping::PoseGraph::Constraint;
-
   static ceres::CostFunction* CreateAutoDiffCostFunction(
-      const Constraint::Pose& pose) {
+      const PoseGraph::Constraint::Pose& pose) {
     return new ceres::AutoDiffCostFunction<
-        SpaCostFunction, 6 /* residuals */, 4 /* rotation variables */,
+        SpaCostFunction3D, 6 /* residuals */, 4 /* rotation variables */,
         3 /* translation variables */, 4 /* rotation variables */,
-        3 /* translation variables */>(new SpaCostFunction(pose));
+        3 /* translation variables */>(new SpaCostFunction3D(pose));
   }
 
   template <typename T>
   bool operator()(const T* const c_i_rotation, const T* const c_i_translation,
                   const T* const c_j_rotation, const T* const c_j_translation,
                   T* const e) const {
-    using mapping::pose_graph::ComputeUnscaledError;
-    using mapping::pose_graph::ScaleError;
-
     const std::array<T, 6> error = ScaleError(
         ComputeUnscaledError(pose_.zbar_ij, c_i_rotation, c_i_translation,
                              c_j_rotation, c_j_translation),
@@ -61,13 +56,14 @@ class SpaCostFunction {
   }
 
  private:
-  explicit SpaCostFunction(const Constraint::Pose& pose) : pose_(pose) {}
+  explicit SpaCostFunction3D(const PoseGraph::Constraint::Pose& pose)
+      : pose_(pose) {}
 
-  const Constraint::Pose pose_;
+  const PoseGraph::Constraint::Pose pose_;
 };
 
 }  // namespace pose_graph
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_SPA_COST_FUNCTION_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_SPA_COST_FUNCTION_3D_H_

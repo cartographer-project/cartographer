@@ -20,7 +20,7 @@ import "cartographer/mapping/proto/motion_filter_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
 import "cartographer/mapping_3d/proto/submaps_options_3d.proto";
-import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.proto";
+import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options_3d.proto";
 
 // NEXT ID: 18
 message LocalTrajectoryBuilderOptions3D {
@@ -47,7 +47,7 @@ message LocalTrajectoryBuilderOptions3D {
   bool use_online_correlative_scan_matching = 13;
   mapping.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
       real_time_correlative_scan_matcher_options = 14;
-  mapping_3d.scan_matching.proto.CeresScanMatcherOptions
+  mapping.scan_matching.proto.CeresScanMatcherOptions3D
       ceres_scan_matcher_options = 6;
   mapping.proto.MotionFilterOptions motion_filter_options = 7;
 

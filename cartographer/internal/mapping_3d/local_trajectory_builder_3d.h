@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_H_
-#define CARTOGRAPHER_INTERNAL_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_H_
+#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_
+#define CARTOGRAPHER_INTERNAL_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_
 
 #include <memory>
 
@@ -23,8 +23,8 @@
 #include "cartographer/internal/mapping/motion_filter.h"
 #include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options_3d.pb.h"
-#include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
-#include "cartographer/mapping_3d/scan_matching/real_time_correlative_scan_matcher.h"
+#include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher_3d.h"
+#include "cartographer/mapping_3d/scan_matching/real_time_correlative_scan_matcher_3d.h"
 #include "cartographer/mapping_3d/submap_3d.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -33,11 +33,11 @@
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
 // Wires up the local SLAM stack (i.e. pose extrapolator, scan matching, etc.)
 // without loop closure.
-class LocalTrajectoryBuilder {
+class LocalTrajectoryBuilder3D {
  public:
   struct InsertionResult {
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
@@ -51,12 +51,12 @@ class LocalTrajectoryBuilder {
     std::unique_ptr<const InsertionResult> insertion_result;
   };
 
-  explicit LocalTrajectoryBuilder(
+  explicit LocalTrajectoryBuilder3D(
       const mapping::proto::LocalTrajectoryBuilderOptions3D& options);
-  ~LocalTrajectoryBuilder();
+  ~LocalTrajectoryBuilder3D();
 
-  LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;
-  LocalTrajectoryBuilder& operator=(const LocalTrajectoryBuilder&) = delete;
+  LocalTrajectoryBuilder3D(const LocalTrajectoryBuilder3D&) = delete;
+  LocalTrajectoryBuilder3D& operator=(const LocalTrajectoryBuilder3D&) = delete;
 
   void AddImuData(const sensor::ImuData& imu_data);
   // Returns 'MatchingResult' when range data accumulation completed,
@@ -84,9 +84,9 @@ class LocalTrajectoryBuilder {
   mapping::ActiveSubmaps3D active_submaps_;
 
   mapping::MotionFilter motion_filter_;
-  std::unique_ptr<scan_matching::RealTimeCorrelativeScanMatcher>
+  std::unique_ptr<scan_matching::RealTimeCorrelativeScanMatcher3D>
       real_time_correlative_scan_matcher_;
-  std::unique_ptr<scan_matching::CeresScanMatcher> ceres_scan_matcher_;
+  std::unique_ptr<scan_matching::CeresScanMatcher3D> ceres_scan_matcher_;
 
   std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
 
@@ -94,7 +94,7 @@ class LocalTrajectoryBuilder {
   sensor::RangeData accumulated_range_data_;
 };
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_H_
+#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_

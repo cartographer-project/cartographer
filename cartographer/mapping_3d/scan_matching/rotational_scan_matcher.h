@@ -23,7 +23,7 @@
 #include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 
 class RotationalScanMatcher {
@@ -51,7 +51,7 @@ class RotationalScanMatcher {
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_ROTATIONAL_SCAN_MATCHER_H_

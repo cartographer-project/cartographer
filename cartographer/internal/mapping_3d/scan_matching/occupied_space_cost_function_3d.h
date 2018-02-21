@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTION_H_
-#define CARTOGRAPHER_INTERNAL_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTION_H_
+#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTION_3D_H_
+#define CARTOGRAPHER_INTERNAL_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTION_3D_H_
 
 #include "Eigen/Core"
 #include "cartographer/mapping_3d/hybrid_grid.h"
@@ -25,21 +25,22 @@
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 
 // Computes a cost for matching the 'point_cloud' to the 'hybrid_grid' with a
 // 'translation' and 'rotation'. The cost increases when points fall into less
 // occupied space, i.e. at voxels with lower values.
-class OccupiedSpaceCostFunction {
+class OccupiedSpaceCostFunction3D {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor, const sensor::PointCloud& point_cloud,
       const mapping::HybridGrid& hybrid_grid) {
     return new ceres::AutoDiffCostFunction<
-        OccupiedSpaceCostFunction, ceres::DYNAMIC /* residuals */,
+        OccupiedSpaceCostFunction3D, ceres::DYNAMIC /* residuals */,
         3 /* translation variables */, 4 /* rotation variables */>(
-        new OccupiedSpaceCostFunction(scaling_factor, point_cloud, hybrid_grid),
+        new OccupiedSpaceCostFunction3D(scaling_factor, point_cloud,
+                                        hybrid_grid),
         point_cloud.size());
   }
 
@@ -54,15 +55,15 @@ class OccupiedSpaceCostFunction {
   }
 
  private:
-  OccupiedSpaceCostFunction(const double scaling_factor,
-                            const sensor::PointCloud& point_cloud,
-                            const mapping::HybridGrid& hybrid_grid)
+  OccupiedSpaceCostFunction3D(const double scaling_factor,
+                              const sensor::PointCloud& point_cloud,
+                              const mapping::HybridGrid& hybrid_grid)
       : scaling_factor_(scaling_factor),
         point_cloud_(point_cloud),
         interpolated_grid_(hybrid_grid) {}
 
-  OccupiedSpaceCostFunction(const OccupiedSpaceCostFunction&) = delete;
-  OccupiedSpaceCostFunction& operator=(const OccupiedSpaceCostFunction&) =
+  OccupiedSpaceCostFunction3D(const OccupiedSpaceCostFunction3D&) = delete;
+  OccupiedSpaceCostFunction3D& operator=(const OccupiedSpaceCostFunction3D&) =
       delete;
 
   template <typename T>
@@ -84,7 +85,7 @@ class OccupiedSpaceCostFunction {
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTION_H_
+#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTION_3D_H_

@@ -37,7 +37,7 @@ RealTimeCorrelativeScanMatcher2D::RealTimeCorrelativeScanMatcher2D(
     const proto::RealTimeCorrelativeScanMatcherOptions& options)
     : options_(options) {}
 
-std::vector<Candidate>
+std::vector<Candidate2D>
 RealTimeCorrelativeScanMatcher2D::GenerateExhaustiveSearchCandidates(
     const SearchParameters& search_parameters) const {
   int num_candidates = 0;
@@ -51,7 +51,7 @@ RealTimeCorrelativeScanMatcher2D::GenerateExhaustiveSearchCandidates(
          search_parameters.linear_bounds[scan_index].min_y + 1);
     num_candidates += num_linear_x_candidates * num_linear_y_candidates;
   }
-  std::vector<Candidate> candidates;
+  std::vector<Candidate2D> candidates;
   candidates.reserve(num_candidates);
   for (int scan_index = 0; scan_index != search_parameters.num_scans;
        ++scan_index) {
@@ -89,16 +89,16 @@ double RealTimeCorrelativeScanMatcher2D::Match(
 
   const std::vector<sensor::PointCloud> rotated_scans =
       GenerateRotatedScans(rotated_point_cloud, search_parameters);
-  const std::vector<DiscreteScan> discrete_scans = DiscretizeScans(
+  const std::vector<DiscreteScan2D> discrete_scans = DiscretizeScans(
       probability_grid.limits(), rotated_scans,
       Eigen::Translation2f(initial_pose_estimate.translation().x(),
                            initial_pose_estimate.translation().y()));
-  std::vector<Candidate> candidates =
+  std::vector<Candidate2D> candidates =
       GenerateExhaustiveSearchCandidates(search_parameters);
   ScoreCandidates(probability_grid, discrete_scans, search_parameters,
                   &candidates);
 
-  const Candidate& best_candidate =
+  const Candidate2D& best_candidate =
       *std::max_element(candidates.begin(), candidates.end());
   *pose_estimate = transform::Rigid2d(
       {initial_pose_estimate.translation().x() + best_candidate.x,
@@ -109,10 +109,10 @@ double RealTimeCorrelativeScanMatcher2D::Match(
 
 void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
     const ProbabilityGrid& probability_grid,
-    const std::vector<DiscreteScan>& discrete_scans,
+    const std::vector<DiscreteScan2D>& discrete_scans,
     const SearchParameters& search_parameters,
-    std::vector<Candidate>* const candidates) const {
-  for (Candidate& candidate : *candidates) {
+    std::vector<Candidate2D>* const candidates) const {
+  for (Candidate2D& candidate : *candidates) {
     candidate.score = 0.f;
     for (const Eigen::Array2i& xy_index :
          discrete_scans[candidate.scan_index]) {

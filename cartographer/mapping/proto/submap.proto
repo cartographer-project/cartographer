@@ -28,7 +28,7 @@ message Submap2D {
   ProbabilityGrid probability_grid = 4;
 }
 
-// Serialized state of a mapping_3d::Submap.
+// Serialized state of a Submap3D.
 message Submap3D {
   transform.proto.Rigid3d local_pose = 1;
   int32 num_range_data = 2;

@@ -29,7 +29,7 @@ namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 
-typedef std::vector<Eigen::Array2i> DiscreteScan;
+typedef std::vector<Eigen::Array2i> DiscreteScan2D;
 
 // Describes the search space.
 struct SearchParameters {
@@ -49,7 +49,7 @@ struct SearchParameters {
                    double angular_perturbation_step_size, double resolution);
 
   // Tightens the search window as much as possible.
-  void ShrinkToFit(const std::vector<DiscreteScan>& scans,
+  void ShrinkToFit(const std::vector<DiscreteScan2D>& scans,
                    const CellLimits& cell_limits);
 
   int num_angular_perturbations;
@@ -66,15 +66,15 @@ std::vector<sensor::PointCloud> GenerateRotatedScans(
 
 // Translates and discretizes the rotated scans into a vector of integer
 // indices.
-std::vector<DiscreteScan> DiscretizeScans(
+std::vector<DiscreteScan2D> DiscretizeScans(
     const MapLimits& map_limits, const std::vector<sensor::PointCloud>& scans,
     const Eigen::Translation2f& initial_translation);
 
 // A possible solution.
-struct Candidate {
-  Candidate(const int init_scan_index, const int init_x_index_offset,
-            const int init_y_index_offset,
-            const SearchParameters& search_parameters)
+struct Candidate2D {
+  Candidate2D(const int init_scan_index, const int init_x_index_offset,
+              const int init_y_index_offset,
+              const SearchParameters& search_parameters)
       : scan_index(init_scan_index),
         x_index_offset(init_x_index_offset),
         y_index_offset(init_y_index_offset),
@@ -90,7 +90,7 @@ struct Candidate {
   int x_index_offset = 0;
   int y_index_offset = 0;
 
-  // Pose of this Candidate relative to the initial pose.
+  // Pose of this Candidate2D relative to the initial pose.
   double x = 0.;
   double y = 0.;
   double orientation = 0.;
@@ -98,8 +98,8 @@ struct Candidate {
   // Score, higher is better.
   float score = 0.f;
 
-  bool operator<(const Candidate& other) const { return score < other.score; }
-  bool operator>(const Candidate& other) const { return score > other.score; }
+  bool operator<(const Candidate2D& other) const { return score < other.score; }
+  bool operator>(const Candidate2D& other) const { return score > other.score; }
 };
 
 }  // namespace scan_matching
