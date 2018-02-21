@@ -16,6 +16,9 @@
 
 #include "cartographer/io/submap_painter.h"
 
+#include "cartographer/mapping_2d/submap_2d.h"
+#include "cartographer/mapping_3d/submaps.h"
+
 namespace cartographer {
 namespace io {
 namespace {
@@ -115,7 +118,7 @@ void FillSubmapSlice(
     local_pose = submap.local_pose();
     submap.ToResponseProto(global_submap_pose, &response);
   } else {
-    ::cartographer::mapping_2d::Submap submap(proto.submap_2d());
+    ::cartographer::mapping::Submap2D submap(proto.submap_2d());
     local_pose = submap.local_pose();
     submap.ToResponseProto(global_submap_pose, &response);
   }

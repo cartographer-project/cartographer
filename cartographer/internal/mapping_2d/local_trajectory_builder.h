@@ -22,10 +22,10 @@
 #include "cartographer/common/time.h"
 #include "cartographer/internal/mapping/motion_filter.h"
 #include "cartographer/mapping/pose_extrapolator.h"
-#include "cartographer/mapping_2d/proto/local_trajectory_builder_options.pb.h"
+#include "cartographer/mapping_2d/proto/local_trajectory_builder_options_2d.pb.h"
 #include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
-#include "cartographer/mapping_2d/submaps.h"
+#include "cartographer/mapping_2d/submap_2d.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/range_data.h"
@@ -42,7 +42,7 @@ class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
-    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+    std::vector<std::shared_ptr<const mapping::Submap2D>> insertion_submaps;
   };
   struct MatchingResult {
     common::Time time;
@@ -53,7 +53,7 @@ class LocalTrajectoryBuilder {
   };
 
   explicit LocalTrajectoryBuilder(
-      const proto::LocalTrajectoryBuilderOptions& options);
+      const mapping::proto::LocalTrajectoryBuilderOptions2D& options);
   ~LocalTrajectoryBuilder();
 
   LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;
@@ -92,8 +92,8 @@ class LocalTrajectoryBuilder {
   // Lazily constructs a PoseExtrapolator.
   void InitializeExtrapolator(common::Time time);
 
-  const proto::LocalTrajectoryBuilderOptions options_;
-  ActiveSubmaps active_submaps_;
+  const mapping::proto::LocalTrajectoryBuilderOptions2D options_;
+  mapping::ActiveSubmaps2D active_submaps_;
 
   mapping::MotionFilter motion_filter_;
   scan_matching::RealTimeCorrelativeScanMatcher

@@ -17,7 +17,7 @@ syntax = "proto3";
 import "cartographer/mapping_2d/proto/cell_limits.proto";
 import "cartographer/transform/proto/transform.proto";
 
-package cartographer.mapping_2d.proto;
+package cartographer.mapping.proto;
 
 message MapLimits {
   double resolution = 1;

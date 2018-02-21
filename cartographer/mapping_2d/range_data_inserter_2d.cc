@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/range_data_inserter.h"
+#include "cartographer/mapping_2d/range_data_inserter_2d.h"
 
 #include <cstdlib>
 
@@ -26,11 +26,11 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 
-proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
+proto::RangeDataInserterOptions2D CreateRangeDataInserterOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::RangeDataInserterOptions options;
+  proto::RangeDataInserterOptions2D options;
   options.set_hit_probability(
       parameter_dictionary->GetDouble("hit_probability"));
   options.set_miss_probability(
@@ -44,16 +44,17 @@ proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
   return options;
 }
 
-RangeDataInserter::RangeDataInserter(
-    const proto::RangeDataInserterOptions& options)
+RangeDataInserter2D::RangeDataInserter2D(
+    const proto::RangeDataInserterOptions2D& options)
     : options_(options),
-      hit_table_(mapping::ComputeLookupTableToApplyOdds(
-          mapping::Odds(options.hit_probability()))),
-      miss_table_(mapping::ComputeLookupTableToApplyOdds(
-          mapping::Odds(options.miss_probability()))) {}
+      hit_table_(
+          ComputeLookupTableToApplyOdds(Odds(options.hit_probability()))),
+      miss_table_(
+          ComputeLookupTableToApplyOdds(Odds(options.miss_probability()))) {}
 
-void RangeDataInserter::Insert(const sensor::RangeData& range_data,
-                               ProbabilityGrid* const probability_grid) const {
+void RangeDataInserter2D::Insert(
+    const sensor::RangeData& range_data,
+    ProbabilityGrid* const probability_grid) const {
   // By not finishing the update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
   CastRays(range_data, hit_table_, miss_table_, options_.insert_free_space(),
@@ -61,5 +62,5 @@ void RangeDataInserter::Insert(const sensor::RangeData& range_data,
   probability_grid->FinishUpdate();
 }
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

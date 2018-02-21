@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace {
 
 TEST(XYIndexTest, CellLimitsToProto) {
@@ -57,5 +57,5 @@ TEST(XYIndexTest, XYIndexRangeIterator) {
 }
 
 }  // namespace
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

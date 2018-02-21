@@ -71,7 +71,7 @@ SearchParameters::SearchParameters(const int num_linear_perturbations,
 }
 
 void SearchParameters::ShrinkToFit(const std::vector<DiscreteScan>& scans,
-                                   const CellLimits& cell_limits) {
+                                   const mapping::CellLimits& cell_limits) {
   CHECK_EQ(scans.size(), num_scans);
   CHECK_EQ(linear_bounds.size(), num_scans);
   for (int i = 0; i != num_scans; ++i) {
@@ -109,7 +109,8 @@ std::vector<sensor::PointCloud> GenerateRotatedScans(
 }
 
 std::vector<DiscreteScan> DiscretizeScans(
-    const MapLimits& map_limits, const std::vector<sensor::PointCloud>& scans,
+    const mapping::MapLimits& map_limits,
+    const std::vector<sensor::PointCloud>& scans,
     const Eigen::Translation2f& initial_translation) {
   std::vector<DiscreteScan> discrete_scans;
   discrete_scans.reserve(scans.size());

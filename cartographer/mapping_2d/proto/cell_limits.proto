@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package cartographer.mapping_2d.proto;
+package cartographer.mapping.proto;
 
 message CellLimits {
   int32 num_x_cells = 1;

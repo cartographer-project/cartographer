@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/range_data_inserter.h"
+#include "cartographer/mapping_2d/range_data_inserter_2d.h"
 
 #include <memory>
 
@@ -26,12 +26,12 @@
 #include "gmock/gmock.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace {
 
-class RangeDataInserterTest : public ::testing::Test {
+class RangeDataInserterTest2D : public ::testing::Test {
  protected:
-  RangeDataInserterTest()
+  RangeDataInserterTest2D()
       : probability_grid_(
             MapLimits(1., Eigen::Vector2d(1., 5.), CellLimits(5, 5))) {
     auto parameter_dictionary = common::MakeDictionary(
@@ -40,8 +40,8 @@ class RangeDataInserterTest : public ::testing::Test {
         "hit_probability = 0.7, "
         "miss_probability = 0.4, "
         "}");
-    options_ = CreateRangeDataInserterOptions(parameter_dictionary.get());
-    range_data_inserter_ = common::make_unique<RangeDataInserter>(options_);
+    options_ = CreateRangeDataInserterOptions2D(parameter_dictionary.get());
+    range_data_inserter_ = common::make_unique<RangeDataInserter2D>(options_);
   }
 
   void InsertPointCloud() {
@@ -57,11 +57,11 @@ class RangeDataInserterTest : public ::testing::Test {
   }
 
   ProbabilityGrid probability_grid_;
-  std::unique_ptr<RangeDataInserter> range_data_inserter_;
-  proto::RangeDataInserterOptions options_;
+  std::unique_ptr<RangeDataInserter2D> range_data_inserter_;
+  proto::RangeDataInserterOptions2D options_;
 };
 
-TEST_F(RangeDataInserterTest, InsertPointCloud) {
+TEST_F(RangeDataInserterTest2D, InsertPointCloud) {
   InsertPointCloud();
 
   EXPECT_NEAR(1., probability_grid_.limits().max().x(), 1e-9);
@@ -101,7 +101,7 @@ TEST_F(RangeDataInserterTest, InsertPointCloud) {
   }
 }
 
-TEST_F(RangeDataInserterTest, ProbabilityProgression) {
+TEST_F(RangeDataInserterTest2D, ProbabilityProgression) {
   InsertPointCloud();
   EXPECT_NEAR(
       options_.hit_probability(),
@@ -118,17 +118,17 @@ TEST_F(RangeDataInserterTest, ProbabilityProgression) {
     InsertPointCloud();
   }
   EXPECT_NEAR(
-      mapping::kMaxProbability,
+      kMaxProbability,
       probability_grid_.GetProbability(probability_grid_.limits().GetCellIndex(
           Eigen::Vector2f(-3.5f, 0.5f))),
       1e-3);
   EXPECT_NEAR(
-      mapping::kMinProbability,
+      kMinProbability,
       probability_grid_.GetProbability(probability_grid_.limits().GetCellIndex(
           Eigen::Vector2f(-2.5f, 0.5f))),
       1e-3);
 }
 
 }  // namespace
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

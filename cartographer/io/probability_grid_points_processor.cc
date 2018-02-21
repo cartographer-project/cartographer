@@ -30,7 +30,7 @@ namespace io {
 namespace {
 
 void DrawTrajectoriesIntoImage(
-    const mapping_2d::ProbabilityGrid& probability_grid,
+    const mapping::ProbabilityGrid& probability_grid,
     const Eigen::Array2i& offset,
     const std::vector<mapping::proto::Trajectory>& trajectories,
     cairo_surface_t* cairo_surface) {
@@ -57,7 +57,7 @@ uint8 ProbabilityToColor(float probability_from_grid) {
 
 ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
     const double resolution,
-    const mapping_2d::proto::RangeDataInserterOptions&
+    const mapping::proto::RangeDataInserterOptions2D&
         range_data_inserter_options,
     const DrawTrajectories& draw_trajectories,
     std::unique_ptr<FileWriter> file_writer,
@@ -82,7 +82,7 @@ ProbabilityGridPointsProcessor::FromDictionary(
                                      : DrawTrajectories::kNo;
   return common::make_unique<ProbabilityGridPointsProcessor>(
       dictionary->GetDouble("resolution"),
-      mapping_2d::CreateRangeDataInserterOptions(
+      mapping::CreateRangeDataInserterOptions2D(
           dictionary->GetDictionary("range_data_inserter").get()),
       draw_trajectories,
       file_writer_factory(dictionary->GetString("filename") + ".png"),
@@ -125,9 +125,8 @@ PointsProcessor::FlushResult ProbabilityGridPointsProcessor::Flush() {
 }
 
 std::unique_ptr<Image> DrawProbabilityGrid(
-    const mapping_2d::ProbabilityGrid& probability_grid,
-    Eigen::Array2i* offset) {
-  mapping_2d::CellLimits cell_limits;
+    const mapping::ProbabilityGrid& probability_grid, Eigen::Array2i* offset) {
+  mapping::CellLimits cell_limits;
   probability_grid.ComputeCroppedLimits(offset, &cell_limits);
   if (cell_limits.num_x_cells == 0 || cell_limits.num_y_cells == 0) {
     LOG(WARNING) << "Not writing output: empty probability grid";
@@ -136,7 +135,7 @@ std::unique_ptr<Image> DrawProbabilityGrid(
   auto image = common::make_unique<Image>(cell_limits.num_x_cells,
                                           cell_limits.num_y_cells);
   for (const Eigen::Array2i& xy_index :
-       cartographer::mapping_2d::XYIndexRangeIterator(cell_limits)) {
+       mapping::XYIndexRangeIterator(cell_limits)) {
     const Eigen::Array2i index = xy_index + *offset;
     constexpr uint8 kUnknownValue = 128;
     const uint8 value =
@@ -149,14 +148,14 @@ std::unique_ptr<Image> DrawProbabilityGrid(
   return image;
 }
 
-mapping_2d::ProbabilityGrid CreateProbabilityGrid(const double resolution) {
+mapping::ProbabilityGrid CreateProbabilityGrid(const double resolution) {
   constexpr int kInitialProbabilityGridSize = 100;
   Eigen::Vector2d max =
       0.5 * kInitialProbabilityGridSize * resolution * Eigen::Vector2d::Ones();
-  return mapping_2d::ProbabilityGrid(cartographer::mapping_2d::MapLimits(
-      resolution, max,
-      mapping_2d::CellLimits(kInitialProbabilityGridSize,
-                             kInitialProbabilityGridSize)));
+  return mapping::ProbabilityGrid(
+      mapping::MapLimits(resolution, max,
+                         mapping::CellLimits(kInitialProbabilityGridSize,
+                                             kInitialProbabilityGridSize)));
 }
 
 }  // namespace io

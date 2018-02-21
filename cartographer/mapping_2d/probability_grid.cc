@@ -5,7 +5,7 @@
 #include "cartographer/mapping/probability_values.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace {
 
 // Converts a 'cell_index' into an index into 'cells_'.
@@ -20,7 +20,7 @@ ProbabilityGrid::ProbabilityGrid(const MapLimits& limits)
     : limits_(limits),
       cells_(
           limits_.cell_limits().num_x_cells * limits_.cell_limits().num_y_cells,
-          mapping::kUnknownProbabilityValue) {}
+          kUnknownProbabilityValue) {}
 
 ProbabilityGrid::ProbabilityGrid(const proto::ProbabilityGrid& proto)
     : limits_(proto.limits()), cells_() {
@@ -40,8 +40,8 @@ ProbabilityGrid::ProbabilityGrid(const proto::ProbabilityGrid& proto)
 // Finishes the update sequence.
 void ProbabilityGrid::FinishUpdate() {
   while (!update_indices_.empty()) {
-    DCHECK_GE(cells_[update_indices_.back()], mapping::kUpdateMarker);
-    cells_[update_indices_.back()] -= mapping::kUpdateMarker;
+    DCHECK_GE(cells_[update_indices_.back()], kUpdateMarker);
+    cells_[update_indices_.back()] -= kUpdateMarker;
     update_indices_.pop_back();
   }
 }
@@ -51,8 +51,8 @@ void ProbabilityGrid::FinishUpdate() {
 void ProbabilityGrid::SetProbability(const Eigen::Array2i& cell_index,
                                      const float probability) {
   uint16& cell = cells_[ToFlatIndex(cell_index, limits_)];
-  CHECK_EQ(cell, mapping::kUnknownProbabilityValue);
-  cell = mapping::ProbabilityToValue(probability);
+  CHECK_EQ(cell, kUnknownProbabilityValue);
+  cell = ProbabilityToValue(probability);
   known_cells_box_.extend(cell_index.matrix());
 }
 
@@ -65,15 +65,15 @@ void ProbabilityGrid::SetProbability(const Eigen::Array2i& cell_index,
 // will be set to probability corresponding to 'odds'.
 bool ProbabilityGrid::ApplyLookupTable(const Eigen::Array2i& cell_index,
                                        const std::vector<uint16>& table) {
-  DCHECK_EQ(table.size(), mapping::kUpdateMarker);
+  DCHECK_EQ(table.size(), kUpdateMarker);
   const int flat_index = ToFlatIndex(cell_index, limits_);
   uint16* cell = &cells_[flat_index];
-  if (*cell >= mapping::kUpdateMarker) {
+  if (*cell >= kUpdateMarker) {
     return false;
   }
   update_indices_.push_back(flat_index);
   *cell = table[*cell];
-  DCHECK_GE(*cell, mapping::kUpdateMarker);
+  DCHECK_GE(*cell, kUpdateMarker);
   known_cells_box_.extend(cell_index.matrix());
   return true;
 }
@@ -81,17 +81,15 @@ bool ProbabilityGrid::ApplyLookupTable(const Eigen::Array2i& cell_index,
 // Returns the probability of the cell with 'cell_index'.
 float ProbabilityGrid::GetProbability(const Eigen::Array2i& cell_index) const {
   if (limits_.Contains(cell_index)) {
-    return mapping::ValueToProbability(
-        cells_[ToFlatIndex(cell_index, limits_)]);
+    return ValueToProbability(cells_[ToFlatIndex(cell_index, limits_)]);
   }
-  return mapping::kMinProbability;
+  return kMinProbability;
 }
 
 // Returns true if the probability at the specified index is known.
 bool ProbabilityGrid::IsKnown(const Eigen::Array2i& cell_index) const {
   return limits_.Contains(cell_index) &&
-         cells_[ToFlatIndex(cell_index, limits_)] !=
-             mapping::kUnknownProbabilityValue;
+         cells_[ToFlatIndex(cell_index, limits_)] != kUnknownProbabilityValue;
 }
 
 // Fills in 'offset' and 'limits' to define a subregion of that contains all
@@ -126,7 +124,7 @@ void ProbabilityGrid::GrowLimits(const Eigen::Vector2f& point) {
     const int offset = x_offset + stride * y_offset;
     const int new_size = new_limits.cell_limits().num_x_cells *
                          new_limits.cell_limits().num_y_cells;
-    std::vector<uint16> new_cells(new_size, mapping::kUnknownProbabilityValue);
+    std::vector<uint16> new_cells(new_size, kUnknownProbabilityValue);
     for (int i = 0; i < limits_.cell_limits().num_y_cells; ++i) {
       for (int j = 0; j < limits_.cell_limits().num_x_cells; ++j) {
         new_cells[offset + j + i * stride] =
@@ -143,7 +141,7 @@ void ProbabilityGrid::GrowLimits(const Eigen::Vector2f& point) {
 
 proto::ProbabilityGrid ProbabilityGrid::ToProto() const {
   proto::ProbabilityGrid result;
-  *result.mutable_limits() = cartographer::mapping_2d::ToProto(limits_);
+  *result.mutable_limits() = mapping::ToProto(limits_);
   result.mutable_cells()->Reserve(cells_.size());
   for (const auto& cell : cells_) {
     result.mutable_cells()->Add(cell);
@@ -160,5 +158,5 @@ proto::ProbabilityGrid ProbabilityGrid::ToProto() const {
   return result;
 }
 
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

@@ -27,7 +27,7 @@ LocalSlamResultData::LocalSlamResultData(const std::string& sensor_id,
 LocalSlamResult2D::LocalSlamResult2D(
     const std::string& sensor_id, common::Time time,
     std::shared_ptr<const mapping::TrajectoryNode::Data> node_data,
-    const std::vector<std::shared_ptr<const mapping_2d::Submap>>&
+    const std::vector<std::shared_ptr<const mapping::Submap2D>>&
         insertion_submaps)
     : LocalSlamResultData(sensor_id, time),
       node_data_(node_data),

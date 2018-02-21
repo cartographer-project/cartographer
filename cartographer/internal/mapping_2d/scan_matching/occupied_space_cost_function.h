@@ -36,7 +36,7 @@ class OccupiedSpaceCostFunction {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor, const sensor::PointCloud& point_cloud,
-      const ProbabilityGrid& probability_grid) {
+      const mapping::ProbabilityGrid& probability_grid) {
     return new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction,
                                            ceres::DYNAMIC /* residuals */,
                                            3 /* pose variables */>(
@@ -55,7 +55,7 @@ class OccupiedSpaceCostFunction {
 
     const GridArrayAdapter adapter(probability_grid_);
     ceres::BiCubicInterpolator<GridArrayAdapter> interpolator(adapter);
-    const MapLimits& limits = probability_grid_.limits();
+    const mapping::MapLimits& limits = probability_grid_.limits();
 
     for (size_t i = 0; i < point_cloud_.size(); ++i) {
       // Note that this is a 2D point. The third component is a scaling factor.
@@ -79,7 +79,7 @@ class OccupiedSpaceCostFunction {
    public:
     enum { DATA_DIMENSION = 1 };
 
-    explicit GridArrayAdapter(const ProbabilityGrid& probability_grid)
+    explicit GridArrayAdapter(const mapping::ProbabilityGrid& probability_grid)
         : probability_grid_(probability_grid) {}
 
     void GetValue(const int row, const int column, double* const value) const {
@@ -103,12 +103,12 @@ class OccupiedSpaceCostFunction {
     }
 
    private:
-    const ProbabilityGrid& probability_grid_;
+    const mapping::ProbabilityGrid& probability_grid_;
   };
 
   OccupiedSpaceCostFunction(const double scaling_factor,
                             const sensor::PointCloud& point_cloud,
-                            const ProbabilityGrid& probability_grid)
+                            const mapping::ProbabilityGrid& probability_grid)
       : scaling_factor_(scaling_factor),
         point_cloud_(point_cloud),
         probability_grid_(probability_grid) {}
@@ -119,7 +119,7 @@ class OccupiedSpaceCostFunction {
 
   const double scaling_factor_;
   const sensor::PointCloud& point_cloud_;
-  const ProbabilityGrid& probability_grid_;
+  const mapping::ProbabilityGrid& probability_grid_;
 };
 
 }  // namespace scan_matching

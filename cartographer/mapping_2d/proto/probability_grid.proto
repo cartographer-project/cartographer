@@ -16,7 +16,7 @@ syntax = "proto3";
 
 import "cartographer/mapping_2d/proto/map_limits.proto";
 
-package cartographer.mapping_2d.proto;
+package cartographer.mapping.proto;
 
 message ProbabilityGrid {
   message CellBox {
