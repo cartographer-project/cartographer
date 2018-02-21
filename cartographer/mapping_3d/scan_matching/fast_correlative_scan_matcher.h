@@ -57,8 +57,8 @@ class FastCorrelativeScanMatcher {
   };
 
   FastCorrelativeScanMatcher(
-      const HybridGrid& hybrid_grid,
-      const HybridGrid* low_resolution_hybrid_grid,
+      const mapping::HybridGrid& hybrid_grid,
+      const mapping::HybridGrid* low_resolution_hybrid_grid,
       const std::vector<mapping::TrajectoryNode>& nodes,
       const proto::FastCorrelativeScanMatcherOptions& options);
   ~FastCorrelativeScanMatcher();
@@ -132,7 +132,7 @@ class FastCorrelativeScanMatcher {
   const float resolution_;
   const int width_in_voxels_;
   std::unique_ptr<PrecomputationGridStack> precomputation_grid_stack_;
-  const HybridGrid* const low_resolution_hybrid_grid_;
+  const mapping::HybridGrid* const low_resolution_hybrid_grid_;
   RotationalScanMatcher rotational_scan_matcher_;
 };
 

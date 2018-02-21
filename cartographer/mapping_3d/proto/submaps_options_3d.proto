@@ -14,11 +14,11 @@
 
 syntax = "proto3";
 
-import "cartographer/mapping_3d/proto/range_data_inserter_options.proto";
+import "cartographer/mapping_3d/proto/range_data_inserter_options_3d.proto";
 
-package cartographer.mapping_3d.proto;
+package cartographer.mapping.proto;
 
-message SubmapsOptions {
+message SubmapsOptions3D {
   // Resolution of the 'high_resolution' map in meters used for local SLAM and
   // loop closure.
   double high_resolution = 1;
@@ -36,5 +36,5 @@ message SubmapsOptions {
   // matched against, then while being matched.
   int32 num_range_data = 2;
 
-  RangeDataInserterOptions range_data_inserter_options = 3;
+  RangeDataInserterOptions3D range_data_inserter_options = 3;
 }

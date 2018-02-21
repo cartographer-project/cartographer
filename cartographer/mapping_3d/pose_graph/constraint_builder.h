@@ -36,7 +36,7 @@
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
-#include "cartographer/mapping_3d/submaps.h"
+#include "cartographer/mapping_3d/submap_3d.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/voxel_filter.h"
@@ -75,7 +75,7 @@ class ConstraintBuilder {
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddConstraint(
-      const mapping::SubmapId& submap_id, const Submap* submap,
+      const mapping::SubmapId& submap_id, const mapping::Submap3D* submap,
       const mapping::NodeId& node_id,
       const mapping::TrajectoryNode::Data* const constant_data,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
@@ -92,7 +92,7 @@ class ConstraintBuilder {
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddGlobalConstraint(
-      const mapping::SubmapId& submap_id, const Submap* submap,
+      const mapping::SubmapId& submap_id, const mapping::Submap3D* submap,
       const mapping::NodeId& node_id,
       const mapping::TrajectoryNode::Data* const constant_data,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
@@ -114,8 +114,8 @@ class ConstraintBuilder {
 
  private:
   struct SubmapScanMatcher {
-    const HybridGrid* high_resolution_hybrid_grid;
-    const HybridGrid* low_resolution_hybrid_grid;
+    const mapping::HybridGrid* high_resolution_hybrid_grid;
+    const mapping::HybridGrid* low_resolution_hybrid_grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher>
         fast_correlative_scan_matcher;
   };
@@ -125,14 +125,14 @@ class ConstraintBuilder {
   void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       const mapping::SubmapId& submap_id,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const Submap* submap, const std::function<void()>& work_item)
+      const mapping::Submap3D* submap, const std::function<void()>& work_item)
       REQUIRES(mutex_);
 
   // Constructs the scan matcher for a 'submap', then schedules its work items.
   void ConstructSubmapScanMatcher(
       const mapping::SubmapId& submap_id,
       const std::vector<mapping::TrajectoryNode>& submap_nodes,
-      const Submap* submap) EXCLUDES(mutex_);
+      const mapping::Submap3D* submap) EXCLUDES(mutex_);
 
   // Returns the scan matcher for a submap, which has to exist.
   const SubmapScanMatcher* GetSubmapScanMatcher(

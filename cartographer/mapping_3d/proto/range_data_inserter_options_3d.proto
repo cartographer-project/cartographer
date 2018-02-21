@@ -14,9 +14,9 @@
 
 syntax = "proto3";
 
-package cartographer.mapping_3d.proto;
+package cartographer.mapping.proto;
 
-message RangeDataInserterOptions {
+message RangeDataInserterOptions3D {
   // Probability change for a hit (this will be converted to odds and therefore
   // must be greater than 0.5).
   double hit_probability = 1;

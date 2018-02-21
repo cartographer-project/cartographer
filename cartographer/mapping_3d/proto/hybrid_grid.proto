@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package cartographer.mapping_3d.proto;
+package cartographer.mapping.proto;
 
 message HybridGrid {
   float resolution = 1;

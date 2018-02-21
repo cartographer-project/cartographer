@@ -22,10 +22,10 @@
 #include "cartographer/common/time.h"
 #include "cartographer/internal/mapping/motion_filter.h"
 #include "cartographer/mapping/pose_extrapolator.h"
-#include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
+#include "cartographer/mapping_3d/proto/local_trajectory_builder_options_3d.pb.h"
 #include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
 #include "cartographer/mapping_3d/scan_matching/real_time_correlative_scan_matcher.h"
-#include "cartographer/mapping_3d/submaps.h"
+#include "cartographer/mapping_3d/submap_3d.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/range_data.h"
@@ -41,7 +41,7 @@ class LocalTrajectoryBuilder {
  public:
   struct InsertionResult {
     std::shared_ptr<const mapping::TrajectoryNode::Data> constant_data;
-    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+    std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps;
   };
   struct MatchingResult {
     common::Time time;
@@ -52,7 +52,7 @@ class LocalTrajectoryBuilder {
   };
 
   explicit LocalTrajectoryBuilder(
-      const proto::LocalTrajectoryBuilderOptions& options);
+      const mapping::proto::LocalTrajectoryBuilderOptions3D& options);
   ~LocalTrajectoryBuilder();
 
   LocalTrajectoryBuilder(const LocalTrajectoryBuilder&) = delete;
@@ -80,8 +80,8 @@ class LocalTrajectoryBuilder {
       const transform::Rigid3d& pose_estimate,
       const Eigen::Quaterniond& gravity_alignment);
 
-  const proto::LocalTrajectoryBuilderOptions options_;
-  ActiveSubmaps active_submaps_;
+  const mapping::proto::LocalTrajectoryBuilderOptions3D options_;
+  mapping::ActiveSubmaps3D active_submaps_;
 
   mapping::MotionFilter motion_filter_;
   std::unique_ptr<scan_matching::RealTimeCorrelativeScanMatcher>

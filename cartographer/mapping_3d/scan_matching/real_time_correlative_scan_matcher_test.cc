@@ -72,7 +72,7 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
     EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 1e-3));
   }
 
-  HybridGrid hybrid_grid_;
+  mapping::HybridGrid hybrid_grid_;
   transform::Rigid3d expected_pose_;
   sensor::PointCloud point_cloud_;
   std::unique_ptr<RealTimeCorrelativeScanMatcher>

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_SUBMAPS_H_
-#define CARTOGRAPHER_MAPPING_3D_SUBMAPS_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_SUBMAP_3D_H_
+#define CARTOGRAPHER_MAPPING_3D_SUBMAP_3D_H_
 
 #include <memory>
 #include <string>
@@ -28,31 +28,30 @@
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
-#include "cartographer/mapping_3d/proto/submaps_options.pb.h"
-#include "cartographer/mapping_3d/range_data_inserter.h"
+#include "cartographer/mapping_3d/proto/submaps_options_3d.pb.h"
+#include "cartographer/mapping_3d/range_data_inserter_3d.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
-proto::SubmapsOptions CreateSubmapsOptions(
+proto::SubmapsOptions3D CreateSubmapsOptions3D(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class Submap : public mapping::Submap {
+class Submap3D : public Submap {
  public:
-  Submap(float high_resolution, float low_resolution,
-         const transform::Rigid3d& local_submap_pose);
-  explicit Submap(const mapping::proto::Submap3D& proto);
+  Submap3D(float high_resolution, float low_resolution,
+           const transform::Rigid3d& local_submap_pose);
+  explicit Submap3D(const proto::Submap3D& proto);
 
-  void ToProto(mapping::proto::Submap* proto,
+  void ToProto(proto::Submap* proto,
                bool include_probability_grid_data) const override;
-  void UpdateFromProto(const mapping::proto::Submap& proto) override;
+  void UpdateFromProto(const proto::Submap& proto) override;
 
-  void ToResponseProto(
-      const transform::Rigid3d& global_submap_pose,
-      mapping::proto::SubmapQuery::Response* response) const override;
+  void ToResponseProto(const transform::Rigid3d& global_submap_pose,
+                       proto::SubmapQuery::Response* response) const override;
 
   const HybridGrid& high_resolution_hybrid_grid() const {
     return *high_resolution_hybrid_grid_;
@@ -64,7 +63,7 @@ class Submap : public mapping::Submap {
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
   void InsertRangeData(const sensor::RangeData& range_data,
-                       const RangeDataInserter& range_data_inserter,
+                       const RangeDataInserter3D& range_data_inserter,
                        int high_resolution_max_range);
   void Finish();
 
@@ -82,12 +81,12 @@ class Submap : public mapping::Submap {
 // considered initialized: the old submap is no longer changed, the "new" submap
 // is now the "old" submap and is used for scan-to-map matching. Moreover, a
 // "new" submap gets created. The "old" submap is forgotten by this object.
-class ActiveSubmaps {
+class ActiveSubmaps3D {
  public:
-  explicit ActiveSubmaps(const proto::SubmapsOptions& options);
+  explicit ActiveSubmaps3D(const proto::SubmapsOptions3D& options);
 
-  ActiveSubmaps(const ActiveSubmaps&) = delete;
-  ActiveSubmaps& operator=(const ActiveSubmaps&) = delete;
+  ActiveSubmaps3D(const ActiveSubmaps3D&) = delete;
+  ActiveSubmaps3D& operator=(const ActiveSubmaps3D&) = delete;
 
   // Returns the index of the newest initialized Submap which can be
   // used for scan-to-map matching.
@@ -99,18 +98,18 @@ class ActiveSubmaps {
   void InsertRangeData(const sensor::RangeData& range_data,
                        const Eigen::Quaterniond& gravity_alignment);
 
-  std::vector<std::shared_ptr<Submap>> submaps() const;
+  std::vector<std::shared_ptr<Submap3D>> submaps() const;
 
  private:
   void AddSubmap(const transform::Rigid3d& local_submap_pose);
 
-  const proto::SubmapsOptions options_;
+  const proto::SubmapsOptions3D options_;
   int matching_submap_index_ = 0;
-  std::vector<std::shared_ptr<Submap>> submaps_;
-  RangeDataInserter range_data_inserter_;
+  std::vector<std::shared_ptr<Submap3D>> submaps_;
+  RangeDataInserter3D range_data_inserter_;
 };
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_SUBMAPS_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_SUBMAP_3D_H_

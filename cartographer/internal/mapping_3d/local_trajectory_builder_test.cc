@@ -23,7 +23,7 @@
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
-#include "cartographer/mapping_3d/local_trajectory_builder_options.h"
+#include "cartographer/mapping_3d/local_trajectory_builder_options_3d.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
@@ -44,7 +44,8 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
 
   void SetUp() override { GenerateBubbles(); }
 
-  proto::LocalTrajectoryBuilderOptions CreateTrajectoryBuilderOptions() {
+  mapping::proto::LocalTrajectoryBuilderOptions3D
+  CreateTrajectoryBuilderOptions3D() {
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
           min_range = 0.5,
@@ -107,7 +108,8 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
           },
         }
         )text");
-    return CreateLocalTrajectoryBuilderOptions(parameter_dictionary.get());
+    return mapping::CreateLocalTrajectoryBuilderOptions3D(
+        parameter_dictionary.get());
   }
 
   void GenerateBubbles() {
@@ -270,7 +272,7 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
 
 TEST_F(LocalTrajectoryBuilderTest, MoveInsideCubeUsingOnlyCeresScanMatcher) {
   local_trajectory_builder_.reset(
-      new LocalTrajectoryBuilder(CreateTrajectoryBuilderOptions()));
+      new LocalTrajectoryBuilder(CreateTrajectoryBuilderOptions3D()));
   VerifyAccuracy(GenerateCorkscrewTrajectory(), 1e-1);
 }
 

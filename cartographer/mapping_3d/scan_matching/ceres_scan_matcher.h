@@ -35,7 +35,7 @@ proto::CeresScanMatcherOptions CreateCeresScanMatcherOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
 using PointCloudAndHybridGridPointers =
-    std::pair<const sensor::PointCloud*, const HybridGrid*>;
+    std::pair<const sensor::PointCloud*, const mapping::HybridGrid*>;
 
 // This scan matcher uses Ceres to align scans with an existing map.
 class CeresScanMatcher {
