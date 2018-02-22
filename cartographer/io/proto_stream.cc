@@ -45,7 +45,6 @@ bool ReadSizeAsLittleEndian(std::istream* in, uint64* size) {
 
 ProtoStreamWriter::ProtoStreamWriter(const std::string& filename)
     : out_(filename, std::ios::out | std::ios::binary) {
-  CHECK(out_.good()) << "Failed to open proto stream '" << filename << "'.";
   WriteSizeAsLittleEndian(kMagic, &out_);
 }
 
