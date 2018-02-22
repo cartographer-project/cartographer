@@ -77,10 +77,7 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
     return nullptr;
   }
 
-  sensor::TimedPointCloud hits =
-      sensor::VoxelFilter(0.5f * options_.voxel_filter_size())
-          .Filter(range_data.returns);
-
+  const sensor::TimedPointCloud& hits = range_data.returns;
   std::vector<transform::Rigid3f> hits_poses;
   hits_poses.reserve(hits.size());
   for (const Eigen::Vector4f& hit : hits) {
