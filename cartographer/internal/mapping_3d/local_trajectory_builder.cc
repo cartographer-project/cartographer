@@ -79,8 +79,8 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
 
   if (num_accumulated_ == 0) {
     first_pose_estimate_ = extrapolator_->ExtrapolatePose(time).cast<float>();
-    // 'accumulated_range_data_.origin' is not used.
-    accumulated_range_data_ = sensor::RangeData{{}, {}, {}};
+    accumulated_range_data_ =
+        sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
   }
 
   const sensor::TimedPointCloud& hits = range_data.returns;
