@@ -78,7 +78,7 @@ class OutlierRemovingPointsProcessor : public PointsProcessor {
   const double voxel_size_;
   PointsProcessor* const next_;
   State state_;
-  mapping_3d::HybridGridBase<VoxelData> voxels_;
+  mapping::HybridGridBase<VoxelData> voxels_;
 };
 
 }  // namespace io

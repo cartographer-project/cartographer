@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/io/proto_stream.h"
+#include "glog/logging.h"
 
 namespace cartographer {
 namespace io {
@@ -71,6 +72,7 @@ ProtoStreamReader::ProtoStreamReader(const std::string& filename)
   if (!ReadSizeAsLittleEndian(&in_, &magic) || magic != kMagic) {
     in_.setstate(std::ios::failbit);
   }
+  CHECK(in_.good()) << "Failed to open proto stream '" << filename << "'.";
 }
 
 bool ProtoStreamReader::Read(std::string* decompressed_data) {

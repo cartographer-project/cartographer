@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher.h"
+#include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher_2d.h"
 
 #include "cartographer/sensor/point_cloud.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
@@ -98,5 +98,5 @@ TEST(DiscretizeScans, DiscretizeScans) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer

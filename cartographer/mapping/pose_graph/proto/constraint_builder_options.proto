@@ -16,8 +16,8 @@ syntax = "proto3";
 
 package cartographer.mapping.pose_graph.proto;
 
-import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.proto";
-import "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.proto";
+import "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options_2d.proto";
+import "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options_2d.proto";
 import "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.proto";
 import "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.proto";
 
@@ -48,13 +48,12 @@ message ConstraintBuilderOptions {
   bool log_matches = 8;
 
   // Options for the internally used scan matchers.
-  mapping_2d.scan_matching.proto.FastCorrelativeScanMatcherOptions
+  mapping.scan_matching.proto.FastCorrelativeScanMatcherOptions2D
       fast_correlative_scan_matcher_options = 9;
-  mapping_2d.scan_matching.proto.CeresScanMatcherOptions
+  mapping.scan_matching.proto.CeresScanMatcherOptions2D
       ceres_scan_matcher_options = 11;
   mapping_3d.scan_matching.proto.FastCorrelativeScanMatcherOptions
       fast_correlative_scan_matcher_options_3d = 10;
-
   mapping_3d.scan_matching.proto.CeresScanMatcherOptions
       ceres_scan_matcher_options_3d = 12;
 }

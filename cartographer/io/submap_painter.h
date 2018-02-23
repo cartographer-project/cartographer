@@ -21,9 +21,7 @@
 #include "cairo/cairo.h"
 #include "cartographer/io/image.h"
 #include "cartographer/mapping/id.h"
-#include "cartographer/mapping/proto/submap.pb.h"
-#include "cartographer/mapping_2d/submaps.h"
-#include "cartographer/mapping_3d/submaps.h"
+#include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {

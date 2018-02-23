@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "Eigen/Core"
-#include "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
+#include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/sensor/point_cloud.h"
 
@@ -33,7 +33,7 @@ namespace scan_matching {
 class RealTimeCorrelativeScanMatcher {
  public:
   explicit RealTimeCorrelativeScanMatcher(
-      const mapping_2d::scan_matching::proto::
+      const mapping::scan_matching::proto::
           RealTimeCorrelativeScanMatcherOptions& options);
 
   RealTimeCorrelativeScanMatcher(const RealTimeCorrelativeScanMatcher&) =
@@ -46,17 +46,17 @@ class RealTimeCorrelativeScanMatcher {
   // returns the score.
   float Match(const transform::Rigid3d& initial_pose_estimate,
               const sensor::PointCloud& point_cloud,
-              const HybridGrid& hybrid_grid,
+              const mapping::HybridGrid& hybrid_grid,
               transform::Rigid3d* pose_estimate) const;
 
  private:
   std::vector<transform::Rigid3f> GenerateExhaustiveSearchTransforms(
       float resolution, const sensor::PointCloud& point_cloud) const;
-  float ScoreCandidate(const HybridGrid& hybrid_grid,
+  float ScoreCandidate(const mapping::HybridGrid& hybrid_grid,
                        const sensor::PointCloud& transformed_point_cloud,
                        const transform::Rigid3f& transform) const;
 
-  const mapping_2d::scan_matching::proto::RealTimeCorrelativeScanMatcherOptions
+  const mapping::scan_matching::proto::RealTimeCorrelativeScanMatcherOptions
       options_;
 };
 

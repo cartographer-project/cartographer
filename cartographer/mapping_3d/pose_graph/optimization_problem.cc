@@ -51,6 +51,8 @@ namespace {
 
 using ::cartographer::mapping::pose_graph::CeresPose;
 using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
+using TrajectoryData =
+    ::cartographer::mapping::PoseGraphInterface::TrajectoryData;
 
 // For odometry.
 std::unique_ptr<transform::Rigid3d> Interpolate(
@@ -195,6 +197,11 @@ void OptimizationProblem::AddTrajectoryNode(
   trajectory_data_[trajectory_id];
 }
 
+void OptimizationProblem::SetTrajectoryData(
+    int trajectory_id, const TrajectoryData& trajectory_data) {
+  trajectory_data_[trajectory_id] = trajectory_data;
+}
+
 void OptimizationProblem::InsertTrajectoryNode(
     const mapping::NodeId& node_id, const common::Time time,
     const transform::Rigid3d& local_pose,
@@ -272,7 +279,7 @@ void OptimizationProblem::Solve(
           CeresPose(submap_id_data.data.global_pose,
                     translation_parameterization(),
                     common::make_unique<ceres::AutoDiffLocalParameterization<
-                        ConstantYawQuaternionPlus, 4, 2>>(),
+                        mapping::ConstantYawQuaternionPlus, 4, 2>>(),
                     &problem));
       problem.SetParameterBlockConstant(
           C_submaps.at(submap_id_data.id).translation());
@@ -475,8 +482,9 @@ void OptimizationProblem::Solve(
 
       if (!fixed_frame_pose_initialized) {
         transform::Rigid3d fixed_frame_pose_in_map;
-        if (trajectory_data.fixed_frame.has_value()) {
-          fixed_frame_pose_in_map = trajectory_data.fixed_frame.value();
+        if (trajectory_data.fixed_frame_origin_in_map.has_value()) {
+          fixed_frame_pose_in_map =
+              trajectory_data.fixed_frame_origin_in_map.value();
         } else {
           fixed_frame_pose_in_map =
               node_data.global_pose * constraint_pose.zbar_ij.inverse();
@@ -491,7 +499,7 @@ void OptimizationProblem::Solve(
                         Eigen::Vector3d::UnitZ())),
                 nullptr,
                 common::make_unique<ceres::AutoDiffLocalParameterization<
-                    YawOnlyQuaternionPlus, 4, 1>>(),
+                    mapping::YawOnlyQuaternionPlus, 4, 1>>(),
                 &problem));
         fixed_frame_pose_initialized = true;
       }
@@ -537,7 +545,7 @@ void OptimizationProblem::Solve(
         C_node_id_data.data.ToRigid();
   }
   for (const auto& C_fixed_frame : C_fixed_frames) {
-    trajectory_data_.at(C_fixed_frame.first).fixed_frame =
+    trajectory_data_.at(C_fixed_frame.first).fixed_frame_origin_in_map =
         C_fixed_frame.second.ToRigid();
   }
   for (const auto& C_landmark : C_landmarks) {
@@ -573,6 +581,11 @@ OptimizationProblem::odometry_data() const {
 const sensor::MapByTime<sensor::FixedFramePoseData>&
 OptimizationProblem::fixed_frame_pose_data() const {
   return fixed_frame_pose_data_;
+}
+
+const std::map<int, TrajectoryData>& OptimizationProblem::trajectory_data()
+    const {
+  return trajectory_data_;
 }
 
 transform::Rigid3d OptimizationProblem::ComputeRelativePose(

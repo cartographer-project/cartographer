@@ -19,16 +19,13 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_2d {
+namespace mapping {
 namespace scan_matching {
 
 bool PerformGlobalLocalization(
-    const float cutoff,
-    const cartographer::sensor::AdaptiveVoxelFilter& voxel_filter,
-    const std::vector<
-        cartographer::mapping_2d::scan_matching::FastCorrelativeScanMatcher*>&
-        matchers,
-    const cartographer::sensor::PointCloud& point_cloud,
+    const float cutoff, const sensor::AdaptiveVoxelFilter& voxel_filter,
+    const std::vector<FastCorrelativeScanMatcher2D*>& matchers,
+    const sensor::PointCloud& point_cloud,
     transform::Rigid2d* const best_pose_estimate, float* const best_score) {
   CHECK(best_pose_estimate != nullptr)
       << "Need a non-null output_pose_estimate!";
@@ -57,5 +54,5 @@ bool PerformGlobalLocalization(
 }
 
 }  // namespace scan_matching
-}  // namespace mapping_2d
+}  // namespace mapping
 }  // namespace cartographer
