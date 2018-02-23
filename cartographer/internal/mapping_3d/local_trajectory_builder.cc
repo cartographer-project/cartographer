@@ -78,7 +78,8 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   }
 
   if (num_accumulated_ == 0) {
-    first_pose_estimate_ = extrapolator_->ExtrapolatePose(time).cast<float>();
+    first_pose_estimate_ =
+        extrapolator_->ExtrapolatePose(time_first_point).cast<float>();
     accumulated_range_data_ =
         sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}};
   }
