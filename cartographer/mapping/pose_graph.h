@@ -125,9 +125,6 @@ class PoseGraph : public PoseGraphInterface {
   // Returns the odometry data.
   virtual sensor::MapByTime<sensor::OdometryData> GetOdometryData() = 0;
 
-  // Returns the trajectory data.
-  virtual std::map<int, TrajectoryData> GetTrajectoryData() = 0;
-
   // Returns the fixed frame pose data.
   virtual sensor::MapByTime<sensor::FixedFramePoseData>
   GetFixedFramePoseData() = 0;
