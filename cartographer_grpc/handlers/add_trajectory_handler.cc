@@ -50,7 +50,7 @@ void AddTrajectoryHandler::OnRequest(
     // 'LocalTrajectoryBuilder'.
     trajectory_builder_options.clear_trajectory_builder_2d_options();
     trajectory_builder_options.clear_trajectory_builder_3d_options();
-      
+
     // Don't instantiate the 'PureLocalizationTrimmer' on the server.
     trajectory_builder_options.set_pure_localization(false);
 
