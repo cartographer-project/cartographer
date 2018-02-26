@@ -51,7 +51,7 @@ TEST(LandmarkCostFunction3DTest, SmokeTest) {
           },
           prev_node, next_node));
   std::unique_ptr<ceres::CostFunction> cost_function_observation_from_landmark(
-      LandmarkCostFunction::CreateAutoDiffCostFunction(
+      LandmarkCostFunction3D::CreateAutoDiffCostFunction(
           LandmarkObservation{
               0 /* trajectory ID */,
               common::FromUniversal(5) /* time */,
