@@ -8,8 +8,8 @@
 #include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_batch.h"
 #include "cartographer/io/points_processor.h"
-#include "cartographer/mapping_3d/hybrid_grid.h"
-#include "cartographer/mapping_3d/range_data_inserter_3d.h"
+#include "cartographer/mapping/3d/hybrid_grid.h"
+#include "cartographer/mapping/3d/range_data_inserter_3d.h"
 #include "cartographer/sensor/range_data.h"
 #include "glog/logging.h"
 

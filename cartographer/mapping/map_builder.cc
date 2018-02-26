@@ -24,9 +24,9 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
+#include "cartographer/internal/mapping/2d/local_trajectory_builder_2d.h"
+#include "cartographer/internal/mapping/3d/local_trajectory_builder_3d.h"
 #include "cartographer/internal/mapping/global_trajectory_builder.h"
-#include "cartographer/internal/mapping_2d/local_trajectory_builder_2d.h"
-#include "cartographer/internal/mapping_3d/local_trajectory_builder_3d.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
 #include "cartographer/sensor/collator.h"
 #include "cartographer/sensor/range_data.h"
