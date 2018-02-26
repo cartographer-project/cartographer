@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_
-#define CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_OPTIMIZATION_PROBLEM_3D_H_
+#define CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_OPTIMIZATION_PROBLEM_3D_H_
 
 #include <array>
 #include <map>
@@ -37,34 +37,33 @@
 #include "cartographer/transform/transform_interpolation_buffer.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace pose_graph {
 
-struct NodeData {
-  common::Time time;
-  transform::Rigid3d local_pose;
-  transform::Rigid3d global_pose;
-};
-
-struct SubmapData {
-  transform::Rigid3d global_pose;
-};
-
 // Implements the SPA loop closure method.
-class OptimizationProblem {
+class OptimizationProblem3D {
  public:
-  using Constraint = mapping::PoseGraphInterface::Constraint;
-  using LandmarkNode = mapping::PoseGraphInterface::LandmarkNode;
+  using Constraint = PoseGraphInterface::Constraint;
+  using LandmarkNode = PoseGraphInterface::LandmarkNode;
+
+  struct NodeData {
+    common::Time time;
+    transform::Rigid3d local_pose;
+    transform::Rigid3d global_pose;
+  };
+
+  struct SubmapData {
+    transform::Rigid3d global_pose;
+  };
 
   enum class FixZ { kYes, kNo };
 
-  OptimizationProblem(
-      const mapping::pose_graph::proto::OptimizationProblemOptions& options,
-      FixZ fix_z);
-  ~OptimizationProblem();
+  OptimizationProblem3D(
+      const pose_graph::proto::OptimizationProblemOptions& options, FixZ fix_z);
+  ~OptimizationProblem3D();
 
-  OptimizationProblem(const OptimizationProblem&) = delete;
-  OptimizationProblem& operator=(const OptimizationProblem&) = delete;
+  OptimizationProblem3D(const OptimizationProblem3D&) = delete;
+  OptimizationProblem3D& operator=(const OptimizationProblem3D&) = delete;
 
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
   void AddOdometryData(int trajectory_id,
@@ -77,16 +76,16 @@ class OptimizationProblem {
                          const transform::Rigid3d& global_pose);
   void SetTrajectoryData(
       int trajectory_id,
-      const mapping::PoseGraphInterface::TrajectoryData& trajectory_data);
-  void InsertTrajectoryNode(const mapping::NodeId& node_id, common::Time time,
+      const PoseGraphInterface::TrajectoryData& trajectory_data);
+  void InsertTrajectoryNode(const NodeId& node_id, common::Time time,
                             const transform::Rigid3d& local_pose,
                             const transform::Rigid3d& global_pose);
-  void TrimTrajectoryNode(const mapping::NodeId& node_id);
+  void TrimTrajectoryNode(const NodeId& node_id);
   void AddSubmap(int trajectory_id,
                  const transform::Rigid3d& global_submap_pose);
-  void InsertSubmap(const mapping::SubmapId& submap_id,
+  void InsertSubmap(const SubmapId& submap_id,
                     const transform::Rigid3d& global_submap_pose);
-  void TrimSubmap(const mapping::SubmapId& submap_id);
+  void TrimSubmap(const SubmapId& submap_id);
 
   void SetMaxNumIterations(int32 max_num_iterations);
 
@@ -95,15 +94,15 @@ class OptimizationProblem {
              const std::set<int>& frozen_trajectories,
              const std::map<std::string, LandmarkNode>& landmark_nodes);
 
-  const mapping::MapById<mapping::NodeId, NodeData>& node_data() const;
-  const mapping::MapById<mapping::SubmapId, SubmapData>& submap_data() const;
+  const MapById<NodeId, NodeData>& node_data() const;
+  const MapById<SubmapId, SubmapData>& submap_data() const;
   const std::map<std::string, transform::Rigid3d>& landmark_data() const;
   const sensor::MapByTime<sensor::ImuData>& imu_data() const;
   const sensor::MapByTime<sensor::OdometryData>& odometry_data() const;
   const sensor::MapByTime<sensor::FixedFramePoseData>& fixed_frame_pose_data()
       const;
-  const std::map<int, mapping::PoseGraphInterface::TrajectoryData>&
-  trajectory_data() const;
+  const std::map<int, PoseGraphInterface::TrajectoryData>& trajectory_data()
+      const;
 
  private:
   // Uses odometry if available, otherwise the local SLAM results.
@@ -111,19 +110,19 @@ class OptimizationProblem {
       int trajectory_id, const NodeData& first_node_data,
       const NodeData& second_node_data) const;
 
-  mapping::pose_graph::proto::OptimizationProblemOptions options_;
+  pose_graph::proto::OptimizationProblemOptions options_;
   FixZ fix_z_;
-  mapping::MapById<mapping::NodeId, NodeData> node_data_;
-  mapping::MapById<mapping::SubmapId, SubmapData> submap_data_;
+  MapById<NodeId, NodeData> node_data_;
+  MapById<SubmapId, SubmapData> submap_data_;
   std::map<std::string, transform::Rigid3d> landmark_data_;
   sensor::MapByTime<sensor::ImuData> imu_data_;
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
   sensor::MapByTime<sensor::FixedFramePoseData> fixed_frame_pose_data_;
-  std::map<int, mapping::PoseGraphInterface::TrajectoryData> trajectory_data_;
+  std::map<int, PoseGraphInterface::TrajectoryData> trajectory_data_;
 };
 
 }  // namespace pose_graph
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_OPTIMIZATION_PROBLEM_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_POSE_GRAPH_OPTIMIZATION_PROBLEM_3D_H_

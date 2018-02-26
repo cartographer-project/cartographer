@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/scan_matching/precomputation_grid.h"
+#include "cartographer/mapping_3d/scan_matching/precomputation_grid_3d.h"
 
 #include <algorithm>
 
@@ -24,9 +24,8 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
-
 namespace {
 
 // C++11 defines that integer division rounds towards zero. For index math, we
@@ -47,15 +46,13 @@ Eigen::Array3i CellIndexAtHalfResolution(const Eigen::Array3i& cell_index) {
 
 }  // namespace
 
-PrecomputationGrid ConvertToPrecomputationGrid(
-    const mapping::HybridGrid& hybrid_grid) {
-  PrecomputationGrid result(hybrid_grid.resolution());
-  for (auto it = mapping::HybridGrid::Iterator(hybrid_grid); !it.Done();
-       it.Next()) {
+PrecomputationGrid3D ConvertToPrecomputationGrid(
+    const HybridGrid& hybrid_grid) {
+  PrecomputationGrid3D result(hybrid_grid.resolution());
+  for (auto it = HybridGrid::Iterator(hybrid_grid); !it.Done(); it.Next()) {
     const int cell_value = common::RoundToInt(
-        (mapping::ValueToProbability(it.GetValue()) -
-         mapping::kMinProbability) *
-        (255.f / (mapping::kMaxProbability - mapping::kMinProbability)));
+        (ValueToProbability(it.GetValue()) - kMinProbability) *
+        (255.f / (kMaxProbability - kMinProbability)));
     CHECK_GE(cell_value, 0);
     CHECK_LE(cell_value, 255);
     *result.mutable_value(it.GetCellIndex()) = cell_value;
@@ -63,18 +60,18 @@ PrecomputationGrid ConvertToPrecomputationGrid(
   return result;
 }
 
-PrecomputationGrid PrecomputeGrid(const PrecomputationGrid& grid,
-                                  const bool half_resolution,
-                                  const Eigen::Array3i& shift) {
-  PrecomputationGrid result(grid.resolution());
-  for (auto it = PrecomputationGrid::Iterator(grid); !it.Done(); it.Next()) {
+PrecomputationGrid3D PrecomputeGrid(const PrecomputationGrid3D& grid,
+                                    const bool half_resolution,
+                                    const Eigen::Array3i& shift) {
+  PrecomputationGrid3D result(grid.resolution());
+  for (auto it = PrecomputationGrid3D::Iterator(grid); !it.Done(); it.Next()) {
     for (int i = 0; i != 8; ++i) {
       // We use this value to update 8 values in the resulting grid, at
       // position (x - {0, 'shift'}, y - {0, 'shift'}, z - {0, 'shift'}).
       // If 'shift' is 2 ** (depth - 1), where depth 0 is the original grid,
       // this results in precomputation grids analogous to the 2D case.
       const Eigen::Array3i cell_index =
-          it.GetCellIndex() - shift * PrecomputationGrid::GetOctant(i);
+          it.GetCellIndex() - shift * PrecomputationGrid3D::GetOctant(i);
       auto* const cell_value = result.mutable_value(
           half_resolution ? CellIndexAtHalfResolution(cell_index) : cell_index);
       *cell_value = std::max(it.GetValue(), *cell_value);
@@ -84,5 +81,5 @@ PrecomputationGrid PrecomputeGrid(const PrecomputationGrid& grid,
 }
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/scan_matching/real_time_correlative_scan_matcher.h"
+#include "cartographer/mapping_3d/scan_matching/real_time_correlative_scan_matcher_3d.h"
 
 #include <memory>
 
@@ -29,13 +29,13 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
-class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
+class RealTimeCorrelativeScanMatcher3DTest : public ::testing::Test {
  protected:
-  RealTimeCorrelativeScanMatcherTest()
+  RealTimeCorrelativeScanMatcher3DTest()
       : hybrid_grid_(0.1f),
         expected_pose_(Eigen::Vector3d(-1., 0., 0.),
                        Eigen::Quaterniond::Identity()) {
@@ -57,8 +57,8 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
           rotation_delta_cost_weight = 1.,
         })text");
     real_time_correlative_scan_matcher_.reset(
-        new RealTimeCorrelativeScanMatcher(
-            mapping::scan_matching::CreateRealTimeCorrelativeScanMatcherOptions(
+        new RealTimeCorrelativeScanMatcher3D(
+            CreateRealTimeCorrelativeScanMatcherOptions(
                 parameter_dictionary.get())));
   }
 
@@ -71,46 +71,46 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
     EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 1e-3));
   }
 
-  mapping::HybridGrid hybrid_grid_;
+  HybridGrid hybrid_grid_;
   transform::Rigid3d expected_pose_;
   sensor::PointCloud point_cloud_;
-  std::unique_ptr<RealTimeCorrelativeScanMatcher>
+  std::unique_ptr<RealTimeCorrelativeScanMatcher3D>
       real_time_correlative_scan_matcher_;
 };
 
-TEST_F(RealTimeCorrelativeScanMatcherTest, PerfectEstimate) {
+TEST_F(RealTimeCorrelativeScanMatcher3DTest, PerfectEstimate) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., 0.)));
 }
 
-TEST_F(RealTimeCorrelativeScanMatcherTest, AlongX) {
+TEST_F(RealTimeCorrelativeScanMatcher3DTest, AlongX) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-0.8, 0., 0.)));
 }
 
-TEST_F(RealTimeCorrelativeScanMatcherTest, AlongZ) {
+TEST_F(RealTimeCorrelativeScanMatcher3DTest, AlongZ) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., -0.2)));
 }
 
-TEST_F(RealTimeCorrelativeScanMatcherTest, AlongXYZ) {
+TEST_F(RealTimeCorrelativeScanMatcher3DTest, AlongXYZ) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-0.9, -0.2, 0.2)));
 }
 
-TEST_F(RealTimeCorrelativeScanMatcherTest, RotationAroundX) {
+TEST_F(RealTimeCorrelativeScanMatcher3DTest, RotationAroundX) {
   TestFromInitialPose(transform::Rigid3d(
       Eigen::Vector3d(-1., 0., 0.),
       Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(1., 0., 0.))));
 }
 
-TEST_F(RealTimeCorrelativeScanMatcherTest, RotationAroundY) {
+TEST_F(RealTimeCorrelativeScanMatcher3DTest, RotationAroundY) {
   TestFromInitialPose(transform::Rigid3d(
       Eigen::Vector3d(-1., 0., 0.),
       Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(0., 1., 0.))));
 }
 
-TEST_F(RealTimeCorrelativeScanMatcherTest, RotationAroundYZ) {
+TEST_F(RealTimeCorrelativeScanMatcher3DTest, RotationAroundYZ) {
   TestFromInitialPose(transform::Rigid3d(
       Eigen::Vector3d(-1., 0., 0.),
       Eigen::AngleAxisd(0.8 / 180. * M_PI, Eigen::Vector3d(0., 1., 1.))));
@@ -118,5 +118,5 @@ TEST_F(RealTimeCorrelativeScanMatcherTest, RotationAroundYZ) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

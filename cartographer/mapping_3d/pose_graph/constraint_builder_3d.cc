@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/pose_graph/constraint_builder.h"
+#include "cartographer/mapping_3d/pose_graph/constraint_builder_3d.h"
 
 #include <cmath>
 #include <functional>
@@ -29,8 +29,8 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
-#include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
-#include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
+#include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options_3d.pb.h"
+#include "cartographer/mapping_3d/scan_matching/proto/fast_correlative_scan_matcher_options_3d.pb.h"
 #include "cartographer/metrics/counter.h"
 #include "cartographer/metrics/gauge.h"
 #include "cartographer/metrics/histogram.h"
@@ -38,7 +38,7 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace pose_graph {
 
 static auto* kConstraintsSearchedMetric = metrics::Counter::Null();
@@ -55,15 +55,15 @@ static auto* kGlobalConstraintRotationalScoresMetric =
 static auto* kGlobalConstraintLowResolutionScoresMetric =
     metrics::Histogram::Null();
 
-ConstraintBuilder::ConstraintBuilder(
-    const mapping::pose_graph::proto::ConstraintBuilderOptions& options,
+ConstraintBuilder3D::ConstraintBuilder3D(
+    const proto::ConstraintBuilderOptions& options,
     common::ThreadPool* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
       sampler_(options.sampling_ratio()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options_3d()) {}
 
-ConstraintBuilder::~ConstraintBuilder() {
+ConstraintBuilder3D::~ConstraintBuilder3D() {
   common::MutexLocker locker(&mutex_);
   CHECK_EQ(constraints_.size(), 0) << "WhenDone() was not called";
   CHECK_EQ(pending_computations_.size(), 0);
@@ -71,11 +71,10 @@ ConstraintBuilder::~ConstraintBuilder() {
   CHECK(when_done_ == nullptr);
 }
 
-void ConstraintBuilder::MaybeAddConstraint(
-    const mapping::SubmapId& submap_id, const mapping::Submap3D* const submap,
-    const mapping::NodeId& node_id,
-    const mapping::TrajectoryNode::Data* const constant_data,
-    const std::vector<mapping::TrajectoryNode>& submap_nodes,
+void ConstraintBuilder3D::MaybeAddConstraint(
+    const SubmapId& submap_id, const Submap3D* const submap,
+    const NodeId& node_id, const TrajectoryNode::Data* const constant_data,
+    const std::vector<TrajectoryNode>& submap_nodes,
     const transform::Rigid3d& global_node_pose,
     const transform::Rigid3d& global_submap_pose) {
   if ((global_node_pose.translation() - global_submap_pose.translation())
@@ -99,11 +98,10 @@ void ConstraintBuilder::MaybeAddConstraint(
   }
 }
 
-void ConstraintBuilder::MaybeAddGlobalConstraint(
-    const mapping::SubmapId& submap_id, const mapping::Submap3D* const submap,
-    const mapping::NodeId& node_id,
-    const mapping::TrajectoryNode::Data* const constant_data,
-    const std::vector<mapping::TrajectoryNode>& submap_nodes,
+void ConstraintBuilder3D::MaybeAddGlobalConstraint(
+    const SubmapId& submap_id, const Submap3D* const submap,
+    const NodeId& node_id, const TrajectoryNode::Data* const constant_data,
+    const std::vector<TrajectoryNode>& submap_nodes,
     const Eigen::Quaterniond& global_node_rotation,
     const Eigen::Quaterniond& global_submap_rotation) {
   common::MutexLocker locker(&mutex_);
@@ -122,13 +120,13 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
       });
 }
 
-void ConstraintBuilder::NotifyEndOfNode() {
+void ConstraintBuilder3D::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
   ++current_computation_;
 }
 
-void ConstraintBuilder::WhenDone(
-    const std::function<void(const ConstraintBuilder::Result&)>& callback) {
+void ConstraintBuilder3D::WhenDone(
+    const std::function<void(const ConstraintBuilder3D::Result&)>& callback) {
   common::MutexLocker locker(&mutex_);
   CHECK(when_done_ == nullptr);
   when_done_ =
@@ -139,11 +137,9 @@ void ConstraintBuilder::WhenDone(
       [this, current_computation] { FinishComputation(current_computation); });
 }
 
-void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-    const mapping::SubmapId& submap_id,
-    const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const mapping::Submap3D* const submap,
-    const std::function<void()>& work_item) {
+void ConstraintBuilder3D::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
+    const SubmapId& submap_id, const std::vector<TrajectoryNode>& submap_nodes,
+    const Submap3D* const submap, const std::function<void()>& work_item) {
   if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
       nullptr) {
     thread_pool_->Schedule(work_item);
@@ -157,12 +153,11 @@ void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
   }
 }
 
-void ConstraintBuilder::ConstructSubmapScanMatcher(
-    const mapping::SubmapId& submap_id,
-    const std::vector<mapping::TrajectoryNode>& submap_nodes,
-    const mapping::Submap3D* const submap) {
+void ConstraintBuilder3D::ConstructSubmapScanMatcher(
+    const SubmapId& submap_id, const std::vector<TrajectoryNode>& submap_nodes,
+    const Submap3D* const submap) {
   auto submap_scan_matcher =
-      common::make_unique<scan_matching::FastCorrelativeScanMatcher>(
+      common::make_unique<scan_matching::FastCorrelativeScanMatcher3D>(
           submap->high_resolution_hybrid_grid(),
           &submap->low_resolution_hybrid_grid(), submap_nodes,
           options_.fast_correlative_scan_matcher_options_3d());
@@ -177,8 +172,8 @@ void ConstraintBuilder::ConstructSubmapScanMatcher(
   submap_queued_work_items_.erase(submap_id);
 }
 
-const ConstraintBuilder::SubmapScanMatcher*
-ConstraintBuilder::GetSubmapScanMatcher(const mapping::SubmapId& submap_id) {
+const ConstraintBuilder3D::SubmapScanMatcher*
+ConstraintBuilder3D::GetSubmapScanMatcher(const SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
   const SubmapScanMatcher* submap_scan_matcher =
       &submap_scan_matchers_[submap_id];
@@ -186,10 +181,9 @@ ConstraintBuilder::GetSubmapScanMatcher(const mapping::SubmapId& submap_id) {
   return submap_scan_matcher;
 }
 
-void ConstraintBuilder::ComputeConstraint(
-    const mapping::SubmapId& submap_id, const mapping::NodeId& node_id,
-    bool match_full_submap,
-    const mapping::TrajectoryNode::Data* const constant_data,
+void ConstraintBuilder3D::ComputeConstraint(
+    const SubmapId& submap_id, const NodeId& node_id, bool match_full_submap,
+    const TrajectoryNode::Data* const constant_data,
     const transform::Rigid3d& global_node_pose,
     const transform::Rigid3d& global_submap_pose,
     std::unique_ptr<Constraint>* constraint) {
@@ -199,7 +193,7 @@ void ConstraintBuilder::ComputeConstraint(
   // The 'constraint_transform' (submap i <- node j) is computed from:
   // - a 'high_resolution_point_cloud' in node j and
   // - the initial guess 'initial_pose' (submap i <- node j).
-  std::unique_ptr<scan_matching::FastCorrelativeScanMatcher::Result>
+  std::unique_ptr<scan_matching::FastCorrelativeScanMatcher3D::Result>
       match_result;
 
   // Compute 'pose_estimate' in three stages:
@@ -293,7 +287,7 @@ void ConstraintBuilder::ComputeConstraint(
   }
 }
 
-void ConstraintBuilder::FinishComputation(const int computation_index) {
+void ConstraintBuilder3D::FinishComputation(const int computation_index) {
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
@@ -330,7 +324,7 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
   }
 }
 
-int ConstraintBuilder::GetNumFinishedNodes() {
+int ConstraintBuilder3D::GetNumFinishedNodes() {
   common::MutexLocker locker(&mutex_);
   if (pending_computations_.empty()) {
     return current_computation_;
@@ -338,13 +332,13 @@ int ConstraintBuilder::GetNumFinishedNodes() {
   return pending_computations_.begin()->first;
 }
 
-void ConstraintBuilder::DeleteScanMatcher(const mapping::SubmapId& submap_id) {
+void ConstraintBuilder3D::DeleteScanMatcher(const SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
   CHECK(pending_computations_.empty());
   submap_scan_matchers_.erase(submap_id);
 }
 
-void ConstraintBuilder::RegisterMetrics(metrics::FamilyFactory* factory) {
+void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
   auto* counts = factory->NewCounterFamily(
       "/mapping_3d/pose_graph/constraint_builder/constraints",
       "Constraints computed");
@@ -378,5 +372,5 @@ void ConstraintBuilder::RegisterMetrics(metrics::FamilyFactory* factory) {
 }
 
 }  // namespace pose_graph
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

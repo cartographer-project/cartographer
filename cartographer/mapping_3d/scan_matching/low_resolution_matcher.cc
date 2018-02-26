@@ -17,12 +17,11 @@
 #include "cartographer/mapping_3d/scan_matching/low_resolution_matcher.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 
 std::function<float(const transform::Rigid3f&)> CreateLowResolutionMatcher(
-    const mapping::HybridGrid* low_resolution_grid,
-    const sensor::PointCloud* points) {
+    const HybridGrid* low_resolution_grid, const sensor::PointCloud* points) {
   return [=](const transform::Rigid3f& pose) {
     float score = 0.f;
     for (const Eigen::Vector3f& point :
@@ -36,5 +35,5 @@ std::function<float(const transform::Rigid3f&)> CreateLowResolutionMatcher(
 }
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

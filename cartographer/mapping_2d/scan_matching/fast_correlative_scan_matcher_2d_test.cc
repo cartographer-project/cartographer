@@ -44,12 +44,12 @@ TEST(PrecomputationGridTest, CorrectValues) {
   for (const Eigen::Array2i& xy_index :
        XYIndexRangeIterator(Eigen::Array2i(50, 50), Eigen::Array2i(249, 249))) {
     probability_grid.SetProbability(
-        xy_index, PrecomputationGrid::ToProbability(distribution(prng)));
+        xy_index, PrecomputationGrid2D::ToProbability(distribution(prng)));
   }
 
   std::vector<float> reusable_intermediate_grid;
   for (const int width : {1, 2, 3, 8}) {
-    PrecomputationGrid precomputation_grid(
+    PrecomputationGrid2D precomputation_grid(
         probability_grid, probability_grid.limits().cell_limits(), width,
         &reusable_intermediate_grid);
     for (const Eigen::Array2i& xy_index :
@@ -63,7 +63,7 @@ TEST(PrecomputationGridTest, CorrectValues) {
         }
       }
       EXPECT_NEAR(max_score,
-                  PrecomputationGrid::ToProbability(
+                  PrecomputationGrid2D::ToProbability(
                       precomputation_grid.GetValue(xy_index)),
                   1e-4);
     }
@@ -78,12 +78,12 @@ TEST(PrecomputationGridTest, TinyProbabilityGrid) {
   for (const Eigen::Array2i& xy_index :
        XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
     probability_grid.SetProbability(
-        xy_index, PrecomputationGrid::ToProbability(distribution(prng)));
+        xy_index, PrecomputationGrid2D::ToProbability(distribution(prng)));
   }
 
   std::vector<float> reusable_intermediate_grid;
   for (const int width : {1, 2, 3, 8, 200}) {
-    PrecomputationGrid precomputation_grid(
+    PrecomputationGrid2D precomputation_grid(
         probability_grid, probability_grid.limits().cell_limits(), width,
         &reusable_intermediate_grid);
     for (const Eigen::Array2i& xy_index :
@@ -97,7 +97,7 @@ TEST(PrecomputationGridTest, TinyProbabilityGrid) {
         }
       }
       EXPECT_NEAR(max_score,
-                  PrecomputationGrid::ToProbability(
+                  PrecomputationGrid2D::ToProbability(
                       precomputation_grid.GetValue(xy_index)),
                   1e-4);
     }

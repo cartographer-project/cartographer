@@ -85,9 +85,9 @@ TEST_F(RealTimeCorrelativeScanMatcherTest,
        ScorePerfectHighResolutionCandidate) {
   const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud_, SearchParameters(0, 0, 0., 0.));
-  const std::vector<DiscreteScan> discrete_scans = DiscretizeScans(
+  const std::vector<DiscreteScan2D> discrete_scans = DiscretizeScans(
       probability_grid_.limits(), scans, Eigen::Translation2f::Identity());
-  std::vector<Candidate> candidates;
+  std::vector<Candidate2D> candidates;
   candidates.emplace_back(0, 0, 0, SearchParameters(0, 0, 0., 0.));
   real_time_correlative_scan_matcher_->ScoreCandidates(
       probability_grid_, discrete_scans, SearchParameters(0, 0, 0., 0.),
@@ -103,9 +103,9 @@ TEST_F(RealTimeCorrelativeScanMatcherTest,
        ScorePartiallyCorrectHighResolutionCandidate) {
   const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud_, SearchParameters(0, 0, 0., 0.));
-  const std::vector<DiscreteScan> discrete_scans = DiscretizeScans(
+  const std::vector<DiscreteScan2D> discrete_scans = DiscretizeScans(
       probability_grid_.limits(), scans, Eigen::Translation2f::Identity());
-  std::vector<Candidate> candidates;
+  std::vector<Candidate2D> candidates;
   candidates.emplace_back(0, 0, 1, SearchParameters(0, 0, 0., 0.));
   real_time_correlative_scan_matcher_->ScoreCandidates(
       probability_grid_, discrete_scans, SearchParameters(0, 0, 0., 0.),

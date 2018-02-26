@@ -20,7 +20,7 @@
 #include <memory>
 
 #include "cartographer/internal/mapping_2d/local_trajectory_builder_2d.h"
-#include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
+#include "cartographer/internal/mapping_3d/local_trajectory_builder_3d.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/mapping_2d/pose_graph_2d.h"
@@ -36,8 +36,7 @@ std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder2D(
         local_slam_result_callback);
 
 std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder3D(
-    std::unique_ptr<mapping_3d::LocalTrajectoryBuilder>
-        local_trajectory_builder,
+    std::unique_ptr<LocalTrajectoryBuilder3D> local_trajectory_builder,
     const int trajectory_id, mapping::PoseGraph3D* const pose_graph,
     const TrajectoryBuilderInterface::LocalSlamResultCallback&
         local_slam_result_callback);

@@ -18,7 +18,7 @@
 
 #include "cartographer/internal/mapping/motion_filter.h"
 #include "cartographer/mapping/scan_matching/real_time_correlative_scan_matcher.h"
-#include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
+#include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher_3d.h"
 #include "cartographer/mapping_3d/submap_3d.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "glog/logging.h"
@@ -53,7 +53,7 @@ proto::LocalTrajectoryBuilderOptions3D CreateLocalTrajectoryBuilderOptions3D(
               ->GetDictionary("real_time_correlative_scan_matcher")
               .get());
   *options.mutable_ceres_scan_matcher_options() =
-      mapping_3d::scan_matching::CreateCeresScanMatcherOptions(
+      mapping::scan_matching::CreateCeresScanMatcherOptions3D(
           parameter_dictionary->GetDictionary("ceres_scan_matcher").get());
   *options.mutable_motion_filter_options() = CreateMotionFilterOptions(
       parameter_dictionary->GetDictionary("motion_filter").get());

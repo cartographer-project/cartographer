@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-// A voxel accurate scan matcher, exhaustively evaluating the scan matching
-// search space.
-#ifndef CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
-#define CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_3D_H_
+#define CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_3D_H_
 
 #include <vector>
 
@@ -27,41 +25,42 @@
 #include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 
-class RealTimeCorrelativeScanMatcher {
+// A voxel accurate scan matcher, exhaustively evaluating the scan matching
+// search space.
+class RealTimeCorrelativeScanMatcher3D {
  public:
-  explicit RealTimeCorrelativeScanMatcher(
-      const mapping::scan_matching::proto::
-          RealTimeCorrelativeScanMatcherOptions& options);
+  explicit RealTimeCorrelativeScanMatcher3D(
+      const scan_matching::proto::RealTimeCorrelativeScanMatcherOptions&
+          options);
 
-  RealTimeCorrelativeScanMatcher(const RealTimeCorrelativeScanMatcher&) =
+  RealTimeCorrelativeScanMatcher3D(const RealTimeCorrelativeScanMatcher3D&) =
       delete;
-  RealTimeCorrelativeScanMatcher& operator=(
-      const RealTimeCorrelativeScanMatcher&) = delete;
+  RealTimeCorrelativeScanMatcher3D& operator=(
+      const RealTimeCorrelativeScanMatcher3D&) = delete;
 
   // Aligns 'point_cloud' within the 'hybrid_grid' given an
   // 'initial_pose_estimate' then updates 'pose_estimate' with the result and
   // returns the score.
   float Match(const transform::Rigid3d& initial_pose_estimate,
               const sensor::PointCloud& point_cloud,
-              const mapping::HybridGrid& hybrid_grid,
+              const HybridGrid& hybrid_grid,
               transform::Rigid3d* pose_estimate) const;
 
  private:
   std::vector<transform::Rigid3f> GenerateExhaustiveSearchTransforms(
       float resolution, const sensor::PointCloud& point_cloud) const;
-  float ScoreCandidate(const mapping::HybridGrid& hybrid_grid,
+  float ScoreCandidate(const HybridGrid& hybrid_grid,
                        const sensor::PointCloud& transformed_point_cloud,
                        const transform::Rigid3f& transform) const;
 
-  const mapping::scan_matching::proto::RealTimeCorrelativeScanMatcherOptions
-      options_;
+  const proto::RealTimeCorrelativeScanMatcherOptions options_;
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_3D_H_

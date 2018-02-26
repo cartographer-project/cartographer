@@ -24,15 +24,14 @@
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 
 std::function<float(const transform::Rigid3f&)> CreateLowResolutionMatcher(
-    const mapping::HybridGrid* low_resolution_grid,
-    const sensor::PointCloud* points);
+    const HybridGrid* low_resolution_grid, const sensor::PointCloud* points);
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_LOW_RESOLUTION_MATCHER_H_

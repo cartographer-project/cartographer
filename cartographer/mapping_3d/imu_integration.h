@@ -28,7 +28,7 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
 template <typename T>
 struct IntegrateImuResult {
@@ -92,7 +92,7 @@ IntegrateImuResult<double> IntegrateImu(const RangeType& imu_data,
       start_time, end_time, it);
 }
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_3D_IMU_INTEGRATION_H_

@@ -22,7 +22,7 @@
 #include "cartographer/mapping_3d/hybrid_grid.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 
 // Interpolates between HybridGrid probability voxels. We use the tricubic
@@ -34,7 +34,7 @@ namespace scan_matching {
 // continuously differentiable.
 class InterpolatedGrid {
  public:
-  explicit InterpolatedGrid(const mapping::HybridGrid& hybrid_grid)
+  explicit InterpolatedGrid(const HybridGrid& hybrid_grid)
       : hybrid_grid_(hybrid_grid) {}
 
   InterpolatedGrid(const InterpolatedGrid&) = delete;
@@ -145,11 +145,11 @@ class InterpolatedGrid {
     return CenterOfLowerVoxel(jet_x.a, jet_y.a, jet_z.a);
   }
 
-  const mapping::HybridGrid& hybrid_grid_;
+  const HybridGrid& hybrid_grid_;
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_INTERPOLATED_GRID_H_
