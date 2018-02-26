@@ -305,7 +305,7 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
     }
   }
 
-  // Apply the calculated remapping to constraints in the SparsePoseGraph proto.
+  // Apply the calculated remapping to constraints in the pose graph proto.
   for (auto& constraint_proto : *pose_graph_proto.mutable_constraint()) {
     constraint_proto.mutable_submap_id()->set_trajectory_id(
         trajectory_remapping.at(constraint_proto.submap_id().trajectory_id()));
