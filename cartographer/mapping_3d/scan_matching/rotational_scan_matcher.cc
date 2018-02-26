@@ -190,5 +190,5 @@ std::vector<float> RotationalScanMatcher::Match(
 }
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

@@ -149,7 +149,7 @@ class InterpolatedGrid {
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_INTERPOLATED_GRID_H_
