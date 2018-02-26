@@ -84,8 +84,18 @@ LocalTrajectoryBuilder3D::AddRangeData(
 
   std::vector<transform::Rigid3f> hits_poses;
   hits_poses.reserve(hits.size());
+  bool warned = false;
   for (const Eigen::Vector4f& hit : hits) {
-    const common::Time time_point = time + common::FromSeconds(hit[3]);
+    common::Time time_point = time + common::FromSeconds(hit[3]);
+    if (time_point < extrapolator_->GetLastExtrapolatedTime()) {
+      if (!warned) {
+        LOG(ERROR)
+            << "Timestamp of individual range data point jumps backwards from "
+            << extrapolator_->GetLastExtrapolatedTime() << " to " << time_point;
+        warned = true;
+      }
+      time_point = extrapolator_->GetLastExtrapolatedTime();
+    }
     hits_poses.push_back(
         extrapolator_->ExtrapolatePose(time_point).cast<float>());
   }
