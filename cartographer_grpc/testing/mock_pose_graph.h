@@ -50,6 +50,10 @@ class MockPoseGraph : public cartographer::mapping::PoseGraphInterface {
   MOCK_METHOD0(GetLandmarkPoses,
                std::map<std::string, cartographer::transform::Rigid3d>());
   MOCK_METHOD1(IsTrajectoryFinished, bool(int));
+  MOCK_METHOD0(
+      GetTrajectoryData,
+      std::map<int,
+               cartographer::mapping::PoseGraphInterface::TrajectoryData>());
   MOCK_METHOD0(constraints, std::vector<Constraint>());
   MOCK_METHOD0(ToProto, cartographer::mapping::proto::PoseGraph());
 };

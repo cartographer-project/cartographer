@@ -111,6 +111,9 @@ class PoseGraphInterface {
   // Checks if the given trajectory is finished.
   virtual bool IsTrajectoryFinished(int trajectory_id) = 0;
 
+  // Returns the trajectory data.
+  virtual std::map<int, TrajectoryData> GetTrajectoryData() = 0;
+
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() = 0;
 
