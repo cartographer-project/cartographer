@@ -121,7 +121,8 @@ bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
   LOG(FATAL) << "Not implemented";
 }
 
-std::map<int, cartographer::mapping::PoseGraphInterface::TrajectoryData> PoseGraphStub::GetTrajectoryData() {
+std::map<int, cartographer::mapping::PoseGraphInterface::TrajectoryData>
+PoseGraphStub::GetTrajectoryData() {
   LOG(FATAL) << "Not implemented";
 }
 
