@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// A voxel accurate scan matcher, exhaustively evaluating the scan matching
-// search space.
 #ifndef CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_3D_H_
 #define CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_3D_H_
 
@@ -30,6 +28,8 @@ namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 
+// A voxel accurate scan matcher, exhaustively evaluating the scan matching
+// search space.
 class RealTimeCorrelativeScanMatcher3D {
  public:
   explicit RealTimeCorrelativeScanMatcher3D(

@@ -33,11 +33,11 @@ namespace mapping {
 namespace scan_matching {
 namespace {
 
-class FastCorrelativeScanMatcherTest : public ::testing::Test {
+class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
  protected:
-  FastCorrelativeScanMatcherTest()
+  FastCorrelativeScanMatcher3DTest()
       : range_data_inserter_(CreateRangeDataInserterTestOptions3D()),
-        options_(CreateFastCorrelativeScanMatcherTestOptions3D(5)) {}
+        options_(CreateFastCorrelativeScanMatcher3DTestOptions3D(5)) {}
 
   void SetUp() override {
     point_cloud_ = {
@@ -60,7 +60,7 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
   }
 
   static proto::FastCorrelativeScanMatcherOptions3D
-  CreateFastCorrelativeScanMatcherTestOptions3D(
+  CreateFastCorrelativeScanMatcher3DTestOptions3D(
       const int branch_and_bound_depth) {
     auto parameter_dictionary = common::MakeDictionary(
         "return {"
@@ -134,7 +134,7 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
 
 constexpr float kMinScore = 0.1f;
 
-TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
+TEST_F(FastCorrelativeScanMatcher3DTest, CorrectPoseForMatch) {
   for (int i = 0; i != 20; ++i) {
     const auto expected_pose = GetRandomPose();
 
@@ -163,7 +163,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
   }
 }
 
-TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
+TEST_F(FastCorrelativeScanMatcher3DTest, CorrectPoseForMatchFullSubmap) {
   const auto expected_pose = GetRandomPose();
 
   std::unique_ptr<FastCorrelativeScanMatcher3D> fast_correlative_scan_matcher(

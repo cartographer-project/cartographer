@@ -28,7 +28,7 @@ namespace mapping {
 namespace scan_matching {
 namespace {
 
-TEST(PrecomputedGridGeneratorTest, TestAgainstNaiveAlgorithm) {
+TEST(PrecomputedGridGenerator3DTest, TestAgainstNaiveAlgorithm) {
   HybridGrid hybrid_grid(2.f);
 
   std::mt19937 rng(23847);

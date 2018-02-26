@@ -56,7 +56,8 @@ class RotationDeltaCostFunctor3D {
   }
 
  private:
-  // Constructs a new RotationDeltaCostFunctor from the given 'target_rotation'.
+  // Constructs a new RotationDeltaCostFunctor3D from the given
+  // 'target_rotation'.
   explicit RotationDeltaCostFunctor3D(const double scaling_factor,
                                       const Eigen::Quaterniond& target_rotation)
       : scaling_factor_(scaling_factor) {

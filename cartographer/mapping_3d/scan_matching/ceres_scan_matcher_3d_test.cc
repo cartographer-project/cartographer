@@ -31,9 +31,9 @@ namespace mapping {
 namespace scan_matching {
 namespace {
 
-class CeresScanMatcherTest : public ::testing::Test {
+class CeresScanMatcher3DTest : public ::testing::Test {
  protected:
-  CeresScanMatcherTest()
+  CeresScanMatcher3DTest()
       : hybrid_grid_(1.f),
         expected_pose_(
             transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., 0.))) {
@@ -81,28 +81,28 @@ class CeresScanMatcherTest : public ::testing::Test {
   std::unique_ptr<CeresScanMatcher3D> ceres_scan_matcher_;
 };
 
-TEST_F(CeresScanMatcherTest, PerfectEstimate) {
+TEST_F(CeresScanMatcher3DTest, PerfectEstimate) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., 0.)));
 }
 
-TEST_F(CeresScanMatcherTest, AlongX) {
+TEST_F(CeresScanMatcher3DTest, AlongX) {
   ceres_scan_matcher_.reset(new CeresScanMatcher3D(options_));
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-0.8, 0., 0.)));
 }
 
-TEST_F(CeresScanMatcherTest, AlongZ) {
+TEST_F(CeresScanMatcher3DTest, AlongZ) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., -0.2)));
 }
 
-TEST_F(CeresScanMatcherTest, AlongXYZ) {
+TEST_F(CeresScanMatcher3DTest, AlongXYZ) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-0.9, -0.2, 0.2)));
 }
 
-TEST_F(CeresScanMatcherTest, FullPoseCorrection) {
+TEST_F(CeresScanMatcher3DTest, FullPoseCorrection) {
   // We try to find the rotation around z...
   const auto additional_transform = transform::Rigid3d::Rotation(
       Eigen::AngleAxisd(0.05, Eigen::Vector3d(0., 0., 1.)));

@@ -44,7 +44,7 @@ class TranslationDeltaCostFunctor3D {
   }
 
  private:
-  // Constructs a new TranslationDeltaCostFunctor from the given
+  // Constructs a new TranslationDeltaCostFunctor3D from the given
   // 'target_translation'.
   explicit TranslationDeltaCostFunctor3D(
       const double scaling_factor, const Eigen::Vector3d& target_translation)

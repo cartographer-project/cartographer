@@ -44,7 +44,7 @@ double ComputeRotationDeltaSquaredCost(
   return sum_of_squares;
 }
 
-TEST(RotationDeltaCostFunctorTest, SameRotationGivesZeroCost) {
+TEST(RotationDeltaCostFunctor3DTest, SameRotationGivesZeroCost) {
   EXPECT_NEAR(
       0.,
       ComputeRotationDeltaSquaredCost(Eigen::Quaterniond::Identity(), 1.0,
@@ -57,7 +57,7 @@ TEST(RotationDeltaCostFunctorTest, SameRotationGivesZeroCost) {
               kPrecision);
 }
 
-TEST(RotationDeltaCostFunctorTest, ComputesCorrectCost) {
+TEST(RotationDeltaCostFunctor3DTest, ComputesCorrectCost) {
   double scaling_factor = 1.2;
   double angle = 0.8;
   Eigen::Quaterniond rotation(

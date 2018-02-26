@@ -395,7 +395,7 @@ void OptimizationProblem3D::Solve(
                result_to_first_center.delta_rotation) *
               result_center_to_center.delta_velocity;
           problem.AddResidualBlock(
-              AccelerationCostFunction::CreateAutoDiffCostFunction(
+              AccelerationCostFunction3D::CreateAutoDiffCostFunction(
                   options_.acceleration_weight(), delta_velocity,
                   common::ToSeconds(first_duration),
                   common::ToSeconds(second_duration)),

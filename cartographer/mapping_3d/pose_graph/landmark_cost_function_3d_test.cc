@@ -33,7 +33,7 @@ using ::testing::ElementsAre;
 using LandmarkObservation =
     PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
-TEST(LandmarkCostFunctionTest, SmokeTest) {
+TEST(LandmarkCostFunction3DTest, SmokeTest) {
   OptimizationProblem3D::NodeData prev_node;
   prev_node.time = common::FromUniversal(0);
   OptimizationProblem3D::NodeData next_node;
