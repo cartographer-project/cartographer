@@ -21,11 +21,11 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
-TEST(RotationalScanMatcherTest, OnlySameHistogramIsScoreOne) {
+TEST(RotationalScanMatcher3DTest, OnlySameHistogramIsScoreOne) {
   Eigen::VectorXf histogram(7);
   histogram << 1.f, 43.f, 0.5f, 0.3123f, 23.f, 42.f, 0.f;
   RotationalScanMatcher matcher({{histogram, 0.f}});
@@ -35,7 +35,7 @@ TEST(RotationalScanMatcherTest, OnlySameHistogramIsScoreOne) {
   EXPECT_GT(1.f, scores[1]);
 }
 
-TEST(RotationalScanMatcherTest, InterpolatesAsExpected) {
+TEST(RotationalScanMatcher3DTest, InterpolatesAsExpected) {
   constexpr int kNumBuckets = 10;
   constexpr float kAnglePerBucket = M_PI / kNumBuckets;
   constexpr float kNoInitialRotation = 0.f;
@@ -67,5 +67,5 @@ TEST(RotationalScanMatcherTest, InterpolatesAsExpected) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/scan_matching/precomputation_grid.h"
+#include "cartographer/mapping_3d/scan_matching/precomputation_grid_3d.h"
 
 #include <random>
 #include <tuple>
@@ -24,17 +24,17 @@
 #include "gmock/gmock.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
-TEST(PrecomputedGridGeneratorTest, TestAgainstNaiveAlgorithm) {
-  mapping::HybridGrid hybrid_grid(2.f);
+TEST(PrecomputedGridGenerator3DTest, TestAgainstNaiveAlgorithm) {
+  HybridGrid hybrid_grid(2.f);
 
   std::mt19937 rng(23847);
   std::uniform_int_distribution<int> coordinate_distribution(-50, 49);
-  std::uniform_real_distribution<float> value_distribution(
-      mapping::kMinProbability, mapping::kMaxProbability);
+  std::uniform_real_distribution<float> value_distribution(kMinProbability,
+                                                           kMaxProbability);
   for (int i = 0; i < 1000; ++i) {
     const auto x = coordinate_distribution(rng);
     const auto y = coordinate_distribution(rng);
@@ -43,7 +43,7 @@ TEST(PrecomputedGridGeneratorTest, TestAgainstNaiveAlgorithm) {
     hybrid_grid.SetProbability(cell_index, value_distribution(rng));
   }
 
-  std::vector<PrecomputationGrid> precomputed_grids;
+  std::vector<PrecomputationGrid3D> precomputed_grids;
   for (int depth = 0; depth <= 3; ++depth) {
     if (depth == 0) {
       precomputed_grids.push_back(ConvertToPrecomputationGrid(hybrid_grid));
@@ -69,7 +69,7 @@ TEST(PrecomputedGridGeneratorTest, TestAgainstNaiveAlgorithm) {
       }
 
       EXPECT_NEAR(max_probability,
-                  PrecomputationGrid::ToProbability(
+                  PrecomputationGrid3D::ToProbability(
                       precomputed_grids.back().value(Eigen::Array3i(x, y, z))),
                   1e-2);
     }
@@ -78,5 +78,5 @@ TEST(PrecomputedGridGeneratorTest, TestAgainstNaiveAlgorithm) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

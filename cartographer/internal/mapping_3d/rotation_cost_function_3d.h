@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_ROTATION_COST_FUNCTION_H_
-#define CARTOGRAPHER_INTERNAL_MAPPING_3D_ROTATION_COST_FUNCTION_H_
+#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_ROTATION_COST_FUNCTION_3D_H_
+#define CARTOGRAPHER_INTERNAL_MAPPING_3D_ROTATION_COST_FUNCTION_3D_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
 // Penalizes differences between IMU data and optimized orientations.
 class RotationCostFunction {
@@ -67,7 +67,7 @@ class RotationCostFunction {
   const Eigen::Quaterniond delta_rotation_imu_frame_;
 };
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_ROTATION_COST_FUNCTION_H_
+#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_ROTATION_COST_FUNCTION_3D_H_

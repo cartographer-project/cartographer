@@ -47,11 +47,11 @@ CreateFastCorrelativeScanMatcherOptions2D(
 // A precomputed grid that contains in each cell (x0, y0) the maximum
 // probability in the width x width area defined by x0 <= x < x0 + width and
 // y0 <= y < y0.
-class PrecomputationGrid {
+class PrecomputationGrid2D {
  public:
-  PrecomputationGrid(const ProbabilityGrid& probability_grid,
-                     const CellLimits& limits, int width,
-                     std::vector<float>* reusable_intermediate_grid);
+  PrecomputationGrid2D(const ProbabilityGrid& probability_grid,
+                       const CellLimits& limits, int width,
+                       std::vector<float>* reusable_intermediate_grid);
 
   // Returns a value between 0 and 255 to represent probabilities between
   // kMinProbability and kMaxProbability.
@@ -130,19 +130,19 @@ class FastCorrelativeScanMatcher2D {
       const transform::Rigid2d& initial_pose_estimate,
       const sensor::PointCloud& point_cloud, float min_score, float* score,
       transform::Rigid2d* pose_estimate) const;
-  std::vector<Candidate> ComputeLowestResolutionCandidates(
-      const std::vector<DiscreteScan>& discrete_scans,
+  std::vector<Candidate2D> ComputeLowestResolutionCandidates(
+      const std::vector<DiscreteScan2D>& discrete_scans,
       const SearchParameters& search_parameters) const;
-  std::vector<Candidate> GenerateLowestResolutionCandidates(
+  std::vector<Candidate2D> GenerateLowestResolutionCandidates(
       const SearchParameters& search_parameters) const;
-  void ScoreCandidates(const PrecomputationGrid& precomputation_grid,
-                       const std::vector<DiscreteScan>& discrete_scans,
+  void ScoreCandidates(const PrecomputationGrid2D& precomputation_grid,
+                       const std::vector<DiscreteScan2D>& discrete_scans,
                        const SearchParameters& search_parameters,
-                       std::vector<Candidate>* const candidates) const;
-  Candidate BranchAndBound(const std::vector<DiscreteScan>& discrete_scans,
-                           const SearchParameters& search_parameters,
-                           const std::vector<Candidate>& candidates,
-                           int candidate_depth, float min_score) const;
+                       std::vector<Candidate2D>* const candidates) const;
+  Candidate2D BranchAndBound(const std::vector<DiscreteScan2D>& discrete_scans,
+                             const SearchParameters& search_parameters,
+                             const std::vector<Candidate2D>& candidates,
+                             int candidate_depth, float min_score) const;
 
   const proto::FastCorrelativeScanMatcherOptions2D options_;
   MapLimits limits_;

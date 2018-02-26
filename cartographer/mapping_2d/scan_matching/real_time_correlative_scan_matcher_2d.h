@@ -69,18 +69,18 @@ class RealTimeCorrelativeScanMatcher2D {
                const ProbabilityGrid& probability_grid,
                transform::Rigid2d* pose_estimate) const;
 
-  // Computes the score for each Candidate in a collection. The cost is computed
-  // as the sum of probabilities, different from the Ceres CostFunctions:
-  // http://ceres-solver.org/modeling.html
+  // Computes the score for each Candidate2D in a collection. The cost is
+  // computed as the sum of probabilities, different from the Ceres
+  // CostFunctions: http://ceres-solver.org/modeling.html
   //
   // Visible for testing.
   void ScoreCandidates(const ProbabilityGrid& probability_grid,
-                       const std::vector<DiscreteScan>& discrete_scans,
+                       const std::vector<DiscreteScan2D>& discrete_scans,
                        const SearchParameters& search_parameters,
-                       std::vector<Candidate>* candidates) const;
+                       std::vector<Candidate2D>* candidates) const;
 
  private:
-  std::vector<Candidate> GenerateExhaustiveSearchCandidates(
+  std::vector<Candidate2D> GenerateExhaustiveSearchCandidates(
       const SearchParameters& search_parameters) const;
 
   const proto::RealTimeCorrelativeScanMatcherOptions options_;

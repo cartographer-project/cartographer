@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/scan_matching/real_time_correlative_scan_matcher.h"
+#include "cartographer/mapping_3d/scan_matching/real_time_correlative_scan_matcher_3d.h"
 
 #include <cmath>
 
@@ -24,18 +24,16 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 
-RealTimeCorrelativeScanMatcher::RealTimeCorrelativeScanMatcher(
-    const mapping::scan_matching::proto::RealTimeCorrelativeScanMatcherOptions&
-        options)
+RealTimeCorrelativeScanMatcher3D::RealTimeCorrelativeScanMatcher3D(
+    const proto::RealTimeCorrelativeScanMatcherOptions& options)
     : options_(options) {}
 
-float RealTimeCorrelativeScanMatcher::Match(
+float RealTimeCorrelativeScanMatcher3D::Match(
     const transform::Rigid3d& initial_pose_estimate,
-    const sensor::PointCloud& point_cloud,
-    const mapping::HybridGrid& hybrid_grid,
+    const sensor::PointCloud& point_cloud, const HybridGrid& hybrid_grid,
     transform::Rigid3d* pose_estimate) const {
   CHECK_NOTNULL(pose_estimate);
   float best_score = -1.f;
@@ -55,7 +53,7 @@ float RealTimeCorrelativeScanMatcher::Match(
 }
 
 std::vector<transform::Rigid3f>
-RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchTransforms(
+RealTimeCorrelativeScanMatcher3D::GenerateExhaustiveSearchTransforms(
     const float resolution, const sensor::PointCloud& point_cloud) const {
   std::vector<transform::Rigid3f> result;
   const int linear_window_size =
@@ -96,8 +94,8 @@ RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchTransforms(
   return result;
 }
 
-float RealTimeCorrelativeScanMatcher::ScoreCandidate(
-    const mapping::HybridGrid& hybrid_grid,
+float RealTimeCorrelativeScanMatcher3D::ScoreCandidate(
+    const HybridGrid& hybrid_grid,
     const sensor::PointCloud& transformed_point_cloud,
     const transform::Rigid3f& transform) const {
   float score = 0.f;
@@ -115,5 +113,5 @@ float RealTimeCorrelativeScanMatcher::ScoreCandidate(
 }
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

@@ -23,7 +23,7 @@
 #include "cartographer/common/port.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 
 namespace {
@@ -190,5 +190,5 @@ std::vector<float> RotationalScanMatcher::Match(
 }
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

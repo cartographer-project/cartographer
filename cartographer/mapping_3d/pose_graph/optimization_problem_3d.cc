@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/pose_graph/optimization_problem.h"
+#include "cartographer/mapping_3d/pose_graph/optimization_problem_3d.h"
 
 #include <algorithm>
 #include <array>
@@ -30,12 +30,12 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/time.h"
-#include "cartographer/internal/mapping_3d/acceleration_cost_function.h"
-#include "cartographer/internal/mapping_3d/rotation_cost_function.h"
+#include "cartographer/internal/mapping_3d/acceleration_cost_function_3d.h"
+#include "cartographer/internal/mapping_3d/rotation_cost_function_3d.h"
 #include "cartographer/mapping/pose_graph/ceres_pose.h"
 #include "cartographer/mapping_3d/imu_integration.h"
-#include "cartographer/mapping_3d/pose_graph/landmark_cost_function.h"
-#include "cartographer/mapping_3d/pose_graph/spa_cost_function.h"
+#include "cartographer/mapping_3d/pose_graph/landmark_cost_function_3d.h"
+#include "cartographer/mapping_3d/pose_graph/spa_cost_function_3d.h"
 #include "cartographer/mapping_3d/rotation_parameterization.h"
 #include "cartographer/transform/timestamped_transform.h"
 #include "cartographer/transform/transform.h"
@@ -45,14 +45,15 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace pose_graph {
 namespace {
 
-using ::cartographer::mapping::pose_graph::CeresPose;
 using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
 using TrajectoryData =
     ::cartographer::mapping::PoseGraphInterface::TrajectoryData;
+using NodeData = OptimizationProblem3D::NodeData;
+using SubmapData = OptimizationProblem3D::SubmapData;
 
 // For odometry.
 std::unique_ptr<transform::Rigid3d> Interpolate(
@@ -116,8 +117,8 @@ transform::Rigid3d GetInitialLandmarkPose(
 
 void AddLandmarkCostFunctions(
     const std::map<std::string, LandmarkNode>& landmark_nodes,
-    const mapping::MapById<mapping::NodeId, NodeData>& node_data,
-    mapping::MapById<mapping::NodeId, CeresPose>* C_nodes,
+    const MapById<NodeId, NodeData>& node_data,
+    MapById<NodeId, CeresPose>* C_nodes,
     std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem) {
   for (const auto& landmark_node : landmark_nodes) {
     for (const auto& observation : landmark_node.second.landmark_observations) {
@@ -153,7 +154,7 @@ void AddLandmarkCostFunctions(
                       problem));
       }
       problem->AddResidualBlock(
-          LandmarkCostFunction::CreateAutoDiffCostFunction(
+          LandmarkCostFunction3D::CreateAutoDiffCostFunction(
               observation, prev->data, next->data),
           nullptr /* loss function */, C_nodes->at(prev->id).rotation(),
           C_nodes->at(prev->id).translation(), C_nodes->at(next->id).rotation(),
@@ -166,30 +167,29 @@ void AddLandmarkCostFunctions(
 
 }  // namespace
 
-OptimizationProblem::OptimizationProblem(
-    const mapping::pose_graph::proto::OptimizationProblemOptions& options,
-    FixZ fix_z)
+OptimizationProblem3D::OptimizationProblem3D(
+    const pose_graph::proto::OptimizationProblemOptions& options, FixZ fix_z)
     : options_(options), fix_z_(fix_z) {}
 
-OptimizationProblem::~OptimizationProblem() {}
+OptimizationProblem3D::~OptimizationProblem3D() {}
 
-void OptimizationProblem::AddImuData(const int trajectory_id,
-                                     const sensor::ImuData& imu_data) {
+void OptimizationProblem3D::AddImuData(const int trajectory_id,
+                                       const sensor::ImuData& imu_data) {
   imu_data_.Append(trajectory_id, imu_data);
 }
 
-void OptimizationProblem::AddOdometryData(
+void OptimizationProblem3D::AddOdometryData(
     const int trajectory_id, const sensor::OdometryData& odometry_data) {
   odometry_data_.Append(trajectory_id, odometry_data);
 }
 
-void OptimizationProblem::AddFixedFramePoseData(
+void OptimizationProblem3D::AddFixedFramePoseData(
     const int trajectory_id,
     const sensor::FixedFramePoseData& fixed_frame_pose_data) {
   fixed_frame_pose_data_.Append(trajectory_id, fixed_frame_pose_data);
 }
 
-void OptimizationProblem::AddTrajectoryNode(
+void OptimizationProblem3D::AddTrajectoryNode(
     const int trajectory_id, const common::Time time,
     const transform::Rigid3d& local_pose,
     const transform::Rigid3d& global_pose) {
@@ -197,20 +197,20 @@ void OptimizationProblem::AddTrajectoryNode(
   trajectory_data_[trajectory_id];
 }
 
-void OptimizationProblem::SetTrajectoryData(
+void OptimizationProblem3D::SetTrajectoryData(
     int trajectory_id, const TrajectoryData& trajectory_data) {
   trajectory_data_[trajectory_id] = trajectory_data;
 }
 
-void OptimizationProblem::InsertTrajectoryNode(
-    const mapping::NodeId& node_id, const common::Time time,
+void OptimizationProblem3D::InsertTrajectoryNode(
+    const NodeId& node_id, const common::Time time,
     const transform::Rigid3d& local_pose,
     const transform::Rigid3d& global_pose) {
   node_data_.Insert(node_id, NodeData{time, local_pose, global_pose});
   trajectory_data_[node_id.trajectory_id];
 }
 
-void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
+void OptimizationProblem3D::TrimTrajectoryNode(const NodeId& node_id) {
   imu_data_.Trim(node_data_, node_id);
   odometry_data_.Trim(node_data_, node_id);
   fixed_frame_pose_data_.Trim(node_data_, node_id);
@@ -220,27 +220,27 @@ void OptimizationProblem::TrimTrajectoryNode(const mapping::NodeId& node_id) {
   }
 }
 
-void OptimizationProblem::AddSubmap(
+void OptimizationProblem3D::AddSubmap(
     const int trajectory_id, const transform::Rigid3d& global_submap_pose) {
   submap_data_.Append(trajectory_id, SubmapData{global_submap_pose});
 }
 
-void OptimizationProblem::InsertSubmap(
-    const mapping::SubmapId& submap_id,
-    const transform::Rigid3d& global_submap_pose) {
+void OptimizationProblem3D::InsertSubmap(
+    const SubmapId& submap_id, const transform::Rigid3d& global_submap_pose) {
   submap_data_.Insert(submap_id, SubmapData{global_submap_pose});
 }
 
-void OptimizationProblem::TrimSubmap(const mapping::SubmapId& submap_id) {
+void OptimizationProblem3D::TrimSubmap(const SubmapId& submap_id) {
   submap_data_.Trim(submap_id);
 }
 
-void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
+void OptimizationProblem3D::SetMaxNumIterations(
+    const int32 max_num_iterations) {
   options_.mutable_ceres_solver_options()->set_max_num_iterations(
       max_num_iterations);
 }
 
-void OptimizationProblem::Solve(
+void OptimizationProblem3D::Solve(
     const std::vector<Constraint>& constraints,
     const std::set<int>& frozen_trajectories,
     const std::map<std::string, LandmarkNode>& landmark_nodes) {
@@ -262,9 +262,9 @@ void OptimizationProblem::Solve(
 
   // Set the starting point.
   CHECK(!submap_data_.empty());
-  CHECK(submap_data_.Contains(mapping::SubmapId{0, 0}));
-  mapping::MapById<mapping::SubmapId, CeresPose> C_submaps;
-  mapping::MapById<mapping::NodeId, CeresPose> C_nodes;
+  CHECK(submap_data_.Contains(SubmapId{0, 0}));
+  MapById<SubmapId, CeresPose> C_submaps;
+  MapById<NodeId, CeresPose> C_nodes;
   std::map<std::string, CeresPose> C_landmarks;
   bool first_submap = true;
   for (const auto& submap_id_data : submap_data_) {
@@ -279,7 +279,7 @@ void OptimizationProblem::Solve(
           CeresPose(submap_id_data.data.global_pose,
                     translation_parameterization(),
                     common::make_unique<ceres::AutoDiffLocalParameterization<
-                        mapping::ConstantYawQuaternionPlus, 4, 2>>(),
+                        ConstantYawQuaternionPlus, 4, 2>>(),
                     &problem));
       problem.SetParameterBlockConstant(
           C_submaps.at(submap_id_data.id).translation());
@@ -315,7 +315,7 @@ void OptimizationProblem::Solve(
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
     problem.AddResidualBlock(
-        SpaCostFunction::CreateAutoDiffCostFunction(constraint.pose),
+        SpaCostFunction3D::CreateAutoDiffCostFunction(constraint.pose),
         // Only loop closure constraints should have a loss function.
         constraint.tag == Constraint::INTER_SUBMAP
             ? new ceres::HuberLoss(options_.huber_scale())
@@ -350,10 +350,10 @@ void OptimizationProblem::Solve(
       auto imu_it = imu_data.begin();
       auto prev_node_it = node_it;
       for (++node_it; node_it != trajectory_end; ++node_it) {
-        const mapping::NodeId first_node_id = prev_node_it->id;
+        const NodeId first_node_id = prev_node_it->id;
         const NodeData& first_node_data = prev_node_it->data;
         prev_node_it = node_it;
-        const mapping::NodeId second_node_id = node_it->id;
+        const NodeId second_node_id = node_it->id;
         const NodeData& second_node_data = node_it->data;
 
         if (second_node_id.node_index != first_node_id.node_index + 1) {
@@ -372,7 +372,7 @@ void OptimizationProblem::Solve(
         const auto next_node_it = std::next(node_it);
         if (next_node_it != trajectory_end &&
             next_node_it->id.node_index == second_node_id.node_index + 1) {
-          const mapping::NodeId third_node_id = next_node_it->id;
+          const NodeId third_node_id = next_node_it->id;
           const NodeData& third_node_data = next_node_it->data;
           const common::Time first_time = first_node_data.time;
           const common::Time second_time = second_node_data.time;
@@ -395,7 +395,7 @@ void OptimizationProblem::Solve(
                result_to_first_center.delta_rotation) *
               result_center_to_center.delta_velocity;
           problem.AddResidualBlock(
-              AccelerationCostFunction::CreateAutoDiffCostFunction(
+              AccelerationCostFunction3D::CreateAutoDiffCostFunction(
                   options_.acceleration_weight(), delta_velocity,
                   common::ToSeconds(first_duration),
                   common::ToSeconds(second_duration)),
@@ -430,10 +430,10 @@ void OptimizationProblem::Solve(
 
       auto prev_node_it = node_it;
       for (++node_it; node_it != trajectory_end; ++node_it) {
-        const mapping::NodeId first_node_id = prev_node_it->id;
+        const NodeId first_node_id = prev_node_it->id;
         const NodeData& first_node_data = prev_node_it->data;
         prev_node_it = node_it;
-        const mapping::NodeId second_node_id = node_it->id;
+        const NodeId second_node_id = node_it->id;
         const NodeData& second_node_data = node_it->data;
 
         if (second_node_id.node_index != first_node_id.node_index + 1) {
@@ -443,7 +443,7 @@ void OptimizationProblem::Solve(
         const transform::Rigid3d relative_pose = ComputeRelativePose(
             trajectory_id, first_node_data, second_node_data);
         problem.AddResidualBlock(
-            SpaCostFunction::CreateAutoDiffCostFunction(Constraint::Pose{
+            SpaCostFunction3D::CreateAutoDiffCostFunction(Constraint::Pose{
                 relative_pose, options_.consecutive_node_translation_weight(),
                 options_.consecutive_node_rotation_weight()}),
             nullptr /* loss function */, C_nodes.at(first_node_id).rotation(),
@@ -467,7 +467,7 @@ void OptimizationProblem::Solve(
     const TrajectoryData& trajectory_data = trajectory_data_.at(trajectory_id);
     bool fixed_frame_pose_initialized = false;
     for (; node_it != trajectory_end; ++node_it) {
-      const mapping::NodeId node_id = node_it->id;
+      const NodeId node_id = node_it->id;
       const NodeData& node_data = node_it->data;
 
       const std::unique_ptr<transform::Rigid3d> fixed_frame_pose =
@@ -499,13 +499,13 @@ void OptimizationProblem::Solve(
                         Eigen::Vector3d::UnitZ())),
                 nullptr,
                 common::make_unique<ceres::AutoDiffLocalParameterization<
-                    mapping::YawOnlyQuaternionPlus, 4, 1>>(),
+                    YawOnlyQuaternionPlus, 4, 1>>(),
                 &problem));
         fixed_frame_pose_initialized = true;
       }
 
       problem.AddResidualBlock(
-          SpaCostFunction::CreateAutoDiffCostFunction(constraint_pose),
+          SpaCostFunction3D::CreateAutoDiffCostFunction(constraint_pose),
           nullptr /* loss function */,
           C_fixed_frames.at(trajectory_id).rotation(),
           C_fixed_frames.at(trajectory_id).translation(),
@@ -553,42 +553,41 @@ void OptimizationProblem::Solve(
   }
 }
 
-const mapping::MapById<mapping::NodeId, NodeData>&
-OptimizationProblem::node_data() const {
+const MapById<NodeId, NodeData>& OptimizationProblem3D::node_data() const {
   return node_data_;
 }
 
-const mapping::MapById<mapping::SubmapId, SubmapData>&
-OptimizationProblem::submap_data() const {
+const MapById<SubmapId, SubmapData>& OptimizationProblem3D::submap_data()
+    const {
   return submap_data_;
 }
 
 const std::map<std::string, transform::Rigid3d>&
-OptimizationProblem::landmark_data() const {
+OptimizationProblem3D::landmark_data() const {
   return landmark_data_;
 }
 
-const sensor::MapByTime<sensor::ImuData>& OptimizationProblem::imu_data()
+const sensor::MapByTime<sensor::ImuData>& OptimizationProblem3D::imu_data()
     const {
   return imu_data_;
 }
 
 const sensor::MapByTime<sensor::OdometryData>&
-OptimizationProblem::odometry_data() const {
+OptimizationProblem3D::odometry_data() const {
   return odometry_data_;
 }
 
 const sensor::MapByTime<sensor::FixedFramePoseData>&
-OptimizationProblem::fixed_frame_pose_data() const {
+OptimizationProblem3D::fixed_frame_pose_data() const {
   return fixed_frame_pose_data_;
 }
 
-const std::map<int, TrajectoryData>& OptimizationProblem::trajectory_data()
+const std::map<int, TrajectoryData>& OptimizationProblem3D::trajectory_data()
     const {
   return trajectory_data_;
 }
 
-transform::Rigid3d OptimizationProblem::ComputeRelativePose(
+transform::Rigid3d OptimizationProblem3D::ComputeRelativePose(
     const int trajectory_id, const NodeData& first_node_data,
     const NodeData& second_node_data) const {
   if (odometry_data_.HasTrajectory(trajectory_id)) {
@@ -604,5 +603,5 @@ transform::Rigid3d OptimizationProblem::ComputeRelativePose(
 }
 
 }  // namespace pose_graph
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

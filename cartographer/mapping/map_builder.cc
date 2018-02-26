@@ -26,7 +26,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/internal/mapping/global_trajectory_builder.h"
 #include "cartographer/internal/mapping_2d/local_trajectory_builder_2d.h"
-#include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
+#include "cartographer/internal/mapping_3d/local_trajectory_builder_3d.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
 #include "cartographer/sensor/collator.h"
 #include "cartographer/sensor/range_data.h"
@@ -80,12 +80,10 @@ int MapBuilder::AddTrajectoryBuilder(
     LocalSlamResultCallback local_slam_result_callback) {
   const int trajectory_id = trajectory_builders_.size();
   if (options_.use_trajectory_builder_3d()) {
-    std::unique_ptr<mapping_3d::LocalTrajectoryBuilder>
-        local_trajectory_builder;
+    std::unique_ptr<LocalTrajectoryBuilder3D> local_trajectory_builder;
     if (trajectory_options.has_trajectory_builder_3d_options()) {
-      local_trajectory_builder =
-          common::make_unique<mapping_3d::LocalTrajectoryBuilder>(
-              trajectory_options.trajectory_builder_3d_options());
+      local_trajectory_builder = common::make_unique<LocalTrajectoryBuilder3D>(
+          trajectory_options.trajectory_builder_3d_options());
     }
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(

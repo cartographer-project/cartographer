@@ -17,14 +17,14 @@
 #include "cartographer/metrics/register.h"
 
 #include "cartographer/mapping_2d/pose_graph/constraint_builder_2d.h"
-#include "cartographer/mapping_3d/pose_graph/constraint_builder.h"
+#include "cartographer/mapping_3d/pose_graph/constraint_builder_3d.h"
 
 namespace cartographer {
 namespace metrics {
 
 void RegisterAllMetrics(FamilyFactory* registry) {
   mapping::pose_graph::ConstraintBuilder2D::RegisterMetrics(registry);
-  mapping_3d::pose_graph::ConstraintBuilder::RegisterMetrics(registry);
+  mapping::pose_graph::ConstraintBuilder3D::RegisterMetrics(registry);
 }
 
 }  // namespace metrics

@@ -21,7 +21,7 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
@@ -43,7 +43,7 @@ class InterpolatedGridTest : public ::testing::Test {
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x, y, z)));
   }
 
-  mapping::HybridGrid hybrid_grid_;
+  HybridGrid hybrid_grid_;
   InterpolatedGrid interpolated_grid_;
 };
 
@@ -85,5 +85,5 @@ TEST_F(InterpolatedGridTest, MonotonicBehaviorBetweenGridPointsInX) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

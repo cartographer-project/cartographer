@@ -40,7 +40,7 @@ class PoseGraph2DTest : public ::testing::Test {
   PoseGraph2DTest() : thread_pool_(1) {
     // Builds a wavy, irregularly circular point cloud that is unique
     // rotationally. This gives us good rotational texture and avoids any
-    // possibility of the CeresScanMatcher preferring free space (>
+    // possibility of the CeresScanMatcher2D preferring free space (>
     // kMinProbability) to unknown space (== kMinProbability).
     for (float t = 0.f; t < 2.f * M_PI; t += 0.005f) {
       const float r = (std::sin(20.f * t) + 2.f) * std::sin(t + 2.f);

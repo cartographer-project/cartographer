@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
+#include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher_3d.h"
 
 #include <algorithm>
 #include <cmath>
@@ -29,15 +29,15 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
-class FastCorrelativeScanMatcherTest : public ::testing::Test {
+class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
  protected:
-  FastCorrelativeScanMatcherTest()
-      : range_data_inserter_(CreateRangeDataInserterTestOptions()),
-        options_(CreateFastCorrelativeScanMatcherTestOptions(5)) {}
+  FastCorrelativeScanMatcher3DTest()
+      : range_data_inserter_(CreateRangeDataInserterTestOptions3D()),
+        options_(CreateFastCorrelativeScanMatcher3DTestOptions3D(5)) {}
 
   void SetUp() override {
     point_cloud_ = {
@@ -59,8 +59,8 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
                Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
   }
 
-  static proto::FastCorrelativeScanMatcherOptions
-  CreateFastCorrelativeScanMatcherTestOptions(
+  static proto::FastCorrelativeScanMatcherOptions3D
+  CreateFastCorrelativeScanMatcher3DTestOptions3D(
       const int branch_and_bound_depth) {
     auto parameter_dictionary = common::MakeDictionary(
         "return {"
@@ -78,25 +78,25 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
         "linear_z_search_window = 0.8, "
         "angular_search_window = 0.3, "
         "}");
-    return CreateFastCorrelativeScanMatcherOptions(parameter_dictionary.get());
+    return CreateFastCorrelativeScanMatcherOptions3D(
+        parameter_dictionary.get());
   }
 
   static mapping::proto::RangeDataInserterOptions3D
-  CreateRangeDataInserterTestOptions() {
+  CreateRangeDataInserterTestOptions3D() {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
         "hit_probability = 0.7, "
         "miss_probability = 0.4, "
         "num_free_space_voxels = 5, "
         "}");
-    return mapping::CreateRangeDataInserterOptions3D(
-        parameter_dictionary.get());
+    return CreateRangeDataInserterOptions3D(parameter_dictionary.get());
   }
 
-  std::unique_ptr<FastCorrelativeScanMatcher> GetFastCorrelativeScanMatcher(
-      const proto::FastCorrelativeScanMatcherOptions& options,
+  std::unique_ptr<FastCorrelativeScanMatcher3D> GetFastCorrelativeScanMatcher(
+      const proto::FastCorrelativeScanMatcherOptions3D& options,
       const transform::Rigid3f& pose) {
-    hybrid_grid_ = common::make_unique<mapping::HybridGrid>(0.05f);
+    hybrid_grid_ = common::make_unique<HybridGrid>(0.05f);
     range_data_inserter_.Insert(
         sensor::RangeData{pose.translation(),
                           sensor::TransformPointCloud(point_cloud_, pose),
@@ -104,44 +104,44 @@ class FastCorrelativeScanMatcherTest : public ::testing::Test {
         hybrid_grid_.get());
     hybrid_grid_->FinishUpdate();
 
-    return common::make_unique<FastCorrelativeScanMatcher>(
+    return common::make_unique<FastCorrelativeScanMatcher3D>(
         *hybrid_grid_, hybrid_grid_.get(),
-        std::vector<mapping::TrajectoryNode>(
-            {{std::make_shared<const mapping::TrajectoryNode::Data>(
+        std::vector<TrajectoryNode>(
+            {{std::make_shared<const TrajectoryNode::Data>(
                   CreateConstantData(point_cloud_)),
               pose.cast<double>()}}),
         options);
   }
 
-  mapping::TrajectoryNode::Data CreateConstantData(
+  TrajectoryNode::Data CreateConstantData(
       const sensor::PointCloud& low_resolution_point_cloud) {
-    return mapping::TrajectoryNode::Data{common::FromUniversal(0),
-                                         Eigen::Quaterniond::Identity(),
-                                         {},
-                                         point_cloud_,
-                                         low_resolution_point_cloud,
-                                         Eigen::VectorXf::Zero(10)};
+    return TrajectoryNode::Data{common::FromUniversal(0),
+                                Eigen::Quaterniond::Identity(),
+                                {},
+                                point_cloud_,
+                                low_resolution_point_cloud,
+                                Eigen::VectorXf::Zero(10)};
   }
 
   std::mt19937 prng_ = std::mt19937(42);
   std::uniform_real_distribution<float> distribution_ =
       std::uniform_real_distribution<float>(-1.f, 1.f);
-  mapping::RangeDataInserter3D range_data_inserter_;
-  const proto::FastCorrelativeScanMatcherOptions options_;
+  RangeDataInserter3D range_data_inserter_;
+  const proto::FastCorrelativeScanMatcherOptions3D options_;
   sensor::PointCloud point_cloud_;
-  std::unique_ptr<mapping::HybridGrid> hybrid_grid_;
+  std::unique_ptr<HybridGrid> hybrid_grid_;
 };
 
 constexpr float kMinScore = 0.1f;
 
-TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
+TEST_F(FastCorrelativeScanMatcher3DTest, CorrectPoseForMatch) {
   for (int i = 0; i != 20; ++i) {
     const auto expected_pose = GetRandomPose();
 
-    std::unique_ptr<FastCorrelativeScanMatcher> fast_correlative_scan_matcher(
+    std::unique_ptr<FastCorrelativeScanMatcher3D> fast_correlative_scan_matcher(
         GetFastCorrelativeScanMatcher(options_, expected_pose));
 
-    const std::unique_ptr<FastCorrelativeScanMatcher::Result> result =
+    const std::unique_ptr<FastCorrelativeScanMatcher3D::Result> result =
         fast_correlative_scan_matcher->Match(
             transform::Rigid3d::Identity(), transform::Rigid3d::Identity(),
             CreateConstantData(point_cloud_), kMinScore);
@@ -154,7 +154,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
         << "Actual: " << transform::ToProto(result->pose_estimate).DebugString()
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
 
-    const std::unique_ptr<FastCorrelativeScanMatcher::Result>
+    const std::unique_ptr<FastCorrelativeScanMatcher3D::Result>
         low_resolution_result = fast_correlative_scan_matcher->Match(
             transform::Rigid3d::Identity(), transform::Rigid3d::Identity(),
             CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore);
@@ -163,13 +163,13 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatch) {
   }
 }
 
-TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
+TEST_F(FastCorrelativeScanMatcher3DTest, CorrectPoseForMatchFullSubmap) {
   const auto expected_pose = GetRandomPose();
 
-  std::unique_ptr<FastCorrelativeScanMatcher> fast_correlative_scan_matcher(
+  std::unique_ptr<FastCorrelativeScanMatcher3D> fast_correlative_scan_matcher(
       GetFastCorrelativeScanMatcher(options_, expected_pose));
 
-  const std::unique_ptr<FastCorrelativeScanMatcher::Result> result =
+  const std::unique_ptr<FastCorrelativeScanMatcher3D::Result> result =
       fast_correlative_scan_matcher->MatchFullSubmap(
           Eigen::Quaterniond::Identity(), Eigen::Quaterniond::Identity(),
           CreateConstantData(point_cloud_), kMinScore);
@@ -182,7 +182,7 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
       << "Actual: " << transform::ToProto(result->pose_estimate).DebugString()
       << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
 
-  const std::unique_ptr<FastCorrelativeScanMatcher::Result>
+  const std::unique_ptr<FastCorrelativeScanMatcher3D::Result>
       low_resolution_result = fast_correlative_scan_matcher->MatchFullSubmap(
           Eigen::Quaterniond::Identity(), Eigen::Quaterniond::Identity(),
           CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore);
@@ -192,5 +192,5 @@ TEST_F(FastCorrelativeScanMatcherTest, CorrectPoseForMatchFullSubmap) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

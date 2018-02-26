@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
+#include "cartographer/internal/mapping_3d/local_trajectory_builder_3d.h"
 
 #include <memory>
 
@@ -23,28 +23,29 @@
 #include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options_3d.pb.h"
 #include "cartographer/mapping_3d/proto/submaps_options_3d.pb.h"
-#include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
+#include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options_3d.pb.h"
 #include "cartographer/mapping_3d/scan_matching/rotational_scan_matcher.h"
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
-LocalTrajectoryBuilder::LocalTrajectoryBuilder(
+LocalTrajectoryBuilder3D::LocalTrajectoryBuilder3D(
     const mapping::proto::LocalTrajectoryBuilderOptions3D& options)
     : options_(options),
       active_submaps_(options.submaps_options()),
       motion_filter_(options.motion_filter_options()),
       real_time_correlative_scan_matcher_(
-          common::make_unique<scan_matching::RealTimeCorrelativeScanMatcher>(
+          common::make_unique<scan_matching::RealTimeCorrelativeScanMatcher3D>(
               options_.real_time_correlative_scan_matcher_options())),
-      ceres_scan_matcher_(common::make_unique<scan_matching::CeresScanMatcher>(
-          options_.ceres_scan_matcher_options())),
+      ceres_scan_matcher_(
+          common::make_unique<scan_matching::CeresScanMatcher3D>(
+              options_.ceres_scan_matcher_options())),
       accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}} {}
 
-LocalTrajectoryBuilder::~LocalTrajectoryBuilder() {}
+LocalTrajectoryBuilder3D::~LocalTrajectoryBuilder3D() {}
 
-void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
+void LocalTrajectoryBuilder3D::AddImuData(const sensor::ImuData& imu_data) {
   if (extrapolator_ != nullptr) {
     extrapolator_->AddImuData(imu_data);
     return;
@@ -58,9 +59,9 @@ void LocalTrajectoryBuilder::AddImuData(const sensor::ImuData& imu_data) {
       options_.imu_gravity_time_constant(), imu_data);
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
-LocalTrajectoryBuilder::AddRangeData(const common::Time time,
-                                     const sensor::TimedRangeData& range_data) {
+std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
+LocalTrajectoryBuilder3D::AddRangeData(
+    const common::Time time, const sensor::TimedRangeData& range_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator with our first IMU message, we
     // cannot compute the orientation of the rangefinder.
@@ -130,8 +131,8 @@ LocalTrajectoryBuilder::AddRangeData(const common::Time time,
   return nullptr;
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
-LocalTrajectoryBuilder::AddAccumulatedRangeData(
+std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
+LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     const common::Time time,
     const sensor::RangeData& filtered_range_data_in_tracking) {
   if (filtered_range_data_in_tracking.returns.empty()) {
@@ -199,7 +200,7 @@ LocalTrajectoryBuilder::AddAccumulatedRangeData(
       std::move(insertion_result)});
 }
 
-void LocalTrajectoryBuilder::AddOdometryData(
+void LocalTrajectoryBuilder3D::AddOdometryData(
     const sensor::OdometryData& odometry_data) {
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator we cannot add odometry data.
@@ -209,8 +210,8 @@ void LocalTrajectoryBuilder::AddOdometryData(
   extrapolator_->AddOdometryData(odometry_data);
 }
 
-std::unique_ptr<LocalTrajectoryBuilder::InsertionResult>
-LocalTrajectoryBuilder::InsertIntoSubmap(
+std::unique_ptr<LocalTrajectoryBuilder3D::InsertionResult>
+LocalTrajectoryBuilder3D::InsertIntoSubmap(
     const common::Time time,
     const sensor::RangeData& filtered_range_data_in_local,
     const sensor::RangeData& filtered_range_data_in_tracking,
@@ -249,5 +250,5 @@ LocalTrajectoryBuilder::InsertIntoSubmap(
                       std::move(insertion_submaps)});
 }
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

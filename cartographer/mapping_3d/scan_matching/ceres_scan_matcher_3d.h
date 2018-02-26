@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_CERES_SCAN_MATCHER_H_
-#define CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_CERES_SCAN_MATCHER_H_
+#ifndef CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_CERES_SCAN_MATCHER_3D_H_
+#define CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_CERES_SCAN_MATCHER_3D_H_
 
 #include <utility>
 #include <vector>
@@ -23,27 +23,27 @@
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
-#include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
+#include "cartographer/mapping_3d/scan_matching/proto/ceres_scan_matcher_options_3d.pb.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 
-proto::CeresScanMatcherOptions CreateCeresScanMatcherOptions(
+proto::CeresScanMatcherOptions3D CreateCeresScanMatcherOptions3D(
     common::LuaParameterDictionary* parameter_dictionary);
 
 using PointCloudAndHybridGridPointers =
-    std::pair<const sensor::PointCloud*, const mapping::HybridGrid*>;
+    std::pair<const sensor::PointCloud*, const HybridGrid*>;
 
 // This scan matcher uses Ceres to align scans with an existing map.
-class CeresScanMatcher {
+class CeresScanMatcher3D {
  public:
-  explicit CeresScanMatcher(const proto::CeresScanMatcherOptions& options);
+  explicit CeresScanMatcher3D(const proto::CeresScanMatcherOptions3D& options);
 
-  CeresScanMatcher(const CeresScanMatcher&) = delete;
-  CeresScanMatcher& operator=(const CeresScanMatcher&) = delete;
+  CeresScanMatcher3D(const CeresScanMatcher3D&) = delete;
+  CeresScanMatcher3D& operator=(const CeresScanMatcher3D&) = delete;
 
   // Aligns 'point_clouds' within the 'hybrid_grids' given an
   // 'initial_pose_estimate' and returns a 'pose_estimate' and the solver
@@ -56,12 +56,12 @@ class CeresScanMatcher {
              ceres::Solver::Summary* summary);
 
  private:
-  const proto::CeresScanMatcherOptions options_;
+  const proto::CeresScanMatcherOptions3D options_;
   ceres::Solver::Options ceres_solver_options_;
 };
 
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_CERES_SCAN_MATCHER_H_
+#endif  // CARTOGRAPHER_MAPPING_3D_SCAN_MATCHING_CERES_SCAN_MATCHER_3D_H_

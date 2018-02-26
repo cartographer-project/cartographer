@@ -42,7 +42,7 @@ TEST(SearchParameters, Construction) {
 
 TEST(Candidate, Construction) {
   const SearchParameters search_parameters(4, 5, 0.03, 0.05);
-  const Candidate candidate(3, 4, -5, search_parameters);
+  const Candidate2D candidate(3, 4, -5, search_parameters);
   EXPECT_EQ(3, candidate.scan_index);
   EXPECT_EQ(4, candidate.x_index_offset);
   EXPECT_EQ(-5, candidate.y_index_offset);
@@ -51,7 +51,7 @@ TEST(Candidate, Construction) {
   EXPECT_NEAR(-0.06, candidate.orientation, 1e-9);
   EXPECT_NEAR(0., candidate.score, 1e-9);
 
-  Candidate bigger_candidate(3, 4, 5, search_parameters);
+  Candidate2D bigger_candidate(3, 4, 5, search_parameters);
   bigger_candidate.score = 1.;
   EXPECT_LT(candidate, bigger_candidate);
 }
@@ -83,7 +83,7 @@ TEST(DiscretizeScans, DiscretizeScans) {
                              CellLimits(6, 6));
   const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud, SearchParameters(0, 0, 0., 0.));
-  const std::vector<DiscreteScan> discrete_scans =
+  const std::vector<DiscreteScan2D> discrete_scans =
       DiscretizeScans(map_limits, scans, Eigen::Translation2f::Identity());
   EXPECT_EQ(1, discrete_scans.size());
   EXPECT_EQ(7, discrete_scans[0].size());

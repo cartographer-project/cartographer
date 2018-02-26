@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/internal/mapping_3d/local_trajectory_builder.h"
+#include "cartographer/internal/mapping_3d/local_trajectory_builder_3d.h"
 
 #include <memory>
 #include <random>
@@ -32,7 +32,7 @@
 #include "gmock/gmock.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace {
 
 class LocalTrajectoryBuilderTest : public ::testing::Test {
@@ -253,7 +253,7 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
     for (const TrajectoryNode& node : expected_trajectory) {
       AddLinearOnlyImuObservation(node.time, node.pose);
       const auto range_data = GenerateRangeData(node.pose);
-      const std::unique_ptr<LocalTrajectoryBuilder::MatchingResult>
+      const std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
           matching_result = local_trajectory_builder_->AddRangeData(
               node.time, sensor::TimedRangeData{
                              range_data.origin, range_data.returns, {}});
@@ -266,16 +266,16 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
     }
   }
 
-  std::unique_ptr<LocalTrajectoryBuilder> local_trajectory_builder_;
+  std::unique_ptr<LocalTrajectoryBuilder3D> local_trajectory_builder_;
   std::vector<Eigen::Vector3f> bubbles_;
 };
 
 TEST_F(LocalTrajectoryBuilderTest, MoveInsideCubeUsingOnlyCeresScanMatcher) {
   local_trajectory_builder_.reset(
-      new LocalTrajectoryBuilder(CreateTrajectoryBuilderOptions3D()));
+      new LocalTrajectoryBuilder3D(CreateTrajectoryBuilderOptions3D()));
   VerifyAccuracy(GenerateCorkscrewTrajectory(), 1e-1);
 }
 
 }  // namespace
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_ACCELERATION_COST_FUNCTION_H_
-#define CARTOGRAPHER_INTERNAL_MAPPING_3D_ACCELERATION_COST_FUNCTION_H_
+#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_ACCELERATION_COST_FUNCTION_3D_H_
+#define CARTOGRAPHER_INTERNAL_MAPPING_3D_ACCELERATION_COST_FUNCTION_3D_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 
 // Penalizes differences between IMU data and optimized accelerations.
-class AccelerationCostFunction {
+class AccelerationCostFunction3D {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor,
@@ -32,12 +32,13 @@ class AccelerationCostFunction {
       const double first_delta_time_seconds,
       const double second_delta_time_seconds) {
     return new ceres::AutoDiffCostFunction<
-        AccelerationCostFunction, 3 /* residuals */, 4 /* rotation variables */,
+        AccelerationCostFunction3D, 3 /* residuals */,
+        4 /* rotation variables */, 3 /* position variables */,
         3 /* position variables */, 3 /* position variables */,
-        3 /* position variables */, 1 /* gravity variables */,
-        4 /* rotation variables */>(new AccelerationCostFunction(
-        scaling_factor, delta_velocity_imu_frame, first_delta_time_seconds,
-        second_delta_time_seconds));
+        1 /* gravity variables */, 4 /* rotation variables */>(
+        new AccelerationCostFunction3D(scaling_factor, delta_velocity_imu_frame,
+                                       first_delta_time_seconds,
+                                       second_delta_time_seconds));
   }
 
   template <typename T>
@@ -71,17 +72,18 @@ class AccelerationCostFunction {
   }
 
  private:
-  AccelerationCostFunction(const double scaling_factor,
-                           const Eigen::Vector3d& delta_velocity_imu_frame,
-                           const double first_delta_time_seconds,
-                           const double second_delta_time_seconds)
+  AccelerationCostFunction3D(const double scaling_factor,
+                             const Eigen::Vector3d& delta_velocity_imu_frame,
+                             const double first_delta_time_seconds,
+                             const double second_delta_time_seconds)
       : scaling_factor_(scaling_factor),
         delta_velocity_imu_frame_(delta_velocity_imu_frame),
         first_delta_time_seconds_(first_delta_time_seconds),
         second_delta_time_seconds_(second_delta_time_seconds) {}
 
-  AccelerationCostFunction(const AccelerationCostFunction&) = delete;
-  AccelerationCostFunction& operator=(const AccelerationCostFunction&) = delete;
+  AccelerationCostFunction3D(const AccelerationCostFunction3D&) = delete;
+  AccelerationCostFunction3D& operator=(const AccelerationCostFunction3D&) =
+      delete;
 
   template <typename T>
   static Eigen::Quaternion<T> ToEigen(const T* const quaternion) {
@@ -95,7 +97,7 @@ class AccelerationCostFunction {
   const double second_delta_time_seconds_;
 };
 
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_ACCELERATION_COST_FUNCTION_H_
+#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_ACCELERATION_COST_FUNCTION_3D_H_

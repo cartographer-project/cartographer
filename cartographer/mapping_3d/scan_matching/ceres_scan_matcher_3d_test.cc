@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
+#include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher_3d.h"
 
 #include <memory>
 
@@ -27,13 +27,13 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace mapping_3d {
+namespace mapping {
 namespace scan_matching {
 namespace {
 
-class CeresScanMatcherTest : public ::testing::Test {
+class CeresScanMatcher3DTest : public ::testing::Test {
  protected:
-  CeresScanMatcherTest()
+  CeresScanMatcher3DTest()
       : hybrid_grid_(1.f),
         expected_pose_(
             transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., 0.))) {
@@ -59,8 +59,8 @@ class CeresScanMatcherTest : public ::testing::Test {
             num_threads = 1,
           },
         })text");
-    options_ = CreateCeresScanMatcherOptions(parameter_dictionary.get());
-    ceres_scan_matcher_.reset(new CeresScanMatcher(options_));
+    options_ = CreateCeresScanMatcherOptions3D(parameter_dictionary.get());
+    ceres_scan_matcher_.reset(new CeresScanMatcher3D(options_));
   }
 
   void TestFromInitialPose(const transform::Rigid3d& initial_pose) {
@@ -74,35 +74,35 @@ class CeresScanMatcherTest : public ::testing::Test {
     EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 3e-2));
   }
 
-  mapping::HybridGrid hybrid_grid_;
+  HybridGrid hybrid_grid_;
   transform::Rigid3d expected_pose_;
   sensor::PointCloud point_cloud_;
-  proto::CeresScanMatcherOptions options_;
-  std::unique_ptr<CeresScanMatcher> ceres_scan_matcher_;
+  proto::CeresScanMatcherOptions3D options_;
+  std::unique_ptr<CeresScanMatcher3D> ceres_scan_matcher_;
 };
 
-TEST_F(CeresScanMatcherTest, PerfectEstimate) {
+TEST_F(CeresScanMatcher3DTest, PerfectEstimate) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., 0.)));
 }
 
-TEST_F(CeresScanMatcherTest, AlongX) {
-  ceres_scan_matcher_.reset(new CeresScanMatcher(options_));
+TEST_F(CeresScanMatcher3DTest, AlongX) {
+  ceres_scan_matcher_.reset(new CeresScanMatcher3D(options_));
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-0.8, 0., 0.)));
 }
 
-TEST_F(CeresScanMatcherTest, AlongZ) {
+TEST_F(CeresScanMatcher3DTest, AlongZ) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., -0.2)));
 }
 
-TEST_F(CeresScanMatcherTest, AlongXYZ) {
+TEST_F(CeresScanMatcher3DTest, AlongXYZ) {
   TestFromInitialPose(
       transform::Rigid3d::Translation(Eigen::Vector3d(-0.9, -0.2, 0.2)));
 }
 
-TEST_F(CeresScanMatcherTest, FullPoseCorrection) {
+TEST_F(CeresScanMatcher3DTest, FullPoseCorrection) {
   // We try to find the rotation around z...
   const auto additional_transform = transform::Rigid3d::Rotation(
       Eigen::AngleAxisd(0.05, Eigen::Vector3d(0., 0., 1.)));
@@ -117,5 +117,5 @@ TEST_F(CeresScanMatcherTest, FullPoseCorrection) {
 
 }  // namespace
 }  // namespace scan_matching
-}  // namespace mapping_3d
+}  // namespace mapping
 }  // namespace cartographer

@@ -14,9 +14,9 @@
 
 syntax = "proto3";
 
-package cartographer.mapping_3d.scan_matching.proto;
+package cartographer.mapping.scan_matching.proto;
 
-message FastCorrelativeScanMatcherOptions {
+message FastCorrelativeScanMatcherOptions3D {
   // Number of precomputed grids to use.
   int32 branch_and_bound_depth = 2;
 

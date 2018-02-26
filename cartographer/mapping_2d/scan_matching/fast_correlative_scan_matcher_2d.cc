@@ -87,7 +87,7 @@ CreateFastCorrelativeScanMatcherOptions2D(
   return options;
 }
 
-PrecomputationGrid::PrecomputationGrid(
+PrecomputationGrid2D::PrecomputationGrid2D(
     const ProbabilityGrid& probability_grid, const CellLimits& limits,
     const int width, std::vector<float>* reusable_intermediate_grid)
     : offset_(-width + 1, -width + 1),
@@ -157,7 +157,7 @@ PrecomputationGrid::PrecomputationGrid(
   }
 }
 
-uint8 PrecomputationGrid::ComputeCellValue(const float probability) const {
+uint8 PrecomputationGrid2D::ComputeCellValue(const float probability) const {
   const int cell_value =
       common::RoundToInt((probability - kMinProbability) *
                          (255.f / (kMaxProbability - kMinProbability)));
@@ -185,14 +185,14 @@ class PrecomputationGridStack {
     }
   }
 
-  const PrecomputationGrid& Get(int index) {
+  const PrecomputationGrid2D& Get(int index) {
     return precomputation_grids_[index];
   }
 
   int max_depth() const { return precomputation_grids_.size() - 1; }
 
  private:
-  std::vector<PrecomputationGrid> precomputation_grids_;
+  std::vector<PrecomputationGrid2D> precomputation_grids_;
 };
 
 FastCorrelativeScanMatcher2D::FastCorrelativeScanMatcher2D(
@@ -249,15 +249,15 @@ bool FastCorrelativeScanMatcher2D::MatchWithSearchParameters(
           initial_rotation.cast<float>().angle(), Eigen::Vector3f::UnitZ())));
   const std::vector<sensor::PointCloud> rotated_scans =
       GenerateRotatedScans(rotated_point_cloud, search_parameters);
-  const std::vector<DiscreteScan> discrete_scans = DiscretizeScans(
+  const std::vector<DiscreteScan2D> discrete_scans = DiscretizeScans(
       limits_, rotated_scans,
       Eigen::Translation2f(initial_pose_estimate.translation().x(),
                            initial_pose_estimate.translation().y()));
   search_parameters.ShrinkToFit(discrete_scans, limits_.cell_limits());
 
-  const std::vector<Candidate> lowest_resolution_candidates =
+  const std::vector<Candidate2D> lowest_resolution_candidates =
       ComputeLowestResolutionCandidates(discrete_scans, search_parameters);
-  const Candidate best_candidate = BranchAndBound(
+  const Candidate2D best_candidate = BranchAndBound(
       discrete_scans, search_parameters, lowest_resolution_candidates,
       precomputation_grid_stack_->max_depth(), min_score);
   if (best_candidate.score > min_score) {
@@ -271,11 +271,11 @@ bool FastCorrelativeScanMatcher2D::MatchWithSearchParameters(
   return false;
 }
 
-std::vector<Candidate>
+std::vector<Candidate2D>
 FastCorrelativeScanMatcher2D::ComputeLowestResolutionCandidates(
-    const std::vector<DiscreteScan>& discrete_scans,
+    const std::vector<DiscreteScan2D>& discrete_scans,
     const SearchParameters& search_parameters) const {
-  std::vector<Candidate> lowest_resolution_candidates =
+  std::vector<Candidate2D> lowest_resolution_candidates =
       GenerateLowestResolutionCandidates(search_parameters);
   ScoreCandidates(
       precomputation_grid_stack_->Get(precomputation_grid_stack_->max_depth()),
@@ -283,7 +283,7 @@ FastCorrelativeScanMatcher2D::ComputeLowestResolutionCandidates(
   return lowest_resolution_candidates;
 }
 
-std::vector<Candidate>
+std::vector<Candidate2D>
 FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
     const SearchParameters& search_parameters) const {
   const int linear_step_size = 1 << precomputation_grid_stack_->max_depth();
@@ -301,7 +301,7 @@ FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
     num_candidates += num_lowest_resolution_linear_x_candidates *
                       num_lowest_resolution_linear_y_candidates;
   }
-  std::vector<Candidate> candidates;
+  std::vector<Candidate2D> candidates;
   candidates.reserve(num_candidates);
   for (int scan_index = 0; scan_index != search_parameters.num_scans;
        ++scan_index) {
@@ -322,11 +322,11 @@ FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
 }
 
 void FastCorrelativeScanMatcher2D::ScoreCandidates(
-    const PrecomputationGrid& precomputation_grid,
-    const std::vector<DiscreteScan>& discrete_scans,
+    const PrecomputationGrid2D& precomputation_grid,
+    const std::vector<DiscreteScan2D>& discrete_scans,
     const SearchParameters& search_parameters,
-    std::vector<Candidate>* const candidates) const {
-  for (Candidate& candidate : *candidates) {
+    std::vector<Candidate2D>* const candidates) const {
+  for (Candidate2D& candidate : *candidates) {
     int sum = 0;
     for (const Eigen::Array2i& xy_index :
          discrete_scans[candidate.scan_index]) {
@@ -335,29 +335,30 @@ void FastCorrelativeScanMatcher2D::ScoreCandidates(
           xy_index.y() + candidate.y_index_offset);
       sum += precomputation_grid.GetValue(proposed_xy_index);
     }
-    candidate.score = PrecomputationGrid::ToProbability(
+    candidate.score = PrecomputationGrid2D::ToProbability(
         sum / static_cast<float>(discrete_scans[candidate.scan_index].size()));
   }
-  std::sort(candidates->begin(), candidates->end(), std::greater<Candidate>());
+  std::sort(candidates->begin(), candidates->end(),
+            std::greater<Candidate2D>());
 }
 
-Candidate FastCorrelativeScanMatcher2D::BranchAndBound(
-    const std::vector<DiscreteScan>& discrete_scans,
+Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
+    const std::vector<DiscreteScan2D>& discrete_scans,
     const SearchParameters& search_parameters,
-    const std::vector<Candidate>& candidates, const int candidate_depth,
+    const std::vector<Candidate2D>& candidates, const int candidate_depth,
     float min_score) const {
   if (candidate_depth == 0) {
     // Return the best candidate.
     return *candidates.begin();
   }
 
-  Candidate best_high_resolution_candidate(0, 0, 0, search_parameters);
+  Candidate2D best_high_resolution_candidate(0, 0, 0, search_parameters);
   best_high_resolution_candidate.score = min_score;
-  for (const Candidate& candidate : candidates) {
+  for (const Candidate2D& candidate : candidates) {
     if (candidate.score <= min_score) {
       break;
     }
-    std::vector<Candidate> higher_resolution_candidates;
+    std::vector<Candidate2D> higher_resolution_candidates;
     const int half_width = 1 << (candidate_depth - 1);
     for (int x_offset : {0, half_width}) {
       if (candidate.x_index_offset + x_offset >
