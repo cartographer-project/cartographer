@@ -19,12 +19,12 @@
 
 #include <memory>
 
-#include "cartographer/internal/mapping_2d/local_trajectory_builder_2d.h"
-#include "cartographer/internal/mapping_3d/local_trajectory_builder_3d.h"
+#include "cartographer/internal/mapping/2d/local_trajectory_builder_2d.h"
+#include "cartographer/internal/mapping/3d/local_trajectory_builder_3d.h"
+#include "cartographer/mapping/2d/pose_graph_2d.h"
+#include "cartographer/mapping/3d/pose_graph_3d.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
-#include "cartographer/mapping_2d/pose_graph_2d.h"
-#include "cartographer/mapping_3d/pose_graph_3d.h"
 
 namespace cartographer {
 namespace mapping {

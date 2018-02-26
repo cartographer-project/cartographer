@@ -16,8 +16,8 @@
 
 #include "cartographer/io/submap_painter.h"
 
-#include "cartographer/mapping_2d/submap_2d.h"
-#include "cartographer/mapping_3d/submap_3d.h"
+#include "cartographer/mapping/2d/submap_2d.h"
+#include "cartographer/mapping/3d/submap_3d.h"
 
 namespace cartographer {
 namespace io {
