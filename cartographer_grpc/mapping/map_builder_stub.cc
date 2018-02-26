@@ -130,7 +130,7 @@ void MapBuilderStub::LoadState(
   }
   // Request with an AllTrajectoryBuilderOptions should be second.
   {
-    proto::LoadMapRequest request;
+    proto::LoadStateRequest request;
     CHECK(reader->ReadProto(request.mutable_all_trajectory_builder_options()));
     CHECK(client.Write(request));
   }
