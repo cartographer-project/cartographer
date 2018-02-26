@@ -23,9 +23,9 @@
 #include <set>
 
 #include "cartographer/common/thread_pool.h"
+#include "cartographer/mapping/2d/pose_graph_2d.h"
+#include "cartographer/mapping/3d/pose_graph_3d.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
-#include "cartographer/mapping_2d/pose_graph_2d.h"
-#include "cartographer/mapping_3d/pose_graph_3d.h"
 #include "cartographer/sensor/collator_interface.h"
 
 namespace cartographer {

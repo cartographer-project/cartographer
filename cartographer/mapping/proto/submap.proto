@@ -16,8 +16,8 @@ syntax = "proto3";
 
 package cartographer.mapping.proto;
 
-import "cartographer/mapping_2d/proto/probability_grid.proto";
-import "cartographer/mapping_3d/proto/hybrid_grid.proto";
+import "cartographer/mapping/2d/proto/probability_grid.proto";
+import "cartographer/mapping/3d/proto/hybrid_grid.proto";
 import "cartographer/transform/proto/transform.proto";
 
 // Serialized state of a Submap2D.

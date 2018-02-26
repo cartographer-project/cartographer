@@ -1,0 +1,72 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cartographer.mapping.proto;
+
+import "cartographer/mapping/proto/motion_filter_options.proto";
+import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
+import "cartographer/mapping/2d/proto/submaps_options_2d.proto";
+import "cartographer/mapping/2d/scan_matching/proto/ceres_scan_matcher_options_2d.proto";
+import "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.proto";
+
+message LocalTrajectoryBuilderOptions2D {
+  // Rangefinder points outside these ranges will be dropped.
+  float min_range = 14;
+  float max_range = 15;
+  float min_z = 1;
+  float max_z = 2;
+
+  // Points beyond 'max_range' will be inserted with this length as empty space.
+  float missing_data_ray_length = 16;
+
+  // Number of range data to accumulate into one unwarped, combined range data
+  // to use for scan matching.
+  int32 num_accumulated_range_data = 19;
+
+  // Voxel filter that gets applied to the range data immediately after
+  // cropping.
+  float voxel_filter_size = 3;
+
+  // Voxel filter used to compute a sparser point cloud for matching.
+  sensor.proto.AdaptiveVoxelFilterOptions adaptive_voxel_filter_options = 6;
+
+  // Voxel filter used to compute a sparser point cloud for finding loop
+  // closures.
+  sensor.proto.AdaptiveVoxelFilterOptions
+      loop_closure_adaptive_voxel_filter_options = 20;
+
+  // Whether to solve the online scan matching first using the correlative scan
+  // matcher to generate a good starting point for Ceres.
+  bool use_online_correlative_scan_matching = 5;
+  cartographer.mapping.scan_matching.proto.RealTimeCorrelativeScanMatcherOptions
+      real_time_correlative_scan_matcher_options = 7;
+  cartographer.mapping.scan_matching.proto.CeresScanMatcherOptions2D
+      ceres_scan_matcher_options = 8;
+  MotionFilterOptions motion_filter_options = 13;
+
+  // Time constant in seconds for the orientation moving average based on
+  // observed gravity via the IMU. It should be chosen so that the error
+  // 1. from acceleration measurements not due to gravity (which gets worse when
+  // the constant is reduced) and
+  // 2. from integration of angular velocities (which gets worse when the
+  // constant is increased) is balanced.
+  double imu_gravity_time_constant = 17;
+
+  SubmapsOptions2D submaps_options = 11;
+
+  // True if IMU data should be expected and used.
+  bool use_imu_data = 12;
+}

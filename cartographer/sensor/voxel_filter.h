@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_SENSOR_VOXEL_FILTER_H_
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping_3d/hybrid_grid.h"
+#include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/proto/adaptive_voxel_filter_options.pb.h"
 

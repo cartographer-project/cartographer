@@ -25,8 +25,8 @@
 #include "cartographer/common/math.h"
 #include "cartographer/io/draw_trajectories.h"
 #include "cartographer/io/image.h"
+#include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/mapping/detect_floors.h"
-#include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
