@@ -386,6 +386,7 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
 
   if (load_frozen_state) {
     // Add information about which nodes belong to which submap.
+    // Required for 3D pure localization.
     for (const proto::PoseGraph::Constraint& constraint_proto :
          pose_graph_proto.constraint()) {
       if (constraint_proto.tag() !=
@@ -399,6 +400,9 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
                    constraint_proto.submap_id().submap_index()});
     }
   } else {
+    // When loading unfrozen trajectories, 'AddSerializedConstraints' will
+    // take care of adding information about which nodes belong to which
+    // submap.
     pose_graph_->AddSerializedConstraints(
         FromProto(pose_graph_proto.constraint()));
   }
