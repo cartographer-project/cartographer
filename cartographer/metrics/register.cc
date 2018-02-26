@@ -16,8 +16,8 @@
 
 #include "cartographer/metrics/register.h"
 
-#include "cartographer/mapping_2d/pose_graph/constraint_builder_2d.h"
-#include "cartographer/mapping_3d/pose_graph/constraint_builder_3d.h"
+#include "cartographer/mapping/2d/pose_graph/constraint_builder_2d.h"
+#include "cartographer/mapping/3d/pose_graph/constraint_builder_3d.h"
 
 namespace cartographer {
 namespace metrics {
