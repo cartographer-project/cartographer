@@ -61,7 +61,8 @@ class MapBuilder : public MapBuilderInterface {
   std::string SubmapToProto(const SubmapId& submap_id,
                             proto::SubmapQuery::Response* response) override;
 
-  void SerializeState(io::ProtoStreamWriterInterface* writer) override;
+  void SerializeState(io::ProtoStreamWriterInterface* writer,
+                      const std::set<int> trajectory_ids = {}) override;
 
   void LoadState(io::ProtoStreamReaderInterface* reader,
                  bool load_frozen_state) override;
