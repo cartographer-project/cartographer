@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/internal/mapping/global_trajectory_builder.h"
+#include "cartographer/mapping/internal/global_trajectory_builder.h"
 
 #include <memory>
 
