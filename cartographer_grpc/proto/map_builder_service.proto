@@ -102,8 +102,8 @@ message GetSubmapRequest {
   cartographer.mapping.proto.SubmapId submap_id = 1;
 }
 
-message LoadMapRequest {
-  oneof map_chunk {
+message LoadStateRequest {
+  oneof state_chunk {
     cartographer.mapping.proto.PoseGraph pose_graph = 1;
     cartographer.mapping.proto.AllTrajectoryBuilderOptions
         all_trajectory_builder_options = 2;
@@ -162,8 +162,8 @@ message AddLocalSlamResultDataRequest {
   cartographer.mapping.proto.LocalSlamResultData local_slam_result_data = 2;
 }
 
-message WriteMapResponse {
-  oneof map_chunk {
+message WriteStateResponse {
+  oneof state_chunk {
     cartographer.mapping.proto.PoseGraph pose_graph = 1;
     cartographer.mapping.proto.AllTrajectoryBuilderOptions
         all_trajectory_builder_options = 2;
@@ -234,9 +234,10 @@ service MapBuilderService {
   rpc RunFinalOptimization(google.protobuf.Empty)
       returns (google.protobuf.Empty);
 
-  // Adds map data in the order defined by ProtoStreamReader.
-  rpc LoadMap(stream LoadMapRequest) returns (google.protobuf.Empty);
+  // Adds serialized SLAM state data in the order defined by ProtoStreamReader.
+  rpc LoadState(stream LoadStateRequest) returns (google.protobuf.Empty);
 
-  // Receives map data in the order defined by ProtoStreamWriter.
-  rpc WriteMap(google.protobuf.Empty) returns (stream WriteMapResponse);
+  // Receives serialized SLAM state data in the order defined by
+  // ProtoStreamWriter.
+  rpc WriteState(google.protobuf.Empty) returns (stream WriteStateResponse);
 }

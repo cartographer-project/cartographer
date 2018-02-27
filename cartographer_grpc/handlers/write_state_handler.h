@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_HANDLERS_WRITE_MAP_HANDLER_H
-#define CARTOGRAPHER_GRPC_HANDLERS_WRITE_MAP_HANDLER_H
+#ifndef CARTOGRAPHER_GRPC_HANDLERS_WRITE_STATE_HANDLER_H
+#define CARTOGRAPHER_GRPC_HANDLERS_WRITE_STATE_HANDLER_H
 
 #include "cartographer_grpc/framework/rpc_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
@@ -24,12 +24,12 @@
 namespace cartographer_grpc {
 namespace handlers {
 
-class WriteMapHandler
-    : public framework::RpcHandler<google::protobuf::Empty,
-                                   framework::Stream<proto::WriteMapResponse>> {
+class WriteStateHandler : public framework::RpcHandler<
+                              google::protobuf::Empty,
+                              framework::Stream<proto::WriteStateResponse>> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/WriteMap";
+    return "/cartographer_grpc.proto.MapBuilderService/WriteState";
   }
   void OnRequest(const google::protobuf::Empty& request) override;
 };
@@ -37,4 +37,4 @@ class WriteMapHandler
 }  // namespace handlers
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_HANDLERS_WRITE_MAP_HANDLER_H
+#endif  // CARTOGRAPHER_GRPC_HANDLERS_WRITE_STATE_HANDLER_H

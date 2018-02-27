@@ -455,7 +455,6 @@ void PoseGraph3D::AddSubmapFromProto(
       submap_id,
       pose_graph::OptimizationProblem3D::SubmapData{global_submap_pose});
   AddWorkItem([this, submap_id, global_submap_pose]() REQUIRES(mutex_) {
-    CHECK_EQ(frozen_trajectories_.count(submap_id.trajectory_id), 1);
     submap_data_.at(submap_id).state = SubmapState::kFinished;
     optimization_problem_.InsertSubmap(submap_id, global_submap_pose);
   });
@@ -473,7 +472,6 @@ void PoseGraph3D::AddNodeFromProto(const transform::Rigid3d& global_pose,
   trajectory_nodes_.Insert(node_id, TrajectoryNode{constant_data, global_pose});
 
   AddWorkItem([this, node_id, global_pose]() REQUIRES(mutex_) {
-    CHECK_EQ(frozen_trajectories_.count(node_id.trajectory_id), 1);
     const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
     optimization_problem_.InsertTrajectoryNode(
         node_id, constant_data->time, constant_data->local_pose, global_pose);

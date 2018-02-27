@@ -276,9 +276,11 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
       writer->WriteProto(proto);
     }
   }
+  // TODO(pifon2a, ojura): serialize landmarks
 }
 
-void MapBuilder::LoadMap(io::ProtoStreamReaderInterface* const reader) {
+void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
+                           bool load_frozen_state) {
   proto::PoseGraph pose_graph_proto;
   CHECK(reader->ReadProto(&pose_graph_proto));
   proto::AllTrajectoryBuilderOptions all_builder_options_proto;
@@ -298,7 +300,17 @@ void MapBuilder::LoadMap(io::ProtoStreamReaderInterface* const reader) {
               .second)
         << "Duplicate trajectory ID: " << trajectory_proto.trajectory_id();
     trajectory_proto.set_trajectory_id(new_trajectory_id);
-    pose_graph_->FreezeTrajectory(new_trajectory_id);
+    if (load_frozen_state) {
+      pose_graph_->FreezeTrajectory(new_trajectory_id);
+    }
+  }
+
+  // Apply the calculated remapping to constraints in the pose graph proto.
+  for (auto& constraint_proto : *pose_graph_proto.mutable_constraint()) {
+    constraint_proto.mutable_submap_id()->set_trajectory_id(
+        trajectory_remapping.at(constraint_proto.submap_id().trajectory_id()));
+    constraint_proto.mutable_node_id()->set_trajectory_id(
+        trajectory_remapping.at(constraint_proto.node_id().trajectory_id()));
   }
 
   MapById<SubmapId, transform::Rigid3d> submap_poses;
@@ -348,24 +360,49 @@ void MapBuilder::LoadMap(io::ProtoStreamReaderInterface* const reader) {
           trajectory_remapping.at(proto.trajectory_data().trajectory_id()));
       pose_graph_->SetTrajectoryDataFromProto(proto.trajectory_data());
     }
-    // TODO(ojura): Deserialize IMU, odometry and fixed frame pose data when
-    // loading unfrozen trajectories.
+    if (!load_frozen_state) {
+      if (proto.has_imu_data()) {
+        pose_graph_->AddImuData(
+            trajectory_remapping.at(proto.imu_data().trajectory_id()),
+            sensor::FromProto(proto.imu_data().imu_data()));
+      }
+      if (proto.has_odometry_data()) {
+        pose_graph_->AddOdometryData(
+            trajectory_remapping.at(proto.odometry_data().trajectory_id()),
+            sensor::FromProto(proto.odometry_data().odometry_data()));
+      }
+      if (proto.has_fixed_frame_pose_data()) {
+        pose_graph_->AddFixedFramePoseData(
+            trajectory_remapping.at(
+                proto.fixed_frame_pose_data().trajectory_id()),
+            sensor::FromProto(
+                proto.fixed_frame_pose_data().fixed_frame_pose_data()));
+      }
+      // TODO(pifon2a, ojura): deserialize landmarks
+    }
   }
 
-  // Add information about which nodes belong to which submap.
-  for (const proto::PoseGraph::Constraint& constraint_proto :
-       pose_graph_proto.constraint()) {
-    if (constraint_proto.tag() !=
-        mapping::proto::PoseGraph::Constraint::INTRA_SUBMAP) {
-      continue;
+  if (load_frozen_state) {
+    // Add information about which nodes belong to which submap.
+    // Required for 3D pure localization.
+    for (const proto::PoseGraph::Constraint& constraint_proto :
+         pose_graph_proto.constraint()) {
+      if (constraint_proto.tag() !=
+          mapping::proto::PoseGraph::Constraint::INTRA_SUBMAP) {
+        continue;
+      }
+      pose_graph_->AddNodeToSubmap(
+          NodeId{constraint_proto.node_id().trajectory_id(),
+                 constraint_proto.node_id().node_index()},
+          SubmapId{constraint_proto.submap_id().trajectory_id(),
+                   constraint_proto.submap_id().submap_index()});
     }
-    const NodeId node_id{
-        trajectory_remapping.at(constraint_proto.node_id().trajectory_id()),
-        constraint_proto.node_id().node_index()};
-    const SubmapId submap_id{
-        trajectory_remapping.at(constraint_proto.submap_id().trajectory_id()),
-        constraint_proto.submap_id().submap_index()};
-    pose_graph_->AddNodeToSubmap(node_id, submap_id);
+  } else {
+    // When loading unfrozen trajectories, 'AddSerializedConstraints' will
+    // take care of adding information about which nodes belong to which
+    // submap.
+    pose_graph_->AddSerializedConstraints(
+        FromProto(pose_graph_proto.constraint()));
   }
   CHECK(reader->eof());
 }

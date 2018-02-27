@@ -51,8 +51,8 @@ class InMemoryProtoStreamReader
     : public cartographer::io::ProtoStreamReaderInterface {
  public:
   explicit InMemoryProtoStreamReader(
-      std::queue<std::unique_ptr<google::protobuf::Message>>&& map_chunks)
-      : map_chunks_(std::move(map_chunks)){};
+      std::queue<std::unique_ptr<google::protobuf::Message>>&& state_chunks)
+      : state_chunks_(std::move(state_chunks)){};
   InMemoryProtoStreamReader() = default;
   ~InMemoryProtoStreamReader() = default;
 
@@ -62,14 +62,14 @@ class InMemoryProtoStreamReader
 
   template <typename MessageType>
   void AddProto(const MessageType& proto) {
-    map_chunks_.push(common::make_unique<MessageType>(proto));
+    state_chunks_.push(common::make_unique<MessageType>(proto));
   }
 
   bool ReadProto(google::protobuf::Message* proto) override;
-  bool eof() const override { return map_chunks_.empty(); }
+  bool eof() const override { return state_chunks_.empty(); }
 
  private:
-  std::queue<std::unique_ptr<google::protobuf::Message>> map_chunks_;
+  std::queue<std::unique_ptr<google::protobuf::Message>> state_chunks_;
 };
 
 }  // namespace io

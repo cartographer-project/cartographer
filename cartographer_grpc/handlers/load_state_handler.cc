@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer_grpc/handlers/load_map_handler.h"
+#include "cartographer_grpc/handlers/load_state_handler.h"
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/io/in_memory_proto_stream.h"
@@ -26,24 +26,25 @@
 namespace cartographer_grpc {
 namespace handlers {
 
-void LoadMapHandler::OnRequest(const proto::LoadMapRequest& request) {
-  switch (request.map_chunk_case()) {
-    case proto::LoadMapRequest::kPoseGraph:
+void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
+  switch (request.state_chunk_case()) {
+    case proto::LoadStateRequest::kPoseGraph:
       reader_.AddProto(request.pose_graph());
       break;
-    case proto::LoadMapRequest::kAllTrajectoryBuilderOptions:
+    case proto::LoadStateRequest::kAllTrajectoryBuilderOptions:
       reader_.AddProto(request.all_trajectory_builder_options());
       break;
-    case proto::LoadMapRequest::kSerializedData:
+    case proto::LoadStateRequest::kSerializedData:
       reader_.AddProto(request.serialized_data());
       break;
     default:
-      LOG(FATAL) << "Unhandled proto::LoadMapRequest case.";
+      LOG(FATAL) << "Unhandled proto::LoadStateRequest case.";
   }
 }
 
-void LoadMapHandler::OnReadsDone() {
-  GetContext<MapBuilderContextInterface>()->map_builder().LoadMap(&reader_);
+void LoadStateHandler::OnReadsDone() {
+  GetContext<MapBuilderContextInterface>()->map_builder().LoadState(&reader_,
+                                                                    true);
   Send(cartographer::common::make_unique<google::protobuf::Empty>());
 }
 
