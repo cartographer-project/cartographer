@@ -103,6 +103,46 @@ TimedPointCloud VoxelFilter::Filter(const TimedPointCloud& timed_point_cloud) {
   return FilterPointCloudUsingVoxels(timed_point_cloud, &voxels_);
 }
 
+PointCloud SimpleVoxelFilter::Filter(const PointCloud& point_cloud) {
+  PointCloud results;
+  for (const Eigen::Vector3f& point : point_cloud) {
+    auto it_inserted = voxel_set_.insert(IndexToKey(GetCellIndex(point)));
+    if (it_inserted.second) {
+      results.push_back(point);
+    }
+  }
+  return results;
+}
+
+TimedPointCloud SimpleVoxelFilter::Filter(
+    const TimedPointCloud& timed_point_cloud) {
+  TimedPointCloud results;
+  for (const Eigen::Vector4f& point : timed_point_cloud) {
+    auto it_inserted =
+        voxel_set_.insert(IndexToKey(GetCellIndex(point.head<3>())));
+    if (it_inserted.second) {
+      results.push_back(point);
+    }
+  }
+  return results;
+}
+
+SimpleVoxelFilter::KeyType SimpleVoxelFilter::IndexToKey(
+    const Eigen::Array3i& index) {
+  KeyType b0(static_cast<uint32>(index[0]));
+  KeyType b1(static_cast<uint32>(index[1]));
+  KeyType b2(static_cast<uint32>(index[2]));
+  return (b0 << 2 * 8 * sizeof(int)) | (b1 << 1 * 8 * sizeof(int)) | b2;
+}
+
+Eigen::Array3i SimpleVoxelFilter::GetCellIndex(
+    const Eigen::Vector3f& point) const {
+  Eigen::Array3f index = point.array() / resolution_;
+  return Eigen::Array3i(common::RoundToInt(index.x()),
+                        common::RoundToInt(index.y()),
+                        common::RoundToInt(index.z()));
+}
+
 proto::AdaptiveVoxelFilterOptions CreateAdaptiveVoxelFilterOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::AdaptiveVoxelFilterOptions options;

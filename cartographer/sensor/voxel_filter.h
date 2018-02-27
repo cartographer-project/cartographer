@@ -17,6 +17,9 @@
 #ifndef CARTOGRAPHER_SENSOR_VOXEL_FILTER_H_
 #define CARTOGRAPHER_SENSOR_VOXEL_FILTER_H_
 
+#include <bitset>
+#include <unordered_set>
+
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -44,6 +47,31 @@ class VoxelFilter {
 
  private:
   mapping::HybridGridBase<uint8> voxels_;
+};
+
+// Voxel filter for point clouds. For each voxel, the assembled point cloud
+// contains the first point that fell into it from any of the inserted point
+// clouds.
+class SimpleVoxelFilter {
+ public:
+  // 'size' is the length of a voxel edge.
+  explicit SimpleVoxelFilter(float size) : resolution_(size){};
+
+  // Returns a voxel filtered copy of 'point_cloud'.
+  PointCloud Filter(const PointCloud& point_cloud);
+
+  // Same for TimedPointCloud.
+  TimedPointCloud Filter(const TimedPointCloud& timed_point_cloud);
+
+ private:
+  using KeyType = std::bitset<3 * 8 * sizeof(int)>;
+
+  static KeyType IndexToKey(const Eigen::Array3i& index);
+
+  Eigen::Array3i GetCellIndex(const Eigen::Vector3f& point) const;
+
+  float resolution_;
+  std::unordered_set<KeyType> voxel_set_;
 };
 
 proto::AdaptiveVoxelFilterOptions CreateAdaptiveVoxelFilterOptions(
