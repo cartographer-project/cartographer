@@ -21,7 +21,6 @@
 #include <unordered_set>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/proto/adaptive_voxel_filter_options.pb.h"
 
@@ -34,28 +33,7 @@ namespace sensor {
 class VoxelFilter {
  public:
   // 'size' is the length of a voxel edge.
-  explicit VoxelFilter(float size);
-
-  VoxelFilter(const VoxelFilter&) = delete;
-  VoxelFilter& operator=(const VoxelFilter&) = delete;
-
-  // Returns a voxel filtered copy of 'point_cloud'.
-  PointCloud Filter(const PointCloud& point_cloud);
-
-  // Same for TimedPointCloud.
-  TimedPointCloud Filter(const TimedPointCloud& timed_point_cloud);
-
- private:
-  mapping::HybridGridBase<uint8> voxels_;
-};
-
-// Voxel filter for point clouds. For each voxel, the assembled point cloud
-// contains the first point that fell into it from any of the inserted point
-// clouds.
-class SimpleVoxelFilter {
- public:
-  // 'size' is the length of a voxel edge.
-  explicit SimpleVoxelFilter(float size) : resolution_(size){};
+  explicit VoxelFilter(float size) : resolution_(size){};
 
   // Returns a voxel filtered copy of 'point_cloud'.
   PointCloud Filter(const PointCloud& point_cloud);

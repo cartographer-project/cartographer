@@ -76,34 +76,9 @@ PointCloud AdaptivelyVoxelFiltered(
   return result;
 }
 
-template <typename PointCloudType>
-PointCloudType FilterPointCloudUsingVoxels(
-    const PointCloudType& point_cloud, mapping::HybridGridBase<uint8>* voxels) {
-  PointCloudType results;
-  for (const typename PointCloudType::value_type& point : point_cloud) {
-    auto* const value =
-        voxels->mutable_value(voxels->GetCellIndex(point.template head<3>()));
-    if (*value == 0) {
-      results.push_back(point);
-      *value = 1;
-    }
-  }
-  return results;
-}
-
 }  // namespace
 
-VoxelFilter::VoxelFilter(const float size) : voxels_(size) {}
-
 PointCloud VoxelFilter::Filter(const PointCloud& point_cloud) {
-  return FilterPointCloudUsingVoxels(point_cloud, &voxels_);
-}
-
-TimedPointCloud VoxelFilter::Filter(const TimedPointCloud& timed_point_cloud) {
-  return FilterPointCloudUsingVoxels(timed_point_cloud, &voxels_);
-}
-
-PointCloud SimpleVoxelFilter::Filter(const PointCloud& point_cloud) {
   PointCloud results;
   for (const Eigen::Vector3f& point : point_cloud) {
     auto it_inserted = voxel_set_.insert(IndexToKey(GetCellIndex(point)));
@@ -114,8 +89,7 @@ PointCloud SimpleVoxelFilter::Filter(const PointCloud& point_cloud) {
   return results;
 }
 
-TimedPointCloud SimpleVoxelFilter::Filter(
-    const TimedPointCloud& timed_point_cloud) {
+TimedPointCloud VoxelFilter::Filter(const TimedPointCloud& timed_point_cloud) {
   TimedPointCloud results;
   for (const Eigen::Vector4f& point : timed_point_cloud) {
     auto it_inserted =
@@ -127,16 +101,14 @@ TimedPointCloud SimpleVoxelFilter::Filter(
   return results;
 }
 
-SimpleVoxelFilter::KeyType SimpleVoxelFilter::IndexToKey(
-    const Eigen::Array3i& index) {
+VoxelFilter::KeyType VoxelFilter::IndexToKey(const Eigen::Array3i& index) {
   KeyType b0(static_cast<uint32>(index[0]));
   KeyType b1(static_cast<uint32>(index[1]));
   KeyType b2(static_cast<uint32>(index[2]));
   return (b0 << 2 * 8 * sizeof(int)) | (b1 << 1 * 8 * sizeof(int)) | b2;
 }
 
-Eigen::Array3i SimpleVoxelFilter::GetCellIndex(
-    const Eigen::Vector3f& point) const {
+Eigen::Array3i VoxelFilter::GetCellIndex(const Eigen::Vector3f& point) const {
   Eigen::Array3f index = point.array() / resolution_;
   return Eigen::Array3i(common::RoundToInt(index.x()),
                         common::RoundToInt(index.y()),
