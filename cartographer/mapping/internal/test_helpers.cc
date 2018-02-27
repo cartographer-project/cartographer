@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/internal/mapping/test_helpers.h"
+#include "cartographer/mapping/internal/test_helpers.h"
 
 #include "cartographer/common/config.h"
 #include "cartographer/common/configuration_file_resolver.h"

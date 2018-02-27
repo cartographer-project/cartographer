@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_INTERNAL_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_H_
-#define CARTOGRAPHER_INTERNAL_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_LOCAL_TRAJECTORY_BUILDER_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_2D_LOCAL_TRAJECTORY_BUILDER_H_
 
 #include <memory>
 
 #include "cartographer/common/time.h"
-#include "cartographer/internal/mapping/motion_filter.h"
 #include "cartographer/mapping/2d/proto/local_trajectory_builder_options_2d.pb.h"
 #include "cartographer/mapping/2d/scan_matching/ceres_scan_matcher_2d.h"
 #include "cartographer/mapping/2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
 #include "cartographer/mapping/2d/submap_2d.h"
+#include "cartographer/mapping/internal/motion_filter.h"
 #include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -109,4 +109,4 @@ class LocalTrajectoryBuilder2D {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_INTERNAL_MAPPING_2D_LOCAL_TRAJECTORY_BUILDER_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_2D_LOCAL_TRAJECTORY_BUILDER_H_
