@@ -461,6 +461,10 @@ class HybridGridBase : public Grid<ValueType> {
 
 // A grid containing probability values stored using 15 bits, and an update
 // marker per voxel.
+// Points are expected to be close to the origin. Points far from the origin
+// require the grid to grow dynamically. For centimeter resolution, points
+// can only be tens of meters from the origin.
+// The hard limit of cell indexes is +/- 8192 around the origin.
 class HybridGrid : public HybridGridBase<uint16> {
  public:
   explicit HybridGrid(const float resolution)

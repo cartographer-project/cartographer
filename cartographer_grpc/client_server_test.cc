@@ -17,7 +17,7 @@
 #include <condition_variable>
 #include <mutex>
 
-#include "cartographer/internal/mapping/test_helpers.h"
+#include "cartographer/mapping/internal/test_helpers.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/map_builder_server_options.h"

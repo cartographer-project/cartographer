@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_INTERNAL_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_
-#define CARTOGRAPHER_INTERNAL_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_
 
 #include <memory>
 
 #include "cartographer/common/time.h"
-#include "cartographer/internal/mapping/motion_filter.h"
 #include "cartographer/mapping/3d/proto/local_trajectory_builder_options_3d.pb.h"
 #include "cartographer/mapping/3d/scan_matching/ceres_scan_matcher_3d.h"
 #include "cartographer/mapping/3d/scan_matching/real_time_correlative_scan_matcher_3d.h"
 #include "cartographer/mapping/3d/submap_3d.h"
+#include "cartographer/mapping/internal/motion_filter.h"
 #include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -97,4 +97,4 @@ class LocalTrajectoryBuilder3D {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_INTERNAL_MAPPING_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_
