@@ -102,10 +102,10 @@ TimedPointCloud VoxelFilter::Filter(const TimedPointCloud& timed_point_cloud) {
 }
 
 VoxelFilter::KeyType VoxelFilter::IndexToKey(const Eigen::Array3i& index) {
-  KeyType b0(static_cast<uint32>(index[0]));
-  KeyType b1(static_cast<uint32>(index[1]));
-  KeyType b2(static_cast<uint32>(index[2]));
-  return (b0 << 2 * 8 * sizeof(int)) | (b1 << 1 * 8 * sizeof(int)) | b2;
+  KeyType k_0(static_cast<uint32>(index[0]));
+  KeyType k_1(static_cast<uint32>(index[1]));
+  KeyType k_2(static_cast<uint32>(index[2]));
+  return (k_0 << 2 * 8 * sizeof(int)) | (k_1 << 1 * 8 * sizeof(int)) | k_2;
 }
 
 Eigen::Array3i VoxelFilter::GetCellIndex(const Eigen::Vector3f& point) const {

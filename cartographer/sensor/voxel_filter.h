@@ -35,6 +35,9 @@ class VoxelFilter {
   // 'size' is the length of a voxel edge.
   explicit VoxelFilter(float size) : resolution_(size){};
 
+  VoxelFilter(const VoxelFilter&) = delete;
+  VoxelFilter& operator=(const VoxelFilter&) = delete;
+
   // Returns a voxel filtered copy of 'point_cloud'.
   PointCloud Filter(const PointCloud& point_cloud);
 
