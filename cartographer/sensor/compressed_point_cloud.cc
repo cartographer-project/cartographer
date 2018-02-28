@@ -19,7 +19,7 @@
 #include <limits>
 
 #include "cartographer/common/math.h"
-#include "cartographer/mapping_3d/hybrid_grid.h"
+#include "cartographer/mapping/3d/hybrid_grid.h"
 
 namespace cartographer {
 namespace sensor {

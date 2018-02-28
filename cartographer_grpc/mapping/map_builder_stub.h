@@ -50,7 +50,8 @@ class MapBuilderStub : public cartographer::mapping::MapBuilderInterface {
       cartographer::mapping::proto::SubmapQuery::Response* response) override;
   void SerializeState(
       cartographer::io::ProtoStreamWriterInterface* writer) override;
-  void LoadMap(cartographer::io::ProtoStreamReaderInterface* reader) override;
+  void LoadState(cartographer::io::ProtoStreamReaderInterface* reader,
+                 bool load_frozen_state) override;
   int num_trajectory_builders() const override;
   cartographer::mapping::PoseGraphInterface* pose_graph() override;
   const std::vector<

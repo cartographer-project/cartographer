@@ -23,10 +23,10 @@
 #include "cartographer/io/image.h"
 #include "cartographer/io/points_batch.h"
 #include "cartographer/io/points_processor.h"
+#include "cartographer/mapping/2d/probability_grid.h"
+#include "cartographer/mapping/2d/proto/range_data_inserter_options_2d.pb.h"
+#include "cartographer/mapping/2d/range_data_inserter_2d.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
-#include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/proto/range_data_inserter_options_2d.pb.h"
-#include "cartographer/mapping_2d/range_data_inserter_2d.h"
 
 namespace cartographer {
 namespace io {

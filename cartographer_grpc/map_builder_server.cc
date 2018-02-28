@@ -30,10 +30,10 @@
 #include "cartographer_grpc/handlers/get_local_to_global_transform_handler.h"
 #include "cartographer_grpc/handlers/get_submap_handler.h"
 #include "cartographer_grpc/handlers/get_trajectory_node_poses_handler.h"
-#include "cartographer_grpc/handlers/load_map_handler.h"
+#include "cartographer_grpc/handlers/load_state_handler.h"
 #include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
 #include "cartographer_grpc/handlers/run_final_optimization_handler.h"
-#include "cartographer_grpc/handlers/write_map_handler.h"
+#include "cartographer_grpc/handlers/write_state_handler.h"
 #include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
@@ -75,9 +75,9 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::GetAllSubmapPosesHandler>();
   server_builder.RegisterHandler<handlers::GetLocalToGlobalTransformHandler>();
   server_builder.RegisterHandler<handlers::GetConstraintsHandler>();
-  server_builder.RegisterHandler<handlers::LoadMapHandler>();
+  server_builder.RegisterHandler<handlers::LoadStateHandler>();
   server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler>();
-  server_builder.RegisterHandler<handlers::WriteMapHandler>();
+  server_builder.RegisterHandler<handlers::WriteStateHandler>();
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
       cartographer::common::make_unique<MapBuilderContext>(this));

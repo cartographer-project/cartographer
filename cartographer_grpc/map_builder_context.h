@@ -17,8 +17,8 @@
 #ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_H
 #define CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_H
 
-#include "cartographer/mapping_2d/submap_2d.h"
-#include "cartographer/mapping_3d/submap_3d.h"
+#include "cartographer/mapping/2d/submap_2d.h"
+#include "cartographer/mapping/3d/submap_3d.h"
 #include "cartographer_grpc/map_builder_context_interface.h"
 
 namespace cartographer_grpc {

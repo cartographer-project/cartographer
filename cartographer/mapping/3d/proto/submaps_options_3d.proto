@@ -1,0 +1,40 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+import "cartographer/mapping/3d/proto/range_data_inserter_options_3d.proto";
+
+package cartographer.mapping.proto;
+
+message SubmapsOptions3D {
+  // Resolution of the 'high_resolution' map in meters used for local SLAM and
+  // loop closure.
+  double high_resolution = 1;
+
+  // Maximum range to filter the point cloud to before insertion into the
+  // 'high_resolution' map.
+  double high_resolution_max_range = 4;
+
+  // Resolution of the 'low_resolution' version of the map in meters used for
+  // local SLAM only.
+  double low_resolution = 5;
+
+  // Number of range data before adding a new submap. Each submap will get twice
+  // the number of range data inserted: First for initialization without being
+  // matched against, then while being matched.
+  int32 num_range_data = 2;
+
+  RangeDataInserterOptions3D range_data_inserter_options = 3;
+}

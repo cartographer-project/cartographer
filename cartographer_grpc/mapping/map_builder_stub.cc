@@ -18,8 +18,8 @@
 #include "cartographer_grpc/handlers/add_trajectory_handler.h"
 #include "cartographer_grpc/handlers/finish_trajectory_handler.h"
 #include "cartographer_grpc/handlers/get_submap_handler.h"
-#include "cartographer_grpc/handlers/load_map_handler.h"
-#include "cartographer_grpc/handlers/write_map_handler.h"
+#include "cartographer_grpc/handlers/load_state_handler.h"
+#include "cartographer_grpc/handlers/write_state_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
@@ -93,19 +93,19 @@ std::string MapBuilderStub::SubmapToProto(
 void MapBuilderStub::SerializeState(
     cartographer::io::ProtoStreamWriterInterface* writer) {
   google::protobuf::Empty request;
-  framework::Client<handlers::WriteMapHandler> client(client_channel_);
+  framework::Client<handlers::WriteStateHandler> client(client_channel_);
   CHECK(client.Write(request));
-  proto::WriteMapResponse response;
+  proto::WriteStateResponse response;
   while (client.Read(&response)) {
     // writer->WriteProto(response);
-    switch (response.map_chunk_case()) {
-      case proto::WriteMapResponse::kPoseGraph:
+    switch (response.state_chunk_case()) {
+      case proto::WriteStateResponse::kPoseGraph:
         writer->WriteProto(response.pose_graph());
         break;
-      case proto::WriteMapResponse::kAllTrajectoryBuilderOptions:
+      case proto::WriteStateResponse::kAllTrajectoryBuilderOptions:
         writer->WriteProto(response.all_trajectory_builder_options());
         break;
-      case proto::WriteMapResponse::kSerializedData:
+      case proto::WriteStateResponse::kSerializedData:
         writer->WriteProto(response.serialized_data());
         break;
       default:
@@ -115,23 +115,27 @@ void MapBuilderStub::SerializeState(
   CHECK(writer->Close());
 }
 
-void MapBuilderStub::LoadMap(
-    cartographer::io::ProtoStreamReaderInterface* reader) {
-  framework::Client<handlers::LoadMapHandler> client(client_channel_);
+void MapBuilderStub::LoadState(
+    cartographer::io::ProtoStreamReaderInterface* reader,
+    const bool load_frozen_state) {
+  if (!load_frozen_state) {
+    LOG(FATAL) << "Not implemented";
+  }
+  framework::Client<handlers::LoadStateHandler> client(client_channel_);
   // Request with a PoseGraph proto is sent first.
   {
-    proto::LoadMapRequest request;
+    proto::LoadStateRequest request;
     CHECK(reader->ReadProto(request.mutable_pose_graph()));
     CHECK(client.Write(request));
   }
   // Request with an AllTrajectoryBuilderOptions should be second.
   {
-    proto::LoadMapRequest request;
+    proto::LoadStateRequest request;
     CHECK(reader->ReadProto(request.mutable_all_trajectory_builder_options()));
     CHECK(client.Write(request));
   }
   // Multiple requests with SerializedData are sent after.
-  proto::LoadMapRequest request;
+  proto::LoadStateRequest request;
   while (reader->ReadProto(request.mutable_serialized_data())) {
     CHECK(client.Write(request));
   }

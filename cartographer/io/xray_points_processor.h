@@ -23,9 +23,9 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_processor.h"
+#include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/mapping/detect_floors.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
-#include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {

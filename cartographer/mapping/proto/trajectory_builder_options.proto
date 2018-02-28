@@ -15,8 +15,8 @@
 syntax = "proto3";
 
 import "cartographer/transform/proto/transform.proto";
-import "cartographer/mapping_2d/proto/local_trajectory_builder_options_2d.proto";
-import "cartographer/mapping_3d/proto/local_trajectory_builder_options_3d.proto";
+import "cartographer/mapping/2d/proto/local_trajectory_builder_options_2d.proto";
+import "cartographer/mapping/3d/proto/local_trajectory_builder_options_3d.proto";
 
 package cartographer.mapping.proto;
 

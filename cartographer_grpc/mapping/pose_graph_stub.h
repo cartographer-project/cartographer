@@ -46,6 +46,8 @@ class PoseGraphStub : public cartographer::mapping::PoseGraphInterface {
   std::map<std::string, cartographer::transform::Rigid3d> GetLandmarkPoses()
       override;
   bool IsTrajectoryFinished(int trajectory_id) override;
+  std::map<int, cartographer::mapping::PoseGraphInterface::TrajectoryData>
+  GetTrajectoryData() override;
   std::vector<Constraint> constraints() override;
   cartographer::mapping::proto::PoseGraph ToProto() override;
 
