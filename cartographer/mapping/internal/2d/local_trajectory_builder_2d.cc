@@ -20,10 +20,18 @@
 #include <memory>
 
 #include "cartographer/common/make_unique.h"
+#include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
 namespace mapping {
+
+static auto* kLocalSlamLatencyMetric = metrics::Gauge::Null();
+static auto* kFastCorrelativeScanMatcherScoreMetric =
+    metrics::Histogram::Null();
+static auto* kCeresScanMatcherCostMetric = metrics::Histogram::Null();
+static auto* kScanMatcherResidualDistanceMetric = metrics::Histogram::Null();
+static auto* kScanMatcherResidualAngleMetric = metrics::Histogram::Null();
 
 LocalTrajectoryBuilder2D::LocalTrajectoryBuilder2D(
     const proto::LocalTrajectoryBuilderOptions2D& options)
@@ -66,9 +74,10 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     return nullptr;
   }
   if (options_.use_online_correlative_scan_matching()) {
-    real_time_correlative_scan_matcher_.Match(
+    double score = real_time_correlative_scan_matcher_.Match(
         pose_prediction, filtered_gravity_aligned_point_cloud,
         matching_submap->probability_grid(), &initial_ceres_pose);
+    kFastCorrelativeScanMatcherScoreMetric->Observe(score);
   }
 
   auto pose_observation = common::make_unique<transform::Rigid2d>();
@@ -77,6 +86,16 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
                             filtered_gravity_aligned_point_cloud,
                             matching_submap->probability_grid(),
                             pose_observation.get(), &summary);
+  if (pose_observation) {
+    kCeresScanMatcherCostMetric->Observe(summary.final_cost);
+    double residual_distance =
+        (pose_observation->translation() - pose_prediction.translation())
+            .norm();
+    kScanMatcherResidualDistanceMetric->Observe(residual_distance);
+    double residual_angle = std::abs(pose_observation->rotation().angle() -
+                                     pose_prediction.rotation().angle());
+    kScanMatcherResidualAngleMetric->Observe(residual_angle);
+  }
   return pose_observation;
 }
 
@@ -102,6 +121,10 @@ LocalTrajectoryBuilder2D::AddRangeData(
   if (time_first_point < extrapolator_->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
     return nullptr;
+  }
+
+  if (num_accumulated_ == 0) {
+    accumulation_started_ = std::chrono::steady_clock::now();
   }
 
   std::vector<transform::Rigid3f> range_data_poses;
@@ -198,6 +221,9 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
   std::unique_ptr<InsertionResult> insertion_result =
       InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
                        pose_estimate, gravity_alignment.rotation());
+  auto duration = std::chrono::steady_clock::now() - accumulation_started_;
+  kLocalSlamLatencyMetric->Set(
+      std::chrono::duration_cast<std::chrono::seconds>(duration).count());
   return common::make_unique<MatchingResult>(
       MatchingResult{time, pose_estimate, std::move(range_data_in_local),
                      std::move(insertion_result)});
@@ -267,6 +293,33 @@ void LocalTrajectoryBuilder2D::InitializeExtrapolator(const common::Time time) {
       ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
       options_.imu_gravity_time_constant());
   extrapolator_->AddPose(time, transform::Rigid3d::Identity());
+}
+
+void LocalTrajectoryBuilder2D::RegisterMetrics(
+    metrics::FamilyFactory* family_factory) {
+  auto* latency = family_factory->NewGaugeFamily(
+      "/mapping/internal/2d/local_trajectory_builder/latency",
+      "Duration from first incoming point cloud in accumulation to local slam "
+      "result");
+  kLocalSlamLatencyMetric = latency->Add({});
+  auto score_boundaries = metrics::Histogram::FixedWidth(0.05, 20);
+  auto* scores = family_factory->NewHistogramFamily(
+      "/mapping/internal/2d/local_trajectory_builder/scores",
+      "Local scan matcher scores", score_boundaries);
+  kFastCorrelativeScanMatcherScoreMetric =
+      scores->Add({{"scan_matcher", "fast_correlative"}});
+  auto cost_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 100);
+  auto* costs = family_factory->NewHistogramFamily(
+      "/mapping/internal/2d/local_trajectory_builder/costs",
+      "Local scan matcher costs", cost_boundaries);
+  kCeresScanMatcherCostMetric = costs->Add({{"scan_matcher", "ceres"}});
+  auto distance_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 10);
+  auto* residuals = family_factory->NewHistogramFamily(
+      "/mapping/internal/2d/local_trajectory_builder/residuals",
+      "Local scan matcher residuals", distance_boundaries);
+  kScanMatcherResidualDistanceMetric =
+      residuals->Add({{"component", "distance"}});
+  kScanMatcherResidualAngleMetric = residuals->Add({{"component", "angle"}});
 }
 
 }  // namespace mapping

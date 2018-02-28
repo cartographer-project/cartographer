@@ -30,6 +30,13 @@
 namespace cartographer {
 namespace mapping {
 
+static auto* kLocalSlamLatencyMetric = metrics::Gauge::Null();
+static auto* kRealTimeCorrelativeScanMatcherScoreMetric =
+    metrics::Histogram::Null();
+static auto* kCeresScanMatcherCostMetric = metrics::Histogram::Null();
+static auto* kScanMatcherResidualDistanceMetric = metrics::Histogram::Null();
+static auto* kScanMatcherResidualAngleMetric = metrics::Histogram::Null();
+
 LocalTrajectoryBuilder3D::LocalTrajectoryBuilder3D(
     const mapping::proto::LocalTrajectoryBuilderOptions3D& options)
     : options_(options),
@@ -76,6 +83,10 @@ LocalTrajectoryBuilder3D::AddRangeData(
   if (time_first_point < extrapolator_->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
     return nullptr;
+  }
+
+  if (num_accumulated_ == 0) {
+    accumulation_started_ = std::chrono::steady_clock::now();
   }
 
   sensor::TimedPointCloud hits =
@@ -168,9 +179,10 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
   if (options_.use_online_correlative_scan_matching()) {
     // We take a copy since we use 'initial_ceres_pose' as an output argument.
     const transform::Rigid3d initial_pose = initial_ceres_pose;
-    real_time_correlative_scan_matcher_->Match(
+    double score = real_time_correlative_scan_matcher_->Match(
         initial_pose, high_resolution_point_cloud_in_tracking,
         matching_submap->high_resolution_hybrid_grid(), &initial_ceres_pose);
+    kRealTimeCorrelativeScanMatcherScoreMetric->Observe(score);
   }
 
   transform::Rigid3d pose_observation_in_submap;
@@ -193,6 +205,14 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
        {&low_resolution_point_cloud_in_tracking,
         &matching_submap->low_resolution_hybrid_grid()}},
       &pose_observation_in_submap, &summary);
+  kCeresScanMatcherCostMetric->Observe(summary.final_cost);
+  double residual_distance = (pose_observation_in_submap.translation() -
+                              initial_ceres_pose.translation())
+                                 .norm();
+  kScanMatcherResidualDistanceMetric->Observe(residual_distance);
+  double residual_angle = pose_observation_in_submap.rotation().angularDistance(
+      initial_ceres_pose.rotation());
+  kScanMatcherResidualAngleMetric->Observe(residual_angle);
   const transform::Rigid3d pose_estimate =
       matching_submap->local_pose() * pose_observation_in_submap;
   extrapolator_->AddPose(time, pose_estimate);
@@ -205,6 +225,9 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
       time, filtered_range_data_in_local, filtered_range_data_in_tracking,
       high_resolution_point_cloud_in_tracking,
       low_resolution_point_cloud_in_tracking, pose_estimate, gravity_alignment);
+  auto duration = std::chrono::steady_clock::now() - accumulation_started_;
+  kLocalSlamLatencyMetric->Set(
+      std::chrono::duration_cast<std::chrono::seconds>(duration).count());
   return common::make_unique<MatchingResult>(MatchingResult{
       time, pose_estimate, std::move(filtered_range_data_in_local),
       std::move(insertion_result)});
@@ -258,6 +281,33 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
                               rotational_scan_matcher_histogram,
                               pose_estimate}),
                       std::move(insertion_submaps)});
+}
+
+void LocalTrajectoryBuilder3D::RegisterMetrics(
+    metrics::FamilyFactory* family_factory) {
+  auto* latency = family_factory->NewGaugeFamily(
+      "/mapping/internal/3d/local_trajectory_builder/latency",
+      "Duration from first incoming point cloud in accumulation to local slam "
+      "result");
+  kLocalSlamLatencyMetric = latency->Add({});
+  auto score_boundaries = metrics::Histogram::FixedWidth(0.05, 20);
+  auto* scores = family_factory->NewHistogramFamily(
+      "/mapping/internal/3d/local_trajectory_builder/scores",
+      "Local scan matcher scores", score_boundaries);
+  kRealTimeCorrelativeScanMatcherScoreMetric =
+      scores->Add({{"scan_matcher", "real_time_correlative"}});
+  auto cost_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 100);
+  auto* costs = family_factory->NewHistogramFamily(
+      "/mapping/internal/3d/local_trajectory_builder/costs",
+      "Local scan matcher costs", cost_boundaries);
+  kCeresScanMatcherCostMetric = costs->Add({{"scan_matcher", "ceres"}});
+  auto distance_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 10);
+  auto* residuals = family_factory->NewHistogramFamily(
+      "/mapping/internal/3d/local_trajectory_builder/residuals",
+      "Local scan matcher residuals", distance_boundaries);
+  kScanMatcherResidualDistanceMetric =
+      residuals->Add({{"component", "distance"}});
+  kScanMatcherResidualAngleMetric = residuals->Add({{"component", "angle"}});
 }
 
 }  // namespace mapping

@@ -18,6 +18,8 @@
 
 #include "cartographer/mapping/2d/pose_graph/constraint_builder_2d.h"
 #include "cartographer/mapping/3d/pose_graph/constraint_builder_3d.h"
+#include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
+#include "cartographer/mapping/internal/3d/local_trajectory_builder_3d.h"
 
 namespace cartographer {
 namespace metrics {
@@ -25,6 +27,8 @@ namespace metrics {
 void RegisterAllMetrics(FamilyFactory* registry) {
   mapping::pose_graph::ConstraintBuilder2D::RegisterMetrics(registry);
   mapping::pose_graph::ConstraintBuilder3D::RegisterMetrics(registry);
+  mapping::LocalTrajectoryBuilder2D::RegisterMetrics(registry);
+  mapping::LocalTrajectoryBuilder3D::RegisterMetrics(registry);
 }
 
 }  // namespace metrics

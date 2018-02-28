@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_INTERNAL_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_
 #define CARTOGRAPHER_MAPPING_INTERNAL_3D_LOCAL_TRAJECTORY_BUILDER_3D_H_
 
+#include <chrono>
 #include <memory>
 
 #include "cartographer/common/time.h"
@@ -26,6 +27,7 @@
 #include "cartographer/mapping/3d/submap_3d.h"
 #include "cartographer/mapping/internal/motion_filter.h"
 #include "cartographer/mapping/pose_extrapolator.h"
+#include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/range_data.h"
@@ -67,6 +69,8 @@ class LocalTrajectoryBuilder3D {
       common::Time time, const sensor::TimedRangeData& range_data);
   void AddOdometryData(const sensor::OdometryData& odometry_data);
 
+  static void RegisterMetrics(metrics::FamilyFactory* family_factory);
+
  private:
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
       common::Time time,
@@ -92,6 +96,7 @@ class LocalTrajectoryBuilder3D {
 
   int num_accumulated_ = 0;
   sensor::RangeData accumulated_range_data_;
+  std::chrono::steady_clock::time_point accumulation_started_;
 };
 
 }  // namespace mapping
