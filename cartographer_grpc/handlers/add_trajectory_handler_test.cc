@@ -122,6 +122,7 @@ TEST_F(AddTrajectoryHandlerTest, WithLocalSlamUploader) {
       request.trajectory_builder_options();
   upstream_trajectory_builder_options.clear_trajectory_builder_2d_options();
   upstream_trajectory_builder_options.clear_trajectory_builder_3d_options();
+  upstream_trajectory_builder_options.set_pure_localization(false);
   EXPECT_CALL(*mock_local_trajectory_uploader_,
               AddTrajectory(Eq(13), ParseSensorIds(request),
                             Truly(testing::BuildProtoPredicateEquals(
