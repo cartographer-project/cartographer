@@ -45,7 +45,7 @@ class VoxelFilter {
   TimedPointCloud Filter(const TimedPointCloud& timed_point_cloud);
 
  private:
-  using KeyType = std::bitset<3 * 8 * sizeof(int)>;
+  using KeyType = std::bitset<3 * 32>;
 
   static KeyType IndexToKey(const Eigen::Array3i& index);
 

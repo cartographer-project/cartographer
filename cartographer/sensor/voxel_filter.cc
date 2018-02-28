@@ -105,7 +105,7 @@ VoxelFilter::KeyType VoxelFilter::IndexToKey(const Eigen::Array3i& index) {
   KeyType k_0(static_cast<uint32>(index[0]));
   KeyType k_1(static_cast<uint32>(index[1]));
   KeyType k_2(static_cast<uint32>(index[2]));
-  return (k_0 << 2 * 8 * sizeof(int)) | (k_1 << 1 * 8 * sizeof(int)) | k_2;
+  return (k_0 << 2 * 32) | (k_1 << 1 * 32) | k_2;
 }
 
 Eigen::Array3i VoxelFilter::GetCellIndex(const Eigen::Vector3f& point) const {
