@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/internal/mapping/motion_filter.h"
+#include "cartographer/mapping/internal/motion_filter.h"
 
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"

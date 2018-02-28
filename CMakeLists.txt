@@ -75,8 +75,7 @@ if (NOT ${BUILD_PROMETHEUS})
   list(REMOVE_ITEM ALL_EXECUTABLES ${ALL_PROMETHEUS_FILES})
 endif()
 set(INSTALL_SOURCE_HDRS ${ALL_LIBRARY_HDRS})
-file(GLOB_RECURSE INTERNAL_HDRS "cartographer/internal/*.h"
-  "cartographer_grpc/internal/*.h")
+file(GLOB_RECURSE INTERNAL_HDRS "cartographer/*/internal/*.h")
 list(REMOVE_ITEM INSTALL_SOURCE_HDRS ${INTERNAL_HDRS})
 
 file(GLOB_RECURSE ALL_PROTOS "*.proto")

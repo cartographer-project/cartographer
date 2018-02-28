@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_INTERNAL_MAPPING_MOTION_FILTER_H_
-#define CARTOGRAPHER_INTERNAL_MAPPING_MOTION_FILTER_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_MOTION_FILTER_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_MOTION_FILTER_H_
 
 #include <limits>
 
@@ -51,4 +51,4 @@ class MotionFilter {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_INTERNAL_MAPPING_MOTION_FILTER_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_MOTION_FILTER_H_

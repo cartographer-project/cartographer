@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "cartographer/common/config.h"
-#include "cartographer/internal/mapping/test_helpers.h"
+#include "cartographer/mapping/internal/test_helpers.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "gtest/gtest.h"
 

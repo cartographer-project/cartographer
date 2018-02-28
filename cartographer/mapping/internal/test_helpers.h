@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_INTERNAL_MAPPING_TEST_HELPERS_H_
-#define CARTOGRAPHER_INTERNAL_MAPPING_TEST_HELPERS_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_TEST_HELPERS_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_TEST_HELPERS_H_
 
 #include <memory>
 
@@ -37,4 +37,4 @@ GenerateFakeRangeMeasurements(double travel_distance, double duration,
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_INTERNAL_MAPPING_TEST_HELPERS_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_TEST_HELPERS_H_

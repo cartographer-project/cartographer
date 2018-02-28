@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_HANDLERS_LOAD_MAP_HANDLER_H
-#define CARTOGRAPHER_GRPC_HANDLERS_LOAD_MAP_HANDLER_H
+#ifndef CARTOGRAPHER_GRPC_HANDLERS_LOAD_STATE_HANDLER_H
+#define CARTOGRAPHER_GRPC_HANDLERS_LOAD_STATE_HANDLER_H
 
 #include "cartographer/io/in_memory_proto_stream.h"
 #include "cartographer_grpc/framework/rpc_handler.h"
@@ -25,14 +25,14 @@
 namespace cartographer_grpc {
 namespace handlers {
 
-class LoadMapHandler
-    : public framework::RpcHandler<framework::Stream<proto::LoadMapRequest>,
+class LoadStateHandler
+    : public framework::RpcHandler<framework::Stream<proto::LoadStateRequest>,
                                    google::protobuf::Empty> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/LoadMap";
+    return "/cartographer_grpc.proto.MapBuilderService/LoadState";
   }
-  void OnRequest(const proto::LoadMapRequest& request) override;
+  void OnRequest(const proto::LoadStateRequest& request) override;
   void OnReadsDone() override;
 
  private:
@@ -42,4 +42,4 @@ class LoadMapHandler
 }  // namespace handlers
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_HANDLERS_LOAD_MAP_HANDLER_H
+#endif  // CARTOGRAPHER_GRPC_HANDLERS_LOAD_STATE_HANDLER_H
