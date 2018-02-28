@@ -17,8 +17,10 @@
 #ifndef CARTOGRAPHER_SENSOR_VOXEL_FILTER_H_
 #define CARTOGRAPHER_SENSOR_VOXEL_FILTER_H_
 
+#include <bitset>
+#include <unordered_set>
+
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/proto/adaptive_voxel_filter_options.pb.h"
 
@@ -31,7 +33,7 @@ namespace sensor {
 class VoxelFilter {
  public:
   // 'size' is the length of a voxel edge.
-  explicit VoxelFilter(float size);
+  explicit VoxelFilter(float size) : resolution_(size){};
 
   VoxelFilter(const VoxelFilter&) = delete;
   VoxelFilter& operator=(const VoxelFilter&) = delete;
@@ -43,7 +45,14 @@ class VoxelFilter {
   TimedPointCloud Filter(const TimedPointCloud& timed_point_cloud);
 
  private:
-  mapping::HybridGridBase<uint8> voxels_;
+  using KeyType = std::bitset<3 * 32>;
+
+  static KeyType IndexToKey(const Eigen::Array3i& index);
+
+  Eigen::Array3i GetCellIndex(const Eigen::Vector3f& point) const;
+
+  float resolution_;
+  std::unordered_set<KeyType> voxel_set_;
 };
 
 proto::AdaptiveVoxelFilterOptions CreateAdaptiveVoxelFilterOptions(
