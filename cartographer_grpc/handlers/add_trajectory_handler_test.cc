@@ -35,34 +35,21 @@ using ::testing::Test;
 using ::testing::Truly;
 
 const std::string kMessage = R"PROTO(
-    expected_sensor_ids {
-      id: "range_sensor"
-      type: RANGE
-    }
-    expected_sensor_ids {
-      id: "imu_sensor"
-      type: IMU
-    }
-    trajectory_builder_options {
-      trajectory_builder_2d_options {
-        min_range: 20
-        max_range: 30
+  expected_sensor_ids { id: "range_sensor" type: RANGE }
+  expected_sensor_ids { id: "imu_sensor" type: IMU }
+  trajectory_builder_options {
+    trajectory_builder_2d_options { min_range: 20 max_range: 30 }
+    pure_localization: true
+    initial_trajectory_pose {
+      relative_pose {
+        translation { x: 1 y: 2 z: 3 }
+        rotation { w: 4 x: 5 y: 6 z: 7 }
       }
-      pure_localization: true
-      initial_trajectory_pose {
-        relative_pose {
-          translation {
-            x: 1 y: 2 z: 3
-          }
-          rotation {
-            w: 4 x: 5 y: 6 z: 7
-          }
-        }
-        to_trajectory_id: 8
-        timestamp: 9
-      }
+      to_trajectory_id: 8
+      timestamp: 9
     }
-  )PROTO";
+  }
+)PROTO";
 
 class AddTrajectoryHandlerTest
     : public testing::HandlerTest<AddTrajectoryHandler> {

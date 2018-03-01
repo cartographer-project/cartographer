@@ -30,18 +30,11 @@ using ::testing::Pointee;
 using ::testing::Truly;
 
 const std::string kMessage = R"PROTO(
-  sensor_metadata {
-    trajectory_id: 1
-    sensor_id: "sensor_id"
-  }
+  sensor_metadata { trajectory_id: 1 sensor_id: "sensor_id" }
   timed_point_cloud_data {
     timestamp: 2
-    origin {
-      x: 3.f y: 4.f z: 5.f
-    }
-    point_data {
-      x: 6.f y: 7.f z: 8.f t: 9.f
-    }
+    origin { x: 3.f y: 4.f z: 5.f }
+    point_data { x: 6.f y: 7.f z: 8.f t: 9.f }
   })PROTO";
 
 using AddRangefinderDataHandlerTest =
