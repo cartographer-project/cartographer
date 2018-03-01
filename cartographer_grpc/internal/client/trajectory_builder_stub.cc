@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer_grpc/mapping/trajectory_builder_stub.h"
+#include "cartographer_grpc/internal/client/trajectory_builder_stub.h"
 
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"

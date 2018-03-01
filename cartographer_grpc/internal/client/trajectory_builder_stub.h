@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAPPING_TRAJECTORY_BUILDER_STUB_H_
-#define CARTOGRAPHER_GRPC_MAPPING_TRAJECTORY_BUILDER_STUB_H_
+#ifndef CARTOGRAPHER_GRPC_INTERNAL_CLIENT_TRAJECTORY_BUILDER_STUB_H_
+#define CARTOGRAPHER_GRPC_INTERNAL_CLIENT_TRAJECTORY_BUILDER_STUB_H_
 
 #include <thread>
 
@@ -30,6 +30,8 @@
 #include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
 #include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
 #include "grpc++/grpc++.h"
+#include "pose_graph_stub.h"
+#include "trajectory_builder_stub.h"
 
 namespace cartographer_grpc {
 namespace mapping {
@@ -88,4 +90,4 @@ class TrajectoryBuilderStub
 }  // namespace mapping
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_MAPPING_TRAJECTORY_BUILDER_STUB_H_
+#endif  // CARTOGRAPHER_GRPC_INTERNAL_CLIENT_TRAJECTORY_BUILDER_STUB_H_

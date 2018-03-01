@@ -14,23 +14,31 @@
  * limitations under the License.
  */
 
-#include "cartographer_grpc/mapping/map_builder_stub.h"
+#include "cartographer_grpc/client/map_builder_stub.h"
+
 #include "cartographer_grpc/handlers/add_trajectory_handler.h"
 #include "cartographer_grpc/handlers/finish_trajectory_handler.h"
 #include "cartographer_grpc/handlers/get_submap_handler.h"
 #include "cartographer_grpc/handlers/load_state_handler.h"
 #include "cartographer_grpc/handlers/write_state_handler.h"
+#include "cartographer_grpc/internal/client/pose_graph_stub.h"
+#include "cartographer_grpc/internal/client/trajectory_builder_stub.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {
 namespace mapping {
+namespace {
+
+using ::cartographer::common::make_unique;
+
+}  // namespace
 
 MapBuilderStub::MapBuilderStub(const std::string& server_address)
     : client_channel_(grpc::CreateChannel(server_address,
                                           grpc::InsecureChannelCredentials())),
-      pose_graph_stub_(client_channel_) {}
+      pose_graph_stub_(make_unique<PoseGraphStub>(client_channel_)) {}
 
 int MapBuilderStub::AddTrajectoryBuilder(
     const std::set<SensorId>& expected_sensor_ids,
@@ -52,8 +60,7 @@ int MapBuilderStub::AddTrajectoryBuilder(
   trajectory_builder_stubs_.emplace(
       std::piecewise_construct,
       std::forward_as_tuple(client.response().trajectory_id()),
-      std::forward_as_tuple(cartographer::common::make_unique<
-                            cartographer_grpc::mapping::TrajectoryBuilderStub>(
+      std::forward_as_tuple(make_unique<TrajectoryBuilderStub>(
           client_channel_, client.response().trajectory_id(),
           local_slam_result_callback)));
   return client.response().trajectory_id();
@@ -150,7 +157,7 @@ int MapBuilderStub::num_trajectory_builders() const {
 }
 
 cartographer::mapping::PoseGraphInterface* MapBuilderStub::pose_graph() {
-  return &pose_graph_stub_;
+  return pose_graph_stub_.get();
 }
 
 const std::vector<
