@@ -19,9 +19,9 @@
 
 #include "cartographer/mapping/internal/test_helpers.h"
 #include "cartographer/mapping/local_slam_result_data.h"
+#include "cartographer_grpc/client/map_builder_stub.h"
 #include "cartographer_grpc/map_builder_server.h"
 #include "cartographer_grpc/map_builder_server_options.h"
-#include "cartographer_grpc/mapping/map_builder_stub.h"
 #include "cartographer_grpc/testing/mock_map_builder.h"
 #include "cartographer_grpc/testing/mock_trajectory_builder.h"
 #include "glog/logging.h"

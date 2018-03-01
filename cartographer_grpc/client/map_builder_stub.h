@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAPPING_MAP_BUILDER_STUB_H_
-#define CARTOGRAPHER_GRPC_MAPPING_MAP_BUILDER_STUB_H_
+#ifndef CARTOGRAPHER_GRPC_CLIENT_MAP_BUILDER_STUB_H_
+#define CARTOGRAPHER_GRPC_CLIENT_MAP_BUILDER_STUB_H_
 
 #include <memory>
 
 #include "cartographer/mapping/map_builder_interface.h"
-#include "cartographer_grpc/mapping/pose_graph_stub.h"
-#include "cartographer_grpc/mapping/trajectory_builder_stub.h"
+#include "cartographer/mapping/pose_graph_interface.h"
+#include "cartographer/mapping/trajectory_builder_interface.h"
 #include "grpc++/grpc++.h"
 
 namespace cartographer_grpc {
@@ -60,12 +60,13 @@ class MapBuilderStub : public cartographer::mapping::MapBuilderInterface {
 
  private:
   std::shared_ptr<grpc::Channel> client_channel_;
-  PoseGraphStub pose_graph_stub_;
-  std::map<int, std::unique_ptr<TrajectoryBuilderStub>>
+  std::unique_ptr<cartographer::mapping::PoseGraphInterface> pose_graph_stub_;
+  std::map<int,
+           std::unique_ptr<cartographer::mapping::TrajectoryBuilderInterface>>
       trajectory_builder_stubs_;
 };
 
 }  // namespace mapping
 }  // namespace cartographer_grpc
 
-#endif  // CARTOGRAPHER_GRPC_MAPPING_MAP_BUILDER_STUB_H_
+#endif  // CARTOGRAPHER_GRPC_CLIENT_MAP_BUILDER_STUB_H_
