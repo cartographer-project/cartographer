@@ -16,13 +16,13 @@
 
 #include "cartographer_grpc/client/map_builder_stub.h"
 
-#include "cartographer_grpc/handlers/add_trajectory_handler.h"
-#include "cartographer_grpc/handlers/finish_trajectory_handler.h"
-#include "cartographer_grpc/handlers/get_submap_handler.h"
-#include "cartographer_grpc/handlers/load_state_handler.h"
-#include "cartographer_grpc/handlers/write_state_handler.h"
 #include "cartographer_grpc/internal/client/pose_graph_stub.h"
 #include "cartographer_grpc/internal/client/trajectory_builder_stub.h"
+#include "cartographer_grpc/internal/handlers/add_trajectory_handler.h"
+#include "cartographer_grpc/internal/handlers/finish_trajectory_handler.h"
+#include "cartographer_grpc/internal/handlers/get_submap_handler.h"
+#include "cartographer_grpc/internal/handlers/load_state_handler.h"
+#include "cartographer_grpc/internal/handlers/write_state_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"

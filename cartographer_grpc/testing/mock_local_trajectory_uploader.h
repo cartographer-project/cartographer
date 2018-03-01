@@ -32,6 +32,8 @@ class MockLocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
       std::unique_ptr<google::protobuf::Message> data_request) override {
     DoEnqueueDataRequest(data_request.get());
   }
+  MOCK_METHOD0(Start, void());
+  MOCK_METHOD0(Shutdown, void());
   MOCK_METHOD3(
       AddTrajectory,
       void(int, const std::set<SensorId> &,
