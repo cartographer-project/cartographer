@@ -30,20 +30,10 @@ using ::testing::Pointee;
 using ::testing::Truly;
 
 const std::string kMessage = R"PROTO(
-  sensor_metadata {
-    trajectory_id: 1
-    sensor_id: "sensor_id"
-  }
+  sensor_metadata { trajectory_id: 1 sensor_id: "sensor_id" }
   fixed_frame_pose_data {
     timestamp: 2
-    pose {
-      translation {
-        x: 3 y: 4 z: 5
-      }
-      rotation {
-        w: 6 x: 7 y: 8 z: 9
-      }
-    }
+    pose { translation { x: 3 y: 4 z: 5 } rotation { w: 6 x: 7 y: 8 z: 9 } }
   })PROTO";
 
 using AddFixedFramePoseDataHandlerTest =

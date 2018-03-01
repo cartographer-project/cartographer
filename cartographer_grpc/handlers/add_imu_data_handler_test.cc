@@ -30,18 +30,11 @@ using ::testing::Pointee;
 using ::testing::Truly;
 
 const std::string kMessage = R"PROTO(
-  sensor_metadata {
-    trajectory_id: 1
-    sensor_id: "sensor_id"
-  }
+  sensor_metadata { trajectory_id: 1 sensor_id: "sensor_id" }
   imu_data {
     timestamp: 2
-    linear_acceleration {
-      x: 3 y: 4 z: 5
-    }
-    angular_velocity {
-      x: 6 y: 7 z: 8
-    }
+    linear_acceleration { x: 3 y: 4 z: 5 }
+    angular_velocity { x: 6 y: 7 z: 8 }
   })PROTO";
 
 using AddImuDataHandlerTest = testing::HandlerTest<AddImuDataHandler>;

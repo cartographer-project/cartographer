@@ -34,23 +34,15 @@ const std::string kMessage = R"PROTO(
   landmark_poses {
     landmark_id: "landmark_1"
     global_pose {
-      translation {
-        x: 1 y: 2 z: 3
-      }
-      rotation {
-        w: 1 x: 0 y: 0 z: 0
-      }
+      translation { x: 1 y: 2 z: 3 }
+      rotation { w: 1 x: 0 y: 0 z: 0 }
     }
   }
   landmark_poses {
     landmark_id: "landmark_2"
     global_pose {
-      translation {
-        x: 3 y: 2 z: 1
-      }
-      rotation {
-        w: 0 x: 1 y: 0 z: 0
-      }
+      translation { x: 3 y: 2 z: 1 }
+      rotation { w: 0 x: 1 y: 0 z: 0 }
     }
   }
 )PROTO";

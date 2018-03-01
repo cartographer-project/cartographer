@@ -168,7 +168,10 @@ std::string MapBuilder::SubmapToProto(
   return "";
 }
 
-void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
+void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer,
+                                const std::set<int> trajectory_ids) {
+  const bool serialize_all_trajectories = trajectory_ids.empty();
+
   // We serialize the pose graph followed by all the data referenced in it.
   writer->WriteProto(pose_graph_->ToProto());
   // Serialize trajectory builder options.
@@ -186,10 +189,13 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   // Next we serialize all submap data.
   {
     for (const auto& submap_id_data : pose_graph_->GetAllSubmapData()) {
+      const int trajectory_id = submap_id_data.id.trajectory_id;
+      if (!serialize_all_trajectories && !trajectory_ids.count(trajectory_id)) {
+        continue;
+      }
       proto::SerializedData proto;
       auto* const submap_proto = proto.mutable_submap();
-      submap_proto->mutable_submap_id()->set_trajectory_id(
-          submap_id_data.id.trajectory_id);
+      submap_proto->mutable_submap_id()->set_trajectory_id(trajectory_id);
       submap_proto->mutable_submap_id()->set_submap_index(
           submap_id_data.id.submap_index);
       submap_id_data.data.submap->ToProto(
@@ -200,10 +206,13 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   // Next we serialize all node data.
   {
     for (const auto& node_id_data : pose_graph_->GetTrajectoryNodes()) {
+      const int trajectory_id = node_id_data.id.trajectory_id;
+      if (!serialize_all_trajectories && !trajectory_ids.count(trajectory_id)) {
+        continue;
+      }
       proto::SerializedData proto;
       auto* const node_proto = proto.mutable_node();
-      node_proto->mutable_node_id()->set_trajectory_id(
-          node_id_data.id.trajectory_id);
+      node_proto->mutable_node_id()->set_trajectory_id(trajectory_id);
       node_proto->mutable_node_id()->set_node_index(node_id_data.id.node_index);
       *node_proto->mutable_node_data() =
           ToProto(*node_id_data.data.constant_data);
@@ -214,6 +223,9 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   {
     const auto all_imu_data = pose_graph_->GetImuData();
     for (const int trajectory_id : all_imu_data.trajectory_ids()) {
+      if (!serialize_all_trajectories && !trajectory_ids.count(trajectory_id)) {
+        continue;
+      }
       for (const auto& imu_data : all_imu_data.trajectory(trajectory_id)) {
         proto::SerializedData proto;
         auto* const imu_data_proto = proto.mutable_imu_data();
@@ -227,6 +239,9 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   {
     const auto all_odometry_data = pose_graph_->GetOdometryData();
     for (const int trajectory_id : all_odometry_data.trajectory_ids()) {
+      if (!serialize_all_trajectories && !trajectory_ids.count(trajectory_id)) {
+        continue;
+      }
       for (const auto& odometry_data :
            all_odometry_data.trajectory(trajectory_id)) {
         proto::SerializedData proto;
@@ -242,6 +257,9 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   {
     const auto all_fixed_frame_pose_data = pose_graph_->GetFixedFramePoseData();
     for (const int trajectory_id : all_fixed_frame_pose_data.trajectory_ids()) {
+      if (!serialize_all_trajectories && !trajectory_ids.count(trajectory_id)) {
+        continue;
+      }
       for (const auto& fixed_frame_pose_data :
            all_fixed_frame_pose_data.trajectory(trajectory_id)) {
         proto::SerializedData proto;
