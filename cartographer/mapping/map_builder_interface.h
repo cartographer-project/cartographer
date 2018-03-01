@@ -79,7 +79,7 @@ class MapBuilderInterface {
 
   // Serializes the current state to a proto stream.
   virtual void SerializeState(io::ProtoStreamWriterInterface* writer,
-  const std::set<int> trajectory_ids = {}) = 0;
+                              const std::set<int> trajectory_ids = {}) = 0;
 
   // Loads the SLAM state from a proto stream.
   virtual void LoadState(io::ProtoStreamReaderInterface* reader,
