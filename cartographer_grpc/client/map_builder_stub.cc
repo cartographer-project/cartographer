@@ -98,7 +98,8 @@ std::string MapBuilderStub::SubmapToProto(
 }
 
 void MapBuilderStub::SerializeState(
-    cartographer::io::ProtoStreamWriterInterface* writer) {
+    cartographer::io::ProtoStreamWriterInterface* writer,
+    const std::set<int> trajectory_ids) {
   google::protobuf::Empty request;
   framework::Client<handlers::WriteStateHandler> client(client_channel_);
   CHECK(client.Write(request));

@@ -48,8 +48,8 @@ class MapBuilderStub : public cartographer::mapping::MapBuilderInterface {
   std::string SubmapToProto(
       const cartographer::mapping::SubmapId& submap_id,
       cartographer::mapping::proto::SubmapQuery::Response* response) override;
-  void SerializeState(
-      cartographer::io::ProtoStreamWriterInterface* writer) override;
+  void SerializeState(cartographer::io::ProtoStreamWriterInterface* writer,
+                      const std::set<int> trajectory_ids = {}) override;
   void LoadState(cartographer::io::ProtoStreamReaderInterface* reader,
                  bool load_frozen_state) override;
   int num_trajectory_builders() const override;
