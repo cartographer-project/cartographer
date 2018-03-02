@@ -56,7 +56,7 @@ MapBuilderServer::MapBuilderServer(
   server_builder.SetNumEventThreads(
       map_builder_server_options.num_event_threads());
   if (!map_builder_server_options.uplink_server_address().empty()) {
-    local_trajectory_uploader_ = GetLocalTrajectoryUploader(
+    local_trajectory_uploader_ = CreateLocalTrajectoryUploader(
         map_builder_server_options.uplink_server_address());
   }
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler>();

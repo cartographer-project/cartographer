@@ -53,7 +53,7 @@ class LocalTrajectoryUploaderInterface {
 };
 
 // Returns LocalTrajectoryUploader with the actual implementation.
-std::unique_ptr<LocalTrajectoryUploaderInterface> GetLocalTrajectoryUploader(
+std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
     const std::string& uplink_server_address);
 
 }  // namespace cartographer_grpc

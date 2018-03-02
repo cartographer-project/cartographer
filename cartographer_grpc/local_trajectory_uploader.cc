@@ -273,7 +273,7 @@ void LocalTrajectoryUploader::EnqueueDataRequest(
 
 }  // namespace
 
-std::unique_ptr<LocalTrajectoryUploaderInterface> GetLocalTrajectoryUploader(
+std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
     const std::string &uplink_server_address) {
   return make_unique<LocalTrajectoryUploader>(uplink_server_address);
 }
