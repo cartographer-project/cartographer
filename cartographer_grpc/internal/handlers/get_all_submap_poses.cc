@@ -22,7 +22,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void GetAllSubmapPosesHandler::OnRequest(
@@ -31,17 +32,17 @@ void GetAllSubmapPosesHandler::OnRequest(
                           ->map_builder()
                           .pose_graph()
                           ->GetAllSubmapPoses();
-  auto response =
-      cartographer::common::make_unique<proto::GetAllSubmapPosesResponse>();
+  auto response = common::make_unique<proto::GetAllSubmapPosesResponse>();
   for (const auto& submap_id_pose : submap_poses) {
     auto* submap_pose = response->add_submap_poses();
     submap_id_pose.id.ToProto(submap_pose->mutable_submap_id());
     submap_pose->set_submap_version(submap_id_pose.data.version);
     *submap_pose->mutable_global_pose() =
-        cartographer::transform::ToProto(submap_id_pose.data.pose);
+        transform::ToProto(submap_id_pose.data.pose);
   }
   Send(std::move(response));
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

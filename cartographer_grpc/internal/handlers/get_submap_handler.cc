@@ -22,18 +22,20 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void GetSubmapHandler::OnRequest(const proto::GetSubmapRequest &request) {
-  auto response = cartographer::common::make_unique<proto::GetSubmapResponse>();
+  auto response = common::make_unique<proto::GetSubmapResponse>();
   response->set_error_msg(
       GetContext<MapBuilderContextInterface>()->map_builder().SubmapToProto(
-          cartographer::mapping::SubmapId{request.submap_id().trajectory_id(),
-                                          request.submap_id().submap_index()},
+          mapping::SubmapId{request.submap_id().trajectory_id(),
+                            request.submap_id().submap_index()},
           response->mutable_submap_query_response()));
   Send(std::move(response));
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

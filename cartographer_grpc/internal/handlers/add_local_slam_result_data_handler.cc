@@ -25,7 +25,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void AddLocalSlamResultDataHandler::OnRequest(
@@ -33,8 +34,7 @@ void AddLocalSlamResultDataHandler::OnRequest(
   auto local_slam_result_data =
       GetContext<MapBuilderContextInterface>()->ProcessLocalSlamResultData(
           request.sensor_metadata().sensor_id(),
-          cartographer::common::FromUniversal(
-              request.local_slam_result_data().timestamp()),
+          common::FromUniversal(request.local_slam_result_data().timestamp()),
           request.local_slam_result_data());
   GetContext<MapBuilderContextInterface>()->EnqueueLocalSlamResultData(
       request.sensor_metadata().trajectory_id(),
@@ -42,8 +42,9 @@ void AddLocalSlamResultDataHandler::OnRequest(
 }
 
 void AddLocalSlamResultDataHandler::OnReadsDone() {
-  Send(cartographer::common::make_unique<google::protobuf::Empty>());
+  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

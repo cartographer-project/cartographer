@@ -37,17 +37,17 @@
 #include "cartographer_grpc/internal/sensor/serialization.h"
 #include "glog/logging.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace {
 
-const cartographer::common::Duration kPopTimeout =
-    cartographer::common::FromMilliseconds(100);
+const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
 }  // namespace
 
 MapBuilderServer::MapBuilderServer(
     const proto::MapBuilderServerOptions& map_builder_server_options,
-    std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder)
+    std::unique_ptr<mapping::MapBuilderInterface> map_builder)
     : map_builder_(std::move(map_builder)) {
   framework::Server::Builder server_builder;
   server_builder.SetServerAddress(map_builder_server_options.server_address());
@@ -79,7 +79,7 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::WriteStateHandler>();
   grpc_server_ = server_builder.Build();
   grpc_server_->SetExecutionContext(
-      cartographer::common::make_unique<MapBuilderContext>(this));
+      common::make_unique<MapBuilderContext>(this));
 }
 
 void MapBuilderServer::Start() {
@@ -125,33 +125,31 @@ void MapBuilderServer::StartSlamThread() {
   CHECK(!slam_thread_);
 
   // Start the SLAM processing thread.
-  slam_thread_ = cartographer::common::make_unique<std::thread>(
+  slam_thread_ = common::make_unique<std::thread>(
       [this]() { this->ProcessSensorDataQueue(); });
 }
 
 void MapBuilderServer::OnLocalSlamResult(
-    int trajectory_id, cartographer::common::Time time,
-    cartographer::transform::Rigid3d local_pose,
-    cartographer::sensor::RangeData range_data,
-    std::unique_ptr<const cartographer::mapping::TrajectoryBuilderInterface::
-                        InsertionResult>
+    int trajectory_id, common::Time time, transform::Rigid3d local_pose,
+    sensor::RangeData range_data,
+    std::unique_ptr<const mapping::TrajectoryBuilderInterface::InsertionResult>
         insertion_result) {
   auto shared_range_data =
-      std::make_shared<cartographer::sensor::RangeData>(std::move(range_data));
+      std::make_shared<sensor::RangeData>(std::move(range_data));
 
   // If there is an uplink server and a submap insertion happened, enqueue this
   // local SLAM result for uploading.
   if (insertion_result &&
       grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
           ->local_trajectory_uploader()) {
-    auto data_request = cartographer::common::make_unique<
-        proto::AddLocalSlamResultDataRequest>();
+    auto data_request =
+        common::make_unique<proto::AddLocalSlamResultDataRequest>();
     auto sensor_id = grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
                          ->local_trajectory_uploader()
                          ->GetLocalSlamResultSensorId(trajectory_id);
-    sensor::CreateAddLocalSlamResultDataRequest(
-        sensor_id.id, trajectory_id, time, starting_submap_index_,
-        *insertion_result, data_request.get());
+    CreateAddLocalSlamResultDataRequest(sensor_id.id, trajectory_id, time,
+                                        starting_submap_index_,
+                                        *insertion_result, data_request.get());
     // TODO(cschuet): Make this more robust.
     if (insertion_result->insertion_submaps.front()->finished()) {
       ++starting_submap_index_;
@@ -161,18 +159,17 @@ void MapBuilderServer::OnLocalSlamResult(
         ->EnqueueDataRequest(std::move(data_request));
   }
 
-  cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
+  common::MutexLocker locker(&local_slam_subscriptions_lock_);
   for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
     auto copy_of_insertion_result =
         insertion_result
-            ? cartographer::common::make_unique<
-                  const cartographer::mapping::TrajectoryBuilderInterface::
-                      InsertionResult>(*insertion_result)
+            ? common::make_unique<
+                  const mapping::TrajectoryBuilderInterface::InsertionResult>(
+                  *insertion_result)
             : nullptr;
     MapBuilderContextInterface::LocalSlamSubscriptionCallback callback =
         entry.second;
-    callback(cartographer::common::make_unique<
-             MapBuilderContextInterface::LocalSlamResult>(
+    callback(common::make_unique<MapBuilderContextInterface::LocalSlamResult>(
         MapBuilderContextInterface::LocalSlamResult{
             trajectory_id, time, local_pose, shared_range_data,
             std::move(copy_of_insertion_result)}));
@@ -183,7 +180,7 @@ MapBuilderContextInterface::SubscriptionId
 MapBuilderServer::SubscribeLocalSlamResults(
     int trajectory_id,
     MapBuilderContextInterface::LocalSlamSubscriptionCallback callback) {
-  cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
+  common::MutexLocker locker(&local_slam_subscriptions_lock_);
   local_slam_subscriptions_[trajectory_id].emplace(current_subscription_index_,
                                                    callback);
   return MapBuilderContextInterface::SubscriptionId{
@@ -192,14 +189,14 @@ MapBuilderServer::SubscribeLocalSlamResults(
 
 void MapBuilderServer::UnsubscribeLocalSlamResults(
     const MapBuilderContextInterface::SubscriptionId& subscription_id) {
-  cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
+  common::MutexLocker locker(&local_slam_subscriptions_lock_);
   CHECK_EQ(local_slam_subscriptions_[subscription_id.trajectory_id].erase(
                subscription_id.subscription_index),
            1u);
 }
 
 void MapBuilderServer::NotifyFinishTrajectory(int trajectory_id) {
-  cartographer::common::MutexLocker locker(&local_slam_subscriptions_lock_);
+  common::MutexLocker locker(&local_slam_subscriptions_lock_);
   for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
     MapBuilderContextInterface::LocalSlamSubscriptionCallback callback =
         entry.second;
@@ -213,4 +210,5 @@ void MapBuilderServer::WaitUntilIdle() {
   map_builder_->pose_graph()->RunFinalOptimization();
 }
 
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

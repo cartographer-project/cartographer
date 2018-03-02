@@ -23,7 +23,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
@@ -45,8 +46,9 @@ void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
 void LoadStateHandler::OnReadsDone() {
   GetContext<MapBuilderContextInterface>()->map_builder().LoadState(&reader_,
                                                                     true);
-  Send(cartographer::common::make_unique<google::protobuf::Empty>());
+  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

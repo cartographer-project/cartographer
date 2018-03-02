@@ -21,7 +21,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class FinishTrajectoryHandler
@@ -29,12 +30,13 @@ class FinishTrajectoryHandler
                                    google::protobuf::Empty> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/FinishTrajectory";
+    return "/cartographer.cloud.proto.MapBuilderService/FinishTrajectory";
   }
   void OnRequest(const proto::FinishTrajectoryRequest& request) override;
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_FINISH_TRAJECTORY_HANDLER_H

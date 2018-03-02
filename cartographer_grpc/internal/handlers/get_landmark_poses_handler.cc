@@ -22,7 +22,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void GetLandmarkPosesHandler::OnRequest(
@@ -31,16 +32,15 @@ void GetLandmarkPosesHandler::OnRequest(
                             ->map_builder()
                             .pose_graph()
                             ->GetLandmarkPoses();
-  auto response =
-      cartographer::common::make_unique<proto::GetLandmarkPosesResponse>();
+  auto response = common::make_unique<proto::GetLandmarkPosesResponse>();
   for (const auto& landmark_pose : landmark_poses) {
     auto* landmark = response->add_landmark_poses();
     landmark->set_landmark_id(landmark_pose.first);
-    *landmark->mutable_global_pose() =
-        cartographer::transform::ToProto(landmark_pose.second);
+    *landmark->mutable_global_pose() = transform::ToProto(landmark_pose.second);
   }
   Send(std::move(response));
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

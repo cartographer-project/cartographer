@@ -20,7 +20,8 @@
 #include "cartographer_grpc/internal/framework/retry.h"
 #include "glog/logging.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 RetryStrategy CreateRetryStrategy(RetryIndicator retry_indicator,
@@ -43,8 +44,8 @@ RetryDelayCalculator CreateBackoffDelayCalculator(Duration min_delay,
                                                   float backoff_factor) {
   return [min_delay, backoff_factor](int failed_attempts) -> Duration {
     CHECK_GE(failed_attempts, 0);
-    using cartographer::common::FromSeconds;
-    using cartographer::common::ToSeconds;
+    using common::FromSeconds;
+    using common::ToSeconds;
     return FromSeconds(std::pow(backoff_factor, failed_attempts - 1) *
                        ToSeconds(min_delay));
   };
@@ -87,4 +88,5 @@ bool RetryWithStrategy(RetryStrategy retry_strategy, std::function<bool()> op,
 }
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

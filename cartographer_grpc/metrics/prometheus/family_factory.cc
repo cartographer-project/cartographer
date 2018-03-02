@@ -22,15 +22,15 @@
 #include "prometheus/gauge.h"
 #include "prometheus/histogram.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace metrics {
 namespace prometheus {
-
 namespace {
 
-using BucketBoundaries = cartographer::metrics::Histogram::BucketBoundaries;
+using BucketBoundaries = ::cartographer::metrics::Histogram::BucketBoundaries;
 
-class Counter : public cartographer::metrics::Counter {
+class Counter : public ::cartographer::metrics::Counter {
  public:
   explicit Counter(::prometheus::Counter* prometheus)
       : prometheus_(prometheus) {}
@@ -43,7 +43,7 @@ class Counter : public cartographer::metrics::Counter {
 };
 
 class CounterFamily
-    : public cartographer::metrics::Family<cartographer::metrics::Counter> {
+    : public ::cartographer::metrics::Family<::cartographer::metrics::Counter> {
  public:
   explicit CounterFamily(
       ::prometheus::Family<::prometheus::Counter>* prometheus)
@@ -51,7 +51,7 @@ class CounterFamily
 
   Counter* Add(const std::map<std::string, std::string>& labels) override {
     ::prometheus::Counter* counter = &prometheus_->Add(labels);
-    auto wrapper = cartographer::common::make_unique<Counter>(counter);
+    auto wrapper = common::make_unique<Counter>(counter);
     auto* ptr = wrapper.get();
     wrappers_.emplace_back(std::move(wrapper));
     return ptr;
@@ -62,7 +62,7 @@ class CounterFamily
   std::vector<std::unique_ptr<Counter>> wrappers_;
 };
 
-class Gauge : public cartographer::metrics::Gauge {
+class Gauge : public ::cartographer::metrics::Gauge {
  public:
   explicit Gauge(::prometheus::Gauge* prometheus) : prometheus_(prometheus) {}
 
@@ -77,14 +77,14 @@ class Gauge : public cartographer::metrics::Gauge {
 };
 
 class GaugeFamily
-    : public cartographer::metrics::Family<cartographer::metrics::Gauge> {
+    : public ::cartographer::metrics::Family<::cartographer::metrics::Gauge> {
  public:
   explicit GaugeFamily(::prometheus::Family<::prometheus::Gauge>* prometheus)
       : prometheus_(prometheus) {}
 
   Gauge* Add(const std::map<std::string, std::string>& labels) override {
     ::prometheus::Gauge* gauge = &prometheus_->Add(labels);
-    auto wrapper = cartographer::common::make_unique<Gauge>(gauge);
+    auto wrapper = common::make_unique<Gauge>(gauge);
     auto* ptr = wrapper.get();
     wrappers_.emplace_back(std::move(wrapper));
     return ptr;
@@ -95,7 +95,7 @@ class GaugeFamily
   std::vector<std::unique_ptr<Gauge>> wrappers_;
 };
 
-class Histogram : public cartographer::metrics::Histogram {
+class Histogram : public ::cartographer::metrics::Histogram {
  public:
   explicit Histogram(::prometheus::Histogram* prometheus)
       : prometheus_(prometheus) {}
@@ -106,8 +106,8 @@ class Histogram : public cartographer::metrics::Histogram {
   ::prometheus::Histogram* prometheus_;
 };
 
-class HistogramFamily
-    : public cartographer::metrics::Family<cartographer::metrics::Histogram> {
+class HistogramFamily : public ::cartographer::metrics::Family<
+                            ::cartographer::metrics::Histogram> {
  public:
   HistogramFamily(::prometheus::Family<::prometheus::Histogram>* prometheus,
                   const BucketBoundaries& boundaries)
@@ -115,7 +115,7 @@ class HistogramFamily
 
   Histogram* Add(const std::map<std::string, std::string>& labels) override {
     ::prometheus::Histogram* histogram = &prometheus_->Add(labels, boundaries_);
-    auto wrapper = cartographer::common::make_unique<Histogram>(histogram);
+    auto wrapper = common::make_unique<Histogram>(histogram);
     auto* ptr = wrapper.get();
     wrappers_.emplace_back(std::move(wrapper));
     return ptr;
@@ -132,33 +132,33 @@ class HistogramFamily
 FamilyFactory::FamilyFactory()
     : registry_(std::make_shared<::prometheus::Registry>()) {}
 
-cartographer::metrics::Family<cartographer::metrics::Counter>*
+::cartographer::metrics::Family<::cartographer::metrics::Counter>*
 FamilyFactory::NewCounterFamily(const std::string& name,
                                 const std::string& description) {
   auto& family = ::prometheus::BuildCounter()
                      .Name(name)
                      .Help(description)
                      .Register(*registry_);
-  auto wrapper = cartographer::common::make_unique<CounterFamily>(&family);
+  auto wrapper = common::make_unique<CounterFamily>(&family);
   auto* ptr = wrapper.get();
   counters_.emplace_back(std::move(wrapper));
   return ptr;
 }
 
-cartographer::metrics::Family<cartographer::metrics::Gauge>*
+::cartographer::metrics::Family<::cartographer::metrics::Gauge>*
 FamilyFactory::NewGaugeFamily(const std::string& name,
                               const std::string& description) {
   auto& family = ::prometheus::BuildGauge()
                      .Name(name)
                      .Help(description)
                      .Register(*registry_);
-  auto wrapper = cartographer::common::make_unique<GaugeFamily>(&family);
+  auto wrapper = common::make_unique<GaugeFamily>(&family);
   auto* ptr = wrapper.get();
   gauges_.emplace_back(std::move(wrapper));
   return ptr;
 }
 
-cartographer::metrics::Family<cartographer::metrics::Histogram>*
+::cartographer::metrics::Family<::cartographer::metrics::Histogram>*
 FamilyFactory::NewHistogramFamily(const std::string& name,
                                   const std::string& description,
                                   const BucketBoundaries& boundaries) {
@@ -166,8 +166,7 @@ FamilyFactory::NewHistogramFamily(const std::string& name,
                      .Name(name)
                      .Help(description)
                      .Register(*registry_);
-  auto wrapper =
-      cartographer::common::make_unique<HistogramFamily>(&family, boundaries);
+  auto wrapper = common::make_unique<HistogramFamily>(&family, boundaries);
   auto* ptr = wrapper.get();
   histograms_.emplace_back(std::move(wrapper));
   return ptr;
@@ -179,4 +178,5 @@ std::weak_ptr<::prometheus::Collectable> FamilyFactory::GetCollectable() const {
 
 }  // namespace prometheus
 }  // namespace metrics
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

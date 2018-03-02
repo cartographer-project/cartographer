@@ -24,7 +24,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void RunFinalOptimizationHandler::OnRequest(
@@ -33,8 +34,9 @@ void RunFinalOptimizationHandler::OnRequest(
       ->map_builder()
       .pose_graph()
       ->RunFinalOptimization();
-  Send(cartographer::common::make_unique<google::protobuf::Empty>());
+  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

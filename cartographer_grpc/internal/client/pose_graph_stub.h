@@ -20,42 +20,36 @@
 #include "cartographer/mapping/pose_graph_interface.h"
 #include "grpc++/grpc++.h"
 
-namespace cartographer_grpc {
-namespace mapping {
+namespace cartographer {
+namespace cloud {
 
-class PoseGraphStub : public cartographer::mapping::PoseGraphInterface {
+class PoseGraphStub : public ::cartographer::mapping::PoseGraphInterface {
  public:
-  PoseGraphStub(std::shared_ptr<grpc::Channel> client_channel);
+  PoseGraphStub(std::shared_ptr<::grpc::Channel> client_channel);
 
   PoseGraphStub(const PoseGraphStub&) = delete;
   PoseGraphStub& operator=(const PoseGraphStub&) = delete;
 
   void RunFinalOptimization() override;
-  cartographer::mapping::MapById<cartographer::mapping::SubmapId, SubmapData>
-  GetAllSubmapData() override;
-  cartographer::mapping::MapById<cartographer::mapping::SubmapId, SubmapPose>
-  GetAllSubmapPoses() override;
-  cartographer::transform::Rigid3d GetLocalToGlobalTransform(
-      int trajectory_id) override;
-  cartographer::mapping::MapById<cartographer::mapping::NodeId,
-                                 cartographer::mapping::TrajectoryNode>
+  mapping::MapById<mapping::SubmapId, SubmapData> GetAllSubmapData() override;
+  mapping::MapById<mapping::SubmapId, SubmapPose> GetAllSubmapPoses() override;
+  transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id) override;
+  mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
   GetTrajectoryNodes() override;
-  cartographer::mapping::MapById<cartographer::mapping::NodeId,
-                                 cartographer::mapping::TrajectoryNodePose>
+  mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose>
   GetTrajectoryNodePoses() override;
-  std::map<std::string, cartographer::transform::Rigid3d> GetLandmarkPoses()
-      override;
+  std::map<std::string, transform::Rigid3d> GetLandmarkPoses() override;
   bool IsTrajectoryFinished(int trajectory_id) override;
-  std::map<int, cartographer::mapping::PoseGraphInterface::TrajectoryData>
-  GetTrajectoryData() override;
+  std::map<int, mapping::PoseGraphInterface::TrajectoryData> GetTrajectoryData()
+      override;
   std::vector<Constraint> constraints() override;
-  cartographer::mapping::proto::PoseGraph ToProto() override;
+  mapping::proto::PoseGraph ToProto() override;
 
  private:
-  std::shared_ptr<grpc::Channel> client_channel_;
+  std::shared_ptr<::grpc::Channel> client_channel_;
 };
 
-}  // namespace mapping
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_CLIENT_POSE_GRAPH_STUB_H_

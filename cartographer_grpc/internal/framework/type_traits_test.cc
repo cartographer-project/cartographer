@@ -18,7 +18,8 @@
 
 #include "gtest/gtest.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 namespace {
 
@@ -40,4 +41,5 @@ TEST(TypeTraitsTest, RpcTypes) {
 
 }  // namespace
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

@@ -25,7 +25,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void AddImuDataHandler::OnRequest(const proto::AddImuDataRequest &request) {
@@ -34,20 +35,18 @@ void AddImuDataHandler::OnRequest(const proto::AddImuDataRequest &request) {
   // the 'MapBuilderContext'.
   GetUnsynchronizedContext<MapBuilderContextInterface>()->EnqueueSensorData(
       request.sensor_metadata().trajectory_id(),
-      cartographer::sensor::MakeDispatchable(
-          request.sensor_metadata().sensor_id(),
-          cartographer::sensor::FromProto(request.imu_data())));
+      sensor::MakeDispatchable(request.sensor_metadata().sensor_id(),
+                               sensor::FromProto(request.imu_data())));
 
   // The 'BlockingQueue' in 'LocalTrajectoryUploader' is thread-safe.
   // Therefore it suffices to get an unsynchronized reference to the
   // 'MapBuilderContext'.
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    auto data_request =
-        cartographer::common::make_unique<proto::AddImuDataRequest>();
-    sensor::CreateAddImuDataRequest(request.sensor_metadata().sensor_id(),
-                                    request.sensor_metadata().trajectory_id(),
-                                    request.imu_data(), data_request.get());
+    auto data_request = common::make_unique<proto::AddImuDataRequest>();
+    CreateAddImuDataRequest(request.sensor_metadata().sensor_id(),
+                            request.sensor_metadata().trajectory_id(),
+                            request.imu_data(), data_request.get());
     GetUnsynchronizedContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
         ->EnqueueDataRequest(std::move(data_request));
@@ -55,8 +54,9 @@ void AddImuDataHandler::OnRequest(const proto::AddImuDataRequest &request) {
 }
 
 void AddImuDataHandler::OnReadsDone() {
-  Send(cartographer::common::make_unique<google::protobuf::Empty>());
+  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

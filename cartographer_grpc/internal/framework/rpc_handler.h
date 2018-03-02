@@ -25,7 +25,8 @@
 #include "google/protobuf/message.h"
 #include "grpc++/grpc++.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 template <typename Incoming, typename Outgoing>
@@ -86,6 +87,7 @@ class RpcHandler : public RpcHandlerInterface {
 };
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_HANDLER_H

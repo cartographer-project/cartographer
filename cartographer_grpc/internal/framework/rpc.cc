@@ -20,7 +20,8 @@
 #include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 namespace {
 
@@ -83,7 +84,7 @@ Rpc::Rpc(int method_index,
 }
 
 std::unique_ptr<Rpc> Rpc::Clone() {
-  return cartographer::common::make_unique<Rpc>(
+  return common::make_unique<Rpc>(
       method_index_, server_completion_queue_, event_queue_, execution_context_,
       rpc_handler_info_, service_, weak_ptr_factory_);
 }
@@ -166,7 +167,7 @@ void Rpc::Finish(::grpc::Status status) {
 void Rpc::HandleSendQueue() {
   SendItem send_item;
   {
-    cartographer::common::MutexLocker locker(&send_queue_lock_);
+    common::MutexLocker locker(&send_queue_lock_);
     if (send_queue_.empty() || IsRpcEventPending(Event::WRITE) ||
         IsRpcEventPending(Event::FINISH)) {
       return;
@@ -255,7 +256,7 @@ bool* Rpc::GetRpcEventState(Event event) {
 }
 
 void Rpc::EnqueueMessage(SendItem&& send_item) {
-  cartographer::common::MutexLocker locker(&send_queue_lock_);
+  common::MutexLocker locker(&send_queue_lock_);
   send_queue_.emplace(std::move(send_item));
 }
 
@@ -319,23 +320,22 @@ void Rpc::InitializeReadersAndWriters(
   switch (rpc_type) {
     case ::grpc::internal::RpcMethod::BIDI_STREAMING:
       server_async_reader_writer_ =
-          cartographer::common::make_unique<::grpc::ServerAsyncReaderWriter<
+          common::make_unique<::grpc::ServerAsyncReaderWriter<
               google::protobuf::Message, google::protobuf::Message>>(
               &server_context_);
       break;
     case ::grpc::internal::RpcMethod::CLIENT_STREAMING:
-      server_async_reader_ =
-          cartographer::common::make_unique<::grpc::ServerAsyncReader<
-              google::protobuf::Message, google::protobuf::Message>>(
-              &server_context_);
+      server_async_reader_ = common::make_unique<::grpc::ServerAsyncReader<
+          google::protobuf::Message, google::protobuf::Message>>(
+          &server_context_);
       break;
     case ::grpc::internal::RpcMethod::NORMAL_RPC:
-      server_async_response_writer_ = cartographer::common::make_unique<
+      server_async_response_writer_ = common::make_unique<
           ::grpc::ServerAsyncResponseWriter<google::protobuf::Message>>(
           &server_context_);
       break;
     case ::grpc::internal::RpcMethod::SERVER_STREAMING:
-      server_async_writer_ = cartographer::common::make_unique<
+      server_async_writer_ = common::make_unique<
           ::grpc::ServerAsyncWriter<google::protobuf::Message>>(
           &server_context_);
       break;
@@ -343,14 +343,14 @@ void Rpc::InitializeReadersAndWriters(
 }
 
 ActiveRpcs::~ActiveRpcs() {
-  cartographer::common::MutexLocker locker(&lock_);
+  common::MutexLocker locker(&lock_);
   if (!rpcs_.empty()) {
     LOG(FATAL) << "RPCs still in flight!";
   }
 }
 
 std::shared_ptr<Rpc> ActiveRpcs::Add(std::unique_ptr<Rpc> rpc) {
-  cartographer::common::MutexLocker locker(&lock_);
+  common::MutexLocker locker(&lock_);
   std::shared_ptr<Rpc> shared_ptr_rpc = std::move(rpc);
   const auto result = rpcs_.emplace(shared_ptr_rpc.get(), shared_ptr_rpc);
   CHECK(result.second) << "RPC already active.";
@@ -358,7 +358,7 @@ std::shared_ptr<Rpc> ActiveRpcs::Add(std::unique_ptr<Rpc> rpc) {
 }
 
 bool ActiveRpcs::Remove(Rpc* rpc) {
-  cartographer::common::MutexLocker locker(&lock_);
+  common::MutexLocker locker(&lock_);
   auto it = rpcs_.find(rpc);
   if (it != rpcs_.end()) {
     rpcs_.erase(it);
@@ -372,11 +372,12 @@ Rpc::WeakPtrFactory ActiveRpcs::GetWeakPtrFactory() {
 }
 
 std::weak_ptr<Rpc> ActiveRpcs::GetWeakPtr(Rpc* rpc) {
-  cartographer::common::MutexLocker locker(&lock_);
+  common::MutexLocker locker(&lock_);
   auto it = rpcs_.find(rpc);
   CHECK(it != rpcs_.end());
   return it->second;
 }
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

@@ -22,7 +22,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void FinishTrajectoryHandler::OnRequest(
@@ -37,8 +38,9 @@ void FinishTrajectoryHandler::OnRequest(
         ->local_trajectory_uploader()
         ->FinishTrajectory(request.trajectory_id());
   }
-  Send(cartographer::common::make_unique<google::protobuf::Empty>());
+  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

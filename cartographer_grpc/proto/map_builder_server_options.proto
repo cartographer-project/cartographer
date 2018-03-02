@@ -16,7 +16,7 @@ syntax = "proto3";
 
 import "cartographer/mapping/proto/map_builder_options.proto";
 
-package cartographer_grpc.proto;
+package cartographer.cloud.proto;
 
 message MapBuilderServerOptions {
   string server_address = 1;

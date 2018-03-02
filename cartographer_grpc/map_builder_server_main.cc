@@ -33,13 +33,14 @@ DEFINE_string(configuration_basename, "",
               "Basename, i.e. not containing any directory prefix, of the "
               "configuration file.");
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 
 void Run(const std::string& configuration_directory,
          const std::string& configuration_basename) {
 #if USE_PROMETHEUS
   metrics::prometheus::FamilyFactory registry;
-  cartographer::metrics::RegisterAllMetrics(&registry);
+  ::cartographer::metrics::RegisterAllMetrics(&registry);
   ::prometheus::Exposer exposer("0.0.0.0:9100");
   exposer.RegisterCollectable(registry.GetCollectable());
   LOG(INFO) << "Exposing metrics at http://localhost:9100/metrics";
@@ -52,9 +53,8 @@ void Run(const std::string& configuration_directory,
   // config.
   map_builder_server_options.mutable_map_builder_options()
       ->set_collate_by_trajectory(true);
-  auto map_builder =
-      cartographer::common::make_unique<cartographer::mapping::MapBuilder>(
-          map_builder_server_options.map_builder_options());
+  auto map_builder = common::make_unique<mapping::MapBuilder>(
+      map_builder_server_options.map_builder_options());
   std::unique_ptr<MapBuilderServerInterface> map_builder_server =
       CreateMapBuilderServer(map_builder_server_options,
                              std::move(map_builder));
@@ -62,7 +62,8 @@ void Run(const std::string& configuration_directory,
   map_builder_server->WaitForShutdown();
 }
 
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
@@ -73,9 +74,9 @@ int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   if (FLAGS_configuration_directory.empty() ||
       FLAGS_configuration_basename.empty()) {
-    google::ShowUsageWithFlagsRestrict(argv[0], "cartographer_grpc_server");
+    google::ShowUsageWithFlagsRestrict(argv[0], "cloud_server");
     return EXIT_FAILURE;
   }
-  cartographer_grpc::Run(FLAGS_configuration_directory,
-                         FLAGS_configuration_basename);
+  cartographer::cloud::Run(FLAGS_configuration_directory,
+                           FLAGS_configuration_basename);
 }

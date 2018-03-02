@@ -20,7 +20,8 @@
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 namespace {
 
@@ -78,4 +79,5 @@ TEST_F(GetLandmarkPosesHandlerTest, NoLocalSlamUploader) {
 
 }  // namespace
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

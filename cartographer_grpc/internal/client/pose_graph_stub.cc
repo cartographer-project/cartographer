@@ -25,10 +25,10 @@
 #include "cartographer_grpc/internal/handlers/run_final_optimization_handler.h"
 #include "glog/logging.h"
 
-namespace cartographer_grpc {
-namespace mapping {
+namespace cartographer {
+namespace cloud {
 
-PoseGraphStub::PoseGraphStub(std::shared_ptr<grpc::Channel> client_channel)
+PoseGraphStub::PoseGraphStub(std::shared_ptr<::grpc::Channel> client_channel)
     : client_channel_(client_channel) {}
 
 void PoseGraphStub::RunFinalOptimization() {
@@ -38,81 +38,68 @@ void PoseGraphStub::RunFinalOptimization() {
   CHECK(client.Write(request));
 }
 
-cartographer::mapping::MapById<
-    cartographer::mapping::SubmapId,
-    cartographer::mapping::PoseGraphInterface::SubmapData>
+mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapData>
 PoseGraphStub::GetAllSubmapData() {
   LOG(FATAL) << "Not implemented";
 }
 
-cartographer::mapping::MapById<
-    cartographer::mapping::SubmapId,
-    cartographer::mapping::PoseGraphInterface::SubmapPose>
+mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapPose>
 PoseGraphStub::GetAllSubmapPoses() {
   google::protobuf::Empty request;
   framework::Client<handlers::GetAllSubmapPosesHandler> client(client_channel_);
   CHECK(client.Write(request));
-  cartographer::mapping::MapById<
-      cartographer::mapping::SubmapId,
-      cartographer::mapping::PoseGraphInterface::SubmapPose>
+  mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapPose>
       submap_poses;
   for (const auto& submap_pose : client.response().submap_poses()) {
     submap_poses.Insert(
-        cartographer::mapping::SubmapId{submap_pose.submap_id().trajectory_id(),
-                                        submap_pose.submap_id().submap_index()},
-        cartographer::mapping::PoseGraphInterface::SubmapPose{
+        mapping::SubmapId{submap_pose.submap_id().trajectory_id(),
+                          submap_pose.submap_id().submap_index()},
+        mapping::PoseGraphInterface::SubmapPose{
             submap_pose.submap_version(),
-            cartographer::transform::ToRigid3(submap_pose.global_pose())});
+            transform::ToRigid3(submap_pose.global_pose())});
   }
   return submap_poses;
 }
 
-cartographer::transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(
-    int trajectory_id) {
+transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(int trajectory_id) {
   proto::GetLocalToGlobalTransformRequest request;
   request.set_trajectory_id(trajectory_id);
   framework::Client<handlers::GetLocalToGlobalTransformHandler> client(
       client_channel_);
   CHECK(client.Write(request));
-  return cartographer::transform::ToRigid3(client.response().local_to_global());
+  return transform::ToRigid3(client.response().local_to_global());
 }
 
-cartographer::mapping::MapById<cartographer::mapping::NodeId,
-                               cartographer::mapping::TrajectoryNode>
+mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
 PoseGraphStub::GetTrajectoryNodes() {
   LOG(FATAL) << "Not implemented";
 }
 
-cartographer::mapping::MapById<cartographer::mapping::NodeId,
-                               cartographer::mapping::TrajectoryNodePose>
+mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose>
 PoseGraphStub::GetTrajectoryNodePoses() {
   google::protobuf::Empty request;
   framework::Client<handlers::GetTrajectoryNodePosesHandler> client(
       client_channel_);
   CHECK(client.Write(request));
-  cartographer::mapping::MapById<cartographer::mapping::NodeId,
-                                 cartographer::mapping::TrajectoryNodePose>
-      node_poses;
+  mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose> node_poses;
   for (const auto& node_pose : client.response().node_poses()) {
-    node_poses.Insert(
-        cartographer::mapping::NodeId{node_pose.node_id().trajectory_id(),
+    node_poses.Insert(mapping::NodeId{node_pose.node_id().trajectory_id(),
                                       node_pose.node_id().node_index()},
-        cartographer::mapping::TrajectoryNodePose{
-            node_pose.has_constant_data(),
-            cartographer::transform::ToRigid3(node_pose.global_pose())});
+                      mapping::TrajectoryNodePose{
+                          node_pose.has_constant_data(),
+                          transform::ToRigid3(node_pose.global_pose())});
   }
   return node_poses;
 }
 
-std::map<std::string, cartographer::transform::Rigid3d>
-PoseGraphStub::GetLandmarkPoses() {
+std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses() {
   google::protobuf::Empty request;
   framework::Client<handlers::GetLandmarkPosesHandler> client(client_channel_);
   CHECK(client.Write(request));
-  std::map<std::string, cartographer::transform::Rigid3d> landmark_poses;
+  std::map<std::string, transform::Rigid3d> landmark_poses;
   for (const auto& landmark_pose : client.response().landmark_poses()) {
     landmark_poses[landmark_pose.landmark_id()] =
-        cartographer::transform::ToRigid3(landmark_pose.global_pose());
+        transform::ToRigid3(landmark_pose.global_pose());
   }
   return landmark_poses;
 }
@@ -121,22 +108,22 @@ bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
   LOG(FATAL) << "Not implemented";
 }
 
-std::map<int, cartographer::mapping::PoseGraphInterface::TrajectoryData>
+std::map<int, mapping::PoseGraphInterface::TrajectoryData>
 PoseGraphStub::GetTrajectoryData() {
   LOG(FATAL) << "Not implemented";
 }
 
-std::vector<cartographer::mapping::PoseGraphInterface::Constraint>
+std::vector<mapping::PoseGraphInterface::Constraint>
 PoseGraphStub::constraints() {
   google::protobuf::Empty request;
   framework::Client<handlers::GetConstraintsHandler> client(client_channel_);
   CHECK(client.Write(request));
-  return cartographer::mapping::FromProto(client.response().constraints());
+  return mapping::FromProto(client.response().constraints());
 }
 
-cartographer::mapping::proto::PoseGraph PoseGraphStub::ToProto() {
+mapping::proto::PoseGraph PoseGraphStub::ToProto() {
   LOG(FATAL) << "Not implemented";
 }
 
-}  // namespace mapping
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

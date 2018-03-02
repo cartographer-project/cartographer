@@ -24,7 +24,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void AddRangefinderDataHandler::OnRequest(
@@ -34,14 +35,15 @@ void AddRangefinderDataHandler::OnRequest(
   // the 'MapBuilderContext'.
   GetUnsynchronizedContext<MapBuilderContextInterface>()->EnqueueSensorData(
       request.sensor_metadata().trajectory_id(),
-      cartographer::sensor::MakeDispatchable(
+      sensor::MakeDispatchable(
           request.sensor_metadata().sensor_id(),
-          cartographer::sensor::FromProto(request.timed_point_cloud_data())));
+          sensor::FromProto(request.timed_point_cloud_data())));
 }
 
 void AddRangefinderDataHandler::OnReadsDone() {
-  Send(cartographer::common::make_unique<google::protobuf::Empty>());
+  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

@@ -21,7 +21,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class AddLocalSlamResultDataHandler
@@ -30,13 +31,14 @@ class AddLocalSlamResultDataHandler
           google::protobuf::Empty> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/AddLocalSlamResultData";
+    return "/cartographer.cloud.proto.MapBuilderService/AddLocalSlamResultData";
   }
   void OnRequest(const proto::AddLocalSlamResultDataRequest& request) override;
   void OnReadsDone() override;
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_ADD_LOCAL_SLAM_RESULT_DATA_HANDLER_H

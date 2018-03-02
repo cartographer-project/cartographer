@@ -28,7 +28,8 @@
 #include "grpc++/grpc++.h"
 #include "gtest/gtest.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 namespace testing {
 
@@ -41,8 +42,8 @@ class RpcHandlerTestServer : public Server {
  public:
   RpcHandlerTestServer(std::unique_ptr<ExecutionContext> execution_context)
       : Server(Options{1, 1, kServerAddress}),
-        channel_(grpc::CreateChannel(kServerAddress,
-                                     grpc::InsecureChannelCredentials())),
+        channel_(::grpc::CreateChannel(kServerAddress,
+                                       ::grpc::InsecureChannelCredentials())),
         client_(channel_) {
     std::string method_full_name_under_test =
         RpcHandlerInterface::Instantiate<RpcHandlerType>()->method_name();
@@ -113,7 +114,7 @@ class RpcHandlerTestServer : public Server {
                                     Rpc *const rpc,
                                     ExecutionContext *const execution_context) {
       std::unique_ptr<RpcHandlerInterface> rpc_handler =
-          cartographer::common::make_unique<RpcHandlerWrapper<RpcHandlerType>>(
+          common::make_unique<RpcHandlerWrapper<RpcHandlerType>>(
               event_callback);
       rpc_handler->SetRpc(rpc);
       rpc_handler->SetExecutionContext(execution_context);
@@ -126,14 +127,15 @@ class RpcHandlerTestServer : public Server {
   }
 
   std::shared_ptr<::grpc::Channel> channel_;
-  cartographer_grpc::framework::Client<RpcHandlerType> client_;
-  cartographer::common::BlockingQueue<
+  cloud::framework::Client<RpcHandlerType> client_;
+  common::BlockingQueue<
       typename RpcHandlerWrapper<RpcHandlerType>::RpcHandlerEvent>
       rpc_handler_event_queue_;
 };
 
 }  // namespace testing
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_TESTING_RPC_HANDLER_TEST_SERVER_H_

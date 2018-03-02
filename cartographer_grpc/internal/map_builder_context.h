@@ -21,15 +21,15 @@
 #include "cartographer/mapping/3d/submap_3d.h"
 #include "cartographer_grpc/internal/map_builder_context_interface.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 
 class MapBuilderContext : public MapBuilderContextInterface {
  public:
   MapBuilderContext(MapBuilderServer* map_builder_server);
-  cartographer::mapping::MapBuilderInterface& map_builder() override;
-  cartographer::common::BlockingQueue<std::unique_ptr<Data>>&
-  sensor_data_queue() override;
-  cartographer::mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
+  mapping::MapBuilderInterface& map_builder() override;
+  common::BlockingQueue<std::unique_ptr<Data>>& sensor_data_queue() override;
+  mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
   GetLocalSlamResultCallbackForSubscriptions() override;
   void AddSensorDataToTrajectory(const Data& sensor_data) override;
   SubscriptionId SubscribeLocalSlamResults(
@@ -37,31 +37,29 @@ class MapBuilderContext : public MapBuilderContextInterface {
   void UnsubscribeLocalSlamResults(
       const SubscriptionId& subscription_id) override;
   void NotifyFinishTrajectory(int trajectory_id) override;
-  std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-  ProcessLocalSlamResultData(
-      const std::string& sensor_id, cartographer::common::Time time,
-      const cartographer::mapping::proto::LocalSlamResultData& proto) override;
+  std::unique_ptr<mapping::LocalSlamResultData> ProcessLocalSlamResultData(
+      const std::string& sensor_id, common::Time time,
+      const mapping::proto::LocalSlamResultData& proto) override;
   LocalTrajectoryUploaderInterface* local_trajectory_uploader() override;
-  void EnqueueSensorData(
-      int trajectory_id,
-      std::unique_ptr<cartographer::sensor::Data> data) override;
-  void EnqueueLocalSlamResultData(
-      int trajectory_id, const std::string& sensor_id,
-      std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-          local_slam_result_data) override;
+  void EnqueueSensorData(int trajectory_id,
+                         std::unique_ptr<sensor::Data> data) override;
+  void EnqueueLocalSlamResultData(int trajectory_id,
+                                  const std::string& sensor_id,
+                                  std::unique_ptr<mapping::LocalSlamResultData>
+                                      local_slam_result_data) override;
 
  private:
-  std::shared_ptr<cartographer::mapping::Submap2D> UpdateSubmap2D(
-      const cartographer::mapping::proto::Submap& proto);
-  std::shared_ptr<cartographer::mapping::Submap3D> UpdateSubmap3D(
-      const cartographer::mapping::proto::Submap& proto);
+  std::shared_ptr<mapping::Submap2D> UpdateSubmap2D(
+      const mapping::proto::Submap& proto);
+  std::shared_ptr<mapping::Submap3D> UpdateSubmap3D(
+      const mapping::proto::Submap& proto);
 
   MapBuilderServer* map_builder_server_;
-  cartographer::mapping::MapById<cartographer::mapping::SubmapId,
-                                 std::shared_ptr<cartographer::mapping::Submap>>
+  mapping::MapById<mapping::SubmapId, std::shared_ptr<mapping::Submap>>
       unfinished_submaps_;
 };
 
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_H

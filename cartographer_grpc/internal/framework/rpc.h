@@ -32,7 +32,8 @@
 #include "grpc++/impl/codegen/proto_utils.h"
 #include "grpc++/impl/codegen/service_type.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 class Service;
@@ -77,7 +78,7 @@ class Rpc {
   };
 
   using UniqueEventPtr = std::unique_ptr<EventBase, EventDeleter>;
-  using EventQueue = cartographer::common::BlockingQueue<UniqueEventPtr>;
+  using EventQueue = common::BlockingQueue<UniqueEventPtr>;
 
   // Flows through gRPC's CompletionQueue and then our EventQueue.
   struct CompletionQueueRpcEvent : public EventBase {
@@ -180,7 +181,7 @@ class Rpc {
   std::unique_ptr<::grpc::ServerAsyncWriter<google::protobuf::Message>>
       server_async_writer_;
 
-  cartographer::common::Mutex send_queue_lock_;
+  common::Mutex send_queue_lock_;
   std::queue<SendItem> send_queue_;
 };
 
@@ -201,11 +202,12 @@ class ActiveRpcs {
  private:
   std::weak_ptr<Rpc> GetWeakPtr(Rpc* rpc);
 
-  cartographer::common::Mutex lock_;
+  common::Mutex lock_;
   std::map<Rpc*, std::shared_ptr<Rpc>> rpcs_;
 };
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_H

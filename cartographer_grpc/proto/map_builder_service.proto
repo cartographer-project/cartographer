@@ -22,7 +22,7 @@ import "cartographer/sensor/proto/sensor.proto";
 import "cartographer/transform/proto/transform.proto";
 import "google/protobuf/empty.proto";
 
-package cartographer_grpc.proto;
+package cartographer.cloud.proto;
 
 enum SensorType {
   RANGE = 0;

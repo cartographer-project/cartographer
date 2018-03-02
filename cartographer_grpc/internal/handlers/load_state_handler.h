@@ -22,7 +22,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class LoadStateHandler
@@ -30,16 +31,17 @@ class LoadStateHandler
                                    google::protobuf::Empty> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/LoadState";
+    return "/cartographer.cloud.proto.MapBuilderService/LoadState";
   }
   void OnRequest(const proto::LoadStateRequest& request) override;
   void OnReadsDone() override;
 
  private:
-  cartographer::io::InMemoryProtoStreamReader reader_;
+  io::InMemoryProtoStreamReader reader_;
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H

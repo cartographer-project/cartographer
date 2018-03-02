@@ -21,7 +21,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class WriteStateHandler : public framework::RpcHandler<
@@ -29,12 +30,13 @@ class WriteStateHandler : public framework::RpcHandler<
                               framework::Stream<proto::WriteStateResponse>> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/WriteState";
+    return "/cartographer.cloud.proto.MapBuilderService/WriteState";
   }
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_WRITE_STATE_HANDLER_H

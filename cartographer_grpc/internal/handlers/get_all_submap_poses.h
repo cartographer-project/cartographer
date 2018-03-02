@@ -21,7 +21,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class GetAllSubmapPosesHandler
@@ -29,12 +30,13 @@ class GetAllSubmapPosesHandler
                                    proto::GetAllSubmapPosesResponse> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/GetAllSubmapPoses";
+    return "/cartographer.cloud.proto.MapBuilderService/GetAllSubmapPoses";
   }
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_GET_ALL_SUBMAP_POSES_H

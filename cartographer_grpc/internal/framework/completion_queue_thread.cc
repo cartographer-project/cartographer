@@ -19,7 +19,8 @@
 #include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 CompletionQueueThread::CompletionQueueThread(
@@ -32,7 +33,7 @@ CompletionQueueThread::CompletionQueueThread(
 
 void CompletionQueueThread::Start(CompletionQueueRunner runner) {
   CHECK(!worker_thread_);
-  worker_thread_ = cartographer::common::make_unique<std::thread>(
+  worker_thread_ = common::make_unique<std::thread>(
       [this, runner]() { runner(this->completion_queue_.get()); });
 }
 
@@ -43,4 +44,5 @@ void CompletionQueueThread::Shutdown() {
 }
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

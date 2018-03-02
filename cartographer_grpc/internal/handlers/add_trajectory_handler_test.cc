@@ -22,7 +22,8 @@
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 namespace {
 
@@ -69,8 +70,7 @@ class AddTrajectoryHandlerTest
  public:
   void SetUp() override {
     testing::HandlerTest<AddTrajectoryHandler>::SetUp();
-    mock_map_builder_ =
-        cartographer::common::make_unique<testing::MockMapBuilder>();
+    mock_map_builder_ = common::make_unique<testing::MockMapBuilder>();
     EXPECT_CALL(*mock_map_builder_context_,
                 GetLocalSlamResultCallbackForSubscriptions())
         .WillOnce(Return(nullptr));
@@ -79,12 +79,11 @@ class AddTrajectoryHandlerTest
   }
 
  protected:
-  std::set<cartographer::mapping::TrajectoryBuilderInterface::SensorId>
-  ParseSensorIds(const proto::AddTrajectoryRequest &request) {
-    std::set<cartographer::mapping::TrajectoryBuilderInterface::SensorId>
-        expected_sensor_ids;
+  std::set<mapping::TrajectoryBuilderInterface::SensorId> ParseSensorIds(
+      const proto::AddTrajectoryRequest &request) {
+    std::set<mapping::TrajectoryBuilderInterface::SensorId> expected_sensor_ids;
     for (const auto &sensor_id : request.expected_sensor_ids()) {
-      expected_sensor_ids.insert(sensor::FromProto(sensor_id));
+      expected_sensor_ids.insert(cloud::FromProto(sensor_id));
     }
     return expected_sensor_ids;
   }
@@ -133,4 +132,5 @@ TEST_F(AddTrajectoryHandlerTest, WithLocalSlamUploader) {
 
 }  // namespace
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
