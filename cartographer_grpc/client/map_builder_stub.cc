@@ -23,8 +23,8 @@
 #include "cartographer_grpc/internal/handlers/get_submap_handler.h"
 #include "cartographer_grpc/internal/handlers/load_state_handler.h"
 #include "cartographer_grpc/internal/handlers/write_state_handler.h"
+#include "cartographer_grpc/internal/sensor/serialization.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
-#include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {

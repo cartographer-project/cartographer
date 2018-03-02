@@ -17,8 +17,8 @@
 #include "cartographer_grpc/internal/client/trajectory_builder_stub.h"
 
 #include "cartographer/mapping/local_slam_result_data.h"
+#include "cartographer_grpc/internal/sensor/serialization.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
-#include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {

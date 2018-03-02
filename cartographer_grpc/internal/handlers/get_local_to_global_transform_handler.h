@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_GET_LOCAL_TO_GLOBAL_TRANSFORM_HANDLER_H
 #define CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_GET_LOCAL_TO_GLOBAL_TRANSFORM_HANDLER_H
 
-#include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/internal/framework/rpc_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 

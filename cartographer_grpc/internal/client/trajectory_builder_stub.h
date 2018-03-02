@@ -21,7 +21,7 @@
 
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
-#include "cartographer_grpc/framework/client.h"
+#include "cartographer_grpc/internal/framework/client.h"
 #include "cartographer_grpc/internal/handlers/add_fixed_frame_pose_data_handler.h"
 #include "cartographer_grpc/internal/handlers/add_imu_data_handler.h"
 #include "cartographer_grpc/internal/handlers/add_landmark_data_handler.h"
