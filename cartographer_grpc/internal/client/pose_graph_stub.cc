@@ -17,12 +17,12 @@
 #include "cartographer_grpc/internal/client/pose_graph_stub.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer_grpc/framework/client.h"
-#include "cartographer_grpc/handlers/get_all_submap_poses.h"
-#include "cartographer_grpc/handlers/get_constraints_handler.h"
-#include "cartographer_grpc/handlers/get_landmark_poses_handler.h"
-#include "cartographer_grpc/handlers/get_local_to_global_transform_handler.h"
-#include "cartographer_grpc/handlers/get_trajectory_node_poses_handler.h"
-#include "cartographer_grpc/handlers/run_final_optimization_handler.h"
+#include "cartographer_grpc/internal/handlers/get_all_submap_poses.h"
+#include "cartographer_grpc/internal/handlers/get_constraints_handler.h"
+#include "cartographer_grpc/internal/handlers/get_landmark_poses_handler.h"
+#include "cartographer_grpc/internal/handlers/get_local_to_global_transform_handler.h"
+#include "cartographer_grpc/internal/handlers/get_trajectory_node_poses_handler.h"
+#include "cartographer_grpc/internal/handlers/run_final_optimization_handler.h"
 #include "glog/logging.h"
 
 namespace cartographer_grpc {

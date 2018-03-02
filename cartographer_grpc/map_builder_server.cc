@@ -16,24 +16,24 @@
 
 #include "cartographer_grpc/map_builder_server.h"
 
-#include "cartographer_grpc/handlers/add_fixed_frame_pose_data_handler.h"
-#include "cartographer_grpc/handlers/add_imu_data_handler.h"
-#include "cartographer_grpc/handlers/add_landmark_data_handler.h"
-#include "cartographer_grpc/handlers/add_local_slam_result_data_handler.h"
-#include "cartographer_grpc/handlers/add_odometry_data_handler.h"
-#include "cartographer_grpc/handlers/add_rangefinder_data_handler.h"
-#include "cartographer_grpc/handlers/add_trajectory_handler.h"
-#include "cartographer_grpc/handlers/finish_trajectory_handler.h"
-#include "cartographer_grpc/handlers/get_all_submap_poses.h"
-#include "cartographer_grpc/handlers/get_constraints_handler.h"
-#include "cartographer_grpc/handlers/get_landmark_poses_handler.h"
-#include "cartographer_grpc/handlers/get_local_to_global_transform_handler.h"
-#include "cartographer_grpc/handlers/get_submap_handler.h"
-#include "cartographer_grpc/handlers/get_trajectory_node_poses_handler.h"
-#include "cartographer_grpc/handlers/load_state_handler.h"
-#include "cartographer_grpc/handlers/receive_local_slam_results_handler.h"
-#include "cartographer_grpc/handlers/run_final_optimization_handler.h"
-#include "cartographer_grpc/handlers/write_state_handler.h"
+#include "cartographer_grpc/internal/handlers/add_fixed_frame_pose_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_imu_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_landmark_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_local_slam_result_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_odometry_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_rangefinder_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_trajectory_handler.h"
+#include "cartographer_grpc/internal/handlers/finish_trajectory_handler.h"
+#include "cartographer_grpc/internal/handlers/get_all_submap_poses.h"
+#include "cartographer_grpc/internal/handlers/get_constraints_handler.h"
+#include "cartographer_grpc/internal/handlers/get_landmark_poses_handler.h"
+#include "cartographer_grpc/internal/handlers/get_local_to_global_transform_handler.h"
+#include "cartographer_grpc/internal/handlers/get_submap_handler.h"
+#include "cartographer_grpc/internal/handlers/get_trajectory_node_poses_handler.h"
+#include "cartographer_grpc/internal/handlers/load_state_handler.h"
+#include "cartographer_grpc/internal/handlers/receive_local_slam_results_handler.h"
+#include "cartographer_grpc/internal/handlers/run_final_optimization_handler.h"
+#include "cartographer_grpc/internal/handlers/write_state_handler.h"
 #include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
 
@@ -56,9 +56,8 @@ MapBuilderServer::MapBuilderServer(
   server_builder.SetNumEventThreads(
       map_builder_server_options.num_event_threads());
   if (!map_builder_server_options.uplink_server_address().empty()) {
-    local_trajectory_uploader_ =
-        cartographer::common::make_unique<LocalTrajectoryUploader>(
-            map_builder_server_options.uplink_server_address());
+    local_trajectory_uploader_ = CreateLocalTrajectoryUploader(
+        map_builder_server_options.uplink_server_address());
   }
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler>();
   server_builder.RegisterHandler<handlers::AddOdometryDataHandler>();

@@ -15,25 +15,88 @@
  */
 
 #include "cartographer_grpc/local_trajectory_uploader.h"
+
+#include <map>
+#include <thread>
+
 #include "cartographer/common/make_unique.h"
-#include "cartographer_grpc/handlers/add_trajectory_handler.h"
-#include "cartographer_grpc/handlers/finish_trajectory_handler.h"
+#include "cartographer_grpc/framework/client.h"
+#include "cartographer_grpc/internal/handlers/add_fixed_frame_pose_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_imu_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_landmark_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_local_slam_result_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_odometry_data_handler.h"
+#include "cartographer_grpc/internal/handlers/add_trajectory_handler.h"
+#include "cartographer_grpc/internal/handlers/finish_trajectory_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "cartographer_grpc/sensor/serialization.h"
 #include "glog/logging.h"
+#include "grpc++/grpc++.h"
 
 namespace cartographer_grpc {
 namespace {
 
+using ::cartographer::common::make_unique;
+
 const cartographer::common::Duration kPopTimeout =
     cartographer::common::FromMilliseconds(100);
 
-}  // namespace
+class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
+ public:
+  LocalTrajectoryUploader(const std::string &uplink_server_address)
+      : client_channel_(grpc::CreateChannel(
+            uplink_server_address, grpc::InsecureChannelCredentials())) {}
+  ~LocalTrajectoryUploader();
 
-LocalTrajectoryUploader::LocalTrajectoryUploader(
-    const std::string &uplink_server_address)
-    : client_channel_(grpc::CreateChannel(
-          uplink_server_address, grpc::InsecureChannelCredentials())) {}
+  // Starts the upload thread.
+  void Start() final;
+
+  // Shuts down the upload thread. This method blocks until the shutdown is
+  // complete.
+  void Shutdown() final;
+
+  void AddTrajectory(
+      int local_trajectory_id, const std::set<SensorId> &expected_sensor_ids,
+      const cartographer::mapping::proto::TrajectoryBuilderOptions
+          &trajectory_options) final;
+  void FinishTrajectory(int local_trajectory_id) final;
+  void EnqueueDataRequest(
+      std::unique_ptr<google::protobuf::Message> data_request) final;
+
+  SensorId GetLocalSlamResultSensorId(int local_trajectory_id) const final {
+    return SensorId{SensorId::SensorType::LOCAL_SLAM_RESULT,
+                    "local_slam_result_" + std::to_string(local_trajectory_id)};
+  }
+
+ private:
+  void ProcessSendQueue();
+  void TranslateTrajectoryId(proto::SensorMetadata *sensor_metadata);
+  void ProcessFixedFramePoseDataMessage(
+      proto::AddFixedFramePoseDataRequest *data_request);
+  void ProcessImuDataMessage(proto::AddImuDataRequest *data_request);
+  void ProcessLocalSlamResultDataMessage(
+      proto::AddLocalSlamResultDataRequest *data_request);
+  void ProcessOdometryDataMessage(proto::AddOdometryDataRequest *data_request);
+  void ProcessLandmarkDataMessage(proto::AddLandmarkDataRequest *data_request);
+
+  std::shared_ptr<grpc::Channel> client_channel_;
+  std::map<int, int> local_to_cloud_trajectory_id_map_;
+  cartographer::common::BlockingQueue<
+      std::unique_ptr<google::protobuf::Message>>
+      send_queue_;
+  bool shutting_down_ = false;
+  std::unique_ptr<std::thread> upload_thread_;
+  std::unique_ptr<framework::Client<handlers::AddFixedFramePoseDataHandler>>
+      add_fixed_frame_pose_client_;
+  std::unique_ptr<framework::Client<handlers::AddImuDataHandler>>
+      add_imu_client_;
+  std::unique_ptr<framework::Client<handlers::AddLocalSlamResultDataHandler>>
+      add_local_slam_result_client_;
+  std::unique_ptr<framework::Client<handlers::AddOdometryDataHandler>>
+      add_odometry_client_;
+  std::unique_ptr<framework::Client<handlers::AddLandmarkDataHandler>>
+      add_landmark_client_;
+};
 
 LocalTrajectoryUploader::~LocalTrajectoryUploader() {
   if (add_imu_client_) {
@@ -61,8 +124,8 @@ LocalTrajectoryUploader::~LocalTrajectoryUploader() {
 void LocalTrajectoryUploader::Start() {
   CHECK(!shutting_down_);
   CHECK(!upload_thread_);
-  upload_thread_ = cartographer::common::make_unique<std::thread>(
-      [this]() { this->ProcessSendQueue(); });
+  upload_thread_ =
+      make_unique<std::thread>([this]() { this->ProcessSendQueue(); });
 }
 
 void LocalTrajectoryUploader::Shutdown() {
@@ -113,9 +176,9 @@ void LocalTrajectoryUploader::TranslateTrajectoryId(
 void LocalTrajectoryUploader::ProcessFixedFramePoseDataMessage(
     proto::AddFixedFramePoseDataRequest *data_request) {
   if (!add_fixed_frame_pose_client_) {
-    add_fixed_frame_pose_client_ = cartographer::common::make_unique<
-        framework::Client<handlers::AddFixedFramePoseDataHandler>>(
-        client_channel_);
+    add_fixed_frame_pose_client_ =
+        make_unique<framework::Client<handlers::AddFixedFramePoseDataHandler>>(
+            client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   CHECK(add_fixed_frame_pose_client_->Write(*data_request));
@@ -124,8 +187,9 @@ void LocalTrajectoryUploader::ProcessFixedFramePoseDataMessage(
 void LocalTrajectoryUploader::ProcessImuDataMessage(
     proto::AddImuDataRequest *data_request) {
   if (!add_imu_client_) {
-    add_imu_client_ = cartographer::common::make_unique<
-        framework::Client<handlers::AddImuDataHandler>>(client_channel_);
+    add_imu_client_ =
+        make_unique<framework::Client<handlers::AddImuDataHandler>>(
+            client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   CHECK(add_imu_client_->Write(*data_request));
@@ -134,8 +198,9 @@ void LocalTrajectoryUploader::ProcessImuDataMessage(
 void LocalTrajectoryUploader::ProcessOdometryDataMessage(
     proto::AddOdometryDataRequest *data_request) {
   if (!add_odometry_client_) {
-    add_odometry_client_ = cartographer::common::make_unique<
-        framework::Client<handlers::AddOdometryDataHandler>>(client_channel_);
+    add_odometry_client_ =
+        make_unique<framework::Client<handlers::AddOdometryDataHandler>>(
+            client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   CHECK(add_odometry_client_->Write(*data_request));
@@ -144,8 +209,9 @@ void LocalTrajectoryUploader::ProcessOdometryDataMessage(
 void LocalTrajectoryUploader::ProcessLandmarkDataMessage(
     proto::AddLandmarkDataRequest *data_request) {
   if (!add_landmark_client_) {
-    add_landmark_client_ = cartographer::common::make_unique<
-        framework::Client<handlers::AddLandmarkDataHandler>>(client_channel_);
+    add_landmark_client_ =
+        make_unique<framework::Client<handlers::AddLandmarkDataHandler>>(
+            client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   CHECK(add_landmark_client_->Write(*data_request));
@@ -154,9 +220,9 @@ void LocalTrajectoryUploader::ProcessLandmarkDataMessage(
 void LocalTrajectoryUploader::ProcessLocalSlamResultDataMessage(
     proto::AddLocalSlamResultDataRequest *data_request) {
   if (!add_local_slam_result_client_) {
-    add_local_slam_result_client_ = cartographer::common::make_unique<
-        framework::Client<handlers::AddLocalSlamResultDataHandler>>(
-        client_channel_);
+    add_local_slam_result_client_ =
+        make_unique<framework::Client<handlers::AddLocalSlamResultDataHandler>>(
+            client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   // A submap also holds a trajectory id that must be translated to uplink's
@@ -203,6 +269,13 @@ void LocalTrajectoryUploader::FinishTrajectory(int local_trajectory_id) {
 void LocalTrajectoryUploader::EnqueueDataRequest(
     std::unique_ptr<google::protobuf::Message> data_request) {
   send_queue_.Push(std::move(data_request));
+}
+
+}  // namespace
+
+std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
+    const std::string &uplink_server_address) {
+  return make_unique<LocalTrajectoryUploader>(uplink_server_address);
 }
 
 }  // namespace cartographer_grpc
