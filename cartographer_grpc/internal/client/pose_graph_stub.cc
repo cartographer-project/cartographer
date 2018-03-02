@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer_grpc/mapping/pose_graph_stub.h"
+#include "cartographer_grpc/internal/client/pose_graph_stub.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer_grpc/framework/client.h"
 #include "cartographer_grpc/handlers/get_all_submap_poses.h"
