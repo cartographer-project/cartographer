@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_RUN_FINAL_OPTIMIZATION_H
 #define CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_RUN_FINAL_OPTIMIZATION_H
 
-#include "cartographer_grpc/framework/rpc_handler.h"
+#include "cartographer_grpc/internal/framework/rpc_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 

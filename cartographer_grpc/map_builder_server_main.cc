@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+#include "cartographer/mapping/map_builder.h"
 #include "cartographer/metrics/register.h"
-#include "cartographer_grpc/map_builder_server.h"
+#include "cartographer_grpc/map_builder_server_interface.h"
 #include "cartographer_grpc/map_builder_server_options.h"
 #include "gflags/gflags.h"
 #include "glog/logging.h"
@@ -54,10 +55,11 @@ void Run(const std::string& configuration_directory,
   auto map_builder =
       cartographer::common::make_unique<cartographer::mapping::MapBuilder>(
           map_builder_server_options.map_builder_options());
-  MapBuilderServer map_builder_server(map_builder_server_options,
-                                      std::move(map_builder));
-  map_builder_server.Start();
-  map_builder_server.WaitForShutdown();
+  std::unique_ptr<MapBuilderServerInterface> map_builder_server =
+      CreateMapBuilderServer(map_builder_server_options,
+                             std::move(map_builder));
+  map_builder_server->Start();
+  map_builder_server->WaitForShutdown();
 }
 
 }  // namespace cartographer_grpc

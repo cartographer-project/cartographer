@@ -15,10 +15,10 @@
  */
 
 #include "cartographer_grpc/internal/handlers/add_trajectory_handler.h"
-#include "cartographer_grpc/sensor/serialization.h"
-#include "cartographer_grpc/testing/handler_test.h"
-#include "cartographer_grpc/testing/mock_map_builder.h"
-#include "cartographer_grpc/testing/test_helpers.h"
+#include "cartographer_grpc/internal/sensor/serialization.h"
+#include "cartographer_grpc/internal/testing/handler_test.h"
+#include "cartographer_grpc/internal/testing/mock_map_builder.h"
+#include "cartographer_grpc/internal/testing/test_helpers.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
 

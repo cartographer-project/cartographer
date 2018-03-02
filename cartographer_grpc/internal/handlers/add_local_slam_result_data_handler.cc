@@ -20,8 +20,8 @@
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/sensor/dispatchable.h"
-#include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_context_interface.h"
+#include "cartographer_grpc/internal/framework/rpc_handler.h"
+#include "cartographer_grpc/internal/map_builder_context_interface.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 

@@ -15,8 +15,8 @@
  */
 
 #include "cartographer_grpc/internal/handlers/add_imu_data_handler.h"
-#include "cartographer_grpc/testing/handler_test.h"
-#include "cartographer_grpc/testing/test_helpers.h"
+#include "cartographer_grpc/internal/testing/handler_test.h"
+#include "cartographer_grpc/internal/testing/test_helpers.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
 

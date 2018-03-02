@@ -16,8 +16,8 @@
 
 #include "cartographer_grpc/internal/handlers/get_local_to_global_transform_handler.h"
 
-#include "cartographer_grpc/framework/rpc_handler.h"
-#include "cartographer_grpc/map_builder_context_interface.h"
+#include "cartographer_grpc/internal/framework/rpc_handler.h"
+#include "cartographer_grpc/internal/map_builder_context_interface.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
