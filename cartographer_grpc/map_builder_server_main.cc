@@ -40,7 +40,7 @@ void Run(const std::string& configuration_directory,
          const std::string& configuration_basename) {
 #if USE_PROMETHEUS
   metrics::prometheus::FamilyFactory registry;
-  metrics::RegisterAllMetrics(&registry);
+  ::cartographer::metrics::RegisterAllMetrics(&registry);
   ::prometheus::Exposer exposer("0.0.0.0:9100");
   exposer.RegisterCollectable(registry.GetCollectable());
   LOG(INFO) << "Exposing metrics at http://localhost:9100/metrics";

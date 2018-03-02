@@ -28,9 +28,9 @@ namespace metrics {
 namespace prometheus {
 namespace {
 
-static auto* kCounter = metrics::Counter::Null();
-static auto* kGauge = metrics::Gauge::Null();
-static auto* kScoresMetric = metrics::Histogram::Null();
+static auto* kCounter = ::cartographer::metrics::Counter::Null();
+static auto* kGauge = ::cartographer::metrics::Gauge::Null();
+static auto* kScoresMetric = ::cartographer::metrics::Histogram::Null();
 
 const char kLabelKey[] = "kind";
 const char kLabelValue[] = "score";
@@ -38,8 +38,8 @@ const std::array<double, 5> kObserveScores = {{-1, 0.11, 0.2, 0.5, 2}};
 
 class Algorithm {
  public:
-  static void RegisterMetrics(metrics::FamilyFactory* factory) {
-    auto boundaries = metrics::Histogram::FixedWidth(0.05, 20);
+  static void RegisterMetrics(::cartographer::metrics::FamilyFactory* factory) {
+    auto boundaries = ::cartographer::metrics::Histogram::FixedWidth(0.05, 20);
     auto* scores_family = factory->NewHistogramFamily(
         "/algorithm/scores", "Scores achieved", boundaries);
     kScoresMetric = scores_family->Add({{kLabelKey, kLabelValue}});
@@ -135,7 +135,7 @@ TEST(MetricsTest, CollectHistogram) {
 TEST(MetricsTest, RunExposerServer) {
   FamilyFactory registry;
   Algorithm::RegisterMetrics(&registry);
-  metrics::RegisterAllMetrics(&registry);
+  ::cartographer::metrics::RegisterAllMetrics(&registry);
   ::prometheus::Exposer exposer("0.0.0.0:9100");
   exposer.RegisterCollectable(registry.GetCollectable());
 
