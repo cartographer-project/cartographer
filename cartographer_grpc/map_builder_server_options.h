@@ -22,15 +22,17 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer_grpc/proto/map_builder_server_options.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 
 proto::MapBuilderServerOptions CreateMapBuilderServerOptions(
-    ::cartographer::common::LuaParameterDictionary* lua_parameter_dictionary);
+    common::LuaParameterDictionary* lua_parameter_dictionary);
 
 proto::MapBuilderServerOptions LoadMapBuilderServerOptions(
     const std::string& configuration_directory,
     const std::string& configuration_basename);
 
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_OPTIONS_H

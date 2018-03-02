@@ -21,11 +21,11 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/util/message_differencer.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace testing {
 
-using DataPredicateType =
-    std::function<bool(const cartographer::sensor::Data &)>;
+using DataPredicateType = std::function<bool(const sensor::Data &)>;
 using ProtoPredicateType =
     std::function<bool(const google::protobuf::Message &)>;
 
@@ -52,6 +52,7 @@ ProtoPredicateType BuildProtoPredicateEquals(
     const google::protobuf::Message *proto);
 
 }  // namespace testing
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_TEST_HELPERS_H

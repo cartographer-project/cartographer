@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package cartographer_grpc.framework.proto;
+package cartographer.cloud.framework.proto;
 
 message GetSumRequest {
   int32 input = 1;

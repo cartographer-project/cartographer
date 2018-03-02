@@ -21,11 +21,12 @@
 #include "cartographer/common/time.h"
 #include "grpc++/grpc++.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
-using cartographer::common::Duration;
-using cartographer::common::optional;
+using common::Duration;
+using common::optional;
 
 using RetryStrategy =
     std::function<optional<Duration>(int /* failed_attempts */)>;
@@ -46,6 +47,7 @@ bool RetryWithStrategy(RetryStrategy retry_strategy, std::function<bool()> op,
                        std::function<void()> reset = nullptr);
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RETRY_H

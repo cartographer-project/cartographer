@@ -21,23 +21,22 @@
 #include "cartographer_grpc/internal/map_builder_context_interface.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 namespace {
 
 std::unique_ptr<proto::ReceiveLocalSlamResultsResponse> GenerateResponse(
     std::unique_ptr<MapBuilderContextInterface::LocalSlamResult>
         local_slam_result) {
-  auto response = cartographer::common::make_unique<
-      proto::ReceiveLocalSlamResultsResponse>();
+  auto response = common::make_unique<proto::ReceiveLocalSlamResultsResponse>();
   response->set_trajectory_id(local_slam_result->trajectory_id);
-  response->set_timestamp(
-      cartographer::common::ToUniversal(local_slam_result->time));
+  response->set_timestamp(common::ToUniversal(local_slam_result->time));
   *response->mutable_local_pose() =
-      cartographer::transform::ToProto(local_slam_result->local_pose);
+      transform::ToProto(local_slam_result->local_pose);
   if (local_slam_result->range_data) {
     *response->mutable_range_data() =
-        cartographer::sensor::ToProto(*local_slam_result->range_data);
+        sensor::ToProto(*local_slam_result->range_data);
   }
   if (local_slam_result->insertion_result) {
     local_slam_result->insertion_result->node_id.ToProto(
@@ -67,8 +66,9 @@ void ReceiveLocalSlamResultsHandler::OnRequest(
                 }
               });
 
-  subscription_id_ = cartographer::common::make_unique<
-      MapBuilderContextInterface::SubscriptionId>(subscription_id);
+  subscription_id_ =
+      common::make_unique<MapBuilderContextInterface::SubscriptionId>(
+          subscription_id);
 }
 
 void ReceiveLocalSlamResultsHandler::OnFinish() {
@@ -79,4 +79,5 @@ void ReceiveLocalSlamResultsHandler::OnFinish() {
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

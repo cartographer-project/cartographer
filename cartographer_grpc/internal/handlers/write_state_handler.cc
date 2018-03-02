@@ -23,20 +23,20 @@
 #include "cartographer_grpc/internal/map_builder_server.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void WriteStateHandler::OnRequest(const google::protobuf::Empty& request) {
   auto writer = GetWriter();
-  cartographer::io::ForwardingProtoStreamWriter proto_stream_writer(
+  io::ForwardingProtoStreamWriter proto_stream_writer(
       [writer](const google::protobuf::Message* proto) {
         if (!proto) {
           writer.WritesDone();
           return true;
         }
 
-        auto response =
-            cartographer::common::make_unique<proto::WriteStateResponse>();
+        auto response = common::make_unique<proto::WriteStateResponse>();
         if (proto->GetTypeName() == "cartographer.mapping.proto.PoseGraph") {
           response->mutable_pose_graph()->CopyFrom(*proto);
         } else if (proto->GetTypeName() ==
@@ -56,4 +56,5 @@ void WriteStateHandler::OnRequest(const google::protobuf::Empty& request) {
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

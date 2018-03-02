@@ -25,7 +25,8 @@
 #include "mock_map_builder_context.h"
 #include "mock_pose_graph.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace testing {
 
 using ::testing::Return;
@@ -35,16 +36,16 @@ template <typename HandlerType>
 class HandlerTest : public Test {
  public:
   void SetUp() override {
-    test_server_ = cartographer::common::make_unique<
+    test_server_ = common::make_unique<
         framework::testing::RpcHandlerTestServer<HandlerType>>(
-        cartographer::common::make_unique<MockMapBuilderContext>());
+        common::make_unique<MockMapBuilderContext>());
     mock_map_builder_context_ =
         test_server_
             ->template GetUnsynchronizedContext<MockMapBuilderContext>();
     mock_local_trajectory_uploader_ =
-        cartographer::common::make_unique<MockLocalTrajectoryUploader>();
-    mock_map_builder_ = cartographer::common::make_unique<MockMapBuilder>();
-    mock_pose_graph_ = cartographer::common::make_unique<MockPoseGraph>();
+        common::make_unique<MockLocalTrajectoryUploader>();
+    mock_map_builder_ = common::make_unique<MockMapBuilder>();
+    mock_pose_graph_ = common::make_unique<MockPoseGraph>();
 
     EXPECT_CALL(*mock_map_builder_context_, map_builder())
         .Times(::testing::AnyNumber())
@@ -74,6 +75,7 @@ class HandlerTest : public Test {
 };
 
 }  // namespace testing
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_HANDLER_TEST_H

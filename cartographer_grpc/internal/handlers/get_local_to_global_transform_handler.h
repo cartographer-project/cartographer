@@ -21,7 +21,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class GetLocalToGlobalTransformHandler
@@ -29,7 +30,7 @@ class GetLocalToGlobalTransformHandler
                                    proto::GetLocalToGlobalTransformResponse> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/"
+    return "/cartographer.cloud.proto.MapBuilderService/"
            "GetLocalToGlobalTransform";
   }
   void OnRequest(
@@ -37,6 +38,7 @@ class GetLocalToGlobalTransformHandler
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_GET_LOCAL_TO_GLOBAL_TRANSFORM_HANDLER_H

@@ -16,8 +16,8 @@
 
 #include "cartographer_grpc/internal/sensor/serialization.h"
 
-namespace cartographer_grpc {
-namespace sensor {
+namespace cartographer {
+namespace cloud {
 
 void CreateSensorMetadata(const std::string& sensor_id, const int trajectory_id,
                           proto::SensorMetadata* proto) {
@@ -27,18 +27,17 @@ void CreateSensorMetadata(const std::string& sensor_id, const int trajectory_id,
 
 void CreateAddFixedFramePoseDataRequest(
     const std::string& sensor_id, int trajectory_id,
-    const cartographer::sensor::proto::FixedFramePoseData&
-        fixed_frame_pose_data,
+    const sensor::proto::FixedFramePoseData& fixed_frame_pose_data,
     proto::AddFixedFramePoseDataRequest* proto) {
   CreateSensorMetadata(sensor_id, trajectory_id,
                        proto->mutable_sensor_metadata());
   *proto->mutable_fixed_frame_pose_data() = fixed_frame_pose_data;
 }
 
-void CreateAddImuDataRequest(
-    const std::string& sensor_id, const int trajectory_id,
-    const cartographer::sensor::proto::ImuData& imu_data,
-    proto::AddImuDataRequest* proto) {
+void CreateAddImuDataRequest(const std::string& sensor_id,
+                             const int trajectory_id,
+                             const sensor::proto::ImuData& imu_data,
+                             proto::AddImuDataRequest* proto) {
   CreateSensorMetadata(sensor_id, trajectory_id,
                        proto->mutable_sensor_metadata());
   *proto->mutable_imu_data() = imu_data;
@@ -46,7 +45,7 @@ void CreateAddImuDataRequest(
 
 void CreateAddOdometryDataRequest(
     const std::string& sensor_id, int trajectory_id,
-    const cartographer::sensor::proto::OdometryData& odometry_data,
+    const sensor::proto::OdometryData& odometry_data,
     proto::AddOdometryDataRequest* proto) {
   CreateSensorMetadata(sensor_id, trajectory_id,
                        proto->mutable_sensor_metadata());
@@ -55,8 +54,7 @@ void CreateAddOdometryDataRequest(
 
 void CreateAddRangeFinderDataRequest(
     const std::string& sensor_id, int trajectory_id,
-    const cartographer::sensor::proto::TimedPointCloudData&
-        timed_point_cloud_data,
+    const sensor::proto::TimedPointCloudData& timed_point_cloud_data,
     proto::AddRangefinderDataRequest* proto) {
   CreateSensorMetadata(sensor_id, trajectory_id,
                        proto->mutable_sensor_metadata());
@@ -65,7 +63,7 @@ void CreateAddRangeFinderDataRequest(
 
 void CreateAddLandmarkDataRequest(
     const std::string& sensor_id, int trajectory_id,
-    const cartographer::sensor::proto::LandmarkData& landmark_data,
+    const sensor::proto::LandmarkData& landmark_data,
     proto::AddLandmarkDataRequest* proto) {
   CreateSensorMetadata(sensor_id, trajectory_id,
                        proto->mutable_sensor_metadata());
@@ -73,17 +71,17 @@ void CreateAddLandmarkDataRequest(
 }
 
 void CreateAddLocalSlamResultDataRequest(
-    const std::string& sensor_id, int trajectory_id,
-    cartographer::common::Time time, int starting_submap_index,
-    const cartographer::mapping::TrajectoryBuilderInterface::InsertionResult&
+    const std::string& sensor_id, int trajectory_id, common::Time time,
+    int starting_submap_index,
+    const mapping::TrajectoryBuilderInterface::InsertionResult&
         insertion_result,
     proto::AddLocalSlamResultDataRequest* proto) {
-  sensor::CreateSensorMetadata(sensor_id, trajectory_id,
-                               proto->mutable_sensor_metadata());
+  CreateSensorMetadata(sensor_id, trajectory_id,
+                       proto->mutable_sensor_metadata());
   proto->mutable_local_slam_result_data()->set_timestamp(
-      cartographer::common::ToUniversal(time));
+      common::ToUniversal(time));
   *proto->mutable_local_slam_result_data()->mutable_node_data() =
-      cartographer::mapping::ToProto(*insertion_result.constant_data);
+      mapping::ToProto(*insertion_result.constant_data);
   for (const auto& insertion_submap : insertion_result.insertion_submaps) {
     // We only send the probability grid up if the submap is finished.
     auto* submap = proto->mutable_local_slam_result_data()->add_submaps();
@@ -95,10 +93,8 @@ void CreateAddLocalSlamResultDataRequest(
 }
 
 proto::SensorId ToProto(
-    const cartographer::mapping::TrajectoryBuilderInterface::SensorId&
-        sensor_id) {
-  using SensorType =
-      cartographer::mapping::TrajectoryBuilderInterface::SensorId::SensorType;
+    const mapping::TrajectoryBuilderInterface::SensorId& sensor_id) {
+  using SensorType = mapping::TrajectoryBuilderInterface::SensorId::SensorType;
   proto::SensorType type;
   switch (sensor_id.type) {
     case SensorType::RANGE:
@@ -128,9 +124,9 @@ proto::SensorId ToProto(
   return proto;
 }
 
-cartographer::mapping::TrajectoryBuilderInterface::SensorId FromProto(
+mapping::TrajectoryBuilderInterface::SensorId FromProto(
     const proto::SensorId& proto) {
-  using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
+  using SensorId = mapping::TrajectoryBuilderInterface::SensorId;
   using SensorType = SensorId::SensorType;
   SensorType type;
   switch (proto.type()) {
@@ -158,5 +154,5 @@ cartographer::mapping::TrajectoryBuilderInterface::SensorId FromProto(
   return SensorId{type, proto.id()};
 }
 
-}  // namespace sensor
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

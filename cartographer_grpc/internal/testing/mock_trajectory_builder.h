@@ -22,40 +22,37 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace testing {
 
-class MockTrajectoryBuilder
-    : public cartographer::mapping::TrajectoryBuilderInterface {
+class MockTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
  public:
   MockTrajectoryBuilder() = default;
   ~MockTrajectoryBuilder() override = default;
 
   MOCK_METHOD2(AddSensorData,
-               void(const std::string &,
-                    const cartographer::sensor::TimedPointCloudData &));
-  MOCK_METHOD2(AddSensorData, void(const std::string &,
-                                   const cartographer::sensor::ImuData &));
-  MOCK_METHOD2(AddSensorData, void(const std::string &,
-                                   const cartographer::sensor::OdometryData &));
+               void(const std::string &, const sensor::TimedPointCloudData &));
   MOCK_METHOD2(AddSensorData,
-               void(const std::string &,
-                    const cartographer::sensor::FixedFramePoseData &));
-  MOCK_METHOD2(AddSensorData, void(const std::string &,
-                                   const cartographer::sensor::LandmarkData &));
+               void(const std::string &, const sensor::ImuData &));
+  MOCK_METHOD2(AddSensorData,
+               void(const std::string &, const sensor::OdometryData &));
+  MOCK_METHOD2(AddSensorData,
+               void(const std::string &, const sensor::FixedFramePoseData &));
+  MOCK_METHOD2(AddSensorData,
+               void(const std::string &, const sensor::LandmarkData &));
 
   // Some of the platforms we run on may ship with a version of gmock which does
   // not yet support move-only types.
-  MOCK_METHOD1(DoAddLocalSlamResultData,
-               void(cartographer::mapping::LocalSlamResultData *));
-  void AddLocalSlamResultData(
-      std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-          local_slam_result_data) override {
+  MOCK_METHOD1(DoAddLocalSlamResultData, void(mapping::LocalSlamResultData *));
+  void AddLocalSlamResultData(std::unique_ptr<mapping::LocalSlamResultData>
+                                  local_slam_result_data) override {
     DoAddLocalSlamResultData(local_slam_result_data.get());
   }
 };
 
 }  // namespace testing
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_TRAJECTORY_BUILDER_CONTEXT_H

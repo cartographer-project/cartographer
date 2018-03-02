@@ -20,7 +20,8 @@
 #include "cartographer/common/mutex.h"
 #include "glog/logging.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 // Implementations of this class allow RPC handlers to share state among one
@@ -39,27 +40,27 @@ class ExecutionContext {
     ContextType* operator->() {
       return static_cast<ContextType*>(execution_context_);
     }
-    Synchronized(cartographer::common::Mutex* lock,
-                 ExecutionContext* execution_context)
+    Synchronized(common::Mutex* lock, ExecutionContext* execution_context)
         : locker_(lock), execution_context_(execution_context) {}
     Synchronized(const Synchronized&) = delete;
     Synchronized(Synchronized&&) = delete;
 
    private:
-    cartographer::common::MutexLocker locker_;
+    common::MutexLocker locker_;
     ExecutionContext* execution_context_;
   };
   ExecutionContext() = default;
   virtual ~ExecutionContext() = default;
   ExecutionContext(const ExecutionContext&) = delete;
   ExecutionContext& operator=(const ExecutionContext&) = delete;
-  cartographer::common::Mutex* lock() { return &lock_; }
+  common::Mutex* lock() { return &lock_; }
 
  private:
-  cartographer::common::Mutex lock_;
+  common::Mutex lock_;
 };
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_EXECUTION_CONTEXT_H

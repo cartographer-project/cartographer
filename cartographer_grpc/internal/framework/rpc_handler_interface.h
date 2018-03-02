@@ -22,7 +22,8 @@
 #include "google/protobuf/message.h"
 #include "grpc++/grpc++.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 class Rpc;
@@ -43,7 +44,7 @@ class RpcHandlerInterface {
   virtual void OnFinish(){};
   template <class RpcHandlerType>
   static std::unique_ptr<RpcHandlerType> Instantiate() {
-    return cartographer::common::make_unique<RpcHandlerType>();
+    return common::make_unique<RpcHandlerType>();
   }
 };
 
@@ -54,11 +55,12 @@ struct RpcHandlerInfo {
   const google::protobuf::Descriptor* request_descriptor;
   const google::protobuf::Descriptor* response_descriptor;
   const RpcHandlerFactory rpc_handler_factory;
-  const grpc::internal::RpcMethod::RpcType rpc_type;
+  const ::grpc::internal::RpcMethod::RpcType rpc_type;
   const std::string fully_qualified_name;
 };
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_HANDLER_INTERFACE_H_H

@@ -23,18 +23,19 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace testing {
 
 class MockMapBuilderContext : public MapBuilderContextInterface {
  public:
-  MOCK_METHOD0(map_builder, cartographer::mapping::MapBuilderInterface &());
-  MOCK_METHOD0(sensor_data_queue,
-               cartographer::common::BlockingQueue<
-                   std::unique_ptr<MapBuilderContextInterface::Data>> &());
+  MOCK_METHOD0(map_builder, mapping::MapBuilderInterface &());
+  MOCK_METHOD0(
+      sensor_data_queue,
+      common::BlockingQueue<std::unique_ptr<MapBuilderContextInterface::Data>>
+          &());
   MOCK_METHOD0(GetLocalSlamResultCallbackForSubscriptions,
-               cartographer::mapping::TrajectoryBuilderInterface::
-                   LocalSlamResultCallback());
+               mapping::TrajectoryBuilderInterface::LocalSlamResultCallback());
   MOCK_METHOD1(AddSensorDataToTrajectory,
                void(const MapBuilderContextInterface::Data &));
   MOCK_METHOD2(SubscribeLocalSlamResults,
@@ -45,37 +46,35 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
                void(const MapBuilderContextInterface::SubscriptionId &));
   MOCK_METHOD1(NotifyFinishTrajectory, void(int));
   MOCK_METHOD3(DoProcessLocalSlamResultData,
-               cartographer::mapping::LocalSlamResultData *(
-                   const std::string &, cartographer::common::Time,
-                   const cartographer::mapping::proto::LocalSlamResultData &));
-  std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-  ProcessLocalSlamResultData(
-      const std::string &sensor_id, cartographer::common::Time time,
-      const cartographer::mapping::proto::LocalSlamResultData &proto) override {
-    return std::unique_ptr<cartographer::mapping::LocalSlamResultData>(
+               mapping::LocalSlamResultData *(
+                   const std::string &, common::Time,
+                   const mapping::proto::LocalSlamResultData &));
+  std::unique_ptr<mapping::LocalSlamResultData> ProcessLocalSlamResultData(
+      const std::string &sensor_id, common::Time time,
+      const mapping::proto::LocalSlamResultData &proto) override {
+    return std::unique_ptr<mapping::LocalSlamResultData>(
         DoProcessLocalSlamResultData(sensor_id, time, proto));
   }
   MOCK_METHOD0(local_trajectory_uploader, LocalTrajectoryUploaderInterface *());
 
-  MOCK_METHOD2(DoEnqueueSensorData, void(int, cartographer::sensor::Data *));
-  void EnqueueSensorData(
-      int trajectory_id,
-      std::unique_ptr<cartographer::sensor::Data> data) override {
+  MOCK_METHOD2(DoEnqueueSensorData, void(int, sensor::Data *));
+  void EnqueueSensorData(int trajectory_id,
+                         std::unique_ptr<sensor::Data> data) override {
     DoEnqueueSensorData(trajectory_id, data.get());
   }
   MOCK_METHOD3(DoEnqueueLocalSlamResultData,
-               void(int, const std::string &,
-                    cartographer::mapping::LocalSlamResultData *));
-  void EnqueueLocalSlamResultData(
-      int trajectory_id, const std::string &sensor_id,
-      std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-          local_slam_result_data) override {
+               void(int, const std::string &, mapping::LocalSlamResultData *));
+  void EnqueueLocalSlamResultData(int trajectory_id,
+                                  const std::string &sensor_id,
+                                  std::unique_ptr<mapping::LocalSlamResultData>
+                                      local_slam_result_data) override {
     DoEnqueueLocalSlamResultData(trajectory_id, sensor_id,
                                  local_slam_result_data.get());
   }
 };
 
 }  // namespace testing
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_MAP_BUILDER_CONTEXT_H

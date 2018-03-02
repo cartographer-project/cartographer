@@ -16,20 +16,19 @@
 
 #include "cartographer_grpc/internal/testing/test_helpers.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace testing {
 
 template <>
 DataPredicateType BuildDataPredicateEquals<proto::AddImuDataRequest>(
     const proto::AddImuDataRequest &proto) {
-  return [proto](const cartographer::sensor::Data &data) {
+  return [proto](const sensor::Data &data) {
     const auto *dispatchable =
-        dynamic_cast<const cartographer::sensor::Dispatchable<
-            cartographer::sensor::ImuData> *>(&data);
+        dynamic_cast<const sensor::Dispatchable<sensor::ImuData> *>(&data);
     CHECK_NOTNULL(dispatchable);
     return google::protobuf::util::MessageDifferencer::Equals(
-               cartographer::sensor::ToProto(dispatchable->data()),
-               proto.imu_data()) &&
+               sensor::ToProto(dispatchable->data()), proto.imu_data()) &&
            dispatchable->GetSensorId() == proto.sensor_metadata().sensor_id();
   };
 }
@@ -37,13 +36,13 @@ DataPredicateType BuildDataPredicateEquals<proto::AddImuDataRequest>(
 template <>
 DataPredicateType BuildDataPredicateEquals<proto::AddFixedFramePoseDataRequest>(
     const proto::AddFixedFramePoseDataRequest &proto) {
-  return [proto](const cartographer::sensor::Data &data) {
+  return [proto](const sensor::Data &data) {
     const auto *dispatchable =
-        dynamic_cast<const cartographer::sensor::Dispatchable<
-            cartographer::sensor::FixedFramePoseData> *>(&data);
+        dynamic_cast<const sensor::Dispatchable<sensor::FixedFramePoseData> *>(
+            &data);
     CHECK_NOTNULL(dispatchable);
     return google::protobuf::util::MessageDifferencer::Equals(
-               cartographer::sensor::ToProto(dispatchable->data()),
+               sensor::ToProto(dispatchable->data()),
                proto.fixed_frame_pose_data()) &&
            dispatchable->GetSensorId() == proto.sensor_metadata().sensor_id();
   };
@@ -52,14 +51,12 @@ DataPredicateType BuildDataPredicateEquals<proto::AddFixedFramePoseDataRequest>(
 template <>
 DataPredicateType BuildDataPredicateEquals<proto::AddOdometryDataRequest>(
     const proto::AddOdometryDataRequest &proto) {
-  return [proto](const cartographer::sensor::Data &data) {
+  return [proto](const sensor::Data &data) {
     const auto *dispatchable =
-        dynamic_cast<const cartographer::sensor::Dispatchable<
-            cartographer::sensor::OdometryData> *>(&data);
+        dynamic_cast<const sensor::Dispatchable<sensor::OdometryData> *>(&data);
     CHECK_NOTNULL(dispatchable);
     return google::protobuf::util::MessageDifferencer::Equals(
-               cartographer::sensor::ToProto(dispatchable->data()),
-               proto.odometry_data()) &&
+               sensor::ToProto(dispatchable->data()), proto.odometry_data()) &&
            dispatchable->GetSensorId() == proto.sensor_metadata().sensor_id();
   };
 }
@@ -67,14 +64,12 @@ DataPredicateType BuildDataPredicateEquals<proto::AddOdometryDataRequest>(
 template <>
 DataPredicateType BuildDataPredicateEquals<proto::AddLandmarkDataRequest>(
     const proto::AddLandmarkDataRequest &proto) {
-  return [proto](const cartographer::sensor::Data &data) {
+  return [proto](const sensor::Data &data) {
     const auto *dispatchable =
-        dynamic_cast<const cartographer::sensor::Dispatchable<
-            cartographer::sensor::LandmarkData> *>(&data);
+        dynamic_cast<const sensor::Dispatchable<sensor::LandmarkData> *>(&data);
     CHECK_NOTNULL(dispatchable);
     return google::protobuf::util::MessageDifferencer::Equals(
-               cartographer::sensor::ToProto(dispatchable->data()),
-               proto.landmark_data()) &&
+               sensor::ToProto(dispatchable->data()), proto.landmark_data()) &&
            dispatchable->GetSensorId() == proto.sensor_metadata().sensor_id();
   };
 }
@@ -82,13 +77,13 @@ DataPredicateType BuildDataPredicateEquals<proto::AddLandmarkDataRequest>(
 template <>
 DataPredicateType BuildDataPredicateEquals<proto::AddRangefinderDataRequest>(
     const proto::AddRangefinderDataRequest &proto) {
-  return [proto](const cartographer::sensor::Data &data) {
+  return [proto](const sensor::Data &data) {
     const auto *dispatchable =
-        dynamic_cast<const cartographer::sensor::Dispatchable<
-            cartographer::sensor::TimedPointCloudData> *>(&data);
+        dynamic_cast<const sensor::Dispatchable<sensor::TimedPointCloudData> *>(
+            &data);
     CHECK_NOTNULL(dispatchable);
     return google::protobuf::util::MessageDifferencer::Equals(
-               cartographer::sensor::ToProto(dispatchable->data()),
+               sensor::ToProto(dispatchable->data()),
                proto.timed_point_cloud_data()) &&
            dispatchable->GetSensorId() == proto.sensor_metadata().sensor_id();
   };
@@ -102,4 +97,5 @@ ProtoPredicateType BuildProtoPredicateEquals(
 }
 
 }  // namespace testing
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

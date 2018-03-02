@@ -25,18 +25,18 @@
 #include "cartographer_grpc/internal/framework/execution_context.h"
 #include "cartographer_grpc/internal/local_trajectory_uploader.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 
 class MapBuilderServer;
 class MapBuilderContextInterface : public framework::ExecutionContext {
  public:
   struct LocalSlamResult {
     int trajectory_id;
-    cartographer::common::Time time;
-    cartographer::transform::Rigid3d local_pose;
-    std::shared_ptr<const cartographer::sensor::RangeData> range_data;
-    std::unique_ptr<const cartographer::mapping::TrajectoryBuilderInterface::
-                        InsertionResult>
+    common::Time time;
+    transform::Rigid3d local_pose;
+    std::shared_ptr<const sensor::RangeData> range_data;
+    std::unique_ptr<const mapping::TrajectoryBuilderInterface::InsertionResult>
         insertion_result;
   };
   // Calling with 'nullptr' signals subscribers that the subscription has ended.
@@ -44,7 +44,7 @@ class MapBuilderContextInterface : public framework::ExecutionContext {
       std::function<void(std::unique_ptr<LocalSlamResult>)>;
   struct Data {
     int trajectory_id;
-    std::unique_ptr<cartographer::sensor::Data> data;
+    std::unique_ptr<sensor::Data> data;
   };
   struct SubscriptionId {
     const int trajectory_id;
@@ -58,31 +58,29 @@ class MapBuilderContextInterface : public framework::ExecutionContext {
   MapBuilderContextInterface& operator=(const MapBuilderContextInterface&) =
       delete;
 
-  virtual cartographer::mapping::MapBuilderInterface& map_builder() = 0;
-  virtual cartographer::common::BlockingQueue<std::unique_ptr<Data>>&
-  sensor_data_queue() = 0;
-  virtual cartographer::mapping::TrajectoryBuilderInterface::
-      LocalSlamResultCallback
-      GetLocalSlamResultCallbackForSubscriptions() = 0;
+  virtual mapping::MapBuilderInterface& map_builder() = 0;
+  virtual common::BlockingQueue<std::unique_ptr<Data>>& sensor_data_queue() = 0;
+  virtual mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
+  GetLocalSlamResultCallbackForSubscriptions() = 0;
   virtual void AddSensorDataToTrajectory(const Data& sensor_data) = 0;
   virtual SubscriptionId SubscribeLocalSlamResults(
       int trajectory_id, LocalSlamSubscriptionCallback callback) = 0;
   virtual void UnsubscribeLocalSlamResults(
       const SubscriptionId& subscription_id) = 0;
   virtual void NotifyFinishTrajectory(int trajectory_id) = 0;
-  virtual std::unique_ptr<cartographer::mapping::LocalSlamResultData>
+  virtual std::unique_ptr<mapping::LocalSlamResultData>
   ProcessLocalSlamResultData(
-      const std::string& sensor_id, cartographer::common::Time time,
-      const cartographer::mapping::proto::LocalSlamResultData& proto) = 0;
+      const std::string& sensor_id, common::Time time,
+      const mapping::proto::LocalSlamResultData& proto) = 0;
   virtual LocalTrajectoryUploaderInterface* local_trajectory_uploader() = 0;
-  virtual void EnqueueSensorData(
-      int trajectory_id, std::unique_ptr<cartographer::sensor::Data> data) = 0;
+  virtual void EnqueueSensorData(int trajectory_id,
+                                 std::unique_ptr<sensor::Data> data) = 0;
   virtual void EnqueueLocalSlamResultData(
       int trajectory_id, const std::string& sensor_id,
-      std::unique_ptr<cartographer::mapping::LocalSlamResultData>
-          local_slam_result_data) = 0;
+      std::unique_ptr<mapping::LocalSlamResultData> local_slam_result_data) = 0;
 };
 
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_INTERFACE_H

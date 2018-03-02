@@ -22,7 +22,8 @@
 #include "cartographer_grpc/internal/sensor/serialization.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void AddTrajectoryHandler::OnRequest(
@@ -30,10 +31,9 @@ void AddTrajectoryHandler::OnRequest(
   auto local_slam_result_callback =
       GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->GetLocalSlamResultCallbackForSubscriptions();
-  std::set<cartographer::mapping::TrajectoryBuilderInterface::SensorId>
-      expected_sensor_ids;
+  std::set<mapping::TrajectoryBuilderInterface::SensorId> expected_sensor_ids;
   for (const auto& sensor_id : request.expected_sensor_ids()) {
-    expected_sensor_ids.insert(sensor::FromProto(sensor_id));
+    expected_sensor_ids.insert(FromProto(sensor_id));
   }
   const int trajectory_id =
       GetContext<MapBuilderContextInterface>()
@@ -61,11 +61,11 @@ void AddTrajectoryHandler::OnRequest(
                         trajectory_builder_options);
   }
 
-  auto response =
-      cartographer::common::make_unique<proto::AddTrajectoryResponse>();
+  auto response = common::make_unique<proto::AddTrajectoryResponse>();
   response->set_trajectory_id(trajectory_id);
   Send(std::move(response));
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

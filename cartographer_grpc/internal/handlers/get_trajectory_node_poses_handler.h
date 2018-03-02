@@ -21,7 +21,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class GetTrajectoryNodePosesHandler
@@ -29,12 +30,13 @@ class GetTrajectoryNodePosesHandler
                                    proto::GetTrajectoryNodePosesResponse> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/GetTrajectoryNodePoses";
+    return "/cartographer.cloud.proto.MapBuilderService/GetTrajectoryNodePoses";
   }
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_GET_TRAJECTORY_NODE_POSES_HANDLER_H

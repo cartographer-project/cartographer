@@ -22,7 +22,8 @@
 #include "cartographer/mapping/map_builder_interface.h"
 #include "cartographer_grpc/proto/map_builder_server_options.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 
 class MapBuilderServerInterface {
  public:
@@ -47,8 +48,9 @@ class MapBuilderServerInterface {
 // Returns MapBuilderServer with the actual implementation.
 std::unique_ptr<MapBuilderServerInterface> CreateMapBuilderServer(
     const proto::MapBuilderServerOptions& map_builder_server_options,
-    std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder);
+    std::unique_ptr<mapping::MapBuilderInterface> map_builder);
 
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_INTERFACE_H

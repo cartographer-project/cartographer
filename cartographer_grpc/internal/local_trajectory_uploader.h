@@ -24,11 +24,12 @@
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 
 class LocalTrajectoryUploaderInterface {
  public:
-  using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
+  using SensorId = mapping::TrajectoryBuilderInterface::SensorId;
 
   virtual ~LocalTrajectoryUploaderInterface() = default;
 
@@ -44,8 +45,7 @@ class LocalTrajectoryUploaderInterface {
       std::unique_ptr<google::protobuf::Message> data_request) = 0;
   virtual void AddTrajectory(
       int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
-      const cartographer::mapping::proto::TrajectoryBuilderOptions&
-          trajectory_options) = 0;
+      const mapping::proto::TrajectoryBuilderOptions& trajectory_options) = 0;
   virtual void FinishTrajectory(int local_trajectory_id) = 0;
 
   virtual SensorId GetLocalSlamResultSensorId(
@@ -56,6 +56,7 @@ class LocalTrajectoryUploaderInterface {
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
     const std::string& uplink_server_address);
 
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_LOCAL_TRAJECTORY_UPLOADER_H

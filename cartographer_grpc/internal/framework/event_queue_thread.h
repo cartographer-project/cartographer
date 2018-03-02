@@ -23,7 +23,8 @@
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer_grpc/internal/framework/rpc.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 class EventQueueThread {
@@ -43,6 +44,7 @@ class EventQueueThread {
 };
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_EVENT_QUEUE_THREAD_H

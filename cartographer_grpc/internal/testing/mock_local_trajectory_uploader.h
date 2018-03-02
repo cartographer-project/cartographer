@@ -22,7 +22,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace testing {
 
 class MockLocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
@@ -34,15 +35,15 @@ class MockLocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   }
   MOCK_METHOD0(Start, void());
   MOCK_METHOD0(Shutdown, void());
-  MOCK_METHOD3(
-      AddTrajectory,
-      void(int, const std::set<SensorId> &,
-           const cartographer::mapping::proto::TrajectoryBuilderOptions &));
+  MOCK_METHOD3(AddTrajectory,
+               void(int, const std::set<SensorId> &,
+                    const mapping::proto::TrajectoryBuilderOptions &));
   MOCK_METHOD1(FinishTrajectory, void(int));
   MOCK_CONST_METHOD1(GetLocalSlamResultSensorId, SensorId(int));
 };
 
 }  // namespace testing
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_LOCAL_TRAJECTORY_UPLOADER_H

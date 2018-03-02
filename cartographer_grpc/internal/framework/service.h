@@ -24,7 +24,8 @@
 #include "cartographer_grpc/internal/framework/rpc_handler.h"
 #include "grpc++/impl/codegen/service_type.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 // A 'Service' represents a generic service for gRPC asynchronous methods and is
@@ -60,6 +61,7 @@ class Service : public ::grpc::Service {
 };
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_SERVICE_H

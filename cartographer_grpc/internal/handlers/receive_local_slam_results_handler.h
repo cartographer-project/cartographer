@@ -23,7 +23,8 @@
 #include "cartographer_grpc/internal/map_builder_context_interface.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class ReceiveLocalSlamResultsHandler
@@ -32,7 +33,8 @@ class ReceiveLocalSlamResultsHandler
           framework::Stream<proto::ReceiveLocalSlamResultsResponse>> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/ReceiveLocalSlamResults";
+    return "/cartographer.cloud.proto.MapBuilderService/"
+           "ReceiveLocalSlamResults";
   }
   void OnRequest(const proto::ReceiveLocalSlamResultsRequest& request) override;
   void OnFinish() override;
@@ -42,6 +44,7 @@ class ReceiveLocalSlamResultsHandler
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_RECEIVE_LOCAL_SLAM_RESULTS_HANDLER_H

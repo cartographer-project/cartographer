@@ -21,7 +21,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class AddImuDataHandler
@@ -29,13 +30,14 @@ class AddImuDataHandler
                                    google::protobuf::Empty> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/AddImuData";
+    return "/cartographer.cloud.proto.MapBuilderService/AddImuData";
   }
   void OnRequest(const proto::AddImuDataRequest &request) override;
   void OnReadsDone() override;
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_ADD_IMU_DATA_HANDLER_H

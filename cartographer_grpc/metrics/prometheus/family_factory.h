@@ -23,41 +23,35 @@
 #include "cartographer/metrics/family_factory.h"
 #include "prometheus/registry.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace metrics {
 namespace prometheus {
 
-class FamilyFactory : public cartographer::metrics::FamilyFactory {
+class FamilyFactory : public metrics::FamilyFactory {
  public:
   FamilyFactory();
 
-  cartographer::metrics::Family<cartographer::metrics::Counter>*
-  NewCounterFamily(const std::string& name,
-                   const std::string& description) override;
-  cartographer::metrics::Family<cartographer::metrics::Gauge>* NewGaugeFamily(
+  metrics::Family<metrics::Counter>* NewCounterFamily(
       const std::string& name, const std::string& description) override;
-  cartographer::metrics::Family<cartographer::metrics::Histogram>*
-  NewHistogramFamily(const std::string& name, const std::string& description,
-                     const cartographer::metrics::Histogram::BucketBoundaries&
-                         boundaries) override;
+  metrics::Family<metrics::Gauge>* NewGaugeFamily(
+      const std::string& name, const std::string& description) override;
+  metrics::Family<metrics::Histogram>* NewHistogramFamily(
+      const std::string& name, const std::string& description,
+      const metrics::Histogram::BucketBoundaries& boundaries) override;
 
   std::weak_ptr<::prometheus::Collectable> GetCollectable() const;
 
  private:
-  std::vector<std::unique_ptr<
-      cartographer::metrics::Family<cartographer::metrics::Counter>>>
-      counters_;
-  std::vector<std::unique_ptr<
-      cartographer::metrics::Family<cartographer::metrics::Gauge>>>
-      gauges_;
-  std::vector<std::unique_ptr<
-      cartographer::metrics::Family<cartographer::metrics::Histogram>>>
-      histograms_;
+  std::vector<std::unique_ptr<metrics::Family<metrics::Counter>>> counters_;
+  std::vector<std::unique_ptr<metrics::Family<metrics::Gauge>>> gauges_;
+  std::vector<std::unique_ptr<metrics::Family<metrics::Histogram>>> histograms_;
   std::shared_ptr<::prometheus::Registry> registry_;
 };
 
 }  // namespace prometheus
 }  // namespace metrics
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_METRICS_PROMETHEUS_FAMILY_FACTORY_H_

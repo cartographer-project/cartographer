@@ -21,7 +21,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class AddRangefinderDataHandler
@@ -30,13 +31,14 @@ class AddRangefinderDataHandler
           google::protobuf::Empty> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/AddRangefinderData";
+    return "/cartographer.cloud.proto.MapBuilderService/AddRangefinderData";
   }
   void OnRequest(const proto::AddRangefinderDataRequest &request) override;
   void OnReadsDone() override;
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_ADD_RANGEFINDER_DATA_HANDLER_H

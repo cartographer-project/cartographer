@@ -18,12 +18,12 @@
 
 #include "glog/logging.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 namespace {
 
-const cartographer::common::Duration kPopEventTimeout =
-    cartographer::common::FromMilliseconds(100);
+const common::Duration kPopEventTimeout = common::FromMilliseconds(100);
 
 }  // namespace
 
@@ -61,7 +61,7 @@ std::unique_ptr<Server> Server::Builder::Build() {
 
 Server::Server(const Options& options) : options_(options) {
   server_builder_.AddListeningPort(options_.server_address,
-                                   grpc::InsecureServerCredentials());
+                                   ::grpc::InsecureServerCredentials());
 
   // Set up event queue threads.
   event_queue_threads_ =
@@ -99,7 +99,7 @@ void Server::RunCompletionQueue(
 }
 
 EventQueue* Server::SelectNextEventQueueRoundRobin() {
-  cartographer::common::MutexLocker locker(&current_event_queue_id_lock_);
+  common::MutexLocker locker(&current_event_queue_id_lock_);
   current_event_queue_id_ =
       (current_event_queue_id_ + 1) % options_.num_event_threads;
   return event_queue_threads_.at(current_event_queue_id_).event_queue();
@@ -189,4 +189,5 @@ void Server::SetExecutionContext(
 }
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

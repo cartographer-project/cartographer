@@ -33,19 +33,19 @@
 #include "glog/logging.h"
 #include "grpc++/grpc++.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace {
 
-using ::cartographer::common::make_unique;
+using common::make_unique;
 
-const cartographer::common::Duration kPopTimeout =
-    cartographer::common::FromMilliseconds(100);
+const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
   LocalTrajectoryUploader(const std::string &uplink_server_address)
-      : client_channel_(grpc::CreateChannel(
-            uplink_server_address, grpc::InsecureChannelCredentials())) {}
+      : client_channel_(::grpc::CreateChannel(
+            uplink_server_address, ::grpc::InsecureChannelCredentials())) {}
   ~LocalTrajectoryUploader();
 
   // Starts the upload thread.
@@ -57,8 +57,7 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 
   void AddTrajectory(
       int local_trajectory_id, const std::set<SensorId> &expected_sensor_ids,
-      const cartographer::mapping::proto::TrajectoryBuilderOptions
-          &trajectory_options) final;
+      const mapping::proto::TrajectoryBuilderOptions &trajectory_options) final;
   void FinishTrajectory(int local_trajectory_id) final;
   void EnqueueDataRequest(
       std::unique_ptr<google::protobuf::Message> data_request) final;
@@ -79,11 +78,9 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   void ProcessOdometryDataMessage(proto::AddOdometryDataRequest *data_request);
   void ProcessLandmarkDataMessage(proto::AddLandmarkDataRequest *data_request);
 
-  std::shared_ptr<grpc::Channel> client_channel_;
+  std::shared_ptr<::grpc::Channel> client_channel_;
   std::map<int, int> local_to_cloud_trajectory_id_map_;
-  cartographer::common::BlockingQueue<
-      std::unique_ptr<google::protobuf::Message>>
-      send_queue_;
+  common::BlockingQueue<std::unique_ptr<google::protobuf::Message>> send_queue_;
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> upload_thread_;
   std::unique_ptr<framework::Client<handlers::AddFixedFramePoseDataHandler>>
@@ -227,7 +224,7 @@ void LocalTrajectoryUploader::ProcessLocalSlamResultDataMessage(
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   // A submap also holds a trajectory id that must be translated to uplink's
   // trajectory id.
-  for (cartographer::mapping::proto::Submap &mutable_submap :
+  for (mapping::proto::Submap &mutable_submap :
        *data_request->mutable_local_slam_result_data()->mutable_submaps()) {
     mutable_submap.mutable_submap_id()->set_trajectory_id(
         data_request->sensor_metadata().trajectory_id());
@@ -237,18 +234,17 @@ void LocalTrajectoryUploader::ProcessLocalSlamResultDataMessage(
 
 void LocalTrajectoryUploader::AddTrajectory(
     int local_trajectory_id, const std::set<SensorId> &expected_sensor_ids,
-    const cartographer::mapping::proto::TrajectoryBuilderOptions
-        &trajectory_options) {
+    const mapping::proto::TrajectoryBuilderOptions &trajectory_options) {
   proto::AddTrajectoryRequest request;
   *request.mutable_trajectory_builder_options() = trajectory_options;
   for (const SensorId &sensor_id : expected_sensor_ids) {
     // Range sensors are not forwarded, but combined into a LocalSlamResult.
     if (sensor_id.type != SensorId::SensorType::RANGE) {
-      *request.add_expected_sensor_ids() = sensor::ToProto(sensor_id);
+      *request.add_expected_sensor_ids() = cloud::ToProto(sensor_id);
     }
   }
   *request.add_expected_sensor_ids() =
-      sensor::ToProto(GetLocalSlamResultSensorId(local_trajectory_id));
+      cloud::ToProto(GetLocalSlamResultSensorId(local_trajectory_id));
   framework::Client<handlers::AddTrajectoryHandler> client(client_channel_);
   CHECK(client.Write(request));
   CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 0);
@@ -278,4 +274,5 @@ std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
   return make_unique<LocalTrajectoryUploader>(uplink_server_address);
 }
 
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

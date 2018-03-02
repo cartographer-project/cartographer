@@ -20,10 +20,11 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/map_builder.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 
 proto::MapBuilderServerOptions CreateMapBuilderServerOptions(
-    ::cartographer::common::LuaParameterDictionary* lua_parameter_dictionary) {
+    common::LuaParameterDictionary* lua_parameter_dictionary) {
   proto::MapBuilderServerOptions map_builder_server_options;
   map_builder_server_options.set_server_address(
       lua_parameter_dictionary->GetString("server_address"));
@@ -32,7 +33,7 @@ proto::MapBuilderServerOptions CreateMapBuilderServerOptions(
   map_builder_server_options.set_num_event_threads(
       lua_parameter_dictionary->GetInt("num_event_threads"));
   *map_builder_server_options.mutable_map_builder_options() =
-      cartographer::mapping::CreateMapBuilderOptions(
+      mapping::CreateMapBuilderOptions(
           lua_parameter_dictionary->GetDictionary("map_builder").get());
   map_builder_server_options.set_uplink_server_address(
       lua_parameter_dictionary->GetString("uplink_server_address"));
@@ -42,14 +43,14 @@ proto::MapBuilderServerOptions CreateMapBuilderServerOptions(
 proto::MapBuilderServerOptions LoadMapBuilderServerOptions(
     const std::string& configuration_directory,
     const std::string& configuration_basename) {
-  auto file_resolver = cartographer::common::make_unique<
-      cartographer::common::ConfigurationFileResolver>(
+  auto file_resolver = common::make_unique<common::ConfigurationFileResolver>(
       std::vector<std::string>{configuration_directory});
   const std::string code =
       file_resolver->GetFileContentOrDie(configuration_basename);
-  cartographer::common::LuaParameterDictionary lua_parameter_dictionary(
+  common::LuaParameterDictionary lua_parameter_dictionary(
       code, std::move(file_resolver));
   return CreateMapBuilderServerOptions(&lua_parameter_dictionary);
 }
 
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

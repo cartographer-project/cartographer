@@ -27,11 +27,13 @@
 #include "grpc++/grpc++.h"
 #include "gtest/gtest.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 namespace {
 
 using EchoResponder = std::function<bool()>;
+
 class MathServerContext : public ExecutionContext {
  public:
   int additional_increment() { return 10; }
@@ -42,7 +44,7 @@ class GetSumHandler
     : public RpcHandler<Stream<proto::GetSumRequest>, proto::GetSumResponse> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.framework.proto.Math/GetSum";
+    return "/cartographer.cloud.framework.proto.Math/GetSum";
   }
   void OnRequest(const proto::GetSumRequest& request) override {
     sum_ += GetContext<MathServerContext>()->additional_increment();
@@ -50,7 +52,7 @@ class GetSumHandler
   }
 
   void OnReadsDone() override {
-    auto response = cartographer::common::make_unique<proto::GetSumResponse>();
+    auto response = common::make_unique<proto::GetSumResponse>();
     response->set_output(sum_);
     Send(std::move(response));
   }
@@ -63,16 +65,16 @@ class GetRunningSumHandler : public RpcHandler<Stream<proto::GetSumRequest>,
                                                Stream<proto::GetSumResponse>> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.framework.proto.Math/GetRunningSum";
+    return "/cartographer.cloud.framework.proto.Math/GetRunningSum";
   }
   void OnRequest(const proto::GetSumRequest& request) override {
     sum_ += request.input();
 
     // Respond twice to demonstrate bidirectional streaming.
-    auto response = cartographer::common::make_unique<proto::GetSumResponse>();
+    auto response = common::make_unique<proto::GetSumResponse>();
     response->set_output(sum_);
     Send(std::move(response));
-    response = cartographer::common::make_unique<proto::GetSumResponse>();
+    response = common::make_unique<proto::GetSumResponse>();
     response->set_output(sum_);
     Send(std::move(response));
   }
@@ -87,11 +89,10 @@ class GetSquareHandler
     : public RpcHandler<proto::GetSquareRequest, proto::GetSquareResponse> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.framework.proto.Math/GetSquare";
+    return "/cartographer.cloud.framework.proto.Math/GetSquare";
   }
   void OnRequest(const proto::GetSquareRequest& request) override {
-    auto response =
-        cartographer::common::make_unique<proto::GetSquareResponse>();
+    auto response = common::make_unique<proto::GetSquareResponse>();
     response->set_output(request.input() * request.input());
     Send(std::move(response));
   }
@@ -101,15 +102,14 @@ class GetEchoHandler
     : public RpcHandler<proto::GetEchoRequest, proto::GetEchoResponse> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.framework.proto.Math/GetEcho";
+    return "/cartographer.cloud.framework.proto.Math/GetEcho";
   }
   void OnRequest(const proto::GetEchoRequest& request) override {
     int value = request.input();
     Writer writer = GetWriter();
     GetContext<MathServerContext>()->echo_responder.set_value(
         [writer, value]() {
-          auto response =
-              cartographer::common::make_unique<proto::GetEchoResponse>();
+          auto response = common::make_unique<proto::GetEchoResponse>();
           response->set_output(value);
           return writer.Write(std::move(response));
         });
@@ -121,12 +121,11 @@ class GetSequenceHandler
                         Stream<proto::GetSequenceResponse>> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.framework.proto.Math/GetSequence";
+    return "/cartographer.cloud.framework.proto.Math/GetSequence";
   }
   void OnRequest(const proto::GetSequenceRequest& request) override {
     for (int i = 0; i < request.input(); ++i) {
-      auto response =
-          cartographer::common::make_unique<proto::GetSequenceResponse>();
+      auto response = common::make_unique<proto::GetSequenceResponse>();
       response->set_output(i);
       Send(std::move(response));
     }
@@ -154,12 +153,12 @@ class ServerTest : public ::testing::Test {
     server_builder.RegisterHandler<GetSequenceHandler>();
     server_ = server_builder.Build();
 
-    client_channel_ =
-        grpc::CreateChannel(kServerAddress, grpc::InsecureChannelCredentials());
+    client_channel_ = ::grpc::CreateChannel(
+        kServerAddress, ::grpc::InsecureChannelCredentials());
   }
 
   std::unique_ptr<Server> server_;
-  std::shared_ptr<grpc::Channel> client_channel_;
+  std::shared_ptr<::grpc::Channel> client_channel_;
 };
 
 TEST_F(ServerTest, StartAndStopServerTest) {
@@ -168,8 +167,7 @@ TEST_F(ServerTest, StartAndStopServerTest) {
 }
 
 TEST_F(ServerTest, ProcessRpcStreamTest) {
-  server_->SetExecutionContext(
-      cartographer::common::make_unique<MathServerContext>());
+  server_->SetExecutionContext(common::make_unique<MathServerContext>());
   server_->Start();
 
   Client<GetSumHandler> client(client_channel_);
@@ -220,8 +218,7 @@ TEST_F(ServerTest, ProcessBidiStreamingRpcTest) {
 }
 
 TEST_F(ServerTest, WriteFromOtherThread) {
-  server_->SetExecutionContext(
-      cartographer::common::make_unique<MathServerContext>());
+  server_->SetExecutionContext(common::make_unique<MathServerContext>());
   server_->Start();
 
   Server* server = server_.get();
@@ -264,4 +261,5 @@ TEST_F(ServerTest, ProcessServerStreamingRpcTest) {
 
 }  // namespace
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

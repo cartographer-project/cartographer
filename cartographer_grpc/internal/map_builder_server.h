@@ -30,7 +30,8 @@
 #include "cartographer_grpc/map_builder_server_interface.h"
 #include "cartographer_grpc/proto/map_builder_server_options.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 
 class MapBuilderServer : public MapBuilderServerInterface {
  public:
@@ -38,7 +39,7 @@ class MapBuilderServer : public MapBuilderServerInterface {
 
   MapBuilderServer(
       const proto::MapBuilderServerOptions& map_builder_server_options,
-      std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder);
+      std::unique_ptr<mapping::MapBuilderInterface> map_builder);
   ~MapBuilderServer() {}
 
   // Starts the gRPC server, the 'LocalTrajectoryUploader' and the SLAM thread.
@@ -64,11 +65,10 @@ class MapBuilderServer : public MapBuilderServerInterface {
   void ProcessSensorDataQueue();
   void StartSlamThread();
   void OnLocalSlamResult(
-      int trajectory_id, cartographer::common::Time time,
-      cartographer::transform::Rigid3d local_pose,
-      cartographer::sensor::RangeData range_data,
-      std::unique_ptr<const cartographer::mapping::TrajectoryBuilderInterface::
-                          InsertionResult>
+      int trajectory_id, common::Time time, transform::Rigid3d local_pose,
+      sensor::RangeData range_data,
+      std::unique_ptr<
+          const mapping::TrajectoryBuilderInterface::InsertionResult>
           insertion_result);
   MapBuilderContextInterface::SubscriptionId SubscribeLocalSlamResults(
       int trajectory_id,
@@ -80,11 +80,10 @@ class MapBuilderServer : public MapBuilderServerInterface {
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> slam_thread_;
   std::unique_ptr<framework::Server> grpc_server_;
-  std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder_;
-  cartographer::common::BlockingQueue<
-      std::unique_ptr<MapBuilderContextInterface::Data>>
+  std::unique_ptr<mapping::MapBuilderInterface> map_builder_;
+  common::BlockingQueue<std::unique_ptr<MapBuilderContextInterface::Data>>
       incoming_data_queue_;
-  cartographer::common::Mutex local_slam_subscriptions_lock_;
+  common::Mutex local_slam_subscriptions_lock_;
   int current_subscription_index_ = 0;
   std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>
       local_slam_subscriptions_ GUARDED_BY(local_slam_subscriptions_lock_);
@@ -92,6 +91,7 @@ class MapBuilderServer : public MapBuilderServerInterface {
   int starting_submap_index_ = 0;
 };
 
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_H

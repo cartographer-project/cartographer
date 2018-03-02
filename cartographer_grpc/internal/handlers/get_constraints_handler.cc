@@ -23,7 +23,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 void GetConstraintsHandler::OnRequest(const google::protobuf::Empty& request) {
@@ -31,14 +32,14 @@ void GetConstraintsHandler::OnRequest(const google::protobuf::Empty& request) {
                          ->map_builder()
                          .pose_graph()
                          ->constraints();
-  auto response =
-      cartographer::common::make_unique<proto::GetConstraintsResponse>();
+  auto response = common::make_unique<proto::GetConstraintsResponse>();
   response->mutable_constraints()->Reserve(constraints.size());
   for (const auto& constraint : constraints) {
-    *response->add_constraints() = cartographer::mapping::ToProto(constraint);
+    *response->add_constraints() = mapping::ToProto(constraint);
   }
   Send(std::move(response));
 }
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

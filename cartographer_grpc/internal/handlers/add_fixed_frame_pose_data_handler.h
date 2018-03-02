@@ -21,7 +21,8 @@
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class AddFixedFramePoseDataHandler
@@ -30,13 +31,14 @@ class AddFixedFramePoseDataHandler
           google::protobuf::Empty> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/AddFixedFramePoseData";
+    return "/cartographer.cloud.proto.MapBuilderService/AddFixedFramePoseData";
   }
   void OnRequest(const proto::AddFixedFramePoseDataRequest &request) override;
   void OnReadsDone() override;
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_ADD_FIXED_FRAME_POSE_DATA_HANDLER_H

@@ -19,7 +19,8 @@
 
 #include <functional>
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 namespace testing {
 
@@ -53,6 +54,7 @@ class RpcHandlerWrapper : public RpcHandlerType {
 
 }  // namespace testing
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_TESTING_RPC_HANDLER_WRAPPER_H_

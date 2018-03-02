@@ -20,7 +20,8 @@
 #include "cartographer_grpc/internal/framework/rpc_handler.h"
 #include "cartographer_grpc/proto/map_builder_service.pb.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace handlers {
 
 class AddTrajectoryHandler
@@ -28,12 +29,13 @@ class AddTrajectoryHandler
                                    proto::AddTrajectoryResponse> {
  public:
   std::string method_name() const override {
-    return "/cartographer_grpc.proto.MapBuilderService/AddTrajectory";
+    return "/cartographer.cloud.proto.MapBuilderService/AddTrajectory";
   }
   void OnRequest(const proto::AddTrajectoryRequest& request) override;
 };
 
 }  // namespace handlers
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_ADD_TRAJECTORY_HANDLER_H

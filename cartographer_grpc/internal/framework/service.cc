@@ -21,7 +21,8 @@
 #include "glog/logging.h"
 #include "grpc++/impl/codegen/proto_utils.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 Service::Service(const std::string& service_name,
@@ -32,7 +33,7 @@ Service::Service(const std::string& service_name,
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
     // The 'handler' below is set to 'nullptr' indicating that we want to
     // handle this method asynchronously.
-    this->AddMethod(new grpc::internal::RpcServiceMethod(
+    this->AddMethod(new ::grpc::internal::RpcServiceMethod(
         rpc_handler_info.second.fully_qualified_name.c_str(),
         rpc_handler_info.second.rpc_type, nullptr /* handler */));
   }
@@ -44,11 +45,10 @@ void Service::StartServing(
   int i = 0;
   for (const auto& rpc_handler_info : rpc_handler_infos_) {
     for (auto& completion_queue_thread : completion_queue_threads) {
-      std::shared_ptr<Rpc> rpc =
-          active_rpcs_.Add(cartographer::common::make_unique<Rpc>(
-              i, completion_queue_thread.completion_queue(),
-              event_queue_selector_(), execution_context,
-              rpc_handler_info.second, this, active_rpcs_.GetWeakPtrFactory()));
+      std::shared_ptr<Rpc> rpc = active_rpcs_.Add(common::make_unique<Rpc>(
+          i, completion_queue_thread.completion_queue(),
+          event_queue_selector_(), execution_context, rpc_handler_info.second,
+          this, active_rpcs_.GetWeakPtrFactory()));
       rpc->RequestNextMethodInvocation();
     }
     ++i;
@@ -147,4 +147,5 @@ void Service::RemoveIfNotPending(Rpc* rpc) {
 }
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer

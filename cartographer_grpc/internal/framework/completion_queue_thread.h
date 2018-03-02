@@ -21,7 +21,8 @@
 #include <memory>
 #include <thread>
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 class CompletionQueueThread {
@@ -43,6 +44,7 @@ class CompletionQueueThread {
 };
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_COMPLETION_QUEUE_THREAD_H

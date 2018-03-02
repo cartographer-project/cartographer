@@ -31,7 +31,8 @@
 #include "cartographer_grpc/internal/framework/service.h"
 #include "grpc++/grpc++.h"
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace framework {
 
 class Server {
@@ -71,7 +72,7 @@ class Server {
               RpcHandlerType::ResponseType::default_instance().GetDescriptor(),
               [](Rpc* const rpc, ExecutionContext* const execution_context) {
                 std::unique_ptr<RpcHandlerInterface> rpc_handler =
-                    cartographer::common::make_unique<RpcHandlerType>();
+                    common::make_unique<RpcHandlerType>();
                 rpc_handler->SetRpc(rpc);
                 rpc_handler->SetExecutionContext(execution_context);
                 return rpc_handler;
@@ -181,7 +182,7 @@ class Server {
 
   // Threads processing RPC events.
   std::vector<EventQueueThread> event_queue_threads_;
-  cartographer::common::Mutex current_event_queue_id_lock_;
+  common::Mutex current_event_queue_id_lock_;
   int current_event_queue_id_ = 0;
 
   // Map of service names to services.
@@ -193,6 +194,7 @@ class Server {
 };
 
 }  // namespace framework
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_SERVER_H

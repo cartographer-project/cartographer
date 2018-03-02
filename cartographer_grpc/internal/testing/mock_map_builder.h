@@ -25,44 +25,39 @@
 
 using testing::_;
 
-namespace cartographer_grpc {
+namespace cartographer {
+namespace cloud {
 namespace testing {
 
-class MockMapBuilder : public cartographer::mapping::MapBuilderInterface {
+class MockMapBuilder : public mapping::MapBuilderInterface {
  public:
   MOCK_METHOD3(
       AddTrajectoryBuilder,
       int(const std::set<SensorId> &expected_sensor_ids,
-          const cartographer::mapping::proto::TrajectoryBuilderOptions
-              &trajectory_options,
-          cartographer::mapping::MapBuilderInterface::LocalSlamResultCallback
+          const mapping::proto::TrajectoryBuilderOptions &trajectory_options,
+          mapping::MapBuilderInterface::LocalSlamResultCallback
               local_slam_result_callback));
   MOCK_METHOD1(AddTrajectoryForDeserialization,
-               int(const cartographer::mapping::proto::
-                       TrajectoryBuilderOptionsWithSensorIds
-                           &options_with_sensor_ids_proto));
-  MOCK_CONST_METHOD1(
-      GetTrajectoryBuilder,
-      cartographer::mapping::TrajectoryBuilderInterface *(int trajectory_id));
+               int(const mapping::proto::TrajectoryBuilderOptionsWithSensorIds
+                       &options_with_sensor_ids_proto));
+  MOCK_CONST_METHOD1(GetTrajectoryBuilder,
+                     mapping::TrajectoryBuilderInterface *(int trajectory_id));
   MOCK_METHOD1(FinishTrajectory, void(int trajectory_id));
-  MOCK_METHOD2(
-      SubmapToProto,
-      std::string(const cartographer::mapping::SubmapId &,
-                  cartographer::mapping::proto::SubmapQuery::Response *));
-  MOCK_METHOD1(SerializeState,
-               void(cartographer::io::ProtoStreamWriterInterface *));
-  MOCK_METHOD2(LoadState,
-               void(cartographer::io::ProtoStreamReaderInterface *, bool));
+  MOCK_METHOD2(SubmapToProto,
+               std::string(const mapping::SubmapId &,
+                           mapping::proto::SubmapQuery::Response *));
+  MOCK_METHOD1(SerializeState, void(io::ProtoStreamWriterInterface *));
+  MOCK_METHOD2(LoadState, void(io::ProtoStreamReaderInterface *, bool));
   MOCK_CONST_METHOD0(num_trajectory_builders, int());
-  MOCK_METHOD0(pose_graph, cartographer::mapping::PoseGraphInterface *());
+  MOCK_METHOD0(pose_graph, mapping::PoseGraphInterface *());
   MOCK_CONST_METHOD0(
       GetAllTrajectoryBuilderOptions,
-      const std::vector<
-          cartographer::mapping::proto::TrajectoryBuilderOptionsWithSensorIds>
+      const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>
           &());
 };
 
 }  // namespace testing
-}  // namespace cartographer_grpc
+}  // namespace cloud
+}  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_MAP_BUILDER_H
