@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_CLIENT_MAP_BUILDER_STUB_H_
-#define CARTOGRAPHER_GRPC_CLIENT_MAP_BUILDER_STUB_H_
+#ifndef CARTOGRAPHER_CLOUD_CLIENT_MAP_BUILDER_STUB_H_
+#define CARTOGRAPHER_CLOUD_CLIENT_MAP_BUILDER_STUB_H_
 
 #include <memory>
 
@@ -65,4 +65,4 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_CLIENT_MAP_BUILDER_STUB_H_
+#endif  // CARTOGRAPHER_CLOUD_CLIENT_MAP_BUILDER_STUB_H_

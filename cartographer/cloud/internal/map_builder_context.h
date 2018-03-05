@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_H
-#define CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_H
+#ifndef CARTOGRAPHER_INTERNAL_CLOUD_MAP_BUILDER_CONTEXT_H
+#define CARTOGRAPHER_INTERNAL_CLOUD_MAP_BUILDER_CONTEXT_H
 
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/mapping/2d/submap_2d.h"
@@ -62,4 +62,4 @@ class MapBuilderContext : public MapBuilderContextInterface {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_H
+#endif  // CARTOGRAPHER_INTERNAL_CLOUD_MAP_BUILDER_CONTEXT_H

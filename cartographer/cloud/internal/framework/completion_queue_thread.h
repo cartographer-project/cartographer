@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_COMPLETION_QUEUE_THREAD_H
-#define CARTOGRAPHER_COMPLETION_QUEUE_THREAD_H
+#ifndef CARTOGRAPHER_INTERNAL_FRAMEWORK_COMPLETION_QUEUE_THREAD_H_
+#define CARTOGRAPHER_INTERNAL_FRAMEWORK_COMPLETION_QUEUE_THREAD_H_
 
 #include <grpc++/grpc++.h>
 #include <memory>
@@ -47,4 +47,4 @@ class CompletionQueueThread {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_COMPLETION_QUEUE_THREAD_H
+#endif  // CARTOGRAPHER_INTERNAL_FRAMEWORK_COMPLETION_QUEUE_THREAD_H_

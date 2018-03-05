@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_METRICS_PROMETHEUS_FAMILY_FACTORY_H_
-#define CARTOGRAPHER_GRPC_METRICS_PROMETHEUS_FAMILY_FACTORY_H_
+#ifndef CARTOGRAPHER_CLOUD_METRICS_PROMETHEUS_FAMILY_FACTORY_H_
+#define CARTOGRAPHER_CLOUD_METRICS_PROMETHEUS_FAMILY_FACTORY_H_
 
 #include <memory>
 #include <string>
@@ -63,4 +63,4 @@ class FamilyFactory : public ::cartographer::metrics::FamilyFactory {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_METRICS_PROMETHEUS_FAMILY_FACTORY_H_
+#endif  // CARTOGRAPHER_CLOUD_METRICS_PROMETHEUS_FAMILY_FACTORY_H_

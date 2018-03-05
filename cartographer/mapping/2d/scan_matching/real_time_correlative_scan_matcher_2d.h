@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_2D_H_
+#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_2D_H_
+
 // This is an implementation of the algorithm described in "Real-Time
 // Correlative Scan Matching" by Olson.
 //
@@ -32,9 +35,6 @@
 //
 // This can be made even faster by transforming the scan exactly once over some
 // discretized range.
-
-#ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_2D_H_
-#define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_2D_H_
 
 #include <iostream>
 #include <memory>

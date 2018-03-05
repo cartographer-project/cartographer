@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_OPTIONS_H
-#define CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_OPTIONS_H
+#ifndef CARTOGRAPHER_CLOUD_MAP_BUILDER_SERVER_OPTIONS_H_
+#define CARTOGRAPHER_CLOUD_MAP_BUILDER_SERVER_OPTIONS_H_
 
 #include <string>
 
@@ -35,4 +35,4 @@ proto::MapBuilderServerOptions LoadMapBuilderServerOptions(
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_OPTIONS_H
+#endif  // CARTOGRAPHER_CLOUD_MAP_BUILDER_SERVER_OPTIONS_H_

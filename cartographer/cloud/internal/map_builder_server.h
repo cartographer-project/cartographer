@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_H
-#define CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_MAP_BUILDER_SERVER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_MAP_BUILDER_SERVER_H
 
 #include "cartographer/cloud/internal/framework/execution_context.h"
 #include "cartographer/cloud/internal/framework/server.h"
@@ -94,4 +94,4 @@ class MapBuilderServer : public MapBuilderServerInterface {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_MAP_BUILDER_SERVER_H

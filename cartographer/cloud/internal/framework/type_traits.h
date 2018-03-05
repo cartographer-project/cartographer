@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_TYPES_H
-#define CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_TYPES_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_TYPE_TRAITS_H_
+#define CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_TYPE_TRAITS_H_
 
 #include <grpc++/grpc++.h>
 
@@ -68,4 +68,4 @@ struct RpcType<Stream<Incoming>, Stream<Outgoing>>
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_TYPES_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_TYPE_TRAITS_H_

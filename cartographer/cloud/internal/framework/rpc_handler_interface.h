@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_HANDLER_INTERFACE_H_H
-#define CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_HANDLER_INTERFACE_H_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RPC_HANDLER_INTERFACE_H_
+#define CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RPC_HANDLER_INTERFACE_H_
 
 #include "cartographer/cloud/internal/framework/execution_context.h"
 #include "cartographer/common/make_unique.h"
@@ -63,4 +63,4 @@ struct RpcHandlerInfo {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_HANDLER_INTERFACE_H_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RPC_HANDLER_INTERFACE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_CLIENT_H
-#define CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_CLIENT_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_CLIENT_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_CLIENT_H
 
 #include "cartographer/cloud/internal/framework/retry.h"
 #include "cartographer/cloud/internal/framework/rpc_handler_interface.h"
@@ -202,4 +202,4 @@ class Client {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_CLIENT_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_CLIENT_H

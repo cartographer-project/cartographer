@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_SERVICE_H
-#define CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_SERVICE_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_SERVICE_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_SERVICE_H
 
 #include "cartographer/cloud/internal/framework/completion_queue_thread.h"
 #include "cartographer/cloud/internal/framework/event_queue_thread.h"
@@ -64,4 +64,4 @@ class Service : public ::grpc::Service {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_SERVICE_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_SERVICE_H

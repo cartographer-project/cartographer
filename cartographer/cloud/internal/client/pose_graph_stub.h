@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_CLIENT_POSE_GRAPH_STUB_H_
-#define CARTOGRAPHER_GRPC_INTERNAL_CLIENT_POSE_GRAPH_STUB_H_
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_CLIENT_POSE_GRAPH_STUB_H_
+#define CARTOGRAPHER_CLOUD_INTERNAL_CLIENT_POSE_GRAPH_STUB_H_
 
 #include "cartographer/mapping/pose_graph_interface.h"
 #include "grpc++/grpc++.h"
@@ -52,4 +52,4 @@ class PoseGraphStub : public ::cartographer::mapping::PoseGraphInterface {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_CLIENT_POSE_GRAPH_STUB_H_
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_CLIENT_POSE_GRAPH_STUB_H_

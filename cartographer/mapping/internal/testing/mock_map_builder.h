@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_MAP_BUILDER_H
-#define CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_MAP_BUILDER_H
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_MAP_BUILDER_H
+#define CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_MAP_BUILDER_H
 
 #include "cartographer/mapping/map_builder_interface.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
@@ -60,4 +60,4 @@ class MockMapBuilder : public mapping::MapBuilderInterface {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_MAP_BUILDER_H
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_MAP_BUILDER_H

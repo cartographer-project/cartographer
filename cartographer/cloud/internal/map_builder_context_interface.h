@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_INTERFACE_H
-#define CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_INTERFACE_H
+#ifndef CARTOGRAPHER_CLOUD_MAP_BUILDER_CONTEXT_INTERFACE_H
+#define CARTOGRAPHER_CLOUD_MAP_BUILDER_CONTEXT_INTERFACE_H
 
 #include "cartographer/cloud/internal/framework/execution_context.h"
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
@@ -83,4 +83,4 @@ class MapBuilderContextInterface : public framework::ExecutionContext {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_CONTEXT_INTERFACE_H
+#endif  // CARTOGRAPHER_CLOUD_MAP_BUILDER_CONTEXT_INTERFACE_H

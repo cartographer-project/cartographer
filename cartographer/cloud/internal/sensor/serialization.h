@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_SENSOR_SERIALIZATION_H
-#define CARTOGRAPHER_GRPC_INTERNAL_SENSOR_SERIALIZATION_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_SENSOR_SERIALIZATION_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_SENSOR_SERIALIZATION_H
 
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/mapping/local_slam_result_data.h"
@@ -66,4 +66,4 @@ mapping::TrajectoryBuilderInterface::SensorId FromProto(
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_SENSOR_SERIALIZATION_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_SENSOR_SERIALIZATION_H

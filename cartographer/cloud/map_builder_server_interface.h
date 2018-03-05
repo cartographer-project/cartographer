@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_INTERFACE_H
-#define CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_INTERFACE_H
+#ifndef CARTOGRAPHER_CLOUD_MAP_BUILDER_SERVER_INTERFACE_H
+#define CARTOGRAPHER_CLOUD_MAP_BUILDER_SERVER_INTERFACE_H
 
 #include <memory>
 
@@ -53,4 +53,4 @@ std::unique_ptr<MapBuilderServerInterface> CreateMapBuilderServer(
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_MAP_BUILDER_SERVER_INTERFACE_H
+#endif  // CARTOGRAPHER_CLOUD_MAP_BUILDER_SERVER_INTERFACE_H
