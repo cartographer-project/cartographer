@@ -59,8 +59,8 @@ file(GLOB_RECURSE ALL_TESTS "*_test.cc")
 file(GLOB_RECURSE ALL_EXECUTABLES "*_main.cc")
 list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_TESTS})
 list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_EXECUTABLES})
-file(GLOB_RECURSE ALL_GRPC_FILES "cartographer_grpc/*")
-file(GLOB_RECURSE ALL_PROMETHEUS_FILES "cartographer_grpc/metrics/prometheus/*")
+file(GLOB_RECURSE ALL_GRPC_FILES "cartographer/cloud/*")
+file(GLOB_RECURSE ALL_PROMETHEUS_FILES "cartographer/cloud/metrics/prometheus/*")
 list(REMOVE_ITEM ALL_GRPC_FILES ${ALL_PROMETHEUS_FILES})
 if (NOT ${BUILD_GRPC})
   list(REMOVE_ITEM ALL_LIBRARY_HDRS ${ALL_GRPC_FILES})
@@ -159,7 +159,7 @@ google_binary(cartographer_compute_relations_metrics
 if(${BUILD_GRPC})
   google_binary(cartographer_grpc_server
     SRCS
-      cartographer_grpc/map_builder_server_main.cc
+      cartographer/cloud/map_builder_server_main.cc
   )
   target_link_libraries(cartographer_grpc_server PUBLIC grpc++)
   if(${BUILD_PROMETHEUS})
