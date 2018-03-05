@@ -34,6 +34,8 @@ struct LandmarkObservation {
   transform::Rigid3d landmark_to_tracking_transform;
   double translation_weight;
   double rotation_weight;
+  // Set to false if the observation was made from the landmark frame.
+  bool observed_from_tracking;
 };
 
 struct LandmarkData {

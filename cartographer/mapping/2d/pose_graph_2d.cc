@@ -181,7 +181,8 @@ void PoseGraph2D::AddLandmarkData(int trajectory_id,
           PoseGraph::LandmarkNode::LandmarkObservation{
               trajectory_id, landmark_data.time,
               observation.landmark_to_tracking_transform,
-              observation.translation_weight, observation.rotation_weight});
+              observation.translation_weight, observation.rotation_weight,
+              observation.observed_from_tracking});
     }
   });
 }
@@ -297,6 +298,7 @@ void PoseGraph2D::DispatchOptimization() {
     HandleWorkQueue();
   }
 }
+
 common::Time PoseGraph2D::GetLatestNodeTime(const NodeId& node_id,
                                             const SubmapId& submap_id) const {
   common::Time time = trajectory_nodes_.at(node_id).constant_data->time;
