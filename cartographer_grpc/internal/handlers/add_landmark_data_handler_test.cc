@@ -30,7 +30,7 @@ using ::testing::Eq;
 using ::testing::Pointee;
 using ::testing::Truly;
 
-const std::string kMessage = R"PROTO(
+const std::string kMessage = R"(
   sensor_metadata {
     trajectory_id: 1
     sensor_id: "sensor_id"
@@ -50,7 +50,7 @@ const std::string kMessage = R"PROTO(
       translation_weight: 11.0
       rotation_weight: 12.0
     }
-  })PROTO";
+  })";
 
 using AddLandmarkDataHandlerTest = testing::HandlerTest<AddLandmarkDataHandler>;
 

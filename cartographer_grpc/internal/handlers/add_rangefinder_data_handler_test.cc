@@ -30,7 +30,7 @@ using ::testing::Eq;
 using ::testing::Pointee;
 using ::testing::Truly;
 
-const std::string kMessage = R"PROTO(
+const std::string kMessage = R"(
   sensor_metadata {
     trajectory_id: 1
     sensor_id: "sensor_id"
@@ -43,7 +43,7 @@ const std::string kMessage = R"PROTO(
     point_data {
       x: 6.f y: 7.f z: 8.f t: 9.f
     }
-  })PROTO";
+  })";
 
 using AddRangefinderDataHandlerTest =
     testing::HandlerTest<AddRangefinderDataHandler>;

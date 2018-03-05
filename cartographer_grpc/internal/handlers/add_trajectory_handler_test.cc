@@ -35,7 +35,7 @@ using ::testing::ReturnRef;
 using ::testing::Test;
 using ::testing::Truly;
 
-const std::string kMessage = R"PROTO(
+const std::string kMessage = R"(
     expected_sensor_ids {
       id: "range_sensor"
       type: RANGE
@@ -63,7 +63,7 @@ const std::string kMessage = R"PROTO(
         timestamp: 9
       }
     }
-  )PROTO";
+  )";
 
 class AddTrajectoryHandlerTest
     : public testing::HandlerTest<AddTrajectoryHandler> {
