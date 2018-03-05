@@ -19,11 +19,11 @@
 
 #include "cartographer/cloud/internal/framework/testing/rpc_handler_test_server.h"
 #include "cartographer/common/make_unique.h"
+#include "cartographer/mapping/internal/testing/mock_map_builder.h"
+#include "cartographer/mapping/internal/testing/mock_pose_graph.h"
 #include "gtest/gtest.h"
 #include "mock_local_trajectory_uploader.h"
-#include "mock_map_builder.h"
 #include "mock_map_builder_context.h"
-#include "mock_pose_graph.h"
 
 namespace cartographer {
 namespace cloud {
@@ -44,8 +44,8 @@ class HandlerTest : public Test {
             ->template GetUnsynchronizedContext<MockMapBuilderContext>();
     mock_local_trajectory_uploader_ =
         common::make_unique<MockLocalTrajectoryUploader>();
-    mock_map_builder_ = common::make_unique<MockMapBuilder>();
-    mock_pose_graph_ = common::make_unique<MockPoseGraph>();
+    mock_map_builder_ = common::make_unique<mapping::testing::MockMapBuilder>();
+    mock_pose_graph_ = common::make_unique<mapping::testing::MockPoseGraph>();
 
     EXPECT_CALL(*mock_map_builder_context_, map_builder())
         .Times(::testing::AnyNumber())
@@ -70,8 +70,8 @@ class HandlerTest : public Test {
       test_server_;
   MockMapBuilderContext* mock_map_builder_context_;
   std::unique_ptr<MockLocalTrajectoryUploader> mock_local_trajectory_uploader_;
-  std::unique_ptr<MockMapBuilder> mock_map_builder_;
-  std::unique_ptr<MockPoseGraph> mock_pose_graph_;
+  std::unique_ptr<mapping::testing::MockMapBuilder> mock_map_builder_;
+  std::unique_ptr<mapping::testing::MockPoseGraph> mock_pose_graph_;
 };
 
 }  // namespace testing

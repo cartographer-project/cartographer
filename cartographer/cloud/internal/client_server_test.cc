@@ -19,10 +19,10 @@
 
 #include "cartographer/cloud/client/map_builder_stub.h"
 #include "cartographer/cloud/internal/map_builder_server.h"
-#include "cartographer/cloud/internal/testing/mock_map_builder.h"
-#include "cartographer/cloud/internal/testing/mock_trajectory_builder.h"
 #include "cartographer/cloud/map_builder_server_options.h"
 #include "cartographer/mapping/internal/test_helpers.h"
+#include "cartographer/mapping/internal/testing/mock_map_builder.h"
+#include "cartographer/mapping/internal/testing/mock_trajectory_builder.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"
@@ -32,6 +32,8 @@ using ::cartographer::mapping::MapBuilder;
 using ::cartographer::mapping::MapBuilderInterface;
 using ::cartographer::mapping::PoseGraphInterface;
 using ::cartographer::mapping::TrajectoryBuilderInterface;
+using ::cartographer::mapping::testing::MockMapBuilder;
+using ::cartographer::mapping::testing::MockTrajectoryBuilder;
 using ::testing::_;
 using SensorId = ::cartographer::mapping::TrajectoryBuilderInterface::SensorId;
 
@@ -92,13 +94,12 @@ class ClientServerTest : public ::testing::Test {
   }
 
   void InitializeServerWithMockMapBuilder() {
-    auto mock_map_builder = common::make_unique<testing::MockMapBuilder>();
+    auto mock_map_builder = common::make_unique<MockMapBuilder>();
     mock_map_builder_ = mock_map_builder.get();
     server_ = common::make_unique<MapBuilderServer>(
         map_builder_server_options_, std::move(mock_map_builder));
     EXPECT_TRUE(server_ != nullptr);
-    mock_trajectory_builder_ =
-        common::make_unique<testing::MockTrajectoryBuilder>();
+    mock_trajectory_builder_ = common::make_unique<MockTrajectoryBuilder>();
   }
 
   void InitializeStub() {
@@ -114,8 +115,8 @@ class ClientServerTest : public ::testing::Test {
   }
 
   proto::MapBuilderServerOptions map_builder_server_options_;
-  testing::MockMapBuilder* mock_map_builder_;
-  std::unique_ptr<testing::MockTrajectoryBuilder> mock_trajectory_builder_;
+  MockMapBuilder* mock_map_builder_;
+  std::unique_ptr<MockTrajectoryBuilder> mock_trajectory_builder_;
   ::cartographer::mapping::proto::TrajectoryBuilderOptions
       trajectory_builder_options_;
   std::unique_ptr<MapBuilderServer> server_;

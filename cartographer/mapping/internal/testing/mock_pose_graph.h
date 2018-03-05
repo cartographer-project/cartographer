@@ -23,7 +23,7 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace cloud {
+namespace mapping {
 namespace testing {
 
 class MockPoseGraph : public mapping::PoseGraphInterface {
@@ -51,7 +51,7 @@ class MockPoseGraph : public mapping::PoseGraphInterface {
 };
 
 }  // namespace testing
-}  // namespace cloud
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_POSE_GRAPH_H
