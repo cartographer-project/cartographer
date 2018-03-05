@@ -26,7 +26,7 @@
 using testing::_;
 
 namespace cartographer {
-namespace cloud {
+namespace mapping {
 namespace testing {
 
 class MockMapBuilder : public mapping::MapBuilderInterface {
@@ -57,7 +57,7 @@ class MockMapBuilder : public mapping::MapBuilderInterface {
 };
 
 }  // namespace testing
-}  // namespace cloud
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_MAP_BUILDER_H

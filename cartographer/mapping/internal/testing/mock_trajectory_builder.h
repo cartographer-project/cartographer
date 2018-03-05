@@ -23,7 +23,7 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace cloud {
+namespace mapping {
 namespace testing {
 
 class MockTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
@@ -52,7 +52,7 @@ class MockTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
 };
 
 }  // namespace testing
-}  // namespace cloud
+}  // namespace mapping
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_TRAJECTORY_BUILDER_CONTEXT_H

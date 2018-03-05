@@ -17,8 +17,8 @@
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/internal/testing/handler_test.h"
-#include "cartographer/cloud/internal/testing/mock_map_builder.h"
 #include "cartographer/cloud/internal/testing/test_helpers.h"
+#include "cartographer/mapping/internal/testing/mock_map_builder.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
 
@@ -70,7 +70,7 @@ class AddTrajectoryHandlerTest
  public:
   void SetUp() override {
     testing::HandlerTest<AddTrajectoryHandler>::SetUp();
-    mock_map_builder_ = common::make_unique<testing::MockMapBuilder>();
+    mock_map_builder_ = common::make_unique<mapping::testing::MockMapBuilder>();
     EXPECT_CALL(*mock_map_builder_context_,
                 GetLocalSlamResultCallbackForSubscriptions())
         .WillOnce(Return(nullptr));
@@ -88,7 +88,7 @@ class AddTrajectoryHandlerTest
     return expected_sensor_ids;
   }
 
-  std::unique_ptr<testing::MockMapBuilder> mock_map_builder_;
+  std::unique_ptr<mapping::testing::MockMapBuilder> mock_map_builder_;
 };
 
 TEST_F(AddTrajectoryHandlerTest, NoLocalSlamUploader) {
