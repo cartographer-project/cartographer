@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_TESTING_HANDLER_TEST_H
-#define CARTOGRAPHER_GRPC_INTERNAL_TESTING_HANDLER_TEST_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_TESTING_HANDLER_TEST_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_TESTING_HANDLER_TEST_H
 
 #include "cartographer/cloud/internal/framework/testing/rpc_handler_test_server.h"
 #include "cartographer/common/make_unique.h"
@@ -78,4 +78,4 @@ class HandlerTest : public Test {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_HANDLER_TEST_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_TESTING_HANDLER_TEST_H

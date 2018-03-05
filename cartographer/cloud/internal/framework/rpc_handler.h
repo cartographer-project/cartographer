@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_HANDLER_H
-#define CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_HANDLER_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RPC_HANDLER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RPC_HANDLER_H
 
 #include "cartographer/cloud/internal/framework/execution_context.h"
 #include "cartographer/cloud/internal/framework/rpc.h"
@@ -90,4 +90,4 @@ class RpcHandler : public RpcHandlerInterface {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_HANDLER_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RPC_HANDLER_H

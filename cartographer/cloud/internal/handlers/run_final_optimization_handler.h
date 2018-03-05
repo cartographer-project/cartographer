@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_RUN_FINAL_OPTIMIZATION_H
-#define CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_RUN_FINAL_OPTIMIZATION_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_RUN_FINAL_OPTIMIZATION_HANDLER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_RUN_FINAL_OPTIMIZATION_HANDLER_H
 
 #include "cartographer/cloud/internal/framework/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
@@ -39,4 +39,4 @@ class RunFinalOptimizationHandler
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_HANDLERS_RUN_FINAL_OPTIMIZATION_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_RUN_FINAL_OPTIMIZATION_HANDLER_H

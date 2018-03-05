@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_TRAJECTORY_BUILDER_CONTEXT_H
-#define CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_TRAJECTORY_BUILDER_CONTEXT_H
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_TRAJECTORY_BUILDER_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_TRAJECTORY_BUILDER_H_
 
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "glog/logging.h"
@@ -55,4 +55,4 @@ class MockTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_TRAJECTORY_BUILDER_CONTEXT_H
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_TRAJECTORY_BUILDER_H_

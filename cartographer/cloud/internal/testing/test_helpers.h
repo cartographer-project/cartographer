@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_TESTING_TEST_HELPERS_H
-#define CARTOGRAPHER_GRPC_INTERNAL_TESTING_TEST_HELPERS_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_TESTING_TEST_HELPERS_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_TESTING_TEST_HELPERS_H
 
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/sensor/dispatchable.h"
@@ -55,4 +55,4 @@ ProtoPredicateType BuildProtoPredicateEquals(
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_TEST_HELPERS_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_TESTING_TEST_HELPERS_H

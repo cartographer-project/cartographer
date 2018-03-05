@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_POSE_GRAPH_H
-#define CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_POSE_GRAPH_H
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_POSE_GRAPH_H
+#define CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_POSE_GRAPH_H
 
 #include "cartographer/mapping/pose_graph_interface.h"
 #include "glog/logging.h"
@@ -54,4 +54,4 @@ class MockPoseGraph : public mapping::PoseGraphInterface {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_POSE_GRAPH_H
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_POSE_GRAPH_H

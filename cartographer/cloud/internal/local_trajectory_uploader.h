@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_LOCAL_TRAJECTORY_UPLOADER_H
-#define CARTOGRAPHER_GRPC_LOCAL_TRAJECTORY_UPLOADER_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_LOCAL_TRAJECTORY_UPLOADER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_LOCAL_TRAJECTORY_UPLOADER_H
 
 #include <memory>
 #include <set>
@@ -59,4 +59,4 @@ std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_LOCAL_TRAJECTORY_UPLOADER_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_LOCAL_TRAJECTORY_UPLOADER_H

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_SERVER_H
-#define CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_SERVER_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_SERVER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_SERVER_H
 
 #include <cstddef>
 #include <memory>
@@ -197,4 +197,4 @@ class Server {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_SERVER_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_SERVER_H

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_LOCAL_TRAJECTORY_UPLOADER_H
-#define CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_LOCAL_TRAJECTORY_UPLOADER_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_TESTING_MOCK_LOCAL_TRAJECTORY_UPLOADER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_TESTING_MOCK_LOCAL_TRAJECTORY_UPLOADER_H
 
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
 #include "glog/logging.h"
@@ -46,4 +46,4 @@ class MockLocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_TESTING_MOCK_LOCAL_TRAJECTORY_UPLOADER_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_TESTING_MOCK_LOCAL_TRAJECTORY_UPLOADER_H

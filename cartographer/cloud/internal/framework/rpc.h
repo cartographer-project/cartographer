@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_H
-#define CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RPC_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RPC_H
 
 #include <memory>
 #include <queue>
@@ -210,4 +210,4 @@ class ActiveRpcs {
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RPC_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RPC_H

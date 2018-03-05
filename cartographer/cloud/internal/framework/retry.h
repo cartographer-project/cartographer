@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RETRY_H
-#define CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RETRY_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RETRY_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RETRY_H
 
 #include "cartographer/common/optional.h"
 #include "cartographer/common/time.h"
@@ -50,4 +50,4 @@ bool RetryWithStrategy(RetryStrategy retry_strategy, std::function<bool()> op,
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_GRPC_INTERNAL_FRAMEWORK_RETRY_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_FRAMEWORK_RETRY_H
