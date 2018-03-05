@@ -30,7 +30,7 @@ using ::testing::Eq;
 using ::testing::Pointee;
 using ::testing::Truly;
 
-const std::string kMessage = R"PROTO(
+const std::string kMessage = R"(
   sensor_metadata {
     trajectory_id: 1
     sensor_id: "sensor_id"
@@ -45,7 +45,7 @@ const std::string kMessage = R"PROTO(
         w: 6 x: 7 y: 8 z: 9
       }
     }
-  })PROTO";
+  })";
 
 using AddOdometryDataHandlerTest = testing::HandlerTest<AddOdometryDataHandler>;
 

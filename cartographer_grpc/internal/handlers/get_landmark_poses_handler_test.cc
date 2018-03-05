@@ -31,7 +31,7 @@ using ::testing::Eq;
 using ::testing::Pointee;
 using ::testing::Truly;
 
-const std::string kMessage = R"PROTO(
+const std::string kMessage = R"(
   landmark_poses {
     landmark_id: "landmark_1"
     global_pose {
@@ -54,7 +54,7 @@ const std::string kMessage = R"PROTO(
       }
     }
   }
-)PROTO";
+)";
 
 using GetLandmarkPosesHandlerTest =
     testing::HandlerTest<GetLandmarkPosesHandler>;
