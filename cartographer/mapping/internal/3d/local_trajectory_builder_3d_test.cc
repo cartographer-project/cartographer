@@ -35,7 +35,7 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-const char kSensorId[] = "sensor_id";
+constexpr char kSensorId[] = "sensor_id";
 
 class LocalTrajectoryBuilderTest : public ::testing::Test {
  protected:

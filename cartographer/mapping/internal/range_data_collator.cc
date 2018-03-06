@@ -40,17 +40,17 @@ sensor::TimedPointCloudOriginData RangeDataCollator::AddRangeData(
     return result;
   }
   id_to_pending_data_.emplace(sensor_id, timed_point_cloud_data);
-  if (expected_sensor_ids_.size() == id_to_pending_data_.size()) {
-    current_start_ = current_end_;
-    // We have messages from all sensors, move forward to oldest.
-    common::Time oldest_timestamp = common::Time::max();
-    for (const auto& pair : id_to_pending_data_) {
-      oldest_timestamp = std::min(oldest_timestamp, pair.second.time);
-    }
-    current_end_ = oldest_timestamp;
-    return CropAndMerge();
+  if (expected_sensor_ids_.size() != id_to_pending_data_.size()) {
+    return {};
   }
-  return {};
+  current_start_ = current_end_;
+  // We have messages from all sensors, move forward to oldest.
+  common::Time oldest_timestamp = common::Time::max();
+  for (const auto& pair : id_to_pending_data_) {
+    oldest_timestamp = std::min(oldest_timestamp, pair.second.time);
+  }
+  current_end_ = oldest_timestamp;
+  return CropAndMerge();
 }
 
 sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
