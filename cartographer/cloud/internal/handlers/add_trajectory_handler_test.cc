@@ -62,8 +62,6 @@ const std::string kMessage = R"(
         to_trajectory_id: 8
         timestamp: 9
       }
-      to_trajectory_id: 8
-      timestamp: 9
     }
   )";
 

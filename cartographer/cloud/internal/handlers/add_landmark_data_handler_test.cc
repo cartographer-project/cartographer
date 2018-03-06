@@ -40,8 +40,12 @@ const std::string kMessage = R"(
     landmark_observations {
       id: "3"
       landmark_to_tracking_transform {
-        translation { x: 4 y: 5 z: 6 }
-        rotation { w: 7 x: 8 y: 9 z: 10 }
+        translation {
+          x: 4 y: 5 z: 6
+        }
+        rotation {
+          w:7 x: 8 y: 9 z: 10
+        }
       }
       translation_weight: 11.0
       rotation_weight: 12.0
