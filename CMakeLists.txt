@@ -56,6 +56,7 @@ install(DIRECTORY cmake DESTINATION share/cartographer/)
 file(GLOB_RECURSE ALL_LIBRARY_HDRS "*.h")
 file(GLOB_RECURSE ALL_LIBRARY_SRCS "*.cc")
 file(GLOB_RECURSE ALL_TESTS "*_test.cc")
+file(GLOB_RECURSE ALL_EXECUTABLES "*_main.cc")
 
 # Remove dotfiles/-folders that could potentially pollute the build.
 file(GLOB_RECURSE ALL_DOTFILES ".*/*")
@@ -63,9 +64,9 @@ if (ALL_DOTFILES)
   list(REMOVE_ITEM ALL_LIBRARY_HDRS ${ALL_DOTFILES})
   list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_DOTFILES})
   list(REMOVE_ITEM ALL_TESTS ${ALL_DOTFILES})
+  list(REMOVE_ITEM ALL_EXECUTABLES ${ALL_DOTFILES})
 endif()
 
-file(GLOB_RECURSE ALL_EXECUTABLES "*_main.cc")
 list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_TESTS})
 list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_EXECUTABLES})
 file(GLOB_RECURSE ALL_GRPC_FILES "cartographer/cloud/*")
