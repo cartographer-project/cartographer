@@ -108,6 +108,10 @@ bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
   LOG(FATAL) << "Not implemented";
 }
 
+bool PoseGraphStub::IsTrajectoryFrozen(int trajectory_id) {
+  LOG(FATAL) << "Not implemented";
+}
+
 std::map<int, mapping::PoseGraphInterface::TrajectoryData>
 PoseGraphStub::GetTrajectoryData() {
   LOG(FATAL) << "Not implemented";

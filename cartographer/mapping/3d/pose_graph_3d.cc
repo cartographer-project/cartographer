@@ -435,6 +435,10 @@ void PoseGraph3D::FreezeTrajectory(const int trajectory_id) {
   });
 }
 
+bool PoseGraph3D::IsTrajectoryFrozen(const int trajectory_id) {
+  return frozen_trajectories_.count(trajectory_id) > 0;
+}
+
 void PoseGraph3D::AddSubmapFromProto(
     const transform::Rigid3d& global_submap_pose, const proto::Submap& submap) {
   if (!submap.has_submap_3d()) {
