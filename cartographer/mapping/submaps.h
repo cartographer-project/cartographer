@@ -23,7 +23,6 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
-#include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
