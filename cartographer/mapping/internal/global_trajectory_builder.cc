@@ -16,7 +16,6 @@
 
 #include "cartographer/mapping/internal/global_trajectory_builder.h"
 
-#include <chrono>
 #include <memory>
 
 #include "cartographer/common/make_unique.h"
@@ -29,7 +28,6 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-static auto* kLocalSlamLatencyMetric = metrics::Gauge::Null();
 static auto* kLocalSlamMatchingResults = metrics::Counter::Null();
 static auto* kLocalSlamInsertionResults = metrics::Counter::Null();
 
@@ -85,14 +83,6 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
           trajectory_id_, matching_result->time, matching_result->local_pose,
           std::move(matching_result->range_data_in_local),
           std::move(insertion_result));
-
-      const std::chrono::milliseconds now =
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-              std::chrono::system_clock::now().time_since_epoch());
-      common::Duration local_slam_latency_duration =
-          common::FromUniversal(now.count()) - matching_result->time;
-      kLocalSlamLatencyMetric->Set(
-          common::ToSeconds(local_slam_latency_duration));
     }
   }
 
@@ -167,11 +157,6 @@ std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder3D(
 }
 
 void GlobalTrajectoryBuilderRegisterMetrics(metrics::FamilyFactory* factory) {
-  auto* latency = factory->NewGaugeFamily(
-      "/mapping/internal/global_trajectory_builder/local_slam_latency",
-      "Time difference between time of a local SLAM callback and the timestamp "
-      "of its oldest input data");
-  kLocalSlamLatencyMetric = latency->Add({});
   auto* results = factory->NewCounterFamily(
       "/mapping/internal/global_trajectory_builder/local_slam_results",
       "Local SLAM results");
