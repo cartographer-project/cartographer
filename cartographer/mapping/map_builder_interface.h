@@ -24,7 +24,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
-#include "cartographer/io/proto_stream.h"
+#include "cartographer/io/proto_stream_interface.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
