@@ -85,6 +85,7 @@ int MapBuilder::AddTrajectoryBuilder(
       local_trajectory_builder = common::make_unique<LocalTrajectoryBuilder3D>(
           trajectory_options.trajectory_builder_3d_options());
     }
+    DCHECK(dynamic_cast<PoseGraph3D*>(pose_graph_.get()));
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             sensor_collator_.get(), trajectory_id, expected_sensor_ids,
@@ -98,6 +99,7 @@ int MapBuilder::AddTrajectoryBuilder(
       local_trajectory_builder = common::make_unique<LocalTrajectoryBuilder2D>(
           trajectory_options.trajectory_builder_2d_options());
     }
+    DCHECK(dynamic_cast<PoseGraph2D*>(pose_graph_.get()));
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             sensor_collator_.get(), trajectory_id, expected_sensor_ids,
