@@ -24,6 +24,8 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/2d/pose_graph_2d.h"
+#include "cartographer/mapping/3d/pose_graph_3d.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
 #include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
 #include "cartographer/mapping/internal/3d/local_trajectory_builder_3d.h"
@@ -58,14 +60,12 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
   if (options.use_trajectory_builder_2d()) {
-    pose_graph_2d_ = common::make_unique<PoseGraph2D>(
+    pose_graph_ = common::make_unique<PoseGraph2D>(
         options_.pose_graph_options(), &thread_pool_);
-    pose_graph_ = pose_graph_2d_.get();
   }
   if (options.use_trajectory_builder_3d()) {
-    pose_graph_3d_ = common::make_unique<PoseGraph3D>(
+    pose_graph_ = common::make_unique<PoseGraph3D>(
         options_.pose_graph_options(), &thread_pool_);
-    pose_graph_ = pose_graph_3d_.get();
   }
   if (options.collate_by_trajectory()) {
     sensor_collator_ = common::make_unique<sensor::TrajectoryCollator>();
@@ -85,24 +85,28 @@ int MapBuilder::AddTrajectoryBuilder(
       local_trajectory_builder = common::make_unique<LocalTrajectoryBuilder3D>(
           trajectory_options.trajectory_builder_3d_options());
     }
+    DCHECK(dynamic_cast<PoseGraph3D*>(pose_graph_.get()));
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             sensor_collator_.get(), trajectory_id, expected_sensor_ids,
-            CreateGlobalTrajectoryBuilder3D(std::move(local_trajectory_builder),
-                                            trajectory_id, pose_graph_3d_.get(),
-                                            local_slam_result_callback)));
+            CreateGlobalTrajectoryBuilder3D(
+                std::move(local_trajectory_builder), trajectory_id,
+                static_cast<PoseGraph3D*>(pose_graph_.get()),
+                local_slam_result_callback)));
   } else {
     std::unique_ptr<LocalTrajectoryBuilder2D> local_trajectory_builder;
     if (trajectory_options.has_trajectory_builder_2d_options()) {
       local_trajectory_builder = common::make_unique<LocalTrajectoryBuilder2D>(
           trajectory_options.trajectory_builder_2d_options());
     }
+    DCHECK(dynamic_cast<PoseGraph2D*>(pose_graph_.get()));
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
             sensor_collator_.get(), trajectory_id, expected_sensor_ids,
-            CreateGlobalTrajectoryBuilder2D(std::move(local_trajectory_builder),
-                                            trajectory_id, pose_graph_2d_.get(),
-                                            local_slam_result_callback)));
+            CreateGlobalTrajectoryBuilder2D(
+                std::move(local_trajectory_builder), trajectory_id,
+                static_cast<PoseGraph2D*>(pose_graph_.get()),
+                local_slam_result_callback)));
   }
   if (trajectory_options.pure_localization()) {
     constexpr int kSubmapsToKeep = 3;
@@ -411,7 +415,7 @@ int MapBuilder::num_trajectory_builders() const {
   return trajectory_builders_.size();
 }
 
-PoseGraphInterface* MapBuilder::pose_graph() { return pose_graph_; }
+PoseGraphInterface* MapBuilder::pose_graph() { return pose_graph_.get(); }
 
 const std::vector<proto::TrajectoryBuilderOptionsWithSensorIds>&
 MapBuilder::GetAllTrajectoryBuilderOptions() const {
