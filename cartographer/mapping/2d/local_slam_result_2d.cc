@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-#include "local_slam_result_data.h"
+#include "cartographer/mapping/2d/local_slam_result_2d.h"
 #include "cartographer/mapping/2d/pose_graph_2d.h"
-#include "cartographer/mapping/3d/pose_graph_3d.h"
-#include "cartographer/mapping/trajectory_builder_interface.h"
 
 namespace cartographer {
 namespace mapping {
@@ -31,21 +29,8 @@ void LocalSlamResult2D::AddToTrajectoryBuilder(
 void LocalSlamResult2D::AddToPoseGraph(int trajectory_id,
                                        PoseGraph* pose_graph) const {
   DCHECK(dynamic_cast<PoseGraph2D*>(pose_graph));
-  PoseGraph2D* pose_graph_2d = static_cast<PoseGraph2D*>(pose_graph);
-  pose_graph_2d->AddNode(node_data_, trajectory_id, insertion_submaps_);
-}
-
-void LocalSlamResult3D::AddToTrajectoryBuilder(
-    TrajectoryBuilderInterface* const trajectory_builder) {
-  trajectory_builder->AddLocalSlamResultData(
-      common::make_unique<LocalSlamResult3D>(*this));
-}
-
-void LocalSlamResult3D::AddToPoseGraph(int trajectory_id,
-                                       PoseGraph* pose_graph) const {
-  DCHECK(dynamic_cast<PoseGraph3D*>(pose_graph));
-  PoseGraph3D* pose_graph_3d = static_cast<PoseGraph3D*>(pose_graph);
-  pose_graph_3d->AddNode(node_data_, trajectory_id, insertion_submaps_);
+  static_cast<PoseGraph2D*>(pose_graph)
+      ->AddNode(node_data_, trajectory_id, insertion_submaps_);
 }
 
 }  // namespace mapping

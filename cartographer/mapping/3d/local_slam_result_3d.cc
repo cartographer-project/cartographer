@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
-#define CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
-
-#include "cartographer/mapping/pose_graph.h"
-#include "cartographer/sensor/data.h"
+#include "cartographer/mapping/3d/local_slam_result_3d.h"
+#include "cartographer/mapping/3d/pose_graph_3d.h"
 
 namespace cartographer {
 namespace mapping {
 
-class LocalSlamResultData : public sensor::Data {
- public:
-  LocalSlamResultData(const std::string& sensor_id, common::Time time)
-      : Data(sensor_id), time_(time) {}
+void LocalSlamResult3D::AddToTrajectoryBuilder(
+    TrajectoryBuilderInterface* const trajectory_builder) {
+  trajectory_builder->AddLocalSlamResultData(
+      common::make_unique<LocalSlamResult3D>(*this));
+}
 
-  common::Time GetTime() const override { return time_; }
-  virtual void AddToPoseGraph(int trajectory_id,
-                              PoseGraph* pose_graph) const = 0;
-
- private:
-  common::Time time_;
-};
+void LocalSlamResult3D::AddToPoseGraph(int trajectory_id,
+                                       PoseGraph* pose_graph) const {
+  DCHECK(dynamic_cast<PoseGraph3D*>(pose_graph));
+  static_cast<PoseGraph3D*>(pose_graph)
+      ->AddNode(node_data_, trajectory_id, insertion_submaps_);
+}
 
 }  // namespace mapping
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
