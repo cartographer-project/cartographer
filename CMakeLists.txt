@@ -57,10 +57,20 @@ file(GLOB_RECURSE ALL_LIBRARY_HDRS "*.h")
 file(GLOB_RECURSE ALL_LIBRARY_SRCS "*.cc")
 file(GLOB_RECURSE ALL_TESTS "*_test.cc")
 file(GLOB_RECURSE ALL_EXECUTABLES "*_main.cc")
+
+# Remove dotfiles/-folders that could potentially pollute the build.
+file(GLOB_RECURSE ALL_DOTFILES ".*/*")
+if (ALL_DOTFILES)
+  list(REMOVE_ITEM ALL_LIBRARY_HDRS ${ALL_DOTFILES})
+  list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_DOTFILES})
+  list(REMOVE_ITEM ALL_TESTS ${ALL_DOTFILES})
+  list(REMOVE_ITEM ALL_EXECUTABLES ${ALL_DOTFILES})
+endif()
+
 list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_TESTS})
 list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_EXECUTABLES})
-file(GLOB_RECURSE ALL_GRPC_FILES "cartographer_grpc/*")
-file(GLOB_RECURSE ALL_PROMETHEUS_FILES "cartographer_grpc/metrics/prometheus/*")
+file(GLOB_RECURSE ALL_GRPC_FILES "cartographer/cloud/*")
+file(GLOB_RECURSE ALL_PROMETHEUS_FILES "cartographer/cloud/metrics/prometheus/*")
 list(REMOVE_ITEM ALL_GRPC_FILES ${ALL_PROMETHEUS_FILES})
 if (NOT ${BUILD_GRPC})
   list(REMOVE_ITEM ALL_LIBRARY_HDRS ${ALL_GRPC_FILES})
@@ -78,8 +88,8 @@ set(INSTALL_SOURCE_HDRS ${ALL_LIBRARY_HDRS})
 file(GLOB_RECURSE INTERNAL_HDRS "cartographer/*/internal/*.h")
 list(REMOVE_ITEM INSTALL_SOURCE_HDRS ${INTERNAL_HDRS})
 
-file(GLOB_RECURSE ALL_PROTOS "*.proto")
-file(GLOB_RECURSE ALL_GRPC_SERVICES "*_service.proto")
+file(GLOB_RECURSE ALL_PROTOS "cartographer*/*.proto")
+file(GLOB_RECURSE ALL_GRPC_SERVICES "cartographer*/*_service.proto")
 list(REMOVE_ITEM ALL_PROTOS ALL_GRPC_SERVICES)
 if (NOT ${BUILD_GRPC})
   list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_FILES})
@@ -159,7 +169,7 @@ google_binary(cartographer_compute_relations_metrics
 if(${BUILD_GRPC})
   google_binary(cartographer_grpc_server
     SRCS
-      cartographer_grpc/map_builder_server_main.cc
+      cartographer/cloud/map_builder_server_main.cc
   )
   target_link_libraries(cartographer_grpc_server PUBLIC grpc++)
   if(${BUILD_PROMETHEUS})

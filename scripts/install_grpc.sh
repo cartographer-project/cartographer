@@ -17,8 +17,11 @@
 set -o errexit
 set -o verbose
 
+VERSION="v1.10.0"
+# Digest: 474c5950686e3962bd339c93d27e369bf64f568f
+
 # Build and install gRPC.
-git clone https://github.com/grpc/grpc
+git clone --branch ${VERSION} --depth 1 https://github.com/grpc/grpc
 cd grpc
 git submodule update --init
 make

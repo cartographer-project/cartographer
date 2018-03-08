@@ -352,7 +352,7 @@ void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
       counts->Add({{"search_region", "global"}, {"matcher", "found"}});
   auto* queue_length = factory->NewGaugeFamily(
       "/mapping/3d/pose_graph/constraint_builder/queue_length", "Queue length");
-  kQueueLengthMetric = queue_length->Add({{}});
+  kQueueLengthMetric = queue_length->Add({});
   auto boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = factory->NewHistogramFamily(
       "/mapping/3d/pose_graph/constraint_builder/scores",
