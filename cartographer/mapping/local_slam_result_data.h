@@ -17,8 +17,9 @@
 #ifndef CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
 #define CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
 
-#include "cartographer/mapping/2d/pose_graph_2d.h"
-#include "cartographer/mapping/3d/pose_graph_3d.h"
+#include "cartographer/mapping/2d/submap_2d.h"
+#include "cartographer/mapping/3d/submap_3d.h"
+#include "cartographer/mapping/pose_graph.h"
 #include "cartographer/sensor/data.h"
 
 namespace cartographer {
@@ -27,7 +28,8 @@ namespace mapping {
 class TrajectoryBuilderInterface;
 class LocalSlamResultData : public cartographer::sensor::Data {
  public:
-  LocalSlamResultData(const std::string& sensor_id, common::Time time);
+  LocalSlamResultData(const std::string& sensor_id, common::Time time)
+      : Data(sensor_id), time_(time) {}
 
   common::Time GetTime() const override { return time_; }
   virtual void AddToPoseGraph(int trajectory_id,
@@ -42,7 +44,10 @@ class LocalSlamResult2D : public LocalSlamResultData {
   LocalSlamResult2D(
       const std::string& sensor_id, common::Time time,
       std::shared_ptr<const TrajectoryNode::Data> node_data,
-      const std::vector<std::shared_ptr<const Submap2D>>& insertion_submaps);
+      const std::vector<std::shared_ptr<const Submap2D>>& insertion_submaps)
+      : LocalSlamResultData(sensor_id, time),
+        node_data_(node_data),
+        insertion_submaps_(insertion_submaps) {}
 
   void AddToTrajectoryBuilder(
       TrajectoryBuilderInterface* const trajectory_builder) override;
@@ -58,7 +63,10 @@ class LocalSlamResult3D : public LocalSlamResultData {
   LocalSlamResult3D(
       const std::string& sensor_id, common::Time time,
       std::shared_ptr<const TrajectoryNode::Data> node_data,
-      const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps);
+      const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps)
+      : LocalSlamResultData(sensor_id, time),
+        node_data_(node_data),
+        insertion_submaps_(insertion_submaps) {}
 
   void AddToTrajectoryBuilder(
       TrajectoryBuilderInterface* const trajectory_builder) override;
