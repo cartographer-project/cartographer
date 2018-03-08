@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/min_max_range_filtering_points_processor.h"
+#include "cartographer/io/internal/min_max_range_filtering_points_processor.h"
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"

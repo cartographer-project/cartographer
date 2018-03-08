@@ -14,44 +14,45 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_COLORING_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_COLORING_POINTS_PROCESSOR_H_
+#ifndef CARTOGRAPHER_IO_INTERNAL_XYZ_WRITING_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_INTERNAL_XYZ_WRITING_POINTS_PROCESSOR_H_
 
+#include <fstream>
 #include <memory>
+#include <string>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/io/points_batch.h"
+#include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
 namespace io {
 
-// Colors points with a fixed color by frame_id.
-class ColoringPointsProcessor : public PointsProcessor {
+// Writes ASCII xyz points.
+class XyzWriterPointsProcessor : public PointsProcessor {
  public:
-  constexpr static const char* kConfigurationFileActionName = "color_points";
+  constexpr static const char* kConfigurationFileActionName = "write_xyz";
 
-  ColoringPointsProcessor(const FloatColor& color, const std::string& frame_id,
-                          PointsProcessor* next);
+  XyzWriterPointsProcessor(std::unique_ptr<FileWriter>, PointsProcessor* next);
 
-  static std::unique_ptr<ColoringPointsProcessor> FromDictionary(
+  static std::unique_ptr<XyzWriterPointsProcessor> FromDictionary(
+      const FileWriterFactory& file_writer_factory,
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
-  ~ColoringPointsProcessor() override{};
+  ~XyzWriterPointsProcessor() override {}
 
-  ColoringPointsProcessor(const ColoringPointsProcessor&) = delete;
-  ColoringPointsProcessor& operator=(const ColoringPointsProcessor&) = delete;
+  XyzWriterPointsProcessor(const XyzWriterPointsProcessor&) = delete;
+  XyzWriterPointsProcessor& operator=(const XyzWriterPointsProcessor&) = delete;
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
 
  private:
-  const FloatColor color_;
-  const std::string frame_id_;
   PointsProcessor* const next_;
+  std::unique_ptr<FileWriter> file_writer_;
 };
 
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_COLORING_POINTS_PROCESSOR_H_
+#endif  // CARTOGRAPHER_IO_INTERNAL_XYZ_WRITING_POINTS_PROCESSOR_H_

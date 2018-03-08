@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/probability_grid_points_processor.h"
+#include "cartographer/io/internal/probability_grid_points_processor.h"
 
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/io/draw_trajectories.h"
 #include "cartographer/io/image.h"
+#include "cartographer/io/internal/draw_trajectories.h"
 #include "cartographer/io/points_batch.h"
+#include "cartographer/io/probability_grid_utils.h"
 #include "cartographer/mapping/probability_values.h"
 
 namespace cartographer {
@@ -44,13 +45,6 @@ void DrawTrajectoriesIntoImage(
                    },
                    cairo_surface);
   }
-}
-
-uint8 ProbabilityToColor(float probability_from_grid) {
-  const float probability = 1.f - probability_from_grid;
-  return ::cartographer::common::RoundToInt(
-      255 * ((probability - mapping::kMinProbability) /
-             (mapping::kMaxProbability - mapping::kMinProbability)));
 }
 
 }  // namespace
@@ -122,40 +116,6 @@ PointsProcessor::FlushResult ProbabilityGridPointsProcessor::Flush() {
   // The following unreachable return statement is needed to avoid a GCC bug
   // described at https://gcc.gnu.org/bugzilla/show_bug.cgi?id=81508
   return FlushResult::kFinished;
-}
-
-std::unique_ptr<Image> DrawProbabilityGrid(
-    const mapping::ProbabilityGrid& probability_grid, Eigen::Array2i* offset) {
-  mapping::CellLimits cell_limits;
-  probability_grid.ComputeCroppedLimits(offset, &cell_limits);
-  if (cell_limits.num_x_cells == 0 || cell_limits.num_y_cells == 0) {
-    LOG(WARNING) << "Not writing output: empty probability grid";
-    return nullptr;
-  }
-  auto image = common::make_unique<Image>(cell_limits.num_x_cells,
-                                          cell_limits.num_y_cells);
-  for (const Eigen::Array2i& xy_index :
-       mapping::XYIndexRangeIterator(cell_limits)) {
-    const Eigen::Array2i index = xy_index + *offset;
-    constexpr uint8 kUnknownValue = 128;
-    const uint8 value =
-        probability_grid.IsKnown(index)
-            ? ProbabilityToColor(probability_grid.GetProbability(index))
-            : kUnknownValue;
-    ;
-    image->SetPixel(xy_index.x(), xy_index.y(), {{value, value, value}});
-  }
-  return image;
-}
-
-mapping::ProbabilityGrid CreateProbabilityGrid(const double resolution) {
-  constexpr int kInitialProbabilityGridSize = 100;
-  Eigen::Vector2d max =
-      0.5 * kInitialProbabilityGridSize * resolution * Eigen::Vector2d::Ones();
-  return mapping::ProbabilityGrid(
-      mapping::MapLimits(resolution, max,
-                         mapping::CellLimits(kInitialProbabilityGridSize,
-                                             kInitialProbabilityGridSize)));
 }
 
 }  // namespace io

@@ -1,4 +1,4 @@
-#include "cartographer/io/xyz_writing_points_processor.h"
+#include "cartographer/io/internal/xyz_writing_points_processor.h"
 
 #include <iomanip>
 

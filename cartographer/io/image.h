@@ -24,7 +24,6 @@
 #include "cartographer/common/port.h"
 #include "cartographer/io/color.h"
 #include "cartographer/io/file_writer.h"
-#include "cartographer/io/points_batch.h"
 
 namespace cartographer {
 namespace io {

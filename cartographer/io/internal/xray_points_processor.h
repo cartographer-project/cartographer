@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_XRAY_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_XRAY_POINTS_PROCESSOR_H_
+#ifndef CARTOGRAPHER_IO_INTERNAL_XRAY_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_INTERNAL_XRAY_POINTS_PROCESSOR_H_
 
 #include <map>
 
@@ -95,4 +95,4 @@ class XRayPointsProcessor : public PointsProcessor {
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_XRAY_POINTS_PROCESSOR_H_
+#endif  // CARTOGRAPHER_IO_INTERNAL_XRAY_POINTS_PROCESSOR_H_

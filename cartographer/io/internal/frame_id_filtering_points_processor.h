@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_FRAME_ID_FILTERING_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_FRAME_ID_FILTERING_POINTS_PROCESSOR_H_
+#ifndef CARTOGRAPHER_IO_INTERNAL_FRAME_ID_FILTERING_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_INTERNAL_FRAME_ID_FILTERING_POINTS_PROCESSOR_H_
 
 #include <unordered_set>
 
@@ -56,4 +56,4 @@ class FrameIdFilteringPointsProcessor : public PointsProcessor {
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_FRAME_ID_FILTERING_POINTS_PROCESSOR_H_
+#endif  // CARTOGRAPHER_IO_INTERNAL_FRAME_ID_FILTERING_POINTS_PROCESSOR_H_

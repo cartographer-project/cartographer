@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/intensity_to_color_points_processor.h"
+#include "cartographer/io/internal/intensity_to_color_points_processor.h"
 
 #include "Eigen/Core"
 #include "cartographer/common/make_unique.h"

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/draw_trajectories.h"
+#include "cartographer/io/internal/draw_trajectories.h"
 
 #include "cartographer/io/image.h"
 #include "cartographer/transform/transform.h"

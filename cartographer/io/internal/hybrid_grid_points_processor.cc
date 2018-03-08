@@ -1,4 +1,4 @@
-#include "cartographer/io/hybrid_grid_points_processor.h"
+#include "cartographer/io/internal/hybrid_grid_points_processor.h"
 
 #include <memory>
 #include <string>
