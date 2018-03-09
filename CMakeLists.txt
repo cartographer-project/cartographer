@@ -29,7 +29,7 @@ google_initialize_cartographer_project()
 google_enable_testing()
 
 find_package(Boost REQUIRED COMPONENTS iostreams)
-find_package(Ceres REQUIRED COMPONENTS SparseLinearAlgebraLibrary)
+find_package(Ceres REQUIRED COMPONENTS SuiteSparse)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
 find_package(Protobuf 3.0.0 REQUIRED)
