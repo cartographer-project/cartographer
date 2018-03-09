@@ -24,11 +24,11 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/2d/pose_graph_2d.h"
-#include "cartographer/mapping/3d/pose_graph_3d.h"
 #include "cartographer/mapping/collated_trajectory_builder.h"
 #include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
+#include "cartographer/mapping/internal/2d/pose_graph_2d.h"
 #include "cartographer/mapping/internal/3d/local_trajectory_builder_3d.h"
+#include "cartographer/mapping/internal/3d/pose_graph_3d.h"
 #include "cartographer/mapping/internal/global_trajectory_builder.h"
 #include "cartographer/sensor/collator.h"
 #include "cartographer/sensor/range_data.h"
