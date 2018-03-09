@@ -19,7 +19,7 @@
 
 #include "cartographer/cloud/internal/framework/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/io/in_memory_proto_stream.h"
+#include "cartographer/io/internal/in_memory_proto_stream.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer {

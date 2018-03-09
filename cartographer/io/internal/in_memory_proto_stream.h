@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_IN_MEMORY_PROTO_STREAM_H_
-#define CARTOGRAPHER_IO_IN_MEMORY_PROTO_STREAM_H_
+#ifndef CARTOGRAPHER_IO_INTERNAL_IN_MEMORY_PROTO_STREAM_H_
+#define CARTOGRAPHER_IO_INTERNAL_IN_MEMORY_PROTO_STREAM_H_
 
 #include <queue>
 
@@ -75,4 +75,4 @@ class InMemoryProtoStreamReader
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_IN_MEMORY_PROTO_STREAM_H_
+#endif  // CARTOGRAPHER_IO_INTERNAL_IN_MEMORY_PROTO_STREAM_H_

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/in_memory_proto_stream.h"
+#include "cartographer/io/internal/in_memory_proto_stream.h"
 #include "cartographer/mapping/proto/pose_graph.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 
