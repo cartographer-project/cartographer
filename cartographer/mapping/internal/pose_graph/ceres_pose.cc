@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/pose_graph/ceres_pose.h"
+#include "cartographer/mapping/internal/pose_graph/ceres_pose.h"
 
 namespace cartographer {
 namespace mapping {

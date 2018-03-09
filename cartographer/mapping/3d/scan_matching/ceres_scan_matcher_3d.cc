@@ -26,7 +26,7 @@
 #include "cartographer/mapping/3d/scan_matching/translation_delta_cost_functor_3d.h"
 #include "cartographer/mapping/internal/3d/rotation_parameterization.h"
 #include "cartographer/mapping/internal/3d/scan_matching/occupied_space_cost_function_3d.h"
-#include "cartographer/mapping/pose_graph/ceres_pose.h"
+#include "cartographer/mapping/internal/pose_graph/ceres_pose.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"

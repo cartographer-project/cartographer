@@ -20,7 +20,7 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/mapping/internal/2d/pose_graph/optimization_problem_2d.h"
-#include "cartographer/mapping/pose_graph/cost_helpers.h"
+#include "cartographer/mapping/internal/pose_graph/cost_helpers.h"
 #include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"

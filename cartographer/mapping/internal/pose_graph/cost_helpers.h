@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_COST_HELPERS_H_
-#define CARTOGRAPHER_MAPPING_POSE_GRAPH_COST_HELPERS_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
@@ -63,6 +63,6 @@ std::array<T, 4> SlerpQuaternions(const T* const start, const T* const end,
 }  // namespace mapping
 }  // namespace cartographer
 
-#include "cartographer/mapping/pose_graph/cost_helpers_impl.h"
+#include "cartographer/mapping/internal/pose_graph/cost_helpers_impl.h"
 
-#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_COST_HELPERS_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_H_

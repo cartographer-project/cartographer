@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_CERES_POSE_H_
-#define CARTOGRAPHER_MAPPING_POSE_GRAPH_CERES_POSE_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_CERES_POSE_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_CERES_POSE_H_
 
 #include <array>
 #include <memory>
@@ -54,4 +54,4 @@ class CeresPose {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_CERES_POSE_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_CERES_POSE_H_
