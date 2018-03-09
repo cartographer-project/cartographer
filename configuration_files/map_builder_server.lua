@@ -19,5 +19,5 @@ MAP_BUILDER_SERVER = {
   num_event_threads = 4,
   num_grpc_threads = 4,
   server_address = "0.0.0.0:50051",
-  uplink_server_address = "localhost:50052",
+  uplink_server_address = "",
 }
