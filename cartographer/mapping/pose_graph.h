@@ -82,12 +82,12 @@ class PoseGraph : public PoseGraphInterface {
   virtual void FreezeTrajectory(int trajectory_id) = 0;
 
   // Adds a 'submap' from a proto with the given 'global_pose' to the
-  // appropriate frozen trajectory.
+  // appropriate trajectory.
   virtual void AddSubmapFromProto(const transform::Rigid3d& global_pose,
                                   const proto::Submap& submap) = 0;
 
   // Adds a 'node' from a proto with the given 'global_pose' to the
-  // appropriate frozen trajectory.
+  // appropriate trajectory.
   virtual void AddNodeFromProto(const transform::Rigid3d& global_pose,
                                 const proto::Node& node) = 0;
 
