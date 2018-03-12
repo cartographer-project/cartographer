@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/trajectory_connectivity_state.h"
+#include "cartographer/mapping/internal/trajectory_connectivity_state.h"
 
 #include "gtest/gtest.h"
 

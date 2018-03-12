@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_CONNECTED_COMPONENTS_H_
-#define CARTOGRAPHER_MAPPING_CONNECTED_COMPONENTS_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_CONNECTED_COMPONENTS_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_CONNECTED_COMPONENTS_H_
 
 #include <map>
 #include <unordered_map>
@@ -87,4 +87,4 @@ proto::ConnectedComponents ToProto(
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_CONNECTED_COMPONENTS_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_CONNECTED_COMPONENTS_H_

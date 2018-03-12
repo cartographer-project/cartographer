@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/connected_components.h"
+#include "cartographer/mapping/internal/connected_components.h"
 
 #include <algorithm>
 #include <memory>
