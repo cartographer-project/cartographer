@@ -29,7 +29,7 @@
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/internal/2d/pose_graph/landmark_cost_function_2d.h"
 #include "cartographer/mapping/internal/2d/pose_graph/spa_cost_function_2d.h"
-#include "cartographer/mapping/pose_graph/ceres_pose.h"
+#include "cartographer/mapping/internal/pose_graph/ceres_pose.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_COST_HELPERS_IMPL_H_
-#define CARTOGRAPHER_MAPPING_POSE_GRAPH_COST_HELPERS_IMPL_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_IMPL_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_IMPL_H_
 
 namespace cartographer {
 namespace mapping {
@@ -124,4 +124,4 @@ std::array<T, 4> SlerpQuaternions(const T* const start, const T* const end,
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_COST_HELPERS_IMPL_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_IMPL_H_

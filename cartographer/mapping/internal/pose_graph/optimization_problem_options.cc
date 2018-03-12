@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/pose_graph/optimization_problem_options.h"
+#include "cartographer/mapping/internal/pose_graph/optimization_problem_options.h"
 
 #include "cartographer/common/ceres_solver_options.h"
 
