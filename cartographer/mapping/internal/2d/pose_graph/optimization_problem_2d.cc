@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "cartographer/common/ceres_solver_options.h"
-#include "cartographer/common/histogram.h"
+#include "cartographer/common/internal/histogram.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/internal/2d/pose_graph/landmark_cost_function_2d.h"
 #include "cartographer/mapping/internal/2d/pose_graph/spa_cost_function_2d.h"

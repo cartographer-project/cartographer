@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/common/histogram.h"
+#include "cartographer/common/internal/histogram.h"
 
 #include <algorithm>
 #include <numeric>
