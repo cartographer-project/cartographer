@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "optimization_problem_3d.h"
+#include "cartographer/mapping/internal/3d/pose_graph/optimization_problem_3d.h"
 
 #include <random>
 
