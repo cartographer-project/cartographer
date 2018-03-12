@@ -410,6 +410,7 @@ void PoseGraph3D::WaitForAllComputations() {
 }
 
 void PoseGraph3D::FinishTrajectory(const int trajectory_id) {
+  common::MutexLocker locker(&mutex_);
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
     CHECK_EQ(finished_trajectories_.count(trajectory_id), 0);
     finished_trajectories_.insert(trajectory_id);
