@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_TRAJECTORY_CONNECTIVITY_STATE_H_
-#define CARTOGRAPHER_MAPPING_TRAJECTORY_CONNECTIVITY_STATE_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_TRAJECTORY_CONNECTIVITY_STATE_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_TRAJECTORY_CONNECTIVITY_STATE_H_
 
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/connected_components.h"
+#include "cartographer/mapping/internal/connected_components.h"
 
 namespace cartographer {
 namespace mapping {
@@ -73,4 +73,4 @@ class TrajectoryConnectivityState {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_TRAJECTORY_CONNECTIVITY_STATE_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_TRAJECTORY_CONNECTIVITY_STATE_H_

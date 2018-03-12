@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/collated_trajectory_builder.h"
+#include "cartographer/mapping/internal/collated_trajectory_builder.h"
 
 #include "cartographer/common/time.h"
 #include "glog/logging.h"

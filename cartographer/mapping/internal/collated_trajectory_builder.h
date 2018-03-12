@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_COLLATED_TRAJECTORY_BUILDER_H_
-#define CARTOGRAPHER_MAPPING_COLLATED_TRAJECTORY_BUILDER_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_COLLATED_TRAJECTORY_BUILDER_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_COLLATED_TRAJECTORY_BUILDER_H_
 
 #include <chrono>
 #include <map>
@@ -100,4 +100,4 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_COLLATED_TRAJECTORY_BUILDER_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_COLLATED_TRAJECTORY_BUILDER_H_
