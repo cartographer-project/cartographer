@@ -23,7 +23,7 @@
 #include "cartographer/mapping/3d/proto/local_trajectory_builder_options_3d.pb.h"
 #include "cartographer/mapping/3d/proto/submaps_options_3d.pb.h"
 #include "cartographer/mapping/3d/scan_matching/proto/ceres_scan_matcher_options_3d.pb.h"
-#include "cartographer/mapping/3d/scan_matching/rotational_scan_matcher.h"
+#include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
 #include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
 #include "glog/logging.h"
 
