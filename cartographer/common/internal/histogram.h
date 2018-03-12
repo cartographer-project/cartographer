@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_COMMON_HISTOGRAM_H_
-#define CARTOGRAPHER_COMMON_HISTOGRAM_H_
+#ifndef CARTOGRAPHER_COMMON_INTERNAL_HISTOGRAM_H_
+#define CARTOGRAPHER_COMMON_INTERNAL_HISTOGRAM_H_
 
 #include <string>
 #include <vector>
@@ -37,4 +37,4 @@ class Histogram {
 }  // namespace common
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_COMMON_HISTOGRAM_H_
+#endif  // CARTOGRAPHER_COMMON_INTERNAL_HISTOGRAM_H_
