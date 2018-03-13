@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
-#define CARTOGRAPHER_MAPPING_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
@@ -33,4 +33,4 @@ CreateRealTimeCorrelativeScanMatcherOptions(
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_SCAN_MATCHING_REAL_TIME_CORRELATIVE_SCAN_MATCHER_H_
