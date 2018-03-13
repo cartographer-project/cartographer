@@ -101,6 +101,21 @@ TimedPointCloud VoxelFilter::Filter(const TimedPointCloud& timed_point_cloud) {
   return results;
 }
 
+std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement>
+VoxelFilter::Filter(
+    const std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement>&
+        range_measurements) {
+  std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement> results;
+  for (const auto& range_measurement : range_measurements) {
+    auto it_inserted = voxel_set_.insert(
+        IndexToKey(GetCellIndex(range_measurement.point_time.head<3>())));
+    if (it_inserted.second) {
+      results.push_back(range_measurement);
+    }
+  }
+  return results;
+}
+
 VoxelFilter::KeyType VoxelFilter::IndexToKey(const Eigen::Array3i& index) {
   KeyType k_0(static_cast<uint32>(index[0]));
   KeyType k_1(static_cast<uint32>(index[1]));

@@ -38,7 +38,8 @@ static auto* kScanMatcherResidualDistanceMetric = metrics::Histogram::Null();
 static auto* kScanMatcherResidualAngleMetric = metrics::Histogram::Null();
 
 LocalTrajectoryBuilder3D::LocalTrajectoryBuilder3D(
-    const mapping::proto::LocalTrajectoryBuilderOptions3D& options)
+    const mapping::proto::LocalTrajectoryBuilderOptions3D& options,
+    const std::vector<std::string>& expected_range_sensor_ids)
     : options_(options),
       active_submaps_(options.submaps_options()),
       motion_filter_(options.motion_filter_options()),
@@ -48,7 +49,8 @@ LocalTrajectoryBuilder3D::LocalTrajectoryBuilder3D(
       ceres_scan_matcher_(
           common::make_unique<scan_matching::CeresScanMatcher3D>(
               options_.ceres_scan_matcher_options())),
-      accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}} {}
+      accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}},
+      range_data_collator_(expected_range_sensor_ids) {}
 
 LocalTrajectoryBuilder3D::~LocalTrajectoryBuilder3D() {}
 
@@ -68,7 +70,16 @@ void LocalTrajectoryBuilder3D::AddImuData(const sensor::ImuData& imu_data) {
 
 std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
 LocalTrajectoryBuilder3D::AddRangeData(
-    const common::Time time, const sensor::TimedRangeData& range_data) {
+    const std::string& sensor_id,
+    const sensor::TimedPointCloudData& unsynchronized_data) {
+  auto synchronized_data =
+      range_data_collator_.AddRangeData(sensor_id, unsynchronized_data);
+  if (synchronized_data.ranges.empty()) {
+    LOG(INFO) << "Range data collator filling buffer.";
+    return nullptr;
+  }
+
+  const common::Time& time = synchronized_data.time;
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator with our first IMU message, we
     // cannot compute the orientation of the rangefinder.
@@ -76,10 +87,11 @@ LocalTrajectoryBuilder3D::AddRangeData(
     return nullptr;
   }
 
-  CHECK(!range_data.returns.empty());
-  CHECK_EQ(range_data.returns.back()[3], 0);
+  CHECK(!synchronized_data.ranges.empty());
+  CHECK_LE(synchronized_data.ranges.back().point_time[3], 0.f);
   const common::Time time_first_point =
-      time + common::FromSeconds(range_data.returns.front()[3]);
+      time +
+      common::FromSeconds(synchronized_data.ranges.front().point_time[3]);
   if (time_first_point < extrapolator_->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
     return nullptr;
@@ -89,15 +101,15 @@ LocalTrajectoryBuilder3D::AddRangeData(
     accumulation_started_ = std::chrono::steady_clock::now();
   }
 
-  sensor::TimedPointCloud hits =
+  std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement> hits =
       sensor::VoxelFilter(0.5f * options_.voxel_filter_size())
-          .Filter(range_data.returns);
+          .Filter(synchronized_data.ranges);
 
   std::vector<transform::Rigid3f> hits_poses;
   hits_poses.reserve(hits.size());
   bool warned = false;
-  for (const Eigen::Vector4f& hit : hits) {
-    common::Time time_point = time + common::FromSeconds(hit[3]);
+  for (const auto& hit : hits) {
+    common::Time time_point = time + common::FromSeconds(hit.point_time[3]);
     if (time_point < extrapolator_->GetLastExtrapolatedTime()) {
       if (!warned) {
         LOG(ERROR)
@@ -117,8 +129,10 @@ LocalTrajectoryBuilder3D::AddRangeData(
   }
 
   for (size_t i = 0; i < hits.size(); ++i) {
-    const Eigen::Vector3f hit_in_local = hits_poses[i] * hits[i].head<3>();
-    const Eigen::Vector3f origin_in_local = hits_poses[i] * range_data.origin;
+    const Eigen::Vector3f hit_in_local =
+        hits_poses[i] * hits[i].point_time.head<3>();
+    const Eigen::Vector3f origin_in_local =
+        hits_poses[i] * synchronized_data.origins.at(hits[i].origin_index);
     const Eigen::Vector3f delta = hit_in_local - origin_in_local;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
@@ -140,7 +154,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
     transform::Rigid3f current_pose =
         extrapolator_->ExtrapolatePose(time).cast<float>();
     const sensor::RangeData filtered_range_data = {
-        current_pose * range_data.origin,
+        current_pose.translation(),
         sensor::VoxelFilter(options_.voxel_filter_size())
             .Filter(accumulated_range_data_.returns),
         sensor::VoxelFilter(options_.voxel_filter_size())

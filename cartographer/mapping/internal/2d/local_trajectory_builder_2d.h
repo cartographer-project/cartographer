@@ -26,6 +26,7 @@
 #include "cartographer/mapping/internal/2d/scan_matching/ceres_scan_matcher_2d.h"
 #include "cartographer/mapping/internal/2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
 #include "cartographer/mapping/internal/motion_filter.h"
+#include "cartographer/mapping/internal/range_data_collator.h"
 #include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/imu_data.h"
@@ -55,7 +56,8 @@ class LocalTrajectoryBuilder2D {
   };
 
   explicit LocalTrajectoryBuilder2D(
-      const proto::LocalTrajectoryBuilderOptions2D& options);
+      const proto::LocalTrajectoryBuilderOptions2D& options,
+      const std::vector<std::string>& expected_range_sensor_ids);
   ~LocalTrajectoryBuilder2D();
 
   LocalTrajectoryBuilder2D(const LocalTrajectoryBuilder2D&) = delete;
@@ -63,11 +65,12 @@ class LocalTrajectoryBuilder2D {
 
   // Returns 'MatchingResult' when range data accumulation completed,
   // otherwise 'nullptr'. Range data must be approximately horizontal
-  // for 2D SLAM. `time` is when the last point in `range_data` was
-  // acquired, `range_data` contains the relative time of point with
-  // respect to `time`.
+  // for 2D SLAM. `TimedPointCloudData::time` is when the last point in
+  // `range_data` was acquired, `TimedPointCloudData::ranges` contains the
+  // relative time of point with respect to `TimedPointCloudData::time`.
   std::unique_ptr<MatchingResult> AddRangeData(
-      common::Time, const sensor::TimedRangeData& range_data);
+      const std::string& sensor_id,
+      const sensor::TimedPointCloudData& range_data);
   void AddImuData(const sensor::ImuData& imu_data);
   void AddOdometryData(const sensor::OdometryData& odometry_data);
 
@@ -109,6 +112,8 @@ class LocalTrajectoryBuilder2D {
   int num_accumulated_ = 0;
   sensor::RangeData accumulated_range_data_;
   std::chrono::steady_clock::time_point accumulation_started_;
+
+  RangeDataCollator range_data_collator_;
 };
 
 }  // namespace mapping

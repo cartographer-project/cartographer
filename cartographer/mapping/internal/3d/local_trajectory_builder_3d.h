@@ -26,6 +26,7 @@
 #include "cartographer/mapping/internal/3d/scan_matching/ceres_scan_matcher_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/real_time_correlative_scan_matcher_3d.h"
 #include "cartographer/mapping/internal/motion_filter.h"
+#include "cartographer/mapping/internal/range_data_collator.h"
 #include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/imu_data.h"
@@ -54,7 +55,8 @@ class LocalTrajectoryBuilder3D {
   };
 
   explicit LocalTrajectoryBuilder3D(
-      const mapping::proto::LocalTrajectoryBuilderOptions3D& options);
+      const mapping::proto::LocalTrajectoryBuilderOptions3D& options,
+      const std::vector<std::string>& expected_range_sensor_ids);
   ~LocalTrajectoryBuilder3D();
 
   LocalTrajectoryBuilder3D(const LocalTrajectoryBuilder3D&) = delete;
@@ -62,11 +64,12 @@ class LocalTrajectoryBuilder3D {
 
   void AddImuData(const sensor::ImuData& imu_data);
   // Returns 'MatchingResult' when range data accumulation completed,
-  // otherwise 'nullptr'. `time` is when the last point in `range_data`
-  // was acquired, `range_data` contains the relative time of point with
-  // respect to `time`.
+  // otherwise 'nullptr'.  `TimedPointCloudData::time` is when the last point in
+  // `range_data` was acquired, `TimedPointCloudData::ranges` contains the
+  // relative time of point with respect to `TimedPointCloudData::time`.
   std::unique_ptr<MatchingResult> AddRangeData(
-      common::Time time, const sensor::TimedRangeData& range_data);
+      const std::string& sensor_id,
+      const sensor::TimedPointCloudData& range_data);
   void AddOdometryData(const sensor::OdometryData& odometry_data);
 
   static void RegisterMetrics(metrics::FamilyFactory* family_factory);
@@ -97,6 +100,8 @@ class LocalTrajectoryBuilder3D {
   int num_accumulated_ = 0;
   sensor::RangeData accumulated_range_data_;
   std::chrono::steady_clock::time_point accumulation_started_;
+
+  RangeDataCollator range_data_collator_;
 };
 
 }  // namespace mapping
