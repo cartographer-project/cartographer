@@ -22,9 +22,9 @@
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/2d/proto/local_trajectory_builder_options_2d.pb.h"
-#include "cartographer/mapping/2d/scan_matching/ceres_scan_matcher_2d.h"
-#include "cartographer/mapping/2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
 #include "cartographer/mapping/2d/submap_2d.h"
+#include "cartographer/mapping/internal/2d/scan_matching/ceres_scan_matcher_2d.h"
+#include "cartographer/mapping/internal/2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
 #include "cartographer/mapping/internal/motion_filter.h"
 #include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer/metrics/family_factory.h"
