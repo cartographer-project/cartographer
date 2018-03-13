@@ -444,22 +444,21 @@ void OptimizationProblem3D::Solve(
         const std::unique_ptr<transform::Rigid3d> relative_odometry =
             OdometryBetween(trajectory_id, first_node_data, second_node_data);
         if (relative_odometry != nullptr) {
-            problem.AddResidualBlock(
-            SpaCostFunction::CreateAutoDiffCostFunction(
-                Constraint::Pose{(*relative_odometry),
-                                 options_.odometry_translation_weight(),
-                                 options_.odometry_rotation_weight()}),
-            nullptr /* loss function */, C_nodes.at(first_node_id).rotation(),
-            C_nodes.at(first_node_id).translation(),
-            C_nodes.at(second_node_id).rotation(),
-            C_nodes.at(second_node_id).translation());
+          problem.AddResidualBlock(
+              SpaCostFunction3D::CreateAutoDiffCostFunction(Constraint::Pose{
+                  (*relative_odometry), options_.odometry_translation_weight(),
+                  options_.odometry_rotation_weight()}),
+              nullptr /* loss function */, C_nodes.at(first_node_id).rotation(),
+              C_nodes.at(first_node_id).translation(),
+              C_nodes.at(second_node_id).rotation(),
+              C_nodes.at(second_node_id).translation());
         }
 
         // Add a relative pose constraint based on the initial poses.
         const transform::Rigid3d relative_initial_pose =
             first_node_data.local_pose.inverse() * second_node_data.local_pose;
         problem.AddResidualBlock(
-            SpaCostFunction::CreateAutoDiffCostFunction(
+            SpaCostFunction3D::CreateAutoDiffCostFunction(
                 Constraint::Pose{relative_initial_pose,
                                  options_.initial_pose_translation_weight(),
                                  options_.initial_pose_rotation_weight()}),
@@ -604,7 +603,7 @@ const std::map<int, TrajectoryData>& OptimizationProblem3D::trajectory_data()
   return trajectory_data_;
 }
 
-std::unique_ptr<transform::Rigid3d> OptimizationProblem::OdometryBetween(
+std::unique_ptr<transform::Rigid3d> OptimizationProblem3D::OdometryBetween(
     const int trajectory_id, const NodeData& first_node_data,
     const NodeData& second_node_data) const {
   if (odometry_data_.HasTrajectory(trajectory_id)) {

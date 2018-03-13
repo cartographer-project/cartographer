@@ -261,7 +261,7 @@ void OptimizationProblem2D::Solve(
           OdometryBetween(trajectory_id, first_node_data, second_node_data);
       if (relative_odometry != nullptr) {
         problem.AddResidualBlock(
-            SpaCostFunction::CreateAutoDiffCostFunction(Constraint::Pose{
+            SpaCostFunction2D::CreateAutoDiffCostFunction(Constraint::Pose{
                 (*relative_odometry), options_.odometry_translation_weight(),
                 options_.odometry_rotation_weight()}),
             nullptr /* loss function */, C_nodes.at(first_node_id).data(),
@@ -273,7 +273,7 @@ void OptimizationProblem2D::Solve(
           transform::Embed3D(first_node_data.initial_pose.inverse() *
                              second_node_data.initial_pose);
       problem.AddResidualBlock(
-          SpaCostFunction::CreateAutoDiffCostFunction(Constraint::Pose{
+          SpaCostFunction2D::CreateAutoDiffCostFunction(Constraint::Pose{
               relative_initial_pose, options_.initial_pose_translation_weight(),
               options_.initial_pose_rotation_weight()}),
           nullptr /* loss function */, C_nodes.at(first_node_id).data(),
@@ -346,7 +346,7 @@ std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::InterpolateOdometry(
           .transform);
 }
 
-std::unique_ptr<transform::Rigid3d> OptimizationProblem::OdometryBetween(
+std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::OdometryBetween(
     const int trajectory_id, const NodeData& first_node_data,
     const NodeData& second_node_data) const {
   if (odometry_data_.HasTrajectory(trajectory_id)) {
