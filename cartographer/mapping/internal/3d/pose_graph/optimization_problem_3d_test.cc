@@ -21,7 +21,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/pose_graph/optimization_problem_options.h"
+#include "cartographer/mapping/internal/pose_graph/optimization_problem_options.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"

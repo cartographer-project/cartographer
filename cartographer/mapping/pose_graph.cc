@@ -16,8 +16,8 @@
 
 #include "cartographer/mapping/pose_graph.h"
 
-#include "cartographer/mapping/pose_graph/constraint_builder.h"
-#include "cartographer/mapping/pose_graph/optimization_problem_options.h"
+#include "cartographer/mapping/internal/pose_graph/constraint_builder.h"
+#include "cartographer/mapping/internal/pose_graph/optimization_problem_options.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
