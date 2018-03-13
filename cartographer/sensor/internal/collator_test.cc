@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/collator.h"
+#include "cartographer/sensor/internal/collator.h"
 
 #include <array>
 #include <memory>
@@ -22,8 +22,8 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/internal/test_helpers.h"
 #include "cartographer/sensor/odometry_data.h"
-#include "cartographer/sensor/test_helpers.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 #include "gtest/gtest.h"
 

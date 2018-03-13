@@ -20,7 +20,7 @@
 #include "cartographer/mapping/internal/3d/scan_matching/ceres_scan_matcher_3d.h"
 #include "cartographer/mapping/internal/motion_filter.h"
 #include "cartographer/mapping/scan_matching/real_time_correlative_scan_matcher.h"
-#include "cartographer/sensor/voxel_filter.h"
+#include "cartographer/sensor/internal/voxel_filter.h"
 #include "glog/logging.h"
 
 namespace cartographer {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/voxel_filter.h"
+#include "cartographer/sensor/internal/voxel_filter.h"
 
 #include <cmath>
 

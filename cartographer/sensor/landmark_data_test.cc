@@ -18,7 +18,7 @@
 
 #include <cmath>
 
-#include "cartographer/sensor/test_helpers.h"
+#include "cartographer/sensor/internal/test_helpers.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
 #include "gtest/gtest.h"

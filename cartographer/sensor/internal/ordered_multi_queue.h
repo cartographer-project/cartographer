@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_SENSOR_ORDERED_MULTI_QUEUE_H_
-#define CARTOGRAPHER_SENSOR_ORDERED_MULTI_QUEUE_H_
+#ifndef CARTOGRAPHER_SENSOR_INTERNAL_ORDERED_MULTI_QUEUE_H_
+#define CARTOGRAPHER_SENSOR_INTERNAL_ORDERED_MULTI_QUEUE_H_
 
 #include <functional>
 #include <map>
@@ -26,7 +26,7 @@
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
-#include "cartographer/sensor/dispatchable.h"
+#include "cartographer/sensor/internal/dispatchable.h"
 
 namespace cartographer {
 namespace sensor {
@@ -96,4 +96,4 @@ class OrderedMultiQueue {
 }  // namespace sensor
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_SENSOR_ORDERED_MULTI_QUEUE_H_
+#endif  // CARTOGRAPHER_SENSOR_INTERNAL_ORDERED_MULTI_QUEUE_H_

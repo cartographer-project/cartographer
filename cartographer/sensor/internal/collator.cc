@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/collator.h"
+#include "cartographer/sensor/internal/collator.h"
 
 namespace cartographer {
 namespace sensor {
