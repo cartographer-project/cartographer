@@ -21,7 +21,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
-#include "cartographer/mapping/internal/2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
+#include "cartographer/mapping/internal/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
