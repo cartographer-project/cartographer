@@ -1,4 +1,4 @@
-#include "cartographer/mapping/scan_matching/real_time_correlative_scan_matcher.h"
+#include "cartographer/mapping/internal/scan_matching/real_time_correlative_scan_matcher.h"
 
 namespace cartographer {
 namespace mapping {
