@@ -22,7 +22,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_node.h"
-#include "cartographer/sensor/dispatchable.h"
+#include "cartographer/sensor/internal/dispatchable.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer {

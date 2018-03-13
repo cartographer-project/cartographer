@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/ordered_multi_queue.h"
+#include "cartographer/sensor/internal/ordered_multi_queue.h"
 
 #include <vector>
 

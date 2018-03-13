@@ -29,7 +29,7 @@
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/sensor/collator_interface.h"
-#include "cartographer/sensor/dispatchable.h"
+#include "cartographer/sensor/internal/dispatchable.h"
 
 namespace cartographer {
 namespace mapping {

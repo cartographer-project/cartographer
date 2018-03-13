@@ -32,7 +32,7 @@
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/pose_graph/proto/constraint_builder_options.pb.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
-#include "cartographer/sensor/voxel_filter.h"
+#include "cartographer/sensor/internal/voxel_filter.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
