@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_SENSOR_VOXEL_FILTER_H_
-#define CARTOGRAPHER_SENSOR_VOXEL_FILTER_H_
+#ifndef CARTOGRAPHER_SENSOR_INTERNAL_VOXEL_FILTER_H_
+#define CARTOGRAPHER_SENSOR_INTERNAL_VOXEL_FILTER_H_
 
 #include <bitset>
 #include <unordered_set>
@@ -75,4 +75,4 @@ class AdaptiveVoxelFilter {
 }  // namespace sensor
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_SENSOR_VOXEL_FILTER_H_
+#endif  // CARTOGRAPHER_SENSOR_INTERNAL_VOXEL_FILTER_H_

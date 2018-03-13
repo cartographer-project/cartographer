@@ -21,7 +21,7 @@
 
 #include "Eigen/Geometry"
 #include "cartographer/mapping/internal/2d/scan_matching/fast_correlative_scan_matcher_2d.h"
-#include "cartographer/sensor/voxel_filter.h"
+#include "cartographer/sensor/internal/voxel_filter.h"
 
 namespace cartographer {
 namespace mapping {

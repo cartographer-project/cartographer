@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_SENSOR_TEST_HELPERS_H_
-#define CARTOGRAPHER_SENSOR_TEST_HELPERS_H_
+#ifndef CARTOGRAPHER_SENSOR_INTERNAL_TEST_HELPERS_H_
+#define CARTOGRAPHER_SENSOR_INTERNAL_TEST_HELPERS_H_
 
 #include <string>
 #include <tuple>
@@ -23,8 +23,8 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/collator_interface.h"
-#include "cartographer/sensor/dispatchable.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/sensor/internal/dispatchable.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 #include "gmock/gmock.h"
@@ -84,4 +84,4 @@ struct CollatorInput {
 }  // namespace sensor
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_SENSOR_TEST_HELPERS_H_
+#endif  // CARTOGRAPHER_SENSOR_INTERNAL_TEST_HELPERS_H_

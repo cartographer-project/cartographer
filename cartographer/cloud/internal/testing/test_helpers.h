@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_CLOUD_INTERNAL_TESTING_TEST_HELPERS_H
 
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/sensor/dispatchable.h"
+#include "cartographer/sensor/internal/dispatchable.h"
 #include "google/protobuf/util/message_differencer.h"
 
 namespace cartographer {

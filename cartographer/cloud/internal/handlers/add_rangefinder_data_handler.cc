@@ -20,7 +20,7 @@
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/common/make_unique.h"
-#include "cartographer/sensor/dispatchable.h"
+#include "cartographer/sensor/internal/dispatchable.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 #include "google/protobuf/empty.pb.h"
 

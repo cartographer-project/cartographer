@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/trajectory_collator.h"
+#include "cartographer/sensor/internal/trajectory_collator.h"
 
 namespace cartographer {
 namespace sensor {
