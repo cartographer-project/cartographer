@@ -308,6 +308,9 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
       pose_graph_->FreezeTrajectory(new_trajectory_id);
     }
   }
+  if (load_frozen_state) {
+    pose_graph_->FreezeLandmarks();
+  }
 
   // Apply the calculated remapping to constraints in the pose graph proto.
   for (auto& constraint_proto : *pose_graph_proto.mutable_constraint()) {
@@ -382,7 +385,11 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
             sensor::FromProto(
                 proto.fixed_frame_pose_data().fixed_frame_pose_data()));
       }
-      // TODO(pifon2a, ojura): deserialize landmarks
+      if (proto.has_landmark_data()) {
+        pose_graph_->AddLandmarkData(
+            trajectory_remapping.at(proto.landmark_data().trajectory_id()),
+            sensor::FromProto(proto.landmark_data().landmark_data()));
+      }
     }
   }
 

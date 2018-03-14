@@ -81,6 +81,9 @@ class PoseGraph : public PoseGraphInterface {
   // Freezes a trajectory. Poses in this trajectory will not be optimized.
   virtual void FreezeTrajectory(int trajectory_id) = 0;
 
+  // Freezes all landmarks. Poses of landmarks won't be optimized.
+  virtual void FreezeLandmarks() = 0;
+
   // Adds a 'submap' from a proto with the given 'global_pose' to the
   // appropriate trajectory.
   virtual void AddSubmapFromProto(const transform::Rigid3d& global_pose,

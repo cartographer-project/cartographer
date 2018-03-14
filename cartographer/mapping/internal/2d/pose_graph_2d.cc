@@ -418,6 +418,11 @@ void PoseGraph2D::FreezeTrajectory(const int trajectory_id) {
   });
 }
 
+void PoseGraph2D::FreezeLandmarks() {
+  common::MutexLocker locker(&mutex_);
+  freeze_landmarks_ = true;
+}
+
 bool PoseGraph2D::IsTrajectoryFrozen(const int trajectory_id) {
   return frozen_trajectories_.count(trajectory_id) > 0;
 }
@@ -554,7 +559,7 @@ void PoseGraph2D::RunOptimization() {
   // is time consuming, so not taking the mutex before Solve to avoid blocking
   // foreground processing.
   optimization_problem_.Solve(constraints_, frozen_trajectories_,
-                              landmark_nodes_);
+                              landmark_nodes_, freeze_landmarks_);
   common::MutexLocker locker(&mutex_);
 
   const auto& submap_data = optimization_problem_.submap_data();

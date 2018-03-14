@@ -93,6 +93,7 @@ class PoseGraph2D : public PoseGraph {
   void FinishTrajectory(int trajectory_id) override;
   bool IsTrajectoryFinished(int trajectory_id) override;
   void FreezeTrajectory(int trajectory_id) override;
+  void FreezeLandmarks() override;
   bool IsTrajectoryFrozen(int trajectory_id) override;
   void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
                           const proto::Submap& submap) override;
@@ -256,6 +257,9 @@ class PoseGraph2D : public PoseGraph {
 
   // Set of all frozen trajectories not being optimized.
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
+
+  // Whether or not optimize landmark poses.
+  bool freeze_landmarks_ GUARDED_BY(mutex_) = false;
 
   // Set of all finished trajectories.
   std::set<int> finished_trajectories_ GUARDED_BY(mutex_);

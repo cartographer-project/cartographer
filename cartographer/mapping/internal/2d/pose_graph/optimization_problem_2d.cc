@@ -74,10 +74,15 @@ transform::Rigid3d GetInitialLandmarkPose(
 
 void AddLandmarkCostFunctions(
     const std::map<std::string, LandmarkNode>& landmark_nodes,
-    const MapById<NodeId, NodeData>& node_data,
+    bool freeze_landmarks, const MapById<NodeId, NodeData>& node_data,
     MapById<NodeId, std::array<double, 3>>* C_nodes,
     std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem) {
   for (const auto& landmark_node : landmark_nodes) {
+    // Do not use landmarks that were not optimized for localization.
+    if (!landmark_node.second.global_landmark_pose.has_value() &&
+        freeze_landmarks) {
+      continue;
+    }
     for (const auto& observation : landmark_node.second.landmark_observations) {
       const std::string& landmark_id = landmark_node.first;
       const auto& begin_of_trajectory =
@@ -109,6 +114,12 @@ void AddLandmarkCostFunctions(
             CeresPose(starting_point, nullptr /* translation_parametrization */,
                       common::make_unique<ceres::QuaternionParameterization>(),
                       problem));
+        if (freeze_landmarks) {
+          problem->SetParameterBlockConstant(
+              C_landmarks->at(landmark_id).translation());
+          problem->SetParameterBlockConstant(
+              C_landmarks->at(landmark_id).rotation());
+        }
       }
       problem->AddResidualBlock(
           LandmarkCostFunction2D::CreateAutoDiffCostFunction(
@@ -183,7 +194,8 @@ void OptimizationProblem2D::SetMaxNumIterations(
 void OptimizationProblem2D::Solve(
     const std::vector<Constraint>& constraints,
     const std::set<int>& frozen_trajectories,
-    const std::map<std::string, LandmarkNode>& landmark_nodes) {
+    const std::map<std::string, LandmarkNode>& landmark_nodes,
+    bool freeze_landmarks) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
@@ -232,8 +244,8 @@ void OptimizationProblem2D::Solve(
         C_nodes.at(constraint.node_id).data());
   }
   // Add cost  functions for landmarks.
-  AddLandmarkCostFunctions(landmark_nodes, node_data_, &C_nodes, &C_landmarks,
-                           &problem);
+  AddLandmarkCostFunctions(landmark_nodes, freeze_landmarks, node_data_,
+                           &C_nodes, &C_landmarks, &problem);
   // Add penalties for violating odometry or changes between consecutive nodes
   // if odometry is not available.
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
