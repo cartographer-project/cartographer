@@ -438,7 +438,7 @@ void PoseGraph3D::FreezeTrajectory(const int trajectory_id) {
 
 void PoseGraph3D::FreezeLandmarks() {
   common::MutexLocker locker(&mutex_);
-  freeze_landmarks_ = true;
+  AddWorkItem([this]() REQUIRES(mutex_) { freeze_landmarks_ = true; });
 }
 
 bool PoseGraph3D::IsTrajectoryFrozen(const int trajectory_id) {
@@ -598,9 +598,9 @@ void PoseGraph3D::RunOptimization() {
   }
 
   // No other thread is accessing the optimization_problem_, constraints_,
-  // frozen_trajectories_ and landmark_nodes_ when executing the Solve. Solve
-  // is time consuming, so not taking the mutex before Solve to avoid blocking
-  // foreground processing.
+  // frozen_trajectories_, freeze_landmarks_ and landmark_nodes_ when executing
+  // the Solve. Solve is time consuming, so not taking the mutex before Solve to
+  // avoid blocking foreground processing.
   optimization_problem_.Solve(constraints_, frozen_trajectories_,
                               landmark_nodes_, freeze_landmarks_);
   common::MutexLocker locker(&mutex_);
