@@ -117,10 +117,15 @@ transform::Rigid3d GetInitialLandmarkPose(
 
 void AddLandmarkCostFunctions(
     const std::map<std::string, LandmarkNode>& landmark_nodes,
-    const MapById<NodeId, NodeData>& node_data,
+    bool freeze_landmarks, const MapById<NodeId, NodeData>& node_data,
     MapById<NodeId, CeresPose>* C_nodes,
     std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem) {
   for (const auto& landmark_node : landmark_nodes) {
+    // Do not use landmarks that were not optimized for localization.
+    if (!landmark_node.second.global_landmark_pose.has_value() &&
+        freeze_landmarks) {
+      continue;
+    }
     for (const auto& observation : landmark_node.second.landmark_observations) {
       const std::string& landmark_id = landmark_node.first;
       const auto& begin_of_trajectory =
@@ -152,6 +157,12 @@ void AddLandmarkCostFunctions(
             CeresPose(starting_point, nullptr /* translation_parametrization */,
                       common::make_unique<ceres::QuaternionParameterization>(),
                       problem));
+        if (freeze_landmarks) {
+          problem->SetParameterBlockConstant(
+              C_landmarks->at(landmark_id).translation());
+          problem->SetParameterBlockConstant(
+              C_landmarks->at(landmark_id).rotation());
+        }
       }
       problem->AddResidualBlock(
           LandmarkCostFunction3D::CreateAutoDiffCostFunction(
@@ -267,6 +278,7 @@ void OptimizationProblem3D::Solve(
   MapById<NodeId, CeresPose> C_nodes;
   std::map<std::string, CeresPose> C_landmarks;
   bool first_submap = true;
+  bool freeze_landmarks = !frozen_trajectories.empty();
   for (const auto& submap_id_data : submap_data_) {
     const bool frozen =
         frozen_trajectories.count(submap_id_data.id.trajectory_id) != 0;
@@ -325,9 +337,9 @@ void OptimizationProblem3D::Solve(
         C_nodes.at(constraint.node_id).rotation(),
         C_nodes.at(constraint.node_id).translation());
   }
-  // Add cost  functions for landmarks.
-  AddLandmarkCostFunctions(landmark_nodes, node_data_, &C_nodes, &C_landmarks,
-                           &problem);
+  // Add cost functions for landmarks.
+  AddLandmarkCostFunctions(landmark_nodes, freeze_landmarks, node_data_,
+                           &C_nodes, &C_landmarks, &problem);
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
   if (fix_z_ == FixZ::kNo) {

@@ -593,8 +593,8 @@ void PoseGraph3D::RunOptimization() {
   }
 
   // No other thread is accessing the optimization_problem_, constraints_,
-  // frozen_trajectories_ and landmark_nodes_ when executing the Solve. Solve
-  // is time consuming, so not taking the mutex before Solve to avoid blocking
+  // frozen_trajectories_ and landmark_nodes_ when executing the Solve. Solve is
+  // time consuming, so not taking the mutex before Solve to avoid blocking
   // foreground processing.
   optimization_problem_.Solve(constraints_, frozen_trajectories_,
                               landmark_nodes_);
