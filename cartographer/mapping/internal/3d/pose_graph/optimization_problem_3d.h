@@ -28,6 +28,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
+#include "cartographer/mapping/internal/pose_graph/optimization_problem_interface.h"
 #include "cartographer/mapping/pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
@@ -41,7 +42,7 @@ namespace mapping {
 namespace pose_graph {
 
 // Implements the SPA loop closure method.
-class OptimizationProblem3D {
+class OptimizationProblem3D : public OptimizationProblemInterface {
  public:
   using Constraint = PoseGraphInterface::Constraint;
   using LandmarkNode = PoseGraphInterface::LandmarkNode;
