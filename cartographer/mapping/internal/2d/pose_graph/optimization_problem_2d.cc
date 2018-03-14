@@ -194,8 +194,7 @@ void OptimizationProblem2D::SetMaxNumIterations(
 void OptimizationProblem2D::Solve(
     const std::vector<Constraint>& constraints,
     const std::set<int>& frozen_trajectories,
-    const std::map<std::string, LandmarkNode>& landmark_nodes,
-    bool freeze_landmarks) {
+    const std::map<std::string, LandmarkNode>& landmark_nodes) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
@@ -210,6 +209,7 @@ void OptimizationProblem2D::Solve(
   MapById<NodeId, std::array<double, 3>> C_nodes;
   std::map<std::string, CeresPose> C_landmarks;
   bool first_submap = true;
+  bool freeze_landmarks = !frozen_trajectories.empty();
   for (const auto& submap_id_data : submap_data_) {
     const bool frozen =
         frozen_trajectories.count(submap_id_data.id.trajectory_id) != 0;
@@ -243,7 +243,7 @@ void OptimizationProblem2D::Solve(
         C_submaps.at(constraint.submap_id).data(),
         C_nodes.at(constraint.node_id).data());
   }
-  // Add cost  functions for landmarks.
+  // Add cost functions for landmarks.
   AddLandmarkCostFunctions(landmark_nodes, freeze_landmarks, node_data_,
                            &C_nodes, &C_landmarks, &problem);
   // Add penalties for violating odometry or changes between consecutive nodes

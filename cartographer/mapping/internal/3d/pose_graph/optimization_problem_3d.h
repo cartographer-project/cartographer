@@ -92,8 +92,7 @@ class OptimizationProblem3D {
   // Optimizes the global poses.
   void Solve(const std::vector<Constraint>& constraints,
              const std::set<int>& frozen_trajectories,
-             const std::map<std::string, LandmarkNode>& landmark_nodes,
-             bool freeze_landmarks);
+             const std::map<std::string, LandmarkNode>& landmark_nodes);
 
   const MapById<NodeId, NodeData>& node_data() const;
   const MapById<SubmapId, SubmapData>& submap_data() const;

@@ -308,9 +308,6 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
       pose_graph_->FreezeTrajectory(new_trajectory_id);
     }
   }
-  if (load_frozen_state) {
-    pose_graph_->FreezeLandmarks();
-  }
 
   // Apply the calculated remapping to constraints in the pose graph proto.
   for (auto& constraint_proto : *pose_graph_proto.mutable_constraint()) {
