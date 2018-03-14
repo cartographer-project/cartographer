@@ -23,7 +23,7 @@
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
-#include "cartographer/mapping/3d/local_trajectory_builder_options_3d.h"
+#include "cartographer/mapping/internal/3d/local_trajectory_builder_options_3d.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"

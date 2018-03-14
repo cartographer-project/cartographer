@@ -23,6 +23,7 @@
 #include "cartographer/cloud/internal/handlers/get_trajectory_node_poses_handler.h"
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
 #include "cartographer/mapping/pose_graph.h"
+#include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -105,6 +106,10 @@ std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses() {
 }
 
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
+  LOG(FATAL) << "Not implemented";
+}
+
+bool PoseGraphStub::IsTrajectoryFrozen(int trajectory_id) {
   LOG(FATAL) << "Not implemented";
 }
 

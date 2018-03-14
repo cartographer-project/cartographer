@@ -20,8 +20,7 @@
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/map_builder_server.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/io/in_memory_proto_stream.h"
+#include "cartographer/io/internal/in_memory_proto_stream.h"
 
 namespace cartographer {
 namespace cloud {
@@ -53,6 +52,7 @@ void WriteStateHandler::OnRequest(const google::protobuf::Empty& request) {
       });
   GetContext<MapBuilderContextInterface>()->map_builder().SerializeState(
       &proto_stream_writer);
+  proto_stream_writer.Close();
 }
 
 }  // namespace handlers

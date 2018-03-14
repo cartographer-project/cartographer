@@ -30,6 +30,16 @@ struct TimedPointCloudData {
   sensor::TimedPointCloud ranges;
 };
 
+struct TimedPointCloudOriginData {
+  struct RangeMeasurement {
+    Eigen::Vector4f point_time;
+    size_t origin_index;
+  };
+  common::Time time;
+  std::vector<Eigen::Vector3f> origins;
+  std::vector<RangeMeasurement> ranges;
+};
+
 // Converts 'timed_point_cloud_data' to a proto::TimedPointCloudData.
 proto::TimedPointCloudData ToProto(
     const TimedPointCloudData& timed_point_cloud_data);

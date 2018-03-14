@@ -17,17 +17,16 @@
 #ifndef CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
 #define CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
 
-#include "cartographer/mapping/2d/pose_graph_2d.h"
-#include "cartographer/mapping/3d/pose_graph_3d.h"
+#include "cartographer/mapping/pose_graph.h"
 #include "cartographer/sensor/data.h"
 
 namespace cartographer {
 namespace mapping {
 
-class TrajectoryBuilderInterface;
-class LocalSlamResultData : public cartographer::sensor::Data {
+class LocalSlamResultData : public sensor::Data {
  public:
-  LocalSlamResultData(const std::string& sensor_id, common::Time time);
+  LocalSlamResultData(const std::string& sensor_id, common::Time time)
+      : Data(sensor_id), time_(time) {}
 
   common::Time GetTime() const override { return time_; }
   virtual void AddToPoseGraph(int trajectory_id,
@@ -35,38 +34,6 @@ class LocalSlamResultData : public cartographer::sensor::Data {
 
  private:
   common::Time time_;
-};
-
-class LocalSlamResult2D : public LocalSlamResultData {
- public:
-  LocalSlamResult2D(
-      const std::string& sensor_id, common::Time time,
-      std::shared_ptr<const TrajectoryNode::Data> node_data,
-      const std::vector<std::shared_ptr<const Submap2D>>& insertion_submaps);
-
-  void AddToTrajectoryBuilder(
-      TrajectoryBuilderInterface* const trajectory_builder) override;
-  void AddToPoseGraph(int trajectory_id, PoseGraph* pose_graph) const override;
-
- private:
-  std::shared_ptr<const TrajectoryNode::Data> node_data_;
-  std::vector<std::shared_ptr<const Submap2D>> insertion_submaps_;
-};
-
-class LocalSlamResult3D : public LocalSlamResultData {
- public:
-  LocalSlamResult3D(
-      const std::string& sensor_id, common::Time time,
-      std::shared_ptr<const TrajectoryNode::Data> node_data,
-      const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps);
-
-  void AddToTrajectoryBuilder(
-      TrajectoryBuilderInterface* const trajectory_builder) override;
-  void AddToPoseGraph(int trajectory_id, PoseGraph* pose_graph) const override;
-
- private:
-  std::shared_ptr<const TrajectoryNode::Data> node_data_;
-  std::vector<std::shared_ptr<const Submap3D>> insertion_submaps_;
 };
 
 }  // namespace mapping

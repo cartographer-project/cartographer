@@ -28,7 +28,7 @@
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/map_builder.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
-#include "cartographer/sensor/dispatchable.h"
+#include "cartographer/sensor/internal/dispatchable.h"
 
 namespace cartographer {
 namespace cloud {

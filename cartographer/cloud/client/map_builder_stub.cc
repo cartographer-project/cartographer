@@ -100,7 +100,6 @@ void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
   CHECK(client.Write(request));
   proto::WriteStateResponse response;
   while (client.Read(&response)) {
-    // writer->WriteProto(response);
     switch (response.state_chunk_case()) {
       case proto::WriteStateResponse::kPoseGraph:
         writer->WriteProto(response.pose_graph());
@@ -115,7 +114,6 @@ void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
         LOG(FATAL) << "Unhandled message type";
     }
   }
-  CHECK(writer->Close());
 }
 
 void MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,

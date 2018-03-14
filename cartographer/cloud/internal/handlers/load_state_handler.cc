@@ -20,7 +20,6 @@
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/common/make_unique.h"
-#include "cartographer/io/in_memory_proto_stream.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
