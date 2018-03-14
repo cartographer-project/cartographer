@@ -21,6 +21,7 @@
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
+#include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace mapping {
@@ -65,6 +66,86 @@ GenerateFakeRangeMeasurements(double travel_distance, double duration,
         time, Eigen::Vector3f::Zero(), ranges});
   }
   return measurements;
+}
+
+proto::Submap CreateFakeSubmap3D(int trajectory_id, int submap_index) {
+  proto::Submap proto;
+  proto.mutable_submap_id()->set_trajectory_id(trajectory_id);
+  proto.mutable_submap_id()->set_submap_index(submap_index);
+  proto.mutable_submap_3d()->set_num_range_data(1);
+  *proto.mutable_submap_3d()->mutable_local_pose() =
+      transform::ToProto(transform::Rigid3d::Identity());
+  return proto;
+}
+
+proto::Node CreateFakeNode(int trajectory_id, int node_index) {
+  proto::Node proto;
+  proto.mutable_node_id()->set_trajectory_id(trajectory_id);
+  proto.mutable_node_id()->set_node_index(node_index);
+  proto.mutable_node_data()->set_timestamp(42);
+  *proto.mutable_node_data()->mutable_local_pose() =
+      transform::ToProto(transform::Rigid3d::Identity());
+  return proto;
+}
+
+proto::PoseGraph::Constraint CreateFakeConstraint(const proto::Node& node,
+                                                  const proto::Submap& submap) {
+  proto::PoseGraph::Constraint proto;
+  proto.mutable_submap_id()->set_submap_index(
+      submap.submap_id().submap_index());
+  proto.mutable_submap_id()->set_trajectory_id(
+      submap.submap_id().trajectory_id());
+  proto.mutable_node_id()->set_node_index(node.node_id().node_index());
+  proto.mutable_node_id()->set_trajectory_id(node.node_id().trajectory_id());
+  transform::Rigid3d pose(
+      Eigen::Vector3d(2., 3., 4.),
+      Eigen::AngleAxisd(M_PI / 8., Eigen::Vector3d::UnitX()));
+  *proto.mutable_relative_pose() = transform::ToProto(pose);
+  proto.set_translation_weight(0.2f);
+  proto.set_rotation_weight(0.1f);
+  proto.set_tag(proto::PoseGraph::Constraint::INTER_SUBMAP);
+  return proto;
+}
+
+proto::Trajectory* CreateTrajectoryIfNeeded(int trajectory_id,
+                                            proto::PoseGraph* pose_graph) {
+  for (int i = 0; i < pose_graph->trajectory_size(); ++i) {
+    proto::Trajectory* trajectory = pose_graph->mutable_trajectory(i);
+    if (trajectory->trajectory_id() == trajectory_id) {
+      return trajectory;
+    }
+  }
+  proto::Trajectory* trajectory = pose_graph->add_trajectory();
+  trajectory->set_trajectory_id(trajectory_id);
+  return trajectory;
+}
+
+void AddToProtoGraph(const proto::Node& node_data,
+                     proto::PoseGraph* pose_graph) {
+  auto* trajectory =
+      CreateTrajectoryIfNeeded(node_data.node_id().trajectory_id(), pose_graph);
+  auto* node = trajectory->add_node();
+  node->set_timestamp(node_data.node_data().timestamp());
+  node->set_node_index(node_data.node_id().node_index());
+  *node->mutable_pose() = node_data.node_data().local_pose();
+}
+
+void AddToProtoGraph(const proto::Submap& submap_data,
+                     proto::PoseGraph* pose_graph) {
+  auto* trajectory = CreateTrajectoryIfNeeded(
+      submap_data.submap_id().trajectory_id(), pose_graph);
+  auto* submap = trajectory->add_submap();
+  submap->set_submap_index(submap_data.submap_id().submap_index());
+  if (submap_data.has_submap_2d()) {
+    *submap->mutable_pose() = submap_data.submap_2d().local_pose();
+  } else {
+    *submap->mutable_pose() = submap_data.submap_3d().local_pose();
+  }
+}
+
+void AddToProtoGraph(const proto::PoseGraph::Constraint& constraint,
+                     proto::PoseGraph* pose_graph) {
+  *pose_graph->add_constraint() = constraint;
 }
 
 }  // namespace test

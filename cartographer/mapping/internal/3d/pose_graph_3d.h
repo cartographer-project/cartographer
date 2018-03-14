@@ -133,6 +133,11 @@ class PoseGraph3D : public PoseGraph {
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
 
+ protected:
+  // Waits until we caught up (i.e. nothing is waiting to be scheduled), and
+  // all computations have finished.
+  void WaitForAllComputations() EXCLUDES(mutex_);
+
  private:
   // The current state of the submap in the background threads. When this
   // transitions to kFinished, all nodes are tried to match against this submap.
@@ -179,10 +184,6 @@ class PoseGraph3D : public PoseGraph {
   // Registers the callback to run the optimization once all constraints have
   // been computed, that will also do all work that queue up in 'work_queue_'.
   void HandleWorkQueue() REQUIRES(mutex_);
-
-  // Waits until we caught up (i.e. nothing is waiting to be scheduled), and
-  // all computations have finished.
-  void WaitForAllComputations() EXCLUDES(mutex_);
 
   // Runs the optimization. Callers have to make sure, that there is only one
   // optimization being run at a time.
