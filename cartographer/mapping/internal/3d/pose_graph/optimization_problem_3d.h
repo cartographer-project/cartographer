@@ -41,12 +41,8 @@ namespace cartographer {
 namespace mapping {
 namespace pose_graph {
 
-// Implements the SPA loop closure method.
 class OptimizationProblem3D : public OptimizationProblemInterface {
  public:
-  using Constraint = PoseGraphInterface::Constraint;
-  using LandmarkNode = PoseGraphInterface::LandmarkNode;
-
   struct NodeData {
     common::Time time;
     transform::Rigid3d local_pose;
@@ -57,16 +53,16 @@ class OptimizationProblem3D : public OptimizationProblemInterface {
     transform::Rigid3d global_pose;
   };
 
-  OptimizationProblem3D(
+  explicit OptimizationProblem3D(
       const pose_graph::proto::OptimizationProblemOptions& options);
   ~OptimizationProblem3D();
 
   OptimizationProblem3D(const OptimizationProblem3D&) = delete;
   OptimizationProblem3D& operator=(const OptimizationProblem3D&) = delete;
 
-  void AddImuData(int trajectory_id, const sensor::ImuData& imu_data);
+  void AddImuData(int trajectory_id, const sensor::ImuData& imu_data) override;
   void AddOdometryData(int trajectory_id,
-                       const sensor::OdometryData& odometry_data);
+                       const sensor::OdometryData& odometry_data) override;
   void AddFixedFramePoseData(
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
@@ -79,25 +75,26 @@ class OptimizationProblem3D : public OptimizationProblemInterface {
   void InsertTrajectoryNode(const NodeId& node_id, common::Time time,
                             const transform::Rigid3d& local_pose,
                             const transform::Rigid3d& global_pose);
-  void TrimTrajectoryNode(const NodeId& node_id);
+  void TrimTrajectoryNode(const NodeId& node_id) override;
   void AddSubmap(int trajectory_id,
                  const transform::Rigid3d& global_submap_pose);
   void InsertSubmap(const SubmapId& submap_id,
                     const transform::Rigid3d& global_submap_pose);
-  void TrimSubmap(const SubmapId& submap_id);
+  void TrimSubmap(const SubmapId& submap_id) override;
 
-  void SetMaxNumIterations(int32 max_num_iterations);
+  void SetMaxNumIterations(int32 max_num_iterations) override;
 
-  // Optimizes the global poses.
-  void Solve(const std::vector<Constraint>& constraints,
-             const std::set<int>& frozen_trajectories,
-             const std::map<std::string, LandmarkNode>& landmark_nodes);
+  void Solve(
+      const std::vector<Constraint>& constraints,
+      const std::set<int>& frozen_trajectories,
+      const std::map<std::string, LandmarkNode>& landmark_nodes) override;
 
   const MapById<NodeId, NodeData>& node_data() const;
   const MapById<SubmapId, SubmapData>& submap_data() const;
-  const std::map<std::string, transform::Rigid3d>& landmark_data() const;
-  const sensor::MapByTime<sensor::ImuData>& imu_data() const;
-  const sensor::MapByTime<sensor::OdometryData>& odometry_data() const;
+  const std::map<std::string, transform::Rigid3d>& landmark_data()
+      const override;
+  const sensor::MapByTime<sensor::ImuData>& imu_data() const override;
+  const sensor::MapByTime<sensor::OdometryData>& odometry_data() const override;
   const sensor::MapByTime<sensor::FixedFramePoseData>& fixed_frame_pose_data()
       const;
   const std::map<int, PoseGraphInterface::TrajectoryData>& trajectory_data()

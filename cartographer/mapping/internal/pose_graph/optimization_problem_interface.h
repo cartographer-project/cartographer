@@ -52,6 +52,12 @@ class OptimizationProblemInterface {
   OptimizationProblemInterface& operator=(const OptimizationProblemInterface&) =
       delete;
 
+  virtual void AddImuData(int trajectory_id,
+                          const sensor::ImuData& imu_data) = 0;
+  virtual void AddOdometryData(int trajectory_id,
+                               const sensor::OdometryData& odometry_data) = 0;
+  virtual void TrimTrajectoryNode(const NodeId& node_id) = 0;
+  virtual void TrimSubmap(const SubmapId& submap_id) = 0;
   virtual void SetMaxNumIterations(int32 max_num_iterations) = 0;
 
   // Optimizes the global poses.
