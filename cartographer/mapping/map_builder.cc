@@ -16,12 +16,6 @@
 
 #include "cartographer/mapping/map_builder.h"
 
-#include <cmath>
-#include <limits>
-#include <memory>
-#include <unordered_set>
-#include <utility>
-
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
@@ -33,10 +27,8 @@
 #include "cartographer/sensor/internal/collator.h"
 #include "cartographer/sensor/internal/trajectory_collator.h"
 #include "cartographer/sensor/internal/voxel_filter.h"
-#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
-#include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping {
@@ -140,11 +132,6 @@ int MapBuilder::AddTrajectoryForDeserialization(
   all_trajectory_builder_options_.push_back(options_with_sensor_ids_proto);
   CHECK_EQ(trajectory_builders_.size(), all_trajectory_builder_options_.size());
   return trajectory_id;
-}
-
-TrajectoryBuilderInterface* MapBuilder::GetTrajectoryBuilder(
-    const int trajectory_id) const {
-  return trajectory_builders_.at(trajectory_id).get();
 }
 
 void MapBuilder::FinishTrajectory(const int trajectory_id) {
@@ -409,17 +396,6 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
         FromProto(pose_graph_proto.constraint()));
   }
   CHECK(reader->eof());
-}
-
-int MapBuilder::num_trajectory_builders() const {
-  return trajectory_builders_.size();
-}
-
-PoseGraphInterface* MapBuilder::pose_graph() { return pose_graph_.get(); }
-
-const std::vector<proto::TrajectoryBuilderOptionsWithSensorIds>&
-MapBuilder::GetAllTrajectoryBuilderOptions() const {
-  return all_trajectory_builder_options_;
 }
 
 }  // namespace mapping
