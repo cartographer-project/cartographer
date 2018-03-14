@@ -138,20 +138,14 @@ void OptimizationProblem2D::AddOdometryData(
   odometry_data_.Append(trajectory_id, odometry_data);
 }
 
-void OptimizationProblem2D::AddTrajectoryNode(
-    const int trajectory_id, const common::Time time,
-    const transform::Rigid2d& initial_pose, const transform::Rigid2d& pose,
-    const Eigen::Quaterniond& gravity_alignment) {
-  node_data_.Append(trajectory_id,
-                    NodeData{time, initial_pose, pose, gravity_alignment});
+void OptimizationProblem2D::AddTrajectoryNode(const int trajectory_id,
+                                              const NodeData& node_data) {
+  node_data_.Append(trajectory_id, node_data);
 }
 
-void OptimizationProblem2D::InsertTrajectoryNode(
-    const NodeId& node_id, const common::Time time,
-    const transform::Rigid2d& initial_pose, const transform::Rigid2d& pose,
-    const Eigen::Quaterniond& gravity_alignment) {
-  node_data_.Insert(node_id,
-                    NodeData{time, initial_pose, pose, gravity_alignment});
+void OptimizationProblem2D::InsertTrajectoryNode(const NodeId& node_id,
+                                                 const NodeData& node_data) {
+  node_data_.Insert(node_id, node_data);
 }
 
 void OptimizationProblem2D::TrimTrajectoryNode(const NodeId& node_id) {
@@ -287,30 +281,6 @@ void OptimizationProblem2D::Solve(
   for (const auto& C_landmark : C_landmarks) {
     landmark_data_[C_landmark.first] = C_landmark.second.ToRigid();
   }
-}
-
-const MapById<NodeId, NodeData>& OptimizationProblem2D::node_data() const {
-  return node_data_;
-}
-
-const MapById<SubmapId, SubmapData>& OptimizationProblem2D::submap_data()
-    const {
-  return submap_data_;
-}
-
-const std::map<std::string, transform::Rigid3d>&
-OptimizationProblem2D::landmark_data() const {
-  return landmark_data_;
-}
-
-const sensor::MapByTime<sensor::ImuData>& OptimizationProblem2D::imu_data()
-    const {
-  return imu_data_;
-}
-
-const sensor::MapByTime<sensor::OdometryData>&
-OptimizationProblem2D::odometry_data() const {
-  return odometry_data_;
 }
 
 std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::InterpolateOdometry(

@@ -40,15 +40,15 @@ namespace cartographer {
 namespace mapping {
 namespace pose_graph {
 
-class OptimizationProblem2D : public OptimizationProblemInterface {
- public:
-  struct NodeData {
-    common::Time time;
-    transform::Rigid2d initial_pose;
-    transform::Rigid2d pose;
-    Eigen::Quaterniond gravity_alignment;
-  };
+struct NodeData2D {
+  common::Time time;
+  transform::Rigid2d initial_pose;
+  transform::Rigid2d pose;
+  Eigen::Quaterniond gravity_alignment;
+};
 
+class OptimizationProblem2D : public OptimizationProblemInterface<NodeData2D> {
+ public:
   struct SubmapData {
     transform::Rigid2d global_pose;
   };
@@ -63,14 +63,9 @@ class OptimizationProblem2D : public OptimizationProblemInterface {
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data) override;
   void AddOdometryData(int trajectory_id,
                        const sensor::OdometryData& odometry_data) override;
-  void AddTrajectoryNode(int trajectory_id, common::Time time,
-                         const transform::Rigid2d& initial_pose,
-                         const transform::Rigid2d& pose,
-                         const Eigen::Quaterniond& gravity_alignment);
-  void InsertTrajectoryNode(const NodeId& node_id, common::Time time,
-                            const transform::Rigid2d& initial_pose,
-                            const transform::Rigid2d& pose,
-                            const Eigen::Quaterniond& gravity_alignment);
+  void AddTrajectoryNode(int trajectory_id, const NodeData& node_data) override;
+  void InsertTrajectoryNode(const NodeId& node_id,
+                            const NodeData& node_data) override;
   void TrimTrajectoryNode(const NodeId& node_id) override;
   void AddSubmap(int trajectory_id,
                  const transform::Rigid2d& global_submap_pose);
@@ -85,12 +80,21 @@ class OptimizationProblem2D : public OptimizationProblemInterface {
       const std::set<int>& frozen_trajectories,
       const std::map<std::string, LandmarkNode>& landmark_nodes) override;
 
-  const MapById<NodeId, NodeData>& node_data() const;
-  const MapById<SubmapId, SubmapData>& submap_data() const;
+  const MapById<NodeId, NodeData>& node_data() const { return node_data_; }
+  const MapById<SubmapId, SubmapData>& submap_data() const {
+    return submap_data_;
+  }
   const std::map<std::string, transform::Rigid3d>& landmark_data()
-      const override;
-  const sensor::MapByTime<sensor::ImuData>& imu_data() const override;
-  const sensor::MapByTime<sensor::OdometryData>& odometry_data() const override;
+      const override {
+    return landmark_data_;
+  }
+  const sensor::MapByTime<sensor::ImuData>& imu_data() const override {
+    return imu_data_;
+  }
+  const sensor::MapByTime<sensor::OdometryData>& odometry_data()
+      const override {
+    return odometry_data_;
+  }
 
  private:
   std::unique_ptr<transform::Rigid3d> InterpolateOdometry(

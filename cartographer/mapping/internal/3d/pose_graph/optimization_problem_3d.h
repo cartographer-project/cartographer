@@ -41,14 +41,14 @@ namespace cartographer {
 namespace mapping {
 namespace pose_graph {
 
-class OptimizationProblem3D : public OptimizationProblemInterface {
- public:
-  struct NodeData {
-    common::Time time;
-    transform::Rigid3d local_pose;
-    transform::Rigid3d global_pose;
-  };
+struct NodeData3D {
+  common::Time time;
+  transform::Rigid3d local_pose;
+  transform::Rigid3d global_pose;
+};
 
+class OptimizationProblem3D : public OptimizationProblemInterface<NodeData3D> {
+ public:
   struct SubmapData {
     transform::Rigid3d global_pose;
   };
@@ -66,15 +66,12 @@ class OptimizationProblem3D : public OptimizationProblemInterface {
   void AddFixedFramePoseData(
       int trajectory_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data);
-  void AddTrajectoryNode(int trajectory_id, common::Time time,
-                         const transform::Rigid3d& local_pose,
-                         const transform::Rigid3d& global_pose);
+  void AddTrajectoryNode(int trajectory_id, const NodeData& node_data) override;
   void SetTrajectoryData(
       int trajectory_id,
       const PoseGraphInterface::TrajectoryData& trajectory_data);
-  void InsertTrajectoryNode(const NodeId& node_id, common::Time time,
-                            const transform::Rigid3d& local_pose,
-                            const transform::Rigid3d& global_pose);
+  void InsertTrajectoryNode(const NodeId& node_id,
+                            const NodeData& node_data) override;
   void TrimTrajectoryNode(const NodeId& node_id) override;
   void AddSubmap(int trajectory_id,
                  const transform::Rigid3d& global_submap_pose);
@@ -89,16 +86,31 @@ class OptimizationProblem3D : public OptimizationProblemInterface {
       const std::set<int>& frozen_trajectories,
       const std::map<std::string, LandmarkNode>& landmark_nodes) override;
 
-  const MapById<NodeId, NodeData>& node_data() const;
-  const MapById<SubmapId, SubmapData>& submap_data() const;
+  const MapById<NodeId, NodeData>& node_data() const override {
+    return node_data_;
+  }
+  const MapById<SubmapId, SubmapData>& submap_data() const {
+    return submap_data_;
+  }
   const std::map<std::string, transform::Rigid3d>& landmark_data()
-      const override;
-  const sensor::MapByTime<sensor::ImuData>& imu_data() const override;
-  const sensor::MapByTime<sensor::OdometryData>& odometry_data() const override;
+      const override {
+    return landmark_data_;
+  }
+  const sensor::MapByTime<sensor::ImuData>& imu_data() const override {
+    return imu_data_;
+  }
+  const sensor::MapByTime<sensor::OdometryData>& odometry_data()
+      const override {
+    return odometry_data_;
+  }
   const sensor::MapByTime<sensor::FixedFramePoseData>& fixed_frame_pose_data()
-      const;
+      const {
+    return fixed_frame_pose_data_;
+  }
   const std::map<int, PoseGraphInterface::TrajectoryData>& trajectory_data()
-      const;
+      const {
+    return trajectory_data_;
+  }
 
  private:
   // Uses odometry if available, otherwise the local SLAM results.

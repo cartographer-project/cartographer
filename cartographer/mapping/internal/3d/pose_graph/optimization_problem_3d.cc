@@ -189,11 +189,9 @@ void OptimizationProblem3D::AddFixedFramePoseData(
   fixed_frame_pose_data_.Append(trajectory_id, fixed_frame_pose_data);
 }
 
-void OptimizationProblem3D::AddTrajectoryNode(
-    const int trajectory_id, const common::Time time,
-    const transform::Rigid3d& local_pose,
-    const transform::Rigid3d& global_pose) {
-  node_data_.Append(trajectory_id, NodeData{time, local_pose, global_pose});
+void OptimizationProblem3D::AddTrajectoryNode(const int trajectory_id,
+                                              const NodeData& node_data) {
+  node_data_.Append(trajectory_id, node_data);
   trajectory_data_[trajectory_id];
 }
 
@@ -202,11 +200,9 @@ void OptimizationProblem3D::SetTrajectoryData(
   trajectory_data_[trajectory_id] = trajectory_data;
 }
 
-void OptimizationProblem3D::InsertTrajectoryNode(
-    const NodeId& node_id, const common::Time time,
-    const transform::Rigid3d& local_pose,
-    const transform::Rigid3d& global_pose) {
-  node_data_.Insert(node_id, NodeData{time, local_pose, global_pose});
+void OptimizationProblem3D::InsertTrajectoryNode(const NodeId& node_id,
+                                                 const NodeData& node_data) {
+  node_data_.Insert(node_id, node_data);
   trajectory_data_[node_id.trajectory_id];
 }
 
@@ -551,40 +547,6 @@ void OptimizationProblem3D::Solve(
   for (const auto& C_landmark : C_landmarks) {
     landmark_data_[C_landmark.first] = C_landmark.second.ToRigid();
   }
-}
-
-const MapById<NodeId, NodeData>& OptimizationProblem3D::node_data() const {
-  return node_data_;
-}
-
-const MapById<SubmapId, SubmapData>& OptimizationProblem3D::submap_data()
-    const {
-  return submap_data_;
-}
-
-const std::map<std::string, transform::Rigid3d>&
-OptimizationProblem3D::landmark_data() const {
-  return landmark_data_;
-}
-
-const sensor::MapByTime<sensor::ImuData>& OptimizationProblem3D::imu_data()
-    const {
-  return imu_data_;
-}
-
-const sensor::MapByTime<sensor::OdometryData>&
-OptimizationProblem3D::odometry_data() const {
-  return odometry_data_;
-}
-
-const sensor::MapByTime<sensor::FixedFramePoseData>&
-OptimizationProblem3D::fixed_frame_pose_data() const {
-  return fixed_frame_pose_data_;
-}
-
-const std::map<int, TrajectoryData>& OptimizationProblem3D::trajectory_data()
-    const {
-  return trajectory_data_;
 }
 
 transform::Rigid3d OptimizationProblem3D::ComputeRelativePose(

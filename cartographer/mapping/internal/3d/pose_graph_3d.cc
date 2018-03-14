@@ -263,7 +263,9 @@ void PoseGraph3D::ComputeConstraintsForNode(
       optimization_problem_.submap_data().at(matching_id).global_pose *
       insertion_submaps.front()->local_pose().inverse() * local_pose;
   optimization_problem_.AddTrajectoryNode(
-      matching_id.trajectory_id, constant_data->time, local_pose, global_pose);
+      matching_id.trajectory_id,
+      pose_graph::OptimizationProblem3D::NodeData{constant_data->time,
+                                                  local_pose, global_pose});
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const SubmapId submap_id = submap_ids[i];
     // Even if this was the last node added to 'submap_id', the submap will only
@@ -478,7 +480,9 @@ void PoseGraph3D::AddNodeFromProto(const transform::Rigid3d& global_pose,
   AddWorkItem([this, node_id, global_pose]() REQUIRES(mutex_) {
     const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
     optimization_problem_.InsertTrajectoryNode(
-        node_id, constant_data->time, constant_data->local_pose, global_pose);
+        node_id,
+        pose_graph::OptimizationProblem3D::NodeData{
+            constant_data->time, constant_data->local_pose, global_pose});
   });
 }
 

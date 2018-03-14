@@ -246,8 +246,9 @@ void PoseGraph2D::ComputeConstraintsForNode(
       pose_graph::ComputeSubmapPose(*insertion_submaps.front()).inverse() *
       pose;
   optimization_problem_.AddTrajectoryNode(
-      matching_id.trajectory_id, constant_data->time, pose, optimized_pose,
-      constant_data->gravity_alignment);
+      matching_id.trajectory_id, pose_graph::OptimizationProblem2D::NodeData{
+                                     constant_data->time, pose, optimized_pose,
+                                     constant_data->gravity_alignment});
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const SubmapId submap_id = submap_ids[i];
     // Even if this was the last node added to 'submap_id', the submap will
@@ -465,11 +466,13 @@ void PoseGraph2D::AddNodeFromProto(const transform::Rigid3d& global_pose,
     const auto gravity_alignment_inverse = transform::Rigid3d::Rotation(
         constant_data->gravity_alignment.inverse());
     optimization_problem_.InsertTrajectoryNode(
-        node_id, constant_data->time,
-        transform::Project2D(constant_data->local_pose *
-                             gravity_alignment_inverse),
-        transform::Project2D(global_pose * gravity_alignment_inverse),
-        constant_data->gravity_alignment);
+        node_id,
+        pose_graph::OptimizationProblem2D::NodeData{
+            constant_data->time,
+            transform::Project2D(constant_data->local_pose *
+                                 gravity_alignment_inverse),
+            transform::Project2D(global_pose * gravity_alignment_inverse),
+            constant_data->gravity_alignment});
   });
 }
 

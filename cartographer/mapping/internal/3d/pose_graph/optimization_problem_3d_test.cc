@@ -125,7 +125,8 @@ TEST_F(OptimizationProblem3DTest, ReducesNoise) {
     optimization_problem_.AddImuData(
         kTrajectoryId, sensor::ImuData{now, Eigen::Vector3d::UnitZ() * 9.81,
                                        Eigen::Vector3d::Zero()});
-    optimization_problem_.AddTrajectoryNode(kTrajectoryId, now, pose, pose);
+    optimization_problem_.AddTrajectoryNode(
+        kTrajectoryId, OptimizationProblem3D::NodeData{now, pose, pose});
     now += common::FromSeconds(0.01);
   }
 
