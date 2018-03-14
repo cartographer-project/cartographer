@@ -47,12 +47,14 @@ struct NodeData2D {
   Eigen::Quaterniond gravity_alignment;
 };
 
-class OptimizationProblem2D : public OptimizationProblemInterface<NodeData2D> {
- public:
-  struct SubmapData {
-    transform::Rigid2d global_pose;
-  };
+struct SubmapData2D {
+  transform::Rigid2d global_pose;
+};
 
+class OptimizationProblem2D
+    : public OptimizationProblemInterface<NodeData2D, SubmapData2D,
+                                          transform::Rigid2d> {
+ public:
   explicit OptimizationProblem2D(
       const pose_graph::proto::OptimizationProblemOptions& options);
   ~OptimizationProblem2D();
@@ -68,11 +70,10 @@ class OptimizationProblem2D : public OptimizationProblemInterface<NodeData2D> {
                             const NodeData& node_data) override;
   void TrimTrajectoryNode(const NodeId& node_id) override;
   void AddSubmap(int trajectory_id,
-                 const transform::Rigid2d& global_submap_pose);
+                 const RigidTransform& global_submap_pose) override;
   void InsertSubmap(const SubmapId& submap_id,
-                    const transform::Rigid2d& global_submap_pose);
+                    const RigidTransform& global_submap_pose) override;
   void TrimSubmap(const SubmapId& submap_id) override;
-
   void SetMaxNumIterations(int32 max_num_iterations) override;
 
   void Solve(
@@ -80,8 +81,10 @@ class OptimizationProblem2D : public OptimizationProblemInterface<NodeData2D> {
       const std::set<int>& frozen_trajectories,
       const std::map<std::string, LandmarkNode>& landmark_nodes) override;
 
-  const MapById<NodeId, NodeData>& node_data() const { return node_data_; }
-  const MapById<SubmapId, SubmapData>& submap_data() const {
+  const MapById<NodeId, NodeData>& node_data() const override {
+    return node_data_;
+  }
+  const MapById<SubmapId, SubmapData>& submap_data() const override {
     return submap_data_;
   }
   const std::map<std::string, transform::Rigid3d>& landmark_data()

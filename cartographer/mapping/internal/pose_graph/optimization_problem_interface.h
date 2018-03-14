@@ -17,15 +17,12 @@
 #ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_OPTIMIZATION_PROBLEM_INTERFACE_H_
 #define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_OPTIMIZATION_PROBLEM_INTERFACE_H_
 
-#include <array>
 #include <map>
 #include <set>
 #include <vector>
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
-#include "cartographer/common/optional.h"
-#include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/pose_graph_interface.h"
@@ -33,20 +30,21 @@
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/map_by_time.h"
 #include "cartographer/sensor/odometry_data.h"
-#include "cartographer/transform/transform_interpolation_buffer.h"
 
 namespace cartographer {
 namespace mapping {
 namespace pose_graph {
 
 // Implements the SPA loop closure method.
-// template<typename NodeDataType, typename SubmapDataType, typename PoseType>
-template <typename NodeDataType>
+template <typename NodeDataType, typename SubmapDataType,
+          typename RigidTransformType>
 class OptimizationProblemInterface {
  public:
   using Constraint = PoseGraphInterface::Constraint;
   using LandmarkNode = PoseGraphInterface::LandmarkNode;
   using NodeData = NodeDataType;
+  using SubmapData = SubmapDataType;
+  using RigidTransform = RigidTransformType;
 
   OptimizationProblemInterface() {}
   virtual ~OptimizationProblemInterface() {}
@@ -64,6 +62,10 @@ class OptimizationProblemInterface {
   virtual void InsertTrajectoryNode(const NodeId& node_id,
                                     const NodeDataType& node_data) = 0;
   virtual void TrimTrajectoryNode(const NodeId& node_id) = 0;
+  virtual void AddSubmap(int trajectory_id,
+                         const RigidTransform& global_submap_pose) = 0;
+  virtual void InsertSubmap(const SubmapId& submap_id,
+                            const RigidTransform& global_submap_pose) = 0;
   virtual void TrimSubmap(const SubmapId& submap_id) = 0;
   virtual void SetMaxNumIterations(int32 max_num_iterations) = 0;
 
@@ -74,6 +76,7 @@ class OptimizationProblemInterface {
       const std::map<std::string, LandmarkNode>& landmark_nodes) = 0;
 
   virtual const MapById<NodeId, NodeData>& node_data() const = 0;
+  virtual const MapById<SubmapId, SubmapData>& submap_data() const = 0;
   virtual const std::map<std::string, transform::Rigid3d>& landmark_data()
       const = 0;
   virtual const sensor::MapByTime<sensor::ImuData>& imu_data() const = 0;
