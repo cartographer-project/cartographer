@@ -16,20 +16,15 @@
 
 #include "cartographer/mapping/map_builder.h"
 
-#include <functional>
-#include <string>
-#include <vector>
-
 #include "cartographer/common/config.h"
 #include "cartographer/mapping/internal/test_helpers.h"
-#include "cartographer/mapping/trajectory_builder_interface.h"
 #include "gtest/gtest.h"
-
-using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
 
 namespace cartographer {
 namespace mapping {
 namespace {
+
+using SensorId = cartographer::mapping::TrajectoryBuilderInterface::SensorId;
 
 const SensorId kRangeSensorId{SensorId::SensorType::RANGE, "range"};
 const SensorId kIMUSensorId{SensorId::SensorType::IMU, "imu"};
