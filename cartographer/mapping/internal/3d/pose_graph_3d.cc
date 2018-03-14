@@ -42,8 +42,7 @@ namespace mapping {
 PoseGraph3D::PoseGraph3D(const proto::PoseGraphOptions& options,
                          common::ThreadPool* thread_pool)
     : options_(options),
-      optimization_problem_(options_.optimization_problem_options(),
-                            pose_graph::OptimizationProblem3D::FixZ::kNo),
+      optimization_problem_(options_.optimization_problem_options()),
       constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
 
 PoseGraph3D::~PoseGraph3D() {

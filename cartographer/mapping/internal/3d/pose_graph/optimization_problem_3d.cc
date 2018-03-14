@@ -168,8 +168,8 @@ void AddLandmarkCostFunctions(
 }  // namespace
 
 OptimizationProblem3D::OptimizationProblem3D(
-    const pose_graph::proto::OptimizationProblemOptions& options, FixZ fix_z)
-    : options_(options), fix_z_(fix_z) {}
+    const pose_graph::proto::OptimizationProblemOptions& options)
+    : options_(options) {}
 
 OptimizationProblem3D::~OptimizationProblem3D() {}
 
@@ -254,7 +254,7 @@ void OptimizationProblem3D::Solve(
 
   const auto translation_parameterization =
       [this]() -> std::unique_ptr<ceres::LocalParameterization> {
-    return fix_z_ == FixZ::kYes
+    return options_.fix_z_in_3d()
                ? common::make_unique<ceres::SubsetParameterization>(
                      3, std::vector<int>{2})
                : nullptr;
@@ -330,7 +330,7 @@ void OptimizationProblem3D::Solve(
                            &problem);
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
-  if (fix_z_ == FixZ::kNo) {
+  if (!options_.fix_z_in_3d()) {
     for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
       const int trajectory_id = node_it->id.trajectory_id;
       const auto trajectory_end = node_data_.EndOfTrajectory(trajectory_id);
@@ -417,7 +417,7 @@ void OptimizationProblem3D::Solve(
     }
   }
 
-  if (fix_z_ == FixZ::kYes) {
+  if (options_.fix_z_in_3d()) {
     // Add penalties for violating odometry or changes between consecutive nodes
     // if odometry is not available.
     for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {

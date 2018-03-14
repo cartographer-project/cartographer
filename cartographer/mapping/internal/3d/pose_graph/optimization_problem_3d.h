@@ -57,10 +57,8 @@ class OptimizationProblem3D : public OptimizationProblemInterface {
     transform::Rigid3d global_pose;
   };
 
-  enum class FixZ { kYes, kNo };
-
   OptimizationProblem3D(
-      const pose_graph::proto::OptimizationProblemOptions& options, FixZ fix_z);
+      const pose_graph::proto::OptimizationProblemOptions& options);
   ~OptimizationProblem3D();
 
   OptimizationProblem3D(const OptimizationProblem3D&) = delete;
@@ -112,7 +110,6 @@ class OptimizationProblem3D : public OptimizationProblemInterface {
       const NodeData& second_node_data) const;
 
   pose_graph::proto::OptimizationProblemOptions options_;
-  FixZ fix_z_;
   MapById<NodeId, NodeData> node_data_;
   MapById<SubmapId, SubmapData> submap_data_;
   std::map<std::string, transform::Rigid3d> landmark_data_;

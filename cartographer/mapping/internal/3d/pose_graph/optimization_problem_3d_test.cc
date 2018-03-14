@@ -34,9 +34,7 @@ namespace {
 class OptimizationProblem3DTest : public ::testing::Test {
  protected:
   OptimizationProblem3DTest()
-      : optimization_problem_(CreateOptions(),
-                              OptimizationProblem3D::FixZ::kNo),
-        rng_(45387) {}
+      : optimization_problem_(CreateOptions()), rng_(45387) {}
 
   pose_graph::proto::OptimizationProblemOptions CreateOptions() {
     auto parameter_dictionary = common::MakeDictionary(R"text(
