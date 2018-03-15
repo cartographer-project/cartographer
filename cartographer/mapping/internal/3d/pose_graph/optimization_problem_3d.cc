@@ -107,12 +107,20 @@ std::unique_ptr<transform::Rigid3d> Interpolate(
 // applies a relative transform from it.
 transform::Rigid3d GetInitialLandmarkPose(
     const LandmarkNode::LandmarkObservation& observation,
-    const NodeData& prev_node, const NodeData& next_node) {
-  const NodeData& closest_node =
-      observation.time - prev_node.time < next_node.time - observation.time
-          ? prev_node
-          : next_node;
-  return closest_node.global_pose * observation.landmark_to_tracking_transform;
+    const NodeData& prev_node, const NodeData& next_node,
+    const CeresPose& prev_node_pose, const CeresPose& next_node_pose) {
+  const double interpolation_parameter =
+      common::ToSeconds(observation.time - prev_node.time) /
+      common::ToSeconds(next_node.time - prev_node.time);
+
+  const std::tuple<std::array<double, 4>, std::array<double, 3>>
+      rotation_and_translation = InterpolateNodes3D(
+          prev_node_pose.rotation(), prev_node_pose.translation(),
+          next_node_pose.rotation(), next_node_pose.translation(),
+          interpolation_parameter);
+  return transform::Rigid3d::FromArrays(std::get<0>(rotation_and_translation),
+                                        std::get<1>(rotation_and_translation)) *
+         observation.landmark_to_tracking_transform;
 }
 
 void AddLandmarkCostFunctions(
@@ -147,11 +155,14 @@ void AddLandmarkCostFunctions(
       }
       auto prev = std::prev(next);
       // Add parameter blocks for the landmark ID if they were not added before.
+      CeresPose* prev_node_pose = &C_nodes->at(prev->id);
+      CeresPose* next_node_pose = &C_nodes->at(next->id);
       if (!C_landmarks->count(landmark_id)) {
         const transform::Rigid3d starting_point =
             landmark_node.second.global_landmark_pose.has_value()
                 ? landmark_node.second.global_landmark_pose.value()
-                : GetInitialLandmarkPose(observation, prev->data, next->data);
+                : GetInitialLandmarkPose(observation, prev->data, next->data,
+                                         *prev_node_pose, *next_node_pose);
         C_landmarks->emplace(
             landmark_id,
             CeresPose(starting_point, nullptr /* translation_parametrization */,
@@ -167,9 +178,9 @@ void AddLandmarkCostFunctions(
       problem->AddResidualBlock(
           LandmarkCostFunction3D::CreateAutoDiffCostFunction(
               observation, prev->data, next->data),
-          nullptr /* loss function */, C_nodes->at(prev->id).rotation(),
-          C_nodes->at(prev->id).translation(), C_nodes->at(next->id).rotation(),
-          C_nodes->at(next->id).translation(),
+          nullptr /* loss function */, prev_node_pose->rotation(),
+          prev_node_pose->translation(), next_node_pose->rotation(),
+          next_node_pose->translation(),
           C_landmarks->at(landmark_id).rotation(),
           C_landmarks->at(landmark_id).translation());
     }
