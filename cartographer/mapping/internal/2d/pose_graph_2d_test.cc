@@ -132,8 +132,12 @@ class PoseGraph2DTest : public ::testing::Test {
             log_residual_histograms = true,
             global_constraint_search_after_n_seconds = 10.0,
           })text");
+      auto options = CreatePoseGraphOptions(parameter_dictionary.get());
       pose_graph_ = common::make_unique<PoseGraph2D>(
-          CreatePoseGraphOptions(parameter_dictionary.get()), &thread_pool_);
+          options,
+          common::make_unique<pose_graph::OptimizationProblem2D>(
+              options.optimization_problem_options()),
+          &thread_pool_);
     }
 
     current_pose_ = transform::Rigid2d::Identity();

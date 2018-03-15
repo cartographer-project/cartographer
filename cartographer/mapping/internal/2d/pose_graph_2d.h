@@ -59,8 +59,10 @@ namespace mapping {
 // All constraints are between a submap i and a node j.
 class PoseGraph2D : public PoseGraph {
  public:
-  PoseGraph2D(const proto::PoseGraphOptions& options,
-              common::ThreadPool* thread_pool);
+  PoseGraph2D(
+      const proto::PoseGraphOptions& options,
+      std::unique_ptr<pose_graph::OptimizationProblem2D> optimization_problem,
+      common::ThreadPool* thread_pool);
   ~PoseGraph2D() override;
 
   PoseGraph2D(const PoseGraph2D&) = delete;
@@ -230,7 +232,7 @@ class PoseGraph2D : public PoseGraph {
   void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
-  pose_graph::OptimizationProblem2D optimization_problem_;
+  std::unique_ptr<pose_graph::OptimizationProblem2D> optimization_problem_;
   pose_graph::ConstraintBuilder2D constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
