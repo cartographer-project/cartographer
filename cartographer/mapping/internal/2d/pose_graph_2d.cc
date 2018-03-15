@@ -246,8 +246,9 @@ void PoseGraph2D::ComputeConstraintsForNode(
       pose_graph::ComputeSubmapPose(*insertion_submaps.front()).inverse() *
       pose;
   optimization_problem_.AddTrajectoryNode(
-      matching_id.trajectory_id, constant_data->time, pose, optimized_pose,
-      constant_data->gravity_alignment);
+      matching_id.trajectory_id,
+      pose_graph::NodeData2D{constant_data->time, pose, optimized_pose,
+                             constant_data->gravity_alignment});
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const SubmapId submap_id = submap_ids[i];
     // Even if this was the last node added to 'submap_id', the submap will
@@ -440,9 +441,8 @@ void PoseGraph2D::AddSubmapFromProto(
   submap_data_.Insert(submap_id, SubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the 'global_submap_pose'.
-  global_submap_poses_.Insert(
-      submap_id,
-      pose_graph::OptimizationProblem2D::SubmapData{global_submap_pose_2d});
+  global_submap_poses_.Insert(submap_id,
+                              pose_graph::SubmapData2D{global_submap_pose_2d});
   AddWorkItem([this, submap_id, global_submap_pose_2d]() REQUIRES(mutex_) {
     submap_data_.at(submap_id).state = SubmapState::kFinished;
     optimization_problem_.InsertSubmap(submap_id, global_submap_pose_2d);
@@ -465,11 +465,13 @@ void PoseGraph2D::AddNodeFromProto(const transform::Rigid3d& global_pose,
     const auto gravity_alignment_inverse = transform::Rigid3d::Rotation(
         constant_data->gravity_alignment.inverse());
     optimization_problem_.InsertTrajectoryNode(
-        node_id, constant_data->time,
-        transform::Project2D(constant_data->local_pose *
-                             gravity_alignment_inverse),
-        transform::Project2D(global_pose * gravity_alignment_inverse),
-        constant_data->gravity_alignment);
+        node_id,
+        pose_graph::NodeData2D{
+            constant_data->time,
+            transform::Project2D(constant_data->local_pose *
+                                 gravity_alignment_inverse),
+            transform::Project2D(global_pose * gravity_alignment_inverse),
+            constant_data->gravity_alignment});
   });
 }
 
@@ -728,8 +730,7 @@ PoseGraph2D::GetAllSubmapPoses() {
 }
 
 transform::Rigid3d PoseGraph2D::ComputeLocalToGlobalTransform(
-    const MapById<SubmapId, pose_graph::OptimizationProblem2D::SubmapData>&
-        global_submap_poses,
+    const MapById<SubmapId, pose_graph::SubmapData2D>& global_submap_poses,
     const int trajectory_id) const {
   auto begin_it = global_submap_poses.BeginOfTrajectory(trajectory_id);
   auto end_it = global_submap_poses.EndOfTrajectory(trajectory_id);

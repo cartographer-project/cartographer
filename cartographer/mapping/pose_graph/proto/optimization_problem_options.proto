@@ -18,7 +18,7 @@ package cartographer.mapping.pose_graph.proto;
 
 import "cartographer/common/proto/ceres_solver_options.proto";
 
-// NEXT ID: 13
+// NEXT ID: 14
 message OptimizationProblemOptions {
   // Scaling parameter for Huber loss function.
   double huber_scale = 1;
@@ -40,6 +40,9 @@ message OptimizationProblemOptions {
 
   // Scaling parameter for the FixedFramePose rotation.
   double fixed_frame_pose_rotation_weight = 12;
+
+  // 3D only: fix Z.
+  bool fix_z_in_3d = 13;
 
   // If true, the Ceres solver summary will be logged for every optimization.
   bool log_solver_summary = 5;

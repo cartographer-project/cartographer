@@ -42,8 +42,7 @@ namespace mapping {
 PoseGraph3D::PoseGraph3D(const proto::PoseGraphOptions& options,
                          common::ThreadPool* thread_pool)
     : options_(options),
-      optimization_problem_(options_.optimization_problem_options(),
-                            pose_graph::OptimizationProblem3D::FixZ::kNo),
+      optimization_problem_(options_.optimization_problem_options()),
       constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
 
 PoseGraph3D::~PoseGraph3D() {
@@ -264,7 +263,8 @@ void PoseGraph3D::ComputeConstraintsForNode(
       optimization_problem_.submap_data().at(matching_id).global_pose *
       insertion_submaps.front()->local_pose().inverse() * local_pose;
   optimization_problem_.AddTrajectoryNode(
-      matching_id.trajectory_id, constant_data->time, local_pose, global_pose);
+      matching_id.trajectory_id,
+      pose_graph::NodeData3D{constant_data->time, local_pose, global_pose});
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const SubmapId submap_id = submap_ids[i];
     // Even if this was the last node added to 'submap_id', the submap will only
@@ -456,9 +456,8 @@ void PoseGraph3D::AddSubmapFromProto(
   submap_data_.Insert(submap_id, SubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the 'global_submap_pose'.
-  global_submap_poses_.Insert(
-      submap_id,
-      pose_graph::OptimizationProblem3D::SubmapData{global_submap_pose});
+  global_submap_poses_.Insert(submap_id,
+                              pose_graph::SubmapData3D{global_submap_pose});
   AddWorkItem([this, submap_id, global_submap_pose]() REQUIRES(mutex_) {
     submap_data_.at(submap_id).state = SubmapState::kFinished;
     optimization_problem_.InsertSubmap(submap_id, global_submap_pose);
@@ -479,7 +478,9 @@ void PoseGraph3D::AddNodeFromProto(const transform::Rigid3d& global_pose,
   AddWorkItem([this, node_id, global_pose]() REQUIRES(mutex_) {
     const auto& constant_data = trajectory_nodes_.at(node_id).constant_data;
     optimization_problem_.InsertTrajectoryNode(
-        node_id, constant_data->time, constant_data->local_pose, global_pose);
+        node_id,
+        pose_graph::NodeData3D{constant_data->time, constant_data->local_pose,
+                               global_pose});
   });
 }
 
@@ -762,8 +763,7 @@ PoseGraph3D::GetAllSubmapPoses() {
 }
 
 transform::Rigid3d PoseGraph3D::ComputeLocalToGlobalTransform(
-    const MapById<SubmapId, pose_graph::OptimizationProblem3D::SubmapData>&
-        global_submap_poses,
+    const MapById<SubmapId, pose_graph::SubmapData3D>& global_submap_poses,
     const int trajectory_id) const {
   auto begin_it = global_submap_poses.BeginOfTrajectory(trajectory_id);
   auto end_it = global_submap_poses.EndOfTrajectory(trajectory_id);

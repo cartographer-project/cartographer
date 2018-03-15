@@ -34,9 +34,7 @@ namespace {
 class OptimizationProblem3DTest : public ::testing::Test {
  protected:
   OptimizationProblem3DTest()
-      : optimization_problem_(CreateOptions(),
-                              OptimizationProblem3D::FixZ::kNo),
-        rng_(45387) {}
+      : optimization_problem_(CreateOptions()), rng_(45387) {}
 
   pose_graph::proto::OptimizationProblemOptions CreateOptions() {
     auto parameter_dictionary = common::MakeDictionary(R"text(
@@ -127,7 +125,8 @@ TEST_F(OptimizationProblem3DTest, ReducesNoise) {
     optimization_problem_.AddImuData(
         kTrajectoryId, sensor::ImuData{now, Eigen::Vector3d::UnitZ() * 9.81,
                                        Eigen::Vector3d::Zero()});
-    optimization_problem_.AddTrajectoryNode(kTrajectoryId, now, pose, pose);
+    optimization_problem_.AddTrajectoryNode(kTrajectoryId,
+                                            NodeData3D{now, pose, pose});
     now += common::FromSeconds(0.01);
   }
 
@@ -170,7 +169,7 @@ TEST_F(OptimizationProblem3DTest, ReducesNoise) {
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap2Transform);
-  const std::set<int> kFrozen;
+  const std::set<int> kFrozen = {};
   optimization_problem_.Solve(constraints, kFrozen, {});
 
   double translation_error_after = 0.;
