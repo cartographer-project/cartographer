@@ -40,9 +40,8 @@ class LandmarkCostFunction2D {
       PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
   static ceres::CostFunction* CreateAutoDiffCostFunction(
-      const LandmarkObservation& observation,
-      const OptimizationProblem2D::NodeData& prev_node,
-      const OptimizationProblem2D::NodeData& next_node) {
+      const LandmarkObservation& observation, const NodeData2D& prev_node,
+      const NodeData2D& next_node) {
     return new ceres::AutoDiffCostFunction<
         LandmarkCostFunction2D, 6 /* residuals */,
         3 /* previous node pose variables */, 3 /* next node pose variables */,
@@ -55,44 +54,16 @@ class LandmarkCostFunction2D {
   bool operator()(const T* const prev_node_pose, const T* const next_node_pose,
                   const T* const landmark_rotation,
                   const T* const landmark_translation, T* const e) const {
-    const std::array<T, 3> interpolated_pose_translation{
-        {prev_node_pose[0] +
-             interpolation_parameter_ * (next_node_pose[0] - prev_node_pose[0]),
-         prev_node_pose[1] +
-             interpolation_parameter_ * (next_node_pose[1] - prev_node_pose[1]),
-         T(0)}};
-
-    // The following is equivalent to (Embed3D(prev_pose) *
-    // Rigid3d::Rotation(prev_pose_gravity_alignment)).rotation().
-    const Eigen::Quaternion<T> prev_quaternion(
-        (Eigen::AngleAxis<T>(prev_node_pose[2],
-                             Eigen::Matrix<T, 3, 1>::UnitZ()) *
-         prev_node_gravity_alignment_.cast<T>())
-            .normalized());
-    const std::array<T, 4> prev_node_rotation = {
-        {prev_quaternion.w(), prev_quaternion.x(), prev_quaternion.y(),
-         prev_quaternion.z()}};
-
-    // The following is equivalent to (Embed3D(next_pose) *
-    // Rigid3d::Rotation(next_pose_gravity_alignment)).rotation().
-    const Eigen::Quaternion<T> next_quaternion(
-        (Eigen::AngleAxis<T>(next_node_pose[2],
-                             Eigen::Matrix<T, 3, 1>::UnitZ()) *
-         next_node_gravity_alignment_.cast<T>())
-            .normalized());
-    const std::array<T, 4> next_node_rotation = {
-        {next_quaternion.w(), next_quaternion.x(), next_quaternion.y(),
-         next_quaternion.z()}};
-
-    const std::array<T, 4> interpolated_pose_rotation =
-        SlerpQuaternions(prev_node_rotation.data(), next_node_rotation.data(),
-                         T(interpolation_parameter_));
-
+    const std::tuple<std::array<T, 4>, std::array<T, 3>>
+        interpolated_rotation_and_translation = InterpolateNodes2D(
+            prev_node_pose, prev_node_gravity_alignment_, next_node_pose,
+            next_node_gravity_alignment_, interpolation_parameter_);
     const std::array<T, 6> error = ScaleError(
-        ComputeUnscaledError(landmark_to_tracking_transform_,
-                             interpolated_pose_rotation.data(),
-                             interpolated_pose_translation.data(),
-                             landmark_rotation, landmark_translation),
+        ComputeUnscaledError(
+            landmark_to_tracking_transform_,
+            std::get<0>(interpolated_rotation_and_translation).data(),
+            std::get<1>(interpolated_rotation_and_translation).data(),
+            landmark_rotation, landmark_translation),
         T(translation_weight_), T(rotation_weight_));
     std::copy(std::begin(error), std::end(error), e);
     return true;
@@ -100,8 +71,8 @@ class LandmarkCostFunction2D {
 
  private:
   LandmarkCostFunction2D(const LandmarkObservation& observation,
-                         const OptimizationProblem2D::NodeData& prev_node,
-                         const OptimizationProblem2D::NodeData& next_node)
+                         const NodeData2D& prev_node,
+                         const NodeData2D& next_node)
       : landmark_to_tracking_transform_(
             observation.landmark_to_tracking_transform),
         prev_node_gravity_alignment_(prev_node.gravity_alignment),

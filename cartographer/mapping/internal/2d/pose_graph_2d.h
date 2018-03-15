@@ -191,8 +191,7 @@ class PoseGraph2D : public PoseGraph {
   // Computes the local to global map frame transform based on the given
   // 'global_submap_poses'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const MapById<SubmapId, pose_graph::OptimizationProblem2D::SubmapData>&
-          global_submap_poses,
+      const MapById<SubmapId, pose_graph::SubmapData2D>& global_submap_poses,
       int trajectory_id) const REQUIRES(mutex_);
 
   PoseGraph::SubmapData GetSubmapDataUnderLock(const SubmapId& submap_id)
@@ -244,8 +243,8 @@ class PoseGraph2D : public PoseGraph {
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Global submap poses currently used for displaying data.
-  MapById<SubmapId, pose_graph::OptimizationProblem2D::SubmapData>
-      global_submap_poses_ GUARDED_BY(mutex_);
+  MapById<SubmapId, pose_graph::SubmapData2D> global_submap_poses_
+      GUARDED_BY(mutex_);
 
   // Global landmark poses with all observations.
   std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
@@ -256,6 +255,9 @@ class PoseGraph2D : public PoseGraph {
 
   // Set of all frozen trajectories not being optimized.
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
+
+  // Whether or not optimize landmark poses.
+  bool freeze_landmarks_ GUARDED_BY(mutex_) = false;
 
   // Set of all finished trajectories.
   std::set<int> finished_trajectories_ GUARDED_BY(mutex_);

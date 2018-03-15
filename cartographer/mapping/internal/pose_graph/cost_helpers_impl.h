@@ -120,6 +120,66 @@ std::array<T, 4> SlerpQuaternions(const T* const start, const T* const end,
            prev_scale * start[3] + next_scale * end[3]}};
 }
 
+template <typename T>
+std::tuple<std::array<T, 4> /* rotation */, std::array<T, 3> /* translation */>
+InterpolateNodes3D(const T* const prev_node_rotation,
+                   const T* const prev_node_translation,
+                   const T* const next_node_rotation,
+                   const T* const next_node_translation,
+                   const double interpolation_parameter) {
+  return std::make_tuple(
+      SlerpQuaternions(prev_node_rotation, next_node_rotation,
+                       T(interpolation_parameter)),
+      std::array<T, 3>{
+          {prev_node_translation[0] +
+               interpolation_parameter *
+                   (next_node_translation[0] - prev_node_translation[0]),
+           prev_node_translation[1] +
+               interpolation_parameter *
+                   (next_node_translation[1] - prev_node_translation[1]),
+           prev_node_translation[2] +
+               interpolation_parameter *
+                   (next_node_translation[2] - prev_node_translation[2])}});
+}
+
+template <typename T>
+std::tuple<std::array<T, 4> /* rotation */, std::array<T, 3> /* translation */>
+InterpolateNodes2D(const T* const prev_node_pose,
+                   const Eigen::Quaterniond& prev_node_gravity_alignment,
+                   const T* const next_node_pose,
+                   const Eigen::Quaterniond& next_node_gravity_alignment,
+                   const double interpolation_parameter) {
+  // The following is equivalent to (Embed3D(prev_node_pose) *
+  // Rigid3d::Rotation(prev_node_gravity_alignment)).rotation().
+  const Eigen::Quaternion<T> prev_quaternion(
+      (Eigen::AngleAxis<T>(prev_node_pose[2], Eigen::Matrix<T, 3, 1>::UnitZ()) *
+       prev_node_gravity_alignment.cast<T>())
+          .normalized());
+  const std::array<T, 4> prev_node_rotation = {
+      {prev_quaternion.w(), prev_quaternion.x(), prev_quaternion.y(),
+       prev_quaternion.z()}};
+
+  // The following is equivalent to (Embed3D(next_node_pose) *
+  // Rigid3d::Rotation(next_node_gravity_alignment)).rotation().
+  const Eigen::Quaternion<T> next_quaternion(
+      (Eigen::AngleAxis<T>(next_node_pose[2], Eigen::Matrix<T, 3, 1>::UnitZ()) *
+       next_node_gravity_alignment.cast<T>())
+          .normalized());
+  const std::array<T, 4> next_node_rotation = {
+      {next_quaternion.w(), next_quaternion.x(), next_quaternion.y(),
+       next_quaternion.z()}};
+
+  return std::make_tuple(
+      SlerpQuaternions(prev_node_rotation.data(), next_node_rotation.data(),
+                       T(interpolation_parameter)),
+      std::array<T, 3>{
+          {prev_node_pose[0] + interpolation_parameter *
+                                   (next_node_pose[0] - prev_node_pose[0]),
+           prev_node_pose[1] + interpolation_parameter *
+                                   (next_node_pose[1] - prev_node_pose[1]),
+           T(0)}});
+}
+
 }  // namespace pose_graph
 }  // namespace mapping
 }  // namespace cartographer

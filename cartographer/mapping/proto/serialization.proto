@@ -48,6 +48,11 @@ message FixedFramePoseData {
   sensor.proto.FixedFramePoseData fixed_frame_pose_data = 2;
 }
 
+message LandmarkData {
+  int32 trajectory_id = 1;
+  sensor.proto.LandmarkData landmark_data = 2;
+}
+
 message TrajectoryData {
   int32 trajectory_id = 1;
   double gravity_constant = 2;
@@ -62,6 +67,7 @@ message SerializedData {
   OdometryData odometry_data = 4;
   FixedFramePoseData fixed_frame_pose_data = 5;
   TrajectoryData trajectory_data = 6;
+  LandmarkData landmark_data = 7;
 }
 
 message LocalSlamResultData {

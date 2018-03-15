@@ -39,9 +39,8 @@ class LandmarkCostFunction3D {
       PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
   static ceres::CostFunction* CreateAutoDiffCostFunction(
-      const LandmarkObservation& observation,
-      const OptimizationProblem3D::NodeData& prev_node,
-      const OptimizationProblem3D::NodeData& next_node) {
+      const LandmarkObservation& observation, const NodeData3D& prev_node,
+      const NodeData3D& next_node) {
     return new ceres::AutoDiffCostFunction<
         LandmarkCostFunction3D, 6 /* residuals */,
         4 /* previous node rotation variables */,
@@ -60,24 +59,16 @@ class LandmarkCostFunction3D {
                   const T* const next_node_translation,
                   const T* const landmark_rotation,
                   const T* const landmark_translation, T* const e) const {
-    const std::array<T, 3> interpolated_pose_translation{
-        {prev_node_translation[0] +
-             interpolation_parameter_ *
-                 (next_node_translation[0] - prev_node_translation[0]),
-         prev_node_translation[1] +
-             interpolation_parameter_ *
-                 (next_node_translation[1] - prev_node_translation[1]),
-         prev_node_translation[2] +
-             interpolation_parameter_ *
-                 (next_node_translation[2] - prev_node_translation[2])}};
-    const std::array<T, 4> interpolated_pose_rotation = SlerpQuaternions(
-        prev_node_rotation, next_node_rotation, T(interpolation_parameter_));
-
+    const std::tuple<std::array<T, 4>, std::array<T, 3>>
+        interpolated_rotation_and_translation = InterpolateNodes3D(
+            prev_node_rotation, prev_node_translation, next_node_rotation,
+            next_node_translation, interpolation_parameter_);
     const std::array<T, 6> error = ScaleError(
-        ComputeUnscaledError(landmark_to_tracking_transform_,
-                             interpolated_pose_rotation.data(),
-                             interpolated_pose_translation.data(),
-                             landmark_rotation, landmark_translation),
+        ComputeUnscaledError(
+            landmark_to_tracking_transform_,
+            std::get<0>(interpolated_rotation_and_translation).data(),
+            std::get<1>(interpolated_rotation_and_translation).data(),
+            landmark_rotation, landmark_translation),
         T(translation_weight_), T(rotation_weight_));
     std::copy(std::begin(error), std::end(error), e);
     return true;
@@ -85,8 +76,8 @@ class LandmarkCostFunction3D {
 
  private:
   LandmarkCostFunction3D(const LandmarkObservation& observation,
-                         const OptimizationProblem3D::NodeData& prev_node,
-                         const OptimizationProblem3D::NodeData& next_node)
+                         const NodeData3D& prev_node,
+                         const NodeData3D& next_node)
       : landmark_to_tracking_transform_(
             observation.landmark_to_tracking_transform),
         translation_weight_(observation.translation_weight),
