@@ -37,63 +37,54 @@ class PoseGraph3DForTesting : public PoseGraph3D {
   void WaitForAllComputations() { PoseGraph3D::WaitForAllComputations(); }
 };
 
-class TestEnvironment {
- public:
-  TestEnvironment()
+class PoseGraph3DTest : public ::testing::Test {
+ protected:
+  PoseGraph3DTest()
       : thread_pool_(common::make_unique<common::ThreadPool>(1)) {}
 
-  TestEnvironment& SetDefault() {
+  void SetUp() override {
     const std::string kPoseGraphLua = R"text(
       include "pose_graph.lua"
       return POSE_GRAPH)text";
     auto pose_graph_parameters = test::ResolveLuaParameters(kPoseGraphLua);
     pose_graph_options_ = CreatePoseGraphOptions(pose_graph_parameters.get());
-    return *this;
+    pose_graph_ = common::make_unique<PoseGraph3DForTesting>(
+        pose_graph_options_, thread_pool_.get());
   }
 
-  std::unique_ptr<PoseGraph3DForTesting> Build() {
-    return common::make_unique<PoseGraph3DForTesting>(pose_graph_options_,
-                                                      thread_pool_.get());
-  }
-
- private:
   proto::PoseGraphOptions pose_graph_options_;
   std::unique_ptr<common::ThreadPool> thread_pool_;
+  std::unique_ptr<PoseGraph3DForTesting> pose_graph_;
 };
 
-TEST(PoseGraph3DTest, Empty) {
-  TestEnvironment builder;
-  auto pose_graph = builder.SetDefault().Build();
-  pose_graph->WaitForAllComputations();
-  EXPECT_TRUE(pose_graph->GetAllSubmapData().empty());
-  EXPECT_TRUE(pose_graph->constraints().empty());
-  EXPECT_TRUE(pose_graph->GetConnectedTrajectories().empty());
-  EXPECT_TRUE(pose_graph->GetAllSubmapPoses().empty());
-  EXPECT_TRUE(pose_graph->GetTrajectoryNodes().empty());
-  EXPECT_TRUE(pose_graph->GetTrajectoryNodePoses().empty());
-  EXPECT_TRUE(pose_graph->GetTrajectoryData().empty());
+TEST_F(PoseGraph3DTest, Empty) {
+  pose_graph_->WaitForAllComputations();
+  EXPECT_TRUE(pose_graph_->GetAllSubmapData().empty());
+  EXPECT_TRUE(pose_graph_->constraints().empty());
+  EXPECT_TRUE(pose_graph_->GetConnectedTrajectories().empty());
+  EXPECT_TRUE(pose_graph_->GetAllSubmapPoses().empty());
+  EXPECT_TRUE(pose_graph_->GetTrajectoryNodes().empty());
+  EXPECT_TRUE(pose_graph_->GetTrajectoryNodePoses().empty());
+  EXPECT_TRUE(pose_graph_->GetTrajectoryData().empty());
   proto::PoseGraph empty_proto;
   EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
-      pose_graph->ToProto(), empty_proto));
+      pose_graph_->ToProto(), empty_proto));
 }
 
-TEST(PoseGraph3DTest, BasicSerialization) {
-  TestEnvironment builder;
-  auto pose_graph = builder.SetDefault().Build();
+TEST_F(PoseGraph3DTest, BasicSerialization) {
   proto::PoseGraph proto;
-
   auto fake_node = test::CreateFakeNode();
   test::AddToProtoGraph(fake_node, &proto);
-  pose_graph->AddNodeFromProto(transform::Rigid3d::Identity(), fake_node);
+  pose_graph_->AddNodeFromProto(transform::Rigid3d::Identity(), fake_node);
   auto fake_submap = test::CreateFakeSubmap3D();
   test::AddToProtoGraph(fake_submap, &proto);
-  pose_graph->AddSubmapFromProto(transform::Rigid3d::Identity(), fake_submap);
+  pose_graph_->AddSubmapFromProto(transform::Rigid3d::Identity(), fake_submap);
   test::AddToProtoGraph(test::CreateFakeConstraint(fake_node, fake_submap),
                         &proto);
-  pose_graph->AddSerializedConstraints(FromProto(proto.constraint()));
+  pose_graph_->AddSerializedConstraints(FromProto(proto.constraint()));
 
-  pose_graph->WaitForAllComputations();
-  proto::PoseGraph actual_proto = pose_graph->ToProto();
+  pose_graph_->WaitForAllComputations();
+  proto::PoseGraph actual_proto = pose_graph_->ToProto();
   EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
       proto.constraint(0), actual_proto.constraint(0)));
   EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
