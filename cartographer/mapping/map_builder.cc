@@ -369,7 +369,11 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
             sensor::FromProto(
                 proto.fixed_frame_pose_data().fixed_frame_pose_data()));
       }
-      // TODO(pifon2a, ojura): deserialize landmarks
+      if (proto.has_landmark_data()) {
+        pose_graph_->AddLandmarkData(
+            trajectory_remapping.at(proto.landmark_data().trajectory_id()),
+            sensor::FromProto(proto.landmark_data().landmark_data()));
+      }
     }
   }
 
