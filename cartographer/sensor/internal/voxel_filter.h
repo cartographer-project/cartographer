@@ -23,6 +23,7 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/proto/adaptive_voxel_filter_options.pb.h"
+#include "cartographer/sensor/timed_point_cloud_data.h"
 
 namespace cartographer {
 namespace sensor {
@@ -43,6 +44,11 @@ class VoxelFilter {
 
   // Same for TimedPointCloud.
   TimedPointCloud Filter(const TimedPointCloud& timed_point_cloud);
+
+  // Same for RangeMeasurement.
+  std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement> Filter(
+      const std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement>&
+          range_measurements);
 
  private:
   using KeyType = std::bitset<3 * 32>;
