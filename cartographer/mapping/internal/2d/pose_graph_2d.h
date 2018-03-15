@@ -230,7 +230,7 @@ class PoseGraph2D : public PoseGraph {
   void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
-  pose_graph::OptimizationProblem2D optimization_problem_;
+  std::unique_ptr<pose_graph::OptimizationProblem2D> optimization_problem_;
   pose_graph::ConstraintBuilder2D constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
