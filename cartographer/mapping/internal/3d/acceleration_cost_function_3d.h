@@ -59,15 +59,15 @@ class AccelerationCostFunction3D {
     const Eigen::Matrix<T, 3, 1> start_velocity =
         (Eigen::Map<const Eigen::Matrix<T, 3, 1>>(middle_position) -
          Eigen::Map<const Eigen::Matrix<T, 3, 1>>(start_position)) /
-        T(first_delta_time_seconds_);
+        first_delta_time_seconds_;
     const Eigen::Matrix<T, 3, 1> end_velocity =
         (Eigen::Map<const Eigen::Matrix<T, 3, 1>>(end_position) -
          Eigen::Map<const Eigen::Matrix<T, 3, 1>>(middle_position)) /
-        T(second_delta_time_seconds_);
+        second_delta_time_seconds_;
     const Eigen::Matrix<T, 3, 1> delta_velocity = end_velocity - start_velocity;
 
     (Eigen::Map<Eigen::Matrix<T, 3, 1>>(residual) =
-         T(scaling_factor_) * (imu_delta_velocity - delta_velocity));
+         scaling_factor_ * (imu_delta_velocity - delta_velocity));
     return true;
   }
 

@@ -50,7 +50,7 @@ class SpaCostFunction2D {
 
     const std::array<T, 3> error = ScaleError(
         ComputeUnscaledError(transform::Project2D(pose_.zbar_ij), c_i, c_j),
-        T(pose_.translation_weight), T(pose_.rotation_weight));
+        pose_.translation_weight, pose_.rotation_weight);
     std::copy(std::begin(error), std::end(error), e);
     return true;
   }

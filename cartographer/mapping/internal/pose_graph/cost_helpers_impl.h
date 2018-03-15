@@ -39,8 +39,8 @@ static std::array<T, 3> ComputeUnscaledError(
 }
 
 template <typename T>
-std::array<T, 3> ScaleError(std::array<T, 3> error, T translation_weight,
-                            T rotation_weight) {
+std::array<T, 3> ScaleError(std::array<T, 3> error, double translation_weight,
+                            double rotation_weight) {
   std::array<T, 3> scaled_error(std::move(error));
   scaled_error[0] *= translation_weight;
   scaled_error[1] *= translation_weight;
@@ -80,8 +80,8 @@ static std::array<T, 6> ComputeUnscaledError(
 }
 
 template <typename T>
-std::array<T, 6> ScaleError(std::array<T, 6> error, T translation_weight,
-                            T rotation_weight) {
+std::array<T, 6> ScaleError(std::array<T, 6> error, double translation_weight,
+                            double rotation_weight) {
   std::array<T, 6> scaled_error(std::move(error));
   scaled_error[0] *= translation_weight;
   scaled_error[1] *= translation_weight;
@@ -96,7 +96,7 @@ std::array<T, 6> ScaleError(std::array<T, 6> error, T translation_weight,
 //  platforms. Our own implementation is used instead.
 template <typename T>
 std::array<T, 4> SlerpQuaternions(const T* const start, const T* const end,
-                                  T factor) {
+                                  double factor) {
   // Angle 'theta' is the half-angle "between" quaternions. It can be computed
   // as the arccosine of their dot product.
   const T cos_theta = start[0] * end[0] + start[1] * end[1] +
@@ -105,8 +105,8 @@ std::array<T, 4> SlerpQuaternions(const T* const start, const T* const end,
   const T abs_cos_theta = ceres::abs(cos_theta);
   // If numerical error brings 'cos_theta' outside [-1 + epsilon, 1 - epsilon]
   // interval, then the quaternions are likely to be collinear.
-  T prev_scale = T(1.) - factor;
-  T next_scale = factor;
+  T prev_scale(1. - factor);
+  T next_scale(factor);
   if (abs_cos_theta < T(1. - 1e-5)) {
     const T theta = acos(abs_cos_theta);
     const T sin_theta = sin(theta);
@@ -129,7 +129,7 @@ InterpolateNodes3D(const T* const prev_node_rotation,
                    const double interpolation_parameter) {
   return std::make_tuple(
       SlerpQuaternions(prev_node_rotation, next_node_rotation,
-                       T(interpolation_parameter)),
+                       interpolation_parameter),
       std::array<T, 3>{
           {prev_node_translation[0] +
                interpolation_parameter *
@@ -171,7 +171,7 @@ InterpolateNodes2D(const T* const prev_node_pose,
 
   return std::make_tuple(
       SlerpQuaternions(prev_node_rotation.data(), next_node_rotation.data(),
-                       T(interpolation_parameter)),
+                       interpolation_parameter),
       std::array<T, 3>{
           {prev_node_pose[0] + interpolation_parameter *
                                    (next_node_pose[0] - prev_node_pose[0]),
