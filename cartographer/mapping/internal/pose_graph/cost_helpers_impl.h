@@ -149,8 +149,8 @@ InterpolateNodes2D(const T* const prev_node_pose,
                    const T* const next_node_pose,
                    const Eigen::Quaterniond& next_node_gravity_alignment,
                    const double interpolation_parameter) {
-  // The following is equivalent to (Embed3D(prev_pose) *
-  // Rigid3d::Rotation(prev_pose_gravity_alignment)).rotation().
+  // The following is equivalent to (Embed3D(prev_node_pose) *
+  // Rigid3d::Rotation(prev_node_gravity_alignment)).rotation().
   const Eigen::Quaternion<T> prev_quaternion(
       (Eigen::AngleAxis<T>(prev_node_pose[2], Eigen::Matrix<T, 3, 1>::UnitZ()) *
        prev_node_gravity_alignment.cast<T>())
@@ -159,8 +159,8 @@ InterpolateNodes2D(const T* const prev_node_pose,
       {prev_quaternion.w(), prev_quaternion.x(), prev_quaternion.y(),
        prev_quaternion.z()}};
 
-  // The following is equivalent to (Embed3D(next_pose) *
-  // Rigid3d::Rotation(next_pose_gravity_alignment)).rotation().
+  // The following is equivalent to (Embed3D(next_node_pose) *
+  // Rigid3d::Rotation(next_node_gravity_alignment)).rotation().
   const Eigen::Quaternion<T> next_quaternion(
       (Eigen::AngleAxis<T>(next_node_pose[2], Eigen::Matrix<T, 3, 1>::UnitZ()) *
        next_node_gravity_alignment.cast<T>())
