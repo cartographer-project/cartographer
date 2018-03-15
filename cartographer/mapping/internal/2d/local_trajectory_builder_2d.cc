@@ -34,13 +34,15 @@ static auto* kScanMatcherResidualDistanceMetric = metrics::Histogram::Null();
 static auto* kScanMatcherResidualAngleMetric = metrics::Histogram::Null();
 
 LocalTrajectoryBuilder2D::LocalTrajectoryBuilder2D(
-    const proto::LocalTrajectoryBuilderOptions2D& options)
+    const proto::LocalTrajectoryBuilderOptions2D& options,
+    const std::vector<std::string>& expected_range_sensor_ids)
     : options_(options),
       active_submaps_(options.submaps_options()),
       motion_filter_(options_.motion_filter_options()),
       real_time_correlative_scan_matcher_(
           options_.real_time_correlative_scan_matcher_options()),
-      ceres_scan_matcher_(options_.ceres_scan_matcher_options()) {}
+      ceres_scan_matcher_(options_.ceres_scan_matcher_options()),
+      range_data_collator_(expected_range_sensor_ids) {}
 
 LocalTrajectoryBuilder2D::~LocalTrajectoryBuilder2D() {}
 
@@ -101,7 +103,16 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
 
 std::unique_ptr<LocalTrajectoryBuilder2D::MatchingResult>
 LocalTrajectoryBuilder2D::AddRangeData(
-    const common::Time time, const sensor::TimedRangeData& range_data) {
+    const std::string& sensor_id,
+    const sensor::TimedPointCloudData& unsynchronized_data) {
+  auto synchronized_data =
+      range_data_collator_.AddRangeData(sensor_id, unsynchronized_data);
+  if (synchronized_data.ranges.empty()) {
+    LOG(INFO) << "Range data collator filling buffer.";
+    return nullptr;
+  }
+
+  const common::Time& time = synchronized_data.time;
   // Initialize extrapolator now if we do not ever use an IMU.
   if (!options_.use_imu_data()) {
     InitializeExtrapolator(time);
@@ -114,10 +125,12 @@ LocalTrajectoryBuilder2D::AddRangeData(
     return nullptr;
   }
 
-  CHECK(!range_data.returns.empty());
-  CHECK_EQ(range_data.returns.back()[3], 0);
+  CHECK(!synchronized_data.ranges.empty());
+  // TODO(gaschler): Check if this can strictly be 0.
+  CHECK_LE(synchronized_data.ranges.back().point_time[3], 0.f);
   const common::Time time_first_point =
-      time + common::FromSeconds(range_data.returns.front()[3]);
+      time +
+      common::FromSeconds(synchronized_data.ranges.front().point_time[3]);
   if (time_first_point < extrapolator_->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
     return nullptr;
@@ -128,10 +141,10 @@ LocalTrajectoryBuilder2D::AddRangeData(
   }
 
   std::vector<transform::Rigid3f> range_data_poses;
-  range_data_poses.reserve(range_data.returns.size());
+  range_data_poses.reserve(synchronized_data.ranges.size());
   bool warned = false;
-  for (const Eigen::Vector4f& hit : range_data.returns) {
-    common::Time time_point = time + common::FromSeconds(hit[3]);
+  for (const auto& range : synchronized_data.ranges) {
+    common::Time time_point = time + common::FromSeconds(range.point_time[3]);
     if (time_point < extrapolator_->GetLastExtrapolatedTime()) {
       if (!warned) {
         LOG(ERROR)
@@ -153,10 +166,11 @@ LocalTrajectoryBuilder2D::AddRangeData(
 
   // Drop any returns below the minimum range and convert returns beyond the
   // maximum range into misses.
-  for (size_t i = 0; i < range_data.returns.size(); ++i) {
-    const Eigen::Vector4f& hit = range_data.returns[i];
+  for (size_t i = 0; i < synchronized_data.ranges.size(); ++i) {
+    const Eigen::Vector4f& hit = synchronized_data.ranges[i].point_time;
     const Eigen::Vector3f origin_in_local =
-        range_data_poses[i] * range_data.origin;
+        range_data_poses[i] *
+        synchronized_data.origins.at(synchronized_data.ranges[i].origin_index);
     const Eigen::Vector3f hit_in_local = range_data_poses[i] * hit.head<3>();
     const Eigen::Vector3f delta = hit_in_local - origin_in_local;
     const float range = delta.norm();
@@ -176,8 +190,9 @@ LocalTrajectoryBuilder2D::AddRangeData(
     num_accumulated_ = 0;
     const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
         extrapolator_->EstimateGravityOrientation(time));
-    accumulated_range_data_.origin =
-        range_data_poses.back() * range_data.origin;
+    // TODO(gaschler): This assumes that 'range_data_poses.back()' is at time
+    // 'time'.
+    accumulated_range_data_.origin = range_data_poses.back().translation();
     return AddAccumulatedRangeData(
         time,
         TransformToGravityAlignedFrameAndFilter(
