@@ -56,10 +56,7 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
         << "Cannot add TimedPointCloudData without a LocalTrajectoryBuilder.";
     std::unique_ptr<typename LocalTrajectoryBuilder::MatchingResult>
         matching_result = local_trajectory_builder_->AddRangeData(
-            timed_point_cloud_data.time,
-            sensor::TimedRangeData{timed_point_cloud_data.origin,
-                                   timed_point_cloud_data.ranges,
-                                   {}});
+            sensor_id, timed_point_cloud_data);
     if (matching_result == nullptr) {
       // The range data has not been fully accumulated yet.
       return;

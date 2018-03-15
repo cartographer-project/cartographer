@@ -49,6 +49,17 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
   return options;
 }
 
+std::vector<std::string> SelectRangeSensorIds(
+    const std::set<MapBuilder::SensorId>& expected_sensor_ids) {
+  std::vector<std::string> range_sensor_ids;
+  for (const MapBuilder::SensorId& sensor_id : expected_sensor_ids) {
+    if (sensor_id.type == MapBuilder::SensorId::SensorType::RANGE) {
+      range_sensor_ids.push_back(sensor_id.id);
+    }
+  }
+  return range_sensor_ids;
+}
+
 MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
   if (options.use_trajectory_builder_2d()) {
@@ -81,7 +92,8 @@ int MapBuilder::AddTrajectoryBuilder(
     std::unique_ptr<LocalTrajectoryBuilder3D> local_trajectory_builder;
     if (trajectory_options.has_trajectory_builder_3d_options()) {
       local_trajectory_builder = common::make_unique<LocalTrajectoryBuilder3D>(
-          trajectory_options.trajectory_builder_3d_options());
+          trajectory_options.trajectory_builder_3d_options(),
+          SelectRangeSensorIds(expected_sensor_ids));
     }
     DCHECK(dynamic_cast<PoseGraph3D*>(pose_graph_.get()));
     trajectory_builders_.push_back(
@@ -95,7 +107,8 @@ int MapBuilder::AddTrajectoryBuilder(
     std::unique_ptr<LocalTrajectoryBuilder2D> local_trajectory_builder;
     if (trajectory_options.has_trajectory_builder_2d_options()) {
       local_trajectory_builder = common::make_unique<LocalTrajectoryBuilder2D>(
-          trajectory_options.trajectory_builder_2d_options());
+          trajectory_options.trajectory_builder_2d_options(),
+          SelectRangeSensorIds(expected_sensor_ids));
     }
     DCHECK(dynamic_cast<PoseGraph2D*>(pose_graph_.get()));
     trajectory_builders_.push_back(
