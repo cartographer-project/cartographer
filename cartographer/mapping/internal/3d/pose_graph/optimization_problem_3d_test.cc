@@ -169,7 +169,7 @@ TEST_F(OptimizationProblem3DTest, ReducesNoise) {
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap2Transform);
-  const std::set<int> kFrozen;
+  const std::set<int> kFrozen = {};
   optimization_problem_.Solve(constraints, kFrozen, {});
 
   double translation_error_after = 0.;
