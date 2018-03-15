@@ -58,8 +58,10 @@ namespace mapping {
 // All constraints are between a submap i and a node j.
 class PoseGraph3D : public PoseGraph {
  public:
-  PoseGraph3D(const proto::PoseGraphOptions& options,
-              common::ThreadPool* thread_pool);
+  PoseGraph3D(
+      const proto::PoseGraphOptions& options,
+      std::unique_ptr<pose_graph::OptimizationProblem3D> optimization_problem,
+      common::ThreadPool* thread_pool);
   ~PoseGraph3D() override;
 
   PoseGraph3D(const PoseGraph3D&) = delete;
@@ -235,7 +237,7 @@ class PoseGraph3D : public PoseGraph {
   void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
-  pose_graph::OptimizationProblem3D optimization_problem_;
+  std::unique_ptr<pose_graph::OptimizationProblem3D> optimization_problem_;
   pose_graph::ConstraintBuilder3D constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
