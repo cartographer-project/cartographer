@@ -191,8 +191,7 @@ class PoseGraph3D : public PoseGraph {
   // Computes the local to global map frame transform based on the given
   // 'global_submap_poses'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const MapById<SubmapId, pose_graph::OptimizationProblem3D::SubmapData>&
-          global_submap_poses,
+      const MapById<SubmapId, pose_graph::SubmapData3D>& global_submap_poses,
       int trajectory_id) const REQUIRES(mutex_);
 
   PoseGraph::SubmapData GetSubmapDataUnderLock(const SubmapId& submap_id)
@@ -248,8 +247,8 @@ class PoseGraph3D : public PoseGraph {
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Global submap poses currently used for displaying data.
-  MapById<SubmapId, pose_graph::OptimizationProblem3D::SubmapData>
-      global_submap_poses_ GUARDED_BY(mutex_);
+  MapById<SubmapId, pose_graph::SubmapData3D> global_submap_poses_
+      GUARDED_BY(mutex_);
 
   // Global landmark poses with all observations.
   std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>

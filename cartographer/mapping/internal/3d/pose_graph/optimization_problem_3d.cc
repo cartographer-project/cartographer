@@ -52,8 +52,8 @@ namespace {
 using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
 using TrajectoryData =
     ::cartographer::mapping::PoseGraphInterface::TrajectoryData;
-using NodeData = OptimizationProblem3D::NodeData;
-using SubmapData = OptimizationProblem3D::SubmapData;
+using NodeData = NodeData3D;
+using SubmapData = SubmapData3D;
 
 // For odometry.
 std::unique_ptr<transform::Rigid3d> Interpolate(

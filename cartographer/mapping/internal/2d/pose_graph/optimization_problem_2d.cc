@@ -42,8 +42,8 @@ namespace {
 
 using ::cartographer::mapping::pose_graph::CeresPose;
 using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
-using NodeData = OptimizationProblem2D::NodeData;
-using SubmapData = OptimizationProblem2D::SubmapData;
+using NodeData = NodeData2D;
+using SubmapData = SubmapData2D;
 
 // Converts a pose into the 3 optimization variable format used for Ceres:
 // translation in x and y, followed by the rotation angle representing the

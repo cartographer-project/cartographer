@@ -42,9 +42,6 @@ class OptimizationProblemInterface {
  public:
   using Constraint = PoseGraphInterface::Constraint;
   using LandmarkNode = PoseGraphInterface::LandmarkNode;
-  using NodeData = NodeDataType;
-  using SubmapData = SubmapDataType;
-  using RigidTransform = RigidTransformType;
 
   OptimizationProblemInterface() {}
   virtual ~OptimizationProblemInterface() {}
@@ -63,9 +60,9 @@ class OptimizationProblemInterface {
                                     const NodeDataType& node_data) = 0;
   virtual void TrimTrajectoryNode(const NodeId& node_id) = 0;
   virtual void AddSubmap(int trajectory_id,
-                         const RigidTransform& global_submap_pose) = 0;
+                         const RigidTransformType& global_submap_pose) = 0;
   virtual void InsertSubmap(const SubmapId& submap_id,
-                            const RigidTransform& global_submap_pose) = 0;
+                            const RigidTransformType& global_submap_pose) = 0;
   virtual void TrimSubmap(const SubmapId& submap_id) = 0;
   virtual void SetMaxNumIterations(int32 max_num_iterations) = 0;
 
@@ -75,8 +72,8 @@ class OptimizationProblemInterface {
       const std::set<int>& frozen_trajectories,
       const std::map<std::string, LandmarkNode>& landmark_nodes) = 0;
 
-  virtual const MapById<NodeId, NodeData>& node_data() const = 0;
-  virtual const MapById<SubmapId, SubmapData>& submap_data() const = 0;
+  virtual const MapById<NodeId, NodeDataType>& node_data() const = 0;
+  virtual const MapById<SubmapId, SubmapDataType>& submap_data() const = 0;
   virtual const std::map<std::string, transform::Rigid3d>& landmark_data()
       const = 0;
   virtual const sensor::MapByTime<sensor::ImuData>& imu_data() const = 0;
