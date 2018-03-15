@@ -60,24 +60,16 @@ class LandmarkCostFunction3D {
                   const T* const next_node_translation,
                   const T* const landmark_rotation,
                   const T* const landmark_translation, T* const e) const {
-    const std::array<T, 3> interpolated_pose_translation{
-        {prev_node_translation[0] +
-             interpolation_parameter_ *
-                 (next_node_translation[0] - prev_node_translation[0]),
-         prev_node_translation[1] +
-             interpolation_parameter_ *
-                 (next_node_translation[1] - prev_node_translation[1]),
-         prev_node_translation[2] +
-             interpolation_parameter_ *
-                 (next_node_translation[2] - prev_node_translation[2])}};
-    const std::array<T, 4> interpolated_pose_rotation = SlerpQuaternions(
-        prev_node_rotation, next_node_rotation, T(interpolation_parameter_));
-
+    const std::tuple<std::array<T, 4>, std::array<T, 3>>
+        interpolated_rotation_and_translation = InterpolateNodes3D(
+            prev_node_rotation, prev_node_translation, next_node_rotation,
+            next_node_translation, interpolation_parameter_);
     const std::array<T, 6> error = ScaleError(
-        ComputeUnscaledError(landmark_to_tracking_transform_,
-                             interpolated_pose_rotation.data(),
-                             interpolated_pose_translation.data(),
-                             landmark_rotation, landmark_translation),
+        ComputeUnscaledError(
+            landmark_to_tracking_transform_,
+            std::get<0>(interpolated_rotation_and_translation).data(),
+            std::get<1>(interpolated_rotation_and_translation).data(),
+            landmark_rotation, landmark_translation),
         T(translation_weight_), T(rotation_weight_));
     std::copy(std::begin(error), std::end(error), e);
     return true;
