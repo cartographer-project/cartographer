@@ -32,7 +32,10 @@ class PoseGraph3DForTesting : public PoseGraph3D {
  public:
   PoseGraph3DForTesting(const proto::PoseGraphOptions& options,
                         common::ThreadPool* thread_pool)
-      : PoseGraph3D(options, thread_pool) {}
+      : PoseGraph3D(options,
+                    common::make_unique<pose_graph::OptimizationProblem3D>(
+                        options.optimization_problem_options()),
+                    thread_pool) {}
 
   void WaitForAllComputations() { PoseGraph3D::WaitForAllComputations(); }
 };

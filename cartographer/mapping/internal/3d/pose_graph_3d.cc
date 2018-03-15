@@ -39,12 +39,12 @@
 namespace cartographer {
 namespace mapping {
 
-PoseGraph3D::PoseGraph3D(const proto::PoseGraphOptions& options,
-                         common::ThreadPool* thread_pool)
+PoseGraph3D::PoseGraph3D(
+    const proto::PoseGraphOptions& options,
+    std::unique_ptr<pose_graph::OptimizationProblem3D> optimization_problem,
+    common::ThreadPool* thread_pool)
     : options_(options),
-      optimization_problem_(
-          common::make_unique<pose_graph::OptimizationProblem3D>(
-              options_.optimization_problem_options())),
+      optimization_problem_(std::move(optimization_problem)),
       constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
 
 PoseGraph3D::~PoseGraph3D() {

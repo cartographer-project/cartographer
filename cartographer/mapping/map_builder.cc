@@ -53,11 +53,17 @@ MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
   if (options.use_trajectory_builder_2d()) {
     pose_graph_ = common::make_unique<PoseGraph2D>(
-        options_.pose_graph_options(), &thread_pool_);
+        options_.pose_graph_options(),
+        common::make_unique<pose_graph::OptimizationProblem2D>(
+            options_.pose_graph_options().optimization_problem_options()),
+        &thread_pool_);
   }
   if (options.use_trajectory_builder_3d()) {
     pose_graph_ = common::make_unique<PoseGraph3D>(
-        options_.pose_graph_options(), &thread_pool_);
+        options_.pose_graph_options(),
+        common::make_unique<pose_graph::OptimizationProblem3D>(
+            options_.pose_graph_options().optimization_problem_options()),
+        &thread_pool_);
   }
   if (options.collate_by_trajectory()) {
     sensor_collator_ = common::make_unique<sensor::TrajectoryCollator>();
