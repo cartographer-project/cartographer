@@ -69,7 +69,7 @@ class LandmarkCostFunction3D {
             std::get<0>(interpolated_rotation_and_translation).data(),
             std::get<1>(interpolated_rotation_and_translation).data(),
             landmark_rotation, landmark_translation),
-        T(translation_weight_), T(rotation_weight_));
+        translation_weight_, rotation_weight_);
     std::copy(std::begin(error), std::end(error), e);
     return true;
   }

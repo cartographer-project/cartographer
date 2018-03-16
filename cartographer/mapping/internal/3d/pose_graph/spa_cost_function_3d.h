@@ -50,7 +50,7 @@ class SpaCostFunction3D {
     const std::array<T, 6> error = ScaleError(
         ComputeUnscaledError(pose_.zbar_ij, c_i_rotation, c_i_translation,
                              c_j_rotation, c_j_translation),
-        T(pose_.translation_weight), T(pose_.rotation_weight));
+        pose_.translation_weight, pose_.rotation_weight);
     std::copy(std::begin(error), std::end(error), e);
     return true;
   }
