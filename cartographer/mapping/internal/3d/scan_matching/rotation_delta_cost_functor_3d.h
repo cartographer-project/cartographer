@@ -44,7 +44,7 @@ class RotationDeltaCostFunctor3D {
   bool operator()(const T* const rotation_quaternion, T* residual) const {
     std::array<T, 4> delta;
     common::QuaternionProduct(target_rotation_inverse_, rotation_quaternion,
-                              delta);
+                              delta.data());
     // Will compute the squared norm of the imaginary component of the delta
     // quaternion which is sin(phi/2)^2.
     residual[0] = scaling_factor_ * delta[1];
