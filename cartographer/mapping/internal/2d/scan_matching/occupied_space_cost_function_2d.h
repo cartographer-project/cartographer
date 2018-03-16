@@ -59,14 +59,14 @@ class OccupiedSpaceCostFunction2D {
 
     for (size_t i = 0; i < point_cloud_.size(); ++i) {
       // Note that this is a 2D point. The third component is a scaling factor.
-      const Eigen::Matrix<T, 3, 1> point((T(point_cloud_[i].x())),
-                                         (T(point_cloud_[i].y())), T(1.));
+      const Eigen::Matrix<double, 3, 1> point((point_cloud_[i].x()),
+                                         (point_cloud_[i].y()), 1.);
       const Eigen::Matrix<T, 3, 1> world = transform * point;
       interpolator.Evaluate(
           (limits.max().x() - world[0]) / limits.resolution() - 0.5 +
-              T(kPadding),
+              double(kPadding),
           (limits.max().y() - world[1]) / limits.resolution() - 0.5 +
-              T(kPadding),
+              double(kPadding),
           &residual[i]);
       residual[i] = scaling_factor_ * (1. - residual[i]);
     }

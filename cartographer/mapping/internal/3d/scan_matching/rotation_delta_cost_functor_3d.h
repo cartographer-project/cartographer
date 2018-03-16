@@ -20,6 +20,7 @@
 #include <cmath>
 
 #include "Eigen/Core"
+#include "cartographer/common/math.h"
 #include "ceres/ceres.h"
 #include "ceres/rotation.h"
 
@@ -42,11 +43,8 @@ class RotationDeltaCostFunctor3D {
   template <typename T>
   bool operator()(const T* const rotation_quaternion, T* residual) const {
     T delta[4];
-    T target_rotation_inverse[4] = {
-        T(target_rotation_inverse_[0]), T(target_rotation_inverse_[1]),
-        T(target_rotation_inverse_[2]), T(target_rotation_inverse_[3])};
-    ceres::QuaternionProduct(target_rotation_inverse, rotation_quaternion,
-                             delta);
+    cartographer::common::QuaternionProduct(
+        target_rotation_inverse_, rotation_quaternion, delta);
     // Will compute the squared norm of the imaginary component of the delta
     // quaternion which is sin(phi/2)^2.
     residual[0] = scaling_factor_ * delta[1];
