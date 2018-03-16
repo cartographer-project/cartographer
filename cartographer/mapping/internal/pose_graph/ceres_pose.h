@@ -39,7 +39,10 @@ class CeresPose {
   const transform::Rigid3d ToRigid() const;
 
   double* translation() { return data_->translation.data(); }
+  const double* translation() const { return data_->translation.data(); }
+
   double* rotation() { return data_->rotation.data(); }
+  const double* rotation() const { return data_->rotation.data(); }
 
  private:
   struct Data {

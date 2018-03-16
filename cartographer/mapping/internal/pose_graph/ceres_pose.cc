@@ -37,10 +37,7 @@ CeresPose::CeresPose(
 }
 
 const transform::Rigid3d CeresPose::ToRigid() const {
-  const auto& rotation = data_->rotation;
-  return transform::Rigid3d(
-      Eigen::Map<const Eigen::Vector3d>(data_->translation.data()),
-      Eigen::Quaterniond(rotation[0], rotation[1], rotation[2], rotation[3]));
+  return transform::Rigid3d::FromArrays(data_->rotation, data_->translation);
 }
 
 }  // namespace pose_graph
