@@ -812,6 +812,16 @@ int PoseGraph3D::TrimmingHandle::num_submaps(const int trajectory_id) const {
   return submap_data.SizeOfTrajectoryOrZero(trajectory_id);
 }
 
+std::vector<SubmapId> PoseGraph3D::TrimmingHandle::GetSubmapIds(
+    int trajectory_id) const {
+  std::vector<SubmapId> submap_ids;
+  const auto& submap_data = parent_->optimization_problem_->submap_data();
+  for (const auto& it : submap_data.trajectory(trajectory_id)) {
+    submap_ids.push_back(it.id);
+  }
+  return submap_ids;
+}
+
 bool PoseGraph3D::TrimmingHandle::IsFinished(const int trajectory_id) const {
   return parent_->IsTrajectoryFinished(trajectory_id);
 }
