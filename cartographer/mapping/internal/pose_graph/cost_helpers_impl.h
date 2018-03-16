@@ -34,8 +34,8 @@ static std::array<T, 3> ComputeUnscaledError(
                   end[2] - start[2]};
   return {{relative_pose.translation().x() - h[0],
            relative_pose.translation().y() - h[1],
-           common::NormalizeAngleDifference(
-               relative_pose.rotation().angle() - h[2])}};
+           common::NormalizeAngleDifference(relative_pose.rotation().angle() -
+                                            h[2])}};
 }
 
 template <typename T>

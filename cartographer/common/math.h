@@ -74,8 +74,8 @@ T atan2(const Eigen::Matrix<T, 2, 1>& vector) {
   return ceres::atan2(vector.y(), vector.x());
 }
 
-template<typename T> inline
-void QuaternionProduct(const double z[4], const T w[4], T zw[4]) {
+template <typename T>
+inline void QuaternionProduct(const double z[4], const T w[4], T zw[4]) {
   zw[0] = z[0] * w[0] - z[1] * w[1] - z[2] * w[2] - z[3] * w[3];
   zw[1] = z[0] * w[1] + z[1] * w[0] + z[2] * w[3] - z[3] * w[2];
   zw[2] = z[0] * w[2] - z[1] * w[3] + z[2] * w[0] + z[3] * w[1];
