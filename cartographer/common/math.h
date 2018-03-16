@@ -61,10 +61,10 @@ constexpr double RadToDeg(double rad) { return 180. * rad / M_PI; }
 template <typename T>
 T NormalizeAngleDifference(T difference) {
   while (difference > M_PI) {
-    difference -= T(2. * M_PI);
+    difference -= 2. * M_PI;
   }
   while (difference < -M_PI) {
-    difference += T(2. * M_PI);
+    difference += 2. * M_PI;
   }
   return difference;
 }
@@ -72,6 +72,15 @@ T NormalizeAngleDifference(T difference) {
 template <typename T>
 T atan2(const Eigen::Matrix<T, 2, 1>& vector) {
   return ceres::atan2(vector.y(), vector.x());
+}
+
+template <typename T>
+inline void QuaternionProduct(const double* const z, const T* const w,
+                              T* const zw) {
+  zw[0] = z[0] * w[0] - z[1] * w[1] - z[2] * w[2] - z[3] * w[3];
+  zw[1] = z[0] * w[1] + z[1] * w[0] + z[2] * w[3] - z[3] * w[2];
+  zw[2] = z[0] * w[2] - z[1] * w[3] + z[2] * w[0] + z[3] * w[1];
+  zw[3] = z[0] * w[3] + z[1] * w[2] - z[2] * w[1] + z[3] * w[0];
 }
 
 }  // namespace common
