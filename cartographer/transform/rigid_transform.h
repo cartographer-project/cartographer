@@ -144,6 +144,13 @@ class Rigid3 {
     return Rigid3(vector, Quaternion::Identity());
   }
 
+  static Rigid3 FromArrays(const std::array<FloatType, 4>& rotation,
+                           const std::array<FloatType, 3>& translation) {
+    return Rigid3(Eigen::Map<const Vector>(translation.data()),
+                  Eigen::Quaternion<FloatType>(rotation[0], rotation[1],
+                                               rotation[2], rotation[3]));
+  }
+
   static Rigid3<FloatType> Identity() { return Rigid3<FloatType>(); }
 
   template <typename OtherType>
