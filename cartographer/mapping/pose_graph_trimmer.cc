@@ -33,7 +33,7 @@ void PureLocalizationTrimmer::Trim(Trimmable* const pose_graph) {
   }
 
   auto submap_ids = pose_graph->GetSubmapIds(trajectory_id_);
-  for (int i = 0; i + num_submaps_to_keep_ < submap_ids.size(); ++i) {
+  for (std::size_t i = 0; i + num_submaps_to_keep_ < submap_ids.size(); ++i) {
     pose_graph->MarkSubmapAsTrimmed(submap_ids.at(i));
   }
 

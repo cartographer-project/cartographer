@@ -26,16 +26,30 @@
 
 namespace cartographer {
 namespace mapping {
+namespace pose_graph {
+
+class FakeOptimizationProblem3D : public OptimizationProblem3D {
+ public:
+  FakeOptimizationProblem3D()
+      : OptimizationProblem3D(proto::OptimizationProblemOptions{}) {}
+  ~FakeOptimizationProblem3D() override = default;
+  void Solve(
+      const std::vector<Constraint>& constraints,
+      const std::set<int>& frozen_trajectories,
+      const std::map<std::string, LandmarkNode>& landmark_nodes) override {}
+};
+
+}  // namespace pose_graph
+
 namespace {
 
 class PoseGraph3DForTesting : public PoseGraph3D {
  public:
-  PoseGraph3DForTesting(const proto::PoseGraphOptions& options,
-                        common::ThreadPool* thread_pool)
-      : PoseGraph3D(options,
-                    common::make_unique<pose_graph::OptimizationProblem3D>(
-                        options.optimization_problem_options()),
-                    thread_pool) {}
+  PoseGraph3DForTesting(
+      const proto::PoseGraphOptions& options,
+      std::unique_ptr<pose_graph::OptimizationProblem3D> optimization_problem,
+      common::ThreadPool* thread_pool)
+      : PoseGraph3D(options, std::move(optimization_problem), thread_pool) {}
 
   void WaitForAllComputations() { PoseGraph3D::WaitForAllComputations(); }
 };
@@ -51,8 +65,23 @@ class PoseGraph3DTest : public ::testing::Test {
       return POSE_GRAPH)text";
     auto pose_graph_parameters = test::ResolveLuaParameters(kPoseGraphLua);
     pose_graph_options_ = CreatePoseGraphOptions(pose_graph_parameters.get());
+  }
+
+  void BuildPoseGraph() {
+    auto optimization_problem =
+        common::make_unique<pose_graph::OptimizationProblem3D>(
+            pose_graph_options_.optimization_problem_options());
     pose_graph_ = common::make_unique<PoseGraph3DForTesting>(
-        pose_graph_options_, thread_pool_.get());
+        pose_graph_options_, std::move(optimization_problem),
+        thread_pool_.get());
+  }
+
+  void BuildPoseGraphWithFakeOptimization() {
+    auto optimization_problem =
+        common::make_unique<pose_graph::FakeOptimizationProblem3D>();
+    pose_graph_ = common::make_unique<PoseGraph3DForTesting>(
+        pose_graph_options_, std::move(optimization_problem),
+        thread_pool_.get());
   }
 
   proto::PoseGraphOptions pose_graph_options_;
@@ -61,6 +90,7 @@ class PoseGraph3DTest : public ::testing::Test {
 };
 
 TEST_F(PoseGraph3DTest, Empty) {
+  BuildPoseGraph();
   pose_graph_->WaitForAllComputations();
   EXPECT_TRUE(pose_graph_->GetAllSubmapData().empty());
   EXPECT_TRUE(pose_graph_->constraints().empty());
@@ -75,6 +105,7 @@ TEST_F(PoseGraph3DTest, Empty) {
 }
 
 TEST_F(PoseGraph3DTest, BasicSerialization) {
+  BuildPoseGraph();
   proto::PoseGraph proto;
   auto fake_node = test::CreateFakeNode();
   test::AddToProtoGraph(fake_node, &proto);
@@ -98,6 +129,65 @@ TEST_F(PoseGraph3DTest, BasicSerialization) {
       proto.trajectory(0), actual_proto.trajectory(0)));
   EXPECT_TRUE(
       google::protobuf::util::MessageDifferencer::Equals(proto, actual_proto));
+}
+
+TEST_F(PoseGraph3DTest, PureLocalizationTrimmer) {
+  BuildPoseGraphWithFakeOptimization();
+  const int trajectory_id = 2;
+  const int num_submaps_to_create = 5;
+  const int num_submaps_to_keep = 3;
+  const int num_nodes_per_submap = 2;
+  for (int i = 0; i < num_submaps_to_create; ++i) {
+    int submap_index = 42 + i;
+    auto submap = test::CreateFakeSubmap3D(trajectory_id, submap_index);
+    pose_graph_->AddSubmapFromProto(transform::Rigid3d::Identity(), submap);
+    for (int j = 0; j < num_nodes_per_submap; ++j) {
+      int node_index = 7 + num_nodes_per_submap * i + j;
+      auto node = test::CreateFakeNode(trajectory_id, node_index);
+      pose_graph_->AddNodeFromProto(transform::Rigid3d::Identity(), node);
+      proto::PoseGraph proto;
+      auto constraint = test::CreateFakeConstraint(node, submap);
+      // TODO(gaschler): Also remove inter constraints when all references are
+      // gone.
+      constraint.set_tag(proto::PoseGraph::Constraint::INTRA_SUBMAP);
+      test::AddToProtoGraph(constraint, &proto);
+      pose_graph_->AddSerializedConstraints(FromProto(proto.constraint()));
+    }
+  }
+  pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
+      trajectory_id, num_submaps_to_keep));
+  pose_graph_->WaitForAllComputations();
+  EXPECT_EQ(
+      pose_graph_->GetAllSubmapPoses().SizeOfTrajectoryOrZero(trajectory_id),
+      num_submaps_to_create);
+  EXPECT_EQ(
+      pose_graph_->GetAllSubmapData().SizeOfTrajectoryOrZero(trajectory_id),
+      num_submaps_to_create);
+  EXPECT_EQ(
+      pose_graph_->GetTrajectoryNodes().SizeOfTrajectoryOrZero(trajectory_id),
+      num_nodes_per_submap * num_submaps_to_create);
+  EXPECT_EQ(pose_graph_->GetTrajectoryNodePoses().SizeOfTrajectoryOrZero(
+                trajectory_id),
+            num_nodes_per_submap * num_submaps_to_create);
+  EXPECT_EQ(pose_graph_->constraints().size(),
+            num_nodes_per_submap * num_submaps_to_create);
+  for (int i = 0; i < 2; ++i) {
+    pose_graph_->RunFinalOptimization();
+    EXPECT_EQ(
+        pose_graph_->GetAllSubmapPoses().SizeOfTrajectoryOrZero(trajectory_id),
+        num_submaps_to_keep);
+    EXPECT_EQ(
+        pose_graph_->GetAllSubmapData().SizeOfTrajectoryOrZero(trajectory_id),
+        num_submaps_to_keep);
+    EXPECT_EQ(
+        pose_graph_->GetTrajectoryNodes().SizeOfTrajectoryOrZero(trajectory_id),
+        num_nodes_per_submap * num_submaps_to_keep);
+    EXPECT_EQ(pose_graph_->GetTrajectoryNodePoses().SizeOfTrajectoryOrZero(
+                  trajectory_id),
+              num_nodes_per_submap * num_submaps_to_keep);
+    EXPECT_EQ(pose_graph_->constraints().size(),
+              num_nodes_per_submap * num_submaps_to_keep);
+  }
 }
 
 }  // namespace
