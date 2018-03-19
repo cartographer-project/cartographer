@@ -125,6 +125,8 @@ class PoseGraph3D : public PoseGraph {
       EXCLUDES(mutex_);
   sensor::MapByTime<sensor::FixedFramePoseData> GetFixedFramePoseData() override
       EXCLUDES(mutex_);
+  std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
+  GetLandmarkNodes() override EXCLUDES(mutex_);
   std::map<int, TrajectoryData> GetTrajectoryData() override;
 
   std::vector<Constraint> constraints() override EXCLUDES(mutex_);

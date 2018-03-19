@@ -684,6 +684,12 @@ PoseGraph3D::GetFixedFramePoseData() {
   return optimization_problem_->fixed_frame_pose_data();
 }
 
+std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
+PoseGraph3D::GetLandmarkNodes() {
+  common::MutexLocker locker(&mutex_);
+  return landmark_nodes_;
+}
+
 std::map<int, PoseGraphInterface::TrajectoryData>
 PoseGraph3D::GetTrajectoryData() {
   common::MutexLocker locker(&mutex_);

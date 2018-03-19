@@ -129,6 +129,10 @@ class PoseGraph : public PoseGraphInterface {
   virtual sensor::MapByTime<sensor::FixedFramePoseData>
   GetFixedFramePoseData() = 0;
 
+  // Returns the landmark data.
+  virtual std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
+  GetLandmarkNodes() = 0;
+
   // Sets a relative initial pose 'relative_pose' for 'from_trajectory_id' with
   // respect to 'to_trajectory_id' at time 'time'.
   virtual void SetInitialTrajectoryPose(int from_trajectory_id,

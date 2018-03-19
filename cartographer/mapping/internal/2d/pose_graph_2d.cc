@@ -635,6 +635,12 @@ sensor::MapByTime<sensor::OdometryData> PoseGraph2D::GetOdometryData() {
   return optimization_problem_->odometry_data();
 }
 
+std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
+PoseGraph2D::GetLandmarkNodes() {
+  common::MutexLocker locker(&mutex_);
+  return landmark_nodes_;
+}
+
 std::map<int, PoseGraphInterface::TrajectoryData>
 PoseGraph2D::GetTrajectoryData() {
   return {};  // Not implemented yet in 2D.
