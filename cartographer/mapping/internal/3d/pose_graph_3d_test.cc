@@ -71,7 +71,6 @@ class PoseGraph3DTest : public ::testing::Test {
     auto optimization_problem =
         common::make_unique<pose_graph::OptimizationProblem3D>(
             pose_graph_options_.optimization_problem_options());
-    optimization_problem_ = optimization_problem.get();
     pose_graph_ = common::make_unique<PoseGraph3DForTesting>(
         pose_graph_options_, std::move(optimization_problem),
         thread_pool_.get());
@@ -80,7 +79,6 @@ class PoseGraph3DTest : public ::testing::Test {
   void BuildPoseGraphWithFakeOptimization() {
     auto optimization_problem =
         common::make_unique<pose_graph::FakeOptimizationProblem3D>();
-    optimization_problem_ = optimization_problem.get();
     pose_graph_ = common::make_unique<PoseGraph3DForTesting>(
         pose_graph_options_, std::move(optimization_problem),
         thread_pool_.get());
@@ -88,7 +86,6 @@ class PoseGraph3DTest : public ::testing::Test {
 
   proto::PoseGraphOptions pose_graph_options_;
   std::unique_ptr<common::ThreadPool> thread_pool_;
-  pose_graph::OptimizationProblem3D* optimization_problem_;
   std::unique_ptr<PoseGraph3DForTesting> pose_graph_;
 };
 
