@@ -286,7 +286,29 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
       writer->WriteProto(proto);
     }
   }
-  // TODO(pifon2a, ojura): serialize landmarks
+  // Next we serialize all landmark data.
+  {
+    const std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
+        all_landmark_nodes = pose_graph_->GetLandmarkNodes();
+    for (const auto& node : all_landmark_nodes) {
+      for (const auto& observation : node.second.landmark_observations) {
+        proto::SerializedData proto;
+        auto* landmark_data_proto = proto.mutable_landmark_data();
+        landmark_data_proto->set_trajectory_id(observation.trajectory_id);
+        landmark_data_proto->mutable_landmark_data()->set_timestamp(
+            common::ToUniversal(observation.time));
+        auto* observation_proto = landmark_data_proto->mutable_landmark_data()
+                                      ->add_landmark_observations();
+        observation_proto->set_id(node.first);
+        *observation_proto->mutable_landmark_to_tracking_transform() =
+            transform::ToProto(observation.landmark_to_tracking_transform);
+        observation_proto->set_translation_weight(
+            observation.translation_weight);
+        observation_proto->set_rotation_weight(observation.rotation_weight);
+        writer->WriteProto(proto);
+      }
+    }
+  }
 }
 
 void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
