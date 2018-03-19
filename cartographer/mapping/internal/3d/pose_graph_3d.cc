@@ -659,6 +659,7 @@ MapById<NodeId, TrajectoryNodePose> PoseGraph3D::GetTrajectoryNodePoses() {
 
 std::map<std::string, transform::Rigid3d> PoseGraph3D::GetLandmarkPoses() {
   std::map<std::string, transform::Rigid3d> landmark_poses;
+  common::MutexLocker locker(&mutex_);
   for (const auto& landmark : landmark_nodes_) {
     // Landmark without value has not been optimized yet.
     if (!landmark.second.global_landmark_pose.has_value()) continue;
