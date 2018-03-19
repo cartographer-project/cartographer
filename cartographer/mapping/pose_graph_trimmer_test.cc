@@ -27,10 +27,19 @@ namespace {
 
 class FakePoseGraph : public Trimmable {
  public:
+  FakePoseGraph(int trajectory_id, int num_submaps) {
+    for (int index = 0; index < num_submaps; ++index) {
+      submaps_.push_back(SubmapId{trajectory_id, index});
+    }
+  }
   ~FakePoseGraph() override {}
 
   int num_submaps(const int trajectory_id) const override {
-    return 17 - trimmed_submaps_.size();
+    return submaps_.size() - trimmed_submaps_.size();
+  }
+
+  std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override {
+    return submaps_;
   }
 
   void MarkSubmapAsTrimmed(const SubmapId& submap_id) override {
@@ -42,13 +51,14 @@ class FakePoseGraph : public Trimmable {
   std::vector<SubmapId> trimmed_submaps() { return trimmed_submaps_; }
 
  private:
+  std::vector<SubmapId> submaps_;
   std::vector<SubmapId> trimmed_submaps_;
 };
 
 TEST(PureLocalizationTrimmerTest, MarksSubmapsAsExpected) {
   const int kTrajectoryId = 42;
   PureLocalizationTrimmer trimmer(kTrajectoryId, 15);
-  FakePoseGraph fake_pose_graph;
+  FakePoseGraph fake_pose_graph(kTrajectoryId, 17);
   trimmer.Trim(&fake_pose_graph);
 
   const auto trimmed_submaps = fake_pose_graph.trimmed_submaps();
