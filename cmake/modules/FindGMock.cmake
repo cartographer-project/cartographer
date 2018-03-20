@@ -12,58 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find_path(GMOCK_INCLUDE_DIRS gmock/gmock.h
-  HINTS
-    ENV GMOCK_DIR
-  PATH_SUFFIXES include
-  PATHS
-    /usr
-)
-
-# Find system-wide installed gmock.
-find_library(GMOCK_LIBRARIES
-  NAMES gmock_main
-  HINTS
-    ENV GMOCK_DIR
-  PATH_SUFFIXES lib
-  PATHS
-    /usr
-)
-
-# Find system-wide gtest header.
-find_path(GTEST_INCLUDE_DIRS gtest/gtest.h
-  HINTS
-    ENV GTEST_DIR
-  PATH_SUFFIXES include
-  PATHS
-    /usr
-)
-list(APPEND GMOCK_INCLUDE_DIRS ${GTEST_INCLUDE_DIRS})
-
-if(NOT GMOCK_LIBRARIES)
-  # If no system-wide gmock found, then find src version.
-  # Ubuntu might have this.
-  find_path(GMOCK_SRC_DIR src/gmock.cc
-    HINTS
-      ENV GMOCK_DIR
-    PATHS
-      /usr/src/googletest/googlemock
-      /usr/src/gmock
-  )
-  if(GMOCK_SRC_DIR)
-    # If src version found, build it.
-    add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
-    # The next line is needed for Ubuntu Trusty.
-    set(GMOCK_INCLUDE_DIRS "${GMOCK_SRC_DIR}/gtest/include")
+if(NOT TARGET gmock_main)
+    include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
+    set(GTEST_PROJECT_NAME external-gmock)
+    ExternalProject_Add(
+      ${GTEST_PROJECT_NAME}
+      CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}
+      URL https://github.com/google/googletest/archive/release-1.8.0.zip
+    )
+    add_library(gmock_main STATIC IMPORTED)
+    set_target_properties(
+      gmock_main PROPERTIES IMPORTED_LOCATION
+      ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}gmock_main${CMAKE_STATIC_LIBRARY_SUFFIX}
+    )
+        # do not install!
+        # add imported include location!
+    add_dependencies(gmock_main ${GTEST_PROJECT_NAME})
     set(GMOCK_LIBRARIES gmock_main)
-  endif()
+    set(GMOCK_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/include)
 endif()
-
-# System-wide installed gmock library might require pthreads.
-find_package(Threads REQUIRED)
-list(APPEND GMOCK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
-
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GMock DEFAULT_MSG GMOCK_LIBRARIES
-                                  GMOCK_INCLUDE_DIRS)
+        GMOCK_INCLUDE_DIRS)
+
 
