@@ -47,7 +47,7 @@ const std::string kMessage = R"(
     }
   })";
 
-using AddOdometryDataHandlerTest = testing::HandlerTest<AddOdometryDataHandler>;
+using AddOdometryDataHandlerTest = testing::HandlerTest<AddOdometryDataSignature, AddOdometryDataHandler>;
 
 TEST_F(AddOdometryDataHandlerTest, NoLocalSlamUploader) {
   proto::AddOdometryDataRequest request;

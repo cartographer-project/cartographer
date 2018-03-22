@@ -226,6 +226,14 @@ def cartographer_repositories():
       ],
   )
 
+  _maybe(native.http_archive,
+      name = "com_github_googlecartographer_async_grpc",
+      strip_prefix = "async_grpc-2a17175678af56515dbeae09d219311604f8c4e1",
+      urls = [
+          "https://github.com/googlecartographer/async_grpc/archive/2a17175678af56515dbeae09d219311604f8c4e1.tar.gz",
+      ],
+  )
+  
   # TODO(rodrigoq): remove these binds once grpc#14140 has been merged, as well
   # as removing `use_external` in cartographer_grpc/BUILD.bazel.
   # https://github.com/grpc/grpc/pull/14140

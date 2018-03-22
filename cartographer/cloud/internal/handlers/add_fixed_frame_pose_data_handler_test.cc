@@ -48,7 +48,7 @@ const std::string kMessage = R"(
   })";
 
 using AddFixedFramePoseDataHandlerTest =
-    testing::HandlerTest<AddFixedFramePoseDataHandler>;
+    testing::HandlerTest<AddFixedFramePoseDataSignature, AddFixedFramePoseDataHandler>;
 
 TEST_F(AddFixedFramePoseDataHandlerTest, NoLocalSlamUploader) {
   proto::AddFixedFramePoseDataRequest request;
