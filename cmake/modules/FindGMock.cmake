@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-message(ERROR "!!!! my script")
-if(NOT TARGET gmock_main)
-    message(ERROR "!!!! my script 2")
+# TODO(gaschler): Clean up, rename script.
+if(NOT TARGET standalone_gmock_main)
     include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
     set(GTEST_PROJECT_NAME external-gmock)
     set(EXTERNAL_GMOCK_LIBRARY_PATH ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/src/${GTEST_PROJECT_NAME}/googlemock/${CMAKE_STATIC_LIBRARY_PREFIX}gmock_main${CMAKE_STATIC_LIBRARY_SUFFIX})
@@ -27,7 +26,6 @@ if(NOT TARGET gmock_main)
       BUILD_BYPRODUCTS ${EXTERNAL_GMOCK_LIBRARY_PATH}
     CMAKE_CACHE_ARGS
             -DCMAKE_BUILD_TYPE:STRING=Release
-            #"-pthread -std=c++11 -fPIC" ???
             -DBUILD_GTEST:BOOL=ON
             -DBUILD_SHARED_LIBS:BOOL=OFF
     )
@@ -36,19 +34,13 @@ if(NOT TARGET gmock_main)
         # Work-around the directory will only exist at compile time
     file(MAKE_DIRECTORY ${EXTERNAL_GMOCK_INCLUDE_DIR})
     file(MAKE_DIRECTORY ${EXTERNAL_GTEST_INCLUDE_DIR})
-    add_library(gmock_main STATIC IMPORTED)
-    set_target_properties(gmock_main PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+    add_library(standalone_gmock_main STATIC IMPORTED)
+    set_target_properties(standalone_gmock_main PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
             "${EXTERNAL_GMOCK_INCLUDE_DIR};${EXTERNAL_GTEST_INCLUDE_DIR}"
     )
-    set_target_properties(gmock_main PROPERTIES IMPORTED_LOCATION
+    set_target_properties(standalone_gmock_main PROPERTIES IMPORTED_LOCATION
       ${EXTERNAL_GMOCK_LIBRARY_PATH}
     )
-    add_dependencies(gmock_main ${GTEST_PROJECT_NAME})
-    #set(GMOCK_LIBRARIES gmock_main)
-    #set(GMOCK_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/include)
+    add_dependencies(standalone_gmock_main ${GTEST_PROJECT_NAME})
 endif()
-#include(FindPackageHandleStandardArgs)
-#find_package_handle_standard_args(GMock DEFAULT_MSG GMOCK_LIBRARIES
-#        GMOCK_INCLUDE_DIRS)
-
 

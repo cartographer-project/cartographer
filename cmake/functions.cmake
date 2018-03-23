@@ -35,12 +35,8 @@ endmacro(_common_compile_stuff)
 function(google_test NAME ARG_SRC)
   add_executable(${NAME} ${ARG_SRC})
   _common_compile_stuff("PRIVATE")
-
-  # Make sure that gmock always includes the correct gtest/gtest.h.
-  #target_include_directories("${NAME}" SYSTEM PRIVATE
-  #  "${GMOCK_INCLUDE_DIRS}")
-  target_link_libraries("${NAME}" PUBLIC gmock_main)
-  add_dependencies(${NAME} gmock_main)
+  target_link_libraries("${NAME}" PUBLIC standalone_gmock_main)
+  add_dependencies(${NAME} standalone_gmock_main)
 
   add_test(${NAME} ${NAME})
 endfunction()
