@@ -66,7 +66,8 @@ const std::string kMessage = R"(
   )";
 
 class AddTrajectoryHandlerTest
-    : public testing::HandlerTest<AddTrajectorySignature, AddTrajectoryHandler> {
+    : public testing::HandlerTest<AddTrajectorySignature,
+                                  AddTrajectoryHandler> {
  public:
   void SetUp() override {
     testing::HandlerTest<AddTrajectorySignature, AddTrajectoryHandler>::SetUp();

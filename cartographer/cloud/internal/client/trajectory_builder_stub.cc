@@ -103,7 +103,8 @@ void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id, const sensor::OdometryData& odometry_data) {
   if (!add_odometry_client_) {
     add_odometry_client_ = common::make_unique<
-        async_grpc::Client<handlers::AddOdometryDataSignature>>(client_channel_);
+        async_grpc::Client<handlers::AddOdometryDataSignature>>(
+        client_channel_);
   }
   proto::AddOdometryDataRequest request;
   CreateAddOdometryDataRequest(sensor_id, trajectory_id_,
@@ -129,7 +130,8 @@ void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id, const sensor::LandmarkData& landmark_data) {
   if (!add_landmark_client_) {
     add_landmark_client_ = common::make_unique<
-        async_grpc::Client<handlers::AddLandmarkDataSignature>>(client_channel_);
+        async_grpc::Client<handlers::AddLandmarkDataSignature>>(
+        client_channel_);
   }
   proto::AddLandmarkDataRequest request;
   CreateAddLandmarkDataRequest(sensor_id, trajectory_id_,
@@ -143,7 +145,7 @@ void TrajectoryBuilderStub::AddLocalSlamResultData(
 }
 
 void TrajectoryBuilderStub::RunLocalSlamResultsReader(
-    async_grpc::Client<handlers::ReceiveLocalSlamResultsSignature> *client,
+    async_grpc::Client<handlers::ReceiveLocalSlamResultsSignature>* client,
     LocalSlamResultCallback local_slam_result_callback) {
   proto::ReceiveLocalSlamResultsResponse response;
   while (client->StreamRead(&response)) {

@@ -96,7 +96,8 @@ PoseGraphStub::GetTrajectoryNodePoses() {
 
 std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses() {
   google::protobuf::Empty request;
-  async_grpc::Client<handlers::GetLandmarkPosesSignature> client(client_channel_);
+  async_grpc::Client<handlers::GetLandmarkPosesSignature> client(
+      client_channel_);
   CHECK(client.Write(request));
   std::map<std::string, transform::Rigid3d> landmark_poses;
   for (const auto& landmark_pose : client.response().landmark_poses()) {

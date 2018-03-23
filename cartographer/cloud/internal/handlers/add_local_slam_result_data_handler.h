@@ -33,7 +33,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class AddLocalSlamResultDataHandler
     : public async_grpc::RpcHandler<AddLocalSlamResultDataSignature> {
-public:
+ public:
   void OnRequest(const proto::AddLocalSlamResultDataRequest& request) override;
   void OnReadsDone() override;
 };

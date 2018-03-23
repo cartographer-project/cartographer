@@ -30,7 +30,7 @@ namespace cloud {
 
 class MapBuilderServer;
 class MapBuilderContextInterface : public async_grpc::ExecutionContext {
-public:
+ public:
   struct LocalSlamResult {
     int trajectory_id;
     common::Time time;

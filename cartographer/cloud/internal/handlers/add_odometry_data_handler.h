@@ -32,7 +32,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class AddOdometryDataHandler
     : public async_grpc::RpcHandler<AddOdometryDataSignature> {
-public:
+ public:
   void OnRequest(const proto::AddOdometryDataRequest &request) override;
   void OnReadsDone() override;
 };

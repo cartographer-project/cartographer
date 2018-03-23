@@ -32,7 +32,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class GetAllSubmapPosesHandler
     : public async_grpc::RpcHandler<GetAllSubmapPosesSignature> {
-public:
+ public:
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 

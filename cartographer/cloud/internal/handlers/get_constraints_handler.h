@@ -32,7 +32,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class GetConstraintsHandler
     : public async_grpc::RpcHandler<GetConstraintsSignature> {
-public:
+ public:
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 

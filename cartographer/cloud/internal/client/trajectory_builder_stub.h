@@ -61,26 +61,26 @@ class TrajectoryBuilderStub : public mapping::TrajectoryBuilderInterface {
                                   local_slam_result_data) override;
 
  private:
-   static void RunLocalSlamResultsReader(
-       async_grpc::Client<handlers::ReceiveLocalSlamResultsSignature>
-           *client_reader,
-       LocalSlamResultCallback local_slam_result_callback);
+  static void RunLocalSlamResultsReader(
+      async_grpc::Client<handlers::ReceiveLocalSlamResultsSignature>*
+          client_reader,
+      LocalSlamResultCallback local_slam_result_callback);
 
-   std::shared_ptr<::grpc::Channel> client_channel_;
-   const int trajectory_id_;
-   std::unique_ptr<async_grpc::Client<handlers::AddRangefinderDataSignature>>
-       add_rangefinder_client_;
-   std::unique_ptr<async_grpc::Client<handlers::AddImuDataSignature>>
-       add_imu_client_;
-   std::unique_ptr<async_grpc::Client<handlers::AddOdometryDataSignature>>
-       add_odometry_client_;
-   std::unique_ptr<async_grpc::Client<handlers::AddFixedFramePoseDataSignature>>
-       add_fixed_frame_pose_client_;
-   std::unique_ptr<async_grpc::Client<handlers::AddLandmarkDataSignature>>
-       add_landmark_client_;
-   async_grpc::Client<handlers::ReceiveLocalSlamResultsSignature>
-       receive_local_slam_results_client_;
-   std::unique_ptr<std::thread> receive_local_slam_results_thread_;
+  std::shared_ptr<::grpc::Channel> client_channel_;
+  const int trajectory_id_;
+  std::unique_ptr<async_grpc::Client<handlers::AddRangefinderDataSignature>>
+      add_rangefinder_client_;
+  std::unique_ptr<async_grpc::Client<handlers::AddImuDataSignature>>
+      add_imu_client_;
+  std::unique_ptr<async_grpc::Client<handlers::AddOdometryDataSignature>>
+      add_odometry_client_;
+  std::unique_ptr<async_grpc::Client<handlers::AddFixedFramePoseDataSignature>>
+      add_fixed_frame_pose_client_;
+  std::unique_ptr<async_grpc::Client<handlers::AddLandmarkDataSignature>>
+      add_landmark_client_;
+  async_grpc::Client<handlers::ReceiveLocalSlamResultsSignature>
+      receive_local_slam_results_client_;
+  std::unique_ptr<std::thread> receive_local_slam_results_thread_;
 };
 
 }  // namespace cloud

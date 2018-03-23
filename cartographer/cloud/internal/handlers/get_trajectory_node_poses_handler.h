@@ -32,7 +32,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class GetTrajectoryNodePosesHandler
     : public async_grpc::RpcHandler<GetTrajectoryNodePosesSignature> {
-public:
+ public:
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 

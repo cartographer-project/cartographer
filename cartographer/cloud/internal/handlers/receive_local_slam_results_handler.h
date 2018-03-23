@@ -34,7 +34,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class ReceiveLocalSlamResultsHandler
     : public async_grpc::RpcHandler<ReceiveLocalSlamResultsSignature> {
-public:
+ public:
   void OnRequest(const proto::ReceiveLocalSlamResultsRequest& request) override;
   void OnFinish() override;
 

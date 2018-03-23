@@ -32,7 +32,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class AddLandmarkDataHandler
     : public async_grpc::RpcHandler<AddLandmarkDataSignature> {
-public:
+ public:
   void OnRequest(const proto::AddLandmarkDataRequest &request) override;
   void OnReadsDone() override;
 };

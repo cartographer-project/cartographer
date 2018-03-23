@@ -78,7 +78,8 @@ mapping::TrajectoryBuilderInterface* MapBuilderStub::GetTrajectoryBuilder(
 void MapBuilderStub::FinishTrajectory(int trajectory_id) {
   proto::FinishTrajectoryRequest request;
   request.set_trajectory_id(trajectory_id);
-  async_grpc::Client<handlers::FinishTrajectorySignature> client(client_channel_);
+  async_grpc::Client<handlers::FinishTrajectorySignature> client(
+      client_channel_);
   CHECK(client.Write(request));
   trajectory_builder_stubs_.erase(trajectory_id);
 }

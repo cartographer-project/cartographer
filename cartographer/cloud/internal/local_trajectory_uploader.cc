@@ -174,9 +174,9 @@ void LocalTrajectoryUploader::TranslateTrajectoryId(
 void LocalTrajectoryUploader::ProcessFixedFramePoseDataMessage(
     proto::AddFixedFramePoseDataRequest *data_request) {
   if (!add_fixed_frame_pose_client_) {
-    add_fixed_frame_pose_client_ =
-        make_unique<async_grpc::Client<handlers::AddFixedFramePoseDataSignature>>(
-            client_channel_);
+    add_fixed_frame_pose_client_ = make_unique<
+        async_grpc::Client<handlers::AddFixedFramePoseDataSignature>>(
+        client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   CHECK(add_fixed_frame_pose_client_->Write(*data_request));
@@ -259,7 +259,8 @@ void LocalTrajectoryUploader::FinishTrajectory(int local_trajectory_id) {
       local_to_cloud_trajectory_id_map_[local_trajectory_id];
   proto::FinishTrajectoryRequest request;
   request.set_trajectory_id(cloud_trajectory_id);
-  async_grpc::Client<handlers::FinishTrajectorySignature> client(client_channel_);
+  async_grpc::Client<handlers::FinishTrajectorySignature> client(
+      client_channel_);
   CHECK(client.Write(request));
 }
 

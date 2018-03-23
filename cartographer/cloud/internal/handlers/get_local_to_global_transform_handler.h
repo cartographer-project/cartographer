@@ -32,7 +32,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class GetLocalToGlobalTransformHandler
     : public async_grpc::RpcHandler<GetLocalToGlobalTransformSignature> {
-public:
+ public:
   void OnRequest(
       const proto::GetLocalToGlobalTransformRequest& request) override;
 };

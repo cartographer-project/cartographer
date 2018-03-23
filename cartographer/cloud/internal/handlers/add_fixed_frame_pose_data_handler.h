@@ -33,7 +33,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class AddFixedFramePoseDataHandler
     : public async_grpc::RpcHandler<AddFixedFramePoseDataSignature> {
-public:
+ public:
   void OnRequest(const proto::AddFixedFramePoseDataRequest &request) override;
   void OnReadsDone() override;
 };

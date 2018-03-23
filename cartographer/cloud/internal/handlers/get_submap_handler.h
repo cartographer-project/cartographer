@@ -30,7 +30,7 @@ DEFINE_HANDLER_SIGNATURE(
     "/cartographer.cloud.proto.MapBuilderService/GetSubmap")
 
 class GetSubmapHandler : public async_grpc::RpcHandler<GetSubmapSignature> {
-public:
+ public:
   void OnRequest(const proto::GetSubmapRequest &request) override;
 };
 

@@ -32,7 +32,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class RunFinalOptimizationHandler
     : public async_grpc::RpcHandler<RunFinalOptimizationSignature> {
-public:
+ public:
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 

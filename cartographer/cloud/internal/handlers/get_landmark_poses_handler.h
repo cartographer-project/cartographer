@@ -32,7 +32,7 @@ DEFINE_HANDLER_SIGNATURE(
 
 class GetLandmarkPosesHandler
     : public async_grpc::RpcHandler<GetLandmarkPosesSignature> {
-public:
+ public:
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 
