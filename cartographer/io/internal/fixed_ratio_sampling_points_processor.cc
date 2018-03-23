@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/fixed_ratio_sampling_points_processor.h"
+#include "cartographer/io/internal/fixed_ratio_sampling_points_processor.h"
 
 #include "Eigen/Core"
 #include "cartographer/common/make_unique.h"

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/outlier_removing_points_processor.h"
+#include "outlier_removing_points_processor.h"
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"

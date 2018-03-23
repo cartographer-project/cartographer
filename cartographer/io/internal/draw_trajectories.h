@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_DRAW_TRAJECTORIES_H_
-#define CARTOGRAPHER_IO_DRAW_TRAJECTORIES_H_
+#ifndef CARTOGRAPHER_IO_INTERNAL_DRAW_TRAJECTORIES_H_
+#define CARTOGRAPHER_IO_INTERNAL_DRAW_TRAJECTORIES_H_
 
 #include "cairo/cairo.h"
 #include "cartographer/io/color.h"
@@ -39,4 +39,4 @@ void DrawTrajectory(const mapping::proto::Trajectory& trajectory,
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_DRAW_TRAJECTORIES_H_
+#endif  // CARTOGRAPHER_IO_INTERNAL_DRAW_TRAJECTORIES_H_

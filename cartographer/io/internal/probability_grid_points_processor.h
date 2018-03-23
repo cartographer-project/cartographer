@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_PROBABILITY_GRID_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_PROBABILITY_GRID_POINTS_PROCESSOR_H_
+#ifndef CARTOGRAPHER_IO_INTERNAL_PROBABILITY_GRID_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_INTERNAL_PROBABILITY_GRID_POINTS_PROCESSOR_H_
 
 #include <memory>
 
@@ -72,16 +72,7 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
   mapping::ProbabilityGrid probability_grid_;
 };
 
-// Draws 'probability_grid' into an image and fills in 'offset' with the cropped
-// map limits. Returns 'nullptr' if probability_grid was empty.
-std::unique_ptr<Image> DrawProbabilityGrid(
-    const mapping::ProbabilityGrid& probability_grid, Eigen::Array2i* offset);
-
-// Create an initially empty probability grid with 'resolution' and a small
-// size, suitable for a PointsBatchProcessor.
-mapping::ProbabilityGrid CreateProbabilityGrid(const double resolution);
-
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_PROBABILITY_GRID_POINTS_PROCESSOR_H_
+#endif  // CARTOGRAPHER_IO_INTERNAL_PROBABILITY_GRID_POINTS_PROCESSOR_H_

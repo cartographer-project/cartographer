@@ -1,5 +1,5 @@
-#ifndef CARTOGRAPHER_IO_HYBRID_GRID_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_HYBRID_GRID_POINTS_PROCESSOR_H_
+#ifndef CARTOGRAPHER_IO_INTERNAL_HYBRID_GRID_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_INTERNAL_HYBRID_GRID_POINTS_PROCESSOR_H_
 
 // Library used for inserting range data points into a hybrid grid.
 
@@ -52,4 +52,4 @@ class HybridGridPointsProcessor : public PointsProcessor {
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_HYBRID_GRID_POINTS_PROCESSOR_H_
+#endif  // CARTOGRAPHER_IO_INTERNAL_HYBRID_GRID_POINTS_PROCESSOR_H_

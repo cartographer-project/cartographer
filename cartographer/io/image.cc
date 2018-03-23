@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "cartographer/io/file_writer.h"
+#include "cartographer/io/points_batch.h"
 #include "glog/logging.h"
 
 namespace cartographer {

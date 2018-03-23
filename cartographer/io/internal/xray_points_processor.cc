@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/xray_points_processor.h"
+#include "cartographer/io/internal/xray_points_processor.h"
 
 #include <cmath>
 #include <string>
@@ -23,8 +23,8 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/io/draw_trajectories.h"
 #include "cartographer/io/image.h"
+#include "cartographer/io/internal/draw_trajectories.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/mapping/detect_floors.h"
 #include "cartographer/transform/transform.h"

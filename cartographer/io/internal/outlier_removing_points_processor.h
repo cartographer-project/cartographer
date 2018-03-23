@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_OUTLIER_REMOVING_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_OUTLIER_REMOVING_POINTS_PROCESSOR_H_
+#ifndef CARTOGRAPHER_IO_INTERNAL_OUTLIER_REMOVING_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_INTERNAL_OUTLIER_REMOVING_POINTS_PROCESSOR_H_
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_processor.h"
@@ -84,4 +84,4 @@ class OutlierRemovingPointsProcessor : public PointsProcessor {
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_OUTLIER_REMOVING_POINTS_PROCESSOR_H_
+#endif  // CARTOGRAPHER_IO_INTERNAL_OUTLIER_REMOVING_POINTS_PROCESSOR_H_

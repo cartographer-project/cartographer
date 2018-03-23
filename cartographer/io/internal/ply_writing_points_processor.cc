@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/ply_writing_points_processor.h"
+#include "cartographer/io/internal/ply_writing_points_processor.h"
 
 #include <iomanip>
 #include <sstream>

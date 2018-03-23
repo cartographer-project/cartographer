@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
+#ifndef CARTOGRAPHER_IO_INTERNAL_NULL_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_INTERNAL_NULL_POINTS_PROCESSOR_H_
 
 #include "cartographer/io/points_processor.h"
 
@@ -35,4 +35,4 @@ class NullPointsProcessor : public PointsProcessor {
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
+#endif  // CARTOGRAPHER_IO_INTERNAL_NULL_POINTS_PROCESSOR_H_

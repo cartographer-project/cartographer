@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/coloring_points_processor.h"
+#include "cartographer/io/internal/coloring_points_processor.h"
 
 #include "Eigen/Core"
 #include "cartographer/common/make_unique.h"

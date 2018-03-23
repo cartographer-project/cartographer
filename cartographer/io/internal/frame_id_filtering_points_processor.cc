@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/frame_id_filtering_points_processor.h"
+#include "cartographer/io/internal/frame_id_filtering_points_processor.h"
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/make_unique.h"

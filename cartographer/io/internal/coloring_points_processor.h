@@ -14,48 +14,44 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_FIXED_RATIO_SAMPLING_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_FIXED_RATIO_SAMPLING_POINTS_PROCESSOR_H_
+#ifndef CARTOGRAPHER_IO_INTERNAL_COLORING_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_INTERNAL_COLORING_POINTS_PROCESSOR_H_
 
 #include <memory>
 
-#include "cartographer/common/fixed_ratio_sampler.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/io/points_batch.h"
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
 namespace io {
 
-// Only let a fixed 'sampling_ratio' of points through. A 'sampling_ratio' of 1.
-// makes this filter a no-op.
-class FixedRatioSamplingPointsProcessor : public PointsProcessor {
+// Colors points with a fixed color by frame_id.
+class ColoringPointsProcessor : public PointsProcessor {
  public:
-  constexpr static const char* kConfigurationFileActionName =
-      "fixed_ratio_sampler";
+  constexpr static const char* kConfigurationFileActionName = "color_points";
 
-  FixedRatioSamplingPointsProcessor(double sampling_ratio,
-                                    PointsProcessor* next);
+  ColoringPointsProcessor(const FloatColor& color, const std::string& frame_id,
+                          PointsProcessor* next);
 
-  static std::unique_ptr<FixedRatioSamplingPointsProcessor> FromDictionary(
+  static std::unique_ptr<ColoringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
-  ~FixedRatioSamplingPointsProcessor() override{};
+  ~ColoringPointsProcessor() override{};
 
-  FixedRatioSamplingPointsProcessor(const FixedRatioSamplingPointsProcessor&) =
-      delete;
-  FixedRatioSamplingPointsProcessor& operator=(
-      const FixedRatioSamplingPointsProcessor&) = delete;
+  ColoringPointsProcessor(const ColoringPointsProcessor&) = delete;
+  ColoringPointsProcessor& operator=(const ColoringPointsProcessor&) = delete;
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
 
  private:
-  const double sampling_ratio_;
+  const FloatColor color_;
+  const std::string frame_id_;
   PointsProcessor* const next_;
-  std::unique_ptr<common::FixedRatioSampler> sampler_;
 };
 
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_FIXED_RATIO_SAMPLING_POINTS_PROCESSOR_H_
+#endif  // CARTOGRAPHER_IO_INTERNAL_COLORING_POINTS_PROCESSOR_H_

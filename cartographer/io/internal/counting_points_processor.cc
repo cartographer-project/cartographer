@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/counting_points_processor.h"
+#include "cartographer/io/internal/counting_points_processor.h"
 
 #include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
