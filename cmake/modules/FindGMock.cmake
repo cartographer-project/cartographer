@@ -12,28 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+message(ERROR "!!!! my script")
 if(NOT TARGET gmock_main)
+    message(ERROR "!!!! my script 2")
     include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
     set(GTEST_PROJECT_NAME external-gmock)
     ExternalProject_Add(
       ${GTEST_PROJECT_NAME}
-      CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}
       URL https://github.com/google/googletest/archive/release-1.8.0.zip
+      INSTALL_COMMAND ""
     )
     add_library(gmock_main STATIC IMPORTED)
     set_target_properties(
       gmock_main PROPERTIES IMPORTED_LOCATION
       ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}gmock_main${CMAKE_STATIC_LIBRARY_SUFFIX}
     )
-        # do not install!
-        # add imported include location!
+    # add imported include location!
     add_dependencies(gmock_main ${GTEST_PROJECT_NAME})
-    set(GMOCK_LIBRARIES gmock_main)
-    set(GMOCK_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/include)
+    #set(GMOCK_LIBRARIES gmock_main)
+    #set(GMOCK_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/include)
 endif()
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(GMock DEFAULT_MSG GMOCK_LIBRARIES
-        GMOCK_INCLUDE_DIRS)
+#include(FindPackageHandleStandardArgs)
+#find_package_handle_standard_args(GMock DEFAULT_MSG GMOCK_LIBRARIES
+#        GMOCK_INCLUDE_DIRS)
 
 

@@ -40,7 +40,7 @@ function(google_test NAME ARG_SRC)
   target_include_directories("${NAME}" SYSTEM PRIVATE
     "${GMOCK_INCLUDE_DIRS}")
   target_link_libraries("${NAME}" PUBLIC ${GMOCK_LIBRARIES})
-  add_dependencies(${NAME} gmock_main)
+  #add_dependencies(${NAME} gmock_main)
 
   add_test(${NAME} ${NAME})
 endfunction()
