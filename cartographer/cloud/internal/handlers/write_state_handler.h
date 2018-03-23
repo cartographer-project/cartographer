@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_WRITE_STATE_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_WRITE_STATE_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,13 +25,13 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-class WriteStateHandler : public framework::RpcHandler<
-                              google::protobuf::Empty,
-                              framework::Stream<proto::WriteStateResponse>> {
+DEFINE_HANDLER_SIGNATURE(
+    WriteStateSignature, google::protobuf::Empty,
+    async_grpc::Stream<proto::WriteStateResponse>,
+    "/cartographer.cloud.proto.MapBuilderService/WriteState")
+
+class WriteStateHandler : public async_grpc::RpcHandler<WriteStateSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/WriteState";
-  }
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 

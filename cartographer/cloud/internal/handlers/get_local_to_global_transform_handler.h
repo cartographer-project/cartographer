@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_LOCAL_TO_GLOBAL_TRANSFORM_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_LOCAL_TO_GLOBAL_TRANSFORM_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,14 +25,14 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
+DEFINE_HANDLER_SIGNATURE(
+    GetLocalToGlobalTransformSignature, proto::GetLocalToGlobalTransformRequest,
+    proto::GetLocalToGlobalTransformResponse,
+    "/cartographer.cloud.proto.MapBuilderService/GetLocalToGlobalTransform")
+
 class GetLocalToGlobalTransformHandler
-    : public framework::RpcHandler<proto::GetLocalToGlobalTransformRequest,
-                                   proto::GetLocalToGlobalTransformResponse> {
+    : public async_grpc::RpcHandler<GetLocalToGlobalTransformSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/"
-           "GetLocalToGlobalTransform";
-  }
   void OnRequest(
       const proto::GetLocalToGlobalTransformRequest& request) override;
 };

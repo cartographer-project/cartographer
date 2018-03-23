@@ -57,7 +57,7 @@ const std::string kMessage = R"(
 )";
 
 using GetLandmarkPosesHandlerTest =
-    testing::HandlerTest<GetLandmarkPosesHandler>;
+    testing::HandlerTest<GetLandmarkPosesSignature, GetLandmarkPosesHandler>;
 
 TEST_F(GetLandmarkPosesHandlerTest, NoLocalSlamUploader) {
   std::map<std::string, Rigid3d> landmark_poses{

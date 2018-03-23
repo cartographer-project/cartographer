@@ -49,8 +49,8 @@ int MapBuilderStub::AddTrajectoryBuilder(
   for (const auto& sensor_id : expected_sensor_ids) {
     *request.add_expected_sensor_ids() = cloud::ToProto(sensor_id);
   }
-  framework::Client<handlers::AddTrajectoryHandler> client(
-      client_channel_, framework::CreateLimitedBackoffStrategy(
+  async_grpc::Client<handlers::AddTrajectorySignature> client(
+      client_channel_, async_grpc::CreateLimitedBackoffStrategy(
                            common::FromMilliseconds(100), 2.f, 5));
   CHECK(client.Write(request));
 
@@ -78,7 +78,8 @@ mapping::TrajectoryBuilderInterface* MapBuilderStub::GetTrajectoryBuilder(
 void MapBuilderStub::FinishTrajectory(int trajectory_id) {
   proto::FinishTrajectoryRequest request;
   request.set_trajectory_id(trajectory_id);
-  framework::Client<handlers::FinishTrajectoryHandler> client(client_channel_);
+  async_grpc::Client<handlers::FinishTrajectorySignature> client(
+      client_channel_);
   CHECK(client.Write(request));
   trajectory_builder_stubs_.erase(trajectory_id);
 }
@@ -88,7 +89,7 @@ std::string MapBuilderStub::SubmapToProto(
     mapping::proto::SubmapQuery::Response* submap_query_response) {
   proto::GetSubmapRequest request;
   submap_id.ToProto(request.mutable_submap_id());
-  framework::Client<handlers::GetSubmapHandler> client(client_channel_);
+  async_grpc::Client<handlers::GetSubmapSignature> client(client_channel_);
   CHECK(client.Write(request));
   submap_query_response->CopyFrom(client.response().submap_query_response());
   return client.response().error_msg();
@@ -96,10 +97,10 @@ std::string MapBuilderStub::SubmapToProto(
 
 void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
   google::protobuf::Empty request;
-  framework::Client<handlers::WriteStateHandler> client(client_channel_);
+  async_grpc::Client<handlers::WriteStateSignature> client(client_channel_);
   CHECK(client.Write(request));
   proto::WriteStateResponse response;
-  while (client.Read(&response)) {
+  while (client.StreamRead(&response)) {
     switch (response.state_chunk_case()) {
       case proto::WriteStateResponse::kPoseGraph:
         writer->WriteProto(response.pose_graph());
@@ -121,7 +122,7 @@ void MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,
   if (!load_frozen_state) {
     LOG(FATAL) << "Not implemented";
   }
-  framework::Client<handlers::LoadStateHandler> client(client_channel_);
+  async_grpc::Client<handlers::LoadStateSignature> client(client_channel_);
   // Request with a PoseGraph proto is sent first.
   {
     proto::LoadStateRequest request;
@@ -141,8 +142,8 @@ void MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,
   }
 
   CHECK(reader->eof());
-  CHECK(client.WritesDone());
-  CHECK(client.Finish().ok());
+  CHECK(client.StreamWritesDone());
+  CHECK(client.StreamFinish().ok());
 }
 
 int MapBuilderStub::num_trajectory_builders() const {

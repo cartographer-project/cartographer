@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_ALL_SUBMAP_POSES_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_ALL_SUBMAP_POSES_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,13 +25,14 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
+DEFINE_HANDLER_SIGNATURE(
+    GetAllSubmapPosesSignature, google::protobuf::Empty,
+    proto::GetAllSubmapPosesResponse,
+    "/cartographer.cloud.proto.MapBuilderService/GetAllSubmapPoses")
+
 class GetAllSubmapPosesHandler
-    : public framework::RpcHandler<google::protobuf::Empty,
-                                   proto::GetAllSubmapPosesResponse> {
+    : public async_grpc::RpcHandler<GetAllSubmapPosesSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/GetAllSubmapPoses";
-  }
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 

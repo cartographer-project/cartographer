@@ -50,24 +50,24 @@ TrajectoryBuilderStub::~TrajectoryBuilderStub() {
     receive_local_slam_results_thread_->join();
   }
   if (add_rangefinder_client_) {
-    CHECK(add_rangefinder_client_->WritesDone());
-    CHECK(add_rangefinder_client_->Finish().ok());
+    CHECK(add_rangefinder_client_->StreamWritesDone());
+    CHECK(add_rangefinder_client_->StreamFinish().ok());
   }
   if (add_imu_client_) {
-    CHECK(add_imu_client_->WritesDone());
-    CHECK(add_imu_client_->Finish().ok());
+    CHECK(add_imu_client_->StreamWritesDone());
+    CHECK(add_imu_client_->StreamFinish().ok());
   }
   if (add_odometry_client_) {
-    CHECK(add_odometry_client_->WritesDone());
-    CHECK(add_odometry_client_->Finish().ok());
+    CHECK(add_odometry_client_->StreamWritesDone());
+    CHECK(add_odometry_client_->StreamFinish().ok());
   }
   if (add_landmark_client_) {
-    CHECK(add_landmark_client_->WritesDone());
-    CHECK(add_landmark_client_->Finish().ok());
+    CHECK(add_landmark_client_->StreamWritesDone());
+    CHECK(add_landmark_client_->StreamFinish().ok());
   }
   if (add_fixed_frame_pose_client_) {
-    CHECK(add_fixed_frame_pose_client_->WritesDone());
-    CHECK(add_fixed_frame_pose_client_->Finish().ok());
+    CHECK(add_fixed_frame_pose_client_->StreamWritesDone());
+    CHECK(add_fixed_frame_pose_client_->StreamFinish().ok());
   }
 }
 
@@ -76,7 +76,7 @@ void TrajectoryBuilderStub::AddSensorData(
     const sensor::TimedPointCloudData& timed_point_cloud_data) {
   if (!add_rangefinder_client_) {
     add_rangefinder_client_ = common::make_unique<
-        framework::Client<handlers::AddRangefinderDataHandler>>(
+        async_grpc::Client<handlers::AddRangefinderDataSignature>>(
         client_channel_);
   }
   proto::AddRangefinderDataRequest request;
@@ -90,7 +90,7 @@ void TrajectoryBuilderStub::AddSensorData(const std::string& sensor_id,
                                           const sensor::ImuData& imu_data) {
   if (!add_imu_client_) {
     add_imu_client_ =
-        common::make_unique<framework::Client<handlers::AddImuDataHandler>>(
+        common::make_unique<async_grpc::Client<handlers::AddImuDataSignature>>(
             client_channel_);
   }
   proto::AddImuDataRequest request;
@@ -103,7 +103,8 @@ void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id, const sensor::OdometryData& odometry_data) {
   if (!add_odometry_client_) {
     add_odometry_client_ = common::make_unique<
-        framework::Client<handlers::AddOdometryDataHandler>>(client_channel_);
+        async_grpc::Client<handlers::AddOdometryDataSignature>>(
+        client_channel_);
   }
   proto::AddOdometryDataRequest request;
   CreateAddOdometryDataRequest(sensor_id, trajectory_id_,
@@ -116,7 +117,7 @@ void TrajectoryBuilderStub::AddSensorData(
     const sensor::FixedFramePoseData& fixed_frame_pose) {
   if (!add_fixed_frame_pose_client_) {
     add_fixed_frame_pose_client_ = common::make_unique<
-        framework::Client<handlers::AddFixedFramePoseDataHandler>>(
+        async_grpc::Client<handlers::AddFixedFramePoseDataSignature>>(
         client_channel_);
   }
   proto::AddFixedFramePoseDataRequest request;
@@ -129,7 +130,8 @@ void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id, const sensor::LandmarkData& landmark_data) {
   if (!add_landmark_client_) {
     add_landmark_client_ = common::make_unique<
-        framework::Client<handlers::AddLandmarkDataHandler>>(client_channel_);
+        async_grpc::Client<handlers::AddLandmarkDataSignature>>(
+        client_channel_);
   }
   proto::AddLandmarkDataRequest request;
   CreateAddLandmarkDataRequest(sensor_id, trajectory_id_,
@@ -143,10 +145,10 @@ void TrajectoryBuilderStub::AddLocalSlamResultData(
 }
 
 void TrajectoryBuilderStub::RunLocalSlamResultsReader(
-    framework::Client<handlers::ReceiveLocalSlamResultsHandler>* client,
+    async_grpc::Client<handlers::ReceiveLocalSlamResultsSignature>* client,
     LocalSlamResultCallback local_slam_result_callback) {
   proto::ReceiveLocalSlamResultsResponse response;
-  while (client->Read(&response)) {
+  while (client->StreamRead(&response)) {
     int trajectory_id = response.trajectory_id();
     common::Time time = common::FromUniversal(response.timestamp());
     transform::Rigid3d local_pose = transform::ToRigid3(response.local_pose());
@@ -161,7 +163,7 @@ void TrajectoryBuilderStub::RunLocalSlamResultsReader(
     local_slam_result_callback(trajectory_id, time, local_pose, range_data,
                                std::move(insertion_result));
   }
-  client->Finish();
+  client->StreamFinish();
 }
 
 }  // namespace cloud

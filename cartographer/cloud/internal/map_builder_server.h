@@ -17,8 +17,8 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_MAP_BUILDER_SERVER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_MAP_BUILDER_SERVER_H
 
-#include "cartographer/cloud/internal/framework/execution_context.h"
-#include "cartographer/cloud/internal/framework/server.h"
+#include "async_grpc/execution_context.h"
+#include "async_grpc/server.h"
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
 #include "cartographer/cloud/internal/map_builder_context.h"
 #include "cartographer/cloud/map_builder_server_interface.h"
@@ -79,7 +79,7 @@ class MapBuilderServer : public MapBuilderServerInterface {
 
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> slam_thread_;
-  std::unique_ptr<framework::Server> grpc_server_;
+  std::unique_ptr<async_grpc::Server> grpc_server_;
   std::unique_ptr<mapping::MapBuilderInterface> map_builder_;
   common::BlockingQueue<std::unique_ptr<MapBuilderContextInterface::Data>>
       incoming_data_queue_;

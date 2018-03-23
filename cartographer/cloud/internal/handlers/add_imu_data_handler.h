@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_IMU_DATA_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_IMU_DATA_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,13 +25,13 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-class AddImuDataHandler
-    : public framework::RpcHandler<framework::Stream<proto::AddImuDataRequest>,
-                                   google::protobuf::Empty> {
+DEFINE_HANDLER_SIGNATURE(
+    AddImuDataSignature, async_grpc::Stream<proto::AddImuDataRequest>,
+    google::protobuf::Empty,
+    "/cartographer.cloud.proto.MapBuilderService/AddImuData")
+
+class AddImuDataHandler : public async_grpc::RpcHandler<AddImuDataSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/AddImuData";
-  }
   void OnRequest(const proto::AddImuDataRequest &request) override;
   void OnReadsDone() override;
 };

@@ -45,7 +45,8 @@ const std::string kMessage = R"(
     }
   })";
 
-using AddImuDataHandlerTest = testing::HandlerTest<AddImuDataHandler>;
+using AddImuDataHandlerTest =
+    testing::HandlerTest<AddImuDataSignature, AddImuDataHandler>;
 
 TEST_F(AddImuDataHandlerTest, NoLocalSlamUploader) {
   proto::AddImuDataRequest request;

@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_FIXED_FRAME_POSE_DATA_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_FIXED_FRAME_POSE_DATA_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,14 +25,15 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
+DEFINE_HANDLER_SIGNATURE(
+    AddFixedFramePoseDataSignature,
+    async_grpc::Stream<proto::AddFixedFramePoseDataRequest>,
+    google::protobuf::Empty,
+    "/cartographer.cloud.proto.MapBuilderService/AddFixedFramePoseData")
+
 class AddFixedFramePoseDataHandler
-    : public framework::RpcHandler<
-          framework::Stream<proto::AddFixedFramePoseDataRequest>,
-          google::protobuf::Empty> {
+    : public async_grpc::RpcHandler<AddFixedFramePoseDataSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/AddFixedFramePoseData";
-  }
   void OnRequest(const proto::AddFixedFramePoseDataRequest &request) override;
   void OnReadsDone() override;
 };

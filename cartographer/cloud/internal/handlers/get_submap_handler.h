@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_SUBMAP_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_SUBMAP_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,13 +25,12 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-class GetSubmapHandler
-    : public framework::RpcHandler<proto::GetSubmapRequest,
-                                   proto::GetSubmapResponse> {
+DEFINE_HANDLER_SIGNATURE(
+    GetSubmapSignature, proto::GetSubmapRequest, proto::GetSubmapResponse,
+    "/cartographer.cloud.proto.MapBuilderService/GetSubmap")
+
+class GetSubmapHandler : public async_grpc::RpcHandler<GetSubmapSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/GetSubmap";
-  }
   void OnRequest(const proto::GetSubmapRequest &request) override;
 };
 
