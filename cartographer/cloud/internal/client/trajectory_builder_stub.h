@@ -19,7 +19,7 @@
 
 #include <thread>
 
-#include "cartographer/cloud/internal/framework/client.h"
+#include "async_grpc/client.h"
 #include "cartographer/cloud/internal/handlers/add_fixed_frame_pose_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_imu_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_landmark_data_handler.h"
@@ -62,23 +62,23 @@ class TrajectoryBuilderStub : public mapping::TrajectoryBuilderInterface {
 
  private:
   static void RunLocalSlamResultsReader(
-      framework::Client<handlers::ReceiveLocalSlamResultsHandler>*
+      async_grpc::Client<handlers::ReceiveLocalSlamResultsSignature>*
           client_reader,
       LocalSlamResultCallback local_slam_result_callback);
 
   std::shared_ptr<::grpc::Channel> client_channel_;
   const int trajectory_id_;
-  std::unique_ptr<framework::Client<handlers::AddRangefinderDataHandler>>
+  std::unique_ptr<async_grpc::Client<handlers::AddRangefinderDataSignature>>
       add_rangefinder_client_;
-  std::unique_ptr<framework::Client<handlers::AddImuDataHandler>>
+  std::unique_ptr<async_grpc::Client<handlers::AddImuDataSignature>>
       add_imu_client_;
-  std::unique_ptr<framework::Client<handlers::AddOdometryDataHandler>>
+  std::unique_ptr<async_grpc::Client<handlers::AddOdometryDataSignature>>
       add_odometry_client_;
-  std::unique_ptr<framework::Client<handlers::AddFixedFramePoseDataHandler>>
+  std::unique_ptr<async_grpc::Client<handlers::AddFixedFramePoseDataSignature>>
       add_fixed_frame_pose_client_;
-  std::unique_ptr<framework::Client<handlers::AddLandmarkDataHandler>>
+  std::unique_ptr<async_grpc::Client<handlers::AddLandmarkDataSignature>>
       add_landmark_client_;
-  framework::Client<handlers::ReceiveLocalSlamResultsHandler>
+  async_grpc::Client<handlers::ReceiveLocalSlamResultsSignature>
       receive_local_slam_results_client_;
   std::unique_ptr<std::thread> receive_local_slam_results_thread_;
 };

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright 2016 The Cartographer Authors
+# Copyright 2018 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,13 @@
 set -o errexit
 set -o verbose
 
-# Build and install Cartographer.
-cd cartographer
-bazel build //...
-bazel test --jobs 1 //...
+git clone https://github.com/googlecartographer/async_grpc
+cd async_grpc
+git checkout 654c75ebf553c2bdb624c87a690f5a238aeb651f
+mkdir build
+cd build
+cmake -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  ..
+ninja
+sudo ninja install

@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_LANDMARK_DATA_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,14 +25,14 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
+DEFINE_HANDLER_SIGNATURE(
+    AddLandmarkDataSignature, async_grpc::Stream<proto::AddLandmarkDataRequest>,
+    google::protobuf::Empty,
+    "/cartographer.cloud.proto.MapBuilderService/AddLandmarkData")
+
 class AddLandmarkDataHandler
-    : public framework::RpcHandler<
-          framework::Stream<proto::AddLandmarkDataRequest>,
-          google::protobuf::Empty> {
+    : public async_grpc::RpcHandler<AddLandmarkDataSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/AddLandmarkData";
-  }
   void OnRequest(const proto::AddLandmarkDataRequest &request) override;
   void OnReadsDone() override;
 };

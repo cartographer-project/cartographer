@@ -16,7 +16,7 @@
 
 #include "cartographer/cloud/internal/handlers/add_imu_data_handler.h"
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"

@@ -15,7 +15,7 @@
  */
 
 #include "cartographer/cloud/internal/client/pose_graph_stub.h"
-#include "cartographer/cloud/internal/framework/client.h"
+#include "async_grpc/client.h"
 #include "cartographer/cloud/internal/handlers/get_all_submap_poses.h"
 #include "cartographer/cloud/internal/handlers/get_constraints_handler.h"
 #include "cartographer/cloud/internal/handlers/get_landmark_poses_handler.h"
@@ -34,7 +34,7 @@ PoseGraphStub::PoseGraphStub(std::shared_ptr<::grpc::Channel> client_channel)
 
 void PoseGraphStub::RunFinalOptimization() {
   google::protobuf::Empty request;
-  framework::Client<handlers::RunFinalOptimizationHandler> client(
+  async_grpc::Client<handlers::RunFinalOptimizationSignature> client(
       client_channel_);
   CHECK(client.Write(request));
 }
@@ -47,7 +47,8 @@ PoseGraphStub::GetAllSubmapData() {
 mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapPose>
 PoseGraphStub::GetAllSubmapPoses() {
   google::protobuf::Empty request;
-  framework::Client<handlers::GetAllSubmapPosesHandler> client(client_channel_);
+  async_grpc::Client<handlers::GetAllSubmapPosesSignature> client(
+      client_channel_);
   CHECK(client.Write(request));
   mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapPose>
       submap_poses;
@@ -65,7 +66,7 @@ PoseGraphStub::GetAllSubmapPoses() {
 transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(int trajectory_id) {
   proto::GetLocalToGlobalTransformRequest request;
   request.set_trajectory_id(trajectory_id);
-  framework::Client<handlers::GetLocalToGlobalTransformHandler> client(
+  async_grpc::Client<handlers::GetLocalToGlobalTransformSignature> client(
       client_channel_);
   CHECK(client.Write(request));
   return transform::ToRigid3(client.response().local_to_global());
@@ -79,7 +80,7 @@ PoseGraphStub::GetTrajectoryNodes() {
 mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose>
 PoseGraphStub::GetTrajectoryNodePoses() {
   google::protobuf::Empty request;
-  framework::Client<handlers::GetTrajectoryNodePosesHandler> client(
+  async_grpc::Client<handlers::GetTrajectoryNodePosesSignature> client(
       client_channel_);
   CHECK(client.Write(request));
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose> node_poses;
@@ -95,7 +96,8 @@ PoseGraphStub::GetTrajectoryNodePoses() {
 
 std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses() {
   google::protobuf::Empty request;
-  framework::Client<handlers::GetLandmarkPosesHandler> client(client_channel_);
+  async_grpc::Client<handlers::GetLandmarkPosesSignature> client(
+      client_channel_);
   CHECK(client.Write(request));
   std::map<std::string, transform::Rigid3d> landmark_poses;
   for (const auto& landmark_pose : client.response().landmark_poses()) {
@@ -121,7 +123,7 @@ PoseGraphStub::GetTrajectoryData() {
 std::vector<mapping::PoseGraphInterface::Constraint>
 PoseGraphStub::constraints() {
   google::protobuf::Empty request;
-  framework::Client<handlers::GetConstraintsHandler> client(client_channel_);
+  async_grpc::Client<handlers::GetConstraintsSignature> client(client_channel_);
   CHECK(client.Write(request));
   return mapping::FromProto(client.response().constraints());
 }

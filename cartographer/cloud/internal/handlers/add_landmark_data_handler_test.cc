@@ -52,7 +52,8 @@ const std::string kMessage = R"(
     }
   })";
 
-using AddLandmarkDataHandlerTest = testing::HandlerTest<AddLandmarkDataHandler>;
+using AddLandmarkDataHandlerTest =
+    testing::HandlerTest<AddLandmarkDataSignature, AddLandmarkDataHandler>;
 
 TEST_F(AddLandmarkDataHandlerTest, NoLocalSlamUploader) {
   proto::AddLandmarkDataRequest request;

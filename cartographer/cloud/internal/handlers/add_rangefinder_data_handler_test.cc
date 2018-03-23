@@ -46,7 +46,8 @@ const std::string kMessage = R"(
   })";
 
 using AddRangefinderDataHandlerTest =
-    testing::HandlerTest<AddRangefinderDataHandler>;
+    testing::HandlerTest<AddRangefinderDataSignature,
+                         AddRangefinderDataHandler>;
 
 TEST_F(AddRangefinderDataHandlerTest, NoLocalSlamUploader) {
   proto::AddRangefinderDataRequest request;
