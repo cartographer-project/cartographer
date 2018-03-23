@@ -17,17 +17,32 @@ if(NOT TARGET gmock_main)
     message(ERROR "!!!! my script 2")
     include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
     set(GTEST_PROJECT_NAME external-gmock)
+    set(EXTERNAL_GMOCK_LIBRARY_PATH ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/src/${GTEST_PROJECT_NAME}/googlemock/${CMAKE_STATIC_LIBRARY_PREFIX}gmock_main${CMAKE_STATIC_LIBRARY_SUFFIX})
     ExternalProject_Add(
       ${GTEST_PROJECT_NAME}
+    PREFIX ${GTEST_PROJECT_NAME}
+    BUILD_IN_SOURCE 1
       URL https://github.com/google/googletest/archive/release-1.8.0.zip
       INSTALL_COMMAND ""
+      BUILD_BYPRODUCTS ${EXTERNAL_GMOCK_LIBRARY_PATH}
+    CMAKE_CACHE_ARGS
+            -DCMAKE_BUILD_TYPE:STRING=Release
+            #"-pthread -std=c++11 -fPIC" ???
+            -DBUILD_GTEST:BOOL=ON
+            -DBUILD_SHARED_LIBS:BOOL=OFF
     )
+    set(EXTERNAL_GTEST_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/src/${GTEST_PROJECT_NAME}/googletest/include")
+    set(EXTERNAL_GMOCK_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/src/${GTEST_PROJECT_NAME}/googlemock/include")
+        # Work-around the directory will only exist at compile time
+    file(MAKE_DIRECTORY ${EXTERNAL_GMOCK_INCLUDE_DIR})
+    file(MAKE_DIRECTORY ${EXTERNAL_GTEST_INCLUDE_DIR})
     add_library(gmock_main STATIC IMPORTED)
-    set_target_properties(
-      gmock_main PROPERTIES IMPORTED_LOCATION
-      ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}gmock_main${CMAKE_STATIC_LIBRARY_SUFFIX}
+    set_target_properties(gmock_main PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+            "${EXTERNAL_GMOCK_INCLUDE_DIR};${EXTERNAL_GTEST_INCLUDE_DIR}"
     )
-    # add imported include location!
+    set_target_properties(gmock_main PROPERTIES IMPORTED_LOCATION
+      ${EXTERNAL_GMOCK_LIBRARY_PATH}
+    )
     add_dependencies(gmock_main ${GTEST_PROJECT_NAME})
     #set(GMOCK_LIBRARIES gmock_main)
     #set(GMOCK_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/include)
