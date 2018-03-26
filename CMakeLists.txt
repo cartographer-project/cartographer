@@ -244,10 +244,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-# TODO(damonkohler): Create a testing library.
-target_link_libraries(${PROJECT_NAME} PUBLIC standalone_gmock_main)
-add_dependencies(${PROJECT_NAME} standalone_gmock_main)
-
 set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
 set_target_properties(${PROJECT_NAME} PROPERTIES
   COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})

@@ -15,7 +15,7 @@
 # TODO(gaschler): Clean up, rename script.
 if(NOT TARGET standalone_gmock_main)
     include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
-    set(GTEST_PROJECT_NAME external-gmock)
+    set(GTEST_PROJECT_NAME externalgmock)
     set(EXTERNAL_GMOCK_LIBRARY_PATH ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_PROJECT_NAME}/src/${GTEST_PROJECT_NAME}/googlemock/${CMAKE_STATIC_LIBRARY_PREFIX}gmock_main${CMAKE_STATIC_LIBRARY_SUFFIX})
     ExternalProject_Add(
       ${GTEST_PROJECT_NAME}
@@ -23,7 +23,7 @@ if(NOT TARGET standalone_gmock_main)
     BUILD_IN_SOURCE 1
       URL https://github.com/google/googletest/archive/release-1.8.0.zip
       INSTALL_COMMAND ""
-      BUILD_BYPRODUCTS ${EXTERNAL_GMOCK_LIBRARY_PATH}
+      #if cmake>3 BUILD_BYPRODUCTS ${EXTERNAL_GMOCK_LIBRARY_PATH}
     CMAKE_CACHE_ARGS
             -DCMAKE_BUILD_TYPE:STRING=Release
             -DBUILD_GTEST:BOOL=ON
@@ -34,7 +34,7 @@ if(NOT TARGET standalone_gmock_main)
         # Work-around the directory will only exist at compile time
     file(MAKE_DIRECTORY ${EXTERNAL_GMOCK_INCLUDE_DIR})
     file(MAKE_DIRECTORY ${EXTERNAL_GTEST_INCLUDE_DIR})
-    add_library(standalone_gmock_main STATIC IMPORTED)
+    add_library(standalone_gmock_main UNKNOWN IMPORTED)
     set_target_properties(standalone_gmock_main PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
             "${EXTERNAL_GMOCK_INCLUDE_DIR};${EXTERNAL_GTEST_INCLUDE_DIR}"
     )
