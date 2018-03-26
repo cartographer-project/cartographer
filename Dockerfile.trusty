@@ -26,4 +26,4 @@ RUN cartographer/scripts/install_async_grpc.sh && rm -rf async_grpc
 COPY scripts/install_prometheus_cpp.sh cartographer/scripts/
 RUN cartographer/scripts/install_prometheus_cpp.sh && rm -rf prometheus-cpp
 COPY . cartographer
-RUN cartographer/scripts/install_cartographer_cmake_with_grpc.sh && rm -rf cartographer
+RUN cartographer/scripts/install_cartographer_cmake.sh -DBUILD_GRPC=ON -DBUILD_PROMETHEUS=ON && rm -rf cartographer
