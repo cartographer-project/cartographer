@@ -35,8 +35,8 @@ static std::array<T, 3> ComputeUnscaledError(
     const transform::Rigid2d& relative_pose, const T* const start,
     const T* const end);
 template <typename T>
-std::array<T, 3> ScaleError(std::array<T, 3> error, double translation_weight,
-                            double rotation_weight);
+std::array<T, 3> ScaleError(const std::array<T, 3>& error,
+                            double translation_weight, double rotation_weight);
 
 // Computes the error between the given relative pose and the difference of
 // poses 'start' and 'end' which are both in an arbitrary common frame.
@@ -50,8 +50,8 @@ static std::array<T, 6> ComputeUnscaledError(
     const T* const end_translation);
 
 template <typename T>
-std::array<T, 6> ScaleError(std::array<T, 6> error, double translation_weight,
-                            double rotation_weight);
+std::array<T, 6> ScaleError(const std::array<T, 6>& error,
+                            double translation_weight, double rotation_weight);
 
 // Computes spherical linear interpolation of unit quaternions.
 //
