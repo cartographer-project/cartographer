@@ -27,7 +27,9 @@ env:
   - LSB_RELEASE=jessie DOCKER_CACHE_FILE=/home/travis/docker/jessie-cache.tar.gz
   - LSB_RELEASE=stretch DOCKER_CACHE_FILE=/home/travis/docker/stretch-cache.tar.gz
 
-before_install: scripts/load_docker_cache.sh
+before_install:
+  - export GITHUB_TOKEN=$PUBLIC_GITHUB_TOKEN
+  - scripts/load_docker_cache.sh
 
 install: true
 script:
