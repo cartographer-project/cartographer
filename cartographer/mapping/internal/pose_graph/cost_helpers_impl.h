@@ -39,13 +39,15 @@ static std::array<T, 3> ComputeUnscaledError(
 }
 
 template <typename T>
-std::array<T, 3> ScaleError(std::array<T, 3> error, double translation_weight,
-                            double rotation_weight) {
-  std::array<T, 3> scaled_error(std::move(error));
-  scaled_error[0] *= translation_weight;
-  scaled_error[1] *= translation_weight;
-  scaled_error[2] *= rotation_weight;
-  return scaled_error;
+std::array<T, 3> ScaleError(const std::array<T, 3>& error,
+                            double translation_weight, double rotation_weight) {
+  // clang-format off
+  return {{
+      error[0] * translation_weight,
+      error[1] * translation_weight,
+      error[2] * rotation_weight
+  }};
+  // clang-format on
 }
 
 template <typename T>
@@ -80,16 +82,18 @@ static std::array<T, 6> ComputeUnscaledError(
 }
 
 template <typename T>
-std::array<T, 6> ScaleError(std::array<T, 6> error, double translation_weight,
-                            double rotation_weight) {
-  std::array<T, 6> scaled_error(std::move(error));
-  scaled_error[0] *= translation_weight;
-  scaled_error[1] *= translation_weight;
-  scaled_error[2] *= translation_weight;
-  scaled_error[3] *= rotation_weight;
-  scaled_error[4] *= rotation_weight;
-  scaled_error[5] *= rotation_weight;
-  return scaled_error;
+std::array<T, 6> ScaleError(const std::array<T, 6>& error,
+                            double translation_weight, double rotation_weight) {
+  // clang-format off
+  return {{
+      error[0] * translation_weight,
+      error[1] * translation_weight,
+      error[2] * translation_weight,
+      error[3] * rotation_weight,
+      error[4] * rotation_weight,
+      error[5] * rotation_weight
+  }};
+  // clang-format on
 }
 
 //  Eigen implementation of slerp is not compatible with Ceres on all supported
