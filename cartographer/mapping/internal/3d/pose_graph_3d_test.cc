@@ -138,11 +138,11 @@ TEST_F(PoseGraph3DTest, PureLocalizationTrimmer) {
   const int num_submaps_to_keep = 3;
   const int num_nodes_per_submap = 2;
   for (int i = 0; i < num_submaps_to_create; ++i) {
-    int submap_index = 42 + i;
+    int submap_index = (i < 3) ? 42 + i : 100 + i;
     auto submap = test::CreateFakeSubmap3D(trajectory_id, submap_index);
     pose_graph_->AddSubmapFromProto(transform::Rigid3d::Identity(), submap);
     for (int j = 0; j < num_nodes_per_submap; ++j) {
-      int node_index = 7 + num_nodes_per_submap * i + j;
+      int node_index = 7 + num_nodes_per_submap * submap_index + j;
       auto node = test::CreateFakeNode(trajectory_id, node_index);
       pose_graph_->AddNodeFromProto(transform::Rigid3d::Identity(), node);
       proto::PoseGraph proto;
@@ -156,6 +156,83 @@ TEST_F(PoseGraph3DTest, PureLocalizationTrimmer) {
   }
   pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
       trajectory_id, num_submaps_to_keep));
+  pose_graph_->WaitForAllComputations();
+  EXPECT_EQ(
+      pose_graph_->GetAllSubmapPoses().SizeOfTrajectoryOrZero(trajectory_id),
+      num_submaps_to_create);
+  EXPECT_EQ(
+      pose_graph_->GetAllSubmapData().SizeOfTrajectoryOrZero(trajectory_id),
+      num_submaps_to_create);
+  EXPECT_EQ(
+      pose_graph_->GetTrajectoryNodes().SizeOfTrajectoryOrZero(trajectory_id),
+      num_nodes_per_submap * num_submaps_to_create);
+  EXPECT_EQ(pose_graph_->GetTrajectoryNodePoses().SizeOfTrajectoryOrZero(
+                trajectory_id),
+            num_nodes_per_submap * num_submaps_to_create);
+  EXPECT_EQ(pose_graph_->constraints().size(),
+            num_nodes_per_submap * num_submaps_to_create);
+  for (int i = 0; i < 2; ++i) {
+    pose_graph_->RunFinalOptimization();
+    EXPECT_EQ(
+        pose_graph_->GetAllSubmapPoses().SizeOfTrajectoryOrZero(trajectory_id),
+        num_submaps_to_keep);
+    EXPECT_EQ(
+        pose_graph_->GetAllSubmapData().SizeOfTrajectoryOrZero(trajectory_id),
+        num_submaps_to_keep);
+    EXPECT_EQ(
+        pose_graph_->GetTrajectoryNodes().SizeOfTrajectoryOrZero(trajectory_id),
+        num_nodes_per_submap * num_submaps_to_keep);
+    EXPECT_EQ(pose_graph_->GetTrajectoryNodePoses().SizeOfTrajectoryOrZero(
+                  trajectory_id),
+              num_nodes_per_submap * num_submaps_to_keep);
+    EXPECT_EQ(pose_graph_->constraints().size(),
+              num_nodes_per_submap * num_submaps_to_keep);
+  }
+}
+
+class EvenSubmapTrimmer : public PoseGraphTrimmer {
+ public:
+  explicit EvenSubmapTrimmer(int trajectory_id)
+      : trajectory_id_(trajectory_id) {}
+
+  void Trim(Trimmable* pose_graph) override {
+    auto submap_ids = pose_graph->GetSubmapIds(trajectory_id_);
+    for (const auto submap_id : submap_ids) {
+      if (submap_id.submap_index % 2 == 0) {
+        pose_graph->MarkSubmapAsTrimmed(submap_id);
+      }
+    }
+  }
+
+  bool IsFinished() override { return false; }
+
+ private:
+  int trajectory_id_;
+};
+
+TEST_F(PoseGraph3DTest, EvenSubmapTrimmer) {
+  BuildPoseGraphWithFakeOptimization();
+  const int trajectory_id = 2;
+  const int num_submaps_to_keep = 10;
+  const int num_submaps_to_create = 2 * num_submaps_to_keep;
+  const int num_nodes_per_submap = 3;
+  for (int i = 0; i < num_submaps_to_create; ++i) {
+    int submap_index = 42 + i;
+    auto submap = test::CreateFakeSubmap3D(trajectory_id, submap_index);
+    pose_graph_->AddSubmapFromProto(transform::Rigid3d::Identity(), submap);
+    for (int j = 0; j < num_nodes_per_submap; ++j) {
+      int node_index = 7 + num_nodes_per_submap * i + j;
+      auto node = test::CreateFakeNode(trajectory_id, node_index);
+      pose_graph_->AddNodeFromProto(transform::Rigid3d::Identity(), node);
+      proto::PoseGraph proto;
+      auto constraint = test::CreateFakeConstraint(node, submap);
+      constraint.set_tag(proto::PoseGraph::Constraint::INTRA_SUBMAP);
+      test::AddToProtoGraph(constraint, &proto);
+      pose_graph_->AddSerializedConstraints(FromProto(proto.constraint()));
+    }
+  }
+  pose_graph_->AddTrimmer(
+      common::make_unique<EvenSubmapTrimmer>(trajectory_id));
   pose_graph_->WaitForAllComputations();
   EXPECT_EQ(
       pose_graph_->GetAllSubmapPoses().SizeOfTrajectoryOrZero(trajectory_id),
