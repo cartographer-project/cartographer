@@ -64,10 +64,10 @@ Eigen::Matrix<T, 3, 1> RotationQuaternionToAngleAxisVector(
   // angle that represents this orientation.
   if (normalized_quaternion.w() < 0.) {
     // Multiply by -1. http://eigen.tuxfamily.org/bz/show_bug.cgi?id=560
-    normalized_quaternion.w() = -1.* normalized_quaternion.w();
-    normalized_quaternion.x() = -1.* normalized_quaternion.x();
-    normalized_quaternion.y() = -1.* normalized_quaternion.y();
-    normalized_quaternion.z() = -1.* normalized_quaternion.z();
+    normalized_quaternion.w() = -1. * normalized_quaternion.w();
+    normalized_quaternion.x() = -1. * normalized_quaternion.x();
+    normalized_quaternion.y() = -1. * normalized_quaternion.y();
+    normalized_quaternion.z() = -1. * normalized_quaternion.z();
   }
   // We convert the normalized_quaternion into a vector along the rotation axis
   // with length of the rotation angle.

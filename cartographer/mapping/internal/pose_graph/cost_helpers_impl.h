@@ -32,10 +32,10 @@ static std::array<T, 3> ComputeUnscaledError(
   const T h[3] = {cos_theta_i * delta_x + sin_theta_i * delta_y,
                   -sin_theta_i * delta_x + cos_theta_i * delta_y,
                   end[2] - start[2]};
-  return {{relative_pose.translation().x() - h[0],
-           relative_pose.translation().y() - h[1],
-           common::NormalizeAngleDifference(relative_pose.rotation().angle() -
-                                            h[2])}};
+  return {{T(relative_pose.translation().x()) - h[0],
+           T(relative_pose.translation().y()) - h[1],
+           common::NormalizeAngleDifference(
+               T(relative_pose.rotation().angle()) - h[2])}};
 }
 
 template <typename T>
@@ -74,9 +74,9 @@ static std::array<T, 6> ComputeUnscaledError(
       transform::RotationQuaternionToAngleAxisVector(
           h_rotation_inverse * relative_pose.rotation().cast<T>());
 
-  return {{relative_pose.translation().x() - h_translation[0],
-           relative_pose.translation().y() - h_translation[1],
-           relative_pose.translation().z() - h_translation[2],
+  return {{T(relative_pose.translation().x()) - h_translation[0],
+           T(relative_pose.translation().y()) - h_translation[1],
+           T(relative_pose.translation().z()) - h_translation[2],
            angle_axis_difference[0], angle_axis_difference[1],
            angle_axis_difference[2]}};
 }
@@ -111,13 +111,13 @@ std::array<T, 4> SlerpQuaternions(const T* const start, const T* const end,
   // interval, then the quaternions are likely to be collinear.
   T prev_scale(1. - factor);
   T next_scale(factor);
-  if (abs_cos_theta < 1. - 1e-5) {
+  if (abs_cos_theta < T(1. - 1e-5)) {
     const T theta = acos(abs_cos_theta);
     const T sin_theta = sin(theta);
     prev_scale = sin((1. - factor) * theta) / sin_theta;
     next_scale = sin(factor * theta) / sin_theta;
   }
-  if (cos_theta < 0.) {
+  if (cos_theta < T(0.)) {
     next_scale = -next_scale;
   }
   return {{prev_scale * start[0] + next_scale * end[0],
