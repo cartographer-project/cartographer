@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_MAPPING_POSE_GRAPH_TRIMMER_H_
 
 #include "cartographer/mapping/id.h"
+#include "cartographer/mapping/pose_graph_interface.h"
 
 namespace cartographer {
 namespace mapping {
@@ -31,6 +32,8 @@ class Trimmable {
   virtual int num_submaps(int trajectory_id) const = 0;
 
   virtual std::vector<SubmapId> GetSubmapIds(int trajectory_id) const = 0;
+  virtual MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
+      const = 0;
 
   // Marks 'submap_id' and corresponding intra-submap nodes as trimmed. They
   // will no longer take part in scan matching, loop closure, visualization.

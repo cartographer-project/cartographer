@@ -42,6 +42,11 @@ class FakePoseGraph : public Trimmable {
     return submaps_;
   }
 
+  virtual MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
+      const {
+    return {};
+  }
+
   void MarkSubmapAsTrimmed(const SubmapId& submap_id) override {
     trimmed_submaps_.push_back(submap_id);
   }
