@@ -716,12 +716,7 @@ PoseGraph::SubmapData PoseGraph2D::GetSubmapData(const SubmapId& submap_id) {
 MapById<SubmapId, PoseGraphInterface::SubmapData>
 PoseGraph2D::GetAllSubmapData() {
   common::MutexLocker locker(&mutex_);
-  MapById<SubmapId, PoseGraphInterface::SubmapData> submaps;
-  for (const auto& submap_id_data : submap_data_) {
-    submaps.Insert(submap_id_data.id,
-                   GetSubmapDataUnderLock(submap_id_data.id));
-  }
-  return submaps;
+  return GetSubmapDataUnderLock();
 }
 
 MapById<SubmapId, PoseGraphInterface::SubmapPose>
@@ -786,6 +781,11 @@ PoseGraph2D::TrimmingHandle::TrimmingHandle(PoseGraph2D* const parent)
 int PoseGraph2D::TrimmingHandle::num_submaps(const int trajectory_id) const {
   const auto& submap_data = parent_->optimization_problem_->submap_data();
   return submap_data.SizeOfTrajectoryOrZero(trajectory_id);
+}
+
+MapById<SubmapId, PoseGraphInterface::SubmapData>
+PoseGraph2D::TrimmingHandle::GetAllSubmapData() const {
+  return parent_->GetSubmapDataUnderLock();
 }
 
 std::vector<SubmapId> PoseGraph2D::TrimmingHandle::GetSubmapIds(
@@ -858,6 +858,16 @@ void PoseGraph2D::TrimmingHandle::MarkSubmapAsTrimmed(
     parent_->trajectory_nodes_.Trim(node_id);
     parent_->optimization_problem_->TrimTrajectoryNode(node_id);
   }
+}
+
+MapById<SubmapId, PoseGraphInterface::SubmapData>
+PoseGraph2D::GetSubmapDataUnderLock() {
+  MapById<SubmapId, PoseGraphInterface::SubmapData> submaps;
+  for (const auto& submap_id_data : submap_data_) {
+    submaps.Insert(submap_id_data.id,
+                   GetSubmapDataUnderLock(submap_id_data.id));
+  }
+  return submaps;
 }
 
 }  // namespace mapping

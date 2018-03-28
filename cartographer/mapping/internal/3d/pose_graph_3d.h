@@ -158,6 +158,8 @@ class PoseGraph3D : public PoseGraph {
     SubmapState state = SubmapState::kActive;
   };
 
+  MapById<SubmapId, PoseGraphInterface::SubmapData> GetSubmapDataUnderLock();
+
   // Handles a new work item.
   void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
 
@@ -284,6 +286,8 @@ class PoseGraph3D : public PoseGraph {
 
     int num_submaps(int trajectory_id) const override;
     std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override;
+    MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
+        const override;
     void MarkSubmapAsTrimmed(const SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
     bool IsFinished(int trajectory_id) const override;
