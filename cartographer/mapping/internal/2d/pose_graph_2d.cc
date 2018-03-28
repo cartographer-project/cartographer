@@ -716,7 +716,7 @@ PoseGraph::SubmapData PoseGraph2D::GetSubmapData(const SubmapId& submap_id) {
 MapById<SubmapId, PoseGraphInterface::SubmapData>
 PoseGraph2D::GetAllSubmapData() {
   common::MutexLocker locker(&mutex_);
-  return ConvertSubmapData();
+  return GetSubmapDataUnderLock();
 }
 
 MapById<SubmapId, PoseGraphInterface::SubmapPose>
@@ -785,7 +785,7 @@ int PoseGraph2D::TrimmingHandle::num_submaps(const int trajectory_id) const {
 
 MapById<SubmapId, PoseGraphInterface::SubmapData>
 PoseGraph2D::TrimmingHandle::GetAllSubmapData() const {
-  return parent_->ConvertSubmapData();
+  return parent_->GetSubmapDataUnderLock();
 }
 
 std::vector<SubmapId> PoseGraph2D::TrimmingHandle::GetSubmapIds(
@@ -861,7 +861,7 @@ void PoseGraph2D::TrimmingHandle::MarkSubmapAsTrimmed(
 }
 
 MapById<SubmapId, PoseGraphInterface::SubmapData>
-PoseGraph2D::ConvertSubmapData() {
+PoseGraph2D::GetSubmapDataUnderLock() {
   MapById<SubmapId, PoseGraphInterface::SubmapData> submaps;
   for (const auto& submap_id_data : submap_data_) {
     submaps.Insert(submap_id_data.id,

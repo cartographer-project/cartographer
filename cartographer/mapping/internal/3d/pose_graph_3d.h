@@ -158,7 +158,7 @@ class PoseGraph3D : public PoseGraph {
     SubmapState state = SubmapState::kActive;
   };
 
-  MapById<SubmapId, PoseGraphInterface::SubmapData> ConvertSubmapData();
+  MapById<SubmapId, PoseGraphInterface::SubmapData> GetSubmapDataUnderLock();
 
   // Handles a new work item.
   void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
