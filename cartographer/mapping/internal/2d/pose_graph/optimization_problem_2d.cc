@@ -340,7 +340,6 @@ std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::InterpolateOdometry(
           .transform);
 }
 
-// Computes the relative pose between two nodes based on odometry data.
 std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::OdometryBetween(
     const int trajectory_id, const NodeData& first_node_data,
     const NodeData& second_node_data) const {

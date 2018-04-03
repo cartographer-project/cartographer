@@ -116,6 +116,7 @@ class OptimizationProblem3D
   }
 
  private:
+  // Computes the relative pose between two nodes based on odometry data.
   std::unique_ptr<transform::Rigid3d> OdometryBetween(
       int trajectory_id, const NodeData3D& first_node_data,
       const NodeData3D& second_node_data) const;
