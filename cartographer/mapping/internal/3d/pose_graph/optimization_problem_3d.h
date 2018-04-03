@@ -117,8 +117,8 @@ class OptimizationProblem3D
 
  private:
   std::unique_ptr<transform::Rigid3d> OdometryBetween(
-      int trajectory_id, const NodeData& first_node_data,
-      const NodeData& second_node_data) const;
+      int trajectory_id, const NodeData3D& first_node_data,
+      const NodeData3D& second_node_data) const;
 
   pose_graph::proto::OptimizationProblemOptions options_;
   MapById<NodeId, NodeData3D> node_data_;

@@ -18,7 +18,7 @@ package cartographer.mapping.pose_graph.proto;
 
 import "cartographer/common/proto/ceres_solver_options.proto";
 
-// NEXT ID: 19
+// NEXT ID: 18
 message OptimizationProblemOptions {
   // Scaling parameter for Huber loss function.
   double huber_scale = 1;
@@ -30,20 +30,20 @@ message OptimizationProblemOptions {
   double rotation_weight = 9;
 
   // Scaling parameter for translation between consecutive nodes based on the
-  // initial pose.
-  double initial_pose_translation_weight = 13;
+  // local SLAM pose.
+  double local_slam_pose_translation_weight = 14;
 
   // Scaling parameter for rotation between consecutive nodes based on the
-  // initial pose.
-  double initial_pose_rotation_weight = 14;
+  // local SLAM pose.
+  double local_slam_pose_rotation_weight = 15;
 
   // Scaling parameter for translation between consecutive nodes based on the
   // odometry.
-  double odometry_translation_weight = 15;
+  double odometry_translation_weight = 16;
 
   // Scaling parameter for rotation between consecutive nodes based on the
   // odometry.
-  double odometry_rotation_weight = 16;
+  double odometry_rotation_weight = 17;
 
   // Scaling parameter for the FixedFramePose translation.
   double fixed_frame_pose_translation_weight = 11;

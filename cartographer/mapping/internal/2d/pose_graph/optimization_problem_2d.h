@@ -104,8 +104,8 @@ class OptimizationProblem2D
   std::unique_ptr<transform::Rigid3d> InterpolateOdometry(
       int trajectory_id, common::Time time) const;
   std::unique_ptr<transform::Rigid3d> OdometryBetween(
-      int trajectory_id, const NodeData& first_node_data,
-      const NodeData& second_node_data) const;
+      int trajectory_id, const NodeData2D& first_node_data,
+      const NodeData2D& second_node_data) const;
 
   pose_graph::proto::OptimizationProblemOptions options_;
   MapById<NodeId, NodeData2D> node_data_;

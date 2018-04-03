@@ -285,14 +285,15 @@ void OptimizationProblem2D::Solve(
             C_nodes.at(second_node_id).data());
       }
 
-      // Add a relative pose constraint based on the initial poses.
-      const transform::Rigid3d relative_initial_pose =
+      // Add a relative pose constraint based on consecutive local SLAM poses.
+      const transform::Rigid3d relative_local_slam_pose =
           transform::Embed3D(first_node_data.initial_pose.inverse() *
                              second_node_data.initial_pose);
       problem.AddResidualBlock(
-          SpaCostFunction2D::CreateAutoDiffCostFunction(Constraint::Pose{
-              relative_initial_pose, options_.initial_pose_translation_weight(),
-              options_.initial_pose_rotation_weight()}),
+          SpaCostFunction2D::CreateAutoDiffCostFunction(
+              Constraint::Pose{relative_local_slam_pose,
+                               options_.local_slam_pose_translation_weight(),
+                               options_.local_slam_pose_rotation_weight()}),
           nullptr /* loss function */, C_nodes.at(first_node_id).data(),
           C_nodes.at(second_node_id).data());
     }
@@ -339,6 +340,7 @@ std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::InterpolateOdometry(
           .transform);
 }
 
+// Computes the relative pose between two nodes based on odometry data.
 std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::OdometryBetween(
     const int trajectory_id, const NodeData& first_node_data,
     const NodeData& second_node_data) const {

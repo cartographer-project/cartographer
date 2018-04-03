@@ -34,10 +34,10 @@ proto::OptimizationProblemOptions CreateOptimizationProblemOptions(
       parameter_dictionary->GetDouble("odometry_translation_weight"));
   options.set_odometry_rotation_weight(
       parameter_dictionary->GetDouble("odometry_rotation_weight"));
-  options.set_initial_pose_translation_weight(
-      parameter_dictionary->GetDouble("initial_pose_translation_weight"));
-  options.set_initial_pose_rotation_weight(
-      parameter_dictionary->GetDouble("initial_pose_rotation_weight"));
+  options.set_local_slam_pose_translation_weight(
+      parameter_dictionary->GetDouble("local_slam_pose_translation_weight"));
+  options.set_local_slam_pose_rotation_weight(
+      parameter_dictionary->GetDouble("local_slam_pose_rotation_weight"));
   options.set_fixed_frame_pose_translation_weight(
       parameter_dictionary->GetDouble("fixed_frame_pose_translation_weight"));
   options.set_fixed_frame_pose_rotation_weight(
