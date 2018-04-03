@@ -26,6 +26,7 @@ message Submap2D {
   int32 num_range_data = 2;
   bool finished = 3;
   ProbabilityGrid probability_grid = 4;
+  int64 latest_range_data_time = 5;
 }
 
 // Serialized state of a Submap3D.
@@ -35,4 +36,5 @@ message Submap3D {
   bool finished = 3;
   HybridGrid high_resolution_hybrid_grid = 4;
   HybridGrid low_resolution_hybrid_grid = 5;
+  int64 latest_range_data_time = 6;
 }

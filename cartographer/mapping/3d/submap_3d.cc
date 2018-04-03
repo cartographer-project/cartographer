@@ -211,6 +211,8 @@ Submap3D::Submap3D(const proto::Submap3D& proto)
           common::make_unique<HybridGrid>(proto.low_resolution_hybrid_grid())) {
   set_num_range_data(proto.num_range_data());
   set_finished(proto.finished());
+  set_latest_range_data_time(
+      common::FromUniversal(proto.latest_range_data_time()));
 }
 
 void Submap3D::ToProto(proto::Submap* const proto,
@@ -225,6 +227,8 @@ void Submap3D::ToProto(proto::Submap* const proto,
     *submap_3d->mutable_low_resolution_hybrid_grid() =
         low_resolution_hybrid_grid().ToProto();
   }
+  submap_3d->set_latest_range_data_time(
+      common::ToUniversal(latest_range_data_time()));
 }
 
 void Submap3D::UpdateFromProto(const proto::Submap& proto) {
@@ -246,6 +250,8 @@ void Submap3D::UpdateFromProto(const proto::Submap& proto) {
                   submap_3d.low_resolution_hybrid_grid())
             : nullptr;
   }
+  set_latest_range_data_time(
+      common::FromUniversal(submap_3d.latest_range_data_time()));
 }
 
 void Submap3D::ToResponseProto(
@@ -261,7 +267,8 @@ void Submap3D::ToResponseProto(
 
 void Submap3D::InsertRangeData(const sensor::RangeData& range_data,
                                const RangeDataInserter3D& range_data_inserter,
-                               const int high_resolution_max_range) {
+                               const int high_resolution_max_range,
+                               common::Time time) {
   CHECK(!finished());
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data, local_pose().inverse().cast<float>());
@@ -272,6 +279,7 @@ void Submap3D::InsertRangeData(const sensor::RangeData& range_data,
   range_data_inserter.Insert(transformed_range_data,
                              low_resolution_hybrid_grid_.get());
   set_num_range_data(num_range_data() + 1);
+  set_latest_range_data_time(std::max(latest_range_data_time(), time));
 }
 
 void Submap3D::Finish() {
@@ -298,10 +306,10 @@ int ActiveSubmaps3D::matching_index() const { return matching_submap_index_; }
 
 void ActiveSubmaps3D::InsertRangeData(
     const sensor::RangeData& range_data,
-    const Eigen::Quaterniond& gravity_alignment) {
+    const Eigen::Quaterniond& gravity_alignment, common::Time time) {
   for (auto& submap : submaps_) {
     submap->InsertRangeData(range_data, range_data_inserter_,
-                            options_.high_resolution_max_range());
+                            options_.high_resolution_max_range(), time);
   }
   if (submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),

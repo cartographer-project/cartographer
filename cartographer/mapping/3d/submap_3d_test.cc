@@ -24,10 +24,10 @@ namespace mapping {
 namespace {
 
 TEST(SubmapsTest, ToFromProto) {
-  const Submap3D expected(
-      0.05, 0.25,
-      transform::Rigid3d(Eigen::Vector3d(1., 2., 0.),
-                         Eigen::Quaterniond(0., 0., 0., 1.)));
+  Submap3D expected(0.05, 0.25,
+                    transform::Rigid3d(Eigen::Vector3d(1., 2., 0.),
+                                       Eigen::Quaterniond(0., 0., 0., 1.)));
+  expected.set_latest_range_data_time(common::FromUniversal(100500));
   proto::Submap proto;
   expected.ToProto(&proto, true /* include_probability_grid_data */);
   EXPECT_FALSE(proto.has_submap_2d());

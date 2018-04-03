@@ -33,22 +33,28 @@ namespace {
 
 TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
   constexpr int kNumRangeData = 10;
-  auto parameter_dictionary = common::MakeDictionary(
-      "return {"
-      "resolution = 0.05, "
-      "num_range_data = " +
-      std::to_string(kNumRangeData) +
-      ", "
-      "range_data_inserter = {"
-      "insert_free_space = true, "
-      "hit_probability = 0.53, "
-      "miss_probability = 0.495, "
-      "},"
-      "}");
+  auto parameter_dictionary = common::MakeDictionary(R"(
+      return {
+        resolution = 0.05,
+        num_range_data = )" + std::to_string(kNumRangeData) +
+                                                     R"(,
+        range_data_inserter = {
+          insert_free_space = true,
+          hit_probability = 0.53,
+          miss_probability = 0.495,
+        },
+      })");
   ActiveSubmaps2D submaps{CreateSubmapsOptions2D(parameter_dictionary.get())};
   std::set<std::shared_ptr<Submap2D>> all_submaps;
   for (int i = 0; i != 1000; ++i) {
-    submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}});
+    submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}},
+                            common::FromUniversal(i));
+
+    // Check if the latest range data time is 0 for a freshly added submap and
+    // `i` for a submap with a least one inserted point cloud.
+    EXPECT_EQ((i + 1) % kNumRangeData ? i : 0,
+              common::ToUniversal(
+                  submaps.submaps().back()->latest_range_data_time()));
     // Except for the first, maps should only be returned after enough range
     // data.
     for (const auto& submap : submaps.submaps()) {
@@ -72,6 +78,7 @@ TEST(Submap2DTest, ToFromProto) {
   Submap2D expected(
       MapLimits(1., Eigen::Vector2d(2., 3.), CellLimits(100, 110)),
       Eigen::Vector2f(4.f, 5.f));
+  expected.set_latest_range_data_time(common::FromUniversal(100500));
   proto::Submap proto;
   expected.ToProto(&proto, true /* include_probability_grid_data */);
   EXPECT_TRUE(proto.has_submap_2d());
@@ -89,6 +96,7 @@ TEST(Submap2DTest, ToFromProto) {
       actual.probability_grid().limits().max(), 1e-6));
   EXPECT_EQ(expected.probability_grid().limits().cell_limits().num_x_cells,
             actual.probability_grid().limits().cell_limits().num_x_cells);
+  EXPECT_EQ(expected.latest_range_data_time(), actual.latest_range_data_time());
 }
 
 }  // namespace

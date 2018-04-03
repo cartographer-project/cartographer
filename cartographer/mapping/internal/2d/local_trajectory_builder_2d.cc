@@ -260,7 +260,7 @@ LocalTrajectoryBuilder2D::InsertIntoSubmap(
   for (const std::shared_ptr<Submap2D>& submap : active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
-  active_submaps_.InsertRangeData(range_data_in_local);
+  active_submaps_.InsertRangeData(range_data_in_local, time);
 
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.loop_closure_adaptive_voxel_filter_options());

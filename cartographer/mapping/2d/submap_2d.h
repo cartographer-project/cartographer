@@ -59,7 +59,8 @@ class Submap2D : public Submap {
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
   void InsertRangeData(const sensor::RangeData& range_data,
-                       const RangeDataInserter2D& range_data_inserter);
+                       const RangeDataInserter2D& range_data_inserter,
+                       common::Time time);
   void Finish();
 
  private:
@@ -84,12 +85,12 @@ class ActiveSubmaps2D {
 
   // Returns the index of the newest initialized Submap which can be
   // used for scan-to-map matching.
-  int matching_index() const;
+  int matching_index() const { return matching_submap_index_; }
 
   // Inserts 'range_data' into the Submap collection.
-  void InsertRangeData(const sensor::RangeData& range_data);
+  void InsertRangeData(const sensor::RangeData& range_data, common::Time time);
 
-  std::vector<std::shared_ptr<Submap2D>> submaps() const;
+  std::vector<std::shared_ptr<Submap2D>> submaps() const { return submaps_; }
 
  private:
   void FinishSubmap();

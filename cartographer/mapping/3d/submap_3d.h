@@ -64,7 +64,7 @@ class Submap3D : public Submap {
   // submap must not be finished yet.
   void InsertRangeData(const sensor::RangeData& range_data,
                        const RangeDataInserter3D& range_data_inserter,
-                       int high_resolution_max_range);
+                       int high_resolution_max_range, common::Time time);
   void Finish();
 
  private:
@@ -96,7 +96,8 @@ class ActiveSubmaps3D {
   // used for the orientation of new submaps so that the z axis approximately
   // aligns with gravity.
   void InsertRangeData(const sensor::RangeData& range_data,
-                       const Eigen::Quaterniond& gravity_alignment);
+                       const Eigen::Quaterniond& gravity_alignment,
+                       common::Time time);
 
   std::vector<std::shared_ptr<Submap3D>> submaps() const;
 

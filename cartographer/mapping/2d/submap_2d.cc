@@ -72,6 +72,8 @@ Submap2D::Submap2D(const proto::Submap2D& proto)
       probability_grid_(ProbabilityGrid(proto.probability_grid())) {
   set_num_range_data(proto.num_range_data());
   set_finished(proto.finished());
+  set_latest_range_data_time(
+      common::FromUniversal(proto.latest_range_data_time()));
 }
 
 void Submap2D::ToProto(proto::Submap* const proto,
@@ -83,6 +85,8 @@ void Submap2D::ToProto(proto::Submap* const proto,
   if (include_probability_grid_data) {
     *submap_2d->mutable_probability_grid() = probability_grid_.ToProto();
   }
+  submap_2d->set_latest_range_data_time(
+      common::ToUniversal(latest_range_data_time()));
 }
 
 void Submap2D::UpdateFromProto(const proto::Submap& proto) {
@@ -93,6 +97,8 @@ void Submap2D::UpdateFromProto(const proto::Submap& proto) {
   if (submap_2d.has_probability_grid()) {
     probability_grid_ = ProbabilityGrid(submap_2d.probability_grid());
   }
+  set_latest_range_data_time(
+      common::FromUniversal(submap_2d.latest_range_data_time()));
 }
 
 void Submap2D::ToResponseProto(
@@ -144,10 +150,12 @@ void Submap2D::ToResponseProto(
 }
 
 void Submap2D::InsertRangeData(const sensor::RangeData& range_data,
-                               const RangeDataInserter2D& range_data_inserter) {
+                               const RangeDataInserter2D& range_data_inserter,
+                               common::Time time) {
   CHECK(!finished());
   range_data_inserter.Insert(range_data, &probability_grid_);
   set_num_range_data(num_range_data() + 1);
+  set_latest_range_data_time(std::max(latest_range_data_time(), time));
 }
 
 void Submap2D::Finish() {
@@ -164,20 +172,15 @@ ActiveSubmaps2D::ActiveSubmaps2D(const proto::SubmapsOptions2D& options)
   AddSubmap(Eigen::Vector2f::Zero());
 }
 
-void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
+void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data,
+                                      common::Time time) {
   for (auto& submap : submaps_) {
-    submap->InsertRangeData(range_data, range_data_inserter_);
+    submap->InsertRangeData(range_data, range_data_inserter_, time);
   }
   if (submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(range_data.origin.head<2>());
   }
 }
-
-std::vector<std::shared_ptr<Submap2D>> ActiveSubmaps2D::submaps() const {
-  return submaps_;
-}
-
-int ActiveSubmaps2D::matching_index() const { return matching_submap_index_; }
 
 void ActiveSubmaps2D::FinishSubmap() {
   Submap2D* submap = submaps_.front().get();

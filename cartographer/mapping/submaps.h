@@ -23,6 +23,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
+#include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
@@ -80,6 +81,14 @@ class Submap {
     num_range_data_ = num_range_data;
   }
 
+  // Time when the latest RangeData was inserted.
+  common::Time latest_range_data_time() const {
+    return latest_range_data_time_;
+  }
+  void set_latest_range_data_time(common::Time time) {
+    latest_range_data_time_ = time;
+  }
+
   // Whether the submap is finished or not.
   bool finished() const { return finished_; }
   void set_finished(bool finished) { finished_ = finished; }
@@ -88,6 +97,7 @@ class Submap {
   const transform::Rigid3d local_pose_;
   int num_range_data_ = 0;
   bool finished_ = false;
+  common::Time latest_range_data_time_ = common::FromUniversal(0);
 };
 
 }  // namespace mapping
