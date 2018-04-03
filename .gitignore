@@ -1,5 +1,2 @@
 build
 bazel-*
-
-.vscode/
-compile_commands.json
