@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_LOCAL_SLAM_RESULT_DATA_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_LOCAL_SLAM_RESULT_DATA_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,14 +25,15 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
+DEFINE_HANDLER_SIGNATURE(
+    AddLocalSlamResultDataSignature,
+    async_grpc::Stream<proto::AddLocalSlamResultDataRequest>,
+    google::protobuf::Empty,
+    "/cartographer.cloud.proto.MapBuilderService/AddLocalSlamResultData")
+
 class AddLocalSlamResultDataHandler
-    : public framework::RpcHandler<
-          framework::Stream<proto::AddLocalSlamResultDataRequest>,
-          google::protobuf::Empty> {
+    : public async_grpc::RpcHandler<AddLocalSlamResultDataSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/AddLocalSlamResultData";
-  }
   void OnRequest(const proto::AddLocalSlamResultDataRequest& request) override;
   void OnReadsDone() override;
 };

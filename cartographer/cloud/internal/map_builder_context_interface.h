@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_MAP_BUILDER_CONTEXT_INTERFACE_H
 #define CARTOGRAPHER_CLOUD_MAP_BUILDER_CONTEXT_INTERFACE_H
 
-#include "cartographer/cloud/internal/framework/execution_context.h"
+#include "async_grpc/execution_context.h"
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/mapping/map_builder_interface.h"
@@ -29,7 +29,7 @@ namespace cartographer {
 namespace cloud {
 
 class MapBuilderServer;
-class MapBuilderContextInterface : public framework::ExecutionContext {
+class MapBuilderContextInterface : public async_grpc::ExecutionContext {
  public:
   struct LocalSlamResult {
     int trajectory_id;

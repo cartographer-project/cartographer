@@ -19,7 +19,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/mapping/3d/hybrid_grid.h"
-#include "cartographer/mapping/3d/scan_matching/interpolated_grid.h"
+#include "cartographer/mapping/internal/3d/scan_matching/interpolated_grid.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"

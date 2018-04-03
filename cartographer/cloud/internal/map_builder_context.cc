@@ -17,8 +17,8 @@
 #include "cartographer/cloud/internal/map_builder_context.h"
 
 #include "cartographer/cloud/internal/map_builder_server.h"
-#include "cartographer/mapping/2d/local_slam_result_2d.h"
-#include "cartographer/mapping/3d/local_slam_result_3d.h"
+#include "cartographer/mapping/internal/2d/local_slam_result_2d.h"
+#include "cartographer/mapping/internal/3d/local_slam_result_3d.h"
 
 namespace cartographer {
 namespace cloud {

@@ -16,12 +16,12 @@
 
 #include "cartographer/cloud/internal/handlers/add_odometry_data_handler.h"
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/common/make_unique.h"
-#include "cartographer/sensor/dispatchable.h"
+#include "cartographer/sensor/internal/dispatchable.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "google/protobuf/empty.pb.h"
 

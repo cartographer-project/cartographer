@@ -19,7 +19,7 @@
 #include <tuple>
 #include <vector>
 
-#include "cartographer/sensor/test_helpers.h"
+#include "cartographer/sensor/internal/test_helpers.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {

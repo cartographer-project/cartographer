@@ -82,12 +82,12 @@ class PoseGraph : public PoseGraphInterface {
   virtual void FreezeTrajectory(int trajectory_id) = 0;
 
   // Adds a 'submap' from a proto with the given 'global_pose' to the
-  // appropriate frozen trajectory.
+  // appropriate trajectory.
   virtual void AddSubmapFromProto(const transform::Rigid3d& global_pose,
                                   const proto::Submap& submap) = 0;
 
   // Adds a 'node' from a proto with the given 'global_pose' to the
-  // appropriate frozen trajectory.
+  // appropriate trajectory.
   virtual void AddNodeFromProto(const transform::Rigid3d& global_pose,
                                 const proto::Node& node) = 0;
 
@@ -128,6 +128,10 @@ class PoseGraph : public PoseGraphInterface {
   // Returns the fixed frame pose data.
   virtual sensor::MapByTime<sensor::FixedFramePoseData>
   GetFixedFramePoseData() = 0;
+
+  // Returns the landmark data.
+  virtual std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
+  GetLandmarkNodes() = 0;
 
   // Sets a relative initial pose 'relative_pose' for 'from_trajectory_id' with
   // respect to 'to_trajectory_id' at time 'time'.

@@ -19,7 +19,7 @@
 #include <map>
 #include <thread>
 
-#include "cartographer/cloud/internal/framework/client.h"
+#include "async_grpc/client.h"
 #include "cartographer/cloud/internal/handlers/add_fixed_frame_pose_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_imu_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_landmark_data_handler.h"
@@ -29,6 +29,7 @@
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
+#include "cartographer/common/blocking_queue.h"
 #include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 #include "grpc++/grpc++.h"
@@ -83,38 +84,38 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   common::BlockingQueue<std::unique_ptr<google::protobuf::Message>> send_queue_;
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> upload_thread_;
-  std::unique_ptr<framework::Client<handlers::AddFixedFramePoseDataHandler>>
+  std::unique_ptr<async_grpc::Client<handlers::AddFixedFramePoseDataSignature>>
       add_fixed_frame_pose_client_;
-  std::unique_ptr<framework::Client<handlers::AddImuDataHandler>>
+  std::unique_ptr<async_grpc::Client<handlers::AddImuDataSignature>>
       add_imu_client_;
-  std::unique_ptr<framework::Client<handlers::AddLocalSlamResultDataHandler>>
+  std::unique_ptr<async_grpc::Client<handlers::AddLocalSlamResultDataSignature>>
       add_local_slam_result_client_;
-  std::unique_ptr<framework::Client<handlers::AddOdometryDataHandler>>
+  std::unique_ptr<async_grpc::Client<handlers::AddOdometryDataSignature>>
       add_odometry_client_;
-  std::unique_ptr<framework::Client<handlers::AddLandmarkDataHandler>>
+  std::unique_ptr<async_grpc::Client<handlers::AddLandmarkDataSignature>>
       add_landmark_client_;
 };
 
 LocalTrajectoryUploader::~LocalTrajectoryUploader() {
   if (add_imu_client_) {
-    CHECK(add_imu_client_->WritesDone());
-    CHECK(add_imu_client_->Finish().ok());
+    CHECK(add_imu_client_->StreamWritesDone());
+    CHECK(add_imu_client_->StreamFinish().ok());
   }
   if (add_odometry_client_) {
-    CHECK(add_odometry_client_->WritesDone());
-    CHECK(add_odometry_client_->Finish().ok());
+    CHECK(add_odometry_client_->StreamWritesDone());
+    CHECK(add_odometry_client_->StreamFinish().ok());
   }
   if (add_fixed_frame_pose_client_) {
-    CHECK(add_fixed_frame_pose_client_->WritesDone());
-    CHECK(add_fixed_frame_pose_client_->Finish().ok());
+    CHECK(add_fixed_frame_pose_client_->StreamWritesDone());
+    CHECK(add_fixed_frame_pose_client_->StreamFinish().ok());
   }
   if (add_local_slam_result_client_) {
-    CHECK(add_local_slam_result_client_->WritesDone());
-    CHECK(add_local_slam_result_client_->Finish().ok());
+    CHECK(add_local_slam_result_client_->StreamWritesDone());
+    CHECK(add_local_slam_result_client_->StreamFinish().ok());
   }
   if (add_landmark_client_) {
-    CHECK(add_landmark_client_->WritesDone());
-    CHECK(add_landmark_client_->Finish().ok());
+    CHECK(add_landmark_client_->StreamWritesDone());
+    CHECK(add_landmark_client_->StreamFinish().ok());
   }
 }
 
@@ -173,9 +174,9 @@ void LocalTrajectoryUploader::TranslateTrajectoryId(
 void LocalTrajectoryUploader::ProcessFixedFramePoseDataMessage(
     proto::AddFixedFramePoseDataRequest *data_request) {
   if (!add_fixed_frame_pose_client_) {
-    add_fixed_frame_pose_client_ =
-        make_unique<framework::Client<handlers::AddFixedFramePoseDataHandler>>(
-            client_channel_);
+    add_fixed_frame_pose_client_ = make_unique<
+        async_grpc::Client<handlers::AddFixedFramePoseDataSignature>>(
+        client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   CHECK(add_fixed_frame_pose_client_->Write(*data_request));
@@ -185,7 +186,7 @@ void LocalTrajectoryUploader::ProcessImuDataMessage(
     proto::AddImuDataRequest *data_request) {
   if (!add_imu_client_) {
     add_imu_client_ =
-        make_unique<framework::Client<handlers::AddImuDataHandler>>(
+        make_unique<async_grpc::Client<handlers::AddImuDataSignature>>(
             client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
@@ -196,7 +197,7 @@ void LocalTrajectoryUploader::ProcessOdometryDataMessage(
     proto::AddOdometryDataRequest *data_request) {
   if (!add_odometry_client_) {
     add_odometry_client_ =
-        make_unique<framework::Client<handlers::AddOdometryDataHandler>>(
+        make_unique<async_grpc::Client<handlers::AddOdometryDataSignature>>(
             client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
@@ -207,7 +208,7 @@ void LocalTrajectoryUploader::ProcessLandmarkDataMessage(
     proto::AddLandmarkDataRequest *data_request) {
   if (!add_landmark_client_) {
     add_landmark_client_ =
-        make_unique<framework::Client<handlers::AddLandmarkDataHandler>>(
+        make_unique<async_grpc::Client<handlers::AddLandmarkDataSignature>>(
             client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
@@ -217,9 +218,9 @@ void LocalTrajectoryUploader::ProcessLandmarkDataMessage(
 void LocalTrajectoryUploader::ProcessLocalSlamResultDataMessage(
     proto::AddLocalSlamResultDataRequest *data_request) {
   if (!add_local_slam_result_client_) {
-    add_local_slam_result_client_ =
-        make_unique<framework::Client<handlers::AddLocalSlamResultDataHandler>>(
-            client_channel_);
+    add_local_slam_result_client_ = make_unique<
+        async_grpc::Client<handlers::AddLocalSlamResultDataSignature>>(
+        client_channel_);
   }
   TranslateTrajectoryId(data_request->mutable_sensor_metadata());
   // A submap also holds a trajectory id that must be translated to uplink's
@@ -245,7 +246,7 @@ void LocalTrajectoryUploader::AddTrajectory(
   }
   *request.add_expected_sensor_ids() =
       cloud::ToProto(GetLocalSlamResultSensorId(local_trajectory_id));
-  framework::Client<handlers::AddTrajectoryHandler> client(client_channel_);
+  async_grpc::Client<handlers::AddTrajectorySignature> client(client_channel_);
   CHECK(client.Write(request));
   CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 0);
   local_to_cloud_trajectory_id_map_[local_trajectory_id] =
@@ -258,7 +259,8 @@ void LocalTrajectoryUploader::FinishTrajectory(int local_trajectory_id) {
       local_to_cloud_trajectory_id_map_[local_trajectory_id];
   proto::FinishTrajectoryRequest request;
   request.set_trajectory_id(cloud_trajectory_id);
-  framework::Client<handlers::FinishTrajectoryHandler> client(client_channel_);
+  async_grpc::Client<handlers::FinishTrajectorySignature> client(
+      client_channel_);
   CHECK(client.Write(request));
 }
 

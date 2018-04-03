@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_ODOMETRY_DATA_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_ODOMETRY_DATA_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,14 +25,14 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
+DEFINE_HANDLER_SIGNATURE(
+    AddOdometryDataSignature, async_grpc::Stream<proto::AddOdometryDataRequest>,
+    google::protobuf::Empty,
+    "/cartographer.cloud.proto.MapBuilderService/AddOdometryData")
+
 class AddOdometryDataHandler
-    : public framework::RpcHandler<
-          framework::Stream<proto::AddOdometryDataRequest>,
-          google::protobuf::Empty> {
+    : public async_grpc::RpcHandler<AddOdometryDataSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/AddOdometryData";
-  }
   void OnRequest(const proto::AddOdometryDataRequest &request) override;
   void OnReadsDone() override;
 };

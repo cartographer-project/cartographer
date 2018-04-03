@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_RANGEFINDER_DATA_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_RANGEFINDER_DATA_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,14 +25,15 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
+DEFINE_HANDLER_SIGNATURE(
+    AddRangefinderDataSignature,
+    async_grpc::Stream<proto::AddRangefinderDataRequest>,
+    google::protobuf::Empty,
+    "/cartographer.cloud.proto.MapBuilderService/AddRangefinderData")
+
 class AddRangefinderDataHandler
-    : public framework::RpcHandler<
-          framework::Stream<proto::AddRangefinderDataRequest>,
-          google::protobuf::Empty> {
+    : public async_grpc::RpcHandler<AddRangefinderDataSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/AddRangefinderData";
-  }
   void OnRequest(const proto::AddRangefinderDataRequest &request) override;
   void OnReadsDone() override;
 };

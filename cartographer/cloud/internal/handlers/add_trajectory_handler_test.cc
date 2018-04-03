@@ -66,10 +66,11 @@ const std::string kMessage = R"(
   )";
 
 class AddTrajectoryHandlerTest
-    : public testing::HandlerTest<AddTrajectoryHandler> {
+    : public testing::HandlerTest<AddTrajectorySignature,
+                                  AddTrajectoryHandler> {
  public:
   void SetUp() override {
-    testing::HandlerTest<AddTrajectoryHandler>::SetUp();
+    testing::HandlerTest<AddTrajectorySignature, AddTrajectoryHandler>::SetUp();
     mock_map_builder_ = common::make_unique<mapping::testing::MockMapBuilder>();
     EXPECT_CALL(*mock_map_builder_context_,
                 GetLocalSlamResultCallbackForSubscriptions())

@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_LANDMARK_POSES_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_LANDMARK_POSES_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -25,13 +25,14 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
+DEFINE_HANDLER_SIGNATURE(
+    GetLandmarkPosesSignature, google::protobuf::Empty,
+    proto::GetLandmarkPosesResponse,
+    "/cartographer.cloud.proto.MapBuilderService/GetLandmarkPoses")
+
 class GetLandmarkPosesHandler
-    : public framework::RpcHandler<google::protobuf::Empty,
-                                   proto::GetLandmarkPosesResponse> {
+    : public async_grpc::RpcHandler<GetLandmarkPosesSignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/GetLandmarkPoses";
-  }
   void OnRequest(const google::protobuf::Empty& request) override;
 };
 

@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 
 namespace cartographer {
@@ -32,6 +33,25 @@ ResolveLuaParameters(const std::string& lua_code);
 std::vector<cartographer::sensor::TimedPointCloudData>
 GenerateFakeRangeMeasurements(double travel_distance, double duration,
                               double time_step);
+
+proto::Submap CreateFakeSubmap3D(int trajectory_id = 1, int submap_index = 1);
+
+proto::Node CreateFakeNode(int trajectory_id = 1, int node_index = 1);
+
+proto::PoseGraph::Constraint CreateFakeConstraint(const proto::Node& node,
+                                                  const proto::Submap& submap);
+
+proto::Trajectory* CreateTrajectoryIfNeeded(int trajectory_id,
+                                            proto::PoseGraph* pose_graph);
+
+void AddToProtoGraph(const proto::Node& node_data,
+                     proto::PoseGraph* pose_graph);
+
+void AddToProtoGraph(const proto::Submap& submap_data,
+                     proto::PoseGraph* pose_graph);
+
+void AddToProtoGraph(const proto::PoseGraph::Constraint& constraint,
+                     proto::PoseGraph* pose_graph);
 
 }  // namespace test
 }  // namespace mapping

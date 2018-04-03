@@ -17,20 +17,21 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_TRAJECTORY_HANDLER_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_TRAJECTORY_HANDLER_H
 
-#include "cartographer/cloud/internal/framework/rpc_handler.h"
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 
 namespace cartographer {
 namespace cloud {
 namespace handlers {
 
+DEFINE_HANDLER_SIGNATURE(
+    AddTrajectorySignature, proto::AddTrajectoryRequest,
+    proto::AddTrajectoryResponse,
+    "/cartographer.cloud.proto.MapBuilderService/AddTrajectory")
+
 class AddTrajectoryHandler
-    : public framework::RpcHandler<proto::AddTrajectoryRequest,
-                                   proto::AddTrajectoryResponse> {
+    : public async_grpc::RpcHandler<AddTrajectorySignature> {
  public:
-  std::string method_name() const override {
-    return "/cartographer.cloud.proto.MapBuilderService/AddTrajectory";
-  }
   void OnRequest(const proto::AddTrajectoryRequest& request) override;
 };
 

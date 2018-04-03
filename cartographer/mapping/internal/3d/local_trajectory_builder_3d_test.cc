@@ -23,7 +23,7 @@
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
-#include "cartographer/mapping/3d/local_trajectory_builder_options_3d.h"
+#include "cartographer/mapping/internal/3d/local_trajectory_builder_options_3d.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
@@ -34,6 +34,8 @@
 namespace cartographer {
 namespace mapping {
 namespace {
+
+constexpr char kSensorId[] = "sensor_id";
 
 class LocalTrajectoryBuilderTest : public ::testing::Test {
  protected:
@@ -255,8 +257,8 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
       const auto range_data = GenerateRangeData(node.pose);
       const std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
           matching_result = local_trajectory_builder_->AddRangeData(
-              node.time, sensor::TimedRangeData{
-                             range_data.origin, range_data.returns, {}});
+              kSensorId, sensor::TimedPointCloudData{
+                             node.time, range_data.origin, range_data.returns});
       if (matching_result != nullptr) {
         EXPECT_THAT(matching_result->local_pose,
                     transform::IsNearly(node.pose, 1e-1));
@@ -271,8 +273,8 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
 };
 
 TEST_F(LocalTrajectoryBuilderTest, MoveInsideCubeUsingOnlyCeresScanMatcher) {
-  local_trajectory_builder_.reset(
-      new LocalTrajectoryBuilder3D(CreateTrajectoryBuilderOptions3D()));
+  local_trajectory_builder_.reset(new LocalTrajectoryBuilder3D(
+      CreateTrajectoryBuilderOptions3D(), {kSensorId}));
   VerifyAccuracy(GenerateCorkscrewTrajectory(), 1e-1);
 }
 
