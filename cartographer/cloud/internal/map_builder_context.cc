@@ -97,7 +97,7 @@ std::shared_ptr<mapping::Submap2D> MapBuilderContext::UpdateSubmap2D(
     } else {
       // If the submap is unfinished set the 'num_range_data' to 0 since we
       // haven't changed the HybridGrid.
-      submap_2d_ptr->SetNumRangeData(0);
+      submap_2d_ptr->set_num_range_data(0);
     }
   }
   return submap_2d_ptr;
@@ -131,7 +131,7 @@ std::shared_ptr<mapping::Submap3D> MapBuilderContext::UpdateSubmap3D(
     } else {
       // If the submap is unfinished set the 'num_range_data' to 0 since we
       // haven't changed the HybridGrid.
-      submap_3d_ptr->SetNumRangeData(0);
+      submap_3d_ptr->set_num_range_data(0);
     }
   }
   return submap_3d_ptr;
