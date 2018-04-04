@@ -95,10 +95,10 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
     }
 
     // Drop buffered points until overlap_end.
-    if (overlap_end == ranges.begin()) {
-      ++it;
-    } else if (overlap_end == ranges.end()) {
+    if (overlap_end == ranges.end()) {
       it = id_to_pending_data_.erase(it);
+    } else if (overlap_end == ranges.begin()) {
+      ++it;
     } else {
       data = sensor::TimedPointCloudData{
           data.time, data.origin,

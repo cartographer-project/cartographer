@@ -77,6 +77,33 @@ TEST(RangeDataCollatorTest, SingleSensor) {
   EXPECT_TRUE(ArePointTimestampsSorted(output_2));
 }
 
+TEST(RangeDataCollatorTest, SingleSensorEmptyData) {
+  const std::string sensor_id = "single_sensor";
+  RangeDataCollator collator({sensor_id});
+  sensor::TimedPointCloudData empty_data{common::FromUniversal(300)};
+  auto output_0 = collator.AddRangeData(sensor_id, empty_data);
+  EXPECT_EQ(output_0.time, empty_data.time);
+  EXPECT_EQ(output_0.ranges.size(), empty_data.ranges.size());
+  EXPECT_TRUE(ArePointTimestampsSorted(output_0));
+  auto output_1 =
+      collator.AddRangeData(sensor_id, CreateFakeRangeData(300, 500));
+  EXPECT_EQ(common::ToUniversal(output_1.time), 500);
+  EXPECT_EQ(output_1.origins.size(), 1);
+  ASSERT_EQ(output_1.ranges.size(), kNumSamples);
+  EXPECT_TRUE(ArePointTimestampsSorted(output_1));
+  EXPECT_NEAR(common::ToUniversal(
+                  output_1.time +
+                  common::FromSeconds(output_1.ranges[0].point_time[3])),
+              300, 2);
+  auto output_2 =
+      collator.AddRangeData(sensor_id, CreateFakeRangeData(-1000, 510));
+  EXPECT_EQ(common::ToUniversal(output_2.time), 510);
+  EXPECT_EQ(output_2.origins.size(), 1);
+  EXPECT_EQ(output_2.ranges.size(), 1);
+  EXPECT_EQ(output_2.ranges[0].point_time[3], 0.f);
+  EXPECT_TRUE(ArePointTimestampsSorted(output_2));
+}
+
 TEST(RangeDataCollatorTest, TwoSensors) {
   const std::string sensor_0 = "sensor_0";
   const std::string sensor_1 = "sensor_1";
