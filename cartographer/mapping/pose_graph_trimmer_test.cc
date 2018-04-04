@@ -47,6 +47,12 @@ class FakePoseGraph : public Trimmable {
     return {};
   }
 
+  MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() override { return {}; }
+
+  std::vector<PoseGraphInterface::Constraint> GetConstraints() override {
+    return {};
+  }
+
   void MarkSubmapAsTrimmed(const SubmapId& submap_id) override {
     trimmed_submaps_.push_back(submap_id);
   }
