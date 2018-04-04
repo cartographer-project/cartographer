@@ -829,12 +829,12 @@ PoseGraph3D::TrimmingHandle::GetAllSubmapData() const {
 }
 
 MapById<NodeId, TrajectoryNode>
-PoseGraph3D::TrimmingHandle::GetTrajectoryNodes() {
+PoseGraph3D::TrimmingHandle::GetTrajectoryNodes() const {
   return parent_->trajectory_nodes_;
 }
 
 std::vector<PoseGraphInterface::Constraint>
-PoseGraph3D::TrimmingHandle::GetConstraints() {
+PoseGraph3D::TrimmingHandle::GetConstraints() const {
   return parent_->constraints_;
 }
 

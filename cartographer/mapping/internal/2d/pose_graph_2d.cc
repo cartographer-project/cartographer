@@ -799,12 +799,12 @@ std::vector<SubmapId> PoseGraph2D::TrimmingHandle::GetSubmapIds(
 }
 
 MapById<NodeId, TrajectoryNode>
-PoseGraph2D::TrimmingHandle::GetTrajectoryNodes() {
+PoseGraph2D::TrimmingHandle::GetTrajectoryNodes() const {
   return parent_->trajectory_nodes_;
 }
 
 std::vector<PoseGraphInterface::Constraint>
-PoseGraph2D::TrimmingHandle::GetConstraints() {
+PoseGraph2D::TrimmingHandle::GetConstraints() const {
   return parent_->constraints_;
 }
 
