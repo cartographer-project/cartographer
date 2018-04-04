@@ -157,8 +157,10 @@ class PoseGraph2DTest : public ::testing::Test {
         Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
     constexpr int kTrajectoryId = 0;
-    active_submaps_->InsertRangeData(TransformRangeData(
-        range_data, transform::Embed3D(pose_estimate.cast<float>())));
+    active_submaps_->InsertRangeData(
+        TransformRangeData(range_data,
+                           transform::Embed3D(pose_estimate.cast<float>())),
+        common::FromUniversal(0));
 
     pose_graph_->AddNode(
         std::make_shared<const TrajectoryNode::Data>(
