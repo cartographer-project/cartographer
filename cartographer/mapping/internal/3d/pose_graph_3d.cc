@@ -828,6 +828,16 @@ PoseGraph3D::TrimmingHandle::GetAllSubmapData() const {
   return parent_->GetSubmapDataUnderLock();
 }
 
+MapById<NodeId, TrajectoryNode>
+PoseGraph3D::TrimmingHandle::GetTrajectoryNodes() const {
+  return parent_->trajectory_nodes_;
+}
+
+std::vector<PoseGraphInterface::Constraint>
+PoseGraph3D::TrimmingHandle::GetConstraints() const {
+  return parent_->constraints_;
+}
+
 bool PoseGraph3D::TrimmingHandle::IsFinished(const int trajectory_id) const {
   return parent_->IsTrajectoryFinished(trajectory_id);
 }

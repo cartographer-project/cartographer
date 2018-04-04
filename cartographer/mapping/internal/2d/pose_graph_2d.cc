@@ -798,6 +798,16 @@ std::vector<SubmapId> PoseGraph2D::TrimmingHandle::GetSubmapIds(
   return submap_ids;
 }
 
+MapById<NodeId, TrajectoryNode>
+PoseGraph2D::TrimmingHandle::GetTrajectoryNodes() const {
+  return parent_->trajectory_nodes_;
+}
+
+std::vector<PoseGraphInterface::Constraint>
+PoseGraph2D::TrimmingHandle::GetConstraints() const {
+  return parent_->constraints_;
+}
+
 bool PoseGraph2D::TrimmingHandle::IsFinished(const int trajectory_id) const {
   return parent_->IsTrajectoryFinished(trajectory_id);
 }

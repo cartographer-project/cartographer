@@ -288,6 +288,8 @@ class PoseGraph3D : public PoseGraph {
     std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override;
     MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
         const override;
+    MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() const override;
+    std::vector<PoseGraphInterface::Constraint> GetConstraints() const override;
     void MarkSubmapAsTrimmed(const SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
     bool IsFinished(int trajectory_id) const override;
