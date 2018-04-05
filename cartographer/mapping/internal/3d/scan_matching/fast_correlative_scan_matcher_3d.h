@@ -40,7 +40,7 @@ proto::FastCorrelativeScanMatcherOptions3D
 CreateFastCorrelativeScanMatcherOptions3D(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class PrecomputationGridStack;
+class PrecomputationGridStack3D;
 struct DiscreteScan3D;
 struct Candidate3D;
 
@@ -129,7 +129,7 @@ class FastCorrelativeScanMatcher3D {
   const proto::FastCorrelativeScanMatcherOptions3D options_;
   const float resolution_;
   const int width_in_voxels_;
-  std::unique_ptr<PrecomputationGridStack> precomputation_grid_stack_;
+  std::unique_ptr<PrecomputationGridStack3D> precomputation_grid_stack_;
   const HybridGrid* const low_resolution_hybrid_grid_;
   RotationalScanMatcher rotational_scan_matcher_;
 };

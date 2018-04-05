@@ -55,9 +55,9 @@ CreateFastCorrelativeScanMatcherOptions3D(
   return options;
 }
 
-class PrecomputationGridStack {
+class PrecomputationGridStack3D {
  public:
-  PrecomputationGridStack(
+  PrecomputationGridStack3D(
       const HybridGrid& hybrid_grid,
       const proto::FastCorrelativeScanMatcherOptions3D& options) {
     CHECK_GE(options.branch_and_bound_depth(), 1);
@@ -150,7 +150,7 @@ FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
       resolution_(hybrid_grid.resolution()),
       width_in_voxels_(hybrid_grid.grid_size()),
       precomputation_grid_stack_(
-          common::make_unique<PrecomputationGridStack>(hybrid_grid, options)),
+          common::make_unique<PrecomputationGridStack3D>(hybrid_grid, options)),
       low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
       rotational_scan_matcher_(HistogramsAtAnglesFromNodes(nodes)) {}
 

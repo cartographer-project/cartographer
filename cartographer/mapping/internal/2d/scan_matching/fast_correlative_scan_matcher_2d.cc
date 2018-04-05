@@ -23,6 +23,7 @@
 #include <limits>
 
 #include "Eigen/Geometry"
+#include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -166,9 +167,9 @@ uint8 PrecomputationGrid2D::ComputeCellValue(const float probability) const {
   return cell_value;
 }
 
-class PrecomputationGridStack {
+class PrecomputationGridStack2D {
  public:
-  PrecomputationGridStack(
+  PrecomputationGridStack2D(
       const ProbabilityGrid& probability_grid,
       const proto::FastCorrelativeScanMatcherOptions2D& options) {
     CHECK_GE(options.branch_and_bound_depth(), 1);
@@ -200,8 +201,8 @@ FastCorrelativeScanMatcher2D::FastCorrelativeScanMatcher2D(
     const proto::FastCorrelativeScanMatcherOptions2D& options)
     : options_(options),
       limits_(probability_grid.limits()),
-      precomputation_grid_stack_(
-          new PrecomputationGridStack(probability_grid, options)) {}
+      precomputation_grid_stack_(common::make_unique<PrecomputationGridStack2D>(
+          probability_grid, options)) {}
 
 FastCorrelativeScanMatcher2D::~FastCorrelativeScanMatcher2D() {}
 

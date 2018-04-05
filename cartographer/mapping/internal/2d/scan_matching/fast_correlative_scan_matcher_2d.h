@@ -92,7 +92,7 @@ class PrecomputationGrid2D {
   std::vector<uint8> cells_;
 };
 
-class PrecomputationGridStack;
+class PrecomputationGridStack2D;
 
 // An implementation of "Real-Time Correlative Scan Matching" by Olson.
 class FastCorrelativeScanMatcher2D {
@@ -146,7 +146,7 @@ class FastCorrelativeScanMatcher2D {
 
   const proto::FastCorrelativeScanMatcherOptions2D options_;
   MapLimits limits_;
-  std::unique_ptr<PrecomputationGridStack> precomputation_grid_stack_;
+  std::unique_ptr<PrecomputationGridStack2D> precomputation_grid_stack_;
 };
 
 }  // namespace scan_matching
