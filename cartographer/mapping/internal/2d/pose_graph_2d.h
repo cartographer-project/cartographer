@@ -93,9 +93,9 @@ class PoseGraph2D : public PoseGraph {
       EXCLUDES(mutex_);
 
   void FinishTrajectory(int trajectory_id) override;
-  bool IsTrajectoryFinished(int trajectory_id) override;
+  bool IsTrajectoryFinished(int trajectory_id) override REQUIRES(mutex_);
   void FreezeTrajectory(int trajectory_id) override;
-  bool IsTrajectoryFrozen(int trajectory_id) override;
+  bool IsTrajectoryFrozen(int trajectory_id) override REQUIRES(mutex_);
   void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
                           const proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
@@ -284,7 +284,7 @@ class PoseGraph2D : public PoseGraph {
     std::vector<PoseGraphInterface::Constraint> GetConstraints() const override;
     void MarkSubmapAsTrimmed(const SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
-    bool IsFinished(int trajectory_id) const override;
+    bool IsFinished(int trajectory_id) const override REQUIRES(parent_->mutex);
 
    private:
     PoseGraph2D* const parent_;

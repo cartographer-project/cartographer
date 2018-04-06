@@ -680,7 +680,7 @@ void PoseGraph2D::SetInitialTrajectoryPose(const int from_trajectory_id,
 
 transform::Rigid3d PoseGraph2D::GetInterpolatedGlobalTrajectoryPose(
     const int trajectory_id, const common::Time time) const {
-  CHECK(trajectory_nodes_.SizeOfTrajectoryOrZero(trajectory_id) > 0);
+  CHECK_GT(trajectory_nodes_.SizeOfTrajectoryOrZero(trajectory_id), 0);
   const auto it = trajectory_nodes_.lower_bound(trajectory_id, time);
   if (it == trajectory_nodes_.BeginOfTrajectory(trajectory_id)) {
     return trajectory_nodes_.BeginOfTrajectory(trajectory_id)->data.global_pose;
