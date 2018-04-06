@@ -17,6 +17,10 @@
 #ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_IMPL_H_
 #define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_IMPL_H_
 
+#include "Eigen/Core"
+#include "cartographer/transform/rigid_transform.h"
+#include "cartographer/transform/transform.h"
+
 namespace cartographer {
 namespace mapping {
 namespace pose_graph {
