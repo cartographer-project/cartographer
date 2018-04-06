@@ -28,8 +28,8 @@ macro(_common_compile_stuff VISIBILITY)
   set_target_properties(${NAME} PROPERTIES
     COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
-  target_include_directories(${NAME} PUBLIC ${PROJECT_NAME})
-  target_link_libraries(${NAME} PUBLIC ${PROJECT_NAME})
+  target_include_directories(${NAME} ${VISIBILITY} ${PROJECT_NAME})
+  target_link_libraries(${NAME} ${VISIBILITY} ${PROJECT_NAME})
 endmacro(_common_compile_stuff)
 
 function(google_test NAME ARG_SRC)
@@ -39,7 +39,7 @@ function(google_test NAME ARG_SRC)
   # Make sure that gmock always includes the correct gtest/gtest.h.
   target_include_directories("${NAME}" SYSTEM PRIVATE
     "${GMOCK_INCLUDE_DIRS}")
-  target_link_libraries("${NAME}" PUBLIC ${GMOCK_LIBRARIES})
+  target_link_libraries("${NAME}" PRIVATE ${GMOCK_LIBRARIES})
 
   add_test(${NAME} ${NAME})
 endfunction()
