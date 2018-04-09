@@ -461,7 +461,8 @@ void OptimizationProblem3D::Solve(
 
         // Add a relative pose constraint based on the odometry (if available).
         const std::unique_ptr<transform::Rigid3d> relative_odometry =
-            OdometryBetween(trajectory_id, first_node_data, second_node_data);
+            CalculateOdometryBetweenNodes(trajectory_id, first_node_data,
+                                          second_node_data);
         if (relative_odometry != nullptr) {
           problem.AddResidualBlock(
               SpaCostFunction3D::CreateAutoDiffCostFunction(Constraint::Pose{
@@ -588,7 +589,8 @@ void OptimizationProblem3D::Solve(
   }
 }
 
-std::unique_ptr<transform::Rigid3d> OptimizationProblem3D::OdometryBetween(
+std::unique_ptr<transform::Rigid3d>
+OptimizationProblem3D::CalculateOdometryBetweenNodes(
     const int trajectory_id, const NodeData& first_node_data,
     const NodeData& second_node_data) const {
   if (odometry_data_.HasTrajectory(trajectory_id)) {
