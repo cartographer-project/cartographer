@@ -69,7 +69,7 @@ class SlidingWindowMaximum {
 
  private:
   // Maximum of the current sliding window at the front. Then the maximum of the
-  // remaining window that came after this values first occurence, and so on.
+  // remaining window that came after this values first occurrence, and so on.
   std::deque<float> non_ascending_maxima_;
 };
 

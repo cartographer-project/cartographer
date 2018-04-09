@@ -34,7 +34,7 @@ namespace sensor {
 class VoxelFilter {
  public:
   // 'size' is the length of a voxel edge.
-  explicit VoxelFilter(float size) : resolution_(size){};
+  explicit VoxelFilter(float size) : resolution_(size) {}
 
   VoxelFilter(const VoxelFilter&) = delete;
   VoxelFilter& operator=(const VoxelFilter&) = delete;
