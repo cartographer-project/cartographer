@@ -233,7 +233,13 @@ def cartographer_repositories():
           "https://github.com/googlecartographer/async_grpc/archive/654c75ebf553c2bdb624c87a690f5a238aeb651f.tar.gz",
       ],
   )
-  
+
+  _maybe(native.new_local_repository,
+      name = "suitesparse",
+      build_file = "bazel/third_party/suitesparse.BUILD",
+      path = "/usr/include",
+  )
+
   # TODO(rodrigoq): remove these binds once grpc#14140 has been merged, as well
   # as removing `use_external` in cartographer_grpc/BUILD.bazel.
   # https://github.com/grpc/grpc/pull/14140
