@@ -26,7 +26,6 @@
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/3d/scan_matching/proto/fast_correlative_scan_matcher_options_3d.pb.h"
 #include "cartographer/mapping/internal/3d/scan_matching/low_resolution_matcher.h"
-#include "cartographer/mapping/internal/3d/scan_matching/precomputation_grid_3d.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -55,40 +54,27 @@ CreateFastCorrelativeScanMatcherOptions3D(
   return options;
 }
 
-class PrecomputationGridStack {
- public:
-  PrecomputationGridStack(
-      const HybridGrid& hybrid_grid,
-      const proto::FastCorrelativeScanMatcherOptions3D& options) {
-    CHECK_GE(options.branch_and_bound_depth(), 1);
-    CHECK_GE(options.full_resolution_depth(), 1);
-    precomputation_grids_.reserve(options.branch_and_bound_depth());
-    precomputation_grids_.push_back(ConvertToPrecomputationGrid(hybrid_grid));
-    Eigen::Array3i last_width = Eigen::Array3i::Ones();
-    for (int depth = 1; depth != options.branch_and_bound_depth(); ++depth) {
-      const bool half_resolution = depth >= options.full_resolution_depth();
-      const Eigen::Array3i next_width = ((1 << depth) * Eigen::Array3i::Ones());
-      const int full_voxels_per_high_resolution_voxel =
-          1 << std::max(0, depth - options.full_resolution_depth());
-      const Eigen::Array3i shift =
-          (next_width - last_width +
-           (full_voxels_per_high_resolution_voxel - 1)) /
-          full_voxels_per_high_resolution_voxel;
-      precomputation_grids_.push_back(
-          PrecomputeGrid(precomputation_grids_.back(), half_resolution, shift));
-      last_width = next_width;
-    }
+PrecomputationGridStack3D::PrecomputationGridStack3D(
+    const HybridGrid& hybrid_grid,
+    const proto::FastCorrelativeScanMatcherOptions3D& options) {
+  CHECK_GE(options.branch_and_bound_depth(), 1);
+  CHECK_GE(options.full_resolution_depth(), 1);
+  precomputation_grids_.reserve(options.branch_and_bound_depth());
+  precomputation_grids_.push_back(ConvertToPrecomputationGrid(hybrid_grid));
+  Eigen::Array3i last_width = Eigen::Array3i::Ones();
+  for (int depth = 1; depth != options.branch_and_bound_depth(); ++depth) {
+    const bool half_resolution = depth >= options.full_resolution_depth();
+    const Eigen::Array3i next_width = ((1 << depth) * Eigen::Array3i::Ones());
+    const int full_voxels_per_high_resolution_voxel =
+        1 << std::max(0, depth - options.full_resolution_depth());
+    const Eigen::Array3i shift = (next_width - last_width +
+                                  (full_voxels_per_high_resolution_voxel - 1)) /
+                                 full_voxels_per_high_resolution_voxel;
+    precomputation_grids_.push_back(
+        PrecomputeGrid(precomputation_grids_.back(), half_resolution, shift));
+    last_width = next_width;
   }
-
-  const PrecomputationGrid3D& Get(int depth) const {
-    return precomputation_grids_.at(depth);
-  }
-
-  int max_depth() const { return precomputation_grids_.size() - 1; }
-
- private:
-  std::vector<PrecomputationGrid3D> precomputation_grids_;
-};
+}
 
 struct DiscreteScan3D {
   transform::Rigid3f pose;
@@ -150,7 +136,7 @@ FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
       resolution_(hybrid_grid.resolution()),
       width_in_voxels_(hybrid_grid.grid_size()),
       precomputation_grid_stack_(
-          common::make_unique<PrecomputationGridStack>(hybrid_grid, options)),
+          common::make_unique<PrecomputationGridStack3D>(hybrid_grid, options)),
       low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
       rotational_scan_matcher_(HistogramsAtAnglesFromNodes(nodes)) {}
 

@@ -23,6 +23,7 @@
 #include <limits>
 
 #include "Eigen/Geometry"
+#include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -166,42 +167,30 @@ uint8 PrecomputationGrid2D::ComputeCellValue(const float probability) const {
   return cell_value;
 }
 
-class PrecomputationGridStack {
- public:
-  PrecomputationGridStack(
-      const ProbabilityGrid& probability_grid,
-      const proto::FastCorrelativeScanMatcherOptions2D& options) {
-    CHECK_GE(options.branch_and_bound_depth(), 1);
-    const int max_width = 1 << (options.branch_and_bound_depth() - 1);
-    precomputation_grids_.reserve(options.branch_and_bound_depth());
-    std::vector<float> reusable_intermediate_grid;
-    const CellLimits limits = probability_grid.limits().cell_limits();
-    reusable_intermediate_grid.reserve((limits.num_x_cells + max_width - 1) *
-                                       limits.num_y_cells);
-    for (int i = 0; i != options.branch_and_bound_depth(); ++i) {
-      const int width = 1 << i;
-      precomputation_grids_.emplace_back(probability_grid, limits, width,
-                                         &reusable_intermediate_grid);
-    }
+PrecomputationGridStack2D::PrecomputationGridStack2D(
+    const ProbabilityGrid& probability_grid,
+    const proto::FastCorrelativeScanMatcherOptions2D& options) {
+  CHECK_GE(options.branch_and_bound_depth(), 1);
+  const int max_width = 1 << (options.branch_and_bound_depth() - 1);
+  precomputation_grids_.reserve(options.branch_and_bound_depth());
+  std::vector<float> reusable_intermediate_grid;
+  const CellLimits limits = probability_grid.limits().cell_limits();
+  reusable_intermediate_grid.reserve((limits.num_x_cells + max_width - 1) *
+                                     limits.num_y_cells);
+  for (int i = 0; i != options.branch_and_bound_depth(); ++i) {
+    const int width = 1 << i;
+    precomputation_grids_.emplace_back(probability_grid, limits, width,
+                                       &reusable_intermediate_grid);
   }
-
-  const PrecomputationGrid2D& Get(int index) {
-    return precomputation_grids_[index];
-  }
-
-  int max_depth() const { return precomputation_grids_.size() - 1; }
-
- private:
-  std::vector<PrecomputationGrid2D> precomputation_grids_;
-};
+}
 
 FastCorrelativeScanMatcher2D::FastCorrelativeScanMatcher2D(
     const ProbabilityGrid& probability_grid,
     const proto::FastCorrelativeScanMatcherOptions2D& options)
     : options_(options),
       limits_(probability_grid.limits()),
-      precomputation_grid_stack_(
-          new PrecomputationGridStack(probability_grid, options)) {}
+      precomputation_grid_stack_(common::make_unique<PrecomputationGridStack2D>(
+          probability_grid, options)) {}
 
 FastCorrelativeScanMatcher2D::~FastCorrelativeScanMatcher2D() {}
 
