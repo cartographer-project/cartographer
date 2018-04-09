@@ -285,7 +285,7 @@ class PoseGraph3D : public PoseGraph {
     int num_submaps(int trajectory_id) const override;
     std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override;
     MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
-        const override;
+        const override REQUIRES(parent_->mutex_);
     MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() const override
         REQUIRES(parent_->mutex_);
     std::vector<PoseGraphInterface::Constraint> GetConstraints() const override
