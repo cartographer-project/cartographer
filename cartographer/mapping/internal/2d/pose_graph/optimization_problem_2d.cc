@@ -280,7 +280,7 @@ void OptimizationProblem2D::Solve(
       if (relative_odometry != nullptr) {
         problem.AddResidualBlock(
             SpaCostFunction2D::CreateAutoDiffCostFunction(Constraint::Pose{
-                (*relative_odometry), options_.odometry_translation_weight(),
+                *relative_odometry, options_.odometry_translation_weight(),
                 options_.odometry_rotation_weight()}),
             nullptr /* loss function */, C_nodes.at(first_node_id).data(),
             C_nodes.at(second_node_id).data());
