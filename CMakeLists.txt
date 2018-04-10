@@ -57,10 +57,10 @@ install(DIRECTORY configuration_files DESTINATION share/cartographer/)
 
 install(DIRECTORY cmake DESTINATION share/cartographer/)
 
-file(GLOB_RECURSE ALL_LIBRARY_HDRS "*.h")
-file(GLOB_RECURSE ALL_LIBRARY_SRCS "*.cc")
-file(GLOB_RECURSE ALL_TESTS "*_test.cc")
-file(GLOB_RECURSE ALL_EXECUTABLES "*_main.cc")
+file(GLOB_RECURSE ALL_LIBRARY_HDRS "cartographer/*.h")
+file(GLOB_RECURSE ALL_LIBRARY_SRCS "cartographer/*.cc")
+file(GLOB_RECURSE ALL_TESTS "cartographer/*_test.cc")
+file(GLOB_RECURSE ALL_EXECUTABLES "cartographer/*_main.cc")
 
 # Remove dotfiles/-folders that could potentially pollute the build.
 file(GLOB_RECURSE ALL_DOTFILES ".*/*")
@@ -92,8 +92,8 @@ set(INSTALL_SOURCE_HDRS ${ALL_LIBRARY_HDRS})
 file(GLOB_RECURSE INTERNAL_HDRS "cartographer/*/internal/*.h")
 list(REMOVE_ITEM INSTALL_SOURCE_HDRS ${INTERNAL_HDRS})
 
-file(GLOB_RECURSE ALL_PROTOS "cartographer*/*.proto")
-file(GLOB_RECURSE ALL_GRPC_SERVICES "cartographer*/*_service.proto")
+file(GLOB_RECURSE ALL_PROTOS "cartographer/*.proto")
+file(GLOB_RECURSE ALL_GRPC_SERVICES "cartographer/*_service.proto")
 list(REMOVE_ITEM ALL_PROTOS ALL_GRPC_SERVICES)
 if (NOT ${BUILD_GRPC})
   list(REMOVE_ITEM ALL_PROTOS ${ALL_GRPC_FILES})
