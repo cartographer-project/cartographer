@@ -86,11 +86,17 @@ double acceleration_weight
 double rotation_weight
   Scaling parameter for the IMU rotation term.
 
-double consecutive_node_translation_weight
-  Scaling parameter for translation between consecutive nodes.
+double local_slam_pose_translation_weight
+  Scaling parameter for translation between consecutive nodes based on the local SLAM pose.
 
-double consecutive_node_rotation_weight
-  Scaling parameter for rotation between consecutive nodes.
+double local_slam_pose_rotation_weight
+  Scaling parameter for rotation between consecutive nodes based on the local SLAM pose.
+
+double odometry_translation_weight
+  Scaling parameter for translation between consecutive nodes based on the odometry.
+
+double odometry_rotation_weight
+  Scaling parameter for rotation between consecutive nodes based on the odometry.
 
 double fixed_frame_pose_translation_weight
   Scaling parameter for the FixedFramePose translation.
