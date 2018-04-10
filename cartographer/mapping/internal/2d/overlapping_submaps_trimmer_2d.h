@@ -25,13 +25,13 @@ namespace mapping {
 
 // Trims submaps that have less than 'min_covered_cells_count' cells not
 // overlapped by at least 'fresh_submaps_count` submaps.
-class OverlappingSubmapsTrimmer : public PoseGraphTrimmer {
+class OverlappingSubmapsTrimmer2D : public PoseGraphTrimmer {
  public:
-  OverlappingSubmapsTrimmer(uint16 fresh_submaps_count,
-                            uint16 min_covered_cells_count)
+  OverlappingSubmapsTrimmer2D(uint16 fresh_submaps_count,
+                              uint16 min_covered_cells_count)
       : fresh_submaps_count_(fresh_submaps_count),
         min_covered_cells_count_(min_covered_cells_count) {}
-  ~OverlappingSubmapsTrimmer() override = default;
+  ~OverlappingSubmapsTrimmer2D() override = default;
 
   void Trim(Trimmable* pose_graph) override;
   bool IsFinished() override { return finished_; }

@@ -1,4 +1,20 @@
-#include "cartographer/mapping/internal/2d/overlapping_submaps_trimmer.h"
+/*
+ * Copyright 2018 The Cartographer Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "cartographer/mapping/internal/2d/overlapping_submaps_trimmer_2d.h"
 
 #include <algorithm>
 
@@ -8,15 +24,15 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-class GlobalGrid {
+class SubmapCoverageGrid2D {
  public:
   // Aliases for documentation only (no type-safety).
   using CellId = std::pair<int64 /* x cells */, int64 /* y cells */>;
   using StoredType = std::vector<std::pair<SubmapId, common::Time>>;
 
-  explicit GlobalGrid(const Eigen::Vector2d& offset) : offset_(offset) {}
+  explicit SubmapCoverageGrid2D(const Eigen::Vector2d& offset)
+      : offset_(offset) {}
 
-  // Adds data to the StoredType in a cell that corresponds to the given point.
   void AddPoint(const Eigen::Vector2d& point, const SubmapId& submap_id,
                 const common::Time& time) {
     CellId cell_id{common::RoundToInt64(offset_(0) - point(0)),
@@ -31,8 +47,7 @@ class GlobalGrid {
   std::map<CellId, StoredType> cells_;
 };
 
-// Returns corner of the first submap.
-Eigen::Vector2d GetOffset(
+Eigen::Vector2d GetCornerOfFirstSubmap(
     const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data) {
   auto submap_2d = std::static_pointer_cast<const Submap2D>(
       submap_data.begin()->data.submap);
@@ -42,10 +57,10 @@ Eigen::Vector2d GetOffset(
 // Iterates over every cell in a submap, transforms the center of the cell to
 // the global frame and then adds the submap id and the timestamp of the most
 // recent range data insertion into the global grid.
-std::set<SubmapId> AddSubmapsToGlobalGrid(
+std::set<SubmapId> AddSubmapsToSubmapCoverageGrid2D(
     const std::map<SubmapId, common::Time>& submap_freshness,
     const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data,
-    GlobalGrid* global_grid) {
+    SubmapCoverageGrid2D* coverage_grid) {
   std::set<SubmapId> all_submap_ids;
 
   for (const auto& submap : submap_data) {
@@ -75,8 +90,8 @@ std::set<SubmapId> AddSubmapsToGlobalGrid(
       const transform::Rigid2d center_of_cell_in_global_frame =
           projected_submap_pose *
           transform::Rigid2d::Translation({index.x() + 0.5, index.y() + 0.5});
-      global_grid->AddPoint(center_of_cell_in_global_frame.translation(),
-                            submap.id, freshness->second);
+      coverage_grid->AddPoint(center_of_cell_in_global_frame.translation(),
+                              submap.id, freshness->second);
     }
   }
   return all_submap_ids;
@@ -122,19 +137,16 @@ std::map<SubmapId, common::Time> ComputeSubmapFreshness(
   return submap_freshness;
 }
 
-// Finds submap IDs to drop in three steps:
-//   1. for each cell in the global grid takes top freshest submaps
-//   (parameter: 'fresh_submaps_count_').
-//   2. computes number of cells covered by each submap and selects submaps with
-//   the area greater or equal to `min_covered_cells_count_`.
-//   3. computes a set difference between `all_submap_ids` and result of step 2.
+// Returns IDs of submaps that have less than 'min_covered_cells_count' cells
+// not overlapped by at least 'fresh_submaps_count' submaps.
 std::vector<SubmapId> FindSubmapIdsToTrim(
-    const GlobalGrid& global_grid, const std::set<SubmapId>& all_submap_ids,
-    uint16 fresh_submaps_count, uint16 min_covered_cells_count) {
+    const SubmapCoverageGrid2D& coverage_grid,
+    const std::set<SubmapId>& all_submap_ids, uint16 fresh_submaps_count,
+    uint16 min_covered_cells_count) {
   std::vector<SubmapId> result;
 
   std::map<SubmapId, uint16> cells_covered_by_submap;
-  for (const auto& cell : global_grid.cells()) {
+  for (const auto& cell : coverage_grid.cells()) {
     std::vector<std::pair<SubmapId, common::Time>> submaps_per_cell(
         cell.second);
     // In case there are several submaps covering the cell, only the freshest
@@ -168,19 +180,18 @@ std::vector<SubmapId> FindSubmapIdsToTrim(
 
 }  // namespace
 
-void OverlappingSubmapsTrimmer::Trim(Trimmable* pose_graph) {
-  // Copy necessary data from pose graph.
+void OverlappingSubmapsTrimmer2D::Trim(Trimmable* pose_graph) {
   const auto constraints = pose_graph->GetConstraints();
   const auto submap_data = pose_graph->GetAllSubmapData();
   const auto trajectory_nodes = pose_graph->GetTrajectoryNodes();
 
-  GlobalGrid global_grid(GetOffset(submap_data));
+  SubmapCoverageGrid2D coverage_grid(GetCornerOfFirstSubmap(submap_data));
 
-  const std::set<SubmapId> all_submap_ids = AddSubmapsToGlobalGrid(
+  const std::set<SubmapId> all_submap_ids = AddSubmapsToSubmapCoverageGrid2D(
       ComputeSubmapFreshness(submap_data, trajectory_nodes, constraints),
-      submap_data, &global_grid);
+      submap_data, &coverage_grid);
   const std::vector<SubmapId> submap_ids_to_remove =
-      FindSubmapIdsToTrim(global_grid, all_submap_ids, fresh_submaps_count_,
+      FindSubmapIdsToTrim(coverage_grid, all_submap_ids, fresh_submaps_count_,
                           min_covered_cells_count_);
   for (const SubmapId& id : submap_ids_to_remove) {
     pose_graph->MarkSubmapAsTrimmed(id);
