@@ -1,0 +1,22 @@
+
+FROM osrf/ros:lunar-desktop-full-stretch
+
+RUN apt-get update && apt-get install -y sudo cmake-curses-gui locate nano wget && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y ros-lunar-catkin
+
+RUN rosdep update
+
+COPY . /tmp/catkin_ws/src/cartographer
+
+RUN cd /tmp/catkin_ws && \
+    rosdep install --from-paths src --ignore-src --rosdistro lunar -y
+
+RUN cd /tmp/catkin_ws && \
+    bash -c "source /opt/ros/lunar/setup.bash && catkin_make_isolated --install"
+
+RUN cd /tmp/catkin_ws && \
+    bash -c "source /opt/ros/lunar/setup.bash && catkin_make_isolated --install --make-args test"
+
+RUN ls -alR /tmp/catkin_ws/install_isolated/lib
+
