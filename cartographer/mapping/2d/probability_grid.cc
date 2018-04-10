@@ -68,11 +68,9 @@ bool ProbabilityGrid::ApplyLookupTable(const Eigen::Array2i& cell_index,
 
 // Returns the probability of the cell with 'cell_index'.
 float ProbabilityGrid::GetProbability(const Eigen::Array2i& cell_index) const {
-  if (limits_.Contains(cell_index)) {
-    return ValueToProbability(
-        correspondence_cost_cells_[ToFlatIndex(cell_index, limits_)]);
-  }
-  return kMinProbability;
+  if (!limits_.Contains(cell_index)) return kMinProbability;
+  return ValueToProbability(
+      correspondence_cost_cells_[ToFlatIndex(cell_index, limits_)]);
 }
 proto::Grid2D ProbabilityGrid::ToProto() const {
   proto::Grid2D result;

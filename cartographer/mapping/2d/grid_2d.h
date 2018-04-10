@@ -21,12 +21,10 @@
 
 #include "cartographer/mapping/2d/map_limits.h"
 #include "cartographer/mapping/2d/proto/grid_2d.pb.h"
-#include "cartographer/mapping/2d/xy_index.h"
 
 namespace cartographer {
 namespace mapping {
 
-// Represents a 2D grid.
 class Grid2D {
  public:
   explicit Grid2D(const MapLimits& limits);
