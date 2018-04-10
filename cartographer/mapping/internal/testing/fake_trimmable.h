@@ -17,6 +17,10 @@
 #ifndef CARTOGRAPHER_MAPPING_INTERNAL_TESTING_FAKE_TRIMMABLE_H_
 #define CARTOGRAPHER_MAPPING_INTERNAL_TESTING_FAKE_TRIMMABLE_H_
 
+#include <vector>
+
+#include "cartographer/mapping/pose_graph_trimmer.h"
+
 namespace cartographer {
 namespace mapping {
 namespace testing {
@@ -69,4 +73,3 @@ class FakeTrimmable : public Trimmable {
 }  // namespace cartographer
 
 #endif  // CARTOGRAPHER_MAPPING_INTERNAL_TESTING_FAKE_TRIMMABLE_H_
-
