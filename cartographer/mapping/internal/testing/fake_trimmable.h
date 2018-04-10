@@ -16,6 +16,7 @@
 
 namespace cartographer {
 namespace mapping {
+namespace testing {
 
 class FakeTrimmable : public Trimmable {
  public:
@@ -60,5 +61,6 @@ class FakeTrimmable : public Trimmable {
   std::vector<SubmapId> trimmed_submaps_;
 };
 
+}  // namespace testing
 }  // namespace mapping
 }  // namespace cartographer

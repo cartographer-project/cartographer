@@ -29,7 +29,7 @@ namespace {
 TEST(PureLocalizationTrimmerTest, MarksSubmapsAsExpected) {
   const int kTrajectoryId = 42;
   PureLocalizationTrimmer trimmer(kTrajectoryId, 15);
-  FakeTrimmable fake_pose_graph(kTrajectoryId, 17);
+  testing::FakeTrimmable fake_pose_graph(kTrajectoryId, 17);
   trimmer.Trim(&fake_pose_graph);
 
   const auto trimmed_submaps = fake_pose_graph.trimmed_submaps();
