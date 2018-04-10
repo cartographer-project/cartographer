@@ -50,6 +50,8 @@ class ProbabilityGrid : public Grid2D {
 
   // Returns the probability of the cell with 'cell_index'.
   float GetProbability(const Eigen::Array2i& cell_index) const;
+
+  virtual proto::Grid2D ToProto() const override;
 };
 
 }  // namespace mapping

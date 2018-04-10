@@ -30,7 +30,6 @@ namespace mapping {
 class Grid2D {
  public:
   explicit Grid2D(const MapLimits& limits);
-  explicit Grid2D(const proto::Grid2D& proto);
 
   // Returns the limits of this ProbabilityGrid.
   const MapLimits& limits() const { return limits_; }
@@ -59,7 +58,7 @@ class Grid2D {
   // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
   void GrowLimits(const Eigen::Vector2f& point);
 
-  virtual proto::Grid2D ToProto() const;
+  virtual proto::Grid2D ToProto() const = 0;
 
  protected:
   MapLimits limits_;
