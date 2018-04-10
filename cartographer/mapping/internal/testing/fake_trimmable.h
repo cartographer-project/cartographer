@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_TESTING_FAKE_TRIMMABLE_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_TESTING_FAKE_TRIMMABLE_H_
+
 namespace cartographer {
 namespace mapping {
 namespace testing {
@@ -64,3 +67,6 @@ class FakeTrimmable : public Trimmable {
 }  // namespace testing
 }  // namespace mapping
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_TESTING_FAKE_TRIMMABLE_H_
+
