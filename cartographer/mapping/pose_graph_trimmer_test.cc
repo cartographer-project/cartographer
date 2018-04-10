@@ -19,59 +19,17 @@
 #include <vector>
 
 #include "cartographer/mapping/id.h"
+#include "cartographer/mapping/internal/testing/fake_trimmable.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace mapping {
 namespace {
 
-class FakePoseGraph : public Trimmable {
- public:
-  FakePoseGraph(int trajectory_id, int num_submaps) {
-    for (int index = 0; index < num_submaps; ++index) {
-      submaps_.push_back(SubmapId{trajectory_id, index});
-    }
-  }
-  ~FakePoseGraph() override {}
-
-  int num_submaps(const int trajectory_id) const override {
-    return submaps_.size() - trimmed_submaps_.size();
-  }
-
-  std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override {
-    return submaps_;
-  }
-
-  MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
-      const override {
-    return {};
-  }
-
-  MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() const override {
-    return {};
-  }
-
-  std::vector<PoseGraphInterface::Constraint> GetConstraints() const override {
-    return {};
-  }
-
-  void MarkSubmapAsTrimmed(const SubmapId& submap_id) override {
-    trimmed_submaps_.push_back(submap_id);
-  }
-
-  bool IsFinished(const int trajectory_id) const override { return false; }
-
-  std::vector<SubmapId> trimmed_submaps() { return trimmed_submaps_; }
-
- private:
-  std::vector<SubmapId> submaps_;
-  std::vector<SubmapId> trimmed_submaps_;
-};
-
 TEST(PureLocalizationTrimmerTest, MarksSubmapsAsExpected) {
   const int kTrajectoryId = 42;
   PureLocalizationTrimmer trimmer(kTrajectoryId, 15);
-  FakePoseGraph fake_pose_graph(kTrajectoryId, 17);
+  testing::FakeTrimmable fake_pose_graph(kTrajectoryId, 17);
   trimmer.Trim(&fake_pose_graph);
 
   const auto trimmed_submaps = fake_pose_graph.trimmed_submaps();
