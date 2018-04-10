@@ -53,7 +53,7 @@ class PoseGraph : public PoseGraphInterface {
   };
 
   PoseGraph() {}
-  virtual ~PoseGraph() override {}
+  ~PoseGraph() override {}
 
   PoseGraph(const PoseGraph&) = delete;
   PoseGraph& operator=(const PoseGraph&) = delete;

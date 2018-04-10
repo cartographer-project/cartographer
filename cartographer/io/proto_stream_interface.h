@@ -26,7 +26,7 @@ namespace io {
 // A writer for writing proto messages to a pbstream.
 class ProtoStreamWriterInterface {
  public:
-  virtual ~ProtoStreamWriterInterface(){};
+  virtual ~ProtoStreamWriterInterface() {}
 
   // Serializes, compressed and writes the 'proto' to the file.
   virtual void WriteProto(const google::protobuf::Message& proto) = 0;
@@ -39,7 +39,7 @@ class ProtoStreamWriterInterface {
 class ProtoStreamReaderInterface {
  public:
   ProtoStreamReaderInterface() = default;
-  virtual ~ProtoStreamReaderInterface(){};
+  virtual ~ProtoStreamReaderInterface() {}
 
   // Deserialize compressed proto from the pb stream.
   virtual bool ReadProto(google::protobuf::Message* proto) = 0;

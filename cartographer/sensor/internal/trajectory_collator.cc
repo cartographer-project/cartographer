@@ -23,7 +23,7 @@ void TrajectoryCollator::AddTrajectory(
     const int trajectory_id,
     const std::unordered_set<std::string>& expected_sensor_ids,
     const Callback& callback) {
-  CHECK(trajectory_to_queue_.count(trajectory_id) == 0);
+  CHECK_EQ(trajectory_to_queue_.count(trajectory_id), 0);
   for (const auto& sensor_id : expected_sensor_ids) {
     const auto queue_key = QueueKey{trajectory_id, sensor_id};
     trajectory_to_queue_[trajectory_id].AddQueue(
