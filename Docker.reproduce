@@ -7,10 +7,12 @@ RUN apt-get update && apt-get install -y ros-lunar-catkin
 
 RUN rosdep update
 
-COPY . /tmp/catkin_ws/src/cartographer
+COPY package.xml /tmp/catkin_ws/src/cartographer/package.xml
 
 RUN cd /tmp/catkin_ws && \
     rosdep install --from-paths src --ignore-src --rosdistro lunar -y
+
+COPY . /tmp/catkin_ws/src/cartographer
 
 RUN cd /tmp/catkin_ws && \
     bash -c "source /opt/ros/lunar/setup.bash && catkin_make_isolated --install"
