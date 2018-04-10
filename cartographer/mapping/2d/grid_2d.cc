@@ -70,7 +70,7 @@ float Grid2D::GetCorrespondenceCost(const Eigen::Array2i& cell_index) const {
 bool Grid2D::IsKnown(const Eigen::Array2i& cell_index) const {
   return limits_.Contains(cell_index) &&
          correspondence_cost_cells_[ToFlatIndex(cell_index, limits_)] !=
-             kUnknownProbabilityValue;
+             kUnknownCorrespondenceValue;
 }
 
 // Fills in 'offset' and 'limits' to define a subregion of that contains all
@@ -105,7 +105,7 @@ void Grid2D::GrowLimits(const Eigen::Vector2f& point) {
     const int offset = x_offset + stride * y_offset;
     const int new_size = new_limits.cell_limits().num_x_cells *
                          new_limits.cell_limits().num_y_cells;
-    std::vector<uint16> new_cells(new_size, kUnknownProbabilityValue);
+    std::vector<uint16> new_cells(new_size, kUnknownCorrespondenceValue);
     for (int i = 0; i < limits_.cell_limits().num_y_cells; ++i) {
       for (int j = 0; j < limits_.cell_limits().num_x_cells; ++j) {
         new_cells[offset + j + i * stride] =
