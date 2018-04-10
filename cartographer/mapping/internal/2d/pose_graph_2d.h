@@ -93,9 +93,9 @@ class PoseGraph2D : public PoseGraph {
       EXCLUDES(mutex_);
 
   void FinishTrajectory(int trajectory_id) override;
-  bool IsTrajectoryFinished(int trajectory_id) override;
+  bool IsTrajectoryFinished(int trajectory_id) override REQUIRES(mutex_);
   void FreezeTrajectory(int trajectory_id) override;
-  bool IsTrajectoryFrozen(int trajectory_id) override;
+  bool IsTrajectoryFrozen(int trajectory_id) override REQUIRES(mutex_);
   void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
                           const proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
@@ -262,9 +262,6 @@ class PoseGraph2D : public PoseGraph {
   // Set of all frozen trajectories not being optimized.
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
 
-  // Whether or not optimize landmark poses.
-  bool freeze_landmarks_ GUARDED_BY(mutex_) = false;
-
   // Set of all finished trajectories.
   std::set<int> finished_trajectories_ GUARDED_BY(mutex_);
 
@@ -283,9 +280,11 @@ class PoseGraph2D : public PoseGraph {
     std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override;
     MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
         const override;
+    MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() const override;
+    std::vector<PoseGraphInterface::Constraint> GetConstraints() const override;
     void MarkSubmapAsTrimmed(const SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
-    bool IsFinished(int trajectory_id) const override;
+    bool IsFinished(int trajectory_id) const override REQUIRES(parent_->mutex_);
 
    private:
     PoseGraph2D* const parent_;

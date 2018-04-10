@@ -209,8 +209,8 @@ Submap3D::Submap3D(const proto::Submap3D& proto)
           common::make_unique<HybridGrid>(proto.high_resolution_hybrid_grid())),
       low_resolution_hybrid_grid_(
           common::make_unique<HybridGrid>(proto.low_resolution_hybrid_grid())) {
-  SetNumRangeData(proto.num_range_data());
-  SetFinished(proto.finished());
+  set_num_range_data(proto.num_range_data());
+  set_finished(proto.finished());
 }
 
 void Submap3D::ToProto(proto::Submap* const proto,
@@ -230,8 +230,8 @@ void Submap3D::ToProto(proto::Submap* const proto,
 void Submap3D::UpdateFromProto(const proto::Submap& proto) {
   CHECK(proto.has_submap_3d());
   const auto& submap_3d = proto.submap_3d();
-  SetNumRangeData(submap_3d.num_range_data());
-  SetFinished(submap_3d.finished());
+  set_num_range_data(submap_3d.num_range_data());
+  set_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
     high_resolution_hybrid_grid_ =
         submap_3d.has_high_resolution_hybrid_grid()
@@ -271,12 +271,12 @@ void Submap3D::InsertRangeData(const sensor::RangeData& range_data,
       high_resolution_hybrid_grid_.get());
   range_data_inserter.Insert(transformed_range_data,
                              low_resolution_hybrid_grid_.get());
-  SetNumRangeData(num_range_data() + 1);
+  set_num_range_data(num_range_data() + 1);
 }
 
 void Submap3D::Finish() {
   CHECK(!finished());
-  SetFinished(true);
+  set_finished(true);
 }
 
 ActiveSubmaps3D::ActiveSubmaps3D(const proto::SubmapsOptions3D& options)

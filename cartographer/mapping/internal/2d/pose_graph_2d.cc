@@ -680,7 +680,7 @@ void PoseGraph2D::SetInitialTrajectoryPose(const int from_trajectory_id,
 
 transform::Rigid3d PoseGraph2D::GetInterpolatedGlobalTrajectoryPose(
     const int trajectory_id, const common::Time time) const {
-  CHECK(trajectory_nodes_.SizeOfTrajectoryOrZero(trajectory_id) > 0);
+  CHECK_GT(trajectory_nodes_.SizeOfTrajectoryOrZero(trajectory_id), 0);
   const auto it = trajectory_nodes_.lower_bound(trajectory_id, time);
   if (it == trajectory_nodes_.BeginOfTrajectory(trajectory_id)) {
     return trajectory_nodes_.BeginOfTrajectory(trajectory_id)->data.global_pose;
@@ -796,6 +796,16 @@ std::vector<SubmapId> PoseGraph2D::TrimmingHandle::GetSubmapIds(
     submap_ids.push_back(it.id);
   }
   return submap_ids;
+}
+
+MapById<NodeId, TrajectoryNode>
+PoseGraph2D::TrimmingHandle::GetTrajectoryNodes() const {
+  return parent_->trajectory_nodes_;
+}
+
+std::vector<PoseGraphInterface::Constraint>
+PoseGraph2D::TrimmingHandle::GetConstraints() const {
+  return parent_->constraints_;
 }
 
 bool PoseGraph2D::TrimmingHandle::IsFinished(const int trajectory_id) const {

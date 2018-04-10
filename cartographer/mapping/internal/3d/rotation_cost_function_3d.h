@@ -19,6 +19,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "ceres/ceres.h"
 
 namespace cartographer {
 namespace mapping {

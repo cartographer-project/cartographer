@@ -92,9 +92,9 @@ class PoseGraph3D : public PoseGraph {
       EXCLUDES(mutex_);
 
   void FinishTrajectory(int trajectory_id) override;
-  bool IsTrajectoryFinished(int trajectory_id) override;
+  bool IsTrajectoryFinished(int trajectory_id) override REQUIRES(mutex_);
   void FreezeTrajectory(int trajectory_id) override;
-  bool IsTrajectoryFrozen(int trajectory_id) override;
+  bool IsTrajectoryFrozen(int trajectory_id) override REQUIRES(mutex_);
   void AddSubmapFromProto(const transform::Rigid3d& global_submap_pose,
                           const proto::Submap& submap) override;
   void AddNodeFromProto(const transform::Rigid3d& global_pose,
@@ -158,7 +158,8 @@ class PoseGraph3D : public PoseGraph {
     SubmapState state = SubmapState::kActive;
   };
 
-  MapById<SubmapId, PoseGraphInterface::SubmapData> GetSubmapDataUnderLock();
+  MapById<SubmapId, PoseGraphInterface::SubmapData> GetSubmapDataUnderLock()
+      REQUIRES(mutex_);
 
   // Handles a new work item.
   void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
@@ -267,9 +268,6 @@ class PoseGraph3D : public PoseGraph {
   // Set of all frozen trajectories not being optimized.
   std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
 
-  // Whether or not optimize landmark poses.
-  bool freeze_landmarks_ GUARDED_BY(mutex_) = false;
-
   // Set of all finished trajectories.
   std::set<int> finished_trajectories_ GUARDED_BY(mutex_);
 
@@ -287,10 +285,14 @@ class PoseGraph3D : public PoseGraph {
     int num_submaps(int trajectory_id) const override;
     std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override;
     MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
-        const override;
+        const override REQUIRES(parent_->mutex_);
+    MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() const override
+        REQUIRES(parent_->mutex_);
+    std::vector<PoseGraphInterface::Constraint> GetConstraints() const override
+        REQUIRES(parent_->mutex_);
     void MarkSubmapAsTrimmed(const SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
-    bool IsFinished(int trajectory_id) const override;
+    bool IsFinished(int trajectory_id) const override REQUIRES(parent_->mutex_);
 
    private:
     PoseGraph3D* const parent_;

@@ -34,6 +34,9 @@ class Trimmable {
   virtual std::vector<SubmapId> GetSubmapIds(int trajectory_id) const = 0;
   virtual MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
       const = 0;
+  virtual MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() const = 0;
+  virtual std::vector<PoseGraphInterface::Constraint> GetConstraints()
+      const = 0;
 
   // Marks 'submap_id' and corresponding intra-submap nodes as trimmed. They
   // will no longer take part in scan matching, loop closure, visualization.
