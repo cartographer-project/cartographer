@@ -41,7 +41,7 @@ class Grid2D {
   // Sets the correspondence cost of the cell at 'cell_index' to the given
   // 'correspondence cost'. Only allowed if the cell was unknown before.
   void SetCorrespondenceCost(const Eigen::Array2i& cell_index,
-                                     const float correspondence_cost);
+                             const float correspondence_cost);
 
   // Returns the probability of the cell with 'cell_index'.
   float GetCorrespondenceCost(const Eigen::Array2i& cell_index) const;

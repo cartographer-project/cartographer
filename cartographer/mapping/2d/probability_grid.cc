@@ -16,11 +16,9 @@ int ToFlatIndex(const Eigen::Array2i& cell_index, const MapLimits& limits) {
 
 }  // namespace
 
-ProbabilityGrid::ProbabilityGrid(const MapLimits& limits)
-    : Grid2D(limits) {}
+ProbabilityGrid::ProbabilityGrid(const MapLimits& limits) : Grid2D(limits) {}
 
-ProbabilityGrid::ProbabilityGrid(const proto::Grid2D& proto)
-    : Grid2D(proto) {}
+ProbabilityGrid::ProbabilityGrid(const proto::Grid2D& proto) : Grid2D(proto) {}
 
 // Sets the probability of the cell at 'cell_index' to the given
 // 'probability'. Only allowed if the cell was unknown before.
@@ -57,7 +55,8 @@ bool ProbabilityGrid::ApplyLookupTable(const Eigen::Array2i& cell_index,
 // Returns the probability of the cell with 'cell_index'.
 float ProbabilityGrid::GetProbability(const Eigen::Array2i& cell_index) const {
   if (limits_.Contains(cell_index)) {
-    return ValueToProbability(correspondence_cost_cells_[ToFlatIndex(cell_index, limits_)]);
+    return ValueToProbability(
+        correspondence_cost_cells_[ToFlatIndex(cell_index, limits_)]);
   }
   return kMinProbability;
 }
