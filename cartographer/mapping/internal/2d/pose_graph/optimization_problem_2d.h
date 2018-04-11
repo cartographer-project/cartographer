@@ -42,8 +42,8 @@ namespace pose_graph {
 
 struct NodeData2D {
   common::Time time;
-  transform::Rigid2d initial_pose;
-  transform::Rigid2d pose;
+  transform::Rigid2d local_2d_pose;
+  transform::Rigid2d global_2d_pose;
   Eigen::Quaterniond gravity_alignment;
 };
 

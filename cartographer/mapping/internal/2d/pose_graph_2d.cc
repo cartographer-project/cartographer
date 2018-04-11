@@ -209,7 +209,7 @@ void PoseGraph2D::ComputeConstraint(const NodeId& node_id,
         optimization_problem_->submap_data()
             .at(submap_id)
             .global_pose.inverse() *
-        optimization_problem_->node_data().at(node_id).pose;
+        optimization_problem_->node_data().at(node_id).global_2d_pose;
     constraint_builder_.MaybeAddConstraint(
         submap_id, submap_data_.at(submap_id).submap.get(), node_id,
         trajectory_nodes_.at(node_id).constant_data.get(),
@@ -240,16 +240,16 @@ void PoseGraph2D::ComputeConstraintsForNode(
       node_id.trajectory_id, constant_data->time, insertion_submaps);
   CHECK_EQ(submap_ids.size(), insertion_submaps.size());
   const SubmapId matching_id = submap_ids.front();
-  const transform::Rigid2d pose = transform::Project2D(
+  const transform::Rigid2d local_2d_pose = transform::Project2D(
       constant_data->local_pose *
       transform::Rigid3d::Rotation(constant_data->gravity_alignment.inverse()));
-  const transform::Rigid2d optimized_pose =
+  const transform::Rigid2d global_2d_pose =
       optimization_problem_->submap_data().at(matching_id).global_pose *
       pose_graph::ComputeSubmapPose(*insertion_submaps.front()).inverse() *
-      pose;
+      local_2d_pose;
   optimization_problem_->AddTrajectoryNode(
       matching_id.trajectory_id,
-      pose_graph::NodeData2D{constant_data->time, pose, optimized_pose,
+      pose_graph::NodeData2D{constant_data->time, local_2d_pose, global_2d_pose,
                              constant_data->gravity_alignment});
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const SubmapId submap_id = submap_ids[i];
@@ -258,7 +258,8 @@ void PoseGraph2D::ComputeConstraintsForNode(
     CHECK(submap_data_.at(submap_id).state == SubmapState::kActive);
     submap_data_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid2d constraint_transform =
-        pose_graph::ComputeSubmapPose(*insertion_submaps[i]).inverse() * pose;
+        pose_graph::ComputeSubmapPose(*insertion_submaps[i]).inverse() *
+        local_2d_pose;
     constraints_.push_back(Constraint{submap_id,
                                       node_id,
                                       {transform::Embed3D(constraint_transform),
@@ -376,21 +377,19 @@ void PoseGraph2D::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. *
-                         (constraint_builder_.GetNumFinishedNodes() -
-                          num_finished_nodes_at_start) /
+                  << 100. * (constraint_builder_.GetNumFinishedNodes() -
+                             num_finished_nodes_at_start) /
                          (num_trajectory_nodes_ - num_finished_nodes_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone(
-      [this,
-       &notification](const pose_graph::ConstraintBuilder2D::Result& result) {
-        common::MutexLocker locker(&mutex_);
-        constraints_.insert(constraints_.end(), result.begin(), result.end());
-        notification = true;
-      });
+  constraint_builder_.WhenDone([this, &notification](
+      const pose_graph::ConstraintBuilder2D::Result& result) {
+    common::MutexLocker locker(&mutex_);
+    constraints_.insert(constraints_.end(), result.begin(), result.end());
+    notification = true;
+  });
   locker.Await([&notification]() { return notification; });
 }
 
@@ -567,7 +566,7 @@ void PoseGraph2D::RunOptimization() {
     for (const auto& node : node_data.trajectory(trajectory_id)) {
       auto& mutable_trajectory_node = trajectory_nodes_.at(node.id);
       mutable_trajectory_node.global_pose =
-          transform::Embed3D(node.data.pose) *
+          transform::Embed3D(node.data.global_2d_pose) *
           transform::Rigid3d::Rotation(
               mutable_trajectory_node.constant_data->gravity_alignment);
     }
