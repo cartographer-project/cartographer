@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_SENSOR_INTERNAL_MAPPING_DISPATCHABLE_H_
-#define CARTOGRAPHER_SENSOR_INTERNAL_MAPPING_DISPATCHABLE_H_
+#ifndef CARTOGRAPHER_SENSOR_INTERNAL_DISPATCHABLE_H_
+#define CARTOGRAPHER_SENSOR_INTERNAL_DISPATCHABLE_H_
 
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/sensor/data.h"
@@ -49,4 +49,4 @@ std::unique_ptr<Dispatchable<DataType>> MakeDispatchable(
 }  // namespace sensor
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_SENSOR_INTERNAL_MAPPING_DISPATCHABLE_H_
+#endif  // CARTOGRAPHER_SENSOR_INTERNAL_DISPATCHABLE_H_
