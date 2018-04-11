@@ -66,13 +66,11 @@ std::set<SubmapId> AddSubmapsToSubmapCoverageGrid2D(
   for (const auto& submap : submap_data) {
     auto freshness = submap_freshness.find(submap.id);
     if (freshness == submap_freshness.end()) continue;
-
+    if (!submap.data.submap->finished()) continue;
     all_submap_ids.insert(submap.id);
-
     const ProbabilityGrid& probability_grid =
         std::static_pointer_cast<const Submap2D>(submap.data.submap)
             ->probability_grid();
-
     // Iterate over every cell in a submap.
     Eigen::Array2i offset;
     CellLimits cell_limits;
@@ -86,7 +84,6 @@ std::set<SubmapId> AddSubmapsToSubmapCoverageGrid2D(
     for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(cell_limits)) {
       const Eigen::Array2i index = xy_index + offset;
       if (!probability_grid.IsKnown(index)) continue;
-
       const transform::Rigid2d center_of_cell_in_global_frame =
           projected_submap_pose *
           transform::Rigid2d::Translation({index.x() + 0.5, index.y() + 0.5});
@@ -143,8 +140,6 @@ std::vector<SubmapId> FindSubmapIdsToTrim(
     const SubmapCoverageGrid2D& coverage_grid,
     const std::set<SubmapId>& all_submap_ids, uint16 fresh_submaps_count,
     uint16 min_covered_cells_count) {
-  std::vector<SubmapId> result;
-
   std::map<SubmapId, uint16> cells_covered_by_submap;
   for (const auto& cell : coverage_grid.cells()) {
     std::vector<std::pair<SubmapId, common::Time>> submaps_per_cell(
@@ -172,17 +167,21 @@ std::vector<SubmapId> FindSubmapIdsToTrim(
   }
 
   DCHECK(std::is_sorted(submap_ids_to_keep.begin(), submap_ids_to_keep.end()));
+
+  std::vector<SubmapId> result;
   std::set_difference(all_submap_ids.begin(), all_submap_ids.end(),
                       submap_ids_to_keep.begin(), submap_ids_to_keep.end(),
-                      result.begin());
+                      std::inserter(result, result.begin()));
   return result;
 }
 
 }  // namespace
 
 void OverlappingSubmapsTrimmer2D::Trim(Trimmable* pose_graph) {
-  const auto constraints = pose_graph->GetConstraints();
   const auto submap_data = pose_graph->GetAllSubmapData();
+  if (submap_data.size() == 0) return;
+
+  const auto constraints = pose_graph->GetConstraints();
   const auto trajectory_nodes = pose_graph->GetTrajectoryNodes();
 
   SubmapCoverageGrid2D coverage_grid(GetCornerOfFirstSubmap(submap_data));
