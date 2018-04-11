@@ -273,12 +273,28 @@ void OptimizationProblem2D::Solve(
         continue;
       }
 
-      const transform::Rigid3d relative_pose =
-          ComputeRelativePose(trajectory_id, first_node_data, second_node_data);
+      // Add a relative pose constraint based on the odometry (if available).
+      std::unique_ptr<transform::Rigid3d> relative_odometry =
+          CalculateOdometryBetweenNodes(trajectory_id, first_node_data,
+                                        second_node_data);
+      if (relative_odometry != nullptr) {
+        problem.AddResidualBlock(
+            SpaCostFunction2D::CreateAutoDiffCostFunction(Constraint::Pose{
+                *relative_odometry, options_.odometry_translation_weight(),
+                options_.odometry_rotation_weight()}),
+            nullptr /* loss function */, C_nodes.at(first_node_id).data(),
+            C_nodes.at(second_node_id).data());
+      }
+
+      // Add a relative pose constraint based on consecutive local SLAM poses.
+      const transform::Rigid3d relative_local_slam_pose =
+          transform::Embed3D(first_node_data.initial_pose.inverse() *
+                             second_node_data.initial_pose);
       problem.AddResidualBlock(
-          SpaCostFunction2D::CreateAutoDiffCostFunction(Constraint::Pose{
-              relative_pose, options_.consecutive_node_translation_weight(),
-              options_.consecutive_node_rotation_weight()}),
+          SpaCostFunction2D::CreateAutoDiffCostFunction(
+              Constraint::Pose{relative_local_slam_pose,
+                               options_.local_slam_pose_translation_weight(),
+                               options_.local_slam_pose_rotation_weight()}),
           nullptr /* loss function */, C_nodes.at(first_node_id).data(),
           C_nodes.at(second_node_id).data());
     }
@@ -325,7 +341,8 @@ std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::InterpolateOdometry(
           .transform);
 }
 
-transform::Rigid3d OptimizationProblem2D::ComputeRelativePose(
+std::unique_ptr<transform::Rigid3d>
+OptimizationProblem2D::CalculateOdometryBetweenNodes(
     const int trajectory_id, const NodeData& first_node_data,
     const NodeData& second_node_data) const {
   if (odometry_data_.HasTrajectory(trajectory_id)) {
@@ -334,14 +351,15 @@ transform::Rigid3d OptimizationProblem2D::ComputeRelativePose(
     const std::unique_ptr<transform::Rigid3d> second_node_odometry =
         InterpolateOdometry(trajectory_id, second_node_data.time);
     if (first_node_odometry != nullptr && second_node_odometry != nullptr) {
-      return transform::Rigid3d::Rotation(first_node_data.gravity_alignment) *
-             first_node_odometry->inverse() * (*second_node_odometry) *
-             transform::Rigid3d::Rotation(
-                 second_node_data.gravity_alignment.inverse());
+      transform::Rigid3d relative_odometry =
+          transform::Rigid3d::Rotation(first_node_data.gravity_alignment) *
+          first_node_odometry->inverse() * (*second_node_odometry) *
+          transform::Rigid3d::Rotation(
+              second_node_data.gravity_alignment.inverse());
+      return common::make_unique<transform::Rigid3d>(relative_odometry);
     }
   }
-  return transform::Embed3D(first_node_data.initial_pose.inverse() *
-                            second_node_data.initial_pose);
+  return nullptr;
 }
 
 }  // namespace pose_graph

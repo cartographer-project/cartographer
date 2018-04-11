@@ -116,8 +116,8 @@ class OptimizationProblem3D
   }
 
  private:
-  // Uses odometry if available, otherwise the local SLAM results.
-  transform::Rigid3d ComputeRelativePose(
+  // Computes the relative pose between two nodes based on odometry data.
+  std::unique_ptr<transform::Rigid3d> CalculateOdometryBetweenNodes(
       int trajectory_id, const NodeData3D& first_node_data,
       const NodeData3D& second_node_data) const;
 
