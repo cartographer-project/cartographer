@@ -30,6 +30,8 @@
 #include "cartographer/cloud/internal/handlers/get_local_to_global_transform_handler.h"
 #include "cartographer/cloud/internal/handlers/get_submap_handler.h"
 #include "cartographer/cloud/internal/handlers/get_trajectory_node_poses_handler.h"
+#include "cartographer/cloud/internal/handlers/is_trajectory_finished_handler.h"
+#include "cartographer/cloud/internal/handlers/is_trajectory_frozen_handler.h"
 #include "cartographer/cloud/internal/handlers/load_state_handler.h"
 #include "cartographer/cloud/internal/handlers/receive_local_slam_results_handler.h"
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
@@ -74,6 +76,8 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::GetAllSubmapPosesHandler>();
   server_builder.RegisterHandler<handlers::GetLocalToGlobalTransformHandler>();
   server_builder.RegisterHandler<handlers::GetConstraintsHandler>();
+  server_builder.RegisterHandler<handlers::IsTrajectoryFinishedHandler>();
+  server_builder.RegisterHandler<handlers::IsTrajectoryFrozenHandler>();
   server_builder.RegisterHandler<handlers::LoadStateHandler>();
   server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler>();
   server_builder.RegisterHandler<handlers::WriteStateHandler>();
