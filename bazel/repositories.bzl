@@ -219,10 +219,10 @@ def cartographer_repositories():
 
   _maybe(native.http_archive,
       name = "com_github_jupp0r_prometheus_cpp",
-      sha256 = "41b202a206ba6339c4678ffe3690659fdb77287d97507aad82a83c5360b8ba8b",
-      strip_prefix = "prometheus-cpp-b3914b1045c92649e81d020851f3bb06ef858df4",
+      sha256 = "0d3e999dfbfc49bb117698154a01dac26fb59e77d0354ccb81107a6da7b014d0",
+      strip_prefix = "prometheus-cpp-8330b3f753fb774c9e0567baaac20ffb7042723b",
       urls = [
-          "https://github.com/jupp0r/prometheus-cpp/archive/b3914b1045c92649e81d020851f3bb06ef858df4.tar.gz",
+          "https://github.com/jupp0r/prometheus-cpp/archive/8330b3f753fb774c9e0567baaac20ffb7042723b.tar.gz",
       ],
   )
 
