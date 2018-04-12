@@ -21,6 +21,8 @@
 #include "cartographer/cloud/internal/handlers/get_landmark_poses_handler.h"
 #include "cartographer/cloud/internal/handlers/get_local_to_global_transform_handler.h"
 #include "cartographer/cloud/internal/handlers/get_trajectory_node_poses_handler.h"
+#include "cartographer/cloud/internal/handlers/is_trajectory_finished_handler.h"
+#include "cartographer/cloud/internal/handlers/is_trajectory_frozen_handler.h"
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/transform/transform.h"
@@ -108,11 +110,21 @@ std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses() {
 }
 
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
-  LOG(FATAL) << "Not implemented";
+  proto::IsTrajectoryFinishedRequest request;
+  request.set_trajectory_id(trajectory_id);
+  async_grpc::Client<handlers::IsTrajectoryFinishedSignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
+  return client.response().is_finished();
 }
 
 bool PoseGraphStub::IsTrajectoryFrozen(int trajectory_id) {
-  LOG(FATAL) << "Not implemented";
+  proto::IsTrajectoryFrozenRequest request;
+  request.set_trajectory_id(trajectory_id);
+  async_grpc::Client<handlers::IsTrajectoryFrozenSignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
+  return client.response().is_frozen();
 }
 
 std::map<int, mapping::PoseGraphInterface::TrajectoryData>
