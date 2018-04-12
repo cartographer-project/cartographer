@@ -27,32 +27,66 @@ namespace testing {
 
 class FakeTrimmable : public Trimmable {
  public:
+  FakeTrimmable() = default;
+
+  // Populates dummy SubmapIDs.
   FakeTrimmable(int trajectory_id, int num_submaps) {
     for (int index = 0; index < num_submaps; ++index) {
-      submaps_.push_back(SubmapId{trajectory_id, index});
+      submap_data_.Insert(SubmapId{trajectory_id, index}, {});
     }
   }
   ~FakeTrimmable() override {}
 
   int num_submaps(const int trajectory_id) const override {
-    return submaps_.size() - trimmed_submaps_.size();
+    return submap_data_.size() - trimmed_submaps_.size();
   }
 
   std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override {
-    return submaps_;
+    std::vector<SubmapId> submap_ids;
+    for (const auto& submap : submap_data_) {
+      submap_ids.push_back(submap.id);
+    }
+    return submap_ids;
+  }
+
+  void set_submap_data(
+      const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data) {
+    submap_data_ = submap_data;
+  }
+
+  MapById<SubmapId, PoseGraphInterface::SubmapData>* mutable_submap_data() {
+    return &submap_data_;
   }
 
   MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
       const override {
-    return {};
+    return submap_data_;
+  }
+
+  void set_trajectory_nodes(
+      const MapById<NodeId, TrajectoryNode>& trajectory_nodes) {
+    trajectory_nodes_ = trajectory_nodes;
+  }
+
+  MapById<NodeId, TrajectoryNode>* mutable_trajectory_nodes() {
+    return &trajectory_nodes_;
   }
 
   MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() const override {
-    return {};
+    return trajectory_nodes_;
+  }
+
+  void set_constraints(
+      const std::vector<PoseGraphInterface::Constraint>& constraints) {
+    constraints_ = constraints;
+  }
+
+  std::vector<PoseGraphInterface::Constraint>* mutable_constraints() {
+    return &constraints_;
   }
 
   std::vector<PoseGraphInterface::Constraint> GetConstraints() const override {
-    return {};
+    return constraints_;
   }
 
   void MarkSubmapAsTrimmed(const SubmapId& submap_id) override {
@@ -64,8 +98,11 @@ class FakeTrimmable : public Trimmable {
   std::vector<SubmapId> trimmed_submaps() { return trimmed_submaps_; }
 
  private:
-  std::vector<SubmapId> submaps_;
   std::vector<SubmapId> trimmed_submaps_;
+
+  std::vector<PoseGraphInterface::Constraint> constraints_;
+  MapById<NodeId, TrajectoryNode> trajectory_nodes_;
+  MapById<SubmapId, PoseGraphInterface::SubmapData> submap_data_;
 };
 
 }  // namespace testing
