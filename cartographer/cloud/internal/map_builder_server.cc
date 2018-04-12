@@ -82,8 +82,18 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler>();
   server_builder.RegisterHandler<handlers::WriteStateHandler>();
   grpc_server_ = server_builder.Build();
-  grpc_server_->SetExecutionContext(
-      common::make_unique<MapBuilderContext>(this));
+  if (map_builder_server_options.map_builder_options()
+          .use_trajectory_builder_2d()) {
+    grpc_server_->SetExecutionContext(
+        common::make_unique<MapBuilderContext<mapping::Submap2D>>(this));
+  } else if (map_builder_server_options.map_builder_options()
+                 .use_trajectory_builder_3d()) {
+    grpc_server_->SetExecutionContext(
+        common::make_unique<MapBuilderContext<mapping::Submap3D>>(this));
+  } else {
+    LOG(FATAL)
+        << "Set either use_trajectory_builder_2d or use_trajectory_builder_3d";
+  }
 }
 
 void MapBuilderServer::Start() {
@@ -119,8 +129,8 @@ void MapBuilderServer::ProcessSensorDataQueue() {
     std::unique_ptr<MapBuilderContextInterface::Data> sensor_data =
         incoming_data_queue_.PopWithTimeout(kPopTimeout);
     if (sensor_data) {
-      grpc_server_->GetContext<MapBuilderContext>()->AddSensorDataToTrajectory(
-          *sensor_data);
+      grpc_server_->GetContext<MapBuilderContextInterface>()
+          ->AddSensorDataToTrajectory(*sensor_data);
     }
   }
 }
@@ -144,13 +154,14 @@ void MapBuilderServer::OnLocalSlamResult(
   // If there is an uplink server and a submap insertion happened, enqueue this
   // local SLAM result for uploading.
   if (insertion_result &&
-      grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
+      grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
     auto data_request =
         common::make_unique<proto::AddLocalSlamResultDataRequest>();
-    auto sensor_id = grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
-                         ->local_trajectory_uploader()
-                         ->GetLocalSlamResultSensorId(trajectory_id);
+    auto sensor_id =
+        grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
+            ->local_trajectory_uploader()
+            ->GetLocalSlamResultSensorId(trajectory_id);
     CreateAddLocalSlamResultDataRequest(sensor_id.id, trajectory_id, time,
                                         starting_submap_index_,
                                         *insertion_result, data_request.get());
@@ -158,7 +169,7 @@ void MapBuilderServer::OnLocalSlamResult(
     if (insertion_result->insertion_submaps.front()->finished()) {
       ++starting_submap_index_;
     }
-    grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
+    grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
         ->EnqueueDataRequest(std::move(data_request));
   }
