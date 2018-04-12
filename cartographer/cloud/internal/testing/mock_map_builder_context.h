@@ -53,7 +53,8 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
     DoEnqueueSensorData(trajectory_id, data.get());
   }
   MOCK_METHOD3(EnqueueLocalSlamResultData,
-               void(int, const std::string &, const mapping::proto::LocalSlamResultData&));
+               void(int, const std::string &,
+                    const mapping::proto::LocalSlamResultData &));
 };
 
 }  // namespace testing

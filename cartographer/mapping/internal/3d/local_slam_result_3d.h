@@ -30,8 +30,8 @@ class LocalSlamResult3D : public LocalSlamResultData {
       const std::string& sensor_id,
       const mapping::proto::LocalSlamResultData local_slam_result_data,
       cloud::SubmapController<mapping::Submap3D>* submap_controller)
-      : LocalSlamResultData(sensor_id,
-                            common::FromUniversal(local_slam_result_data.timestamp())),
+      : LocalSlamResultData(sensor_id, common::FromUniversal(
+                                           local_slam_result_data.timestamp())),
         sensor_id_(sensor_id),
         local_slam_result_data_(local_slam_result_data),
         submap_controller_(submap_controller) {}

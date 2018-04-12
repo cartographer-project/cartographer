@@ -37,7 +37,8 @@ void LocalSlamResult2D::AddToPoseGraph(int trajectory_id,
   }
   static_cast<PoseGraph2D*>(pose_graph)
       ->AddNode(std::make_shared<const mapping::TrajectoryNode::Data>(
-          mapping::FromProto(local_slam_result_data_.node_data())), trajectory_id, submaps);
+                    mapping::FromProto(local_slam_result_data_.node_data())),
+                trajectory_id, submaps);
 }
 
 }  // namespace mapping
