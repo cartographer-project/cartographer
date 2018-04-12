@@ -53,11 +53,7 @@ class MapBuilderContext : public MapBuilderContextInterface {
   void UnsubscribeLocalSlamResults(
       const SubscriptionId& subscription_id) override;
   void NotifyFinishTrajectory(int trajectory_id) override;
-  std::unique_ptr<mapping::LocalSlamResultData> ProcessLocalSlamResultData(
-      const std::string& sensor_id, common::Time time,
-      const mapping::proto::LocalSlamResultData& proto) override;
   LocalTrajectoryUploaderInterface* local_trajectory_uploader() override;
-
   void EnqueueSensorData(int trajectory_id,
                          std::unique_ptr<sensor::Data> data) override;
   void EnqueueLocalSlamResultData(

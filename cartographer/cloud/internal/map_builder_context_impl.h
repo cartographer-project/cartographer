@@ -93,17 +93,6 @@ void MapBuilderContext<SubmapType>::EnqueueSensorData(
 }
 
 template <>
-std::unique_ptr<mapping::LocalSlamResultData>
-MapBuilderContext<mapping::Submap2D>::ProcessLocalSlamResultData(
-    const std::string& sensor_id, common::Time time,
-    const mapping::proto::LocalSlamResultData& proto);
-template <>
-std::unique_ptr<mapping::LocalSlamResultData>
-MapBuilderContext<mapping::Submap3D>::ProcessLocalSlamResultData(
-    const std::string& sensor_id, common::Time time,
-    const mapping::proto::LocalSlamResultData& proto);
-
-template <>
 void MapBuilderContext<mapping::Submap2D>::EnqueueLocalSlamResultData(
     int trajectory_id, const std::string& sensor_id,
     const mapping::proto::LocalSlamResultData& local_slam_result_data);
