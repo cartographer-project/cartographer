@@ -107,7 +107,7 @@ MapBuilderContext<mapping::Submap2D>::ProcessLocalSlamResultData(
     const mapping::proto::LocalSlamResultData& proto);
 template <>
 std::unique_ptr<mapping::LocalSlamResultData>
-MapBuilderContext<mapping::Submap2D>::ProcessLocalSlamResultData(
+MapBuilderContext<mapping::Submap3D>::ProcessLocalSlamResultData(
     const std::string& sensor_id, common::Time time,
     const mapping::proto::LocalSlamResultData& proto);
 
