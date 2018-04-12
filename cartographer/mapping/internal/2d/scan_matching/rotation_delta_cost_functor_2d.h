@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_MAPPING_INTERNAL_2D_SCAN_MATCHING_ROTATION_DELTA_COST_FUNCTOR_2D_H_
 
 #include "Eigen/Core"
+#include "ceres/ceres.h"
 
 namespace cartographer {
 namespace mapping {

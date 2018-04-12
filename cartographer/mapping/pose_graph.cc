@@ -43,7 +43,8 @@ PoseGraph::Constraint::Tag FromProto(
     case proto::PoseGraph::Constraint::INTER_SUBMAP:
       return PoseGraph::Constraint::Tag::INTER_SUBMAP;
     case ::google::protobuf::kint32max:
-    case ::google::protobuf::kint32min:;
+    case ::google::protobuf::kint32min: {
+    }
   }
   LOG(FATAL) << "Unsupported tag.";
 }

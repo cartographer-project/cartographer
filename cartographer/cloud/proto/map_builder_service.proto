@@ -171,6 +171,22 @@ message WriteStateResponse {
   }
 }
 
+message IsTrajectoryFinishedRequest {
+  int32 trajectory_id = 1;
+}
+
+message IsTrajectoryFinishedResponse {
+  bool is_finished = 1;
+}
+
+message IsTrajectoryFrozenRequest {
+  int32 trajectory_id = 1;
+}
+
+message IsTrajectoryFrozenResponse {
+  bool is_frozen = 1;
+}
+
 service MapBuilderService {
   // Starts a new trajectory and returns its index.
   rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
@@ -229,6 +245,14 @@ service MapBuilderService {
 
   // Returns the list of constraints in the current optimization problem.
   rpc GetConstraints(google.protobuf.Empty) returns (GetConstraintsResponse);
+
+  // Checks whether the trajectory is finished.
+  rpc IsTrajectoryFinished(IsTrajectoryFinishedRequest)
+      returns (IsTrajectoryFinishedResponse);
+
+  // Checks whether the trajectory is frozen.
+  rpc IsTrajectoryFrozen(IsTrajectoryFrozenRequest)
+  	  returns (IsTrajectoryFrozenResponse);
 
   // Requests a PoseGraph to call RunFinalOptimization.
   rpc RunFinalOptimization(google.protobuf.Empty)

@@ -140,7 +140,10 @@ TEST_F(ClientServerTest, AddTrajectoryBuilder) {
   InitializeStub();
   int trajectory_id = stub_->AddTrajectoryBuilder(
       {kImuSensorId}, trajectory_builder_options_, nullptr);
+  EXPECT_FALSE(stub_->pose_graph()->IsTrajectoryFinished(trajectory_id));
   stub_->FinishTrajectory(trajectory_id);
+  EXPECT_TRUE(stub_->pose_graph()->IsTrajectoryFinished(trajectory_id));
+  EXPECT_FALSE(stub_->pose_graph()->IsTrajectoryFrozen(trajectory_id));
   server_->Shutdown();
 }
 

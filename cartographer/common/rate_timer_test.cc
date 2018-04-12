@@ -37,7 +37,6 @@ struct SimulatedClock {
   using period = std::chrono::steady_clock::period;
   using duration = std::chrono::steady_clock::duration;
   using time_point = std::chrono::steady_clock::time_point;
-  static constexpr bool is_steady = true;
 
   static time_point time;
   static time_point now() noexcept { return time; }

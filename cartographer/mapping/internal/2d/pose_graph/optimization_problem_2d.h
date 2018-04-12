@@ -42,8 +42,8 @@ namespace pose_graph {
 
 struct NodeData2D {
   common::Time time;
-  transform::Rigid2d initial_pose;
-  transform::Rigid2d pose;
+  transform::Rigid2d local_pose_2d;
+  transform::Rigid2d global_pose_2d;
   Eigen::Quaterniond gravity_alignment;
 };
 
@@ -103,8 +103,8 @@ class OptimizationProblem2D
  private:
   std::unique_ptr<transform::Rigid3d> InterpolateOdometry(
       int trajectory_id, common::Time time) const;
-  // Uses odometry if available, otherwise the local SLAM results.
-  transform::Rigid3d ComputeRelativePose(
+  // Computes the relative pose between two nodes based on odometry data.
+  std::unique_ptr<transform::Rigid3d> CalculateOdometryBetweenNodes(
       int trajectory_id, const NodeData2D& first_node_data,
       const NodeData2D& second_node_data) const;
 
