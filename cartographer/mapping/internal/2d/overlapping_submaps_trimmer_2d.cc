@@ -140,7 +140,7 @@ std::vector<SubmapId> FindSubmapIdsToTrim(
     const SubmapCoverageGrid2D& coverage_grid,
     const std::set<SubmapId>& all_submap_ids, uint16 fresh_submaps_count,
     uint16 min_covered_cells_count) {
-  std::map<SubmapId, uint16> cells_covered_by_submap;
+  std::map<SubmapId, uint16> submap_to_covered_cells_count;
   for (const auto& cell : coverage_grid.cells()) {
     std::vector<std::pair<SubmapId, common::Time>> submaps_per_cell(
         cell.second);
@@ -158,21 +158,20 @@ std::vector<SubmapId> FindSubmapIdsToTrim(
                              submaps_per_cell.end());
     }
     for (const std::pair<SubmapId, common::Time>& submap : submaps_per_cell) {
-      ++cells_covered_by_submap[submap.first];
+      ++submap_to_covered_cells_count[submap.first];
     }
   }
   std::vector<SubmapId> submap_ids_to_keep;
-  for (const auto& id_to_cells_count : cells_covered_by_submap) {
+  for (const auto& id_to_cells_count : submap_to_covered_cells_count) {
     if (id_to_cells_count.second < min_covered_cells_count) continue;
     submap_ids_to_keep.push_back(id_to_cells_count.first);
   }
 
   DCHECK(std::is_sorted(submap_ids_to_keep.begin(), submap_ids_to_keep.end()));
-
   std::vector<SubmapId> result;
   std::set_difference(all_submap_ids.begin(), all_submap_ids.end(),
                       submap_ids_to_keep.begin(), submap_ids_to_keep.end(),
-                      std::inserter(result, result.begin()));
+                      std::back_inserter(result));
   return result;
 }
 
@@ -196,7 +195,6 @@ void OverlappingSubmapsTrimmer2D::Trim(Trimmable* pose_graph) {
   for (const SubmapId& id : submap_ids_to_remove) {
     pose_graph->MarkSubmapAsTrimmed(id);
   }
-  finished_ = true;
 }
 
 }  // namespace mapping

@@ -164,7 +164,7 @@ TEST_F(OverlappingSubmapsTrimmer2DTest, UseOnlyIntraSubmapsToComputeFreshness) {
 //
 // The background submap should be trimmed, since it has only 3 cells
 // not-covered by another submap.
-TEST_F(OverlappingSubmapsTrimmer2DTest, ) {
+TEST_F(OverlappingSubmapsTrimmer2DTest, TrimSubmapWithLowCoveredCellsCount) {
   AddSquareSubmap(Rigid2d::Identity(), 0 /* submap_index */, 2 /* num_cells */,
                   true /* is_finished */);
   AddSquareSubmap(Rigid2d::Translation(Eigen::Vector2d(1., 1.)),
