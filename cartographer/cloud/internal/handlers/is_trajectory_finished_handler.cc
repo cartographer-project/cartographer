@@ -28,9 +28,11 @@ namespace handlers {
 void IsTrajectoryFinishedHandler::OnRequest(
     const proto::IsTrajectoryFinishedRequest& request) {
   auto response = common::make_unique<proto::IsTrajectoryFinishedResponse>();
-  response->set_is_finished(GetContext<MapBuilderContextInterface>()
+  response->set_is_finished(
+      GetContext<MapBuilderContextInterface>()
           ->map_builder()
-          .pose_graph()->IsTrajectoryFinished(request.trajectory_id()));
+          .pose_graph()
+          ->IsTrajectoryFinished(request.trajectory_id()));
   Send(std::move(response));
 }
 

@@ -112,7 +112,8 @@ std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses() {
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
   proto::IsTrajectoryFinishedRequest request;
   request.set_trajectory_id(trajectory_id);
-  async_grpc::Client<handlers::IsTrajectoryFinishedSignature> client(client_channel_);
+  async_grpc::Client<handlers::IsTrajectoryFinishedSignature> client(
+      client_channel_);
   CHECK(client.Write(request));
   return client.response().is_finished();
 }
@@ -120,7 +121,8 @@ bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
 bool PoseGraphStub::IsTrajectoryFrozen(int trajectory_id) {
   proto::IsTrajectoryFrozenRequest request;
   request.set_trajectory_id(trajectory_id);
-  async_grpc::Client<handlers::IsTrajectoryFrozenSignature> client(client_channel_);
+  async_grpc::Client<handlers::IsTrajectoryFrozenSignature> client(
+      client_channel_);
   CHECK(client.Write(request));
   return client.response().is_frozen();
 }
