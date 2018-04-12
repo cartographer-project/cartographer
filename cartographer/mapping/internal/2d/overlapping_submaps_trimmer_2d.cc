@@ -144,6 +144,7 @@ std::vector<SubmapId> FindSubmapIdsToTrim(
   for (const auto& cell : coverage_grid.cells()) {
     std::vector<std::pair<SubmapId, common::Time>> submaps_per_cell(
         cell.second);
+
     // In case there are several submaps covering the cell, only the freshest
     // submaps are kept.
     if (submaps_per_cell.size() > fresh_submaps_count) {
