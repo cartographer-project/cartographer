@@ -60,10 +60,9 @@ class MapBuilderContext : public MapBuilderContextInterface {
 
   void EnqueueSensorData(int trajectory_id,
                          std::unique_ptr<sensor::Data> data) override;
-  void EnqueueLocalSlamResultData(int trajectory_id,
-                                  const std::string& sensor_id,
-                                  std::unique_ptr<mapping::LocalSlamResultData>
-                                      local_slam_result_data) override;
+  void EnqueueLocalSlamResultData(
+      int trajectory_id, const std::string& sensor_id,
+      const mapping::proto::LocalSlamResultData& local_slam_result_data) override;
 
  private:
   MapBuilderServer* map_builder_server_;

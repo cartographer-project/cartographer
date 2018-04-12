@@ -62,15 +62,8 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
                          std::unique_ptr<sensor::Data> data) override {
     DoEnqueueSensorData(trajectory_id, data.get());
   }
-  MOCK_METHOD3(DoEnqueueLocalSlamResultData,
-               void(int, const std::string &, mapping::LocalSlamResultData *));
-  void EnqueueLocalSlamResultData(int trajectory_id,
-                                  const std::string &sensor_id,
-                                  std::unique_ptr<mapping::LocalSlamResultData>
-                                      local_slam_result_data) override {
-    DoEnqueueLocalSlamResultData(trajectory_id, sensor_id,
-                                 local_slam_result_data.get());
-  }
+  MOCK_METHOD3(EnqueueLocalSlamResultData,
+               void(int, const std::string &, const mapping::proto::LocalSlamResultData&));
 };
 
 }  // namespace testing
