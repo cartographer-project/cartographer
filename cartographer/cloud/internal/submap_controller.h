@@ -37,20 +37,20 @@ class SubmapController {
     if (submap_it == unfinished_submaps_.end()) {
       submap_ptr = CreateSubmap(proto);
       unfinished_submaps_.Insert(submap_id, submap_ptr);
-    } else {
-      submap_ptr = submap_it->data;
-      CHECK(submap_ptr);
-      submap_ptr->UpdateFromProto(proto);
+      return submap_ptr;
+    }
+    submap_ptr = submap_it->data;
+    CHECK(submap_ptr);
+    submap_ptr->UpdateFromProto(proto);
 
-      // If the submap was just finished by the recent update, remove it from
-      // the list of unfinished submaps.
-      if (submap_ptr->finished()) {
-        unfinished_submaps_.Trim(submap_id);
-      } else {
-        // If the submap is unfinished set the 'num_range_data' to 0 since we
-        // haven't changed the HybridGrid.
-        submap_ptr->set_num_range_data(0);
-      }
+    // If the submap was just finished by the recent update, remove it from
+    // the list of unfinished submaps.
+    if (submap_ptr->finished()) {
+      unfinished_submaps_.Trim(submap_id);
+    } else {
+      // If the submap is unfinished set the 'num_range_data' to 0 since we
+      // haven't changed the HybridGrid.
+      submap_ptr->set_num_range_data(0);
     }
     return submap_ptr;
   }
