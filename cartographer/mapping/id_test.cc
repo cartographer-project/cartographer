@@ -60,10 +60,12 @@ TEST(IdTest, EmptyMapById) {
   EXPECT_FALSE(map_by_id.empty());
   map_by_id.Trim(id);
   EXPECT_TRUE(map_by_id.empty());
+  EXPECT_EQ(0, map_by_id.size());
 }
 
 TEST(IdTest, MapByIdIterator) {
   MapById<NodeId, int> map_by_id = CreateTestMapById<NodeId>();
+  EXPECT_EQ(4, map_by_id.size());
   EXPECT_EQ(2, map_by_id.BeginOfTrajectory(7)->data);
   EXPECT_TRUE(std::next(map_by_id.BeginOfTrajectory(7)) ==
               map_by_id.EndOfTrajectory(7));

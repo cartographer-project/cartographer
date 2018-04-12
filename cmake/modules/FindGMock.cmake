@@ -54,7 +54,8 @@ if(NOT GMock_FOUND)
     if(GMOCK_SRC_DIR)
       # If src version found, build it.
       if(NOT TARGET gmock)
-        add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
+        add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock"
+          EXCLUDE_FROM_ALL)
       endif()
       # The next line is needed for Ubuntu Trusty.
       set(GMOCK_INCLUDE_DIRS "${GMOCK_SRC_DIR}/gtest/include")

@@ -20,11 +20,14 @@
 #include "async_grpc/execution_context.h"
 #include "async_grpc/server.h"
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
-#include "cartographer/cloud/internal/map_builder_context.h"
+#include "cartographer/cloud/internal/map_builder_context_interface.h"
+#include "cartographer/cloud/internal/submap_controller.h"
 #include "cartographer/cloud/map_builder_server_interface.h"
 #include "cartographer/cloud/proto/map_builder_server_options.pb.h"
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/2d/submap_2d.h"
+#include "cartographer/mapping/3d/submap_3d.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/map_builder.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
@@ -33,9 +36,44 @@
 namespace cartographer {
 namespace cloud {
 
+class MapBuilderServer;
+
+template <class SubmapType>
+class MapBuilderContext : public MapBuilderContextInterface {
+ public:
+  MapBuilderContext(MapBuilderServer* map_builder_server);
+  mapping::MapBuilderInterface& map_builder() override;
+  common::BlockingQueue<std::unique_ptr<MapBuilderContextInterface::Data>>&
+  sensor_data_queue() override;
+  mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
+  GetLocalSlamResultCallbackForSubscriptions() override;
+  void AddSensorDataToTrajectory(const Data& sensor_data) override;
+  MapBuilderContextInterface::SubscriptionId SubscribeLocalSlamResults(
+      int trajectory_id, LocalSlamSubscriptionCallback callback) override;
+  void UnsubscribeLocalSlamResults(
+      const SubscriptionId& subscription_id) override;
+  void NotifyFinishTrajectory(int trajectory_id) override;
+  std::unique_ptr<mapping::LocalSlamResultData> ProcessLocalSlamResultData(
+      const std::string& sensor_id, common::Time time,
+      const mapping::proto::LocalSlamResultData& proto) override;
+  LocalTrajectoryUploaderInterface* local_trajectory_uploader() override;
+
+  void EnqueueSensorData(int trajectory_id,
+                         std::unique_ptr<sensor::Data> data) override;
+  void EnqueueLocalSlamResultData(int trajectory_id,
+                                  const std::string& sensor_id,
+                                  std::unique_ptr<mapping::LocalSlamResultData>
+                                      local_slam_result_data) override;
+
+ private:
+  MapBuilderServer* map_builder_server_;
+  SubmapController<SubmapType> submap_controller_;
+};
+
 class MapBuilderServer : public MapBuilderServerInterface {
  public:
-  friend MapBuilderContext;
+  friend MapBuilderContext<mapping::Submap2D>;
+  friend MapBuilderContext<mapping::Submap3D>;
 
   MapBuilderServer(
       const proto::MapBuilderServerOptions& map_builder_server_options,
@@ -93,5 +131,7 @@ class MapBuilderServer : public MapBuilderServerInterface {
 
 }  // namespace cloud
 }  // namespace cartographer
+
+#include "cartographer/cloud/internal/map_builder_context_impl.h"
 
 #endif  // CARTOGRAPHER_CLOUD_INTERNAL_MAP_BUILDER_SERVER_H
