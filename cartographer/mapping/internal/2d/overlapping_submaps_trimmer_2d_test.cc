@@ -66,7 +66,7 @@ class OverlappingSubmapsTrimmer2DTest : public ::testing::Test {
     know_cells_box->set_max_y(num_cells - 1);
 
     grid->mutable_probability_grid_2d();
-LOG(INFO) << submap_2d.DebugString();
+    LOG(INFO) << submap_2d.DebugString();
     fake_pose_graph_.mutable_submap_data()->Insert(
         {0 /* trajectory_id */, submap_index},
         {std::make_shared<const Submap2D>(submap_2d), pose_3d});
