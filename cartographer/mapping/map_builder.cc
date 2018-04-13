@@ -369,7 +369,7 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
   }
 
   // Set global poses of landmarks.
-  for (const auto& landmark : pose_graph_proto.landmarks()) {
+  for (const auto& landmark : pose_graph_proto.landmark_poses()) {
     pose_graph_->SetLandmarkPose(landmark.landmark_id(),
                                  transform::ToRigid3(landmark.global_pose()));
   }
