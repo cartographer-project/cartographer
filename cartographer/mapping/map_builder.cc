@@ -366,6 +366,12 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
     }
   }
 
+  // Set global poses of landmarks.
+  for (const auto& landmark : pose_graph_proto.landmarks()) {
+    pose_graph_->SetLandmarkPose(landmark.landmark_id(),
+                                 transform::ToRigid3(landmark.global_pose()));
+  }
+
   for (;;) {
     proto::SerializedData proto;
     if (!reader->ReadProto(&proto)) {

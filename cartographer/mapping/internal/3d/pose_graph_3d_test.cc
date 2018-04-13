@@ -26,22 +26,21 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
-
-class FakeOptimizationProblem3D : public OptimizationProblem3D {
- public:
-  FakeOptimizationProblem3D()
-      : OptimizationProblem3D(proto::OptimizationProblemOptions{}) {}
-  ~FakeOptimizationProblem3D() override = default;
-  void Solve(
-      const std::vector<Constraint>& constraints,
-      const std::set<int>& frozen_trajectories,
-      const std::map<std::string, LandmarkNode>& landmark_nodes) override {}
-};
-
-}  // namespace pose_graph
-
 namespace {
+
+using ::cartographer::mapping::pose_graph::OptimizationProblem3D;
+using ::cartographer::mapping::pose_graph::proto::OptimizationProblemOptions;
+using ::cartographer::transform::Rigid3d;
+
+class MockOptimizationProblem3D : public OptimizationProblem3D {
+ public:
+  MockOptimizationProblem3D()
+      : OptimizationProblem3D(OptimizationProblemOptions{}) {}
+  ~MockOptimizationProblem3D() override = default;
+
+  MOCK_METHOD3(Solve, void(const std::vector<Constraint>&, const std::set<int>&,
+                           const std::map<std::string, LandmarkNode>&));
+};
 
 class PoseGraph3DForTesting : public PoseGraph3D {
  public:
@@ -78,7 +77,7 @@ class PoseGraph3DTest : public ::testing::Test {
 
   void BuildPoseGraphWithFakeOptimization() {
     auto optimization_problem =
-        common::make_unique<pose_graph::FakeOptimizationProblem3D>();
+        common::make_unique<MockOptimizationProblem3D>();
     pose_graph_ = common::make_unique<PoseGraph3DForTesting>(
         pose_graph_options_, std::move(optimization_problem),
         thread_pool_.get());
@@ -109,14 +108,16 @@ TEST_F(PoseGraph3DTest, BasicSerialization) {
   proto::PoseGraph proto;
   auto fake_node = test::CreateFakeNode();
   test::AddToProtoGraph(fake_node, &proto);
-  pose_graph_->AddNodeFromProto(transform::Rigid3d::Identity(), fake_node);
+  pose_graph_->AddNodeFromProto(Rigid3d::Identity(), fake_node);
   auto fake_submap = test::CreateFakeSubmap3D();
   test::AddToProtoGraph(fake_submap, &proto);
-  pose_graph_->AddSubmapFromProto(transform::Rigid3d::Identity(), fake_submap);
+  pose_graph_->AddSubmapFromProto(Rigid3d::Identity(), fake_submap);
   test::AddToProtoGraph(test::CreateFakeConstraint(fake_node, fake_submap),
                         &proto);
   pose_graph_->AddSerializedConstraints(FromProto(proto.constraint()));
-
+  test::AddToProtoGraph(
+      test::CreateFakeLandmark("landmark_id", Rigid3d::Identity()), &proto);
+  pose_graph_->SetLandmarkPose("landmark_id", Rigid3d::Identity());
   pose_graph_->WaitForAllComputations();
   proto::PoseGraph actual_proto = pose_graph_->ToProto();
   EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
@@ -127,6 +128,8 @@ TEST_F(PoseGraph3DTest, BasicSerialization) {
       proto.trajectory(0).submap(0), actual_proto.trajectory(0).submap(0)));
   EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
       proto.trajectory(0), actual_proto.trajectory(0)));
+  EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
+      proto.landmarks(0), actual_proto.landmarks(0)));
   EXPECT_TRUE(
       google::protobuf::util::MessageDifferencer::Equals(proto, actual_proto));
 }
@@ -140,11 +143,11 @@ TEST_F(PoseGraph3DTest, PureLocalizationTrimmer) {
   for (int i = 0; i < num_submaps_to_create; ++i) {
     int submap_index = (i < 3) ? 42 + i : 100 + i;
     auto submap = test::CreateFakeSubmap3D(trajectory_id, submap_index);
-    pose_graph_->AddSubmapFromProto(transform::Rigid3d::Identity(), submap);
+    pose_graph_->AddSubmapFromProto(Rigid3d::Identity(), submap);
     for (int j = 0; j < num_nodes_per_submap; ++j) {
       int node_index = 7 + num_nodes_per_submap * submap_index + j;
       auto node = test::CreateFakeNode(trajectory_id, node_index);
-      pose_graph_->AddNodeFromProto(transform::Rigid3d::Identity(), node);
+      pose_graph_->AddNodeFromProto(Rigid3d::Identity(), node);
       proto::PoseGraph proto;
       auto constraint = test::CreateFakeConstraint(node, submap);
       // TODO(gaschler): Also remove inter constraints when all references are
@@ -219,11 +222,11 @@ TEST_F(PoseGraph3DTest, EvenSubmapTrimmer) {
   for (int i = 0; i < num_submaps_to_create; ++i) {
     int submap_index = 42 + i;
     auto submap = test::CreateFakeSubmap3D(trajectory_id, submap_index);
-    pose_graph_->AddSubmapFromProto(transform::Rigid3d::Identity(), submap);
+    pose_graph_->AddSubmapFromProto(Rigid3d::Identity(), submap);
     for (int j = 0; j < num_nodes_per_submap; ++j) {
       int node_index = 7 + num_nodes_per_submap * i + j;
       auto node = test::CreateFakeNode(trajectory_id, node_index);
-      pose_graph_->AddNodeFromProto(transform::Rigid3d::Identity(), node);
+      pose_graph_->AddNodeFromProto(Rigid3d::Identity(), node);
       proto::PoseGraph proto;
       auto constraint = test::CreateFakeConstraint(node, submap);
       constraint.set_tag(proto::PoseGraph::Constraint::INTRA_SUBMAP);
