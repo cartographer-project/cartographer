@@ -28,6 +28,7 @@ namespace mapping {
 class Grid2D {
  public:
   explicit Grid2D(const MapLimits& limits);
+  explicit Grid2D(const proto::Grid2D& proto);
 
   // Returns the limits of this ProbabilityGrid.
   const MapLimits& limits() const { return limits_; }
@@ -56,9 +57,27 @@ class Grid2D {
   // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
   void GrowLimits(const Eigen::Vector2f& point);
 
-  virtual proto::Grid2D ToProto() const = 0;
+  virtual proto::Grid2D ToProto() const;
 
  protected:
+  const std::vector<uint16>& correspondence_cost_cells() const {
+    return correspondence_cost_cells_;
+  }
+  const std::vector<int>& update_indices() const { return update_indices_; }
+  const Eigen::AlignedBox2i& known_cells_box() const {
+    return known_cells_box_;
+  }
+
+  std::vector<uint16>* mutable_correspondence_cost_cells() {
+    return &correspondence_cost_cells_;
+  }
+  std::vector<int>* mutable_update_indices() { return &update_indices_; }
+  Eigen::AlignedBox2i* mutable_known_cells_box() { return &known_cells_box_; }
+
+  // Converts a 'cell_index' into an index into 'cells_'.
+  int ToFlatIndex(const Eigen::Array2i& cell_index) const;
+
+ private:
   MapLimits limits_;
   std::vector<uint16> correspondence_cost_cells_;
   std::vector<int> update_indices_;
