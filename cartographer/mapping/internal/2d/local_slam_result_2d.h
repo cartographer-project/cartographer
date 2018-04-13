@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_LOCAL_SLAM_RESULT_2D_H_
 #define CARTOGRAPHER_MAPPING_INTERNAL_2D_LOCAL_SLAM_RESULT_2D_H_
 
-#include "cartographer/mapping/2d/submap_2d.h"
+#include "cartographer/mapping/internal/submap_controller.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 
@@ -27,20 +27,23 @@ namespace mapping {
 class LocalSlamResult2D : public LocalSlamResultData {
  public:
   LocalSlamResult2D(
-      const std::string& sensor_id, common::Time time,
-      std::shared_ptr<const TrajectoryNode::Data> node_data,
-      const std::vector<std::shared_ptr<const Submap2D>>& insertion_submaps)
-      : LocalSlamResultData(sensor_id, time),
-        node_data_(node_data),
-        insertion_submaps_(insertion_submaps) {}
+      const std::string& sensor_id,
+      const mapping::proto::LocalSlamResultData local_slam_result_data,
+      SubmapController<mapping::Submap2D>* submap_controller)
+      : LocalSlamResultData(sensor_id, common::FromUniversal(
+                                           local_slam_result_data.timestamp())),
+        sensor_id_(sensor_id),
+        local_slam_result_data_(local_slam_result_data),
+        submap_controller_(submap_controller) {}
 
   void AddToTrajectoryBuilder(
       TrajectoryBuilderInterface* const trajectory_builder) override;
   void AddToPoseGraph(int trajectory_id, PoseGraph* pose_graph) const override;
 
  private:
-  std::shared_ptr<const TrajectoryNode::Data> node_data_;
-  std::vector<std::shared_ptr<const Submap2D>> insertion_submaps_;
+  const std::string sensor_id_;
+  const mapping::proto::LocalSlamResultData local_slam_result_data_;
+  SubmapController<mapping::Submap2D>* submap_controller_;
 };
 
 }  // namespace mapping

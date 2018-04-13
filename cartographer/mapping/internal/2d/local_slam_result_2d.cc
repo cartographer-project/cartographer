@@ -29,8 +29,16 @@ void LocalSlamResult2D::AddToTrajectoryBuilder(
 void LocalSlamResult2D::AddToPoseGraph(int trajectory_id,
                                        PoseGraph* pose_graph) const {
   DCHECK(dynamic_cast<PoseGraph2D*>(pose_graph));
+  CHECK_GE(local_slam_result_data_.submaps().size(), 1);
+  CHECK(local_slam_result_data_.submaps(0).has_submap_2d());
+  std::vector<std::shared_ptr<const mapping::Submap2D>> submaps;
+  for (const auto& submap_proto : local_slam_result_data_.submaps()) {
+    submaps.push_back(submap_controller_->UpdateSubmap(submap_proto));
+  }
   static_cast<PoseGraph2D*>(pose_graph)
-      ->AddNode(node_data_, trajectory_id, insertion_submaps_);
+      ->AddNode(std::make_shared<const mapping::TrajectoryNode::Data>(
+                    mapping::FromProto(local_slam_result_data_.node_data())),
+                trajectory_id, submaps);
 }
 
 }  // namespace mapping
