@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "cartographer/cloud/internal/submap_controller.h"
+#include "cartographer/mapping/internal/submap_controller.h"
 
 namespace cartographer {
-namespace cloud {
+namespace mapping {
 
 template <>
 std::shared_ptr<mapping::Submap2D>
@@ -33,5 +33,5 @@ SubmapController<mapping::Submap3D>::CreateSubmap(
   return std::make_shared<mapping::Submap3D>(proto.submap_3d());
 }
 
-}  // namespace cloud
+}  // namespace mapping
 }  // namespace cartographer
