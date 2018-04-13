@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package cartographer.mapping.proto;
 
-import "cartographer/mapping/2d/proto/probability_grid.proto";
+import "cartographer/mapping/2d/proto/grid_2d.proto";
 import "cartographer/mapping/3d/proto/hybrid_grid.proto";
 import "cartographer/transform/proto/transform.proto";
 
@@ -25,7 +25,7 @@ message Submap2D {
   transform.proto.Rigid3d local_pose = 1;
   int32 num_range_data = 2;
   bool finished = 3;
-  ProbabilityGrid probability_grid = 4;
+  Grid2D grid = 4;
 }
 
 // Serialized state of a Submap3D.
