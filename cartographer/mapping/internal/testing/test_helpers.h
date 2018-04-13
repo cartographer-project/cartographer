@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_TEST_HELPERS_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_TEST_HELPERS_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_TESTING_TEST_HELPERS_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_TESTING_TEST_HELPERS_H_
 
 #include <memory>
 
@@ -62,4 +62,4 @@ void AddToProtoGraph(const proto::PoseGraph::Landmark& landmark_node,
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_TEST_HELPERS_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_TESTING_TEST_HELPERS_H_
