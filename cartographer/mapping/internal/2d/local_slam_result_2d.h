@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_LOCAL_SLAM_RESULT_2D_H_
 #define CARTOGRAPHER_MAPPING_INTERNAL_2D_LOCAL_SLAM_RESULT_2D_H_
 
-#include "cartographer/cloud/internal/submap_controller.h"
+#include "cartographer/mapping/internal/submap_controller.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 
@@ -29,7 +29,7 @@ class LocalSlamResult2D : public LocalSlamResultData {
   LocalSlamResult2D(
       const std::string& sensor_id,
       const mapping::proto::LocalSlamResultData local_slam_result_data,
-      cloud::SubmapController<mapping::Submap2D>* submap_controller)
+      SubmapController<mapping::Submap2D>* submap_controller)
       : LocalSlamResultData(sensor_id,
                             common::FromUniversal(local_slam_result_data.timestamp())),
         sensor_id_(sensor_id),
@@ -43,7 +43,7 @@ class LocalSlamResult2D : public LocalSlamResultData {
  private:
   const std::string sensor_id_;
   const mapping::proto::LocalSlamResultData local_slam_result_data_;
-  cloud::SubmapController<mapping::Submap2D>* submap_controller_;
+  SubmapController<mapping::Submap2D>* submap_controller_;
 };
 
 }  // namespace mapping

@@ -21,13 +21,13 @@
 #include "async_grpc/server.h"
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
-#include "cartographer/cloud/internal/submap_controller.h"
 #include "cartographer/cloud/map_builder_server_interface.h"
 #include "cartographer/cloud/proto/map_builder_server_options.pb.h"
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/2d/submap_2d.h"
 #include "cartographer/mapping/3d/submap_3d.h"
+#include "cartographer/mapping/internal/submap_controller.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/map_builder.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
@@ -62,7 +62,7 @@ class MapBuilderContext : public MapBuilderContextInterface {
 
  private:
   MapBuilderServer* map_builder_server_;
-  SubmapController<SubmapType> submap_controller_;
+  mapping::SubmapController<SubmapType> submap_controller_;
 };
 
 class MapBuilderServer : public MapBuilderServerInterface {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_CLOUD_INTERNAL_SUBMAP_CONTROLLER_H
-#define CARTOGRAPHER_CLOUD_INTERNAL_SUBMAP_CONTROLLER_H
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_SUBMAP_CONTROLLER_H
+#define CARTOGRAPHER_MAPPING_INTERNAL_SUBMAP_CONTROLLER_H
 
 #include "cartographer/mapping/2d/submap_2d.h"
 #include "cartographer/mapping/3d/submap_3d.h"
@@ -23,7 +23,7 @@
 #include "cartographer/mapping/proto/serialization.pb.h"
 
 namespace cartographer {
-namespace cloud {
+namespace mapping {
 
 template <class SubmapType>
 class SubmapController {
@@ -71,7 +71,7 @@ std::shared_ptr<mapping::Submap3D>
 SubmapController<mapping::Submap3D>::CreateSubmap(
     const mapping::proto::Submap& proto);
 
-}  // namespace cloud
+}  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_CLOUD_INTERNAL_SUBMAP_CONTROLLER_H
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_SUBMAP_CONTROLLER_H
