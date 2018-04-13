@@ -27,14 +27,20 @@ template <>
 void MapBuilderContext<mapping::Submap2D>::EnqueueLocalSlamResultData(
     int trajectory_id, const std::string& sensor_id,
     const mapping::proto::LocalSlamResultData& local_slam_result_data) {
-  map_builder_server_->incoming_data_queue_.Push(common::make_unique<Data>(Data{trajectory_id, common::make_unique<mapping::LocalSlamResult2D>(sensor_id, local_slam_result_data, &submap_controller_)}));
+  map_builder_server_->incoming_data_queue_.Push(common::make_unique<Data>(
+      Data{trajectory_id,
+           common::make_unique<mapping::LocalSlamResult2D>(
+               sensor_id, local_slam_result_data, &submap_controller_)}));
 }
 
 template <>
 void MapBuilderContext<mapping::Submap3D>::EnqueueLocalSlamResultData(
     int trajectory_id, const std::string& sensor_id,
     const mapping::proto::LocalSlamResultData& local_slam_result_data) {
-  map_builder_server_->incoming_data_queue_.Push(common::make_unique<Data>(Data{trajectory_id, common::make_unique<mapping::LocalSlamResult3D>(sensor_id, local_slam_result_data, &submap_controller_)}));
+  map_builder_server_->incoming_data_queue_.Push(common::make_unique<Data>(
+      Data{trajectory_id,
+           common::make_unique<mapping::LocalSlamResult3D>(
+               sensor_id, local_slam_result_data, &submap_controller_)}));
 }
 
 }  // namespace cloud
