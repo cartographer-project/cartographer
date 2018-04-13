@@ -26,7 +26,8 @@ Grid2D::Grid2D(const MapLimits& limits)
           limits_.cell_limits().num_x_cells * limits_.cell_limits().num_y_cells,
           kUnknownCorrespondenceValue) {}
 
-Grid2D::Grid2D(const proto::Grid2D& proto) : Grid2D(MapLimits(proto.limits())) {
+Grid2D::Grid2D(const proto::Grid2D& proto)
+    : limits_(proto.limits()), correspondence_cost_cells_() {
   if (proto.has_known_cells_box()) {
     const auto& box = proto.known_cells_box();
     known_cells_box_ =
