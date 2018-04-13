@@ -128,6 +128,8 @@ TEST_F(PoseGraph3DTest, BasicSerialization) {
       proto.trajectory(0).submap(0), actual_proto.trajectory(0).submap(0)));
   EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
       proto.trajectory(0), actual_proto.trajectory(0)));
+  EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
+      proto.landmarks(0), actual_proto.landmarks(0)));
   EXPECT_TRUE(
       google::protobuf::util::MessageDifferencer::Equals(proto, actual_proto));
 }
