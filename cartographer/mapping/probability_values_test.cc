@@ -30,6 +30,57 @@ TEST(ProbabilityValuesTest, OddsConversions) {
   EXPECT_NEAR(ProbabilityFromOdds(Odds(0.5)), 0.5, 1e-6);
 }
 
+TEST(ProbabilityValuesTest,
+     ProbabilityValueToCorrespondenceCostValueConversions) {
+  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
+                ProbabilityValueToCorrespondenceCostValue(0)),
+            0);
+  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
+                ProbabilityValueToCorrespondenceCostValue(1)),
+            1);
+  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
+                ProbabilityValueToCorrespondenceCostValue(100)),
+            100);
+  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
+                ProbabilityValueToCorrespondenceCostValue(32767)),
+            32767);
+
+  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
+                ProbabilityValueToCorrespondenceCostValue(1 + kUpdateMarker)),
+            1 + kUpdateMarker);
+  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
+                ProbabilityValueToCorrespondenceCostValue(100 + kUpdateMarker)),
+            100 + kUpdateMarker);
+  EXPECT_EQ(
+      CorrespondenceCostValueToProbabilityValue(
+          ProbabilityValueToCorrespondenceCostValue(32767 + kUpdateMarker)),
+      32767 + kUpdateMarker);
+
+  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
+                CorrespondenceCostValueToProbabilityValue(0)),
+            0);
+  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
+                CorrespondenceCostValueToProbabilityValue(1)),
+            1);
+  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
+                CorrespondenceCostValueToProbabilityValue(100)),
+            100);
+  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
+                CorrespondenceCostValueToProbabilityValue(32767)),
+            32767);
+
+  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
+                CorrespondenceCostValueToProbabilityValue(1 + kUpdateMarker)),
+            1 + kUpdateMarker);
+  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
+                CorrespondenceCostValueToProbabilityValue(100 + kUpdateMarker)),
+            100 + kUpdateMarker);
+  EXPECT_EQ(
+      ProbabilityValueToCorrespondenceCostValue(
+          CorrespondenceCostValueToProbabilityValue(32767 + kUpdateMarker)),
+      32767 + kUpdateMarker);
+}
+
 }  // namespace
 }  // namespace mapping
 }  // namespace cartographer
