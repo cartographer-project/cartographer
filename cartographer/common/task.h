@@ -45,7 +45,7 @@ class Task {
     dependency->AddDependentTask(this);
   }
 
-  void Dispatch(ThreadPool* thread_pool) {
+  void Dispatch(ThreadPoolInterface* thread_pool) {
     MutexLocker locker(&mutex_);
     CHECK_EQ(state_, IDLE);
     state_ = DISPATCHED;
@@ -98,7 +98,7 @@ class Task {
   enum State { IDLE, DISPATCHED, RUNNING, COMPLETED };
 
   WorkItem work_item_;
-  ThreadPool* thread_pool_ = nullptr;
+  ThreadPoolInterface* thread_pool_ = nullptr;
   State state_ = IDLE;
   unsigned int ref_count_ = 0;
   std::set<Task*> dependent_tasks_;
