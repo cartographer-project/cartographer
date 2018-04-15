@@ -31,71 +31,19 @@ class Task {
   using WorkItem = std::function<void()>;
   using TaskDispatcher = std::function<void(Task*)>;
   using TasksDispatchingWorkItem = std::function<void(TaskDispatcher)>;
+  enum State { IDLE, DISPATCHED, RUNNING, COMPLETED };
 
- public:
   Task() {}
   Task(WorkItem work_item) : work_item_(work_item) {}
 
-  void AddDependency(Task* dependency) {
-    {
-      MutexLocker locker(&mutex_);
-      CHECK_EQ(state_, IDLE);
-      ++ref_count_;
-    }
-    dependency->AddDependentTask(this);
-  }
-
-  void Dispatch(ThreadPoolInterface* thread_pool) {
-    MutexLocker locker(&mutex_);
-    CHECK_EQ(state_, IDLE);
-    state_ = DISPATCHED;
-    thread_pool_ = thread_pool;
-    if (ref_count_ == 0) {
-      CHECK(thread_pool_);
-      thread_pool_->Schedule(ContructThreadPoolWorkItem());
-    }
-  }
-
-  void AddDependentTask(Task* dependent_task) {
-	MutexLocker locker(&mutex_);
-	if (state_ == COMPLETED) {
-	  dependent_task->OnDependenyCompleted();
-	  return;
-	}
-	dependent_tasks_.insert(dependent_task);
-  }
-
-  virtual void OnDependenyCompleted() {
-	MutexLocker locker(&mutex_);
-	--ref_count_;
-	if (ref_count_ == 0 && state_ == DISPATCHED) {
-	  CHECK(thread_pool_);
-	  thread_pool_->Schedule(ContructThreadPoolWorkItem());
-	}
-  }
-
-  virtual WorkItem ContructThreadPoolWorkItem() {
-    return [this]() {
-      {
-        MutexLocker locker(&mutex_);
-    	state_ = RUNNING;
-      }
-
-      // Execute the work item.
-      if(work_item_) {
-    	  work_item_();
-      }
-
-      MutexLocker locker(&mutex_);
-      state_ = COMPLETED;
-      for (Task* dependent_task : dependent_tasks_) {
-    	dependent_task->OnDependenyCompleted();
-      }
-    };
-  }
+  State GetState() { return state_; }
+  void AddDependency(Task* dependency);
+  void Dispatch(ThreadPoolInterface* thread_pool);
+  void AddDependentTask(Task* dependent_task);
+  void OnDependenyCompleted();
+  WorkItem ContructThreadPoolWorkItem();
 
  protected:
-  enum State { IDLE, DISPATCHED, RUNNING, COMPLETED };
 
   WorkItem work_item_;
   ThreadPoolInterface* thread_pool_ = nullptr;
@@ -104,59 +52,6 @@ class Task {
   std::set<Task*> dependent_tasks_;
 
   Mutex mutex_;
-};
-
-class TasksSchedulingTask : public Task {
- public:
-  TasksSchedulingTask(TasksDispatchingWorkItem task_dispatching_work_item) : task_dispatching_work_item_(task_dispatching_work_item) {}
-
- protected:
-  TaskDispatcher ConstructTaskDispatcher() {
-	return [this](Task* dependency) {
-		{
-		  MutexLocker locker(&mutex_);
-		  CHECK_EQ(state_, RUNNING);
-		  ++ref_count_;
-		}
-		dependency->AddDependentTask(this);
-		dependency->Dispatch(thread_pool_);
-	};
-  }
-
-  void OnDependenyCompleted() override {
-	MutexLocker locker(&mutex_);
-	CHECK(state_ != IDLE);
-	CHECK(state_ != COMPLETED);
-	--ref_count_;
-	if (ref_count_ == 0 && state_ == DISPATCHED) {
-	  CHECK(thread_pool_);
-	  thread_pool_->Schedule(ContructThreadPoolWorkItem());
-	} else if (ref_count_ == 0 && state_ == RUNNING) {
-	  state_ = COMPLETED;
-	  for (Task* dependent_task : dependent_tasks_) {
-	    dependent_task->OnDependenyCompleted();
-	  }
-	}
-  }
-
-  WorkItem ContructThreadPoolWorkItem() override {
-	return [this]() {
-		{
-		  MutexLocker locker(&mutex_);
-		  state_ = RUNNING;
-
-		  // Up ref count by one to ensure this task does
-		  // not complete prematurely while dispatching
-		  // work items.
-          ++ref_count_;
-		  CHECK_EQ(ref_count_, 1);
-	    }
-		task_dispatching_work_item_(ConstructTaskDispatcher());
-        OnDependenyCompleted();
-	};
-  }
-
-  TasksDispatchingWorkItem task_dispatching_work_item_;
 };
 
 }  // namespace common
