@@ -111,7 +111,7 @@ class ConstraintBuilder2D {
     const ProbabilityGrid* probability_grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
         fast_correlative_scan_matcher;
-    common::Task scan_matcher_factory;
+    common::Task scan_matcher_factory_task;
   };
 
   // Either schedules the 'work_item', or if needed, schedules the scan matcher
@@ -134,9 +134,10 @@ class ConstraintBuilder2D {
                          std::unique_ptr<Constraint>* constraint)
       EXCLUDES(mutex_);
 
-  // Decrements the 'pending_computations_' count. If all computations are done,
-  // runs the 'when_done_' callback and resets the state.
-  void FinishComputation(int computation_index) EXCLUDES(mutex_);
+  // If all computations are done, runs the 'when_done_' callback and resets the
+  // state.
+  void FinishComputation(std::unique_ptr<int> newly_finished_node_index)
+      EXCLUDES(mutex_);
 
   const pose_graph::proto::ConstraintBuilderOptions options_;
   common::ThreadPool* thread_pool_;
@@ -147,9 +148,9 @@ class ConstraintBuilder2D {
       GUARDED_BY(mutex_);
 
   // Index of the node in reaction to which computations are currently
-  // added. This is always the highest node index seen so far, even when older
+  // added. This is always the number of nodes seen so far, even when older
   // nodes are matched against a new submap.
-  int current_node_index_ GUARDED_BY(mutex_) = 0;
+  int num_started_nodes_ GUARDED_BY(mutex_) = 0;
 
   // For each added node, maps to the number of pending computations that were
   // added for it.
@@ -160,7 +161,7 @@ class ConstraintBuilder2D {
   // keep pointers valid when adding more entries.
   std::deque<std::unique_ptr<Constraint>> constraints_ GUARDED_BY(mutex_);
 
-  // Map of already constructed scan matchers by 'submap_id'.
+  // Map of dispatched or constructed scan matchers by 'submap_id'.
   std::map<SubmapId, SubmapScanMatcher> submap_scan_matchers_
       GUARDED_BY(mutex_);
 

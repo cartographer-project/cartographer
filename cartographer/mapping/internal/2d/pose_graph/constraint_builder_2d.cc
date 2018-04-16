@@ -76,7 +76,6 @@ void ConstraintBuilder2D::MaybeAddConstraint(
       options_.max_constraint_distance()) {
     return;
   }
-  LOG(INFO) << "ConstraintBuilder2D::MaybeAddConstraint";
   if (sampler_.Pulse()) {
     common::MutexLocker locker(&mutex_);
     constraints_.emplace_back();
@@ -84,7 +83,6 @@ void ConstraintBuilder2D::MaybeAddConstraint(
     auto* const constraint = &constraints_.back();
     DispatchScanMatcherConstructionAndWorkItem(
         submap_id, &submap->probability_grid(), [=]() EXCLUDES(mutex_) {
-          LOG(INFO) << "Execute ConstraintBuilder2D::MaybeAddConstraint";
           ComputeConstraint(submap_id, submap, node_id,
                             false, /* match_full_submap */
                             constant_data, initial_relative_pose, constraint);
@@ -101,7 +99,6 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
   auto* const constraint = &constraints_.back();
   DispatchScanMatcherConstructionAndWorkItem(
       submap_id, &submap->probability_grid(), [=]() EXCLUDES(mutex_) {
-        LOG(INFO) << "Execute ConstraintBuilder2D::MaybeAddGlobalConstraint";
         ComputeConstraint(
             submap_id, submap, node_id, true, /* match_full_submap */
             constant_data, transform::Rigid2d::Identity(), constraint);
@@ -110,21 +107,18 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
 
 void ConstraintBuilder2D::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
-  // TODO: Create task that depends on all constraint search for node.
   // TODO(gaschler): Delete task when done.
   auto* task = new common::Task;
-  int current_node_index = current_node_index_;
-  LOG(INFO) << "Dispatch ConstraintBuilder2D::NotifyEndOfNode";
+  int current_node_index = num_started_nodes_;
   task->SetWorkItem([this, current_node_index] {
-    LOG(INFO) << "Execute ConstraintBuilder2D::NotifyEndOfNode";
-    FinishComputation(current_node_index);
+    FinishComputation(common::make_unique<int>(current_node_index));
   });
   for (common::Task& constraint_search_task :
-       node_index_to_constraint_search_tasks_[current_node_index_]) {
+       node_index_to_constraint_search_tasks_[num_started_nodes_]) {
     task->AddDependency(&constraint_search_task);
   }
   task->Dispatch(thread_pool_);
-  ++current_node_index_;
+  ++num_started_nodes_;
 }
 
 void ConstraintBuilder2D::WhenDone(
@@ -133,20 +127,13 @@ void ConstraintBuilder2D::WhenDone(
   CHECK(when_done_ == nullptr);
   when_done_ =
       common::make_unique<std::function<void(const Result&)>>(callback);
-  // TODO(gaschler): Delete task when done.
+  // TODO(gaschler): Delete task when done, but how? New and then delete itself?
+  // Pass by value and let ThreadPool delete it? (Won't work if there are any
+  // dependants.) Perhaps a limited 'IndependentTask' that does not notify
+  // anybody and deletes itself.
   // TODO(gaschler): Remove duplication with NotifyEndOfNode.
   auto* task = new common::Task;
-  int current_node_index = current_node_index_;
-  task->SetWorkItem([this, current_node_index] {
-    LOG(INFO) << "Execute ConstraintBuilder2D::WhenDone";
-    FinishComputation(current_node_index);
-  });
-
-  // TODO: check if this is sufficient.
-  for (common::Task& constraint_search_task :
-       node_index_to_constraint_search_tasks_[current_node_index_]) {
-    task->AddDependency(&constraint_search_task);
-  }
+  task->SetWorkItem([this] { FinishComputation(nullptr); });
   task->Dispatch(thread_pool_);
 }
 
@@ -163,30 +150,24 @@ void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
     it = submap_scan_matchers_.find(submap_id);
     auto& submap_scan_matcher = it->second;
     submap_scan_matcher.probability_grid = submap;
-    // Create scan matcher factory.
-    // TODO(gaschler): Make const copy of options in constructor.
     auto& scan_matcher_options =
         options_.fast_correlative_scan_matcher_options();
-    submap_scan_matcher.scan_matcher_factory.SetWorkItem(
+    submap_scan_matcher.scan_matcher_factory_task.SetWorkItem(
         [&submap_scan_matcher, &scan_matcher_options]() {
-          // TODO(gaschler): This doesn't need mutex_?
-          LOG(INFO) << "Execute scan_matcher_factory";
           submap_scan_matcher.fast_correlative_scan_matcher =
               common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
                   *submap_scan_matcher.probability_grid, scan_matcher_options);
         });
-    LOG(INFO) << "Dispatch scan_matcher_factory";
-    submap_scan_matcher.scan_matcher_factory.Dispatch(thread_pool_);
+    submap_scan_matcher.scan_matcher_factory_task.Dispatch(thread_pool_);
   }
 
   // TODO(gaschler): Delete task when done.
-  auto& list = node_index_to_constraint_search_tasks_[current_node_index_];
+  auto& list = node_index_to_constraint_search_tasks_[num_started_nodes_];
   list.emplace_front();
   common::Task& task = list.front();
   task.SetWorkItem(work_item);
-  task.AddDependency(&it->second.scan_matcher_factory);
+  task.AddDependency(&it->second.scan_matcher_factory_task);
   task.Dispatch(thread_pool_);
-  LOG(INFO) << "Dispatch ComputeConstraint";
 }
 
 const ConstraintBuilder2D::SubmapScanMatcher*
@@ -289,27 +270,21 @@ void ConstraintBuilder2D::ComputeConstraint(
   }
 }
 
-void ConstraintBuilder2D::FinishComputation(const int node_index) {
+void ConstraintBuilder2D::FinishComputation(
+    std::unique_ptr<int> newly_finished_node_index) {
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
     common::MutexLocker locker(&mutex_);
-    ++num_finished_nodes_;
-    for (common::Task& constraint_search_task :
-         node_index_to_constraint_search_tasks_[node_index]) {
-      CHECK_EQ(constraint_search_task.GetState(), common::Task::COMPLETED);
+    if (newly_finished_node_index) {
+      ++num_finished_nodes_;
+      for (common::Task& constraint_search_task :
+           node_index_to_constraint_search_tasks_[*newly_finished_node_index]) {
+        CHECK_EQ(constraint_search_task.GetState(), common::Task::COMPLETED);
+      }
+      node_index_to_constraint_search_tasks_.erase(*newly_finished_node_index);
     }
-    node_index_to_constraint_search_tasks_.erase(node_index);
-    LOG(WARNING) << "FinishComputation node_index=" << node_index;
-#if 0
-    if (--pending_computations_[computation_index] == 0) {
-      num_finished_nodes_ = pending_computations_.begin()->first;
-      pending_computations_.erase(computation_index);
-      LOG(INFO) << "Finished computation_index=" << computation_index;
-    }
-#endif
     if (node_index_to_constraint_search_tasks_.empty()) {
-      // CHECK_EQ(submap_queued_work_items_.size(), 0);
       if (when_done_ != nullptr) {
         for (const std::unique_ptr<Constraint>& constraint : constraints_) {
           if (constraint != nullptr) {
@@ -329,26 +304,25 @@ void ConstraintBuilder2D::FinishComputation(const int node_index) {
     kQueueLengthMetric->Set(constraints_.size());
   }
   if (callback != nullptr) {
-    LOG(ERROR) << "Call back when_done_";
     (*callback)(result);
-  } else {
-    LOG(ERROR) << "when_done_ == nullptr is fishy";
   }
 }
 
 int ConstraintBuilder2D::GetNumFinishedNodes() {
   common::MutexLocker locker(&mutex_);
+#if 0
   LOG(INFO) << "GetNumFinishedNodes ";
-  LOG(INFO) << "current_node_index_ " << current_node_index_;
+  LOG(INFO) << "num_started_nodes_ " << num_started_nodes_;
   LOG(INFO) << "num_finished_nodes_ " << num_finished_nodes_;
   LOG(INFO) << "pending_computations_.begin()->first "
             << node_index_to_constraint_search_tasks_.begin()->first;
   if (node_index_to_constraint_search_tasks_.empty()) {
-    // CHECK_EQ(num_finished_nodes_, current_node_index_);
-    return current_node_index_;
+    CHECK_EQ(num_finished_nodes_, num_started_nodes_);
+    return num_finished_nodes_;
   }
-  // CHECK_EQ(num_finished_nodes_, pending_computations_.begin()->first);
-  return node_index_to_constraint_search_tasks_.begin()->first;
+  CHECK_EQ(num_finished_nodes_, node_index_to_constraint_search_tasks_.begin()->first);
+#endif
+  return num_finished_nodes_;
 }
 
 void ConstraintBuilder2D::DeleteScanMatcher(const SubmapId& submap_id) {

@@ -45,7 +45,7 @@ class Task {
   WorkItem work_item_;
   ThreadPoolInterface* thread_pool_ = nullptr;
   State state_ = IDLE;
-  unsigned int ref_count_ = 0;
+  unsigned int uncompleted_dependencies_ = 0;
   std::set<Task*> dependent_tasks_;
 
   Mutex mutex_;

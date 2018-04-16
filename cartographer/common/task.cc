@@ -29,7 +29,7 @@ void Task::AddDependency(Task* dependency) {
   {
     MutexLocker locker(&mutex_);
     CHECK_EQ(state_, IDLE);
-    ++ref_count_;
+    ++uncompleted_dependencies_;
   }
   dependency->AddDependentTask(this);
 }
@@ -39,7 +39,7 @@ void Task::Dispatch(ThreadPoolInterface* thread_pool) {
   CHECK_EQ(state_, IDLE);
   state_ = DISPATCHED;
   thread_pool_ = thread_pool;
-  if (ref_count_ == 0) {
+  if (uncompleted_dependencies_ == 0) {
     CHECK(thread_pool_);
     thread_pool_->Schedule(ContructThreadPoolWorkItem());
   }
@@ -56,8 +56,8 @@ void Task::AddDependentTask(Task* dependent_task) {
 
 void Task::OnDependenyCompleted() {
   MutexLocker locker(&mutex_);
-  --ref_count_;
-  if (ref_count_ == 0 && state_ == DISPATCHED) {
+  --uncompleted_dependencies_;
+  if (uncompleted_dependencies_ == 0 && state_ == DISPATCHED) {
     CHECK(thread_pool_);
     thread_pool_->Schedule(ContructThreadPoolWorkItem());
   }
