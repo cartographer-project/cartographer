@@ -44,7 +44,6 @@ class Task {
   WorkItem ContructThreadPoolWorkItem();
 
  protected:
-
   WorkItem work_item_;
   ThreadPoolInterface* thread_pool_ = nullptr;
   State state_ = IDLE;
