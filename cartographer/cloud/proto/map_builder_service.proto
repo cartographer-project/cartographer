@@ -126,13 +126,12 @@ message GetTrajectoryNodePosesResponse {
   repeated TrajectoryNodePose node_poses = 1;
 }
 
-message LandmarkPose {
-  string landmark_id = 1;
-  cartographer.transform.proto.Rigid3d global_pose = 2;
+message GetLandmarkPosesResponse {
+  repeated cartographer.mapping.proto.PoseGraph.LandmarkPose landmark_poses = 1;
 }
 
-message GetLandmarkPosesResponse {
-  repeated LandmarkPose landmark_poses = 1;
+message SetLandmarkPoseRequest {
+  cartographer.mapping.proto.PoseGraph.LandmarkPose landmark_pose = 1;
 }
 
 message SubmapPose {
@@ -169,6 +168,22 @@ message WriteStateResponse {
         all_trajectory_builder_options = 2;
     cartographer.mapping.proto.SerializedData serialized_data = 3;
   }
+}
+
+message IsTrajectoryFinishedRequest {
+  int32 trajectory_id = 1;
+}
+
+message IsTrajectoryFinishedResponse {
+  bool is_finished = 1;
+}
+
+message IsTrajectoryFrozenRequest {
+  int32 trajectory_id = 1;
+}
+
+message IsTrajectoryFrozenResponse {
+  bool is_frozen = 1;
 }
 
 service MapBuilderService {
@@ -229,6 +244,17 @@ service MapBuilderService {
 
   // Returns the list of constraints in the current optimization problem.
   rpc GetConstraints(google.protobuf.Empty) returns (GetConstraintsResponse);
+
+  // Sets a pose for a landmark.
+  rpc SetLandmarkPose(SetLandmarkPoseRequest) returns (google.protobuf.Empty);
+
+  // Checks whether the trajectory is finished.
+  rpc IsTrajectoryFinished(IsTrajectoryFinishedRequest)
+      returns (IsTrajectoryFinishedResponse);
+
+  // Checks whether the trajectory is frozen.
+  rpc IsTrajectoryFrozen(IsTrajectoryFrozenRequest)
+  	  returns (IsTrajectoryFrozenResponse);
 
   // Requests a PoseGraph to call RunFinalOptimization.
   rpc RunFinalOptimization(google.protobuf.Empty)

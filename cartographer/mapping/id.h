@@ -331,6 +331,15 @@ class MapById {
                : 0;
   }
 
+  // Returns count of all elements.
+  size_t size() const {
+    size_t size = 0;
+    for (const auto& item : trajectories_) {
+      size += item.second.data_.size();
+    }
+    return size;
+  }
+
   // Returns Range object for range-based loops over the nodes of a trajectory.
   Range<ConstIterator> trajectory(const int trajectory_id) const {
     return Range<ConstIterator>(BeginOfTrajectory(trajectory_id),

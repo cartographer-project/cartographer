@@ -62,6 +62,8 @@ std::vector<std::string> SelectRangeSensorIds(
 
 MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
+  CHECK(options.use_trajectory_builder_2d() ^
+        options.use_trajectory_builder_3d());
   if (options.use_trajectory_builder_2d()) {
     pose_graph_ = common::make_unique<PoseGraph2D>(
         options_.pose_graph_options(),
@@ -364,6 +366,12 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
           NodeId{trajectory_proto.trajectory_id(), node_proto.node_index()},
           transform::ToRigid3(node_proto.pose()));
     }
+  }
+
+  // Set global poses of landmarks.
+  for (const auto& landmark : pose_graph_proto.landmark_poses()) {
+    pose_graph_->SetLandmarkPose(landmark.landmark_id(),
+                                 transform::ToRigid3(landmark.global_pose()));
   }
 
   for (;;) {

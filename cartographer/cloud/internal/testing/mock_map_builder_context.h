@@ -45,16 +45,6 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
   MOCK_METHOD1(UnsubscribeLocalSlamResults,
                void(const MapBuilderContextInterface::SubscriptionId &));
   MOCK_METHOD1(NotifyFinishTrajectory, void(int));
-  MOCK_METHOD3(DoProcessLocalSlamResultData,
-               mapping::LocalSlamResultData *(
-                   const std::string &, common::Time,
-                   const mapping::proto::LocalSlamResultData &));
-  std::unique_ptr<mapping::LocalSlamResultData> ProcessLocalSlamResultData(
-      const std::string &sensor_id, common::Time time,
-      const mapping::proto::LocalSlamResultData &proto) override {
-    return std::unique_ptr<mapping::LocalSlamResultData>(
-        DoProcessLocalSlamResultData(sensor_id, time, proto));
-  }
   MOCK_METHOD0(local_trajectory_uploader, LocalTrajectoryUploaderInterface *());
 
   MOCK_METHOD2(DoEnqueueSensorData, void(int, sensor::Data *));
@@ -62,15 +52,9 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
                          std::unique_ptr<sensor::Data> data) override {
     DoEnqueueSensorData(trajectory_id, data.get());
   }
-  MOCK_METHOD3(DoEnqueueLocalSlamResultData,
-               void(int, const std::string &, mapping::LocalSlamResultData *));
-  void EnqueueLocalSlamResultData(int trajectory_id,
-                                  const std::string &sensor_id,
-                                  std::unique_ptr<mapping::LocalSlamResultData>
-                                      local_slam_result_data) override {
-    DoEnqueueLocalSlamResultData(trajectory_id, sensor_id,
-                                 local_slam_result_data.get());
-  }
+  MOCK_METHOD3(EnqueueLocalSlamResultData,
+               void(int, const std::string &,
+                    const mapping::proto::LocalSlamResultData &));
 };
 
 }  // namespace testing

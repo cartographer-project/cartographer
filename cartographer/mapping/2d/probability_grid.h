@@ -20,24 +20,18 @@
 #include <vector>
 
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/2d/map_limits.h"
-#include "cartographer/mapping/2d/proto/probability_grid.pb.h"
 #include "cartographer/mapping/2d/xy_index.h"
 
 namespace cartographer {
 namespace mapping {
 
 // Represents a 2D grid of probabilities.
-class ProbabilityGrid {
+class ProbabilityGrid : public Grid2D {
  public:
   explicit ProbabilityGrid(const MapLimits& limits);
-  explicit ProbabilityGrid(const proto::ProbabilityGrid& proto);
-
-  // Returns the limits of this ProbabilityGrid.
-  const MapLimits& limits() const { return limits_; }
-
-  // Finishes the update sequence.
-  void FinishUpdate();
+  explicit ProbabilityGrid(const proto::Grid2D& proto);
 
   // Sets the probability of the cell at 'cell_index' to the given
   // 'probability'. Only allowed if the cell was unknown before.
@@ -57,28 +51,7 @@ class ProbabilityGrid {
   // Returns the probability of the cell with 'cell_index'.
   float GetProbability(const Eigen::Array2i& cell_index) const;
 
-  // Returns true if the probability at the specified index is known.
-  bool IsKnown(const Eigen::Array2i& cell_index) const;
-
-  // Fills in 'offset' and 'limits' to define a subregion of that contains all
-  // known cells.
-  void ComputeCroppedLimits(Eigen::Array2i* const offset,
-                            CellLimits* const limits) const;
-
-  // Grows the map as necessary to include 'point'. This changes the meaning of
-  // these coordinates going forward. This method must be called immediately
-  // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
-  void GrowLimits(const Eigen::Vector2f& point);
-
-  proto::ProbabilityGrid ToProto() const;
-
- private:
-  MapLimits limits_;
-  std::vector<uint16> cells_;  // Highest bit is update marker.
-  std::vector<int> update_indices_;
-
-  // Bounding box of known cells to efficiently compute cropping limits.
-  Eigen::AlignedBox2i known_cells_box_;
+  virtual proto::Grid2D ToProto() const override;
 };
 
 }  // namespace mapping

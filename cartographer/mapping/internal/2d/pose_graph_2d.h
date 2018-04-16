@@ -121,6 +121,9 @@ class PoseGraph2D : public PoseGraph {
       EXCLUDES(mutex_);
   std::map<std::string, transform::Rigid3d> GetLandmarkPoses() override
       EXCLUDES(mutex_);
+  void SetLandmarkPose(const std::string& landmark_id,
+                       const transform::Rigid3d& global_pose) override
+      EXCLUDES(mutex_);
   sensor::MapByTime<sensor::ImuData> GetImuData() override EXCLUDES(mutex_);
   sensor::MapByTime<sensor::OdometryData> GetOdometryData() override
       EXCLUDES(mutex_);
