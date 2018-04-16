@@ -126,13 +126,12 @@ message GetTrajectoryNodePosesResponse {
   repeated TrajectoryNodePose node_poses = 1;
 }
 
-message LandmarkPose {
-  string landmark_id = 1;
-  cartographer.transform.proto.Rigid3d global_pose = 2;
+message GetLandmarkPosesResponse {
+  repeated cartographer.mapping.proto.PoseGraph.LandmarkPose landmark_poses = 1;
 }
 
-message GetLandmarkPosesResponse {
-  repeated LandmarkPose landmark_poses = 1;
+message SetLandmarkPoseRequest {
+  cartographer.mapping.proto.PoseGraph.LandmarkPose landmark_pose = 1;
 }
 
 message SubmapPose {
@@ -245,6 +244,9 @@ service MapBuilderService {
 
   // Returns the list of constraints in the current optimization problem.
   rpc GetConstraints(google.protobuf.Empty) returns (GetConstraintsResponse);
+
+  // Sets a pose for a landmark.
+  rpc SetLandmarkPose(SetLandmarkPoseRequest) returns (google.protobuf.Empty);
 
   // Checks whether the trajectory is finished.
   rpc IsTrajectoryFinished(IsTrajectoryFinishedRequest)

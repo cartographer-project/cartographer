@@ -43,7 +43,7 @@ proto::PoseGraph::Constraint CreateFakeConstraint(const proto::Node& node,
 
 proto::Trajectory* CreateTrajectoryIfNeeded(int trajectory_id,
                                             proto::PoseGraph* pose_graph);
-proto::PoseGraph::Landmark CreateFakeLandmark(
+proto::PoseGraph::LandmarkPose CreateFakeLandmark(
     const std::string& landmark_id, const transform::Rigid3d& global_pose);
 
 void AddToProtoGraph(const proto::Node& node_data,
@@ -55,7 +55,7 @@ void AddToProtoGraph(const proto::Submap& submap_data,
 void AddToProtoGraph(const proto::PoseGraph::Constraint& constraint,
                      proto::PoseGraph* pose_graph);
 
-void AddToProtoGraph(const proto::PoseGraph::Landmark& landmark_node,
+void AddToProtoGraph(const proto::PoseGraph::LandmarkPose& landmark_node,
                      proto::PoseGraph* pose_graph);
 
 }  // namespace test
