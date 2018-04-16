@@ -95,11 +95,13 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
       add_landmark_client_;
 };
 
-
-LocalTrajectoryUploader::LocalTrajectoryUploader(const std::string &uplink_server_address)
-: client_channel_(::grpc::CreateChannel(
-    uplink_server_address, ::grpc::InsecureChannelCredentials())) {
-  std::chrono::system_clock::time_point deadline(std::chrono::system_clock::now() + std::chrono::seconds(kConnectionTimeoutInSecond));
+LocalTrajectoryUploader::LocalTrajectoryUploader(
+    const std::string &uplink_server_address)
+    : client_channel_(::grpc::CreateChannel(
+          uplink_server_address, ::grpc::InsecureChannelCredentials())) {
+  std::chrono::system_clock::time_point deadline(
+      std::chrono::system_clock::now() +
+      std::chrono::seconds(kConnectionTimeoutInSecond));
   LOG(INFO) << "Connecting to uplink " << uplink_server_address;
   if (!client_channel_->WaitForConnected(deadline)) {
     LOG(FATAL) << "Failed to connect to " << uplink_server_address;
