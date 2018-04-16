@@ -669,6 +669,14 @@ std::map<std::string, transform::Rigid3d> PoseGraph3D::GetLandmarkPoses() {
   return landmark_poses;
 }
 
+void PoseGraph3D::SetLandmarkPose(const std::string& landmark_id,
+                                  const transform::Rigid3d& global_pose) {
+  common::MutexLocker locker(&mutex_);
+  AddWorkItem([=]() REQUIRES(mutex_) {
+    landmark_nodes_[landmark_id].global_landmark_pose = global_pose;
+  });
+}
+
 sensor::MapByTime<sensor::ImuData> PoseGraph3D::GetImuData() {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_->imu_data();
@@ -713,7 +721,7 @@ void PoseGraph3D::SetInitialTrajectoryPose(const int from_trajectory_id,
 
 transform::Rigid3d PoseGraph3D::GetInterpolatedGlobalTrajectoryPose(
     const int trajectory_id, const common::Time time) const {
-  CHECK(trajectory_nodes_.SizeOfTrajectoryOrZero(trajectory_id) > 0);
+  CHECK_GT(trajectory_nodes_.SizeOfTrajectoryOrZero(trajectory_id), 0);
   const auto it = trajectory_nodes_.lower_bound(trajectory_id, time);
   if (it == trajectory_nodes_.BeginOfTrajectory(trajectory_id)) {
     return trajectory_nodes_.BeginOfTrajectory(trajectory_id)->data.global_pose;

@@ -52,7 +52,7 @@ class InMemoryProtoStreamReader
  public:
   explicit InMemoryProtoStreamReader(
       std::queue<std::unique_ptr<google::protobuf::Message>>&& state_chunks)
-      : state_chunks_(std::move(state_chunks)){};
+      : state_chunks_(std::move(state_chunks)) {}
   InMemoryProtoStreamReader() = default;
   ~InMemoryProtoStreamReader() = default;
 

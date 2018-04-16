@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
-#define CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
+#ifndef CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H_
+#define CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H_
 
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/sensor/data.h"
@@ -39,4 +39,4 @@ class LocalSlamResultData : public sensor::Data {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H
+#endif  // CARTOGRAPHER_MAPPING_LOCAL_SLAM_RESULT_DATA_H_

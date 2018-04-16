@@ -28,7 +28,7 @@ namespace mapping {
 sensor::TimedPointCloudOriginData RangeDataCollator::AddRangeData(
     const std::string& sensor_id,
     const sensor::TimedPointCloudData& timed_point_cloud_data) {
-  CHECK(expected_sensor_ids_.count(sensor_id) != 0);
+  CHECK_NE(expected_sensor_ids_.count(sensor_id), 0);
   // TODO(gaschler): These two cases can probably be one.
   if (id_to_pending_data_.count(sensor_id) != 0) {
     current_start_ = current_end_;

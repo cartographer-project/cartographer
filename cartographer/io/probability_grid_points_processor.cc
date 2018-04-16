@@ -168,7 +168,6 @@ std::unique_ptr<Image> DrawProbabilityGrid(
         probability_grid.IsKnown(index)
             ? ProbabilityToColor(probability_grid.GetProbability(index))
             : kUnknownValue;
-
     image->SetPixel(xy_index.x(), xy_index.y(), {{value, value, value}});
   }
   return image;

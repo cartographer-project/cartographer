@@ -69,7 +69,7 @@ Submap2D::Submap2D(const MapLimits& limits, const Eigen::Vector2f& origin)
 
 Submap2D::Submap2D(const proto::Submap2D& proto)
     : Submap(transform::ToRigid3(proto.local_pose())),
-      probability_grid_(ProbabilityGrid(proto.probability_grid())) {
+      probability_grid_(ProbabilityGrid(proto.grid())) {
   set_num_range_data(proto.num_range_data());
   set_finished(proto.finished());
 }
@@ -81,7 +81,7 @@ void Submap2D::ToProto(proto::Submap* const proto,
   submap_2d->set_num_range_data(num_range_data());
   submap_2d->set_finished(finished());
   if (include_probability_grid_data) {
-    *submap_2d->mutable_probability_grid() = probability_grid_.ToProto();
+    *submap_2d->mutable_grid() = probability_grid_.ToProto();
   }
 }
 
@@ -90,8 +90,8 @@ void Submap2D::UpdateFromProto(const proto::Submap& proto) {
   const auto& submap_2d = proto.submap_2d();
   set_num_range_data(submap_2d.num_range_data());
   set_finished(submap_2d.finished());
-  if (submap_2d.has_probability_grid()) {
-    probability_grid_ = ProbabilityGrid(submap_2d.probability_grid());
+  if (submap_2d.has_grid()) {
+    probability_grid_ = ProbabilityGrid(submap_2d.grid());
   }
 }
 

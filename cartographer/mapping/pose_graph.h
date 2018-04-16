@@ -53,7 +53,7 @@ class PoseGraph : public PoseGraphInterface {
   };
 
   PoseGraph() {}
-  virtual ~PoseGraph() override {}
+  ~PoseGraph() override {}
 
   PoseGraph(const PoseGraph&) = delete;
   PoseGraph& operator=(const PoseGraph&) = delete;
@@ -132,6 +132,10 @@ class PoseGraph : public PoseGraphInterface {
   // Returns the landmark data.
   virtual std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
   GetLandmarkNodes() = 0;
+
+  // Sets global pose of landmark 'landmark_id' to given 'global_pose'.
+  virtual void SetLandmarkPose(const std::string& landmark_id,
+                               const transform::Rigid3d& global_pose) = 0;
 
   // Sets a relative initial pose 'relative_pose' for 'from_trajectory_id' with
   // respect to 'to_trajectory_id' at time 'time'.

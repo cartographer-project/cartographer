@@ -28,6 +28,7 @@
 #include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/mapping/3d/scan_matching/proto/fast_correlative_scan_matcher_options_3d.pb.h"
 #include "cartographer/mapping/internal/2d/scan_matching/fast_correlative_scan_matcher_2d.h"
+#include "cartographer/mapping/internal/3d/scan_matching/precomputation_grid_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -40,7 +41,22 @@ proto::FastCorrelativeScanMatcherOptions3D
 CreateFastCorrelativeScanMatcherOptions3D(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class PrecomputationGridStack;
+class PrecomputationGridStack3D {
+ public:
+  PrecomputationGridStack3D(
+      const HybridGrid& hybrid_grid,
+      const proto::FastCorrelativeScanMatcherOptions3D& options);
+
+  const PrecomputationGrid3D& Get(int depth) const {
+    return precomputation_grids_.at(depth);
+  }
+
+  int max_depth() const { return precomputation_grids_.size() - 1; }
+
+ private:
+  std::vector<PrecomputationGrid3D> precomputation_grids_;
+};
+
 struct DiscreteScan3D;
 struct Candidate3D;
 
@@ -129,7 +145,7 @@ class FastCorrelativeScanMatcher3D {
   const proto::FastCorrelativeScanMatcherOptions3D options_;
   const float resolution_;
   const int width_in_voxels_;
-  std::unique_ptr<PrecomputationGridStack> precomputation_grid_stack_;
+  std::unique_ptr<PrecomputationGridStack3D> precomputation_grid_stack_;
   const HybridGrid* const low_resolution_hybrid_grid_;
   RotationalScanMatcher rotational_scan_matcher_;
 };
