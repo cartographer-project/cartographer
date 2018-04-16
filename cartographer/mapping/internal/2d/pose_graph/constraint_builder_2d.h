@@ -60,9 +60,8 @@ class ConstraintBuilder2D {
   using Constraint = PoseGraphInterface::Constraint;
   using Result = std::vector<Constraint>;
 
-  ConstraintBuilder2D(
-      const pose_graph::proto::ConstraintBuilderOptions& options,
-      common::ThreadPool* thread_pool);
+  ConstraintBuilder2D(const proto::ConstraintBuilderOptions& options,
+                      common::ThreadPool* thread_pool);
   ~ConstraintBuilder2D();
 
   ConstraintBuilder2D(const ConstraintBuilder2D&) = delete;
