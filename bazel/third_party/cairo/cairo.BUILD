@@ -273,6 +273,7 @@ cc_library(
         "-D_REENTRANT",
         "-Wno-attributes",
         "-Wno-cpp",
+        "-Wno-int-in-bool-context",
         "-Wno-maybe-uninitialized",
         "-Wno-misleading-indentation",
         "-Wno-strict-aliasing",
