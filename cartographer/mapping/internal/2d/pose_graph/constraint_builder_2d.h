@@ -21,6 +21,7 @@
 #include <deque>
 #include <functional>
 #include <limits>
+#include <list>
 #include <vector>
 
 #include "Eigen/Core"
@@ -115,7 +116,7 @@ class ConstraintBuilder2D {
 
   // Either schedules the 'work_item', or if needed, schedules the scan matcher
   // construction and queues the 'work_item'.
-  void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
+  void DispatchScanMatcherConstructionAndWorkItem(
       const SubmapId& submap_id, const ProbabilityGrid* submap,
       const std::function<void()>& work_item) REQUIRES(mutex_);
 
@@ -148,11 +149,12 @@ class ConstraintBuilder2D {
   // Index of the node in reaction to which computations are currently
   // added. This is always the highest node index seen so far, even when older
   // nodes are matched against a new submap.
-  int current_computation_ GUARDED_BY(mutex_) = 0;
+  int current_node_index_ GUARDED_BY(mutex_) = 0;
 
   // For each added node, maps to the number of pending computations that were
   // added for it.
-  std::map<int, int> pending_computations_ GUARDED_BY(mutex_);
+  std::map<int, std::list<common::Task>> node_index_to_constraint_search_tasks_
+      GUARDED_BY(mutex_);
 
   // Constraints currently being computed in the background. A deque is used to
   // keep pointers valid when adding more entries.
@@ -167,6 +169,8 @@ class ConstraintBuilder2D {
 
   // Histogram of scan matcher scores.
   common::Histogram score_histogram_ GUARDED_BY(mutex_);
+
+  int num_finished_nodes_ GUARDED_BY(mutex_) = 0;
 };
 
 }  // namespace pose_graph
