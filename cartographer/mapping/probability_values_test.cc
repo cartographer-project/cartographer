@@ -32,53 +32,44 @@ TEST(ProbabilityValuesTest, OddsConversions) {
 
 TEST(ProbabilityValuesTest,
      ProbabilityValueToCorrespondenceCostValueConversions) {
-  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
-                ProbabilityValueToCorrespondenceCostValue(0)),
-            0);
-  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
-                ProbabilityValueToCorrespondenceCostValue(1)),
-            1);
-  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
-                ProbabilityValueToCorrespondenceCostValue(100)),
-            100);
-  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
-                ProbabilityValueToCorrespondenceCostValue(32767)),
-            32767);
+  for (uint16 i = 0; i < 32768; ++i) {
+    EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
+                  CorrespondenceCostValueToProbabilityValue(i)),
+              i);
+    EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
+                  ProbabilityValueToCorrespondenceCostValue(i)),
+              i);
+  }
+}
 
-  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
-                ProbabilityValueToCorrespondenceCostValue(1 + kUpdateMarker)),
-            1 + kUpdateMarker);
-  EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
-                ProbabilityValueToCorrespondenceCostValue(100 + kUpdateMarker)),
-            100 + kUpdateMarker);
-  EXPECT_EQ(
-      CorrespondenceCostValueToProbabilityValue(
-          ProbabilityValueToCorrespondenceCostValue(32767 + kUpdateMarker)),
-      32767 + kUpdateMarker);
+TEST(ProbabilityValuesTest,
+     ProbabilityValueToCorrespondenceCostValueConversionsWithUpdateMarker) {
+  for (uint16 i = 1; i < 32768; ++i) {
+    EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
+                  CorrespondenceCostValueToProbabilityValue(i + kUpdateMarker)),
+              i + kUpdateMarker);
+    EXPECT_EQ(CorrespondenceCostValueToProbabilityValue(
+                  ProbabilityValueToCorrespondenceCostValue(i + kUpdateMarker)),
+              i + kUpdateMarker);
+  }
+}
 
-  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
-                CorrespondenceCostValueToProbabilityValue(0)),
-            0);
-  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
-                CorrespondenceCostValueToProbabilityValue(1)),
-            1);
-  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
-                CorrespondenceCostValueToProbabilityValue(100)),
-            100);
-  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
-                CorrespondenceCostValueToProbabilityValue(32767)),
-            32767);
+TEST(ProbabilityValuesTest, EqualityLookupTableToApplyOdds) {
+  std::vector<uint16> probability_table = ComputeLookupTableToApplyOdds(0.3);
+  std::vector<uint16> correspondence_table =
+      ComputeLookupTableToApplyCorrespondenceCostOdds(0.3);
 
-  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
-                CorrespondenceCostValueToProbabilityValue(1 + kUpdateMarker)),
-            1 + kUpdateMarker);
-  EXPECT_EQ(ProbabilityValueToCorrespondenceCostValue(
-                CorrespondenceCostValueToProbabilityValue(100 + kUpdateMarker)),
-            100 + kUpdateMarker);
-  EXPECT_EQ(
-      ProbabilityValueToCorrespondenceCostValue(
-          CorrespondenceCostValueToProbabilityValue(32767 + kUpdateMarker)),
-      32767 + kUpdateMarker);
+  for (uint16 i = 0; i < 32768; ++i) {
+    EXPECT_NEAR(
+        probability_table[i],
+        CorrespondenceCostValueToProbabilityValue(
+            correspondence_table[ProbabilityValueToCorrespondenceCostValue(i)]),
+        1);
+    EXPECT_NEAR(
+        ProbabilityValueToCorrespondenceCostValue(
+            probability_table[CorrespondenceCostValueToProbabilityValue(i)]),
+        correspondence_table[i], 1);
+  }
 }
 
 }  // namespace
