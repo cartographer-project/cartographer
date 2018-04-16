@@ -65,11 +65,14 @@ proto::SubmapsOptions2D CreateSubmapsOptions2D(
 Submap2D::Submap2D(const MapLimits& limits, const Eigen::Vector2f& origin)
     : Submap(transform::Rigid3d::Translation(
           Eigen::Vector3d(origin.x(), origin.y(), 0.))),
-      probability_grid_(limits) {}
+      probability_grid_(common::make_unique<ProbabilityGrid>(limits)) {}
 
 Submap2D::Submap2D(const proto::Submap2D& proto)
-    : Submap(transform::ToRigid3(proto.local_pose())),
-      probability_grid_(ProbabilityGrid(proto.grid())) {
+    : Submap(transform::ToRigid3(proto.local_pose())) {
+  if (proto.has_grid()) {
+    CHECK(proto.grid().has_probability_grid_2d());
+    probability_grid_ = common::make_unique<ProbabilityGrid>(proto.grid());
+  }
   set_num_range_data(proto.num_range_data());
   set_finished(proto.finished());
 }
@@ -81,7 +84,8 @@ void Submap2D::ToProto(proto::Submap* const proto,
   submap_2d->set_num_range_data(num_range_data());
   submap_2d->set_finished(finished());
   if (include_probability_grid_data) {
-    *submap_2d->mutable_grid() = probability_grid_.ToProto();
+    CHECK(probability_grid_);
+    *submap_2d->mutable_grid() = probability_grid_->ToProto();
   }
 }
 
@@ -90,23 +94,25 @@ void Submap2D::UpdateFromProto(const proto::Submap& proto) {
   const auto& submap_2d = proto.submap_2d();
   set_num_range_data(submap_2d.num_range_data());
   set_finished(submap_2d.finished());
-  if (submap_2d.has_grid()) {
-    probability_grid_ = ProbabilityGrid(submap_2d.grid());
+  if (proto.submap_2d().has_grid()) {
+    CHECK(proto.submap_2d().grid().has_probability_grid_2d());
+    probability_grid_ = common::make_unique<ProbabilityGrid>(submap_2d.grid());
   }
 }
 
 void Submap2D::ToResponseProto(
     const transform::Rigid3d&,
     proto::SubmapQuery::Response* const response) const {
+  CHECK(probability_grid_);
   response->set_submap_version(num_range_data());
 
   Eigen::Array2i offset;
   CellLimits limits;
-  probability_grid_.ComputeCroppedLimits(&offset, &limits);
+  probability_grid_->ComputeCroppedLimits(&offset, &limits);
 
   std::string cells;
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(limits)) {
-    if (probability_grid_.IsKnown(xy_index + offset)) {
+    if (probability_grid_->IsKnown(xy_index + offset)) {
       // We would like to add 'delta' but this is not possible using a value and
       // alpha. We use premultiplied alpha, so when 'delta' is positive we can
       // add it by setting 'alpha' to zero. If it is negative, we set 'value' to
@@ -115,7 +121,7 @@ void Submap2D::ToResponseProto(
       // detect visually for the user, though.
       const int delta =
           128 - ProbabilityToLogOddsInteger(
-                    probability_grid_.GetProbability(xy_index + offset));
+                    probability_grid_->GetProbability(xy_index + offset));
       const uint8 alpha = delta > 0 ? 0 : -delta;
       const uint8 value = delta > 0 ? delta : 0;
       cells.push_back(value);
@@ -132,12 +138,12 @@ void Submap2D::ToResponseProto(
 
   texture->set_width(limits.num_x_cells);
   texture->set_height(limits.num_y_cells);
-  const double resolution = probability_grid_.limits().resolution();
+  const double resolution = probability_grid_->limits().resolution();
   texture->set_resolution(resolution);
   const double max_x =
-      probability_grid_.limits().max().x() - resolution * offset.y();
+      probability_grid_->limits().max().x() - resolution * offset.y();
   const double max_y =
-      probability_grid_.limits().max().y() - resolution * offset.x();
+      probability_grid_->limits().max().y() - resolution * offset.x();
   *texture->mutable_slice_pose() = transform::ToProto(
       local_pose().inverse() *
       transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));
@@ -145,14 +151,16 @@ void Submap2D::ToResponseProto(
 
 void Submap2D::InsertRangeData(const sensor::RangeData& range_data,
                                const RangeDataInserter2D& range_data_inserter) {
+  CHECK(probability_grid_);
   CHECK(!finished());
-  range_data_inserter.Insert(range_data, &probability_grid_);
+  range_data_inserter.Insert(range_data, probability_grid_.get());
   set_num_range_data(num_range_data() + 1);
 }
 
 void Submap2D::Finish() {
+  CHECK(probability_grid_);
   CHECK(!finished());
-  probability_grid_ = ComputeCroppedProbabilityGrid(probability_grid_);
+  *probability_grid_ = ComputeCroppedProbabilityGrid(*probability_grid_);
   set_finished(true);
 }
 
