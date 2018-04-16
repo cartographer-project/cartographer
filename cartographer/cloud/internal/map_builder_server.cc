@@ -19,9 +19,9 @@
 #include "cartographer/cloud/internal/handlers/add_fixed_frame_pose_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_imu_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_landmark_data_handler.h"
-#include "cartographer/cloud/internal/handlers/add_local_slam_result_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_odometry_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_rangefinder_data_handler.h"
+#include "cartographer/cloud/internal/handlers/add_sensor_data_batch_handler.h"
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/get_all_submap_poses.h"
@@ -68,7 +68,7 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::AddRangefinderDataHandler>();
   server_builder.RegisterHandler<handlers::AddFixedFramePoseDataHandler>();
   server_builder.RegisterHandler<handlers::AddLandmarkDataHandler>();
-  server_builder.RegisterHandler<handlers::AddLocalSlamResultDataHandler>();
+  server_builder.RegisterHandler<handlers::AddSensorDataBatchHandler>();
   server_builder.RegisterHandler<handlers::FinishTrajectoryHandler>();
   server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler>();
   server_builder.RegisterHandler<handlers::GetSubmapHandler>();
@@ -158,22 +158,21 @@ void MapBuilderServer::OnLocalSlamResult(
   if (insertion_result &&
       grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    auto data_request =
-        common::make_unique<proto::AddLocalSlamResultDataRequest>();
+    auto data_request = common::make_unique<proto::SensorData>();
     auto sensor_id =
         grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
             ->local_trajectory_uploader()
             ->GetLocalSlamResultSensorId(trajectory_id);
-    CreateAddLocalSlamResultDataRequest(sensor_id.id, trajectory_id, time,
-                                        starting_submap_index_,
-                                        *insertion_result, data_request.get());
+    CreateSensorDataForLocalSlamResult(sensor_id.id, trajectory_id, time,
+                                       starting_submap_index_,
+                                       *insertion_result, data_request.get());
     // TODO(cschuet): Make this more robust.
     if (insertion_result->insertion_submaps.front()->finished()) {
       ++starting_submap_index_;
     }
     grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
-        ->EnqueueDataRequest(std::move(data_request));
+        ->EnqueueSensorData(std::move(data_request));
   }
 
   common::MutexLocker locker(&local_slam_subscriptions_lock_);
