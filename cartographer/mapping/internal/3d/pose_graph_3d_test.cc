@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping/internal/3d/pose_graph_3d.h"
 
-#include "cartographer/mapping/internal/test_helpers.h"
+#include "cartographer/mapping/internal/testing/test_helpers.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
