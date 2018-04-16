@@ -231,7 +231,7 @@ void OptimizationProblem2D::Solve(
   for (const auto& node_id_data : node_data_) {
     const bool frozen =
         frozen_trajectories.count(node_id_data.id.trajectory_id) != 0;
-    C_nodes.Insert(node_id_data.id, FromPose(node_id_data.data.pose));
+    C_nodes.Insert(node_id_data.id, FromPose(node_id_data.data.global_pose_2d));
     problem.AddParameterBlock(C_nodes.at(node_id_data.id).data(), 3);
     if (frozen) {
       problem.SetParameterBlockConstant(C_nodes.at(node_id_data.id).data());
@@ -288,8 +288,8 @@ void OptimizationProblem2D::Solve(
 
       // Add a relative pose constraint based on consecutive local SLAM poses.
       const transform::Rigid3d relative_local_slam_pose =
-          transform::Embed3D(first_node_data.initial_pose.inverse() *
-                             second_node_data.initial_pose);
+          transform::Embed3D(first_node_data.local_pose_2d.inverse() *
+                             second_node_data.local_pose_2d);
       problem.AddResidualBlock(
           SpaCostFunction2D::CreateAutoDiffCostFunction(
               Constraint::Pose{relative_local_slam_pose,
@@ -315,7 +315,8 @@ void OptimizationProblem2D::Solve(
         ToPose(C_submap_id_data.data);
   }
   for (const auto& C_node_id_data : C_nodes) {
-    node_data_.at(C_node_id_data.id).pose = ToPose(C_node_id_data.data);
+    node_data_.at(C_node_id_data.id).global_pose_2d =
+        ToPose(C_node_id_data.data);
   }
   for (const auto& C_landmark : C_landmarks) {
     landmark_data_[C_landmark.first] = C_landmark.second.ToRigid();

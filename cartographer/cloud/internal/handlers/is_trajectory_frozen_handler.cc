@@ -14,30 +14,25 @@
  * limitations under the License.
  */
 
-#include "cartographer/cloud/internal/handlers/add_local_slam_result_data_handler.h"
+#include "cartographer/cloud/internal/handlers/is_trajectory_frozen_handler.h"
 
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/common/make_unique.h"
-#include "cartographer/mapping/local_slam_result_data.h"
-#include "cartographer/mapping/trajectory_node.h"
-#include "cartographer/sensor/internal/dispatchable.h"
-#include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-void AddLocalSlamResultDataHandler::OnRequest(
-    const proto::AddLocalSlamResultDataRequest& request) {
-  GetContext<MapBuilderContextInterface>()->EnqueueLocalSlamResultData(
-      request.sensor_metadata().trajectory_id(),
-      request.sensor_metadata().sensor_id(), request.local_slam_result_data());
-}
-
-void AddLocalSlamResultDataHandler::OnReadsDone() {
-  Send(common::make_unique<google::protobuf::Empty>());
+void IsTrajectoryFrozenHandler::OnRequest(
+    const proto::IsTrajectoryFrozenRequest& request) {
+  auto response = common::make_unique<proto::IsTrajectoryFrozenResponse>();
+  response->set_is_frozen(GetContext<MapBuilderContextInterface>()
+                              ->map_builder()
+                              .pose_graph()
+                              ->IsTrajectoryFrozen(request.trajectory_id()));
+  Send(std::move(response));
 }
 
 }  // namespace handlers

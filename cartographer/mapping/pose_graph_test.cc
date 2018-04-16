@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping/pose_graph.h"
 
-#include "cartographer/mapping/internal/test_helpers.h"
+#include "cartographer/mapping/internal/testing/test_helpers.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/transform/transform.h"
 #include "google/protobuf/util/message_differencer.h"

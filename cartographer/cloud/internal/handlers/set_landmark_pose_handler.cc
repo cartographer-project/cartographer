@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-#include "cartographer/cloud/internal/handlers/add_local_slam_result_data_handler.h"
+#include "cartographer/cloud/internal/handlers/set_landmark_pose_handler.h"
 
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/mapping/local_slam_result_data.h"
-#include "cartographer/mapping/trajectory_node.h"
-#include "cartographer/sensor/internal/dispatchable.h"
+#include "cartographer/transform/transform.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-void AddLocalSlamResultDataHandler::OnRequest(
-    const proto::AddLocalSlamResultDataRequest& request) {
-  GetContext<MapBuilderContextInterface>()->EnqueueLocalSlamResultData(
-      request.sensor_metadata().trajectory_id(),
-      request.sensor_metadata().sensor_id(), request.local_slam_result_data());
-}
-
-void AddLocalSlamResultDataHandler::OnReadsDone() {
+void SetLandmarkPoseHandler::OnRequest(
+    const proto::SetLandmarkPoseRequest& request) {
+  GetContext<MapBuilderContextInterface>()
+      ->map_builder()
+      .pose_graph()
+      ->SetLandmarkPose(
+          request.landmark_pose().landmark_id(),
+          transform::ToRigid3(request.landmark_pose().global_pose()));
   Send(common::make_unique<google::protobuf::Empty>());
 }
 

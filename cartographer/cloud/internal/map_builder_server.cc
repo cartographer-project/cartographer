@@ -30,9 +30,12 @@
 #include "cartographer/cloud/internal/handlers/get_local_to_global_transform_handler.h"
 #include "cartographer/cloud/internal/handlers/get_submap_handler.h"
 #include "cartographer/cloud/internal/handlers/get_trajectory_node_poses_handler.h"
+#include "cartographer/cloud/internal/handlers/is_trajectory_finished_handler.h"
+#include "cartographer/cloud/internal/handlers/is_trajectory_frozen_handler.h"
 #include "cartographer/cloud/internal/handlers/load_state_handler.h"
 #include "cartographer/cloud/internal/handlers/receive_local_slam_results_handler.h"
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
+#include "cartographer/cloud/internal/handlers/set_landmark_pose_handler.h"
 #include "cartographer/cloud/internal/handlers/write_state_handler.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "glog/logging.h"
@@ -74,12 +77,25 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::GetAllSubmapPosesHandler>();
   server_builder.RegisterHandler<handlers::GetLocalToGlobalTransformHandler>();
   server_builder.RegisterHandler<handlers::GetConstraintsHandler>();
+  server_builder.RegisterHandler<handlers::IsTrajectoryFinishedHandler>();
+  server_builder.RegisterHandler<handlers::IsTrajectoryFrozenHandler>();
   server_builder.RegisterHandler<handlers::LoadStateHandler>();
   server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler>();
   server_builder.RegisterHandler<handlers::WriteStateHandler>();
+  server_builder.RegisterHandler<handlers::SetLandmarkPoseHandler>();
   grpc_server_ = server_builder.Build();
-  grpc_server_->SetExecutionContext(
-      common::make_unique<MapBuilderContext>(this));
+  if (map_builder_server_options.map_builder_options()
+          .use_trajectory_builder_2d()) {
+    grpc_server_->SetExecutionContext(
+        common::make_unique<MapBuilderContext<mapping::Submap2D>>(this));
+  } else if (map_builder_server_options.map_builder_options()
+                 .use_trajectory_builder_3d()) {
+    grpc_server_->SetExecutionContext(
+        common::make_unique<MapBuilderContext<mapping::Submap3D>>(this));
+  } else {
+    LOG(FATAL)
+        << "Set either use_trajectory_builder_2d or use_trajectory_builder_3d";
+  }
 }
 
 void MapBuilderServer::Start() {
@@ -115,8 +131,8 @@ void MapBuilderServer::ProcessSensorDataQueue() {
     std::unique_ptr<MapBuilderContextInterface::Data> sensor_data =
         incoming_data_queue_.PopWithTimeout(kPopTimeout);
     if (sensor_data) {
-      grpc_server_->GetContext<MapBuilderContext>()->AddSensorDataToTrajectory(
-          *sensor_data);
+      grpc_server_->GetContext<MapBuilderContextInterface>()
+          ->AddSensorDataToTrajectory(*sensor_data);
     }
   }
 }
@@ -140,13 +156,14 @@ void MapBuilderServer::OnLocalSlamResult(
   // If there is an uplink server and a submap insertion happened, enqueue this
   // local SLAM result for uploading.
   if (insertion_result &&
-      grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
+      grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
     auto data_request =
         common::make_unique<proto::AddLocalSlamResultDataRequest>();
-    auto sensor_id = grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
-                         ->local_trajectory_uploader()
-                         ->GetLocalSlamResultSensorId(trajectory_id);
+    auto sensor_id =
+        grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
+            ->local_trajectory_uploader()
+            ->GetLocalSlamResultSensorId(trajectory_id);
     CreateAddLocalSlamResultDataRequest(sensor_id.id, trajectory_id, time,
                                         starting_submap_index_,
                                         *insertion_result, data_request.get());
@@ -154,7 +171,7 @@ void MapBuilderServer::OnLocalSlamResult(
     if (insertion_result->insertion_submaps.front()->finished()) {
       ++starting_submap_index_;
     }
-    grpc_server_->GetUnsynchronizedContext<MapBuilderContext>()
+    grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
         ->EnqueueDataRequest(std::move(data_request));
   }

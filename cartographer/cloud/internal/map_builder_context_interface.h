@@ -21,6 +21,7 @@
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/mapping/map_builder_interface.h"
+#include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -68,16 +69,12 @@ class MapBuilderContextInterface : public async_grpc::ExecutionContext {
   virtual void UnsubscribeLocalSlamResults(
       const SubscriptionId& subscription_id) = 0;
   virtual void NotifyFinishTrajectory(int trajectory_id) = 0;
-  virtual std::unique_ptr<mapping::LocalSlamResultData>
-  ProcessLocalSlamResultData(
-      const std::string& sensor_id, common::Time time,
-      const mapping::proto::LocalSlamResultData& proto) = 0;
   virtual LocalTrajectoryUploaderInterface* local_trajectory_uploader() = 0;
   virtual void EnqueueSensorData(int trajectory_id,
                                  std::unique_ptr<sensor::Data> data) = 0;
   virtual void EnqueueLocalSlamResultData(
       int trajectory_id, const std::string& sensor_id,
-      std::unique_ptr<mapping::LocalSlamResultData> local_slam_result_data) = 0;
+      const mapping::proto::LocalSlamResultData& local_slam_result_data) = 0;
 };
 
 }  // namespace cloud
