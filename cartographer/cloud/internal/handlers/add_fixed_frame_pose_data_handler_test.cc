@@ -76,10 +76,11 @@ TEST_F(AddFixedFramePoseDataHandlerTest, WithMockLocalSlamUploader) {
                   Pointee(Truly(testing::BuildDataPredicateEquals(request)))));
   proto::SensorData sensor_data;
   *sensor_data.mutable_sensor_metadata() = request.sensor_metadata();
-  *sensor_data.mutable_fixed_frame_pose_data() = request.fixed_frame_pose_data();
+  *sensor_data.mutable_fixed_frame_pose_data() =
+      request.fixed_frame_pose_data();
   EXPECT_CALL(*mock_local_trajectory_uploader_,
               DoEnqueueSensorData(Pointee(
-                 Truly(testing::BuildProtoPredicateEquals(&sensor_data)))));
+                  Truly(testing::BuildProtoPredicateEquals(&sensor_data)))));
   test_server_->SendWrite(request);
   test_server_->SendWritesDone();
   test_server_->SendFinish();
