@@ -65,7 +65,6 @@ ConstraintBuilder2D::~ConstraintBuilder2D() {
   common::MutexLocker locker(&mutex_);
   CHECK_EQ(constraints_.size(), 0) << "WhenDone() was not called";
   CHECK_EQ(pending_computations_.size(), 0);
-  CHECK_EQ(submap_queued_work_items_.size(), 0);
   CHECK(when_done_ == nullptr);
 }
 
@@ -125,37 +124,48 @@ void ConstraintBuilder2D::WhenDone(
       common::make_unique<std::function<void(const Result&)>>(callback);
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
-  thread_pool_->Schedule(
+
+  // TODO(gaschler): Remove pending_computations_ and current_computation.
+  // TODO(gaschler): Finish should be a task depending on constraint search.
+  // TODO(gaschler): Delete task when done.
+  common::Task* task = new common::Task;
+  task->SetWorkItem(
       [this, current_computation] { FinishComputation(current_computation); });
+  task->Dispatch(thread_pool_);
 }
 
 void ConstraintBuilder2D::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
     const SubmapId& submap_id, const ProbabilityGrid* const submap,
     const std::function<void()>& work_item) {
-  if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
-      nullptr) {
-    thread_pool_->Schedule(work_item);
-  } else {
-    submap_queued_work_items_[submap_id].push_back(work_item);
-    if (submap_queued_work_items_[submap_id].size() == 1) {
-      thread_pool_->Schedule(
-          [=]() { ConstructSubmapScanMatcher(submap_id, submap); });
-    }
+  auto it = submap_scan_matchers_.find(submap_id);
+  if (it == submap_scan_matchers_.end()) {
+    // TODO(gaschler): Use emplace.
+    // auto insert_result =
+    // submap_scan_matchers_.emplace(std::make_pair(submap_id,
+    // SubmapScanMatcher())); it = insert_result.first;
+    submap_scan_matchers_[submap_id];
+    it = submap_scan_matchers_.find(submap_id);
+    auto& submap_scan_matcher = it->second;
+    submap_scan_matcher.probability_grid = submap;
+    // Create scan matcher factory.
+    // TODO(gaschler): Make const copy of options in constructor.
+    auto& scan_matcher_options =
+        options_.fast_correlative_scan_matcher_options();
+    submap_scan_matcher.scan_matcher_factory.SetWorkItem(
+        [&submap_scan_matcher, &scan_matcher_options]() {
+          // TODO(gaschler): This doesn't need mutex_?
+          submap_scan_matcher.fast_correlative_scan_matcher =
+              common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
+                  *submap_scan_matcher.probability_grid, scan_matcher_options);
+        });
+    submap_scan_matcher.scan_matcher_factory.Dispatch(thread_pool_);
   }
-}
 
-void ConstraintBuilder2D::ConstructSubmapScanMatcher(
-    const SubmapId& submap_id, const ProbabilityGrid* const submap) {
-  auto submap_scan_matcher =
-      common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
-          *submap, options_.fast_correlative_scan_matcher_options());
-  common::MutexLocker locker(&mutex_);
-  submap_scan_matchers_[submap_id] = {submap, std::move(submap_scan_matcher)};
-  for (const std::function<void()>& work_item :
-       submap_queued_work_items_[submap_id]) {
-    thread_pool_->Schedule(work_item);
-  }
-  submap_queued_work_items_.erase(submap_id);
+  // TODO(gaschler): Delete task when done.
+  common::Task* task = new common::Task;
+  task->SetWorkItem(work_item);
+  task->AddDependency(&it->second.scan_matcher_factory);
+  task->Dispatch(thread_pool_);
 }
 
 const ConstraintBuilder2D::SubmapScanMatcher*
@@ -267,7 +277,7 @@ void ConstraintBuilder2D::FinishComputation(const int computation_index) {
       pending_computations_.erase(computation_index);
     }
     if (pending_computations_.empty()) {
-      CHECK_EQ(submap_queued_work_items_.size(), 0);
+      // CHECK_EQ(submap_queued_work_items_.size(), 0);
       if (when_done_ != nullptr) {
         for (const std::unique_ptr<Constraint>& constraint : constraints_) {
           if (constraint != nullptr) {

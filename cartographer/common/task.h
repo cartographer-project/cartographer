@@ -33,9 +33,7 @@ class Task {
   using TasksDispatchingWorkItem = std::function<void(TaskDispatcher)>;
   enum State { IDLE, DISPATCHED, RUNNING, COMPLETED };
 
-  Task() {}
-  Task(WorkItem work_item) : work_item_(work_item) {}
-
+  void SetWorkItem(WorkItem work_item) { work_item_ = work_item; }
   State GetState() { return state_; }
   void AddDependency(Task* dependency);
   void Dispatch(ThreadPoolInterface* thread_pool);

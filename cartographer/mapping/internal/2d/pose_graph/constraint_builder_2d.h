@@ -29,6 +29,7 @@
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/mutex.h"
+#include "cartographer/common/task.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/2d/submap_2d.h"
 #include "cartographer/mapping/internal/2d/scan_matching/ceres_scan_matcher_2d.h"
@@ -109,6 +110,7 @@ class ConstraintBuilder2D {
     const ProbabilityGrid* probability_grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
         fast_correlative_scan_matcher;
+    common::Task scan_matcher_factory;
   };
 
   // Either schedules the 'work_item', or if needed, schedules the scan matcher
@@ -116,11 +118,6 @@ class ConstraintBuilder2D {
   void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       const SubmapId& submap_id, const ProbabilityGrid* submap,
       const std::function<void()>& work_item) REQUIRES(mutex_);
-
-  // Constructs the scan matcher for a 'submap', then schedules its work items.
-  void ConstructSubmapScanMatcher(const SubmapId& submap_id,
-                                  const ProbabilityGrid* submap)
-      EXCLUDES(mutex_);
 
   // Returns the scan matcher for a submap, which has to exist.
   const SubmapScanMatcher* GetSubmapScanMatcher(const SubmapId& submap_id)
@@ -164,11 +161,6 @@ class ConstraintBuilder2D {
   // Map of already constructed scan matchers by 'submap_id'.
   std::map<SubmapId, SubmapScanMatcher> submap_scan_matchers_
       GUARDED_BY(mutex_);
-
-  // Map by 'submap_id' of scan matchers under construction, and the work
-  // to do once construction is done.
-  std::map<SubmapId, std::vector<std::function<void()>>>
-      submap_queued_work_items_ GUARDED_BY(mutex_);
 
   common::FixedRatioSampler sampler_;
   scan_matching::CeresScanMatcher2D ceres_scan_matcher_;
