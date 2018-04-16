@@ -25,6 +25,7 @@
 #include "cartographer/io/points_batch.h"
 #include "cartographer/mapping/probability_values.h"
 #include "glog/logging.h"
+
 namespace cartographer {
 namespace io {
 namespace {
