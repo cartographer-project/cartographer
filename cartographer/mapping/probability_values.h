@@ -44,6 +44,7 @@ inline float ClampProbability(const float probability) {
 }
 
 constexpr uint16 kUnknownProbabilityValue = 0;
+constexpr uint16 kUnknownCorrespondenceValue = 0;
 constexpr uint16 kUpdateMarker = 1u << 15;
 
 // Converts a probability to a uint16 in the [1, 32767] range.

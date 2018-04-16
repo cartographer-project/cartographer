@@ -47,24 +47,26 @@ class OverlappingSubmapsTrimmer2DTest : public ::testing::Test {
     submap_2d.set_finished(is_finished);
     *submap_2d.mutable_local_pose() = transform::ToProto(pose_3d);
 
-    auto* probability_grid = submap_2d.mutable_probability_grid();
+    auto* grid = submap_2d.mutable_grid();
     for (int i = 0; i < num_cells * num_cells; ++i) {
-      probability_grid->add_cells(1);
+      grid->add_cells(1);
     }
 
-    auto* map_limits = probability_grid->mutable_limits();
+    auto* map_limits = grid->mutable_limits();
     map_limits->set_resolution(1.0);
     *map_limits->mutable_max() =
         transform::ToProto(Eigen::Vector2d(num_cells, num_cells));
     map_limits->mutable_cell_limits()->set_num_x_cells(num_cells);
     map_limits->mutable_cell_limits()->set_num_y_cells(num_cells);
 
-    auto* know_cells_box = probability_grid->mutable_known_cells_box();
+    auto* know_cells_box = grid->mutable_known_cells_box();
     know_cells_box->set_min_x(0);
     know_cells_box->set_min_y(0);
     know_cells_box->set_max_x(num_cells - 1);
     know_cells_box->set_max_y(num_cells - 1);
 
+    grid->mutable_probability_grid_2d();
+    LOG(INFO) << submap_2d.DebugString();
     fake_pose_graph_.mutable_submap_data()->Insert(
         {0 /* trajectory_id */, submap_index},
         {std::make_shared<const Submap2D>(submap_2d), pose_3d});

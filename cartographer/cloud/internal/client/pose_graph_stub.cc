@@ -109,6 +109,11 @@ std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses() {
   return landmark_poses;
 }
 
+void PoseGraphStub::SetLandmarkPose(const std::string& landmark_id,
+                                    const transform::Rigid3d& global_pose) {
+  LOG(FATAL) << "Not implemented";
+}
+
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
   proto::IsTrajectoryFinishedRequest request;
   request.set_trajectory_id(trajectory_id);

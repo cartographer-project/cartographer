@@ -31,14 +31,9 @@ namespace handlers {
 
 void AddLocalSlamResultDataHandler::OnRequest(
     const proto::AddLocalSlamResultDataRequest& request) {
-  auto local_slam_result_data =
-      GetContext<MapBuilderContextInterface>()->ProcessLocalSlamResultData(
-          request.sensor_metadata().sensor_id(),
-          common::FromUniversal(request.local_slam_result_data().timestamp()),
-          request.local_slam_result_data());
   GetContext<MapBuilderContextInterface>()->EnqueueLocalSlamResultData(
       request.sensor_metadata().trajectory_id(),
-      request.sensor_metadata().sensor_id(), std::move(local_slam_result_data));
+      request.sensor_metadata().sensor_id(), request.local_slam_result_data());
 }
 
 void AddLocalSlamResultDataHandler::OnReadsDone() {

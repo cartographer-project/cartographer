@@ -108,6 +108,10 @@ class PoseGraphInterface {
   // Returns the current optimized landmark poses.
   virtual std::map<std::string, transform::Rigid3d> GetLandmarkPoses() = 0;
 
+  // Sets global pose of landmark 'landmark_id' to given 'global_pose'.
+  virtual void SetLandmarkPose(const std::string& landmark_id,
+                               const transform::Rigid3d& global_pose) = 0;
+
   // Checks if the given trajectory is finished.
   virtual bool IsTrajectoryFinished(int trajectory_id) = 0;
 

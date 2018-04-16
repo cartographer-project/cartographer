@@ -92,24 +92,14 @@ void MapBuilderContext<SubmapType>::EnqueueSensorData(
       common::make_unique<Data>(Data{trajectory_id, std::move(data)}));
 }
 
-template <class SubmapType>
-void MapBuilderContext<SubmapType>::EnqueueLocalSlamResultData(
+template <>
+void MapBuilderContext<mapping::Submap2D>::EnqueueLocalSlamResultData(
     int trajectory_id, const std::string& sensor_id,
-    std::unique_ptr<mapping::LocalSlamResultData> local_slam_result_data) {
-  map_builder_server_->incoming_data_queue_.Push(common::make_unique<Data>(
-      Data{trajectory_id, std::move(local_slam_result_data)}));
-}
-
+    const mapping::proto::LocalSlamResultData& local_slam_result_data);
 template <>
-std::unique_ptr<mapping::LocalSlamResultData>
-MapBuilderContext<mapping::Submap2D>::ProcessLocalSlamResultData(
-    const std::string& sensor_id, common::Time time,
-    const mapping::proto::LocalSlamResultData& proto);
-template <>
-std::unique_ptr<mapping::LocalSlamResultData>
-MapBuilderContext<mapping::Submap3D>::ProcessLocalSlamResultData(
-    const std::string& sensor_id, common::Time time,
-    const mapping::proto::LocalSlamResultData& proto);
+void MapBuilderContext<mapping::Submap3D>::EnqueueLocalSlamResultData(
+    int trajectory_id, const std::string& sensor_id,
+    const mapping::proto::LocalSlamResultData& local_slam_result_data);
 
 }  // namespace cloud
 }  // namespace cartographer

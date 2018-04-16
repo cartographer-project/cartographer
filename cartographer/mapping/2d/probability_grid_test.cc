@@ -29,7 +29,7 @@ using Eigen::Array2i;
 using Eigen::Vector2f;
 
 TEST(ProbabilityGridTest, ProtoConstructor) {
-  proto::ProbabilityGrid proto;
+  proto::Grid2D proto;
   const MapLimits limits(1., {2., 3.}, CellLimits(4., 5.));
   *proto.mutable_limits() = ToProto(limits);
   for (int i = 6; i < 12; ++i) {
@@ -39,6 +39,7 @@ TEST(ProbabilityGridTest, ProtoConstructor) {
   proto.mutable_known_cells_box()->set_max_y(20);
   proto.mutable_known_cells_box()->set_min_x(21);
   proto.mutable_known_cells_box()->set_min_y(22);
+  proto.mutable_probability_grid_2d();
 
   ProbabilityGrid grid(proto);
   EXPECT_EQ(proto.limits().DebugString(), ToProto(grid.limits()).DebugString());
