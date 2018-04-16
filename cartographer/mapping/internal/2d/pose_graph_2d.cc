@@ -368,6 +368,9 @@ void PoseGraph2D::WaitForAllComputations() {
   common::MutexLocker locker(&mutex_);
   const int num_finished_nodes_at_start =
       constraint_builder_.GetNumFinishedNodes();
+  LOG(INFO) << "Waiting for GetNumFinishedNodes()="
+            << constraint_builder_.GetNumFinishedNodes()
+            << " to become num_trajectory_nodes_=" << num_trajectory_nodes_;
   while (!locker.AwaitWithTimeout(
       [this]() REQUIRES(mutex_) {
         return ((constraint_builder_.GetNumFinishedNodes() ==

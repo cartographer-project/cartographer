@@ -33,12 +33,8 @@ class Task {
   using TasksDispatchingWorkItem = std::function<void(TaskDispatcher)>;
   enum State { IDLE, DISPATCHED, RUNNING, COMPLETED };
 
-  void SetWorkItem(WorkItem work_item) {
-    MutexLocker locker(&mutex_);
-    CHECK_EQ(state_, IDLE);
-    work_item_ = work_item;
-  }
   State GetState() { return state_; }
+  void SetWorkItem(const WorkItem& work_item);
   void AddDependency(Task* dependency);
   void Dispatch(ThreadPoolInterface* thread_pool);
   void AddDependentTask(Task* dependent_task);

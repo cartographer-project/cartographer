@@ -110,20 +110,18 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
 
 void ConstraintBuilder2D::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
-  if (!node_index_to_constraint_search_tasks_.count(current_node_index_)) {
-    ++num_finished_nodes_;
-  }
   // TODO: Create task that depends on all constraint search for node.
   // TODO(gaschler): Delete task when done.
   auto* task = new common::Task;
   int current_node_index = current_node_index_;
+  LOG(INFO) << "Dispatch ConstraintBuilder2D::NotifyEndOfNode";
   task->SetWorkItem([this, current_node_index] {
     LOG(INFO) << "Execute ConstraintBuilder2D::NotifyEndOfNode";
     FinishComputation(current_node_index);
   });
-  auto& list = node_index_to_constraint_search_tasks_[current_node_index_];
-  for (auto it = list.begin(); it != list.end(); ++it) {
-    task->AddDependency(&*it);
+  for (common::Task& constraint_search_task :
+       node_index_to_constraint_search_tasks_[current_node_index_]) {
+    task->AddDependency(&constraint_search_task);
   }
   task->Dispatch(thread_pool_);
   ++current_node_index_;
@@ -135,25 +133,20 @@ void ConstraintBuilder2D::WhenDone(
   CHECK(when_done_ == nullptr);
   when_done_ =
       common::make_unique<std::function<void(const Result&)>>(callback);
-  // TODO(gaschler): Remove pending_computations_ and current_computation.
-
+  // TODO(gaschler): Delete task when done.
+  // TODO(gaschler): Remove duplication with NotifyEndOfNode.
   auto* task = new common::Task;
   int current_node_index = current_node_index_;
   task->SetWorkItem([this, current_node_index] {
     LOG(INFO) << "Execute ConstraintBuilder2D::WhenDone";
     FinishComputation(current_node_index);
   });
-  auto& list = node_index_to_constraint_search_tasks_[current_node_index_];
-  for (auto it = list.begin(); it != list.end(); ++it) {
-    task->AddDependency(&*it);
-  }
+
   // TODO: check if this is sufficient.
-#if 0
   for (common::Task& constraint_search_task :
-      node_index_to_constraint_search_tasks_[current_node_index_]) {
+       node_index_to_constraint_search_tasks_[current_node_index_]) {
     task->AddDependency(&constraint_search_task);
   }
-#endif
   task->Dispatch(thread_pool_);
 }
 

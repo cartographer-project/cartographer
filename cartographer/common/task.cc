@@ -19,6 +19,12 @@
 namespace cartographer {
 namespace common {
 
+void Task::SetWorkItem(const WorkItem& work_item) {
+  MutexLocker locker(&mutex_);
+  CHECK_EQ(state_, IDLE);
+  work_item_ = work_item;
+}
+
 void Task::AddDependency(Task* dependency) {
   {
     MutexLocker locker(&mutex_);
