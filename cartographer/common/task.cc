@@ -19,7 +19,6 @@
 namespace cartographer {
 namespace common {
 
-
 void Task::AddDependency(Task* dependency) {
   {
     MutexLocker locker(&mutex_);
@@ -41,39 +40,39 @@ void Task::Dispatch(ThreadPoolInterface* thread_pool) {
 }
 
 void Task::AddDependentTask(Task* dependent_task) {
-	MutexLocker locker(&mutex_);
-	if (state_ == COMPLETED) {
-	  dependent_task->OnDependenyCompleted();
-	  return;
-	}
-	dependent_tasks_.insert(dependent_task);
+  MutexLocker locker(&mutex_);
+  if (state_ == COMPLETED) {
+    dependent_task->OnDependenyCompleted();
+    return;
+  }
+  dependent_tasks_.insert(dependent_task);
 }
 
 void Task::OnDependenyCompleted() {
-	MutexLocker locker(&mutex_);
-	--ref_count_;
-	if (ref_count_ == 0 && state_ == DISPATCHED) {
-	  CHECK(thread_pool_);
-	  thread_pool_->Schedule(ContructThreadPoolWorkItem());
-	}
+  MutexLocker locker(&mutex_);
+  --ref_count_;
+  if (ref_count_ == 0 && state_ == DISPATCHED) {
+    CHECK(thread_pool_);
+    thread_pool_->Schedule(ContructThreadPoolWorkItem());
+  }
 }
 
 Task::WorkItem Task::ContructThreadPoolWorkItem() {
   return [this]() {
     {
       MutexLocker locker(&mutex_);
-  	state_ = RUNNING;
+      state_ = RUNNING;
     }
 
     // Execute the work item.
-    if(work_item_) {
-  	  work_item_();
+    if (work_item_) {
+      work_item_();
     }
 
     MutexLocker locker(&mutex_);
     state_ = COMPLETED;
     for (Task* dependent_task : dependent_tasks_) {
-  	dependent_task->OnDependenyCompleted();
+      dependent_task->OnDependenyCompleted();
     }
   };
 }
