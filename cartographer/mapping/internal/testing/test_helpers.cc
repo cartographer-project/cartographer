@@ -120,9 +120,9 @@ proto::Trajectory* CreateTrajectoryIfNeeded(int trajectory_id,
   return trajectory;
 }
 
-proto::PoseGraph::Landmark CreateFakeLandmark(
+proto::PoseGraph::LandmarkPose CreateFakeLandmark(
     const std::string& landmark_id, const transform::Rigid3d& global_pose) {
-  proto::PoseGraph::Landmark landmark;
+  proto::PoseGraph::LandmarkPose landmark;
   landmark.set_landmark_id(landmark_id);
   *landmark.mutable_global_pose() = transform::ToProto(global_pose);
   return landmark;
@@ -156,9 +156,9 @@ void AddToProtoGraph(const proto::PoseGraph::Constraint& constraint,
   *pose_graph->add_constraint() = constraint;
 }
 
-void AddToProtoGraph(const proto::PoseGraph::Landmark& landmark,
+void AddToProtoGraph(const proto::PoseGraph::LandmarkPose& landmark,
                      proto::PoseGraph* pose_graph) {
-  *pose_graph->add_landmarks() = landmark;
+  *pose_graph->add_landmark_poses() = landmark;
 }
 
 }  // namespace test
