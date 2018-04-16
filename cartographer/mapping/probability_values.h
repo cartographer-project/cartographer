@@ -29,12 +29,13 @@ namespace mapping {
 
 namespace {
 
-inline uint16 FloatToValue(const float argument, const float min_argument,
-                           const float max_argument) {
+inline uint16 BoundedFloatToValue(const float float_value,
+                                  const float lower_bound,
+                                  const float upper_bound) {
   const int value =
       common::RoundToInt(
-          (common::Clamp(argument, min_argument, max_argument) - min_argument) *
-          (32766.f / (max_argument - min_argument))) +
+          (common::Clamp(float_value, lower_bound, upper_bound) - lower_bound) *
+          (32766.f / (upper_bound - lower_bound))) +
       1;
   // DCHECK for performance.
   DCHECK_GE(value, 1);
@@ -72,7 +73,8 @@ constexpr float kMaxCorrespondenceCost =
 inline float ClampProbability(const float probability) {
   return common::Clamp(probability, kMinProbability, kMaxProbability);
 }
-// Clamps probability to be in the range [kMinProbability, kMaxProbability].
+// Clamps correspondece cost to be in the range [kMinCorrespondenceCost,
+// kMaxCorrespondenceCost].
 inline float ClampCorrespondenceCost(const float correspondence_cost) {
   return common::Clamp(correspondence_cost, kMinCorrespondenceCost,
                        kMaxCorrespondenceCost);
@@ -84,13 +86,13 @@ constexpr uint16 kUpdateMarker = 1u << 15;
 
 // Converts a correspondence_cost to a uint16 in the [1, 32767] range.
 inline uint16 CorrespondenceCostToValue(const float correspondence_cost) {
-  return FloatToValue(correspondence_cost, kMinCorrespondenceCost,
-                      kMaxCorrespondenceCost);
+  return BoundedFloatToValue(correspondence_cost, kMinCorrespondenceCost,
+                             kMaxCorrespondenceCost);
 }
 
 // Converts a probability to a uint16 in the [1, 32767] range.
 inline uint16 ProbabilityToValue(const float probability) {
-  return FloatToValue(probability, kMinProbability, kMaxProbability);
+  return BoundedFloatToValue(probability, kMinProbability, kMaxProbability);
 }
 
 extern const std::vector<float>* const kValueToProbability;
@@ -103,7 +105,8 @@ inline float ValueToProbability(const uint16 value) {
 }
 
 // Converts a uint16 (which may or may not have the update marker set) to a
-// probability in the range [kMinProbability, kMaxProbability].
+// correspondence cost in the range [kMinCorrespondenceCost,
+// kMaxCorrespondenceCost].
 inline float ValueToCorrespondenceCost(const uint16 value) {
   return (*kValueToCorrespondenceCost)[value];
 }

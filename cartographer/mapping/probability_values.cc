@@ -21,45 +21,46 @@ namespace mapping {
 
 namespace {
 
-// 0 is unknown, [1, 32767] maps to [min, max].
-float SlowValueToFloat(const uint16 value, const uint16 unknown_value,
-                       const float unknown_return, const float min,
-                       const float max) {
+// 0 is unknown, [1, 32767] maps to [lower_bound, upper_bound].
+float SlowValueToBoundedFloat(const uint16 value, const uint16 unknown_value,
+                              const float unknown_result,
+                              const float lower_bound,
+                              const float upper_bound) {
   CHECK_GE(value, 0);
   CHECK_LE(value, 32767);
   if (value == unknown_value) {
     // Unknown cells have kMinProbability.
-    return unknown_return;
+    return unknown_result;
   }
-  const float kScale = (max - min) / 32766.f;
-  return value * kScale + (min - kScale);
+  const float kScale = (upper_bound - lower_bound) / 32766.f;
+  return value * kScale + (lower_bound - kScale);
 }
 
-const std::vector<float>* PrecomputeValueToFloat(const uint16 unknown_value,
-                                                 const float unknown_return,
-                                                 const float min,
-                                                 const float max) {
+const std::vector<float>* PrecomputeValueToBoundedFloat(
+    const uint16 unknown_value, const float unknown_result,
+    const float lower_bound, const float upper_bound) {
   std::vector<float>* result = new std::vector<float>;
   // Repeat two times, so that both values with and without the update marker
   // can be converted to a probability.
   for (int repeat = 0; repeat != 2; ++repeat) {
     for (int value = 0; value != 32768; ++value) {
-      result->push_back(
-          SlowValueToFloat(value, unknown_value, unknown_return, min, max));
+      result->push_back(SlowValueToBoundedFloat(
+          value, unknown_value, unknown_result, lower_bound, upper_bound));
     }
   }
   return result;
 }
 
 const std::vector<float>* PrecomputeValueToProbability() {
-  return PrecomputeValueToFloat(kUnknownProbabilityValue, kMinProbability,
-                                kMinProbability, kMaxProbability);
+  return PrecomputeValueToBoundedFloat(kUnknownProbabilityValue,
+                                       kMinProbability, kMinProbability,
+                                       kMaxProbability);
 }
 
 const std::vector<float>* PrecomputeValueToCorrespondenceCost() {
-  return PrecomputeValueToFloat(kUnknownCorrespondenceValue,
-                                kMaxCorrespondenceCost, kMinCorrespondenceCost,
-                                kMaxCorrespondenceCost);
+  return PrecomputeValueToBoundedFloat(
+      kUnknownCorrespondenceValue, kMaxCorrespondenceCost,
+      kMinCorrespondenceCost, kMaxCorrespondenceCost);
 }
 
 }  // namespace
