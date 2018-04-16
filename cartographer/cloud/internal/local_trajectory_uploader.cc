@@ -37,6 +37,8 @@ using common::make_unique;
 
 constexpr int kConnectionTimeoutInSecond = 10;
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
+// TODO(cschuet): Make configurable?
+constexpr int kBatchSize = 100;
 
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
@@ -108,11 +110,10 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
       proto::SensorData *added_sensor_data = batch_request.add_sensor_data();
       *added_sensor_data = *sensor_data;
       TranslateTrajectoryId(added_sensor_data->mutable_sensor_metadata());
-      if (batch_request.sensor_data_size() == 100) {
+      if (batch_request.sensor_data_size() == kBatchSize) {
         async_grpc::Client<handlers::AddSensorDataBatchSignature> client(
             client_channel_, async_grpc::CreateUnlimitedConstantDelayStrategy(
                                  common::FromSeconds(1)));
-        LOG(INFO) << "SENDING BATCH";
         CHECK(client.Write(batch_request));
         batch_request.clear_sensor_data();
       }
