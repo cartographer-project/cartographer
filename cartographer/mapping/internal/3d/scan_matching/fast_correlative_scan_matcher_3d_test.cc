@@ -37,7 +37,7 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
  protected:
   FastCorrelativeScanMatcher3DTest()
       : range_data_inserter_(CreateRangeDataInserterTestOptions3D()),
-        options_(CreateFastCorrelativeScanMatcher3DTestOptions3D(5)) {}
+        options_(CreateFastCorrelativeScanMatcher3DTestOptions3D(6)) {}
 
   void SetUp() override {
     point_cloud_ = {
