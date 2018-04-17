@@ -20,14 +20,12 @@ licenses(["notice"])  # New BSD, portions MIT.
 
 CERES_DEFINES = [
     "CERES_USE_CXX11",
-    "CERES_NO_EIGENSPARSE",
+    "CERES_USE_EIGEN_SPARSE",
     "CERES_NO_SUITESPARSE",
     "CERES_NO_LAPACK",
     "CERES_NO_CXSPARSE",
     "CERES_STD_UNORDERED_MAP",
-
-    # Enable support for OpenMP.
-    "CERES_USE_OPENMP",
+    "CERES_USE_CXX11_THREADS",
 
     # Use the internal mutex code. Not ideal, but it works.
     "CERES_HAVE_PTHREAD",
@@ -58,6 +56,7 @@ cc_library(
         "internal/ceres/compressed_row_sparse_matrix.cc",
         "internal/ceres/conditioned_cost_function.cc",
         "internal/ceres/conjugate_gradients_solver.cc",
+        "internal/ceres/context_impl.cc",
         "internal/ceres/corrector.cc",
         "internal/ceres/covariance.cc",
         "internal/ceres/covariance_impl.cc",
@@ -80,6 +79,7 @@ cc_library(
         "internal/ceres/implicit_schur_complement.cc",
         "internal/ceres/inner_product_computer.cc",
         "internal/ceres/is_close.cc",
+        "internal/ceres/iterative_refiner.cc",
         "internal/ceres/iterative_schur_complement_solver.cc",
         "internal/ceres/lapack.cc",
         "internal/ceres/levenberg_marquardt_strategy.cc",
@@ -95,6 +95,7 @@ cc_library(
         "internal/ceres/low_rank_inverse_hessian.cc",
         "internal/ceres/minimizer.cc",
         "internal/ceres/normal_prior.cc",
+        "internal/ceres/parallel_for_cxx.cc",
         "internal/ceres/parameter_block_ordering.cc",
         "internal/ceres/partitioned_matrix_view.cc",
         "internal/ceres/polynomial.cc",
@@ -120,6 +121,8 @@ cc_library(
         "internal/ceres/split.cc",
         "internal/ceres/stringprintf.cc",
         "internal/ceres/suitesparse.cc",
+        "internal/ceres/thread_pool.cc",
+        "internal/ceres/thread_token_provider.cc",
         "internal/ceres/trust_region_minimizer.cc",
         "internal/ceres/trust_region_preprocessor.cc",
         "internal/ceres/trust_region_step_evaluator.cc",
