@@ -29,8 +29,6 @@ namespace common {
 class Task {
  public:
   using WorkItem = std::function<void()>;
-  using TaskDispatcher = std::function<void(Task*)>;
-  using TasksDispatchingWorkItem = std::function<void(TaskDispatcher)>;
   enum State { IDLE, DISPATCHED, RUNNING, COMPLETED };
 
   State GetState() { return state_; }
@@ -39,9 +37,10 @@ class Task {
   void Dispatch(ThreadPoolInterface* thread_pool);
   void AddDependentTask(Task* dependent_task);
   void OnDependenyCompleted();
+
+ private:
   WorkItem ContructThreadPoolWorkItem();
 
- protected:
   WorkItem work_item_;
   ThreadPoolInterface* thread_pool_ = nullptr;
   State state_ = IDLE;

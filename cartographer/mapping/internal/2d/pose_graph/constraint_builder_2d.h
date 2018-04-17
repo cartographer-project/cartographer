@@ -30,6 +30,7 @@
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/mutex.h"
+#include "cartographer/common/optional.h"
 #include "cartographer/common/task.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/2d/submap_2d.h"
@@ -51,10 +52,10 @@ transform::Rigid2d ComputeSubmapPose(const Submap2D& submap);
 
 // Asynchronously computes constraints.
 //
-// Intermingle an arbitrary number of calls to MaybeAddConstraint() or
-// MaybeAddGlobalConstraint, then call WhenDone(). After all computations are
-// done the 'callback' will be called with the result and another
-// MaybeAdd(Global)Constraint()/WhenDone() cycle can follow.
+// Intermingle an arbitrary number of calls to 'MaybeAddConstraint',
+// 'MaybeAddGlobalConstraint', and 'NotifyEndOfNode', then call 'WhenDone' once.
+// After all computations are done the 'callback' will be called with the result
+// and another MaybeAdd(Global)Constraint()/WhenDone() cycle can follow.
 //
 // This class is thread-safe.
 class ConstraintBuilder2D {
@@ -96,6 +97,10 @@ class ConstraintBuilder2D {
 
   // Registers the 'callback' to be called with the results, after all
   // computations triggered by MaybeAddConstraint() have finished.
+  //
+  // After both 'NotifyEndOfNode' (at least once) and 'WhenDone' have been
+  // called and all scheduled constraint searches are finished, 'callback' is
+  // executed in the background.
   void WhenDone(const std::function<void(const Result&)>& callback);
 
   // Returns the number of consecutive finished nodes.
@@ -136,7 +141,7 @@ class ConstraintBuilder2D {
 
   // If all computations are done, runs the 'when_done_' callback and resets the
   // state.
-  void FinishComputation(std::unique_ptr<int> newly_finished_node_index)
+  void FinishComputation(common::optional<int> newly_finished_node_index)
       EXCLUDES(mutex_);
 
   const pose_graph::proto::ConstraintBuilderOptions options_;
@@ -147,10 +152,12 @@ class ConstraintBuilder2D {
   std::unique_ptr<std::function<void(const Result&)>> when_done_
       GUARDED_BY(mutex_);
 
-  // Index of the node in reaction to which computations are currently
+  // Number of the node in reaction to which computations are currently
   // added. This is always the number of nodes seen so far, even when older
   // nodes are matched against a new submap.
   int num_started_nodes_ GUARDED_BY(mutex_) = 0;
+
+  int num_finished_nodes_ GUARDED_BY(mutex_) = 0;
 
   // For each added node, maps to the number of pending computations that were
   // added for it.
@@ -170,8 +177,6 @@ class ConstraintBuilder2D {
 
   // Histogram of scan matcher scores.
   common::Histogram score_histogram_ GUARDED_BY(mutex_);
-
-  int num_finished_nodes_ GUARDED_BY(mutex_) = 0;
 };
 
 }  // namespace pose_graph

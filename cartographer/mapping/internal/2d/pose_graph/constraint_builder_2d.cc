@@ -111,7 +111,7 @@ void ConstraintBuilder2D::NotifyEndOfNode() {
   auto* task = new common::Task;
   int current_node_index = num_started_nodes_;
   task->SetWorkItem([this, current_node_index] {
-    FinishComputation(common::make_unique<int>(current_node_index));
+    FinishComputation(common::optional<int>(current_node_index));
   });
   for (common::Task& constraint_search_task :
        node_index_to_constraint_search_tasks_[num_started_nodes_]) {
@@ -133,7 +133,7 @@ void ConstraintBuilder2D::WhenDone(
   // anybody and deletes itself.
   // TODO(gaschler): Remove duplication with NotifyEndOfNode.
   auto* task = new common::Task;
-  task->SetWorkItem([this] { FinishComputation(nullptr); });
+  task->SetWorkItem([this] { FinishComputation({}); });
   task->Dispatch(thread_pool_);
 }
 
@@ -271,18 +271,20 @@ void ConstraintBuilder2D::ComputeConstraint(
 }
 
 void ConstraintBuilder2D::FinishComputation(
-    std::unique_ptr<int> newly_finished_node_index) {
+    common::optional<int> newly_finished_node_index) {
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
     common::MutexLocker locker(&mutex_);
-    if (newly_finished_node_index) {
+    if (newly_finished_node_index.has_value()) {
       ++num_finished_nodes_;
       for (common::Task& constraint_search_task :
-           node_index_to_constraint_search_tasks_[*newly_finished_node_index]) {
+           node_index_to_constraint_search_tasks_[newly_finished_node_index
+                                                      .value()]) {
         CHECK_EQ(constraint_search_task.GetState(), common::Task::COMPLETED);
       }
-      node_index_to_constraint_search_tasks_.erase(*newly_finished_node_index);
+      node_index_to_constraint_search_tasks_.erase(
+          newly_finished_node_index.value());
     }
     if (node_index_to_constraint_search_tasks_.empty()) {
       if (when_done_ != nullptr) {
