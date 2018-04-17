@@ -19,9 +19,9 @@
 licenses(["notice"])  # New BSD, portions MIT.
 
 CERES_DEFINES = [
+    "CERES_SUITESPARSE_VERSION=\\\"4.5.5\\\"",
     "CERES_USE_CXX11",
     "CERES_NO_EIGENSPARSE",
-    "CERES_NO_SUITESPARSE",
     "CERES_NO_LAPACK",
     "CERES_NO_CXSPARSE",
     "CERES_STD_UNORDERED_MAP",
@@ -157,5 +157,6 @@ cc_library(
     deps = [
         "@com_google_glog//:glog",
         "@org_tuxfamily_eigen//:eigen",
+        "@suitesparse",
     ],
 )
