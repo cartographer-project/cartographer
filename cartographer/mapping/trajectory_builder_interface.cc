@@ -22,6 +22,24 @@
 
 namespace cartographer {
 namespace mapping {
+namespace {
+
+void PopulateOverlappingSubmapsTrimmerOptions2D(
+    proto::TrajectoryBuilderOptions* const trajectory_builder_options,
+    common::LuaParameterDictionary* const parameter_dictionary) {
+  constexpr char kDictionaryKey[] = "overlapping_submaps_trimmer_2d";
+  if (!parameter_dictionary->HasKey(kDictionaryKey)) return;
+
+  auto options_dictionary = parameter_dictionary->GetDictionary(kDictionaryKey);
+  auto* options =
+      trajectory_builder_options->mutable_overlapping_submaps_trimmer_2d();
+  options->set_fresh_submaps_count(
+      options_dictionary->GetInt("fresh_submaps_count"));
+  options->set_min_covered_cells_count(
+      options_dictionary->GetInt("min_covered_cells_count"));
+}
+
+}  // namespace
 
 proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
@@ -34,6 +52,7 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
           parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
   options.set_pure_localization(
       parameter_dictionary->GetBool("pure_localization"));
+  PopulateOverlappingSubmapsTrimmerOptions2D(&options, parameter_dictionary);
   return options;
 }
 
