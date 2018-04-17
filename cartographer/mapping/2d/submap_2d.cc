@@ -103,9 +103,7 @@ void Submap2D::UpdateFromProto(const proto::Submap& proto) {
 void Submap2D::ToResponseProto(
     const transform::Rigid3d&,
     proto::SubmapQuery::Response* const response) const {
-  if (!probability_grid_) {
-    return;
-  }
+  if (!probability_grid_) return;
   response->set_submap_version(num_range_data());
 
   Eigen::Array2i offset;
