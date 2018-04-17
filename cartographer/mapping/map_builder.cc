@@ -127,7 +127,10 @@ int MapBuilder::AddTrajectoryBuilder(
           trajectory_options.overlapping_submaps_trimmer_2d();
       pose_graph_->AddTrimmer(common::make_unique<OverlappingSubmapsTrimmer2D>(
           trimmer_options.fresh_submaps_count(),
-          trimmer_options.min_covered_cells_count()));
+          trimmer_options.min_covered_area() /
+              common::Pow2(trajectory_options.trajectory_builder_2d_options()
+                               .submaps_options()
+                               .resolution())));
     }
   }
   if (trajectory_options.pure_localization()) {

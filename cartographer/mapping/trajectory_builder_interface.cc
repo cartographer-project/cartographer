@@ -35,8 +35,8 @@ void PopulateOverlappingSubmapsTrimmerOptions2D(
       trajectory_builder_options->mutable_overlapping_submaps_trimmer_2d();
   options->set_fresh_submaps_count(
       options_dictionary->GetInt("fresh_submaps_count"));
-  options->set_min_covered_cells_count(
-      options_dictionary->GetInt("min_covered_cells_count"));
+  options->set_min_covered_area(
+      options_dictionary->GetDouble("min_covered_area"));
 }
 
 }  // namespace
