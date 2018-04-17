@@ -124,11 +124,11 @@ def cartographer_repositories():
   _maybe(native.new_http_archive,
       name = "org_ceres_solver_ceres_solver",
       build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:ceres.BUILD",
-      sha256 = "cb69d1ca4900bc9c4703116a9facba00413eafd893430659fab63246f5320288",
-      strip_prefix = "ceres-solver-f58eacf082ddf198b2bf982e3cdb57ed3b5ea025",
+      sha256 = "ede5b4205ee8d7c7e029e9da74c7ee759fee6961f7e6bfa694274e4a55b8c7ca",
+      strip_prefix = "ceres-solver-58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e",
       urls = [
-          "https://mirror.bazel.build/github.com/ceres-solver/ceres-solver/archive/f58eacf082ddf198b2bf982e3cdb57ed3b5ea025.tar.gz",
-          "https://github.com/ceres-solver/ceres-solver/archive/f58eacf082ddf198b2bf982e3cdb57ed3b5ea025.tar.gz",
+          "https://mirror.bazel.build/github.com/ceres-solver/ceres-solver/archive/58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e.tar.gz",
+          "https://github.com/ceres-solver/ceres-solver/archive/58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e.tar.gz",
       ],
   )
 
