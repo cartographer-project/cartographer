@@ -53,21 +53,18 @@ inline float ProbabilityFromOdds(const float odds) {
   return odds / (odds + 1.f);
 }
 
-constexpr float ProbabilityToCorrespondenceCost(const float probability) {
-  return 1. - probability;
+inline float ProbabilityToCorrespondenceCost(const float probability) {
+  return 1.f - probability;
 }
 
-constexpr float CorrespondenceCostToProbability(
-    const float correspondence_cost) {
-  return 1. - correspondence_cost;
+inline float CorrespondenceCostToProbability(const float correspondence_cost) {
+  return 1.f - correspondence_cost;
 }
 
 constexpr float kMinProbability = 0.1f;
 constexpr float kMaxProbability = 1.f - kMinProbability;
-constexpr float kMinCorrespondenceCost =
-    ProbabilityToCorrespondenceCost(kMaxProbability);
-constexpr float kMaxCorrespondenceCost =
-    ProbabilityToCorrespondenceCost(kMinProbability);
+constexpr float kMinCorrespondenceCost = 1.f - kMaxProbability;
+constexpr float kMaxCorrespondenceCost = 1.f - kMinProbability;
 
 // Clamps probability to be in the range [kMinProbability, kMaxProbability].
 inline float ClampProbability(const float probability) {
