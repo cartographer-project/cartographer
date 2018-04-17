@@ -53,7 +53,7 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
           min_range = 0.5,
           max_range = 50.,
           num_accumulated_range_data = 1,
-          voxel_filter_size = 0.05,
+          voxel_filter_size = 0.2,
 
           high_resolution_adaptive_voxel_filter = {
             max_length = 0.7,
@@ -237,7 +237,7 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
           TrajectoryNode{current_time, transform::Rigid3d::Identity()});
     }
     // Corkscrew translation and constant velocity rotation.
-    for (double t = 0.; t <= 0.6; t += 0.006) {
+    for (double t = 0.; t <= 0.6; t += 0.05) {
       current_time += common::FromSeconds(0.3);
       trajectory.push_back(TrajectoryNode{
           current_time,
