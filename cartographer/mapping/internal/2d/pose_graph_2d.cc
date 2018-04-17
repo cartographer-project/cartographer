@@ -480,7 +480,7 @@ void PoseGraph2D::AddNodeFromProto(const transform::Rigid3d& global_pose,
 
 void PoseGraph2D::SetTrajectoryDataFromProto(
     const proto::TrajectoryData& data) {
-  // Not implemented yet in 2D.
+  LOG(ERROR) << "not implemented";
 }
 
 void PoseGraph2D::AddNodeToSubmap(const NodeId& node_id,

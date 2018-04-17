@@ -32,13 +32,22 @@ namespace cloud {
 namespace {
 
 using common::make_unique;
+constexpr int kConnectionTimeoutInSecond = 10;
 
 }  // namespace
 
 MapBuilderStub::MapBuilderStub(const std::string& server_address)
     : client_channel_(::grpc::CreateChannel(
           server_address, ::grpc::InsecureChannelCredentials())),
-      pose_graph_stub_(make_unique<PoseGraphStub>(client_channel_)) {}
+      pose_graph_stub_(make_unique<PoseGraphStub>(client_channel_)) {
+  LOG(INFO) << "Connecting to SLAM process at " << server_address;
+  std::chrono::system_clock::time_point deadline(
+      std::chrono::system_clock::now() +
+      std::chrono::seconds(kConnectionTimeoutInSecond));
+  if (!client_channel_->WaitForConnected(deadline)) {
+    LOG(FATAL) << "Failed to connect to " << server_address;
+  }
+}
 
 int MapBuilderStub::AddTrajectoryBuilder(
     const std::set<SensorId>& expected_sensor_ids,

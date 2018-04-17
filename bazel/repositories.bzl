@@ -124,11 +124,11 @@ def cartographer_repositories():
   _maybe(native.new_http_archive,
       name = "org_ceres_solver_ceres_solver",
       build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:ceres.BUILD",
-      sha256 = "cb69d1ca4900bc9c4703116a9facba00413eafd893430659fab63246f5320288",
-      strip_prefix = "ceres-solver-f58eacf082ddf198b2bf982e3cdb57ed3b5ea025",
+      sha256 = "ede5b4205ee8d7c7e029e9da74c7ee759fee6961f7e6bfa694274e4a55b8c7ca",
+      strip_prefix = "ceres-solver-58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e",
       urls = [
-          "https://mirror.bazel.build/github.com/ceres-solver/ceres-solver/archive/f58eacf082ddf198b2bf982e3cdb57ed3b5ea025.tar.gz",
-          "https://github.com/ceres-solver/ceres-solver/archive/f58eacf082ddf198b2bf982e3cdb57ed3b5ea025.tar.gz",
+          "https://mirror.bazel.build/github.com/ceres-solver/ceres-solver/archive/58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e.tar.gz",
+          "https://github.com/ceres-solver/ceres-solver/archive/58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e.tar.gz",
       ],
   )
 
@@ -219,10 +219,10 @@ def cartographer_repositories():
 
   _maybe(native.http_archive,
       name = "com_github_jupp0r_prometheus_cpp",
-      sha256 = "41b202a206ba6339c4678ffe3690659fdb77287d97507aad82a83c5360b8ba8b",
-      strip_prefix = "prometheus-cpp-b3914b1045c92649e81d020851f3bb06ef858df4",
+      sha256 = "0d3e999dfbfc49bb117698154a01dac26fb59e77d0354ccb81107a6da7b014d0",
+      strip_prefix = "prometheus-cpp-8330b3f753fb774c9e0567baaac20ffb7042723b",
       urls = [
-          "https://github.com/jupp0r/prometheus-cpp/archive/b3914b1045c92649e81d020851f3bb06ef858df4.tar.gz",
+          "https://github.com/jupp0r/prometheus-cpp/archive/8330b3f753fb774c9e0567baaac20ffb7042723b.tar.gz",
       ],
   )
 

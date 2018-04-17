@@ -17,7 +17,7 @@
 #include "cartographer/mapping/map_builder.h"
 
 #include "cartographer/common/config.h"
-#include "cartographer/mapping/internal/test_helpers.h"
+#include "cartographer/mapping/internal/testing/test_helpers.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {

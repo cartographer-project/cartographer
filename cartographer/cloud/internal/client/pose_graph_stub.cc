@@ -24,6 +24,7 @@
 #include "cartographer/cloud/internal/handlers/is_trajectory_finished_handler.h"
 #include "cartographer/cloud/internal/handlers/is_trajectory_frozen_handler.h"
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
+#include "cartographer/cloud/internal/handlers/set_landmark_pose_handler.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
@@ -111,7 +112,13 @@ std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses() {
 
 void PoseGraphStub::SetLandmarkPose(const std::string& landmark_id,
                                     const transform::Rigid3d& global_pose) {
-  LOG(FATAL) << "Not implemented";
+  proto::SetLandmarkPoseRequest request;
+  request.mutable_landmark_pose()->set_landmark_id(landmark_id);
+  *request.mutable_landmark_pose()->mutable_global_pose() =
+      transform::ToProto(global_pose);
+  async_grpc::Client<handlers::SetLandmarkPoseSignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
 }
 
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
