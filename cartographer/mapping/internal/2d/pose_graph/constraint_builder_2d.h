@@ -163,6 +163,8 @@ class ConstraintBuilder2D {
   std::map<int, std::list<common::Task>> node_index_to_constraint_search_tasks_
       GUARDED_BY(mutex_);
 
+  std::list<common::Task> notify_end_of_node_tasks_ GUARDED_BY(mutex_);
+
   // Constraints currently being computed in the background. A deque is used to
   // keep pointers valid when adding more entries.
   std::deque<std::unique_ptr<Constraint>> constraints_ GUARDED_BY(mutex_);

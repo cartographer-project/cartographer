@@ -107,17 +107,17 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
 
 void ConstraintBuilder2D::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
-  // TODO(gaschler): Delete task when done.
-  auto* task = new common::Task;
+  notify_end_of_node_tasks_.emplace_front();
+  common::Task& task = notify_end_of_node_tasks_.front();
   int current_node_index = num_started_nodes_;
-  task->SetWorkItem([this, current_node_index] {
+  task.SetWorkItem([this, current_node_index] {
     FinishComputation(common::optional<int>(current_node_index));
   });
   for (common::Task& constraint_search_task :
        node_index_to_constraint_search_tasks_[num_started_nodes_]) {
-    task->AddDependency(&constraint_search_task);
+    task.AddDependency(&constraint_search_task);
   }
-  task->Dispatch(thread_pool_);
+  task.Dispatch(thread_pool_);
   ++num_started_nodes_;
 }
 
