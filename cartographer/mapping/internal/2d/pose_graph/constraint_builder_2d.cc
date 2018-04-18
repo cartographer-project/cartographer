@@ -110,9 +110,9 @@ void ConstraintBuilder2D::NotifyEndOfNode() {
   // TODO(gaschler): Clear when done.
   notify_end_of_node_tasks_.emplace_front();
   common::Task& task = notify_end_of_node_tasks_.front();
-  int current_node_index = num_started_nodes_;
-  task.SetWorkItem([this, current_node_index] {
-    FinishComputation(common::optional<int>(current_node_index));
+  task.SetWorkItem([this] {
+    common::MutexLocker locker(&mutex_);
+    ++num_finished_nodes_;
   });
   for (common::Task& constraint_search_task :
        node_index_to_constraint_search_tasks_[num_started_nodes_]) {
@@ -128,7 +128,19 @@ void ConstraintBuilder2D::WhenDone(
   CHECK(when_done_ == nullptr);
   when_done_ =
       common::make_unique<std::function<void(const Result&)>>(callback);
-  thread_pool_->Schedule([this]() { FinishComputation({}); });
+
+  // TODO(gaschler): Delete task.
+  auto when_done_task = new common::Task;
+  for (auto& it : node_index_to_constraint_search_tasks_) {
+    for (common::Task& task : it.second) {
+      when_done_task->AddDependency(&task);
+    }
+  }
+  for (common::Task& task : notify_end_of_node_tasks_) {
+    when_done_task->AddDependency(&task);
+  }
+  when_done_task->SetWorkItem([this] { FinishComputation(); });
+  when_done_task->Dispatch(thread_pool_);
 }
 
 void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
@@ -266,60 +278,34 @@ void ConstraintBuilder2D::ComputeConstraint(
   }
 }
 
-void ConstraintBuilder2D::FinishComputation(
-    common::optional<int> newly_finished_node_index) {
+void ConstraintBuilder2D::FinishComputation() {
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
     common::MutexLocker locker(&mutex_);
-    if (newly_finished_node_index.has_value()) {
-      ++num_finished_nodes_;
-      for (common::Task& constraint_search_task :
-           node_index_to_constraint_search_tasks_[newly_finished_node_index
-                                                      .value()]) {
-        CHECK_EQ(constraint_search_task.GetState(), common::Task::COMPLETED);
-      }
-      node_index_to_constraint_search_tasks_.erase(
-          newly_finished_node_index.value());
-    }
-    if (node_index_to_constraint_search_tasks_.empty()) {
-      if (when_done_ != nullptr) {
-        for (const std::unique_ptr<Constraint>& constraint : constraints_) {
-          if (constraint != nullptr) {
-            result.push_back(*constraint);
-          }
-        }
-        if (options_.log_matches()) {
-          LOG(INFO) << constraints_.size() << " computations resulted in "
-                    << result.size() << " additional constraints.";
-          LOG(INFO) << "Score histogram:\n" << score_histogram_.ToString(10);
-        }
-        constraints_.clear();
-        callback = std::move(when_done_);
-        when_done_.reset();
+    notify_end_of_node_tasks_.clear();
+    node_index_to_constraint_search_tasks_.clear();
+    CHECK(when_done_ != nullptr);
+    for (const std::unique_ptr<Constraint>& constraint : constraints_) {
+      if (constraint != nullptr) {
+        result.push_back(*constraint);
       }
     }
+    if (options_.log_matches()) {
+      LOG(INFO) << constraints_.size() << " computations resulted in "
+                << result.size() << " additional constraints.";
+      LOG(INFO) << "Score histogram:\n" << score_histogram_.ToString(10);
+    }
+    constraints_.clear();
+    callback = std::move(when_done_);
+    when_done_.reset();
     kQueueLengthMetric->Set(constraints_.size());
   }
-  if (callback != nullptr) {
-    (*callback)(result);
-  }
+  (*callback)(result);
 }
 
 int ConstraintBuilder2D::GetNumFinishedNodes() {
   common::MutexLocker locker(&mutex_);
-#if 0
-  LOG(INFO) << "GetNumFinishedNodes ";
-  LOG(INFO) << "num_started_nodes_ " << num_started_nodes_;
-  LOG(INFO) << "num_finished_nodes_ " << num_finished_nodes_;
-  LOG(INFO) << "pending_computations_.begin()->first "
-            << node_index_to_constraint_search_tasks_.begin()->first;
-  if (node_index_to_constraint_search_tasks_.empty()) {
-    CHECK_EQ(num_finished_nodes_, num_started_nodes_);
-    return num_finished_nodes_;
-  }
-  CHECK_EQ(num_finished_nodes_, node_index_to_constraint_search_tasks_.begin()->first);
-#endif
   return num_finished_nodes_;
 }
 

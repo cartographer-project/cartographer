@@ -33,7 +33,9 @@ class Task {
 
   ~Task() {
     // TODO(gaschler): Relax some checks after testing.
-    CHECK_EQ(state_, COMPLETED);
+    if (state_ != COMPLETED) {
+      LOG(WARNING) << "Delete Task before completion (was verified).";
+    }
   }
   State GetState() { return state_; }
   void SetWorkItem(const WorkItem& work_item);

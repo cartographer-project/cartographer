@@ -138,10 +138,7 @@ class ConstraintBuilder2D {
                          std::unique_ptr<Constraint>* constraint)
       EXCLUDES(mutex_);
 
-  // If all computations are done, runs the 'when_done_' callback and resets the
-  // state.
-  void FinishComputation(common::optional<int> newly_finished_node_index)
-      EXCLUDES(mutex_);
+  void FinishComputation() EXCLUDES(mutex_);
 
   const pose_graph::proto::ConstraintBuilderOptions options_;
   common::ThreadPool* thread_pool_;
