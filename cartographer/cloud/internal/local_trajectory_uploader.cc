@@ -40,7 +40,8 @@ const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
-  LocalTrajectoryUploader(const std::string &uplink_server_address, int batch_size);
+  LocalTrajectoryUploader(const std::string &uplink_server_address,
+                          int batch_size);
   ~LocalTrajectoryUploader() {}
 
   // Starts the upload thread.
@@ -76,7 +77,8 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 LocalTrajectoryUploader::LocalTrajectoryUploader(
     const std::string &uplink_server_address, int batch_size)
     : client_channel_(::grpc::CreateChannel(
-          uplink_server_address, ::grpc::InsecureChannelCredentials())), batch_size_(batch_size) {
+          uplink_server_address, ::grpc::InsecureChannelCredentials())),
+      batch_size_(batch_size) {
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
       std::chrono::seconds(kConnectionTimeoutInSecond));
@@ -114,9 +116,10 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
       // trajectory id.
       if (added_sensor_data->has_local_slam_result_data()) {
         for (mapping::proto::Submap &mutable_submap :
-            *added_sensor_data->mutable_local_slam_result_data()->mutable_submaps()) {
-            mutable_submap.mutable_submap_id()->set_trajectory_id(
-                added_sensor_data->sensor_metadata().trajectory_id());
+             *added_sensor_data->mutable_local_slam_result_data()
+                  ->mutable_submaps()) {
+          mutable_submap.mutable_submap_id()->set_trajectory_id(
+              added_sensor_data->sensor_metadata().trajectory_id());
         }
       }
 
@@ -178,7 +181,8 @@ void LocalTrajectoryUploader::EnqueueSensorData(
 
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
     const std::string &uplink_server_address, int batch_size) {
-  return make_unique<LocalTrajectoryUploader>(uplink_server_address, batch_size);
+  return make_unique<LocalTrajectoryUploader>(uplink_server_address,
+                                              batch_size);
 }
 
 }  // namespace cloud
