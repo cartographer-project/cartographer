@@ -1,0 +1,9 @@
+---
+platforms:
+  ubuntu1604:
+    build_targets:
+    - "..."
+    test_flags:
+    - "--jobs=1"
+    test_targets:
+    - "..."
