@@ -44,13 +44,12 @@ void AddOdometryDataHandler::OnRequest(
   // 'MapBuilderContext'.
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    auto data_request = common::make_unique<proto::AddOdometryDataRequest>();
-    CreateAddOdometryDataRequest(request.sensor_metadata().sensor_id(),
-                                 request.sensor_metadata().trajectory_id(),
-                                 request.odometry_data(), data_request.get());
+    auto sensor_data = common::make_unique<proto::SensorData>();
+    *sensor_data->mutable_sensor_metadata() = request.sensor_metadata();
+    *sensor_data->mutable_odometry_data() = request.odometry_data();
     GetUnsynchronizedContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
-        ->EnqueueDataRequest(std::move(data_request));
+        ->EnqueueSensorData(std::move(sensor_data));
   }
 }
 

@@ -28,10 +28,10 @@ namespace testing {
 
 class MockLocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
-  MOCK_METHOD1(DoEnqueueDataRequest, void(google::protobuf::Message *));
-  void EnqueueDataRequest(
-      std::unique_ptr<google::protobuf::Message> data_request) override {
-    DoEnqueueDataRequest(data_request.get());
+  MOCK_METHOD1(DoEnqueueSensorData, void(proto::SensorData *));
+  void EnqueueSensorData(
+      std::unique_ptr<proto::SensorData> data_request) override {
+    DoEnqueueSensorData(data_request.get());
   }
   MOCK_METHOD0(Start, void());
   MOCK_METHOD0(Shutdown, void());
