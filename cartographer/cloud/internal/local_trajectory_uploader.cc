@@ -92,6 +92,8 @@ LocalTrajectoryUploader::LocalTrajectoryUploader(
   }
 }
 
+LocalTrajectoryUploader::~LocalTrajectoryUploader() {}
+
 void LocalTrajectoryUploader::Start() {
   CHECK(!shutting_down_);
   CHECK(!upload_thread_);
