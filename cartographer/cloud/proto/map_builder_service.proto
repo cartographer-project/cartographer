@@ -49,8 +49,24 @@ message SensorMetadata {
   string sensor_id = 2;
 }
 
+message SensorData {
+  SensorMetadata sensor_metadata = 1;
+  oneof sensor_data {
+    cartographer.sensor.proto.OdometryData odometry_data = 2;
+    cartographer.sensor.proto.ImuData imu_data = 3;
+    cartographer.sensor.proto.TimedPointCloudData timed_point_cloud_data = 4;
+    cartographer.sensor.proto.FixedFramePoseData fixed_frame_pose_data = 5;
+    cartographer.sensor.proto.LandmarkData landmark_data = 6;
+    cartographer.mapping.proto.LocalSlamResultData local_slam_result_data = 7;
+  }
+}
+
 message AddTrajectoryResponse {
   int32 trajectory_id = 1;
+}
+
+message AddSensorDataBatchRequest {
+  repeated SensorData sensor_data = 1;
 }
 
 message AddOdometryDataRequest {
@@ -156,11 +172,6 @@ message GetConstraintsResponse {
   repeated cartographer.mapping.proto.PoseGraph.Constraint constraints = 1;
 }
 
-message AddLocalSlamResultDataRequest {
-  SensorMetadata sensor_metadata = 1;
-  cartographer.mapping.proto.LocalSlamResultData local_slam_result_data = 2;
-}
-
 message WriteStateResponse {
   oneof state_chunk {
     cartographer.mapping.proto.PoseGraph pose_graph = 1;
@@ -190,6 +201,10 @@ service MapBuilderService {
   // Starts a new trajectory and returns its index.
   rpc AddTrajectory(AddTrajectoryRequest) returns (AddTrajectoryResponse);
 
+  // Adds a batch of sensor data  to a trajectory.
+  rpc AddSensorDataBatch(AddSensorDataBatchRequest)
+      returns (google.protobuf.Empty);
+
   // Adds odometry data from the sensor with id 'sensor_metadata.sensor_id' to
   // the trajectory corresponding to 'sensor_metadata.trajectory_id'.
   rpc AddOdometryData(stream AddOdometryDataRequest)
@@ -208,10 +223,6 @@ service MapBuilderService {
 
   // Same for landmark data.
   rpc AddLandmarkData(stream AddLandmarkDataRequest)
-      returns (google.protobuf.Empty);
-
-  // Adds a local SLAM result.
-  rpc AddLocalSlamResultData(stream AddLocalSlamResultDataRequest)
       returns (google.protobuf.Empty);
 
   // Requests the server to send a stream of local SLAM results for the given

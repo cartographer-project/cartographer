@@ -23,7 +23,6 @@
 #include "cartographer/cloud/internal/handlers/add_fixed_frame_pose_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_imu_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_landmark_data_handler.h"
-#include "cartographer/cloud/internal/handlers/add_local_slam_result_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_odometry_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_rangefinder_data_handler.h"
 #include "cartographer/cloud/internal/handlers/receive_local_slam_results_handler.h"
