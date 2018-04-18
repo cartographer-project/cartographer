@@ -151,8 +151,6 @@ TEST(ProbabilityValuesTest, MultipleCellUpdate) {
   }
 }
 
-
-
 TEST(ProbabilityValuesTest, EqualityLookupTableToApplyOdds) {
   std::vector<uint16> probability_table = ComputeLookupTableToApplyOdds(0.3);
   std::vector<uint16> correspondence_table =
