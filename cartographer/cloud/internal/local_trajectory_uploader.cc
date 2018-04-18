@@ -41,8 +41,8 @@ const common::Duration kPopTimeout = common::FromMilliseconds(100);
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
   LocalTrajectoryUploader(const std::string &uplink_server_address,
-                          int batch_size);
-  ~LocalTrajectoryUploader() {}
+                          int batch_size, bool enable_ssl_encryption);
+  ~LocalTrajectoryUploader();
 
   // Starts the upload thread.
   void Start() final;
@@ -75,9 +75,13 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 };
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
-    const std::string &uplink_server_address, int batch_size)
+    const std::string &uplink_server_address, int batch_size,
+    bool enable_ssl_encryption)
     : client_channel_(::grpc::CreateChannel(
-          uplink_server_address, ::grpc::InsecureChannelCredentials())),
+          uplink_server_address,
+          enable_ssl_encryption
+              ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
+              : ::grpc::InsecureChannelCredentials())),
       batch_size_(batch_size) {
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
@@ -87,6 +91,8 @@ LocalTrajectoryUploader::LocalTrajectoryUploader(
     LOG(FATAL) << "Failed to connect to " << uplink_server_address;
   }
 }
+
+LocalTrajectoryUploader::~LocalTrajectoryUploader() {}
 
 void LocalTrajectoryUploader::Start() {
   CHECK(!shutting_down_);
@@ -180,9 +186,10 @@ void LocalTrajectoryUploader::EnqueueSensorData(
 }  // namespace
 
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
-    const std::string &uplink_server_address, int batch_size) {
-  return make_unique<LocalTrajectoryUploader>(uplink_server_address,
-                                              batch_size);
+    const std::string &uplink_server_address, int batch_size,
+    bool enable_ssl_encryption) {
+  return make_unique<LocalTrajectoryUploader>(uplink_server_address, batch_size,
+                                              enable_ssl_encryption);
 }
 
 }  // namespace cloud
