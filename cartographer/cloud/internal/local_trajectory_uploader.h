@@ -21,6 +21,7 @@
 #include <set>
 #include <string>
 
+#include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 
@@ -41,8 +42,8 @@ class LocalTrajectoryUploaderInterface {
   virtual void Shutdown() = 0;
 
   // Enqueue an Add*DataRequest message to be uploaded.
-  virtual void EnqueueDataRequest(
-      std::unique_ptr<google::protobuf::Message> data_request) = 0;
+  virtual void EnqueueSensorData(
+      std::unique_ptr<proto::SensorData> sensor_data) = 0;
   virtual void AddTrajectory(
       int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
       const mapping::proto::TrajectoryBuilderOptions& trajectory_options) = 0;
@@ -54,7 +55,7 @@ class LocalTrajectoryUploaderInterface {
 
 // Returns LocalTrajectoryUploader with the actual implementation.
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
-    const std::string& uplink_server_address);
+    const std::string& uplink_server_address, int batch_size);
 
 }  // namespace cloud
 }  // namespace cartographer

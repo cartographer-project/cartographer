@@ -51,12 +51,12 @@ void CreateAddLandmarkDataRequest(
     const std::string& sensor_id, int trajectory_id,
     const sensor::proto::LandmarkData& landmark_data,
     proto::AddLandmarkDataRequest* proto);
-void CreateAddLocalSlamResultDataRequest(
+void CreateSensorDataForLocalSlamResult(
     const std::string& sensor_id, int trajectory_id, common::Time time,
     int starting_submap_index,
     const mapping::TrajectoryBuilderInterface::InsertionResult&
         insertion_result,
-    proto::AddLocalSlamResultDataRequest* proto);
+    proto::SensorData* proto);
 
 proto::SensorId ToProto(
     const mapping::TrajectoryBuilderInterface::SensorId& sensor_id);
