@@ -89,11 +89,13 @@ CreateFastCorrelativeScanMatcherOptions2D(
 }
 
 PrecomputationGrid2D::PrecomputationGrid2D(
-    const Grid2D& grid, const CellLimits& limits,
-    const int width, std::vector<float>* reusable_intermediate_grid)
+    const Grid2D& grid, const CellLimits& limits, const int width,
+    std::vector<float>* reusable_intermediate_grid)
     : offset_(-width + 1, -width + 1),
       wide_limits_(limits.num_x_cells + width - 1,
                    limits.num_y_cells + width - 1),
+      min_score_(1.f - grid.GetMaxCorrespondenceCost()),
+      max_score_(1.f - grid.GetMinCorrespondenceCost()),
       cells_(wide_limits_.num_x_cells * wide_limits_.num_y_cells) {
   CHECK_GE(width, 1);
   CHECK_GE(limits.num_x_cells, 1);
@@ -159,9 +161,8 @@ PrecomputationGrid2D::PrecomputationGrid2D(
 }
 
 uint8 PrecomputationGrid2D::ComputeCellValue(const float probability) const {
-  const int cell_value =
-      common::RoundToInt((probability - kMinProbability) *
-                         (255.f / (kMaxProbability - kMinProbability)));
+  const int cell_value = common::RoundToInt(
+      (probability - min_score_) * (255.f / (max_score_ - min_score_)));
   CHECK_GE(cell_value, 0);
   CHECK_LE(cell_value, 255);
   return cell_value;
@@ -324,7 +325,7 @@ void FastCorrelativeScanMatcher2D::ScoreCandidates(
           xy_index.y() + candidate.y_index_offset);
       sum += precomputation_grid.GetValue(proposed_xy_index);
     }
-    candidate.score = PrecomputationGrid2D::ToProbability(
+    candidate.score = precomputation_grid.ToScore(
         sum / static_cast<float>(discrete_scans[candidate.scan_index].size()));
   }
   std::sort(candidates->begin(), candidates->end(),

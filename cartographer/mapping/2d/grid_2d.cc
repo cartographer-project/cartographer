@@ -20,14 +20,20 @@
 namespace cartographer {
 namespace mapping {
 
-Grid2D::Grid2D(const MapLimits& limits)
+Grid2D::Grid2D(const MapLimits& limits, float min_correspondence_cost,
+               float max_correspondence_cost)
     : limits_(limits),
       correspondence_cost_cells_(
           limits_.cell_limits().num_x_cells * limits_.cell_limits().num_y_cells,
-          kUnknownCorrespondenceValue) {}
+          kUnknownCorrespondenceValue),
+      max_correspondence_cost_(max_correspondence_cost),
+      min_correspondence_cost_(min_correspondence_cost) {}
 
 Grid2D::Grid2D(const proto::Grid2D& proto)
-    : limits_(proto.limits()), correspondence_cost_cells_() {
+    : limits_(proto.limits()),
+      correspondence_cost_cells_(),
+      max_correspondence_cost_(proto.max_correspondence_cost()),
+      min_correspondence_cost_(proto.min_correspondence_cost()) {
   if (proto.has_known_cells_box()) {
     const auto& box = proto.known_cells_box();
     known_cells_box_ =
@@ -136,6 +142,8 @@ proto::Grid2D Grid2D::ToProto() const {
     box->set_min_x(known_cells_box().min().x());
     box->set_min_y(known_cells_box().min().y());
   }
+  result.set_max_correspondence_cost(max_correspondence_cost_);
+  result.set_min_correspondence_cost(min_correspondence_cost_);
   return result;
 }
 

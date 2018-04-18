@@ -22,7 +22,8 @@
 namespace cartographer {
 namespace mapping {
 
-ProbabilityGrid::ProbabilityGrid(const MapLimits& limits) : Grid2D(limits) {}
+ProbabilityGrid::ProbabilityGrid(const MapLimits& limits)
+    : Grid2D(limits, kMinCorrespondenceCost, kMaxCorrespondenceCost) {}
 
 ProbabilityGrid::ProbabilityGrid(const proto::Grid2D& proto) : Grid2D(proto) {
   CHECK(proto.has_probability_grid_2d());

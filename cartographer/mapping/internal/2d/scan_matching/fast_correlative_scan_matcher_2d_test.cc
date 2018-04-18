@@ -41,13 +41,17 @@ TEST(PrecomputationGridTest, CorrectValues) {
   std::uniform_int_distribution<int> distribution(0, 255);
   ProbabilityGrid probability_grid(
       MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(250, 250)));
+  std::vector<float> reusable_intermediate_grid;
+  PrecomputationGrid2D precomputation_grid_dummy(
+      probability_grid, probability_grid.limits().cell_limits(), 1,
+      &reusable_intermediate_grid);
   for (const Eigen::Array2i& xy_index :
        XYIndexRangeIterator(Eigen::Array2i(50, 50), Eigen::Array2i(249, 249))) {
     probability_grid.SetProbability(
-        xy_index, PrecomputationGrid2D::ToProbability(distribution(prng)));
+        xy_index, precomputation_grid_dummy.ToScore(distribution(prng)));
   }
 
-  std::vector<float> reusable_intermediate_grid;
+  reusable_intermediate_grid.clear();
   for (const int width : {1, 2, 3, 8}) {
     PrecomputationGrid2D precomputation_grid(
         probability_grid, probability_grid.limits().cell_limits(), width,
@@ -62,10 +66,10 @@ TEST(PrecomputationGridTest, CorrectValues) {
               probability_grid.GetProbability(xy_index + Eigen::Array2i(x, y)));
         }
       }
-      EXPECT_NEAR(max_score,
-                  PrecomputationGrid2D::ToProbability(
-                      precomputation_grid.GetValue(xy_index)),
-                  1e-4);
+      EXPECT_NEAR(
+          max_score,
+          precomputation_grid.ToScore(precomputation_grid.GetValue(xy_index)),
+          1e-4);
     }
   }
 }
@@ -75,13 +79,17 @@ TEST(PrecomputationGridTest, TinyProbabilityGrid) {
   std::uniform_int_distribution<int> distribution(0, 255);
   ProbabilityGrid probability_grid(
       MapLimits(0.05, Eigen::Vector2d(0.1, 0.1), CellLimits(4, 4)));
+  std::vector<float> reusable_intermediate_grid;
+  PrecomputationGrid2D precomputation_grid_dummy(
+      probability_grid, probability_grid.limits().cell_limits(), 1,
+      &reusable_intermediate_grid);
   for (const Eigen::Array2i& xy_index :
        XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
     probability_grid.SetProbability(
-        xy_index, PrecomputationGrid2D::ToProbability(distribution(prng)));
+        xy_index, precomputation_grid_dummy.ToScore(distribution(prng)));
   }
 
-  std::vector<float> reusable_intermediate_grid;
+  reusable_intermediate_grid.clear();
   for (const int width : {1, 2, 3, 8, 200}) {
     PrecomputationGrid2D precomputation_grid(
         probability_grid, probability_grid.limits().cell_limits(), width,
@@ -96,10 +104,10 @@ TEST(PrecomputationGridTest, TinyProbabilityGrid) {
               probability_grid.GetProbability(xy_index + Eigen::Array2i(x, y)));
         }
       }
-      EXPECT_NEAR(max_score,
-                  PrecomputationGrid2D::ToProbability(
-                      precomputation_grid.GetValue(xy_index)),
-                  1e-4);
+      EXPECT_NEAR(
+          max_score,
+          precomputation_grid.ToScore(precomputation_grid.GetValue(xy_index)),
+          1e-4);
     }
   }
 }
