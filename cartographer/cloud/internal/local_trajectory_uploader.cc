@@ -37,12 +37,10 @@ using common::make_unique;
 
 constexpr int kConnectionTimeoutInSecond = 10;
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
-// TODO(cschuet): Make configurable?
-constexpr int kBatchSize = 100;
 
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
-  LocalTrajectoryUploader(const std::string &uplink_server_address);
+  LocalTrajectoryUploader(const std::string &uplink_server_address, int batch_size);
   ~LocalTrajectoryUploader() {}
 
   // Starts the upload thread.
@@ -68,6 +66,7 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   void TranslateTrajectoryId(proto::SensorMetadata *sensor_metadata);
 
   std::shared_ptr<::grpc::Channel> client_channel_;
+  int batch_size_;
   std::map<int, int> local_to_cloud_trajectory_id_map_;
   common::BlockingQueue<std::unique_ptr<proto::SensorData>> send_queue_;
   bool shutting_down_ = false;
@@ -75,9 +74,9 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 };
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
-    const std::string &uplink_server_address)
+    const std::string &uplink_server_address, int batch_size)
     : client_channel_(::grpc::CreateChannel(
-          uplink_server_address, ::grpc::InsecureChannelCredentials())) {
+          uplink_server_address, ::grpc::InsecureChannelCredentials())), batch_size_(batch_size) {
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
       std::chrono::seconds(kConnectionTimeoutInSecond));
@@ -110,7 +109,18 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
       proto::SensorData *added_sensor_data = batch_request.add_sensor_data();
       *added_sensor_data = *sensor_data;
       TranslateTrajectoryId(added_sensor_data->mutable_sensor_metadata());
-      if (batch_request.sensor_data_size() == kBatchSize) {
+
+      // A submap also holds a trajectory id that must be translated to uplink's
+      // trajectory id.
+      if (added_sensor_data->has_local_slam_result_data()) {
+        for (mapping::proto::Submap &mutable_submap :
+            *added_sensor_data->mutable_local_slam_result_data()->mutable_submaps()) {
+            mutable_submap.mutable_submap_id()->set_trajectory_id(
+                added_sensor_data->sensor_metadata().trajectory_id());
+        }
+      }
+
+      if (batch_request.sensor_data_size() == batch_size_) {
         async_grpc::Client<handlers::AddSensorDataBatchSignature> client(
             client_channel_, async_grpc::CreateUnlimitedConstantDelayStrategy(
                                  common::FromSeconds(1)));
@@ -167,8 +177,8 @@ void LocalTrajectoryUploader::EnqueueSensorData(
 }  // namespace
 
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
-    const std::string &uplink_server_address) {
-  return make_unique<LocalTrajectoryUploader>(uplink_server_address);
+    const std::string &uplink_server_address, int batch_size) {
+  return make_unique<LocalTrajectoryUploader>(uplink_server_address, batch_size);
 }
 
 }  // namespace cloud

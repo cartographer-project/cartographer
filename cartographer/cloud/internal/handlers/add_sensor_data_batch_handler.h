@@ -19,6 +19,7 @@
 
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
+#include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {

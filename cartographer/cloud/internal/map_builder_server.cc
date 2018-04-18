@@ -60,7 +60,7 @@ MapBuilderServer::MapBuilderServer(
       map_builder_server_options.num_event_threads());
   if (!map_builder_server_options.uplink_server_address().empty()) {
     local_trajectory_uploader_ = CreateLocalTrajectoryUploader(
-        map_builder_server_options.uplink_server_address());
+        map_builder_server_options.uplink_server_address(), map_builder_server_options.upload_batch_size());
   }
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler>();
   server_builder.RegisterHandler<handlers::AddOdometryDataHandler>();
@@ -122,6 +122,11 @@ void MapBuilderServer::Shutdown() {
   grpc_server_->Shutdown();
   if (slam_thread_) {
     slam_thread_->join();
+    slam_thread_.reset();
+  }
+  if (local_trajectory_uploader_) {
+    local_trajectory_uploader_->Shutdown();
+    local_trajectory_uploader_.reset();
   }
 }
 
@@ -158,21 +163,21 @@ void MapBuilderServer::OnLocalSlamResult(
   if (insertion_result &&
       grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    auto data_request = common::make_unique<proto::SensorData>();
+    auto sensor_data = common::make_unique<proto::SensorData>();
     auto sensor_id =
         grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
             ->local_trajectory_uploader()
             ->GetLocalSlamResultSensorId(trajectory_id);
     CreateSensorDataForLocalSlamResult(sensor_id.id, trajectory_id, time,
                                        starting_submap_index_,
-                                       *insertion_result, data_request.get());
+                                       *insertion_result, sensor_data.get());
     // TODO(cschuet): Make this more robust.
     if (insertion_result->insertion_submaps.front()->finished()) {
       ++starting_submap_index_;
     }
     grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
-        ->EnqueueSensorData(std::move(data_request));
+        ->EnqueueSensorData(std::move(sensor_data));
   }
 
   common::MutexLocker locker(&local_slam_subscriptions_lock_);

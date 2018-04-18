@@ -72,12 +72,12 @@ void AddSensorDataBatchHandler::OnRequest(
                     sensor_data.sensor_metadata().sensor_id(),
                     sensor::FromProto(sensor_data.landmark_data())));
         break;
-      case proto::SensorData::kLocalSlamResultData: {
+      case proto::SensorData::kLocalSlamResultData:
         GetContext<MapBuilderContextInterface>()->EnqueueLocalSlamResultData(
             sensor_data.sensor_metadata().trajectory_id(),
             sensor_data.sensor_metadata().sensor_id(),
             sensor_data.local_slam_result_data());
-      } break;
+        break;
       default:
         LOG(FATAL) << "Unknown sensor data type: "
                    << sensor_data.sensor_data_case();
