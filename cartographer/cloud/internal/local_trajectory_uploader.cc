@@ -40,13 +40,12 @@ namespace {
 
 using common::make_unique;
 
+constexpr int kConnectionTimeoutInSecond = 10;
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
-  LocalTrajectoryUploader(const std::string &uplink_server_address)
-      : client_channel_(::grpc::CreateChannel(
-            uplink_server_address, ::grpc::InsecureChannelCredentials())) {}
+  LocalTrajectoryUploader(const std::string &uplink_server_address);
   ~LocalTrajectoryUploader();
 
   // Starts the upload thread.
@@ -95,6 +94,19 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   std::unique_ptr<async_grpc::Client<handlers::AddLandmarkDataSignature>>
       add_landmark_client_;
 };
+
+LocalTrajectoryUploader::LocalTrajectoryUploader(
+    const std::string &uplink_server_address)
+    : client_channel_(::grpc::CreateChannel(
+          uplink_server_address, ::grpc::InsecureChannelCredentials())) {
+  std::chrono::system_clock::time_point deadline(
+      std::chrono::system_clock::now() +
+      std::chrono::seconds(kConnectionTimeoutInSecond));
+  LOG(INFO) << "Connecting to uplink " << uplink_server_address;
+  if (!client_channel_->WaitForConnected(deadline)) {
+    LOG(FATAL) << "Failed to connect to " << uplink_server_address;
+  }
+}
 
 LocalTrajectoryUploader::~LocalTrajectoryUploader() {
   if (add_imu_client_) {

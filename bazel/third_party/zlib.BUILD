@@ -46,5 +46,8 @@ cc_library(
         "zutil.h",
     ],
     hdrs = ["zlib.h"],
+    copts = [
+        "-Wno-implicit-function-declaration",
+    ],
     includes = ["."],
 )

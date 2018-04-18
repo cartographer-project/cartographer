@@ -19,6 +19,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
+#include "cartographer/mapping/internal/2d/overlapping_submaps_trimmer_2d.h"
 #include "cartographer/mapping/internal/2d/pose_graph_2d.h"
 #include "cartographer/mapping/internal/3d/local_trajectory_builder_3d.h"
 #include "cartographer/mapping/internal/3d/pose_graph_3d.h"
@@ -62,6 +63,8 @@ std::vector<std::string> SelectRangeSensorIds(
 
 MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
+  CHECK(options.use_trajectory_builder_2d() ^
+        options.use_trajectory_builder_3d());
   if (options.use_trajectory_builder_2d()) {
     pose_graph_ = common::make_unique<PoseGraph2D>(
         options_.pose_graph_options(),
@@ -118,6 +121,17 @@ int MapBuilder::AddTrajectoryBuilder(
                 std::move(local_trajectory_builder), trajectory_id,
                 static_cast<PoseGraph2D*>(pose_graph_.get()),
                 local_slam_result_callback)));
+
+    if (trajectory_options.has_overlapping_submaps_trimmer_2d()) {
+      const auto& trimmer_options =
+          trajectory_options.overlapping_submaps_trimmer_2d();
+      pose_graph_->AddTrimmer(common::make_unique<OverlappingSubmapsTrimmer2D>(
+          trimmer_options.fresh_submaps_count(),
+          trimmer_options.min_covered_area() /
+              common::Pow2(trajectory_options.trajectory_builder_2d_options()
+                               .submaps_options()
+                               .resolution())));
+    }
   }
   if (trajectory_options.pure_localization()) {
     constexpr int kSubmapsToKeep = 3;
@@ -367,7 +381,7 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
   }
 
   // Set global poses of landmarks.
-  for (const auto& landmark : pose_graph_proto.landmarks()) {
+  for (const auto& landmark : pose_graph_proto.landmark_poses()) {
     pose_graph_->SetLandmarkPose(landmark.landmark_id(),
                                  transform::ToRigid3(landmark.global_pose()));
   }

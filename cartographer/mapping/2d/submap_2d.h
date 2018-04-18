@@ -54,7 +54,7 @@ class Submap2D : public Submap {
   void ToResponseProto(const transform::Rigid3d& global_submap_pose,
                        proto::SubmapQuery::Response* response) const override;
 
-  const ProbabilityGrid& probability_grid() const { return probability_grid_; }
+  const ProbabilityGrid& probability_grid() const { return *probability_grid_; }
 
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
@@ -63,7 +63,7 @@ class Submap2D : public Submap {
   void Finish();
 
  private:
-  ProbabilityGrid probability_grid_;
+  std::unique_ptr<ProbabilityGrid> probability_grid_;
 };
 
 // Except during initialization when only a single submap exists, there are
