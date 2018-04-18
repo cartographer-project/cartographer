@@ -73,9 +73,12 @@ TEST_F(AddOdometryDataHandlerTest, WithMockLocalSlamUploader) {
               DoEnqueueSensorData(
                   Eq(request.sensor_metadata().trajectory_id()),
                   Pointee(Truly(testing::BuildDataPredicateEquals(request)))));
+  proto::SensorData sensor_data;
+  *sensor_data.mutable_sensor_metadata() = request.sensor_metadata();
+  *sensor_data.mutable_odometry_data() = request.odometry_data();
   EXPECT_CALL(*mock_local_trajectory_uploader_,
-              DoEnqueueDataRequest(Pointee(
-                  Truly(testing::BuildProtoPredicateEquals(&request)))));
+              DoEnqueueSensorData(Pointee(
+                  Truly(testing::BuildProtoPredicateEquals(&sensor_data)))));
   test_server_->SendWrite(request);
   test_server_->SendWritesDone();
   test_server_->SendFinish();

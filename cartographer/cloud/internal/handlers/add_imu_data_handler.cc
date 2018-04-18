@@ -43,13 +43,12 @@ void AddImuDataHandler::OnRequest(const proto::AddImuDataRequest &request) {
   // 'MapBuilderContext'.
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    auto data_request = common::make_unique<proto::AddImuDataRequest>();
-    CreateAddImuDataRequest(request.sensor_metadata().sensor_id(),
-                            request.sensor_metadata().trajectory_id(),
-                            request.imu_data(), data_request.get());
+    auto sensor_data = common::make_unique<proto::SensorData>();
+    *sensor_data->mutable_sensor_metadata() = request.sensor_metadata();
+    *sensor_data->mutable_imu_data() = request.imu_data();
     GetUnsynchronizedContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
-        ->EnqueueDataRequest(std::move(data_request));
+        ->EnqueueSensorData(std::move(sensor_data));
   }
 }
 
