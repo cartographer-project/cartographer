@@ -92,9 +92,8 @@ inline uint16 ProbabilityToValue(const float probability) {
   return BoundedFloatToValue(probability, kMinProbability, kMaxProbability);
 }
 
-extern const std::unique_ptr<const std::vector<float>> kValueToProbability;
-extern const std::unique_ptr<const std::vector<float>>
-    kValueToCorrespondenceCost;
+extern const std::vector<float>* const kValueToProbability;
+extern const std::vector<float>* const kValueToCorrespondenceCost;
 
 // Converts a uint16 (which may or may not have the update marker set) to a
 // probability in the range [kMinProbability, kMaxProbability].
