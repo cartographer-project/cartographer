@@ -41,7 +41,7 @@ const common::Duration kPopTimeout = common::FromMilliseconds(100);
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
   LocalTrajectoryUploader(const std::string &uplink_server_address,
-      int batch_size, bool enable_ssl_encryption);
+                          int batch_size, bool enable_ssl_encryption);
   ~LocalTrajectoryUploader();
 
   // Starts the upload thread.
@@ -75,9 +75,13 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 };
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
-    const std::string &uplink_server_address, int batch_size, bool enable_ssl_encryption)
+    const std::string &uplink_server_address, int batch_size,
+    bool enable_ssl_encryption)
     : client_channel_(::grpc::CreateChannel(
-    uplink_server_address, enable_ssl_encryption ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions()) : ::grpc::InsecureChannelCredentials())),
+          uplink_server_address,
+          enable_ssl_encryption
+              ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
+              : ::grpc::InsecureChannelCredentials())),
       batch_size_(batch_size) {
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
@@ -180,9 +184,10 @@ void LocalTrajectoryUploader::EnqueueSensorData(
 }  // namespace
 
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
-    const std::string &uplink_server_address, int batch_size, bool enable_ssl_encryption) {
-  return make_unique<LocalTrajectoryUploader>(uplink_server_address,
-                                              batch_size, enable_ssl_encryption);
+    const std::string &uplink_server_address, int batch_size,
+    bool enable_ssl_encryption) {
+  return make_unique<LocalTrajectoryUploader>(uplink_server_address, batch_size,
+                                              enable_ssl_encryption);
 }
 
 }  // namespace cloud
