@@ -1,0 +1,10 @@
+---
+platforms:
+  ubuntu1604:
+    build_targets:
+    - "..."
+    # Tests cannot run concurrently as some of them open the same port.
+    test_flags:
+    - "--jobs=1"
+    test_targets:
+    - "..."
