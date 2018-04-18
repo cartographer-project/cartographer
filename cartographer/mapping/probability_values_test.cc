@@ -90,9 +90,9 @@ TEST(ProbabilityValuesTest, CellUpdate) {
   for (int i_probability = 0; i_probability < num_evaluations;
        ++i_probability) {
     float p = (static_cast<float>(i_probability) /
-        static_cast<float>(num_evaluations)) *
-        (kMaxProbability - kMinProbability) +
-        kMinProbability;
+               static_cast<float>(num_evaluations)) *
+                  (kMaxProbability - kMinProbability) +
+              kMinProbability;
     cell_pg_pre_update = ProbabilityToValue(p);
     cell_cg_pre_update =
         CorrespondenceCostToValue(ProbabilityToCorrespondenceCost(p));
