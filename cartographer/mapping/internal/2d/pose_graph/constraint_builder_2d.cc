@@ -107,6 +107,7 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
 
 void ConstraintBuilder2D::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
+  // TODO(gaschler): Clear when done.
   notify_end_of_node_tasks_.emplace_front();
   common::Task& task = notify_end_of_node_tasks_.front();
   int current_node_index = num_started_nodes_;
@@ -127,19 +128,16 @@ void ConstraintBuilder2D::WhenDone(
   CHECK(when_done_ == nullptr);
   when_done_ =
       common::make_unique<std::function<void(const Result&)>>(callback);
-  // TODO(gaschler): Delete task when done, but how? New and then delete itself?
-  // Pass by value and let ThreadPool delete it? (Won't work if there are any
-  // dependants.) Perhaps a limited 'IndependentTask' that does not notify
-  // anybody and deletes itself.
-  // TODO(gaschler): Remove duplication with NotifyEndOfNode.
-  auto* task = new common::Task;
-  task->SetWorkItem([this] { FinishComputation({}); });
-  task->Dispatch(thread_pool_);
+  thread_pool_->Schedule([this]() { FinishComputation({}); });
 }
 
 void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
     const SubmapId& submap_id, const ProbabilityGrid* submap,
     const std::function<void()>& work_item) {
+  if (when_done_) {
+    LOG(WARNING)
+        << "MaybeAdd*Constraint was called while WhenDone was scheduled.";
+  }
   auto it = submap_scan_matchers_.find(submap_id);
   if (it == submap_scan_matchers_.end()) {
     // TODO(gaschler): Use emplace.
@@ -160,8 +158,6 @@ void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
         });
     submap_scan_matcher.scan_matcher_factory_task.Dispatch(thread_pool_);
   }
-
-  // TODO(gaschler): Delete task when done.
   auto& list = node_index_to_constraint_search_tasks_[num_started_nodes_];
   list.emplace_front();
   common::Task& task = list.front();

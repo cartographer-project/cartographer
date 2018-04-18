@@ -31,6 +31,10 @@ class Task {
   using WorkItem = std::function<void()>;
   enum State { IDLE, DISPATCHED, RUNNING, COMPLETED };
 
+  ~Task() {
+    // TODO(gaschler): Relax some checks after testing.
+    CHECK_EQ(state_, COMPLETED);
+  }
   State GetState() { return state_; }
   void SetWorkItem(const WorkItem& work_item);
   void AddDependency(Task* dependency);

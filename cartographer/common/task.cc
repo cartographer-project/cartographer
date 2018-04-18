@@ -51,11 +51,13 @@ void Task::AddDependentTask(Task* dependent_task) {
     dependent_task->OnDependenyCompleted();
     return;
   }
-  dependent_tasks_.insert(dependent_task);
+  bool inserted = dependent_tasks_.insert(dependent_task).second;
+  CHECK(inserted) << "Given dependency is already a dependency.";
 }
 
 void Task::OnDependenyCompleted() {
   MutexLocker locker(&mutex_);
+  CHECK(state_ == IDLE || state_ == DISPATCHED);
   --uncompleted_dependencies_;
   if (uncompleted_dependencies_ == 0 && state_ == DISPATCHED) {
     CHECK(thread_pool_);
