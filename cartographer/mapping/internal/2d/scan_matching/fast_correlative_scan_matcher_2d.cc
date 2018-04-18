@@ -25,7 +25,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/mapping/2d/probability_grid.h"
+#include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
@@ -89,7 +89,7 @@ CreateFastCorrelativeScanMatcherOptions2D(
 }
 
 PrecomputationGrid2D::PrecomputationGrid2D(
-    const ProbabilityGrid& probability_grid, const CellLimits& limits,
+    const Grid2D& grid, const CellLimits& limits,
     const int width, std::vector<float>* reusable_intermediate_grid)
     : offset_(-width + 1, -width + 1),
       wide_limits_(limits.num_x_cells + width - 1,
@@ -106,26 +106,26 @@ PrecomputationGrid2D::PrecomputationGrid2D(
   for (int y = 0; y != limits.num_y_cells; ++y) {
     SlidingWindowMaximum current_values;
     current_values.AddValue(
-        probability_grid.GetProbability(Eigen::Array2i(0, y)));
+        1.f - std::abs(grid.GetCorrespondenceCost(Eigen::Array2i(0, y))));
     for (int x = -width + 1; x != 0; ++x) {
       intermediate[x + width - 1 + y * stride] = current_values.GetMaximum();
       if (x + width < limits.num_x_cells) {
         current_values.AddValue(
-            probability_grid.GetProbability(Eigen::Array2i(x + width, y)));
+            1.f - std::abs(grid.GetCorrespondenceCost(Eigen::Array2i(x + width, y))));
       }
     }
     for (int x = 0; x < limits.num_x_cells - width; ++x) {
       intermediate[x + width - 1 + y * stride] = current_values.GetMaximum();
       current_values.RemoveValue(
-          probability_grid.GetProbability(Eigen::Array2i(x, y)));
+          1.f - std::abs(grid.GetCorrespondenceCost(Eigen::Array2i(x, y))));
       current_values.AddValue(
-          probability_grid.GetProbability(Eigen::Array2i(x + width, y)));
+          1.f - std::abs(grid.GetCorrespondenceCost(Eigen::Array2i(x + width, y))));
     }
     for (int x = std::max(limits.num_x_cells - width, 0);
          x != limits.num_x_cells; ++x) {
       intermediate[x + width - 1 + y * stride] = current_values.GetMaximum();
       current_values.RemoveValue(
-          probability_grid.GetProbability(Eigen::Array2i(x, y)));
+          1.f - std::abs(grid.GetCorrespondenceCost(Eigen::Array2i(x, y))));
     }
     current_values.CheckIsEmpty();
   }
@@ -168,29 +168,29 @@ uint8 PrecomputationGrid2D::ComputeCellValue(const float probability) const {
 }
 
 PrecomputationGridStack2D::PrecomputationGridStack2D(
-    const ProbabilityGrid& probability_grid,
+    const Grid2D& grid,
     const proto::FastCorrelativeScanMatcherOptions2D& options) {
   CHECK_GE(options.branch_and_bound_depth(), 1);
   const int max_width = 1 << (options.branch_and_bound_depth() - 1);
   precomputation_grids_.reserve(options.branch_and_bound_depth());
   std::vector<float> reusable_intermediate_grid;
-  const CellLimits limits = probability_grid.limits().cell_limits();
+  const CellLimits limits = grid.limits().cell_limits();
   reusable_intermediate_grid.reserve((limits.num_x_cells + max_width - 1) *
                                      limits.num_y_cells);
   for (int i = 0; i != options.branch_and_bound_depth(); ++i) {
     const int width = 1 << i;
-    precomputation_grids_.emplace_back(probability_grid, limits, width,
+    precomputation_grids_.emplace_back(grid, limits, width,
                                        &reusable_intermediate_grid);
   }
 }
 
 FastCorrelativeScanMatcher2D::FastCorrelativeScanMatcher2D(
-    const ProbabilityGrid& probability_grid,
+    const Grid2D& grid,
     const proto::FastCorrelativeScanMatcherOptions2D& options)
     : options_(options),
-      limits_(probability_grid.limits()),
+      limits_(grid.limits()),
       precomputation_grid_stack_(common::make_unique<PrecomputationGridStack2D>(
-          probability_grid, options)) {}
+          grid, options)) {}
 
 FastCorrelativeScanMatcher2D::~FastCorrelativeScanMatcher2D() {}
 
