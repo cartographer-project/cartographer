@@ -16,6 +16,8 @@
 
 #include "cartographer/mapping/probability_values.h"
 
+#include "cartographer/common/make_unique.h"
+
 namespace cartographer {
 namespace mapping {
 
@@ -28,35 +30,34 @@ float SlowValueToBoundedFloat(const uint16 value, const uint16 unknown_value,
                               const float upper_bound) {
   CHECK_GE(value, 0);
   CHECK_LE(value, 32767);
-  if (value == unknown_value) {
-    return unknown_result;
-  }
+  if (value == unknown_value) return unknown_result;
   const float kScale = (upper_bound - lower_bound) / 32766.f;
   return value * kScale + (lower_bound - kScale);
 }
 
-const std::vector<float>* PrecomputeValueToBoundedFloat(
+std::unique_ptr<const std::vector<float>> PrecomputeValueToBoundedFloat(
     const uint16 unknown_value, const float unknown_result,
     const float lower_bound, const float upper_bound) {
-  std::vector<float>* result = new std::vector<float>;
+  std::vector<float> result;
   // Repeat two times, so that both values with and without the update marker
   // can be converted to a probability.
   for (int repeat = 0; repeat != 2; ++repeat) {
     for (int value = 0; value != 32768; ++value) {
-      result->push_back(SlowValueToBoundedFloat(
+      result.push_back(SlowValueToBoundedFloat(
           value, unknown_value, unknown_result, lower_bound, upper_bound));
     }
   }
-  return result;
+  return common::make_unique<const std::vector<float>>(result);
 }
 
-const std::vector<float>* PrecomputeValueToProbability() {
+std::unique_ptr<const std::vector<float>> PrecomputeValueToProbability() {
   return PrecomputeValueToBoundedFloat(kUnknownProbabilityValue,
                                        kMinProbability, kMinProbability,
                                        kMaxProbability);
 }
 
-const std::vector<float>* PrecomputeValueToCorrespondenceCost() {
+std::unique_ptr<const std::vector<float>>
+PrecomputeValueToCorrespondenceCost() {
   return PrecomputeValueToBoundedFloat(
       kUnknownCorrespondenceValue, kMaxCorrespondenceCost,
       kMinCorrespondenceCost, kMaxCorrespondenceCost);
@@ -64,10 +65,10 @@ const std::vector<float>* PrecomputeValueToCorrespondenceCost() {
 
 }  // namespace
 
-const std::vector<float>* const kValueToProbability =
+std::unique_ptr<const std::vector<float>> const kValueToProbability =
     PrecomputeValueToProbability();
 
-const std::vector<float>* const kValueToCorrespondenceCost =
+std::unique_ptr<const std::vector<float>> const kValueToCorrespondenceCost =
     PrecomputeValueToCorrespondenceCost();
 
 std::vector<uint16> ComputeLookupTableToApplyOdds(const float odds) {

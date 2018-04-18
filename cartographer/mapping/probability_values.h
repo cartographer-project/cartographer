@@ -92,8 +92,9 @@ inline uint16 ProbabilityToValue(const float probability) {
   return BoundedFloatToValue(probability, kMinProbability, kMaxProbability);
 }
 
-extern const std::vector<float>* const kValueToProbability;
-extern const std::vector<float>* const kValueToCorrespondenceCost;
+extern const std::unique_ptr<const std::vector<float>> kValueToProbability;
+extern const std::unique_ptr<const std::vector<float>>
+    kValueToCorrespondenceCost;
 
 // Converts a uint16 (which may or may not have the update marker set) to a
 // probability in the range [kMinProbability, kMaxProbability].
@@ -110,8 +111,9 @@ inline float ValueToCorrespondenceCost(const uint16 value) {
 
 inline uint16 ProbabilityValueToCorrespondenceCostValue(
     uint16 probability_value) {
-  if (probability_value == kUnknownProbabilityValue)
+  if (probability_value == kUnknownProbabilityValue) {
     return kUnknownCorrespondenceValue;
+  }
   bool update_carry = false;
   if (probability_value > kUpdateMarker) {
     probability_value -= kUpdateMarker;
