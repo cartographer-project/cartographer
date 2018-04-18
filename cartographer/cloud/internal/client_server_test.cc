@@ -59,7 +59,7 @@ class ClientServerTest : public ::testing::Test {
       MAP_BUILDER_SERVER.num_event_threads = 1
       MAP_BUILDER_SERVER.num_grpc_threads = 1
       MAP_BUILDER_SERVER.uplink_server_address = ""
-      MAP_BUILDER_SERVER.server_address = "localhost:50051"
+      MAP_BUILDER_SERVER.server_address = "0.0.0.0:50051"
       return MAP_BUILDER_SERVER)text";
     auto map_builder_server_parameters =
         mapping::test::ResolveLuaParameters(kMapBuilderServerLua);
@@ -73,7 +73,7 @@ class ClientServerTest : public ::testing::Test {
       MAP_BUILDER_SERVER.num_event_threads = 1
       MAP_BUILDER_SERVER.num_grpc_threads = 1
       MAP_BUILDER_SERVER.uplink_server_address = "localhost:50051"
-      MAP_BUILDER_SERVER.server_address = "localhost:50052"
+      MAP_BUILDER_SERVER.server_address = "0.0.0.0:50052"
       MAP_BUILDER_SERVER.upload_batch_size = 1
       return MAP_BUILDER_SERVER)text";
     auto uploading_map_builder_server_parameters =
@@ -90,12 +90,16 @@ class ClientServerTest : public ::testing::Test {
         mapping::test::ResolveLuaParameters(kTrajectoryBuilderLua);
     trajectory_builder_options_ = mapping::CreateTrajectoryBuilderOptions(
         trajectory_builder_parameters.get());
+    number_of_insertion_results_ = 0;
     local_slam_result_callback_ =
         [this](
             int, common::Time, transform::Rigid3d local_pose, sensor::RangeData,
             std::unique_ptr<
-                const mapping::TrajectoryBuilderInterface::InsertionResult>) {
+                const mapping::TrajectoryBuilderInterface::InsertionResult> insertion_result) {
           std::unique_lock<std::mutex> lock(local_slam_result_mutex_);
+          if (insertion_result) {
+            ++number_of_insertion_results_;
+          }
           local_slam_result_poses_.push_back(local_pose);
           lock.unlock();
           local_slam_result_condition_.notify_all();
@@ -115,7 +119,7 @@ class ClientServerTest : public ::testing::Test {
         uploading_map_builder_server_options_.map_builder_options());
     uploading_server_ = common::make_unique<MapBuilderServer>(uploading_map_builder_server_options_,
                                                     std::move(map_builder));
-    EXPECT_TRUE(server_ != nullptr);
+    EXPECT_TRUE(uploading_server_ != nullptr);
   }
 
   void InitializeServerWithMockMapBuilder() {
@@ -168,6 +172,7 @@ class ClientServerTest : public ::testing::Test {
   std::mutex local_slam_result_mutex_;
   std::mutex local_slam_result_upload_mutex_;
   std::vector<transform::Rigid3d> local_slam_result_poses_;
+  int number_of_insertion_results_;
 };
 
 TEST_F(ClientServerTest, StartAndStopServer) {
@@ -370,7 +375,7 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
     trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
   }
   WaitForLocalSlamResults(measurements.size());
-  WaitForLocalSlamResultUploads(6);
+  WaitForLocalSlamResultUploads(number_of_insertion_results_);
   stub_for_uploading_server_->FinishTrajectory(trajectory_id);
   EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,
