@@ -41,7 +41,7 @@
 #include <vector>
 
 #include "Eigen/Core"
-#include "cartographer/mapping/2d/probability_grid.h"
+#include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/internal/2d/scan_matching/correlative_scan_matcher_2d.h"
 #include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
 
@@ -60,12 +60,11 @@ class RealTimeCorrelativeScanMatcher2D {
   RealTimeCorrelativeScanMatcher2D& operator=(
       const RealTimeCorrelativeScanMatcher2D&) = delete;
 
-  // Aligns 'point_cloud' within the 'probability_grid' given an
+  // Aligns 'point_cloud' within the 'grid' given an
   // 'initial_pose_estimate' then updates 'pose_estimate' with the result and
   // returns the score.
   double Match(const transform::Rigid2d& initial_pose_estimate,
-               const sensor::PointCloud& point_cloud,
-               const ProbabilityGrid& probability_grid,
+               const sensor::PointCloud& point_cloud, const Grid2D& grid,
                transform::Rigid2d* pose_estimate) const;
 
   // Computes the score for each Candidate2D in a collection. The cost is
@@ -73,7 +72,7 @@ class RealTimeCorrelativeScanMatcher2D {
   // CostFunctions: http://ceres-solver.org/modeling.html
   //
   // Visible for testing.
-  void ScoreCandidates(const ProbabilityGrid& probability_grid,
+  void ScoreCandidates(const Grid2D& grid,
                        const std::vector<DiscreteScan2D>& discrete_scans,
                        const SearchParameters& search_parameters,
                        std::vector<Candidate2D>* candidates) const;

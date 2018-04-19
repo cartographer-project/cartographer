@@ -73,8 +73,7 @@ RealTimeCorrelativeScanMatcher2D::GenerateExhaustiveSearchCandidates(
 
 double RealTimeCorrelativeScanMatcher2D::Match(
     const transform::Rigid2d& initial_pose_estimate,
-    const sensor::PointCloud& point_cloud,
-    const ProbabilityGrid& probability_grid,
+    const sensor::PointCloud& point_cloud, const Grid2D& grid,
     transform::Rigid2d* pose_estimate) const {
   CHECK_NOTNULL(pose_estimate);
 
@@ -85,18 +84,17 @@ double RealTimeCorrelativeScanMatcher2D::Match(
           initial_rotation.cast<float>().angle(), Eigen::Vector3f::UnitZ())));
   const SearchParameters search_parameters(
       options_.linear_search_window(), options_.angular_search_window(),
-      rotated_point_cloud, probability_grid.limits().resolution());
+      rotated_point_cloud, grid.limits().resolution());
 
   const std::vector<sensor::PointCloud> rotated_scans =
       GenerateRotatedScans(rotated_point_cloud, search_parameters);
   const std::vector<DiscreteScan2D> discrete_scans = DiscretizeScans(
-      probability_grid.limits(), rotated_scans,
+      grid.limits(), rotated_scans,
       Eigen::Translation2f(initial_pose_estimate.translation().x(),
                            initial_pose_estimate.translation().y()));
   std::vector<Candidate2D> candidates =
       GenerateExhaustiveSearchCandidates(search_parameters);
-  ScoreCandidates(probability_grid, discrete_scans, search_parameters,
-                  &candidates);
+  ScoreCandidates(grid, discrete_scans, search_parameters, &candidates);
 
   const Candidate2D& best_candidate =
       *std::max_element(candidates.begin(), candidates.end());
@@ -108,8 +106,7 @@ double RealTimeCorrelativeScanMatcher2D::Match(
 }
 
 void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
-    const ProbabilityGrid& probability_grid,
-    const std::vector<DiscreteScan2D>& discrete_scans,
+    const Grid2D& grid, const std::vector<DiscreteScan2D>& discrete_scans,
     const SearchParameters& search_parameters,
     std::vector<Candidate2D>* const candidates) const {
   for (Candidate2D& candidate : *candidates) {
@@ -120,7 +117,9 @@ void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
           xy_index.x() + candidate.x_index_offset,
           xy_index.y() + candidate.y_index_offset);
       const float probability =
-          probability_grid.GetProbability(proposed_xy_index);
+          1.f - grid.GetCorrespondenceCost(
+                    proposed_xy_index);  // todo(kdaun) formulation is only
+                                         // meaningful for the probability grid
       candidate.score += probability;
     }
     candidate.score /=
