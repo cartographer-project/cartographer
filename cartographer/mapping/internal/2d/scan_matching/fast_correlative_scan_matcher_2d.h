@@ -78,7 +78,7 @@ class PrecomputationGrid2D {
  private:
   uint8 ComputeCellValue(float probability) const;
 
-  // Offset of the precomputation grid in relation to the 'probability_grid'
+  // Offset of the precomputation grid in relation to the 'grid'
   // including the additional 'width' - 1 cells.
   const Eigen::Array2i offset_;
 

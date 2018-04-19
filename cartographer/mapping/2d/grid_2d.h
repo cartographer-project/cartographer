@@ -58,6 +58,8 @@ class Grid2D {
   // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
   void GrowLimits(const Eigen::Vector2f& point);
 
+  virtual std::unique_ptr<Grid2D> ComputeCroppedGrid() const = 0;
+
   virtual proto::Grid2D ToProto() const;
 
  protected:

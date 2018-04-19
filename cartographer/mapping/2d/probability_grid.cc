@@ -17,6 +17,7 @@
 
 #include <limits>
 
+#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/probability_values.h"
 
 namespace cartographer {
@@ -74,6 +75,25 @@ proto::Grid2D ProbabilityGrid::ToProto() const {
   result = Grid2D::ToProto();
   result.mutable_probability_grid_2d();
   return result;
+}
+
+std::unique_ptr<Grid2D> ProbabilityGrid::ComputeCroppedGrid() const {
+  Eigen::Array2i offset;
+  CellLimits cell_limits;
+  ComputeCroppedLimits(&offset, &cell_limits);
+  const double resolution = limits().resolution();
+  const Eigen::Vector2d max =
+      limits().max() - resolution * Eigen::Vector2d(offset.y(), offset.x());
+  std::unique_ptr<ProbabilityGrid> cropped_grid =
+      common::make_unique<ProbabilityGrid>(
+          MapLimits(resolution, max, cell_limits));
+  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(cell_limits)) {
+    if (IsKnown(xy_index + offset)) {
+      cropped_grid->SetProbability(xy_index, GetProbability(xy_index + offset));
+    }
+  }
+
+  return std::unique_ptr<Grid2D>(cropped_grid.release());
 }
 
 }  // namespace mapping
