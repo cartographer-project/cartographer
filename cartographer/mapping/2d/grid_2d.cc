@@ -60,8 +60,9 @@ void Grid2D::SetCorrespondenceCost(const Eigen::Array2i& cell_index,
 
 // Returns the probability of the cell with 'cell_index'.
 float Grid2D::GetCorrespondenceCost(const Eigen::Array2i& cell_index) const {
-  LOG(FATAL) << "Not implemented";
-  return kUnknownCorrespondenceValue;
+  if (!limits().Contains(cell_index)) return kMaxCorrespondenceCost;
+  return ValueToCorrespondenceCost(
+      correspondence_cost_cells()[ToFlatIndex(cell_index)]);
 }
 
 // Returns true if the probability at the specified index is known.

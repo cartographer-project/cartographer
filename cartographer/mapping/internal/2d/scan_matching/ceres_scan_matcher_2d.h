@@ -22,7 +22,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/2d/probability_grid.h"
+#include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/2d/scan_matching/proto/ceres_scan_matcher_options_2d.pb.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "ceres/ceres.h"
@@ -48,8 +48,7 @@ class CeresScanMatcher2D {
   // 'summary'.
   void Match(const Eigen::Vector2d& target_translation,
              const transform::Rigid2d& initial_pose_estimate,
-             const sensor::PointCloud& point_cloud,
-             const ProbabilityGrid& probability_grid,
+             const sensor::PointCloud& point_cloud, const Grid2D& grid,
              transform::Rigid2d* pose_estimate,
              ceres::Solver::Summary* summary) const;
 
