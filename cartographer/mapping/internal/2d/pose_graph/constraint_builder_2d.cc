@@ -144,8 +144,8 @@ void ConstraintBuilder2D::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
   }
 }
 
-void ConstraintBuilder2D::ConstructSubmapScanMatcher(
-    const SubmapId& submap_id, const Grid2D* const grid) {
+void ConstraintBuilder2D::ConstructSubmapScanMatcher(const SubmapId& submap_id,
+                                                     const Grid2D* const grid) {
   auto submap_scan_matcher =
       common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
           *grid, options_.fast_correlative_scan_matcher_options());
@@ -227,8 +227,8 @@ void ConstraintBuilder2D::ComputeConstraint(
   ceres::Solver::Summary unused_summary;
   ceres_scan_matcher_.Match(pose_estimate.translation(), pose_estimate,
                             constant_data->filtered_gravity_aligned_point_cloud,
-                            *submap_scan_matcher->grid,
-                            &pose_estimate, &unused_summary);
+                            *submap_scan_matcher->grid, &pose_estimate,
+                            &unused_summary);
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;

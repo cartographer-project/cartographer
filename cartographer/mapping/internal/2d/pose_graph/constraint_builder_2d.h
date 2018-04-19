@@ -117,8 +117,7 @@ class ConstraintBuilder2D {
       const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Constructs the scan matcher for a 'submap', then schedules its work items.
-  void ConstructSubmapScanMatcher(const SubmapId& submap_id,
-                                  const Grid2D* grid)
+  void ConstructSubmapScanMatcher(const SubmapId& submap_id, const Grid2D* grid)
       EXCLUDES(mutex_);
 
   // Returns the scan matcher for a submap, which has to exist.

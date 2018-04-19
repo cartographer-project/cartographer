@@ -112,16 +112,16 @@ PrecomputationGrid2D::PrecomputationGrid2D(
     for (int x = -width + 1; x != 0; ++x) {
       intermediate[x + width - 1 + y * stride] = current_values.GetMaximum();
       if (x + width < limits.num_x_cells) {
-        current_values.AddValue(
-            1.f - std::abs(grid.GetCorrespondenceCost(Eigen::Array2i(x + width, y))));
+        current_values.AddValue(1.f - std::abs(grid.GetCorrespondenceCost(
+                                          Eigen::Array2i(x + width, y))));
       }
     }
     for (int x = 0; x < limits.num_x_cells - width; ++x) {
       intermediate[x + width - 1 + y * stride] = current_values.GetMaximum();
       current_values.RemoveValue(
           1.f - std::abs(grid.GetCorrespondenceCost(Eigen::Array2i(x, y))));
-      current_values.AddValue(
-          1.f - std::abs(grid.GetCorrespondenceCost(Eigen::Array2i(x + width, y))));
+      current_values.AddValue(1.f - std::abs(grid.GetCorrespondenceCost(
+                                        Eigen::Array2i(x + width, y))));
     }
     for (int x = std::max(limits.num_x_cells - width, 0);
          x != limits.num_x_cells; ++x) {
@@ -190,8 +190,8 @@ FastCorrelativeScanMatcher2D::FastCorrelativeScanMatcher2D(
     const proto::FastCorrelativeScanMatcherOptions2D& options)
     : options_(options),
       limits_(grid.limits()),
-      precomputation_grid_stack_(common::make_unique<PrecomputationGridStack2D>(
-          grid, options)) {}
+      precomputation_grid_stack_(
+          common::make_unique<PrecomputationGridStack2D>(grid, options)) {}
 
 FastCorrelativeScanMatcher2D::~FastCorrelativeScanMatcher2D() {}
 
