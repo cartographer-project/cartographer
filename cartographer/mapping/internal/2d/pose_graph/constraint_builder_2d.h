@@ -105,7 +105,7 @@ class ConstraintBuilder2D {
 
  private:
   struct SubmapScanMatcher {
-    const ProbabilityGrid* probability_grid;
+    const Grid2D* grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
         fast_correlative_scan_matcher;
   };
@@ -113,12 +113,11 @@ class ConstraintBuilder2D {
   // Either schedules the 'work_item', or if needed, schedules the scan matcher
   // construction and queues the 'work_item'.
   void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      const SubmapId& submap_id, const ProbabilityGrid* submap,
+      const SubmapId& submap_id, const Grid2D* grid,
       const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Constructs the scan matcher for a 'submap', then schedules its work items.
-  void ConstructSubmapScanMatcher(const SubmapId& submap_id,
-                                  const ProbabilityGrid* submap)
+  void ConstructSubmapScanMatcher(const SubmapId& submap_id, const Grid2D* grid)
       EXCLUDES(mutex_);
 
   // Returns the scan matcher for a submap, which has to exist.

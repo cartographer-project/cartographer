@@ -130,7 +130,7 @@ void ConstraintBuilder2D::WhenDone(
 }
 
 void ConstraintBuilder2D::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-    const SubmapId& submap_id, const ProbabilityGrid* const submap,
+    const SubmapId& submap_id, const Grid2D* const grid,
     const std::function<void()>& work_item) {
   if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
       nullptr) {
@@ -139,18 +139,18 @@ void ConstraintBuilder2D::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
     submap_queued_work_items_[submap_id].push_back(work_item);
     if (submap_queued_work_items_[submap_id].size() == 1) {
       thread_pool_->Schedule(
-          [=]() { ConstructSubmapScanMatcher(submap_id, submap); });
+          [=]() { ConstructSubmapScanMatcher(submap_id, grid); });
     }
   }
 }
 
-void ConstraintBuilder2D::ConstructSubmapScanMatcher(
-    const SubmapId& submap_id, const ProbabilityGrid* const submap) {
+void ConstraintBuilder2D::ConstructSubmapScanMatcher(const SubmapId& submap_id,
+                                                     const Grid2D* const grid) {
   auto submap_scan_matcher =
       common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
-          *submap, options_.fast_correlative_scan_matcher_options());
+          *grid, options_.fast_correlative_scan_matcher_options());
   common::MutexLocker locker(&mutex_);
-  submap_scan_matchers_[submap_id] = {submap, std::move(submap_scan_matcher)};
+  submap_scan_matchers_[submap_id] = {grid, std::move(submap_scan_matcher)};
   for (const std::function<void()>& work_item :
        submap_queued_work_items_[submap_id]) {
     thread_pool_->Schedule(work_item);
@@ -227,8 +227,8 @@ void ConstraintBuilder2D::ComputeConstraint(
   ceres::Solver::Summary unused_summary;
   ceres_scan_matcher_.Match(pose_estimate.translation(), pose_estimate,
                             constant_data->filtered_gravity_aligned_point_cloud,
-                            *submap_scan_matcher->probability_grid,
-                            &pose_estimate, &unused_summary);
+                            *submap_scan_matcher->grid, &pose_estimate,
+                            &unused_summary);
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;

@@ -20,11 +20,16 @@
 namespace cartographer {
 namespace mapping {
 
-Grid2D::Grid2D(const MapLimits& limits)
+Grid2D::Grid2D(const MapLimits& limits, float min_correspondence_cost,
+               float max_correspondence_cost)
     : limits_(limits),
       correspondence_cost_cells_(
           limits_.cell_limits().num_x_cells * limits_.cell_limits().num_y_cells,
-          kUnknownCorrespondenceValue) {}
+          kUnknownCorrespondenceValue),
+      min_correspondence_cost_(min_correspondence_cost),
+      max_correspondence_cost_(max_correspondence_cost) {
+  CHECK_LT(min_correspondence_cost_, max_correspondence_cost_);
+}
 
 Grid2D::Grid2D(const proto::Grid2D& proto)
     : limits_(proto.limits()), correspondence_cost_cells_() {
@@ -39,6 +44,19 @@ Grid2D::Grid2D(const proto::Grid2D& proto)
     CHECK_LE(cell, std::numeric_limits<uint16>::max());
     correspondence_cost_cells_.push_back(cell);
   }
+  if (proto.min_correspondence_cost() == 0.f &&
+      proto.max_correspondence_cost() == 0.f) {
+    LOG(WARNING)
+        << "proto::Grid2D: max_correspondence_cost and min_correspondence_cost "
+           "are initialized with 0 indicating an older version of the "
+           "protobuf format. Loading default values.";
+    min_correspondence_cost_ = kMinCorrespondenceCost;
+    max_correspondence_cost_ = kMaxCorrespondenceCost;
+  } else {
+    min_correspondence_cost_ = proto.min_correspondence_cost();
+    max_correspondence_cost_ = proto.max_correspondence_cost();
+  }
+  CHECK_LT(min_correspondence_cost_, max_correspondence_cost_);
 }
 
 // Finishes the update sequence.
@@ -51,21 +69,14 @@ void Grid2D::FinishUpdate() {
   }
 }
 
-// Sets the probability of the cell at 'cell_index' to the given
-// 'probability'. Only allowed if the cell was unknown before.
-void Grid2D::SetCorrespondenceCost(const Eigen::Array2i& cell_index,
-                                   const float correspondence_cost) {
-  LOG(FATAL) << "Not implemented";
-}
-
-// Returns the probability of the cell with 'cell_index'.
+// Returns the correspondence cost of the cell with 'cell_index'.
 float Grid2D::GetCorrespondenceCost(const Eigen::Array2i& cell_index) const {
   if (!limits().Contains(cell_index)) return kMaxCorrespondenceCost;
   return ValueToCorrespondenceCost(
       correspondence_cost_cells()[ToFlatIndex(cell_index)]);
 }
 
-// Returns true if the probability at the specified index is known.
+// Returns true if the correspondence cost at the specified index is known.
 bool Grid2D::IsKnown(const Eigen::Array2i& cell_index) const {
   return limits_.Contains(cell_index) &&
          correspondence_cost_cells_[ToFlatIndex(cell_index)] !=
@@ -136,6 +147,8 @@ proto::Grid2D Grid2D::ToProto() const {
     box->set_min_x(known_cells_box().min().x());
     box->set_min_y(known_cells_box().min().y());
   }
+  result.set_min_correspondence_cost(min_correspondence_cost_);
+  result.set_max_correspondence_cost(max_correspondence_cost_);
   return result;
 }
 

@@ -30,10 +30,9 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/port.h"
-#include "cartographer/mapping/2d/probability_grid.h"
+#include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/2d/scan_matching/proto/fast_correlative_scan_matcher_options_2d.pb.h"
 #include "cartographer/mapping/internal/2d/scan_matching/correlative_scan_matcher_2d.h"
-#include "cartographer/mapping/probability_values.h"
 #include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
@@ -49,12 +48,11 @@ CreateFastCorrelativeScanMatcherOptions2D(
 // y0 <= y < y0.
 class PrecomputationGrid2D {
  public:
-  PrecomputationGrid2D(const ProbabilityGrid& probability_grid,
-                       const CellLimits& limits, int width,
+  PrecomputationGrid2D(const Grid2D& grid, const CellLimits& limits, int width,
                        std::vector<float>* reusable_intermediate_grid);
 
   // Returns a value between 0 and 255 to represent probabilities between
-  // kMinProbability and kMaxProbability.
+  // min_score and max_score.
   int GetValue(const Eigen::Array2i& xy_index) const {
     const Eigen::Array2i local_xy_index = xy_index - offset_;
     // The static_cast<unsigned> is for performance to check with 2 comparisons
@@ -72,10 +70,9 @@ class PrecomputationGrid2D {
     return cells_[local_xy_index.x() + local_xy_index.y() * stride];
   }
 
-  // Maps values from [0, 255] to [kMinProbability, kMaxProbability].
-  static float ToProbability(float value) {
-    return kMinProbability +
-           value * ((kMaxProbability - kMinProbability) / 255.f);
+  // Maps values from [0, 255] to [min_score, max_score].
+  float ToScore(float value) const {
+    return min_score_ + value * ((max_score_ - min_score_) / 255.f);
   }
 
  private:
@@ -88,6 +85,9 @@ class PrecomputationGrid2D {
   // Size of the precomputation grid.
   const CellLimits wide_limits_;
 
+  const float min_score_;
+  const float max_score_;
+
   // Probabilites mapped to 0 to 255.
   std::vector<uint8> cells_;
 };
@@ -95,7 +95,7 @@ class PrecomputationGrid2D {
 class PrecomputationGridStack2D {
  public:
   PrecomputationGridStack2D(
-      const ProbabilityGrid& probability_grid,
+      const Grid2D& grid,
       const proto::FastCorrelativeScanMatcherOptions2D& options);
 
   const PrecomputationGrid2D& Get(int index) {
@@ -112,7 +112,7 @@ class PrecomputationGridStack2D {
 class FastCorrelativeScanMatcher2D {
  public:
   FastCorrelativeScanMatcher2D(
-      const ProbabilityGrid& probability_grid,
+      const Grid2D& grid,
       const proto::FastCorrelativeScanMatcherOptions2D& options);
   ~FastCorrelativeScanMatcher2D();
 
@@ -120,7 +120,7 @@ class FastCorrelativeScanMatcher2D {
   FastCorrelativeScanMatcher2D& operator=(const FastCorrelativeScanMatcher2D&) =
       delete;
 
-  // Aligns 'point_cloud' within the 'probability_grid' given an
+  // Aligns 'point_cloud' within the 'grid' given an
   // 'initial_pose_estimate'. If a score above 'min_score' (excluding equality)
   // is possible, true is returned, and 'score' and 'pose_estimate' are updated
   // with the result.
@@ -128,7 +128,7 @@ class FastCorrelativeScanMatcher2D {
              const sensor::PointCloud& point_cloud, float min_score,
              float* score, transform::Rigid2d* pose_estimate) const;
 
-  // Aligns 'point_cloud' within the full 'probability_grid', i.e., not
+  // Aligns 'point_cloud' within the full 'grid', i.e., not
   // restricted to the configured search window. If a score above 'min_score'
   // (excluding equality) is possible, true is returned, and 'score' and
   // 'pose_estimate' are updated with the result.
