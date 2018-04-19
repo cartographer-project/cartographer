@@ -32,10 +32,7 @@ Grid2D::Grid2D(const MapLimits& limits, float min_correspondence_cost,
 }
 
 Grid2D::Grid2D(const proto::Grid2D& proto)
-    : limits_(proto.limits()),
-      correspondence_cost_cells_(),
-      min_correspondence_cost_(proto.min_correspondence_cost()),
-      max_correspondence_cost_(proto.max_correspondence_cost()) {
+    : limits_(proto.limits()), correspondence_cost_cells_() {
   if (proto.has_known_cells_box()) {
     const auto& box = proto.known_cells_box();
     known_cells_box_ =
