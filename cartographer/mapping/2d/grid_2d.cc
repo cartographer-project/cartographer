@@ -26,14 +26,16 @@ Grid2D::Grid2D(const MapLimits& limits, float min_correspondence_cost,
       correspondence_cost_cells_(
           limits_.cell_limits().num_x_cells * limits_.cell_limits().num_y_cells,
           kUnknownCorrespondenceValue),
-      max_correspondence_cost_(max_correspondence_cost),
-      min_correspondence_cost_(min_correspondence_cost) {}
+      min_correspondence_cost_(min_correspondence_cost),
+      max_correspondence_cost_(max_correspondence_cost) {
+  CHECK_LT(min_correspondence_cost_, max_correspondence_cost_);
+}
 
 Grid2D::Grid2D(const proto::Grid2D& proto)
     : limits_(proto.limits()),
       correspondence_cost_cells_(),
-      max_correspondence_cost_(proto.max_correspondence_cost()),
-      min_correspondence_cost_(proto.min_correspondence_cost()) {
+      min_correspondence_cost_(proto.min_correspondence_cost()),
+      max_correspondence_cost_(proto.max_correspondence_cost()) {
   if (proto.has_known_cells_box()) {
     const auto& box = proto.known_cells_box();
     known_cells_box_ =
@@ -45,18 +47,19 @@ Grid2D::Grid2D(const proto::Grid2D& proto)
     CHECK_LE(cell, std::numeric_limits<uint16>::max());
     correspondence_cost_cells_.push_back(cell);
   }
-  if (proto.max_correspondence_cost() == 0.f &&
-      proto.min_correspondence_cost() == 0.f) {
+  if (proto.min_correspondence_cost() == 0.f &&
+      proto.max_correspondence_cost() == 0.f) {
     LOG(WARNING)
         << "proto::Grid2D: max_correspondence_cost and min_correspondence_cost "
            "are initialized with 0 indicating an older version of the "
            "protobuf format. Loading default values.";
-    max_correspondence_cost_ = kMaxCorrespondenceCost;
     min_correspondence_cost_ = kMinCorrespondenceCost;
+    max_correspondence_cost_ = kMaxCorrespondenceCost;
   } else {
-    max_correspondence_cost_ = proto.max_correspondence_cost();
     min_correspondence_cost_ = proto.min_correspondence_cost();
+    max_correspondence_cost_ = proto.max_correspondence_cost();
   }
+  CHECK_LT(min_correspondence_cost_, max_correspondence_cost_);
 }
 
 // Finishes the update sequence.
@@ -147,8 +150,8 @@ proto::Grid2D Grid2D::ToProto() const {
     box->set_min_x(known_cells_box().min().x());
     box->set_min_y(known_cells_box().min().y());
   }
-  result.set_max_correspondence_cost(max_correspondence_cost_);
   result.set_min_correspondence_cost(min_correspondence_cost_);
+  result.set_max_correspondence_cost(max_correspondence_cost_);
   return result;
 }
 

@@ -27,8 +27,8 @@ namespace mapping {
 
 class Grid2D {
  public:
-  explicit Grid2D(const MapLimits& limits, float max_correspondence_cost,
-                  float min_correspondence_cost);
+  explicit Grid2D(const MapLimits& limits, float min_correspondence_cost,
+                  float max_correspondence_cost);
   explicit Grid2D(const proto::Grid2D& proto);
 
   // Returns the limits of this Grid2D.
@@ -39,11 +39,11 @@ class Grid2D {
   // Returns the correspondence cost of the cell with 'cell_index'.
   float GetCorrespondenceCost(const Eigen::Array2i& cell_index) const;
 
-  // Returns the maximum possible correspondence cost.
-  float GetMaxCorrespondenceCost() const { return max_correspondence_cost_; }
+  // Returns the minimum possible correspondence cost.
+  float GetMinCorrespondenceCost() const { return min_correspondence_cost_; }
 
   // Returns the maximum possible correspondence cost.
-  float GetMinCorrespondenceCost() const { return min_correspondence_cost_; }
+  float GetMaxCorrespondenceCost() const { return max_correspondence_cost_; }
 
   // Returns true if the probability at the specified index is known.
   bool IsKnown(const Eigen::Array2i& cell_index) const;
@@ -81,8 +81,8 @@ class Grid2D {
  private:
   MapLimits limits_;
   std::vector<uint16> correspondence_cost_cells_;
-  float max_correspondence_cost_;
   float min_correspondence_cost_;
+  float max_correspondence_cost_;
   std::vector<int> update_indices_;
 
   // Bounding box of known cells to efficiently compute cropping limits.
