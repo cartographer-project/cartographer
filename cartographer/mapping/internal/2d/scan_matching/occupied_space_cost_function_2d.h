@@ -30,8 +30,8 @@ namespace mapping {
 namespace scan_matching {
 
 // Computes a cost for matching the 'point_cloud' to the 'grid' with
-// a 'pose'. The cost increases when points fall into less occupied space, i.e.
-// at pixels with lower values.
+// a 'pose'. The cost increases with poorer correspondence of the grid and the
+// point observation (e.g. points falling into less occupied space).
 class OccupiedSpaceCostFunction2D {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
