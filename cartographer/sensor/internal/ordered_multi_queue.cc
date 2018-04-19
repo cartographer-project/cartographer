@@ -105,7 +105,8 @@ void OrderedMultiQueue::Dispatch() {
         return;
       }
       if (last_dispatched_time_ > data->GetTime()) {
-        LOG(WARNING) << "Dropping non-sorted data on queue: '" << it->first << "'";
+        LOG(WARNING) << "Dropping non-sorted data on queue: '" << it->first
+                     << "'";
         it->second.queue.Pop();
         continue;
       }
