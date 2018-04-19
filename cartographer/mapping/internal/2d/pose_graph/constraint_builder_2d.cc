@@ -107,7 +107,6 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
 
 void ConstraintBuilder2D::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
-  // TODO(gaschler): Clear when done.
   auto task = std::make_shared<common::Task>();
   task->SetWorkItem([this] {
     common::MutexLocker locker(&mutex_);
@@ -149,15 +148,8 @@ void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
     LOG(WARNING)
         << "MaybeAdd*Constraint was called while WhenDone was scheduled.";
   }
-  auto it = submap_scan_matchers_.find(submap_id);
-  if (it == submap_scan_matchers_.end()) {
-    // TODO(gaschler): Use emplace.
-    // auto insert_result =
-    // submap_scan_matchers_.emplace(std::make_pair(submap_id,
-    // SubmapScanMatcher())); it = insert_result.first;
-    submap_scan_matchers_[submap_id];
-    it = submap_scan_matchers_.find(submap_id);
-    auto& submap_scan_matcher = it->second;
+  auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
+  if (submap_scan_matcher.scan_matcher_factory_task == nullptr) {
     submap_scan_matcher.scan_matcher_factory_task =
         std::make_shared<common::Task>();
     submap_scan_matcher.probability_grid = submap;
@@ -172,12 +164,12 @@ void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
     thread_pool_->ScheduleWhenReady(
         submap_scan_matcher.scan_matcher_factory_task);
   }
-  auto& list = node_index_to_constraint_search_tasks_[num_started_nodes_];
   auto task = std::make_shared<common::Task>();
   task->SetWorkItem(work_item);
-  task->AddDependency(it->second.scan_matcher_factory_task.get());
+  task->AddDependency(submap_scan_matcher.scan_matcher_factory_task.get());
   thread_pool_->ScheduleWhenReady(task);
-  list.push_front(std::move(task));
+  node_index_to_constraint_search_tasks_[num_started_nodes_].push_front(
+      std::move(task));
 }
 
 const ConstraintBuilder2D::SubmapScanMatcher*

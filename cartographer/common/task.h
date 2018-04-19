@@ -44,6 +44,7 @@ class Task {
     return state_;
   }
   void SetWorkItem(const WorkItem& work_item) EXCLUDES(mutex_);
+  // TODO(gaschler): Pass weak_ptr.
   void AddDependency(Task* dependency) EXCLUDES(mutex_);
   void NotifyWhenReady(ThreadPoolInterface* thread_pool) EXCLUDES(mutex_);
   void Execute() EXCLUDES(mutex_);
