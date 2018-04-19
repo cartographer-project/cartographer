@@ -130,7 +130,8 @@ int MapBuilder::AddTrajectoryBuilder(
           trimmer_options.min_covered_area() /
               common::Pow2(trajectory_options.trajectory_builder_2d_options()
                                .submaps_options()
-                               .resolution())));
+                               .resolution()),
+          trimmer_options.min_added_submaps_count()));
     }
   }
   if (trajectory_options.pure_localization()) {
