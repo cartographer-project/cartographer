@@ -14,125 +14,111 @@
  * limitations under the License.
  */
 
-#include <queue>
-
 #include "cartographer/common/task.h"
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace common {
 namespace {
 
-class FakeThreadPool : public ThreadPoolInterface {
+class MockThreadPool : public ThreadPoolInterface {
  public:
-  void Schedule(const Task::WorkItem& work_item) override {
-    work_queue_.push(work_item);
-  }
-
-  void RunNext() {
-    ASSERT_GE(work_queue_.size(), 1);
-    work_queue_.front()();
-    work_queue_.pop();
-  }
-
-  bool IsEmpty() { return work_queue_.empty(); }
-
- private:
-  std::queue<Task::WorkItem> work_queue_;
+  MOCK_METHOD1(NotifyReady, void(Task*));
+  MOCK_METHOD1(Schedule, void(const std::function<void()>&));
 };
 
-class TaskTest : public ::testing::Test {
- protected:
-  FakeThreadPool* thread_pool() { return &thread_pool_; }
-  FakeThreadPool thread_pool_;
-};
-
-TEST_F(TaskTest, RunTask) {
+TEST(TaskTest, RunTask) {
+  MockThreadPool thread_pool;
   Task a;
-  ASSERT_EQ(a.GetState(), Task::NEW);
-  a.Dispatch(thread_pool());
-  ASSERT_EQ(a.GetState(), Task::DISPATCHED);
-  thread_pool()->RunNext();
-  ASSERT_TRUE(thread_pool()->IsEmpty());
-  ASSERT_EQ(a.GetState(), Task::COMPLETED);
+  EXPECT_EQ(a.GetState(), Task::NEW);
+  EXPECT_CALL(thread_pool, NotifyReady(&a)).Times(1);
+  a.NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(a.GetState(), Task::READY);
+  a.Execute();
+  EXPECT_EQ(a.GetState(), Task::COMPLETED);
 }
 
-TEST_F(TaskTest, RunTaskWithDependency) {
+TEST(TaskTest, RunTaskWithDependency) {
+  MockThreadPool thread_pool;
   Task a;
   Task b;
   b.AddDependency(&a);
-  ASSERT_EQ(a.GetState(), Task::NEW);
-  ASSERT_EQ(b.GetState(), Task::NEW);
-  b.Dispatch(thread_pool());
-  ASSERT_TRUE(thread_pool()->IsEmpty());
-  a.Dispatch(thread_pool());
-  thread_pool()->RunNext();
-  ASSERT_EQ(a.GetState(), Task::COMPLETED);
-  ASSERT_EQ(b.GetState(), Task::DISPATCHED);
-  thread_pool()->RunNext();
-  ASSERT_TRUE(thread_pool()->IsEmpty());
-  ASSERT_EQ(b.GetState(), Task::COMPLETED);
+  EXPECT_EQ(a.GetState(), Task::NEW);
+  EXPECT_EQ(b.GetState(), Task::NEW);
+  {
+    ::testing::InSequence dummy;
+    EXPECT_CALL(thread_pool, NotifyReady(&a)).Times(1);
+    EXPECT_CALL(thread_pool, NotifyReady(&b)).Times(1);
+  }
+  b.NotifyWhenReady(&thread_pool);
+  EXPECT_EQ(b.GetState(), Task::DISPATCHED);
+  a.NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(a.GetState(), Task::READY);
+  a.Execute();
+  ASSERT_EQ(b.GetState(), Task::READY);
+  b.Execute();
+  EXPECT_EQ(a.GetState(), Task::COMPLETED);
+  EXPECT_EQ(b.GetState(), Task::COMPLETED);
 }
 
-TEST_F(TaskTest, RunTaskWithTwoDependency) {
-  // a
-  // |
-  // v
-  // b  c
-  // |  |
-  // | /
-  //	|
-  // v
-  // d
+TEST(TaskTest, RunTaskWithTwoDependency) {
+  MockThreadPool thread_pool;
+  /*         c \
+   *  a -->  b --> d
+   */
   Task a;
   Task b;
   Task c;
   Task d;
+  {
+    ::testing::InSequence dummy;
+    EXPECT_CALL(thread_pool, NotifyReady(&c)).Times(1);
+    EXPECT_CALL(thread_pool, NotifyReady(&a)).Times(1);
+    EXPECT_CALL(thread_pool, NotifyReady(&b)).Times(1);
+    EXPECT_CALL(thread_pool, NotifyReady(&d)).Times(1);
+  }
   b.AddDependency(&a);
   d.AddDependency(&b);
   d.AddDependency(&c);
-  d.Dispatch(thread_pool());
+  d.NotifyWhenReady(&thread_pool);
   ASSERT_EQ(d.GetState(), Task::DISPATCHED);
-  ASSERT_TRUE(thread_pool()->IsEmpty());
-  b.Dispatch(thread_pool());
+  b.NotifyWhenReady(&thread_pool);
   ASSERT_EQ(b.GetState(), Task::DISPATCHED);
-  ASSERT_TRUE(thread_pool()->IsEmpty());
-  c.Dispatch(thread_pool());
-  ASSERT_EQ(c.GetState(), Task::DISPATCHED);
-  thread_pool()->RunNext();
-  ASSERT_TRUE(thread_pool()->IsEmpty());
-  ASSERT_EQ(c.GetState(), Task::COMPLETED);
+  c.NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(c.GetState(), Task::READY);
+  c.Execute();
+  EXPECT_EQ(c.GetState(), Task::COMPLETED);
   ASSERT_EQ(d.GetState(), Task::DISPATCHED);
-  a.Dispatch(thread_pool());
-  ASSERT_EQ(a.GetState(), Task::DISPATCHED);
-  thread_pool()->RunNext();
-  ASSERT_EQ(a.GetState(), Task::COMPLETED);
-  ASSERT_EQ(b.GetState(), Task::DISPATCHED);
-  thread_pool()->RunNext();
-  ASSERT_EQ(b.GetState(), Task::COMPLETED);
-  ASSERT_EQ(d.GetState(), Task::DISPATCHED);
-  thread_pool()->RunNext();
-  ASSERT_EQ(d.GetState(), Task::COMPLETED);
-  ASSERT_TRUE(thread_pool()->IsEmpty());
+  a.NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(a.GetState(), Task::READY);
+  a.Execute();
+  EXPECT_EQ(a.GetState(), Task::COMPLETED);
+  ASSERT_EQ(b.GetState(), Task::READY);
+  b.Execute();
+  EXPECT_EQ(b.GetState(), Task::COMPLETED);
+  ASSERT_EQ(d.GetState(), Task::READY);
+  d.Execute();
+  EXPECT_EQ(d.GetState(), Task::COMPLETED);
 }
 
-TEST_F(TaskTest, RunWithCompletedDependency) {
+TEST(TaskTest, RunWithCompletedDependency) {
+  MockThreadPool thread_pool;
   Task a;
-  a.Dispatch(thread_pool());
-  thread_pool()->RunNext();
-  ASSERT_TRUE(thread_pool()->IsEmpty());
-  ASSERT_EQ(a.GetState(), Task::COMPLETED);
-
+  EXPECT_CALL(thread_pool, NotifyReady(&a)).Times(1);
+  a.NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(a.GetState(), Task::READY);
+  a.Execute();
+  EXPECT_EQ(a.GetState(), Task::COMPLETED);
   Task b;
+  EXPECT_CALL(thread_pool, NotifyReady(&b)).Times(1);
   b.AddDependency(&a);
-  ASSERT_EQ(b.GetState(), Task::NEW);
-  b.Dispatch(thread_pool());
-  ASSERT_EQ(b.GetState(), Task::DISPATCHED);
-  ASSERT_FALSE(thread_pool()->IsEmpty());
-  thread_pool()->RunNext();
-  ASSERT_TRUE(thread_pool()->IsEmpty());
-  ASSERT_EQ(b.GetState(), Task::COMPLETED);
+  EXPECT_EQ(b.GetState(), Task::NEW);
+  b.NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(b.GetState(), Task::READY);
+  b.Execute();
+  EXPECT_EQ(b.GetState(), Task::COMPLETED);
 }
 
 }  // namespace
