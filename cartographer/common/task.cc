@@ -21,27 +21,28 @@ namespace common {
 
 void Task::SetWorkItem(const WorkItem& work_item) {
   MutexLocker locker(&mutex_);
-  CHECK_EQ(state_, IDLE);
+  CHECK_EQ(state_, NEW);
   work_item_ = work_item;
 }
 
 void Task::AddDependency(Task* dependency) {
   {
     MutexLocker locker(&mutex_);
-    CHECK_EQ(state_, IDLE);
+    CHECK_EQ(state_, NEW);
     ++uncompleted_dependencies_;
   }
   dependency->AddDependentTask(this);
 }
 
-void Task::Dispatch(ThreadPoolInterface* thread_pool) {
+void Task::NotifyWhenReady(ThreadPoolInterface* thread_pool) {
   MutexLocker locker(&mutex_);
-  CHECK_EQ(state_, IDLE);
+  CHECK_EQ(state_, NEW);
   state_ = DISPATCHED;
-  thread_pool_ = thread_pool;
+  thread_pool_to_notify_ = thread_pool;
   if (uncompleted_dependencies_ == 0) {
-    CHECK(thread_pool_);
-    thread_pool_->Schedule(ContructThreadPoolWorkItem());
+    state_ = READY;
+    CHECK(thread_pool_to_notify_);
+    thread_pool_to_notify_->NotifyReady(this);
   }
 }
 
@@ -57,32 +58,32 @@ void Task::AddDependentTask(Task* dependent_task) {
 
 void Task::OnDependenyCompleted() {
   MutexLocker locker(&mutex_);
-  CHECK(state_ == IDLE || state_ == DISPATCHED);
+  CHECK(state_ == NEW || state_ == DISPATCHED);
   --uncompleted_dependencies_;
   if (uncompleted_dependencies_ == 0 && state_ == DISPATCHED) {
-    CHECK(thread_pool_);
-    thread_pool_->Schedule(ContructThreadPoolWorkItem());
+    state_ = READY;
+    CHECK(thread_pool_to_notify_);
+    thread_pool_to_notify_->NotifyReady(this);
   }
 }
 
-Task::WorkItem Task::ContructThreadPoolWorkItem() {
-  return [this]() {
-    {
-      MutexLocker locker(&mutex_);
-      state_ = RUNNING;
-    }
-
-    // Execute the work item.
-    if (work_item_) {
-      work_item_();
-    }
-
+void Task::Execute() {
+  {
     MutexLocker locker(&mutex_);
-    state_ = COMPLETED;
-    for (Task* dependent_task : dependent_tasks_) {
-      dependent_task->OnDependenyCompleted();
-    }
-  };
+    CHECK_EQ(state_, READY);
+    state_ = RUNNING;
+  }
+
+  // Execute the work item.
+  if (work_item_) {
+    work_item_();
+  }
+
+  MutexLocker locker(&mutex_);
+  state_ = COMPLETED;
+  for (Task* dependent_task : dependent_tasks_) {
+    dependent_task->OnDependenyCompleted();
+  }
 }
 
 }  // namespace common

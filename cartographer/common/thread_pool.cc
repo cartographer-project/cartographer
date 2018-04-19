@@ -21,6 +21,9 @@
 #include <chrono>
 #include <numeric>
 
+#include "cartographer/common/make_unique.h"
+#include "cartographer/common/task.h"
+#include "cartographer/common/time.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -38,17 +41,44 @@ ThreadPool::~ThreadPool() {
     MutexLocker locker(&mutex_);
     CHECK(running_);
     running_ = false;
-    CHECK_EQ(work_queue_.size(), 0);
+    CHECK_EQ(task_queue_.size(), 0);
+    CHECK_EQ(tasks_not_ready_.size(), 0);
   }
   for (std::thread& thread : pool_) {
     thread.join();
   }
 }
 
+void ThreadPool::NotifyReady(Task* task) {
+  MutexLocker locker(&mutex_);
+  CHECK(running_);
+  auto it = tasks_not_ready_.find(task);
+  CHECK(it != tasks_not_ready_.end());
+  task_queue_.push_back(it->second);
+  tasks_not_ready_.erase(it);
+}
+
+#if 0
 void ThreadPool::Schedule(const std::function<void()>& work_item) {
   MutexLocker locker(&mutex_);
   CHECK(running_);
-  work_queue_.push_back(work_item);
+  auto task = make_unique<Task>();
+  task->SetWorkItem(work_item);
+  task_queue_.push_back(std::move(task));
+}
+#endif
+
+std::shared_ptr<Task> ThreadPool::ScheduleWhenReady(
+    std::shared_ptr<Task> task) {
+  {
+    MutexLocker locker(&mutex_);
+    CHECK(running_);
+    auto insert_result =
+        tasks_not_ready_.insert(std::make_pair(task.get(), task));
+    CHECK(insert_result.second) << "ScheduleWhenReady called twice";
+  }
+  task->NotifyWhenReady(this);
+  return task;
 }
 
 void ThreadPool::DoWork() {
@@ -59,22 +89,39 @@ void ThreadPool::DoWork() {
   CHECK_NE(nice(10), -1);
 #endif
   for (;;) {
-    std::function<void()> work_item;
+    std::shared_ptr<Task> task;
     {
       MutexLocker locker(&mutex_);
       locker.Await([this]() REQUIRES(mutex_) {
-        return !work_queue_.empty() || !running_;
+        return !task_queue_.empty() || !running_;
       });
-      if (!work_queue_.empty()) {
-        work_item = work_queue_.front();
-        work_queue_.pop_front();
+      if (!task_queue_.empty()) {
+        task = std::move(task_queue_.front());
+        task_queue_.pop_front();
       } else if (!running_) {
         return;
       }
     }
-    CHECK(work_item);
-    work_item();
+    CHECK(task);
+    CHECK_EQ(task->GetState(), common::Task::READY);
+    task->Execute();
   }
+}
+
+void ThreadPool::WaitForAllForTesting() {
+  bool finished = false;
+  while (!finished) {
+    common::MutexLocker locker(&mutex_);
+    finished = locker.AwaitWithTimeout(
+        [this]() REQUIRES(mutex_) {
+          return (tasks_not_ready_.empty() && task_queue_.empty());
+        },
+        common::FromSeconds(0.1));
+    LOG(INFO) << "tasks_not_ready_.size(): " << tasks_not_ready_.size();
+    LOG(INFO) << "task_queue_.size(): " << task_queue_.size();
+  }
+  CHECK(tasks_not_ready_.empty() && task_queue_.empty());
+  CHECK(running_);
 }
 
 }  // namespace common

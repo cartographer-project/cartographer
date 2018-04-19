@@ -26,10 +26,12 @@
 namespace cartographer {
 namespace common {
 
+class ThreadPoolInterface;
+
 class Task {
  public:
   using WorkItem = std::function<void()>;
-  enum State { IDLE, DISPATCHED, RUNNING, COMPLETED };
+  enum State { NEW, DISPATCHED, READY, RUNNING, COMPLETED };
 
   ~Task() {
     // TODO(gaschler): Relax some checks after testing.
@@ -37,21 +39,24 @@ class Task {
       LOG(WARNING) << "Delete Task before completion (was verified).";
     }
   }
-  State GetState() { return state_; }
-  void SetWorkItem(const WorkItem& work_item);
-  void AddDependency(Task* dependency);
-  void Dispatch(ThreadPoolInterface* thread_pool);
+  State GetState() EXCLUDES(mutex_) {
+    MutexLocker locker(&mutex_);
+    return state_;
+  }
+  void SetWorkItem(const WorkItem& work_item) EXCLUDES(mutex_);
+  void AddDependency(Task* dependency) EXCLUDES(mutex_);
+  void NotifyWhenReady(ThreadPoolInterface* thread_pool) EXCLUDES(mutex_);
+  void Execute() EXCLUDES(mutex_);
+
+ private:
   void AddDependentTask(Task* dependent_task);
   void OnDependenyCompleted();
 
- private:
-  WorkItem ContructThreadPoolWorkItem();
-
-  WorkItem work_item_;
-  ThreadPoolInterface* thread_pool_ = nullptr;
-  State state_ = IDLE;
-  unsigned int uncompleted_dependencies_ = 0;
-  std::set<Task*> dependent_tasks_;
+  WorkItem work_item_ GUARDED_BY(mutex_);
+  ThreadPoolInterface* thread_pool_to_notify_ GUARDED_BY(mutex_) = nullptr;
+  State state_ GUARDED_BY(mutex_) = NEW;
+  unsigned int uncompleted_dependencies_ GUARDED_BY(mutex_) = 0;
+  std::set<Task*> dependent_tasks_ GUARDED_BY(mutex_);
 
   Mutex mutex_;
 };

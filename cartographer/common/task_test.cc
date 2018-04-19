@@ -50,7 +50,7 @@ class TaskTest : public ::testing::Test {
 
 TEST_F(TaskTest, RunTask) {
   Task a;
-  ASSERT_EQ(a.GetState(), Task::IDLE);
+  ASSERT_EQ(a.GetState(), Task::NEW);
   a.Dispatch(thread_pool());
   ASSERT_EQ(a.GetState(), Task::DISPATCHED);
   thread_pool()->RunNext();
@@ -62,8 +62,8 @@ TEST_F(TaskTest, RunTaskWithDependency) {
   Task a;
   Task b;
   b.AddDependency(&a);
-  ASSERT_EQ(a.GetState(), Task::IDLE);
-  ASSERT_EQ(b.GetState(), Task::IDLE);
+  ASSERT_EQ(a.GetState(), Task::NEW);
+  ASSERT_EQ(b.GetState(), Task::NEW);
   b.Dispatch(thread_pool());
   ASSERT_TRUE(thread_pool()->IsEmpty());
   a.Dispatch(thread_pool());
@@ -126,7 +126,7 @@ TEST_F(TaskTest, RunWithCompletedDependency) {
 
   Task b;
   b.AddDependency(&a);
-  ASSERT_EQ(b.GetState(), Task::IDLE);
+  ASSERT_EQ(b.GetState(), Task::NEW);
   b.Dispatch(thread_pool());
   ASSERT_EQ(b.GetState(), Task::DISPATCHED);
   ASSERT_FALSE(thread_pool()->IsEmpty());

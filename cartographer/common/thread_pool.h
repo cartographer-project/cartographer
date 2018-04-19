@@ -19,13 +19,18 @@
 
 #include <deque>
 #include <functional>
+#include <map>
+#include <memory>
 #include <thread>
 #include <vector>
 
 #include "cartographer/common/mutex.h"
+#include "cartographer/common/task.h"
 
 namespace cartographer {
 namespace common {
+
+class Task;
 
 // General interface for thread pool implementations.
 class ThreadPoolInterface {
@@ -34,14 +39,16 @@ class ThreadPoolInterface {
   virtual ~ThreadPoolInterface() {}
   ThreadPoolInterface(const ThreadPoolInterface&) = delete;
   ThreadPoolInterface& operator=(const ThreadPoolInterface&) = delete;
+  virtual void NotifyReady(Task* task) = 0;
   virtual void Schedule(const std::function<void()>& work_item) = 0;
 };
 
-// A fixed number of threads working on a work queue of work items. Adding a
-// new work item does not block, and will be executed by a background thread
-// eventually. The queue must be empty before calling the destructor. The thread
-// pool will then wait for the currently executing work items to finish and then
-// destroy the threads.
+// A fixed number of threads working on tasks. Adding a task does not block.
+// Tasks may be added whether or not their dependencies are completed.
+// When all dependencies of a task are completed, it is queued up for execution
+// in a background thread. The queue must be empty before calling the
+// destructor. The thread pool will then wait for the currently executing work
+// items to finish and then destroy the threads.
 class ThreadPool : public ThreadPoolInterface {
  public:
   explicit ThreadPool(int num_threads);
@@ -50,7 +57,21 @@ class ThreadPool : public ThreadPoolInterface {
   ThreadPool(const ThreadPool&) = delete;
   ThreadPool& operator=(const ThreadPool&) = delete;
 
-  void Schedule(const std::function<void()>& work_item) override;
+  void NotifyReady(Task* task) EXCLUDES(mutex_) override;
+
+  // TODO(gaschler): Remove all uses.
+  void Schedule(const std::function<void()>& work_item) override {
+    LOG(FATAL) << "ThreadPool::Schedule is obsolete";
+  }
+
+  // TODO: Make this stricter.
+  // If the returned smart pointer is expired, 'task' has certainly completed,
+  // so it no longer needs be added as a dependency.
+  std::shared_ptr<Task> ScheduleWhenReady(std::shared_ptr<Task> task)
+      EXCLUDES(mutex_);
+
+ protected:
+  virtual void WaitForAllForTesting() EXCLUDES(mutex_);
 
  private:
   void DoWork();
@@ -58,7 +79,11 @@ class ThreadPool : public ThreadPoolInterface {
   Mutex mutex_;
   bool running_ GUARDED_BY(mutex_) = true;
   std::vector<std::thread> pool_ GUARDED_BY(mutex_);
-  std::deque<std::function<void()>> work_queue_ GUARDED_BY(mutex_);
+  // TODO(gaschler): Make this a shared pointer at let Schedule return a weak
+  // one.
+  std::deque<std::shared_ptr<Task>> task_queue_ GUARDED_BY(mutex_);
+
+  std::map<Task*, std::shared_ptr<Task>> tasks_not_ready_ GUARDED_BY(mutex_);
 };
 
 }  // namespace common

@@ -108,17 +108,17 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
 void ConstraintBuilder2D::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
   // TODO(gaschler): Clear when done.
-  notify_end_of_node_tasks_.emplace_front();
-  common::Task& task = notify_end_of_node_tasks_.front();
-  task.SetWorkItem([this] {
+  auto task = std::make_shared<common::Task>();
+  task->SetWorkItem([this] {
     common::MutexLocker locker(&mutex_);
     ++num_finished_nodes_;
   });
-  for (common::Task& constraint_search_task :
+  for (auto& constraint_search_task :
        node_index_to_constraint_search_tasks_[num_started_nodes_]) {
-    task.AddDependency(&constraint_search_task);
+    task->AddDependency(constraint_search_task.get());
   }
-  task.Dispatch(thread_pool_);
+  thread_pool_->ScheduleWhenReady(task);
+  notify_end_of_node_tasks_.push_front(std::move(task));
   ++num_started_nodes_;
 }
 
@@ -129,18 +129,17 @@ void ConstraintBuilder2D::WhenDone(
   when_done_ =
       common::make_unique<std::function<void(const Result&)>>(callback);
 
-  // TODO(gaschler): Delete task.
-  auto when_done_task = new common::Task;
+  auto when_done_task = std::make_shared<common::Task>();
   for (auto& it : node_index_to_constraint_search_tasks_) {
-    for (common::Task& task : it.second) {
-      when_done_task->AddDependency(&task);
+    for (auto& task : it.second) {
+      when_done_task->AddDependency(task.get());
     }
   }
-  for (common::Task& task : notify_end_of_node_tasks_) {
-    when_done_task->AddDependency(&task);
+  for (auto& task : notify_end_of_node_tasks_) {
+    when_done_task->AddDependency(task.get());
   }
-  when_done_task->SetWorkItem([this] { FinishComputation(); });
-  when_done_task->Dispatch(thread_pool_);
+  when_done_task->SetWorkItem([this] { RunCallback(); });
+  thread_pool_->ScheduleWhenReady(when_done_task);
 }
 
 void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
@@ -159,23 +158,26 @@ void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
     submap_scan_matchers_[submap_id];
     it = submap_scan_matchers_.find(submap_id);
     auto& submap_scan_matcher = it->second;
+    submap_scan_matcher.scan_matcher_factory_task =
+        std::make_shared<common::Task>();
     submap_scan_matcher.probability_grid = submap;
     auto& scan_matcher_options =
         options_.fast_correlative_scan_matcher_options();
-    submap_scan_matcher.scan_matcher_factory_task.SetWorkItem(
+    submap_scan_matcher.scan_matcher_factory_task->SetWorkItem(
         [&submap_scan_matcher, &scan_matcher_options]() {
           submap_scan_matcher.fast_correlative_scan_matcher =
               common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
                   *submap_scan_matcher.probability_grid, scan_matcher_options);
         });
-    submap_scan_matcher.scan_matcher_factory_task.Dispatch(thread_pool_);
+    thread_pool_->ScheduleWhenReady(
+        submap_scan_matcher.scan_matcher_factory_task);
   }
   auto& list = node_index_to_constraint_search_tasks_[num_started_nodes_];
-  list.emplace_front();
-  common::Task& task = list.front();
-  task.SetWorkItem(work_item);
-  task.AddDependency(&it->second.scan_matcher_factory_task);
-  task.Dispatch(thread_pool_);
+  auto task = std::make_shared<common::Task>();
+  task->SetWorkItem(work_item);
+  task->AddDependency(it->second.scan_matcher_factory_task.get());
+  thread_pool_->ScheduleWhenReady(task);
+  list.push_front(std::move(task));
 }
 
 const ConstraintBuilder2D::SubmapScanMatcher*
@@ -278,11 +280,12 @@ void ConstraintBuilder2D::ComputeConstraint(
   }
 }
 
-void ConstraintBuilder2D::FinishComputation() {
+void ConstraintBuilder2D::RunCallback() {
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
     common::MutexLocker locker(&mutex_);
+    // TODO(gaschler): Consider clearing earlier.
     notify_end_of_node_tasks_.clear();
     node_index_to_constraint_search_tasks_.clear();
     CHECK(when_done_ != nullptr);

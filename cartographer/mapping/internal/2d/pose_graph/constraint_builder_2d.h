@@ -95,11 +95,8 @@ class ConstraintBuilder2D {
   void NotifyEndOfNode();
 
   // Registers the 'callback' to be called with the results, after all
-  // computations triggered by MaybeAddConstraint() have finished.
-  //
-  // After both 'NotifyEndOfNode' (at least once) and 'WhenDone' have been
-  // called and all scheduled constraint searches are finished, 'callback' is
-  // executed in the background.
+  // computations triggered by 'MaybeAdd*Constraint' have finished.
+  // 'callback' is executed in the 'ThreadPool'.
   void WhenDone(const std::function<void(const Result&)>& callback);
 
   // Returns the number of consecutive finished nodes.
@@ -115,7 +112,7 @@ class ConstraintBuilder2D {
     const ProbabilityGrid* probability_grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
         fast_correlative_scan_matcher;
-    common::Task scan_matcher_factory_task;
+    std::shared_ptr<common::Task> scan_matcher_factory_task;
   };
 
   // Either schedules the 'work_item', or if needed, schedules the scan matcher
@@ -138,7 +135,7 @@ class ConstraintBuilder2D {
                          std::unique_ptr<Constraint>* constraint)
       EXCLUDES(mutex_);
 
-  void FinishComputation() EXCLUDES(mutex_);
+  void RunCallback() EXCLUDES(mutex_);
 
   const pose_graph::proto::ConstraintBuilderOptions options_;
   common::ThreadPool* thread_pool_;
@@ -157,10 +154,11 @@ class ConstraintBuilder2D {
 
   // For each added node, maps to the number of pending computations that were
   // added for it.
-  std::map<int, std::list<common::Task>> node_index_to_constraint_search_tasks_
-      GUARDED_BY(mutex_);
+  std::map<int, std::list<std::shared_ptr<common::Task>>>
+      node_index_to_constraint_search_tasks_ GUARDED_BY(mutex_);
 
-  std::list<common::Task> notify_end_of_node_tasks_ GUARDED_BY(mutex_);
+  std::list<std::shared_ptr<common::Task>> notify_end_of_node_tasks_
+      GUARDED_BY(mutex_);
 
   // Constraints currently being computed in the background. A deque is used to
   // keep pointers valid when adding more entries.
