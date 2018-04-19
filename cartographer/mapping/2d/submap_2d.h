@@ -51,7 +51,7 @@ class Submap2D : public Submap {
   void ToResponseProto(const transform::Rigid3d& global_submap_pose,
                        proto::SubmapQuery::Response* response) const override;
 
-  const Grid2D& grid() const { return *grid_; }
+  const Grid2D* grid() const { return grid_.get(); }
 
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.

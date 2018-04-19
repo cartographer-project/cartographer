@@ -51,7 +51,7 @@ Eigen::Vector2d GetCornerOfFirstSubmap(
     const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data) {
   auto submap_2d = std::static_pointer_cast<const Submap2D>(
       submap_data.begin()->data.submap);
-  return submap_2d->grid().limits().max();
+  return submap_2d->grid()->limits().max();
 }
 
 // Iterates over every cell in a submap, transforms the center of the cell to
@@ -69,7 +69,7 @@ std::set<SubmapId> AddSubmapsToSubmapCoverageGrid2D(
     if (!submap.data.submap->finished()) continue;
     all_submap_ids.insert(submap.id);
     const Grid2D& grid =
-        std::static_pointer_cast<const Submap2D>(submap.data.submap)->grid();
+        *std::static_pointer_cast<const Submap2D>(submap.data.submap)->grid();
     // Iterate over every cell in a submap.
     Eigen::Array2i offset;
     CellLimits cell_limits;

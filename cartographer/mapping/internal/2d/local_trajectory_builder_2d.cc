@@ -76,9 +76,11 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     return nullptr;
   }
   if (options_.use_online_correlative_scan_matching()) {
+    // todo(kdaun) add CHECK on options to guarantee grid is a probability grid
     double score = real_time_correlative_scan_matcher_.Match(
         pose_prediction, filtered_gravity_aligned_point_cloud,
-        matching_submap->grid(), &initial_ceres_pose);
+        *static_cast<const ProbabilityGrid*>(matching_submap->grid()),
+        &initial_ceres_pose);
     kFastCorrelativeScanMatcherScoreMetric->Observe(score);
   }
 
@@ -86,7 +88,7 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
   ceres::Solver::Summary summary;
   ceres_scan_matcher_.Match(pose_prediction.translation(), initial_ceres_pose,
                             filtered_gravity_aligned_point_cloud,
-                            matching_submap->grid(), pose_observation.get(),
+                            *matching_submap->grid(), pose_observation.get(),
                             &summary);
   if (pose_observation) {
     kCeresScanMatcherCostMetric->Observe(summary.final_cost);
