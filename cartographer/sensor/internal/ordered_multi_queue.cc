@@ -104,13 +104,16 @@ void OrderedMultiQueue::Dispatch() {
         CannotMakeProgress(it->first);
         return;
       }
+      if (last_dispatched_time_ > data->GetTime()) {
+        LOG(WARNING) << "Dropping non-sorted data on queue: '" << it->first << "'";
+        it->second.queue.Pop();
+        continue;
+      }
       if (next_data == nullptr || data->GetTime() < next_data->GetTime()) {
         next_data = data;
         next_queue = &it->second;
         next_queue_key = it->first;
       }
-      CHECK_LE(last_dispatched_time_, next_data->GetTime())
-          << "Non-sorted data added to queue: '" << it->first << "'";
       ++it;
     }
     if (next_data == nullptr) {
