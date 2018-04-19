@@ -58,13 +58,16 @@ ConstraintBuilder2D::ConstraintBuilder2D(
     common::ThreadPool* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
+      finish_node_task_(common::make_unique<common::Task>()),
+      when_done_task_(common::make_unique<common::Task>()),
       sampler_(options.sampling_ratio()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options()) {}
 
 ConstraintBuilder2D::~ConstraintBuilder2D() {
   common::MutexLocker locker(&mutex_);
+  CHECK_EQ(finish_node_task_->GetState(), common::Task::NEW);
+  CHECK_EQ(when_done_task_->GetState(), common::Task::NEW);
   CHECK_EQ(constraints_.size(), 0) << "WhenDone() was not called";
-  CHECK_EQ(node_index_to_constraint_search_tasks_.size(), 0);
   CHECK(when_done_ == nullptr);
 }
 
@@ -107,17 +110,15 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
 
 void ConstraintBuilder2D::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
-  auto task = std::make_shared<common::Task>();
-  task->SetWorkItem([this] {
+  CHECK(finish_node_task_ != nullptr);
+  finish_node_task_->SetWorkItem([this] {
     common::MutexLocker locker(&mutex_);
     ++num_finished_nodes_;
   });
-  for (auto& constraint_search_task :
-       node_index_to_constraint_search_tasks_[num_started_nodes_]) {
-    task->AddDependency(constraint_search_task.get());
-  }
-  thread_pool_->ScheduleWhenReady(task);
-  notify_end_of_node_tasks_.push_front(std::move(task));
+  CHECK(when_done_task_ != nullptr);
+  when_done_task_->AddDependency(finish_node_task_.get());
+  thread_pool_->ScheduleWhenReady(std::move(finish_node_task_));
+  finish_node_task_ = common::make_unique<common::Task>();
   ++num_started_nodes_;
 }
 
@@ -127,20 +128,14 @@ void ConstraintBuilder2D::WhenDone(
   CHECK(when_done_ == nullptr);
   when_done_ =
       common::make_unique<std::function<void(const Result&)>>(callback);
-
-  auto when_done_task = std::make_shared<common::Task>();
-  for (auto& it : node_index_to_constraint_search_tasks_) {
-    for (auto& task : it.second) {
-      when_done_task->AddDependency(task.get());
-    }
-  }
-  for (auto& task : notify_end_of_node_tasks_) {
-    when_done_task->AddDependency(task.get());
-  }
-  when_done_task->SetWorkItem([this] { RunCallback(); });
-  thread_pool_->ScheduleWhenReady(when_done_task);
+  CHECK(when_done_task_ != nullptr);
+  when_done_task_->SetWorkItem([this] { RunCallback(); });
+  thread_pool_->ScheduleWhenReady(std::move(when_done_task_));
+  when_done_task_ = common::make_unique<common::Task>();
 }
 
+// TODO(gaschler): Let this only create the scan matcher task and return a
+// weak_ptr.
 void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
     const SubmapId& submap_id, const ProbabilityGrid* submap,
     const std::function<void()>& work_item) {
@@ -164,12 +159,12 @@ void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
     thread_pool_->ScheduleWhenReady(
         submap_scan_matcher.scan_matcher_factory_task);
   }
-  auto task = std::make_shared<common::Task>();
+  auto task = common::make_unique<common::Task>();
   task->SetWorkItem(work_item);
   task->AddDependency(submap_scan_matcher.scan_matcher_factory_task.get());
-  thread_pool_->ScheduleWhenReady(task);
-  node_index_to_constraint_search_tasks_[num_started_nodes_].push_front(
-      std::move(task));
+  CHECK(finish_node_task_ != nullptr);
+  finish_node_task_->AddDependency(task.get());
+  thread_pool_->ScheduleWhenReady(std::move(task));
 }
 
 const ConstraintBuilder2D::SubmapScanMatcher*
@@ -277,9 +272,6 @@ void ConstraintBuilder2D::RunCallback() {
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
     common::MutexLocker locker(&mutex_);
-    // TODO(gaschler): Consider clearing earlier.
-    notify_end_of_node_tasks_.clear();
-    node_index_to_constraint_search_tasks_.clear();
     CHECK(when_done_ != nullptr);
     for (const std::unique_ptr<Constraint>& constraint : constraints_) {
       if (constraint != nullptr) {
@@ -306,7 +298,6 @@ int ConstraintBuilder2D::GetNumFinishedNodes() {
 
 void ConstraintBuilder2D::DeleteScanMatcher(const SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
-  CHECK(node_index_to_constraint_search_tasks_.empty());
   submap_scan_matchers_.erase(submap_id);
 }
 

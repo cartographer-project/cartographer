@@ -33,24 +33,28 @@ class Task {
   using WorkItem = std::function<void()>;
   enum State { NEW, DISPATCHED, READY, RUNNING, COMPLETED };
 
-  ~Task() {
-    // TODO(gaschler): Relax some checks after testing.
-    if (state_ != COMPLETED) {
-      LOG(WARNING) << "Delete Task before completion (was verified).";
-    }
-  }
-  State GetState() EXCLUDES(mutex_) {
-    MutexLocker locker(&mutex_);
-    return state_;
-  }
+  ~Task();
+
+  State GetState() EXCLUDES(mutex_);
+
+  // State must be 'NEW'.
   void SetWorkItem(const WorkItem& work_item) EXCLUDES(mutex_);
   // TODO(gaschler): Pass weak_ptr.
+
+  // State must be 'NEW'.
   void AddDependency(Task* dependency) EXCLUDES(mutex_);
+
+  // State must be 'NEW' and becomes 'DISPATCHED' or 'READY'.
   void NotifyWhenReady(ThreadPoolInterface* thread_pool) EXCLUDES(mutex_);
+
+  // State must be 'READY' and becomes 'COMPLETED'.
   void Execute() EXCLUDES(mutex_);
 
  private:
+  // Allowed all states.
   void AddDependentTask(Task* dependent_task);
+
+  // State must be 'NEW' or 'DISPATCHED'. If 'DISPATCHED', may become 'READY'.
   void OnDependenyCompleted();
 
   WorkItem work_item_ GUARDED_BY(mutex_);

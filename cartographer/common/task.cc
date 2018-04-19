@@ -19,6 +19,18 @@
 namespace cartographer {
 namespace common {
 
+Task::~Task() {
+  // TODO(gaschler): Relax some checks after testing.
+  if (state_ != NEW && state_ != COMPLETED) {
+    LOG(WARNING) << "Delete Task between dispatch and completion.";
+  }
+}
+
+Task::State Task::GetState() {
+  MutexLocker locker(&mutex_);
+  return state_;
+}
+
 void Task::SetWorkItem(const WorkItem& work_item) {
   MutexLocker locker(&mutex_);
   CHECK_EQ(state_, NEW);

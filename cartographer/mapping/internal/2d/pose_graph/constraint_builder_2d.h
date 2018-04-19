@@ -21,7 +21,6 @@
 #include <deque>
 #include <functional>
 #include <limits>
-#include <list>
 #include <vector>
 
 #include "Eigen/Core"
@@ -30,7 +29,6 @@
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/mutex.h"
-#include "cartographer/common/optional.h"
 #include "cartographer/common/task.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/2d/submap_2d.h"
@@ -112,6 +110,7 @@ class ConstraintBuilder2D {
     const ProbabilityGrid* probability_grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
         fast_correlative_scan_matcher;
+    // TODO(gaschler): Make weak_ptr.
     std::shared_ptr<common::Task> scan_matcher_factory_task;
   };
 
@@ -152,13 +151,9 @@ class ConstraintBuilder2D {
 
   int num_finished_nodes_ GUARDED_BY(mutex_) = 0;
 
-  // For each added node, maps to the number of pending computations that were
-  // added for it.
-  std::map<int, std::list<std::shared_ptr<common::Task>>>
-      node_index_to_constraint_search_tasks_ GUARDED_BY(mutex_);
+  std::unique_ptr<common::Task> finish_node_task_ GUARDED_BY(mutex_);
 
-  std::list<std::shared_ptr<common::Task>> notify_end_of_node_tasks_
-      GUARDED_BY(mutex_);
+  std::unique_ptr<common::Task> when_done_task_ GUARDED_BY(mutex_);
 
   // Constraints currently being computed in the background. A deque is used to
   // keep pointers valid when adding more entries.
