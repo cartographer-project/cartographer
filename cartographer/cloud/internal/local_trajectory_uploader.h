@@ -55,7 +55,8 @@ class LocalTrajectoryUploaderInterface {
 
 // Returns LocalTrajectoryUploader with the actual implementation.
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
-    const std::string& uplink_server_address, int batch_size);
+    const std::string& uplink_server_address, int batch_size,
+    bool enable_ssl_encryption);
 
 }  // namespace cloud
 }  // namespace cartographer

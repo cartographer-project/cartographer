@@ -25,4 +25,5 @@ message MapBuilderServerOptions {
   cartographer.mapping.proto.MapBuilderOptions map_builder_options = 4;
   string uplink_server_address = 5;
   int32 upload_batch_size = 6;
+  bool enable_ssl_encryption = 7;
 }
