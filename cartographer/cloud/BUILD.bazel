@@ -89,6 +89,8 @@ cc_binary(
     name = src.replace("/", "_").replace(".cc", ""),
     srcs = [src],
     data = ["//:configuration_files"],
+    # Tests cannot run concurrently as some of them open the same port.
+    tags = ["exclusive"],
     deps = [
         ":cartographer_grpc",
         "@com_google_googletest//:gtest_main",
