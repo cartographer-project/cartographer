@@ -110,8 +110,7 @@ class ConstraintBuilder2D {
     const Grid2D* grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
         fast_correlative_scan_matcher;
-    // TODO(gaschler): Make weak_ptr.
-    std::shared_ptr<common::Task> scan_matcher_factory_task;
+    std::weak_ptr<common::Task> scan_matcher_factory_task;
   };
 
   // Either schedules the 'work_item', or if needed, schedules the scan matcher

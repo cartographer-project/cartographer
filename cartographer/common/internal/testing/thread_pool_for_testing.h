@@ -36,8 +36,8 @@ class ThreadPoolForTesting : public ThreadPoolInterface {
 
   void NotifyReady(Task* task) override;
   void Schedule(const std::function<void()>& work_item) override;
-  std::shared_ptr<common::Task> ScheduleWhenReady(
-      std::shared_ptr<Task> task) override;
+  std::weak_ptr<common::Task> ScheduleWhenReady(
+      std::unique_ptr<Task> task) override;
   void WaitUntilIdle();
 
  private:

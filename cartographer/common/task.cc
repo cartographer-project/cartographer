@@ -37,13 +37,18 @@ void Task::SetWorkItem(const WorkItem& work_item) {
   work_item_ = work_item;
 }
 
-void Task::AddDependency(Task* dependency) {
+void Task::AddDependency(std::weak_ptr<Task> dependency) {
+  std::shared_ptr<Task> shared_dependency;
   {
     MutexLocker locker(&mutex_);
     CHECK_EQ(state_, NEW);
-    ++uncompleted_dependencies_;
+    if (shared_dependency = dependency.lock()) {
+      ++uncompleted_dependencies_;
+    }
   }
-  dependency->AddDependentTask(this);
+  if (shared_dependency) {
+    shared_dependency->AddDependentTask(this);
+  }
 }
 
 void Task::NotifyWhenReady(ThreadPoolInterface* thread_pool) {

@@ -116,9 +116,10 @@ void ConstraintBuilder2D::NotifyEndOfNode() {
     ++num_finished_nodes_;
   });
   CHECK(when_done_task_ != nullptr);
-  when_done_task_->AddDependency(finish_node_task_.get());
-  thread_pool_->ScheduleWhenReady(std::move(finish_node_task_));
+  auto weak_finish_node_task =
+      thread_pool_->ScheduleWhenReady(std::move(finish_node_task_));
   finish_node_task_ = common::make_unique<common::Task>();
+  when_done_task_->AddDependency(weak_finish_node_task);
   ++num_started_nodes_;
 }
 
@@ -143,28 +144,28 @@ void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
     LOG(WARNING)
         << "MaybeAdd*Constraint was called while WhenDone was scheduled.";
   }
-  auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
-  if (submap_scan_matcher.scan_matcher_factory_task == nullptr) {
-    submap_scan_matcher.scan_matcher_factory_task =
-        std::make_shared<common::Task>();
+  if (submap_scan_matchers_.count(submap_id) == 0) {
+    auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
     submap_scan_matcher.grid = grid;
     auto& scan_matcher_options =
         options_.fast_correlative_scan_matcher_options();
-    submap_scan_matcher.scan_matcher_factory_task->SetWorkItem(
+    auto scan_matcher_task = common::make_unique<common::Task>();
+    scan_matcher_task->SetWorkItem(
         [&submap_scan_matcher, &scan_matcher_options]() {
           submap_scan_matcher.fast_correlative_scan_matcher =
               common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
                   *submap_scan_matcher.grid, scan_matcher_options);
         });
-    thread_pool_->ScheduleWhenReady(
-        submap_scan_matcher.scan_matcher_factory_task);
+    submap_scan_matcher.scan_matcher_factory_task =
+        thread_pool_->ScheduleWhenReady(std::move(scan_matcher_task));
   }
   auto task = common::make_unique<common::Task>();
   task->SetWorkItem(work_item);
-  task->AddDependency(submap_scan_matcher.scan_matcher_factory_task.get());
+  task->AddDependency(
+      submap_scan_matchers_.at(submap_id).scan_matcher_factory_task);
+  auto weak_task = thread_pool_->ScheduleWhenReady(std::move(task));
   CHECK(finish_node_task_ != nullptr);
-  finish_node_task_->AddDependency(task.get());
-  thread_pool_->ScheduleWhenReady(std::move(task));
+  finish_node_task_->AddDependency(weak_task);
 }
 
 const ConstraintBuilder2D::SubmapScanMatcher*

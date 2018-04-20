@@ -16,6 +16,7 @@
 
 #include "cartographer/common/thread_pool.h"
 
+#include "cartographer/common/make_unique.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -49,78 +50,78 @@ class Receiver {
 TEST(ThreadPoolTest, RunTask) {
   ThreadPool pool(1);
   Receiver receiver;
-  auto task = std::make_shared<Task>();
+  auto task = common::make_unique<Task>();
   task->SetWorkItem([&receiver]() { receiver.Receive(1); });
-  pool.ScheduleWhenReady(task);
+  pool.ScheduleWhenReady(std::move(task));
   receiver.WaitForNumberSequence({1});
 }
 
 TEST(ThreadPoolTest, RunWithDependency) {
   ThreadPool pool(2);
   Receiver receiver;
-  auto task_2 = std::make_shared<Task>();
+  auto task_2 = common::make_unique<Task>();
   task_2->SetWorkItem([&receiver]() { receiver.Receive(2); });
-  auto task_1 = std::make_shared<Task>();
+  auto task_1 = common::make_unique<Task>();
   task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
-  task_2->AddDependency(task_1.get());
-  pool.ScheduleWhenReady(task_2);
-  pool.ScheduleWhenReady(task_1);
+  auto weak_task_1 = pool.ScheduleWhenReady(std::move(task_1));
+  task_2->AddDependency(weak_task_1);
+  pool.ScheduleWhenReady(std::move(task_2));
   receiver.WaitForNumberSequence({1, 2});
 }
 
 TEST(ThreadPoolTest, RunWithOutOfScopeDependency) {
   ThreadPool pool(2);
   Receiver receiver;
-  auto task_2 = std::make_shared<Task>();
+  auto task_2 = common::make_unique<Task>();
   task_2->SetWorkItem([&receiver]() { receiver.Receive(2); });
   {
-    auto task_1 = std::make_shared<Task>();
+    auto task_1 = common::make_unique<Task>();
     task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
-    pool.ScheduleWhenReady(task_1);
-    task_2->AddDependency(task_1.get());
+    auto weak_task_1 = pool.ScheduleWhenReady(std::move(task_1));
+    task_2->AddDependency(weak_task_1);
     // task_1 goes out of scope.
   }
-  pool.ScheduleWhenReady(task_2);
+  pool.ScheduleWhenReady(std::move(task_2));
   receiver.WaitForNumberSequence({1, 2});
 }
 
 TEST(ThreadPoolTest, RunWithMultipleDependencies) {
   ThreadPool pool(2);
   Receiver receiver;
-  auto task_1 = std::make_shared<Task>();
+  auto task_1 = common::make_unique<Task>();
   task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
-  auto task_2a = std::make_shared<Task>();
+  auto task_2a = common::make_unique<Task>();
   task_2a->SetWorkItem([&receiver]() { receiver.Receive(2); });
-  auto task_2b = std::make_shared<Task>();
+  auto task_2b = common::make_unique<Task>();
   task_2b->SetWorkItem([&receiver]() { receiver.Receive(2); });
-  auto task_3 = std::make_shared<Task>();
+  auto task_3 = common::make_unique<Task>();
   task_3->SetWorkItem([&receiver]() { receiver.Receive(3); });
   /*          -> task_2a \
    *  task_1 /-> task_2b --> task_3
    */
-  task_3->AddDependency(task_2a.get());
-  task_3->AddDependency(task_2b.get());
-  task_2a->AddDependency(task_1.get());
-  pool.ScheduleWhenReady(task_1);
-  pool.ScheduleWhenReady(task_2a);
-  task_3->AddDependency(task_1.get());
-  pool.ScheduleWhenReady(task_3);
-  task_2b->AddDependency(task_1.get());
-  pool.ScheduleWhenReady(task_2b);
+  auto weak_task_1 = pool.ScheduleWhenReady(std::move(task_1));
+  task_2a->AddDependency(weak_task_1);
+  auto weak_task_2a = pool.ScheduleWhenReady(std::move(task_2a));
+  task_3->AddDependency(weak_task_1);
+  task_3->AddDependency(weak_task_2a);
+  task_2b->AddDependency(weak_task_1);
+  auto weak_task_2b = pool.ScheduleWhenReady(std::move(task_2b));
+  task_3->AddDependency(weak_task_2b);
+  pool.ScheduleWhenReady(std::move(task_3));
   receiver.WaitForNumberSequence({1, 2, 2, 3});
 }
 
 TEST(ThreadPoolTest, RunWithFinishedDependency) {
   ThreadPool pool(2);
   Receiver receiver;
-  auto task_1 = std::make_shared<Task>();
+  auto task_1 = common::make_unique<Task>();
   task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
-  auto task_2 = std::make_shared<Task>();
+  auto task_2 = common::make_unique<Task>();
   task_2->SetWorkItem([&receiver]() { receiver.Receive(2); });
-  task_2->AddDependency(task_1.get());
-  pool.ScheduleWhenReady(task_1);
+  auto weak_task_1 = pool.ScheduleWhenReady(std::move(task_1));
+  task_2->AddDependency(weak_task_1);
   receiver.WaitForNumberSequence({1});
-  pool.ScheduleWhenReady(task_2);
+  pool.ScheduleWhenReady(std::move(task_2));
   receiver.WaitForNumberSequence({1, 2});
 }
 

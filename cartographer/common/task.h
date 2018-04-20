@@ -41,8 +41,9 @@ class Task {
   void SetWorkItem(const WorkItem& work_item) EXCLUDES(mutex_);
   // TODO(gaschler): Pass weak_ptr.
 
-  // State must be 'NEW'.
-  void AddDependency(Task* dependency) EXCLUDES(mutex_);
+  // State must be 'NEW'. 'dependency' may be nullptr, in which case it is
+  // assumed completed.
+  void AddDependency(std::weak_ptr<Task> dependency) EXCLUDES(mutex_);
 
   // State must be 'NEW' and becomes 'DISPATCHED' or 'READY'.
   void NotifyWhenReady(ThreadPoolInterface* thread_pool) EXCLUDES(mutex_);
@@ -51,7 +52,7 @@ class Task {
   void Execute() EXCLUDES(mutex_);
 
  private:
-  // Allowed all states.
+  // Allowed in all states.
   void AddDependentTask(Task* dependent_task);
 
   // State must be 'NEW' or 'DISPATCHED'. If 'DISPATCHED', may become 'READY'.

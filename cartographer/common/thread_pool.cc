@@ -64,17 +64,18 @@ void ThreadPool::Schedule(const std::function<void()>& work_item) {
   ScheduleWhenReady(std::move(task));
 }
 
-std::shared_ptr<Task> ThreadPool::ScheduleWhenReady(
-    std::shared_ptr<Task> task) {
+std::weak_ptr<Task> ThreadPool::ScheduleWhenReady(std::unique_ptr<Task> task) {
+  std::shared_ptr<Task> shared_task;
   {
     MutexLocker locker(&mutex_);
     CHECK(running_);
     auto insert_result =
-        tasks_not_ready_.insert(std::make_pair(task.get(), task));
+        tasks_not_ready_.insert(std::make_pair(task.get(), std::move(task)));
     CHECK(insert_result.second) << "ScheduleWhenReady called twice";
+    shared_task = insert_result.first->second;
   }
-  task->NotifyWhenReady(this);
-  return task;
+  shared_task->NotifyWhenReady(this);
+  return shared_task;
 }
 
 void ThreadPool::DoWork() {

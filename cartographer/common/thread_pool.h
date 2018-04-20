@@ -40,8 +40,7 @@ class ThreadPoolInterface {
   virtual void NotifyReady(Task* task) = 0;
   // TODO(gaschler): Replace by ScheduleWhenReady.
   virtual void Schedule(const std::function<void()>& work_item) = 0;
-  virtual std::shared_ptr<Task> ScheduleWhenReady(
-      std::shared_ptr<Task> task) = 0;
+  virtual std::weak_ptr<Task> ScheduleWhenReady(std::unique_ptr<Task> task) = 0;
 };
 
 // A fixed number of threads working on tasks. Adding a task does not block.
@@ -63,10 +62,9 @@ class ThreadPool : public ThreadPoolInterface {
   // TODO(gaschler): Remove all uses.
   void Schedule(const std::function<void()>& work_item) override;
 
-  // TODO: Make this stricter.
-  // If the returned smart pointer is expired, 'task' has certainly completed,
-  // so it no longer needs be added as a dependency.
-  std::shared_ptr<Task> ScheduleWhenReady(std::shared_ptr<Task> task)
+  // If the returned weak pointer is expired, 'task' has certainly completed,
+  // so dependants no longer need to add it as a dependency.
+  std::weak_ptr<Task> ScheduleWhenReady(std::unique_ptr<Task> task)
       EXCLUDES(mutex_);
 
  private:
@@ -75,10 +73,7 @@ class ThreadPool : public ThreadPoolInterface {
   Mutex mutex_;
   bool running_ GUARDED_BY(mutex_) = true;
   std::vector<std::thread> pool_ GUARDED_BY(mutex_);
-  // TODO(gaschler): Make this a shared pointer at let Schedule return a weak
-  // one.
   std::deque<std::shared_ptr<Task>> task_queue_ GUARDED_BY(mutex_);
-
   std::map<Task*, std::shared_ptr<Task>> tasks_not_ready_ GUARDED_BY(mutex_);
 };
 
