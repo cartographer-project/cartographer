@@ -35,6 +35,7 @@ message TrajectoryBuilderOptions {
   message OverlappingSubmapsTrimmerOptions2D {
     int32 fresh_submaps_count = 1;
     double min_covered_area = 2;
+    int32 min_added_submaps_count = 3;
   }
   OverlappingSubmapsTrimmerOptions2D overlapping_submaps_trimmer_2d = 5;
 }
