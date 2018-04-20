@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/optimization/landmark_cost_function_2d.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/landmark_cost_function_2d.h"
 
 #include <memory>
 

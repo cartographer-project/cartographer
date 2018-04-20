@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_HELPERS_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_HELPERS_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_COST_HELPERS_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_COST_HELPERS_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
@@ -84,6 +84,6 @@ InterpolateNodes2D(const T* const prev_node_pose,
 }  // namespace mapping
 }  // namespace cartographer
 
-#include "cartographer/mapping/internal/optimization/cost_helpers_impl.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/cost_helpers_impl.h"
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_HELPERS_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_COST_HELPERS_H_

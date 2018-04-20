@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_SPA_COST_FUNCTION_3D_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_SPA_COST_FUNCTION_3D_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_SPA_COST_FUNCTION_3D_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_SPA_COST_FUNCTION_3D_H_
 
 #include <array>
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
-#include "cartographer/mapping/internal/optimization/cost_helpers.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/cost_helpers.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -66,4 +66,4 @@ class SpaCostFunction3D {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_SPA_COST_FUNCTION_3D_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_SPA_COST_FUNCTION_3D_H_
