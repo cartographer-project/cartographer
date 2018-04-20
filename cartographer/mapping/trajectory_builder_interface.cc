@@ -37,6 +37,8 @@ void PopulateOverlappingSubmapsTrimmerOptions2D(
       options_dictionary->GetInt("fresh_submaps_count"));
   options->set_min_covered_area(
       options_dictionary->GetDouble("min_covered_area"));
+  options->set_min_added_submaps_count(
+      options_dictionary->GetInt("min_added_submaps_count"));
 }
 
 }  // namespace

@@ -55,7 +55,7 @@ transform::Rigid2d ComputeSubmapPose(const Submap2D& submap) {
 
 ConstraintBuilder2D::ConstraintBuilder2D(
     const pose_graph::proto::ConstraintBuilderOptions& options,
-    common::ThreadPool* const thread_pool)
+    common::ThreadPoolInterface* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
       finish_node_task_(common::make_unique<common::Task>()),
@@ -137,7 +137,7 @@ void ConstraintBuilder2D::WhenDone(
 // TODO(gaschler): Let this only create the scan matcher task and return a
 // weak_ptr.
 void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
-    const SubmapId& submap_id, const ProbabilityGrid* submap,
+    const SubmapId& submap_id, const Grid2D* const grid,
     const std::function<void()>& work_item) {
   if (when_done_) {
     LOG(WARNING)
@@ -147,14 +147,14 @@ void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
   if (submap_scan_matcher.scan_matcher_factory_task == nullptr) {
     submap_scan_matcher.scan_matcher_factory_task =
         std::make_shared<common::Task>();
-    submap_scan_matcher.probability_grid = submap;
+    submap_scan_matcher.grid = grid;
     auto& scan_matcher_options =
         options_.fast_correlative_scan_matcher_options();
     submap_scan_matcher.scan_matcher_factory_task->SetWorkItem(
         [&submap_scan_matcher, &scan_matcher_options]() {
           submap_scan_matcher.fast_correlative_scan_matcher =
               common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
-                  *submap_scan_matcher.probability_grid, scan_matcher_options);
+                  *submap_scan_matcher.grid, scan_matcher_options);
         });
     thread_pool_->ScheduleWhenReady(
         submap_scan_matcher.scan_matcher_factory_task);
@@ -236,8 +236,8 @@ void ConstraintBuilder2D::ComputeConstraint(
   ceres::Solver::Summary unused_summary;
   ceres_scan_matcher_.Match(pose_estimate.translation(), pose_estimate,
                             constant_data->filtered_gravity_aligned_point_cloud,
-                            *submap_scan_matcher->probability_grid,
-                            &pose_estimate, &unused_summary);
+                            *submap_scan_matcher->grid, &pose_estimate,
+                            &unused_summary);
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;

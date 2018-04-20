@@ -45,15 +45,13 @@ void AddFixedFramePoseDataHandler::OnRequest(
   // 'MapBuilderContext'.
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    auto data_request =
-        common::make_unique<proto::AddFixedFramePoseDataRequest>();
-    CreateAddFixedFramePoseDataRequest(
-        request.sensor_metadata().sensor_id(),
-        request.sensor_metadata().trajectory_id(),
-        request.fixed_frame_pose_data(), data_request.get());
+    auto sensor_data = common::make_unique<proto::SensorData>();
+    *sensor_data->mutable_sensor_metadata() = request.sensor_metadata();
+    *sensor_data->mutable_fixed_frame_pose_data() =
+        request.fixed_frame_pose_data();
     GetUnsynchronizedContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
-        ->EnqueueDataRequest(std::move(data_request));
+        ->EnqueueSensorData(std::move(sensor_data));
   }
 }
 

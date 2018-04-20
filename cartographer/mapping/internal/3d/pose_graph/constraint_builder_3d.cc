@@ -57,7 +57,7 @@ static auto* kGlobalConstraintLowResolutionScoresMetric =
 
 ConstraintBuilder3D::ConstraintBuilder3D(
     const proto::ConstraintBuilderOptions& options,
-    common::ThreadPool* const thread_pool)
+    common::ThreadPoolInterface* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
       sampler_(options.sampling_ratio()),

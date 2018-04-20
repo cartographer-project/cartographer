@@ -35,4 +35,6 @@ message Grid2D {
   oneof grid {
     ProbabilityGrid probability_grid_2d = 4;
   }
+  float min_correspondence_cost = 6;
+  float max_correspondence_cost = 7;
 }

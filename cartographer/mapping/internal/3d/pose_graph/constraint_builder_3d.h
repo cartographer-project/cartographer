@@ -60,7 +60,7 @@ class ConstraintBuilder3D {
   using Result = std::vector<Constraint>;
 
   ConstraintBuilder3D(const proto::ConstraintBuilderOptions& options,
-                      common::ThreadPool* thread_pool);
+                      common::ThreadPoolInterface* thread_pool);
   ~ConstraintBuilder3D();
 
   ConstraintBuilder3D(const ConstraintBuilder3D&) = delete;
@@ -153,7 +153,7 @@ class ConstraintBuilder3D {
   void FinishComputation(int computation_index) EXCLUDES(mutex_);
 
   const proto::ConstraintBuilderOptions options_;
-  common::ThreadPool* thread_pool_;
+  common::ThreadPoolInterface* thread_pool_;
   common::Mutex mutex_;
 
   // 'callback' set by WhenDone().

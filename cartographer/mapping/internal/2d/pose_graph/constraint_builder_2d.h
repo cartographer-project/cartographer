@@ -62,7 +62,7 @@ class ConstraintBuilder2D {
   using Result = std::vector<Constraint>;
 
   ConstraintBuilder2D(const proto::ConstraintBuilderOptions& options,
-                      common::ThreadPool* thread_pool);
+                      common::ThreadPoolInterface* thread_pool);
   ~ConstraintBuilder2D();
 
   ConstraintBuilder2D(const ConstraintBuilder2D&) = delete;
@@ -107,7 +107,7 @@ class ConstraintBuilder2D {
 
  private:
   struct SubmapScanMatcher {
-    const ProbabilityGrid* probability_grid;
+    const Grid2D* grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
         fast_correlative_scan_matcher;
     // TODO(gaschler): Make weak_ptr.
@@ -117,7 +117,7 @@ class ConstraintBuilder2D {
   // Either schedules the 'work_item', or if needed, schedules the scan matcher
   // construction and queues the 'work_item'.
   void DispatchScanMatcherConstructionAndWorkItem(
-      const SubmapId& submap_id, const ProbabilityGrid* submap,
+      const SubmapId& submap_id, const Grid2D* grid,
       const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Returns the scan matcher for a submap, which has to exist.
@@ -137,7 +137,7 @@ class ConstraintBuilder2D {
   void RunCallback() EXCLUDES(mutex_);
 
   const pose_graph::proto::ConstraintBuilderOptions options_;
-  common::ThreadPool* thread_pool_;
+  common::ThreadPoolInterface* thread_pool_;
   common::Mutex mutex_;
 
   // 'callback' set by WhenDone().

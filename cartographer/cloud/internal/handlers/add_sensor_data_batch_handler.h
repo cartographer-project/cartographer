@@ -14,32 +14,30 @@
  * limitations under the License.
  */
 
-#include "cartographer/cloud/internal/handlers/add_local_slam_result_data_handler.h"
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SENSOR_DATA_BATCH_HANDLER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SENSOR_DATA_BATCH_HANDLER_H
 
 #include "async_grpc/rpc_handler.h"
-#include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/mapping/local_slam_result_data.h"
-#include "cartographer/mapping/trajectory_node.h"
-#include "cartographer/sensor/internal/dispatchable.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-void AddLocalSlamResultDataHandler::OnRequest(
-    const proto::AddLocalSlamResultDataRequest& request) {
-  GetContext<MapBuilderContextInterface>()->EnqueueLocalSlamResultData(
-      request.sensor_metadata().trajectory_id(),
-      request.sensor_metadata().sensor_id(), request.local_slam_result_data());
-}
+DEFINE_HANDLER_SIGNATURE(
+    AddSensorDataBatchSignature, proto::AddSensorDataBatchRequest,
+    google::protobuf::Empty,
+    "/cartographer.cloud.proto.MapBuilderService/AddSensorDataBatch")
 
-void AddLocalSlamResultDataHandler::OnReadsDone() {
-  Send(common::make_unique<google::protobuf::Empty>());
-}
+class AddSensorDataBatchHandler
+    : public async_grpc::RpcHandler<AddSensorDataBatchSignature> {
+ public:
+  void OnRequest(const proto::AddSensorDataBatchRequest& request) override;
+};
 
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SENSOR_DATA_BATCH_HANDLER_H

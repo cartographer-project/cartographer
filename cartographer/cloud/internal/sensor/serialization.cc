@@ -70,12 +70,12 @@ void CreateAddLandmarkDataRequest(
   *proto->mutable_landmark_data() = landmark_data;
 }
 
-void CreateAddLocalSlamResultDataRequest(
+void CreateSensorDataForLocalSlamResult(
     const std::string& sensor_id, int trajectory_id, common::Time time,
     int starting_submap_index,
     const mapping::TrajectoryBuilderInterface::InsertionResult&
         insertion_result,
-    proto::AddLocalSlamResultDataRequest* proto) {
+    proto::SensorData* proto) {
   CreateSensorMetadata(sensor_id, trajectory_id,
                        proto->mutable_sensor_metadata());
   proto->mutable_local_slam_result_data()->set_timestamp(

@@ -47,11 +47,11 @@ def cartographer_repositories():
 
   _maybe(native.http_archive,
       name = "com_google_glog",
-      sha256 = "1ee310e5d0a19b9d584a855000434bb724aa744745d5b8ab1855c85bff8a8e21",
-      strip_prefix = "glog-028d37889a1e80e8a07da1b8945ac706259e5fd8",
+      sha256 = "dfc074b41a5b86fc5dda4f0e2e2d6cc5b21f798c9fcc8ed5fea9c8f7c4613be6",
+      strip_prefix = "glog-dd2b93d761a19860190cb3fa92066c8031e912e3",
       urls = [
-          "https://mirror.bazel.build/github.com/google/glog/archive/028d37889a1e80e8a07da1b8945ac706259e5fd8.tar.gz",
-          "https://github.com/google/glog/archive/028d37889a1e80e8a07da1b8945ac706259e5fd8.tar.gz",
+          "https://mirror.bazel.build/github.com/google/glog/archive/dd2b93d761a19860190cb3fa92066c8031e912e3.tar.gz",
+          "https://github.com/google/glog/archive/dd2b93d761a19860190cb3fa92066c8031e912e3.tar.gz",
       ],
   )
 
@@ -228,9 +228,9 @@ def cartographer_repositories():
 
   _maybe(native.http_archive,
       name = "com_github_googlecartographer_async_grpc",
-      strip_prefix = "async_grpc-654c75ebf553c2bdb624c87a690f5a238aeb651f",
+      strip_prefix = "async_grpc-c2c68f56904a595ab5ba24c1fb19b4b8e954fa15",
       urls = [
-          "https://github.com/googlecartographer/async_grpc/archive/654c75ebf553c2bdb624c87a690f5a238aeb651f.tar.gz",
+          "https://github.com/googlecartographer/async_grpc/archive/c2c68f56904a595ab5ba24c1fb19b4b8e954fa15.tar.gz",
       ],
   )
   

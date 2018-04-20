@@ -27,6 +27,7 @@ class MockThreadPool : public ThreadPoolInterface {
  public:
   MOCK_METHOD1(NotifyReady, void(Task*));
   MOCK_METHOD1(Schedule, void(const std::function<void()>&));
+  MOCK_METHOD1(ScheduleWhenReady, std::shared_ptr<Task>(std::shared_ptr<Task>));
 };
 
 TEST(TaskTest, RunTask) {

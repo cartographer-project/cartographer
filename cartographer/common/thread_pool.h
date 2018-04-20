@@ -37,10 +37,11 @@ class ThreadPoolInterface {
  public:
   ThreadPoolInterface() {}
   virtual ~ThreadPoolInterface() {}
-  ThreadPoolInterface(const ThreadPoolInterface&) = delete;
-  ThreadPoolInterface& operator=(const ThreadPoolInterface&) = delete;
   virtual void NotifyReady(Task* task) = 0;
+  // TODO(gaschler): Replace by ScheduleWhenReady.
   virtual void Schedule(const std::function<void()>& work_item) = 0;
+  virtual std::shared_ptr<Task> ScheduleWhenReady(
+      std::shared_ptr<Task> task) = 0;
 };
 
 // A fixed number of threads working on tasks. Adding a task does not block.
