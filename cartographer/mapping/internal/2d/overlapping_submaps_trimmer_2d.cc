@@ -179,7 +179,9 @@ std::vector<SubmapId> FindSubmapIdsToTrim(
 
 void OverlappingSubmapsTrimmer2D::Trim(Trimmable* pose_graph) {
   const auto submap_data = pose_graph->GetAllSubmapData();
-  if (submap_data.size() == 0) return;
+  if (submap_data.size() - current_submap_count_ <= min_added_submaps_count_) {
+    return;
+  }
 
   SubmapCoverageGrid2D coverage_grid(GetCornerOfFirstSubmap(submap_data));
   const std::map<SubmapId, common::Time> submap_freshness =
@@ -190,6 +192,7 @@ void OverlappingSubmapsTrimmer2D::Trim(Trimmable* pose_graph) {
   const std::vector<SubmapId> submap_ids_to_remove =
       FindSubmapIdsToTrim(coverage_grid, all_submap_ids, fresh_submaps_count_,
                           min_covered_cells_count_);
+  current_submap_count_ = submap_data.size() - submap_ids_to_remove.size();
   for (const SubmapId& id : submap_ids_to_remove) {
     pose_graph->MarkSubmapAsTrimmed(id);
   }

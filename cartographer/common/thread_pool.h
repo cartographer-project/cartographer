@@ -40,12 +40,12 @@ class ThreadPoolInterface {
 class ThreadPool : public ThreadPoolInterface {
  public:
   explicit ThreadPool(int num_threads);
-  virtual ~ThreadPool();
+  ~ThreadPool();
 
   ThreadPool(const ThreadPool&) = delete;
   ThreadPool& operator=(const ThreadPool&) = delete;
 
-  virtual void Schedule(const std::function<void()>& work_item);
+  void Schedule(const std::function<void()>& work_item) override;
 
  private:
   void DoWork();
