@@ -178,7 +178,7 @@ std::vector<SubmapId> FindSubmapIdsToTrim(
 }  // namespace
 
 void OverlappingSubmapsTrimmer2D::Trim(Trimmable* pose_graph) {
-  const auto submap_data = pose_graph->GetAllSubmapData();
+  const auto submap_data = pose_graph->GetOptimizedSubmapData();
   if (submap_data.size() - current_submap_count_ <= min_added_submaps_count_) {
     return;
   }

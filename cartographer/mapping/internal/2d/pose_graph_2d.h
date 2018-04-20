@@ -281,7 +281,7 @@ class PoseGraph2D : public PoseGraph {
 
     int num_submaps(int trajectory_id) const override;
     std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override;
-    MapById<SubmapId, SubmapData> GetAllSubmapData() const override
+    MapById<SubmapId, SubmapData> GetOptimizedSubmapData() const override
         REQUIRES(parent_->mutex_);
     const MapById<NodeId, TrajectoryNode>& GetTrajectoryNodes() const override
         REQUIRES(parent_->mutex_);
