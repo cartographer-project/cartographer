@@ -37,6 +37,10 @@ proto::MapBuilderServerOptions CreateMapBuilderServerOptions(
           lua_parameter_dictionary->GetDictionary("map_builder").get());
   map_builder_server_options.set_uplink_server_address(
       lua_parameter_dictionary->GetString("uplink_server_address"));
+  map_builder_server_options.set_upload_batch_size(
+      lua_parameter_dictionary->GetInt("upload_batch_size"));
+  map_builder_server_options.set_enable_ssl_encryption(
+      lua_parameter_dictionary->GetBool("enable_ssl_encryption"));
   return map_builder_server_options;
 }
 

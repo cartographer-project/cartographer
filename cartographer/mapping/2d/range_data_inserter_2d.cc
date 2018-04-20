@@ -47,10 +47,10 @@ proto::RangeDataInserterOptions2D CreateRangeDataInserterOptions2D(
 RangeDataInserter2D::RangeDataInserter2D(
     const proto::RangeDataInserterOptions2D& options)
     : options_(options),
-      hit_table_(
-          ComputeLookupTableToApplyOdds(Odds(options.hit_probability()))),
-      miss_table_(
-          ComputeLookupTableToApplyOdds(Odds(options.miss_probability()))) {}
+      hit_table_(ComputeLookupTableToApplyCorrespondenceCostOdds(
+          Odds(options.hit_probability()))),
+      miss_table_(ComputeLookupTableToApplyCorrespondenceCostOdds(
+          Odds(options.miss_probability()))) {}
 
 void RangeDataInserter2D::Insert(
     const sensor::RangeData& range_data,

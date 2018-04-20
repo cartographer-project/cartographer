@@ -22,7 +22,8 @@
 namespace cartographer {
 namespace mapping {
 
-ProbabilityGrid::ProbabilityGrid(const MapLimits& limits) : Grid2D(limits) {}
+ProbabilityGrid::ProbabilityGrid(const MapLimits& limits)
+    : Grid2D(limits, kMinCorrespondenceCost, kMaxCorrespondenceCost) {}
 
 ProbabilityGrid::ProbabilityGrid(const proto::Grid2D& proto) : Grid2D(proto) {
   CHECK(proto.has_probability_grid_2d());
@@ -35,7 +36,8 @@ void ProbabilityGrid::SetProbability(const Eigen::Array2i& cell_index,
   uint16& cell =
       (*mutable_correspondence_cost_cells())[ToFlatIndex(cell_index)];
   CHECK_EQ(cell, kUnknownProbabilityValue);
-  cell = ProbabilityToValue(probability);
+  cell =
+      CorrespondenceCostToValue(ProbabilityToCorrespondenceCost(probability));
   mutable_known_cells_box()->extend(cell_index.matrix());
 }
 
@@ -64,8 +66,8 @@ bool ProbabilityGrid::ApplyLookupTable(const Eigen::Array2i& cell_index,
 // Returns the probability of the cell with 'cell_index'.
 float ProbabilityGrid::GetProbability(const Eigen::Array2i& cell_index) const {
   if (!limits().Contains(cell_index)) return kMinProbability;
-  return ValueToProbability(
-      correspondence_cost_cells()[ToFlatIndex(cell_index)]);
+  return CorrespondenceCostToProbability(ValueToCorrespondenceCost(
+      correspondence_cost_cells()[ToFlatIndex(cell_index)]));
 }
 proto::Grid2D ProbabilityGrid::ToProto() const {
   proto::Grid2D result;

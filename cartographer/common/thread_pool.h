@@ -27,13 +27,8 @@
 namespace cartographer {
 namespace common {
 
-// General interface for thread pool implementations.
 class ThreadPoolInterface {
  public:
-  ThreadPoolInterface() {}
-  virtual ~ThreadPoolInterface() {}
-  ThreadPoolInterface(const ThreadPoolInterface&) = delete;
-  ThreadPoolInterface& operator=(const ThreadPoolInterface&) = delete;
   virtual void Schedule(const std::function<void()>& work_item) = 0;
 };
 

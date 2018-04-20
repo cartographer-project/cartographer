@@ -34,10 +34,10 @@ using LandmarkObservation =
     PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
 TEST(LandmarkCostFunctionTest, SmokeTest) {
-  NodeData2D prev_node;
+  NodeSpec2D prev_node;
   prev_node.time = common::FromUniversal(0);
   prev_node.gravity_alignment = Eigen::Quaterniond::Identity();
-  NodeData2D next_node;
+  NodeSpec2D next_node;
   next_node.time = common::FromUniversal(10);
   next_node.gravity_alignment = Eigen::Quaterniond::Identity();
 

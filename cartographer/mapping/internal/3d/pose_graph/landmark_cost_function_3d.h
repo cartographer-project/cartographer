@@ -39,8 +39,8 @@ class LandmarkCostFunction3D {
       PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
   static ceres::CostFunction* CreateAutoDiffCostFunction(
-      const LandmarkObservation& observation, const NodeData3D& prev_node,
-      const NodeData3D& next_node) {
+      const LandmarkObservation& observation, const NodeSpec3D& prev_node,
+      const NodeSpec3D& next_node) {
     return new ceres::AutoDiffCostFunction<
         LandmarkCostFunction3D, 6 /* residuals */,
         4 /* previous node rotation variables */,
@@ -76,8 +76,8 @@ class LandmarkCostFunction3D {
 
  private:
   LandmarkCostFunction3D(const LandmarkObservation& observation,
-                         const NodeData3D& prev_node,
-                         const NodeData3D& next_node)
+                         const NodeSpec3D& prev_node,
+                         const NodeSpec3D& next_node)
       : landmark_to_tracking_transform_(
             observation.landmark_to_tracking_transform),
         translation_weight_(observation.translation_weight),

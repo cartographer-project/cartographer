@@ -19,7 +19,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
-#include "cartographer/mapping/2d/probability_grid.h"
+#include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "ceres/ceres.h"
@@ -29,19 +29,18 @@ namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 
-// Computes a cost for matching the 'point_cloud' to the 'probability_grid' with
-// a 'pose'. The cost increases when points fall into less occupied space, i.e.
-// at pixels with lower values.
+// Computes a cost for matching the 'point_cloud' to the 'grid' with
+// a 'pose'. The cost increases with poorer correspondence of the grid and the
+// point observation (e.g. points falling into less occupied space).
 class OccupiedSpaceCostFunction2D {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor, const sensor::PointCloud& point_cloud,
-      const ProbabilityGrid& probability_grid) {
+      const Grid2D& grid) {
     return new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction2D,
                                            ceres::DYNAMIC /* residuals */,
                                            3 /* pose variables */>(
-        new OccupiedSpaceCostFunction2D(scaling_factor, point_cloud,
-                                        probability_grid),
+        new OccupiedSpaceCostFunction2D(scaling_factor, point_cloud, grid),
         point_cloud.size());
   }
 
@@ -53,9 +52,9 @@ class OccupiedSpaceCostFunction2D {
     Eigen::Matrix<T, 3, 3> transform;
     transform << rotation_matrix, translation, T(0.), T(0.), T(1.);
 
-    const GridArrayAdapter adapter(probability_grid_);
+    const GridArrayAdapter adapter(grid_);
     ceres::BiCubicInterpolator<GridArrayAdapter> interpolator(adapter);
-    const MapLimits& limits = probability_grid_.limits();
+    const MapLimits& limits = grid_.limits();
 
     for (size_t i = 0; i < point_cloud_.size(); ++i) {
       // Note that this is a 2D point. The third component is a scaling factor.
@@ -68,7 +67,7 @@ class OccupiedSpaceCostFunction2D {
           (limits.max().y() - world[1]) / limits.resolution() - 0.5 +
               static_cast<double>(kPadding),
           &residual[i]);
-      residual[i] = scaling_factor_ * (1. - residual[i]);
+      residual[i] = scaling_factor_ * residual[i];
     }
     return true;
   }
@@ -79,39 +78,36 @@ class OccupiedSpaceCostFunction2D {
    public:
     enum { DATA_DIMENSION = 1 };
 
-    explicit GridArrayAdapter(const ProbabilityGrid& probability_grid)
-        : probability_grid_(probability_grid) {}
+    explicit GridArrayAdapter(const Grid2D& grid) : grid_(grid) {}
 
     void GetValue(const int row, const int column, double* const value) const {
       if (row < kPadding || column < kPadding || row >= NumRows() - kPadding ||
           column >= NumCols() - kPadding) {
-        *value = kMinProbability;
+        *value = kMaxCorrespondenceCost;
       } else {
-        *value = static_cast<double>(probability_grid_.GetProbability(
+        *value = static_cast<double>(grid_.GetCorrespondenceCost(
             Eigen::Array2i(column - kPadding, row - kPadding)));
       }
     }
 
     int NumRows() const {
-      return probability_grid_.limits().cell_limits().num_y_cells +
-             2 * kPadding;
+      return grid_.limits().cell_limits().num_y_cells + 2 * kPadding;
     }
 
     int NumCols() const {
-      return probability_grid_.limits().cell_limits().num_x_cells +
-             2 * kPadding;
+      return grid_.limits().cell_limits().num_x_cells + 2 * kPadding;
     }
 
    private:
-    const ProbabilityGrid& probability_grid_;
+    const Grid2D& grid_;
   };
 
   OccupiedSpaceCostFunction2D(const double scaling_factor,
                               const sensor::PointCloud& point_cloud,
-                              const ProbabilityGrid& probability_grid)
+                              const Grid2D& grid)
       : scaling_factor_(scaling_factor),
         point_cloud_(point_cloud),
-        probability_grid_(probability_grid) {}
+        grid_(grid) {}
 
   OccupiedSpaceCostFunction2D(const OccupiedSpaceCostFunction2D&) = delete;
   OccupiedSpaceCostFunction2D& operator=(const OccupiedSpaceCostFunction2D&) =
@@ -119,7 +115,7 @@ class OccupiedSpaceCostFunction2D {
 
   const double scaling_factor_;
   const sensor::PointCloud& point_cloud_;
-  const ProbabilityGrid& probability_grid_;
+  const Grid2D& grid_;
 };
 
 }  // namespace scan_matching

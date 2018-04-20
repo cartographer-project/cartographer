@@ -20,4 +20,6 @@ MAP_BUILDER_SERVER = {
   num_grpc_threads = 4,
   server_address = "0.0.0.0:50051",
   uplink_server_address = "",
+  upload_batch_size = 100,
+  enable_ssl_encryption = false,
 }

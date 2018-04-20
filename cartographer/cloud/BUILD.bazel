@@ -67,6 +67,7 @@ cc_library(
     deps = [
         ":cc_protos",
         "//cartographer",
+        "@com_github_googlecartographer_async_grpc//async_grpc",
         "@com_github_grpc_grpc//:grpc++",
         "@com_github_jupp0r_prometheus_cpp//:prometheus_cpp",
         "@com_google_glog//:glog",
@@ -88,6 +89,8 @@ cc_binary(
     name = src.replace("/", "_").replace(".cc", ""),
     srcs = [src],
     data = ["//:configuration_files"],
+    # Tests cannot run concurrently as some of them open the same port.
+    tags = ["exclusive"],
     deps = [
         ":cartographer_grpc",
         "@com_google_googletest//:gtest_main",

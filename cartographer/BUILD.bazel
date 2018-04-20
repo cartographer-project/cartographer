@@ -70,7 +70,6 @@ cc_library(
         ":cc_protos",
         "@boost//:iostreams",
         "@com_google_glog//:glog",
-	"@com_github_googlecartographer_async_grpc//async_grpc:async_grpc",
         "@org_cairographics_cairo//:cairo",
         "@org_ceres_solver_ceres_solver//:ceres",
         "@org_lua_lua//:lua",

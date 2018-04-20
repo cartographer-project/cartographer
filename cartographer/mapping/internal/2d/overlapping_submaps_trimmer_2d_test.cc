@@ -66,7 +66,6 @@ class OverlappingSubmapsTrimmer2DTest : public ::testing::Test {
     know_cells_box->set_max_y(num_cells - 1);
 
     grid->mutable_probability_grid_2d();
-    LOG(INFO) << submap_2d.DebugString();
     fake_pose_graph_.mutable_submap_data()->Insert(
         {0 /* trajectory_id */, submap_index},
         {std::make_shared<const Submap2D>(submap_2d), pose_3d});
@@ -101,7 +100,8 @@ class OverlappingSubmapsTrimmer2DTest : public ::testing::Test {
 
 TEST_F(OverlappingSubmapsTrimmer2DTest, EmptyPoseGraph) {
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      0 /* min_covered_cells_count */);
+                                      0 /* min_covered_cells_count */,
+                                      0 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(), IsEmpty());
 }
@@ -117,10 +117,36 @@ TEST_F(OverlappingSubmapsTrimmer2DTest, TrimOneOfTwoOverlappingSubmaps) {
   AddConstraint(1 /*submap_index*/, 1 /*node_index*/, true);
 
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      0 /* min_covered_cells_count */);
+                                      0 /* min_covered_cells_count */,
+                                      0 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(),
               ElementsAre(EqualsSubmapId({0, 0})));
+}
+
+TEST_F(OverlappingSubmapsTrimmer2DTest, TestMinAddedSubmapsCountParam) {
+  AddSquareSubmap(Rigid2d::Identity(), 0 /* submap_index */, 1 /* num_cells */,
+                  true /* is_finished */);
+  AddSquareSubmap(Rigid2d::Identity(), 1 /* submap_index */, 1 /* num_cells */,
+                  true /* is_finished */);
+  AddTrajectoryNode(0 /* node_index */, 1000 /* timestamp */);
+  AddTrajectoryNode(1 /* node_index */, 2000 /* timestamp */);
+  AddConstraint(0 /*submap_index*/, 0 /*node_index*/, true);
+  AddConstraint(1 /*submap_index*/, 1 /*node_index*/, true);
+
+  OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
+                                      0 /* min_covered_cells_count */,
+                                      2 /* min_added_submaps_count */);
+  trimmer.Trim(&fake_pose_graph_);
+  EXPECT_THAT(fake_pose_graph_.trimmed_submaps(), IsEmpty());
+
+  AddSquareSubmap(Rigid2d::Identity(), 2 /* submap_index */, 1 /* num_cells */,
+                  true /* is_finished */);
+  AddTrajectoryNode(2 /* node_index */, 3000 /* timestamp */);
+  AddConstraint(2 /*submap_index*/, 2 /*node_index*/, true);
+  trimmer.Trim(&fake_pose_graph_);
+  EXPECT_THAT(fake_pose_graph_.trimmed_submaps(),
+              ElementsAre(EqualsSubmapId({0, 0}), EqualsSubmapId({0, 1})));
 }
 
 TEST_F(OverlappingSubmapsTrimmer2DTest, DoNotTrimUnfinishedSubmap) {
@@ -134,7 +160,8 @@ TEST_F(OverlappingSubmapsTrimmer2DTest, DoNotTrimUnfinishedSubmap) {
   AddConstraint(1 /*submap_index*/, 1 /*node_index*/, true);
 
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      0 /* min_covered_cells_count */);
+                                      0 /* min_covered_cells_count */,
+                                      0 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(), IsEmpty());
 }
@@ -152,7 +179,8 @@ TEST_F(OverlappingSubmapsTrimmer2DTest, UseOnlyIntraSubmapsToComputeFreshness) {
   AddConstraint(1 /*submap_index*/, 1 /*node_index*/, true);
 
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      0 /* min_covered_cells_count */);
+                                      0 /* min_covered_cells_count */,
+                                      0 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(),
               ElementsAre(EqualsSubmapId({0, 1})));
@@ -178,7 +206,8 @@ TEST_F(OverlappingSubmapsTrimmer2DTest, TrimSubmapWithLowCoveredCellsCount) {
   AddConstraint(1 /*submap_index*/, 1 /*node_index*/, true);
 
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      4 /* min_covered_cells_count */);
+                                      4 /* min_covered_cells_count */,
+                                      0 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(),
               ElementsAre(EqualsSubmapId({0, 0})));

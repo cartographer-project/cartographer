@@ -47,11 +47,11 @@ def cartographer_repositories():
 
   _maybe(native.http_archive,
       name = "com_google_glog",
-      sha256 = "1ee310e5d0a19b9d584a855000434bb724aa744745d5b8ab1855c85bff8a8e21",
-      strip_prefix = "glog-028d37889a1e80e8a07da1b8945ac706259e5fd8",
+      sha256 = "dfc074b41a5b86fc5dda4f0e2e2d6cc5b21f798c9fcc8ed5fea9c8f7c4613be6",
+      strip_prefix = "glog-dd2b93d761a19860190cb3fa92066c8031e912e3",
       urls = [
-          "https://mirror.bazel.build/github.com/google/glog/archive/028d37889a1e80e8a07da1b8945ac706259e5fd8.tar.gz",
-          "https://github.com/google/glog/archive/028d37889a1e80e8a07da1b8945ac706259e5fd8.tar.gz",
+          "https://mirror.bazel.build/github.com/google/glog/archive/dd2b93d761a19860190cb3fa92066c8031e912e3.tar.gz",
+          "https://github.com/google/glog/archive/dd2b93d761a19860190cb3fa92066c8031e912e3.tar.gz",
       ],
   )
 
@@ -124,11 +124,11 @@ def cartographer_repositories():
   _maybe(native.new_http_archive,
       name = "org_ceres_solver_ceres_solver",
       build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:ceres.BUILD",
-      sha256 = "cb69d1ca4900bc9c4703116a9facba00413eafd893430659fab63246f5320288",
-      strip_prefix = "ceres-solver-f58eacf082ddf198b2bf982e3cdb57ed3b5ea025",
+      sha256 = "ede5b4205ee8d7c7e029e9da74c7ee759fee6961f7e6bfa694274e4a55b8c7ca",
+      strip_prefix = "ceres-solver-58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e",
       urls = [
-          "https://mirror.bazel.build/github.com/ceres-solver/ceres-solver/archive/f58eacf082ddf198b2bf982e3cdb57ed3b5ea025.tar.gz",
-          "https://github.com/ceres-solver/ceres-solver/archive/f58eacf082ddf198b2bf982e3cdb57ed3b5ea025.tar.gz",
+          "https://mirror.bazel.build/github.com/ceres-solver/ceres-solver/archive/58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e.tar.gz",
+          "https://github.com/ceres-solver/ceres-solver/archive/58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e.tar.gz",
       ],
   )
 
@@ -219,18 +219,18 @@ def cartographer_repositories():
 
   _maybe(native.http_archive,
       name = "com_github_jupp0r_prometheus_cpp",
-      sha256 = "41b202a206ba6339c4678ffe3690659fdb77287d97507aad82a83c5360b8ba8b",
-      strip_prefix = "prometheus-cpp-b3914b1045c92649e81d020851f3bb06ef858df4",
+      sha256 = "0d3e999dfbfc49bb117698154a01dac26fb59e77d0354ccb81107a6da7b014d0",
+      strip_prefix = "prometheus-cpp-8330b3f753fb774c9e0567baaac20ffb7042723b",
       urls = [
-          "https://github.com/jupp0r/prometheus-cpp/archive/b3914b1045c92649e81d020851f3bb06ef858df4.tar.gz",
+          "https://github.com/jupp0r/prometheus-cpp/archive/8330b3f753fb774c9e0567baaac20ffb7042723b.tar.gz",
       ],
   )
 
   _maybe(native.http_archive,
       name = "com_github_googlecartographer_async_grpc",
-      strip_prefix = "async_grpc-654c75ebf553c2bdb624c87a690f5a238aeb651f",
+      strip_prefix = "async_grpc-c2c68f56904a595ab5ba24c1fb19b4b8e954fa15",
       urls = [
-          "https://github.com/googlecartographer/async_grpc/archive/654c75ebf553c2bdb624c87a690f5a238aeb651f.tar.gz",
+          "https://github.com/googlecartographer/async_grpc/archive/c2c68f56904a595ab5ba24c1fb19b4b8e954fa15.tar.gz",
       ],
   )
   
