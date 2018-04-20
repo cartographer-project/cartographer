@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_3D_POSE_GRAPH_LANDMARK_COST_FUNCTION_3D_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_3D_POSE_GRAPH_LANDMARK_COST_FUNCTION_3D_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_LANDMARK_COST_FUNCTION_3D_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_LANDMARK_COST_FUNCTION_3D_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
-#include "cartographer/mapping/internal/3d/pose_graph/optimization_problem_3d.h"
-#include "cartographer/mapping/internal/pose_graph/cost_helpers.h"
+#include "cartographer/mapping/internal/optimization/cost_helpers.h"
+#include "cartographer/mapping/internal/optimization/optimization_problem_3d.h"
 #include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -29,7 +29,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 
 // Cost function measuring the weighted error between the observed pose given by
 // the landmark measurement and the linearly interpolated pose.
@@ -92,8 +92,8 @@ class LandmarkCostFunction3D {
   const double interpolation_parameter_;
 };
 
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_3D_POSE_GRAPH_LANDMARK_COST_FUNCTION_3D_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_LANDMARK_COST_FUNCTION_3D_H_

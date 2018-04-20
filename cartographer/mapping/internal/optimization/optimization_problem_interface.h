@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_OPTIMIZATION_PROBLEM_INTERFACE_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_OPTIMIZATION_PROBLEM_INTERFACE_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_INTERFACE_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_INTERFACE_H_
 
 #include <map>
 #include <set>
@@ -33,7 +33,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 
 // Implements the SPA loop closure method.
 template <typename NodeDataType, typename SubmapDataType,
@@ -81,8 +81,8 @@ class OptimizationProblemInterface {
       const = 0;
 };
 
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_OPTIMIZATION_PROBLEM_INTERFACE_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_INTERFACE_H_

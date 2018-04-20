@@ -34,7 +34,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/3d/submap_3d.h"
 #include "cartographer/mapping/internal/3d/pose_graph/constraint_builder_3d.h"
-#include "cartographer/mapping/internal/3d/pose_graph/optimization_problem_3d.h"
+#include "cartographer/mapping/internal/optimization/optimization_problem_3d.h"
 #include "cartographer/mapping/internal/trajectory_connectivity_state.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
@@ -60,7 +60,7 @@ class PoseGraph3D : public PoseGraph {
  public:
   PoseGraph3D(
       const proto::PoseGraphOptions& options,
-      std::unique_ptr<pose_graph::OptimizationProblem3D> optimization_problem,
+      std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem,
       common::ThreadPool* thread_pool);
   ~PoseGraph3D() override;
 
@@ -200,7 +200,7 @@ class PoseGraph3D : public PoseGraph {
   // Computes the local to global map frame transform based on the given
   // 'global_submap_poses'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const MapById<SubmapId, pose_graph::SubmapSpec3D>& global_submap_poses,
+      const MapById<SubmapId, optimization::SubmapSpec3D>& global_submap_poses,
       int trajectory_id) const REQUIRES(mutex_);
 
   PoseGraph::SubmapData GetSubmapDataUnderLock(const SubmapId& submap_id)
@@ -243,7 +243,7 @@ class PoseGraph3D : public PoseGraph {
   void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
-  std::unique_ptr<pose_graph::OptimizationProblem3D> optimization_problem_;
+  std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem_;
   pose_graph::ConstraintBuilder3D constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
@@ -256,7 +256,7 @@ class PoseGraph3D : public PoseGraph {
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Global submap poses currently used for displaying data.
-  MapById<SubmapId, pose_graph::SubmapSpec3D> global_submap_poses_
+  MapById<SubmapId, optimization::SubmapSpec3D> global_submap_poses_
       GUARDED_BY(mutex_);
 
   // Global landmark poses with all observations.

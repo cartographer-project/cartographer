@@ -16,8 +16,8 @@
 
 #include "cartographer/mapping/pose_graph.h"
 
+#include "cartographer/mapping/internal/optimization/optimization_problem_options.h"
 #include "cartographer/mapping/internal/pose_graph/constraint_builder.h"
-#include "cartographer/mapping/internal/pose_graph/optimization_problem_options.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -82,7 +82,7 @@ proto::PoseGraphOptions CreatePoseGraphOptions(
   options.set_matcher_rotation_weight(
       parameter_dictionary->GetDouble("matcher_rotation_weight"));
   *options.mutable_optimization_problem_options() =
-      pose_graph::CreateOptimizationProblemOptions(
+      optimization::CreateOptimizationProblemOptions(
           parameter_dictionary->GetDictionary("optimization_problem").get());
   options.set_max_num_final_iterations(
       parameter_dictionary->GetNonNegativeInt("max_num_final_iterations"));
