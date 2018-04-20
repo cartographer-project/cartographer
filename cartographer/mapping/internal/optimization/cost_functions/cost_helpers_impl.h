@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_IMPL_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_IMPL_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_COST_HELPERS_IMPL_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_COST_HELPERS_IMPL_H_
 
 #include "Eigen/Core"
 #include "cartographer/transform/rigid_transform.h"
@@ -23,7 +23,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 
 template <typename T>
 static std::array<T, 3> ComputeUnscaledError(
@@ -190,8 +190,8 @@ InterpolateNodes2D(const T* const prev_node_pose,
            T(0)}});
 }
 
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_IMPL_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_COST_HELPERS_IMPL_H_

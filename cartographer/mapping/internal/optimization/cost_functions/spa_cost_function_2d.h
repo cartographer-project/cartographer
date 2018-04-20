@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_SPA_COST_FUNCTION_2D_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_SPA_COST_FUNCTION_2D_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_SPA_COST_FUNCTION_2D_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_SPA_COST_FUNCTION_2D_H_
 
 #include <array>
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
-#include "cartographer/mapping/internal/pose_graph/cost_helpers.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/cost_helpers.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -31,7 +31,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 
 class SpaCostFunction2D {
  public:
@@ -45,8 +45,8 @@ class SpaCostFunction2D {
 
   template <typename T>
   bool operator()(const T* const c_i, const T* const c_j, T* e) const {
-    using pose_graph::ComputeUnscaledError;
-    using pose_graph::ScaleError;
+    using optimization::ComputeUnscaledError;
+    using optimization::ScaleError;
 
     const std::array<T, 3> error = ScaleError(
         ComputeUnscaledError(transform::Project2D(pose_.zbar_ij), c_i, c_j),
@@ -62,8 +62,8 @@ class SpaCostFunction2D {
   const PoseGraph::Constraint::Pose pose_;
 };
 
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_SPA_COST_FUNCTION_2D_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_SPA_COST_FUNCTION_2D_H_

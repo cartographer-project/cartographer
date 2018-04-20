@@ -34,7 +34,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/2d/submap_2d.h"
 #include "cartographer/mapping/internal/2d/pose_graph/constraint_builder_2d.h"
-#include "cartographer/mapping/internal/2d/pose_graph/optimization_problem_2d.h"
+#include "cartographer/mapping/internal/optimization/optimization_problem_2d.h"
 #include "cartographer/mapping/internal/trajectory_connectivity_state.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
@@ -61,7 +61,7 @@ class PoseGraph2D : public PoseGraph {
  public:
   PoseGraph2D(
       const proto::PoseGraphOptions& options,
-      std::unique_ptr<pose_graph::OptimizationProblem2D> optimization_problem,
+      std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem,
       common::ThreadPool* thread_pool);
   ~PoseGraph2D() override;
 
@@ -201,7 +201,7 @@ class PoseGraph2D : public PoseGraph {
   // Computes the local to global map frame transform based on the given
   // 'global_submap_poses'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const MapById<SubmapId, pose_graph::SubmapSpec2D>& global_submap_poses,
+      const MapById<SubmapId, optimization::SubmapSpec2D>& global_submap_poses,
       int trajectory_id) const REQUIRES(mutex_);
 
   SubmapData GetSubmapDataUnderLock(const SubmapId& submap_id) REQUIRES(mutex_);
@@ -239,7 +239,7 @@ class PoseGraph2D : public PoseGraph {
   void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
-  std::unique_ptr<pose_graph::OptimizationProblem2D> optimization_problem_;
+  std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem_;
   pose_graph::ConstraintBuilder2D constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
@@ -252,7 +252,7 @@ class PoseGraph2D : public PoseGraph {
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Global submap poses currently used for displaying data.
-  MapById<SubmapId, pose_graph::SubmapSpec2D> global_submap_poses_
+  MapById<SubmapId, optimization::SubmapSpec2D> global_submap_poses_
       GUARDED_BY(mutex_);
 
   // Global landmark poses with all observations.

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_3D_ROTATION_COST_FUNCTION_3D_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_3D_ROTATION_COST_FUNCTION_3D_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_ROTATION_COST_FUNCTION_3D_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_ROTATION_COST_FUNCTION_3D_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
@@ -25,15 +25,15 @@ namespace cartographer {
 namespace mapping {
 
 // Penalizes differences between IMU data and optimized orientations.
-class RotationCostFunction {
+class RotationCostFunction3D {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
       const double scaling_factor,
       const Eigen::Quaterniond& delta_rotation_imu_frame) {
     return new ceres::AutoDiffCostFunction<
-        RotationCostFunction, 3 /* residuals */, 4 /* rotation variables */,
+        RotationCostFunction3D, 3 /* residuals */, 4 /* rotation variables */,
         4 /* rotation variables */, 4 /* rotation variables */
-        >(new RotationCostFunction(scaling_factor, delta_rotation_imu_frame));
+        >(new RotationCostFunction3D(scaling_factor, delta_rotation_imu_frame));
   }
 
   template <typename T>
@@ -56,13 +56,13 @@ class RotationCostFunction {
   }
 
  private:
-  RotationCostFunction(const double scaling_factor,
-                       const Eigen::Quaterniond& delta_rotation_imu_frame)
+  RotationCostFunction3D(const double scaling_factor,
+                         const Eigen::Quaterniond& delta_rotation_imu_frame)
       : scaling_factor_(scaling_factor),
         delta_rotation_imu_frame_(delta_rotation_imu_frame) {}
 
-  RotationCostFunction(const RotationCostFunction&) = delete;
-  RotationCostFunction& operator=(const RotationCostFunction&) = delete;
+  RotationCostFunction3D(const RotationCostFunction3D&) = delete;
+  RotationCostFunction3D& operator=(const RotationCostFunction3D&) = delete;
 
   const double scaling_factor_;
   const Eigen::Quaterniond delta_rotation_imu_frame_;
@@ -71,4 +71,4 @@ class RotationCostFunction {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_3D_ROTATION_COST_FUNCTION_3D_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_ROTATION_COST_FUNCTION_3D_H_

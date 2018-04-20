@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/pose_graph/optimization_problem_options.h"
+#include "cartographer/mapping/internal/optimization/optimization_problem_options.h"
 
 #include "cartographer/common/ceres_solver_options.h"
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 
 proto::OptimizationProblemOptions CreateOptimizationProblemOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
@@ -50,6 +50,6 @@ proto::OptimizationProblemOptions CreateOptimizationProblemOptions(
   return options;
 }
 
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer

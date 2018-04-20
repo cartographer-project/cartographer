@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/2d/pose_graph/optimization_problem_2d.h"
+#include "cartographer/mapping/internal/optimization/optimization_problem_2d.h"
 
 #include <algorithm>
 #include <array>
@@ -27,10 +27,9 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
-#include "cartographer/mapping/internal/2d/pose_graph/landmark_cost_function_2d.h"
-#include "cartographer/mapping/internal/2d/pose_graph/spa_cost_function_2d.h"
-#include "cartographer/mapping/internal/pose_graph/ceres_pose.h"
-#include "cartographer/mapping/internal/pose_graph/cost_helpers.h"
+#include "cartographer/mapping/internal/optimization/ceres_pose.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/landmark_cost_function_2d.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/spa_cost_function_2d.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
@@ -38,10 +37,10 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 namespace {
 
-using ::cartographer::mapping::pose_graph::CeresPose;
+using ::cartographer::mapping::optimization::CeresPose;
 using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
 
 // Converts a pose into the 3 optimization variable format used for Ceres:
@@ -361,6 +360,6 @@ OptimizationProblem2D::CalculateOdometryBetweenNodes(
   return nullptr;
 }
 
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
