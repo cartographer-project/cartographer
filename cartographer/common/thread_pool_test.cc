@@ -16,94 +16,88 @@
 
 #include "cartographer/common/thread_pool.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace common {
 namespace {
 
-class ThreadPoolForTesting : public ThreadPool {
+class Receiver {
  public:
-  ThreadPoolForTesting() : ThreadPool(1) {}
+  void Receive(int number) {
+    Mutex::Locker locker(&mutex_);
+    received_numbers_.push_back(number);
+  }
 
-  void WaitForAllForTesting() override { ThreadPool::WaitForAllForTesting(); }
-};
+  void WaitForNumberSequence(const std::list<int>& expected_numbers) {
+    bool have_enough_numbers = false;
+    while (!have_enough_numbers) {
+      common::MutexLocker locker(&mutex_);
+      have_enough_numbers = locker.AwaitWithTimeout(
+          [this, &expected_numbers]() REQUIRES(mutex_) {
+            return (received_numbers_.size() >= expected_numbers.size());
+          },
+          common::FromSeconds(0.1));
+    }
+    EXPECT_EQ(expected_numbers, received_numbers_);
+  }
 
-class Mock {
- public:
-  MOCK_METHOD1(Run, void(int));
+  std::list<int> received_numbers_;
+  Mutex mutex_;
 };
 
 TEST(ThreadPoolTest, RunTask) {
-  ThreadPoolForTesting pool;
-  Mock mock;
+  ThreadPool pool(1);
+  Receiver receiver;
   auto task = std::make_shared<Task>();
-  task->SetWorkItem([&mock]() { mock.Run(1); });
-  EXPECT_CALL(mock, Run(1)).Times(1);
+  task->SetWorkItem([&receiver]() { receiver.Receive(1); });
   pool.ScheduleWhenReady(task);
-  pool.WaitForAllForTesting();
+  receiver.WaitForNumberSequence({1});
 }
 
 TEST(ThreadPoolTest, RunWithDependency) {
-  ThreadPoolForTesting pool;
-  Mock mock;
+  ThreadPool pool(2);
+  Receiver receiver;
   auto task_2 = std::make_shared<Task>();
-  task_2->SetWorkItem([&mock]() { mock.Run(2); });
+  task_2->SetWorkItem([&receiver]() { receiver.Receive(2); });
   auto task_1 = std::make_shared<Task>();
-  task_1->SetWorkItem([&mock]() { mock.Run(1); });
+  task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
   task_2->AddDependency(task_1.get());
-  {
-    ::testing::InSequence dummy;
-    EXPECT_CALL(mock, Run(1)).Times(1);
-    EXPECT_CALL(mock, Run(2)).Times(1);
-  }
   pool.ScheduleWhenReady(task_2);
   pool.ScheduleWhenReady(task_1);
-  pool.WaitForAllForTesting();
+  receiver.WaitForNumberSequence({1, 2});
 }
 
 TEST(ThreadPoolTest, RunWithOutOfScopeDependency) {
-  ThreadPoolForTesting pool;
-  Mock mock;
-  {
-    ::testing::InSequence dummy;
-    EXPECT_CALL(mock, Run(1)).Times(1);
-    EXPECT_CALL(mock, Run(2)).Times(1);
-  }
+  ThreadPool pool(2);
+  Receiver receiver;
   auto task_2 = std::make_shared<Task>();
-  task_2->SetWorkItem([&mock]() { mock.Run(2); });
+  task_2->SetWorkItem([&receiver]() { receiver.Receive(2); });
   {
     auto task_1 = std::make_shared<Task>();
-    task_1->SetWorkItem([&mock]() { mock.Run(1); });
+    task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
     pool.ScheduleWhenReady(task_1);
     task_2->AddDependency(task_1.get());
     // task_1 goes out of scope.
   }
   pool.ScheduleWhenReady(task_2);
-  pool.WaitForAllForTesting();
+  receiver.WaitForNumberSequence({1, 2});
 }
 
 TEST(ThreadPoolTest, RunWithMultipleDependencies) {
-  ThreadPoolForTesting pool;
-  Mock mock;
+  ThreadPool pool(2);
+  Receiver receiver;
   auto task_1 = std::make_shared<Task>();
-  task_1->SetWorkItem([&mock]() { mock.Run(1); });
+  task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
   auto task_2a = std::make_shared<Task>();
-  task_2a->SetWorkItem([&mock]() { mock.Run(2); });
+  task_2a->SetWorkItem([&receiver]() { receiver.Receive(2); });
   auto task_2b = std::make_shared<Task>();
-  task_2b->SetWorkItem([&mock]() { mock.Run(2); });
+  task_2b->SetWorkItem([&receiver]() { receiver.Receive(2); });
   auto task_3 = std::make_shared<Task>();
-  task_3->SetWorkItem([&mock]() { mock.Run(3); });
+  task_3->SetWorkItem([&receiver]() { receiver.Receive(3); });
   /*          -> task_2a \
    *  task_1 /-> task_2b --> task_3
    */
-  {
-    ::testing::InSequence dummy;
-    EXPECT_CALL(mock, Run(1)).Times(1);
-    EXPECT_CALL(mock, Run(2)).Times(2);
-    EXPECT_CALL(mock, Run(3)).Times(1);
-  }
   task_3->AddDependency(task_2a.get());
   task_3->AddDependency(task_2b.get());
   task_2a->AddDependency(task_1.get());
@@ -113,23 +107,21 @@ TEST(ThreadPoolTest, RunWithMultipleDependencies) {
   pool.ScheduleWhenReady(task_3);
   task_2b->AddDependency(task_1.get());
   pool.ScheduleWhenReady(task_2b);
-  pool.WaitForAllForTesting();
+  receiver.WaitForNumberSequence({1, 2, 2, 3});
 }
 
 TEST(ThreadPoolTest, RunWithFinishedDependency) {
-  ThreadPoolForTesting pool;
-  Mock mock;
+  ThreadPool pool(2);
+  Receiver receiver;
   auto task_1 = std::make_shared<Task>();
-  task_1->SetWorkItem([&mock]() { mock.Run(1); });
+  task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
   auto task_2 = std::make_shared<Task>();
-  task_2->SetWorkItem([&mock]() { mock.Run(2); });
+  task_2->SetWorkItem([&receiver]() { receiver.Receive(2); });
   task_2->AddDependency(task_1.get());
-  EXPECT_CALL(mock, Run(1)).Times(1);
   pool.ScheduleWhenReady(task_1);
-  pool.WaitForAllForTesting();
-  EXPECT_CALL(mock, Run(2)).Times(1);
+  receiver.WaitForNumberSequence({1});
   pool.ScheduleWhenReady(task_2);
-  pool.WaitForAllForTesting();
+  receiver.WaitForNumberSequence({1, 2});
 }
 
 }  // namespace

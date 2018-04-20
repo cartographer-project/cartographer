@@ -61,18 +61,13 @@ class ThreadPool : public ThreadPoolInterface {
   void NotifyReady(Task* task) EXCLUDES(mutex_) override;
 
   // TODO(gaschler): Remove all uses.
-  void Schedule(const std::function<void()>& work_item) override {
-    LOG(FATAL) << "ThreadPool::Schedule is obsolete";
-  }
+  void Schedule(const std::function<void()>& work_item) override;
 
   // TODO: Make this stricter.
   // If the returned smart pointer is expired, 'task' has certainly completed,
   // so it no longer needs be added as a dependency.
   std::shared_ptr<Task> ScheduleWhenReady(std::shared_ptr<Task> task)
       EXCLUDES(mutex_);
-
- protected:
-  virtual void WaitForAllForTesting() EXCLUDES(mutex_);
 
  private:
   void DoWork();

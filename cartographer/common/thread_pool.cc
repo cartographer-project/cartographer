@@ -58,15 +58,11 @@ void ThreadPool::NotifyReady(Task* task) {
   tasks_not_ready_.erase(it);
 }
 
-#if 0
 void ThreadPool::Schedule(const std::function<void()>& work_item) {
-  MutexLocker locker(&mutex_);
-  CHECK(running_);
   auto task = make_unique<Task>();
   task->SetWorkItem(work_item);
-  task_queue_.push_back(std::move(task));
+  ScheduleWhenReady(std::move(task));
 }
-#endif
 
 std::shared_ptr<Task> ThreadPool::ScheduleWhenReady(
     std::shared_ptr<Task> task) {
@@ -106,22 +102,6 @@ void ThreadPool::DoWork() {
     CHECK_EQ(task->GetState(), common::Task::READY);
     task->Execute();
   }
-}
-
-void ThreadPool::WaitForAllForTesting() {
-  bool finished = false;
-  while (!finished) {
-    common::MutexLocker locker(&mutex_);
-    finished = locker.AwaitWithTimeout(
-        [this]() REQUIRES(mutex_) {
-          return (tasks_not_ready_.empty() && task_queue_.empty());
-        },
-        common::FromSeconds(0.1));
-    LOG(INFO) << "tasks_not_ready_.size(): " << tasks_not_ready_.size();
-    LOG(INFO) << "task_queue_.size(): " << task_queue_.size();
-  }
-  CHECK(tasks_not_ready_.empty() && task_queue_.empty());
-  CHECK(running_);
 }
 
 }  // namespace common
