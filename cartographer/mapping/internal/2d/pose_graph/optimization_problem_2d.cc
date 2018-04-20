@@ -61,7 +61,7 @@ transform::Rigid2d ToPose(const std::array<double, 3>& values) {
 // applies a relative transform from it.
 transform::Rigid3d GetInitialLandmarkPose(
     const LandmarkNode::LandmarkObservation& observation,
-    const NodeOptInput2D& prev_node, const NodeOptInput2D& next_node,
+    const NodeSpec2D& prev_node, const NodeSpec2D& next_node,
     const std::array<double, 3>& prev_node_pose,
     const std::array<double, 3>& next_node_pose) {
   const double interpolation_parameter =
@@ -80,7 +80,7 @@ transform::Rigid3d GetInitialLandmarkPose(
 
 void AddLandmarkCostFunctions(
     const std::map<std::string, LandmarkNode>& landmark_nodes,
-    bool freeze_landmarks, const MapById<NodeId, NodeOptInput2D>& node_data,
+    bool freeze_landmarks, const MapById<NodeId, NodeSpec2D>& node_data,
     MapById<NodeId, std::array<double, 3>>* C_nodes,
     std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem) {
   for (const auto& landmark_node : landmark_nodes) {
@@ -159,12 +159,12 @@ void OptimizationProblem2D::AddOdometryData(
 }
 
 void OptimizationProblem2D::AddTrajectoryNode(const int trajectory_id,
-                                              const NodeOptInput2D& node_data) {
+                                              const NodeSpec2D& node_data) {
   node_data_.Append(trajectory_id, node_data);
 }
 
-void OptimizationProblem2D::InsertTrajectoryNode(
-    const NodeId& node_id, const NodeOptInput2D& node_data) {
+void OptimizationProblem2D::InsertTrajectoryNode(const NodeId& node_id,
+                                                 const NodeSpec2D& node_data) {
   node_data_.Insert(node_id, node_data);
 }
 
@@ -176,12 +176,12 @@ void OptimizationProblem2D::TrimTrajectoryNode(const NodeId& node_id) {
 
 void OptimizationProblem2D::AddSubmap(
     const int trajectory_id, const transform::Rigid2d& global_submap_pose) {
-  submap_data_.Append(trajectory_id, SubmapOptInput2D{global_submap_pose});
+  submap_data_.Append(trajectory_id, SubmapSpec2D{global_submap_pose});
 }
 
 void OptimizationProblem2D::InsertSubmap(
     const SubmapId& submap_id, const transform::Rigid2d& global_submap_pose) {
-  submap_data_.Insert(submap_id, SubmapOptInput2D{global_submap_pose});
+  submap_data_.Insert(submap_id, SubmapSpec2D{global_submap_pose});
 }
 
 void OptimizationProblem2D::TrimSubmap(const SubmapId& submap_id) {
@@ -207,7 +207,7 @@ void OptimizationProblem2D::Solve(
   ceres::Problem problem(problem_options);
 
   // Set the starting point.
-  // TODO(hrapp): Move ceres data into SubmapOptInput2D.
+  // TODO(hrapp): Move ceres data into SubmapSpec.
   MapById<SubmapId, std::array<double, 3>> C_submaps;
   MapById<NodeId, std::array<double, 3>> C_nodes;
   std::map<std::string, CeresPose> C_landmarks;
@@ -262,10 +262,10 @@ void OptimizationProblem2D::Solve(
     auto prev_node_it = node_it;
     for (++node_it; node_it != trajectory_end; ++node_it) {
       const NodeId first_node_id = prev_node_it->id;
-      const NodeOptInput2D& first_node_data = prev_node_it->data;
+      const NodeSpec2D& first_node_data = prev_node_it->data;
       prev_node_it = node_it;
       const NodeId second_node_id = node_it->id;
-      const NodeOptInput2D& second_node_data = node_it->data;
+      const NodeSpec2D& second_node_data = node_it->data;
 
       if (second_node_id.node_index != first_node_id.node_index + 1) {
         continue;
@@ -342,8 +342,8 @@ std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::InterpolateOdometry(
 
 std::unique_ptr<transform::Rigid3d>
 OptimizationProblem2D::CalculateOdometryBetweenNodes(
-    const int trajectory_id, const NodeOptInput2D& first_node_data,
-    const NodeOptInput2D& second_node_data) const {
+    const int trajectory_id, const NodeSpec2D& first_node_data,
+    const NodeSpec2D& second_node_data) const {
   if (odometry_data_.HasTrajectory(trajectory_id)) {
     const std::unique_ptr<transform::Rigid3d> first_node_odometry =
         InterpolateOdometry(trajectory_id, first_node_data.time);
