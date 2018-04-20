@@ -40,8 +40,8 @@ class LandmarkCostFunction2D {
       PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
   static ceres::CostFunction* CreateAutoDiffCostFunction(
-      const LandmarkObservation& observation, const NodeData2D& prev_node,
-      const NodeData2D& next_node) {
+      const LandmarkObservation& observation, const NodeSpec2D& prev_node,
+      const NodeSpec2D& next_node) {
     return new ceres::AutoDiffCostFunction<
         LandmarkCostFunction2D, 6 /* residuals */,
         3 /* previous node pose variables */, 3 /* next node pose variables */,
@@ -71,8 +71,8 @@ class LandmarkCostFunction2D {
 
  private:
   LandmarkCostFunction2D(const LandmarkObservation& observation,
-                         const NodeData2D& prev_node,
-                         const NodeData2D& next_node)
+                         const NodeSpec2D& prev_node,
+                         const NodeSpec2D& next_node)
       : landmark_to_tracking_transform_(
             observation.landmark_to_tracking_transform),
         prev_node_gravity_alignment_(prev_node.gravity_alignment),

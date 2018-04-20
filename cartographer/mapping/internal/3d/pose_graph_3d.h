@@ -109,8 +109,7 @@ class PoseGraph3D : public PoseGraph {
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
   PoseGraph::SubmapData GetSubmapData(const SubmapId& submap_id)
       EXCLUDES(mutex_) override;
-  MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
-      EXCLUDES(mutex_) override;
+  MapById<SubmapId, SubmapData> GetAllSubmapData() EXCLUDES(mutex_) override;
   MapById<SubmapId, SubmapPose> GetAllSubmapPoses() EXCLUDES(mutex_) override;
   transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id)
       EXCLUDES(mutex_) override;
@@ -150,7 +149,7 @@ class PoseGraph3D : public PoseGraph {
   // transitions to kFinished, all nodes are tried to match against this submap.
   // Likewise, all new nodes are matched against submaps which are finished.
   enum class SubmapState { kActive, kFinished };
-  struct SubmapData {
+  struct InternalSubmapData {
     std::shared_ptr<const Submap3D> submap;
 
     // IDs of the nodes that were inserted into this map together with
@@ -161,8 +160,7 @@ class PoseGraph3D : public PoseGraph {
     SubmapState state = SubmapState::kActive;
   };
 
-  MapById<SubmapId, PoseGraphInterface::SubmapData> GetSubmapDataUnderLock()
-      REQUIRES(mutex_);
+  MapById<SubmapId, SubmapData> GetSubmapDataUnderLock() REQUIRES(mutex_);
 
   // Handles a new work item.
   void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
@@ -202,7 +200,7 @@ class PoseGraph3D : public PoseGraph {
   // Computes the local to global map frame transform based on the given
   // 'global_submap_poses'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const MapById<SubmapId, pose_graph::SubmapData3D>& global_submap_poses,
+      const MapById<SubmapId, pose_graph::SubmapSpec3D>& global_submap_poses,
       int trajectory_id) const REQUIRES(mutex_);
 
   PoseGraph::SubmapData GetSubmapDataUnderLock(const SubmapId& submap_id)
@@ -251,14 +249,14 @@ class PoseGraph3D : public PoseGraph {
 
   // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
-  MapById<SubmapId, SubmapData> submap_data_ GUARDED_BY(mutex_);
+  MapById<SubmapId, InternalSubmapData> submap_data_ GUARDED_BY(mutex_);
 
   // Data that are currently being shown.
   MapById<NodeId, TrajectoryNode> trajectory_nodes_ GUARDED_BY(mutex_);
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Global submap poses currently used for displaying data.
-  MapById<SubmapId, pose_graph::SubmapData3D> global_submap_poses_
+  MapById<SubmapId, pose_graph::SubmapSpec3D> global_submap_poses_
       GUARDED_BY(mutex_);
 
   // Global landmark poses with all observations.
@@ -287,12 +285,12 @@ class PoseGraph3D : public PoseGraph {
 
     int num_submaps(int trajectory_id) const override;
     std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override;
-    MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
-        const override REQUIRES(parent_->mutex_);
+    MapById<SubmapId, SubmapData> GetAllSubmapData() const override
+        REQUIRES(parent_->mutex_);
     const MapById<NodeId, TrajectoryNode>& GetTrajectoryNodes() const override
         REQUIRES(parent_->mutex_);
-    const std::vector<PoseGraphInterface::Constraint>& GetConstraints()
-        const override REQUIRES(parent_->mutex_);
+    const std::vector<Constraint>& GetConstraints() const override
+        REQUIRES(parent_->mutex_);
     void MarkSubmapAsTrimmed(const SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
     bool IsFinished(int trajectory_id) const override REQUIRES(parent_->mutex_);
