@@ -19,6 +19,7 @@
 #include <functional>
 
 #include "cartographer/common/config.h"
+#include "cartographer/common/internal/testing/thread_pool_for_testing.h"
 #include "cartographer/mapping/2d/submap_2d.h"
 #include "cartographer/mapping/internal/pose_graph/constraint_builder.h"
 #include "cartographer/mapping/internal/testing/test_helpers.h"
@@ -49,26 +50,25 @@ class Mock {
 };
 
 TEST(ConstraintBuilder2DTest, Create) {
-  common::ThreadPool thread_pool(1);
+  common::testing::ThreadPoolForTesting thread_pool;
   ConstraintBuilder2D constraint_builder(GenerateConstraintBuilderOptions(),
                                          &thread_pool);
 }
 
 TEST(ConstraintBuilder2DTest, Callback) {
-  common::ThreadPool thread_pool(1);
+  common::testing::ThreadPoolForTesting thread_pool;
   ConstraintBuilder2D constraint_builder(GenerateConstraintBuilderOptions(),
                                          &thread_pool);
   Mock mock;
+  EXPECT_CALL(mock, Run(testing::_));
   constraint_builder.NotifyEndOfNode();
   constraint_builder.WhenDone(
       std::bind(&Mock::Run, &mock, std::placeholders::_1));
-  EXPECT_CALL(mock, Run(testing::_));
-  // TODO: use ThreadPool for testing
-  sleep(1);
+  thread_pool.WaitUntilIdle();
 }
 
 TEST(ConstraintBuilder2DTest, FindsConstraints) {
-  common::ThreadPool thread_pool(1);
+  common::testing::ThreadPoolForTesting thread_pool;
   ConstraintBuilder2D constraint_builder(GenerateConstraintBuilderOptions(),
                                          &thread_pool);
   Mock mock;
@@ -88,9 +88,11 @@ TEST(ConstraintBuilder2DTest, FindsConstraints) {
   constraint_builder.MaybeAddGlobalConstraint(submap_id, &submap, NodeId{},
                                               &node_data);
   constraint_builder.NotifyEndOfNode();
-  sleep(1);
+  thread_pool.WaitUntilIdle();
   EXPECT_EQ(constraint_builder.GetNumFinishedNodes(), 1);
   constraint_builder.NotifyEndOfNode();
+  thread_pool.WaitUntilIdle();
+  EXPECT_EQ(constraint_builder.GetNumFinishedNodes(), 2);
   EXPECT_CALL(mock, Run(testing::AllOf(
                         testing::SizeIs(3),
                         testing::Each(testing::Field(
@@ -98,9 +100,7 @@ TEST(ConstraintBuilder2DTest, FindsConstraints) {
                             PoseGraphInterface::Constraint::INTER_SUBMAP)))));
   constraint_builder.WhenDone(
       std::bind(&Mock::Run, &mock, std::placeholders::_1));
-  // TODO: use ThreadPool for testing
-  sleep(1);
-  EXPECT_EQ(constraint_builder.GetNumFinishedNodes(), 2);
+  thread_pool.WaitUntilIdle();
   constraint_builder.DeleteScanMatcher(submap_id);
 }
 

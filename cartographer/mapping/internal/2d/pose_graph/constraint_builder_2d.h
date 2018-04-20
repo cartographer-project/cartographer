@@ -61,7 +61,7 @@ class ConstraintBuilder2D {
   using Result = std::vector<Constraint>;
 
   ConstraintBuilder2D(const proto::ConstraintBuilderOptions& options,
-                      common::ThreadPool* thread_pool);
+                      common::ThreadPoolInterface* thread_pool);
   ~ConstraintBuilder2D();
 
   ConstraintBuilder2D(const ConstraintBuilder2D&) = delete;
@@ -139,7 +139,7 @@ class ConstraintBuilder2D {
   void FinishComputation(int computation_index) EXCLUDES(mutex_);
 
   const pose_graph::proto::ConstraintBuilderOptions options_;
-  common::ThreadPool* thread_pool_;
+  common::ThreadPoolInterface* thread_pool_;
   common::Mutex mutex_;
 
   // 'callback' set by WhenDone().
