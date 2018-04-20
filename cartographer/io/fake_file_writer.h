@@ -34,7 +34,7 @@ class FakeFileWriter : public FileWriter {
   bool Write(const char* data, size_t len) override;
   bool Close() override;
   std::string GetFilename() override;
-  std::string GetOutput();
+  std::string GetOutput() const;
 
  private:
   std::string out_;

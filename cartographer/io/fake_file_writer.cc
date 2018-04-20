@@ -36,7 +36,7 @@ bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
 
 std::string FakeFileWriter::GetFilename() { return ""; }
 
-std::string FakeFileWriter::GetOutput() { return out_; }
+std::string FakeFileWriter::GetOutput() const { return out_; }
 
 }  // namespace io
 }  // namespace cartographer
