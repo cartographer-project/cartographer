@@ -14,66 +14,66 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_OPTIMIZATION_PROBLEM_2D_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_OPTIMIZATION_PROBLEM_2D_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_3D_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_3D_H_
 
 #include <array>
-#include <deque>
 #include <map>
 #include <set>
 #include <vector>
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "cartographer/common/optional.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
-#include "cartographer/mapping/internal/pose_graph/optimization_problem_interface.h"
+#include "cartographer/mapping/internal/optimization/optimization_problem_interface.h"
 #include "cartographer/mapping/pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/mapping/pose_graph_interface.h"
+#include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/map_by_time.h"
 #include "cartographer/sensor/odometry_data.h"
-#include "cartographer/transform/timestamped_transform.h"
+#include "cartographer/transform/transform_interpolation_buffer.h"
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 
-struct NodeSpec2D {
+struct NodeSpec3D {
   common::Time time;
-  transform::Rigid2d local_pose_2d;
-  transform::Rigid2d global_pose_2d;
-  Eigen::Quaterniond gravity_alignment;
+  transform::Rigid3d local_pose;
+  transform::Rigid3d global_pose;
 };
 
-struct SubmapSpec2D {
-  transform::Rigid2d global_pose;
+struct SubmapSpec3D {
+  transform::Rigid3d global_pose;
 };
 
-class OptimizationProblem2D
-    : public OptimizationProblemInterface<NodeSpec2D, SubmapSpec2D,
-                                          transform::Rigid2d> {
+class OptimizationProblem3D
+    : public OptimizationProblemInterface<NodeSpec3D, SubmapSpec3D,
+                                          transform::Rigid3d> {
  public:
-  explicit OptimizationProblem2D(
-      const pose_graph::proto::OptimizationProblemOptions& options);
-  ~OptimizationProblem2D();
+  explicit OptimizationProblem3D(
+      const optimization::proto::OptimizationProblemOptions& options);
+  ~OptimizationProblem3D();
 
-  OptimizationProblem2D(const OptimizationProblem2D&) = delete;
-  OptimizationProblem2D& operator=(const OptimizationProblem2D&) = delete;
+  OptimizationProblem3D(const OptimizationProblem3D&) = delete;
+  OptimizationProblem3D& operator=(const OptimizationProblem3D&) = delete;
 
   void AddImuData(int trajectory_id, const sensor::ImuData& imu_data) override;
   void AddOdometryData(int trajectory_id,
                        const sensor::OdometryData& odometry_data) override;
   void AddTrajectoryNode(int trajectory_id,
-                         const NodeSpec2D& node_data) override;
+                         const NodeSpec3D& node_data) override;
   void InsertTrajectoryNode(const NodeId& node_id,
-                            const NodeSpec2D& node_data) override;
+                            const NodeSpec3D& node_data) override;
   void TrimTrajectoryNode(const NodeId& node_id) override;
   void AddSubmap(int trajectory_id,
-                 const transform::Rigid2d& global_submap_pose) override;
+                 const transform::Rigid3d& global_submap_pose) override;
   void InsertSubmap(const SubmapId& submap_id,
-                    const transform::Rigid2d& global_submap_pose) override;
+                    const transform::Rigid3d& global_submap_pose) override;
   void TrimSubmap(const SubmapId& submap_id) override;
   void SetMaxNumIterations(int32 max_num_iterations) override;
 
@@ -82,10 +82,10 @@ class OptimizationProblem2D
       const std::set<int>& frozen_trajectories,
       const std::map<std::string, LandmarkNode>& landmark_nodes) override;
 
-  const MapById<NodeId, NodeSpec2D>& node_data() const override {
+  const MapById<NodeId, NodeSpec3D>& node_data() const override {
     return node_data_;
   }
-  const MapById<SubmapId, SubmapSpec2D>& submap_data() const override {
+  const MapById<SubmapId, SubmapSpec3D>& submap_data() const override {
     return submap_data_;
   }
   const std::map<std::string, transform::Rigid3d>& landmark_data()
@@ -100,24 +100,39 @@ class OptimizationProblem2D
     return odometry_data_;
   }
 
+  void AddFixedFramePoseData(
+      int trajectory_id,
+      const sensor::FixedFramePoseData& fixed_frame_pose_data);
+  void SetTrajectoryData(
+      int trajectory_id,
+      const PoseGraphInterface::TrajectoryData& trajectory_data);
+  const sensor::MapByTime<sensor::FixedFramePoseData>& fixed_frame_pose_data()
+      const {
+    return fixed_frame_pose_data_;
+  }
+  const std::map<int, PoseGraphInterface::TrajectoryData>& trajectory_data()
+      const {
+    return trajectory_data_;
+  }
+
  private:
-  std::unique_ptr<transform::Rigid3d> InterpolateOdometry(
-      int trajectory_id, common::Time time) const;
   // Computes the relative pose between two nodes based on odometry data.
   std::unique_ptr<transform::Rigid3d> CalculateOdometryBetweenNodes(
-      int trajectory_id, const NodeSpec2D& first_node_data,
-      const NodeSpec2D& second_node_data) const;
+      int trajectory_id, const NodeSpec3D& first_node_data,
+      const NodeSpec3D& second_node_data) const;
 
-  pose_graph::proto::OptimizationProblemOptions options_;
-  MapById<NodeId, NodeSpec2D> node_data_;
-  MapById<SubmapId, SubmapSpec2D> submap_data_;
+  optimization::proto::OptimizationProblemOptions options_;
+  MapById<NodeId, NodeSpec3D> node_data_;
+  MapById<SubmapId, SubmapSpec3D> submap_data_;
   std::map<std::string, transform::Rigid3d> landmark_data_;
   sensor::MapByTime<sensor::ImuData> imu_data_;
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
+  sensor::MapByTime<sensor::FixedFramePoseData> fixed_frame_pose_data_;
+  std::map<int, PoseGraphInterface::TrajectoryData> trajectory_data_;
 };
 
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_OPTIMIZATION_PROBLEM_2D_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_3D_H_

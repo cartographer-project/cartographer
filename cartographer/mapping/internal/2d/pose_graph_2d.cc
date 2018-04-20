@@ -41,7 +41,7 @@ namespace mapping {
 
 PoseGraph2D::PoseGraph2D(
     const proto::PoseGraphOptions& options,
-    std::unique_ptr<pose_graph::OptimizationProblem2D> optimization_problem,
+    std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem,
     common::ThreadPool* thread_pool)
     : options_(options),
       optimization_problem_(std::move(optimization_problem)),
@@ -250,8 +250,9 @@ void PoseGraph2D::ComputeConstraintsForNode(
       local_pose_2d;
   optimization_problem_->AddTrajectoryNode(
       matching_id.trajectory_id,
-      pose_graph::NodeSpec2D{constant_data->time, local_pose_2d, global_pose_2d,
-                             constant_data->gravity_alignment});
+      optimization::NodeSpec2D{constant_data->time, local_pose_2d,
+                               global_pose_2d,
+                               constant_data->gravity_alignment});
   for (size_t i = 0; i < insertion_submaps.size(); ++i) {
     const SubmapId submap_id = submap_ids[i];
     // Even if this was the last node added to 'submap_id', the submap will
@@ -446,8 +447,8 @@ void PoseGraph2D::AddSubmapFromProto(
   submap_data_.Insert(submap_id, InternalSubmapData());
   submap_data_.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the 'global_submap_pose'.
-  global_submap_poses_.Insert(submap_id,
-                              pose_graph::SubmapSpec2D{global_submap_pose_2d});
+  global_submap_poses_.Insert(
+      submap_id, optimization::SubmapSpec2D{global_submap_pose_2d});
   AddWorkItem([this, submap_id, global_submap_pose_2d]() REQUIRES(mutex_) {
     submap_data_.at(submap_id).state = SubmapState::kFinished;
     optimization_problem_->InsertSubmap(submap_id, global_submap_pose_2d);
@@ -471,7 +472,7 @@ void PoseGraph2D::AddNodeFromProto(const transform::Rigid3d& global_pose,
         constant_data->gravity_alignment.inverse());
     optimization_problem_->InsertTrajectoryNode(
         node_id,
-        pose_graph::NodeSpec2D{
+        optimization::NodeSpec2D{
             constant_data->time,
             transform::Project2D(constant_data->local_pose *
                                  gravity_alignment_inverse),
@@ -746,7 +747,7 @@ PoseGraph2D::GetAllSubmapPoses() {
 }
 
 transform::Rigid3d PoseGraph2D::ComputeLocalToGlobalTransform(
-    const MapById<SubmapId, pose_graph::SubmapSpec2D>& global_submap_poses,
+    const MapById<SubmapId, optimization::SubmapSpec2D>& global_submap_poses,
     const int trajectory_id) const {
   auto begin_it = global_submap_poses.BeginOfTrajectory(trajectory_id);
   auto end_it = global_submap_poses.EndOfTrajectory(trajectory_id);

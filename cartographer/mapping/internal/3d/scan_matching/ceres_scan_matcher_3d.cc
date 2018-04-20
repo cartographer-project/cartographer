@@ -26,7 +26,7 @@
 #include "cartographer/mapping/internal/3d/scan_matching/occupied_space_cost_function_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotation_delta_cost_functor_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/translation_delta_cost_functor_3d.h"
-#include "cartographer/mapping/internal/pose_graph/ceres_pose.h"
+#include "cartographer/mapping/internal/optimization/ceres_pose.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
@@ -76,7 +76,7 @@ void CeresScanMatcher3D::Match(
     transform::Rigid3d* const pose_estimate,
     ceres::Solver::Summary* const summary) {
   ceres::Problem problem;
-  pose_graph::CeresPose ceres_pose(
+  optimization::CeresPose ceres_pose(
       initial_pose_estimate, nullptr /* translation_parameterization */,
       options_.only_optimize_yaw()
           ? std::unique_ptr<ceres::LocalParameterization>(

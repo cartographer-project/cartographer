@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/3d/pose_graph/optimization_problem_3d.h"
+#include "cartographer/mapping/internal/optimization/optimization_problem_3d.h"
 
 #include <random>
 
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/internal/pose_graph/optimization_problem_options.h"
+#include "cartographer/mapping/internal/optimization/optimization_problem_options.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 namespace {
 
 class OptimizationProblem3DTest : public ::testing::Test {
@@ -36,7 +36,7 @@ class OptimizationProblem3DTest : public ::testing::Test {
   OptimizationProblem3DTest()
       : optimization_problem_(CreateOptions()), rng_(45387) {}
 
-  pose_graph::proto::OptimizationProblemOptions CreateOptions() {
+  optimization::proto::OptimizationProblemOptions CreateOptions() {
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
           acceleration_weight = 1e-4,
@@ -55,7 +55,7 @@ class OptimizationProblem3DTest : public ::testing::Test {
             num_threads = 4,
           },
         })text");
-    return pose_graph::CreateOptimizationProblemOptions(
+    return optimization::CreateOptimizationProblemOptions(
         parameter_dictionary.get());
   }
 
@@ -191,6 +191,6 @@ TEST_F(OptimizationProblem3DTest, ReducesNoise) {
 }
 
 }  // namespace
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/2d/pose_graph/landmark_cost_function_2d.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/landmark_cost_function_3d.h"
 
 #include <memory>
 
@@ -24,7 +24,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 namespace {
 
 using ::testing::DoubleEq;
@@ -33,16 +33,14 @@ using ::testing::ElementsAre;
 using LandmarkObservation =
     PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
-TEST(LandmarkCostFunctionTest, SmokeTest) {
-  NodeSpec2D prev_node;
+TEST(LandmarkCostFunction3DTest, SmokeTest) {
+  NodeSpec3D prev_node;
   prev_node.time = common::FromUniversal(0);
-  prev_node.gravity_alignment = Eigen::Quaterniond::Identity();
-  NodeSpec2D next_node;
+  NodeSpec3D next_node;
   next_node.time = common::FromUniversal(10);
-  next_node.gravity_alignment = Eigen::Quaterniond::Identity();
 
   std::unique_ptr<ceres::CostFunction> cost_function(
-      LandmarkCostFunction2D::CreateAutoDiffCostFunction(
+      LandmarkCostFunction3D::CreateAutoDiffCostFunction(
           LandmarkObservation{
               0 /* trajectory ID */,
               common::FromUniversal(5) /* time */,
@@ -52,19 +50,21 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
           },
           prev_node, next_node));
 
-  const std::array<double, 3> prev_node_pose{{2., 0., 0.}};
-  const std::array<double, 3> next_node_pose{{0., 2., 0.}};
+  const std::array<double, 4> prev_node_rotation{{1., 0., 0., 0.}};
+  const std::array<double, 3> prev_node_translation{{0., 0., 0.}};
+  const std::array<double, 4> next_node_rotation{{1., 0., 0., 0.}};
+  const std::array<double, 3> next_node_translation{{2., 2., 2.}};
   const std::array<double, 4> landmark_rotation{{1., 0., 0., 0.}};
-  const std::array<double, 3> landmark_translation{{1., 2., 1.}};
-  const std::array<const double*, 4> parameter_blocks{
-      {prev_node_pose.data(), next_node_pose.data(), landmark_rotation.data(),
-       landmark_translation.data()}};
+  const std::array<double, 3> landmark_translation{{1., 2., 2.}};
+  const std::array<const double*, 6> parameter_blocks{
+      {prev_node_rotation.data(), prev_node_translation.data(),
+       next_node_rotation.data(), next_node_translation.data(),
+       landmark_rotation.data(), landmark_translation.data()}};
 
   std::array<double, 6> residuals;
-  std::array<std::array<double, 13>, 6> jacobians;
+  std::array<std::array<double, 21>, 6> jacobians;
   std::array<double*, 6> jacobians_ptrs;
   for (int i = 0; i < 6; ++i) jacobians_ptrs[i] = jacobians[i].data();
-
   cost_function->Evaluate(parameter_blocks.data(), residuals.data(),
                           jacobians_ptrs.data());
   EXPECT_THAT(residuals, ElementsAre(DoubleEq(1.), DoubleEq(0.), DoubleEq(0.),
@@ -72,6 +72,6 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
 }
 
 }  // namespace
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
