@@ -21,6 +21,7 @@
 
 #include "cartographer/mapping/2d/map_limits.h"
 #include "cartographer/mapping/2d/proto/grid_2d.pb.h"
+#include "cartographer/mapping/proto/submap_visualization.pb.h"
 
 namespace cartographer {
 namespace mapping {
@@ -58,7 +59,13 @@ class Grid2D {
   // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
   void GrowLimits(const Eigen::Vector2f& point);
 
+  virtual std::unique_ptr<Grid2D> ComputeCroppedGrid() const = 0;
+
   virtual proto::Grid2D ToProto() const;
+
+  virtual bool DrawToSubmapTexture(
+      proto::SubmapQuery::Response::SubmapTexture* const texture,
+      transform::Rigid3d local_pose) const = 0;
 
  protected:
   const std::vector<uint16>& correspondence_cost_cells() const {

@@ -51,7 +51,7 @@ Eigen::Vector2d GetCornerOfFirstSubmap(
     const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data) {
   auto submap_2d = std::static_pointer_cast<const Submap2D>(
       submap_data.begin()->data.submap);
-  return submap_2d->probability_grid().limits().max();
+  return submap_2d->grid()->limits().max();
 }
 
 // Iterates over every cell in a submap, transforms the center of the cell to
@@ -68,13 +68,12 @@ std::set<SubmapId> AddSubmapsToSubmapCoverageGrid2D(
     if (freshness == submap_freshness.end()) continue;
     if (!submap.data.submap->finished()) continue;
     all_submap_ids.insert(submap.id);
-    const ProbabilityGrid& probability_grid =
-        std::static_pointer_cast<const Submap2D>(submap.data.submap)
-            ->probability_grid();
+    const Grid2D& grid =
+        *std::static_pointer_cast<const Submap2D>(submap.data.submap)->grid();
     // Iterate over every cell in a submap.
     Eigen::Array2i offset;
     CellLimits cell_limits;
-    probability_grid.ComputeCroppedLimits(&offset, &cell_limits);
+    grid.ComputeCroppedLimits(&offset, &cell_limits);
     if (cell_limits.num_x_cells == 0 || cell_limits.num_y_cells == 0) {
       LOG(WARNING) << "Empty grid found in submap ID = " << submap.id;
       continue;
@@ -83,7 +82,7 @@ std::set<SubmapId> AddSubmapsToSubmapCoverageGrid2D(
         transform::Project2D(submap.data.pose);
     for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(cell_limits)) {
       const Eigen::Array2i index = xy_index + offset;
-      if (!probability_grid.IsKnown(index)) continue;
+      if (!grid.IsKnown(index)) continue;
       const transform::Rigid2d center_of_cell_in_global_frame =
           projected_submap_pose *
           transform::Rigid2d::Translation({index.x() + 0.5, index.y() + 0.5});
