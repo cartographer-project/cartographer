@@ -19,7 +19,7 @@
 namespace cartographer {
 namespace io {
 
-FakeFileWriter::FakeFileWriter(){}
+FakeFileWriter::FakeFileWriter() {}
 
 FakeFileWriter::~FakeFileWriter() {}
 
@@ -28,9 +28,7 @@ bool FakeFileWriter::Write(const char* const data, const size_t len) {
   return true;
 }
 
-bool FakeFileWriter::Close() {
-  return true;
-}
+bool FakeFileWriter::Close() { return true; }
 
 bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
   return Write(data, len);
@@ -38,9 +36,7 @@ bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
 
 std::string FakeFileWriter::GetFilename() { return ""; }
 
-std::string FakeFileWriter::GetOutput() {
-    return out_;
-}
+std::string FakeFileWriter::GetOutput() { return out_; }
 
 }  // namespace io
 }  // namespace cartographer

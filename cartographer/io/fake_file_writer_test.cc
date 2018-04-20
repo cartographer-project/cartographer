@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/fake_file_writer.h"
 #include <vector>
 
+#include "cartographer/io/fake_file_writer.h"
 #include "gtest/gtest.h"
-#include "glog/logging.h"
 
 namespace cartographer {
 namespace io {
@@ -28,13 +27,13 @@ TEST(FakeFileWriter, Write) {
   const std::string header = "dummy header";
   const std::vector<std::string> data_stream = {"data 1", "data 2"};
   std::stringstream expected_result;
-  
+
   FakeFileWriter writer;
   writer.WriteHeader(header.c_str(), header.size());
   expected_result << header;
   ASSERT_EQ(expected_result.str(), writer.GetOutput());
 
-  for(const auto& data : data_stream) {
+  for (const auto& data : data_stream) {
     writer.WriteHeader(data.c_str(), data.size());
     expected_result << data;
   }

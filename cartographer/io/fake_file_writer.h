@@ -29,17 +29,15 @@ class FakeFileWriter : public FileWriter {
  public:
   FakeFileWriter();
   ~FakeFileWriter() override;
-  
 
   bool WriteHeader(const char* data, size_t len) override;
-
   bool Write(const char* data, size_t len) override;
   bool Close() override;
   std::string GetFilename() override;
-
   std::string GetOutput();
-private:
-  std::string out_;  
+
+ private:
+  std::string out_;
 };
 
 }  // namespace io
