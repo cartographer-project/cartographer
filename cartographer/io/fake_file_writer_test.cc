@@ -34,7 +34,7 @@ TEST(FakeFileWriter, Write) {
   ASSERT_EQ(expected_result.str(), writer.GetOutput());
 
   for (const auto& data : data_stream) {
-    writer.WriteHeader(data.c_str(), data.size());
+    writer.Write(data.c_str(), data.size());
     expected_result << data;
   }
   ASSERT_EQ(expected_result.str(), writer.GetOutput());
