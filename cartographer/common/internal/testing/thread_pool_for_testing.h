@@ -19,8 +19,8 @@
 
 #include <deque>
 #include <functional>
+#include <map>
 #include <thread>
-#include <vector>
 
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
@@ -46,7 +46,8 @@ class ThreadPoolForTesting : public ThreadPoolInterface {
   std::thread thread_ GUARDED_BY(mutex_);
   bool running_ GUARDED_BY(mutex_) = true;
   bool idle_ GUARDED_BY(mutex_) = true;
-  std::deque<std::function<void()>> work_queue_ GUARDED_BY(mutex_);
+  std::deque<std::shared_ptr<Task>> task_queue_ GUARDED_BY(mutex_);
+  std::map<Task*, std::shared_ptr<Task>> tasks_not_ready_ GUARDED_BY(mutex_);
   Mutex mutex_;
 };
 
