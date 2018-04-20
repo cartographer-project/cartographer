@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_3D_POSE_GRAPH_CONSTRAINT_BUILDER_3D_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_3D_POSE_GRAPH_CONSTRAINT_BUILDER_3D_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_3D_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_3D_H_
 
 #include <array>
 #include <deque>
@@ -44,7 +44,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace constraints {
 
 // Asynchronously computes constraints.
 //
@@ -191,8 +191,8 @@ class ConstraintBuilder3D {
   common::Histogram low_resolution_score_histogram_ GUARDED_BY(mutex_);
 };
 
-}  // namespace pose_graph
+}  // namespace constraints
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_3D_POSE_GRAPH_CONSTRAINT_BUILDER_3D_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_3D_H_

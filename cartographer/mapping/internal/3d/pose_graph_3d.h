@@ -33,7 +33,7 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/3d/submap_3d.h"
-#include "cartographer/mapping/internal/3d/pose_graph/constraint_builder_3d.h"
+#include "cartographer/mapping/internal/constraints/constraint_builder_3d.h"
 #include "cartographer/mapping/internal/optimization/optimization_problem_3d.h"
 #include "cartographer/mapping/internal/trajectory_connectivity_state.h"
 #include "cartographer/mapping/pose_graph.h"
@@ -244,7 +244,7 @@ class PoseGraph3D : public PoseGraph {
 
   // Current optimization problem.
   std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem_;
-  pose_graph::ConstraintBuilder3D constraint_builder_ GUARDED_BY(mutex_);
+  constraints::ConstraintBuilder3D constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
   // Submaps get assigned an ID and state as soon as they are seen, even

@@ -88,8 +88,8 @@ std::vector<SubmapId> PoseGraph2D::InitializeGlobalSubmapPoses(
     optimization_problem_->AddSubmap(
         trajectory_id,
         first_submap_pose *
-            pose_graph::ComputeSubmapPose(*insertion_submaps[0]).inverse() *
-            pose_graph::ComputeSubmapPose(*insertion_submaps[1]));
+            constraints::ComputeSubmapPose(*insertion_submaps[0]).inverse() *
+            constraints::ComputeSubmapPose(*insertion_submaps[1]));
     return {last_submap_id,
             SubmapId{trajectory_id, last_submap_id.submap_index + 1}};
   }
@@ -246,7 +246,7 @@ void PoseGraph2D::ComputeConstraintsForNode(
       transform::Rigid3d::Rotation(constant_data->gravity_alignment.inverse()));
   const transform::Rigid2d global_pose_2d =
       optimization_problem_->submap_data().at(matching_id).global_pose *
-      pose_graph::ComputeSubmapPose(*insertion_submaps.front()).inverse() *
+      constraints::ComputeSubmapPose(*insertion_submaps.front()).inverse() *
       local_pose_2d;
   optimization_problem_->AddTrajectoryNode(
       matching_id.trajectory_id,
@@ -260,7 +260,7 @@ void PoseGraph2D::ComputeConstraintsForNode(
     CHECK(submap_data_.at(submap_id).state == SubmapState::kActive);
     submap_data_.at(submap_id).node_ids.emplace(node_id);
     const transform::Rigid2d constraint_transform =
-        pose_graph::ComputeSubmapPose(*insertion_submaps[i]).inverse() *
+        constraints::ComputeSubmapPose(*insertion_submaps[i]).inverse() *
         local_pose_2d;
     constraints_.push_back(Constraint{submap_id,
                                       node_id,
@@ -328,7 +328,7 @@ void PoseGraph2D::UpdateTrajectoryConnectivity(const Constraint& constraint) {
 
 void PoseGraph2D::HandleWorkQueue() {
   constraint_builder_.WhenDone(
-      [this](const pose_graph::ConstraintBuilder2D::Result& result) {
+      [this](const constraints::ConstraintBuilder2D::Result& result) {
         {
           common::MutexLocker locker(&mutex_);
           constraints_.insert(constraints_.end(), result.begin(), result.end());
@@ -390,7 +390,7 @@ void PoseGraph2D::WaitForAllComputations() {
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
   constraint_builder_.WhenDone(
       [this,
-       &notification](const pose_graph::ConstraintBuilder2D::Result& result) {
+       &notification](const constraints::ConstraintBuilder2D::Result& result) {
         common::MutexLocker locker(&mutex_);
         constraints_.insert(constraints_.end(), result.begin(), result.end());
         notification = true;
