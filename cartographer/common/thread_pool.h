@@ -27,12 +27,17 @@
 namespace cartographer {
 namespace common {
 
+class ThreadPoolInterface {
+ public:
+  virtual void Schedule(const std::function<void()>& work_item) = 0;
+};
+
 // A fixed number of threads working on a work queue of work items. Adding a
 // new work item does not block, and will be executed by a background thread
 // eventually. The queue must be empty before calling the destructor. The thread
 // pool will then wait for the currently executing work items to finish and then
 // destroy the threads.
-class ThreadPool {
+class ThreadPool : public ThreadPoolInterface {
  public:
   explicit ThreadPool(int num_threads);
   ~ThreadPool();
@@ -40,7 +45,7 @@ class ThreadPool {
   ThreadPool(const ThreadPool&) = delete;
   ThreadPool& operator=(const ThreadPool&) = delete;
 
-  void Schedule(const std::function<void()>& work_item);
+  void Schedule(const std::function<void()>& work_item) override;
 
  private:
   void DoWork();
