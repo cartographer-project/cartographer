@@ -86,49 +86,9 @@ void Submap2D::ToResponseProto(
     proto::SubmapQuery::Response* const response) const {
   if (!grid_) return;
   response->set_submap_version(num_range_data());
-
-  Eigen::Array2i offset;
-  CellLimits limits;
-  grid_->ComputeCroppedLimits(&offset, &limits);
-
-  std::string cells;
-  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(limits)) {
-    if (grid_->IsKnown(xy_index + offset)) {
-      // We would like to add 'delta' but this is not possible using a value and
-      // alpha. We use premultiplied alpha, so when 'delta' is positive we can
-      // add it by setting 'alpha' to zero. If it is negative, we set 'value' to
-      // zero, and use 'alpha' to subtract. This is only correct when the pixel
-      // is currently white, so walls will look too gray. This should be hard to
-      // detect visually for the user, though.
-      const int delta =
-          128 -
-          ProbabilityToLogOddsInteger(
-              1.f - grid_->GetCorrespondenceCost(
-                        xy_index +
-                        offset));  // todo(kdaun) move drawing logic to grid
-      const uint8 alpha = delta > 0 ? 0 : -delta;
-      const uint8 value = delta > 0 ? delta : 0;
-      cells.push_back(value);
-      cells.push_back((value || alpha) ? alpha : 1);
-    } else {
-      constexpr uint8 kUnknownLogOdds = 0;
-      cells.push_back(static_cast<uint8>(kUnknownLogOdds));  // value
-      cells.push_back(0);                                    // alpha
-    }
-  }
   proto::SubmapQuery::Response::SubmapTexture* const texture =
       response->add_textures();
-  common::FastGzipString(cells, texture->mutable_cells());
-
-  texture->set_width(limits.num_x_cells);
-  texture->set_height(limits.num_y_cells);
-  const double resolution = grid_->limits().resolution();
-  texture->set_resolution(resolution);
-  const double max_x = grid_->limits().max().x() - resolution * offset.y();
-  const double max_y = grid_->limits().max().y() - resolution * offset.x();
-  *texture->mutable_slice_pose() = transform::ToProto(
-      local_pose().inverse() *
-      transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));
+  grid()->DrawToSubmapTexture(texture, local_pose());
 }
 
 void Submap2D::InsertRangeData(const sensor::RangeData& range_data,
