@@ -835,8 +835,20 @@ std::vector<SubmapId> PoseGraph3D::TrimmingHandle::GetSubmapIds(
   return submap_ids;
 }
 MapById<SubmapId, PoseGraphInterface::SubmapData>
-PoseGraph3D::TrimmingHandle::GetAllSubmapData() const {
-  return parent_->GetSubmapDataUnderLock();
+PoseGraph3D::TrimmingHandle::GetOptimizedSubmapData() const {
+  MapById<SubmapId, PoseGraphInterface::SubmapData> submaps;
+  for (const auto& submap_id_data : parent_->submap_data_) {
+    if (submap_id_data.data.state != SubmapState::kFinished ||
+        !parent_->global_submap_poses_.Contains(submap_id_data.id)) {
+      continue;
+    }
+    submaps.Insert(
+        submap_id_data.id,
+        SubmapData{
+            submap_id_data.data.submap,
+            parent_->global_submap_poses_.at(submap_id_data.id).global_pose});
+  }
+  return submaps;
 }
 
 const MapById<NodeId, TrajectoryNode>&

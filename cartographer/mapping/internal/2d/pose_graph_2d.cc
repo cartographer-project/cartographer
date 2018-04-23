@@ -797,8 +797,20 @@ int PoseGraph2D::TrimmingHandle::num_submaps(const int trajectory_id) const {
 }
 
 MapById<SubmapId, PoseGraphInterface::SubmapData>
-PoseGraph2D::TrimmingHandle::GetAllSubmapData() const {
-  return parent_->GetSubmapDataUnderLock();
+PoseGraph2D::TrimmingHandle::GetOptimizedSubmapData() const {
+  MapById<SubmapId, PoseGraphInterface::SubmapData> submaps;
+  for (const auto& submap_id_data : parent_->submap_data_) {
+    if (submap_id_data.data.state != SubmapState::kFinished ||
+        !parent_->global_submap_poses_.Contains(submap_id_data.id)) {
+      continue;
+    }
+    submaps.Insert(submap_id_data.id,
+                   SubmapData{submap_id_data.data.submap,
+                              transform::Embed3D(parent_->global_submap_poses_
+                                                     .at(submap_id_data.id)
+                                                     .global_pose)});
+  }
+  return submaps;
 }
 
 std::vector<SubmapId> PoseGraph2D::TrimmingHandle::GetSubmapIds(

@@ -83,12 +83,12 @@ TEST(Submap2DTest, ToFromProto) {
       actual.local_pose().rotation(), 1e-6));
   EXPECT_EQ(expected.num_range_data(), actual.num_range_data());
   EXPECT_EQ(expected.finished(), actual.finished());
-  EXPECT_NEAR(expected.probability_grid().limits().resolution(),
-              actual.probability_grid().limits().resolution(), 1e-6);
-  EXPECT_TRUE(expected.probability_grid().limits().max().isApprox(
-      actual.probability_grid().limits().max(), 1e-6));
-  EXPECT_EQ(expected.probability_grid().limits().cell_limits().num_x_cells,
-            actual.probability_grid().limits().cell_limits().num_x_cells);
+  EXPECT_NEAR(expected.grid()->limits().resolution(),
+              actual.grid()->limits().resolution(), 1e-6);
+  EXPECT_TRUE(expected.grid()->limits().max().isApprox(
+      actual.grid()->limits().max(), 1e-6));
+  EXPECT_EQ(expected.grid()->limits().cell_limits().num_x_cells,
+            actual.grid()->limits().cell_limits().num_x_cells);
 }
 
 }  // namespace

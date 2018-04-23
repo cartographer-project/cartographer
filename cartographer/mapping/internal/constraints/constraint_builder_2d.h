@@ -61,7 +61,7 @@ class ConstraintBuilder2D {
   using Result = std::vector<Constraint>;
 
   ConstraintBuilder2D(const proto::ConstraintBuilderOptions& options,
-                      common::ThreadPool* thread_pool);
+                      common::ThreadPoolInterface* thread_pool);
   ~ConstraintBuilder2D();
 
   ConstraintBuilder2D(const ConstraintBuilder2D&) = delete;

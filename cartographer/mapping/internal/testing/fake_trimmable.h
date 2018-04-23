@@ -58,7 +58,7 @@ class FakeTrimmable : public Trimmable {
     return &submap_data_;
   }
 
-  MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
+  MapById<SubmapId, PoseGraphInterface::SubmapData> GetOptimizedSubmapData()
       const override {
     return submap_data_;
   }
