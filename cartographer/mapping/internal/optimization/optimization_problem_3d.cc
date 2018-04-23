@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/3d/pose_graph/optimization_problem_3d.h"
+#include "cartographer/mapping/internal/optimization/optimization_problem_3d.h"
 
 #include <algorithm>
 #include <array>
@@ -30,13 +30,13 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/internal/3d/acceleration_cost_function_3d.h"
 #include "cartographer/mapping/internal/3d/imu_integration.h"
-#include "cartographer/mapping/internal/3d/pose_graph/landmark_cost_function_3d.h"
-#include "cartographer/mapping/internal/3d/pose_graph/spa_cost_function_3d.h"
-#include "cartographer/mapping/internal/3d/rotation_cost_function_3d.h"
 #include "cartographer/mapping/internal/3d/rotation_parameterization.h"
-#include "cartographer/mapping/internal/pose_graph/ceres_pose.h"
+#include "cartographer/mapping/internal/optimization/ceres_pose.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/acceleration_cost_function_3d.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/landmark_cost_function_3d.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/rotation_cost_function_3d.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/spa_cost_function_3d.h"
 #include "cartographer/transform/timestamped_transform.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
@@ -46,7 +46,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 namespace {
 
 using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
@@ -188,7 +188,7 @@ void AddLandmarkCostFunctions(
 }  // namespace
 
 OptimizationProblem3D::OptimizationProblem3D(
-    const pose_graph::proto::OptimizationProblemOptions& options)
+    const optimization::proto::OptimizationProblemOptions& options)
     : options_(options) {}
 
 OptimizationProblem3D::~OptimizationProblem3D() {}
@@ -425,7 +425,7 @@ void OptimizationProblem3D::Solve(
               trajectory_data.imu_calibration.data());
         }
         problem.AddResidualBlock(
-            RotationCostFunction::CreateAutoDiffCostFunction(
+            RotationCostFunction3D::CreateAutoDiffCostFunction(
                 options_.rotation_weight(), result.delta_rotation),
             nullptr /* loss function */, C_nodes.at(first_node_id).rotation(),
             C_nodes.at(second_node_id).rotation(),
@@ -605,6 +605,6 @@ OptimizationProblem3D::CalculateOdometryBetweenNodes(
   return nullptr;
 }
 
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer

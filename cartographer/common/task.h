@@ -39,7 +39,6 @@ class Task {
 
   // State must be 'NEW'.
   void SetWorkItem(const WorkItem& work_item) EXCLUDES(mutex_);
-  // TODO(gaschler): Pass weak_ptr.
 
   // State must be 'NEW'. 'dependency' may be nullptr, in which case it is
   // assumed completed.

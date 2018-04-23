@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/2d/pose_graph/constraint_builder_2d.h"
+#include "cartographer/mapping/internal/constraints/constraint_builder_2d.h"
 
 #include <cmath>
 #include <functional>
@@ -39,7 +39,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace constraints {
 
 static auto* kConstraintsSearchedMetric = metrics::Counter::Null();
 static auto* kConstraintsFoundMetric = metrics::Counter::Null();
@@ -54,8 +54,8 @@ transform::Rigid2d ComputeSubmapPose(const Submap2D& submap) {
 }
 
 ConstraintBuilder2D::ConstraintBuilder2D(
-    const pose_graph::proto::ConstraintBuilderOptions& options,
-    common::ThreadPool* const thread_pool)
+    const constraints::proto::ConstraintBuilderOptions& options,
+    common::ThreadPoolInterface* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
       sampler_(options.sampling_ratio()),
@@ -85,7 +85,7 @@ void ConstraintBuilder2D::MaybeAddConstraint(
     ++pending_computations_[current_computation_];
     const int current_computation = current_computation_;
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-        submap_id, &submap->probability_grid(), [=]() EXCLUDES(mutex_) {
+        submap_id, submap->grid(), [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, submap, node_id,
                             false, /* match_full_submap */
                             constant_data, initial_relative_pose, constraint);
@@ -104,7 +104,7 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      submap_id, &submap->probability_grid(), [=]() EXCLUDES(mutex_) {
+      submap_id, submap->grid(), [=]() EXCLUDES(mutex_) {
         ComputeConstraint(
             submap_id, submap, node_id, true, /* match_full_submap */
             constant_data, transform::Rigid2d::Identity(), constraint);
@@ -328,6 +328,6 @@ void ConstraintBuilder2D::RegisterMetrics(metrics::FamilyFactory* factory) {
   kGlobalConstraintScoresMetric = scores->Add({{"search_region", "global"}});
 }
 
-}  // namespace pose_graph
+}  // namespace constraints
 }  // namespace mapping
 }  // namespace cartographer

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_CONSTRAINT_BUILDER_2D_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_CONSTRAINT_BUILDER_2D_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_3D_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_3D_H_
 
 #include <array>
 #include <deque>
@@ -27,25 +27,24 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/fixed_ratio_sampler.h"
 #include "cartographer/common/histogram.h"
+#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/mutex.h"
 #include "cartographer/common/thread_pool.h"
-#include "cartographer/mapping/2d/submap_2d.h"
-#include "cartographer/mapping/internal/2d/scan_matching/ceres_scan_matcher_2d.h"
-#include "cartographer/mapping/internal/2d/scan_matching/fast_correlative_scan_matcher_2d.h"
+#include "cartographer/mapping/3d/submap_3d.h"
+#include "cartographer/mapping/internal/3d/scan_matching/ceres_scan_matcher_3d.h"
+#include "cartographer/mapping/internal/3d/scan_matching/fast_correlative_scan_matcher_3d.h"
 #include "cartographer/mapping/pose_graph/proto/constraint_builder_options.pb.h"
 #include "cartographer/mapping/pose_graph_interface.h"
+#include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/metrics/family_factory.h"
+#include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/sensor/internal/voxel_filter.h"
 #include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
-
-// Returns (map <- submap) where 'submap' is a coordinate system at the origin
-// of the Submap.
-transform::Rigid2d ComputeSubmapPose(const Submap2D& submap);
+namespace constraints {
 
 // Asynchronously computes constraints.
 //
@@ -55,38 +54,48 @@ transform::Rigid2d ComputeSubmapPose(const Submap2D& submap);
 // MaybeAdd(Global)Constraint()/WhenDone() cycle can follow.
 //
 // This class is thread-safe.
-class ConstraintBuilder2D {
+class ConstraintBuilder3D {
  public:
-  using Constraint = PoseGraphInterface::Constraint;
+  using Constraint = mapping::PoseGraphInterface::Constraint;
   using Result = std::vector<Constraint>;
 
-  ConstraintBuilder2D(const proto::ConstraintBuilderOptions& options,
-                      common::ThreadPool* thread_pool);
-  ~ConstraintBuilder2D();
+  ConstraintBuilder3D(const proto::ConstraintBuilderOptions& options,
+                      common::ThreadPoolInterface* thread_pool);
+  ~ConstraintBuilder3D();
 
-  ConstraintBuilder2D(const ConstraintBuilder2D&) = delete;
-  ConstraintBuilder2D& operator=(const ConstraintBuilder2D&) = delete;
+  ConstraintBuilder3D(const ConstraintBuilder3D&) = delete;
+  ConstraintBuilder3D& operator=(const ConstraintBuilder3D&) = delete;
 
   // Schedules exploring a new constraint between 'submap' identified by
-  // 'submap_id', and the 'compressed_point_cloud' for 'node_id'. The
-  // 'initial_relative_pose' is relative to the 'submap'.
+  // 'submap_id', and the 'compressed_point_cloud' for 'node_id'.
+  //
+  // 'global_node_pose' and 'global_submap_pose' are initial estimates of poses
+  // in the global map frame, i.e. both are gravity aligned.
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
-  void MaybeAddConstraint(const SubmapId& submap_id, const Submap2D* submap,
+  void MaybeAddConstraint(const SubmapId& submap_id, const Submap3D* submap,
                           const NodeId& node_id,
                           const TrajectoryNode::Data* const constant_data,
-                          const transform::Rigid2d& initial_relative_pose);
+                          const std::vector<TrajectoryNode>& submap_nodes,
+                          const transform::Rigid3d& global_node_pose,
+                          const transform::Rigid3d& global_submap_pose);
 
   // Schedules exploring a new constraint between 'submap' identified by
   // 'submap_id' and the 'compressed_point_cloud' for 'node_id'.
   // This performs full-submap matching.
   //
+  // 'global_node_rotation' and 'global_submap_rotation' are initial estimates
+  // of roll and pitch, i.e. their yaw is essentially ignored.
+  //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddGlobalConstraint(
-      const SubmapId& submap_id, const Submap2D* submap, const NodeId& node_id,
-      const TrajectoryNode::Data* const constant_data);
+      const SubmapId& submap_id, const Submap3D* submap, const NodeId& node_id,
+      const TrajectoryNode::Data* const constant_data,
+      const std::vector<TrajectoryNode>& submap_nodes,
+      const Eigen::Quaterniond& global_node_rotation,
+      const Eigen::Quaterniond& global_submap_rotation);
 
   // Must be called after all computations related to one node have been added.
   void NotifyEndOfNode();
@@ -105,19 +114,23 @@ class ConstraintBuilder2D {
 
  private:
   struct SubmapScanMatcher {
-    const Grid2D* grid;
-    std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
+    const HybridGrid* high_resolution_hybrid_grid;
+    const HybridGrid* low_resolution_hybrid_grid;
+    std::unique_ptr<scan_matching::FastCorrelativeScanMatcher3D>
         fast_correlative_scan_matcher;
   };
 
   // Either schedules the 'work_item', or if needed, schedules the scan matcher
   // construction and queues the 'work_item'.
   void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      const SubmapId& submap_id, const Grid2D* grid,
+      const SubmapId& submap_id,
+      const std::vector<TrajectoryNode>& submap_nodes, const Submap3D* submap,
       const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Constructs the scan matcher for a 'submap', then schedules its work items.
-  void ConstructSubmapScanMatcher(const SubmapId& submap_id, const Grid2D* grid)
+  void ConstructSubmapScanMatcher(
+      const SubmapId& submap_id,
+      const std::vector<TrajectoryNode>& submap_nodes, const Submap3D* submap)
       EXCLUDES(mutex_);
 
   // Returns the scan matcher for a submap, which has to exist.
@@ -125,12 +138,13 @@ class ConstraintBuilder2D {
       EXCLUDES(mutex_);
 
   // Runs in a background thread and does computations for an additional
-  // constraint, assuming 'submap' and 'compressed_point_cloud' do not change
-  // anymore. As output, it may create a new Constraint in 'constraint'.
-  void ComputeConstraint(const SubmapId& submap_id, const Submap2D* submap,
-                         const NodeId& node_id, bool match_full_submap,
+  // constraint.
+  // As output, it may create a new Constraint in 'constraint'.
+  void ComputeConstraint(const SubmapId& submap_id, const NodeId& node_id,
+                         bool match_full_submap,
                          const TrajectoryNode::Data* const constant_data,
-                         const transform::Rigid2d& initial_relative_pose,
+                         const transform::Rigid3d& global_node_pose,
+                         const transform::Rigid3d& global_submap_pose,
                          std::unique_ptr<Constraint>* constraint)
       EXCLUDES(mutex_);
 
@@ -138,8 +152,8 @@ class ConstraintBuilder2D {
   // runs the 'when_done_' callback and resets the state.
   void FinishComputation(int computation_index) EXCLUDES(mutex_);
 
-  const pose_graph::proto::ConstraintBuilderOptions options_;
-  common::ThreadPool* thread_pool_;
+  const proto::ConstraintBuilderOptions options_;
+  common::ThreadPoolInterface* thread_pool_;
   common::Mutex mutex_;
 
   // 'callback' set by WhenDone().
@@ -169,14 +183,16 @@ class ConstraintBuilder2D {
       submap_queued_work_items_ GUARDED_BY(mutex_);
 
   common::FixedRatioSampler sampler_;
-  scan_matching::CeresScanMatcher2D ceres_scan_matcher_;
+  scan_matching::CeresScanMatcher3D ceres_scan_matcher_;
 
-  // Histogram of scan matcher scores.
+  // Histograms of scan matcher scores.
   common::Histogram score_histogram_ GUARDED_BY(mutex_);
+  common::Histogram rotational_score_histogram_ GUARDED_BY(mutex_);
+  common::Histogram low_resolution_score_histogram_ GUARDED_BY(mutex_);
 };
 
-}  // namespace pose_graph
+}  // namespace constraints
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_CONSTRAINT_BUILDER_2D_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_3D_H_

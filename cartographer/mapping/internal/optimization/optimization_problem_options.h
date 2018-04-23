@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_OPTIMIZATION_PROBLEM_OPTIONS_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_OPTIMIZATION_PROBLEM_OPTIONS_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_OPTIONS_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_OPTIONS_H_
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/pose_graph/proto/optimization_problem_options.pb.h"
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 
 proto::OptimizationProblemOptions CreateOptimizationProblemOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_OPTIMIZATION_PROBLEM_OPTIONS_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_OPTIONS_H_

@@ -28,8 +28,8 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-using ::cartographer::mapping::pose_graph::OptimizationProblem3D;
-using ::cartographer::mapping::pose_graph::proto::OptimizationProblemOptions;
+using ::cartographer::mapping::optimization::OptimizationProblem3D;
+using ::cartographer::mapping::optimization::proto::OptimizationProblemOptions;
 using ::cartographer::transform::Rigid3d;
 
 class MockOptimizationProblem3D : public OptimizationProblem3D {
@@ -46,7 +46,7 @@ class PoseGraph3DForTesting : public PoseGraph3D {
  public:
   PoseGraph3DForTesting(
       const proto::PoseGraphOptions& options,
-      std::unique_ptr<pose_graph::OptimizationProblem3D> optimization_problem,
+      std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem,
       common::ThreadPool* thread_pool)
       : PoseGraph3D(options, std::move(optimization_problem), thread_pool) {}
 
@@ -68,7 +68,7 @@ class PoseGraph3DTest : public ::testing::Test {
 
   void BuildPoseGraph() {
     auto optimization_problem =
-        common::make_unique<pose_graph::OptimizationProblem3D>(
+        common::make_unique<optimization::OptimizationProblem3D>(
             pose_graph_options_.optimization_problem_options());
     pose_graph_ = common::make_unique<PoseGraph3DForTesting>(
         pose_graph_options_, std::move(optimization_problem),
