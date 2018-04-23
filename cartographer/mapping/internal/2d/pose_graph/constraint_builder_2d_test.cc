@@ -30,42 +30,41 @@ namespace mapping {
 namespace pose_graph {
 namespace {
 
-pose_graph::proto::ConstraintBuilderOptions GenerateConstraintBuilderOptions() {
-  const std::string kConstraintBuilderLua = R"text(
-    include "pose_graph.lua"
-    POSE_GRAPH.constraint_builder.sampling_ratio = 1
-    POSE_GRAPH.constraint_builder.min_score = 0
-    POSE_GRAPH.constraint_builder.global_localization_min_score = 0
-    return POSE_GRAPH.constraint_builder)text";
-  auto constraint_builder_parameters =
-      test::ResolveLuaParameters(kConstraintBuilderLua);
-  return CreateConstraintBuilderOptions(constraint_builder_parameters.get());
-}
-
 class MockCallback {
  public:
   MOCK_METHOD1(Run, void(const ConstraintBuilder2D::Result&));
 };
 
-TEST(ConstraintBuilder2DTest, CallsBack) {
-  common::testing::ThreadPoolForTesting thread_pool;
-  ConstraintBuilder2D constraint_builder(GenerateConstraintBuilderOptions(),
-                                         &thread_pool);
-  MockCallback mock;
-  EXPECT_EQ(constraint_builder.GetNumFinishedNodes(), 0);
-  EXPECT_CALL(mock, Run(testing::_));
-  constraint_builder.NotifyEndOfNode();
-  constraint_builder.WhenDone(
-      std::bind(&MockCallback::Run, &mock, std::placeholders::_1));
-  thread_pool.WaitUntilIdle();
-  EXPECT_EQ(constraint_builder.GetNumFinishedNodes(), 1);
+class ConstraintBuilder2DTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    auto constraint_builder_parameters = test::ResolveLuaParameters(R"text(
+            include "pose_graph.lua"
+            POSE_GRAPH.constraint_builder.sampling_ratio = 1
+            POSE_GRAPH.constraint_builder.min_score = 0
+            POSE_GRAPH.constraint_builder.global_localization_min_score = 0
+            return POSE_GRAPH.constraint_builder)text");
+    constraint_builder_ = common::make_unique<ConstraintBuilder2D>(
+        CreateConstraintBuilderOptions(constraint_builder_parameters.get()),
+        &thread_pool_);
+  }
+
+  std::unique_ptr<ConstraintBuilder2D> constraint_builder_;
+  MockCallback mock_;
+  common::testing::ThreadPoolForTesting thread_pool_;
+};
+
+TEST_F(ConstraintBuilder2DTest, CallsBack) {
+  EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), 0);
+  EXPECT_CALL(mock_, Run(testing::IsEmpty()));
+  constraint_builder_->NotifyEndOfNode();
+  constraint_builder_->WhenDone(
+      std::bind(&MockCallback::Run, &mock_, std::placeholders::_1));
+  thread_pool_.WaitUntilIdle();
+  EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), 1);
 }
 
-TEST(ConstraintBuilder2DTest, FindsConstraints) {
-  common::testing::ThreadPoolForTesting thread_pool;
-  ConstraintBuilder2D constraint_builder(GenerateConstraintBuilderOptions(),
-                                         &thread_pool);
-  MockCallback mock;
+TEST_F(ConstraintBuilder2DTest, FindsConstraints) {
   TrajectoryNode::Data node_data;
   node_data.filtered_gravity_aligned_point_cloud.push_back(
       Eigen::Vector3f(0.1, 0.2, 0.3));
@@ -76,31 +75,30 @@ TEST(ConstraintBuilder2DTest, FindsConstraints) {
                   Eigen::Vector2f(4.f, 5.f));
   int expected_nodes = 0;
   for (int i = 0; i < 2; ++i) {
-    EXPECT_EQ(constraint_builder.GetNumFinishedNodes(), expected_nodes);
+    EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), expected_nodes);
     for (int j = 0; j < 2; ++j) {
-      constraint_builder.MaybeAddConstraint(submap_id, &submap, NodeId{},
-                                            &node_data,
-                                            transform::Rigid2d::Identity());
+      constraint_builder_->MaybeAddConstraint(submap_id, &submap, NodeId{},
+                                              &node_data,
+                                              transform::Rigid2d::Identity());
     }
-    constraint_builder.MaybeAddGlobalConstraint(submap_id, &submap, NodeId{},
-                                                &node_data);
-    constraint_builder.NotifyEndOfNode();
-    thread_pool.WaitUntilIdle();
-    ++expected_nodes;
-    EXPECT_EQ(constraint_builder.GetNumFinishedNodes(), expected_nodes);
-    constraint_builder.NotifyEndOfNode();
-    thread_pool.WaitUntilIdle();
-    ++expected_nodes;
-    EXPECT_EQ(constraint_builder.GetNumFinishedNodes(), expected_nodes);
-    EXPECT_CALL(mock, Run(testing::AllOf(
-                          testing::SizeIs(3),
-                          testing::Each(testing::Field(
-                              &PoseGraphInterface::Constraint::tag,
-                              PoseGraphInterface::Constraint::INTER_SUBMAP)))));
-    constraint_builder.WhenDone(
-        std::bind(&MockCallback::Run, &mock, std::placeholders::_1));
-    thread_pool.WaitUntilIdle();
-    constraint_builder.DeleteScanMatcher(submap_id);
+    constraint_builder_->MaybeAddGlobalConstraint(submap_id, &submap, NodeId{},
+                                                  &node_data);
+    constraint_builder_->NotifyEndOfNode();
+    thread_pool_.WaitUntilIdle();
+    EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), ++expected_nodes);
+    constraint_builder_->NotifyEndOfNode();
+    thread_pool_.WaitUntilIdle();
+    EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), ++expected_nodes);
+    EXPECT_CALL(mock_,
+                Run(testing::AllOf(
+                    testing::SizeIs(3),
+                    testing::Each(testing::Field(
+                        &PoseGraphInterface::Constraint::tag,
+                        PoseGraphInterface::Constraint::INTER_SUBMAP)))));
+    constraint_builder_->WhenDone(
+        std::bind(&MockCallback::Run, &mock_, std::placeholders::_1));
+    thread_pool_.WaitUntilIdle();
+    constraint_builder_->DeleteScanMatcher(submap_id);
   }
 }
 
