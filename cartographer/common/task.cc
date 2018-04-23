@@ -19,23 +19,47 @@
 namespace cartographer {
 namespace common {
 
-void Task::AddDependency(Task* dependency) {
-  {
-    MutexLocker locker(&mutex_);
-    CHECK_EQ(state_, IDLE);
-    ++ref_count_;
+Task::~Task() {
+  // TODO(gaschler): Relax some checks after testing.
+  if (state_ != NEW && state_ != COMPLETED) {
+    LOG(WARNING) << "Delete Task between dispatch and completion.";
   }
-  dependency->AddDependentTask(this);
 }
 
-void Task::Dispatch(ThreadPoolInterface* thread_pool) {
+Task::State Task::GetState() {
   MutexLocker locker(&mutex_);
-  CHECK_EQ(state_, IDLE);
+  return state_;
+}
+
+void Task::SetWorkItem(const WorkItem& work_item) {
+  MutexLocker locker(&mutex_);
+  CHECK_EQ(state_, NEW);
+  work_item_ = work_item;
+}
+
+void Task::AddDependency(std::weak_ptr<Task> dependency) {
+  std::shared_ptr<Task> shared_dependency;
+  {
+    MutexLocker locker(&mutex_);
+    CHECK_EQ(state_, NEW);
+    if (shared_dependency = dependency.lock()) {
+      ++uncompleted_dependencies_;
+    }
+  }
+  if (shared_dependency) {
+    shared_dependency->AddDependentTask(this);
+  }
+}
+
+void Task::NotifyWhenReady(ThreadPoolInterface* thread_pool) {
+  MutexLocker locker(&mutex_);
+  CHECK_EQ(state_, NEW);
   state_ = DISPATCHED;
-  thread_pool_ = thread_pool;
-  if (ref_count_ == 0) {
-    CHECK(thread_pool_);
-    thread_pool_->Schedule(ContructThreadPoolWorkItem());
+  thread_pool_to_notify_ = thread_pool;
+  if (uncompleted_dependencies_ == 0) {
+    state_ = READY;
+    CHECK(thread_pool_to_notify_);
+    thread_pool_to_notify_->NotifyReady(this);
   }
 }
 
@@ -45,36 +69,38 @@ void Task::AddDependentTask(Task* dependent_task) {
     dependent_task->OnDependenyCompleted();
     return;
   }
-  dependent_tasks_.insert(dependent_task);
+  bool inserted = dependent_tasks_.insert(dependent_task).second;
+  CHECK(inserted) << "Given dependency is already a dependency.";
 }
 
 void Task::OnDependenyCompleted() {
   MutexLocker locker(&mutex_);
-  --ref_count_;
-  if (ref_count_ == 0 && state_ == DISPATCHED) {
-    CHECK(thread_pool_);
-    thread_pool_->Schedule(ContructThreadPoolWorkItem());
+  CHECK(state_ == NEW || state_ == DISPATCHED);
+  --uncompleted_dependencies_;
+  if (uncompleted_dependencies_ == 0 && state_ == DISPATCHED) {
+    state_ = READY;
+    CHECK(thread_pool_to_notify_);
+    thread_pool_to_notify_->NotifyReady(this);
   }
 }
 
-Task::WorkItem Task::ContructThreadPoolWorkItem() {
-  return [this]() {
-    {
-      MutexLocker locker(&mutex_);
-      state_ = RUNNING;
-    }
-
-    // Execute the work item.
-    if (work_item_) {
-      work_item_();
-    }
-
+void Task::Execute() {
+  {
     MutexLocker locker(&mutex_);
-    state_ = COMPLETED;
-    for (Task* dependent_task : dependent_tasks_) {
-      dependent_task->OnDependenyCompleted();
-    }
-  };
+    CHECK_EQ(state_, READY);
+    state_ = RUNNING;
+  }
+
+  // Execute the work item.
+  if (work_item_) {
+    work_item_();
+  }
+
+  MutexLocker locker(&mutex_);
+  state_ = COMPLETED;
+  for (Task* dependent_task : dependent_tasks_) {
+    dependent_task->OnDependenyCompleted();
+  }
 }
 
 }  // namespace common

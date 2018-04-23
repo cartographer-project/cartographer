@@ -26,29 +26,43 @@
 namespace cartographer {
 namespace common {
 
+class ThreadPoolInterface;
+
 class Task {
  public:
   using WorkItem = std::function<void()>;
-  using TaskDispatcher = std::function<void(Task*)>;
-  using TasksDispatchingWorkItem = std::function<void(TaskDispatcher)>;
-  enum State { IDLE, DISPATCHED, RUNNING, COMPLETED };
+  enum State { NEW, DISPATCHED, READY, RUNNING, COMPLETED };
 
-  Task() {}
-  Task(WorkItem work_item) : work_item_(work_item) {}
+  ~Task();
 
-  State GetState() { return state_; }
-  void AddDependency(Task* dependency);
-  void Dispatch(ThreadPoolInterface* thread_pool);
+  State GetState() EXCLUDES(mutex_);
+
+  // State must be 'NEW'.
+  void SetWorkItem(const WorkItem& work_item) EXCLUDES(mutex_);
+  // TODO(gaschler): Pass weak_ptr.
+
+  // State must be 'NEW'. 'dependency' may be nullptr, in which case it is
+  // assumed completed.
+  void AddDependency(std::weak_ptr<Task> dependency) EXCLUDES(mutex_);
+
+  // State must be 'NEW' and becomes 'DISPATCHED' or 'READY'.
+  void NotifyWhenReady(ThreadPoolInterface* thread_pool) EXCLUDES(mutex_);
+
+  // State must be 'READY' and becomes 'COMPLETED'.
+  void Execute() EXCLUDES(mutex_);
+
+ private:
+  // Allowed in all states.
   void AddDependentTask(Task* dependent_task);
-  void OnDependenyCompleted();
-  WorkItem ContructThreadPoolWorkItem();
 
- protected:
-  WorkItem work_item_;
-  ThreadPoolInterface* thread_pool_ = nullptr;
-  State state_ = IDLE;
-  unsigned int ref_count_ = 0;
-  std::set<Task*> dependent_tasks_;
+  // State must be 'NEW' or 'DISPATCHED'. If 'DISPATCHED', may become 'READY'.
+  void OnDependenyCompleted();
+
+  WorkItem work_item_ GUARDED_BY(mutex_);
+  ThreadPoolInterface* thread_pool_to_notify_ GUARDED_BY(mutex_) = nullptr;
+  State state_ GUARDED_BY(mutex_) = NEW;
+  unsigned int uncompleted_dependencies_ GUARDED_BY(mutex_) = 0;
+  std::set<Task*> dependent_tasks_ GUARDED_BY(mutex_);
 
   Mutex mutex_;
 };
