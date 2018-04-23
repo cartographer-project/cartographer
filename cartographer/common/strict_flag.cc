@@ -16,9 +16,11 @@
 
 #include "cartographer/common/strict_flag.h"
 
-DEFINE_double(cartographer_strict, true,
-              "Controls whether Cartographer will crash for any violation of "
-              "input invariants, e.g. strict time ordering within each sensor"
-              " data type. Setting this flag to false turns these CHECKs into"
-              "warnings. For a detailed list of behavioural changes this flag"
-              "controls see https://google-cartographer.readthedocs.io/en/latest/strict_mode.html");
+DEFINE_double(
+    cartographer_strict, true,
+    "Controls whether Cartographer will crash for any violation of "
+    "input invariants, e.g. strict time ordering within each sensor"
+    " data type. Setting this flag to false turns these CHECKs into"
+    "warnings. For a detailed list of behavioural changes this flag"
+    "controls see "
+    "https://google-cartographer.readthedocs.io/en/latest/strict_mode.html");
