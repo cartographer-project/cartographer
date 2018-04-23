@@ -18,7 +18,6 @@
 
 #include "cartographer/mapping/internal/constraints/constraint_builder.h"
 #include "cartographer/mapping/internal/optimization/optimization_problem_options.h"
-#include "cartographer/mapping/internal/constraints/constraint_builder.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
