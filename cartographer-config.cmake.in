@@ -35,7 +35,7 @@ endif()
 set(BUILD_GRPC @BUILD_GRPC@)
 
 if(BUILD_GRPC)
-  find_package(async_grpc)
+   find_package(async_grpc)
 endif()
 
 include("${CARTOGRAPHER_CMAKE_DIR}/CartographerTargets.cmake")
