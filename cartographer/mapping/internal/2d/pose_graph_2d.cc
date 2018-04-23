@@ -371,9 +371,6 @@ void PoseGraph2D::WaitForAllComputations() {
   common::MutexLocker locker(&mutex_);
   const int num_finished_nodes_at_start =
       constraint_builder_.GetNumFinishedNodes();
-  LOG(INFO) << "Waiting for GetNumFinishedNodes()="
-            << constraint_builder_.GetNumFinishedNodes()
-            << " to become num_trajectory_nodes_=" << num_trajectory_nodes_;
   while (!locker.AwaitWithTimeout(
       [this]() REQUIRES(mutex_) {
         return ((constraint_builder_.GetNumFinishedNodes() ==
@@ -389,9 +386,6 @@ void PoseGraph2D::WaitForAllComputations() {
                          (num_trajectory_nodes_ - num_finished_nodes_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
-    LOG(INFO) << "Waiting for GetNumFinishedNodes()="
-              << constraint_builder_.GetNumFinishedNodes()
-              << " to become num_trajectory_nodes_=" << num_trajectory_nodes_;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
   constraint_builder_.WhenDone(
