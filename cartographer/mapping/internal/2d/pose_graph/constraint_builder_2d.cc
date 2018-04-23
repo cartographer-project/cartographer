@@ -55,7 +55,7 @@ transform::Rigid2d ComputeSubmapPose(const Submap2D& submap) {
 
 ConstraintBuilder2D::ConstraintBuilder2D(
     const pose_graph::proto::ConstraintBuilderOptions& options,
-    common::ThreadPool* const thread_pool)
+    common::ThreadPoolInterface* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
       sampler_(options.sampling_ratio()),
