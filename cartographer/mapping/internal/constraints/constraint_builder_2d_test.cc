@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/2d/pose_graph/constraint_builder_2d.h"
+#include "cartographer/mapping/internal/constraints/constraint_builder_2d.h"
 
 #include <functional>
 
 #include "cartographer/common/internal/testing/thread_pool_for_testing.h"
 #include "cartographer/mapping/2d/submap_2d.h"
-#include "cartographer/mapping/internal/pose_graph/constraint_builder.h"
+#include "cartographer/mapping/internal/constraints/constraint_builder.h"
 #include "cartographer/mapping/internal/testing/test_helpers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace constraints {
 namespace {
 
 class MockCallback {
@@ -103,6 +103,6 @@ TEST_F(ConstraintBuilder2DTest, FindsConstraints) {
 }
 
 }  // namespace
-}  // namespace pose_graph
+}  // namespace constraints
 }  // namespace mapping
 }  // namespace cartographer

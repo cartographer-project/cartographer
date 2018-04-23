@@ -139,7 +139,7 @@ class ConstraintBuilder2D {
   void FinishComputation(int computation_index) EXCLUDES(mutex_);
 
   const constraints::proto::ConstraintBuilderOptions options_;
-  common::ThreadPool* thread_pool_;
+  common::ThreadPoolInterface* thread_pool_;
   common::Mutex mutex_;
 
   // 'callback' set by WhenDone().
