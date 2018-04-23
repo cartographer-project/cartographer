@@ -68,14 +68,14 @@ MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
   if (options.use_trajectory_builder_2d()) {
     pose_graph_ = common::make_unique<PoseGraph2D>(
         options_.pose_graph_options(),
-        common::make_unique<pose_graph::OptimizationProblem2D>(
+        common::make_unique<optimization::OptimizationProblem2D>(
             options_.pose_graph_options().optimization_problem_options()),
         &thread_pool_);
   }
   if (options.use_trajectory_builder_3d()) {
     pose_graph_ = common::make_unique<PoseGraph3D>(
         options_.pose_graph_options(),
-        common::make_unique<pose_graph::OptimizationProblem3D>(
+        common::make_unique<optimization::OptimizationProblem3D>(
             options_.pose_graph_options().optimization_problem_options()),
         &thread_pool_);
   }

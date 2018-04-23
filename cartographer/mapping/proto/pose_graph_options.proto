@@ -37,7 +37,7 @@ message PoseGraphOptions {
   double matcher_rotation_weight = 8;
 
   // Options for the optimization problem.
-  mapping.pose_graph.proto.OptimizationProblemOptions
+  mapping.optimization.proto.OptimizationProblemOptions
       optimization_problem_options = 4;
 
   // Number of iterations to use in 'optimization_problem_options' for the final

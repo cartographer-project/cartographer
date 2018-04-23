@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/2d/pose_graph/landmark_cost_function_2d.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/landmark_cost_function_2d.h"
 
 #include <memory>
 
@@ -24,7 +24,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 namespace {
 
 using ::testing::DoubleEq;
@@ -34,10 +34,10 @@ using LandmarkObservation =
     PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
 TEST(LandmarkCostFunctionTest, SmokeTest) {
-  NodeData2D prev_node;
+  NodeSpec2D prev_node;
   prev_node.time = common::FromUniversal(0);
   prev_node.gravity_alignment = Eigen::Quaterniond::Identity();
-  NodeData2D next_node;
+  NodeSpec2D next_node;
   next_node.time = common::FromUniversal(10);
   next_node.gravity_alignment = Eigen::Quaterniond::Identity();
 
@@ -72,6 +72,6 @@ TEST(LandmarkCostFunctionTest, SmokeTest) {
 }
 
 }  // namespace
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer

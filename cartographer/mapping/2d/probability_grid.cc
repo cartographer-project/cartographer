@@ -17,7 +17,9 @@
 
 #include <limits>
 
+#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/probability_values.h"
+#include "cartographer/mapping/submaps.h"
 
 namespace cartographer {
 namespace mapping {
@@ -74,6 +76,66 @@ proto::Grid2D ProbabilityGrid::ToProto() const {
   result = Grid2D::ToProto();
   result.mutable_probability_grid_2d();
   return result;
+}
+
+std::unique_ptr<Grid2D> ProbabilityGrid::ComputeCroppedGrid() const {
+  Eigen::Array2i offset;
+  CellLimits cell_limits;
+  ComputeCroppedLimits(&offset, &cell_limits);
+  const double resolution = limits().resolution();
+  const Eigen::Vector2d max =
+      limits().max() - resolution * Eigen::Vector2d(offset.y(), offset.x());
+  std::unique_ptr<ProbabilityGrid> cropped_grid =
+      common::make_unique<ProbabilityGrid>(
+          MapLimits(resolution, max, cell_limits));
+  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(cell_limits)) {
+    if (!IsKnown(xy_index + offset)) continue;
+    cropped_grid->SetProbability(xy_index, GetProbability(xy_index + offset));
+  }
+
+  return std::unique_ptr<Grid2D>(cropped_grid.release());
+}
+
+bool ProbabilityGrid::DrawToSubmapTexture(
+    proto::SubmapQuery::Response::SubmapTexture* const texture,
+    transform::Rigid3d local_pose) const {
+  Eigen::Array2i offset;
+  CellLimits cell_limits;
+  ComputeCroppedLimits(&offset, &cell_limits);
+
+  std::string cells;
+  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(cell_limits)) {
+    if (!IsKnown(xy_index + offset)) {
+      cells.push_back(0 /* unknown log odds value */);
+      cells.push_back(0 /* alpha */);
+      continue;
+    }
+    // We would like to add 'delta' but this is not possible using a value and
+    // alpha. We use premultiplied alpha, so when 'delta' is positive we can
+    // add it by setting 'alpha' to zero. If it is negative, we set 'value' to
+    // zero, and use 'alpha' to subtract. This is only correct when the pixel
+    // is currently white, so walls will look too gray. This should be hard to
+    // detect visually for the user, though.
+    const int delta =
+        128 - ProbabilityToLogOddsInteger(GetProbability(xy_index + offset));
+    const uint8 alpha = delta > 0 ? 0 : -delta;
+    const uint8 value = delta > 0 ? delta : 0;
+    cells.push_back(value);
+    cells.push_back((value || alpha) ? alpha : 1);
+  }
+
+  common::FastGzipString(cells, texture->mutable_cells());
+  texture->set_width(cell_limits.num_x_cells);
+  texture->set_height(cell_limits.num_y_cells);
+  const double resolution = limits().resolution();
+  texture->set_resolution(resolution);
+  const double max_x = limits().max().x() - resolution * offset.y();
+  const double max_y = limits().max().y() - resolution * offset.x();
+  *texture->mutable_slice_pose() = transform::ToProto(
+      local_pose.inverse() *
+      transform::Rigid3d::Translation(Eigen::Vector3d(max_x, max_y, 0.)));
+
+  return true;
 }
 
 }  // namespace mapping
