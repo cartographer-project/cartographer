@@ -17,11 +17,9 @@
 #ifndef CARTOGRAPHER_IO_FILE_WRITER_H_
 #define CARTOGRAPHER_IO_FILE_WRITER_H_
 
-#include <fstream>
-#include <sstream>
-
 #include <functional>
 #include <memory>
+#include <ostream>
 
 #include "cartographer/common/port.h"
 

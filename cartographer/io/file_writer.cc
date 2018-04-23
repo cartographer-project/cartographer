@@ -15,9 +15,9 @@
  */
 
 #include "cartographer/io/file_writer.h"
+
+#include <fstream>
 #include "cartographer/common/make_unique.h"
-#include "gflags/gflags.h"
-#include "glog/logging.h"
 
 namespace cartographer {
 namespace io {
