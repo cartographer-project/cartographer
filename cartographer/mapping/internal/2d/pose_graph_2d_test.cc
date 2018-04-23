@@ -24,7 +24,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/2d/range_data_inserter_2d.h"
+#include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 #include "cartographer/mapping/2d/submap_2d.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
@@ -52,7 +52,7 @@ class PoseGraph2DTest : public ::testing::Test {
           return {
             resolution = 0.05,
             num_range_data = 1,
-            range_data_inserter = {
+            probability_grid_range_data_inserter = {
               insert_free_space = true,
               hit_probability = 0.53,
               miss_probability = 0.495,

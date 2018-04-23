@@ -39,7 +39,7 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
       "num_range_data = " +
       std::to_string(kNumRangeData) +
       ", "
-      "range_data_inserter = {"
+      "probability_grid_range_data_inserter = {"
       "insert_free_space = true, "
       "hit_probability = 0.53, "
       "miss_probability = 0.495, "

@@ -23,7 +23,7 @@
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/2d/probability_grid.h"
-#include "cartographer/mapping/2d/range_data_inserter_2d.h"
+#include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 #include "cartographer/mapping/internal/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/transform.h"
@@ -46,8 +46,10 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
           "hit_probability = 0.7, "
           "miss_probability = 0.4, "
           "}");
-      range_data_inserter_ = common::make_unique<RangeDataInserter2D>(
-          CreateRangeDataInserterOptions2D(parameter_dictionary.get()));
+      range_data_inserter_ =
+          common::make_unique<ProbabilityGridRangeDataInserter2D>(
+              CreateProbabilityGridRangeDataInserterOptions2D(
+                  parameter_dictionary.get()));
     }
     point_cloud_.emplace_back(0.025f, 0.175f, 0.f);
     point_cloud_.emplace_back(-0.025f, 0.175f, 0.f);
@@ -76,7 +78,7 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
   }
 
   ProbabilityGrid probability_grid_;
-  std::unique_ptr<RangeDataInserter2D> range_data_inserter_;
+  std::unique_ptr<ProbabilityGridRangeDataInserter2D> range_data_inserter_;
   sensor::PointCloud point_cloud_;
   std::unique_ptr<RealTimeCorrelativeScanMatcher2D>
       real_time_correlative_scan_matcher_;

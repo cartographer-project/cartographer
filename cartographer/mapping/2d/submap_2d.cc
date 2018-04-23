@@ -25,6 +25,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -36,9 +37,11 @@ proto::SubmapsOptions2D CreateSubmapsOptions2D(
   options.set_resolution(parameter_dictionary->GetDouble("resolution"));
   options.set_num_range_data(
       parameter_dictionary->GetNonNegativeInt("num_range_data"));
-  *options.mutable_range_data_inserter_options() =
-      CreateRangeDataInserterOptions2D(
-          parameter_dictionary->GetDictionary("range_data_inserter").get());
+  *options.mutable_probability_grid_range_data_inserter_options() =
+      CreateProbabilityGridRangeDataInserterOptions2D(
+          parameter_dictionary
+              ->GetDictionary("probability_grid_range_data_inserter")
+              .get());
   CHECK_GT(options.num_range_data(), 0);
   return options;
 }
@@ -92,10 +95,10 @@ void Submap2D::ToResponseProto(
 }
 
 void Submap2D::InsertRangeData(const sensor::RangeData& range_data,
-                               const RangeDataInserter2D& range_data_inserter) {
+                               const RangeDataInserter* range_data_inserter) {
   CHECK(grid_);
   CHECK(!finished());
-  range_data_inserter.Insert(range_data, grid_.get());
+  range_data_inserter->Insert(range_data, grid_.get());
   set_num_range_data(num_range_data() + 1);
 }
 
@@ -108,19 +111,12 @@ void Submap2D::Finish() {
 
 ActiveSubmaps2D::ActiveSubmaps2D(const proto::SubmapsOptions2D& options)
     : options_(options),
-      range_data_inserter_(options.range_data_inserter_options()) {
+      range_data_inserter_(
+          common::make_unique<ProbabilityGridRangeDataInserter2D>(
+              options.probability_grid_range_data_inserter_options())) {
   // We always want to have at least one likelihood field which we can return,
   // and will create it at the origin in absence of a better choice.
   AddSubmap(Eigen::Vector2f::Zero());
-}
-
-void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
-  for (auto& submap : submaps_) {
-    submap->InsertRangeData(range_data, range_data_inserter_);
-  }
-  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
-    AddSubmap(range_data.origin.head<2>());
-  }
 }
 
 std::vector<std::shared_ptr<Submap2D>> ActiveSubmaps2D::submaps() const {
@@ -128,6 +124,15 @@ std::vector<std::shared_ptr<Submap2D>> ActiveSubmaps2D::submaps() const {
 }
 
 int ActiveSubmaps2D::matching_index() const { return matching_submap_index_; }
+
+void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
+  for (auto& submap : submaps_) {
+    submap->InsertRangeData(range_data, range_data_inserter_.get());
+  }
+  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
+    AddSubmap(range_data.origin.head<2>());
+  }
+}
 
 void ActiveSubmaps2D::FinishSubmap() {
   Submap2D* submap = submaps_.front().get();

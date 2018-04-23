@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package cartographer.mapping.proto;
 
-message RangeDataInserterOptions2D {
+message ProbabilityGridRangeDataInserterOptions2D {
   // Probability change for a hit (this will be converted to odds and therefore
   // must be greater than 0.5).
   double hit_probability = 1;
