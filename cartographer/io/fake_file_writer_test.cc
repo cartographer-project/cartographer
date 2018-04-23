@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Cartographer Authors
+ * Copyright 2018 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,21 +23,23 @@ namespace cartographer {
 namespace io {
 namespace {
 
-TEST(FakeFileWriter, Write) {
+TEST(FakeFileWriter, WriteHeader) {
   const std::string header = "dummy header";
-  const std::vector<std::string> data_stream = {"data 1", "data 2"};
-  std::stringstream expected_result;
-
   FakeFileWriter writer;
-  writer.WriteHeader(header.c_str(), header.size());
-  expected_result << header;
-  ASSERT_EQ(expected_result.str(), writer.GetOutput());
+  EXPECT_TRUE(writer.WriteHeader(header.c_str(), header.size()));
+  EXPECT_TRUE(writer.Close());
+  EXPECT_EQ(writer.GetOutput(), "dummy header");
+}
 
+TEST(FakeFileWriter, Write) {
+  const std::vector<std::string> data_stream = {"data 1", "data 2"};
+  FakeFileWriter writer;
   for (const auto& data : data_stream) {
-    writer.Write(data.c_str(), data.size());
-    expected_result << data;
+    EXPECT_TRUE(writer.Write(data.c_str(), data.size()));
   }
-  ASSERT_EQ(expected_result.str(), writer.GetOutput());
+
+  EXPECT_TRUE(writer.Close());
+  EXPECT_EQ(writer.GetOutput(), "data1 data2");
 }
 
 }  // namespace
