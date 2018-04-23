@@ -17,8 +17,8 @@
 #include "cartographer/metrics/register.h"
 
 #include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
-#include "cartographer/mapping/internal/constraints/constraint_builder_2d.h"
 #include "cartographer/mapping/internal/3d/local_trajectory_builder_3d.h"
+#include "cartographer/mapping/internal/constraints/constraint_builder_2d.h"
 #include "cartographer/mapping/internal/constraints/constraint_builder_3d.h"
 #include "cartographer/mapping/internal/global_trajectory_builder.h"
 
