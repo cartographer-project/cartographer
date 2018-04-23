@@ -15,41 +15,19 @@
  */
 
 #include "cartographer/io/fake_file_writer.h"
+#include "cartographer/common/make_unique.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace io {
 
-FakeFileWriter::FakeFileWriter(const std::string& filename) : filename_(filename), was_closed_(false){
-}
+FakeStreamFileWriter::FakeStreamFileWriter(const std::string filename)
+    : StreamWriter(common::make_unique<std::ofstream>(), filename) {}
 
-FakeFileWriter::~FakeFileWriter() {
-  EXPECT_TRUE(was_closed_);
-}
+FakeStreamFileWriter::~FakeStreamFileWriter() = default;
 
-bool FakeFileWriter::Write(const char* const data, const size_t len) {
-  
-  EXPECT_FALSE(was_closed_);
-  out_.write(data, len);
-  return true;
-}
-
-bool FakeFileWriter::Close() { 
-  was_closed_ = true; 
-  return true; 
-}
-
-bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
-  out_.flush();
-  out_.seekp(0);
-  return Write(data, len);
-}
-
-std::string FakeFileWriter::GetFilename() { return filename_; }
-
-std::string FakeFileWriter::GetOutput() const { 
-  EXPECT_TRUE(was_closed_);
-  return out_; 
+std::string FakeStreamFileWriter::GetOutput() const {
+  return static_cast<std::ostringstream*>(out_.get())->str();
 }
 
 }  // namespace io

@@ -25,23 +25,11 @@ namespace cartographer {
 namespace io {
 
 // Fakes a FileWriter by just writing the data to a std::string.
-class FakeFileWriter : public FileWriter {
+class FakeStreamFileWriter : public StreamWriter {
  public:
- FakeFileWriter(const std::string& filename);
-  ~FakeFileWriter() override;
-
-  bool WriteHeader(const char* data, size_t len) override;
-  bool Write(const char* data, size_t len) override;
-  bool Close() override;
-  std::string GetFilename() override;
+  FakeStreamFileWriter(const std::string filename);
+  ~FakeStreamFileWriter() override;
   std::string GetOutput() const;
-
- private:
- 
- std::string filename_;
-  std::ostringstream out_;
-  bool was_closed_;
-  
 };
 
 }  // namespace io
