@@ -22,8 +22,8 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/2d/map_limits.h"
-#include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/2d/proto/submaps_options_2d.pb.h"
 #include "cartographer/mapping/2d/range_data_inserter_2d.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
@@ -35,9 +35,6 @@
 
 namespace cartographer {
 namespace mapping {
-
-ProbabilityGrid ComputeCroppedProbabilityGrid(
-    const ProbabilityGrid& probability_grid);
 
 proto::SubmapsOptions2D CreateSubmapsOptions2D(
     common::LuaParameterDictionary* parameter_dictionary);
@@ -54,7 +51,7 @@ class Submap2D : public Submap {
   void ToResponseProto(const transform::Rigid3d& global_submap_pose,
                        proto::SubmapQuery::Response* response) const override;
 
-  const ProbabilityGrid& probability_grid() const { return *probability_grid_; }
+  const Grid2D* grid() const { return grid_.get(); }
 
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
@@ -63,7 +60,7 @@ class Submap2D : public Submap {
   void Finish();
 
  private:
-  std::unique_ptr<ProbabilityGrid> probability_grid_;
+  std::unique_ptr<Grid2D> grid_;
 };
 
 // Except during initialization when only a single submap exists, there are

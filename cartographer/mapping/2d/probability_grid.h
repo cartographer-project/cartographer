@@ -52,6 +52,10 @@ class ProbabilityGrid : public Grid2D {
   float GetProbability(const Eigen::Array2i& cell_index) const;
 
   virtual proto::Grid2D ToProto() const override;
+  virtual std::unique_ptr<Grid2D> ComputeCroppedGrid() const override;
+  virtual bool DrawToSubmapTexture(
+      proto::SubmapQuery::Response::SubmapTexture* const texture,
+      transform::Rigid3d local_pose) const override;
 };
 
 }  // namespace mapping

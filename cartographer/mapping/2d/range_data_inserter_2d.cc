@@ -52,14 +52,13 @@ RangeDataInserter2D::RangeDataInserter2D(
       miss_table_(ComputeLookupTableToApplyCorrespondenceCostOdds(
           Odds(options.miss_probability()))) {}
 
-void RangeDataInserter2D::Insert(
-    const sensor::RangeData& range_data,
-    ProbabilityGrid* const probability_grid) const {
+void RangeDataInserter2D::Insert(const sensor::RangeData& range_data,
+                                 Grid2D* const grid) const {
   // By not finishing the update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
   CastRays(range_data, hit_table_, miss_table_, options_.insert_free_space(),
-           CHECK_NOTNULL(probability_grid));
-  probability_grid->FinishUpdate();
+           CHECK_NOTNULL(static_cast<ProbabilityGrid*>(grid)));
+  grid->FinishUpdate();
 }
 
 }  // namespace mapping

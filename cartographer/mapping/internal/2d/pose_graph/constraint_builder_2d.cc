@@ -85,7 +85,7 @@ void ConstraintBuilder2D::MaybeAddConstraint(
     kQueueLengthMetric->Set(constraints_.size());
     auto* const constraint = &constraints_.back();
     DispatchScanMatcherConstructionAndWorkItem(
-        submap_id, &submap->probability_grid(), [=]() EXCLUDES(mutex_) {
+        submap_id, submap->grid(), [=]() EXCLUDES(mutex_) {
           ComputeConstraint(submap_id, submap, node_id,
                             false, /* match_full_submap */
                             constant_data, initial_relative_pose, constraint);
@@ -101,7 +101,7 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
   kQueueLengthMetric->Set(constraints_.size());
   auto* const constraint = &constraints_.back();
   DispatchScanMatcherConstructionAndWorkItem(
-      submap_id, &submap->probability_grid(), [=]() EXCLUDES(mutex_) {
+      submap_id, submap->grid(), [=]() EXCLUDES(mutex_) {
         ComputeConstraint(
             submap_id, submap, node_id, true, /* match_full_submap */
             constant_data, transform::Rigid2d::Identity(), constraint);

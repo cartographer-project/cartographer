@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_COST_HELPERS_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_COST_HELPERS_H_
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
@@ -24,7 +24,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 
 // Computes the error between the given relative pose and the difference of
 // poses 'start' and 'end' which are both in an arbitrary common frame.
@@ -80,10 +80,10 @@ InterpolateNodes2D(const T* const prev_node_pose,
                    const Eigen::Quaterniond& next_node_gravity_alignment,
                    const double interpolation_parameter);
 
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
 
-#include "cartographer/mapping/internal/pose_graph/cost_helpers_impl.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/cost_helpers_impl.h"
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_COST_HELPERS_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_COST_FUNCTIONS_COST_HELPERS_H_

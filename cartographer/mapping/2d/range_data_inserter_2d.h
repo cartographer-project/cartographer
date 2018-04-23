@@ -43,8 +43,7 @@ class RangeDataInserter2D {
   RangeDataInserter2D& operator=(const RangeDataInserter2D&) = delete;
 
   // Inserts 'range_data' into 'probability_grid'.
-  void Insert(const sensor::RangeData& range_data,
-              ProbabilityGrid* probability_grid) const;
+  void Insert(const sensor::RangeData& range_data, Grid2D* grid) const;
 
  private:
   const proto::RangeDataInserterOptions2D options_;

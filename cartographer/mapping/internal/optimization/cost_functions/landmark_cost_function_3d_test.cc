@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/3d/pose_graph/landmark_cost_function_3d.h"
+#include "cartographer/mapping/internal/optimization/cost_functions/landmark_cost_function_3d.h"
 
 #include <memory>
 
@@ -24,7 +24,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace optimization {
 namespace {
 
 using ::testing::DoubleEq;
@@ -34,9 +34,9 @@ using LandmarkObservation =
     PoseGraphInterface::LandmarkNode::LandmarkObservation;
 
 TEST(LandmarkCostFunction3DTest, SmokeTest) {
-  NodeData3D prev_node;
+  NodeSpec3D prev_node;
   prev_node.time = common::FromUniversal(0);
-  NodeData3D next_node;
+  NodeSpec3D next_node;
   next_node.time = common::FromUniversal(10);
 
   std::unique_ptr<ceres::CostFunction> cost_function(
@@ -72,6 +72,6 @@ TEST(LandmarkCostFunction3DTest, SmokeTest) {
 }
 
 }  // namespace
-}  // namespace pose_graph
+}  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
