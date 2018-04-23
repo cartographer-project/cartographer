@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/3d/pose_graph/constraint_builder_3d.h"
+#include "cartographer/mapping/internal/constraints/constraint_builder_3d.h"
 
 #include <functional>
 
 #include "cartographer/common/internal/testing/thread_pool_for_testing.h"
 #include "cartographer/mapping/3d/submap_3d.h"
-#include "cartographer/mapping/internal/pose_graph/constraint_builder.h"
+#include "cartographer/mapping/internal/constraints/constraint_builder.h"
 #include "cartographer/mapping/internal/testing/test_helpers.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -29,7 +29,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace constraints {
 namespace {
 
 class MockCallback {
@@ -113,6 +113,6 @@ TEST_F(ConstraintBuilder3DTest, FindsConstraints) {
 }
 
 }  // namespace
-}  // namespace pose_graph
+}  // namespace constraints
 }  // namespace mapping
 }  // namespace cartographer

@@ -33,7 +33,7 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/2d/submap_2d.h"
-#include "cartographer/mapping/internal/2d/pose_graph/constraint_builder_2d.h"
+#include "cartographer/mapping/internal/constraints/constraint_builder_2d.h"
 #include "cartographer/mapping/internal/optimization/optimization_problem_2d.h"
 #include "cartographer/mapping/internal/trajectory_connectivity_state.h"
 #include "cartographer/mapping/pose_graph.h"
@@ -240,7 +240,7 @@ class PoseGraph2D : public PoseGraph {
 
   // Current optimization problem.
   std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem_;
-  pose_graph::ConstraintBuilder2D constraint_builder_ GUARDED_BY(mutex_);
+  constraints::ConstraintBuilder2D constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
   // Submaps get assigned an ID and state as soon as they are seen, even

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_CONSTRAINT_BUILDER_2D_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_CONSTRAINT_BUILDER_2D_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_2D_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_2D_H_
 
 #include <array>
 #include <deque>
@@ -41,7 +41,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace constraints {
 
 // Returns (map <- submap) where 'submap' is a coordinate system at the origin
 // of the Submap.
@@ -138,7 +138,7 @@ class ConstraintBuilder2D {
   // runs the 'when_done_' callback and resets the state.
   void FinishComputation(int computation_index) EXCLUDES(mutex_);
 
-  const pose_graph::proto::ConstraintBuilderOptions options_;
+  const constraints::proto::ConstraintBuilderOptions options_;
   common::ThreadPoolInterface* thread_pool_;
   common::Mutex mutex_;
 
@@ -175,8 +175,8 @@ class ConstraintBuilder2D {
   common::Histogram score_histogram_ GUARDED_BY(mutex_);
 };
 
-}  // namespace pose_graph
+}  // namespace constraints
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_CONSTRAINT_BUILDER_2D_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_2D_H_
