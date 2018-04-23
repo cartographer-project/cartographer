@@ -18,6 +18,8 @@
 #define CARTOGRAPHER_IO_FILE_WRITER_H_
 
 #include <fstream>
+#include <sstream>
+
 #include <functional>
 #include <memory>
 
@@ -45,21 +47,31 @@ class FileWriter {
   virtual std::string GetFilename() = 0;
 };
 
-// An Implementation of file using std::ofstream.
-class StreamFileWriter : public FileWriter {
+class StreamWriter : public FileWriter {
  public:
-  ~StreamFileWriter() override;
+  virtual ~StreamWriter() override;
 
-  StreamFileWriter(const std::string& filename);
+  StreamWriter(std::unique_ptr<std::ostream> ostream,
+               const std::string& filename);
 
-  bool Write(const char* data, size_t len) override;
-  bool WriteHeader(const char* data, size_t len) override;
-  bool Close() override;
+  virtual bool Write(const char* data, size_t len) override;
+  virtual bool WriteHeader(const char* data, size_t len) override;
+  virtual bool Close() override;
   std::string GetFilename() override;
 
- private:
+ protected:
   const std::string filename_;
-  std::ofstream out_;
+  bool is_closed_;
+  std::unique_ptr<std::ostream> out_;
+};
+
+// An Implementation of file using std::ofstream.
+class StreamFileWriter : public StreamWriter {
+ public:
+  StreamFileWriter(const std::string filename);
+  ~StreamFileWriter() override;
+  virtual bool Write(const char* data, size_t len) override;
+  virtual bool Close() override;
 };
 
 using FileWriterFactory =

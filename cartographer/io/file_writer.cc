@@ -15,41 +15,62 @@
  */
 
 #include "cartographer/io/file_writer.h"
+#include "cartographer/common/make_unique.h"
 
 namespace cartographer {
 namespace io {
 
-StreamFileWriter::StreamFileWriter(const std::string& filename)
-    : filename_(filename), out_(filename, std::ios::out | std::ios::binary) {}
+StreamWriter::StreamWriter(std::unique_ptr<std::ostream> ostream,
+                           const std::string& filename)
+    : filename_(filename), is_closed_(false), out_(std::move(ostream)) {}
 
-StreamFileWriter::~StreamFileWriter() {}
+StreamWriter::~StreamWriter() {}
 
-bool StreamFileWriter::Write(const char* const data, const size_t len) {
-  if (out_.bad()) {
+bool StreamWriter::Write(const char* const data, const size_t len) {
+  if (out_->bad() || is_closed_) {
     return false;
   }
-  out_.write(data, len);
-  return !out_.bad();
+  out_->write(data, len);
+  return !out_->bad();
 }
 
-bool StreamFileWriter::Close() {
-  if (out_.bad()) {
+bool StreamWriter::Close() {
+  is_closed_ = true;
+  if (out_->bad()) {
     return false;
   }
-  out_.close();
-  return !out_.bad();
+  return !out_->bad();
 }
 
-bool StreamFileWriter::WriteHeader(const char* const data, const size_t len) {
-  if (out_.bad()) {
+bool StreamWriter::WriteHeader(const char* const data, const size_t len) {
+  if (out_->bad() || is_closed_) {
     return false;
   }
-  out_.flush();
-  out_.seekp(0);
+  out_->flush();
+  out_->seekp(0);
   return Write(data, len);
 }
 
-std::string StreamFileWriter::GetFilename() { return filename_; }
+std::string StreamWriter::GetFilename() { return filename_; }
+
+StreamFileWriter::StreamFileWriter(const std::string filename)
+    : StreamWriter(common::make_unique<std::ofstream>(
+                       filename, std::ios::out | std::ios::binary),
+                   filename) {}
+
+bool StreamFileWriter::Close() {
+  static_cast<std::ofstream*>(out_.get())->close();
+  return StreamWriter::Close();
+}
+
+StreamFileWriter::~StreamFileWriter() {}
+
+bool StreamFileWriter::Write(const char* data, size_t len) {
+  if (!static_cast<std::ofstream*>(out_.get())->is_open()) {
+    return false;
+  }
+  return StreamWriter::Write(data, len);
+}
 
 }  // namespace io
 }  // namespace cartographer
