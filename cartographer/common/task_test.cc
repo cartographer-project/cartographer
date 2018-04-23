@@ -36,13 +36,21 @@ class MockThreadPool : public ThreadPoolInterface {
   }
 };
 
+class MockCallback {
+ public:
+  MOCK_METHOD0(Run, void());
+};
+
 TEST(TaskTest, RunTask) {
   MockThreadPool thread_pool;
   Task a;
+  MockCallback callback;
+  a.SetWorkItem([&callback]() { callback.Run(); });
   EXPECT_EQ(a.GetState(), Task::NEW);
   EXPECT_CALL(thread_pool, NotifyReady(&a)).Times(1);
   a.NotifyWhenReady(&thread_pool);
   ASSERT_EQ(a.GetState(), Task::READY);
+  EXPECT_CALL(callback, Run()).Times(1);
   a.Execute();
   EXPECT_EQ(a.GetState(), Task::COMPLETED);
 }
@@ -51,6 +59,10 @@ TEST(TaskTest, RunTaskWithDependency) {
   MockThreadPool thread_pool;
   auto a = std::make_shared<Task>();
   auto b = std::make_shared<Task>();
+  MockCallback callback_a;
+  a->SetWorkItem([&callback_a]() { callback_a.Run(); });
+  MockCallback callback_b;
+  b->SetWorkItem([&callback_b]() { callback_b.Run(); });
   b->AddDependency(a);
   EXPECT_EQ(a->GetState(), Task::NEW);
   EXPECT_EQ(b->GetState(), Task::NEW);
@@ -63,8 +75,10 @@ TEST(TaskTest, RunTaskWithDependency) {
   EXPECT_EQ(b->GetState(), Task::DISPATCHED);
   a->NotifyWhenReady(&thread_pool);
   ASSERT_EQ(a->GetState(), Task::READY);
+  EXPECT_CALL(callback_a, Run()).Times(1);
   a->Execute();
   ASSERT_EQ(b->GetState(), Task::READY);
+  EXPECT_CALL(callback_b, Run()).Times(1);
   b->Execute();
   EXPECT_EQ(a->GetState(), Task::COMPLETED);
   EXPECT_EQ(b->GetState(), Task::COMPLETED);
