@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/3d/pose_graph/constraint_builder_3d.h"
+#include "cartographer/mapping/internal/constraints/constraint_builder_3d.h"
 
 #include <cmath>
 #include <functional>
@@ -39,7 +39,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace constraints {
 
 static auto* kConstraintsSearchedMetric = metrics::Counter::Null();
 static auto* kConstraintsFoundMetric = metrics::Counter::Null();
@@ -371,6 +371,6 @@ void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
       {{"search_region", "global"}, {"kind", "low_resolution_score"}});
 }
 
-}  // namespace pose_graph
+}  // namespace constraints
 }  // namespace mapping
 }  // namespace cartographer

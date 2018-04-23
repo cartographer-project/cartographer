@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_CONSTRAINT_BUILDER_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_CONSTRAINT_BUILDER_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_H_
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/pose_graph/proto/constraint_builder_options.pb.h"
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
+namespace constraints {
 
 proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-}  // namespace pose_graph
+}  // namespace constraints
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_CONSTRAINT_BUILDER_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_H_
