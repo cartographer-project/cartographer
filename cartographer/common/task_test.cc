@@ -16,6 +16,8 @@
 
 #include "cartographer/common/task.h"
 
+#include <memory>
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -27,7 +29,11 @@ class MockThreadPool : public ThreadPoolInterface {
  public:
   MOCK_METHOD1(NotifyReady, void(Task*));
   MOCK_METHOD1(Schedule, void(const std::function<void()>&));
-  MOCK_METHOD1(ScheduleWhenReady, std::shared_ptr<Task>(std::shared_ptr<Task>));
+  // Work-around gmock's unique_ptr limitation.
+  MOCK_METHOD1(ScheduleWhenReadyWithPtr, std::weak_ptr<Task>(Task*));
+  std::weak_ptr<Task> ScheduleWhenReady(std::unique_ptr<Task> task) override {
+    return ScheduleWhenReadyWithPtr(task.get());
+  }
 };
 
 TEST(TaskTest, RunTask) {
@@ -43,25 +49,25 @@ TEST(TaskTest, RunTask) {
 
 TEST(TaskTest, RunTaskWithDependency) {
   MockThreadPool thread_pool;
-  Task a;
-  Task b;
-  b.AddDependency(&a);
-  EXPECT_EQ(a.GetState(), Task::NEW);
-  EXPECT_EQ(b.GetState(), Task::NEW);
+  auto a = std::make_shared<Task>();
+  auto b = std::make_shared<Task>();
+  b->AddDependency(a);
+  EXPECT_EQ(a->GetState(), Task::NEW);
+  EXPECT_EQ(b->GetState(), Task::NEW);
   {
     ::testing::InSequence dummy;
-    EXPECT_CALL(thread_pool, NotifyReady(&a)).Times(1);
-    EXPECT_CALL(thread_pool, NotifyReady(&b)).Times(1);
+    EXPECT_CALL(thread_pool, NotifyReady(a.get())).Times(1);
+    EXPECT_CALL(thread_pool, NotifyReady(b.get())).Times(1);
   }
-  b.NotifyWhenReady(&thread_pool);
-  EXPECT_EQ(b.GetState(), Task::DISPATCHED);
-  a.NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(a.GetState(), Task::READY);
-  a.Execute();
-  ASSERT_EQ(b.GetState(), Task::READY);
-  b.Execute();
-  EXPECT_EQ(a.GetState(), Task::COMPLETED);
-  EXPECT_EQ(b.GetState(), Task::COMPLETED);
+  b->NotifyWhenReady(&thread_pool);
+  EXPECT_EQ(b->GetState(), Task::DISPATCHED);
+  a->NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(a->GetState(), Task::READY);
+  a->Execute();
+  ASSERT_EQ(b->GetState(), Task::READY);
+  b->Execute();
+  EXPECT_EQ(a->GetState(), Task::COMPLETED);
+  EXPECT_EQ(b->GetState(), Task::COMPLETED);
 }
 
 TEST(TaskTest, RunTaskWithTwoDependency) {
@@ -69,57 +75,57 @@ TEST(TaskTest, RunTaskWithTwoDependency) {
   /*         c \
    *  a -->  b --> d
    */
-  Task a;
-  Task b;
-  Task c;
-  Task d;
+  auto a = std::make_shared<Task>();
+  auto b = std::make_shared<Task>();
+  auto c = std::make_shared<Task>();
+  auto d = std::make_shared<Task>();
   {
     ::testing::InSequence dummy;
-    EXPECT_CALL(thread_pool, NotifyReady(&c)).Times(1);
-    EXPECT_CALL(thread_pool, NotifyReady(&a)).Times(1);
-    EXPECT_CALL(thread_pool, NotifyReady(&b)).Times(1);
-    EXPECT_CALL(thread_pool, NotifyReady(&d)).Times(1);
+    EXPECT_CALL(thread_pool, NotifyReady(c.get())).Times(1);
+    EXPECT_CALL(thread_pool, NotifyReady(a.get())).Times(1);
+    EXPECT_CALL(thread_pool, NotifyReady(b.get())).Times(1);
+    EXPECT_CALL(thread_pool, NotifyReady(d.get())).Times(1);
   }
-  b.AddDependency(&a);
-  d.AddDependency(&b);
-  d.AddDependency(&c);
-  d.NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(d.GetState(), Task::DISPATCHED);
-  b.NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(b.GetState(), Task::DISPATCHED);
-  c.NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(c.GetState(), Task::READY);
-  c.Execute();
-  EXPECT_EQ(c.GetState(), Task::COMPLETED);
-  ASSERT_EQ(d.GetState(), Task::DISPATCHED);
-  a.NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(a.GetState(), Task::READY);
-  a.Execute();
-  EXPECT_EQ(a.GetState(), Task::COMPLETED);
-  ASSERT_EQ(b.GetState(), Task::READY);
-  b.Execute();
-  EXPECT_EQ(b.GetState(), Task::COMPLETED);
-  ASSERT_EQ(d.GetState(), Task::READY);
-  d.Execute();
-  EXPECT_EQ(d.GetState(), Task::COMPLETED);
+  b->AddDependency(a);
+  d->AddDependency(b);
+  d->AddDependency(c);
+  d->NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(d->GetState(), Task::DISPATCHED);
+  b->NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(b->GetState(), Task::DISPATCHED);
+  c->NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(c->GetState(), Task::READY);
+  c->Execute();
+  EXPECT_EQ(c->GetState(), Task::COMPLETED);
+  ASSERT_EQ(d->GetState(), Task::DISPATCHED);
+  a->NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(a->GetState(), Task::READY);
+  a->Execute();
+  EXPECT_EQ(a->GetState(), Task::COMPLETED);
+  ASSERT_EQ(b->GetState(), Task::READY);
+  b->Execute();
+  EXPECT_EQ(b->GetState(), Task::COMPLETED);
+  ASSERT_EQ(d->GetState(), Task::READY);
+  d->Execute();
+  EXPECT_EQ(d->GetState(), Task::COMPLETED);
 }
 
 TEST(TaskTest, RunWithCompletedDependency) {
   MockThreadPool thread_pool;
-  Task a;
-  EXPECT_CALL(thread_pool, NotifyReady(&a)).Times(1);
-  a.NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(a.GetState(), Task::READY);
-  a.Execute();
-  EXPECT_EQ(a.GetState(), Task::COMPLETED);
-  Task b;
-  EXPECT_CALL(thread_pool, NotifyReady(&b)).Times(1);
-  b.AddDependency(&a);
-  EXPECT_EQ(b.GetState(), Task::NEW);
-  b.NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(b.GetState(), Task::READY);
-  b.Execute();
-  EXPECT_EQ(b.GetState(), Task::COMPLETED);
+  auto a = std::make_shared<Task>();
+  EXPECT_CALL(thread_pool, NotifyReady(a.get())).Times(1);
+  a->NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(a->GetState(), Task::READY);
+  a->Execute();
+  EXPECT_EQ(a->GetState(), Task::COMPLETED);
+  auto b = std::make_shared<Task>();
+  EXPECT_CALL(thread_pool, NotifyReady(b.get())).Times(1);
+  b->AddDependency(a);
+  EXPECT_EQ(b->GetState(), Task::NEW);
+  b->NotifyWhenReady(&thread_pool);
+  ASSERT_EQ(b->GetState(), Task::READY);
+  b->Execute();
+  EXPECT_EQ(b->GetState(), Task::COMPLETED);
 }
 
 }  // namespace
