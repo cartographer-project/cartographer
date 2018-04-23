@@ -25,8 +25,6 @@ namespace io {
 FakeStreamFileWriter::FakeStreamFileWriter(const std::string filename)
     : StreamWriter(common::make_unique<std::ostringstream>(), filename) {}
 
-FakeStreamFileWriter::~FakeStreamFileWriter() = default;
-
 std::string FakeStreamFileWriter::GetOutput() const {
   return static_cast<std::ostringstream*>(out_.get())->str();
 }

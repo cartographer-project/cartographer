@@ -65,8 +65,6 @@ bool StreamFileWriter::Close() {
   return StreamWriter::Close();
 }
 
-StreamFileWriter::~StreamFileWriter() {}
-
 bool StreamFileWriter::Write(const char* data, size_t len) {
   if (!static_cast<std::ofstream*>(out_.get())->is_open()) {
     return false;

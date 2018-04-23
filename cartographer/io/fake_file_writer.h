@@ -28,7 +28,7 @@ namespace io {
 class FakeStreamFileWriter : public StreamWriter {
  public:
   FakeStreamFileWriter(const std::string filename);
-  ~FakeStreamFileWriter() override;
+  ~FakeStreamFileWriter() override = default;
   std::string GetOutput() const;
 };
 
