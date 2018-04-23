@@ -79,33 +79,53 @@ void ConstraintBuilder2D::MaybeAddConstraint(
       options_.max_constraint_distance()) {
     return;
   }
-  if (sampler_.Pulse()) {
-    common::MutexLocker locker(&mutex_);
-    constraints_.emplace_back();
-    kQueueLengthMetric->Set(constraints_.size());
-    auto* const constraint = &constraints_.back();
-    DispatchScanMatcherConstructionAndWorkItem(
-        submap_id, submap->grid(), [=]() EXCLUDES(mutex_) {
-          ComputeConstraint(submap_id, submap, node_id,
-                            false, /* match_full_submap */
-                            constant_data, initial_relative_pose, constraint);
-        });
+  if (!sampler_.Pulse()) return;
+
+  common::MutexLocker locker(&mutex_);
+  if (when_done_) {
+    LOG(WARNING)
+        << "MaybeAddConstraint was called while WhenDone was scheduled.";
   }
+  constraints_.emplace_back();
+  kQueueLengthMetric->Set(constraints_.size());
+  auto* const constraint = &constraints_.back();
+  const auto* scan_matcher =
+      DispatchScanMatcherConstruction(submap_id, submap->grid());
+  auto task = common::make_unique<common::Task>();
+  task->SetWorkItem([=]() EXCLUDES(mutex_) {
+    ComputeConstraint(submap_id, submap, node_id, false, /* match_full_submap */
+                      constant_data, initial_relative_pose, *scan_matcher,
+                      constraint);
+  });
+  task->AddDependency(scan_matcher->scan_matcher_factory_task);
+  auto weak_task = thread_pool_->ScheduleWhenReady(std::move(task));
+  CHECK(finish_node_task_ != nullptr);
+  finish_node_task_->AddDependency(weak_task);
 }
 
 void ConstraintBuilder2D::MaybeAddGlobalConstraint(
     const SubmapId& submap_id, const Submap2D* const submap,
     const NodeId& node_id, const TrajectoryNode::Data* const constant_data) {
   common::MutexLocker locker(&mutex_);
+  if (when_done_) {
+    LOG(WARNING)
+        << "MaybeAddGlobalConstraint was called while WhenDone was scheduled.";
+  }
   constraints_.emplace_back();
   kQueueLengthMetric->Set(constraints_.size());
   auto* const constraint = &constraints_.back();
-  DispatchScanMatcherConstructionAndWorkItem(
-      submap_id, submap->grid(), [=]() EXCLUDES(mutex_) {
-        ComputeConstraint(
-            submap_id, submap, node_id, true, /* match_full_submap */
-            constant_data, transform::Rigid2d::Identity(), constraint);
-      });
+  const auto* scan_matcher =
+      DispatchScanMatcherConstruction(submap_id, submap->grid());
+  auto task = common::make_unique<common::Task>();
+  task->SetWorkItem([=]() EXCLUDES(mutex_) {
+    ComputeConstraint(submap_id, submap, node_id, true, /* match_full_submap */
+                      constant_data, transform::Rigid2d::Identity(),
+                      *scan_matcher, constraint);
+  });
+  task->AddDependency(scan_matcher->scan_matcher_factory_task);
+  auto weak_task = thread_pool_->ScheduleWhenReady(std::move(task));
+  CHECK(finish_node_task_ != nullptr);
+  finish_node_task_->AddDependency(weak_task);
 }
 
 void ConstraintBuilder2D::NotifyEndOfNode() {
@@ -135,15 +155,9 @@ void ConstraintBuilder2D::WhenDone(
   when_done_task_ = common::make_unique<common::Task>();
 }
 
-// TODO(gaschler): Let this only create the scan matcher task and return a
-// weak_ptr.
-void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
-    const SubmapId& submap_id, const Grid2D* const grid,
-    const std::function<void()>& work_item) {
-  if (when_done_) {
-    LOG(WARNING)
-        << "MaybeAdd*Constraint was called while WhenDone was scheduled.";
-  }
+const ConstraintBuilder2D::SubmapScanMatcher*
+ConstraintBuilder2D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
+                                                     const Grid2D* const grid) {
   if (submap_scan_matchers_.count(submap_id) == 0) {
     auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
     submap_scan_matcher.grid = grid;
@@ -159,22 +173,7 @@ void ConstraintBuilder2D::DispatchScanMatcherConstructionAndWorkItem(
     submap_scan_matcher.scan_matcher_factory_task =
         thread_pool_->ScheduleWhenReady(std::move(scan_matcher_task));
   }
-  auto task = common::make_unique<common::Task>();
-  task->SetWorkItem(work_item);
-  task->AddDependency(
-      submap_scan_matchers_.at(submap_id).scan_matcher_factory_task);
-  auto weak_task = thread_pool_->ScheduleWhenReady(std::move(task));
-  CHECK(finish_node_task_ != nullptr);
-  finish_node_task_->AddDependency(weak_task);
-}
-
-const ConstraintBuilder2D::SubmapScanMatcher*
-ConstraintBuilder2D::GetSubmapScanMatcher(const SubmapId& submap_id) {
-  common::MutexLocker locker(&mutex_);
-  const SubmapScanMatcher* submap_scan_matcher =
-      &submap_scan_matchers_[submap_id];
-  CHECK(submap_scan_matcher->fast_correlative_scan_matcher != nullptr);
-  return submap_scan_matcher;
+  return &submap_scan_matchers_.at(submap_id);
 }
 
 void ConstraintBuilder2D::ComputeConstraint(
@@ -182,11 +181,10 @@ void ConstraintBuilder2D::ComputeConstraint(
     const NodeId& node_id, bool match_full_submap,
     const TrajectoryNode::Data* const constant_data,
     const transform::Rigid2d& initial_relative_pose,
+    const SubmapScanMatcher& submap_scan_matcher,
     std::unique_ptr<ConstraintBuilder2D::Constraint>* constraint) {
   const transform::Rigid2d initial_pose =
       ComputeSubmapPose(*submap) * initial_relative_pose;
-  const SubmapScanMatcher* const submap_scan_matcher =
-      GetSubmapScanMatcher(submap_id);
 
   // The 'constraint_transform' (submap i <- node j) is computed from:
   // - a 'filtered_gravity_aligned_point_cloud' in node j,
@@ -202,7 +200,7 @@ void ConstraintBuilder2D::ComputeConstraint(
   // 3. Refine.
   if (match_full_submap) {
     kGlobalConstraintsSearchedMetric->Increment();
-    if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
+    if (submap_scan_matcher.fast_correlative_scan_matcher->MatchFullSubmap(
             constant_data->filtered_gravity_aligned_point_cloud,
             options_.global_localization_min_score(), &score, &pose_estimate)) {
       CHECK_GT(score, options_.global_localization_min_score());
@@ -215,7 +213,7 @@ void ConstraintBuilder2D::ComputeConstraint(
     }
   } else {
     kConstraintsSearchedMetric->Increment();
-    if (submap_scan_matcher->fast_correlative_scan_matcher->Match(
+    if (submap_scan_matcher.fast_correlative_scan_matcher->Match(
             initial_pose, constant_data->filtered_gravity_aligned_point_cloud,
             options_.min_score(), &score, &pose_estimate)) {
       // We've reported a successful local match.
@@ -237,7 +235,7 @@ void ConstraintBuilder2D::ComputeConstraint(
   ceres::Solver::Summary unused_summary;
   ceres_scan_matcher_.Match(pose_estimate.translation(), pose_estimate,
                             constant_data->filtered_gravity_aligned_point_cloud,
-                            *submap_scan_matcher->grid, &pose_estimate,
+                            *submap_scan_matcher.grid, &pose_estimate,
                             &unused_summary);
 
   const transform::Rigid2d constraint_transform =
@@ -299,6 +297,10 @@ int ConstraintBuilder2D::GetNumFinishedNodes() {
 
 void ConstraintBuilder2D::DeleteScanMatcher(const SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
+  if (when_done_) {
+    LOG(WARNING)
+        << "DeleteScanMatcher was called while WhenDone was scheduled.";
+  }
   submap_scan_matchers_.erase(submap_id);
 }
 

@@ -113,15 +113,10 @@ class ConstraintBuilder2D {
     std::weak_ptr<common::Task> scan_matcher_factory_task;
   };
 
-  // Either schedules the 'work_item', or if needed, schedules the scan matcher
-  // construction and queues the 'work_item'.
-  void DispatchScanMatcherConstructionAndWorkItem(
-      const SubmapId& submap_id, const Grid2D* grid,
-      const std::function<void()>& work_item) REQUIRES(mutex_);
-
-  // Returns the scan matcher for a submap, which has to exist.
-  const SubmapScanMatcher* GetSubmapScanMatcher(const SubmapId& submap_id)
-      EXCLUDES(mutex_);
+  // The returned 'grid' and 'fast_correlative_scan_matcher' must only be
+  // accessed after 'scan_matcher_factory_task' has completed.
+  const SubmapScanMatcher* DispatchScanMatcherConstruction(
+      const SubmapId& submap_id, const Grid2D* grid) REQUIRES(mutex_);
 
   // Runs in a background thread and does computations for an additional
   // constraint, assuming 'submap' and 'compressed_point_cloud' do not change
@@ -130,6 +125,7 @@ class ConstraintBuilder2D {
                          const NodeId& node_id, bool match_full_submap,
                          const TrajectoryNode::Data* const constant_data,
                          const transform::Rigid2d& initial_relative_pose,
+                         const SubmapScanMatcher& submap_scan_matcher,
                          std::unique_ptr<Constraint>* constraint)
       EXCLUDES(mutex_);
 
