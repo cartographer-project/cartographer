@@ -16,39 +16,40 @@
 
 #include "cartographer/io/fake_file_writer.h"
 
+#include "glog/logging.h"
+
 namespace cartographer {
 namespace io {
 
 FakeFileWriter::FakeFileWriter(const std::string& filename,
-                               std::shared_ptr<std::string> on_close_output)
-    : is_closed_(false), on_close_out_(on_close_output), filename_(filename) {}
+                               std::shared_ptr<std::string> content)
+    : is_closed_(false), content_(content), filename_(filename) {
+  CHECK(content);
+}
 
 bool FakeFileWriter::Write(const char* const data, const size_t len) {
   if (is_closed_) return false;
-  out_.append(data, len);
+  content_->append(data, len);
   return true;
 }
 
 bool FakeFileWriter::Close() {
   if (is_closed_) return false;
-  if (on_close_out_) *on_close_out_ = out_;
   is_closed_ = true;
   return true;
 }
 
 bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
   if (is_closed_) return false;
-  if (out_.size() == 0 || out_.size() < len) {
-    out_ = "";
+  if (content_->size() == 0 || content_->size() < len) {
+    *content_ = "";
     return Write(data, len);
   }
-  out_.replace(0, len, data);
+  content_->replace(0, len, data);
   return true;
 }
 
 std::string FakeFileWriter::GetFilename() { return filename_; }
-
-std::string FakeFileWriter::GetOutput() const { return out_; }
 
 }  // namespace io
 }  // namespace cartographer

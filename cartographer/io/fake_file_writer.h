@@ -29,20 +29,17 @@ namespace io {
 class FakeFileWriter : public FileWriter {
  public:
   FakeFileWriter(const std::string& filename,
-                 std::shared_ptr<std::string> on_close_output =
-                     std::make_shared<std::string>());
+                 std::shared_ptr<std::string> content);
   ~FakeFileWriter() override = default;
 
   bool WriteHeader(const char* data, size_t len) override;
   bool Write(const char* data, size_t len) override;
   bool Close() override;
   std::string GetFilename() override;
-  std::string GetOutput() const;
 
  private:
   bool is_closed_;
-  std::string out_;
-  std::shared_ptr<std::string> on_close_out_;
+  std::shared_ptr<std::string> content_;
   std::string filename_;
 };
 
