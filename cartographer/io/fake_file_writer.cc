@@ -15,7 +15,6 @@
  */
 
 #include "cartographer/io/fake_file_writer.h"
-
 #include <sstream>
 #include "cartographer/common/make_unique.h"
 
