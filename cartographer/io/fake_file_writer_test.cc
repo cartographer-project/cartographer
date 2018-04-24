@@ -25,33 +25,42 @@ namespace io {
 namespace {
 
 TEST(FakeFileWriter, CloseStream) {
-  FakeFileWriter writer("file");
+  auto on_close_output = std::make_shared<std::string>();
+  FakeFileWriter writer("file", on_close_output);
   EXPECT_EQ(writer.GetFilename(), "file");
   EXPECT_TRUE(writer.Close());
+  EXPECT_EQ(writer.GetOutput(), "");
+  EXPECT_EQ(*on_close_output, "");
   EXPECT_FALSE(writer.Close());
 }
 
 TEST(FakeFileWriter, WriteHeader) {
+  auto on_close_output = std::make_shared<std::string>();
   const std::string header("dummy header");
   const std::string header_2("dummy header 2");
-  FakeFileWriter writer("file");
+  FakeFileWriter writer("file", on_close_output);
   EXPECT_EQ(writer.GetFilename(), "file");
 
   EXPECT_TRUE(writer.WriteHeader(header.c_str(), header.size()));
   EXPECT_EQ(writer.GetOutput(), "dummy header");
+  EXPECT_EQ(*on_close_output, "");
 
   EXPECT_TRUE(writer.WriteHeader(header_2.c_str(), header_2.size()));
   EXPECT_EQ(writer.GetOutput(), "dummy header 2");
+  EXPECT_EQ(*on_close_output, "");
 
   EXPECT_TRUE(writer.Close());
+  EXPECT_EQ(*on_close_output, "dummy header 2");
   EXPECT_FALSE(writer.WriteHeader(header.c_str(), header.size()));
 
   EXPECT_EQ(writer.GetOutput(), "dummy header 2");
+  EXPECT_EQ(*on_close_output, "dummy header 2");
 }
 
 TEST(FakeFileWriter, Write) {
+  auto on_close_output = std::make_shared<std::string>();
   const std::vector<std::string> data_stream = {"data 1", "data 2"};
-  FakeFileWriter writer("file");
+  FakeFileWriter writer("file", on_close_output);
   EXPECT_EQ(writer.GetFilename(), "file");
 
   for (const auto& data : data_stream) {
@@ -59,23 +68,29 @@ TEST(FakeFileWriter, Write) {
   }
 
   EXPECT_EQ(writer.GetOutput(), "data 1data 2");
+  EXPECT_EQ(*on_close_output, "");
   EXPECT_TRUE(writer.Close());
+  EXPECT_EQ(*on_close_output, "data 1data 2");
 }
 
 TEST(FakeFileWriter, HeaderAndWrite) {
+  auto on_close_output = std::make_shared<std::string>();
   const std::string header = "dummy header";
   const std::vector<std::string> data_stream = {"data 1", "data 2"};
-  FakeFileWriter writer("file");
+  FakeFileWriter writer("file", on_close_output);
   EXPECT_EQ(writer.GetFilename(), "file");
 
   EXPECT_TRUE(writer.WriteHeader(header.c_str(), header.size()));
   EXPECT_EQ(writer.GetOutput(), "dummy header");
+  EXPECT_EQ(*on_close_output, "");
 
   for (const auto& data : data_stream) {
     EXPECT_TRUE(writer.Write(data.c_str(), data.size()));
   }
 
+  EXPECT_EQ(*on_close_output, "");
   EXPECT_TRUE(writer.Close());
+  EXPECT_EQ(*on_close_output, "dummy headerdata 1data 2");
   EXPECT_EQ(writer.GetOutput(), "dummy headerdata 1data 2");
 }
 

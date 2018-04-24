@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_IO_FAKE_FILE_WRITER_H_
 #define CARTOGRAPHER_IO_FAKE_FILE_WRITER_H_
 
+#include <memory>
 #include <string>
 
 #include "cartographer/io/file_writer.h"
@@ -27,7 +28,9 @@ namespace io {
 // Fakes a FileWriter by just writing the data to a std::string.
 class FakeFileWriter : public FileWriter {
  public:
-  FakeFileWriter(const std::string& filename);
+  FakeFileWriter(const std::string& filename,
+                 std::shared_ptr<std::string> on_close_output =
+                     std::make_shared<std::string>());
   ~FakeFileWriter() override = default;
 
   bool WriteHeader(const char* data, size_t len) override;
@@ -39,6 +42,7 @@ class FakeFileWriter : public FileWriter {
  private:
   bool is_closed_;
   std::string out_;
+  std::shared_ptr<std::string> on_close_out_;
   std::string filename_;
 };
 
