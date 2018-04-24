@@ -26,6 +26,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
+#include "cartographer/mapping/range_data_inserter.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -34,22 +35,23 @@ namespace mapping {
 proto::SubmapsOptions2D CreateSubmapsOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::SubmapsOptions2D options;
-  options.set_resolution(parameter_dictionary->GetDouble("resolution"));
   options.set_num_range_data(
       parameter_dictionary->GetNonNegativeInt("num_range_data"));
-  *options.mutable_probability_grid_range_data_inserter_options() =
-      CreateProbabilityGridRangeDataInserterOptions2D(
-          parameter_dictionary
-              ->GetDictionary("probability_grid_range_data_inserter")
-              .get());
+  *options.mutable_grid_options_2d() = CreateGridOptions2D(
+      parameter_dictionary->GetDictionary("grid_options_2d").get());
+  *options.mutable_range_data_inserter_options() =
+      CreateRangeDataInserterOptions(
+          parameter_dictionary->GetDictionary("range_data_inserter").get());
+
   CHECK_GT(options.num_range_data(), 0);
   return options;
 }
 
-Submap2D::Submap2D(const MapLimits& limits, const Eigen::Vector2f& origin)
+Submap2D::Submap2D(const Eigen::Vector2f& origin, std::unique_ptr<Grid2D> grid)
     : Submap(transform::Rigid3d::Translation(
-          Eigen::Vector3d(origin.x(), origin.y(), 0.))),
-      grid_(common::make_unique<ProbabilityGrid>(limits)) {}
+          Eigen::Vector3d(origin.x(), origin.y(), 0.))) {
+  grid_ = std::move(grid);
+}
 
 Submap2D::Submap2D(const proto::Submap2D& proto)
     : Submap(transform::ToRigid3(proto.local_pose())) {
@@ -111,9 +113,7 @@ void Submap2D::Finish() {
 
 ActiveSubmaps2D::ActiveSubmaps2D(const proto::SubmapsOptions2D& options)
     : options_(options),
-      range_data_inserter_(
-          common::make_unique<ProbabilityGridRangeDataInserter2D>(
-              options.probability_grid_range_data_inserter_options())) {
+      range_data_inserter_(std::move(CreateRangeDataInserter())) {
   // We always want to have at least one likelihood field which we can return,
   // and will create it at the origin in absence of a better choice.
   AddSubmap(Eigen::Vector2f::Zero());
@@ -134,6 +134,23 @@ void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
   }
 }
 
+std::unique_ptr<RangeDataInserter> ActiveSubmaps2D::CreateRangeDataInserter() {
+  return common::make_unique<ProbabilityGridRangeDataInserter2D>(
+      options_.range_data_inserter_options()
+          .probability_grid_range_data_inserter_options_2d());
+}
+
+std::unique_ptr<Grid> ActiveSubmaps2D::CreateGrid(
+    const Eigen::Vector2f& origin) {
+  constexpr int kInitialSubmapSize = 100;
+  float resolution = options_.grid_options_2d().resolution();
+  return common::make_unique<ProbabilityGrid>(
+      MapLimits(resolution,
+                origin.cast<double>() + 0.5 * kInitialSubmapSize * resolution *
+                                            Eigen::Vector2d::Ones(),
+                CellLimits(kInitialSubmapSize, kInitialSubmapSize)));
+}
+
 void ActiveSubmaps2D::FinishSubmap() {
   Submap2D* submap = submaps_.front().get();
   submap->Finish();
@@ -147,14 +164,10 @@ void ActiveSubmaps2D::AddSubmap(const Eigen::Vector2f& origin) {
     // reduce peak memory usage a bit.
     FinishSubmap();
   }
-  constexpr int kInitialSubmapSize = 100;
+
   submaps_.push_back(common::make_unique<Submap2D>(
-      MapLimits(options_.resolution(),
-                origin.cast<double>() + 0.5 * kInitialSubmapSize *
-                                            options_.resolution() *
-                                            Eigen::Vector2d::Ones(),
-                CellLimits(kInitialSubmapSize, kInitialSubmapSize)),
-      origin));
+      origin, std::unique_ptr<Grid2D>(
+                  static_cast<Grid2D*>(CreateGrid(origin).release()))));
   LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
 }
 

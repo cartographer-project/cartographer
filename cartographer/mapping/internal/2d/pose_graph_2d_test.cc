@@ -50,12 +50,18 @@ class PoseGraph2DTest : public ::testing::Test {
     {
       auto parameter_dictionary = common::MakeDictionary(R"text(
           return {
-            resolution = 0.05,
             num_range_data = 1,
-            probability_grid_range_data_inserter = {
-              insert_free_space = true,
-              hit_probability = 0.53,
-              miss_probability = 0.495,
+            grid_options_2d = {
+              grid_type = "PROBABILITY_GRID",
+              resolution = 0.05,
+            },
+            range_data_inserter = {
+              range_data_inserter_type = "PROBABILITY_GRID_INSERTER_2D",
+              probability_grid_range_data_inserter = {
+                insert_free_space = true,
+                hit_probability = 0.53,
+                miss_probability = 0.495,
+              },
             },
           })text");
       active_submaps_ = common::make_unique<ActiveSubmaps2D>(

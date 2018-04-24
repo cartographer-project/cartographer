@@ -72,10 +72,6 @@ float ProbabilityGrid::GetProbability(const Eigen::Array2i& cell_index) const {
       correspondence_cost_cells()[ToFlatIndex(cell_index)]));
 }
 
-std::unique_ptr<Grid> ProbabilityGrid::Create() const {
-  return std::unique_ptr<Grid>(new ProbabilityGrid(limits()));
-}
-
 proto::Grid2D ProbabilityGrid::ToProto() const {
   proto::Grid2D result;
   result = Grid2D::ToProto();

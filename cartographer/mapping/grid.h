@@ -24,7 +24,7 @@ namespace cartographer {
 namespace mapping {
 
 class Grid {
-  virtual std::unique_ptr<Grid> Create() const = 0;
+  //todo(kdaun) move mutual functions of Grid2D/3D here
 };
 
 }  // namespace mapping

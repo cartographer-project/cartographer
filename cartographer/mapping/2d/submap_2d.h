@@ -41,7 +41,7 @@ proto::SubmapsOptions2D CreateSubmapsOptions2D(
 
 class Submap2D : public Submap {
  public:
-  Submap2D(const MapLimits& limits, const Eigen::Vector2f& origin);
+  Submap2D(const Eigen::Vector2f& origin, std::unique_ptr<Grid2D> grid);
   explicit Submap2D(const proto::Submap2D& proto);
 
   void ToProto(proto::Submap* proto,
@@ -89,6 +89,8 @@ class ActiveSubmaps2D {
   std::vector<std::shared_ptr<Submap2D>> submaps() const;
 
  private:
+  std::unique_ptr<RangeDataInserter> CreateRangeDataInserter();
+  std::unique_ptr<Grid> CreateGrid(const Eigen::Vector2f& origin);
   void FinishSubmap();
   void AddSubmap(const Eigen::Vector2f& origin);
 
