@@ -15,8 +15,9 @@
  */
 
 #include "cartographer/io/fake_file_writer.h"
-#include <sstream>
 #include "cartographer/common/make_unique.h"
+#include "glog/logging.h"
+#include "gtest/gtest.h"
 
 namespace cartographer {
 namespace io {
