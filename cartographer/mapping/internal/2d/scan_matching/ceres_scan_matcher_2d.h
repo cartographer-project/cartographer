@@ -43,7 +43,7 @@ class CeresScanMatcher2D {
   CeresScanMatcher2D(const CeresScanMatcher2D&) = delete;
   CeresScanMatcher2D& operator=(const CeresScanMatcher2D&) = delete;
 
-  // Aligns 'point_cloud' within the 'probability_grid' given an
+  // Aligns 'point_cloud' within the 'grid' given an
   // 'initial_pose_estimate' and returns a 'pose_estimate' and the solver
   // 'summary'.
   void Match(const Eigen::Vector2d& target_translation,
