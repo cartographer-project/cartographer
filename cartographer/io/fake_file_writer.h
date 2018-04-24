@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Cartographer Authors
+ * Copyright 2016 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace io {
 // Fakes a FileWriter by just writing the data to a std::string.
 class FakeFileWriter : public FileWriter {
  public:
- FakeFileWriter(const std::string& filename);
+  FakeFileWriter();
   ~FakeFileWriter() override;
 
   bool WriteHeader(const char* data, size_t len) override;
@@ -37,11 +37,7 @@ class FakeFileWriter : public FileWriter {
   std::string GetOutput() const;
 
  private:
- 
- std::string filename_;
-  std::ostringstream out_;
-  bool was_closed_;
-  
+  std::string out_;
 };
 
 }  // namespace io
