@@ -67,7 +67,7 @@ class StreamWriter : public FileWriter {
 class StreamFileWriter : public StreamWriter {
  public:
   StreamFileWriter(const std::string filename);
-  ~StreamFileWriter() override = default;
+  ~StreamFileWriter() override;
   virtual bool Write(const char* data, size_t len) override;
   virtual bool Close() override;
 };
