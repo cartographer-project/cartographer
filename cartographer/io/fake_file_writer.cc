@@ -16,14 +16,13 @@
 
 #include "cartographer/io/fake_file_writer.h"
 #include "cartographer/common/make_unique.h"
-#include "glog/logging.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace io {
 
 FakeStreamFileWriter::FakeStreamFileWriter(const std::string filename)
-    : StreamWriter(common::make_unique<std::ostringstream>(), filename) {}
+    : StreamWriter(common::make_unique<std::ofstream>(), filename) {}
 
 FakeStreamFileWriter::~FakeStreamFileWriter() = default;
 

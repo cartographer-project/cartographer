@@ -16,8 +16,6 @@
 
 #include "cartographer/io/file_writer.h"
 #include "cartographer/common/make_unique.h"
-#include "gflags/gflags.h"
-#include "glog/logging.h"
 
 namespace cartographer {
 namespace io {
@@ -37,10 +35,10 @@ bool StreamWriter::Write(const char* const data, const size_t len) {
 }
 
 bool StreamWriter::Close() {
-  if (out_->bad() || is_closed_) {
+  is_closed_ = true;
+  if (out_->bad()) {
     return false;
   }
-  is_closed_ = true;
   return !out_->bad();
 }
 
