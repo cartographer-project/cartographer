@@ -17,35 +17,29 @@
 #include <vector>
 
 #include "cartographer/io/fake_file_writer.h"
-#include "gflags/gflags.h"
-#include "glog/logging.h"
 #include "gtest/gtest.h"
+
 namespace cartographer {
 namespace io {
 namespace {
 
 TEST(FakeFileWriter, WriteHeader) {
   const std::string header = "dummy header";
-  const std::string header_2 = "dummy header 2";
-  FakeStreamFileWriter writer("file");
+  FakeFileWriter writer;
   EXPECT_TRUE(writer.WriteHeader(header.c_str(), header.size()));
-  EXPECT_TRUE(writer.WriteHeader(header_2.c_str(), header_2.size()));
   EXPECT_TRUE(writer.Close());
-  EXPECT_FALSE(writer.WriteHeader(header.c_str(), header.size()));
-  EXPECT_EQ(writer.GetOutput(), "dummy header 2");
+  EXPECT_EQ(writer.GetOutput(), "dummy header");
 }
 
 TEST(FakeFileWriter, Write) {
   const std::vector<std::string> data_stream = {"data 1", "data 2"};
-  FakeStreamFileWriter writer("file");
+  FakeFileWriter writer;
   for (const auto& data : data_stream) {
     EXPECT_TRUE(writer.Write(data.c_str(), data.size()));
   }
 
   EXPECT_TRUE(writer.Close());
-  auto output = writer.GetOutput();
-  LOG(INFO) << output;
-  EXPECT_EQ(output, "data 1data 2");
+  EXPECT_EQ(writer.GetOutput(), "data1 data2");
 }
 
 }  // namespace
