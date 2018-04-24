@@ -36,10 +36,18 @@ class ThreadPoolInterface {
  public:
   ThreadPoolInterface() {}
   virtual ~ThreadPoolInterface() {}
-  virtual void NotifyReady(Task* task) = 0;
-  // TODO(gaschler): Implement and use ScheduleWhenReady, then remove Schedule.
+  // TODO(gaschler): Use Schedule(unique_ptr<Task>), then remove Schedule.
   virtual void Schedule(const std::function<void()>& work_item) = 0;
-  virtual std::weak_ptr<Task> ScheduleWhenReady(std::unique_ptr<Task> task) = 0;
+  virtual std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task) = 0;
+
+ protected:
+  void Execute(Task* task);
+  void SetThreadPool(Task* task);
+
+ private:
+  friend class Task;
+
+  virtual void NotifyDependenciesCompleted(Task* task) = 0;
 };
 
 // A fixed number of threads working on a work queue of work items. Adding a
@@ -55,22 +63,22 @@ class ThreadPool : public ThreadPoolInterface {
   ThreadPool(const ThreadPool&) = delete;
   ThreadPool& operator=(const ThreadPool&) = delete;
 
-  void NotifyReady(Task* task) EXCLUDES(mutex_) override {
-    LOG(FATAL) << "not implemented";
-  }
-
   // TODO(gaschler): Remove all uses.
   void Schedule(const std::function<void()>& work_item) override;
 
-  // If the returned weak pointer is expired, 'task' has certainly completed,
+  // When the returned weak pointer is expired, 'task' has certainly completed,
   // so dependants no longer need to add it as a dependency.
-  std::weak_ptr<Task> ScheduleWhenReady(std::unique_ptr<Task> task)
+  std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task)
       EXCLUDES(mutex_) override {
     LOG(FATAL) << "not implemented";
   }
 
  private:
   void DoWork();
+
+  void NotifyDependenciesCompleted(Task* task) EXCLUDES(mutex_) override {
+    LOG(FATAL) << "not implemented";
+  }
 
   Mutex mutex_;
   bool running_ GUARDED_BY(mutex_) = true;

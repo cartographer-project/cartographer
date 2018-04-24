@@ -17,7 +17,9 @@
 #include "cartographer/common/task.h"
 
 #include <memory>
+#include <queue>
 
+#include "cartographer/common/make_unique.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -25,121 +27,160 @@ namespace cartographer {
 namespace common {
 namespace {
 
-class MockThreadPool : public ThreadPoolInterface {
- public:
-  virtual MOCK_METHOD1(NotifyReady, void(Task*));
-  MOCK_METHOD1(Schedule, void(const std::function<void()>&));
-  // Work-around gmock's unique_ptr limitation.
-  MOCK_METHOD1(ScheduleWhenReadyWithPtr, std::weak_ptr<Task>(Task*));
-  virtual std::weak_ptr<Task> ScheduleWhenReady(std::unique_ptr<Task> task) {
-    return ScheduleWhenReadyWithPtr(task.get());
-  }
-};
-
 class MockCallback {
  public:
   MOCK_METHOD0(Run, void());
 };
 
-TEST(TaskTest, RunTask) {
-  MockThreadPool thread_pool;
-  Task a;
+class FakeThreadPool : public ThreadPoolInterface {
+ public:
+  void NotifyDependenciesCompleted(Task* task) {
+    auto it = tasks_not_ready_.find(task);
+    ASSERT_NE(it, tasks_not_ready_.end());
+    task_queue_.push_back(it->second);
+    tasks_not_ready_.erase(it);
+  }
+
+  void Schedule(const std::function<void()>& work_item) {
+    LOG(FATAL) << "not implemented";
+  }
+
+  std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task) override {
+    auto it =
+        tasks_not_ready_.insert(std::make_pair(task.get(), std::move(task)));
+    EXPECT_TRUE(it.second);
+    SetThreadPool(it.first->first);
+    return it.first->second;
+  }
+
+  void RunNext() {
+    ASSERT_GE(task_queue_.size(), 1);
+    Execute(task_queue_.front().get());
+    task_queue_.pop_front();
+  }
+
+  bool IsEmpty() { return task_queue_.empty(); }
+
+ private:
+  std::deque<std::shared_ptr<Task>> task_queue_;
+  std::map<Task*, std::shared_ptr<Task>> tasks_not_ready_;
+};
+
+class TaskTest : public ::testing::Test {
+ protected:
+  FakeThreadPool* thread_pool() { return &thread_pool_; }
+  FakeThreadPool thread_pool_;
+};
+
+TEST_F(TaskTest, RunTask) {
+  auto a = make_unique<Task>();
   MockCallback callback;
-  a.SetWorkItem([&callback]() { callback.Run(); });
-  EXPECT_EQ(a.GetState(), Task::NEW);
-  EXPECT_CALL(thread_pool, NotifyReady(&a)).Times(1);
-  a.NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(a.GetState(), Task::READY);
+  a->SetWorkItem([&callback]() { callback.Run(); });
+  EXPECT_EQ(a->GetState(), Task::NEW);
+  auto shared_a = thread_pool()->Schedule(std::move(a)).lock();
+  EXPECT_NE(shared_a, nullptr);
+  EXPECT_EQ(shared_a->GetState(), Task::DEPENDENCIES_COMPLETED);
   EXPECT_CALL(callback, Run()).Times(1);
-  a.Execute();
-  EXPECT_EQ(a.GetState(), Task::COMPLETED);
+  thread_pool()->RunNext();
+  EXPECT_EQ(shared_a->GetState(), Task::COMPLETED);
+  EXPECT_TRUE(thread_pool()->IsEmpty());
 }
 
-TEST(TaskTest, RunTaskWithDependency) {
-  MockThreadPool thread_pool;
-  auto a = std::make_shared<Task>();
-  auto b = std::make_shared<Task>();
+TEST_F(TaskTest, RunTaskWithDependency) {
+  auto a = make_unique<Task>();
+  auto b = make_unique<Task>();
   MockCallback callback_a;
   a->SetWorkItem([&callback_a]() { callback_a.Run(); });
   MockCallback callback_b;
   b->SetWorkItem([&callback_b]() { callback_b.Run(); });
-  b->AddDependency(a);
   EXPECT_EQ(a->GetState(), Task::NEW);
   EXPECT_EQ(b->GetState(), Task::NEW);
   {
     ::testing::InSequence dummy;
-    EXPECT_CALL(thread_pool, NotifyReady(a.get())).Times(1);
-    EXPECT_CALL(thread_pool, NotifyReady(b.get())).Times(1);
+    EXPECT_CALL(callback_a, Run()).Times(1);
+    EXPECT_CALL(callback_b, Run()).Times(1);
   }
-  b->NotifyWhenReady(&thread_pool);
-  EXPECT_EQ(b->GetState(), Task::DISPATCHED);
-  a->NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(a->GetState(), Task::READY);
-  EXPECT_CALL(callback_a, Run()).Times(1);
-  a->Execute();
-  ASSERT_EQ(b->GetState(), Task::READY);
-  EXPECT_CALL(callback_b, Run()).Times(1);
-  b->Execute();
-  EXPECT_EQ(a->GetState(), Task::COMPLETED);
-  EXPECT_EQ(b->GetState(), Task::COMPLETED);
+  auto shared_a = thread_pool()->Schedule(std::move(a)).lock();
+  EXPECT_NE(shared_a, nullptr);
+  b->AddDependency(shared_a);
+  auto shared_b = thread_pool()->Schedule(std::move(b)).lock();
+  EXPECT_NE(shared_b, nullptr);
+  EXPECT_EQ(shared_b->GetState(), Task::DISPATCHED);
+  EXPECT_EQ(shared_a->GetState(), Task::DEPENDENCIES_COMPLETED);
+  thread_pool()->RunNext();
+  EXPECT_EQ(shared_b->GetState(), Task::DEPENDENCIES_COMPLETED);
+  thread_pool()->RunNext();
+  EXPECT_EQ(shared_a->GetState(), Task::COMPLETED);
+  EXPECT_EQ(shared_b->GetState(), Task::COMPLETED);
 }
 
-TEST(TaskTest, RunTaskWithTwoDependency) {
-  MockThreadPool thread_pool;
+TEST_F(TaskTest, RunTaskWithTwoDependency) {
   /*         c \
    *  a -->  b --> d
    */
-  auto a = std::make_shared<Task>();
-  auto b = std::make_shared<Task>();
-  auto c = std::make_shared<Task>();
-  auto d = std::make_shared<Task>();
-  {
-    ::testing::InSequence dummy;
-    EXPECT_CALL(thread_pool, NotifyReady(c.get())).Times(1);
-    EXPECT_CALL(thread_pool, NotifyReady(a.get())).Times(1);
-    EXPECT_CALL(thread_pool, NotifyReady(b.get())).Times(1);
-    EXPECT_CALL(thread_pool, NotifyReady(d.get())).Times(1);
-  }
-  b->AddDependency(a);
-  d->AddDependency(b);
-  d->AddDependency(c);
-  d->NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(d->GetState(), Task::DISPATCHED);
-  b->NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(b->GetState(), Task::DISPATCHED);
-  c->NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(c->GetState(), Task::READY);
-  c->Execute();
-  EXPECT_EQ(c->GetState(), Task::COMPLETED);
-  ASSERT_EQ(d->GetState(), Task::DISPATCHED);
-  a->NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(a->GetState(), Task::READY);
-  a->Execute();
-  EXPECT_EQ(a->GetState(), Task::COMPLETED);
-  ASSERT_EQ(b->GetState(), Task::READY);
-  b->Execute();
-  EXPECT_EQ(b->GetState(), Task::COMPLETED);
-  ASSERT_EQ(d->GetState(), Task::READY);
-  d->Execute();
-  EXPECT_EQ(d->GetState(), Task::COMPLETED);
+  auto a = make_unique<Task>();
+  auto b = make_unique<Task>();
+  auto c = make_unique<Task>();
+  auto d = make_unique<Task>();
+  MockCallback callback_a;
+  a->SetWorkItem([&callback_a]() { callback_a.Run(); });
+  MockCallback callback_b;
+  b->SetWorkItem([&callback_b]() { callback_b.Run(); });
+  MockCallback callback_c;
+  c->SetWorkItem([&callback_c]() { callback_c.Run(); });
+  MockCallback callback_d;
+  d->SetWorkItem([&callback_d]() { callback_d.Run(); });
+  EXPECT_CALL(callback_a, Run()).Times(1);
+  EXPECT_CALL(callback_b, Run()).Times(1);
+  EXPECT_CALL(callback_c, Run()).Times(1);
+  EXPECT_CALL(callback_d, Run()).Times(1);
+  auto shared_a = thread_pool()->Schedule(std::move(a)).lock();
+  EXPECT_NE(shared_a, nullptr);
+  b->AddDependency(shared_a);
+  auto shared_b = thread_pool()->Schedule(std::move(b)).lock();
+  EXPECT_NE(shared_b, nullptr);
+  auto shared_c = thread_pool()->Schedule(std::move(c)).lock();
+  EXPECT_NE(shared_c, nullptr);
+  d->AddDependency(shared_b);
+  d->AddDependency(shared_c);
+  auto shared_d = thread_pool()->Schedule(std::move(d)).lock();
+  EXPECT_NE(shared_d, nullptr);
+  EXPECT_EQ(shared_b->GetState(), Task::DISPATCHED);
+  EXPECT_EQ(shared_d->GetState(), Task::DISPATCHED);
+  thread_pool()->RunNext();
+  EXPECT_EQ(shared_a->GetState(), Task::COMPLETED);
+  EXPECT_EQ(shared_b->GetState(), Task::DEPENDENCIES_COMPLETED);
+  EXPECT_EQ(shared_c->GetState(), Task::DEPENDENCIES_COMPLETED);
+  thread_pool()->RunNext();
+  thread_pool()->RunNext();
+  EXPECT_EQ(shared_b->GetState(), Task::COMPLETED);
+  EXPECT_EQ(shared_c->GetState(), Task::COMPLETED);
+  EXPECT_EQ(shared_d->GetState(), Task::DEPENDENCIES_COMPLETED);
+  thread_pool()->RunNext();
+  EXPECT_EQ(shared_d->GetState(), Task::COMPLETED);
 }
 
-TEST(TaskTest, RunWithCompletedDependency) {
-  MockThreadPool thread_pool;
-  auto a = std::make_shared<Task>();
-  EXPECT_CALL(thread_pool, NotifyReady(a.get())).Times(1);
-  a->NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(a->GetState(), Task::READY);
-  a->Execute();
-  EXPECT_EQ(a->GetState(), Task::COMPLETED);
-  auto b = std::make_shared<Task>();
-  EXPECT_CALL(thread_pool, NotifyReady(b.get())).Times(1);
-  b->AddDependency(a);
+TEST_F(TaskTest, RunWithCompletedDependency) {
+  auto a = make_unique<Task>();
+  MockCallback callback_a;
+  a->SetWorkItem([&callback_a]() { callback_a.Run(); });
+  auto shared_a = thread_pool()->Schedule(std::move(a)).lock();
+  EXPECT_NE(shared_a, nullptr);
+  EXPECT_EQ(shared_a->GetState(), Task::DEPENDENCIES_COMPLETED);
+  EXPECT_CALL(callback_a, Run()).Times(1);
+  thread_pool()->RunNext();
+  EXPECT_EQ(shared_a->GetState(), Task::COMPLETED);
+  auto b = make_unique<Task>();
+  MockCallback callback_b;
+  b->SetWorkItem([&callback_b]() { callback_b.Run(); });
+  b->AddDependency(shared_a);
   EXPECT_EQ(b->GetState(), Task::NEW);
-  b->NotifyWhenReady(&thread_pool);
-  ASSERT_EQ(b->GetState(), Task::READY);
-  b->Execute();
-  EXPECT_EQ(b->GetState(), Task::COMPLETED);
+  auto shared_b = thread_pool()->Schedule(std::move(b)).lock();
+  EXPECT_NE(shared_b, nullptr);
+  EXPECT_EQ(shared_b->GetState(), Task::DEPENDENCIES_COMPLETED);
+  EXPECT_CALL(callback_b, Run()).Times(1);
+  thread_pool()->RunNext();
+  EXPECT_EQ(shared_b->GetState(), Task::COMPLETED);
 }
 
 }  // namespace

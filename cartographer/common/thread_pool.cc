@@ -26,6 +26,12 @@
 namespace cartographer {
 namespace common {
 
+void ThreadPoolInterface::Execute(Task* task) { task->Execute(); }
+
+void ThreadPoolInterface::SetThreadPool(Task* task) {
+  task->SetThreadPool(this);
+}
+
 ThreadPool::ThreadPool(int num_threads) {
   MutexLocker locker(&mutex_);
   for (int i = 0; i != num_threads; ++i) {
