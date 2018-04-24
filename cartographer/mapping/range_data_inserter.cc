@@ -15,13 +15,10 @@
  */
 
 #include "cartographer/mapping/range_data_inserter.h"
+#include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 
 namespace cartographer {
 namespace mapping {
-
-proto::ProbabilityGridRangeDataInserterOptions2D
-CreateProbabilityGridRangeDataInserterOptions2D(
-    common::LuaParameterDictionary* parameter_dictionary);
 
 proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
