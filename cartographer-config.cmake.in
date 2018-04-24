@@ -32,9 +32,9 @@ else ()
    find_package(Ceres HINTS ${CERES_DIR_HINTS})
 endif()
 
-set(BUILD_GRPC @BUILD_GRPC@)
+set(CARTOGRAPHER_HAS_GRPC @CARTOGRAPHER_HAS_GRPC@)
 
-if(BUILD_GRPC)
+if(CARTOGRAPHER_HAS_GRPC)
    find_package(async_grpc)
 endif()
 
