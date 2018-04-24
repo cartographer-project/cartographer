@@ -73,7 +73,7 @@ TEST(FakeFileWriter, Write) {
 
 TEST(FakeFileWriter, HeaderAndWrite) {
   auto on_close_output = std::make_shared<std::string>();
-  const std::string header = "dummy header";
+  const std::string header("dummy header");
   const std::vector<std::string> data_stream = {"data 1", "data 2"};
   FakeFileWriter writer("file", on_close_output);
   EXPECT_EQ(writer.GetFilename(), "file");
