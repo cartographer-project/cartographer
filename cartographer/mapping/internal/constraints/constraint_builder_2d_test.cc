@@ -72,10 +72,9 @@ TEST_F(ConstraintBuilder2DTest, FindsConstraints) {
   node_data.gravity_alignment = Eigen::Quaterniond::Identity();
   node_data.local_pose = transform::Rigid3d::Identity();
   SubmapId submap_id{0, 1};
-  MapLimits map_limits(1., Eigen::Vector2d(2., 3.),
-                                CellLimits(100, 110));
+  MapLimits map_limits(1., Eigen::Vector2d(2., 3.), CellLimits(100, 110));
   Submap2D submap(Eigen::Vector2f(4.f, 5.f),
-                    common::make_unique<ProbabilityGrid>(map_limits));
+                  common::make_unique<ProbabilityGrid>(map_limits));
   int expected_nodes = 0;
   for (int i = 0; i < 2; ++i) {
     EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), expected_nodes);
