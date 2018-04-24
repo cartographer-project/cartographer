@@ -51,15 +51,15 @@ void Task::AddDependency(std::weak_ptr<Task> dependency) {
   }
 }
 
-void Task::NotifyWhenReady(ThreadPoolInterface* thread_pool) {
+void Task::SetThreadPool(ThreadPoolInterface* thread_pool) {
   MutexLocker locker(&mutex_);
   CHECK_EQ(state_, NEW);
   state_ = DISPATCHED;
   thread_pool_to_notify_ = thread_pool;
   if (uncompleted_dependencies_ == 0) {
-    state_ = READY;
+    state_ = DEPENDENCIES_COMPLETED;
     CHECK(thread_pool_to_notify_);
-    thread_pool_to_notify_->NotifyReady(this);
+    thread_pool_to_notify_->NotifyDependenciesCompleted(this);
   }
 }
 
@@ -78,16 +78,16 @@ void Task::OnDependenyCompleted() {
   CHECK(state_ == NEW || state_ == DISPATCHED);
   --uncompleted_dependencies_;
   if (uncompleted_dependencies_ == 0 && state_ == DISPATCHED) {
-    state_ = READY;
+    state_ = DEPENDENCIES_COMPLETED;
     CHECK(thread_pool_to_notify_);
-    thread_pool_to_notify_->NotifyReady(this);
+    thread_pool_to_notify_->NotifyDependenciesCompleted(this);
   }
 }
 
 void Task::Execute() {
   {
     MutexLocker locker(&mutex_);
-    CHECK_EQ(state_, READY);
+    CHECK_EQ(state_, DEPENDENCIES_COMPLETED);
     state_ = RUNNING;
   }
 

@@ -98,7 +98,7 @@ void ConstraintBuilder2D::MaybeAddConstraint(
                       constraint);
   });
   task->AddDependency(scan_matcher->scan_matcher_factory_task);
-  auto weak_task = thread_pool_->ScheduleWhenReady(std::move(task));
+  auto weak_task = thread_pool_->Schedule(std::move(task));
   CHECK(finish_node_task_ != nullptr);
   finish_node_task_->AddDependency(weak_task);
 }
@@ -123,7 +123,7 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
                       *scan_matcher, constraint);
   });
   task->AddDependency(scan_matcher->scan_matcher_factory_task);
-  auto weak_task = thread_pool_->ScheduleWhenReady(std::move(task));
+  auto weak_task = thread_pool_->Schedule(std::move(task));
   CHECK(finish_node_task_ != nullptr);
   finish_node_task_->AddDependency(weak_task);
 }
@@ -137,7 +137,7 @@ void ConstraintBuilder2D::NotifyEndOfNode() {
   });
   CHECK(when_done_task_ != nullptr);
   auto weak_finish_node_task =
-      thread_pool_->ScheduleWhenReady(std::move(finish_node_task_));
+      thread_pool_->Schedule(std::move(finish_node_task_));
   finish_node_task_ = common::make_unique<common::Task>();
   when_done_task_->AddDependency(weak_finish_node_task);
   ++num_started_nodes_;
@@ -151,7 +151,7 @@ void ConstraintBuilder2D::WhenDone(
       common::make_unique<std::function<void(const Result&)>>(callback);
   CHECK(when_done_task_ != nullptr);
   when_done_task_->SetWorkItem([this] { RunCallback(); });
-  thread_pool_->ScheduleWhenReady(std::move(when_done_task_));
+  thread_pool_->Schedule(std::move(when_done_task_));
   when_done_task_ = common::make_unique<common::Task>();
 }
 
@@ -171,7 +171,7 @@ ConstraintBuilder2D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
                   *submap_scan_matcher.grid, scan_matcher_options);
         });
     submap_scan_matcher.scan_matcher_factory_task =
-        thread_pool_->ScheduleWhenReady(std::move(scan_matcher_task));
+        thread_pool_->Schedule(std::move(scan_matcher_task));
   }
   return &submap_scan_matchers_.at(submap_id);
 }

@@ -34,10 +34,13 @@ class ThreadPoolForTesting : public ThreadPoolInterface {
   ThreadPoolForTesting();
   ~ThreadPoolForTesting();
 
-  void NotifyReady(Task* task) override;
+  void NotifyDependenciesCompleted(Task* task) EXCLUDES(mutex_) override;
+
   void Schedule(const std::function<void()>& work_item) override;
-  std::weak_ptr<common::Task> ScheduleWhenReady(
-      std::unique_ptr<Task> task) override;
+
+  std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task)
+      EXCLUDES(mutex_) override;
+
   void WaitUntilIdle();
 
  private:

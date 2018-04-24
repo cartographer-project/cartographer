@@ -43,7 +43,7 @@ ThreadPoolForTesting::~ThreadPoolForTesting() {
   thread_.join();
 }
 
-void ThreadPoolForTesting::NotifyReady(Task* task) {
+void ThreadPoolForTesting::NotifyDependenciesCompleted(Task* task) {
   MutexLocker locker(&mutex_);
   CHECK(running_);
   auto it = tasks_not_ready_.find(task);
@@ -55,11 +55,10 @@ void ThreadPoolForTesting::NotifyReady(Task* task) {
 void ThreadPoolForTesting::Schedule(const std::function<void()>& work_item) {
   auto task = common::make_unique<Task>();
   task->SetWorkItem(work_item);
-  ScheduleWhenReady(std::move(task));
+  Schedule(std::move(task));
 }
 
-std::weak_ptr<Task> ThreadPoolForTesting::ScheduleWhenReady(
-    std::unique_ptr<Task> task) {
+std::weak_ptr<Task> ThreadPoolForTesting::Schedule(std::unique_ptr<Task> task) {
   std::shared_ptr<Task> shared_task;
   {
     MutexLocker locker(&mutex_);
@@ -70,7 +69,7 @@ std::weak_ptr<Task> ThreadPoolForTesting::ScheduleWhenReady(
     CHECK(insert_result.second) << "ScheduleWhenReady called twice";
     shared_task = insert_result.first->second;
   }
-  shared_task->NotifyWhenReady(this);
+  SetThreadPool(shared_task.get());
   return shared_task;
 }
 
@@ -106,7 +105,7 @@ void ThreadPoolForTesting::DoWork() {
         idle_ = true;
       }
     }
-    if (task) task->Execute();
+    if (task) Execute(task.get());
   }
 }
 

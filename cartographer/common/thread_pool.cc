@@ -29,6 +29,12 @@
 namespace cartographer {
 namespace common {
 
+void ThreadPoolInterface::Execute(Task* task) { task->Execute(); }
+
+void ThreadPoolInterface::SetThreadPool(Task* task) {
+  task->SetThreadPool(this);
+}
+
 ThreadPool::ThreadPool(int num_threads) {
   MutexLocker locker(&mutex_);
   for (int i = 0; i != num_threads; ++i) {
@@ -49,7 +55,7 @@ ThreadPool::~ThreadPool() {
   }
 }
 
-void ThreadPool::NotifyReady(Task* task) {
+void ThreadPool::NotifyDependenciesCompleted(Task* task) {
   MutexLocker locker(&mutex_);
   CHECK(running_);
   auto it = tasks_not_ready_.find(task);
@@ -61,20 +67,20 @@ void ThreadPool::NotifyReady(Task* task) {
 void ThreadPool::Schedule(const std::function<void()>& work_item) {
   auto task = make_unique<Task>();
   task->SetWorkItem(work_item);
-  ScheduleWhenReady(std::move(task));
+  Schedule(std::move(task));
 }
 
-std::weak_ptr<Task> ThreadPool::ScheduleWhenReady(std::unique_ptr<Task> task) {
+std::weak_ptr<Task> ThreadPool::Schedule(std::unique_ptr<Task> task) {
   std::shared_ptr<Task> shared_task;
   {
     MutexLocker locker(&mutex_);
     CHECK(running_);
     auto insert_result =
         tasks_not_ready_.insert(std::make_pair(task.get(), std::move(task)));
-    CHECK(insert_result.second) << "ScheduleWhenReady called twice";
+    CHECK(insert_result.second) << "Schedule called twice";
     shared_task = insert_result.first->second;
   }
-  shared_task->NotifyWhenReady(this);
+  SetThreadPool(shared_task.get());
   return shared_task;
 }
 
@@ -100,8 +106,8 @@ void ThreadPool::DoWork() {
       }
     }
     CHECK(task);
-    CHECK_EQ(task->GetState(), common::Task::READY);
-    task->Execute();
+    CHECK_EQ(task->GetState(), common::Task::DEPENDENCIES_COMPLETED);
+    Execute(task.get());
   }
 }
 

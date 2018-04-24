@@ -52,7 +52,7 @@ TEST(ThreadPoolTest, RunTask) {
   Receiver receiver;
   auto task = common::make_unique<Task>();
   task->SetWorkItem([&receiver]() { receiver.Receive(1); });
-  pool.ScheduleWhenReady(std::move(task));
+  pool.Schedule(std::move(task));
   receiver.WaitForNumberSequence({1});
 }
 
@@ -63,9 +63,9 @@ TEST(ThreadPoolTest, RunWithDependency) {
   task_2->SetWorkItem([&receiver]() { receiver.Receive(2); });
   auto task_1 = common::make_unique<Task>();
   task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
-  auto weak_task_1 = pool.ScheduleWhenReady(std::move(task_1));
+  auto weak_task_1 = pool.Schedule(std::move(task_1));
   task_2->AddDependency(weak_task_1);
-  pool.ScheduleWhenReady(std::move(task_2));
+  pool.Schedule(std::move(task_2));
   receiver.WaitForNumberSequence({1, 2});
 }
 
@@ -77,11 +77,11 @@ TEST(ThreadPoolTest, RunWithOutOfScopeDependency) {
   {
     auto task_1 = common::make_unique<Task>();
     task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
-    auto weak_task_1 = pool.ScheduleWhenReady(std::move(task_1));
+    auto weak_task_1 = pool.Schedule(std::move(task_1));
     task_2->AddDependency(weak_task_1);
     // task_1 goes out of scope.
   }
-  pool.ScheduleWhenReady(std::move(task_2));
+  pool.Schedule(std::move(task_2));
   receiver.WaitForNumberSequence({1, 2});
 }
 
@@ -99,15 +99,15 @@ TEST(ThreadPoolTest, RunWithMultipleDependencies) {
   /*          -> task_2a \
    *  task_1 /-> task_2b --> task_3
    */
-  auto weak_task_1 = pool.ScheduleWhenReady(std::move(task_1));
+  auto weak_task_1 = pool.Schedule(std::move(task_1));
   task_2a->AddDependency(weak_task_1);
-  auto weak_task_2a = pool.ScheduleWhenReady(std::move(task_2a));
+  auto weak_task_2a = pool.Schedule(std::move(task_2a));
   task_3->AddDependency(weak_task_1);
   task_3->AddDependency(weak_task_2a);
   task_2b->AddDependency(weak_task_1);
-  auto weak_task_2b = pool.ScheduleWhenReady(std::move(task_2b));
+  auto weak_task_2b = pool.Schedule(std::move(task_2b));
   task_3->AddDependency(weak_task_2b);
-  pool.ScheduleWhenReady(std::move(task_3));
+  pool.Schedule(std::move(task_3));
   receiver.WaitForNumberSequence({1, 2, 2, 3});
 }
 
@@ -118,10 +118,10 @@ TEST(ThreadPoolTest, RunWithFinishedDependency) {
   task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
   auto task_2 = common::make_unique<Task>();
   task_2->SetWorkItem([&receiver]() { receiver.Receive(2); });
-  auto weak_task_1 = pool.ScheduleWhenReady(std::move(task_1));
+  auto weak_task_1 = pool.Schedule(std::move(task_1));
   task_2->AddDependency(weak_task_1);
   receiver.WaitForNumberSequence({1});
-  pool.ScheduleWhenReady(std::move(task_2));
+  pool.Schedule(std::move(task_2));
   receiver.WaitForNumberSequence({1, 2});
 }
 
