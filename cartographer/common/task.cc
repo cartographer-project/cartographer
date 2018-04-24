@@ -42,7 +42,7 @@ void Task::AddDependency(std::weak_ptr<Task> dependency) {
   {
     MutexLocker locker(&mutex_);
     CHECK_EQ(state_, NEW);
-    if (shared_dependency = dependency.lock()) {
+    if ((shared_dependency = dependency.lock())) {
       ++uncompleted_dependencies_;
     }
   }
