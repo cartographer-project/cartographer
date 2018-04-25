@@ -34,14 +34,14 @@ class MockCallback {
 
 class FakeThreadPool : public ThreadPoolInterface {
  public:
-  void NotifyDependenciesCompleted(Task* task) {
+  void NotifyDependenciesCompleted(Task* task) override {
     auto it = tasks_not_ready_.find(task);
     ASSERT_NE(it, tasks_not_ready_.end());
     task_queue_.push_back(it->second);
     tasks_not_ready_.erase(it);
   }
 
-  void Schedule(const std::function<void()>& work_item) {
+  void Schedule(const std::function<void()>& work_item) override {
     LOG(FATAL) << "not implemented";
   }
 
