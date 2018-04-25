@@ -201,6 +201,45 @@ TEST_F(MapBuilderTest, GlobalSlam2D) {
               0.1 * kTravelDistance);
 }
 
+TEST_F(MapBuilderTest, GlobalSlam3D) {
+  SetOptionsTo3D();
+  SetOptionsEnableGlobalOptimization();
+  BuildMapBuilder();
+  int trajectory_id = map_builder_->AddTrajectoryBuilder(
+      {kRangeSensorId, kIMUSensorId}, trajectory_builder_options_,
+      GetLocalSlamResultCallback());
+  TrajectoryBuilderInterface* trajectory_builder =
+      map_builder_->GetTrajectoryBuilder(trajectory_id);
+  const auto measurements = test::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
+  for (const auto& measurement : measurements) {
+    trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
+    trajectory_builder->AddSensorData(
+        kIMUSensorId.id,
+        sensor::ImuData{measurement.time, Eigen::Vector3d(0., 0., 9.8),
+                        Eigen::Vector3d::Zero()});
+  }
+  map_builder_->FinishTrajectory(trajectory_id);
+  map_builder_->pose_graph()->RunFinalOptimization();
+  EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
+  EXPECT_NEAR(kTravelDistance,
+              (local_slam_result_poses_.back().translation() -
+               local_slam_result_poses_.front().translation())
+                  .norm(),
+              0.1 * kTravelDistance);
+  EXPECT_GE(map_builder_->pose_graph()->constraints().size(), 10);
+  const auto trajectory_nodes =
+      map_builder_->pose_graph()->GetTrajectoryNodes();
+  EXPECT_GE(trajectory_nodes.SizeOfTrajectoryOrZero(trajectory_id), 5);
+  const auto submap_data = map_builder_->pose_graph()->GetAllSubmapData();
+  EXPECT_GE(submap_data.SizeOfTrajectoryOrZero(trajectory_id), 2);
+  const transform::Rigid3d final_pose =
+      map_builder_->pose_graph()->GetLocalToGlobalTransform(trajectory_id) *
+      local_slam_result_poses_.back();
+  EXPECT_NEAR(kTravelDistance, final_pose.translation().norm(),
+              0.1 * kTravelDistance);
+}
+
 }  // namespace
 }  // namespace mapping
 }  // namespace cartographer
