@@ -110,11 +110,11 @@ class ConstraintBuilder2D {
     const Grid2D* grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
         fast_correlative_scan_matcher;
-    std::weak_ptr<common::Task> scan_matcher_factory_task;
+    std::weak_ptr<common::Task> creation_task_handle;
   };
 
   // The returned 'grid' and 'fast_correlative_scan_matcher' must only be
-  // accessed after 'scan_matcher_factory_task' has completed.
+  // accessed after 'creation_task_handle' has completed.
   const SubmapScanMatcher* DispatchScanMatcherConstruction(
       const SubmapId& submap_id, const Grid2D* grid) REQUIRES(mutex_);
 
@@ -129,7 +129,7 @@ class ConstraintBuilder2D {
                          std::unique_ptr<Constraint>* constraint)
       EXCLUDES(mutex_);
 
-  void RunCallback() EXCLUDES(mutex_);
+  void RunWhenDoneCallback() EXCLUDES(mutex_);
 
   const constraints::proto::ConstraintBuilderOptions options_;
   common::ThreadPoolInterface* thread_pool_;
@@ -139,6 +139,7 @@ class ConstraintBuilder2D {
   std::unique_ptr<std::function<void(const Result&)>> when_done_
       GUARDED_BY(mutex_);
 
+  // TODO(gaschler): Use atomics instead of mutex to access these counters.
   // Number of the node in reaction to which computations are currently
   // added. This is always the number of nodes seen so far, even when older
   // nodes are matched against a new submap.
@@ -151,7 +152,8 @@ class ConstraintBuilder2D {
   std::unique_ptr<common::Task> when_done_task_ GUARDED_BY(mutex_);
 
   // Constraints currently being computed in the background. A deque is used to
-  // keep pointers valid when adding more entries.
+  // keep pointers valid when adding more entries. Constraint search results
+  // with below-threshold scores are also 'nullptr'.
   std::deque<std::unique_ptr<Constraint>> constraints_ GUARDED_BY(mutex_);
 
   // Map of dispatched or constructed scan matchers by 'submap_id'.

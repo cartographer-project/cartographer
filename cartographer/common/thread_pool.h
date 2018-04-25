@@ -19,9 +19,9 @@
 
 #include <deque>
 #include <functional>
-#include <map>
 #include <memory>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "cartographer/common/mutex.h"
@@ -81,7 +81,8 @@ class ThreadPool : public ThreadPoolInterface {
   bool running_ GUARDED_BY(mutex_) = true;
   std::vector<std::thread> pool_ GUARDED_BY(mutex_);
   std::deque<std::shared_ptr<Task>> task_queue_ GUARDED_BY(mutex_);
-  std::map<Task*, std::shared_ptr<Task>> tasks_not_ready_ GUARDED_BY(mutex_);
+  std::unordered_map<Task*, std::shared_ptr<Task>> tasks_not_ready_
+      GUARDED_BY(mutex_);
 };
 
 }  // namespace common

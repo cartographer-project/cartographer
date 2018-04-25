@@ -91,16 +91,16 @@ void ConstraintBuilder2D::MaybeAddConstraint(
   auto* const constraint = &constraints_.back();
   const auto* scan_matcher =
       DispatchScanMatcherConstruction(submap_id, submap->grid());
-  auto task = common::make_unique<common::Task>();
-  task->SetWorkItem([=]() EXCLUDES(mutex_) {
+  auto constraint_task = common::make_unique<common::Task>();
+  constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
     ComputeConstraint(submap_id, submap, node_id, false, /* match_full_submap */
                       constant_data, initial_relative_pose, *scan_matcher,
                       constraint);
   });
-  task->AddDependency(scan_matcher->scan_matcher_factory_task);
-  auto weak_task = thread_pool_->Schedule(std::move(task));
-  CHECK(finish_node_task_ != nullptr);
-  finish_node_task_->AddDependency(weak_task);
+  constraint_task->AddDependency(scan_matcher->creation_task_handle);
+  auto constraint_task_handle =
+      thread_pool_->Schedule(std::move(constraint_task));
+  finish_node_task_->AddDependency(constraint_task_handle);
 }
 
 void ConstraintBuilder2D::MaybeAddGlobalConstraint(
@@ -116,16 +116,16 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
   auto* const constraint = &constraints_.back();
   const auto* scan_matcher =
       DispatchScanMatcherConstruction(submap_id, submap->grid());
-  auto task = common::make_unique<common::Task>();
-  task->SetWorkItem([=]() EXCLUDES(mutex_) {
+  auto constraint_task = common::make_unique<common::Task>();
+  constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
     ComputeConstraint(submap_id, submap, node_id, true, /* match_full_submap */
                       constant_data, transform::Rigid2d::Identity(),
                       *scan_matcher, constraint);
   });
-  task->AddDependency(scan_matcher->scan_matcher_factory_task);
-  auto weak_task = thread_pool_->Schedule(std::move(task));
-  CHECK(finish_node_task_ != nullptr);
-  finish_node_task_->AddDependency(weak_task);
+  constraint_task->AddDependency(scan_matcher->creation_task_handle);
+  auto constraint_task_handle =
+      thread_pool_->Schedule(std::move(constraint_task));
+  finish_node_task_->AddDependency(constraint_task_handle);
 }
 
 void ConstraintBuilder2D::NotifyEndOfNode() {
@@ -135,11 +135,10 @@ void ConstraintBuilder2D::NotifyEndOfNode() {
     common::MutexLocker locker(&mutex_);
     ++num_finished_nodes_;
   });
-  CHECK(when_done_task_ != nullptr);
-  auto weak_finish_node_task =
+  auto finish_node_task_handle =
       thread_pool_->Schedule(std::move(finish_node_task_));
   finish_node_task_ = common::make_unique<common::Task>();
-  when_done_task_->AddDependency(weak_finish_node_task);
+  when_done_task_->AddDependency(finish_node_task_handle);
   ++num_started_nodes_;
 }
 
@@ -147,10 +146,11 @@ void ConstraintBuilder2D::WhenDone(
     const std::function<void(const ConstraintBuilder2D::Result&)>& callback) {
   common::MutexLocker locker(&mutex_);
   CHECK(when_done_ == nullptr);
+  // TODO(gaschler): Consider using just std::function, it can also be empty.
   when_done_ =
       common::make_unique<std::function<void(const Result&)>>(callback);
   CHECK(when_done_task_ != nullptr);
-  when_done_task_->SetWorkItem([this] { RunCallback(); });
+  when_done_task_->SetWorkItem([this] { RunWhenDoneCallback(); });
   thread_pool_->Schedule(std::move(when_done_task_));
   when_done_task_ = common::make_unique<common::Task>();
 }
@@ -158,21 +158,21 @@ void ConstraintBuilder2D::WhenDone(
 const ConstraintBuilder2D::SubmapScanMatcher*
 ConstraintBuilder2D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
                                                      const Grid2D* const grid) {
-  if (submap_scan_matchers_.count(submap_id) == 0) {
-    auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
-    submap_scan_matcher.grid = grid;
-    auto& scan_matcher_options =
-        options_.fast_correlative_scan_matcher_options();
-    auto scan_matcher_task = common::make_unique<common::Task>();
-    scan_matcher_task->SetWorkItem(
-        [&submap_scan_matcher, &scan_matcher_options]() {
-          submap_scan_matcher.fast_correlative_scan_matcher =
-              common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
-                  *submap_scan_matcher.grid, scan_matcher_options);
-        });
-    submap_scan_matcher.scan_matcher_factory_task =
-        thread_pool_->Schedule(std::move(scan_matcher_task));
+  if (submap_scan_matchers_.count(submap_id) != 0) {
+    return &submap_scan_matchers_.at(submap_id);
   }
+  auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
+  submap_scan_matcher.grid = grid;
+  auto& scan_matcher_options = options_.fast_correlative_scan_matcher_options();
+  auto scan_matcher_task = common::make_unique<common::Task>();
+  scan_matcher_task->SetWorkItem(
+      [&submap_scan_matcher, &scan_matcher_options]() {
+        submap_scan_matcher.fast_correlative_scan_matcher =
+            common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
+                *submap_scan_matcher.grid, scan_matcher_options);
+      });
+  submap_scan_matcher.creation_task_handle =
+      thread_pool_->Schedule(std::move(scan_matcher_task));
   return &submap_scan_matchers_.at(submap_id);
 }
 
@@ -266,16 +266,15 @@ void ConstraintBuilder2D::ComputeConstraint(
   }
 }
 
-void ConstraintBuilder2D::RunCallback() {
+void ConstraintBuilder2D::RunWhenDoneCallback() {
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
     common::MutexLocker locker(&mutex_);
     CHECK(when_done_ != nullptr);
     for (const std::unique_ptr<Constraint>& constraint : constraints_) {
-      if (constraint != nullptr) {
-        result.push_back(*constraint);
-      }
+      if (constraint == nullptr) continue;
+      result.push_back(*constraint);
     }
     if (options_.log_matches()) {
       LOG(INFO) << constraints_.size() << " computations resulted in "

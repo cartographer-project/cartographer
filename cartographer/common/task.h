@@ -35,6 +35,7 @@ class Task {
   using WorkItem = std::function<void()>;
   enum State { NEW, DISPATCHED, DEPENDENCIES_COMPLETED, RUNNING, COMPLETED };
 
+  Task() = default;
   ~Task();
 
   State GetState() EXCLUDES(mutex_);

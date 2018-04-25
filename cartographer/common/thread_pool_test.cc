@@ -16,6 +16,8 @@
 
 #include "cartographer/common/thread_pool.h"
 
+#include <vector>
+
 #include "cartographer/common/make_unique.h"
 #include "gtest/gtest.h"
 
@@ -30,7 +32,7 @@ class Receiver {
     received_numbers_.push_back(number);
   }
 
-  void WaitForNumberSequence(const std::list<int>& expected_numbers) {
+  void WaitForNumberSequence(const std::vector<int>& expected_numbers) {
     bool have_enough_numbers = false;
     while (!have_enough_numbers) {
       common::MutexLocker locker(&mutex_);
@@ -43,7 +45,7 @@ class Receiver {
     EXPECT_EQ(expected_numbers, received_numbers_);
   }
 
-  std::list<int> received_numbers_;
+  std::vector<int> received_numbers_;
   Mutex mutex_;
 };
 
@@ -79,7 +81,6 @@ TEST(ThreadPoolTest, RunWithOutOfScopeDependency) {
     task_1->SetWorkItem([&receiver]() { receiver.Receive(1); });
     auto weak_task_1 = pool.Schedule(std::move(task_1));
     task_2->AddDependency(weak_task_1);
-    // task_1 goes out of scope.
   }
   pool.Schedule(std::move(task_2));
   receiver.WaitForNumberSequence({1, 2});
