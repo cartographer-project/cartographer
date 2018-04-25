@@ -14,17 +14,18 @@
 
 syntax = "proto3";
 
-import "cartographer/mapping/2d/proto/grid_2d_options.proto";
-import "cartographer/mapping/2d/proto/probability_grid_range_data_inserter_options_2d.proto";
-import "cartographer/mapping/proto/range_data_inserter_options.proto";
-
 package cartographer.mapping.proto;
 
-message SubmapsOptions2D {
-  // Number of range data before adding a new submap. Each submap will get twice
-  // the number of range data inserted: First for initialization without being
-  // matched against, then while being matched.
-  int32 num_range_data = 1;
-  GridOptions2D grid_options_2d = 2;
-  RangeDataInserterOptions range_data_inserter_options = 3;
+message ProbabilityGridRangeDataInserterOptions2D {
+  // Probability change for a hit (this will be converted to odds and therefore
+  // must be greater than 0.5).
+  double hit_probability = 1;
+
+  // Probability change for a miss (this will be converted to odds and therefore
+  // must be less than 0.5).
+  double miss_probability = 2;
+
+  // If 'false', free space will not change the probabilities in the occupancy
+  // grid.
+  bool insert_free_space = 3;
 }

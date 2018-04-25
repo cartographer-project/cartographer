@@ -62,12 +62,18 @@ TRAJECTORY_BUILDER_2D = {
   imu_gravity_time_constant = 10.,
 
   submaps = {
-    resolution = 0.05,
     num_range_data = 90,
+    grid_options_2d = {
+      grid_type = "PROBABILITY_GRID",
+      resolution = 0.05,
+    },
     range_data_inserter = {
-      insert_free_space = true,
-      hit_probability = 0.55,
-      miss_probability = 0.49,
+      range_data_inserter_type = "PROBABILITY_GRID_INSERTER_2D",
+      probability_grid_range_data_inserter = {
+        insert_free_space = true,
+        hit_probability = 0.55,
+        miss_probability = 0.49,
+      },
     },
   },
 }

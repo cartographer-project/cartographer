@@ -76,7 +76,8 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     return nullptr;
   }
   if (options_.use_online_correlative_scan_matching()) {
-    // todo(kdaun) add CHECK on options to guarantee grid is a probability grid
+    CHECK_EQ(options_.submaps_options().grid_options_2d().grid_type(),
+             proto::GridOptions2D_GridType_PROBABILITY_GRID);
     double score = real_time_correlative_scan_matcher_.Match(
         pose_prediction, filtered_gravity_aligned_point_cloud,
         *static_cast<const ProbabilityGrid*>(matching_submap->grid()),

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_2D_H_
-#define CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_2D_H_
+#ifndef CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_2D_PROBABILITY_GRID_H_
+#define CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_2D_PROBABILITY_GRID_H_
 
 #include <utility>
 #include <vector>
@@ -23,30 +23,35 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/probability_grid.h"
-#include "cartographer/mapping/2d/proto/range_data_inserter_options_2d.pb.h"
+#include "cartographer/mapping/2d/proto/probability_grid_range_data_inserter_options_2d.pb.h"
 #include "cartographer/mapping/2d/xy_index.h"
+#include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
 namespace mapping {
 
-proto::RangeDataInserterOptions2D CreateRangeDataInserterOptions2D(
+proto::ProbabilityGridRangeDataInserterOptions2D
+CreateProbabilityGridRangeDataInserterOptions2D(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class RangeDataInserter2D {
+class ProbabilityGridRangeDataInserter2D : public RangeDataInserterInterface {
  public:
-  explicit RangeDataInserter2D(
-      const proto::RangeDataInserterOptions2D& options);
+  explicit ProbabilityGridRangeDataInserter2D(
+      const proto::ProbabilityGridRangeDataInserterOptions2D& options);
 
-  RangeDataInserter2D(const RangeDataInserter2D&) = delete;
-  RangeDataInserter2D& operator=(const RangeDataInserter2D&) = delete;
+  ProbabilityGridRangeDataInserter2D(
+      const ProbabilityGridRangeDataInserter2D&) = delete;
+  ProbabilityGridRangeDataInserter2D& operator=(
+      const ProbabilityGridRangeDataInserter2D&) = delete;
 
   // Inserts 'range_data' into 'probability_grid'.
-  void Insert(const sensor::RangeData& range_data, Grid2D* grid) const;
+  virtual void Insert(const sensor::RangeData& range_data,
+                      GridInterface* grid) const override;
 
  private:
-  const proto::RangeDataInserterOptions2D options_;
+  const proto::ProbabilityGridRangeDataInserterOptions2D options_;
   const std::vector<uint16> hit_table_;
   const std::vector<uint16> miss_table_;
 };
@@ -54,4 +59,4 @@ class RangeDataInserter2D {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_2D_H_
+#endif  // CARTOGRAPHER_MAPPING_2D_RANGE_DATA_INSERTER_2D_PROBABILITY_GRID_H_

@@ -130,6 +130,7 @@ int MapBuilder::AddTrajectoryBuilder(
           trimmer_options.min_covered_area() /
               common::Pow2(trajectory_options.trajectory_builder_2d_options()
                                .submaps_options()
+                               .grid_options_2d()
                                .resolution()),
           trimmer_options.min_added_submaps_count()));
     }
