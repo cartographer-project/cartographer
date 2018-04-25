@@ -47,7 +47,6 @@ namespace {
 static auto* kIncomingDataQueueMetric = metrics::Gauge::Null();
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
-
 }  // namespace
 
 MapBuilderServer::MapBuilderServer(
