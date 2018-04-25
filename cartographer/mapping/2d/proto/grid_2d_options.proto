@@ -17,7 +17,7 @@ syntax = "proto3";
 package cartographer.mapping.proto;
 
 message GridOptions2D {
-  enum GridType { PROBABILITY_GRID = 0; }
+  enum GridType { INVALID_GRID = 0;  PROBABILITY_GRID = 1; }
 
   GridType grid_type = 1;
   float resolution = 2;

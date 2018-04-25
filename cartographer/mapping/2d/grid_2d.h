@@ -62,7 +62,7 @@ class Grid2D : public Grid {
   // Grows the map as necessary to include 'point'. This changes the meaning of
   // these coordinates going forward. This method must be called immediately
   // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
-  void GrowLimits(const Eigen::Vector2f& point);
+  virtual void GrowLimits(const Eigen::Vector2f& point);
 
   virtual std::unique_ptr<Grid2D> ComputeCroppedGrid() const = 0;
 

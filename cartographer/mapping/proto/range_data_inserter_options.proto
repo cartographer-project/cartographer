@@ -19,7 +19,7 @@ import "cartographer/mapping/2d/proto/probability_grid_range_data_inserter_optio
 package cartographer.mapping.proto;
 
 message RangeDataInserterOptions {
-  enum RangeDataInserterType { PROBABILITY_GRID_INSERTER_2D = 0; }
+  enum RangeDataInserterType { INVALID_INSERTER = 0; PROBABILITY_GRID_INSERTER_2D = 1; }
 
   RangeDataInserterType range_data_inserter_type = 1;
   ProbabilityGridRangeDataInserterOptions2D
