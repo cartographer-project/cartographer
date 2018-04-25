@@ -237,7 +237,8 @@ void MapBuilderServer::WaitUntilIdle() {
 
 void MapBuilderServer::RegisterMetrics(metrics::FamilyFactory* factory) {
   auto* queue_length = factory->NewGaugeFamily(
-      "cloud_internal_map_builder_server_incoming_data_queue_length", "Incoming SLAM Data Queue length");
+      "cloud_internal_map_builder_server_incoming_data_queue_length",
+      "Incoming SLAM Data Queue length");
   kIncomingDataQueueMetric = queue_length->Add({});
 }
 
