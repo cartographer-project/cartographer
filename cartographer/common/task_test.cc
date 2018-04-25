@@ -46,11 +46,13 @@ class FakeThreadPool : public ThreadPoolInterface {
   }
 
   std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task) override {
+    std::shared_ptr<Task> shared_task;
     auto it =
         tasks_not_ready_.insert(std::make_pair(task.get(), std::move(task)));
     EXPECT_TRUE(it.second);
-    SetThreadPool(it.first->first);
-    return it.first->second;
+    shared_task = it.first->second;
+    SetThreadPool(shared_task.get());
+    return shared_task;
   }
 
   void RunNext() {

@@ -21,6 +21,9 @@
 #include <chrono>
 #include <numeric>
 
+#include "cartographer/common/make_unique.h"
+#include "cartographer/common/task.h"
+#include "cartographer/common/time.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -35,16 +38,40 @@ ThreadPoolForTesting::~ThreadPoolForTesting() {
     MutexLocker locker(&mutex_);
     CHECK(running_);
     running_ = false;
-    CHECK_EQ(work_queue_.size(), 0);
+    CHECK_EQ(task_queue_.size(), 0);
+    CHECK_EQ(tasks_not_ready_.size(), 0);
   }
   thread_.join();
 }
 
-void ThreadPoolForTesting::Schedule(const std::function<void()> &work_item) {
+void ThreadPoolForTesting::NotifyDependenciesCompleted(Task* task) {
   MutexLocker locker(&mutex_);
-  idle_ = false;
   CHECK(running_);
-  work_queue_.push_back(work_item);
+  auto it = tasks_not_ready_.find(task);
+  CHECK(it != tasks_not_ready_.end());
+  task_queue_.push_back(it->second);
+  tasks_not_ready_.erase(it);
+}
+
+void ThreadPoolForTesting::Schedule(const std::function<void()>& work_item) {
+  auto task = common::make_unique<Task>();
+  task->SetWorkItem(work_item);
+  Schedule(std::move(task));
+}
+
+std::weak_ptr<Task> ThreadPoolForTesting::Schedule(std::unique_ptr<Task> task) {
+  std::shared_ptr<Task> shared_task;
+  {
+    MutexLocker locker(&mutex_);
+    idle_ = false;
+    CHECK(running_);
+    auto insert_result =
+        tasks_not_ready_.insert(std::make_pair(task.get(), std::move(task)));
+    CHECK(insert_result.second) << "ScheduleWhenReady called twice";
+    shared_task = insert_result.first->second;
+  }
+  SetThreadPool(shared_task.get());
+  return shared_task;
 }
 
 void ThreadPoolForTesting::WaitUntilIdle() {
@@ -61,25 +88,25 @@ void ThreadPoolForTesting::WaitUntilIdle() {
 
 void ThreadPoolForTesting::DoWork() {
   for (;;) {
-    std::function<void()> work_item;
+    std::shared_ptr<Task> task;
     {
       MutexLocker locker(&mutex_);
       locker.AwaitWithTimeout(
           [this]()
-              REQUIRES(mutex_) { return !work_queue_.empty() || !running_; },
+              REQUIRES(mutex_) { return !task_queue_.empty() || !running_; },
           common::FromSeconds(0.1));
-      if (!work_queue_.empty()) {
-        work_item = work_queue_.front();
-        work_queue_.pop_front();
+      if (!task_queue_.empty()) {
+        task = task_queue_.front();
+        task_queue_.pop_front();
       }
       if (!running_) {
         return;
       }
-      if (work_queue_.empty() && !work_item) {
+      if (tasks_not_ready_.empty() && task_queue_.empty() && !task) {
         idle_ = true;
       }
     }
-    if (work_item) work_item();
+    if (task) Execute(task.get());
   }
 }
 
