@@ -23,6 +23,7 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/task.h"
+#include "cartographer/common/time.h"
 #include "glog/logging.h"
 
 namespace cartographer {
