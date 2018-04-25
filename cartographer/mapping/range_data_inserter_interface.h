@@ -30,7 +30,7 @@ namespace mapping {
 proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
-class RangeDataInserter {
+class RangeDataInserterInterface {
  public:
   // Inserts 'range_data' into 'grid'.
   virtual void Insert(const sensor::RangeData& range_data,

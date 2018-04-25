@@ -25,7 +25,7 @@
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/2d/proto/probability_grid_range_data_inserter_options_2d.pb.h"
 #include "cartographer/mapping/2d/xy_index.h"
-#include "cartographer/mapping/range_data_inserter.h"
+#include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
 
@@ -36,7 +36,7 @@ proto::ProbabilityGridRangeDataInserterOptions2D
 CreateProbabilityGridRangeDataInserterOptions2D(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class ProbabilityGridRangeDataInserter2D : public RangeDataInserter {
+class ProbabilityGridRangeDataInserter2D : public RangeDataInserterInterface {
  public:
   explicit ProbabilityGridRangeDataInserter2D(
       const proto::ProbabilityGridRangeDataInserterOptions2D& options);

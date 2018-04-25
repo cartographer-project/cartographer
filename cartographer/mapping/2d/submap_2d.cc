@@ -26,7 +26,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
-#include "cartographer/mapping/range_data_inserter.h"
+#include "cartographer/mapping/range_data_inserter_interface.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -110,8 +110,9 @@ void Submap2D::ToResponseProto(
   grid()->DrawToSubmapTexture(texture, local_pose());
 }
 
-void Submap2D::InsertRangeData(const sensor::RangeData& range_data,
-                               const RangeDataInserter* range_data_inserter) {
+void Submap2D::InsertRangeData(
+    const sensor::RangeData& range_data,
+    const RangeDataInserterInterface* range_data_inserter) {
   CHECK(grid_);
   CHECK(!finished());
   range_data_inserter->Insert(range_data, grid_.get());
@@ -148,7 +149,8 @@ void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
   }
 }
 
-std::unique_ptr<RangeDataInserter> ActiveSubmaps2D::CreateRangeDataInserter() {
+std::unique_ptr<RangeDataInserterInterface>
+ActiveSubmaps2D::CreateRangeDataInserter() {
   return common::make_unique<ProbabilityGridRangeDataInserter2D>(
       options_.range_data_inserter_options()
           .probability_grid_range_data_inserter_options_2d());
