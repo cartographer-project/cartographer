@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/mapping/2d/submap_2d.h"
+#include "cartographer/mapping/2d/probability_grid.h"
 
 #include <map>
 #include <memory>
@@ -35,14 +36,20 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
   constexpr int kNumRangeData = 10;
   auto parameter_dictionary = common::MakeDictionary(
       "return {"
-      "resolution = 0.05, "
       "num_range_data = " +
       std::to_string(kNumRangeData) +
       ", "
+      "grid_options_2d = {"
+      "grid_type = \"PROBABILITY_GRID\","
+      "resolution = 0.05, "
+      "},"
       "range_data_inserter = {"
+      "range_data_inserter_type = \"PROBABILITY_GRID_INSERTER_2D\","
+      "probability_grid_range_data_inserter = {"
       "insert_free_space = true, "
       "hit_probability = 0.53, "
       "miss_probability = 0.495, "
+      "},"
       "},"
       "}");
   ActiveSubmaps2D submaps{CreateSubmapsOptions2D(parameter_dictionary.get())};
@@ -69,9 +76,10 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
 }
 
 TEST(Submap2DTest, ToFromProto) {
-  Submap2D expected(
-      MapLimits(1., Eigen::Vector2d(2., 3.), CellLimits(100, 110)),
-      Eigen::Vector2f(4.f, 5.f));
+  MapLimits expected_map_limits(1., Eigen::Vector2d(2., 3.),
+                                CellLimits(100, 110));
+  Submap2D expected(Eigen::Vector2f(4.f, 5.f),
+                    common::make_unique<ProbabilityGrid>(expected_map_limits));
   proto::Submap proto;
   expected.ToProto(&proto, true /* include_probability_grid_data */);
   EXPECT_TRUE(proto.has_submap_2d());

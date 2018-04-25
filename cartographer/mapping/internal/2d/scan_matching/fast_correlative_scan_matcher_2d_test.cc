@@ -24,7 +24,7 @@
 
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/mapping/2d/probability_grid.h"
-#include "cartographer/mapping/2d/range_data_inserter_2d.h"
+#include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
 #include "gtest/gtest.h"
@@ -125,7 +125,7 @@ CreateFastCorrelativeScanMatcherTestOptions2D(
   return CreateFastCorrelativeScanMatcherOptions2D(parameter_dictionary.get());
 }
 
-mapping::proto::RangeDataInserterOptions2D
+mapping::proto::ProbabilityGridRangeDataInserterOptions2D
 CreateRangeDataInserterTestOptions2D() {
   auto parameter_dictionary = common::MakeDictionary(R"text(
       return {
@@ -133,13 +133,14 @@ CreateRangeDataInserterTestOptions2D() {
         hit_probability = 0.7,
         miss_probability = 0.4,
       })text");
-  return mapping::CreateRangeDataInserterOptions2D(parameter_dictionary.get());
+  return mapping::CreateProbabilityGridRangeDataInserterOptions2D(
+      parameter_dictionary.get());
 }
 
 TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
   std::mt19937 prng(42);
   std::uniform_real_distribution<float> distribution(-1.f, 1.f);
-  RangeDataInserter2D range_data_inserter(
+  ProbabilityGridRangeDataInserter2D range_data_inserter(
       CreateRangeDataInserterTestOptions2D());
   constexpr float kMinScore = 0.1f;
   const auto options = CreateFastCorrelativeScanMatcherTestOptions2D(3);
@@ -187,7 +188,7 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
 TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
   std::mt19937 prng(42);
   std::uniform_real_distribution<float> distribution(-1.f, 1.f);
-  RangeDataInserter2D range_data_inserter(
+  ProbabilityGridRangeDataInserter2D range_data_inserter(
       CreateRangeDataInserterTestOptions2D());
   constexpr float kMinScore = 0.1f;
   const auto options = CreateFastCorrelativeScanMatcherTestOptions2D(6);

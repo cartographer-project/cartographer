@@ -20,6 +20,19 @@
 namespace cartographer {
 namespace mapping {
 
+proto::GridOptions2D CreateGridOptions2D(
+    common::LuaParameterDictionary* const parameter_dictionary) {
+  proto::GridOptions2D options;
+  const std::string grid_type_string =
+      parameter_dictionary->GetString("grid_type");
+  proto::GridOptions2D_GridType grid_type;
+  CHECK(proto::GridOptions2D_GridType_Parse(grid_type_string, &grid_type))
+      << "Unknown GridOptions2D_GridType kind: " << grid_type_string;
+  options.set_grid_type(grid_type);
+  options.set_resolution(parameter_dictionary->GetDouble("resolution"));
+  return options;
+}
+
 Grid2D::Grid2D(const MapLimits& limits, float min_correspondence_cost,
                float max_correspondence_cost)
     : limits_(limits),

@@ -340,7 +340,7 @@ void ConstraintBuilder3D::DeleteScanMatcher(const SubmapId& submap_id) {
 
 void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
   auto* counts = factory->NewCounterFamily(
-      "/mapping/3d/pose_graph/constraint_builder/constraints",
+      "mapping_internal_constraints_constraint_builder_3d_constraints",
       "Constraints computed");
   kConstraintsSearchedMetric =
       counts->Add({{"search_region", "local"}, {"matcher", "searched"}});
@@ -351,11 +351,12 @@ void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
   kGlobalConstraintsFoundMetric =
       counts->Add({{"search_region", "global"}, {"matcher", "found"}});
   auto* queue_length = factory->NewGaugeFamily(
-      "/mapping/3d/pose_graph/constraint_builder/queue_length", "Queue length");
+      "mapping_internal_constraints_constraint_builder_3d_queue_length",
+      "Queue length");
   kQueueLengthMetric = queue_length->Add({});
   auto boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = factory->NewHistogramFamily(
-      "/mapping/3d/pose_graph/constraint_builder/scores",
+      "mapping_internal_constraints_constraint_builder_3d_scores",
       "Constraint scores built", boundaries);
   kConstraintScoresMetric =
       scores->Add({{"search_region", "local"}, {"kind", "score"}});
