@@ -351,7 +351,8 @@ void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
   kGlobalConstraintsFoundMetric =
       counts->Add({{"search_region", "global"}, {"matcher", "found"}});
   auto* queue_length = factory->NewGaugeFamily(
-      "mapping_internal_constraints_constraint_builder_3d_queue_length", "Queue length");
+      "mapping_internal_constraints_constraint_builder_3d_queue_length",
+      "Queue length");
   kQueueLengthMetric = queue_length->Add({});
   auto boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = factory->NewHistogramFamily(
