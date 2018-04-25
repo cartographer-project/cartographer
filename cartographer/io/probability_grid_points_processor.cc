@@ -54,6 +54,30 @@ uint8 ProbabilityToColor(float probability_from_grid) {
              (mapping::kMaxProbability - mapping::kMinProbability)));
 }
 
+std::string OutputTypeToFileExtension(
+    ProbabilityGridPointsProcessor::OutputType output_type) {
+  if (output_type == ProbabilityGridPointsProcessor::OutputType::kPng) {
+    return ".png";
+  } else if (output_type == ProbabilityGridPointsProcessor::OutputType::kPb) {
+    return ".pb";
+  } else {
+    CHECK(false) << "OutputType does not exist!";
+  }
+}
+
+ProbabilityGridPointsProcessor::OutputType OutputTypeFromString(
+    const std::string& output_type) {
+  if (output_type == "png") {
+    return ProbabilityGridPointsProcessor::OutputType::kPng;
+  } else if (output_type == "pb") {
+    return ProbabilityGridPointsProcessor::OutputType::kPb;
+  } else {
+    CHECK(output_type == "png" || output_type == "pb")
+        << "OutputType " << output_type << " does not exist!";
+    return ProbabilityGridPointsProcessor::OutputType::kPb;
+  }
+}
+
 }  // namespace
 
 ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
@@ -71,7 +95,7 @@ ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
       next_(next),
       range_data_inserter_(range_data_inserter_options),
       probability_grid_(CreateProbabilityGrid(resolution)) {
-  LOG_IF(WARNING, output_type == OutputType::kPbstream &&
+  LOG_IF(WARNING, output_type == OutputType::kPb &&
                       draw_trajectories_ == DrawTrajectories::kYes)
       << "Drawing the trajectories is not supported when writing the "
          "probability grid as pbstream.";
@@ -89,20 +113,15 @@ ProbabilityGridPointsProcessor::FromDictionary(
                                      : DrawTrajectories::kNo;
   auto output_type = OutputType::kPng;
   if (dictionary->HasKey("output_type")) {
-    const auto output_type_string = dictionary->GetString("output_type");
-    CHECK(output_type_string == "pbstream" || output_type_string == "png");
-    output_type = output_type_string == "pbstream" ? OutputType::kPbstream
-                                                   : OutputType::kPng;
+    output_type = OutputTypeFromString(dictionary->GetString("output_type"));
   }
-
   return common::make_unique<ProbabilityGridPointsProcessor>(
       dictionary->GetDouble("resolution"),
       mapping::CreateRangeDataInserterOptions2D(
           dictionary->GetDictionary("range_data_inserter").get()),
       draw_trajectories, output_type,
-      file_writer_factory(
-          dictionary->GetString("filename") +
-          (output_type == OutputType::kPng ? ".png" : ".pbstream")),
+      file_writer_factory(dictionary->GetString("filename") +
+                          OutputTypeToFileExtension(output_type)),
       trajectories, next);
 }
 
@@ -127,10 +146,11 @@ PointsProcessor::FlushResult ProbabilityGridPointsProcessor::Flush() {
       image->WritePng(file_writer_.get());
       CHECK(file_writer_->Close());
     }
-  } else {  // OutputType::kPbstream
+  } else {  // OutputType::kPb
     const auto probability_grid_proto = probability_grid_.ToProto();
     std::string probability_grid_serialized;
     probability_grid_proto.SerializeToString(&probability_grid_serialized);
+    ;
     file_writer_->Write(probability_grid_serialized.data(),
                         probability_grid_serialized.size());
     CHECK(file_writer_->Close());

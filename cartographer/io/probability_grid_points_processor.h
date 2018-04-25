@@ -40,7 +40,7 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
   constexpr static const char* kConfigurationFileActionName =
       "write_probability_grid";
   enum class DrawTrajectories { kNo, kYes };
-  enum class OutputType { kPng, kPbstream };
+  enum class OutputType { kPng, kPb };
   ProbabilityGridPointsProcessor(
       double resolution,
       const mapping::proto::RangeDataInserterOptions2D&
