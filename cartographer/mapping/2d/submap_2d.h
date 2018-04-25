@@ -25,9 +25,9 @@
 #include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/2d/map_limits.h"
 #include "cartographer/mapping/2d/proto/submaps_options_2d.pb.h"
-#include "cartographer/mapping/2d/range_data_inserter_2d.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
+#include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/sensor/range_data.h"
@@ -41,7 +41,7 @@ proto::SubmapsOptions2D CreateSubmapsOptions2D(
 
 class Submap2D : public Submap {
  public:
-  Submap2D(const MapLimits& limits, const Eigen::Vector2f& origin);
+  Submap2D(const Eigen::Vector2f& origin, std::unique_ptr<Grid2D> grid);
   explicit Submap2D(const proto::Submap2D& proto);
 
   void ToProto(proto::Submap* proto,
@@ -56,7 +56,7 @@ class Submap2D : public Submap {
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
   void InsertRangeData(const sensor::RangeData& range_data,
-                       const RangeDataInserter2D& range_data_inserter);
+                       const RangeDataInserterInterface* range_data_inserter);
   void Finish();
 
  private:
@@ -89,13 +89,15 @@ class ActiveSubmaps2D {
   std::vector<std::shared_ptr<Submap2D>> submaps() const;
 
  private:
+  std::unique_ptr<RangeDataInserterInterface> CreateRangeDataInserter();
+  std::unique_ptr<GridInterface> CreateGrid(const Eigen::Vector2f& origin);
   void FinishSubmap();
   void AddSubmap(const Eigen::Vector2f& origin);
 
   const proto::SubmapsOptions2D options_;
   int matching_submap_index_ = 0;
   std::vector<std::shared_ptr<Submap2D>> submaps_;
-  RangeDataInserter2D range_data_inserter_;
+  std::unique_ptr<RangeDataInserterInterface> range_data_inserter_;
 };
 
 }  // namespace mapping

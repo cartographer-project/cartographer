@@ -278,7 +278,6 @@ void OptimizationProblem3D::Solve(
 
   // Set the starting point.
   CHECK(!submap_data_.empty());
-  CHECK(submap_data_.Contains(SubmapId{0, 0}));
   MapById<SubmapId, CeresPose> C_submaps;
   MapById<NodeId, CeresPose> C_nodes;
   std::map<std::string, CeresPose> C_landmarks;

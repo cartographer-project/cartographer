@@ -1,4 +1,4 @@
-// Copyright 2016 The Cartographer Authors
+// Copyright 2018 The Cartographer Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,16 +16,12 @@ syntax = "proto3";
 
 package cartographer.mapping.proto;
 
-message RangeDataInserterOptions2D {
-  // Probability change for a hit (this will be converted to odds and therefore
-  // must be greater than 0.5).
-  double hit_probability = 1;
+message GridOptions2D {
+  enum GridType {
+    INVALID_GRID = 0;
+    PROBABILITY_GRID = 1;
+  }
 
-  // Probability change for a miss (this will be converted to odds and therefore
-  // must be less than 0.5).
-  double miss_probability = 2;
-
-  // If 'false', free space will not change the probabilities in the occupancy
-  // grid.
-  bool insert_free_space = 3;
+  GridType grid_type = 1;
+  float resolution = 2;
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/2d/range_data_inserter_2d.h"
+#include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 
 #include <memory>
 
@@ -40,8 +40,10 @@ class RangeDataInserterTest2D : public ::testing::Test {
         "hit_probability = 0.7, "
         "miss_probability = 0.4, "
         "}");
-    options_ = CreateRangeDataInserterOptions2D(parameter_dictionary.get());
-    range_data_inserter_ = common::make_unique<RangeDataInserter2D>(options_);
+    options_ = CreateProbabilityGridRangeDataInserterOptions2D(
+        parameter_dictionary.get());
+    range_data_inserter_ =
+        common::make_unique<ProbabilityGridRangeDataInserter2D>(options_);
   }
 
   void InsertPointCloud() {
@@ -57,8 +59,8 @@ class RangeDataInserterTest2D : public ::testing::Test {
   }
 
   ProbabilityGrid probability_grid_;
-  std::unique_ptr<RangeDataInserter2D> range_data_inserter_;
-  proto::RangeDataInserterOptions2D options_;
+  std::unique_ptr<ProbabilityGridRangeDataInserter2D> range_data_inserter_;
+  proto::ProbabilityGridRangeDataInserterOptions2D options_;
 };
 
 TEST_F(RangeDataInserterTest2D, InsertPointCloud) {

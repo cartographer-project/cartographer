@@ -24,8 +24,8 @@
 #include "cartographer/io/points_batch.h"
 #include "cartographer/io/points_processor.h"
 #include "cartographer/mapping/2d/probability_grid.h"
-#include "cartographer/mapping/2d/proto/range_data_inserter_options_2d.pb.h"
-#include "cartographer/mapping/2d/range_data_inserter_2d.h"
+#include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
+#include "cartographer/mapping/2d/proto/probability_grid_range_data_inserter_options_2d.pb.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
 
 namespace cartographer {
@@ -42,8 +42,8 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
   enum class DrawTrajectories { kNo, kYes };
   ProbabilityGridPointsProcessor(
       double resolution,
-      const mapping::proto::RangeDataInserterOptions2D&
-          range_data_inserter_options,
+      const mapping::proto::ProbabilityGridRangeDataInserterOptions2D&
+          probability_grid_range_data_inserter_options,
       const DrawTrajectories& draw_trajectories,
       std::unique_ptr<FileWriter> file_writer,
       const std::vector<mapping::proto::Trajectory>& trajectorios,
@@ -68,7 +68,7 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
   const std::vector<mapping::proto::Trajectory> trajectories_;
   std::unique_ptr<FileWriter> file_writer_;
   PointsProcessor* const next_;
-  mapping::RangeDataInserter2D range_data_inserter_;
+  mapping::ProbabilityGridRangeDataInserter2D range_data_inserter_;
   mapping::ProbabilityGrid probability_grid_;
 };
 
