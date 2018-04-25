@@ -41,16 +41,14 @@ class FakeThreadPool : public ThreadPoolInterface {
     tasks_not_ready_.erase(it);
   }
 
-  void Schedule(const std::function<void()>& work_item) override {
-    LOG(FATAL) << "not implemented";
-  }
-
   std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task) override {
+    std::shared_ptr<Task> shared_task;
     auto it =
         tasks_not_ready_.insert(std::make_pair(task.get(), std::move(task)));
     EXPECT_TRUE(it.second);
-    SetThreadPool(it.first->first);
-    return it.first->second;
+    shared_task = it.first->second;
+    SetThreadPool(shared_task.get());
+    return shared_task;
   }
 
   void RunNext() {
