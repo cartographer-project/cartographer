@@ -22,7 +22,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/2d/probability_grid.h"
+#include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/internal/2d/scan_matching/occupied_space_cost_function_2d.h"
 #include "cartographer/mapping/internal/2d/scan_matching/rotation_delta_cost_functor_2d.h"
 #include "cartographer/mapping/internal/2d/scan_matching/translation_delta_cost_functor_2d.h"
@@ -62,7 +62,7 @@ CeresScanMatcher2D::~CeresScanMatcher2D() {}
 void CeresScanMatcher2D::Match(const Eigen::Vector2d& target_translation,
                                const transform::Rigid2d& initial_pose_estimate,
                                const sensor::PointCloud& point_cloud,
-                               const ProbabilityGrid& probability_grid,
+                               const Grid2D& grid,
                                transform::Rigid2d* const pose_estimate,
                                ceres::Solver::Summary* const summary) const {
   double ceres_pose_estimate[3] = {initial_pose_estimate.translation().x(),
@@ -74,7 +74,7 @@ void CeresScanMatcher2D::Match(const Eigen::Vector2d& target_translation,
       OccupiedSpaceCostFunction2D::CreateAutoDiffCostFunction(
           options_.occupied_space_weight() /
               std::sqrt(static_cast<double>(point_cloud.size())),
-          point_cloud, probability_grid),
+          point_cloud, grid),
       nullptr /* loss function */, ceres_pose_estimate);
   CHECK_GT(options_.translation_weight(), 0.);
   problem.AddResidualBlock(

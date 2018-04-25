@@ -59,11 +59,28 @@ class ClientServerTest : public ::testing::Test {
       MAP_BUILDER_SERVER.num_event_threads = 1
       MAP_BUILDER_SERVER.num_grpc_threads = 1
       MAP_BUILDER_SERVER.uplink_server_address = ""
+      MAP_BUILDER_SERVER.server_address = "0.0.0.0:50051"
       return MAP_BUILDER_SERVER)text";
     auto map_builder_server_parameters =
         mapping::test::ResolveLuaParameters(kMapBuilderServerLua);
     map_builder_server_options_ =
         CreateMapBuilderServerOptions(map_builder_server_parameters.get());
+
+    const std::string kUploadingMapBuilderServerLua = R"text(
+      include "map_builder_server.lua"
+      MAP_BUILDER.use_trajectory_builder_2d = true
+      MAP_BUILDER.pose_graph.optimize_every_n_nodes = 0
+      MAP_BUILDER_SERVER.num_event_threads = 1
+      MAP_BUILDER_SERVER.num_grpc_threads = 1
+      MAP_BUILDER_SERVER.uplink_server_address = "localhost:50051"
+      MAP_BUILDER_SERVER.server_address = "0.0.0.0:50052"
+      MAP_BUILDER_SERVER.upload_batch_size = 1
+      return MAP_BUILDER_SERVER)text";
+    auto uploading_map_builder_server_parameters =
+        mapping::test::ResolveLuaParameters(kUploadingMapBuilderServerLua);
+    uploading_map_builder_server_options_ = CreateMapBuilderServerOptions(
+        uploading_map_builder_server_parameters.get());
+
     const std::string kTrajectoryBuilderLua = R"text(
       include "trajectory_builder.lua"
       TRAJECTORY_BUILDER.trajectory_builder_2d.use_imu_data = false
@@ -73,12 +90,17 @@ class ClientServerTest : public ::testing::Test {
         mapping::test::ResolveLuaParameters(kTrajectoryBuilderLua);
     trajectory_builder_options_ = mapping::CreateTrajectoryBuilderOptions(
         trajectory_builder_parameters.get());
+    number_of_insertion_results_ = 0;
     local_slam_result_callback_ =
-        [this](
-            int, common::Time, transform::Rigid3d local_pose, sensor::RangeData,
-            std::unique_ptr<
-                const mapping::TrajectoryBuilderInterface::InsertionResult>) {
+        [this](int, common::Time, transform::Rigid3d local_pose,
+               sensor::RangeData,
+               std::unique_ptr<
+                   const mapping::TrajectoryBuilderInterface::InsertionResult>
+                   insertion_result) {
           std::unique_lock<std::mutex> lock(local_slam_result_mutex_);
+          if (insertion_result) {
+            ++number_of_insertion_results_;
+          }
           local_slam_result_poses_.push_back(local_pose);
           lock.unlock();
           local_slam_result_condition_.notify_all();
@@ -91,6 +113,14 @@ class ClientServerTest : public ::testing::Test {
     server_ = common::make_unique<MapBuilderServer>(map_builder_server_options_,
                                                     std::move(map_builder));
     EXPECT_TRUE(server_ != nullptr);
+  }
+
+  void InitializeRealUploadingServer() {
+    auto map_builder = common::make_unique<MapBuilder>(
+        uploading_map_builder_server_options_.map_builder_options());
+    uploading_server_ = common::make_unique<MapBuilderServer>(
+        uploading_map_builder_server_options_, std::move(map_builder));
+    EXPECT_TRUE(uploading_server_ != nullptr);
   }
 
   void InitializeServerWithMockMapBuilder() {
@@ -108,24 +138,43 @@ class ClientServerTest : public ::testing::Test {
     EXPECT_TRUE(stub_ != nullptr);
   }
 
+  void InitializeStubForUploadingServer() {
+    stub_for_uploading_server_ = common::make_unique<MapBuilderStub>(
+        uploading_map_builder_server_options_.server_address());
+    EXPECT_TRUE(stub_for_uploading_server_ != nullptr);
+  }
+
   void WaitForLocalSlamResults(size_t size) {
     std::unique_lock<std::mutex> lock(local_slam_result_mutex_);
     local_slam_result_condition_.wait(
         lock, [&] { return local_slam_result_poses_.size() >= size; });
   }
 
+  void WaitForLocalSlamResultUploads(size_t size) {
+    std::unique_lock<std::mutex> lock(local_slam_result_upload_mutex_);
+    local_slam_result_upload_condition_.wait(lock, [&] {
+      return stub_->pose_graph()->GetTrajectoryNodePoses().size() >= size;
+    });
+  }
+
   proto::MapBuilderServerOptions map_builder_server_options_;
+  proto::MapBuilderServerOptions uploading_map_builder_server_options_;
   MockMapBuilder* mock_map_builder_;
   std::unique_ptr<MockTrajectoryBuilder> mock_trajectory_builder_;
   ::cartographer::mapping::proto::TrajectoryBuilderOptions
       trajectory_builder_options_;
   std::unique_ptr<MapBuilderServer> server_;
+  std::unique_ptr<MapBuilderServer> uploading_server_;
   std::unique_ptr<MapBuilderStub> stub_;
+  std::unique_ptr<MapBuilderStub> stub_for_uploading_server_;
   TrajectoryBuilderInterface::LocalSlamResultCallback
       local_slam_result_callback_;
   std::condition_variable local_slam_result_condition_;
+  std::condition_variable local_slam_result_upload_condition_;
   std::mutex local_slam_result_mutex_;
+  std::mutex local_slam_result_upload_mutex_;
   std::vector<transform::Rigid3d> local_slam_result_poses_;
+  int number_of_insertion_results_;
 };
 
 TEST_F(ClientServerTest, StartAndStopServer) {
@@ -278,6 +327,68 @@ TEST_F(ClientServerTest, GlobalSlam3D) {
                local_slam_result_poses_.front().translation())
                   .norm(),
               0.1 * kTravelDistance);
+  server_->Shutdown();
+}
+
+TEST_F(ClientServerTest, StartAndStopUploadingServerAndServer) {
+  InitializeRealServer();
+  server_->Start();
+  InitializeRealUploadingServer();
+  uploading_server_->Start();
+  uploading_server_->Shutdown();
+  server_->Shutdown();
+}
+
+TEST_F(ClientServerTest, AddTrajectoryBuilderWithUploadingServer) {
+  InitializeRealServer();
+  server_->Start();
+  InitializeRealUploadingServer();
+  uploading_server_->Start();
+  InitializeStub();
+  InitializeStubForUploadingServer();
+  int trajectory_id = stub_for_uploading_server_->AddTrajectoryBuilder(
+      {kImuSensorId}, trajectory_builder_options_, nullptr);
+  EXPECT_FALSE(stub_for_uploading_server_->pose_graph()->IsTrajectoryFinished(
+      trajectory_id));
+  EXPECT_FALSE(stub_->pose_graph()->IsTrajectoryFinished(trajectory_id));
+  stub_for_uploading_server_->FinishTrajectory(trajectory_id);
+  EXPECT_TRUE(stub_for_uploading_server_->pose_graph()->IsTrajectoryFinished(
+      trajectory_id));
+  EXPECT_TRUE(stub_->pose_graph()->IsTrajectoryFinished(trajectory_id));
+  EXPECT_FALSE(stub_for_uploading_server_->pose_graph()->IsTrajectoryFrozen(
+      trajectory_id));
+  EXPECT_FALSE(stub_->pose_graph()->IsTrajectoryFrozen(trajectory_id));
+  uploading_server_->Shutdown();
+  server_->Shutdown();
+}
+
+TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+  InitializeRealUploadingServer();
+  uploading_server_->Start();
+  InitializeStubForUploadingServer();
+  int trajectory_id = stub_for_uploading_server_->AddTrajectoryBuilder(
+      {kRangeSensorId}, trajectory_builder_options_,
+      local_slam_result_callback_);
+  TrajectoryBuilderInterface* trajectory_stub =
+      stub_for_uploading_server_->GetTrajectoryBuilder(trajectory_id);
+  const auto measurements = mapping::test::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
+  for (const auto& measurement : measurements) {
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
+  }
+  WaitForLocalSlamResults(measurements.size());
+  WaitForLocalSlamResultUploads(number_of_insertion_results_);
+  stub_for_uploading_server_->FinishTrajectory(trajectory_id);
+  EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
+  EXPECT_NEAR(kTravelDistance,
+              (local_slam_result_poses_.back().translation() -
+               local_slam_result_poses_.front().translation())
+                  .norm(),
+              0.1 * kTravelDistance);
+  uploading_server_->Shutdown();
   server_->Shutdown();
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Cartographer Authors
+ * Copyright 2018 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,40 @@
 
 #include "cartographer/io/fake_file_writer.h"
 
+#include "glog/logging.h"
+
 namespace cartographer {
 namespace io {
 
-FakeFileWriter::FakeFileWriter() {}
-FakeFileWriter::FakeFileWriter(const std::string& file_name) : fake_filename_(file_name) {
+FakeFileWriter::FakeFileWriter(const std::string& filename,
+                               std::shared_ptr<std::string> content)
+    : is_closed_(false), content_(content), filename_(filename) {
+  CHECK(content);
 }
-FakeFileWriter::~FakeFileWriter() {}
 
 bool FakeFileWriter::Write(const char* const data, const size_t len) {
-  out_.append(data, len);
+  if (is_closed_) return false;
+  content_->append(data, len);
   return true;
 }
 
-bool FakeFileWriter::Close() { return true; }
-
-bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
-  return Write(data, len);
+bool FakeFileWriter::Close() {
+  if (is_closed_) return false;
+  is_closed_ = true;
+  return true;
 }
 
-std::string FakeFileWriter::GetFilename() { return fake_filename_; }
+bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
+  if (is_closed_) return false;
+  if (content_->size() == 0 || content_->size() < len) {
+    *content_ = "";
+    return Write(data, len);
+  }
+  content_->replace(0, len, data);
+  return true;
+}
 
-std::string FakeFileWriter::GetOutput() const { return out_; }
+std::string FakeFileWriter::GetFilename() { return filename_; }
 
 }  // namespace io
 }  // namespace cartographer

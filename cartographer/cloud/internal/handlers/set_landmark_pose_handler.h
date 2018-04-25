@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_LOCAL_SLAM_RESULT_DATA_HANDLER_H
-#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_LOCAL_SLAM_RESULT_DATA_HANDLER_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SET_LANDMARK_POSE_HANDLER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SET_LANDMARK_POSE_HANDLER_H
 
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
@@ -26,20 +26,18 @@ namespace cloud {
 namespace handlers {
 
 DEFINE_HANDLER_SIGNATURE(
-    AddLocalSlamResultDataSignature,
-    async_grpc::Stream<proto::AddLocalSlamResultDataRequest>,
+    SetLandmarkPoseSignature, proto::SetLandmarkPoseRequest,
     google::protobuf::Empty,
-    "/cartographer.cloud.proto.MapBuilderService/AddLocalSlamResultData")
+    "/cartographer.cloud.proto.MapBuilderService/SetLandmarkPose")
 
-class AddLocalSlamResultDataHandler
-    : public async_grpc::RpcHandler<AddLocalSlamResultDataSignature> {
+class SetLandmarkPoseHandler
+    : public async_grpc::RpcHandler<SetLandmarkPoseSignature> {
  public:
-  void OnRequest(const proto::AddLocalSlamResultDataRequest& request) override;
-  void OnReadsDone() override;
+  void OnRequest(const proto::SetLandmarkPoseRequest &request) override;
 };
 
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_LOCAL_SLAM_RESULT_DATA_HANDLER_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SET_LANDMARK_POSE_HANDLER_H

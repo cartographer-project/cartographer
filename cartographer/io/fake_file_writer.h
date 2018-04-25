@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * Copyright 2016 The Cartographer Authors
+=======
+ * Copyright 2018 The Cartographer Authors
+>>>>>>> fake_file_writer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +21,7 @@
 #ifndef CARTOGRAPHER_IO_FAKE_FILE_WRITER_H_
 #define CARTOGRAPHER_IO_FAKE_FILE_WRITER_H_
 
+#include <memory>
 #include <string>
 
 #include "cartographer/io/file_writer.h"
@@ -27,19 +32,19 @@ namespace io {
 // Fakes a FileWriter by just writing the data to a std::string.
 class FakeFileWriter : public FileWriter {
  public:
-  FakeFileWriter();
-  FakeFileWriter(const std::string& file_name);
-  ~FakeFileWriter() override;
+  FakeFileWriter(const std::string& filename,
+                 std::shared_ptr<std::string> content);
+  ~FakeFileWriter() override = default;
 
   bool WriteHeader(const char* data, size_t len) override;
   bool Write(const char* data, size_t len) override;
   bool Close() override;
   std::string GetFilename() override;
-  std::string GetOutput() const;
 
  private:
-  std::string out_;
-  std::string fake_filename_;
+  bool is_closed_;
+  std::shared_ptr<std::string> content_;
+  std::string filename_;
 };
 
 }  // namespace io

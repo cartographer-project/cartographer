@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Cartographer Authors
+ * Copyright 2018 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,70 @@
 
 #include "cartographer/io/fake_file_writer.h"
 #include "gtest/gtest.h"
-
 namespace cartographer {
 namespace io {
 namespace {
 
-TEST(FakeFileWriter, Write) {
-  const std::string header = "dummy header";
-  const std::vector<std::string> data_stream = {"data 1", "data 2"};
-  std::stringstream expected_result;
+TEST(FakeFileWriter, CloseStream) {
+  auto on_close_output = std::make_shared<std::string>();
+  FakeFileWriter writer("file", on_close_output);
+  EXPECT_EQ(writer.GetFilename(), "file");
+  EXPECT_TRUE(writer.Close());
+  EXPECT_EQ(*on_close_output, "");
+  EXPECT_FALSE(writer.Close());
+}
 
-  FakeFileWriter writer;
-  writer.WriteHeader(header.c_str(), header.size());
-  expected_result << header;
-  ASSERT_EQ(expected_result.str(), writer.GetOutput());
+TEST(FakeFileWriter, WriteHeader) {
+  auto on_close_output = std::make_shared<std::string>();
+  const std::string header("dummy header");
+  const std::string header_2("dummy header 2");
+  FakeFileWriter writer("file", on_close_output);
+  EXPECT_EQ(writer.GetFilename(), "file");
+
+  EXPECT_TRUE(writer.WriteHeader(header.c_str(), header.size()));
+  EXPECT_EQ(*on_close_output, "dummy header");
+
+  EXPECT_TRUE(writer.WriteHeader(header_2.c_str(), header_2.size()));
+  EXPECT_EQ(*on_close_output, "dummy header 2");
+
+  EXPECT_TRUE(writer.Close());
+  EXPECT_EQ(*on_close_output, "dummy header 2");
+  EXPECT_FALSE(writer.WriteHeader(header.c_str(), header.size()));
+
+  EXPECT_EQ(*on_close_output, "dummy header 2");
+}
+
+TEST(FakeFileWriter, Write) {
+  auto on_close_output = std::make_shared<std::string>();
+  const std::vector<std::string> data_stream = {"data 1", "data 2"};
+  FakeFileWriter writer("file", on_close_output);
+  EXPECT_EQ(writer.GetFilename(), "file");
 
   for (const auto& data : data_stream) {
-    writer.Write(data.c_str(), data.size());
-    expected_result << data;
+    EXPECT_TRUE(writer.Write(data.c_str(), data.size()));
   }
-  ASSERT_EQ(expected_result.str(), writer.GetOutput());
+
+  EXPECT_EQ(*on_close_output, "data 1data 2");
+  EXPECT_TRUE(writer.Close());
+  EXPECT_EQ(*on_close_output, "data 1data 2");
+}
+
+TEST(FakeFileWriter, HeaderAndWrite) {
+  auto on_close_output = std::make_shared<std::string>();
+  const std::string header("dummy header");
+  const std::vector<std::string> data_stream = {"data 1", "data 2"};
+  FakeFileWriter writer("file", on_close_output);
+  EXPECT_EQ(writer.GetFilename(), "file");
+
+  EXPECT_TRUE(writer.WriteHeader(header.c_str(), header.size()));
+  EXPECT_EQ(*on_close_output, "dummy header");
+
+  for (const auto& data : data_stream) {
+    EXPECT_TRUE(writer.Write(data.c_str(), data.size()));
+  }
+
+  EXPECT_TRUE(writer.Close());
+  EXPECT_EQ(*on_close_output, "dummy headerdata 1data 2");
 }
 
 }  // namespace

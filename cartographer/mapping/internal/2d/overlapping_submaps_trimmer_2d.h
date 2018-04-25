@@ -28,9 +28,11 @@ namespace mapping {
 class OverlappingSubmapsTrimmer2D : public PoseGraphTrimmer {
  public:
   OverlappingSubmapsTrimmer2D(uint16 fresh_submaps_count,
-                              uint16 min_covered_cells_count)
+                              uint16 min_covered_cells_count,
+                              uint16 min_added_submaps_count)
       : fresh_submaps_count_(fresh_submaps_count),
-        min_covered_cells_count_(min_covered_cells_count) {}
+        min_covered_cells_count_(min_covered_cells_count),
+        min_added_submaps_count_(min_added_submaps_count) {}
   ~OverlappingSubmapsTrimmer2D() override = default;
 
   void Trim(Trimmable* pose_graph) override;
@@ -41,6 +43,10 @@ class OverlappingSubmapsTrimmer2D : public PoseGraphTrimmer {
   const uint16 fresh_submaps_count_;
   // Minimal number of covered cells to keep submap from trimming.
   const uint16 min_covered_cells_count_;
+  // Number of added submaps before the trimmer is invoked.
+  const uint16 min_added_submaps_count_;
+  // Current finished submap count.
+  uint16 current_submap_count_ = 0;
 
   bool finished_ = false;
 };

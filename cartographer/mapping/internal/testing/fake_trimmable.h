@@ -72,7 +72,7 @@ class FakeTrimmable : public Trimmable {
     return &trajectory_nodes_;
   }
 
-  MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() const override {
+  const MapById<NodeId, TrajectoryNode>& GetTrajectoryNodes() const override {
     return trajectory_nodes_;
   }
 
@@ -85,7 +85,8 @@ class FakeTrimmable : public Trimmable {
     return &constraints_;
   }
 
-  std::vector<PoseGraphInterface::Constraint> GetConstraints() const override {
+  const std::vector<PoseGraphInterface::Constraint>& GetConstraints()
+      const override {
     return constraints_;
   }
 
