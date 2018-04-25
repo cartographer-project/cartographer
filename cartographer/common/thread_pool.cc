@@ -63,12 +63,6 @@ void ThreadPool::NotifyDependenciesCompleted(Task* task) {
   tasks_not_ready_.erase(it);
 }
 
-void ThreadPool::Schedule(const std::function<void()>& work_item) {
-  auto task = make_unique<Task>();
-  task->SetWorkItem(work_item);
-  Schedule(std::move(task));
-}
-
 std::weak_ptr<Task> ThreadPool::Schedule(std::unique_ptr<Task> task) {
   std::shared_ptr<Task> shared_task;
   {
