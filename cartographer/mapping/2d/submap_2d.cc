@@ -43,6 +43,20 @@ proto::SubmapsOptions2D CreateSubmapsOptions2D(
       CreateRangeDataInserterOptions(
           parameter_dictionary->GetDictionary("range_data_inserter").get());
 
+  bool valid_range_data_inserter_grid_combination = false;
+  const proto::GridOptions2D_GridType& grid_type =
+      options.grid_options_2d().grid_type();
+  const proto::RangeDataInserterOptions_RangeDataInserterType&
+      range_data_inserter_type =
+          options.range_data_inserter_options().range_data_inserter_type();
+  if (grid_type == proto::GridOptions2D::PROBABILITY_GRID &&
+      range_data_inserter_type ==
+          proto::RangeDataInserterOptions::PROBABILITY_GRID_INSERTER_2D) {
+    valid_range_data_inserter_grid_combination = true;
+  }
+  CHECK(valid_range_data_inserter_grid_combination)
+      << "Invalid combination grid_type " << grid_type
+      << " with range_data_inserter_type " << range_data_inserter_type;
   CHECK_GT(options.num_range_data(), 0);
   return options;
 }
@@ -140,7 +154,7 @@ std::unique_ptr<RangeDataInserter> ActiveSubmaps2D::CreateRangeDataInserter() {
           .probability_grid_range_data_inserter_options_2d());
 }
 
-std::unique_ptr<Grid> ActiveSubmaps2D::CreateGrid(
+std::unique_ptr<GridInterface> ActiveSubmaps2D::CreateGrid(
     const Eigen::Vector2f& origin) {
   constexpr int kInitialSubmapSize = 100;
   float resolution = options_.grid_options_2d().resolution();

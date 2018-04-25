@@ -54,7 +54,7 @@ ProbabilityGridRangeDataInserter2D::ProbabilityGridRangeDataInserter2D(
           Odds(options.miss_probability()))) {}
 
 void ProbabilityGridRangeDataInserter2D::Insert(
-    const sensor::RangeData& range_data, Grid* const grid) const {
+    const sensor::RangeData& range_data, GridInterface* const grid) const {
   ProbabilityGrid* const probability_grid = static_cast<ProbabilityGrid*>(grid);
   // By not finishing the update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).

@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "cartographer/mapping/2d/proto/submaps_options_2d.pb.h"
-#include "cartographer/mapping/grid.h"
+#include "cartographer/mapping/grid_interface.h"
 #include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
@@ -34,7 +34,7 @@ class RangeDataInserter {
  public:
   // Inserts 'range_data' into 'grid'.
   virtual void Insert(const sensor::RangeData& range_data,
-                      Grid* grid) const = 0;
+                      GridInterface* grid) const = 0;
 };
 
 }  // namespace mapping

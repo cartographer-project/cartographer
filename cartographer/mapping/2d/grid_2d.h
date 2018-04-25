@@ -22,7 +22,7 @@
 #include "cartographer/mapping/2d/map_limits.h"
 #include "cartographer/mapping/2d/proto/grid_2d.pb.h"
 #include "cartographer/mapping/2d/proto/submaps_options_2d.pb.h"
-#include "cartographer/mapping/grid.h"
+#include "cartographer/mapping/grid_interface.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 
 namespace cartographer {
@@ -31,7 +31,7 @@ namespace mapping {
 proto::GridOptions2D CreateGridOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary);
 
-class Grid2D : public Grid {
+class Grid2D : public GridInterface {
  public:
   explicit Grid2D(const MapLimits& limits, float min_correspondence_cost,
                   float max_correspondence_cost);
