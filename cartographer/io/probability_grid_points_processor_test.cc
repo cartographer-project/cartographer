@@ -18,10 +18,10 @@
 #include <string>
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/io/points_processor_pipeline_builder.h"
-#include "cartographer/mapping/2d/range_data_inserter_2d.h"
 #include "cartographer/common/port.h"
 #include "cartographer/io/fake_file_writer.h"
+#include "cartographer/io/points_processor_pipeline_builder.h"
+#include "cartographer/mapping/2d/range_data_inserter_2d.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -33,7 +33,6 @@ std::unique_ptr<common::LuaParameterDictionary> CreateParameterDictionary() {
       cartographer::common::LuaParameterDictionary::NonReferenceCounted(
           R"text(
         options = { 
-          tracking_frame = "base_link", 
           pipeline = { 
             { 
               action = "write_probability_grid", 
@@ -109,10 +108,10 @@ std::string CreateExpectedProbabilityGrid(
   range_data_inserter.Insert({points_batch->origin, points_batch->points, {}},
                              &probability_grid);
 
-  std::string expected_probability_grid_proto_string;
+  std::string expected_probability_grid_proto;
   probability_grid.ToProto().SerializeToString(
-      &expected_probability_grid_proto_string);
-  return expected_probability_grid_proto_string;
+      &expected_probability_grid_proto);
+  return expected_probability_grid_proto;
 }
 
 TEST(ProbabilityGridPointsProcessor, WriteProto) {
@@ -126,11 +125,11 @@ TEST(ProbabilityGridPointsProcessor, WriteProto) {
   const std::vector<mapping::proto::Trajectory> dummy_trajectories;
   auto points_batch = CreatePointsBatch();
 
-  auto expected_prob_grid_proto_string = CreateExpectedProbabilityGrid(
+  const auto expected_prob_grid_proto = CreateExpectedProbabilityGrid(
       std::move(points_batch), write_prob_options.get());
 
   auto fake_file_writer_output = std::make_shared<std::string>();
-  auto pipeline = CreatePipelineFromDictionary(
+  const auto pipeline = CreatePipelineFromDictionary(
       std::move(pipeline_dict), dummy_trajectories,
       CreateFakeFileWriterFactory(
           write_prob_options->GetString("filename") + ".pb",
@@ -142,8 +141,7 @@ TEST(ProbabilityGridPointsProcessor, WriteProto) {
   } while (pipeline.back()->Flush() ==
            cartographer::io::PointsProcessor::FlushResult::kRestartStream);
 
-  EXPECT_TRUE(*fake_file_writer_output ==
-              expected_prob_grid_proto_string);
+  EXPECT_TRUE(*fake_file_writer_output == expected_prob_grid_proto);
 }
 
 }  // namespace
