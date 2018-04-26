@@ -22,30 +22,36 @@ namespace cartographer {
 namespace io {
 
 FakeFileWriter::FakeFileWriter(const std::string& filename,
-                               std::shared_ptr<std::string> content)
+                               std::shared_ptr<std::vector<char>> content)
     : is_closed_(false), content_(content), filename_(filename) {
-  CHECK(content);
+  CHECK(content != nullptr);
 }
 
 bool FakeFileWriter::Write(const char* const data, const size_t len) {
-  if (is_closed_) return false;
-  content_->append(data, len);
+  if (is_closed_) {
+    return false;
+  }
+  content_->insert(content_->end(), data, data + len);
   return true;
 }
 
 bool FakeFileWriter::Close() {
-  if (is_closed_) return false;
+  if (is_closed_) {
+    return false;
+  }
   is_closed_ = true;
   return true;
 }
 
 bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
-  if (is_closed_) return false;
+  if (is_closed_) {
+    return false;
+  }
   if (content_->size() == 0 || content_->size() < len) {
-    *content_ = "";
+    content_->clear();
     return Write(data, len);
   }
-  content_->replace(0, len, data);
+  std::copy(data, data + len, content_->begin());
   return true;
 }
 
