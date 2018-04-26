@@ -309,11 +309,12 @@ void ConstraintBuilder3D::RunWhenDoneCallback() {
     }
     if (options_.log_matches()) {
       LOG(INFO) << constraints_.size() << " computations resulted in "
-                << result.size() << " additional constraints.";
-      LOG(INFO) << "Score histogram:\n" << score_histogram_.ToString(10);
-      LOG(INFO) << "Rotational score histogram:\n"
-                << rotational_score_histogram_.ToString(10);
-      LOG(INFO) << "Low resolution score histogram:\n"
+                << result.size() << " additional constraints.\n"
+                << "Score histogram:\n"
+                << score_histogram_.ToString(10) << "\n"
+                << "Rotational score histogram:\n"
+                << rotational_score_histogram_.ToString(10) << "\n"
+                << "Low resolution score histogram:\n"
                 << low_resolution_score_histogram_.ToString(10);
     }
     constraints_.clear();
