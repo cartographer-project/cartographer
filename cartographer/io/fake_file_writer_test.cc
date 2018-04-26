@@ -34,7 +34,6 @@ TEST(FakeFileWriter, CloseStream) {
   EXPECT_EQ("file", writer.GetFilename());
   EXPECT_TRUE(writer.Close());
   EXPECT_EQ("", toString(*on_close_output));
-  EXPECT_FALSE(writer.Close());
 }
 
 TEST(FakeFileWriter, WriteHeader) {
@@ -51,9 +50,6 @@ TEST(FakeFileWriter, WriteHeader) {
   EXPECT_EQ("dummy header 2", toString(*on_close_output));
 
   EXPECT_TRUE(writer.Close());
-  EXPECT_EQ("dummy header 2", toString(*on_close_output));
-  EXPECT_FALSE(writer.WriteHeader(header.c_str(), header.size()));
-
   EXPECT_EQ("dummy header 2", toString(*on_close_output));
 }
 

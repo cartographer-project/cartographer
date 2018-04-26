@@ -17,6 +17,7 @@
 #include "cartographer/io/fake_file_writer.h"
 
 #include "glog/logging.h"
+#include "gtest/gtest.h"
 
 namespace cartographer {
 namespace io {
@@ -28,25 +29,19 @@ FakeFileWriter::FakeFileWriter(const std::string& filename,
 }
 
 bool FakeFileWriter::Write(const char* const data, const size_t len) {
-  if (is_closed_) {
-    return false;
-  }
+  EXPECT_FALSE(is_closed_);
   content_->insert(content_->end(), data, data + len);
   return true;
 }
 
 bool FakeFileWriter::Close() {
-  if (is_closed_) {
-    return false;
-  }
+  EXPECT_FALSE(is_closed_);
   is_closed_ = true;
   return true;
 }
 
 bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
-  if (is_closed_) {
-    return false;
-  }
+  EXPECT_FALSE(is_closed_);
   if (content_->size() < len) {
     content_->resize(len);
   }
