@@ -47,9 +47,8 @@ bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
   if (is_closed_) {
     return false;
   }
-  if (content_->size() == 0 || content_->size() < len) {
-    content_->clear();
-    return Write(data, len);
+  if (content_->size() < len) {
+    content_->resize(len);
   }
   std::copy(data, data + len, content_->begin());
   return true;
