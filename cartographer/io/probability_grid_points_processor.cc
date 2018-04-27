@@ -87,8 +87,7 @@ ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
     const DrawTrajectories& draw_trajectories,
     std::unique_ptr<FileWriter> file_writer,
     const std::vector<mapping::proto::Trajectory>& trajectories,
-     const OutputType& output_type,
-    PointsProcessor* const next)
+    const OutputType& output_type, PointsProcessor* const next)
     : draw_trajectories_(draw_trajectories),
       output_type_(output_type),
       trajectories_(trajectories),
@@ -120,7 +119,7 @@ ProbabilityGridPointsProcessor::FromDictionary(
       dictionary->GetDouble("resolution"),
       mapping::CreateProbabilityGridRangeDataInserterOptions2D(
           dictionary->GetDictionary("range_data_inserter").get()),
-      draw_trajectories, 
+      draw_trajectories,
       file_writer_factory(dictionary->GetString("filename") +
                           OutputTypeToFileExtension(output_type)),
       trajectories, output_type, next);

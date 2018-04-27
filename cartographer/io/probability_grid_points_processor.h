@@ -48,8 +48,7 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
       const DrawTrajectories& draw_trajectories,
       std::unique_ptr<FileWriter> file_writer,
       const std::vector<mapping::proto::Trajectory>& trajectorios,
-      const OutputType& output_type,
-      PointsProcessor* next);
+      const OutputType& output_type, PointsProcessor* next);
   ProbabilityGridPointsProcessor(const ProbabilityGridPointsProcessor&) =
       delete;
   ProbabilityGridPointsProcessor& operator=(
