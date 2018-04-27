@@ -60,14 +60,17 @@ ConstraintBuilder3D::ConstraintBuilder3D(
     common::ThreadPoolInterface* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
+      finish_node_task_(common::make_unique<common::Task>()),
+      when_done_task_(common::make_unique<common::Task>()),
       sampler_(options.sampling_ratio()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options_3d()) {}
 
 ConstraintBuilder3D::~ConstraintBuilder3D() {
   common::MutexLocker locker(&mutex_);
+  CHECK_EQ(finish_node_task_->GetState(), common::Task::NEW);
+  CHECK_EQ(when_done_task_->GetState(), common::Task::NEW);
   CHECK_EQ(constraints_.size(), 0) << "WhenDone() was not called";
-  CHECK_EQ(pending_computations_.size(), 0);
-  CHECK_EQ(submap_queued_work_items_.size(), 0);
+  CHECK_EQ(num_started_nodes_, num_finished_nodes_);
   CHECK(when_done_ == nullptr);
 }
 
@@ -81,21 +84,28 @@ void ConstraintBuilder3D::MaybeAddConstraint(
           .norm() > options_.max_constraint_distance()) {
     return;
   }
-  if (sampler_.Pulse()) {
-    common::MutexLocker locker(&mutex_);
-    constraints_.emplace_back();
-    kQueueLengthMetric->Set(constraints_.size());
-    auto* const constraint = &constraints_.back();
-    ++pending_computations_[current_computation_];
-    const int current_computation = current_computation_;
-    ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-        submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
-          ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
-                            constant_data, global_node_pose, global_submap_pose,
-                            constraint);
-          FinishComputation(current_computation);
-        });
+  if (!sampler_.Pulse()) return;
+
+  common::MutexLocker locker(&mutex_);
+  if (when_done_) {
+    LOG(WARNING)
+        << "MaybeAddConstraint was called while WhenDone was scheduled.";
   }
+  constraints_.emplace_back();
+  kQueueLengthMetric->Set(constraints_.size());
+  auto* const constraint = &constraints_.back();
+  const auto* scan_matcher =
+      DispatchScanMatcherConstruction(submap_id, submap_nodes, submap);
+  auto constraint_task = common::make_unique<common::Task>();
+  constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
+    ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
+                      constant_data, global_node_pose, global_submap_pose,
+                      *scan_matcher, constraint);
+  });
+  constraint_task->AddDependency(scan_matcher->creation_task_handle);
+  auto constraint_task_handle =
+      thread_pool_->Schedule(std::move(constraint_task));
+  finish_node_task_->AddDependency(constraint_task_handle);
 }
 
 void ConstraintBuilder3D::MaybeAddGlobalConstraint(
@@ -105,80 +115,82 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
     const Eigen::Quaterniond& global_node_rotation,
     const Eigen::Quaterniond& global_submap_rotation) {
   common::MutexLocker locker(&mutex_);
+  if (when_done_) {
+    LOG(WARNING)
+        << "MaybeAddGlobalConstraint was called while WhenDone was scheduled.";
+  }
   constraints_.emplace_back();
   kQueueLengthMetric->Set(constraints_.size());
   auto* const constraint = &constraints_.back();
-  ++pending_computations_[current_computation_];
-  const int current_computation = current_computation_;
-  ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      submap_id, submap_nodes, submap, [=]() EXCLUDES(mutex_) {
-        ComputeConstraint(
-            submap_id, node_id, true, /* match_full_submap */
-            constant_data, transform::Rigid3d::Rotation(global_node_rotation),
-            transform::Rigid3d::Rotation(global_submap_rotation), constraint);
-        FinishComputation(current_computation);
-      });
+  const auto* scan_matcher =
+      DispatchScanMatcherConstruction(submap_id, submap_nodes, submap);
+  auto constraint_task = common::make_unique<common::Task>();
+  constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
+    ComputeConstraint(submap_id, node_id, true, /* match_full_submap */
+                      constant_data,
+                      transform::Rigid3d::Rotation(global_node_rotation),
+                      transform::Rigid3d::Rotation(global_submap_rotation),
+                      *scan_matcher, constraint);
+  });
+  constraint_task->AddDependency(scan_matcher->creation_task_handle);
+  auto constraint_task_handle =
+      thread_pool_->Schedule(std::move(constraint_task));
+  finish_node_task_->AddDependency(constraint_task_handle);
 }
 
 void ConstraintBuilder3D::NotifyEndOfNode() {
   common::MutexLocker locker(&mutex_);
-  ++current_computation_;
+  CHECK(finish_node_task_ != nullptr);
+  finish_node_task_->SetWorkItem([this] {
+    common::MutexLocker locker(&mutex_);
+    ++num_finished_nodes_;
+  });
+  auto finish_node_task_handle =
+      thread_pool_->Schedule(std::move(finish_node_task_));
+  finish_node_task_ = common::make_unique<common::Task>();
+  when_done_task_->AddDependency(finish_node_task_handle);
+  ++num_started_nodes_;
 }
 
 void ConstraintBuilder3D::WhenDone(
     const std::function<void(const ConstraintBuilder3D::Result&)>& callback) {
   common::MutexLocker locker(&mutex_);
   CHECK(when_done_ == nullptr);
+  // TODO(gaschler): Consider using just std::function, it can also be empty.
   when_done_ =
       common::make_unique<std::function<void(const Result&)>>(callback);
-  ++pending_computations_[current_computation_];
-  const int current_computation = current_computation_;
-  thread_pool_->Schedule(
-      [this, current_computation] { FinishComputation(current_computation); });
-}
-
-void ConstraintBuilder3D::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-    const SubmapId& submap_id, const std::vector<TrajectoryNode>& submap_nodes,
-    const Submap3D* const submap, const std::function<void()>& work_item) {
-  if (submap_scan_matchers_[submap_id].fast_correlative_scan_matcher !=
-      nullptr) {
-    thread_pool_->Schedule(work_item);
-  } else {
-    submap_queued_work_items_[submap_id].push_back(work_item);
-    if (submap_queued_work_items_[submap_id].size() == 1) {
-      thread_pool_->Schedule([=]() {
-        ConstructSubmapScanMatcher(submap_id, submap_nodes, submap);
-      });
-    }
-  }
-}
-
-void ConstraintBuilder3D::ConstructSubmapScanMatcher(
-    const SubmapId& submap_id, const std::vector<TrajectoryNode>& submap_nodes,
-    const Submap3D* const submap) {
-  auto submap_scan_matcher =
-      common::make_unique<scan_matching::FastCorrelativeScanMatcher3D>(
-          submap->high_resolution_hybrid_grid(),
-          &submap->low_resolution_hybrid_grid(), submap_nodes,
-          options_.fast_correlative_scan_matcher_options_3d());
-  common::MutexLocker locker(&mutex_);
-  submap_scan_matchers_[submap_id] = {&submap->high_resolution_hybrid_grid(),
-                                      &submap->low_resolution_hybrid_grid(),
-                                      std::move(submap_scan_matcher)};
-  for (const std::function<void()>& work_item :
-       submap_queued_work_items_[submap_id]) {
-    thread_pool_->Schedule(work_item);
-  }
-  submap_queued_work_items_.erase(submap_id);
+  CHECK(when_done_task_ != nullptr);
+  when_done_task_->SetWorkItem([this] { RunWhenDoneCallback(); });
+  thread_pool_->Schedule(std::move(when_done_task_));
+  when_done_task_ = common::make_unique<common::Task>();
 }
 
 const ConstraintBuilder3D::SubmapScanMatcher*
-ConstraintBuilder3D::GetSubmapScanMatcher(const SubmapId& submap_id) {
-  common::MutexLocker locker(&mutex_);
-  const SubmapScanMatcher* submap_scan_matcher =
-      &submap_scan_matchers_[submap_id];
-  CHECK(submap_scan_matcher->fast_correlative_scan_matcher != nullptr);
-  return submap_scan_matcher;
+ConstraintBuilder3D::DispatchScanMatcherConstruction(
+    const SubmapId& submap_id, const std::vector<TrajectoryNode>& submap_nodes,
+    const Submap3D* submap) {
+  if (submap_scan_matchers_.count(submap_id) != 0) {
+    return &submap_scan_matchers_.at(submap_id);
+  }
+  auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
+  submap_scan_matcher.high_resolution_hybrid_grid =
+      &submap->high_resolution_hybrid_grid();
+  submap_scan_matcher.low_resolution_hybrid_grid =
+      &submap->low_resolution_hybrid_grid();
+  auto& scan_matcher_options =
+      options_.fast_correlative_scan_matcher_options_3d();
+  auto scan_matcher_task = common::make_unique<common::Task>();
+  scan_matcher_task->SetWorkItem(
+      [&submap_scan_matcher, &scan_matcher_options, submap_nodes]() {
+        submap_scan_matcher.fast_correlative_scan_matcher =
+            common::make_unique<scan_matching::FastCorrelativeScanMatcher3D>(
+                *submap_scan_matcher.high_resolution_hybrid_grid,
+                submap_scan_matcher.low_resolution_hybrid_grid, submap_nodes,
+                scan_matcher_options);
+      });
+  submap_scan_matcher.creation_task_handle =
+      thread_pool_->Schedule(std::move(scan_matcher_task));
+  return &submap_scan_matchers_.at(submap_id);
 }
 
 void ConstraintBuilder3D::ComputeConstraint(
@@ -186,10 +198,8 @@ void ConstraintBuilder3D::ComputeConstraint(
     const TrajectoryNode::Data* const constant_data,
     const transform::Rigid3d& global_node_pose,
     const transform::Rigid3d& global_submap_pose,
+    const SubmapScanMatcher& submap_scan_matcher,
     std::unique_ptr<Constraint>* constraint) {
-  const SubmapScanMatcher* const submap_scan_matcher =
-      GetSubmapScanMatcher(submap_id);
-
   // The 'constraint_transform' (submap i <- node j) is computed from:
   // - a 'high_resolution_point_cloud' in node j and
   // - the initial guess 'initial_pose' (submap i <- node j).
@@ -203,7 +213,7 @@ void ConstraintBuilder3D::ComputeConstraint(
   if (match_full_submap) {
     kGlobalConstraintsSearchedMetric->Increment();
     match_result =
-        submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
+        submap_scan_matcher.fast_correlative_scan_matcher->MatchFullSubmap(
             global_node_pose.rotation(), global_submap_pose.rotation(),
             *constant_data, options_.global_localization_min_score());
     if (match_result != nullptr) {
@@ -221,7 +231,7 @@ void ConstraintBuilder3D::ComputeConstraint(
     }
   } else {
     kConstraintsSearchedMetric->Increment();
-    match_result = submap_scan_matcher->fast_correlative_scan_matcher->Match(
+    match_result = submap_scan_matcher.fast_correlative_scan_matcher->Match(
         global_node_pose, global_submap_pose, *constant_data,
         options_.min_score());
     if (match_result != nullptr) {
@@ -252,9 +262,9 @@ void ConstraintBuilder3D::ComputeConstraint(
   ceres_scan_matcher_.Match(match_result->pose_estimate.translation(),
                             match_result->pose_estimate,
                             {{&constant_data->high_resolution_point_cloud,
-                              submap_scan_matcher->high_resolution_hybrid_grid},
+                              submap_scan_matcher.high_resolution_hybrid_grid},
                              {&constant_data->low_resolution_point_cloud,
-                              submap_scan_matcher->low_resolution_hybrid_grid}},
+                              submap_scan_matcher.low_resolution_hybrid_grid}},
                             &constraint_transform, &unused_summary);
 
   constraint->reset(new Constraint{
@@ -287,54 +297,45 @@ void ConstraintBuilder3D::ComputeConstraint(
   }
 }
 
-void ConstraintBuilder3D::FinishComputation(const int computation_index) {
+void ConstraintBuilder3D::RunWhenDoneCallback() {
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
     common::MutexLocker locker(&mutex_);
-    if (--pending_computations_[computation_index] == 0) {
-      pending_computations_.erase(computation_index);
+    CHECK(when_done_ != nullptr);
+    for (const std::unique_ptr<Constraint>& constraint : constraints_) {
+      if (constraint == nullptr) continue;
+      result.push_back(*constraint);
     }
-    if (pending_computations_.empty()) {
-      CHECK_EQ(submap_queued_work_items_.size(), 0);
-      if (when_done_ != nullptr) {
-        for (const std::unique_ptr<Constraint>& constraint : constraints_) {
-          if (constraint != nullptr) {
-            result.push_back(*constraint);
-          }
-        }
-        if (options_.log_matches()) {
-          LOG(INFO) << constraints_.size() << " computations resulted in "
-                    << result.size() << " additional constraints.";
-          LOG(INFO) << "Score histogram:\n" << score_histogram_.ToString(10);
-          LOG(INFO) << "Rotational score histogram:\n"
-                    << rotational_score_histogram_.ToString(10);
-          LOG(INFO) << "Low resolution score histogram:\n"
-                    << low_resolution_score_histogram_.ToString(10);
-        }
-        constraints_.clear();
-        callback = std::move(when_done_);
-        when_done_.reset();
-      }
+    if (options_.log_matches()) {
+      LOG(INFO) << constraints_.size() << " computations resulted in "
+                << result.size() << " additional constraints.\n"
+                << "Score histogram:\n"
+                << score_histogram_.ToString(10) << "\n"
+                << "Rotational score histogram:\n"
+                << rotational_score_histogram_.ToString(10) << "\n"
+                << "Low resolution score histogram:\n"
+                << low_resolution_score_histogram_.ToString(10);
     }
+    constraints_.clear();
+    callback = std::move(when_done_);
+    when_done_.reset();
     kQueueLengthMetric->Set(constraints_.size());
   }
-  if (callback != nullptr) {
-    (*callback)(result);
-  }
+  (*callback)(result);
 }
 
 int ConstraintBuilder3D::GetNumFinishedNodes() {
   common::MutexLocker locker(&mutex_);
-  if (pending_computations_.empty()) {
-    return current_computation_;
-  }
-  return pending_computations_.begin()->first;
+  return num_finished_nodes_;
 }
 
 void ConstraintBuilder3D::DeleteScanMatcher(const SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
-  CHECK(pending_computations_.empty());
+  if (when_done_) {
+    LOG(WARNING)
+        << "DeleteScanMatcher was called while WhenDone was scheduled.";
+  }
   submap_scan_matchers_.erase(submap_id);
 }
 
