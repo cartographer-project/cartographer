@@ -54,7 +54,7 @@ uint8 ProbabilityToColor(float probability_from_grid) {
              (mapping::kMaxProbability - mapping::kMinProbability)));
 }
 
-std::string OutputTypeToFileExtension(
+std::string FileExtensionFromOutputType(
     ProbabilityGridPointsProcessor::OutputType output_type) {
   if (output_type == ProbabilityGridPointsProcessor::OutputType::kPng) {
     return ".png";
@@ -120,7 +120,7 @@ ProbabilityGridPointsProcessor::FromDictionary(
           dictionary->GetDictionary("range_data_inserter").get()),
       draw_trajectories,
       file_writer_factory(dictionary->GetString("filename") +
-                          OutputTypeToFileExtension(output_type)),
+                          FileExtensionFromOutputType(output_type)),
       trajectories, output_type, next);
 }
 

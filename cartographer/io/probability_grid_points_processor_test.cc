@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Cartographer Authors
+ * Copyright 2018 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/io/probability_grid_points_processor.h"
+
 #include <string>
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
