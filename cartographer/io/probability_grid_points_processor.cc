@@ -60,9 +60,8 @@ std::string OutputTypeToFileExtension(
     return ".png";
   } else if (output_type == ProbabilityGridPointsProcessor::OutputType::kPb) {
     return ".pb";
-  } else {
-    CHECK(false) << "OutputType does not exist!";
   }
+  LOG(FATAL) << "OutputType does not exist!";
 }
 
 ProbabilityGridPointsProcessor::OutputType OutputTypeFromString(
