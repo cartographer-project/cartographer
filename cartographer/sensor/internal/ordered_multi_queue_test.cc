@@ -78,6 +78,25 @@ TEST_F(OrderedMultiQueueTest, Ordering) {
   }
 }
 
+TEST_F(OrderedMultiQueueTest, OutOfOrderIsDropped) {
+  queue_.Add(kFirst, MakeImu(0));
+  queue_.Add(kFirst, MakeImu(7));
+  queue_.Add(kFirst, MakeImu(6));
+  EXPECT_TRUE(values_.empty());
+  queue_.Add(kSecond, MakeImu(0));
+  queue_.Add(kSecond, MakeImu(1));
+  EXPECT_TRUE(values_.empty());
+  queue_.Add(kThird, MakeImu(0));
+  queue_.Add(kThird, MakeImu(2));
+  EXPECT_EQ(values_.size(), 4);
+  queue_.Flush();
+
+  EXPECT_EQ(6, values_.size());
+  for (size_t i = 0; i < values_.size() - 1; ++i) {
+    EXPECT_LE(values_[i]->GetTime(), values_[i + 1]->GetTime());
+  }
+}
+
 TEST_F(OrderedMultiQueueTest, MarkQueueAsFinished) {
   queue_.Add(kFirst, MakeImu(1));
   queue_.Add(kFirst, MakeImu(2));
