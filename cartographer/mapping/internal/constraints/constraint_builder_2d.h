@@ -29,6 +29,7 @@
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/mutex.h"
+#include "cartographer/common/task.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/2d/submap_2d.h"
 #include "cartographer/mapping/internal/2d/scan_matching/ceres_scan_matcher_2d.h"
@@ -49,10 +50,10 @@ transform::Rigid2d ComputeSubmapPose(const Submap2D& submap);
 
 // Asynchronously computes constraints.
 //
-// Intermingle an arbitrary number of calls to MaybeAddConstraint() or
-// MaybeAddGlobalConstraint, then call WhenDone(). After all computations are
-// done the 'callback' will be called with the result and another
-// MaybeAdd(Global)Constraint()/WhenDone() cycle can follow.
+// Intermingle an arbitrary number of calls to 'MaybeAddConstraint',
+// 'MaybeAddGlobalConstraint', and 'NotifyEndOfNode', then call 'WhenDone' once.
+// After all computations are done the 'callback' will be called with the result
+// and another MaybeAdd(Global)Constraint()/WhenDone() cycle can follow.
 //
 // This class is thread-safe.
 class ConstraintBuilder2D {
@@ -92,7 +93,8 @@ class ConstraintBuilder2D {
   void NotifyEndOfNode();
 
   // Registers the 'callback' to be called with the results, after all
-  // computations triggered by MaybeAddConstraint() have finished.
+  // computations triggered by 'MaybeAdd*Constraint' have finished.
+  // 'callback' is executed in the 'ThreadPool'.
   void WhenDone(const std::function<void(const Result&)>& callback);
 
   // Returns the number of consecutive finished nodes.
@@ -108,21 +110,13 @@ class ConstraintBuilder2D {
     const Grid2D* grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
         fast_correlative_scan_matcher;
+    std::weak_ptr<common::Task> creation_task_handle;
   };
 
-  // Either schedules the 'work_item', or if needed, schedules the scan matcher
-  // construction and queues the 'work_item'.
-  void ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
-      const SubmapId& submap_id, const Grid2D* grid,
-      const std::function<void()>& work_item) REQUIRES(mutex_);
-
-  // Constructs the scan matcher for a 'submap', then schedules its work items.
-  void ConstructSubmapScanMatcher(const SubmapId& submap_id, const Grid2D* grid)
-      EXCLUDES(mutex_);
-
-  // Returns the scan matcher for a submap, which has to exist.
-  const SubmapScanMatcher* GetSubmapScanMatcher(const SubmapId& submap_id)
-      EXCLUDES(mutex_);
+  // The returned 'grid' and 'fast_correlative_scan_matcher' must only be
+  // accessed after 'creation_task_handle' has completed.
+  const SubmapScanMatcher* DispatchScanMatcherConstruction(
+      const SubmapId& submap_id, const Grid2D* grid) REQUIRES(mutex_);
 
   // Runs in a background thread and does computations for an additional
   // constraint, assuming 'submap' and 'compressed_point_cloud' do not change
@@ -131,12 +125,11 @@ class ConstraintBuilder2D {
                          const NodeId& node_id, bool match_full_submap,
                          const TrajectoryNode::Data* const constant_data,
                          const transform::Rigid2d& initial_relative_pose,
+                         const SubmapScanMatcher& submap_scan_matcher,
                          std::unique_ptr<Constraint>* constraint)
       EXCLUDES(mutex_);
 
-  // Decrements the 'pending_computations_' count. If all computations are done,
-  // runs the 'when_done_' callback and resets the state.
-  void FinishComputation(int computation_index) EXCLUDES(mutex_);
+  void RunWhenDoneCallback() EXCLUDES(mutex_);
 
   const constraints::proto::ConstraintBuilderOptions options_;
   common::ThreadPoolInterface* thread_pool_;
@@ -146,27 +139,26 @@ class ConstraintBuilder2D {
   std::unique_ptr<std::function<void(const Result&)>> when_done_
       GUARDED_BY(mutex_);
 
-  // Index of the node in reaction to which computations are currently
-  // added. This is always the highest node index seen so far, even when older
+  // TODO(gaschler): Use atomics instead of mutex to access these counters.
+  // Number of the node in reaction to which computations are currently
+  // added. This is always the number of nodes seen so far, even when older
   // nodes are matched against a new submap.
-  int current_computation_ GUARDED_BY(mutex_) = 0;
+  int num_started_nodes_ GUARDED_BY(mutex_) = 0;
 
-  // For each added node, maps to the number of pending computations that were
-  // added for it.
-  std::map<int, int> pending_computations_ GUARDED_BY(mutex_);
+  int num_finished_nodes_ GUARDED_BY(mutex_) = 0;
+
+  std::unique_ptr<common::Task> finish_node_task_ GUARDED_BY(mutex_);
+
+  std::unique_ptr<common::Task> when_done_task_ GUARDED_BY(mutex_);
 
   // Constraints currently being computed in the background. A deque is used to
-  // keep pointers valid when adding more entries.
+  // keep pointers valid when adding more entries. Constraint search results
+  // with below-threshold scores are also 'nullptr'.
   std::deque<std::unique_ptr<Constraint>> constraints_ GUARDED_BY(mutex_);
 
-  // Map of already constructed scan matchers by 'submap_id'.
+  // Map of dispatched or constructed scan matchers by 'submap_id'.
   std::map<SubmapId, SubmapScanMatcher> submap_scan_matchers_
       GUARDED_BY(mutex_);
-
-  // Map by 'submap_id' of scan matchers under construction, and the work
-  // to do once construction is done.
-  std::map<SubmapId, std::vector<std::function<void()>>>
-      submap_queued_work_items_ GUARDED_BY(mutex_);
 
   common::FixedRatioSampler sampler_;
   scan_matching::CeresScanMatcher2D ceres_scan_matcher_;
