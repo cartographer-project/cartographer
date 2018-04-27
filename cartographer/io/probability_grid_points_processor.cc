@@ -149,7 +149,6 @@ PointsProcessor::FlushResult ProbabilityGridPointsProcessor::Flush() {
     const auto probability_grid_proto = probability_grid_.ToProto();
     std::string probability_grid_serialized;
     probability_grid_proto.SerializeToString(&probability_grid_serialized);
-    ;
     file_writer_->Write(probability_grid_serialized.data(),
                         probability_grid_serialized.size());
     CHECK(file_writer_->Close());
