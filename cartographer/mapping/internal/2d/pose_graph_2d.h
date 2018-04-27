@@ -33,8 +33,8 @@
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/2d/submap_2d.h"
-#include "cartographer/mapping/internal/2d/pose_graph/constraint_builder_2d.h"
-#include "cartographer/mapping/internal/2d/pose_graph/optimization_problem_2d.h"
+#include "cartographer/mapping/internal/constraints/constraint_builder_2d.h"
+#include "cartographer/mapping/internal/optimization/optimization_problem_2d.h"
 #include "cartographer/mapping/internal/trajectory_connectivity_state.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
@@ -61,7 +61,7 @@ class PoseGraph2D : public PoseGraph {
  public:
   PoseGraph2D(
       const proto::PoseGraphOptions& options,
-      std::unique_ptr<pose_graph::OptimizationProblem2D> optimization_problem,
+      std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem,
       common::ThreadPool* thread_pool);
   ~PoseGraph2D() override;
 
@@ -108,7 +108,7 @@ class PoseGraph2D : public PoseGraph {
   void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() override;
-  PoseGraph::SubmapData GetSubmapData(const SubmapId& submap_id)
+  PoseGraphInterface::SubmapData GetSubmapData(const SubmapId& submap_id)
       EXCLUDES(mutex_) override;
   MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
       EXCLUDES(mutex_) override;
@@ -145,7 +145,7 @@ class PoseGraph2D : public PoseGraph {
   // transitions to kFinished, all nodes are tried to match against this submap.
   // Likewise, all new nodes are matched against submaps which are finished.
   enum class SubmapState { kActive, kFinished };
-  struct SubmapData {
+  struct InternalSubmapData {
     std::shared_ptr<const Submap2D> submap;
 
     // IDs of the nodes that were inserted into this map together with
@@ -201,11 +201,10 @@ class PoseGraph2D : public PoseGraph {
   // Computes the local to global map frame transform based on the given
   // 'global_submap_poses'.
   transform::Rigid3d ComputeLocalToGlobalTransform(
-      const MapById<SubmapId, pose_graph::SubmapData2D>& global_submap_poses,
+      const MapById<SubmapId, optimization::SubmapSpec2D>& global_submap_poses,
       int trajectory_id) const REQUIRES(mutex_);
 
-  PoseGraph::SubmapData GetSubmapDataUnderLock(const SubmapId& submap_id)
-      REQUIRES(mutex_);
+  SubmapData GetSubmapDataUnderLock(const SubmapId& submap_id) REQUIRES(mutex_);
 
   common::Time GetLatestNodeTime(const NodeId& node_id,
                                  const SubmapId& submap_id) const
@@ -240,20 +239,20 @@ class PoseGraph2D : public PoseGraph {
   void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
-  std::unique_ptr<pose_graph::OptimizationProblem2D> optimization_problem_;
-  pose_graph::ConstraintBuilder2D constraint_builder_ GUARDED_BY(mutex_);
+  std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem_;
+  constraints::ConstraintBuilder2D constraint_builder_ GUARDED_BY(mutex_);
   std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
 
   // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
-  MapById<SubmapId, SubmapData> submap_data_ GUARDED_BY(mutex_);
+  MapById<SubmapId, InternalSubmapData> submap_data_ GUARDED_BY(mutex_);
 
   // Data that are currently being shown.
   MapById<NodeId, TrajectoryNode> trajectory_nodes_ GUARDED_BY(mutex_);
   int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
 
   // Global submap poses currently used for displaying data.
-  MapById<SubmapId, pose_graph::SubmapData2D> global_submap_poses_
+  MapById<SubmapId, optimization::SubmapSpec2D> global_submap_poses_
       GUARDED_BY(mutex_);
 
   // Global landmark poses with all observations.
@@ -282,12 +281,12 @@ class PoseGraph2D : public PoseGraph {
 
     int num_submaps(int trajectory_id) const override;
     std::vector<SubmapId> GetSubmapIds(int trajectory_id) const override;
-    MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
-        const override REQUIRES(parent_->mutex_);
+    MapById<SubmapId, SubmapData> GetOptimizedSubmapData() const override
+        REQUIRES(parent_->mutex_);
     const MapById<NodeId, TrajectoryNode>& GetTrajectoryNodes() const override
         REQUIRES(parent_->mutex_);
-    const std::vector<PoseGraphInterface::Constraint>& GetConstraints()
-        const override REQUIRES(parent_->mutex_);
+    const std::vector<Constraint>& GetConstraints() const override
+        REQUIRES(parent_->mutex_);
     void MarkSubmapAsTrimmed(const SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
     bool IsFinished(int trajectory_id) const override REQUIRES(parent_->mutex_);

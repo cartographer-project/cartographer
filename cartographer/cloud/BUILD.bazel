@@ -63,6 +63,7 @@ cc_library(
         "**/*.h",
     ]),
     copts = ["-Wno-sign-compare"],
+    defines = ["USE_PROMETHEUS=1"],
     includes = ["."],
     deps = [
         ":cc_protos",

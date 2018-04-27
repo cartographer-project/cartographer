@@ -32,8 +32,9 @@ class Trimmable {
   virtual int num_submaps(int trajectory_id) const = 0;
 
   virtual std::vector<SubmapId> GetSubmapIds(int trajectory_id) const = 0;
-  virtual MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData()
-      const = 0;
+  // Returns finished submaps with optimized poses only.
+  virtual MapById<SubmapId, PoseGraphInterface::SubmapData>
+  GetOptimizedSubmapData() const = 0;
   virtual const MapById<NodeId, TrajectoryNode>& GetTrajectoryNodes() const = 0;
   virtual const std::vector<PoseGraphInterface::Constraint>& GetConstraints()
       const = 0;

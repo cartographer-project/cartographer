@@ -19,20 +19,44 @@
 
 #include <deque>
 #include <functional>
+#include <memory>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "cartographer/common/mutex.h"
+#include "cartographer/common/task.h"
 
 namespace cartographer {
 namespace common {
 
-// A fixed number of threads working on a work queue of work items. Adding a
-// new work item does not block, and will be executed by a background thread
-// eventually. The queue must be empty before calling the destructor. The thread
-// pool will then wait for the currently executing work items to finish and then
-// destroy the threads.
-class ThreadPool {
+class Task;
+
+class ThreadPoolInterface {
+ public:
+  ThreadPoolInterface() {}
+  virtual ~ThreadPoolInterface() {}
+  // TODO(gaschler): Use Schedule(unique_ptr<Task>), then remove Schedule.
+  virtual void Schedule(const std::function<void()>& work_item) = 0;
+  virtual std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task) = 0;
+
+ protected:
+  void Execute(Task* task);
+  void SetThreadPool(Task* task);
+
+ private:
+  friend class Task;
+
+  virtual void NotifyDependenciesCompleted(Task* task) = 0;
+};
+
+// A fixed number of threads working on tasks. Adding a task does not block.
+// Tasks may be added whether or not their dependencies are completed.
+// When all dependencies of a task are completed, it is queued up for execution
+// in a background thread. The queue must be empty before calling the
+// destructor. The thread pool will then wait for the currently executing work
+// items to finish and then destroy the threads.
+class ThreadPool : public ThreadPoolInterface {
  public:
   explicit ThreadPool(int num_threads);
   ~ThreadPool();
@@ -40,15 +64,25 @@ class ThreadPool {
   ThreadPool(const ThreadPool&) = delete;
   ThreadPool& operator=(const ThreadPool&) = delete;
 
-  void Schedule(const std::function<void()>& work_item);
+  // TODO(gaschler): Remove all uses.
+  void Schedule(const std::function<void()>& work_item) override;
+
+  // When the returned weak pointer is expired, 'task' has certainly completed,
+  // so dependants no longer need to add it as a dependency.
+  std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task)
+      EXCLUDES(mutex_) override;
 
  private:
   void DoWork();
 
+  void NotifyDependenciesCompleted(Task* task) EXCLUDES(mutex_) override;
+
   Mutex mutex_;
   bool running_ GUARDED_BY(mutex_) = true;
   std::vector<std::thread> pool_ GUARDED_BY(mutex_);
-  std::deque<std::function<void()>> work_queue_ GUARDED_BY(mutex_);
+  std::deque<std::shared_ptr<Task>> task_queue_ GUARDED_BY(mutex_);
+  std::unordered_map<Task*, std::shared_ptr<Task>> tasks_not_ready_
+      GUARDED_BY(mutex_);
 };
 
 }  // namespace common

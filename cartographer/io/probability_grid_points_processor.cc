@@ -57,8 +57,8 @@ uint8 ProbabilityToColor(float probability_from_grid) {
 
 ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
     const double resolution,
-    const mapping::proto::RangeDataInserterOptions2D&
-        range_data_inserter_options,
+    const mapping::proto::ProbabilityGridRangeDataInserterOptions2D&
+        probability_grid_range_data_inserter_options,
     const DrawTrajectories& draw_trajectories,
     std::unique_ptr<FileWriter> file_writer,
     const std::vector<mapping::proto::Trajectory>& trajectories,
@@ -67,7 +67,7 @@ ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
       trajectories_(trajectories),
       file_writer_(std::move(file_writer)),
       next_(next),
-      range_data_inserter_(range_data_inserter_options),
+      range_data_inserter_(probability_grid_range_data_inserter_options),
       probability_grid_(CreateProbabilityGrid(resolution)) {}
 
 std::unique_ptr<ProbabilityGridPointsProcessor>
@@ -82,7 +82,7 @@ ProbabilityGridPointsProcessor::FromDictionary(
                                      : DrawTrajectories::kNo;
   return common::make_unique<ProbabilityGridPointsProcessor>(
       dictionary->GetDouble("resolution"),
-      mapping::CreateRangeDataInserterOptions2D(
+      mapping::CreateProbabilityGridRangeDataInserterOptions2D(
           dictionary->GetDictionary("range_data_inserter").get()),
       draw_trajectories,
       file_writer_factory(dictionary->GetString("filename") + ".png"),

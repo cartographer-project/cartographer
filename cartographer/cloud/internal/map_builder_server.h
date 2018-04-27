@@ -31,6 +31,7 @@
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/map_builder.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
+#include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/internal/dispatchable.h"
 
 namespace cartographer {
@@ -90,6 +91,8 @@ class MapBuilderServer : public MapBuilderServerInterface {
   // Shuts down the gRPC server, the 'LocalTrajectoryUploader' and the SLAM
   // thread.
   void Shutdown() final;
+
+  static void RegisterMetrics(metrics::FamilyFactory* family_factory);
 
  private:
   using LocalSlamResultHandlerSubscriptions =
