@@ -67,8 +67,8 @@ class CAPABILITY("mutex") Mutex {
     Locker(Mutex* mutex) ACQUIRE(mutex) : mutex_(mutex), lock_(mutex->mutex_) {}
 
     ~Locker() RELEASE() {
-      lock_.unlock();
       mutex_->condition_.notify_all();
+      lock_.unlock();
     }
 
     template <typename Predicate>
