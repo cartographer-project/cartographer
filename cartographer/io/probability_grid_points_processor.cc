@@ -82,18 +82,19 @@ ProbabilityGridPointsProcessor::OutputType OutputTypeFromString(
 
 ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
     const double resolution,
-    const mapping::proto::RangeDataInserterOptions2D&
-        range_data_inserter_options,
-    const DrawTrajectories& draw_trajectories, const OutputType& output_type,
+    const mapping::proto::ProbabilityGridRangeDataInserterOptions2D&
+        probability_grid_range_data_inserter_options,
+    const DrawTrajectories& draw_trajectories,
     std::unique_ptr<FileWriter> file_writer,
     const std::vector<mapping::proto::Trajectory>& trajectories,
+     const OutputType& output_type,
     PointsProcessor* const next)
     : draw_trajectories_(draw_trajectories),
       output_type_(output_type),
       trajectories_(trajectories),
       file_writer_(std::move(file_writer)),
       next_(next),
-      range_data_inserter_(range_data_inserter_options),
+      range_data_inserter_(probability_grid_range_data_inserter_options),
       probability_grid_(CreateProbabilityGrid(resolution)) {
   LOG_IF(WARNING, output_type == OutputType::kPb &&
                       draw_trajectories_ == DrawTrajectories::kYes)
@@ -117,12 +118,12 @@ ProbabilityGridPointsProcessor::FromDictionary(
   }
   return common::make_unique<ProbabilityGridPointsProcessor>(
       dictionary->GetDouble("resolution"),
-      mapping::CreateRangeDataInserterOptions2D(
+      mapping::CreateProbabilityGridRangeDataInserterOptions2D(
           dictionary->GetDictionary("range_data_inserter").get()),
-      draw_trajectories, output_type,
+      draw_trajectories, 
       file_writer_factory(dictionary->GetString("filename") +
                           OutputTypeToFileExtension(output_type)),
-      trajectories, next);
+      trajectories, output_type, next);
 }
 
 void ProbabilityGridPointsProcessor::Process(

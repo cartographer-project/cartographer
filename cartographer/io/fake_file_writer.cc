@@ -17,35 +17,35 @@
 #include "cartographer/io/fake_file_writer.h"
 
 #include "glog/logging.h"
+#include "gtest/gtest.h"
 
 namespace cartographer {
 namespace io {
 
 FakeFileWriter::FakeFileWriter(const std::string& filename,
-                               std::shared_ptr<std::string> content)
+                               std::shared_ptr<std::vector<char>> content)
     : is_closed_(false), content_(content), filename_(filename) {
-  CHECK(content);
+  CHECK(content != nullptr);
 }
 
 bool FakeFileWriter::Write(const char* const data, const size_t len) {
-  if (is_closed_) return false;
-  content_->append(data, len);
+  EXPECT_FALSE(is_closed_);
+  content_->insert(content_->end(), data, data + len);
   return true;
 }
 
 bool FakeFileWriter::Close() {
-  if (is_closed_) return false;
+  EXPECT_FALSE(is_closed_);
   is_closed_ = true;
   return true;
 }
 
 bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
-  if (is_closed_) return false;
-  if (content_->size() == 0 || content_->size() < len) {
-    *content_ = "";
-    return Write(data, len);
+  EXPECT_FALSE(is_closed_);
+  if (content_->size() < len) {
+    content_->resize(len);
   }
-  content_->replace(0, len, data);
+  std::copy(data, data + len, content_->begin());
   return true;
 }
 

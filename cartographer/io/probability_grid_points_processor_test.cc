@@ -21,7 +21,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/io/fake_file_writer.h"
 #include "cartographer/io/points_processor_pipeline_builder.h"
-#include "cartographer/mapping/2d/range_data_inserter_2d.h"
+#include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
@@ -100,8 +100,8 @@ CreatePipelineFromDictionary(
 std::vector<char> CreateExpectedProbabilityGrid(
     std::unique_ptr<PointsBatch> points_batch,
     common::LuaParameterDictionary* const probability_grid_options) {
-  ::cartographer::mapping::RangeDataInserter2D range_data_inserter(
-      cartographer::mapping::CreateRangeDataInserterOptions2D(
+  ::cartographer::mapping::ProbabilityGridRangeDataInserter2D range_data_inserter(
+      cartographer::mapping::CreateProbabilityGridRangeDataInserterOptions2D(
           probability_grid_options->GetDictionary("range_data_inserter")
               .get()));
   auto probability_grid =

@@ -407,13 +407,13 @@ class DynamicGrid {
 };
 
 template <typename ValueType>
-using Grid = DynamicGrid<NestedGrid<FlatGrid<ValueType, 3>, 3>>;
+using GridBase = DynamicGrid<NestedGrid<FlatGrid<ValueType, 3>, 3>>;
 
 // Represents a 3D grid as a wide, shallow tree.
 template <typename ValueType>
-class HybridGridBase : public Grid<ValueType> {
+class HybridGridBase : public GridBase<ValueType> {
  public:
-  using Iterator = typename Grid<ValueType>::Iterator;
+  using Iterator = typename GridBase<ValueType>::Iterator;
 
   // Creates a new tree-based probability grid with voxels having edge length
   // 'resolution' around the origin which becomes the center of the cell at
