@@ -22,38 +22,12 @@
 #include "cartographer/io/fake_file_writer.h"
 #include "cartographer/io/points_processor_pipeline_builder.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace cartographer {
 namespace io {
 namespace {
-
-std::unique_ptr<common::LuaParameterDictionary> CreateParameterDictionary() {
-  auto parameter_dictionary =
-      cartographer::common::LuaParameterDictionary::NonReferenceCounted(
-          R"text(
-        options = { 
-          pipeline = { 
-            { 
-              action = "write_probability_grid", 
-              resolution = 0.05, 
-              range_data_inserter = { 
-                insert_free_space = true, 
-                hit_probability = 0.55, 
-                miss_probability = 0.49, 
-              }, 
-              draw_trajectories = false, 
-              output_type = "pb", 
-              filename = "map" 
-            }
-          } 
-        } 
-        return options
-    )text",
-          common::make_unique<cartographer::common::DummyFileResolver>());
-  return parameter_dictionary;
-}
 
 std::unique_ptr<PointsBatch> CreatePointsBatch() {
   auto points_batch = cartographer::common::make_unique<PointsBatch>();
@@ -80,7 +54,7 @@ std::unique_ptr<PointsBatch> CreatePointsBatch() {
 
 std::vector<std::unique_ptr<::cartographer::io::PointsProcessor>>
 CreatePipelineFromDictionary(
-    std::unique_ptr<common::LuaParameterDictionary> pipeline_dictionary,
+    common::LuaParameterDictionary* const pipeline_dictionary,
     const std::vector<mapping::proto::Trajectory>& trajectories,
     ::cartographer::io::FileWriterFactory file_writer_factory) {
   auto builder = ::cartographer::common::make_unique<
@@ -94,55 +68,86 @@ CreatePipelineFromDictionary(
             trajectories, file_writer_factory, dictionary, next);
       });
 
-  return builder->CreatePipeline(pipeline_dictionary.get());
+  return builder->CreatePipeline(pipeline_dictionary);
 }
 
 std::vector<char> CreateExpectedProbabilityGrid(
     std::unique_ptr<PointsBatch> points_batch,
     common::LuaParameterDictionary* const probability_grid_options) {
-  ::cartographer::mapping::ProbabilityGridRangeDataInserter2D range_data_inserter(
-      cartographer::mapping::CreateProbabilityGridRangeDataInserterOptions2D(
-          probability_grid_options->GetDictionary("range_data_inserter")
-              .get()));
+  ::cartographer::mapping::ProbabilityGridRangeDataInserter2D
+      range_data_inserter(
+          cartographer::mapping::
+              CreateProbabilityGridRangeDataInserterOptions2D(
+                  probability_grid_options->GetDictionary("range_data_inserter")
+                      .get()));
   auto probability_grid =
       CreateProbabilityGrid(probability_grid_options->GetDouble("resolution"));
   range_data_inserter.Insert({points_batch->origin, points_batch->points, {}},
                              &probability_grid);
 
-  std::vector<char> expected_probability_grid_proto(probability_grid.ToProto().ByteSize());
+  std::vector<char> probability_grid_proto(
+      probability_grid.ToProto().ByteSize());
   probability_grid.ToProto().SerializePartialToArray(
-       expected_probability_grid_proto.data(),  expected_probability_grid_proto.size());
-  return expected_probability_grid_proto;
+      probability_grid_proto.data(), probability_grid_proto.size());
+  return probability_grid_proto;
 }
 
-TEST(ProbabilityGridPointsProcessor, WriteProto) {
-  auto parameter_dictionary = CreateParameterDictionary();
-  auto pipeline_dict = parameter_dictionary->GetDictionary("pipeline");
-  std::vector<std::unique_ptr<common::LuaParameterDictionary>> configurations =
-      pipeline_dict->GetArrayValuesAsDictionaries();
-  const auto& write_prob_options = configurations.front();
-  EXPECT_EQ(write_prob_options->GetString("action"), "write_probability_grid");
+std::unique_ptr<common::LuaParameterDictionary> CreateParameterDictionary() {
+  auto parameter_dictionary =
+      cartographer::common::LuaParameterDictionary::NonReferenceCounted(
+          R"text(
+          pipeline = { 
+            { 
+              action = "write_probability_grid", 
+              resolution = 0.05, 
+              range_data_inserter = { 
+                insert_free_space = true, 
+                hit_probability = 0.55, 
+                miss_probability = 0.49, 
+              }, 
+              draw_trajectories = false, 
+              output_type = "pb", 
+              filename = "map" 
+            }
+          } 
+          return pipeline
+    )text",
+          common::make_unique<cartographer::common::DummyFileResolver>());
+  return parameter_dictionary;
+}
 
-  const std::vector<mapping::proto::Trajectory> dummy_trajectories;
-  auto points_batch = CreatePointsBatch();
+class ProbabilityGridPointsProcessorTest : public ::testing::Test {
+ protected:
+  ProbabilityGridPointsProcessorTest()
+      : pipeline_dictionary_(CreateParameterDictionary()) {}
 
+  void Run(const std::string& expected_filename) {
+    const auto pipeline = CreatePipelineFromDictionary(
+        pipeline_dictionary_.get(), dummy_trajectories_,
+        CreateFakeFileWriterFactory(expected_filename,
+                                    fake_file_writer_output_));
+    EXPECT_TRUE(pipeline.size() > 0);
+
+    do {
+      pipeline.back()->Process(CreatePointsBatch());
+    } while (pipeline.back()->Flush() ==
+             cartographer::io::PointsProcessor::FlushResult::kRestartStream);
+  }
+
+  std::shared_ptr<std::vector<char>> fake_file_writer_output_ =
+      std::make_shared<std::vector<char>>();
+  std::unique_ptr<cartographer::common::LuaParameterDictionary>
+      pipeline_dictionary_;
+  const std::vector<mapping::proto::Trajectory> dummy_trajectories_;
+};
+
+TEST_F(ProbabilityGridPointsProcessorTest, WriteProto) {
   auto expected_prob_grid_proto = CreateExpectedProbabilityGrid(
-      std::move(points_batch), write_prob_options.get());
-
-  auto fake_file_writer_output = std::make_shared<std::vector<char>>();
-  const auto pipeline = CreatePipelineFromDictionary(
-      std::move(pipeline_dict), dummy_trajectories,
-      CreateFakeFileWriterFactory(
-          write_prob_options->GetString("filename") + ".pb",
-          fake_file_writer_output));
-  EXPECT_TRUE(pipeline.size() > 0);
-
-  do {
-    pipeline.back()->Process(CreatePointsBatch());
-  } while (pipeline.back()->Flush() ==
-           cartographer::io::PointsProcessor::FlushResult::kRestartStream);
-
-  EXPECT_THAT(*fake_file_writer_output, ::testing::ContainerEq(expected_prob_grid_proto));
+      CreatePointsBatch(),
+      pipeline_dictionary_->GetArrayValuesAsDictionaries().front().get());
+  Run("map.pb");
+  EXPECT_THAT(*fake_file_writer_output_,
+              ::testing::ContainerEq(expected_prob_grid_proto));
 }
 
 }  // namespace
