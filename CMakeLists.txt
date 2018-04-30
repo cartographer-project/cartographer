@@ -194,7 +194,7 @@ foreach(ABS_FIL ${ALL_TESTS})
     target_link_libraries("${TEST_TARGET_NAME}" PUBLIC async_grpc)
   endif()
   if(${BUILD_PROMETHEUS})
-    target_link_libraries(${PROJECT_NAME} PUBLIC prometheus-cpp)
+    target_link_libraries("${TEST_TARGET_NAME}" PUBLIC prometheus-cpp)
   endif()
 endforeach()
 
