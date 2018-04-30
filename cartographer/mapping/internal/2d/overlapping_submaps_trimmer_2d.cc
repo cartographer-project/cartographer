@@ -30,15 +30,8 @@ class SubmapCoverageGrid2D {
   using CellId = std::pair<int64 /* x cells */, int64 /* y cells */>;
   using StoredType = std::vector<std::pair<SubmapId, common::Time>>;
 
-  explicit SubmapCoverageGrid2D(
-      const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data) {
-    auto map_limits = std::static_pointer_cast<const Submap2D>(
-                          submap_data.begin()->data.submap)
-                          ->grid()
-                          ->limits();
-    offset_ = map_limits.max();
-    resolution_ = map_limits.resolution();
-  }
+  SubmapCoverageGrid2D(const MapLimits& map_limits)
+      : offset_(map_limits.max()), resolution_(map_limits.resolution()) {}
 
   void AddPoint(const Eigen::Vector2d& point, const SubmapId& submap_id,
                 const common::Time& time) {
@@ -194,7 +187,12 @@ void OverlappingSubmapsTrimmer2D::Trim(Trimmable* pose_graph) {
   if (submap_data.size() - current_submap_count_ <= min_added_submaps_count_) {
     return;
   }
-  SubmapCoverageGrid2D coverage_grid(submap_data);
+
+  const MapLimits first_submap_map_limits =
+      std::static_pointer_cast<const Submap2D>(submap_data.begin()->data.submap)
+          ->grid()
+          ->limits();
+  SubmapCoverageGrid2D coverage_grid(first_submap_map_limits);
   const std::map<SubmapId, common::Time> submap_freshness =
       ComputeSubmapFreshness(submap_data, pose_graph->GetTrajectoryNodes(),
                              pose_graph->GetConstraints());
