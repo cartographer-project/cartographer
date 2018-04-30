@@ -237,12 +237,10 @@ set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
 set_target_properties(${PROJECT_NAME} PROPERTIES
   COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
-# TODO(damonkohler): Create a testing library.
 set(TEST_LIB
   cartographer_test_library
 )
 add_library(${TEST_LIB} ${TEST_LIBRARY_HDRS} ${TEST_LIBRARY_SRCS})
-
 target_include_directories(${TEST_LIB} SYSTEM PRIVATE
   "${GMOCK_INCLUDE_DIRS}")
 target_link_libraries(${TEST_LIB} PUBLIC ${GMOCK_LIBRARY} ${PROJECT_NAME})
