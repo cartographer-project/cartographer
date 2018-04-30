@@ -30,29 +30,23 @@ class SubmapCoverageGrid2D {
   using CellId = std::pair<int64 /* x cells */, int64 /* y cells */>;
   using StoredType = std::vector<std::pair<SubmapId, common::Time>>;
 
-  explicit SubmapCoverageGrid2D(const Eigen::Vector2d& offset)
-      : offset_(offset) {}
+  SubmapCoverageGrid2D(const MapLimits& map_limits)
+      : offset_(map_limits.max()), resolution_(map_limits.resolution()) {}
 
   void AddPoint(const Eigen::Vector2d& point, const SubmapId& submap_id,
                 const common::Time& time) {
-    CellId cell_id{common::RoundToInt64(offset_(0) - point(0)),
-                   common::RoundToInt64(offset_(1) - point(1))};
+    CellId cell_id{common::RoundToInt64((offset_(0) - point(0)) / resolution_),
+                   common::RoundToInt64((offset_(1) - point(1)) / resolution_)};
     cells_[cell_id].emplace_back(submap_id, time);
   }
 
   const std::map<CellId, StoredType>& cells() const { return cells_; }
 
  private:
-  const Eigen::Vector2d offset_;
+  Eigen::Vector2d offset_;
+  double resolution_;
   std::map<CellId, StoredType> cells_;
 };
-
-Eigen::Vector2d GetCornerOfFirstSubmap(
-    const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data) {
-  auto submap_2d = std::static_pointer_cast<const Submap2D>(
-      submap_data.begin()->data.submap);
-  return submap_2d->grid()->limits().max();
-}
 
 // Iterates over every cell in a submap, transforms the center of the cell to
 // the global frame and then adds the submap id and the timestamp of the most
@@ -78,14 +72,26 @@ std::set<SubmapId> AddSubmapsToSubmapCoverageGrid2D(
       LOG(WARNING) << "Empty grid found in submap ID = " << submap.id;
       continue;
     }
-    const transform::Rigid2d projected_submap_pose =
-        transform::Project2D(submap.data.pose);
+
+    const transform::Rigid3d& global_frame_from_submap_frame = submap.data.pose;
+    const transform::Rigid3d submap_frame_from_local_frame =
+        submap.data.submap->local_pose().inverse();
     for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(cell_limits)) {
       const Eigen::Array2i index = xy_index + offset;
       if (!grid.IsKnown(index)) continue;
+
+      const transform::Rigid3d center_of_cell_in_local_frame =
+          transform::Rigid3d::Translation(Eigen::Vector3d(
+              grid.limits().max().x() -
+                  grid.limits().resolution() * (index.y() + 0.5),
+              grid.limits().max().y() -
+                  grid.limits().resolution() * (index.x() + 0.5),
+              0));
+
       const transform::Rigid2d center_of_cell_in_global_frame =
-          projected_submap_pose *
-          transform::Rigid2d::Translation({index.x() + 0.5, index.y() + 0.5});
+          transform::Project2D(global_frame_from_submap_frame *
+                               submap_frame_from_local_frame *
+                               center_of_cell_in_local_frame);
       coverage_grid->AddPoint(center_of_cell_in_global_frame.translation(),
                               submap.id, freshness->second);
     }
@@ -182,7 +188,11 @@ void OverlappingSubmapsTrimmer2D::Trim(Trimmable* pose_graph) {
     return;
   }
 
-  SubmapCoverageGrid2D coverage_grid(GetCornerOfFirstSubmap(submap_data));
+  const MapLimits first_submap_map_limits =
+      std::static_pointer_cast<const Submap2D>(submap_data.begin()->data.submap)
+          ->grid()
+          ->limits();
+  SubmapCoverageGrid2D coverage_grid(first_submap_map_limits);
   const std::map<SubmapId, common::Time> submap_freshness =
       ComputeSubmapFreshness(submap_data, pose_graph->GetTrajectoryNodes(),
                              pose_graph->GetConstraints());
