@@ -59,8 +59,8 @@ install(DIRECTORY cmake DESTINATION share/cartographer/)
 
 file(GLOB_RECURSE ALL_LIBRARY_HDRS "cartographer/*.h")
 file(GLOB_RECURSE ALL_LIBRARY_SRCS "cartographer/*.cc")
-file(GLOB_RECURSE TEST_LIBRARY_HDRS "cartographer/fake_*.h" "cartographer/*test_helpers_*.h" "cartographer/mock_*.h")
-file(GLOB_RECURSE TEST_LIBRARY_SRCS "cartographer/fake_*.cc" "cartographer/*test_helpers_*.cc" "cartographer/mock_*.cc")
+file(GLOB_RECURSE TEST_LIBRARY_HDRS "cartographer/fake_*.h" "cartographer/*test_helpers*.h" "cartographer/mock_*.h")
+file(GLOB_RECURSE TEST_LIBRARY_SRCS "cartographer/fake_*.cc" "cartographer/*test_helpers*.cc" "cartographer/mock_*.cc")
 file(GLOB_RECURSE ALL_TESTS "cartographer/*_test.cc")
 file(GLOB_RECURSE ALL_EXECUTABLES "cartographer/*_main.cc")
 
@@ -74,7 +74,7 @@ if (ALL_DOTFILES)
   list(REMOVE_ITEM ALL_TESTS ${ALL_DOTFILES})
   list(REMOVE_ITEM ALL_EXECUTABLES ${ALL_DOTFILES})
 endif()
-
+list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_EXECUTABLES})
 list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_TESTS})
 list(REMOVE_ITEM ALL_LIBRARY_HDRS ${TEST_LIBRARY_HDRS})
 list(REMOVE_ITEM ALL_LIBRARY_SRCS ${TEST_LIBRARY_SRCS})
@@ -84,12 +84,16 @@ list(REMOVE_ITEM ALL_GRPC_FILES ${ALL_PROMETHEUS_FILES})
 if (NOT ${BUILD_GRPC})
   list(REMOVE_ITEM ALL_LIBRARY_HDRS ${ALL_GRPC_FILES})
   list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_GRPC_FILES})
+  list(REMOVE_ITEM TEST_LIBRARY_HDRS ${ALL_GRPC_FILES})
+  list(REMOVE_ITEM TEST_LIBRARY_SRCS ${ALL_GRPC_FILES})
   list(REMOVE_ITEM ALL_TESTS ${ALL_GRPC_FILES})
   list(REMOVE_ITEM ALL_EXECUTABLES ${ALL_GRPC_FILES})
 endif()
 if (NOT ${BUILD_PROMETHEUS})
   list(REMOVE_ITEM ALL_LIBRARY_HDRS ${ALL_PROMETHEUS_FILES})
   list(REMOVE_ITEM ALL_LIBRARY_SRCS ${ALL_PROMETHEUS_FILES})
+  list(REMOVE_ITEM TEST_LIBRARY_HDRS ${ALL_PROMETHEUS_FILES})
+  list(REMOVE_ITEM TEST_LIBRARY_SRCS ${ALL_PROMETHEUS_FILES})
   list(REMOVE_ITEM ALL_TESTS ${ALL_PROMETHEUS_FILES})
   list(REMOVE_ITEM ALL_EXECUTABLES ${ALL_PROMETHEUS_FILES})
 endif()
@@ -225,14 +229,6 @@ if(${BUILD_PROMETHEUS})
   target_compile_definitions(${PROJECT_NAME} PUBLIC USE_PROMETHEUS=1)
 endif()
 
-# Add the binary directory first, so that port.h is included after it has
-# been generated.
-target_include_directories(${PROJECT_NAME} PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-)
-
 set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
 set_target_properties(${PROJECT_NAME} PROPERTIES
   COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
@@ -243,7 +239,8 @@ set(TEST_LIB
 add_library(${TEST_LIB} ${TEST_LIBRARY_HDRS} ${TEST_LIBRARY_SRCS})
 target_include_directories(${TEST_LIB} SYSTEM PRIVATE
   "${GMOCK_INCLUDE_DIRS}")
-target_link_libraries(${TEST_LIB} PUBLIC ${GMOCK_LIBRARY} ${PROJECT_NAME})
+target_link_libraries(${TEST_LIB} PUBLIC ${GMOCK_LIBRARY})
+target_link_libraries(${TEST_LIB} PUBLIC ${PROJECT_NAME})
 set_target_properties(${TEST_LIB} PROPERTIES
   COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
@@ -259,10 +256,19 @@ foreach(ABS_FIL ${ALL_TESTS})
     target_link_libraries("${TEST_TARGET_NAME}" PUBLIC async_grpc)
   endif()
   if(${BUILD_PROMETHEUS})
-    target_link_libraries(${PROJECT_NAME} PUBLIC prometheus-cpp)
+    target_link_libraries(${TEST_TARGET_NAME} PUBLIC prometheus-cpp)
   endif()
   target_link_libraries("${TEST_TARGET_NAME}" PUBLIC ${TEST_LIB})
 endforeach()
+
+
+# Add the binary directory first, so that port.h is included after it has
+# been generated.
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
 
 install(
   TARGETS ${PROJECT_NAME}
