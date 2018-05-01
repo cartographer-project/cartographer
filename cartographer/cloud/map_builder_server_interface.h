@@ -21,6 +21,7 @@
 
 #include "cartographer/cloud/proto/map_builder_server_options.pb.h"
 #include "cartographer/mapping/map_builder_interface.h"
+#include "cartographer/metrics/family_factory.h"
 
 namespace cartographer {
 namespace cloud {
@@ -44,6 +45,9 @@ class MapBuilderServerInterface {
   // thread.
   virtual void Shutdown() = 0;
 };
+
+// Registers all metrics for the MapBuilderServer.
+void RegisterMapBuilderServerMetrics(metrics::FamilyFactory* factory);
 
 // Returns MapBuilderServer with the actual implementation.
 std::unique_ptr<MapBuilderServerInterface> CreateMapBuilderServer(
