@@ -21,6 +21,7 @@
 
 #include "cartographer/cloud/proto/map_builder_server_options.pb.h"
 #include "cartographer/mapping/map_builder_interface.h"
+#include "cartographer/metrics/family_factory.h"
 
 namespace cartographer {
 namespace cloud {
@@ -43,6 +44,9 @@ class MapBuilderServerInterface {
   // Shuts down the gRPC server, the 'LocalTrajectoryUploader' and the SLAM
   // thread.
   virtual void Shutdown() = 0;
+
+  // Registers all metrics for the MapBuilderServer.
+  static void RegisterMetrics(metrics::FamilyFactory* factory);
 };
 
 // Returns MapBuilderServer with the actual implementation.
