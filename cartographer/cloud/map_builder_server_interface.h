@@ -47,7 +47,7 @@ class MapBuilderServerInterface {
 };
 
 // Registers all metrics for the MapBuilderServer.
-void RegisterMapBuilderServerMetrics(metrics::FamilyFactory *factory);
+void RegisterMapBuilderServerMetrics(metrics::FamilyFactory* factory);
 
 // Returns MapBuilderServer with the actual implementation.
 std::unique_ptr<MapBuilderServerInterface> CreateMapBuilderServer(
