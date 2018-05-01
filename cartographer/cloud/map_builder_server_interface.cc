@@ -6,7 +6,8 @@
 namespace cartographer {
 namespace cloud {
 
-void MapBuilderServerInterface::RegisterMetrics(metrics::FamilyFactory* factory) {
+void MapBuilderServerInterface::RegisterMetrics(
+    metrics::FamilyFactory* factory) {
   MapBuilderServer::RegisterMetrics(factory);
 }
 
