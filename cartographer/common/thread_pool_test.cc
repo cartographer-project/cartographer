@@ -33,20 +33,15 @@ class Receiver {
   }
 
   void WaitForNumberSequence(const std::vector<int>& expected_numbers) {
-    bool have_enough_numbers = false;
-    while (!have_enough_numbers) {
-      common::MutexLocker locker(&mutex_);
-      have_enough_numbers = locker.AwaitWithTimeout(
-          [this, &expected_numbers]() REQUIRES(mutex_) {
-            return (received_numbers_.size() >= expected_numbers.size());
-          },
-          common::FromSeconds(0.1));
-    }
+    common::MutexLocker locker(&mutex_);
+    locker.Await([this, &expected_numbers]() REQUIRES(mutex_) {
+      return (received_numbers_.size() >= expected_numbers.size());
+    });
     EXPECT_EQ(expected_numbers, received_numbers_);
   }
 
-  std::vector<int> received_numbers_;
   Mutex mutex_;
+  std::vector<int> received_numbers_ GUARDED_BY(mutex_);
 };
 
 TEST(ThreadPoolTest, RunTask) {
@@ -56,6 +51,20 @@ TEST(ThreadPoolTest, RunTask) {
   task->SetWorkItem([&receiver]() { receiver.Receive(1); });
   pool.Schedule(std::move(task));
   receiver.WaitForNumberSequence({1});
+}
+
+TEST(ThreadPoolTest, ManyTasks) {
+  for (int a = 0; a < 5; ++a) {
+    ThreadPool pool(3);
+    Receiver receiver;
+    int kNumTasks = 10;
+    for (int i = 0; i < kNumTasks; ++i) {
+      auto task = common::make_unique<Task>();
+      task->SetWorkItem([&receiver]() { receiver.Receive(1); });
+      pool.Schedule(std::move(task));
+    }
+    receiver.WaitForNumberSequence(std::vector<int>(kNumTasks, 1));
+  }
 }
 
 TEST(ThreadPoolTest, RunWithDependency) {
@@ -84,6 +93,41 @@ TEST(ThreadPoolTest, RunWithOutOfScopeDependency) {
   }
   pool.Schedule(std::move(task_2));
   receiver.WaitForNumberSequence({1, 2});
+}
+
+TEST(ThreadPoolTest, ManyDependencies) {
+  for (int a = 0; a < 5; ++a) {
+    ThreadPool pool(5);
+    Receiver receiver;
+    int kNumDependencies = 10;
+    auto task = common::make_unique<Task>();
+    task->SetWorkItem([&receiver]() { receiver.Receive(1); });
+    for (int i = 0; i < kNumDependencies; ++i) {
+      auto dependency_task = common::make_unique<Task>();
+      dependency_task->SetWorkItem([]() {});
+      task->AddDependency(pool.Schedule(std::move(dependency_task)));
+    }
+    pool.Schedule(std::move(task));
+    receiver.WaitForNumberSequence({1});
+  }
+}
+
+TEST(ThreadPoolTest, ManyDependants) {
+  for (int a = 0; a < 5; ++a) {
+    ThreadPool pool(5);
+    Receiver receiver;
+    int kNumDependants = 10;
+    auto dependency_task = common::make_unique<Task>();
+    dependency_task->SetWorkItem([]() {});
+    auto dependency_handle = pool.Schedule(std::move(dependency_task));
+    for (int i = 0; i < kNumDependants; ++i) {
+      auto task = common::make_unique<Task>();
+      task->AddDependency(dependency_handle);
+      task->SetWorkItem([&receiver]() { receiver.Receive(1); });
+      pool.Schedule(std::move(task));
+    }
+    receiver.WaitForNumberSequence(std::vector<int>(kNumDependants, 1));
+  }
 }
 
 TEST(ThreadPoolTest, RunWithMultipleDependencies) {
