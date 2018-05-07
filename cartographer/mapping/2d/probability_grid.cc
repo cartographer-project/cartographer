@@ -71,6 +71,7 @@ float ProbabilityGrid::GetProbability(const Eigen::Array2i& cell_index) const {
   return CorrespondenceCostToProbability(ValueToCorrespondenceCost(
       correspondence_cost_cells()[ToFlatIndex(cell_index)]));
 }
+
 proto::Grid2D ProbabilityGrid::ToProto() const {
   proto::Grid2D result;
   result = Grid2D::ToProto();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/2d/range_data_inserter_2d.h"
+#include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 
 #include <cstdlib>
 
@@ -28,9 +28,10 @@
 namespace cartographer {
 namespace mapping {
 
-proto::RangeDataInserterOptions2D CreateRangeDataInserterOptions2D(
-    common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::RangeDataInserterOptions2D options;
+proto::ProbabilityGridRangeDataInserterOptions2D
+CreateProbabilityGridRangeDataInserterOptions2D(
+    common::LuaParameterDictionary* parameter_dictionary) {
+  proto::ProbabilityGridRangeDataInserterOptions2D options;
   options.set_hit_probability(
       parameter_dictionary->GetDouble("hit_probability"));
   options.set_miss_probability(
@@ -44,21 +45,22 @@ proto::RangeDataInserterOptions2D CreateRangeDataInserterOptions2D(
   return options;
 }
 
-RangeDataInserter2D::RangeDataInserter2D(
-    const proto::RangeDataInserterOptions2D& options)
+ProbabilityGridRangeDataInserter2D::ProbabilityGridRangeDataInserter2D(
+    const proto::ProbabilityGridRangeDataInserterOptions2D& options)
     : options_(options),
       hit_table_(ComputeLookupTableToApplyCorrespondenceCostOdds(
           Odds(options.hit_probability()))),
       miss_table_(ComputeLookupTableToApplyCorrespondenceCostOdds(
           Odds(options.miss_probability()))) {}
 
-void RangeDataInserter2D::Insert(const sensor::RangeData& range_data,
-                                 Grid2D* const grid) const {
+void ProbabilityGridRangeDataInserter2D::Insert(
+    const sensor::RangeData& range_data, GridInterface* const grid) const {
+  ProbabilityGrid* const probability_grid = static_cast<ProbabilityGrid*>(grid);
   // By not finishing the update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
   CastRays(range_data, hit_table_, miss_table_, options_.insert_free_space(),
-           CHECK_NOTNULL(static_cast<ProbabilityGrid*>(grid)));
-  grid->FinishUpdate();
+           CHECK_NOTNULL(probability_grid));
+  probability_grid->FinishUpdate();
 }
 
 }  // namespace mapping

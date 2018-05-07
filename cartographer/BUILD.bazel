@@ -48,6 +48,29 @@ cc_fix_config(
     visibility = ["//visibility:private"],
 )
 
+TEST_LIBRARY_SRCS = glob([
+    "**/*test_helpers.cc",
+    "**/fake_*.cc",
+    "**/mock_*.cc",
+])
+
+TEST_LIBRARY_HDRS = glob([
+    "**/*test_helpers.h",
+    "**/fake_*.h",
+    "**/mock_*.h",
+])
+
+cc_library(
+    name = "cartographer_test_library",
+    testonly = 1,
+    srcs = TEST_LIBRARY_SRCS,
+    hdrs = TEST_LIBRARY_HDRS,
+    deps = [
+        ":cartographer",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 cc_library(
     name = "cartographer",
     srcs = glob(
@@ -57,13 +80,16 @@ cc_library(
         exclude = [
             "**/*_main.cc",
             "**/*_test.cc",
-        ],
+        ] + TEST_LIBRARY_SRCS,
     ),
     hdrs = [
         "common/config.h",
-    ] + glob([
-        "**/*.h",
-    ]),
+    ] + glob(
+        [
+            "**/*.h",
+        ],
+        exclude = TEST_LIBRARY_HDRS,
+    ),
     copts = ["-Wno-sign-compare"],
     includes = ["."],
     deps = [
@@ -83,6 +109,7 @@ cc_library(
     data = ["//:configuration_files"],
     deps = [
         ":cartographer",
+        ":cartographer_test_library",
         "@com_google_googletest//:gtest_main",
     ],
 ) for src in glob(

@@ -25,7 +25,7 @@ message PoseGraphOptions {
   int32 optimize_every_n_nodes = 1;
 
   // Options for the constraint builder.
-  mapping.pose_graph.proto.ConstraintBuilderOptions
+  mapping.constraints.proto.ConstraintBuilderOptions
       constraint_builder_options = 3;
 
   // Weight used in the optimization problem for the translational component of

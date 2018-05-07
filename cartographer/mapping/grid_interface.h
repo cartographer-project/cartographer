@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Cartographer Authors
+ * Copyright 2018 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_CONSTRAINT_BUILDER_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_CONSTRAINT_BUILDER_H_
+#ifndef CARTOGRAPHER_MAPPING_GRID_H_
+#define CARTOGRAPHER_MAPPING_GRID_H_
 
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/pose_graph/proto/constraint_builder_options.pb.h"
+#include <memory>
+#include <utility>
 
 namespace cartographer {
 namespace mapping {
-namespace pose_graph {
 
-proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
-    common::LuaParameterDictionary* parameter_dictionary);
+class GridInterface {
+  // todo(kdaun) move mutual functions of Grid2D/3D here
+};
 
-}  // namespace pose_graph
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_POSE_GRAPH_CONSTRAINT_BUILDER_H_
+#endif  // CARTOGRAPHER_MAPPING_GRID_H_

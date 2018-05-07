@@ -343,7 +343,7 @@ void PoseGraph3D::UpdateTrajectoryConnectivity(const Constraint& constraint) {
 
 void PoseGraph3D::HandleWorkQueue() {
   constraint_builder_.WhenDone(
-      [this](const pose_graph::ConstraintBuilder3D::Result& result) {
+      [this](const constraints::ConstraintBuilder3D::Result& result) {
         {
           common::MutexLocker locker(&mutex_);
           constraints_.insert(constraints_.end(), result.begin(), result.end());
@@ -405,7 +405,7 @@ void PoseGraph3D::WaitForAllComputations() {
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
   constraint_builder_.WhenDone(
       [this,
-       &notification](const pose_graph::ConstraintBuilder3D::Result& result) {
+       &notification](const constraints::ConstraintBuilder3D::Result& result) {
         common::MutexLocker locker(&mutex_);
         constraints_.insert(constraints_.end(), result.begin(), result.end());
         notification = true;

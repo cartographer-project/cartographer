@@ -16,8 +16,8 @@
 
 #include "cartographer/mapping/pose_graph.h"
 
+#include "cartographer/mapping/internal/constraints/constraint_builder.h"
 #include "cartographer/mapping/internal/optimization/optimization_problem_options.h"
-#include "cartographer/mapping/internal/pose_graph/constraint_builder.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -75,7 +75,7 @@ proto::PoseGraphOptions CreatePoseGraphOptions(
   options.set_optimize_every_n_nodes(
       parameter_dictionary->GetInt("optimize_every_n_nodes"));
   *options.mutable_constraint_builder_options() =
-      pose_graph::CreateConstraintBuilderOptions(
+      constraints::CreateConstraintBuilderOptions(
           parameter_dictionary->GetDictionary("constraint_builder").get());
   options.set_matcher_translation_weight(
       parameter_dictionary->GetDouble("matcher_translation_weight"));

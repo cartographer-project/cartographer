@@ -76,7 +76,8 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     return nullptr;
   }
   if (options_.use_online_correlative_scan_matching()) {
-    // todo(kdaun) add CHECK on options to guarantee grid is a probability grid
+    CHECK_EQ(options_.submaps_options().grid_options_2d().grid_type(),
+             proto::GridOptions2D_GridType_PROBABILITY_GRID);
     double score = real_time_correlative_scan_matcher_.Match(
         pose_prediction, filtered_gravity_aligned_point_cloud,
         *static_cast<const ProbabilityGrid*>(matching_submap->grid()),
@@ -315,24 +316,24 @@ void LocalTrajectoryBuilder2D::InitializeExtrapolator(const common::Time time) {
 void LocalTrajectoryBuilder2D::RegisterMetrics(
     metrics::FamilyFactory* family_factory) {
   auto* latency = family_factory->NewGaugeFamily(
-      "/mapping/internal/2d/local_trajectory_builder/latency",
+      "mapping_internal_2d_local_trajectory_builder_latency",
       "Duration from first incoming point cloud in accumulation to local slam "
       "result");
   kLocalSlamLatencyMetric = latency->Add({});
   auto score_boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = family_factory->NewHistogramFamily(
-      "/mapping/internal/2d/local_trajectory_builder/scores",
+      "mapping_internal_2d_local_trajectory_builder_scores",
       "Local scan matcher scores", score_boundaries);
   kFastCorrelativeScanMatcherScoreMetric =
       scores->Add({{"scan_matcher", "fast_correlative"}});
   auto cost_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 100);
   auto* costs = family_factory->NewHistogramFamily(
-      "/mapping/internal/2d/local_trajectory_builder/costs",
+      "mapping_internal_2d_local_trajectory_builder_costs",
       "Local scan matcher costs", cost_boundaries);
   kCeresScanMatcherCostMetric = costs->Add({{"scan_matcher", "ceres"}});
   auto distance_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 10);
   auto* residuals = family_factory->NewHistogramFamily(
-      "/mapping/internal/2d/local_trajectory_builder/residuals",
+      "mapping_internal_2d_local_trajectory_builder_residuals",
       "Local scan matcher residuals", distance_boundaries);
   kScanMatcherResidualDistanceMetric =
       residuals->Add({{"component", "distance"}});

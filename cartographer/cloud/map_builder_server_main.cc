@@ -41,6 +41,7 @@ void Run(const std::string& configuration_directory,
 #if USE_PROMETHEUS
   metrics::prometheus::FamilyFactory registry;
   ::cartographer::metrics::RegisterAllMetrics(&registry);
+  RegisterMapBuilderServerMetrics(&registry);
   ::prometheus::Exposer exposer("0.0.0.0:9100");
   exposer.RegisterCollectable(registry.GetCollectable());
   LOG(INFO) << "Exposing metrics at http://localhost:9100/metrics";

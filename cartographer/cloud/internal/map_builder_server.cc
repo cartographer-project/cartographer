@@ -44,6 +44,7 @@ namespace cartographer {
 namespace cloud {
 namespace {
 
+static auto* kIncomingDataQueueMetric = metrics::Gauge::Null();
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
 }  // namespace
@@ -135,6 +136,7 @@ void MapBuilderServer::Shutdown() {
 void MapBuilderServer::ProcessSensorDataQueue() {
   LOG(INFO) << "Starting SLAM thread.";
   while (!shutting_down_) {
+    kIncomingDataQueueMetric->Set(incoming_data_queue_.Size());
     std::unique_ptr<MapBuilderContextInterface::Data> sensor_data =
         incoming_data_queue_.PopWithTimeout(kPopTimeout);
     if (sensor_data) {
@@ -231,6 +233,13 @@ void MapBuilderServer::NotifyFinishTrajectory(int trajectory_id) {
 void MapBuilderServer::WaitUntilIdle() {
   incoming_data_queue_.WaitUntilEmpty();
   map_builder_->pose_graph()->RunFinalOptimization();
+}
+
+void MapBuilderServer::RegisterMetrics(metrics::FamilyFactory* factory) {
+  auto* queue_length = factory->NewGaugeFamily(
+      "cloud_internal_map_builder_server_incoming_data_queue_length",
+      "Incoming SLAM Data Queue length");
+  kIncomingDataQueueMetric = queue_length->Add({});
 }
 
 }  // namespace cloud

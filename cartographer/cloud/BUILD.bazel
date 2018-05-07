@@ -63,6 +63,7 @@ cc_library(
         "**/*.h",
     ]),
     copts = ["-Wno-sign-compare"],
+    defines = ["USE_PROMETHEUS=1"],
     includes = ["."],
     deps = [
         ":cc_protos",
@@ -93,6 +94,7 @@ cc_binary(
     tags = ["exclusive"],
     deps = [
         ":cartographer_grpc",
+        "//cartographer:cartographer_test_library",
         "@com_google_googletest//:gtest_main",
     ],
 ) for src in glob(
