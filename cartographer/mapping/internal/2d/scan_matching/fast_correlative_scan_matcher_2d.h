@@ -31,7 +31,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/grid_2d.h"
-#include "cartographer/mapping/2d/scan_matching/proto/fast_correlative_scan_matcher_options_2d.pb.h"
+#include "cartographer/mapping/proto/scan_matching/fast_correlative_scan_matcher_options_2d.pb.h"
 #include "cartographer/mapping/internal/2d/scan_matching/correlative_scan_matcher_2d.h"
 #include "cartographer/sensor/point_cloud.h"
 

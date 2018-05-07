@@ -25,7 +25,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
-#include "cartographer/mapping/2d/proto/cell_limits.pb.h"
+#include "cartographer/mapping/proto/2d/cell_limits.pb.h"
 #include "glog/logging.h"
 
 namespace cartographer {
