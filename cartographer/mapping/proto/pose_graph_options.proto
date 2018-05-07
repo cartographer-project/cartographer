@@ -54,5 +54,6 @@ message PoseGraphOptions {
   // If for the duration specified by this option no global contraint has been
   // added between two trajectories, loop closure searches will be performed
   // globally rather than in a smaller search window.
+  // Set to <= 0.0 to disable.
   double global_constraint_search_after_n_seconds = 10;
 }

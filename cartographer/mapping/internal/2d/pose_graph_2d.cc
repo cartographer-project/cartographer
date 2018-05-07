@@ -214,6 +214,7 @@ void PoseGraph2D::ComputeConstraint(const NodeId& node_id,
       data_.trajectory_connectivity_state.LastConnectionTime(
           node_id.trajectory_id, submap_id.trajectory_id);
   if (node_id.trajectory_id == submap_id.trajectory_id ||
+      options_.global_constraint_search_after_n_seconds() <= 0.0 ||
       node_time <
           last_connection_time +
               common::FromSeconds(
