@@ -38,6 +38,11 @@ message TrajectoryBuilderOptions {
     int32 min_added_submaps_count = 3;
   }
   OverlappingSubmapsTrimmerOptions2D overlapping_submaps_trimmer_2d = 5;
+
+  message PureLocalizationTrimmerOptions {
+    int32 max_submaps_to_keep = 1;
+  }
+  PureLocalizationTrimmerOptions pure_localization_trimmer = 6;
 }
 
 message SensorId {
