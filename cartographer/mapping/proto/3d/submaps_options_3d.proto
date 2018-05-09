@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-import "cartographer/mapping/3d/proto/range_data_inserter_options_3d.proto";
+import "cartographer/mapping/proto/3d/range_data_inserter_options_3d.proto";
 
 package cartographer.mapping.proto;
 

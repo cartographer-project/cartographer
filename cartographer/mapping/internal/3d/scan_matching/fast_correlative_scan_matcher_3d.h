@@ -26,10 +26,10 @@
 #include "Eigen/Core"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
-#include "cartographer/mapping/3d/scan_matching/proto/fast_correlative_scan_matcher_options_3d.pb.h"
 #include "cartographer/mapping/internal/2d/scan_matching/fast_correlative_scan_matcher_2d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/precomputation_grid_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
+#include "cartographer/mapping/proto/scan_matching/fast_correlative_scan_matcher_options_3d.pb.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/sensor/point_cloud.h"
 
