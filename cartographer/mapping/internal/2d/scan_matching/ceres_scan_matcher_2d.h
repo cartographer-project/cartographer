@@ -23,7 +23,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/2d/grid_2d.h"
-#include "cartographer/mapping/2d/scan_matching/proto/ceres_scan_matcher_options_2d.pb.h"
+#include "cartographer/mapping/proto/scan_matching/ceres_scan_matcher_options_2d.pb.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "ceres/ceres.h"
 

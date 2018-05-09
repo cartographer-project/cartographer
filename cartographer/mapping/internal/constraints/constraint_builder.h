@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_MAPPING_INTERNAL_CONSTRAINTS_CONSTRAINT_BUILDER_H_
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/pose_graph/proto/constraint_builder_options.pb.h"
+#include "cartographer/mapping/proto/pose_graph/constraint_builder_options.pb.h"
 
 namespace cartographer {
 namespace mapping {

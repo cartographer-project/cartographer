@@ -25,7 +25,7 @@
 #include "cartographer/io/points_processor.h"
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
-#include "cartographer/mapping/2d/proto/probability_grid_range_data_inserter_options_2d.pb.h"
+#include "cartographer/mapping/proto/2d/probability_grid_range_data_inserter_options_2d.pb.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
 
 namespace cartographer {
