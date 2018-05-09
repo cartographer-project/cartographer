@@ -48,7 +48,8 @@ class PoseGraph3DForTesting : public PoseGraph3D {
       const proto::PoseGraphOptions& options,
       std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem,
       common::ThreadPool* thread_pool)
-      : PoseGraph3D(options, std::move(optimization_problem), thread_pool) {}
+      : PoseGraph3D(options, nullptr /* global_slam_optimization_callback */,
+                    std::move(optimization_problem), thread_pool) {}
 
   void WaitForAllComputations() { PoseGraph3D::WaitForAllComputations(); }
 };
