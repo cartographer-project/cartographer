@@ -52,8 +52,9 @@ class PoseGraph : public PoseGraphInterface {
     common::Time time;
   };
 
-  using GlobalSlamOptimizationCallback = std::function<void(
-      const std::map<int, SubmapId>&, const std::map<int, NodeId>&)>;
+  using GlobalSlamOptimizationCallback =
+      std::function<void(const std::map<int /* trajectory_id */, SubmapId>&,
+                         const std::map<int /* trajectory_id */, NodeId>&)>;
 
   PoseGraph() {}
   ~PoseGraph() override {}
