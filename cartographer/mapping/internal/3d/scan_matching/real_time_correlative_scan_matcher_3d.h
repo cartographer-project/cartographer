@@ -21,7 +21,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/mapping/3d/hybrid_grid.h"
-#include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
+#include "cartographer/mapping/proto/scan_matching/real_time_correlative_scan_matcher_options.pb.h"
 #include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
