@@ -123,7 +123,8 @@ class LocklessQueue {
     return list_head_ptr;
   }
 
-  // Pops all data nodes from the list.
+  // Swaps the incoming data list for an empty list and appends all items
+  // to 'data_list_tail_'.
   void SwapLists() {
     Node* node_itr = incoming_data_list_head_.exchange(nullptr);
     if (node_itr == nullptr) {
