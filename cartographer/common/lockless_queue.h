@@ -18,7 +18,6 @@
 #define CARTOGRAPHER_COMMON_LOCKLESS_QUEUE_H_
 
 #include <atomic>
-#include <list>
 #include <memory>
 
 #include "cartographer/common/make_unique.h"
@@ -59,7 +58,7 @@ class LocklessQueue {
   // Pops the oldest data item from the queue. If the queue is empty returns a
   // nullptr.
   std::unique_ptr<T> Pop() {
-    PopAllDataNodes();
+    SwapLists();
     if (data_list_head_ != nullptr) {
       Node* node = data_list_head_;
       data_list_head_ = data_list_head_->next;
@@ -125,7 +124,7 @@ class LocklessQueue {
   }
 
   // Pops all data nodes from the list.
-  void PopAllDataNodes() {
+  void SwapLists() {
     Node* node_itr = incoming_data_list_head_.exchange(nullptr);
     if (node_itr == nullptr) {
       // There is no data on the incoming list.
