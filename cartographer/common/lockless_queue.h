@@ -38,11 +38,14 @@ class LocklessQueue {
   LocklessQueue() {
     free_list_head_ = nullptr;
     incoming_data_list_head_ = nullptr;
+    data_list_head_ = nullptr;
+    data_list_tail_ = nullptr;
   }
 
   ~LocklessQueue() {
-    FreeNodes(&free_list_head_);
-    FreeNodes(&incoming_data_list_head_);
+    FreeNodes(free_list_head_.exchange(nullptr));
+    FreeNodes(incoming_data_list_head_.exchange(nullptr));
+    FreeNodes(data_list_head_);
   }
 
   // Pushes the data item into the queue.
@@ -57,9 +60,11 @@ class LocklessQueue {
   // nullptr.
   std::unique_ptr<T> Pop() {
     PopAllDataNodes();
-    if (outgoing_data_items_.size() > 0u) {
-      std::unique_ptr<T> data = std::move(outgoing_data_items_.front());
-      outgoing_data_items_.pop_front();
+    if (data_list_head_ != nullptr) {
+      Node* node = data_list_head_;
+      data_list_head_ = data_list_head_->next;
+      std::unique_ptr<T> data = std::move(node->data);
+      PushNodeToList(&free_list_head_, node);
       return std::move(data);
     }
     return nullptr;
@@ -81,12 +86,11 @@ class LocklessQueue {
   };
 
   // Deallocates all nodes of the list starting with 'head'.
-  void FreeNodes(std::atomic<Node*>* head) {
-    Node* node_itr = head->exchange(nullptr);
-    while (node_itr != nullptr) {
-      Node* next_node_ptr = node_itr->next;
-      delete node_itr;
-      node_itr = next_node_ptr;
+  void FreeNodes(Node* node) {
+    while (node != nullptr) {
+      Node* next_node_ptr = node->next;
+      delete node;
+      node = next_node_ptr;
     }
   }
 
@@ -120,28 +124,48 @@ class LocklessQueue {
     return list_head_ptr;
   }
 
-  // Pops all data nodes from the list thread-safe
+  // Pops all data nodes from the list.
   void PopAllDataNodes() {
     Node* node_itr = incoming_data_list_head_.exchange(nullptr);
-    std::list<std::unique_ptr<T>> temp_data_list;
+    if (node_itr == nullptr) {
+      // There is no data on the incoming list.
+      return;
+    }
+    // The first node of the incoming data list will become the tail of the
+    // data list.
+    Node* const data_list_tail = node_itr;
+
+    // Reverses the list order. After this operation 'prev_node_itr' points to
+    // head of the new data list items.
+    Node* prev_node_itr = nullptr;
     while (node_itr != nullptr) {
-      Node* next_node_ptr = node_itr->next;
-      temp_data_list.push_front(std::move(node_itr->data));
-      node_itr->data = nullptr;
-      PushNodeToList(&free_list_head_, node_itr);
+      Node* const next_node_ptr = node_itr->next;
+      node_itr->next = prev_node_itr;
+      prev_node_itr = node_itr;
       node_itr = next_node_ptr;
     }
-    outgoing_data_items_.splice(outgoing_data_items_.end(), temp_data_list);
+
+    // If the previous data list was empty, replace head rather than appending
+    // to the list.
+    if (data_list_tail_ == nullptr) {
+      data_list_head_ = prev_node_itr;
+    } else {
+      data_list_tail_->next = prev_node_itr;
+    }
+    data_list_tail_ = data_list_tail;
   }
 
   // Pointer to head node of free list.
   std::atomic<Node*> free_list_head_;
 
-  // Pointer to head node of data list.
+  // Pointer to head node of incoming data list, which is in FILO order.
   std::atomic<Node*> incoming_data_list_head_;
 
-  // List of data items in FIFO order.
-  std::list<std::unique_ptr<T>> outgoing_data_items_;
+  // Pointer to head node of data list.
+  Node* data_list_head_;
+
+  // Pointer to tail node of data list.
+  Node* data_list_tail_;
 };
 
 }  // namespace common
