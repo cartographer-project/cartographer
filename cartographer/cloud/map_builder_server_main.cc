@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/cloud/map_builder_server_interface.h"
+#include "cartographer/cloud/internal/map_builder_server.h"
 #include "cartographer/cloud/map_builder_server_options.h"
 #include "cartographer/mapping/map_builder.h"
 #include "cartographer/metrics/register.h"
@@ -54,12 +54,16 @@ void Run(const std::string& configuration_directory,
   // config.
   map_builder_server_options.mutable_map_builder_options()
       ->set_collate_by_trajectory(true);
-  auto map_builder = common::make_unique<mapping::MapBuilder>(
-      map_builder_server_options.map_builder_options(),
-      nullptr /* global_slam_optimization_callback */);
+
   std::unique_ptr<MapBuilderServerInterface> map_builder_server =
-      CreateMapBuilderServer(map_builder_server_options,
-                             std::move(map_builder));
+      common::make_unique<MapBuilderServer>(
+          map_builder_server_options,
+          [](const mapping::proto::MapBuilderOptions &map_builder_options,
+             mapping::PoseGraph::GlobalSlamOptimizationCallback
+                 global_slam_optimization_callback) {
+            return common::make_unique<mapping::MapBuilder>(
+                map_builder_options, global_slam_optimization_callback);
+          });
   map_builder_server->Start();
   map_builder_server->WaitForShutdown();
 }

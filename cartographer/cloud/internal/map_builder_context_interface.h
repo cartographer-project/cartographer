@@ -19,6 +19,7 @@
 
 #include "async_grpc/execution_context.h"
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
+#include "cartographer/cloud/internal/pose_uploader.h"
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/mapping/map_builder_interface.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
@@ -70,6 +71,7 @@ class MapBuilderContextInterface : public async_grpc::ExecutionContext {
       const SubscriptionId& subscription_id) = 0;
   virtual void NotifyFinishTrajectory(int trajectory_id) = 0;
   virtual LocalTrajectoryUploaderInterface* local_trajectory_uploader() = 0;
+  virtual PoseUploaderInterface *pose_uploader() = 0;
   virtual void EnqueueSensorData(int trajectory_id,
                                  std::unique_ptr<sensor::Data> data) = 0;
   virtual void EnqueueLocalSlamResultData(

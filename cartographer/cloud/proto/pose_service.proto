@@ -1,4 +1,4 @@
-// Copyright 2017 The Cartographer Authors
+// Copyright 2018 The Cartographer Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,18 +14,24 @@
 
 syntax = "proto3";
 
-import "cartographer/mapping/proto/map_builder_options.proto";
+import "cartographer/transform/proto/transform.proto";
+import "google/protobuf/empty.proto";
 
 package cartographer.cloud.proto;
 
-message MapBuilderServerOptions {
-  string server_address = 1;
-  int32 num_grpc_threads = 2;
-  int32 num_event_threads = 3;
-  cartographer.mapping.proto.MapBuilderOptions map_builder_options = 4;
-  string uplink_server_address = 5;
-  int32 trajectory_upload_batch_size = 6;
-  bool enable_ssl_encryption = 7;
-  string pose_server_address = 8;
-  int32 pose_upload_batch_size = 9;
+service PoseService {
+  rpc AddPoseBatch(AddPoseBatchRequest) returns (google.protobuf.Empty);
+}
+
+message AddPoseBatchRequest {
+  // ID of the localized agent reporting the poses.
+  string agent_id = 1;
+
+  // Keyframes of odom to map frame transform.
+  map<int64 /* timestamp */, cartographer.transform.proto.Rigid3d>
+      odom_to_global = 2;
+
+  // Keyframes of odometry transform.
+  map<int64 /* timestamp */, cartographer.transform.proto.Rigid3d>
+      base_link_to_odom = 3;
 }
