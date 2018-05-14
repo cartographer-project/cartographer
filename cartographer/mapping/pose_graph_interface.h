@@ -89,43 +89,46 @@ class PoseGraphInterface {
   virtual void RunFinalOptimization() = 0;
 
   // Returns data for all submaps.
-  virtual MapById<SubmapId, SubmapData> GetAllSubmapData() = 0;
+  virtual MapById<SubmapId, SubmapData> GetAllSubmapData() const = 0;
 
   // Returns the global poses for all submaps.
-  virtual MapById<SubmapId, SubmapPose> GetAllSubmapPoses() = 0;
+  virtual MapById<SubmapId, SubmapPose> GetAllSubmapPoses() const = 0;
 
   // Returns the transform converting data in the local map frame (i.e. the
   // continuous, non-loop-closed frame) into the global map frame (i.e. the
   // discontinuous, loop-closed frame).
-  virtual transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id) = 0;
+  virtual transform::Rigid3d GetLocalToGlobalTransform(
+      int trajectory_id) const = 0;
 
   // Returns the current optimized trajectories.
-  virtual MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() = 0;
+  virtual MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() const = 0;
 
   // Returns the current optimized trajectory poses.
-  virtual MapById<NodeId, TrajectoryNodePose> GetTrajectoryNodePoses() = 0;
+  virtual MapById<NodeId, TrajectoryNodePose> GetTrajectoryNodePoses()
+      const = 0;
 
   // Returns the current optimized landmark poses.
-  virtual std::map<std::string, transform::Rigid3d> GetLandmarkPoses() = 0;
+  virtual std::map<std::string, transform::Rigid3d> GetLandmarkPoses()
+      const = 0;
 
   // Sets global pose of landmark 'landmark_id' to given 'global_pose'.
   virtual void SetLandmarkPose(const std::string& landmark_id,
                                const transform::Rigid3d& global_pose) = 0;
 
   // Checks if the given trajectory is finished.
-  virtual bool IsTrajectoryFinished(int trajectory_id) = 0;
+  virtual bool IsTrajectoryFinished(int trajectory_id) const = 0;
 
   // Checks if the given trajectory is frozen.
-  virtual bool IsTrajectoryFrozen(int trajectory_id) = 0;
+  virtual bool IsTrajectoryFrozen(int trajectory_id) const = 0;
 
   // Returns the trajectory data.
-  virtual std::map<int, TrajectoryData> GetTrajectoryData() = 0;
+  virtual std::map<int, TrajectoryData> GetTrajectoryData() const = 0;
 
   // Returns the collection of constraints.
-  virtual std::vector<Constraint> constraints() = 0;
+  virtual std::vector<Constraint> constraints() const = 0;
 
   // Serializes the constraints and trajectories.
-  virtual proto::PoseGraph ToProto() = 0;
+  virtual proto::PoseGraph ToProto() const = 0;
 };
 
 }  // namespace mapping

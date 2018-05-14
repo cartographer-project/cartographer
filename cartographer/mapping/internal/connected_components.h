@@ -52,27 +52,28 @@ class ConnectedComponents {
   // either trajectory is not being tracked, returns false, except when it is
   // the same trajectory, where it returns true. This function is invariant to
   // the order of its arguments.
-  bool TransitivelyConnected(int trajectory_id_a, int trajectory_id_b)
+  bool TransitivelyConnected(int trajectory_id_a, int trajectory_id_b) const
       EXCLUDES(lock_);
 
   // Return the number of _direct_ connections between 'trajectory_id_a' and
   // 'trajectory_id_b'. If either trajectory is not being tracked, returns 0.
   // This function is invariant to the order of its arguments.
-  int ConnectionCount(int trajectory_id_a, int trajectory_id_b) EXCLUDES(lock_);
+  int ConnectionCount(int trajectory_id_a, int trajectory_id_b) const
+      EXCLUDES(lock_);
 
   // The trajectory IDs, grouped by connectivity.
-  std::vector<std::vector<int>> Components() EXCLUDES(lock_);
+  std::vector<std::vector<int>> Components() const EXCLUDES(lock_);
 
   // The list of trajectory IDs that belong to the same connected component as
   // 'trajectory_id'.
-  std::vector<int> GetComponent(int trajectory_id) EXCLUDES(lock_);
+  std::vector<int> GetComponent(int trajectory_id) const EXCLUDES(lock_);
 
  private:
   // Find the representative and compresses the path to it.
-  int FindSet(int trajectory_id) REQUIRES(lock_);
+  int FindSet(int trajectory_id) const REQUIRES(lock_);
   void Union(int trajectory_id_a, int trajectory_id_b) REQUIRES(lock_);
 
-  common::Mutex lock_;
+  mutable common::Mutex lock_;
   // Tracks transitive connectivity using a disjoint set forest, i.e. each
   // entry points towards the representative for the given trajectory.
   std::map<int, int> forest_ GUARDED_BY(lock_);
