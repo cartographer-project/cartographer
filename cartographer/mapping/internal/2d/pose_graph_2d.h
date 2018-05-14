@@ -61,6 +61,7 @@ class PoseGraph2D : public PoseGraph {
  public:
   PoseGraph2D(
       const proto::PoseGraphOptions& options,
+      GlobalSlamOptimizationCallback global_slam_optimization_callback,
       std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem,
       common::ThreadPool* thread_pool);
   ~PoseGraph2D() override;
@@ -186,9 +187,9 @@ class PoseGraph2D : public PoseGraph {
   void ComputeConstraintsForOldNodes(const SubmapId& submap_id)
       REQUIRES(mutex_);
 
-  // Registers the callback to run the optimization once all constraints have
-  // been computed, that will also do all work that queue up in 'work_queue_'.
-  void HandleWorkQueue() REQUIRES(mutex_);
+  // Runs the optimization, executes the trimmers and processes the work queue.
+  void HandleWorkQueue(const constraints::ConstraintBuilder2D::Result& result)
+      REQUIRES(mutex_);
 
   // Waits until we caught up (i.e. nothing is waiting to be scheduled), and
   // all computations have finished.
@@ -215,6 +216,7 @@ class PoseGraph2D : public PoseGraph {
       REQUIRES(mutex_);
 
   const proto::PoseGraphOptions options_;
+  GlobalSlamOptimizationCallback global_slam_optimization_callback_;
   common::Mutex mutex_;
 
   // If it exists, further work items must be added to this queue, and will be

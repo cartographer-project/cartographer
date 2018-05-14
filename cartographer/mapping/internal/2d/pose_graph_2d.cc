@@ -41,9 +41,11 @@ namespace mapping {
 
 PoseGraph2D::PoseGraph2D(
     const proto::PoseGraphOptions& options,
+    GlobalSlamOptimizationCallback global_slam_optimization_callback,
     std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem,
     common::ThreadPool* thread_pool)
     : options_(options),
+      global_slam_optimization_callback_(global_slam_optimization_callback),
       optimization_problem_(std::move(optimization_problem)),
       constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
 
@@ -301,7 +303,8 @@ void PoseGraph2D::DispatchOptimization() {
   // If there is a 'work_queue_' already, some other thread will take care.
   if (work_queue_ == nullptr) {
     work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
-    HandleWorkQueue();
+    constraint_builder_.WhenDone(
+        std::bind(&PoseGraph2D::HandleWorkQueue, this, std::placeholders::_1));
   }
 }
 common::Time PoseGraph2D::GetLatestNodeTime(const NodeId& node_id,
@@ -326,44 +329,62 @@ void PoseGraph2D::UpdateTrajectoryConnectivity(const Constraint& constraint) {
                                          time);
 }
 
-void PoseGraph2D::HandleWorkQueue() {
+void PoseGraph2D::HandleWorkQueue(
+    const constraints::ConstraintBuilder2D::Result& result) {
+  {
+    common::MutexLocker locker(&mutex_);
+    constraints_.insert(constraints_.end(), result.begin(), result.end());
+  }
+  RunOptimization();
+
+  if (global_slam_optimization_callback_) {
+    std::map<int, NodeId> trajectory_id_to_last_optimized_node_id;
+    std::map<int, SubmapId> trajectory_id_to_last_optimized_submap_id;
+    {
+      common::MutexLocker locker(&mutex_);
+      const auto& submap_data = optimization_problem_->submap_data();
+      const auto& node_data = optimization_problem_->node_data();
+      for (const int trajectory_id : node_data.trajectory_ids()) {
+        trajectory_id_to_last_optimized_node_id[trajectory_id] =
+            std::prev(node_data.EndOfTrajectory(trajectory_id))->id;
+        trajectory_id_to_last_optimized_submap_id[trajectory_id] =
+            std::prev(submap_data.EndOfTrajectory(trajectory_id))->id;
+      }
+    }
+    global_slam_optimization_callback_(
+        trajectory_id_to_last_optimized_submap_id,
+        trajectory_id_to_last_optimized_node_id);
+  }
+
+  common::MutexLocker locker(&mutex_);
+  for (const Constraint& constraint : result) {
+    UpdateTrajectoryConnectivity(constraint);
+  }
+  TrimmingHandle trimming_handle(this);
+  for (auto& trimmer : trimmers_) {
+    trimmer->Trim(&trimming_handle);
+  }
+  trimmers_.erase(
+      std::remove_if(trimmers_.begin(), trimmers_.end(),
+                     [](std::unique_ptr<PoseGraphTrimmer>& trimmer) {
+                       return trimmer->IsFinished();
+                     }),
+      trimmers_.end());
+
+  num_nodes_since_last_loop_closure_ = 0;
+  run_loop_closure_ = false;
+  while (!run_loop_closure_) {
+    if (work_queue_->empty()) {
+      work_queue_.reset();
+      return;
+    }
+    work_queue_->front()();
+    work_queue_->pop_front();
+  }
+  LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
+  // We have to optimize again.
   constraint_builder_.WhenDone(
-      [this](const constraints::ConstraintBuilder2D::Result& result) {
-        {
-          common::MutexLocker locker(&mutex_);
-          constraints_.insert(constraints_.end(), result.begin(), result.end());
-        }
-        RunOptimization();
-
-        common::MutexLocker locker(&mutex_);
-        for (const Constraint& constraint : result) {
-          UpdateTrajectoryConnectivity(constraint);
-        }
-        TrimmingHandle trimming_handle(this);
-        for (auto& trimmer : trimmers_) {
-          trimmer->Trim(&trimming_handle);
-        }
-        trimmers_.erase(
-            std::remove_if(trimmers_.begin(), trimmers_.end(),
-                           [](std::unique_ptr<PoseGraphTrimmer>& trimmer) {
-                             return trimmer->IsFinished();
-                           }),
-            trimmers_.end());
-
-        num_nodes_since_last_loop_closure_ = 0;
-        run_loop_closure_ = false;
-        while (!run_loop_closure_) {
-          if (work_queue_->empty()) {
-            work_queue_.reset();
-            return;
-          }
-          work_queue_->front()();
-          work_queue_->pop_front();
-        }
-        LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
-        // We have to optimize again.
-        HandleWorkQueue();
-      });
+      std::bind(&PoseGraph2D::HandleWorkQueue, this, std::placeholders::_1));
 }
 
 void PoseGraph2D::WaitForAllComputations() {

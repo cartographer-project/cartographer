@@ -60,6 +60,7 @@ class PoseGraph3D : public PoseGraph {
  public:
   PoseGraph3D(
       const proto::PoseGraphOptions& options,
+      GlobalSlamOptimizationCallback global_slam_optimization_callback,
       std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem,
       common::ThreadPool* thread_pool);
   ~PoseGraph3D() override;
@@ -189,9 +190,9 @@ class PoseGraph3D : public PoseGraph {
   void ComputeConstraintsForOldNodes(const SubmapId& submap_id)
       REQUIRES(mutex_);
 
-  // Registers the callback to run the optimization once all constraints have
-  // been computed, that will also do all work that queue up in 'work_queue_'.
-  void HandleWorkQueue() REQUIRES(mutex_);
+  // Runs the optimization, executes the trimmers and processes the work queue.
+  void HandleWorkQueue(const constraints::ConstraintBuilder3D::Result& result)
+      REQUIRES(mutex_);
 
   // Runs the optimization. Callers have to make sure, that there is only one
   // optimization being run at a time.
@@ -219,6 +220,7 @@ class PoseGraph3D : public PoseGraph {
       REQUIRES(mutex_);
 
   const proto::PoseGraphOptions options_;
+  GlobalSlamOptimizationCallback global_slam_optimization_callback_;
   common::Mutex mutex_;
 
   // If it exists, further work items must be added to this queue, and will be
