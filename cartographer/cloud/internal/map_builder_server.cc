@@ -177,18 +177,18 @@ void MapBuilderServer::OnGlobalSlamResult(
           // If we have uploaded global poses from this trajectory previously,
           // jump behind the last uploaded pose.
           node_it = trajectory_nodes.find(last_global_node_id);
-          CHECK_NE(node_it, trajectory_nodes.trajectory(trajectory_id).end());
+          CHECK(node_it != trajectory_nodes.trajectory(trajectory_id).end());
           ++node_it;
         }
         auto node_it_end =
             trajectory_nodes.find(last_optimized_nodes.at(trajectory_id));
-        CHECK_NE(node_it_end, trajectory_nodes.trajectory(trajectory_id).end());
+        CHECK(node_it_end != trajectory_nodes.trajectory(trajectory_id).end());
 
         for (; node_it != node_it_end; ++node_it) {
           pose_uploader_->EnqueueGlobalPose(
-              node_it->data.time(), node_it->.id,
-              node_it->.data.constant_data->local_pose,
-              node_it->.data.global_pose);
+              node_it->data.time(), node_it->id,
+              node_it->data.constant_data->local_pose,
+              node_it->data.global_pose);
         }
       }
     }
