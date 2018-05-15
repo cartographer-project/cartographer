@@ -74,7 +74,7 @@ class ClientServerTest : public ::testing::Test {
       MAP_BUILDER_SERVER.num_grpc_threads = 1
       MAP_BUILDER_SERVER.uplink_server_address = "localhost:50051"
       MAP_BUILDER_SERVER.server_address = "0.0.0.0:50052"
-      MAP_BUILDER_SERVER.upload_batch_size = 1
+      MAP_BUILDER_SERVER.trajectory_upload_batch_size = 1
       return MAP_BUILDER_SERVER)text";
     auto uploading_map_builder_server_parameters =
         mapping::test::ResolveLuaParameters(kUploadingMapBuilderServerLua);
