@@ -164,20 +164,31 @@ void MapBuilderServer::StartSlamThread() {
 }
 
 void MapBuilderServer::OnGlobalSlamResult(
-    const std::map<int, mapping::SubmapId> &last_optimized_submaps,
-    const std::map<int, mapping::NodeId> &last_optimized_nodes) {
+    const std::map<int, mapping::SubmapId>& last_optimized_submaps,
+    const std::map<int, mapping::NodeId>& last_optimized_nodes) {
   if (pose_uploader_) {
     auto trajectory_nodes = map_builder_->pose_graph()->GetTrajectoryNodes();
     for (const int trajectory_id : trajectory_nodes.trajectory_ids()) {
       if (pose_uploader_->active_trajectory_id() == trajectory_id) {
         mapping::NodeId last_global_node_id =
             pose_uploader_->last_global_node_id();
-        for (const auto &node : trajectory_nodes.trajectory(trajectory_id)) {
-          if (node.id.node_index > last_global_node_id.node_index) {
-            pose_uploader_->EnqueueGlobalPose(
-                node.data.time(), node.id, node.data.constant_data->local_pose,
-                node.data.global_pose);
-          }
+        auto node_it = trajectory_nodes.trajectory(trajectory_id).begin();
+        if (last_global_node_id.node_index > -1) {
+          // If we have uploaded global poses from this trajectory previously,
+          // jump behind the last uploaded pose.
+          node_it = trajectory_nodes.find(last_global_node_id);
+          CHECK_NE(node_it, trajectory_nodes.trajectory(trajectory_id).end());
+          ++node_it;
+        }
+        auto node_it_end =
+            trajectory_nodes.find(last_optimized_nodes.at(trajectory_id));
+        CHECK_NE(node_it_end, trajectory_nodes.trajectory(trajectory_id).end());
+
+        for (; node_it != node_it_end; ++node_it) {
+          pose_uploader_->EnqueueGlobalPose(
+              node_it->data.time(), node_it->.id,
+              node_it->.data.constant_data->local_pose,
+              node_it->.data.global_pose);
         }
       }
     }

@@ -64,8 +64,7 @@ PoseUploader::PoseUploader(const std::string &pose_server_address,
 void PoseUploader::EnqueueLocalPose(common::Time time, int trajectory_id,
                                     const transform::Rigid3d &local_pose) {
   CHECK_EQ(trajectory_id, active_trajectory_id_);
-
-  // TODO(cschuet): Enqueue pose.
+  // TODO(cschuet): Enqueue pose for uploading.
 }
 
 void PoseUploader::EnqueueGlobalPose(common::Time time,
@@ -74,8 +73,7 @@ void PoseUploader::EnqueueGlobalPose(common::Time time,
                                      const transform::Rigid3d &global_pose) {
   CHECK_EQ(node_id.trajectory_id, active_trajectory_id_);
   last_global_node_id_.node_index = node_id.node_index;
-
-  // TODO(cschuet): Enqueue pose.
+  // TODO(cschuet): Enqueue pose for uploading.
 }
 
 void PoseUploader::SetActiveTrajectory(int trajectory_id) {
