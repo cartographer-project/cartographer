@@ -31,22 +31,25 @@ class PoseGraphStub : public ::cartographer::mapping::PoseGraphInterface {
   PoseGraphStub& operator=(const PoseGraphStub&) = delete;
 
   void RunFinalOptimization() override;
-  mapping::MapById<mapping::SubmapId, SubmapData> GetAllSubmapData() override;
-  mapping::MapById<mapping::SubmapId, SubmapPose> GetAllSubmapPoses() override;
-  transform::Rigid3d GetLocalToGlobalTransform(int trajectory_id) override;
+  mapping::MapById<mapping::SubmapId, SubmapData> GetAllSubmapData()
+      const override;
+  mapping::MapById<mapping::SubmapId, SubmapPose> GetAllSubmapPoses()
+      const override;
+  transform::Rigid3d GetLocalToGlobalTransform(
+      int trajectory_id) const override;
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
-  GetTrajectoryNodes() override;
+  GetTrajectoryNodes() const override;
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose>
-  GetTrajectoryNodePoses() override;
-  std::map<std::string, transform::Rigid3d> GetLandmarkPoses() override;
+  GetTrajectoryNodePoses() const override;
+  std::map<std::string, transform::Rigid3d> GetLandmarkPoses() const override;
   void SetLandmarkPose(const std::string& landmark_id,
                        const transform::Rigid3d& global_pose) override;
-  bool IsTrajectoryFinished(int trajectory_id) override;
-  bool IsTrajectoryFrozen(int trajectory_id) override;
+  bool IsTrajectoryFinished(int trajectory_id) const override;
+  bool IsTrajectoryFrozen(int trajectory_id) const override;
   std::map<int, mapping::PoseGraphInterface::TrajectoryData> GetTrajectoryData()
-      override;
-  std::vector<Constraint> constraints() override;
-  mapping::proto::PoseGraph ToProto() override;
+      const override;
+  std::vector<Constraint> constraints() const override;
+  mapping::proto::PoseGraph ToProto() const override;
 
  private:
   std::shared_ptr<::grpc::Channel> client_channel_;
