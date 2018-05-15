@@ -449,7 +449,6 @@ void PoseGraph3D::FinishTrajectory(const int trajectory_id) {
 }
 
 bool PoseGraph3D::IsTrajectoryFinished(const int trajectory_id) const {
-  common::MutexLocker locker(&mutex_);
   return finished_trajectories_.count(trajectory_id) > 0;
 }
 
@@ -463,7 +462,6 @@ void PoseGraph3D::FreezeTrajectory(const int trajectory_id) {
 }
 
 bool PoseGraph3D::IsTrajectoryFrozen(const int trajectory_id) const {
-  common::MutexLocker locker(&mutex_);
   return frozen_trajectories_.count(trajectory_id) > 0;
 }
 

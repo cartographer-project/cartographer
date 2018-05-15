@@ -434,7 +434,6 @@ void PoseGraph2D::FinishTrajectory(const int trajectory_id) {
 }
 
 bool PoseGraph2D::IsTrajectoryFinished(const int trajectory_id) const {
-  common::MutexLocker locker(&mutex_);
   return finished_trajectories_.count(trajectory_id) > 0;
 }
 
@@ -448,7 +447,6 @@ void PoseGraph2D::FreezeTrajectory(const int trajectory_id) {
 }
 
 bool PoseGraph2D::IsTrajectoryFrozen(const int trajectory_id) const {
-  common::MutexLocker locker(&mutex_);
   return frozen_trajectories_.count(trajectory_id) > 0;
 }
 
