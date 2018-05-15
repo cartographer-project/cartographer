@@ -50,17 +50,18 @@ void ConnectedComponents::Union(const int trajectory_id_a,
   forest_[representative_a] = representative_b;
 }
 
-int ConnectedComponents::FindSet(const int trajectory_id) const {
+int ConnectedComponents::FindSet(const int trajectory_id) {
   auto it = forest_.find(trajectory_id);
   CHECK(it != forest_.end());
   if (it->first != it->second) {
-    return FindSet(it->second);
+    // Path compression for efficiency.
+    it->second = FindSet(it->second);
   }
   return it->second;
 }
 
-bool ConnectedComponents::TransitivelyConnected(
-    const int trajectory_id_a, const int trajectory_id_b) const {
+bool ConnectedComponents::TransitivelyConnected(const int trajectory_id_a,
+                                                const int trajectory_id_b) {
   if (trajectory_id_a == trajectory_id_b) {
     return true;
   }
@@ -74,7 +75,7 @@ bool ConnectedComponents::TransitivelyConnected(
   return FindSet(trajectory_id_a) == FindSet(trajectory_id_b);
 }
 
-std::vector<std::vector<int>> ConnectedComponents::Components() const {
+std::vector<std::vector<int>> ConnectedComponents::Components() {
   // Map from cluster exemplar -> growing cluster.
   std::unordered_map<int, std::vector<int>> map;
   common::MutexLocker locker(&lock_);
@@ -91,8 +92,7 @@ std::vector<std::vector<int>> ConnectedComponents::Components() const {
   return result;
 }
 
-std::vector<int> ConnectedComponents::GetComponent(
-    const int trajectory_id) const {
+std::vector<int> ConnectedComponents::GetComponent(const int trajectory_id) {
   common::MutexLocker locker(&lock_);
   const int set_id = FindSet(trajectory_id);
   std::vector<int> trajectory_ids;
@@ -105,7 +105,7 @@ std::vector<int> ConnectedComponents::GetComponent(
 }
 
 int ConnectedComponents::ConnectionCount(const int trajectory_id_a,
-                                         const int trajectory_id_b) const {
+                                         const int trajectory_id_b) {
   common::MutexLocker locker(&lock_);
   const auto it =
       connection_map_.find(std::minmax(trajectory_id_a, trajectory_id_b));

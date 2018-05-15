@@ -60,7 +60,8 @@ class TrajectoryConnectivityState {
   common::Time LastConnectionTime(int trajectory_id_a, int trajectory_id_b);
 
  private:
-  ConnectedComponents connected_components_;
+  // ConnectedComponents are thread safe.
+  mutable ConnectedComponents connected_components_;
 
   // Tracks the last time a direct connection between two trajectories has
   // been added. The exception is when a connection between two trajectories
