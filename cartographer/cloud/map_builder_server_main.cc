@@ -58,7 +58,7 @@ void Run(const std::string& configuration_directory,
   std::unique_ptr<MapBuilderServerInterface> map_builder_server =
       common::make_unique<MapBuilderServer>(
           map_builder_server_options,
-          [](const mapping::proto::MapBuilderOptions &map_builder_options,
+          [](const mapping::proto::MapBuilderOptions& map_builder_options,
              mapping::PoseGraph::GlobalSlamOptimizationCallback
                  global_slam_optimization_callback) {
             return common::make_unique<mapping::MapBuilder>(

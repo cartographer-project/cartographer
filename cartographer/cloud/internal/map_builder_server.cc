@@ -50,7 +50,7 @@ const common::Duration kPopTimeout = common::FromMilliseconds(100);
 }  // namespace
 
 MapBuilderServer::MapBuilderServer(
-    const proto::MapBuilderServerOptions &map_builder_server_options,
+    const proto::MapBuilderServerOptions& map_builder_server_options,
     MapBuilderServer::MapBuilderFactory map_builder_factory)
     : map_builder_(map_builder_factory(
           map_builder_server_options.map_builder_options(),

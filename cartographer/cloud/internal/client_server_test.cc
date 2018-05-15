@@ -108,10 +108,9 @@ class ClientServerTest : public ::testing::Test {
   }
 
   void InitializeRealServer() {
-
     server_ = common::make_unique<MapBuilderServer>(
         map_builder_server_options_,
-        [](const mapping::proto::MapBuilderOptions &map_builder_options,
+        [](const mapping::proto::MapBuilderOptions& map_builder_options,
            mapping::PoseGraph::GlobalSlamOptimizationCallback
                global_slam_optimization_callback) {
           return common::make_unique<MapBuilder>(
@@ -123,7 +122,7 @@ class ClientServerTest : public ::testing::Test {
   void InitializeRealUploadingServer() {
     uploading_server_ = common::make_unique<MapBuilderServer>(
         uploading_map_builder_server_options_,
-        [](const mapping::proto::MapBuilderOptions &map_builder_options,
+        [](const mapping::proto::MapBuilderOptions& map_builder_options,
            mapping::PoseGraph::GlobalSlamOptimizationCallback
                global_slam_optimization_callback) {
           return common::make_unique<MapBuilder>(
@@ -133,10 +132,9 @@ class ClientServerTest : public ::testing::Test {
   }
 
   void InitializeServerWithMockMapBuilder() {
-
     server_ = common::make_unique<MapBuilderServer>(
         map_builder_server_options_,
-        [this](const mapping::proto::MapBuilderOptions &,
+        [this](const mapping::proto::MapBuilderOptions&,
                mapping::PoseGraph::GlobalSlamOptimizationCallback) {
           auto mock_map_builder = common::make_unique<MockMapBuilder>();
           mock_map_builder_ = mock_map_builder.get();

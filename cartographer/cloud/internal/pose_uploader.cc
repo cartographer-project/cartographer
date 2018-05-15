@@ -31,7 +31,7 @@ DEFINE_HANDLER_SIGNATURE(AddPoseBatchSignature, proto::AddPoseBatchRequest,
                          "/cartographer.cloud.proto.PoseService/AddPoseBatch")
 
 class PoseUploader : public PoseUploaderInterface {
-public:
+ public:
   PoseUploader(const std::string &pose_server_address, int batch_size,
                bool enable_ssl_encryption);
   void EnqueueLocalPose(common::Time time, int trajectory_id,
@@ -45,7 +45,7 @@ public:
     return last_global_node_id_;
   }
 
-private:
+ private:
   std::shared_ptr<::grpc::Channel> client_channel_;
   int batch_size_;
   int active_trajectory_id_ = -1;
@@ -81,14 +81,14 @@ void PoseUploader::SetActiveTrajectory(int trajectory_id) {
   last_global_node_id_ = mapping::NodeId{trajectory_id, -1};
 }
 
-} // namespace
+}  // namespace
 
-std::unique_ptr<PoseUploaderInterface>
-CreatePoseUploader(const std::string &pose_server_address, int batch_size,
-                   bool enable_ssl_encryption) {
+std::unique_ptr<PoseUploaderInterface> CreatePoseUploader(
+    const std::string &pose_server_address, int batch_size,
+    bool enable_ssl_encryption) {
   return common::make_unique<PoseUploader>(pose_server_address, batch_size,
                                            enable_ssl_encryption);
 }
 
-} // namespace cloud
-} // namespace cartographer
+}  // namespace cloud
+}  // namespace cartographer

@@ -56,7 +56,7 @@ class MapBuilderContext : public MapBuilderContextInterface {
       const SubscriptionId& subscription_id) override;
   void NotifyFinishTrajectory(int trajectory_id) override;
   LocalTrajectoryUploaderInterface* local_trajectory_uploader() override;
-  PoseUploaderInterface *pose_uploader() override;
+  PoseUploaderInterface* pose_uploader() override;
   void EnqueueSensorData(int trajectory_id,
                          std::unique_ptr<sensor::Data> data) override;
   void EnqueueLocalSlamResultData(int trajectory_id,
@@ -71,34 +71,34 @@ class MapBuilderContext : public MapBuilderContextInterface {
 
 class MapBuilderServer : public MapBuilderServerInterface {
  public:
-   using MapBuilderFactory =
-       std::function<std::unique_ptr<mapping::MapBuilderInterface>(
-           const mapping::proto::MapBuilderOptions &,
-           mapping::PoseGraph::GlobalSlamOptimizationCallback)>;
-   friend MapBuilderContext<mapping::Submap2D>;
-   friend MapBuilderContext<mapping::Submap3D>;
+  using MapBuilderFactory =
+      std::function<std::unique_ptr<mapping::MapBuilderInterface>(
+          const mapping::proto::MapBuilderOptions&,
+          mapping::PoseGraph::GlobalSlamOptimizationCallback)>;
+  friend MapBuilderContext<mapping::Submap2D>;
+  friend MapBuilderContext<mapping::Submap3D>;
 
-   MapBuilderServer(
-       const proto::MapBuilderServerOptions &map_builder_server_options,
-       MapBuilderFactory map_builder_factory);
-   ~MapBuilderServer() {}
+  MapBuilderServer(
+      const proto::MapBuilderServerOptions& map_builder_server_options,
+      MapBuilderFactory map_builder_factory);
+  ~MapBuilderServer() {}
 
-   // Starts the gRPC server, the 'LocalTrajectoryUploader' and the SLAM thread.
-   void Start() final;
+  // Starts the gRPC server, the 'LocalTrajectoryUploader' and the SLAM thread.
+  void Start() final;
 
-   // Waits for the 'MapBuilderServer' to shut down. Note: The server must be
-   // either shutting down or some other thread must call 'Shutdown()' for this
-   // function to ever return.
-   void WaitForShutdown() final;
+  // Waits for the 'MapBuilderServer' to shut down. Note: The server must be
+  // either shutting down or some other thread must call 'Shutdown()' for this
+  // function to ever return.
+  void WaitForShutdown() final;
 
-   // Waits until all computation is finished (for testing).
-   void WaitUntilIdle() final;
+  // Waits until all computation is finished (for testing).
+  void WaitUntilIdle() final;
 
-   // Shuts down the gRPC server, the 'LocalTrajectoryUploader' and the SLAM
-   // thread.
-   void Shutdown() final;
+  // Shuts down the gRPC server, the 'LocalTrajectoryUploader' and the SLAM
+  // thread.
+  void Shutdown() final;
 
-   static void RegisterMetrics(metrics::FamilyFactory *family_factory);
+  static void RegisterMetrics(metrics::FamilyFactory* family_factory);
 
  private:
   using LocalSlamResultHandlerSubscriptions =
@@ -108,8 +108,8 @@ class MapBuilderServer : public MapBuilderServerInterface {
   void ProcessSensorDataQueue();
   void StartSlamThread();
   void OnGlobalSlamResult(
-      const std::map<int, mapping::SubmapId> &last_optimized_submaps,
-      const std::map<int, mapping::NodeId> &last_optimized_nodes);
+      const std::map<int, mapping::SubmapId>& last_optimized_submaps,
+      const std::map<int, mapping::NodeId>& last_optimized_nodes);
   void OnLocalSlamResult(
       int trajectory_id, common::Time time, transform::Rigid3d local_pose,
       sensor::RangeData range_data,

@@ -26,7 +26,7 @@ namespace cartographer {
 namespace cloud {
 
 class PoseUploaderInterface {
-public:
+ public:
   virtual void EnqueueLocalPose(common::Time time, int trajectory_id,
                                 const transform::Rigid3d &local_pose) = 0;
   virtual void EnqueueGlobalPose(common::Time time,
@@ -39,11 +39,11 @@ public:
 };
 
 // Returns PoseUploader with the actual implementation.
-std::unique_ptr<PoseUploaderInterface>
-CreatePoseUploader(const std::string &pose_server_address, int batch_size,
-                   bool enable_ssl_encryption);
+std::unique_ptr<PoseUploaderInterface> CreatePoseUploader(
+    const std::string &pose_server_address, int batch_size,
+    bool enable_ssl_encryption);
 
-} // namespace cloud
-} // namespace cartographer
+}  // namespace cloud
+}  // namespace cartographer
 
-#endif // CARTOGRAPHER_CLOUD_INTERNAL_POSE_UPLOADER_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_POSE_UPLOADER_H

@@ -86,7 +86,7 @@ MapBuilderContext<SubmapType>::local_trajectory_uploader() {
 }
 
 template <class SubmapType>
-PoseUploaderInterface *MapBuilderContext<SubmapType>::pose_uploader() {
+PoseUploaderInterface* MapBuilderContext<SubmapType>::pose_uploader() {
   return map_builder_server_->pose_uploader_.get();
 }
 
