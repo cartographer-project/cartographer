@@ -43,6 +43,11 @@ DEFINE_string(relations_filename, "",
 DEFINE_bool(read_text_file_with_unix_timestamps, false,
             "Enable support for the relations text files as in the paper. "
             "Default is to read from a GroundTruth proto file.");
+DEFINE_bool(write_relation_metrics, false,
+            "Enable exporting relation metrics as comma-separated values.");
+DEFINE_string(relation_metrics_filename, "",
+              "Export target for relation metrics. Defaults to "
+              "[pose_graph_filename].relation_metrics.csv");
 
 namespace cartographer {
 namespace ground_truth {
@@ -109,6 +114,51 @@ std::string StatisticsString(const std::vector<Error>& errors) {
          MeanAndStdDevString(squared_rotational_errors_degrees) + " deg^2\n";
 }
 
+void WriteRelationMetricsToFile(const std::vector<Error>& errors,
+                                const proto::GroundTruth& ground_truth,
+                                const std::string& relation_metrics_filename) {
+  std::vector<double> translational_errors;
+  std::vector<double> squared_translational_errors;
+  std::vector<double> rotational_errors_degrees;
+  std::vector<double> squared_rotational_errors_degrees;
+  CHECK_EQ(errors.size(), ground_truth.relation_size());
+  size_t n = errors.size();
+  std::ofstream relation_errors_file;
+  std::string log_file_path;
+  LOG(INFO) << "Writing relation metrics to '" + relation_metrics_filename +
+                   "'...";
+  relation_errors_file.open(relation_metrics_filename);
+  relation_errors_file
+      << "translational_error,squared_translational_error,rotational_"
+         "errors_degree,squared_rotational_errors_degree,"
+         "expected_translation_x,expected_translation_y,expected_"
+         "translation_z,expected_rotation_w,expected_rotation_x,"
+         "expected_rotation_y,expected_rotation_z,covered_distance\n";
+  for (size_t i = 0; i < n; ++i) {
+    const Error& error = errors[i];
+    const proto::Relation& relation = ground_truth.relation(i);
+    double translational_error = std::sqrt(error.translational_squared);
+    double squared_translational_error = error.translational_squared;
+    double rotational_errors_degree =
+        common::RadToDeg(std::sqrt(error.rotational_squared));
+    double squared_rotational_errors_degree =
+        common::Pow2(rotational_errors_degree);
+    relation_errors_file << translational_error << ","
+                         << squared_translational_error << ","
+                         << rotational_errors_degree << ","
+                         << squared_rotational_errors_degree << ","
+                         << relation.expected().translation().x() << ","
+                         << relation.expected().translation().y() << ","
+                         << relation.expected().translation().z() << ","
+                         << relation.expected().rotation().w() << ","
+                         << relation.expected().rotation().x() << ","
+                         << relation.expected().rotation().y() << ","
+                         << relation.expected().rotation().z() << ","
+                         << relation.covered_distance() << "\n";
+  }
+  relation_errors_file.close();
+}
+
 transform::Rigid3d LookupTransform(
     const transform::TransformInterpolationBuffer&
         transform_interpolation_buffer,
@@ -126,7 +176,9 @@ transform::Rigid3d LookupTransform(
 
 void Run(const std::string& pose_graph_filename,
          const std::string& relations_filename,
-         const bool read_text_file_with_unix_timestamps) {
+         const bool read_text_file_with_unix_timestamps,
+         const bool write_relation_metrics,
+         const std::string& relation_metrics_filename) {
   LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";
   mapping::proto::PoseGraph pose_graph;
   {
@@ -162,6 +214,10 @@ void Run(const std::string& pose_graph_filename,
     errors.push_back(ComputeError(pose1, pose2, expected));
   }
 
+  if (write_relation_metrics) {
+    WriteRelationMetricsToFile(errors, ground_truth, relation_metrics_filename);
+  }
+
   LOG(INFO) << "Result:\n" << StatisticsString(errors);
 }
 
@@ -184,7 +240,16 @@ int main(int argc, char** argv) {
     google::ShowUsageWithFlagsRestrict(argv[0], "compute_relations_metrics");
     return EXIT_FAILURE;
   }
-  ::cartographer::ground_truth::Run(FLAGS_pose_graph_filename,
-                                    FLAGS_relations_filename,
-                                    FLAGS_read_text_file_with_unix_timestamps);
+  std::string relation_metrics_filename;
+  if (FLAGS_relation_metrics_filename != "") {
+    relation_metrics_filename = FLAGS_relation_metrics_filename;
+  } else {
+    relation_metrics_filename =
+        FLAGS_pose_graph_filename + ".relation_metrics.csv";
+  }
+
+  ::cartographer::ground_truth::Run(
+      FLAGS_pose_graph_filename, FLAGS_relations_filename,
+      FLAGS_read_text_file_with_unix_timestamps, FLAGS_write_relation_metrics,
+      relation_metrics_filename);
 }
