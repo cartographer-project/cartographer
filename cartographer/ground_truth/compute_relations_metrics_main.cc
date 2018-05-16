@@ -122,7 +122,7 @@ void WriteRelationMetricsToFile(const std::vector<Error>& errors,
   std::vector<double> rotational_errors_degrees;
   std::vector<double> squared_rotational_errors_degrees;
   CHECK_EQ(errors.size(), ground_truth.relation_size());
-  size_t n = errors.size();
+  size_t num_errors = errors.size();
   std::ofstream relation_errors_file;
   std::string log_file_path;
   LOG(INFO) << "Writing relation metrics to '" + relation_metrics_filename +
@@ -134,9 +134,10 @@ void WriteRelationMetricsToFile(const std::vector<Error>& errors,
          "expected_translation_x,expected_translation_y,expected_"
          "translation_z,expected_rotation_w,expected_rotation_x,"
          "expected_rotation_y,expected_rotation_z,covered_distance\n";
-  for (size_t i = 0; i < n; ++i) {
-    const Error& error = errors[i];
-    const proto::Relation& relation = ground_truth.relation(i);
+  for (size_t relation_index = 0; relation_index < num_errors;
+       ++relation_index) {
+    const Error& error = errors[relation_index];
+    const proto::Relation& relation = ground_truth.relation(relation_index);
     double translational_error = std::sqrt(error.translational_squared);
     double squared_translational_error = error.translational_squared;
     double rotational_errors_degree =
