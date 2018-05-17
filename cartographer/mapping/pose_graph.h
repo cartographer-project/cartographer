@@ -114,28 +114,28 @@ class PoseGraph : public PoseGraphInterface {
   virtual void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) = 0;
 
   // Gets the current trajectory clusters.
-  virtual std::vector<std::vector<int>> GetConnectedTrajectories() = 0;
+  virtual std::vector<std::vector<int>> GetConnectedTrajectories() const = 0;
 
   // Returns the current optimized transform and submap itself for the given
   // 'submap_id'. Returns 'nullptr' for the 'submap' member if the submap does
   // not exist (anymore).
-  virtual SubmapData GetSubmapData(const SubmapId& submap_id) = 0;
+  virtual SubmapData GetSubmapData(const SubmapId& submap_id) const = 0;
 
-  proto::PoseGraph ToProto() override;
+  proto::PoseGraph ToProto() const override;
 
   // Returns the IMU data.
-  virtual sensor::MapByTime<sensor::ImuData> GetImuData() = 0;
+  virtual sensor::MapByTime<sensor::ImuData> GetImuData() const = 0;
 
   // Returns the odometry data.
-  virtual sensor::MapByTime<sensor::OdometryData> GetOdometryData() = 0;
+  virtual sensor::MapByTime<sensor::OdometryData> GetOdometryData() const = 0;
 
   // Returns the fixed frame pose data.
-  virtual sensor::MapByTime<sensor::FixedFramePoseData>
-  GetFixedFramePoseData() = 0;
+  virtual sensor::MapByTime<sensor::FixedFramePoseData> GetFixedFramePoseData()
+      const = 0;
 
   // Returns the landmark data.
   virtual std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
-  GetLandmarkNodes() = 0;
+  GetLandmarkNodes() const = 0;
 
   // Sets a relative initial pose 'relative_pose' for 'from_trajectory_id' with
   // respect to 'to_trajectory_id' at time 'time'.
