@@ -122,8 +122,8 @@ proto::GroundTruth GenerateGroundTruth(
 
     // Covered distance between the two should not be too small.
     double covered_distance_in_constraint =
-        covered_distance.at(matched_node) -
-        covered_distance.at(representative_node);
+        std::abs(covered_distance.at(matched_node) -
+                 covered_distance.at(representative_node));
     if (covered_distance_in_constraint < min_covered_distance) {
       continue;
     }

@@ -44,10 +44,8 @@ DEFINE_bool(read_text_file_with_unix_timestamps, false,
             "Enable support for the relations text files as in the paper. "
             "Default is to read from a GroundTruth proto file.");
 DEFINE_bool(write_relation_metrics, false,
-            "Enable exporting relation metrics as comma-separated values.");
-DEFINE_string(relation_metrics_filename, "",
-              "Export target for relation metrics. Defaults to "
-              "[pose_graph_filename].relation_metrics.csv");
+            "Enable exporting relation metrics as comma-separated values to "
+            "[pose_graph_filename].relation_metrics.csv");
 
 namespace cartographer {
 namespace ground_truth {
@@ -117,12 +115,6 @@ std::string StatisticsString(const std::vector<Error>& errors) {
 void WriteRelationMetricsToFile(const std::vector<Error>& errors,
                                 const proto::GroundTruth& ground_truth,
                                 const std::string& relation_metrics_filename) {
-  std::vector<double> translational_errors;
-  std::vector<double> squared_translational_errors;
-  std::vector<double> rotational_errors_degrees;
-  std::vector<double> squared_rotational_errors_degrees;
-  CHECK_EQ(errors.size(), ground_truth.relation_size());
-  size_t num_errors = errors.size();
   std::ofstream relation_errors_file;
   std::string log_file_path;
   LOG(INFO) << "Writing relation metrics to '" + relation_metrics_filename +
@@ -134,7 +126,7 @@ void WriteRelationMetricsToFile(const std::vector<Error>& errors,
          "expected_translation_x,expected_translation_y,expected_"
          "translation_z,expected_rotation_w,expected_rotation_x,"
          "expected_rotation_y,expected_rotation_z,covered_distance\n";
-  for (size_t relation_index = 0; relation_index < num_errors;
+  for (size_t relation_index = 0; relation_index < ground_truth.relation_size();
        ++relation_index) {
     const Error& error = errors[relation_index];
     const proto::Relation& relation = ground_truth.relation(relation_index);
@@ -178,8 +170,7 @@ transform::Rigid3d LookupTransform(
 void Run(const std::string& pose_graph_filename,
          const std::string& relations_filename,
          const bool read_text_file_with_unix_timestamps,
-         const bool write_relation_metrics,
-         const std::string& relation_metrics_filename) {
+         const bool write_relation_metrics) {
   LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";
   mapping::proto::PoseGraph pose_graph;
   {
@@ -215,6 +206,8 @@ void Run(const std::string& pose_graph_filename,
     errors.push_back(ComputeError(pose1, pose2, expected));
   }
 
+  const std::string relation_metrics_filename =
+      pose_graph_filename + ".relation_metrics.csv";
   if (write_relation_metrics) {
     WriteRelationMetricsToFile(errors, ground_truth, relation_metrics_filename);
   }
@@ -241,16 +234,8 @@ int main(int argc, char** argv) {
     google::ShowUsageWithFlagsRestrict(argv[0], "compute_relations_metrics");
     return EXIT_FAILURE;
   }
-  std::string relation_metrics_filename;
-  if (FLAGS_relation_metrics_filename != "") {
-    relation_metrics_filename = FLAGS_relation_metrics_filename;
-  } else {
-    relation_metrics_filename =
-        FLAGS_pose_graph_filename + ".relation_metrics.csv";
-  }
 
   ::cartographer::ground_truth::Run(
       FLAGS_pose_graph_filename, FLAGS_relations_filename,
-      FLAGS_read_text_file_with_unix_timestamps, FLAGS_write_relation_metrics,
-      relation_metrics_filename);
+      FLAGS_read_text_file_with_unix_timestamps, FLAGS_write_relation_metrics);
 }
