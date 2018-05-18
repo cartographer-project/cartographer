@@ -83,7 +83,7 @@ class AnalyticalSpaCostFunction2D
     residuals[1] =
         translation_weight_ *
         (observed_relative_pose_.translation().y() -
-         (-sin_start_rotation * delta_x - cos_start_rotation * delta_y));
+         (-sin_start_rotation * delta_x + cos_start_rotation * delta_y));
     residuals[2] =
         rotation_weight_ *
         common::NormalizeAngleDifference(
@@ -100,20 +100,24 @@ class AnalyticalSpaCostFunction2D
       jacobians[0][1] = weighted_sin_start_rotation;
       jacobians[0][2] = weighted_sin_start_rotation * delta_x -
                         weighted_cos_start_rotation * delta_y;
-      jacobians[0][3] = -weighted_cos_start_rotation;
-      jacobians[0][4] = -weighted_sin_start_rotation;
+      jacobians[0][3] = -weighted_sin_start_rotation;
+      jacobians[0][4] = weighted_cos_start_rotation;
+      jacobians[0][5] = weighted_cos_start_rotation * delta_x +
+                        weighted_sin_start_rotation * delta_y;
+      jacobians[0][6] = 0;
+      jacobians[0][7] = 0;
+      jacobians[0][8] = rotation_weight_;
     }
     if (jacobians[1] != NULL) {
-      jacobians[1][0] = -weighted_sin_start_rotation;
-      jacobians[1][1] = weighted_cos_start_rotation;
-      jacobians[1][2] = weighted_cos_start_rotation * delta_x +
-                        weighted_sin_start_rotation * delta_y;
-      jacobians[1][3] = -weighted_sin_start_rotation;
-      jacobians[1][4] = weighted_cos_start_rotation;
-    }
-    if (jacobians[2] != NULL) {
-      jacobians[2][2] = rotation_weight_;
-      jacobians[2][5] = -rotation_weight_;
+      jacobians[1][0] = -weighted_cos_start_rotation;
+      jacobians[1][1] = -weighted_sin_start_rotation;
+      jacobians[1][2] = 0;
+      jacobians[1][3] = weighted_sin_start_rotation;
+      jacobians[1][4] = -weighted_cos_start_rotation;
+      jacobians[1][5] = 0;
+      jacobians[1][6] = 0;
+      jacobians[1][7] = 0;
+      jacobians[1][8] = -rotation_weight_;
     }
     return true;
   }
