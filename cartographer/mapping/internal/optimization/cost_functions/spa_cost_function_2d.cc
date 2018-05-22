@@ -95,6 +95,8 @@ class AnalyticalSpaCostFunction2D
     const double weighted_sin_start_rotation =
         translation_weight_ * sin_start_rotation;
 
+    // Jacobians in Ceres are ordered by the parameter blocks:
+    // jacobian[i] = [(dr_0 / dx_i)^T, ..., (dr_n / dx_i)^T].
     if (jacobians[0] != NULL) {
       jacobians[0][0] = weighted_cos_start_rotation;
       jacobians[0][1] = weighted_sin_start_rotation;

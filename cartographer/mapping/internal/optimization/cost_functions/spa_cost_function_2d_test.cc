@@ -38,7 +38,7 @@ using ResidualType = std::array<double, kResidualsCount>;
 using JacobianType = std::array<std::array<double, kJacobianColDimension>,
                                 kParameterBlocksCount>;
 
-::testing::Matcher<double> Near(double expected, double precision = 1e-01) {
+::testing::Matcher<double> Near(double expected, double precision = 1e-05) {
   return testing::DoubleNear(expected, precision);
 }
 
@@ -96,14 +96,12 @@ TEST_F(SpaCostFunction2DTest, CompareAutoDiffAndAnalytical) {
   std::tie(analytical_residual, analytical_jacobian) =
       EvaluateAnalyticalCost(parameter_blocks);
 
-  constexpr double kEps = 1e-05;
   for (int i = 0; i < kResidualsCount; ++i) {
-    EXPECT_THAT(auto_diff_residual[i], Near(analytical_residual[i], kEps));
+    EXPECT_THAT(auto_diff_residual[i], Near(analytical_residual[i]));
   }
   for (int i = 0; i < kParameterBlocksCount; ++i) {
     for (int j = 0; j < kJacobianColDimension; ++j) {
-      EXPECT_THAT(auto_diff_jacobian[i][j],
-                  Near(analytical_jacobian[i][j], kEps));
+      EXPECT_THAT(auto_diff_jacobian[i][j], Near(analytical_jacobian[i][j]));
     }
   }
 }
