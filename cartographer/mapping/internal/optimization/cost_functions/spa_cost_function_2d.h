@@ -27,7 +27,7 @@ namespace optimization {
 ceres::CostFunction* CreateAutoDiffSpaCostFunction(
     const PoseGraphInterface::Constraint::Pose& pose);
 
-ceres::CostFunction* CreateAnalyticSpaCostFunction(
+ceres::CostFunction* CreateAnalyticalSpaCostFunction(
     const PoseGraphInterface::Constraint::Pose& pose);
 
 }  // namespace optimization

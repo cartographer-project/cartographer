@@ -138,7 +138,7 @@ ceres::CostFunction* CreateAutoDiffSpaCostFunction(
       new SpaCostFunction2D(observed_relative_pose));
 }
 
-ceres::CostFunction* CreateAnalyticSpaCostFunction(
+ceres::CostFunction* CreateAnalyticalSpaCostFunction(
     const PoseGraphInterface::Constraint::Pose& observed_relative_pose) {
   return new AnalyticalSpaCostFunction2D(observed_relative_pose);
 }

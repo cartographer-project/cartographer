@@ -16,9 +16,7 @@
 
 #include "cartographer/mapping/internal/optimization/cost_functions/spa_cost_function_2d.h"
 
-#include <chrono>
 #include <memory>
-#include <random>
 
 #include "cartographer/transform/rigid_transform.h"
 #include "gmock/gmock.h"
@@ -29,80 +27,123 @@ namespace mapping {
 namespace optimization {
 namespace {
 
-using ::testing::DoubleEq;
 using ::testing::ElementsAre;
 
-TEST(Benchmark, SmokeTest) {
-  PoseGraphInterface::Constraint::Pose constraint{
-      transform::Rigid3d(Eigen::Vector3d(1., 3., 1.),
-                         Eigen::Quaterniond(1., 1., -1., -1.)),
-      3, 5};
+constexpr int kPoseDimension = 3;
+constexpr int kResidualsCount = 3;
+constexpr int kParameterBlocksCount = 2;
+constexpr int kJacobianColDimension = kResidualsCount * kPoseDimension;
 
-  std::unique_ptr<ceres::CostFunction> auto_cost(
-      CreateAutoDiffSpaCostFunction(constraint));
-  std::unique_ptr<ceres::CostFunction> real_cost(
-      CreateAnalyticSpaCostFunction(constraint));
+using ResidualType = std::array<double, kResidualsCount>;
+using JacobianType = std::array<std::array<double, kJacobianColDimension>,
+                                kParameterBlocksCount>;
 
-  int test_count = 20000000;
+::testing::Matcher<double> Near(double expected, double precision = 1e-01) {
+  return testing::DoubleNear(expected, precision);
+}
 
-  // First create an instance of an engine.
-  std::random_device rnd_device;
-  // Specify the engine and distribution.
-  std::mt19937 mersenne_engine(rnd_device());
-  std::uniform_real_distribution<double> dist(10, 52);
-
-  std::vector<std::array<double, 3>> start_poses(test_count);
-  std::vector<std::array<double, 3>> end_poses(test_count);
-  for (int i = 0; i < test_count; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      start_poses[i][j] = dist(rnd_device);
-      end_poses[i][j] = dist(rnd_device);
+class SpaCostFunction2DTest : public ::testing::Test {
+ public:
+  SpaCostFunction2DTest()
+      : constraint_(PoseGraphInterface::Constraint::Pose{
+            transform::Rigid3d(Eigen::Vector3d(1., 1., 1.),
+                               Eigen::Quaterniond(1., 1., -1., -1.)),
+            1, 10}),
+        auto_diff_cost_(CreateAutoDiffSpaCostFunction(constraint_)),
+        analytical_cost_(CreateAnalyticalSpaCostFunction(constraint_)) {
+    for (int i = 0; i < kParameterBlocksCount; ++i) {
+      jacobian_ptrs_[i] = jacobian_[i].data();
     }
   }
 
-  std::array<double, 3> residuals, real_res;
-  std::array<std::array<double, 9>, 2> jacobians, real_jacobians;
-  std::array<double*, 2> jacobians_ptrs, real_jacobians_ptrs;
-  for (int i = 0; i < 2; ++i) {
-    jacobians_ptrs[i] = jacobians[i].data();
-    real_jacobians_ptrs[i] = real_jacobians[i].data();
+  std::pair<const ResidualType&, const JacobianType&> EvaluateAnalyticalCost(
+      const std::array<const double*, 2>& parameter_blocks) {
+    return Evaluate(parameter_blocks, analytical_cost_);
   }
 
-  std::array<const double*, 2> parameter_blocks;
-
-  auto real_start = std::chrono::steady_clock::now();
-  for (int i = 0; i < test_count; ++i) {
-    parameter_blocks[0] = start_poses[i].data();
-    parameter_blocks[1] = end_poses[i].data();
-    real_cost->Evaluate(parameter_blocks.data(), real_res.data(),
-                        real_jacobians_ptrs.data());
+  std::pair<const ResidualType&, const JacobianType&> EvaluateAutoDiffCost(
+      const std::array<const double*, 2>& parameter_blocks) {
+    return Evaluate(parameter_blocks, auto_diff_cost_);
   }
-  auto real_end = std::chrono::steady_clock::now();
-  std::cout << "Real diff = "
-            << std::chrono::duration<double, std::milli>(real_end - real_start)
-                   .count()
-            << std::endl;
 
-  auto start = std::chrono::steady_clock::now();
-  for (int i = 0; i < test_count; ++i) {
-    parameter_blocks[0] = start_poses[i].data();
-    parameter_blocks[1] = end_poses[i].data();
-    auto_cost->Evaluate(parameter_blocks.data(), residuals.data(),
-                        jacobians_ptrs.data());
+ private:
+  std::pair<const ResidualType&, const JacobianType&> Evaluate(
+      const std::array<const double*, 2>& parameter_blocks,
+      const std::unique_ptr<ceres::CostFunction>& cost_function) {
+    cost_function->Evaluate(parameter_blocks.data(), residuals_.data(),
+                            jacobian_ptrs_.data());
+    return std::make_pair(std::cref(residuals_), std::cref(jacobian_));
   }
-  auto end = std::chrono::steady_clock::now();
-  std::cout << "Auto diff = "
-            << std::chrono::duration<double, std::milli>(end - start).count()
-            << std::endl;
 
-  for (int i = 0; i < 2; ++i) {
-    std::cout << "auto res " << i << " = " << residuals[i]
-              << " real_res = " << real_res[i] << std::endl;
-    for (int j = 0; j < 9; ++j) {
-      std::cout << "auto jac " << i << "," << j << " = " << jacobians[i][j]
-                << " real_jac = " << real_jacobians[i][j] << std::endl;
+  ResidualType residuals_;
+  JacobianType jacobian_;
+  std::array<double*, kParameterBlocksCount> jacobian_ptrs_;
+  PoseGraphInterface::Constraint::Pose constraint_;
+  std::unique_ptr<ceres::CostFunction> auto_diff_cost_;
+  std::unique_ptr<ceres::CostFunction> analytical_cost_;
+};
+
+TEST_F(SpaCostFunction2DTest, CompareAutoDiffAndAnalytical) {
+  std::array<double, 3> start_pose{{1., 1., 1.}};
+  std::array<double, 3> end_pose{{10., 1., 100.}};
+  std::array<const double*, 2> parameter_blocks{
+      {start_pose.data(), end_pose.data()}};
+
+  ResidualType auto_diff_residual, analytical_residual;
+  JacobianType auto_diff_jacobian, analytical_jacobian;
+  std::tie(auto_diff_residual, auto_diff_jacobian) =
+      EvaluateAutoDiffCost(parameter_blocks);
+  std::tie(analytical_residual, analytical_jacobian) =
+      EvaluateAnalyticalCost(parameter_blocks);
+
+  constexpr double kEps = 1e-05;
+  for (int i = 0; i < kResidualsCount; ++i) {
+    EXPECT_THAT(auto_diff_residual[i], Near(analytical_residual[i], kEps));
+  }
+  for (int i = 0; i < kParameterBlocksCount; ++i) {
+    for (int j = 0; j < kJacobianColDimension; ++j) {
+      EXPECT_THAT(auto_diff_jacobian[i][j],
+                  Near(analytical_jacobian[i][j], kEps));
     }
   }
+}
+
+TEST_F(SpaCostFunction2DTest, EvaluateAnalyticalCost) {
+  std::array<double, 3> start_pose{{1., 1., 1.}};
+  std::array<double, 3> end_pose{{10., 1., 100.}};
+  std::array<const double*, 2> parameter_blocks{
+      {start_pose.data(), end_pose.data()}};
+
+  auto residuals_and_jacobian = EvaluateAnalyticalCost(parameter_blocks);
+  EXPECT_THAT(residuals_and_jacobian.first,
+              ElementsAre(Near(-3.86272), Near(8.57324), Near(-6.83333)));
+  EXPECT_THAT(
+      residuals_and_jacobian.second,
+      ElementsAre(
+          ElementsAre(Near(0.540302), Near(0.841471), Near(7.57324),
+                      Near(-0.841471), Near(0.540302), Near(4.86272), Near(0),
+                      Near(0), Near(10)),
+          ElementsAre(Near(-0.540302), Near(-0.841471), Near(0), Near(0.841471),
+                      Near(-0.540302), Near(0), Near(0), Near(0), Near(-10))));
+}
+
+TEST_F(SpaCostFunction2DTest, EvaluateAutoDiffCost) {
+  std::array<double, 3> start_pose{{1., 1., 1.}};
+  std::array<double, 3> end_pose{{10., 1., 100.}};
+  std::array<const double*, 2> parameter_blocks{
+      {start_pose.data(), end_pose.data()}};
+
+  auto residuals_and_jacobian = EvaluateAutoDiffCost(parameter_blocks);
+  EXPECT_THAT(residuals_and_jacobian.first,
+              ElementsAre(Near(-3.86272), Near(8.57324), Near(-6.83333)));
+  EXPECT_THAT(
+      residuals_and_jacobian.second,
+      ElementsAre(
+          ElementsAre(Near(0.540302), Near(0.841471), Near(7.57324),
+                      Near(-0.841471), Near(0.540302), Near(4.86272), Near(0),
+                      Near(0), Near(10)),
+          ElementsAre(Near(-0.540302), Near(-0.841471), Near(0), Near(0.841471),
+                      Near(-0.540302), Near(0), Near(0), Near(0), Near(-10))));
 }
 
 }  // namespace
