@@ -237,7 +237,7 @@ void OptimizationProblem2D::Solve(
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
     problem.AddResidualBlock(
-        SpaCostFunction2D::CreateAutoDiffCostFunction(constraint.pose),
+        CreateAutoDiffSpaCostFunction(constraint.pose),
         // Only loop closure constraints should have a loss function.
         constraint.tag == Constraint::INTER_SUBMAP
             ? new ceres::HuberLoss(options_.huber_scale())
@@ -276,7 +276,7 @@ void OptimizationProblem2D::Solve(
                                         second_node_data);
       if (relative_odometry != nullptr) {
         problem.AddResidualBlock(
-            SpaCostFunction2D::CreateAutoDiffCostFunction(Constraint::Pose{
+            CreateAutoDiffSpaCostFunction(Constraint::Pose{
                 *relative_odometry, options_.odometry_translation_weight(),
                 options_.odometry_rotation_weight()}),
             nullptr /* loss function */, C_nodes.at(first_node_id).data(),
@@ -288,7 +288,7 @@ void OptimizationProblem2D::Solve(
           transform::Embed3D(first_node_data.local_pose_2d.inverse() *
                              second_node_data.local_pose_2d);
       problem.AddResidualBlock(
-          SpaCostFunction2D::CreateAutoDiffCostFunction(
+          CreateAutoDiffSpaCostFunction(
               Constraint::Pose{relative_local_slam_pose,
                                options_.local_slam_pose_translation_weight(),
                                options_.local_slam_pose_rotation_weight()}),

@@ -115,7 +115,7 @@ proto::PoseGraph::Constraint ToProto(const PoseGraph::Constraint& constraint) {
   return constraint_proto;
 }
 
-proto::PoseGraph PoseGraph::ToProto() {
+proto::PoseGraph PoseGraph::ToProto() const {
   proto::PoseGraph proto;
 
   std::map<int, proto::Trajectory* const> trajectory_protos;
