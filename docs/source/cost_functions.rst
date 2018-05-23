@@ -33,6 +33,7 @@ coordinate frame :math:`i` has the following form
         \theta_j-\theta_i
    \end{array}
  \right]
+
 where :math:`R(\theta_i)^T` is the rotation matrix of :math:`\theta_i`.
 
 The weighted error :math:`f:\mathbb R^6 \mapsto \mathbb R^3` between
@@ -58,6 +59,7 @@ coordinate frame :math:`i` can be computed as
       \right)
    \end{array}
  \right]
+
 where :math:`w_t` and :math:`w_r` are weights for translation and rotation
 respectively and :math:`\mathrm{clamp}: \mathbb R \mapsto [-\pi, \pi]`
 normalizes the angle difference.
@@ -65,16 +67,28 @@ normalizes the angle difference.
 Jacobian matrix  :math:`J_f` is given by:
 
 .. math::
- J_f( \mathbf{p_i},\mathbf{p_j}) =
- \left[
-   \begin{array}{cccc}
-       w_{\text{t}} R^T(\theta_i)
-         & -w_{\text{t}} {R'}^T(\theta_i)(\mathbf x_j - \mathbf x_i)
-         & -w_{\text{t}} R^T(\theta_i)
-         & \mathbf{0} \\
-      \mathbf{0}^T
-       & w_{\text{r}}
-       & \mathbf{0}^T
-       & -w_{\text{r}}
-   \end{array}
- \right]
+ \begin{align}
+   J_f( \mathbf{p_i},\mathbf{p_j}) &=
+   \left[
+     \frac{\partial\mathbf f}{\partial x_i} \quad
+     \frac{\partial\mathbf f}{\partial y_i} \quad
+     \frac{\partial\mathbf f}{\partial \theta_i} \quad
+     \frac{\partial\mathbf f}{\partial x_j} \quad
+     \frac{\partial\mathbf f}{\partial y_j} \quad
+     \frac{\partial\mathbf f}{\partial \theta_j}
+   \right] \\
+   &\mathstrut \\
+   &=
+   \left[
+     \begin{array}{cccc}
+         w_{\text{t}} R^T(\theta_i)
+           & -w_{\text{t}} {\frac{\mathrm d R^T(\theta_i)}{\mathrm d \theta}}(\mathbf x_j - \mathbf x_i)
+           & -w_{\text{t}} R^T(\theta_i)
+           & \mathbf{0} \\
+        \mathbf{0}^T
+         & w_{\text{r}}
+         & \mathbf{0}^T
+         & -w_{\text{r}}
+     \end{array}
+   \right]
+ \end{align}
