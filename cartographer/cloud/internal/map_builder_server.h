@@ -53,6 +53,9 @@ class MapBuilderContext : public MapBuilderContextInterface {
       int trajectory_id, LocalSlamSubscriptionCallback callback) override;
   void UnsubscribeLocalSlamResults(
       const SubscriptionId& subscription_id) override;
+  int SubscribeGlobalSlamOptimizations(
+      GlobalSlamOptimizationCallback callback) override;
+  void UnsubscribeGlobalSlamOptimizations(int subscription_index) override;
   void NotifyFinishTrajectory(int trajectory_id) override;
   LocalTrajectoryUploaderInterface* local_trajectory_uploader() override;
   void EnqueueSensorData(int trajectory_id,
@@ -107,11 +110,17 @@ class MapBuilderServer : public MapBuilderServerInterface {
       std::unique_ptr<
           const mapping::TrajectoryBuilderInterface::InsertionResult>
           insertion_result);
+  void OnGlobalSlamOptimizations(
+      const std::map<int, mapping::SubmapId> &last_optimized_submap_ids,
+      const std::map<int, mapping::NodeId> &last_optimized_node_ids);
   MapBuilderContextInterface::SubscriptionId SubscribeLocalSlamResults(
       int trajectory_id,
       MapBuilderContextInterface::LocalSlamSubscriptionCallback callback);
   void UnsubscribeLocalSlamResults(
       const MapBuilderContextInterface::SubscriptionId& subscription_id);
+  int SubscribeGlobalSlamOptimizations(
+      MapBuilderContextInterface::GlobalSlamOptimizationCallback callback);
+  void UnsubscribeGlobalSlamOptimizations(int subscription_index);
   void NotifyFinishTrajectory(int trajectory_id);
 
   bool shutting_down_ = false;
@@ -120,10 +129,13 @@ class MapBuilderServer : public MapBuilderServerInterface {
   std::unique_ptr<mapping::MapBuilderInterface> map_builder_;
   common::BlockingQueue<std::unique_ptr<MapBuilderContextInterface::Data>>
       incoming_data_queue_;
-  common::Mutex local_slam_subscriptions_lock_;
+  common::Mutex subscriptions_lock_;
   int current_subscription_index_ = 0;
   std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>
-      local_slam_subscriptions_ GUARDED_BY(local_slam_subscriptions_lock_);
+      local_slam_subscriptions_ GUARDED_BY(subscriptions_lock_);
+  std::map<int /* subscription_index */,
+           MapBuilderContextInterface::GlobalSlamOptimizationCallback>
+      global_slam_subscriptions_ GUARDED_BY(subscriptions_lock_);
   std::unique_ptr<LocalTrajectoryUploaderInterface> local_trajectory_uploader_;
   int starting_submap_index_ = 0;
 };

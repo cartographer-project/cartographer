@@ -21,6 +21,7 @@
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/mapping/map_builder_interface.h"
+#include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/range_data.h"
@@ -43,6 +44,12 @@ class MapBuilderContextInterface : public async_grpc::ExecutionContext {
   // Calling with 'nullptr' signals subscribers that the subscription has ended.
   using LocalSlamSubscriptionCallback =
       std::function<void(std::unique_ptr<LocalSlamResult>)>;
+
+  // A return value of 'false' indicates that the subscription should end.
+  using GlobalSlamOptimizationCallback = std::function<bool(
+      const std::map<int /* trajectory_id */, mapping::SubmapId> &,
+      const std::map<int /* trajectory_id */, mapping::NodeId> &)>;
+
   struct Data {
     int trajectory_id;
     std::unique_ptr<sensor::Data> data;
@@ -68,6 +75,9 @@ class MapBuilderContextInterface : public async_grpc::ExecutionContext {
       int trajectory_id, LocalSlamSubscriptionCallback callback) = 0;
   virtual void UnsubscribeLocalSlamResults(
       const SubscriptionId& subscription_id) = 0;
+  virtual int
+  SubscribeGlobalSlamOptimizations(GlobalSlamOptimizationCallback callback) = 0;
+  virtual void UnsubscribeGlobalSlamOptimizations(int subscription_index) = 0;
   virtual void NotifyFinishTrajectory(int trajectory_id) = 0;
   virtual LocalTrajectoryUploaderInterface* local_trajectory_uploader() = 0;
   virtual void EnqueueSensorData(int trajectory_id,

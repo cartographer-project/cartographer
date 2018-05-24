@@ -51,7 +51,7 @@ class MapBuilder : public MapBuilderInterface {
       const proto::TrajectoryBuilderOptionsWithSensorIds
           &options_with_sensor_ids_proto) override;
 
-  void FinishTrajectory(int trajectory_id) override;
+   void FinishTrajectory(int trajectory_id) override;
 
   std::string SubmapToProto(const SubmapId &submap_id,
                             proto::SubmapQuery::Response *response) override;
@@ -79,7 +79,7 @@ class MapBuilder : public MapBuilderInterface {
     return all_trajectory_builder_options_;
   }
 
- private:
+private:
   const proto::MapBuilderOptions options_;
   common::ThreadPool thread_pool_;
 

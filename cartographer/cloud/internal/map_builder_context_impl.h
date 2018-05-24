@@ -75,6 +75,18 @@ void MapBuilderContext<SubmapType>::UnsubscribeLocalSlamResults(
 }
 
 template <class SubmapType>
+int MapBuilderContext<SubmapType>::SubscribeGlobalSlamOptimizations(
+    GlobalSlamOptimizationCallback callback) {
+  return map_builder_server_->SubscribeGlobalSlamOptimizations(callback);
+}
+
+template <class SubmapType>
+void MapBuilderContext<SubmapType>::UnsubscribeGlobalSlamOptimizations(
+    int subscription_index) {
+  map_builder_server_->UnsubscribeGlobalSlamOptimizations(subscription_index);
+}
+
+template <class SubmapType>
 void MapBuilderContext<SubmapType>::NotifyFinishTrajectory(int trajectory_id) {
   map_builder_server_->NotifyFinishTrajectory(trajectory_id);
 }
