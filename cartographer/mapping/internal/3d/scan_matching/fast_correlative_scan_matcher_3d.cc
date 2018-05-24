@@ -24,8 +24,8 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/mapping/3d/scan_matching/proto/fast_correlative_scan_matcher_options_3d.pb.h"
 #include "cartographer/mapping/internal/3d/scan_matching/low_resolution_matcher.h"
+#include "cartographer/mapping/proto/scan_matching//fast_correlative_scan_matcher_options_3d.pb.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 

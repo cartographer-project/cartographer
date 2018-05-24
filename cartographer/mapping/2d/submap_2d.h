@@ -24,7 +24,7 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/2d/map_limits.h"
-#include "cartographer/mapping/2d/proto/submaps_options_2d.pb.h"
+#include "cartographer/mapping/proto/2d/submaps_options_2d.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/range_data_inserter_interface.h"

@@ -20,9 +20,9 @@
 #include <vector>
 
 #include "cartographer/mapping/2d/map_limits.h"
-#include "cartographer/mapping/2d/proto/grid_2d.pb.h"
-#include "cartographer/mapping/2d/proto/submaps_options_2d.pb.h"
 #include "cartographer/mapping/grid_interface.h"
+#include "cartographer/mapping/proto/2d/grid_2d.pb.h"
+#include "cartographer/mapping/proto/2d/submaps_options_2d.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 
 namespace cartographer {
