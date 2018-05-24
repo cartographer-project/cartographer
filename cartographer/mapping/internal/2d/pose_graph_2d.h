@@ -61,7 +61,6 @@ class PoseGraph2D : public PoseGraph {
  public:
   PoseGraph2D(
       const proto::PoseGraphOptions& options,
-      GlobalSlamOptimizationCallback global_slam_optimization_callback,
       std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem,
       common::ThreadPool* thread_pool);
   ~PoseGraph2D() override;
@@ -141,6 +140,8 @@ class PoseGraph2D : public PoseGraph {
                                 const transform::Rigid3d& pose,
                                 const common::Time time) override
       EXCLUDES(mutex_);
+  void SetGlobalSlamOptimizationCallback(
+      PoseGraphInterface::GlobalSlamOptimizationCallback callback) override;
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
 

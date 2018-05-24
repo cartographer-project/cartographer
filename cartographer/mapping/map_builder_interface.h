@@ -90,6 +90,11 @@ class MapBuilderInterface {
 
   virtual const std::vector<proto::TrajectoryBuilderOptionsWithSensorIds>&
   GetAllTrajectoryBuilderOptions() const = 0;
+
+  // Sets the callback function that is invoked whenever the global optimization
+  // problem is solved.
+  virtual void SetGlobalSlamOptimizationCallback(
+      PoseGraphInterface::GlobalSlamOptimizationCallback callback) = 0;
 };
 
 }  // namespace mapping

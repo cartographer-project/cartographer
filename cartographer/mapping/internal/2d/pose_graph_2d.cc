@@ -41,11 +41,9 @@ namespace mapping {
 
 PoseGraph2D::PoseGraph2D(
     const proto::PoseGraphOptions& options,
-    GlobalSlamOptimizationCallback global_slam_optimization_callback,
     std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem,
     common::ThreadPool* thread_pool)
     : options_(options),
-      global_slam_optimization_callback_(global_slam_optimization_callback),
       optimization_problem_(std::move(optimization_problem)),
       constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
 
@@ -926,6 +924,11 @@ PoseGraph2D::GetSubmapDataUnderLock() const {
                    GetSubmapDataUnderLock(submap_id_data.id));
   }
   return submaps;
+}
+
+void PoseGraph2D::SetGlobalSlamOptimizationCallback(
+    PoseGraphInterface::GlobalSlamOptimizationCallback callback) {
+  global_slam_optimization_callback_ = callback;
 }
 
 }  // namespace mapping

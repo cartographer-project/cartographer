@@ -79,6 +79,10 @@ class PoseGraphInterface {
     common::optional<transform::Rigid3d> fixed_frame_origin_in_map;
   };
 
+  using GlobalSlamOptimizationCallback =
+      std::function<void(const std::map<int /* trajectory_id */, SubmapId> &,
+                         const std::map<int /* trajectory_id */, NodeId> &)>;
+
   PoseGraphInterface() {}
   virtual ~PoseGraphInterface() {}
 

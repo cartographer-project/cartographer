@@ -52,10 +52,6 @@ class PoseGraph : public PoseGraphInterface {
     common::Time time;
   };
 
-  using GlobalSlamOptimizationCallback =
-      std::function<void(const std::map<int /* trajectory_id */, SubmapId>&,
-                         const std::map<int /* trajectory_id */, NodeId>&)>;
-
   PoseGraph() {}
   ~PoseGraph() override {}
 
@@ -143,6 +139,11 @@ class PoseGraph : public PoseGraphInterface {
                                         int to_trajectory_id,
                                         const transform::Rigid3d& pose,
                                         const common::Time time) = 0;
+
+  // Sets the callback function that is invoked whenever the global optimization
+  // problem is solved.
+  virtual void SetGlobalSlamOptimizationCallback(
+      PoseGraphInterface::GlobalSlamOptimizationCallback callback) = 0;
 };
 
 std::vector<PoseGraph::Constraint> FromProto(

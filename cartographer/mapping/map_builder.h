@@ -36,35 +36,33 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 // and a PoseGraph for loop closure.
 class MapBuilder : public MapBuilderInterface {
  public:
-  MapBuilder(const proto::MapBuilderOptions& options,
-             PoseGraph::GlobalSlamOptimizationCallback
-                 global_slam_optimization_callback);
-  ~MapBuilder() override {}
+   explicit MapBuilder(const proto::MapBuilderOptions &options);
+   ~MapBuilder() override {}
 
-  MapBuilder(const MapBuilder&) = delete;
-  MapBuilder& operator=(const MapBuilder&) = delete;
+   MapBuilder(const MapBuilder &) = delete;
+   MapBuilder &operator=(const MapBuilder &) = delete;
 
-  int AddTrajectoryBuilder(
-      const std::set<SensorId>& expected_sensor_ids,
-      const proto::TrajectoryBuilderOptions& trajectory_options,
-      LocalSlamResultCallback local_slam_result_callback) override;
+   int AddTrajectoryBuilder(
+       const std::set<SensorId> &expected_sensor_ids,
+       const proto::TrajectoryBuilderOptions &trajectory_options,
+       LocalSlamResultCallback local_slam_result_callback) override;
 
-  int AddTrajectoryForDeserialization(
-      const proto::TrajectoryBuilderOptionsWithSensorIds&
-          options_with_sensor_ids_proto) override;
+   int AddTrajectoryForDeserialization(
+       const proto::TrajectoryBuilderOptionsWithSensorIds
+           &options_with_sensor_ids_proto) override;
 
-  void FinishTrajectory(int trajectory_id) override;
+   void FinishTrajectory(int trajectory_id) override;
 
-  std::string SubmapToProto(const SubmapId& submap_id,
-                            proto::SubmapQuery::Response* response) override;
+   std::string SubmapToProto(const SubmapId &submap_id,
+                             proto::SubmapQuery::Response *response) override;
 
-  void SerializeState(io::ProtoStreamWriterInterface* writer) override;
+   void SerializeState(io::ProtoStreamWriterInterface *writer) override;
 
-  void LoadState(io::ProtoStreamReaderInterface* reader,
-                 bool load_frozen_state) override;
+   void LoadState(io::ProtoStreamReaderInterface *reader,
+                  bool load_frozen_state) override;
 
-  mapping::PoseGraphInterface* pose_graph() override {
-    return pose_graph_.get();
+   mapping::PoseGraphInterface *pose_graph() override {
+     return pose_graph_.get();
   }
 
   int num_trajectory_builders() const override {
@@ -81,7 +79,10 @@ class MapBuilder : public MapBuilderInterface {
     return all_trajectory_builder_options_;
   }
 
- private:
+  void SetGlobalSlamOptimizationCallback(
+      PoseGraphInterface::GlobalSlamOptimizationCallback callback) override;
+
+private:
   const proto::MapBuilderOptions options_;
   common::ThreadPool thread_pool_;
 

@@ -54,8 +54,11 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
   mapping::PoseGraphInterface* pose_graph() override;
   const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
   GetAllTrajectoryBuilderOptions() const override;
+  void SetGlobalSlamOptimizationCallback(
+      mapping::PoseGraphInterface::GlobalSlamOptimizationCallback callback)
+      override;
 
- private:
+private:
   std::shared_ptr<::grpc::Channel> client_channel_;
   std::unique_ptr<mapping::PoseGraphInterface> pose_graph_stub_;
   std::map<int, std::unique_ptr<mapping::TrajectoryBuilderInterface>>
