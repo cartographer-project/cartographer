@@ -80,8 +80,8 @@ class PoseGraphInterface {
   };
 
   using GlobalSlamOptimizationCallback =
-      std::function<void(const std::map<int /* trajectory_id */, SubmapId> &,
-                         const std::map<int /* trajectory_id */, NodeId> &)>;
+      std::function<void(const std::map<int /* trajectory_id */, SubmapId>&,
+                         const std::map<int /* trajectory_id */, NodeId>&)>;
 
   PoseGraphInterface() {}
   virtual ~PoseGraphInterface() {}

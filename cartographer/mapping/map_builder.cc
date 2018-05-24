@@ -61,7 +61,7 @@ std::vector<std::string> SelectRangeSensorIds(
   return range_sensor_ids;
 }
 
-MapBuilder::MapBuilder(const proto::MapBuilderOptions &options)
+MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
   CHECK(options.use_trajectory_builder_2d() ^
         options.use_trajectory_builder_3d());
