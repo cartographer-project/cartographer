@@ -21,6 +21,7 @@
 #include "async_grpc/server.h"
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
+#include "cartographer/cloud/internal/pose_uploader.h"
 #include "cartographer/cloud/map_builder_server_interface.h"
 #include "cartographer/cloud/proto/map_builder_server_options.pb.h"
 #include "cartographer/common/blocking_queue.h"
@@ -55,6 +56,7 @@ class MapBuilderContext : public MapBuilderContextInterface {
       const SubscriptionId& subscription_id) override;
   void NotifyFinishTrajectory(int trajectory_id) override;
   LocalTrajectoryUploaderInterface* local_trajectory_uploader() override;
+  PoseUploaderInterface* pose_uploader() override;
   void EnqueueSensorData(int trajectory_id,
                          std::unique_ptr<sensor::Data> data) override;
   void EnqueueLocalSlamResultData(int trajectory_id,
@@ -69,12 +71,16 @@ class MapBuilderContext : public MapBuilderContextInterface {
 
 class MapBuilderServer : public MapBuilderServerInterface {
  public:
+  using MapBuilderFactory =
+      std::function<std::unique_ptr<mapping::MapBuilderInterface>(
+          const mapping::proto::MapBuilderOptions&,
+          mapping::PoseGraph::GlobalSlamOptimizationCallback)>;
   friend MapBuilderContext<mapping::Submap2D>;
   friend MapBuilderContext<mapping::Submap3D>;
 
   MapBuilderServer(
       const proto::MapBuilderServerOptions& map_builder_server_options,
-      std::unique_ptr<mapping::MapBuilderInterface> map_builder);
+      MapBuilderFactory map_builder_factory);
   ~MapBuilderServer() {}
 
   // Starts the gRPC server, the 'LocalTrajectoryUploader' and the SLAM thread.
@@ -101,6 +107,9 @@ class MapBuilderServer : public MapBuilderServerInterface {
 
   void ProcessSensorDataQueue();
   void StartSlamThread();
+  void OnGlobalSlamResult(
+      const std::map<int, mapping::SubmapId>& last_optimized_submaps,
+      const std::map<int, mapping::NodeId>& last_optimized_nodes);
   void OnLocalSlamResult(
       int trajectory_id, common::Time time, transform::Rigid3d local_pose,
       sensor::RangeData range_data,
@@ -125,6 +134,7 @@ class MapBuilderServer : public MapBuilderServerInterface {
   std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>
       local_slam_subscriptions_ GUARDED_BY(local_slam_subscriptions_lock_);
   std::unique_ptr<LocalTrajectoryUploaderInterface> local_trajectory_uploader_;
+  std::unique_ptr<PoseUploaderInterface> pose_uploader_;
   int starting_submap_index_ = 0;
 };
 

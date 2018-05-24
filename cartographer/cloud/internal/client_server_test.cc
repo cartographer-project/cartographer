@@ -74,7 +74,7 @@ class ClientServerTest : public ::testing::Test {
       MAP_BUILDER_SERVER.num_grpc_threads = 1
       MAP_BUILDER_SERVER.uplink_server_address = "localhost:50051"
       MAP_BUILDER_SERVER.server_address = "0.0.0.0:50052"
-      MAP_BUILDER_SERVER.upload_batch_size = 1
+      MAP_BUILDER_SERVER.trajectory_upload_batch_size = 1
       return MAP_BUILDER_SERVER)text";
     auto uploading_map_builder_server_parameters =
         mapping::test::ResolveLuaParameters(kUploadingMapBuilderServerLua);
@@ -108,29 +108,38 @@ class ClientServerTest : public ::testing::Test {
   }
 
   void InitializeRealServer() {
-    auto map_builder = common::make_unique<MapBuilder>(
-        map_builder_server_options_.map_builder_options(),
-        nullptr /* global_slam_optimization_callback */
-    );
-    server_ = common::make_unique<MapBuilderServer>(map_builder_server_options_,
-                                                    std::move(map_builder));
+    server_ = common::make_unique<MapBuilderServer>(
+        map_builder_server_options_,
+        [](const mapping::proto::MapBuilderOptions& map_builder_options,
+           mapping::PoseGraph::GlobalSlamOptimizationCallback
+               global_slam_optimization_callback) {
+          return common::make_unique<MapBuilder>(
+              map_builder_options, global_slam_optimization_callback);
+        });
     EXPECT_TRUE(server_ != nullptr);
   }
 
   void InitializeRealUploadingServer() {
-    auto map_builder = common::make_unique<MapBuilder>(
-        uploading_map_builder_server_options_.map_builder_options(),
-        nullptr /* global_slam_optimization_callback */);
     uploading_server_ = common::make_unique<MapBuilderServer>(
-        uploading_map_builder_server_options_, std::move(map_builder));
+        uploading_map_builder_server_options_,
+        [](const mapping::proto::MapBuilderOptions& map_builder_options,
+           mapping::PoseGraph::GlobalSlamOptimizationCallback
+               global_slam_optimization_callback) {
+          return common::make_unique<MapBuilder>(
+              map_builder_options, global_slam_optimization_callback);
+        });
     EXPECT_TRUE(uploading_server_ != nullptr);
   }
 
   void InitializeServerWithMockMapBuilder() {
-    auto mock_map_builder = common::make_unique<MockMapBuilder>();
-    mock_map_builder_ = mock_map_builder.get();
     server_ = common::make_unique<MapBuilderServer>(
-        map_builder_server_options_, std::move(mock_map_builder));
+        map_builder_server_options_,
+        [this](const mapping::proto::MapBuilderOptions&,
+               mapping::PoseGraph::GlobalSlamOptimizationCallback) {
+          auto mock_map_builder = common::make_unique<MockMapBuilder>();
+          mock_map_builder_ = mock_map_builder.get();
+          return std::move(mock_map_builder);
+        });
     EXPECT_TRUE(server_ != nullptr);
     mock_trajectory_builder_ = common::make_unique<MockTrajectoryBuilder>();
   }

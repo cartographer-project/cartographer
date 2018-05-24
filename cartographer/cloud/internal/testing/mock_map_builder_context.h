@@ -46,6 +46,7 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
                void(const MapBuilderContextInterface::SubscriptionId &));
   MOCK_METHOD1(NotifyFinishTrajectory, void(int));
   MOCK_METHOD0(local_trajectory_uploader, LocalTrajectoryUploaderInterface *());
+  MOCK_METHOD0(pose_uploader, PoseUploaderInterface *());
 
   MOCK_METHOD2(DoEnqueueSensorData, void(int, sensor::Data *));
   void EnqueueSensorData(int trajectory_id,

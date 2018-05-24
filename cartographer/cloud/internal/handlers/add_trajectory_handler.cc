@@ -61,6 +61,12 @@ void AddTrajectoryHandler::OnRequest(
                         trajectory_builder_options);
   }
 
+  if (GetUnsynchronizedContext<MapBuilderContextInterface>()->pose_uploader()) {
+    GetContext<MapBuilderContextInterface>()
+        ->pose_uploader()
+        ->SetActiveTrajectory(trajectory_id);
+  }
+
   auto response = common::make_unique<proto::AddTrajectoryResponse>();
   response->set_trajectory_id(trajectory_id);
   Send(std::move(response));

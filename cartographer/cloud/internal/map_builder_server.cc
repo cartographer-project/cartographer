@@ -51,8 +51,11 @@ const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
 MapBuilderServer::MapBuilderServer(
     const proto::MapBuilderServerOptions& map_builder_server_options,
-    std::unique_ptr<mapping::MapBuilderInterface> map_builder)
-    : map_builder_(std::move(map_builder)) {
+    MapBuilderServer::MapBuilderFactory map_builder_factory)
+    : map_builder_(map_builder_factory(
+          map_builder_server_options.map_builder_options(),
+          std::bind(&MapBuilderServer::OnGlobalSlamResult, this,
+                    std::placeholders::_1, std::placeholders::_2))) {
   async_grpc::Server::Builder server_builder;
   server_builder.SetServerAddress(map_builder_server_options.server_address());
   server_builder.SetNumGrpcThreads(
@@ -62,8 +65,14 @@ MapBuilderServer::MapBuilderServer(
   if (!map_builder_server_options.uplink_server_address().empty()) {
     local_trajectory_uploader_ = CreateLocalTrajectoryUploader(
         map_builder_server_options.uplink_server_address(),
-        map_builder_server_options.upload_batch_size(),
+        map_builder_server_options.trajectory_upload_batch_size(),
         map_builder_server_options.enable_ssl_encryption());
+  }
+  if (!map_builder_server_options.pose_server_address().empty()) {
+    pose_uploader_ =
+        CreatePoseUploader(map_builder_server_options.pose_server_address(),
+                           map_builder_server_options.pose_upload_batch_size(),
+                           map_builder_server_options.enable_ssl_encryption());
   }
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler>();
   server_builder.RegisterHandler<handlers::AddOdometryDataHandler>();
@@ -154,6 +163,38 @@ void MapBuilderServer::StartSlamThread() {
       [this]() { this->ProcessSensorDataQueue(); });
 }
 
+void MapBuilderServer::OnGlobalSlamResult(
+    const std::map<int, mapping::SubmapId>& last_optimized_submaps,
+    const std::map<int, mapping::NodeId>& last_optimized_nodes) {
+  if (pose_uploader_) {
+    auto trajectory_nodes = map_builder_->pose_graph()->GetTrajectoryNodes();
+    for (const int trajectory_id : trajectory_nodes.trajectory_ids()) {
+      if (pose_uploader_->active_trajectory_id() == trajectory_id) {
+        mapping::NodeId last_global_node_id =
+            pose_uploader_->last_global_node_id();
+        auto node_it = trajectory_nodes.trajectory(trajectory_id).begin();
+        if (last_global_node_id.node_index > -1) {
+          // If we have uploaded global poses from this trajectory previously,
+          // jump behind the last uploaded pose.
+          node_it = trajectory_nodes.find(last_global_node_id);
+          CHECK(node_it != trajectory_nodes.trajectory(trajectory_id).end());
+          ++node_it;
+        }
+        auto node_it_end =
+            trajectory_nodes.find(last_optimized_nodes.at(trajectory_id));
+        CHECK(node_it_end != trajectory_nodes.trajectory(trajectory_id).end());
+
+        for (; node_it != node_it_end; ++node_it) {
+          pose_uploader_->EnqueueGlobalPose(
+              node_it->data.time(), node_it->id,
+              node_it->data.constant_data->local_pose,
+              node_it->data.global_pose);
+        }
+      }
+    }
+  }
+}
+
 void MapBuilderServer::OnLocalSlamResult(
     int trajectory_id, common::Time time, transform::Rigid3d local_pose,
     sensor::RangeData range_data,
@@ -164,14 +205,10 @@ void MapBuilderServer::OnLocalSlamResult(
 
   // If there is an uplink server and a submap insertion happened, enqueue this
   // local SLAM result for uploading.
-  if (insertion_result &&
-      grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
-          ->local_trajectory_uploader()) {
+  if (insertion_result && local_trajectory_uploader_) {
     auto sensor_data = common::make_unique<proto::SensorData>();
     auto sensor_id =
-        grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
-            ->local_trajectory_uploader()
-            ->GetLocalSlamResultSensorId(trajectory_id);
+        local_trajectory_uploader_->GetLocalSlamResultSensorId(trajectory_id);
     CreateSensorDataForLocalSlamResult(sensor_id.id, trajectory_id, time,
                                        starting_submap_index_,
                                        *insertion_result, sensor_data.get());
@@ -179,9 +216,11 @@ void MapBuilderServer::OnLocalSlamResult(
     if (insertion_result->insertion_submaps.front()->finished()) {
       ++starting_submap_index_;
     }
-    grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
-        ->local_trajectory_uploader()
-        ->EnqueueSensorData(std::move(sensor_data));
+    local_trajectory_uploader_->EnqueueSensorData(std::move(sensor_data));
+  }
+
+  if (pose_uploader_) {
+    pose_uploader_->EnqueueLocalPose(time, trajectory_id, local_pose);
   }
 
   common::MutexLocker locker(&local_slam_subscriptions_lock_);

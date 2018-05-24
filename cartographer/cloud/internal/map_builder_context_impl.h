@@ -86,6 +86,11 @@ MapBuilderContext<SubmapType>::local_trajectory_uploader() {
 }
 
 template <class SubmapType>
+PoseUploaderInterface* MapBuilderContext<SubmapType>::pose_uploader() {
+  return map_builder_server_->pose_uploader_.get();
+}
+
+template <class SubmapType>
 void MapBuilderContext<SubmapType>::EnqueueSensorData(
     int trajectory_id, std::unique_ptr<sensor::Data> data) {
   map_builder_server_->incoming_data_queue_.Push(
