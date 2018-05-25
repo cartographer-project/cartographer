@@ -109,9 +109,7 @@ class ClientServerTest : public ::testing::Test {
 
   void InitializeRealServer() {
     auto map_builder = common::make_unique<MapBuilder>(
-        map_builder_server_options_.map_builder_options(),
-        nullptr /* global_slam_optimization_callback */
-    );
+        map_builder_server_options_.map_builder_options());
     server_ = common::make_unique<MapBuilderServer>(map_builder_server_options_,
                                                     std::move(map_builder));
     EXPECT_TRUE(server_ != nullptr);
@@ -119,8 +117,7 @@ class ClientServerTest : public ::testing::Test {
 
   void InitializeRealUploadingServer() {
     auto map_builder = common::make_unique<MapBuilder>(
-        uploading_map_builder_server_options_.map_builder_options(),
-        nullptr /* global_slam_optimization_callback */);
+        uploading_map_builder_server_options_.map_builder_options());
     uploading_server_ = common::make_unique<MapBuilderServer>(
         uploading_map_builder_server_options_, std::move(map_builder));
     EXPECT_TRUE(uploading_server_ != nullptr);

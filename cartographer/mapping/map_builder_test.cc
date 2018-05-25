@@ -58,8 +58,7 @@ class MapBuilderTest : public ::testing::Test {
   }
 
   void BuildMapBuilder() {
-    map_builder_ = common::make_unique<MapBuilder>(
-        map_builder_options_, nullptr /* global_slam_optimization_callback */);
+    map_builder_ = common::make_unique<MapBuilder>(map_builder_options_);
   }
 
   void SetOptionsTo3D() {

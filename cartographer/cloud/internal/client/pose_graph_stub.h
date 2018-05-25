@@ -50,6 +50,8 @@ class PoseGraphStub : public ::cartographer::mapping::PoseGraphInterface {
       const override;
   std::vector<Constraint> constraints() const override;
   mapping::proto::PoseGraph ToProto() const override;
+  void SetGlobalSlamOptimizationCallback(
+      GlobalSlamOptimizationCallback callback) override;
 
  private:
   std::shared_ptr<::grpc::Channel> client_channel_;

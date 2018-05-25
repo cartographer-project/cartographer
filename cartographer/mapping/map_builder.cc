@@ -61,22 +61,20 @@ std::vector<std::string> SelectRangeSensorIds(
   return range_sensor_ids;
 }
 
-MapBuilder::MapBuilder(
-    const proto::MapBuilderOptions& options,
-    PoseGraph::GlobalSlamOptimizationCallback global_slam_optimization_callback)
+MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
   CHECK(options.use_trajectory_builder_2d() ^
         options.use_trajectory_builder_3d());
   if (options.use_trajectory_builder_2d()) {
     pose_graph_ = common::make_unique<PoseGraph2D>(
-        options_.pose_graph_options(), global_slam_optimization_callback,
+        options_.pose_graph_options(),
         common::make_unique<optimization::OptimizationProblem2D>(
             options_.pose_graph_options().optimization_problem_options()),
         &thread_pool_);
   }
   if (options.use_trajectory_builder_3d()) {
     pose_graph_ = common::make_unique<PoseGraph3D>(
-        options_.pose_graph_options(), global_slam_optimization_callback,
+        options_.pose_graph_options(),
         common::make_unique<optimization::OptimizationProblem3D>(
             options_.pose_graph_options().optimization_problem_options()),
         &thread_pool_);

@@ -79,6 +79,10 @@ class PoseGraphInterface {
     common::optional<transform::Rigid3d> fixed_frame_origin_in_map;
   };
 
+  using GlobalSlamOptimizationCallback =
+      std::function<void(const std::map<int /* trajectory_id */, SubmapId>&,
+                         const std::map<int /* trajectory_id */, NodeId>&)>;
+
   PoseGraphInterface() {}
   virtual ~PoseGraphInterface() {}
 
@@ -129,6 +133,11 @@ class PoseGraphInterface {
 
   // Serializes the constraints and trajectories.
   virtual proto::PoseGraph ToProto() const = 0;
+
+  // Sets the callback function that is invoked whenever the global optimization
+  // problem is solved.
+  virtual void SetGlobalSlamOptimizationCallback(
+      GlobalSlamOptimizationCallback callback) = 0;
 };
 
 }  // namespace mapping
