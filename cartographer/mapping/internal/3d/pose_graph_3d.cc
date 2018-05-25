@@ -448,7 +448,7 @@ void PoseGraph3D::FinishTrajectory(const int trajectory_id) {
   });
 }
 
-bool PoseGraph3D::IsTrajectoryFinished(const int trajectory_id) {
+bool PoseGraph3D::IsTrajectoryFinished(const int trajectory_id) const {
   return finished_trajectories_.count(trajectory_id) > 0;
 }
 
@@ -461,7 +461,7 @@ void PoseGraph3D::FreezeTrajectory(const int trajectory_id) {
   });
 }
 
-bool PoseGraph3D::IsTrajectoryFrozen(const int trajectory_id) {
+bool PoseGraph3D::IsTrajectoryFrozen(const int trajectory_id) const {
   return frozen_trajectories_.count(trajectory_id) > 0;
 }
 
@@ -587,7 +587,7 @@ void PoseGraph3D::RunFinalOptimization() {
   WaitForAllComputations();
 }
 
-void PoseGraph3D::LogResidualHistograms() {
+void PoseGraph3D::LogResidualHistograms() const {
   common::Histogram rotational_residual;
   common::Histogram translational_residual;
   for (const Constraint& constraint : constraints_) {
@@ -663,12 +663,13 @@ void PoseGraph3D::RunOptimization() {
   }
 }
 
-MapById<NodeId, TrajectoryNode> PoseGraph3D::GetTrajectoryNodes() {
+MapById<NodeId, TrajectoryNode> PoseGraph3D::GetTrajectoryNodes() const {
   common::MutexLocker locker(&mutex_);
   return trajectory_nodes_;
 }
 
-MapById<NodeId, TrajectoryNodePose> PoseGraph3D::GetTrajectoryNodePoses() {
+MapById<NodeId, TrajectoryNodePose> PoseGraph3D::GetTrajectoryNodePoses()
+    const {
   MapById<NodeId, TrajectoryNodePose> node_poses;
   common::MutexLocker locker(&mutex_);
   for (const auto& node_id_data : trajectory_nodes_) {
@@ -680,7 +681,8 @@ MapById<NodeId, TrajectoryNodePose> PoseGraph3D::GetTrajectoryNodePoses() {
   return node_poses;
 }
 
-std::map<std::string, transform::Rigid3d> PoseGraph3D::GetLandmarkPoses() {
+std::map<std::string, transform::Rigid3d> PoseGraph3D::GetLandmarkPoses()
+    const {
   std::map<std::string, transform::Rigid3d> landmark_poses;
   common::MutexLocker locker(&mutex_);
   for (const auto& landmark : landmark_nodes_) {
@@ -700,35 +702,35 @@ void PoseGraph3D::SetLandmarkPose(const std::string& landmark_id,
   });
 }
 
-sensor::MapByTime<sensor::ImuData> PoseGraph3D::GetImuData() {
+sensor::MapByTime<sensor::ImuData> PoseGraph3D::GetImuData() const {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_->imu_data();
 }
 
-sensor::MapByTime<sensor::OdometryData> PoseGraph3D::GetOdometryData() {
+sensor::MapByTime<sensor::OdometryData> PoseGraph3D::GetOdometryData() const {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_->odometry_data();
 }
 
 sensor::MapByTime<sensor::FixedFramePoseData>
-PoseGraph3D::GetFixedFramePoseData() {
+PoseGraph3D::GetFixedFramePoseData() const {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_->fixed_frame_pose_data();
 }
 
 std::map<std::string /* landmark ID */, PoseGraphInterface::LandmarkNode>
-PoseGraph3D::GetLandmarkNodes() {
+PoseGraph3D::GetLandmarkNodes() const {
   common::MutexLocker locker(&mutex_);
   return landmark_nodes_;
 }
 
 std::map<int, PoseGraphInterface::TrajectoryData>
-PoseGraph3D::GetTrajectoryData() {
+PoseGraph3D::GetTrajectoryData() const {
   common::MutexLocker locker(&mutex_);
   return optimization_problem_->trajectory_data();
 }
 
-std::vector<PoseGraphInterface::Constraint> PoseGraph3D::constraints() {
+std::vector<PoseGraphInterface::Constraint> PoseGraph3D::constraints() const {
   common::MutexLocker locker(&mutex_);
   return constraints_;
 }
@@ -763,29 +765,29 @@ transform::Rigid3d PoseGraph3D::GetInterpolatedGlobalTrajectoryPose(
 }
 
 transform::Rigid3d PoseGraph3D::GetLocalToGlobalTransform(
-    const int trajectory_id) {
+    const int trajectory_id) const {
   common::MutexLocker locker(&mutex_);
   return ComputeLocalToGlobalTransform(global_submap_poses_, trajectory_id);
 }
 
-std::vector<std::vector<int>> PoseGraph3D::GetConnectedTrajectories() {
+std::vector<std::vector<int>> PoseGraph3D::GetConnectedTrajectories() const {
   return trajectory_connectivity_state_.Components();
 }
 
 PoseGraphInterface::SubmapData PoseGraph3D::GetSubmapData(
-    const SubmapId& submap_id) {
+    const SubmapId& submap_id) const {
   common::MutexLocker locker(&mutex_);
   return GetSubmapDataUnderLock(submap_id);
 }
 
 MapById<SubmapId, PoseGraphInterface::SubmapData>
-PoseGraph3D::GetAllSubmapData() {
+PoseGraph3D::GetAllSubmapData() const {
   common::MutexLocker locker(&mutex_);
   return GetSubmapDataUnderLock();
 }
 
 MapById<SubmapId, PoseGraphInterface::SubmapPose>
-PoseGraph3D::GetAllSubmapPoses() {
+PoseGraph3D::GetAllSubmapPoses() const {
   common::MutexLocker locker(&mutex_);
   MapById<SubmapId, SubmapPose> submap_poses;
   for (const auto& submap_id_data : submap_data_) {
@@ -822,7 +824,7 @@ transform::Rigid3d PoseGraph3D::ComputeLocalToGlobalTransform(
 }
 
 PoseGraphInterface::SubmapData PoseGraph3D::GetSubmapDataUnderLock(
-    const SubmapId& submap_id) {
+    const SubmapId& submap_id) const {
   const auto it = submap_data_.find(submap_id);
   if (it == submap_data_.end()) {
     return {};
@@ -945,7 +947,7 @@ void PoseGraph3D::TrimmingHandle::MarkSubmapAsTrimmed(
 }
 
 MapById<SubmapId, PoseGraphInterface::SubmapData>
-PoseGraph3D::GetSubmapDataUnderLock() {
+PoseGraph3D::GetSubmapDataUnderLock() const {
   MapById<SubmapId, PoseGraphInterface::SubmapData> submaps;
   for (const auto& submap_id_data : submap_data_) {
     submaps.Insert(submap_id_data.id,
