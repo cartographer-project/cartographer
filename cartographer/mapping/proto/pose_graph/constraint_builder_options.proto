@@ -16,10 +16,10 @@ syntax = "proto3";
 
 package cartographer.mapping.constraints.proto;
 
-import "cartographer/mapping/2d/scan_matching/proto/ceres_scan_matcher_options_2d.proto";
-import "cartographer/mapping/2d/scan_matching/proto/fast_correlative_scan_matcher_options_2d.proto";
-import "cartographer/mapping/3d/scan_matching/proto/ceres_scan_matcher_options_3d.proto";
-import "cartographer/mapping/3d/scan_matching/proto/fast_correlative_scan_matcher_options_3d.proto";
+import "cartographer/mapping/proto/scan_matching/ceres_scan_matcher_options_2d.proto";
+import "cartographer/mapping/proto/scan_matching/ceres_scan_matcher_options_3d.proto";
+import "cartographer/mapping/proto/scan_matching/fast_correlative_scan_matcher_options_2d.proto";
+import "cartographer/mapping/proto/scan_matching/fast_correlative_scan_matcher_options_3d.proto";
 
 message ConstraintBuilderOptions {
   // A constraint will be added if the proportion of added constraints to

@@ -54,6 +54,7 @@ int ConnectedComponents::FindSet(const int trajectory_id) {
   auto it = forest_.find(trajectory_id);
   CHECK(it != forest_.end());
   if (it->first != it->second) {
+    // Path compression for efficiency.
     it->second = FindSet(it->second);
   }
   return it->second;

@@ -53,12 +53,6 @@ void ThreadPoolForTesting::NotifyDependenciesCompleted(Task* task) {
   tasks_not_ready_.erase(it);
 }
 
-void ThreadPoolForTesting::Schedule(const std::function<void()>& work_item) {
-  auto task = common::make_unique<Task>();
-  task->SetWorkItem(work_item);
-  Schedule(std::move(task));
-}
-
 std::weak_ptr<Task> ThreadPoolForTesting::Schedule(std::unique_ptr<Task> task) {
   std::shared_ptr<Task> shared_task;
   {

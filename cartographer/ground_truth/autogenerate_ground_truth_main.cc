@@ -121,9 +121,10 @@ proto::GroundTruth GenerateGroundTruth(
         submap_to_node_index.at(constraint.submap_id().submap_index());
 
     // Covered distance between the two should not be too small.
-    if (std::abs(covered_distance.at(matched_node) -
-                 covered_distance.at(representative_node)) <
-        min_covered_distance) {
+    double covered_distance_in_constraint =
+        std::abs(covered_distance.at(matched_node) -
+                 covered_distance.at(representative_node));
+    if (covered_distance_in_constraint < min_covered_distance) {
       continue;
     }
 
@@ -157,6 +158,7 @@ proto::GroundTruth GenerateGroundTruth(
         trajectory.node(representative_node).timestamp());
     new_relation->set_timestamp2(trajectory.node(matched_node).timestamp());
     *new_relation->mutable_expected() = transform::ToProto(expected);
+    new_relation->set_covered_distance(covered_distance_in_constraint);
   }
   LOG(INFO) << "Generated " << ground_truth.relation_size()
             << " relations and ignored " << num_outliers << " outliers.";

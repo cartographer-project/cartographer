@@ -36,8 +36,6 @@ class ThreadPoolInterface {
  public:
   ThreadPoolInterface() {}
   virtual ~ThreadPoolInterface() {}
-  // TODO(gaschler): Use Schedule(unique_ptr<Task>), then remove Schedule.
-  virtual void Schedule(const std::function<void()>& work_item) = 0;
   virtual std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task) = 0;
 
  protected:
@@ -63,9 +61,6 @@ class ThreadPool : public ThreadPoolInterface {
 
   ThreadPool(const ThreadPool&) = delete;
   ThreadPool& operator=(const ThreadPool&) = delete;
-
-  // TODO(gaschler): Remove all uses.
-  void Schedule(const std::function<void()>& work_item) override;
 
   // When the returned weak pointer is expired, 'task' has certainly completed,
   // so dependants no longer need to add it as a dependency.

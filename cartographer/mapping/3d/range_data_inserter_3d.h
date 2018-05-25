@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_MAPPING_3D_RANGE_DATA_INSERTER_3D_H_
 
 #include "cartographer/mapping/3d/hybrid_grid.h"
-#include "cartographer/mapping/3d/proto/range_data_inserter_options_3d.pb.h"
+#include "cartographer/mapping/proto/3d/range_data_inserter_options_3d.pb.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
 

@@ -43,7 +43,7 @@
 #include "Eigen/Core"
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/internal/2d/scan_matching/correlative_scan_matcher_2d.h"
-#include "cartographer/mapping/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
+#include "cartographer/mapping/proto/scan_matching/real_time_correlative_scan_matcher_options.pb.h"
 
 namespace cartographer {
 namespace mapping {
