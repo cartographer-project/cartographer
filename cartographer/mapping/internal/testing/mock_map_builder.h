@@ -55,8 +55,6 @@ class MockMapBuilder : public mapping::MapBuilderInterface {
       GetAllTrajectoryBuilderOptions,
       const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>
           &());
-  MOCK_METHOD1(SetGlobalSlamOptimizationCallback,
-               void(PoseGraphInterface::GlobalSlamOptimizationCallback));
 };
 
 }  // namespace testing
