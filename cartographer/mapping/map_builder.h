@@ -30,7 +30,7 @@ namespace cartographer {
 namespace mapping {
 
 proto::MapBuilderOptions CreateMapBuilderOptions(
-    common::LuaParameterDictionary *const parameter_dictionary);
+    common::LuaParameterDictionary* const parameter_dictionary);
 
 // Wires up the complete SLAM stack with TrajectoryBuilders (for local submaps)
 // and a PoseGraph for loop closure.
@@ -78,9 +78,6 @@ class MapBuilder : public MapBuilderInterface {
       &GetAllTrajectoryBuilderOptions() const override {
     return all_trajectory_builder_options_;
   }
-
-  void SetGlobalSlamOptimizationCallback(
-      PoseGraphInterface::GlobalSlamOptimizationCallback callback) override;
 
  private:
   const proto::MapBuilderOptions options_;

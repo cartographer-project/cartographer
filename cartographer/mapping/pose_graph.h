@@ -139,11 +139,6 @@ class PoseGraph : public PoseGraphInterface {
                                         int to_trajectory_id,
                                         const transform::Rigid3d& pose,
                                         const common::Time time) = 0;
-
-  // Sets the callback function that is invoked whenever the global optimization
-  // problem is solved.
-  virtual void SetGlobalSlamOptimizationCallback(
-      PoseGraphInterface::GlobalSlamOptimizationCallback callback) = 0;
 };
 
 std::vector<PoseGraph::Constraint> FromProto(

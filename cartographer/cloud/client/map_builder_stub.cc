@@ -168,10 +168,5 @@ MapBuilderStub::GetAllTrajectoryBuilderOptions() const {
   LOG(FATAL) << "Not implemented";
 }
 
-void MapBuilderStub::SetGlobalSlamOptimizationCallback(
-    mapping::PoseGraphInterface::GlobalSlamOptimizationCallback callback) {
-  LOG(FATAL) << "Not implemented";
-}
-
 }  // namespace cloud
 }  // namespace cartographer

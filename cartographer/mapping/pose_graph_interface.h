@@ -133,6 +133,11 @@ class PoseGraphInterface {
 
   // Serializes the constraints and trajectories.
   virtual proto::PoseGraph ToProto() const = 0;
+
+  // Sets the callback function that is invoked whenever the global optimization
+  // problem is solved.
+  virtual void SetGlobalSlamOptimizationCallback(
+      GlobalSlamOptimizationCallback callback) = 0;
 };
 
 }  // namespace mapping

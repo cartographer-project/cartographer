@@ -465,11 +465,5 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
   CHECK(reader->eof());
 }
 
-void MapBuilder::SetGlobalSlamOptimizationCallback(
-    PoseGraphInterface::GlobalSlamOptimizationCallback callback) {
-  CHECK(pose_graph_);
-  pose_graph_->SetGlobalSlamOptimizationCallback(callback);
-}
-
 }  // namespace mapping
 }  // namespace cartographer
