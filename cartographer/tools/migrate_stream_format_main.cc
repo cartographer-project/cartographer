@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/mapping_state_deserializer.h"
 #include "cartographer/io/proto_stream.h"
 #include "cartographer/io/serialization_format_migration.h"
 #include "gflags/gflags.h"
@@ -43,7 +42,7 @@ int main(int argc, char** argv) {
 
     cartographer::io::ProtoStreamReader input(FLAGS_original_pbstream_file);
     cartographer::io::ProtoStreamWriter output(FLAGS_output_pbstream_file);
-    cartographer::mapping::MigrateStreamFormatToVersion1(&input, &output);
+    cartographer::io::MigrateStreamFormatToVersion1(&input, &output);
 
     return EXIT_FAILURE;
   }

@@ -22,7 +22,7 @@
 #include "glog/logging.h"
 
 namespace cartographer {
-namespace mapping {
+namespace io {
 namespace {
 
 using mapping::proto::SerializedData;
@@ -139,5 +139,5 @@ void MigrateStreamFormatToVersion1(
   SerializeToVersion1Format(ParseLegacyData(input), output);
 }
 
-}  // namespace mapping
+}  // namespace io
 }  // namespace cartographer

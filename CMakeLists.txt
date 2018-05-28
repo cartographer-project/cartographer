@@ -179,7 +179,7 @@ google_binary(cartographer_compute_relations_metrics
     cartographer/ground_truth/compute_relations_metrics_main.cc
 )
 
-google_binary(cartographer_migrate_serialized_format
+google_binary(cartographer_migrate_stream_format
   SRCS
     cartographer/tools/migrate_stream_format_main.cc
 )
