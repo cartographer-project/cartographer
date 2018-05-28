@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "cartographer/io/serialization_format_migration.h"
+
 #include <vector>
 
 #include "cartographer/mapping/proto/internal/legacy_serialized_data.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
-#include "cartographer/mapping/stream_format_migration.h"
 #include "glog/logging.h"
 
 namespace cartographer {
