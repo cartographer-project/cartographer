@@ -16,13 +16,13 @@
 
 #include "cartographer/io/mapping_state_deserializer.h"
 #include "cartographer/io/proto_stream.h"
-#include "cartographer/mapping/proto/pose_graph.pb.h"
-#include "cartographer/mapping/stream_format_migration.h"
+#include "cartographer/io/serialization_format_migration.h"
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
-DEFINE_string(original_pbstream_file, "",
-              "Path to the pbstream file that shall be migrated.");
+DEFINE_string(
+    original_pbstream_file, "",
+    "Path to the pbstream file that will be migrated to the new version.");
 DEFINE_string(output_pbstream_file, "",
               "Output filename for the migrated pbstream.");
 

@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CARTOGRAPHER_MAPPING_MAPPING_STATE_MIGRATION_H_
-#define CARTOGRAPHER_MAPPING_MAPPING_STATE_MIGRATION_H_
+#ifndef CARTOGRAPHER_IO_MAPPING_STATE_MIGRATION_H_
+#define CARTOGRAPHER_IO_MAPPING_STATE_MIGRATION_H_
 
 #include "cartographer/io/proto_stream_interface.h"
 
 namespace cartographer {
-namespace mapping {
+namespace io {
 
 // This helper function, migrates the input stream, which is supposed to match
 // to the "old" stream format order (PoseGraph, AllTrajectoryBuilderOptions,
@@ -29,7 +29,7 @@ void MigrateStreamFormatToVersion1(
     cartographer::io::ProtoStreamReaderInterface* const input,
     cartographer::io::ProtoStreamWriterInterface* const output);
 
-}  // namespace mapping
+}  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_MAPPING_STATE_MIGRATION_H_
+#endif  // CARTOGRAPHER_IO_MAPPING_STATE_MIGRATION_H_
