@@ -27,7 +27,7 @@ namespace io {
 static constexpr int kMappingStateSerializationFormatVersion = 1;
 
 // Serialize mapping state to a pbstream.
-void ToPbStream(
+void WritePbStream(
     const mapping::PoseGraph& pose_graph,
     const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
         builder_options,

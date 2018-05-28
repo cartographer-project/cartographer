@@ -190,7 +190,7 @@ void SerializeLandmarkNodes(
 
 }  // namespace
 
-void ToPbStream(
+void WritePbStream(
     const mapping::PoseGraph& pose_graph,
     const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
         trajectory_builder_options,
