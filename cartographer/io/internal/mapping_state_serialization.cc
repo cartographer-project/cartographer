@@ -20,9 +20,7 @@
 
 namespace cartographer {
 namespace io {
-
 namespace {
-
 using mapping::MapById;
 using mapping::NodeId;
 using mapping::PoseGraphInterface;

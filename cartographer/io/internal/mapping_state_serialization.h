@@ -20,7 +20,6 @@
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 
-// Helper function to serialize a PoseGraph to a protobuf stream.
 namespace cartographer {
 namespace io {
 
