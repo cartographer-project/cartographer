@@ -20,6 +20,7 @@ import "cartographer/mapping/proto/pose_graph.proto";
 import "cartographer/mapping/proto/submap.proto";
 import "cartographer/mapping/proto/trajectory_node_data.proto";
 import "cartographer/sensor/proto/sensor.proto";
+import "cartographer/mapping/proto/trajectory_builder_options.proto";
 import "cartographer/transform/proto/transform.proto";
 
 message Submap {
@@ -60,18 +61,28 @@ message TrajectoryData {
   transform.proto.Rigid3d fixed_frame_origin_in_map = 4;
 }
 
-message SerializedData {
-  Submap submap = 1;
-  Node node = 2;
-  ImuData imu_data = 3;
-  OdometryData odometry_data = 4;
-  FixedFramePoseData fixed_frame_pose_data = 5;
-  TrajectoryData trajectory_data = 6;
-  LandmarkData landmark_data = 7;
-}
-
 message LocalSlamResultData {
   int64 timestamp = 1;
   TrajectoryNodeData node_data = 2;
   repeated Submap submaps = 3;
+}
+
+// Header of the serialization format. At the moment it only contains the
+// version of the format.
+message SerializationHeader {
+  uint32 format_version = 1;
+}
+
+message SerializedData {
+  oneof data {
+    PoseGraph pose_graph = 1;
+    AllTrajectoryBuilderOptions all_trajectory_builder_options = 2;
+    Submap submap = 3;
+    Node node = 4;
+    TrajectoryData trajectory_data = 5;
+    ImuData imu_data = 6;
+    OdometryData odometry_data = 7;
+    FixedFramePoseData fixed_frame_pose_data = 8;
+    LandmarkData landmark_data = 9;
+  }
 }
