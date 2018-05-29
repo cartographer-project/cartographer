@@ -121,7 +121,7 @@ mapping::proto::SerializationHeader CreateSerializationHeader() {
 void SerializeToVersion1Format(
     const ProtoMap& deserialized_data,
     cartographer::io::ProtoStreamWriterInterface* const output) {
-  static const std::vector<int> kFieldSerializationOrder = {
+  const std::vector<int> kFieldSerializationOrder = {
       SerializedData::kPoseGraphFieldNumber,
       SerializedData::kAllTrajectoryBuilderOptionsFieldNumber,
       SerializedData::kSubmapFieldNumber,

@@ -89,8 +89,7 @@ TEST_F(MigrationTest, MigrationAddsHeaderAsFirstMessage) {
   EXPECT_THAT(output_messages_, SizeIs(kNumOriginalMessages + 1));
 
   mapping::proto::SerializationHeader header;
-  EXPECT_THAT(TextFormat::ParseFromString(output_messages_[0], &header),
-              Eq(true));
+  EXPECT_TRUE(TextFormat::ParseFromString(output_messages_[0], &header));
   EXPECT_THAT(header.format_version(), Eq(1));
 }
 
@@ -101,20 +100,19 @@ TEST_F(MigrationTest, SerializedDataOrderIsCorrect) {
   std::vector<mapping::proto::SerializedData> serialized(
       output_messages_.size() - 1);
   for (size_t i = 1; i < output_messages_.size(); ++i) {
-    EXPECT_THAT(
-        TextFormat::ParseFromString(output_messages_[i], &serialized[i - 1]),
-        Eq(true));
+    EXPECT_TRUE(
+        TextFormat::ParseFromString(output_messages_[i], &serialized[i - 1]));
   }
 
-  EXPECT_THAT(serialized[0].has_pose_graph(), Eq(true));
-  EXPECT_THAT(serialized[1].has_all_trajectory_builder_options(), Eq(true));
-  EXPECT_THAT(serialized[2].has_submap(), Eq(true));
-  EXPECT_THAT(serialized[3].has_node(), Eq(true));
-  EXPECT_THAT(serialized[4].has_trajectory_data(), Eq(true));
-  EXPECT_THAT(serialized[5].has_imu_data(), Eq(true));
-  EXPECT_THAT(serialized[6].has_odometry_data(), Eq(true));
-  EXPECT_THAT(serialized[7].has_fixed_frame_pose_data(), Eq(true));
-  EXPECT_THAT(serialized[8].has_landmark_data(), Eq(true));
+  EXPECT_TRUE(serialized[0].has_pose_graph());
+  EXPECT_TRUE(serialized[1].has_all_trajectory_builder_options());
+  EXPECT_TRUE(serialized[2].has_submap());
+  EXPECT_TRUE(serialized[3].has_node());
+  EXPECT_TRUE(serialized[4].has_trajectory_data());
+  EXPECT_TRUE(serialized[5].has_imu_data());
+  EXPECT_TRUE(serialized[6].has_odometry_data());
+  EXPECT_TRUE(serialized[7].has_fixed_frame_pose_data());
+  EXPECT_TRUE(serialized[8].has_landmark_data());
 }
 
 }  // namespace
