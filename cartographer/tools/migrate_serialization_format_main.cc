@@ -30,15 +30,14 @@ int main(int argc, char** argv) {
   FLAGS_logtostderr = true;
   google::SetUsageMessage(
       "\n\n"
-      "Tool for migrating files that used the old stream format for "
-      "serializing the mapping state of Cartographer, to the new stream format "
-      "(Version 1).");
+      "Tool for migrating files that used the old mapping state serialization "
+      "format of Cartographer, to the new serialization format, which includes "
+      "a header (Version 1).");
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   if (FLAGS_original_pbstream_file.empty() ||
       FLAGS_output_pbstream_file.empty()) {
-    google::ShowUsageWithFlagsRestrict(argv[0],
-                                       "migrate_pose_graph_file_format");
+    google::ShowUsageWithFlagsRestrict(argv[0], "migrate_serialization_format");
 
     cartographer::io::ProtoStreamReader input(FLAGS_original_pbstream_file);
     cartographer::io::ProtoStreamWriter output(FLAGS_output_pbstream_file);
