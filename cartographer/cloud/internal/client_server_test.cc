@@ -129,13 +129,9 @@ class ClientServerTest : public ::testing::Test {
     auto mock_map_builder = common::make_unique<MockMapBuilder>();
     mock_map_builder_ = mock_map_builder.get();
     mock_pose_graph_ = common::make_unique<MockPoseGraph>();
-    EXPECT_CALL(
-        *mock_map_builder_,
-        pose_graph())
+    EXPECT_CALL(*mock_map_builder_, pose_graph())
         .WillOnce(::testing::Return(mock_pose_graph_.get()));
-    EXPECT_CALL(
-        *mock_pose_graph_,
-        SetGlobalSlamOptimizationCallback(_));
+    EXPECT_CALL(*mock_pose_graph_, SetGlobalSlamOptimizationCallback(_));
     server_ = common::make_unique<MapBuilderServer>(
         map_builder_server_options_, std::move(mock_map_builder));
     EXPECT_TRUE(server_ != nullptr);
