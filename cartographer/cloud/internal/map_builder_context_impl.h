@@ -61,7 +61,7 @@ void MapBuilderContext<SubmapType>::AddSensorDataToTrajectory(
 }
 
 template <class SubmapType>
-MapBuilderContextInterface::SubscriptionId
+MapBuilderContextInterface::LocalSlamSubscriptionId
 MapBuilderContext<SubmapType>::SubscribeLocalSlamResults(
     int trajectory_id, LocalSlamSubscriptionCallback callback) {
   return map_builder_server_->SubscribeLocalSlamResults(trajectory_id,
@@ -70,8 +70,20 @@ MapBuilderContext<SubmapType>::SubscribeLocalSlamResults(
 
 template <class SubmapType>
 void MapBuilderContext<SubmapType>::UnsubscribeLocalSlamResults(
-    const SubscriptionId& subscription_id) {
+    const LocalSlamSubscriptionId& subscription_id) {
   map_builder_server_->UnsubscribeLocalSlamResults(subscription_id);
+}
+
+template <class SubmapType>
+int MapBuilderContext<SubmapType>::SubscribeGlobalSlamOptimizations(
+    GlobalSlamOptimizationCallback callback) {
+  return map_builder_server_->SubscribeGlobalSlamOptimizations(callback);
+}
+
+template <class SubmapType>
+void MapBuilderContext<SubmapType>::UnsubscribeGlobalSlamOptimizations(
+    int subscription_index) {
+  map_builder_server_->UnsubscribeGlobalSlamOptimizations(subscription_index);
 }
 
 template <class SubmapType>

@@ -51,7 +51,7 @@ std::unique_ptr<proto::ReceiveLocalSlamResultsResponse> GenerateResponse(
 void ReceiveLocalSlamResultsHandler::OnRequest(
     const proto::ReceiveLocalSlamResultsRequest& request) {
   auto writer = GetWriter();
-  MapBuilderContextInterface::SubscriptionId subscription_id =
+  MapBuilderContextInterface::LocalSlamSubscriptionId subscription_id =
       GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->SubscribeLocalSlamResults(
               request.trajectory_id(),
@@ -59,16 +59,22 @@ void ReceiveLocalSlamResultsHandler::OnRequest(
                   std::unique_ptr<MapBuilderContextInterface::LocalSlamResult>
                       local_slam_result) {
                 if (local_slam_result) {
-                  writer.Write(GenerateResponse(std::move(local_slam_result)));
+                  if (!writer.Write(
+                          GenerateResponse(std::move(local_slam_result)))) {
+                    // Client closed connection.
+                    LOG(INFO) << "Client closed connection.";
+                    return false;
+                  }
                 } else {
                   // Callback with 'nullptr' signals that the trajectory
                   // finished.
                   writer.WritesDone();
                 }
+                return true;
               });
 
   subscription_id_ =
-      common::make_unique<MapBuilderContextInterface::SubscriptionId>(
+      common::make_unique<MapBuilderContextInterface::LocalSlamSubscriptionId>(
           subscription_id);
 }
 
