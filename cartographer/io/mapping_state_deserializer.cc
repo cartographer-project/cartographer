@@ -20,7 +20,6 @@
 
 namespace cartographer {
 namespace io {
-
 namespace {
 mapping::proto::SerializationHeader ReadHeaderOrDie(
     ProtoStreamReaderInterface* const reader) {

@@ -17,7 +17,6 @@
 #include <memory>
 
 #include "cartographer/io/internal/in_memory_proto_stream.h"
-#include "cartographer/io/internal/testing/serialized_mapping_state_text_proto.h"
 #include "cartographer/io/mapping_state_deserializer.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"
@@ -37,6 +36,50 @@ using ::google::protobuf::util::MessageDifferencer;
 using ::testing::Eq;
 using ::testing::Not;
 
+static constexpr char kSerializationHeaderProtoString[] = R"PROTO(
+  format_version: 1
+)PROTO";
+
+static constexpr char kUnsupportedSerializationHeaderProtoString[] = R"PROTO(
+  format_version: 123
+)PROTO";
+
+static constexpr char kPoseGraphProtoString[] = R"PROTO(
+  pose_graph {}
+)PROTO";
+
+static constexpr char kAllTrajectoryBuilderOptionsProtoString[] = R"PROTO(
+  all_trajectory_builder_options {}
+)PROTO";
+
+static constexpr char kSubmapProtoString[] = R"PROTO(
+  submap {}
+)PROTO";
+
+static constexpr char kNodeProtoString[] = R"PROTO(
+  node {}
+)PROTO";
+
+static constexpr char kTrajectoryDataProtoString[] = R"PROTO(
+  trajectory_data {}
+)PROTO";
+
+static constexpr char kImuDataProtoString[] = R"PROTO(
+  imu_data {}
+)PROTO";
+
+static constexpr char kOdometryDataProtoString[] = R"PROTO(
+  odometry_data {}
+)PROTO";
+
+static constexpr char kFixedFramePoseDataProtoString[] = R"PROTO(
+  fixed_frame_pose_data {}
+)PROTO";
+
+static constexpr char kLandmarkDataProtoString[] = R"PROTO(
+  landmark_data {}
+)PROTO";
+
 template <typename T>
 T ProtoFromStringOrDie(const std::string& proto_string) {
   T msg;
@@ -55,25 +98,25 @@ CreateInMemoryReaderFromTextProtos() {
   std::queue<std::unique_ptr<Message>> proto_queue;
 
   proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializationHeader>(
-      testing::kSerializationHeaderProtoString));
+      kSerializationHeaderProtoString));
   proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(testing::kPoseGraphProtoString));
+      ProtoUPtrFromStringOrDie<SerializedData>(kPoseGraphProtoString));
   proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializedData>(
-      testing::kAllTrajectoryBuilderOptionsProtoString));
+      kAllTrajectoryBuilderOptionsProtoString));
   proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(testing::kSubmapProtoString));
+      ProtoUPtrFromStringOrDie<SerializedData>(kSubmapProtoString));
   proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(testing::kNodeProtoString));
-  proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializedData>(
-      testing::kTrajectoryDataProtoString));
+      ProtoUPtrFromStringOrDie<SerializedData>(kNodeProtoString));
   proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(testing::kImuDataProtoString));
-  proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializedData>(
-      testing::kOdometryDataProtoString));
-  proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializedData>(
-      testing::kFixedFramePoseDataProtoString));
-  proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializedData>(
-      testing::kLandmarkDataProtoString));
+      ProtoUPtrFromStringOrDie<SerializedData>(kTrajectoryDataProtoString));
+  proto_queue.emplace(
+      ProtoUPtrFromStringOrDie<SerializedData>(kImuDataProtoString));
+  proto_queue.emplace(
+      ProtoUPtrFromStringOrDie<SerializedData>(kOdometryDataProtoString));
+  proto_queue.emplace(
+      ProtoUPtrFromStringOrDie<SerializedData>(kFixedFramePoseDataProtoString));
+  proto_queue.emplace(
+      ProtoUPtrFromStringOrDie<SerializedData>(kLandmarkDataProtoString));
   return make_unique<InMemoryProtoStreamReader>(std::move(proto_queue));
 }
 
@@ -87,54 +130,53 @@ TEST(MappingStateDeserializerTest, WorksOnGoldenTextStream) {
 
   EXPECT_TRUE(MessageDifferencer::Equals(
       deserializer.header(), ProtoFromStringOrDie<SerializationHeader>(
-                                 testing::kSerializationHeaderProtoString)));
+                                 kSerializationHeaderProtoString)));
 
   EXPECT_TRUE(MessageDifferencer::Equals(
       deserializer.pose_graph(),
-      ProtoFromStringOrDie<SerializedData>(testing::kPoseGraphProtoString)
+      ProtoFromStringOrDie<SerializedData>(kPoseGraphProtoString)
           .pose_graph()));
 
-  EXPECT_TRUE(MessageDifferencer::Equals(
-      deserializer.all_trajectory_builder_options(),
-      ProtoFromStringOrDie<SerializedData>(
-          testing::kAllTrajectoryBuilderOptionsProtoString)
-          .all_trajectory_builder_options()));
+  EXPECT_TRUE(
+      MessageDifferencer::Equals(deserializer.all_trajectory_builder_options(),
+                                 ProtoFromStringOrDie<SerializedData>(
+                                     kAllTrajectoryBuilderOptionsProtoString)
+                                     .all_trajectory_builder_options()));
 
   SerializedData serialized_data;
   EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
-      ProtoFromStringOrDie<SerializedData>(testing::kSubmapProtoString)));
+      ProtoFromStringOrDie<SerializedData>(kSubmapProtoString)));
+
+  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
+  EXPECT_TRUE(MessageDifferencer::Equals(
+      serialized_data, ProtoFromStringOrDie<SerializedData>(kNodeProtoString)));
 
   EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
-      ProtoFromStringOrDie<SerializedData>(testing::kNodeProtoString)));
-
-  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
-  EXPECT_TRUE(MessageDifferencer::Equals(
-      serialized_data, ProtoFromStringOrDie<SerializedData>(
-                           testing::kTrajectoryDataProtoString)));
+      ProtoFromStringOrDie<SerializedData>(kTrajectoryDataProtoString)));
 
   EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
-      ProtoFromStringOrDie<SerializedData>(testing::kImuDataProtoString)));
+      ProtoFromStringOrDie<SerializedData>(kImuDataProtoString)));
 
   EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
-      ProtoFromStringOrDie<SerializedData>(testing::kOdometryDataProtoString)));
-
-  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
-  EXPECT_TRUE(MessageDifferencer::Equals(
-      serialized_data, ProtoFromStringOrDie<SerializedData>(
-                           testing::kFixedFramePoseDataProtoString)));
+      ProtoFromStringOrDie<SerializedData>(kOdometryDataProtoString)));
 
   EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
-      ProtoFromStringOrDie<SerializedData>(testing::kLandmarkDataProtoString)));
+      ProtoFromStringOrDie<SerializedData>(kFixedFramePoseDataProtoString)));
+
+  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
+  EXPECT_TRUE(MessageDifferencer::Equals(
+      serialized_data,
+      ProtoFromStringOrDie<SerializedData>(kLandmarkDataProtoString)));
 
   EXPECT_FALSE(deserializer.GetNextSerializedData(&serialized_data));
   EXPECT_TRUE(reader->eof());
@@ -143,7 +185,7 @@ TEST(MappingStateDeserializerTest, WorksOnGoldenTextStream) {
 TEST(MappingStateDeserializerDeathTests, FailsIfVersionNotSupported) {
   std::queue<std::unique_ptr<Message>> proto_queue;
   proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializationHeader>(
-      testing::kUnsupportedSerializationHeaderProtoString));
+      kUnsupportedSerializationHeaderProtoString));
   InMemoryProtoStreamReader reader(std::move(proto_queue));
 
   EXPECT_DEATH(common::make_unique<MappingStateDeserializer>(&reader),
