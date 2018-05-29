@@ -26,7 +26,6 @@
   <maintainer email="google-cartographer@googlegroups.com">
     The Cartographer Authors
   </maintainer>
-  <maintainer email="mikael@osrfoundation.org">Mikael Arguedas</maintainer>
   <license>Apache 2.0</license>
 
   <url>https://github.com/googlecartographer/cartographer</url>
