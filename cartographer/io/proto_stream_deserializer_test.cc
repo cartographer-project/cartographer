@@ -17,7 +17,7 @@
 #include <memory>
 
 #include "cartographer/io/internal/in_memory_proto_stream.h"
-#include "cartographer/io/mapping_state_deserializer.h"
+#include "cartographer/io/proto_stream_deserializer.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
@@ -121,12 +121,12 @@ CreateInMemoryReaderFromTextProtos() {
 }
 
 // This test checks, if the serialization works.
-TEST(MappingStateDeserializerTest, WorksOnGoldenTextStream) {
+TEST(ProtoStreamDeserializerTest, WorksOnGoldenTextStream) {
   // Load text proto into in_memory_reader.
   std::unique_ptr<InMemoryProtoStreamReader> reader =
       CreateInMemoryReaderFromTextProtos();
 
-  io::MappingStateDeserializer deserializer(reader.get());
+  io::ProtoStreamDeserializer deserializer(reader.get());
 
   EXPECT_TRUE(MessageDifferencer::Equals(
       deserializer.header(), ProtoFromStringOrDie<SerializationHeader>(
@@ -182,13 +182,13 @@ TEST(MappingStateDeserializerTest, WorksOnGoldenTextStream) {
   EXPECT_TRUE(reader->eof());
 }
 
-TEST(MappingStateDeserializerDeathTests, FailsIfVersionNotSupported) {
+TEST(ProtoStreamDeserializerDeathTests, FailsIfVersionNotSupported) {
   std::queue<std::unique_ptr<Message>> proto_queue;
   proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializationHeader>(
       kUnsupportedSerializationHeaderProtoString));
   InMemoryProtoStreamReader reader(std::move(proto_queue));
 
-  EXPECT_DEATH(common::make_unique<MappingStateDeserializer>(&reader),
+  EXPECT_DEATH(common::make_unique<ProtoStreamDeserializer>(&reader),
                "Unsupported serialization format");
 }
 

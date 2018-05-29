@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/mapping_state_deserializer.h"
+#include "cartographer/io/proto_stream_deserializer.h"
+
 #include "cartographer/io/internal/mapping_state_serialization.h"
 #include "glog/logging.h"
 
@@ -34,7 +35,7 @@ bool IsVersionSupported(const mapping::proto::SerializationHeader& header) {
 
 }  // namespace
 
-MappingStateDeserializer::MappingStateDeserializer(
+ProtoStreamDeserializer::ProtoStreamDeserializer(
     ProtoStreamReaderInterface* const reader)
     : reader_(reader), header_(ReadHeaderOrDie(reader)) {
   CHECK(IsVersionSupported(header_)) << "Unsupported serialization format \""
@@ -60,7 +61,7 @@ MappingStateDeserializer::MappingStateDeserializer(
                .options_with_sensor_ids_size());
 }
 
-bool MappingStateDeserializer::GetNextSerializedData(
+bool ProtoStreamDeserializer::GetNextSerializedData(
     mapping::proto::SerializedData* data) {
   return reader_->ReadProto(data);
 }

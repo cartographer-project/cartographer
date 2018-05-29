@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_MAPPING_STATE_DESERIALIZER_H_
-#define CARTOGRAPHER_IO_MAPPING_STATE_DESERIALIZER_H_
-
-#include <iterator>
+#ifndef CARTOGRAPHER_IO_PROTO_STREAM_DESERIALIZER_H_
+#define CARTOGRAPHER_IO_PROTO_STREAM_DESERIALIZER_H_
 
 #include "cartographer/io/proto_stream_interface.h"
 #include "cartographer/mapping/proto/pose_graph.pb.h"
@@ -29,13 +27,13 @@ namespace io {
 
 // Helper for deserializing a previously serialized mapping state from a
 // proto stream, abstracting away the format parsing logic.
-class MappingStateDeserializer {
+class ProtoStreamDeserializer {
  public:
-  explicit MappingStateDeserializer(ProtoStreamReaderInterface* const reader);
+  explicit ProtoStreamDeserializer(ProtoStreamReaderInterface* const reader);
 
-  MappingStateDeserializer(const MappingStateDeserializer&) = delete;
-  MappingStateDeserializer& operator=(const MappingStateDeserializer&) = delete;
-  MappingStateDeserializer(MappingStateDeserializer&&) = delete;
+  ProtoStreamDeserializer(const ProtoStreamDeserializer&) = delete;
+  ProtoStreamDeserializer& operator=(const ProtoStreamDeserializer&) = delete;
+  ProtoStreamDeserializer(ProtoStreamDeserializer&&) = delete;
 
   mapping::proto::SerializationHeader& header() { return header_; }
 
@@ -67,4 +65,4 @@ class MappingStateDeserializer {
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_MAPPING_STATE_DESERIALIZER_H_
+#endif  // CARTOGRAPHER_IO_PROTO_STREAM_DESERIALIZER_H_
