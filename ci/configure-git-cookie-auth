@@ -1,0 +1,106 @@
+#!/usr/bin/python
+# Copyright (C) 2012 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+This code is heavily based on https://gerrit.googlesource.com/gcompute-tools
+
+The difference is that we are using Google auth to request an access token
+which is in turn used to create a cookie for the authentication with git.
+
+As opposed to the original code, this utility does not automatically update
+cookies when they expire. It is in fact not required for the narrow use case
+of unit testing within Kokoro.
+
+The function stores the retrieved cookie for Git in
+  $HOME/.git-credential-cache/cookie
+
+It also changes the global Git config and sets http.cookiefile to the cookie
+file specified above.
+"""
+
+import cookielib
+import os
+import subprocess
+import time
+import google.auth
+import google.auth.transport.requests
+
+COOKIE_JAR = None
+
+
+def configure_git():
+    global COOKIE_JAR
+
+    dir = os.path.expanduser('~/.git-credential-cache')
+
+    COOKIE_JAR = os.path.join(dir, 'cookie')
+
+    if os.path.exists(dir):
+        os.chmod(dir, 0700)
+    else:
+        os.mkdir(dir, 0700)
+    subprocess.call([
+        'git', 'config', '--global',
+        'http.cookiefile', COOKIE_JAR
+    ])
+
+
+def authenticate_and_write_cookie():
+    credentials, _ = google.auth.default(
+        scopes=['https://www.googleapis.com/auth/gerritcodereview'])
+    transport = google.auth.transport.requests.Request()
+    credentials.refresh(transport)
+
+    access_token = credentials.token
+
+    # there was a problem with credentials.expiry and since we know that the
+    # cookie will be value for some time and since in this scenario, we use
+    # it for an extremely short time only, the approach of setting a 30 min
+    # expiry time is a valid fix
+    expires = int(time.time()) + 1800  # epoch in seconds
+
+    tmp_jar = COOKIE_JAR + '.lock'
+    cj = cookielib.MozillaCookieJar(tmp_jar)
+
+    for d in ['source.developers.google.com', '.googlesource.com']:
+        cj.set_cookie(cookielib.Cookie(
+            version=0,
+            name='o',
+            value=access_token,
+            port=None,
+            port_specified=False,
+            domain=d,
+            domain_specified=True,
+            domain_initial_dot=d.startswith('.'),
+            path='/',
+            path_specified=True,
+            secure=True,
+            expires=expires,
+            discard=False,
+            comment=None,
+            comment_url=None,
+            rest=None))
+
+    cj.save()
+    os.rename(tmp_jar, COOKIE_JAR)
+
+
+def main():
+    configure_git()
+    authenticate_and_write_cookie()
+
+
+if __name__ == '__main__':
+    main()
