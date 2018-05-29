@@ -54,6 +54,8 @@ class MockPoseGraph : public mapping::PoseGraphInterface {
       std::map<int, mapping::PoseGraphInterface::TrajectoryData>());
   MOCK_CONST_METHOD0(constraints, std::vector<Constraint>());
   MOCK_CONST_METHOD0(ToProto, mapping::proto::PoseGraph());
+  MOCK_METHOD1(SetGlobalSlamOptimizationCallback,
+               void(GlobalSlamOptimizationCallback callback));
 };
 
 }  // namespace testing

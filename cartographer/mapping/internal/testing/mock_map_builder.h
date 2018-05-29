@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_MAP_BUILDER_H_
 
 #include "cartographer/mapping/map_builder_interface.h"
+#include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"

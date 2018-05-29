@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Cartographer Authors
+ * Copyright 2018 The Cartographer Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_RECEIVE_LOCAL_SLAM_RESULTS_HANDLER_H
-#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_RECEIVE_LOCAL_SLAM_RESULTS_HANDLER_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_RECEIVE_GLOBAL_SLAM_OPTIMIZATIONS_HANDLER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_RECEIVE_GLOBAL_SLAM_OPTIMIZATIONS_HANDLER_H
 
 #include <memory>
 
@@ -28,23 +27,23 @@ namespace cloud {
 namespace handlers {
 
 DEFINE_HANDLER_SIGNATURE(
-    ReceiveLocalSlamResultsSignature, proto::ReceiveLocalSlamResultsRequest,
-    async_grpc::Stream<proto::ReceiveLocalSlamResultsResponse>,
-    "/cartographer.cloud.proto.MapBuilderService/ReceiveLocalSlamResults")
+    ReceiveGlobalSlamOptimizationsSignature, google::protobuf::Empty,
+    async_grpc::Stream<proto::ReceiveGlobalSlamOptimizationsResponse>,
+    "/cartographer.cloud.proto.MapBuilderService/"
+    "ReceiveGlobalSlamOptimizations")
 
-class ReceiveLocalSlamResultsHandler
-    : public async_grpc::RpcHandler<ReceiveLocalSlamResultsSignature> {
+class ReceiveGlobalSlamOptimizationsHandler
+    : public async_grpc::RpcHandler<ReceiveGlobalSlamOptimizationsSignature> {
  public:
-  void OnRequest(const proto::ReceiveLocalSlamResultsRequest& request) override;
+  void OnRequest(const google::protobuf::Empty &request) override;
   void OnFinish() override;
 
  private:
-  std::unique_ptr<MapBuilderContextInterface::LocalSlamSubscriptionId>
-      subscription_id_;
+  common::optional<int> subscription_index_;
 };
 
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_RECEIVE_LOCAL_SLAM_RESULTS_HANDLER_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_RECEIVE_GLOBAL_SLAM_OPTIMIZATIONS_HANDLER_H

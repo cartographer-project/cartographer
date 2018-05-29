@@ -158,5 +158,10 @@ mapping::proto::PoseGraph PoseGraphStub::ToProto() const {
   LOG(FATAL) << "Not implemented";
 }
 
+void PoseGraphStub::SetGlobalSlamOptimizationCallback(
+    GlobalSlamOptimizationCallback callback) {
+  LOG(FATAL) << "Not implemented";
+}
+
 }  // namespace cloud
 }  // namespace cartographer

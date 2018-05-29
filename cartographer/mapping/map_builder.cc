@@ -25,6 +25,7 @@
 #include "cartographer/mapping/internal/3d/pose_graph_3d.h"
 #include "cartographer/mapping/internal/collated_trajectory_builder.h"
 #include "cartographer/mapping/internal/global_trajectory_builder.h"
+#include "cartographer/mapping/proto/internal/legacy_serialized_data.pb.h"
 #include "cartographer/sensor/internal/collator.h"
 #include "cartographer/sensor/internal/trajectory_collator.h"
 #include "cartographer/sensor/internal/voxel_filter.h"
@@ -61,22 +62,20 @@ std::vector<std::string> SelectRangeSensorIds(
   return range_sensor_ids;
 }
 
-MapBuilder::MapBuilder(
-    const proto::MapBuilderOptions& options,
-    PoseGraph::GlobalSlamOptimizationCallback global_slam_optimization_callback)
+MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
   CHECK(options.use_trajectory_builder_2d() ^
         options.use_trajectory_builder_3d());
   if (options.use_trajectory_builder_2d()) {
     pose_graph_ = common::make_unique<PoseGraph2D>(
-        options_.pose_graph_options(), global_slam_optimization_callback,
+        options_.pose_graph_options(),
         common::make_unique<optimization::OptimizationProblem2D>(
             options_.pose_graph_options().optimization_problem_options()),
         &thread_pool_);
   }
   if (options.use_trajectory_builder_3d()) {
     pose_graph_ = common::make_unique<PoseGraph3D>(
-        options_.pose_graph_options(), global_slam_optimization_callback,
+        options_.pose_graph_options(),
         common::make_unique<optimization::OptimizationProblem3D>(
             options_.pose_graph_options().optimization_problem_options()),
         &thread_pool_);
@@ -214,7 +213,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   // Next we serialize all submap data.
   {
     for (const auto& submap_id_data : pose_graph_->GetAllSubmapData()) {
-      proto::SerializedData proto;
+      proto::LegacySerializedData proto;
       auto* const submap_proto = proto.mutable_submap();
       submap_proto->mutable_submap_id()->set_trajectory_id(
           submap_id_data.id.trajectory_id);
@@ -228,7 +227,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   // Next we serialize all node data.
   {
     for (const auto& node_id_data : pose_graph_->GetTrajectoryNodes()) {
-      proto::SerializedData proto;
+      proto::LegacySerializedData proto;
       auto* const node_proto = proto.mutable_node();
       node_proto->mutable_node_id()->set_trajectory_id(
           node_id_data.id.trajectory_id);
@@ -243,7 +242,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
     const auto all_imu_data = pose_graph_->GetImuData();
     for (const int trajectory_id : all_imu_data.trajectory_ids()) {
       for (const auto& imu_data : all_imu_data.trajectory(trajectory_id)) {
-        proto::SerializedData proto;
+        proto::LegacySerializedData proto;
         auto* const imu_data_proto = proto.mutable_imu_data();
         imu_data_proto->set_trajectory_id(trajectory_id);
         *imu_data_proto->mutable_imu_data() = sensor::ToProto(imu_data);
@@ -257,7 +256,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
     for (const int trajectory_id : all_odometry_data.trajectory_ids()) {
       for (const auto& odometry_data :
            all_odometry_data.trajectory(trajectory_id)) {
-        proto::SerializedData proto;
+        proto::LegacySerializedData proto;
         auto* const odometry_data_proto = proto.mutable_odometry_data();
         odometry_data_proto->set_trajectory_id(trajectory_id);
         *odometry_data_proto->mutable_odometry_data() =
@@ -272,7 +271,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
     for (const int trajectory_id : all_fixed_frame_pose_data.trajectory_ids()) {
       for (const auto& fixed_frame_pose_data :
            all_fixed_frame_pose_data.trajectory(trajectory_id)) {
-        proto::SerializedData proto;
+        proto::LegacySerializedData proto;
         auto* const fixed_frame_pose_data_proto =
             proto.mutable_fixed_frame_pose_data();
         fixed_frame_pose_data_proto->set_trajectory_id(trajectory_id);
@@ -286,7 +285,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   {
     const auto all_trajectory_data = pose_graph_->GetTrajectoryData();
     for (const auto& trajectory_data : all_trajectory_data) {
-      proto::SerializedData proto;
+      proto::LegacySerializedData proto;
       auto* const trajectory_data_proto = proto.mutable_trajectory_data();
       trajectory_data_proto->set_trajectory_id(trajectory_data.first);
       trajectory_data_proto->set_gravity_constant(
@@ -310,7 +309,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
         all_landmark_nodes = pose_graph_->GetLandmarkNodes();
     for (const auto& node : all_landmark_nodes) {
       for (const auto& observation : node.second.landmark_observations) {
-        proto::SerializedData proto;
+        proto::LegacySerializedData proto;
         auto* landmark_data_proto = proto.mutable_landmark_data();
         landmark_data_proto->set_trajectory_id(observation.trajectory_id);
         landmark_data_proto->mutable_landmark_data()->set_timestamp(
@@ -391,7 +390,7 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
   }
 
   for (;;) {
-    proto::SerializedData proto;
+    proto::LegacySerializedData proto;
     if (!reader->ReadProto(&proto)) {
       break;
     }

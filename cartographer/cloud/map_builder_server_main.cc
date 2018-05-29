@@ -55,8 +55,7 @@ void Run(const std::string& configuration_directory,
   map_builder_server_options.mutable_map_builder_options()
       ->set_collate_by_trajectory(true);
   auto map_builder = common::make_unique<mapping::MapBuilder>(
-      map_builder_server_options.map_builder_options(),
-      nullptr /* global_slam_optimization_callback */);
+      map_builder_server_options.map_builder_options());
   std::unique_ptr<MapBuilderServerInterface> map_builder_server =
       CreateMapBuilderServer(map_builder_server_options,
                              std::move(map_builder));
