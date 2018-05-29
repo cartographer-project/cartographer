@@ -81,7 +81,7 @@ class MigrationTest : public ::testing::Test {
   static constexpr int kNumOriginalMessages = 9;
 };
 
-TEST_F(MigrationTest, MigrationAddsHeaderBeforePoseGraphAndBuilderOptions) {
+TEST_F(MigrationTest, MigrationAddsHeaderAsFirstMessage) {
   MigrateStreamFormatToVersion1(&reader_, writer_.get());
   // We expect one message more than the original number of messages.
   EXPECT_THAT(output_messages_, SizeIs(kNumOriginalMessages + 1));
@@ -90,28 +90,29 @@ TEST_F(MigrationTest, MigrationAddsHeaderBeforePoseGraphAndBuilderOptions) {
   EXPECT_THAT(TextFormat::ParseFromString(output_messages_[0], &header),
               Eq(true));
   EXPECT_THAT(header.format_version(), Eq(1));
-
-  mapping::proto::SerializedData data;
-  EXPECT_THAT(TextFormat::ParseFromString(output_messages_[1], &data),
-              Eq(true));
-  EXPECT_THAT(data.has_pose_graph(), Eq(true));
-
-  EXPECT_THAT(TextFormat::ParseFromString(output_messages_[2], &data),
-              Eq(true));
-  EXPECT_THAT(data.has_all_trajectory_builder_options(), Eq(true));
 }
 
-TEST_F(MigrationTest, MigrationReordersTrajectoryDataAfterSubmapAndNode) {
+TEST_F(MigrationTest, SerializedDataOrderIsCorrect) {
   MigrateStreamFormatToVersion1(&reader_, writer_.get());
   EXPECT_THAT(output_messages_, SizeIs(kNumOriginalMessages + 1));
 
-  mapping::proto::SerializedData data;
-  EXPECT_THAT(TextFormat::ParseFromString(output_messages_[5], &data),
-              Eq(true));
-  EXPECT_THAT(data.has_trajectory_data(), Eq(true));
-  EXPECT_THAT(TextFormat::ParseFromString(output_messages_[6], &data),
-              Eq(true));
-  EXPECT_THAT(data.has_imu_data(), Eq(true));
+  std::vector<mapping::proto::SerializedData> serialized(
+      output_messages_.size() - 1);
+  for (size_t i = 1; i < output_messages_.size(); ++i) {
+    EXPECT_THAT(
+        TextFormat::ParseFromString(output_messages_[i], &serialized[i - 1]),
+        Eq(true));
+  }
+
+  EXPECT_THAT(serialized[0].has_pose_graph(), Eq(true));
+  EXPECT_THAT(serialized[1].has_all_trajectory_builder_options(), Eq(true));
+  EXPECT_THAT(serialized[2].has_submap(), Eq(true));
+  EXPECT_THAT(serialized[3].has_node(), Eq(true));
+  EXPECT_THAT(serialized[4].has_trajectory_data(), Eq(true));
+  EXPECT_THAT(serialized[5].has_imu_data(), Eq(true));
+  EXPECT_THAT(serialized[6].has_odometry_data(), Eq(true));
+  EXPECT_THAT(serialized[7].has_fixed_frame_pose_data(), Eq(true));
+  EXPECT_THAT(serialized[8].has_landmark_data(), Eq(true));
 }
 
 }  // namespace
