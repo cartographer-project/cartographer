@@ -51,6 +51,14 @@ std::unique_ptr<PoseExtrapolator> PoseExtrapolator::InitializeWithImu(
   return extrapolator;
 }
 
+Eigen::Vector3d PoseExtrapolator::LinearVelocity() {
+  return linear_velocity_from_poses_;
+}
+
+Eigen::Vector3d PoseExtrapolator::AngularVelocity() {
+  return angular_velocity_from_poses_;
+}
+
 common::Time PoseExtrapolator::GetLastPoseTime() const {
   if (timed_pose_queue_.empty()) {
     return common::Time::min();
