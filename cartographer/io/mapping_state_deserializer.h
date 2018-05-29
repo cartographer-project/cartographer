@@ -28,7 +28,7 @@ namespace cartographer {
 namespace io {
 
 // Class to help deserializing a previously serialized mapping state from a
-// stream, abstracting away the format parsing logic.
+// proto stream, abstracting away the format parsing logic.
 class MappingStateDeserializer {
  public:
   explicit MappingStateDeserializer(ProtoStreamReaderInterface* const reader);
