@@ -7,15 +7,15 @@ namespace cartographer {
 namespace io {
 namespace testing {
 
-static const std::string kSerializationHeaderProtoString = R"(
+static constexpr char kSerializationHeaderProtoString[] = R"(
   format_version: 1
 )";
 
-static const std::string kUnsupportedSerializationHeaderProtoString = R"(
+static constexpr char kUnsupportedSerializationHeaderProtoString[] = R"(
   format_version: 123
 )";
 
-static const std::string kPoseGraphProtoString = R"(
+static constexpr char kPoseGraphProtoString[] = R"(
 pose_graph {
   constraint {
     submap_id {
@@ -84,7 +84,7 @@ pose_graph {
 }
 )";
 
-static const std::string kAllTrajectoryBuilderOptionsProtoString = R"(
+static constexpr char kAllTrajectoryBuilderOptionsProtoString[] = R"(
 all_trajectory_builder_options {
   options_with_sensor_ids {
     sensor_id {
@@ -125,7 +125,7 @@ all_trajectory_builder_options {
 }
 )";
 
-static const std::string kSubmapProtoString = R"(
+static constexpr char kSubmapProtoString[] = R"(
 submap {
   submap_id {
   }
@@ -134,7 +134,7 @@ submap {
 }
 )";
 
-static const std::string kNodeProtoString = R"(
+static constexpr char kNodeProtoString[] = R"(
 node {
   node_id {
     trajectory_id: 0
@@ -159,7 +159,7 @@ node {
 }
 )";
 
-static const std::string kTrajectoryDataProtoString = R"(
+static constexpr char kTrajectoryDataProtoString[] = R"(
 trajectory_data {
   trajectory_id: 1
   gravity_constant: 9.81
@@ -172,7 +172,7 @@ trajectory_data {
 }
 )";
 
-static const std::string kImuDataProtoString = R"(
+static constexpr char kImuDataProtoString[] = R"(
 imu_data {
   trajectory_id: 5
   imu_data {
@@ -180,7 +180,7 @@ imu_data {
 }
 )";
 
-static const std::string kOdometryDataProtoString = R"(
+static constexpr char kOdometryDataProtoString[] = R"(
 odometry_data {
   trajectory_id: 654
   odometry_data {
@@ -188,7 +188,7 @@ odometry_data {
 }
 )";
 
-static const std::string kFixedFramePoseDataProtoString = R"(
+static constexpr char kFixedFramePoseDataProtoString[] = R"(
 fixed_frame_pose_data {
   trajectory_id: 2
   fixed_frame_pose_data {
@@ -196,7 +196,7 @@ fixed_frame_pose_data {
 }
 )";
 
-static const std::string kLandmarkDataProtoString = R"(
+static constexpr char kLandmarkDataProtoString[] = R"(
 landmark_data {
   trajectory_id: 23
   landmark_data {
