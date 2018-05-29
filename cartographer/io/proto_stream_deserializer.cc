@@ -41,14 +41,14 @@ ProtoStreamDeserializer::ProtoStreamDeserializer(
   CHECK(IsVersionSupported(header_)) << "Unsupported serialization format \""
                                      << header_.format_version() << "\"";
 
-  CHECK(GetNextSerializedData(&pose_graph_))
+  CHECK(ReadNextSerializedData(&pose_graph_))
       << "Serialized stream misses PoseGraph.";
   CHECK(pose_graph_.has_pose_graph())
       << "Serialized stream order corrupt. Expecting `PoseGraph` after "
          "`SerializationHeader`, but got field tag "
       << pose_graph_.data_case();
 
-  CHECK(GetNextSerializedData(&all_trajectory_builder_options_))
+  CHECK(ReadNextSerializedData(&all_trajectory_builder_options_))
       << "Serialized stream misses `AllTrajectoryBuilderOptions`.";
   CHECK(all_trajectory_builder_options_.has_all_trajectory_builder_options())
       << "Serialized stream order corrupt. Expecting "
@@ -61,7 +61,7 @@ ProtoStreamDeserializer::ProtoStreamDeserializer(
                .options_with_sensor_ids_size());
 }
 
-bool ProtoStreamDeserializer::GetNextSerializedData(
+bool ProtoStreamDeserializer::ReadNextSerializedData(
     mapping::proto::SerializedData* data) {
   return reader_->ReadProto(data);
 }

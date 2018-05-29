@@ -52,7 +52,7 @@ class ProtoStreamDeserializer {
   // Reads the next `SerializedData` message of the ProtoStream into `data`.
   // Returns `true` if the message was successfully read or `false` in case
   // there are no-more messages or an error occurred.
-  bool GetNextSerializedData(mapping::proto::SerializedData* data);
+  bool ReadNextSerializedData(mapping::proto::SerializedData* data);
 
  private:
   ProtoStreamReaderInterface* reader_;

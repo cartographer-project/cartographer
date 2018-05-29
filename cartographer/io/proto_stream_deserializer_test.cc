@@ -92,7 +92,6 @@ std::unique_ptr<T> ProtoUPtrFromStringOrDie(const std::string& proto_string) {
   return make_unique<T>(ProtoFromStringOrDie<T>(proto_string));
 }
 
-// open text file with a set of text-protos that mimic a pbstream.
 std::unique_ptr<InMemoryProtoStreamReader>
 CreateInMemoryReaderFromTextProtos() {
   std::queue<std::unique_ptr<Message>> proto_queue;
@@ -120,7 +119,7 @@ CreateInMemoryReaderFromTextProtos() {
   return make_unique<InMemoryProtoStreamReader>(std::move(proto_queue));
 }
 
-// This test checks, if the serialization works.
+// This test checks if the serialization works.
 TEST(ProtoStreamDeserializerTest, WorksOnGoldenTextStream) {
   // Load text proto into in_memory_reader.
   std::unique_ptr<InMemoryProtoStreamReader> reader =
@@ -144,41 +143,42 @@ TEST(ProtoStreamDeserializerTest, WorksOnGoldenTextStream) {
                                      .all_trajectory_builder_options()));
 
   SerializedData serialized_data;
-  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
+  EXPECT_TRUE(deserializer.ReadNextSerializedData(&serialized_data));
+  // TODO(sebastianklose): Add matcher for protos in common place and use here.
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
       ProtoFromStringOrDie<SerializedData>(kSubmapProtoString)));
 
-  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
+  EXPECT_TRUE(deserializer.ReadNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data, ProtoFromStringOrDie<SerializedData>(kNodeProtoString)));
 
-  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
+  EXPECT_TRUE(deserializer.ReadNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
       ProtoFromStringOrDie<SerializedData>(kTrajectoryDataProtoString)));
 
-  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
+  EXPECT_TRUE(deserializer.ReadNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
       ProtoFromStringOrDie<SerializedData>(kImuDataProtoString)));
 
-  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
+  EXPECT_TRUE(deserializer.ReadNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
       ProtoFromStringOrDie<SerializedData>(kOdometryDataProtoString)));
 
-  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
+  EXPECT_TRUE(deserializer.ReadNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
       ProtoFromStringOrDie<SerializedData>(kFixedFramePoseDataProtoString)));
 
-  EXPECT_TRUE(deserializer.GetNextSerializedData(&serialized_data));
+  EXPECT_TRUE(deserializer.ReadNextSerializedData(&serialized_data));
   EXPECT_TRUE(MessageDifferencer::Equals(
       serialized_data,
       ProtoFromStringOrDie<SerializedData>(kLandmarkDataProtoString)));
 
-  EXPECT_FALSE(deserializer.GetNextSerializedData(&serialized_data));
+  EXPECT_FALSE(deserializer.ReadNextSerializedData(&serialized_data));
   EXPECT_TRUE(reader->eof());
 }
 
