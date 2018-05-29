@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "cartographer/io/serialization_format_migration.h"
 
 #include <functional>
@@ -49,19 +50,19 @@ class MigrationTest : public ::testing::Test {
     mapping::proto::PoseGraph pose_graph;
     mapping::proto::AllTrajectoryBuilderOptions all_options;
     mapping::proto::LegacySerializedData submap;
-    submap.mutable_submap()->mutable_submap_id()->set_trajectory_id(0);
+    submap.mutable_submap();
     mapping::proto::LegacySerializedData node;
-    node.mutable_node()->mutable_node_id()->set_trajectory_id(0);
+    node.mutable_node();
     mapping::proto::LegacySerializedData imu_data;
-    imu_data.mutable_imu_data()->set_trajectory_id(0);
+    imu_data.mutable_imu_data();
     mapping::proto::LegacySerializedData odometry_data;
-    odometry_data.mutable_odometry_data()->set_trajectory_id(0);
+    odometry_data.mutable_odometry_data();
     mapping::proto::LegacySerializedData fixed_frame_pose;
-    fixed_frame_pose.mutable_fixed_frame_pose_data()->set_trajectory_id(0);
+    fixed_frame_pose.mutable_fixed_frame_pose_data();
     mapping::proto::LegacySerializedData trajectory_data;
-    trajectory_data.mutable_trajectory_data()->set_trajectory_id(0);
+    trajectory_data.mutable_trajectory_data();
     mapping::proto::LegacySerializedData landmark_data;
-    landmark_data.mutable_landmark_data()->set_trajectory_id(0);
+    landmark_data.mutable_landmark_data();
 
     reader_.AddProto(pose_graph);
     reader_.AddProto(all_options);

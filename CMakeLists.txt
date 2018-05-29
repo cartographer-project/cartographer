@@ -181,7 +181,7 @@ google_binary(cartographer_compute_relations_metrics
 
 google_binary(cartographer_migrate_serialization_format
   SRCS
-    cartographer/tools/migrate_serialization_format_main.cc
+    cartographer/io/migrate_serialization_format_main.cc
 )
 
 if(${BUILD_GRPC})
