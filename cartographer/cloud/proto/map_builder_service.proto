@@ -140,9 +140,13 @@ message GetSubmapResponse {
 }
 
 message TrajectoryNodePose {
+  message ConstantPoseData {
+    int64 timestamp = 1;
+    cartographer.transform.proto.Rigid3d local_pose = 2;
+  }
   cartographer.mapping.proto.NodeId node_id = 1;
   cartographer.transform.proto.Rigid3d global_pose = 2;
-  bool has_constant_data = 3;
+  ConstantPoseData constant_pose_data = 3;
 }
 
 message GetTrajectoryNodePosesResponse {

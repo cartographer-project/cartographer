@@ -671,10 +671,15 @@ MapById<NodeId, TrajectoryNodePose> PoseGraph3D::GetTrajectoryNodePoses()
   MapById<NodeId, TrajectoryNodePose> node_poses;
   common::MutexLocker locker(&mutex_);
   for (const auto& node_id_data : trajectory_nodes_) {
+    common::optional<TrajectoryNodePose::ConstantPoseData> constant_pose_data;
+    if (node_id_data.data.constant_data != nullptr) {
+      constant_pose_data = TrajectoryNodePose::ConstantPoseData{
+          node_id_data.data.constant_data->time,
+          node_id_data.data.constant_data->local_pose};
+    }
     node_poses.Insert(
         node_id_data.id,
-        TrajectoryNodePose{node_id_data.data.constant_data != nullptr,
-                           node_id_data.data.global_pose});
+        TrajectoryNodePose{node_id_data.data.global_pose, constant_pose_data});
   }
   return node_poses;
 }
