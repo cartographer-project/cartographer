@@ -114,6 +114,13 @@ message ReceiveLocalSlamResultsResponse {
   LocalSlamInsertionResult insertion_result = 5;
 }
 
+message ReceiveGlobalSlamOptimizationsResponse {
+  map<int32 /* trajectory_id */, cartographer.mapping.proto.NodeId>
+      last_optimized_node_ids = 1;
+  map<int32 /* trajectory_id */, cartographer.mapping.proto.SubmapId>
+      last_optimized_submap_ids = 2;
+}
+
 message GetSubmapRequest {
   cartographer.mapping.proto.SubmapId submap_id = 1;
 }
@@ -229,6 +236,10 @@ service MapBuilderService {
   // 'trajectory_id'.
   rpc ReceiveLocalSlamResults(ReceiveLocalSlamResultsRequest)
       returns (stream ReceiveLocalSlamResultsResponse);
+
+  // Requests the server to send a stream of global SLAM notifications.
+  rpc ReceiveGlobalSlamOptimizations(google.protobuf.Empty)
+      returns (stream ReceiveGlobalSlamOptimizationsResponse);
 
   // Marks a trajectory corresponding to 'trajectory_id' as finished,
   // i.e. no further sensor data is expected.

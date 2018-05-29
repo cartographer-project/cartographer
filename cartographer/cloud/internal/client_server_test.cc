@@ -21,6 +21,7 @@
 #include "cartographer/cloud/internal/map_builder_server.h"
 #include "cartographer/cloud/map_builder_server_options.h"
 #include "cartographer/mapping/internal/testing/mock_map_builder.h"
+#include "cartographer/mapping/internal/testing/mock_pose_graph.h"
 #include "cartographer/mapping/internal/testing/mock_trajectory_builder.h"
 #include "cartographer/mapping/internal/testing/test_helpers.h"
 #include "cartographer/mapping/local_slam_result_data.h"
@@ -33,6 +34,7 @@ using ::cartographer::mapping::MapBuilderInterface;
 using ::cartographer::mapping::PoseGraphInterface;
 using ::cartographer::mapping::TrajectoryBuilderInterface;
 using ::cartographer::mapping::testing::MockMapBuilder;
+using ::cartographer::mapping::testing::MockPoseGraph;
 using ::cartographer::mapping::testing::MockTrajectoryBuilder;
 using ::testing::_;
 using SensorId = ::cartographer::mapping::TrajectoryBuilderInterface::SensorId;
@@ -126,6 +128,14 @@ class ClientServerTest : public ::testing::Test {
   void InitializeServerWithMockMapBuilder() {
     auto mock_map_builder = common::make_unique<MockMapBuilder>();
     mock_map_builder_ = mock_map_builder.get();
+    mock_pose_graph_ = common::make_unique<MockPoseGraph>();
+    EXPECT_CALL(
+        *mock_map_builder_,
+        pose_graph())
+        .WillOnce(::testing::Return(mock_pose_graph_.get()));
+    EXPECT_CALL(
+        *mock_pose_graph_,
+        SetGlobalSlamOptimizationCallback(_));
     server_ = common::make_unique<MapBuilderServer>(
         map_builder_server_options_, std::move(mock_map_builder));
     EXPECT_TRUE(server_ != nullptr);
@@ -160,6 +170,7 @@ class ClientServerTest : public ::testing::Test {
   proto::MapBuilderServerOptions map_builder_server_options_;
   proto::MapBuilderServerOptions uploading_map_builder_server_options_;
   MockMapBuilder* mock_map_builder_;
+  std::unique_ptr<MockPoseGraph> mock_pose_graph_;
   std::unique_ptr<MockTrajectoryBuilder> mock_trajectory_builder_;
   ::cartographer::mapping::proto::TrajectoryBuilderOptions
       trajectory_builder_options_;
