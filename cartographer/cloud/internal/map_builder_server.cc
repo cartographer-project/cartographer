@@ -200,10 +200,14 @@ void MapBuilderServer::OnLocalSlamResult(
             : nullptr;
     MapBuilderContextInterface::LocalSlamSubscriptionCallback callback =
         entry.second;
-    callback(common::make_unique<MapBuilderContextInterface::LocalSlamResult>(
-        MapBuilderContextInterface::LocalSlamResult{
-            trajectory_id, time, local_pose, shared_range_data,
-            std::move(copy_of_insertion_result)}));
+    if (!callback(
+            common::make_unique<MapBuilderContextInterface::LocalSlamResult>(
+                MapBuilderContextInterface::LocalSlamResult{
+                    trajectory_id, time, local_pose, shared_range_data,
+                    std::move(copy_of_insertion_result)}))) {
+      LOG(INFO) << "Removing subscription with index: " << entry.first;
+      CHECK_EQ(local_slam_subscriptions_[trajectory_id].erase(entry.first), 1u);
+    }
   }
 }
 
@@ -219,19 +223,20 @@ void MapBuilderServer::OnGlobalSlamOptimizations(
   }
 }
 
-MapBuilderContextInterface::SubscriptionId
+MapBuilderContextInterface::LocalSlamSubscriptionId
 MapBuilderServer::SubscribeLocalSlamResults(
     int trajectory_id,
     MapBuilderContextInterface::LocalSlamSubscriptionCallback callback) {
   common::MutexLocker locker(&subscriptions_lock_);
   local_slam_subscriptions_[trajectory_id].emplace(current_subscription_index_,
                                                    callback);
-  return MapBuilderContextInterface::SubscriptionId{
+  return MapBuilderContextInterface::LocalSlamSubscriptionId{
       trajectory_id, current_subscription_index_++};
 }
 
 void MapBuilderServer::UnsubscribeLocalSlamResults(
-    const MapBuilderContextInterface::SubscriptionId& subscription_id) {
+    const MapBuilderContextInterface::LocalSlamSubscriptionId&
+        subscription_id) {
   common::MutexLocker locker(&subscriptions_lock_);
   CHECK_EQ(local_slam_subscriptions_[subscription_id.trajectory_id].erase(
                subscription_id.subscription_index),

@@ -49,10 +49,10 @@ class MapBuilderContext : public MapBuilderContextInterface {
   mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
   GetLocalSlamResultCallbackForSubscriptions() override;
   void AddSensorDataToTrajectory(const Data& sensor_data) override;
-  MapBuilderContextInterface::SubscriptionId SubscribeLocalSlamResults(
+  MapBuilderContextInterface::LocalSlamSubscriptionId SubscribeLocalSlamResults(
       int trajectory_id, LocalSlamSubscriptionCallback callback) override;
   void UnsubscribeLocalSlamResults(
-      const SubscriptionId& subscription_id) override;
+      const LocalSlamSubscriptionId& subscription_id) override;
   int SubscribeGlobalSlamOptimizations(
       GlobalSlamOptimizationCallback callback) override;
   void UnsubscribeGlobalSlamOptimizations(int subscription_index) override;
@@ -113,11 +113,12 @@ class MapBuilderServer : public MapBuilderServerInterface {
   void OnGlobalSlamOptimizations(
       const std::map<int, mapping::SubmapId>& last_optimized_submap_ids,
       const std::map<int, mapping::NodeId>& last_optimized_node_ids);
-  MapBuilderContextInterface::SubscriptionId SubscribeLocalSlamResults(
+  MapBuilderContextInterface::LocalSlamSubscriptionId SubscribeLocalSlamResults(
       int trajectory_id,
       MapBuilderContextInterface::LocalSlamSubscriptionCallback callback);
   void UnsubscribeLocalSlamResults(
-      const MapBuilderContextInterface::SubscriptionId& subscription_id);
+      const MapBuilderContextInterface::LocalSlamSubscriptionId&
+          subscription_id);
   int SubscribeGlobalSlamOptimizations(
       MapBuilderContextInterface::GlobalSlamOptimizationCallback callback);
   void UnsubscribeGlobalSlamOptimizations(int subscription_index);
