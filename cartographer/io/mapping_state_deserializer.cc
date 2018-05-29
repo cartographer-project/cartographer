@@ -38,8 +38,8 @@ bool IsVersionSupported(const mapping::proto::SerializationHeader& header) {
 MappingStateDeserializer::MappingStateDeserializer(
     ProtoStreamReaderInterface* const reader)
     : reader_(reader), header_(ReadHeaderOrDie(reader)) {
-  CHECK(IsVersionSupported(header)) << "Unsupported serialization format \""
-                                    << header_.format_version() << "\"";
+  CHECK(IsVersionSupported(header_)) << "Unsupported serialization format \""
+                                     << header_.format_version() << "\"";
 
   CHECK(GetNextSerializedData(&pose_graph_))
       << "Serialized stream misses PoseGraph.";

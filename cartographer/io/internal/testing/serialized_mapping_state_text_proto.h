@@ -7,13 +7,15 @@ namespace cartographer {
 namespace io {
 namespace testing {
 
-// Single proto messages are separated by `#` for simple parsing.
-// The first proto is a `SerializationHeader`, the second a `PoseGraph` and the
-// third `AllTrajectoryBuilderOptions`, followed by a sequence of
-// `SerializedData` protos.
-static const std::string kSerializedMappingStateStream = R"(
+static const std::string kSerializationHeaderProtoString = R"(
   format_version: 1
-#
+)";
+
+static const std::string kUnsupportedSerializationHeaderProtoString = R"(
+  format_version: 123
+)";
+
+static const std::string kPoseGraphProtoString = R"(
 pose_graph {
   constraint {
     submap_id {
@@ -80,7 +82,9 @@ pose_graph {
   landmark_poses {
   }
 }
-#
+)";
+
+static const std::string kAllTrajectoryBuilderOptionsProtoString = R"(
 all_trajectory_builder_options {
   options_with_sensor_ids {
     sensor_id {
@@ -119,36 +123,85 @@ all_trajectory_builder_options {
     }
   }
 }
-#
-  submap {
-    submap_id {
-    }
-    submap_2d {
-    }
+)";
+
+static const std::string kSubmapProtoString = R"(
+submap {
+  submap_id {
   }
-#
-  node {
-    node_id {
-      trajectory_id: 0
-      node_index: 0
-    }
-    node_data {
-      timestamp: 0
-      local_pose {
-        translation {
-          x: 0.0
-          y: 0.0
-          z: 0.0
-        }
-        rotation {
-          x: 0.0
-          y: 0.0
-          z: 0.0
-          w: 1.0
-        }
+  submap_2d {
+  }
+}
+)";
+
+static const std::string kNodeProtoString = R"(
+node {
+  node_id {
+    trajectory_id: 0
+    node_index: 0
+  }
+  node_data {
+    timestamp: 0
+    local_pose {
+      translation {
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      }
+      rotation {
+        x: 0.0
+        y: 0.0
+        z: 0.0
+        w: 1.0
       }
     }
   }
+}
+)";
+
+static const std::string kTrajectoryDataProtoString = R"(
+trajectory_data {
+  trajectory_id: 1
+  gravity_constant: 9.81
+  imu_calibration {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+  }
+}
+)";
+
+static const std::string kImuDataProtoString = R"(
+imu_data {
+  trajectory_id: 5
+  imu_data {
+  }
+}
+)";
+
+static const std::string kOdometryDataProtoString = R"(
+odometry_data {
+  trajectory_id: 654
+  odometry_data {
+  }
+}
+)";
+
+static const std::string kFixedFramePoseDataProtoString = R"(
+fixed_frame_pose_data {
+  trajectory_id: 2
+  fixed_frame_pose_data {
+  }
+}
+)";
+
+static const std::string kLandmarkDataProtoString = R"(
+landmark_data {
+  trajectory_id: 23
+  landmark_data {
+  }
+}
 )";
 
 }  // namespace testing
