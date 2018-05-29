@@ -33,7 +33,7 @@ using ProtoMap = std::unordered_map<int, std::vector<SerializedData>>;
 bool ReadPoseGraph(cartographer::io::ProtoStreamReaderInterface* const input,
                    ProtoMap* proto_map) {
   auto& pose_graph_vec = (*proto_map)[SerializedData::kPoseGraph];
-  pose_graph_vec.push_back({});
+  pose_graph_vec.emplace_back();
   return input->ReadProto(pose_graph_vec.back().mutable_pose_graph());
 }
 
@@ -42,7 +42,7 @@ bool ReadBuilderOptions(
     ProtoMap* proto_map) {
   auto& options_vec =
       (*proto_map)[SerializedData::kAllTrajectoryBuilderOptions];
-  options_vec.push_back({});
+  options_vec.emplace_back();
   return input->ReadProto(
       options_vec.back().mutable_all_trajectory_builder_options());
 }
@@ -54,42 +54,42 @@ bool DeserializeNext(cartographer::io::ProtoStreamReaderInterface* const input,
 
   if (legacy_data.has_submap()) {
     auto& output_vector = (*proto_map)[SerializedData::kSubmapFieldNumber];
-    output_vector.push_back({});
+    output_vector.emplace_back();
     *output_vector.back().mutable_submap() = legacy_data.submap();
   }
   if (legacy_data.has_node()) {
     auto& output_vector = (*proto_map)[SerializedData::kNodeFieldNumber];
-    output_vector.push_back({});
+    output_vector.emplace_back();
     *output_vector.back().mutable_node() = legacy_data.node();
   }
   if (legacy_data.has_trajectory_data()) {
     auto& output_vector =
         (*proto_map)[SerializedData::kTrajectoryDataFieldNumber];
-    output_vector.push_back({});
+    output_vector.emplace_back();
     *output_vector.back().mutable_trajectory_data() =
         legacy_data.trajectory_data();
   }
   if (legacy_data.has_imu_data()) {
     auto& output_vector = (*proto_map)[SerializedData::kImuDataFieldNumber];
-    output_vector.push_back({});
+    output_vector.emplace_back();
     *output_vector.back().mutable_imu_data() = legacy_data.imu_data();
   }
   if (legacy_data.has_odometry_data()) {
     auto& output_vector = (*proto_map)[SerializedData::kOdometryData];
-    output_vector.push_back({});
+    output_vector.emplace_back();
     *output_vector.back().mutable_odometry_data() = legacy_data.odometry_data();
   }
   if (legacy_data.has_fixed_frame_pose_data()) {
     auto& output_vector =
         (*proto_map)[SerializedData::kFixedFramePoseDataFieldNumber];
-    output_vector.push_back({});
+    output_vector.emplace_back();
     *output_vector.back().mutable_fixed_frame_pose_data() =
         legacy_data.fixed_frame_pose_data();
   }
   if (legacy_data.has_landmark_data()) {
     auto& output_vector =
         (*proto_map)[SerializedData::kLandmarkDataFieldNumber];
-    output_vector.push_back({});
+    output_vector.emplace_back();
     *output_vector.back().mutable_landmark_data() = legacy_data.landmark_data();
   }
   return true;
@@ -106,8 +106,8 @@ ProtoMap ParseLegacyData(
       << "Input stream seems to differ from original stream format. Could "
          "not "
          "read AllTrajectoryBuilderOptions as second message.";
-  while (DeserializeNext(input, &proto_map)) {
-  }
+  do {
+  } while (DeserializeNext(input, &proto_map));
   return proto_map;
 }
 
