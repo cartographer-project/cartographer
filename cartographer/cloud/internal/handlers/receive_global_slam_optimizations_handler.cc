@@ -43,24 +43,26 @@ std::unique_ptr<proto::ReceiveGlobalSlamOptimizationsResponse> GenerateResponse(
   return response;
 }
 
-} // namespace
+}  // namespace
 
 void ReceiveGlobalSlamOptimizationsHandler::OnRequest(
     const google::protobuf::Empty &request) {
   auto writer = GetWriter();
   const int subscription_index =
       GetUnsynchronizedContext<MapBuilderContextInterface>()
-          ->SubscribeGlobalSlamOptimizations([writer](
-              const std::map<int, mapping::SubmapId> &last_optimized_submap_ids,
-              const std::map<int, mapping::NodeId> &last_optimized_node_ids) {
-            if (!writer.Write(GenerateResponse(last_optimized_submap_ids,
-                                               last_optimized_node_ids))) {
-              // Client closed connection.
-              LOG(INFO) << "Client closed connection.";
-              return false;
-            }
-            return true;
-          });
+          ->SubscribeGlobalSlamOptimizations(
+              [writer](const std::map<int, mapping::SubmapId>
+                           &last_optimized_submap_ids,
+                       const std::map<int, mapping::NodeId>
+                           &last_optimized_node_ids) {
+                if (!writer.Write(GenerateResponse(last_optimized_submap_ids,
+                                                   last_optimized_node_ids))) {
+                  // Client closed connection.
+                  LOG(INFO) << "Client closed connection.";
+                  return false;
+                }
+                return true;
+              });
 
   LOG(INFO) << "Added subscription: " << subscription_index;
   subscription_index_ = subscription_index;
@@ -74,6 +76,6 @@ void ReceiveGlobalSlamOptimizationsHandler::OnFinish() {
   }
 }
 
-} // namespace handlers
-} // namespace cloud
-} // namespace cartographer
+}  // namespace handlers
+}  // namespace cloud
+}  // namespace cartographer

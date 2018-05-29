@@ -208,10 +208,10 @@ void MapBuilderServer::OnLocalSlamResult(
 }
 
 void MapBuilderServer::OnGlobalSlamOptimizations(
-    const std::map<int, mapping::SubmapId> &last_optimized_submap_ids,
-    const std::map<int, mapping::NodeId> &last_optimized_node_ids) {
+    const std::map<int, mapping::SubmapId>& last_optimized_submap_ids,
+    const std::map<int, mapping::NodeId>& last_optimized_node_ids) {
   common::MutexLocker locker(&subscriptions_lock_);
-  for (auto &entry : global_slam_subscriptions_) {
+  for (auto& entry : global_slam_subscriptions_) {
     if (!entry.second(last_optimized_submap_ids, last_optimized_node_ids)) {
       LOG(INFO) << "Removing subscription with index: " << entry.first;
       CHECK_EQ(global_slam_subscriptions_.erase(entry.first), 1u);

@@ -111,8 +111,8 @@ class MapBuilderServer : public MapBuilderServerInterface {
           const mapping::TrajectoryBuilderInterface::InsertionResult>
           insertion_result);
   void OnGlobalSlamOptimizations(
-      const std::map<int, mapping::SubmapId> &last_optimized_submap_ids,
-      const std::map<int, mapping::NodeId> &last_optimized_node_ids);
+      const std::map<int, mapping::SubmapId>& last_optimized_submap_ids,
+      const std::map<int, mapping::NodeId>& last_optimized_node_ids);
   MapBuilderContextInterface::SubscriptionId SubscribeLocalSlamResults(
       int trajectory_id,
       MapBuilderContextInterface::LocalSlamSubscriptionCallback callback);

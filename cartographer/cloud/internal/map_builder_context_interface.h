@@ -47,8 +47,8 @@ class MapBuilderContextInterface : public async_grpc::ExecutionContext {
 
   // A return value of 'false' indicates that the subscription should end.
   using GlobalSlamOptimizationCallback = std::function<bool(
-      const std::map<int /* trajectory_id */, mapping::SubmapId> &,
-      const std::map<int /* trajectory_id */, mapping::NodeId> &)>;
+      const std::map<int /* trajectory_id */, mapping::SubmapId>&,
+      const std::map<int /* trajectory_id */, mapping::NodeId>&)>;
 
   struct Data {
     int trajectory_id;
@@ -75,8 +75,8 @@ class MapBuilderContextInterface : public async_grpc::ExecutionContext {
       int trajectory_id, LocalSlamSubscriptionCallback callback) = 0;
   virtual void UnsubscribeLocalSlamResults(
       const SubscriptionId& subscription_id) = 0;
-  virtual int
-  SubscribeGlobalSlamOptimizations(GlobalSlamOptimizationCallback callback) = 0;
+  virtual int SubscribeGlobalSlamOptimizations(
+      GlobalSlamOptimizationCallback callback) = 0;
   virtual void UnsubscribeGlobalSlamOptimizations(int subscription_index) = 0;
   virtual void NotifyFinishTrajectory(int trajectory_id) = 0;
   virtual LocalTrajectoryUploaderInterface* local_trajectory_uploader() = 0;
