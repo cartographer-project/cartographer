@@ -78,7 +78,6 @@ int MapBuilderStub::AddTrajectoryForDeserialization(
     const mapping::proto::TrajectoryBuilderOptionsWithSensorIds&
         options_with_sensor_ids_proto) {
   LOG(FATAL) << "Not implemented";
-  return -1;
 }
 
 mapping::TrajectoryBuilderInterface* MapBuilderStub::GetTrajectoryBuilder(
