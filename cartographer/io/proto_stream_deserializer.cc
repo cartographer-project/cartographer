@@ -17,6 +17,7 @@
 #include "cartographer/io/proto_stream_deserializer.h"
 
 #include "cartographer/io/internal/mapping_state_serialization.h"
+#include "cartographer/io/proto_stream.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -34,6 +35,13 @@ bool IsVersionSupported(const mapping::proto::SerializationHeader& header) {
 }
 
 }  // namespace
+
+mapping::proto::PoseGraph DeserializePoseGraphFromFile(
+    const std::string& file_name) {
+  ProtoStreamReader reader(file_name);
+  ProtoStreamDeserializer deserializer(&reader);
+  return deserializer.pose_graph();
+}
 
 ProtoStreamDeserializer::ProtoStreamDeserializer(
     ProtoStreamReaderInterface* const reader)
