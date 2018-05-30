@@ -39,7 +39,14 @@ void GetTrajectoryNodePosesHandler::OnRequest(
     node_id_pose.id.ToProto(node_pose->mutable_node_id());
     *node_pose->mutable_global_pose() =
         transform::ToProto(node_id_pose.data.global_pose);
-    node_pose->set_has_constant_data(node_id_pose.data.has_constant_data);
+    if (node_id_pose.data.constant_pose_data.has_value()) {
+      node_pose->mutable_constant_pose_data()->set_timestamp(
+          common::ToUniversal(
+              node_id_pose.data.constant_pose_data.value().time));
+      *node_pose->mutable_constant_pose_data()->mutable_local_pose() =
+          transform::ToProto(
+              node_id_pose.data.constant_pose_data.value().local_pose);
+    }
   }
   Send(std::move(response));
 }
