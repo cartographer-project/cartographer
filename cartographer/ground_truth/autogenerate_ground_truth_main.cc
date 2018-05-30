@@ -21,6 +21,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/ground_truth/proto/relations.pb.h"
 #include "cartographer/io/proto_stream.h"
+#include "cartographer/io/proto_stream_deserializer.h"
 #include "cartographer/mapping/proto/pose_graph.pb.h"
 #include "cartographer/transform/transform.h"
 #include "gflags/gflags.h"
@@ -170,13 +171,9 @@ void Run(const std::string& pose_graph_filename,
          const double outlier_threshold_meters,
          const double outlier_threshold_radians) {
   LOG(INFO) << "Reading pose graph from '" << pose_graph_filename << "'...";
-  mapping::proto::PoseGraph pose_graph;
-  {
-    io::ProtoStreamReader reader(pose_graph_filename);
-    CHECK(reader.ReadProto(&pose_graph));
-    CHECK_EQ(pose_graph.trajectory_size(), 1)
-        << "Only pose graphs containing a single trajectory are supported.";
-  }
+  mapping::proto::PoseGraph pose_graph =
+      io::DeserializePoseGraphFromFile(pose_graph_filename);
+
   LOG(INFO) << "Autogenerating ground truth relations...";
   const proto::GroundTruth ground_truth =
       GenerateGroundTruth(pose_graph, min_covered_distance,

@@ -36,11 +36,9 @@ void WriteStateHandler::OnRequest(const google::protobuf::Empty& request) {
         }
 
         auto response = common::make_unique<proto::WriteStateResponse>();
-        if (proto->GetTypeName() == "cartographer.mapping.proto.PoseGraph") {
-          response->mutable_pose_graph()->CopyFrom(*proto);
-        } else if (proto->GetTypeName() ==
-                   "cartographer.mapping.proto.AllTrajectoryBuilderOptions") {
-          response->mutable_all_trajectory_builder_options()->CopyFrom(*proto);
+        if (proto->GetTypeName() ==
+            "cartographer.mapping.proto.SerializationHeader") {
+          response->mutable_header()->CopyFrom(*proto);
         } else if (proto->GetTypeName() ==
                    "cartographer.mapping.proto.SerializedData") {
           response->mutable_serialized_data()->CopyFrom(*proto);

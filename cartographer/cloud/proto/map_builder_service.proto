@@ -185,10 +185,8 @@ message GetConstraintsResponse {
 
 message WriteStateResponse {
   oneof state_chunk {
-    cartographer.mapping.proto.PoseGraph pose_graph = 1;
-    cartographer.mapping.proto.AllTrajectoryBuilderOptions
-        all_trajectory_builder_options = 2;
-    cartographer.mapping.proto.SerializedData serialized_data = 3;
+    cartographer.mapping.proto.SerializationHeader header = 1;
+    cartographer.mapping.proto.SerializedData serialized_data = 2;
   }
 }
 
@@ -280,7 +278,7 @@ service MapBuilderService {
 
   // Checks whether the trajectory is frozen.
   rpc IsTrajectoryFrozen(IsTrajectoryFrozenRequest)
-  	  returns (IsTrajectoryFrozenResponse);
+      returns (IsTrajectoryFrozenResponse);
 
   // Requests a PoseGraph to call RunFinalOptimization.
   rpc RunFinalOptimization(google.protobuf.Empty)
