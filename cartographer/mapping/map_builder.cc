@@ -184,8 +184,7 @@ void MapBuilder::FinishTrajectory(const int trajectory_id) {
 }
 
 std::string MapBuilder::SubmapToProto(
-    const mapping::SubmapId& submap_id,
-    proto::SubmapQuery::Response* const response) {
+    const SubmapId& submap_id, proto::SubmapQuery::Response* const response) {
   if (submap_id.trajectory_id < 0 ||
       submap_id.trajectory_id >= num_trajectory_builders()) {
     return "Requested submap from trajectory " +
@@ -213,7 +212,7 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
 
   // Create a copy of the pose_graph_proto, such that we can re-write the
   // trajectory ids.
-  mapping::proto::PoseGraph pose_graph_proto = deserializer.pose_graph();
+  proto::PoseGraph pose_graph_proto = deserializer.pose_graph();
   const auto& all_builder_options_proto =
       deserializer.all_trajectory_builder_options();
 
@@ -242,25 +241,24 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
         trajectory_remapping.at(constraint_proto.node_id().trajectory_id()));
   }
 
-  MapById<mapping::SubmapId, transform::Rigid3d> submap_poses;
-  for (const mapping::proto::Trajectory& trajectory_proto :
+  MapById<SubmapId, transform::Rigid3d> submap_poses;
+  for (const proto::Trajectory& trajectory_proto :
        pose_graph_proto.trajectory()) {
-    for (const mapping::proto::Trajectory::Submap& submap_proto :
+    for (const proto::Trajectory::Submap& submap_proto :
          trajectory_proto.submap()) {
-      submap_poses.Insert(mapping::SubmapId{trajectory_proto.trajectory_id(),
-                                            submap_proto.submap_index()},
+      submap_poses.Insert(SubmapId{trajectory_proto.trajectory_id(),
+                                   submap_proto.submap_index()},
                           transform::ToRigid3(submap_proto.pose()));
     }
   }
 
-  MapById<mapping::NodeId, transform::Rigid3d> node_poses;
-  for (const mapping::proto::Trajectory& trajectory_proto :
+  MapById<NodeId, transform::Rigid3d> node_poses;
+  for (const proto::Trajectory& trajectory_proto :
        pose_graph_proto.trajectory()) {
-    for (const mapping::proto::Trajectory::Node& node_proto :
-         trajectory_proto.node()) {
-      node_poses.Insert(mapping::NodeId{trajectory_proto.trajectory_id(),
-                                        node_proto.node_index()},
-                        transform::ToRigid3(node_proto.pose()));
+    for (const proto::Trajectory::Node& node_proto : trajectory_proto.node()) {
+      node_poses.Insert(
+          NodeId{trajectory_proto.trajectory_id(), node_proto.node_index()},
+          transform::ToRigid3(node_proto.pose()));
     }
   }
 
@@ -287,17 +285,17 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
             trajectory_remapping.at(
                 proto.submap().submap_id().trajectory_id()));
         const transform::Rigid3d& submap_pose = submap_poses.at(
-            mapping::SubmapId{proto.submap().submap_id().trajectory_id(),
-                              proto.submap().submap_id().submap_index()});
+            SubmapId{proto.submap().submap_id().trajectory_id(),
+                     proto.submap().submap_id().submap_index()});
         pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
         break;
       }
       case SerializedData::kNode: {
         proto.mutable_node()->mutable_node_id()->set_trajectory_id(
             trajectory_remapping.at(proto.node().node_id().trajectory_id()));
-        const transform::Rigid3d& node_pose = node_poses.at(
-            mapping::NodeId{proto.node().node_id().trajectory_id(),
-                            proto.node().node_id().node_index()});
+        const transform::Rigid3d& node_pose =
+            node_poses.at(NodeId{proto.node().node_id().trajectory_id(),
+                                 proto.node().node_id().node_index()});
         pose_graph_->AddNodeFromProto(node_pose, proto.node());
         break;
       }
@@ -346,10 +344,10 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
   if (load_frozen_state) {
     // Add information about which nodes belong to which submap.
     // Required for 3D pure localization.
-    for (const mapping::proto::PoseGraph::Constraint& constraint_proto :
+    for (const proto::PoseGraph::Constraint& constraint_proto :
          pose_graph_proto.constraint()) {
       if (constraint_proto.tag() !=
-          mapping::proto::PoseGraph::Constraint::INTRA_SUBMAP) {
+          proto::PoseGraph::Constraint::INTRA_SUBMAP) {
         continue;
       }
       pose_graph_->AddNodeToSubmap(
