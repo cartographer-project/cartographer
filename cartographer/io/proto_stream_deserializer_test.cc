@@ -36,49 +36,19 @@ using ::google::protobuf::util::MessageDifferencer;
 using ::testing::Eq;
 using ::testing::Not;
 
-static constexpr char kSerializationHeaderProtoString[] = R"PROTO(
-  format_version: 1
-)PROTO";
-
-static constexpr char kUnsupportedSerializationHeaderProtoString[] = R"PROTO(
-  format_version: 123
-)PROTO";
-
-static constexpr char kPoseGraphProtoString[] = R"PROTO(
-  pose_graph {}
-)PROTO";
-
-static constexpr char kAllTrajectoryBuilderOptionsProtoString[] = R"PROTO(
-  all_trajectory_builder_options {}
-)PROTO";
-
-static constexpr char kSubmapProtoString[] = R"PROTO(
-  submap {}
-)PROTO";
-
-static constexpr char kNodeProtoString[] = R"PROTO(
-  node {}
-)PROTO";
-
-static constexpr char kTrajectoryDataProtoString[] = R"PROTO(
-  trajectory_data {}
-)PROTO";
-
-static constexpr char kImuDataProtoString[] = R"PROTO(
-  imu_data {}
-)PROTO";
-
-static constexpr char kOdometryDataProtoString[] = R"PROTO(
-  odometry_data {}
-)PROTO";
-
-static constexpr char kFixedFramePoseDataProtoString[] = R"PROTO(
-  fixed_frame_pose_data {}
-)PROTO";
-
-static constexpr char kLandmarkDataProtoString[] = R"PROTO(
-  landmark_data {}
-)PROTO";
+constexpr char kSerializationHeaderProtoString[] = "format_version: 1";
+constexpr char kUnsupportedSerializationHeaderProtoString[] =
+    "format_version: 123";
+constexpr char kPoseGraphProtoString[] = "pose_graph {}";
+constexpr char kAllTrajectoryBuilderOptionsProtoString[] =
+    "all_trajectory_builder_options {}";
+constexpr char kSubmapProtoString[] = "submap {}";
+constexpr char kNodeProtoString[] = "node {}";
+constexpr char kTrajectoryDataProtoString[] = "trajectory_data {}";
+constexpr char kImuDataProtoString[] = "imu_data {}";
+constexpr char kOdometryDataProtoString[] = "odometry_data {}";
+constexpr char kFixedFramePoseDataProtoString[] = "fixed_frame_pose_data {}";
+constexpr char kLandmarkDataProtoString[] = "landmark_data {}";
 
 template <typename T>
 T ProtoFromStringOrDie(const std::string& proto_string) {
@@ -87,45 +57,41 @@ T ProtoFromStringOrDie(const std::string& proto_string) {
   return msg;
 }
 
-template <typename T>
-std::unique_ptr<T> ProtoUPtrFromStringOrDie(const std::string& proto_string) {
-  return make_unique<T>(ProtoFromStringOrDie<T>(proto_string));
-}
+class ProtoStreamDeserializerTest : public ::testing::Test {
+ protected:
+  void InitializeProtoReader(
+      const std::string& header_textpb,
+      const std::initializer_list<std::string>& data_textpbs) {
+    std::queue<std::unique_ptr<Message>> proto_queue;
+    proto_queue.emplace(make_unique<SerializationHeader>(
+        ProtoFromStringOrDie<SerializationHeader>(header_textpb)));
+    for (const std::string& data_textpb : data_textpbs) {
+      proto_queue.emplace(make_unique<SerializedData>(
+          ProtoFromStringOrDie<SerializedData>(data_textpb)));
+    }
+    reader_ = make_unique<InMemoryProtoStreamReader>(std::move(proto_queue));
+  }
 
-std::unique_ptr<InMemoryProtoStreamReader>
-CreateInMemoryReaderFromTextProtos() {
-  std::queue<std::unique_ptr<Message>> proto_queue;
-
-  proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializationHeader>(
-      kSerializationHeaderProtoString));
-  proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(kPoseGraphProtoString));
-  proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializedData>(
-      kAllTrajectoryBuilderOptionsProtoString));
-  proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(kSubmapProtoString));
-  proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(kNodeProtoString));
-  proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(kTrajectoryDataProtoString));
-  proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(kImuDataProtoString));
-  proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(kOdometryDataProtoString));
-  proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(kFixedFramePoseDataProtoString));
-  proto_queue.emplace(
-      ProtoUPtrFromStringOrDie<SerializedData>(kLandmarkDataProtoString));
-  return make_unique<InMemoryProtoStreamReader>(std::move(proto_queue));
-}
+  std::unique_ptr<InMemoryProtoStreamReader> reader_;
+};
 
 // This test checks if the serialization works.
-TEST(ProtoStreamDeserializerTest, WorksOnGoldenTextStream) {
+TEST_F(ProtoStreamDeserializerTest, WorksOnGoldenTextStream) {
   // Load text proto into in_memory_reader.
-  std::unique_ptr<InMemoryProtoStreamReader> reader =
-      CreateInMemoryReaderFromTextProtos();
+  InitializeProtoReader(kSerializationHeaderProtoString,
+                        {
+                            kPoseGraphProtoString,
+                            kAllTrajectoryBuilderOptionsProtoString,
+                            kSubmapProtoString,
+                            kNodeProtoString,
+                            kTrajectoryDataProtoString,
+                            kImuDataProtoString,
+                            kOdometryDataProtoString,
+                            kFixedFramePoseDataProtoString,
+                            kLandmarkDataProtoString,
+                        });
 
-  io::ProtoStreamDeserializer deserializer(reader.get());
+  io::ProtoStreamDeserializer deserializer(reader_.get());
 
   EXPECT_TRUE(MessageDifferencer::Equals(
       deserializer.header(), ProtoFromStringOrDie<SerializationHeader>(
@@ -179,16 +145,12 @@ TEST(ProtoStreamDeserializerTest, WorksOnGoldenTextStream) {
       ProtoFromStringOrDie<SerializedData>(kLandmarkDataProtoString)));
 
   EXPECT_FALSE(deserializer.ReadNextSerializedData(&serialized_data));
-  EXPECT_TRUE(reader->eof());
+  EXPECT_TRUE(reader_->eof());
 }
 
-TEST(ProtoStreamDeserializerDeathTests, FailsIfVersionNotSupported) {
-  std::queue<std::unique_ptr<Message>> proto_queue;
-  proto_queue.emplace(ProtoUPtrFromStringOrDie<SerializationHeader>(
-      kUnsupportedSerializationHeaderProtoString));
-  InMemoryProtoStreamReader reader(std::move(proto_queue));
-
-  EXPECT_DEATH(common::make_unique<ProtoStreamDeserializer>(&reader),
+TEST_F(ProtoStreamDeserializerTest, FailsIfVersionNotSupported) {
+  InitializeProtoReader(kUnsupportedSerializationHeaderProtoString, {});
+  EXPECT_DEATH(common::make_unique<ProtoStreamDeserializer>(reader_.get()),
                "Unsupported serialization format");
 }
 
