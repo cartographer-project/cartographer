@@ -143,7 +143,7 @@ class ProbabilityGridPointsProcessorTest : public ::testing::Test {
 };
 
 TEST_F(ProbabilityGridPointsProcessorTest, WriteProto) {
-  auto expected_prob_grid_proto = CreateExpectedProbabilityGrid(
+  const auto expected_prob_grid_proto = CreateExpectedProbabilityGrid(
       CreatePointsBatch(),
       pipeline_dictionary_->GetArrayValuesAsDictionaries().front().get());
   Run("map.pb");
