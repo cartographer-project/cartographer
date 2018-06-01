@@ -45,10 +45,10 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
       double resolution,
       const mapping::proto::ProbabilityGridRangeDataInserterOptions2D&
           probability_grid_range_data_inserter_options,
-      const DrawTrajectories& draw_trajectories,
+      const DrawTrajectories& draw_trajectories, const OutputType& output_type,
       std::unique_ptr<FileWriter> file_writer,
-      const std::vector<mapping::proto::Trajectory>& trajectorios,
-      const OutputType& output_type, PointsProcessor* next);
+      const std::vector<mapping::proto::Trajectory>& trajectories,
+      PointsProcessor* next);
   ProbabilityGridPointsProcessor(const ProbabilityGridPointsProcessor&) =
       delete;
   ProbabilityGridPointsProcessor& operator=(
