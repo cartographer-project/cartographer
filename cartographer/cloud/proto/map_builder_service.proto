@@ -114,6 +114,13 @@ message ReceiveLocalSlamResultsResponse {
   LocalSlamInsertionResult insertion_result = 5;
 }
 
+message ReceiveGlobalSlamOptimizationsResponse {
+  map<int32 /* trajectory_id */, cartographer.mapping.proto.NodeId>
+      last_optimized_node_ids = 1;
+  map<int32 /* trajectory_id */, cartographer.mapping.proto.SubmapId>
+      last_optimized_submap_ids = 2;
+}
+
 message GetSubmapRequest {
   cartographer.mapping.proto.SubmapId submap_id = 1;
 }
@@ -133,9 +140,13 @@ message GetSubmapResponse {
 }
 
 message TrajectoryNodePose {
+  message ConstantPoseData {
+    int64 timestamp = 1;
+    cartographer.transform.proto.Rigid3d local_pose = 2;
+  }
   cartographer.mapping.proto.NodeId node_id = 1;
   cartographer.transform.proto.Rigid3d global_pose = 2;
-  bool has_constant_data = 3;
+  ConstantPoseData constant_pose_data = 3;
 }
 
 message GetTrajectoryNodePosesResponse {
@@ -174,10 +185,8 @@ message GetConstraintsResponse {
 
 message WriteStateResponse {
   oneof state_chunk {
-    cartographer.mapping.proto.PoseGraph pose_graph = 1;
-    cartographer.mapping.proto.AllTrajectoryBuilderOptions
-        all_trajectory_builder_options = 2;
-    cartographer.mapping.proto.SerializedData serialized_data = 3;
+    cartographer.mapping.proto.SerializationHeader header = 1;
+    cartographer.mapping.proto.SerializedData serialized_data = 2;
   }
 }
 
@@ -230,6 +239,10 @@ service MapBuilderService {
   rpc ReceiveLocalSlamResults(ReceiveLocalSlamResultsRequest)
       returns (stream ReceiveLocalSlamResultsResponse);
 
+  // Requests the server to send a stream of global SLAM notifications.
+  rpc ReceiveGlobalSlamOptimizations(google.protobuf.Empty)
+      returns (stream ReceiveGlobalSlamOptimizationsResponse);
+
   // Marks a trajectory corresponding to 'trajectory_id' as finished,
   // i.e. no further sensor data is expected.
   rpc FinishTrajectory(FinishTrajectoryRequest) returns (google.protobuf.Empty);
@@ -265,7 +278,7 @@ service MapBuilderService {
 
   // Checks whether the trajectory is frozen.
   rpc IsTrajectoryFrozen(IsTrajectoryFrozenRequest)
-  	  returns (IsTrajectoryFrozenResponse);
+      returns (IsTrajectoryFrozenResponse);
 
   // Requests a PoseGraph to call RunFinalOptimization.
   rpc RunFinalOptimization(google.protobuf.Empty)

@@ -23,12 +23,16 @@
     and mapping (SLAM) in 2D and 3D across multiple platforms and sensor
     configurations.
   </description>
-  <maintainer email="google-cartographer@googlegroups.com">
+  <maintainer email="cartographer-owners@googlegroups.com">
     The Cartographer Authors
   </maintainer>
   <license>Apache 2.0</license>
 
   <url>https://github.com/googlecartographer/cartographer</url>
+
+  <author email="google-cartographer@googlegroups.com">
+    The Cartographer Authors
+  </author>
 
   <buildtool_depend>catkin</buildtool_depend>
 

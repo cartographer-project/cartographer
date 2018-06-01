@@ -21,6 +21,7 @@
 #include "cartographer/cloud/internal/local_trajectory_uploader.h"
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/mapping/map_builder_interface.h"
+#include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/range_data.h"
@@ -40,14 +41,27 @@ class MapBuilderContextInterface : public async_grpc::ExecutionContext {
     std::unique_ptr<const mapping::TrajectoryBuilderInterface::InsertionResult>
         insertion_result;
   };
-  // Calling with 'nullptr' signals subscribers that the subscription has ended.
+  // Calling with 'nullptr' signals subscribers that the subscription has ended,
+  // e.g. this happens when the corresponding trajectory was finished and hence
+  // no more local SLAM updates will occur.
+  // The callback can return 'false' to indicate that the client is not
+  // interested in more local SLAM updates and 'MapBuilderServer' will end the
+  // subscription.
   using LocalSlamSubscriptionCallback =
-      std::function<void(std::unique_ptr<LocalSlamResult>)>;
+      std::function<bool(std::unique_ptr<LocalSlamResult>)>;
+
+  // The callback can return 'false' to indicate that the client is not
+  // interested in more global SLAM runs and 'MapBuilderServer' will end the
+  // subscription.
+  using GlobalSlamOptimizationCallback = std::function<bool(
+      const std::map<int /* trajectory_id */, mapping::SubmapId>&,
+      const std::map<int /* trajectory_id */, mapping::NodeId>&)>;
+
   struct Data {
     int trajectory_id;
     std::unique_ptr<sensor::Data> data;
   };
-  struct SubscriptionId {
+  struct LocalSlamSubscriptionId {
     const int trajectory_id;
     const int subscription_index;
   };
@@ -64,10 +78,13 @@ class MapBuilderContextInterface : public async_grpc::ExecutionContext {
   virtual mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
   GetLocalSlamResultCallbackForSubscriptions() = 0;
   virtual void AddSensorDataToTrajectory(const Data& sensor_data) = 0;
-  virtual SubscriptionId SubscribeLocalSlamResults(
+  virtual LocalSlamSubscriptionId SubscribeLocalSlamResults(
       int trajectory_id, LocalSlamSubscriptionCallback callback) = 0;
   virtual void UnsubscribeLocalSlamResults(
-      const SubscriptionId& subscription_id) = 0;
+      const LocalSlamSubscriptionId& subscription_id) = 0;
+  virtual int SubscribeGlobalSlamOptimizations(
+      GlobalSlamOptimizationCallback callback) = 0;
+  virtual void UnsubscribeGlobalSlamOptimizations(int subscription_index) = 0;
   virtual void NotifyFinishTrajectory(int trajectory_id) = 0;
   virtual LocalTrajectoryUploaderInterface* local_trajectory_uploader() = 0;
   virtual void EnqueueSensorData(int trajectory_id,

@@ -39,11 +39,15 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
   MOCK_METHOD1(AddSensorDataToTrajectory,
                void(const MapBuilderContextInterface::Data &));
   MOCK_METHOD2(SubscribeLocalSlamResults,
-               MapBuilderContextInterface::SubscriptionId(
+               MapBuilderContextInterface::LocalSlamSubscriptionId(
                    int,
                    MapBuilderContextInterface::LocalSlamSubscriptionCallback));
-  MOCK_METHOD1(UnsubscribeLocalSlamResults,
-               void(const MapBuilderContextInterface::SubscriptionId &));
+  MOCK_METHOD1(
+      UnsubscribeLocalSlamResults,
+      void(const MapBuilderContextInterface::LocalSlamSubscriptionId &));
+  MOCK_METHOD1(SubscribeGlobalSlamOptimizations,
+               int(GlobalSlamOptimizationCallback));
+  MOCK_METHOD1(UnsubscribeGlobalSlamOptimizations, void(int));
   MOCK_METHOD1(NotifyFinishTrajectory, void(int));
   MOCK_METHOD0(local_trajectory_uploader, LocalTrajectoryUploaderInterface *());
 

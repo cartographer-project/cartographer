@@ -25,6 +25,7 @@
 #include "cartographer/cloud/internal/handlers/write_state_handler.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
+#include "cartographer/io/proto_stream_deserializer.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -111,11 +112,8 @@ void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
   proto::WriteStateResponse response;
   while (client.StreamRead(&response)) {
     switch (response.state_chunk_case()) {
-      case proto::WriteStateResponse::kPoseGraph:
-        writer->WriteProto(response.pose_graph());
-        break;
-      case proto::WriteStateResponse::kAllTrajectoryBuilderOptions:
-        writer->WriteProto(response.all_trajectory_builder_options());
+      case proto::WriteStateResponse::kHeader:
+        writer->WriteProto(response.header());
         break;
       case proto::WriteStateResponse::kSerializedData:
         writer->WriteProto(response.serialized_data());
@@ -132,21 +130,25 @@ void MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,
     LOG(FATAL) << "Not implemented";
   }
   async_grpc::Client<handlers::LoadStateSignature> client(client_channel_);
+
+  io::ProtoStreamDeserializer deserializer(reader);
   // Request with a PoseGraph proto is sent first.
   {
     proto::LoadStateRequest request;
-    CHECK(reader->ReadProto(request.mutable_pose_graph()));
+    *request.mutable_pose_graph() = deserializer.pose_graph();
     CHECK(client.Write(request));
   }
   // Request with an AllTrajectoryBuilderOptions should be second.
   {
     proto::LoadStateRequest request;
-    CHECK(reader->ReadProto(request.mutable_all_trajectory_builder_options()));
+    *request.mutable_all_trajectory_builder_options() =
+        deserializer.all_trajectory_builder_options();
     CHECK(client.Write(request));
   }
   // Multiple requests with SerializedData are sent after.
   proto::LoadStateRequest request;
-  while (reader->ReadProto(request.mutable_serialized_data())) {
+  while (
+      deserializer.ReadNextSerializedData(request.mutable_serialized_data())) {
     CHECK(client.Write(request));
   }
 
