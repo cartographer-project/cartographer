@@ -397,7 +397,7 @@ void PoseGraph2D::WaitForAllComputations() {
                 !work_queue_);
       },
       common::FromSeconds(1.))) {
-    // log progress on nodes only when we are actually processing nodes:
+    // Log progress on nodes only when we are actually processing nodes.
     if (num_trajectory_nodes_ != num_finished_nodes_at_start) {
       std::ostringstream progress_info;
       progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
