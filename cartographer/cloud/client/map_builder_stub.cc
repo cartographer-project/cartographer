@@ -136,7 +136,7 @@ void MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,
   {
     proto::LoadStateRequest request;
     *request.mutable_serialization_header() = deserializer.header();
-    CHECK(client.Write(request);
+    CHECK(client.Write(request));
   }
   // Request with a PoseGraph proto is sent second.
   {
