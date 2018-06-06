@@ -40,13 +40,14 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
   constexpr static const char* kConfigurationFileActionName =
       "write_probability_grid";
   enum class DrawTrajectories { kNo, kYes };
+  enum class OutputType { kPng, kPb };
   ProbabilityGridPointsProcessor(
       double resolution,
       const mapping::proto::ProbabilityGridRangeDataInserterOptions2D&
           probability_grid_range_data_inserter_options,
-      const DrawTrajectories& draw_trajectories,
+      const DrawTrajectories& draw_trajectories, const OutputType& output_type,
       std::unique_ptr<FileWriter> file_writer,
-      const std::vector<mapping::proto::Trajectory>& trajectorios,
+      const std::vector<mapping::proto::Trajectory>& trajectories,
       PointsProcessor* next);
   ProbabilityGridPointsProcessor(const ProbabilityGridPointsProcessor&) =
       delete;
@@ -65,6 +66,7 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
 
  private:
   const DrawTrajectories draw_trajectories_;
+  const OutputType output_type_;
   const std::vector<mapping::proto::Trajectory> trajectories_;
   std::unique_ptr<FileWriter> file_writer_;
   PointsProcessor* const next_;
