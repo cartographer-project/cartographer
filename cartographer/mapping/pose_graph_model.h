@@ -48,32 +48,32 @@ struct InternalSubmapData {
 struct PoseGraphModel {
   // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
-  MapById<SubmapId, InternalSubmapData> submap_data_;
+  MapById<SubmapId, InternalSubmapData> submap_data;
 
   // Global submap poses currently used for displaying data.
-  MapById<SubmapId, optimization::SubmapSpec2D> global_submap_poses_2d_;
-  MapById<SubmapId, optimization::SubmapSpec3D> global_submap_poses_3d_;
+  MapById<SubmapId, optimization::SubmapSpec2D> global_submap_poses_2d;
+  MapById<SubmapId, optimization::SubmapSpec3D> global_submap_poses_3d;
 
   // Data that are currently being shown.
-  MapById<NodeId, TrajectoryNode> trajectory_nodes_ GUARDED_BY(mutex_);
+  MapById<NodeId, TrajectoryNode> trajectory_nodes;
 
   // Global landmark poses with all observations.
   std::map<std::string /* landmark ID */, PoseGraphInterface::LandmarkNode>
-      landmark_nodes_;
+      landmark_nodes;
 
   // How our various trajectories are related.
-  TrajectoryConnectivityState trajectory_connectivity_state_;
-  int num_trajectory_nodes_ = 0;
-  std::set<int> finished_trajectories_ GUARDED_BY(mutex_);
-  std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
+  TrajectoryConnectivityState trajectory_connectivity_state;
+  int num_trajectory_nodes = 0;
+  std::set<int> finished_trajectories;
+  std::set<int> frozen_trajectories;
 
   // Set of all initial trajectory poses.
-  std::map<int, PoseGraph::InitialTrajectoryPose> initial_trajectory_poses_;
+  std::map<int, PoseGraph::InitialTrajectoryPose> initial_trajectory_poses;
 
-  std::vector<PoseGraphInterface::Constraint> constraints_;
+  std::vector<PoseGraphInterface::Constraint> constraints;
 };
 
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_2D_POSE_GRAPH_2D_H_
+#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_MODEL_H_
