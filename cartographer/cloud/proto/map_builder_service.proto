@@ -127,10 +127,8 @@ message GetSubmapRequest {
 
 message LoadStateRequest {
   oneof state_chunk {
-    cartographer.mapping.proto.PoseGraph pose_graph = 1;
-    cartographer.mapping.proto.AllTrajectoryBuilderOptions
-        all_trajectory_builder_options = 2;
-    cartographer.mapping.proto.SerializedData serialized_data = 3;
+    cartographer.mapping.proto.SerializedData serialized_data = 1;
+    cartographer.mapping.proto.SerializationHeader serialization_header = 2;
   }
 }
 
