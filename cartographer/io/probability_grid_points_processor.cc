@@ -109,9 +109,9 @@ ProbabilityGridPointsProcessor::FromDictionary(
                                      ? DrawTrajectories::kYes
                                      : DrawTrajectories::kNo;
   const auto output_type =
-      !dictionary->HasKey("output_type")
-          ? OutputType::kPng
-          : OutputTypeFromString(dictionary->GetString("output_type"));
+      dictionary->HasKey("output_type")
+          ? OutputTypeFromString(dictionary->GetString("output_type"))
+          : OutputType::kPng;
   return common::make_unique<ProbabilityGridPointsProcessor>(
       dictionary->GetDouble("resolution"),
       mapping::CreateProbabilityGridRangeDataInserterOptions2D(
