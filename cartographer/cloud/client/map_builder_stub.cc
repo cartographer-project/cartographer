@@ -132,16 +132,24 @@ void MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,
   async_grpc::Client<handlers::LoadStateSignature> client(client_channel_);
 
   io::ProtoStreamDeserializer deserializer(reader);
-  // Request with a PoseGraph proto is sent first.
+  // Request with the SerializationHeader proto is sent first.
   {
     proto::LoadStateRequest request;
-    *request.mutable_pose_graph() = deserializer.pose_graph();
+    *request.mutable_serialization_header() = deserializer.header();
     CHECK(client.Write(request));
   }
-  // Request with an AllTrajectoryBuilderOptions should be second.
+  // Request with a PoseGraph proto is sent second.
   {
     proto::LoadStateRequest request;
-    *request.mutable_all_trajectory_builder_options() =
+    *request.mutable_serialized_data()->mutable_pose_graph() =
+        deserializer.pose_graph();
+    CHECK(client.Write(request));
+  }
+  // Request with an AllTrajectoryBuilderOptions should be third.
+  {
+    proto::LoadStateRequest request;
+    *request.mutable_serialized_data()
+         ->mutable_all_trajectory_builder_options() =
         deserializer.all_trajectory_builder_options();
     CHECK(client.Write(request));
   }

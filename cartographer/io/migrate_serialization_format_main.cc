@@ -42,6 +42,10 @@ int main(int argc, char** argv) {
   }
   cartographer::io::ProtoStreamReader input(FLAGS_original_pbstream_file);
   cartographer::io::ProtoStreamWriter output(FLAGS_output_pbstream_file);
+  LOG(INFO) << "Migrating old serialization format in \""
+            << FLAGS_original_pbstream_file
+            << "\" to new serialization format in \""
+            << FLAGS_output_pbstream_file << "\"";
   cartographer::io::MigrateStreamFormatToVersion1(&input, &output);
 
   return EXIT_SUCCESS;

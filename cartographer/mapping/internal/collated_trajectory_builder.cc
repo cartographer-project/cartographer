@@ -38,6 +38,8 @@ CollatedTrajectoryBuilder::CollatedTrajectoryBuilder(
       last_logging_time_(std::chrono::steady_clock::now()) {
   std::unordered_set<std::string> expected_sensor_id_strings;
   for (const auto& sensor_id : expected_sensor_ids) {
+    // Landmark data does not need to be collated.
+    if (sensor_id.type == SensorId::SensorType::LANDMARK) continue;
     expected_sensor_id_strings.insert(sensor_id.id);
   }
   sensor_collator_->AddTrajectory(
