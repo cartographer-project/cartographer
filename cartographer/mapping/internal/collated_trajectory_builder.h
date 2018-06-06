@@ -74,7 +74,7 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
 
   void AddSensorData(const std::string& sensor_id,
                      const sensor::LandmarkData& landmark_data) override {
-    AddData(sensor::MakeDispatchable(sensor_id, landmark_data));
+    wrapped_trajectory_builder_->AddSensorData(sensor_id, landmark_data);
   }
 
   void AddLocalSlamResultData(std::unique_ptr<mapping::LocalSlamResultData>
