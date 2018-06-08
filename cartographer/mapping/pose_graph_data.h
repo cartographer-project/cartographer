@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_MODEL_H_
-#define CARTOGRAPHER_MAPPING_POSE_GRAPH_MODEL_H_
+#ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_DATA_H_
+#define CARTOGRAPHER_MAPPING_POSE_GRAPH_DATA_H_
 
 #include <map>
 #include <set>
@@ -45,7 +45,7 @@ struct InternalSubmapData {
   std::set<NodeId> node_ids;
 };
 
-struct PoseGraphModel {
+struct PoseGraphData {
   // Submaps get assigned an ID and state as soon as they are seen, even
   // before they take part in the background computations.
   MapById<SubmapId, InternalSubmapData> submap_data;
@@ -76,4 +76,4 @@ struct PoseGraphModel {
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_MODEL_H_
+#endif  // CARTOGRAPHER_MAPPING_POSE_GRAPH_DATA_H_
