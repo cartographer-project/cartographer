@@ -20,6 +20,7 @@
 #include <thread>
 
 #include "async_grpc/client.h"
+#include "async_grpc/token_file_credentials.h"
 #include "cartographer/cloud/internal/handlers/add_sensor_data_batch_handler.h"
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
@@ -36,12 +37,14 @@ namespace {
 using common::make_unique;
 
 constexpr int kConnectionTimeoutInSecond = 10;
+constexpr int kTokenRefreshIntervalInMinutes = 1;
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
-  LocalTrajectoryUploader(const std::string &uplink_server_address,
-                          int batch_size, bool enable_ssl_encryption);
+  LocalTrajectoryUploader(const std::string& uplink_server_address,
+                          int batch_size, bool enable_ssl_encryption,
+                          const std::string& token_file_path);
   ~LocalTrajectoryUploader();
 
   // Starts the upload thread.
@@ -52,8 +55,8 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   void Shutdown() final;
 
   void AddTrajectory(
-      int local_trajectory_id, const std::set<SensorId> &expected_sensor_ids,
-      const mapping::proto::TrajectoryBuilderOptions &trajectory_options) final;
+      int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
+      const mapping::proto::TrajectoryBuilderOptions& trajectory_options) final;
   void FinishTrajectory(int local_trajectory_id) final;
   void EnqueueSensorData(std::unique_ptr<proto::SensorData> sensor_data) final;
 
@@ -75,14 +78,22 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 };
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
-    const std::string &uplink_server_address, int batch_size,
-    bool enable_ssl_encryption)
-    : client_channel_(::grpc::CreateChannel(
-          uplink_server_address,
-          enable_ssl_encryption
+    const std::string& uplink_server_address, int batch_size,
+    bool enable_ssl_encryption, const std::string& token_file_path)
+    : batch_size_(batch_size) {
+  auto channel_creds = enable_ssl_encryption
               ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
-              : ::grpc::InsecureChannelCredentials())),
-      batch_size_(batch_size) {
+              : ::grpc::InsecureChannelCredentials();
+
+  if (!token_file_path.empty()) {
+    auto call_creds = async_grpc::TokenFileCredentials(
+        token_file_path, std::chrono::minutes(kTokenRefreshIntervalInMinutes));
+    channel_creds =
+        grpc::CompositeChannelCredentials(channel_creds, call_creds);
+  }
+  client_channel_ = ::grpc::CreateChannel(
+          uplink_server_address,
+          channel_creds);
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
       std::chrono::seconds(kConnectionTimeoutInSecond));
@@ -121,7 +132,7 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
       // A submap also holds a trajectory id that must be translated to uplink's
       // trajectory id.
       if (added_sensor_data->has_local_slam_result_data()) {
-        for (mapping::proto::Submap &mutable_submap :
+        for (mapping::proto::Submap& mutable_submap :
              *added_sensor_data->mutable_local_slam_result_data()
                   ->mutable_submaps()) {
           mutable_submap.mutable_submap_id()->set_trajectory_id(
@@ -148,11 +159,11 @@ void LocalTrajectoryUploader::TranslateTrajectoryId(
 }
 
 void LocalTrajectoryUploader::AddTrajectory(
-    int local_trajectory_id, const std::set<SensorId> &expected_sensor_ids,
-    const mapping::proto::TrajectoryBuilderOptions &trajectory_options) {
+    int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
+    const mapping::proto::TrajectoryBuilderOptions& trajectory_options) {
   proto::AddTrajectoryRequest request;
   *request.mutable_trajectory_builder_options() = trajectory_options;
-  for (const SensorId &sensor_id : expected_sensor_ids) {
+  for (const SensorId& sensor_id : expected_sensor_ids) {
     // Range sensors are not forwarded, but combined into a LocalSlamResult.
     if (sensor_id.type != SensorId::SensorType::RANGE) {
       *request.add_expected_sensor_ids() = cloud::ToProto(sensor_id);
@@ -161,7 +172,8 @@ void LocalTrajectoryUploader::AddTrajectory(
   *request.add_expected_sensor_ids() =
       cloud::ToProto(GetLocalSlamResultSensorId(local_trajectory_id));
   async_grpc::Client<handlers::AddTrajectorySignature> client(client_channel_);
-  CHECK(client.Write(request));
+  ::grpc::Status status;
+  CHECK(client.Write(request,& status)) << status.error_message();
   CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 0);
   local_to_cloud_trajectory_id_map_[local_trajectory_id] =
       client.response().trajectory_id();
@@ -186,10 +198,11 @@ void LocalTrajectoryUploader::EnqueueSensorData(
 }  // namespace
 
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
-    const std::string &uplink_server_address, int batch_size,
-    bool enable_ssl_encryption) {
+    const std::string& uplink_server_address, int batch_size,
+    bool enable_ssl_encryption, const std::string& token_file_path) {
   return make_unique<LocalTrajectoryUploader>(uplink_server_address, batch_size,
-                                              enable_ssl_encryption);
+                                              enable_ssl_encryption,
+                                              token_file_path);
 }
 
 }  // namespace cloud
