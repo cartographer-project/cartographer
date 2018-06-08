@@ -37,6 +37,7 @@
 #include "cartographer/mapping/internal/optimization/optimization_problem_2d.h"
 #include "cartographer/mapping/internal/trajectory_connectivity_state.h"
 #include "cartographer/mapping/pose_graph.h"
+#include "cartographer/mapping/pose_graph_data.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/landmark_data.h"
@@ -146,21 +147,6 @@ class PoseGraph2D : public PoseGraph {
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
 
  private:
-  // The current state of the submap in the background threads. When this
-  // transitions to kFinished, all nodes are tried to match against this submap.
-  // Likewise, all new nodes are matched against submaps which are finished.
-  enum class SubmapState { kActive, kFinished };
-  struct InternalSubmapData {
-    std::shared_ptr<const Submap2D> submap;
-
-    // IDs of the nodes that were inserted into this map together with
-    // constraints for them. They are not to be matched again when this submap
-    // becomes 'finished'.
-    std::set<NodeId> node_ids;
-
-    SubmapState state = SubmapState::kActive;
-  };
-
   MapById<SubmapId, PoseGraphInterface::SubmapData> GetSubmapDataUnderLock()
       const REQUIRES(mutex_);
 
@@ -229,9 +215,6 @@ class PoseGraph2D : public PoseGraph {
   std::unique_ptr<std::deque<std::function<void()>>> work_queue_
       GUARDED_BY(mutex_);
 
-  // How our various trajectories are related.
-  TrajectoryConnectivityState trajectory_connectivity_state_;
-
   // We globally localize a fraction of the nodes from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>
       global_localization_samplers_ GUARDED_BY(mutex_);
@@ -248,36 +231,11 @@ class PoseGraph2D : public PoseGraph {
   // Current optimization problem.
   std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem_;
   constraints::ConstraintBuilder2D constraint_builder_ GUARDED_BY(mutex_);
-  std::vector<Constraint> constraints_ GUARDED_BY(mutex_);
-
-  // Submaps get assigned an ID and state as soon as they are seen, even
-  // before they take part in the background computations.
-  MapById<SubmapId, InternalSubmapData> submap_data_ GUARDED_BY(mutex_);
-
-  // Data that are currently being shown.
-  MapById<NodeId, TrajectoryNode> trajectory_nodes_ GUARDED_BY(mutex_);
-  int num_trajectory_nodes_ GUARDED_BY(mutex_) = 0;
-
-  // Global submap poses currently used for displaying data.
-  MapById<SubmapId, optimization::SubmapSpec2D> global_submap_poses_
-      GUARDED_BY(mutex_);
-
-  // Global landmark poses with all observations.
-  std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
-      landmark_nodes_ GUARDED_BY(mutex_);
 
   // List of all trimmers to consult when optimizations finish.
   std::vector<std::unique_ptr<PoseGraphTrimmer>> trimmers_ GUARDED_BY(mutex_);
 
-  // Set of all frozen trajectories not being optimized.
-  std::set<int> frozen_trajectories_ GUARDED_BY(mutex_);
-
-  // Set of all finished trajectories.
-  std::set<int> finished_trajectories_ GUARDED_BY(mutex_);
-
-  // Set of all initial trajectory poses.
-  std::map<int, InitialTrajectoryPose> initial_trajectory_poses_
-      GUARDED_BY(mutex_);
+  PoseGraphData data_ GUARDED_BY(mutex_);
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.
