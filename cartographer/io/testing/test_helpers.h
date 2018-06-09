@@ -27,18 +27,19 @@ namespace cartographer {
 namespace io {
 namespace testing {
 
-template <typename T> T ProtoFromStringOrDie(const std::string &proto_string) {
+template <typename T>
+T ProtoFromStringOrDie(const std::string &proto_string) {
   T msg;
   CHECK(google::protobuf::TextFormat::ParseFromString(proto_string, &msg));
   return msg;
 }
 
-std::unique_ptr<InMemoryProtoStreamReader>
-ProtoReaderFromStrings(const std::string &header_textpb,
-                       const std::initializer_list<std::string> &data_textpbs);
+std::unique_ptr<InMemoryProtoStreamReader> ProtoReaderFromStrings(
+    const std::string &header_textpb,
+    const std::initializer_list<std::string> &data_textpbs);
 
-} // namespace testing
-} // namespace io
-} // namespace cartographer
+}  // namespace testing
+}  // namespace io
+}  // namespace cartographer
 
-#endif // CARTOGRAPHER_IO_TESTING_TEST_HELPERS_H_
+#endif  // CARTOGRAPHER_IO_TESTING_TEST_HELPERS_H_

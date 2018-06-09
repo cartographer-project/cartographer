@@ -429,14 +429,19 @@ TEST_F(ClientServerTest, LoadState) {
   InitializeStub();
 
   // Load text proto into in_memory_reader.
-  auto reader = ProtoReaderFromStrings(
-      kSerializationHeaderProtoString,
-      {
-          kPoseGraphProtoString, kAllTrajectoryBuilderOptionsProtoString,
-          kSubmapProtoString, kNodeProtoString, kTrajectoryDataProtoString,
-          kImuDataProtoString, kOdometryDataProtoString,
-          kFixedFramePoseDataProtoString, kLandmarkDataProtoString,
-      });
+  auto reader =
+      ProtoReaderFromStrings(kSerializationHeaderProtoString,
+                             {
+                                 kPoseGraphProtoString,
+                                 kAllTrajectoryBuilderOptionsProtoString,
+                                 kSubmapProtoString,
+                                 kNodeProtoString,
+                                 kTrajectoryDataProtoString,
+                                 kImuDataProtoString,
+                                 kOdometryDataProtoString,
+                                 kFixedFramePoseDataProtoString,
+                                 kLandmarkDataProtoString,
+                             });
 
   stub_->LoadState(reader.get(), true);
   EXPECT_TRUE(stub_->pose_graph()->IsTrajectoryFrozen(0));

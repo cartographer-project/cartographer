@@ -61,14 +61,18 @@ class ProtoStreamDeserializerTest : public ::testing::Test {
 // This test checks if the serialization works.
 TEST_F(ProtoStreamDeserializerTest, WorksOnGoldenTextStream) {
   // Load text proto into in_memory_reader.
-  reader_ = ProtoReaderFromStrings(
-      kSerializationHeaderProtoString,
-      {
-          kPoseGraphProtoString, kAllTrajectoryBuilderOptionsProtoString,
-          kSubmapProtoString, kNodeProtoString, kTrajectoryDataProtoString,
-          kImuDataProtoString, kOdometryDataProtoString,
-          kFixedFramePoseDataProtoString, kLandmarkDataProtoString,
-      });
+  reader_ = ProtoReaderFromStrings(kSerializationHeaderProtoString,
+                                   {
+                                       kPoseGraphProtoString,
+                                       kAllTrajectoryBuilderOptionsProtoString,
+                                       kSubmapProtoString,
+                                       kNodeProtoString,
+                                       kTrajectoryDataProtoString,
+                                       kImuDataProtoString,
+                                       kOdometryDataProtoString,
+                                       kFixedFramePoseDataProtoString,
+                                       kLandmarkDataProtoString,
+                                   });
 
   io::ProtoStreamDeserializer deserializer(reader_.get());
 

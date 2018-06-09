@@ -21,9 +21,9 @@ namespace cartographer {
 namespace io {
 namespace testing {
 
-std::unique_ptr<InMemoryProtoStreamReader>
-ProtoReaderFromStrings(const std::string &header_textpb,
-                       const std::initializer_list<std::string> &data_textpbs) {
+std::unique_ptr<InMemoryProtoStreamReader> ProtoReaderFromStrings(
+    const std::string &header_textpb,
+    const std::initializer_list<std::string> &data_textpbs) {
   std::queue<std::unique_ptr<::google::protobuf::Message>> proto_queue;
   proto_queue.emplace(common::make_unique<
                       ::cartographer::mapping::proto::SerializationHeader>(
@@ -38,6 +38,6 @@ ProtoReaderFromStrings(const std::string &header_textpb,
   return common::make_unique<InMemoryProtoStreamReader>(std::move(proto_queue));
 }
 
-} // namespace testing
-} // namespace io
-} // namespace cartographer
+}  // namespace testing
+}  // namespace io
+}  // namespace cartographer
