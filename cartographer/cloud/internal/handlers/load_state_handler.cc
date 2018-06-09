@@ -40,7 +40,6 @@ void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
 }
 
 void LoadStateHandler::OnReadsDone() {
-  LOG(INFO) << "OnReadsDone";
   GetContext<MapBuilderContextInterface>()->map_builder().LoadState(&reader_,
                                                                     true);
   Send(common::make_unique<google::protobuf::Empty>());
