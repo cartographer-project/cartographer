@@ -203,7 +203,7 @@ class EvenSubmapTrimmer : public PoseGraphTrimmer {
     auto submap_ids = pose_graph->GetSubmapIds(trajectory_id_);
     for (const auto submap_id : submap_ids) {
       if (submap_id.submap_index % 2 == 0) {
-        pose_graph->MarkSubmapAsTrimmed(submap_id);
+        pose_graph->TrimSubmap(submap_id);
       }
     }
   }

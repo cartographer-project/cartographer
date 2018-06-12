@@ -203,7 +203,7 @@ void OverlappingSubmapsTrimmer2D::Trim(Trimmable* pose_graph) {
                           min_covered_cells_count_);
   current_submap_count_ = submap_data.size() - submap_ids_to_remove.size();
   for (const SubmapId& id : submap_ids_to_remove) {
-    pose_graph->MarkSubmapAsTrimmed(id);
+    pose_graph->TrimSubmap(id);
   }
 }
 
