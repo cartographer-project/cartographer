@@ -252,7 +252,7 @@ class PoseGraph2D : public PoseGraph {
         REQUIRES(parent_->mutex_);
     const std::vector<Constraint>& GetConstraints() const override
         REQUIRES(parent_->mutex_);
-    void MarkSubmapAsTrimmed(const SubmapId& submap_id)
+    void TrimSubmap(const SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
     bool IsFinished(int trajectory_id) const override REQUIRES(parent_->mutex_);
 

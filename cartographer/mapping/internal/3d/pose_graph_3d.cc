@@ -914,8 +914,7 @@ bool PoseGraph3D::TrimmingHandle::IsFinished(const int trajectory_id) const {
   return parent_->IsTrajectoryFinished(trajectory_id);
 }
 
-void PoseGraph3D::TrimmingHandle::MarkSubmapAsTrimmed(
-    const SubmapId& submap_id) {
+void PoseGraph3D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   // TODO(hrapp): We have to make sure that the trajectory has been finished
   // if we want to delete the last submaps.
   CHECK(parent_->data_.submap_data.at(submap_id).state ==
