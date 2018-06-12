@@ -64,7 +64,7 @@ class ClientServerTest : public ::testing::Test {
       MAP_BUILDER_SERVER.server_address = "0.0.0.0:50051"
       return MAP_BUILDER_SERVER)text";
     auto map_builder_server_parameters =
-        mapping::test::ResolveLuaParameters(kMapBuilderServerLua);
+        mapping::testing::ResolveLuaParameters(kMapBuilderServerLua);
     map_builder_server_options_ =
         CreateMapBuilderServerOptions(map_builder_server_parameters.get());
 
@@ -79,7 +79,7 @@ class ClientServerTest : public ::testing::Test {
       MAP_BUILDER_SERVER.upload_batch_size = 1
       return MAP_BUILDER_SERVER)text";
     auto uploading_map_builder_server_parameters =
-        mapping::test::ResolveLuaParameters(kUploadingMapBuilderServerLua);
+        mapping::testing::ResolveLuaParameters(kUploadingMapBuilderServerLua);
     uploading_map_builder_server_options_ = CreateMapBuilderServerOptions(
         uploading_map_builder_server_parameters.get());
 
@@ -89,7 +89,7 @@ class ClientServerTest : public ::testing::Test {
       TRAJECTORY_BUILDER.trajectory_builder_2d.submaps.num_range_data = 4
       return TRAJECTORY_BUILDER)text";
     auto trajectory_builder_parameters =
-        mapping::test::ResolveLuaParameters(kTrajectoryBuilderLua);
+        mapping::testing::ResolveLuaParameters(kTrajectoryBuilderLua);
     trajectory_builder_options_ = mapping::CreateTrajectoryBuilderOptions(
         trajectory_builder_parameters.get());
     number_of_insertion_results_ = 0;
@@ -278,7 +278,7 @@ TEST_F(ClientServerTest, LocalSlam2D) {
                                   local_slam_result_callback_);
   TrajectoryBuilderInterface* trajectory_stub =
       stub_->GetTrajectoryBuilder(trajectory_id);
-  const auto measurements = mapping::test::GenerateFakeRangeMeasurements(
+  const auto measurements = mapping::testing::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
     trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
@@ -316,7 +316,7 @@ TEST_F(ClientServerTest, GlobalSlam3D) {
       local_slam_result_callback_);
   TrajectoryBuilderInterface* trajectory_stub =
       stub_->GetTrajectoryBuilder(trajectory_id);
-  const auto measurements = mapping::test::GenerateFakeRangeMeasurements(
+  const auto measurements = mapping::testing::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
     sensor::ImuData imu_data{
@@ -381,7 +381,7 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
       local_slam_result_callback_);
   TrajectoryBuilderInterface* trajectory_stub =
       stub_for_uploading_server_->GetTrajectoryBuilder(trajectory_id);
-  const auto measurements = mapping::test::GenerateFakeRangeMeasurements(
+  const auto measurements = mapping::testing::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
     trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
