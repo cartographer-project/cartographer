@@ -36,7 +36,7 @@ MATCHER_P(Near, point, std::string(negation ? "Doesn't" : "Does") + " match.") {
   return arg.isApprox(point, 0.001f);
 }
 
-namespace test {
+namespace testing {
 
 typedef std::tuple<int /* trajectory_id */, std::string /* sensor_id */,
                    common::Time>
@@ -80,7 +80,7 @@ struct CollatorInput {
   const CollatorOutput expected_output;
 };
 
-}  // namespace test
+}  // namespace testing
 }  // namespace sensor
 }  // namespace cartographer
 

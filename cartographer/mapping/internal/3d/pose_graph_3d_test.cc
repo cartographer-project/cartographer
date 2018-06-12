@@ -63,7 +63,7 @@ class PoseGraph3DTest : public ::testing::Test {
     const std::string kPoseGraphLua = R"text(
       include "pose_graph.lua"
       return POSE_GRAPH)text";
-    auto pose_graph_parameters = test::ResolveLuaParameters(kPoseGraphLua);
+    auto pose_graph_parameters = testing::ResolveLuaParameters(kPoseGraphLua);
     pose_graph_options_ = CreatePoseGraphOptions(pose_graph_parameters.get());
   }
 
@@ -107,17 +107,17 @@ TEST_F(PoseGraph3DTest, Empty) {
 TEST_F(PoseGraph3DTest, BasicSerialization) {
   BuildPoseGraph();
   proto::PoseGraph proto;
-  auto fake_node = test::CreateFakeNode();
-  test::AddToProtoGraph(fake_node, &proto);
+  auto fake_node = testing::CreateFakeNode();
+  testing::AddToProtoGraph(fake_node, &proto);
   pose_graph_->AddNodeFromProto(Rigid3d::Identity(), fake_node);
-  auto fake_submap = test::CreateFakeSubmap3D();
-  test::AddToProtoGraph(fake_submap, &proto);
+  auto fake_submap = testing::CreateFakeSubmap3D();
+  testing::AddToProtoGraph(fake_submap, &proto);
   pose_graph_->AddSubmapFromProto(Rigid3d::Identity(), fake_submap);
-  test::AddToProtoGraph(test::CreateFakeConstraint(fake_node, fake_submap),
-                        &proto);
+  testing::AddToProtoGraph(
+      testing::CreateFakeConstraint(fake_node, fake_submap), &proto);
   pose_graph_->AddSerializedConstraints(FromProto(proto.constraint()));
-  test::AddToProtoGraph(
-      test::CreateFakeLandmark("landmark_id", Rigid3d::Identity()), &proto);
+  testing::AddToProtoGraph(
+      testing::CreateFakeLandmark("landmark_id", Rigid3d::Identity()), &proto);
   pose_graph_->SetLandmarkPose("landmark_id", Rigid3d::Identity());
   pose_graph_->WaitForAllComputations();
   proto::PoseGraph actual_proto = pose_graph_->ToProto();
@@ -143,18 +143,18 @@ TEST_F(PoseGraph3DTest, PureLocalizationTrimmer) {
   const int num_nodes_per_submap = 2;
   for (int i = 0; i < num_submaps_to_create; ++i) {
     int submap_index = (i < 3) ? 42 + i : 100 + i;
-    auto submap = test::CreateFakeSubmap3D(trajectory_id, submap_index);
+    auto submap = testing::CreateFakeSubmap3D(trajectory_id, submap_index);
     pose_graph_->AddSubmapFromProto(Rigid3d::Identity(), submap);
     for (int j = 0; j < num_nodes_per_submap; ++j) {
       int node_index = 7 + num_nodes_per_submap * submap_index + j;
-      auto node = test::CreateFakeNode(trajectory_id, node_index);
+      auto node = testing::CreateFakeNode(trajectory_id, node_index);
       pose_graph_->AddNodeFromProto(Rigid3d::Identity(), node);
       proto::PoseGraph proto;
-      auto constraint = test::CreateFakeConstraint(node, submap);
+      auto constraint = testing::CreateFakeConstraint(node, submap);
       // TODO(gaschler): Also remove inter constraints when all references are
       // gone.
       constraint.set_tag(proto::PoseGraph::Constraint::INTRA_SUBMAP);
-      test::AddToProtoGraph(constraint, &proto);
+      testing::AddToProtoGraph(constraint, &proto);
       pose_graph_->AddSerializedConstraints(FromProto(proto.constraint()));
     }
   }
@@ -222,16 +222,16 @@ TEST_F(PoseGraph3DTest, EvenSubmapTrimmer) {
   const int num_nodes_per_submap = 3;
   for (int i = 0; i < num_submaps_to_create; ++i) {
     int submap_index = 42 + i;
-    auto submap = test::CreateFakeSubmap3D(trajectory_id, submap_index);
+    auto submap = testing::CreateFakeSubmap3D(trajectory_id, submap_index);
     pose_graph_->AddSubmapFromProto(Rigid3d::Identity(), submap);
     for (int j = 0; j < num_nodes_per_submap; ++j) {
       int node_index = 7 + num_nodes_per_submap * i + j;
-      auto node = test::CreateFakeNode(trajectory_id, node_index);
+      auto node = testing::CreateFakeNode(trajectory_id, node_index);
       pose_graph_->AddNodeFromProto(Rigid3d::Identity(), node);
       proto::PoseGraph proto;
-      auto constraint = test::CreateFakeConstraint(node, submap);
+      auto constraint = testing::CreateFakeConstraint(node, submap);
       constraint.set_tag(proto::PoseGraph::Constraint::INTRA_SUBMAP);
-      test::AddToProtoGraph(constraint, &proto);
+      testing::AddToProtoGraph(constraint, &proto);
       pose_graph_->AddSerializedConstraints(FromProto(proto.constraint()));
     }
   }

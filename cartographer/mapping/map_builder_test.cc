@@ -45,7 +45,7 @@ class MapBuilderTest : public ::testing::Test {
       MAP_BUILDER.pose_graph.global_sampling_ratio = 0.05
       MAP_BUILDER.pose_graph.global_constraint_search_after_n_seconds = 0
       return MAP_BUILDER)text";
-    auto map_builder_parameters = test::ResolveLuaParameters(kMapBuilderLua);
+    auto map_builder_parameters = testing::ResolveLuaParameters(kMapBuilderLua);
     map_builder_options_ =
         CreateMapBuilderOptions(map_builder_parameters.get());
     // Multiple submaps are created because of a small 'num_range_data'.
@@ -56,7 +56,7 @@ class MapBuilderTest : public ::testing::Test {
       TRAJECTORY_BUILDER.trajectory_builder_3d.submaps.num_range_data = 4
       return TRAJECTORY_BUILDER)text";
     auto trajectory_builder_parameters =
-        test::ResolveLuaParameters(kTrajectoryBuilderLua);
+        testing::ResolveLuaParameters(kTrajectoryBuilderLua);
     trajectory_builder_options_ =
         CreateTrajectoryBuilderOptions(trajectory_builder_parameters.get());
   }
@@ -95,7 +95,7 @@ class MapBuilderTest : public ::testing::Test {
         GetLocalSlamResultCallback());
     TrajectoryBuilderInterface* trajectory_builder =
         map_builder_->GetTrajectoryBuilder(trajectory_id);
-    auto measurements = test::GenerateFakeRangeMeasurements(
+    auto measurements = testing::GenerateFakeRangeMeasurements(
         kTravelDistance, kDuration, kTimeStep);
     for (auto& measurement : measurements) {
       trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
@@ -144,7 +144,7 @@ TEST_F(MapBuilderTest, LocalSlam2D) {
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
-  const auto measurements = test::GenerateFakeRangeMeasurements(
+  const auto measurements = testing::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
     trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
@@ -167,7 +167,7 @@ TEST_F(MapBuilderTest, LocalSlam3D) {
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
-  const auto measurements = test::GenerateFakeRangeMeasurements(
+  const auto measurements = testing::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
     trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
@@ -194,7 +194,7 @@ TEST_F(MapBuilderTest, GlobalSlam2D) {
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
-  const auto measurements = test::GenerateFakeRangeMeasurements(
+  const auto measurements = testing::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
     trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
@@ -209,7 +209,7 @@ TEST_F(MapBuilderTest, GlobalSlam2D) {
               0.1 * kTravelDistance);
   EXPECT_GE(map_builder_->pose_graph()->constraints().size(), 50);
   EXPECT_THAT(map_builder_->pose_graph()->constraints(),
-              testing::Contains(testing::Field(
+              ::testing::Contains(::testing::Field(
                   &PoseGraphInterface::Constraint::tag,
                   PoseGraphInterface::Constraint::INTER_SUBMAP)));
   const auto trajectory_nodes =
@@ -233,7 +233,7 @@ TEST_F(MapBuilderTest, GlobalSlam3D) {
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
-  const auto measurements = test::GenerateFakeRangeMeasurements(
+  const auto measurements = testing::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
   for (const auto& measurement : measurements) {
     trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
@@ -252,7 +252,7 @@ TEST_F(MapBuilderTest, GlobalSlam3D) {
               0.1 * kTravelDistance);
   EXPECT_GE(map_builder_->pose_graph()->constraints().size(), 10);
   EXPECT_THAT(map_builder_->pose_graph()->constraints(),
-              testing::Contains(testing::Field(
+              ::testing::Contains(::testing::Field(
                   &PoseGraphInterface::Constraint::tag,
                   PoseGraphInterface::Constraint::INTER_SUBMAP)));
   const auto trajectory_nodes =
@@ -280,7 +280,7 @@ TEST_F(MapBuilderTest, SaveLoadState) {
         GetLocalSlamResultCallback());
     TrajectoryBuilderInterface* trajectory_builder =
         map_builder_->GetTrajectoryBuilder(trajectory_id);
-    const auto measurements = test::GenerateFakeRangeMeasurements(
+    const auto measurements = testing::GenerateFakeRangeMeasurements(
         kTravelDistance, kDuration, kTimeStep);
     for (const auto& measurement : measurements) {
       trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
@@ -353,7 +353,7 @@ TEST_F(MapBuilderTest, LocalizationOnFrozenTrajectory2D) {
       Eigen::Quaterniond(Eigen::AngleAxisd(1.2, Eigen::Vector3d::UnitZ())));
   Eigen::Vector3d travel_translation =
       Eigen::Vector3d(2., 1., 0.).normalized() * kTravelDistance;
-  auto measurements = test::GenerateFakeRangeMeasurements(
+  auto measurements = testing::GenerateFakeRangeMeasurements(
       travel_translation.cast<float>(), kDuration, kTimeStep,
       frozen_trajectory_to_global.cast<float>());
   for (auto& measurement : measurements) {
@@ -380,7 +380,7 @@ TEST_F(MapBuilderTest, LocalizationOnFrozenTrajectory2D) {
   EXPECT_GT(num_cross_trajectory_constraints, 3);
   // TODO(gaschler): Subscribe global slam callback, verify that all nodes are
   // optimized.
-  EXPECT_THAT(constraints, testing::Contains(testing::Field(
+  EXPECT_THAT(constraints, ::testing::Contains(::testing::Field(
                                &PoseGraphInterface::Constraint::tag,
                                PoseGraphInterface::Constraint::INTER_SUBMAP)));
   const auto trajectory_nodes =
