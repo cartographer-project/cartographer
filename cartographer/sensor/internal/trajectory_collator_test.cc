@@ -31,8 +31,8 @@ namespace cartographer {
 namespace sensor {
 namespace {
 
-using test::CollatorInput;
-using test::CollatorOutput;
+using testing::CollatorInput;
+using testing::CollatorOutput;
 
 TEST(TrajectoryCollator, OrderingMultipleTrajectories) {
   const int kTrajectoryId[] = {4, 7};

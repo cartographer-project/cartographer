@@ -25,7 +25,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace test {
+namespace testing {
 
 std::unique_ptr<::cartographer::common::LuaParameterDictionary>
 ResolveLuaParameters(const std::string& lua_code) {
@@ -171,6 +171,6 @@ void AddToProtoGraph(const proto::PoseGraph::LandmarkPose& landmark,
   *pose_graph->add_landmark_poses() = landmark;
 }
 
-}  // namespace test
+}  // namespace testing
 }  // namespace mapping
 }  // namespace cartographer

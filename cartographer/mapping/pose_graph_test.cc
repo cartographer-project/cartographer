@@ -27,8 +27,9 @@ namespace mapping {
 namespace {
 
 TEST(PoseGraph, SerializeConstraint) {
-  proto::PoseGraph::Constraint expected_constraint = test::CreateFakeConstraint(
-      test::CreateFakeNode(1, 2), test::CreateFakeSubmap3D(2, 3));
+  proto::PoseGraph::Constraint expected_constraint =
+      testing::CreateFakeConstraint(testing::CreateFakeNode(1, 2),
+                                    testing::CreateFakeSubmap3D(2, 3));
   ::google::protobuf::RepeatedPtrField<proto::PoseGraph::Constraint>
       constraint_protos;
   *constraint_protos.Add() = expected_constraint;

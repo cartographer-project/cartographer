@@ -39,7 +39,7 @@ class MockCallback {
 class ConstraintBuilder2DTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    auto constraint_builder_parameters = test::ResolveLuaParameters(R"text(
+    auto constraint_builder_parameters = testing::ResolveLuaParameters(R"text(
             include "pose_graph.lua"
             POSE_GRAPH.constraint_builder.sampling_ratio = 1
             POSE_GRAPH.constraint_builder.min_score = 0
@@ -57,7 +57,7 @@ class ConstraintBuilder2DTest : public ::testing::Test {
 
 TEST_F(ConstraintBuilder2DTest, CallsBack) {
   EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), 0);
-  EXPECT_CALL(mock_, Run(testing::IsEmpty()));
+  EXPECT_CALL(mock_, Run(::testing::IsEmpty()));
   constraint_builder_->NotifyEndOfNode();
   constraint_builder_->WhenDone(
       std::bind(&MockCallback::Run, &mock_, std::placeholders::_1));
@@ -92,9 +92,9 @@ TEST_F(ConstraintBuilder2DTest, FindsConstraints) {
     thread_pool_.WaitUntilIdle();
     EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), ++expected_nodes);
     EXPECT_CALL(mock_,
-                Run(testing::AllOf(
-                    testing::SizeIs(3),
-                    testing::Each(testing::Field(
+                Run(::testing::AllOf(
+                    ::testing::SizeIs(3),
+                    ::testing::Each(::testing::Field(
                         &PoseGraphInterface::Constraint::tag,
                         PoseGraphInterface::Constraint::INTER_SUBMAP)))));
     constraint_builder_->WhenDone(
