@@ -561,7 +561,8 @@ void OptimizationProblem3D::Solve(
       LOG(INFO) << "Gravity was: " << trajectory_data.gravity_constant;
       const auto& imu_calibration = trajectory_data.imu_calibration;
       LOG(INFO) << "IMU correction was: "
-                << common::RadToDeg(2. * std::acos(imu_calibration[0]))
+                << common::RadToDeg(2. *
+                                    std::acos(std::abs(imu_calibration[0])))
                 << " deg (" << imu_calibration[0] << ", " << imu_calibration[1]
                 << ", " << imu_calibration[2] << ", " << imu_calibration[3]
                 << ")";
