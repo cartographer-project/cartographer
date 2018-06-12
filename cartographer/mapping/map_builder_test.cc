@@ -348,17 +348,16 @@ TEST_F(MapBuilderTest, LocalizationOnFrozenTrajectory2D) {
       GetLocalSlamResultCallback());
   TrajectoryBuilderInterface* trajectory_builder =
       map_builder_->GetTrajectoryBuilder(trajectory_id);
-  Eigen::Quaterniond rotation(Eigen::AngleAxisd(1.2, Eigen::Vector3d::UnitZ()));
-  transform::Rigid3d frozen_trajectory_to_global(Eigen::Vector3d(0.5, 0.4, 0),
-                                                 rotation);
+  transform::Rigid3d frozen_trajectory_to_global(
+      Eigen::Vector3d(0.5, 0.4, 0),
+      Eigen::Quaterniond(Eigen::AngleAxisd(1.2, Eigen::Vector3d::UnitZ())));
   Eigen::Vector3d travel_translation =
       Eigen::Vector3d(2., 1., 0.).normalized() * kTravelDistance;
   auto measurements = test::GenerateFakeRangeMeasurements(
       travel_translation.cast<float>(), kDuration, kTimeStep,
       frozen_trajectory_to_global.cast<float>());
-  double delay_measurements = 100.;
   for (auto& measurement : measurements) {
-    measurement.time += common::FromSeconds(delay_measurements);
+    measurement.time += common::FromSeconds(100.);
     trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
   }
   map_builder_->FinishTrajectory(trajectory_id);
@@ -375,7 +374,7 @@ TEST_F(MapBuilderTest, LocalizationOnFrozenTrajectory2D) {
   for (const auto& constraint : constraints) {
     if (constraint.node_id.trajectory_id !=
         constraint.submap_id.trajectory_id) {
-      num_cross_trajectory_constraints++;
+      ++num_cross_trajectory_constraints;
     }
   }
   EXPECT_GT(num_cross_trajectory_constraints, 3);
