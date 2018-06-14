@@ -61,6 +61,8 @@ class MapBuilder : public MapBuilderInterface {
   void LoadState(io::ProtoStreamReaderInterface *reader,
                  bool load_frozen_state) override;
 
+  void LoadStateFromFile(const std::string &filename) override;
+
   mapping::PoseGraphInterface *pose_graph() override {
     return pose_graph_.get();
   }

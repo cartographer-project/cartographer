@@ -93,6 +93,7 @@ class PoseGraph2D : public PoseGraph {
                        const sensor::LandmarkData& landmark_data) override
       EXCLUDES(mutex_);
 
+  void DeleteTrajectory(int trajectory_id) override;
   void FinishTrajectory(int trajectory_id) override;
   bool IsTrajectoryFinished(int trajectory_id) const override REQUIRES(mutex_);
   void FreezeTrajectory(int trajectory_id) override;
@@ -176,6 +177,10 @@ class PoseGraph2D : public PoseGraph {
   // Adds constraints for older nodes whenever a new submap is finished.
   void ComputeConstraintsForOldNodes(const SubmapId& submap_id)
       REQUIRES(mutex_);
+
+  // Deletes trajectories waiting for deletion. Must not be called during
+  // constraint search.
+  void DeleteTrajectoriesIfNeeded() REQUIRES(mutex_);
 
   // Runs the optimization, executes the trimmers and processes the work queue.
   void HandleWorkQueue(const constraints::ConstraintBuilder2D::Result& result)

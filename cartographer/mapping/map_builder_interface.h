@@ -84,6 +84,8 @@ class MapBuilderInterface {
   virtual void LoadState(io::ProtoStreamReaderInterface* reader,
                          bool load_frozen_state) = 0;
 
+  virtual void LoadStateFromFile(const std::string& filename) = 0;
+
   virtual int num_trajectory_builders() const = 0;
 
   virtual mapping::PoseGraphInterface* pose_graph() = 0;

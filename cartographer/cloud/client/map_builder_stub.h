@@ -50,6 +50,7 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
   void SerializeState(io::ProtoStreamWriterInterface* writer) override;
   void LoadState(io::ProtoStreamReaderInterface* reader,
                  bool load_frozen_state) override;
+  void LoadStateFromFile(const std::string& filename) override;
   int num_trajectory_builders() const override;
   mapping::PoseGraphInterface* pose_graph() override;
   const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&

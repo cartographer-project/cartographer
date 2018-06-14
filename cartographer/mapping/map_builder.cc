@@ -19,6 +19,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/io/internal/mapping_state_serialization.h"
+#include "cartographer/io/proto_stream.h"
 #include "cartographer/io/proto_stream_deserializer.h"
 #include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
 #include "cartographer/mapping/internal/2d/overlapping_submaps_trimmer_2d.h"
@@ -364,6 +365,19 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
         FromProto(pose_graph_proto.constraint()));
   }
   CHECK(reader->eof());
+}
+
+void MapBuilder::LoadStateFromFile(const std::string& state_filename) {
+  // Check if suffix of the state file is ".pbstream".
+  const std::string suffix = ".pbstream";
+  CHECK_EQ(state_filename.substr(
+               std::max<int>(state_filename.size() - suffix.size(), 0)),
+           suffix)
+      << "The file containing the state to be loaded must be a "
+         ".pbstream file.";
+  LOG(INFO) << "Loading saved state '" << state_filename << "'...";
+  io::ProtoStreamReader stream(state_filename);
+  LoadState(&stream, true);
 }
 
 }  // namespace mapping

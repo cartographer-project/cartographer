@@ -148,6 +148,7 @@ void PoseGraph2D::AddWorkItem(const std::function<void()>& work_item) {
 
 void PoseGraph2D::AddTrajectoryIfNeeded(const int trajectory_id) {
   data_.trajectory_connectivity_state.Add(trajectory_id);
+  data_.trajectories_state[trajectory_id];
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[trajectory_id]) {
     global_localization_samplers_[trajectory_id] =
@@ -337,6 +338,20 @@ void PoseGraph2D::UpdateTrajectoryConnectivity(const Constraint& constraint) {
       time);
 }
 
+void PoseGraph2D::DeleteTrajectoriesIfNeeded() {
+  TrimmingHandle trimming_handle(this);
+  for (auto& it : data_.trajectories_state) {
+    if (it.second.deletion_state == TrajectoryState::WAIT_FOR_DELETION) {
+      auto submap_ids = trimming_handle.GetSubmapIds(it.first);
+      for (auto& submap_id : submap_ids) {
+        trimming_handle.TrimSubmap(submap_id);
+      }
+      it.second.state = TrajectoryState::DELETED;
+      it.second.deletion_state = TrajectoryState::NORMAL;
+    }
+  }
+}
+
 void PoseGraph2D::HandleWorkQueue(
     const constraints::ConstraintBuilder2D::Result& result) {
   {
@@ -369,6 +384,7 @@ void PoseGraph2D::HandleWorkQueue(
   for (const Constraint& constraint : result) {
     UpdateTrajectoryConnectivity(constraint);
   }
+  DeleteTrajectoriesIfNeeded();
   TrimmingHandle trimming_handle(this);
   for (auto& trimmer : trimmers_) {
     trimmer->Trim(&trimming_handle);
@@ -433,11 +449,28 @@ void PoseGraph2D::WaitForAllComputations() {
   locker.Await([&notification]() { return notification; });
 }
 
+void PoseGraph2D::DeleteTrajectory(const int trajectory_id) {
+  common::MutexLocker locker(&mutex_);
+  // TODO(gaschler): Check for SCHEDULED_FOR_DELETION in other function.
+  data_.trajectories_state.at(trajectory_id).deletion_state =
+      TrajectoryState::SCHEDULED_FOR_DELETION;
+  AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
+    CHECK_NE(data_.trajectories_state.at(trajectory_id).state,
+             TrajectoryState::ACTIVE);
+    CHECK_NE(data_.trajectories_state.at(trajectory_id).state,
+             TrajectoryState::DELETED);
+    CHECK_EQ(data_.trajectories_state.at(trajectory_id).deletion_state,
+             TrajectoryState::SCHEDULED_FOR_DELETION);
+    data_.trajectories_state.at(trajectory_id).deletion_state =
+        TrajectoryState::WAIT_FOR_DELETION;
+  });
+}
+
 void PoseGraph2D::FinishTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
-    CHECK_EQ(data_.finished_trajectories.count(trajectory_id), 0);
-    data_.finished_trajectories.insert(trajectory_id);
+    CHECK(!IsTrajectoryFinished(trajectory_id));
+    data_.trajectories_state[trajectory_id].state = TrajectoryState::FINISHED;
 
     for (const auto& submap : data_.submap_data.trajectory(trajectory_id)) {
       data_.submap_data.at(submap.id).state = SubmapState::kFinished;
@@ -448,20 +481,24 @@ void PoseGraph2D::FinishTrajectory(const int trajectory_id) {
 }
 
 bool PoseGraph2D::IsTrajectoryFinished(const int trajectory_id) const {
-  return data_.finished_trajectories.count(trajectory_id) > 0;
+  return data_.trajectories_state.count(trajectory_id) != 0 &&
+         data_.trajectories_state.at(trajectory_id).state ==
+             TrajectoryState::FINISHED;
 }
 
 void PoseGraph2D::FreezeTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   data_.trajectory_connectivity_state.Add(trajectory_id);
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
-    CHECK_EQ(data_.frozen_trajectories.count(trajectory_id), 0);
-    data_.frozen_trajectories.insert(trajectory_id);
+    CHECK(!IsTrajectoryFrozen(trajectory_id));
+    data_.trajectories_state[trajectory_id].state = TrajectoryState::FROZEN;
   });
 }
 
 bool PoseGraph2D::IsTrajectoryFrozen(const int trajectory_id) const {
-  return data_.frozen_trajectories.count(trajectory_id) > 0;
+  return data_.trajectories_state.count(trajectory_id) != 0 &&
+         data_.trajectories_state.at(trajectory_id).state ==
+             TrajectoryState::FROZEN;
 }
 
 void PoseGraph2D::AddSubmapFromProto(
@@ -595,11 +632,18 @@ void PoseGraph2D::RunOptimization() {
     return;
   }
 
+  // TODO(gaschler): Directy pass trajectory state to optimization problem.
+  std::set<int> frozen_trajectories;
+  for (const auto& it : data_.trajectories_state) {
+    if (it.second.state == TrajectoryState::FROZEN) {
+      frozen_trajectories.insert(it.first);
+    }
+  }
   // No other thread is accessing the optimization_problem_,
   // data_.constraints, data_.frozen_trajectories and data_.landmark_nodes
   // when executing the Solve. Solve is time consuming, so not taking the mutex
   // before Solve to avoid blocking foreground processing.
-  optimization_problem_->Solve(data_.constraints, data_.frozen_trajectories,
+  optimization_problem_->Solve(data_.constraints, frozen_trajectories,
                                data_.landmark_nodes);
   common::MutexLocker locker(&mutex_);
 

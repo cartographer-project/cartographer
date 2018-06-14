@@ -146,6 +146,7 @@ void PoseGraph3D::AddWorkItem(const std::function<void()>& work_item) {
 
 void PoseGraph3D::AddTrajectoryIfNeeded(const int trajectory_id) {
   data_.trajectory_connectivity_state.Add(trajectory_id);
+  data_.trajectories_state[trajectory_id];
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[trajectory_id]) {
     global_localization_samplers_[trajectory_id] =
@@ -449,11 +450,15 @@ void PoseGraph3D::WaitForAllComputations() {
   locker.Await([&notification]() { return notification; });
 }
 
+void PoseGraph3D::DeleteTrajectory(const int trajectory_id) {
+  LOG(FATAL) << "not implemented";
+}
+
 void PoseGraph3D::FinishTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
-    CHECK_EQ(data_.finished_trajectories.count(trajectory_id), 0);
-    data_.finished_trajectories.insert(trajectory_id);
+    CHECK(!IsTrajectoryFinished(trajectory_id));
+    data_.trajectories_state[trajectory_id].state = TrajectoryState::FINISHED;
 
     for (const auto& submap : data_.submap_data.trajectory(trajectory_id)) {
       data_.submap_data.at(submap.id).state = SubmapState::kFinished;
@@ -464,20 +469,24 @@ void PoseGraph3D::FinishTrajectory(const int trajectory_id) {
 }
 
 bool PoseGraph3D::IsTrajectoryFinished(const int trajectory_id) const {
-  return data_.finished_trajectories.count(trajectory_id) > 0;
+  return data_.trajectories_state.count(trajectory_id) != 0 &&
+         data_.trajectories_state.at(trajectory_id).state ==
+             TrajectoryState::FINISHED;
 }
 
 void PoseGraph3D::FreezeTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   data_.trajectory_connectivity_state.Add(trajectory_id);
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
-    CHECK_EQ(data_.frozen_trajectories.count(trajectory_id), 0);
-    data_.frozen_trajectories.insert(trajectory_id);
+    CHECK(!IsTrajectoryFrozen(trajectory_id));
+    data_.trajectories_state[trajectory_id].state = TrajectoryState::FROZEN;
   });
 }
 
 bool PoseGraph3D::IsTrajectoryFrozen(const int trajectory_id) const {
-  return data_.frozen_trajectories.count(trajectory_id) > 0;
+  return data_.trajectories_state.count(trajectory_id) != 0 &&
+         data_.trajectories_state.at(trajectory_id).state ==
+             TrajectoryState::FROZEN;
 }
 
 void PoseGraph3D::AddSubmapFromProto(
@@ -636,11 +645,18 @@ void PoseGraph3D::RunOptimization() {
     return;
   }
 
+  // TODO(gaschler): Directy pass trajectory state to optimization problem.
+  std::set<int> frozen_trajectories;
+  for (const auto& it : data_.trajectories_state) {
+    if (it.second.state == TrajectoryState::FROZEN) {
+      frozen_trajectories.insert(it.first);
+    }
+  }
   // No other thread is accessing the optimization_problem_, data_.constraints,
   // data_.frozen_trajectories and data_.landmark_nodes when executing the
   // Solve. Solve is time consuming, so not taking the mutex before Solve to
   // avoid blocking foreground processing.
-  optimization_problem_->Solve(data_.constraints, data_.frozen_trajectories,
+  optimization_problem_->Solve(data_.constraints, frozen_trajectories,
                                data_.landmark_nodes);
   common::MutexLocker locker(&mutex_);
 
