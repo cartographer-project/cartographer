@@ -25,7 +25,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace test {
+namespace testing {
 
 std::unique_ptr<::cartographer::common::LuaParameterDictionary>
 ResolveLuaParameters(const std::string& lua_code) {
@@ -41,6 +41,16 @@ ResolveLuaParameters(const std::string& lua_code) {
 std::vector<cartographer::sensor::TimedPointCloudData>
 GenerateFakeRangeMeasurements(double travel_distance, double duration,
                               double time_step) {
+  const Eigen::Vector3f kDirection = Eigen::Vector3f(2., 1., 0.).normalized();
+  return GenerateFakeRangeMeasurements(kDirection * travel_distance, duration,
+                                       time_step,
+                                       transform::Rigid3f::Identity());
+}
+
+std::vector<cartographer::sensor::TimedPointCloudData>
+GenerateFakeRangeMeasurements(const Eigen::Vector3f& translation,
+                              double duration, double time_step,
+                              const transform::Rigid3f& local_to_global) {
   std::vector<cartographer::sensor::TimedPointCloudData> measurements;
   cartographer::sensor::TimedPointCloud point_cloud;
   for (double angle = 0.; angle < M_PI; angle += 0.01) {
@@ -50,18 +60,18 @@ GenerateFakeRangeMeasurements(double travel_distance, double duration,
                                kRadius * std::sin(angle), height, 0.);
     }
   }
-  const Eigen::Vector3f kDirection = Eigen::Vector3f(2., 1., 0.).normalized();
-  const Eigen::Vector3f kVelocity = travel_distance / duration * kDirection;
+  const Eigen::Vector3f kVelocity = translation / duration;
   for (double elapsed_time = 0.; elapsed_time < duration;
        elapsed_time += time_step) {
     cartographer::common::Time time =
         cartographer::common::FromUniversal(123) +
         cartographer::common::FromSeconds(elapsed_time);
-    cartographer::transform::Rigid3f pose =
+    cartographer::transform::Rigid3f global_pose =
+        local_to_global *
         cartographer::transform::Rigid3f::Translation(elapsed_time * kVelocity);
     cartographer::sensor::TimedPointCloud ranges =
         cartographer::sensor::TransformTimedPointCloud(point_cloud,
-                                                       pose.inverse());
+                                                       global_pose.inverse());
     measurements.emplace_back(cartographer::sensor::TimedPointCloudData{
         time, Eigen::Vector3f::Zero(), ranges});
   }
@@ -161,6 +171,6 @@ void AddToProtoGraph(const proto::PoseGraph::LandmarkPose& landmark,
   *pose_graph->add_landmark_poses() = landmark;
 }
 
-}  // namespace test
+}  // namespace testing
 }  // namespace mapping
 }  // namespace cartographer

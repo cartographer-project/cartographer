@@ -702,12 +702,15 @@ PoseGraph2D::GetLandmarkNodes() const {
 
 std::map<int, PoseGraphInterface::TrajectoryData>
 PoseGraph2D::GetTrajectoryData() const {
-  return {};  // Not implemented yet in 2D.
+  // The 2D optimization problem does not have any 'TrajectoryData'.
+  return {};
 }
 
 sensor::MapByTime<sensor::FixedFramePoseData>
 PoseGraph2D::GetFixedFramePoseData() const {
-  return {};  // Not implemented yet in 2D.
+  // FixedFramePoseData is not yet implemented for 2D. We need to return empty
+  // so serialization works.
+  return {};
 }
 
 std::vector<PoseGraphInterface::Constraint> PoseGraph2D::constraints() const {
@@ -887,8 +890,7 @@ bool PoseGraph2D::TrimmingHandle::IsFinished(const int trajectory_id) const {
   return parent_->IsTrajectoryFinished(trajectory_id);
 }
 
-void PoseGraph2D::TrimmingHandle::MarkSubmapAsTrimmed(
-    const SubmapId& submap_id) {
+void PoseGraph2D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   // TODO(hrapp): We have to make sure that the trajectory has been finished
   // if we want to delete the last submaps.
   CHECK(parent_->data_.submap_data.at(submap_id).state ==

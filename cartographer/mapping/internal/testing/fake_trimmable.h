@@ -90,7 +90,7 @@ class FakeTrimmable : public Trimmable {
     return constraints_;
   }
 
-  void MarkSubmapAsTrimmed(const SubmapId& submap_id) override {
+  void TrimSubmap(const SubmapId& submap_id) override {
     trimmed_submaps_.push_back(submap_id);
   }
 
