@@ -20,6 +20,7 @@
 #include "cartographer/cloud/client/map_builder_stub.h"
 #include "cartographer/cloud/internal/map_builder_server.h"
 #include "cartographer/cloud/map_builder_server_options.h"
+#include "cartographer/io/testing/test_helpers.h"
 #include "cartographer/mapping/internal/testing/mock_map_builder.h"
 #include "cartographer/mapping/internal/testing/mock_pose_graph.h"
 #include "cartographer/mapping/internal/testing/mock_trajectory_builder.h"
@@ -29,6 +30,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+using ::cartographer::io::testing::ProtoReaderFromStrings;
 using ::cartographer::mapping::MapBuilder;
 using ::cartographer::mapping::MapBuilderInterface;
 using ::cartographer::mapping::PoseGraphInterface;
@@ -48,6 +50,28 @@ const SensorId kRangeSensorId{SensorId::SensorType::RANGE, "range"};
 constexpr double kDuration = 4.;         // Seconds.
 constexpr double kTimeStep = 0.1;        // Seconds.
 constexpr double kTravelDistance = 1.2;  // Meters.
+
+constexpr char kSerializationHeaderProtoString[] = "format_version: 1";
+constexpr char kUnsupportedSerializationHeaderProtoString[] =
+    "format_version: 123";
+constexpr char kPoseGraphProtoString[] = R"(pose_graph {
+      trajectory: {
+        trajectory_id: 0
+		node: {}
+		submap: {}
+	  }
+    })";
+constexpr char kAllTrajectoryBuilderOptionsProtoString[] =
+    R"(all_trajectory_builder_options {
+      options_with_sensor_ids: {}
+    })";
+constexpr char kSubmapProtoString[] = "submap {}";
+constexpr char kNodeProtoString[] = "node {}";
+constexpr char kTrajectoryDataProtoString[] = "trajectory_data {}";
+constexpr char kImuDataProtoString[] = "imu_data {}";
+constexpr char kOdometryDataProtoString[] = "odometry_data {}";
+constexpr char kFixedFramePoseDataProtoString[] = "fixed_frame_pose_data {}";
+constexpr char kLandmarkDataProtoString[] = "landmark_data {}";
 
 class ClientServerTest : public ::testing::Test {
  protected:
@@ -396,6 +420,31 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
                   .norm(),
               0.1 * kTravelDistance);
   uploading_server_->Shutdown();
+  server_->Shutdown();
+}
+
+TEST_F(ClientServerTest, LoadState) {
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+
+  // Load text proto into in_memory_reader.
+  auto reader =
+      ProtoReaderFromStrings(kSerializationHeaderProtoString,
+                             {
+                                 kPoseGraphProtoString,
+                                 kAllTrajectoryBuilderOptionsProtoString,
+                                 kSubmapProtoString,
+                                 kNodeProtoString,
+                                 kTrajectoryDataProtoString,
+                                 kImuDataProtoString,
+                                 kOdometryDataProtoString,
+                                 kFixedFramePoseDataProtoString,
+                                 kLandmarkDataProtoString,
+                             });
+
+  stub_->LoadState(reader.get(), true);
+  EXPECT_TRUE(stub_->pose_graph()->IsTrajectoryFrozen(0));
   server_->Shutdown();
 }
 
