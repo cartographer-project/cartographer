@@ -721,6 +721,16 @@ MapById<NodeId, TrajectoryNodePose> PoseGraph3D::GetTrajectoryNodePoses()
   return node_poses;
 }
 
+std::map<int, PoseGraphInterface::TrajectoryState>
+PoseGraph3D::GetTrajectoryStates() const {
+  std::map<int, PoseGraphInterface::TrajectoryState> trajectories_state;
+  common::MutexLocker locker(&mutex_);
+  for (const auto& it : data_.trajectories_state) {
+    trajectories_state[it.first] = it.second.state;
+  }
+  return trajectories_state;
+}
+
 std::map<std::string, transform::Rigid3d> PoseGraph3D::GetLandmarkPoses()
     const {
   std::map<std::string, transform::Rigid3d> landmark_poses;

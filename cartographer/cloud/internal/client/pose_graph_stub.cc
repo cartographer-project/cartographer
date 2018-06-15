@@ -105,6 +105,11 @@ PoseGraphStub::GetTrajectoryNodePoses() const {
   return node_poses;
 }
 
+std::map<int, mapping::PoseGraphInterface::TrajectoryState>
+PoseGraphStub::GetTrajectoryStates() const {
+  LOG(FATAL) << "not implemented";
+}
+
 std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses()
     const {
   google::protobuf::Empty request;

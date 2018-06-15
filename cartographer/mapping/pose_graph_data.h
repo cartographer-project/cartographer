@@ -36,11 +36,11 @@ namespace mapping {
 // Likewise, all new nodes are matched against submaps which are finished.
 enum class SubmapState { kActive, kFinished };
 
-struct TrajectoryState {
-  enum State { ACTIVE, FINISHED, FROZEN, DELETED };
+struct InternalTrajectoryState {
   enum DeletionState { NORMAL, SCHEDULED_FOR_DELETION, WAIT_FOR_DELETION };
 
-  State state = ACTIVE;
+  PoseGraphInterface::TrajectoryState state =
+      PoseGraphInterface::TrajectoryState::ACTIVE;
   DeletionState deletion_state = NORMAL;
 };
 
@@ -73,7 +73,7 @@ struct PoseGraphData {
   // How our various trajectories are related.
   TrajectoryConnectivityState trajectory_connectivity_state;
   int num_trajectory_nodes = 0;
-  std::map<int, TrajectoryState> trajectories_state;
+  std::map<int, InternalTrajectoryState> trajectories_state;
 
   // Set of all initial trajectory poses.
   std::map<int, PoseGraph::InitialTrajectoryPose> initial_trajectory_poses;
