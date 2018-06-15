@@ -33,6 +33,13 @@ enum SensorType {
   LOCAL_SLAM_RESULT = 5;
 }
 
+enum TrajectoryState {
+  ACTIVE = 0;
+  FINISHED = 1;
+  FROZEN = 2;
+  DELETED = 3;
+}
+
 message SensorId {
   string id = 1;
   SensorType type = 2;
@@ -98,6 +105,10 @@ message FinishTrajectoryRequest {
   int32 trajectory_id = 1;
 }
 
+message DeleteTrajectoryRequest {
+  int32 trajectory_id = 1;
+}
+
 message ReceiveLocalSlamResultsRequest {
   int32 trajectory_id = 1;
 }
@@ -149,6 +160,10 @@ message TrajectoryNodePose {
 
 message GetTrajectoryNodePosesResponse {
   repeated TrajectoryNodePose node_poses = 1;
+}
+
+message GetTrajectoryStatesResponse {
+  map<int32 /* trajectory_id */, TrajectoryState> trajectories_state = 1;
 }
 
 message GetLandmarkPosesResponse {
@@ -245,12 +260,19 @@ service MapBuilderService {
   // i.e. no further sensor data is expected.
   rpc FinishTrajectory(FinishTrajectoryRequest) returns (google.protobuf.Empty);
 
+  // Deletes a trajectory asynchronously.
+  rpc DeleteTrajectory(DeleteTrajectoryRequest) returns (google.protobuf.Empty);
+
   // Retrieves a single submap.
   rpc GetSubmap(GetSubmapRequest) returns (GetSubmapResponse);
 
   // Returns the current optimized trajectory poses.
   rpc GetTrajectoryNodePoses(google.protobuf.Empty)
       returns (GetTrajectoryNodePosesResponse);
+
+  // Returns the states of trajectories.
+  rpc GetTrajectoryStates(google.protobuf.Empty)
+      returns (GetTrajectoryStatesResponse);
 
   // Returns the current optimized landmark poses.
   rpc GetLandmarkPoses(google.protobuf.Empty)
