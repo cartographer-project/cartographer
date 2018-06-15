@@ -478,6 +478,8 @@ TEST_F(ClientServerTest, LoadState) {
   server_->Shutdown();
 }
 
+// TODO(gaschler): Test-cover LoadStateFromFile.
+
 }  // namespace
 }  // namespace cloud
 }  // namespace cartographer

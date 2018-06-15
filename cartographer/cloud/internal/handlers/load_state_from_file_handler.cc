@@ -14,33 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H
-#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H
+#include "cartographer/cloud/internal/handlers/load_state_from_file_handler.h"
 
 #include "async_grpc/rpc_handler.h"
+#include "cartographer/cloud/internal/map_builder_context_interface.h"
+#include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/io/internal/in_memory_proto_stream.h"
+#include "cartographer/common/make_unique.h"
 
 namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-DEFINE_HANDLER_SIGNATURE(
-    LoadStateSignature, async_grpc::Stream<proto::LoadStateRequest>,
-    proto::LoadStateResponse,
-    "/cartographer.cloud.proto.MapBuilderService/LoadState")
-
-class LoadStateHandler : public async_grpc::RpcHandler<LoadStateSignature> {
- public:
-  void OnRequest(const proto::LoadStateRequest& request) override;
-  void OnReadsDone() override;
-
- private:
-  io::InMemoryProtoStreamReader reader_;
-};
+void LoadStateFromFileHandler::OnRequest(
+    const proto::LoadStateFromFileRequest& request) {
+  // TODO(gaschler): This blocks a handler thread, consider working in
+  // background.
+  auto trajectory_remapping =
+      GetContext<MapBuilderContextInterface>()->map_builder().LoadStateFromFile(
+          request.file_path());
+  auto response = common::make_unique<proto::LoadStateFromFileResponse>();
+  *response->mutable_trajectory_remapping() = ToProto(trajectory_remapping);
+  Send(std::move(response));
+}
 
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H

@@ -53,5 +53,20 @@ mapping::PoseGraphInterface::TrajectoryState FromProto(
   }
 }
 
+proto::TrajectoryRemapping ToProto(
+    const std::map<int, int>& trajectory_remapping) {
+  proto::TrajectoryRemapping proto;
+  *proto.mutable_serialized_trajectories_to_trajectories() =
+      google::protobuf::Map<int32, int32>(trajectory_remapping.begin(),
+                                          trajectory_remapping.end());
+  return proto;
+}
+
+std::map<int, int> FromProto(const proto::TrajectoryRemapping& proto) {
+  return std::map<int, int>(
+      proto.serialized_trajectories_to_trajectories().begin(),
+      proto.serialized_trajectories_to_trajectories().end());
+}
+
 }  // namespace cloud
 }  // namespace cartographer

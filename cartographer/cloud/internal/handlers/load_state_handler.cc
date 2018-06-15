@@ -18,9 +18,9 @@
 
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
+#include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/common/make_unique.h"
-#include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {
@@ -40,9 +40,12 @@ void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
 }
 
 void LoadStateHandler::OnReadsDone() {
-  GetContext<MapBuilderContextInterface>()->map_builder().LoadState(&reader_,
-                                                                    true);
-  Send(common::make_unique<google::protobuf::Empty>());
+  auto trajectory_remapping =
+      GetContext<MapBuilderContextInterface>()->map_builder().LoadState(
+          &reader_, true);
+  auto response = common::make_unique<proto::LoadStateResponse>();
+  *response->mutable_trajectory_remapping() = ToProto(trajectory_remapping);
+  Send(std::move(response));
 }
 
 }  // namespace handlers

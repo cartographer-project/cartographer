@@ -207,7 +207,7 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   io::WritePbStream(*pose_graph_, all_trajectory_builder_options_, writer);
 }
 
-void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
+std::map<int, int> MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
                            bool load_frozen_state) {
   io::ProtoStreamDeserializer deserializer(reader);
 
@@ -365,9 +365,10 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
         FromProto(pose_graph_proto.constraint()));
   }
   CHECK(reader->eof());
+  return trajectory_remapping;
 }
 
-void MapBuilder::LoadStateFromFile(const std::string& state_filename) {
+std::map<int, int> MapBuilder::LoadStateFromFile(const std::string& state_filename) {
   // Check if suffix of the state file is ".pbstream".
   const std::string suffix = ".pbstream";
   CHECK_EQ(state_filename.substr(
@@ -377,7 +378,7 @@ void MapBuilder::LoadStateFromFile(const std::string& state_filename) {
          ".pbstream file.";
   LOG(INFO) << "Loading saved state '" << state_filename << "'...";
   io::ProtoStreamReader stream(state_filename);
-  LoadState(&stream, true);
+  return LoadState(&stream, true);
 }
 
 }  // namespace mapping
