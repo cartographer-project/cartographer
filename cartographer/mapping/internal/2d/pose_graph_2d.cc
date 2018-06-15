@@ -702,12 +702,15 @@ PoseGraph2D::GetLandmarkNodes() const {
 
 std::map<int, PoseGraphInterface::TrajectoryData>
 PoseGraph2D::GetTrajectoryData() const {
-  return {};  // Not implemented yet in 2D.
+  // The 2D optimization problem does not have any 'TrajectoryData'.
+  return {};
 }
 
 sensor::MapByTime<sensor::FixedFramePoseData>
 PoseGraph2D::GetFixedFramePoseData() const {
-  return {};  // Not implemented yet in 2D.
+  // FixedFramePoseData is not yet implemented for 2D. We need to return empty
+  // so serialization works.
+  return {};
 }
 
 std::vector<PoseGraphInterface::Constraint> PoseGraph2D::constraints() const {
