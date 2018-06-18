@@ -49,7 +49,7 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
       mapping::proto::SubmapQuery::Response* response) override;
   void SerializeState(io::ProtoStreamWriterInterface* writer) override;
   std::map<int, int> LoadState(io::ProtoStreamReaderInterface* reader,
-                 bool load_frozen_state) override;
+                               bool load_frozen_state) override;
   std::map<int, int> LoadStateFromFile(const std::string& filename) override;
   int num_trajectory_builders() const override;
   mapping::PoseGraphInterface* pose_graph() override;

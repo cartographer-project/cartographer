@@ -59,7 +59,7 @@ class MapBuilder : public MapBuilderInterface {
   void SerializeState(io::ProtoStreamWriterInterface *writer) override;
 
   std::map<int, int> LoadState(io::ProtoStreamReaderInterface *reader,
-                 bool load_frozen_state) override;
+                               bool load_frozen_state) override;
 
   std::map<int, int> LoadStateFromFile(const std::string &filename) override;
 

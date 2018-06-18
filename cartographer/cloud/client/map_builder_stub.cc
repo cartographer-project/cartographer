@@ -126,8 +126,8 @@ void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
   }
 }
 
-std::map<int, int> MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,
-                               const bool load_frozen_state) {
+std::map<int, int> MapBuilderStub::LoadState(
+    io::ProtoStreamReaderInterface* reader, const bool load_frozen_state) {
   if (!load_frozen_state) {
     LOG(FATAL) << "Not implemented";
   }

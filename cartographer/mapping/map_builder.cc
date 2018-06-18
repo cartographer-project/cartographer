@@ -207,8 +207,8 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   io::WritePbStream(*pose_graph_, all_trajectory_builder_options_, writer);
 }
 
-std::map<int, int> MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
-                           bool load_frozen_state) {
+std::map<int, int> MapBuilder::LoadState(
+    io::ProtoStreamReaderInterface* const reader, bool load_frozen_state) {
   io::ProtoStreamDeserializer deserializer(reader);
 
   // Create a copy of the pose_graph_proto, such that we can re-write the
