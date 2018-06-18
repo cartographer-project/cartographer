@@ -368,14 +368,14 @@ std::map<int, int> MapBuilder::LoadState(io::ProtoStreamReaderInterface* const r
   return trajectory_remapping;
 }
 
-std::map<int, int> MapBuilder::LoadStateFromFile(const std::string& state_filename) {
-  // Check if suffix of the state file is ".pbstream".
+std::map<int, int> MapBuilder::LoadStateFromFile(
+    const std::string& state_filename) {
   const std::string suffix = ".pbstream";
-  CHECK_EQ(state_filename.substr(
-               std::max<int>(state_filename.size() - suffix.size(), 0)),
-           suffix)
-      << "The file containing the state to be loaded must be a "
-         ".pbstream file.";
+  if (state_filename.substr(
+          std::max<int>(state_filename.size() - suffix.size(), 0)) != suffix) {
+    LOG(WARNING) << "The file containing the state should be a "
+                    ".pbstream file.";
+  }
   LOG(INFO) << "Loading saved state '" << state_filename << "'...";
   io::ProtoStreamReader stream(state_filename);
   return LoadState(&stream, true);

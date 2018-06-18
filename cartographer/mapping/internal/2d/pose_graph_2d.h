@@ -196,7 +196,7 @@ class PoseGraph2D : public PoseGraph {
   // optimization being run at a time.
   void RunOptimization() EXCLUDES(mutex_);
 
-  bool ShouldSkipTrajectoryWorkItem(int trajectory_id) REQUIRES(mutex_);
+  bool CanAddWorkItemModifying(int trajectory_id) REQUIRES(mutex_);
 
   // Computes the local to global map frame transform based on the given
   // 'global_submap_poses'.
