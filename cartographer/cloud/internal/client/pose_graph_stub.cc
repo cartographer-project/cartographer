@@ -16,15 +16,18 @@
 
 #include "cartographer/cloud/internal/client/pose_graph_stub.h"
 #include "async_grpc/client.h"
+#include "cartographer/cloud/internal/handlers/delete_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/get_all_submap_poses.h"
 #include "cartographer/cloud/internal/handlers/get_constraints_handler.h"
 #include "cartographer/cloud/internal/handlers/get_landmark_poses_handler.h"
 #include "cartographer/cloud/internal/handlers/get_local_to_global_transform_handler.h"
 #include "cartographer/cloud/internal/handlers/get_trajectory_node_poses_handler.h"
+#include "cartographer/cloud/internal/handlers/get_trajectory_states_handler.h"
 #include "cartographer/cloud/internal/handlers/is_trajectory_finished_handler.h"
 #include "cartographer/cloud/internal/handlers/is_trajectory_frozen_handler.h"
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
 #include "cartographer/cloud/internal/handlers/set_landmark_pose_handler.h"
+#include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
@@ -105,6 +108,20 @@ PoseGraphStub::GetTrajectoryNodePoses() const {
   return node_poses;
 }
 
+std::map<int, mapping::PoseGraphInterface::TrajectoryState>
+PoseGraphStub::GetTrajectoryStates() const {
+  google::protobuf::Empty request;
+  async_grpc::Client<handlers::GetTrajectoryStatesSignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
+  std::map<int, mapping::PoseGraphInterface::TrajectoryState>
+      trajectories_state;
+  for (const auto& entry : client.response().trajectories_state()) {
+    trajectories_state[entry.first] = FromProto(entry.second);
+  }
+  return trajectories_state;
+}
+
 std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses()
     const {
   google::protobuf::Empty request;
@@ -126,6 +143,14 @@ void PoseGraphStub::SetLandmarkPose(const std::string& landmark_id,
   *request.mutable_landmark_pose()->mutable_global_pose() =
       transform::ToProto(global_pose);
   async_grpc::Client<handlers::SetLandmarkPoseSignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
+}
+
+void PoseGraphStub::DeleteTrajectory(int trajectory_id) {
+  proto::DeleteTrajectoryRequest request;
+  request.set_trajectory_id(trajectory_id);
+  async_grpc::Client<handlers::DeleteTrajectorySignature> client(
       client_channel_);
   CHECK(client.Write(request));
 }

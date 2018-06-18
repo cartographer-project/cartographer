@@ -33,6 +33,13 @@ enum SensorType {
   LOCAL_SLAM_RESULT = 5;
 }
 
+enum TrajectoryState {
+  ACTIVE = 0;
+  FINISHED = 1;
+  FROZEN = 2;
+  DELETED = 3;
+}
+
 message SensorId {
   string id = 1;
   SensorType type = 2;
@@ -98,6 +105,10 @@ message FinishTrajectoryRequest {
   int32 trajectory_id = 1;
 }
 
+message DeleteTrajectoryRequest {
+  int32 trajectory_id = 1;
+}
+
 message ReceiveLocalSlamResultsRequest {
   int32 trajectory_id = 1;
 }
@@ -132,6 +143,23 @@ message LoadStateRequest {
   }
 }
 
+message TrajectoryRemapping {
+  map<int32 /* serialized trajectory id */, int32 /* trajectory id */>
+      serialized_trajectories_to_trajectories = 1;
+}
+
+message LoadStateResponse {
+  TrajectoryRemapping trajectory_remapping = 1;
+}
+
+message LoadStateFromFileRequest {
+  string file_path = 1;
+}
+
+message LoadStateFromFileResponse {
+  TrajectoryRemapping trajectory_remapping = 1;
+}
+
 message GetSubmapResponse {
   cartographer.mapping.proto.SubmapQuery.Response submap_query_response = 1;
   string error_msg = 2;
@@ -149,6 +177,10 @@ message TrajectoryNodePose {
 
 message GetTrajectoryNodePosesResponse {
   repeated TrajectoryNodePose node_poses = 1;
+}
+
+message GetTrajectoryStatesResponse {
+  map<int32 /* trajectory_id */, TrajectoryState> trajectories_state = 1;
 }
 
 message GetLandmarkPosesResponse {
@@ -245,12 +277,19 @@ service MapBuilderService {
   // i.e. no further sensor data is expected.
   rpc FinishTrajectory(FinishTrajectoryRequest) returns (google.protobuf.Empty);
 
+  // Deletes a trajectory asynchronously.
+  rpc DeleteTrajectory(DeleteTrajectoryRequest) returns (google.protobuf.Empty);
+
   // Retrieves a single submap.
   rpc GetSubmap(GetSubmapRequest) returns (GetSubmapResponse);
 
   // Returns the current optimized trajectory poses.
   rpc GetTrajectoryNodePoses(google.protobuf.Empty)
       returns (GetTrajectoryNodePosesResponse);
+
+  // Returns the states of trajectories.
+  rpc GetTrajectoryStates(google.protobuf.Empty)
+      returns (GetTrajectoryStatesResponse);
 
   // Returns the current optimized landmark poses.
   rpc GetLandmarkPoses(google.protobuf.Empty)
@@ -283,7 +322,11 @@ service MapBuilderService {
       returns (google.protobuf.Empty);
 
   // Adds serialized SLAM state data in the order defined by ProtoStreamReader.
-  rpc LoadState(stream LoadStateRequest) returns (google.protobuf.Empty);
+  rpc LoadState(stream LoadStateRequest) returns (LoadStateResponse);
+
+  // Loads a serialized SLAM state data from the host file system.
+  rpc LoadStateFromFile(LoadStateFromFileRequest)
+      returns (LoadStateFromFileResponse);
 
   // Receives serialized SLAM state data in the order defined by
   // ProtoStreamWriter.

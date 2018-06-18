@@ -14,37 +14,30 @@
  * limitations under the License.
  */
 
-#include "cartographer/cloud/internal/handlers/load_state_handler.h"
+#include "cartographer/cloud/internal/handlers/get_trajectory_states_handler.h"
 
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/common/make_unique.h"
+#include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
-  switch (request.state_chunk_case()) {
-    case proto::LoadStateRequest::kSerializedData:
-      reader_.AddProto(request.serialized_data());
-      break;
-    case proto::LoadStateRequest::kSerializationHeader:
-      reader_.AddProto(request.serialization_header());
-      break;
-    default:
-      LOG(FATAL) << "Unhandled proto::LoadStateRequest case.";
+void GetTrajectoryStatesHandler::OnRequest(
+    const google::protobuf::Empty& request) {
+  auto trajectories_state = GetContext<MapBuilderContextInterface>()
+                                ->map_builder()
+                                .pose_graph()
+                                ->GetTrajectoryStates();
+  auto response = common::make_unique<proto::GetTrajectoryStatesResponse>();
+  for (const auto& entry : trajectories_state) {
+    (*response->mutable_trajectories_state())[entry.first] =
+        ToProto(entry.second);
   }
-}
-
-void LoadStateHandler::OnReadsDone() {
-  auto trajectory_remapping =
-      GetContext<MapBuilderContextInterface>()->map_builder().LoadState(
-          &reader_, true);
-  auto response = common::make_unique<proto::LoadStateResponse>();
-  *response->mutable_trajectory_remapping() = ToProto(trajectory_remapping);
   Send(std::move(response));
 }
 

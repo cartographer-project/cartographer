@@ -89,7 +89,7 @@ class MapBuilderTest : public ::testing::Test {
     };
   }
 
-  int CreateTrajectoryWithFakeData() {
+  int CreateTrajectoryWithFakeData(double timestamps_add_duration = 0.) {
     int trajectory_id = map_builder_->AddTrajectoryBuilder(
         {kRangeSensorId}, trajectory_builder_options_,
         GetLocalSlamResultCallback());
@@ -98,6 +98,7 @@ class MapBuilderTest : public ::testing::Test {
     auto measurements = testing::GenerateFakeRangeMeasurements(
         kTravelDistance, kDuration, kTimeStep);
     for (auto& measurement : measurements) {
+      measurement.time += common::FromSeconds(timestamps_add_duration);
       trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
     }
     map_builder_->FinishTrajectory(trajectory_id);
@@ -265,6 +266,47 @@ TEST_F(MapBuilderTest, GlobalSlam3D) {
       local_slam_result_poses_.back();
   EXPECT_NEAR(kTravelDistance, final_pose.translation().norm(),
               0.1 * kTravelDistance);
+}
+
+TEST_F(MapBuilderTest, DeleteFinishedTrajectory2D) {
+  SetOptionsEnableGlobalOptimization();
+  BuildMapBuilder();
+  int trajectory_id = CreateTrajectoryWithFakeData();
+  map_builder_->pose_graph()->RunFinalOptimization();
+  EXPECT_TRUE(map_builder_->pose_graph()->IsTrajectoryFinished(trajectory_id));
+  EXPECT_GE(map_builder_->pose_graph()->constraints().size(), 50);
+  EXPECT_GE(
+      map_builder_->pose_graph()->GetTrajectoryNodes().SizeOfTrajectoryOrZero(
+          trajectory_id),
+      20);
+  EXPECT_GE(
+      map_builder_->pose_graph()->GetAllSubmapData().SizeOfTrajectoryOrZero(
+          trajectory_id),
+      5);
+  map_builder_->pose_graph()->DeleteTrajectory(trajectory_id);
+  int another_trajectory_id = CreateTrajectoryWithFakeData(100.);
+  map_builder_->pose_graph()->RunFinalOptimization();
+  EXPECT_TRUE(
+      map_builder_->pose_graph()->IsTrajectoryFinished(another_trajectory_id));
+  EXPECT_EQ(
+      map_builder_->pose_graph()->GetTrajectoryNodes().SizeOfTrajectoryOrZero(
+          trajectory_id),
+      0);
+  EXPECT_EQ(
+      map_builder_->pose_graph()->GetAllSubmapData().SizeOfTrajectoryOrZero(
+          trajectory_id),
+      0);
+  map_builder_->pose_graph()->DeleteTrajectory(another_trajectory_id);
+  map_builder_->pose_graph()->RunFinalOptimization();
+  EXPECT_EQ(map_builder_->pose_graph()->constraints().size(), 0);
+  EXPECT_EQ(
+      map_builder_->pose_graph()->GetTrajectoryNodes().SizeOfTrajectoryOrZero(
+          another_trajectory_id),
+      0);
+  EXPECT_EQ(
+      map_builder_->pose_graph()->GetAllSubmapData().SizeOfTrajectoryOrZero(
+          another_trajectory_id),
+      0);
 }
 
 TEST_F(MapBuilderTest, SaveLoadState) {

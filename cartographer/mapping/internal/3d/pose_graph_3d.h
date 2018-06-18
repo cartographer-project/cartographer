@@ -92,6 +92,7 @@ class PoseGraph3D : public PoseGraph {
                        const sensor::LandmarkData& landmark_data) override
       EXCLUDES(mutex_);
 
+  void DeleteTrajectory(int trajectory_id) override;
   void FinishTrajectory(int trajectory_id) override;
   bool IsTrajectoryFinished(int trajectory_id) const override REQUIRES(mutex_);
   void FreezeTrajectory(int trajectory_id) override;
@@ -119,6 +120,8 @@ class PoseGraph3D : public PoseGraph {
   MapById<NodeId, TrajectoryNode> GetTrajectoryNodes() const override
       EXCLUDES(mutex_);
   MapById<NodeId, TrajectoryNodePose> GetTrajectoryNodePoses() const override
+      EXCLUDES(mutex_);
+  std::map<int, TrajectoryState> GetTrajectoryStates() const override
       EXCLUDES(mutex_);
   std::map<std::string, transform::Rigid3d> GetLandmarkPoses() const override
       EXCLUDES(mutex_);

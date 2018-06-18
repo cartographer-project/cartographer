@@ -14,33 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H
-#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H
+#include "cartographer/cloud/internal/handlers/delete_trajectory_handler.h"
 
 #include "async_grpc/rpc_handler.h"
+#include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/io/internal/in_memory_proto_stream.h"
+#include "cartographer/common/make_unique.h"
+#include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-DEFINE_HANDLER_SIGNATURE(
-    LoadStateSignature, async_grpc::Stream<proto::LoadStateRequest>,
-    proto::LoadStateResponse,
-    "/cartographer.cloud.proto.MapBuilderService/LoadState")
-
-class LoadStateHandler : public async_grpc::RpcHandler<LoadStateSignature> {
- public:
-  void OnRequest(const proto::LoadStateRequest& request) override;
-  void OnReadsDone() override;
-
- private:
-  io::InMemoryProtoStreamReader reader_;
-};
+void DeleteTrajectoryHandler::OnRequest(
+    const proto::DeleteTrajectoryRequest& request) {
+  GetContext<MapBuilderContextInterface>()
+      ->map_builder()
+      .pose_graph()
+      ->DeleteTrajectory(request.trajectory_id());
+  // TODO(gaschler): Think if LocalSlamUploader needs to be notified.
+  Send(common::make_unique<google::protobuf::Empty>());
+}
 
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H
