@@ -37,7 +37,6 @@ namespace mapping {
 enum class SubmapState { kActive, kFinished };
 
 struct InternalTrajectoryState {
-  // TODO(gaschler): Implement PoseGraphInterface::DeleteTrajectory.
   enum class DeletionState {
     NORMAL,
     SCHEDULED_FOR_DELETION,

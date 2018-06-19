@@ -135,6 +135,10 @@ void PoseGraphStub::SetLandmarkPose(const std::string& landmark_id,
   CHECK(client.Write(request));
 }
 
+void PoseGraphStub::DeleteTrajectory(int trajectory_id) {
+  LOG(FATAL) << "not implemented";
+}
+
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) const {
   proto::IsTrajectoryFinishedRequest request;
   request.set_trajectory_id(trajectory_id);

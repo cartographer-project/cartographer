@@ -113,6 +113,9 @@ NodeId PoseGraph2D::AddNode(
 
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(trajectory_id);
+  if (!CanAddWorkItemModifying(trajectory_id)) {
+    LOG(WARNING) << "AddNode was called for finished or deleted trajectory.";
+  }
   const NodeId node_id = data_.trajectory_nodes.Append(
       trajectory_id, TrajectoryNode{constant_data, optimized_pose});
   ++data_.num_trajectory_nodes;
@@ -152,6 +155,8 @@ void PoseGraph2D::AddTrajectoryIfNeeded(const int trajectory_id) {
         TrajectoryState::FINISHED);
   CHECK(data_.trajectories_state.at(trajectory_id).state !=
         TrajectoryState::DELETED);
+  CHECK(data_.trajectories_state.at(trajectory_id).deletion_state ==
+        InternalTrajectoryState::DeletionState::NORMAL);
   data_.trajectory_connectivity_state.Add(trajectory_id);
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[trajectory_id]) {
@@ -164,6 +169,7 @@ void PoseGraph2D::AddTrajectoryIfNeeded(const int trajectory_id) {
 void PoseGraph2D::AddImuData(const int trajectory_id,
                              const sensor::ImuData& imu_data) {
   common::MutexLocker locker(&mutex_);
+  if (!CanAddWorkItemModifying(trajectory_id)) return;
   AddWorkItem([=]() REQUIRES(mutex_) {
     optimization_problem_->AddImuData(trajectory_id, imu_data);
   });
@@ -172,6 +178,7 @@ void PoseGraph2D::AddImuData(const int trajectory_id,
 void PoseGraph2D::AddOdometryData(const int trajectory_id,
                                   const sensor::OdometryData& odometry_data) {
   common::MutexLocker locker(&mutex_);
+  if (!CanAddWorkItemModifying(trajectory_id)) return;
   AddWorkItem([=]() REQUIRES(mutex_) {
     optimization_problem_->AddOdometryData(trajectory_id, odometry_data);
   });
@@ -184,9 +191,9 @@ void PoseGraph2D::AddFixedFramePoseData(
 }
 
 void PoseGraph2D::AddLandmarkData(int trajectory_id,
-                                  const sensor::LandmarkData& landmark_data)
-    EXCLUDES(mutex_) {
+                                  const sensor::LandmarkData& landmark_data) {
   common::MutexLocker locker(&mutex_);
+  if (!CanAddWorkItemModifying(trajectory_id)) return;
   AddWorkItem([=]() REQUIRES(mutex_) {
     for (const auto& observation : landmark_data.landmark_observations) {
       data_.landmark_nodes[observation.id].landmark_observations.emplace_back(
@@ -284,6 +291,8 @@ void PoseGraph2D::ComputeConstraintsForNode(
                    Constraint::INTRA_SUBMAP});
   }
 
+  // TODO(gaschler): Consider not searching for constraints against trajectories
+  // scheduled for deletion.
   for (const auto& submap_id_data : data_.submap_data) {
     if (submap_id_data.data.state == SubmapState::kFinished) {
       CHECK_EQ(submap_id_data.data.node_ids.count(node_id), 0);
@@ -342,6 +351,23 @@ void PoseGraph2D::UpdateTrajectoryConnectivity(const Constraint& constraint) {
       time);
 }
 
+void PoseGraph2D::DeleteTrajectoriesIfNeeded() {
+  TrimmingHandle trimming_handle(this);
+  for (auto& it : data_.trajectories_state) {
+    if (it.second.deletion_state ==
+        InternalTrajectoryState::DeletionState::WAIT_FOR_DELETION) {
+      // TODO(gaschler): Consider directly deleting from data_, which may be
+      // more complete.
+      auto submap_ids = trimming_handle.GetSubmapIds(it.first);
+      for (auto& submap_id : submap_ids) {
+        trimming_handle.TrimSubmap(submap_id);
+      }
+      it.second.state = TrajectoryState::DELETED;
+      it.second.deletion_state = InternalTrajectoryState::DeletionState::NORMAL;
+    }
+  }
+}
+
 void PoseGraph2D::HandleWorkQueue(
     const constraints::ConstraintBuilder2D::Result& result) {
   {
@@ -374,6 +400,7 @@ void PoseGraph2D::HandleWorkQueue(
   for (const Constraint& constraint : result) {
     UpdateTrajectoryConnectivity(constraint);
   }
+  DeleteTrajectoriesIfNeeded();
   TrimmingHandle trimming_handle(this);
   for (auto& trimmer : trimmers_) {
     trimmer->Trim(&trimming_handle);
@@ -438,6 +465,22 @@ void PoseGraph2D::WaitForAllComputations() {
   locker.Await([&notification]() { return notification; });
 }
 
+void PoseGraph2D::DeleteTrajectory(const int trajectory_id) {
+  common::MutexLocker locker(&mutex_);
+  data_.trajectories_state.at(trajectory_id).deletion_state =
+      InternalTrajectoryState::DeletionState::SCHEDULED_FOR_DELETION;
+  AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
+    CHECK(data_.trajectories_state.at(trajectory_id).state !=
+          TrajectoryState::ACTIVE);
+    CHECK(data_.trajectories_state.at(trajectory_id).state !=
+          TrajectoryState::DELETED);
+    CHECK(data_.trajectories_state.at(trajectory_id).deletion_state ==
+          InternalTrajectoryState::DeletionState::SCHEDULED_FOR_DELETION);
+    data_.trajectories_state.at(trajectory_id).deletion_state =
+        InternalTrajectoryState::DeletionState::WAIT_FOR_DELETION;
+  });
+}
+
 void PoseGraph2D::FinishTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
@@ -488,6 +531,7 @@ void PoseGraph2D::AddSubmapFromProto(
 
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(submap_id.trajectory_id);
+  if (!CanAddWorkItemModifying(submap_id.trajectory_id)) return;
   data_.submap_data.Insert(submap_id, InternalSubmapData());
   data_.submap_data.at(submap_id).submap = submap_ptr;
   // Immediately show the submap at the 'global_submap_pose'.
@@ -508,6 +552,7 @@ void PoseGraph2D::AddNodeFromProto(const transform::Rigid3d& global_pose,
 
   common::MutexLocker locker(&mutex_);
   AddTrajectoryIfNeeded(node_id.trajectory_id);
+  if (!CanAddWorkItemModifying(node_id.trajectory_id)) return;
   data_.trajectory_nodes.Insert(node_id,
                                 TrajectoryNode{constant_data, global_pose});
 
@@ -535,6 +580,7 @@ void PoseGraph2D::SetTrajectoryDataFromProto(
 void PoseGraph2D::AddNodeToSubmap(const NodeId& node_id,
                                   const SubmapId& submap_id) {
   common::MutexLocker locker(&mutex_);
+  if (!CanAddWorkItemModifying(submap_id.trajectory_id)) return;
   AddWorkItem([this, node_id, submap_id]() REQUIRES(mutex_) {
     data_.submap_data.at(submap_id).node_ids.insert(node_id);
   });
@@ -647,6 +693,37 @@ void PoseGraph2D::RunOptimization() {
     data_.landmark_nodes[landmark.first].global_landmark_pose = landmark.second;
   }
   data_.global_submap_poses_2d = submap_data;
+}
+
+bool PoseGraph2D::CanAddWorkItemModifying(int trajectory_id) {
+  auto it = data_.trajectories_state.find(trajectory_id);
+  if (it == data_.trajectories_state.end()) {
+    LOG(WARNING) << "trajectory_id:" << trajectory_id
+                 << " has not been added "
+                    "but modification is requested.";
+    return true;
+  }
+  if (it->second.state == TrajectoryState::FINISHED) {
+    // TODO(gaschler): Replace all FATAL to WARNING after some testing.
+    LOG(FATAL) << "trajectory_id " << trajectory_id
+               << " has finished "
+                  "but modification is requested, skipping.";
+    return false;
+  }
+  if (it->second.deletion_state !=
+      InternalTrajectoryState::DeletionState::NORMAL) {
+    LOG(FATAL) << "trajectory_id " << trajectory_id
+               << " has been scheduled for deletion "
+                  "but modification is requested, skipping.";
+    return false;
+  }
+  if (it->second.state == TrajectoryState::DELETED) {
+    LOG(FATAL) << "trajectory_id " << trajectory_id
+               << " has been deleted "
+                  "but modification is requested, skipping.";
+    return false;
+  }
+  return true;
 }
 
 MapById<NodeId, TrajectoryNode> PoseGraph2D::GetTrajectoryNodes() const {
