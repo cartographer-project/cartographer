@@ -147,6 +147,11 @@ void PoseGraph2D::AddWorkItem(const std::function<void()>& work_item) {
 }
 
 void PoseGraph2D::AddTrajectoryIfNeeded(const int trajectory_id) {
+  data_.trajectories_state[trajectory_id];
+  CHECK(data_.trajectories_state.at(trajectory_id).state !=
+        TrajectoryState::FINISHED);
+  CHECK(data_.trajectories_state.at(trajectory_id).state !=
+        TrajectoryState::DELETED);
   data_.trajectory_connectivity_state.Add(trajectory_id);
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[trajectory_id]) {
@@ -436,8 +441,8 @@ void PoseGraph2D::WaitForAllComputations() {
 void PoseGraph2D::FinishTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
-    CHECK_EQ(data_.finished_trajectories.count(trajectory_id), 0);
-    data_.finished_trajectories.insert(trajectory_id);
+    CHECK(!IsTrajectoryFinished(trajectory_id));
+    data_.trajectories_state[trajectory_id].state = TrajectoryState::FINISHED;
 
     for (const auto& submap : data_.submap_data.trajectory(trajectory_id)) {
       data_.submap_data.at(submap.id).state = SubmapState::kFinished;
@@ -448,20 +453,24 @@ void PoseGraph2D::FinishTrajectory(const int trajectory_id) {
 }
 
 bool PoseGraph2D::IsTrajectoryFinished(const int trajectory_id) const {
-  return data_.finished_trajectories.count(trajectory_id) > 0;
+  return data_.trajectories_state.count(trajectory_id) != 0 &&
+         data_.trajectories_state.at(trajectory_id).state ==
+             TrajectoryState::FINISHED;
 }
 
 void PoseGraph2D::FreezeTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
   data_.trajectory_connectivity_state.Add(trajectory_id);
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
-    CHECK_EQ(data_.frozen_trajectories.count(trajectory_id), 0);
-    data_.frozen_trajectories.insert(trajectory_id);
+    CHECK(!IsTrajectoryFrozen(trajectory_id));
+    data_.trajectories_state[trajectory_id].state = TrajectoryState::FROZEN;
   });
 }
 
 bool PoseGraph2D::IsTrajectoryFrozen(const int trajectory_id) const {
-  return data_.frozen_trajectories.count(trajectory_id) > 0;
+  return data_.trajectories_state.count(trajectory_id) != 0 &&
+         data_.trajectories_state.at(trajectory_id).state ==
+             TrajectoryState::FROZEN;
 }
 
 void PoseGraph2D::AddSubmapFromProto(
@@ -599,7 +608,7 @@ void PoseGraph2D::RunOptimization() {
   // data_.constraints, data_.frozen_trajectories and data_.landmark_nodes
   // when executing the Solve. Solve is time consuming, so not taking the mutex
   // before Solve to avoid blocking foreground processing.
-  optimization_problem_->Solve(data_.constraints, data_.frozen_trajectories,
+  optimization_problem_->Solve(data_.constraints, GetTrajectoryStates(),
                                data_.landmark_nodes);
   common::MutexLocker locker(&mutex_);
 
@@ -661,6 +670,16 @@ MapById<NodeId, TrajectoryNodePose> PoseGraph2D::GetTrajectoryNodePoses()
         TrajectoryNodePose{node_id_data.data.global_pose, constant_pose_data});
   }
   return node_poses;
+}
+
+std::map<int, PoseGraphInterface::TrajectoryState>
+PoseGraph2D::GetTrajectoryStates() const {
+  std::map<int, PoseGraphInterface::TrajectoryState> trajectories_state;
+  common::MutexLocker locker(&mutex_);
+  for (const auto& it : data_.trajectories_state) {
+    trajectories_state[it.first] = it.second.state;
+  }
+  return trajectories_state;
 }
 
 std::map<std::string, transform::Rigid3d> PoseGraph2D::GetLandmarkPoses()
