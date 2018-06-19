@@ -33,22 +33,10 @@ class TSDValueConverter {
  public:
   TSDValueConverter(float max_tsdf, float max_weight);
 
-  // Clamps probability to be in the range [kMinTSD, kMaxTSD].
-  inline float ClampTSD(const float tsd) const {
-    return common::Clamp(tsd, kMinTSD, kMaxTSD);
-  }
-
-  // Clamps probability to be in the range [kMinTSD, kMaxTSD].
-  inline float ClampWeight(const float tsd) const {
-    return common::Clamp(tsd, kMinWeight, kMaxWeight);
-  }
-
   // Converts a tsdf to a uint16 in the [1, 32767] range.
   inline uint16 TSDFToValue(const float tsd) const {
-    const int value = common::RoundToInt((ClampTSD(tsd) - kMinTSD) *
-                                         (32766.f / (kMaxTSD - kMinTSD))) +
-                      1;
-    // DCHECK for performance.
+    const int value =
+        common::RoundToInt((ClampTSD(tsd) - min_tsd_) * tsd_resolution_) + 1;
     DCHECK_GE(value, 1);
     DCHECK_LE(value, 32767);
     return value;
@@ -56,51 +44,60 @@ class TSDValueConverter {
 
   // Converts a weight to a uint16 in the [1, 32767] range.
   inline uint16 WeightToValue(const float weight) const {
-    const int value =
-        common::RoundToInt((ClampWeight(weight) - kMinWeight) *
-                           (32766.f / (kMaxWeight - kMinWeight))) +
-        1;
-    // DCHECK for performance.
+    const int value = common::RoundToInt((ClampWeight(weight) - min_weight_) *
+                                         weight_resolution_) +
+                      1;
     DCHECK_GE(value, 1);
     DCHECK_LE(value, 32767);
     return value;
   }
 
   // Converts a uint16 (which may or may not have the update marker set) to a
-  // probability in the range [kMinTSD, kMaxTSD].
+  // value in the range [min_tsd_, max_tsd_].
   inline float ValueToTSDF(const uint16 value) const {
-    return kValueToTSDF[value];
-
-  }  // Converts a uint16 (which may or may not have the update marker set) to a
-  // probability in the range [kMinWeight, kMaxWeight].
-  inline float ValueToWeight(const uint16 value) const {
-    return kValueToWeight[value];
+    return value_to_tsd_[value];
   }
 
-  uint16 getUnknownTSDFValue() const { return kUnknownTSDValue; }
-  uint16 getUnknownWeightValue() const { return kUnknownWeightValue; }
-  uint16 getUpdateMarker() const { return kUpdateMarker; }
-  float getMaxTSDF() const { return kMaxTSD; }
-  float getMinTSDF() const { return kMinTSD; }
-  float getMaxWeight() const { return kMaxWeight; }
-  float getMinWeight() const { return kMinWeight; }
+  // Converts a uint16 (which may or may not have the update marker set) to a
+  // value in the range [min_weight_, max_weight_].
+  inline float ValueToWeight(const uint16 value) const {
+    return value_to_weight_[value];
+  }
+
+  static uint16 getUnknownTSDFValue() { return unknown_tsd_value_; }
+  static uint16 getUnknownWeightValue() { return unknown_weight_value_; }
+  static uint16 getUpdateMarker() { return update_marker_; }
+  float getMaxTSDF() const { return max_tsd_; }
+  float getMinTSDF() const { return min_tsd_; }
+  float getMaxWeight() const { return max_weight_; }
+  float getMinWeight() const { return min_weight_; }
 
  private:
+  // Clamps TSD to be in the range [min_tsd_, max_tsd_].
+  inline float ClampTSD(const float tsd) const {
+    return common::Clamp(tsd, min_tsd_, max_tsd_);
+  }
+  // Clamps weight to be in the range [min_tsd_, max_tsd_].
+  inline float ClampWeight(const float weight) const {
+    return common::Clamp(weight, min_weight_, max_weight_);
+  }
   float SlowValueToTSD(const uint16 value) const;
   std::vector<float> PrecomputeValueToTSD();
   float SlowValueToWeight(const uint16 value) const;
   std::vector<float> PrecomputeValueToWeight();
 
-  float kMaxTSD;
-  float kMinTSD;
-  float kMaxWeight;
-  static constexpr float kMinWeight = 0.f;
-  static constexpr uint16 kUnknownTSDValue = 0;
-  static constexpr uint16 kUnknownWeightValue = 0;
-  static constexpr uint16 kUpdateMarker = 1u << 15;
+  float max_tsd_;
+  float min_tsd_;
+  float max_weight_;
+  float tsd_resolution_;
+  float weight_resolution_;
+  static constexpr float min_weight_ = 0.f;
+  static constexpr uint16 unknown_tsd_value_ = 0;
+  static constexpr uint16 unknown_weight_value_ = 0;
+  static constexpr uint16 update_marker_ = 1u << 15;
 
-  std::vector<float> kValueToTSDF;
-  std::vector<float> kValueToWeight;
+  std::vector<float> value_to_tsd_;
+  std::vector<float> value_to_weight_;
 };
 
 }  // namespace mapping
