@@ -297,6 +297,7 @@ TEST_F(ClientServerTest, LocalSlam2D) {
   InitializeRealServer();
   server_->Start();
   InitializeStub();
+  EXPECT_TRUE(stub_->pose_graph()->GetTrajectoryStates().empty());
   int trajectory_id =
       stub_->AddTrajectoryBuilder({kRangeSensorId}, trajectory_builder_options_,
                                   local_slam_result_callback_);
@@ -308,7 +309,12 @@ TEST_F(ClientServerTest, LocalSlam2D) {
     trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
   }
   WaitForLocalSlamResults(measurements.size());
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+            PoseGraphInterface::TrajectoryState::ACTIVE);
   stub_->FinishTrajectory(trajectory_id);
+  stub_->pose_graph()->RunFinalOptimization();
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+            PoseGraphInterface::TrajectoryState::FINISHED);
   EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,
               (local_slam_result_poses_.back().translation() -
