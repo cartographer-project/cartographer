@@ -27,7 +27,7 @@
 namespace cartographer {
 namespace mapping {
 
-// Provides conversions between float and uint16 representation for
+// Provides conversions between float and uint16 representations for
 // truncated signed distance values and weights.
 class TSDValueConverter {
  public:
