@@ -83,7 +83,7 @@ TEST_F(TSDValueConverterTest, TSDFToValueConversions) {
     float sdf_sample =
         -truncation_distance_ + i * 2.f * truncation_distance_ / num_samples;
     EXPECT_NEAR(tsdf_value_converter_.ValueToTSD(
-        tsdf_value_converter_.TSDFToValue(sdf_sample)),
+                    tsdf_value_converter_.TSDFToValue(sdf_sample)),
                 sdf_sample, tolerance);
   }
 }
