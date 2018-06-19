@@ -58,8 +58,10 @@ class MapBuilder : public MapBuilderInterface {
 
   void SerializeState(io::ProtoStreamWriterInterface *writer) override;
 
-  void LoadState(io::ProtoStreamReaderInterface *reader,
-                 bool load_frozen_state) override;
+  std::map<int, int> LoadState(io::ProtoStreamReaderInterface *reader,
+                               bool load_frozen_state) override;
+
+  std::map<int, int> LoadStateFromFile(const std::string &filename) override;
 
   mapping::PoseGraphInterface *pose_graph() override {
     return pose_graph_.get();

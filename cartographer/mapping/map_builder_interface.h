@@ -80,9 +80,15 @@ class MapBuilderInterface {
   // Serializes the current state to a proto stream.
   virtual void SerializeState(io::ProtoStreamWriterInterface* writer) = 0;
 
-  // Loads the SLAM state from a proto stream.
-  virtual void LoadState(io::ProtoStreamReaderInterface* reader,
-                         bool load_frozen_state) = 0;
+  // Loads the SLAM state from a proto stream. Returns the remapping of new
+  // trajectory_ids.
+  virtual std::map<int /* trajectory id in proto */, int /* trajectory id */>
+  LoadState(io::ProtoStreamReaderInterface* reader, bool load_frozen_state) = 0;
+
+  // Loads the SLAM state froma a pbstream file. Returns the remapping of new
+  // trajectory_ids.
+  virtual std::map<int /* trajectory id in proto */, int /* trajectory id */>
+  LoadStateFromFile(const std::string& filename) = 0;
 
   virtual int num_trajectory_builders() const = 0;
 
