@@ -79,7 +79,8 @@ class OptimizationProblem2D
 
   void Solve(
       const std::vector<Constraint>& constraints,
-      const std::set<int>& frozen_trajectories,
+      const std::map<int, PoseGraphInterface::TrajectoryState>&
+          trajectories_state,
       const std::map<std::string, LandmarkNode>& landmark_nodes) override;
 
   const MapById<NodeId, NodeSpec2D>& node_data() const override {

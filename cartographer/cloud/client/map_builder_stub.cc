@@ -124,8 +124,8 @@ void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
   }
 }
 
-void MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,
-                               const bool load_frozen_state) {
+std::map<int, int> MapBuilderStub::LoadState(
+    io::ProtoStreamReaderInterface* reader, const bool load_frozen_state) {
   if (!load_frozen_state) {
     LOG(FATAL) << "Not implemented";
   }
@@ -163,6 +163,13 @@ void MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,
   CHECK(reader->eof());
   CHECK(client.StreamWritesDone());
   CHECK(client.StreamFinish().ok());
+  // TODO(gaschler): Return trajectory remapping.
+  return {};
+}
+
+std::map<int, int> MapBuilderStub::LoadStateFromFile(
+    const std::string& filename) {
+  LOG(FATAL) << "not implemented";
 }
 
 int MapBuilderStub::num_trajectory_builders() const {

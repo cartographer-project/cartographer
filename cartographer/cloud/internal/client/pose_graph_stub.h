@@ -41,9 +41,11 @@ class PoseGraphStub : public ::cartographer::mapping::PoseGraphInterface {
   GetTrajectoryNodes() const override;
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose>
   GetTrajectoryNodePoses() const override;
+  std::map<int, TrajectoryState> GetTrajectoryStates() const override;
   std::map<std::string, transform::Rigid3d> GetLandmarkPoses() const override;
   void SetLandmarkPose(const std::string& landmark_id,
                        const transform::Rigid3d& global_pose) override;
+  void DeleteTrajectory(int trajectory_id) override;
   bool IsTrajectoryFinished(int trajectory_id) const override;
   bool IsTrajectoryFrozen(int trajectory_id) const override;
   std::map<int, mapping::PoseGraphInterface::TrajectoryData> GetTrajectoryData()

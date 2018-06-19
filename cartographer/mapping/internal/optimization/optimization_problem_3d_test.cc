@@ -171,8 +171,9 @@ TEST_F(OptimizationProblem3DTest, ReducesNoise) {
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap2Transform);
-  const std::set<int> kFrozen = {};
-  optimization_problem_.Solve(constraints, kFrozen, {});
+  const std::map<int, PoseGraphInterface::TrajectoryState> kTrajectoriesState =
+      {{kTrajectoryId, PoseGraphInterface::TrajectoryState::ACTIVE}};
+  optimization_problem_.Solve(constraints, kTrajectoriesState, {});
 
   double translation_error_after = 0.;
   double rotation_error_after = 0.;
