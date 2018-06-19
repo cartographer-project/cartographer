@@ -98,6 +98,10 @@ message FinishTrajectoryRequest {
   int32 trajectory_id = 1;
 }
 
+message DeleteTrajectoryRequest {
+  int32 trajectory_id = 1;
+}
+
 message ReceiveLocalSlamResultsRequest {
   int32 trajectory_id = 1;
 }
@@ -244,6 +248,9 @@ service MapBuilderService {
   // Marks a trajectory corresponding to 'trajectory_id' as finished,
   // i.e. no further sensor data is expected.
   rpc FinishTrajectory(FinishTrajectoryRequest) returns (google.protobuf.Empty);
+
+  // Deletes a trajectory asynchronously.
+  rpc DeleteTrajectory(DeleteTrajectoryRequest) returns (google.protobuf.Empty);
 
   // Retrieves a single submap.
   rpc GetSubmap(GetSubmapRequest) returns (GetSubmapResponse);

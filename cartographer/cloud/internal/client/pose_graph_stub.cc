@@ -16,6 +16,7 @@
 
 #include "cartographer/cloud/internal/client/pose_graph_stub.h"
 #include "async_grpc/client.h"
+#include "cartographer/cloud/internal/handlers/delete_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/get_all_submap_poses.h"
 #include "cartographer/cloud/internal/handlers/get_constraints_handler.h"
 #include "cartographer/cloud/internal/handlers/get_landmark_poses_handler.h"
@@ -136,7 +137,11 @@ void PoseGraphStub::SetLandmarkPose(const std::string& landmark_id,
 }
 
 void PoseGraphStub::DeleteTrajectory(int trajectory_id) {
-  LOG(FATAL) << "not implemented";
+  proto::DeleteTrajectoryRequest request;
+  request.set_trajectory_id(trajectory_id);
+  async_grpc::Client<handlers::DeleteTrajectorySignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
 }
 
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) const {
