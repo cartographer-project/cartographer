@@ -21,8 +21,10 @@
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/get_submap_handler.h"
+#include "cartographer/cloud/internal/handlers/load_state_from_file_handler.h"
 #include "cartographer/cloud/internal/handlers/load_state_handler.h"
 #include "cartographer/cloud/internal/handlers/write_state_handler.h"
+#include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/io/proto_stream_deserializer.h"
@@ -163,13 +165,17 @@ std::map<int, int> MapBuilderStub::LoadState(
   CHECK(reader->eof());
   CHECK(client.StreamWritesDone());
   CHECK(client.StreamFinish().ok());
-  // TODO(gaschler): Return trajectory remapping.
-  return {};
+  return FromProto(client.response().trajectory_remapping());
 }
 
 std::map<int, int> MapBuilderStub::LoadStateFromFile(
     const std::string& filename) {
-  LOG(FATAL) << "not implemented";
+  proto::LoadStateFromFileRequest request;
+  request.set_file_path(filename);
+  async_grpc::Client<handlers::LoadStateFromFileSignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
+  return FromProto(client.response().trajectory_remapping());
 }
 
 int MapBuilderStub::num_trajectory_builders() const {
