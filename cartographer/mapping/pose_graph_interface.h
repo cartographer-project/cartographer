@@ -79,6 +79,8 @@ class PoseGraphInterface {
     common::optional<transform::Rigid3d> fixed_frame_origin_in_map;
   };
 
+  enum class TrajectoryState { ACTIVE, FINISHED, FROZEN, DELETED };
+
   using GlobalSlamOptimizationCallback =
       std::function<void(const std::map<int /* trajectory_id */, SubmapId>&,
                          const std::map<int /* trajectory_id */, NodeId>&)>;
@@ -110,6 +112,9 @@ class PoseGraphInterface {
   // Returns the current optimized trajectory poses.
   virtual MapById<NodeId, TrajectoryNodePose> GetTrajectoryNodePoses()
       const = 0;
+
+  // Returns the states of trajectories.
+  virtual std::map<int, TrajectoryState> GetTrajectoryStates() const = 0;
 
   // Returns the current optimized landmark poses.
   virtual std::map<std::string, transform::Rigid3d> GetLandmarkPoses()

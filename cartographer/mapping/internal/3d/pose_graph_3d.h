@@ -120,6 +120,8 @@ class PoseGraph3D : public PoseGraph {
       EXCLUDES(mutex_);
   MapById<NodeId, TrajectoryNodePose> GetTrajectoryNodePoses() const override
       EXCLUDES(mutex_);
+  std::map<int, TrajectoryState> GetTrajectoryStates() const override
+      EXCLUDES(mutex_);
   std::map<std::string, transform::Rigid3d> GetLandmarkPoses() const override
       EXCLUDES(mutex_);
   void SetLandmarkPose(const std::string& landmark_id,
