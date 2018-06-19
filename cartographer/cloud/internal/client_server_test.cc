@@ -318,6 +318,37 @@ TEST_F(ClientServerTest, LocalSlam2D) {
   server_->Shutdown();
 }
 
+TEST_F(ClientServerTest, LocalSlamAndDelete2D) {
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+  int trajectory_id =
+      stub_->AddTrajectoryBuilder({kRangeSensorId}, trajectory_builder_options_,
+                                  local_slam_result_callback_);
+  TrajectoryBuilderInterface* trajectory_stub =
+      stub_->GetTrajectoryBuilder(trajectory_id);
+  const auto measurements = mapping::testing::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
+  for (const auto& measurement : measurements) {
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
+  }
+  WaitForLocalSlamResults(measurements.size());
+  stub_->pose_graph()->RunFinalOptimization();
+  // TODO(gaschler): Enable after pending PR has merged.
+  // EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+  //          PoseGraphInterface::TrajectoryState::ACTIVE);
+  EXPECT_GT(stub_->pose_graph()->GetAllSubmapPoses().size(), 0);
+  EXPECT_GT(stub_->pose_graph()->GetTrajectoryNodePoses().size(), 0);
+  stub_->FinishTrajectory(trajectory_id);
+  stub_->pose_graph()->DeleteTrajectory(trajectory_id);
+  stub_->pose_graph()->RunFinalOptimization();
+  // EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+  //          PoseGraphInterface::TrajectoryState::DELETED);
+  EXPECT_EQ(stub_->pose_graph()->GetAllSubmapPoses().size(), 0);
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryNodePoses().size(), 0);
+  server_->Shutdown();
+}
+
 TEST_F(ClientServerTest, GlobalSlam3D) {
   map_builder_server_options_.mutable_map_builder_options()
       ->set_use_trajectory_builder_2d(false);

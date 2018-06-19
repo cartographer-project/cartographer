@@ -23,6 +23,7 @@
 #include "cartographer/cloud/internal/handlers/add_rangefinder_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_sensor_data_batch_handler.h"
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
+#include "cartographer/cloud/internal/handlers/delete_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/get_all_submap_poses.h"
 #include "cartographer/cloud/internal/handlers/get_constraints_handler.h"
@@ -74,6 +75,7 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::AddLandmarkDataHandler>();
   server_builder.RegisterHandler<handlers::AddSensorDataBatchHandler>();
   server_builder.RegisterHandler<handlers::FinishTrajectoryHandler>();
+  server_builder.RegisterHandler<handlers::DeleteTrajectoryHandler>();
   server_builder
       .RegisterHandler<handlers::ReceiveGlobalSlamOptimizationsHandler>();
   server_builder.RegisterHandler<handlers::ReceiveLocalSlamResultsHandler>();
