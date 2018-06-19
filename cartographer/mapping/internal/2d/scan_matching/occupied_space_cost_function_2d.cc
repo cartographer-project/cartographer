@@ -22,6 +22,7 @@ namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 namespace {
+
 // Computes a cost for matching the 'point_cloud' to the 'grid' with
 // a 'pose'. The cost increases with poorer correspondence of the grid and the
 // point observation (e.g. points falling into less occupied space).
