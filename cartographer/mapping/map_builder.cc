@@ -19,6 +19,7 @@
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
 #include "cartographer/io/internal/mapping_state_serialization.h"
+#include "cartographer/io/proto_stream.h"
 #include "cartographer/io/proto_stream_deserializer.h"
 #include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
 #include "cartographer/mapping/internal/2d/overlapping_submaps_trimmer_2d.h"
@@ -206,8 +207,8 @@ void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer) {
   io::WritePbStream(*pose_graph_, all_trajectory_builder_options_, writer);
 }
 
-void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
-                           bool load_frozen_state) {
+std::map<int, int> MapBuilder::LoadState(
+    io::ProtoStreamReaderInterface* const reader, bool load_frozen_state) {
   io::ProtoStreamDeserializer deserializer(reader);
 
   // Create a copy of the pose_graph_proto, such that we can re-write the
@@ -364,6 +365,20 @@ void MapBuilder::LoadState(io::ProtoStreamReaderInterface* const reader,
         FromProto(pose_graph_proto.constraint()));
   }
   CHECK(reader->eof());
+  return trajectory_remapping;
+}
+
+std::map<int, int> MapBuilder::LoadStateFromFile(
+    const std::string& state_filename) {
+  const std::string suffix = ".pbstream";
+  if (state_filename.substr(
+          std::max<int>(state_filename.size() - suffix.size(), 0)) != suffix) {
+    LOG(WARNING) << "The file containing the state should be a "
+                    ".pbstream file.";
+  }
+  LOG(INFO) << "Loading saved state '" << state_filename << "'...";
+  io::ProtoStreamReader stream(state_filename);
+  return LoadState(&stream, true);
 }
 
 }  // namespace mapping
