@@ -33,6 +33,7 @@
 #include "cartographer/cloud/internal/handlers/get_trajectory_node_poses_handler.h"
 #include "cartographer/cloud/internal/handlers/is_trajectory_finished_handler.h"
 #include "cartographer/cloud/internal/handlers/is_trajectory_frozen_handler.h"
+#include "cartographer/cloud/internal/handlers/load_state_from_file_handler.h"
 #include "cartographer/cloud/internal/handlers/load_state_handler.h"
 #include "cartographer/cloud/internal/handlers/receive_global_slam_optimizations_handler.h"
 #include "cartographer/cloud/internal/handlers/receive_local_slam_results_handler.h"
@@ -88,6 +89,7 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::IsTrajectoryFinishedHandler>();
   server_builder.RegisterHandler<handlers::IsTrajectoryFrozenHandler>();
   server_builder.RegisterHandler<handlers::LoadStateHandler>();
+  server_builder.RegisterHandler<handlers::LoadStateFromFileHandler>();
   server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler>();
   server_builder.RegisterHandler<handlers::WriteStateHandler>();
   server_builder.RegisterHandler<handlers::SetLandmarkPoseHandler>();

@@ -474,8 +474,13 @@ TEST_F(ClientServerTest, LoadState) {
                                  kLandmarkDataProtoString,
                              });
 
-  stub_->LoadState(reader.get(), true);
-  EXPECT_TRUE(stub_->pose_graph()->IsTrajectoryFrozen(0));
+  auto trajectory_remapping = stub_->LoadState(reader.get(), true);
+  int expected_trajectory_id = 0;
+  EXPECT_EQ(trajectory_remapping.size(), 1);
+  EXPECT_EQ(trajectory_remapping.at(0), expected_trajectory_id);
+  EXPECT_TRUE(stub_->pose_graph()->IsTrajectoryFrozen(expected_trajectory_id));
+  EXPECT_FALSE(
+      stub_->pose_graph()->IsTrajectoryFinished(expected_trajectory_id));
   server_->Shutdown();
 }
 

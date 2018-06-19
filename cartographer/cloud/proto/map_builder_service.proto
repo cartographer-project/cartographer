@@ -136,6 +136,23 @@ message LoadStateRequest {
   }
 }
 
+message TrajectoryRemapping {
+  map<int32 /* serialized trajectory id */, int32 /* trajectory id */>
+      serialized_trajectories_to_trajectories = 1;
+}
+
+message LoadStateResponse {
+  TrajectoryRemapping trajectory_remapping = 1;
+}
+
+message LoadStateFromFileRequest {
+  string file_path = 1;
+}
+
+message LoadStateFromFileResponse {
+  TrajectoryRemapping trajectory_remapping = 1;
+}
+
 message GetSubmapResponse {
   cartographer.mapping.proto.SubmapQuery.Response submap_query_response = 1;
   string error_msg = 2;
@@ -290,7 +307,11 @@ service MapBuilderService {
       returns (google.protobuf.Empty);
 
   // Adds serialized SLAM state data in the order defined by ProtoStreamReader.
-  rpc LoadState(stream LoadStateRequest) returns (google.protobuf.Empty);
+  rpc LoadState(stream LoadStateRequest) returns (LoadStateResponse);
+
+  // Loads a serialized SLAM state data from the host file system.
+  rpc LoadStateFromFile(LoadStateFromFileRequest)
+      returns (LoadStateFromFileResponse);
 
   // Receives serialized SLAM state data in the order defined by
   // ProtoStreamWriter.
