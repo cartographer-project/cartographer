@@ -38,11 +38,15 @@ enum class SubmapState { kActive, kFinished };
 
 struct InternalTrajectoryState {
   // TODO(gaschler): Implement PoseGraphInterface::DeleteTrajectory.
-  enum DeletionState { NORMAL, SCHEDULED_FOR_DELETION, WAIT_FOR_DELETION };
+  enum class DeletionState {
+    NORMAL,
+    SCHEDULED_FOR_DELETION,
+    WAIT_FOR_DELETION
+  };
 
   PoseGraphInterface::TrajectoryState state =
       PoseGraphInterface::TrajectoryState::ACTIVE;
-  DeletionState deletion_state = NORMAL;
+  DeletionState deletion_state = DeletionState::NORMAL;
 };
 
 struct InternalSubmapData {
