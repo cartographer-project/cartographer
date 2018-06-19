@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_TSDF_VALUES_H_
-#define CARTOGRAPHER_MAPPING_TSDF_VALUES_H_
+#ifndef CARTOGRAPHER_MAPPING_TSD_VALUE_CONVERTER_H_
+#define CARTOGRAPHER_MAPPING_TSD_VALUE_CONVERTER_H_
 
 #include <cmath>
 #include <vector>
@@ -102,7 +102,8 @@ class TSDValueConverter {
   std::vector<float> kValueToTSDF;
   std::vector<float> kValueToWeight;
 };
+
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_TSDF_VALUES_H_
+#endif  // CARTOGRAPHER_MAPPING_TSD_VALUE_CONVERTER_H_
