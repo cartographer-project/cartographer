@@ -71,7 +71,7 @@ void CeresScanMatcher2D::Match(const Eigen::Vector2d& target_translation,
   ceres::Problem problem;
   CHECK_GT(options_.occupied_space_weight(), 0.);
   problem.AddResidualBlock(
-      OccupiedSpaceCostFunction2D::CreateAutoDiffCostFunction(
+      CreateOccupiedSpaceCostFunction2D(
           options_.occupied_space_weight() /
               std::sqrt(static_cast<double>(point_cloud.size())),
           point_cloud, grid),
