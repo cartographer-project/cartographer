@@ -124,6 +124,9 @@ class PoseGraphInterface {
   virtual void SetLandmarkPose(const std::string& landmark_id,
                                const transform::Rigid3d& global_pose) = 0;
 
+  // Deletes a trajectory asynchronously.
+  virtual void DeleteTrajectory(int trajectory_id) = 0;
+
   // Checks if the given trajectory is finished.
   virtual bool IsTrajectoryFinished(int trajectory_id) const = 0;
 

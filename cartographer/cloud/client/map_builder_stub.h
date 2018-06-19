@@ -57,7 +57,6 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
   GetAllTrajectoryBuilderOptions() const override;
 
  private:
-  ::grpc::ChannelArguments channel_arguments_;
   std::shared_ptr<::grpc::Channel> client_channel_;
   std::unique_ptr<mapping::PoseGraphInterface> pose_graph_stub_;
   std::map<int, std::unique_ptr<mapping::TrajectoryBuilderInterface>>
