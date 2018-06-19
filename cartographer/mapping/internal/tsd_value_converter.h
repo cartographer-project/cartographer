@@ -31,10 +31,10 @@ namespace mapping {
 // truncated signed distance values and weights.
 class TSDValueConverter {
  public:
-  TSDValueConverter(float max_tsdf, float max_weight);
+  TSDValueConverter(float max_tsd, float max_weight);
 
-  // Converts a tsdf to a uint16 in the [1, 32767] range.
-  inline uint16 TSDFToValue(const float tsd) const {
+  // Converts a tsd to a uint16 in the [1, 32767] range.
+  inline uint16 TSDToValue(const float tsd) const {
     const int value =
         common::RoundToInt((ClampTSD(tsd) - min_tsd_) * tsd_resolution_) + 1;
     DCHECK_GE(value, 1);
@@ -67,8 +67,8 @@ class TSDValueConverter {
   static uint16 getUnknownTSDValue() { return unknown_tsd_value_; }
   static uint16 getUnknownWeightValue() { return unknown_weight_value_; }
   static uint16 getUpdateMarker() { return update_marker_; }
-  float getMaxTSDF() const { return max_tsd_; }
-  float getMinTSDF() const { return min_tsd_; }
+  float getMaxTSD() const { return max_tsd_; }
+  float getMinTSD() const { return min_tsd_; }
   float getMaxWeight() const { return max_weight_; }
   float getMinWeight() const { return min_weight_; }
 

@@ -19,9 +19,9 @@
 namespace cartographer {
 namespace mapping {
 
-TSDValueConverter::TSDValueConverter(float max_tsdf, float max_weight)
-    : max_tsd_(max_tsdf),
-      min_tsd_(-max_tsdf),
+TSDValueConverter::TSDValueConverter(float max_tsd, float max_weight)
+    : max_tsd_(max_tsd),
+      min_tsd_(-max_tsd),
       max_weight_(max_weight),
       tsd_resolution_(32766.f / (max_tsd_ - min_tsd_)),
       weight_resolution_(32766.f / (max_weight_ - min_weight_)),
