@@ -105,6 +105,11 @@ PoseGraphStub::GetTrajectoryNodePoses() const {
   return node_poses;
 }
 
+std::map<int, mapping::PoseGraphInterface::TrajectoryState>
+PoseGraphStub::GetTrajectoryStates() const {
+  LOG(FATAL) << "not implemented";
+}
+
 std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses()
     const {
   google::protobuf::Empty request;
@@ -128,6 +133,10 @@ void PoseGraphStub::SetLandmarkPose(const std::string& landmark_id,
   async_grpc::Client<handlers::SetLandmarkPoseSignature> client(
       client_channel_);
   CHECK(client.Write(request));
+}
+
+void PoseGraphStub::DeleteTrajectory(int trajectory_id) {
+  LOG(FATAL) << "not implemented";
 }
 
 bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) const {

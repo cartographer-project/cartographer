@@ -195,11 +195,19 @@ void OptimizationProblem2D::SetMaxNumIterations(
 
 void OptimizationProblem2D::Solve(
     const std::vector<Constraint>& constraints,
-    const std::set<int>& frozen_trajectories,
+    const std::map<int, PoseGraphInterface::TrajectoryState>&
+        trajectories_state,
     const std::map<std::string, LandmarkNode>& landmark_nodes) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
+  }
+
+  std::set<int> frozen_trajectories;
+  for (const auto& it : trajectories_state) {
+    if (it.second == PoseGraphInterface::TrajectoryState::FROZEN) {
+      frozen_trajectories.insert(it.first);
+    }
   }
 
   ceres::Problem::Options problem_options;
