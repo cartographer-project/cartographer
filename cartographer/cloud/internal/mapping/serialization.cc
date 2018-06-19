@@ -18,10 +18,14 @@
 
 namespace cartographer {
 namespace cloud {
+namespace {
 
-proto::TrajectoryState ToProto(
-    const mapping::PoseGraphInterface::TrajectoryState& trajectory_state) {
-  using TrajectoryState = mapping::PoseGraphInterface::TrajectoryState;
+using TrajectoryState =
+    ::cartographer::mapping::PoseGraphInterface::TrajectoryState;
+
+}  // namespace
+
+proto::TrajectoryState ToProto(const TrajectoryState& trajectory_state) {
   switch (trajectory_state) {
     case TrajectoryState::ACTIVE:
       return proto::TrajectoryState::ACTIVE;
@@ -32,13 +36,11 @@ proto::TrajectoryState ToProto(
     case TrajectoryState::DELETED:
       return proto::TrajectoryState::DELETED;
     default:
-      LOG(FATAL) << "unknown TrajectoryState";
+      LOG(FATAL) << "Unknown TrajectoryState";
   }
 }
 
-mapping::PoseGraphInterface::TrajectoryState FromProto(
-    const proto::TrajectoryState& proto) {
-  using TrajectoryState = mapping::PoseGraphInterface::TrajectoryState;
+TrajectoryState FromProto(const proto::TrajectoryState& proto) {
   switch (proto) {
     case proto::TrajectoryState::ACTIVE:
       return TrajectoryState::ACTIVE;
@@ -49,7 +51,7 @@ mapping::PoseGraphInterface::TrajectoryState FromProto(
     case proto::TrajectoryState::DELETED:
       return TrajectoryState::DELETED;
     default:
-      LOG(FATAL) << "unknown proto::TrajectoryState";
+      LOG(FATAL) << "Unknown proto::TrajectoryState";
   }
 }
 
