@@ -35,7 +35,7 @@ class TSDValueConverterTest : public ::testing::Test {
 
 TEST_F(TSDValueConverterTest, DefaultValues) {
   EXPECT_EQ(tsdf_value_converter_.getUnknownWeightValue(), 0);
-  EXPECT_EQ(tsdf_value_converter_.getUnknownTSDFValue(), 0);
+  EXPECT_EQ(tsdf_value_converter_.getUnknownTSDValue(), 0);
   EXPECT_EQ(tsdf_value_converter_.getMinTSDF(), -truncation_distance_);
   EXPECT_EQ(tsdf_value_converter_.getMaxTSDF(), truncation_distance_);
   EXPECT_EQ(tsdf_value_converter_.getMinWeight(), 0.f);
@@ -45,7 +45,7 @@ TEST_F(TSDValueConverterTest, DefaultValues) {
 TEST_F(TSDValueConverterTest, ValueToTSDFConversions) {
   for (uint16 i = 1; i < 32768; ++i) {
     EXPECT_EQ(
-        tsdf_value_converter_.TSDFToValue(tsdf_value_converter_.ValueToTSDF(i)),
+        tsdf_value_converter_.TSDFToValue(tsdf_value_converter_.ValueToTSD(i)),
         i);
   }
 }
@@ -53,7 +53,7 @@ TEST_F(TSDValueConverterTest, ValueToTSDFConversions) {
 TEST_F(TSDValueConverterTest, ValueToTSDFConversionsWithUpdateMarker) {
   for (uint16 i = 1; i < 32768; ++i) {
     EXPECT_EQ(
-        tsdf_value_converter_.TSDFToValue(tsdf_value_converter_.ValueToTSDF(
+        tsdf_value_converter_.TSDFToValue(tsdf_value_converter_.ValueToTSD(
             i + tsdf_value_converter_.getUpdateMarker())),
         i);
   }
@@ -82,8 +82,8 @@ TEST_F(TSDValueConverterTest, TSDFToValueConversions) {
   for (uint16 i = 0; i < num_samples; ++i) {
     float sdf_sample =
         -truncation_distance_ + i * 2.f * truncation_distance_ / num_samples;
-    EXPECT_NEAR(tsdf_value_converter_.ValueToTSDF(
-                    tsdf_value_converter_.TSDFToValue(sdf_sample)),
+    EXPECT_NEAR(tsdf_value_converter_.ValueToTSD(
+        tsdf_value_converter_.TSDFToValue(sdf_sample)),
                 sdf_sample, tolerance);
   }
 }
@@ -112,11 +112,11 @@ TEST_F(TSDValueConverterTest, WeightToValueOutOfRangeConversions) {
 TEST_F(TSDValueConverterTest, TSDFToValueOutOfRangeConversions) {
   float tolerance = truncation_distance_ * 2.f / 32767.f;
   EXPECT_NEAR(
-      tsdf_value_converter_.ValueToTSDF(
+      tsdf_value_converter_.ValueToTSD(
           tsdf_value_converter_.TSDFToValue(2.f * truncation_distance_)),
       truncation_distance_, tolerance);
   EXPECT_NEAR(
-      tsdf_value_converter_.ValueToTSDF(
+      tsdf_value_converter_.ValueToTSD(
           tsdf_value_converter_.TSDFToValue(-2.f * truncation_distance_)),
       -truncation_distance_, tolerance);
 }

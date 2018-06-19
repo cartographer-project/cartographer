@@ -54,7 +54,7 @@ class TSDValueConverter {
 
   // Converts a uint16 (which may or may not have the update marker set) to a
   // value in the range [min_tsd_, max_tsd_].
-  inline float ValueToTSDF(const uint16 value) const {
+  inline float ValueToTSD(const uint16 value) const {
     return value_to_tsd_[value];
   }
 
@@ -64,7 +64,7 @@ class TSDValueConverter {
     return value_to_weight_[value];
   }
 
-  static uint16 getUnknownTSDFValue() { return unknown_tsd_value_; }
+  static uint16 getUnknownTSDValue() { return unknown_tsd_value_; }
   static uint16 getUnknownWeightValue() { return unknown_weight_value_; }
   static uint16 getUpdateMarker() { return update_marker_; }
   float getMaxTSDF() const { return max_tsd_; }
