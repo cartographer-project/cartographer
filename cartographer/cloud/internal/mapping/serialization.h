@@ -28,6 +28,10 @@ proto::TrajectoryState ToProto(
 mapping::PoseGraphInterface::TrajectoryState FromProto(
     const proto::TrajectoryState& proto);
 
+proto::TrajectoryRemapping ToProto(
+    const std::map<int, int>& trajectory_remapping);
+std::map<int, int> FromProto(const proto::TrajectoryRemapping& proto);
+
 }  // namespace cloud
 }  // namespace cartographer
 
