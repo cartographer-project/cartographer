@@ -348,15 +348,13 @@ TEST_F(MapBuilderTest, SaveLoadState) {
     // Reset 'map_builder_'.
     BuildMapBuilder();
     io::ProtoStreamReader reader(filename);
-    map_builder_->LoadState(&reader, false /* load_frozen_state */);
-    // TODO(gaschler): Design better way to find out which new trajectory_ids
-    // were created by LoadState.
+    auto trajectory_remapping =
+        map_builder_->LoadState(&reader, false /* load_frozen_state */);
     map_builder_->pose_graph()->RunFinalOptimization();
-    auto nodes = map_builder_->pose_graph()->GetTrajectoryNodes();
-    ASSERT_GT(nodes.size(), 0);
-    int new_trajectory_id = nodes.begin()->id.trajectory_id;
     EXPECT_EQ(num_constraints,
               map_builder_->pose_graph()->constraints().size());
+    ASSERT_EQ(trajectory_remapping.size(), 1);
+    int new_trajectory_id = trajectory_remapping.begin()->second;
     EXPECT_EQ(
         num_nodes,
         map_builder_->pose_graph()->GetTrajectoryNodes().SizeOfTrajectoryOrZero(
