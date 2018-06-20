@@ -297,6 +297,7 @@ TEST_F(ClientServerTest, LocalSlam2D) {
   InitializeRealServer();
   server_->Start();
   InitializeStub();
+  EXPECT_TRUE(stub_->pose_graph()->GetTrajectoryStates().empty());
   int trajectory_id =
       stub_->AddTrajectoryBuilder({kRangeSensorId}, trajectory_builder_options_,
                                   local_slam_result_callback_);
@@ -308,7 +309,12 @@ TEST_F(ClientServerTest, LocalSlam2D) {
     trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
   }
   WaitForLocalSlamResults(measurements.size());
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+            PoseGraphInterface::TrajectoryState::ACTIVE);
   stub_->FinishTrajectory(trajectory_id);
+  stub_->pose_graph()->RunFinalOptimization();
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+            PoseGraphInterface::TrajectoryState::FINISHED);
   EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,
               (local_slam_result_poses_.back().translation() -
@@ -334,16 +340,15 @@ TEST_F(ClientServerTest, LocalSlamAndDelete2D) {
   }
   WaitForLocalSlamResults(measurements.size());
   stub_->pose_graph()->RunFinalOptimization();
-  // TODO(gaschler): Enable after pending PR has merged.
-  // EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
-  //          PoseGraphInterface::TrajectoryState::ACTIVE);
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+            PoseGraphInterface::TrajectoryState::ACTIVE);
   EXPECT_GT(stub_->pose_graph()->GetAllSubmapPoses().size(), 0);
   EXPECT_GT(stub_->pose_graph()->GetTrajectoryNodePoses().size(), 0);
   stub_->FinishTrajectory(trajectory_id);
   stub_->pose_graph()->DeleteTrajectory(trajectory_id);
   stub_->pose_graph()->RunFinalOptimization();
-  // EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
-  //          PoseGraphInterface::TrajectoryState::DELETED);
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+            PoseGraphInterface::TrajectoryState::DELETED);
   EXPECT_EQ(stub_->pose_graph()->GetAllSubmapPoses().size(), 0);
   EXPECT_EQ(stub_->pose_graph()->GetTrajectoryNodePoses().size(), 0);
   server_->Shutdown();

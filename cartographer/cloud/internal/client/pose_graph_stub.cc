@@ -22,10 +22,12 @@
 #include "cartographer/cloud/internal/handlers/get_landmark_poses_handler.h"
 #include "cartographer/cloud/internal/handlers/get_local_to_global_transform_handler.h"
 #include "cartographer/cloud/internal/handlers/get_trajectory_node_poses_handler.h"
+#include "cartographer/cloud/internal/handlers/get_trajectory_states_handler.h"
 #include "cartographer/cloud/internal/handlers/is_trajectory_finished_handler.h"
 #include "cartographer/cloud/internal/handlers/is_trajectory_frozen_handler.h"
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
 #include "cartographer/cloud/internal/handlers/set_landmark_pose_handler.h"
+#include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
@@ -108,7 +110,16 @@ PoseGraphStub::GetTrajectoryNodePoses() const {
 
 std::map<int, mapping::PoseGraphInterface::TrajectoryState>
 PoseGraphStub::GetTrajectoryStates() const {
-  LOG(FATAL) << "not implemented";
+  google::protobuf::Empty request;
+  async_grpc::Client<handlers::GetTrajectoryStatesSignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
+  std::map<int, mapping::PoseGraphInterface::TrajectoryState>
+      trajectories_state;
+  for (const auto& entry : client.response().trajectories_state()) {
+    trajectories_state[entry.first] = FromProto(entry.second);
+  }
+  return trajectories_state;
 }
 
 std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses()

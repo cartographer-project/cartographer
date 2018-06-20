@@ -14,25 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_CLOUD_INTERNAL_MAPPING_SERIALIZATION_H
-#define CARTOGRAPHER_CLOUD_INTERNAL_MAPPING_SERIALIZATION_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_TRAJECTORY_STATES_HANDLER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_TRAJECTORY_STATES_HANDLER_H
 
+#include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/mapping/pose_graph_interface.h"
+#include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {
+namespace handlers {
 
-proto::TrajectoryState ToProto(
-    const mapping::PoseGraphInterface::TrajectoryState& trajectory_state);
-mapping::PoseGraphInterface::TrajectoryState FromProto(
-    const proto::TrajectoryState& proto);
+DEFINE_HANDLER_SIGNATURE(
+    GetTrajectoryStatesSignature, google::protobuf::Empty,
+    proto::GetTrajectoryStatesResponse,
+    "/cartographer.cloud.proto.MapBuilderService/GetTrajectoryStates")
 
-proto::TrajectoryRemapping ToProto(
-    const std::map<int, int>& trajectory_remapping);
-std::map<int, int> FromProto(const proto::TrajectoryRemapping& proto);
+class GetTrajectoryStatesHandler
+    : public async_grpc::RpcHandler<GetTrajectoryStatesSignature> {
+ public:
+  void OnRequest(const google::protobuf::Empty& request) override;
+};
 
+}  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_CLOUD_INTERNAL_MAPPING_SERIALIZATION_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_GET_TRAJECTORY_STATES_HANDLER_H

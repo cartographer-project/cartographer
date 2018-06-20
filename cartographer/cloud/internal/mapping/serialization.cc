@@ -20,6 +20,42 @@
 
 namespace cartographer {
 namespace cloud {
+namespace {
+
+using TrajectoryState =
+    ::cartographer::mapping::PoseGraphInterface::TrajectoryState;
+
+}  // namespace
+
+proto::TrajectoryState ToProto(const TrajectoryState& trajectory_state) {
+  switch (trajectory_state) {
+    case TrajectoryState::ACTIVE:
+      return proto::TrajectoryState::ACTIVE;
+    case TrajectoryState::FINISHED:
+      return proto::TrajectoryState::FINISHED;
+    case TrajectoryState::FROZEN:
+      return proto::TrajectoryState::FROZEN;
+    case TrajectoryState::DELETED:
+      return proto::TrajectoryState::DELETED;
+    default:
+      LOG(FATAL) << "Unknown TrajectoryState";
+  }
+}
+
+TrajectoryState FromProto(const proto::TrajectoryState& proto) {
+  switch (proto) {
+    case proto::TrajectoryState::ACTIVE:
+      return TrajectoryState::ACTIVE;
+    case proto::TrajectoryState::FINISHED:
+      return TrajectoryState::FINISHED;
+    case proto::TrajectoryState::FROZEN:
+      return TrajectoryState::FROZEN;
+    case proto::TrajectoryState::DELETED:
+      return TrajectoryState::DELETED;
+    default:
+      LOG(FATAL) << "Unknown proto::TrajectoryState";
+  }
+}
 
 proto::TrajectoryRemapping ToProto(
     const std::map<int, int>& trajectory_remapping) {

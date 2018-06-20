@@ -33,6 +33,13 @@ enum SensorType {
   LOCAL_SLAM_RESULT = 5;
 }
 
+enum TrajectoryState {
+  ACTIVE = 0;
+  FINISHED = 1;
+  FROZEN = 2;
+  DELETED = 3;
+}
+
 message SensorId {
   string id = 1;
   SensorType type = 2;
@@ -172,6 +179,10 @@ message GetTrajectoryNodePosesResponse {
   repeated TrajectoryNodePose node_poses = 1;
 }
 
+message GetTrajectoryStatesResponse {
+  map<int32 /* trajectory_id */, TrajectoryState> trajectories_state = 1;
+}
+
 message GetLandmarkPosesResponse {
   repeated cartographer.mapping.proto.PoseGraph.LandmarkPose landmark_poses = 1;
 }
@@ -275,6 +286,10 @@ service MapBuilderService {
   // Returns the current optimized trajectory poses.
   rpc GetTrajectoryNodePoses(google.protobuf.Empty)
       returns (GetTrajectoryNodePosesResponse);
+
+  // Returns the states of trajectories.
+  rpc GetTrajectoryStates(google.protobuf.Empty)
+      returns (GetTrajectoryStatesResponse);
 
   // Returns the current optimized landmark poses.
   rpc GetLandmarkPoses(google.protobuf.Empty)
