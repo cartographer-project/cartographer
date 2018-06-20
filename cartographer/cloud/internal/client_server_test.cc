@@ -340,16 +340,15 @@ TEST_F(ClientServerTest, LocalSlamAndDelete2D) {
   }
   WaitForLocalSlamResults(measurements.size());
   stub_->pose_graph()->RunFinalOptimization();
-  // TODO(gaschler): Enable after pending PR has merged.
-  // EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
-  //          PoseGraphInterface::TrajectoryState::ACTIVE);
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+            PoseGraphInterface::TrajectoryState::ACTIVE);
   EXPECT_GT(stub_->pose_graph()->GetAllSubmapPoses().size(), 0);
   EXPECT_GT(stub_->pose_graph()->GetTrajectoryNodePoses().size(), 0);
   stub_->FinishTrajectory(trajectory_id);
   stub_->pose_graph()->DeleteTrajectory(trajectory_id);
   stub_->pose_graph()->RunFinalOptimization();
-  // EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
-  //          PoseGraphInterface::TrajectoryState::DELETED);
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+            PoseGraphInterface::TrajectoryState::DELETED);
   EXPECT_EQ(stub_->pose_graph()->GetAllSubmapPoses().size(), 0);
   EXPECT_EQ(stub_->pose_graph()->GetTrajectoryNodePoses().size(), 0);
   server_->Shutdown();
