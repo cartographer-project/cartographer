@@ -147,7 +147,6 @@ void Grid2D::GrowLimits(const Eigen::Vector2f& point,
       }
       *grids[grid_index] = new_cells;
     }
-
     limits_ = new_limits;
     if (!known_cells_box_.isEmpty()) {
       known_cells_box_.translate(Eigen::Vector2i(x_offset, y_offset));

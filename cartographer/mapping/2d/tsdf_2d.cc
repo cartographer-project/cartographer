@@ -46,16 +46,16 @@ TSDF2D::TSDF2D(const proto::Grid2D& proto) : Grid2D(proto) {
 void TSDF2D::SetCell(const Eigen::Array2i& cell_index, const float tsd,
                      const float weight) {
   const int flat_index = ToFlatIndex(cell_index);
-  uint16& tsdf_cell = (*mutable_correspondence_cost_cells())[flat_index];
-  uint16& weight_cell = weight_cells_[flat_index];
-  if (tsdf_cell >= value_converter->getUpdateMarker()) {
+  uint16* tsdf_cell = &(*mutable_correspondence_cost_cells())[flat_index];
+  uint16* weight_cell = &weight_cells_[flat_index];
+  if (*tsdf_cell >= value_converter->getUpdateMarker()) {
     return;
   }
   mutable_update_indices()->push_back(flat_index);
   mutable_known_cells_box()->extend(cell_index.matrix());
-  tsdf_cell =
+  *tsdf_cell =
       value_converter->TSDToValue(tsd) + value_converter->getUpdateMarker();
-  weight_cell = value_converter->WeightToValue(weight);
+  *weight_cell = value_converter->WeightToValue(weight);
   return;
 }
 
