@@ -73,6 +73,10 @@ class Grid2D : public GridInterface {
       transform::Rigid3d local_pose) const = 0;
 
  protected:
+  void GrowLimits(const Eigen::Vector2f& point,
+                  const std::vector<std::vector<uint16>*>& grids,
+                  const std::vector<uint16>& grids_unknown_cell_values);
+
   const std::vector<uint16>& correspondence_cost_cells() const {
     return correspondence_cost_cells_;
   }
