@@ -47,9 +47,6 @@ TEST(TSDF2DTest, ProtoConstructor) {
 
   TSDF2D grid(proto);
   EXPECT_EQ(proto.limits().DebugString(), ToProto(grid.limits()).DebugString());
-
-  // TODO(macmason): Figure out how to test the contents of cells_ and
-  // {min, max}_{x, y}_ gracefully.
 }
 
 TEST(TSDF2DTest, ToProto) {
@@ -58,9 +55,6 @@ TEST(TSDF2DTest, ToProto) {
 
   const auto proto = tsdf.ToProto();
   EXPECT_EQ(ToProto(tsdf.limits()).DebugString(), proto.limits().DebugString());
-
-  // TODO(macmason): Figure out how to test the contents of cells_ and
-  // {min, max}_{x, y}_ gracefully.
 }
 
 TEST(TSDF2DTest, GetCellIndex) {
@@ -94,8 +88,8 @@ TEST(TSDF2DTest, GetCellIndex) {
 }
 
 TEST(TSDF2DTest, WriteRead) {
-  float truncation_distance = 1.f;
-  float max_weight = 10.f;
+  const float truncation_distance = 1.f;
+  const float max_weight = 10.f;
   TSDF2D tsdf(MapLimits(1., Eigen::Vector2d(1., 2.), CellLimits(2, 2)),
               truncation_distance, max_weight);
 
@@ -112,8 +106,8 @@ TEST(TSDF2DTest, WriteRead) {
                                                          truncation_distance);
   std::uniform_real_distribution<float> weight_distribution(0.f, max_weight);
   for (size_t i = 0; i < 1; ++i) {
-    float tsd = tsd_distribution(rng);
-    float weight = weight_distribution(rng);
+    const float tsd = tsd_distribution(rng);
+    const float weight = weight_distribution(rng);
     tsdf.SetCell(limits.GetCellIndex(Vector2f(-0.5f, 0.5f)), tsd, weight);
     EXPECT_NEAR(
         tsdf.GetTSDAndWeight(limits.GetCellIndex(Vector2f(-0.5f, 0.5f))).first,
@@ -136,8 +130,8 @@ TEST(TSDF2DTest, WriteRead) {
 
 TEST(TSDF2DTest, CorrectCropping) {
   // Create a TSDF with random values.
-  float truncation_distance = 1.f;
-  float max_weight = 10.f;
+  const float truncation_distance = 1.f;
+  const float max_weight = 10.f;
   std::mt19937 rng(42);
   std::uniform_real_distribution<float> tsdf_distribution(-truncation_distance,
                                                           truncation_distance);

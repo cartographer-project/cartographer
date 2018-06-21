@@ -49,7 +49,7 @@ class TSDF2D : public Grid2D {
       transform::Rigid3d local_pose) const override;
 
  private:
-  std::unique_ptr<TSDValueConverter> value_converter;
+  std::unique_ptr<TSDValueConverter> value_converter_;
   std::vector<uint16> weight_cells_;  // Highest bit is update marker.
 };
 

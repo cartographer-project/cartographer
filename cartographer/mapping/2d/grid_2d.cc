@@ -157,10 +157,8 @@ void Grid2D::GrowLimits(const Eigen::Vector2f& point,
 proto::Grid2D Grid2D::ToProto() const {
   proto::Grid2D result;
   *result.mutable_limits() = mapping::ToProto(limits_);
-  result.mutable_cells()->Reserve(correspondence_cost_cells_.size());
-  for (const auto& cell : correspondence_cost_cells_) {
-    result.mutable_cells()->Add(cell);
-  }
+  *result.mutable_cells() = {correspondence_cost_cells_.begin(),
+                             correspondence_cost_cells_.end()};
   CHECK(update_indices().empty()) << "Serializing a grid during an update is "
                                      "not supported. Finish the update first.";
   if (!known_cells_box().isEmpty()) {

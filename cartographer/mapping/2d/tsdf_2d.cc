@@ -26,15 +26,15 @@ namespace mapping {
 TSDF2D::TSDF2D(const MapLimits& limits, float truncation_distance,
                float max_weight)
     : Grid2D(limits, -truncation_distance, truncation_distance),
-      value_converter(common::make_unique<TSDValueConverter>(
+      value_converter_(common::make_unique<TSDValueConverter>(
           truncation_distance, max_weight)),
       weight_cells_(
           limits.cell_limits().num_x_cells * limits.cell_limits().num_y_cells,
-          value_converter->getUnknownWeightValue()) {}
+          value_converter_->getUnknownWeightValue()) {}
 
 TSDF2D::TSDF2D(const proto::Grid2D& proto) : Grid2D(proto) {
   CHECK(proto.has_tsdf_2d());
-  value_converter = common::make_unique<TSDValueConverter>(
+  value_converter_ = common::make_unique<TSDValueConverter>(
       proto.tsdf_2d().truncation_distance(), proto.tsdf_2d().max_weight());
   weight_cells_.reserve(proto.tsdf_2d().weight_cells_size());
   for (const auto& cell : proto.tsdf_2d().weight_cells()) {
@@ -43,36 +43,36 @@ TSDF2D::TSDF2D(const proto::Grid2D& proto) : Grid2D(proto) {
   }
 }
 
-void TSDF2D::SetCell(const Eigen::Array2i& cell_index, const float tsd,
-                     const float weight) {
+void TSDF2D::SetCell(const Eigen::Array2i& cell_index, float tsd,
+                     float weight) {
   const int flat_index = ToFlatIndex(cell_index);
   uint16* tsdf_cell = &(*mutable_correspondence_cost_cells())[flat_index];
   uint16* weight_cell = &weight_cells_[flat_index];
-  if (*tsdf_cell >= value_converter->getUpdateMarker()) {
+  if (*tsdf_cell >= value_converter_->getUpdateMarker()) {
     return;
   }
   mutable_update_indices()->push_back(flat_index);
   mutable_known_cells_box()->extend(cell_index.matrix());
   *tsdf_cell =
-      value_converter->TSDToValue(tsd) + value_converter->getUpdateMarker();
-  *weight_cell = value_converter->WeightToValue(weight);
+      value_converter_->TSDToValue(tsd) + value_converter_->getUpdateMarker();
+  *weight_cell = value_converter_->WeightToValue(weight);
   return;
 }
 
 float TSDF2D::GetTSD(const Eigen::Array2i& cell_index) const {
   if (limits().Contains(cell_index)) {
-    return value_converter->ValueToTSD(
+    return value_converter_->ValueToTSD(
         correspondence_cost_cells()[ToFlatIndex(cell_index)]);
   }
-  return value_converter->getMinTSD();
+  return value_converter_->getMinTSD();
 }
 
 float TSDF2D::GetWeight(const Eigen::Array2i& cell_index) const {
   if (limits().Contains(cell_index)) {
-    return value_converter->ValueToWeight(
+    return value_converter_->ValueToWeight(
         weight_cells_[ToFlatIndex(cell_index)]);
   }
-  return value_converter->getMinWeight();
+  return value_converter_->getMinWeight();
 }
 
 std::pair<float, float> TSDF2D::GetTSDAndWeight(
@@ -80,31 +80,28 @@ std::pair<float, float> TSDF2D::GetTSDAndWeight(
   if (limits().Contains(cell_index)) {
     int flat_index = ToFlatIndex(cell_index);
     return std::make_pair(
-        value_converter->ValueToTSD(correspondence_cost_cells()[flat_index]),
-        value_converter->ValueToWeight(weight_cells_[flat_index]));
+        value_converter_->ValueToTSD(correspondence_cost_cells()[flat_index]),
+        value_converter_->ValueToWeight(weight_cells_[flat_index]));
   }
-  return std::make_pair(value_converter->getMinTSD(),
-                        value_converter->getMinWeight());
+  return std::make_pair(value_converter_->getMinTSD(),
+                        value_converter_->getMinWeight());
 }
 
 void TSDF2D::GrowLimits(const Eigen::Vector2f& point) {
   Grid2D::GrowLimits(point,
                      {mutable_correspondence_cost_cells(), &weight_cells_},
-                     {value_converter->getUnknownTSDValue(),
-                      value_converter->getUnknownWeightValue()});
+                     {value_converter_->getUnknownTSDValue(),
+                      value_converter_->getUnknownWeightValue()});
 }
 
 proto::Grid2D TSDF2D::ToProto() const {
   proto::Grid2D result;
   result = Grid2D::ToProto();
-  result.mutable_tsdf_2d()->mutable_weight_cells()->Reserve(
-      weight_cells_.size());
-  for (const auto& cell : weight_cells_) {
-    result.mutable_tsdf_2d()->mutable_weight_cells()->Add(cell);
-  }
+  *result.mutable_tsdf_2d()->mutable_weight_cells() = {weight_cells_.begin(),
+                                                       weight_cells_.end()};
   result.mutable_tsdf_2d()->set_truncation_distance(
-      value_converter->getMaxTSD());
-  result.mutable_tsdf_2d()->set_max_weight(value_converter->getMaxWeight());
+      value_converter_->getMaxTSD());
+  result.mutable_tsdf_2d()->set_max_weight(value_converter_->getMaxWeight());
   return result;
 }
 
@@ -116,14 +113,14 @@ std::unique_ptr<Grid2D> TSDF2D::ComputeCroppedGrid() const {
   const Eigen::Vector2d max =
       limits().max() - resolution * Eigen::Vector2d(offset.y(), offset.x());
   std::unique_ptr<TSDF2D> cropped_grid = common::make_unique<TSDF2D>(
-      MapLimits(resolution, max, cell_limits), value_converter->getMaxTSD(),
-      value_converter->getMaxWeight());
+      MapLimits(resolution, max, cell_limits), value_converter_->getMaxTSD(),
+      value_converter_->getMaxWeight());
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(cell_limits)) {
     if (!IsKnown(xy_index + offset)) continue;
     cropped_grid->SetCell(xy_index, GetTSD(xy_index + offset),
                           GetWeight(xy_index + offset));
   }
-  return std::unique_ptr<Grid2D>(cropped_grid.release());
+  return std::move(cropped_grid);
 }
 
 bool TSDF2D::DrawToSubmapTexture(
@@ -147,9 +144,9 @@ bool TSDF2D::DrawToSubmapTexture(
     // detect visually for the user, though.
     float normalized_tsdf = std::abs(GetTSD(xy_index + offset));
     normalized_tsdf =
-        std::pow(normalized_tsdf / value_converter->getMaxTSD(), 0.5f);
+        std::pow(normalized_tsdf / value_converter_->getMaxTSD(), 0.5f);
     float normalized_weight =
-        GetWeight(xy_index + offset) / value_converter->getMaxWeight();
+        GetWeight(xy_index + offset) / value_converter_->getMaxWeight();
     const int delta = static_cast<int>(
         std::round(normalized_weight * (normalized_tsdf * 255. - 128.)));
     const uint8 alpha = delta > 0 ? 0 : -delta;
