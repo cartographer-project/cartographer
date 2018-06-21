@@ -1,0 +1,51 @@
+// Copyright 2018 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cartographer.mapping.proto;
+
+import "cartographer/mapping/proto/2d/normal_estimation_options_2d.proto";
+
+enum RangeDataInserter2DWeightType {
+  INVALID_WEIGHT_TYPE = 0;
+  CONSTANT_WEIGHT = 1;
+  LINEAR_WEIGHT = 2;
+  QUADRATIC_WEIGHT = 3;
+}
+
+message TSDFRangeDataInserterOptions2D {
+  RangeDataInserter2DWeightType range_data_inserter_weight_type = 1;
+  // Distance in front of the wall within the signed distance function is
+  // evaluation
+  double truncation_distance = 2;
+  // Distance behind the range observation where weight reduction starts
+  double behind_surface_distance = 3;
+  // Factor scaling the update weight
+  double update_weight = 4;
+  // Maximum weight that can be stored in a cell
+  double maximum_weight = 5;
+
+  NormalEstimationOptions2D normal_estimation_options = 6;
+
+  bool project_sdf_distance_to_scan_normal = 7;
+
+  bool scale_update_weight_to_angle_scan_normal_to_ray = 8;
+
+  double update_weight_angle_scan_normal_to_ray_kernel_bandwith = 9;
+
+  bool scale_update_weight_to_distance_cell_to_hit = 10;
+
+  double update_weight_distance_cell_to_hit_kernel_bandwith = 11;
+}

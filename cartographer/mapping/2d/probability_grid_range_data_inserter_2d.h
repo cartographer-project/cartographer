@@ -46,7 +46,7 @@ class ProbabilityGridRangeDataInserter2D : public RangeDataInserterInterface {
   ProbabilityGridRangeDataInserter2D& operator=(
       const ProbabilityGridRangeDataInserter2D&) = delete;
 
-  // Inserts 'range_data' into 'probability_grid'.
+  // Inserts 'range_data' into 'rid'.
   virtual void Insert(const sensor::RangeData& range_data,
                       GridInterface* grid) const override;
 
