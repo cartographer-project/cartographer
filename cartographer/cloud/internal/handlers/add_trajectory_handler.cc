@@ -53,7 +53,7 @@ void AddTrajectoryHandler::OnRequest(
 
     // Don't instantiate the 'PureLocalizationTrimmer' on the server and don't
     // freeze the trajectory on the server.
-    trajectory_builder_options.set_pure_localization(false);
+    trajectory_builder_options.clear_pure_localization_trimmer();
 
     GetContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
