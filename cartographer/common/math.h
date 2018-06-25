@@ -71,6 +71,19 @@ T atan2(const Eigen::Matrix<T, 2, 1>& vector) {
   return ceres::atan2(vector.y(), vector.x());
 }
 
+// Calulates the circular mean by transforming 'angles' to unit vectors and
+// calculating the arithmetic mean in Cartesian space.
+template <typename T>
+T CircularMean(const std::vector<T>& angles) {
+  T summed_y = 0;
+  T summed_x = 0;
+  for (const T angle : angles) {
+    summed_y += std::sin(angle);
+    summed_x += std::cos(angle);
+  }
+  return ceres::atan2(summed_y, summed_x);
+}
+
 template <typename T>
 inline void QuaternionProduct(const double* const z, const T* const w,
                               T* const zw) {
