@@ -33,8 +33,8 @@ proto::GridOptions2D CreateGridOptions2D(
 
 class Grid2D : public GridInterface {
  public:
-  explicit Grid2D(const MapLimits& limits, float min_correspondence_cost,
-                  float max_correspondence_cost);
+  Grid2D(const MapLimits& limits, float min_correspondence_cost,
+         float max_correspondence_cost);
   explicit Grid2D(const proto::Grid2D& proto);
 
   // Returns the limits of this Grid2D.
@@ -73,6 +73,10 @@ class Grid2D : public GridInterface {
       transform::Rigid3d local_pose) const = 0;
 
  protected:
+  void GrowLimits(const Eigen::Vector2f& point,
+                  const std::vector<std::vector<uint16>*>& grids,
+                  const std::vector<uint16>& grids_unknown_cell_values);
+
   const std::vector<uint16>& correspondence_cost_cells() const {
     return correspondence_cost_cells_;
   }

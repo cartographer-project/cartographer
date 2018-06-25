@@ -114,6 +114,13 @@ void Grid2D::ComputeCroppedLimits(Eigen::Array2i* const offset,
 // these coordinates going forward. This method must be called immediately
 // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
 void Grid2D::GrowLimits(const Eigen::Vector2f& point) {
+  GrowLimits(point, {mutable_correspondence_cost_cells()},
+             {kUnknownCorrespondenceValue});
+}
+
+void Grid2D::GrowLimits(const Eigen::Vector2f& point,
+                        const std::vector<std::vector<uint16>*>& grids,
+                        const std::vector<uint16>& grids_unknown_cell_values) {
   CHECK(update_indices_.empty());
   while (!limits_.Contains(limits_.GetCellIndex(point))) {
     const int x_offset = limits_.cell_limits().num_x_cells / 2;
@@ -128,15 +135,18 @@ void Grid2D::GrowLimits(const Eigen::Vector2f& point) {
     const int offset = x_offset + stride * y_offset;
     const int new_size = new_limits.cell_limits().num_x_cells *
                          new_limits.cell_limits().num_y_cells;
-    std::vector<uint16> new_cells(new_size, kUnknownCorrespondenceValue);
-    for (int i = 0; i < limits_.cell_limits().num_y_cells; ++i) {
-      for (int j = 0; j < limits_.cell_limits().num_x_cells; ++j) {
-        new_cells[offset + j + i * stride] =
-            correspondence_cost_cells_[j +
-                                       i * limits_.cell_limits().num_x_cells];
+
+    for (size_t grid_index = 0; grid_index < grids.size(); ++grid_index) {
+      std::vector<uint16> new_cells(new_size,
+                                    grids_unknown_cell_values[grid_index]);
+      for (int i = 0; i < limits_.cell_limits().num_y_cells; ++i) {
+        for (int j = 0; j < limits_.cell_limits().num_x_cells; ++j) {
+          new_cells[offset + j + i * stride] =
+              (*grids[grid_index])[j + i * limits_.cell_limits().num_x_cells];
+        }
       }
+      *grids[grid_index] = new_cells;
     }
-    correspondence_cost_cells_ = new_cells;
     limits_ = new_limits;
     if (!known_cells_box_.isEmpty()) {
       known_cells_box_.translate(Eigen::Vector2i(x_offset, y_offset));
@@ -147,10 +157,8 @@ void Grid2D::GrowLimits(const Eigen::Vector2f& point) {
 proto::Grid2D Grid2D::ToProto() const {
   proto::Grid2D result;
   *result.mutable_limits() = mapping::ToProto(limits_);
-  result.mutable_cells()->Reserve(correspondence_cost_cells_.size());
-  for (const auto& cell : correspondence_cost_cells_) {
-    result.mutable_cells()->Add(cell);
-  }
+  *result.mutable_cells() = {correspondence_cost_cells_.begin(),
+                             correspondence_cost_cells_.end()};
   CHECK(update_indices().empty()) << "Serializing a grid during an update is "
                                      "not supported. Finish the update first.";
   if (!known_cells_box().isEmpty()) {
