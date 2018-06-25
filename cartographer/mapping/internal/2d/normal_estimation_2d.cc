@@ -50,14 +50,11 @@ float EstimateNormal(const Eigen::Vector3f& observation,
 proto::NormalEstimationOptions2D CreateNormalEstimationOptions2D(
     common::LuaParameterDictionary* parameter_dictionary) {
   proto::NormalEstimationOptions2D options;
-  options.set_enable(parameter_dictionary->GetBool("enable"));
   options.set_num_normal_samples(
       parameter_dictionary->GetInt("num_normal_samples"));
   options.set_sample_radius(parameter_dictionary->GetDouble("sample_radius"));
-  if (options.enable()) {
-    CHECK_GT(options.num_normal_samples(), 0);
-    CHECK_GT(options.sample_radius(), 0.0);
-  }
+  CHECK_GT(options.num_normal_samples(), 0);
+  CHECK_GT(options.sample_radius(), 0.0);
   return options;
 }
 

@@ -29,7 +29,6 @@ namespace {
 TEST(NormalEstimation2DTest, StraightLineGeometry) {
   const auto parameter_dictionary = common::MakeDictionary(
       "return { "
-      "enable = true, "
       "num_normal_samples = 2, "
       "sample_radius = 10.0, "
       "}");
@@ -81,7 +80,6 @@ TEST(NormalEstimation2DTest, StraightLineGeometry) {
 TEST(NormalEstimation2DTest, CircularGeometry) {
   const auto parameter_dictionary = common::MakeDictionary(
       "return { "
-      "enable = true, "
       "num_normal_samples = 2, "
       "sample_radius = 10.0, "
       "}");
@@ -110,7 +108,6 @@ TEST(NormalEstimation2DTest, CircularGeometry) {
 TEST(NormalEstimation2DTest, CircularGeometrySingleSample) {
   const auto parameter_dictionary = common::MakeDictionary(
       "return { "
-      "enable = true, "
       "num_normal_samples = 1, "
       "sample_radius = 10.0, "
       "}");

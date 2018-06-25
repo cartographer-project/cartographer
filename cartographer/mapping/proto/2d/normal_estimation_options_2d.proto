@@ -17,7 +17,6 @@ syntax = "proto3";
 package cartographer.mapping.proto;
 
 message NormalEstimationOptions2D {
-  bool enable = 1;
-  int32 num_normal_samples = 2;
-  float sample_radius = 3;
+  int32 num_normal_samples = 1;
+  float sample_radius = 2;
 }
