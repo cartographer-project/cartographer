@@ -30,7 +30,7 @@ namespace mapping {
 // Represents a 2D grid of truncated signed distances and weights.
 class TSDF2D : public Grid2D {
  public:
-  explicit TSDF2D(const MapLimits& limits, float truncation_distance,
+  TSDF2D(const MapLimits& limits, float truncation_distance,
                   float max_weight);
   explicit TSDF2D(const proto::Grid2D& proto);
 
