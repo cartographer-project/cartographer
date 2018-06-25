@@ -34,7 +34,7 @@ proto::GridOptions2D CreateGridOptions2D(
 class Grid2D : public GridInterface {
  public:
   Grid2D(const MapLimits& limits, float min_correspondence_cost,
-                  float max_correspondence_cost);
+         float max_correspondence_cost);
   explicit Grid2D(const proto::Grid2D& proto);
 
   // Returns the limits of this Grid2D.
