@@ -20,6 +20,19 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
+// Calulates the circular mean by transforming 'angles' to unit vectors and
+// calculating the arithmetic mean in Cartesian space.
+template <typename T>
+T CircularMean(const std::vector<T>& angles) {
+  T summed_y = 0;
+  T summed_x = 0;
+  for (const T angle : angles) {
+    summed_y += std::sin(angle);
+    summed_x += std::cos(angle);
+  }
+  return ceres::atan2(summed_y, summed_x);
+}
+
 float Angle(const Eigen::Vector3f& v) { return std::atan2(v[1], v[0]); }
 
 // Estimate the normal of an 'observation' as the arithmetic mean of the the
@@ -43,7 +56,7 @@ float EstimateNormal(const Eigen::Vector3f& observation,
     float normal_angle = Angle(normal);
     normals.push_back(normal_angle);
   }
-  return common::CircularMean(normals);
+  return CircularMean(normals);
 }
 }  // namespace
 
