@@ -29,30 +29,32 @@ float NormalTo2DAngle(const Eigen::Vector3f& v) {
 // sample_window.
 float EstimateNormal(const sensor::PointCloud& returns,
                      const size_t estimation_point_index,
-                     const size_t sample_window_first,
-                     const size_t sample_window_last,
+                     const size_t sample_window_begin,
+                     const size_t sample_window_end,
                      const Eigen::Vector3f& sensor_origin) {
   const Eigen::Vector3f& estimation_point = returns[estimation_point_index];
-  if (sample_window_last - sample_window_first < 2) {
+  if (sample_window_end - sample_window_begin < 2) {
     return NormalTo2DAngle(sensor_origin - estimation_point);
   }
   Eigen::Vector3f mean_normal = Eigen::Vector3f::Zero();
   const Eigen::Vector3f& estimation_point_to_observation =
       sensor_origin - estimation_point;
-  for (size_t sample_point_index = sample_window_first;
-       sample_point_index < sample_window_last; ++sample_point_index) {
+  for (size_t sample_point_index = sample_window_begin;
+       sample_point_index < sample_window_end; ++sample_point_index) {
     if (sample_point_index == estimation_point_index) continue;
     const Eigen::Vector3f& sample_point = returns[sample_point_index];
     const Eigen::Vector3f& tangent = estimation_point - sample_point;
     Eigen::Vector3f sample_normal = {-tangent[1], tangent[0], 0.f};
+    constexpr float kMinNormalLength = 1e-6f;
+    if (sample_normal.norm() < kMinNormalLength) {
+      continue;
+    }
     // Ensure sample_normal points towards 'sensor_origin'.
     if (sample_normal.dot(estimation_point_to_observation) < 0) {
       sample_normal = -sample_normal;
     }
-    if (sample_normal.norm() > 1e-6) {
-      sample_normal.normalize();
-      mean_normal += sample_normal;
-    }
+    sample_normal.normalize();
+    mean_normal += sample_normal;
   }
   return NormalTo2DAngle(mean_normal);
 }
@@ -82,23 +84,23 @@ std::vector<float> EstimateNormals(
   for (size_t current_point = 0; current_point < range_data.returns.size();
        ++current_point) {
     const Eigen::Vector3f& hit = range_data.returns[current_point];
-    size_t sample_window_first = current_point;
-    for (; sample_window_first > 0 &&
-           current_point - sample_window_first < max_num_samples / 2 &&
-           (hit - range_data.returns[sample_window_first - 1]).norm() <
+    size_t sample_window_begin = current_point;
+    for (; sample_window_begin > 0 &&
+           current_point - sample_window_begin < max_num_samples / 2 &&
+           (hit - range_data.returns[sample_window_begin - 1]).norm() <
                sample_radius;
-         --sample_window_first) {
+         --sample_window_begin) {
     }
-    size_t sample_window_last = current_point;
+    size_t sample_window_end = current_point;
     for (;
-         sample_window_last < range_data.returns.size() &&
-         sample_window_last - current_point < ceil(max_num_samples / 2.0) + 1 &&
-         (hit - range_data.returns[sample_window_last]).norm() < sample_radius;
-         ++sample_window_last) {
+         sample_window_end < range_data.returns.size() &&
+         sample_window_end - current_point < ceil(max_num_samples / 2.0) + 1 &&
+         (hit - range_data.returns[sample_window_end]).norm() < sample_radius;
+         ++sample_window_end) {
     }
     const float normal_estimate =
-        EstimateNormal(range_data.returns, current_point, sample_window_first,
-                       sample_window_last, range_data.origin);
+        EstimateNormal(range_data.returns, current_point, sample_window_begin,
+                       sample_window_end, range_data.origin);
     normals.push_back(normal_estimate);
   }
   return normals;
