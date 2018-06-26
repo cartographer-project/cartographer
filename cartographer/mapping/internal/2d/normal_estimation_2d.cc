@@ -20,43 +20,37 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-// Calulates the circular mean by transforming 'angles' to unit vectors and
-// calculating the arithmetic mean in Cartesian space.
-template <typename T>
-T CircularMean(const std::vector<T>& angles) {
-  T summed_y = 0;
-  T summed_x = 0;
-  for (const T angle : angles) {
-    summed_y += std::sin(angle);
-    summed_x += std::cos(angle);
-  }
-  return ceres::atan2(summed_y, summed_x);
-}
-
 float Angle(const Eigen::Vector3f& v) { return std::atan2(v[1], v[0]); }
 
-// Estimate the normal of an 'observation' as the arithmetic mean of the the
-// normals of the vectors from 'observation' to each 'neighbor'.
-float EstimateNormal(const Eigen::Vector3f& observation,
-                     const std::vector<Eigen::Vector3f>& neighbors,
-                     const Eigen::Vector3f& observation_origin) {
-  if (neighbors.empty()) {
-    return Angle(observation_origin - observation);
+// Estimate the normal of an estimation_point as the arithmetic mean of the the
+// normals of the vectors from estimation_point to each point in the
+// sample_window.
+float EstimateNormal(sensor::PointCloud returns,
+                     const size_t estimation_point_index,
+                     const size_t sample_window_lower_bound,
+                     const size_t sample_window_upper_bound,
+                     const Eigen::Vector3f& sensor_origin) {
+  const Eigen::Vector3f estimation_point = returns[estimation_point_index];
+  if (sample_window_upper_bound - sample_window_lower_bound < 2) {
+    return Angle(sensor_origin - estimation_point);
   }
-  std::vector<float> normals;
-  const Eigen::Vector3f origin_to_observation =
-      observation_origin - observation;
-  for (const auto& neighbor : neighbors) {
-    const Eigen::Vector3f tangent = observation - neighbor;
-    Eigen::Vector3f normal = {-tangent[1], tangent[0], tangent[2]};
-    // Ensure normal points towards 'observation_origin'.
-    if (normal.dot(origin_to_observation) < 0) {
-      normal = -normal;
+  Eigen::Vector3f mean_normal = Eigen::Vector3f::Zero();
+  const Eigen::Vector3f estimation_point_to_observation =
+      sensor_origin - estimation_point;
+  for (size_t sample_point_index = sample_window_lower_bound;
+       sample_point_index < sample_window_upper_bound; ++sample_point_index) {
+    if (sample_point_index == estimation_point_index) continue;
+    const Eigen::Vector3f sample_point = returns[sample_point_index];
+    const Eigen::Vector3f tangent = estimation_point - sample_point;
+    Eigen::Vector3f sample_normal = {-tangent[1], tangent[0], 0.f};
+    // Ensure sample_normal points towards 'sensor_origin'.
+    if (sample_normal.dot(estimation_point_to_observation) < 0) {
+      sample_normal = -sample_normal;
     }
-    float normal_angle = Angle(normal);
-    normals.push_back(normal_angle);
+    sample_normal.normalize();
+    mean_normal += sample_normal;
   }
-  return CircularMean(normals);
+  return Angle(mean_normal);
 }
 }  // namespace
 
@@ -74,47 +68,37 @@ proto::NormalEstimationOptions2D CreateNormalEstimationOptions2D(
 // Estimates the normal for each 'return' in 'range_data'.
 // Assumes the angles in the range data returns are sorted with respect to
 // the orientation of the vector from 'origin' to 'return'.
-void EstimateNormals(
-    const sensor::RangeData& range_data, std::vector<float>* normals,
+std::vector<float> EstimateNormals(
+    const sensor::RangeData& range_data,
     const proto::NormalEstimationOptions2D& normal_estimation_options) {
-  CHECK(normals != nullptr);
+  std::vector<float> normals;
   const size_t max_num_samples = normal_estimation_options.num_normal_samples();
   const float sample_radius = normal_estimation_options.sample_radius();
-  for (size_t i_hit = 0; i_hit < range_data.returns.size(); ++i_hit) {
-    const Eigen::Vector3f& hit = range_data.returns[i_hit];
-    size_t neighbors_lower_bound = i_hit;
-    while (neighbors_lower_bound > 0 &&
-           i_hit - neighbors_lower_bound < max_num_samples / 2 &&
-           (hit - range_data.returns[neighbors_lower_bound - 1]).norm() <
-               sample_radius) {
-      neighbors_lower_bound--;
+  for (size_t current_point = 0; current_point < range_data.returns.size();
+       ++current_point) {
+    const Eigen::Vector3f& hit = range_data.returns[current_point];
+    size_t sample_window_lower_bound = current_point;
+    for (; sample_window_lower_bound > 0 &&
+           current_point - sample_window_lower_bound < max_num_samples / 2 &&
+           (hit - range_data.returns[sample_window_lower_bound - 1]).norm() <
+               sample_radius;
+         --sample_window_lower_bound) {
     }
-    size_t neighbors_upper_bound = i_hit;
-    while (neighbors_upper_bound < range_data.returns.size() - 1 &&
-           neighbors_upper_bound - i_hit <
+    size_t sample_window_upper_bound = current_point;
+    for (; sample_window_upper_bound < range_data.returns.size() - 1 &&
+           sample_window_upper_bound - current_point <
                max_num_samples / 2 + max_num_samples % 2 &&
-           (hit - range_data.returns[neighbors_upper_bound + 1]).norm() <
-               sample_radius) {
-      neighbors_upper_bound++;
+           (hit - range_data.returns[sample_window_upper_bound + 1]).norm() <
+               sample_radius;
+         ++sample_window_upper_bound) {
     }
-    std::vector<Eigen::Vector3f> neighbors;
-    const size_t n_to_upper_bound = neighbors_upper_bound - i_hit;
-    const size_t n_to_lower_bound = i_hit - neighbors_lower_bound;
-    for (size_t upper_offset = 1;
-         i_hit + upper_offset < range_data.returns.size() &&
-         upper_offset <= n_to_upper_bound;
-         ++upper_offset) {
-      neighbors.push_back(range_data.returns[i_hit + upper_offset]);
-    }
-    for (size_t lower_offset = 1;
-         i_hit >= lower_offset && lower_offset <= n_to_lower_bound;
-         ++lower_offset) {
-      neighbors.push_back(range_data.returns[i_hit - lower_offset]);
-    }
-    const float normal_estimate =
-        EstimateNormal(range_data.returns[i_hit], neighbors, range_data.origin);
-    normals->push_back(normal_estimate);
+
+    const float normal_estimate = EstimateNormal(
+        range_data.returns, current_point, sample_window_lower_bound,
+        sample_window_upper_bound + 1, range_data.origin);
+    normals.push_back(normal_estimate);
   }
+  return normals;
 }
 
 }  // namespace mapping

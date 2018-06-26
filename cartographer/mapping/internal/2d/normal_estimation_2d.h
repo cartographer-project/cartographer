@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_NORMAL_ESTIMATION_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_2D_NORMAL_ESTIMATION_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_NORMAL_ESTIMATION_2D_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_NORMAL_ESTIMATION_2D_H_
 
 #include <vector>
 #include "cartographer/mapping/proto/2d/normal_estimation_options_2d.pb.h"
@@ -32,11 +32,11 @@ proto::NormalEstimationOptions2D CreateNormalEstimationOptions2D(
 // Estimates the normal for each 'return' in 'range_data'.
 // Assumes the angles in the range data returns are sorted with respect to
 // the orientation of the vector from 'origin' to 'return'.
-void EstimateNormals(
-    const sensor::RangeData& range_data, std::vector<float>* normals,
+std::vector<float> EstimateNormals(
+    const sensor::RangeData& range_data,
     const proto::NormalEstimationOptions2D& normal_estimation_options);
 
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_2D_NORMAL_ESTIMATION_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_NORMAL_ESTIMATION_2D_H_
