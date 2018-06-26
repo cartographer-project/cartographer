@@ -986,6 +986,11 @@ bool PoseGraph2D::TrimmingHandle::IsFinished(const int trajectory_id) const {
   return parent_->IsTrajectoryFinished(trajectory_id);
 }
 
+void PoseGraph2D::TrimmingHandle::SetTrajectoryState(int trajectory_id,
+                                                     TrajectoryState state) {
+  parent_->data_.trajectories_state[trajectory_id].state = state;
+}
+
 void PoseGraph2D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   // TODO(hrapp): We have to make sure that the trajectory has been finished
   // if we want to delete the last submaps.
