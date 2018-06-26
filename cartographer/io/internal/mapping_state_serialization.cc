@@ -66,7 +66,7 @@ SerializedData SerializePoseGraph(const mapping::PoseGraph& pose_graph) {
   return proto;
 }
 
-SerializedData SerializeAllTrajectoryBuilderOptions(
+SerializedData SerializeTrajectoryBuilderOptions(
     const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
         trajectory_builder_options,
     const std::vector<int>& trajectory_ids_to_serialize) {
@@ -212,7 +212,7 @@ void WritePbStream(
     ProtoStreamWriterInterface* const writer) {
   writer->WriteProto(CreateHeader());
   writer->WriteProto(SerializePoseGraph(pose_graph));
-  writer->WriteProto(SerializeAllTrajectoryBuilderOptions(
+  writer->WriteProto(SerializeTrajectoryBuilderOptions(
       trajectory_builder_options,
       GetValidTrajectoryIds(pose_graph.GetTrajectoryStates())));
 
