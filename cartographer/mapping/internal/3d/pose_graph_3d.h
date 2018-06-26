@@ -268,6 +268,9 @@ class PoseGraph3D : public PoseGraph {
         REQUIRES(parent_->mutex_) override;
     bool IsFinished(int trajectory_id) const override REQUIRES(parent_->mutex_);
 
+    void SetTrajectoryState(int trajectory_id, TrajectoryState state) override
+        REQUIRES(parent_->mutex_);
+
    private:
     PoseGraph3D* const parent_;
   };
