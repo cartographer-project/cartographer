@@ -46,6 +46,10 @@ class Trimmable {
 
   // Checks if the given trajectory is finished or not.
   virtual bool IsFinished(int trajectory_id) const = 0;
+
+  // Sets the state for a specific trajectory.
+  virtual void SetTrajectoryState(
+      int trajectory_id, PoseGraphInterface::TrajectoryState state) = 0;
 };
 
 // An interface to implement algorithms that choose how to trim the pose graph.
