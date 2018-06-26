@@ -20,37 +20,41 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-float Angle(const Eigen::Vector3f& v) { return std::atan2(v[1], v[0]); }
+float NormalTo2DAngle(const Eigen::Vector3f& v) {
+  return std::atan2(v[1], v[0]);
+}
 
 // Estimate the normal of an estimation_point as the arithmetic mean of the the
 // normals of the vectors from estimation_point to each point in the
 // sample_window.
-float EstimateNormal(sensor::PointCloud returns,
+float EstimateNormal(const sensor::PointCloud& returns,
                      const size_t estimation_point_index,
-                     const size_t sample_window_lower_bound,
-                     const size_t sample_window_upper_bound,
+                     const size_t sample_window_first,
+                     const size_t sample_window_last,
                      const Eigen::Vector3f& sensor_origin) {
-  const Eigen::Vector3f estimation_point = returns[estimation_point_index];
-  if (sample_window_upper_bound - sample_window_lower_bound < 2) {
-    return Angle(sensor_origin - estimation_point);
+  const Eigen::Vector3f& estimation_point = returns[estimation_point_index];
+  if (sample_window_last - sample_window_first < 2) {
+    return NormalTo2DAngle(sensor_origin - estimation_point);
   }
   Eigen::Vector3f mean_normal = Eigen::Vector3f::Zero();
-  const Eigen::Vector3f estimation_point_to_observation =
+  const Eigen::Vector3f& estimation_point_to_observation =
       sensor_origin - estimation_point;
-  for (size_t sample_point_index = sample_window_lower_bound;
-       sample_point_index < sample_window_upper_bound; ++sample_point_index) {
+  for (size_t sample_point_index = sample_window_first;
+       sample_point_index < sample_window_last; ++sample_point_index) {
     if (sample_point_index == estimation_point_index) continue;
-    const Eigen::Vector3f sample_point = returns[sample_point_index];
-    const Eigen::Vector3f tangent = estimation_point - sample_point;
+    const Eigen::Vector3f& sample_point = returns[sample_point_index];
+    const Eigen::Vector3f& tangent = estimation_point - sample_point;
     Eigen::Vector3f sample_normal = {-tangent[1], tangent[0], 0.f};
     // Ensure sample_normal points towards 'sensor_origin'.
     if (sample_normal.dot(estimation_point_to_observation) < 0) {
       sample_normal = -sample_normal;
     }
-    sample_normal.normalize();
-    mean_normal += sample_normal;
+    if (sample_normal.norm() > 1e-6) {
+      sample_normal.normalize();
+      mean_normal += sample_normal;
+    }
   }
-  return Angle(mean_normal);
+  return NormalTo2DAngle(mean_normal);
 }
 }  // namespace
 
@@ -72,29 +76,29 @@ std::vector<float> EstimateNormals(
     const sensor::RangeData& range_data,
     const proto::NormalEstimationOptions2D& normal_estimation_options) {
   std::vector<float> normals;
+  normals.reserve(range_data.returns.size());
   const size_t max_num_samples = normal_estimation_options.num_normal_samples();
   const float sample_radius = normal_estimation_options.sample_radius();
   for (size_t current_point = 0; current_point < range_data.returns.size();
        ++current_point) {
     const Eigen::Vector3f& hit = range_data.returns[current_point];
-    size_t sample_window_lower_bound = current_point;
-    for (; sample_window_lower_bound > 0 &&
-           current_point - sample_window_lower_bound < max_num_samples / 2 &&
-           (hit - range_data.returns[sample_window_lower_bound - 1]).norm() <
+    size_t sample_window_first = current_point;
+    for (; sample_window_first > 0 &&
+           current_point - sample_window_first < max_num_samples / 2 &&
+           (hit - range_data.returns[sample_window_first - 1]).norm() <
                sample_radius;
-         --sample_window_lower_bound) {
+         --sample_window_first) {
     }
-    size_t sample_window_upper_bound = current_point;
-    for (; sample_window_upper_bound < range_data.returns.size() - 1 &&
-           sample_window_upper_bound - current_point <
-               max_num_samples / 2 + max_num_samples % 2 &&
-           (hit - range_data.returns[sample_window_upper_bound + 1]).norm() <
-               sample_radius;
-         ++sample_window_upper_bound) {
+    size_t sample_window_last = current_point;
+    for (;
+         sample_window_last < range_data.returns.size() &&
+         sample_window_last - current_point < ceil(max_num_samples / 2.0) + 1 &&
+         (hit - range_data.returns[sample_window_last]).norm() < sample_radius;
+         ++sample_window_last) {
     }
-    const float normal_estimate = EstimateNormal(
-        range_data.returns, current_point, sample_window_lower_bound,
-        sample_window_upper_bound + 1, range_data.origin);
+    const float normal_estimate =
+        EstimateNormal(range_data.returns, current_point, sample_window_first,
+                       sample_window_last, range_data.origin);
     normals.push_back(normal_estimate);
   }
   return normals;
