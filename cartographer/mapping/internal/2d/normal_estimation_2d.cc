@@ -92,7 +92,6 @@ std::vector<float> EstimateNormals(
                sample_radius;
          ++sample_window_upper_bound) {
     }
-
     const float normal_estimate = EstimateNormal(
         range_data.returns, current_point, sample_window_lower_bound,
         sample_window_upper_bound + 1, range_data.origin);
