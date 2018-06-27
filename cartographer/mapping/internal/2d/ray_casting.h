@@ -24,9 +24,8 @@
 namespace cartographer {
 namespace mapping {
 
-// We divide each pixel in kSubpixelScale x kSubpixelScale subpixels. 'begin'
-// and 'end' are coordinates at subpixel precision. We compute all pixels in
-// which some part of the line segment connecting 'begin' and 'end' lies.
+// Compute all pixels in which some part of the line segment connecting 'begin'
+// and 'end' lies with 'subpixel_scale' precision.
 std::vector<Eigen::Array2i> CastRay(const Eigen::Array2i& begin,
                                     const Eigen::Array2i& end,
                                     int subpixel_scale);
