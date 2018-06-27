@@ -19,21 +19,17 @@
 
 #include <vector>
 
-#include "cartographer/common/port.h"
-#include "cartographer/mapping/2d/probability_grid.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace mapping {
 
-// For each ray in 'range_data', inserts hits and misses into
-// 'probability_grid'. Hits are handled before misses.
-void CastRays(const sensor::RangeData& range_data,
-              const std::vector<uint16>& hit_table,
-              const std::vector<uint16>& miss_table, bool insert_free_space,
-              ProbabilityGrid* probability_grid);
+// We divide each pixel in kSubpixelScale x kSubpixelScale subpixels. 'begin'
+// and 'end' are coordinates at subpixel precision. We compute all pixels in
+// which some part of the line segment connecting 'begin' and 'end' lies.
+std::vector<Eigen::Array2i> CastRay(const Eigen::Array2i& begin,
+                                    const Eigen::Array2i& end,
+                                    int subpixel_scale);
 
 }  // namespace mapping
 }  // namespace cartographer
