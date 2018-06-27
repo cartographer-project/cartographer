@@ -35,28 +35,22 @@ namespace mapping {
 proto::TSDFRangeDataInserterOptions2D CreateTSDFRangeDataInserterOptions2D(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class RangeDataInserter2DTSDF : public RangeDataInserterInterface {
+class TSDFRangeDataInserter2D : public RangeDataInserterInterface {
  public:
-  explicit RangeDataInserter2DTSDF(
+  explicit TSDFRangeDataInserter2D(
       const proto::TSDFRangeDataInserterOptions2D& options);
 
-  RangeDataInserter2DTSDF(const RangeDataInserter2DTSDF&) = delete;
-  RangeDataInserter2DTSDF& operator=(const RangeDataInserter2DTSDF&) = delete;
+  TSDFRangeDataInserter2D(const TSDFRangeDataInserter2D&) = delete;
+  TSDFRangeDataInserter2D& operator=(const TSDFRangeDataInserter2D&) = delete;
 
   // Inserts 'range_data' into 'grid'.
   virtual void Insert(const sensor::RangeData& range_data,
                       GridInterface* grid) const override;
 
-  void ComputeNormals(sensor::RangeData& range_data,
-                      std::vector<float>* normals) const;
-
  private:
   void UpdateCell(TSDF2D* const tsdf, const Eigen::Array2i& cell,
-                  float update_sdf, float ray_length,
-                  float update_weight_scale) const;
-  float ComputeWeightConstant(float sdf) const;
-  float ComputeWeightLinear(float sdf, float ray_length) const;
-  float ComputeWeightQuadratic(float sdf, float ray_length) const;
+                  float update_sdf, float update_weight) const;
+  float ComputeWeight(float ray_length, int exponent) const;
   const proto::TSDFRangeDataInserterOptions2D options_;
 };
 
