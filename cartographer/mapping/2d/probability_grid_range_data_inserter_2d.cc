@@ -111,7 +111,8 @@ void ProbabilityGridRangeDataInserter2D::CastRays(
 
   // Now add the misses.
   for (const Eigen::Array2i& end : ends) {
-    std::vector<Eigen::Array2i> ray = CastRay(begin, end, kSubpixelScale);
+    std::vector<Eigen::Array2i> ray =
+        RayToPixelMask(begin, end, kSubpixelScale);
     for (const auto& cell_index : ray) {
       probability_grid->ApplyLookupTable(cell_index, miss_table_);
     }
@@ -119,9 +120,9 @@ void ProbabilityGridRangeDataInserter2D::CastRays(
 
   // Finally, compute and add empty rays based on misses in the range data.
   for (const Eigen::Vector3f& missing_echo : range_data.misses) {
-    std::vector<Eigen::Array2i> ray =
-        CastRay(begin, superscaled_limits.GetCellIndex(missing_echo.head<2>()),
-                kSubpixelScale);
+    std::vector<Eigen::Array2i> ray = RayToPixelMask(
+        begin, superscaled_limits.GetCellIndex(missing_echo.head<2>()),
+        kSubpixelScale);
     for (const auto& cell_index : ray) {
       probability_grid->ApplyLookupTable(cell_index, miss_table_);
     }

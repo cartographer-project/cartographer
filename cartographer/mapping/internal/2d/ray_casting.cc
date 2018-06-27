@@ -21,12 +21,12 @@ namespace mapping {
 
 // Compute all pixels in which some part of the line segment connecting 'begin'
 // and 'end' lies with 'subpixel_scale' precision.
-std::vector<Eigen::Array2i> CastRay(const Eigen::Array2i& begin,
-                                    const Eigen::Array2i& end,
-                                    int subpixel_scale) {
+std::vector<Eigen::Array2i> RayToPixelMask(const Eigen::Array2i& begin,
+                                           const Eigen::Array2i& end,
+                                           int subpixel_scale) {
   // For simplicity, we order 'begin' and 'end' by their x coordinate.
   if (begin.x() > end.x()) {
-    return CastRay(end, begin, subpixel_scale);
+    return RayToPixelMask(end, begin, subpixel_scale);
   }
 
   CHECK_GE(begin.x(), 0);

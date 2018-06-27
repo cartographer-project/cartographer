@@ -28,7 +28,7 @@ TEST(RayCastingTest, SingleCell) {
   const Eigen::Array2i& begin = {1, 1};
   const Eigen::Array2i& end = {1, 1};
   const int subpixel_scale = 1;
-  std::vector<Eigen::Array2i> ray = CastRay(begin, end, subpixel_scale);
+  std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 1);
   EXPECT_TRUE(begin.isApprox(ray[0]));
 }
@@ -37,12 +37,12 @@ TEST(RayCastingTest, AxisAlignedX) {
   const Eigen::Array2i& begin = {1, 1};
   const Eigen::Array2i& end = {3, 1};
   const int subpixel_scale = 1;
-  std::vector<Eigen::Array2i> ray = CastRay(begin, end, subpixel_scale);
+  std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 3);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 1})));
   EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 1})));
-  ray = CastRay(end, begin, subpixel_scale);
+  ray = RayToPixelMask(end, begin, subpixel_scale);
   EXPECT_EQ(ray.size(), 3);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 1})));
@@ -53,12 +53,12 @@ TEST(RayCastingTest, AxisAlignedY) {
   const Eigen::Array2i& begin = {1, 1};
   const Eigen::Array2i& end = {1, 3};
   const int subpixel_scale = 1;
-  std::vector<Eigen::Array2i> ray = CastRay(begin, end, subpixel_scale);
+  std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 3);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({1, 2})));
   EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({1, 3})));
-  ray = CastRay(end, begin, subpixel_scale);
+  ray = RayToPixelMask(end, begin, subpixel_scale);
   EXPECT_EQ(ray.size(), 3);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({1, 2})));
@@ -69,24 +69,24 @@ TEST(RayCastingTest, Diagonal) {
   Eigen::Array2i begin = {1, 1};
   Eigen::Array2i end = {3, 3};
   const int subpixel_scale = 1;
-  std::vector<Eigen::Array2i> ray = CastRay(begin, end, subpixel_scale);
+  std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 3);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 2})));
   EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 3})));
-  ray = CastRay(end, begin, subpixel_scale);
+  ray = RayToPixelMask(end, begin, subpixel_scale);
   EXPECT_EQ(ray.size(), 3);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 2})));
   EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 3})));
   begin = Eigen::Array2i({1, 3});
   end = Eigen::Array2i({3, 1});
-  ray = CastRay(begin, end, subpixel_scale);
+  ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 3);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 3})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 2})));
   EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 1})));
-  ray = CastRay(end, begin, subpixel_scale);
+  ray = RayToPixelMask(end, begin, subpixel_scale);
   EXPECT_EQ(ray.size(), 3);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 3})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 2})));
@@ -97,7 +97,7 @@ TEST(RayCastingTest, SteepLine) {
   Eigen::Array2i begin = {1, 1};
   Eigen::Array2i end = {2, 5};
   const int subpixel_scale = 1;
-  std::vector<Eigen::Array2i> ray = CastRay(begin, end, subpixel_scale);
+  std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 6);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({1, 2})));
@@ -108,7 +108,7 @@ TEST(RayCastingTest, SteepLine) {
 
   begin = {1, 1};
   end = {2, 4};
-  ray = CastRay(begin, end, subpixel_scale);
+  ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 4);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({1, 2})));
@@ -120,7 +120,7 @@ TEST(RayCastingTest, FlatLine) {
   Eigen::Array2i begin = {1, 1};
   Eigen::Array2i end = {5, 2};
   const int subpixel_scale = 1;
-  std::vector<Eigen::Array2i> ray = CastRay(begin, end, subpixel_scale);
+  std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 6);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 1})));
@@ -131,7 +131,7 @@ TEST(RayCastingTest, FlatLine) {
 
   begin = {1, 1};
   end = {4, 2};
-  ray = CastRay(begin, end, subpixel_scale);
+  ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 4);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 1})));
@@ -154,7 +154,7 @@ TEST(RayCastingTest, MultiScaleAxisAlignedX) {
   Eigen::Array2i end =
       superscaled_limits.GetCellIndex(Eigen::Vector2f({0.35, 0.05}));
   const std::vector<Eigen::Array2i> base_scale_ray =
-      CastRay(begin, end, subpixel_scale);
+      RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(base_scale_ray.size(), 4);
   EXPECT_TRUE(base_scale_ray[0].isApprox(Eigen::Array2i({9, 6})));
   EXPECT_TRUE(base_scale_ray[1].isApprox(Eigen::Array2i({9, 7})));
@@ -168,7 +168,7 @@ TEST(RayCastingTest, MultiScaleAxisAlignedX) {
     begin = superscaled_limits.GetCellIndex(Eigen::Vector2f({0.05, 0.05}));
     end = superscaled_limits.GetCellIndex(Eigen::Vector2f({0.35, 0.05}));
     const std::vector<Eigen::Array2i> superscaled_ray =
-        CastRay(begin, end, subpixel_scale);
+        RayToPixelMask(begin, end, subpixel_scale);
     EXPECT_EQ(superscaled_ray.size(), 4);
     for (size_t ray_index = 0; ray_index < superscaled_ray.size();
          ++ray_index) {
@@ -192,7 +192,7 @@ TEST(RayCastingTest, MultiScaleSkewedLine) {
       superscaled_limits.GetCellIndex(Eigen::Vector2f({0.01, 0.09}));
   Eigen::Array2i end =
       superscaled_limits.GetCellIndex(Eigen::Vector2f({0.21, 0.19}));
-  std::vector<Eigen::Array2i> ray = CastRay(begin, end, subpixel_scale);
+  std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 4);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({8, 7})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({8, 8})));
@@ -207,7 +207,7 @@ TEST(RayCastingTest, MultiScaleSkewedLine) {
       CellLimits(num_cells_x * subpixel_scale, num_cells_y * subpixel_scale));
   begin = superscaled_limits.GetCellIndex(Eigen::Vector2f({0.01, 0.09}));
   end = superscaled_limits.GetCellIndex(Eigen::Vector2f({0.21, 0.19}));
-  ray = CastRay(begin, end, subpixel_scale);
+  ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_EQ(ray.size(), 4);
   EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({8, 7})));
   EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({8, 8})));
