@@ -32,12 +32,13 @@ inline bool Equals(const Eigen::Array2i& lhs, const Eigen::Array2i& rhs) {
 }
 
 bool IsLess(const Eigen::Array2i& lhs, const Eigen::Array2i& rhs) {
-  if (lhs[0] < rhs[0])
+  if (lhs[0] < rhs[0]) {
     return true;
-  else if (lhs[0] > rhs[0])
+  } else if (lhs[0] > rhs[0]) {
     return false;
-  else
+  } else {
     return lhs[1] < rhs[1];
+  }
 }
 
 MATCHER(PixelMaskEqual, "") { return Equals(get<0>(arg), get<1>(arg)); }
