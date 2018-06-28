@@ -51,10 +51,6 @@ class ProbabilityGridRangeDataInserter2D : public RangeDataInserterInterface {
                       GridInterface* grid) const override;
 
  private:
-  // For each ray in 'range_data', inserts hits and misses into
-  // 'probability_grid'. Hits are handled before misses.
-  void CastRays(const sensor::RangeData& range_data,
-                ProbabilityGrid* probability_grid) const;
   const proto::ProbabilityGridRangeDataInserterOptions2D options_;
   const std::vector<uint16> hit_table_;
   const std::vector<uint16> miss_table_;
