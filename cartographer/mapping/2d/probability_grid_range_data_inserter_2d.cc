@@ -21,7 +21,7 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/mapping/2d/xy_index.h"
-#include "cartographer/mapping/internal/2d/ray_casting.h"
+#include "cartographer/mapping/internal/2d/ray_to_pixel_mask.h"
 #include "cartographer/mapping/probability_values.h"
 #include "glog/logging.h"
 
@@ -113,7 +113,7 @@ void ProbabilityGridRangeDataInserter2D::CastRays(
   for (const Eigen::Array2i& end : ends) {
     std::vector<Eigen::Array2i> ray =
         RayToPixelMask(begin, end, kSubpixelScale);
-    for (const auto& cell_index : ray) {
+    for (const Eigen::Array2i& cell_index : ray) {
       probability_grid->ApplyLookupTable(cell_index, miss_table_);
     }
   }
@@ -123,7 +123,7 @@ void ProbabilityGridRangeDataInserter2D::CastRays(
     std::vector<Eigen::Array2i> ray = RayToPixelMask(
         begin, superscaled_limits.GetCellIndex(missing_echo.head<2>()),
         kSubpixelScale);
-    for (const auto& cell_index : ray) {
+    for (const Eigen::Array2i& cell_index : ray) {
       probability_grid->ApplyLookupTable(cell_index, miss_table_);
     }
   }

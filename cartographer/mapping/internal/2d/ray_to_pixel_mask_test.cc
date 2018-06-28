@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/2d/ray_casting.h"
+#include "cartographer/mapping/internal/2d/ray_to_pixel_mask.h"
 
 #include "cartographer/mapping/2d/map_limits.h"
 #include "gmock/gmock.h"
@@ -24,7 +24,7 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-TEST(RayCastingTest, SingleCell) {
+TEST(RayToPixelMaskTest, SingleCell) {
   const Eigen::Array2i& begin = {1, 1};
   const Eigen::Array2i& end = {1, 1};
   const int subpixel_scale = 1;
@@ -33,7 +33,7 @@ TEST(RayCastingTest, SingleCell) {
   EXPECT_TRUE(begin.isApprox(ray[0]));
 }
 
-TEST(RayCastingTest, AxisAlignedX) {
+TEST(RayToPixelMaskTest, AxisAlignedX) {
   const Eigen::Array2i& begin = {1, 1};
   const Eigen::Array2i& end = {3, 1};
   const int subpixel_scale = 1;
@@ -49,7 +49,7 @@ TEST(RayCastingTest, AxisAlignedX) {
   EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 1})));
 }
 
-TEST(RayCastingTest, AxisAlignedY) {
+TEST(RayToPixelMaskTest, AxisAlignedY) {
   const Eigen::Array2i& begin = {1, 1};
   const Eigen::Array2i& end = {1, 3};
   const int subpixel_scale = 1;
@@ -65,7 +65,7 @@ TEST(RayCastingTest, AxisAlignedY) {
   EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({1, 3})));
 }
 
-TEST(RayCastingTest, Diagonal) {
+TEST(RayToPixelMaskTest, Diagonal) {
   Eigen::Array2i begin = {1, 1};
   Eigen::Array2i end = {3, 3};
   const int subpixel_scale = 1;
@@ -93,7 +93,7 @@ TEST(RayCastingTest, Diagonal) {
   EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 1})));
 }
 
-TEST(RayCastingTest, SteepLine) {
+TEST(RayToPixelMaskTest, SteepLine) {
   Eigen::Array2i begin = {1, 1};
   Eigen::Array2i end = {2, 5};
   const int subpixel_scale = 1;
@@ -116,7 +116,7 @@ TEST(RayCastingTest, SteepLine) {
   EXPECT_TRUE(ray[3].isApprox(Eigen::Array2i({2, 4})));
 }
 
-TEST(RayCastingTest, FlatLine) {
+TEST(RayToPixelMaskTest, FlatLine) {
   Eigen::Array2i begin = {1, 1};
   Eigen::Array2i end = {5, 2};
   const int subpixel_scale = 1;
@@ -139,7 +139,7 @@ TEST(RayCastingTest, FlatLine) {
   EXPECT_TRUE(ray[3].isApprox(Eigen::Array2i({4, 2})));
 }
 
-TEST(RayCastingTest, MultiScaleAxisAlignedX) {
+TEST(RayToPixelMaskTest, MultiScaleAxisAlignedX) {
   int subpixel_scale = 1;
   const int num_cells_x = 20;
   const int num_cells_y = 20;
@@ -178,7 +178,7 @@ TEST(RayCastingTest, MultiScaleAxisAlignedX) {
   }
 }
 
-TEST(RayCastingTest, MultiScaleSkewedLine) {
+TEST(RayToPixelMaskTest, MultiScaleSkewedLine) {
   int subpixel_scale = 1;
   const int num_cells_x = 20;
   const int num_cells_y = 20;
