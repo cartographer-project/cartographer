@@ -20,17 +20,38 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+using ::testing::get;
+using ::testing::Pointwise;
+
 namespace cartographer {
 namespace mapping {
 namespace {
+
+inline bool Equals(const Eigen::Array2i& lhs, const Eigen::Array2i& rhs) {
+  return ((lhs - rhs).matrix().lpNorm<1>() == 0);
+}
+
+bool IsLess(const Eigen::Array2i& lhs, const Eigen::Array2i& rhs) {
+  if (lhs[0] < rhs[0])
+    return true;
+  else if (lhs[0] > rhs[0])
+    return false;
+  else
+    return lhs[1] < rhs[1];
+}
+
+MATCHER(PixelMaskEqual, "") { return Equals(get<0>(arg), get<1>(arg)); }
 
 TEST(RayToPixelMaskTest, SingleCell) {
   const Eigen::Array2i& begin = {1, 1};
   const Eigen::Array2i& end = {1, 1};
   const int subpixel_scale = 1;
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 1);
-  EXPECT_TRUE(begin.isApprox(ray[0]));
+  std::vector<Eigen::Array2i> ray_reference =
+      std::vector<Eigen::Array2i>{begin};
+  std::sort(ray.begin(), ray.end(), IsLess);
+  std::sort(ray_reference.begin(), ray_reference.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
 }
 
 TEST(RayToPixelMaskTest, AxisAlignedX) {
@@ -38,105 +59,93 @@ TEST(RayToPixelMaskTest, AxisAlignedX) {
   const Eigen::Array2i& end = {3, 1};
   const int subpixel_scale = 1;
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 3);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 1})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 1})));
+  std::vector<Eigen::Array2i> ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({1, 1}), Eigen::Array2i({2, 1}), Eigen::Array2i({3, 1})};
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
   ray = RayToPixelMask(end, begin, subpixel_scale);
-  EXPECT_EQ(ray.size(), 3);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 1})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 1})));
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
 }
 
 TEST(RayToPixelMaskTest, AxisAlignedY) {
   const Eigen::Array2i& begin = {1, 1};
   const Eigen::Array2i& end = {1, 3};
   const int subpixel_scale = 1;
+  std::vector<Eigen::Array2i> ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({1, 1}), Eigen::Array2i({1, 2}), Eigen::Array2i({1, 3})};
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 3);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({1, 2})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({1, 3})));
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
   ray = RayToPixelMask(end, begin, subpixel_scale);
-  EXPECT_EQ(ray.size(), 3);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({1, 2})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({1, 3})));
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
 }
 
 TEST(RayToPixelMaskTest, Diagonal) {
   Eigen::Array2i begin = {1, 1};
   Eigen::Array2i end = {3, 3};
   const int subpixel_scale = 1;
+  std::vector<Eigen::Array2i> ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({1, 1}), Eigen::Array2i({2, 2}), Eigen::Array2i({3, 3})};
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 3);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 2})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 3})));
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
   ray = RayToPixelMask(end, begin, subpixel_scale);
-  EXPECT_EQ(ray.size(), 3);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 2})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 3})));
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
   begin = Eigen::Array2i({1, 3});
   end = Eigen::Array2i({3, 1});
   ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 3);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 3})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 2})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 1})));
+  ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({1, 3}), Eigen::Array2i({2, 2}), Eigen::Array2i({3, 1})};
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
   ray = RayToPixelMask(end, begin, subpixel_scale);
-  EXPECT_EQ(ray.size(), 3);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 3})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 2})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 1})));
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
 }
 
 TEST(RayToPixelMaskTest, SteepLine) {
   Eigen::Array2i begin = {1, 1};
   Eigen::Array2i end = {2, 5};
   const int subpixel_scale = 1;
+  std::vector<Eigen::Array2i> ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({1, 1}), Eigen::Array2i({1, 2}), Eigen::Array2i({1, 3}),
+      Eigen::Array2i({2, 3}), Eigen::Array2i({2, 4}), Eigen::Array2i({2, 5})};
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 6);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({1, 2})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({1, 3})));
-  EXPECT_TRUE(ray[3].isApprox(Eigen::Array2i({2, 3})));
-  EXPECT_TRUE(ray[4].isApprox(Eigen::Array2i({2, 4})));
-  EXPECT_TRUE(ray[5].isApprox(Eigen::Array2i({2, 5})));
-
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
   begin = {1, 1};
   end = {2, 4};
+  ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({1, 1}), Eigen::Array2i({1, 2}), Eigen::Array2i({2, 3}),
+      Eigen::Array2i({2, 4})};
   ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 4);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({1, 2})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({2, 3})));
-  EXPECT_TRUE(ray[3].isApprox(Eigen::Array2i({2, 4})));
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
 }
 
 TEST(RayToPixelMaskTest, FlatLine) {
   Eigen::Array2i begin = {1, 1};
   Eigen::Array2i end = {5, 2};
   const int subpixel_scale = 1;
+
+  std::vector<Eigen::Array2i> ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({1, 1}), Eigen::Array2i({2, 1}), Eigen::Array2i({3, 1}),
+      Eigen::Array2i({3, 2}), Eigen::Array2i({4, 2}), Eigen::Array2i({5, 2})};
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 6);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 1})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 1})));
-  EXPECT_TRUE(ray[3].isApprox(Eigen::Array2i({3, 2})));
-  EXPECT_TRUE(ray[4].isApprox(Eigen::Array2i({4, 2})));
-  EXPECT_TRUE(ray[5].isApprox(Eigen::Array2i({5, 2})));
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
 
   begin = {1, 1};
   end = {4, 2};
+  ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({1, 1}), Eigen::Array2i({2, 1}), Eigen::Array2i({3, 2}),
+      Eigen::Array2i({4, 2})};
   ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 4);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({1, 1})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({2, 1})));
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({3, 2})));
-  EXPECT_TRUE(ray[3].isApprox(Eigen::Array2i({4, 2})));
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
 }
 
 TEST(RayToPixelMaskTest, MultiScaleAxisAlignedX) {
@@ -145,36 +154,23 @@ TEST(RayToPixelMaskTest, MultiScaleAxisAlignedX) {
   const int num_cells_y = 20;
   double resolution = 0.1;
   Eigen::Vector2d max = {1.0, 1.0};
-  double superscaled_resolution = resolution / subpixel_scale;
-  MapLimits superscaled_limits(
-      superscaled_resolution, max,
-      CellLimits(num_cells_x * subpixel_scale, num_cells_y * subpixel_scale));
-  Eigen::Array2i begin =
-      superscaled_limits.GetCellIndex(Eigen::Vector2f({0.05, 0.05}));
-  Eigen::Array2i end =
-      superscaled_limits.GetCellIndex(Eigen::Vector2f({0.35, 0.05}));
-  const std::vector<Eigen::Array2i> base_scale_ray =
-      RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(base_scale_ray.size(), 4);
-  EXPECT_TRUE(base_scale_ray[0].isApprox(Eigen::Array2i({9, 6})));
-  EXPECT_TRUE(base_scale_ray[1].isApprox(Eigen::Array2i({9, 7})));
-  EXPECT_TRUE(base_scale_ray[2].isApprox(Eigen::Array2i({9, 8})));
-  EXPECT_TRUE(base_scale_ray[3].isApprox(Eigen::Array2i({9, 9})));
-  for (subpixel_scale = 2; subpixel_scale < 10000; subpixel_scale *= 2) {
-    superscaled_resolution = resolution / subpixel_scale;
-    superscaled_limits = MapLimits(
+  std::vector<Eigen::Array2i> base_scale_ray;
+  std::vector<Eigen::Array2i> ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({9, 6}), Eigen::Array2i({9, 7}), Eigen::Array2i({9, 8}),
+      Eigen::Array2i({9, 9})};
+  for (subpixel_scale = 1; subpixel_scale < 10000; subpixel_scale *= 2) {
+    double superscaled_resolution = resolution / subpixel_scale;
+    MapLimits superscaled_limits(
         superscaled_resolution, max,
         CellLimits(num_cells_x * subpixel_scale, num_cells_y * subpixel_scale));
-    begin = superscaled_limits.GetCellIndex(Eigen::Vector2f({0.05, 0.05}));
-    end = superscaled_limits.GetCellIndex(Eigen::Vector2f({0.35, 0.05}));
-    const std::vector<Eigen::Array2i> superscaled_ray =
+    Eigen::Array2i begin =
+        superscaled_limits.GetCellIndex(Eigen::Vector2f({0.05, 0.05}));
+    Eigen::Array2i end =
+        superscaled_limits.GetCellIndex(Eigen::Vector2f({0.35, 0.05}));
+    std::vector<Eigen::Array2i> ray =
         RayToPixelMask(begin, end, subpixel_scale);
-    EXPECT_EQ(superscaled_ray.size(), 4);
-    for (size_t ray_index = 0; ray_index < superscaled_ray.size();
-         ++ray_index) {
-      EXPECT_TRUE(
-          base_scale_ray[ray_index].isApprox(superscaled_ray[ray_index]));
-    }
+    std::sort(ray.begin(), ray.end(), IsLess);
+    EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
   }
 }
 
@@ -192,14 +188,13 @@ TEST(RayToPixelMaskTest, MultiScaleSkewedLine) {
       superscaled_limits.GetCellIndex(Eigen::Vector2f({0.01, 0.09}));
   Eigen::Array2i end =
       superscaled_limits.GetCellIndex(Eigen::Vector2f({0.21, 0.19}));
-  std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 4);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({8, 7})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({8, 8})));
-  // expected wrong pixel as subpixel_scale is too low
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({9, 8})));
-  EXPECT_TRUE(ray[3].isApprox(Eigen::Array2i({9, 9})));
 
+  std::vector<Eigen::Array2i> ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({8, 7}), Eigen::Array2i({8, 8}), Eigen::Array2i({9, 8}),
+      Eigen::Array2i({9, 9})};
+  std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
   subpixel_scale = 20;
   superscaled_resolution = resolution / subpixel_scale;
   superscaled_limits = MapLimits(
@@ -207,13 +202,12 @@ TEST(RayToPixelMaskTest, MultiScaleSkewedLine) {
       CellLimits(num_cells_x * subpixel_scale, num_cells_y * subpixel_scale));
   begin = superscaled_limits.GetCellIndex(Eigen::Vector2f({0.01, 0.09}));
   end = superscaled_limits.GetCellIndex(Eigen::Vector2f({0.21, 0.19}));
+  ray_reference = std::vector<Eigen::Array2i>{
+      Eigen::Array2i({8, 7}), Eigen::Array2i({8, 8}), Eigen::Array2i({8, 9}),
+      Eigen::Array2i({9, 9})};
   ray = RayToPixelMask(begin, end, subpixel_scale);
-  EXPECT_EQ(ray.size(), 4);
-  EXPECT_TRUE(ray[0].isApprox(Eigen::Array2i({8, 7})));
-  EXPECT_TRUE(ray[1].isApprox(Eigen::Array2i({8, 8})));
-  // expected correct pixel as subpixel_scale is sufficiently high
-  EXPECT_TRUE(ray[2].isApprox(Eigen::Array2i({8, 9})));
-  EXPECT_TRUE(ray[3].isApprox(Eigen::Array2i({9, 9})));
+  std::sort(ray.begin(), ray.end(), IsLess);
+  EXPECT_THAT(ray_reference, Pointwise(PixelMaskEqual(), ray));
 }
 
 }  // namespace
