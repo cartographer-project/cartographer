@@ -186,6 +186,10 @@ PoseGraphStub::constraints() const {
   return mapping::FromProto(client.response().constraints());
 }
 
+std::chrono::milliseconds PoseGraphStub::GetWorkQueueDelay() const {
+  return std::chrono::milliseconds(0);
+}
+
 mapping::proto::PoseGraph PoseGraphStub::ToProto() const {
   LOG(FATAL) << "Not implemented";
 }

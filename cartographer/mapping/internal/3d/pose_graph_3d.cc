@@ -1091,5 +1091,14 @@ void PoseGraph3D::SetGlobalSlamOptimizationCallback(
   global_slam_optimization_callback_ = callback;
 }
 
+std::chrono::milliseconds PoseGraph3D::GetWorkQueueDelay() const {
+  common::MutexLocker locker(&mutex_);
+  if (work_queue_ == nullptr || work_queue_->empty()) {
+    return std::chrono::milliseconds(0);
+  }
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::steady_clock::now() - work_queue_->front().time);
+}
+
 }  // namespace mapping
 }  // namespace cartographer

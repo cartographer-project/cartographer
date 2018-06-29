@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_INTERFACE_H_
 #define CARTOGRAPHER_MAPPING_POSE_GRAPH_INTERFACE_H_
 
+#include <chrono>
 #include <vector>
 
 #include "cartographer/common/optional.h"
@@ -138,6 +139,9 @@ class PoseGraphInterface {
 
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() const = 0;
+
+  // Returns the delay of the oldest work queue item.
+  virtual std::chrono::milliseconds GetWorkQueueDelay() const = 0;
 
   // Serializes the constraints and trajectories.
   virtual proto::PoseGraph ToProto() const = 0;

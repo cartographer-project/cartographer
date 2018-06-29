@@ -149,8 +149,9 @@ class PoseGraph2D : public PoseGraph {
       PoseGraphInterface::GlobalSlamOptimizationCallback callback) override;
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
+  std::chrono::milliseconds GetWorkQueueDelay() const override REQUIRES(mutex_);
 
- private:
+private:
   MapById<SubmapId, PoseGraphInterface::SubmapData> GetSubmapDataUnderLock()
       const REQUIRES(mutex_);
 

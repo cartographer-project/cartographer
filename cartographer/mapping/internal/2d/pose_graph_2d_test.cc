@@ -295,6 +295,10 @@ TEST_F(PoseGraph2DTest, OverlappingNodes) {
               ::testing::Lt(error_before.translation().norm()));
 }
 
+TEST_F(PoseGraph2DTest, NoWorkQueueDelay) {
+  EXPECT_THAT(pose_graph_->GetWorkQueueDelay().count(), ::testing::Eq(0));
+}
+
 }  // namespace
 }  // namespace mapping
 }  // namespace cartographer
