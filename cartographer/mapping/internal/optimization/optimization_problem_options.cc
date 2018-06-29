@@ -45,8 +45,7 @@ proto::OptimizationProblemOptions CreateOptimizationProblemOptions(
   options.set_log_solver_summary(
       parameter_dictionary->GetBool("log_solver_summary"));
   options.set_online_imu_extrinsics_in_3d(
-      parameter_dictionary->GetBool("online_imu_extrinsics_in_3d")
-      );
+      parameter_dictionary->GetBool("online_imu_extrinsics_in_3d"));
   *options.mutable_ceres_solver_options() =
       common::CreateCeresSolverOptionsProto(
           parameter_dictionary->GetDictionary("ceres_solver_options").get());
