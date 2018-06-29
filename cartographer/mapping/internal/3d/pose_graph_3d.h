@@ -36,6 +36,7 @@
 #include "cartographer/mapping/internal/constraints/constraint_builder_3d.h"
 #include "cartographer/mapping/internal/optimization/optimization_problem_3d.h"
 #include "cartographer/mapping/internal/trajectory_connectivity_state.h"
+#include "cartographer/mapping/internal/work_queue.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph_data.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
@@ -157,7 +158,7 @@ class PoseGraph3D : public PoseGraph {
   MapById<SubmapId, SubmapData> GetSubmapDataUnderLock() const REQUIRES(mutex_);
 
   // Handles a new work item.
-  void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
+  void AddWorkItem(const std::function<void()> &work_item) REQUIRES(mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);
@@ -227,8 +228,7 @@ class PoseGraph3D : public PoseGraph {
 
   // If it exists, further work items must be added to this queue, and will be
   // considered later.
-  std::unique_ptr<std::deque<std::function<void()>>> work_queue_
-      GUARDED_BY(mutex_);
+  std::unique_ptr<WorkQueue> work_queue_ GUARDED_BY(mutex_);
 
   // We globally localize a fraction of the nodes from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>

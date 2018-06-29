@@ -145,7 +145,7 @@ void PoseGraph2D::AddWorkItem(const std::function<void()>& work_item) {
   if (work_queue_ == nullptr) {
     work_item();
   } else {
-    work_queue_->push_back(work_item);
+    work_queue_->push_back({std::chrono::steady_clock::now(), work_item});
   }
 }
 
@@ -323,7 +323,7 @@ void PoseGraph2D::DispatchOptimization() {
   run_loop_closure_ = true;
   // If there is a 'work_queue_' already, some other thread will take care.
   if (work_queue_ == nullptr) {
-    work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+    work_queue_ = common::make_unique<WorkQueue>();
     constraint_builder_.WhenDone(
         std::bind(&PoseGraph2D::HandleWorkQueue, this, std::placeholders::_1));
   }
@@ -419,7 +419,7 @@ void PoseGraph2D::HandleWorkQueue(
       work_queue_.reset();
       return;
     }
-    work_queue_->front()();
+    work_queue_->front().task();
     work_queue_->pop_front();
   }
   LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
