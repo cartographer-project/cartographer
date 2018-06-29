@@ -55,7 +55,7 @@ message OptimizationProblemOptions {
   bool fix_z_in_3d = 13;
 
   // 3D only: activate online IMU extrinsics.
-  bool online_imu_extrinsics_in_3d = 18;
+  bool use_online_imu_extrinsics_in_3d = 18;
 
   // If true, the Ceres solver summary will be logged for every optimization.
   bool log_solver_summary = 5;

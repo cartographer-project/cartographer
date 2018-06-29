@@ -367,7 +367,7 @@ void OptimizationProblem3D::Solve(
 
       problem.AddParameterBlock(trajectory_data.imu_calibration.data(), 4,
                                 new ceres::QuaternionParameterization());
-      if (!options_.online_imu_extrinsics_in_3d()) {
+      if (!options_.use_online_imu_extrinsics_in_3d()) {
         problem.SetParameterBlockConstant(
             trajectory_data.imu_calibration.data());
       }
