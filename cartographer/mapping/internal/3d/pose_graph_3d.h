@@ -159,7 +159,7 @@ class PoseGraph3D : public PoseGraph {
   MapById<SubmapId, SubmapData> GetSubmapDataUnderLock() const REQUIRES(mutex_);
 
   // Handles a new work item.
-  void AddWorkItem(const std::function<void()> &work_item) REQUIRES(mutex_);
+  void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);

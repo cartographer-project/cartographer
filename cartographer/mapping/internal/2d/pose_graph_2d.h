@@ -151,12 +151,12 @@ class PoseGraph2D : public PoseGraph {
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
   std::chrono::milliseconds GetWorkQueueDelay() const override REQUIRES(mutex_);
 
-private:
+ private:
   MapById<SubmapId, PoseGraphInterface::SubmapData> GetSubmapDataUnderLock()
       const REQUIRES(mutex_);
 
   // Handles a new work item.
-  void AddWorkItem(const std::function<void()> &work_item) REQUIRES(mutex_);
+  void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);

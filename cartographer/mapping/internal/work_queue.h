@@ -36,4 +36,4 @@ using WorkQueue = std::deque<WorkItem>;
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif // CARTOGRAPHER_MAPPING_INTERNAL_WORK_QUEUE_H
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_WORK_QUEUE_H
