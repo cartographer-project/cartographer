@@ -273,6 +273,7 @@ TEST_F(PoseGraph3DTest, EvenSubmapTrimmer) {
 }
 
 TEST_F(PoseGraph3DTest, NoWorkQueueDelay) {
+  BuildPoseGraph();
   EXPECT_THAT(pose_graph_->GetWorkQueueDelay().count(), ::testing::Eq(0));
 }
 
