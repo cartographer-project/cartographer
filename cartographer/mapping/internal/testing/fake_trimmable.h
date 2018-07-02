@@ -96,6 +96,10 @@ class FakeTrimmable : public Trimmable {
 
   bool IsFinished(const int trajectory_id) const override { return false; }
 
+  void SetTrajectoryState(
+      int /*trajectory_id*/,
+      PoseGraphInterface::TrajectoryState /*state*/) override {}
+
   std::vector<SubmapId> trimmed_submaps() { return trimmed_submaps_; }
 
  private:

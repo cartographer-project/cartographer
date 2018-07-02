@@ -39,6 +39,8 @@ void PureLocalizationTrimmer::Trim(Trimmable* const pose_graph) {
 
   if (num_submaps_to_keep_ == 0) {
     finished_ = true;
+    pose_graph->SetTrajectoryState(
+        trajectory_id_, PoseGraphInterface::TrajectoryState::DELETED);
   }
 }
 

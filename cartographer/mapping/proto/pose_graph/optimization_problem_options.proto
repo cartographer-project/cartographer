@@ -18,7 +18,7 @@ package cartographer.mapping.optimization.proto;
 
 import "cartographer/common/proto/ceres_solver_options.proto";
 
-// NEXT ID: 18
+// NEXT ID: 19
 message OptimizationProblemOptions {
   // Scaling parameter for Huber loss function.
   double huber_scale = 1;
@@ -53,6 +53,9 @@ message OptimizationProblemOptions {
 
   // 3D only: fix Z.
   bool fix_z_in_3d = 13;
+
+  // 3D only: activate online IMU extrinsics.
+  bool use_online_imu_extrinsics_in_3d = 18;
 
   // If true, the Ceres solver summary will be logged for every optimization.
   bool log_solver_summary = 5;
