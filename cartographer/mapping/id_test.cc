@@ -56,11 +56,42 @@ static MapById<IdType, int> CreateTestMapById() {
 TEST(IdTest, EmptyMapById) {
   MapById<NodeId, int> map_by_id;
   EXPECT_TRUE(map_by_id.empty());
+  EXPECT_EQ(map_by_id.trajectory_ids().begin(),
+            map_by_id.trajectory_ids().end());
+  int unknown_trajectory_id = 3;
+  EXPECT_EQ(map_by_id.trajectory(unknown_trajectory_id).begin(),
+            map_by_id.trajectory(unknown_trajectory_id).end());
   const NodeId id = map_by_id.Append(42, 42);
   EXPECT_FALSE(map_by_id.empty());
   map_by_id.Trim(id);
   EXPECT_TRUE(map_by_id.empty());
   EXPECT_EQ(0, map_by_id.size());
+}
+
+TEST(IdTest, DeleteTrajectory) {
+  MapById<NodeId, int> map_by_id;
+  int trajectory_id = 3;
+  int other_trajectory_id = 5;
+  map_by_id.Insert(NodeId{trajectory_id, 4}, 5);
+  map_by_id.Insert(NodeId{trajectory_id, 5}, 7);
+  map_by_id.Insert(NodeId{other_trajectory_id, 1}, 3);
+  EXPECT_EQ(map_by_id.size(), 3);
+  EXPECT_EQ(2, std::distance(map_by_id.trajectory_ids().begin(),
+                             map_by_id.trajectory_ids().end()));
+  for (const auto& it : map_by_id.trajectory(trajectory_id)) {
+    map_by_id.Trim(it.id);
+  }
+  EXPECT_EQ(0, std::distance(map_by_id.trajectory(trajectory_id).begin(),
+                             map_by_id.trajectory(trajectory_id).end()));
+  int invalid_trajectory_id = 2;
+  EXPECT_EQ(map_by_id.trajectory(invalid_trajectory_id).begin(),
+            map_by_id.trajectory(invalid_trajectory_id).end());
+  EXPECT_EQ(map_by_id.size(), 1);
+  EXPECT_EQ(1, std::distance(map_by_id.trajectory(other_trajectory_id).begin(),
+                             map_by_id.trajectory(other_trajectory_id).end()));
+  EXPECT_EQ(1, std::distance(map_by_id.trajectory_ids().begin(),
+                             map_by_id.trajectory_ids().end()));
+  EXPECT_FALSE(map_by_id.empty());
 }
 
 TEST(IdTest, MapByIdIterator) {
@@ -152,6 +183,7 @@ TEST(IdTest, FindNodeId) {
   map_by_id.Append(42, 43);
   map_by_id.Append(42, 44);
   CHECK_EQ(map_by_id.find(NodeId{42, 1})->data, 43);
+  EXPECT_TRUE(map_by_id.find(NodeId{41, 0}) == map_by_id.end());
   EXPECT_TRUE(map_by_id.find(NodeId{42, 3}) == map_by_id.end());
 }
 
