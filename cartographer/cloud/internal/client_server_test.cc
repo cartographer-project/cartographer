@@ -107,7 +107,7 @@ class ClientServerTest : public ::testing::Test {
     uploading_map_builder_server_options_ = CreateMapBuilderServerOptions(
         uploading_map_builder_server_parameters.get());
     EXPECT_NE(map_builder_server_options_.server_address(),
-      uploading_map_builder_server_options_.server_address());
+              uploading_map_builder_server_options_.server_address());
 
     const std::string kTrajectoryBuilderLua = R"text(
       include "trajectory_builder.lua"
