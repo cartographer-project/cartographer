@@ -24,7 +24,7 @@ namespace mapping {
 PureLocalizationTrimmer::PureLocalizationTrimmer(const int trajectory_id,
                                                  const int num_submaps_to_keep)
     : trajectory_id_(trajectory_id), num_submaps_to_keep_(num_submaps_to_keep) {
-  CHECK_GE(num_submaps_to_keep, 3);
+  CHECK_GE(num_submaps_to_keep, 2) << "Cannot trim with less than 2 submaps";
 }
 
 void PureLocalizationTrimmer::Trim(Trimmable* const pose_graph) {
