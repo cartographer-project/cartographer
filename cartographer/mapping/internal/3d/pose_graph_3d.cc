@@ -484,7 +484,13 @@ void PoseGraph3D::WaitForAllComputations() {
 
 void PoseGraph3D::DeleteTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
-  data_.trajectories_state.at(trajectory_id).deletion_state =
+  auto it = data_.trajectories_state.find(trajectory_id);
+  if (it == data_.trajectories_state.end()) {
+    LOG(WARNING) << "Skipping request to delete non-existing trajectory_id: "
+                 << trajectory_id;
+    return;
+  }
+  it->second.deletion_state =
       InternalTrajectoryState::DeletionState::SCHEDULED_FOR_DELETION;
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
     CHECK(data_.trajectories_state.at(trajectory_id).state !=
