@@ -41,7 +41,7 @@ class TSDF2D : public Grid2D {
       const Eigen::Array2i& cell_index) const;
 
   virtual void GrowLimits(const Eigen::Vector2f& point) override;
-  proto::Grid2D ToProto() const;
+  proto::Grid2D ToProto() const override;
   virtual std::unique_ptr<Grid2D> ComputeCroppedGrid() const override;
   virtual bool DrawToSubmapTexture(
       proto::SubmapQuery::Response::SubmapTexture* const texture,
