@@ -299,6 +299,10 @@ TEST_F(MapBuilderTest, DeleteFinishedTrajectory2D) {
   map_builder_->pose_graph()->DeleteTrajectory(another_trajectory_id);
   map_builder_->pose_graph()->RunFinalOptimization();
   EXPECT_EQ(map_builder_->pose_graph()->constraints().size(), 0);
+  EXPECT_EQ(map_builder_->pose_graph()
+                ->GetTrajectoryNodePoses()
+                .SizeOfTrajectoryOrZero(another_trajectory_id),
+            0);
   EXPECT_EQ(
       map_builder_->pose_graph()->GetTrajectoryNodes().SizeOfTrajectoryOrZero(
           another_trajectory_id),
@@ -381,7 +385,8 @@ TEST_F(MapBuilderTest, LocalizationOnFrozenTrajectory2D) {
   SetOptionsEnableGlobalOptimization();
   BuildMapBuilder();
   io::ProtoStreamReader reader(filename);
-  map_builder_->LoadState(&reader, true /* load_frozen_state */);
+  auto load_state_remapping =
+      map_builder_->LoadState(&reader, true /* load_frozen_state */);
   map_builder_->pose_graph()->RunFinalOptimization();
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
       {kRangeSensorId}, trajectory_builder_options_,
@@ -400,7 +405,6 @@ TEST_F(MapBuilderTest, LocalizationOnFrozenTrajectory2D) {
     measurement.time += common::FromSeconds(100.);
     trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
   }
-  map_builder_->FinishTrajectory(trajectory_id);
   map_builder_->pose_graph()->RunFinalOptimization();
   EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,
@@ -446,6 +450,28 @@ TEST_F(MapBuilderTest, LocalizationOnFrozenTrajectory2D) {
       0.3)
       << "global_pose: " << global_pose
       << "expected_global_pose: " << expected_global_pose;
+
+  int frozen_trajectory_id = load_state_remapping.begin()->second;
+  map_builder_->pose_graph()->DeleteTrajectory(frozen_trajectory_id);
+  for (auto& measurement : measurements) {
+    measurement.time += common::FromSeconds(200.);
+    trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
+  }
+  map_builder_->pose_graph()->RunFinalOptimization();
+  EXPECT_EQ(map_builder_->pose_graph()
+                ->GetTrajectoryNodePoses()
+                .SizeOfTrajectoryOrZero(frozen_trajectory_id),
+            0);
+  EXPECT_EQ(
+      map_builder_->pose_graph()->GetTrajectoryNodes().SizeOfTrajectoryOrZero(
+          frozen_trajectory_id),
+      0);
+  EXPECT_EQ(
+      map_builder_->pose_graph()->GetAllSubmapData().SizeOfTrajectoryOrZero(
+          frozen_trajectory_id),
+      0);
+  map_builder_->FinishTrajectory(trajectory_id);
+  map_builder_->pose_graph()->RunFinalOptimization();
 }
 
 }  // namespace

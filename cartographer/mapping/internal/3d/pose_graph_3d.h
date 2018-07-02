@@ -191,6 +191,9 @@ class PoseGraph3D : public PoseGraph {
   // constraint search.
   void DeleteTrajectoriesIfNeeded() REQUIRES(mutex_);
 
+  // Deletes all data of a trajectory.
+  void DeleteTrajectoryData(int trajectory_id) REQUIRES(mutex_);
+
   // Runs the optimization, executes the trimmers and processes the work queue.
   void HandleWorkQueue(const constraints::ConstraintBuilder3D::Result& result)
       REQUIRES(mutex_);

@@ -376,20 +376,45 @@ void PoseGraph3D::UpdateTrajectoryConnectivity(const Constraint& constraint) {
 }
 
 void PoseGraph3D::DeleteTrajectoriesIfNeeded() {
-  TrimmingHandle trimming_handle(this);
   for (auto& it : data_.trajectories_state) {
     if (it.second.deletion_state ==
         InternalTrajectoryState::DeletionState::WAIT_FOR_DELETION) {
-      // TODO(gaschler): Consider directly deleting from data_, which may be
-      // more complete.
-      auto submap_ids = trimming_handle.GetSubmapIds(it.first);
-      for (auto& submap_id : submap_ids) {
-        trimming_handle.TrimSubmap(submap_id);
-      }
+      DeleteTrajectoryData(it.first);
       it.second.state = TrajectoryState::DELETED;
       it.second.deletion_state = InternalTrajectoryState::DeletionState::NORMAL;
     }
   }
+}
+
+void PoseGraph3D::DeleteTrajectoryData(int trajectory_id) {
+  std::vector<SubmapId> submaps_to_delete;
+  for (const auto& submap_it :
+       optimization_problem_->submap_data().trajectory(trajectory_id)) {
+    submaps_to_delete.push_back(submap_it.id);
+  }
+  for (const SubmapId& submap_id : submaps_to_delete) {
+    data_.submap_data.Trim(submap_id);
+    constraint_builder_.DeleteScanMatcher(submap_id);
+    optimization_problem_->TrimSubmap(submap_id);
+  }
+  std::vector<NodeId> nodes_to_delete;
+  for (const auto& node_it :
+       optimization_problem_->node_data().trajectory(trajectory_id)) {
+    nodes_to_delete.push_back(node_it.id);
+  }
+  for (const NodeId& node_id : nodes_to_delete) {
+    optimization_problem_->TrimTrajectoryNode(node_id);
+    data_.trajectory_nodes.Trim(node_id);
+  }
+  std::vector<PoseGraphInterface::Constraint> constraints_to_keep;
+  for (const Constraint& constraint : data_.constraints) {
+    if (constraint.submap_id.trajectory_id == trajectory_id ||
+        constraint.node_id.trajectory_id == trajectory_id)
+      continue;
+    constraints_to_keep.push_back(constraint);
+  }
+  data_.constraints = std::move(constraints_to_keep);
+  // TODO(gaschler): Decide whether to delete global_submap_poses.
 }
 
 void PoseGraph3D::HandleWorkQueue(
