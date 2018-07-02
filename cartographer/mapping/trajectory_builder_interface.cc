@@ -66,6 +66,10 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
       CreateLocalTrajectoryBuilderOptions3D(
           parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
   PopulateOverlappingSubmapsTrimmerOptions2D(&options, parameter_dictionary);
+  options.set_collate_fixed_frame(
+      parameter_dictionary->GetBool("collate_fixed_frame"));
+  options.set_collate_landmarks(
+      parameter_dictionary->GetBool("collate_landmarks"));
   PopulatePureLocalizationTrimmerOptions(&options, parameter_dictionary);
   return options;
 }

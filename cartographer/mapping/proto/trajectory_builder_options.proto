@@ -42,6 +42,9 @@ message TrajectoryBuilderOptions {
     int32 max_submaps_to_keep = 1;
   }
   PureLocalizationTrimmerOptions pure_localization_trimmer = 6;
+
+  bool collate_fixed_frame = 7;
+  bool collate_landmarks = 8;
 }
 
 message SensorId {
