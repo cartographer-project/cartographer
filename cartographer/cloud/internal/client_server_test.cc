@@ -106,6 +106,8 @@ class ClientServerTest : public ::testing::Test {
         mapping::testing::ResolveLuaParameters(kUploadingMapBuilderServerLua);
     uploading_map_builder_server_options_ = CreateMapBuilderServerOptions(
         uploading_map_builder_server_parameters.get());
+    EXPECT_NE(map_builder_server_options_.server_address(),
+              uploading_map_builder_server_options_.server_address());
 
     const std::string kTrajectoryBuilderLua = R"text(
       include "trajectory_builder.lua"
@@ -490,6 +492,56 @@ TEST_F(ClientServerTest, LoadState) {
 }
 
 // TODO(gaschler): Test-cover LoadStateFromFile.
+
+TEST_F(ClientServerTest, LocalSlam2DHandlesInvalidRequests) {
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+  int trajectory_id =
+      stub_->AddTrajectoryBuilder({kRangeSensorId}, trajectory_builder_options_,
+                                  local_slam_result_callback_);
+  TrajectoryBuilderInterface* trajectory_stub =
+      stub_->GetTrajectoryBuilder(trajectory_id);
+  const auto measurements = mapping::testing::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
+  for (const auto& measurement : measurements) {
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
+  }
+  WaitForLocalSlamResults(measurements.size());
+  stub_->pose_graph()->RunFinalOptimization();
+
+  const int kInvalidTrajectoryId = 7;
+  stub_->pose_graph()->DeleteTrajectory(kInvalidTrajectoryId);
+  EXPECT_FALSE(stub_->pose_graph()->IsTrajectoryFinished(kInvalidTrajectoryId));
+  EXPECT_FALSE(stub_->pose_graph()->IsTrajectoryFrozen(kInvalidTrajectoryId));
+  EXPECT_EQ(nullptr, stub_->GetTrajectoryBuilder(kInvalidTrajectoryId));
+  stub_->FinishTrajectory(kInvalidTrajectoryId);
+  const mapping::SubmapId kInvalidSubmapId0{kInvalidTrajectoryId, 0},
+      kInvalidSubmapId1{trajectory_id, 424242};
+  mapping::proto::SubmapQuery::Response submap_query_response;
+  // Expect that it returns non-empty error string.
+  EXPECT_NE("",
+            stub_->SubmapToProto(kInvalidSubmapId0, &submap_query_response));
+  EXPECT_NE("",
+            stub_->SubmapToProto(kInvalidSubmapId1, &submap_query_response));
+
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+            PoseGraphInterface::TrajectoryState::ACTIVE);
+  auto submap_poses = stub_->pose_graph()->GetAllSubmapPoses();
+  EXPECT_GT(submap_poses.size(), 0);
+  EXPECT_GT(stub_->pose_graph()->GetTrajectoryNodePoses().size(), 0);
+  stub_->FinishTrajectory(trajectory_id);
+  stub_->pose_graph()->DeleteTrajectory(trajectory_id);
+  stub_->pose_graph()->RunFinalOptimization();
+  mapping::SubmapId deleted_submap_id = submap_poses.begin()->id;
+  EXPECT_NE("",
+            stub_->SubmapToProto(deleted_submap_id, &submap_query_response));
+  EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+            PoseGraphInterface::TrajectoryState::DELETED);
+  // Make sure optimization runs with a deleted trajectory.
+  stub_->pose_graph()->RunFinalOptimization();
+  server_->Shutdown();
+}
 
 }  // namespace
 }  // namespace cloud
