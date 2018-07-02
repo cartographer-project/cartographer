@@ -41,6 +41,19 @@ void PopulateOverlappingSubmapsTrimmerOptions2D(
       options_dictionary->GetInt("min_added_submaps_count"));
 }
 
+void PopulatePureLocalizationTrimmerOptions(
+    proto::TrajectoryBuilderOptions* const trajectory_builder_options,
+    common::LuaParameterDictionary* const parameter_dictionary) {
+  constexpr char kDictionaryKey[] = "pure_localization_trimmer";
+  if (!parameter_dictionary->HasKey(kDictionaryKey)) return;
+
+  auto options_dictionary = parameter_dictionary->GetDictionary(kDictionaryKey);
+  auto* options =
+      trajectory_builder_options->mutable_pure_localization_trimmer();
+  options->set_max_submaps_to_keep(
+      options_dictionary->GetInt("max_submaps_to_keep"));
+}
+
 }  // namespace
 
 proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
@@ -52,9 +65,8 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
   *options.mutable_trajectory_builder_3d_options() =
       CreateLocalTrajectoryBuilderOptions3D(
           parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
-  options.set_pure_localization(
-      parameter_dictionary->GetBool("pure_localization"));
   PopulateOverlappingSubmapsTrimmerOptions2D(&options, parameter_dictionary);
+  PopulatePureLocalizationTrimmerOptions(&options, parameter_dictionary);
   return options;
 }
 

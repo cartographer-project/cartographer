@@ -145,10 +145,10 @@ int MapBuilder::AddTrajectoryBuilder(
           trimmer_options.min_added_submaps_count()));
     }
   }
-  if (trajectory_options.pure_localization()) {
-    constexpr int kSubmapsToKeep = 3;
+  if (trajectory_options.has_pure_localization_trimmer()) {
     pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
-        trajectory_id, kSubmapsToKeep));
+        trajectory_id,
+        trajectory_options.pure_localization_trimmer().max_submaps_to_keep()));
   }
   if (trajectory_options.has_initial_trajectory_pose()) {
     const auto& initial_trajectory_pose =

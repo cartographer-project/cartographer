@@ -29,7 +29,6 @@ message InitialTrajectoryPose {
 message TrajectoryBuilderOptions {
   LocalTrajectoryBuilderOptions2D trajectory_builder_2d_options = 1;
   LocalTrajectoryBuilderOptions3D trajectory_builder_3d_options = 2;
-  bool pure_localization = 3;
   InitialTrajectoryPose initial_trajectory_pose = 4;
 
   message OverlappingSubmapsTrimmerOptions2D {
@@ -38,6 +37,11 @@ message TrajectoryBuilderOptions {
     int32 min_added_submaps_count = 3;
   }
   OverlappingSubmapsTrimmerOptions2D overlapping_submaps_trimmer_2d = 5;
+
+  message PureLocalizationTrimmerOptions {
+    int32 max_submaps_to_keep = 1;
+  }
+  PureLocalizationTrimmerOptions pure_localization_trimmer = 6;
 }
 
 message SensorId {
