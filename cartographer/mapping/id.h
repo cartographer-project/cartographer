@@ -289,7 +289,7 @@ class MapById {
   void Trim(const IdType& id) {
     auto& trajectory = trajectories_.at(id.trajectory_id);
     const auto it = trajectory.data_.find(GetIndex(id));
-    CHECK(it != trajectory.data_.end());
+    CHECK(it != trajectory.data_.end()) << id;
     if (std::next(it) == trajectory.data_.end()) {
       // We are removing the data with the highest index from this trajectory.
       // We assume that we will never append to it anymore. If we did, we would

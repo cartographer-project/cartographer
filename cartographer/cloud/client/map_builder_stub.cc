@@ -84,7 +84,11 @@ int MapBuilderStub::AddTrajectoryForDeserialization(
 
 mapping::TrajectoryBuilderInterface* MapBuilderStub::GetTrajectoryBuilder(
     int trajectory_id) const {
-  return trajectory_builder_stubs_.at(trajectory_id).get();
+  auto it = trajectory_builder_stubs_.find(trajectory_id);
+  if (it == trajectory_builder_stubs_.end()) {
+    return nullptr;
+  }
+  return it->second.get();
 }
 
 void MapBuilderStub::FinishTrajectory(int trajectory_id) {
