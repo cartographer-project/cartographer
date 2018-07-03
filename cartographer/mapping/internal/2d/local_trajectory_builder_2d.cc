@@ -241,7 +241,8 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
                        pose_estimate, gravity_alignment.rotation());
   auto duration = std::chrono::steady_clock::now() - accumulation_started_;
   kLocalSlamLatencyMetric->Set(
-      std::chrono::duration_cast<std::chrono::seconds>(duration).count());
+      std::chrono::duration_cast<std::chrono::duration<double>>(duration)
+          .count());
   return common::make_unique<MatchingResult>(
       MatchingResult{time, pose_estimate, std::move(range_data_in_local),
                      std::move(insertion_result)});
