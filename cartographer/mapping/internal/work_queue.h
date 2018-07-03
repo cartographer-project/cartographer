@@ -21,8 +21,6 @@
 #include <deque>
 #include <functional>
 
-#include "cartographer/common/time.h"
-
 namespace cartographer {
 namespace mapping {
 

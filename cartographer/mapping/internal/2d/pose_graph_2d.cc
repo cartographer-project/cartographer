@@ -39,6 +39,8 @@
 namespace cartographer {
 namespace mapping {
 
+static auto* kWorkQueueDelayMetric = metrics::Gauge::Null();
+
 PoseGraph2D::PoseGraph2D(
     const proto::PoseGraphOptions& options,
     std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem,
@@ -141,11 +143,16 @@ NodeId PoseGraph2D::AddNode(
   return node_id;
 }
 
-void PoseGraph2D::AddWorkItem(const std::function<void()>& work_item) {
+void PoseGraph2D::AddWorkItem(const std::function<void()> &work_item) {
   if (work_queue_ == nullptr) {
     work_item();
   } else {
-    work_queue_->push_back({std::chrono::steady_clock::now(), work_item});
+    const auto now = std::chrono::steady_clock::now();
+    work_queue_->push_back({now, work_item});
+    kWorkQueueDelayMetric->Set(
+        std::chrono::duration_cast<std::chrono::duration<double>>(
+            now - work_queue_->front().time)
+            .count());
   }
 }
 
@@ -1077,13 +1084,11 @@ void PoseGraph2D::SetGlobalSlamOptimizationCallback(
   global_slam_optimization_callback_ = callback;
 }
 
-std::chrono::milliseconds PoseGraph2D::GetWorkQueueDelay() const {
-  common::MutexLocker locker(&mutex_);
-  if (work_queue_ == nullptr || work_queue_->empty()) {
-    return std::chrono::milliseconds(0);
-  }
-  return std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::steady_clock::now() - work_queue_->front().time);
+void PoseGraph2D::RegisterMetrics(metrics::FamilyFactory* family_factory) {
+  auto* latency = family_factory->NewGaugeFamily(
+      "mapping_internal_2d_pose_graph_work_queue_delay",
+      "Age of the oldest entry in the work queue in seconds");
+  kWorkQueueDelayMetric = latency->Add({});
 }
 
 }  // namespace mapping

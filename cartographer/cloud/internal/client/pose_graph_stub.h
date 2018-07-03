@@ -51,7 +51,6 @@ class PoseGraphStub : public ::cartographer::mapping::PoseGraphInterface {
   std::map<int, mapping::PoseGraphInterface::TrajectoryData> GetTrajectoryData()
       const override;
   std::vector<Constraint> constraints() const override;
-  std::chrono::milliseconds GetWorkQueueDelay() const override;
   mapping::proto::PoseGraph ToProto() const override;
   void SetGlobalSlamOptimizationCallback(
       GlobalSlamOptimizationCallback callback) override;

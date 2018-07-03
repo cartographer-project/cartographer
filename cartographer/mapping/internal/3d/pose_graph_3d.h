@@ -40,6 +40,7 @@
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph_data.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
+#include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/landmark_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -138,7 +139,6 @@ class PoseGraph3D : public PoseGraph {
   std::map<std::string /* landmark ID */, PoseGraph::LandmarkNode>
   GetLandmarkNodes() const override EXCLUDES(mutex_);
   std::map<int, TrajectoryData> GetTrajectoryData() const override;
-  std::chrono::milliseconds GetWorkQueueDelay() const override REQUIRES(mutex_);
 
   std::vector<Constraint> constraints() const override EXCLUDES(mutex_);
   void SetInitialTrajectoryPose(int from_trajectory_id, int to_trajectory_id,
@@ -149,6 +149,8 @@ class PoseGraph3D : public PoseGraph {
       PoseGraphInterface::GlobalSlamOptimizationCallback callback) override;
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
+
+  static void RegisterMetrics(metrics::FamilyFactory* family_factory);
 
  protected:
   // Waits until we caught up (i.e. nothing is waiting to be scheduled), and

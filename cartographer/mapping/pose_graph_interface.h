@@ -140,9 +140,6 @@ class PoseGraphInterface {
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() const = 0;
 
-  // Returns the delay of the oldest work queue item.
-  virtual std::chrono::milliseconds GetWorkQueueDelay() const = 0;
-
   // Serializes the constraints and trajectories.
   virtual proto::PoseGraph ToProto() const = 0;
 

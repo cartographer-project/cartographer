@@ -40,6 +40,7 @@
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph_data.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
+#include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/landmark_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -149,7 +150,8 @@ class PoseGraph2D : public PoseGraph {
       PoseGraphInterface::GlobalSlamOptimizationCallback callback) override;
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
-  std::chrono::milliseconds GetWorkQueueDelay() const override REQUIRES(mutex_);
+
+  static void RegisterMetrics(metrics::FamilyFactory* family_factory);
 
  private:
   MapById<SubmapId, PoseGraphInterface::SubmapData> GetSubmapDataUnderLock()
