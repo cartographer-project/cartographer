@@ -25,9 +25,6 @@ namespace mapping {
 namespace {
 
 using ::testing::ElementsAre;
-using ::testing::get;
-using ::testing::Pointwise;
-using ::testing::UnorderedElementsAre;
 
 MATCHER_P(PixelMaskEqual, value, "") {
   Eigen::Array2i residual = value - arg;
@@ -50,12 +47,12 @@ TEST(RayToPixelMaskTest, AxisAlignedX) {
   const int subpixel_scale = 1;
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
                                    PixelMaskEqual(Eigen::Array2i({2, 1})),
                                    PixelMaskEqual(Eigen::Array2i({3, 1}))));
   ray = RayToPixelMask(end, begin, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
                                    PixelMaskEqual(Eigen::Array2i({2, 1})),
                                    PixelMaskEqual(Eigen::Array2i({3, 1}))));
 }
@@ -68,12 +65,12 @@ TEST(RayToPixelMaskTest, AxisAlignedY) {
       Eigen::Array2i({1, 1}), Eigen::Array2i({1, 2}), Eigen::Array2i({1, 3})};
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
                                    PixelMaskEqual(Eigen::Array2i({1, 2})),
                                    PixelMaskEqual(Eigen::Array2i({1, 3}))));
   ray = RayToPixelMask(end, begin, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
                                    PixelMaskEqual(Eigen::Array2i({1, 2})),
                                    PixelMaskEqual(Eigen::Array2i({1, 3}))));
 }
@@ -86,24 +83,24 @@ TEST(RayToPixelMaskTest, Diagonal) {
       Eigen::Array2i({1, 1}), Eigen::Array2i({2, 2}), Eigen::Array2i({3, 3})};
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
                                    PixelMaskEqual(Eigen::Array2i({2, 2})),
                                    PixelMaskEqual(Eigen::Array2i({3, 3}))));
   ray = RayToPixelMask(end, begin, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
                                    PixelMaskEqual(Eigen::Array2i({2, 2})),
                                    PixelMaskEqual(Eigen::Array2i({3, 3}))));
   begin = Eigen::Array2i({1, 3});
   end = Eigen::Array2i({3, 1});
   ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 3})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 3})),
                                    PixelMaskEqual(Eigen::Array2i({2, 2})),
                                    PixelMaskEqual(Eigen::Array2i({3, 1}))));
   ray = RayToPixelMask(end, begin, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 3})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 3})),
                                    PixelMaskEqual(Eigen::Array2i({2, 2})),
                                    PixelMaskEqual(Eigen::Array2i({3, 1}))));
 }
@@ -117,7 +114,7 @@ TEST(RayToPixelMaskTest, SteepLine) {
       Eigen::Array2i({2, 3}), Eigen::Array2i({2, 4}), Eigen::Array2i({2, 5})};
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
                                    PixelMaskEqual(Eigen::Array2i({1, 2})),
                                    PixelMaskEqual(Eigen::Array2i({1, 3})),
                                    PixelMaskEqual(Eigen::Array2i({2, 3})),
@@ -130,7 +127,7 @@ TEST(RayToPixelMaskTest, SteepLine) {
       Eigen::Array2i({2, 4})};
   ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
                                    PixelMaskEqual(Eigen::Array2i({1, 2})),
                                    PixelMaskEqual(Eigen::Array2i({2, 3})),
                                    PixelMaskEqual(Eigen::Array2i({2, 4}))));
@@ -142,7 +139,7 @@ TEST(RayToPixelMaskTest, FlatLine) {
   const int subpixel_scale = 1;
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
                                    PixelMaskEqual(Eigen::Array2i({2, 1})),
                                    PixelMaskEqual(Eigen::Array2i({3, 1})),
                                    PixelMaskEqual(Eigen::Array2i({3, 2})),
@@ -152,7 +149,7 @@ TEST(RayToPixelMaskTest, FlatLine) {
   end = {4, 2};
   ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({1, 1})),
                                    PixelMaskEqual(Eigen::Array2i({2, 1})),
                                    PixelMaskEqual(Eigen::Array2i({3, 2})),
                                    PixelMaskEqual(Eigen::Array2i({4, 2}))));
@@ -177,7 +174,7 @@ TEST(RayToPixelMaskTest, MultiScaleAxisAlignedX) {
     std::vector<Eigen::Array2i> ray =
         RayToPixelMask(begin, end, subpixel_scale);
     EXPECT_THAT(ray,
-                UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({9, 6})),
+                ElementsAre(PixelMaskEqual(Eigen::Array2i({9, 6})),
                                      PixelMaskEqual(Eigen::Array2i({9, 7})),
                                      PixelMaskEqual(Eigen::Array2i({9, 8})),
                                      PixelMaskEqual(Eigen::Array2i({9, 9}))));
@@ -201,7 +198,7 @@ TEST(RayToPixelMaskTest, MultiScaleSkewedLine) {
 
   std::vector<Eigen::Array2i> ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({8, 7})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({8, 7})),
                                    PixelMaskEqual(Eigen::Array2i({8, 8})),
                                    PixelMaskEqual(Eigen::Array2i({9, 8})),
                                    PixelMaskEqual(Eigen::Array2i({9, 9}))));
@@ -214,7 +211,7 @@ TEST(RayToPixelMaskTest, MultiScaleSkewedLine) {
   end = superscaled_limits.GetCellIndex(Eigen::Vector2f({0.21, 0.19}));
   ray = RayToPixelMask(begin, end, subpixel_scale);
   EXPECT_THAT(ray,
-              UnorderedElementsAre(PixelMaskEqual(Eigen::Array2i({8, 7})),
+              ElementsAre(PixelMaskEqual(Eigen::Array2i({8, 7})),
                                    PixelMaskEqual(Eigen::Array2i({8, 8})),
                                    PixelMaskEqual(Eigen::Array2i({8, 9})),
                                    PixelMaskEqual(Eigen::Array2i({9, 9}))));
