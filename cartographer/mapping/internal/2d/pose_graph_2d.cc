@@ -143,7 +143,7 @@ NodeId PoseGraph2D::AddNode(
   return node_id;
 }
 
-void PoseGraph2D::AddWorkItem(const std::function<void()> &work_item) {
+void PoseGraph2D::AddWorkItem(const std::function<void()>& work_item) {
   if (work_queue_ == nullptr) {
     work_item();
   } else {
