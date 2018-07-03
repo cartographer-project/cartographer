@@ -385,10 +385,16 @@ void PoseGraph2D::HandleWorkQueue(
       const auto& submap_data = optimization_problem_->submap_data();
       const auto& node_data = optimization_problem_->node_data();
       for (const int trajectory_id : node_data.trajectory_ids()) {
-        trajectory_id_to_last_optimized_node_id[trajectory_id] =
-            std::prev(node_data.EndOfTrajectory(trajectory_id))->id;
-        trajectory_id_to_last_optimized_submap_id[trajectory_id] =
-            std::prev(submap_data.EndOfTrajectory(trajectory_id))->id;
+        if (node_data.SizeOfTrajectoryOrZero(trajectory_id) == 0 ||
+            submap_data.SizeOfTrajectoryOrZero(trajectory_id) == 0) {
+          continue;
+        }
+        trajectory_id_to_last_optimized_node_id.emplace(
+            trajectory_id,
+            std::prev(node_data.EndOfTrajectory(trajectory_id))->id);
+        trajectory_id_to_last_optimized_submap_id.emplace(
+            trajectory_id,
+            std::prev(submap_data.EndOfTrajectory(trajectory_id))->id);
       }
     }
     global_slam_optimization_callback_(
@@ -467,7 +473,13 @@ void PoseGraph2D::WaitForAllComputations() {
 
 void PoseGraph2D::DeleteTrajectory(const int trajectory_id) {
   common::MutexLocker locker(&mutex_);
-  data_.trajectories_state.at(trajectory_id).deletion_state =
+  auto it = data_.trajectories_state.find(trajectory_id);
+  if (it == data_.trajectories_state.end()) {
+    LOG(WARNING) << "Skipping request to delete non-existing trajectory_id: "
+                 << trajectory_id;
+    return;
+  }
+  it->second.deletion_state =
       InternalTrajectoryState::DeletionState::SCHEDULED_FOR_DELETION;
   AddWorkItem([this, trajectory_id]() REQUIRES(mutex_) {
     CHECK(data_.trajectories_state.at(trajectory_id).state !=
@@ -984,6 +996,11 @@ PoseGraph2D::TrimmingHandle::GetConstraints() const {
 
 bool PoseGraph2D::TrimmingHandle::IsFinished(const int trajectory_id) const {
   return parent_->IsTrajectoryFinished(trajectory_id);
+}
+
+void PoseGraph2D::TrimmingHandle::SetTrajectoryState(int trajectory_id,
+                                                     TrajectoryState state) {
+  parent_->data_.trajectories_state[trajectory_id].state = state;
 }
 
 void PoseGraph2D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {

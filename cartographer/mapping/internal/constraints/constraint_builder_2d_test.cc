@@ -79,12 +79,12 @@ TEST_F(ConstraintBuilder2DTest, FindsConstraints) {
   for (int i = 0; i < 2; ++i) {
     EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), expected_nodes);
     for (int j = 0; j < 2; ++j) {
-      constraint_builder_->MaybeAddConstraint(submap_id, &submap, NodeId{},
+      constraint_builder_->MaybeAddConstraint(submap_id, &submap, NodeId{0, 0},
                                               &node_data,
                                               transform::Rigid2d::Identity());
     }
-    constraint_builder_->MaybeAddGlobalConstraint(submap_id, &submap, NodeId{},
-                                                  &node_data);
+    constraint_builder_->MaybeAddGlobalConstraint(submap_id, &submap,
+                                                  NodeId{0, 0}, &node_data);
     constraint_builder_->NotifyEndOfNode();
     thread_pool_.WaitUntilIdle();
     EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), ++expected_nodes);

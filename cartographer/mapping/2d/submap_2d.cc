@@ -127,8 +127,7 @@ void Submap2D::Finish() {
 }
 
 ActiveSubmaps2D::ActiveSubmaps2D(const proto::SubmapsOptions2D& options)
-    : options_(options),
-      range_data_inserter_(std::move(CreateRangeDataInserter())) {
+    : options_(options), range_data_inserter_(CreateRangeDataInserter()) {
   // We always want to have at least one likelihood field which we can return,
   // and will create it at the origin in absence of a better choice.
   AddSubmap(Eigen::Vector2f::Zero());

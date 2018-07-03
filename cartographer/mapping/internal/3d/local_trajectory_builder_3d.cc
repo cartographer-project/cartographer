@@ -241,7 +241,8 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
       low_resolution_point_cloud_in_tracking, pose_estimate, gravity_alignment);
   auto duration = std::chrono::steady_clock::now() - accumulation_started_;
   kLocalSlamLatencyMetric->Set(
-      std::chrono::duration_cast<std::chrono::seconds>(duration).count());
+      std::chrono::duration_cast<std::chrono::duration<double>>(duration)
+          .count());
   return common::make_unique<MatchingResult>(MatchingResult{
       time, pose_estimate, std::move(filtered_range_data_in_local),
       std::move(insertion_result)});

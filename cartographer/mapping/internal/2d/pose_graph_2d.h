@@ -264,6 +264,8 @@ class PoseGraph2D : public PoseGraph {
     void TrimSubmap(const SubmapId& submap_id)
         REQUIRES(parent_->mutex_) override;
     bool IsFinished(int trajectory_id) const override REQUIRES(parent_->mutex_);
+    void SetTrajectoryState(int trajectory_id, TrajectoryState state) override
+        REQUIRES(parent_->mutex_);
 
    private:
     PoseGraph2D* const parent_;
