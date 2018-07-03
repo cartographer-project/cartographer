@@ -111,7 +111,8 @@ int MapBuilder::AddTrajectoryBuilder(
     DCHECK(dynamic_cast<PoseGraph3D*>(pose_graph_.get()));
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
-            sensor_collator_.get(), trajectory_id, expected_sensor_ids,
+            trajectory_options, sensor_collator_.get(), trajectory_id,
+            expected_sensor_ids,
             CreateGlobalTrajectoryBuilder3D(
                 std::move(local_trajectory_builder), trajectory_id,
                 static_cast<PoseGraph3D*>(pose_graph_.get()),
@@ -126,7 +127,8 @@ int MapBuilder::AddTrajectoryBuilder(
     DCHECK(dynamic_cast<PoseGraph2D*>(pose_graph_.get()));
     trajectory_builders_.push_back(
         common::make_unique<CollatedTrajectoryBuilder>(
-            sensor_collator_.get(), trajectory_id, expected_sensor_ids,
+            trajectory_options, sensor_collator_.get(), trajectory_id,
+            expected_sensor_ids,
             CreateGlobalTrajectoryBuilder2D(
                 std::move(local_trajectory_builder), trajectory_id,
                 static_cast<PoseGraph2D*>(pose_graph_.get()),
