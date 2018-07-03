@@ -37,7 +37,6 @@
 
 namespace cartographer {
 namespace mapping {
-
 namespace {
 
 using mapping::proto::SerializedData;
@@ -51,6 +50,25 @@ std::vector<std::string> SelectRangeSensorIds(
     }
   }
   return range_sensor_ids;
+}
+
+void MaybeAddPureLocalizationTrimmer(
+    const int trajectory_id,
+    const proto::TrajectoryBuilderOptions& trajectory_options,
+    PoseGraph* pose_graph) {
+  if (trajectory_options.pure_localization()) {
+    LOG(WARNING)
+        << "'TrajectoryBuilderOptions::pure_localization' field is deprecated. "
+           "Use 'TrajectoryBuilderOptions::pure_localization_trimmer' instead.";
+    pose_graph->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
+        trajectory_id, 3 /* max_submaps_to_keep */));
+    return;
+  }
+  if (trajectory_options.has_pure_localization_trimmer()) {
+    pose_graph->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
+        trajectory_id,
+        trajectory_options.pure_localization_trimmer().max_submaps_to_keep()));
+  }
 }
 
 }  // namespace
@@ -147,11 +165,9 @@ int MapBuilder::AddTrajectoryBuilder(
           trimmer_options.min_added_submaps_count()));
     }
   }
-  if (trajectory_options.has_pure_localization_trimmer()) {
-    pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
-        trajectory_id,
-        trajectory_options.pure_localization_trimmer().max_submaps_to_keep()));
-  }
+  MaybeAddPureLocalizationTrimmer(trajectory_id, trajectory_options,
+                                  pose_graph_.get());
+
   if (trajectory_options.has_initial_trajectory_pose()) {
     const auto& initial_trajectory_pose =
         trajectory_options.initial_trajectory_pose();
