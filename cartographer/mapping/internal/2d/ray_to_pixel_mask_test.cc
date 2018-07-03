@@ -20,14 +20,14 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+namespace cartographer {
+namespace mapping {
+namespace {
+
 using ::testing::ElementsAre;
 using ::testing::get;
 using ::testing::Pointwise;
 using ::testing::UnorderedElementsAre;
-
-namespace cartographer {
-namespace mapping {
-namespace {
 
 MATCHER_P(PixelMaskEqual, value, "") {
   Eigen::Array2i residual = value - arg;
