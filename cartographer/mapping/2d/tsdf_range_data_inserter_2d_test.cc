@@ -74,7 +74,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
   const float maximum_weight = static_cast<float>(options_.maximum_weight());
 
   for (float y = 1.5; y < 6.; ++y) {
-    // Cell on ray
+    // Cell on ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -84,7 +84,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
     EXPECT_TRUE(tsdf_.IsKnown(cell_index));
     EXPECT_NEAR(expected_tsdf, tsdf_.GetTSD(cell_index), 1e-4);
     EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
-    // Cells next to ray
+    // Cells next to ray.
     x = 0.5f;
     cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
     expected_tsdf = -truncation_distance;
@@ -99,7 +99,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
     EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
   }
 
-  // Cells next to ray
+  // Cells next to ray.
   Eigen::Array2i cell_index =
       tsdf_.limits().GetCellIndex(Eigen::Vector2f(0.5, 6.5));
   EXPECT_FALSE(tsdf_.IsKnown(cell_index));
@@ -115,7 +115,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
     InsertPoint();
   }
   for (float y = 1.5; y < 6.; ++y) {
-    // Cell on ray
+    // Cell on to ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -136,7 +136,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
   const float maximum_weight = static_cast<float>(options_.maximum_weight());
 
   for (float y = -0.5; y < 6.; ++y) {
-    // Cell on ray
+    // Cells on ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -146,7 +146,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
     EXPECT_TRUE(tsdf_.IsKnown(cell_index));
     EXPECT_NEAR(expected_tsdf, tsdf_.GetTSD(cell_index), 1e-4);
     EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
-    // Cells next to ray
+    // Cells next to ray.
     x = 0.5f;
     cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
     expected_tsdf = -truncation_distance;
@@ -161,7 +161,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
     EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
   }
 
-  // Cells next to ray
+  // Cells next to ray.
   Eigen::Array2i cell_index =
       tsdf_.limits().GetCellIndex(Eigen::Vector2f(-0.5, 6.5));
   EXPECT_FALSE(tsdf_.IsKnown(cell_index));
@@ -177,7 +177,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
     InsertPoint();
   }
   for (float y = -0.5; y < 6.; ++y) {
-    // Cell on ray
+    // Cell on ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -196,7 +196,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointLinearWeight) {
   const float truncation_distance =
       static_cast<float>(options_.truncation_distance());
   for (float y = 1.5; y < 6.; ++y) {
-    // Cell on ray
+    // Cell on ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -216,7 +216,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointQuadraticWeight) {
   const float truncation_distance =
       static_cast<float>(options_.truncation_distance());
   for (float y = 1.5; y < 6.; ++y) {
-    // Cell on ray
+    // Cell on ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -239,8 +239,6 @@ TEST_F(RangeDataInserterTest2DTSDF,
   range_data.origin.y() = -0.5f;
   range_data_inserter_->Insert(range_data, &tsdf_);
   tsdf_.FinishUpdate();
-  const float truncation_distance =
-      static_cast<float>(options_.truncation_distance());
   float x = 4.5f;
   float y = 2.5f;
   Eigen::Array2i cell_index =
@@ -264,7 +262,6 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertSmallAnglePointWitNormalProjection) {
   sensor::RangeData range_data;
   range_data.returns.emplace_back(-0.5f, 3.5f, 0.f);
   range_data.returns.emplace_back(5.5f, 3.5f, 0.f);
-  range_data.returns.emplace_back(10.5f, 3.5f, 0.f);
   range_data.origin.x() = -0.5f;
   range_data.origin.y() = -0.5f;
   range_data_inserter_->Insert(range_data, &tsdf_);
@@ -286,6 +283,68 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertSmallAnglePointWitNormalProjection) {
   EXPECT_TRUE(tsdf_.IsKnown(cell_index));
   EXPECT_NEAR(expected_tsdf, tsdf_.GetTSD(cell_index), 1e-4);
   EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
+}
+
+TEST_F(RangeDataInserterTest2DTSDF,
+       InsertPointsWithAngleScanNormalToRayWeight) {
+  float bandwith = 10.f;
+  options_.set_update_weight_angle_scan_normal_to_ray_kernel_bandwith(bandwith);
+  range_data_inserter_ = common::make_unique<TSDFRangeDataInserter2D>(options_);
+  sensor::RangeData range_data;
+  range_data.returns.emplace_back(-0.5f, 3.5f, 0.f);
+  range_data.returns.emplace_back(5.5f, 3.5f, 0.f);
+  range_data.origin.x() = -0.5f;
+  range_data.origin.y() = -0.5f;
+  range_data_inserter_->Insert(range_data, &tsdf_);
+  tsdf_.FinishUpdate();
+  float x = -0.5f;
+  float y = 3.5f;
+  // Ray is perpendicular to surface.
+  Eigen::Array2i cell_index =
+      tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
+  float expected_weight = 1.f / (std::sqrt(2 * M_PI) * bandwith);
+  EXPECT_TRUE(tsdf_.IsKnown(cell_index));
+  EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
+  x = 6.5f;
+  y = 4.5f;
+  cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
+  EXPECT_TRUE(tsdf_.IsKnown(cell_index));
+  EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
+  // Ray is inclined relative to surface.
+  cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
+  float angle = std::atan(7.f / 5.f);
+  expected_weight = 1.f / (std::sqrt(2 * M_PI) * bandwith) *
+                    std::exp(angle * angle / (2 * std::pow(bandwith, 2)));
+  EXPECT_TRUE(tsdf_.IsKnown(cell_index));
+  EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
+  x = 6.5f;
+  y = 4.5f;
+  cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
+  EXPECT_TRUE(tsdf_.IsKnown(cell_index));
+  EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
+}
+
+TEST_F(RangeDataInserterTest2DTSDF, InsertPointsWithDistanceCellToHit) {
+  float bandwith = 10.f;
+  options_.set_update_weight_distance_cell_to_hit_kernel_bandwith(bandwith);
+  range_data_inserter_ = common::make_unique<TSDFRangeDataInserter2D>(options_);
+  InsertPoint();
+  const float truncation_distance =
+      static_cast<float>(options_.truncation_distance());
+  for (float y = 1.5; y < 6.; ++y) {
+    // Cell on ray.
+    float x = -0.5f;
+    Eigen::Array2i cell_index =
+        tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
+    float expected_tsdf =
+        std::max(std::min(3.5f - y, truncation_distance), -truncation_distance);
+    float expected_weight =
+        1.f / (std::sqrt(2 * M_PI) * bandwith) *
+        std::exp(std::pow(expected_tsdf, 2) / (2 * std::pow(bandwith, 2)));
+    EXPECT_TRUE(tsdf_.IsKnown(cell_index));
+    EXPECT_NEAR(expected_tsdf, tsdf_.GetTSD(cell_index), 1e-4);
+    EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-2);
+  }
 }
 
 }  // namespace

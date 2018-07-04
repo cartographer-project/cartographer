@@ -192,7 +192,7 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
       if (options_.update_weight_distance_cell_to_hit_kernel_bandwith() !=
           0.f) {
         update_weight *= GaussianKernel(
-            range - distance_cell_to_origin,
+            update_tsd,
             options_.update_weight_distance_cell_to_hit_kernel_bandwith());
       }
       UpdateCell(tsdf, cell_index, update_tsd, update_weight);
