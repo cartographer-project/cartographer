@@ -173,7 +173,8 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
     }
     float weight_factor_range = 1.f;
     if (options_.update_weight_range_exponent() != 0) {
-      ComputeWeight(range, options_.update_weight_range_exponent());
+      weight_factor_range =
+          ComputeWeight(range, options_.update_weight_range_exponent());
     }
 
     for (const Eigen::Array2i& cell_index : ray_mask) {
@@ -182,7 +183,7 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
       float update_tsd = range - distance_cell_to_origin;
       if (options_.project_sdf_distance_to_scan_normal()) {
         float normal_orientation = normals[hit_index];
-        update_tsd = (update_tsd * (origin - hit).normalized())
+        update_tsd = (cell_center - hit)
                          .dot(Eigen::Vector2f{std::cos(normal_orientation),
                                               std::sin(normal_orientation)});
       }
