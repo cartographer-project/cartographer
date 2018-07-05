@@ -323,14 +323,14 @@ void LocalTrajectoryBuilder2D::RegisterMetrics(
   kLocalSlamLatencyMetric = latency->Add({});
   auto score_boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = family_factory->NewHistogramFamily(
-      "mapping_2d_local_trajectory_builder_scores",
-      "Local scan matcher scores", score_boundaries);
+      "mapping_2d_local_trajectory_builder_scores", "Local scan matcher scores",
+      score_boundaries);
   kFastCorrelativeScanMatcherScoreMetric =
       scores->Add({{"scan_matcher", "fast_correlative"}});
   auto cost_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 100);
   auto* costs = family_factory->NewHistogramFamily(
-      "mapping_2d_local_trajectory_builder_costs",
-      "Local scan matcher costs", cost_boundaries);
+      "mapping_2d_local_trajectory_builder_costs", "Local scan matcher costs",
+      cost_boundaries);
   kCeresScanMatcherCostMetric = costs->Add({{"scan_matcher", "ceres"}});
   auto distance_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 10);
   auto* residuals = family_factory->NewHistogramFamily(
