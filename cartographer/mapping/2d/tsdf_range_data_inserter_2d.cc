@@ -25,8 +25,10 @@ namespace {
 
 // Factor for subpixel accuracy of start and end point for ray casts.
 constexpr int kSubpixelScale = 1000;
-// Minimum distance between range observation and origin.
-constexpr float kMinRange = 1e-6f;
+// Minimum distance between range observation and origin. Otherwise, range
+// observations are discarded.
+constexpr float kMinRangeMeters = 1e-6f;
+constexpr float kSqrtTwoPi = std::sqrt(2.0 * M_PI);
 
 void GrowAsNeeded(const sensor::RangeData& range_data,
                   const float truncation_distance, TSDF2D* const tsdf) {
@@ -36,14 +38,14 @@ void GrowAsNeeded(const sensor::RangeData& range_data,
     const Eigen::Vector3f end_position = hit + truncation_distance * direction;
     bounding_box.extend(end_position.head<2>());
   }
+  // Padding around bounding box to avoid numerical issues at cell boundaries.
   constexpr float kPadding = 1e-6f;
   tsdf->GrowLimits(bounding_box.min() - kPadding * Eigen::Vector2f::Ones());
   tsdf->GrowLimits(bounding_box.max() + kPadding * Eigen::Vector2f::Ones());
 }
 
 float GaussianKernel(const float x, const float sigma) {
-  return 1.0 / (std::sqrt(2.0 * M_PI) * sigma) *
-         std::exp(-0.5 * std::pow(x / sigma, 2));
+  return 1.0 / (kSqrtTwoPi * sigma) * std::exp(-0.5 * x * x / (sigma * sigma));
 }
 
 std::pair<Eigen::Array2i, Eigen::Array2i> SuperscaleRay(
@@ -79,6 +81,14 @@ struct RangeDataSorter {
  private:
   Eigen::Vector2f origin_;
 };
+
+float ComputeRangeWeightFactor(float range, int exponent) {
+  float weight = 0.f;
+  if (std::abs(range) > kMinRangeMeters) {
+    weight = 1.f / (std::pow(range, exponent));
+  }
+  return weight;
+}
 }  // namespace
 
 proto::TSDFRangeDataInserterOptions2D CreateTSDFRangeDataInserterOptions2D(
@@ -109,26 +119,20 @@ TSDFRangeDataInserter2D::TSDFRangeDataInserter2D(
     const proto::TSDFRangeDataInserterOptions2D& options)
     : options_(options) {}
 
+// Casts a ray from origin towards hit for each hit in range data.
+// If 'options.update_free_space' is 'true', all cells along the ray
+// until 'truncation_distance' behind hit ar updated. Otherwise, only the cells
+// within 'truncation_distance' around hit are updated.
 void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
                                      GridInterface* grid) const {
-  // Extend bounding box to fit range data
-  Eigen::AlignedBox2f bounding_box(range_data.origin.head<2>());
   const float truncation_distance =
       static_cast<float>(options_.truncation_distance());
-  for (const Eigen::Vector3f& hit : range_data.returns) {
-    const Eigen::Vector2f direction =
-        (hit.head<2>() - range_data.origin.head<2>()).normalized();
-    const Eigen::Vector2f end_position =
-        hit.head<2>() + truncation_distance * direction;
-    bounding_box.extend(end_position);
-  }
-  bool scale_update_weight_angle_scan_normal_to_ray =
-      options_.update_weight_angle_scan_normal_to_ray_kernel_bandwith() != 0.f;
   TSDF2D* tsdf = static_cast<TSDF2D*>(grid);
-  GrowAsNeeded(range_data, static_cast<float>(options_.truncation_distance()),
-               tsdf);
+  GrowAsNeeded(range_data, truncation_distance, tsdf);
 
   // Compute normals if needed.
+  bool scale_update_weight_angle_scan_normal_to_ray =
+      options_.update_weight_angle_scan_normal_to_ray_kernel_bandwith() != 0.f;
   sensor::RangeData sorted_range_data = range_data;
   std::vector<float> normals;
   if (options_.project_sdf_distance_to_scan_normal() ||
@@ -143,65 +147,73 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
   const Eigen::Vector2f origin = sorted_range_data.origin.head<2>();
   for (size_t hit_index = 0; hit_index < sorted_range_data.returns.size();
        ++hit_index) {
-    // Compute mask of pixels intersecting with ray.
     const Eigen::Vector2f hit = sorted_range_data.returns[hit_index].head<2>();
-    const Eigen::Vector2f ray = hit - origin;
-    const float range = ray.norm();
-    if (range < options_.truncation_distance()) continue;
-    const float t_truncation_distance =
-        static_cast<float>(options_.truncation_distance()) / range;
-    const Eigen::Vector2f ray_begin =
-        options_.update_free_space()
-            ? origin
-            : origin + (1.0f - t_truncation_distance) * ray;
-    const Eigen::Vector2f ray_end =
-        origin + (1.0f + t_truncation_distance) * ray;
-    std::pair<Eigen::Array2i, Eigen::Array2i> superscaled_ray =
-        SuperscaleRay(ray_begin, ray_end, tsdf);
-    std::vector<Eigen::Array2i> ray_mask = RayToPixelMask(
-        superscaled_ray.first, superscaled_ray.second, kSubpixelScale);
-
-    // Precompute weight factors.
-    float weight_factor_angle_ray_normal = 1.f;
-    if (scale_update_weight_angle_scan_normal_to_ray) {
-      const Eigen::Vector2f negative_ray = -ray;
-      float angle_ray_normal = common::NormalizeAngleDifference(
-          normals[hit_index] - common::atan2(negative_ray));
-      weight_factor_angle_ray_normal = GaussianKernel(
-          angle_ray_normal,
-          options_.update_weight_angle_scan_normal_to_ray_kernel_bandwith());
-    }
-    float weight_factor_range = 1.f;
-    if (options_.update_weight_range_exponent() != 0) {
-      weight_factor_range =
-          ComputeWeight(range, options_.update_weight_range_exponent());
-    }
-
-    // Update Cells.
-    for (const Eigen::Array2i& cell_index : ray_mask) {
-      Eigen::Vector2f cell_center = tsdf->limits().GetCellCenter(cell_index);
-      float distance_cell_to_origin = (cell_center - origin).norm();
-      float update_tsd = range - distance_cell_to_origin;
-      if (options_.project_sdf_distance_to_scan_normal()) {
-        float normal_orientation = normals[hit_index];
-        update_tsd = (cell_center - hit)
-                         .dot(Eigen::Vector2f{std::cos(normal_orientation),
-                                              std::sin(normal_orientation)});
-      }
-      update_tsd =
-          common::Clamp(update_tsd, -truncation_distance, truncation_distance);
-      float update_weight =
-          weight_factor_range * weight_factor_angle_ray_normal;
-      if (options_.update_weight_distance_cell_to_hit_kernel_bandwith() !=
-          0.f) {
-        update_weight *= GaussianKernel(
-            update_tsd,
-            options_.update_weight_distance_cell_to_hit_kernel_bandwith());
-      }
-      UpdateCell(cell_index, update_tsd, update_weight, tsdf);
-    }
+    const float normal = normals.empty()
+                             ? std::numeric_limits<float>::quiet_NaN()
+                             : normals[hit_index];
+    InsertHit(options_, hit, origin, normal, tsdf);
   }
   tsdf->FinishUpdate();
+}
+
+void TSDFRangeDataInserter2D::InsertHit(
+    const proto::TSDFRangeDataInserterOptions2D& options,
+    const Eigen::Vector2f& hit, const Eigen::Vector2f& origin, float normal,
+    TSDF2D* tsdf) const {
+  const Eigen::Vector2f ray = hit - origin;
+  const float range = ray.norm();
+  const float truncation_distance =
+      static_cast<float>(options_.truncation_distance());
+  if (range < truncation_distance) return;
+  const float truncation_ratio = truncation_distance / range;
+  const Eigen::Vector2f ray_begin =
+      options_.update_free_space() ? origin
+                                   : origin + (1.0f - truncation_ratio) * ray;
+  const Eigen::Vector2f ray_end = origin + (1.0f + truncation_ratio) * ray;
+  std::pair<Eigen::Array2i, Eigen::Array2i> superscaled_ray =
+      SuperscaleRay(ray_begin, ray_end, tsdf);
+  std::vector<Eigen::Array2i> ray_mask = RayToPixelMask(
+      superscaled_ray.first, superscaled_ray.second, kSubpixelScale);
+
+  // Precompute weight factors.
+  float weight_factor_angle_ray_normal = 1.f;
+  if (options_.update_weight_angle_scan_normal_to_ray_kernel_bandwith() !=
+      0.f) {
+    const Eigen::Vector2f negative_ray = -ray;
+    float angle_ray_normal =
+        common::NormalizeAngleDifference(normal - common::atan2(negative_ray));
+    weight_factor_angle_ray_normal = GaussianKernel(
+        angle_ray_normal,
+        options_.update_weight_angle_scan_normal_to_ray_kernel_bandwith());
+  }
+  float weight_factor_range = 1.f;
+  if (options_.update_weight_range_exponent() != 0) {
+    weight_factor_range = ComputeRangeWeightFactor(
+        range, options_.update_weight_range_exponent());
+  }
+
+  // Update Cells.
+  for (const Eigen::Array2i& cell_index : ray_mask) {
+    if (tsdf->CellIsUpdated(cell_index)) continue;
+    Eigen::Vector2f cell_center = tsdf->limits().GetCellCenter(cell_index);
+    float distance_cell_to_origin = (cell_center - origin).norm();
+    float update_tsd = range - distance_cell_to_origin;
+    if (options_.project_sdf_distance_to_scan_normal()) {
+      float normal_orientation = normal;
+      update_tsd = (cell_center - hit)
+                       .dot(Eigen::Vector2f{std::cos(normal_orientation),
+                                            std::sin(normal_orientation)});
+    }
+    update_tsd =
+        common::Clamp(update_tsd, -truncation_distance, truncation_distance);
+    float update_weight = weight_factor_range * weight_factor_angle_ray_normal;
+    if (options_.update_weight_distance_cell_to_hit_kernel_bandwith() != 0.f) {
+      update_weight *= GaussianKernel(
+          update_tsd,
+          options_.update_weight_distance_cell_to_hit_kernel_bandwith());
+    }
+    UpdateCell(cell_index, update_tsd, update_weight, tsdf);
+  }
 }
 
 void TSDFRangeDataInserter2D::UpdateCell(const Eigen::Array2i& cell,
@@ -216,15 +228,6 @@ void TSDFRangeDataInserter2D::UpdateCell(const Eigen::Array2i& cell,
   updated_weight =
       std::min(updated_weight, static_cast<float>(options_.maximum_weight()));
   tsdf->SetCell(cell, updated_sdf, updated_weight);
-}
-
-float TSDFRangeDataInserter2D::ComputeWeight(float ray_length,
-                                             int exponent) const {
-  float weight = 0.f;
-  if (std::abs(ray_length) > kMinRange) {
-    weight = 1.f / (std::pow(ray_length, exponent));
-  }
-  return weight;
 }
 
 }  // namespace mapping

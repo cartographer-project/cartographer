@@ -39,6 +39,12 @@ TSDF2D::TSDF2D(const proto::Grid2D& proto) : Grid2D(proto) {
   }
 }
 
+bool TSDF2D::CellIsUpdated(const Eigen::Array2i& cell_index) const {
+  const int flat_index = ToFlatIndex(cell_index);
+  uint16 tsdf_cell = correspondence_cost_cells()[flat_index];
+  return tsdf_cell >= value_converter_->getUpdateMarker();
+}
+
 void TSDF2D::SetCell(const Eigen::Array2i& cell_index, float tsd,
                      float weight) {
   const int flat_index = ToFlatIndex(cell_index);
