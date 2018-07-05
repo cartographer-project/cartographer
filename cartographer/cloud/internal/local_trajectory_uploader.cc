@@ -36,8 +36,8 @@ namespace {
 
 using common::make_unique;
 
-constexpr int kConnectionTimeoutInSecond = 10;
-constexpr int kTokenRefreshIntervalInMinutes = 1;
+constexpr int kConnectionTimeoutInSeconds = 10;
+constexpr int kTokenRefreshIntervalInSeconds = 60;
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
@@ -87,7 +87,7 @@ LocalTrajectoryUploader::LocalTrajectoryUploader(
 
   if (!token_file_path.empty()) {
     auto call_creds = async_grpc::TokenFileCredentials(
-        token_file_path, std::chrono::minutes(kTokenRefreshIntervalInMinutes));
+        token_file_path, std::chrono::seconds(kTokenRefreshIntervalInSeconds));
     channel_creds =
         grpc::CompositeChannelCredentials(channel_creds, call_creds);
   }
@@ -96,7 +96,7 @@ LocalTrajectoryUploader::LocalTrajectoryUploader(
           channel_creds);
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
-      std::chrono::seconds(kConnectionTimeoutInSecond));
+      std::chrono::seconds(kConnectionTimeoutInSeconds));
   LOG(INFO) << "Connecting to uplink " << uplink_server_address;
   if (!client_channel_->WaitForConnected(deadline)) {
     LOG(FATAL) << "Failed to connect to " << uplink_server_address;
