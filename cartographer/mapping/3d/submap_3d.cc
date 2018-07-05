@@ -39,7 +39,7 @@ struct PixelData {
 // 'max_range' distance from the origin. Removes misses and reflectivity
 // information.
 sensor::RangeData FilterRangeDataByMaxRange(const sensor::RangeData& range_data,
-                                            const double max_range) {
+                                            const float max_range) {
   sensor::RangeData result{range_data.origin, {}, {}};
   for (const Eigen::Vector3f& hit : range_data.returns) {
     if ((hit - range_data.origin).norm() <= max_range) {
@@ -261,7 +261,7 @@ void Submap3D::ToResponseProto(
 
 void Submap3D::InsertRangeData(const sensor::RangeData& range_data,
                                const RangeDataInserter3D& range_data_inserter,
-                               const double high_resolution_max_range) {
+                               const float high_resolution_max_range) {
   CHECK(!finished());
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data, local_pose().inverse().cast<float>());
