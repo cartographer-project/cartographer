@@ -67,7 +67,7 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 
  private:
   void ProcessSendQueue();
-  void TranslateTrajectoryId(proto::SensorMetadata *sensor_metadata);
+  void TranslateTrajectoryId(proto::SensorMetadata* sensor_metadata);
 
   std::shared_ptr<::grpc::Channel> client_channel_;
   int batch_size_;
@@ -81,9 +81,10 @@ LocalTrajectoryUploader::LocalTrajectoryUploader(
     const std::string& uplink_server_address, int batch_size,
     bool enable_ssl_encryption, const std::string& token_file_path)
     : batch_size_(batch_size) {
-  auto channel_creds = enable_ssl_encryption
-              ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
-              : ::grpc::InsecureChannelCredentials();
+  auto channel_creds =
+      enable_ssl_encryption
+          ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
+          : ::grpc::InsecureChannelCredentials();
 
   if (!token_file_path.empty()) {
     auto call_creds = async_grpc::TokenFileCredentials(
@@ -91,9 +92,7 @@ LocalTrajectoryUploader::LocalTrajectoryUploader(
     channel_creds =
         grpc::CompositeChannelCredentials(channel_creds, call_creds);
   }
-  client_channel_ = ::grpc::CreateChannel(
-          uplink_server_address,
-          channel_creds);
+  client_channel_ = ::grpc::CreateChannel(uplink_server_address, channel_creds);
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
       std::chrono::seconds(kConnectionTimeoutInSeconds));
@@ -125,7 +124,7 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
   while (!shutting_down_) {
     auto sensor_data = send_queue_.PopWithTimeout(kPopTimeout);
     if (sensor_data) {
-      proto::SensorData *added_sensor_data = batch_request.add_sensor_data();
+      proto::SensorData* added_sensor_data = batch_request.add_sensor_data();
       *added_sensor_data = *sensor_data;
       TranslateTrajectoryId(added_sensor_data->mutable_sensor_metadata());
 
@@ -152,7 +151,7 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
 }
 
 void LocalTrajectoryUploader::TranslateTrajectoryId(
-    proto::SensorMetadata *sensor_metadata) {
+    proto::SensorMetadata* sensor_metadata) {
   int cloud_trajectory_id =
       local_to_cloud_trajectory_id_map_.at(sensor_metadata->trajectory_id());
   sensor_metadata->set_trajectory_id(cloud_trajectory_id);
@@ -173,7 +172,7 @@ void LocalTrajectoryUploader::AddTrajectory(
       cloud::ToProto(GetLocalSlamResultSensorId(local_trajectory_id));
   async_grpc::Client<handlers::AddTrajectorySignature> client(client_channel_);
   ::grpc::Status status;
-  CHECK(client.Write(request,& status)) << status.error_message();
+  CHECK(client.Write(request, &status)) << status.error_message();
   CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 0);
   local_to_cloud_trajectory_id_map_[local_trajectory_id] =
       client.response().trajectory_id();
