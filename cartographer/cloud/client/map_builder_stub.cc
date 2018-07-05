@@ -35,7 +35,7 @@ namespace cloud {
 namespace {
 
 using common::make_unique;
-constexpr int kConnectionTimeoutInSecond = 10;
+constexpr int kConnectionTimeoutInSeconds = 10;
 
 }  // namespace
 
@@ -46,7 +46,7 @@ MapBuilderStub::MapBuilderStub(const std::string& server_address)
   LOG(INFO) << "Connecting to SLAM process at " << server_address;
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
-      std::chrono::seconds(kConnectionTimeoutInSecond));
+      std::chrono::seconds(kConnectionTimeoutInSeconds));
   if (!client_channel_->WaitForConnected(deadline)) {
     LOG(FATAL) << "Failed to connect to " << server_address;
   }
