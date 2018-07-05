@@ -59,8 +59,8 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
   MOCK_METHOD3(EnqueueLocalSlamResultData,
                void(int, const std::string &,
                     const mapping::proto::LocalSlamResultData &));
-  MOCK_METHOD2(RegisterClientIdForTrajectory, void(int, const std::string&));
-  MOCK_METHOD2(CheckClientIdForTrajectory, bool(int, const std::string&));
+  MOCK_METHOD2(RegisterClientIdForTrajectory, void(int, const std::string &));
+  MOCK_METHOD2(CheckClientIdForTrajectory, bool(int, const std::string &));
 };
 
 }  // namespace testing

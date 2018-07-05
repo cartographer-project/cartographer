@@ -41,7 +41,8 @@ void AddTrajectoryHandler::OnRequest(
           .AddTrajectoryBuilder(expected_sensor_ids,
                                 request.trajectory_builder_options(),
                                 local_slam_result_callback);
-  GetContext<MapBuilderContextInterface>()->RegisterClientIdForTrajectory(trajectory_id, request.client_id());
+  GetContext<MapBuilderContextInterface>()->RegisterClientIdForTrajectory(
+      trajectory_id, request.client_id());
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
     auto trajectory_builder_options = request.trajectory_builder_options();

@@ -55,11 +55,11 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   void Shutdown() final;
 
   void AddTrajectory(
-      const std::string& client_id,
-      int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
+      const std::string& client_id, int local_trajectory_id,
+      const std::set<SensorId>& expected_sensor_ids,
       const mapping::proto::TrajectoryBuilderOptions& trajectory_options) final;
-  void FinishTrajectory(
-		  const std::string& client_id, int local_trajectory_id) final;
+  void FinishTrajectory(const std::string& client_id,
+                        int local_trajectory_id) final;
   void EnqueueSensorData(std::unique_ptr<proto::SensorData> sensor_data) final;
 
   SensorId GetLocalSlamResultSensorId(int local_trajectory_id) const final {
@@ -160,8 +160,8 @@ void LocalTrajectoryUploader::TranslateTrajectoryId(
 }
 
 void LocalTrajectoryUploader::AddTrajectory(
-    const std::string& client_id,
-    int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
+    const std::string& client_id, int local_trajectory_id,
+    const std::set<SensorId>& expected_sensor_ids,
     const mapping::proto::TrajectoryBuilderOptions& trajectory_options) {
   proto::AddTrajectoryRequest request;
   request.set_client_id(client_id);
@@ -182,8 +182,8 @@ void LocalTrajectoryUploader::AddTrajectory(
       client.response().trajectory_id();
 }
 
-void LocalTrajectoryUploader::FinishTrajectory(
-		  const std::string& client_id, int local_trajectory_id) {
+void LocalTrajectoryUploader::FinishTrajectory(const std::string& client_id,
+                                               int local_trajectory_id) {
   CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 1);
   int cloud_trajectory_id =
       local_to_cloud_trajectory_id_map_[local_trajectory_id];

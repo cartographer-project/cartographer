@@ -36,7 +36,7 @@ namespace cartographer {
 namespace cloud {
 
 PoseGraphStub::PoseGraphStub(std::shared_ptr<::grpc::Channel> client_channel,
-		const std::string& client_id)
+                             const std::string& client_id)
     : client_channel_(client_channel), client_id_(client_id) {}
 
 void PoseGraphStub::RunFinalOptimization() {
@@ -157,8 +157,9 @@ void PoseGraphStub::DeleteTrajectory(int trajectory_id) {
   ::grpc::Status status;
   client.Write(request, &status);
   if (!status.ok()) {
-	LOG(ERROR) << "Failed to delete trajectory " << trajectory_id
-			<< " for client_id " << client_id_ << ": " << status.error_message();
+    LOG(ERROR) << "Failed to delete trajectory " << trajectory_id
+               << " for client_id " << client_id_ << ": "
+               << status.error_message();
   }
 }
 

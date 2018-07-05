@@ -26,7 +26,7 @@ namespace cloud {
 class PoseGraphStub : public ::cartographer::mapping::PoseGraphInterface {
  public:
   PoseGraphStub(std::shared_ptr<::grpc::Channel> client_channel,
-		        const std::string& client_id);
+                const std::string& client_id);
 
   PoseGraphStub(const PoseGraphStub&) = delete;
   PoseGraphStub& operator=(const PoseGraphStub&) = delete;

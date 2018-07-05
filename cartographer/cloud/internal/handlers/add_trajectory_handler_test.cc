@@ -107,7 +107,7 @@ TEST_F(AddTrajectoryHandlerTest, NoLocalSlamUploader) {
                                    _))
       .WillOnce(Return(13));
   EXPECT_CALL(*mock_map_builder_context_,
-		      RegisterClientIdForTrajectory(Eq(13), Eq("CLIENT_ID")));
+              RegisterClientIdForTrajectory(Eq(13), Eq("CLIENT_ID")));
   test_server_->SendWrite(request);
   EXPECT_EQ(test_server_->response().trajectory_id(), 13);
 }
@@ -124,7 +124,7 @@ TEST_F(AddTrajectoryHandlerTest, WithLocalSlamUploader) {
                                    _))
       .WillOnce(Return(13));
   EXPECT_CALL(*mock_map_builder_context_,
-		      RegisterClientIdForTrajectory(Eq(13), Eq("CLIENT_ID")));
+              RegisterClientIdForTrajectory(Eq(13), Eq("CLIENT_ID")));
   auto upstream_trajectory_builder_options =
       request.trajectory_builder_options();
   upstream_trajectory_builder_options.clear_trajectory_builder_2d_options();

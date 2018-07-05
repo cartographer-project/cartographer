@@ -40,13 +40,13 @@ constexpr int kConnectionTimeoutInSeconds = 10;
 }  // namespace
 
 MapBuilderStub::MapBuilderStub(const std::string& server_address,
-		const std::string& client_id)
+                               const std::string& client_id)
     : client_channel_(::grpc::CreateChannel(
           server_address, ::grpc::InsecureChannelCredentials())),
       pose_graph_stub_(make_unique<PoseGraphStub>(client_channel_, client_id)),
-	  client_id_(client_id) {
+      client_id_(client_id) {
   LOG(INFO) << "Connecting to SLAM process at " << server_address
-		  << " with client_id " << client_id;
+            << " with client_id " << client_id;
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
       std::chrono::seconds(kConnectionTimeoutInSeconds));
@@ -104,9 +104,10 @@ void MapBuilderStub::FinishTrajectory(int trajectory_id) {
   ::grpc::Status status;
   client.Write(request, &status);
   if (!status.ok()) {
-	LOG(ERROR) << "Failed to finish trajectory " << trajectory_id
-			<< " for client_id " << client_id_ << ": " << status.error_message();
-	return;
+    LOG(ERROR) << "Failed to finish trajectory " << trajectory_id
+               << " for client_id " << client_id_ << ": "
+               << status.error_message();
+    return;
   }
   trajectory_builder_stubs_.erase(trajectory_id);
 }

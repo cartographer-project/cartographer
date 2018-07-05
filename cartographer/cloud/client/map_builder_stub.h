@@ -29,7 +29,8 @@ namespace cloud {
 
 class MapBuilderStub : public mapping::MapBuilderInterface {
  public:
-  MapBuilderStub(const std::string& server_address, const std::string& client_id);
+  MapBuilderStub(const std::string& server_address,
+                 const std::string& client_id);
 
   MapBuilderStub(const MapBuilderStub&) = delete;
   MapBuilderStub& operator=(const MapBuilderStub&) = delete;
