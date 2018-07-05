@@ -21,10 +21,13 @@
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/get_submap_handler.h"
+#include "cartographer/cloud/internal/handlers/load_state_from_file_handler.h"
 #include "cartographer/cloud/internal/handlers/load_state_handler.h"
 #include "cartographer/cloud/internal/handlers/write_state_handler.h"
+#include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
+#include "cartographer/io/proto_stream_deserializer.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -81,7 +84,11 @@ int MapBuilderStub::AddTrajectoryForDeserialization(
 
 mapping::TrajectoryBuilderInterface* MapBuilderStub::GetTrajectoryBuilder(
     int trajectory_id) const {
-  return trajectory_builder_stubs_.at(trajectory_id).get();
+  auto it = trajectory_builder_stubs_.find(trajectory_id);
+  if (it == trajectory_builder_stubs_.end()) {
+    return nullptr;
+  }
+  return it->second.get();
 }
 
 void MapBuilderStub::FinishTrajectory(int trajectory_id) {
@@ -111,11 +118,8 @@ void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
   proto::WriteStateResponse response;
   while (client.StreamRead(&response)) {
     switch (response.state_chunk_case()) {
-      case proto::WriteStateResponse::kPoseGraph:
-        writer->WriteProto(response.pose_graph());
-        break;
-      case proto::WriteStateResponse::kAllTrajectoryBuilderOptions:
-        writer->WriteProto(response.all_trajectory_builder_options());
+      case proto::WriteStateResponse::kHeader:
+        writer->WriteProto(response.header());
         break;
       case proto::WriteStateResponse::kSerializedData:
         writer->WriteProto(response.serialized_data());
@@ -126,33 +130,56 @@ void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
   }
 }
 
-void MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,
-                               const bool load_frozen_state) {
+std::map<int, int> MapBuilderStub::LoadState(
+    io::ProtoStreamReaderInterface* reader, const bool load_frozen_state) {
   if (!load_frozen_state) {
     LOG(FATAL) << "Not implemented";
   }
   async_grpc::Client<handlers::LoadStateSignature> client(client_channel_);
-  // Request with a PoseGraph proto is sent first.
+
+  io::ProtoStreamDeserializer deserializer(reader);
+  // Request with the SerializationHeader proto is sent first.
   {
     proto::LoadStateRequest request;
-    CHECK(reader->ReadProto(request.mutable_pose_graph()));
+    *request.mutable_serialization_header() = deserializer.header();
     CHECK(client.Write(request));
   }
-  // Request with an AllTrajectoryBuilderOptions should be second.
+  // Request with a PoseGraph proto is sent second.
   {
     proto::LoadStateRequest request;
-    CHECK(reader->ReadProto(request.mutable_all_trajectory_builder_options()));
+    *request.mutable_serialized_data()->mutable_pose_graph() =
+        deserializer.pose_graph();
+    CHECK(client.Write(request));
+  }
+  // Request with an AllTrajectoryBuilderOptions should be third.
+  {
+    proto::LoadStateRequest request;
+    *request.mutable_serialized_data()
+         ->mutable_all_trajectory_builder_options() =
+        deserializer.all_trajectory_builder_options();
     CHECK(client.Write(request));
   }
   // Multiple requests with SerializedData are sent after.
   proto::LoadStateRequest request;
-  while (reader->ReadProto(request.mutable_serialized_data())) {
+  while (
+      deserializer.ReadNextSerializedData(request.mutable_serialized_data())) {
     CHECK(client.Write(request));
   }
 
   CHECK(reader->eof());
   CHECK(client.StreamWritesDone());
   CHECK(client.StreamFinish().ok());
+  return FromProto(client.response().trajectory_remapping());
+}
+
+std::map<int, int> MapBuilderStub::LoadStateFromFile(
+    const std::string& filename) {
+  proto::LoadStateFromFileRequest request;
+  request.set_file_path(filename);
+  async_grpc::Client<handlers::LoadStateFromFileSignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
+  return FromProto(client.response().trajectory_remapping());
 }
 
 int MapBuilderStub::num_trajectory_builders() const {

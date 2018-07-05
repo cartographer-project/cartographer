@@ -49,7 +49,9 @@ const std::string kMessage = R"(
         min_range: 20
         max_range: 30
       }
-      pure_localization: true
+      pure_localization_trimmer {
+        max_submaps_to_keep: 3
+      }
       initial_trajectory_pose {
         relative_pose {
           translation {
@@ -122,7 +124,7 @@ TEST_F(AddTrajectoryHandlerTest, WithLocalSlamUploader) {
       request.trajectory_builder_options();
   upstream_trajectory_builder_options.clear_trajectory_builder_2d_options();
   upstream_trajectory_builder_options.clear_trajectory_builder_3d_options();
-  upstream_trajectory_builder_options.set_pure_localization(false);
+  upstream_trajectory_builder_options.clear_pure_localization_trimmer();
   EXPECT_CALL(*mock_local_trajectory_uploader_,
               AddTrajectory(Eq(13), ParseSensorIds(request),
                             Truly(testing::BuildProtoPredicateEquals(

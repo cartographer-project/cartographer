@@ -258,11 +258,19 @@ void OptimizationProblem3D::SetMaxNumIterations(
 
 void OptimizationProblem3D::Solve(
     const std::vector<Constraint>& constraints,
-    const std::set<int>& frozen_trajectories,
+    const std::map<int, PoseGraphInterface::TrajectoryState>&
+        trajectories_state,
     const std::map<std::string, LandmarkNode>& landmark_nodes) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
+  }
+
+  std::set<int> frozen_trajectories;
+  for (const auto& it : trajectories_state) {
+    if (it.second == PoseGraphInterface::TrajectoryState::FROZEN) {
+      frozen_trajectories.insert(it.first);
+    }
   }
 
   ceres::Problem::Options problem_options;
@@ -359,6 +367,10 @@ void OptimizationProblem3D::Solve(
 
       problem.AddParameterBlock(trajectory_data.imu_calibration.data(), 4,
                                 new ceres::QuaternionParameterization());
+      if (!options_.use_online_imu_extrinsics_in_3d()) {
+        problem.SetParameterBlockConstant(
+            trajectory_data.imu_calibration.data());
+      }
       CHECK(imu_data_.HasTrajectory(trajectory_id));
       const auto imu_data = imu_data_.trajectory(trajectory_id);
       CHECK(imu_data.begin() != imu_data.end());
@@ -561,7 +573,8 @@ void OptimizationProblem3D::Solve(
       LOG(INFO) << "Gravity was: " << trajectory_data.gravity_constant;
       const auto& imu_calibration = trajectory_data.imu_calibration;
       LOG(INFO) << "IMU correction was: "
-                << common::RadToDeg(2. * std::acos(imu_calibration[0]))
+                << common::RadToDeg(2. *
+                                    std::acos(std::abs(imu_calibration[0])))
                 << " deg (" << imu_calibration[0] << ", " << imu_calibration[1]
                 << ", " << imu_calibration[2] << ", " << imu_calibration[3]
                 << ")";
