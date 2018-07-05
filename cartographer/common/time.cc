@@ -31,6 +31,11 @@ double ToSeconds(const Duration duration) {
       .count();
 }
 
+double ToSeconds(const std::chrono::steady_clock::duration duration) {
+  return std::chrono::duration_cast<std::chrono::duration<double>>(duration)
+      .count();
+}
+
 Time FromUniversal(const int64 ticks) { return Time(Duration(ticks)); }
 
 int64 ToUniversal(const Time time) { return time.time_since_epoch().count(); }
