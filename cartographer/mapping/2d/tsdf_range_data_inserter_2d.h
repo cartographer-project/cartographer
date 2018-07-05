@@ -17,13 +17,8 @@
 #ifndef CARTOGRAPHER_MAPPING_2D_TSDF_RANGE_DATA_INSERTER_2D_H_
 #define CARTOGRAPHER_MAPPING_2D_TSDF_RANGE_DATA_INSERTER_2D_H_
 
-#include <utility>
-#include <vector>
-
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/tsdf_2d.h"
-#include "cartographer/mapping/2d/xy_index.h"
 #include "cartographer/mapping/proto/2d/tsdf_range_data_inserter_options_2d.pb.h"
 #include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -48,8 +43,8 @@ class TSDFRangeDataInserter2D : public RangeDataInserterInterface {
                       GridInterface* grid) const override;
 
  private:
-  void UpdateCell(TSDF2D* const tsdf, const Eigen::Array2i& cell,
-                  float update_sdf, float update_weight) const;
+  void UpdateCell(const Eigen::Array2i& cell, float update_sdf,
+                  float update_weight, TSDF2D* tsdf) const;
   float ComputeWeight(float ray_length, int exponent) const;
   const proto::TSDFRangeDataInserterOptions2D options_;
 };

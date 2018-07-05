@@ -16,16 +16,11 @@
 
 #include "cartographer/mapping/2d/tsdf_range_data_inserter_2d.h"
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "cartographer/mapping/2d/xy_index.h"
 #include "cartographer/mapping/internal/2d/normal_estimation_2d.h"
 #include "cartographer/mapping/internal/2d/ray_to_pixel_mask.h"
-#include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping {
-
 namespace {
 
 // Factor for subpixel accuracy of start and end point for ray casts.
@@ -68,17 +63,22 @@ std::pair<Eigen::Array2i, Eigen::Array2i> SuperscaleRay(
 }
 
 struct RangeDataSorter {
-  RangeDataSorter(Eigen::Vector3f origin) { origin_ = origin; }
+  RangeDataSorter(Eigen::Vector3f origin) { origin_ = origin.head<2>(); }
   bool operator()(Eigen::Vector3f lhs, Eigen::Vector3f rhs) {
-    const Eigen::Vector2f delta_lhs = (lhs - origin_).head<2>();
-    const Eigen::Vector2f delta_rhs = (lhs - origin_).head<2>();
-    return common::atan2(delta_lhs) < common::atan2(delta_rhs);
+    const Eigen::Vector2f delta_lhs = (lhs.head<2>() - origin_).normalized();
+    const Eigen::Vector2f delta_rhs = (lhs.head<2>() - origin_).normalized();
+    if ((delta_lhs[1] < 0.f) != (delta_rhs[1] < 0.f)) {
+      return delta_lhs[1] < 0.f;
+    } else if (delta_lhs[1] < 0.f) {
+      return delta_lhs[0] < delta_rhs[0];
+    } else {
+      return delta_lhs[0] > delta_rhs[0];
+    }
   }
 
  private:
-  Eigen::Vector3f origin_;
+  Eigen::Vector2f origin_;
 };
-
 }  // namespace
 
 proto::TSDFRangeDataInserterOptions2D CreateTSDFRangeDataInserterOptions2D(
@@ -128,7 +128,7 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
   GrowAsNeeded(range_data, static_cast<float>(options_.truncation_distance()),
                tsdf);
 
-  // Compute normals if needed
+  // Compute normals if needed.
   sensor::RangeData sorted_range_data = range_data;
   std::vector<float> normals;
   if (options_.project_sdf_distance_to_scan_normal() ||
@@ -143,7 +143,7 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
   const Eigen::Vector2f origin = sorted_range_data.origin.head<2>();
   for (size_t hit_index = 0; hit_index < sorted_range_data.returns.size();
        ++hit_index) {
-    // Compute pixelmask intersecting with ray
+    // Compute mask of pixels intersecting with ray.
     const Eigen::Vector2f hit = sorted_range_data.returns[hit_index].head<2>();
     const Eigen::Vector2f ray = hit - origin;
     const float range = ray.norm();
@@ -161,7 +161,7 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
     std::vector<Eigen::Array2i> ray_mask = RayToPixelMask(
         superscaled_ray.first, superscaled_ray.second, kSubpixelScale);
 
-    // Precompute weight factors
+    // Precompute weight factors.
     float weight_factor_angle_ray_normal = 1.f;
     if (scale_update_weight_angle_scan_normal_to_ray) {
       const Eigen::Vector2f negative_ray = -ray;
@@ -177,6 +177,7 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
           ComputeWeight(range, options_.update_weight_range_exponent());
     }
 
+    // Update Cells.
     for (const Eigen::Array2i& cell_index : ray_mask) {
       Eigen::Vector2f cell_center = tsdf->limits().GetCellCenter(cell_index);
       float distance_cell_to_origin = (cell_center - origin).norm();
@@ -187,6 +188,8 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
                          .dot(Eigen::Vector2f{std::cos(normal_orientation),
                                               std::sin(normal_orientation)});
       }
+      update_tsd =
+          common::Clamp(update_tsd, -truncation_distance, truncation_distance);
       float update_weight =
           weight_factor_range * weight_factor_angle_ray_normal;
       if (options_.update_weight_distance_cell_to_hit_kernel_bandwith() !=
@@ -195,24 +198,23 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
             update_tsd,
             options_.update_weight_distance_cell_to_hit_kernel_bandwith());
       }
-      UpdateCell(tsdf, cell_index, update_tsd, update_weight);
+      UpdateCell(cell_index, update_tsd, update_weight, tsdf);
     }
   }
   tsdf->FinishUpdate();
 }
 
-void TSDFRangeDataInserter2D::UpdateCell(TSDF2D* const tsdf,
-                                         const Eigen::Array2i& cell,
-                                         float update_sdf,
-                                         float update_weight) const {
+void TSDFRangeDataInserter2D::UpdateCell(const Eigen::Array2i& cell,
+                                         float update_sdf, float update_weight,
+                                         TSDF2D* tsdf) const {
   if (update_weight == 0.f) return;
   const std::pair<float, float> tsd_and_weight = tsdf->GetTSDAndWeight(cell);
   float updated_weight = tsd_and_weight.second + update_weight;
-  float updated_sdf = updated_weight > 0.f
-                          ? (tsd_and_weight.first * tsd_and_weight.second +
-                             update_sdf * update_weight) /
-                                updated_weight
-                          : tsd_and_weight.first;
+  float updated_sdf = (tsd_and_weight.first * tsd_and_weight.second +
+                       update_sdf * update_weight) /
+                      updated_weight;
+  updated_weight =
+      std::min(updated_weight, static_cast<float>(options_.maximum_weight()));
   tsdf->SetCell(cell, updated_sdf, updated_weight);
 }
 

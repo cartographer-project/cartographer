@@ -16,13 +16,8 @@
 
 #include "cartographer/mapping/2d/tsdf_range_data_inserter_2d.h"
 
-#include <memory>
-
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/mapping/2d/tsdf_2d.h"
-#include "cartographer/mapping/internal/2d/normal_estimation_2d.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {
@@ -74,7 +69,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
   const float maximum_weight = static_cast<float>(options_.maximum_weight());
 
   for (float y = 1.5; y < 6.; ++y) {
-    // Cell on ray.
+    // Cell intersects with ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -84,7 +79,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
     EXPECT_TRUE(tsdf_.IsKnown(cell_index));
     EXPECT_NEAR(expected_tsdf, tsdf_.GetTSD(cell_index), 1e-4);
     EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
-    // Cells next to ray.
+    // Cells don't intersects with ray.
     x = 0.5f;
     cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
     expected_tsdf = -truncation_distance;
@@ -99,23 +94,21 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
     EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
   }
 
-  // Cells next to ray.
+  // Cells don't intersects with ray.
   Eigen::Array2i cell_index =
       tsdf_.limits().GetCellIndex(Eigen::Vector2f(0.5, 6.5));
   EXPECT_FALSE(tsdf_.IsKnown(cell_index));
   EXPECT_NEAR(-truncation_distance, tsdf_.GetTSD(cell_index), 1e-4);
   EXPECT_NEAR(0., tsdf_.GetWeight(cell_index), 1e-3);
-
   cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(-0.5, -1.5));
   EXPECT_FALSE(tsdf_.IsKnown(cell_index));
   EXPECT_NEAR(-truncation_distance, tsdf_.GetTSD(cell_index), 1e-4);
   EXPECT_NEAR(0., tsdf_.GetWeight(cell_index), 1e-3);
-
   for (int i = 0; i < 1000; ++i) {
     InsertPoint();
   }
   for (float y = 1.5; y < 6.; ++y) {
-    // Cell on to ray.
+    // Cell intersects with ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -136,7 +129,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
   const float maximum_weight = static_cast<float>(options_.maximum_weight());
 
   for (float y = -0.5; y < 6.; ++y) {
-    // Cells on ray.
+    // Cells intersects with ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -146,7 +139,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
     EXPECT_TRUE(tsdf_.IsKnown(cell_index));
     EXPECT_NEAR(expected_tsdf, tsdf_.GetTSD(cell_index), 1e-4);
     EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
-    // Cells next to ray.
+    // Cells don't intersects with ray.
     x = 0.5f;
     cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
     expected_tsdf = -truncation_distance;
@@ -161,23 +154,21 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
     EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
   }
 
-  // Cells next to ray.
+  // Cells don't intersect with the ray.
   Eigen::Array2i cell_index =
       tsdf_.limits().GetCellIndex(Eigen::Vector2f(-0.5, 6.5));
   EXPECT_FALSE(tsdf_.IsKnown(cell_index));
   EXPECT_NEAR(-truncation_distance, tsdf_.GetTSD(cell_index), 1e-4);
   EXPECT_NEAR(0., tsdf_.GetWeight(cell_index), 1e-3);
-
   cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(-0.5, -1.5));
   EXPECT_FALSE(tsdf_.IsKnown(cell_index));
   EXPECT_NEAR(-truncation_distance, tsdf_.GetTSD(cell_index), 1e-4);
   EXPECT_NEAR(0., tsdf_.GetWeight(cell_index), 1e-3);
-
   for (int i = 0; i < 1000; ++i) {
     InsertPoint();
   }
   for (float y = -0.5; y < 6.; ++y) {
-    // Cell on ray.
+    // Cell intersects with ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -196,7 +187,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointLinearWeight) {
   const float truncation_distance =
       static_cast<float>(options_.truncation_distance());
   for (float y = 1.5; y < 6.; ++y) {
-    // Cell on ray.
+    // Cell intersects with ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -216,7 +207,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointQuadraticWeight) {
   const float truncation_distance =
       static_cast<float>(options_.truncation_distance());
   for (float y = 1.5; y < 6.; ++y) {
-    // Cell on ray.
+    // Cell intersects with ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
@@ -332,7 +323,6 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointsWithDistanceCellToHit) {
   const float truncation_distance =
       static_cast<float>(options_.truncation_distance());
   for (float y = 1.5; y < 6.; ++y) {
-    // Cell on ray.
     float x = -0.5f;
     Eigen::Array2i cell_index =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
