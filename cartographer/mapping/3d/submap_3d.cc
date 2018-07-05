@@ -294,8 +294,6 @@ std::vector<std::shared_ptr<Submap3D>> ActiveSubmaps3D::submaps() const {
   return submaps_;
 }
 
-int ActiveSubmaps3D::matching_index() const { return matching_submap_index_; }
-
 void ActiveSubmaps3D::InsertRangeData(
     const sensor::RangeData& range_data,
     const Eigen::Quaterniond& gravity_alignment) {
@@ -312,13 +310,11 @@ void ActiveSubmaps3D::InsertRangeData(
 void ActiveSubmaps3D::AddSubmap(const transform::Rigid3d& local_submap_pose) {
   if (submaps_.size() > 1) {
     submaps_.front()->Finish();
-    ++matching_submap_index_;
     submaps_.erase(submaps_.begin());
   }
   submaps_.emplace_back(new Submap3D(options_.high_resolution(),
                                      options_.low_resolution(),
                                      local_submap_pose));
-  LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
 }
 
 }  // namespace mapping

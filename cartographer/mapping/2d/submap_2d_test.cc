@@ -61,10 +61,11 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
     for (const auto& submap : submaps.submaps()) {
       all_submaps.insert(submap);
     }
-    if (submaps.matching_index() != 0) {
+    if (submaps.submaps().size() > 1) {
       EXPECT_LE(kNumRangeData, submaps.submaps().front()->num_range_data());
     }
   }
+  EXPECT_EQ(2, submaps.submaps().size());
   int correct_num_range_data = 0;
   for (const auto& submap : all_submaps) {
     if (submap->num_range_data() == kNumRangeData * 2) {
