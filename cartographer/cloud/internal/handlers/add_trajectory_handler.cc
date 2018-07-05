@@ -64,6 +64,7 @@ void AddTrajectoryHandler::OnRequest(
 
   auto response = common::make_unique<proto::AddTrajectoryResponse>();
   response->set_trajectory_id(trajectory_id);
+  response->set_client_id(request.client_id());
   Send(std::move(response));
 }
 

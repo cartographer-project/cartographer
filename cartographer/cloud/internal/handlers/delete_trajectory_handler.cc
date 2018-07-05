@@ -28,6 +28,15 @@ namespace handlers {
 
 void DeleteTrajectoryHandler::OnRequest(
     const proto::DeleteTrajectoryRequest& request) {
+	if(!GetContext<MapBuilderContextInterface>()->CheckClientIdForTrajectory(
+			request.trajectory_id(),
+			request.client_id())) {
+	LOG(ERROR) << "Unknown trajectory with ID "
+			<< request.trajectory_id() << " and client_id "
+			<< request.client_id();
+	Finish(::grpc::Status(::grpc::NOT_FOUND, "Unknown trajectory"));
+	return;
+	}
   GetContext<MapBuilderContextInterface>()
       ->map_builder()
       .pose_graph()

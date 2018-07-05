@@ -58,7 +58,8 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
       const std::string& client_id,
       int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
       const mapping::proto::TrajectoryBuilderOptions& trajectory_options) final;
-  void FinishTrajectory(int local_trajectory_id) final;
+  void FinishTrajectory(
+		  const std::string& client_id, int local_trajectory_id) final;
   void EnqueueSensorData(std::unique_ptr<proto::SensorData> sensor_data) final;
 
   SensorId GetLocalSlamResultSensorId(int local_trajectory_id) const final {
@@ -181,11 +182,13 @@ void LocalTrajectoryUploader::AddTrajectory(
       client.response().trajectory_id();
 }
 
-void LocalTrajectoryUploader::FinishTrajectory(int local_trajectory_id) {
+void LocalTrajectoryUploader::FinishTrajectory(
+		  const std::string& client_id, int local_trajectory_id) {
   CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 1);
   int cloud_trajectory_id =
       local_to_cloud_trajectory_id_map_[local_trajectory_id];
   proto::FinishTrajectoryRequest request;
+  request.set_client_id(client_id);
   request.set_trajectory_id(cloud_trajectory_id);
   async_grpc::Client<handlers::FinishTrajectorySignature> client(
       client_channel_);
