@@ -244,10 +244,11 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
   }
   ceres_scan_matcher_->Match(
       (matching_submap->local_pose().inverse() * pose_prediction).translation(),
-      initial_ceres_pose, {{&high_resolution_point_cloud_in_tracking,
-                            &matching_submap->high_resolution_hybrid_grid()},
-                           {&low_resolution_point_cloud_in_tracking,
-                            &matching_submap->low_resolution_hybrid_grid()}},
+      initial_ceres_pose,
+      {{&high_resolution_point_cloud_in_tracking,
+        &matching_submap->high_resolution_hybrid_grid()},
+       {&low_resolution_point_cloud_in_tracking,
+        &matching_submap->low_resolution_hybrid_grid()}},
       &pose_observation_in_submap, &summary);
 
   const auto scan_matcher_stop = std::chrono::steady_clock::now();
@@ -266,7 +267,6 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     LOG(INFO) << "scan_matcher_fraction " << scan_matcher_fraction;
     kLocalSlamScanMatcherFraction->Set(scan_matcher_fraction);
   }
-
 
   kCeresScanMatcherCostMetric->Observe(summary.final_cost);
   double residual_distance = (pose_observation_in_submap.translation() -
@@ -306,8 +306,7 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
             insert_into_submap_duration)
             .count() /
         sensor_duration.value();
-    LOG(INFO) << "insert_into_submap_fraction "
-              << insert_into_submap_fraction;
+    LOG(INFO) << "insert_into_submap_fraction " << insert_into_submap_fraction;
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
 
