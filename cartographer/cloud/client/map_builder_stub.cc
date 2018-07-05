@@ -39,11 +39,14 @@ constexpr int kConnectionTimeoutInSeconds = 10;
 
 }  // namespace
 
-MapBuilderStub::MapBuilderStub(const std::string& server_address)
+MapBuilderStub::MapBuilderStub(const std::string& server_address,
+		const std::string& client_id)
     : client_channel_(::grpc::CreateChannel(
           server_address, ::grpc::InsecureChannelCredentials())),
-      pose_graph_stub_(make_unique<PoseGraphStub>(client_channel_)) {
-  LOG(INFO) << "Connecting to SLAM process at " << server_address;
+      pose_graph_stub_(make_unique<PoseGraphStub>(client_channel_)),
+	  client_id_(client_id) {
+  LOG(INFO) << "Connecting to SLAM process at " << server_address
+		  << "with client_id " << client_id;
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
       std::chrono::seconds(kConnectionTimeoutInSeconds));
@@ -57,6 +60,7 @@ int MapBuilderStub::AddTrajectoryBuilder(
     const mapping::proto::TrajectoryBuilderOptions& trajectory_options,
     LocalSlamResultCallback local_slam_result_callback) {
   proto::AddTrajectoryRequest request;
+  request.set_client_id(client_id_);
   *request.mutable_trajectory_builder_options() = trajectory_options;
   for (const auto& sensor_id : expected_sensor_ids) {
     *request.add_expected_sensor_ids() = cloud::ToProto(sensor_id);

@@ -55,6 +55,7 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   void Shutdown() final;
 
   void AddTrajectory(
+      const std::string& client_id,
       int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
       const mapping::proto::TrajectoryBuilderOptions& trajectory_options) final;
   void FinishTrajectory(int local_trajectory_id) final;
@@ -158,9 +159,11 @@ void LocalTrajectoryUploader::TranslateTrajectoryId(
 }
 
 void LocalTrajectoryUploader::AddTrajectory(
+    const std::string& client_id,
     int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
     const mapping::proto::TrajectoryBuilderOptions& trajectory_options) {
   proto::AddTrajectoryRequest request;
+  request.set_client_id(client_id);
   *request.mutable_trajectory_builder_options() = trajectory_options;
   for (const SensorId& sensor_id : expected_sensor_ids) {
     // Range sensors are not forwarded, but combined into a LocalSlamResult.

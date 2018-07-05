@@ -92,6 +92,8 @@ class MapBuilderContextInterface : public async_grpc::ExecutionContext {
   virtual void EnqueueLocalSlamResultData(
       int trajectory_id, const std::string& sensor_id,
       const mapping::proto::LocalSlamResultData& local_slam_result_data) = 0;
+  virtual void RegisterClientIdForTrajectory(int trajectory_id, const std::string& client_id) = 0;
+  virtual bool CheckClientIdForTrajectory(int trajectory_id, const std::string& client_id) = 0;
 };
 
 }  // namespace cloud

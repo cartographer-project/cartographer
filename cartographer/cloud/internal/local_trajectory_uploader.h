@@ -45,6 +45,7 @@ class LocalTrajectoryUploaderInterface {
   virtual void EnqueueSensorData(
       std::unique_ptr<proto::SensorData> sensor_data) = 0;
   virtual void AddTrajectory(
+	  const std::string& client_id,
       int local_trajectory_id, const std::set<SensorId>& expected_sensor_ids,
       const mapping::proto::TrajectoryBuilderOptions& trajectory_options) = 0;
   virtual void FinishTrajectory(int local_trajectory_id) = 0;
