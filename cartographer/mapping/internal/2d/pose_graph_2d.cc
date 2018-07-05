@@ -1086,7 +1086,7 @@ void PoseGraph2D::SetGlobalSlamOptimizationCallback(
 
 void PoseGraph2D::RegisterMetrics(metrics::FamilyFactory* family_factory) {
   auto* latency = family_factory->NewGaugeFamily(
-      "mapping_internal_2d_pose_graph_work_queue_delay",
+      "mapping_2d_pose_graph_work_queue_delay",
       "Age of the oldest entry in the work queue in seconds");
   kWorkQueueDelayMetric = latency->Add({});
 }
