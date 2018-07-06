@@ -129,6 +129,7 @@ NodeId PoseGraph3D::AddNode(
     const SubmapId submap_id =
         data_.submap_data.Append(trajectory_id, InternalSubmapData());
     data_.submap_data.at(submap_id).submap = insertion_submaps.back();
+    LOG(INFO) << "Inserted submap " << submap_id << ".";
   }
 
   // We have to check this here, because it might have changed by the time we
