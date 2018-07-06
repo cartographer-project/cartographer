@@ -36,9 +36,11 @@
 #include "cartographer/mapping/internal/constraints/constraint_builder_2d.h"
 #include "cartographer/mapping/internal/optimization/optimization_problem_2d.h"
 #include "cartographer/mapping/internal/trajectory_connectivity_state.h"
+#include "cartographer/mapping/internal/work_queue.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph_data.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
+#include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/landmark_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -149,6 +151,8 @@ class PoseGraph2D : public PoseGraph {
   transform::Rigid3d GetInterpolatedGlobalTrajectoryPose(
       int trajectory_id, const common::Time time) const REQUIRES(mutex_);
 
+  static void RegisterMetrics(metrics::FamilyFactory* family_factory);
+
  private:
   MapById<SubmapId, PoseGraphInterface::SubmapData> GetSubmapDataUnderLock()
       const REQUIRES(mutex_);
@@ -221,8 +225,7 @@ class PoseGraph2D : public PoseGraph {
 
   // If it exists, further work items must be added to this queue, and will be
   // considered later.
-  std::unique_ptr<std::deque<std::function<void()>>> work_queue_
-      GUARDED_BY(mutex_);
+  std::unique_ptr<WorkQueue> work_queue_ GUARDED_BY(mutex_);
 
   // We globally localize a fraction of the nodes from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>

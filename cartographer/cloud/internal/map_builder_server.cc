@@ -67,7 +67,8 @@ MapBuilderServer::MapBuilderServer(
     local_trajectory_uploader_ = CreateLocalTrajectoryUploader(
         map_builder_server_options.uplink_server_address(),
         map_builder_server_options.upload_batch_size(),
-        map_builder_server_options.enable_ssl_encryption());
+        map_builder_server_options.enable_ssl_encryption(),
+        map_builder_server_options.token_file_path());
   }
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler>();
   server_builder.RegisterHandler<handlers::AddOdometryDataHandler>();

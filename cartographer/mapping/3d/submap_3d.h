@@ -64,7 +64,7 @@ class Submap3D : public Submap {
   // submap must not be finished yet.
   void InsertRangeData(const sensor::RangeData& range_data,
                        const RangeDataInserter3D& range_data_inserter,
-                       int high_resolution_max_range);
+                       float high_resolution_max_range);
   void Finish();
 
  private:
@@ -87,10 +87,6 @@ class ActiveSubmaps3D {
 
   ActiveSubmaps3D(const ActiveSubmaps3D&) = delete;
   ActiveSubmaps3D& operator=(const ActiveSubmaps3D&) = delete;
-
-  // Returns the index of the newest initialized Submap which can be
-  // used for scan-to-map matching.
-  int matching_index() const;
 
   // Inserts 'range_data' into the Submap collection. 'gravity_alignment' is
   // used for the orientation of new submaps so that the z axis approximately

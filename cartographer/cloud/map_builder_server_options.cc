@@ -41,6 +41,8 @@ proto::MapBuilderServerOptions CreateMapBuilderServerOptions(
       lua_parameter_dictionary->GetInt("upload_batch_size"));
   map_builder_server_options.set_enable_ssl_encryption(
       lua_parameter_dictionary->GetBool("enable_ssl_encryption"));
+  map_builder_server_options.set_token_file_path(
+      lua_parameter_dictionary->GetString("token_file_path"));
   return map_builder_server_options;
 }
 
