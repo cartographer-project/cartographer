@@ -78,7 +78,6 @@ std::unique_ptr<transform::Rigid3d> LocalTrajectoryBuilder3D::ScanMatch(
 
   transform::Rigid3d pose_observation_in_submap;
   ceres::Solver::Summary summary;
-
   ceres_scan_matcher_->Match(
       (matching_submap->local_pose().inverse() * pose_prediction).translation(),
       initial_ceres_pose,
@@ -88,12 +87,13 @@ std::unique_ptr<transform::Rigid3d> LocalTrajectoryBuilder3D::ScanMatch(
         &matching_submap->low_resolution_hybrid_grid()}},
       &pose_observation_in_submap, &summary);
   kCeresScanMatcherCostMetric->Observe(summary.final_cost);
-  double residual_distance = (pose_observation_in_submap.translation() -
-                              initial_ceres_pose.translation())
-                                 .norm();
+  const double residual_distance = (pose_observation_in_submap.translation() -
+                                    initial_ceres_pose.translation())
+                                       .norm();
   kScanMatcherResidualDistanceMetric->Observe(residual_distance);
-  double residual_angle = pose_observation_in_submap.rotation().angularDistance(
-      initial_ceres_pose.rotation());
+  const double residual_angle =
+      pose_observation_in_submap.rotation().angularDistance(
+          initial_ceres_pose.rotation());
   kScanMatcherResidualAngleMetric->Observe(residual_angle);
   return common::make_unique<transform::Rigid3d>(matching_submap->local_pose() *
                                                  pose_observation_in_submap);
@@ -248,7 +248,6 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     LOG(WARNING) << "Scan matching failed.";
     return nullptr;
   }
-
   extrapolator_->AddPose(time, *pose_estimate);
   const Eigen::Quaterniond gravity_alignment =
       extrapolator_->EstimateGravityOrientation(time);
