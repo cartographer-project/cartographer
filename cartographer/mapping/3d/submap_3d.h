@@ -88,10 +88,6 @@ class ActiveSubmaps3D {
   ActiveSubmaps3D(const ActiveSubmaps3D&) = delete;
   ActiveSubmaps3D& operator=(const ActiveSubmaps3D&) = delete;
 
-  // Returns the index of the newest initialized Submap which can be
-  // used for scan-to-map matching.
-  int matching_index() const;
-
   // Inserts 'range_data' into the Submap collection. 'gravity_alignment' is
   // used for the orientation of new submaps so that the z axis approximately
   // aligns with gravity.
