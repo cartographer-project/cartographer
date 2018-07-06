@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_POSE_GRAPH_INTERFACE_H_
 #define CARTOGRAPHER_MAPPING_POSE_GRAPH_INTERFACE_H_
 
+#include <chrono>
 #include <vector>
 
 #include "cartographer/common/optional.h"
