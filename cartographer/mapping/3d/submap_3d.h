@@ -64,7 +64,7 @@ class Submap3D : public Submap {
   // submap must not be finished yet.
   void InsertRangeData(const sensor::RangeData& range_data,
                        const RangeDataInserter3D& range_data_inserter,
-                       int high_resolution_max_range);
+                       float high_resolution_max_range);
   void Finish();
 
  private:

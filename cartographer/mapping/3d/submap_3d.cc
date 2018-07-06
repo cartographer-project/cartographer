@@ -261,7 +261,7 @@ void Submap3D::ToResponseProto(
 
 void Submap3D::InsertRangeData(const sensor::RangeData& range_data,
                                const RangeDataInserter3D& range_data_inserter,
-                               const int high_resolution_max_range) {
+                               const float high_resolution_max_range) {
   CHECK(!finished());
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data, local_pose().inverse().cast<float>());
