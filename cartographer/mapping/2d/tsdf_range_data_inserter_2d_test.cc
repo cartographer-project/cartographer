@@ -65,28 +65,28 @@ class RangeDataInserterTest2DTSDF : public ::testing::Test {
 class MockCellProperties {
  public:
   MockCellProperties(const Eigen::Array2i& cell_index, const TSDF2D& tsdf)
-      : is_known(tsdf.IsKnown(cell_index)),
-        tsd(tsdf.GetTSD(cell_index)),
-        weight(tsdf.GetWeight(cell_index)){};
+      : is_known_(tsdf.IsKnown(cell_index)),
+        tsd_(tsdf.GetTSD(cell_index)),
+        weight_(tsdf.GetWeight(cell_index)){};
 
-  bool is_known;
-  float tsd;
-  float weight;
+  bool is_known_;
+  float tsd_;
+  float weight_;
 };
 
 ::std::ostream& operator<<(::std::ostream& os, const MockCellProperties& bar) {
-  return os << std::to_string(bar.is_known) + "\t" + std::to_string(bar.tsd) +
-                   "\t" + std::to_string(bar.weight);
+  return os << std::to_string(bar.is_known_) + "\t" + std::to_string(bar.tsd_) +
+                   "\t" + std::to_string(bar.weight_);
 }
 
-MATCHER_P3(MatchesCellProperties, expected_is_known, expected_tsd,
+MATCHER_P3(EqualCellProperties, expected_is_known, expected_tsd,
            expected_weight,
            std::string("Expected ") + std::to_string(expected_is_known) + "\t" +
                std::to_string(expected_tsd) + "\t" +
                std::to_string(expected_weight)) {
-  bool result = expected_is_known == arg.is_known;
-  result = result && (std::abs(expected_tsd - arg.tsd < 1e-4));
-  result = result && (std::abs(expected_weight - arg.weight < 1e-2));
+  bool result = expected_is_known == arg.is_known_;
+  result = result && (std::abs(expected_tsd - arg.tsd_ < 1e-4));
+  result = result && (std::abs(expected_weight - arg.weight_ < 1e-2));
   return result;
 }
 
@@ -105,28 +105,28 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
         std::max(std::min(3.5f - y, truncation_distance), -truncation_distance);
     float expected_weight = 1.f;
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(true, expected_tsdf, expected_weight));
+                EqualCellProperties(true, expected_tsdf, expected_weight));
     // Cells don't intersect with ray..
     x = 0.5f;
     cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
     expected_tsdf = -truncation_distance;
     expected_weight = 0.;
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(false, expected_tsdf, expected_weight));
+                EqualCellProperties(false, expected_tsdf, expected_weight));
     x = 1.5f;
     cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(false, expected_tsdf, expected_weight));
+                EqualCellProperties(false, expected_tsdf, expected_weight));
   }
 
   // Cells don't intersect with ray.
   Eigen::Array2i cell_index =
       tsdf_.limits().GetCellIndex(Eigen::Vector2f(0.5, 6.5));
   EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-              MatchesCellProperties(false, -truncation_distance, 0.));
+              EqualCellProperties(false, -truncation_distance, 0.));
   cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(-0.5, -1.5));
   EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-              MatchesCellProperties(false, -truncation_distance, 0.));
+              EqualCellProperties(false, -truncation_distance, 0.));
   for (int i = 0; i < 1000; ++i) {
     InsertPoint();
   }
@@ -138,7 +138,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
     float expected_tsdf =
         std::max(std::min(3.5f - y, truncation_distance), -truncation_distance);
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(true, expected_tsdf, maximum_weight));
+                EqualCellProperties(true, expected_tsdf, maximum_weight));
   }
 }
 
@@ -159,28 +159,28 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
         std::max(std::min(3.5f - y, truncation_distance), -truncation_distance);
     float expected_weight = 1.f;
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(true, expected_tsdf, expected_weight));
+                EqualCellProperties(true, expected_tsdf, expected_weight));
     // Cells don't intersect with ray..
     x = 0.5f;
     cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
     expected_tsdf = -truncation_distance;
     expected_weight = 0.;
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(false, expected_tsdf, expected_weight));
+                EqualCellProperties(false, expected_tsdf, expected_weight));
     x = 1.5f;
     cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(false, expected_tsdf, expected_weight));
+                EqualCellProperties(false, expected_tsdf, expected_weight));
   }
 
   // Cells don't intersect with the ray.
   Eigen::Array2i cell_index =
       tsdf_.limits().GetCellIndex(Eigen::Vector2f(-0.5, 6.5));
   EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-              MatchesCellProperties(false, -truncation_distance, 0.));
+              EqualCellProperties(false, -truncation_distance, 0.));
   cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(-0.5, -1.5));
   EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-              MatchesCellProperties(false, -truncation_distance, 0.));
+              EqualCellProperties(false, -truncation_distance, 0.));
   for (int i = 0; i < 1000; ++i) {
     InsertPoint();
   }
@@ -192,7 +192,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
     float expected_tsdf =
         std::max(std::min(3.5f - y, truncation_distance), -truncation_distance);
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(true, expected_tsdf, maximum_weight));
+                EqualCellProperties(true, expected_tsdf, maximum_weight));
   }
 }
 
@@ -211,7 +211,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointLinearWeight) {
         std::max(std::min(3.5f - y, truncation_distance), -truncation_distance);
     float expected_weight = 1.f / 4.f;
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(true, expected_tsdf, expected_weight));
+                EqualCellProperties(true, expected_tsdf, expected_weight));
   }
 }
 
@@ -230,7 +230,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointQuadraticWeight) {
         std::max(std::min(3.5f - y, truncation_distance), -truncation_distance);
     float expected_weight = 1.f / std::pow(4.f, 2);
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(true, expected_tsdf, expected_weight));
+                EqualCellProperties(true, expected_tsdf, expected_weight));
   }
 }
 
@@ -257,7 +257,7 @@ TEST_F(RangeDataInserterTest2DTSDF,
   float expected_tsdf = ray_length - distance_origin_to_cell;
   float expected_weight = 1.f;
   EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-              MatchesCellProperties(true, expected_tsdf, expected_weight));
+              EqualCellProperties(true, expected_tsdf, expected_weight));
 }
 
 TEST_F(RangeDataInserterTest2DTSDF, InsertSmallAnglePointWitNormalProjection) {
@@ -277,14 +277,14 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertSmallAnglePointWitNormalProjection) {
   float expected_tsdf = 1.f;
   float expected_weight = 1.f;
   EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-              MatchesCellProperties(true, expected_tsdf, expected_weight));
+              EqualCellProperties(true, expected_tsdf, expected_weight));
   x = 6.5f;
   y = 4.5f;
   cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
   expected_tsdf = -1.f;
   expected_weight = 1.f;
   EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-              MatchesCellProperties(true, expected_tsdf, expected_weight));
+              EqualCellProperties(true, expected_tsdf, expected_weight));
 }
 
 TEST_F(RangeDataInserterTest2DTSDF,
@@ -339,7 +339,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointsWithDistanceCellToHit) {
         1.f / (std::sqrt(2 * M_PI) * bandwith) *
         std::exp(std::pow(expected_tsdf, 2) / (2 * std::pow(bandwith, 2)));
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
-                MatchesCellProperties(true, expected_tsdf, expected_weight));
+                EqualCellProperties(true, expected_tsdf, expected_weight));
   }
 }
 
