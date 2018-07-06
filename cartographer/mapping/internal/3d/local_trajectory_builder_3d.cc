@@ -95,10 +95,6 @@ std::unique_ptr<transform::Rigid3d> LocalTrajectoryBuilder3D::ScanMatch(
   double residual_angle = pose_observation_in_submap.rotation().angularDistance(
       initial_ceres_pose.rotation());
   kScanMatcherResidualAngleMetric->Observe(residual_angle);
-  /*
-  const transform::Rigid3d pose_estimate =
-      matching_submap->local_pose() * pose_observation_in_submap
-      */
   return common::make_unique<transform::Rigid3d>(matching_submap->local_pose() *
                                                  pose_observation_in_submap);
 }
