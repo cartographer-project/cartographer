@@ -177,12 +177,11 @@ LocalTrajectoryBuilder3D::AddRangeData(
     const auto voxel_filter_duration = voxel_filter_stop - voxel_filter_start;
 
     if (sensor_duration.has_value()) {
-      double voxel_filter_fraction =
+      const double voxel_filter_fraction =
           std::chrono::duration_cast<std::chrono::duration<double>>(
               voxel_filter_duration)
               .count() /
           sensor_duration.value();
-      LOG(INFO) << "voxel_filter_fraction " << voxel_filter_fraction;
       kLocalSlamVoxelFilterFraction->Set(voxel_filter_fraction);
     }
 
@@ -253,13 +252,8 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
 
   const auto scan_matcher_stop = std::chrono::steady_clock::now();
   const auto scan_matcher_duration = scan_matcher_stop - scan_matcher_start;
-  LOG(INFO) << "scan_matcher_duration = "
-            << std::chrono::duration_cast<std::chrono::duration<double>>(
-                   scan_matcher_duration)
-                   .count()
-            << " seconds.";
   if (sensor_duration.has_value()) {
-    double scan_matcher_fraction =
+    const double scan_matcher_fraction =
         std::chrono::duration_cast<std::chrono::duration<double>>(
             scan_matcher_duration)
             .count() /
@@ -377,17 +371,17 @@ void LocalTrajectoryBuilder3D::RegisterMetrics(
       "result");
 
   auto* voxel_filter_fraction = family_factory->NewGaugeFamily(
-      "/mapping/internal/3d/local_trajectory_builder/voxel_filter_fraction",
+      "mapping_3d_local_trajectory_builder_voxel_filter_fraction",
       "Fraction of total sensor time taken up by voxel filter.");
   kLocalSlamVoxelFilterFraction = voxel_filter_fraction->Add({});
 
   auto* scan_matcher_fraction = family_factory->NewGaugeFamily(
-      "/mapping/internal/3d/local_trajectory_builder/scan_matcher_fraction",
+      "mapping_3d_local_trajectory_builder_scan_matcher_fraction",
       "Fraction of total sensor time taken up by scan matcher.");
   kLocalSlamScanMatcherFraction = scan_matcher_fraction->Add({});
 
   auto* insert_into_submap_fraction = family_factory->NewGaugeFamily(
-      "/mapping/internal/3d/local_trajectory_builder/"
+      "mapping_3d_local_trajectory_builder"
       "insert_into_submap_fraction",
       "Fraction of total sensor time taken up by inserting into submap.");
   kLocalSlamInsertIntoSubmapFraction = insert_into_submap_fraction->Add({});
