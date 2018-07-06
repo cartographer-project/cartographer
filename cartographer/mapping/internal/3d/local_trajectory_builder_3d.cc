@@ -178,10 +178,6 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
   const transform::Rigid3d pose_prediction =
       extrapolator_->ExtrapolatePose(time);
 
-  std::shared_ptr<const mapping::Submap3D> matching_submap =
-      active_submaps_.submaps().front();
-  transform::Rigid3d initial_ceres_pose =
-      matching_submap->local_pose().inverse() * pose_prediction;
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.high_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud high_resolution_point_cloud_in_tracking =
@@ -190,6 +186,17 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     LOG(WARNING) << "Dropped empty high resolution point cloud data.";
     return nullptr;
   }
+  if(active_submaps_.submaps().empty()){
+      return 
+  }
+  std::shared_ptr<const mapping::Submap3D> matching_submap =
+      active_submaps_.submaps().front();
+
+
+
+      
+  transform::Rigid3d initial_ceres_pose =
+      matching_submap->local_pose().inverse() * pose_prediction;
   if (options_.use_online_correlative_scan_matching()) {
     // We take a copy since we use 'initial_ceres_pose' as an output argument.
     const transform::Rigid3d initial_pose = initial_ceres_pose;

@@ -63,8 +63,6 @@ LocalTrajectoryBuilder2D::TransformToGravityAlignedFrameAndFilter(
 std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     const common::Time time, const transform::Rigid2d& pose_prediction,
     const sensor::RangeData& gravity_aligned_range_data) {
-  std::shared_ptr<const Submap2D> matching_submap =
-      active_submaps_.submaps().front();
   // The online correlative scan matcher will refine the initial estimate for
   // the Ceres scan matcher.
   transform::Rigid2d initial_ceres_pose = pose_prediction;
@@ -75,6 +73,11 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
   if (filtered_gravity_aligned_point_cloud.empty()) {
     return nullptr;
   }
+if(active_submaps_.submaps().empty()) {
+    return common::make_unique<transform::Rigid2d>(pose_prediction);
+}
+  std::shared_ptr<const Submap2D> matching_submap =
+      active_submaps_.submaps().front();
   if (options_.use_online_correlative_scan_matching()) {
     CHECK_EQ(options_.submaps_options().grid_options_2d().grid_type(),
              proto::GridOptions2D_GridType_PROBABILITY_GRID);
