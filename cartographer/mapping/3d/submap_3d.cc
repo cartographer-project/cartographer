@@ -261,7 +261,7 @@ void Submap3D::ToResponseProto(
 
 void Submap3D::InsertRangeData(const sensor::RangeData& range_data,
                                const RangeDataInserter3D& range_data_inserter,
-                               const int high_resolution_max_range) {
+                               const float high_resolution_max_range) {
   CHECK(!finished());
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data, local_pose().inverse().cast<float>());
@@ -314,13 +314,11 @@ void ActiveSubmaps3D::AddSubmap(const transform::Rigid3d& local_submap_pose) {
   if (submaps_.size() == 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
-    CHECK(submaps_.front()->finished());
     submaps_.erase(submaps_.begin());
   }
-    submaps_.emplace_back(new Submap3D(options_.high_resolution(),
+  submaps_.emplace_back(new Submap3D(options_.high_resolution(),
                                      options_.low_resolution(),
                                      local_submap_pose));
-
 }
 
 }  // namespace mapping
