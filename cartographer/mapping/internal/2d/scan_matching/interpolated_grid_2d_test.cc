@@ -27,8 +27,8 @@ namespace {
 class InterpolatedTSDF2DTest : public ::testing::Test {
  protected:
   InterpolatedTSDF2DTest()
-      : tsdf_(MapLimits(1., Eigen::Vector2d(5., 5.), CellLimits(10, 10)), 1.0f,
-              10.0f),
+      : tsdf_(MapLimits(1., Eigen::Vector2d(5.5, 5.5), CellLimits(10, 10)),
+              1.0f, 10.0f, &conversion_tables_),
         interpolated_tsdf_(tsdf_) {}
 
   float GetUninterpolatedCorrespondenceCost(float x, float y) const {
@@ -40,6 +40,7 @@ class InterpolatedTSDF2DTest : public ::testing::Test {
     return tsdf_.GetWeight(tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y)));
   }
 
+  ValueConversionTables conversion_tables_;
   TSDF2D tsdf_;
   InterpolatedTSDF2D interpolated_tsdf_;
 };
@@ -49,20 +50,33 @@ TEST_F(InterpolatedTSDF2DTest, InterpolatesGridPoints) {
       Eigen::Vector2f(1.f, 1.f), Eigen::Vector2f(2.f, 1.f),
       Eigen::Vector2f(1.f, 2.f), Eigen::Vector2f(2.f, 2.f)};
   for (const Eigen::Vector2f& point : inner_points) {
-    tsdf_.SetCell(tsdf_.limits().GetCellIndex(point), 0.5f, 1.0f);
+    tsdf_.SetCell(tsdf_.limits().GetCellIndex(point), 0.1f, 1.0f);
+  }
+  // Outer points.
+  for (size_t x = 0; x < 4; ++x) {
+    for (size_t y = 0; y < 4; ++y) {
+      if (x == 0 || x == 3 || y == 0 || y == 3) {
+        Eigen::Vector2f point = {static_cast<float>(x), static_cast<float>(y)};
+        tsdf_.SetCell(tsdf_.limits().GetCellIndex(point), 0.1f, 1.0f);
+      }
+    }
   }
   for (const Eigen::Vector2f& point : inner_points) {
-    EXPECT_NEAR(GetUninterpolatedCorrespondenceCost(point[0], point[1]),
-                interpolated_tsdf_.GetCorrespondenceCost(point[0], point[1]),
-                1e-6);
+    EXPECT_NEAR(
+        GetUninterpolatedCorrespondenceCost(point[0], point[1]),
+        interpolated_tsdf_.GetCorrespondenceCost(static_cast<double>(point[0]),
+                                                 static_cast<double>(point[1])),
+        1e-4);
     EXPECT_NEAR(GetUninterpolatedWeight(point[0], point[1]),
-                interpolated_tsdf_.GetWeight(point[0], point[1]), 1e-6);
+                interpolated_tsdf_.GetWeight(static_cast<double>(point[0]),
+                                             static_cast<double>(point[1])),
+                1e-4);
   }
   // Check unknown cell.
-  EXPECT_NEAR(GetUninterpolatedCorrespondenceCost(3.f, 2.f),
-              tsdf_.GetMaxCorrespondenceCost(), 1e-6);
+  EXPECT_NEAR(tsdf_.GetMaxCorrespondenceCost(),
+              interpolated_tsdf_.GetCorrespondenceCost(3.0, 2.0), 1e-4);
   EXPECT_NEAR(GetUninterpolatedWeight(3.f, 2.f),
-              interpolated_tsdf_.GetWeight(3.f, 2.f), 1e-6);
+              interpolated_tsdf_.GetWeight(3.0, 2.0), 1e-4);
 }
 
 TEST_F(InterpolatedTSDF2DTest, InterpolatesWithinCell) {
@@ -84,16 +98,17 @@ TEST_F(InterpolatedTSDF2DTest, InterpolatesWithinCell) {
   tsdf_.SetCell(tsdf_.limits().GetCellIndex(Eigen::Vector2f(1.f, 1.f)), tsd_11,
                 w_11);
 
-  const float kSampleStep = tsdf_.limits().resolution() / 100.;
-  for (float x = 0. + kSampleStep; x < 1.; x += tsdf_.limits().resolution()) {
-    for (float y = 0. + kSampleStep; y < 1.; y += tsdf_.limits().resolution()) {
-      float tsd_expected = (x * tsd_00 + (1.f - x) * tsd_10) * y +
-                           (x * tsd_01 + (1.f - x) * tsd_11) * (1.f - y);
+  const double kSampleStep = tsdf_.limits().resolution() / 100.;
+  for (double x = 0. + kSampleStep; x < 1.; x += tsdf_.limits().resolution()) {
+    for (double y = 0. + kSampleStep; y < 1.;
+         y += tsdf_.limits().resolution()) {
+      double tsd_expected = (x * tsd_10 + (1.f - x) * tsd_00) * (1.f - y) +
+                            (x * tsd_11 + (1.f - x) * tsd_01) * y;
       EXPECT_NEAR(interpolated_tsdf_.GetCorrespondenceCost(x, y), tsd_expected,
-                  1e-6);
-      float w_expected = (x * w_00 + (1.f - x) * w_10) * y +
-                         (x * w_01 + (1.f - x) * w_11) * (1.f - y);
-      EXPECT_NEAR(interpolated_tsdf_.GetWeight(3.f, 2.f), w_expected, 1e-6);
+                  1e-3);
+      double w_expected = (x * w_10 + (1.f - x) * w_00) * (1.f - y) +
+                         (x * w_11 + (1.f - x) * w_01) * y;
+      EXPECT_NEAR(interpolated_tsdf_.GetWeight(x, y), w_expected, 1e-3);
     }
   }
 }
