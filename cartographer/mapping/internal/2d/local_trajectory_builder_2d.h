@@ -83,7 +83,8 @@ class LocalTrajectoryBuilder2D {
   sensor::RangeData TransformToGravityAlignedFrameAndFilter(
       const transform::Rigid3f& transform_to_gravity_aligned_frame,
       const sensor::RangeData& range_data) const;
-  sensor::PointCloud voxelFilter(const sensor::PointCloud& point_cloud);
+  sensor::PointCloud RunAdaptiveVoxelFilter(
+      const sensor::PointCloud& point_cloud);
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       common::Time time, const sensor::RangeData& range_data_in_local,
       const sensor::PointCloud& filtered_gravity_aligned_point_cloud,
