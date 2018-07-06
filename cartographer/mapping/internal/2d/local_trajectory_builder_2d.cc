@@ -257,14 +257,12 @@ LocalTrajectoryBuilder2D::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
-
-  // Querying the active submaps must be done here before calling
-  // InsertRangeData() since the queried values are valid for next insertion.
+  
+  active_submaps_.InsertRangeData(range_data_in_local);
   std::vector<std::shared_ptr<const Submap2D>> insertion_submaps;
   for (const std::shared_ptr<Submap2D>& submap : active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
-  active_submaps_.InsertRangeData(range_data_in_local);
 
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.loop_closure_adaptive_voxel_filter_options());

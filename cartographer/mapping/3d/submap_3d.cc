@@ -287,7 +287,7 @@ ActiveSubmaps3D::ActiveSubmaps3D(const proto::SubmapsOptions3D& options)
   //
   // TODO(whess): Start with no submaps, so that all of them can be
   // approximately gravity aligned.
-  AddSubmap(transform::Rigid3d::Identity());
+  //AddSubmap(transform::Rigid3d::Identity());
 }
 
 std::vector<std::shared_ptr<Submap3D>> ActiveSubmaps3D::submaps() const {
@@ -297,24 +297,29 @@ std::vector<std::shared_ptr<Submap3D>> ActiveSubmaps3D::submaps() const {
 void ActiveSubmaps3D::InsertRangeData(
     const sensor::RangeData& range_data,
     const Eigen::Quaterniond& gravity_alignment) {
+  if (submaps_.empty() || submaps_.back()->num_range_data() == options_.num_range_data()) {
+    AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
+                                 gravity_alignment));
+  }
   for (auto& submap : submaps_) {
     submap->InsertRangeData(range_data, range_data_inserter_,
                             options_.high_resolution_max_range());
   }
-  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
-    AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
-                                 gravity_alignment));
+  if (submaps_.front()->num_range_data() == 2* options_.num_range_data()) {
+    submaps_.front()->Finish();
   }
 }
 
 void ActiveSubmaps3D::AddSubmap(const transform::Rigid3d& local_submap_pose) {
   if (submaps_.size() > 1) {
-    submaps_.front()->Finish();
+    // This will crop the finished Submap before inserting a new Submap to
+    // reduce peak memory usage a bit.
     submaps_.erase(submaps_.begin());
   }
-  submaps_.emplace_back(new Submap3D(options_.high_resolution(),
+    submaps_.emplace_back(new Submap3D(options_.high_resolution(),
                                      options_.low_resolution(),
                                      local_submap_pose));
+
 }
 
 }  // namespace mapping

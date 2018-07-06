@@ -130,7 +130,7 @@ ActiveSubmaps2D::ActiveSubmaps2D(const proto::SubmapsOptions2D& options)
     : options_(options), range_data_inserter_(CreateRangeDataInserter()) {
   // We always want to have at least one likelihood field which we can return,
   // and will create it at the origin in absence of a better choice.
-  AddSubmap(Eigen::Vector2f::Zero());
+  //AddSubmap(Eigen::Vector2f::Zero());
 }
 
 std::vector<std::shared_ptr<Submap2D>> ActiveSubmaps2D::submaps() const {
@@ -138,11 +138,14 @@ std::vector<std::shared_ptr<Submap2D>> ActiveSubmaps2D::submaps() const {
 }
 
 void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
+  if (submaps_.empty() || (!submaps_.empty() && submaps_.front()->finished())) {
+    AddSubmap(range_data.origin.head<2>());
+  }
   for (auto& submap : submaps_) {
     submap->InsertRangeData(range_data, range_data_inserter_.get());
   }
-  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
-    AddSubmap(range_data.origin.head<2>());
+  if (submaps_.size() > 1 && submaps_.back()->num_range_data() == options_.num_range_data()) {
+    submaps_.front()->Finish();
   }
 }
 
@@ -164,17 +167,11 @@ std::unique_ptr<GridInterface> ActiveSubmaps2D::CreateGrid(
                 CellLimits(kInitialSubmapSize, kInitialSubmapSize)));
 }
 
-void ActiveSubmaps2D::FinishSubmap() {
-  Submap2D* submap = submaps_.front().get();
-  submap->Finish();
-  submaps_.erase(submaps_.begin());
-}
-
 void ActiveSubmaps2D::AddSubmap(const Eigen::Vector2f& origin) {
   if (submaps_.size() > 1) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
-    FinishSubmap();
+    submaps_.erase(submaps_.begin());
   }
 
   submaps_.push_back(common::make_unique<Submap2D>(
