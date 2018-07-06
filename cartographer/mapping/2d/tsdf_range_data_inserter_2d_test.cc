@@ -119,7 +119,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
                 MatchesCellProperties(false, expected_tsdf, expected_weight));
   }
 
-  // Cells don't intersect with ray..
+  // Cells don't intersect with ray.
   Eigen::Array2i cell_index =
       tsdf_.limits().GetCellIndex(Eigen::Vector2f(0.5, 6.5));
   EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
