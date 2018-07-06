@@ -137,8 +137,6 @@ std::vector<std::shared_ptr<Submap2D>> ActiveSubmaps2D::submaps() const {
   return submaps_;
 }
 
-int ActiveSubmaps2D::matching_index() const { return matching_submap_index_; }
-
 void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
   for (auto& submap : submaps_) {
     submap->InsertRangeData(range_data, range_data_inserter_.get());
@@ -169,7 +167,6 @@ std::unique_ptr<GridInterface> ActiveSubmaps2D::CreateGrid(
 void ActiveSubmaps2D::FinishSubmap() {
   Submap2D* submap = submaps_.front().get();
   submap->Finish();
-  ++matching_submap_index_;
   submaps_.erase(submaps_.begin());
 }
 
@@ -183,7 +180,6 @@ void ActiveSubmaps2D::AddSubmap(const Eigen::Vector2f& origin) {
   submaps_.push_back(common::make_unique<Submap2D>(
       origin, std::unique_ptr<Grid2D>(
                   static_cast<Grid2D*>(CreateGrid(origin).release()))));
-  LOG(INFO) << "Added submap " << matching_submap_index_ + submaps_.size();
 }
 
 }  // namespace mapping
