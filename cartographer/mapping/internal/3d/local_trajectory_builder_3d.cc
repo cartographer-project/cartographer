@@ -155,10 +155,10 @@ LocalTrajectoryBuilder3D::AddRangeData(
 
   if (num_accumulated_ >= options_.num_accumulated_range_data()) {
     const common::Time current_sensor_time = synchronized_data.time;
-    common::optional<double> sensor_duration;
+    common::optional<common::Duration> sensor_duration;
     if (last_sensor_time_.has_value()) {
       sensor_duration =
-          common::ToSeconds(current_sensor_time - last_sensor_time_.value());
+          current_sensor_time - last_sensor_time_.value();
     }
     last_sensor_time_ = current_sensor_time;
     num_accumulated_ = 0;
@@ -181,7 +181,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
           std::chrono::duration_cast<std::chrono::duration<double>>(
               voxel_filter_duration)
               .count() /
-          sensor_duration.value();
+          common::ToSeconds(sensor_duration.value());
       kLocalSlamVoxelFilterFraction->Set(voxel_filter_fraction);
     }
 
@@ -197,7 +197,7 @@ std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
 LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     const common::Time time,
     const sensor::RangeData& filtered_range_data_in_tracking,
-    const common::optional<double> sensor_duration) {
+    const common::optional<common::Duration> sensor_duration) {
   if (filtered_range_data_in_tracking.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";
     return nullptr;
@@ -257,7 +257,7 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
         std::chrono::duration_cast<std::chrono::duration<double>>(
             scan_matcher_duration)
             .count() /
-        sensor_duration.value();
+        common::ToSeconds(sensor_duration.value());
     LOG(INFO) << "scan_matcher_fraction " << scan_matcher_fraction;
     kLocalSlamScanMatcherFraction->Set(scan_matcher_fraction);
   }
@@ -299,7 +299,7 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
         std::chrono::duration_cast<std::chrono::duration<double>>(
             insert_into_submap_duration)
             .count() /
-        sensor_duration.value();
+        common::ToSeconds(sensor_duration.value());
     LOG(INFO) << "insert_into_submap_fraction " << insert_into_submap_fraction;
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
