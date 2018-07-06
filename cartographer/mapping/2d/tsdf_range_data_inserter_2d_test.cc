@@ -106,7 +106,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
     float expected_weight = 1.f;
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
                 EqualCellProperties(true, expected_tsdf, expected_weight));
-    // Cells don't intersect with ray..
+    // Cells don't intersect with ray.
     x = 0.5f;
     cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
     expected_tsdf = -truncation_distance;
@@ -160,7 +160,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
     float expected_weight = 1.f;
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
                 EqualCellProperties(true, expected_tsdf, expected_weight));
-    // Cells don't intersect with ray..
+    // Cells don't intersect with ray.
     x = 0.5f;
     cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
     expected_tsdf = -truncation_distance;

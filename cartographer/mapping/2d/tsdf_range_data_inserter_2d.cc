@@ -121,7 +121,7 @@ TSDFRangeDataInserter2D::TSDFRangeDataInserter2D(
 
 // Casts a ray from origin towards hit for each hit in range data.
 // If 'options.update_free_space' is 'true', all cells along the ray
-// until 'truncation_distance' behind hit ar updated. Otherwise, only the cells
+// until 'truncation_distance' behind hit are updated. Otherwise, only the cells
 // within 'truncation_distance' around hit are updated.
 void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
                                      GridInterface* grid) const {

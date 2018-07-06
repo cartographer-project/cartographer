@@ -19,27 +19,29 @@ package cartographer.mapping.proto;
 import "cartographer/mapping/proto/2d/normal_estimation_options_2d.proto";
 
 message TSDFRangeDataInserterOptions2D {
-  // Distance to the surface within the signed distance function is evaluated
+  // Distance to the surface within the signed distance function is evaluated.
   double truncation_distance = 1;
-  // Maximum weight that can be stored in a cell
+  // Maximum weight that can be stored in a cell.
   double maximum_weight = 2;
 
+  // Enables updating cells between the sensor origin and the range observation
+  // as free space.
   bool update_free_space = 3;
 
   NormalEstimationOptions2D normal_estimation_options = 4;
 
-  // Project the distance between the updated cell und the scan observation to
-  // the estimated scan normal
+  // Project the distance between the updated cell und the range observation to
+  // the estimated scan normal.
   bool project_sdf_distance_to_scan_normal = 5;
 
-  // Update weight is scaled with 1/distance(origin,hit)^range_exponent
+  // Update weight is scaled with 1/distance(origin,hit)^range_exponent.
   int32 update_weight_range_exponent = 6;
 
-  // Kernel bandwith of the weight factor based on the angle between
+  // Kernel bandwith of the weight factor based on the angle between.
   // scan normal and ray
   double update_weight_angle_scan_normal_to_ray_kernel_bandwith = 7;
 
   // Kernel bandwith of the weight factor based on the distance between
-  // cell and scan observation
+  // cell and scan observation.
   double update_weight_distance_cell_to_hit_kernel_bandwith = 8;
 }
