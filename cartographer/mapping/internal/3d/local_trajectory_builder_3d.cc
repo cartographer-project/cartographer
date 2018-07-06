@@ -62,9 +62,9 @@ std::unique_ptr<transform::Rigid3d> LocalTrajectoryBuilder3D::ScanMatch(
     LOG(WARNING) << "Dropped empty low resolution point cloud data.";
     return nullptr;
   }
-    if(active_submaps_.submaps().empty()) {
+  if (active_submaps_.submaps().empty()) {
     return common::make_unique<transform::Rigid3d>(pose_prediction);
-    }
+  }
   std::shared_ptr<const mapping::Submap3D> matching_submap =
       active_submaps_.submaps().front();
   transform::Rigid3d initial_ceres_pose =
@@ -291,7 +291,7 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
-  
+
   active_submaps_.InsertRangeData(filtered_range_data_in_local,
                                   gravity_alignment);
   std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps;
