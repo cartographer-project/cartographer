@@ -14,28 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_RAY_CASTING_H_
-#define CARTOGRAPHER_MAPPING_INTERNAL_2D_RAY_CASTING_H_
+#ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_RAY_TO_PIXEL_MASK_H_
+#define CARTOGRAPHER_MAPPING_INTERNAL_2D_RAY_TO_PIXEL_MASK_H_
 
 #include <vector>
 
-#include "cartographer/common/port.h"
-#include "cartographer/mapping/2d/probability_grid.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace mapping {
 
-// For each ray in 'range_data', inserts hits and misses into
-// 'probability_grid'. Hits are handled before misses.
-void CastRays(const sensor::RangeData& range_data,
-              const std::vector<uint16>& hit_table,
-              const std::vector<uint16>& miss_table, bool insert_free_space,
-              ProbabilityGrid* probability_grid);
+// Compute all pixels that contain some part of the line segment connecting
+// 'scaled_begin' and 'scaled_end'. 'scaled_begin' and 'scaled_end' are scaled
+// by 'subpixel_scale'. 'scaled_begin' and 'scaled_end' are expected to be
+// greater than zero. Return values are in pixels and not scaled.
+std::vector<Eigen::Array2i> RayToPixelMask(const Eigen::Array2i& scaled_begin,
+                                           const Eigen::Array2i& scaled_end,
+                                           int subpixel_scale);
 
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_2D_RAY_CASTING_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_2D_RAY_TO_PIXEL_MASK_H_

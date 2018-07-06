@@ -39,6 +39,8 @@
 namespace cartographer {
 namespace mapping {
 
+static auto* kWorkQueueDelayMetric = metrics::Gauge::Null();
+
 PoseGraph2D::PoseGraph2D(
     const proto::PoseGraphOptions& options,
     std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem,
@@ -129,6 +131,7 @@ NodeId PoseGraph2D::AddNode(
     const SubmapId submap_id =
         data_.submap_data.Append(trajectory_id, InternalSubmapData());
     data_.submap_data.at(submap_id).submap = insertion_submaps.back();
+    LOG(INFO) << "Inserted submap " << submap_id << ".";
   }
 
   // We have to check this here, because it might have changed by the time we
@@ -145,7 +148,12 @@ void PoseGraph2D::AddWorkItem(const std::function<void()>& work_item) {
   if (work_queue_ == nullptr) {
     work_item();
   } else {
-    work_queue_->push_back(work_item);
+    const auto now = std::chrono::steady_clock::now();
+    work_queue_->push_back({now, work_item});
+    kWorkQueueDelayMetric->Set(
+        std::chrono::duration_cast<std::chrono::duration<double>>(
+            now - work_queue_->front().time)
+            .count());
   }
 }
 
@@ -323,7 +331,7 @@ void PoseGraph2D::DispatchOptimization() {
   run_loop_closure_ = true;
   // If there is a 'work_queue_' already, some other thread will take care.
   if (work_queue_ == nullptr) {
-    work_queue_ = common::make_unique<std::deque<std::function<void()>>>();
+    work_queue_ = common::make_unique<WorkQueue>();
     constraint_builder_.WhenDone(
         std::bind(&PoseGraph2D::HandleWorkQueue, this, std::placeholders::_1));
   }
@@ -385,10 +393,16 @@ void PoseGraph2D::HandleWorkQueue(
       const auto& submap_data = optimization_problem_->submap_data();
       const auto& node_data = optimization_problem_->node_data();
       for (const int trajectory_id : node_data.trajectory_ids()) {
-        trajectory_id_to_last_optimized_node_id[trajectory_id] =
-            std::prev(node_data.EndOfTrajectory(trajectory_id))->id;
-        trajectory_id_to_last_optimized_submap_id[trajectory_id] =
-            std::prev(submap_data.EndOfTrajectory(trajectory_id))->id;
+        if (node_data.SizeOfTrajectoryOrZero(trajectory_id) == 0 ||
+            submap_data.SizeOfTrajectoryOrZero(trajectory_id) == 0) {
+          continue;
+        }
+        trajectory_id_to_last_optimized_node_id.emplace(
+            trajectory_id,
+            std::prev(node_data.EndOfTrajectory(trajectory_id))->id);
+        trajectory_id_to_last_optimized_submap_id.emplace(
+            trajectory_id,
+            std::prev(submap_data.EndOfTrajectory(trajectory_id))->id);
       }
     }
     global_slam_optimization_callback_(
@@ -419,7 +433,7 @@ void PoseGraph2D::HandleWorkQueue(
       work_queue_.reset();
       return;
     }
-    work_queue_->front()();
+    work_queue_->front().task();
     work_queue_->pop_front();
   }
   LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
@@ -1069,6 +1083,13 @@ PoseGraph2D::GetSubmapDataUnderLock() const {
 void PoseGraph2D::SetGlobalSlamOptimizationCallback(
     PoseGraphInterface::GlobalSlamOptimizationCallback callback) {
   global_slam_optimization_callback_ = callback;
+}
+
+void PoseGraph2D::RegisterMetrics(metrics::FamilyFactory* family_factory) {
+  auto* latency = family_factory->NewGaugeFamily(
+      "mapping_2d_pose_graph_work_queue_delay",
+      "Age of the oldest entry in the work queue in seconds");
+  kWorkQueueDelayMetric = latency->Add({});
 }
 
 }  // namespace mapping
