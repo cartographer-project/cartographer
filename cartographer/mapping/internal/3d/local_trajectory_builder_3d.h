@@ -78,7 +78,7 @@ class LocalTrajectoryBuilder3D {
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
       common::Time time,
       const sensor::RangeData& filtered_range_data_in_tracking,
-      const common::optional<common::Duration> sensor_duration);
+      const common::optional<common::Duration>& sensor_duration);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       common::Time time, const sensor::RangeData& filtered_range_data_in_local,

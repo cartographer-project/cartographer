@@ -196,7 +196,7 @@ std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
 LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     const common::Time time,
     const sensor::RangeData& filtered_range_data_in_tracking,
-    const common::optional<common::Duration> sensor_duration) {
+    const common::optional<common::Duration>& sensor_duration) {
   if (filtered_range_data_in_tracking.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";
     return nullptr;
