@@ -27,7 +27,7 @@ namespace cartographer {
 namespace mapping {
 
 static auto* kLocalSlamLatencyMetric = metrics::Gauge::Null();
-static auto* kFastCorrelativeScanMatcherScoreMetric =
+static auto* kRealTimeCorrelativeScanMatcherScoreMetric =
     metrics::Histogram::Null();
 static auto* kCeresScanMatcherCostMetric = metrics::Histogram::Null();
 static auto* kScanMatcherResidualDistanceMetric = metrics::Histogram::Null();
@@ -82,7 +82,7 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
         pose_prediction, filtered_gravity_aligned_point_cloud,
         *static_cast<const ProbabilityGrid*>(matching_submap->grid()),
         &initial_ceres_pose);
-    kFastCorrelativeScanMatcherScoreMetric->Observe(score);
+    kRealTimeCorrelativeScanMatcherScoreMetric->Observe(score);
   }
 
   auto pose_observation = common::make_unique<transform::Rigid2d>();
@@ -325,8 +325,8 @@ void LocalTrajectoryBuilder2D::RegisterMetrics(
   auto* scores = family_factory->NewHistogramFamily(
       "mapping_2d_local_trajectory_builder_scores", "Local scan matcher scores",
       score_boundaries);
-  kFastCorrelativeScanMatcherScoreMetric =
-      scores->Add({{"scan_matcher", "fast_correlative"}});
+  kRealTimeCorrelativeScanMatcherScoreMetric =
+      scores->Add({{"scan_matcher", "real_time_correlative"}});
   auto cost_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 100);
   auto* costs = family_factory->NewHistogramFamily(
       "mapping_2d_local_trajectory_builder_costs", "Local scan matcher costs",
