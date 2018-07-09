@@ -177,7 +177,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
 
     if (sensor_duration.has_value()) {
       const double voxel_filter_fraction =
-          common::ToSeconds(voxel_filter_duration)   /
+          common::ToSeconds(voxel_filter_duration) /
           common::ToSeconds(sensor_duration.value());
       kLocalSlamVoxelFilterFraction->Set(voxel_filter_fraction);
     }
