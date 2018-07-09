@@ -157,8 +157,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
     const common::Time current_sensor_time = synchronized_data.time;
     common::optional<common::Duration> sensor_duration;
     if (last_sensor_time_.has_value()) {
-      sensor_duration =
-          current_sensor_time - last_sensor_time_.value();
+      sensor_duration = current_sensor_time - last_sensor_time_.value();
     }
     last_sensor_time_ = current_sensor_time;
     num_accumulated_ = 0;
