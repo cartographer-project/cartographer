@@ -63,9 +63,6 @@ LocalTrajectoryBuilder2D::TransformToGravityAlignedFrameAndFilter(
 std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     const common::Time time, const transform::Rigid2d& pose_prediction,
     const sensor::PointCloud& filtered_gravity_aligned_point_cloud) {
-  if (filtered_gravity_aligned_point_cloud.empty()) {
-    return nullptr;
-  }
   std::shared_ptr<const Submap2D> matching_submap =
       active_submaps_.submaps().front();
   // The online correlative scan matcher will refine the initial estimate for
@@ -228,6 +225,10 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
 
   const sensor::PointCloud& filtered_gravity_aligned_point_cloud =
       RunAdaptiveVoxelFilter(gravity_aligned_range_data.returns);
+  if (filtered_gravity_aligned_point_cloud.empty()) {
+    return nullptr;
+  }
+
   // local map frame <- gravity-aligned frame
   std::unique_ptr<transform::Rigid2d> pose_estimate_2d =
       ScanMatch(time, pose_prediction, filtered_gravity_aligned_point_cloud);
