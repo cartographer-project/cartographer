@@ -200,13 +200,6 @@ LocalTrajectoryBuilder2D::AddRangeData(
   return nullptr;
 }
 
-sensor::PointCloud LocalTrajectoryBuilder2D::RunAdaptiveVoxelFilter(
-    const sensor::PointCloud& point_cloud) {
-  sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
-      options_.adaptive_voxel_filter_options());
-  return adaptive_voxel_filter.Filter(point_cloud);
-}
-
 std::unique_ptr<LocalTrajectoryBuilder2D::MatchingResult>
 LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
     const common::Time time,
@@ -224,7 +217,8 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
   const sensor::PointCloud& filtered_gravity_aligned_point_cloud =
-      RunAdaptiveVoxelFilter(gravity_aligned_range_data.returns);
+      sensor::AdaptiveVoxelFilter(options_.adaptive_voxel_filter_options())
+          .Filter(gravity_aligned_range_data.returns);
   if (filtered_gravity_aligned_point_cloud.empty()) {
     return nullptr;
   }
