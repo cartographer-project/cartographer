@@ -78,7 +78,7 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
   if (options_.use_online_correlative_scan_matching()) {
     CHECK_EQ(options_.submaps_options().grid_options_2d().grid_type(),
              proto::GridOptions2D_GridType_PROBABILITY_GRID);
-    double score = real_time_correlative_scan_matcher_.Match(
+    const double score = real_time_correlative_scan_matcher_.Match(
         pose_prediction, filtered_gravity_aligned_point_cloud,
         *static_cast<const ProbabilityGrid*>(matching_submap->grid()),
         &initial_ceres_pose);
@@ -93,12 +93,13 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
                             &summary);
   if (pose_observation) {
     kCeresScanMatcherCostMetric->Observe(summary.final_cost);
-    double residual_distance =
+    const double residual_distance =
         (pose_observation->translation() - pose_prediction.translation())
             .norm();
     kScanMatcherResidualDistanceMetric->Observe(residual_distance);
-    double residual_angle = std::abs(pose_observation->rotation().angle() -
-                                     pose_prediction.rotation().angle());
+    const double residual_angle =
+        std::abs(pose_observation->rotation().angle() -
+                 pose_prediction.rotation().angle());
     kScanMatcherResidualAngleMetric->Observe(residual_angle);
   }
   return pose_observation;
