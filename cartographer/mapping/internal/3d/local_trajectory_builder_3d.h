@@ -77,7 +77,8 @@ class LocalTrajectoryBuilder3D {
  private:
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
       common::Time time,
-      const sensor::RangeData& filtered_range_data_in_tracking);
+      const sensor::RangeData& filtered_range_data_in_tracking,
+      const common::optional<common::Duration>& sensor_duration);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       common::Time time, const sensor::RangeData& filtered_range_data_in_local,
@@ -102,6 +103,8 @@ class LocalTrajectoryBuilder3D {
   std::chrono::steady_clock::time_point accumulation_started_;
 
   RangeDataCollator range_data_collator_;
+
+  common::optional<common::Time> last_sensor_time_;
 };
 
 }  // namespace mapping
