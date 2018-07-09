@@ -228,9 +228,9 @@ def cartographer_repositories():
 
   _maybe(native.http_archive,
       name = "com_github_googlecartographer_async_grpc",
-      strip_prefix = "async_grpc-c2c68f56904a595ab5ba24c1fb19b4b8e954fa15",
+      strip_prefix = "async_grpc-a562634ecea49beac5a08436ca76c6b82efb439b",
       urls = [
-          "https://github.com/googlecartographer/async_grpc/archive/c2c68f56904a595ab5ba24c1fb19b4b8e954fa15.tar.gz",
+          "https://github.com/googlecartographer/async_grpc/archive/a562634ecea49beac5a08436ca76c6b82efb439b.tar.gz",
       ],
   )
   

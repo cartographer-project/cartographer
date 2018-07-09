@@ -306,7 +306,7 @@ void ConstraintBuilder2D::DeleteScanMatcher(const SubmapId& submap_id) {
 
 void ConstraintBuilder2D::RegisterMetrics(metrics::FamilyFactory* factory) {
   auto* counts = factory->NewCounterFamily(
-      "mapping_internal_constraints_constraint_builder_2d_constraints",
+      "mapping_constraints_constraint_builder_2d_constraints",
       "Constraints computed");
   kConstraintsSearchedMetric =
       counts->Add({{"search_region", "local"}, {"matcher", "searched"}});
@@ -317,12 +317,11 @@ void ConstraintBuilder2D::RegisterMetrics(metrics::FamilyFactory* factory) {
   kGlobalConstraintsFoundMetric =
       counts->Add({{"search_region", "global"}, {"matcher", "found"}});
   auto* queue_length = factory->NewGaugeFamily(
-      "mapping_internal_constraints_constraint_builder_2d_queue_length",
-      "Queue length");
+      "mapping_constraints_constraint_builder_2d_queue_length", "Queue length");
   kQueueLengthMetric = queue_length->Add({});
   auto boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = factory->NewHistogramFamily(
-      "mapping_internal_constraints_constraint_builder_2d_scores",
+      "mapping_constraints_constraint_builder_2d_scores",
       "Constraint scores built", boundaries);
   kConstraintScoresMetric = scores->Add({{"search_region", "local"}});
   kGlobalConstraintScoresMetric = scores->Add({{"search_region", "global"}});
