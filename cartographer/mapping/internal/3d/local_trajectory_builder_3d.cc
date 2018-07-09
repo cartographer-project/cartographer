@@ -258,7 +258,6 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
             scan_matcher_duration)
             .count() /
         common::ToSeconds(sensor_duration.value());
-    LOG(INFO) << "scan_matcher_fraction " << scan_matcher_fraction;
     kLocalSlamScanMatcherFraction->Set(scan_matcher_fraction);
   }
 
@@ -289,18 +288,12 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
 
   const auto insert_into_submap_duration =
       insert_into_submap_stop - insert_into_submap_start;
-  LOG(INFO) << "insert_into_submap_duration = "
-            << std::chrono::duration_cast<std::chrono::duration<double>>(
-                   insert_into_submap_duration)
-                   .count()
-            << " seconds.";
   if (sensor_duration.has_value()) {
     double insert_into_submap_fraction =
         std::chrono::duration_cast<std::chrono::duration<double>>(
             insert_into_submap_duration)
             .count() /
         common::ToSeconds(sensor_duration.value());
-    LOG(INFO) << "insert_into_submap_fraction " << insert_into_submap_fraction;
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
 
