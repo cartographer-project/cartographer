@@ -32,4 +32,10 @@ else ()
    find_package(Ceres HINTS ${CERES_DIR_HINTS})
 endif()
 
+set(CARTOGRAPHER_HAS_GRPC @CARTOGRAPHER_HAS_GRPC@)
+
+if(CARTOGRAPHER_HAS_GRPC)
+   find_package(async_grpc)
+endif()
+
 include("${CARTOGRAPHER_CMAKE_DIR}/CartographerTargets.cmake")
