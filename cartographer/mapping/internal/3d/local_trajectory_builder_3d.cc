@@ -141,7 +141,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
   }
 
   if (num_accumulated_ == 0) {
-    accumulation_started_ = std::chrono::steady_clock::now();
+    accumulation_started_old_ = std::chrono::steady_clock::now();
   }
 
   std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement> hits =
@@ -302,9 +302,16 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
         common::ToSeconds(sensor_duration.value());
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
-  const auto accumulation_duration =
-      std::chrono::steady_clock::now() - accumulation_started_;
-  kLocalSlamLatencyMetric->Set(common::ToSeconds(accumulation_duration));
+  const auto accumulation_stop =  std::chrono::steady_clock::now();
+  const auto accumulation_duration_old = accumulation_stop - accumulation_started_old_;
+  if (last_accumulation_stop_.has_value()) {
+    const auto accumulation_duration = accumulation_stop - last_accumulation_stop_.value();
+    kLocalSlamLatencyMetric->Set(common::ToSeconds(accumulation_duration));
+    LOG(INFO) << "accumulation_duration:     " << common::ToSeconds(accumulation_duration);
+    LOG(INFO) << "accumulation_duration_old: " << common::ToSeconds(accumulation_duration_old) <<
+       ", difference: " << 100 * common::ToSeconds(accumulation_duration_old - accumulation_duration) / common::ToSeconds(accumulation_duration) << " %";
+  }  
+  last_accumulation_stop_ = accumulation_stop;
   return common::make_unique<MatchingResult>(MatchingResult{
       time, *pose_estimate, std::move(filtered_range_data_in_local),
       std::move(insertion_result)});
