@@ -27,7 +27,7 @@ namespace cartographer {
 namespace mapping {
 
 static auto* kLocalSlamLatencyMetric = metrics::Gauge::Null();
-static auto* kFastCorrelativeScanMatcherScoreMetric =
+static auto* kRealTimeCorrelativeScanMatcherScoreMetric =
     metrics::Histogram::Null();
 static auto* kCeresScanMatcherCostMetric = metrics::Histogram::Null();
 static auto* kScanMatcherResidualDistanceMetric = metrics::Histogram::Null();
@@ -72,11 +72,11 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
   if (options_.use_online_correlative_scan_matching()) {
     CHECK_EQ(options_.submaps_options().grid_options_2d().grid_type(),
              proto::GridOptions2D_GridType_PROBABILITY_GRID);
-    double score = real_time_correlative_scan_matcher_.Match(
+    const double score = real_time_correlative_scan_matcher_.Match(
         pose_prediction, filtered_gravity_aligned_point_cloud,
         *static_cast<const ProbabilityGrid*>(matching_submap->grid()),
         &initial_ceres_pose);
-    kFastCorrelativeScanMatcherScoreMetric->Observe(score);
+    kRealTimeCorrelativeScanMatcherScoreMetric->Observe(score);
   }
 
   auto pose_observation = common::make_unique<transform::Rigid2d>();
@@ -87,12 +87,13 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
                             &summary);
   if (pose_observation) {
     kCeresScanMatcherCostMetric->Observe(summary.final_cost);
-    double residual_distance =
+    const double residual_distance =
         (pose_observation->translation() - pose_prediction.translation())
             .norm();
     kScanMatcherResidualDistanceMetric->Observe(residual_distance);
-    double residual_angle = std::abs(pose_observation->rotation().angle() -
-                                     pose_prediction.rotation().angle());
+    const double residual_angle =
+        std::abs(pose_observation->rotation().angle() -
+                 pose_prediction.rotation().angle());
     kScanMatcherResidualAngleMetric->Observe(residual_angle);
   }
   return pose_observation;
@@ -321,8 +322,8 @@ void LocalTrajectoryBuilder2D::RegisterMetrics(
   auto* scores = family_factory->NewHistogramFamily(
       "mapping_2d_local_trajectory_builder_scores", "Local scan matcher scores",
       score_boundaries);
-  kFastCorrelativeScanMatcherScoreMetric =
-      scores->Add({{"scan_matcher", "fast_correlative"}});
+  kRealTimeCorrelativeScanMatcherScoreMetric =
+      scores->Add({{"scan_matcher", "real_time_correlative"}});
   auto cost_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 100);
   auto* costs = family_factory->NewHistogramFamily(
       "mapping_2d_local_trajectory_builder_costs", "Local scan matcher costs",
