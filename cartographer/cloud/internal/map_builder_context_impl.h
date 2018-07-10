@@ -104,6 +104,22 @@ void MapBuilderContext<SubmapType>::EnqueueSensorData(
       common::make_unique<Data>(Data{trajectory_id, std::move(data)}));
 }
 
+template <class SubmapType>
+void MapBuilderContext<SubmapType>::RegisterClientIdForTrajectory(
+    const std::string& client_id, int trajectory_id) {
+  CHECK_EQ(client_ids_.count(trajectory_id), 0u);
+  LOG(INFO) << "Registering trajectory_id " << trajectory_id << " to client_id "
+            << client_id;
+  client_ids_[trajectory_id] = client_id;
+}
+
+template <class SubmapType>
+bool MapBuilderContext<SubmapType>::CheckClientIdForTrajectory(
+    const std::string& client_id, int trajectory_id) {
+  return (client_ids_.count(trajectory_id) > 0 &&
+          client_ids_[trajectory_id] == client_id);
+}
+
 template <>
 void MapBuilderContext<mapping::Submap2D>::EnqueueLocalSlamResultData(
     int trajectory_id, const std::string& sensor_id,
