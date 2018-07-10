@@ -20,13 +20,13 @@ Relative Transform Error 2D
 ===========================
 
 Given two poses
-:math:`\mathbf{p_i} = [\mathbf{x_i}; \theta_i] = [x_i, y_i, \theta_i]^T`
-and :math:`\mathbf{p_j} = [\mathbf{x_j}; \theta_j] = [x_j, y_j, \theta_j]^T`
+:math:`\mathbf{p}_i = [\mathbf{x}_i; \theta_i] = [x_i, y_i, \theta_i]^T`
+and :math:`\mathbf{p}_j = [\mathbf{x}_j; \theta_j] = [x_j, y_j, \theta_j]^T`
 the transformation :math:`\mathbf T` from the coordinate frame :math:`j` to the
 coordinate frame :math:`i` has the following form
 
 .. math::
- \mathbf{T}( \mathbf{p_i},\mathbf{p_j}) =
+ \mathbf{T}( \mathbf{p}_i,\mathbf{p}_j) =
  \left[
    \begin{array}{c}
         R(\theta_i)^T (\mathbf x_j - \mathbf x_i) \\
@@ -42,12 +42,12 @@ The weighted error :math:`f:\mathbb R^6 \mapsto \mathbb R^3` between
 coordinate frame :math:`i` can be computed as
 
 .. math::
- \mathbf f( \mathbf{p_i},\mathbf{p_j}) =
+ \mathbf f( \mathbf{p}_i,\mathbf{p}_j) =
  \left[
    w_{\text{t}} \; w_{\text{r}}
  \right]
  \left(
-   \mathbf T_{ij}^m - \mathbf T( \mathbf{p_i},\mathbf{p_j})
+   \mathbf T_{ij}^m - \mathbf T( \mathbf{p}_i,\mathbf{p}_j)
  \right) =
  \left[
    \begin{array}{c}
@@ -68,7 +68,7 @@ Jacobian matrix  :math:`J_f` is given by:
 
 .. math::
  \begin{align}
-   J_f( \mathbf{p_i},\mathbf{p_j}) &=
+   J_f( \mathbf{p}_i,\mathbf{p}_j) &=
    \left[
      \frac{\partial\mathbf f}{\partial x_i} \quad
      \frac{\partial\mathbf f}{\partial y_i} \quad
