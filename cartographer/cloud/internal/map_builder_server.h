@@ -65,9 +65,9 @@ class MapBuilderContext : public MapBuilderContextInterface {
                                   const mapping::proto::LocalSlamResultData&
                                       local_slam_result_data) override;
   void RegisterClientIdForTrajectory(const std::string& client_id,
-		  int trajectory_id) override;
+                                     int trajectory_id) override;
   bool CheckClientIdForTrajectory(const std::string& client_id,
-		  int trajectory_id) override;
+                                  int trajectory_id) override;
 
  private:
   MapBuilderServer* map_builder_server_;

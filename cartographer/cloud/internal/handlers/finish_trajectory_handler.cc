@@ -29,7 +29,7 @@ namespace handlers {
 void FinishTrajectoryHandler::OnRequest(
     const proto::FinishTrajectoryRequest& request) {
   if (!GetContext<MapBuilderContextInterface>()->CheckClientIdForTrajectory(
-		  request.client_id(), request.trajectory_id())) {
+          request.client_id(), request.trajectory_id())) {
     LOG(ERROR) << "Unknown trajectory with ID " << request.trajectory_id()
                << " and client_id " << request.client_id();
     Finish(::grpc::Status(::grpc::NOT_FOUND, "Unknown trajectory"));
