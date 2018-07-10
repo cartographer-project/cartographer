@@ -284,14 +284,14 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
   const auto insert_into_submap_duration =
       insert_into_submap_stop - insert_into_submap_start;
   if (sensor_duration.has_value()) {
-    double insert_into_submap_fraction =
+    const double insert_into_submap_fraction =
         common::ToSeconds(insert_into_submap_duration) /
         common::ToSeconds(sensor_duration.value());
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
 
-  auto duration = std::chrono::steady_clock::now() - accumulation_started_;
-  kLocalSlamLatencyMetric->Set(common::ToSeconds(duration));
+  const auto accumulation_duration = std::chrono::steady_clock::now() - accumulation_started_;
+  kLocalSlamLatencyMetric->Set(common::ToSeconds(accumulation_duration));
   return common::make_unique<MatchingResult>(MatchingResult{
       time, pose_estimate, std::move(filtered_range_data_in_local),
       std::move(insertion_result)});
