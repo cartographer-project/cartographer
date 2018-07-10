@@ -106,7 +106,7 @@ void MapBuilderContext<SubmapType>::EnqueueSensorData(
 
 template <class SubmapType>
 void MapBuilderContext<SubmapType>::RegisterClientIdForTrajectory(
-    int trajectory_id, const std::string& client_id) {
+    const std::string& client_id, int trajectory_id) {
   CHECK_EQ(client_ids_.count(trajectory_id), 0u);
   LOG(INFO) << "Registering trajectory_id " << trajectory_id << " to client_id "
             << client_id;
@@ -115,7 +115,7 @@ void MapBuilderContext<SubmapType>::RegisterClientIdForTrajectory(
 
 template <class SubmapType>
 bool MapBuilderContext<SubmapType>::CheckClientIdForTrajectory(
-    int trajectory_id, const std::string& client_id) {
+    const std::string& client_id, int trajectory_id) {
   return (client_ids_.count(trajectory_id) > 0 &&
           client_ids_[trajectory_id] == client_id);
 }

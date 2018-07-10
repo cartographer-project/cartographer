@@ -28,7 +28,7 @@ namespace testing {
 
 class MockLocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
-  MOCK_METHOD1(DoEnqueueSensorData, void(proto::SensorData *));
+  MOCK_METHOD1(DoEnqueueSensorData, void(proto::SensorData*));
   void EnqueueSensorData(
       std::unique_ptr<proto::SensorData> data_request) override {
     DoEnqueueSensorData(data_request.get());
@@ -36,8 +36,8 @@ class MockLocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   MOCK_METHOD0(Start, void());
   MOCK_METHOD0(Shutdown, void());
   MOCK_METHOD4(AddTrajectory,
-               void(const std::string &, int, const std::set<SensorId> &,
-                    const mapping::proto::TrajectoryBuilderOptions &));
+               void(const std::string&, int, const std::set<SensorId>&,
+                    const mapping::proto::TrajectoryBuilderOptions&));
   MOCK_METHOD2(FinishTrajectory, void(const std::string &, int));
   MOCK_CONST_METHOD1(GetLocalSlamResultSensorId, SensorId(int));
 };

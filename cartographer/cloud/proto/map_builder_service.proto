@@ -71,7 +71,6 @@ message SensorData {
 
 message AddTrajectoryResponse {
   int32 trajectory_id = 1;
-  string client_id = 2;
 }
 
 message AddSensorDataBatchRequest {

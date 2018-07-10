@@ -62,7 +62,7 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
   std::unique_ptr<mapping::PoseGraphInterface> pose_graph_stub_;
   std::map<int, std::unique_ptr<mapping::TrajectoryBuilderInterface>>
       trajectory_builder_stubs_;
-  std::string client_id_;
+  const std::string client_id_;
 };
 
 }  // namespace cloud

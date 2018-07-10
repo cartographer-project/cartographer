@@ -29,7 +29,7 @@ namespace testing {
 
 class MockMapBuilderContext : public MapBuilderContextInterface {
  public:
-  MOCK_METHOD0(map_builder, mapping::MapBuilderInterface &());
+  MOCK_METHOD0(map_builder, mapping::MapBuilderInterface&());
   MOCK_METHOD0(
       sensor_data_queue,
       common::BlockingQueue<std::unique_ptr<MapBuilderContextInterface::Data>>
@@ -37,14 +37,14 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
   MOCK_METHOD0(GetLocalSlamResultCallbackForSubscriptions,
                mapping::TrajectoryBuilderInterface::LocalSlamResultCallback());
   MOCK_METHOD1(AddSensorDataToTrajectory,
-               void(const MapBuilderContextInterface::Data &));
+               void(const MapBuilderContextInterface::Data&));
   MOCK_METHOD2(SubscribeLocalSlamResults,
                MapBuilderContextInterface::LocalSlamSubscriptionId(
                    int,
                    MapBuilderContextInterface::LocalSlamSubscriptionCallback));
   MOCK_METHOD1(
       UnsubscribeLocalSlamResults,
-      void(const MapBuilderContextInterface::LocalSlamSubscriptionId &));
+      void(const MapBuilderContextInterface::LocalSlamSubscriptionId&));
   MOCK_METHOD1(SubscribeGlobalSlamOptimizations,
                int(GlobalSlamOptimizationCallback));
   MOCK_METHOD1(UnsubscribeGlobalSlamOptimizations, void(int));
@@ -57,10 +57,10 @@ class MockMapBuilderContext : public MapBuilderContextInterface {
     DoEnqueueSensorData(trajectory_id, data.get());
   }
   MOCK_METHOD3(EnqueueLocalSlamResultData,
-               void(int, const std::string &,
-                    const mapping::proto::LocalSlamResultData &));
-  MOCK_METHOD2(RegisterClientIdForTrajectory, void(int, const std::string &));
-  MOCK_METHOD2(CheckClientIdForTrajectory, bool(int, const std::string &));
+               void(int, const std::string&,
+                    const mapping::proto::LocalSlamResultData&));
+  MOCK_METHOD2(RegisterClientIdForTrajectory, void(const std::string&, int));
+  MOCK_METHOD2(CheckClientIdForTrajectory, bool(const std::string&, int));
 };
 
 }  // namespace testing

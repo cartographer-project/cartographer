@@ -64,10 +64,10 @@ class MapBuilderContext : public MapBuilderContextInterface {
                                   const std::string& sensor_id,
                                   const mapping::proto::LocalSlamResultData&
                                       local_slam_result_data) override;
-  void RegisterClientIdForTrajectory(int trajectory_id,
-                                     const std::string& client_id) override;
-  bool CheckClientIdForTrajectory(int trajectory_id,
-                                  const std::string& client_id) override;
+  void RegisterClientIdForTrajectory(const std::string& client_id,
+		  int trajectory_id) override;
+  bool CheckClientIdForTrajectory(const std::string& client_id,
+		  int trajectory_id) override;
 
  private:
   MapBuilderServer* map_builder_server_;
