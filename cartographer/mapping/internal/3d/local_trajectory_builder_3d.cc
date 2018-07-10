@@ -31,6 +31,9 @@ namespace cartographer {
 namespace mapping {
 
 static auto* kLocalSlamLatencyMetric = metrics::Gauge::Null();
+static auto* kLocalSlamVoxelFilterFraction = metrics::Gauge::Null();
+static auto* kLocalSlamScanMatcherFraction = metrics::Gauge::Null();
+static auto* kLocalSlamInsertIntoSubmapFraction = metrics::Gauge::Null();
 static auto* kRealTimeCorrelativeScanMatcherScoreMetric =
     metrics::Histogram::Null();
 static auto* kCeresScanMatcherCostMetric = metrics::Histogram::Null();
@@ -148,6 +151,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
   std::vector<transform::Rigid3f> hits_poses;
   hits_poses.reserve(hits.size());
   bool warned = false;
+
   for (const auto& hit : hits) {
     common::Time time_point = time + common::FromSeconds(hit.point_time[3]);
     if (time_point < extrapolator_->GetLastExtrapolatedTime()) {
@@ -190,18 +194,40 @@ LocalTrajectoryBuilder3D::AddRangeData(
   ++num_accumulated_;
 
   if (num_accumulated_ >= options_.num_accumulated_range_data()) {
+    const common::Time current_sensor_time = synchronized_data.time;
+    common::optional<common::Duration> sensor_duration;
+    if (last_sensor_time_.has_value()) {
+      sensor_duration = current_sensor_time - last_sensor_time_.value();
+    }
+    last_sensor_time_ = current_sensor_time;
     num_accumulated_ = 0;
+
     transform::Rigid3f current_pose =
         extrapolator_->ExtrapolatePose(time).cast<float>();
+
+    const auto voxel_filter_start = std::chrono::steady_clock::now();
     const sensor::RangeData filtered_range_data = {
         current_pose.translation(),
         sensor::VoxelFilter(options_.voxel_filter_size())
             .Filter(accumulated_range_data_.returns),
         sensor::VoxelFilter(options_.voxel_filter_size())
             .Filter(accumulated_range_data_.misses)};
+    const auto voxel_filter_stop = std::chrono::steady_clock::now();
+    const auto voxel_filter_duration = voxel_filter_stop - voxel_filter_start;
+
+    if (sensor_duration.has_value()) {
+      const double voxel_filter_fraction =
+          std::chrono::duration_cast<std::chrono::duration<double>>(
+              voxel_filter_duration)
+              .count() /
+          common::ToSeconds(sensor_duration.value());
+      kLocalSlamVoxelFilterFraction->Set(voxel_filter_fraction);
+    }
+
     return AddAccumulatedRangeData(
-        time, sensor::TransformRangeData(filtered_range_data,
-                                         current_pose.inverse()));
+        time,
+        sensor::TransformRangeData(filtered_range_data, current_pose.inverse()),
+        sensor_duration);
   }
   return nullptr;
 }
@@ -209,11 +235,16 @@ LocalTrajectoryBuilder3D::AddRangeData(
 std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
 LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     const common::Time time,
-    const sensor::RangeData& filtered_range_data_in_tracking) {
+    const sensor::RangeData& filtered_range_data_in_tracking,
+    const common::optional<common::Duration>& sensor_duration) {
   if (filtered_range_data_in_tracking.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";
     return nullptr;
   }
+  const transform::Rigid3d pose_prediction =
+      extrapolator_->ExtrapolatePose(time);
+
+  const auto scan_matcher_start = std::chrono::steady_clock::now();
 
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.high_resolution_adaptive_voxel_filter_options());
@@ -234,8 +265,6 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     return nullptr;
   }
 
-  const transform::Rigid3d pose_prediction =
-      extrapolator_->ExtrapolatePose(time);
   std::unique_ptr<transform::Rigid3d> pose_estimate =
       ScanMatch(pose_prediction, low_resolution_point_cloud_in_tracking,
                 high_resolution_point_cloud_in_tracking);
@@ -244,17 +273,43 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     return nullptr;
   }
   extrapolator_->AddPose(time, *pose_estimate);
+
+  const auto scan_matcher_stop = std::chrono::steady_clock::now();
+  const auto scan_matcher_duration = scan_matcher_stop - scan_matcher_start;
+  if (sensor_duration.has_value()) {
+    const double scan_matcher_fraction =
+        std::chrono::duration_cast<std::chrono::duration<double>>(
+            scan_matcher_duration)
+            .count() /
+        common::ToSeconds(sensor_duration.value());
+    kLocalSlamScanMatcherFraction->Set(scan_matcher_fraction);
+  }
+
   const Eigen::Quaterniond gravity_alignment =
       extrapolator_->EstimateGravityOrientation(time);
-
   sensor::RangeData filtered_range_data_in_local = sensor::TransformRangeData(
       filtered_range_data_in_tracking, pose_estimate->cast<float>());
+
+const auto insert_into_submap_start = std::chrono::steady_clock::now();
   std::unique_ptr<InsertionResult> insertion_result = InsertIntoSubmap(
       time, filtered_range_data_in_local, filtered_range_data_in_tracking,
       high_resolution_point_cloud_in_tracking,
       low_resolution_point_cloud_in_tracking, *pose_estimate,
       gravity_alignment);
-  auto duration = std::chrono::steady_clock::now() - accumulation_started_;
+  const auto insert_into_submap_stop = std::chrono::steady_clock::now();
+
+  const auto insert_into_submap_duration =
+      insert_into_submap_stop - insert_into_submap_start;
+  if (sensor_duration.has_value()) {
+    double insert_into_submap_fraction =
+        std::chrono::duration_cast<std::chrono::duration<double>>(
+            insert_into_submap_duration)
+            .count() /
+        common::ToSeconds(sensor_duration.value());
+    kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
+  }
+  
+  const auto duration = std::chrono::steady_clock::now() - accumulation_started_;
   kLocalSlamLatencyMetric->Set(
       std::chrono::duration_cast<std::chrono::duration<double>>(duration)
           .count());
@@ -316,24 +371,41 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
 void LocalTrajectoryBuilder3D::RegisterMetrics(
     metrics::FamilyFactory* family_factory) {
   auto* latency = family_factory->NewGaugeFamily(
-      "mapping_internal_3d_local_trajectory_builder_latency",
+      "mapping_3d_local_trajectory_builder_latency",
       "Duration from first incoming point cloud in accumulation to local slam "
       "result");
+
+  auto* voxel_filter_fraction = family_factory->NewGaugeFamily(
+      "mapping_3d_local_trajectory_builder_voxel_filter_fraction",
+      "Fraction of total sensor time taken up by voxel filter.");
+  kLocalSlamVoxelFilterFraction = voxel_filter_fraction->Add({});
+
+  auto* scan_matcher_fraction = family_factory->NewGaugeFamily(
+      "mapping_3d_local_trajectory_builder_scan_matcher_fraction",
+      "Fraction of total sensor time taken up by scan matcher.");
+  kLocalSlamScanMatcherFraction = scan_matcher_fraction->Add({});
+
+  auto* insert_into_submap_fraction = family_factory->NewGaugeFamily(
+      "mapping_3d_local_trajectory_builder"
+      "insert_into_submap_fraction",
+      "Fraction of total sensor time taken up by inserting into submap.");
+  kLocalSlamInsertIntoSubmapFraction = insert_into_submap_fraction->Add({});
+
   kLocalSlamLatencyMetric = latency->Add({});
   auto score_boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = family_factory->NewHistogramFamily(
-      "mapping_internal_3d_local_trajectory_builder_scores",
-      "Local scan matcher scores", score_boundaries);
+      "mapping_3d_local_trajectory_builder_scores", "Local scan matcher scores",
+      score_boundaries);
   kRealTimeCorrelativeScanMatcherScoreMetric =
       scores->Add({{"scan_matcher", "real_time_correlative"}});
   auto cost_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 100);
   auto* costs = family_factory->NewHistogramFamily(
-      "mapping_internal_3d_local_trajectory_builder_costs",
-      "Local scan matcher costs", cost_boundaries);
+      "mapping_3d_local_trajectory_builder_costs", "Local scan matcher costs",
+      cost_boundaries);
   kCeresScanMatcherCostMetric = costs->Add({{"scan_matcher", "ceres"}});
   auto distance_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 10);
   auto* residuals = family_factory->NewHistogramFamily(
-      "mapping_internal_3d_local_trajectory_builder_residuals",
+      "mapping_3d_local_trajectory_builder_residuals",
       "Local scan matcher residuals", distance_boundaries);
   kScanMatcherResidualDistanceMetric =
       residuals->Add({{"component", "distance"}});

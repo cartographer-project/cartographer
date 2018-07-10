@@ -62,19 +62,13 @@ LocalTrajectoryBuilder2D::TransformToGravityAlignedFrameAndFilter(
 
 std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     const common::Time time, const transform::Rigid2d& pose_prediction,
-    const sensor::RangeData& gravity_aligned_range_data) {
+    const sensor::PointCloud& filtered_gravity_aligned_point_cloud) {
   std::shared_ptr<const Submap2D> matching_submap =
       active_submaps_.submaps().front();
   // The online correlative scan matcher will refine the initial estimate for
   // the Ceres scan matcher.
   transform::Rigid2d initial_ceres_pose = pose_prediction;
-  sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
-      options_.adaptive_voxel_filter_options());
-  const sensor::PointCloud filtered_gravity_aligned_point_cloud =
-      adaptive_voxel_filter.Filter(gravity_aligned_range_data.returns);
-  if (filtered_gravity_aligned_point_cloud.empty()) {
-    return nullptr;
-  }
+
   if (options_.use_online_correlative_scan_matching()) {
     CHECK_EQ(options_.submaps_options().grid_options_2d().grid_type(),
              proto::GridOptions2D_GridType_PROBABILITY_GRID);
@@ -222,9 +216,16 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
   const transform::Rigid2d pose_prediction = transform::Project2D(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
+  const sensor::PointCloud& filtered_gravity_aligned_point_cloud =
+      sensor::AdaptiveVoxelFilter(options_.adaptive_voxel_filter_options())
+          .Filter(gravity_aligned_range_data.returns);
+  if (filtered_gravity_aligned_point_cloud.empty()) {
+    return nullptr;
+  }
+
   // local map frame <- gravity-aligned frame
   std::unique_ptr<transform::Rigid2d> pose_estimate_2d =
-      ScanMatch(time, pose_prediction, gravity_aligned_range_data);
+      ScanMatch(time, pose_prediction, filtered_gravity_aligned_point_cloud);
   if (pose_estimate_2d == nullptr) {
     LOG(WARNING) << "Scan matching failed.";
     return nullptr;
@@ -236,9 +237,9 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
   sensor::RangeData range_data_in_local =
       TransformRangeData(gravity_aligned_range_data,
                          transform::Embed3D(pose_estimate_2d->cast<float>()));
-  std::unique_ptr<InsertionResult> insertion_result =
-      InsertIntoSubmap(time, range_data_in_local, gravity_aligned_range_data,
-                       pose_estimate, gravity_alignment.rotation());
+  std::unique_ptr<InsertionResult> insertion_result = InsertIntoSubmap(
+      time, range_data_in_local, filtered_gravity_aligned_point_cloud,
+      pose_estimate, gravity_alignment.rotation());
   auto duration = std::chrono::steady_clock::now() - accumulation_started_;
   kLocalSlamLatencyMetric->Set(
       std::chrono::duration_cast<std::chrono::duration<double>>(duration)
@@ -251,7 +252,7 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
 std::unique_ptr<LocalTrajectoryBuilder2D::InsertionResult>
 LocalTrajectoryBuilder2D::InsertIntoSubmap(
     const common::Time time, const sensor::RangeData& range_data_in_local,
-    const sensor::RangeData& gravity_aligned_range_data,
+    const sensor::PointCloud& filtered_gravity_aligned_point_cloud,
     const transform::Rigid3d& pose_estimate,
     const Eigen::Quaterniond& gravity_alignment) {
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
@@ -265,11 +266,6 @@ LocalTrajectoryBuilder2D::InsertIntoSubmap(
     insertion_submaps.push_back(submap);
   }
   active_submaps_.InsertRangeData(range_data_in_local);
-
-  sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
-      options_.loop_closure_adaptive_voxel_filter_options());
-  const sensor::PointCloud filtered_gravity_aligned_point_cloud =
-      adaptive_voxel_filter.Filter(gravity_aligned_range_data.returns);
 
   return common::make_unique<InsertionResult>(InsertionResult{
       std::make_shared<const TrajectoryNode::Data>(TrajectoryNode::Data{
@@ -317,24 +313,24 @@ void LocalTrajectoryBuilder2D::InitializeExtrapolator(const common::Time time) {
 void LocalTrajectoryBuilder2D::RegisterMetrics(
     metrics::FamilyFactory* family_factory) {
   auto* latency = family_factory->NewGaugeFamily(
-      "mapping_internal_2d_local_trajectory_builder_latency",
+      "mapping_2d_local_trajectory_builder_latency",
       "Duration from first incoming point cloud in accumulation to local slam "
       "result");
   kLocalSlamLatencyMetric = latency->Add({});
   auto score_boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = family_factory->NewHistogramFamily(
-      "mapping_internal_2d_local_trajectory_builder_scores",
-      "Local scan matcher scores", score_boundaries);
+      "mapping_2d_local_trajectory_builder_scores", "Local scan matcher scores",
+      score_boundaries);
   kFastCorrelativeScanMatcherScoreMetric =
       scores->Add({{"scan_matcher", "fast_correlative"}});
   auto cost_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 100);
   auto* costs = family_factory->NewHistogramFamily(
-      "mapping_internal_2d_local_trajectory_builder_costs",
-      "Local scan matcher costs", cost_boundaries);
+      "mapping_2d_local_trajectory_builder_costs", "Local scan matcher costs",
+      cost_boundaries);
   kCeresScanMatcherCostMetric = costs->Add({{"scan_matcher", "ceres"}});
   auto distance_boundaries = metrics::Histogram::ScaledPowersOf(2, 0.01, 10);
   auto* residuals = family_factory->NewHistogramFamily(
-      "mapping_internal_2d_local_trajectory_builder_residuals",
+      "mapping_2d_local_trajectory_builder_residuals",
       "Local scan matcher residuals", distance_boundaries);
   kScanMatcherResidualDistanceMetric =
       residuals->Add({{"component", "distance"}});

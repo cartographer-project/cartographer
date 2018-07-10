@@ -15,6 +15,7 @@
 syntax = "proto3";
 
 import "cartographer/mapping/proto/2d/probability_grid_range_data_inserter_options_2d.proto";
+import "cartographer/mapping/proto/2d/tsdf_range_data_inserter_options_2d.proto";
 
 package cartographer.mapping.proto;
 
@@ -22,9 +23,11 @@ message RangeDataInserterOptions {
   enum RangeDataInserterType {
     INVALID_INSERTER = 0;
     PROBABILITY_GRID_INSERTER_2D = 1;
+    TSDF_INSERTER_2D = 2;
   }
 
   RangeDataInserterType range_data_inserter_type = 1;
   ProbabilityGridRangeDataInserterOptions2D
       probability_grid_range_data_inserter_options_2d = 2;
+  TSDFRangeDataInserterOptions2D tsdf_range_data_inserter_options_2d = 3;
 }
