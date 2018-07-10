@@ -217,9 +217,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
 
     if (sensor_duration.has_value()) {
       const double voxel_filter_fraction =
-          std::chrono::duration_cast<std::chrono::duration<double>>(
-              voxel_filter_duration)
-              .count() /
+          common::ToSeconds(voxel_filter_duration) /
           common::ToSeconds(sensor_duration.value());
       kLocalSlamVoxelFilterFraction->Set(voxel_filter_fraction);
     }
@@ -278,9 +276,7 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
   const auto scan_matcher_duration = scan_matcher_stop - scan_matcher_start;
   if (sensor_duration.has_value()) {
     const double scan_matcher_fraction =
-        std::chrono::duration_cast<std::chrono::duration<double>>(
-            scan_matcher_duration)
-            .count() /
+        common::ToSeconds(scan_matcher_duration) /
         common::ToSeconds(sensor_duration.value());
     kLocalSlamScanMatcherFraction->Set(scan_matcher_fraction);
   }
@@ -301,19 +297,14 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
   const auto insert_into_submap_duration =
       insert_into_submap_stop - insert_into_submap_start;
   if (sensor_duration.has_value()) {
-    double insert_into_submap_fraction =
-        std::chrono::duration_cast<std::chrono::duration<double>>(
-            insert_into_submap_duration)
-            .count() /
+    const double insert_into_submap_fraction =
+        common::ToSeconds(insert_into_submap_duration) /
         common::ToSeconds(sensor_duration.value());
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
-
-  const auto duration =
+  const auto accumulation_duration =
       std::chrono::steady_clock::now() - accumulation_started_;
-  kLocalSlamLatencyMetric->Set(
-      std::chrono::duration_cast<std::chrono::duration<double>>(duration)
-          .count());
+  kLocalSlamLatencyMetric->Set(common::ToSeconds(accumulation_duration));
   return common::make_unique<MatchingResult>(MatchingResult{
       time, *pose_estimate, std::move(filtered_range_data_in_local),
       std::move(insertion_result)});
