@@ -88,6 +88,13 @@ class LocalTrajectoryBuilder3D {
       const transform::Rigid3d& pose_estimate,
       const Eigen::Quaterniond& gravity_alignment);
 
+  // Scan matches using the two point clouds and returns the observed pose, or
+  // nullptr on failure.
+  std::unique_ptr<transform::Rigid3d> ScanMatch(
+      const transform::Rigid3d& pose_prediction,
+      const sensor::PointCloud& low_resolution_point_cloud_in_tracking,
+      const sensor::PointCloud& high_resolution_point_cloud_in_tracking);
+
   const mapping::proto::LocalTrajectoryBuilderOptions3D options_;
   mapping::ActiveSubmaps3D active_submaps_;
 
