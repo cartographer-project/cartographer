@@ -16,10 +16,6 @@
 
 #include "cartographer/mapping/2d/tsdf_2d.h"
 
-#include <limits>
-
-#include "cartographer/common/make_unique.h"
-
 namespace cartographer {
 namespace mapping {
 
@@ -43,11 +39,16 @@ TSDF2D::TSDF2D(const proto::Grid2D& proto) : Grid2D(proto) {
   }
 }
 
+bool TSDF2D::CellIsUpdated(const Eigen::Array2i& cell_index) const {
+  const int flat_index = ToFlatIndex(cell_index);
+  uint16 tsdf_cell = correspondence_cost_cells()[flat_index];
+  return tsdf_cell >= value_converter_->getUpdateMarker();
+}
+
 void TSDF2D::SetCell(const Eigen::Array2i& cell_index, float tsd,
                      float weight) {
   const int flat_index = ToFlatIndex(cell_index);
   uint16* tsdf_cell = &(*mutable_correspondence_cost_cells())[flat_index];
-  uint16* weight_cell = &weight_cells_[flat_index];
   if (*tsdf_cell >= value_converter_->getUpdateMarker()) {
     return;
   }
@@ -55,8 +56,8 @@ void TSDF2D::SetCell(const Eigen::Array2i& cell_index, float tsd,
   mutable_known_cells_box()->extend(cell_index.matrix());
   *tsdf_cell =
       value_converter_->TSDToValue(tsd) + value_converter_->getUpdateMarker();
+  uint16* weight_cell = &weight_cells_[flat_index];
   *weight_cell = value_converter_->WeightToValue(weight);
-  return;
 }
 
 float TSDF2D::GetTSD(const Eigen::Array2i& cell_index) const {

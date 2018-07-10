@@ -127,15 +127,15 @@ void Submap2D::Finish() {
 }
 
 ActiveSubmaps2D::ActiveSubmaps2D(const proto::SubmapsOptions2D& options)
-    : options_(options), range_data_inserter_(CreateRangeDataInserter()) {
-}
+    : options_(options), range_data_inserter_(CreateRangeDataInserter()) {}
 
 std::vector<std::shared_ptr<Submap2D>> ActiveSubmaps2D::submaps() const {
   return submaps_;
 }
 
 void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
-  if (submaps_.empty() || submaps_.back()->num_range_data() == options_.num_range_data()) {
+  if (submaps_.empty() ||
+      submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(range_data.origin.head<2>());
   }
   for (auto& submap : submaps_) {

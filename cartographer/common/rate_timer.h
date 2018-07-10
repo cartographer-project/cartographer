@@ -62,9 +62,8 @@ class RateTimer {
       return 0.;
     }
     return common::ToSeconds((events_.back().time - events_.front().time)) /
-           std::chrono::duration_cast<std::chrono::duration<double>>(
-               events_.back().wall_time - events_.front().wall_time)
-               .count();
+           common::ToSeconds(events_.back().wall_time -
+                             events_.front().wall_time);
   }
 
   // Records an event that will contribute to the computed rate.

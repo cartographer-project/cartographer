@@ -155,7 +155,7 @@ std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder3D(
 
 void GlobalTrajectoryBuilderRegisterMetrics(metrics::FamilyFactory* factory) {
   auto* results = factory->NewCounterFamily(
-      "mapping_internal_global_trajectory_builder_local_slam_results",
+      "mapping_global_trajectory_builder_local_slam_results",
       "Local SLAM results");
   kLocalSlamMatchingResults = results->Add({{"type", "MatchingResult"}});
   kLocalSlamInsertionResults = results->Add({{"type", "InsertionResult"}});

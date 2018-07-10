@@ -49,6 +49,7 @@ Duration FromMilliseconds(int64 milliseconds);
 
 // Returns the given duration in seconds.
 double ToSeconds(Duration duration);
+double ToSeconds(std::chrono::steady_clock::duration duration);
 
 // Creates a time from a Universal Time Scale.
 Time FromUniversal(int64 ticks);

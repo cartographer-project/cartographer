@@ -55,6 +55,9 @@ void AddTrajectoryHandler::OnRequest(
     // freeze the trajectory on the server.
     trajectory_builder_options.clear_pure_localization_trimmer();
 
+    // Ignore initial poses in trajectory_builder_options.
+    trajectory_builder_options.clear_initial_trajectory_pose();
+
     GetContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
         ->AddTrajectory(trajectory_id, expected_sensor_ids,
