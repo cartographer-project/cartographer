@@ -36,7 +36,8 @@ class ValueConversionTables {
                                                float upper_bound);
 
  private:
-  std::map<const std::tuple<float, float, float>,  // add names
+  std::map<const std::tuple<float /* unknown_result */, float /* lower_bound */,
+                            float /* upper_bound */>,
            std::unique_ptr<const std::vector<float>>>
       bounds_to_lookup_table_;
 };

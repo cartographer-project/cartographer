@@ -91,7 +91,6 @@ ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
       file_writer_(std::move(file_writer)),
       next_(next),
       range_data_inserter_(probability_grid_range_data_inserter_options),
-      conversion_tables_(),
       probability_grid_(
           CreateProbabilityGrid(resolution, &conversion_tables_)) {
   LOG_IF(WARNING, output_type == OutputType::kPb &&
