@@ -61,6 +61,9 @@ std::unique_ptr<transform::Rigid3d> LocalTrajectoryBuilder3D::ScanMatch(
     const transform::Rigid3d& pose_prediction,
     const sensor::PointCloud& low_resolution_point_cloud_in_tracking,
     const sensor::PointCloud& high_resolution_point_cloud_in_tracking) {
+  if (active_submaps_.submaps().empty()) {
+    return common::make_unique<transform::Rigid3d>(pose_prediction);
+  }
   std::shared_ptr<const mapping::Submap3D> matching_submap =
       active_submaps_.submaps().front();
   transform::Rigid3d initial_ceres_pose =
