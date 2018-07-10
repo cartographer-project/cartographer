@@ -149,9 +149,7 @@ void PoseGraph3D::AddWorkItem(const std::function<void()>& work_item) {
     const auto now = std::chrono::steady_clock::now();
     work_queue_->push_back({now, work_item});
     kWorkQueueDelayMetric->Set(
-        std::chrono::duration_cast<std::chrono::duration<double>>(
-            now - work_queue_->front().time)
-            .count());
+        common::ToSeconds(now - work_queue_->front().time));
   }
 }
 
