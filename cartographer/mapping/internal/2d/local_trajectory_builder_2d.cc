@@ -237,9 +237,10 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
   std::unique_ptr<InsertionResult> insertion_result = InsertIntoSubmap(
       time, range_data_in_local, filtered_gravity_aligned_point_cloud,
       pose_estimate, gravity_alignment.rotation());
-  const auto accumulation_stop =  std::chrono::steady_clock::now();
+  const auto accumulation_stop = std::chrono::steady_clock::now();
   if (last_accumulation_stop_.has_value()) {
-    const auto accumulation_duration = accumulation_stop - last_accumulation_stop_.value();
+    const auto accumulation_duration =
+        accumulation_stop - last_accumulation_stop_.value();
     kLocalSlamLatencyMetric->Set(common::ToSeconds(accumulation_duration));
   }
   last_accumulation_stop_ = accumulation_stop;

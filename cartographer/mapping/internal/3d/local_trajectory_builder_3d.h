@@ -107,7 +107,8 @@ class LocalTrajectoryBuilder3D {
 
   int num_accumulated_ = 0;
   sensor::RangeData accumulated_range_data_;
-  common::optional<std::chrono::steady_clock::time_point> last_accumulation_stop_;
+  common::optional<std::chrono::steady_clock::time_point>
+      last_accumulation_stop_;
 
   RangeDataCollator range_data_collator_;
 
