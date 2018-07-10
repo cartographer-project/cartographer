@@ -55,6 +55,7 @@ message AddTrajectoryRequest {
 message SensorMetadata {
   int32 trajectory_id = 1;
   string sensor_id = 2;
+  string client_id = 3;
 }
 
 message SensorData {

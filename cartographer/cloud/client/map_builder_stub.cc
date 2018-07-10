@@ -75,7 +75,7 @@ int MapBuilderStub::AddTrajectoryBuilder(
       std::piecewise_construct,
       std::forward_as_tuple(client.response().trajectory_id()),
       std::forward_as_tuple(make_unique<TrajectoryBuilderStub>(
-          client_channel_, client.response().trajectory_id(),
+          client_channel_, client.response().trajectory_id(), client_id_,
           local_slam_result_callback)));
   return client.response().trajectory_id();
 }
