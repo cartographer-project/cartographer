@@ -19,59 +19,17 @@
 namespace cartographer {
 namespace mapping {
 
-TSDValueConverter::TSDValueConverter(float max_tsd, float max_weight)
+TSDValueConverter::TSDValueConverter(float max_tsd, float max_weight,
+                                     ValueConversionTables* conversion_tables)
     : max_tsd_(max_tsd),
       min_tsd_(-max_tsd),
       max_weight_(max_weight),
       tsd_resolution_(32766.f / (max_tsd_ - min_tsd_)),
       weight_resolution_(32766.f / (max_weight_ - min_weight_)),
-      value_to_tsd_(PrecomputeValueToTSD()),
-      value_to_weight_(PrecomputeValueToWeight()) {}
-
-// 0 is unknown, [1, 32767] maps to [min_tsd_ max_tsd_].
-float TSDValueConverter::SlowValueToTSD(const uint16 value) const {
-  CHECK_GE(value, 0);
-  CHECK_LE(value, 32767);
-  if (value == unknown_tsd_value_) {
-    return min_tsd_;
-  }
-  const float kScale = (max_tsd_ - min_tsd_) / 32766.f;
-  return value * kScale + (min_tsd_ - kScale);
-}
-
-std::vector<float> TSDValueConverter::PrecomputeValueToTSD() {
-  std::vector<float> result;
-  size_t num_values = std::numeric_limits<uint16>::max() + 1;
-  result.reserve(num_values);
-  for (size_t value = 0; value != num_values; ++value) {
-    result.push_back(
-        SlowValueToTSD(static_cast<uint16>(value) & ~update_marker_));
-  }
-  return result;
-}
-
-// 0 is unknown, [1, 32767] maps to [min_weight_ max_weight_].
-float TSDValueConverter::SlowValueToWeight(const uint16 value) const {
-  CHECK_GE(value, 0);
-  CHECK_LE(value, 32767);
-  if (value == unknown_weight_value_) {
-    // Unknown cells have min_weight_.
-    return min_weight_;
-  }
-  const float kScale = (max_weight_ - min_weight_) / 32766.f;
-  return value * kScale + (min_weight_ - kScale);
-}
-
-std::vector<float> TSDValueConverter::PrecomputeValueToWeight() {
-  std::vector<float> result;
-  size_t num_values = std::numeric_limits<uint16>::max() + 1;
-  result.reserve(num_values);
-  for (size_t value = 0; value != num_values; ++value) {
-    result.push_back(
-        SlowValueToWeight(static_cast<uint16>(value) & ~update_marker_));
-  }
-  return result;
-}
+      value_to_tsd_(conversion_tables->GetConversionTable(unknown_tsd_value_,
+                                                          min_tsd_, max_tsd_)),
+      value_to_weight_(conversion_tables->GetConversionTable(
+          unknown_weight_value_, min_weight_, max_weight)) {}
 
 }  // namespace mapping
 }  // namespace cartographer

@@ -34,18 +34,27 @@ proto::GridOptions2D CreateGridOptions2D(
 }
 
 Grid2D::Grid2D(const MapLimits& limits, float min_correspondence_cost,
-               float max_correspondence_cost)
+               float max_correspondence_cost,
+               ValueConversionTables* conversion_tables)
     : limits_(limits),
       correspondence_cost_cells_(
           limits_.cell_limits().num_x_cells * limits_.cell_limits().num_y_cells,
           kUnknownCorrespondenceValue),
       min_correspondence_cost_(min_correspondence_cost),
-      max_correspondence_cost_(max_correspondence_cost) {
+      max_correspondence_cost_(max_correspondence_cost),
+      value_to_correspondence_cost_table_(conversion_tables->GetConversionTable(
+          max_correspondence_cost, min_correspondence_cost,
+          max_correspondence_cost)) {
   CHECK_LT(min_correspondence_cost_, max_correspondence_cost_);
 }
 
-Grid2D::Grid2D(const proto::Grid2D& proto)
-    : limits_(proto.limits()), correspondence_cost_cells_() {
+Grid2D::Grid2D(const proto::Grid2D& proto,
+               ValueConversionTables* conversion_tables)
+    : limits_(proto.limits()),
+      correspondence_cost_cells_(),
+      value_to_correspondence_cost_table_(conversion_tables->GetConversionTable(
+          proto.max_correspondence_cost(), proto.min_correspondence_cost(),
+          proto.max_correspondence_cost())) {
   if (proto.has_known_cells_box()) {
     const auto& box = proto.known_cells_box();
     known_cells_box_ =
@@ -84,9 +93,9 @@ void Grid2D::FinishUpdate() {
 
 // Returns the correspondence cost of the cell with 'cell_index'.
 float Grid2D::GetCorrespondenceCost(const Eigen::Array2i& cell_index) const {
-  if (!limits().Contains(cell_index)) return kMaxCorrespondenceCost;
-  return ValueToCorrespondenceCost(
-      correspondence_cost_cells()[ToFlatIndex(cell_index)]);
+  if (!limits().Contains(cell_index)) return max_correspondence_cost_;
+  return (*value_to_correspondence_cost_table_)
+      [correspondence_cost_cells()[ToFlatIndex(cell_index)]];
 }
 
 // Returns true if the correspondence cost at the specified index is known.

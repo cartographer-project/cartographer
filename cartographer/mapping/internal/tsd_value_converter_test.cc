@@ -27,7 +27,9 @@ class TSDValueConverterTest : public ::testing::Test {
   TSDValueConverterTest()
       : truncation_distance_(0.1f),
         max_weight_(10.0f),
-        tsd_value_converter_(truncation_distance_, max_weight_) {}
+        tsd_value_converter_(truncation_distance_, max_weight_,
+                             &conversion_tables) {}
+  ValueConversionTables conversion_tables;
   float truncation_distance_;
   float max_weight_;
   TSDValueConverter tsd_value_converter_;
