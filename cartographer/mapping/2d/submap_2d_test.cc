@@ -79,14 +79,18 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
     }
   }
   EXPECT_EQ(2, submaps.submaps().size());
-  int correct_num_range_data = 0;
+  int correct_num_finished_submaps = 0;
+  int num_unfinished_submaps = 0;
   for (const auto& submap : all_submaps) {
     if (submap->num_range_data() == kNumRangeData * 2) {
-      ++correct_num_range_data;
+      ++correct_num_finished_submaps;
+    } else if (submap->num_range_data() == kNumRangeData) {
+      ++num_unfinished_submaps;
     }
   }
   // Submaps should not be left without the right number of range data in them.
-  EXPECT_EQ(correct_num_range_data, all_submaps.size() - 2);
+  EXPECT_EQ(correct_num_finished_submaps, all_submaps.size() - 1);
+  EXPECT_EQ(1, num_unfinished_submaps);
 }
 
 TEST(Submap2DTest, ToFromProto) {
