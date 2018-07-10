@@ -50,6 +50,19 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
       "hit_probability = 0.53, "
       "miss_probability = 0.495, "
       "},"
+      "tsdf_range_data_inserter = { "
+      "truncation_distance = 2.0,"
+      "maximum_weight = 10.,"
+      "update_free_space = false,"
+      "normal_estimation_options = {"
+      "num_normal_samples = 2,"
+      "sample_radius = 10.,"
+      "},"
+      "project_sdf_distance_to_scan_normal = false,"
+      "update_weight_range_exponent = 0,"
+      "update_weight_angle_scan_normal_to_ray_kernel_bandwith = 0,"
+      "update_weight_distance_cell_to_hit_kernel_bandwith = 0,"
+      "},"
       "},"
       "}");
   ActiveSubmaps2D submaps{CreateSubmapsOptions2D(parameter_dictionary.get())};
@@ -61,10 +74,11 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
     for (const auto& submap : submaps.submaps()) {
       all_submaps.insert(submap);
     }
-    if (submaps.matching_index() != 0) {
+    if (submaps.submaps().size() > 1) {
       EXPECT_LE(kNumRangeData, submaps.submaps().front()->num_range_data());
     }
   }
+  EXPECT_EQ(2, submaps.submaps().size());
   int correct_num_range_data = 0;
   for (const auto& submap : all_submaps) {
     if (submap->num_range_data() == kNumRangeData * 2) {

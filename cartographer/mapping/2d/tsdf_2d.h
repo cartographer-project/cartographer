@@ -46,6 +46,7 @@ class TSDF2D : public Grid2D {
   virtual bool DrawToSubmapTexture(
       proto::SubmapQuery::Response::SubmapTexture* const texture,
       transform::Rigid3d local_pose) const override;
+  bool CellIsUpdated(const Eigen::Array2i& cell_index) const;
 
  private:
   std::unique_ptr<TSDValueConverter> value_converter_;

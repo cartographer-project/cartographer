@@ -62,8 +62,21 @@ class PoseGraph2DTest : public ::testing::Test {
                 hit_probability = 0.53,
                 miss_probability = 0.495,
               },
+            tsdf_range_data_inserter = {
+              truncation_distance = 0.3,
+              maximum_weight = 10.,
+              update_free_space = false,
+              normal_estimation_options = {
+                num_normal_samples = 4,
+                sample_radius = 0.5,
+              },
+              project_sdf_distance_to_scan_normal = false,
+              update_weight_range_exponent = 0,
+              update_weight_angle_scan_normal_to_ray_kernel_bandwith = 0,
+              update_weight_distance_cell_to_hit_kernel_bandwith = 0,
             },
-          })text");
+          },
+        })text");
       active_submaps_ = common::make_unique<ActiveSubmaps2D>(
           mapping::CreateSubmapsOptions2D(parameter_dictionary.get()));
     }

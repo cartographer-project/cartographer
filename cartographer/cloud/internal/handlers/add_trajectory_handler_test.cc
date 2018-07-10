@@ -127,9 +127,11 @@ TEST_F(AddTrajectoryHandlerTest, WithLocalSlamUploader) {
               RegisterClientIdForTrajectory(Eq(13), Eq("CLIENT_ID")));
   auto upstream_trajectory_builder_options =
       request.trajectory_builder_options();
+  // Reproduce the changes to the request as done by the handler.
   upstream_trajectory_builder_options.clear_trajectory_builder_2d_options();
   upstream_trajectory_builder_options.clear_trajectory_builder_3d_options();
   upstream_trajectory_builder_options.clear_pure_localization_trimmer();
+  upstream_trajectory_builder_options.clear_initial_trajectory_pose();
   EXPECT_CALL(*mock_local_trajectory_uploader_,
               AddTrajectory(Eq("CLIENT_ID"), Eq(13), ParseSensorIds(request),
                             Truly(testing::BuildProtoPredicateEquals(
