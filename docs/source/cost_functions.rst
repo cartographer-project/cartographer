@@ -96,9 +96,12 @@ Jacobian matrix  :math:`J_f` is given by:
 Landmark Cost Function
 ======================
 
-Let :math:`\mathbf{p}_o` be the global pose of the SLAM tracking frame at which a landmark with the global pose :math:`\mathbf{p}_l` is observed.
-The landmark observation itself is the measured transformation :math:`\mathbf{T}^m_{ol}` that was observed at time :math:`t_o`.
-As the landmark can be observed asynchronously, :math:`\mathbf{p}_o` is modeled in between two regular trajectory nodes :math:`\mathbf{p}_i, \mathbf{p}_j`.
+Let :math:`\mathbf{p}_o` be the global pose of the SLAM tracking frame at which
+a landmark with the global pose :math:`\mathbf{p}_l` is observed.
+The landmark observation itself is the measured transformation
+:math:`\mathbf{T}^m_{ol}` that was observed at time :math:`t_o`.
+As the landmark can be observed asynchronously, :math:`\mathbf{p}_o` is modeled
+in between two regular trajectory nodes :math:`\mathbf{p}_i, \mathbf{p}_j`.
 
 Using the notation introduced above, the weighted landmark cost function is:
 
@@ -111,5 +114,8 @@ Using the notation introduced above, the weighted landmark cost function is:
       \mathbf T_{ol}^m - \mathbf T( \mathbf{p}_o,\mathbf{p}_l)
     \right)
 
-The pose :math:`\mathbf{p}_o` is interpolated between :math:`\mathbf{p}_i` and :math:`\mathbf{p}_j` at the observation time :math:`t_o` (linear interpolation for the translation, quaternion SLERP for the rotation).
-The translation and rotation weights :math:`w_{\text{t}}, w_{\text{r}}` are part of the landmark observation data that is fed into Cartographer.
+The pose :math:`\mathbf{p}_o` is interpolated between :math:`\mathbf{p}_i` and
+:math:`\mathbf{p}_j` at the observation time :math:`t_o` (linear interpolation
+for the translation, quaternion SLERP for the rotation).
+The translation and rotation weights :math:`w_{\text{t}}, w_{\text{r}}` are
+part of the landmark observation data that is fed into Cartographer.
