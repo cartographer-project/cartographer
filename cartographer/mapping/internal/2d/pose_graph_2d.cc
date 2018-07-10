@@ -431,7 +431,7 @@ void PoseGraph2D::HandleWorkQueue(
       return;
     }
     process_work_queue =
-              work_queue_->front().task() == WorkItem::Result::kDoNotRunOptimization;
+        work_queue_->front().task() == WorkItem::Result::kDoNotRunOptimization;
     work_queue_->pop_front();
   }
   LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();

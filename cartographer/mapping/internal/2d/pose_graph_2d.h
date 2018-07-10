@@ -158,7 +158,8 @@ class PoseGraph2D : public PoseGraph {
       const REQUIRES(mutex_);
 
   // Handles a new work item.
-  void AddWorkItem(const std::function<WorkItem::Result()>& work_item) REQUIRES(mutex_);
+  void AddWorkItem(const std::function<WorkItem::Result()>& work_item)
+      REQUIRES(mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);

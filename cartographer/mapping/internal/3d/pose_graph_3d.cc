@@ -142,7 +142,8 @@ NodeId PoseGraph3D::AddNode(
   return node_id;
 }
 
-void PoseGraph3D::AddWorkItem(const std::function<WorkItem::Result()>& work_item) {
+void PoseGraph3D::AddWorkItem(
+    const std::function<WorkItem::Result()>& work_item) {
   if (work_queue_ != nullptr) {
     const auto now = std::chrono::steady_clock::now();
     work_queue_->push_back({now, work_item});
@@ -444,8 +445,8 @@ void PoseGraph3D::HandleWorkQueue(
       work_queue_.reset();
       return;
     }
-    process_work_queue = work_queue_->front().task() ==
-                               WorkItem::Result::kDoNotRunOptimization;
+    process_work_queue =
+        work_queue_->front().task() == WorkItem::Result::kDoNotRunOptimization;
     work_queue_->pop_front();
   }
   LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
