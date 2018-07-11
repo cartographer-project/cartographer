@@ -63,10 +63,11 @@ class Submap2D : public Submap {
   std::unique_ptr<Grid2D> grid_;
 };
 
-// Except during initialization when only a single submap exists, there are
-// always two submaps into which range data is inserted: an old submap that is
-// used for matching, and a new one, which will be used for matching next, that
-// is being initialized.
+// The first active submap will be created on the insertion of the first range
+// data. Except during this initialization when no or only one single submap
+// exists, there are always two submaps into which range data is inserted: an
+// old submap that is used for matching, and a new one, which will be used for
+// matching next, that is being initialized.
 //
 // Once a certain number of range data have been inserted, the new submap is
 // considered initialized: the old submap is no longer changed, the "new" submap
