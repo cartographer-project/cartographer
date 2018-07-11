@@ -63,6 +63,9 @@ LocalTrajectoryBuilder2D::TransformToGravityAlignedFrameAndFilter(
 std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     const common::Time time, const transform::Rigid2d& pose_prediction,
     const sensor::PointCloud& filtered_gravity_aligned_point_cloud) {
+  if (active_submaps_.submaps().empty()) {
+    return common::make_unique<transform::Rigid2d>(pose_prediction);
+  }
   std::shared_ptr<const Submap2D> matching_submap =
       active_submaps_.submaps().front();
   // The online correlative scan matcher will refine the initial estimate for
@@ -258,15 +261,8 @@ LocalTrajectoryBuilder2D::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
-
-  // Querying the active submaps must be done here before calling
-  // InsertRangeData() since the queried values are valid for next insertion.
-  std::vector<std::shared_ptr<const Submap2D>> insertion_submaps;
-  for (const std::shared_ptr<Submap2D>& submap : active_submaps_.submaps()) {
-    insertion_submaps.push_back(submap);
-  }
-  active_submaps_.InsertRangeData(range_data_in_local);
-
+  std::vector<std::shared_ptr<const Submap2D>> insertion_submaps =
+      active_submaps_.InsertRangeData(range_data_in_local);
   return common::make_unique<InsertionResult>(InsertionResult{
       std::make_shared<const TrajectoryNode::Data>(TrajectoryNode::Data{
           time,
