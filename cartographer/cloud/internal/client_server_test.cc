@@ -45,6 +45,7 @@ namespace cartographer {
 namespace cloud {
 namespace {
 
+constexpr char kClientId[] = "CLIENT_ID";
 const SensorId kImuSensorId{SensorId::SensorType::IMU, "imu"};
 const SensorId kRangeSensorId{SensorId::SensorType::RANGE, "range"};
 constexpr double kDuration = 4.;         // Seconds.
@@ -166,13 +167,13 @@ class ClientServerTest : public ::testing::Test {
 
   void InitializeStub() {
     stub_ = common::make_unique<MapBuilderStub>(
-        map_builder_server_options_.server_address());
+        map_builder_server_options_.server_address(), kClientId);
     EXPECT_TRUE(stub_ != nullptr);
   }
 
   void InitializeStubForUploadingServer() {
     stub_for_uploading_server_ = common::make_unique<MapBuilderStub>(
-        uploading_map_builder_server_options_.server_address());
+        uploading_map_builder_server_options_.server_address(), kClientId);
     EXPECT_TRUE(stub_for_uploading_server_ != nullptr);
   }
 

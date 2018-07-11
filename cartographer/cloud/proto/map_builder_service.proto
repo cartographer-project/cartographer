@@ -49,6 +49,7 @@ message AddTrajectoryRequest {
   repeated SensorId expected_sensor_ids = 3;
   cartographer.mapping.proto.TrajectoryBuilderOptions
       trajectory_builder_options = 2;
+  string client_id = 4;
 }
 
 message SensorMetadata {
@@ -103,10 +104,12 @@ message AddLandmarkDataRequest {
 
 message FinishTrajectoryRequest {
   int32 trajectory_id = 1;
+  string client_id = 2;
 }
 
 message DeleteTrajectoryRequest {
   int32 trajectory_id = 1;
+  string client_id = 2;
 }
 
 message ReceiveLocalSlamResultsRequest {
