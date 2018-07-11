@@ -66,12 +66,13 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
       "},"
       "}");
   ActiveSubmaps2D submaps{CreateSubmapsOptions2D(parameter_dictionary.get())};
-  std::set<std::shared_ptr<Submap2D>> all_submaps;
+  std::set<std::shared_ptr<const Submap2D>> all_submaps;
   for (int i = 0; i != 1000; ++i) {
-    submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}});
+    auto insertion_submaps =
+        submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}});
     // Except for the first, maps should only be returned after enough range
     // data.
-    for (const auto& submap : submaps.submaps()) {
+    for (const auto& submap : insertion_submaps) {
       all_submaps.insert(submap);
     }
     if (submaps.submaps().size() > 1) {

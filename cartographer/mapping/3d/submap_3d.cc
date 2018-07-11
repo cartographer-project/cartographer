@@ -283,11 +283,12 @@ ActiveSubmaps3D::ActiveSubmaps3D(const proto::SubmapsOptions3D& options)
     : options_(options),
       range_data_inserter_(options.range_data_inserter_options()) {}
 
-std::vector<std::shared_ptr<Submap3D>> ActiveSubmaps3D::submaps() const {
-  return submaps_;
+std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::submaps() const {
+  return std::vector<std::shared_ptr<const Submap3D>>(submaps_.begin(),
+                                                      submaps_.end());
 }
 
-void ActiveSubmaps3D::InsertRangeData(
+std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertRangeData(
     const sensor::RangeData& range_data,
     const Eigen::Quaterniond& gravity_alignment) {
   if (submaps_.empty() ||
@@ -302,6 +303,7 @@ void ActiveSubmaps3D::InsertRangeData(
   if (submaps_.front()->num_range_data() == 2 * options_.num_range_data()) {
     submaps_.front()->Finish();
   }
+  return submaps();
 }
 
 void ActiveSubmaps3D::AddSubmap(const transform::Rigid3d& local_submap_pose) {

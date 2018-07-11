@@ -261,13 +261,8 @@ LocalTrajectoryBuilder2D::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
-
-  active_submaps_.InsertRangeData(range_data_in_local);
-  std::vector<std::shared_ptr<const Submap2D>> insertion_submaps;
-  for (const std::shared_ptr<Submap2D>& submap : active_submaps_.submaps()) {
-    insertion_submaps.push_back(submap);
-  }
-
+  std::vector<std::shared_ptr<const Submap2D>> insertion_submaps =
+      active_submaps_.InsertRangeData(range_data_in_local);
   return common::make_unique<InsertionResult>(InsertionResult{
       std::make_shared<const TrajectoryNode::Data>(TrajectoryNode::Data{
           time,

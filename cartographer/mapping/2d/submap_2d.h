@@ -81,9 +81,10 @@ class ActiveSubmaps2D {
   ActiveSubmaps2D& operator=(const ActiveSubmaps2D&) = delete;
 
   // Inserts 'range_data' into the Submap collection.
-  void InsertRangeData(const sensor::RangeData& range_data);
+  std::vector<std::shared_ptr<const Submap2D>> InsertRangeData(
+      const sensor::RangeData& range_data);
 
-  std::vector<std::shared_ptr<Submap2D>> submaps() const;
+  std::vector<std::shared_ptr<const Submap2D>> submaps() const;
 
  private:
   std::unique_ptr<RangeDataInserterInterface> CreateRangeDataInserter();
