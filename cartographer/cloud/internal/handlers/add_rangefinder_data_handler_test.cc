@@ -53,6 +53,11 @@ TEST_F(AddRangefinderDataHandlerTest, NoLocalSlamUploader) {
   proto::AddRangefinderDataRequest request;
   EXPECT_TRUE(
       google::protobuf::TextFormat::ParseFromString(kMessage, &request));
+  EXPECT_CALL(
+      *mock_map_builder_context_,
+      CheckClientIdForTrajectory(Eq(request.sensor_metadata().client_id()),
+                                 Eq(request.sensor_metadata().trajectory_id())))
+      .WillOnce(::testing::Return(true));
   EXPECT_CALL(*mock_map_builder_context_,
               DoEnqueueSensorData(
                   Eq(request.sensor_metadata().trajectory_id()),
