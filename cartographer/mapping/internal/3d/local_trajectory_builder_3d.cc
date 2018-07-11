@@ -339,14 +339,19 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
        active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
-  active_submaps_.InsertRangeData(filtered_range_data_in_local,
-                                  gravity_alignment);
   const Eigen::VectorXf rotational_scan_matcher_histogram =
       scan_matching::RotationalScanMatcher::ComputeHistogram(
           sensor::TransformPointCloud(
               filtered_range_data_in_tracking.returns,
               transform::Rigid3f::Rotation(gravity_alignment.cast<float>())),
           options_.rotational_histogram_size());
+
+  const transform::Rigid3d inverse_gravity_to_local_map =
+      pose_estimate * transform::Rigid3d::Rotation(gravity_alignment.inverse());
+  active_submaps_.InsertData(filtered_range_data_in_local, gravity_alignment,
+                             rotational_scan_matcher_histogram,
+                             inverse_gravity_to_local_map);
+
   return common::make_unique<InsertionResult>(
       InsertionResult{std::make_shared<const mapping::TrajectoryNode::Data>(
                           mapping::TrajectoryNode::Data{

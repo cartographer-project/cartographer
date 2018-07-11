@@ -20,6 +20,7 @@
 #include <limits>
 
 #include "cartographer/common/math.h"
+#include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
 #include "cartographer/sensor/range_data.h"
 #include "glog/logging.h"
 
@@ -211,6 +212,12 @@ Submap3D::Submap3D(const proto::Submap3D& proto)
           common::make_unique<HybridGrid>(proto.low_resolution_hybrid_grid())) {
   set_num_range_data(proto.num_range_data());
   set_finished(proto.finished());
+  rotational_scan_matcher_histogram_.resize(
+      proto.rotational_scan_matcher_histogram_size());
+  for (int i = 0; i != proto.rotational_scan_matcher_histogram_size(); ++i) {
+    rotational_scan_matcher_histogram_(i) =
+        proto.rotational_scan_matcher_histogram(i);
+  }
 }
 
 void Submap3D::ToProto(proto::Submap* const proto,
@@ -224,6 +231,11 @@ void Submap3D::ToProto(proto::Submap* const proto,
         high_resolution_hybrid_grid().ToProto();
     *submap_3d->mutable_low_resolution_hybrid_grid() =
         low_resolution_hybrid_grid().ToProto();
+  }
+  for (Eigen::VectorXf::Index i = 0;
+       i != rotational_scan_matcher_histogram_.size(); ++i) {
+    submap_3d->add_rotational_scan_matcher_histogram(
+        rotational_scan_matcher_histogram_(i));
   }
 }
 
@@ -246,6 +258,13 @@ void Submap3D::UpdateFromProto(const proto::Submap& proto) {
                   submap_3d.low_resolution_hybrid_grid())
             : nullptr;
   }
+  rotational_scan_matcher_histogram_.resize(
+      submap_3d.rotational_scan_matcher_histogram_size());
+  for (int i = 0; i != submap_3d.rotational_scan_matcher_histogram_size();
+       ++i) {
+    rotational_scan_matcher_histogram_(i) =
+        submap_3d.rotational_scan_matcher_histogram(i);
+  }
 }
 
 void Submap3D::ToResponseProto(
@@ -259,9 +278,12 @@ void Submap3D::ToResponseProto(
                     response->add_textures());
 }
 
-void Submap3D::InsertRangeData(const sensor::RangeData& range_data,
-                               const RangeDataInserter3D& range_data_inserter,
-                               const float high_resolution_max_range) {
+void Submap3D::InsertData(
+    const sensor::RangeData& range_data,
+    const RangeDataInserter3D& range_data_inserter,
+    const float high_resolution_max_range,
+    const Eigen::VectorXf& scan_histogram,
+    const transform::Rigid3d& inverse_gravity_to_local_map) {
   CHECK(!finished());
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data, local_pose().inverse().cast<float>());
@@ -294,12 +316,15 @@ std::vector<std::shared_ptr<Submap3D>> ActiveSubmaps3D::submaps() const {
   return submaps_;
 }
 
-void ActiveSubmaps3D::InsertRangeData(
+void ActiveSubmaps3D::InsertData(
     const sensor::RangeData& range_data,
-    const Eigen::Quaterniond& gravity_alignment) {
+    const Eigen::Quaterniond& gravity_alignment,
+    const Eigen::VectorXf& rotational_scan_matcher_histogram,
+    const transform::Rigid3d& inverse_gravity_to_local_map) {
   for (auto& submap : submaps_) {
-    submap->InsertRangeData(range_data, range_data_inserter_,
-                            options_.high_resolution_max_range());
+    submap->InsertData(
+        range_data, range_data_inserter_, options_.high_resolution_max_range(),
+        rotational_scan_matcher_histogram, inverse_gravity_to_local_map);
   }
   if (submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
