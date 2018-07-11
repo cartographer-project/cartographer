@@ -331,7 +331,9 @@ void PoseGraph2D::DispatchOptimization() {
   if (work_queue_ == nullptr) {
     work_queue_ = common::make_unique<WorkQueue>();
     constraint_builder_.WhenDone(
-        std::bind(&PoseGraph2D::HandleWorkQueue, this, std::placeholders::_1));
+        [this](const constraints::ConstraintBuilder2D::Result& result) {
+          HandleWorkQueue(result);
+        });
   }
 }
 common::Time PoseGraph2D::GetLatestNodeTime(const NodeId& node_id,
@@ -437,7 +439,9 @@ void PoseGraph2D::HandleWorkQueue(
   LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
   // We have to optimize again.
   constraint_builder_.WhenDone(
-      std::bind(&PoseGraph2D::HandleWorkQueue, this, std::placeholders::_1));
+      [this](const constraints::ConstraintBuilder2D::Result& result) {
+        HandleWorkQueue(result);
+      });
 }
 
 void PoseGraph2D::WaitForAllComputations() {
