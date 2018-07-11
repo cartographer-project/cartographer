@@ -25,8 +25,13 @@ namespace cartographer {
 namespace mapping {
 
 struct WorkItem {
+  enum class Result {
+    kDoNotRunOptimization,
+    kRunOptimization,
+  };
+
   std::chrono::steady_clock::time_point time;
-  std::function<void()> task;
+  std::function<Result()> task;
 };
 
 using WorkQueue = std::deque<WorkItem>;
