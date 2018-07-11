@@ -29,8 +29,8 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-void AddOdometryDataHandler::OnRequest(
-    const proto::AddOdometryDataRequest &request) {
+void AddOdometryDataHandler::OnSensorData(
+    const proto::AddOdometryDataRequest& request) {
   // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
   // thread-safe. Therefore it suffices to get an unsynchronized reference to
   // the 'MapBuilderContext'.
