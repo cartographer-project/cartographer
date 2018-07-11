@@ -185,20 +185,22 @@ void PoseGraph3D::AddTrajectoryIfNeeded(const int trajectory_id) {
 
 void PoseGraph3D::AddImuData(const int trajectory_id,
                              const sensor::ImuData& imu_data) {
-  if (!CanAddWorkItemModifying(trajectory_id)) return;
   AddWorkItem([=]() EXCLUDES(mutex_) {
     common::MutexLocker locker(&mutex_);
-    optimization_problem_->AddImuData(trajectory_id, imu_data);
+    if (CanAddWorkItemModifying(trajectory_id)) {
+      optimization_problem_->AddImuData(trajectory_id, imu_data);
+    }
     return WorkItem::Result::kDoNotRunOptimization;
   });
 }
 
 void PoseGraph3D::AddOdometryData(const int trajectory_id,
                                   const sensor::OdometryData& odometry_data) {
-  if (!CanAddWorkItemModifying(trajectory_id)) return;
   AddWorkItem([=]() EXCLUDES(mutex_) {
     common::MutexLocker locker(&mutex_);
-    optimization_problem_->AddOdometryData(trajectory_id, odometry_data);
+    if (CanAddWorkItemModifying(trajectory_id)) {
+      optimization_problem_->AddOdometryData(trajectory_id, odometry_data);
+    }
     return WorkItem::Result::kDoNotRunOptimization;
   });
 }
@@ -206,26 +208,28 @@ void PoseGraph3D::AddOdometryData(const int trajectory_id,
 void PoseGraph3D::AddFixedFramePoseData(
     const int trajectory_id,
     const sensor::FixedFramePoseData& fixed_frame_pose_data) {
-  if (!CanAddWorkItemModifying(trajectory_id)) return;
   AddWorkItem([=]() EXCLUDES(mutex_) {
     common::MutexLocker locker(&mutex_);
-    optimization_problem_->AddFixedFramePoseData(trajectory_id,
-                                                 fixed_frame_pose_data);
+    if (CanAddWorkItemModifying(trajectory_id)) {
+      optimization_problem_->AddFixedFramePoseData(trajectory_id,
+                                                   fixed_frame_pose_data);
+    }
     return WorkItem::Result::kDoNotRunOptimization;
   });
 }
 
 void PoseGraph3D::AddLandmarkData(int trajectory_id,
                                   const sensor::LandmarkData& landmark_data) {
-  if (!CanAddWorkItemModifying(trajectory_id)) return;
   AddWorkItem([=]() EXCLUDES(mutex_) {
     common::MutexLocker locker(&mutex_);
-    for (const auto& observation : landmark_data.landmark_observations) {
-      data_.landmark_nodes[observation.id].landmark_observations.emplace_back(
-          PoseGraphInterface::LandmarkNode::LandmarkObservation{
-              trajectory_id, landmark_data.time,
-              observation.landmark_to_tracking_transform,
-              observation.translation_weight, observation.rotation_weight});
+    if (CanAddWorkItemModifying(trajectory_id)) {
+      for (const auto& observation : landmark_data.landmark_observations) {
+        data_.landmark_nodes[observation.id].landmark_observations.emplace_back(
+            PoseGraphInterface::LandmarkNode::LandmarkObservation{
+                trajectory_id, landmark_data.time,
+                observation.landmark_to_tracking_transform,
+                observation.translation_weight, observation.rotation_weight});
+      }
     }
     return WorkItem::Result::kDoNotRunOptimization;
   });
@@ -644,20 +648,22 @@ void PoseGraph3D::SetTrajectoryDataFromProto(
   }
 
   const int trajectory_id = data.trajectory_id();
-  if (!CanAddWorkItemModifying(trajectory_id)) return;
   AddWorkItem([this, trajectory_id, trajectory_data]() EXCLUDES(mutex_) {
     common::MutexLocker locker(&mutex_);
-    optimization_problem_->SetTrajectoryData(trajectory_id, trajectory_data);
+    if (CanAddWorkItemModifying(trajectory_id)) {
+      optimization_problem_->SetTrajectoryData(trajectory_id, trajectory_data);
+    }
     return WorkItem::Result::kDoNotRunOptimization;
   });
 }
 
 void PoseGraph3D::AddNodeToSubmap(const NodeId& node_id,
                                   const SubmapId& submap_id) {
-  if (!CanAddWorkItemModifying(submap_id.trajectory_id)) return;
   AddWorkItem([this, node_id, submap_id]() EXCLUDES(mutex_) {
-    common::MutexLocker locker(&mutex_);
-    data_.submap_data.at(submap_id).node_ids.insert(node_id);
+    if (CanAddWorkItemModifying(submap_id.trajectory_id)) {
+      common::MutexLocker locker(&mutex_);
+      data_.submap_data.at(submap_id).node_ids.insert(node_id);
+    }
     return WorkItem::Result::kDoNotRunOptimization;
   });
 }
