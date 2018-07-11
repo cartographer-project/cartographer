@@ -85,7 +85,8 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
   for (const auto& submap : all_submaps) {
     if (submap->num_range_data() == kNumRangeData * 2) {
       ++correct_num_finished_submaps;
-    } else if (submap->num_range_data() == kNumRangeData) {
+    } else {
+      EXPECT_EQ(kNumRangeData, submap->num_range_data());
       ++num_unfinished_submaps;
     }
   }
