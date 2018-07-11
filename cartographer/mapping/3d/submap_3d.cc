@@ -281,35 +281,36 @@ void Submap3D::Finish() {
 
 ActiveSubmaps3D::ActiveSubmaps3D(const proto::SubmapsOptions3D& options)
     : options_(options),
-      range_data_inserter_(options.range_data_inserter_options()) {
-  // We always want to have at least one submap which we can return and will
-  // create it at the origin in absence of a better choice.
-  //
-  // TODO(whess): Start with no submaps, so that all of them can be
-  // approximately gravity aligned.
-  AddSubmap(transform::Rigid3d::Identity());
+      range_data_inserter_(options.range_data_inserter_options()) {}
+
+std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::submaps() const {
+  return std::vector<std::shared_ptr<const Submap3D>>(submaps_.begin(),
+                                                      submaps_.end());
 }
 
-std::vector<std::shared_ptr<Submap3D>> ActiveSubmaps3D::submaps() const {
-  return submaps_;
-}
-
-void ActiveSubmaps3D::InsertRangeData(
+std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertRangeData(
     const sensor::RangeData& range_data,
     const Eigen::Quaterniond& gravity_alignment) {
+  if (submaps_.empty() ||
+      submaps_.back()->num_range_data() == options_.num_range_data()) {
+    AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
+                                 gravity_alignment));
+  }
   for (auto& submap : submaps_) {
     submap->InsertRangeData(range_data, range_data_inserter_,
                             options_.high_resolution_max_range());
   }
-  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
-    AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
-                                 gravity_alignment));
+  if (submaps_.front()->num_range_data() == 2 * options_.num_range_data()) {
+    submaps_.front()->Finish();
   }
+  return submaps();
 }
 
 void ActiveSubmaps3D::AddSubmap(const transform::Rigid3d& local_submap_pose) {
-  if (submaps_.size() > 1) {
-    submaps_.front()->Finish();
+  if (submaps_.size() >= 2) {
+    // This will crop the finished Submap before inserting a new Submap to
+    // reduce peak memory usage a bit.
+    CHECK(submaps_.front()->finished());
     submaps_.erase(submaps_.begin());
   }
   submaps_.emplace_back(new Submap3D(options_.high_resolution(),

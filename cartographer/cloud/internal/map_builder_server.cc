@@ -110,8 +110,11 @@ MapBuilderServer::MapBuilderServer(
         << "Set either use_trajectory_builder_2d or use_trajectory_builder_3d";
   }
   map_builder_->pose_graph()->SetGlobalSlamOptimizationCallback(
-      std::bind(&MapBuilderServer::OnGlobalSlamOptimizations, this,
-                std::placeholders::_1, std::placeholders::_2));
+      [this](const std::map<int, mapping::SubmapId>& last_optimized_submap_ids,
+             const std::map<int, mapping::NodeId>& last_optimized_node_ids) {
+        OnGlobalSlamOptimizations(last_optimized_submap_ids,
+                                  last_optimized_node_ids);
+      });
 }
 
 void MapBuilderServer::Start() {

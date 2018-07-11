@@ -28,7 +28,7 @@ constexpr int kSubpixelScale = 1000;
 // Minimum distance between range observation and origin. Otherwise, range
 // observations are discarded.
 constexpr float kMinRangeMeters = 1e-6f;
-constexpr float kSqrtTwoPi = std::sqrt(2.0 * M_PI);
+const float kSqrtTwoPi = std::sqrt(2.0 * M_PI);
 
 void GrowAsNeeded(const sensor::RangeData& range_data,
                   const float truncation_distance, TSDF2D* const tsdf) {

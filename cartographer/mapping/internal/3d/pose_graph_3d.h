@@ -161,7 +161,8 @@ class PoseGraph3D : public PoseGraph {
   MapById<SubmapId, SubmapData> GetSubmapDataUnderLock() const REQUIRES(mutex_);
 
   // Handles a new work item.
-  void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
+  void AddWorkItem(const std::function<WorkItem::Result()>& work_item)
+      REQUIRES(mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);
@@ -174,7 +175,7 @@ class PoseGraph3D : public PoseGraph {
       REQUIRES(mutex_);
 
   // Adds constraints for a node, and starts scan matching in the background.
-  void ComputeConstraintsForNode(
+  WorkItem::Result ComputeConstraintsForNode(
       const NodeId& node_id,
       std::vector<std::shared_ptr<const Submap3D>> insertion_submaps,
       bool newly_finished_submap) REQUIRES(mutex_);
@@ -222,9 +223,6 @@ class PoseGraph3D : public PoseGraph {
   void UpdateTrajectoryConnectivity(const Constraint& constraint)
       REQUIRES(mutex_);
 
-  // Schedules optimization (i.e. loop closure) to run.
-  void DispatchOptimization() REQUIRES(mutex_);
-
   const proto::PoseGraphOptions options_;
   GlobalSlamOptimizationCallback global_slam_optimization_callback_;
   mutable common::Mutex mutex_;
@@ -239,9 +237,6 @@ class PoseGraph3D : public PoseGraph {
 
   // Number of nodes added since last loop closure.
   int num_nodes_since_last_loop_closure_ GUARDED_BY(mutex_) = 0;
-
-  // Whether the optimization has to be run before more data is added.
-  bool run_loop_closure_ GUARDED_BY(mutex_) = false;
 
   // Current optimization problem.
   std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem_;

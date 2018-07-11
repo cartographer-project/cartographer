@@ -127,23 +127,26 @@ void Submap2D::Finish() {
 }
 
 ActiveSubmaps2D::ActiveSubmaps2D(const proto::SubmapsOptions2D& options)
-    : options_(options), range_data_inserter_(CreateRangeDataInserter()) {
-  // We always want to have at least one likelihood field which we can return,
-  // and will create it at the origin in absence of a better choice.
-  AddSubmap(Eigen::Vector2f::Zero());
+    : options_(options), range_data_inserter_(CreateRangeDataInserter()) {}
+
+std::vector<std::shared_ptr<const Submap2D>> ActiveSubmaps2D::submaps() const {
+  return std::vector<std::shared_ptr<const Submap2D>>(submaps_.begin(),
+                                                      submaps_.end());
 }
 
-std::vector<std::shared_ptr<Submap2D>> ActiveSubmaps2D::submaps() const {
-  return submaps_;
-}
-
-void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
+std::vector<std::shared_ptr<const Submap2D>> ActiveSubmaps2D::InsertRangeData(
+    const sensor::RangeData& range_data) {
+  if (submaps_.empty() ||
+      submaps_.back()->num_range_data() == options_.num_range_data()) {
+    AddSubmap(range_data.origin.head<2>());
+  }
   for (auto& submap : submaps_) {
     submap->InsertRangeData(range_data, range_data_inserter_.get());
   }
-  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
-    AddSubmap(range_data.origin.head<2>());
+  if (submaps_.front()->num_range_data() == 2 * options_.num_range_data()) {
+    submaps_.front()->Finish();
   }
+  return submaps();
 }
 
 std::unique_ptr<RangeDataInserterInterface>
@@ -164,17 +167,12 @@ std::unique_ptr<GridInterface> ActiveSubmaps2D::CreateGrid(
                 CellLimits(kInitialSubmapSize, kInitialSubmapSize)));
 }
 
-void ActiveSubmaps2D::FinishSubmap() {
-  Submap2D* submap = submaps_.front().get();
-  submap->Finish();
-  submaps_.erase(submaps_.begin());
-}
-
 void ActiveSubmaps2D::AddSubmap(const Eigen::Vector2f& origin) {
-  if (submaps_.size() > 1) {
+  if (submaps_.size() >= 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
-    FinishSubmap();
+    CHECK(submaps_.front()->finished());
+    submaps_.erase(submaps_.begin());
   }
 
   submaps_.push_back(common::make_unique<Submap2D>(
