@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package cartographer.pose_graph.proto;
 
-message TrivialLoss {}
+message QuadraticLoss {}
 
 message HuberLoss {
   double scale = 1;
@@ -24,7 +24,7 @@ message HuberLoss {
 
 message LossFunction {
   oneof Type {
-    TrivialLoss trivial_loss = 1;
+    QuadraticLoss quadratic_loss = 1;
     HuberLoss huber_loss = 2;
   }
 }
