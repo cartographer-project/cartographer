@@ -61,6 +61,9 @@ std::unique_ptr<transform::Rigid3d> LocalTrajectoryBuilder3D::ScanMatch(
     const transform::Rigid3d& pose_prediction,
     const sensor::PointCloud& low_resolution_point_cloud_in_tracking,
     const sensor::PointCloud& high_resolution_point_cloud_in_tracking) {
+  if (active_submaps_.submaps().empty()) {
+    return common::make_unique<transform::Rigid3d>(pose_prediction);
+  }
   std::shared_ptr<const mapping::Submap3D> matching_submap =
       active_submaps_.submaps().front();
   transform::Rigid3d initial_ceres_pose =
@@ -248,7 +251,6 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     LOG(WARNING) << "Dropped empty high resolution point cloud data.";
     return nullptr;
   }
-
   sensor::AdaptiveVoxelFilter low_resolution_adaptive_voxel_filter(
       options_.low_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud low_resolution_point_cloud_in_tracking =
@@ -332,15 +334,9 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
-  // Querying the active submaps must be done here before calling
-  // InsertRangeData() since the queried values are valid for next insertion.
-  std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps;
-  for (const std::shared_ptr<mapping::Submap3D>& submap :
-       active_submaps_.submaps()) {
-    insertion_submaps.push_back(submap);
-  }
-  active_submaps_.InsertRangeData(filtered_range_data_in_local,
-                                  gravity_alignment);
+  std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
+      active_submaps_.InsertRangeData(filtered_range_data_in_local,
+                                      gravity_alignment);
   const Eigen::VectorXf rotational_scan_matcher_histogram =
       scan_matching::RotationalScanMatcher::ComputeHistogram(
           sensor::TransformPointCloud(

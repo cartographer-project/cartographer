@@ -171,17 +171,16 @@ class PoseGraph2DTest : public ::testing::Test {
     const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
-    std::vector<std::shared_ptr<const Submap2D>> insertion_submaps;
-    for (const auto& submap : active_submaps_->submaps()) {
-      insertion_submaps.push_back(submap);
-    }
     const sensor::RangeData range_data{
         Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
     constexpr int kTrajectoryId = 0;
     active_submaps_->InsertRangeData(TransformRangeData(
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
-
+    std::vector<std::shared_ptr<const Submap2D>> insertion_submaps;
+    for (const auto& submap : active_submaps_->submaps()) {
+      insertion_submaps.push_back(submap);
+    }
     pose_graph_->AddNode(
         std::make_shared<const TrajectoryNode::Data>(
             TrajectoryNode::Data{common::FromUniversal(0),

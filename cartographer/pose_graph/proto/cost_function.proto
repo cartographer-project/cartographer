@@ -1,0 +1,68 @@
+// Copyright 2018 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+import "cartographer/pose_graph/proto/node.proto";
+import "cartographer/transform/proto/transform.proto";
+
+package cartographer.pose_graph.proto;
+
+message RelativePose2D {
+  NodeId first = 1;
+  NodeId second = 2;
+
+  transform.proto.Rigid2d first_T_second = 3;
+  double translation_weight = 4;
+  double rotation_weight = 5;
+}
+
+message RelativePose3D {
+  NodeId first = 1;
+  NodeId second = 2;
+
+  transform.proto.Rigid3d first_T_second = 3;
+  double translation_weight = 4;
+  double rotation_weight = 5;
+}
+
+message Acceleration3D {
+  NodeId first = 1;
+  NodeId second = 2;
+  NodeId third = 3;
+  NodeId imu_calibration = 4;
+
+  transform.proto.Vector3d delta_velocity_imu_frame = 5;
+  int64 first_to_second_time_delta = 6;
+  int64 second_to_third_time_delta = 7;
+  double scaling_factor = 8;
+}
+
+message Rotation3D {
+  NodeId first = 1;
+  NodeId second = 2;
+  NodeId imu_calibration = 3;
+
+  transform.proto.Quaterniond delta_rotation_imu_frame = 4;
+  double scaling_factor = 5;
+}
+
+message CostFunction {
+  oneof Type {
+    RelativePose2D relative_pose_2d = 1;
+    RelativePose3D relative_pose_3d = 2;
+    Acceleration3D acceleration_3d = 3;
+    Rotation3D rotation_3d = 4;
+  }
+}
