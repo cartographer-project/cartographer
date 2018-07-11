@@ -171,8 +171,8 @@ void MapBuilderServer::StartSlamThread() {
 }
 
 void MapBuilderServer::OnLocalSlamResult(
-    int trajectory_id, common::Time time, transform::Rigid3d local_pose,
-    sensor::RangeData range_data,
+    int trajectory_id, const std::string client_id, common::Time time,
+    transform::Rigid3d local_pose, sensor::RangeData range_data,
     std::unique_ptr<const mapping::TrajectoryBuilderInterface::InsertionResult>
         insertion_result) {
   auto shared_range_data =
@@ -188,8 +188,8 @@ void MapBuilderServer::OnLocalSlamResult(
         grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()
             ->local_trajectory_uploader()
             ->GetLocalSlamResultSensorId(trajectory_id);
-    CreateSensorDataForLocalSlamResult(sensor_id.id, trajectory_id, time,
-                                       starting_submap_index_,
+    CreateSensorDataForLocalSlamResult(sensor_id.id, trajectory_id, client_id,
+                                       time, starting_submap_index_,
                                        *insertion_result, sensor_data.get());
     // TODO(cschuet): Make this more robust.
     if (insertion_result->insertion_submaps.front()->finished()) {
