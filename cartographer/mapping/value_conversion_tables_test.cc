@@ -56,9 +56,9 @@ TEST(ValueConversionTablesTest, ValueConversion) {
         value_conversion_tables.GetConversionTable(undefined_value, lower_bound,
                                                    upper_bound);
     EXPECT_EQ((*conversion_table)[0], undefined_value);
-    const float kScale = (upper_bound - lower_bound) / 32766.f;
+    const float scale = (upper_bound - lower_bound) / 32766.f;
     for (uint16 i = 1; i < 32768; ++i) {
-      EXPECT_EQ((*conversion_table)[i], i * kScale + (lower_bound - kScale));
+      EXPECT_EQ((*conversion_table)[i], i * scale + (lower_bound - scale));
     }
   }
 }
