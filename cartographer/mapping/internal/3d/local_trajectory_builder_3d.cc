@@ -342,7 +342,6 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
        active_submaps_.submaps()) {
     insertion_submaps.push_back(submap);
   }
-
   const Eigen::VectorXf rotational_scan_matcher_histogram =
       scan_matching::RotationalScanMatcher::ComputeHistogram(
           sensor::TransformPointCloud(

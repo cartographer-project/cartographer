@@ -165,7 +165,7 @@ std::unique_ptr<GridInterface> ActiveSubmaps2D::CreateGrid(
 }
 
 void ActiveSubmaps2D::AddSubmap(const Eigen::Vector2f& origin) {
-  if (submaps_.size() == 2) {
+  if (submaps_.size() >= 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
     CHECK(submaps_.front()->finished());

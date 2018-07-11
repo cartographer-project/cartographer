@@ -171,7 +171,6 @@ class PoseGraph2DTest : public ::testing::Test {
     const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
-
     const sensor::RangeData range_data{
         Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
