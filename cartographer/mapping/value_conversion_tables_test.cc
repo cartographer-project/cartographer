@@ -16,6 +16,8 @@
 
 #include "cartographer/mapping/value_conversion_tables.h"
 
+#include <random>
+
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -38,6 +40,27 @@ TEST(ValueConversionTablesTest, InequalTables) {
   const std::vector<float>* test_table =
       value_conversion_tables.GetConversionTable(0.1f, 0.4f, 0.5f);
   EXPECT_FALSE(reference_table == test_table);
+}
+
+TEST(ValueConversionTablesTest, ValueConversion) {
+  ValueConversionTables value_conversion_tables;
+  std::mt19937 rng(42);
+  std::uniform_real_distribution<float> bound_distribution(-10.f, 10.f);
+  for (size_t sample_index = 0; sample_index < 100; ++sample_index) {
+    const float bound_sample_0 = bound_distribution(rng);
+    const float bound_sample_1 = bound_distribution(rng);
+    const float lower_bound = std::min(bound_sample_0, bound_sample_1);
+    const float upper_bound = std::max(bound_sample_0, bound_sample_1);
+    const float undefined_value = bound_distribution(rng);
+    const std::vector<float>* conversion_table =
+        value_conversion_tables.GetConversionTable(undefined_value, lower_bound,
+                                                   upper_bound);
+    EXPECT_EQ((*conversion_table)[0], undefined_value);
+    const float kScale = (upper_bound - lower_bound) / 32766.f;
+    for (uint16 i = 1; i < 32768; ++i) {
+      EXPECT_EQ((*conversion_table)[i], i * kScale + (lower_bound - kScale));
+    }
+  }
 }
 
 }  // namespace
