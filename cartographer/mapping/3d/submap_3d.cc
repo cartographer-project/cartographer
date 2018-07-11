@@ -310,6 +310,7 @@ void ActiveSubmaps3D::AddSubmap(const transform::Rigid3d& local_submap_pose) {
   if (submaps_.size() >= 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
+    CHECK(submaps_.front()->finished());
     submaps_.erase(submaps_.begin());
   }
   submaps_.emplace_back(new Submap3D(options_.high_resolution(),
