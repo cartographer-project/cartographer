@@ -110,7 +110,7 @@ class MapBuilderServer : public MapBuilderServerInterface {
   void ProcessSensorDataQueue();
   void StartSlamThread();
   void OnLocalSlamResult(
-      int trajectory_id, const std::string& client_id, common::Time time,
+      int trajectory_id, const std::string client_id, common::Time time,
       transform::Rigid3d local_pose, sensor::RangeData range_data,
       std::unique_ptr<
           const mapping::TrajectoryBuilderInterface::InsertionResult>
