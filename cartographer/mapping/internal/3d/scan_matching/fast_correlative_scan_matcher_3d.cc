@@ -140,6 +140,19 @@ FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
       low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
       rotational_scan_matcher_(HistogramsAtAnglesFromNodes(nodes)) {}
 
+FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
+    const HybridGrid& hybrid_grid,
+    const HybridGrid* const low_resolution_hybrid_grid,
+    const Eigen::VectorXf& rotational_histogram,
+    const proto::FastCorrelativeScanMatcherOptions3D& options)
+    : options_(options),
+      resolution_(hybrid_grid.resolution()),
+      width_in_voxels_(hybrid_grid.grid_size()),
+      precomputation_grid_stack_(
+          common::make_unique<PrecomputationGridStack3D>(hybrid_grid, options)),
+      low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
+      rotational_scan_matcher_(HistogramsAtAnglesFromNodes(nodes)) {}
+
 FastCorrelativeScanMatcher3D::~FastCorrelativeScanMatcher3D() {}
 
 std::unique_ptr<FastCorrelativeScanMatcher3D::Result>

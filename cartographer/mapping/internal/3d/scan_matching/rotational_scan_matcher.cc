@@ -132,6 +132,11 @@ float MatchHistograms(const Eigen::VectorXf& submap_histogram,
 
 }  // namespace
 
+RotationalScanMatcher::RotationalScanMatcher(const Eigen::VectorXf& histogram) 
+  : histogram_(histogram)
+{  
+}
+
 // Rotates the given 'histogram' by the given 'angle'. This might lead to
 // rotations of a fractional bucket which is handled by linearly interpolating.
 Eigen::VectorXf RotationalScanMatcher::RotateHistogram(
