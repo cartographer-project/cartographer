@@ -462,6 +462,39 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
   server_->Shutdown();
 }
 
+TEST_F(ClientServerTest, LocalSlam2DWithRestartingUploadingServer) {
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+  InitializeRealUploadingServer();
+  uploading_server_->Start();
+  InitializeStubForUploadingServer();
+  int trajectory_id = stub_for_uploading_server_->AddTrajectoryBuilder(
+      {kRangeSensorId}, trajectory_builder_options_,
+      local_slam_result_callback_);
+  TrajectoryBuilderInterface* trajectory_stub =
+      stub_for_uploading_server_->GetTrajectoryBuilder(trajectory_id);
+  const auto measurements = mapping::testing::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
+  
+  
+  
+  for (const auto& measurement : measurements) {
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
+  }
+  WaitForLocalSlamResults(measurements.size());
+  WaitForLocalSlamResultUploads(number_of_insertion_results_);
+  stub_for_uploading_server_->FinishTrajectory(trajectory_id);
+  EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
+  EXPECT_NEAR(kTravelDistance,
+              (local_slam_result_poses_.back().translation() -
+               local_slam_result_poses_.front().translation())
+                  .norm(),
+              0.1 * kTravelDistance);
+  uploading_server_->Shutdown();
+  server_->Shutdown();
+}
+
 TEST_F(ClientServerTest, LoadState) {
   InitializeRealServer();
   server_->Start();
