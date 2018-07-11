@@ -152,7 +152,9 @@ void PoseGraph3D::AddWorkItem(
   } else if (work_item() == WorkItem::Result::kRunOptimization) {
     work_queue_ = common::make_unique<WorkQueue>();
     constraint_builder_.WhenDone(
-        std::bind(&PoseGraph3D::HandleWorkQueue, this, std::placeholders::_1));
+        [this](const constraints::ConstraintBuilder3D::Result& result) {
+          HandleWorkQueue(result);
+        });
   }
 }
 
@@ -452,7 +454,9 @@ void PoseGraph3D::HandleWorkQueue(
   LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
   // We have to optimize again.
   constraint_builder_.WhenDone(
-      std::bind(&PoseGraph3D::HandleWorkQueue, this, std::placeholders::_1));
+      [this](const constraints::ConstraintBuilder3D::Result& result) {
+        HandleWorkQueue(result);
+      });
 }
 
 void PoseGraph3D::WaitForAllComputations() {
