@@ -223,9 +223,6 @@ class PoseGraph3D : public PoseGraph {
   void UpdateTrajectoryConnectivity(const Constraint& constraint)
       REQUIRES(mutex_);
 
-  // Schedules optimization (i.e. loop closure) to run.
-  void DispatchOptimization() REQUIRES(mutex_);
-
   const proto::PoseGraphOptions options_;
   GlobalSlamOptimizationCallback global_slam_optimization_callback_;
   mutable common::Mutex mutex_;
