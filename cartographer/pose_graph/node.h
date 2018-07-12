@@ -45,7 +45,7 @@ class Node {
     Parameterization parameterization;
   };
 
-  explicit Node(NodeId id, bool constant) :node_id_(id), constant_(constant) {}
+  explicit Node(NodeId id, bool constant) : node_id_(id), constant_(constant) {}
   ~Node() = default;
 
   proto::Node Serialize() const;
