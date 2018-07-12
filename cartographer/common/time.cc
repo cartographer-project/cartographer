@@ -18,6 +18,8 @@
 #include "glog/logging.h"
 
 #include <time.h>
+#include <cerrno>
+#include <cstring>
 #include <string>
 
 namespace cartographer {
