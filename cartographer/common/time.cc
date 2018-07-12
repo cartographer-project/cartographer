@@ -16,8 +16,8 @@
 
 #include "cartographer/common/time.h"
 
-#include <string>
 #include <time.h>
+#include <string>
 
 namespace cartographer {
 namespace common {
@@ -54,7 +54,8 @@ common::Duration FromMilliseconds(const int64 milliseconds) {
 double GetThreadCpuTimeSeconds() {
   struct timespec tm;
   clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tm);
-  return static_cast<double>(tm.tv_sec) + 1e-9 * static_cast<double>(tm.tv_nsec);
+  return static_cast<double>(tm.tv_sec) +
+         1e-9 * static_cast<double>(tm.tv_nsec);
 }
 
 }  // namespace common
