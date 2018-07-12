@@ -43,7 +43,9 @@ proto::SubmapsOptions3D CreateSubmapsOptions3D(
 class Submap3D : public Submap {
  public:
   Submap3D(float high_resolution, float low_resolution,
-           const transform::Rigid3d& local_submap_pose);
+           const transform::Rigid3d& local_submap_pose,
+           const Eigen::VectorXf& rotational_scan_matcher_histogram =
+               Eigen::VectorXf());
   explicit Submap3D(const proto::Submap3D& proto);
 
   void ToProto(proto::Submap* proto,
@@ -59,8 +61,8 @@ class Submap3D : public Submap {
   const HybridGrid& low_resolution_hybrid_grid() const {
     return *low_resolution_hybrid_grid_;
   }
-  Eigen::VectorXf rotational_scan_matcher_histogram() const{
-      return rotational_scan_matcher_histogram_;
+  Eigen::VectorXf rotational_scan_matcher_histogram() const {
+    return rotational_scan_matcher_histogram_;
   }
 
   // Insert 'range_data' into this submap using 'range_data_inserter'. The

@@ -197,12 +197,14 @@ proto::SubmapsOptions3D CreateSubmapsOptions3D(
 }
 
 Submap3D::Submap3D(const float high_resolution, const float low_resolution,
-                   const transform::Rigid3d& local_submap_pose)
+                   const transform::Rigid3d& local_submap_pose,
+                   const Eigen::VectorXf& rotational_scan_matcher_histogram)
     : Submap(local_submap_pose),
       high_resolution_hybrid_grid_(
           common::make_unique<HybridGrid>(high_resolution)),
       low_resolution_hybrid_grid_(
-          common::make_unique<HybridGrid>(low_resolution)) {}
+          common::make_unique<HybridGrid>(low_resolution)),
+      rotational_scan_matcher_histogram_(rotational_scan_matcher_histogram) {}
 
 Submap3D::Submap3D(const proto::Submap3D& proto)
     : Submap(transform::ToRigid3(proto.local_pose())),
@@ -294,6 +296,15 @@ void Submap3D::InsertData(
   range_data_inserter.Insert(transformed_range_data,
                              low_resolution_hybrid_grid_.get());
   set_num_range_data(num_range_data() + 1);
+  if (rotational_scan_matcher_histogram_.rows() == 0) {
+    rotational_scan_matcher_histogram_.resize(scan_histogram.size());
+    rotational_scan_matcher_histogram_.setZero();
+  }
+  const float yaw_to_submap =
+      transform::GetYaw(local_pose().inverse() * inverse_gravity_to_local_map);
+  rotational_scan_matcher_histogram_ +=
+      scan_matching::RotationalScanMatcher::RotateHistogram(scan_histogram,
+                                                            yaw_to_submap);
 }
 
 void Submap3D::Finish() {

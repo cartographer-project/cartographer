@@ -227,15 +227,6 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
   const transform::Rigid3d global_submap_pose_inverse =
       global_submap_pose.inverse();
 
-  std::vector<TrajectoryNode> submap_nodes;
-  for (const NodeId& submap_node_id :
-       data_.submap_data.at(submap_id).node_ids) {
-    submap_nodes.push_back(TrajectoryNode{
-        data_.trajectory_nodes.at(submap_node_id).constant_data,
-        global_submap_pose_inverse *
-            data_.trajectory_nodes.at(submap_node_id).global_pose});
-  }
-
   const common::Time node_time = GetLatestNodeTime(node_id, submap_id);
   const common::Time last_connection_time =
       data_.trajectory_connectivity_state.LastConnectionTime(
@@ -254,7 +245,7 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
         static_cast<const Submap3D*>(
             data_.submap_data.at(submap_id).submap.get()),
         node_id, data_.trajectory_nodes.at(node_id).constant_data.get(),
-        submap_nodes, global_node_pose, global_submap_pose);
+        global_node_pose, global_submap_pose);
   } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
     // In this situation, 'global_node_pose' and 'global_submap_pose' have
     // orientations agreeing on gravity. Their relationship regarding yaw is
@@ -266,8 +257,7 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
         static_cast<const Submap3D*>(
             data_.submap_data.at(submap_id).submap.get()),
         node_id, data_.trajectory_nodes.at(node_id).constant_data.get(),
-        submap_nodes, global_node_pose.rotation(),
-        global_submap_pose.rotation());
+        global_node_pose.rotation(), global_submap_pose.rotation());
   }
 }
 

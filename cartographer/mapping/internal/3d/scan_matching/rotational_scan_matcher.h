@@ -45,7 +45,7 @@ class RotationalScanMatcher {
       const std::vector<std::pair<Eigen::VectorXf, float>>&
           histograms_at_angles);
 
-  RotationalScanMatcher(const Eigen::VectorXf& histogram);
+  explicit RotationalScanMatcher(const Eigen::VectorXf& histogram);
 
   // Scores how well 'histogram' rotated by 'initial_angle' can be understood as
   // further rotated by certain 'angles' relative to the 'nodes'. Each angle
