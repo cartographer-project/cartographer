@@ -36,6 +36,7 @@ using ::testing::Test;
 using ::testing::Truly;
 
 const std::string kMessage = R"(
+    client_id: "CLIENT_ID"
     expected_sensor_ids {
       id: "range_sensor"
       type: RANGE
@@ -105,6 +106,8 @@ TEST_F(AddTrajectoryHandlerTest, NoLocalSlamUploader) {
                                        &request.trajectory_builder_options())),
                                    _))
       .WillOnce(Return(13));
+  EXPECT_CALL(*mock_map_builder_context_,
+              RegisterClientIdForTrajectory(Eq("CLIENT_ID"), Eq(13)));
   test_server_->SendWrite(request);
   EXPECT_EQ(test_server_->response().trajectory_id(), 13);
 }
@@ -120,6 +123,8 @@ TEST_F(AddTrajectoryHandlerTest, WithLocalSlamUploader) {
                                        &request.trajectory_builder_options())),
                                    _))
       .WillOnce(Return(13));
+  EXPECT_CALL(*mock_map_builder_context_,
+              RegisterClientIdForTrajectory(Eq("CLIENT_ID"), Eq(13)));
   auto upstream_trajectory_builder_options =
       request.trajectory_builder_options();
   // Reproduce the changes to the request as done by the handler.
@@ -128,7 +133,7 @@ TEST_F(AddTrajectoryHandlerTest, WithLocalSlamUploader) {
   upstream_trajectory_builder_options.clear_pure_localization_trimmer();
   upstream_trajectory_builder_options.clear_initial_trajectory_pose();
   EXPECT_CALL(*mock_local_trajectory_uploader_,
-              AddTrajectory(Eq(13), ParseSensorIds(request),
+              AddTrajectory(Eq("CLIENT_ID"), Eq(13), ParseSensorIds(request),
                             Truly(testing::BuildProtoPredicateEquals(
                                 &upstream_trajectory_builder_options))));
   test_server_->SendWrite(request);

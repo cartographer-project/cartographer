@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_WORK_QUEUE_H
-#define CARTOGRAPHER_MAPPING_INTERNAL_WORK_QUEUE_H
+#ifndef CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+#define CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
 
-#include <chrono>
-#include <deque>
-#include <functional>
+#include "cartographer/pose_graph/node.h"
+
+#include "Eigen/Core"
 
 namespace cartographer {
-namespace mapping {
+namespace pose_graph {
 
-struct WorkItem {
-  enum class Result {
-    kDoNotRunOptimization,
-    kRunOptimization,
-  };
+class Pose2D : public Node {
+ public:
+  Pose2D(const NodeId& node_id, bool constant,
+         const Eigen::Vector2d& translation, double rotation);
 
-  std::chrono::steady_clock::time_point time;
-  std::function<Result()> task;
+ protected:
+  proto::Parameters ToParametersProto() const final;
+
+ private:
+  std::array<double, 3> pose_2d_;
 };
 
-using WorkQueue = std::deque<WorkItem>;
-
-}  // namespace mapping
+}  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_WORK_QUEUE_H
+#endif  // CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_

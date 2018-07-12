@@ -35,10 +35,10 @@ class MockLocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   }
   MOCK_METHOD0(Start, void());
   MOCK_METHOD0(Shutdown, void());
-  MOCK_METHOD3(AddTrajectory,
-               void(int, const std::set<SensorId> &,
+  MOCK_METHOD4(AddTrajectory,
+               void(const std::string &, int, const std::set<SensorId> &,
                     const mapping::proto::TrajectoryBuilderOptions &));
-  MOCK_METHOD1(FinishTrajectory, void(int));
+  MOCK_METHOD2(FinishTrajectory, void(const std::string &, int));
   MOCK_CONST_METHOD1(GetLocalSlamResultSensorId, SensorId(int));
 };
 

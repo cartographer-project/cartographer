@@ -158,7 +158,8 @@ class PoseGraph2D : public PoseGraph {
       const REQUIRES(mutex_);
 
   // Handles a new work item.
-  void AddWorkItem(const std::function<void()>& work_item) REQUIRES(mutex_);
+  void AddWorkItem(const std::function<WorkItem::Result()>& work_item)
+      REQUIRES(mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);
@@ -171,7 +172,7 @@ class PoseGraph2D : public PoseGraph {
       REQUIRES(mutex_);
 
   // Adds constraints for a node, and starts scan matching in the background.
-  void ComputeConstraintsForNode(
+  WorkItem::Result ComputeConstraintsForNode(
       const NodeId& node_id,
       std::vector<std::shared_ptr<const Submap2D>> insertion_submaps,
       bool newly_finished_submap) REQUIRES(mutex_);
@@ -233,12 +234,6 @@ class PoseGraph2D : public PoseGraph {
 
   // Number of nodes added since last loop closure.
   int num_nodes_since_last_loop_closure_ GUARDED_BY(mutex_) = 0;
-
-  // Whether the optimization has to be run before more data is added.
-  bool run_loop_closure_ GUARDED_BY(mutex_) = false;
-
-  // Schedules optimization (i.e. loop closure) to run.
-  void DispatchOptimization() REQUIRES(mutex_);
 
   // Current optimization problem.
   std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem_;

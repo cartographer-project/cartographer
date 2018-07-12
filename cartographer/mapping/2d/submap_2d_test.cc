@@ -66,12 +66,13 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
       "},"
       "}");
   ActiveSubmaps2D submaps{CreateSubmapsOptions2D(parameter_dictionary.get())};
-  std::set<std::shared_ptr<Submap2D>> all_submaps;
+  std::set<std::shared_ptr<const Submap2D>> all_submaps;
   for (int i = 0; i != 1000; ++i) {
-    submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}});
+    auto insertion_submaps =
+        submaps.InsertRangeData({Eigen::Vector3f::Zero(), {}, {}});
     // Except for the first, maps should only be returned after enough range
     // data.
-    for (const auto& submap : submaps.submaps()) {
+    for (const auto& submap : insertion_submaps) {
       all_submaps.insert(submap);
     }
     if (submaps.submaps().size() > 1) {
@@ -79,14 +80,19 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
     }
   }
   EXPECT_EQ(2, submaps.submaps().size());
-  int correct_num_range_data = 0;
+  int correct_num_finished_submaps = 0;
+  int num_unfinished_submaps = 0;
   for (const auto& submap : all_submaps) {
     if (submap->num_range_data() == kNumRangeData * 2) {
-      ++correct_num_range_data;
+      ++correct_num_finished_submaps;
+    } else {
+      EXPECT_EQ(kNumRangeData, submap->num_range_data());
+      ++num_unfinished_submaps;
     }
   }
   // Submaps should not be left without the right number of range data in them.
-  EXPECT_EQ(correct_num_range_data, all_submaps.size() - 2);
+  EXPECT_EQ(correct_num_finished_submaps, all_submaps.size() - 1);
+  EXPECT_EQ(1, num_unfinished_submaps);
 }
 
 TEST(Submap2DTest, ToFromProto) {
