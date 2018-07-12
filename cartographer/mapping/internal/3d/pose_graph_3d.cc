@@ -518,15 +518,17 @@ void PoseGraph3D::WaitForAllComputations() {
 }
 
 void PoseGraph3D::DeleteTrajectory(const int trajectory_id) {
-  common::MutexLocker locker(&mutex_);
-  auto it = data_.trajectories_state.find(trajectory_id);
-  if (it == data_.trajectories_state.end()) {
-    LOG(WARNING) << "Skipping request to delete non-existing trajectory_id: "
-                 << trajectory_id;
-    return;
+  {
+    common::MutexLocker locker(&mutex_);
+    auto it = data_.trajectories_state.find(trajectory_id);
+    if (it == data_.trajectories_state.end()) {
+      LOG(WARNING) << "Skipping request to delete non-existing trajectory_id: "
+                   << trajectory_id;
+      return;
+    }
+    it->second.deletion_state =
+        InternalTrajectoryState::DeletionState::SCHEDULED_FOR_DELETION;
   }
-  it->second.deletion_state =
-      InternalTrajectoryState::DeletionState::SCHEDULED_FOR_DELETION;
   AddWorkItem([this, trajectory_id]() EXCLUDES(mutex_) {
     common::MutexLocker locker(&mutex_);
     CHECK(data_.trajectories_state.at(trajectory_id).state !=
@@ -660,8 +662,8 @@ void PoseGraph3D::SetTrajectoryDataFromProto(
 void PoseGraph3D::AddNodeToSubmap(const NodeId& node_id,
                                   const SubmapId& submap_id) {
   AddWorkItem([this, node_id, submap_id]() EXCLUDES(mutex_) {
+    common::MutexLocker locker(&mutex_);
     if (CanAddWorkItemModifying(submap_id.trajectory_id)) {
-      common::MutexLocker locker(&mutex_);
       data_.submap_data.at(submap_id).node_ids.insert(node_id);
     }
     return WorkItem::Result::kDoNotRunOptimization;
