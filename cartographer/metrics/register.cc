@@ -28,8 +28,8 @@ namespace cartographer {
 namespace metrics {
 
 namespace {
-  bool kMetricsRegistered = false;
-}  // namespace 
+bool kMetricsRegistered = false;
+}  // namespace
 
 void RegisterAllMetrics(FamilyFactory* registry) {
   kMetricsRegistered = true;
