@@ -42,7 +42,7 @@ The weighted error :math:`f:\mathbb R^6 \mapsto \mathbb R^3` between
 coordinate frame :math:`i` can be computed as
 
 .. math::
- \mathbf f( \mathbf{p}_i,\mathbf{p}_j) =
+ \mathbf f_{\text{relative}}( \mathbf{p}_i,\mathbf{p}_j) =
  \left[
    w_{\text{t}} \; w_{\text{r}}
  \right]
@@ -96,26 +96,35 @@ Jacobian matrix  :math:`J_f` is given by:
 Landmark Cost Function
 ======================
 
-Let :math:`\mathbf{p}_o` be the global pose of the SLAM tracking frame at which
-a landmark with the global pose :math:`\mathbf{p}_l` is observed.
+Let :math:`\mathbf{p}_o` denote the global pose of the SLAM tracking frame at
+which a landmark with the global pose :math:`\mathbf{p}_l` is observed.
 The landmark observation itself is the measured transformation
 :math:`\mathbf{T}^m_{ol}` that was observed at time :math:`t_o`.
-As the landmark can be observed asynchronously, :math:`\mathbf{p}_o` is modeled
-in between two regular trajectory nodes :math:`\mathbf{p}_i, \mathbf{p}_j`.
 
-Using the notation introduced above, the weighted landmark cost function is:
+As the landmark can be observed asynchronously, the pose of observation 
+:math:`\mathbf{p}_o` is modeled in between two regular, consecutive trajectory
+nodes :math:`\mathbf{p}_i, \mathbf{p}_j`.
+It is interpolated between :math:`\mathbf{p}_i` and
+:math:`\mathbf{p}_j` at the observation time :math:`t_o` using a linear
+interpolation for the translation and a quaternion SLERP for the rotation:
 
 .. math::
-  \mathbf f( \mathbf{p}_o, \mathbf{p}_l) = 
+  \mathbf{p}_o = \text{interpolate}(\mathbf{p}_i, \mathbf{p}_j, t_o)
+
+Then, the full weighted landmark cost function can be written as:
+
+.. math::
+  \begin{align}
+    \mathbf f_{\text{landmark}}(\mathbf{p}_l, \mathbf{p}_i, \mathbf{p}_j) &= 
+      \mathbf f_{\text{relative}}(\mathbf{p}_l, \mathbf{p}_o) \\ 
+    &= 
     \left[
       w_{\text{t}} \; w_{\text{r}}
     \right]
     \left(
       \mathbf T_{ol}^m - \mathbf T( \mathbf{p}_o,\mathbf{p}_l)
     \right)
+  \end{align}
 
-The pose :math:`\mathbf{p}_o` is interpolated between :math:`\mathbf{p}_i` and
-:math:`\mathbf{p}_j` at the observation time :math:`t_o` (linear interpolation
-for the translation, quaternion SLERP for the rotation).
 The translation and rotation weights :math:`w_{\text{t}}, w_{\text{r}}` are
 part of the landmark observation data that is fed into Cartographer.
