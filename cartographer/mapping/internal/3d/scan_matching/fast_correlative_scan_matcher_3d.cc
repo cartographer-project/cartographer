@@ -130,7 +130,7 @@ std::vector<std::pair<Eigen::VectorXf, float>> HistogramsAtAnglesFromNodes(
 FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
     const HybridGrid& hybrid_grid,
     const HybridGrid* const low_resolution_hybrid_grid,
-    const std::vector<TrajectoryNode>& nodes,
+    const Eigen::VectorXf& rotational_scan_matcher_histogram,
     const proto::FastCorrelativeScanMatcherOptions3D& options)
     : options_(options),
       resolution_(hybrid_grid.resolution()),
@@ -138,20 +138,7 @@ FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
       precomputation_grid_stack_(
           common::make_unique<PrecomputationGridStack3D>(hybrid_grid, options)),
       low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
-      rotational_scan_matcher_(HistogramsAtAnglesFromNodes(nodes)) {}
-
-FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
-    const HybridGrid& hybrid_grid,
-    const HybridGrid* const low_resolution_hybrid_grid,
-    const Eigen::VectorXf& rotational_histogram,
-    const proto::FastCorrelativeScanMatcherOptions3D& options)
-    : options_(options),
-      resolution_(hybrid_grid.resolution()),
-      width_in_voxels_(hybrid_grid.grid_size()),
-      precomputation_grid_stack_(
-          common::make_unique<PrecomputationGridStack3D>(hybrid_grid, options)),
-      low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
-      rotational_scan_matcher_(HistogramsAtAnglesFromNodes(nodes)) {}
+      rotational_scan_matcher_(rotational_scan_matcher_histogram) {}
 
 FastCorrelativeScanMatcher3D::~FastCorrelativeScanMatcher3D() {}
 

@@ -167,8 +167,7 @@ void ConstraintBuilder3D::WhenDone(
 
 const ConstraintBuilder3D::SubmapScanMatcher*
 ConstraintBuilder3D::DispatchScanMatcherConstruction(
-    const SubmapId& submap_id, const std::vector<TrajectoryNode>& submap_nodes,
-    const Submap3D* submap) {
+    const SubmapId& submap_id, const Submap3D* submap) {
   if (submap_scan_matchers_.count(submap_id) != 0) {
     return &submap_scan_matchers_.at(submap_id);
   }
@@ -181,11 +180,12 @@ ConstraintBuilder3D::DispatchScanMatcherConstruction(
       options_.fast_correlative_scan_matcher_options_3d();
   auto scan_matcher_task = common::make_unique<common::Task>();
   scan_matcher_task->SetWorkItem(
-      [&submap_scan_matcher, &scan_matcher_options, submap_nodes]() {
+      [&submap_scan_matcher, &scan_matcher_options]() {
         submap_scan_matcher.fast_correlative_scan_matcher =
             common::make_unique<scan_matching::FastCorrelativeScanMatcher3D>(
                 *submap_scan_matcher.high_resolution_hybrid_grid,
-                submap_scan_matcher.low_resolution_hybrid_grid, submap_nodes,
+                submap_scan_matcher.low_resolution_hybrid_grid,
+                submap->rotational_scan_matcher_histogram(),
                 scan_matcher_options);
       });
   submap_scan_matcher.creation_task_handle =

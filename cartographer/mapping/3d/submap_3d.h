@@ -59,6 +59,9 @@ class Submap3D : public Submap {
   const HybridGrid& low_resolution_hybrid_grid() const {
     return *low_resolution_hybrid_grid_;
   }
+  Eigen::VectorXf rotational_scan_matcher_histogram() const{
+      return rotational_scan_matcher_histogram_;
+  }
 
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.

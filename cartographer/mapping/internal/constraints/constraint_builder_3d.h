@@ -126,8 +126,7 @@ class ConstraintBuilder3D {
   // The returned 'grid' and 'fast_correlative_scan_matcher' must only be
   // accessed after 'creation_task_handle' has completed.
   const SubmapScanMatcher* DispatchScanMatcherConstruction(
-      const SubmapId& submap_id,
-      const std::vector<TrajectoryNode>& submap_nodes, const Submap3D* submap)
+      const SubmapId& submap_id, const Submap3D* submap)
       REQUIRES(mutex_);
 
   // Runs in a background thread and does computations for an additional
