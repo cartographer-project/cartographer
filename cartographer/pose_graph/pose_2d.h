@@ -30,7 +30,7 @@ class Pose2D : public Node {
          const Eigen::Vector2d& translation, double rotation);
 
  protected:
-  proto::Parameters SerializeParameters() const final;
+  proto::Parameters ToParametersProto() const final;
 
  private:
   std::array<double, 3> pose_2d_;

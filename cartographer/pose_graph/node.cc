@@ -19,11 +19,11 @@
 namespace cartographer {
 namespace pose_graph {
 
-proto::Node Node::Serialize() const {
+proto::Node Node::ToProto() const {
   proto::Node node;
   node.set_constant(constant_);
   node.mutable_id()->set_object_id(node_id_);
-  *node.mutable_parameters() = SerializeParameters();
+  *node.mutable_parameters() = ToParametersProto();
   return node;
 }
 

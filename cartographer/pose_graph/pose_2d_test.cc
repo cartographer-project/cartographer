@@ -49,7 +49,7 @@ MATCHER_P(EqualsProto, expected_proto_string, "") {
 
 TEST(Pose2DTest, SerializeToProto) {
   Pose2D pose_2d("flat_world", true, Eigen::Vector2d(1., 2.), 5.);
-  EXPECT_THAT(pose_2d.Serialize(), EqualsProto(kExpectedNode));
+  EXPECT_THAT(pose_2d.ToProto(), EqualsProto(kExpectedNode));
 }
 
 }  // namespace

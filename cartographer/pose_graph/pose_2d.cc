@@ -33,7 +33,7 @@ Pose2D::Pose2D(const NodeId& node_id, bool constant,
   AddParameterBlock(Parameterization::NONE, &pose_2d_);
 }
 
-proto::Parameters Pose2D::SerializeParameters() const {
+proto::Parameters Pose2D::ToParametersProto() const {
   proto::Parameters parameters;
   auto* pose_2d = parameters.mutable_pose_2d();
   pose_2d->set_rotation(pose_2d_[kRotationIndex]);
