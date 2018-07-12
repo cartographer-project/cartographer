@@ -30,10 +30,15 @@
 namespace cartographer {
 namespace mapping {
 
+// TODO(spielawa): Adjust metrics for multi-trajectory. So far we assume a
+// single trajectory.
 static auto* kLocalSlamLatencyMetric = metrics::Gauge::Null();
 static auto* kLocalSlamVoxelFilterFraction = metrics::Gauge::Null();
 static auto* kLocalSlamScanMatcherFraction = metrics::Gauge::Null();
 static auto* kLocalSlamInsertIntoSubmapFraction = metrics::Gauge::Null();
+// TODO(spielawa): Add the following two metrics also to local_trajectory_builder_2d
+static auto* kLocalSlamRealTimeRateRatio = metrics::Gauge::Null();
+static auto* kLocalSlamCpuTimeRateRatio = metrics::Gauge::Null();
 static auto* kRealTimeCorrelativeScanMatcherScoreMetric =
     metrics::Histogram::Null();
 static auto* kCeresScanMatcherCostMetric = metrics::Histogram::Null();
@@ -197,6 +202,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
     common::optional<common::Duration> sensor_duration;
     if (last_sensor_time_.has_value()) {
       sensor_duration = current_sensor_time - last_sensor_time_.value();
+      LOG(INFO) << "sensor_duration:       " << common::ToSeconds(sensor_duration.value());
     }
     last_sensor_time_ = current_sensor_time;
     num_accumulated_ = 0;
@@ -301,12 +307,38 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
   const auto accumulation_stop = std::chrono::steady_clock::now();
-  if (last_accumulation_stop_.has_value()) {
-    const auto accumulation_duration =
-        accumulation_stop - last_accumulation_stop_.value();
-    kLocalSlamLatencyMetric->Set(common::ToSeconds(accumulation_duration));
+  const double cpu_thread_time_sec = common::GetThreadCpuTimeSeconds();
+  if (last_wall_time_.has_value()) {
+    const auto wall_time_duration =
+        accumulation_stop - last_wall_time_.value();
+    kLocalSlamLatencyMetric->Set(common::ToSeconds(wall_time_duration));
+    if (sensor_duration.has_value()) {
+      kLocalSlamRealTimeRateRatio->Set(
+          common::ToSeconds(sensor_duration.value()) / common::ToSeconds(wall_time_duration));
+      // TODO(spielawa): remove debug output
+      LOG(INFO) << "wall_time_duration: " << common::ToSeconds(wall_time_duration) << 
+      " --- RealTimeRateRatio: " <<
+      100 * common::ToSeconds(sensor_duration.value()) / common::ToSeconds(wall_time_duration)  << " %";
+    } else {
+      LOG(INFO) << "wall_time_duration: " << common::ToSeconds(wall_time_duration); 
+    }
   }
-  last_accumulation_stop_ = accumulation_stop;
+  if (last_thread_cpu_time_sec_.has_value()) {
+      const double thread_cpu_duration = cpu_thread_time_sec - 
+        last_thread_cpu_time_sec_.value();
+    if (sensor_duration.has_value()) {
+      kLocalSlamCpuTimeRateRatio->Set(
+          common::ToSeconds(sensor_duration.value()) / thread_cpu_duration);
+      LOG(INFO) << "thread_cpu_duration:   " << thread_cpu_duration << 
+      " --- CpuTimeRateRatio " << 
+      100 * common::ToSeconds(sensor_duration.value()) / thread_cpu_duration << " %";
+    } else {
+      LOG(INFO) << "thread_cpu_duration:   "  << thread_cpu_duration; 
+    }
+
+  }
+  last_wall_time_ = accumulation_stop;
+  last_thread_cpu_time_sec_ = cpu_thread_time_sec;
   return common::make_unique<MatchingResult>(MatchingResult{
       time, *pose_estimate, std::move(filtered_range_data_in_local),
       std::move(insertion_result)});
@@ -362,6 +394,7 @@ void LocalTrajectoryBuilder3D::RegisterMetrics(
       "mapping_3d_local_trajectory_builder_latency",
       "Duration from first incoming point cloud in accumulation to local slam "
       "result");
+  kLocalSlamLatencyMetric = latency->Add({});
 
   auto* voxel_filter_fraction = family_factory->NewGaugeFamily(
       "mapping_3d_local_trajectory_builder_voxel_filter_fraction",
@@ -374,12 +407,22 @@ void LocalTrajectoryBuilder3D::RegisterMetrics(
   kLocalSlamScanMatcherFraction = scan_matcher_fraction->Add({});
 
   auto* insert_into_submap_fraction = family_factory->NewGaugeFamily(
-      "mapping_3d_local_trajectory_builder"
-      "insert_into_submap_fraction",
+      "mapping_3d_local_trajectory_builder_insert_into_submap_fraction",
       "Fraction of total sensor time taken up by inserting into submap.");
   kLocalSlamInsertIntoSubmapFraction = insert_into_submap_fraction->Add({});
 
-  kLocalSlamLatencyMetric = latency->Add({});
+  auto* real_time_rate_ratio = family_factory->NewGaugeFamily(
+      "mapping_3d_local_trajecotry_builder_real_time_rate_ratio", 
+      "sensor duration / wall clock duration."
+  );
+  kLocalSlamRealTimeRateRatio = real_time_rate_ratio->Add({});
+ 
+  auto* cpu_time_rate_ratio = family_factory->NewGaugeFamily(
+      "mapping_3d_local_trajecotry_builder_cpu_time_rate_ratio", 
+      "sensor duration / cpu duration."
+  );
+  kLocalSlamCpuTimeRateRatio = cpu_time_rate_ratio->Add({});
+
   auto score_boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = family_factory->NewHistogramFamily(
       "mapping_3d_local_trajectory_builder_scores", "Local scan matcher scores",
