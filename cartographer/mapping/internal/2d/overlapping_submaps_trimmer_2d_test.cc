@@ -69,7 +69,7 @@ class OverlappingSubmapsTrimmer2DTest : public ::testing::Test {
     grid->mutable_probability_grid_2d();
     fake_pose_graph_.mutable_submap_data()->Insert(
         {0 /* trajectory_id */, submap_index},
-        {std::make_shared<const Submap2D>(submap_2d),
+        {std::make_shared<const Submap2D>(submap_2d, &conversion_tables_),
          transform::Embed3D(global_to_submap_frame)});
   }
 
@@ -91,6 +91,7 @@ class OverlappingSubmapsTrimmer2DTest : public ::testing::Test {
                          : PoseGraphInterface::Constraint::INTER_SUBMAP});
   }
 
+  ValueConversionTables conversion_tables_;
   testing::FakeTrimmable fake_pose_graph_;
 };
 

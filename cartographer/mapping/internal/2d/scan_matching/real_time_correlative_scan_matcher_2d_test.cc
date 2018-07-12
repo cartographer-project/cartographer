@@ -38,7 +38,8 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
  protected:
   RealTimeCorrelativeScanMatcherTest()
       : probability_grid_(
-            MapLimits(0.05, Eigen::Vector2d(0.05, 0.25), CellLimits(6, 6))) {
+            MapLimits(0.05, Eigen::Vector2d(0.05, 0.25), CellLimits(6, 6)),
+            &conversion_tables_) {
     {
       auto parameter_dictionary = common::MakeDictionary(
           "return { "
@@ -77,6 +78,7 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
     }
   }
 
+  ValueConversionTables conversion_tables_;
   ProbabilityGrid probability_grid_;
   std::unique_ptr<ProbabilityGridRangeDataInserter2D> range_data_inserter_;
   sensor::PointCloud point_cloud_;

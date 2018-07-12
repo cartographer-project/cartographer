@@ -110,7 +110,8 @@ PaintSubmapSlicesResult PaintSubmapSlices(
 void FillSubmapSlice(
     const ::cartographer::transform::Rigid3d& global_submap_pose,
     const ::cartographer::mapping::proto::Submap& proto,
-    SubmapSlice* const submap_slice) {
+    SubmapSlice* const submap_slice,
+    mapping::ValueConversionTables* conversion_tables) {
   ::cartographer::mapping::proto::SubmapQuery::Response response;
   ::cartographer::transform::Rigid3d local_pose;
   if (proto.has_submap_3d()) {
@@ -118,7 +119,8 @@ void FillSubmapSlice(
     local_pose = submap.local_pose();
     submap.ToResponseProto(global_submap_pose, &response);
   } else {
-    ::cartographer::mapping::Submap2D submap(proto.submap_2d());
+    ::cartographer::mapping::Submap2D submap(proto.submap_2d(),
+                                             conversion_tables);
     local_pose = submap.local_pose();
     submap.ToResponseProto(global_submap_pose, &response);
   }

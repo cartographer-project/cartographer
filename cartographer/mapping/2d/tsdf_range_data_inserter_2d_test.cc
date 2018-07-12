@@ -28,7 +28,7 @@ class RangeDataInserterTest2DTSDF : public ::testing::Test {
  protected:
   RangeDataInserterTest2DTSDF()
       : tsdf_(MapLimits(1., Eigen::Vector2d(0., 7.), CellLimits(8, 1)), 2.0,
-              10.0) {
+              10.0, &conversion_tables_) {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
         "truncation_distance = 2.0,"
@@ -57,6 +57,7 @@ class RangeDataInserterTest2DTSDF : public ::testing::Test {
     tsdf_.FinishUpdate();
   }
 
+  ValueConversionTables conversion_tables_;
   proto::TSDFRangeDataInserterOptions2D options_;
   TSDF2D tsdf_;
   std::unique_ptr<TSDFRangeDataInserter2D> range_data_inserter_;
