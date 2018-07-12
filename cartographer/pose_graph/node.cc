@@ -14,29 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_MAPPING_INTERNAL_WORK_QUEUE_H
-#define CARTOGRAPHER_MAPPING_INTERNAL_WORK_QUEUE_H
-
-#include <chrono>
-#include <deque>
-#include <functional>
+#include "cartographer/pose_graph/node.h"
 
 namespace cartographer {
-namespace mapping {
+namespace pose_graph {
 
-struct WorkItem {
-  enum class Result {
-    kDoNotRunOptimization,
-    kRunOptimization,
-  };
+proto::Node Node::ToProto() const {
+  proto::Node node;
+  node.set_constant(constant_);
+  node.mutable_id()->set_object_id(node_id_);
+  *node.mutable_parameters() = ToParametersProto();
+  return node;
+}
 
-  std::chrono::steady_clock::time_point time;
-  std::function<Result()> task;
-};
-
-using WorkQueue = std::deque<WorkItem>;
-
-}  // namespace mapping
+}  // namespace pose_graph
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_WORK_QUEUE_H
