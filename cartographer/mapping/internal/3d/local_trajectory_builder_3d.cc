@@ -30,6 +30,8 @@
 namespace cartographer {
 namespace mapping {
 
+// TODO(spielawa): Adjust metrics for multi-trajectory. So far we assume a
+// single trajectory.
 static auto* kLocalSlamLatencyMetric = metrics::Gauge::Null();
 static auto* kLocalSlamVoxelFilterFraction = metrics::Gauge::Null();
 static auto* kLocalSlamScanMatcherFraction = metrics::Gauge::Null();
