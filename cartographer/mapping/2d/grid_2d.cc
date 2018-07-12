@@ -19,6 +19,34 @@
 
 namespace cartographer {
 namespace mapping {
+namespace {
+
+float MinCorrespondenceCostFromProto(const proto::Grid2D& proto) {
+  if (proto.min_correspondence_cost() == 0.f &&
+      proto.max_correspondence_cost() == 0.f) {
+    LOG(WARNING)
+        << "proto::Grid2D: max_correspondence_cost and min_correspondence_cost "
+           "are initialized with 0 indicating an older version of the "
+           "protobuf format. Loading default values.";
+    return kMinCorrespondenceCost;
+  } else {
+    return proto.min_correspondence_cost();
+  }
+}
+
+float MaxCorrespondenceCostFromProto(const proto::Grid2D& proto) {
+  if (proto.min_correspondence_cost() == 0.f &&
+      proto.max_correspondence_cost() == 0.f) {
+    LOG(WARNING)
+        << "proto::Grid2D: max_correspondence_cost and min_correspondence_cost "
+           "are initialized with 0 indicating an older version of the "
+           "protobuf format. Loading default values.";
+    return kMaxCorrespondenceCost;
+  } else {
+    return proto.max_correspondence_cost();
+  }
+}
+}  // namespace
 
 proto::GridOptions2D CreateGridOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary) {
@@ -52,9 +80,12 @@ Grid2D::Grid2D(const proto::Grid2D& proto,
                ValueConversionTables* conversion_tables)
     : limits_(proto.limits()),
       correspondence_cost_cells_(),
+      min_correspondence_cost_(MinCorrespondenceCostFromProto(proto)),
+      max_correspondence_cost_(MaxCorrespondenceCostFromProto(proto)),
       value_to_correspondence_cost_table_(conversion_tables->GetConversionTable(
-          proto.max_correspondence_cost(), proto.min_correspondence_cost(),
-          proto.max_correspondence_cost())) {
+          max_correspondence_cost_, min_correspondence_cost_,
+          max_correspondence_cost_)) {
+  CHECK_LT(min_correspondence_cost_, max_correspondence_cost_);
   if (proto.has_known_cells_box()) {
     const auto& box = proto.known_cells_box();
     known_cells_box_ =
@@ -66,19 +97,6 @@ Grid2D::Grid2D(const proto::Grid2D& proto,
     CHECK_LE(cell, std::numeric_limits<uint16>::max());
     correspondence_cost_cells_.push_back(cell);
   }
-  if (proto.min_correspondence_cost() == 0.f &&
-      proto.max_correspondence_cost() == 0.f) {
-    LOG(WARNING)
-        << "proto::Grid2D: max_correspondence_cost and min_correspondence_cost "
-           "are initialized with 0 indicating an older version of the "
-           "protobuf format. Loading default values.";
-    min_correspondence_cost_ = kMinCorrespondenceCost;
-    max_correspondence_cost_ = kMaxCorrespondenceCost;
-  } else {
-    min_correspondence_cost_ = proto.min_correspondence_cost();
-    max_correspondence_cost_ = proto.max_correspondence_cost();
-  }
-  CHECK_LT(min_correspondence_cost_, max_correspondence_cost_);
 }
 
 // Finishes the update sequence.
