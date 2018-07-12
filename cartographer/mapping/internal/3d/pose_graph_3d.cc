@@ -471,8 +471,7 @@ void PoseGraph3D::HandleWorkQueue(
       work_queue_->pop_front();
       work_queue_size = work_queue_->size();
     }
-    process_work_queue =
-        work_queue_->front().task() == WorkItem::Result::kDoNotRunOptimization;
+    process_work_queue = work_item() == WorkItem::Result::kDoNotRunOptimization;
   }
   LOG(INFO) << "Remaining work items in queue: " << work_queue_size;
   // We have to optimize again.
