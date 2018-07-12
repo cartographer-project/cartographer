@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/common/time.h"
+#include "glog/logging.h"
 
 #include <time.h>
 #include <string>
@@ -53,7 +54,9 @@ common::Duration FromMilliseconds(const int64 milliseconds) {
 
 double GetThreadCpuTimeSeconds() {
   struct timespec thread_cpu_time;
-  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_cpu_time);
+  if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_cpu_time) == -1) {
+    LOG(ERROR) << "clock_gettime failed: " << std::strerror(errno);
+  }
   return thread_cpu_time.tv_sec + 1e-9 * thread_cpu_time.tv_nsec;
 }
 
