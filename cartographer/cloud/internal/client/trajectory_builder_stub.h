@@ -38,7 +38,7 @@ namespace cloud {
 class TrajectoryBuilderStub : public mapping::TrajectoryBuilderInterface {
  public:
   TrajectoryBuilderStub(std::shared_ptr<::grpc::Channel> client_channel,
-                        const int trajectory_id,
+                        const int trajectory_id, const std::string& client_id,
                         LocalSlamResultCallback local_slam_result_callback);
   ~TrajectoryBuilderStub() override;
   TrajectoryBuilderStub(const TrajectoryBuilderStub&) = delete;
@@ -67,6 +67,7 @@ class TrajectoryBuilderStub : public mapping::TrajectoryBuilderInterface {
 
   std::shared_ptr<::grpc::Channel> client_channel_;
   const int trajectory_id_;
+  const std::string client_id_;
   std::unique_ptr<async_grpc::Client<handlers::AddRangefinderDataSignature>>
       add_rangefinder_client_;
   std::unique_ptr<async_grpc::Client<handlers::AddImuDataSignature>>

@@ -39,16 +39,19 @@ MapBuilderContext<SubmapType>::sensor_data_queue() {
 template <class SubmapType>
 mapping::TrajectoryBuilderInterface::LocalSlamResultCallback
 MapBuilderContext<SubmapType>::GetLocalSlamResultCallbackForSubscriptions() {
-  MapBuilderServer* map_builder_server = map_builder_server_;
-  return [map_builder_server](
-             int trajectory_id, common::Time time,
-             transform::Rigid3d local_pose, sensor::RangeData range_data,
-             std::unique_ptr<
-                 const mapping::TrajectoryBuilderInterface::InsertionResult>
-                 insertion_result) {
-    map_builder_server->OnLocalSlamResult(trajectory_id, time, local_pose,
-                                          std::move(range_data),
-                                          std::move(insertion_result));
+  return [this](int trajectory_id, common::Time time,
+                transform::Rigid3d local_pose, sensor::RangeData range_data,
+                std::unique_ptr<
+                    const mapping::TrajectoryBuilderInterface::InsertionResult>
+                    insertion_result) {
+    auto it = client_ids_.find(trajectory_id);
+    if (it == client_ids_.end()) {
+      LOG(ERROR) << "Unknown trajectory_id " << trajectory_id << ". Ignoring.";
+      return;
+    }
+    map_builder_server_->OnLocalSlamResult(trajectory_id, it->second, time,
+                                           local_pose, std::move(range_data),
+                                           std::move(insertion_result));
   };
 }
 
@@ -102,6 +105,22 @@ void MapBuilderContext<SubmapType>::EnqueueSensorData(
     int trajectory_id, std::unique_ptr<sensor::Data> data) {
   map_builder_server_->incoming_data_queue_.Push(
       common::make_unique<Data>(Data{trajectory_id, std::move(data)}));
+}
+
+template <class SubmapType>
+void MapBuilderContext<SubmapType>::RegisterClientIdForTrajectory(
+    const std::string& client_id, int trajectory_id) {
+  CHECK_EQ(client_ids_.count(trajectory_id), 0u);
+  LOG(INFO) << "Registering trajectory_id " << trajectory_id << " to client_id "
+            << client_id;
+  client_ids_[trajectory_id] = client_id;
+}
+
+template <class SubmapType>
+bool MapBuilderContext<SubmapType>::CheckClientIdForTrajectory(
+    const std::string& client_id, int trajectory_id) {
+  return (client_ids_.count(trajectory_id) > 0 &&
+          client_ids_[trajectory_id] == client_id);
 }
 
 template <>

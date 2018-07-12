@@ -28,6 +28,13 @@ namespace handlers {
 
 void FinishTrajectoryHandler::OnRequest(
     const proto::FinishTrajectoryRequest& request) {
+  if (!GetContext<MapBuilderContextInterface>()->CheckClientIdForTrajectory(
+          request.client_id(), request.trajectory_id())) {
+    LOG(ERROR) << "Unknown trajectory with ID " << request.trajectory_id()
+               << " and client_id " << request.client_id();
+    Finish(::grpc::Status(::grpc::NOT_FOUND, "Unknown trajectory"));
+    return;
+  }
   GetContext<MapBuilderContextInterface>()->map_builder().FinishTrajectory(
       request.trajectory_id());
   GetUnsynchronizedContext<MapBuilderContextInterface>()
@@ -36,7 +43,7 @@ void FinishTrajectoryHandler::OnRequest(
           ->local_trajectory_uploader()) {
     GetContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
-        ->FinishTrajectory(request.trajectory_id());
+        ->FinishTrajectory(request.client_id(), request.trajectory_id());
   }
   Send(common::make_unique<google::protobuf::Empty>());
 }

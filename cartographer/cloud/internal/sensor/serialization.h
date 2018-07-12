@@ -30,30 +30,36 @@ namespace cartographer {
 namespace cloud {
 
 void CreateSensorMetadata(const std::string& sensor_id, int trajectory_id,
+                          const std::string& client_id,
                           proto::SensorMetadata* proto);
 
 void CreateAddFixedFramePoseDataRequest(
     const std::string& sensor_id, int trajectory_id,
+    const std::string& client_id,
     const sensor::proto::FixedFramePoseData& fixed_frame_pose_data,
     proto::AddFixedFramePoseDataRequest* proto);
 void CreateAddImuDataRequest(const std::string& sensor_id, int trajectory_id,
+                             const std::string& client_id,
                              const sensor::proto::ImuData& imu_data,
                              proto::AddImuDataRequest* proto);
 void CreateAddOdometryDataRequest(
     const std::string& sensor_id, int trajectory_id,
+    const std::string& client_id,
     const sensor::proto::OdometryData& odometry_data,
     proto::AddOdometryDataRequest* proto);
 void CreateAddRangeFinderDataRequest(
     const std::string& sensor_id, int trajectory_id,
+    const std::string& client_id,
     const sensor::proto::TimedPointCloudData& timed_point_cloud_data,
     proto::AddRangefinderDataRequest* proto);
 void CreateAddLandmarkDataRequest(
     const std::string& sensor_id, int trajectory_id,
+    const std::string& client_id,
     const sensor::proto::LandmarkData& landmark_data,
     proto::AddLandmarkDataRequest* proto);
 void CreateSensorDataForLocalSlamResult(
-    const std::string& sensor_id, int trajectory_id, common::Time time,
-    int starting_submap_index,
+    const std::string& sensor_id, int trajectory_id,
+    const std::string& client_id, common::Time time, int starting_submap_index,
     const mapping::TrajectoryBuilderInterface::InsertionResult&
         insertion_result,
     proto::SensorData* proto);

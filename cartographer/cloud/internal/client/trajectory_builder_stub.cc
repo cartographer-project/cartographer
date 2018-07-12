@@ -27,9 +27,11 @@ namespace cloud {
 
 TrajectoryBuilderStub::TrajectoryBuilderStub(
     std::shared_ptr<::grpc::Channel> client_channel, const int trajectory_id,
+    const std::string& client_id,
     LocalSlamResultCallback local_slam_result_callback)
     : client_channel_(client_channel),
       trajectory_id_(trajectory_id),
+      client_id_(client_id),
       receive_local_slam_results_client_(client_channel_) {
   if (local_slam_result_callback) {
     proto::ReceiveLocalSlamResultsRequest request;
@@ -80,7 +82,7 @@ void TrajectoryBuilderStub::AddSensorData(
         client_channel_);
   }
   proto::AddRangefinderDataRequest request;
-  CreateAddRangeFinderDataRequest(sensor_id, trajectory_id_,
+  CreateAddRangeFinderDataRequest(sensor_id, trajectory_id_, client_id_,
                                   sensor::ToProto(timed_point_cloud_data),
                                   &request);
   add_rangefinder_client_->Write(request);
@@ -94,8 +96,8 @@ void TrajectoryBuilderStub::AddSensorData(const std::string& sensor_id,
             client_channel_);
   }
   proto::AddImuDataRequest request;
-  CreateAddImuDataRequest(sensor_id, trajectory_id_, sensor::ToProto(imu_data),
-                          &request);
+  CreateAddImuDataRequest(sensor_id, trajectory_id_, client_id_,
+                          sensor::ToProto(imu_data), &request);
   add_imu_client_->Write(request);
 }
 
@@ -107,7 +109,7 @@ void TrajectoryBuilderStub::AddSensorData(
         client_channel_);
   }
   proto::AddOdometryDataRequest request;
-  CreateAddOdometryDataRequest(sensor_id, trajectory_id_,
+  CreateAddOdometryDataRequest(sensor_id, trajectory_id_, client_id_,
                                sensor::ToProto(odometry_data), &request);
   add_odometry_client_->Write(request);
 }
@@ -121,8 +123,9 @@ void TrajectoryBuilderStub::AddSensorData(
         client_channel_);
   }
   proto::AddFixedFramePoseDataRequest request;
-  CreateAddFixedFramePoseDataRequest(
-      sensor_id, trajectory_id_, sensor::ToProto(fixed_frame_pose), &request);
+  CreateAddFixedFramePoseDataRequest(sensor_id, trajectory_id_, client_id_,
+                                     sensor::ToProto(fixed_frame_pose),
+                                     &request);
   add_fixed_frame_pose_client_->Write(request);
 }
 
@@ -134,7 +137,7 @@ void TrajectoryBuilderStub::AddSensorData(
         client_channel_);
   }
   proto::AddLandmarkDataRequest request;
-  CreateAddLandmarkDataRequest(sensor_id, trajectory_id_,
+  CreateAddLandmarkDataRequest(sensor_id, trajectory_id_, client_id_,
                                sensor::ToProto(landmark_data), &request);
   add_landmark_client_->Write(request);
 }
