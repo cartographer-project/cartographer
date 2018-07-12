@@ -63,7 +63,9 @@ TEST_F(ConstraintBuilder3DTest, CallsBack) {
   EXPECT_CALL(mock_, Run(::testing::IsEmpty()));
   constraint_builder_->NotifyEndOfNode();
   constraint_builder_->WhenDone(
-      std::bind(&MockCallback::Run, &mock_, std::placeholders::_1));
+      [this](const constraints::ConstraintBuilder3D::Result& result) {
+        mock_.Run(result);
+      });
   thread_pool_.WaitUntilIdle();
   EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), 1);
 }
@@ -108,7 +110,9 @@ TEST_F(ConstraintBuilder3DTest, FindsConstraints) {
                         &PoseGraphInterface::Constraint::tag,
                         PoseGraphInterface::Constraint::INTER_SUBMAP)))));
     constraint_builder_->WhenDone(
-        std::bind(&MockCallback::Run, &mock_, std::placeholders::_1));
+        [this](const constraints::ConstraintBuilder3D::Result& result) {
+          mock_.Run(result);
+        });
     thread_pool_.WaitUntilIdle();
     constraint_builder_->DeleteScanMatcher(submap_id);
   }

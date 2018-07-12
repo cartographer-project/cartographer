@@ -149,8 +149,10 @@ void PoseGraph2D::AddWorkItem(
   if (work_queue_ == nullptr) {
     if (work_item() == WorkItem::Result::kRunOptimization) {
       work_queue_ = common::make_unique<WorkQueue>();
-      constraint_builder_.WhenDone(std::bind(&PoseGraph2D::HandleWorkQueue,
-                                             this, std::placeholders::_1));
+      constraint_builder_.WhenDone(
+          [this](const constraints::ConstraintBuilder2D::Result& result) {
+            HandleWorkQueue(result);
+          });
     }
   } else {
     const auto now = std::chrono::steady_clock::now();
@@ -437,7 +439,9 @@ void PoseGraph2D::HandleWorkQueue(
   LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
   // We have to optimize again.
   constraint_builder_.WhenDone(
-      std::bind(&PoseGraph2D::HandleWorkQueue, this, std::placeholders::_1));
+      [this](const constraints::ConstraintBuilder2D::Result& result) {
+        HandleWorkQueue(result);
+      });
 }
 
 void PoseGraph2D::WaitForAllComputations() {

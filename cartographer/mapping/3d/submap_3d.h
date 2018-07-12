@@ -72,10 +72,11 @@ class Submap3D : public Submap {
   std::unique_ptr<HybridGrid> low_resolution_hybrid_grid_;
 };
 
-// Except during initialization when only a single submap exists, there are
-// always two submaps into which range data is inserted: an old submap that is
-// used for matching, and a new one, which will be used for matching next, that
-// is being initialized.
+// The first active submap will be created on the insertion of the first range
+// data. Except during this initialization when no or only one single submap
+// exists, there are always two submaps into which range data is inserted: an
+// old submap that is used for matching, and a new one, which will be used for
+// matching next, that is being initialized.
 //
 // Once a certain number of range data have been inserted, the new submap is
 // considered initialized: the old submap is no longer changed, the "new" submap
@@ -91,10 +92,11 @@ class ActiveSubmaps3D {
   // Inserts 'range_data' into the Submap collection. 'gravity_alignment' is
   // used for the orientation of new submaps so that the z axis approximately
   // aligns with gravity.
-  void InsertRangeData(const sensor::RangeData& range_data,
-                       const Eigen::Quaterniond& gravity_alignment);
+  std::vector<std::shared_ptr<const Submap3D>> InsertRangeData(
+      const sensor::RangeData& range_data,
+      const Eigen::Quaterniond& gravity_alignment);
 
-  std::vector<std::shared_ptr<Submap3D>> submaps() const;
+  std::vector<std::shared_ptr<const Submap3D>> submaps() const;
 
  private:
   void AddSubmap(const transform::Rigid3d& local_submap_pose);
