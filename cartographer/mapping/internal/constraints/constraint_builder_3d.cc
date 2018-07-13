@@ -175,8 +175,7 @@ ConstraintBuilder3D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
   auto& scan_matcher_options =
       options_.fast_correlative_scan_matcher_options_3d();
   auto scan_matcher_task = common::make_unique<common::Task>();
-  const auto& submap_ref = *submap;
-  auto histogram = submap_ref.rotational_scan_matcher_histogram();
+  const auto& histogram = submap->rotational_scan_matcher_histogram();
   scan_matcher_task->SetWorkItem(
       [&submap_scan_matcher, &scan_matcher_options, histogram]() {
         submap_scan_matcher.fast_correlative_scan_matcher =
@@ -202,6 +201,7 @@ void ConstraintBuilder3D::ComputeConstraint(
   // - the initial guess 'initial_pose' (submap i <- node j).
   std::unique_ptr<scan_matching::FastCorrelativeScanMatcher3D::Result>
       match_result;
+
   // Compute 'pose_estimate' in three stages:
   // 1. Fast estimate using the fast correlative scan matcher.
   // 2. Prune if the score is too low.
@@ -262,6 +262,7 @@ void ConstraintBuilder3D::ComputeConstraint(
                              {&constant_data->low_resolution_point_cloud,
                               submap_scan_matcher.low_resolution_hybrid_grid}},
                             &constraint_transform, &unused_summary);
+
   constraint->reset(new Constraint{
       submap_id,
       node_id,

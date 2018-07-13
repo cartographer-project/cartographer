@@ -101,10 +101,11 @@ class ActiveSubmaps3D {
   // Inserts 'range_data' into the Submap collection. 'gravity_alignment' is
   // used for the orientation of new submaps so that the z axis approximately
   // aligns with gravity.
-  std::vector<std::shared_ptr<const Submap3D>> InsertData(const sensor::RangeData& range_data,
-                  const Eigen::Quaterniond& gravity_alignment,
-                  const Eigen::VectorXf& rotational_scan_matcher_histogram,
-                  const transform::Rigid3d& inverse_gravity_to_local_map);
+  std::vector<std::shared_ptr<const Submap3D>> InsertData(
+      const sensor::RangeData& range_data,
+      const Eigen::Quaterniond& gravity_alignment,
+      const Eigen::VectorXf& rotational_scan_matcher_histogram,
+      const transform::Rigid3d& inverse_gravity_to_local_map);
 
   std::vector<std::shared_ptr<const Submap3D>> submaps() const;
 

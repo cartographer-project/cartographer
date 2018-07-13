@@ -345,10 +345,10 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
 
   const transform::Rigid3d inverse_gravity_to_local_map =
       pose_estimate * transform::Rigid3d::Rotation(gravity_alignment.inverse());
-      std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
-  active_submaps_.InsertData(filtered_range_data_in_local, gravity_alignment,
-                             rotational_scan_matcher_histogram,
-                             inverse_gravity_to_local_map);
+  std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
+      active_submaps_.InsertData(
+          filtered_range_data_in_local, gravity_alignment,
+          rotational_scan_matcher_histogram, inverse_gravity_to_local_map);
 
   return common::make_unique<InsertionResult>(
       InsertionResult{std::make_shared<const mapping::TrajectoryNode::Data>(

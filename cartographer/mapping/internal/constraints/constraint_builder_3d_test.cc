@@ -79,7 +79,6 @@ TEST_F(ConstraintBuilder3DTest, FindsConstraints) {
       Eigen::Vector3f(0.1, 0.2, 0.3));
   node_data->rotational_scan_matcher_histogram = Eigen::VectorXf::Zero(3);
   node_data->local_pose = transform::Rigid3d::Identity();
-
   SubmapId submap_id{0, 1};
   Submap3D submap(0.1, 0.1, transform::Rigid3d::Identity(),
                   Eigen::VectorXf::Zero(3));
