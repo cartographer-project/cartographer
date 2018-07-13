@@ -32,6 +32,16 @@ namespace handlers {
 void AddSensorDataBatchHandler::OnRequest(
     const proto::AddSensorDataBatchRequest& request) {
   for (const proto::SensorData& sensor_data : request.sensor_data()) {
+    if (!GetContext<MapBuilderContextInterface>()->CheckClientIdForTrajectory(
+            sensor_data.sensor_metadata().client_id(),
+            sensor_data.sensor_metadata().trajectory_id())) {
+      LOG(ERROR) << "Unknown trajectory with ID "
+                 << sensor_data.sensor_metadata().trajectory_id()
+                 << " and client_id "
+                 << sensor_data.sensor_metadata().client_id();
+      Finish(::grpc::Status(::grpc::NOT_FOUND, "Unknown trajectory"));
+      return;
+    }
     switch (sensor_data.sensor_data_case()) {
       case proto::SensorData::kOdometryData:
         GetUnsynchronizedContext<MapBuilderContextInterface>()

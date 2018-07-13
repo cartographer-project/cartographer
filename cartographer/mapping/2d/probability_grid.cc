@@ -24,10 +24,15 @@
 namespace cartographer {
 namespace mapping {
 
-ProbabilityGrid::ProbabilityGrid(const MapLimits& limits)
-    : Grid2D(limits, kMinCorrespondenceCost, kMaxCorrespondenceCost) {}
+ProbabilityGrid::ProbabilityGrid(const MapLimits& limits,
+                                 ValueConversionTables* conversion_tables)
+    : Grid2D(limits, kMinCorrespondenceCost, kMaxCorrespondenceCost,
+             conversion_tables),
+      conversion_tables_(conversion_tables) {}
 
-ProbabilityGrid::ProbabilityGrid(const proto::Grid2D& proto) : Grid2D(proto) {
+ProbabilityGrid::ProbabilityGrid(const proto::Grid2D& proto,
+                                 ValueConversionTables* conversion_tables)
+    : Grid2D(proto, conversion_tables), conversion_tables_(conversion_tables) {
   CHECK(proto.has_probability_grid_2d());
 }
 
@@ -88,7 +93,7 @@ std::unique_ptr<Grid2D> ProbabilityGrid::ComputeCroppedGrid() const {
       limits().max() - resolution * Eigen::Vector2d(offset.y(), offset.x());
   std::unique_ptr<ProbabilityGrid> cropped_grid =
       common::make_unique<ProbabilityGrid>(
-          MapLimits(resolution, max, cell_limits));
+          MapLimits(resolution, max, cell_limits), conversion_tables_);
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(cell_limits)) {
     if (!IsKnown(xy_index + offset)) continue;
     cropped_grid->SetProbability(xy_index, GetProbability(xy_index + offset));

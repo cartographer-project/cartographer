@@ -41,7 +41,8 @@ TEST(ProbabilityGridTest, ProtoConstructor) {
   proto.mutable_known_cells_box()->set_min_y(22);
   proto.mutable_probability_grid_2d();
 
-  ProbabilityGrid grid(proto);
+  ValueConversionTables conversion_tables;
+  ProbabilityGrid grid(proto, &conversion_tables);
   EXPECT_EQ(proto.limits().DebugString(), ToProto(grid.limits()).DebugString());
 
   // TODO(macmason): Figure out how to test the contents of cells_ and
@@ -49,8 +50,10 @@ TEST(ProbabilityGridTest, ProtoConstructor) {
 }
 
 TEST(ProbabilityGridTest, ToProto) {
+  ValueConversionTables conversion_tables;
   ProbabilityGrid probability_grid(
-      MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)));
+      MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)),
+      &conversion_tables);
 
   const auto proto = probability_grid.ToProto();
   EXPECT_EQ(ToProto(probability_grid.limits()).DebugString(),
@@ -61,8 +64,10 @@ TEST(ProbabilityGridTest, ToProto) {
 }
 
 TEST(ProbabilityGridTest, ApplyOdds) {
+  ValueConversionTables conversion_tables;
   ProbabilityGrid probability_grid(
-      MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)));
+      MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)),
+      &conversion_tables);
   const MapLimits& limits = probability_grid.limits();
 
   EXPECT_TRUE(limits.Contains(Array2i(0, 0)));
@@ -108,8 +113,10 @@ TEST(ProbabilityGridTest, ApplyOdds) {
 }
 
 TEST(ProbabilityGridTest, GetProbability) {
+  ValueConversionTables conversion_tables;
   ProbabilityGrid probability_grid(
-      MapLimits(1., Eigen::Vector2d(1., 2.), CellLimits(2, 2)));
+      MapLimits(1., Eigen::Vector2d(1., 2.), CellLimits(2, 2)),
+      &conversion_tables);
 
   const MapLimits& limits = probability_grid.limits();
   EXPECT_EQ(1., limits.max().x());
@@ -133,8 +140,10 @@ TEST(ProbabilityGridTest, GetProbability) {
 }
 
 TEST(ProbabilityGridTest, GetCellIndex) {
+  ValueConversionTables conversion_tables;
   ProbabilityGrid probability_grid(
-      MapLimits(2., Eigen::Vector2d(8., 14.), CellLimits(14, 8)));
+      MapLimits(2., Eigen::Vector2d(8., 14.), CellLimits(14, 8)),
+      &conversion_tables);
 
   const MapLimits& limits = probability_grid.limits();
   const CellLimits& cell_limits = limits.cell_limits();
@@ -167,8 +176,10 @@ TEST(ProbabilityGridTest, CorrectCropping) {
   std::mt19937 rng(42);
   std::uniform_real_distribution<float> value_distribution(kMinProbability,
                                                            kMaxProbability);
+  ValueConversionTables conversion_tables;
   ProbabilityGrid probability_grid(
-      MapLimits(0.05, Eigen::Vector2d(10., 10.), CellLimits(400, 400)));
+      MapLimits(0.05, Eigen::Vector2d(10., 10.), CellLimits(400, 400)),
+      &conversion_tables);
   for (const Array2i& xy_index :
        XYIndexRangeIterator(Array2i(100, 100), Array2i(299, 299))) {
     probability_grid.SetProbability(xy_index, value_distribution(rng));

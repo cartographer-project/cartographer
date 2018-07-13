@@ -98,13 +98,16 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
 TEST(Submap2DTest, ToFromProto) {
   MapLimits expected_map_limits(1., Eigen::Vector2d(2., 3.),
                                 CellLimits(100, 110));
+  ValueConversionTables conversion_tables;
   Submap2D expected(Eigen::Vector2f(4.f, 5.f),
-                    common::make_unique<ProbabilityGrid>(expected_map_limits));
+                    common::make_unique<ProbabilityGrid>(expected_map_limits,
+                                                         &conversion_tables),
+                    &conversion_tables);
   proto::Submap proto;
   expected.ToProto(&proto, true /* include_probability_grid_data */);
   EXPECT_TRUE(proto.has_submap_2d());
   EXPECT_FALSE(proto.has_submap_3d());
-  const auto actual = Submap2D(proto.submap_2d());
+  const auto actual = Submap2D(proto.submap_2d(), &conversion_tables);
   EXPECT_TRUE(expected.local_pose().translation().isApprox(
       actual.local_pose().translation(), 1e-6));
   EXPECT_TRUE(expected.local_pose().rotation().isApprox(

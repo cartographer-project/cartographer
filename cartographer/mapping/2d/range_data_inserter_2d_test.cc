@@ -33,7 +33,8 @@ class RangeDataInserterTest2D : public ::testing::Test {
  protected:
   RangeDataInserterTest2D()
       : probability_grid_(
-            MapLimits(1., Eigen::Vector2d(1., 5.), CellLimits(5, 5))) {
+            MapLimits(1., Eigen::Vector2d(1., 5.), CellLimits(5, 5)),
+            &conversion_tables_) {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
         "insert_free_space = true, "
@@ -58,6 +59,7 @@ class RangeDataInserterTest2D : public ::testing::Test {
     probability_grid_.FinishUpdate();
   }
 
+  ValueConversionTables conversion_tables_;
   ProbabilityGrid probability_grid_;
   std::unique_ptr<ProbabilityGridRangeDataInserter2D> range_data_inserter_;
   proto::ProbabilityGridRangeDataInserterOptions2D options_;

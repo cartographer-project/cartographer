@@ -53,6 +53,11 @@ TEST_F(AddImuDataHandlerTest, NoLocalSlamUploader) {
   EXPECT_TRUE(
       google::protobuf::TextFormat::ParseFromString(kMessage, &request));
   SetNoLocalTrajectoryUploader();
+  EXPECT_CALL(
+      *mock_map_builder_context_,
+      CheckClientIdForTrajectory(Eq(request.sensor_metadata().client_id()),
+                                 Eq(request.sensor_metadata().trajectory_id())))
+      .WillOnce(::testing::Return(true));
   EXPECT_CALL(*mock_map_builder_context_,
               DoEnqueueSensorData(
                   Eq(request.sensor_metadata().trajectory_id()),
@@ -67,6 +72,11 @@ TEST_F(AddImuDataHandlerTest, WithMockLocalSlamUploader) {
   EXPECT_TRUE(
       google::protobuf::TextFormat::ParseFromString(kMessage, &request));
   SetMockLocalTrajectoryUploader();
+  EXPECT_CALL(
+      *mock_map_builder_context_,
+      CheckClientIdForTrajectory(Eq(request.sensor_metadata().client_id()),
+                                 Eq(request.sensor_metadata().trajectory_id())))
+      .WillOnce(::testing::Return(true));
   EXPECT_CALL(*mock_map_builder_context_,
               DoEnqueueSensorData(
                   Eq(request.sensor_metadata().trajectory_id()),
