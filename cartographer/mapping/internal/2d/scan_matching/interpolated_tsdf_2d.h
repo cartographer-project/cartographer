@@ -40,7 +40,7 @@ class InterpolatedTSDF2D {
   // zero gradient.
   template <typename T>
   T GetCorrespondenceCost(const T& x, const T& y) const {
-    double x1, y1, x2, y2;
+    float x1, y1, x2, y2;
     ComputeInterpolationDataPoints(x, y, &x1, &y1, &x2, &y2);
 
     const Eigen::Array2i index1 =
@@ -68,7 +68,7 @@ class InterpolatedTSDF2D {
   // Returns the interpolated weight at (x,y).
   template <typename T>
   T GetWeight(const T& x, const T& y) const {
-    double x1, y1, x2, y2;
+    float x1, y1, x2, y2;
     ComputeInterpolationDataPoints(x, y, &x1, &y1, &x2, &y2);
 
     const Eigen::Array2i index1 =
@@ -83,19 +83,18 @@ class InterpolatedTSDF2D {
 
  private:
   template <typename T>
-  void ComputeInterpolationDataPoints(const T& x, const T& y, double* x1,
-                                      double* y1, double* x2,
-                                      double* y2) const {
+  void ComputeInterpolationDataPoints(const T& x, const T& y, float* x1,
+                                      float* y1, float* x2, float* y2) const {
     const Eigen::Vector2f lower = CenterOfLowerPixel(x, y);
     *x1 = lower.x();
     *y1 = lower.y();
-    *x2 = lower.x() + tsdf_.limits().resolution();
-    *y2 = lower.y() + tsdf_.limits().resolution();
+    *x2 = lower.x() + static_cast<float>(tsdf_.limits().resolution());
+    *y2 = lower.y() + static_cast<float>(tsdf_.limits().resolution());
   }
 
   template <typename T>
-  T InterpolateBilinear(const T& x, const T& y, double x1, double y1, double x2,
-                        double y2, float q11, float q12, float q21,
+  T InterpolateBilinear(const T& x, const T& y, float x1, float y1, float x2,
+                        float y2, float q11, float q12, float q21,
                         float q22) const {
     const T normalized_x = (x - x1) / (x2 - x1);
     const T normalized_y = (y - y1) / (y2 - y1);
@@ -107,7 +106,7 @@ class InterpolatedTSDF2D {
   // Center of the next lower pixel, i.e., not necessarily the pixel containing
   // (x, y). For each dimension, the largest pixel index so that the
   // corresponding center is at most the given coordinate.
-  Eigen::Vector2f CenterOfLowerPixel(const double x, const double y) const {
+  Eigen::Vector2f CenterOfLowerPixel(double x, double y) const {
     // Center of the cell containing (x, y).
     Eigen::Vector2f center = tsdf_.limits().GetCellCenter(
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y)));

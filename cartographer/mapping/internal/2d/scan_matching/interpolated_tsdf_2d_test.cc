@@ -54,12 +54,20 @@ TEST_F(InterpolatedTSDF2DTest, InterpolatesGridPoints) {
   }
   // Insert surrounding points.
   for (size_t x = 0; x < 4; ++x) {
-    for (size_t y = 0; y < 4; ++y) {
-      if (x == 0 || x == 3 || y == 0 || y == 3) {
-        Eigen::Vector2f point = {static_cast<float>(x), static_cast<float>(y)};
-        tsdf_.SetCell(tsdf_.limits().GetCellIndex(point), 0.1f, 1.0f);
-      }
-    }
+    tsdf_.SetCell(tsdf_.limits().GetCellIndex(
+                      Eigen::Vector2f(static_cast<float>(x), 0.f)),
+                  0.1f, 1.0f);
+    tsdf_.SetCell(tsdf_.limits().GetCellIndex(
+                      Eigen::Vector2f(static_cast<float>(x), 3.f)),
+                  0.1f, 1.0f);
+  }
+  for (size_t y = 1; y < 3; ++y) {
+    tsdf_.SetCell(tsdf_.limits().GetCellIndex(
+                      Eigen::Vector2f(0.f, static_cast<float>(y))),
+                  0.1f, 1.0f);
+    tsdf_.SetCell(tsdf_.limits().GetCellIndex(
+                      Eigen::Vector2f(3.f, static_cast<float>(y))),
+                  0.1f, 1.0f);
   }
   for (const Eigen::Vector2f& point : inner_points) {
     EXPECT_NEAR(
@@ -80,14 +88,14 @@ TEST_F(InterpolatedTSDF2DTest, InterpolatesGridPoints) {
 }
 
 TEST_F(InterpolatedTSDF2DTest, InterpolatesWithinCell) {
-  float tsd_00 = 0.1f;
-  float tsd_01 = 0.2f;
-  float tsd_10 = 0.3f;
-  float tsd_11 = 0.4f;
-  float w_00 = 1.f;
-  float w_01 = 2.f;
-  float w_10 = 3.f;
-  float w_11 = 4.f;
+  const float tsd_00 = 0.1f;
+  const float tsd_01 = 0.2f;
+  const float tsd_10 = 0.3f;
+  const float tsd_11 = 0.4f;
+  const float w_00 = 1.f;
+  const float w_01 = 2.f;
+  const float w_10 = 3.f;
+  const float w_11 = 4.f;
 
   tsdf_.SetCell(tsdf_.limits().GetCellIndex(Eigen::Vector2f(0.f, 0.f)), tsd_00,
                 w_00);
@@ -102,12 +110,12 @@ TEST_F(InterpolatedTSDF2DTest, InterpolatesWithinCell) {
   for (double x = 0. + kSampleStep; x < 1.; x += tsdf_.limits().resolution()) {
     for (double y = 0. + kSampleStep; y < 1.;
          y += tsdf_.limits().resolution()) {
-      double tsd_expected = (x * tsd_10 + (1.f - x) * tsd_00) * (1.f - y) +
-                            (x * tsd_11 + (1.f - x) * tsd_01) * y;
+      const float tsd_expected = (x * tsd_10 + (1.f - x) * tsd_00) * (1.f - y) +
+                                 (x * tsd_11 + (1.f - x) * tsd_01) * y;
       EXPECT_NEAR(interpolated_tsdf_.GetCorrespondenceCost(x, y), tsd_expected,
                   1e-3);
-      double w_expected = (x * w_10 + (1.f - x) * w_00) * (1.f - y) +
-                          (x * w_11 + (1.f - x) * w_01) * y;
+      const float w_expected = (x * w_10 + (1.f - x) * w_00) * (1.f - y) +
+                               (x * w_11 + (1.f - x) * w_01) * y;
       EXPECT_NEAR(interpolated_tsdf_.GetWeight(x, y), w_expected, 1e-3);
     }
   }
