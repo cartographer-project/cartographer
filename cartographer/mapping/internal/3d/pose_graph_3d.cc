@@ -104,6 +104,33 @@ std::vector<SubmapId> PoseGraph3D::InitializeGlobalSubmapPoses(
   return {front_submap_id, last_submap_id};
 }
 
+NodeId PoseGraph3D::AppendNode(
+    std::shared_ptr<const TrajectoryNode::Data> constant_data,
+    const int trajectory_id,
+    const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps,
+    const transform::Rigid3d& optimized_pose) {
+  common::MutexLocker locker(&mutex_);
+  AddTrajectoryIfNeeded(trajectory_id);
+  if (!CanAddWorkItemModifying(trajectory_id)) {
+    LOG(WARNING) << "AddNode was called for finished or deleted trajectory.";
+  }
+  const NodeId node_id = data_.trajectory_nodes.Append(
+      trajectory_id, TrajectoryNode{constant_data, optimized_pose});
+  ++data_.num_trajectory_nodes;
+  // Test if the 'insertion_submap.back()' is one we never saw before.
+  if (data_.submap_data.SizeOfTrajectoryOrZero(trajectory_id) == 0 ||
+      std::prev(data_.submap_data.EndOfTrajectory(trajectory_id))
+              ->data.submap != insertion_submaps.back()) {
+    // We grow 'data_.submap_data' as needed. This code assumes that the first
+    // time we see a new submap is as 'insertion_submaps.back()'.
+    const SubmapId submap_id =
+        data_.submap_data.Append(trajectory_id, InternalSubmapData());
+    data_.submap_data.at(submap_id).submap = insertion_submaps.back();
+    LOG(INFO) << "Inserted submap " << submap_id << ".";
+  }
+  return node_id;
+}
+
 NodeId PoseGraph3D::AddNode(
     std::shared_ptr<const TrajectoryNode::Data> constant_data,
     const int trajectory_id,
@@ -111,29 +138,8 @@ NodeId PoseGraph3D::AddNode(
   const transform::Rigid3d optimized_pose(
       GetLocalToGlobalTransform(trajectory_id) * constant_data->local_pose);
 
-  NodeId node_id(0, 0);
-  {
-    common::MutexLocker locker(&mutex_);
-    AddTrajectoryIfNeeded(trajectory_id);
-    if (!CanAddWorkItemModifying(trajectory_id)) {
-      LOG(WARNING) << "AddNode was called for finished or deleted trajectory.";
-    }
-    node_id = data_.trajectory_nodes.Append(
-        trajectory_id, TrajectoryNode{constant_data, optimized_pose});
-    ++data_.num_trajectory_nodes;
-    // Test if the 'insertion_submap.back()' is one we never saw before.
-    if (data_.submap_data.SizeOfTrajectoryOrZero(trajectory_id) == 0 ||
-        std::prev(data_.submap_data.EndOfTrajectory(trajectory_id))
-                ->data.submap != insertion_submaps.back()) {
-      // We grow 'data_.submap_data' as needed. This code assumes that the first
-      // time we see a new submap is as 'insertion_submaps.back()'.
-      const SubmapId submap_id =
-          data_.submap_data.Append(trajectory_id, InternalSubmapData());
-      data_.submap_data.at(submap_id).submap = insertion_submaps.back();
-      LOG(INFO) << "Inserted submap " << submap_id << ".";
-    }
-  }
-
+  NodeId node_id = AppendNode(constant_data, trajectory_id, insertion_submaps,
+                              optimized_pose);
   // We have to check this here, because it might have changed by the time we
   // execute the lambda.
   const bool newly_finished_submap = insertion_submaps.front()->finished();

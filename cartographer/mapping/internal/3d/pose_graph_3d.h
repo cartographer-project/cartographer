@@ -167,6 +167,13 @@ class PoseGraph3D : public PoseGraph {
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);
 
+  // Appends the new node and submap (if needed) to the internal data stuctures.
+  NodeId AppendNode(
+      std::shared_ptr<const TrajectoryNode::Data> constant_data,
+      int trajectory_id,
+      const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps,
+      const transform::Rigid3d& optimized_pose) EXCLUDES(mutex_);
+
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
   std::vector<SubmapId> InitializeGlobalSubmapPoses(
