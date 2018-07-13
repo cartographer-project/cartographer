@@ -107,7 +107,7 @@ TEST_F(InterpolatedTSDF2DTest, InterpolatesWithinCell) {
       EXPECT_NEAR(interpolated_tsdf_.GetCorrespondenceCost(x, y), tsd_expected,
                   1e-3);
       double w_expected = (x * w_10 + (1.f - x) * w_00) * (1.f - y) +
-                         (x * w_11 + (1.f - x) * w_01) * y;
+                          (x * w_11 + (1.f - x) * w_01) * y;
       EXPECT_NEAR(interpolated_tsdf_.GetWeight(x, y), w_expected, 1e-3);
     }
   }
