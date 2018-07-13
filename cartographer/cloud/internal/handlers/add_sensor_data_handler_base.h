@@ -54,6 +54,7 @@ class AddSensorDataHandlerBase
   }
 };
 
+
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer
