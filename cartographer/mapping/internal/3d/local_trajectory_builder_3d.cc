@@ -307,7 +307,7 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
   const auto wall_time = std::chrono::steady_clock::now();
-  const double cpu_thread_time_seconds = common::GetThreadCpuTimeSeconds();
+  const double thread_cpu_time_seconds = common::GetThreadCpuTimeSeconds();
   if (last_wall_time_.has_value()) {
     const auto wall_time_duration = wall_time - last_wall_time_.value();
     kLocalSlamLatencyMetric->Set(common::ToSeconds(wall_time_duration));
@@ -318,15 +318,15 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     }
   }
   if (last_thread_cpu_time_seconds_.has_value()) {
-    const double e_seconds =
-        cpu_thread_time_seconds - last_thread_cpu_time_seconds_.value();
+    const double thread_cpu_duration_seconds =
+        thread_cpu_time_seconds - last_thread_cpu_time_seconds_.value();
     if (sensor_duration.has_value()) {
       kLocalSlamCpuRealTimeRatio->Set(
-          common::ToSeconds(sensor_duration.value()) / e_seconds);
+          common::ToSeconds(sensor_duration.value()) / thread_cpu_duration_seconds);
     }
   }
   last_wall_time_ = wall_time;
-  last_thread_cpu_time_seconds_ = cpu_thread_time_seconds;
+  last_thread_cpu_time_seconds_ = thread_cpu_time_seconds;
   return common::make_unique<MatchingResult>(MatchingResult{
       time, *pose_estimate, std::move(filtered_range_data_in_local),
       std::move(insertion_result)});
@@ -400,12 +400,12 @@ void LocalTrajectoryBuilder3D::RegisterMetrics(
   kLocalSlamInsertIntoSubmapFraction = insert_into_submap_fraction->Add({});
 
   auto* real_time_rate_ratio = family_factory->NewGaugeFamily(
-      "mapping_3d_local_trajecotry_builder_real_time_rate_ratio",
+      "mapping_3d_local_trajectory_builder_real_time_ratio",
       "sensor duration / wall clock duration.");
   kLocalSlamRealTimeRatio = real_time_rate_ratio->Add({});
 
   auto* cpu_time_rate_ratio = family_factory->NewGaugeFamily(
-      "mapping_3d_local_trajecotry_builder_cpu_time_rate_ratio",
+      "mapping_3d_local_trajectory_builder_cpu_real_time_ratio",
       "sensor duration / cpu duration.");
   kLocalSlamCpuRealTimeRatio = cpu_time_rate_ratio->Add({});
 
