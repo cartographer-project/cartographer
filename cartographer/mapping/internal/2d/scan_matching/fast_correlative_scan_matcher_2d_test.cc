@@ -39,8 +39,10 @@ TEST(PrecomputationGridTest, CorrectValues) {
   // represented by uint8 values.
   std::mt19937 prng(42);
   std::uniform_int_distribution<int> distribution(0, 255);
+  ValueConversionTables conversion_tables;
   ProbabilityGrid probability_grid(
-      MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(250, 250)));
+      MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(250, 250)),
+      &conversion_tables);
   std::vector<float> reusable_intermediate_grid;
   PrecomputationGrid2D precomputation_grid_dummy(
       probability_grid, probability_grid.limits().cell_limits(), 1,
@@ -77,8 +79,10 @@ TEST(PrecomputationGridTest, CorrectValues) {
 TEST(PrecomputationGridTest, TinyProbabilityGrid) {
   std::mt19937 prng(42);
   std::uniform_int_distribution<int> distribution(0, 255);
+  ValueConversionTables conversion_tables;
   ProbabilityGrid probability_grid(
-      MapLimits(0.05, Eigen::Vector2d(0.1, 0.1), CellLimits(4, 4)));
+      MapLimits(0.05, Eigen::Vector2d(0.1, 0.1), CellLimits(4, 4)),
+      &conversion_tables);
   std::vector<float> reusable_intermediate_grid;
   PrecomputationGrid2D precomputation_grid_dummy(
       probability_grid, probability_grid.limits().cell_limits(), 1,
@@ -158,8 +162,10 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
         {2. * distribution(prng), 2. * distribution(prng)},
         0.5 * distribution(prng));
 
+    ValueConversionTables conversion_tables;
     ProbabilityGrid probability_grid(
-        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
+        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)),
+        &conversion_tables);
     range_data_inserter.Insert(
         sensor::RangeData{
             Eigen::Vector3f(expected_pose.translation().x(),
@@ -212,8 +218,10 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
                            0.5 * distribution(prng)) *
         perturbation.inverse();
 
+    ValueConversionTables conversion_tables;
     ProbabilityGrid probability_grid(
-        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
+        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)),
+        &conversion_tables);
     range_data_inserter.Insert(
         sensor::RangeData{
             transform::Embed3D(expected_pose * perturbation).translation(),

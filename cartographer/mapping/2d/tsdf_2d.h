@@ -30,8 +30,10 @@ namespace mapping {
 // Represents a 2D grid of truncated signed distances and weights.
 class TSDF2D : public Grid2D {
  public:
-  TSDF2D(const MapLimits& limits, float truncation_distance, float max_weight);
-  explicit TSDF2D(const proto::Grid2D& proto);
+  TSDF2D(const MapLimits& limits, float truncation_distance, float max_weight,
+         ValueConversionTables* conversion_tables);
+  explicit TSDF2D(const proto::Grid2D& proto,
+                  ValueConversionTables* conversion_tables);
 
   void SetCell(const Eigen::Array2i& cell_index, const float tsd,
                const float weight);
@@ -49,6 +51,7 @@ class TSDF2D : public Grid2D {
   bool CellIsUpdated(const Eigen::Array2i& cell_index) const;
 
  private:
+  ValueConversionTables* conversion_tables_;
   std::unique_ptr<TSDValueConverter> value_converter_;
   std::vector<uint16> weight_cells_;  // Highest bit is update marker.
 };

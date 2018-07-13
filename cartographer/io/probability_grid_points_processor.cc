@@ -91,7 +91,8 @@ ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
       file_writer_(std::move(file_writer)),
       next_(next),
       range_data_inserter_(probability_grid_range_data_inserter_options),
-      probability_grid_(CreateProbabilityGrid(resolution)) {
+      probability_grid_(
+          CreateProbabilityGrid(resolution, &conversion_tables_)) {
   LOG_IF(WARNING, output_type == OutputType::kPb &&
                       draw_trajectories_ == DrawTrajectories::kYes)
       << "Drawing the trajectories is not supported when writing the "
@@ -192,14 +193,17 @@ std::unique_ptr<Image> DrawProbabilityGrid(
   return image;
 }
 
-mapping::ProbabilityGrid CreateProbabilityGrid(const double resolution) {
+mapping::ProbabilityGrid CreateProbabilityGrid(
+    const double resolution,
+    mapping::ValueConversionTables* conversion_tables) {
   constexpr int kInitialProbabilityGridSize = 100;
   Eigen::Vector2d max =
       0.5 * kInitialProbabilityGridSize * resolution * Eigen::Vector2d::Ones();
   return mapping::ProbabilityGrid(
       mapping::MapLimits(resolution, max,
                          mapping::CellLimits(kInitialProbabilityGridSize,
-                                             kInitialProbabilityGridSize)));
+                                             kInitialProbabilityGridSize)),
+      conversion_tables);
 }
 
 }  // namespace io

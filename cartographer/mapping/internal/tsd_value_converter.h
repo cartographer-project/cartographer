@@ -22,6 +22,7 @@
 
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/value_conversion_tables.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -31,7 +32,8 @@ namespace mapping {
 // truncated signed distance values and weights.
 class TSDValueConverter {
  public:
-  TSDValueConverter(float max_tsd, float max_weight);
+  TSDValueConverter(float max_tsd, float max_weight,
+                    ValueConversionTables* conversion_tables);
 
   // Converts a tsd to a uint16 in the [1, 32767] range.
   inline uint16 TSDToValue(const float tsd) const {
@@ -55,13 +57,13 @@ class TSDValueConverter {
   // Converts a uint16 (which may or may not have the update marker set) to a
   // value in the range [min_tsd_, max_tsd_].
   inline float ValueToTSD(const uint16 value) const {
-    return value_to_tsd_[value];
+    return (*value_to_tsd_)[value];
   }
 
   // Converts a uint16 (which may or may not have the update marker set) to a
   // value in the range [min_weight_, max_weight_].
   inline float ValueToWeight(const uint16 value) const {
-    return value_to_weight_[value];
+    return (*value_to_weight_)[value];
   }
 
   static uint16 getUnknownTSDValue() { return unknown_tsd_value_; }
@@ -81,10 +83,6 @@ class TSDValueConverter {
   inline float ClampWeight(const float weight) const {
     return common::Clamp(weight, min_weight_, max_weight_);
   }
-  float SlowValueToTSD(const uint16 value) const;
-  std::vector<float> PrecomputeValueToTSD();
-  float SlowValueToWeight(const uint16 value) const;
-  std::vector<float> PrecomputeValueToWeight();
 
   float max_tsd_;
   float min_tsd_;
@@ -96,8 +94,8 @@ class TSDValueConverter {
   static constexpr uint16 unknown_weight_value_ = 0;
   static constexpr uint16 update_marker_ = 1u << 15;
 
-  std::vector<float> value_to_tsd_;
-  std::vector<float> value_to_weight_;
+  const std::vector<float>* value_to_tsd_;
+  const std::vector<float>* value_to_weight_;
 };
 
 }  // namespace mapping
