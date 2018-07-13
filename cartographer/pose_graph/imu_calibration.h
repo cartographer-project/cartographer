@@ -14,33 +14,36 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
-#define CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+#ifndef CARTOGRAPHER_POSE_GRAPH_IMU_CALIBRATION_H_
+#define CARTOGRAPHER_POSE_GRAPH_IMU_CALIBRATION_H_
 
 #include "cartographer/pose_graph/node.h"
 
-#include <array>
-#include "Eigen/Core"
+#include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-class Pose2D : public Node {
+class ImuCalibration : public Node {
  public:
-  Pose2D(const NodeId& node_id, bool constant,
-         const Eigen::Vector2d& translation, double rotation);
+  ImuCalibration(const NodeId& node_id, bool constant, double gravity_constant,
+                 const Eigen::Quaterniond& orientation);
 
-  std::array<double, 3>* mutable_pose_2d() { return &pose_2d_; }
-  const std::array<double, 3>& pose_2d() const { return pose_2d_; }
+  double* mutable_gravity_constant() { return &gravity_constant_; }
+  double gravity_constant() const { return gravity_constant_; }
+
+  std::array<double, 4>* mutable_orientation() { return &orientation_; }
+  const std::array<double, 4>& orientation() const { return orientation_; }
 
  protected:
   proto::Parameters ToParametersProto() const final;
 
  private:
-  std::array<double, 3> pose_2d_;
+  double gravity_constant_;
+  std::array<double, 4> orientation_;
 };
 
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_IMU_CALIBRATION_H_

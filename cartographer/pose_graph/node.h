@@ -32,20 +32,6 @@ using NodeId = std::string;
 
 class Node {
  public:
-  enum class Parameterization {
-    NONE,
-    YAW_ONLY,
-    CONSTANT_YAW,
-  };
-
-  struct ParameterBlock {
-    // Non-owning pointer to values corresponding to a single parameter block.
-    double* const values;
-    // Size of the parameter block.
-    const size_t size;
-    const Parameterization parameterization;
-  };
-
   explicit Node(NodeId id, bool constant) : node_id_(id), constant_(constant) {}
   ~Node() = default;
 
@@ -60,22 +46,12 @@ class Node {
   bool constant() const { return constant_; }
   void set_constant(bool constant) { constant_ = constant; }
 
-  std::vector<ParameterBlock>& parameter_blocks() { return parameter_blocks_; }
-
  protected:
   virtual proto::Parameters ToParametersProto() const = 0;
-
-  template <std::size_t ArraySize>
-  void AddParameterBlock(Parameterization parameterization,
-                         std::array<double, ArraySize>* values) {
-    parameter_blocks_.emplace_back(
-        ParameterBlock{values->data(), values->size(), parameterization});
-  }
 
  private:
   NodeId node_id_;
   bool constant_;
-  std::vector<ParameterBlock> parameter_blocks_;
 };
 
 }  // namespace pose_graph

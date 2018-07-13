@@ -14,33 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
-#define CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+#include "cartographer/pose_graph/pose_3d.h"
 
-#include "cartographer/pose_graph/node.h"
-
-#include <array>
-#include "Eigen/Core"
+#include "cartographer/pose_graph/internal/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {
+namespace {
 
-class Pose2D : public Node {
- public:
-  Pose2D(const NodeId& node_id, bool constant,
-         const Eigen::Vector2d& translation, double rotation);
+constexpr char kExpectedNode[] = R"PROTO(
+  id { object_id: "bumpy_world" }
+  constant: true
+  parameters {
+    pose_3d {
+      translation { x: 1 y: 2 z: 3 }
+      rotation: { w: 0 x: 1 y: 2 z: 3 }
+    }
+  }
+)PROTO";
 
-  std::array<double, 3>* mutable_pose_2d() { return &pose_2d_; }
-  const std::array<double, 3>& pose_2d() const { return pose_2d_; }
+TEST(Pose3DTest, ToProto) {
+  Pose3D pose_3d("bumpy_world", true, Eigen::Vector3d(1., 2., 3.),
+                 Eigen::Quaterniond(0., 1., 2., 3.));
+  EXPECT_THAT(pose_3d.ToProto(), testing::EqualsProto(kExpectedNode));
+}
 
- protected:
-  proto::Parameters ToParametersProto() const final;
-
- private:
-  std::array<double, 3> pose_2d_;
-};
-
+}  // namespace
 }  // namespace pose_graph
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_

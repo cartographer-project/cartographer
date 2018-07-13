@@ -14,33 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
-#define CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+#ifndef CARTOGRAPHER_POSE_GRAPH_NODES_H_
+#define CARTOGRAPHER_POSE_GRAPH_NODES_H_
 
-#include "cartographer/pose_graph/node.h"
+#include "cartographer/pose_graph/imu_calibration.h"
+#include "cartographer/pose_graph/pose_2d.h"
+#include "cartographer/pose_graph/pose_3d.h"
 
-#include <array>
-#include "Eigen/Core"
+#include <map>
 
 namespace cartographer {
 namespace pose_graph {
 
-class Pose2D : public Node {
- public:
-  Pose2D(const NodeId& node_id, bool constant,
-         const Eigen::Vector2d& translation, double rotation);
-
-  std::array<double, 3>* mutable_pose_2d() { return &pose_2d_; }
-  const std::array<double, 3>& pose_2d() const { return pose_2d_; }
-
- protected:
-  proto::Parameters ToParametersProto() const final;
-
- private:
-  std::array<double, 3> pose_2d_;
+struct Nodes {
+  // TODO(pifon): Should it really be an std::map or smth else?
+  std::map<NodeId, Pose2D> pose_2d_nodes;
+  std::map<NodeId, Pose3D> pose_3d_nodes;
+  std::map<NodeId, Pose3D> imu_calibration_nodes;
 };
 
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_NODES_H_

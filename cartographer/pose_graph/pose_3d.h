@@ -14,33 +14,37 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
-#define CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+#ifndef CARTOGRAPHER_POSE_GRAPH_POSE_3D_H_
+#define CARTOGRAPHER_POSE_GRAPH_POSE_3D_H_
 
 #include "cartographer/pose_graph/node.h"
 
-#include <array>
-#include "Eigen/Core"
+#include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-class Pose2D : public Node {
+class Pose3D : public Node {
  public:
-  Pose2D(const NodeId& node_id, bool constant,
-         const Eigen::Vector2d& translation, double rotation);
+  Pose3D(const NodeId& node_id, bool constant,
+         const Eigen::Vector3d& translation,
+         const Eigen::Quaterniond& rotation);
 
-  std::array<double, 3>* mutable_pose_2d() { return &pose_2d_; }
-  const std::array<double, 3>& pose_2d() const { return pose_2d_; }
+  std::array<double, 3>* mutable_translation() { return &translation_; }
+  const std::array<double, 3>& translation() const { return translation_; }
+
+  std::array<double, 4>* mutable_rotation() { return &rotation_; }
+  const std::array<double, 4>& rotation() const { return rotation_; }
 
  protected:
   proto::Parameters ToParametersProto() const final;
 
  private:
-  std::array<double, 3> pose_2d_;
+  std::array<double, 3> translation_;
+  std::array<double, 4> rotation_;
 };
 
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_POSE_3D_H_
