@@ -16,10 +16,7 @@
 
 #include "cartographer/pose_graph/pose_2d.h"
 
-#include "gmock/gmock.h"
-#include "google/protobuf/text_format.h"
-#include "google/protobuf/util/message_differencer.h"
-#include "gtest/gtest.h"
+#include "cartographer/pose_graph/internal/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {
@@ -36,20 +33,9 @@ constexpr char kExpectedNode[] = R"PROTO(
   }
 )PROTO";
 
-// TODO(pifon): Move this to a separate header.
-MATCHER_P(EqualsProto, expected_proto_string, "") {
-  using ConstProtoType = typename std::remove_reference<decltype(arg)>::type;
-
-  typename std::remove_cv<ConstProtoType>::type expected_proto;
-  EXPECT_TRUE(google::protobuf::TextFormat::ParseFromString(
-      expected_proto_string, &expected_proto));
-  return google::protobuf::util::MessageDifferencer::Equals(arg,
-                                                            expected_proto);
-}
-
-TEST(Pose2DTest, SerializeToProto) {
+TEST(Pose2DTest, ToProto) {
   Pose2D pose_2d("flat_world", true, Eigen::Vector2d(1., 2.), 5.);
-  EXPECT_THAT(pose_2d.ToProto(), EqualsProto(kExpectedNode));
+  EXPECT_THAT(pose_2d.ToProto(), testing::EqualsProto(kExpectedNode));
 }
 
 }  // namespace
