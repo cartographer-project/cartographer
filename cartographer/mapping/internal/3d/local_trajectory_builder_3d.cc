@@ -306,11 +306,11 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
         common::ToSeconds(sensor_duration.value());
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
-  const auto accumulation_stop = std::chrono::steady_clock::now();
+  const auto wall_time = std::chrono::steady_clock::now();
   const double cpu_thread_time_sec = common::GetThreadCpuTimeSeconds();
   if (last_wall_time_.has_value()) {
     const auto wall_time_duration =
-        accumulation_stop - last_wall_time_.value();
+        wall_time - last_wall_time_.value();
     kLocalSlamLatencyMetric->Set(common::ToSeconds(wall_time_duration));
     if (sensor_duration.has_value()) {
       kLocalSlamRealTimeRateRatio->Set(
@@ -337,7 +337,7 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     }
 
   }
-  last_wall_time_ = accumulation_stop;
+  last_wall_time_ = wall_time;
   last_thread_cpu_time_sec_ = cpu_thread_time_sec;
   return common::make_unique<MatchingResult>(MatchingResult{
       time, *pose_estimate, std::move(filtered_range_data_in_local),
