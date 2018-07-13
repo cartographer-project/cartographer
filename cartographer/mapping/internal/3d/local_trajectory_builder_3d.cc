@@ -202,7 +202,6 @@ LocalTrajectoryBuilder3D::AddRangeData(
     common::optional<common::Duration> sensor_duration;
     if (last_sensor_time_.has_value()) {
       sensor_duration = current_sensor_time - last_sensor_time_.value();
-      LOG(INFO) << "sensor_duration:       " << common::ToSeconds(sensor_duration.value());
     }
     last_sensor_time_ = current_sensor_time;
     num_accumulated_ = 0;
@@ -306,21 +305,15 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
         common::ToSeconds(sensor_duration.value());
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
-  const auto accumulation_stop = std::chrono::steady_clock::now();
+  const auto wall_time = std::chrono::steady_clock::now();
   const double cpu_thread_time_sec = common::GetThreadCpuTimeSeconds();
   if (last_wall_time_.has_value()) {
     const auto wall_time_duration =
-        accumulation_stop - last_wall_time_.value();
+        wall_time - last_wall_time_.value();
     kLocalSlamLatencyMetric->Set(common::ToSeconds(wall_time_duration));
     if (sensor_duration.has_value()) {
       kLocalSlamRealTimeRateRatio->Set(
           common::ToSeconds(sensor_duration.value()) / common::ToSeconds(wall_time_duration));
-      // TODO(spielawa): remove debug output
-      LOG(INFO) << "wall_time_duration: " << common::ToSeconds(wall_time_duration) << 
-      " --- RealTimeRateRatio: " <<
-      100 * common::ToSeconds(sensor_duration.value()) / common::ToSeconds(wall_time_duration)  << " %";
-    } else {
-      LOG(INFO) << "wall_time_duration: " << common::ToSeconds(wall_time_duration); 
     }
   }
   if (last_thread_cpu_time_sec_.has_value()) {
@@ -329,15 +322,10 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     if (sensor_duration.has_value()) {
       kLocalSlamCpuTimeRateRatio->Set(
           common::ToSeconds(sensor_duration.value()) / thread_cpu_duration);
-      LOG(INFO) << "thread_cpu_duration:   " << thread_cpu_duration << 
-      " --- CpuTimeRateRatio " << 
-      100 * common::ToSeconds(sensor_duration.value()) / thread_cpu_duration << " %";
-    } else {
-      LOG(INFO) << "thread_cpu_duration:   "  << thread_cpu_duration; 
     }
 
   }
-  last_wall_time_ = accumulation_stop;
+  last_wall_time_ = wall_time;
   last_thread_cpu_time_sec_ = cpu_thread_time_sec;
   return common::make_unique<MatchingResult>(MatchingResult{
       time, *pose_estimate, std::move(filtered_range_data_in_local),
