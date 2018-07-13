@@ -307,7 +307,6 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     kLocalSlamInsertIntoSubmapFraction->Set(insert_into_submap_fraction);
   }
   const auto wall_time = std::chrono::steady_clock::now();
-  const double thread_cpu_time_seconds = common::GetThreadCpuTimeSeconds();
   if (last_wall_time_.has_value()) {
     const auto wall_time_duration = wall_time - last_wall_time_.value();
     kLocalSlamLatencyMetric->Set(common::ToSeconds(wall_time_duration));
@@ -317,6 +316,7 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
           common::ToSeconds(wall_time_duration));
     }
   }
+  const double thread_cpu_time_seconds = common::GetThreadCpuTimeSeconds();
   if (last_thread_cpu_time_seconds_.has_value()) {
     const double thread_cpu_duration_seconds =
         thread_cpu_time_seconds - last_thread_cpu_time_seconds_.value();
@@ -399,15 +399,15 @@ void LocalTrajectoryBuilder3D::RegisterMetrics(
       "Fraction of total sensor time taken up by inserting into submap.");
   kLocalSlamInsertIntoSubmapFraction = insert_into_submap_fraction->Add({});
 
-  auto* real_time_rate_ratio = family_factory->NewGaugeFamily(
+  auto* real_time_ratio = family_factory->NewGaugeFamily(
       "mapping_3d_local_trajectory_builder_real_time_ratio",
       "sensor duration / wall clock duration.");
-  kLocalSlamRealTimeRatio = real_time_rate_ratio->Add({});
+  kLocalSlamRealTimeRatio = real_time_ratio->Add({});
 
-  auto* cpu_time_rate_ratio = family_factory->NewGaugeFamily(
+  auto* cpu_real_time_ratio = family_factory->NewGaugeFamily(
       "mapping_3d_local_trajectory_builder_cpu_real_time_ratio",
       "sensor duration / cpu duration.");
-  kLocalSlamCpuRealTimeRatio = cpu_time_rate_ratio->Add({});
+  kLocalSlamCpuRealTimeRatio = cpu_real_time_ratio->Add({});
 
   auto score_boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = family_factory->NewHistogramFamily(
