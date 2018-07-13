@@ -55,10 +55,6 @@ void AddFixedFramePoseDataHandler::OnSensorData(
   }
 }
 
-void AddFixedFramePoseDataHandler::OnReadsDone() {
-  Send(common::make_unique<google::protobuf::Empty>());
-}
-
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer

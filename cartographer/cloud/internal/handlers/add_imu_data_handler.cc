@@ -52,10 +52,6 @@ void AddImuDataHandler::OnSensorData(const proto::AddImuDataRequest& request) {
   }
 }
 
-void AddImuDataHandler::OnReadsDone() {
-  Send(common::make_unique<google::protobuf::Empty>());
-}
-
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer

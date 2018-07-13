@@ -40,10 +40,6 @@ void AddRangefinderDataHandler::OnSensorData(
           sensor::FromProto(request.timed_point_cloud_data())));
 }
 
-void AddRangefinderDataHandler::OnReadsDone() {
-  Send(common::make_unique<google::protobuf::Empty>());
-}
-
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer

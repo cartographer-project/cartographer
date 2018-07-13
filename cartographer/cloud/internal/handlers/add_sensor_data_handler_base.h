@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SENSOR_DATA_HANDLER_H
-#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SENSOR_DATA_HANDLER_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SENSOR_DATA_HANDLER_BASE_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SENSOR_DATA_HANDLER_BASE_H
 
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
@@ -24,12 +24,12 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-template <typename RpcServiceMethodConcept>
-class AddSensorDataHandler
-    : public async_grpc::RpcHandler<RpcServiceMethodConcept> {
+template <typename HandlerSignatureType>
+class AddSensorDataHandlerBase
+    : public async_grpc::RpcHandler<HandlerSignatureType> {
  public:
   using SensorDataType =
-      async_grpc::StripStream<typename RpcServiceMethodConcept::IncomingType>;
+      async_grpc::StripStream<typename HandlerSignatureType::IncomingType>;
 
   void OnRequest(const SensorDataType& request) override {
     if (!this->template GetContext<
@@ -46,11 +46,17 @@ class AddSensorDataHandler
     }
     OnSensorData(request);
   }
+
   virtual void OnSensorData(const SensorDataType& request) = 0;
+
+  void OnReadsDone() override {
+    this->template Send(common::make_unique<google::protobuf::Empty>());
+  }
 };
+
 
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SENSOR_DATA_HANDLER_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_SENSOR_DATA_HANDLER_BASE_H

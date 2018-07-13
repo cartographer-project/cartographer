@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_IMU_DATA_HANDLER_H
 
 #include "async_grpc/rpc_handler.h"
-#include "cartographer/cloud/internal/handlers/add_sensor_data_handler.h"
+#include "cartographer/cloud/internal/handlers/add_sensor_data_handler_base.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -31,10 +31,9 @@ DEFINE_HANDLER_SIGNATURE(
     google::protobuf::Empty,
     "/cartographer.cloud.proto.MapBuilderService/AddImuData")
 
-class AddImuDataHandler : public AddSensorDataHandler<AddImuDataSignature> {
+class AddImuDataHandler : public AddSensorDataHandlerBase<AddImuDataSignature> {
  public:
   void OnSensorData(const proto::AddImuDataRequest& request) override;
-  void OnReadsDone() override;
 };
 
 }  // namespace handlers
