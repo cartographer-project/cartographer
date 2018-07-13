@@ -24,6 +24,7 @@
 #include "cartographer/mapping/proto/2d/grid_2d.pb.h"
 #include "cartographer/mapping/proto/2d/submaps_options_2d.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
+#include "cartographer/mapping/value_conversion_tables.h"
 
 namespace cartographer {
 namespace mapping {
@@ -34,8 +35,10 @@ proto::GridOptions2D CreateGridOptions2D(
 class Grid2D : public GridInterface {
  public:
   Grid2D(const MapLimits& limits, float min_correspondence_cost,
-         float max_correspondence_cost);
-  explicit Grid2D(const proto::Grid2D& proto);
+         float max_correspondence_cost,
+         ValueConversionTables* conversion_tables);
+  explicit Grid2D(const proto::Grid2D& proto,
+                  ValueConversionTables* conversion_tables);
 
   // Returns the limits of this Grid2D.
   const MapLimits& limits() const { return limits_; }
@@ -103,6 +106,7 @@ class Grid2D : public GridInterface {
 
   // Bounding box of known cells to efficiently compute cropping limits.
   Eigen::AlignedBox2i known_cells_box_;
+  const std::vector<float>* value_to_correspondence_cost_table_;
 };
 
 }  // namespace mapping

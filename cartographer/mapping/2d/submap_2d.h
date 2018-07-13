@@ -30,6 +30,7 @@
 #include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/mapping/value_conversion_tables.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -41,8 +42,10 @@ proto::SubmapsOptions2D CreateSubmapsOptions2D(
 
 class Submap2D : public Submap {
  public:
-  Submap2D(const Eigen::Vector2f& origin, std::unique_ptr<Grid2D> grid);
-  explicit Submap2D(const proto::Submap2D& proto);
+  Submap2D(const Eigen::Vector2f& origin, std::unique_ptr<Grid2D> grid,
+           ValueConversionTables* conversion_tables);
+  explicit Submap2D(const proto::Submap2D& proto,
+                    ValueConversionTables* conversion_tables);
 
   void ToProto(proto::Submap* proto,
                bool include_probability_grid_data) const override;
@@ -61,6 +64,7 @@ class Submap2D : public Submap {
 
  private:
   std::unique_ptr<Grid2D> grid_;
+  ValueConversionTables* conversion_tables_;
 };
 
 // The first active submap will be created on the insertion of the first range
@@ -95,6 +99,7 @@ class ActiveSubmaps2D {
   const proto::SubmapsOptions2D options_;
   std::vector<std::shared_ptr<Submap2D>> submaps_;
   std::unique_ptr<RangeDataInserterInterface> range_data_inserter_;
+  ValueConversionTables conversion_tables_;
 };
 
 }  // namespace mapping

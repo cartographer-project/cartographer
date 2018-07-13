@@ -60,6 +60,8 @@ class SubmapController {
 
   mapping::MapById<mapping::SubmapId, std::shared_ptr<SubmapType>>
       unfinished_submaps_;
+
+  ValueConversionTables conversion_tables_;
 };
 
 template <>

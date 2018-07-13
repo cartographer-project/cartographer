@@ -23,6 +23,7 @@
 #include "cartographer/io/fake_file_writer.h"
 #include "cartographer/io/points_processor_pipeline_builder.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
+#include "cartographer/mapping/value_conversion_tables.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -81,8 +82,9 @@ std::vector<char> CreateExpectedProbabilityGrid(
               CreateProbabilityGridRangeDataInserterOptions2D(
                   probability_grid_options->GetDictionary("range_data_inserter")
                       .get()));
-  auto probability_grid =
-      CreateProbabilityGrid(probability_grid_options->GetDouble("resolution"));
+  mapping::ValueConversionTables conversion_tables;
+  auto probability_grid = CreateProbabilityGrid(
+      probability_grid_options->GetDouble("resolution"), &conversion_tables);
   range_data_inserter.Insert({points_batch->origin, points_batch->points, {}},
                              &probability_grid);
 

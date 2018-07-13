@@ -58,7 +58,7 @@ common::Duration FromMilliseconds(const int64 milliseconds) {
 double GetThreadCpuTimeSeconds() {
   struct timespec thread_cpu_time;
   CHECK(clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_cpu_time) == 0)
-      << "clock_gettime failed: " << std::strerror(errno);
+      << std::strerror(errno);
   return thread_cpu_time.tv_sec + 1e-9 * thread_cpu_time.tv_nsec;
 }
 
