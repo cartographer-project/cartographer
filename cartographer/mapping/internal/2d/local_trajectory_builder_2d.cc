@@ -21,6 +21,7 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/metrics/family_factory.h"
+#include "cartographer/metrics/register.h"
 #include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
@@ -88,7 +89,7 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
                             filtered_gravity_aligned_point_cloud,
                             *matching_submap->grid(), pose_observation.get(),
                             &summary);
-  if (pose_observation) {
+  if (pose_observation && metrics::MetricsRegistered()) {
     kCeresScanMatcherCostMetric->Observe(summary.final_cost);
     const double residual_distance =
         (pose_observation->translation() - pose_prediction.translation())
