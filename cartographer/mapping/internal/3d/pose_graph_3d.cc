@@ -138,8 +138,8 @@ NodeId PoseGraph3D::AddNode(
   const transform::Rigid3d optimized_pose(
       GetLocalToGlobalTransform(trajectory_id) * constant_data->local_pose);
 
-  NodeId node_id = AppendNode(constant_data, trajectory_id, insertion_submaps,
-                              optimized_pose);
+  const NodeId node_id = AppendNode(constant_data, trajectory_id,
+                                    insertion_submaps, optimized_pose);
   // We have to check this here, because it might have changed by the time we
   // execute the lambda.
   const bool newly_finished_submap = insertion_submaps.front()->finished();
