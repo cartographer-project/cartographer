@@ -50,7 +50,6 @@ class LocalTrajectoryUploaderInterface {
       const mapping::proto::TrajectoryBuilderOptions& trajectory_options) = 0;
   virtual void FinishTrajectory(const std::string& client_id,
                                 int local_trajectory_id) = 0;
-
   virtual SensorId GetLocalSlamResultSensorId(
       int local_trajectory_id) const = 0;
 };
