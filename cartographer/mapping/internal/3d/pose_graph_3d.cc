@@ -280,9 +280,18 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
             last_connection_time +
                 common::FromSeconds(
                     options_.global_constraint_search_after_n_seconds())) {
+      // If the node and the submap belong to the same trajectory or if there
+      // has been a recent global constraint that ties that node's trajectory to
+      // the submap's trajectory, it suffices to do a match constrained to a
+      // local search window.
       maybe_add_local_constraint = true;
     } else if (
         global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
+      // In this situation, 'global_node_pose' and 'global_submap_pose' have
+      // orientations agreeing on gravity. Their relationship regarding yaw is
+      // arbitrary. Finding the correct yaw component will be handled by the
+      // matching procedure in the FastCorrelativeScanMatcher, and the given yaw
+      // is essentially ignored.
       maybe_add_global_constraint = true;
     }
     constant_data = data_.trajectory_nodes.at(node_id).constant_data.get();
@@ -291,19 +300,10 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
   }
 
   if (maybe_add_local_constraint) {
-    // If the node and the submap belong to the same trajectory or if there has
-    // been a recent global constraint that ties that node's trajectory to the
-    // submap's trajectory, it suffices to do a match constrained to a local
-    // search window.
     constraint_builder_.MaybeAddConstraint(
         submap_id, submap, node_id, constant_data, submap_nodes,
         global_node_pose, global_submap_pose);
   } else if (maybe_add_global_constraint) {
-    // In this situation, 'global_node_pose' and 'global_submap_pose' have
-    // orientations agreeing on gravity. Their relationship regarding yaw is
-    // arbitrary. Finding the correct yaw component will be handled by the
-    // matching procedure in the FastCorrelativeScanMatcher, and the given yaw
-    // is essentially ignored.
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap, node_id, constant_data, submap_nodes,
         global_node_pose.rotation(), global_submap_pose.rotation());
