@@ -52,7 +52,7 @@ TEST_F(InterpolatedTSDF2DTest, InterpolatesGridPoints) {
   for (const Eigen::Vector2f& point : inner_points) {
     tsdf_.SetCell(tsdf_.limits().GetCellIndex(point), 0.1f, 1.0f);
   }
-  // Outer points.
+  // Insert surrounding points.
   for (size_t x = 0; x < 4; ++x) {
     for (size_t y = 0; y < 4; ++y) {
       if (x == 0 || x == 3 || y == 0 || y == 3) {

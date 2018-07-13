@@ -25,8 +25,7 @@ namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 
-// Interpolates between TSDF2D pixels. We use the bilinear
-// interpolation.
+// Interpolates between TSDF2D pixels with bilinear interpolation.
 //
 // This class is templated to work with Ceres autodiff.
 class InterpolatedTSDF2D {
@@ -36,8 +35,9 @@ class InterpolatedTSDF2D {
   InterpolatedTSDF2D(const InterpolatedTSDF2D&) = delete;
   InterpolatedTSDF2D& operator=(const InterpolatedTSDF2D&) = delete;
 
-  // Cells with at least one unknown interpolation point result in
-  // "MaxCorrespondenceCost()" with zero Gradient.
+  // Returns the interpolated correspondence cost at (x,y). Cells with at least
+  // one 'unknown' interpolation point result in "MaxCorrespondenceCost()" with
+  // zero gradient.
   template <typename T>
   T GetCorrespondenceCost(const T& x, const T& y) const {
     double x1, y1, x2, y2;
@@ -62,14 +62,10 @@ class InterpolatedTSDF2D {
     const double q22 =
         tsdf_.GetCorrespondenceCost(index1 + Eigen::Array2i(-1, -1));
 
-    const T normalized_x = (x - x1) / (x2 - x1);
-    const T normalized_y = (y - y1) / (y2 - y1);
-
-    const T q1 = (q12 - q11) * normalized_y + q11;
-    const T q2 = (q22 - q21) * normalized_y + q21;
-    return (q2 - q1) * normalized_x + q1;
+    return InterpolateBilinear(x, y, x1, y1, x2, y2, q11, q12, q21, q22);
   }
 
+  // Returns the interpolated weight at (x,y).
   template <typename T>
   T GetWeight(const T& x, const T& y) const {
     double x1, y1, x2, y2;
@@ -78,19 +74,11 @@ class InterpolatedTSDF2D {
     const Eigen::Array2i index1 =
         tsdf_.limits().GetCellIndex(Eigen::Vector2f(x1, y1));
     const double q11 = tsdf_.GetWeight(index1);
-    const double q12 =
-        tsdf_.GetWeight(index1 + Eigen::Array2i(-1, 0));
-    const double q21 =
-        tsdf_.GetWeight(index1 + Eigen::Array2i(0, -1));
-    const double q22 =
-        tsdf_.GetWeight(index1 + Eigen::Array2i(-1, -1));
+    const double q12 = tsdf_.GetWeight(index1 + Eigen::Array2i(-1, 0));
+    const double q21 = tsdf_.GetWeight(index1 + Eigen::Array2i(0, -1));
+    const double q22 = tsdf_.GetWeight(index1 + Eigen::Array2i(-1, -1));
 
-    const T normalized_x = (x - x1) / (x2 - x1);
-    const T normalized_y = (y - y1) / (y2 - y1);
-
-    const T q1 = (q12 - q11) * normalized_y + q11;
-    const T q2 = (q22 - q21) * normalized_y + q21;
-    return (q2 - q1) * normalized_x + q1;
+    return InterpolateBilinear(x, y, x1, y1, x2, y2, q11, q12, q21, q22);
   }
 
  private:
@@ -111,7 +99,6 @@ class InterpolatedTSDF2D {
                         double q22) const {
     const T normalized_x = (x - x1) / (x2 - x1);
     const T normalized_y = (y - y1) / (y2 - y1);
-
     const T q1 = (q12 - q11) * normalized_y + q11;
     const T q2 = (q22 - q21) * normalized_y + q21;
     return (q2 - q1) * normalized_x + q1;
