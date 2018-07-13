@@ -60,7 +60,9 @@ TEST_F(ConstraintBuilder2DTest, CallsBack) {
   EXPECT_CALL(mock_, Run(::testing::IsEmpty()));
   constraint_builder_->NotifyEndOfNode();
   constraint_builder_->WhenDone(
-      std::bind(&MockCallback::Run, &mock_, std::placeholders::_1));
+      [this](const constraints::ConstraintBuilder2D::Result& result) {
+        mock_.Run(result);
+      });
   thread_pool_.WaitUntilIdle();
   EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), 1);
 }
@@ -73,8 +75,11 @@ TEST_F(ConstraintBuilder2DTest, FindsConstraints) {
   node_data.local_pose = transform::Rigid3d::Identity();
   SubmapId submap_id{0, 1};
   MapLimits map_limits(1., Eigen::Vector2d(2., 3.), CellLimits(100, 110));
-  Submap2D submap(Eigen::Vector2f(4.f, 5.f),
-                  common::make_unique<ProbabilityGrid>(map_limits));
+  ValueConversionTables conversion_tables;
+  Submap2D submap(
+      Eigen::Vector2f(4.f, 5.f),
+      common::make_unique<ProbabilityGrid>(map_limits, &conversion_tables),
+      &conversion_tables);
   int expected_nodes = 0;
   for (int i = 0; i < 2; ++i) {
     EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), expected_nodes);
@@ -98,7 +103,9 @@ TEST_F(ConstraintBuilder2DTest, FindsConstraints) {
                         &PoseGraphInterface::Constraint::tag,
                         PoseGraphInterface::Constraint::INTER_SUBMAP)))));
     constraint_builder_->WhenDone(
-        std::bind(&MockCallback::Run, &mock_, std::placeholders::_1));
+        [this](const constraints::ConstraintBuilder2D::Result& result) {
+          mock_.Run(result);
+        });
     thread_pool_.WaitUntilIdle();
     constraint_builder_->DeleteScanMatcher(submap_id);
   }

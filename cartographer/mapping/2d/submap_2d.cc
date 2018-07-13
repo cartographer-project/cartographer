@@ -61,17 +61,22 @@ proto::SubmapsOptions2D CreateSubmapsOptions2D(
   return options;
 }
 
-Submap2D::Submap2D(const Eigen::Vector2f& origin, std::unique_ptr<Grid2D> grid)
+Submap2D::Submap2D(const Eigen::Vector2f& origin, std::unique_ptr<Grid2D> grid,
+                   ValueConversionTables* conversion_tables)
     : Submap(transform::Rigid3d::Translation(
-          Eigen::Vector3d(origin.x(), origin.y(), 0.))) {
+          Eigen::Vector3d(origin.x(), origin.y(), 0.))),
+      conversion_tables_(conversion_tables) {
   grid_ = std::move(grid);
 }
 
-Submap2D::Submap2D(const proto::Submap2D& proto)
-    : Submap(transform::ToRigid3(proto.local_pose())) {
+Submap2D::Submap2D(const proto::Submap2D& proto,
+                   ValueConversionTables* conversion_tables)
+    : Submap(transform::ToRigid3(proto.local_pose())),
+      conversion_tables_(conversion_tables) {
   if (proto.has_grid()) {
     CHECK(proto.grid().has_probability_grid_2d());
-    grid_ = common::make_unique<ProbabilityGrid>(proto.grid());
+    grid_ =
+        common::make_unique<ProbabilityGrid>(proto.grid(), conversion_tables_);
   }
   set_num_range_data(proto.num_range_data());
   set_finished(proto.finished());
@@ -96,7 +101,8 @@ void Submap2D::UpdateFromProto(const proto::Submap& proto) {
   set_finished(submap_2d.finished());
   if (proto.submap_2d().has_grid()) {
     CHECK(proto.submap_2d().grid().has_probability_grid_2d());
-    grid_ = common::make_unique<ProbabilityGrid>(submap_2d.grid());
+    grid_ = common::make_unique<ProbabilityGrid>(submap_2d.grid(),
+                                                 conversion_tables_);
   }
 }
 
@@ -127,23 +133,26 @@ void Submap2D::Finish() {
 }
 
 ActiveSubmaps2D::ActiveSubmaps2D(const proto::SubmapsOptions2D& options)
-    : options_(options), range_data_inserter_(CreateRangeDataInserter()) {
-  // We always want to have at least one likelihood field which we can return,
-  // and will create it at the origin in absence of a better choice.
-  AddSubmap(Eigen::Vector2f::Zero());
+    : options_(options), range_data_inserter_(CreateRangeDataInserter()) {}
+
+std::vector<std::shared_ptr<const Submap2D>> ActiveSubmaps2D::submaps() const {
+  return std::vector<std::shared_ptr<const Submap2D>>(submaps_.begin(),
+                                                      submaps_.end());
 }
 
-std::vector<std::shared_ptr<Submap2D>> ActiveSubmaps2D::submaps() const {
-  return submaps_;
-}
-
-void ActiveSubmaps2D::InsertRangeData(const sensor::RangeData& range_data) {
+std::vector<std::shared_ptr<const Submap2D>> ActiveSubmaps2D::InsertRangeData(
+    const sensor::RangeData& range_data) {
+  if (submaps_.empty() ||
+      submaps_.back()->num_range_data() == options_.num_range_data()) {
+    AddSubmap(range_data.origin.head<2>());
+  }
   for (auto& submap : submaps_) {
     submap->InsertRangeData(range_data, range_data_inserter_.get());
   }
-  if (submaps_.back()->num_range_data() == options_.num_range_data()) {
-    AddSubmap(range_data.origin.head<2>());
+  if (submaps_.front()->num_range_data() == 2 * options_.num_range_data()) {
+    submaps_.front()->Finish();
   }
+  return submaps();
 }
 
 std::unique_ptr<RangeDataInserterInterface>
@@ -161,25 +170,22 @@ std::unique_ptr<GridInterface> ActiveSubmaps2D::CreateGrid(
       MapLimits(resolution,
                 origin.cast<double>() + 0.5 * kInitialSubmapSize * resolution *
                                             Eigen::Vector2d::Ones(),
-                CellLimits(kInitialSubmapSize, kInitialSubmapSize)));
-}
-
-void ActiveSubmaps2D::FinishSubmap() {
-  Submap2D* submap = submaps_.front().get();
-  submap->Finish();
-  submaps_.erase(submaps_.begin());
+                CellLimits(kInitialSubmapSize, kInitialSubmapSize)),
+      &conversion_tables_);
 }
 
 void ActiveSubmaps2D::AddSubmap(const Eigen::Vector2f& origin) {
-  if (submaps_.size() > 1) {
+  if (submaps_.size() >= 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
-    FinishSubmap();
+    CHECK(submaps_.front()->finished());
+    submaps_.erase(submaps_.begin());
   }
-
   submaps_.push_back(common::make_unique<Submap2D>(
-      origin, std::unique_ptr<Grid2D>(
-                  static_cast<Grid2D*>(CreateGrid(origin).release()))));
+      origin,
+      std::unique_ptr<Grid2D>(
+          static_cast<Grid2D*>(CreateGrid(origin).release())),
+      &conversion_tables_));
 }
 
 }  // namespace mapping

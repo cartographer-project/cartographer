@@ -149,8 +149,10 @@ void PoseGraph2D::AddWorkItem(
   if (work_queue_ == nullptr) {
     if (work_item() == WorkItem::Result::kRunOptimization) {
       work_queue_ = common::make_unique<WorkQueue>();
-      constraint_builder_.WhenDone(std::bind(&PoseGraph2D::HandleWorkQueue,
-                                             this, std::placeholders::_1));
+      constraint_builder_.WhenDone(
+          [this](const constraints::ConstraintBuilder2D::Result& result) {
+            HandleWorkQueue(result);
+          });
     }
   } else {
     const auto now = std::chrono::steady_clock::now();
@@ -437,7 +439,9 @@ void PoseGraph2D::HandleWorkQueue(
   LOG(INFO) << "Remaining work items in queue: " << work_queue_->size();
   // We have to optimize again.
   constraint_builder_.WhenDone(
-      std::bind(&PoseGraph2D::HandleWorkQueue, this, std::placeholders::_1));
+      [this](const constraints::ConstraintBuilder2D::Result& result) {
+        HandleWorkQueue(result);
+      });
 }
 
 void PoseGraph2D::WaitForAllComputations() {
@@ -543,12 +547,12 @@ void PoseGraph2D::AddSubmapFromProto(
 
   const SubmapId submap_id = {submap.submap_id().trajectory_id(),
                               submap.submap_id().submap_index()};
-  std::shared_ptr<const Submap2D> submap_ptr =
-      std::make_shared<const Submap2D>(submap.submap_2d());
-  const transform::Rigid2d global_submap_pose_2d =
-      transform::Project2D(global_submap_pose);
 
   common::MutexLocker locker(&mutex_);
+  std::shared_ptr<const Submap2D> submap_ptr =
+      std::make_shared<const Submap2D>(submap.submap_2d(), &conversion_tables_);
+  const transform::Rigid2d global_submap_pose_2d =
+      transform::Project2D(global_submap_pose);
   AddTrajectoryIfNeeded(submap_id.trajectory_id);
   if (!CanAddWorkItemModifying(submap_id.trajectory_id)) return;
   data_.submap_data.Insert(submap_id, InternalSubmapData());

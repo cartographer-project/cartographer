@@ -23,7 +23,8 @@ template <>
 std::shared_ptr<mapping::Submap2D>
 SubmapController<mapping::Submap2D>::CreateSubmap(
     const mapping::proto::Submap& proto) {
-  return std::make_shared<mapping::Submap2D>(proto.submap_2d());
+  return std::make_shared<mapping::Submap2D>(proto.submap_2d(),
+                                             &conversion_tables_);
 }
 
 template <>

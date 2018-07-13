@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_FIXED_FRAME_POSE_DATA_HANDLER_H
 
 #include "async_grpc/rpc_handler.h"
+#include "cartographer/cloud/internal/handlers/add_sensor_data_handler_base.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -32,10 +33,10 @@ DEFINE_HANDLER_SIGNATURE(
     "/cartographer.cloud.proto.MapBuilderService/AddFixedFramePoseData")
 
 class AddFixedFramePoseDataHandler
-    : public async_grpc::RpcHandler<AddFixedFramePoseDataSignature> {
+    : public AddSensorDataHandlerBase<AddFixedFramePoseDataSignature> {
  public:
-  void OnRequest(const proto::AddFixedFramePoseDataRequest &request) override;
-  void OnReadsDone() override;
+  void OnSensorData(
+      const proto::AddFixedFramePoseDataRequest& request) override;
 };
 
 }  // namespace handlers

@@ -28,7 +28,6 @@ float SlowValueToBoundedFloat(const uint16 value, const uint16 unknown_value,
                               const float unknown_result,
                               const float lower_bound,
                               const float upper_bound) {
-  CHECK_GE(value, 0);
   CHECK_LE(value, 32767);
   if (value == unknown_value) return unknown_result;
   const float kScale = (upper_bound - lower_bound) / 32766.f;
