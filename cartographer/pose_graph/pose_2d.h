@@ -14,25 +14,29 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/submap_controller.h"
+#ifndef CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+#define CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+
+#include "cartographer/pose_graph/node.h"
+
+#include "Eigen/Core"
 
 namespace cartographer {
-namespace mapping {
+namespace pose_graph {
 
-template <>
-std::shared_ptr<mapping::Submap2D>
-SubmapController<mapping::Submap2D>::CreateSubmap(
-    const mapping::proto::Submap& proto) {
-  return std::make_shared<mapping::Submap2D>(proto.submap_2d(),
-                                             &conversion_tables_);
-}
+class Pose2D : public Node {
+ public:
+  Pose2D(const NodeId& node_id, bool constant,
+         const Eigen::Vector2d& translation, double rotation);
 
-template <>
-std::shared_ptr<mapping::Submap3D>
-SubmapController<mapping::Submap3D>::CreateSubmap(
-    const mapping::proto::Submap& proto) {
-  return std::make_shared<mapping::Submap3D>(proto.submap_3d());
-}
+ protected:
+  proto::Parameters ToParametersProto() const final;
 
-}  // namespace mapping
+ private:
+  std::array<double, 3> pose_2d_;
+};
+
+}  // namespace pose_graph
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_

@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/internal/submap_controller.h"
+#include "cartographer/pose_graph/node.h"
 
 namespace cartographer {
-namespace mapping {
+namespace pose_graph {
 
-template <>
-std::shared_ptr<mapping::Submap2D>
-SubmapController<mapping::Submap2D>::CreateSubmap(
-    const mapping::proto::Submap& proto) {
-  return std::make_shared<mapping::Submap2D>(proto.submap_2d(),
-                                             &conversion_tables_);
+proto::Node Node::ToProto() const {
+  proto::Node node;
+  node.set_constant(constant_);
+  node.mutable_id()->set_object_id(node_id_);
+  *node.mutable_parameters() = ToParametersProto();
+  return node;
 }
 
-template <>
-std::shared_ptr<mapping::Submap3D>
-SubmapController<mapping::Submap3D>::CreateSubmap(
-    const mapping::proto::Submap& proto) {
-  return std::make_shared<mapping::Submap3D>(proto.submap_3d());
-}
-
-}  // namespace mapping
+}  // namespace pose_graph
 }  // namespace cartographer

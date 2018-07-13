@@ -36,7 +36,8 @@ class CeresScanMatcherTest : public ::testing::Test {
  protected:
   CeresScanMatcherTest()
       : probability_grid_(
-            MapLimits(1., Eigen::Vector2d(10., 10.), CellLimits(20, 20))) {
+            MapLimits(1., Eigen::Vector2d(10., 10.), CellLimits(20, 20)),
+            &conversion_tables_) {
     probability_grid_.SetProbability(
         probability_grid_.limits().GetCellIndex(Eigen::Vector2f(-3.5f, 2.5f)),
         kMaxProbability);
@@ -73,6 +74,7 @@ class CeresScanMatcherTest : public ::testing::Test {
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
   }
 
+  ValueConversionTables conversion_tables_;
   ProbabilityGrid probability_grid_;
   sensor::PointCloud point_cloud_;
   std::unique_ptr<CeresScanMatcher2D> ceres_scan_matcher_;
