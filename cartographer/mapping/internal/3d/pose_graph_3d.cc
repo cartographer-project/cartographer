@@ -264,7 +264,7 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
     CHECK(data_.submap_data.at(submap_id).state == SubmapState::kFinished);
 
     for (const NodeId& submap_node_id :
-       data_.submap_data.at(submap_id).node_ids) {
+         data_.submap_data.at(submap_id).node_ids) {
       submap_nodes.push_back(TrajectoryNode{
           data_.trajectory_nodes.at(submap_node_id).constant_data,
           global_submap_pose_inverse *
@@ -285,8 +285,7 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
       // the submap's trajectory, it suffices to do a match constrained to a
       // local search window.
       maybe_add_local_constraint = true;
-    } else if (
-        global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
+    } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
       // In this situation, 'global_node_pose' and 'global_submap_pose' have
       // orientations agreeing on gravity. Their relationship regarding yaw is
       // arbitrary. Finding the correct yaw component will be handled by the
@@ -319,7 +318,8 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
   std::set<NodeId> newly_finished_submap_node_ids;
   {
     common::MutexLocker locker(&mutex_);
-    const auto& constant_data = data_.trajectory_nodes.at(node_id).constant_data;
+    const auto& constant_data =
+        data_.trajectory_nodes.at(node_id).constant_data;
     submap_ids = InitializeGlobalSubmapPoses(
         node_id.trajectory_id, constant_data->time, insertion_submaps);
     CHECK_EQ(submap_ids.size(), insertion_submaps.size());
