@@ -245,8 +245,6 @@ void PoseGraph3D::AddLandmarkData(int trajectory_id,
 
 void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
                                     const SubmapId& submap_id) {
-  CHECK(data_.submap_data.at(submap_id).state == SubmapState::kFinished);
-
   const transform::Rigid3d global_node_pose =
       optimization_problem_->node_data().at(node_id).global_pose;
 
@@ -256,57 +254,58 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
   const transform::Rigid3d global_submap_pose_inverse =
       global_submap_pose.inverse();
 
+  bool maybe_add_local_constraint = false;
+  bool maybe_add_global_constraint = false;
+  const TrajectoryNode::Data* constant_data;
+  const Submap3D* submap;
   std::vector<TrajectoryNode> submap_nodes;
-  for (const NodeId& submap_node_id :
-       data_.submap_data.at(submap_id).node_ids) {
-    submap_nodes.push_back(TrajectoryNode{
-        data_.trajectory_nodes.at(submap_node_id).constant_data,
-        global_submap_pose_inverse *
-            data_.trajectory_nodes.at(submap_node_id).global_pose});
-  }
+  {
+    common::MutexLocker locker(&mutex_);
+    CHECK(data_.submap_data.at(submap_id).state == SubmapState::kFinished);
 
-  const common::Time node_time = GetLatestNodeTime(node_id, submap_id);
-  const common::Time last_connection_time =
-      data_.trajectory_connectivity_state.LastConnectionTime(
-          node_id.trajectory_id, submap_id.trajectory_id);
-  if (node_id.trajectory_id == submap_id.trajectory_id ||
-      node_time <
-          last_connection_time +
-              common::FromSeconds(
-                  options_.global_constraint_search_after_n_seconds())) {
-    // If the node and the submap belong to the same trajectory or if there has
-    // been a recent global constraint that ties that node's trajectory to the
-    // submap's trajectory, it suffices to do a match constrained to a local
-    // search window.
-    constraint_builder_.MaybeAddConstraint(
-        submap_id,
-        static_cast<const Submap3D*>(
-            data_.submap_data.at(submap_id).submap.get()),
-        node_id, data_.trajectory_nodes.at(node_id).constant_data.get(),
-        submap_nodes, global_node_pose, global_submap_pose);
-  } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
-    // In this situation, 'global_node_pose' and 'global_submap_pose' have
-    // orientations agreeing on gravity. Their relationship regarding yaw is
-    // arbitrary. Finding the correct yaw component will be handled by the
-    // matching procedure in the FastCorrelativeScanMatcher, and the given yaw
-    // is essentially ignored.
-    constraint_builder_.MaybeAddGlobalConstraint(
-        submap_id,
-        static_cast<const Submap3D*>(
-            data_.submap_data.at(submap_id).submap.get()),
-        node_id, data_.trajectory_nodes.at(node_id).constant_data.get(),
-        submap_nodes, global_node_pose.rotation(),
-        global_submap_pose.rotation());
-  }
-}
-
-void PoseGraph3D::ComputeConstraintsForOldNodes(const SubmapId& submap_id) {
-  const auto& submap_data = data_.submap_data.at(submap_id);
-  for (const auto& node_id_data : optimization_problem_->node_data()) {
-    const NodeId& node_id = node_id_data.id;
-    if (submap_data.node_ids.count(node_id) == 0) {
-      ComputeConstraint(node_id, submap_id);
+    for (const NodeId& submap_node_id :
+         data_.submap_data.at(submap_id).node_ids) {
+      submap_nodes.push_back(TrajectoryNode{
+          data_.trajectory_nodes.at(submap_node_id).constant_data,
+          global_submap_pose_inverse *
+              data_.trajectory_nodes.at(submap_node_id).global_pose});
     }
+
+    const common::Time node_time = GetLatestNodeTime(node_id, submap_id);
+    const common::Time last_connection_time =
+        data_.trajectory_connectivity_state.LastConnectionTime(
+            node_id.trajectory_id, submap_id.trajectory_id);
+    if (node_id.trajectory_id == submap_id.trajectory_id ||
+        node_time <
+            last_connection_time +
+                common::FromSeconds(
+                    options_.global_constraint_search_after_n_seconds())) {
+      // If the node and the submap belong to the same trajectory or if there
+      // has been a recent global constraint that ties that node's trajectory to
+      // the submap's trajectory, it suffices to do a match constrained to a
+      // local search window.
+      maybe_add_local_constraint = true;
+    } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
+      // In this situation, 'global_node_pose' and 'global_submap_pose' have
+      // orientations agreeing on gravity. Their relationship regarding yaw is
+      // arbitrary. Finding the correct yaw component will be handled by the
+      // matching procedure in the FastCorrelativeScanMatcher, and the given yaw
+      // is essentially ignored.
+      maybe_add_global_constraint = true;
+    }
+    constant_data = data_.trajectory_nodes.at(node_id).constant_data.get();
+    submap = static_cast<const Submap3D*>(
+        data_.submap_data.at(submap_id).submap.get());
+  }
+
+  if (maybe_add_local_constraint) {
+    constraint_builder_.MaybeAddConstraint(
+        submap_id, submap, node_id, constant_data, submap_nodes,
+        global_node_pose, global_submap_pose);
+  } else if (maybe_add_global_constraint) {
+    constraint_builder_.MaybeAddGlobalConstraint(
+        submap_id, submap, node_id, constant_data, submap_nodes,
+        global_node_pose.rotation(), global_submap_pose.rotation());
   }
 }
 
@@ -314,53 +313,73 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
     const NodeId& node_id,
     std::vector<std::shared_ptr<const Submap3D>> insertion_submaps,
     const bool newly_finished_submap) {
-  common::MutexLocker locker(&mutex_);
-  const auto& constant_data = data_.trajectory_nodes.at(node_id).constant_data;
-  const std::vector<SubmapId> submap_ids = InitializeGlobalSubmapPoses(
-      node_id.trajectory_id, constant_data->time, insertion_submaps);
-  CHECK_EQ(submap_ids.size(), insertion_submaps.size());
-  const SubmapId matching_id = submap_ids.front();
-  const transform::Rigid3d& local_pose = constant_data->local_pose;
-  const transform::Rigid3d global_pose =
-      optimization_problem_->submap_data().at(matching_id).global_pose *
-      insertion_submaps.front()->local_pose().inverse() * local_pose;
-  optimization_problem_->AddTrajectoryNode(
-      matching_id.trajectory_id,
-      optimization::NodeSpec3D{constant_data->time, local_pose, global_pose});
-  for (size_t i = 0; i < insertion_submaps.size(); ++i) {
-    const SubmapId submap_id = submap_ids[i];
-    // Even if this was the last node added to 'submap_id', the submap will only
-    // be marked as finished in 'data_.submap_data' further below.
-    CHECK(data_.submap_data.at(submap_id).state == SubmapState::kActive);
-    data_.submap_data.at(submap_id).node_ids.emplace(node_id);
-    const transform::Rigid3d constraint_transform =
-        insertion_submaps[i]->local_pose().inverse() * local_pose;
-    data_.constraints.push_back(
-        Constraint{submap_id,
-                   node_id,
-                   {constraint_transform, options_.matcher_translation_weight(),
-                    options_.matcher_rotation_weight()},
-                   Constraint::INTRA_SUBMAP});
-  }
-
-  // TODO(gaschler): Consider not searching for constraints against trajectories
-  // scheduled for deletion.
-  for (const auto& submap_id_data : data_.submap_data) {
-    if (submap_id_data.data.state == SubmapState::kFinished) {
-      CHECK_EQ(submap_id_data.data.node_ids.count(node_id), 0);
-      ComputeConstraint(node_id, submap_id_data.id);
+  std::vector<SubmapId> submap_ids;
+  std::vector<SubmapId> finished_submap_ids;
+  std::set<NodeId> newly_finished_submap_node_ids;
+  {
+    common::MutexLocker locker(&mutex_);
+    const auto& constant_data =
+        data_.trajectory_nodes.at(node_id).constant_data;
+    submap_ids = InitializeGlobalSubmapPoses(
+        node_id.trajectory_id, constant_data->time, insertion_submaps);
+    CHECK_EQ(submap_ids.size(), insertion_submaps.size());
+    const SubmapId matching_id = submap_ids.front();
+    const transform::Rigid3d& local_pose = constant_data->local_pose;
+    const transform::Rigid3d global_pose =
+        optimization_problem_->submap_data().at(matching_id).global_pose *
+        insertion_submaps.front()->local_pose().inverse() * local_pose;
+    optimization_problem_->AddTrajectoryNode(
+        matching_id.trajectory_id,
+        optimization::NodeSpec3D{constant_data->time, local_pose, global_pose});
+    for (size_t i = 0; i < insertion_submaps.size(); ++i) {
+      const SubmapId submap_id = submap_ids[i];
+      // Even if this was the last node added to 'submap_id', the submap will
+      // only be marked as finished in 'data_.submap_data' further below.
+      CHECK(data_.submap_data.at(submap_id).state == SubmapState::kActive);
+      data_.submap_data.at(submap_id).node_ids.emplace(node_id);
+      const transform::Rigid3d constraint_transform =
+          insertion_submaps[i]->local_pose().inverse() * local_pose;
+      data_.constraints.push_back(Constraint{
+          submap_id,
+          node_id,
+          {constraint_transform, options_.matcher_translation_weight(),
+           options_.matcher_rotation_weight()},
+          Constraint::INTRA_SUBMAP});
+    }
+    // TODO(gaschler): Consider not searching for constraints against
+    // trajectories scheduled for deletion.
+    // TODO(danielsievers): Add a member variable and avoid having to copy
+    // them out here.
+    for (const auto& submap_id_data : data_.submap_data) {
+      if (submap_id_data.data.state == SubmapState::kFinished) {
+        CHECK_EQ(submap_id_data.data.node_ids.count(node_id), 0);
+        finished_submap_ids.emplace_back(submap_id_data.id);
+      }
+    }
+    if (newly_finished_submap) {
+      const SubmapId newly_finished_submap_id = submap_ids.front();
+      InternalSubmapData& finished_submap_data =
+          data_.submap_data.at(newly_finished_submap_id);
+      CHECK(finished_submap_data.state == SubmapState::kActive);
+      finished_submap_data.state = SubmapState::kFinished;
+      newly_finished_submap_node_ids = finished_submap_data.node_ids;
     }
   }
 
+  for (const auto& submap_id : finished_submap_ids) {
+    ComputeConstraint(node_id, submap_id);
+  }
+
   if (newly_finished_submap) {
-    const SubmapId finished_submap_id = submap_ids.front();
-    InternalSubmapData& finished_submap_data =
-        data_.submap_data.at(finished_submap_id);
-    CHECK(finished_submap_data.state == SubmapState::kActive);
-    finished_submap_data.state = SubmapState::kFinished;
+    const SubmapId newly_finished_submap_id = submap_ids.front();
     // We have a new completed submap, so we look into adding constraints for
     // old nodes.
-    ComputeConstraintsForOldNodes(finished_submap_id);
+    for (const auto& node_id_data : optimization_problem_->node_data()) {
+      const NodeId& node_id = node_id_data.id;
+      if (newly_finished_submap_node_ids.count(node_id) == 0) {
+        ComputeConstraint(node_id, newly_finished_submap_id);
+      }
+    }
   }
   constraint_builder_.NotifyEndOfNode();
   ++num_nodes_since_last_loop_closure_;
