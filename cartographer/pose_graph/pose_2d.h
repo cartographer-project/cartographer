@@ -19,6 +19,7 @@
 
 #include "cartographer/pose_graph/node.h"
 
+#include <array>
 #include "Eigen/Core"
 
 namespace cartographer {
