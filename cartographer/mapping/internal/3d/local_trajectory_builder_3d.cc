@@ -311,9 +311,8 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     const auto wall_time_duration = wall_time - last_wall_time_.value();
     kLocalSlamLatencyMetric->Set(common::ToSeconds(wall_time_duration));
     if (sensor_duration.has_value()) {
-      kLocalSlamRealTimeRatio->Set(
-          common::ToSeconds(sensor_duration.value()) /
-          common::ToSeconds(wall_time_duration));
+      kLocalSlamRealTimeRatio->Set(common::ToSeconds(sensor_duration.value()) /
+                                   common::ToSeconds(wall_time_duration));
     }
   }
   const double thread_cpu_time_seconds = common::GetThreadCpuTimeSeconds();
@@ -322,7 +321,8 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
         thread_cpu_time_seconds - last_thread_cpu_time_seconds_.value();
     if (sensor_duration.has_value()) {
       kLocalSlamCpuRealTimeRatio->Set(
-          common::ToSeconds(sensor_duration.value()) / thread_cpu_duration_seconds);
+          common::ToSeconds(sensor_duration.value()) /
+          thread_cpu_duration_seconds);
     }
   }
   last_wall_time_ = wall_time;
