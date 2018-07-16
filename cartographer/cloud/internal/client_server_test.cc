@@ -479,7 +479,6 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
   EXPECT_EQ(deserializer.pose_graph().trajectory(0).node_size(),
             measurements.size());
 
-  std::remove("map.pbstream");
   stub_for_uploading_server_->FinishTrajectory(trajectory_id);
   EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,
