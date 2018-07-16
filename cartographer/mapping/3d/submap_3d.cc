@@ -282,12 +282,11 @@ void Submap3D::ToResponseProto(
                     response->add_textures());
 }
 
-void Submap3D::InsertData(
-    const sensor::RangeData& range_data,
-    const RangeDataInserter3D& range_data_inserter,
-    const float high_resolution_max_range,
-    const Eigen::VectorXf& scan_histogram,
-    const transform::Rigid3d& inverse_gravity_to_local_map) {
+void Submap3D::InsertData(const sensor::RangeData& range_data,
+                          const RangeDataInserter3D& range_data_inserter,
+                          const float high_resolution_max_range,
+                          const Eigen::VectorXf& scan_histogram_in_gravity,
+                          const transform::Rigid3d& local_from_gravity) {
   CHECK(!finished());
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data, local_pose().inverse().cast<float>());
@@ -299,14 +298,14 @@ void Submap3D::InsertData(
                              low_resolution_hybrid_grid_.get());
   set_num_range_data(num_range_data() + 1);
   if (rotational_scan_matcher_histogram_.rows() == 0) {
-    rotational_scan_matcher_histogram_.resize(scan_histogram.size());
+    rotational_scan_matcher_histogram_.resize(scan_histogram_in_gravity.size());
     rotational_scan_matcher_histogram_.setZero();
   }
   const float yaw_to_submap =
-      transform::GetYaw(local_pose().inverse() * inverse_gravity_to_local_map);
+      transform::GetYaw(local_pose().inverse() * local_from_gravity);
   rotational_scan_matcher_histogram_ +=
-      scan_matching::RotationalScanMatcher::RotateHistogram(scan_histogram,
-                                                            yaw_to_submap);
+      scan_matching::RotationalScanMatcher::RotateHistogram(
+          scan_histogram_in_gravity, yaw_to_submap);
 }
 
 void Submap3D::Finish() {
@@ -327,7 +326,7 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
     const sensor::RangeData& range_data,
     const Eigen::Quaterniond& gravity_alignment,
     const Eigen::VectorXf& rotational_scan_matcher_histogram,
-    const transform::Rigid3d& inverse_gravity_to_local_map) {
+    const transform::Rigid3d& local_map_from_gravity) {
   if (submaps_.empty() ||
       submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
@@ -336,7 +335,7 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
   for (auto& submap : submaps_) {
     submap->InsertData(
         range_data, range_data_inserter_, options_.high_resolution_max_range(),
-        rotational_scan_matcher_histogram, inverse_gravity_to_local_map);
+        rotational_scan_matcher_histogram, local_map_from_gravity);
   }
   if (submaps_.front()->num_range_data() == 2 * options_.num_range_data()) {
     submaps_.front()->Finish();
