@@ -40,8 +40,6 @@ proto::Parameters ImuCalibration::ToParametersProto() const {
   orientation->set_x(orientation_[1]);
   orientation->set_y(orientation_[2]);
   orientation->set_z(orientation_[3]);
-
-  std::cout << parameters.DebugString();
   return parameters;
 }
 
