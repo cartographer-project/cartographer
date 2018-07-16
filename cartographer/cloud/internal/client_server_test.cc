@@ -115,6 +115,7 @@ class ClientServerTest : public ::testing::Test {
       include "trajectory_builder.lua"
       TRAJECTORY_BUILDER.trajectory_builder_2d.use_imu_data = false
       TRAJECTORY_BUILDER.trajectory_builder_2d.submaps.num_range_data = 4
+      TRAJECTORY_BUILDER.trajectory_builder_2d.motion_filter.max_time_seconds = 0
       return TRAJECTORY_BUILDER)text";
     auto trajectory_builder_parameters =
         mapping::testing::ResolveLuaParameters(kTrajectoryBuilderLua);
@@ -185,10 +186,9 @@ class ClientServerTest : public ::testing::Test {
   }
 
   void WaitForLocalSlamResultUploads(size_t size) {
-    std::unique_lock<std::mutex> lock(local_slam_result_upload_mutex_);
-    local_slam_result_upload_condition_.wait(lock, [&] {
-      return stub_->pose_graph()->GetTrajectoryNodePoses().size() >= size;
-    });
+    while (stub_->pose_graph()->GetTrajectoryNodePoses().size() < size) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
   }
 
   proto::MapBuilderServerOptions map_builder_server_options_;
@@ -497,14 +497,31 @@ TEST_F(ClientServerTest, LocalSlam2DWithRestartingUploadingServer) {
       stub_for_uploading_server_->GetTrajectoryBuilder(trajectory_id);
   const auto measurements = mapping::testing::GenerateFakeRangeMeasurements(
       kTravelDistance, kDuration, kTimeStep);
-  
-  
-  
-  for (const auto& measurement : measurements) {
-    trajectory_stub->AddSensorData(kRangeSensorId.id, measurement);
+
+  // Insert half of the measurements.
+  for (unsigned int i = 0; i < measurements.size() / 2; ++i) {
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurements.at(i));
   }
+
+  // Simulate a cloud server restart.
+  stub_->FinishTrajectory(0);
+  server_->Shutdown();
+  server_->WaitForShutdown();
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+
+  // Insert the second half of the measurements.
+  for (unsigned int i = measurements.size() / 2; i < measurements.size(); ++i) {
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurements.at(i));
+  }
+
   WaitForLocalSlamResults(measurements.size());
-  WaitForLocalSlamResultUploads(number_of_insertion_results_);
+  // The number of uploaded local SLAM results is not 40, i.e. the number of
+  // measurements, as 1 measurement is dropped as part of the recovery behavior
+  // and then the partially filled submap (which contains 2 measurements) is
+  // ignored, dropping another 3 nodes.
+  WaitForLocalSlamResultUploads(measurements.size() - 4);
   stub_for_uploading_server_->FinishTrajectory(trajectory_id);
   EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,

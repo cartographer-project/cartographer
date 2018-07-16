@@ -151,6 +151,9 @@ void LocalTrajectoryUploader::TryRecovery() {
         send_queue_.PeekWithTimeout<proto::SensorData>(kPopTimeout);
     if (sensor_data) {
       if (sensor_data->sensor_data_case() ==
+          proto::SensorData::kLocalSlamResultData && sensor_data->local_slam_result_data().submaps_size() == 1) {
+        break;
+      } else if (sensor_data->sensor_data_case() ==
               proto::SensorData::kLocalSlamResultData &&
           sensor_data->local_slam_result_data()
                   .submaps(1)
@@ -205,10 +208,13 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
             client_channel_,
             async_grpc::CreateUnlimitedConstantDelayStrategy(
                 common::FromSeconds(1), kUnrecoverableStatusCodes));
+        LOG(INFO) << "Uploading";
         if (!client.Write(batch_request)) {
           // Unrecoverable error occurred.
           batch_request.clear_sensor_data();
           TryRecovery();
+        } else {
+          LOG(INFO) << "Upload success";
         }
         batch_request.clear_sensor_data();
       }
