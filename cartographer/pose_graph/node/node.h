@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_H_
-#define CARTOGRAPHER_POSE_GRAPH_NODE_H_
+#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
+#define CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
 
 #include "cartographer/pose_graph/proto/node.pb.h"
 
@@ -57,4 +57,4 @@ class Node {
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/node.h"
+#include "cartographer/pose_graph/node/node.h"
 
 namespace cartographer {
 namespace pose_graph {

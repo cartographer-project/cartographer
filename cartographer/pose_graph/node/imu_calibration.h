@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_IMU_CALIBRATION_H_
-#define CARTOGRAPHER_POSE_GRAPH_IMU_CALIBRATION_H_
+#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_IMU_CALIBRATION_H_
+#define CARTOGRAPHER_POSE_GRAPH_NODE_IMU_CALIBRATION_H_
 
-#include "cartographer/pose_graph/node.h"
+#include "cartographer/pose_graph/node/node.h"
 
 #include <array>
 
@@ -48,4 +48,4 @@ class ImuCalibration : public Node {
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_IMU_CALIBRATION_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_IMU_CALIBRATION_H_

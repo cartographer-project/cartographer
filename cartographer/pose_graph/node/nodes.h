@@ -14,31 +14,26 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/imu_calibration.h"
+#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODES_H_
+#define CARTOGRAPHER_POSE_GRAPH_NODE_NODES_H_
 
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include "cartographer/pose_graph/node/imu_calibration.h"
+#include "cartographer/pose_graph/node/pose_2d.h"
+#include "cartographer/pose_graph/node/pose_3d.h"
+
+#include <map>
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
 
-constexpr char kExpectedNode[] = R"PROTO(
-  id { object_id: "accelerometer" }
-  constant: true
-  parameters {
-    imu_calibration {
-      gravity_constant: 10
-      orientation: { w: 0 x: 1 y: 2 z: 3 }
-    }
-  }
-)PROTO";
+struct Nodes {
+  // TODO(pifon): Should it really be an std::map or smth else?
+  std::map<NodeId, Pose2D> pose_2d_nodes;
+  std::map<NodeId, Pose3D> pose_3d_nodes;
+  std::map<NodeId, Pose3D> imu_calibration_nodes;
+};
 
-TEST(Pose3DTest, ToProto) {
-  ImuCalibration imu_calibration("accelerometer", true, 10,
-                                 Eigen::Quaterniond(0., 1., 2., 3.));
-  EXPECT_THAT(imu_calibration.ToProto(), testing::EqualsProto(kExpectedNode));
-}
-
-}  // namespace
 }  // namespace pose_graph
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_NODES_H_

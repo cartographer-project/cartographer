@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/imu_calibration.h"
+#include "cartographer/pose_graph/node/imu_calibration.h"
 
 namespace cartographer {
 namespace pose_graph {

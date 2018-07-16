@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/pose_2d.h"
+#include "cartographer/pose_graph/node/imu_calibration.h"
 
 #include "cartographer/pose_graph/internal/testing/test_helpers.h"
 
@@ -23,19 +23,20 @@ namespace pose_graph {
 namespace {
 
 constexpr char kExpectedNode[] = R"PROTO(
-  id { object_id: "flat_world" }
+  id { object_id: "accelerometer" }
   constant: true
   parameters {
-    pose_2d {
-      translation { x: 1 y: 2 }
-      rotation: 5
+    imu_calibration {
+      gravity_constant: 10
+      orientation: { w: 0 x: 1 y: 2 z: 3 }
     }
   }
 )PROTO";
 
-TEST(Pose2DTest, ToProto) {
-  Pose2D pose_2d("flat_world", true, Eigen::Vector2d(1., 2.), 5.);
-  EXPECT_THAT(pose_2d.ToProto(), testing::EqualsProto(kExpectedNode));
+TEST(Pose3DTest, ToProto) {
+  ImuCalibration imu_calibration("accelerometer", true, 10,
+                                 Eigen::Quaterniond(0., 1., 2., 3.));
+  EXPECT_THAT(imu_calibration.ToProto(), testing::EqualsProto(kExpectedNode));
 }
 
 }  // namespace

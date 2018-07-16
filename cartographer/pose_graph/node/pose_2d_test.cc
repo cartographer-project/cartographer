@@ -14,26 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_NODES_H_
-#define CARTOGRAPHER_POSE_GRAPH_NODES_H_
+#include "cartographer/pose_graph/node/pose_2d.h"
 
-#include "cartographer/pose_graph/imu_calibration.h"
-#include "cartographer/pose_graph/pose_2d.h"
-#include "cartographer/pose_graph/pose_3d.h"
-
-#include <map>
+#include "cartographer/pose_graph/internal/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {
+namespace {
 
-struct Nodes {
-  // TODO(pifon): Should it really be an std::map or smth else?
-  std::map<NodeId, Pose2D> pose_2d_nodes;
-  std::map<NodeId, Pose3D> pose_3d_nodes;
-  std::map<NodeId, Pose3D> imu_calibration_nodes;
-};
+constexpr char kExpectedNode[] = R"PROTO(
+  id { object_id: "flat_world" }
+  constant: true
+  parameters {
+    pose_2d {
+      translation { x: 1 y: 2 }
+      rotation: 5
+    }
+  }
+)PROTO";
 
+TEST(Pose2DTest, ToProto) {
+  Pose2D pose_2d("flat_world", true, Eigen::Vector2d(1., 2.), 5.);
+  EXPECT_THAT(pose_2d.ToProto(), testing::EqualsProto(kExpectedNode));
+}
+
+}  // namespace
 }  // namespace pose_graph
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_POSE_GRAPH_NODES_H_

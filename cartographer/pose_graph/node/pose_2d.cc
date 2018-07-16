@@ -14,31 +14,33 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/pose_3d.h"
-
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include "cartographer/pose_graph/node/pose_2d.h"
 
 namespace cartographer {
 namespace pose_graph {
 namespace {
 
-constexpr char kExpectedNode[] = R"PROTO(
-  id { object_id: "bumpy_world" }
-  constant: true
-  parameters {
-    pose_3d {
-      translation { x: 1 y: 2 z: 3 }
-      rotation: { w: 0 x: 1 y: 2 z: 3 }
-    }
-  }
-)PROTO";
-
-TEST(Pose3DTest, ToProto) {
-  Pose3D pose_3d("bumpy_world", true, Eigen::Vector3d(1., 2., 3.),
-                 Eigen::Quaterniond(0., 1., 2., 3.));
-  EXPECT_THAT(pose_3d.ToProto(), testing::EqualsProto(kExpectedNode));
-}
+constexpr size_t kXIndex = 0;
+constexpr size_t kYIndex = 1;
+constexpr size_t kRotationIndex = 2;
 
 }  // namespace
+
+Pose2D::Pose2D(const NodeId& node_id, bool constant,
+               const Eigen::Vector2d& translation, double rotation)
+    : Node(node_id, constant),
+      pose_2d_{{translation.x(), translation.y(), rotation}} {}
+
+proto::Parameters Pose2D::ToParametersProto() const {
+  proto::Parameters parameters;
+  auto* pose_2d = parameters.mutable_pose_2d();
+  pose_2d->set_rotation(pose_2d_[kRotationIndex]);
+
+  auto* translation = pose_2d->mutable_translation();
+  translation->set_x(pose_2d_[kXIndex]);
+  translation->set_y(pose_2d_[kYIndex]);
+  return parameters;
+}
+
 }  // namespace pose_graph
 }  // namespace cartographer
