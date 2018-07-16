@@ -24,8 +24,8 @@ ImuCalibration::ImuCalibration(const NodeId& node_id, bool constant,
                                const Eigen::Quaterniond& orientation)
     : Node(node_id, constant),
       gravity_constant_(gravity_constant),
-      orientation_{{orientation.w(), orientation.x(), orientation.y(),
-                    orientation.z()}} {}
+      orientation_{{orientation.x(), orientation.y(), orientation.z(),
+                    orientation.w()}} {}
 
 proto::Parameters ImuCalibration::ToParametersProto() const {
   proto::Parameters parameters;
@@ -36,10 +36,11 @@ proto::Parameters ImuCalibration::ToParametersProto() const {
   // TODO(pifon): Use a common method to convert from Eigen::Quaterniond to
   // proto. Probably, the one defined in transform.h.
   auto* orientation = imu_calibration->mutable_orientation();
-  orientation->set_w(orientation_[0]);
-  orientation->set_x(orientation_[1]);
-  orientation->set_y(orientation_[2]);
-  orientation->set_z(orientation_[3]);
+  orientation->set_x(orientation_[0]);
+  orientation->set_y(orientation_[1]);
+  orientation->set_z(orientation_[2]);
+  orientation->set_w(orientation_[3]);
+
   return parameters;
 }
 

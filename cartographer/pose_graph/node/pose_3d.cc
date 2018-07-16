@@ -24,7 +24,7 @@ Pose3D::Pose3D(const NodeId& node_id, bool constant,
                const Eigen::Quaterniond& rotation)
     : Node(node_id, constant),
       translation_{{translation.x(), translation.y(), translation.z()}},
-      rotation_{{rotation.w(), rotation.x(), rotation.y(), rotation.z()}} {}
+      rotation_{{rotation.x(), rotation.y(), rotation.z(), rotation.w()}} {}
 
 proto::Parameters Pose3D::ToParametersProto() const {
   proto::Parameters parameters;
@@ -36,10 +36,10 @@ proto::Parameters Pose3D::ToParametersProto() const {
   translation->set_z(translation_[2]);
 
   auto* rotation = pose_3d->mutable_rotation();
-  rotation->set_w(rotation_[0]);
-  rotation->set_x(rotation_[1]);
-  rotation->set_y(rotation_[2]);
-  rotation->set_z(rotation_[3]);
+  rotation->set_x(rotation_[0]);
+  rotation->set_y(rotation_[1]);
+  rotation->set_z(rotation_[2]);
+  rotation->set_w(rotation_[3]);
 
   return parameters;
 }
