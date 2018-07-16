@@ -518,6 +518,21 @@ void PoseGraph3D::WaitForAllComputations() {
   const int num_finished_nodes_at_start =
       constraint_builder_.GetNumFinishedNodes();
 
+  auto report_progress = [this, num_trajectory_nodes,
+                          num_finished_nodes_at_start]() {
+    // Log progress on nodes only when we are actually processing nodes.
+    if (num_trajectory_nodes != num_finished_nodes_at_start) {
+      std::ostringstream progress_info;
+      progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
+                    << 100. *
+                           (constraint_builder_.GetNumFinishedNodes() -
+                            num_finished_nodes_at_start) /
+                           (num_trajectory_nodes - num_finished_nodes_at_start)
+                    << "%...";
+      std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
+    }
+  };
+
   // First wait for the work queue to drain so that it's safe to schedule
   // a WhenDone() callback.
   {
@@ -525,14 +540,9 @@ void PoseGraph3D::WaitForAllComputations() {
     while (!locker.AwaitWithTimeout(
         [this]() REQUIRES(work_queue_mutex_) { return work_queue_ == nullptr; },
         common::FromSeconds(1.))) {
-      std::ostringstream progress_info;
-      progress_info << "Processing work queue: "
-                    << (work_queue_ ? work_queue_->size() : 0)
-                    << " items left...";
-      std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
+      report_progress();
     }
   }
-  std::cout << "\r\x1b[KProcessing work queue: Done.          " << std::endl;
 
   // Now wait for any pending constraint computations to finish.
   common::MutexLocker locker(&mutex_);
@@ -549,17 +559,7 @@ void PoseGraph3D::WaitForAllComputations() {
   while (!locker.AwaitWithTimeout(
       [&notification]() REQUIRES(notification_mutex) { return notification; },
       common::FromSeconds(1.))) {
-    // Log progress on nodes only when we are actually processing nodes.
-    if (num_trajectory_nodes != num_finished_nodes_at_start) {
-      std::ostringstream progress_info;
-      progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                    << 100. *
-                           (constraint_builder_.GetNumFinishedNodes() -
-                            num_finished_nodes_at_start) /
-                           (num_trajectory_nodes - num_finished_nodes_at_start)
-                    << "%...";
-      std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
-    }
+    report_progress();
   }
   CHECK_EQ(constraint_builder_.GetNumFinishedNodes(), num_trajectory_nodes);
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
