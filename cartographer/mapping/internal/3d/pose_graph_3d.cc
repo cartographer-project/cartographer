@@ -556,9 +556,9 @@ void PoseGraph3D::WaitForAllComputations() {
                                      result.end());
             notification = true;
           });
-  while (!locker.AwaitWithTimeout(
-      [&notification]() REQUIRES(notification_mutex) { return notification; },
-      common::FromSeconds(1.))) {
+  while (!locker.AwaitWithTimeout([&notification]()
+                                      REQUIRES(mutex_) { return notification; },
+                                  common::FromSeconds(1.))) {
     report_progress();
   }
   CHECK_EQ(constraint_builder_.GetNumFinishedNodes(), num_trajectory_nodes);
