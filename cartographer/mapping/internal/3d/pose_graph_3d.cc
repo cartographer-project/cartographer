@@ -233,9 +233,6 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
   const transform::Rigid3d global_submap_pose =
       optimization_problem_->submap_data().at(submap_id).global_pose;
 
-  const transform::Rigid3d global_submap_pose_inverse =
-      global_submap_pose.inverse();
-
   const common::Time node_time = GetLatestNodeTime(node_id, submap_id);
   const common::Time last_connection_time =
       data_.trajectory_connectivity_state.LastConnectionTime(

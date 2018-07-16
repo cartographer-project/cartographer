@@ -301,11 +301,11 @@ void Submap3D::InsertData(const sensor::RangeData& range_data,
     rotational_scan_matcher_histogram_.resize(scan_histogram_in_gravity.size());
     rotational_scan_matcher_histogram_.setZero();
   }
-  const float yaw_to_submap =
+  const float yaw_to_submap_from_gravity =
       transform::GetYaw(local_pose().inverse() * local_from_gravity);
   rotational_scan_matcher_histogram_ +=
       scan_matching::RotationalScanMatcher::RotateHistogram(
-          scan_histogram_in_gravity, yaw_to_submap);
+          scan_histogram_in_gravity, yaw_to_submap_from_gravity);
 }
 
 void Submap3D::Finish() {
