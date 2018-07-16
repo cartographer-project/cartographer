@@ -19,6 +19,8 @@
 
 #include "cartographer/pose_graph/node.h"
 
+#include <array>
+
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
