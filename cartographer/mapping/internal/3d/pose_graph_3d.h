@@ -201,7 +201,7 @@ class PoseGraph3D : public PoseGraph {
 
   // Process pending tasks in the work queue on the calling thread, until the
   // queue is empty.
-  void DrainWorkQueue() EXCLUDES(mutex_);
+  void DrainWorkQueue() EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
 
   // Runs the optimization. Callers have to make sure, that there is only one
   // optimization being run at a time.
