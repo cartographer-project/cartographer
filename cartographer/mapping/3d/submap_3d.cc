@@ -234,6 +234,7 @@ void Submap3D::ToProto(proto::Submap* const proto,
     *submap_3d->mutable_low_resolution_hybrid_grid() =
         low_resolution_hybrid_grid().ToProto();
   }
+  submap_3d->clear_rotational_scan_matcher_histogram();
   for (Eigen::VectorXf::Index i = 0;
        i != rotational_scan_matcher_histogram_.size(); ++i) {
     submap_3d->add_rotational_scan_matcher_histogram(
@@ -260,6 +261,7 @@ void Submap3D::UpdateFromProto(const proto::Submap& proto) {
                   submap_3d.low_resolution_hybrid_grid())
             : nullptr;
   }
+
   rotational_scan_matcher_histogram_.resize(
       submap_3d.rotational_scan_matcher_histogram_size());
   for (int i = 0; i != submap_3d.rotational_scan_matcher_histogram_size();
