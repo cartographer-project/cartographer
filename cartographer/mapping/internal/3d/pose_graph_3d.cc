@@ -532,6 +532,7 @@ void PoseGraph3D::WaitForAllComputations() {
       std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
     }
   }
+  std::cout << "\r\x1b[KProcessing work queue: Done.          " << std::endl;
 
   // Now wait for any pending constraint computations to finish.
   common::MutexLocker locker(&mutex_);
