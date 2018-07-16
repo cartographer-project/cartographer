@@ -522,8 +522,9 @@ void PoseGraph3D::WaitForAllComputations() {
   // a WhenDone() callback.
   {
     common::MutexLocker locker(&work_queue_mutex_);
-    locker.Await(
-        [this]() REQUIRES(work_queue_mutex_) { return work_queue_ == nullptr; });
+    locker.Await([this]() REQUIRES(work_queue_mutex_) {
+      return work_queue_ == nullptr;
+    });
   }
 
   // Now wait for any pending constraint computations to finish.
@@ -552,10 +553,10 @@ void PoseGraph3D::WaitForAllComputations() {
       std::ostringstream progress_info;
       progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
                     << 100. *
-                         (constraint_builder_.GetNumFinishedNodes() -
-                          num_finished_nodes_at_start) /
-                         (num_trajectory_nodes - num_finished_nodes_at_start)
-                  << "%...";
+                           (constraint_builder_.GetNumFinishedNodes() -
+                            num_finished_nodes_at_start) /
+                           (num_trajectory_nodes - num_finished_nodes_at_start)
+                    << "%...";
       std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
     }
   }
