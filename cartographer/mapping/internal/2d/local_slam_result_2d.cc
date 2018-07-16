@@ -40,6 +40,10 @@ void LocalSlamResult2D::AddToPoseGraph(int trajectory_id,
       LOG(INFO) << "Ignoring submap";
     }
   }
+  if (submaps.size() == 0) {
+    LOG(INFO) << "Ignoring node";
+    return;
+  }
   static_cast<PoseGraph2D*>(pose_graph)
       ->AddNode(std::make_shared<const mapping::TrajectoryNode::Data>(
                     mapping::FromProto(local_slam_result_data_.node_data())),
