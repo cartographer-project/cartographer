@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/pose_2d.h"
+#include "cartographer/pose_graph/node/pose_2d.h"
 
 namespace cartographer {
 namespace pose_graph {
@@ -29,9 +29,7 @@ constexpr size_t kRotationIndex = 2;
 Pose2D::Pose2D(const NodeId& node_id, bool constant,
                const Eigen::Vector2d& translation, double rotation)
     : Node(node_id, constant),
-      pose_2d_{{translation.x(), translation.y(), rotation}} {
-  AddParameterBlock(Parameterization::NONE, &pose_2d_);
-}
+      pose_2d_{{translation.x(), translation.y(), rotation}} {}
 
 proto::Parameters Pose2D::ToParametersProto() const {
   proto::Parameters parameters;

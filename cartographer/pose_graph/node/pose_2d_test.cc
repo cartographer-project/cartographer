@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
-#define CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
+#include "cartographer/pose_graph/node/pose_2d.h"
 
-#include "cartographer/pose_graph/node.h"
-
-#include <array>
-#include "Eigen/Core"
+#include "cartographer/pose_graph/internal/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {
+namespace {
 
-class Pose2D : public Node {
- public:
-  Pose2D(const NodeId& node_id, bool constant,
-         const Eigen::Vector2d& translation, double rotation);
+constexpr char kExpectedNode[] = R"PROTO(
+  id { object_id: "flat_world" }
+  constant: true
+  parameters {
+    pose_2d {
+      translation { x: 1 y: 2 }
+      rotation: 5
+    }
+  }
+)PROTO";
 
- protected:
-  proto::Parameters ToParametersProto() const final;
+TEST(Pose2DTest, ToProto) {
+  Pose2D pose_2d("flat_world", true, Eigen::Vector2d(1., 2.), 5.);
+  EXPECT_THAT(pose_2d.ToProto(), testing::EqualsProto(kExpectedNode));
+}
 
- private:
-  std::array<double, 3> pose_2d_;
-};
-
+}  // namespace
 }  // namespace pose_graph
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_POSE_GRAPH_POSE_2D_H_
