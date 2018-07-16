@@ -20,6 +20,8 @@
 #include "cartographer/cloud/client/map_builder_stub.h"
 #include "cartographer/cloud/internal/map_builder_server.h"
 #include "cartographer/cloud/map_builder_server_options.h"
+#include "cartographer/io/proto_stream.h"
+#include "cartographer/io/proto_stream_deserializer.h"
 #include "cartographer/io/testing/test_helpers.h"
 #include "cartographer/mapping/internal/testing/mock_map_builder.h"
 #include "cartographer/mapping/internal/testing/mock_pose_graph.h"
@@ -114,6 +116,7 @@ class ClientServerTest : public ::testing::Test {
       include "trajectory_builder.lua"
       TRAJECTORY_BUILDER.trajectory_builder_2d.use_imu_data = false
       TRAJECTORY_BUILDER.trajectory_builder_2d.submaps.num_range_data = 4
+      TRAJECTORY_BUILDER.trajectory_builder_2d.motion_filter.max_time_seconds = 0
       return TRAJECTORY_BUILDER)text";
     auto trajectory_builder_parameters =
         mapping::testing::ResolveLuaParameters(kTrajectoryBuilderLua);
@@ -451,6 +454,20 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
   }
   WaitForLocalSlamResults(measurements.size());
   WaitForLocalSlamResultUploads(number_of_insertion_results_);
+
+  // Serialize the state.
+  io::ProtoStreamWriter writer("map.pbstream");
+  stub_->SerializeState(&writer);
+  CHECK(writer.Close());
+
+  // Ensure it can be read.
+  io::ProtoStreamReader reader("map.pbstream");
+  io::ProtoStreamDeserializer deserializer(&reader);
+  EXPECT_EQ(deserializer.pose_graph().trajectory_size(), 1);
+  EXPECT_EQ(deserializer.pose_graph().trajectory(0).node_size(),
+            measurements.size());
+
+  std::remove("map.pbstream");
   stub_for_uploading_server_->FinishTrajectory(trajectory_id);
   EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,

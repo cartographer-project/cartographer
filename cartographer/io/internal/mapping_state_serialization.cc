@@ -88,8 +88,10 @@ void SerializeSubmaps(
         submap_id_data.id.trajectory_id);
     submap_proto->mutable_submap_id()->set_submap_index(
         submap_id_data.id.submap_index);
-    submap_id_data.data.submap->ToProto(submap_proto,
-                                        /*include_probability_grid_data=*/true);
+    submap_id_data.data.submap->ToProto(
+        submap_proto,
+        /*include_probability_grid_data=*/submap_id_data.data.submap
+            ->finished());
     writer->WriteProto(proto);
   }
 }
