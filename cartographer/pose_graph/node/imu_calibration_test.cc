@@ -14,18 +14,31 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/node.h"
+#include "cartographer/pose_graph/node/imu_calibration.h"
+
+#include "cartographer/pose_graph/internal/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {
+namespace {
 
-proto::Node Node::ToProto() const {
-  proto::Node node;
-  node.set_constant(constant_);
-  node.mutable_id()->set_object_id(node_id_);
-  *node.mutable_parameters() = ToParametersProto();
-  return node;
+constexpr char kExpectedNode[] = R"PROTO(
+  id { object_id: "accelerometer" }
+  constant: true
+  parameters {
+    imu_calibration {
+      gravity_constant: 10
+      orientation: { w: 0 x: 1 y: 2 z: 3 }
+    }
+  }
+)PROTO";
+
+TEST(Pose3DTest, ToProto) {
+  ImuCalibration imu_calibration("accelerometer", true, 10,
+                                 Eigen::Quaterniond(0., 1., 2., 3.));
+  EXPECT_THAT(imu_calibration.ToProto(), testing::EqualsProto(kExpectedNode));
 }
 
+}  // namespace
 }  // namespace pose_graph
 }  // namespace cartographer
