@@ -522,27 +522,28 @@ void PoseGraph3D::WaitForAllComputations() {
   // a WhenDone() callback.
   {
     common::MutexLocker locker(&work_queue_mutex_);
-    locker.Await(
-        [this]() REQUIRES(work_queue_mutex_) { return work_queue_ == nullptr; });
+    while (!locker.AwaitWithTimeout(
+        [this]() REQUIRES(work_queue_mutex_) { return work_queue_ == nullptr; },
+        common::FromSeconds(1.))) {
+      std::ostringstream progress_info;
+      progress_info << "Processing work queue: "
+                    << (work_queue_ ? work_queue_->size() : 0)
+                    << " items left...";
+      std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
+    }
   }
 
   // Now wait for any pending constraint computations to finish.
-  common::Mutex notification_mutex;
-  common::MutexLocker locker(&notification_mutex);
-  bool notification GUARDED_BY(notification_mutex) = false;
+  common::MutexLocker locker(&mutex_);
+  bool notification GUARDED_BY(mutex_) = false;
   constraint_builder_.WhenDone(
-      [this, &notification, &notification_mutex](
-          const constraints::ConstraintBuilder3D::Result& result)
-          EXCLUDES(mutex_) EXCLUDES(notification_mutex) {
-            {
-              common::MutexLocker locker(&mutex_);
-              data_.constraints.insert(data_.constraints.end(), result.begin(),
-                                       result.end());
-            }
-            {
-              common::MutexLocker locker(&notification_mutex);
-              notification = true;
-            }
+      [this,
+       &notification](const constraints::ConstraintBuilder3D::Result& result)
+          EXCLUDES(mutex_) {
+            common::MutexLocker locker(&mutex_);
+            data_.constraints.insert(data_.constraints.end(), result.begin(),
+                                     result.end());
+            notification = true;
           });
   while (!locker.AwaitWithTimeout(
       [&notification]() REQUIRES(notification_mutex) { return notification; },
