@@ -38,7 +38,7 @@ message Pose3D {
 
 message ImuCalibration {
   double gravity_constant = 1;
-  transform.proto.Quaterniond imu_calibration = 2;
+  transform.proto.Quaterniond orientation = 2;
   Parameterization rotation_parameterization = 3;
 }
 
