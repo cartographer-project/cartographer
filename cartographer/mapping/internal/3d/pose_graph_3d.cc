@@ -553,10 +553,10 @@ void PoseGraph3D::WaitForAllComputations() {
       std::ostringstream progress_info;
       progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
                     << 100. *
-                         (constraint_builder_.GetNumFinishedNodes() -
-                          num_finished_nodes_at_start) /
-                         (num_trajectory_nodes - num_finished_nodes_at_start)
-                  << "%...";
+                           (constraint_builder_.GetNumFinishedNodes() -
+                            num_finished_nodes_at_start) /
+                           (num_trajectory_nodes - num_finished_nodes_at_start)
+                    << "%...";
       std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
     }
   }
