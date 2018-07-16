@@ -19,6 +19,7 @@
 
 #include "cartographer/pose_graph/proto/node.pb.h"
 
+#include <array>
 #include <string>
 #include <vector>
 
