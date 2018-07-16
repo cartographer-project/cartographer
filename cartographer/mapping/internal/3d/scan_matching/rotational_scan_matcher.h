@@ -38,13 +38,6 @@ class RotationalScanMatcher {
   static Eigen::VectorXf ComputeHistogram(const sensor::PointCloud& point_cloud,
                                           int histogram_size);
 
-  // Creates a matcher from the given histograms rotated by the given angles.
-  // The angles should be chosen to bring the histograms into approximately the
-  // same frame.
-  explicit RotationalScanMatcher(
-      const std::vector<std::pair<Eigen::VectorXf, float>>&
-          histograms_at_angles);
-
   explicit RotationalScanMatcher(const Eigen::VectorXf& histogram);
 
   // Scores how well 'histogram' rotated by 'initial_angle' can be understood as

@@ -326,16 +326,16 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
     const sensor::RangeData& range_data,
     const Eigen::Quaterniond& gravity_alignment,
     const Eigen::VectorXf& rotational_scan_matcher_histogram,
-    const transform::Rigid3d& local_map_from_gravity) {
+    const transform::Rigid3d& local_from_gravity) {
   if (submaps_.empty() ||
       submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
                                  gravity_alignment));
   }
   for (auto& submap : submaps_) {
-    submap->InsertData(
-        range_data, range_data_inserter_, options_.high_resolution_max_range(),
-        rotational_scan_matcher_histogram, local_map_from_gravity);
+    submap->InsertData(range_data, range_data_inserter_,
+                       options_.high_resolution_max_range(),
+                       rotational_scan_matcher_histogram, local_from_gravity);
   }
   if (submaps_.front()->num_range_data() == 2 * options_.num_range_data()) {
     submaps_.front()->Finish();

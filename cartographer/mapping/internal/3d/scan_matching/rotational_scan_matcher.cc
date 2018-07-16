@@ -169,16 +169,6 @@ Eigen::VectorXf RotationalScanMatcher::ComputeHistogram(
   return histogram;
 }
 
-RotationalScanMatcher::RotationalScanMatcher(
-    const std::vector<std::pair<Eigen::VectorXf, float>>& histograms_at_angles)
-    : histogram_(
-          Eigen::VectorXf::Zero(histograms_at_angles.at(0).first.size())) {
-  for (const auto& histogram_at_angle : histograms_at_angles) {
-    histogram_ +=
-        RotateHistogram(histogram_at_angle.first, histogram_at_angle.second);
-  }
-}
-
 std::vector<float> RotationalScanMatcher::Match(
     const Eigen::VectorXf& histogram, const float initial_angle,
     const std::vector<float>& angles) const {
