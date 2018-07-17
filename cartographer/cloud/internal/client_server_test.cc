@@ -114,7 +114,6 @@ class ClientServerTest : public ::testing::Test {
       include "trajectory_builder.lua"
       TRAJECTORY_BUILDER.trajectory_builder_2d.use_imu_data = false
       TRAJECTORY_BUILDER.trajectory_builder_2d.submaps.num_range_data = 4
-      TRAJECTORY_BUILDER.trajectory_builder_2d.motion_filter.max_time_seconds = 0
       return TRAJECTORY_BUILDER)text";
     auto trajectory_builder_parameters =
         mapping::testing::ResolveLuaParameters(kTrajectoryBuilderLua);
@@ -186,6 +185,7 @@ class ClientServerTest : public ::testing::Test {
 
   void WaitForLocalSlamResultUploads(size_t size) {
     while (stub_->pose_graph()->GetTrajectoryNodePoses().size() < size) {
+      LOG(INFO) << stub_->pose_graph()->GetTrajectoryNodePoses().size();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   }
@@ -511,7 +511,7 @@ TEST_F(ClientServerTest, LocalSlam2DWithRestartingUploadingServer) {
   // measurements, as 1 measurement is dropped as part of the recovery behavior
   // and then the partially filled submap (which contains 2 measurements) is
   // ignored, dropping another 3 nodes.
-  WaitForLocalSlamResultUploads(measurements.size() - 4);
+  WaitForLocalSlamResultUploads(2);
   stub_for_uploading_server_->FinishTrajectory(trajectory_id);
   EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,
