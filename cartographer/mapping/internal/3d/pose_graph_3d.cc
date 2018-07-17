@@ -546,7 +546,7 @@ void PoseGraph3D::WaitForAllComputations() {
 
   // Now wait for any pending constraint computations to finish.
   common::MutexLocker locker(&mutex_);
-  bool notification GUARDED_BY(mutex_) = false;
+  bool notification = false;
   constraint_builder_.WhenDone(
       [this,
        &notification](const constraints::ConstraintBuilder3D::Result& result)

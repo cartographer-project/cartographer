@@ -53,8 +53,6 @@ constexpr double kTimeStep = 0.1;        // Seconds.
 constexpr double kTravelDistance = 1.2;  // Meters.
 
 constexpr char kSerializationHeaderProtoString[] = "format_version: 1";
-constexpr char kUnsupportedSerializationHeaderProtoString[] =
-    "format_version: 123";
 constexpr char kPoseGraphProtoString[] = R"(pose_graph {
       trajectory: {
         trajectory_id: 0
