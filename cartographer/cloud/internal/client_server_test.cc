@@ -530,6 +530,7 @@ TEST_F(ClientServerTest, LocalSlam2DWithRestartingUploadingServer) {
                   .norm(),
               0.1 * kTravelDistance);
   uploading_server_->Shutdown();
+  uploading_server_->WaitForShutdown();
   server_->Shutdown();
   server_->WaitForShutdown();
 }
