@@ -463,6 +463,14 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
 }
 
 TEST_F(ClientServerTest, LocalSlam2DWithRestartingUploadingServer) {
+  map_builder_server_options_.mutable_map_builder_options()
+      ->mutable_pose_graph_options()
+      ->mutable_constraint_builder_options()
+      ->set_sampling_ratio(0.);
+  uploading_map_builder_server_options_.mutable_map_builder_options()
+      ->mutable_pose_graph_options()
+      ->mutable_constraint_builder_options()
+      ->set_sampling_ratio(0.);
   InitializeRealServer();
   server_->Start();
   InitializeStub();
