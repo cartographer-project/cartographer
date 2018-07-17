@@ -86,8 +86,8 @@ MATCHER_P3(EqualCellProperties, expected_is_known, expected_tsd,
                std::to_string(expected_tsd) + "\t" +
                std::to_string(expected_weight)) {
   bool result = expected_is_known == arg.is_known_;
-  result = result && (std::abs(expected_tsd - arg.tsd_ < 1e-4));
-  result = result && (std::abs(expected_weight - arg.weight_ < 1e-2));
+  result = result && (std::abs(expected_tsd - arg.tsd_) < 1e-4);
+  result = result && (std::abs(expected_weight - arg.weight_) < 1e-2);
   return result;
 }
 
