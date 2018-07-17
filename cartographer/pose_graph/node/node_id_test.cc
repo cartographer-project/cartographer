@@ -24,18 +24,27 @@ namespace cartographer {
 namespace pose_graph {
 namespace {
 
-TEST(NodeId, ToProto) {
-  NodeId node_id{"some_object", common::FromUniversal(1)};
-  EXPECT_THAT(
-      node_id.ToProto(), testing::EqualsProto(R"PROTO(object_id: "some_object"
-                                                      timestamp: 1)PROTO"));
+TEST(NodeIdTest, FromProto) {
+  proto::NodeId proto;
+  proto.set_object_id("some_object");
+  proto.set_timestamp(1);
+
+  NodeId node_id(proto);
+  EXPECT_EQ(node_id.object_id, "some_object");
+  EXPECT_EQ(common::ToUniversal(node_id.time), 1);
 }
 
-TEST(NodeId, ToString) {
+TEST(NodeIdTest, ToProto) {
+  NodeId node_id{"some_object", common::FromUniversal(1)};
+  EXPECT_THAT(node_id.ToProto(),
+              testing::EqualsProto("object_id: 'some_object' timestamp: 1"));
+}
+
+TEST(NodeIdTest, ToString) {
   std::stringstream ss;
   ss << NodeId{"some_object", common::FromUniversal(1)};
 
-  EXPECT_EQ("(some_object, 1)", ss.str());
+  EXPECT_EQ("(object_id: some_object, time: 1)", ss.str());
 }
 
 }  // namespace

@@ -19,6 +19,12 @@
 namespace cartographer {
 namespace pose_graph {
 
+NodeId::NodeId(const std::string& object_id, common::Time time)
+    : object_id(object_id), time(time) {}
+
+NodeId::NodeId(const proto::NodeId& node_id)
+    : NodeId(node_id.object_id(), common::FromUniversal(node_id.timestamp())) {}
+
 proto::NodeId NodeId::ToProto() const {
   proto::NodeId node_id;
   node_id.set_object_id(object_id);

@@ -27,7 +27,13 @@ namespace cartographer {
 namespace pose_graph {
 
 struct NodeId {
+  NodeId(const std::string& object_id, common::Time time);
+  explicit NodeId(const proto::NodeId& node_id);
+
+  // Object refers to dynamic/static objects, e.g. robot/landmark/submap poses,
+  // IMU calibration, etc.
   std::string object_id;
+  // Time associated with the object's pose.
   common::Time time;
 
   proto::NodeId ToProto() const;
@@ -39,7 +45,7 @@ inline bool operator<(const NodeId& lhs, const NodeId& rhs) {
 }
 
 inline std::ostream& operator<<(std::ostream& os, const NodeId& id) {
-  return os << "(" << id.object_id << ", " << id.time << ")";
+  return os << "(object_id: " << id.object_id << ", time: " << id.time << ")";
 }
 
 }  // namespace pose_graph
