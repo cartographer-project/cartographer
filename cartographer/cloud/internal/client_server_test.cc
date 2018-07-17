@@ -464,7 +464,8 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
 
 TEST_F(ClientServerTest, LocalSlam2DWithRestartingUploadingServer) {
   map_builder_server_options_.mutable_map_builder_options()
-      ->mutable_pose_graph_options()->set_optimize_every_n_nodes(500);
+      ->mutable_pose_graph_options()
+      ->set_optimize_every_n_nodes(500);
   map_builder_server_options_.mutable_map_builder_options()
       ->mutable_pose_graph_options()
       ->mutable_constraint_builder_options()
