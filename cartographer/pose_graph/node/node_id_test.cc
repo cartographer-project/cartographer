@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/node/imu_calibration.h"
+#include "cartographer/pose_graph/node/node_id.h"
+
+#include <sstream>
 
 #include "cartographer/pose_graph/internal/testing/test_helpers.h"
 
@@ -22,21 +24,27 @@ namespace cartographer {
 namespace pose_graph {
 namespace {
 
-constexpr char kExpectedNode[] = R"PROTO(
-  id { object_id: "accelerometer" timestamp: 1 }
-  constant: true
-  parameters {
-    imu_calibration {
-      gravity_constant: 10
-      orientation: { w: 0 x: 1 y: 2 z: 3 }
-    }
-  }
-)PROTO";
+TEST(NodeIdTest, FromProto) {
+  proto::NodeId proto;
+  proto.set_object_id("some_object");
+  proto.set_timestamp(1);
 
-TEST(Pose3DTest, ToProto) {
-  ImuCalibration imu_calibration({"accelerometer", common::FromUniversal(1)},
-                                 true, 10, Eigen::Quaterniond(0., 1., 2., 3.));
-  EXPECT_THAT(imu_calibration.ToProto(), testing::EqualsProto(kExpectedNode));
+  NodeId node_id(proto);
+  EXPECT_EQ(node_id.object_id, "some_object");
+  EXPECT_EQ(common::ToUniversal(node_id.time), 1);
+}
+
+TEST(NodeIdTest, ToProto) {
+  NodeId node_id{"some_object", common::FromUniversal(1)};
+  EXPECT_THAT(node_id.ToProto(),
+              testing::EqualsProto("object_id: 'some_object' timestamp: 1"));
+}
+
+TEST(NodeIdTest, ToString) {
+  std::stringstream ss;
+  ss << NodeId{"some_object", common::FromUniversal(1)};
+
+  EXPECT_EQ("(object_id: some_object, time: 1)", ss.str());
 }
 
 }  // namespace
