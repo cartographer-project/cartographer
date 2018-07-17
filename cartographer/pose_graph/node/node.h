@@ -17,22 +17,19 @@
 #ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
 #define CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
 
+#include "cartographer/pose_graph/node/node_id.h"
 #include "cartographer/pose_graph/proto/node.pb.h"
 
-#include <array>
-#include <string>
 #include <vector>
 
 namespace cartographer {
 namespace pose_graph {
 
-// TODO(pifon): Change it to struct { string, timestamp} and introduce the
-// necessary operators.
-using NodeId = std::string;
-
 class Node {
  public:
-  explicit Node(NodeId id, bool constant) : node_id_(id), constant_(constant) {}
+  explicit Node(const NodeId& id, bool constant)
+      : node_id_(id), constant_(constant) {}
+
   ~Node() = default;
 
   Node(const Node&) = delete;
@@ -41,7 +38,6 @@ class Node {
   proto::Node ToProto() const;
 
   const NodeId node_id() const { return node_id_; }
-  void set_node_id(const NodeId& id) { node_id_ = id; }
 
   bool constant() const { return constant_; }
   void set_constant(bool constant) { constant_ = constant; }

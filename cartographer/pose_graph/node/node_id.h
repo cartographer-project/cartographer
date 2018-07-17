@@ -14,31 +14,35 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/node/imu_calibration.h"
+#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODE_ID_
+#define CARTOGRAPHER_POSE_GRAPH_NODE_NODE_ID_
 
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include <ostream>
+#include <string>
+
+#include "cartographer/common/time.h"
+#include "cartographer/pose_graph/proto/node.pb.h"
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
 
-constexpr char kExpectedNode[] = R"PROTO(
-  id { object_id: "accelerometer" timestamp: 1 }
-  constant: true
-  parameters {
-    imu_calibration {
-      gravity_constant: 10
-      orientation: { w: 0 x: 1 y: 2 z: 3 }
-    }
-  }
-)PROTO";
+struct NodeId {
+  std::string object_id;
+  common::Time time;
 
-TEST(Pose3DTest, ToProto) {
-  ImuCalibration imu_calibration({"accelerometer", common::FromUniversal(1)},
-                                 true, 10, Eigen::Quaterniond(0., 1., 2., 3.));
-  EXPECT_THAT(imu_calibration.ToProto(), testing::EqualsProto(kExpectedNode));
+  proto::NodeId ToProto() const;
+};
+
+inline bool operator<(const NodeId& lhs, const NodeId& rhs) {
+  return std::forward_as_tuple(lhs.object_id, lhs.time) <
+         std::forward_as_tuple(rhs.object_id, rhs.time);
 }
 
-}  // namespace
+inline std::ostream& operator<<(std::ostream& os, const NodeId& id) {
+  return os << "(" << id.object_id << ", " << id.time << ")";
+}
+
 }  // namespace pose_graph
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_NODE_ID_
