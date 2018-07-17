@@ -22,7 +22,7 @@ namespace pose_graph {
 proto::Node Node::ToProto() const {
   proto::Node node;
   node.set_constant(constant_);
-  node.mutable_id()->set_object_id(node_id_);
+  *node.mutable_id() = node_id_.ToProto();
   *node.mutable_parameters() = ToParametersProto();
   return node;
 }

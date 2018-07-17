@@ -30,7 +30,7 @@ struct Nodes {
   // TODO(pifon): Should it really be an std::map or smth else?
   std::map<NodeId, Pose2D> pose_2d_nodes;
   std::map<NodeId, Pose3D> pose_3d_nodes;
-  std::map<NodeId, Pose3D> imu_calibration_nodes;
+  std::map<NodeId, ImuCalibration> imu_calibration_nodes;
 };
 
 }  // namespace pose_graph
