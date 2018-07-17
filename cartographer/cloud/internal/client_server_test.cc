@@ -492,8 +492,11 @@ TEST_F(ClientServerTest, LocalSlam2DWithRestartingUploadingServer) {
   for (unsigned int i = 0; i < measurements.size() / 2; ++i) {
     trajectory_stub->AddSensorData(kRangeSensorId.id, measurements.at(i));
   }
+  WaitForLocalSlamResults(measurements.size() / 2);
+  WaitForLocalSlamResultUploads(number_of_insertion_results_);
 
   // Simulate a cloud server restart.
+  LOG(INFO) << "Simulating server restart.";
   stub_->FinishTrajectory(0);
   server_->Shutdown();
   server_->WaitForShutdown();
@@ -506,19 +509,9 @@ TEST_F(ClientServerTest, LocalSlam2DWithRestartingUploadingServer) {
     trajectory_stub->AddSensorData(kRangeSensorId.id, measurements.at(i));
   }
 
-  WaitForLocalSlamResults(measurements.size());
-  // The number of uploaded local SLAM results is not 40, i.e. the number of
-  // measurements, as 1 measurement is dropped as part of the recovery behavior
-  // and then the partially filled submap (which contains 2 measurements) is
-  // ignored, dropping another 3 nodes.
+  WaitForLocalSlamResults(measurements.size() / 2);
   WaitForLocalSlamResultUploads(2);
   stub_for_uploading_server_->FinishTrajectory(trajectory_id);
-  EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
-  EXPECT_NEAR(kTravelDistance,
-              (local_slam_result_poses_.back().translation() -
-               local_slam_result_poses_.front().translation())
-                  .norm(),
-              0.1 * kTravelDistance);
   uploading_server_->Shutdown();
   uploading_server_->WaitForShutdown();
   server_->Shutdown();
