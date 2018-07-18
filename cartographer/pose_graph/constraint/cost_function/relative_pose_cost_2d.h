@@ -30,10 +30,12 @@ class RelativePoseCost2D
                                       3 /* size of second pose */> {
  public:
   explicit RelativePoseCost2D(
-      const proto::RelativePose2D::Parameters& Parameters);
+      const proto::RelativePose2D::Parameters& parameters);
 
-  proto::RelativePose2D::Parameters ToProto();
+  proto::RelativePose2D::Parameters ToProto() const;
 
+  // Parameters are packed as [first_pose_2d, second_pose_2d], where each 2D
+  // pose is [translation_x, translation_y, rotation].
   bool Evaluate(double const* const* parameters, double* residuals,
                 double** jacobians) const final;
 

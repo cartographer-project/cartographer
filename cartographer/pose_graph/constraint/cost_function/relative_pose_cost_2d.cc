@@ -25,7 +25,7 @@ RelativePoseCost2D::RelativePoseCost2D(
       rotation_weight_(parameters.rotation_weight()),
       first_T_second_(transform::ToRigid2(parameters.first_t_second())) {}
 
-proto::RelativePose2D::Parameters RelativePoseCost2D::ToProto() {
+proto::RelativePose2D::Parameters RelativePoseCost2D::ToProto() const {
   proto::RelativePose2D::Parameters parameters;
   parameters.set_translation_weight(translation_weight_);
   parameters.set_rotation_weight(rotation_weight_);
@@ -54,7 +54,7 @@ bool RelativePoseCost2D::Evaluate(double const* const* parameters,
   residuals[2] = rotation_weight_ *
                  common::NormalizeAngleDifference(
                      first_T_second_.rotation().angle() - (end[2] - start[2]));
-  if (jacobians == NULL) return true;
+  if (jacobians == nullptr) return true;
 
   const double weighted_cos_start_rotation =
       translation_weight_ * cos_start_rotation;
@@ -63,7 +63,7 @@ bool RelativePoseCost2D::Evaluate(double const* const* parameters,
 
   // Jacobians in Ceres are ordered by the parameter blocks:
   // jacobian[i] = [(dr_0 / dx_i)^T, ..., (dr_n / dx_i)^T].
-  if (jacobians[0] != NULL) {
+  if (jacobians[0] != nullptr) {
     jacobians[0][0] = weighted_cos_start_rotation;
     jacobians[0][1] = weighted_sin_start_rotation;
     jacobians[0][2] = weighted_sin_start_rotation * delta_x -
@@ -76,7 +76,7 @@ bool RelativePoseCost2D::Evaluate(double const* const* parameters,
     jacobians[0][7] = 0;
     jacobians[0][8] = rotation_weight_;
   }
-  if (jacobians[1] != NULL) {
+  if (jacobians[1] != nullptr) {
     jacobians[1][0] = -weighted_cos_start_rotation;
     jacobians[1][1] = -weighted_sin_start_rotation;
     jacobians[1][2] = 0;

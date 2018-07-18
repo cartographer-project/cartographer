@@ -36,6 +36,9 @@ using ResidualType = std::array<double, kResidualsCount>;
 using JacobianType = std::array<std::array<double, kJacobianColDimension>,
                                 kParameterBlocksCount>;
 
+// This is the autodiff version of the RelativePoseCost2D.
+//
+// TODO(pifon): Use the gradient_checker from Ceres.
 class AutoDiffRelativePoseCost {
  public:
   explicit AutoDiffRelativePoseCost(
@@ -85,7 +88,8 @@ class RelativePoseCost2DTest : public ::testing::Test {
     }
   }
 
-  std::pair<const ResidualType&, const JacobianType&> EvaluateAnalyticalCost(
+  std::pair<const ResidualType&, const JacobianType&>
+  EvaluateRelativePoseCost2D(
       const std::array<const double*, 2>& parameter_blocks) {
     return Evaluate(parameter_blocks, analytical_cost_);
   }
@@ -111,8 +115,9 @@ class RelativePoseCost2DTest : public ::testing::Test {
   std::unique_ptr<ceres::CostFunction> analytical_cost_;
 };
 
-::testing::Matcher<double> Near(double expected, double precision = 1e-05) {
-  return ::testing::DoubleNear(expected, precision);
+::testing::Matcher<double> Near(double expected) {
+  constexpr double kPrecision = 1e-05;
+  return ::testing::DoubleNear(expected, kPrecision);
 }
 
 TEST_F(RelativePoseCost2DTest, CompareAutoDiffAndAnalytical) {
@@ -126,7 +131,7 @@ TEST_F(RelativePoseCost2DTest, CompareAutoDiffAndAnalytical) {
   std::tie(auto_diff_residual, auto_diff_jacobian) =
       EvaluateAutoDiffCost(parameter_blocks);
   std::tie(analytical_residual, analytical_jacobian) =
-      EvaluateAnalyticalCost(parameter_blocks);
+      EvaluateRelativePoseCost2D(parameter_blocks);
 
   for (int i = 0; i < kResidualsCount; ++i) {
     EXPECT_THAT(auto_diff_residual[i], Near(analytical_residual[i]));
@@ -138,13 +143,13 @@ TEST_F(RelativePoseCost2DTest, CompareAutoDiffAndAnalytical) {
   }
 }
 
-TEST_F(RelativePoseCost2DTest, EvaluateAnalyticalCost) {
+TEST_F(RelativePoseCost2DTest, EvaluateRelativePoseCost2D) {
   std::array<double, kPoseDimension> start_pose{{1., 1., 1.}};
   std::array<double, kPoseDimension> end_pose{{10., 1., 100.}};
   std::array<const double*, kParameterBlocksCount> parameter_blocks{
       {start_pose.data(), end_pose.data()}};
 
-  auto residuals_and_jacobian = EvaluateAnalyticalCost(parameter_blocks);
+  auto residuals_and_jacobian = EvaluateRelativePoseCost2D(parameter_blocks);
   EXPECT_THAT(residuals_and_jacobian.first,
               ElementsAre(Near(-3.86272), Near(8.57324), Near(-6.83333)));
   EXPECT_THAT(
