@@ -23,16 +23,19 @@ message RelativePose2D {
   NodeId first = 1;
   NodeId second = 2;
 
-  transform.proto.Rigid2d first_T_second = 3;
-  double translation_weight = 4;
-  double rotation_weight = 5;
+  message Parameters {
+    transform.proto.Rigid2d first_t_second = 1;
+    double translation_weight = 2;
+    double rotation_weight = 3;
+  }
+  Parameters parameters = 3;
 }
 
 message RelativePose3D {
   NodeId first = 1;
   NodeId second = 2;
 
-  transform.proto.Rigid3d first_T_second = 3;
+  transform.proto.Rigid3d first_t_second = 3;
   double translation_weight = 4;
   double rotation_weight = 5;
 }
