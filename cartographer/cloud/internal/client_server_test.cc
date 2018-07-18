@@ -466,8 +466,6 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
         chunks.push(std::move(p));
         return true;
       });
-
-  // Serialize the state.
   stub_->SerializeState(&writer);
   CHECK(writer.Close());
 

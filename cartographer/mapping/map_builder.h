@@ -83,8 +83,8 @@ class MapBuilder : public MapBuilderInterface {
 
  private:
   const proto::MapBuilderOptions options_;
-
   common::ThreadPool thread_pool_;
+
   std::unique_ptr<PoseGraph> pose_graph_;
 
   std::unique_ptr<sensor::CollatorInterface> sensor_collator_;
