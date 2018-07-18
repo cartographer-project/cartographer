@@ -102,7 +102,6 @@ class ActiveSubmaps3D {
   void AddSubmap(const transform::Rigid3d& local_submap_pose);
 
   const proto::SubmapsOptions3D options_;
-  int matching_submap_index_ = 0;
   std::vector<std::shared_ptr<Submap3D>> submaps_;
   RangeDataInserter3D range_data_inserter_;
 };
