@@ -80,9 +80,9 @@ SerializedData SerializeTrajectoryBuilderOptions(
 void SerializeSubmaps(
     const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data,
     ProtoStreamWriterInterface* const writer) {
+  SerializedData proto;
   // Next serialize all submaps.
   for (const auto& submap_id_data : submap_data) {
-    SerializedData proto;
     *proto.mutable_submap() = submap_id_data.data.submap->ToProto(
         /*include_probability_grid_data=*/submap_id_data.data.submap
             ->finished());
