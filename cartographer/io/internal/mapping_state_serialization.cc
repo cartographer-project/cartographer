@@ -83,12 +83,13 @@ void SerializeSubmaps(
   SerializedData proto;
   // Next serialize all submaps.
   for (const auto& submap_id_data : submap_data) {
-    *proto.mutable_submap() = submap_id_data.data.submap->ToProto(
+    auto* const submap_proto = proto.mutable_submap();
+    *submap_proto = submap_id_data.data.submap->ToProto(
         /*include_probability_grid_data=*/submap_id_data.data.submap
             ->finished());
-    proto.mutable_submap()->mutable_submap_id()->set_trajectory_id(
+    submap_proto->mutable_submap_id()->set_trajectory_id(
         submap_id_data.id.trajectory_id);
-    proto.mutable_submap()->mutable_submap_id()->set_submap_index(
+    submap_proto->mutable_submap_id()->set_submap_index(
         submap_id_data.id.submap_index);
     writer->WriteProto(proto);
   }
