@@ -80,18 +80,16 @@ SerializedData SerializeTrajectoryBuilderOptions(
 void SerializeSubmaps(
     const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data,
     ProtoStreamWriterInterface* const writer) {
-  SerializedData proto;
   // Next serialize all submaps.
   for (const auto& submap_id_data : submap_data) {
-    auto* const submap_proto = proto.mutable_submap();
-    submap_proto->mutable_submap_id()->set_trajectory_id(
-        submap_id_data.id.trajectory_id);
-    submap_proto->mutable_submap_id()->set_submap_index(
-        submap_id_data.id.submap_index);
-    submap_id_data.data.submap->ToProto(
-        submap_proto,
+    SerializedData proto;
+    *proto.mutable_submap() = submap_id_data.data.submap->ToProto(
         /*include_probability_grid_data=*/submap_id_data.data.submap
             ->finished());
+    proto.mutable_submap()->mutable_submap_id()->set_trajectory_id(
+        submap_id_data.id.trajectory_id);
+    proto.mutable_submap()->mutable_submap_id()->set_submap_index(
+        submap_id_data.id.submap_index);
     writer->WriteProto(proto);
   }
 }
