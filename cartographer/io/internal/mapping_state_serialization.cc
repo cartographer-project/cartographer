@@ -99,8 +99,8 @@ void SerializeSubmaps(
 void SerializeTrajectoryNodes(
     const MapById<NodeId, TrajectoryNode>& trajectory_nodes,
     ProtoStreamWriterInterface* const writer) {
-  SerializedData proto;
   for (const auto& node_id_data : trajectory_nodes) {
+    SerializedData proto;
     auto* const node_proto = proto.mutable_node();
     node_proto->mutable_node_id()->set_trajectory_id(
         node_id_data.id.trajectory_id);
