@@ -20,6 +20,9 @@
 #include "cartographer/cloud/client/map_builder_stub.h"
 #include "cartographer/cloud/internal/map_builder_server.h"
 #include "cartographer/cloud/map_builder_server_options.h"
+#include "cartographer/io/internal/in_memory_proto_stream.h"
+#include "cartographer/io/proto_stream.h"
+#include "cartographer/io/proto_stream_deserializer.h"
 #include "cartographer/io/testing/test_helpers.h"
 #include "cartographer/mapping/internal/testing/mock_map_builder.h"
 #include "cartographer/mapping/internal/testing/mock_pose_graph.h"
@@ -449,6 +452,26 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
   }
   WaitForLocalSlamResults(measurements.size());
   WaitForLocalSlamResultUploads(number_of_insertion_results_);
+
+  std::queue<std::unique_ptr<google::protobuf::Message>> chunks;
+  io::ForwardingProtoStreamWriter writer(
+      [&chunks](const google::protobuf::Message* proto) -> bool {
+        if (!proto) {
+          return true;
+        }
+        std::unique_ptr<google::protobuf::Message> p(proto->New());
+        p->CopyFrom(*proto);
+        chunks.push(std::move(p));
+        return true;
+      });
+  stub_->SerializeState(&writer);
+  CHECK(writer.Close());
+
+  // Ensure it can be read.
+  io::InMemoryProtoStreamReader reader(std::move(chunks));
+  io::ProtoStreamDeserializer deserializer(&reader);
+  EXPECT_EQ(deserializer.pose_graph().trajectory_size(), 1);
+
   stub_for_uploading_server_->FinishTrajectory(trajectory_id);
   EXPECT_EQ(local_slam_result_poses_.size(), measurements.size());
   EXPECT_NEAR(kTravelDistance,
