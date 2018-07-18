@@ -80,9 +80,9 @@ SerializedData SerializeTrajectoryBuilderOptions(
 void SerializeSubmaps(
     const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data,
     ProtoStreamWriterInterface* const writer) {
-  SerializedData proto;
   // Next serialize all submaps.
   for (const auto& submap_id_data : submap_data) {
+    SerializedData proto;
     auto* const submap_proto = proto.mutable_submap();
     submap_proto->mutable_submap_id()->set_trajectory_id(
         submap_id_data.id.trajectory_id);
@@ -99,8 +99,8 @@ void SerializeSubmaps(
 void SerializeTrajectoryNodes(
     const MapById<NodeId, TrajectoryNode>& trajectory_nodes,
     ProtoStreamWriterInterface* const writer) {
-  SerializedData proto;
   for (const auto& node_id_data : trajectory_nodes) {
+    SerializedData proto;
     auto* const node_proto = proto.mutable_node();
     node_proto->mutable_node_id()->set_trajectory_id(
         node_id_data.id.trajectory_id);
@@ -115,8 +115,8 @@ void SerializeTrajectoryData(
     const std::map<int, PoseGraphInterface::TrajectoryData>&
         all_trajectory_data,
     ProtoStreamWriterInterface* const writer) {
-  SerializedData proto;
   for (const auto& trajectory_data : all_trajectory_data) {
+    SerializedData proto;
     auto* const trajectory_data_proto = proto.mutable_trajectory_data();
     trajectory_data_proto->set_trajectory_id(trajectory_data.first);
     trajectory_data_proto->set_gravity_constant(
@@ -137,9 +137,9 @@ void SerializeTrajectoryData(
 
 void SerializeImuData(const sensor::MapByTime<sensor::ImuData>& all_imu_data,
                       ProtoStreamWriterInterface* const writer) {
-  SerializedData proto;
   for (const int trajectory_id : all_imu_data.trajectory_ids()) {
     for (const auto& imu_data : all_imu_data.trajectory(trajectory_id)) {
+      SerializedData proto;
       auto* const imu_data_proto = proto.mutable_imu_data();
       imu_data_proto->set_trajectory_id(trajectory_id);
       *imu_data_proto->mutable_imu_data() = sensor::ToProto(imu_data);
@@ -151,10 +151,10 @@ void SerializeImuData(const sensor::MapByTime<sensor::ImuData>& all_imu_data,
 void SerializeOdometryData(
     const sensor::MapByTime<sensor::OdometryData>& all_odometry_data,
     ProtoStreamWriterInterface* const writer) {
-  SerializedData proto;
   for (const int trajectory_id : all_odometry_data.trajectory_ids()) {
     for (const auto& odometry_data :
          all_odometry_data.trajectory(trajectory_id)) {
+      SerializedData proto;
       auto* const odometry_data_proto = proto.mutable_odometry_data();
       odometry_data_proto->set_trajectory_id(trajectory_id);
       *odometry_data_proto->mutable_odometry_data() =
@@ -168,10 +168,10 @@ void SerializeFixedFramePoseData(
     const sensor::MapByTime<sensor::FixedFramePoseData>&
         all_fixed_frame_pose_data,
     ProtoStreamWriterInterface* const writer) {
-  SerializedData proto;
   for (const int trajectory_id : all_fixed_frame_pose_data.trajectory_ids()) {
     for (const auto& fixed_frame_pose_data :
          all_fixed_frame_pose_data.trajectory(trajectory_id)) {
+      SerializedData proto;
       auto* const fixed_frame_pose_data_proto =
           proto.mutable_fixed_frame_pose_data();
       fixed_frame_pose_data_proto->set_trajectory_id(trajectory_id);
@@ -186,9 +186,9 @@ void SerializeLandmarkNodes(
     const std::map<std::string, PoseGraphInterface::LandmarkNode>&
         all_landmark_nodes,
     ProtoStreamWriterInterface* const writer) {
-  SerializedData proto;
   for (const auto& node : all_landmark_nodes) {
     for (const auto& observation : node.second.landmark_observations) {
+      SerializedData proto;
       auto* landmark_data_proto = proto.mutable_landmark_data();
       landmark_data_proto->set_trajectory_id(observation.trajectory_id);
       landmark_data_proto->mutable_landmark_data()->set_timestamp(
