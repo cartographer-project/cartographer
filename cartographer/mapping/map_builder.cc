@@ -236,10 +236,10 @@ std::map<int, int> MapBuilder::LoadState(
       deserializer.all_trajectory_builder_options();
 
   std::map<int, int> trajectory_remapping;
-  for (auto& trajectory_proto : *pose_graph_proto.mutable_trajectory()) {
+  for (int i = 0; i < pose_graph_proto.trajectory_size(); ++i) {
+    auto& trajectory_proto = *pose_graph_proto.mutable_trajectory(i);
     const auto& options_with_sensor_ids_proto =
-        all_builder_options_proto.options_with_sensor_ids(
-            trajectory_proto.trajectory_id());
+        all_builder_options_proto.options_with_sensor_ids(i);
     const int new_trajectory_id =
         AddTrajectoryForDeserialization(options_with_sensor_ids_proto);
     CHECK(trajectory_remapping
