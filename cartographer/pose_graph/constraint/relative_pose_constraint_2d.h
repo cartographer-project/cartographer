@@ -36,7 +36,7 @@ class RelativePoseConstraint2D : public Constraint {
  private:
   NodeId first_;
   NodeId second_;
-  std::unique_ptr<RelativePoseCost2D> ceres_cost_;
+  RelativePoseCost2D ceres_cost_;
 };
 
 }  // namespace pose_graph

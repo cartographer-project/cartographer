@@ -31,7 +31,7 @@ using ConstraintId = std::string;
 class Constraint {
  public:
   explicit Constraint(const ConstraintId& id) : constraint_id_(id) {}
-  ~Constraint() = default;
+  virtual ~Constraint() = default;
 
   Constraint(const Constraint&) = delete;
   Constraint& operator=(const Constraint&) = delete;
