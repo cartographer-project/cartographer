@@ -61,19 +61,19 @@ TEST(RelativePoseCost3DTest, EvaluatesCorrectly) {
       TextFormat::ParseFromString(kParameters, &relative_pose_parameters));
   RelativePoseCost3D relative_pose_cost_3d(relative_pose_parameters);
 
-  const PositionType position1{{1., 1., 1.}};
-  const RotationType rotation1{{1., 1., 1., 1.}};
+  const PositionType kPosition1{{1., 1., 1.}};
+  const RotationType kRotation1{{1., 1., 1., 1.}};
   ResidualType residuals;
-  EXPECT_TRUE(relative_pose_cost_3d(position1.data(), rotation1.data(),
-                                    position1.data(), rotation1.data(),
+  EXPECT_TRUE(relative_pose_cost_3d(kPosition1.data(), kRotation1.data(),
+                                    kPosition1.data(), kRotation1.data(),
                                     residuals.data()));
   EXPECT_THAT(residuals, ElementsAre(Near(1), Near(2), Near(3), Near(0),
                                      Near(19.1037), Near(6.3679)));
 
-  const PositionType position2{{0., -1., -2.}};
-  const RotationType rotation2{{.1, .2, .3, .4}};
-  EXPECT_TRUE(relative_pose_cost_3d(position1.data(), rotation1.data(),
-                                    position2.data(), rotation2.data(),
+  const PositionType kPosition2{{0., -1., -2.}};
+  const RotationType kRotation2{{.1, .2, .3, .4}};
+  EXPECT_TRUE(relative_pose_cost_3d(kPosition1.data(), kRotation1.data(),
+                                    kPosition2.data(), kRotation2.data(),
                                     residuals.data()));
   EXPECT_THAT(residuals, ElementsAre(Near(6), Near(8), Near(-2), Near(1.03544),
                                      Near(11.38984), Near(3.10632)));
