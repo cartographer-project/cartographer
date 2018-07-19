@@ -39,13 +39,6 @@ using ParameterBlockType = std::array<const double*, 4>;
 }
 
 TEST(RelativePoseCost3DTest, EvaluateRelativePoseCost3D) {
-  const PositionType position1{{1., 1., 1.}};
-  const RotationType rotation1{{1., 1., 1., 1.}};
-  const PositionType position2{{1., 1., 1.}};
-  const RotationType rotation2{{1., 1., 1., 1.}};
-  const ParameterBlockType parameter_blocks{
-      {position1.data(), rotation1.data(), position2.data(), rotation2.data()}};
-
   constexpr char kParameters[] = R"PROTO(
     first_t_second {
       translation: { x: 1 y: 2 z: 3 }
@@ -54,18 +47,34 @@ TEST(RelativePoseCost3DTest, EvaluateRelativePoseCost3D) {
     translation_weight: 1
     rotation_weight: 10
   )PROTO";
-
   proto::RelativePose3D::Parameters relative_pose_parameters;
   ASSERT_TRUE(
       TextFormat::ParseFromString(kParameters, &relative_pose_parameters));
-
   RelativePoseCost3D relative_pose_cost_3d(relative_pose_parameters);
+
+  // Test with the same pose.
+  const PositionType position1{{1., 1., 1.}};
+  const RotationType rotation1{{1., 1., 1., 1.}};
+  const ParameterBlockType parameter_blocks{
+      {position1.data(), rotation1.data(), position1.data(), rotation1.data()}};
   ResidualType residuals;
   relative_pose_cost_3d.GetCeresFunction()->Evaluate(
       parameter_blocks.data(), residuals.data(), /*jacobians=*/nullptr);
 
   EXPECT_THAT(residuals, ElementsAre(Near(1), Near(2), Near(3), Near(0),
                                      Near(19.1037), Near(6.3679)));
+
+  // Test with a different second pose.
+  const PositionType position2{{0., -1., -2.}};
+  const RotationType rotation2{{.1, .2, .3, .4}};
+  const ParameterBlockType parameter_blocks2{
+      {position1.data(), rotation1.data(), position2.data(), rotation2.data()}};
+  ResidualType residuals2;
+  relative_pose_cost_3d.GetCeresFunction()->Evaluate(
+      parameter_blocks2.data(), residuals2.data(), /*jacobians=*/nullptr);
+
+  EXPECT_THAT(residuals2, ElementsAre(Near(6), Near(8), Near(-2), Near(1.03544),
+                                      Near(11.38984), Near(3.10632)));
 }
 
 }  // namespace
