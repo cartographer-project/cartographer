@@ -16,7 +16,6 @@
 
 #include "cartographer/pose_graph/constraint/cost_function/relative_pose_cost_3d.h"
 
-
 namespace cartographer {
 namespace pose_graph {
 
