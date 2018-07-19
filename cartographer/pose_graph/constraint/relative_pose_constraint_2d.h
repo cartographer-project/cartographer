@@ -14,40 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
-#define CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
+#ifndef CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_RELATIVE_POSE_CONSTRAINT_2D_H_
+#define CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_RELATIVE_POSE_CONSTRAINT_2D_H_
 
-#include "cartographer/pose_graph/node/node_id.h"
-#include "cartographer/pose_graph/proto/node.pb.h"
-
-#include <vector>
+#include "cartographer/pose_graph/constraint/constraint.h"
+#include "cartographer/pose_graph/constraint/cost_function/relative_pose_cost_2d.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-class Node {
+class RelativePoseConstraint2D : public Constraint {
  public:
-  explicit Node(const NodeId& id, bool constant)
-      : node_id_(id), constant_(constant) {}
+  RelativePoseConstraint2D(const ConstraintId& id,
+                           const proto::RelativePose2D& proto);
 
-  ~Node() = default;
-
-  proto::Node ToProto() const;
-
-  const NodeId node_id() const { return node_id_; }
-
-  bool constant() const { return constant_; }
-  void set_constant(bool constant) { constant_ = constant; }
+  void AddToOptimizer(Nodes* nodes, ceres::Problem* problem) const final;
 
  protected:
-  virtual proto::Parameters ToParametersProto() const = 0;
+  proto::CostFunction ToCostFunctionProto() const final;
 
  private:
-  NodeId node_id_;
-  bool constant_;
+  NodeId first_;
+  NodeId second_;
+  std::unique_ptr<RelativePoseCost2D> ceres_cost_;
 };
 
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_RELATIVE_POSE_CONSTRAINT_2D_H_

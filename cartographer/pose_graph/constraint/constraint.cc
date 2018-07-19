@@ -14,40 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
-#define CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
-
-#include "cartographer/pose_graph/node/node_id.h"
-#include "cartographer/pose_graph/proto/node.pb.h"
-
-#include <vector>
+#include "cartographer/pose_graph/constraint/constraint.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-class Node {
- public:
-  explicit Node(const NodeId& id, bool constant)
-      : node_id_(id), constant_(constant) {}
-
-  ~Node() = default;
-
-  proto::Node ToProto() const;
-
-  const NodeId node_id() const { return node_id_; }
-
-  bool constant() const { return constant_; }
-  void set_constant(bool constant) { constant_ = constant; }
-
- protected:
-  virtual proto::Parameters ToParametersProto() const = 0;
-
- private:
-  NodeId node_id_;
-  bool constant_;
-};
+proto::Constraint Constraint::ToProto() const {
+  proto::Constraint constraint;
+  constraint.set_id(constraint_id_);
+  *constraint.mutable_cost_function() = ToCostFunctionProto();
+  return constraint;
+}
 
 }  // namespace pose_graph
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
