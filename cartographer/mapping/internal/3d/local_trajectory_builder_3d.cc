@@ -158,7 +158,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
   bool warned = false;
 
   for (const auto& hit : hits) {
-    common::Time time_point = time + common::FromSeconds(hit.point_time[3]);
+    common::Time time_point = current_sensor_time + common::FromSeconds(hit.point_time[3]);
     if (time_point < extrapolator_->GetLastExtrapolatedTime()) {
       if (!warned) {
         LOG(ERROR)
@@ -207,7 +207,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
     num_accumulated_ = 0;
 
     transform::Rigid3f current_pose =
-        extrapolator_->ExtrapolatePose(time).cast<float>();
+        extrapolator_->ExtrapolatePose(current_sensor_time).cast<float>();
 
     const auto voxel_filter_start = std::chrono::steady_clock::now();
     const sensor::RangeData filtered_range_data = {
@@ -227,7 +227,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
     }
 
     return AddAccumulatedRangeData(
-        time,
+        current_sensor_time,
         sensor::TransformRangeData(filtered_range_data, current_pose.inverse()),
         sensor_duration);
   }
