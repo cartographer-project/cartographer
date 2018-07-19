@@ -158,7 +158,8 @@ LocalTrajectoryBuilder3D::AddRangeData(
   bool warned = false;
 
   for (const auto& hit : hits) {
-    common::Time time_point = current_sensor_time + common::FromSeconds(hit.point_time[3]);
+    common::Time time_point =
+        current_sensor_time + common::FromSeconds(hit.point_time[3]);
     if (time_point < extrapolator_->GetLastExtrapolatedTime()) {
       if (!warned) {
         LOG(ERROR)
