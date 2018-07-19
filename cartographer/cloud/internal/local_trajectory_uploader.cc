@@ -45,6 +45,11 @@ const common::Duration kPopTimeout = common::FromMilliseconds(100);
 const std::set<::grpc::StatusCode> kUnrecoverableStatusCodes = {
     ::grpc::NOT_FOUND};
 
+bool IsNewSubmap(const mapping::proto::Submap& submap) {
+  return (submap.has_submap_2d() && submap.submap_2d().num_range_data() == 1) ||
+         (submap.has_submap_3d() && submap.submap_3d().num_range_data() == 1);
+}
+
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
   struct TrajectoryInfo {
@@ -153,11 +158,9 @@ void LocalTrajectoryUploader::TryRecovery() {
       CHECK_GE(sensor_data->local_slam_result_data().submaps_size(), 0);
       if (sensor_data->sensor_data_case() ==
               proto::SensorData::kLocalSlamResultData &&
-          sensor_data->local_slam_result_data()
-                  .submaps(
-                      sensor_data->local_slam_result_data().submaps_size() - 1)
-                  .submap_2d()
-                  .num_range_data() == 1) {
+          sensor_data->local_slam_result_data().submaps_size() > 0 &&
+          IsNewSubmap(sensor_data->local_slam_result_data().submaps(
+              sensor_data->local_slam_result_data().submaps_size() - 1))) {
         break;
       } else {
         send_queue_.Pop();
@@ -210,8 +213,6 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
           // Unrecoverable error occurred.
           batch_request.clear_sensor_data();
           TryRecovery();
-        } else {
-          LOG(INFO) << "Upload success";
         }
         batch_request.clear_sensor_data();
       }
@@ -231,7 +232,6 @@ bool LocalTrajectoryUploader::AddTrajectory(
     const std::string& client_id, int local_trajectory_id,
     const std::set<SensorId>& expected_sensor_ids,
     const mapping::proto::TrajectoryBuilderOptions& trajectory_options) {
-  LOG(INFO) << "LocalTrajectoryUploader::AddTrajectory " << client_id;
   proto::AddTrajectoryRequest request;
   request.set_client_id(client_id);
   *request.mutable_trajectory_builder_options() = trajectory_options;
@@ -249,6 +249,10 @@ bool LocalTrajectoryUploader::AddTrajectory(
     LOG(ERROR) << status.error_message();
     return false;
   }
+  LOG(INFO) << "Created trajectory for client_id: " << client_id
+            << " local trajectory_id: " << local_trajectory_id
+            << " uplink trajectory_id: " << client.response().trajectory_id();
+
   CHECK_EQ(local_trajectory_id_to_trajectory_info_.count(local_trajectory_id),
            0);
   local_trajectory_id_to_trajectory_info_.emplace(

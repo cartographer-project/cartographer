@@ -483,18 +483,7 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, LocalSlam2DWithRestartingUploadingServer) {
-  map_builder_server_options_.mutable_map_builder_options()
-      ->mutable_pose_graph_options()
-      ->set_optimize_every_n_nodes(500);
-  map_builder_server_options_.mutable_map_builder_options()
-      ->mutable_pose_graph_options()
-      ->mutable_constraint_builder_options()
-      ->set_sampling_ratio(0.);
-  uploading_map_builder_server_options_.mutable_map_builder_options()
-      ->mutable_pose_graph_options()
-      ->mutable_constraint_builder_options()
-      ->set_sampling_ratio(0.);
+TEST_F(ClientServerTest, LocalSlam2DUplinkServerRestarting) {
   InitializeRealServer();
   server_->Start();
   InitializeStub();
@@ -518,7 +507,8 @@ TEST_F(ClientServerTest, LocalSlam2DWithRestartingUploadingServer) {
 
   // Simulate a cloud server restart.
   LOG(INFO) << "Simulating server restart.";
-  stub_->FinishTrajectory(0);
+  constexpr int kUplinkTrajectoryId = 0;
+  stub_->FinishTrajectory(kUplinkTrajectoryId);
   server_->Shutdown();
   server_->WaitForShutdown();
   InitializeRealServer();
