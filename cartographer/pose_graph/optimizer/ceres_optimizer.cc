@@ -29,12 +29,24 @@ ceres::Problem::Options CreateCeresProblemOptions() {
   return problem_options;
 }
 
+Optimizer::SolverStatus ToSolverStatus(
+    const ceres::TerminationType& termination_type) {
+  switch (termination_type) {
+    case (ceres::TerminationType::CONVERGENCE):
+      return Optimizer::SolverStatus::CONVERGENCE;
+    case (ceres::TerminationType::NO_CONVERGENCE):
+      return Optimizer::SolverStatus::NO_CONVERGENCE;
+    default:
+      return Optimizer::SolverStatus::FAILURE;
+  }
+}
+
 }  // namespace
 
 CeresOptimizer::CeresOptimizer(const ceres::Solver::Options& options)
     : problem_options_(CreateCeresProblemOptions()), solver_options_(options) {}
 
-ceres::Solver::Summary CeresOptimizer::Solve(PoseGraphData* data) const {
+Optimizer::SolverStatus CeresOptimizer::Solve(PoseGraphData* data) const {
   ceres::Problem problem(problem_options_);
 
   for (const auto& constraint : data->constraints) {
@@ -43,7 +55,7 @@ ceres::Solver::Summary CeresOptimizer::Solve(PoseGraphData* data) const {
 
   ceres::Solver::Summary summary;
   ceres::Solve(solver_options_, &problem, &summary);
-  return summary;
+  return ToSolverStatus(summary.termination_type);
 }
 
 }  // namespace pose_graph

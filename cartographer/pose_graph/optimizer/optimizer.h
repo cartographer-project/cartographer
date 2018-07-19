@@ -24,13 +24,19 @@ namespace pose_graph {
 
 class Optimizer {
  public:
+  enum class SolverStatus {
+    CONVERGENCE,
+    NO_CONVERGENCE,
+    FAILURE,
+  };
+
   Optimizer() = default;
   virtual ~Optimizer() = default;
 
   Optimizer(const Optimizer&) = delete;
   Optimizer& operator=(const Optimizer&) = delete;
 
-  virtual ceres::Solver::Summary Solve(PoseGraphData* data) const = 0;
+  virtual SolverStatus Solve(PoseGraphData* data) const = 0;
 };
 
 }  // namespace pose_graph

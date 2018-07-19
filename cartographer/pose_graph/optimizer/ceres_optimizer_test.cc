@@ -88,8 +88,7 @@ TEST(CeresOptimizerTest, SmokeTest) {
       "constraint_1", ParseProto<proto::RelativePose2D>(kRelativePose2D)));
 
   CeresOptimizer optimizer(ceres::Solver::Options{});
-  const auto summary = optimizer.Solve(&data);
-  EXPECT_EQ(ceres::TerminationType::CONVERGENCE, summary.termination_type);
+  EXPECT_EQ(optimizer.Solve(&data), Optimizer::SolverStatus::CONVERGENCE);
 }
 
 }  // namespace

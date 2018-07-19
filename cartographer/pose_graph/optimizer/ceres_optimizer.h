@@ -28,7 +28,7 @@ class CeresOptimizer : public Optimizer {
  public:
   explicit CeresOptimizer(const ceres::Solver::Options& options);
 
-  ceres::Solver::Summary Solve(PoseGraphData* data) const final;
+  SolverStatus Solve(PoseGraphData* data) const final;
 
  private:
   const ceres::Problem::Options problem_options_;
