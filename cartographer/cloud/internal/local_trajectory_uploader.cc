@@ -208,13 +208,14 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
             client_channel_,
             async_grpc::CreateUnlimitedConstantDelayStrategy(
                 common::FromSeconds(1), kUnrecoverableStatusCodes));
-        LOG(INFO) << "Uploading";
-        if (!client.Write(batch_request)) {
-          // Unrecoverable error occurred.
-          batch_request.clear_sensor_data();
-          TryRecovery();
+        if (client.Write(batch_request)) {
+        	LOG(INFO) << "Uploaded " << batch_request.ByteSize() << " bytes of sensor data.";
+            batch_request.clear_sensor_data();
+        	continue;
         }
+        // Unrecoverable error occurred. Attempt recovery.
         batch_request.clear_sensor_data();
+        TryRecovery();
       }
     }
   }
@@ -252,7 +253,6 @@ bool LocalTrajectoryUploader::AddTrajectory(
   LOG(INFO) << "Created trajectory for client_id: " << client_id
             << " local trajectory_id: " << local_trajectory_id
             << " uplink trajectory_id: " << client.response().trajectory_id();
-
   CHECK_EQ(local_trajectory_id_to_trajectory_info_.count(local_trajectory_id),
            0);
   local_trajectory_id_to_trajectory_info_.emplace(
