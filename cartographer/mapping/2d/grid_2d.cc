@@ -25,8 +25,8 @@ float MinCorrespondenceCostFromProto(const proto::Grid2D& proto) {
   if (proto.min_correspondence_cost() == 0.f &&
       proto.max_correspondence_cost() == 0.f) {
     LOG(WARNING)
-        << "proto::Grid2D: max_correspondence_cost and min_correspondence_cost "
-           "are initialized with 0 indicating an older version of the "
+        << "proto::Grid2D: min_correspondence_cost "
+           "is initialized with 0 indicating an older version of the "
            "protobuf format. Loading default values.";
     return kMinCorrespondenceCost;
   } else {
@@ -38,8 +38,8 @@ float MaxCorrespondenceCostFromProto(const proto::Grid2D& proto) {
   if (proto.min_correspondence_cost() == 0.f &&
       proto.max_correspondence_cost() == 0.f) {
     LOG(WARNING)
-        << "proto::Grid2D: max_correspondence_cost and min_correspondence_cost "
-           "are initialized with 0 indicating an older version of the "
+        << "proto::Grid2D: max_correspondence_cost "
+           "is initialized with 0 indicating an older version of the "
            "protobuf format. Loading default values.";
     return kMaxCorrespondenceCost;
   } else {

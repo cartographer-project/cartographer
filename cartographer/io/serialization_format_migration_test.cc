@@ -83,7 +83,7 @@ class MigrationTest : public ::testing::Test {
 };
 
 TEST_F(MigrationTest, MigrationAddsHeaderAsFirstMessage) {
-  MigrateStreamFormatToVersion1(&reader_, writer_.get());
+  MigrateStreamFormatToVersion1(&reader_, writer_.get(), false);
   // We expect one message more than the original number of messages, because of
   // the added header.
   EXPECT_THAT(output_messages_, SizeIs(kNumOriginalMessages + 1));
@@ -94,7 +94,7 @@ TEST_F(MigrationTest, MigrationAddsHeaderAsFirstMessage) {
 }
 
 TEST_F(MigrationTest, SerializedDataOrderIsCorrect) {
-  MigrateStreamFormatToVersion1(&reader_, writer_.get());
+  MigrateStreamFormatToVersion1(&reader_, writer_.get(), false);
   EXPECT_THAT(output_messages_, SizeIs(kNumOriginalMessages + 1));
 
   std::vector<mapping::proto::SerializedData> serialized(

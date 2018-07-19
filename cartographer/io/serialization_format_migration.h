@@ -28,7 +28,8 @@ namespace io {
 // SerializedData*).
 void MigrateStreamFormatToVersion1(
     cartographer::io::ProtoStreamReaderInterface* const input,
-    cartographer::io::ProtoStreamWriterInterface* const output);
+    cartographer::io::ProtoStreamWriterInterface* const output,
+    bool uses_old_submap);
 
 }  // namespace io
 }  // namespace cartographer
