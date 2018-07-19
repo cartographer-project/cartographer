@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_POSE_GRAPH_POSE_GRAPH_DATA_H_
 
 #include "cartographer/pose_graph/constraint/constraint.h"
-#include "cartographer/pose_graph/nodes/nodes.h"
+#include "cartographer/pose_graph/node/nodes.h"
 
 namespace cartographer {
 namespace pose_graph {
