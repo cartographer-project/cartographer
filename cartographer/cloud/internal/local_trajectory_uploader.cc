@@ -209,9 +209,10 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
             async_grpc::CreateUnlimitedConstantDelayStrategy(
                 common::FromSeconds(1), kUnrecoverableStatusCodes));
         if (client.Write(batch_request)) {
-        	LOG(INFO) << "Uploaded " << batch_request.ByteSize() << " bytes of sensor data.";
-            batch_request.clear_sensor_data();
-        	continue;
+          LOG(INFO) << "Uploaded " << batch_request.ByteSize()
+                    << " bytes of sensor data.";
+          batch_request.clear_sensor_data();
+          continue;
         }
         // Unrecoverable error occurred. Attempt recovery.
         batch_request.clear_sensor_data();
