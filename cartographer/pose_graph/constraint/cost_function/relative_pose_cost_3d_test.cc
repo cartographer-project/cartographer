@@ -16,8 +16,7 @@
 
 #include "cartographer/pose_graph/constraint/cost_function/relative_pose_cost_3d.h"
 
-#include "cartographer/common/make_unique.h"
-#include "cartographer/mapping/internal/optimization/cost_functions/cost_helpers.h"
+#include "cartographer/pose_graph/internal/testing/test_helpers.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 
@@ -27,54 +26,57 @@ namespace {
 
 using ::google::protobuf::TextFormat;
 using ::testing::ElementsAre;
+using testing::EqualsProto;
 
 using PositionType = std::array<double, 3>;
 using RotationType = std::array<double, 4>;
 using ResidualType = std::array<double, 6>;
-using ParameterBlockType = std::array<const double*, 4>;
 
 ::testing::Matcher<double> Near(double expected) {
   constexpr double kPrecision = 1e-05;
   return ::testing::DoubleNear(expected, kPrecision);
 }
 
-TEST(RelativePoseCost3DTest, EvaluateRelativePoseCost3D) {
-  constexpr char kParameters[] = R"PROTO(
-    first_t_second {
-      translation: { x: 1 y: 2 z: 3 }
-      rotation: { x: 0 y: 0.3 z: 0.1 w: 0.2 }
-    }
-    translation_weight: 1
-    rotation_weight: 10
-  )PROTO";
+constexpr char kParameters[] = R"PROTO(
+  first_t_second {
+    translation: { x: 1 y: 2 z: 3 }
+    rotation: { x: 0 y: 0.3 z: 0.1 w: 0.2 }
+  }
+  translation_weight: 1
+  rotation_weight: 10
+)PROTO";
+
+TEST(RelativePoseCost3DTest, SerializesCorrectly) {
+  proto::RelativePose3D::Parameters relative_pose_parameters;
+  ASSERT_TRUE(
+      TextFormat::ParseFromString(kParameters, &relative_pose_parameters));
+  RelativePoseCost3D relative_pose_cost_3d(relative_pose_parameters);
+  const auto actual_proto = relative_pose_cost_3d.ToProto();
+  EXPECT_THAT(actual_proto, EqualsProto(kParameters));
+}
+
+TEST(RelativePoseCost3DTest, EvaluatesCorrectly) {
   proto::RelativePose3D::Parameters relative_pose_parameters;
   ASSERT_TRUE(
       TextFormat::ParseFromString(kParameters, &relative_pose_parameters));
   RelativePoseCost3D relative_pose_cost_3d(relative_pose_parameters);
 
-  // Test with the same pose.
   const PositionType position1{{1., 1., 1.}};
   const RotationType rotation1{{1., 1., 1., 1.}};
-  const ParameterBlockType parameter_blocks{
-      {position1.data(), rotation1.data(), position1.data(), rotation1.data()}};
   ResidualType residuals;
-  relative_pose_cost_3d.GetCeresFunction()->Evaluate(
-      parameter_blocks.data(), residuals.data(), /*jacobians=*/nullptr);
-
+  EXPECT_TRUE(relative_pose_cost_3d(position1.data(), rotation1.data(),
+                                    position1.data(), rotation1.data(),
+                                    residuals.data()));
   EXPECT_THAT(residuals, ElementsAre(Near(1), Near(2), Near(3), Near(0),
                                      Near(19.1037), Near(6.3679)));
 
-  // Test with a different second pose.
   const PositionType position2{{0., -1., -2.}};
   const RotationType rotation2{{.1, .2, .3, .4}};
-  const ParameterBlockType parameter_blocks2{
-      {position1.data(), rotation1.data(), position2.data(), rotation2.data()}};
-  ResidualType residuals2;
-  relative_pose_cost_3d.GetCeresFunction()->Evaluate(
-      parameter_blocks2.data(), residuals2.data(), /*jacobians=*/nullptr);
-
-  EXPECT_THAT(residuals2, ElementsAre(Near(6), Near(8), Near(-2), Near(1.03544),
-                                      Near(11.38984), Near(3.10632)));
+  EXPECT_TRUE(relative_pose_cost_3d(position1.data(), rotation1.data(),
+                                    position2.data(), rotation2.data(),
+                                    residuals.data()));
+  EXPECT_THAT(residuals, ElementsAre(Near(6), Near(8), Near(-2), Near(1.03544),
+                                     Near(11.38984), Near(3.10632)));
 }
 
 }  // namespace

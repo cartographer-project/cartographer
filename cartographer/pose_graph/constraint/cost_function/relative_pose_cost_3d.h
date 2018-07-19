@@ -17,38 +17,38 @@
 #ifndef CARTOGRAPHER_RELATIVE_POSE_COST_3D_H
 #define CARTOGRAPHER_RELATIVE_POSE_COST_3D_H
 
+#include "cartographer/mapping/internal/optimization/cost_functions/cost_helpers.h"
 #include "cartographer/pose_graph/proto/cost_function.pb.h"
 #include "cartographer/transform/transform.h"
-#include "ceres/sized_cost_function.h"
 
 namespace cartographer {
 namespace pose_graph {
 
+// Provides cost function for relative pose and de/serialization methods.
 class RelativePoseCost3D {
  public:
-  using CeresFunction =
-      ceres::SizedCostFunction<6 /* number of residuals */,
-                               3 /* translation variables first pose */,
-                               4 /* rotation variables first pose*/,
-                               3 /* translation variables second pose */,
-                               4 /* rotation variables second pose*/>;
-
   explicit RelativePoseCost3D(
       const proto::RelativePose3D::Parameters& parameters);
 
-  const CeresFunction* GetCeresFunction() { return function_.get(); }
-
   proto::RelativePose3D::Parameters ToProto() const;
 
-  double GetTranslationWeight() const { return translation_weight_; }
-  double GetRotationWeight() const { return rotation_weight_; }
-  transform::Rigid3d GetFirstTSecond() const { return first_T_second_; }
+  template <typename T>
+  bool operator()(const T* const c_i_translation, const T* const c_i_rotation,
+                  const T* const c_j_translation, const T* const c_j_rotation,
+                  T* const error_out) const {
+    const std::array<T, 6> error = mapping::optimization::ScaleError(
+        mapping::optimization::ComputeUnscaledError(
+            first_T_second_, c_i_rotation, c_i_translation, c_j_rotation,
+            c_j_translation),
+        translation_weight_, rotation_weight_);
+    std::copy(std::begin(error), std::end(error), error_out);
+    return true;
+  }
 
  private:
   const double translation_weight_;
   const double rotation_weight_;
   const transform::Rigid3d first_T_second_;
-  const std::unique_ptr<CeresFunction> function_;
 };
 
 }  // namespace pose_graph
