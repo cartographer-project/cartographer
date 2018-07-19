@@ -38,7 +38,8 @@ RelativePoseConstraint2D::RelativePoseConstraint2D(
     : Constraint(id),
       first_(proto.first()),
       second_(proto.second()),
-      ceres_cost_(proto.parameters()) {}
+      ceres_cost_(common::make_unique<RelativePoseCost2D>(proto.parameters())) {
+}
 
 void RelativePoseConstraint2D::AddToOptimizer(Nodes* nodes,
                                               ceres::Problem* problem) const {
@@ -70,7 +71,7 @@ void RelativePoseConstraint2D::AddToOptimizer(Nodes* nodes,
   if (second_node->constant()) {
     problem->SetParameterBlockConstant(second_pose->data());
   }
-  problem->AddResidualBlock(&ceres_cost_, nullptr /* loss function */,
+  problem->AddResidualBlock(ceres_cost_.get(), nullptr /* loss function */,
                             first_pose->data(), second_pose->data());
 }
 
@@ -79,7 +80,7 @@ proto::CostFunction RelativePoseConstraint2D::ToCostFunctionProto() const {
   auto* relative_pose_2d = cost_function.mutable_relative_pose_2d();
   *relative_pose_2d->mutable_first() = first_.ToProto();
   *relative_pose_2d->mutable_second() = second_.ToProto();
-  *relative_pose_2d->mutable_parameters() = ceres_cost_.ToProto();
+  *relative_pose_2d->mutable_parameters() = ceres_cost_->ToProto();
   return cost_function;
 }
 
