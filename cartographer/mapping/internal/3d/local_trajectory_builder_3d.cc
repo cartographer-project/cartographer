@@ -124,14 +124,14 @@ std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
 LocalTrajectoryBuilder3D::AddRangeData(
     const std::string& sensor_id,
     const sensor::TimedPointCloudData& unsynchronized_data) {
-  auto synchronized_data =
+  const auto synchronized_data =
       range_data_collator_.AddRangeData(sensor_id, unsynchronized_data);
   if (synchronized_data.ranges.empty()) {
     LOG(INFO) << "Range data collator filling buffer.";
     return nullptr;
   }
 
-  const common::Time& time = synchronized_data.time;
+  const common::Time& current_sensor_time = synchronized_data.time;
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator with our first IMU message, we
     // cannot compute the orientation of the rangefinder.
@@ -142,7 +142,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
   CHECK(!synchronized_data.ranges.empty());
   CHECK_LE(synchronized_data.ranges.back().point_time[3], 0.f);
   const common::Time time_first_point =
-      time +
+      current_sensor_time +
       common::FromSeconds(synchronized_data.ranges.front().point_time[3]);
   if (time_first_point < extrapolator_->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
@@ -199,7 +199,6 @@ LocalTrajectoryBuilder3D::AddRangeData(
   ++num_accumulated_;
 
   if (num_accumulated_ >= options_.num_accumulated_range_data()) {
-    const common::Time current_sensor_time = synchronized_data.time;
     common::optional<common::Duration> sensor_duration;
     if (last_sensor_time_.has_value()) {
       sensor_duration = current_sensor_time - last_sensor_time_.value();
