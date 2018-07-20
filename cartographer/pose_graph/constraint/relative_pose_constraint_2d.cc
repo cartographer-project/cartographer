@@ -23,13 +23,15 @@ namespace cartographer {
 namespace pose_graph {
 
 RelativePoseConstraint2D::RelativePoseConstraint2D(
-    const ConstraintId& id, const proto::RelativePose2D& proto)
-    : Constraint(id),
+    const ConstraintId& id, const proto::LossFunction& loss_function_proto,
+    const proto::RelativePose2D& proto)
+    : Constraint(id, loss_function_proto),
       first_(proto.first()),
       second_(proto.second()),
       ceres_cost_(common::make_unique<RelativePoseCost2D>(proto.parameters())) {
 }
 
+// TODO(pifon): Add a test.
 void RelativePoseConstraint2D::AddToOptimizer(Nodes* nodes,
                                               ceres::Problem* problem) const {
   auto first_node = common::FindOrNull(nodes->pose_2d_nodes, first_);
@@ -60,8 +62,8 @@ void RelativePoseConstraint2D::AddToOptimizer(Nodes* nodes,
   if (second_node->constant()) {
     problem->SetParameterBlockConstant(second_pose->data());
   }
-  problem->AddResidualBlock(ceres_cost_.get(), nullptr /* loss function */,
-                            first_pose->data(), second_pose->data());
+  problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(), first_pose->data(),
+                            second_pose->data());
 }
 
 proto::CostFunction RelativePoseConstraint2D::ToCostFunctionProto() const {

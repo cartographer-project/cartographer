@@ -199,6 +199,10 @@ class PoseGraph3D : public PoseGraph {
   void HandleWorkQueue(const constraints::ConstraintBuilder3D::Result& result)
       EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
 
+  // Process pending tasks in the work queue on the calling thread, until the
+  // queue is either empty or an optimization is required.
+  void DrainWorkQueue() EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
+
   // Runs the optimization. Callers have to make sure, that there is only one
   // optimization being run at a time.
   void RunOptimization() EXCLUDES(mutex_);
@@ -245,6 +249,9 @@ class PoseGraph3D : public PoseGraph {
   // Current optimization problem.
   std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem_;
   constraints::ConstraintBuilder3D constraint_builder_;
+
+  // Thread pool used for handling the work queue.
+  common::ThreadPool* const thread_pool_;
 
   // List of all trimmers to consult when optimizations finish.
   std::vector<std::unique_ptr<PoseGraphTrimmer>> trimmers_ GUARDED_BY(mutex_);
