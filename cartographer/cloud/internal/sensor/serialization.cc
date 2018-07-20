@@ -15,7 +15,6 @@
  */
 
 #include "cartographer/cloud/internal/sensor/serialization.h"
-#include "cartographer/cartographer/mapping/submaps.h"
 
 namespace cartographer {
 namespace cloud {
@@ -92,11 +91,10 @@ void CreateSensorDataForLocalSlamResult(
       mapping::ToProto(*insertion_result.constant_data);
   for (const auto& insertion_submap : insertion_result.insertion_submaps) {
     // We only send the probability grid up if the submap is finished.
-    ::cartographer::mapping::proto::Submap submap =
-        insertion_submap->ToProto(insertion_submap->finished());
-    submap.mutable_submap_id()->set_trajectory_id(trajectory_id);
-    submap.mutable_submap_id()->set_submap_index(starting_submap_index);
-    proto->mutable_local_slam_result_data()->add_submap(std::move(submap);
+    auto* submap = proto->mutable_local_slam_result_data()->add_submaps();
+    *submap = insertion_submap->ToProto(insertion_submap->finished());
+    submap->mutable_submap_id()->set_trajectory_id(trajectory_id);
+    submap->mutable_submap_id()->set_submap_index(starting_submap_index);
     ++starting_submap_index;
   }
 }
