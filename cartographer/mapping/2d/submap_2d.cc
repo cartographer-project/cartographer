@@ -82,9 +82,10 @@ Submap2D::Submap2D(const proto::Submap2D& proto,
   set_finished(proto.finished());
 }
 
-void Submap2D::ToProto(proto::Submap* const proto,
-                       bool include_probability_grid_data) const {
-  auto* const submap_2d = proto->mutable_submap_2d();
+proto::Submap Submap2D::ToProto(
+    const bool include_probability_grid_data) const {
+  proto::Submap proto;
+  auto* const submap_2d = proto.mutable_submap_2d();
   *submap_2d->mutable_local_pose() = transform::ToProto(local_pose());
   submap_2d->set_num_range_data(num_range_data());
   submap_2d->set_finished(finished());
@@ -92,6 +93,7 @@ void Submap2D::ToProto(proto::Submap* const proto,
     CHECK(grid_);
     *submap_2d->mutable_grid() = grid_->ToProto();
   }
+  return proto;
 }
 
 void Submap2D::UpdateFromProto(const proto::Submap& proto) {
