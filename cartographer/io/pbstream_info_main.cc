@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <fstream>
-
 #include "cartographer/io/proto_stream.h"
 #include "cartographer/io/proto_stream_deserializer.h"
 #include "gflags/gflags.h"
@@ -50,67 +48,50 @@ void Run(const std::string& pbstream_filename, bool all_debug_strings) {
     LOG(INFO) << "Pose graph: " << pose_graph.DebugString();
   }
 
-  std::map<std::string, int> data_counts;
-  data_counts["submap_2d"];
-  data_counts["submap_2d_grid"];
-  data_counts["submap_3d"];
-  data_counts["submap_3d_high_resolution_hybrid_grid"];
-  data_counts["node"];
-  data_counts["trajectory_data"];
-  data_counts["imu_data"];
-  data_counts["odometry_data"];
-  data_counts["fixed_frame_pose_data"];
-  data_counts["landmark_data"];
+  const std::unordered_map<proto::SerializedData::DataCase, std::string>
+      data_case_to_name = {
+          {proto::SerializedData::kSubmap, "submap"},
+          {proto::SerializedData::kNode, "node"},
+          {proto::SerializedData::kTrajectoryData, "trajectory_data"},
+          {proto::SerializedData::kImuData, "imu_data"},
+          {proto::SerializedData::kOdometryData, "odometry_data"},
+          {proto::SerializedData::kFixedFramePoseData, "fixed_frame_pose_data"},
+          {proto::SerializedData::kLandmarkData, "landmark_data"},
+      };
+  // Initialize so zero counts of these are also reported.
+  std::unordered_map<std::string, int> data_counts = {
+      {"submap_2d", 0},
+      {"submap_2d_grid", 0},
+      {"submap_3d", 0},
+      {"submap_3d_high_resolution_hybrid_grid", 0},
+  };
   proto::SerializedData proto;
   while (deserializer.ReadNextSerializedData(&proto)) {
     if (all_debug_strings) {
       LOG(INFO) << "Serialized data: " << proto.DebugString();
     }
-    switch (proto.data_case()) {
-      case proto::SerializedData::kSubmap: {
-        if (proto.mutable_submap()->has_submap_2d()) {
-          data_counts["submap_2d"]++;
-          if (proto.mutable_submap()->mutable_submap_2d()->has_grid()) {
-            data_counts["submap_2d_grid"]++;
-          }
+    auto it = data_case_to_name.find(proto.data_case());
+    if (it == data_case_to_name.end()) {
+      LOG(WARNING) << "Skipping unknown message type in stream: "
+                   << proto.GetTypeName();
+    }
+    const std::string& data_name = it->second;
+    ++data_counts[data_name];
+    if (proto.data_case() == proto::SerializedData::kSubmap) {
+      if (proto.mutable_submap()->has_submap_2d()) {
+        ++data_counts["submap_2d"];
+        if (proto.mutable_submap()->mutable_submap_2d()->has_grid()) {
+          ++data_counts["submap_2d_grid"];
         }
-        if (proto.mutable_submap()->has_submap_3d()) {
-          data_counts["submap_3d"]++;
-          if (proto.mutable_submap()
-                  ->mutable_submap_3d()
-                  ->has_high_resolution_hybrid_grid()) {
-            data_counts["submap_3d_high_resolution_hybrid_grid"]++;
-          }
+      }
+      if (proto.mutable_submap()->has_submap_3d()) {
+        ++data_counts["submap_3d"];
+        if (proto.mutable_submap()
+                ->mutable_submap_3d()
+                ->has_high_resolution_hybrid_grid()) {
+          ++data_counts["submap_3d_high_resolution_hybrid_grid"];
         }
-        break;
       }
-      case proto::SerializedData::kNode: {
-        data_counts["node"]++;
-        break;
-      }
-      case proto::SerializedData::kTrajectoryData: {
-        data_counts["trajectory_data"]++;
-        break;
-      }
-      case proto::SerializedData::kImuData: {
-        data_counts["imu_data"]++;
-        break;
-      }
-      case proto::SerializedData::kOdometryData: {
-        data_counts["odometry_data"]++;
-        break;
-      }
-      case proto::SerializedData::kFixedFramePoseData: {
-        data_counts["fixed_frame_pose_data"]++;
-        break;
-      }
-      case proto::SerializedData::kLandmarkData: {
-        data_counts["landmark_data"]++;
-        break;
-      }
-      default:
-        LOG(WARNING) << "Skipping unknown message type in stream: "
-                     << proto.GetTypeName();
     }
   }
 
