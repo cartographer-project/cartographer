@@ -17,25 +17,19 @@
 #include "cartographer/pose_graph/constraint/cost_function/relative_pose_cost_3d.h"
 
 #include "cartographer/pose_graph/internal/testing/test_helpers.h"
-#include "gmock/gmock.h"
-#include "google/protobuf/text_format.h"
 
 namespace cartographer {
 namespace pose_graph {
 namespace {
 
-using ::google::protobuf::TextFormat;
 using ::testing::ElementsAre;
 using testing::EqualsProto;
+using testing::Near;
+using testing::ParseProto;
 
 using PositionType = std::array<double, 3>;
 using RotationType = std::array<double, 4>;
 using ResidualType = std::array<double, 6>;
-
-::testing::Matcher<double> Near(double expected) {
-  constexpr double kPrecision = 1e-05;
-  return ::testing::DoubleNear(expected, kPrecision);
-}
 
 constexpr char kParameters[] = R"PROTO(
   first_t_second {
@@ -47,18 +41,16 @@ constexpr char kParameters[] = R"PROTO(
 )PROTO";
 
 TEST(RelativePoseCost3DTest, SerializesCorrectly) {
-  proto::RelativePose3D::Parameters relative_pose_parameters;
-  ASSERT_TRUE(
-      TextFormat::ParseFromString(kParameters, &relative_pose_parameters));
+  auto relative_pose_parameters =
+      ParseProto<proto::RelativePose3D::Parameters>(kParameters);
   RelativePoseCost3D relative_pose_cost_3d(relative_pose_parameters);
   const auto actual_proto = relative_pose_cost_3d.ToProto();
   EXPECT_THAT(actual_proto, EqualsProto(kParameters));
 }
 
 TEST(RelativePoseCost3DTest, EvaluatesCorrectly) {
-  proto::RelativePose3D::Parameters relative_pose_parameters;
-  ASSERT_TRUE(
-      TextFormat::ParseFromString(kParameters, &relative_pose_parameters));
+  auto relative_pose_parameters =
+      ParseProto<proto::RelativePose3D::Parameters>(kParameters);
   RelativePoseCost3D relative_pose_cost_3d(relative_pose_parameters);
 
   const PositionType kPosition1{{1., 1., 1.}};
