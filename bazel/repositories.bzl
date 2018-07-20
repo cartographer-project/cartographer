@@ -233,7 +233,13 @@ def cartographer_repositories():
           "https://github.com/googlecartographer/async_grpc/archive/ed8e3b31bdd46a74f0c47b4c53a47e0c0f21141b.tar.gz",
       ],
   )
-  
+  _maybe(native.http_archive,
+      name = "com_google_absl",
+      sha256 = "387cf016ab1ab8530d1cea8975276ce8d8bff355133776129bdc400d05519eb6",
+      strip_prefix = "abseil-cpp-44aa275286baf97fc13529aca547a88b180beb08",
+      urls = ["https://github.com/abseil/abseil-cpp/archive/44aa275286baf97fc13529aca547a88b180beb08.tar.gz"],
+  )
+
   # TODO(rodrigoq): remove these binds once grpc#14140 has been merged, as well
   # as removing `use_external` in cartographer_grpc/BUILD.bazel.
   # https://github.com/grpc/grpc/pull/14140
