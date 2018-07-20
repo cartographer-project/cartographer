@@ -26,6 +26,7 @@ namespace pose_graph {
 class RelativePoseConstraint2D : public Constraint {
  public:
   RelativePoseConstraint2D(const ConstraintId& id,
+                           const proto::LossFunction& loss_function_proto,
                            const proto::RelativePose2D& proto);
 
   void AddToOptimizer(Nodes* nodes, ceres::Problem* problem) const final;
