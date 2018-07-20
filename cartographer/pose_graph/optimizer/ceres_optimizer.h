@@ -14,18 +14,28 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/node.h"
+#ifndef CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_CERES_OPTIMIZER_H_
+#define CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_CERES_OPTIMIZER_H_
+
+#include "cartographer/pose_graph/optimizer/optimizer.h"
+#include "ceres/problem.h"
+#include "ceres/solver.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-proto::Node Node::ToProto() const {
-  proto::Node node;
-  node.set_constant(constant_);
-  node.mutable_id()->set_object_id(node_id_);
-  *node.mutable_parameters() = ToParametersProto();
-  return node;
-}
+class CeresOptimizer : public Optimizer {
+ public:
+  explicit CeresOptimizer(const ceres::Solver::Options& options);
+
+  SolverStatus Solve(PoseGraphData* data) const final;
+
+ private:
+  const ceres::Problem::Options problem_options_;
+  const ceres::Solver::Options solver_options_;
+};
 
 }  // namespace pose_graph
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_CERES_OPTIMIZER_H_

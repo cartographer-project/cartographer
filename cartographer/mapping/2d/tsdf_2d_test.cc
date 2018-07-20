@@ -18,6 +18,7 @@
 
 #include <random>
 
+#include "cartographer/mapping/value_conversion_tables.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -45,21 +46,24 @@ TEST(TSDF2DTest, ProtoConstructor) {
   proto.set_max_correspondence_cost(1.0);
   proto.set_min_correspondence_cost(-1.0);
 
-  TSDF2D grid(proto);
+  ValueConversionTables conversion_tables;
+  TSDF2D grid(proto, &conversion_tables);
   EXPECT_EQ(proto.limits().DebugString(), ToProto(grid.limits()).DebugString());
 }
 
 TEST(TSDF2DTest, ToProto) {
+  ValueConversionTables conversion_tables;
   TSDF2D tsdf(MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)), 1.0f,
-              10.0f);
+              10.0f, &conversion_tables);
 
   const auto proto = tsdf.ToProto();
   EXPECT_EQ(ToProto(tsdf.limits()).DebugString(), proto.limits().DebugString());
 }
 
 TEST(TSDF2DTest, GetCellIndex) {
+  ValueConversionTables conversion_tables;
   TSDF2D tsdf(MapLimits(2., Eigen::Vector2d(8., 14.), CellLimits(14, 8)), 1.f,
-              10.f);
+              10.f, &conversion_tables);
 
   const MapLimits& limits = tsdf.limits();
   const CellLimits& cell_limits = limits.cell_limits();
@@ -90,8 +94,9 @@ TEST(TSDF2DTest, GetCellIndex) {
 TEST(TSDF2DTest, WriteRead) {
   const float truncation_distance = 1.f;
   const float max_weight = 10.f;
+  ValueConversionTables conversion_tables;
   TSDF2D tsdf(MapLimits(1., Eigen::Vector2d(1., 2.), CellLimits(2, 2)),
-              truncation_distance, max_weight);
+              truncation_distance, max_weight, &conversion_tables);
 
   const MapLimits& limits = tsdf.limits();
   EXPECT_EQ(1., limits.max().x());
@@ -136,8 +141,9 @@ TEST(TSDF2DTest, CorrectCropping) {
   std::uniform_real_distribution<float> tsdf_distribution(-truncation_distance,
                                                           truncation_distance);
   std::uniform_real_distribution<float> weight_distribution(0.f, max_weight);
+  ValueConversionTables conversion_tables;
   TSDF2D tsdf(MapLimits(0.05, Eigen::Vector2d(10., 10.), CellLimits(400, 400)),
-              truncation_distance, max_weight);
+              truncation_distance, max_weight, &conversion_tables);
   for (const Array2i& xy_index :
        XYIndexRangeIterator(Array2i(100, 100), Array2i(299, 299))) {
     tsdf.SetCell(xy_index, tsdf_distribution(rng), weight_distribution(rng));

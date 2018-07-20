@@ -29,8 +29,8 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-void AddLandmarkDataHandler::OnRequest(
-    const proto::AddLandmarkDataRequest &request) {
+void AddLandmarkDataHandler::OnSensorData(
+    const proto::AddLandmarkDataRequest& request) {
   // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
   // thread-safe. Therefore it suffices to get an unsynchronized reference to
   // the 'MapBuilderContext'.
@@ -51,10 +51,6 @@ void AddLandmarkDataHandler::OnRequest(
         ->local_trajectory_uploader()
         ->EnqueueSensorData(std::move(sensor_data));
   }
-}
-
-void AddLandmarkDataHandler::OnReadsDone() {
-  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers

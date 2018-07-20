@@ -19,6 +19,34 @@
 
 namespace cartographer {
 namespace mapping {
+namespace {
+
+float MinCorrespondenceCostFromProto(const proto::Grid2D& proto) {
+  if (proto.min_correspondence_cost() == 0.f &&
+      proto.max_correspondence_cost() == 0.f) {
+    LOG(WARNING)
+        << "proto::Grid2D: max_correspondence_cost and min_correspondence_cost "
+           "are initialized with 0 indicating an older version of the "
+           "protobuf format. Loading default values.";
+    return kMinCorrespondenceCost;
+  } else {
+    return proto.min_correspondence_cost();
+  }
+}
+
+float MaxCorrespondenceCostFromProto(const proto::Grid2D& proto) {
+  if (proto.min_correspondence_cost() == 0.f &&
+      proto.max_correspondence_cost() == 0.f) {
+    LOG(WARNING)
+        << "proto::Grid2D: max_correspondence_cost and min_correspondence_cost "
+           "are initialized with 0 indicating an older version of the "
+           "protobuf format. Loading default values.";
+    return kMaxCorrespondenceCost;
+  } else {
+    return proto.max_correspondence_cost();
+  }
+}
+}  // namespace
 
 proto::GridOptions2D CreateGridOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary) {
@@ -34,18 +62,30 @@ proto::GridOptions2D CreateGridOptions2D(
 }
 
 Grid2D::Grid2D(const MapLimits& limits, float min_correspondence_cost,
-               float max_correspondence_cost)
+               float max_correspondence_cost,
+               ValueConversionTables* conversion_tables)
     : limits_(limits),
       correspondence_cost_cells_(
           limits_.cell_limits().num_x_cells * limits_.cell_limits().num_y_cells,
           kUnknownCorrespondenceValue),
       min_correspondence_cost_(min_correspondence_cost),
-      max_correspondence_cost_(max_correspondence_cost) {
+      max_correspondence_cost_(max_correspondence_cost),
+      value_to_correspondence_cost_table_(conversion_tables->GetConversionTable(
+          max_correspondence_cost, min_correspondence_cost,
+          max_correspondence_cost)) {
   CHECK_LT(min_correspondence_cost_, max_correspondence_cost_);
 }
 
-Grid2D::Grid2D(const proto::Grid2D& proto)
-    : limits_(proto.limits()), correspondence_cost_cells_() {
+Grid2D::Grid2D(const proto::Grid2D& proto,
+               ValueConversionTables* conversion_tables)
+    : limits_(proto.limits()),
+      correspondence_cost_cells_(),
+      min_correspondence_cost_(MinCorrespondenceCostFromProto(proto)),
+      max_correspondence_cost_(MaxCorrespondenceCostFromProto(proto)),
+      value_to_correspondence_cost_table_(conversion_tables->GetConversionTable(
+          max_correspondence_cost_, min_correspondence_cost_,
+          max_correspondence_cost_)) {
+  CHECK_LT(min_correspondence_cost_, max_correspondence_cost_);
   if (proto.has_known_cells_box()) {
     const auto& box = proto.known_cells_box();
     known_cells_box_ =
@@ -57,19 +97,6 @@ Grid2D::Grid2D(const proto::Grid2D& proto)
     CHECK_LE(cell, std::numeric_limits<uint16>::max());
     correspondence_cost_cells_.push_back(cell);
   }
-  if (proto.min_correspondence_cost() == 0.f &&
-      proto.max_correspondence_cost() == 0.f) {
-    LOG(WARNING)
-        << "proto::Grid2D: max_correspondence_cost and min_correspondence_cost "
-           "are initialized with 0 indicating an older version of the "
-           "protobuf format. Loading default values.";
-    min_correspondence_cost_ = kMinCorrespondenceCost;
-    max_correspondence_cost_ = kMaxCorrespondenceCost;
-  } else {
-    min_correspondence_cost_ = proto.min_correspondence_cost();
-    max_correspondence_cost_ = proto.max_correspondence_cost();
-  }
-  CHECK_LT(min_correspondence_cost_, max_correspondence_cost_);
 }
 
 // Finishes the update sequence.
@@ -84,9 +111,9 @@ void Grid2D::FinishUpdate() {
 
 // Returns the correspondence cost of the cell with 'cell_index'.
 float Grid2D::GetCorrespondenceCost(const Eigen::Array2i& cell_index) const {
-  if (!limits().Contains(cell_index)) return kMaxCorrespondenceCost;
-  return ValueToCorrespondenceCost(
-      correspondence_cost_cells()[ToFlatIndex(cell_index)]);
+  if (!limits().Contains(cell_index)) return max_correspondence_cost_;
+  return (*value_to_correspondence_cost_table_)
+      [correspondence_cost_cells()[ToFlatIndex(cell_index)]];
 }
 
 // Returns true if the correspondence cost at the specified index is known.

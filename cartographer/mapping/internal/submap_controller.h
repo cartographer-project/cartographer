@@ -36,7 +36,9 @@ class SubmapController {
     auto submap_it = unfinished_submaps_.find(submap_id);
     if (submap_it == unfinished_submaps_.end()) {
       submap_ptr = CreateSubmap(proto);
-      unfinished_submaps_.Insert(submap_id, submap_ptr);
+      if (submap_ptr) {
+        unfinished_submaps_.Insert(submap_id, submap_ptr);
+      }
       return submap_ptr;
     }
     submap_ptr = submap_it->data;
@@ -60,6 +62,8 @@ class SubmapController {
 
   mapping::MapById<mapping::SubmapId, std::shared_ptr<SubmapType>>
       unfinished_submaps_;
+
+  ValueConversionTables conversion_tables_;
 };
 
 template <>

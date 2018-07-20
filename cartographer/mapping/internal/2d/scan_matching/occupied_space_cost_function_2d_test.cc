@@ -31,8 +31,9 @@ using ::testing::DoubleEq;
 using ::testing::ElementsAre;
 
 TEST(OccupiedSpaceCostFunction2DTest, SmokeTest) {
-  ProbabilityGrid grid(
-      MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)));
+  ValueConversionTables conversion_tables;
+  ProbabilityGrid grid(MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)),
+                       &conversion_tables);
   sensor::PointCloud point_cloud = {Eigen::Vector3f{0.f, 0.f, 0.f}};
   ceres::Problem problem;
   std::unique_ptr<ceres::CostFunction> cost_function(

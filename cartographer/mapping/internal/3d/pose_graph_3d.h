@@ -162,10 +162,17 @@ class PoseGraph3D : public PoseGraph {
 
   // Handles a new work item.
   void AddWorkItem(const std::function<WorkItem::Result()>& work_item)
-      REQUIRES(mutex_);
+      EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);
+
+  // Appends the new node and submap (if needed) to the internal data stuctures.
+  NodeId AppendNode(
+      std::shared_ptr<const TrajectoryNode::Data> constant_data,
+      int trajectory_id,
+      const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps,
+      const transform::Rigid3d& optimized_pose) EXCLUDES(mutex_);
 
   // Grows the optimization problem to have an entry for every element of
   // 'insertion_submaps'. Returns the IDs for the 'insertion_submaps'.
@@ -178,15 +185,11 @@ class PoseGraph3D : public PoseGraph {
   WorkItem::Result ComputeConstraintsForNode(
       const NodeId& node_id,
       std::vector<std::shared_ptr<const Submap3D>> insertion_submaps,
-      bool newly_finished_submap) REQUIRES(mutex_);
+      bool newly_finished_submap) EXCLUDES(mutex_);
 
   // Computes constraints for a node and submap pair.
   void ComputeConstraint(const NodeId& node_id, const SubmapId& submap_id)
-      REQUIRES(mutex_);
-
-  // Adds constraints for older nodes whenever a new submap is finished.
-  void ComputeConstraintsForOldNodes(const SubmapId& submap_id)
-      REQUIRES(mutex_);
+      EXCLUDES(mutex_);
 
   // Deletes trajectories waiting for deletion. Must not be called during
   // constraint search.
@@ -194,7 +197,7 @@ class PoseGraph3D : public PoseGraph {
 
   // Runs the optimization, executes the trimmers and processes the work queue.
   void HandleWorkQueue(const constraints::ConstraintBuilder3D::Result& result)
-      REQUIRES(mutex_);
+      EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
 
   // Runs the optimization. Callers have to make sure, that there is only one
   // optimization being run at a time.
@@ -226,10 +229,11 @@ class PoseGraph3D : public PoseGraph {
   const proto::PoseGraphOptions options_;
   GlobalSlamOptimizationCallback global_slam_optimization_callback_;
   mutable common::Mutex mutex_;
+  common::Mutex work_queue_mutex_;
 
   // If it exists, further work items must be added to this queue, and will be
   // considered later.
-  std::unique_ptr<WorkQueue> work_queue_ GUARDED_BY(mutex_);
+  std::unique_ptr<WorkQueue> work_queue_ GUARDED_BY(work_queue_mutex_);
 
   // We globally localize a fraction of the nodes from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>
@@ -240,7 +244,7 @@ class PoseGraph3D : public PoseGraph {
 
   // Current optimization problem.
   std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem_;
-  constraints::ConstraintBuilder3D constraint_builder_ GUARDED_BY(mutex_);
+  constraints::ConstraintBuilder3D constraint_builder_;
 
   // List of all trimmers to consult when optimizations finish.
   std::vector<std::unique_ptr<PoseGraphTrimmer>> trimmers_ GUARDED_BY(mutex_);

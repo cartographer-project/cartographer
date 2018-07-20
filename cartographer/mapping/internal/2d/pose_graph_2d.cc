@@ -547,12 +547,12 @@ void PoseGraph2D::AddSubmapFromProto(
 
   const SubmapId submap_id = {submap.submap_id().trajectory_id(),
                               submap.submap_id().submap_index()};
-  std::shared_ptr<const Submap2D> submap_ptr =
-      std::make_shared<const Submap2D>(submap.submap_2d());
-  const transform::Rigid2d global_submap_pose_2d =
-      transform::Project2D(global_submap_pose);
 
   common::MutexLocker locker(&mutex_);
+  std::shared_ptr<const Submap2D> submap_ptr =
+      std::make_shared<const Submap2D>(submap.submap_2d(), &conversion_tables_);
+  const transform::Rigid2d global_submap_pose_2d =
+      transform::Project2D(global_submap_pose);
   AddTrajectoryIfNeeded(submap_id.trajectory_id);
   if (!CanAddWorkItemModifying(submap_id.trajectory_id)) return;
   data_.submap_data.Insert(submap_id, InternalSubmapData());
@@ -560,11 +560,14 @@ void PoseGraph2D::AddSubmapFromProto(
   // Immediately show the submap at the 'global_submap_pose'.
   data_.global_submap_poses_2d.Insert(
       submap_id, optimization::SubmapSpec2D{global_submap_pose_2d});
-  AddWorkItem([this, submap_id, global_submap_pose_2d]() REQUIRES(mutex_) {
-    data_.submap_data.at(submap_id).state = SubmapState::kFinished;
-    optimization_problem_->InsertSubmap(submap_id, global_submap_pose_2d);
-    return WorkItem::Result::kDoNotRunOptimization;
-  });
+  bool finished = submap.submap_2d().finished();
+  AddWorkItem(
+      [this, submap_id, global_submap_pose_2d, finished]() REQUIRES(mutex_) {
+        data_.submap_data.at(submap_id).state =
+            finished ? SubmapState::kFinished : SubmapState::kActive;
+        optimization_problem_->InsertSubmap(submap_id, global_submap_pose_2d);
+        return WorkItem::Result::kDoNotRunOptimization;
+      });
 }
 
 void PoseGraph2D::AddNodeFromProto(const transform::Rigid3d& global_pose,

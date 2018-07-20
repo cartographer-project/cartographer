@@ -168,7 +168,10 @@ bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) const {
   request.set_trajectory_id(trajectory_id);
   async_grpc::Client<handlers::IsTrajectoryFinishedSignature> client(
       client_channel_);
-  CHECK(client.Write(request));
+  ::grpc::Status status;
+  CHECK(client.Write(request, &status))
+      << "Failed to check if trajectory " << trajectory_id
+      << " is finished: " << status.error_message();
   return client.response().is_finished();
 }
 
@@ -177,7 +180,10 @@ bool PoseGraphStub::IsTrajectoryFrozen(int trajectory_id) const {
   request.set_trajectory_id(trajectory_id);
   async_grpc::Client<handlers::IsTrajectoryFrozenSignature> client(
       client_channel_);
-  CHECK(client.Write(request));
+  ::grpc::Status status;
+  CHECK(client.Write(request, &status))
+      << "Failed to check if trajectory " << trajectory_id
+      << " is frozen: " << status.error_message();
   return client.response().is_frozen();
 }
 
@@ -190,7 +196,9 @@ std::vector<mapping::PoseGraphInterface::Constraint>
 PoseGraphStub::constraints() const {
   google::protobuf::Empty request;
   async_grpc::Client<handlers::GetConstraintsSignature> client(client_channel_);
-  CHECK(client.Write(request));
+  ::grpc::Status status;
+  CHECK(client.Write(request, &status))
+      << "Failed to get constraints: " << status.error_message();
   return mapping::FromProto(client.response().constraints());
 }
 
