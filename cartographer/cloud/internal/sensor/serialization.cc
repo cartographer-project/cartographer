@@ -92,7 +92,7 @@ void CreateSensorDataForLocalSlamResult(
       mapping::ToProto(*insertion_result.constant_data);
   for (const auto& insertion_submap : insertion_result.insertion_submaps) {
     // We only send the probability grid up if the submap is finished.
-    proto::Submap submap =
+    ::cartographer::mapping::proto::Submap submap =
         insertion_submap->ToProto(insertion_submap->finished());
     submap.mutable_submap_id()->set_trajectory_id(trajectory_id);
     submap.mutable_submap_id()->set_submap_index(starting_submap_index);
