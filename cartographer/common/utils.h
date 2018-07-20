@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/node/node.h"
-
 namespace cartographer {
-namespace pose_graph {
+namespace common {
 
-proto::Node Node::ToProto() const {
-  proto::Node node;
-  node.set_constant(constant_);
-  *node.mutable_id() = node_id_.ToProto();
-  *node.mutable_parameters() = ToParametersProto();
-  return node;
+template <typename MapType, typename KeyType = typename MapType::key_type,
+          typename ValueType = typename MapType::mapped_type>
+ValueType* FindOrNull(MapType& map, const KeyType& key) {
+  auto it = map.find(key);
+  if (it == map.end()) return nullptr;
+  return &(it->second);
 }
 
-}  // namespace pose_graph
+}  // namespace common
 }  // namespace cartographer

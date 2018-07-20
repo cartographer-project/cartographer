@@ -46,8 +46,6 @@ ThreadPool::~ThreadPool() {
     MutexLocker locker(&mutex_);
     CHECK(running_);
     running_ = false;
-    CHECK_EQ(task_queue_.size(), 0);
-    CHECK_EQ(tasks_not_ready_.size(), 0);
   }
   for (std::thread& thread : pool_) {
     thread.join();
@@ -56,7 +54,6 @@ ThreadPool::~ThreadPool() {
 
 void ThreadPool::NotifyDependenciesCompleted(Task* task) {
   MutexLocker locker(&mutex_);
-  CHECK(running_);
   auto it = tasks_not_ready_.find(task);
   CHECK(it != tasks_not_ready_.end());
   task_queue_.push_back(it->second);
@@ -67,7 +64,6 @@ std::weak_ptr<Task> ThreadPool::Schedule(std::unique_ptr<Task> task) {
   std::shared_ptr<Task> shared_task;
   {
     MutexLocker locker(&mutex_);
-    CHECK(running_);
     auto insert_result =
         tasks_not_ready_.insert(std::make_pair(task.get(), std::move(task)));
     CHECK(insert_result.second) << "Schedule called twice";

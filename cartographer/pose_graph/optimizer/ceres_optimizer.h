@@ -14,31 +14,28 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/node/imu_calibration.h"
+#ifndef CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_CERES_OPTIMIZER_H_
+#define CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_CERES_OPTIMIZER_H_
 
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include "cartographer/pose_graph/optimizer/optimizer.h"
+#include "ceres/problem.h"
+#include "ceres/solver.h"
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
 
-constexpr char kExpectedNode[] = R"PROTO(
-  id { object_id: "accelerometer" timestamp: 1 }
-  constant: true
-  parameters {
-    imu_calibration {
-      gravity_constant: 10
-      orientation: { w: 0 x: 1 y: 2 z: 3 }
-    }
-  }
-)PROTO";
+class CeresOptimizer : public Optimizer {
+ public:
+  explicit CeresOptimizer(const ceres::Solver::Options& options);
 
-TEST(Pose3DTest, ToProto) {
-  ImuCalibration imu_calibration({"accelerometer", common::FromUniversal(1)},
-                                 true, 10, Eigen::Quaterniond(0., 1., 2., 3.));
-  EXPECT_THAT(imu_calibration.ToProto(), testing::EqualsProto(kExpectedNode));
-}
+  SolverStatus Solve(PoseGraphData* data) const final;
 
-}  // namespace
+ private:
+  const ceres::Problem::Options problem_options_;
+  const ceres::Solver::Options solver_options_;
+};
+
 }  // namespace pose_graph
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_CERES_OPTIMIZER_H_

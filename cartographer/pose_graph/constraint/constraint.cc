@@ -14,31 +14,17 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/node/imu_calibration.h"
-
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include "cartographer/pose_graph/constraint/constraint.h"
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
 
-constexpr char kExpectedNode[] = R"PROTO(
-  id { object_id: "accelerometer" timestamp: 1 }
-  constant: true
-  parameters {
-    imu_calibration {
-      gravity_constant: 10
-      orientation: { w: 0 x: 1 y: 2 z: 3 }
-    }
-  }
-)PROTO";
-
-TEST(Pose3DTest, ToProto) {
-  ImuCalibration imu_calibration({"accelerometer", common::FromUniversal(1)},
-                                 true, 10, Eigen::Quaterniond(0., 1., 2., 3.));
-  EXPECT_THAT(imu_calibration.ToProto(), testing::EqualsProto(kExpectedNode));
+proto::Constraint Constraint::ToProto() const {
+  proto::Constraint constraint;
+  constraint.set_id(constraint_id_);
+  *constraint.mutable_cost_function() = ToCostFunctionProto();
+  return constraint;
 }
 
-}  // namespace
 }  // namespace pose_graph
 }  // namespace cartographer

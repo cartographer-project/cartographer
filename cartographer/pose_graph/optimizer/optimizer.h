@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/node/imu_calibration.h"
+#ifndef CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_OPTIMIZER_H_
+#define CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_OPTIMIZER_H_
 
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include "cartographer/pose_graph/pose_graph_data.h"
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
 
-constexpr char kExpectedNode[] = R"PROTO(
-  id { object_id: "accelerometer" timestamp: 1 }
-  constant: true
-  parameters {
-    imu_calibration {
-      gravity_constant: 10
-      orientation: { w: 0 x: 1 y: 2 z: 3 }
-    }
-  }
-)PROTO";
+class Optimizer {
+ public:
+  enum class SolverStatus {
+    CONVERGENCE,
+    NO_CONVERGENCE,
+    FAILURE,
+  };
 
-TEST(Pose3DTest, ToProto) {
-  ImuCalibration imu_calibration({"accelerometer", common::FromUniversal(1)},
-                                 true, 10, Eigen::Quaterniond(0., 1., 2., 3.));
-  EXPECT_THAT(imu_calibration.ToProto(), testing::EqualsProto(kExpectedNode));
-}
+  Optimizer() = default;
+  virtual ~Optimizer() = default;
 
-}  // namespace
+  Optimizer(const Optimizer&) = delete;
+  Optimizer& operator=(const Optimizer&) = delete;
+
+  virtual SolverStatus Solve(PoseGraphData* data) const = 0;
+};
+
 }  // namespace pose_graph
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_OPTIMIZER_H_

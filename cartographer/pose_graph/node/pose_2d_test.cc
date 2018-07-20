@@ -23,7 +23,7 @@ namespace pose_graph {
 namespace {
 
 constexpr char kExpectedNode[] = R"PROTO(
-  id { object_id: "flat_world" }
+  id { object_id: "flat_world" timestamp: 1 }
   constant: true
   parameters {
     pose_2d {
@@ -34,7 +34,8 @@ constexpr char kExpectedNode[] = R"PROTO(
 )PROTO";
 
 TEST(Pose2DTest, ToProto) {
-  Pose2D pose_2d("flat_world", true, Eigen::Vector2d(1., 2.), 5.);
+  Pose2D pose_2d({"flat_world", common::FromUniversal(1)}, true,
+                 Eigen::Vector2d(1., 2.), 5.);
   EXPECT_THAT(pose_2d.ToProto(), testing::EqualsProto(kExpectedNode));
 }
 
