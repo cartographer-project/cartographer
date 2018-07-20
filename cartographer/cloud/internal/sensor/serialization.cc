@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/cloud/internal/sensor/serialization.h"
+#include "cartographer/cartographer/mapping/submaps.h"
 
 namespace cartographer {
 namespace cloud {
