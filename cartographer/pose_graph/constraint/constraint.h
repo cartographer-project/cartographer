@@ -48,7 +48,7 @@ class Constraint {
  protected:
   virtual proto::CostFunction ToCostFunctionProto() const = 0;
 
-  const std::unique_ptr<ceres::LossFunction>& ceres_loss() const {
+  ceres::LossFunction* ceres_loss() const {
     return loss_function_.ceres_loss();
   }
 

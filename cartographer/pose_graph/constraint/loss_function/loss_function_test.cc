@@ -27,17 +27,16 @@ using testing::ParseProto;
 TEST(LossFunctionTest, ConstructQuadraticLoss) {
   LossFunction quadratic_loss(
       ParseProto<proto::LossFunction>(R"(quadratic_loss: {})"));
-  EXPECT_EQ(nullptr, quadratic_loss.ceres_loss().get());
+  EXPECT_EQ(nullptr, quadratic_loss.ceres_loss());
 }
 
 TEST(LossFunctionTest, ConstructHuberLoss) {
   LossFunction huber_loss(
       ParseProto<proto::LossFunction>(R"(huber_loss: { scale: 0.5 })"));
-  EXPECT_NE(nullptr,
-            dynamic_cast<ceres::HuberLoss*>(huber_loss.ceres_loss().get()));
+  EXPECT_NE(nullptr, dynamic_cast<ceres::HuberLoss*>(huber_loss.ceres_loss()));
 }
 
-TEST(LossFunctionTest, FailToConstructUnspecifiedLoss) {
+TEST(LossFunctionDeathTest, FailToConstructUnspecifiedLoss) {
   EXPECT_DEATH(LossFunction(proto::LossFunction{}), "");
 }
 

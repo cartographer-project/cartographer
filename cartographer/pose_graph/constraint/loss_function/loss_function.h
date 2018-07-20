@@ -31,9 +31,7 @@ class LossFunction {
 
   const proto::LossFunction& ToProto() const { return proto_; }
 
-  const std::unique_ptr<ceres::LossFunction>& ceres_loss() const {
-    return ceres_loss_;
-  }
+  ceres::LossFunction* ceres_loss() const { return ceres_loss_.get(); }
 
  private:
   const proto::LossFunction proto_;

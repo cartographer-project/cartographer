@@ -73,8 +73,8 @@ void RelativePoseConstraint2D::AddToOptimizer(Nodes* nodes,
   if (second_node->constant()) {
     problem->SetParameterBlockConstant(second_pose->data());
   }
-  problem->AddResidualBlock(ceres_cost_.get(), ceres_loss().get(),
-                            first_pose->data(), second_pose->data());
+  problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(), first_pose->data(),
+                            second_pose->data());
 }
 
 proto::CostFunction RelativePoseConstraint2D::ToCostFunctionProto() const {
