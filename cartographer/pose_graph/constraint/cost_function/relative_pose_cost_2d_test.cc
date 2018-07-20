@@ -18,8 +18,7 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/internal/optimization/cost_functions/cost_helpers.h"
-#include "gmock/gmock.h"
-#include "google/protobuf/text_format.h"
+#include "cartographer/pose_graph/internal/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {
@@ -30,8 +29,10 @@ constexpr int kResidualsCount = 3;
 constexpr int kParameterBlocksCount = 2;
 constexpr int kJacobianColDimension = kResidualsCount * kPoseDimension;
 
-using ::google::protobuf::TextFormat;
 using ::testing::ElementsAre;
+using testing::Near;
+using testing::ParseProto;
+
 using ResidualType = std::array<double, kResidualsCount>;
 using JacobianType = std::array<std::array<double, kJacobianColDimension>,
                                 kParameterBlocksCount>;
@@ -67,7 +68,6 @@ class AutoDiffRelativePoseCost {
 class RelativePoseCost2DTest : public ::testing::Test {
  public:
   RelativePoseCost2DTest() {
-    proto::RelativePose2D::Parameters parameters;
     constexpr char kParameters[] = R"PROTO(
       first_t_second {
         translation: { x: 1 y: 1 }
@@ -76,8 +76,9 @@ class RelativePoseCost2DTest : public ::testing::Test {
       translation_weight: 1
       rotation_weight: 10
     )PROTO";
-    EXPECT_TRUE(TextFormat::ParseFromString(kParameters, &parameters));
 
+    auto parameters =
+        ParseProto<proto::RelativePose2D::Parameters>(kParameters);
     auto_diff_cost_ = common::make_unique<RelativePoseCost2D>(parameters);
     analytical_cost_ = common::make_unique<
         ceres::AutoDiffCostFunction<AutoDiffRelativePoseCost, kResidualsCount,
@@ -114,11 +115,6 @@ class RelativePoseCost2DTest : public ::testing::Test {
   std::unique_ptr<ceres::CostFunction> auto_diff_cost_;
   std::unique_ptr<ceres::CostFunction> analytical_cost_;
 };
-
-::testing::Matcher<double> Near(double expected) {
-  constexpr double kPrecision = 1e-05;
-  return ::testing::DoubleNear(expected, kPrecision);
-}
 
 TEST_F(RelativePoseCost2DTest, CompareAutoDiffAndAnalytical) {
   std::array<double, kPoseDimension> start_pose{{1., 1., 1.}};

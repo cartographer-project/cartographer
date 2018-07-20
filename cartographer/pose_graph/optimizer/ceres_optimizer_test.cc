@@ -18,27 +18,19 @@
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/pose_graph/constraint/relative_pose_constraint_2d.h"
-#include "google/protobuf/text_format.h"
-
-#include "gtest/gtest.h"
+#include "cartographer/pose_graph/internal/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {
 namespace {
+
+using testing::ParseProto;
 
 // TODO(pifon): Use the factory function, when the factory is done.
 Pose2D GetPose2D(const proto::Node& proto) {
   return {NodeId(proto.id()), proto.constant(),
           transform::ToEigen(proto.parameters().pose_2d().translation()),
           proto.parameters().pose_2d().rotation()};
-}
-
-template <typename ProtoType>
-ProtoType ParseProto(const std::string& proto_string) {
-  ProtoType proto;
-  EXPECT_TRUE(
-      ::google::protobuf::TextFormat::ParseFromString(proto_string, &proto));
-  return proto;
 }
 
 constexpr char kStartNode[] = R"PROTO(
