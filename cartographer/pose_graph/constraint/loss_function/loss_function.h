@@ -14,40 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
-#define CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
+#ifndef CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_LOSS_FUNCTION_H_
+#define CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_LOSS_FUNCTION_H_
 
-#include "cartographer/pose_graph/node/node_id.h"
-#include "cartographer/pose_graph/proto/node.pb.h"
+#include <memory>
 
-#include <vector>
+#include "cartographer/pose_graph/proto/loss_function.pb.h"
+#include "ceres/loss_function.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-class Node {
+class LossFunction {
  public:
-  explicit Node(const NodeId& id, bool constant)
-      : node_id_(id), constant_(constant) {}
+  explicit LossFunction(const proto::LossFunction& proto);
 
-  ~Node() = default;
+  const proto::LossFunction& ToProto() const { return proto_; }
 
-  proto::Node ToProto() const;
-
-  const NodeId node_id() const { return node_id_; }
-
-  bool constant() const { return constant_; }
-  void set_constant(bool constant) { constant_ = constant; }
-
- protected:
-  virtual proto::Parameters ToParametersProto() const = 0;
+  ceres::LossFunction* ceres_loss() const { return ceres_loss_.get(); }
 
  private:
-  NodeId node_id_;
-  bool constant_;
+  const proto::LossFunction proto_;
+  const std::unique_ptr<ceres::LossFunction> ceres_loss_;
 };
 
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_LOSS_FUNCTION_H_

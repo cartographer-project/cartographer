@@ -87,6 +87,18 @@ class BlockingQueue {
     return t;
   }
 
+  // Like Peek, but can timeout. Returns nullptr in this case.
+  template <typename R>
+  R* PeekWithTimeout(const common::Duration timeout) {
+    MutexLocker lock(&mutex_);
+    if (!lock.AwaitWithTimeout(
+            [this]() REQUIRES(mutex_) { return !QueueEmptyCondition(); },
+            timeout)) {
+      return nullptr;
+    }
+    return deque_.front().get();
+  }
+
   // Returns the next value in the queue or nullptr if the queue is empty.
   // Maintains ownership. This assumes a member function get() that returns
   // a pointer to the given type R.

@@ -14,40 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
-#define CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
+#include "cartographer/pose_graph/constraint/loss_function/loss_function.h"
 
-#include "cartographer/pose_graph/node/node_id.h"
-#include "cartographer/pose_graph/proto/node.pb.h"
-
-#include <vector>
+#include "cartographer/common/make_unique.h"
 
 namespace cartographer {
 namespace pose_graph {
+namespace {
 
-class Node {
- public:
-  explicit Node(const NodeId& id, bool constant)
-      : node_id_(id), constant_(constant) {}
+std::unique_ptr<ceres::LossFunction> CeresLossFromProto(
+    const proto::LossFunction& proto) {
+  switch (proto.Type_case()) {
+    case proto::LossFunction::kHuberLoss:
+      return common::make_unique<ceres::HuberLoss>(proto.huber_loss().scale());
+    case proto::LossFunction::kQuadraticLoss:
+      return nullptr;
+    default:
+      LOG(FATAL) << "The loss function is not specified.";
+      return nullptr;
+  }
+}
 
-  ~Node() = default;
+}  // namespace
 
-  proto::Node ToProto() const;
-
-  const NodeId node_id() const { return node_id_; }
-
-  bool constant() const { return constant_; }
-  void set_constant(bool constant) { constant_ = constant; }
-
- protected:
-  virtual proto::Parameters ToParametersProto() const = 0;
-
- private:
-  NodeId node_id_;
-  bool constant_;
-};
+LossFunction::LossFunction(const proto::LossFunction& proto)
+    : proto_(proto), ceres_loss_(CeresLossFromProto(proto_)) {}
 
 }  // namespace pose_graph
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
