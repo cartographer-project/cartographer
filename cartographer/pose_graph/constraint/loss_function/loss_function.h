@@ -14,19 +14,31 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/constraint/constraint.h"
+#ifndef CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_LOSS_FUNCTION_H_
+#define CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_LOSS_FUNCTION_H_
+
+#include <memory>
+
+#include "cartographer/pose_graph/proto/loss_function.pb.h"
+#include "ceres/loss_function.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-// TODO(pifon): Add a test.
-proto::Constraint Constraint::ToProto() const {
-  proto::Constraint constraint;
-  constraint.set_id(constraint_id_);
-  *constraint.mutable_cost_function() = ToCostFunctionProto();
-  *constraint.mutable_loss_function() = loss_function_.ToProto();
-  return constraint;
-}
+class LossFunction {
+ public:
+  explicit LossFunction(const proto::LossFunction& proto);
+
+  const proto::LossFunction& ToProto() const { return proto_; }
+
+  ceres::LossFunction* ceres_loss() const { return ceres_loss_.get(); }
+
+ private:
+  const proto::LossFunction proto_;
+  const std::unique_ptr<ceres::LossFunction> ceres_loss_;
+};
 
 }  // namespace pose_graph
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_LOSS_FUNCTION_H_
