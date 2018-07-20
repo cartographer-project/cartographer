@@ -70,8 +70,7 @@ class Submap3D : public Submap {
   void InsertData(const sensor::RangeData& range_data,
                   const RangeDataInserter3D& range_data_inserter,
                   float high_resolution_max_range,
-                  const Eigen::VectorXf& scan_histogram_in_gravity,
-                  const transform::Rigid3d& local_from_gravity);
+                  const Eigen::VectorXf& scan_histogram_in_local);
 
   void Finish();
 
@@ -104,8 +103,7 @@ class ActiveSubmaps3D {
   std::vector<std::shared_ptr<const Submap3D>> InsertData(
       const sensor::RangeData& range_data,
       const Eigen::Quaterniond& gravity_alignment,
-      const Eigen::VectorXf& rotational_scan_matcher_histogram_in_gravity,
-      const transform::Rigid3d& local_from_gravity);
+      const Eigen::VectorXf& rotational_scan_matcher_histogram_in_local);
 
   std::vector<std::shared_ptr<const Submap3D>> submaps() const;
 

@@ -336,19 +336,24 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
-  const Eigen::VectorXf rotational_scan_matcher_histogram =
+  const Eigen::VectorXf rotational_scan_matcher_histogram_in_gravity =
       scan_matching::RotationalScanMatcher::ComputeHistogram(
           sensor::TransformPointCloud(
               filtered_range_data_in_tracking.returns,
               transform::Rigid3f::Rotation(gravity_alignment.cast<float>())),
           options_.rotational_histogram_size());
 
-  const transform::Rigid3d local_from_gravity =
-      pose_estimate * transform::Rigid3d::Rotation(gravity_alignment.inverse());
+  const float local_yaw_from_gravity =
+      transform::GetYaw(pose_estimate.rotation() * gravity_alignment.inverse());
+
+  const Eigen::VectorXf rotational_scan_matcher_histogram_in_local =
+      scan_matching::RotationalScanMatcher::RotateHistogram(
+          rotational_scan_matcher_histogram_in_gravity, local_yaw_from_gravity);
+
   std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
-      active_submaps_.InsertData(
-          filtered_range_data_in_local, gravity_alignment,
-          rotational_scan_matcher_histogram, local_from_gravity);
+      active_submaps_.InsertData(filtered_range_data_in_local,
+                                 gravity_alignment,
+                                 rotational_scan_matcher_histogram_in_local);
 
   return common::make_unique<InsertionResult>(
       InsertionResult{std::make_shared<const mapping::TrajectoryNode::Data>(
@@ -358,7 +363,7 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
                               {},  // 'filtered_point_cloud' is only used in 2D.
                               high_resolution_point_cloud_in_tracking,
                               low_resolution_point_cloud_in_tracking,
-                              rotational_scan_matcher_histogram,
+                              rotational_scan_matcher_histogram_in_gravity,
                               pose_estimate}),
                       std::move(insertion_submaps)});
 }
