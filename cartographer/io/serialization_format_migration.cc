@@ -277,7 +277,7 @@ void MigrateStreamFormatToVersion1(
     cartographer::io::ProtoStreamReaderInterface* const input,
     cartographer::io::ProtoStreamWriterInterface* const output,
     bool uses_old_submap) {
-    SerializeToVersion1Format(ParseLegacyData(input, uses_old_submap), output);
+  SerializeToVersion1Format(ParseLegacyData(input, uses_old_submap), output);
 }
 
 }  // namespace io

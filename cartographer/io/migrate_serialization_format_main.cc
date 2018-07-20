@@ -25,7 +25,7 @@ DEFINE_string(
 DEFINE_string(output_pbstream_file, "",
               "Output filename for the migrated pbstream.");
 DEFINE_bool(uses_old_submap, false,
-              "Set if the input pbstream uses the old probability grid format.");
+            "Set if the input pbstream uses the old probability grid format.");
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
@@ -48,7 +48,8 @@ int main(int argc, char** argv) {
             << FLAGS_original_pbstream_file
             << "\" to new serialization format in \""
             << FLAGS_output_pbstream_file << "\"";
-  cartographer::io::MigrateStreamFormatToVersion1(&input, &output, FLAGS_uses_old_submap);
+  cartographer::io::MigrateStreamFormatToVersion1(&input, &output,
+                                                  FLAGS_uses_old_submap);
 
   return EXIT_SUCCESS;
 }
