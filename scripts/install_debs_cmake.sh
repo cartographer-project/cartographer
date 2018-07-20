@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Copyright 2016 The Cartographer Authors
 #
@@ -19,6 +19,18 @@ set -o verbose
 
 # Install the required libraries that are available as debs.
 sudo apt-get update
+
+# Install CMake 3.2 for Ubuntu Trusty and Debian Jessie.
+sudo apt-get install lsb-release -y
+if [[ "$(lsb_release -sc)" = "trusty" ]]
+then
+  sudo apt-get install python-software-properties apt-file -y
+  sudo apt-file update
+  sudo apt-get install software-properties-common -y
+  sudo add-apt-repository ppa:george-edison55/cmake-3.x
+  sudo apt-get update
+fi
+
 sudo apt-get install -y \
     cmake \
     g++ \
