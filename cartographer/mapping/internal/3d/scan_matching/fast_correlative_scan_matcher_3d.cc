@@ -112,7 +112,7 @@ struct Candidate3D {
 FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
     const HybridGrid& hybrid_grid,
     const HybridGrid* const low_resolution_hybrid_grid,
-    const Eigen::VectorXf& rotational_scan_matcher_histogram,
+    const Eigen::VectorXf* rotational_scan_matcher_histogram,
     const proto::FastCorrelativeScanMatcherOptions3D& options)
     : options_(options),
       resolution_(hybrid_grid.resolution()),

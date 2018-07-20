@@ -28,7 +28,7 @@ namespace {
 TEST(RotationalScanMatcher3DTest, OnlySameHistogramIsScoreOne) {
   Eigen::VectorXf histogram(7);
   histogram << 1.f, 43.f, 0.5f, 0.3123f, 23.f, 42.f, 0.f;
-  RotationalScanMatcher matcher(histogram);
+  RotationalScanMatcher matcher(&histogram);
   const auto scores = matcher.Match(histogram, 0.f, {0.f, 1.f});
   ASSERT_EQ(2, scores.size());
   EXPECT_NEAR(1.f, scores[0], 1e-6);
@@ -40,7 +40,7 @@ TEST(RotationalScanMatcher3DTest, InterpolatesAsExpected) {
   constexpr float kAnglePerBucket = M_PI / kNumBuckets;
   constexpr float kNoInitialRotation = 0.f;
   const Eigen::VectorXf histogram = Eigen::VectorXf::Unit(kNumBuckets, 3);
-  RotationalScanMatcher matcher(histogram);
+  RotationalScanMatcher matcher(&histogram);
   for (float t = 0.f; t < 1.f; t += 0.1f) {
     // 't' is the fraction of overlap and we have to divide by the norm of the
     // histogram to get the expected score.

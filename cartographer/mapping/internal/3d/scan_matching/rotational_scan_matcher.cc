@@ -132,7 +132,7 @@ float MatchHistograms(const Eigen::VectorXf& submap_histogram,
 
 }  // namespace
 
-RotationalScanMatcher::RotationalScanMatcher(const Eigen::VectorXf& histogram)
+RotationalScanMatcher::RotationalScanMatcher(const Eigen::VectorXf* histogram)
     : histogram_(histogram) {}
 
 // Rotates the given 'histogram' by the given 'angle'. This might lead to
@@ -177,7 +177,7 @@ std::vector<float> RotationalScanMatcher::Match(
   for (const float angle : angles) {
     const Eigen::VectorXf scan_histogram =
         RotateHistogram(histogram, initial_angle + angle);
-    result.push_back(MatchHistograms(histogram_, scan_histogram));
+    result.push_back(MatchHistograms(*histogram_, scan_histogram));
   }
   return result;
 }

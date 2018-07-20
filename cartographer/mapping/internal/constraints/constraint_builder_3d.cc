@@ -174,8 +174,9 @@ ConstraintBuilder3D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
       &submap->low_resolution_hybrid_grid();
   auto& scan_matcher_options =
       options_.fast_correlative_scan_matcher_options_3d();
+  const Eigen::VectorXf* histogram =
+      &submap->rotational_scan_matcher_histogram();
   auto scan_matcher_task = common::make_unique<common::Task>();
-  const auto& histogram = submap->rotational_scan_matcher_histogram();
   scan_matcher_task->SetWorkItem(
       [&submap_scan_matcher, &scan_matcher_options, histogram]() {
         submap_scan_matcher.fast_correlative_scan_matcher =

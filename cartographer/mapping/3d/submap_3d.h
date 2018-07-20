@@ -61,7 +61,7 @@ class Submap3D : public Submap {
   const HybridGrid& low_resolution_hybrid_grid() const {
     return *low_resolution_hybrid_grid_;
   }
-  Eigen::VectorXf rotational_scan_matcher_histogram() const {
+  const Eigen::VectorXf& rotational_scan_matcher_histogram() const {
     return rotational_scan_matcher_histogram_;
   }
 
