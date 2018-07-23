@@ -24,14 +24,25 @@
 namespace cartographer {
 namespace testing {
 
+template <typename ProtoType>
+ProtoType ParseProto(const std::string& proto_string) {
+  ProtoType proto;
+  EXPECT_TRUE(
+      ::google::protobuf::TextFormat::ParseFromString(proto_string, &proto));
+  return proto;
+}
+
 MATCHER_P(EqualsProto, expected_proto_string, "") {
   using ConstProtoType = typename std::remove_reference<decltype(arg)>::type;
+  using ProtoType = typename std::remove_cv<ConstProtoType>::type;
 
-  typename std::remove_cv<ConstProtoType>::type expected_proto;
-  EXPECT_TRUE(google::protobuf::TextFormat::ParseFromString(
-      expected_proto_string, &expected_proto));
-  return google::protobuf::util::MessageDifferencer::Equals(arg,
-                                                            expected_proto);
+  return google::protobuf::util::MessageDifferencer::Equals(
+      arg, ParseProto<ProtoType>(expected_proto_string));
+}
+
+::testing::Matcher<double> Near(double expected) {
+  constexpr double kPrecision = 1e-05;
+  return ::testing::DoubleNear(expected, kPrecision);
 }
 
 }  // namespace testing

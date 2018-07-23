@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/constraint/constraint.h"
-
 namespace cartographer {
-namespace pose_graph {
+namespace common {
 
-// TODO(pifon): Add a test.
-proto::Constraint Constraint::ToProto() const {
-  proto::Constraint constraint;
-  constraint.set_id(constraint_id_);
-  *constraint.mutable_cost_function() = ToCostFunctionProto();
-  *constraint.mutable_loss_function() = loss_function_.ToProto();
-  return constraint;
+template <typename MapType, typename KeyType = typename MapType::key_type,
+          typename ValueType = typename MapType::mapped_type>
+ValueType* FindOrNull(MapType& map, const KeyType& key) {
+  auto it = map.find(key);
+  if (it == map.end()) return nullptr;
+  return &(it->second);
 }
 
-}  // namespace pose_graph
+}  // namespace common
 }  // namespace cartographer

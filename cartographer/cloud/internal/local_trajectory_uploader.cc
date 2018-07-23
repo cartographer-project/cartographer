@@ -40,7 +40,35 @@ constexpr int kConnectionTimeoutInSeconds = 10;
 constexpr int kTokenRefreshIntervalInSeconds = 60;
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
+// This defines the '::grpc::StatusCode's that are considered unrecoverable
+// errors and hence no retries will be attempted by the client.
+const std::set<::grpc::StatusCode> kUnrecoverableStatusCodes = {
+    ::grpc::NOT_FOUND};
+
+bool IsNewSubmap(const mapping::proto::Submap& submap) {
+  return (submap.has_submap_2d() && submap.submap_2d().num_range_data() == 1) ||
+         (submap.has_submap_3d() && submap.submap_3d().num_range_data() == 1);
+}
+
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
+ public:
+  struct TrajectoryInfo {
+    TrajectoryInfo() = default;
+    TrajectoryInfo(
+        const int uplink_trajectory_id,
+        const std::set<SensorId>& expected_sensor_ids,
+        const mapping::proto::TrajectoryBuilderOptions& trajectory_options,
+        const std::string& client_id)
+        : uplink_trajectory_id(uplink_trajectory_id),
+          expected_sensor_ids(expected_sensor_ids),
+          trajectory_options(trajectory_options),
+          client_id(client_id) {}
+    const int uplink_trajectory_id;
+    const std::set<SensorId> expected_sensor_ids;
+    const mapping::proto::TrajectoryBuilderOptions trajectory_options;
+    const std::string client_id;
+  };
+
  public:
   LocalTrajectoryUploader(const std::string& uplink_server_address,
                           int batch_size, bool enable_ssl_encryption,
@@ -54,13 +82,14 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   // complete.
   void Shutdown() final;
 
-  void AddTrajectory(
+  bool AddTrajectory(
       const std::string& client_id, int local_trajectory_id,
       const std::set<SensorId>& expected_sensor_ids,
       const mapping::proto::TrajectoryBuilderOptions& trajectory_options) final;
   void FinishTrajectory(const std::string& client_id,
                         int local_trajectory_id) final;
   void EnqueueSensorData(std::unique_ptr<proto::SensorData> sensor_data) final;
+  void TryRecovery();
 
   SensorId GetLocalSlamResultSensorId(int local_trajectory_id) const final {
     return SensorId{SensorId::SensorType::LOCAL_SLAM_RESULT,
@@ -73,7 +102,7 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 
   std::shared_ptr<::grpc::Channel> client_channel_;
   int batch_size_;
-  std::map<int, int> local_to_cloud_trajectory_id_map_;
+  std::map<int, TrajectoryInfo> local_trajectory_id_to_trajectory_info_;
   common::BlockingQueue<std::unique_ptr<proto::SensorData>> send_queue_;
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> upload_thread_;
@@ -120,6 +149,39 @@ void LocalTrajectoryUploader::Shutdown() {
   upload_thread_->join();
 }
 
+void LocalTrajectoryUploader::TryRecovery() {
+  // Wind the sensor_data_queue forward to the next new submap.
+  while (true) {
+    proto::SensorData* sensor_data =
+        send_queue_.PeekWithTimeout<proto::SensorData>(kPopTimeout);
+    if (sensor_data) {
+      CHECK_GE(sensor_data->local_slam_result_data().submaps_size(), 0);
+      if (sensor_data->sensor_data_case() ==
+              proto::SensorData::kLocalSlamResultData &&
+          sensor_data->local_slam_result_data().submaps_size() > 0 &&
+          IsNewSubmap(sensor_data->local_slam_result_data().submaps(
+              sensor_data->local_slam_result_data().submaps_size() - 1))) {
+        break;
+      } else {
+        send_queue_.Pop();
+      }
+    }
+  }
+
+  // Attempt to recreate the trajectories.
+  const auto local_trajectory_id_to_trajectory_info =
+      local_trajectory_id_to_trajectory_info_;
+  local_trajectory_id_to_trajectory_info_.clear();
+  for (const auto& entry : local_trajectory_id_to_trajectory_info) {
+    if (!AddTrajectory(entry.second.client_id, entry.first,
+                       entry.second.expected_sensor_ids,
+                       entry.second.trajectory_options)) {
+      LOG(ERROR) << "Failed to create trajectory. Aborting recovery attempt.";
+      return;
+    }
+  }
+}
+
 void LocalTrajectoryUploader::ProcessSendQueue() {
   LOG(INFO) << "Starting uploader thread.";
   proto::AddSensorDataBatchRequest batch_request;
@@ -143,10 +205,18 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
 
       if (batch_request.sensor_data_size() == batch_size_) {
         async_grpc::Client<handlers::AddSensorDataBatchSignature> client(
-            client_channel_, async_grpc::CreateUnlimitedConstantDelayStrategy(
-                                 common::FromSeconds(1)));
-        CHECK(client.Write(batch_request));
+            client_channel_,
+            async_grpc::CreateUnlimitedConstantDelayStrategy(
+                common::FromSeconds(1), kUnrecoverableStatusCodes));
+        if (client.Write(batch_request)) {
+          LOG(INFO) << "Uploaded " << batch_request.ByteSize()
+                    << " bytes of sensor data.";
+          batch_request.clear_sensor_data();
+          continue;
+        }
+        // Unrecoverable error occurred. Attempt recovery.
         batch_request.clear_sensor_data();
+        TryRecovery();
       }
     }
   }
@@ -154,12 +224,13 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
 
 void LocalTrajectoryUploader::TranslateTrajectoryId(
     proto::SensorMetadata* sensor_metadata) {
-  int cloud_trajectory_id =
-      local_to_cloud_trajectory_id_map_.at(sensor_metadata->trajectory_id());
+  int cloud_trajectory_id = local_trajectory_id_to_trajectory_info_
+                                .at(sensor_metadata->trajectory_id())
+                                .uplink_trajectory_id;
   sensor_metadata->set_trajectory_id(cloud_trajectory_id);
 }
 
-void LocalTrajectoryUploader::AddTrajectory(
+bool LocalTrajectoryUploader::AddTrajectory(
     const std::string& client_id, int local_trajectory_id,
     const std::set<SensorId>& expected_sensor_ids,
     const mapping::proto::TrajectoryBuilderOptions& trajectory_options) {
@@ -176,17 +247,30 @@ void LocalTrajectoryUploader::AddTrajectory(
       cloud::ToProto(GetLocalSlamResultSensorId(local_trajectory_id));
   async_grpc::Client<handlers::AddTrajectorySignature> client(client_channel_);
   ::grpc::Status status;
-  CHECK(client.Write(request, &status)) << status.error_message();
-  CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 0);
-  local_to_cloud_trajectory_id_map_[local_trajectory_id] =
-      client.response().trajectory_id();
+  if (!client.Write(request, &status)) {
+    LOG(ERROR) << status.error_message();
+    return false;
+  }
+  LOG(INFO) << "Created trajectory for client_id: " << client_id
+            << " local trajectory_id: " << local_trajectory_id
+            << " uplink trajectory_id: " << client.response().trajectory_id();
+  CHECK_EQ(local_trajectory_id_to_trajectory_info_.count(local_trajectory_id),
+           0);
+  local_trajectory_id_to_trajectory_info_.emplace(
+      std::piecewise_construct, std::forward_as_tuple(local_trajectory_id),
+      std::forward_as_tuple(client.response().trajectory_id(),
+                            expected_sensor_ids, trajectory_options,
+                            client_id));
+  return true;
 }
 
 void LocalTrajectoryUploader::FinishTrajectory(const std::string& client_id,
                                                int local_trajectory_id) {
-  CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 1);
+  CHECK_EQ(local_trajectory_id_to_trajectory_info_.count(local_trajectory_id),
+           1);
   int cloud_trajectory_id =
-      local_to_cloud_trajectory_id_map_[local_trajectory_id];
+      local_trajectory_id_to_trajectory_info_.at(local_trajectory_id)
+          .uplink_trajectory_id;
   proto::FinishTrajectoryRequest request;
   request.set_client_id(client_id);
   request.set_trajectory_id(cloud_trajectory_id);

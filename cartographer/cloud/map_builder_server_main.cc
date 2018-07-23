@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   if (FLAGS_configuration_directory.empty() ||
       FLAGS_configuration_basename.empty()) {
-    google::ShowUsageWithFlagsRestrict(argv[0], "cloud_server");
+    google::ShowUsageWithFlagsRestrict(argv[0], "map_builder_server");
     return EXIT_FAILURE;
   }
   cartographer::cloud::Run(FLAGS_configuration_directory,
