@@ -117,10 +117,23 @@ sensor::PointCloud SortSlice(const sensor::PointCloud& slice) {
   return result;
 }
 
-// Rotates the given 'histogram' by the given 'angle'. This might lead to
-// rotations of a fractional bucket which is handled by linearly interpolating.
-Eigen::VectorXf RotateHistogram(const Eigen::VectorXf& histogram,
-                                const float angle) {
+float MatchHistograms(const Eigen::VectorXf& submap_histogram,
+                      const Eigen::VectorXf& scan_histogram) {
+  // We compute the dot product of normalized histograms as a measure of
+  // similarity.
+  const float scan_histogram_norm = scan_histogram.norm();
+  const float submap_histogram_norm = submap_histogram.norm();
+  const float normalization = scan_histogram_norm * submap_histogram_norm;
+  if (normalization < 1e-3f) {
+    return 1.f;
+  }
+  return submap_histogram.dot(scan_histogram) / normalization;
+}
+
+}  // namespace
+
+Eigen::VectorXf RotationalScanMatcher::RotateHistogram(
+    const Eigen::VectorXf& histogram, const float angle) {
   const float rotate_by_buckets = -angle * histogram.size() / M_PI;
   int full_buckets = common::RoundToInt(rotate_by_buckets - 0.5f);
   const float fraction = rotate_by_buckets - full_buckets;
@@ -138,21 +151,6 @@ Eigen::VectorXf RotateHistogram(const Eigen::VectorXf& histogram,
          (1.f - fraction) * rotated_histogram_0;
 }
 
-float MatchHistograms(const Eigen::VectorXf& submap_histogram,
-                      const Eigen::VectorXf& scan_histogram) {
-  // We compute the dot product of normalized histograms as a measure of
-  // similarity.
-  const float scan_histogram_norm = scan_histogram.norm();
-  const float submap_histogram_norm = submap_histogram.norm();
-  const float normalization = scan_histogram_norm * submap_histogram_norm;
-  if (normalization < 1e-3f) {
-    return 1.f;
-  }
-  return submap_histogram.dot(scan_histogram) / normalization;
-}
-
-}  // namespace
-
 Eigen::VectorXf RotationalScanMatcher::ComputeHistogram(
     const sensor::PointCloud& point_cloud, const int histogram_size) {
   Eigen::VectorXf histogram = Eigen::VectorXf::Zero(histogram_size);
@@ -165,6 +163,9 @@ Eigen::VectorXf RotationalScanMatcher::ComputeHistogram(
   }
   return histogram;
 }
+
+RotationalScanMatcher::RotationalScanMatcher(const Eigen::VectorXf& histogram)
+    : histogram_(histogram) {}
 
 RotationalScanMatcher::RotationalScanMatcher(
     const std::vector<std::pair<Eigen::VectorXf, float>>& histograms_at_angles)
