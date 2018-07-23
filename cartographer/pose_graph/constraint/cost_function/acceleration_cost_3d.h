@@ -51,14 +51,14 @@ class AccelerationCost3D {
 
     const Vector3T start_velocity =
         (TranslationMap(middle_position) - TranslationMap(start_position)) /
-        first_to_second_delta_time_seconds_;
+        T(first_to_second_delta_time_seconds_);
     const Vector3T end_velocity =
         (TranslationMap(end_position) - TranslationMap(middle_position)) /
-        second_to_third_delta_time_seconds_;
+        T(second_to_third_delta_time_seconds_);
     const Vector3T delta_velocity = end_velocity - start_velocity;
 
     (Eigen::Map<Vector3T>(residual) =
-         scaling_factor_ * (imu_delta_velocity - delta_velocity));
+         T(scaling_factor_) * (imu_delta_velocity - delta_velocity));
     return true;
   }
 
