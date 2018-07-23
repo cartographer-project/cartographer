@@ -198,6 +198,12 @@ proto::SubmapsOptions3D CreateSubmapsOptions3D(
 
 Submap3D::Submap3D(const float high_resolution, const float low_resolution,
                    const transform::Rigid3d& local_submap_pose,
+                   int rotational_scan_matcher_histogram_size)
+    : Submap3D(high_resolution, low_resolution, local_submap_pose,
+               Eigen::VectorXf::Zero(rotational_scan_matcher_histogram_size)) {}
+
+Submap3D::Submap3D(const float high_resolution, const float low_resolution,
+                   const transform::Rigid3d& local_submap_pose,
                    const Eigen::VectorXf& rotational_scan_matcher_histogram)
     : Submap(local_submap_pose),
       high_resolution_hybrid_grid_(
@@ -261,9 +267,9 @@ void Submap3D::UpdateFromProto(const proto::Submap& proto) {
                   submap_3d.low_resolution_hybrid_grid())
             : nullptr;
   }
-
-  rotational_scan_matcher_histogram_.resize(
-      submap_3d.rotational_scan_matcher_histogram_size());
+  CHECK(submap_3d.rotational_scan_matcher_histogram_size() > 0);
+  rotational_scan_matcher_histogram_ =
+      Eigen::VectorXf::Zero(submap_3d.rotational_scan_matcher_histogram_size());
   for (int i = 0; i != submap_3d.rotational_scan_matcher_histogram_size();
        ++i) {
     rotational_scan_matcher_histogram_(i) =
@@ -296,10 +302,6 @@ void Submap3D::InsertData(const sensor::RangeData& range_data,
   range_data_inserter.Insert(transformed_range_data,
                              low_resolution_hybrid_grid_.get());
   set_num_range_data(num_range_data() + 1);
-  if (rotational_scan_matcher_histogram_.rows() == 0) {
-    rotational_scan_matcher_histogram_.resize(scan_histogram_in_local.size());
-    rotational_scan_matcher_histogram_.setZero();
-  }
   const float yaw_in_submap_from_local =
       transform::GetYaw(local_pose().inverse());
   rotational_scan_matcher_histogram_ +=
@@ -327,8 +329,9 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
     const Eigen::VectorXf& rotational_scan_matcher_histogram_in_local) {
   if (submaps_.empty() ||
       submaps_.back()->num_range_data() == options_.num_range_data()) {
-    AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
-                                 gravity_alignment));
+    AddSubmap(
+        transform::Rigid3d(range_data.origin.cast<double>(), gravity_alignment),
+        rotational_scan_matcher_histogram_in_local.size());
   }
   for (auto& submap : submaps_) {
     submap->InsertData(range_data, range_data_inserter_,
@@ -341,16 +344,18 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
   return submaps();
 }
 
-void ActiveSubmaps3D::AddSubmap(const transform::Rigid3d& local_submap_pose) {
+void ActiveSubmaps3D::AddSubmap(
+    const transform::Rigid3d& local_submap_pose,
+    const int rotational_scan_matcher_histogram_size) {
   if (submaps_.size() >= 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
     CHECK(submaps_.front()->finished());
     submaps_.erase(submaps_.begin());
   }
-  submaps_.emplace_back(new Submap3D(options_.high_resolution(),
-                                     options_.low_resolution(),
-                                     local_submap_pose));
+  submaps_.emplace_back(
+      new Submap3D(options_.high_resolution(), options_.low_resolution(),
+                   local_submap_pose, rotational_scan_matcher_histogram_size));
 }
 
 }  // namespace mapping
