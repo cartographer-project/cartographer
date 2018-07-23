@@ -22,13 +22,8 @@ namespace cartographer {
 namespace pose_graph {
 namespace {
 
-using ::testing::ElementsAre;
 using testing::EqualsProto;
-using testing::Near;
 using testing::ParseProto;
-
-using RotationType = std::array<double, 4>;
-using ResidualType = std::array<double, 3>;
 
 constexpr char kConstraint[] = R"PROTO(
   id: "narf"
