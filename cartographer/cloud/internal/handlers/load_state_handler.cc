@@ -34,6 +34,9 @@ void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
     case proto::LoadStateRequest::kSerializationHeader:
       reader_.AddProto(request.serialization_header());
       break;
+    case proto::LoadStateRequest::kClientId:
+      client_id_ = request.client_id();
+      break;
     default:
       LOG(FATAL) << "Unhandled proto::LoadStateRequest case.";
   }
@@ -43,6 +46,10 @@ void LoadStateHandler::OnReadsDone() {
   auto trajectory_remapping =
       GetContext<MapBuilderContextInterface>()->map_builder().LoadState(
           &reader_, true);
+  for (const auto& entry : trajectory_remapping) {
+    GetContext<MapBuilderContextInterface>()->RegisterClientIdForTrajectory(
+        client_id_, entry.second);
+  }
   auto response = common::make_unique<proto::LoadStateResponse>();
   *response->mutable_trajectory_remapping() = ToProto(trajectory_remapping);
   Send(std::move(response));

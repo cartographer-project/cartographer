@@ -185,6 +185,11 @@ google_binary(cartographer_migrate_serialization_format
     cartographer/io/migrate_serialization_format_main.cc
 )
 
+google_binary(cartographer_pbstream_info
+  SRCS
+  cartographer/io/pbstream_info_main.cc
+)
+
 if(${BUILD_GRPC})
   google_binary(cartographer_grpc_server
     SRCS
