@@ -100,7 +100,7 @@ mapping::proto::Submap MigrateLegacySubmap3d(
       submap_in.submap_3d().high_resolution_hybrid_grid();
   *submap_3d.mutable_low_resolution_hybrid_grid() =
       submap_in.submap_3d().low_resolution_hybrid_grid();
-  
+
   mapping::proto::Submap submap_out;
   *submap_out.mutable_submap_3d() = submap_3d;
   *submap_out.mutable_submap_id() = submap_in.submap_id();
