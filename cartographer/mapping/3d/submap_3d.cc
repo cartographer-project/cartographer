@@ -220,6 +220,7 @@ Submap3D::Submap3D(const proto::Submap3D& proto)
           common::make_unique<HybridGrid>(proto.low_resolution_hybrid_grid())) {
   set_num_range_data(proto.num_range_data());
   set_finished(proto.finished());
+  CHECK(proto.rotational_scan_matcher_histogram_size() > 0);
   rotational_scan_matcher_histogram_.resize(
       proto.rotational_scan_matcher_histogram_size());
   for (int i = 0; i != proto.rotational_scan_matcher_histogram_size(); ++i) {

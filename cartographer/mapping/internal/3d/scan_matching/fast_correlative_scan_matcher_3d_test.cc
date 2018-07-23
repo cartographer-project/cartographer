@@ -105,7 +105,7 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
     hybrid_grid_->FinishUpdate();
 
     return common::make_unique<FastCorrelativeScanMatcher3D>(
-        *hybrid_grid_, hybrid_grid_.get(), &rotational_scan_matcher_histogram_,
+        *hybrid_grid_, hybrid_grid_.get(), &GetRotationalScanMatcherHistogram(),
         options);
   }
 
@@ -116,10 +116,10 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
                                 {},
                                 point_cloud_,
                                 low_resolution_point_cloud,
-                                GetRotationalScanMatcherHstogram()};
+                                GetRotationalScanMatcherHistogram()};
   }
 
-  const Eigen::VectorXf& GetRotationalScanMatcherHstogram() {
+  const Eigen::VectorXf& GetRotationalScanMatcherHistogram() {
     return rotational_scan_matcher_histogram_;
   }
 

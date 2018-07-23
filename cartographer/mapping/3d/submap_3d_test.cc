@@ -29,7 +29,7 @@ TEST(SubmapsTest, ToFromProto) {
   const Submap3D expected(
       0.05, 0.25,
       transform::Rigid3d(Eigen::Vector3d(1., 2., 0.),
-      Eigen::Quaterniond(0., 0., 0., 1.)),
+                         Eigen::Quaterniond(0., 0., 0., 1.)),
       histogram);
   const proto::Submap proto =
       expected.ToProto(true /* include_probability_grid_data */);
