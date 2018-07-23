@@ -282,7 +282,7 @@ void PoseGraph2D::ComputeConstraint(const NodeId& node_id,
   } else if (maybe_add_global_constraint) {
     constraint_builder_.MaybeAddGlobalConstraint(submap_id, submap, node_id,
                                                  constant_data);
-}
+  }
 }
 
 WorkItem::Result PoseGraph2D::ComputeConstraintsForNode(
