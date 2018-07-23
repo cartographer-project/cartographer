@@ -48,7 +48,7 @@ void Run(const std::string& pbstream_filename, bool all_debug_strings) {
     LOG(INFO) << "Pose graph: " << pose_graph.DebugString();
   }
 
-  const std::unordered_map<proto::SerializedData::DataCase, std::string>
+  const std::map<proto::SerializedData::DataCase, std::string>
       data_case_to_name = {
           {proto::SerializedData::kSubmap, "submap"},
           {proto::SerializedData::kNode, "node"},
@@ -59,7 +59,7 @@ void Run(const std::string& pbstream_filename, bool all_debug_strings) {
           {proto::SerializedData::kLandmarkData, "landmark_data"},
       };
   // Initialize so zero counts of these are also reported.
-  std::unordered_map<std::string, int> data_counts = {
+  std::map<std::string, int> data_counts = {
       {"submap_2d", 0},
       {"submap_2d_grid", 0},
       {"submap_3d", 0},
