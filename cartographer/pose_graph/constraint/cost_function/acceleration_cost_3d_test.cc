@@ -35,7 +35,7 @@ using ResidualType = std::array<double, 3>;
 constexpr char kParameters[] = R"PROTO(
   delta_velocity_imu_frame { x: 1 y: 1 z: 1 }
   first_to_second_delta_time_seconds: 10.0
-  second_to_third_delta_time_seconds: 10.0
+  second_to_third_delta_time_seconds: 20.0
   scaling_factor: 2.0
 )PROTO";
 
@@ -63,7 +63,7 @@ TEST(AccelerationCost3DTest, EvaluatesCorrectly) {
       kMiddleRotation.data(), kStartPosition.data(), kMiddlePosition.data(),
       kEndPosition.data(), &kGravityConstant, kImuCalibration.data(),
       residuals.data()));
-  EXPECT_THAT(residuals, ElementsAre(Near(2.), Near(2.), Near(-198.)));
+  EXPECT_THAT(residuals, ElementsAre(Near(2.1), Near(2.1), Near(-297.9)));
 }
 
 }  // namespace

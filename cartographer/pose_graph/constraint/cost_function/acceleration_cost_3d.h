@@ -37,28 +37,27 @@ class AccelerationCost3D {
                   const T* const middle_position, const T* const end_position,
                   const T* const gravity_constant,
                   const T* const imu_calibration, T* residual) const {
-    using ::Eigen::Map;
-    using ::Eigen::Matrix;
+    using Vector3T = Eigen::Matrix<T, 3, 1>;
+    using TranslationMap = Eigen::Map<const Vector3T>;
+    using RotationMap = Eigen::Map<const Eigen::Quaternion<T>>;
 
-    const Matrix<T, 3, 1> imu_delta_velocity =
-        Map<const Eigen::Quaternion<T>>(middle_rotation) *
-            Map<const Eigen::Quaternion<T>>(imu_calibration) *
+    const Vector3T imu_delta_velocity =
+        RotationMap(middle_rotation) * RotationMap(imu_calibration) *
             delta_velocity_imu_frame_.cast<T>() -
-        ((first_to_second_delta_time_seconds_ +
-          second_to_third_delta_time_seconds_) *
-         *gravity_constant / 2.f) *
+        (*gravity_constant * 0.5 *
+         (first_to_second_delta_time_seconds_ +
+          second_to_third_delta_time_seconds_)) *
             Eigen::Vector3d::UnitZ().cast<T>();
-    const Matrix<T, 3, 1> start_velocity =
-        (Map<const Matrix<T, 3, 1>>(middle_position) -
-         Map<const Matrix<T, 3, 1>>(start_position)) /
-        T(first_to_second_delta_time_seconds_);
-    const Matrix<T, 3, 1> end_velocity =
-        (Map<const Matrix<T, 3, 1>>(end_position) -
-         Map<const Matrix<T, 3, 1>>(middle_position)) /
-        T(second_to_third_delta_time_seconds_);
-    const Matrix<T, 3, 1> delta_velocity = end_velocity - start_velocity;
 
-    (Map<Matrix<T, 3, 1>>(residual) =
+    const Vector3T start_velocity =
+        (TranslationMap(middle_position) - TranslationMap(start_position)) /
+        first_to_second_delta_time_seconds_;
+    const Vector3T end_velocity =
+        (TranslationMap(end_position) - TranslationMap(middle_position)) /
+        second_to_third_delta_time_seconds_;
+    const Vector3T delta_velocity = end_velocity - start_velocity;
+
+    (Eigen::Map<Vector3T>(residual) =
          scaling_factor_ * (imu_delta_velocity - delta_velocity));
     return true;
   }
