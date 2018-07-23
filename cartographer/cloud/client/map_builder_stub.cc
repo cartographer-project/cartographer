@@ -148,6 +148,11 @@ std::map<int, int> MapBuilderStub::LoadState(
     LOG(FATAL) << "Not implemented";
   }
   async_grpc::Client<handlers::LoadStateSignature> client(client_channel_);
+  {
+    proto::LoadStateRequest request;
+    request.set_client_id(client_id_);
+    CHECK(client.Write(request));
+  }
 
   io::ProtoStreamDeserializer deserializer(reader);
   // Request with the SerializationHeader proto is sent first.
@@ -188,6 +193,7 @@ std::map<int, int> MapBuilderStub::LoadStateFromFile(
     const std::string& filename) {
   proto::LoadStateFromFileRequest request;
   request.set_file_path(filename);
+  request.set_client_id(client_id_);
   async_grpc::Client<handlers::LoadStateFromFileSignature> client(
       client_channel_);
   CHECK(client.Write(request));

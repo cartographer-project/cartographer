@@ -144,6 +144,7 @@ message LoadStateRequest {
   oneof state_chunk {
     cartographer.mapping.proto.SerializedData serialized_data = 1;
     cartographer.mapping.proto.SerializationHeader serialization_header = 2;
+    string client_id = 3;
   }
 }
 
@@ -158,6 +159,7 @@ message LoadStateResponse {
 
 message LoadStateFromFileRequest {
   string file_path = 1;
+  string client_id = 2;
 }
 
 message LoadStateFromFileResponse {
