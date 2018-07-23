@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/constraint/rotation_constraint_3d.h"
 
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include "cartographer/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {
@@ -38,7 +38,6 @@ constexpr char kConstraint[] = R"PROTO(
       }
     }
   }
-
   loss_function { quadratic_loss {} }
 )PROTO";
 
