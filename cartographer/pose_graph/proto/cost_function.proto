@@ -49,10 +49,13 @@ message Acceleration3D {
   NodeId third = 3;
   NodeId imu_calibration = 4;
 
-  transform.proto.Vector3d delta_velocity_imu_frame = 5;
-  int64 first_to_second_time_delta = 6;
-  int64 second_to_third_time_delta = 7;
-  double scaling_factor = 8;
+  message Parameters {
+    transform.proto.Vector3d delta_velocity_imu_frame = 1;
+    int64 first_to_second_time_delta = 2;
+    int64 second_to_third_time_delta = 3;
+    double scaling_factor = 4;
+  }
+  Parameters parameters = 5;
 }
 
 message Rotation3D {
@@ -61,9 +64,43 @@ message Rotation3D {
   NodeId imu_calibration = 3;
 
   message Parameters {
-    transform.proto.Quaterniond delta_rotation_imu_frame = 4;
-    double scaling_factor = 5;
+    transform.proto.Quaterniond delta_rotation_imu_frame = 1;
+    double scaling_factor = 2;
   }
+  Parameters parameters = 4;
+}
+
+message InterpolatedNode {
+  NodeId start = 1;
+  NodeId end = 2;
+  double factor = 3;
+}
+
+message RelativePose2DInterpolated {
+  InterpolatedNode first = 1;
+  NodeId second = 2;
+
+  message Parameters {
+    transform.proto.Rigid3d first_t_second = 1;
+    double translation_weight = 2;
+    double rotation_weight = 3;
+  }
+  Parameters parameters = 3;
+}
+
+message RelativePose3DInterpolated {
+  InterpolatedNode first = 1;
+  NodeId second = 2;
+
+  message Parameters {
+    transform.proto.Rigid3d first_t_second = 1;
+    double translation_weight = 2;
+    double rotation_weight = 3;
+
+    transform.proto.Quaterniond gravity_alignment_start = 4;
+    transform.proto.Quaterniond gravity_alignment_end = 5;
+  }
+  Parameters parameters = 3;
 }
 
 message CostFunction {
@@ -72,5 +109,7 @@ message CostFunction {
     RelativePose3D relative_pose_3d = 2;
     Acceleration3D acceleration_3d = 3;
     Rotation3D rotation_3d = 4;
+    RelativePose2DInterpolated relative_pose_2d_interpolated = 5;
+    RelativePose3DInterpolated relative_pose_3d_interpolated = 6;
   }
 }
