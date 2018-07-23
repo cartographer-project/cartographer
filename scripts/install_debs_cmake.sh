@@ -29,10 +29,16 @@ then
   sudo apt-get install software-properties-common -y
   sudo add-apt-repository ppa:george-edison55/cmake-3.x
   sudo apt-get update
+elif [[ "$(lsb_release -sc)" = "jessie" ]]
+then
+  sudo sh -c "echo 'deb http://ftp.debian.org/debian jessie-backports main' >> /etc/apt/sources.list"
+  sudo apt-get update
+  sudo apt-get -t jessie-backports install cmake -y
+else
+  sudo apt-get install cmake -y
 fi
 
 sudo apt-get install -y \
-    cmake \
     g++ \
     git \
     google-mock \
