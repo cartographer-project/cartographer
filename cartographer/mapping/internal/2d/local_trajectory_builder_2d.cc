@@ -27,6 +27,8 @@ namespace cartographer {
 namespace mapping {
 
 static auto* kLocalSlamLatencyMetric = metrics::Gauge::Null();
+static auto* kLocalSlamRealTimeRatio = metrics::Gauge::Null();
+static auto* kLocalSlamCpuRealTimeRatio = metrics::Gauge::Null();
 static auto* kRealTimeCorrelativeScanMatcherScoreMetric =
     metrics::Histogram::Null();
 static auto* kCeresScanMatcherCostMetric = metrics::Histogram::Null();
@@ -184,6 +186,12 @@ LocalTrajectoryBuilder2D::AddRangeData(
   ++num_accumulated_;
 
   if (num_accumulated_ >= options_.num_accumulated_range_data()) {
+    const common::Time current_sensor_time = synchronized_data.time;
+    common::optional<common::Duration> sensor_duration;
+    if (last_sensor_time_.has_value()) {
+      sensor_duration = current_sensor_time - last_sensor_time_.value();
+    }
+    last_sensor_time_ = current_sensor_time;
     num_accumulated_ = 0;
     const transform::Rigid3d gravity_alignment = transform::Rigid3d::Rotation(
         extrapolator_->EstimateGravityOrientation(time));
@@ -195,7 +203,7 @@ LocalTrajectoryBuilder2D::AddRangeData(
         TransformToGravityAlignedFrameAndFilter(
             gravity_alignment.cast<float>() * range_data_poses.back().inverse(),
             accumulated_range_data_),
-        gravity_alignment);
+        gravity_alignment, sensor_duration);
   }
   return nullptr;
 }
@@ -204,7 +212,8 @@ std::unique_ptr<LocalTrajectoryBuilder2D::MatchingResult>
 LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
     const common::Time time,
     const sensor::RangeData& gravity_aligned_range_data,
-    const transform::Rigid3d& gravity_alignment) {
+    const transform::Rigid3d& gravity_alignment,
+    const common::optional<common::Duration>& sensor_duration) {
   if (gravity_aligned_range_data.returns.empty()) {
     LOG(WARNING) << "Dropped empty horizontal range data.";
     return nullptr;
@@ -240,13 +249,28 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
   std::unique_ptr<InsertionResult> insertion_result = InsertIntoSubmap(
       time, range_data_in_local, filtered_gravity_aligned_point_cloud,
       pose_estimate, gravity_alignment.rotation());
-  const auto accumulation_stop = std::chrono::steady_clock::now();
-  if (last_accumulation_stop_.has_value()) {
-    const auto accumulation_duration =
-        accumulation_stop - last_accumulation_stop_.value();
-    kLocalSlamLatencyMetric->Set(common::ToSeconds(accumulation_duration));
+
+  const auto wall_time = std::chrono::steady_clock::now();
+  if (last_wall_time_.has_value()) {
+    const auto wall_time_duration = wall_time - last_wall_time_.value();
+    kLocalSlamLatencyMetric->Set(common::ToSeconds(wall_time_duration));
+    if (sensor_duration.has_value()) {
+      kLocalSlamRealTimeRatio->Set(common::ToSeconds(sensor_duration.value()) /
+                                   common::ToSeconds(wall_time_duration));
+    }
   }
-  last_accumulation_stop_ = accumulation_stop;
+  const double thread_cpu_time_seconds = common::GetThreadCpuTimeSeconds();
+  if (last_thread_cpu_time_seconds_.has_value()) {
+    const double thread_cpu_duration_seconds =
+        thread_cpu_time_seconds - last_thread_cpu_time_seconds_.value();
+    if (sensor_duration.has_value()) {
+      kLocalSlamCpuRealTimeRatio->Set(
+          common::ToSeconds(sensor_duration.value()) /
+          thread_cpu_duration_seconds);
+    }
+  }
+  last_wall_time_ = wall_time;
+  last_thread_cpu_time_seconds_ = thread_cpu_time_seconds;
   return common::make_unique<MatchingResult>(
       MatchingResult{time, pose_estimate, std::move(range_data_in_local),
                      std::move(insertion_result)});
@@ -313,6 +337,15 @@ void LocalTrajectoryBuilder2D::RegisterMetrics(
       "Duration from first incoming point cloud in accumulation to local slam "
       "result");
   kLocalSlamLatencyMetric = latency->Add({});
+  auto* real_time_ratio = family_factory->NewGaugeFamily(
+      "mapping_2d_local_trajectory_builder_real_time_ratio",
+      "sensor duration / wall clock duration.");
+  kLocalSlamRealTimeRatio = real_time_ratio->Add({});
+
+  auto* cpu_real_time_ratio = family_factory->NewGaugeFamily(
+      "mapping_2d_local_trajectory_builder_cpu_real_time_ratio",
+      "sensor duration / cpu duration.");
+  kLocalSlamCpuRealTimeRatio = cpu_real_time_ratio->Add({});
   auto score_boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = family_factory->NewHistogramFamily(
       "mapping_2d_local_trajectory_builder_scores", "Local scan matcher scores",
