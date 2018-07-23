@@ -529,7 +529,7 @@ TEST_F(ClientServerTest, LocalSlam2DUplinkServerRestarting) {
   server_->WaitForShutdown();
 }
 
-TEST_F(ClientServerTest, LoadState) {
+TEST_F(ClientServerTest, LoadStateAndDelete) {
   InitializeRealServer();
   server_->Start();
   InitializeStub();
@@ -553,9 +553,17 @@ TEST_F(ClientServerTest, LoadState) {
   int expected_trajectory_id = 0;
   EXPECT_EQ(trajectory_remapping.size(), 1);
   EXPECT_EQ(trajectory_remapping.at(0), expected_trajectory_id);
+  stub_->pose_graph()->RunFinalOptimization();
   EXPECT_TRUE(stub_->pose_graph()->IsTrajectoryFrozen(expected_trajectory_id));
   EXPECT_FALSE(
       stub_->pose_graph()->IsTrajectoryFinished(expected_trajectory_id));
+  for (const auto& entry : trajectory_remapping) {
+    int trajectory_id = entry.second;
+    stub_->pose_graph()->DeleteTrajectory(trajectory_id);
+    stub_->pose_graph()->RunFinalOptimization();
+    EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+              PoseGraphInterface::TrajectoryState::DELETED);
+  }
   server_->Shutdown();
 }
 

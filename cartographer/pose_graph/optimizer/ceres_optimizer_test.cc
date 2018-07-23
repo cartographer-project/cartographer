@@ -77,7 +77,8 @@ TEST(CeresOptimizerTest, SmokeTest) {
       NodeId{"end_node", common::FromUniversal(1)},
       GetPose2D(ParseProto<proto::Node>(kEndNode)));
   data.constraints.emplace_back(common::make_unique<RelativePoseConstraint2D>(
-      "constraint_1", ParseProto<proto::RelativePose2D>(kRelativePose2D)));
+      "constraint_1", ParseProto<proto::LossFunction>(R"(quadratic_loss: {})"),
+      ParseProto<proto::RelativePose2D>(kRelativePose2D)));
 
   CeresOptimizer optimizer(ceres::Solver::Options{});
   EXPECT_EQ(optimizer.Solve(&data), Optimizer::SolverStatus::CONVERGENCE);

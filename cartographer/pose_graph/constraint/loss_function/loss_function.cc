@@ -14,19 +14,31 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/constraint/constraint.h"
+#include "cartographer/pose_graph/constraint/loss_function/loss_function.h"
+
+#include "cartographer/common/make_unique.h"
 
 namespace cartographer {
 namespace pose_graph {
+namespace {
 
-// TODO(pifon): Add a test.
-proto::Constraint Constraint::ToProto() const {
-  proto::Constraint constraint;
-  constraint.set_id(constraint_id_);
-  *constraint.mutable_cost_function() = ToCostFunctionProto();
-  *constraint.mutable_loss_function() = loss_function_.ToProto();
-  return constraint;
+std::unique_ptr<ceres::LossFunction> CeresLossFromProto(
+    const proto::LossFunction& proto) {
+  switch (proto.Type_case()) {
+    case proto::LossFunction::kHuberLoss:
+      return common::make_unique<ceres::HuberLoss>(proto.huber_loss().scale());
+    case proto::LossFunction::kQuadraticLoss:
+      return nullptr;
+    default:
+      LOG(FATAL) << "The loss function is not specified.";
+      return nullptr;
+  }
 }
+
+}  // namespace
+
+LossFunction::LossFunction(const proto::LossFunction& proto)
+    : proto_(proto), ceres_loss_(CeresLossFromProto(proto_)) {}
 
 }  // namespace pose_graph
 }  // namespace cartographer

@@ -14,18 +14,24 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/constraint/constraint.h"
+#include "cartographer/pose_graph/constraint/cost_function/rotation_cost_3d.h"
+
+#include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-// TODO(pifon): Add a test.
-proto::Constraint Constraint::ToProto() const {
-  proto::Constraint constraint;
-  constraint.set_id(constraint_id_);
-  *constraint.mutable_cost_function() = ToCostFunctionProto();
-  *constraint.mutable_loss_function() = loss_function_.ToProto();
-  return constraint;
+RotationCost3D::RotationCost3D(const proto::Rotation3D::Parameters& parameters)
+    : scaling_factor_(parameters.scaling_factor()),
+      delta_rotation_imu_frame_(
+          transform::ToEigen(parameters.delta_rotation_imu_frame())) {}
+
+proto::Rotation3D::Parameters RotationCost3D::ToProto() const {
+  proto::Rotation3D::Parameters parameters;
+  parameters.set_scaling_factor(scaling_factor_);
+  *parameters.mutable_delta_rotation_imu_frame() =
+      transform::ToProto(delta_rotation_imu_frame_);
+  return parameters;
 }
 
 }  // namespace pose_graph
