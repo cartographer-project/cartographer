@@ -39,8 +39,8 @@ TEST(RotationalScanMatcher3DTest, InterpolatesAsExpected) {
   constexpr int kNumBuckets = 10;
   constexpr float kAnglePerBucket = M_PI / kNumBuckets;
   constexpr float kNoInitialRotation = 0.f;
-  const Eigen::VectorXf histogram = Eigen::VectorXf::Unit(kNumBuckets, 3);
-  RotationalScanMatcher matcher(&histogram);
+  const Eigen::VectorXf histogram_no_initial_rotation = Eigen::VectorXf::Unit(kNumBuckets, 3);
+  RotationalScanMatcher matcher(&histogram_no_initial_rotation);
   for (float t = 0.f; t < 1.f; t += 0.1f) {
     // 't' is the fraction of overlap and we have to divide by the norm of the
     // histogram to get the expected score.
