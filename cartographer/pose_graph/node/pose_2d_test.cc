@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/node/pose_2d.h"
 
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include "cartographer/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {
