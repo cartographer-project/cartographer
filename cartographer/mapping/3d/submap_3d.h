@@ -51,8 +51,7 @@ class Submap3D : public Submap {
 
   explicit Submap3D(const proto::Submap3D& proto);
 
-  void ToProto(proto::Submap* proto,
-               bool include_probability_grid_data) const override;
+  proto::Submap ToProto(bool include_probability_grid_data) const override;
   void UpdateFromProto(const proto::Submap& proto) override;
 
   void ToResponseProto(const transform::Rigid3d& global_submap_pose,

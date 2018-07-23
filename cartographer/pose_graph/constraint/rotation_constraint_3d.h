@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_RELATIVE_POSE_CONSTRAINT_2D_H_
-#define CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_RELATIVE_POSE_CONSTRAINT_2D_H_
+#ifndef CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_ROTATION_CONSTRAINT_3D_H_
+#define CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_ROTATION_CONSTRAINT_3D_H_
 
 #include "cartographer/pose_graph/constraint/constraint.h"
-#include "cartographer/pose_graph/constraint/cost_function/relative_pose_cost_2d.h"
+#include "cartographer/pose_graph/constraint/cost_function/rotation_cost_3d.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-class RelativePoseConstraint2D : public Constraint {
+class RotationContraint3D : public Constraint {
  public:
-  RelativePoseConstraint2D(const ConstraintId& id,
-                           const proto::LossFunction& loss_function_proto,
-                           const proto::RelativePose2D& proto);
+  RotationContraint3D(const ConstraintId& id,
+                      const proto::LossFunction& loss_function_proto,
+                      const proto::Rotation3D& proto);
 
   void AddToOptimizer(Nodes* nodes, ceres::Problem* problem) const final;
 
@@ -35,12 +35,18 @@ class RelativePoseConstraint2D : public Constraint {
   proto::CostFunction ToCostFunctionProto() const final;
 
  private:
+  using AutoDiffFunction = ceres::AutoDiffCostFunction<
+      RotationCost3D, 3 /* number of residuals */, 4 /* rotation first pose */,
+      4 /* rotation second pose */, 4 /* imu calibration */>;
   NodeId first_;
   NodeId second_;
-  std::unique_ptr<RelativePoseCost2D> ceres_cost_;
+  NodeId imu_calibration_;
+  // The cost function is owned by the ceres cost function.
+  RotationCost3D* const cost_;
+  std::unique_ptr<AutoDiffFunction> ceres_cost_;
 };
 
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_RELATIVE_POSE_CONSTRAINT_2D_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_ROTATION_CONSTRAINT_3D_H_

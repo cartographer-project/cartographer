@@ -228,9 +228,10 @@ Submap3D::Submap3D(const proto::Submap3D& proto)
   }
 }
 
-void Submap3D::ToProto(proto::Submap* const proto,
-                       bool include_probability_grid_data) const {
-  auto* const submap_3d = proto->mutable_submap_3d();
+proto::Submap Submap3D::ToProto(
+    const bool include_probability_grid_data) const {
+  proto::Submap proto;
+  auto* const submap_3d = proto.mutable_submap_3d();
   *submap_3d->mutable_local_pose() = transform::ToProto(local_pose());
   submap_3d->set_num_range_data(num_range_data());
   submap_3d->set_finished(finished());
@@ -240,12 +241,12 @@ void Submap3D::ToProto(proto::Submap* const proto,
     *submap_3d->mutable_low_resolution_hybrid_grid() =
         low_resolution_hybrid_grid().ToProto();
   }
-  submap_3d->clear_rotational_scan_matcher_histogram();
   for (Eigen::VectorXf::Index i = 0;
        i != rotational_scan_matcher_histogram_.size(); ++i) {
     submap_3d->add_rotational_scan_matcher_histogram(
         rotational_scan_matcher_histogram_(i));
   }
+  return proto;
 }
 
 void Submap3D::UpdateFromProto(const proto::Submap& proto) {
