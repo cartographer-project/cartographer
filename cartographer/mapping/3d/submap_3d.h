@@ -67,6 +67,7 @@ class Submap3D : public Submap {
   void Finish();
 
  private:
+  void UpdateFromProto(const proto::Submap3D& proto);
   std::unique_ptr<HybridGrid> high_resolution_hybrid_grid_;
   std::unique_ptr<HybridGrid> low_resolution_hybrid_grid_;
 };
