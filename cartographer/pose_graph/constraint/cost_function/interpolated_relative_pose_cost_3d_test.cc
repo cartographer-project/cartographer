@@ -41,7 +41,7 @@ constexpr char kParameters[] = R"PROTO(
   interpolation_factor: 0.3
 )PROTO";
 
-TEST(RelativePoseCost3DTest, SerializesCorrectly) {
+TEST(InterpolatedRelativePoseCost3DTest, SerializesCorrectly) {
   const auto parameters =
       ParseProto<proto::InterpolatedRelativePose3D::Parameters>(kParameters);
   InterpolatedRelativePoseCost3D interpolated_relative_pose_cost_3d(parameters);
@@ -49,7 +49,7 @@ TEST(RelativePoseCost3DTest, SerializesCorrectly) {
   EXPECT_THAT(actual_proto, EqualsProto(kParameters));
 }
 
-TEST(RelativePoseCost3DTest, EvaluatesCorrectly) {
+TEST(InterpolatedRelativePoseCost3DTest, EvaluatesCorrectly) {
   const auto parameters =
       ParseProto<proto::InterpolatedRelativePose3D::Parameters>(kParameters);
   InterpolatedRelativePoseCost3D interpolated_relative_pose_cost_3d(parameters);

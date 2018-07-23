@@ -53,7 +53,7 @@ constexpr char kConstraint[] = R"PROTO(
   loss_function { quadratic_loss {} }
 )PROTO";
 
-TEST(RotationConstraint3DTest, SerializesCorrectly) {
+TEST(InterpolatedRelativePostConstraint3DTest, SerializesCorrectly) {
   const auto proto = ParseProto<proto::Constraint>(kConstraint);
   InterpolatedRelativePoseConstraint3D constraint(
       proto.id(), proto.loss_function(),
