@@ -338,12 +338,12 @@ void LocalTrajectoryBuilder2D::RegisterMetrics(
       "result");
   kLocalSlamLatencyMetric = latency->Add({});
   auto* real_time_ratio = family_factory->NewGaugeFamily(
-      "mapping_3d_local_trajectory_builder_real_time_ratio",
+      "mapping_2d_local_trajectory_builder_real_time_ratio",
       "sensor duration / wall clock duration.");
   kLocalSlamRealTimeRatio = real_time_ratio->Add({});
 
   auto* cpu_real_time_ratio = family_factory->NewGaugeFamily(
-      "mapping_3d_local_trajectory_builder_cpu_real_time_ratio",
+      "mapping_2d_local_trajectory_builder_cpu_real_time_ratio",
       "sensor duration / cpu duration.");
   kLocalSlamCpuRealTimeRatio = cpu_real_time_ratio->Add({});
   auto score_boundaries = metrics::Histogram::FixedWidth(0.05, 20);
