@@ -16,15 +16,11 @@
 
 #include "cartographer/io/serialization_format_migration.h"
 
-#include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "cartographer/common/math.h"
-#include "cartographer/mapping/2d/submap_2d.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping/proto/internal/legacy_serialized_data.pb.h"
-#include "cartographer/mapping/proto/internal/legacy_serialized_data_old_submap.pb.h"
 #include "cartographer/mapping/proto/internal/legacy_submap.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "glog/logging.h"
@@ -53,24 +49,11 @@ bool ReadBuilderOptions(
       options_vec.back().mutable_all_trajectory_builder_options());
 }
 
-// Checks if the proto is in the old "probability-grid-only" 2D submap format
-// that was used before the generalized grid field was introduced.
-bool HasLegacyProbabilityGrid2d(const mapping::proto::LegacySubmap& submap) {
-  if (submap.has_submap_2d()) {
-    if (submap.submap_2d().has_probability_grid()) {
-      return true;
-    }
-  }
-  return false;
-}
-
 mapping::proto::Submap MigrateLegacySubmap2d(
     const mapping::proto::LegacySubmap& submap_in) {
-  CHECK(HasLegacyProbabilityGrid2d(submap_in));
   mapping::proto::Submap2D submap_2d;
 
   // Convert probability grid to generalized grid.
-  CHECK(submap_in.submap_2d().has_probability_grid());
   *submap_2d.mutable_grid()->mutable_limits() =
       submap_in.submap_2d().probability_grid().limits();
   *submap_2d.mutable_grid()->mutable_cells() =
@@ -107,6 +90,23 @@ mapping::proto::Submap MigrateLegacySubmap2d(
   return submap_out;
 }
 
+mapping::proto::Submap MigrateLegacySubmap3d(
+    const mapping::proto::LegacySubmap& submap_in) {
+  mapping::proto::Submap3D submap_3d;
+  *submap_3d.mutable_local_pose() = submap_in.submap_3d().local_pose();
+  submap_3d.set_num_range_data(submap_in.submap_3d().num_range_data());
+  submap_3d.set_finished(submap_in.submap_3d().finished());
+  *submap_3d.mutable_high_resolution_hybrid_grid() =
+      submap_in.submap_3d().high_resolution_hybrid_grid();
+  *submap_3d.mutable_low_resolution_hybrid_grid() =
+      submap_in.submap_3d().low_resolution_hybrid_grid();
+  
+  mapping::proto::Submap submap_out;
+  *submap_out.mutable_submap_3d() = submap_3d;
+  *submap_out.mutable_submap_id() = submap_in.submap_id();
+  return submap_out;
+}
+
 bool DeserializeNext(cartographer::io::ProtoStreamReaderInterface* const input,
                      ProtoMap* proto_map) {
   mapping::proto::LegacySerializedData legacy_data;
@@ -114,6 +114,10 @@ bool DeserializeNext(cartographer::io::ProtoStreamReaderInterface* const input,
 
   if (legacy_data.has_submap()) {
     LOG_FIRST_N(INFO, 1) << "Migrating submap data.";
+    if (legacy_data.submap().has_submap_2d()) {
+      CHECK(legacy_data.submap().submap_2d().grid().has_probability_grid_2d() ||
+            legacy_data.submap().submap_2d().grid().has_tsdf_2d());
+    }
     auto& output_vector = (*proto_map)[SerializedData::kSubmapFieldNumber];
     output_vector.emplace_back();
     *output_vector.back().mutable_submap() = legacy_data.submap();
@@ -172,8 +176,14 @@ bool DeserializeNextWithLegacySubmap(
     LOG_FIRST_N(INFO, 1) << "Migrating submap data.";
     auto& output_vector = (*proto_map)[SerializedData::kSubmapFieldNumber];
     output_vector.emplace_back();
-    *output_vector.back().mutable_submap() =
-        MigrateLegacySubmap2d(legacy_data.submap());
+    if (legacy_data.submap().has_submap_2d()) {
+      CHECK(legacy_data.submap().submap_2d().has_probability_grid());
+      *output_vector.back().mutable_submap() =
+          MigrateLegacySubmap2d(legacy_data.submap());
+    } else {
+      *output_vector.back().mutable_submap() =
+          MigrateLegacySubmap3d(legacy_data.submap());
+    }
   }
   if (legacy_data.has_node()) {
     LOG_FIRST_N(INFO, 1) << "Migrating node data.";

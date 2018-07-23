@@ -16,6 +16,7 @@ syntax = "proto3";
 
 package cartographer.mapping.proto;
 
+import "cartographer/mapping/proto/pose_graph.proto";
 import "cartographer/mapping/proto/internal/legacy_probability_grid.proto";
 import "cartographer/mapping/proto/3d/hybrid_grid.proto";
 import "cartographer/transform/proto/transform.proto";
@@ -36,4 +37,10 @@ message LegacySubmap3D {
   bool finished = 3;
   HybridGrid high_resolution_hybrid_grid = 4;
   HybridGrid low_resolution_hybrid_grid = 5;
+}
+
+message LegacySubmap {
+  SubmapId submap_id = 1;
+  LegacySubmap2D submap_2d = 2;
+  LegacySubmap3D submap_3d = 3;
 }
