@@ -80,13 +80,13 @@ void AccelerationConstraint3D::AddToOptimizer(Nodes* nodes,
 
   auto imu_node = common::FindOrNull(nodes->imu_calibration_nodes, imu_);
   if (imu_node == nullptr) {
-    LOG(INFO) << "IMU calibration node was not found in pose_3d_nodes.";
+    LOG(INFO) << "IMU calibration node was not found in imu_calibration_nodes.";
     return;
   }
 
   if (first_node->constant() && second_node->constant() &&
       third_node->constant() && imu_node->constant()) {
-    LOG(INFO) << "Both nodes are constant, skipping the constraint.";
+    LOG(INFO) << "All nodes are constant, skipping the constraint.";
     return;
   }
 
