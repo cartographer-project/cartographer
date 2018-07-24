@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 
   FLAGS_logtostderr = true;
   google::SetUsageMessage(
-      "Swiss army knife for pbstreams.\n\n"
+      "Swiss Army knife for pbstreams.\n\n"
       "Currently supported subcommands are:\n"
       "\tinfo    - Prints summary of pbstream.\n"
       "\tmigrate - Migrates old pbstream (w/o header) to new pbstream format.");

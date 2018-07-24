@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 The Cartographer Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "cartographer/io/internal/pbstream_info.h"
 
 #include <map>
@@ -11,7 +27,9 @@
 
 DEFINE_bool(all_debug_strings, false,
             "Print debug strings of all serialized data.");
+
 using cartographer::mapping::proto::SerializedData;
+
 namespace cartographer {
 namespace io {
 namespace {
@@ -95,7 +113,7 @@ int pbstream_info(int argc, char* argv[]) {
   ss << "\n\n"
      << "Reads a pbstream file and summarizes its contents.\n\n"
      << "Usage: " << argv[0] << " " << argv[1]
-     << " <pbstream_filename> [Options]\n";
+     << " <pbstream_filename> [flags]\n";
   google::SetUsageMessage(ss.str());
   if (argc < 3) {
     google::ShowUsageWithFlagsRestrict(argv[0], "pbstream_info");
