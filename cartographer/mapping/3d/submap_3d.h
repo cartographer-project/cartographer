@@ -46,8 +46,7 @@ class Submap3D : public Submap {
            const transform::Rigid3d& local_submap_pose);
   explicit Submap3D(const proto::Submap3D& proto);
 
-  void ToProto(proto::Submap* proto,
-               bool include_probability_grid_data) const override;
+  proto::Submap ToProto(bool include_probability_grid_data) const override;
   void UpdateFromProto(const proto::Submap& proto) override;
 
   void ToResponseProto(const transform::Rigid3d& global_submap_pose,
@@ -68,6 +67,8 @@ class Submap3D : public Submap {
   void Finish();
 
  private:
+  void UpdateFromProto(const proto::Submap3D& submap_3d);
+
   std::unique_ptr<HybridGrid> high_resolution_hybrid_grid_;
   std::unique_ptr<HybridGrid> low_resolution_hybrid_grid_;
 };

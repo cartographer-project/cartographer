@@ -135,7 +135,8 @@ TEST_F(AddTrajectoryHandlerTest, WithLocalSlamUploader) {
   EXPECT_CALL(*mock_local_trajectory_uploader_,
               AddTrajectory(Eq("CLIENT_ID"), Eq(13), ParseSensorIds(request),
                             Truly(testing::BuildProtoPredicateEquals(
-                                &upstream_trajectory_builder_options))));
+                                &upstream_trajectory_builder_options))))
+      .WillOnce(Return(13));
   test_server_->SendWrite(request);
   EXPECT_EQ(test_server_->response().trajectory_id(), 13);
 }

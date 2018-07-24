@@ -19,10 +19,12 @@
 namespace cartographer {
 namespace pose_graph {
 
+// TODO(pifon): Add a test.
 proto::Constraint Constraint::ToProto() const {
   proto::Constraint constraint;
   constraint.set_id(constraint_id_);
   *constraint.mutable_cost_function() = ToCostFunctionProto();
+  *constraint.mutable_loss_function() = loss_function_.ToProto();
   return constraint;
 }
 

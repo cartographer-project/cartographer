@@ -185,10 +185,10 @@ class ClientServerTest : public ::testing::Test {
   }
 
   void WaitForLocalSlamResultUploads(size_t size) {
-    std::unique_lock<std::mutex> lock(local_slam_result_upload_mutex_);
-    local_slam_result_upload_condition_.wait(lock, [&] {
-      return stub_->pose_graph()->GetTrajectoryNodePoses().size() >= size;
-    });
+    while (stub_->pose_graph()->GetTrajectoryNodePoses().size() < size) {
+      LOG(INFO) << stub_->pose_graph()->GetTrajectoryNodePoses().size();
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
   }
 
   proto::MapBuilderServerOptions map_builder_server_options_;
@@ -483,7 +483,53 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, LoadState) {
+TEST_F(ClientServerTest, LocalSlam2DUplinkServerRestarting) {
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+  InitializeRealUploadingServer();
+  uploading_server_->Start();
+  InitializeStubForUploadingServer();
+  int trajectory_id = stub_for_uploading_server_->AddTrajectoryBuilder(
+      {kRangeSensorId}, trajectory_builder_options_,
+      local_slam_result_callback_);
+  TrajectoryBuilderInterface* trajectory_stub =
+      stub_for_uploading_server_->GetTrajectoryBuilder(trajectory_id);
+  const auto measurements = mapping::testing::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
+
+  // Insert half of the measurements.
+  for (unsigned int i = 0; i < measurements.size() / 2; ++i) {
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurements.at(i));
+  }
+  WaitForLocalSlamResults(measurements.size() / 2);
+  WaitForLocalSlamResultUploads(number_of_insertion_results_);
+
+  // Simulate a cloud server restart.
+  LOG(INFO) << "Simulating server restart.";
+  constexpr int kUplinkTrajectoryId = 0;
+  stub_->FinishTrajectory(kUplinkTrajectoryId);
+  server_->Shutdown();
+  server_->WaitForShutdown();
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+
+  // Insert the second half of the measurements.
+  for (unsigned int i = measurements.size() / 2; i < measurements.size(); ++i) {
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurements.at(i));
+  }
+
+  WaitForLocalSlamResults(measurements.size() / 2);
+  WaitForLocalSlamResultUploads(2);
+  stub_for_uploading_server_->FinishTrajectory(trajectory_id);
+  uploading_server_->Shutdown();
+  uploading_server_->WaitForShutdown();
+  server_->Shutdown();
+  server_->WaitForShutdown();
+}
+
+TEST_F(ClientServerTest, LoadStateAndDelete) {
   InitializeRealServer();
   server_->Start();
   InitializeStub();
@@ -507,9 +553,17 @@ TEST_F(ClientServerTest, LoadState) {
   int expected_trajectory_id = 0;
   EXPECT_EQ(trajectory_remapping.size(), 1);
   EXPECT_EQ(trajectory_remapping.at(0), expected_trajectory_id);
+  stub_->pose_graph()->RunFinalOptimization();
   EXPECT_TRUE(stub_->pose_graph()->IsTrajectoryFrozen(expected_trajectory_id));
   EXPECT_FALSE(
       stub_->pose_graph()->IsTrajectoryFinished(expected_trajectory_id));
+  for (const auto& entry : trajectory_remapping) {
+    int trajectory_id = entry.second;
+    stub_->pose_graph()->DeleteTrajectory(trajectory_id);
+    stub_->pose_graph()->RunFinalOptimization();
+    EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+              PoseGraphInterface::TrajectoryState::DELETED);
+  }
   server_->Shutdown();
 }
 

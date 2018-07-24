@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/node/imu_calibration.h"
 
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include "cartographer/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {

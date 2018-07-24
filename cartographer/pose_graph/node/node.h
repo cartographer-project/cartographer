@@ -32,9 +32,6 @@ class Node {
 
   ~Node() = default;
 
-  Node(const Node&) = delete;
-  Node& operator=(const Node&) = delete;
-
   proto::Node ToProto() const;
 
   const NodeId node_id() const { return node_id_; }

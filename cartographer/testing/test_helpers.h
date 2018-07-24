@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_INTERNAL_TESTING_TEST_HELPERS_H_
-#define CARTOGRAPHER_POSE_GRAPH_INTERNAL_TESTING_TEST_HELPERS_H_
+#ifndef CARTOGRAPHER_TESTING_TEST_HELPERS_H_
+#define CARTOGRAPHER_TESTING_TEST_HELPERS_H_
 
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
@@ -24,17 +24,28 @@
 namespace cartographer {
 namespace testing {
 
+template <typename ProtoType>
+ProtoType ParseProto(const std::string& proto_string) {
+  ProtoType proto;
+  EXPECT_TRUE(
+      ::google::protobuf::TextFormat::ParseFromString(proto_string, &proto));
+  return proto;
+}
+
 MATCHER_P(EqualsProto, expected_proto_string, "") {
   using ConstProtoType = typename std::remove_reference<decltype(arg)>::type;
+  using ProtoType = typename std::remove_cv<ConstProtoType>::type;
 
-  typename std::remove_cv<ConstProtoType>::type expected_proto;
-  EXPECT_TRUE(google::protobuf::TextFormat::ParseFromString(
-      expected_proto_string, &expected_proto));
-  return google::protobuf::util::MessageDifferencer::Equals(arg,
-                                                            expected_proto);
+  return google::protobuf::util::MessageDifferencer::Equals(
+      arg, ParseProto<ProtoType>(expected_proto_string));
+}
+
+::testing::Matcher<double> Near(double expected) {
+  constexpr double kPrecision = 1e-05;
+  return ::testing::DoubleNear(expected, kPrecision);
 }
 
 }  // namespace testing
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_INTERNAL_TESTING_TEST_HELPERS_H_
+#endif  // CARTOGRAPHER_TESTING_TEST_HELPERS_H_

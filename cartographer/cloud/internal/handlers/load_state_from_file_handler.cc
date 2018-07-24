@@ -33,6 +33,10 @@ void LoadStateFromFileHandler::OnRequest(
   auto trajectory_remapping =
       GetContext<MapBuilderContextInterface>()->map_builder().LoadStateFromFile(
           request.file_path());
+  for (const auto& entry : trajectory_remapping) {
+    GetContext<MapBuilderContextInterface>()->RegisterClientIdForTrajectory(
+        request.client_id(), entry.second);
+  }
   auto response = common::make_unique<proto::LoadStateFromFileResponse>();
   *response->mutable_trajectory_remapping() = ToProto(trajectory_remapping);
   Send(std::move(response));

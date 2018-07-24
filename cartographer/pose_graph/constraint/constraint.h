@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_CONSTRAINT_H_
 #define CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_CONSTRAINT_H_
 
+#include "cartographer/pose_graph/constraint/loss_function/loss_function.h"
 #include "cartographer/pose_graph/node/nodes.h"
 #include "cartographer/pose_graph/proto/constraint.pb.h"
 #include "ceres/problem.h"
@@ -30,7 +31,9 @@ using ConstraintId = std::string;
 
 class Constraint {
  public:
-  explicit Constraint(const ConstraintId& id) : constraint_id_(id) {}
+  Constraint(const ConstraintId& id,
+             const proto::LossFunction& loss_function_proto)
+      : constraint_id_(id), loss_function_(loss_function_proto) {}
   virtual ~Constraint() = default;
 
   Constraint(const Constraint&) = delete;
@@ -45,8 +48,13 @@ class Constraint {
  protected:
   virtual proto::CostFunction ToCostFunctionProto() const = 0;
 
+  ceres::LossFunction* ceres_loss() const {
+    return loss_function_.ceres_loss();
+  }
+
  private:
   ConstraintId constraint_id_;
+  LossFunction loss_function_;
 };
 
 }  // namespace pose_graph
