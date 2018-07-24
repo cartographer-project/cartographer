@@ -88,19 +88,19 @@ message RelativePose2DInterpolated {
   Parameters parameters = 3;
 }
 
-message RelativePose3DInterpolated {
-  InterpolatedNode first = 1;
-  NodeId second = 2;
+message InterpolatedRelativePose3D {
+  NodeId first_start = 1;
+  NodeId first_end = 2;
+  NodeId second = 3;
 
   message Parameters {
     transform.proto.Rigid3d first_t_second = 1;
     double translation_weight = 2;
     double rotation_weight = 3;
-
-    transform.proto.Quaterniond gravity_alignment_start = 4;
-    transform.proto.Quaterniond gravity_alignment_end = 5;
+    // Interpolates between first_start and first_end.
+    double interpolation_factor = 4;
   }
-  Parameters parameters = 3;
+  Parameters parameters = 4;
 }
 
 message CostFunction {
@@ -110,6 +110,6 @@ message CostFunction {
     Acceleration3D acceleration_3d = 3;
     Rotation3D rotation_3d = 4;
     RelativePose2DInterpolated relative_pose_2d_interpolated = 5;
-    RelativePose3DInterpolated relative_pose_3d_interpolated = 6;
+    InterpolatedRelativePose3D interpolated_relative_pose_3d = 6;
   }
 }
