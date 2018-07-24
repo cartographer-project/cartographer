@@ -29,7 +29,7 @@ namespace io {
 void MigrateStreamFormatToVersion1(
     cartographer::io::ProtoStreamReaderInterface* const input,
     cartographer::io::ProtoStreamWriterInterface* const output,
-    bool uses_old_submap);
+    bool migrate_grid_format);
 
 }  // namespace io
 }  // namespace cartographer

@@ -116,7 +116,9 @@ bool DeserializeNext(cartographer::io::ProtoStreamReaderInterface* const input,
     LOG_FIRST_N(INFO, 1) << "Migrating submap data.";
     if (legacy_data.submap().has_submap_2d()) {
       CHECK(legacy_data.submap().submap_2d().grid().has_probability_grid_2d() ||
-            legacy_data.submap().submap_2d().grid().has_tsdf_2d());
+            legacy_data.submap().submap_2d().grid().has_tsdf_2d())
+          << "\nThe legacy data contains a 2D submap, but it's not using the "
+             "expected grid format. Try to migrate the grid format instead.";
     }
     auto& output_vector = (*proto_map)[SerializedData::kSubmapFieldNumber];
     output_vector.emplace_back();
@@ -166,10 +168,10 @@ bool DeserializeNext(cartographer::io::ProtoStreamReaderInterface* const input,
   return true;
 }
 
-bool DeserializeNextWithLegacySubmap(
+bool DeserializeNextAndMigrateGridFormat(
     cartographer::io::ProtoStreamReaderInterface* const input,
     ProtoMap* proto_map) {
-  mapping::proto::LegacySerializedDataOldSubmap legacy_data;
+  mapping::proto::LegacySerializedDataLegacySubmap legacy_data;
   if (!input->ReadProto(&legacy_data)) return false;
 
   if (legacy_data.has_submap()) {
@@ -177,7 +179,9 @@ bool DeserializeNextWithLegacySubmap(
     auto& output_vector = (*proto_map)[SerializedData::kSubmapFieldNumber];
     output_vector.emplace_back();
     if (legacy_data.submap().has_submap_2d()) {
-      CHECK(legacy_data.submap().submap_2d().has_probability_grid());
+      CHECK(legacy_data.submap().submap_2d().has_probability_grid())
+          << "\nThe legacy data contains a 2D submap, but it has no legacy "
+             "probability grid that can be migrated to the new grid format.";
       *output_vector.back().mutable_submap() =
           MigrateLegacySubmap2d(legacy_data.submap());
     } else {
@@ -231,7 +235,7 @@ bool DeserializeNextWithLegacySubmap(
 
 ProtoMap ParseLegacyData(
     cartographer::io::ProtoStreamReaderInterface* const input,
-    bool uses_old_submap) {
+    bool migrate_grid_format) {
   ProtoMap proto_map;
   CHECK(ReadPoseGraph(input, &proto_map))
       << "Input stream seems to differ from original stream format. Could "
@@ -241,9 +245,9 @@ ProtoMap ParseLegacyData(
       << "Input stream seems to differ from original stream format. Could "
          "not "
          "read AllTrajectoryBuilderOptions as second message.";
-  if (uses_old_submap) {
+  if (migrate_grid_format) {
     do {
-    } while (DeserializeNextWithLegacySubmap(input, &proto_map));
+    } while (DeserializeNextAndMigrateGridFormat(input, &proto_map));
   } else {
     do {
     } while (DeserializeNext(input, &proto_map));
@@ -286,8 +290,9 @@ void SerializeToVersion1Format(
 void MigrateStreamFormatToVersion1(
     cartographer::io::ProtoStreamReaderInterface* const input,
     cartographer::io::ProtoStreamWriterInterface* const output,
-    bool uses_old_submap) {
-  SerializeToVersion1Format(ParseLegacyData(input, uses_old_submap), output);
+    bool migrate_grid_format) {
+  SerializeToVersion1Format(ParseLegacyData(input, migrate_grid_format),
+                            output);
 }
 
 }  // namespace io

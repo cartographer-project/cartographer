@@ -29,8 +29,9 @@ message LegacySerializedData {
   LandmarkData landmark_data = 7;
 }
 
-// With old submap format without generalized grid.
-message LegacySerializedDataOldSubmap {
+// For backwards compatibility with serialized data containing the legacy 
+// submap format that did not yet use the generalized 2D grid format.
+message LegacySerializedDataLegacySubmap {
   LegacySubmap submap = 1;
   Node node = 2;
   ImuData imu_data = 3;
