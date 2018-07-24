@@ -213,20 +213,9 @@ Submap3D::Submap3D(const float high_resolution, const float low_resolution,
       rotational_scan_matcher_histogram_(rotational_scan_matcher_histogram) {}
 
 Submap3D::Submap3D(const proto::Submap3D& proto)
-    : Submap(transform::ToRigid3(proto.local_pose())),
-      high_resolution_hybrid_grid_(
-          common::make_unique<HybridGrid>(proto.high_resolution_hybrid_grid())),
-      low_resolution_hybrid_grid_(
-          common::make_unique<HybridGrid>(proto.low_resolution_hybrid_grid())) {
-  set_num_range_data(proto.num_range_data());
-  set_finished(proto.finished());
+    : Submap(transform::ToRigid3(proto.local_pose())) {
+  UpdateFromProto(proto);
   CHECK(proto.rotational_scan_matcher_histogram_size() > 0);
-  rotational_scan_matcher_histogram_.resize(
-      proto.rotational_scan_matcher_histogram_size());
-  for (int i = 0; i != proto.rotational_scan_matcher_histogram_size(); ++i) {
-    rotational_scan_matcher_histogram_(i) =
-        proto.rotational_scan_matcher_histogram(i);
-  }
 }
 
 proto::Submap Submap3D::ToProto(
@@ -247,12 +236,17 @@ proto::Submap Submap3D::ToProto(
     submap_3d->add_rotational_scan_matcher_histogram(
         rotational_scan_matcher_histogram_(i));
   }
+  LOG(INFO) << "histogram size> " << rotational_scan_matcher_histogram_.size();
   return proto;
 }
 
 void Submap3D::UpdateFromProto(const proto::Submap& proto) {
   CHECK(proto.has_submap_3d());
-  const auto& submap_3d = proto.submap_3d();
+  UpdateFromProto(proto.submap_3d());
+}
+
+void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
+  LOG(INFO) << "Update from proto";
   set_num_range_data(submap_3d.num_range_data());
   set_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
@@ -277,6 +271,7 @@ void Submap3D::UpdateFromProto(const proto::Submap& proto) {
     rotational_scan_matcher_histogram_(i) =
         submap_3d.rotational_scan_matcher_histogram(i);
   }
+  LOG(INFO) << "Update from proto done";
 }
 
 void Submap3D::ToResponseProto(
