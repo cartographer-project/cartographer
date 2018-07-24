@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/constraint/rotation_constraint_3d.h"
+#include "cartographer/pose_graph/constraint/acceleration_constraint_3d.h"
 
 #include "cartographer/testing/test_helpers.h"
 
@@ -26,25 +26,28 @@ using testing::EqualsProto;
 using testing::ParseProto;
 
 constexpr char kConstraint[] = R"PROTO(
-  id: "narf"
+  id: "hal_acceleration"
   cost_function {
-    rotation_3d {
-      first { object_id: "node0" }
-      second { object_id: "node1" }
-      imu_calibration { object_id: "imu_node" }
+    acceleration_3d {
+      first { object_id: "hal9000" timestamp: 100 }
+      second { object_id: "hal9000" timestamp: 200 }
+      third { object_id: "hal9000" timestamp: 300 }
+      imu_calibration { object_id: "hal_imu" }
       parameters {
-        delta_rotation_imu_frame { x: 0 y: 0.1 z: 0.2 w: 0.3 }
-        scaling_factor: 0.4
+        delta_velocity_imu_frame { x: 1 y: 1 z: 1 }
+        first_to_second_delta_time_seconds: 10.0
+        second_to_third_delta_time_seconds: 20.0
+        scaling_factor: 2.0
       }
     }
   }
   loss_function { quadratic_loss {} }
 )PROTO";
 
-TEST(RotationConstraint3DTest, SerializesCorrectly) {
+TEST(AccelerationConstraint3DTest, SerializesCorrectly) {
   const auto proto = ParseProto<proto::Constraint>(kConstraint);
-  RotationContraint3D constraint(proto.id(), proto.loss_function(),
-                                 proto.cost_function().rotation_3d());
+  AccelerationConstraint3D constraint(proto.id(), proto.loss_function(),
+                                      proto.cost_function().acceleration_3d());
   const auto actual_proto = constraint.ToProto();
   EXPECT_THAT(actual_proto, EqualsProto(kConstraint));
 }

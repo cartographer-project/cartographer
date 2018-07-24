@@ -51,8 +51,8 @@ message Acceleration3D {
 
   message Parameters {
     transform.proto.Vector3d delta_velocity_imu_frame = 1;
-    int64 first_to_second_time_delta = 2;
-    int64 second_to_third_time_delta = 3;
+    double first_to_second_delta_time_seconds = 2;
+    double second_to_third_delta_time_seconds = 3;
     double scaling_factor = 4;
   }
   Parameters parameters = 5;

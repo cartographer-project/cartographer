@@ -36,8 +36,6 @@ static auto* kLocalSlamLatencyMetric = metrics::Gauge::Null();
 static auto* kLocalSlamVoxelFilterFraction = metrics::Gauge::Null();
 static auto* kLocalSlamScanMatcherFraction = metrics::Gauge::Null();
 static auto* kLocalSlamInsertIntoSubmapFraction = metrics::Gauge::Null();
-// TODO(spielawa): Add the following two metrics also to
-// local_trajectory_builder_2d
 static auto* kLocalSlamRealTimeRatio = metrics::Gauge::Null();
 static auto* kLocalSlamCpuRealTimeRatio = metrics::Gauge::Null();
 static auto* kRealTimeCorrelativeScanMatcherScoreMetric =
