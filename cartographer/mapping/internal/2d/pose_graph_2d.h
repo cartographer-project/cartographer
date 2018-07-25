@@ -188,11 +188,7 @@ class PoseGraph2D : public PoseGraph {
 
   // Computes constraints for a node and submap pair.
   void ComputeConstraint(const NodeId& node_id, const SubmapId& submap_id)
-      REQUIRES(mutex_);
-
-  // Adds constraints for older nodes whenever a new submap is finished.
-  void ComputeConstraintsForOldNodes(const SubmapId& submap_id)
-      REQUIRES(mutex_);
+      EXCLUDES(mutex_);
 
   // Deletes trajectories waiting for deletion. Must not be called during
   // constraint search.
