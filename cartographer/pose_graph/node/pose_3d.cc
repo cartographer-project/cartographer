@@ -20,11 +20,12 @@ namespace cartographer {
 namespace pose_graph {
 
 Pose3D::Pose3D(const NodeId& node_id, bool constant,
-               const Eigen::Vector3d& translation,
-               const Eigen::Quaterniond& rotation)
+               const proto::Pose3D& pose_3d)
     : Node(node_id, constant),
-      translation_{{translation.x(), translation.y(), translation.z()}},
-      rotation_{{rotation.x(), rotation.y(), rotation.z(), rotation.w()}} {}
+      translation_{{pose_3d.translation().x(), pose_3d.translation().y(),
+                    pose_3d.translation().z()}},
+      rotation_{{pose_3d.rotation().x(), pose_3d.rotation().y(),
+                 pose_3d.rotation().z(), pose_3d.rotation().w()}} {}
 
 proto::Parameters Pose3D::ToParametersProto() const {
   proto::Parameters parameters;
