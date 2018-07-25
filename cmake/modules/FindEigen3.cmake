@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find_package(Eigen3 QUIET)
+find_package(Eigen3 QUIET NO_MODULE)
 if (NOT EIGEN3_FOUND)
   list(APPEND EIGEN3_POSSIBLE_DIRS
     /usr/local/include/eigen3
