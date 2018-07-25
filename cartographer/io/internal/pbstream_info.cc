@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
+#include "cartographer/io/internal/pbstream_info.h"
+
+#include <map>
+#include <sstream>
+#include <string>
+
 #include "cartographer/io/proto_stream.h"
 #include "cartographer/io/proto_stream_deserializer.h"
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
-DEFINE_string(pbstream_filename, "", "Proto stream file.");
 DEFINE_bool(all_debug_strings, false,
             "Print debug strings of all serialized data.");
 
+using cartographer::mapping::proto::SerializedData;
+
 namespace cartographer {
-namespace mapping {
+namespace io {
 namespace {
 
 void Run(const std::string& pbstream_filename, bool all_debug_strings) {
@@ -33,13 +40,13 @@ void Run(const std::string& pbstream_filename, bool all_debug_strings) {
   io::ProtoStreamDeserializer deserializer(&reader);
   const auto header = deserializer.header();
   LOG(INFO) << "Header: " << header.DebugString();
-  for (const proto::TrajectoryBuilderOptionsWithSensorIds& trajectory_options :
-       deserializer.all_trajectory_builder_options()
-           .options_with_sensor_ids()) {
+  for (const mapping::proto::TrajectoryBuilderOptionsWithSensorIds&
+           trajectory_options : deserializer.all_trajectory_builder_options()
+                                    .options_with_sensor_ids()) {
     LOG(INFO) << "Trajectory options: " << trajectory_options.DebugString();
   }
-  const proto::PoseGraph pose_graph = deserializer.pose_graph();
-  for (const proto::Trajectory& trajectory : pose_graph.trajectory()) {
+  const mapping::proto::PoseGraph pose_graph = deserializer.pose_graph();
+  for (const mapping::proto::Trajectory& trajectory : pose_graph.trajectory()) {
     LOG(INFO) << "Trajectory id: " << trajectory.trajectory_id()
               << " has #nodes " << trajectory.node_size() << " has #submaps "
               << trajectory.submap_size();
@@ -48,16 +55,15 @@ void Run(const std::string& pbstream_filename, bool all_debug_strings) {
     LOG(INFO) << "Pose graph: " << pose_graph.DebugString();
   }
 
-  const std::map<proto::SerializedData::DataCase, std::string>
-      data_case_to_name = {
-          {proto::SerializedData::kSubmap, "submap"},
-          {proto::SerializedData::kNode, "node"},
-          {proto::SerializedData::kTrajectoryData, "trajectory_data"},
-          {proto::SerializedData::kImuData, "imu_data"},
-          {proto::SerializedData::kOdometryData, "odometry_data"},
-          {proto::SerializedData::kFixedFramePoseData, "fixed_frame_pose_data"},
-          {proto::SerializedData::kLandmarkData, "landmark_data"},
-      };
+  const std::map<SerializedData::DataCase, std::string> data_case_to_name = {
+      {SerializedData::kSubmap, "submap"},
+      {SerializedData::kNode, "node"},
+      {SerializedData::kTrajectoryData, "trajectory_data"},
+      {SerializedData::kImuData, "imu_data"},
+      {SerializedData::kOdometryData, "odometry_data"},
+      {SerializedData::kFixedFramePoseData, "fixed_frame_pose_data"},
+      {SerializedData::kLandmarkData, "landmark_data"},
+  };
   // Initialize so zero counts of these are also reported.
   std::map<std::string, int> data_counts = {
       {"submap_2d", 0},
@@ -65,7 +71,7 @@ void Run(const std::string& pbstream_filename, bool all_debug_strings) {
       {"submap_3d", 0},
       {"submap_3d_high_resolution_hybrid_grid", 0},
   };
-  proto::SerializedData proto;
+  SerializedData proto;
   while (deserializer.ReadNextSerializedData(&proto)) {
     if (all_debug_strings) {
       LOG(INFO) << "Serialized data: " << proto.DebugString();
@@ -77,7 +83,7 @@ void Run(const std::string& pbstream_filename, bool all_debug_strings) {
     }
     const std::string& data_name = it->second;
     ++data_counts[data_name];
-    if (proto.data_case() == proto::SerializedData::kSubmap) {
+    if (proto.data_case() == SerializedData::kSubmap) {
       if (proto.mutable_submap()->has_submap_2d()) {
         ++data_counts["submap_2d"];
         if (proto.mutable_submap()->mutable_submap_2d()->has_grid()) {
@@ -100,23 +106,22 @@ void Run(const std::string& pbstream_filename, bool all_debug_strings) {
               << entry.second;
   }
 }
-
 }  // namespace
-}  // namespace mapping
-}  // namespace cartographer
 
-int main(int argc, char** argv) {
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_logtostderr = true;
-  google::SetUsageMessage(
-      "\n\n"
-      "Reads a pbstream file and summarizes its contents.\n");
-  google::ParseCommandLineFlags(&argc, &argv, true);
-
-  if (FLAGS_pbstream_filename.empty()) {
+int pbstream_info(int argc, char* argv[]) {
+  std::stringstream ss;
+  ss << "\n\n"
+     << "Reads a pbstream file and summarizes its contents.\n\n"
+     << "Usage: " << argv[0] << " " << argv[1]
+     << " <pbstream_filename> [flags]\n";
+  google::SetUsageMessage(ss.str());
+  if (argc < 3) {
     google::ShowUsageWithFlagsRestrict(argv[0], "pbstream_info");
     return EXIT_FAILURE;
   }
-  ::cartographer::mapping::Run(FLAGS_pbstream_filename,
-                               FLAGS_all_debug_strings);
+  Run(argv[2], FLAGS_all_debug_strings);
+  return EXIT_SUCCESS;
 }
+
+}  // namespace io
+}  // namespace cartographer

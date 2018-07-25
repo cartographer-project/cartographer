@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/constraint/rotation_constraint_3d.h"
+#include "cartographer/pose_graph/constraint/relative_pose_constraint_3d.h"
 
 #include "cartographer/testing/test_helpers.h"
 
@@ -28,23 +28,27 @@ using testing::ParseProto;
 constexpr char kConstraint[] = R"PROTO(
   id: "narf"
   cost_function {
-    rotation_3d {
+    relative_pose_3d {
       first { object_id: "node0" }
       second { object_id: "node1" }
-      imu_calibration { object_id: "imu_node" }
       parameters {
-        delta_rotation_imu_frame { x: 0 y: 0.1 z: 0.2 w: 0.3 }
-        scaling_factor: 0.4
+        first_t_second {
+          translation: { x: 1 y: 2 z: 3 }
+          rotation: { x: 0 y: 0.3 z: 0.1 w: 0.2 }
+        }
+        translation_weight: 1
+        rotation_weight: 10
       }
     }
   }
+
   loss_function { quadratic_loss {} }
 )PROTO";
 
-TEST(RotationConstraint3DTest, SerializesCorrectly) {
+TEST(RelativePoseConstraint2DTest, SerializesCorrectly) {
   const auto proto = ParseProto<proto::Constraint>(kConstraint);
-  RotationContraint3D constraint(proto.id(), proto.loss_function(),
-                                 proto.cost_function().rotation_3d());
+  RelativePoseConstraint3D constraint(proto.id(), proto.loss_function(),
+                                      proto.cost_function().relative_pose_3d());
   const auto actual_proto = constraint.ToProto();
   EXPECT_THAT(actual_proto, EqualsProto(kConstraint));
 }

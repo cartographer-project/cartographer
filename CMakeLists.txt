@@ -180,14 +180,9 @@ google_binary(cartographer_compute_relations_metrics
     cartographer/ground_truth/compute_relations_metrics_main.cc
 )
 
-google_binary(cartographer_migrate_serialization_format
+google_binary(cartographer_pbstream
   SRCS
-    cartographer/io/migrate_serialization_format_main.cc
-)
-
-google_binary(cartographer_pbstream_info
-  SRCS
-  cartographer/io/pbstream_info_main.cc
+  cartographer/io/pbstream_main.cc
 )
 
 if(${BUILD_GRPC})

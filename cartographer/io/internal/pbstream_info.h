@@ -14,31 +14,17 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/node/pose_2d.h"
-
-#include "cartographer/testing/test_helpers.h"
+#ifndef CARTOGRAPHER_IO_INTERNAL_PBSTREAM_INFO_H_
+#define CARTOGRAPHER_IO_INTERNAL_PBSTREAM_INFO_H_
 
 namespace cartographer {
-namespace pose_graph {
-namespace {
+namespace io {
 
-constexpr char kExpectedNode[] = R"PROTO(
-  id { object_id: "flat_world" timestamp: 1 }
-  constant: true
-  parameters {
-    pose_2d {
-      translation { x: 1 y: 2 }
-      rotation: 5
-    }
-  }
-)PROTO";
+// info subtool for pbstream swiss army knife. The command line arguments are
+// assumed to be parsed and removed from the remaining arguments already.
+int pbstream_info(int argc, char* argv[]);
 
-TEST(Pose2DTest, ToProto) {
-  Pose2D pose_2d({"flat_world", common::FromUniversal(1)}, true,
-                 Eigen::Vector2d(1., 2.), 5.);
-  EXPECT_THAT(pose_2d.ToProto(), testing::EqualsProto(kExpectedNode));
-}
-
-}  // namespace
-}  // namespace pose_graph
+}  // namespace io
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_IO_INTERNAL_PBSTREAM_INFO_H_
