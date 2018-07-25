@@ -160,7 +160,7 @@ class PoseGraph2D : public PoseGraph {
 
   // Handles a new work item.
   void AddWorkItem(const std::function<WorkItem::Result()>& work_item)
-      EXCLUDES(mutex_);
+      EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id) REQUIRES(mutex_);
@@ -196,11 +196,11 @@ class PoseGraph2D : public PoseGraph {
 
   // Runs the optimization, executes the trimmers and processes the work queue.
   void HandleWorkQueue(const constraints::ConstraintBuilder2D::Result& result)
-      EXCLUDES(mutex_);
+      EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
 
   // Waits until we caught up (i.e. nothing is waiting to be scheduled), and
   // all computations have finished.
-  void WaitForAllComputations() EXCLUDES(mutex_);
+  void WaitForAllComputations() EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
 
   // Runs the optimization. Callers have to make sure, that there is only one
   // optimization being run at a time.
@@ -228,10 +228,11 @@ class PoseGraph2D : public PoseGraph {
   const proto::PoseGraphOptions options_;
   GlobalSlamOptimizationCallback global_slam_optimization_callback_;
   mutable common::Mutex mutex_;
+  common::Mutex work_queue_mutex_;
 
   // If it exists, further work items must be added to this queue, and will be
   // considered later.
-  std::unique_ptr<WorkQueue> work_queue_ GUARDED_BY(mutex_);
+  std::unique_ptr<WorkQueue> work_queue_ GUARDED_BY(work_queue_mutex_);
 
   // We globally localize a fraction of the nodes from each trajectory.
   std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>

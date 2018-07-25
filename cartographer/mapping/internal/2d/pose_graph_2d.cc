@@ -52,7 +52,7 @@ PoseGraph2D::PoseGraph2D(
 
 PoseGraph2D::~PoseGraph2D() {
   WaitForAllComputations();
-  common::MutexLocker locker(&mutex_);
+  common::MutexLocker locker(&work_queue_mutex_);
   CHECK(work_queue_ == nullptr);
 }
 
@@ -156,7 +156,7 @@ NodeId PoseGraph2D::AddNode(
 void PoseGraph2D::AddWorkItem(
     const std::function<WorkItem::Result()>& work_item) {
   {
-    common::MutexLocker locker(&mutex_);
+    common::MutexLocker locker(&work_queue_mutex_);
     if (work_queue_ != nullptr) {
       const auto now = std::chrono::steady_clock::now();
       work_queue_->push_back({now, work_item});
@@ -167,7 +167,7 @@ void PoseGraph2D::AddWorkItem(
   }
   if (work_item() == WorkItem::Result::kRunOptimization) {
     {
-      common::MutexLocker locker(&mutex_);
+      common::MutexLocker locker(&work_queue_mutex_);
       work_queue_ = common::make_unique<WorkQueue>();
     }
     constraint_builder_.WhenDone(
@@ -474,7 +474,7 @@ void PoseGraph2D::HandleWorkQueue(
   while (process_work_queue) {
     std::function<WorkItem::Result()> work_item;
     {
-      common::MutexLocker locker(&mutex_);
+      common::MutexLocker locker(&work_queue_mutex_);
       if (work_queue_->empty()) {
         work_queue_.reset();
         return;
@@ -494,40 +494,60 @@ void PoseGraph2D::HandleWorkQueue(
 }
 
 void PoseGraph2D::WaitForAllComputations() {
-  bool notification = false;
-  common::MutexLocker locker(&mutex_);
+  int num_trajectory_nodes;
+  {
+    common::MutexLocker locker(&mutex_);
+    num_trajectory_nodes = data_.num_trajectory_nodes;
+  }
+
   const int num_finished_nodes_at_start =
       constraint_builder_.GetNumFinishedNodes();
-  while (!locker.AwaitWithTimeout(
-      [this]() REQUIRES(mutex_) {
-        return ((constraint_builder_.GetNumFinishedNodes() ==
-                 data_.num_trajectory_nodes) &&
-                !work_queue_);
-      },
-      common::FromSeconds(1.))) {
+
+  auto report_progress = [this, num_trajectory_nodes,
+                          num_finished_nodes_at_start]() {
     // Log progress on nodes only when we are actually processing nodes.
-    if (data_.num_trajectory_nodes != num_finished_nodes_at_start) {
+    if (num_trajectory_nodes != num_finished_nodes_at_start) {
       std::ostringstream progress_info;
       progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
                     << 100. *
                            (constraint_builder_.GetNumFinishedNodes() -
                             num_finished_nodes_at_start) /
-                           (data_.num_trajectory_nodes -
-                            num_finished_nodes_at_start)
+                           (num_trajectory_nodes - num_finished_nodes_at_start)
                     << "%...";
       std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
     }
+  };
+
+  // First wait for the work queue to drain so that it's safe to schedule
+  // a WhenDone() callback.
+  {
+    common::MutexLocker locker(&work_queue_mutex_);
+    while (!locker.AwaitWithTimeout(
+        [this]() REQUIRES(work_queue_mutex_) { return work_queue_ == nullptr; },
+        common::FromSeconds(1.))) {
+      report_progress();
+    }
   }
-  std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
+
+  // Now wait for any pending constraint computations to finish.
+  common::MutexLocker locker(&mutex_);
+  bool notification = false;
   constraint_builder_.WhenDone(
       [this,
-       &notification](const constraints::ConstraintBuilder2D::Result& result) {
-        common::MutexLocker locker(&mutex_);
-        data_.constraints.insert(data_.constraints.end(), result.begin(),
-                                 result.end());
-        notification = true;
-      });
-  locker.Await([&notification]() { return notification; });
+       &notification](const constraints::ConstraintBuilder2D::Result& result)
+          EXCLUDES(mutex_) {
+            common::MutexLocker locker(&mutex_);
+            data_.constraints.insert(data_.constraints.end(), result.begin(),
+                                     result.end());
+            notification = true;
+          });
+  while (!locker.AwaitWithTimeout([&notification]()
+                                      REQUIRES(mutex_) { return notification; },
+                                  common::FromSeconds(1.))) {
+    report_progress();
+  }
+  CHECK_EQ(constraint_builder_.GetNumFinishedNodes(), num_trajectory_nodes);
+  std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
 }
 
 void PoseGraph2D::DeleteTrajectory(const int trajectory_id) {
