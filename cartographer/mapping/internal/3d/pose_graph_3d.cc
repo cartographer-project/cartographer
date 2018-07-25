@@ -856,9 +856,6 @@ void PoseGraph3D::RunOptimization() {
 bool PoseGraph3D::CanAddWorkItemModifying(int trajectory_id) {
   auto it = data_.trajectories_state.find(trajectory_id);
   if (it == data_.trajectories_state.end()) {
-    LOG(WARNING) << "trajectory_id:" << trajectory_id
-                 << " has not been added "
-                    "but modification is requested.";
     return true;
   }
   if (it->second.state == TrajectoryState::FINISHED) {
