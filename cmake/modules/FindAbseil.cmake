@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# DO NOT SUBMIT, would break on CMake versions.
-# FIXME: BUILD_BYPRODUCTS requires CMake 3.2.
 cmake_minimum_required(VERSION 3.2)
 
 if(NOT TARGET standalone_absl)
@@ -25,9 +23,8 @@ if(NOT TARGET standalone_absl)
     ${CMAKE_CURRENT_BINARY_DIR}/${ABSEIL_PROJECT_NAME}/src/${ABSEIL_PROJECT_NAME}-build)
   set(ABSEIL_INCLUDE_DIRS ${ABSEIL_PROJECT_SRC_DIR})
   set(ABSEIL_LIBRARY_PATH
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/synchronization/${CMAKE_STATIC_LIBRARY_PREFIX}absl_synchronization${CMAKE_STATIC_LIBRARY_SUFFIX}")
-  set(dependent_libraries
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/time/libabsl_time.a"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/synchronization/absl_synchronization")
+  set(ABSEIL_DEPENDENT_LIBRARIES
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/algorithm/libabsl_algorithm.a"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/libabsl_base.a"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/libabsl_dynamic_annotations.a"
@@ -48,12 +45,13 @@ if(NOT TARGET standalone_absl)
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/numeric/libabsl_int128.a"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/numeric/libabsl_numeric.a"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/libabsl_strings.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_bad_any_cast.a"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/time/libabsl_time.a"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_any.a"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_bad_any_cast.a"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_bad_optional_access.a"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_optional.a"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_span.a"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_variant.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_optional.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_bad_optional_access.a"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/utility/libabsl_utility.a"
     )
   ExternalProject_Add(${ABSEIL_PROJECT_NAME}
@@ -62,7 +60,7 @@ if(NOT TARGET standalone_absl)
     GIT_TAG          44aa275286baf97fc13529aca547a88b180beb08
     INSTALL_COMMAND  ""
     CMAKE_CACHE_ARGS "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON;-DBUILD_TESTING:BOOL=OFF;-DCMAKE_BUILD_TYPE:STRING=Release"
-    BUILD_BYPRODUCTS "${ABSEIL_LIBRARY_PATH};${dependent_libraries}"
+    BUILD_BYPRODUCTS "${ABSEIL_LIBRARY_PATH};${ABSEIL_DEPENDENT_LIBRARIES}"
   )
   add_library(standalone_absl STATIC IMPORTED)
   set_target_properties(standalone_absl
@@ -73,7 +71,7 @@ if(NOT TARGET standalone_absl)
     PROPERTIES IMPORTED_LOCATION
     ${ABSEIL_LIBRARY_PATH}
     INTERFACE_LINK_LIBRARIES
-    "${dependent_libraries}"
+    "${ABSEIL_DEPENDENT_LIBRARIES}"
   )
   add_dependencies(standalone_absl ${ABSEIL_PROJECT_NAME})
 endif()

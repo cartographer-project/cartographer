@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 2.8.12)  # Ships with Ubuntu 14.04 (Trusty)
+cmake_minimum_required(VERSION 3.2)
 
 project(cartographer)
 
@@ -32,12 +32,7 @@ google_enable_testing()
 find_package(Abseil REQUIRED)
 find_package(Boost REQUIRED COMPONENTS iostreams)
 find_package(Ceres REQUIRED COMPONENTS SuiteSparse)
-
-find_package(Eigen3)
-if(NOT EIGEN3_FOUND)
-  set(EIGEN3_INCLUDE_DIRS ${/usr/include/eigen3})
-endif()
-
+find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
 find_package(Protobuf 3.0.0 REQUIRED)
 

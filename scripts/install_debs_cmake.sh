@@ -24,12 +24,7 @@ sudo apt-get update
 sudo apt-get install lsb-release -y
 if [[ "$(lsb_release -sc)" = "trusty" ]]
 then
-  sudo apt-get install python-software-properties apt-file -y
-  sudo apt-file update
-  sudo apt-get install software-properties-common -y
-  sudo add-apt-repository ppa:george-edison55/cmake-3.x
-  sudo apt-get update
-  sudo apt-get install cmake -y
+  sudo apt-get install cmake3 -y
 elif [[ "$(lsb_release -sc)" = "jessie" ]]
 then
   sudo sh -c "echo 'deb http://ftp.debian.org/debian jessie-backports main' >> /etc/apt/sources.list"
