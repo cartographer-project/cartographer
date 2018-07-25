@@ -21,6 +21,10 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
+DEFINE_bool(migrate_grid_format, false,
+            "Set if the submap data of the input pbstream uses the old "
+            "probability grid format.");
+
 namespace cartographer {
 namespace io {
 
@@ -28,9 +32,10 @@ int pbstream_migrate(int argc, char** argv) {
   std::stringstream ss;
   ss << "\n\nTool for migrating files that use the serialization output of "
         "Cartographer 0.3, to the new serialization format, which includes a "
-        "header (Version 1)."
+        "header (Version 1). You may need to specify the '--migrate_grid_format"
+        " flag if the input file contains submaps with the legacy grid format."
      << "\nUsage: " << argv[0] << " " << argv[1]
-     << " <input_filename> <output_filename>";
+     << " <input_filename> <output_filename> [flags]";
   google::SetUsageMessage(ss.str());
 
   if (argc < 4) {
@@ -41,7 +46,8 @@ int pbstream_migrate(int argc, char** argv) {
   cartographer::io::ProtoStreamWriter output(argv[3]);
   LOG(INFO) << "Migrating old serialization format in \"" << argv[2]
             << "\" to new serialization format in \"" << argv[3] << "\"";
-  cartographer::io::MigrateStreamFormatToVersion1(&input, &output);
+  cartographer::io::MigrateStreamFormatToVersion1(&input, &output,
+                                                  FLAGS_migrate_grid_format);
 
   return EXIT_SUCCESS;
 }
