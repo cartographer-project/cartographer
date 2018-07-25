@@ -23,7 +23,7 @@ if(NOT TARGET standalone_absl)
     ${CMAKE_CURRENT_BINARY_DIR}/${ABSEIL_PROJECT_NAME}/src/${ABSEIL_PROJECT_NAME}-build)
   set(ABSEIL_INCLUDE_DIRS ${ABSEIL_PROJECT_SRC_DIR})
   set(ABSEIL_LIBRARY_PATH
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/synchronization/absl_synchronization")
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/synchronization/libabsl_synchronization.a")
   set(ABSEIL_DEPENDENT_LIBRARIES
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/algorithm/libabsl_algorithm.a"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/libabsl_base.a"

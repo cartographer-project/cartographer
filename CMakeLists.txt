@@ -32,7 +32,7 @@ google_enable_testing()
 find_package(Abseil REQUIRED)
 find_package(Boost REQUIRED COMPONENTS iostreams)
 find_package(Ceres REQUIRED COMPONENTS SuiteSparse)
-find_package(Eigen3 REQUIRED)
+find_package(Eigen REQUIRED)
 find_package(LuaGoogle REQUIRED)
 find_package(Protobuf 3.0.0 REQUIRED)
 
