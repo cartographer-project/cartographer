@@ -155,7 +155,7 @@ class PoseGraph3D : public PoseGraph {
  protected:
   // Waits until we caught up (i.e. nothing is waiting to be scheduled), and
   // all computations have finished.
-  void WaitForAllComputations() EXCLUDES(mutex_);
+  void WaitForAllComputations() EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
 
  private:
   MapById<SubmapId, SubmapData> GetSubmapDataUnderLock() const REQUIRES(mutex_);
