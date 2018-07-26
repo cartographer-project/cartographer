@@ -39,8 +39,8 @@ class InterpolatedRelativePoseConstraint2D : public Constraint {
   using AutoDiffFunction = ceres::AutoDiffCostFunction<
       InterpolatedRelativePoseCost2D,
       6 /* residuals */,
-      3 /* pose variables of first start pose */,
-      3 /* pose variables of first end pose */,
+      3 /* 2d pose variables of first start pose */,
+      3 /* 2d pose variables of first end pose */,
       3 /* translation of second pose */,
       4 /* rotation of second pose */>;
   // clang-format on

@@ -23,7 +23,7 @@ namespace cartographer {
 namespace pose_graph {
 namespace {
 
-void AddPoseParameters(Pose3D* pose, ceres::Problem* problem) {
+void AddPose3DParameters(Pose3D* pose, ceres::Problem* problem) {
   auto transation = pose->mutable_translation();
   auto rotation = pose->mutable_rotation();
   problem->AddParameterBlock(transation->data(), transation->size());
@@ -34,7 +34,7 @@ void AddPoseParameters(Pose3D* pose, ceres::Problem* problem) {
   }
 }
 
-void AddPoseParameters(Pose2D* pose, ceres::Problem* problem) {
+void AddPose2DParameters(Pose2D* pose, ceres::Problem* problem) {
   auto pose_2d = pose->mutable_pose_2d();
   problem->AddParameterBlock(pose_2d->data(), pose_2d->size());
   if (pose->constant()) {
@@ -81,9 +81,9 @@ void InterpolatedRelativePoseConstraint2D::AddToOptimizer(
     return;
   }
 
-  AddPoseParameters(first_node_start, problem);
-  AddPoseParameters(first_node_end, problem);
-  AddPoseParameters(second_node, problem);
+  AddPose2DParameters(first_node_start, problem);
+  AddPose2DParameters(first_node_end, problem);
+  AddPose3DParameters(second_node, problem);
   problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(),
                             first_node_start->mutable_pose_2d()->data(),
                             first_node_end->mutable_pose_2d()->data(),
