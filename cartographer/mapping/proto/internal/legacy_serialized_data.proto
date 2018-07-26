@@ -17,9 +17,22 @@ syntax = "proto3";
 package cartographer.mapping.proto;
 
 import "cartographer/mapping/proto/serialization.proto";
+import "cartographer/mapping/proto/internal/legacy_submap.proto";
 
 message LegacySerializedData {
   Submap submap = 1;
+  Node node = 2;
+  ImuData imu_data = 3;
+  OdometryData odometry_data = 4;
+  FixedFramePoseData fixed_frame_pose_data = 5;
+  TrajectoryData trajectory_data = 6;
+  LandmarkData landmark_data = 7;
+}
+
+// For backwards compatibility with serialized data containing the legacy 
+// submap format that did not yet use the generalized 2D grid format.
+message LegacySerializedDataLegacySubmap {
+  LegacySubmap submap = 1;
   Node node = 2;
   ImuData imu_data = 3;
   OdometryData odometry_data = 4;

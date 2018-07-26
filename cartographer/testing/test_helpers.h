@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_INTERNAL_TESTING_TEST_HELPERS_H_
-#define CARTOGRAPHER_POSE_GRAPH_INTERNAL_TESTING_TEST_HELPERS_H_
+#ifndef CARTOGRAPHER_TESTING_TEST_HELPERS_H_
+#define CARTOGRAPHER_TESTING_TEST_HELPERS_H_
 
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
@@ -48,4 +48,4 @@ MATCHER_P(EqualsProto, expected_proto_string, "") {
 }  // namespace testing
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_INTERNAL_TESTING_TEST_HELPERS_H_
+#endif  // CARTOGRAPHER_TESTING_TEST_HELPERS_H_

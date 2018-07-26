@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/constraint/loss_function/loss_function.h"
 
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include "cartographer/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {

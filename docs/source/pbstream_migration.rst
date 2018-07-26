@@ -24,16 +24,14 @@ In order to enable users to reuse previously generated pbstream files, we
 provide a migration tool which converts pbstreams from Cartographer 0.3 to the
 new serialization format used in Cartographer 1.0.
 
-The tool is shipped as part of Cartographer (`source`_) and once built can be
-invoked as follows:::
+The tool is shipped as part of Cartographer's pbstream tool (`source`_) and once
+built can be invoked as follows:::
 
-  cartographer_migrate_serialization_format \
-        --original_pbstream_file=old.pbstream \
-        --output_pbstream_file=new.pbstream
+  cartographer_pbstream migrate old.pbstream new.pbstream
 
-The tool assumes that the pbstream provided via the ``--original_pbstream_file``
-argument, follows the serialization format of Cartographer 0.3. The resulting
-1.0 pbstream will be saved to the ``--output_pbstream_file`` location.
+The tool assumes that the first pbstream provided as commandline argument,
+follows the serialization format of Cartographer 0.3. The resulting
+1.0 pbstream will be saved to the second commandline argument location.
 
 .. _RFC-0021: https://github.com/googlecartographer/rfcs/blob/master/text/0021-serialization-format.md
-.. _source: https://github.com/googlecartographer/cartographer/blob/master/cartographer/io/migrate_serialization_format_main.cc
+.. _source: https://github.com/googlecartographer/cartographer/blob/master/cartographer/io/pbstream_main.cc

@@ -16,19 +16,14 @@
 
 #include "cartographer/pose_graph/constraint/rotation_constraint_3d.h"
 
-#include "cartographer/pose_graph/internal/testing/test_helpers.h"
+#include "cartographer/testing/test_helpers.h"
 
 namespace cartographer {
 namespace pose_graph {
 namespace {
 
-using ::testing::ElementsAre;
 using testing::EqualsProto;
-using testing::Near;
 using testing::ParseProto;
-
-using RotationType = std::array<double, 4>;
-using ResidualType = std::array<double, 3>;
 
 constexpr char kConstraint[] = R"PROTO(
   id: "narf"
@@ -43,7 +38,6 @@ constexpr char kConstraint[] = R"PROTO(
       }
     }
   }
-
   loss_function { quadratic_loss {} }
 )PROTO";
 

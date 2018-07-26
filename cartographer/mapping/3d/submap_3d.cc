@@ -215,7 +215,6 @@ Submap3D::Submap3D(const float high_resolution, const float low_resolution,
 Submap3D::Submap3D(const proto::Submap3D& proto)
     : Submap(transform::ToRigid3(proto.local_pose())) {
   UpdateFromProto(proto);
-  CHECK(proto.rotational_scan_matcher_histogram_size() > 0);
 }
 
 proto::Submap Submap3D::ToProto(
@@ -246,7 +245,6 @@ void Submap3D::UpdateFromProto(const proto::Submap& proto) {
 }
 
 void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
-  LOG(INFO) << "Update from proto";
   set_num_range_data(submap_3d.num_range_data());
   set_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
