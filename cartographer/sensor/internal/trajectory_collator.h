@@ -50,7 +50,7 @@ class TrajectoryCollator : public CollatorInterface {
 
   void Flush() override;
 
-  common::optional<int> GetBlockingTrajectoryId() const override;
+  absl::optional<int> GetBlockingTrajectoryId() const override;
 
  private:
   std::unordered_map<int, OrderedMultiQueue> trajectory_to_queue_;

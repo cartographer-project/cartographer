@@ -198,7 +198,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
   ++num_accumulated_;
 
   if (num_accumulated_ >= options_.num_accumulated_range_data()) {
-    common::optional<common::Duration> sensor_duration;
+    absl::optional<common::Duration> sensor_duration;
     if (last_sensor_time_.has_value()) {
       sensor_duration = current_sensor_time - last_sensor_time_.value();
     }
@@ -237,7 +237,7 @@ std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
 LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     const common::Time time,
     const sensor::RangeData& filtered_range_data_in_tracking,
-    const common::optional<common::Duration>& sensor_duration) {
+    const absl::optional<common::Duration>& sensor_duration) {
   if (filtered_range_data_in_tracking.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";
     return nullptr;
