@@ -84,7 +84,7 @@ message InterpolatedRelativePose2D {
      // Interpolates between first_start and first_end.
     double interpolation_factor = 6;
   }
-  Parameters parameters = 3;
+  Parameters parameters = 4;
 }
 
 message InterpolatedRelativePose3D {

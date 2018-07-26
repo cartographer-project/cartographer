@@ -23,7 +23,7 @@ namespace cartographer {
 namespace pose_graph {
 namespace {
 
-void AddPoseParameters(Pose2D* pose, ceres::Problem* problem) {
+void AddPoseParameters(Pose3D* pose, ceres::Problem* problem) {
   auto transation = pose->mutable_translation();
   auto rotation = pose->mutable_rotation();
   problem->AddParameterBlock(transation->data(), transation->size());
@@ -31,6 +31,14 @@ void AddPoseParameters(Pose2D* pose, ceres::Problem* problem) {
   if (pose->constant()) {
     problem->SetParameterBlockConstant(transation->data());
     problem->SetParameterBlockConstant(rotation->data());
+  }
+}
+
+void AddPoseParameters(Pose2D* pose, ceres::Problem* problem) {
+  auto pose_2d = pose->mutable_pose_2d();
+  problem->AddParameterBlock(pose_2d->data(), pose_2d->size());
+  if (pose->constant()) {
+    problem->SetParameterBlockConstant(pose_2d->data());
   }
 }
 
@@ -77,10 +85,8 @@ void InterpolatedRelativePoseConstraint2D::AddToOptimizer(
   AddPoseParameters(first_node_end, problem);
   AddPoseParameters(second_node, problem);
   problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(),
-                            first_node_start->mutable_translation()->data(),
-                            first_node_start->mutable_rotation()->data(),
-                            first_node_end->mutable_translation()->data(),
-                            first_node_end->mutable_rotation()->data(),
+                            first_node_start->mutable_pose_2d()->data(),
+                            first_node_end->mutable_pose_2d()->data(),
                             second_node->mutable_translation()->data(),
                             second_node->mutable_rotation()->data());
 }
@@ -88,13 +94,13 @@ void InterpolatedRelativePoseConstraint2D::AddToOptimizer(
 proto::CostFunction InterpolatedRelativePoseConstraint2D::ToCostFunctionProto()
     const {
   proto::CostFunction cost_function;
-  auto* interpolated_relative_pose_3d =
-      cost_function.mutable_interpolated_relative_pose_3d();
-  *interpolated_relative_pose_3d->mutable_first_start() =
+  auto* interpolated_relative_pose_2d =
+      cost_function.mutable_interpolated_relative_pose_2d();
+  *interpolated_relative_pose_2d->mutable_first_start() =
       first_start_.ToProto();
-  *interpolated_relative_pose_3d->mutable_first_end() = first_end_.ToProto();
-  *interpolated_relative_pose_3d->mutable_second() = second_.ToProto();
-  *interpolated_relative_pose_3d->mutable_parameters() = cost_->ToProto();
+  *interpolated_relative_pose_2d->mutable_first_end() = first_end_.ToProto();
+  *interpolated_relative_pose_2d->mutable_second() = second_.ToProto();
+  *interpolated_relative_pose_2d->mutable_parameters() = cost_->ToProto();
   return cost_function;
 }
 
