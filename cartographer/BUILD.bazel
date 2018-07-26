@@ -100,6 +100,7 @@ cc_library(
         "@org_ceres_solver_ceres_solver//:ceres",
         "@org_lua_lua//:lua",
         "@org_tuxfamily_eigen//:eigen",
+        "@com_google_absl//absl/strings",
     ],
 )
 
