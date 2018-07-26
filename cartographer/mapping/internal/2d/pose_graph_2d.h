@@ -198,6 +198,10 @@ class PoseGraph2D : public PoseGraph {
   void HandleWorkQueue(const constraints::ConstraintBuilder2D::Result& result)
       EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
 
+  // Process pending tasks in the work queue on the calling thread, until the
+  // queue is either empty or an optimization is required.
+  void DrainWorkQueue() EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
+
   // Waits until we caught up (i.e. nothing is waiting to be scheduled), and
   // all computations have finished.
   void WaitForAllComputations() EXCLUDES(mutex_) EXCLUDES(work_queue_mutex_);
@@ -244,6 +248,9 @@ class PoseGraph2D : public PoseGraph {
   // Current optimization problem.
   std::unique_ptr<optimization::OptimizationProblem2D> optimization_problem_;
   constraints::ConstraintBuilder2D constraint_builder_;
+
+  // Thread pool used for handling the work queue.
+  common::ThreadPool* const thread_pool_;
 
   // List of all trimmers to consult when optimizations finish.
   std::vector<std::unique_ptr<PoseGraphTrimmer>> trimmers_ GUARDED_BY(mutex_);
