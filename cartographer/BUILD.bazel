@@ -95,12 +95,12 @@ cc_library(
     deps = [
         ":cc_protos",
         "@boost//:iostreams",
+        "@com_google_absl//absl/types:optional",
         "@com_google_glog//:glog",
         "@org_cairographics_cairo//:cairo",
         "@org_ceres_solver_ceres_solver//:ceres",
         "@org_lua_lua//:lua",
         "@org_tuxfamily_eigen//:eigen",
-        "@com_google_absl//absl/strings",
     ],
 )
 
