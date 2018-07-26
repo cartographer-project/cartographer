@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
 #include "cartographer/mapping/proto/3d/local_trajectory_builder_options_3d.pb.h"
@@ -51,11 +51,10 @@ LocalTrajectoryBuilder3D::LocalTrajectoryBuilder3D(
       active_submaps_(options.submaps_options()),
       motion_filter_(options.motion_filter_options()),
       real_time_correlative_scan_matcher_(
-          common::make_unique<scan_matching::RealTimeCorrelativeScanMatcher3D>(
+          absl::make_unique<scan_matching::RealTimeCorrelativeScanMatcher3D>(
               options_.real_time_correlative_scan_matcher_options())),
-      ceres_scan_matcher_(
-          common::make_unique<scan_matching::CeresScanMatcher3D>(
-              options_.ceres_scan_matcher_options())),
+      ceres_scan_matcher_(absl::make_unique<scan_matching::CeresScanMatcher3D>(
+          options_.ceres_scan_matcher_options())),
       accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}},
       range_data_collator_(expected_range_sensor_ids) {}
 
@@ -66,7 +65,7 @@ std::unique_ptr<transform::Rigid3d> LocalTrajectoryBuilder3D::ScanMatch(
     const sensor::PointCloud& low_resolution_point_cloud_in_tracking,
     const sensor::PointCloud& high_resolution_point_cloud_in_tracking) {
   if (active_submaps_.submaps().empty()) {
-    return common::make_unique<transform::Rigid3d>(pose_prediction);
+    return absl::make_unique<transform::Rigid3d>(pose_prediction);
   }
   std::shared_ptr<const mapping::Submap3D> matching_submap =
       active_submaps_.submaps().front();
@@ -100,8 +99,8 @@ std::unique_ptr<transform::Rigid3d> LocalTrajectoryBuilder3D::ScanMatch(
       pose_observation_in_submap.rotation().angularDistance(
           initial_ceres_pose.rotation());
   kScanMatcherResidualAngleMetric->Observe(residual_angle);
-  return common::make_unique<transform::Rigid3d>(matching_submap->local_pose() *
-                                                 pose_observation_in_submap);
+  return absl::make_unique<transform::Rigid3d>(matching_submap->local_pose() *
+                                               pose_observation_in_submap);
 }
 
 void LocalTrajectoryBuilder3D::AddImuData(const sensor::ImuData& imu_data) {
@@ -325,7 +324,7 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
   }
   last_wall_time_ = wall_time;
   last_thread_cpu_time_seconds_ = thread_cpu_time_seconds;
-  return common::make_unique<MatchingResult>(MatchingResult{
+  return absl::make_unique<MatchingResult>(MatchingResult{
       time, *pose_estimate, std::move(filtered_range_data_in_local),
       std::move(insertion_result)});
 }
@@ -361,7 +360,7 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
               filtered_range_data_in_tracking.returns,
               transform::Rigid3f::Rotation(gravity_alignment.cast<float>())),
           options_.rotational_histogram_size());
-  return common::make_unique<InsertionResult>(
+  return absl::make_unique<InsertionResult>(
       InsertionResult{std::make_shared<const mapping::TrajectoryNode::Data>(
                           mapping::TrajectoryNode::Data{
                               time,

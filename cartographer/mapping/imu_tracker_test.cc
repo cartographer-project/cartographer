@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping/imu_tracker.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -31,7 +31,7 @@ constexpr int kSteps = 10;
 class ImuTrackerTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    imu_tracker_ = common::make_unique<ImuTracker>(kGravityTimeConstant, time_);
+    imu_tracker_ = absl::make_unique<ImuTracker>(kGravityTimeConstant, time_);
     angular_velocity_ = Eigen::Vector3d(0, 0, 0);
     linear_acceleration_ = Eigen::Vector3d(0, 0, 9.9);
     EXPECT_NEAR(0.,

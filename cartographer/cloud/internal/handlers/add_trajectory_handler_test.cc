@@ -74,7 +74,7 @@ class AddTrajectoryHandlerTest
  public:
   void SetUp() override {
     testing::HandlerTest<AddTrajectorySignature, AddTrajectoryHandler>::SetUp();
-    mock_map_builder_ = common::make_unique<mapping::testing::MockMapBuilder>();
+    mock_map_builder_ = absl::make_unique<mapping::testing::MockMapBuilder>();
     EXPECT_CALL(*mock_map_builder_context_,
                 GetLocalSlamResultCallbackForSubscriptions())
         .WillOnce(Return(nullptr));

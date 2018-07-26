@@ -16,10 +16,10 @@
 
 #include "cartographer/mapping/internal/testing/test_helpers.h"
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/config.h"
 #include "cartographer/common/configuration_file_resolver.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 #include "cartographer/transform/transform.h"
 
@@ -29,12 +29,12 @@ namespace testing {
 
 std::unique_ptr<::cartographer::common::LuaParameterDictionary>
 ResolveLuaParameters(const std::string& lua_code) {
-  auto file_resolver = ::cartographer::common::make_unique<
-      ::cartographer::common::ConfigurationFileResolver>(
-      std::vector<std::string>{
-          std::string(::cartographer::common::kSourceDirectory) +
-          "/configuration_files"});
-  return common::make_unique<::cartographer::common::LuaParameterDictionary>(
+  auto file_resolver =
+      absl::make_unique<::cartographer::common::ConfigurationFileResolver>(
+          std::vector<std::string>{
+              std::string(::cartographer::common::kSourceDirectory) +
+              "/configuration_files"});
+  return absl::make_unique<::cartographer::common::LuaParameterDictionary>(
       lua_code, std::move(file_resolver));
 }
 

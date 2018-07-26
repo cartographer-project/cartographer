@@ -29,7 +29,7 @@
 #include <string>
 
 #include "Eigen/Eigenvalues"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/proto/pose_graph/constraint_builder_options.pb.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
@@ -168,7 +168,7 @@ void PoseGraph2D::AddWorkItem(
   if (work_item() == WorkItem::Result::kRunOptimization) {
     {
       common::MutexLocker locker(&work_queue_mutex_);
-      work_queue_ = common::make_unique<WorkQueue>();
+      work_queue_ = absl::make_unique<WorkQueue>();
     }
     constraint_builder_.WhenDone(
         [this](const constraints::ConstraintBuilder2D::Result& result) {
@@ -189,7 +189,7 @@ void PoseGraph2D::AddTrajectoryIfNeeded(const int trajectory_id) {
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[trajectory_id]) {
     global_localization_samplers_[trajectory_id] =
-        common::make_unique<common::FixedRatioSampler>(
+        absl::make_unique<common::FixedRatioSampler>(
             options_.global_sampling_ratio());
   }
 }

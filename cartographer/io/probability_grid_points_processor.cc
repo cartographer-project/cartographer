@@ -17,8 +17,8 @@
 #include "cartographer/io/probability_grid_points_processor.h"
 
 #include "Eigen/Core"
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/io/draw_trajectories.h"
 #include "cartographer/io/image.h"
@@ -113,7 +113,7 @@ ProbabilityGridPointsProcessor::FromDictionary(
       dictionary->HasKey("output_type")
           ? OutputTypeFromString(dictionary->GetString("output_type"))
           : OutputType::kPng;
-  return common::make_unique<ProbabilityGridPointsProcessor>(
+  return absl::make_unique<ProbabilityGridPointsProcessor>(
       dictionary->GetDouble("resolution"),
       mapping::CreateProbabilityGridRangeDataInserterOptions2D(
           dictionary->GetDictionary("range_data_inserter").get()),
@@ -178,8 +178,8 @@ std::unique_ptr<Image> DrawProbabilityGrid(
     LOG(WARNING) << "Not writing output: empty probability grid";
     return nullptr;
   }
-  auto image = common::make_unique<Image>(cell_limits.num_x_cells,
-                                          cell_limits.num_y_cells);
+  auto image = absl::make_unique<Image>(cell_limits.num_x_cells,
+                                        cell_limits.num_y_cells);
   for (const Eigen::Array2i& xy_index :
        mapping::XYIndexRangeIterator(cell_limits)) {
     const Eigen::Array2i index = xy_index + *offset;

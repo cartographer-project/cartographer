@@ -26,8 +26,8 @@
 #include <vector>
 
 #include "Eigen/Core"
+#include "absl/memory/memory.h"
 #include "cartographer/common/ceres_solver_options.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/internal/3d/imu_integration.h"
@@ -63,12 +63,12 @@ std::unique_ptr<transform::Rigid3d> Interpolate(
   }
   if (it == map_by_time.BeginOfTrajectory(trajectory_id)) {
     if (it->time == time) {
-      return common::make_unique<transform::Rigid3d>(it->pose);
+      return absl::make_unique<transform::Rigid3d>(it->pose);
     }
     return nullptr;
   }
   const auto prev_it = std::prev(it);
-  return common::make_unique<transform::Rigid3d>(
+  return absl::make_unique<transform::Rigid3d>(
       Interpolate(transform::TimestampedTransform{prev_it->time, prev_it->pose},
                   transform::TimestampedTransform{it->time, it->pose}, time)
           .transform);
@@ -85,13 +85,13 @@ std::unique_ptr<transform::Rigid3d> Interpolate(
   }
   if (it == map_by_time.BeginOfTrajectory(trajectory_id)) {
     if (it->time == time) {
-      return common::make_unique<transform::Rigid3d>(it->pose.value());
+      return absl::make_unique<transform::Rigid3d>(it->pose.value());
     }
     return nullptr;
   }
   const auto prev_it = std::prev(it);
   if (prev_it->pose.has_value()) {
-    return common::make_unique<transform::Rigid3d>(
+    return absl::make_unique<transform::Rigid3d>(
         Interpolate(transform::TimestampedTransform{prev_it->time,
                                                     prev_it->pose.value()},
                     transform::TimestampedTransform{it->time, it->pose.value()},
@@ -164,7 +164,7 @@ void AddLandmarkCostFunctions(
         C_landmarks->emplace(
             landmark_id,
             CeresPose(starting_point, nullptr /* translation_parametrization */,
-                      common::make_unique<ceres::QuaternionParameterization>(),
+                      absl::make_unique<ceres::QuaternionParameterization>(),
                       problem));
         if (freeze_landmarks) {
           problem->SetParameterBlockConstant(
@@ -279,7 +279,7 @@ void OptimizationProblem3D::Solve(
   const auto translation_parameterization =
       [this]() -> std::unique_ptr<ceres::LocalParameterization> {
     return options_.fix_z_in_3d()
-               ? common::make_unique<ceres::SubsetParameterization>(
+               ? absl::make_unique<ceres::SubsetParameterization>(
                      3, std::vector<int>{2})
                : nullptr;
   };
@@ -302,7 +302,7 @@ void OptimizationProblem3D::Solve(
           submap_id_data.id,
           CeresPose(submap_id_data.data.global_pose,
                     translation_parameterization(),
-                    common::make_unique<ceres::AutoDiffLocalParameterization<
+                    absl::make_unique<ceres::AutoDiffLocalParameterization<
                         ConstantYawQuaternionPlus, 4, 2>>(),
                     &problem));
       problem.SetParameterBlockConstant(
@@ -312,7 +312,7 @@ void OptimizationProblem3D::Solve(
           submap_id_data.id,
           CeresPose(submap_id_data.data.global_pose,
                     translation_parameterization(),
-                    common::make_unique<ceres::QuaternionParameterization>(),
+                    absl::make_unique<ceres::QuaternionParameterization>(),
                     &problem));
     }
     if (frozen) {
@@ -328,7 +328,7 @@ void OptimizationProblem3D::Solve(
     C_nodes.Insert(
         node_id_data.id,
         CeresPose(node_id_data.data.global_pose, translation_parameterization(),
-                  common::make_unique<ceres::QuaternionParameterization>(),
+                  absl::make_unique<ceres::QuaternionParameterization>(),
                   &problem));
     if (frozen) {
       problem.SetParameterBlockConstant(C_nodes.at(node_id_data.id).rotation());
@@ -543,7 +543,7 @@ void OptimizationProblem3D::Solve(
                         transform::GetYaw(fixed_frame_pose_in_map.rotation()),
                         Eigen::Vector3d::UnitZ())),
                 nullptr,
-                common::make_unique<ceres::AutoDiffLocalParameterization<
+                absl::make_unique<ceres::AutoDiffLocalParameterization<
                     YawOnlyQuaternionPlus, 4, 1>>(),
                 &problem));
         fixed_frame_pose_initialized = true;
@@ -611,7 +611,7 @@ OptimizationProblem3D::CalculateOdometryBetweenNodes(
     if (first_node_odometry != nullptr && second_node_odometry != nullptr) {
       const transform::Rigid3d relative_odometry =
           first_node_odometry->inverse() * (*second_node_odometry);
-      return common::make_unique<transform::Rigid3d>(relative_odometry);
+      return absl::make_unique<transform::Rigid3d>(relative_odometry);
     }
   }
   return nullptr;

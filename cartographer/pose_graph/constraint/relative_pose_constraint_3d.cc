@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/constraint/relative_pose_constraint_3d.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
 
 namespace cartographer {
@@ -43,7 +43,7 @@ RelativePoseConstraint3D::RelativePoseConstraint3D(
       first_(proto.first()),
       second_(proto.second()),
       cost_(new RelativePoseCost3D(proto.parameters())),
-      ceres_cost_(common::make_unique<AutoDiffFunction>(cost_)) {}
+      ceres_cost_(absl::make_unique<AutoDiffFunction>(cost_)) {}
 
 void RelativePoseConstraint3D::AddToOptimizer(Nodes* nodes,
                                               ceres::Problem* problem) const {

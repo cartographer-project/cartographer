@@ -57,8 +57,7 @@ class PoseGraph3DForTesting : public PoseGraph3D {
 
 class PoseGraph3DTest : public ::testing::Test {
  protected:
-  PoseGraph3DTest()
-      : thread_pool_(common::make_unique<common::ThreadPool>(1)) {}
+  PoseGraph3DTest() : thread_pool_(absl::make_unique<common::ThreadPool>(1)) {}
 
   void SetUp() override {
     const std::string kPoseGraphLua = R"text(
@@ -70,17 +69,16 @@ class PoseGraph3DTest : public ::testing::Test {
 
   void BuildPoseGraph() {
     auto optimization_problem =
-        common::make_unique<optimization::OptimizationProblem3D>(
+        absl::make_unique<optimization::OptimizationProblem3D>(
             pose_graph_options_.optimization_problem_options());
-    pose_graph_ = common::make_unique<PoseGraph3DForTesting>(
+    pose_graph_ = absl::make_unique<PoseGraph3DForTesting>(
         pose_graph_options_, std::move(optimization_problem),
         thread_pool_.get());
   }
 
   void BuildPoseGraphWithFakeOptimization() {
-    auto optimization_problem =
-        common::make_unique<MockOptimizationProblem3D>();
-    pose_graph_ = common::make_unique<PoseGraph3DForTesting>(
+    auto optimization_problem = absl::make_unique<MockOptimizationProblem3D>();
+    pose_graph_ = absl::make_unique<PoseGraph3DForTesting>(
         pose_graph_options_, std::move(optimization_problem),
         thread_pool_.get());
   }
@@ -159,7 +157,7 @@ TEST_F(PoseGraph3DTest, PureLocalizationTrimmer) {
       pose_graph_->AddSerializedConstraints(FromProto(proto.constraint()));
     }
   }
-  pose_graph_->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
+  pose_graph_->AddTrimmer(absl::make_unique<PureLocalizationTrimmer>(
       trajectory_id, num_submaps_to_keep));
   pose_graph_->WaitForAllComputations();
   EXPECT_EQ(
@@ -236,8 +234,7 @@ TEST_F(PoseGraph3DTest, EvenSubmapTrimmer) {
       pose_graph_->AddSerializedConstraints(FromProto(proto.constraint()));
     }
   }
-  pose_graph_->AddTrimmer(
-      common::make_unique<EvenSubmapTrimmer>(trajectory_id));
+  pose_graph_->AddTrimmer(absl::make_unique<EvenSubmapTrimmer>(trajectory_id));
   pose_graph_->WaitForAllComputations();
   EXPECT_EQ(
       pose_graph_->GetAllSubmapPoses().SizeOfTrajectoryOrZero(trajectory_id),

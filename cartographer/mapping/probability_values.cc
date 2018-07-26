@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping/probability_values.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 
 namespace cartographer {
 namespace mapping {
@@ -37,7 +37,7 @@ float SlowValueToBoundedFloat(const uint16 value, const uint16 unknown_value,
 std::unique_ptr<std::vector<float>> PrecomputeValueToBoundedFloat(
     const uint16 unknown_value, const float unknown_result,
     const float lower_bound, const float upper_bound) {
-  auto result = common::make_unique<std::vector<float>>();
+  auto result = absl::make_unique<std::vector<float>>();
   // Repeat two times, so that both values with and without the update marker
   // can be converted to a probability.
   for (int repeat = 0; repeat != 2; ++repeat) {

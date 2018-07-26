@@ -17,7 +17,7 @@
 #include "cartographer/io/intensity_to_color_points_processor.h"
 
 #include "Eigen/Core"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "glog/logging.h"
 
@@ -32,7 +32,7 @@ IntensityToColorPointsProcessor::FromDictionary(
       dictionary->HasKey("frame_id") ? dictionary->GetString("frame_id") : "";
   const float min_intensity = dictionary->GetDouble("min_intensity");
   const float max_intensity = dictionary->GetDouble("max_intensity");
-  return common::make_unique<IntensityToColorPointsProcessor>(
+  return absl::make_unique<IntensityToColorPointsProcessor>(
       min_intensity, max_intensity, frame_id, next);
 }
 

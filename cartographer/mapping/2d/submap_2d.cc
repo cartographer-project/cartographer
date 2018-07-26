@@ -23,7 +23,7 @@
 #include <limits>
 
 #include "Eigen/Geometry"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 #include "cartographer/mapping/range_data_inserter_interface.h"
@@ -76,7 +76,7 @@ Submap2D::Submap2D(const proto::Submap2D& proto,
   if (proto.has_grid()) {
     CHECK(proto.grid().has_probability_grid_2d());
     grid_ =
-        common::make_unique<ProbabilityGrid>(proto.grid(), conversion_tables_);
+        absl::make_unique<ProbabilityGrid>(proto.grid(), conversion_tables_);
   }
   set_num_range_data(proto.num_range_data());
   set_finished(proto.finished());
@@ -103,8 +103,8 @@ void Submap2D::UpdateFromProto(const proto::Submap& proto) {
   set_finished(submap_2d.finished());
   if (proto.submap_2d().has_grid()) {
     CHECK(proto.submap_2d().grid().has_probability_grid_2d());
-    grid_ = common::make_unique<ProbabilityGrid>(submap_2d.grid(),
-                                                 conversion_tables_);
+    grid_ = absl::make_unique<ProbabilityGrid>(submap_2d.grid(),
+                                               conversion_tables_);
   }
 }
 
@@ -159,7 +159,7 @@ std::vector<std::shared_ptr<const Submap2D>> ActiveSubmaps2D::InsertRangeData(
 
 std::unique_ptr<RangeDataInserterInterface>
 ActiveSubmaps2D::CreateRangeDataInserter() {
-  return common::make_unique<ProbabilityGridRangeDataInserter2D>(
+  return absl::make_unique<ProbabilityGridRangeDataInserter2D>(
       options_.range_data_inserter_options()
           .probability_grid_range_data_inserter_options_2d());
 }
@@ -168,7 +168,7 @@ std::unique_ptr<GridInterface> ActiveSubmaps2D::CreateGrid(
     const Eigen::Vector2f& origin) {
   constexpr int kInitialSubmapSize = 100;
   float resolution = options_.grid_options_2d().resolution();
-  return common::make_unique<ProbabilityGrid>(
+  return absl::make_unique<ProbabilityGrid>(
       MapLimits(resolution,
                 origin.cast<double>() + 0.5 * kInitialSubmapSize * resolution *
                                             Eigen::Vector2d::Ones(),
@@ -183,7 +183,7 @@ void ActiveSubmaps2D::AddSubmap(const Eigen::Vector2f& origin) {
     CHECK(submaps_.front()->finished());
     submaps_.erase(submaps_.begin());
   }
-  submaps_.push_back(common::make_unique<Submap2D>(
+  submaps_.push_back(absl::make_unique<Submap2D>(
       origin,
       std::unique_ptr<Grid2D>(
           static_cast<Grid2D*>(CreateGrid(origin).release())),

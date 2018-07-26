@@ -19,7 +19,7 @@
 #include <limits>
 #include <memory>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/range_data.h"
 
@@ -66,7 +66,7 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     const common::Time time, const transform::Rigid2d& pose_prediction,
     const sensor::PointCloud& filtered_gravity_aligned_point_cloud) {
   if (active_submaps_.submaps().empty()) {
-    return common::make_unique<transform::Rigid2d>(pose_prediction);
+    return absl::make_unique<transform::Rigid2d>(pose_prediction);
   }
   std::shared_ptr<const Submap2D> matching_submap =
       active_submaps_.submaps().front();
@@ -84,7 +84,7 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
     kRealTimeCorrelativeScanMatcherScoreMetric->Observe(score);
   }
 
-  auto pose_observation = common::make_unique<transform::Rigid2d>();
+  auto pose_observation = absl::make_unique<transform::Rigid2d>();
   ceres::Solver::Summary summary;
   ceres_scan_matcher_.Match(pose_prediction.translation(), initial_ceres_pose,
                             filtered_gravity_aligned_point_cloud,
@@ -271,7 +271,7 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
   }
   last_wall_time_ = wall_time;
   last_thread_cpu_time_seconds_ = thread_cpu_time_seconds;
-  return common::make_unique<MatchingResult>(
+  return absl::make_unique<MatchingResult>(
       MatchingResult{time, pose_estimate, std::move(range_data_in_local),
                      std::move(insertion_result)});
 }
@@ -287,7 +287,7 @@ LocalTrajectoryBuilder2D::InsertIntoSubmap(
   }
   std::vector<std::shared_ptr<const Submap2D>> insertion_submaps =
       active_submaps_.InsertRangeData(range_data_in_local);
-  return common::make_unique<InsertionResult>(InsertionResult{
+  return absl::make_unique<InsertionResult>(InsertionResult{
       std::make_shared<const TrajectoryNode::Data>(TrajectoryNode::Data{
           time,
           gravity_alignment,
@@ -324,7 +324,7 @@ void LocalTrajectoryBuilder2D::InitializeExtrapolator(const common::Time time) {
   // in time and thus the last two are used.
   constexpr double kExtrapolationEstimationTimeSec = 0.001;
   // TODO(gaschler): Consider using InitializeWithImu as 3D does.
-  extrapolator_ = common::make_unique<PoseExtrapolator>(
+  extrapolator_ = absl::make_unique<PoseExtrapolator>(
       ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
       options_.imu_gravity_time_constant());
   extrapolator_->AddPose(time, transform::Rigid3d::Identity());

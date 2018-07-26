@@ -16,10 +16,10 @@
 
 #include "cartographer/cloud/internal/handlers/add_sensor_data_batch_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/sensor/internal/dispatchable.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
@@ -93,7 +93,7 @@ void AddSensorDataBatchHandler::OnRequest(
                    << sensor_data.sensor_data_case();
     }
   }
-  Send(common::make_unique<google::protobuf::Empty>());
+  Send(absl::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers
