@@ -24,7 +24,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
-#include "cartographer/common/optional.h"
+#include "absl/types/optional.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"

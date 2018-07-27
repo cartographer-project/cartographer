@@ -39,7 +39,7 @@ class ReceiveGlobalSlamOptimizationsHandler
   void OnFinish() override;
 
  private:
-  common::optional<int> subscription_index_;
+  absl::optional<int> subscription_index_;
 };
 
 }  // namespace handlers

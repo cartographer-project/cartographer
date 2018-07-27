@@ -93,7 +93,7 @@ PoseGraphStub::GetTrajectoryNodePoses() const {
   CHECK(client.Write(request));
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose> node_poses;
   for (const auto& node_pose : client.response().node_poses()) {
-    common::optional<mapping::TrajectoryNodePose::ConstantPoseData>
+    absl::optional<mapping::TrajectoryNodePose::ConstantPoseData>
         constant_pose_data;
     if (node_pose.has_constant_pose_data()) {
       constant_pose_data = mapping::TrajectoryNodePose::ConstantPoseData{

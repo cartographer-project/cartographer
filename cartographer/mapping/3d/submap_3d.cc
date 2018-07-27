@@ -199,9 +199,9 @@ Submap3D::Submap3D(const float high_resolution, const float low_resolution,
                    const transform::Rigid3d& local_submap_pose)
     : Submap(local_submap_pose),
       high_resolution_hybrid_grid_(
-          common::make_unique<HybridGrid>(high_resolution)),
+          absl::make_unique<HybridGrid>(high_resolution)),
       low_resolution_hybrid_grid_(
-          common::make_unique<HybridGrid>(low_resolution)) {}
+          absl::make_unique<HybridGrid>(low_resolution)) {}
 
 Submap3D::Submap3D(const proto::Submap3D& proto)
     : Submap(transform::ToRigid3(proto.local_pose())) {
@@ -233,12 +233,12 @@ void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   set_num_range_data(submap_3d.num_range_data());
   set_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
-    high_resolution_hybrid_grid_ = common::make_unique<HybridGrid>(
-        submap_3d.high_resolution_hybrid_grid());
+    high_resolution_hybrid_grid_ =
+        absl::make_unique<HybridGrid>(submap_3d.high_resolution_hybrid_grid());
   }
   if (submap_3d.has_low_resolution_hybrid_grid()) {
     low_resolution_hybrid_grid_ =
-        common::make_unique<HybridGrid>(submap_3d.low_resolution_hybrid_grid());
+        absl::make_unique<HybridGrid>(submap_3d.low_resolution_hybrid_grid());
   }
 }
 

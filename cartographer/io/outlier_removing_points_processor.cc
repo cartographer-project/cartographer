@@ -16,8 +16,8 @@
 
 #include "cartographer/io/outlier_removing_points_processor.h"
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -27,7 +27,7 @@ std::unique_ptr<OutlierRemovingPointsProcessor>
 OutlierRemovingPointsProcessor::FromDictionary(
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
-  return common::make_unique<OutlierRemovingPointsProcessor>(
+  return absl::make_unique<OutlierRemovingPointsProcessor>(
       dictionary->GetDouble("voxel_size"), next);
 }
 

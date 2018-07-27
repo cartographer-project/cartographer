@@ -28,7 +28,7 @@
 #include <string>
 
 #include "Eigen/Eigenvalues"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/proto/pose_graph/constraint_builder_options.pb.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
@@ -155,8 +155,8 @@ void PoseGraph3D::AddWorkItem(
     const std::function<WorkItem::Result()>& work_item) {
   common::MutexLocker locker(&work_queue_mutex_);
   if (work_queue_ == nullptr) {
-    work_queue_ = common::make_unique<WorkQueue>();
-    auto task = common::make_unique<common::Task>();
+    work_queue_ = absl::make_unique<WorkQueue>();
+    auto task = absl::make_unique<common::Task>();
     task->SetWorkItem([this]() { DrainWorkQueue(); });
     thread_pool_->Schedule(std::move(task));
   }
@@ -180,7 +180,7 @@ void PoseGraph3D::AddTrajectoryIfNeeded(const int trajectory_id) {
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[trajectory_id]) {
     global_localization_samplers_[trajectory_id] =
-        common::make_unique<common::FixedRatioSampler>(
+        absl::make_unique<common::FixedRatioSampler>(
             options_.global_sampling_ratio());
   }
 }
@@ -888,7 +888,7 @@ MapById<NodeId, TrajectoryNodePose> PoseGraph3D::GetTrajectoryNodePoses()
   MapById<NodeId, TrajectoryNodePose> node_poses;
   common::MutexLocker locker(&mutex_);
   for (const auto& node_id_data : data_.trajectory_nodes) {
-    common::optional<TrajectoryNodePose::ConstantPoseData> constant_pose_data;
+    absl::optional<TrajectoryNodePose::ConstantPoseData> constant_pose_data;
     if (node_id_data.data.constant_data != nullptr) {
       constant_pose_data = TrajectoryNodePose::ConstantPoseData{
           node_id_data.data.constant_data->time,

@@ -16,10 +16,10 @@
 
 #include "cartographer/cloud/internal/handlers/receive_global_slam_optimizations_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
@@ -31,7 +31,7 @@ std::unique_ptr<proto::ReceiveGlobalSlamOptimizationsResponse> GenerateResponse(
     const std::map<int, mapping::SubmapId> &last_optimized_submap_ids,
     const std::map<int, mapping::NodeId> &last_optimized_node_ids) {
   auto response =
-      common::make_unique<proto::ReceiveGlobalSlamOptimizationsResponse>();
+      absl::make_unique<proto::ReceiveGlobalSlamOptimizationsResponse>();
   for (const auto &entry : last_optimized_submap_ids) {
     entry.second.ToProto(
         &(*response->mutable_last_optimized_submap_ids())[entry.first]);

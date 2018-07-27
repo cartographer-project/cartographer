@@ -16,8 +16,9 @@
 
 #include "cartographer/pose_graph/pose_graph_data.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/pose_graph/constraint/acceleration_constraint_3d.h"
+#include "cartographer/pose_graph/constraint/interpolated_relative_pose_constraint_2d.h"
 #include "cartographer/pose_graph/constraint/interpolated_relative_pose_constraint_3d.h"
 #include "cartographer/pose_graph/constraint/relative_pose_constraint_2d.h"
 #include "cartographer/pose_graph/constraint/relative_pose_constraint_3d.h"
@@ -34,22 +35,22 @@ std::unique_ptr<Constraint> CreateConstraint(
   const auto& cost = constraint.cost_function();
   switch (cost.type_case()) {
     case (proto::CostFunction::kRelativePose2D):
-      return common::make_unique<RelativePoseConstraint2D>(
+      return absl::make_unique<RelativePoseConstraint2D>(
           id, loss, cost.relative_pose_2d());
     case (proto::CostFunction::kRelativePose3D):
-      return common::make_unique<RelativePoseConstraint3D>(
+      return absl::make_unique<RelativePoseConstraint3D>(
           id, loss, cost.relative_pose_3d());
     case (proto::CostFunction::kAcceleration3D):
-      return common::make_unique<AccelerationConstraint3D>(
+      return absl::make_unique<AccelerationConstraint3D>(
           id, loss, cost.acceleration_3d());
     case (proto::CostFunction::kRotation3D):
-      return common::make_unique<RotationContraint3D>(id, loss,
-                                                      cost.rotation_3d());
-    case (proto::CostFunction::kRelativePose2DInterpolated):
-      LOG(FATAL) << "Not yet implemented.";
-      return nullptr;
+      return absl::make_unique<RotationContraint3D>(id, loss,
+                                                    cost.rotation_3d());
+    case (proto::CostFunction::kInterpolatedRelativePose2D):
+      return absl::make_unique<InterpolatedRelativePoseConstraint2D>(
+          id, loss, cost.interpolated_relative_pose_2d());
     case (proto::CostFunction::kInterpolatedRelativePose3D):
-      return common::make_unique<InterpolatedRelativePoseConstraint3D>(
+      return absl::make_unique<InterpolatedRelativePoseConstraint3D>(
           id, loss, cost.interpolated_relative_pose_3d());
     case (proto::CostFunction::TYPE_NOT_SET):
       LOG(FATAL) << "Constraint cost function type is not set.";

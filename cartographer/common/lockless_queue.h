@@ -20,7 +20,7 @@
 #include <atomic>
 #include <memory>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "glog/logging.h"
 
 namespace cartographer {

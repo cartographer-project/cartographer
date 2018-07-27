@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/constraint/cost_function/relative_pose_cost_2d.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/testing/test_helpers.h"
 #include "ceres/gradient_checker.h"
 
@@ -50,7 +50,7 @@ constexpr char kParameters[] = R"PROTO(
 class RelativePoseCost2DTest : public ::testing::Test {
  public:
   RelativePoseCost2DTest()
-      : relative_pose_cost_2d_(common::make_unique<RelativePoseCost2D>(
+      : relative_pose_cost_2d_(absl::make_unique<RelativePoseCost2D>(
             ParseProto<proto::RelativePose2D::Parameters>(kParameters))) {
     for (int i = 0; i < kParameterBlocksCount; ++i) {
       jacobian_ptrs_[i] = jacobian_[i].data();

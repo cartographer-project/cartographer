@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/optimizer/ceres_optimizer.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/pose_graph/constraint/relative_pose_constraint_2d.h"
 #include "cartographer/testing/test_helpers.h"
 
@@ -73,7 +73,6 @@ TEST(CeresOptimizerTest, SmokeTest) {
   AddNodeToPoseGraphData(ParseProto<proto::Node>(kEndNode), &data);
   AddConstraintToPoseGraphData(ParseProto<proto::Constraint>(kRelativePose2D),
                                &data);
-
   CeresOptimizer optimizer(ceres::Solver::Options{});
   EXPECT_EQ(optimizer.Solve(&data), Optimizer::SolverStatus::CONVERGENCE);
 }

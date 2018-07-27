@@ -16,8 +16,8 @@
 
 #include "cartographer/cloud/map_builder_server_options.h"
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/configuration_file_resolver.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/map_builder.h"
 
 namespace cartographer {
@@ -49,7 +49,7 @@ proto::MapBuilderServerOptions CreateMapBuilderServerOptions(
 proto::MapBuilderServerOptions LoadMapBuilderServerOptions(
     const std::string& configuration_directory,
     const std::string& configuration_basename) {
-  auto file_resolver = common::make_unique<common::ConfigurationFileResolver>(
+  auto file_resolver = absl::make_unique<common::ConfigurationFileResolver>(
       std::vector<std::string>{configuration_directory});
   const std::string code =
       file_resolver->GetFileContentOrDie(configuration_basename);

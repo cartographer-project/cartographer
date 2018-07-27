@@ -21,8 +21,8 @@
 #include <memory>
 #include <string>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"

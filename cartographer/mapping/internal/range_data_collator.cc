@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "glog/logging.h"
 

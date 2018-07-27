@@ -104,7 +104,7 @@ template <class SubmapType>
 void MapBuilderContext<SubmapType>::EnqueueSensorData(
     int trajectory_id, std::unique_ptr<sensor::Data> data) {
   map_builder_server_->incoming_data_queue_.Push(
-      common::make_unique<Data>(Data{trajectory_id, std::move(data)}));
+      absl::make_unique<Data>(Data{trajectory_id, std::move(data)}));
 }
 
 template <class SubmapType>

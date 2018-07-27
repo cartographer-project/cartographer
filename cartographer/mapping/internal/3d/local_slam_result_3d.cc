@@ -23,7 +23,7 @@ namespace mapping {
 void LocalSlamResult3D::AddToTrajectoryBuilder(
     TrajectoryBuilderInterface* const trajectory_builder) {
   trajectory_builder->AddLocalSlamResultData(
-      common::make_unique<LocalSlamResult3D>(*this));
+      absl::make_unique<LocalSlamResult3D>(*this));
 }
 
 void LocalSlamResult3D::AddToPoseGraph(int trajectory_id,

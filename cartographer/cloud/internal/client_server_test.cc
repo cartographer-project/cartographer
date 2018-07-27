@@ -138,42 +138,42 @@ class ClientServerTest : public ::testing::Test {
   }
 
   void InitializeRealServer() {
-    auto map_builder = common::make_unique<MapBuilder>(
+    auto map_builder = absl::make_unique<MapBuilder>(
         map_builder_server_options_.map_builder_options());
-    server_ = common::make_unique<MapBuilderServer>(map_builder_server_options_,
-                                                    std::move(map_builder));
+    server_ = absl::make_unique<MapBuilderServer>(map_builder_server_options_,
+                                                  std::move(map_builder));
     EXPECT_TRUE(server_ != nullptr);
   }
 
   void InitializeRealUploadingServer() {
-    auto map_builder = common::make_unique<MapBuilder>(
+    auto map_builder = absl::make_unique<MapBuilder>(
         uploading_map_builder_server_options_.map_builder_options());
-    uploading_server_ = common::make_unique<MapBuilderServer>(
+    uploading_server_ = absl::make_unique<MapBuilderServer>(
         uploading_map_builder_server_options_, std::move(map_builder));
     EXPECT_TRUE(uploading_server_ != nullptr);
   }
 
   void InitializeServerWithMockMapBuilder() {
-    auto mock_map_builder = common::make_unique<MockMapBuilder>();
+    auto mock_map_builder = absl::make_unique<MockMapBuilder>();
     mock_map_builder_ = mock_map_builder.get();
-    mock_pose_graph_ = common::make_unique<MockPoseGraph>();
+    mock_pose_graph_ = absl::make_unique<MockPoseGraph>();
     EXPECT_CALL(*mock_map_builder_, pose_graph())
         .WillOnce(::testing::Return(mock_pose_graph_.get()));
     EXPECT_CALL(*mock_pose_graph_, SetGlobalSlamOptimizationCallback(_));
-    server_ = common::make_unique<MapBuilderServer>(
-        map_builder_server_options_, std::move(mock_map_builder));
+    server_ = absl::make_unique<MapBuilderServer>(map_builder_server_options_,
+                                                  std::move(mock_map_builder));
     EXPECT_TRUE(server_ != nullptr);
-    mock_trajectory_builder_ = common::make_unique<MockTrajectoryBuilder>();
+    mock_trajectory_builder_ = absl::make_unique<MockTrajectoryBuilder>();
   }
 
   void InitializeStub() {
-    stub_ = common::make_unique<MapBuilderStub>(
+    stub_ = absl::make_unique<MapBuilderStub>(
         map_builder_server_options_.server_address(), kClientId);
     EXPECT_TRUE(stub_ != nullptr);
   }
 
   void InitializeStubForUploadingServer() {
-    stub_for_uploading_server_ = common::make_unique<MapBuilderStub>(
+    stub_for_uploading_server_ = absl::make_unique<MapBuilderStub>(
         uploading_map_builder_server_options_.server_address(), kClientId);
     EXPECT_TRUE(stub_for_uploading_server_ != nullptr);
   }

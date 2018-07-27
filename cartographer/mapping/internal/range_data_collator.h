@@ -19,7 +19,7 @@
 
 #include <memory>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 
 namespace cartographer {

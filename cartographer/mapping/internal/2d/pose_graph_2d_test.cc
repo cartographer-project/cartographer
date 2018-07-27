@@ -20,8 +20,8 @@
 #include <memory>
 #include <random>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
@@ -77,7 +77,7 @@ class PoseGraph2DTest : public ::testing::Test {
             },
           },
         })text");
-      active_submaps_ = common::make_unique<ActiveSubmaps2D>(
+      active_submaps_ = absl::make_unique<ActiveSubmaps2D>(
           mapping::CreateSubmapsOptions2D(parameter_dictionary.get()));
     }
 
@@ -155,9 +155,9 @@ class PoseGraph2DTest : public ::testing::Test {
             global_constraint_search_after_n_seconds = 10.0,
           })text");
       auto options = CreatePoseGraphOptions(parameter_dictionary.get());
-      pose_graph_ = common::make_unique<PoseGraph2D>(
+      pose_graph_ = absl::make_unique<PoseGraph2D>(
           options,
-          common::make_unique<optimization::OptimizationProblem2D>(
+          absl::make_unique<optimization::OptimizationProblem2D>(
               options.optimization_problem_options()),
           &thread_pool_);
     }

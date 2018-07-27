@@ -19,6 +19,7 @@
 #include <map>
 #include <thread>
 
+#include "absl/memory/memory.h"
 #include "async_grpc/client.h"
 #include "async_grpc/token_file_credentials.h"
 #include "cartographer/cloud/internal/handlers/add_sensor_data_batch_handler.h"
@@ -26,7 +27,6 @@
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/common/blocking_queue.h"
-#include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 #include "grpc++/grpc++.h"
 
@@ -34,7 +34,7 @@ namespace cartographer {
 namespace cloud {
 namespace {
 
-using common::make_unique;
+using absl::make_unique;
 
 constexpr int kConnectionTimeoutInSeconds = 10;
 constexpr int kTokenRefreshIntervalInSeconds = 60;

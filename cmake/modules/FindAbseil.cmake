@@ -54,11 +54,20 @@ if(NOT TARGET standalone_absl)
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_variant.a"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/utility/libabsl_utility.a"
     )
+
+   if(CMAKE_GENERATOR MATCHES "Ninja")
+     set (ABSL_BUILD_COMMAND "ninja")
+   else()
+     set (ABSL_BUILD_COMMAND "make")
+   endif()
+
   ExternalProject_Add(${ABSEIL_PROJECT_NAME}
     PREFIX ${ABSEIL_PROJECT_NAME}
     GIT_REPOSITORY   https://github.com/abseil/abseil-cpp.git
     GIT_TAG          44aa275286baf97fc13529aca547a88b180beb08
     INSTALL_COMMAND  ""
+    BUILD_ALWAYS TRUE
+    BUILD_COMMAND ${ABSEIL_BUILD_COMMAND}
     CMAKE_CACHE_ARGS "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON;-DBUILD_TESTING:BOOL=OFF;-DCMAKE_BUILD_TYPE:STRING=Release"
     BUILD_BYPRODUCTS "${ABSEIL_LIBRARY_PATH};${ABSEIL_DEPENDENT_LIBRARIES}"
   )

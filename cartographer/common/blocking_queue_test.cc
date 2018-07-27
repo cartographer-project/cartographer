@@ -19,7 +19,7 @@
 #include <memory>
 #include <thread>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/time.h"
 #include "gtest/gtest.h"
 
@@ -29,9 +29,9 @@ namespace {
 
 TEST(BlockingQueueTest, testPushPeekPop) {
   BlockingQueue<std::unique_ptr<int>> blocking_queue;
-  blocking_queue.Push(common::make_unique<int>(42));
+  blocking_queue.Push(absl::make_unique<int>(42));
   ASSERT_EQ(1, blocking_queue.Size());
-  blocking_queue.Push(common::make_unique<int>(24));
+  blocking_queue.Push(absl::make_unique<int>(24));
   ASSERT_EQ(2, blocking_queue.Size());
   EXPECT_EQ(42, *blocking_queue.Peek<int>());
   ASSERT_EQ(2, blocking_queue.Size());
@@ -60,10 +60,10 @@ TEST(BlockingQueueTest, testPopWithTimeout) {
 TEST(BlockingQueueTest, testPushWithTimeout) {
   BlockingQueue<std::unique_ptr<int>> blocking_queue(1);
   EXPECT_EQ(true,
-            blocking_queue.PushWithTimeout(common::make_unique<int>(42),
+            blocking_queue.PushWithTimeout(absl::make_unique<int>(42),
                                            common::FromMilliseconds(150)));
   EXPECT_EQ(false,
-            blocking_queue.PushWithTimeout(common::make_unique<int>(15),
+            blocking_queue.PushWithTimeout(absl::make_unique<int>(15),
                                            common::FromMilliseconds(150)));
   EXPECT_EQ(42, *blocking_queue.Pop());
   EXPECT_EQ(0, blocking_queue.Size());
@@ -72,10 +72,10 @@ TEST(BlockingQueueTest, testPushWithTimeout) {
 TEST(BlockingQueueTest, testPushWithTimeoutInfinteQueue) {
   BlockingQueue<std::unique_ptr<int>> blocking_queue;
   EXPECT_EQ(true,
-            blocking_queue.PushWithTimeout(common::make_unique<int>(42),
+            blocking_queue.PushWithTimeout(absl::make_unique<int>(42),
                                            common::FromMilliseconds(150)));
   EXPECT_EQ(true,
-            blocking_queue.PushWithTimeout(common::make_unique<int>(45),
+            blocking_queue.PushWithTimeout(absl::make_unique<int>(45),
                                            common::FromMilliseconds(150)));
   EXPECT_EQ(42, *blocking_queue.Pop());
   EXPECT_EQ(45, *blocking_queue.Pop());
@@ -91,7 +91,7 @@ TEST(BlockingQueueTest, testBlockingPop) {
   std::thread thread([&blocking_queue, &pop] { pop = *blocking_queue.Pop(); });
 
   std::this_thread::sleep_for(common::FromMilliseconds(100));
-  blocking_queue.Push(common::make_unique<int>(42));
+  blocking_queue.Push(absl::make_unique<int>(42));
   thread.join();
   ASSERT_EQ(0, blocking_queue.Size());
   EXPECT_EQ(42, pop);
@@ -108,7 +108,7 @@ TEST(BlockingQueueTest, testBlockingPopWithTimeout) {
   });
 
   std::this_thread::sleep_for(common::FromMilliseconds(100));
-  blocking_queue.Push(common::make_unique<int>(42));
+  blocking_queue.Push(absl::make_unique<int>(42));
   thread.join();
   ASSERT_EQ(0, blocking_queue.Size());
   EXPECT_EQ(42, pop);

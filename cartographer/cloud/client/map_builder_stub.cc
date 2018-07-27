@@ -34,7 +34,7 @@ namespace cartographer {
 namespace cloud {
 namespace {
 
-using common::make_unique;
+using absl::make_unique;
 constexpr int kConnectionTimeoutInSeconds = 10;
 
 }  // namespace

@@ -20,8 +20,8 @@
 #include <string>
 
 #include "Eigen/Core"
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/io/draw_trajectories.h"
 #include "cartographer/io/image.h"
@@ -133,7 +133,7 @@ std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
     floors = mapping::DetectFloors(trajectories.at(0));
   }
 
-  return common::make_unique<XRayPointsProcessor>(
+  return absl::make_unique<XRayPointsProcessor>(
       dictionary->GetDouble("voxel_size"),
       transform::FromDictionary(dictionary->GetDictionary("transform").get())
           .cast<float>(),

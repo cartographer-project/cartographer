@@ -100,8 +100,8 @@ TEST(Submap2DTest, ToFromProto) {
                                 CellLimits(100, 110));
   ValueConversionTables conversion_tables;
   Submap2D expected(Eigen::Vector2f(4.f, 5.f),
-                    common::make_unique<ProbabilityGrid>(expected_map_limits,
-                                                         &conversion_tables),
+                    absl::make_unique<ProbabilityGrid>(expected_map_limits,
+                                                       &conversion_tables),
                     &conversion_tables);
   const proto::Submap proto =
       expected.ToProto(true /* include_probability_grid_data */);

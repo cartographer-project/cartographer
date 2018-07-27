@@ -16,11 +16,11 @@
 
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 
 namespace cartographer {
 namespace cloud {
@@ -71,7 +71,7 @@ void AddTrajectoryHandler::OnRequest(
     }
   }
 
-  auto response = common::make_unique<proto::AddTrajectoryResponse>();
+  auto response = absl::make_unique<proto::AddTrajectoryResponse>();
   response->set_trajectory_id(trajectory_id);
   Send(std::move(response));
 }
