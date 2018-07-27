@@ -132,7 +132,6 @@ float MatchHistograms(const Eigen::VectorXf& submap_histogram,
 
 }  // namespace
 
-
 RotationalScanMatcher::RotationalScanMatcher(const Eigen::VectorXf* histogram)
     : histogram_(histogram) {}
 
