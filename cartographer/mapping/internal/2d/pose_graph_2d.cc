@@ -636,12 +636,10 @@ void PoseGraph2D::AddSubmapFromProto(
     data_.global_submap_poses_2d.Insert(
         submap_id, optimization::SubmapSpec2D{global_submap_pose_2d});
   }
-  const bool finished = submap.submap_2d().finished();
   AddWorkItem(
       [this, submap_id, global_submap_pose_2d, finished]() EXCLUDES(mutex_) {
         common::MutexLocker locker(&mutex_);
-        data_.submap_data.at(submap_id).state =
-            finished ? SubmapState::kFinished : SubmapState::kActive;
+        data_.submap_data.at(submap_id).state = SubmapState::kFinished;
         optimization_problem_->InsertSubmap(submap_id, global_submap_pose_2d);
         return WorkItem::Result::kDoNotRunOptimization;
       });
