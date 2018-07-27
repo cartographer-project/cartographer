@@ -34,6 +34,7 @@
 #include "cartographer/mapping/proto/pose_graph/constraint_builder_options.pb.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/sensor/internal/voxel_filter.h"
+#include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -47,11 +48,12 @@ PoseGraph2D::PoseGraph2D(
     common::ThreadPool* thread_pool)
     : options_(options),
       optimization_problem_(std::move(optimization_problem)),
-      constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
+      constraint_builder_(options_.constraint_builder_options(), thread_pool),
+      thread_pool_(thread_pool) {}
 
 PoseGraph2D::~PoseGraph2D() {
   WaitForAllComputations();
-  common::MutexLocker locker(&mutex_);
+  common::MutexLocker locker(&work_queue_mutex_);
   CHECK(work_queue_ == nullptr);
 }
 
@@ -154,26 +156,19 @@ NodeId PoseGraph2D::AddNode(
 
 void PoseGraph2D::AddWorkItem(
     const std::function<WorkItem::Result()>& work_item) {
-  {
-    common::MutexLocker locker(&mutex_);
-    if (work_queue_ != nullptr) {
-      const auto now = std::chrono::steady_clock::now();
-      work_queue_->push_back({now, work_item});
-      kWorkQueueDelayMetric->Set(
-          common::ToSeconds(now - work_queue_->front().time));
-      return;
-    }
+  common::MutexLocker locker(&work_queue_mutex_);
+  if (work_queue_ == nullptr) {
+    work_queue_ = common::make_unique<WorkQueue>();
+    auto task = common::make_unique<common::Task>();
+    task->SetWorkItem([this]() { DrainWorkQueue(); });
+    thread_pool_->Schedule(std::move(task));
   }
-  if (work_item() == WorkItem::Result::kRunOptimization) {
-    {
-      common::MutexLocker locker(&mutex_);
-      work_queue_ = common::make_unique<WorkQueue>();
-    }
-    constraint_builder_.WhenDone(
-        [this](const constraints::ConstraintBuilder2D::Result& result) {
-          HandleWorkQueue(result);
-        });
-  }
+  const auto now = std::chrono::steady_clock::now();
+  work_queue_->push_back({now, work_item});
+  kWorkQueueDelayMetric->Set(
+      std::chrono::duration_cast<std::chrono::duration<double>>(
+          now - work_queue_->front().time)
+          .count());
 }
 
 void PoseGraph2D::AddTrajectoryIfNeeded(const int trajectory_id) {
@@ -240,48 +235,47 @@ void PoseGraph2D::AddLandmarkData(int trajectory_id,
 
 void PoseGraph2D::ComputeConstraint(const NodeId& node_id,
                                     const SubmapId& submap_id) {
-  CHECK(data_.submap_data.at(submap_id).state == SubmapState::kFinished);
+  bool maybe_add_local_constraint = false;
+  bool maybe_add_global_constraint = false;
+  const TrajectoryNode::Data* constant_data;
+  const Submap2D* submap;
+  {
+    common::MutexLocker locker(&mutex_);
+    CHECK(data_.submap_data.at(submap_id).state == SubmapState::kFinished);
 
-  const common::Time node_time = GetLatestNodeTime(node_id, submap_id);
-  const common::Time last_connection_time =
-      data_.trajectory_connectivity_state.LastConnectionTime(
-          node_id.trajectory_id, submap_id.trajectory_id);
-  if (node_id.trajectory_id == submap_id.trajectory_id ||
-      node_time <
-          last_connection_time +
-              common::FromSeconds(
-                  options_.global_constraint_search_after_n_seconds())) {
-    // If the node and the submap belong to the same trajectory or if there
-    // has been a recent global constraint that ties that node's trajectory to
-    // the submap's trajectory, it suffices to do a match constrained to a
-    // local search window.
+    const common::Time node_time = GetLatestNodeTime(node_id, submap_id);
+    const common::Time last_connection_time =
+        data_.trajectory_connectivity_state.LastConnectionTime(
+            node_id.trajectory_id, submap_id.trajectory_id);
+    if (node_id.trajectory_id == submap_id.trajectory_id ||
+        node_time <
+            last_connection_time +
+                common::FromSeconds(
+                    options_.global_constraint_search_after_n_seconds())) {
+      // If the node and the submap belong to the same trajectory or if there
+      // has been a recent global constraint that ties that node's trajectory to
+      // the submap's trajectory, it suffices to do a match constrained to a
+      // local search window.
+      maybe_add_local_constraint = true;
+    } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
+      maybe_add_global_constraint = true;
+    }
+    constant_data = data_.trajectory_nodes.at(node_id).constant_data.get();
+    submap = static_cast<const Submap2D*>(
+        data_.submap_data.at(submap_id).submap.get());
+  }
+
+  if (maybe_add_local_constraint) {
     const transform::Rigid2d initial_relative_pose =
         optimization_problem_->submap_data()
             .at(submap_id)
             .global_pose.inverse() *
         optimization_problem_->node_data().at(node_id).global_pose_2d;
     constraint_builder_.MaybeAddConstraint(
-        submap_id,
-        static_cast<const Submap2D*>(
-            data_.submap_data.at(submap_id).submap.get()),
-        node_id, data_.trajectory_nodes.at(node_id).constant_data.get(),
-        initial_relative_pose);
-  } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
-    constraint_builder_.MaybeAddGlobalConstraint(
-        submap_id,
-        static_cast<const Submap2D*>(
-            data_.submap_data.at(submap_id).submap.get()),
-        node_id, data_.trajectory_nodes.at(node_id).constant_data.get());
-  }
-}
-
-void PoseGraph2D::ComputeConstraintsForOldNodes(const SubmapId& submap_id) {
-  const auto& submap_data = data_.submap_data.at(submap_id);
-  for (const auto& node_id_data : optimization_problem_->node_data()) {
-    const NodeId& node_id = node_id_data.id;
-    if (submap_data.node_ids.count(node_id) == 0) {
-      ComputeConstraint(node_id, submap_id);
-    }
+        submap_id, submap, node_id, constant_data, initial_relative_pose);
+  } else if (maybe_add_global_constraint) {
+    constraint_builder_.MaybeAddGlobalConstraint(submap_id, submap, node_id,
+                                                 constant_data);
   }
 }
 
@@ -289,60 +283,82 @@ WorkItem::Result PoseGraph2D::ComputeConstraintsForNode(
     const NodeId& node_id,
     std::vector<std::shared_ptr<const Submap2D>> insertion_submaps,
     const bool newly_finished_submap) {
-  common::MutexLocker locker(&mutex_);
-  const auto& constant_data = data_.trajectory_nodes.at(node_id).constant_data;
-  const std::vector<SubmapId> submap_ids = InitializeGlobalSubmapPoses(
-      node_id.trajectory_id, constant_data->time, insertion_submaps);
-  CHECK_EQ(submap_ids.size(), insertion_submaps.size());
-  const SubmapId matching_id = submap_ids.front();
-  const transform::Rigid2d local_pose_2d = transform::Project2D(
-      constant_data->local_pose *
-      transform::Rigid3d::Rotation(constant_data->gravity_alignment.inverse()));
-  const transform::Rigid2d global_pose_2d =
-      optimization_problem_->submap_data().at(matching_id).global_pose *
-      constraints::ComputeSubmapPose(*insertion_submaps.front()).inverse() *
-      local_pose_2d;
-  optimization_problem_->AddTrajectoryNode(
-      matching_id.trajectory_id,
-      optimization::NodeSpec2D{constant_data->time, local_pose_2d,
-                               global_pose_2d,
-                               constant_data->gravity_alignment});
-  for (size_t i = 0; i < insertion_submaps.size(); ++i) {
-    const SubmapId submap_id = submap_ids[i];
-    // Even if this was the last node added to 'submap_id', the submap will
-    // only be marked as finished in 'data_.submap_data' further below.
-    CHECK(data_.submap_data.at(submap_id).state == SubmapState::kActive);
-    data_.submap_data.at(submap_id).node_ids.emplace(node_id);
-    const transform::Rigid2d constraint_transform =
-        constraints::ComputeSubmapPose(*insertion_submaps[i]).inverse() *
+  std::vector<SubmapId> submap_ids;
+  std::vector<SubmapId> finished_submap_ids;
+  std::set<NodeId> newly_finished_submap_node_ids;
+  {
+    common::MutexLocker locker(&mutex_);
+    const auto& constant_data =
+        data_.trajectory_nodes.at(node_id).constant_data;
+    submap_ids = InitializeGlobalSubmapPoses(
+        node_id.trajectory_id, constant_data->time, insertion_submaps);
+    CHECK_EQ(submap_ids.size(), insertion_submaps.size());
+    const SubmapId matching_id = submap_ids.front();
+    const transform::Rigid2d local_pose_2d =
+        transform::Project2D(constant_data->local_pose *
+                             transform::Rigid3d::Rotation(
+                                 constant_data->gravity_alignment.inverse()));
+    const transform::Rigid2d global_pose_2d =
+        optimization_problem_->submap_data().at(matching_id).global_pose *
+        constraints::ComputeSubmapPose(*insertion_submaps.front()).inverse() *
         local_pose_2d;
-    data_.constraints.push_back(
-        Constraint{submap_id,
-                   node_id,
-                   {transform::Embed3D(constraint_transform),
-                    options_.matcher_translation_weight(),
-                    options_.matcher_rotation_weight()},
-                   Constraint::INTRA_SUBMAP});
-  }
+    optimization_problem_->AddTrajectoryNode(
+        matching_id.trajectory_id,
+        optimization::NodeSpec2D{constant_data->time, local_pose_2d,
+                                 global_pose_2d,
+                                 constant_data->gravity_alignment});
+    for (size_t i = 0; i < insertion_submaps.size(); ++i) {
+      const SubmapId submap_id = submap_ids[i];
+      // Even if this was the last node added to 'submap_id', the submap will
+      // only be marked as finished in 'data_.submap_data' further below.
+      CHECK(data_.submap_data.at(submap_id).state == SubmapState::kActive);
+      data_.submap_data.at(submap_id).node_ids.emplace(node_id);
+      const transform::Rigid2d constraint_transform =
+          constraints::ComputeSubmapPose(*insertion_submaps[i]).inverse() *
+          local_pose_2d;
+      data_.constraints.push_back(
+          Constraint{submap_id,
+                     node_id,
+                     {transform::Embed3D(constraint_transform),
+                      options_.matcher_translation_weight(),
+                      options_.matcher_rotation_weight()},
+                     Constraint::INTRA_SUBMAP});
+    }
 
-  // TODO(gaschler): Consider not searching for constraints against trajectories
-  // scheduled for deletion.
-  for (const auto& submap_id_data : data_.submap_data) {
-    if (submap_id_data.data.state == SubmapState::kFinished) {
-      CHECK_EQ(submap_id_data.data.node_ids.count(node_id), 0);
-      ComputeConstraint(node_id, submap_id_data.id);
+    // TODO(gaschler): Consider not searching for constraints against
+    // trajectories scheduled for deletion.
+    // TODO(danielsievers): Add a member variable and avoid having to copy
+    // them out here.
+    for (const auto& submap_id_data : data_.submap_data) {
+      if (submap_id_data.data.state == SubmapState::kFinished) {
+        CHECK_EQ(submap_id_data.data.node_ids.count(node_id), 0);
+        finished_submap_ids.emplace_back(submap_id_data.id);
+      }
+    }
+    if (newly_finished_submap) {
+      const SubmapId newly_finished_submap_id = submap_ids.front();
+      InternalSubmapData& finished_submap_data =
+          data_.submap_data.at(newly_finished_submap_id);
+      CHECK(finished_submap_data.state == SubmapState::kActive);
+      finished_submap_data.state = SubmapState::kFinished;
+      newly_finished_submap_node_ids = finished_submap_data.node_ids;
     }
   }
 
+  for (const auto& submap_id : finished_submap_ids) {
+    ComputeConstraint(node_id, submap_id);
+  }
+
   if (newly_finished_submap) {
-    const SubmapId finished_submap_id = submap_ids.front();
-    InternalSubmapData& finished_submap_data =
-        data_.submap_data.at(finished_submap_id);
-    CHECK(finished_submap_data.state == SubmapState::kActive);
-    finished_submap_data.state = SubmapState::kFinished;
+    const SubmapId newly_finished_submap_id = submap_ids.front();
     // We have a new completed submap, so we look into adding constraints for
     // old nodes.
-    ComputeConstraintsForOldNodes(finished_submap_id);
+    for (const auto& node_id_data : optimization_problem_->node_data()) {
+      const NodeId& node_id = node_id_data.id;
+      if (newly_finished_submap_node_ids.count(node_id) == 0) {
+        ComputeConstraint(node_id, newly_finished_submap_id);
+      }
+    }
   }
   constraint_builder_.NotifyEndOfNode();
   ++num_nodes_since_last_loop_closure_;
@@ -447,12 +463,16 @@ void PoseGraph2D::HandleWorkQueue(
     num_nodes_since_last_loop_closure_ = 0;
   }
 
-  size_t work_queue_size;
+  DrainWorkQueue();
+}
+
+void PoseGraph2D::DrainWorkQueue() {
   bool process_work_queue = true;
+  size_t work_queue_size;
   while (process_work_queue) {
     std::function<WorkItem::Result()> work_item;
     {
-      common::MutexLocker locker(&mutex_);
+      common::MutexLocker locker(&work_queue_mutex_);
       if (work_queue_->empty()) {
         work_queue_.reset();
         return;
@@ -472,40 +492,60 @@ void PoseGraph2D::HandleWorkQueue(
 }
 
 void PoseGraph2D::WaitForAllComputations() {
-  bool notification = false;
-  common::MutexLocker locker(&mutex_);
+  int num_trajectory_nodes;
+  {
+    common::MutexLocker locker(&mutex_);
+    num_trajectory_nodes = data_.num_trajectory_nodes;
+  }
+
   const int num_finished_nodes_at_start =
       constraint_builder_.GetNumFinishedNodes();
-  while (!locker.AwaitWithTimeout(
-      [this]() REQUIRES(mutex_) {
-        return ((constraint_builder_.GetNumFinishedNodes() ==
-                 data_.num_trajectory_nodes) &&
-                !work_queue_);
-      },
-      common::FromSeconds(1.))) {
+
+  auto report_progress = [this, num_trajectory_nodes,
+                          num_finished_nodes_at_start]() {
     // Log progress on nodes only when we are actually processing nodes.
-    if (data_.num_trajectory_nodes != num_finished_nodes_at_start) {
+    if (num_trajectory_nodes != num_finished_nodes_at_start) {
       std::ostringstream progress_info;
       progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
                     << 100. *
                            (constraint_builder_.GetNumFinishedNodes() -
                             num_finished_nodes_at_start) /
-                           (data_.num_trajectory_nodes -
-                            num_finished_nodes_at_start)
+                           (num_trajectory_nodes - num_finished_nodes_at_start)
                     << "%...";
       std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
     }
+  };
+
+  // First wait for the work queue to drain so that it's safe to schedule
+  // a WhenDone() callback.
+  {
+    common::MutexLocker locker(&work_queue_mutex_);
+    while (!locker.AwaitWithTimeout(
+        [this]() REQUIRES(work_queue_mutex_) { return work_queue_ == nullptr; },
+        common::FromSeconds(1.))) {
+      report_progress();
+    }
   }
-  std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
+
+  // Now wait for any pending constraint computations to finish.
+  common::MutexLocker locker(&mutex_);
+  bool notification = false;
   constraint_builder_.WhenDone(
       [this,
-       &notification](const constraints::ConstraintBuilder2D::Result& result) {
-        common::MutexLocker locker(&mutex_);
-        data_.constraints.insert(data_.constraints.end(), result.begin(),
-                                 result.end());
-        notification = true;
-      });
-  locker.Await([&notification]() { return notification; });
+       &notification](const constraints::ConstraintBuilder2D::Result& result)
+          EXCLUDES(mutex_) {
+            common::MutexLocker locker(&mutex_);
+            data_.constraints.insert(data_.constraints.end(), result.begin(),
+                                     result.end());
+            notification = true;
+          });
+  while (!locker.AwaitWithTimeout([&notification]()
+                                      REQUIRES(mutex_) { return notification; },
+                                  common::FromSeconds(1.))) {
+    report_progress();
+  }
+  CHECK_EQ(constraint_builder_.GetNumFinishedNodes(), num_trajectory_nodes);
+  std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
 }
 
 void PoseGraph2D::DeleteTrajectory(const int trajectory_id) {
@@ -596,15 +636,12 @@ void PoseGraph2D::AddSubmapFromProto(
     data_.global_submap_poses_2d.Insert(
         submap_id, optimization::SubmapSpec2D{global_submap_pose_2d});
   }
-  const bool finished = submap.submap_2d().finished();
-  AddWorkItem(
-      [this, submap_id, global_submap_pose_2d, finished]() EXCLUDES(mutex_) {
-        common::MutexLocker locker(&mutex_);
-        data_.submap_data.at(submap_id).state =
-            finished ? SubmapState::kFinished : SubmapState::kActive;
-        optimization_problem_->InsertSubmap(submap_id, global_submap_pose_2d);
-        return WorkItem::Result::kDoNotRunOptimization;
-      });
+  AddWorkItem([this, submap_id, global_submap_pose_2d]() EXCLUDES(mutex_) {
+    common::MutexLocker locker(&mutex_);
+    data_.submap_data.at(submap_id).state = SubmapState::kFinished;
+    optimization_problem_->InsertSubmap(submap_id, global_submap_pose_2d);
+    return WorkItem::Result::kDoNotRunOptimization;
+  });
 }
 
 void PoseGraph2D::AddNodeFromProto(const transform::Rigid3d& global_pose,
