@@ -48,7 +48,8 @@ PoseGraph2D::PoseGraph2D(
     common::ThreadPool* thread_pool)
     : options_(options),
       optimization_problem_(std::move(optimization_problem)),
-      constraint_builder_(options_.constraint_builder_options(), thread_pool) {}
+      constraint_builder_(options_.constraint_builder_options(), thread_pool),
+      thread_pool_(thread_pool) {}
 
 PoseGraph2D::~PoseGraph2D() {
   WaitForAllComputations();
@@ -155,26 +156,19 @@ NodeId PoseGraph2D::AddNode(
 
 void PoseGraph2D::AddWorkItem(
     const std::function<WorkItem::Result()>& work_item) {
-  {
-    common::MutexLocker locker(&work_queue_mutex_);
-    if (work_queue_ != nullptr) {
-      const auto now = std::chrono::steady_clock::now();
-      work_queue_->push_back({now, work_item});
-      kWorkQueueDelayMetric->Set(
-          common::ToSeconds(now - work_queue_->front().time));
-      return;
-    }
+  common::MutexLocker locker(&work_queue_mutex_);
+  if (work_queue_ == nullptr) {
+    work_queue_ = absl::make_unique<WorkQueue>();
+    auto task = absl::make_unique<common::Task>();
+    task->SetWorkItem([this]() { DrainWorkQueue(); });
+    thread_pool_->Schedule(std::move(task));
   }
-  if (work_item() == WorkItem::Result::kRunOptimization) {
-    {
-      common::MutexLocker locker(&work_queue_mutex_);
-      work_queue_ = absl::make_unique<WorkQueue>();
-    }
-    constraint_builder_.WhenDone(
-        [this](const constraints::ConstraintBuilder2D::Result& result) {
-          HandleWorkQueue(result);
-        });
-  }
+  const auto now = std::chrono::steady_clock::now();
+  work_queue_->push_back({now, work_item});
+  kWorkQueueDelayMetric->Set(
+      std::chrono::duration_cast<std::chrono::duration<double>>(
+          now - work_queue_->front().time)
+          .count());
 }
 
 void PoseGraph2D::AddTrajectoryIfNeeded(const int trajectory_id) {
@@ -469,8 +463,12 @@ void PoseGraph2D::HandleWorkQueue(
     num_nodes_since_last_loop_closure_ = 0;
   }
 
-  size_t work_queue_size;
+  DrainWorkQueue();
+}
+
+void PoseGraph2D::DrainWorkQueue() {
   bool process_work_queue = true;
+  size_t work_queue_size;
   while (process_work_queue) {
     std::function<WorkItem::Result()> work_item;
     {
@@ -638,15 +636,12 @@ void PoseGraph2D::AddSubmapFromProto(
     data_.global_submap_poses_2d.Insert(
         submap_id, optimization::SubmapSpec2D{global_submap_pose_2d});
   }
-  const bool finished = submap.submap_2d().finished();
-  AddWorkItem(
-      [this, submap_id, global_submap_pose_2d, finished]() EXCLUDES(mutex_) {
-        common::MutexLocker locker(&mutex_);
-        data_.submap_data.at(submap_id).state =
-            finished ? SubmapState::kFinished : SubmapState::kActive;
-        optimization_problem_->InsertSubmap(submap_id, global_submap_pose_2d);
-        return WorkItem::Result::kDoNotRunOptimization;
-      });
+  AddWorkItem([this, submap_id, global_submap_pose_2d]() EXCLUDES(mutex_) {
+    common::MutexLocker locker(&mutex_);
+    data_.submap_data.at(submap_id).state = SubmapState::kFinished;
+    optimization_problem_->InsertSubmap(submap_id, global_submap_pose_2d);
+    return WorkItem::Result::kDoNotRunOptimization;
+  });
 }
 
 void PoseGraph2D::AddNodeFromProto(const transform::Rigid3d& global_pose,
@@ -850,7 +845,7 @@ MapById<NodeId, TrajectoryNodePose> PoseGraph2D::GetTrajectoryNodePoses()
   MapById<NodeId, TrajectoryNodePose> node_poses;
   common::MutexLocker locker(&mutex_);
   for (const auto& node_id_data : data_.trajectory_nodes) {
-    common::optional<TrajectoryNodePose::ConstantPoseData> constant_pose_data;
+    absl::optional<TrajectoryNodePose::ConstantPoseData> constant_pose_data;
     if (node_id_data.data.constant_data != nullptr) {
       constant_pose_data = TrajectoryNodePose::ConstantPoseData{
           node_id_data.data.constant_data->time,

@@ -234,17 +234,11 @@ void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   set_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
     high_resolution_hybrid_grid_ =
-        submap_3d.has_high_resolution_hybrid_grid()
-            ? absl::make_unique<HybridGrid>(
-                  submap_3d.high_resolution_hybrid_grid())
-            : nullptr;
+        absl::make_unique<HybridGrid>(submap_3d.high_resolution_hybrid_grid());
   }
   if (submap_3d.has_low_resolution_hybrid_grid()) {
     low_resolution_hybrid_grid_ =
-        submap_3d.has_low_resolution_hybrid_grid()
-            ? absl::make_unique<HybridGrid>(
-                  submap_3d.low_resolution_hybrid_grid())
-            : nullptr;
+        absl::make_unique<HybridGrid>(submap_3d.low_resolution_hybrid_grid());
   }
 }
 

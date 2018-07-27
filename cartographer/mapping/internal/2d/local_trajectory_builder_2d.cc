@@ -187,7 +187,7 @@ LocalTrajectoryBuilder2D::AddRangeData(
 
   if (num_accumulated_ >= options_.num_accumulated_range_data()) {
     const common::Time current_sensor_time = synchronized_data.time;
-    common::optional<common::Duration> sensor_duration;
+    absl::optional<common::Duration> sensor_duration;
     if (last_sensor_time_.has_value()) {
       sensor_duration = current_sensor_time - last_sensor_time_.value();
     }
@@ -213,7 +213,7 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
     const common::Time time,
     const sensor::RangeData& gravity_aligned_range_data,
     const transform::Rigid3d& gravity_alignment,
-    const common::optional<common::Duration>& sensor_duration) {
+    const absl::optional<common::Duration>& sensor_duration) {
   if (gravity_aligned_range_data.returns.empty()) {
     LOG(WARNING) << "Dropped empty horizontal range data.";
     return nullptr;
