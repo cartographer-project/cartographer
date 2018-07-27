@@ -648,12 +648,10 @@ void PoseGraph3D::AddSubmapFromProto(
     data_.global_submap_poses_3d.Insert(
         submap_id, optimization::SubmapSpec3D{global_submap_pose});
   }
-  bool finished = submap.submap_3d().finished();
   AddWorkItem(
       [this, submap_id, global_submap_pose, finished]() EXCLUDES(mutex_) {
         common::MutexLocker locker(&mutex_);
-        data_.submap_data.at(submap_id).state =
-            finished ? SubmapState::kFinished : SubmapState::kActive;
+        data_.submap_data.at(submap_id).state = SubmapState::kFinished;
         optimization_problem_->InsertSubmap(submap_id, global_submap_pose);
         return WorkItem::Result::kDoNotRunOptimization;
       });
