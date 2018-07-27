@@ -22,6 +22,8 @@ namespace cartographer {
 namespace pose_graph {
 namespace {
 
+using testing::ParseProto;
+
 constexpr char kExpectedNode[] = R"PROTO(
   id { object_id: "bumpy_world" timestamp: 1 }
   constant: true
@@ -35,8 +37,10 @@ constexpr char kExpectedNode[] = R"PROTO(
 
 TEST(Pose3DTest, ToProto) {
   Pose3D pose_3d({"bumpy_world", common::FromUniversal(1)}, true,
-                 Eigen::Vector3d(1., 2., 3.),
-                 Eigen::Quaterniond(0., 1., 2., 3.));
+                 ParseProto<proto::Pose3D>(R"(
+                   translation { x: 1 y: 2 z: 3 }
+                   rotation: { w: 0 x: 1 y: 2 z: 3 }
+                 )"));
   EXPECT_THAT(pose_3d.ToProto(), testing::EqualsProto(kExpectedNode));
 }
 

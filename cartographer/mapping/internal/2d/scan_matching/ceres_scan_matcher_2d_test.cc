@@ -18,9 +18,9 @@
 
 #include <memory>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -57,7 +57,7 @@ class CeresScanMatcherTest : public ::testing::Test {
         })text");
     const proto::CeresScanMatcherOptions2D options =
         CreateCeresScanMatcherOptions2D(parameter_dictionary.get());
-    ceres_scan_matcher_ = common::make_unique<CeresScanMatcher2D>(options);
+    ceres_scan_matcher_ = absl::make_unique<CeresScanMatcher2D>(options);
   }
 
   void TestFromInitialPose(const transform::Rigid2d& initial_pose) {

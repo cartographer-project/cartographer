@@ -16,7 +16,7 @@
 
 #include "cartographer/io/counting_points_processor.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -29,7 +29,7 @@ std::unique_ptr<CountingPointsProcessor>
 CountingPointsProcessor::FromDictionary(
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
-  return common::make_unique<CountingPointsProcessor>(next);
+  return absl::make_unique<CountingPointsProcessor>(next);
 }
 
 void CountingPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {

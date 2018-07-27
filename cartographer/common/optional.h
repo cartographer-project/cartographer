@@ -19,7 +19,7 @@
 
 #include <memory>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -32,11 +32,11 @@ class optional {
 
   optional(const optional& other) {
     if (other.has_value()) {
-      value_ = common::make_unique<T>(other.value());
+      value_ = absl::make_unique<T>(other.value());
     }
   }
 
-  explicit optional(const T& value) { value_ = common::make_unique<T>(value); }
+  explicit optional(const T& value) { value_ = absl::make_unique<T>(value); }
 
   bool has_value() const { return value_ != nullptr; }
 
@@ -46,7 +46,7 @@ class optional {
   }
 
   optional<T>& operator=(const T& other_value) {
-    this->value_ = common::make_unique<T>(other_value);
+    this->value_ = absl::make_unique<T>(other_value);
     return *this;
   }
 
@@ -54,7 +54,7 @@ class optional {
     if (!other.has_value()) {
       this->value_ = nullptr;
     } else {
-      this->value_ = common::make_unique<T>(other.value());
+      this->value_ = absl::make_unique<T>(other.value());
     }
     return *this;
   }

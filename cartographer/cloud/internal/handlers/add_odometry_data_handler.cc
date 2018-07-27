@@ -16,11 +16,11 @@
 
 #include "cartographer/cloud/internal/handlers/add_odometry_data_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/sensor/internal/dispatchable.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "google/protobuf/empty.pb.h"
@@ -44,7 +44,7 @@ void AddOdometryDataHandler::OnSensorData(
   // 'MapBuilderContext'.
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    auto sensor_data = common::make_unique<proto::SensorData>();
+    auto sensor_data = absl::make_unique<proto::SensorData>();
     *sensor_data->mutable_sensor_metadata() = request.sensor_metadata();
     *sensor_data->mutable_odometry_data() = request.odometry_data();
     GetUnsynchronizedContext<MapBuilderContextInterface>()

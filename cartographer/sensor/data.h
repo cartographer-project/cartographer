@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_DATA_H_
 #define CARTOGRAPHER_MAPPING_DATA_H_
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/time.h"
 #include "cartographer/transform/rigid_transform.h"
 

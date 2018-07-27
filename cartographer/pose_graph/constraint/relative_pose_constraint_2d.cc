@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/constraint/relative_pose_constraint_2d.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
 
 namespace cartographer {
@@ -28,8 +28,7 @@ RelativePoseConstraint2D::RelativePoseConstraint2D(
     : Constraint(id, loss_function_proto),
       first_(proto.first()),
       second_(proto.second()),
-      ceres_cost_(common::make_unique<RelativePoseCost2D>(proto.parameters())) {
-}
+      ceres_cost_(absl::make_unique<RelativePoseCost2D>(proto.parameters())) {}
 
 // TODO(pifon): Add a test.
 void RelativePoseConstraint2D::AddToOptimizer(Nodes* nodes,

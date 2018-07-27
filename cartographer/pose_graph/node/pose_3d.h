@@ -28,9 +28,7 @@ namespace pose_graph {
 
 class Pose3D : public Node {
  public:
-  Pose3D(const NodeId& node_id, bool constant,
-         const Eigen::Vector3d& translation,
-         const Eigen::Quaterniond& rotation);
+  Pose3D(const NodeId& node_id, bool constant, const proto::Pose3D& pose_3d);
 
   std::array<double, 3>* mutable_translation() { return &translation_; }
   const std::array<double, 3>& translation() const { return translation_; }

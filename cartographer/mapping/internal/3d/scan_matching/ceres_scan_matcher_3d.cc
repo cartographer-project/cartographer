@@ -20,8 +20,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/ceres_solver_options.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/internal/3d/rotation_parameterization.h"
 #include "cartographer/mapping/internal/3d/scan_matching/occupied_space_cost_function_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotation_delta_cost_functor_3d.h"
@@ -80,10 +80,10 @@ void CeresScanMatcher3D::Match(
       initial_pose_estimate, nullptr /* translation_parameterization */,
       options_.only_optimize_yaw()
           ? std::unique_ptr<ceres::LocalParameterization>(
-                common::make_unique<ceres::AutoDiffLocalParameterization<
+                absl::make_unique<ceres::AutoDiffLocalParameterization<
                     YawOnlyQuaternionPlus, 4, 1>>())
           : std::unique_ptr<ceres::LocalParameterization>(
-                common::make_unique<ceres::QuaternionParameterization>()),
+                absl::make_unique<ceres::QuaternionParameterization>()),
       &problem);
 
   CHECK_EQ(options_.occupied_space_weight_size(),

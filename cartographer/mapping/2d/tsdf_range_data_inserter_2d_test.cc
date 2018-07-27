@@ -44,8 +44,7 @@ class RangeDataInserterTest2DTSDF : public ::testing::Test {
         "update_weight_distance_cell_to_hit_kernel_bandwith = 0,"
         "}");
     options_ = CreateTSDFRangeDataInserterOptions2D(parameter_dictionary.get());
-    range_data_inserter_ =
-        common::make_unique<TSDFRangeDataInserter2D>(options_);
+    range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   }
 
   void InsertPoint() {
@@ -145,7 +144,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPoint) {
 
 TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
   options_.set_update_free_space(true);
-  range_data_inserter_ = common::make_unique<TSDFRangeDataInserter2D>(options_);
+  range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   InsertPoint();
   const float truncation_distance =
       static_cast<float>(options_.truncation_distance());
@@ -199,7 +198,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointWithFreeSpaceUpdate) {
 
 TEST_F(RangeDataInserterTest2DTSDF, InsertPointLinearWeight) {
   options_.set_update_weight_range_exponent(1);
-  range_data_inserter_ = common::make_unique<TSDFRangeDataInserter2D>(options_);
+  range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   InsertPoint();
   const float truncation_distance =
       static_cast<float>(options_.truncation_distance());
@@ -218,7 +217,7 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointLinearWeight) {
 
 TEST_F(RangeDataInserterTest2DTSDF, InsertPointQuadraticWeight) {
   options_.set_update_weight_range_exponent(2);
-  range_data_inserter_ = common::make_unique<TSDFRangeDataInserter2D>(options_);
+  range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   InsertPoint();
   const float truncation_distance =
       static_cast<float>(options_.truncation_distance());
@@ -263,7 +262,7 @@ TEST_F(RangeDataInserterTest2DTSDF,
 
 TEST_F(RangeDataInserterTest2DTSDF, InsertSmallAnglePointWitNormalProjection) {
   options_.set_project_sdf_distance_to_scan_normal(true);
-  range_data_inserter_ = common::make_unique<TSDFRangeDataInserter2D>(options_);
+  range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   sensor::RangeData range_data;
   range_data.returns.emplace_back(-0.5f, 3.5f, 0.f);
   range_data.returns.emplace_back(5.5f, 3.5f, 0.f);
@@ -292,7 +291,7 @@ TEST_F(RangeDataInserterTest2DTSDF,
        InsertPointsWithAngleScanNormalToRayWeight) {
   float bandwith = 10.f;
   options_.set_update_weight_angle_scan_normal_to_ray_kernel_bandwith(bandwith);
-  range_data_inserter_ = common::make_unique<TSDFRangeDataInserter2D>(options_);
+  range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   sensor::RangeData range_data;
   range_data.returns.emplace_back(-0.5f, 3.5f, 0.f);
   range_data.returns.emplace_back(5.5f, 3.5f, 0.f);
@@ -326,7 +325,7 @@ TEST_F(RangeDataInserterTest2DTSDF,
 TEST_F(RangeDataInserterTest2DTSDF, InsertPointsWithDistanceCellToHit) {
   float bandwith = 10.f;
   options_.set_update_weight_distance_cell_to_hit_kernel_bandwith(bandwith);
-  range_data_inserter_ = common::make_unique<TSDFRangeDataInserter2D>(options_);
+  range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   InsertPoint();
   const float truncation_distance =
       static_cast<float>(options_.truncation_distance());

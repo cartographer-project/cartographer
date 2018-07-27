@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping/map_builder.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/time.h"
 #include "cartographer/io/internal/mapping_state_serialization.h"
 #include "cartographer/io/proto_stream.h"
@@ -60,12 +60,12 @@ void MaybeAddPureLocalizationTrimmer(
     LOG(WARNING)
         << "'TrajectoryBuilderOptions::pure_localization' field is deprecated. "
            "Use 'TrajectoryBuilderOptions::pure_localization_trimmer' instead.";
-    pose_graph->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
+    pose_graph->AddTrimmer(absl::make_unique<PureLocalizationTrimmer>(
         trajectory_id, 3 /* max_submaps_to_keep */));
     return;
   }
   if (trajectory_options.has_pure_localization_trimmer()) {
-    pose_graph->AddTrimmer(common::make_unique<PureLocalizationTrimmer>(
+    pose_graph->AddTrimmer(absl::make_unique<PureLocalizationTrimmer>(
         trajectory_id,
         trajectory_options.pure_localization_trimmer().max_submaps_to_keep()));
   }
@@ -94,23 +94,23 @@ MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
   CHECK(options.use_trajectory_builder_2d() ^
         options.use_trajectory_builder_3d());
   if (options.use_trajectory_builder_2d()) {
-    pose_graph_ = common::make_unique<PoseGraph2D>(
+    pose_graph_ = absl::make_unique<PoseGraph2D>(
         options_.pose_graph_options(),
-        common::make_unique<optimization::OptimizationProblem2D>(
+        absl::make_unique<optimization::OptimizationProblem2D>(
             options_.pose_graph_options().optimization_problem_options()),
         &thread_pool_);
   }
   if (options.use_trajectory_builder_3d()) {
-    pose_graph_ = common::make_unique<PoseGraph3D>(
+    pose_graph_ = absl::make_unique<PoseGraph3D>(
         options_.pose_graph_options(),
-        common::make_unique<optimization::OptimizationProblem3D>(
+        absl::make_unique<optimization::OptimizationProblem3D>(
             options_.pose_graph_options().optimization_problem_options()),
         &thread_pool_);
   }
   if (options.collate_by_trajectory()) {
-    sensor_collator_ = common::make_unique<sensor::TrajectoryCollator>();
+    sensor_collator_ = absl::make_unique<sensor::TrajectoryCollator>();
   } else {
-    sensor_collator_ = common::make_unique<sensor::Collator>();
+    sensor_collator_ = absl::make_unique<sensor::Collator>();
   }
 }
 
@@ -122,40 +122,38 @@ int MapBuilder::AddTrajectoryBuilder(
   if (options_.use_trajectory_builder_3d()) {
     std::unique_ptr<LocalTrajectoryBuilder3D> local_trajectory_builder;
     if (trajectory_options.has_trajectory_builder_3d_options()) {
-      local_trajectory_builder = common::make_unique<LocalTrajectoryBuilder3D>(
+      local_trajectory_builder = absl::make_unique<LocalTrajectoryBuilder3D>(
           trajectory_options.trajectory_builder_3d_options(),
           SelectRangeSensorIds(expected_sensor_ids));
     }
     DCHECK(dynamic_cast<PoseGraph3D*>(pose_graph_.get()));
-    trajectory_builders_.push_back(
-        common::make_unique<CollatedTrajectoryBuilder>(
-            trajectory_options, sensor_collator_.get(), trajectory_id,
-            expected_sensor_ids,
-            CreateGlobalTrajectoryBuilder3D(
-                std::move(local_trajectory_builder), trajectory_id,
-                static_cast<PoseGraph3D*>(pose_graph_.get()),
-                local_slam_result_callback)));
+    trajectory_builders_.push_back(absl::make_unique<CollatedTrajectoryBuilder>(
+        trajectory_options, sensor_collator_.get(), trajectory_id,
+        expected_sensor_ids,
+        CreateGlobalTrajectoryBuilder3D(
+            std::move(local_trajectory_builder), trajectory_id,
+            static_cast<PoseGraph3D*>(pose_graph_.get()),
+            local_slam_result_callback)));
   } else {
     std::unique_ptr<LocalTrajectoryBuilder2D> local_trajectory_builder;
     if (trajectory_options.has_trajectory_builder_2d_options()) {
-      local_trajectory_builder = common::make_unique<LocalTrajectoryBuilder2D>(
+      local_trajectory_builder = absl::make_unique<LocalTrajectoryBuilder2D>(
           trajectory_options.trajectory_builder_2d_options(),
           SelectRangeSensorIds(expected_sensor_ids));
     }
     DCHECK(dynamic_cast<PoseGraph2D*>(pose_graph_.get()));
-    trajectory_builders_.push_back(
-        common::make_unique<CollatedTrajectoryBuilder>(
-            trajectory_options, sensor_collator_.get(), trajectory_id,
-            expected_sensor_ids,
-            CreateGlobalTrajectoryBuilder2D(
-                std::move(local_trajectory_builder), trajectory_id,
-                static_cast<PoseGraph2D*>(pose_graph_.get()),
-                local_slam_result_callback)));
+    trajectory_builders_.push_back(absl::make_unique<CollatedTrajectoryBuilder>(
+        trajectory_options, sensor_collator_.get(), trajectory_id,
+        expected_sensor_ids,
+        CreateGlobalTrajectoryBuilder2D(
+            std::move(local_trajectory_builder), trajectory_id,
+            static_cast<PoseGraph2D*>(pose_graph_.get()),
+            local_slam_result_callback)));
 
     if (trajectory_options.has_overlapping_submaps_trimmer_2d()) {
       const auto& trimmer_options =
           trajectory_options.overlapping_submaps_trimmer_2d();
-      pose_graph_->AddTrimmer(common::make_unique<OverlappingSubmapsTrimmer2D>(
+      pose_graph_->AddTrimmer(absl::make_unique<OverlappingSubmapsTrimmer2D>(
           trimmer_options.fresh_submaps_count(),
           trimmer_options.min_covered_area() /
               common::Pow2(trajectory_options.trajectory_builder_2d_options()

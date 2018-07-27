@@ -19,7 +19,7 @@
 
 #include <queue>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/port.h"
 #include "cartographer/io/proto_stream_interface.h"
 #include "google/protobuf/message.h"
@@ -62,7 +62,7 @@ class InMemoryProtoStreamReader
 
   template <typename MessageType>
   void AddProto(const MessageType& proto) {
-    state_chunks_.push(common::make_unique<MessageType>(proto));
+    state_chunks_.push(absl::make_unique<MessageType>(proto));
   }
 
   bool ReadProto(google::protobuf::Message* proto) override;

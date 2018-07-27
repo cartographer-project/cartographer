@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/constraint/interpolated_relative_pose_constraint_2d.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
 
 namespace cartographer {
@@ -52,7 +52,7 @@ InterpolatedRelativePoseConstraint2D::InterpolatedRelativePoseConstraint2D(
       first_end_(proto.first_end()),
       second_(proto.second()),
       cost_(new InterpolatedRelativePoseCost2D(proto.parameters())),
-      ceres_cost_(common::make_unique<AutoDiffFunction>(cost_)) {}
+      ceres_cost_(absl::make_unique<AutoDiffFunction>(cost_)) {}
 
 void InterpolatedRelativePoseConstraint2D::AddToOptimizer(
     Nodes* nodes, ceres::Problem* problem) const {

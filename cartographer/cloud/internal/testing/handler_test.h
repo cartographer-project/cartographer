@@ -17,8 +17,8 @@
 #ifndef CARTOGRAPHER_CLOUD_INTERNAL_TESTING_HANDLER_TEST_H
 #define CARTOGRAPHER_CLOUD_INTERNAL_TESTING_HANDLER_TEST_H
 
+#include "absl/memory/memory.h"
 #include "async_grpc/testing/rpc_handler_test_server.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/internal/testing/mock_map_builder.h"
 #include "cartographer/mapping/internal/testing/mock_pose_graph.h"
 #include "gtest/gtest.h"
@@ -36,16 +36,16 @@ template <typename HandlerConcept, typename HandlerType>
 class HandlerTest : public Test {
  public:
   void SetUp() override {
-    test_server_ = common::make_unique<
+    test_server_ = absl::make_unique<
         async_grpc::testing::RpcHandlerTestServer<HandlerConcept, HandlerType>>(
-        common::make_unique<MockMapBuilderContext>());
+        absl::make_unique<MockMapBuilderContext>());
     mock_map_builder_context_ =
         test_server_
             ->template GetUnsynchronizedContext<MockMapBuilderContext>();
     mock_local_trajectory_uploader_ =
-        common::make_unique<MockLocalTrajectoryUploader>();
-    mock_map_builder_ = common::make_unique<mapping::testing::MockMapBuilder>();
-    mock_pose_graph_ = common::make_unique<mapping::testing::MockPoseGraph>();
+        absl::make_unique<MockLocalTrajectoryUploader>();
+    mock_map_builder_ = absl::make_unique<mapping::testing::MockMapBuilder>();
+    mock_pose_graph_ = absl::make_unique<mapping::testing::MockPoseGraph>();
 
     EXPECT_CALL(*mock_map_builder_context_, map_builder())
         .Times(::testing::AnyNumber())

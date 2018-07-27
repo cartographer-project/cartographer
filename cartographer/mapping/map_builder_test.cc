@@ -62,7 +62,7 @@ class MapBuilderTest : public ::testing::Test {
   }
 
   void BuildMapBuilder() {
-    map_builder_ = common::make_unique<MapBuilder>(map_builder_options_);
+    map_builder_ = absl::make_unique<MapBuilder>(map_builder_options_);
   }
 
   void SetOptionsTo3D() {
@@ -417,7 +417,7 @@ TEST_F(MapBuilderTest, LocalizationOnFrozenTrajectory2D) {
       ++num_cross_trajectory_constraints;
     }
   }
-  EXPECT_EQ(num_cross_trajectory_constraints, 3);
+  EXPECT_GT(num_cross_trajectory_constraints, 3);
   // TODO(gaschler): Subscribe global slam callback, verify that all nodes are
   // optimized.
   EXPECT_THAT(constraints, ::testing::Contains(::testing::Field(

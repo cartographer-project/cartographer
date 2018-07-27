@@ -16,10 +16,10 @@
 
 #include "cartographer/cloud/internal/handlers/receive_local_slam_results_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
@@ -30,7 +30,7 @@ namespace {
 std::unique_ptr<proto::ReceiveLocalSlamResultsResponse> GenerateResponse(
     std::unique_ptr<MapBuilderContextInterface::LocalSlamResult>
         local_slam_result) {
-  auto response = common::make_unique<proto::ReceiveLocalSlamResultsResponse>();
+  auto response = absl::make_unique<proto::ReceiveLocalSlamResultsResponse>();
   response->set_trajectory_id(local_slam_result->trajectory_id);
   response->set_timestamp(common::ToUniversal(local_slam_result->time));
   *response->mutable_local_pose() =
@@ -74,7 +74,7 @@ void ReceiveLocalSlamResultsHandler::OnRequest(
               });
 
   subscription_id_ =
-      common::make_unique<MapBuilderContextInterface::LocalSlamSubscriptionId>(
+      absl::make_unique<MapBuilderContextInterface::LocalSlamSubscriptionId>(
           subscription_id);
 }
 
