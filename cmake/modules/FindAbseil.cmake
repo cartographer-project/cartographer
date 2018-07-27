@@ -14,18 +14,9 @@
 
 cmake_minimum_required(VERSION 3.2)
 
-if(WIN32)
-  set(prefix "")
-  set(suffix ".lib")
-elseif(APPLE)
-  set(prefix "lib")
-  set(suffix ".a")
-else()
-  set(prefix "lib")
-  set(suffix ".a")
-endif()
-
 if(NOT TARGET standalone_absl)
+  set(prefix ${CMAKE_STATIC_LIBRARY_PREFIX})
+  set(suffix ${CMAKE_STATIC_LIBRARY_SUFFIX})
   include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
   set(ABSEIL_PROJECT_NAME abseil)
   set(ABSEIL_PROJECT_SRC_DIR
@@ -85,4 +76,6 @@ if(NOT TARGET standalone_absl)
     "${ABSEIL_DEPENDENT_LIBRARIES}"
   )
   add_dependencies(standalone_absl ${ABSEIL_PROJECT_NAME})
+  unset(prefix)
+  unset(suffix)
 endif()
