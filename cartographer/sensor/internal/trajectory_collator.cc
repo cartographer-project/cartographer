@@ -53,8 +53,8 @@ void TrajectoryCollator::Flush() {
   }
 }
 
-common::optional<int> TrajectoryCollator::GetBlockingTrajectoryId() const {
-  return common::optional<int>();
+absl::optional<int> TrajectoryCollator::GetBlockingTrajectoryId() const {
+  return absl::optional<int>();
 }
 
 }  // namespace sensor

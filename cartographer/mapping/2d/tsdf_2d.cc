@@ -16,6 +16,8 @@
 
 #include "cartographer/mapping/2d/tsdf_2d.h"
 
+#include "cartographer/common/make_unique.h"
+
 namespace cartographer {
 namespace mapping {
 
