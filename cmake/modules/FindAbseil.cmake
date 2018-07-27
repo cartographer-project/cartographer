@@ -43,7 +43,7 @@ if(NOT TARGET standalone_absl)
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_spinlock_wait${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_throw_delegate${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/container/${prefix}absl_container${suffix}"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/container/libtest_instance_tracker_lib${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/container/${prefix}test_instance_tracker_lib${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_debugging${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_examine_stack${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_failure_signal_handler${suffix}"
