@@ -15,6 +15,8 @@
 cmake_minimum_required(VERSION 3.2)
 
 if(NOT TARGET standalone_absl)
+  set(prefix ${CMAKE_STATIC_LIBRARY_PREFIX})
+  set(suffix ${CMAKE_STATIC_LIBRARY_SUFFIX})
   include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
   set(ABSEIL_PROJECT_NAME abseil)
   set(ABSEIL_PROJECT_SRC_DIR
@@ -23,36 +25,36 @@ if(NOT TARGET standalone_absl)
     ${CMAKE_CURRENT_BINARY_DIR}/${ABSEIL_PROJECT_NAME}/src/${ABSEIL_PROJECT_NAME}-build)
   set(ABSEIL_INCLUDE_DIRS ${ABSEIL_PROJECT_SRC_DIR})
   set(ABSEIL_LIBRARY_PATH
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/synchronization/libabsl_synchronization.a")
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/synchronization/${prefix}absl_synchronization${suffix}")
   set(ABSEIL_DEPENDENT_LIBRARIES
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/algorithm/libabsl_algorithm.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/libabsl_base.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/libabsl_dynamic_annotations.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/libabsl_malloc_internal.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/libabsl_spinlock_wait.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/libabsl_throw_delegate.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/container/libabsl_container.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/container/libtest_instance_tracker_lib.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/libabsl_debugging.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/libabsl_examine_stack.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/libabsl_failure_signal_handler.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/libabsl_leak_check.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/libabsl_stack_consumption.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/libabsl_stacktrace.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/libabsl_symbolize.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/memory/libabsl_memory.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/meta/libabsl_meta.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/numeric/libabsl_int128.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/numeric/libabsl_numeric.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/libabsl_strings.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/time/libabsl_time.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_any.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_bad_any_cast.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_bad_optional_access.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_optional.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_span.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/libabsl_variant.a"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/utility/libabsl_utility.a"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/algorithm/${prefix}absl_algorithm${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_base${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_dynamic_annotations${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_malloc_internal${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_spinlock_wait${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_throw_delegate${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/container/${prefix}absl_container${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/container/${prefix}test_instance_tracker_lib${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_debugging${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_examine_stack${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_failure_signal_handler${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_leak_check${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_stack_consumption${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_stacktrace${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_symbolize${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/memory/${prefix}absl_memory${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/meta/${prefix}absl_meta${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/numeric/${prefix}absl_int128${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/numeric/${prefix}absl_numeric${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/${prefix}absl_strings${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/time/${prefix}absl_time${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_any${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_bad_any_cast${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_bad_optional_access${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_optional${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_span${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_variant${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/utility/${prefix}absl_utility${suffix}"
     )
 
    if(CMAKE_GENERATOR MATCHES "Ninja")
@@ -83,4 +85,6 @@ if(NOT TARGET standalone_absl)
     "${ABSEIL_DEPENDENT_LIBRARIES}"
   )
   add_dependencies(standalone_absl ${ABSEIL_PROJECT_NAME})
+  unset(prefix)
+  unset(suffix)
 endif()
