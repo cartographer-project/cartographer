@@ -198,7 +198,7 @@ proto::SubmapsOptions3D CreateSubmapsOptions3D(
 
 Submap3D::Submap3D(const float high_resolution, const float low_resolution,
                    const transform::Rigid3d& local_submap_pose,
-                   int rotational_scan_matcher_histogram_size)
+                   const int rotational_scan_matcher_histogram_size)
     : Submap3D(high_resolution, low_resolution, local_submap_pose,
                Eigen::VectorXf::Zero(rotational_scan_matcher_histogram_size)) {}
 
