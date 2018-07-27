@@ -28,8 +28,7 @@ namespace handlers {
 
 void GetLocalToGlobalTransformHandler::OnRequest(
     const proto::GetLocalToGlobalTransformRequest& request) {
-  auto response =
-      common::make_unique<proto::GetLocalToGlobalTransformResponse>();
+  auto response = absl::make_unique<proto::GetLocalToGlobalTransformResponse>();
   auto local_to_global =
       GetContext<MapBuilderContextInterface>()
           ->map_builder()

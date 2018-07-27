@@ -29,7 +29,6 @@ namespace cartographer {
 namespace io {
 namespace {
 
-using ::cartographer::common::make_unique;
 using ::cartographer::io::testing::ProtoFromStringOrDie;
 using ::cartographer::io::testing::ProtoReaderFromStrings;
 using ::cartographer::mapping::proto::SerializationHeader;
@@ -134,7 +133,7 @@ TEST_F(ProtoStreamDeserializerTest, WorksOnGoldenTextStream) {
 TEST_F(ProtoStreamDeserializerTest, FailsIfVersionNotSupported) {
   reader_ =
       ProtoReaderFromStrings(kUnsupportedSerializationHeaderProtoString, {});
-  EXPECT_DEATH(common::make_unique<ProtoStreamDeserializer>(reader_.get()),
+  EXPECT_DEATH(absl::make_unique<ProtoStreamDeserializer>(reader_.get()),
                "Unsupported serialization format");
 }
 

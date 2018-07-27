@@ -26,7 +26,7 @@
 #include <string>
 
 #include "Eigen/Eigenvalues"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/proto/scan_matching//ceres_scan_matcher_options_2d.pb.h"
@@ -58,8 +58,8 @@ ConstraintBuilder2D::ConstraintBuilder2D(
     common::ThreadPoolInterface* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
-      finish_node_task_(common::make_unique<common::Task>()),
-      when_done_task_(common::make_unique<common::Task>()),
+      finish_node_task_(absl::make_unique<common::Task>()),
+      when_done_task_(absl::make_unique<common::Task>()),
       sampler_(options.sampling_ratio()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options()) {}
 
@@ -92,7 +92,7 @@ void ConstraintBuilder2D::MaybeAddConstraint(
   auto* const constraint = &constraints_.back();
   const auto* scan_matcher =
       DispatchScanMatcherConstruction(submap_id, submap->grid());
-  auto constraint_task = common::make_unique<common::Task>();
+  auto constraint_task = absl::make_unique<common::Task>();
   constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
     ComputeConstraint(submap_id, submap, node_id, false, /* match_full_submap */
                       constant_data, initial_relative_pose, *scan_matcher,
@@ -117,7 +117,7 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
   auto* const constraint = &constraints_.back();
   const auto* scan_matcher =
       DispatchScanMatcherConstruction(submap_id, submap->grid());
-  auto constraint_task = common::make_unique<common::Task>();
+  auto constraint_task = absl::make_unique<common::Task>();
   constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
     ComputeConstraint(submap_id, submap, node_id, true, /* match_full_submap */
                       constant_data, transform::Rigid2d::Identity(),
@@ -138,7 +138,7 @@ void ConstraintBuilder2D::NotifyEndOfNode() {
   });
   auto finish_node_task_handle =
       thread_pool_->Schedule(std::move(finish_node_task_));
-  finish_node_task_ = common::make_unique<common::Task>();
+  finish_node_task_ = absl::make_unique<common::Task>();
   when_done_task_->AddDependency(finish_node_task_handle);
   ++num_started_nodes_;
 }
@@ -148,12 +148,11 @@ void ConstraintBuilder2D::WhenDone(
   common::MutexLocker locker(&mutex_);
   CHECK(when_done_ == nullptr);
   // TODO(gaschler): Consider using just std::function, it can also be empty.
-  when_done_ =
-      common::make_unique<std::function<void(const Result&)>>(callback);
+  when_done_ = absl::make_unique<std::function<void(const Result&)>>(callback);
   CHECK(when_done_task_ != nullptr);
   when_done_task_->SetWorkItem([this] { RunWhenDoneCallback(); });
   thread_pool_->Schedule(std::move(when_done_task_));
-  when_done_task_ = common::make_unique<common::Task>();
+  when_done_task_ = absl::make_unique<common::Task>();
 }
 
 const ConstraintBuilder2D::SubmapScanMatcher*
@@ -165,11 +164,11 @@ ConstraintBuilder2D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
   auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
   submap_scan_matcher.grid = grid;
   auto& scan_matcher_options = options_.fast_correlative_scan_matcher_options();
-  auto scan_matcher_task = common::make_unique<common::Task>();
+  auto scan_matcher_task = absl::make_unique<common::Task>();
   scan_matcher_task->SetWorkItem(
       [&submap_scan_matcher, &scan_matcher_options]() {
         submap_scan_matcher.fast_correlative_scan_matcher =
-            common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
+            absl::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
                 *submap_scan_matcher.grid, scan_matcher_options);
       });
   submap_scan_matcher.creation_task_handle =

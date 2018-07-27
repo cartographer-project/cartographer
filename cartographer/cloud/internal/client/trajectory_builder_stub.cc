@@ -39,7 +39,7 @@ TrajectoryBuilderStub::TrajectoryBuilderStub(
     receive_local_slam_results_client_.Write(request);
     auto* receive_local_slam_results_client_ptr =
         &receive_local_slam_results_client_;
-    receive_local_slam_results_thread_ = common::make_unique<std::thread>(
+    receive_local_slam_results_thread_ = absl::make_unique<std::thread>(
         [receive_local_slam_results_client_ptr, local_slam_result_callback]() {
           RunLocalSlamResultsReader(receive_local_slam_results_client_ptr,
                                     local_slam_result_callback);
@@ -77,7 +77,7 @@ void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id,
     const sensor::TimedPointCloudData& timed_point_cloud_data) {
   if (!add_rangefinder_client_) {
-    add_rangefinder_client_ = common::make_unique<
+    add_rangefinder_client_ = absl::make_unique<
         async_grpc::Client<handlers::AddRangefinderDataSignature>>(
         client_channel_);
   }
@@ -92,7 +92,7 @@ void TrajectoryBuilderStub::AddSensorData(const std::string& sensor_id,
                                           const sensor::ImuData& imu_data) {
   if (!add_imu_client_) {
     add_imu_client_ =
-        common::make_unique<async_grpc::Client<handlers::AddImuDataSignature>>(
+        absl::make_unique<async_grpc::Client<handlers::AddImuDataSignature>>(
             client_channel_);
   }
   proto::AddImuDataRequest request;
@@ -104,7 +104,7 @@ void TrajectoryBuilderStub::AddSensorData(const std::string& sensor_id,
 void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id, const sensor::OdometryData& odometry_data) {
   if (!add_odometry_client_) {
-    add_odometry_client_ = common::make_unique<
+    add_odometry_client_ = absl::make_unique<
         async_grpc::Client<handlers::AddOdometryDataSignature>>(
         client_channel_);
   }
@@ -118,7 +118,7 @@ void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id,
     const sensor::FixedFramePoseData& fixed_frame_pose) {
   if (!add_fixed_frame_pose_client_) {
-    add_fixed_frame_pose_client_ = common::make_unique<
+    add_fixed_frame_pose_client_ = absl::make_unique<
         async_grpc::Client<handlers::AddFixedFramePoseDataSignature>>(
         client_channel_);
   }
@@ -132,7 +132,7 @@ void TrajectoryBuilderStub::AddSensorData(
 void TrajectoryBuilderStub::AddSensorData(
     const std::string& sensor_id, const sensor::LandmarkData& landmark_data) {
   if (!add_landmark_client_) {
-    add_landmark_client_ = common::make_unique<
+    add_landmark_client_ = absl::make_unique<
         async_grpc::Client<handlers::AddLandmarkDataSignature>>(
         client_channel_);
   }
@@ -158,7 +158,7 @@ void TrajectoryBuilderStub::RunLocalSlamResultsReader(
     sensor::RangeData range_data = sensor::FromProto(response.range_data());
     auto insertion_result =
         response.has_insertion_result()
-            ? common::make_unique<InsertionResult>(
+            ? absl::make_unique<InsertionResult>(
                   InsertionResult{mapping::NodeId{
                       response.insertion_result().node_id().trajectory_id(),
                       response.insertion_result().node_id().node_index()}})

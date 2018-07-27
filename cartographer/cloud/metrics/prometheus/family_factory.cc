@@ -16,7 +16,7 @@
 
 #include "cartographer/cloud/metrics/prometheus/family_factory.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "prometheus/counter.h"
 #include "prometheus/family.h"
 #include "prometheus/gauge.h"
@@ -51,7 +51,7 @@ class CounterFamily
 
   Counter* Add(const std::map<std::string, std::string>& labels) override {
     ::prometheus::Counter* counter = &prometheus_->Add(labels);
-    auto wrapper = common::make_unique<Counter>(counter);
+    auto wrapper = absl::make_unique<Counter>(counter);
     auto* ptr = wrapper.get();
     wrappers_.emplace_back(std::move(wrapper));
     return ptr;
@@ -84,7 +84,7 @@ class GaugeFamily
 
   Gauge* Add(const std::map<std::string, std::string>& labels) override {
     ::prometheus::Gauge* gauge = &prometheus_->Add(labels);
-    auto wrapper = common::make_unique<Gauge>(gauge);
+    auto wrapper = absl::make_unique<Gauge>(gauge);
     auto* ptr = wrapper.get();
     wrappers_.emplace_back(std::move(wrapper));
     return ptr;
@@ -115,7 +115,7 @@ class HistogramFamily : public ::cartographer::metrics::Family<
 
   Histogram* Add(const std::map<std::string, std::string>& labels) override {
     ::prometheus::Histogram* histogram = &prometheus_->Add(labels, boundaries_);
-    auto wrapper = common::make_unique<Histogram>(histogram);
+    auto wrapper = absl::make_unique<Histogram>(histogram);
     auto* ptr = wrapper.get();
     wrappers_.emplace_back(std::move(wrapper));
     return ptr;
@@ -139,7 +139,7 @@ FamilyFactory::NewCounterFamily(const std::string& name,
                      .Name(name)
                      .Help(description)
                      .Register(*registry_);
-  auto wrapper = common::make_unique<CounterFamily>(&family);
+  auto wrapper = absl::make_unique<CounterFamily>(&family);
   auto* ptr = wrapper.get();
   counters_.emplace_back(std::move(wrapper));
   return ptr;
@@ -152,7 +152,7 @@ FamilyFactory::NewGaugeFamily(const std::string& name,
                      .Name(name)
                      .Help(description)
                      .Register(*registry_);
-  auto wrapper = common::make_unique<GaugeFamily>(&family);
+  auto wrapper = absl::make_unique<GaugeFamily>(&family);
   auto* ptr = wrapper.get();
   gauges_.emplace_back(std::move(wrapper));
   return ptr;
@@ -166,7 +166,7 @@ FamilyFactory::NewHistogramFamily(const std::string& name,
                      .Name(name)
                      .Help(description)
                      .Register(*registry_);
-  auto wrapper = common::make_unique<HistogramFamily>(&family, boundaries);
+  auto wrapper = absl::make_unique<HistogramFamily>(&family, boundaries);
   auto* ptr = wrapper.get();
   histograms_.emplace_back(std::move(wrapper));
   return ptr;

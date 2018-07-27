@@ -24,7 +24,7 @@
 #include <vector>
 
 #include "Eigen/Core"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/probability_values.h"
@@ -169,7 +169,7 @@ class NestedGrid {
     std::unique_ptr<WrappedGrid>& meta_cell =
         meta_cells_[ToFlatIndex(meta_index, kBits)];
     if (meta_cell == nullptr) {
-      meta_cell = common::make_unique<WrappedGrid>();
+      meta_cell = absl::make_unique<WrappedGrid>();
     }
     const Eigen::Array3i inner_index =
         index - meta_index * WrappedGrid::grid_size();
@@ -292,7 +292,7 @@ class DynamicGrid {
     std::unique_ptr<WrappedGrid>& meta_cell =
         meta_cells_[ToFlatIndex(meta_index, bits_)];
     if (meta_cell == nullptr) {
-      meta_cell = common::make_unique<WrappedGrid>();
+      meta_cell = absl::make_unique<WrappedGrid>();
     }
     const Eigen::Array3i inner_index =
         shifted_index - meta_index * WrappedGrid::grid_size();

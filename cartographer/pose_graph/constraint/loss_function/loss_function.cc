@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/constraint/loss_function/loss_function.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 
 namespace cartographer {
 namespace pose_graph {
@@ -26,7 +26,7 @@ std::unique_ptr<ceres::LossFunction> CeresLossFromProto(
     const proto::LossFunction& proto) {
   switch (proto.Type_case()) {
     case proto::LossFunction::kHuberLoss:
-      return common::make_unique<ceres::HuberLoss>(proto.huber_loss().scale());
+      return absl::make_unique<ceres::HuberLoss>(proto.huber_loss().scale());
     case proto::LossFunction::kQuadraticLoss:
       return nullptr;
     default:

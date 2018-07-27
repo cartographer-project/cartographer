@@ -18,9 +18,9 @@
 
 #include <memory>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/probability_values.h"
 #include "gmock/gmock.h"
@@ -44,7 +44,7 @@ class RangeDataInserterTest2D : public ::testing::Test {
     options_ = CreateProbabilityGridRangeDataInserterOptions2D(
         parameter_dictionary.get());
     range_data_inserter_ =
-        common::make_unique<ProbabilityGridRangeDataInserter2D>(options_);
+        absl::make_unique<ProbabilityGridRangeDataInserter2D>(options_);
   }
 
   void InsertPointCloud() {

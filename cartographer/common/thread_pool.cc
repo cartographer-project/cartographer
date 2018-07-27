@@ -21,7 +21,7 @@
 #include <chrono>
 #include <numeric>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/task.h"
 #include "glog/logging.h"
 

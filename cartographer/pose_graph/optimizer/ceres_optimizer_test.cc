@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/optimizer/ceres_optimizer.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/pose_graph/constraint/relative_pose_constraint_2d.h"
 #include "cartographer/testing/test_helpers.h"
 
@@ -76,7 +76,7 @@ TEST(CeresOptimizerTest, SmokeTest) {
   data.nodes.pose_2d_nodes.emplace(
       NodeId{"end_node", common::FromUniversal(1)},
       GetPose2D(ParseProto<proto::Node>(kEndNode)));
-  data.constraints.emplace_back(common::make_unique<RelativePoseConstraint2D>(
+  data.constraints.emplace_back(absl::make_unique<RelativePoseConstraint2D>(
       "constraint_1", ParseProto<proto::LossFunction>(R"(quadratic_loss: {})"),
       ParseProto<proto::RelativePose2D>(kRelativePose2D)));
 

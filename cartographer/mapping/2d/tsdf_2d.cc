@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping/2d/tsdf_2d.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 
 namespace cartographer {
 namespace mapping {
@@ -26,7 +26,7 @@ TSDF2D::TSDF2D(const MapLimits& limits, float truncation_distance,
     : Grid2D(limits, -truncation_distance, truncation_distance,
              conversion_tables),
       conversion_tables_(conversion_tables),
-      value_converter_(common::make_unique<TSDValueConverter>(
+      value_converter_(absl::make_unique<TSDValueConverter>(
           truncation_distance, max_weight, conversion_tables_)),
       weight_cells_(
           limits.cell_limits().num_x_cells * limits.cell_limits().num_y_cells,
@@ -36,7 +36,7 @@ TSDF2D::TSDF2D(const proto::Grid2D& proto,
                ValueConversionTables* conversion_tables)
     : Grid2D(proto, conversion_tables), conversion_tables_(conversion_tables) {
   CHECK(proto.has_tsdf_2d());
-  value_converter_ = common::make_unique<TSDValueConverter>(
+  value_converter_ = absl::make_unique<TSDValueConverter>(
       proto.tsdf_2d().truncation_distance(), proto.tsdf_2d().max_weight(),
       conversion_tables_);
   weight_cells_.reserve(proto.tsdf_2d().weight_cells_size());
@@ -120,7 +120,7 @@ std::unique_ptr<Grid2D> TSDF2D::ComputeCroppedGrid() const {
   const double resolution = limits().resolution();
   const Eigen::Vector2d max =
       limits().max() - resolution * Eigen::Vector2d(offset.y(), offset.x());
-  std::unique_ptr<TSDF2D> cropped_grid = common::make_unique<TSDF2D>(
+  std::unique_ptr<TSDF2D> cropped_grid = absl::make_unique<TSDF2D>(
       MapLimits(resolution, max, cell_limits), value_converter_->getMaxTSD(),
       value_converter_->getMaxWeight(), conversion_tables_);
   for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(cell_limits)) {

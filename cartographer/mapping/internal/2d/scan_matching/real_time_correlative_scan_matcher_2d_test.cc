@@ -20,8 +20,8 @@
 #include <memory>
 
 #include "Eigen/Geometry"
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 #include "cartographer/mapping/internal/scan_matching/real_time_correlative_scan_matcher.h"
@@ -48,7 +48,7 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
           "miss_probability = 0.4, "
           "}");
       range_data_inserter_ =
-          common::make_unique<ProbabilityGridRangeDataInserter2D>(
+          absl::make_unique<ProbabilityGridRangeDataInserter2D>(
               CreateProbabilityGridRangeDataInserterOptions2D(
                   parameter_dictionary.get()));
     }
@@ -72,7 +72,7 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
           "rotation_delta_cost_weight = 0., "
           "}");
       real_time_correlative_scan_matcher_ =
-          common::make_unique<RealTimeCorrelativeScanMatcher2D>(
+          absl::make_unique<RealTimeCorrelativeScanMatcher2D>(
               CreateRealTimeCorrelativeScanMatcherOptions(
                   parameter_dictionary.get()));
     }

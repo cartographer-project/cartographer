@@ -16,8 +16,8 @@
 
 #include "cartographer/io/frame_id_filtering_points_processor.h"
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/io/points_batch.h"
 #include "glog/logging.h"
 
@@ -36,7 +36,7 @@ FrameIdFilteringPointsProcessor::FromDictionary(
     drop_frames =
         dictionary->GetDictionary("drop_frames")->GetArrayValuesAsStrings();
   }
-  return common::make_unique<FrameIdFilteringPointsProcessor>(
+  return absl::make_unique<FrameIdFilteringPointsProcessor>(
       std::unordered_set<std::string>(keep_frames.begin(), keep_frames.end()),
       std::unordered_set<std::string>(drop_frames.begin(), drop_frames.end()),
       next);

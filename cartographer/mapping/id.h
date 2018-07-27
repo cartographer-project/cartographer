@@ -27,7 +27,7 @@
 #include <tuple>
 #include <vector>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/pose_graph.pb.h"
@@ -181,7 +181,7 @@ class MapById {
     }
 
     std::unique_ptr<const IdDataReference> operator->() const {
-      return common::make_unique<const IdDataReference>(this->operator*());
+      return absl::make_unique<const IdDataReference>(this->operator*());
     }
 
     ConstIterator& operator++() {

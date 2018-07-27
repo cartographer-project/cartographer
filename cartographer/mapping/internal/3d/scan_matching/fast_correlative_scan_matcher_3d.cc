@@ -22,7 +22,7 @@
 #include <limits>
 
 #include "Eigen/Geometry"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/internal/3d/scan_matching/low_resolution_matcher.h"
 #include "cartographer/mapping/proto/scan_matching//fast_correlative_scan_matcher_options_3d.pb.h"
@@ -136,7 +136,7 @@ FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
       resolution_(hybrid_grid.resolution()),
       width_in_voxels_(hybrid_grid.grid_size()),
       precomputation_grid_stack_(
-          common::make_unique<PrecomputationGridStack3D>(hybrid_grid, options)),
+          absl::make_unique<PrecomputationGridStack3D>(hybrid_grid, options)),
       low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
       rotational_scan_matcher_(HistogramsAtAnglesFromNodes(nodes)) {}
 
@@ -206,7 +206,7 @@ FastCorrelativeScanMatcher3D::MatchWithSearchParameters(
       search_parameters, discrete_scans, lowest_resolution_candidates,
       precomputation_grid_stack_->max_depth(), min_score);
   if (best_candidate.score > min_score) {
-    return common::make_unique<Result>(Result{
+    return absl::make_unique<Result>(Result{
         best_candidate.score,
         GetPoseFromCandidate(discrete_scans, best_candidate).cast<double>(),
         discrete_scans[best_candidate.scan_index].rotational_score,

@@ -20,8 +20,8 @@
 #include <cmath>
 #include <memory>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -31,7 +31,7 @@ namespace {
 std::unique_ptr<LuaParameterDictionary> MakeNonReferenceCounted(
     const std::string& code) {
   return LuaParameterDictionary::NonReferenceCounted(
-      code, common::make_unique<DummyFileResolver>());
+      code, absl::make_unique<DummyFileResolver>());
 }
 
 class LuaParameterDictionaryTest : public ::testing::Test {
