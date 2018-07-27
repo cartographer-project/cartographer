@@ -26,13 +26,6 @@ namespace {
 
 using testing::ParseProto;
 
-// TODO(pifon): Use the factory function, when the factory is done.
-Pose2D GetPose2D(const proto::Node& proto) {
-  return {NodeId(proto.id()), proto.constant(),
-          transform::ToEigen(proto.parameters().pose_2d().translation()),
-          proto.parameters().pose_2d().rotation()};
-}
-
 constexpr char kStartNode[] = R"PROTO(
   id { object_id: "start_node" timestamp: 1 }
   constant: false
@@ -56,30 +49,30 @@ constexpr char kEndNode[] = R"PROTO(
 )PROTO";
 
 constexpr char kRelativePose2D[] = R"PROTO(
-  first { object_id: "start_node" timestamp: 1 }
-  second { object_id: "end_node" timestamp: 1 }
-  parameters {
-    first_t_second {
-      translation { x: 1 y: 1 }
-      rotation: 0
+  id: "constraint_1"
+  loss_function { quadratic_loss: {} }
+  cost_function {
+    relative_pose_2d {
+      first { object_id: "start_node" timestamp: 1 }
+      second { object_id: "end_node" timestamp: 1 }
+      parameters {
+        first_t_second {
+          translation { x: 1 y: 1 }
+          rotation: 0
+        }
+        translation_weight: 1
+        rotation_weight: 1
+      }
     }
-    translation_weight: 1
-    rotation_weight: 1
   }
 )PROTO";
 
 TEST(CeresOptimizerTest, SmokeTest) {
   PoseGraphData data;
-  data.nodes.pose_2d_nodes.emplace(
-      NodeId{"start_node", common::FromUniversal(1)},
-      GetPose2D(ParseProto<proto::Node>(kStartNode)));
-  data.nodes.pose_2d_nodes.emplace(
-      NodeId{"end_node", common::FromUniversal(1)},
-      GetPose2D(ParseProto<proto::Node>(kEndNode)));
-  data.constraints.emplace_back(absl::make_unique<RelativePoseConstraint2D>(
-      "constraint_1", ParseProto<proto::LossFunction>(R"(quadratic_loss: {})"),
-      ParseProto<proto::RelativePose2D>(kRelativePose2D)));
-
+  AddNodeToPoseGraphData(ParseProto<proto::Node>(kStartNode), &data);
+  AddNodeToPoseGraphData(ParseProto<proto::Node>(kEndNode), &data);
+  AddConstraintToPoseGraphData(ParseProto<proto::Constraint>(kRelativePose2D),
+                               &data);
   CeresOptimizer optimizer(ceres::Solver::Options{});
   EXPECT_EQ(optimizer.Solve(&data), Optimizer::SolverStatus::CONVERGENCE);
 }

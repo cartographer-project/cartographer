@@ -48,7 +48,7 @@ message NodeId {
 }
 
 message Parameters {
-  oneof Type {
+  oneof type {
     Pose2D pose_2d = 1;
     Pose3D pose_3d = 2;
     ImuCalibration imu_calibration = 3;

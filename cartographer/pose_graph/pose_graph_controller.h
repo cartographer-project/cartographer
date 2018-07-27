@@ -1,0 +1,49 @@
+/*
+ * Copyright 2018 The Cartographer Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef CARTOGRAPHER_POSE_GRAPH_POSE_GRAPH_CONTROLLER_H_
+#define CARTOGRAPHER_POSE_GRAPH_POSE_GRAPH_CONTROLLER_H_
+
+#include "cartographer/common/mutex.h"
+#include "cartographer/pose_graph/optimizer/optimizer.h"
+#include "cartographer/pose_graph/pose_graph_data.h"
+
+namespace cartographer {
+namespace pose_graph {
+
+class PoseGraphController {
+  PoseGraphController(std::unique_ptr<Optimizer> optimizer)
+      : optimizer_(std::move(optimizer)) {}
+
+  PoseGraphController(const PoseGraphController&) = delete;
+  PoseGraphController& operator=(const PoseGraphController&) = delete;
+
+  void AddNode(const proto::Node& node) EXCLUDES(mutex_);
+  void AddConstraint(const proto::Constraint& constraint) EXCLUDES(mutex_);
+
+  Optimizer::SolverStatus Optimize() EXCLUDES(mutex_);
+
+ private:
+  std::unique_ptr<Optimizer> optimizer_;
+
+  mutable common::Mutex mutex_;
+  PoseGraphData data_ GUARDED_BY(mutex_);
+};
+
+}  // namespace pose_graph
+}  // namespace cartographer
+
+#endif  // CARTOGRAPHER_POSE_GRAPH_POSE_GRAPH_CONTROLLER_H_
