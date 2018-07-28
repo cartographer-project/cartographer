@@ -123,7 +123,8 @@ std::string MapBuilderStub::SubmapToProto(
   return client.response().error_msg();
 }
 
-void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
+void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer,
+                                    bool include_unfinished_submaps) {
   google::protobuf::Empty request;
   async_grpc::Client<handlers::WriteStateSignature> client(client_channel_);
   CHECK(client.Write(request));

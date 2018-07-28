@@ -78,7 +78,8 @@ class MapBuilderInterface {
                                     proto::SubmapQuery::Response* response) = 0;
 
   // Serializes the current state to a proto stream.
-  virtual void SerializeState(io::ProtoStreamWriterInterface* writer) = 0;
+  virtual void SerializeState(io::ProtoStreamWriterInterface* writer,
+                              bool include_unfinished_submaps) = 0;
 
   // Loads the SLAM state from a proto stream. Returns the remapping of new
   // trajectory_ids.

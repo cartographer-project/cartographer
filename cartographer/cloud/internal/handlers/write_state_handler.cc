@@ -49,7 +49,7 @@ void WriteStateHandler::OnRequest(const google::protobuf::Empty& request) {
         return true;
       });
   GetContext<MapBuilderContextInterface>()->map_builder().SerializeState(
-      &proto_stream_writer);
+      &proto_stream_writer, false);
   proto_stream_writer.Close();
 }
 

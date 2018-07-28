@@ -60,9 +60,33 @@ mapping::proto::SerializationHeader CreateHeader() {
   return header;
 }
 
-SerializedData SerializePoseGraph(const mapping::PoseGraph& pose_graph) {
+SerializedData SerializePoseGraph(const mapping::PoseGraph& pose_graph,
+                                  bool include_unfinished_submaps) {
   SerializedData proto;
   *proto.mutable_pose_graph() = pose_graph.ToProto();
+
+  if (include_unfinished_submaps) {
+    return proto;
+  }
+
+  // Filter unfinished submaps.
+  std::set<mapping::SubmapId> unfinished_submaps;
+  for (const auto& submap_id_data : pose_graph.GetAllSubmapData()) {
+    if (!submap_id_data.data.submap->finished()) {
+      unfinished_submaps.insert(submap_id_data.id);
+    }
+  }
+  const std::vector<mapping::proto::PoseGraph::Constraint> constraints{
+      proto.pose_graph().constraint().begin(),
+      proto.pose_graph().constraint().end()};
+  proto.mutable_pose_graph()->clear_constraint();
+  for (const auto& constraint : constraints) {
+    mapping::SubmapId submap_id(constraint.submap_id().trajectory_id(),
+                                constraint.submap_id().submap_index());
+    if (unfinished_submaps.count(submap_id) == 0) {
+      *proto.mutable_pose_graph()->mutable_constraint()->Add() = constraint;
+    }
+  }
   return proto;
 }
 
@@ -79,9 +103,13 @@ SerializedData SerializeTrajectoryBuilderOptions(
 
 void SerializeSubmaps(
     const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data,
-    ProtoStreamWriterInterface* const writer) {
+    ProtoStreamWriterInterface* const writer, bool include_unfinished_submaps) {
   // Next serialize all submaps.
   for (const auto& submap_id_data : submap_data) {
+    if (!include_unfinished_submaps &&
+        !submap_id_data.data.submap->finished()) {
+      continue;
+    }
     SerializedData proto;
     auto* const submap_proto = proto.mutable_submap();
     *submap_proto = submap_id_data.data.submap->ToProto(
@@ -209,14 +237,16 @@ void WritePbStream(
     const mapping::PoseGraph& pose_graph,
     const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
         trajectory_builder_options,
-    ProtoStreamWriterInterface* const writer) {
+    ProtoStreamWriterInterface* const writer, bool include_unfinished_submaps) {
   writer->WriteProto(CreateHeader());
-  writer->WriteProto(SerializePoseGraph(pose_graph));
+  writer->WriteProto(
+      SerializePoseGraph(pose_graph, include_unfinished_submaps));
   writer->WriteProto(SerializeTrajectoryBuilderOptions(
       trajectory_builder_options,
       GetValidTrajectoryIds(pose_graph.GetTrajectoryStates())));
 
-  SerializeSubmaps(pose_graph.GetAllSubmapData(), writer);
+  SerializeSubmaps(pose_graph.GetAllSubmapData(), writer,
+                   include_unfinished_submaps);
   SerializeTrajectoryNodes(pose_graph.GetTrajectoryNodes(), writer);
   SerializeTrajectoryData(pose_graph.GetTrajectoryData(), writer);
   SerializeImuData(pose_graph.GetImuData(), writer);
