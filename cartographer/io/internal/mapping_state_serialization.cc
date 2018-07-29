@@ -69,24 +69,77 @@ SerializedData SerializePoseGraph(const mapping::PoseGraph& pose_graph,
     return proto;
   }
 
-  // Filter unfinished submaps.
   std::set<mapping::SubmapId> unfinished_submaps;
+  std::set<mapping::NodeId> orphaned_nodes;
+
+  // Determine set of unfinished submaps.
   for (const auto& submap_id_data : pose_graph.GetAllSubmapData()) {
     if (!submap_id_data.data.submap->finished()) {
       unfinished_submaps.insert(submap_id_data.id);
     }
   }
-  const std::vector<mapping::proto::PoseGraph::Constraint> constraints{
+
+  // Skip all those constraints in the proto that refer to unfinished
+  // submaps and remember the corresponding trajectory nodes as
+  // potentially orphaned.
+  std::vector<mapping::proto::PoseGraph::Constraint> constraints{
       proto.pose_graph().constraint().begin(),
       proto.pose_graph().constraint().end()};
   proto.mutable_pose_graph()->clear_constraint();
-  for (const auto& constraint : constraints) {
-    mapping::SubmapId submap_id(constraint.submap_id().trajectory_id(),
-                                constraint.submap_id().submap_index());
+  for (auto it = constraints.begin(); it != constraints.end();) {
+    mapping::SubmapId submap_id(it->submap_id().trajectory_id(),
+    		it->submap_id().submap_index());
     if (unfinished_submaps.count(submap_id) == 0) {
-      *proto.mutable_pose_graph()->mutable_constraint()->Add() = constraint;
+      // Submap is finished.
+      *proto.mutable_pose_graph()->mutable_constraint()->Add() = *it;
+      ++it;
+    } else {
+    	// Submap is unfinished.
+    	mapping::NodeId node_id(it->node_id().trajectory_id(),
+    			it->node_id().node_index());
+    	orphaned_nodes.insert(node_id);
+    	it = constraints.erase(it);
     }
   }
+
+  // Iterate over all constraints and remove trajectory nodes from
+  // 'orphaned_nodes' that are not actually orphaned.
+  for (const auto& constraint : constraints) {
+	  mapping::NodeId node_id(constraint.node_id().trajectory_id(),
+	      			constraint.node_id().node_index());
+	  orphaned_nodes.erase(node_id);
+  }
+
+  // Skip all those trajectory nodes and submaps in the proto that are
+  // orphaned.
+  for (mapping::proto::Trajectory& trajectory : *proto.mutable_pose_graph()->mutable_trajectory()) {
+    // Skip unfinished submaps.
+    std::vector<mapping::proto::Trajectory::Submap> submaps{
+  	  trajectory.submap().begin(), trajectory.submap().end()};
+    trajectory.clear_submap();
+    for (const auto& submap : submaps) {
+  	    mapping::SubmapId submap_id(trajectory.trajectory_id(),
+		 	  submap.submap_index());
+	  if (unfinished_submaps.count(submap_id) == 0) {
+	    // Submap is finished.
+	    *trajectory.add_submap() = submap;
+	  }
+    }
+
+    // Skip orphaned nodes.
+    std::vector<mapping::proto::Trajectory::Node> nodes{
+      	  trajectory.node().begin(), trajectory.node().end()};
+        trajectory.clear_node();
+        for (const auto& node : nodes) {
+      	    mapping::NodeId node_id(trajectory.trajectory_id(),
+    		 	  node.node_index());
+    	  if (orphaned_nodes.count(node_id) == 0) {
+    	    // Submap is finished.
+    	    *trajectory.add_node() = node;
+    	  }
+        }
+  }
+
   return proto;
 }
 
