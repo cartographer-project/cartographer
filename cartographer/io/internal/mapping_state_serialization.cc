@@ -110,8 +110,8 @@ SerializedData SerializePoseGraph(const mapping::PoseGraph& pose_graph,
     orphaned_nodes.erase(node_id);
   }
 
-  // Skip all those trajectory nodes and submaps in the proto that are
-  // orphaned.
+  // Skip orphaned trajectory nodes and unfinished submaps in the
+  // trajectory proto.
   for (mapping::proto::Trajectory& trajectory :
        *proto.mutable_pose_graph()->mutable_trajectory()) {
     // Skip unfinished submaps.
