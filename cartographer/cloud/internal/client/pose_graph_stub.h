@@ -52,7 +52,8 @@ class PoseGraphStub : public ::cartographer::mapping::PoseGraphInterface {
   std::map<int, mapping::PoseGraphInterface::TrajectoryData> GetTrajectoryData()
       const override;
   std::vector<Constraint> constraints() const override;
-  mapping::proto::PoseGraph ToProto() const override;
+  mapping::proto::PoseGraph ToProto(
+      bool include_unfinished_submaps) const override;
   void SetGlobalSlamOptimizationCallback(
       GlobalSlamOptimizationCallback callback) override;
 

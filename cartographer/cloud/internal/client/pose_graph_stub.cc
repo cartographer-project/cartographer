@@ -202,7 +202,8 @@ PoseGraphStub::constraints() const {
   return mapping::FromProto(client.response().constraints());
 }
 
-mapping::proto::PoseGraph PoseGraphStub::ToProto() const {
+mapping::proto::PoseGraph PoseGraphStub::ToProto(
+    bool include_unfinished_submaps) const {
   LOG(FATAL) << "Not implemented";
 }
 

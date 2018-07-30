@@ -342,7 +342,7 @@ TEST_F(MapBuilderTest, SaveLoadState) {
     // TODO(gaschler): Consider using in-memory to avoid side effects.
     const std::string filename = "temp-SaveLoadState.pbstream";
     io::ProtoStreamWriter writer(filename);
-    map_builder_->SerializeState(&writer);
+    map_builder_->SerializeState(/*include_unfinished_submaps=*/true, &writer);
     writer.Close();
 
     // Reset 'map_builder_'.
@@ -373,7 +373,7 @@ TEST_F(MapBuilderTest, LocalizationOnFrozenTrajectory2D) {
       0);
   const std::string filename = "temp-LocalizationOnFrozenTrajectory2D.pbstream";
   io::ProtoStreamWriter writer(filename);
-  map_builder_->SerializeState(&writer);
+  map_builder_->SerializeState(/*include_unfinished_submaps=*/true, &writer);
   writer.Close();
 
   // Reset 'map_builder_'.
