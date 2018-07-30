@@ -16,10 +16,10 @@
 
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/map_builder_interface.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "google/protobuf/empty.pb.h"
@@ -34,7 +34,7 @@ void RunFinalOptimizationHandler::OnRequest(
       ->map_builder()
       .pose_graph()
       ->RunFinalOptimization();
-  Send(common::make_unique<google::protobuf::Empty>());
+  Send(absl::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers

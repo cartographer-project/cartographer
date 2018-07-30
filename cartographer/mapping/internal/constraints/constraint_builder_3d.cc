@@ -26,7 +26,7 @@
 #include <string>
 
 #include "Eigen/Eigenvalues"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/proto/scan_matching//ceres_scan_matcher_options_3d.pb.h"
@@ -60,8 +60,8 @@ ConstraintBuilder3D::ConstraintBuilder3D(
     common::ThreadPoolInterface* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
-      finish_node_task_(common::make_unique<common::Task>()),
-      when_done_task_(common::make_unique<common::Task>()),
+      finish_node_task_(absl::make_unique<common::Task>()),
+      when_done_task_(absl::make_unique<common::Task>()),
       sampler_(options.sampling_ratio()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options_3d()) {}
 
@@ -94,7 +94,7 @@ void ConstraintBuilder3D::MaybeAddConstraint(
   kQueueLengthMetric->Set(constraints_.size());
   auto* const constraint = &constraints_.back();
   const auto* scan_matcher = DispatchScanMatcherConstruction(submap_id, submap);
-  auto constraint_task = common::make_unique<common::Task>();
+  auto constraint_task = absl::make_unique<common::Task>();
   constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
     ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
                       constant_data, global_node_pose, global_submap_pose,
@@ -120,7 +120,7 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
   kQueueLengthMetric->Set(constraints_.size());
   auto* const constraint = &constraints_.back();
   const auto* scan_matcher = DispatchScanMatcherConstruction(submap_id, submap);
-  auto constraint_task = common::make_unique<common::Task>();
+  auto constraint_task = absl::make_unique<common::Task>();
   constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
     ComputeConstraint(submap_id, node_id, true, /* match_full_submap */
                       constant_data,
@@ -143,7 +143,7 @@ void ConstraintBuilder3D::NotifyEndOfNode() {
   });
   auto finish_node_task_handle =
       thread_pool_->Schedule(std::move(finish_node_task_));
-  finish_node_task_ = common::make_unique<common::Task>();
+  finish_node_task_ = absl::make_unique<common::Task>();
   when_done_task_->AddDependency(finish_node_task_handle);
   ++num_started_nodes_;
 }
@@ -153,12 +153,11 @@ void ConstraintBuilder3D::WhenDone(
   common::MutexLocker locker(&mutex_);
   CHECK(when_done_ == nullptr);
   // TODO(gaschler): Consider using just std::function, it can also be empty.
-  when_done_ =
-      common::make_unique<std::function<void(const Result&)>>(callback);
+  when_done_ = absl::make_unique<std::function<void(const Result&)>>(callback);
   CHECK(when_done_task_ != nullptr);
   when_done_task_->SetWorkItem([this] { RunWhenDoneCallback(); });
   thread_pool_->Schedule(std::move(when_done_task_));
-  when_done_task_ = common::make_unique<common::Task>();
+  when_done_task_ = absl::make_unique<common::Task>();
 }
 
 const ConstraintBuilder3D::SubmapScanMatcher*
@@ -176,11 +175,11 @@ ConstraintBuilder3D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
       options_.fast_correlative_scan_matcher_options_3d();
   const Eigen::VectorXf* histogram =
       &submap->rotational_scan_matcher_histogram();
-  auto scan_matcher_task = common::make_unique<common::Task>();
+  auto scan_matcher_task = absl::make_unique<common::Task>();
   scan_matcher_task->SetWorkItem(
       [&submap_scan_matcher, &scan_matcher_options, histogram]() {
         submap_scan_matcher.fast_correlative_scan_matcher =
-            common::make_unique<scan_matching::FastCorrelativeScanMatcher3D>(
+            absl::make_unique<scan_matching::FastCorrelativeScanMatcher3D>(
                 *submap_scan_matcher.high_resolution_hybrid_grid,
                 submap_scan_matcher.low_resolution_hybrid_grid, histogram,
                 scan_matcher_options);

@@ -18,7 +18,7 @@
 
 #include <vector>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {

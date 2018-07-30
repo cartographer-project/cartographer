@@ -28,8 +28,7 @@ namespace pose_graph {
 
 class Pose2D : public Node {
  public:
-  Pose2D(const NodeId& node_id, bool constant,
-         const Eigen::Vector2d& translation, double rotation);
+  Pose2D(const NodeId& node_id, bool constant, const proto::Pose2D& pose_2d);
 
   std::array<double, 3>* mutable_pose_2d() { return &pose_2d_; }
   const std::array<double, 3>& pose_2d() const { return pose_2d_; }

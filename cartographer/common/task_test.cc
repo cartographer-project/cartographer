@@ -19,7 +19,7 @@
 #include <memory>
 #include <queue>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -71,7 +71,7 @@ class TaskTest : public ::testing::Test {
 };
 
 TEST_F(TaskTest, RunTask) {
-  auto a = make_unique<Task>();
+  auto a = absl::make_unique<Task>();
   MockCallback callback;
   a->SetWorkItem([&callback]() { callback.Run(); });
   EXPECT_EQ(a->GetState(), Task::NEW);
@@ -85,8 +85,8 @@ TEST_F(TaskTest, RunTask) {
 }
 
 TEST_F(TaskTest, RunTaskWithDependency) {
-  auto a = make_unique<Task>();
-  auto b = make_unique<Task>();
+  auto a = absl::make_unique<Task>();
+  auto b = absl::make_unique<Task>();
   MockCallback callback_a;
   a->SetWorkItem([&callback_a]() { callback_a.Run(); });
   MockCallback callback_b;
@@ -116,10 +116,10 @@ TEST_F(TaskTest, RunTaskWithTwoDependency) {
   /*         c \
    *  a -->  b --> d
    */
-  auto a = make_unique<Task>();
-  auto b = make_unique<Task>();
-  auto c = make_unique<Task>();
-  auto d = make_unique<Task>();
+  auto a = absl::make_unique<Task>();
+  auto b = absl::make_unique<Task>();
+  auto c = absl::make_unique<Task>();
+  auto d = absl::make_unique<Task>();
   MockCallback callback_a;
   a->SetWorkItem([&callback_a]() { callback_a.Run(); });
   MockCallback callback_b;
@@ -159,7 +159,7 @@ TEST_F(TaskTest, RunTaskWithTwoDependency) {
 }
 
 TEST_F(TaskTest, RunWithCompletedDependency) {
-  auto a = make_unique<Task>();
+  auto a = absl::make_unique<Task>();
   MockCallback callback_a;
   a->SetWorkItem([&callback_a]() { callback_a.Run(); });
   auto shared_a = thread_pool()->Schedule(std::move(a)).lock();
@@ -168,7 +168,7 @@ TEST_F(TaskTest, RunWithCompletedDependency) {
   EXPECT_CALL(callback_a, Run()).Times(1);
   thread_pool()->RunNext();
   EXPECT_EQ(shared_a->GetState(), Task::COMPLETED);
-  auto b = make_unique<Task>();
+  auto b = absl::make_unique<Task>();
   MockCallback callback_b;
   b->SetWorkItem([&callback_b]() { callback_b.Run(); });
   b->AddDependency(shared_a);

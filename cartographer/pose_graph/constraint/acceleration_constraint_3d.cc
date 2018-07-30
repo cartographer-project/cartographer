@@ -16,7 +16,7 @@
 
 #include "cartographer/pose_graph/constraint/acceleration_constraint_3d.h"
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
 
 namespace cartographer {
@@ -56,7 +56,7 @@ AccelerationConstraint3D::AccelerationConstraint3D(
       third_(proto.third()),
       imu_(proto.imu_calibration()),
       cost_(new AccelerationCost3D(proto.parameters())),
-      ceres_cost_(common::make_unique<AutoDiffFunction>(cost_)) {}
+      ceres_cost_(absl::make_unique<AutoDiffFunction>(cost_)) {}
 
 void AccelerationConstraint3D::AddToOptimizer(Nodes* nodes,
                                               ceres::Problem* problem) const {

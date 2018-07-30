@@ -20,7 +20,7 @@
 #include <string>
 #include <tuple>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/collator_interface.h"
 #include "cartographer/sensor/imu_data.h"

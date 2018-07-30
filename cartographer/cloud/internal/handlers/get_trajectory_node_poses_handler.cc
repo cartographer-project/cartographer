@@ -16,10 +16,10 @@
 
 #include "cartographer/cloud/internal/handlers/get_trajectory_node_poses_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/transform/transform.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -33,7 +33,7 @@ void GetTrajectoryNodePosesHandler::OnRequest(
                         ->map_builder()
                         .pose_graph()
                         ->GetTrajectoryNodePoses();
-  auto response = common::make_unique<proto::GetTrajectoryNodePosesResponse>();
+  auto response = absl::make_unique<proto::GetTrajectoryNodePosesResponse>();
   for (const auto& node_id_pose : node_poses) {
     auto* node_pose = response->add_node_poses();
     node_id_pose.id.ToProto(node_pose->mutable_node_id());

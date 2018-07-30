@@ -28,8 +28,8 @@ namespace pose_graph {
 
 class ImuCalibration : public Node {
  public:
-  ImuCalibration(const NodeId& node_id, bool constant, double gravity_constant,
-                 const Eigen::Quaterniond& orientation);
+  ImuCalibration(const NodeId& node_id, bool constant,
+                 const proto::ImuCalibration& imu_calibration);
 
   double* mutable_gravity_constant() { return &gravity_constant_; }
   double gravity_constant() const { return gravity_constant_; }

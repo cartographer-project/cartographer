@@ -120,7 +120,7 @@ void AddLandmarkCostFunctions(
         C_landmarks->emplace(
             landmark_id,
             CeresPose(starting_point, nullptr /* translation_parametrization */,
-                      common::make_unique<ceres::QuaternionParameterization>(),
+                      absl::make_unique<ceres::QuaternionParameterization>(),
                       problem));
         if (freeze_landmarks) {
           problem->SetParameterBlockConstant(
@@ -336,12 +336,12 @@ std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::InterpolateOdometry(
   }
   if (it == odometry_data_.BeginOfTrajectory(trajectory_id)) {
     if (it->time == time) {
-      return common::make_unique<transform::Rigid3d>(it->pose);
+      return absl::make_unique<transform::Rigid3d>(it->pose);
     }
     return nullptr;
   }
   const auto prev_it = std::prev(it);
-  return common::make_unique<transform::Rigid3d>(
+  return absl::make_unique<transform::Rigid3d>(
       Interpolate(transform::TimestampedTransform{prev_it->time, prev_it->pose},
                   transform::TimestampedTransform{it->time, it->pose}, time)
           .transform);
@@ -362,7 +362,7 @@ OptimizationProblem2D::CalculateOdometryBetweenNodes(
           first_node_odometry->inverse() * (*second_node_odometry) *
           transform::Rigid3d::Rotation(
               second_node_data.gravity_alignment.inverse());
-      return common::make_unique<transform::Rigid3d>(relative_odometry);
+      return absl::make_unique<transform::Rigid3d>(relative_odometry);
     }
   }
   return nullptr;

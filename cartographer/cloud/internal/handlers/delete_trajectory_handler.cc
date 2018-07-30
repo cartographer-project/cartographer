@@ -16,10 +16,10 @@
 
 #include "cartographer/cloud/internal/handlers/delete_trajectory_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
@@ -40,7 +40,7 @@ void DeleteTrajectoryHandler::OnRequest(
       .pose_graph()
       ->DeleteTrajectory(request.trajectory_id());
   // TODO(gaschler): Think if LocalSlamUploader needs to be notified.
-  Send(common::make_unique<google::protobuf::Empty>());
+  Send(absl::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers

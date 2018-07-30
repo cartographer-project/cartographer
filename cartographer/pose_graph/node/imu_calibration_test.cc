@@ -22,6 +22,8 @@ namespace cartographer {
 namespace pose_graph {
 namespace {
 
+using testing::ParseProto;
+
 constexpr char kExpectedNode[] = R"PROTO(
   id { object_id: "accelerometer" timestamp: 1 }
   constant: true
@@ -35,7 +37,10 @@ constexpr char kExpectedNode[] = R"PROTO(
 
 TEST(Pose3DTest, ToProto) {
   ImuCalibration imu_calibration({"accelerometer", common::FromUniversal(1)},
-                                 true, 10, Eigen::Quaterniond(0., 1., 2., 3.));
+                                 true, ParseProto<proto::ImuCalibration>(R"(
+                                     gravity_constant: 10
+                                     orientation: { w: 0 x: 1 y: 2 z: 3 }
+                                   )"));
   EXPECT_THAT(imu_calibration.ToProto(), testing::EqualsProto(kExpectedNode));
 }
 

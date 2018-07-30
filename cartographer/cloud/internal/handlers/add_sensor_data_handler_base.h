@@ -50,7 +50,7 @@ class AddSensorDataHandlerBase
   virtual void OnSensorData(const SensorDataType& request) = 0;
 
   void OnReadsDone() override {
-    this->template Send(common::make_unique<google::protobuf::Empty>());
+    this->template Send(absl::make_unique<google::protobuf::Empty>());
   }
 };
 

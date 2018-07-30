@@ -17,7 +17,7 @@
 #include "cartographer/io/fixed_ratio_sampling_points_processor.h"
 
 #include "Eigen/Core"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -30,8 +30,8 @@ FixedRatioSamplingPointsProcessor::FromDictionary(
   const double sampling_ratio(dictionary->GetDouble("sampling_ratio"));
   CHECK_LT(0., sampling_ratio) << "Sampling ratio <= 0 makes no sense.";
   CHECK_LT(sampling_ratio, 1.) << "Sampling ratio >= 1 makes no sense.";
-  return common::make_unique<FixedRatioSamplingPointsProcessor>(sampling_ratio,
-                                                                next);
+  return absl::make_unique<FixedRatioSamplingPointsProcessor>(sampling_ratio,
+                                                              next);
 }
 
 FixedRatioSamplingPointsProcessor::FixedRatioSamplingPointsProcessor(
@@ -58,8 +58,7 @@ PointsProcessor::FlushResult FixedRatioSamplingPointsProcessor::Flush() {
       return PointsProcessor::FlushResult::kFinished;
 
     case PointsProcessor::FlushResult::kRestartStream:
-      sampler_ =
-          common::make_unique<common::FixedRatioSampler>(sampling_ratio_);
+      sampler_ = absl::make_unique<common::FixedRatioSampler>(sampling_ratio_);
       return PointsProcessor::FlushResult::kRestartStream;
   }
   LOG(FATAL);

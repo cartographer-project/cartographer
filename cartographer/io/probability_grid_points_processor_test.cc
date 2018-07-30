@@ -32,7 +32,7 @@ namespace io {
 namespace {
 
 std::unique_ptr<PointsBatch> CreatePointsBatch() {
-  auto points_batch = cartographer::common::make_unique<PointsBatch>();
+  auto points_batch = ::absl::make_unique<PointsBatch>();
   points_batch->origin = Eigen::Vector3f(0, 0, 0);
   points_batch->points.emplace_back(0.0f, 0.0f, 0.0f);
   points_batch->points.emplace_back(0.0f, 1.0f, 2.0f);
@@ -48,9 +48,8 @@ std::unique_ptr<PointsBatch> CreatePointsBatch() {
   return [&fake_file_writer_output,
           &expected_filename](const std::string& full_filename) {
     EXPECT_EQ(expected_filename, full_filename);
-    return ::cartographer::common::make_unique<
-        ::cartographer::io::FakeFileWriter>(full_filename,
-                                            fake_file_writer_output);
+    return ::absl::make_unique<::cartographer::io::FakeFileWriter>(
+        full_filename, fake_file_writer_output);
   };
 }
 
@@ -59,8 +58,8 @@ CreatePipelineFromDictionary(
     common::LuaParameterDictionary* const pipeline_dictionary,
     const std::vector<mapping::proto::Trajectory>& trajectories,
     ::cartographer::io::FileWriterFactory file_writer_factory) {
-  auto builder = ::cartographer::common::make_unique<
-      ::cartographer::io::PointsProcessorPipelineBuilder>();
+  auto builder =
+      ::absl::make_unique<::cartographer::io::PointsProcessorPipelineBuilder>();
   builder->Register(
       ProbabilityGridPointsProcessor::kConfigurationFileActionName,
       [&trajectories, file_writer_factory](
@@ -115,7 +114,7 @@ std::unique_ptr<common::LuaParameterDictionary> CreateParameterDictionary() {
           } 
           return pipeline
     )text",
-          common::make_unique<cartographer::common::DummyFileResolver>());
+          absl::make_unique<cartographer::common::DummyFileResolver>());
   return parameter_dictionary;
 }
 

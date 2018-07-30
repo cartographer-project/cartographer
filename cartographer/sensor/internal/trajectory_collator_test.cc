@@ -19,7 +19,7 @@
 #include <array>
 #include <memory>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/internal/test_helpers.h"

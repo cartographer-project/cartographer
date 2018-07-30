@@ -48,7 +48,7 @@ class ConstraintBuilder3DTest : public ::testing::Test {
     POSE_GRAPH.constraint_builder.fast_correlative_scan_matcher_3d.min_low_resolution_score = 0
     POSE_GRAPH.constraint_builder.fast_correlative_scan_matcher_3d.min_rotational_score = 0
     return POSE_GRAPH.constraint_builder)text");
-    constraint_builder_ = common::make_unique<ConstraintBuilder3D>(
+    constraint_builder_ = absl::make_unique<ConstraintBuilder3D>(
         CreateConstraintBuilderOptions(constraint_builder_parameters.get()),
         &thread_pool_);
   }

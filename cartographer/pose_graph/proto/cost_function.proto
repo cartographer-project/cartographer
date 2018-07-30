@@ -103,7 +103,7 @@ message InterpolatedRelativePose3D {
 }
 
 message CostFunction {
-  oneof Type {
+  oneof type {
     RelativePose2D relative_pose_2d = 1;
     RelativePose3D relative_pose_3d = 2;
     Acceleration3D acceleration_3d = 3;

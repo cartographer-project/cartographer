@@ -20,7 +20,7 @@
 #include <chrono>
 #include <vector>
 
-#include "cartographer/common/optional.h"
+#include "absl/types/optional.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -61,7 +61,7 @@ class PoseGraphInterface {
       double rotation_weight;
     };
     std::vector<LandmarkObservation> landmark_observations;
-    common::optional<transform::Rigid3d> global_landmark_pose;
+    absl::optional<transform::Rigid3d> global_landmark_pose;
   };
 
   struct SubmapPose {
@@ -77,7 +77,7 @@ class PoseGraphInterface {
   struct TrajectoryData {
     double gravity_constant = 9.8;
     std::array<double, 4> imu_calibration{{1., 0., 0., 0.}};
-    common::optional<transform::Rigid3d> fixed_frame_origin_in_map;
+    absl::optional<transform::Rigid3d> fixed_frame_origin_in_map;
   };
 
   enum class TrajectoryState { ACTIVE, FINISHED, FROZEN, DELETED };

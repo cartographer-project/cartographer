@@ -45,7 +45,7 @@ class ConstraintBuilder2DTest : public ::testing::Test {
             POSE_GRAPH.constraint_builder.min_score = 0
             POSE_GRAPH.constraint_builder.global_localization_min_score = 0
             return POSE_GRAPH.constraint_builder)text");
-    constraint_builder_ = common::make_unique<ConstraintBuilder2D>(
+    constraint_builder_ = absl::make_unique<ConstraintBuilder2D>(
         CreateConstraintBuilderOptions(constraint_builder_parameters.get()),
         &thread_pool_);
   }
@@ -78,7 +78,7 @@ TEST_F(ConstraintBuilder2DTest, FindsConstraints) {
   ValueConversionTables conversion_tables;
   Submap2D submap(
       Eigen::Vector2f(4.f, 5.f),
-      common::make_unique<ProbabilityGrid>(map_limits, &conversion_tables),
+      absl::make_unique<ProbabilityGrid>(map_limits, &conversion_tables),
       &conversion_tables);
   int expected_nodes = 0;
   for (int i = 0; i < 2; ++i) {
