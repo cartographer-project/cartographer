@@ -60,9 +60,10 @@ mapping::proto::SerializationHeader CreateHeader() {
   return header;
 }
 
-SerializedData SerializePoseGraph(const mapping::PoseGraph& pose_graph) {
+SerializedData SerializePoseGraph(const mapping::PoseGraph& pose_graph,
+                                  bool include_unfinished_submaps) {
   SerializedData proto;
-  *proto.mutable_pose_graph() = pose_graph.ToProto();
+  *proto.mutable_pose_graph() = pose_graph.ToProto(include_unfinished_submaps);
   return proto;
 }
 
@@ -79,9 +80,13 @@ SerializedData SerializeTrajectoryBuilderOptions(
 
 void SerializeSubmaps(
     const MapById<SubmapId, PoseGraphInterface::SubmapData>& submap_data,
-    ProtoStreamWriterInterface* const writer) {
+    bool include_unfinished_submaps, ProtoStreamWriterInterface* const writer) {
   // Next serialize all submaps.
   for (const auto& submap_id_data : submap_data) {
+    if (!include_unfinished_submaps &&
+        !submap_id_data.data.submap->finished()) {
+      continue;
+    }
     SerializedData proto;
     auto* const submap_proto = proto.mutable_submap();
     *submap_proto = submap_id_data.data.submap->ToProto(
@@ -209,14 +214,16 @@ void WritePbStream(
     const mapping::PoseGraph& pose_graph,
     const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
         trajectory_builder_options,
-    ProtoStreamWriterInterface* const writer) {
+    ProtoStreamWriterInterface* const writer, bool include_unfinished_submaps) {
   writer->WriteProto(CreateHeader());
-  writer->WriteProto(SerializePoseGraph(pose_graph));
+  writer->WriteProto(
+      SerializePoseGraph(pose_graph, include_unfinished_submaps));
   writer->WriteProto(SerializeTrajectoryBuilderOptions(
       trajectory_builder_options,
       GetValidTrajectoryIds(pose_graph.GetTrajectoryStates())));
 
-  SerializeSubmaps(pose_graph.GetAllSubmapData(), writer);
+  SerializeSubmaps(pose_graph.GetAllSubmapData(), include_unfinished_submaps,
+                   writer);
   SerializeTrajectoryNodes(pose_graph.GetTrajectoryNodes(), writer);
   SerializeTrajectoryData(pose_graph.GetTrajectoryData(), writer);
   SerializeImuData(pose_graph.GetImuData(), writer);

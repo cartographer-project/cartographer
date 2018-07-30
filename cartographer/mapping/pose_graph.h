@@ -117,7 +117,7 @@ class PoseGraph : public PoseGraphInterface {
   // not exist (anymore).
   virtual SubmapData GetSubmapData(const SubmapId& submap_id) const = 0;
 
-  proto::PoseGraph ToProto() const override;
+  proto::PoseGraph ToProto(bool include_unfinished_submaps) const override;
 
   // Returns the IMU data.
   virtual sensor::MapByTime<sensor::ImuData> GetImuData() const = 0;

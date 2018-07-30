@@ -48,7 +48,8 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
   std::string SubmapToProto(
       const mapping::SubmapId& submap_id,
       mapping::proto::SubmapQuery::Response* response) override;
-  void SerializeState(io::ProtoStreamWriterInterface* writer) override;
+  void SerializeState(bool include_unfinished_submaps,
+                      io::ProtoStreamWriterInterface* writer) override;
   std::map<int, int> LoadState(io::ProtoStreamReaderInterface* reader,
                                bool load_frozen_state) override;
   std::map<int, int> LoadStateFromFile(const std::string& filename) override;
