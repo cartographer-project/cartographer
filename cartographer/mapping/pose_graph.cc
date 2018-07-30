@@ -131,6 +131,8 @@ proto::PoseGraph PoseGraph::ToProto(bool include_unfinished_submaps) const {
 
   std::set<mapping::SubmapId> unfinished_submaps;
   for (const auto& submap_id_data : GetAllSubmapData()) {
+    proto::Trajectory* trajectory_proto =
+        trajectory(submap_id_data.id.trajectory_id);
     if (!include_unfinished_submaps &&
         !submap_id_data.data.submap->finished()) {
       // Collect IDs of all unfinished submaps and skip them.
@@ -138,8 +140,7 @@ proto::PoseGraph PoseGraph::ToProto(bool include_unfinished_submaps) const {
       continue;
     }
     CHECK(submap_id_data.data.submap != nullptr);
-    auto* const submap_proto =
-        trajectory(submap_id_data.id.trajectory_id)->add_submap();
+    auto* const submap_proto = trajectory_proto->add_submap();
     submap_proto->set_submap_index(submap_id_data.id.submap_index);
     *submap_proto->mutable_pose() =
         transform::ToProto(submap_id_data.data.pose);
@@ -170,14 +171,15 @@ proto::PoseGraph PoseGraph::ToProto(bool include_unfinished_submaps) const {
   }
 
   for (const auto& node_id_data : GetTrajectoryNodes()) {
+    proto::Trajectory* trajectory_proto =
+        trajectory(node_id_data.id.trajectory_id);
     if (!include_unfinished_submaps &&
         orphaned_nodes.count(node_id_data.id) > 0) {
       // Skip orphaned trajectory nodes.
       continue;
     }
     CHECK(node_id_data.data.constant_data != nullptr);
-    auto* const node_proto =
-        trajectory(node_id_data.id.trajectory_id)->add_node();
+    auto* const node_proto = trajectory_proto->add_node();
     node_proto->set_node_index(node_id_data.id.node_index);
     node_proto->set_timestamp(
         common::ToUniversal(node_id_data.data.constant_data->time));
