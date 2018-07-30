@@ -464,7 +464,7 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
         chunks.push(std::move(p));
         return true;
       });
-  stub_->SerializeState(&writer, true);
+  stub_->SerializeState(false, &writer);
   CHECK(writer.Close());
   // Ensure it can be read.
   io::InMemoryProtoStreamReader reader(std::move(chunks));

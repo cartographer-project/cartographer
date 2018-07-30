@@ -219,8 +219,8 @@ std::string MapBuilder::SubmapToProto(
   return "";
 }
 
-void MapBuilder::SerializeState(io::ProtoStreamWriterInterface* const writer,
-                                bool include_unfinished_submaps) {
+void MapBuilder::SerializeState(bool include_unfinished_submaps,
+                                io::ProtoStreamWriterInterface* const writer) {
   io::WritePbStream(*pose_graph_, all_trajectory_builder_options_, writer,
                     include_unfinished_submaps);
 }
