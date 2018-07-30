@@ -28,11 +28,28 @@ namespace cartographer {
 namespace metrics {
 
 template <typename MetricType>
+class NullFamily;
+
+template <typename MetricType>
 class Family {
- public:
+ public:  // Family instance that does nothing. Safe for use in static
+          // initializers.
+  static Family<MetricType>* Null() {
+    static NullFamily<MetricType> null_family;
+    return &null_family;
+  }
+
   virtual ~Family() = default;
 
   virtual MetricType* Add(const std::map<std::string, std::string>& labels) = 0;
+};
+
+template <typename MetricType>
+class NullFamily : public Family<MetricType> {
+ public:
+  MetricType* Add(const std::map<std::string, std::string>& labels) override {
+    return MetricType::Null();
+  }
 };
 
 class FamilyFactory {
