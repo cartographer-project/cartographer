@@ -115,7 +115,7 @@ proto::PoseGraph::Constraint ToProto(const PoseGraph::Constraint& constraint) {
   return constraint_proto;
 }
 
-proto::PoseGraph PoseGraph::ToProto() const {
+proto::PoseGraph PoseGraph::ToProto(bool include_unfinished_submaps) const {
   proto::PoseGraph proto;
 
   std::map<int, proto::Trajectory* const> trajectory_protos;
@@ -129,30 +129,62 @@ proto::PoseGraph PoseGraph::ToProto() const {
     return trajectory_protos.at(trajectory_id);
   };
 
-  for (const auto& node_id_data : GetTrajectoryNodes()) {
-    CHECK(node_id_data.data.constant_data != nullptr);
-    auto* const node_proto =
-        trajectory(node_id_data.id.trajectory_id)->add_node();
-    node_proto->set_node_index(node_id_data.id.node_index);
-    node_proto->set_timestamp(
-        common::ToUniversal(node_id_data.data.constant_data->time));
-    *node_proto->mutable_pose() =
-        transform::ToProto(node_id_data.data.global_pose);
-  }
-
+  std::set<mapping::SubmapId> unfinished_submaps;
   for (const auto& submap_id_data : GetAllSubmapData()) {
+    proto::Trajectory* trajectory_proto =
+        trajectory(submap_id_data.id.trajectory_id);
+    if (!include_unfinished_submaps &&
+        !submap_id_data.data.submap->finished()) {
+      // Collect IDs of all unfinished submaps and skip them.
+      unfinished_submaps.insert(submap_id_data.id);
+      continue;
+    }
     CHECK(submap_id_data.data.submap != nullptr);
-    auto* const submap_proto =
-        trajectory(submap_id_data.id.trajectory_id)->add_submap();
+    auto* const submap_proto = trajectory_proto->add_submap();
     submap_proto->set_submap_index(submap_id_data.id.submap_index);
     *submap_proto->mutable_pose() =
         transform::ToProto(submap_id_data.data.pose);
   }
 
   auto constraints_copy = constraints();
+  std::set<mapping::NodeId> orphaned_nodes;
   proto.mutable_constraint()->Reserve(constraints_copy.size());
-  for (const auto& constraint : constraints_copy) {
-    *proto.add_constraint() = cartographer::mapping::ToProto(constraint);
+  for (auto it = constraints_copy.begin(); it != constraints_copy.end();) {
+    if (!include_unfinished_submaps &&
+        unfinished_submaps.count(it->submap_id) > 0) {
+      // Skip all those constraints that refer to unfinished submaps and
+      // remember the corresponding trajectory nodes as potentially orphaned.
+      orphaned_nodes.insert(it->node_id);
+      it = constraints_copy.erase(it);
+      continue;
+    }
+    *proto.add_constraint() = cartographer::mapping::ToProto(*it);
+    ++it;
+  }
+
+  if (!include_unfinished_submaps) {
+    // Iterate over all constraints and remove trajectory nodes from
+    // 'orphaned_nodes' that are not actually orphaned.
+    for (const auto& constraint : constraints_copy) {
+      orphaned_nodes.erase(constraint.node_id);
+    }
+  }
+
+  for (const auto& node_id_data : GetTrajectoryNodes()) {
+    proto::Trajectory* trajectory_proto =
+        trajectory(node_id_data.id.trajectory_id);
+    if (!include_unfinished_submaps &&
+        orphaned_nodes.count(node_id_data.id) > 0) {
+      // Skip orphaned trajectory nodes.
+      continue;
+    }
+    CHECK(node_id_data.data.constant_data != nullptr);
+    auto* const node_proto = trajectory_proto->add_node();
+    node_proto->set_node_index(node_id_data.id.node_index);
+    node_proto->set_timestamp(
+        common::ToUniversal(node_id_data.data.constant_data->time));
+    *node_proto->mutable_pose() =
+        transform::ToProto(node_id_data.data.global_pose);
   }
 
   auto landmarks_copy = GetLandmarkPoses();
