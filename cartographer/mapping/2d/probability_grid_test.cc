@@ -44,9 +44,18 @@ TEST(ProbabilityGridTest, ProtoConstructor) {
   ValueConversionTables conversion_tables;
   ProbabilityGrid grid(proto, &conversion_tables);
   EXPECT_EQ(proto.limits().DebugString(), ToProto(grid.limits()).DebugString());
+  EXPECT_EQ(grid.grid_type(), GridType::PROBABILITY_GRID);
 
   // TODO(macmason): Figure out how to test the contents of cells_ and
   // {min, max}_{x, y}_ gracefully.
+}
+
+TEST(ProbabilityGridTest, ConstructorGridType) {
+  ValueConversionTables conversion_tables;
+  ProbabilityGrid probability_grid(
+      MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)),
+      &conversion_tables);
+  EXPECT_EQ(probability_grid.grid_type(), GridType::PROBABILITY_GRID);
 }
 
 TEST(ProbabilityGridTest, ToProto) {
