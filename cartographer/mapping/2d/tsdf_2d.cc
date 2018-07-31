@@ -30,12 +30,15 @@ TSDF2D::TSDF2D(const MapLimits& limits, float truncation_distance,
           truncation_distance, max_weight, conversion_tables_)),
       weight_cells_(
           limits.cell_limits().num_x_cells * limits.cell_limits().num_y_cells,
-          value_converter_->getUnknownWeightValue()) {}
+          value_converter_->getUnknownWeightValue()) {
+  *mutable_grid_type() = GridType::TSDF;
+}
 
 TSDF2D::TSDF2D(const proto::Grid2D& proto,
                ValueConversionTables* conversion_tables)
     : Grid2D(proto, conversion_tables), conversion_tables_(conversion_tables) {
   CHECK(proto.has_tsdf_2d());
+  *mutable_grid_type() = GridType::TSDF;
   value_converter_ = absl::make_unique<TSDValueConverter>(
       proto.tsdf_2d().truncation_distance(), proto.tsdf_2d().max_weight(),
       conversion_tables_);
@@ -128,6 +131,7 @@ std::unique_ptr<Grid2D> TSDF2D::ComputeCroppedGrid() const {
     cropped_grid->SetCell(xy_index, GetTSD(xy_index + offset),
                           GetWeight(xy_index + offset));
   }
+  cropped_grid->FinishUpdate();
   return std::move(cropped_grid);
 }
 
@@ -143,6 +147,7 @@ bool TSDF2D::DrawToSubmapTexture(
     if (!IsKnown(xy_index + offset)) {
       cells.push_back(0);  // value
       cells.push_back(0);  // alpha
+      continue;
     }
     // We would like to add 'delta' but this is not possible using a value and
     // alpha. We use premultiplied alpha, so when 'delta' is positive we can
