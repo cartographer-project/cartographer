@@ -48,7 +48,15 @@ TEST(TSDF2DTest, ProtoConstructor) {
 
   ValueConversionTables conversion_tables;
   TSDF2D grid(proto, &conversion_tables);
+  EXPECT_EQ(grid.grid_type(), GridType::TSDF);
   EXPECT_EQ(proto.limits().DebugString(), ToProto(grid.limits()).DebugString());
+}
+
+TEST(TSDF2DTest, ConstructorGridType) {
+  ValueConversionTables conversion_tables;
+  TSDF2D tsdf(MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)), 1.0f,
+              10.0f, &conversion_tables);
+  EXPECT_EQ(tsdf.grid_type(), GridType::TSDF);
 }
 
 TEST(TSDF2DTest, ToProto) {
