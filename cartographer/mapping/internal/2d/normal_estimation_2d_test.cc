@@ -47,7 +47,7 @@ TEST(NormalEstimation2DTest, SinglePoint) {
                          M_PI;
     range_data.returns.clear();
     range_data.returns.emplace_back(
-        Eigen::Vector3f{std::cos(angle), std::sin(angle), 0.f});
+        Eigen::Vector3d{std::cos(angle), std::sin(angle), 0.}.cast<float>());
     std::vector<float> normals;
     normals = EstimateNormals(range_data, options);
     EXPECT_NEAR(common::NormalizeAngleDifference(angle - normals[0] - M_PI),
@@ -124,7 +124,7 @@ TEST_P(CircularGeometry2DTest, NumSamplesPerNormal) {
                              static_cast<double>(num_angles) * 2. * M_PI -
                          M_PI;
     range_data.returns.emplace_back(
-        Eigen::Vector3f{std::cos(angle), std::sin(angle), 0.f});
+        Eigen::Vector3d{std::cos(angle), std::sin(angle), 0.}.cast<float>());
   }
   range_data.origin.x() = 0.f;
   range_data.origin.y() = 0.f;
