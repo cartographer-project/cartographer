@@ -63,9 +63,9 @@ TEST(NormalEstimation2DTest, StraightLineGeometry) {
   const proto::NormalEstimationOptions2D options =
       CreateNormalEstimationOptions2D(parameter_dictionary.get());
   sensor::RangeData range_data;
-  range_data.returns.emplace_back(-1.f, 1.f, 0.f);
-  range_data.returns.emplace_back(0.f, 1.f, 0.f);
-  range_data.returns.emplace_back(1.f, 1.f, 0.f);
+  range_data.returns.emplace_back(Eigen::Vector3f{-1.f, 1.f, 0.f});
+  range_data.returns.emplace_back(Eigen::Vector3f{0.f, 1.f, 0.f});
+  range_data.returns.emplace_back(Eigen::Vector3f{1.f, 1.f, 0.f});
   range_data.origin.x() = 0.f;
   range_data.origin.y() = 0.f;
   std::vector<float> normals;
@@ -75,9 +75,9 @@ TEST(NormalEstimation2DTest, StraightLineGeometry) {
   }
   normals.clear();
   range_data.returns.clear();
-  range_data.returns.emplace_back(1.f, 1.f, 0.f);
-  range_data.returns.emplace_back(1.f, 0.f, 0.f);
-  range_data.returns.emplace_back(1.f, -1.f, 0.f);
+  range_data.returns.emplace_back(Eigen::Vector3f{1.f, 1.f, 0.f});
+  range_data.returns.emplace_back(Eigen::Vector3f{1.f, 0.f, 0.f});
+  range_data.returns.emplace_back(Eigen::Vector3f{1.f, -1.f, 0.f});
   normals = EstimateNormals(range_data, options);
   for (const float normal : normals) {
     EXPECT_NEAR(std::abs(normal), M_PI, 1e-4);
@@ -85,9 +85,9 @@ TEST(NormalEstimation2DTest, StraightLineGeometry) {
 
   normals.clear();
   range_data.returns.clear();
-  range_data.returns.emplace_back(1.f, -1.f, 0.f);
-  range_data.returns.emplace_back(0.f, -1.f, 0.f);
-  range_data.returns.emplace_back(-1.f, -1.f, 0.f);
+  range_data.returns.emplace_back(Eigen::Vector3f{1.f, -1.f, 0.f});
+  range_data.returns.emplace_back(Eigen::Vector3f{0.f, -1.f, 0.f});
+  range_data.returns.emplace_back(Eigen::Vector3f{-1.f, -1.f, 0.f});
   normals = EstimateNormals(range_data, options);
   for (const float normal : normals) {
     EXPECT_NEAR(normal, M_PI_2, 1e-4);
@@ -95,9 +95,9 @@ TEST(NormalEstimation2DTest, StraightLineGeometry) {
 
   normals.clear();
   range_data.returns.clear();
-  range_data.returns.emplace_back(-1.f, -1.f, 0.f);
-  range_data.returns.emplace_back(-1.f, 0.f, 0.f);
-  range_data.returns.emplace_back(-1.f, 1.f, 0.f);
+  range_data.returns.emplace_back(Eigen::Vector3f{-1.f, -1.f, 0.f});
+  range_data.returns.emplace_back(Eigen::Vector3f{-1.f, 0.f, 0.f});
+  range_data.returns.emplace_back(Eigen::Vector3f{-1.f, 1.f, 0.f});
   normals = EstimateNormals(range_data, options);
   for (const float normal : normals) {
     EXPECT_NEAR(normal, 0, 1e-4);
