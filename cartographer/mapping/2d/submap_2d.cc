@@ -26,6 +26,7 @@
 #include "absl/memory/memory.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
+#include "cartographer/mapping/2d/tsdf_range_data_inserter_2d.h"
 #include "cartographer/mapping/range_data_inserter_interface.h"
 #include "glog/logging.h"
 
@@ -52,6 +53,11 @@ proto::SubmapsOptions2D CreateSubmapsOptions2D(
   if (grid_type == proto::GridOptions2D::PROBABILITY_GRID &&
       range_data_inserter_type ==
           proto::RangeDataInserterOptions::PROBABILITY_GRID_INSERTER_2D) {
+    valid_range_data_inserter_grid_combination = true;
+  }
+  if (grid_type == proto::GridOptions2D::TSDF &&
+      range_data_inserter_type ==
+          proto::RangeDataInserterOptions::TSDF_INSERTER_2D) {
     valid_range_data_inserter_grid_combination = true;
   }
   CHECK(valid_range_data_inserter_grid_combination)
@@ -159,21 +165,50 @@ std::vector<std::shared_ptr<const Submap2D>> ActiveSubmaps2D::InsertRangeData(
 
 std::unique_ptr<RangeDataInserterInterface>
 ActiveSubmaps2D::CreateRangeDataInserter() {
-  return absl::make_unique<ProbabilityGridRangeDataInserter2D>(
-      options_.range_data_inserter_options()
-          .probability_grid_range_data_inserter_options_2d());
+  switch (options_.range_data_inserter_options().range_data_inserter_type()) {
+    case proto::RangeDataInserterOptions::PROBABILITY_GRID_INSERTER_2D:
+      return absl::make_unique<ProbabilityGridRangeDataInserter2D>(
+          options_.range_data_inserter_options()
+              .probability_grid_range_data_inserter_options_2d());
+    case proto::RangeDataInserterOptions::TSDF_INSERTER_2D:
+      return absl::make_unique<TSDFRangeDataInserter2D>(
+          options_.range_data_inserter_options()
+              .tsdf_range_data_inserter_options_2d());
+    default:
+      LOG(FATAL) << "Unknown RangeDataInserterType";
+  }
 }
 
 std::unique_ptr<GridInterface> ActiveSubmaps2D::CreateGrid(
     const Eigen::Vector2f& origin) {
   constexpr int kInitialSubmapSize = 100;
   float resolution = options_.grid_options_2d().resolution();
-  return absl::make_unique<ProbabilityGrid>(
-      MapLimits(resolution,
-                origin.cast<double>() + 0.5 * kInitialSubmapSize * resolution *
-                                            Eigen::Vector2d::Ones(),
-                CellLimits(kInitialSubmapSize, kInitialSubmapSize)),
-      &conversion_tables_);
+  switch (options_.grid_options_2d().grid_type()) {
+    case proto::GridOptions2D::PROBABILITY_GRID:
+      return absl::make_unique<ProbabilityGrid>(
+          MapLimits(resolution,
+                    origin.cast<double>() + 0.5 * kInitialSubmapSize *
+                                                resolution *
+                                                Eigen::Vector2d::Ones(),
+                    CellLimits(kInitialSubmapSize, kInitialSubmapSize)),
+          &conversion_tables_);
+    case proto::GridOptions2D::TSDF:
+      return absl::make_unique<TSDF2D>(
+          MapLimits(resolution,
+                    origin.cast<double>() + 0.5 * kInitialSubmapSize *
+                                                resolution *
+                                                Eigen::Vector2d::Ones(),
+                    CellLimits(kInitialSubmapSize, kInitialSubmapSize)),
+          options_.range_data_inserter_options()
+              .tsdf_range_data_inserter_options_2d()
+              .truncation_distance(),
+          options_.range_data_inserter_options()
+              .tsdf_range_data_inserter_options_2d()
+              .maximum_weight(),
+          &conversion_tables_);
+    default:
+      LOG(FATAL) << "Unknown GridType";
+  }
 }
 
 void ActiveSubmaps2D::AddSubmap(const Eigen::Vector2f& origin) {
