@@ -80,9 +80,14 @@ Submap2D::Submap2D(const proto::Submap2D& proto,
     : Submap(transform::ToRigid3(proto.local_pose())),
       conversion_tables_(conversion_tables) {
   if (proto.has_grid()) {
-    CHECK(proto.grid().has_probability_grid_2d());
-    grid_ =
-        absl::make_unique<ProbabilityGrid>(proto.grid(), conversion_tables_);
+    if (proto.grid().has_probability_grid_2d()) {
+      grid_ =
+          absl::make_unique<ProbabilityGrid>(proto.grid(), conversion_tables_);
+    } else if (proto.grid().has_tsdf_2d()) {
+      grid_ = absl::make_unique<TSDF2D>(proto.grid(), conversion_tables_);
+    } else {
+      LOG(FATAL) << "Loading grid with undefined grid type";
+    }
   }
   set_num_range_data(proto.num_range_data());
   set_finished(proto.finished());
