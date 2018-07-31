@@ -24,7 +24,8 @@
 namespace cartographer {
 namespace common {
 
-#define REQUIRES(...) THREAD_ANNOTATION_ATTRIBUTE__(requires_capability(__VA_ARGS__))
+#define REQUIRES(...) \
+  THREAD_ANNOTATION_ATTRIBUTE__(requires_capability(__VA_ARGS__))
 
 #define EXCLUDES(...) THREAD_ANNOTATION_ATTRIBUTE__(locks_excluded(__VA_ARGS__))
 
@@ -34,10 +35,12 @@ using Mutex = absl::Mutex;
 // A RAII class that acquires a mutex in its constructor, and
 // releases it in its destructor. It also implements waiting functionality on
 // conditions that get checked whenever the mutex is released.
-// TODO(CodeArno): Replace MutexLocker instantiations in the codebase with absl::MutexLock.
+// TODO(CodeArno): Replace MutexLocker instantiations in the codebase with
+// absl::MutexLock.
 class SCOPED_LOCKABLE MutexLocker {
-public:
-  MutexLocker(Mutex* mutex) EXCLUSIVE_LOCK_FUNCTION(mutex) : mutex_(mutex), lock_(mutex) {}
+ public:
+  MutexLocker(Mutex* mutex) EXCLUSIVE_LOCK_FUNCTION(mutex)
+      : mutex_(mutex), lock_(mutex) {}
 
   ~MutexLocker() UNLOCK_FUNCTION() {}
 
@@ -47,11 +50,13 @@ public:
   }
 
   template <typename Predicate>
-  bool AwaitWithTimeout(Predicate predicate, common::Duration timeout) REQUIRES(this) {
-    return mutex_->AwaitWithTimeout(absl::Condition(&predicate), absl::FromChrono(timeout));
+  bool AwaitWithTimeout(Predicate predicate, common::Duration timeout)
+      REQUIRES(this) {
+    return mutex_->AwaitWithTimeout(absl::Condition(&predicate),
+                                    absl::FromChrono(timeout));
   }
 
-private:
+ private:
   absl::Mutex* mutex_;
   absl::MutexLock lock_;
 };
