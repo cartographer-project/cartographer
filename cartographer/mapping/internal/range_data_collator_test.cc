@@ -29,13 +29,13 @@ const int kNumSamples = 10;
 sensor::TimedPointCloudData CreateFakeRangeData(int from, int to) {
   double duration = common::ToSeconds(common::FromUniversal(to) -
                                       common::FromUniversal(from));
-  sensor::TimedPointCloudData result{common::FromUniversal(to),
-                                     Eigen::Vector3f(0., 1., 2.),
-                                     sensor::TimedPointCloud(kNumSamples)};
+  sensor::TimedPointCloudData result{
+      common::FromUniversal(to), Eigen::Vector3f(0., 1., 2.), {}};
+  result.ranges.reserve(kNumSamples);
   for (int i = 0; i < kNumSamples; ++i) {
     double fraction = static_cast<double>(i) / (kNumSamples - 1);
     float relative_time = (1.f - fraction) * -duration;
-    result.ranges[i] = {Eigen::Vector3f(1., 2., 3.), relative_time};
+    result.ranges.emplace_back(Eigen::Vector3f{1., 2., 3.}, relative_time);
   }
   return result;
 }

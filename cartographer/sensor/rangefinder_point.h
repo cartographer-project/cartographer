@@ -37,6 +37,9 @@ class RangefinderPoint {
   template <class T>
   friend RangefinderPoint operator*(const transform::Rigid3<T>& lhs,
                                     const RangefinderPoint& rhs);
+  bool operator==(const RangefinderPoint& rhs) const {
+    return position_ == rhs.position_;
+  }
   RangefinderPoint RestrictDistanceFromOrigin(const Eigen::Vector3f& origin,
                                               float distance) const;
 
@@ -71,6 +74,9 @@ class TimedRangefinderPoint : public RangefinderPoint {
   template <class T>
   friend TimedRangefinderPoint operator*(const transform::Rigid3<T>& lhs,
                                          const TimedRangefinderPoint& rhs);
+  bool operator==(const TimedRangefinderPoint& rhs) const {
+    return RangefinderPoint::operator==(rhs) && time_ == rhs.time_;
+  }
 
   proto::TimedRangefinderPoint ToProto() const;
 

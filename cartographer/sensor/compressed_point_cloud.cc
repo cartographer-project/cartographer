@@ -56,9 +56,10 @@ CompressedPointCloud::ConstIterator::EndIterator(
   return end_iterator;
 }
 
-Eigen::Vector3f CompressedPointCloud::ConstIterator::operator*() const {
+sensor::RangefinderPoint CompressedPointCloud::ConstIterator::operator*()
+    const {
   CHECK_GT(remaining_points_, 0);
-  return current_point_;
+  return {current_point_};
 }
 
 CompressedPointCloud::ConstIterator& CompressedPointCloud::ConstIterator::
@@ -170,7 +171,7 @@ CompressedPointCloud::ConstIterator CompressedPointCloud::end() const {
 
 PointCloud CompressedPointCloud::Decompress() const {
   PointCloud decompressed;
-  for (const Eigen::Vector3f& point : *this) {
+  for (const sensor::RangefinderPoint& point : *this) {
     decompressed.push_back(point);
   }
   return decompressed;
