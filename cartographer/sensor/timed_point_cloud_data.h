@@ -32,7 +32,7 @@ struct TimedPointCloudData {
 
 struct TimedPointCloudOriginData {
   struct RangeMeasurement {
-    Eigen::Vector4f point_time;
+    sensor::TimedRangefinderPoint point_time;
     size_t origin_index;
   };
   common::Time time;

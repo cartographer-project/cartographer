@@ -109,14 +109,14 @@ CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
   CHECK_LE(point_cloud.size(), std::numeric_limits<int>::max());
   for (int point_index = 0; point_index < static_cast<int>(point_cloud.size());
        ++point_index) {
-    const Eigen::Vector3f& point = point_cloud[point_index];
-    CHECK_LT(point.cwiseAbs().maxCoeff() / kPrecision,
+    const sensor::RangefinderPoint& point = point_cloud[point_index];
+    CHECK_LT(point.position().cwiseAbs().maxCoeff() / kPrecision,
              1 << kMaxBitsPerDirection)
-        << "Point out of bounds: " << point;
+        << "Point out of bounds: " << point.position();
     Eigen::Array3i raster_point;
     Eigen::Array3i block_coordinate;
     for (int i = 0; i < 3; ++i) {
-      raster_point[i] = common::RoundToInt(point[i] / kPrecision);
+      raster_point[i] = common::RoundToInt(point.position()[i] / kPrecision);
       block_coordinate[i] = raster_point[i] >> kBitsPerCoordinate;
       raster_point[i] &= kCoordinateMask;
     }
