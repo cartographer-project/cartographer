@@ -82,12 +82,9 @@ TEST_F(TSDFSpaceCostFunction2DTest, MatchEmptyTSDF) {
   std::array<std::array<double, 3>, 1> jacobians;
   std::array<double*, 1> jacobians_ptrs;
   for (int i = 0; i < 1; ++i) jacobians_ptrs[i] = jacobians[i].data();
-  cost_function->Evaluate(parameter_blocks.data(), residuals.data(),
+  bool valid_result = cost_function->Evaluate(parameter_blocks.data(), residuals.data(),
                           jacobians_ptrs.data());
-  EXPECT_THAT(residuals, ElementsAre(DoubleNear(0., 1e-13)));
-  EXPECT_THAT(jacobians[0],
-              ElementsAre(DoubleNear(0., 1e-13), DoubleNear(0., 1e-13),
-                          DoubleNear(0., 1e-13)));
+  EXPECT_FALSE(valid_result);
 }
 
 TEST_F(TSDFSpaceCostFunction2DTest, ExactInitialPose) {
