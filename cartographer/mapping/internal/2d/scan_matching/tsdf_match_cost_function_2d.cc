@@ -24,9 +24,9 @@ namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 
-// Computes a cost for matching the 'point_cloud' to the 'grid' with
-// a 'pose'. The cost increases when points with the signed distance
-// of the matched point location in the 'grid'.
+// Computes a cost for matching the 'point_cloud' in the 'grid' at
+// a 'pose'. The cost increases with the signed distance of the matched point
+// location in the 'grid'.
 class TSDFMatchCostFunction2D {
  public:
   TSDFMatchCostFunction2D(const double scaling_factor,

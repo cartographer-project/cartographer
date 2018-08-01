@@ -135,7 +135,7 @@ class MapBuilderTestBase : public T {
 class MapBuilderTest : public MapBuilderTestBase<::testing::Test> {};
 class MapBuilderTestParamterizedByGridType
     : public MapBuilderTestBase<::testing::TestWithParam<GridType>> {};
-class MapBuilderTestParamterizedByGridTypeDim
+class MapBuilderTestParamterizedByGridTypeAndDimensions
     : public MapBuilderTestBase<
           ::testing::TestWithParam<std::pair<GridType, int /* dimensions */>>> {
 };
@@ -144,13 +144,13 @@ INSTANTIATE_TEST_CASE_P(MapBuilderTestParamterizedByGridType,
                         ::testing::Values(GridType::PROBABILITY_GRID,
                                           GridType::TSDF), );
 INSTANTIATE_TEST_CASE_P(
-    MapBuilderTestParamterizedByGridTypeDim,
-    MapBuilderTestParamterizedByGridTypeDim,
+    MapBuilderTestParamterizedByGridTypeAndDimensions,
+    MapBuilderTestParamterizedByGridTypeAndDimensions,
     ::testing::Values(std::make_pair(GridType::PROBABILITY_GRID, 2),
                       std::make_pair(GridType::PROBABILITY_GRID, 3),
                       std::make_pair(GridType::TSDF, 2)), );
 
-TEST_P(MapBuilderTestParamterizedByGridTypeDim, TrajectoryAddFinish) {
+TEST_P(MapBuilderTestParamterizedByGridTypeAndDimensions, TrajectoryAddFinish) {
   if (GetParam().second == 3) SetOptionsTo3D();
   if (GetParam().first == GridType::TSDF) SetOptionsToTSDF2D();
   BuildMapBuilder();
@@ -339,7 +339,7 @@ TEST_P(MapBuilderTestParamterizedByGridType, DeleteFinishedTrajectory2D) {
       0);
 }
 
-TEST_P(MapBuilderTestParamterizedByGridTypeDim, SaveLoadState) {
+TEST_P(MapBuilderTestParamterizedByGridTypeAndDimensions, SaveLoadState) {
   if (GetParam().second == 3) SetOptionsTo3D();
   if (GetParam().first == GridType::TSDF) SetOptionsToTSDF2D();
   trajectory_builder_options_.mutable_trajectory_builder_2d_options()
