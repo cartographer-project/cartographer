@@ -158,6 +158,7 @@ void ConstraintBuilder2D::WhenDone(
 const ConstraintBuilder2D::SubmapScanMatcher*
 ConstraintBuilder2D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
                                                      const Grid2D* const grid) {
+  CHECK(grid);
   if (submap_scan_matchers_.count(submap_id) != 0) {
     return &submap_scan_matchers_.at(submap_id);
   }
@@ -183,6 +184,7 @@ void ConstraintBuilder2D::ComputeConstraint(
     const transform::Rigid2d& initial_relative_pose,
     const SubmapScanMatcher& submap_scan_matcher,
     std::unique_ptr<ConstraintBuilder2D::Constraint>* constraint) {
+  CHECK(submap_scan_matcher.fast_correlative_scan_matcher);
   const transform::Rigid2d initial_pose =
       ComputeSubmapPose(*submap) * initial_relative_pose;
 
