@@ -82,8 +82,8 @@ TEST_F(TSDFSpaceCostFunction2DTest, MatchEmptyTSDF) {
   std::array<std::array<double, 3>, 1> jacobians;
   std::array<double*, 1> jacobians_ptrs;
   for (int i = 0; i < 1; ++i) jacobians_ptrs[i] = jacobians[i].data();
-  bool valid_result = cost_function->Evaluate(parameter_blocks.data(), residuals.data(),
-                          jacobians_ptrs.data());
+  bool valid_result = cost_function->Evaluate(
+      parameter_blocks.data(), residuals.data(), jacobians_ptrs.data());
   EXPECT_FALSE(valid_result);
 }
 
