@@ -137,7 +137,7 @@ TEST_P(CircularGeometry2DTest, NumSamplesPerNormal) {
 }
 
 INSTANTIATE_TEST_CASE_P(InstantiationName, CircularGeometry2DTest,
-                        ::testing::Values(1, 2, 4, 5, 8), );
+                        ::testing::Values(1, 2, 4, 5, 8));
 
 }  // namespace
 }  // namespace mapping
