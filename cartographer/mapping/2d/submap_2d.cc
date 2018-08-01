@@ -85,8 +85,6 @@ Submap2D::Submap2D(const proto::Submap2D& proto,
           absl::make_unique<ProbabilityGrid>(proto.grid(), conversion_tables_);
     } else if (proto.grid().has_tsdf_2d()) {
       grid_ = absl::make_unique<TSDF2D>(proto.grid(), conversion_tables_);
-    } else {
-      LOG(FATAL) << "Loading grid with undefined grid type";
     }
   }
   set_num_range_data(proto.num_range_data());
@@ -112,10 +110,12 @@ void Submap2D::UpdateFromProto(const proto::Submap& proto) {
   const auto& submap_2d = proto.submap_2d();
   set_num_range_data(submap_2d.num_range_data());
   set_finished(submap_2d.finished());
-  if (proto.submap_2d().has_grid()) {
-    CHECK(proto.submap_2d().grid().has_probability_grid_2d());
-    grid_ = absl::make_unique<ProbabilityGrid>(submap_2d.grid(),
+  if (proto.submap_2d().grid().has_probability_grid_2d()) {
+    grid_ = absl::make_unique<ProbabilityGrid>(proto.submap_2d().grid(),
                                                conversion_tables_);
+  } else if (proto.submap_2d().grid().has_tsdf_2d()) {
+    grid_ =
+        absl::make_unique<TSDF2D>(proto.submap_2d().grid(), conversion_tables_);
   }
 }
 

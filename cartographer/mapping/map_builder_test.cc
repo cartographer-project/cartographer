@@ -78,16 +78,13 @@ class MapBuilderTestBase : public T {
         ->mutable_range_data_inserter_options()
         ->set_range_data_inserter_type(
             proto::RangeDataInserterOptions::TSDF_INSERTER_2D);
-
     trajectory_builder_options_.mutable_trajectory_builder_2d_options()
         ->mutable_submaps_options()
         ->mutable_grid_options_2d()
         ->set_grid_type(proto::GridOptions2D::TSDF);
-
     trajectory_builder_options_.mutable_trajectory_builder_2d_options()
         ->mutable_ceres_scan_matcher_options()
         ->set_occupied_space_weight(10.0);
-
     map_builder_options_.mutable_pose_graph_options()
         ->mutable_constraint_builder_options()
         ->mutable_ceres_scan_matcher_options()
