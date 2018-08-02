@@ -142,13 +142,13 @@ class MapBuilderTestParamterizedByGridTypeAndDimensions
 INSTANTIATE_TEST_CASE_P(MapBuilderTestParamterizedByGridType,
                         MapBuilderTestParamterizedByGridType,
                         ::testing::Values(GridType::PROBABILITY_GRID,
-                                          GridType::TSDF), );
+                                          GridType::TSDF));
 INSTANTIATE_TEST_CASE_P(
     MapBuilderTestParamterizedByGridTypeAndDimensions,
     MapBuilderTestParamterizedByGridTypeAndDimensions,
     ::testing::Values(std::make_pair(GridType::PROBABILITY_GRID, 2),
                       std::make_pair(GridType::PROBABILITY_GRID, 3),
-                      std::make_pair(GridType::TSDF, 2)), );
+                      std::make_pair(GridType::TSDF, 2)));
 
 TEST_P(MapBuilderTestParamterizedByGridTypeAndDimensions, TrajectoryAddFinish) {
   if (GetParam().second == 3) SetOptionsTo3D();

@@ -238,7 +238,7 @@ INSTANTIATE_TEST_CASE_P(
     ClientServerTestParamterizedByGridType,
     ClientServerTestParamterizedByGridType,
     ::testing::Values(::cartographer::mapping::GridType::PROBABILITY_GRID,
-                      ::cartographer::mapping::GridType::TSDF), );
+                      ::cartographer::mapping::GridType::TSDF));
 
 TEST_F(ClientServerTest, StartAndStopServer) {
   InitializeRealServer();
