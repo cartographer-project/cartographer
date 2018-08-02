@@ -47,7 +47,7 @@ class Submap2D : public Submap {
   explicit Submap2D(const proto::Submap2D& proto,
                     ValueConversionTables* conversion_tables);
 
-  proto::Submap ToProto(bool include_probability_grid_data) const override;
+  proto::Submap ToProto(bool include_grid_data) const override;
   void UpdateFromProto(const proto::Submap& proto) override;
 
   void ToResponseProto(const transform::Rigid3d& global_submap_pose,
