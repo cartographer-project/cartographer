@@ -125,7 +125,7 @@ std::string MapBuilderStub::SubmapToProto(
 
 void MapBuilderStub::SerializeState(bool include_unfinished_submaps,
                                     io::ProtoStreamWriterInterface* writer) {
-  if (!include_unfinished_submaps) {
+  if (include_unfinished_submaps) {
     LOG(WARNING) << "Serializing unfinished submaps is currently unsupported. "
                     "Proceeding to write the state without them.";
   }
