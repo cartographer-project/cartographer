@@ -1,2 +1,4 @@
 build
 bazel-*
+
+.vscode
