@@ -50,6 +50,8 @@ class ProbabilityGrid : public Grid2D {
   bool ApplyLookupTable(const Eigen::Array2i& cell_index,
                         const std::vector<uint16>& table);
 
+  virtual GridType GetGridType() const override;
+
   // Returns the probability of the cell with 'cell_index'.
   float GetProbability(const Eigen::Array2i& cell_index) const;
 

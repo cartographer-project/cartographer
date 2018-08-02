@@ -37,6 +37,7 @@ class TSDF2D : public Grid2D {
 
   void SetCell(const Eigen::Array2i& cell_index, const float tsd,
                const float weight);
+  virtual GridType GetGridType() const override;
   float GetTSD(const Eigen::Array2i& cell_index) const;
   float GetWeight(const Eigen::Array2i& cell_index) const;
   std::pair<float, float> GetTSDAndWeight(

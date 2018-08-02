@@ -193,6 +193,16 @@ class ClientServerTestBase : public T {
     trajectory_builder_options_.mutable_trajectory_builder_2d_options()
         ->mutable_ceres_scan_matcher_options()
         ->set_occupied_space_weight(10.0);
+    map_builder_server_options_.mutable_map_builder_options()
+        ->mutable_pose_graph_options()
+        ->mutable_constraint_builder_options()
+        ->mutable_ceres_scan_matcher_options()
+        ->set_occupied_space_weight(50.0);
+    uploading_map_builder_server_options_.mutable_map_builder_options()
+        ->mutable_pose_graph_options()
+        ->mutable_constraint_builder_options()
+        ->mutable_ceres_scan_matcher_options()
+        ->set_occupied_space_weight(50.0);
   }
 
   void WaitForLocalSlamResults(size_t size) {
@@ -230,13 +240,12 @@ class ClientServerTestBase : public T {
 };
 
 class ClientServerTest : public ClientServerTestBase<::testing::Test> {};
-class ClientServerTestParamterizedByGridType
+class ClientServerTestByGridType
     : public ClientServerTestBase<
           ::testing::TestWithParam<::cartographer::mapping::GridType>> {};
 
 INSTANTIATE_TEST_CASE_P(
-    ClientServerTestParamterizedByGridType,
-    ClientServerTestParamterizedByGridType,
+    ClientServerTestByGridType, ClientServerTestByGridType,
     ::testing::Values(::cartographer::mapping::GridType::PROBABILITY_GRID,
                       ::cartographer::mapping::GridType::TSDF));
 
@@ -246,7 +255,7 @@ TEST_F(ClientServerTest, StartAndStopServer) {
   server_->Shutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType, AddTrajectoryBuilder) {
+TEST_P(ClientServerTestByGridType, AddTrajectoryBuilder) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -262,7 +271,7 @@ TEST_P(ClientServerTestParamterizedByGridType, AddTrajectoryBuilder) {
   server_->Shutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType, AddTrajectoryBuilderWithMock) {
+TEST_P(ClientServerTestByGridType, AddTrajectoryBuilderWithMock) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -284,7 +293,7 @@ TEST_P(ClientServerTestParamterizedByGridType, AddTrajectoryBuilderWithMock) {
   server_->Shutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType, AddSensorData) {
+TEST_P(ClientServerTestByGridType, AddSensorData) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -305,7 +314,7 @@ TEST_P(ClientServerTestParamterizedByGridType, AddSensorData) {
   server_->Shutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType, AddSensorDataWithMock) {
+TEST_P(ClientServerTestByGridType, AddSensorDataWithMock) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -337,7 +346,7 @@ TEST_P(ClientServerTestParamterizedByGridType, AddSensorDataWithMock) {
   server_->Shutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType, LocalSlam2D) {
+TEST_P(ClientServerTestByGridType, LocalSlam2D) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -371,7 +380,7 @@ TEST_P(ClientServerTestParamterizedByGridType, LocalSlam2D) {
   server_->Shutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType, LocalSlamAndDelete2D) {
+TEST_P(ClientServerTestByGridType, LocalSlamAndDelete2D) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -447,8 +456,7 @@ TEST_F(ClientServerTest, GlobalSlam3D) {
   server_->Shutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType,
-       StartAndStopUploadingServerAndServer) {
+TEST_P(ClientServerTestByGridType, StartAndStopUploadingServerAndServer) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -460,8 +468,7 @@ TEST_P(ClientServerTestParamterizedByGridType,
   server_->Shutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType,
-       AddTrajectoryBuilderWithUploadingServer) {
+TEST_P(ClientServerTestByGridType, AddTrajectoryBuilderWithUploadingServer) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -487,7 +494,7 @@ TEST_P(ClientServerTestParamterizedByGridType,
   server_->Shutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType, LocalSlam2DWithUploadingServer) {
+TEST_P(ClientServerTestByGridType, LocalSlam2DWithUploadingServer) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -539,8 +546,7 @@ TEST_P(ClientServerTestParamterizedByGridType, LocalSlam2DWithUploadingServer) {
   server_->Shutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType,
-       LocalSlam2DUplinkServerRestarting) {
+TEST_P(ClientServerTestByGridType, LocalSlam2DUplinkServerRestarting) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -589,7 +595,7 @@ TEST_P(ClientServerTestParamterizedByGridType,
   server_->WaitForShutdown();
 }
 
-TEST_P(ClientServerTestParamterizedByGridType, LoadStateAndDelete) {
+TEST_P(ClientServerTestByGridType, LoadStateAndDelete) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }
@@ -632,8 +638,7 @@ TEST_P(ClientServerTestParamterizedByGridType, LoadStateAndDelete) {
 
 // TODO(gaschler): Test-cover LoadStateFromFile.
 
-TEST_P(ClientServerTestParamterizedByGridType,
-       LocalSlam2DHandlesInvalidRequests) {
+TEST_P(ClientServerTestByGridType, LocalSlam2DHandlesInvalidRequests) {
   if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
     SetOptionsToTSDF2D();
   }

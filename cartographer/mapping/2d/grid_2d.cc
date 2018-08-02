@@ -63,7 +63,6 @@ Grid2D::Grid2D(const MapLimits& limits, float min_correspondence_cost,
                float max_correspondence_cost,
                ValueConversionTables* conversion_tables)
     : limits_(limits),
-      grid_type_(GridType::NONE),
       correspondence_cost_cells_(
           limits_.cell_limits().num_x_cells * limits_.cell_limits().num_y_cells,
           kUnknownCorrespondenceValue),
@@ -78,7 +77,6 @@ Grid2D::Grid2D(const MapLimits& limits, float min_correspondence_cost,
 Grid2D::Grid2D(const proto::Grid2D& proto,
                ValueConversionTables* conversion_tables)
     : limits_(proto.limits()),
-      grid_type_(GridType::NONE),
       correspondence_cost_cells_(),
       min_correspondence_cost_(MinCorrespondenceCostFromProto(proto)),
       max_correspondence_cost_(MaxCorrespondenceCostFromProto(proto)),
