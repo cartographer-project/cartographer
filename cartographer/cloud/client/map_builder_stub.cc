@@ -125,8 +125,10 @@ std::string MapBuilderStub::SubmapToProto(
 
 void MapBuilderStub::SerializeState(bool include_unfinished_submaps,
                                     io::ProtoStreamWriterInterface* writer) {
-  CHECK(!include_unfinished_submaps)
-      << "Writing of unfinished submaps is unsupported.";
+  if (!include_unfinished_submaps) {
+    LOG(WARNING) << "Serializing unfinished submaps is currently unsupported. "
+                    "Proceeding to write the state without them.";
+  }
   google::protobuf::Empty request;
   async_grpc::Client<handlers::WriteStateSignature> client(client_channel_);
   CHECK(client.Write(request));
