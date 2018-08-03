@@ -125,7 +125,6 @@ AddSensorDataBatchHandler::GetOrCreateClientMetrics(
     return client_metric_map_itr->second.get();
   }
 
-  LOG(INFO) << "Create metrics handler for client: " << client_id;
   auto new_metrics = absl::make_unique<ClientMetrics>();
   new_metrics->odometry_sensor_counter = counter_metrics_family_->Add(
       {{"client_id", client_id},
