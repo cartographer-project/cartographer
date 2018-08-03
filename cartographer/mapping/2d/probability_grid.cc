@@ -28,15 +28,12 @@ ProbabilityGrid::ProbabilityGrid(const MapLimits& limits,
                                  ValueConversionTables* conversion_tables)
     : Grid2D(limits, kMinCorrespondenceCost, kMaxCorrespondenceCost,
              conversion_tables),
-      conversion_tables_(conversion_tables) {
-  *mutable_grid_type() = GridType::PROBABILITY_GRID;
-}
+      conversion_tables_(conversion_tables) {}
 
 ProbabilityGrid::ProbabilityGrid(const proto::Grid2D& proto,
                                  ValueConversionTables* conversion_tables)
     : Grid2D(proto, conversion_tables), conversion_tables_(conversion_tables) {
   CHECK(proto.has_probability_grid_2d());
-  *mutable_grid_type() = GridType::PROBABILITY_GRID;
 }
 
 // Sets the probability of the cell at 'cell_index' to the given
@@ -71,6 +68,10 @@ bool ProbabilityGrid::ApplyLookupTable(const Eigen::Array2i& cell_index,
   DCHECK_GE(*cell, kUpdateMarker);
   mutable_known_cells_box()->extend(cell_index.matrix());
   return true;
+}
+
+GridType ProbabilityGrid::GetGridType() const {
+  return GridType::PROBABILITY_GRID;
 }
 
 // Returns the probability of the cell with 'cell_index'.
