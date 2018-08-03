@@ -27,6 +27,8 @@ if(NOT TARGET standalone_absl)
   set(ABSEIL_LIBRARY_PATH
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/synchronization/${prefix}absl_synchronization${suffix}")
   set(ABSEIL_DEPENDENT_LIBRARIES
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_symbolize${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/time/${prefix}absl_time${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/algorithm/${prefix}absl_algorithm${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_base${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_dynamic_annotations${suffix}"
@@ -41,13 +43,12 @@ if(NOT TARGET standalone_absl)
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_leak_check${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_stack_consumption${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_stacktrace${suffix}"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_symbolize${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/memory/${prefix}absl_memory${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/meta/${prefix}absl_meta${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/numeric/${prefix}absl_int128${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/numeric/${prefix}absl_numeric${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/${prefix}absl_strings${suffix}"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/time/${prefix}absl_time${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/synchronization/${prefix}absl_synchronization${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_any${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_bad_any_cast${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_bad_optional_access${suffix}"
