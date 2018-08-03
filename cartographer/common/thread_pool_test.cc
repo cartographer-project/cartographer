@@ -28,7 +28,7 @@ namespace {
 class Receiver {
  public:
   void Receive(int number) {
-    Mutex::Locker locker(&mutex_);
+    MutexLocker locker(&mutex_);
     received_numbers_.push_back(number);
   }
 
