@@ -72,7 +72,7 @@ class ThreadPool : public ThreadPoolInterface {
 
   void NotifyDependenciesCompleted(Task* task) EXCLUDES(mutex_) override;
 
-  Mutex mutex_;
+  absl::Mutex mutex_;
   bool running_ GUARDED_BY(mutex_) = true;
   std::vector<std::thread> pool_ GUARDED_BY(mutex_);
   std::deque<std::shared_ptr<Task>> task_queue_ GUARDED_BY(mutex_);

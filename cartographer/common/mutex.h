@@ -29,9 +29,6 @@ namespace common {
 
 #define EXCLUDES(...) THREAD_ANNOTATION_ATTRIBUTE__(locks_excluded(__VA_ARGS__))
 
-// TODO(CodeArno): Replace references in code to absl::Mutex directly.
-using Mutex = absl::Mutex;
-
 // A RAII class that acquires a mutex in its constructor, and
 // releases it in its destructor. It also implements waiting functionality on
 // conditions that get checked whenever the mutex is released.
@@ -39,7 +36,7 @@ using Mutex = absl::Mutex;
 // absl::MutexLock.
 class SCOPED_LOCKABLE MutexLocker {
  public:
-  MutexLocker(Mutex* mutex) EXCLUSIVE_LOCK_FUNCTION(mutex)
+  MutexLocker(absl::Mutex* mutex) EXCLUSIVE_LOCK_FUNCTION(mutex)
       : mutex_(mutex), lock_(mutex) {}
 
   ~MutexLocker() UNLOCK_FUNCTION() {}

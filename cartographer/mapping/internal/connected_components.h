@@ -72,7 +72,7 @@ class ConnectedComponents {
   int FindSet(int trajectory_id) REQUIRES(lock_);
   void Union(int trajectory_id_a, int trajectory_id_b) REQUIRES(lock_);
 
-  common::Mutex lock_;
+  absl::Mutex lock_;
   // Tracks transitive connectivity using a disjoint set forest, i.e. each
   // entry points towards the representative for the given trajectory.
   std::map<int, int> forest_ GUARDED_BY(lock_);

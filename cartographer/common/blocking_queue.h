@@ -132,7 +132,7 @@ class BlockingQueue {
     return queue_size_ == kInfiniteQueueSize || deque_.size() < queue_size_;
   }
 
-  Mutex mutex_;
+  absl::Mutex mutex_;
   const size_t queue_size_ GUARDED_BY(mutex_);
   std::deque<T> deque_ GUARDED_BY(mutex_);
 };

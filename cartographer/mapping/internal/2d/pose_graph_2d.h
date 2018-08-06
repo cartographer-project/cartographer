@@ -231,8 +231,8 @@ class PoseGraph2D : public PoseGraph {
 
   const proto::PoseGraphOptions options_;
   GlobalSlamOptimizationCallback global_slam_optimization_callback_;
-  mutable common::Mutex mutex_;
-  common::Mutex work_queue_mutex_;
+  mutable absl::Mutex mutex_;
+  absl::Mutex work_queue_mutex_;
 
   // If it exists, further work items must be added to this queue, and will be
   // considered later.

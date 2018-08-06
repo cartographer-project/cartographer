@@ -39,7 +39,7 @@ class PoseGraphController {
  private:
   std::unique_ptr<Optimizer> optimizer_;
 
-  mutable common::Mutex mutex_;
+  mutable absl::Mutex mutex_;
   PoseGraphData data_ GUARDED_BY(mutex_);
 };
 

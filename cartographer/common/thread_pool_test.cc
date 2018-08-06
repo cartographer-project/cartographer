@@ -40,7 +40,7 @@ class Receiver {
     EXPECT_EQ(expected_numbers, received_numbers_);
   }
 
-  Mutex mutex_;
+  absl::Mutex mutex_;
   std::vector<int> received_numbers_ GUARDED_BY(mutex_);
 };
 

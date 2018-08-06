@@ -67,7 +67,7 @@ class Task {
   unsigned int uncompleted_dependencies_ GUARDED_BY(mutex_) = 0;
   std::set<Task*> dependent_tasks_ GUARDED_BY(mutex_);
 
-  Mutex mutex_;
+  absl::Mutex mutex_;
 };
 
 }  // namespace common

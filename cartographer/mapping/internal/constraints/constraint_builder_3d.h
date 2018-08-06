@@ -146,7 +146,7 @@ class ConstraintBuilder3D {
 
   const proto::ConstraintBuilderOptions options_;
   common::ThreadPoolInterface* thread_pool_;
-  common::Mutex mutex_;
+  absl::Mutex mutex_;
 
   // 'callback' set by WhenDone().
   std::unique_ptr<std::function<void(const Result&)>> when_done_
