@@ -199,6 +199,7 @@ void ConstraintBuilder3D::ComputeConstraint(
     const transform::Rigid3d& global_submap_pose,
     const SubmapScanMatcher& submap_scan_matcher,
     std::unique_ptr<Constraint>* constraint) {
+  CHECK(submap_scan_matcher.fast_correlative_scan_matcher);
   // The 'constraint_transform' (submap i <- node j) is computed from:
   // - a 'high_resolution_point_cloud' in node j and
   // - the initial guess 'initial_pose' (submap i <- node j).

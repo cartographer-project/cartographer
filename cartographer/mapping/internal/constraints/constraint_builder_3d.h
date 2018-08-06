@@ -116,8 +116,8 @@ class ConstraintBuilder3D {
 
  private:
   struct SubmapScanMatcher {
-    const HybridGrid* high_resolution_hybrid_grid;
-    const HybridGrid* low_resolution_hybrid_grid;
+    const HybridGrid* high_resolution_hybrid_grid = nullptr;
+    const HybridGrid* low_resolution_hybrid_grid = nullptr;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher3D>
         fast_correlative_scan_matcher;
     std::weak_ptr<common::Task> creation_task_handle;

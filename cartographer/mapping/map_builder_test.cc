@@ -443,7 +443,7 @@ TEST_P(MapBuilderTestByGridType, LocalizationOnFrozenTrajectory2D) {
       ++num_cross_trajectory_constraints;
     }
   }
-  EXPECT_GT(num_cross_trajectory_constraints, 3);
+  EXPECT_GE(num_cross_trajectory_constraints, 3);
   // TODO(gaschler): Subscribe global slam callback, verify that all nodes are
   // optimized.
   EXPECT_THAT(constraints, ::testing::Contains(::testing::Field(
