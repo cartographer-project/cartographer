@@ -18,6 +18,7 @@
 
 #include "cartographer/common/config.h"
 #include "cartographer/io/proto_stream.h"
+#include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/internal/testing/test_helpers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -34,7 +35,8 @@ constexpr double kDuration = 4.;         // Seconds.
 constexpr double kTimeStep = 0.1;        // Seconds.
 constexpr double kTravelDistance = 1.2;  // Meters.
 
-class MapBuilderTest : public ::testing::Test {
+template <class T>
+class MapBuilderTestBase : public T {
  protected:
   void SetUp() override {
     // Global SLAM optimization is not executed.
@@ -68,6 +70,25 @@ class MapBuilderTest : public ::testing::Test {
   void SetOptionsTo3D() {
     map_builder_options_.set_use_trajectory_builder_2d(false);
     map_builder_options_.set_use_trajectory_builder_3d(true);
+  }
+
+  void SetOptionsToTSDF2D() {
+    trajectory_builder_options_.mutable_trajectory_builder_2d_options()
+        ->mutable_submaps_options()
+        ->mutable_range_data_inserter_options()
+        ->set_range_data_inserter_type(
+            proto::RangeDataInserterOptions::TSDF_INSERTER_2D);
+    trajectory_builder_options_.mutable_trajectory_builder_2d_options()
+        ->mutable_submaps_options()
+        ->mutable_grid_options_2d()
+        ->set_grid_type(proto::GridOptions2D::TSDF);
+    trajectory_builder_options_.mutable_trajectory_builder_2d_options()
+        ->mutable_ceres_scan_matcher_options()
+        ->set_occupied_space_weight(10.0);
+    map_builder_options_.mutable_pose_graph_options()
+        ->mutable_constraint_builder_options()
+        ->mutable_ceres_scan_matcher_options()
+        ->set_occupied_space_weight(50.0);
   }
 
   void SetOptionsEnableGlobalOptimization() {
@@ -111,7 +132,26 @@ class MapBuilderTest : public ::testing::Test {
   std::vector<::cartographer::transform::Rigid3d> local_slam_result_poses_;
 };
 
-TEST_F(MapBuilderTest, TrajectoryAddFinish2D) {
+class MapBuilderTest : public MapBuilderTestBase<::testing::Test> {};
+class MapBuilderTestByGridType
+    : public MapBuilderTestBase<::testing::TestWithParam<GridType>> {};
+class MapBuilderTestByGridTypeAndDimensions
+    : public MapBuilderTestBase<
+          ::testing::TestWithParam<std::pair<GridType, int /* dimensions */>>> {
+};
+INSTANTIATE_TEST_CASE_P(MapBuilderTestByGridType, MapBuilderTestByGridType,
+                        ::testing::Values(GridType::PROBABILITY_GRID,
+                                          GridType::TSDF));
+INSTANTIATE_TEST_CASE_P(
+    MapBuilderTestByGridTypeAndDimensions,
+    MapBuilderTestByGridTypeAndDimensions,
+    ::testing::Values(std::make_pair(GridType::PROBABILITY_GRID, 2),
+                      std::make_pair(GridType::PROBABILITY_GRID, 3),
+                      std::make_pair(GridType::TSDF, 2)));
+
+TEST_P(MapBuilderTestByGridTypeAndDimensions, TrajectoryAddFinish) {
+  if (GetParam().second == 3) SetOptionsTo3D();
+  if (GetParam().first == GridType::TSDF) SetOptionsToTSDF2D();
   BuildMapBuilder();
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
       {kRangeSensorId}, trajectory_builder_options_,
@@ -124,21 +164,8 @@ TEST_F(MapBuilderTest, TrajectoryAddFinish2D) {
   EXPECT_TRUE(map_builder_->pose_graph()->IsTrajectoryFinished(trajectory_id));
 }
 
-TEST_F(MapBuilderTest, TrajectoryAddFinish3D) {
-  SetOptionsTo3D();
-  BuildMapBuilder();
-  int trajectory_id = map_builder_->AddTrajectoryBuilder(
-      {kRangeSensorId}, trajectory_builder_options_,
-      nullptr /* GetLocalSlamResultCallbackForSubscriptions */);
-  EXPECT_EQ(1, map_builder_->num_trajectory_builders());
-  EXPECT_TRUE(map_builder_->GetTrajectoryBuilder(trajectory_id) != nullptr);
-  EXPECT_TRUE(map_builder_->pose_graph() != nullptr);
-  map_builder_->FinishTrajectory(trajectory_id);
-  map_builder_->pose_graph()->RunFinalOptimization();
-  EXPECT_TRUE(map_builder_->pose_graph()->IsTrajectoryFinished(trajectory_id));
-}
-
-TEST_F(MapBuilderTest, LocalSlam2D) {
+TEST_P(MapBuilderTestByGridType, LocalSlam2D) {
+  if (GetParam() == GridType::TSDF) SetOptionsToTSDF2D();
   BuildMapBuilder();
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
       {kRangeSensorId}, trajectory_builder_options_,
@@ -187,7 +214,8 @@ TEST_F(MapBuilderTest, LocalSlam3D) {
               0.1 * kTravelDistance);
 }
 
-TEST_F(MapBuilderTest, GlobalSlam2D) {
+TEST_P(MapBuilderTestByGridType, GlobalSlam2D) {
+  if (GetParam() == GridType::TSDF) SetOptionsToTSDF2D();
   SetOptionsEnableGlobalOptimization();
   BuildMapBuilder();
   int trajectory_id = map_builder_->AddTrajectoryBuilder(
@@ -268,7 +296,8 @@ TEST_F(MapBuilderTest, GlobalSlam3D) {
               0.1 * kTravelDistance);
 }
 
-TEST_F(MapBuilderTest, DeleteFinishedTrajectory2D) {
+TEST_P(MapBuilderTestByGridType, DeleteFinishedTrajectory2D) {
+  if (GetParam() == GridType::TSDF) SetOptionsToTSDF2D();
   SetOptionsEnableGlobalOptimization();
   BuildMapBuilder();
   int trajectory_id = CreateTrajectoryWithFakeData();
@@ -309,60 +338,57 @@ TEST_F(MapBuilderTest, DeleteFinishedTrajectory2D) {
       0);
 }
 
-TEST_F(MapBuilderTest, SaveLoadState) {
-  for (int dimensions : {2, 3}) {
-    if (dimensions == 3) {
-      SetOptionsTo3D();
-    }
-    trajectory_builder_options_.mutable_trajectory_builder_2d_options()
-        ->set_use_imu_data(true);
-    BuildMapBuilder();
-    int trajectory_id = map_builder_->AddTrajectoryBuilder(
-        {kRangeSensorId, kIMUSensorId}, trajectory_builder_options_,
-        GetLocalSlamResultCallback());
-    TrajectoryBuilderInterface* trajectory_builder =
-        map_builder_->GetTrajectoryBuilder(trajectory_id);
-    const auto measurements = testing::GenerateFakeRangeMeasurements(
-        kTravelDistance, kDuration, kTimeStep);
-    for (const auto& measurement : measurements) {
-      trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
-      trajectory_builder->AddSensorData(
-          kIMUSensorId.id,
-          sensor::ImuData{measurement.time, Eigen::Vector3d(0., 0., 9.8),
-                          Eigen::Vector3d::Zero()});
-    }
-    map_builder_->FinishTrajectory(trajectory_id);
-    map_builder_->pose_graph()->RunFinalOptimization();
-    int num_constraints = map_builder_->pose_graph()->constraints().size();
-    int num_nodes =
-        map_builder_->pose_graph()->GetTrajectoryNodes().SizeOfTrajectoryOrZero(
-            trajectory_id);
-    EXPECT_GT(num_constraints, 0);
-    EXPECT_GT(num_nodes, 0);
-    // TODO(gaschler): Consider using in-memory to avoid side effects.
-    const std::string filename = "temp-SaveLoadState.pbstream";
-    io::ProtoStreamWriter writer(filename);
-    map_builder_->SerializeState(/*include_unfinished_submaps=*/true, &writer);
-    writer.Close();
-
-    // Reset 'map_builder_'.
-    BuildMapBuilder();
-    io::ProtoStreamReader reader(filename);
-    auto trajectory_remapping =
-        map_builder_->LoadState(&reader, false /* load_frozen_state */);
-    map_builder_->pose_graph()->RunFinalOptimization();
-    EXPECT_EQ(num_constraints,
-              map_builder_->pose_graph()->constraints().size());
-    ASSERT_EQ(trajectory_remapping.size(), 1);
-    int new_trajectory_id = trajectory_remapping.begin()->second;
-    EXPECT_EQ(
-        num_nodes,
-        map_builder_->pose_graph()->GetTrajectoryNodes().SizeOfTrajectoryOrZero(
-            new_trajectory_id));
+TEST_P(MapBuilderTestByGridTypeAndDimensions, SaveLoadState) {
+  if (GetParam().second == 3) SetOptionsTo3D();
+  if (GetParam().first == GridType::TSDF) SetOptionsToTSDF2D();
+  trajectory_builder_options_.mutable_trajectory_builder_2d_options()
+      ->set_use_imu_data(true);
+  BuildMapBuilder();
+  int trajectory_id = map_builder_->AddTrajectoryBuilder(
+      {kRangeSensorId, kIMUSensorId}, trajectory_builder_options_,
+      GetLocalSlamResultCallback());
+  TrajectoryBuilderInterface* trajectory_builder =
+      map_builder_->GetTrajectoryBuilder(trajectory_id);
+  const auto measurements = testing::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
+  for (const auto& measurement : measurements) {
+    trajectory_builder->AddSensorData(kRangeSensorId.id, measurement);
+    trajectory_builder->AddSensorData(
+        kIMUSensorId.id,
+        sensor::ImuData{measurement.time, Eigen::Vector3d(0., 0., 9.8),
+                        Eigen::Vector3d::Zero()});
   }
+  map_builder_->FinishTrajectory(trajectory_id);
+  map_builder_->pose_graph()->RunFinalOptimization();
+  int num_constraints = map_builder_->pose_graph()->constraints().size();
+  int num_nodes =
+      map_builder_->pose_graph()->GetTrajectoryNodes().SizeOfTrajectoryOrZero(
+          trajectory_id);
+  EXPECT_GT(num_constraints, 0);
+  EXPECT_GT(num_nodes, 0);
+  // TODO(gaschler): Consider using in-memory to avoid side effects.
+  const std::string filename = "temp-SaveLoadState.pbstream";
+  io::ProtoStreamWriter writer(filename);
+  map_builder_->SerializeState(/*include_unfinished_submaps=*/true, &writer);
+  writer.Close();
+
+  // Reset 'map_builder_'.
+  BuildMapBuilder();
+  io::ProtoStreamReader reader(filename);
+  auto trajectory_remapping =
+      map_builder_->LoadState(&reader, false /* load_frozen_state */);
+  map_builder_->pose_graph()->RunFinalOptimization();
+  EXPECT_EQ(num_constraints, map_builder_->pose_graph()->constraints().size());
+  ASSERT_EQ(trajectory_remapping.size(), 1);
+  int new_trajectory_id = trajectory_remapping.begin()->second;
+  EXPECT_EQ(
+      num_nodes,
+      map_builder_->pose_graph()->GetTrajectoryNodes().SizeOfTrajectoryOrZero(
+          new_trajectory_id));
 }
 
-TEST_F(MapBuilderTest, LocalizationOnFrozenTrajectory2D) {
+TEST_P(MapBuilderTestByGridType, LocalizationOnFrozenTrajectory2D) {
+  if (GetParam() == GridType::TSDF) SetOptionsToTSDF2D();
   BuildMapBuilder();
   int temp_trajectory_id = CreateTrajectoryWithFakeData();
   map_builder_->pose_graph()->RunFinalOptimization();

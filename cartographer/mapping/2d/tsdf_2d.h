@@ -37,15 +37,16 @@ class TSDF2D : public Grid2D {
 
   void SetCell(const Eigen::Array2i& cell_index, const float tsd,
                const float weight);
+  GridType GetGridType() const override;
   float GetTSD(const Eigen::Array2i& cell_index) const;
   float GetWeight(const Eigen::Array2i& cell_index) const;
   std::pair<float, float> GetTSDAndWeight(
       const Eigen::Array2i& cell_index) const;
 
-  virtual void GrowLimits(const Eigen::Vector2f& point) override;
+  void GrowLimits(const Eigen::Vector2f& point) override;
   proto::Grid2D ToProto() const override;
-  virtual std::unique_ptr<Grid2D> ComputeCroppedGrid() const override;
-  virtual bool DrawToSubmapTexture(
+  std::unique_ptr<Grid2D> ComputeCroppedGrid() const override;
+  bool DrawToSubmapTexture(
       proto::SubmapQuery::Response::SubmapTexture* const texture,
       transform::Rigid3d local_pose) const override;
   bool CellIsUpdated(const Eigen::Array2i& cell_index) const;

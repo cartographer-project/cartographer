@@ -75,7 +75,8 @@ constexpr char kOdometryDataProtoString[] = "odometry_data {}";
 constexpr char kFixedFramePoseDataProtoString[] = "fixed_frame_pose_data {}";
 constexpr char kLandmarkDataProtoString[] = "landmark_data {}";
 
-class ClientServerTest : public ::testing::Test {
+template <class T>
+class ClientServerTestBase : public T {
  protected:
   void SetUp() override {
     // TODO(cschuet): Due to the hard-coded addresses these tests will become
@@ -178,6 +179,32 @@ class ClientServerTest : public ::testing::Test {
     EXPECT_TRUE(stub_for_uploading_server_ != nullptr);
   }
 
+  void SetOptionsToTSDF2D() {
+    trajectory_builder_options_.mutable_trajectory_builder_2d_options()
+        ->mutable_submaps_options()
+        ->mutable_range_data_inserter_options()
+        ->set_range_data_inserter_type(
+            ::cartographer::mapping::proto::RangeDataInserterOptions::
+                TSDF_INSERTER_2D);
+    trajectory_builder_options_.mutable_trajectory_builder_2d_options()
+        ->mutable_submaps_options()
+        ->mutable_grid_options_2d()
+        ->set_grid_type(::cartographer::mapping::proto::GridOptions2D::TSDF);
+    trajectory_builder_options_.mutable_trajectory_builder_2d_options()
+        ->mutable_ceres_scan_matcher_options()
+        ->set_occupied_space_weight(10.0);
+    map_builder_server_options_.mutable_map_builder_options()
+        ->mutable_pose_graph_options()
+        ->mutable_constraint_builder_options()
+        ->mutable_ceres_scan_matcher_options()
+        ->set_occupied_space_weight(50.0);
+    uploading_map_builder_server_options_.mutable_map_builder_options()
+        ->mutable_pose_graph_options()
+        ->mutable_constraint_builder_options()
+        ->mutable_ceres_scan_matcher_options()
+        ->set_occupied_space_weight(50.0);
+  }
+
   void WaitForLocalSlamResults(size_t size) {
     std::unique_lock<std::mutex> lock(local_slam_result_mutex_);
     local_slam_result_condition_.wait(
@@ -212,13 +239,26 @@ class ClientServerTest : public ::testing::Test {
   int number_of_insertion_results_;
 };
 
+class ClientServerTest : public ClientServerTestBase<::testing::Test> {};
+class ClientServerTestByGridType
+    : public ClientServerTestBase<
+          ::testing::TestWithParam<::cartographer::mapping::GridType>> {};
+
+INSTANTIATE_TEST_CASE_P(
+    ClientServerTestByGridType, ClientServerTestByGridType,
+    ::testing::Values(::cartographer::mapping::GridType::PROBABILITY_GRID,
+                      ::cartographer::mapping::GridType::TSDF));
+
 TEST_F(ClientServerTest, StartAndStopServer) {
   InitializeRealServer();
   server_->Start();
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, AddTrajectoryBuilder) {
+TEST_P(ClientServerTestByGridType, AddTrajectoryBuilder) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeRealServer();
   server_->Start();
   InitializeStub();
@@ -231,7 +271,10 @@ TEST_F(ClientServerTest, AddTrajectoryBuilder) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, AddTrajectoryBuilderWithMock) {
+TEST_P(ClientServerTestByGridType, AddTrajectoryBuilderWithMock) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeServerWithMockMapBuilder();
   server_->Start();
   InitializeStub();
@@ -250,7 +293,10 @@ TEST_F(ClientServerTest, AddTrajectoryBuilderWithMock) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, AddSensorData) {
+TEST_P(ClientServerTestByGridType, AddSensorData) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   trajectory_builder_options_.mutable_trajectory_builder_2d_options()
       ->set_use_imu_data(true);
   InitializeRealServer();
@@ -268,7 +314,10 @@ TEST_F(ClientServerTest, AddSensorData) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, AddSensorDataWithMock) {
+TEST_P(ClientServerTestByGridType, AddSensorDataWithMock) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeServerWithMockMapBuilder();
   server_->Start();
   InitializeStub();
@@ -297,7 +346,10 @@ TEST_F(ClientServerTest, AddSensorDataWithMock) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, LocalSlam2D) {
+TEST_P(ClientServerTestByGridType, LocalSlam2D) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeRealServer();
   server_->Start();
   InitializeStub();
@@ -328,7 +380,10 @@ TEST_F(ClientServerTest, LocalSlam2D) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, LocalSlamAndDelete2D) {
+TEST_P(ClientServerTestByGridType, LocalSlamAndDelete2D) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeRealServer();
   server_->Start();
   InitializeStub();
@@ -401,7 +456,10 @@ TEST_F(ClientServerTest, GlobalSlam3D) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, StartAndStopUploadingServerAndServer) {
+TEST_P(ClientServerTestByGridType, StartAndStopUploadingServerAndServer) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeRealServer();
   server_->Start();
   InitializeRealUploadingServer();
@@ -410,7 +468,10 @@ TEST_F(ClientServerTest, StartAndStopUploadingServerAndServer) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, AddTrajectoryBuilderWithUploadingServer) {
+TEST_P(ClientServerTestByGridType, AddTrajectoryBuilderWithUploadingServer) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeRealServer();
   server_->Start();
   InitializeRealUploadingServer();
@@ -433,7 +494,10 @@ TEST_F(ClientServerTest, AddTrajectoryBuilderWithUploadingServer) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
+TEST_P(ClientServerTestByGridType, LocalSlam2DWithUploadingServer) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeRealServer();
   server_->Start();
   InitializeStub();
@@ -482,7 +546,10 @@ TEST_F(ClientServerTest, LocalSlam2DWithUploadingServer) {
   server_->Shutdown();
 }
 
-TEST_F(ClientServerTest, LocalSlam2DUplinkServerRestarting) {
+TEST_P(ClientServerTestByGridType, LocalSlam2DUplinkServerRestarting) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeRealServer();
   server_->Start();
   InitializeStub();
@@ -528,7 +595,10 @@ TEST_F(ClientServerTest, LocalSlam2DUplinkServerRestarting) {
   server_->WaitForShutdown();
 }
 
-TEST_F(ClientServerTest, LoadStateAndDelete) {
+TEST_P(ClientServerTestByGridType, LoadStateAndDelete) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeRealServer();
   server_->Start();
   InitializeStub();
@@ -568,7 +638,10 @@ TEST_F(ClientServerTest, LoadStateAndDelete) {
 
 // TODO(gaschler): Test-cover LoadStateFromFile.
 
-TEST_F(ClientServerTest, LocalSlam2DHandlesInvalidRequests) {
+TEST_P(ClientServerTestByGridType, LocalSlam2DHandlesInvalidRequests) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
   InitializeRealServer();
   server_->Start();
   InitializeStub();

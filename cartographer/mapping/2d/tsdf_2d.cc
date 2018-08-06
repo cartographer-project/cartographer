@@ -30,15 +30,12 @@ TSDF2D::TSDF2D(const MapLimits& limits, float truncation_distance,
           truncation_distance, max_weight, conversion_tables_)),
       weight_cells_(
           limits.cell_limits().num_x_cells * limits.cell_limits().num_y_cells,
-          value_converter_->getUnknownWeightValue()) {
-  *mutable_grid_type() = GridType::TSDF;
-}
+          value_converter_->getUnknownWeightValue()) {}
 
 TSDF2D::TSDF2D(const proto::Grid2D& proto,
                ValueConversionTables* conversion_tables)
     : Grid2D(proto, conversion_tables), conversion_tables_(conversion_tables) {
   CHECK(proto.has_tsdf_2d());
-  *mutable_grid_type() = GridType::TSDF;
   value_converter_ = absl::make_unique<TSDValueConverter>(
       proto.tsdf_2d().truncation_distance(), proto.tsdf_2d().max_weight(),
       conversion_tables_);
@@ -69,6 +66,8 @@ void TSDF2D::SetCell(const Eigen::Array2i& cell_index, float tsd,
   uint16* weight_cell = &weight_cells_[flat_index];
   *weight_cell = value_converter_->WeightToValue(weight);
 }
+
+GridType TSDF2D::GetGridType() const { return GridType::TSDF; }
 
 float TSDF2D::GetTSD(const Eigen::Array2i& cell_index) const {
   if (limits().Contains(cell_index)) {
