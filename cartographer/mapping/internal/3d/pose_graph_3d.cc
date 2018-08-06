@@ -256,6 +256,11 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
   {
     common::MutexLocker locker(&mutex_);
     CHECK(data_.submap_data.at(submap_id).state == SubmapState::kFinished);
+    if (!data_.submap_data.at(submap_id).submap->finished()) {
+      // Uplink server only receives grids when they are finished, so skip
+      // constraint search before that.
+      return;
+    }
 
     for (const NodeId& submap_node_id :
          data_.submap_data.at(submap_id).node_ids) {
