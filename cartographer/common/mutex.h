@@ -29,35 +29,6 @@ namespace common {
 
 #define EXCLUDES(...) THREAD_ANNOTATION_ATTRIBUTE__(locks_excluded(__VA_ARGS__))
 
-// A RAII class that acquires a mutex in its constructor, and
-// releases it in its destructor. It also implements waiting functionality on
-// conditions that get checked whenever the mutex is released.
-// TODO(CodeArno): Replace MutexLocker instantiations in the codebase with
-// absl::MutexLock.
-class SCOPED_LOCKABLE MutexLocker {
- public:
-  MutexLocker(absl::Mutex* mutex) EXCLUSIVE_LOCK_FUNCTION(mutex)
-      : mutex_(mutex), lock_(mutex) {}
-
-  ~MutexLocker() UNLOCK_FUNCTION() {}
-
-  template <typename Predicate>
-  void Await(Predicate predicate) REQUIRES(this) {
-    mutex_->Await(absl::Condition(&predicate));
-  }
-
-  template <typename Predicate>
-  bool AwaitWithTimeout(Predicate predicate, common::Duration timeout)
-      REQUIRES(this) {
-    return mutex_->AwaitWithTimeout(absl::Condition(&predicate),
-                                    absl::FromChrono(timeout));
-  }
-
- private:
-  absl::Mutex* mutex_;
-  absl::MutexLock lock_;
-};
-
 }  // namespace common
 }  // namespace cartographer
 

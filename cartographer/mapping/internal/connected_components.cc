@@ -29,13 +29,13 @@ ConnectedComponents::ConnectedComponents()
     : lock_(), forest_(), connection_map_() {}
 
 void ConnectedComponents::Add(const int trajectory_id) {
-  common::MutexLocker locker(&lock_);
+  absl::MutexLock locker(&lock_);
   forest_.emplace(trajectory_id, trajectory_id);
 }
 
 void ConnectedComponents::Connect(const int trajectory_id_a,
                                   const int trajectory_id_b) {
-  common::MutexLocker locker(&lock_);
+  absl::MutexLock locker(&lock_);
   Union(trajectory_id_a, trajectory_id_b);
   auto sorted_pair = std::minmax(trajectory_id_a, trajectory_id_b);
   ++connection_map_[sorted_pair];
@@ -66,7 +66,7 @@ bool ConnectedComponents::TransitivelyConnected(const int trajectory_id_a,
     return true;
   }
 
-  common::MutexLocker locker(&lock_);
+  absl::MutexLock locker(&lock_);
 
   if (forest_.count(trajectory_id_a) == 0 ||
       forest_.count(trajectory_id_b) == 0) {
@@ -78,7 +78,7 @@ bool ConnectedComponents::TransitivelyConnected(const int trajectory_id_a,
 std::vector<std::vector<int>> ConnectedComponents::Components() {
   // Map from cluster exemplar -> growing cluster.
   std::unordered_map<int, std::vector<int>> map;
-  common::MutexLocker locker(&lock_);
+  absl::MutexLock locker(&lock_);
   for (const auto& trajectory_id_entry : forest_) {
     map[FindSet(trajectory_id_entry.first)].push_back(
         trajectory_id_entry.first);
@@ -93,7 +93,7 @@ std::vector<std::vector<int>> ConnectedComponents::Components() {
 }
 
 std::vector<int> ConnectedComponents::GetComponent(const int trajectory_id) {
-  common::MutexLocker locker(&lock_);
+  absl::MutexLock locker(&lock_);
   const int set_id = FindSet(trajectory_id);
   std::vector<int> trajectory_ids;
   for (const auto& entry : forest_) {
@@ -106,7 +106,7 @@ std::vector<int> ConnectedComponents::GetComponent(const int trajectory_id) {
 
 int ConnectedComponents::ConnectionCount(const int trajectory_id_a,
                                          const int trajectory_id_b) {
-  common::MutexLocker locker(&lock_);
+  absl::MutexLock locker(&lock_);
   const auto it =
       connection_map_.find(std::minmax(trajectory_id_a, trajectory_id_b));
   return it != connection_map_.end() ? it->second : 0;
