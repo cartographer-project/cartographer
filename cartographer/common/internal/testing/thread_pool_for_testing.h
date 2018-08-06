@@ -22,7 +22,7 @@
 #include <map>
 #include <thread>
 
-#include "cartographer/common/mutex.h"
+#include "absl/synchronization/mutex.h"
 #include "cartographer/common/thread_pool.h"
 
 namespace cartographer {
@@ -35,7 +35,7 @@ class ThreadPoolForTesting : public ThreadPoolInterface {
   ~ThreadPoolForTesting();
 
   std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task)
-      EXCLUDES(mutex_) override;
+      LOCKS_EXCLUDED(mutex_) override;
 
   void WaitUntilIdle();
 
@@ -44,7 +44,7 @@ class ThreadPoolForTesting : public ThreadPoolInterface {
 
   void DoWork();
 
-  void NotifyDependenciesCompleted(Task* task) EXCLUDES(mutex_) override;
+  void NotifyDependenciesCompleted(Task* task) LOCKS_EXCLUDED(mutex_) override;
 
   absl::Mutex mutex_;
   bool running_ GUARDED_BY(mutex_) = true;

@@ -97,7 +97,7 @@ void ConstraintBuilder3D::MaybeAddConstraint(
   const auto* scan_matcher =
       DispatchScanMatcherConstruction(submap_id, submap_nodes, submap);
   auto constraint_task = absl::make_unique<common::Task>();
-  constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
+  constraint_task->SetWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
                       constant_data, global_node_pose, global_submap_pose,
                       *scan_matcher, constraint);
@@ -125,7 +125,7 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
   const auto* scan_matcher =
       DispatchScanMatcherConstruction(submap_id, submap_nodes, submap);
   auto constraint_task = absl::make_unique<common::Task>();
-  constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
+  constraint_task->SetWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     ComputeConstraint(submap_id, node_id, true, /* match_full_submap */
                       constant_data,
                       transform::Rigid3d::Rotation(global_node_rotation),
