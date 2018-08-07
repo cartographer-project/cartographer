@@ -25,6 +25,7 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/2d/probability_grid.h"
+#include "cartographer/mapping/2d/tsdf_2d.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
@@ -32,6 +33,45 @@
 namespace cartographer {
 namespace mapping {
 namespace scan_matching {
+namespace {
+
+float TSDFCandidateScore(const TSDF2D& tsdf,
+                         const DiscreteScan2D& discrete_scan,
+                         int x_index_offset, int y_index_offset) {
+  float candidate_score = 0.f;
+  float summed_weight = 0.f;
+  for (const Eigen::Array2i& xy_index : discrete_scan) {
+    const Eigen::Array2i proposed_xy_index(xy_index.x() + x_index_offset,
+                                           xy_index.y() + y_index_offset);
+    const std::pair<float, float> tsd_and_weight =
+        tsdf.GetTSDAndWeight(proposed_xy_index);
+    const float normalized_tsd_score =
+        (tsdf.GetMaxCorrespondenceCost() - std::abs(tsd_and_weight.first)) /
+        tsdf.GetMaxCorrespondenceCost();
+    const float weight = tsd_and_weight.second;
+    candidate_score += normalized_tsd_score * weight;
+    summed_weight += weight;
+  }
+  candidate_score /= summed_weight;
+  return candidate_score;
+}
+
+float ProbabilityGridCandidateScore(const ProbabilityGrid& probability_grid,
+                                    const DiscreteScan2D& discrete_scan,
+                                    int x_index_offset, int y_index_offset) {
+  float candidate_score = 0.f;
+  for (const Eigen::Array2i& xy_index : discrete_scan) {
+    const Eigen::Array2i proposed_xy_index(xy_index.x() + x_index_offset,
+                                           xy_index.y() + y_index_offset);
+    const float probability =
+        probability_grid.GetProbability(proposed_xy_index);
+    candidate_score += probability;
+  }
+  candidate_score /= static_cast<float>(discrete_scan.size());
+  return candidate_score;
+}
+
+}  // namespace
 
 RealTimeCorrelativeScanMatcher2D::RealTimeCorrelativeScanMatcher2D(
     const proto::RealTimeCorrelativeScanMatcherOptions& options)
@@ -73,8 +113,7 @@ RealTimeCorrelativeScanMatcher2D::GenerateExhaustiveSearchCandidates(
 
 double RealTimeCorrelativeScanMatcher2D::Match(
     const transform::Rigid2d& initial_pose_estimate,
-    const sensor::PointCloud& point_cloud,
-    const ProbabilityGrid& probability_grid,
+    const sensor::PointCloud& point_cloud, const Grid2D& grid,
     transform::Rigid2d* pose_estimate) const {
   CHECK_NOTNULL(pose_estimate);
 
@@ -85,18 +124,17 @@ double RealTimeCorrelativeScanMatcher2D::Match(
           initial_rotation.cast<float>().angle(), Eigen::Vector3f::UnitZ())));
   const SearchParameters search_parameters(
       options_.linear_search_window(), options_.angular_search_window(),
-      rotated_point_cloud, probability_grid.limits().resolution());
+      rotated_point_cloud, grid.limits().resolution());
 
   const std::vector<sensor::PointCloud> rotated_scans =
       GenerateRotatedScans(rotated_point_cloud, search_parameters);
   const std::vector<DiscreteScan2D> discrete_scans = DiscretizeScans(
-      probability_grid.limits(), rotated_scans,
+      grid.limits(), rotated_scans,
       Eigen::Translation2f(initial_pose_estimate.translation().x(),
                            initial_pose_estimate.translation().y()));
   std::vector<Candidate2D> candidates =
       GenerateExhaustiveSearchCandidates(search_parameters);
-  ScoreCandidates(probability_grid, discrete_scans, search_parameters,
-                  &candidates);
+  ScoreCandidates(grid, discrete_scans, search_parameters, &candidates);
 
   const Candidate2D& best_candidate =
       *std::max_element(candidates.begin(), candidates.end());
@@ -108,23 +146,23 @@ double RealTimeCorrelativeScanMatcher2D::Match(
 }
 
 void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
-    const ProbabilityGrid& probability_grid,
-    const std::vector<DiscreteScan2D>& discrete_scans,
+    const Grid2D& grid, const std::vector<DiscreteScan2D>& discrete_scans,
     const SearchParameters& search_parameters,
     std::vector<Candidate2D>* const candidates) const {
   for (Candidate2D& candidate : *candidates) {
-    candidate.score = 0.f;
-    for (const Eigen::Array2i& xy_index :
-         discrete_scans[candidate.scan_index]) {
-      const Eigen::Array2i proposed_xy_index(
-          xy_index.x() + candidate.x_index_offset,
-          xy_index.y() + candidate.y_index_offset);
-      const float probability =
-          probability_grid.GetProbability(proposed_xy_index);
-      candidate.score += probability;
+    if (grid.GetGridType() == GridType::PROBABILITY_GRID) {
+      candidate.score = ProbabilityGridCandidateScore(
+          static_cast<const ProbabilityGrid&>(grid),
+          discrete_scans[candidate.scan_index], candidate.x_index_offset,
+          candidate.y_index_offset);
+    } else if (grid.GetGridType() == GridType::TSDF) {
+      candidate.score = TSDFCandidateScore(static_cast<const TSDF2D&>(grid),
+                                           discrete_scans[candidate.scan_index],
+                                           candidate.x_index_offset,
+                                           candidate.y_index_offset);
+    } else {
+      LOG(FATAL) << "Unknown GridType.";
     }
-    candidate.score /=
-        static_cast<float>(discrete_scans[candidate.scan_index].size());
     candidate.score *=
         std::exp(-common::Pow2(std::hypot(candidate.x, candidate.y) *
                                    options_.translation_delta_cost_weight() +
