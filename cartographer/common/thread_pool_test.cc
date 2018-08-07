@@ -28,19 +28,21 @@ namespace {
 class Receiver {
  public:
   void Receive(int number) {
-    MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     received_numbers_.push_back(number);
   }
 
   void WaitForNumberSequence(const std::vector<int>& expected_numbers) {
-    common::MutexLocker locker(&mutex_);
-    locker.Await([this, &expected_numbers]() REQUIRES(mutex_) {
-      return (received_numbers_.size() >= expected_numbers.size());
-    });
+    const auto predicate =
+        [this, &expected_numbers]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+          return (received_numbers_.size() >= expected_numbers.size());
+        };
+    absl::MutexLock locker(&mutex_);
+    mutex_.Await(absl::Condition(&predicate));
     EXPECT_EQ(expected_numbers, received_numbers_);
   }
 
-  Mutex mutex_;
+  absl::Mutex mutex_;
   std::vector<int> received_numbers_ GUARDED_BY(mutex_);
 };
 
