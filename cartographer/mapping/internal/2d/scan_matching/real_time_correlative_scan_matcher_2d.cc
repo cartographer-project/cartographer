@@ -168,7 +168,7 @@ void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
                                    options_.translation_delta_cost_weight() +
                                std::abs(candidate.orientation) *
                                    options_.rotation_delta_cost_weight()));
-    CHECK_GT(candidate.score, 0.f);
+    CHECK_GE(candidate.score, 0.f);
   }
 }
 
