@@ -18,34 +18,10 @@
 
 #include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
+#include "cartographer/pose_graph/constraint/constraint_utils.h"
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
-
-void AddPoseParameters(Pose3D* pose, ceres::Problem* problem) {
-  auto transation = pose->mutable_translation();
-  auto rotation = pose->mutable_rotation();
-  problem->AddParameterBlock(transation->data(), transation->size());
-  problem->AddParameterBlock(rotation->data(), rotation->size());
-  if (pose->constant()) {
-    problem->SetParameterBlockConstant(transation->data());
-    problem->SetParameterBlockConstant(rotation->data());
-  }
-}
-
-void AddImuParameters(ImuCalibration* pose, ceres::Problem* problem) {
-  auto gravity = pose->mutable_gravity_constant();
-  auto orientation = pose->mutable_orientation();
-  problem->AddParameterBlock(gravity, 1);
-  problem->AddParameterBlock(orientation->data(), orientation->size());
-  if (pose->constant()) {
-    problem->SetParameterBlockConstant(gravity);
-    problem->SetParameterBlockConstant(orientation->data());
-  }
-}
-
-}  // namespace
 
 AccelerationConstraint3D::AccelerationConstraint3D(
     const ConstraintId& id, const proto::LossFunction& loss_function_proto,
@@ -90,10 +66,10 @@ void AccelerationConstraint3D::AddToOptimizer(Nodes* nodes,
     return;
   }
 
-  AddPoseParameters(first_node, problem);
-  AddPoseParameters(second_node, problem);
-  AddPoseParameters(third_node, problem);
-  AddImuParameters(imu_node, problem);
+  AddPose3D(first_node, problem);
+  AddPose3D(second_node, problem);
+  AddPose3D(third_node, problem);
+  AddImuCalibration(imu_node, problem);
   problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(),
                             second_node->mutable_rotation()->data(),
                             second_node->mutable_translation()->data(),

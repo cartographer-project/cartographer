@@ -18,31 +18,10 @@
 
 #include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
+#include "cartographer/pose_graph/constraint/constraint_utils.h"
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
-
-void AddPose3DParameters(Pose3D* pose, ceres::Problem* problem) {
-  auto transation = pose->mutable_translation();
-  auto rotation = pose->mutable_rotation();
-  problem->AddParameterBlock(transation->data(), transation->size());
-  problem->AddParameterBlock(rotation->data(), rotation->size());
-  if (pose->constant()) {
-    problem->SetParameterBlockConstant(transation->data());
-    problem->SetParameterBlockConstant(rotation->data());
-  }
-}
-
-void AddPose2DParameters(Pose2D* pose, ceres::Problem* problem) {
-  auto pose_2d = pose->mutable_pose_2d();
-  problem->AddParameterBlock(pose_2d->data(), pose_2d->size());
-  if (pose->constant()) {
-    problem->SetParameterBlockConstant(pose_2d->data());
-  }
-}
-
-}  // namespace
 
 InterpolatedRelativePoseConstraint2D::InterpolatedRelativePoseConstraint2D(
     const ConstraintId& id, const proto::LossFunction& loss_function_proto,
@@ -81,9 +60,9 @@ void InterpolatedRelativePoseConstraint2D::AddToOptimizer(
     return;
   }
 
-  AddPose2DParameters(first_node_start, problem);
-  AddPose2DParameters(first_node_end, problem);
-  AddPose3DParameters(second_node, problem);
+  AddPose2D(first_node_start, problem);
+  AddPose2D(first_node_end, problem);
+  AddPose3D(second_node, problem);
   problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(),
                             first_node_start->mutable_pose_2d()->data(),
                             first_node_end->mutable_pose_2d()->data(),
