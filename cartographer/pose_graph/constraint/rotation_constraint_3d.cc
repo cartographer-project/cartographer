@@ -23,11 +23,19 @@ namespace cartographer {
 namespace pose_graph {
 namespace {
 
-void AddRotationParameters(Pose3D* pose, ceres::Problem* problem) {
+void AddRotation3D(Pose3D* pose, ceres::Problem* problem) {
   auto rotation = pose->mutable_rotation();
   problem->AddParameterBlock(rotation->data(), rotation->size());
   if (pose->constant()) {
     problem->SetParameterBlockConstant(rotation->data());
+  }
+}
+
+void AddImuOrientation(ImuCalibration* imu_node, ceres::Problem* problem) {
+  auto imu_orientation = imu_node->mutable_orientation();
+  problem->AddParameterBlock(imu_orientation->data(), imu_orientation->size());
+  if (imu_node->constant()) {
+    problem->SetParameterBlockConstant(imu_orientation->data());
   }
 }
 
@@ -62,25 +70,20 @@ void RotationContraint3D::AddToOptimizer(Nodes* nodes,
     return;
   }
 
-  auto imu_calibration_node =
+  auto imu_node =
       common::FindOrNull(nodes->imu_calibration_nodes, imu_calibration_);
-  if (imu_calibration_node == nullptr) {
+  if (imu_node == nullptr) {
     LOG(INFO) << "Imu calibration node was not found.";
     return;
   }
 
-  AddRotationParameters(first_node, problem);
-  AddRotationParameters(second_node, problem);
-  auto imu_orientation = imu_calibration_node->mutable_orientation();
-  problem->AddParameterBlock(imu_orientation->data(), imu_orientation->size());
-  if (imu_calibration_node->constant()) {
-    problem->SetParameterBlockConstant(imu_orientation->data());
-  }
-
-  problem->AddResidualBlock(ceres_cost_.get(), nullptr /* loss function */,
+  AddRotation3D(first_node, problem);
+  AddRotation3D(second_node, problem);
+  AddImuOrientation(imu_node, problem);
+  problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(),
                             first_node->mutable_rotation()->data(),
                             second_node->mutable_rotation()->data(),
-                            imu_orientation->data());
+                            imu_node->mutable_orientation()->data());
 }
 
 proto::CostFunction RotationContraint3D::ToCostFunctionProto() const {

@@ -58,4 +58,4 @@ class AccelerationConstraint3D : public Constraint {
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_RELATIVE_POSE_CONSTRAINT_3D_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_ACCELERATION_CONSTRAINT_3D_H_
