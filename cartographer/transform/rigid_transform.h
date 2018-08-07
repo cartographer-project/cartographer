@@ -163,7 +163,7 @@ class Rigid3 {
   }
 
   std::string DebugString() const {
-    return absl::Substitute("{ t: [$0, $1, $2], r: [$3, $4, $5, $6] }",
+    return absl::Substitute("{ t: [$0, $1, $2], q: [$3, $4, $5, $6] }",
                             translation().x(), translation().y(),
                             translation().z(), rotation().w(), rotation().x(),
                             rotation().y(), rotation().z());
