@@ -53,6 +53,7 @@ float TSDFCandidateScore(const TSDF2D& tsdf,
     summed_weight += weight;
   }
   candidate_score /= summed_weight;
+  CHECK_GE(candidate_score, 0.f);
   return candidate_score;
 }
 
@@ -68,6 +69,7 @@ float ProbabilityGridCandidateScore(const ProbabilityGrid& probability_grid,
     candidate_score += probability;
   }
   candidate_score /= static_cast<float>(discrete_scan.size());
+  CHECK_GT(candidate_score, 0.f);
   return candidate_score;
 }
 
@@ -168,7 +170,6 @@ void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
                                    options_.translation_delta_cost_weight() +
                                std::abs(candidate.orientation) *
                                    options_.rotation_delta_cost_weight()));
-    CHECK_GE(candidate.score, 0.f);
   }
 }
 
