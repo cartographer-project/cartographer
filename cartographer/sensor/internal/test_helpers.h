@@ -76,7 +76,7 @@ struct CollatorInput {
   }
 
   const int trajectory_id;
-  std::unique_ptr<sensor::Data> data;
+  std::unique_ptr<Data> data;
   const CollatorOutput expected_output;
 };
 

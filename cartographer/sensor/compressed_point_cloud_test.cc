@@ -106,7 +106,7 @@ TEST(CompressPointCloudTest, CompressesNoGaps) {
   EXPECT_EQ(decompressed.size(), recompressed.size());
 
   std::vector<float> x_coord;
-  for (const sensor::RangefinderPoint& p : compressed) {
+  for (const RangefinderPoint& p : compressed) {
     x_coord.push_back(p.position()[0]);
   }
   std::sort(x_coord.begin(), x_coord.end());

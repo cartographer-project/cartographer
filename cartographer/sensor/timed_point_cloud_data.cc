@@ -28,7 +28,7 @@ proto::TimedPointCloudData ToProto(
   proto.set_timestamp(common::ToUniversal(timed_point_cloud_data.time));
   *proto.mutable_origin() = transform::ToProto(timed_point_cloud_data.origin);
   proto.mutable_point_data()->Reserve(timed_point_cloud_data.ranges.size());
-  for (const sensor::TimedRangefinderPoint& range :
+  for (const TimedRangefinderPoint& range :
        timed_point_cloud_data.ranges) {
     *proto.add_point_data() = range.ToProto();
   }

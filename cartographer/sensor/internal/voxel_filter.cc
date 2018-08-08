@@ -28,7 +28,7 @@ namespace {
 PointCloud FilterByMaxRange(const PointCloud& point_cloud,
                             const float max_range) {
   PointCloud result;
-  for (const sensor::RangefinderPoint& point : point_cloud) {
+  for (const RangefinderPoint& point : point_cloud) {
     if (point.position().norm() <= max_range) {
       result.push_back(point);
     }
@@ -80,7 +80,7 @@ PointCloud AdaptivelyVoxelFiltered(
 
 PointCloud VoxelFilter::Filter(const PointCloud& point_cloud) {
   PointCloud results;
-  for (const sensor::RangefinderPoint& point : point_cloud) {
+  for (const RangefinderPoint& point : point_cloud) {
     auto it_inserted =
         voxel_set_.insert(IndexToKey(GetCellIndex(point.position())));
     if (it_inserted.second) {
@@ -92,7 +92,7 @@ PointCloud VoxelFilter::Filter(const PointCloud& point_cloud) {
 
 TimedPointCloud VoxelFilter::Filter(const TimedPointCloud& timed_point_cloud) {
   TimedPointCloud results;
-  for (const sensor::TimedRangefinderPoint& point : timed_point_cloud) {
+  for (const TimedRangefinderPoint& point : timed_point_cloud) {
     auto it_inserted =
         voxel_set_.insert(IndexToKey(GetCellIndex(point.position())));
     if (it_inserted.second) {
@@ -102,11 +102,11 @@ TimedPointCloud VoxelFilter::Filter(const TimedPointCloud& timed_point_cloud) {
   return results;
 }
 
-std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement>
+std::vector<TimedPointCloudOriginData::RangeMeasurement>
 VoxelFilter::Filter(
-    const std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement>&
+    const std::vector<TimedPointCloudOriginData::RangeMeasurement>&
         range_measurements) {
-  std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement> results;
+  std::vector<TimedPointCloudOriginData::RangeMeasurement> results;
   for (const auto& range_measurement : range_measurements) {
     auto it_inserted = voxel_set_.insert(
         IndexToKey(GetCellIndex(range_measurement.point_time.position())));

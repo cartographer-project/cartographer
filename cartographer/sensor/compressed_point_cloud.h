@@ -61,10 +61,10 @@ class CompressedPointCloud {
 class CompressedPointCloud::ConstIterator {
  public:
   using iterator_category = std::forward_iterator_tag;
-  using value_type = sensor::RangefinderPoint;
+  using value_type = RangefinderPoint;
   using difference_type = int64;
-  using pointer = const sensor::RangefinderPoint*;
-  using reference = const sensor::RangefinderPoint&;
+  using pointer = const RangefinderPoint*;
+  using reference = const RangefinderPoint&;
 
   // Creates begin iterator.
   explicit ConstIterator(const CompressedPointCloud* compressed_point_cloud);
@@ -73,7 +73,7 @@ class CompressedPointCloud::ConstIterator {
   static ConstIterator EndIterator(
       const CompressedPointCloud* compressed_point_cloud);
 
-  sensor::RangefinderPoint operator*() const;
+  RangefinderPoint operator*() const;
   ConstIterator& operator++();
   bool operator!=(const ConstIterator& it) const;
 

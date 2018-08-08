@@ -56,7 +56,7 @@ CompressedPointCloud::ConstIterator::EndIterator(
   return end_iterator;
 }
 
-sensor::RangefinderPoint CompressedPointCloud::ConstIterator::operator*()
+RangefinderPoint CompressedPointCloud::ConstIterator::operator*()
     const {
   CHECK_GT(remaining_points_, 0);
   return {current_point_};
@@ -110,7 +110,7 @@ CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
   CHECK_LE(point_cloud.size(), std::numeric_limits<int>::max());
   for (int point_index = 0; point_index < static_cast<int>(point_cloud.size());
        ++point_index) {
-    const sensor::RangefinderPoint& point = point_cloud[point_index];
+    const RangefinderPoint& point = point_cloud[point_index];
     CHECK_LT(point.position().cwiseAbs().maxCoeff() / kPrecision,
              1 << kMaxBitsPerDirection)
         << "Point out of bounds: " << point.position();
@@ -171,14 +171,14 @@ CompressedPointCloud::ConstIterator CompressedPointCloud::end() const {
 
 PointCloud CompressedPointCloud::Decompress() const {
   PointCloud decompressed;
-  for (const sensor::RangefinderPoint& point : *this) {
+  for (const RangefinderPoint& point : *this) {
     decompressed.push_back(point);
   }
   return decompressed;
 }
 
-bool sensor::CompressedPointCloud::operator==(
-    const sensor::CompressedPointCloud& right_hand_container) const {
+bool CompressedPointCloud::operator==(
+    const CompressedPointCloud& right_hand_container) const {
   return point_data_ == right_hand_container.point_data_ &&
          num_points_ == right_hand_container.num_points_;
 }
