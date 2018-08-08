@@ -30,14 +30,14 @@ namespace sensor {
 
 // Stores 3D positions of points.
 // For 2D points, the third entry is 0.f.
-typedef std::vector<RangefinderPoint> PointCloud;
+using PointCloud = std::vector<RangefinderPoint>;
 
 // Stores 3D positions of points with their relative measurement time in the
 // fourth entry. Time is in seconds, increasing and relative to the moment when
 // the last point was acquired. So, the fourth entry for the last point is 0.f.
 // If timing is not available, all fourth entries are 0.f. For 2D points, the
 // third entry is 0.f (and the fourth entry is time).
-typedef std::vector<TimedRangefinderPoint> TimedPointCloud;
+typedef TimedPointCloud = std::vector<TimedRangefinderPoint>;
 
 struct PointCloudWithIntensities {
   TimedPointCloud points;
