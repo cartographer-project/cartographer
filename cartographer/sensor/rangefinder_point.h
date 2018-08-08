@@ -76,6 +76,7 @@ TimedRangefinderPoint FromProto(
 proto::TimedRangefinderPoint ToProto(
     const TimedRangefinderPoint& timed_rangefinder_point);
 
+// Discards time stored in TimedRangefinderPoint.
 RangefinderPoint ToRangefinderPoint(
     const TimedRangefinderPoint& timed_rangefinder_point);
 
