@@ -53,7 +53,7 @@ struct PointsBatch {
   int trajectory_id;
 
   // Geometry of the points in the map frame.
-  cartographer::sensor::PointCloud points;
+  sensor::PointCloud points;
 
   // Intensities are optional and may be unspecified. The meaning of these
   // intensity values varies by device. For example, the VLP16 provides values
