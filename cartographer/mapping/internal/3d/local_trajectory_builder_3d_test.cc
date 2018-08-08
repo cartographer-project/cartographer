@@ -210,7 +210,7 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
       const sensor::TimedRangefinderPoint return_point(
           CollideWithBubbles(
               origin,
-              CollideWithBox(origin, direction_in_world_frame.position())),
+              CollideWithBox(origin, direction_in_world_frame.position)),
           0.);
       returns_in_world_frame.push_back(return_point);
     }

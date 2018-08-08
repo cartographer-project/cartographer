@@ -42,7 +42,7 @@ constexpr float kPrecision = 0.001f;
 // Matcher for 3-d vectors w.r.t. to the target precision.
 MATCHER_P(ApproximatelyEquals, expected,
           std::string("is equal to ") + PrintToString(expected)) {
-  return (arg.position() - expected).isZero(kPrecision);
+  return (arg.position - expected).isZero(kPrecision);
 }
 
 // Helper function to test the mapping of a single point. Includes test for
@@ -107,7 +107,7 @@ TEST(CompressPointCloudTest, CompressesNoGaps) {
 
   std::vector<float> x_coord;
   for (const RangefinderPoint& p : compressed) {
-    x_coord.push_back(p.position()[0]);
+    x_coord.push_back(p.position[0]);
   }
   std::sort(x_coord.begin(), x_coord.end());
   for (size_t i = 1; i < x_coord.size(); ++i) {

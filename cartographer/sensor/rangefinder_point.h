@@ -28,69 +28,54 @@ namespace cartographer {
 namespace sensor {
 
 // Stores 3D position of a point observed by a rangefinder sensor.
-class RangefinderPoint {
- public:
-  RangefinderPoint(const Eigen::Vector3f& position) : position_(position){};
-  RangefinderPoint(const proto::RangefinderPoint& rangefinder_point_proto);
-  Eigen::Vector3f position() const { return position_; };
+struct RangefinderPoint {
+  Eigen::Vector3f position;
+};
 
-  template <class T>
-  friend RangefinderPoint operator*(const transform::Rigid3<T>& lhs,
-                                    const RangefinderPoint& rhs);
-  bool operator==(const RangefinderPoint& rhs) const {
-    return position_ == rhs.position_;
-  }
-  RangefinderPoint RestrictDistanceFromOrigin(const Eigen::Vector3f& origin,
-                                              float distance) const;
-
-  proto::RangefinderPoint ToProto() const;
-
- protected:
-  Eigen::Vector3f position_;
+// Stores 3D position of a point with its relative measurement time.
+// See point_cloud.h for more details.
+struct TimedRangefinderPoint {
+  Eigen::Vector3f position;
+  float time;
 };
 
 template <class T>
 RangefinderPoint operator*(const transform::Rigid3<T>& lhs,
                            const RangefinderPoint& rhs) {
   RangefinderPoint result = rhs;
-  result.position_ = lhs * rhs.position_;
+  result.position = lhs * rhs.position;
   return result;
 }
-
-// Stores 3D position of a point with its relative measurement time.
-// See point_cloud.h for more details.
-class TimedRangefinderPoint : public RangefinderPoint {
- public:
-  TimedRangefinderPoint(const Eigen::Vector3f& position, float time)
-      : RangefinderPoint(position), time_(time){};
-  TimedRangefinderPoint(const RangefinderPoint& rangefinder_point, float time)
-      : RangefinderPoint(rangefinder_point), time_(time){};
-
-  TimedRangefinderPoint(
-      const proto::TimedRangefinderPoint& timed_rangefinder_point_proto);
-  float time() const { return time_; };
-  void set_time(const float& time) { time_ = time; }
-
-  template <class T>
-  friend TimedRangefinderPoint operator*(const transform::Rigid3<T>& lhs,
-                                         const TimedRangefinderPoint& rhs);
-  bool operator==(const TimedRangefinderPoint& rhs) const {
-    return RangefinderPoint::operator==(rhs) && time_ == rhs.time_;
-  }
-
-  proto::TimedRangefinderPoint ToProto() const;
-
- protected:
-  float time_;
-};
 
 template <class T>
 TimedRangefinderPoint operator*(const transform::Rigid3<T>& lhs,
                                 const TimedRangefinderPoint& rhs) {
   TimedRangefinderPoint result = rhs;
-  result.position_ = lhs * rhs.position_;
+  result.position = lhs * rhs.position;
   return result;
 }
+
+inline bool operator==(const TimedRangefinderPoint& lhs,
+                       const TimedRangefinderPoint& rhs) {
+  return lhs.position == rhs.position && lhs.time == rhs.time;
+}
+
+RangefinderPoint FromProto(
+    const proto::RangefinderPoint& rangefinder_point_proto);
+
+proto::RangefinderPoint ToProto(const RangefinderPoint& rangefinder_point);
+
+TimedRangefinderPoint FromProto(
+    const proto::TimedRangefinderPoint& timed_rangefinder_point_proto);
+
+proto::TimedRangefinderPoint ToProto(
+    const TimedRangefinderPoint& timed_rangefinder_point);
+
+RangefinderPoint ToRangefinderPoint(
+    const TimedRangefinderPoint& timed_rangefinder_point);
+
+TimedRangefinderPoint ToTimedRangefinderPoint(
+    const RangefinderPoint& rangefinder_point, float time);
 
 }  // namespace sensor
 }  // namespace cartographer

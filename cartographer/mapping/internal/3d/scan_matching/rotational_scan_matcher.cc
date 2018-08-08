@@ -53,7 +53,7 @@ Eigen::Vector3f ComputeCentroid(const sensor::PointCloud& slice) {
   CHECK(!slice.empty());
   Eigen::Vector3f sum = Eigen::Vector3f::Zero();
   for (const sensor::RangefinderPoint& point : slice) {
-    sum += point.position();
+    sum += point.position;
   }
   return sum / static_cast<float>(slice.size());
 }
@@ -68,17 +68,17 @@ void AddPointCloudSliceToHistogram(const sensor::PointCloud& slice,
   // will add the angle between points to the histogram with the maximum weight.
   // This is to reject, e.g., the angles observed on the ceiling and floor.
   const Eigen::Vector3f centroid = ComputeCentroid(slice);
-  Eigen::Vector3f last_point_position = slice.front().position();
+  Eigen::Vector3f last_point_position = slice.front().position;
   for (const sensor::RangefinderPoint& point : slice) {
     const Eigen::Vector2f delta =
-        (point.position() - last_point_position).head<2>();
-    const Eigen::Vector2f direction = (point.position() - centroid).head<2>();
+        (point.position - last_point_position).head<2>();
+    const Eigen::Vector2f direction = (point.position - centroid).head<2>();
     const float distance = delta.norm();
     if (distance < kMinDistance || direction.norm() < kMinDistance) {
       continue;
     }
     if (distance > kMaxDistance) {
-      last_point_position = point.position();
+      last_point_position = point.position;
       continue;
     }
     const float angle = common::atan2(delta);
@@ -104,7 +104,7 @@ sensor::PointCloud SortSlice(const sensor::PointCloud& slice) {
   std::vector<SortableAnglePointPair> by_angle;
   by_angle.reserve(slice.size());
   for (const sensor::RangefinderPoint& point : slice) {
-    const Eigen::Vector2f delta = (point.position() - centroid).head<2>();
+    const Eigen::Vector2f delta = (point.position - centroid).head<2>();
     if (delta.norm() < kMinDistance) {
       continue;
     }
@@ -157,7 +157,7 @@ Eigen::VectorXf RotationalScanMatcher::ComputeHistogram(
   Eigen::VectorXf histogram = Eigen::VectorXf::Zero(histogram_size);
   std::map<int, sensor::PointCloud> slices;
   for (const sensor::RangefinderPoint& point : point_cloud) {
-    slices[common::RoundToInt(point.position().z() / kSliceHeight)].push_back(
+    slices[common::RoundToInt(point.position.z() / kSliceHeight)].push_back(
         point);
   }
   for (const auto& slice : slices) {

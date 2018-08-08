@@ -62,12 +62,12 @@ TEST(GenerateRotatedScans, GenerateRotatedScans) {
   const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud, SearchParameters(0, 1, M_PI / 2., 0.));
   EXPECT_EQ(3, scans.size());
-  EXPECT_NEAR(1., scans[0][0].position().x(), 1e-6);
-  EXPECT_NEAR(1., scans[0][0].position().y(), 1e-6);
-  EXPECT_NEAR(-1., scans[1][0].position().x(), 1e-6);
-  EXPECT_NEAR(1., scans[1][0].position().y(), 1e-6);
-  EXPECT_NEAR(-1., scans[2][0].position().x(), 1e-6);
-  EXPECT_NEAR(-1., scans[2][0].position().y(), 1e-6);
+  EXPECT_NEAR(1., scans[0][0].position.x(), 1e-6);
+  EXPECT_NEAR(1., scans[0][0].position.y(), 1e-6);
+  EXPECT_NEAR(-1., scans[1][0].position.x(), 1e-6);
+  EXPECT_NEAR(1., scans[1][0].position.y(), 1e-6);
+  EXPECT_NEAR(-1., scans[2][0].position.x(), 1e-6);
+  EXPECT_NEAR(-1., scans[2][0].position.y(), 1e-6);
 }
 
 TEST(DiscretizeScans, DiscretizeScans) {

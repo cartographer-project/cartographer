@@ -22,34 +22,40 @@
 namespace cartographer {
 namespace sensor {
 
-RangefinderPoint RangefinderPoint::RestrictDistanceFromOrigin(
-    const Eigen::Vector3f& origin, float distance) const {
-  RangefinderPoint result = *this;
-  result.position_ = origin + distance * (position_ - origin).normalized();
-  return result;
-}
-
-RangefinderPoint::RangefinderPoint(
+RangefinderPoint FromProto(
     const proto::RangefinderPoint& rangefinder_point_proto) {
-  position_ = transform::ToEigen(rangefinder_point_proto.position());
+  return {transform::ToEigen(rangefinder_point_proto.position())};
 }
 
-TimedRangefinderPoint::TimedRangefinderPoint(
-    const proto::TimedRangefinderPoint& timed_rangefinder_point_proto)
-    : RangefinderPoint(timed_rangefinder_point_proto.rangefinder_point()),
-      time_(timed_rangefinder_point_proto.time()) {}
-
-proto::RangefinderPoint RangefinderPoint::ToProto() const {
+proto::RangefinderPoint ToProto(const RangefinderPoint& rangefinder_point) {
   proto::RangefinderPoint proto;
-  *proto.mutable_position() = transform::ToProto(position_);
+  *proto.mutable_position() = transform::ToProto(rangefinder_point.position);
   return proto;
 }
 
-proto::TimedRangefinderPoint TimedRangefinderPoint::ToProto() const {
+TimedRangefinderPoint FromProto(
+    const proto::TimedRangefinderPoint& timed_rangefinder_point_proto) {
+  return {transform::ToEigen(timed_rangefinder_point_proto.position()),
+          timed_rangefinder_point_proto.time()};
+}
+
+proto::TimedRangefinderPoint ToProto(
+    const TimedRangefinderPoint& timed_rangefinder_point) {
   proto::TimedRangefinderPoint proto;
-  *proto.mutable_rangefinder_point() = RangefinderPoint::ToProto();
-  proto.set_time(time_);
+  *proto.mutable_position() =
+      transform::ToProto(timed_rangefinder_point.position);
+  proto.set_time(timed_rangefinder_point.time);
   return proto;
+}
+
+RangefinderPoint ToRangefinderPoint(
+    const TimedRangefinderPoint& timed_rangefinder_point) {
+  return {timed_rangefinder_point.position};
+}
+
+TimedRangefinderPoint ToTimedRangefinderPoint(
+    const RangefinderPoint& rangefinder_point, const float time) {
+  return {rangefinder_point.position, time};
 }
 
 }  // namespace sensor

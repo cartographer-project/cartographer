@@ -63,13 +63,13 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
 
     auto overlap_begin = ranges.begin();
     while (overlap_begin < ranges.end() &&
-           data.time + common::FromSeconds((*overlap_begin).time()) <
+           data.time + common::FromSeconds((*overlap_begin).time) <
                current_start_) {
       ++overlap_begin;
     }
     auto overlap_end = overlap_begin;
     while (overlap_end < ranges.end() &&
-           data.time + common::FromSeconds((*overlap_end).time()) <=
+           data.time + common::FromSeconds((*overlap_end).time) <=
                current_end_) {
       ++overlap_end;
     }
@@ -91,7 +91,7 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
                                                                   origin_index};
         // current_end_ + point_time[3]_after == in_timestamp +
         // point_time[3]_before
-        point.point_time.set_time(point.point_time.time() + time_correction);
+        point.point_time.time += time_correction;
         result.ranges.push_back(point);
       }
     }
@@ -112,7 +112,7 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
   std::sort(result.ranges.begin(), result.ranges.end(),
             [](const sensor::TimedPointCloudOriginData::RangeMeasurement& a,
                const sensor::TimedPointCloudOriginData::RangeMeasurement& b) {
-              return a.point_time.time() < b.point_time.time();
+              return a.point_time.time < b.point_time.time;
             });
   return result;
 }

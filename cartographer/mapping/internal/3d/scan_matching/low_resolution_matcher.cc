@@ -28,7 +28,7 @@ std::function<float(const transform::Rigid3f&)> CreateLowResolutionMatcher(
          sensor::TransformPointCloud(*points, pose)) {
       // TODO(zhengj, whess): Interpolate the Grid to get better score.
       score += low_resolution_grid->GetProbability(
-          low_resolution_grid->GetCellIndex(point.position()));
+          low_resolution_grid->GetCellIndex(point.position));
     }
     return score / points->size();
   };

@@ -46,7 +46,7 @@ PointCloud CropPointCloud(const PointCloud& point_cloud, const float min_z,
                           const float max_z) {
   PointCloud cropped_point_cloud;
   for (const RangefinderPoint& point : point_cloud) {
-    if (min_z <= point.position().z() && point.position().z() <= max_z) {
+    if (min_z <= point.position.z() && point.position.z() <= max_z) {
       cropped_point_cloud.push_back(point);
     }
   }
@@ -57,7 +57,7 @@ TimedPointCloud CropTimedPointCloud(const TimedPointCloud& point_cloud,
                                     const float min_z, const float max_z) {
   TimedPointCloud cropped_point_cloud;
   for (const TimedRangefinderPoint& point : point_cloud) {
-    if (min_z <= point.position().z() && point.position().z() <= max_z) {
+    if (min_z <= point.position.z() && point.position.z() <= max_z) {
       cropped_point_cloud.push_back(point);
     }
   }

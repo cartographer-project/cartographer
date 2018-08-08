@@ -41,10 +41,9 @@ const std::string kMessage = R"(
       x: 3.f y: 4.f z: 5.f
     }
     point_data {
-      rangefinder_point {
-        position {
+      position {
           x: 6.f y: 7.f z: 8.f
-        } }
+      }
       time: 9.f
     }
   })";

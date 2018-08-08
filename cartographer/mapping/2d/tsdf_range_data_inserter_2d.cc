@@ -35,9 +35,9 @@ void GrowAsNeeded(const sensor::RangeData& range_data,
   Eigen::AlignedBox2f bounding_box(range_data.origin.head<2>());
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
     const Eigen::Vector3f direction =
-        (hit.position() - range_data.origin).normalized();
+        (hit.position - range_data.origin).normalized();
     const Eigen::Vector3f end_position =
-        hit.position() + truncation_distance * direction;
+        hit.position + truncation_distance * direction;
     bounding_box.extend(end_position.head<2>());
   }
   // Padding around bounding box to avoid numerical issues at cell boundaries.
@@ -71,9 +71,9 @@ struct RangeDataSorter {
   bool operator()(const sensor::RangefinderPoint& lhs,
                   const sensor::RangefinderPoint& rhs) {
     const Eigen::Vector2f delta_lhs =
-        (lhs.position().head<2>() - origin_).normalized();
+        (lhs.position.head<2>() - origin_).normalized();
     const Eigen::Vector2f delta_rhs =
-        (lhs.position().head<2>() - origin_).normalized();
+        (lhs.position.head<2>() - origin_).normalized();
     if ((delta_lhs[1] < 0.f) != (delta_rhs[1] < 0.f)) {
       return delta_lhs[1] < 0.f;
     } else if (delta_lhs[1] < 0.f) {
@@ -153,7 +153,7 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
   for (size_t hit_index = 0; hit_index < sorted_range_data.returns.size();
        ++hit_index) {
     const Eigen::Vector2f hit =
-        sorted_range_data.returns[hit_index].position().head<2>();
+        sorted_range_data.returns[hit_index].position.head<2>();
     const float normal = normals.empty()
                              ? std::numeric_limits<float>::quiet_NaN()
                              : normals[hit_index];

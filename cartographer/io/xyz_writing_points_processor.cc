@@ -49,7 +49,7 @@ PointsProcessor::FlushResult XyzWriterPointsProcessor::Flush() {
 
 void XyzWriterPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   for (const sensor::RangefinderPoint& point : batch->points) {
-    WriteXyzPoint(point.position(), file_writer_.get());
+    WriteXyzPoint(point.position, file_writer_.get());
   }
   next_->Process(std::move(batch));
 }

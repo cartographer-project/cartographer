@@ -62,7 +62,7 @@ RealTimeCorrelativeScanMatcher3D::GenerateExhaustiveSearchTransforms(
   // the std::acos() below is defined.
   float max_scan_range = 3.f * resolution;
   for (const sensor::RangefinderPoint& point : point_cloud) {
-    const float range = point.position().norm();
+    const float range = point.position.norm();
     max_scan_range = std::max(range, max_scan_range);
   }
   const float kSafetyMargin = 1.f - 1e-3f;
@@ -101,7 +101,7 @@ float RealTimeCorrelativeScanMatcher3D::ScoreCandidate(
   float score = 0.f;
   for (const sensor::RangefinderPoint& point : transformed_point_cloud) {
     score +=
-        hybrid_grid.GetProbability(hybrid_grid.GetCellIndex(point.position()));
+        hybrid_grid.GetProbability(hybrid_grid.GetCellIndex(point.position));
   }
   score /= static_cast<float>(transformed_point_cloud.size());
   const float angle = transform::GetAngle(transform);
