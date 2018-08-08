@@ -176,7 +176,7 @@ void AddLandmarkCostFunctions(
       problem->AddResidualBlock(
           LandmarkCostFunction3D::CreateAutoDiffCostFunction(
               observation, prev->data, next->data),
-          nullptr /* loss function */, prev_node_pose->rotation(),
+          new ceres::HuberLoss(options_.huber_scale()), prev_node_pose->rotation(),
           prev_node_pose->translation(), next_node_pose->rotation(),
           next_node_pose->translation(),
           C_landmarks->at(landmark_id).rotation(),
@@ -340,7 +340,7 @@ void OptimizationProblem3D::Solve(
   for (const Constraint& constraint : constraints) {
     problem.AddResidualBlock(
         SpaCostFunction3D::CreateAutoDiffCostFunction(constraint.pose),
-        // Only loop closure constraints should have a loss function.
+        // Loop closure constraints should have a loss function.
         constraint.tag == Constraint::INTER_SUBMAP
             ? new ceres::HuberLoss(options_.huber_scale())
             : nullptr /* loss function */,
