@@ -37,7 +37,7 @@ using PointCloud = std::vector<RangefinderPoint>;
 // the last point was acquired. So, the fourth entry for the last point is 0.f.
 // If timing is not available, all fourth entries are 0.f. For 2D points, the
 // third entry is 0.f (and the fourth entry is time).
-typedef TimedPointCloud = std::vector<TimedRangefinderPoint>;
+using TimedPointCloud = std::vector<TimedRangefinderPoint>;
 
 struct PointCloudWithIntensities {
   TimedPointCloud points;
