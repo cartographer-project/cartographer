@@ -33,11 +33,11 @@ TEST(TrajectoryNodeTest, ToAndFromProto) {
       common::FromUniversal(42),
       Eigen::Quaterniond(1., 2., -3., -4.),
       sensor::CompressedPointCloud(
-          {Eigen::Vector3f{1.f, 2.f, 0.f}, Eigen::Vector3f{0.f, 0.f, 1.f}})
+          {{Eigen::Vector3f{1.f, 2.f, 0.f}}, {Eigen::Vector3f{0.f, 0.f, 1.f}}})
           .Decompress(),
-      sensor::CompressedPointCloud({Eigen::Vector3f{2.f, 3.f, 4.f}})
+      sensor::CompressedPointCloud({{Eigen::Vector3f{2.f, 3.f, 4.f}}})
           .Decompress(),
-      sensor::CompressedPointCloud({Eigen::Vector3f{-1.f, 2.f, 0.f}})
+      sensor::CompressedPointCloud({{Eigen::Vector3f{-1.f, 2.f, 0.f}}})
           .Decompress(),
       Eigen::VectorXf::Unit(20, 4),
       transform::Rigid3d({1., 2., 3.},

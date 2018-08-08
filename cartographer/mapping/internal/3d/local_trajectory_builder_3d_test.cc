@@ -179,23 +179,23 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
     sensor::TimedPointCloud directions_in_rangefinder_frame;
     for (int r = -8; r != 8; ++r) {
       for (int s = -250; s != 250; ++s) {
-        const sensor::TimedRangefinderPoint first_point(
+        const sensor::TimedRangefinderPoint first_point{
             Eigen::Vector3f{
                 Eigen::AngleAxisf(M_PI * s / 250., Eigen::Vector3f::UnitZ()) *
                 Eigen::AngleAxisf(M_PI / 12. * r / 8.,
                                   Eigen::Vector3f::UnitY()) *
                 Eigen::Vector3f::UnitX()},
-            0.);
+            0.};
         directions_in_rangefinder_frame.push_back(first_point);
         // Second orthogonal rangefinder.
-        const sensor::TimedRangefinderPoint second_point(
+        const sensor::TimedRangefinderPoint second_point{
             Eigen::Vector3f{
                 Eigen::AngleAxisf(M_PI / 2., Eigen::Vector3f::UnitX()) *
                 Eigen::AngleAxisf(M_PI * s / 250., Eigen::Vector3f::UnitZ()) *
                 Eigen::AngleAxisf(M_PI / 12. * r / 8.,
                                   Eigen::Vector3f::UnitY()) *
                 Eigen::Vector3f::UnitX()},
-            0.);
+            0.};
         directions_in_rangefinder_frame.push_back(second_point);
       }
     }
@@ -207,11 +207,11 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
                                           pose.cast<float>())) {
       const Eigen::Vector3f origin =
           pose.cast<float>() * Eigen::Vector3f::Zero();
-      const sensor::TimedRangefinderPoint return_point(
+      const sensor::TimedRangefinderPoint return_point{
           CollideWithBubbles(
               origin,
               CollideWithBox(origin, direction_in_world_frame.position)),
-          0.);
+          0.};
       returns_in_world_frame.push_back(return_point);
     }
     return {Eigen::Vector3f::Zero(),

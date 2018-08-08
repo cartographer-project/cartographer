@@ -48,7 +48,7 @@ MATCHER_P(ApproximatelyEquals, expected,
 // Helper function to test the mapping of a single point. Includes test for
 // recompressing the same point again.
 void TestPoint(const Eigen::Vector3f& p) {
-  CompressedPointCloud compressed({p});
+  CompressedPointCloud compressed({{p}});
   EXPECT_EQ(1, compressed.size());
   EXPECT_THAT(*compressed.begin(), ApproximatelyEquals(p));
   CompressedPointCloud recompressed({*compressed.begin()});
@@ -70,9 +70,9 @@ TEST(CompressPointCloudTest, CompressesPointsCorrectly) {
 }
 
 TEST(CompressPointCloudTest, Compresses) {
-  const CompressedPointCloud compressed({Eigen::Vector3f(0.838f, 0, 0),
-                                         Eigen::Vector3f(0.839f, 0, 0),
-                                         Eigen::Vector3f(0.840f, 0, 0)});
+  const CompressedPointCloud compressed({{Eigen::Vector3f(0.838f, 0, 0)},
+                                         {Eigen::Vector3f(0.839f, 0, 0)},
+                                         {Eigen::Vector3f(0.840f, 0, 0)}});
   EXPECT_FALSE(compressed.empty());
   EXPECT_EQ(3, compressed.size());
   const PointCloud decompressed = compressed.Decompress();
@@ -98,7 +98,7 @@ TEST(CompressPointCloudTest, CompressesEmptyPointCloud) {
 TEST(CompressPointCloudTest, CompressesNoGaps) {
   PointCloud point_cloud;
   for (int i = 0; i < 3000; ++i) {
-    point_cloud.push_back(Eigen::Vector3f(kPrecision * i - 1.5f, 0, 0));
+    point_cloud.push_back({Eigen::Vector3f(kPrecision * i - 1.5f, 0, 0)});
   }
   const CompressedPointCloud compressed(point_cloud);
   const PointCloud decompressed = compressed.Decompress();

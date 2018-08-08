@@ -55,6 +55,11 @@ TimedRangefinderPoint operator*(const transform::Rigid3<T>& lhs,
   return result;
 }
 
+inline bool operator==(const RangefinderPoint& lhs,
+                       const RangefinderPoint& rhs) {
+  return lhs.position == rhs.position;
+}
+
 inline bool operator==(const TimedRangefinderPoint& lhs,
                        const TimedRangefinderPoint& rhs) {
   return lhs.position == rhs.position && lhs.time == rhs.time;

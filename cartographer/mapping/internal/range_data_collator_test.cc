@@ -35,7 +35,7 @@ sensor::TimedPointCloudData CreateFakeRangeData(int from, int to) {
   for (int i = 0; i < kNumSamples; ++i) {
     double fraction = static_cast<double>(i) / (kNumSamples - 1);
     float relative_time = (1.f - fraction) * -duration;
-    result.ranges.emplace_back(Eigen::Vector3f{1., 2., 3.}, relative_time);
+    result.ranges.push_back({Eigen::Vector3f{1., 2., 3.}, relative_time});
   }
   return result;
 }
