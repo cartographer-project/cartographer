@@ -37,7 +37,7 @@ namespace scan_matching {
 namespace {
 
 proto::RealTimeCorrelativeScanMatcherOptions
-CreateFastCorrelativeScanMatcherTestOptions2D() {
+CreateRealTimeCorrelativeScanMatcherTestOptions2D() {
   auto parameter_dictionary = common::MakeDictionary(
       "return {"
       "linear_search_window = 0.6, "
@@ -49,8 +49,7 @@ CreateFastCorrelativeScanMatcherTestOptions2D() {
       parameter_dictionary.get());
 }
 
-class RealTimeCorrelativeScanMatcherTest
-    : public ::testing::TestWithParam<::cartographer::mapping::GridType> {
+class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
  protected:
   RealTimeCorrelativeScanMatcherTest() {
     point_cloud_.emplace_back(0.025f, 0.175f, 0.f);
@@ -62,7 +61,7 @@ class RealTimeCorrelativeScanMatcherTest
     point_cloud_.emplace_back(-0.125f, 0.025f, 0.f);
     real_time_correlative_scan_matcher_ =
         absl::make_unique<RealTimeCorrelativeScanMatcher2D>(
-            CreateFastCorrelativeScanMatcherTestOptions2D());
+            CreateRealTimeCorrelativeScanMatcherTestOptions2D());
   }
 
   void SetUpTSDF() {
@@ -92,6 +91,7 @@ class RealTimeCorrelativeScanMatcherTest
         grid_.get());
     grid_->FinishUpdate();
   }
+
   void SetUpProbabilityGrid() {
     grid_ = absl::make_unique<ProbabilityGrid>(
         MapLimits(0.05, Eigen::Vector2d(0.05, 0.25), CellLimits(6, 6)),
@@ -129,18 +129,9 @@ class RealTimeCorrelativeScanMatcherTest
       real_time_correlative_scan_matcher_;
 };
 
-INSTANTIATE_TEST_CASE_P(
-    RealTimeCorrelativeScanMatcherTest, RealTimeCorrelativeScanMatcherTest,
-    ::testing::Values(::cartographer::mapping::GridType::PROBABILITY_GRID,
-                      ::cartographer::mapping::GridType::TSDF));
-
-TEST_P(RealTimeCorrelativeScanMatcherTest,
-       ScorePerfectHighResolutionCandidate) {
-  if (GetParam() == ::cartographer::mapping::GridType::PROBABILITY_GRID) {
-    SetUpProbabilityGrid();
-  } else if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
-    SetUpTSDF();
-  }
+TEST_F(RealTimeCorrelativeScanMatcherTest,
+       ScorePerfectHighResolutionCandidateProbabilityGrid) {
+  SetUpProbabilityGrid();
   const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud_, SearchParameters(0, 0, 0., 0.));
   const std::vector<DiscreteScan2D> discrete_scans =
@@ -148,27 +139,36 @@ TEST_P(RealTimeCorrelativeScanMatcherTest,
   std::vector<Candidate2D> candidates;
   candidates.emplace_back(0, 0, 0, SearchParameters(0, 0, 0., 0.));
   real_time_correlative_scan_matcher_->ScoreCandidates(
-      *grid_.get(), discrete_scans, SearchParameters(0, 0, 0., 0.),
-      &candidates);
+      *grid_, discrete_scans, SearchParameters(0, 0, 0., 0.), &candidates);
   EXPECT_EQ(0, candidates[0].scan_index);
   EXPECT_EQ(0, candidates[0].x_index_offset);
   EXPECT_EQ(0, candidates[0].y_index_offset);
   // Every point should align perfectly.
-  if (GetParam() == ::cartographer::mapping::GridType::PROBABILITY_GRID) {
-    EXPECT_NEAR(0.7, candidates[0].score, 1e-2);
-  } else if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
-    EXPECT_NEAR(1.0, candidates[0].score, 1e-1);
-    EXPECT_LT(0.95, candidates[0].score);
-  }
+  EXPECT_NEAR(0.7, candidates[0].score, 1e-2);
 }
 
-TEST_P(RealTimeCorrelativeScanMatcherTest,
-       ScorePartiallyCorrectHighResolutionCandidate) {
-  if (GetParam() == ::cartographer::mapping::GridType::PROBABILITY_GRID) {
-    SetUpProbabilityGrid();
-  } else if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
-    SetUpTSDF();
-  }
+TEST_F(RealTimeCorrelativeScanMatcherTest,
+       ScorePerfectHighResolutionCandidateTSDF) {
+  SetUpTSDF();
+  const std::vector<sensor::PointCloud> scans =
+      GenerateRotatedScans(point_cloud_, SearchParameters(0, 0, 0., 0.));
+  const std::vector<DiscreteScan2D> discrete_scans =
+      DiscretizeScans(grid_->limits(), scans, Eigen::Translation2f::Identity());
+  std::vector<Candidate2D> candidates;
+  candidates.emplace_back(0, 0, 0, SearchParameters(0, 0, 0., 0.));
+  real_time_correlative_scan_matcher_->ScoreCandidates(
+      *grid_, discrete_scans, SearchParameters(0, 0, 0., 0.), &candidates);
+  EXPECT_EQ(0, candidates[0].scan_index);
+  EXPECT_EQ(0, candidates[0].x_index_offset);
+  EXPECT_EQ(0, candidates[0].y_index_offset);
+  // Every point should align perfectly.
+  EXPECT_NEAR(1.0, candidates[0].score, 1e-1);
+  EXPECT_LT(0.95, candidates[0].score);
+}
+
+TEST_F(RealTimeCorrelativeScanMatcherTest,
+       ScorePartiallyCorrectHighResolutionCandidateProbabilityGrid) {
+  SetUpProbabilityGrid();
   const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud_, SearchParameters(0, 0, 0., 0.));
   const std::vector<DiscreteScan2D> discrete_scans =
@@ -182,15 +182,28 @@ TEST_P(RealTimeCorrelativeScanMatcherTest,
   EXPECT_EQ(0, candidates[0].x_index_offset);
   EXPECT_EQ(1, candidates[0].y_index_offset);
   // 3 points should align perfectly.
-  if (GetParam() == ::cartographer::mapping::GridType::PROBABILITY_GRID) {
-    EXPECT_LT(0.7 * 3. / 7., candidates[0].score);
-    EXPECT_GT(0.7, candidates[0].score);
-  }
-  // 3 points should align perfectly, 4 points are at 1/6th truncation distance.
-  else if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
-    EXPECT_LT(1.0 - 4. / (7. * 6.), candidates[0].score);
-    EXPECT_GT(1.0, candidates[0].score);
-  }
+  EXPECT_LT(0.7 * 3. / 7., candidates[0].score);
+  EXPECT_GT(0.7, candidates[0].score);
+}
+
+TEST_F(RealTimeCorrelativeScanMatcherTest,
+       ScorePartiallyCorrectHighResolutionCandidateTSDF) {
+  SetUpTSDF();
+  const std::vector<sensor::PointCloud> scans =
+      GenerateRotatedScans(point_cloud_, SearchParameters(0, 0, 0., 0.));
+  const std::vector<DiscreteScan2D> discrete_scans =
+      DiscretizeScans(grid_->limits(), scans, Eigen::Translation2f::Identity());
+  std::vector<Candidate2D> candidates;
+  candidates.emplace_back(0, 0, 1, SearchParameters(0, 0, 0., 0.));
+  real_time_correlative_scan_matcher_->ScoreCandidates(
+      *grid_.get(), discrete_scans, SearchParameters(0, 0, 0., 0.),
+      &candidates);
+  EXPECT_EQ(0, candidates[0].scan_index);
+  EXPECT_EQ(0, candidates[0].x_index_offset);
+  EXPECT_EQ(1, candidates[0].y_index_offset);
+  // 3 points should align perfectly.
+  EXPECT_LT(1.0 - 4. / (7. * 6.), candidates[0].score);
+  EXPECT_GT(1.0, candidates[0].score);
 }
 
 }  // namespace

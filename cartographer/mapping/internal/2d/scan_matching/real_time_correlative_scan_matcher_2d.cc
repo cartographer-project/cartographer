@@ -35,9 +35,9 @@ namespace mapping {
 namespace scan_matching {
 namespace {
 
-float TSDFCandidateScore(const TSDF2D& tsdf,
-                         const DiscreteScan2D& discrete_scan,
-                         int x_index_offset, int y_index_offset) {
+float ComputeCandidateScore(const TSDF2D& tsdf,
+                            const DiscreteScan2D& discrete_scan,
+                            int x_index_offset, int y_index_offset) {
   float candidate_score = 0.f;
   float summed_weight = 0.f;
   for (const Eigen::Array2i& xy_index : discrete_scan) {
@@ -52,14 +52,15 @@ float TSDFCandidateScore(const TSDF2D& tsdf,
     candidate_score += normalized_tsd_score * weight;
     summed_weight += weight;
   }
+  if (summed_weight == 0.f) return 0.f;
   candidate_score /= summed_weight;
   CHECK_GE(candidate_score, 0.f);
   return candidate_score;
 }
 
-float ProbabilityGridCandidateScore(const ProbabilityGrid& probability_grid,
-                                    const DiscreteScan2D& discrete_scan,
-                                    int x_index_offset, int y_index_offset) {
+float ComputeCandidateScore(const ProbabilityGrid& probability_grid,
+                            const DiscreteScan2D& discrete_scan,
+                            int x_index_offset, int y_index_offset) {
   float candidate_score = 0.f;
   for (const Eigen::Array2i& xy_index : discrete_scan) {
     const Eigen::Array2i proposed_xy_index(xy_index.x() + x_index_offset,
@@ -152,18 +153,18 @@ void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
     const SearchParameters& search_parameters,
     std::vector<Candidate2D>* const candidates) const {
   for (Candidate2D& candidate : *candidates) {
-    if (grid.GetGridType() == GridType::PROBABILITY_GRID) {
-      candidate.score = ProbabilityGridCandidateScore(
-          static_cast<const ProbabilityGrid&>(grid),
-          discrete_scans[candidate.scan_index], candidate.x_index_offset,
-          candidate.y_index_offset);
-    } else if (grid.GetGridType() == GridType::TSDF) {
-      candidate.score = TSDFCandidateScore(static_cast<const TSDF2D&>(grid),
-                                           discrete_scans[candidate.scan_index],
-                                           candidate.x_index_offset,
-                                           candidate.y_index_offset);
-    } else {
-      LOG(FATAL) << "Unknown GridType.";
+    switch (grid.GetGridType()) {
+      case GridType::PROBABILITY_GRID:
+        candidate.score = ComputeCandidateScore(
+            static_cast<const ProbabilityGrid&>(grid),
+            discrete_scans[candidate.scan_index], candidate.x_index_offset,
+            candidate.y_index_offset);
+        break;
+      case GridType::TSDF:
+        candidate.score = ComputeCandidateScore(
+            static_cast<const TSDF2D&>(grid),
+            discrete_scans[candidate.scan_index], candidate.x_index_offset,
+            candidate.y_index_offset);
     }
     candidate.score *=
         std::exp(-common::Pow2(std::hypot(candidate.x, candidate.y) *
