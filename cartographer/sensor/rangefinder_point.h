@@ -65,23 +65,42 @@ inline bool operator==(const TimedRangefinderPoint& lhs,
   return lhs.position == rhs.position && lhs.time == rhs.time;
 }
 
-RangefinderPoint FromProto(
-    const proto::RangefinderPoint& rangefinder_point_proto);
+inline RangefinderPoint FromProto(
+    const proto::RangefinderPoint& rangefinder_point_proto) {
+  return {transform::ToEigen(rangefinder_point_proto.position())};
+}
 
-proto::RangefinderPoint ToProto(const RangefinderPoint& rangefinder_point);
+inline proto::RangefinderPoint ToProto(
+    const RangefinderPoint& rangefinder_point) {
+  proto::RangefinderPoint proto;
+  *proto.mutable_position() = transform::ToProto(rangefinder_point.position);
+  return proto;
+}
 
-TimedRangefinderPoint FromProto(
-    const proto::TimedRangefinderPoint& timed_rangefinder_point_proto);
+inline TimedRangefinderPoint FromProto(
+    const proto::TimedRangefinderPoint& timed_rangefinder_point_proto) {
+  return {transform::ToEigen(timed_rangefinder_point_proto.position()),
+          timed_rangefinder_point_proto.time()};
+}
 
-proto::TimedRangefinderPoint ToProto(
-    const TimedRangefinderPoint& timed_rangefinder_point);
+inline proto::TimedRangefinderPoint ToProto(
+    const TimedRangefinderPoint& timed_rangefinder_point) {
+  proto::TimedRangefinderPoint proto;
+  *proto.mutable_position() =
+      transform::ToProto(timed_rangefinder_point.position);
+  proto.set_time(timed_rangefinder_point.time);
+  return proto;
+}
 
-// Discards time stored in TimedRangefinderPoint.
-RangefinderPoint ToRangefinderPoint(
-    const TimedRangefinderPoint& timed_rangefinder_point);
+inline RangefinderPoint ToRangefinderPoint(
+    const TimedRangefinderPoint& timed_rangefinder_point) {
+  return {timed_rangefinder_point.position};
+}
 
-TimedRangefinderPoint ToTimedRangefinderPoint(
-    const RangefinderPoint& rangefinder_point, float time);
+inline TimedRangefinderPoint ToTimedRangefinderPoint(
+    const RangefinderPoint& rangefinder_point, const float time) {
+  return {rangefinder_point.position, time};
+}
 
 }  // namespace sensor
 }  // namespace cartographer
