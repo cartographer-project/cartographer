@@ -28,7 +28,12 @@
 namespace cartographer {
 namespace metrics {
 
+namespace {
+bool kMetricsRegistered = false;
+}  // namespace
+
 void RegisterAllMetrics(FamilyFactory* registry) {
+  kMetricsRegistered = true;
   mapping::constraints::ConstraintBuilder2D::RegisterMetrics(registry);
   mapping::constraints::ConstraintBuilder3D::RegisterMetrics(registry);
   mapping::GlobalTrajectoryBuilderRegisterMetrics(registry);
@@ -38,6 +43,8 @@ void RegisterAllMetrics(FamilyFactory* registry) {
   mapping::PoseGraph3D::RegisterMetrics(registry);
   sensor::TrajectoryCollator::RegisterMetrics(registry);
 }
+
+bool MetricsRegistered() { return kMetricsRegistered; }
 
 }  // namespace metrics
 }  // namespace cartographer

@@ -136,6 +136,7 @@ TEST(MetricsTest, RunExposerServer) {
   FamilyFactory registry;
   Algorithm::RegisterMetrics(&registry);
   ::cartographer::metrics::RegisterAllMetrics(&registry);
+  EXPECT_TRUE(::cartographer::metrics::MetricsRegistered());
   ::prometheus::Exposer exposer("0.0.0.0:9100");
   exposer.RegisterCollectable(registry.GetCollectable());
 
