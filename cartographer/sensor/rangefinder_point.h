@@ -21,7 +21,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/sensor/proto/sensor.pb.h"
-#include "cartographer/transform/rigid_transform.h"
+#include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
