@@ -636,6 +636,56 @@ TEST_P(ClientServerTestByGridType, LoadStateAndDelete) {
   server_->Shutdown();
 }
 
+TEST_P(ClientServerTestByGridType, LoadUnfrozenStateAndDelete) {
+  if (GetParam() == ::cartographer::mapping::GridType::TSDF) {
+    SetOptionsToTSDF2D();
+  }
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+
+  // Load text proto into in_memory_reader.
+  auto reader =
+      ProtoReaderFromStrings(kSerializationHeaderProtoString,
+                             {
+                                 kPoseGraphProtoString,
+                                 kAllTrajectoryBuilderOptionsProtoString,
+                                 kSubmapProtoString,
+                                 kNodeProtoString,
+                                 kTrajectoryDataProtoString,
+                                 kImuDataProtoString,
+                                 kOdometryDataProtoString,
+                                 // TODO: not implemented by 2D pose graph.
+                                 /* kFixedFramePoseDataProtoString, */
+                                 kLandmarkDataProtoString,
+                             });
+
+  auto trajectory_remapping =
+      stub_->LoadState(reader.get(), false /* load_frozen_state */);
+  int expected_trajectory_id = 0;
+  EXPECT_EQ(trajectory_remapping.size(), 1);
+  EXPECT_EQ(trajectory_remapping.at(0), expected_trajectory_id);
+  stub_->pose_graph()->RunFinalOptimization();
+  EXPECT_FALSE(stub_->pose_graph()->IsTrajectoryFrozen(expected_trajectory_id));
+  EXPECT_FALSE(
+      stub_->pose_graph()->IsTrajectoryFinished(expected_trajectory_id));
+  EXPECT_EQ(
+      stub_->pose_graph()->GetTrajectoryStates().at(expected_trajectory_id),
+      PoseGraphInterface::TrajectoryState::ACTIVE);
+  stub_->FinishTrajectory(expected_trajectory_id);
+  EXPECT_EQ(
+      stub_->pose_graph()->GetTrajectoryStates().at(expected_trajectory_id),
+      PoseGraphInterface::TrajectoryState::FINISHED);
+  for (const auto& entry : trajectory_remapping) {
+    int trajectory_id = entry.second;
+    stub_->pose_graph()->DeleteTrajectory(trajectory_id);
+    stub_->pose_graph()->RunFinalOptimization();
+    EXPECT_EQ(stub_->pose_graph()->GetTrajectoryStates().at(trajectory_id),
+              PoseGraphInterface::TrajectoryState::DELETED);
+  }
+  server_->Shutdown();
+}
+
 // TODO(gaschler): Test-cover LoadStateFromFile.
 
 TEST_P(ClientServerTestByGridType, LocalSlam2DHandlesInvalidRequests) {

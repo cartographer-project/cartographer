@@ -183,9 +183,9 @@ std::map<int, int> MapBuilderStub::LoadState(
   }
   // Multiple requests with SerializedData are sent after.
   proto::LoadStateRequest request;
-  request.set_load_frozen_state(load_frozen_state);
   while (
       deserializer.ReadNextSerializedData(request.mutable_serialized_data())) {
+    request.set_load_frozen_state(load_frozen_state);
     CHECK(client.Write(request));
   }
 
