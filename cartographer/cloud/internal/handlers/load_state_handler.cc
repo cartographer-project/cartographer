@@ -40,7 +40,7 @@ void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
     default:
       LOG(FATAL) << "Unhandled proto::LoadStateRequest case.";
   }
-  load_frozen_state_ = request.load_frozen_state(); 
+  load_frozen_state_ = request.load_frozen_state();
 }
 
 void LoadStateHandler::OnReadsDone() {
