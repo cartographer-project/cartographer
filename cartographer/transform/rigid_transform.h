@@ -23,6 +23,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "absl/strings/substitute.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
@@ -77,15 +78,8 @@ class Rigid2 {
   }
 
   std::string DebugString() const {
-    std::string out;
-    out.append("{ t: [");
-    out.append(std::to_string(translation().x()));
-    out.append(", ");
-    out.append(std::to_string(translation().y()));
-    out.append("], r: [");
-    out.append(std::to_string(rotation().angle()));
-    out.append("] }");
-    return out;
+    return absl::Substitute("{ t: [$0, $1], r: [$2] }", translation().x(),
+                            translation().y(), rotation().angle());
   }
 
  private:
@@ -169,23 +163,10 @@ class Rigid3 {
   }
 
   std::string DebugString() const {
-    std::string out;
-    out.append("{ t: [");
-    out.append(std::to_string(translation().x()));
-    out.append(", ");
-    out.append(std::to_string(translation().y()));
-    out.append(", ");
-    out.append(std::to_string(translation().z()));
-    out.append("], q: [");
-    out.append(std::to_string(rotation().w()));
-    out.append(", ");
-    out.append(std::to_string(rotation().x()));
-    out.append(", ");
-    out.append(std::to_string(rotation().y()));
-    out.append(", ");
-    out.append(std::to_string(rotation().z()));
-    out.append("] }");
-    return out;
+    return absl::Substitute("{ t: [$0, $1, $2], q: [$3, $4, $5, $6] }",
+                            translation().x(), translation().y(),
+                            translation().z(), rotation().w(), rotation().x(),
+                            rotation().y(), rotation().z());
   }
 
   bool IsValid() const {

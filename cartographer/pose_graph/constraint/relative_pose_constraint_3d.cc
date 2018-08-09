@@ -18,23 +18,10 @@
 
 #include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
+#include "cartographer/pose_graph/constraint/constraint_utils.h"
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
-
-void AddPoseParameters(Pose3D* pose, ceres::Problem* problem) {
-  auto transation = pose->mutable_translation();
-  auto rotation = pose->mutable_rotation();
-  problem->AddParameterBlock(transation->data(), transation->size());
-  problem->AddParameterBlock(rotation->data(), rotation->size());
-  if (pose->constant()) {
-    problem->SetParameterBlockConstant(transation->data());
-    problem->SetParameterBlockConstant(rotation->data());
-  }
-}
-
-}  // namespace
 
 RelativePoseConstraint3D::RelativePoseConstraint3D(
     const ConstraintId& id, const proto::LossFunction& loss_function_proto,
@@ -64,9 +51,9 @@ void RelativePoseConstraint3D::AddToOptimizer(Nodes* nodes,
     return;
   }
 
-  AddPoseParameters(first_node, problem);
-  AddPoseParameters(second_node, problem);
-  problem->AddResidualBlock(ceres_cost_.get(), nullptr /* loss function */,
+  AddPose3D(first_node, problem);
+  AddPose3D(second_node, problem);
+  problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(),
                             first_node->mutable_translation()->data(),
                             first_node->mutable_rotation()->data(),
                             second_node->mutable_translation()->data(),

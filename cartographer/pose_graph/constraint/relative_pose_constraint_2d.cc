@@ -18,6 +18,7 @@
 
 #include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
+#include "cartographer/pose_graph/constraint/constraint_utils.h"
 
 namespace cartographer {
 namespace pose_graph {
