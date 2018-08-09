@@ -38,8 +38,9 @@ TimedPointCloudData FromProto(const proto::TimedPointCloudData& proto) {
   TimedPointCloud timed_point_cloud;
   if (proto.point_data().size() > 0) {
     timed_point_cloud.reserve(proto.point_data().size());
-    for (const auto& timed_point_proto : proto.point_data())
+    for (const auto& timed_point_proto : proto.point_data()) {
       timed_point_cloud.push_back(FromProto(timed_point_proto));
+    }
   } else {
     timed_point_cloud.reserve(proto.point_data_legacy().size());
     for (const auto& timed_point_proto : proto.point_data_legacy()) {

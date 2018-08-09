@@ -72,22 +72,26 @@ RangeData FromProto(const proto::RangeData& proto) {
   PointCloud returns;
   if (proto.returns_size() > 0) {
     returns.reserve(proto.returns().size());
-    for (const auto& point_proto : proto.returns())
+    for (const auto& point_proto : proto.returns()) {
       returns.push_back(FromProto(point_proto));
+    }
   } else {
     returns.reserve(proto.returns_legacy().size());
-    for (const auto& point_proto : proto.returns_legacy())
+    for (const auto& point_proto : proto.returns_legacy()) {
       returns.push_back({transform::ToEigen(point_proto)});
+    }
   }
   PointCloud misses;
   if (proto.misses_size() > 0) {
     misses.reserve(proto.misses().size());
-    for (const auto& point_proto : proto.misses())
+    for (const auto& point_proto : proto.misses()) {
       misses.push_back(FromProto(point_proto));
+    }
   } else {
     misses.reserve(proto.misses_legacy().size());
-    for (const auto& point_proto : proto.misses_legacy())
+    for (const auto& point_proto : proto.misses_legacy()) {
       misses.push_back({transform::ToEigen(point_proto)});
+    }
   }
   return RangeData{transform::ToEigen(proto.origin()), returns, misses};
 }
