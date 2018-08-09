@@ -256,7 +256,8 @@ void OptimizationProblem2D::Solve(
   }
   // Add cost functions for landmarks.
   AddLandmarkCostFunctions(landmark_nodes, freeze_landmarks, node_data_,
-                           &C_nodes, &C_landmarks, &problem, options_.huber_scale());
+                           &C_nodes, &C_landmarks, &problem,
+                           options_.huber_scale());
   // Add penalties for violating odometry or changes between consecutive nodes
   // if odometry is not available.
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
