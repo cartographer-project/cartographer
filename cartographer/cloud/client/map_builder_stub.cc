@@ -161,6 +161,7 @@ std::map<int, int> MapBuilderStub::LoadState(
   {
     proto::LoadStateRequest request;
     *request.mutable_serialization_header() = deserializer.header();
+    request.set_load_frozen_state(load_frozen_state);
     CHECK(client.Write(request));
   }
   // Request with a PoseGraph proto is sent second.
@@ -168,6 +169,7 @@ std::map<int, int> MapBuilderStub::LoadState(
     proto::LoadStateRequest request;
     *request.mutable_serialized_data()->mutable_pose_graph() =
         deserializer.pose_graph();
+    request.set_load_frozen_state(load_frozen_state);
     CHECK(client.Write(request));
   }
   // Request with an AllTrajectoryBuilderOptions should be third.
@@ -176,10 +178,12 @@ std::map<int, int> MapBuilderStub::LoadState(
     *request.mutable_serialized_data()
          ->mutable_all_trajectory_builder_options() =
         deserializer.all_trajectory_builder_options();
+    request.set_load_frozen_state(load_frozen_state);
     CHECK(client.Write(request));
   }
   // Multiple requests with SerializedData are sent after.
   proto::LoadStateRequest request;
+  request.set_load_frozen_state(load_frozen_state);
   while (
       deserializer.ReadNextSerializedData(request.mutable_serialized_data())) {
     CHECK(client.Write(request));
