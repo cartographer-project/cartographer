@@ -149,9 +149,6 @@ void MapBuilderStub::SerializeState(bool include_unfinished_submaps,
 
 std::map<int, int> MapBuilderStub::LoadState(
     io::ProtoStreamReaderInterface* reader, const bool load_frozen_state) {
-  if (!load_frozen_state) {
-    LOG(FATAL) << "Not implemented";
-  }
   async_grpc::Client<handlers::LoadStateSignature> client(client_channel_);
   {
     proto::LoadStateRequest request;
