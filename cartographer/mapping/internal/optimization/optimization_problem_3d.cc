@@ -125,7 +125,8 @@ void AddLandmarkCostFunctions(
     const std::map<std::string, LandmarkNode>& landmark_nodes,
     bool freeze_landmarks, const MapById<NodeId, NodeSpec3D>& node_data,
     MapById<NodeId, CeresPose>* C_nodes,
-    std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem) {
+    std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem,
+    double huber_scale) {
   for (const auto& landmark_node : landmark_nodes) {
     // Do not use landmarks that were not optimized for localization.
     if (!landmark_node.second.global_landmark_pose.has_value() &&
@@ -176,7 +177,7 @@ void AddLandmarkCostFunctions(
       problem->AddResidualBlock(
           LandmarkCostFunction3D::CreateAutoDiffCostFunction(
               observation, prev->data, next->data),
-          nullptr /* loss function */, prev_node_pose->rotation(),
+          new ceres::HuberLoss(huber_scale), prev_node_pose->rotation(),
           prev_node_pose->translation(), next_node_pose->rotation(),
           next_node_pose->translation(),
           C_landmarks->at(landmark_id).rotation(),
@@ -340,7 +341,7 @@ void OptimizationProblem3D::Solve(
   for (const Constraint& constraint : constraints) {
     problem.AddResidualBlock(
         SpaCostFunction3D::CreateAutoDiffCostFunction(constraint.pose),
-        // Only loop closure constraints should have a loss function.
+        // Loop closure constraints should have a loss function.
         constraint.tag == Constraint::INTER_SUBMAP
             ? new ceres::HuberLoss(options_.huber_scale())
             : nullptr /* loss function */,
@@ -351,7 +352,7 @@ void OptimizationProblem3D::Solve(
   }
   // Add cost functions for landmarks.
   AddLandmarkCostFunctions(landmark_nodes, freeze_landmarks, node_data_,
-                           &C_nodes, &C_landmarks, &problem);
+                           &C_nodes, &C_landmarks, &problem, options_.huber_scale());
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
   if (!options_.fix_z_in_3d()) {

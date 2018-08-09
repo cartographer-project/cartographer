@@ -81,7 +81,8 @@ void AddLandmarkCostFunctions(
     const std::map<std::string, LandmarkNode>& landmark_nodes,
     bool freeze_landmarks, const MapById<NodeId, NodeSpec2D>& node_data,
     MapById<NodeId, std::array<double, 3>>* C_nodes,
-    std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem) {
+    std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem,
+    double huber_scale) {
   for (const auto& landmark_node : landmark_nodes) {
     // Do not use landmarks that were not optimized for localization.
     if (!landmark_node.second.global_landmark_pose.has_value() &&
@@ -132,7 +133,7 @@ void AddLandmarkCostFunctions(
       problem->AddResidualBlock(
           LandmarkCostFunction2D::CreateAutoDiffCostFunction(
               observation, prev->data, next->data),
-          nullptr /* loss function */, prev_node_pose->data(),
+          new ceres::HuberLoss(huber_scale), prev_node_pose->data(),
           next_node_pose->data(), C_landmarks->at(landmark_id).rotation(),
           C_landmarks->at(landmark_id).translation());
     }
@@ -246,7 +247,7 @@ void OptimizationProblem2D::Solve(
   for (const Constraint& constraint : constraints) {
     problem.AddResidualBlock(
         CreateAutoDiffSpaCostFunction(constraint.pose),
-        // Only loop closure constraints should have a loss function.
+        // Loop closure constraints should have a loss function.
         constraint.tag == Constraint::INTER_SUBMAP
             ? new ceres::HuberLoss(options_.huber_scale())
             : nullptr,
@@ -255,7 +256,7 @@ void OptimizationProblem2D::Solve(
   }
   // Add cost functions for landmarks.
   AddLandmarkCostFunctions(landmark_nodes, freeze_landmarks, node_data_,
-                           &C_nodes, &C_landmarks, &problem);
+                           &C_nodes, &C_landmarks, &problem, options_.huber_scale());
   // Add penalties for violating odometry or changes between consecutive nodes
   // if odometry is not available.
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
