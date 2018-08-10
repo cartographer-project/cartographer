@@ -31,10 +31,11 @@
 namespace cartographer {
 namespace mapping {
 
-// The current state of the submap in the background threads. When this
-// transitions to kFinished, all nodes are tried to match against this submap.
-// Likewise, all new nodes are matched against submaps which are finished.
-enum class SubmapState { kActive, kFinished };
+// The current state of the submap in the background threads. After this
+// transitions to 'kFinished', all nodes are tried to match
+// against this submap. Likewise, all new nodes are matched against submaps in
+// that state.
+enum class SubmapState { kNoConstraintSearch, kFinished };
 
 struct InternalTrajectoryState {
   enum class DeletionState {
@@ -50,11 +51,11 @@ struct InternalTrajectoryState {
 
 struct InternalSubmapData {
   std::shared_ptr<const Submap> submap;
-  SubmapState state = SubmapState::kActive;
+  SubmapState state = SubmapState::kNoConstraintSearch;
 
   // IDs of the nodes that were inserted into this map together with
   // constraints for them. They are not to be matched again when this submap
-  // becomes 'finished'.
+  // becomes 'kFinished'.
   std::set<NodeId> node_ids;
 };
 

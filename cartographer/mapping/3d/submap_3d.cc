@@ -214,7 +214,7 @@ proto::Submap Submap3D::ToProto(
   auto* const submap_3d = proto.mutable_submap_3d();
   *submap_3d->mutable_local_pose() = transform::ToProto(local_pose());
   submap_3d->set_num_range_data(num_range_data());
-  submap_3d->set_finished(finished());
+  submap_3d->set_finished(insertion_finished());
   if (include_probability_grid_data) {
     *submap_3d->mutable_high_resolution_hybrid_grid() =
         high_resolution_hybrid_grid().ToProto();
@@ -231,7 +231,7 @@ void Submap3D::UpdateFromProto(const proto::Submap& proto) {
 
 void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   set_num_range_data(submap_3d.num_range_data());
-  set_finished(submap_3d.finished());
+  set_insertion_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
     high_resolution_hybrid_grid_ =
         absl::make_unique<HybridGrid>(submap_3d.high_resolution_hybrid_grid());
@@ -256,7 +256,7 @@ void Submap3D::ToResponseProto(
 void Submap3D::InsertRangeData(const sensor::RangeData& range_data,
                                const RangeDataInserter3D& range_data_inserter,
                                const float high_resolution_max_range) {
-  CHECK(!finished());
+  CHECK(!insertion_finished());
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data, local_pose().inverse().cast<float>());
   range_data_inserter.Insert(
@@ -269,8 +269,8 @@ void Submap3D::InsertRangeData(const sensor::RangeData& range_data,
 }
 
 void Submap3D::Finish() {
-  CHECK(!finished());
-  set_finished(true);
+  CHECK(!insertion_finished());
+  set_insertion_finished(true);
 }
 
 ActiveSubmaps3D::ActiveSubmaps3D(const proto::SubmapsOptions3D& options)
@@ -304,7 +304,7 @@ void ActiveSubmaps3D::AddSubmap(const transform::Rigid3d& local_submap_pose) {
   if (submaps_.size() >= 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
-    CHECK(submaps_.front()->finished());
+    CHECK(submaps_.front()->insertion_finished());
     submaps_.erase(submaps_.begin());
   }
   submaps_.emplace_back(new Submap3D(options_.high_resolution(),
