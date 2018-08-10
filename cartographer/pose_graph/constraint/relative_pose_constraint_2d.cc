@@ -34,17 +34,10 @@ RelativePoseConstraint2D::RelativePoseConstraint2D(
 // TODO(pifon): Add a test.
 void RelativePoseConstraint2D::AddToOptimizer(Nodes* nodes,
                                               ceres::Problem* problem) const {
-  auto first_node = common::FindOrNull(nodes->pose_2d_nodes, first_);
-  if (first_node == nullptr) {
-    LOG(INFO) << "First node was not found in pose_2d_nodes.";
-    return;
-  }
-
-  auto second_node = common::FindOrNull(nodes->pose_2d_nodes, second_);
-  if (second_node == nullptr) {
-    LOG(INFO) << "Second node was not found in pose_2d_nodes.";
-    return;
-  }
+  FIND_NODE_OR_RETURN(first_node, first_, nodes->pose_2d_nodes,
+                      "First node was not found in pose_2d_nodes.");
+  FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_2d_nodes,
+                      "Second node was not found in pose_2d_nodes.");
 
   if (first_node->constant() && second_node->constant()) {
     LOG(INFO) << "Both nodes are constant, skipping the constraint.";
