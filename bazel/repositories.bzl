@@ -246,19 +246,20 @@ def cartographer_repositories():
         ],
     )
 
-  _maybe(native.http_archive,
-      name = "com_github_googlecartographer_async_grpc",
-      strip_prefix = "async_grpc-771af45374af7f7bfc3b622ed7efbe29a4aba403",
-      urls = [
-          "https://github.com/googlecartographer/async_grpc/archive/771af45374af7f7bfc3b622ed7efbe29a4aba403.tar.gz",
-      ],
-  )
-  _maybe(native.http_archive,
-      name = "com_google_absl",
-      sha256 = "387cf016ab1ab8530d1cea8975276ce8d8bff355133776129bdc400d05519eb6",
-      strip_prefix = "abseil-cpp-44aa275286baf97fc13529aca547a88b180beb08",
-      urls = ["https://github.com/abseil/abseil-cpp/archive/44aa275286baf97fc13529aca547a88b180beb08.tar.gz"],
-  )
+    _maybe(native.http_archive,
+        name = "com_github_googlecartographer_async_grpc",
+        strip_prefix = "async_grpc-771af45374af7f7bfc3b622ed7efbe29a4aba403",
+        urls = [
+            "https://github.com/googlecartographer/async_grpc/archive/771af45374af7f7bfc3b622ed7efbe29a4aba403.tar.gz",
+        ],
+    )
+
+    _maybe(native.http_archive,
+        name = "com_google_absl",
+        sha256 = "387cf016ab1ab8530d1cea8975276ce8d8bff355133776129bdc400d05519eb6",
+        strip_prefix = "abseil-cpp-44aa275286baf97fc13529aca547a88b180beb08",
+        urls = ["https://github.com/abseil/abseil-cpp/archive/44aa275286baf97fc13529aca547a88b180beb08.tar.gz"],
+    )
 
     # TODO(rodrigoq): remove these binds once grpc#14140 has been merged, as well
     # as removing `use_external` in cartographer_grpc/BUILD.bazel.
