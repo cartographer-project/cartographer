@@ -14,7 +14,7 @@
 
 cmake_minimum_required(VERSION 3.2)
 
-include(${CMAKE_ROOT}/Modules/FetchContent.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/FetchContent.cmake)
 FetchContent_Declare(abseil
   GIT_REPOSITORY   https://github.com/abseil/abseil-cpp.git
   GIT_TAG          44aa275286baf97fc13529aca547a88b180beb08
