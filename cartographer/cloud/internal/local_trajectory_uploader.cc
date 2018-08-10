@@ -196,8 +196,7 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
   while (!shutting_down_) {
     auto sensor_data = send_queue_.PopWithTimeout(kPopTimeout);
     if (sensor_data) {
-      bool ok = TranslateTrajectoryId(sensor_data->mutable_sensor_metadata());
-      if (!ok) {
+      if (!TranslateTrajectoryId(sensor_data->mutable_sensor_metadata())) {
         batch_request.clear_sensor_data();
         TryRecovery();
         continue;
