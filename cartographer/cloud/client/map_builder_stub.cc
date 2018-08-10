@@ -66,8 +66,9 @@ int MapBuilderStub::AddTrajectoryBuilder(
     *request.add_expected_sensor_ids() = cloud::ToProto(sensor_id);
   }
   async_grpc::Client<handlers::AddTrajectorySignature> client(
-      client_channel_, async_grpc::CreateLimitedBackoffStrategy(
-                           common::FromMilliseconds(100), 2.f, 5));
+      client_channel_, common::FromSeconds(10),
+      async_grpc::CreateLimitedBackoffStrategy(common::FromMilliseconds(100),
+                                               2.f, 5));
   CHECK(client.Write(request));
 
   // Construct trajectory builder stub.

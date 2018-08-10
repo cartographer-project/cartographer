@@ -19,7 +19,7 @@ set -o verbose
 
 git clone https://github.com/googlecartographer/async_grpc
 cd async_grpc
-git checkout ed8e3b31bdd46a74f0c47b4c53a47e0c0f21141b
+git checkout 771af45374af7f7bfc3b622ed7efbe29a4aba403
 mkdir build
 cd build
 cmake -G Ninja \
