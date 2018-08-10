@@ -20,7 +20,7 @@ cartographer_repositories()
 
 # This can't be inside cartographer_repositories() because of:
 # https://github.com/bazelbuild/bazel/issues/1550
-load("@com_github_nelhage_boost//:boost/boost.bzl", "boost_deps")
+load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
 
 boost_deps()
 
