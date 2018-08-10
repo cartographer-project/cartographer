@@ -15,27 +15,14 @@
 """External dependencies for Cartographer."""
 
 def cartographer_repositories():
-    SOURCEFORGE_MIRRORS = ["phoenixnap", "newcontinuum", "cfhcable", "superb-sea2", "cytranet", "iweb", "gigenet", "ayera", "astuteinternet", "pilotfiber", "svwh"]
-    _maybe(
-        native.new_http_archive,
-        name = "boost",
-        urls = [
-            "https://%s.dl.sourceforge.net/project/boost/boost/1.63.0/boost_1_63_0.tar.gz" % m
-            for m in SOURCEFORGE_MIRRORS
-        ],
-        build_file = "@com_github_nelhage_boost//:BUILD.boost",
-        strip_prefix = "boost_1_63_0",
-        sha256 = "fe34a4e119798e10b8cc9e565b3b0284e9fd3977ec8a1b19586ad1dec397088b",
-    )
-
     _maybe(
         native.http_archive,
-        name = "com_github_nelhage_boost",
-        sha256 = "5c88fc077f6b8111e997fec5146e5f9940ae9a2016eb9949447fcb4b482bcdb3",
-        strip_prefix = "rules_boost-7289bb1d8f938fdf98078297768c122ee9e11c9e",
+        name = "com_github_nelhage_rules_boost",
+        sha256 = "a55b00e0339b92fef1e0e0e4de3bbb856af206899d4c8ca77a498064290bb44c",
+        strip_prefix = "rules_boost-bd05f7b51d25396f30639d31fa78b55a3c1db182",
         urls = [
-            "https://mirror.bazel.build/github.com/nelhage/rules_boost/archive/7289bb1d8f938fdf98078297768c122ee9e11c9e.tar.gz",
-            "https://github.com/nelhage/rules_boost/archive/7289bb1d8f938fdf98078297768c122ee9e11c9e.tar.gz",
+            "https://mirror.bazel.build/github.com/nelhage/rules_boost/archive/bd05f7b51d25396f30639d31fa78b55a3c1db182.tar.gz",
+            "https://github.com/nelhage/rules_boost/archive/bd05f7b51d25396f30639d31fa78b55a3c1db182.tar.gz",
         ],
     )
 
