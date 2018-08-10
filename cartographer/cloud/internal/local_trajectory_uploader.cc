@@ -205,7 +205,7 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
 
       if (batch_request.sensor_data_size() == batch_size_) {
         async_grpc::Client<handlers::AddSensorDataBatchSignature> client(
-            client_channel_,
+            client_channel_, common::FromSeconds(10),
             async_grpc::CreateUnlimitedConstantDelayStrategy(
                 common::FromSeconds(1), kUnrecoverableStatusCodes));
         if (client.Write(batch_request)) {
