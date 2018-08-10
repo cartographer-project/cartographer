@@ -36,14 +36,15 @@ AccelerationConstraint3D::AccelerationConstraint3D(
 
 void AccelerationConstraint3D::AddToOptimizer(Nodes* nodes,
                                               ceres::Problem* problem) const {
-  FIND_NODE(first_node, first_, nodes->pose_3d_nodes,
-            "First node was not found in pose_3d_nodes.");
-  FIND_NODE(second_node, second_, nodes->pose_3d_nodes,
-            "Second node was not found in pose_3d_nodes.");
-  FIND_NODE(third_node, third_, nodes->pose_3d_nodes,
-            "Third node was not found in pose_3d_nodes.");
-  FIND_NODE(imu_node, imu_, nodes->imu_calibration_nodes,
-            "IMU calibration node was not found in imu_calibration_nodes.");
+  FIND_NODE_OR_RETURN(first_node, first_, nodes->pose_3d_nodes,
+                      "First node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_3d_nodes,
+                      "Second node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(third_node, third_, nodes->pose_3d_nodes,
+                      "Third node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(
+      imu_node, imu_, nodes->imu_calibration_nodes,
+      "IMU calibration node was not found in imu_calibration_nodes.");
 
   if (first_node->constant() && second_node->constant() &&
       third_node->constant() && imu_node->constant()) {

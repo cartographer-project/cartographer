@@ -17,6 +17,8 @@
 #include "cartographer/pose_graph/constraint/rotation_constraint_3d.h"
 
 #include "absl/memory/memory.h"
+#include "cartographer/pose_graph/constraint/constraint_utils.h"
+
 #include "cartographer/common/utils.h"
 
 namespace cartographer {
@@ -53,12 +55,12 @@ RotationContraint3D::RotationContraint3D(
 
 void RotationContraint3D::AddToOptimizer(Nodes* nodes,
                                          ceres::Problem* problem) const {
-  FIND_NODE(first_node, first_, nodes->pose_3d_nodes,
-            "First node was not found in pose_3d_nodes.");
-  FIND_NODE(second_node, second_, nodes->pose_3d_nodes,
-            "Second node was not found in pose_3d_nodes.");
-  FIND_NODE(imu_node, imu_calibration_, nodes->imu_calibration_nodes,
-            "Imu calibration node was not found.");
+  FIND_NODE_OR_RETURN(first_node, first_, nodes->pose_3d_nodes,
+                      "First node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_3d_nodes,
+                      "Second node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(imu_node, imu_calibration_, nodes->imu_calibration_nodes,
+                      "Imu calibration node was not found.");
 
   if (first_node->constant() && second_node->constant() &&
       imu_node->constant()) {

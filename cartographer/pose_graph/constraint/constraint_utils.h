@@ -25,26 +25,18 @@
 namespace cartographer {
 namespace pose_graph {
 
-#define FIND_NODE(node_name, node_id, map, log_message)                   \
-  FIND_NODE_IMPL(STATUS_MACROS_IMPL_CONCAT_(__node, __LINE__), node_name, \
-                 node_id, map, log_message)
-
-#define FIND_NODE_IMPL(node_item, node_name, node_id, map, log_message) \
-  auto node_item = common::FindOrNull(map, node_id);                    \
-  if (node_item == nullptr) {                                           \
-    LOG(INFO) << log_message;                                           \
-    return;                                                             \
-  }                                                                     \
-  auto node_name = node_item;
-
-#define STATUS_MACROS_IMPL_CONCAT_INNER_(x, y) x##y
-#define STATUS_MACROS_IMPL_CONCAT_(x, y) STATUS_MACROS_IMPL_CONCAT_INNER_(x, y)
-
 void AddPose2D(Pose2D* pose, ceres::Problem* problem);
 
 void AddPose3D(Pose3D* pose, ceres::Problem* problem);
 
 void AddImuCalibration(ImuCalibration* pose, ceres::Problem* problem);
+
+#define FIND_NODE_OR_RETURN(node_name, node_id, map, log_message) \
+  auto node_name = common::FindOrNull(map, node_id);              \
+  if (node_name == nullptr) {                                     \
+    LOG(INFO) << log_message;                                     \
+    return;                                                       \
+  }
 
 }  // namespace pose_graph
 }  // namespace cartographer
