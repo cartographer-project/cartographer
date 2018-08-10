@@ -34,7 +34,7 @@ TEST(OccupiedSpaceCostFunction2DTest, SmokeTest) {
   ValueConversionTables conversion_tables;
   ProbabilityGrid grid(MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)),
                        &conversion_tables);
-  sensor::PointCloud point_cloud = {Eigen::Vector3f{0.f, 0.f, 0.f}};
+  sensor::PointCloud point_cloud = {{Eigen::Vector3f{0.f, 0.f, 0.f}}};
   ceres::Problem problem;
   std::unique_ptr<ceres::CostFunction> cost_function(
       CreateOccupiedSpaceCostFunction2D(1.f, point_cloud, grid));

@@ -32,7 +32,8 @@ float EstimateNormal(const sensor::PointCloud& returns,
                      const size_t sample_window_begin,
                      const size_t sample_window_end,
                      const Eigen::Vector3f& sensor_origin) {
-  const Eigen::Vector3f& estimation_point = returns[estimation_point_index];
+  const Eigen::Vector3f& estimation_point =
+      returns[estimation_point_index].position;
   if (sample_window_end - sample_window_begin < 2) {
     return NormalTo2DAngle(sensor_origin - estimation_point);
   }
@@ -42,7 +43,7 @@ float EstimateNormal(const sensor::PointCloud& returns,
   for (size_t sample_point_index = sample_window_begin;
        sample_point_index < sample_window_end; ++sample_point_index) {
     if (sample_point_index == estimation_point_index) continue;
-    const Eigen::Vector3f& sample_point = returns[sample_point_index];
+    const Eigen::Vector3f& sample_point = returns[sample_point_index].position;
     const Eigen::Vector3f& tangent = estimation_point - sample_point;
     Eigen::Vector3f sample_normal = {-tangent[1], tangent[0], 0.f};
     constexpr float kMinNormalLength = 1e-6f;
@@ -83,11 +84,11 @@ std::vector<float> EstimateNormals(
   const float sample_radius = normal_estimation_options.sample_radius();
   for (size_t current_point = 0; current_point < range_data.returns.size();
        ++current_point) {
-    const Eigen::Vector3f& hit = range_data.returns[current_point];
+    const Eigen::Vector3f& hit = range_data.returns[current_point].position;
     size_t sample_window_begin = current_point;
     for (; sample_window_begin > 0 &&
            current_point - sample_window_begin < max_num_samples / 2 &&
-           (hit - range_data.returns[sample_window_begin - 1]).norm() <
+           (hit - range_data.returns[sample_window_begin - 1].position).norm() <
                sample_radius;
          --sample_window_begin) {
     }
@@ -95,7 +96,8 @@ std::vector<float> EstimateNormals(
     for (;
          sample_window_end < range_data.returns.size() &&
          sample_window_end - current_point < ceil(max_num_samples / 2.0) + 1 &&
-         (hit - range_data.returns[sample_window_end]).norm() < sample_radius;
+         (hit - range_data.returns[sample_window_end].position).norm() <
+             sample_radius;
          ++sample_window_end) {
     }
     const float normal_estimate =

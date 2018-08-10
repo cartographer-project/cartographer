@@ -75,9 +75,9 @@ TEST_F(ConstraintBuilder3DTest, FindsConstraints) {
   auto node_data = std::make_shared<TrajectoryNode::Data>();
   node_data->gravity_alignment = Eigen::Quaterniond::Identity();
   node_data->high_resolution_point_cloud.push_back(
-      Eigen::Vector3f(0.1, 0.2, 0.3));
+      {Eigen::Vector3f(0.1, 0.2, 0.3)});
   node_data->low_resolution_point_cloud.push_back(
-      Eigen::Vector3f(0.1, 0.2, 0.3));
+      {Eigen::Vector3f(0.1, 0.2, 0.3)});
   node_data->rotational_scan_matcher_histogram = Eigen::VectorXf::Zero(3);
   node_data->local_pose = transform::Rigid3d::Identity();
   node.constant_data = node_data;

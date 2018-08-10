@@ -52,13 +52,13 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
               CreateProbabilityGridRangeDataInserterOptions2D(
                   parameter_dictionary.get()));
     }
-    point_cloud_.emplace_back(0.025f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.025f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.075f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.125f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.075f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.025f, 0.f);
+    point_cloud_.push_back({Eigen::Vector3f{0.025f, 0.175f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.025f, 0.175f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.075f, 0.175f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.175f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.125f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.075f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.025f, 0.f}});
     range_data_inserter_->Insert(
         sensor::RangeData{Eigen::Vector3f::Zero(), point_cloud_, {}},
         &probability_grid_);

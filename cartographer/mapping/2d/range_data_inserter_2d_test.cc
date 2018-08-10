@@ -49,10 +49,10 @@ class RangeDataInserterTest2D : public ::testing::Test {
 
   void InsertPointCloud() {
     sensor::RangeData range_data;
-    range_data.returns.emplace_back(-3.5f, 0.5f, 0.f);
-    range_data.returns.emplace_back(-2.5f, 1.5f, 0.f);
-    range_data.returns.emplace_back(-1.5f, 2.5f, 0.f);
-    range_data.returns.emplace_back(-0.5f, 3.5f, 0.f);
+    range_data.returns.push_back({Eigen::Vector3f{-3.5f, 0.5f, 0.f}});
+    range_data.returns.push_back({Eigen::Vector3f{-2.5f, 1.5f, 0.f}});
+    range_data.returns.push_back({Eigen::Vector3f{-1.5f, 2.5f, 0.f}});
+    range_data.returns.push_back({Eigen::Vector3f{-0.5f, 3.5f, 0.f}});
     range_data.origin.x() = -0.5f;
     range_data.origin.y() = 0.5f;
     range_data_inserter_->Insert(range_data, &probability_grid_);

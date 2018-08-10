@@ -130,10 +130,10 @@ LocalTrajectoryBuilder2D::AddRangeData(
 
   CHECK(!synchronized_data.ranges.empty());
   // TODO(gaschler): Check if this can strictly be 0.
-  CHECK_LE(synchronized_data.ranges.back().point_time[3], 0.f);
+  CHECK_LE(synchronized_data.ranges.back().point_time.time, 0.f);
   const common::Time time_first_point =
       time +
-      common::FromSeconds(synchronized_data.ranges.front().point_time[3]);
+      common::FromSeconds(synchronized_data.ranges.front().point_time.time);
   if (time_first_point < extrapolator_->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
     return nullptr;
@@ -143,7 +143,7 @@ LocalTrajectoryBuilder2D::AddRangeData(
   range_data_poses.reserve(synchronized_data.ranges.size());
   bool warned = false;
   for (const auto& range : synchronized_data.ranges) {
-    common::Time time_point = time + common::FromSeconds(range.point_time[3]);
+    common::Time time_point = time + common::FromSeconds(range.point_time.time);
     if (time_point < extrapolator_->GetLastExtrapolatedTime()) {
       if (!warned) {
         LOG(ERROR)
@@ -166,20 +166,23 @@ LocalTrajectoryBuilder2D::AddRangeData(
   // Drop any returns below the minimum range and convert returns beyond the
   // maximum range into misses.
   for (size_t i = 0; i < synchronized_data.ranges.size(); ++i) {
-    const Eigen::Vector4f& hit = synchronized_data.ranges[i].point_time;
+    const sensor::TimedRangefinderPoint& hit =
+        synchronized_data.ranges[i].point_time;
     const Eigen::Vector3f origin_in_local =
         range_data_poses[i] *
         synchronized_data.origins.at(synchronized_data.ranges[i].origin_index);
-    const Eigen::Vector3f hit_in_local = range_data_poses[i] * hit.head<3>();
-    const Eigen::Vector3f delta = hit_in_local - origin_in_local;
+    sensor::RangefinderPoint hit_in_local =
+        range_data_poses[i] * sensor::ToRangefinderPoint(hit);
+    const Eigen::Vector3f delta = hit_in_local.position - origin_in_local;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
         accumulated_range_data_.returns.push_back(hit_in_local);
       } else {
-        accumulated_range_data_.misses.push_back(
+        hit_in_local.position =
             origin_in_local +
-            options_.missing_data_ray_length() / range * delta);
+            options_.missing_data_ray_length() / range * delta;
+        accumulated_range_data_.misses.push_back(hit_in_local);
       }
     }
   }

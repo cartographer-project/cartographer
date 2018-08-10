@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_IO_POINTS_BATCH_H_
 #define CARTOGRAPHER_IO_POINTS_BATCH_H_
 
+#include <cartographer/sensor/point_cloud.h>
 #include <array>
 #include <cstdint>
 #include <unordered_set>
@@ -52,7 +53,7 @@ struct PointsBatch {
   int trajectory_id;
 
   // Geometry of the points in the map frame.
-  std::vector<Eigen::Vector3f> points;
+  sensor::PointCloud points;
 
   // Intensities are optional and may be unspecified. The meaning of these
   // intensity values varies by device. For example, the VLP16 provides values

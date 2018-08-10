@@ -20,6 +20,15 @@ option java_outer_classname = "Sensor";
 
 import "cartographer/transform/proto/transform.proto";
 
+message RangefinderPoint {
+  transform.proto.Vector3f position = 1;
+}
+
+message TimedRangefinderPoint {
+  transform.proto.Vector3f position = 1;
+  float time = 2;
+}
+
 // Compressed collection of a 3D point cloud.
 message CompressedPointCloud {
   int32 num_points = 1;
@@ -30,14 +39,17 @@ message CompressedPointCloud {
 message TimedPointCloudData {
   int64 timestamp = 1;
   transform.proto.Vector3f origin = 2;
-  repeated transform.proto.Vector4f point_data = 3;
+  repeated transform.proto.Vector4f point_data_legacy = 3;
+  repeated TimedRangefinderPoint point_data = 4;
 }
 
 // Proto representation of ::cartographer::sensor::RangeData.
 message RangeData {
   transform.proto.Vector3f origin = 1;
-  repeated transform.proto.Vector3f returns = 2;
-  repeated transform.proto.Vector3f misses = 3;
+  repeated transform.proto.Vector3f returns_legacy = 2;
+  repeated transform.proto.Vector3f misses_legacy = 3;
+  repeated RangefinderPoint returns = 4;
+  repeated RangefinderPoint misses = 5;
 }
 
 // Proto representation of ::cartographer::sensor::ImuData.
