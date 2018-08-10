@@ -26,6 +26,8 @@ ceres::Problem::Options CreateCeresProblemOptions() {
       ceres::Ownership::DO_NOT_TAKE_OWNERSHIP;
   problem_options.loss_function_ownership =
       ceres::Ownership::DO_NOT_TAKE_OWNERSHIP;
+  problem_options.local_parameterization_ownership =
+      ceres::Ownership::DO_NOT_TAKE_OWNERSHIP;
   return problem_options;
 }
 

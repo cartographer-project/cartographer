@@ -31,12 +31,21 @@ void AddPose3D(Pose3D* pose, ceres::Problem* problem);
 
 void AddImuCalibration(ImuCalibration* pose, ceres::Problem* problem);
 
-#define FIND_NODE_OR_RETURN(node_name, node_id, map, log_message) \
-  auto node_name = common::FindOrNull(map, node_id);              \
-  if (node_name == nullptr) {                                     \
-    LOG(INFO) << log_message;                                     \
-    return;                                                       \
-  }
+#define FIND_NODE_OR_RETURN(node_name, node_id, map, log_message)      \
+  FIND_NODE_OR_RETURN_IMPL(MACRO_CONCAT_(__node, __LINE__), node_name, \
+                           node_id, map, log_message)
+
+#define FIND_NODE_OR_RETURN_IMPL(node_item, node_name, node_id, map, \
+                                 log_message)                        \
+  auto node_item = common::FindOrNull(map, node_id);                 \
+  if (node_item == nullptr) {                                        \
+    LOG(INFO) << log_message;                                        \
+    return;                                                          \
+  }                                                                  \
+  auto node_name = node_item->get();
+
+#define MACRO_CONCAT_IMPL_(x, y) x##y
+#define MACRO_CONCAT_(x, y) MACRO_CONCAT_IMPL_(x, y)
 
 }  // namespace pose_graph
 }  // namespace cartographer

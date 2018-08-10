@@ -14,40 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
-#define CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
+#ifndef CARTOGRAPHER_POSE_GRAPH_NODE_PARAMETERIZATION_PARAMETERIZATION_H_
+#define CARTOGRAPHER_POSE_GRAPH_NODE_PARAMETERIZATION_PARAMETERIZATION_H_
 
-#include "cartographer/pose_graph/node/node_id.h"
 #include "cartographer/pose_graph/proto/node.pb.h"
-
-#include <vector>
+#include "ceres/local_parameterization.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-class Node {
+class Parameterization {
  public:
-  explicit Node(const NodeId& id, bool constant) noexcept
-      : node_id_(id), constant_(constant) {}
+  explicit Parameterization(const proto::Parameterization& proto);
 
-  ~Node() = default;
+  const proto::Parameterization& ToProto() const { return proto_; }
 
-  proto::Node ToProto() const;
-
-  const NodeId node_id() const { return node_id_; }
-
-  bool constant() const { return constant_; }
-  void set_constant(bool constant) { constant_ = constant; }
-
- protected:
-  virtual proto::Parameters ToParametersProto() const = 0;
+  ceres::LocalParameterization* ceres_parameterization() const {
+    return ceres_parameterization_.get();
+  }
 
  private:
-  NodeId node_id_;
-  bool constant_;
+  const proto::Parameterization proto_;
+  const std::unique_ptr<ceres::LocalParameterization> ceres_parameterization_;
 };
 
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_NODE_PARAMETERIZATION_PARAMETERIZATION_H_
