@@ -40,7 +40,7 @@ struct TimedRangefinderPoint {
 };
 
 template <class T>
-RangefinderPoint operator*(const transform::Rigid3<T>& lhs,
+inline RangefinderPoint operator*(const transform::Rigid3<T>& lhs,
                            const RangefinderPoint& rhs) {
   RangefinderPoint result = rhs;
   result.position = lhs * rhs.position;
@@ -48,7 +48,7 @@ RangefinderPoint operator*(const transform::Rigid3<T>& lhs,
 }
 
 template <class T>
-TimedRangefinderPoint operator*(const transform::Rigid3<T>& lhs,
+inline TimedRangefinderPoint operator*(const transform::Rigid3<T>& lhs,
                                 const TimedRangefinderPoint& rhs) {
   TimedRangefinderPoint result = rhs;
   result.position = lhs * rhs.position;
