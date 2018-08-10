@@ -35,24 +35,12 @@ InterpolatedRelativePoseConstraint3D::InterpolatedRelativePoseConstraint3D(
 
 void InterpolatedRelativePoseConstraint3D::AddToOptimizer(
     Nodes* nodes, ceres::Problem* problem) const {
-  auto first_node_start =
-      common::FindOrNull(nodes->pose_3d_nodes, first_start_);
-  if (first_node_start == nullptr) {
-    LOG(INFO) << "First node (start) was not found in pose_3d_nodes.";
-    return;
-  }
-
-  auto first_node_end = common::FindOrNull(nodes->pose_3d_nodes, first_end_);
-  if (first_node_end == nullptr) {
-    LOG(INFO) << "First node (end) was not found in pose_3d_nodes.";
-    return;
-  }
-
-  auto second_node = common::FindOrNull(nodes->pose_3d_nodes, second_);
-  if (second_node == nullptr) {
-    LOG(INFO) << "Second node was not found in pose_3d_nodes.";
-    return;
-  }
+  FIND_NODE_OR_RETURN(first_node_start, first_start_, nodes->pose_3d_nodes,
+                      "First node (start) was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(first_node_end, first_end_, nodes->pose_3d_nodes,
+                      "First node (end) was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_3d_nodes,
+                      "Second node was not found in pose_3d_nodes.");
 
   if (first_node_start->constant() && first_node_end->constant() &&
       second_node->constant()) {
