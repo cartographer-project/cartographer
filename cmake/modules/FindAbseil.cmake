@@ -14,6 +14,8 @@
 
 cmake_minimum_required(VERSION 3.2)
 
+set(ABSEIL_LIBRARIES absl::synchronization absl::optional)
+
 include(${CMAKE_CURRENT_LIST_DIR}/FetchContent.cmake)
 FetchContent_Declare(abseil
   GIT_REPOSITORY   https://github.com/abseil/abseil-cpp.git
@@ -25,7 +27,7 @@ function(_populate_add_abseil)
   set(BUILD_TESTING OFF)
   add_subdirectory(${abseil_SOURCE_DIR} ${abseil_BINARY_DIR})
   add_library(standalone_absl INTERFACE IMPORTED GLOBAL)
-  target_link_libraries(standalone_absl INTERFACE absl_synchronization)
+  target_link_libraries(standalone_absl INTERFACE ${ABSEIL_LIBRARIES})
 endfunction()
 
 FetchContent_GetProperties(abseil)
