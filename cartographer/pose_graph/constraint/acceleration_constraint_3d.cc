@@ -36,29 +36,15 @@ AccelerationConstraint3D::AccelerationConstraint3D(
 
 void AccelerationConstraint3D::AddToOptimizer(Nodes* nodes,
                                               ceres::Problem* problem) const {
-  auto first_node = common::FindOrNull(nodes->pose_3d_nodes, first_);
-  if (first_node == nullptr) {
-    LOG(INFO) << "First node was not found in pose_3d_nodes.";
-    return;
-  }
-
-  auto second_node = common::FindOrNull(nodes->pose_3d_nodes, second_);
-  if (second_node == nullptr) {
-    LOG(INFO) << "Second node was not found in pose_3d_nodes.";
-    return;
-  }
-
-  auto third_node = common::FindOrNull(nodes->pose_3d_nodes, third_);
-  if (third_node == nullptr) {
-    LOG(INFO) << "Third node was not found in pose_3d_nodes.";
-    return;
-  }
-
-  auto imu_node = common::FindOrNull(nodes->imu_calibration_nodes, imu_);
-  if (imu_node == nullptr) {
-    LOG(INFO) << "IMU calibration node was not found in imu_calibration_nodes.";
-    return;
-  }
+  FIND_NODE_OR_RETURN(first_node, first_, nodes->pose_3d_nodes,
+                      "First node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_3d_nodes,
+                      "Second node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(third_node, third_, nodes->pose_3d_nodes,
+                      "Third node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(
+      imu_node, imu_, nodes->imu_calibration_nodes,
+      "IMU calibration node was not found in imu_calibration_nodes.");
 
   if (first_node->constant() && second_node->constant() &&
       third_node->constant() && imu_node->constant()) {

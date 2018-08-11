@@ -56,9 +56,9 @@ CompressedPointCloud::ConstIterator::EndIterator(
   return end_iterator;
 }
 
-Eigen::Vector3f CompressedPointCloud::ConstIterator::operator*() const {
+RangefinderPoint CompressedPointCloud::ConstIterator::operator*() const {
   CHECK_GT(remaining_points_, 0);
-  return current_point_;
+  return {current_point_};
 }
 
 CompressedPointCloud::ConstIterator& CompressedPointCloud::ConstIterator::
@@ -109,14 +109,14 @@ CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
   CHECK_LE(point_cloud.size(), std::numeric_limits<int>::max());
   for (int point_index = 0; point_index < static_cast<int>(point_cloud.size());
        ++point_index) {
-    const Eigen::Vector3f& point = point_cloud[point_index];
-    CHECK_LT(point.cwiseAbs().maxCoeff() / kPrecision,
+    const RangefinderPoint& point = point_cloud[point_index];
+    CHECK_LT(point.position.cwiseAbs().maxCoeff() / kPrecision,
              1 << kMaxBitsPerDirection)
-        << "Point out of bounds: " << point;
+        << "Point out of bounds: " << point.position;
     Eigen::Array3i raster_point;
     Eigen::Array3i block_coordinate;
     for (int i = 0; i < 3; ++i) {
-      raster_point[i] = common::RoundToInt(point[i] / kPrecision);
+      raster_point[i] = common::RoundToInt(point.position[i] / kPrecision);
       block_coordinate[i] = raster_point[i] >> kBitsPerCoordinate;
       raster_point[i] &= kCoordinateMask;
     }
@@ -170,14 +170,14 @@ CompressedPointCloud::ConstIterator CompressedPointCloud::end() const {
 
 PointCloud CompressedPointCloud::Decompress() const {
   PointCloud decompressed;
-  for (const Eigen::Vector3f& point : *this) {
+  for (const RangefinderPoint& point : *this) {
     decompressed.push_back(point);
   }
   return decompressed;
 }
 
-bool sensor::CompressedPointCloud::operator==(
-    const sensor::CompressedPointCloud& right_hand_container) const {
+bool CompressedPointCloud::operator==(
+    const CompressedPointCloud& right_hand_container) const {
   return point_data_ == right_hand_container.point_data_ &&
          num_points_ == right_hand_container.num_points_;
 }

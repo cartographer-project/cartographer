@@ -25,6 +25,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
 #include "cartographer/io/color.h"
+#include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
 namespace io {
@@ -52,7 +53,7 @@ struct PointsBatch {
   int trajectory_id;
 
   // Geometry of the points in the map frame.
-  std::vector<Eigen::Vector3f> points;
+  sensor::PointCloud points;
 
   // Intensities are optional and may be unspecified. The meaning of these
   // intensity values varies by device. For example, the VLP16 provides values

@@ -119,7 +119,8 @@ void PcdWritingPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
     WriteBinaryPcdHeader(has_colors_, 0, file_writer_.get());
   }
   for (size_t i = 0; i < batch->points.size(); ++i) {
-    WriteBinaryPcdPointCoordinate(batch->points[i], file_writer_.get());
+    WriteBinaryPcdPointCoordinate(batch->points[i].position,
+                                  file_writer_.get());
     if (!batch->colors.empty()) {
       WriteBinaryPcdPointColor(ToUint8Color(batch->colors[i]),
                                file_writer_.get());

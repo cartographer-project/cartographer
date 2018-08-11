@@ -136,7 +136,7 @@ void PlyWritingPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   }
 
   for (size_t i = 0; i < batch->points.size(); ++i) {
-    WriteBinaryPlyPointCoordinate(batch->points[i], file_.get());
+    WriteBinaryPlyPointCoordinate(batch->points[i].position, file_.get());
     if (has_colors_) {
       WriteBinaryPlyPointColor(ToUint8Color(batch->colors[i]), file_.get());
     }
