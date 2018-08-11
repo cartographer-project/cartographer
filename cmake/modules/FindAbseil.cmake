@@ -25,6 +25,7 @@ FetchContent_Declare(abseil
 function(_populate_add_abseil)
   FetchContent_Populate(abseil)
   set(BUILD_TESTING OFF)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
   add_subdirectory(${abseil_SOURCE_DIR} ${abseil_BINARY_DIR})
   add_library(standalone_absl INTERFACE IMPORTED GLOBAL)
   target_link_libraries(standalone_absl INTERFACE ${ABSEIL_LIBRARIES})
