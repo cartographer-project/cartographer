@@ -17,7 +17,6 @@
 #ifndef CARTOGRAPHER_IO_POINTS_BATCH_H_
 #define CARTOGRAPHER_IO_POINTS_BATCH_H_
 
-#include <cartographer/sensor/point_cloud.h>
 #include <array>
 #include <cstdint>
 #include <unordered_set>
@@ -26,6 +25,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
 #include "cartographer/io/color.h"
+#include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
 namespace io {
