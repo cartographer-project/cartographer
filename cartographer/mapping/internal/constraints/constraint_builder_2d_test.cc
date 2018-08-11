@@ -70,7 +70,7 @@ TEST_F(ConstraintBuilder2DTest, CallsBack) {
 TEST_F(ConstraintBuilder2DTest, FindsConstraints) {
   TrajectoryNode::Data node_data;
   node_data.filtered_gravity_aligned_point_cloud.push_back(
-      Eigen::Vector3f(0.1, 0.2, 0.3));
+      {Eigen::Vector3f(0.1, 0.2, 0.3)});
   node_data.gravity_alignment = Eigen::Quaterniond::Identity();
   node_data.local_pose = transform::Rigid3d::Identity();
   SubmapId submap_id{0, 1};

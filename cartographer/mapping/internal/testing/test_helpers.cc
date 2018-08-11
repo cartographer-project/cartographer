@@ -56,8 +56,10 @@ GenerateFakeRangeMeasurements(const Eigen::Vector3f& translation,
   for (double angle = 0.; angle < M_PI; angle += 0.01) {
     for (double height : {-0.4, -0.2, 0.0, 0.2, 0.4}) {
       constexpr double kRadius = 5;
-      point_cloud.emplace_back(kRadius * std::cos(angle),
-                               kRadius * std::sin(angle), height, 0.);
+      point_cloud.push_back({Eigen::Vector3d{kRadius * std::cos(angle),
+                                             kRadius * std::sin(angle), height}
+                                 .cast<float>(),
+                             0.});
     }
   }
   const Eigen::Vector3f kVelocity = translation / duration;

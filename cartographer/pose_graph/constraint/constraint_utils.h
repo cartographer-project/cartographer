@@ -31,6 +31,13 @@ void AddPose3D(Pose3D* pose, ceres::Problem* problem);
 
 void AddImuCalibration(ImuCalibration* pose, ceres::Problem* problem);
 
+#define FIND_NODE_OR_RETURN(node_name, node_id, map, log_message) \
+  auto node_name = common::FindOrNull(map, node_id);              \
+  if (node_name == nullptr) {                                     \
+    LOG(INFO) << log_message;                                     \
+    return;                                                       \
+  }
+
 }  // namespace pose_graph
 }  // namespace cartographer
 

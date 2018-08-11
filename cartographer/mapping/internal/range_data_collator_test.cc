@@ -29,13 +29,13 @@ const int kNumSamples = 10;
 sensor::TimedPointCloudData CreateFakeRangeData(int from, int to) {
   double duration = common::ToSeconds(common::FromUniversal(to) -
                                       common::FromUniversal(from));
-  sensor::TimedPointCloudData result{common::FromUniversal(to),
-                                     Eigen::Vector3f(0., 1., 2.),
-                                     sensor::TimedPointCloud(kNumSamples)};
+  sensor::TimedPointCloudData result{
+      common::FromUniversal(to), Eigen::Vector3f(0., 1., 2.), {}};
+  result.ranges.reserve(kNumSamples);
   for (int i = 0; i < kNumSamples; ++i) {
     double fraction = static_cast<double>(i) / (kNumSamples - 1);
-    double relative_time = (1.f - fraction) * -duration;
-    result.ranges[i] = Eigen::Vector4f(1., 2., 3., relative_time);
+    float relative_time = (1.f - fraction) * -duration;
+    result.ranges.push_back({Eigen::Vector3f{1., 2., 3.}, relative_time});
   }
   return result;
 }
@@ -44,7 +44,7 @@ bool ArePointTimestampsSorted(const sensor::TimedPointCloudOriginData& data) {
   std::vector<float> timestamps;
   timestamps.reserve(data.ranges.size());
   for (const auto& range : data.ranges) {
-    timestamps.push_back(range.point_time[3]);
+    timestamps.push_back(range.point_time.time);
   }
   return std::is_sorted(timestamps.begin(), timestamps.end());
 }
@@ -66,14 +66,14 @@ TEST(RangeDataCollatorTest, SingleSensor) {
   EXPECT_TRUE(ArePointTimestampsSorted(output_1));
   EXPECT_NEAR(common::ToUniversal(
                   output_1.time +
-                  common::FromSeconds(output_1.ranges[0].point_time[3])),
+                  common::FromSeconds(output_1.ranges[0].point_time.time)),
               300, 2);
   auto output_2 =
       collator.AddRangeData(sensor_id, CreateFakeRangeData(-1000, 510));
   EXPECT_EQ(common::ToUniversal(output_2.time), 510);
   EXPECT_EQ(output_2.origins.size(), 1);
   EXPECT_EQ(output_2.ranges.size(), 1);
-  EXPECT_EQ(output_2.ranges[0].point_time[3], 0.f);
+  EXPECT_EQ(output_2.ranges[0].point_time.time, 0.f);
   EXPECT_TRUE(ArePointTimestampsSorted(output_2));
 }
 
@@ -93,14 +93,14 @@ TEST(RangeDataCollatorTest, SingleSensorEmptyData) {
   EXPECT_TRUE(ArePointTimestampsSorted(output_1));
   EXPECT_NEAR(common::ToUniversal(
                   output_1.time +
-                  common::FromSeconds(output_1.ranges[0].point_time[3])),
+                  common::FromSeconds(output_1.ranges[0].point_time.time)),
               300, 2);
   auto output_2 =
       collator.AddRangeData(sensor_id, CreateFakeRangeData(-1000, 510));
   EXPECT_EQ(common::ToUniversal(output_2.time), 510);
   EXPECT_EQ(output_2.origins.size(), 1);
   EXPECT_EQ(output_2.ranges.size(), 1);
-  EXPECT_EQ(output_2.ranges[0].point_time[3], 0.f);
+  EXPECT_EQ(output_2.ranges[0].point_time.time, 0.f);
   EXPECT_TRUE(ArePointTimestampsSorted(output_2));
 }
 
@@ -118,9 +118,9 @@ TEST(RangeDataCollatorTest, TwoSensors) {
   ASSERT_EQ(output_1.ranges.size(), 2 * kNumSamples - 1);
   EXPECT_NEAR(common::ToUniversal(
                   output_1.time +
-                  common::FromSeconds(output_1.ranges[0].point_time[3])),
+                  common::FromSeconds(output_1.ranges[0].point_time.time)),
               -1000, 2);
-  EXPECT_EQ(output_1.ranges.back().point_time[3], 0.f);
+  EXPECT_EQ(output_1.ranges.back().point_time.time, 0.f);
   EXPECT_TRUE(ArePointTimestampsSorted(output_1));
   auto output_2 =
       collator.AddRangeData(sensor_0, CreateFakeRangeData(300, 500));
@@ -129,9 +129,9 @@ TEST(RangeDataCollatorTest, TwoSensors) {
   ASSERT_EQ(output_2.ranges.size(), 2);
   EXPECT_NEAR(common::ToUniversal(
                   output_2.time +
-                  common::FromSeconds(output_2.ranges[0].point_time[3])),
+                  common::FromSeconds(output_2.ranges[0].point_time.time)),
               300, 2);
-  EXPECT_EQ(output_2.ranges.back().point_time[3], 0.f);
+  EXPECT_EQ(output_2.ranges.back().point_time.time, 0.f);
   EXPECT_TRUE(ArePointTimestampsSorted(output_2));
   // Sending the same sensor will flush everything before.
   auto output_3 =
@@ -140,7 +140,7 @@ TEST(RangeDataCollatorTest, TwoSensors) {
   EXPECT_EQ(
       output_1.ranges.size() + output_2.ranges.size() + output_3.ranges.size(),
       3 * kNumSamples);
-  EXPECT_EQ(output_3.ranges.back().point_time[3], 0.f);
+  EXPECT_EQ(output_3.ranges.back().point_time.time, 0.f);
   EXPECT_TRUE(ArePointTimestampsSorted(output_3));
 }
 

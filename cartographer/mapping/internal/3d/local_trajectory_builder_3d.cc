@@ -137,10 +137,10 @@ LocalTrajectoryBuilder3D::AddRangeData(
   }
 
   CHECK(!synchronized_data.ranges.empty());
-  CHECK_LE(synchronized_data.ranges.back().point_time[3], 0.f);
+  CHECK_LE(synchronized_data.ranges.back().point_time.time, 0.f);
   const common::Time time_first_point =
       current_sensor_time +
-      common::FromSeconds(synchronized_data.ranges.front().point_time[3]);
+      common::FromSeconds(synchronized_data.ranges.front().point_time.time);
   if (time_first_point < extrapolator_->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
     return nullptr;
@@ -156,7 +156,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
 
   for (const auto& hit : hits) {
     common::Time time_point =
-        current_sensor_time + common::FromSeconds(hit.point_time[3]);
+        current_sensor_time + common::FromSeconds(hit.point_time.time);
     if (time_point < extrapolator_->GetLastExtrapolatedTime()) {
       if (!warned) {
         LOG(ERROR)
@@ -176,11 +176,11 @@ LocalTrajectoryBuilder3D::AddRangeData(
   }
 
   for (size_t i = 0; i < hits.size(); ++i) {
-    const Eigen::Vector3f hit_in_local =
-        hits_poses[i] * hits[i].point_time.head<3>();
+    sensor::RangefinderPoint hit_in_local =
+        hits_poses[i] * sensor::ToRangefinderPoint(hits[i].point_time);
     const Eigen::Vector3f origin_in_local =
         hits_poses[i] * synchronized_data.origins.at(hits[i].origin_index);
-    const Eigen::Vector3f delta = hit_in_local - origin_in_local;
+    const Eigen::Vector3f delta = hit_in_local.position - origin_in_local;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
@@ -189,8 +189,9 @@ LocalTrajectoryBuilder3D::AddRangeData(
         // We insert a ray cropped to 'max_range' as a miss for hits beyond the
         // maximum range. This way the free space up to the maximum range will
         // be updated.
-        accumulated_range_data_.misses.push_back(
-            origin_in_local + options_.max_range() / range * delta);
+        hit_in_local.position =
+            origin_in_local + options_.max_range() / range * delta;
+        accumulated_range_data_.misses.push_back(hit_in_local);
       }
     }
   }

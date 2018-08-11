@@ -34,11 +34,11 @@ namespace {
 std::unique_ptr<PointsBatch> CreatePointsBatch() {
   auto points_batch = ::absl::make_unique<PointsBatch>();
   points_batch->origin = Eigen::Vector3f(0, 0, 0);
-  points_batch->points.emplace_back(0.0f, 0.0f, 0.0f);
-  points_batch->points.emplace_back(0.0f, 1.0f, 2.0f);
-  points_batch->points.emplace_back(1.0f, 2.0f, 4.0f);
-  points_batch->points.emplace_back(0.0f, 3.0f, 5.0f);
-  points_batch->points.emplace_back(3.0f, 0.0f, 6.0f);
+  points_batch->points.push_back({Eigen::Vector3f{0.0f, 0.0f, 0.0f}});
+  points_batch->points.push_back({Eigen::Vector3f{0.0f, 1.0f, 2.0f}});
+  points_batch->points.push_back({Eigen::Vector3f{1.0f, 2.0f, 4.0f}});
+  points_batch->points.push_back({Eigen::Vector3f{0.0f, 3.0f, 5.0f}});
+  points_batch->points.push_back({Eigen::Vector3f{3.0f, 0.0f, 6.0f}});
   return points_batch;
 }
 
