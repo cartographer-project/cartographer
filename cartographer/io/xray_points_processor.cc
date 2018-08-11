@@ -196,9 +196,9 @@ void XRayPointsProcessor::Insert(const PointsBatch& batch,
                                  Aggregation* const aggregation) {
   constexpr FloatColor kDefaultColor = {{0.f, 0.f, 0.f}};
   for (size_t i = 0; i < batch.points.size(); ++i) {
-    const Eigen::Vector3f camera_point = transform_ * batch.points[i];
+    const sensor::RangefinderPoint camera_point = transform_ * batch.points[i];
     const Eigen::Array3i cell_index =
-        aggregation->voxels.GetCellIndex(camera_point);
+        aggregation->voxels.GetCellIndex(camera_point.position);
     *aggregation->voxels.mutable_value(cell_index) = true;
     bounding_box_.extend(cell_index.matrix());
     ColumnData& column_data =

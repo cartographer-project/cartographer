@@ -26,7 +26,7 @@ PointCloud TransformPointCloud(const PointCloud& point_cloud,
                                const transform::Rigid3f& transform) {
   PointCloud result;
   result.reserve(point_cloud.size());
-  for (const Eigen::Vector3f& point : point_cloud) {
+  for (const RangefinderPoint& point : point_cloud) {
     result.emplace_back(transform * point);
   }
   return result;
@@ -36,11 +36,8 @@ TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
                                          const transform::Rigid3f& transform) {
   TimedPointCloud result;
   result.reserve(point_cloud.size());
-  for (const Eigen::Vector4f& point : point_cloud) {
-    Eigen::Vector4f result_point;
-    result_point.head<3>() = transform * point.head<3>();
-    result_point[3] = point[3];
-    result.emplace_back(result_point);
+  for (const TimedRangefinderPoint& point : point_cloud) {
+    result.push_back(transform * point);
   }
   return result;
 }
@@ -48,8 +45,8 @@ TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
 PointCloud CropPointCloud(const PointCloud& point_cloud, const float min_z,
                           const float max_z) {
   PointCloud cropped_point_cloud;
-  for (const Eigen::Vector3f& point : point_cloud) {
-    if (min_z <= point.z() && point.z() <= max_z) {
+  for (const RangefinderPoint& point : point_cloud) {
+    if (min_z <= point.position.z() && point.position.z() <= max_z) {
       cropped_point_cloud.push_back(point);
     }
   }
@@ -59,8 +56,8 @@ PointCloud CropPointCloud(const PointCloud& point_cloud, const float min_z,
 TimedPointCloud CropTimedPointCloud(const TimedPointCloud& point_cloud,
                                     const float min_z, const float max_z) {
   TimedPointCloud cropped_point_cloud;
-  for (const Eigen::Vector4f& point : point_cloud) {
-    if (min_z <= point.z() && point.z() <= max_z) {
+  for (const TimedRangefinderPoint& point : point_cloud) {
+    if (min_z <= point.position.z() && point.position.z() <= max_z) {
       cropped_point_cloud.push_back(point);
     }
   }

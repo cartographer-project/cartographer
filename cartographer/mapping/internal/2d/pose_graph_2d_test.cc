@@ -44,7 +44,8 @@ class PoseGraph2DTest : public ::testing::Test {
     // kMinProbability) to unknown space (== kMinProbability).
     for (float t = 0.f; t < 2.f * M_PI; t += 0.005f) {
       const float r = (std::sin(20.f * t) + 2.f) * std::sin(t + 2.f);
-      point_cloud_.emplace_back(r * std::sin(t), r * std::cos(t), 0.f);
+      point_cloud_.push_back(
+          {Eigen::Vector3f{r * std::sin(t), r * std::cos(t), 0.f}});
     }
 
     {
