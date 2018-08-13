@@ -60,7 +60,7 @@ std::set<SubmapId> AddSubmapsToSubmapCoverageGrid2D(
   for (const auto& submap : submap_data) {
     auto freshness = submap_freshness.find(submap.id);
     if (freshness == submap_freshness.end()) continue;
-    if (!submap.data.submap->finished()) continue;
+    if (!submap.data.submap->insertion_finished()) continue;
     all_submap_ids.insert(submap.id);
     const Grid2D& grid =
         *std::static_pointer_cast<const Submap2D>(submap.data.submap)->grid();
