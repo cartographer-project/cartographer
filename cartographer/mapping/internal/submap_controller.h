@@ -47,7 +47,7 @@ class SubmapController {
 
     // If the submap was just finished by the recent update, remove it from
     // the list of unfinished submaps.
-    if (submap_ptr->finished()) {
+    if (submap_ptr->insertion_finished()) {
       unfinished_submaps_.Trim(submap_id);
     } else {
       // If the submap is unfinished set the 'num_range_data' to 0 since we

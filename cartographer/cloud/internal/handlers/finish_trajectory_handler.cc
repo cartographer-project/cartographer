@@ -41,9 +41,14 @@ void FinishTrajectoryHandler::OnRequest(
       ->NotifyFinishTrajectory(request.trajectory_id());
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    GetContext<MapBuilderContextInterface>()
-        ->local_trajectory_uploader()
-        ->FinishTrajectory(request.client_id(), request.trajectory_id());
+    auto status =
+        GetContext<MapBuilderContextInterface>()
+            ->local_trajectory_uploader()
+            ->FinishTrajectory(request.client_id(), request.trajectory_id());
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to finish trajectory in uplink: "
+                 << status.error_message();
+    }
   }
   Send(absl::make_unique<google::protobuf::Empty>());
 }

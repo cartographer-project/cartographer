@@ -82,12 +82,12 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   // complete.
   void Shutdown() final;
 
-  bool AddTrajectory(
+  grpc::Status AddTrajectory(
       const std::string& client_id, int local_trajectory_id,
       const std::set<SensorId>& expected_sensor_ids,
       const mapping::proto::TrajectoryBuilderOptions& trajectory_options) final;
-  void FinishTrajectory(const std::string& client_id,
-                        int local_trajectory_id) final;
+  grpc::Status FinishTrajectory(const std::string& client_id,
+                                int local_trajectory_id) final;
   void EnqueueSensorData(std::unique_ptr<proto::SensorData> sensor_data) final;
   void TryRecovery();
 
@@ -98,7 +98,8 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 
  private:
   void ProcessSendQueue();
-  void TranslateTrajectoryId(proto::SensorMetadata* sensor_metadata);
+  // Returns 'false' for failure.
+  bool TranslateTrajectoryId(proto::SensorMetadata* sensor_metadata);
 
   std::shared_ptr<::grpc::Channel> client_channel_;
   int batch_size_;
@@ -124,12 +125,12 @@ LocalTrajectoryUploader::LocalTrajectoryUploader(
         grpc::CompositeChannelCredentials(channel_creds, call_creds);
   }
   client_channel_ = ::grpc::CreateChannel(uplink_server_address, channel_creds);
-  std::chrono::system_clock::time_point deadline(
+  std::chrono::system_clock::time_point deadline =
       std::chrono::system_clock::now() +
-      std::chrono::seconds(kConnectionTimeoutInSeconds));
+      std::chrono::seconds(kConnectionTimeoutInSeconds);
   LOG(INFO) << "Connecting to uplink " << uplink_server_address;
   if (!client_channel_->WaitForConnected(deadline)) {
-    LOG(FATAL) << "Failed to connect to " << uplink_server_address;
+    LOG(ERROR) << "Failed to connect to " << uplink_server_address;
   }
 }
 
@@ -151,7 +152,11 @@ void LocalTrajectoryUploader::Shutdown() {
 
 void LocalTrajectoryUploader::TryRecovery() {
   // Wind the sensor_data_queue forward to the next new submap.
+  LOG(INFO) << "LocalTrajectoryUploader tries to recover with next submap.";
   while (true) {
+    if (shutting_down_) {
+      return;
+    }
     proto::SensorData* sensor_data =
         send_queue_.PeekWithTimeout<proto::SensorData>(kPopTimeout);
     if (sensor_data) {
@@ -173,13 +178,16 @@ void LocalTrajectoryUploader::TryRecovery() {
       local_trajectory_id_to_trajectory_info_;
   local_trajectory_id_to_trajectory_info_.clear();
   for (const auto& entry : local_trajectory_id_to_trajectory_info) {
-    if (!AddTrajectory(entry.second.client_id, entry.first,
-                       entry.second.expected_sensor_ids,
-                       entry.second.trajectory_options)) {
-      LOG(ERROR) << "Failed to create trajectory. Aborting recovery attempt.";
+    grpc::Status status = AddTrajectory(entry.second.client_id, entry.first,
+                                        entry.second.expected_sensor_ids,
+                                        entry.second.trajectory_options);
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to create trajectory. Aborting recovery attempt. "
+                 << status.error_message();
       return;
     }
   }
+  LOG(INFO) << "LocalTrajectoryUploader recovered.";
 }
 
 void LocalTrajectoryUploader::ProcessSendQueue() {
@@ -188,9 +196,13 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
   while (!shutting_down_) {
     auto sensor_data = send_queue_.PopWithTimeout(kPopTimeout);
     if (sensor_data) {
+      if (!TranslateTrajectoryId(sensor_data->mutable_sensor_metadata())) {
+        batch_request.clear_sensor_data();
+        TryRecovery();
+        continue;
+      }
       proto::SensorData* added_sensor_data = batch_request.add_sensor_data();
       *added_sensor_data = *sensor_data;
-      TranslateTrajectoryId(added_sensor_data->mutable_sensor_metadata());
 
       // A submap also holds a trajectory id that must be translated to uplink's
       // trajectory id.
@@ -205,7 +217,7 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
 
       if (batch_request.sensor_data_size() == batch_size_) {
         async_grpc::Client<handlers::AddSensorDataBatchSignature> client(
-            client_channel_, common::FromSeconds(10),
+            client_channel_, common::FromSeconds(kConnectionTimeoutInSeconds),
             async_grpc::CreateUnlimitedConstantDelayStrategy(
                 common::FromSeconds(1), kUnrecoverableStatusCodes));
         if (client.Write(batch_request)) {
@@ -222,15 +234,19 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
   }
 }
 
-void LocalTrajectoryUploader::TranslateTrajectoryId(
+bool LocalTrajectoryUploader::TranslateTrajectoryId(
     proto::SensorMetadata* sensor_metadata) {
-  int cloud_trajectory_id = local_trajectory_id_to_trajectory_info_
-                                .at(sensor_metadata->trajectory_id())
-                                .uplink_trajectory_id;
+  auto it = local_trajectory_id_to_trajectory_info_.find(
+      sensor_metadata->trajectory_id());
+  if (it == local_trajectory_id_to_trajectory_info_.end()) {
+    return false;
+  }
+  int cloud_trajectory_id = it->second.uplink_trajectory_id;
   sensor_metadata->set_trajectory_id(cloud_trajectory_id);
+  return true;
 }
 
-bool LocalTrajectoryUploader::AddTrajectory(
+grpc::Status LocalTrajectoryUploader::AddTrajectory(
     const std::string& client_id, int local_trajectory_id,
     const std::set<SensorId>& expected_sensor_ids,
     const mapping::proto::TrajectoryBuilderOptions& trajectory_options) {
@@ -245,11 +261,12 @@ bool LocalTrajectoryUploader::AddTrajectory(
   }
   *request.add_expected_sensor_ids() =
       cloud::ToProto(GetLocalSlamResultSensorId(local_trajectory_id));
-  async_grpc::Client<handlers::AddTrajectorySignature> client(client_channel_);
+  async_grpc::Client<handlers::AddTrajectorySignature> client(
+      client_channel_, common::FromSeconds(kConnectionTimeoutInSeconds));
   ::grpc::Status status;
   if (!client.Write(request, &status)) {
     LOG(ERROR) << status.error_message();
-    return false;
+    return status;
   }
   LOG(INFO) << "Created trajectory for client_id: " << client_id
             << " local trajectory_id: " << local_trajectory_id
@@ -261,22 +278,26 @@ bool LocalTrajectoryUploader::AddTrajectory(
       std::forward_as_tuple(client.response().trajectory_id(),
                             expected_sensor_ids, trajectory_options,
                             client_id));
-  return true;
+  return status;
 }
 
-void LocalTrajectoryUploader::FinishTrajectory(const std::string& client_id,
-                                               int local_trajectory_id) {
-  CHECK_EQ(local_trajectory_id_to_trajectory_info_.count(local_trajectory_id),
-           1);
-  int cloud_trajectory_id =
-      local_trajectory_id_to_trajectory_info_.at(local_trajectory_id)
-          .uplink_trajectory_id;
+grpc::Status LocalTrajectoryUploader::FinishTrajectory(
+    const std::string& client_id, int local_trajectory_id) {
+  auto it = local_trajectory_id_to_trajectory_info_.find(local_trajectory_id);
+  if (it == local_trajectory_id_to_trajectory_info_.end()) {
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                        "local_trajectory_id has not been"
+                        " registered with AddTrajectory.");
+  }
+  int cloud_trajectory_id = it->second.uplink_trajectory_id;
   proto::FinishTrajectoryRequest request;
   request.set_client_id(client_id);
   request.set_trajectory_id(cloud_trajectory_id);
   async_grpc::Client<handlers::FinishTrajectorySignature> client(
-      client_channel_);
-  CHECK(client.Write(request));
+      client_channel_, common::FromSeconds(kConnectionTimeoutInSeconds));
+  grpc::Status status;
+  client.Write(request, &status);
+  return status;
 }
 
 void LocalTrajectoryUploader::EnqueueSensorData(
