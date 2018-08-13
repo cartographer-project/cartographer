@@ -192,7 +192,7 @@ void MapBuilderServer::OnLocalSlamResult(
                                        time, starting_submap_index_,
                                        *insertion_result, sensor_data.get());
     // TODO(cschuet): Make this more robust.
-    if (insertion_result->insertion_submaps.front()->finished()) {
+    if (insertion_result->insertion_submaps.front()->insertion_finished()) {
       ++starting_submap_index_;
     }
     grpc_server_->GetUnsynchronizedContext<MapBuilderContextInterface>()

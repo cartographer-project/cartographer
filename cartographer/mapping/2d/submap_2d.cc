@@ -90,7 +90,7 @@ Submap2D::Submap2D(const proto::Submap2D& proto,
     }
   }
   set_num_range_data(proto.num_range_data());
-  set_finished(proto.finished());
+  set_insertion_finished(proto.finished());
 }
 
 proto::Submap Submap2D::ToProto(const bool include_grid_data) const {
@@ -98,7 +98,7 @@ proto::Submap Submap2D::ToProto(const bool include_grid_data) const {
   auto* const submap_2d = proto.mutable_submap_2d();
   *submap_2d->mutable_local_pose() = transform::ToProto(local_pose());
   submap_2d->set_num_range_data(num_range_data());
-  submap_2d->set_finished(finished());
+  submap_2d->set_finished(insertion_finished());
   if (include_grid_data) {
     CHECK(grid_);
     *submap_2d->mutable_grid() = grid_->ToProto();
@@ -110,7 +110,7 @@ void Submap2D::UpdateFromProto(const proto::Submap& proto) {
   CHECK(proto.has_submap_2d());
   const auto& submap_2d = proto.submap_2d();
   set_num_range_data(submap_2d.num_range_data());
-  set_finished(submap_2d.finished());
+  set_insertion_finished(submap_2d.finished());
   if (proto.submap_2d().has_grid()) {
     if (proto.submap_2d().grid().has_probability_grid_2d()) {
       grid_ = absl::make_unique<ProbabilityGrid>(proto.submap_2d().grid(),
@@ -138,16 +138,16 @@ void Submap2D::InsertRangeData(
     const sensor::RangeData& range_data,
     const RangeDataInserterInterface* range_data_inserter) {
   CHECK(grid_);
-  CHECK(!finished());
+  CHECK(!insertion_finished());
   range_data_inserter->Insert(range_data, grid_.get());
   set_num_range_data(num_range_data() + 1);
 }
 
 void Submap2D::Finish() {
   CHECK(grid_);
-  CHECK(!finished());
+  CHECK(!insertion_finished());
   grid_ = grid_->ComputeCroppedGrid();
-  set_finished(true);
+  set_insertion_finished(true);
 }
 
 ActiveSubmaps2D::ActiveSubmaps2D(const proto::SubmapsOptions2D& options)
@@ -225,7 +225,7 @@ void ActiveSubmaps2D::AddSubmap(const Eigen::Vector2f& origin) {
   if (submaps_.size() >= 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
-    CHECK(submaps_.front()->finished());
+    CHECK(submaps_.front()->insertion_finished());
     submaps_.erase(submaps_.begin());
   }
   submaps_.push_back(absl::make_unique<Submap2D>(
