@@ -52,13 +52,13 @@ CreateRealTimeCorrelativeScanMatcherTestOptions2D() {
 class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
  protected:
   RealTimeCorrelativeScanMatcherTest() {
-    point_cloud_.emplace_back(0.025f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.025f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.075f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.125f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.075f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.025f, 0.f);
+    point_cloud_.push_back({Eigen::Vector3f{0.025f, 0.175f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.025f, 0.175f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.075f, 0.175f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.175f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.125f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.075f, 0.f}});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.025f, 0.f}});
     real_time_correlative_scan_matcher_ =
         absl::make_unique<RealTimeCorrelativeScanMatcher2D>(
             CreateRealTimeCorrelativeScanMatcherTestOptions2D());
@@ -108,13 +108,6 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
               CreateProbabilityGridRangeDataInserterOptions2D(
                   parameter_dictionary.get()));
     }
-    point_cloud_.emplace_back(0.025f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.025f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.075f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.175f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.125f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.075f, 0.f);
-    point_cloud_.emplace_back(-0.125f, 0.025f, 0.f);
     range_data_inserter_->Insert(
         sensor::RangeData{Eigen::Vector3f::Zero(), point_cloud_, {}},
         grid_.get());
@@ -176,7 +169,7 @@ TEST_F(RealTimeCorrelativeScanMatcherTest,
   std::vector<Candidate2D> candidates;
   candidates.emplace_back(0, 0, 1, SearchParameters(0, 0, 0., 0.));
   real_time_correlative_scan_matcher_->ScoreCandidates(
-      *grid_.get(), discrete_scans, SearchParameters(0, 0, 0., 0.),
+      *grid_, discrete_scans, SearchParameters(0, 0, 0., 0.),
       &candidates);
   EXPECT_EQ(0, candidates[0].scan_index);
   EXPECT_EQ(0, candidates[0].x_index_offset);
@@ -196,7 +189,7 @@ TEST_F(RealTimeCorrelativeScanMatcherTest,
   std::vector<Candidate2D> candidates;
   candidates.emplace_back(0, 0, 1, SearchParameters(0, 0, 0., 0.));
   real_time_correlative_scan_matcher_->ScoreCandidates(
-      *grid_.get(), discrete_scans, SearchParameters(0, 0, 0., 0.),
+      *grid_, discrete_scans, SearchParameters(0, 0, 0., 0.),
       &candidates);
   EXPECT_EQ(0, candidates[0].scan_index);
   EXPECT_EQ(0, candidates[0].x_index_offset);
