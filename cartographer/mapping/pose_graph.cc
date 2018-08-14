@@ -134,7 +134,7 @@ proto::PoseGraph PoseGraph::ToProto(bool include_unfinished_submaps) const {
     proto::Trajectory* trajectory_proto =
         trajectory(submap_id_data.id.trajectory_id);
     if (!include_unfinished_submaps &&
-        !submap_id_data.data.submap->finished()) {
+        !submap_id_data.data.submap->insertion_finished()) {
       // Collect IDs of all unfinished submaps and skip them.
       unfinished_submaps.insert(submap_id_data.id);
       continue;

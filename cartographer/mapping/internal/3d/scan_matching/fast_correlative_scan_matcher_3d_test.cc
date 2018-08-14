@@ -41,12 +41,12 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
 
   void SetUp() override {
     point_cloud_ = {
-        Eigen::Vector3f(4.f, 0.f, 0.f), Eigen::Vector3f(4.5f, 0.f, 0.f),
-        Eigen::Vector3f(5.f, 0.f, 0.f), Eigen::Vector3f(5.5f, 0.f, 0.f),
-        Eigen::Vector3f(0.f, 4.f, 0.f), Eigen::Vector3f(0.f, 4.5f, 0.f),
-        Eigen::Vector3f(0.f, 5.f, 0.f), Eigen::Vector3f(0.f, 5.5f, 0.f),
-        Eigen::Vector3f(0.f, 0.f, 4.f), Eigen::Vector3f(0.f, 0.f, 4.5f),
-        Eigen::Vector3f(0.f, 0.f, 5.f), Eigen::Vector3f(0.f, 0.f, 5.5f)};
+        {Eigen::Vector3f(4.f, 0.f, 0.f)}, {Eigen::Vector3f(4.5f, 0.f, 0.f)},
+        {Eigen::Vector3f(5.f, 0.f, 0.f)}, {Eigen::Vector3f(5.5f, 0.f, 0.f)},
+        {Eigen::Vector3f(0.f, 4.f, 0.f)}, {Eigen::Vector3f(0.f, 4.5f, 0.f)},
+        {Eigen::Vector3f(0.f, 5.f, 0.f)}, {Eigen::Vector3f(0.f, 5.5f, 0.f)},
+        {Eigen::Vector3f(0.f, 0.f, 4.f)}, {Eigen::Vector3f(0.f, 0.f, 4.5f)},
+        {Eigen::Vector3f(0.f, 0.f, 5.f)}, {Eigen::Vector3f(0.f, 0.f, 5.5f)}};
   }
 
   transform::Rigid3f GetRandomPose() {
@@ -157,7 +157,8 @@ TEST_F(FastCorrelativeScanMatcher3DTest, CorrectPoseForMatch) {
     const std::unique_ptr<FastCorrelativeScanMatcher3D::Result>
         low_resolution_result = fast_correlative_scan_matcher->Match(
             transform::Rigid3d::Identity(), transform::Rigid3d::Identity(),
-            CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore);
+            CreateConstantData({{Eigen::Vector3f(42.f, 42.f, 42.f)}}),
+            kMinScore);
     EXPECT_THAT(low_resolution_result, testing::IsNull())
         << low_resolution_result->low_resolution_score;
   }
@@ -185,7 +186,7 @@ TEST_F(FastCorrelativeScanMatcher3DTest, CorrectPoseForMatchFullSubmap) {
   const std::unique_ptr<FastCorrelativeScanMatcher3D::Result>
       low_resolution_result = fast_correlative_scan_matcher->MatchFullSubmap(
           Eigen::Quaterniond::Identity(), Eigen::Quaterniond::Identity(),
-          CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore);
+          CreateConstantData({{Eigen::Vector3f(42.f, 42.f, 42.f)}}), kMinScore);
   EXPECT_THAT(low_resolution_result, testing::IsNull())
       << low_resolution_result->low_resolution_score;
 }

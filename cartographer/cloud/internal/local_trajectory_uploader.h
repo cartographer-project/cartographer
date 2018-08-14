@@ -24,10 +24,13 @@
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
+#include "grpc++/support/status.h"
 
 namespace cartographer {
 namespace cloud {
 
+// Uploads sensor data batches to uplink server.
+// Gracefully handles interruptions of the connection.
 class LocalTrajectoryUploaderInterface {
  public:
   using SensorId = mapping::TrajectoryBuilderInterface::SensorId;
@@ -46,14 +49,14 @@ class LocalTrajectoryUploaderInterface {
       std::unique_ptr<proto::SensorData> sensor_data) = 0;
 
   // Creates a new trajectory with the specified settings in the uplink. A
-  // return value of 'false' indicates that the creation failed.
-  virtual bool AddTrajectory(
+  // return 'value' with '!value.ok()' indicates that the creation failed.
+  virtual grpc::Status AddTrajectory(
       const std::string& client_id, int local_trajectory_id,
       const std::set<SensorId>& expected_sensor_ids,
       const mapping::proto::TrajectoryBuilderOptions& trajectory_options) = 0;
 
-  virtual void FinishTrajectory(const std::string& client_id,
-                                int local_trajectory_id) = 0;
+  virtual grpc::Status FinishTrajectory(const std::string& client_id,
+                                        int local_trajectory_id) = 0;
   virtual SensorId GetLocalSlamResultSensorId(
       int local_trajectory_id) const = 0;
 };

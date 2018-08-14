@@ -60,14 +60,14 @@ void AddTrajectoryHandler::OnRequest(
     // Ignore initial poses in trajectory_builder_options.
     trajectory_builder_options.clear_initial_trajectory_pose();
 
-    if (!GetContext<MapBuilderContextInterface>()
-             ->local_trajectory_uploader()
-             ->AddTrajectory(request.client_id(), trajectory_id,
-                             expected_sensor_ids, trajectory_builder_options)) {
-      LOG(ERROR) << "Failed to create trajectory in uplink: " << trajectory_id;
-      Finish(::grpc::Status(::grpc::INTERNAL,
-                            "Failed to create trajectory in uplink"));
-      return;
+    auto status =
+        GetContext<MapBuilderContextInterface>()
+            ->local_trajectory_uploader()
+            ->AddTrajectory(request.client_id(), trajectory_id,
+                            expected_sensor_ids, trajectory_builder_options);
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to create trajectory_id " << trajectory_id
+                 << " in uplink. Error: " << status.error_message();
     }
   }
 

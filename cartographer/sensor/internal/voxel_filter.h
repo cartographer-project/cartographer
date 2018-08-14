@@ -46,8 +46,8 @@ class VoxelFilter {
   TimedPointCloud Filter(const TimedPointCloud& timed_point_cloud);
 
   // Same for RangeMeasurement.
-  std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement> Filter(
-      const std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement>&
+  std::vector<TimedPointCloudOriginData::RangeMeasurement> Filter(
+      const std::vector<TimedPointCloudOriginData::RangeMeasurement>&
           range_measurements);
 
  private:

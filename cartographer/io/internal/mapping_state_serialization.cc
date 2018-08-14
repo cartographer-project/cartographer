@@ -84,7 +84,7 @@ void SerializeSubmaps(
   // Next serialize all submaps.
   for (const auto& submap_id_data : submap_data) {
     if (!include_unfinished_submaps &&
-        !submap_id_data.data.submap->finished()) {
+        !submap_id_data.data.submap->insertion_finished()) {
       continue;
     }
     SerializedData proto;

@@ -167,9 +167,9 @@ FastCorrelativeScanMatcher3D::MatchFullSubmap(
     const Eigen::Quaterniond& global_submap_rotation,
     const TrajectoryNode::Data& constant_data, const float min_score) const {
   float max_point_distance = 0.f;
-  for (const Eigen::Vector3f& point :
+  for (const sensor::RangefinderPoint& point :
        constant_data.high_resolution_point_cloud) {
-    max_point_distance = std::max(max_point_distance, point.norm());
+    max_point_distance = std::max(max_point_distance, point.position.norm());
   }
   const int linear_window_size =
       (width_in_voxels_ + 1) / 2 +
@@ -223,9 +223,10 @@ DiscreteScan3D FastCorrelativeScanMatcher3D::DiscretizeScan(
   const PrecomputationGrid3D& original_grid =
       precomputation_grid_stack_->Get(0);
   std::vector<Eigen::Array3i> full_resolution_cell_indices;
-  for (const Eigen::Vector3f& point :
+  for (const sensor::RangefinderPoint& point :
        sensor::TransformPointCloud(point_cloud, pose)) {
-    full_resolution_cell_indices.push_back(original_grid.GetCellIndex(point));
+    full_resolution_cell_indices.push_back(
+        original_grid.GetCellIndex(point.position));
   }
   const int full_resolution_depth = std::min(options_.full_resolution_depth(),
                                              options_.branch_and_bound_depth());
@@ -271,8 +272,8 @@ std::vector<DiscreteScan3D> FastCorrelativeScanMatcher3D::GenerateDiscreteScans(
   // We set this value to something on the order of resolution to make sure that
   // the std::acos() below is defined.
   float max_scan_range = 3.f * resolution_;
-  for (const Eigen::Vector3f& point : point_cloud) {
-    const float range = point.norm();
+  for (const sensor::RangefinderPoint& point : point_cloud) {
+    const float range = point.position.norm();
     max_scan_range = std::max(range, max_scan_range);
   }
   const float kSafetyMargin = 1.f - 1e-2f;
