@@ -28,6 +28,8 @@ namespace cartographer {
 namespace pose_graph {
 namespace {
 
+using absl::make_unique;
+
 std::unique_ptr<Constraint> CreateConstraint(
     const proto::Constraint& constraint) {
   const auto& id = constraint.id();
@@ -35,22 +37,21 @@ std::unique_ptr<Constraint> CreateConstraint(
   const auto& cost = constraint.cost_function();
   switch (cost.type_case()) {
     case (proto::CostFunction::kRelativePose2D):
-      return absl::make_unique<RelativePoseConstraint2D>(
-          id, loss, cost.relative_pose_2d());
+      return make_unique<RelativePoseConstraint2D>(id, loss,
+                                                   cost.relative_pose_2d());
     case (proto::CostFunction::kRelativePose3D):
-      return absl::make_unique<RelativePoseConstraint3D>(
-          id, loss, cost.relative_pose_3d());
+      return make_unique<RelativePoseConstraint3D>(id, loss,
+                                                   cost.relative_pose_3d());
     case (proto::CostFunction::kAcceleration3D):
-      return absl::make_unique<AccelerationConstraint3D>(
-          id, loss, cost.acceleration_3d());
+      return make_unique<AccelerationConstraint3D>(id, loss,
+                                                   cost.acceleration_3d());
     case (proto::CostFunction::kRotation3D):
-      return absl::make_unique<RotationContraint3D>(id, loss,
-                                                    cost.rotation_3d());
+      return make_unique<RotationContraint3D>(id, loss, cost.rotation_3d());
     case (proto::CostFunction::kInterpolatedRelativePose2D):
-      return absl::make_unique<InterpolatedRelativePoseConstraint2D>(
+      return make_unique<InterpolatedRelativePoseConstraint2D>(
           id, loss, cost.interpolated_relative_pose_2d());
     case (proto::CostFunction::kInterpolatedRelativePose3D):
-      return absl::make_unique<InterpolatedRelativePoseConstraint3D>(
+      return make_unique<InterpolatedRelativePoseConstraint3D>(
           id, loss, cost.interpolated_relative_pose_3d());
     case (proto::CostFunction::TYPE_NOT_SET):
       LOG(FATAL) << "Constraint cost function type is not set.";
@@ -65,20 +66,22 @@ void AddNodeToPoseGraphData(const proto::Node& node, PoseGraphData* data) {
   switch (node.parameters().type_case()) {
     case (proto::Parameters::kPose2D): {
       data->nodes.pose_2d_nodes.emplace(
-          node_id,
-          Pose2D(node_id, node.constant(), node.parameters().pose_2d()));
+          node_id, make_unique<Pose2D>(node_id, node.constant(),
+                                       node.parameters().pose_2d()));
       return;
     }
     case (proto::Parameters::kPose3D): {
       data->nodes.pose_3d_nodes.emplace(
-          node_id,
-          Pose3D(node_id, node.constant(), node.parameters().pose_3d()));
+          node_id, make_unique<Pose3D>(node_id, node.constant(),
+                                       node.parameters().pose_3d()));
+
       return;
     }
     case (proto::Parameters::kImuCalibration): {
       data->nodes.imu_calibration_nodes.emplace(
-          node_id, ImuCalibration(node_id, node.constant(),
-                                  node.parameters().imu_calibration()));
+          node_id,
+          make_unique<ImuCalibration>(node_id, node.constant(),
+                                      node.parameters().imu_calibration()));
       return;
     }
     case (proto::Parameters::TYPE_NOT_SET): {

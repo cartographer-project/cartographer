@@ -20,8 +20,9 @@ import "cartographer/transform/proto/transform.proto";
 
 enum Parameterization {
   NONE = 0;
-  YAW_ONLY = 1;
-  YAW_CONSTANT = 2;
+  FIX_Z = 1;
+  YAW_ONLY = 2;
+  YAW_CONSTANT = 3;
 }
 
 message Pose2D {
@@ -39,7 +40,7 @@ message Pose3D {
 message ImuCalibration {
   double gravity_constant = 1;
   transform.proto.Quaterniond orientation = 2;
-  Parameterization rotation_parameterization = 3;
+  Parameterization orientation_parameterization = 3;
 }
 
 message NodeId {
