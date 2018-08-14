@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef CARTOGRAPHER_COMMON_UTILS_H_
+#define CARTOGRAPHER_COMMON_UTILS_H_
+
 namespace cartographer {
 namespace common {
 
@@ -27,3 +30,5 @@ ValueType* FindOrNull(MapType& map, const KeyType& key) {
 
 }  // namespace common
 }  // namespace cartographer
+
+#endif  // CARTOGRAPHER_COMMON_UTILS_H_
