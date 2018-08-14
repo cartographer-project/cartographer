@@ -27,7 +27,7 @@ namespace pose_graph {
 
 class Node {
  public:
-  explicit Node(const NodeId& id, bool constant) noexcept
+  explicit Node(const NodeId& id, bool constant)
       : node_id_(id), constant_(constant) {}
 
   ~Node() = default;

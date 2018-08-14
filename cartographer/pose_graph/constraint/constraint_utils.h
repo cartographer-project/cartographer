@@ -17,6 +17,7 @@
 #ifndef CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_CONSTRAINT_UTILS_H_
 #define CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_CONSTRAINT_UTILS_H_
 
+#include "cartographer/common/utils.h"
 #include "cartographer/pose_graph/node/imu_calibration.h"
 #include "cartographer/pose_graph/node/pose_2d.h"
 #include "cartographer/pose_graph/node/pose_3d.h"
@@ -31,21 +32,20 @@ void AddPose3D(Pose3D* pose, ceres::Problem* problem);
 
 void AddImuCalibration(ImuCalibration* pose, ceres::Problem* problem);
 
-#define FIND_NODE_OR_RETURN(node_name, node_id, map, log_message)      \
-  FIND_NODE_OR_RETURN_IMPL(MACRO_CONCAT_(__node, __LINE__), node_name, \
-                           node_id, map, log_message)
+template <typename MapType,
+          typename UniquePtrType = typename MapType::mapped_type,
+          typename ValueTyper = typename UniquePtrType::element_type>
+ValueTyper* FindNodeOrNull(MapType& map, const NodeId& node_id) {
+  auto node = common::FindOrNull(map, node_id);
+  return node == nullptr ? nullptr : node->get();
+}
 
-#define FIND_NODE_OR_RETURN_IMPL(node_item, node_name, node_id, map, \
-                                 log_message)                        \
-  auto node_item = common::FindOrNull(map, node_id);                 \
-  if (node_item == nullptr) {                                        \
-    LOG(INFO) << log_message;                                        \
-    return;                                                          \
-  }                                                                  \
-  auto node_name = node_item->get();
-
-#define MACRO_CONCAT_IMPL_(x, y) x##y
-#define MACRO_CONCAT_(x, y) MACRO_CONCAT_IMPL_(x, y)
+#define FIND_NODE_OR_RETURN(node_name, node_id, map, log_message) \
+  auto node_name = FindNodeOrNull(map, node_id);                  \
+  if (node_name == nullptr) {                                     \
+    LOG(INFO) << log_message;                                     \
+    return;                                                       \
+  }
 
 }  // namespace pose_graph
 }  // namespace cartographer
