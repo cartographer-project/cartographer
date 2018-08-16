@@ -165,6 +165,7 @@ void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
             static_cast<const TSDF2D&>(grid),
             discrete_scans[candidate.scan_index], candidate.x_index_offset,
             candidate.y_index_offset);
+        break;
     }
     candidate.score *=
         std::exp(-common::Pow2(std::hypot(candidate.x, candidate.y) *
