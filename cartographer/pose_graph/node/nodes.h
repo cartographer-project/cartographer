@@ -27,10 +27,10 @@ namespace cartographer {
 namespace pose_graph {
 
 struct Nodes {
-  // TODO(pifon): Should it really be an std::map or smth else?
-  std::map<NodeId, Pose2D> pose_2d_nodes;
-  std::map<NodeId, Pose3D> pose_3d_nodes;
-  std::map<NodeId, ImuCalibration> imu_calibration_nodes;
+  // TODO(pifon): Migrate to Swiss Tables when they are out.
+  std::map<NodeId, std::unique_ptr<Pose2D>> pose_2d_nodes;
+  std::map<NodeId, std::unique_ptr<Pose3D>> pose_3d_nodes;
+  std::map<NodeId, std::unique_ptr<ImuCalibration>> imu_calibration_nodes;
 };
 
 }  // namespace pose_graph

@@ -15,3 +15,8 @@
 # Do an optimized build by default, or otherwise Cartographer cannot run
 # real-time and certain tests will timeout.
 build -c opt
+
+# By default, an optimized C++ build with Bazel will build each library twice,
+# with and without -fPIC. --force_pic avoids the unnecessary actions and
+# reduces build time.
+build --force_pic

@@ -21,6 +21,7 @@
 
 #include <array>
 
+#include "cartographer/pose_graph/node/parameterization/parameterization.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
@@ -32,16 +33,25 @@ class Pose3D : public Node {
 
   std::array<double, 3>* mutable_translation() { return &translation_; }
   const std::array<double, 3>& translation() const { return translation_; }
+  ceres::LocalParameterization* translation_parameterization() const {
+    return translation_parameterization_.ceres_parameterization();
+  }
 
   std::array<double, 4>* mutable_rotation() { return &rotation_; }
   const std::array<double, 4>& rotation() const { return rotation_; }
+  ceres::LocalParameterization* rotation_parameterization() const {
+    return rotation_parameterization_.ceres_parameterization();
+  }
 
  protected:
   proto::Parameters ToParametersProto() const final;
 
  private:
   std::array<double, 3> translation_;
+  Parameterization translation_parameterization_;
+
   std::array<double, 4> rotation_;
+  Parameterization rotation_parameterization_;
 };
 
 }  // namespace pose_graph
