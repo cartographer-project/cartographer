@@ -33,9 +33,11 @@ const float kSqrtTwoPi = std::sqrt(2.0 * M_PI);
 void GrowAsNeeded(const sensor::RangeData& range_data,
                   const float truncation_distance, TSDF2D* const tsdf) {
   Eigen::AlignedBox2f bounding_box(range_data.origin.head<2>());
-  for (const Eigen::Vector3f& hit : range_data.returns) {
-    const Eigen::Vector3f direction = (hit - range_data.origin).normalized();
-    const Eigen::Vector3f end_position = hit + truncation_distance * direction;
+  for (const sensor::RangefinderPoint& hit : range_data.returns) {
+    const Eigen::Vector3f direction =
+        (hit.position - range_data.origin).normalized();
+    const Eigen::Vector3f end_position =
+        hit.position + truncation_distance * direction;
     bounding_box.extend(end_position.head<2>());
   }
   // Padding around bounding box to avoid numerical issues at cell boundaries.
@@ -66,9 +68,12 @@ std::pair<Eigen::Array2i, Eigen::Array2i> SuperscaleRay(
 
 struct RangeDataSorter {
   RangeDataSorter(Eigen::Vector3f origin) { origin_ = origin.head<2>(); }
-  bool operator()(Eigen::Vector3f lhs, Eigen::Vector3f rhs) {
-    const Eigen::Vector2f delta_lhs = (lhs.head<2>() - origin_).normalized();
-    const Eigen::Vector2f delta_rhs = (lhs.head<2>() - origin_).normalized();
+  bool operator()(const sensor::RangefinderPoint& lhs,
+                  const sensor::RangefinderPoint& rhs) {
+    const Eigen::Vector2f delta_lhs =
+        (lhs.position.head<2>() - origin_).normalized();
+    const Eigen::Vector2f delta_rhs =
+        (lhs.position.head<2>() - origin_).normalized();
     if ((delta_lhs[1] < 0.f) != (delta_rhs[1] < 0.f)) {
       return delta_lhs[1] < 0.f;
     } else if (delta_lhs[1] < 0.f) {
@@ -147,7 +152,8 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
   const Eigen::Vector2f origin = sorted_range_data.origin.head<2>();
   for (size_t hit_index = 0; hit_index < sorted_range_data.returns.size();
        ++hit_index) {
-    const Eigen::Vector2f hit = sorted_range_data.returns[hit_index].head<2>();
+    const Eigen::Vector2f hit =
+        sorted_range_data.returns[hit_index].position.head<2>();
     const float normal = normals.empty()
                              ? std::numeric_limits<float>::quiet_NaN()
                              : normals[hit_index];

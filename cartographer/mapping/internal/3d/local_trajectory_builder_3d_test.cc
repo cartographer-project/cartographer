@@ -179,38 +179,39 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
     sensor::TimedPointCloud directions_in_rangefinder_frame;
     for (int r = -8; r != 8; ++r) {
       for (int s = -250; s != 250; ++s) {
-        Eigen::Vector4f first_point;
-        first_point << Eigen::AngleAxisf(M_PI * s / 250.,
-                                         Eigen::Vector3f::UnitZ()) *
-                           Eigen::AngleAxisf(M_PI / 12. * r / 8.,
-                                             Eigen::Vector3f::UnitY()) *
-                           Eigen::Vector3f::UnitX(),
-            0.;
+        const sensor::TimedRangefinderPoint first_point{
+            Eigen::Vector3f{
+                Eigen::AngleAxisf(M_PI * s / 250., Eigen::Vector3f::UnitZ()) *
+                Eigen::AngleAxisf(M_PI / 12. * r / 8.,
+                                  Eigen::Vector3f::UnitY()) *
+                Eigen::Vector3f::UnitX()},
+            0.};
         directions_in_rangefinder_frame.push_back(first_point);
         // Second orthogonal rangefinder.
-        Eigen::Vector4f second_point;
-        second_point << Eigen::AngleAxisf(M_PI / 2., Eigen::Vector3f::UnitX()) *
-                            Eigen::AngleAxisf(M_PI * s / 250.,
-                                              Eigen::Vector3f::UnitZ()) *
-                            Eigen::AngleAxisf(M_PI / 12. * r / 8.,
-                                              Eigen::Vector3f::UnitY()) *
-                            Eigen::Vector3f::UnitX(),
-            0.;
+        const sensor::TimedRangefinderPoint second_point{
+            Eigen::Vector3f{
+                Eigen::AngleAxisf(M_PI / 2., Eigen::Vector3f::UnitX()) *
+                Eigen::AngleAxisf(M_PI * s / 250., Eigen::Vector3f::UnitZ()) *
+                Eigen::AngleAxisf(M_PI / 12. * r / 8.,
+                                  Eigen::Vector3f::UnitY()) *
+                Eigen::Vector3f::UnitX()},
+            0.};
         directions_in_rangefinder_frame.push_back(second_point);
       }
     }
     // We simulate a 30 m edge length box around the origin, also containing
     // 50 cm radius spheres.
     sensor::TimedPointCloud returns_in_world_frame;
-    for (const Eigen::Vector4f& direction_in_world_frame :
+    for (const auto& direction_in_world_frame :
          sensor::TransformTimedPointCloud(directions_in_rangefinder_frame,
                                           pose.cast<float>())) {
       const Eigen::Vector3f origin =
           pose.cast<float>() * Eigen::Vector3f::Zero();
-      Eigen::Vector4f return_point;
-      return_point << CollideWithBubbles(
-          origin, CollideWithBox(origin, direction_in_world_frame.head<3>())),
-          0.;
+      const sensor::TimedRangefinderPoint return_point{
+          CollideWithBubbles(
+              origin,
+              CollideWithBox(origin, direction_in_world_frame.position)),
+          0.};
       returns_in_world_frame.push_back(return_point);
     }
     return {Eigen::Vector3f::Zero(),

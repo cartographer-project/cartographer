@@ -20,13 +20,12 @@ namespace cartographer {
 namespace pose_graph {
 
 ImuCalibration::ImuCalibration(const NodeId& node_id, bool constant,
-                               const proto::ImuCalibration& imu_calibration)
+                               const proto::ImuCalibration& imu)
     : Node(node_id, constant),
-      gravity_constant_(imu_calibration.gravity_constant()),
-      orientation_{{imu_calibration.orientation().x(),
-                    imu_calibration.orientation().y(),
-                    imu_calibration.orientation().z(),
-                    imu_calibration.orientation().w()}} {}
+      gravity_constant_(imu.gravity_constant()),
+      orientation_{{imu.orientation().x(), imu.orientation().y(),
+                    imu.orientation().z(), imu.orientation().w()}},
+      orientation_parameterization_(imu.orientation_parameterization()) {}
 
 proto::Parameters ImuCalibration::ToParametersProto() const {
   proto::Parameters parameters;
@@ -41,6 +40,8 @@ proto::Parameters ImuCalibration::ToParametersProto() const {
   orientation->set_y(orientation_[1]);
   orientation->set_z(orientation_[2]);
   orientation->set_w(orientation_[3]);
+  imu_calibration->set_orientation_parameterization(
+      orientation_parameterization_.ToProto());
 
   return parameters;
 }

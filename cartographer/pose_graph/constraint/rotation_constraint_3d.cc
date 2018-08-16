@@ -17,6 +17,8 @@
 #include "cartographer/pose_graph/constraint/rotation_constraint_3d.h"
 
 #include "absl/memory/memory.h"
+#include "cartographer/pose_graph/constraint/constraint_utils.h"
+
 #include "cartographer/common/utils.h"
 
 namespace cartographer {
@@ -53,27 +55,16 @@ RotationContraint3D::RotationContraint3D(
 
 void RotationContraint3D::AddToOptimizer(Nodes* nodes,
                                          ceres::Problem* problem) const {
-  auto first_node = common::FindOrNull(nodes->pose_3d_nodes, first_);
-  if (first_node == nullptr) {
-    LOG(INFO) << "First node was not found in pose_3d_nodes.";
-    return;
-  }
+  FIND_NODE_OR_RETURN(first_node, first_, nodes->pose_3d_nodes,
+                      "First node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_3d_nodes,
+                      "Second node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(imu_node, imu_calibration_, nodes->imu_calibration_nodes,
+                      "Imu calibration node was not found.");
 
-  auto second_node = common::FindOrNull(nodes->pose_3d_nodes, second_);
-  if (second_node == nullptr) {
-    LOG(INFO) << "Second node was not found in pose_3d_nodes.";
-    return;
-  }
-
-  if (first_node->constant() && second_node->constant()) {
+  if (first_node->constant() && second_node->constant() &&
+      imu_node->constant()) {
     LOG(INFO) << "Both nodes are constant, skipping the constraint.";
-    return;
-  }
-
-  auto imu_node =
-      common::FindOrNull(nodes->imu_calibration_nodes, imu_calibration_);
-  if (imu_node == nullptr) {
-    LOG(INFO) << "Imu calibration node was not found.";
     return;
   }
 

@@ -42,13 +42,13 @@ constexpr float kPrecision = 0.001f;
 // Matcher for 3-d vectors w.r.t. to the target precision.
 MATCHER_P(ApproximatelyEquals, expected,
           std::string("is equal to ") + PrintToString(expected)) {
-  return (arg - expected).isZero(kPrecision);
+  return (arg.position - expected).isZero(kPrecision);
 }
 
 // Helper function to test the mapping of a single point. Includes test for
 // recompressing the same point again.
 void TestPoint(const Eigen::Vector3f& p) {
-  CompressedPointCloud compressed({p});
+  CompressedPointCloud compressed({{p}});
   EXPECT_EQ(1, compressed.size());
   EXPECT_THAT(*compressed.begin(), ApproximatelyEquals(p));
   CompressedPointCloud recompressed({*compressed.begin()});
@@ -70,9 +70,9 @@ TEST(CompressPointCloudTest, CompressesPointsCorrectly) {
 }
 
 TEST(CompressPointCloudTest, Compresses) {
-  const CompressedPointCloud compressed({Eigen::Vector3f(0.838f, 0, 0),
-                                         Eigen::Vector3f(0.839f, 0, 0),
-                                         Eigen::Vector3f(0.840f, 0, 0)});
+  const CompressedPointCloud compressed({{Eigen::Vector3f(0.838f, 0, 0)},
+                                         {Eigen::Vector3f(0.839f, 0, 0)},
+                                         {Eigen::Vector3f(0.840f, 0, 0)}});
   EXPECT_FALSE(compressed.empty());
   EXPECT_EQ(3, compressed.size());
   const PointCloud decompressed = compressed.Decompress();
@@ -98,7 +98,7 @@ TEST(CompressPointCloudTest, CompressesEmptyPointCloud) {
 TEST(CompressPointCloudTest, CompressesNoGaps) {
   PointCloud point_cloud;
   for (int i = 0; i < 3000; ++i) {
-    point_cloud.push_back(Eigen::Vector3f(kPrecision * i - 1.5f, 0, 0));
+    point_cloud.push_back({Eigen::Vector3f(kPrecision * i - 1.5f, 0, 0)});
   }
   const CompressedPointCloud compressed(point_cloud);
   const PointCloud decompressed = compressed.Decompress();
@@ -106,8 +106,8 @@ TEST(CompressPointCloudTest, CompressesNoGaps) {
   EXPECT_EQ(decompressed.size(), recompressed.size());
 
   std::vector<float> x_coord;
-  for (const Eigen::Vector3f& p : compressed) {
-    x_coord.push_back(p[0]);
+  for (const RangefinderPoint& p : compressed) {
+    x_coord.push_back(p.position[0]);
   }
   std::sort(x_coord.begin(), x_coord.end());
   for (size_t i = 1; i < x_coord.size(); ++i) {

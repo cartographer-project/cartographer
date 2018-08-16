@@ -38,7 +38,7 @@ TEST(SubmapsTest, ToFromProto) {
   EXPECT_TRUE(expected.local_pose().rotation().isApprox(
       actual.local_pose().rotation(), 1e-6));
   EXPECT_EQ(expected.num_range_data(), actual.num_range_data());
-  EXPECT_EQ(expected.finished(), actual.finished());
+  EXPECT_EQ(expected.insertion_finished(), actual.insertion_finished());
   EXPECT_NEAR(expected.high_resolution_hybrid_grid().resolution(), 0.05, 1e-6);
   EXPECT_NEAR(expected.low_resolution_hybrid_grid().resolution(), 0.25, 1e-6);
 }

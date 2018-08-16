@@ -24,8 +24,10 @@ Pose3D::Pose3D(const NodeId& node_id, bool constant,
     : Node(node_id, constant),
       translation_{{pose_3d.translation().x(), pose_3d.translation().y(),
                     pose_3d.translation().z()}},
+      translation_parameterization_(pose_3d.translation_parameterization()),
       rotation_{{pose_3d.rotation().x(), pose_3d.rotation().y(),
-                 pose_3d.rotation().z(), pose_3d.rotation().w()}} {}
+                 pose_3d.rotation().z(), pose_3d.rotation().w()}},
+      rotation_parameterization_(pose_3d.rotation_parameterization()) {}
 
 proto::Parameters Pose3D::ToParametersProto() const {
   proto::Parameters parameters;
@@ -35,12 +37,15 @@ proto::Parameters Pose3D::ToParametersProto() const {
   translation->set_x(translation_[0]);
   translation->set_y(translation_[1]);
   translation->set_z(translation_[2]);
+  pose_3d->set_translation_parameterization(
+      translation_parameterization_.ToProto());
 
   auto* rotation = pose_3d->mutable_rotation();
   rotation->set_x(rotation_[0]);
   rotation->set_y(rotation_[1]);
   rotation->set_z(rotation_[2]);
   rotation->set_w(rotation_[3]);
+  pose_3d->set_rotation_parameterization(rotation_parameterization_.ToProto());
 
   return parameters;
 }

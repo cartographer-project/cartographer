@@ -143,7 +143,8 @@ NodeId PoseGraph3D::AddNode(
                                     insertion_submaps, optimized_pose);
   // We have to check this here, because it might have changed by the time we
   // execute the lambda.
-  const bool newly_finished_submap = insertion_submaps.front()->finished();
+  const bool newly_finished_submap =
+      insertion_submaps.front()->insertion_finished();
   AddWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     return ComputeConstraintsForNode(node_id, insertion_submaps,
                                      newly_finished_submap);
@@ -256,7 +257,7 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
   {
     absl::MutexLock locker(&mutex_);
     CHECK(data_.submap_data.at(submap_id).state == SubmapState::kFinished);
-    if (!data_.submap_data.at(submap_id).submap->finished()) {
+    if (!data_.submap_data.at(submap_id).submap->insertion_finished()) {
       // Uplink server only receives grids when they are finished, so skip
       // constraint search before that.
       return;
@@ -334,7 +335,8 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
       const SubmapId submap_id = submap_ids[i];
       // Even if this was the last node added to 'submap_id', the submap will
       // only be marked as finished in 'data_.submap_data' further below.
-      CHECK(data_.submap_data.at(submap_id).state == SubmapState::kActive);
+      CHECK(data_.submap_data.at(submap_id).state ==
+            SubmapState::kNoConstraintSearch);
       data_.submap_data.at(submap_id).node_ids.emplace(node_id);
       const transform::Rigid3d constraint_transform =
           insertion_submaps[i]->local_pose().inverse() * local_pose;
@@ -359,7 +361,7 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
       const SubmapId newly_finished_submap_id = submap_ids.front();
       InternalSubmapData& finished_submap_data =
           data_.submap_data.at(newly_finished_submap_id);
-      CHECK(finished_submap_data.state == SubmapState::kActive);
+      CHECK(finished_submap_data.state == SubmapState::kNoConstraintSearch);
       finished_submap_data.state = SubmapState::kFinished;
       newly_finished_submap_node_ids = finished_submap_data.node_ids;
     }
