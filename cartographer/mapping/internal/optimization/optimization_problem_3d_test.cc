@@ -49,6 +49,7 @@ class OptimizationProblem3DTest : public ::testing::Test {
           fixed_frame_pose_translation_weight = 1e1,
           fixed_frame_pose_rotation_weight = 1e2,
           log_solver_summary = true,
+          use_online_imu_extrinsics_in_3d = true,
           ceres_solver_options = {
             use_nonmonotonic_steps = false,
             max_num_iterations = 200,
@@ -171,8 +172,9 @@ TEST_F(OptimizationProblem3DTest, ReducesNoise) {
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap0Transform);
   optimization_problem_.AddSubmap(kTrajectoryId, kSubmap2Transform);
-  const std::set<int> kFrozen = {};
-  optimization_problem_.Solve(constraints, kFrozen, {});
+  const std::map<int, PoseGraphInterface::TrajectoryState> kTrajectoriesState =
+      {{kTrajectoryId, PoseGraphInterface::TrajectoryState::ACTIVE}};
+  optimization_problem_.Solve(constraints, kTrajectoriesState, {});
 
   double translation_error_after = 0.;
   double rotation_error_after = 0.;

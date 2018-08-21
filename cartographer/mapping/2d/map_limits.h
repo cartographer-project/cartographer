@@ -75,6 +75,12 @@ class MapLimits {
         common::RoundToInt((max_.x() - point.x()) / resolution_ - 0.5));
   }
 
+  // Returns the center of the cell at 'cell_index'.
+  Eigen::Vector2f GetCellCenter(const Eigen::Array2i cell_index) const {
+    return {max_.x() - resolution() * (cell_index[1] + 0.5),
+            max_.y() - resolution() * (cell_index[0] + 0.5)};
+  }
+
   // Returns true if the ProbabilityGrid contains 'cell_index'.
   bool Contains(const Eigen::Array2i& cell_index) const {
     return (Eigen::Array2i(0, 0) <= cell_index).all() &&

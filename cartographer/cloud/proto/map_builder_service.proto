@@ -33,6 +33,13 @@ enum SensorType {
   LOCAL_SLAM_RESULT = 5;
 }
 
+enum TrajectoryState {
+  ACTIVE = 0;
+  FINISHED = 1;
+  FROZEN = 2;
+  DELETED = 3;
+}
+
 message SensorId {
   string id = 1;
   SensorType type = 2;
@@ -42,11 +49,13 @@ message AddTrajectoryRequest {
   repeated SensorId expected_sensor_ids = 3;
   cartographer.mapping.proto.TrajectoryBuilderOptions
       trajectory_builder_options = 2;
+  string client_id = 4;
 }
 
 message SensorMetadata {
   int32 trajectory_id = 1;
   string sensor_id = 2;
+  string client_id = 3;
 }
 
 message SensorData {
@@ -96,6 +105,12 @@ message AddLandmarkDataRequest {
 
 message FinishTrajectoryRequest {
   int32 trajectory_id = 1;
+  string client_id = 2;
+}
+
+message DeleteTrajectoryRequest {
+  int32 trajectory_id = 1;
+  string client_id = 2;
 }
 
 message ReceiveLocalSlamResultsRequest {
@@ -114,17 +129,41 @@ message ReceiveLocalSlamResultsResponse {
   LocalSlamInsertionResult insertion_result = 5;
 }
 
+message ReceiveGlobalSlamOptimizationsResponse {
+  map<int32 /* trajectory_id */, cartographer.mapping.proto.NodeId>
+      last_optimized_node_ids = 1;
+  map<int32 /* trajectory_id */, cartographer.mapping.proto.SubmapId>
+      last_optimized_submap_ids = 2;
+}
+
 message GetSubmapRequest {
   cartographer.mapping.proto.SubmapId submap_id = 1;
 }
 
 message LoadStateRequest {
   oneof state_chunk {
-    cartographer.mapping.proto.PoseGraph pose_graph = 1;
-    cartographer.mapping.proto.AllTrajectoryBuilderOptions
-        all_trajectory_builder_options = 2;
-    cartographer.mapping.proto.SerializedData serialized_data = 3;
+    cartographer.mapping.proto.SerializedData serialized_data = 1;
+    cartographer.mapping.proto.SerializationHeader serialization_header = 2;
+    string client_id = 3;
   }
+}
+
+message TrajectoryRemapping {
+  map<int32 /* serialized trajectory id */, int32 /* trajectory id */>
+      serialized_trajectories_to_trajectories = 1;
+}
+
+message LoadStateResponse {
+  TrajectoryRemapping trajectory_remapping = 1;
+}
+
+message LoadStateFromFileRequest {
+  string file_path = 1;
+  string client_id = 2;
+}
+
+message LoadStateFromFileResponse {
+  TrajectoryRemapping trajectory_remapping = 1;
 }
 
 message GetSubmapResponse {
@@ -133,13 +172,21 @@ message GetSubmapResponse {
 }
 
 message TrajectoryNodePose {
+  message ConstantPoseData {
+    int64 timestamp = 1;
+    cartographer.transform.proto.Rigid3d local_pose = 2;
+  }
   cartographer.mapping.proto.NodeId node_id = 1;
   cartographer.transform.proto.Rigid3d global_pose = 2;
-  bool has_constant_data = 3;
+  ConstantPoseData constant_pose_data = 3;
 }
 
 message GetTrajectoryNodePosesResponse {
   repeated TrajectoryNodePose node_poses = 1;
+}
+
+message GetTrajectoryStatesResponse {
+  map<int32 /* trajectory_id */, TrajectoryState> trajectories_state = 1;
 }
 
 message GetLandmarkPosesResponse {
@@ -174,10 +221,8 @@ message GetConstraintsResponse {
 
 message WriteStateResponse {
   oneof state_chunk {
-    cartographer.mapping.proto.PoseGraph pose_graph = 1;
-    cartographer.mapping.proto.AllTrajectoryBuilderOptions
-        all_trajectory_builder_options = 2;
-    cartographer.mapping.proto.SerializedData serialized_data = 3;
+    cartographer.mapping.proto.SerializationHeader header = 1;
+    cartographer.mapping.proto.SerializedData serialized_data = 2;
   }
 }
 
@@ -230,9 +275,16 @@ service MapBuilderService {
   rpc ReceiveLocalSlamResults(ReceiveLocalSlamResultsRequest)
       returns (stream ReceiveLocalSlamResultsResponse);
 
+  // Requests the server to send a stream of global SLAM notifications.
+  rpc ReceiveGlobalSlamOptimizations(google.protobuf.Empty)
+      returns (stream ReceiveGlobalSlamOptimizationsResponse);
+
   // Marks a trajectory corresponding to 'trajectory_id' as finished,
   // i.e. no further sensor data is expected.
   rpc FinishTrajectory(FinishTrajectoryRequest) returns (google.protobuf.Empty);
+
+  // Deletes a trajectory asynchronously.
+  rpc DeleteTrajectory(DeleteTrajectoryRequest) returns (google.protobuf.Empty);
 
   // Retrieves a single submap.
   rpc GetSubmap(GetSubmapRequest) returns (GetSubmapResponse);
@@ -240,6 +292,10 @@ service MapBuilderService {
   // Returns the current optimized trajectory poses.
   rpc GetTrajectoryNodePoses(google.protobuf.Empty)
       returns (GetTrajectoryNodePosesResponse);
+
+  // Returns the states of trajectories.
+  rpc GetTrajectoryStates(google.protobuf.Empty)
+      returns (GetTrajectoryStatesResponse);
 
   // Returns the current optimized landmark poses.
   rpc GetLandmarkPoses(google.protobuf.Empty)
@@ -265,14 +321,18 @@ service MapBuilderService {
 
   // Checks whether the trajectory is frozen.
   rpc IsTrajectoryFrozen(IsTrajectoryFrozenRequest)
-  	  returns (IsTrajectoryFrozenResponse);
+      returns (IsTrajectoryFrozenResponse);
 
   // Requests a PoseGraph to call RunFinalOptimization.
   rpc RunFinalOptimization(google.protobuf.Empty)
       returns (google.protobuf.Empty);
 
   // Adds serialized SLAM state data in the order defined by ProtoStreamReader.
-  rpc LoadState(stream LoadStateRequest) returns (google.protobuf.Empty);
+  rpc LoadState(stream LoadStateRequest) returns (LoadStateResponse);
+
+  // Loads a serialized SLAM state data from the host file system.
+  rpc LoadStateFromFile(LoadStateFromFileRequest)
+      returns (LoadStateFromFileResponse);
 
   // Receives serialized SLAM state data in the order defined by
   // ProtoStreamWriter.

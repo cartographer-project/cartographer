@@ -16,11 +16,11 @@
 
 #include "cartographer/cloud/internal/handlers/load_state_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
+#include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
-#include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {
@@ -28,14 +28,14 @@ namespace handlers {
 
 void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
   switch (request.state_chunk_case()) {
-    case proto::LoadStateRequest::kPoseGraph:
-      reader_.AddProto(request.pose_graph());
-      break;
-    case proto::LoadStateRequest::kAllTrajectoryBuilderOptions:
-      reader_.AddProto(request.all_trajectory_builder_options());
-      break;
     case proto::LoadStateRequest::kSerializedData:
       reader_.AddProto(request.serialized_data());
+      break;
+    case proto::LoadStateRequest::kSerializationHeader:
+      reader_.AddProto(request.serialization_header());
+      break;
+    case proto::LoadStateRequest::kClientId:
+      client_id_ = request.client_id();
       break;
     default:
       LOG(FATAL) << "Unhandled proto::LoadStateRequest case.";
@@ -43,9 +43,16 @@ void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
 }
 
 void LoadStateHandler::OnReadsDone() {
-  GetContext<MapBuilderContextInterface>()->map_builder().LoadState(&reader_,
-                                                                    true);
-  Send(common::make_unique<google::protobuf::Empty>());
+  auto trajectory_remapping =
+      GetContext<MapBuilderContextInterface>()->map_builder().LoadState(
+          &reader_, true);
+  for (const auto& entry : trajectory_remapping) {
+    GetContext<MapBuilderContextInterface>()->RegisterClientIdForTrajectory(
+        client_id_, entry.second);
+  }
+  auto response = absl::make_unique<proto::LoadStateResponse>();
+  *response->mutable_trajectory_remapping() = ToProto(trajectory_remapping);
+  Send(std::move(response));
 }
 
 }  // namespace handlers

@@ -26,7 +26,7 @@
 #include <string>
 
 #include "Eigen/Eigenvalues"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/proto/scan_matching//ceres_scan_matcher_options_2d.pb.h"
@@ -58,13 +58,13 @@ ConstraintBuilder2D::ConstraintBuilder2D(
     common::ThreadPoolInterface* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
-      finish_node_task_(common::make_unique<common::Task>()),
-      when_done_task_(common::make_unique<common::Task>()),
+      finish_node_task_(absl::make_unique<common::Task>()),
+      when_done_task_(absl::make_unique<common::Task>()),
       sampler_(options.sampling_ratio()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options()) {}
 
 ConstraintBuilder2D::~ConstraintBuilder2D() {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   CHECK_EQ(finish_node_task_->GetState(), common::Task::NEW);
   CHECK_EQ(when_done_task_->GetState(), common::Task::NEW);
   CHECK_EQ(constraints_.size(), 0) << "WhenDone() was not called";
@@ -82,7 +82,7 @@ void ConstraintBuilder2D::MaybeAddConstraint(
   }
   if (!sampler_.Pulse()) return;
 
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   if (when_done_) {
     LOG(WARNING)
         << "MaybeAddConstraint was called while WhenDone was scheduled.";
@@ -92,8 +92,8 @@ void ConstraintBuilder2D::MaybeAddConstraint(
   auto* const constraint = &constraints_.back();
   const auto* scan_matcher =
       DispatchScanMatcherConstruction(submap_id, submap->grid());
-  auto constraint_task = common::make_unique<common::Task>();
-  constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
+  auto constraint_task = absl::make_unique<common::Task>();
+  constraint_task->SetWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     ComputeConstraint(submap_id, submap, node_id, false, /* match_full_submap */
                       constant_data, initial_relative_pose, *scan_matcher,
                       constraint);
@@ -107,7 +107,7 @@ void ConstraintBuilder2D::MaybeAddConstraint(
 void ConstraintBuilder2D::MaybeAddGlobalConstraint(
     const SubmapId& submap_id, const Submap2D* const submap,
     const NodeId& node_id, const TrajectoryNode::Data* const constant_data) {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   if (when_done_) {
     LOG(WARNING)
         << "MaybeAddGlobalConstraint was called while WhenDone was scheduled.";
@@ -117,8 +117,8 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
   auto* const constraint = &constraints_.back();
   const auto* scan_matcher =
       DispatchScanMatcherConstruction(submap_id, submap->grid());
-  auto constraint_task = common::make_unique<common::Task>();
-  constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
+  auto constraint_task = absl::make_unique<common::Task>();
+  constraint_task->SetWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     ComputeConstraint(submap_id, submap, node_id, true, /* match_full_submap */
                       constant_data, transform::Rigid2d::Identity(),
                       *scan_matcher, constraint);
@@ -130,46 +130,46 @@ void ConstraintBuilder2D::MaybeAddGlobalConstraint(
 }
 
 void ConstraintBuilder2D::NotifyEndOfNode() {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   CHECK(finish_node_task_ != nullptr);
   finish_node_task_->SetWorkItem([this] {
-    common::MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     ++num_finished_nodes_;
   });
   auto finish_node_task_handle =
       thread_pool_->Schedule(std::move(finish_node_task_));
-  finish_node_task_ = common::make_unique<common::Task>();
+  finish_node_task_ = absl::make_unique<common::Task>();
   when_done_task_->AddDependency(finish_node_task_handle);
   ++num_started_nodes_;
 }
 
 void ConstraintBuilder2D::WhenDone(
     const std::function<void(const ConstraintBuilder2D::Result&)>& callback) {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   CHECK(when_done_ == nullptr);
   // TODO(gaschler): Consider using just std::function, it can also be empty.
-  when_done_ =
-      common::make_unique<std::function<void(const Result&)>>(callback);
+  when_done_ = absl::make_unique<std::function<void(const Result&)>>(callback);
   CHECK(when_done_task_ != nullptr);
   when_done_task_->SetWorkItem([this] { RunWhenDoneCallback(); });
   thread_pool_->Schedule(std::move(when_done_task_));
-  when_done_task_ = common::make_unique<common::Task>();
+  when_done_task_ = absl::make_unique<common::Task>();
 }
 
 const ConstraintBuilder2D::SubmapScanMatcher*
 ConstraintBuilder2D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
                                                      const Grid2D* const grid) {
+  CHECK(grid);
   if (submap_scan_matchers_.count(submap_id) != 0) {
     return &submap_scan_matchers_.at(submap_id);
   }
   auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
   submap_scan_matcher.grid = grid;
   auto& scan_matcher_options = options_.fast_correlative_scan_matcher_options();
-  auto scan_matcher_task = common::make_unique<common::Task>();
+  auto scan_matcher_task = absl::make_unique<common::Task>();
   scan_matcher_task->SetWorkItem(
       [&submap_scan_matcher, &scan_matcher_options]() {
         submap_scan_matcher.fast_correlative_scan_matcher =
-            common::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
+            absl::make_unique<scan_matching::FastCorrelativeScanMatcher2D>(
                 *submap_scan_matcher.grid, scan_matcher_options);
       });
   submap_scan_matcher.creation_task_handle =
@@ -184,6 +184,7 @@ void ConstraintBuilder2D::ComputeConstraint(
     const transform::Rigid2d& initial_relative_pose,
     const SubmapScanMatcher& submap_scan_matcher,
     std::unique_ptr<ConstraintBuilder2D::Constraint>* constraint) {
+  CHECK(submap_scan_matcher.fast_correlative_scan_matcher);
   const transform::Rigid2d initial_pose =
       ComputeSubmapPose(*submap) * initial_relative_pose;
 
@@ -226,7 +227,7 @@ void ConstraintBuilder2D::ComputeConstraint(
     }
   }
   {
-    common::MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     score_histogram_.Add(score);
   }
 
@@ -271,7 +272,7 @@ void ConstraintBuilder2D::RunWhenDoneCallback() {
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
-    common::MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     CHECK(when_done_ != nullptr);
     for (const std::unique_ptr<Constraint>& constraint : constraints_) {
       if (constraint == nullptr) continue;
@@ -291,12 +292,12 @@ void ConstraintBuilder2D::RunWhenDoneCallback() {
 }
 
 int ConstraintBuilder2D::GetNumFinishedNodes() {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   return num_finished_nodes_;
 }
 
 void ConstraintBuilder2D::DeleteScanMatcher(const SubmapId& submap_id) {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   if (when_done_) {
     LOG(WARNING)
         << "DeleteScanMatcher was called while WhenDone was scheduled.";
@@ -306,7 +307,7 @@ void ConstraintBuilder2D::DeleteScanMatcher(const SubmapId& submap_id) {
 
 void ConstraintBuilder2D::RegisterMetrics(metrics::FamilyFactory* factory) {
   auto* counts = factory->NewCounterFamily(
-      "mapping_internal_constraints_constraint_builder_2d_constraints",
+      "mapping_constraints_constraint_builder_2d_constraints",
       "Constraints computed");
   kConstraintsSearchedMetric =
       counts->Add({{"search_region", "local"}, {"matcher", "searched"}});
@@ -317,12 +318,11 @@ void ConstraintBuilder2D::RegisterMetrics(metrics::FamilyFactory* factory) {
   kGlobalConstraintsFoundMetric =
       counts->Add({{"search_region", "global"}, {"matcher", "found"}});
   auto* queue_length = factory->NewGaugeFamily(
-      "mapping_internal_constraints_constraint_builder_2d_queue_length",
-      "Queue length");
+      "mapping_constraints_constraint_builder_2d_queue_length", "Queue length");
   kQueueLengthMetric = queue_length->Add({});
   auto boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = factory->NewHistogramFamily(
-      "mapping_internal_constraints_constraint_builder_2d_scores",
+      "mapping_constraints_constraint_builder_2d_scores",
       "Constraint scores built", boundaries);
   kConstraintScoresMetric = scores->Add({{"search_region", "local"}});
   kGlobalConstraintScoresMetric = scores->Add({{"search_region", "global"}});

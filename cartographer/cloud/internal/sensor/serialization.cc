@@ -20,63 +20,70 @@ namespace cartographer {
 namespace cloud {
 
 void CreateSensorMetadata(const std::string& sensor_id, const int trajectory_id,
+                          const std::string& client_id,
                           proto::SensorMetadata* proto) {
   proto->set_sensor_id(sensor_id);
   proto->set_trajectory_id(trajectory_id);
+  proto->set_client_id(client_id);
 }
 
 void CreateAddFixedFramePoseDataRequest(
     const std::string& sensor_id, int trajectory_id,
+    const std::string& client_id,
     const sensor::proto::FixedFramePoseData& fixed_frame_pose_data,
     proto::AddFixedFramePoseDataRequest* proto) {
-  CreateSensorMetadata(sensor_id, trajectory_id,
+  CreateSensorMetadata(sensor_id, trajectory_id, client_id,
                        proto->mutable_sensor_metadata());
   *proto->mutable_fixed_frame_pose_data() = fixed_frame_pose_data;
 }
 
 void CreateAddImuDataRequest(const std::string& sensor_id,
                              const int trajectory_id,
+                             const std::string& client_id,
                              const sensor::proto::ImuData& imu_data,
                              proto::AddImuDataRequest* proto) {
-  CreateSensorMetadata(sensor_id, trajectory_id,
+  CreateSensorMetadata(sensor_id, trajectory_id, client_id,
                        proto->mutable_sensor_metadata());
   *proto->mutable_imu_data() = imu_data;
 }
 
 void CreateAddOdometryDataRequest(
     const std::string& sensor_id, int trajectory_id,
+    const std::string& client_id,
     const sensor::proto::OdometryData& odometry_data,
     proto::AddOdometryDataRequest* proto) {
-  CreateSensorMetadata(sensor_id, trajectory_id,
+  CreateSensorMetadata(sensor_id, trajectory_id, client_id,
                        proto->mutable_sensor_metadata());
   *proto->mutable_odometry_data() = odometry_data;
 }
 
 void CreateAddRangeFinderDataRequest(
     const std::string& sensor_id, int trajectory_id,
+    const std::string& client_id,
     const sensor::proto::TimedPointCloudData& timed_point_cloud_data,
     proto::AddRangefinderDataRequest* proto) {
-  CreateSensorMetadata(sensor_id, trajectory_id,
+  CreateSensorMetadata(sensor_id, trajectory_id, client_id,
                        proto->mutable_sensor_metadata());
   *proto->mutable_timed_point_cloud_data() = timed_point_cloud_data;
 }
 
 void CreateAddLandmarkDataRequest(
     const std::string& sensor_id, int trajectory_id,
+    const std::string& client_id,
     const sensor::proto::LandmarkData& landmark_data,
     proto::AddLandmarkDataRequest* proto) {
-  CreateSensorMetadata(sensor_id, trajectory_id,
+  CreateSensorMetadata(sensor_id, trajectory_id, client_id,
                        proto->mutable_sensor_metadata());
   *proto->mutable_landmark_data() = landmark_data;
 }
 
 void CreateSensorDataForLocalSlamResult(
-    const std::string& sensor_id, int trajectory_id, common::Time time,
-    int starting_submap_index,
+    const std::string& sensor_id, int trajectory_id,
+    const std::string& client_id, common::Time time, int starting_submap_index,
     const mapping::TrajectoryBuilderInterface::InsertionResult&
         insertion_result,
     proto::SensorData* proto) {
-  CreateSensorMetadata(sensor_id, trajectory_id,
+  CreateSensorMetadata(sensor_id, trajectory_id, client_id,
                        proto->mutable_sensor_metadata());
   proto->mutable_local_slam_result_data()->set_timestamp(
       common::ToUniversal(time));
@@ -85,7 +92,7 @@ void CreateSensorDataForLocalSlamResult(
   for (const auto& insertion_submap : insertion_result.insertion_submaps) {
     // We only send the probability grid up if the submap is finished.
     auto* submap = proto->mutable_local_slam_result_data()->add_submaps();
-    insertion_submap->ToProto(submap, insertion_submap->finished());
+    *submap = insertion_submap->ToProto(insertion_submap->insertion_finished());
     submap->mutable_submap_id()->set_trajectory_id(trajectory_id);
     submap->mutable_submap_id()->set_submap_index(starting_submap_index);
     ++starting_submap_index;

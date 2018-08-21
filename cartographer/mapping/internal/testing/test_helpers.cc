@@ -16,65 +16,79 @@
 
 #include "cartographer/mapping/internal/testing/test_helpers.h"
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/config.h"
 #include "cartographer/common/configuration_file_resolver.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace mapping {
-namespace test {
+namespace testing {
 
 std::unique_ptr<::cartographer::common::LuaParameterDictionary>
 ResolveLuaParameters(const std::string& lua_code) {
-  auto file_resolver = ::cartographer::common::make_unique<
-      ::cartographer::common::ConfigurationFileResolver>(
-      std::vector<std::string>{
-          std::string(::cartographer::common::kSourceDirectory) +
-          "/configuration_files"});
-  return common::make_unique<::cartographer::common::LuaParameterDictionary>(
+  auto file_resolver =
+      absl::make_unique<::cartographer::common::ConfigurationFileResolver>(
+          std::vector<std::string>{
+              std::string(::cartographer::common::kSourceDirectory) +
+              "/configuration_files"});
+  return absl::make_unique<::cartographer::common::LuaParameterDictionary>(
       lua_code, std::move(file_resolver));
 }
 
 std::vector<cartographer::sensor::TimedPointCloudData>
 GenerateFakeRangeMeasurements(double travel_distance, double duration,
                               double time_step) {
+  const Eigen::Vector3f kDirection = Eigen::Vector3f(2., 1., 0.).normalized();
+  return GenerateFakeRangeMeasurements(kDirection * travel_distance, duration,
+                                       time_step,
+                                       transform::Rigid3f::Identity());
+}
+
+std::vector<cartographer::sensor::TimedPointCloudData>
+GenerateFakeRangeMeasurements(const Eigen::Vector3f& translation,
+                              double duration, double time_step,
+                              const transform::Rigid3f& local_to_global) {
   std::vector<cartographer::sensor::TimedPointCloudData> measurements;
   cartographer::sensor::TimedPointCloud point_cloud;
   for (double angle = 0.; angle < M_PI; angle += 0.01) {
     for (double height : {-0.4, -0.2, 0.0, 0.2, 0.4}) {
       constexpr double kRadius = 5;
-      point_cloud.emplace_back(kRadius * std::cos(angle),
-                               kRadius * std::sin(angle), height, 0.);
+      point_cloud.push_back({Eigen::Vector3d{kRadius * std::cos(angle),
+                                             kRadius * std::sin(angle), height}
+                                 .cast<float>(),
+                             0.});
     }
   }
-  const Eigen::Vector3f kDirection = Eigen::Vector3f(2., 1., 0.).normalized();
-  const Eigen::Vector3f kVelocity = travel_distance / duration * kDirection;
+  const Eigen::Vector3f kVelocity = translation / duration;
   for (double elapsed_time = 0.; elapsed_time < duration;
        elapsed_time += time_step) {
     cartographer::common::Time time =
         cartographer::common::FromUniversal(123) +
         cartographer::common::FromSeconds(elapsed_time);
-    cartographer::transform::Rigid3f pose =
+    cartographer::transform::Rigid3f global_pose =
+        local_to_global *
         cartographer::transform::Rigid3f::Translation(elapsed_time * kVelocity);
     cartographer::sensor::TimedPointCloud ranges =
         cartographer::sensor::TransformTimedPointCloud(point_cloud,
-                                                       pose.inverse());
+                                                       global_pose.inverse());
     measurements.emplace_back(cartographer::sensor::TimedPointCloudData{
         time, Eigen::Vector3f::Zero(), ranges});
   }
   return measurements;
 }
 
-proto::Submap CreateFakeSubmap3D(int trajectory_id, int submap_index) {
+proto::Submap CreateFakeSubmap3D(int trajectory_id, int submap_index,
+                                 bool finished) {
   proto::Submap proto;
   proto.mutable_submap_id()->set_trajectory_id(trajectory_id);
   proto.mutable_submap_id()->set_submap_index(submap_index);
   proto.mutable_submap_3d()->set_num_range_data(1);
   *proto.mutable_submap_3d()->mutable_local_pose() =
       transform::ToProto(transform::Rigid3d::Identity());
+  proto.mutable_submap_3d()->set_finished(finished);
   return proto;
 }
 
@@ -161,6 +175,6 @@ void AddToProtoGraph(const proto::PoseGraph::LandmarkPose& landmark,
   *pose_graph->add_landmark_poses() = landmark;
 }
 
-}  // namespace test
+}  // namespace testing
 }  // namespace mapping
 }  // namespace cartographer

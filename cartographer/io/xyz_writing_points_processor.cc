@@ -2,7 +2,7 @@
 
 #include <iomanip>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -30,7 +30,7 @@ XyzWriterPointsProcessor::FromDictionary(
     const FileWriterFactory& file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
-  return common::make_unique<XyzWriterPointsProcessor>(
+  return absl::make_unique<XyzWriterPointsProcessor>(
       file_writer_factory(dictionary->GetString("filename")), next);
 }
 
@@ -48,8 +48,8 @@ PointsProcessor::FlushResult XyzWriterPointsProcessor::Flush() {
 }
 
 void XyzWriterPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
-  for (const Eigen::Vector3f& point : batch->points) {
-    WriteXyzPoint(point, file_writer_.get());
+  for (const sensor::RangefinderPoint& point : batch->points) {
+    WriteXyzPoint(point.position, file_writer_.get());
   }
   next_->Process(std::move(batch));
 }

@@ -21,8 +21,8 @@
 #include <random>
 #include <string>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/3d/range_data_inserter_3d.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
@@ -41,12 +41,12 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
 
   void SetUp() override {
     point_cloud_ = {
-        Eigen::Vector3f(4.f, 0.f, 0.f), Eigen::Vector3f(4.5f, 0.f, 0.f),
-        Eigen::Vector3f(5.f, 0.f, 0.f), Eigen::Vector3f(5.5f, 0.f, 0.f),
-        Eigen::Vector3f(0.f, 4.f, 0.f), Eigen::Vector3f(0.f, 4.5f, 0.f),
-        Eigen::Vector3f(0.f, 5.f, 0.f), Eigen::Vector3f(0.f, 5.5f, 0.f),
-        Eigen::Vector3f(0.f, 0.f, 4.f), Eigen::Vector3f(0.f, 0.f, 4.5f),
-        Eigen::Vector3f(0.f, 0.f, 5.f), Eigen::Vector3f(0.f, 0.f, 5.5f)};
+        {Eigen::Vector3f(4.f, 0.f, 0.f)}, {Eigen::Vector3f(4.5f, 0.f, 0.f)},
+        {Eigen::Vector3f(5.f, 0.f, 0.f)}, {Eigen::Vector3f(5.5f, 0.f, 0.f)},
+        {Eigen::Vector3f(0.f, 4.f, 0.f)}, {Eigen::Vector3f(0.f, 4.5f, 0.f)},
+        {Eigen::Vector3f(0.f, 5.f, 0.f)}, {Eigen::Vector3f(0.f, 5.5f, 0.f)},
+        {Eigen::Vector3f(0.f, 0.f, 4.f)}, {Eigen::Vector3f(0.f, 0.f, 4.5f)},
+        {Eigen::Vector3f(0.f, 0.f, 5.f)}, {Eigen::Vector3f(0.f, 0.f, 5.5f)}};
   }
 
   transform::Rigid3f GetRandomPose() {
@@ -96,7 +96,7 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
   std::unique_ptr<FastCorrelativeScanMatcher3D> GetFastCorrelativeScanMatcher(
       const proto::FastCorrelativeScanMatcherOptions3D& options,
       const transform::Rigid3f& pose) {
-    hybrid_grid_ = common::make_unique<HybridGrid>(0.05f);
+    hybrid_grid_ = absl::make_unique<HybridGrid>(0.05f);
     range_data_inserter_.Insert(
         sensor::RangeData{pose.translation(),
                           sensor::TransformPointCloud(point_cloud_, pose),
@@ -104,7 +104,7 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
         hybrid_grid_.get());
     hybrid_grid_->FinishUpdate();
 
-    return common::make_unique<FastCorrelativeScanMatcher3D>(
+    return absl::make_unique<FastCorrelativeScanMatcher3D>(
         *hybrid_grid_, hybrid_grid_.get(),
         std::vector<TrajectoryNode>(
             {{std::make_shared<const TrajectoryNode::Data>(
@@ -157,7 +157,8 @@ TEST_F(FastCorrelativeScanMatcher3DTest, CorrectPoseForMatch) {
     const std::unique_ptr<FastCorrelativeScanMatcher3D::Result>
         low_resolution_result = fast_correlative_scan_matcher->Match(
             transform::Rigid3d::Identity(), transform::Rigid3d::Identity(),
-            CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore);
+            CreateConstantData({{Eigen::Vector3f(42.f, 42.f, 42.f)}}),
+            kMinScore);
     EXPECT_THAT(low_resolution_result, testing::IsNull())
         << low_resolution_result->low_resolution_score;
   }
@@ -185,7 +186,7 @@ TEST_F(FastCorrelativeScanMatcher3DTest, CorrectPoseForMatchFullSubmap) {
   const std::unique_ptr<FastCorrelativeScanMatcher3D::Result>
       low_resolution_result = fast_correlative_scan_matcher->MatchFullSubmap(
           Eigen::Quaterniond::Identity(), Eigen::Quaterniond::Identity(),
-          CreateConstantData({Eigen::Vector3f(42.f, 42.f, 42.f)}), kMinScore);
+          CreateConstantData({{Eigen::Vector3f(42.f, 42.f, 42.f)}}), kMinScore);
   EXPECT_THAT(low_resolution_result, testing::IsNull())
       << low_resolution_result->low_resolution_score;
 }

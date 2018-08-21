@@ -46,8 +46,7 @@ class Submap3D : public Submap {
            const transform::Rigid3d& local_submap_pose);
   explicit Submap3D(const proto::Submap3D& proto);
 
-  void ToProto(proto::Submap* proto,
-               bool include_probability_grid_data) const override;
+  proto::Submap ToProto(bool include_probability_grid_data) const override;
   void UpdateFromProto(const proto::Submap& proto) override;
 
   void ToResponseProto(const transform::Rigid3d& global_submap_pose,
@@ -64,18 +63,21 @@ class Submap3D : public Submap {
   // submap must not be finished yet.
   void InsertRangeData(const sensor::RangeData& range_data,
                        const RangeDataInserter3D& range_data_inserter,
-                       int high_resolution_max_range);
+                       float high_resolution_max_range);
   void Finish();
 
  private:
+  void UpdateFromProto(const proto::Submap3D& submap_3d);
+
   std::unique_ptr<HybridGrid> high_resolution_hybrid_grid_;
   std::unique_ptr<HybridGrid> low_resolution_hybrid_grid_;
 };
 
-// Except during initialization when only a single submap exists, there are
-// always two submaps into which range data is inserted: an old submap that is
-// used for matching, and a new one, which will be used for matching next, that
-// is being initialized.
+// The first active submap will be created on the insertion of the first range
+// data. Except during this initialization when no or only one single submap
+// exists, there are always two submaps into which range data is inserted: an
+// old submap that is used for matching, and a new one, which will be used for
+// matching next, that is being initialized.
 //
 // Once a certain number of range data have been inserted, the new submap is
 // considered initialized: the old submap is no longer changed, the "new" submap
@@ -88,23 +90,19 @@ class ActiveSubmaps3D {
   ActiveSubmaps3D(const ActiveSubmaps3D&) = delete;
   ActiveSubmaps3D& operator=(const ActiveSubmaps3D&) = delete;
 
-  // Returns the index of the newest initialized Submap which can be
-  // used for scan-to-map matching.
-  int matching_index() const;
-
   // Inserts 'range_data' into the Submap collection. 'gravity_alignment' is
   // used for the orientation of new submaps so that the z axis approximately
   // aligns with gravity.
-  void InsertRangeData(const sensor::RangeData& range_data,
-                       const Eigen::Quaterniond& gravity_alignment);
+  std::vector<std::shared_ptr<const Submap3D>> InsertRangeData(
+      const sensor::RangeData& range_data,
+      const Eigen::Quaterniond& gravity_alignment);
 
-  std::vector<std::shared_ptr<Submap3D>> submaps() const;
+  std::vector<std::shared_ptr<const Submap3D>> submaps() const;
 
  private:
   void AddSubmap(const transform::Rigid3d& local_submap_pose);
 
   const proto::SubmapsOptions3D options_;
-  int matching_submap_index_ = 0;
   std::vector<std::shared_ptr<Submap3D>> submaps_;
   RangeDataInserter3D range_data_inserter_;
 };

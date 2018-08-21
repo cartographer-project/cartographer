@@ -44,7 +44,7 @@ class RealTimeCorrelativeScanMatcher3DTest : public ::testing::Test {
           Eigen::Vector3f(-5.f, 2.f, 0.f), Eigen::Vector3f(-6.f, 2.f, 0.f),
           Eigen::Vector3f(-6.f, 3.f, 1.f), Eigen::Vector3f(-6.f, 4.f, 2.f),
           Eigen::Vector3f(-7.f, 3.f, 1.f)}) {
-      point_cloud_.push_back(point);
+      point_cloud_.push_back({point});
       hybrid_grid_.SetProbability(
           hybrid_grid_.GetCellIndex(expected_pose_.cast<float>() * point), 1.);
     }

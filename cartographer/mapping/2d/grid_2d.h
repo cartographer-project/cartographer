@@ -24,6 +24,7 @@
 #include "cartographer/mapping/proto/2d/grid_2d.pb.h"
 #include "cartographer/mapping/proto/2d/submaps_options_2d.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
+#include "cartographer/mapping/value_conversion_tables.h"
 
 namespace cartographer {
 namespace mapping {
@@ -31,19 +32,26 @@ namespace mapping {
 proto::GridOptions2D CreateGridOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary);
 
+enum class GridType { PROBABILITY_GRID, TSDF };
+
 class Grid2D : public GridInterface {
  public:
-  explicit Grid2D(const MapLimits& limits, float min_correspondence_cost,
-                  float max_correspondence_cost);
-  explicit Grid2D(const proto::Grid2D& proto);
+  Grid2D(const MapLimits& limits, float min_correspondence_cost,
+         float max_correspondence_cost,
+         ValueConversionTables* conversion_tables);
+  explicit Grid2D(const proto::Grid2D& proto,
+                  ValueConversionTables* conversion_tables);
 
   // Returns the limits of this Grid2D.
   const MapLimits& limits() const { return limits_; }
 
   // Finishes the update sequence.
   void FinishUpdate();
+
   // Returns the correspondence cost of the cell with 'cell_index'.
   float GetCorrespondenceCost(const Eigen::Array2i& cell_index) const;
+
+  virtual GridType GetGridType() const = 0;
 
   // Returns the minimum possible correspondence cost.
   float GetMinCorrespondenceCost() const { return min_correspondence_cost_; }
@@ -73,6 +81,10 @@ class Grid2D : public GridInterface {
       transform::Rigid3d local_pose) const = 0;
 
  protected:
+  void GrowLimits(const Eigen::Vector2f& point,
+                  const std::vector<std::vector<uint16>*>& grids,
+                  const std::vector<uint16>& grids_unknown_cell_values);
+
   const std::vector<uint16>& correspondence_cost_cells() const {
     return correspondence_cost_cells_;
   }
@@ -84,6 +96,7 @@ class Grid2D : public GridInterface {
   std::vector<uint16>* mutable_correspondence_cost_cells() {
     return &correspondence_cost_cells_;
   }
+
   std::vector<int>* mutable_update_indices() { return &update_indices_; }
   Eigen::AlignedBox2i* mutable_known_cells_box() { return &known_cells_box_; }
 
@@ -99,6 +112,7 @@ class Grid2D : public GridInterface {
 
   // Bounding box of known cells to efficiently compute cropping limits.
   Eigen::AlignedBox2i known_cells_box_;
+  const std::vector<float>* value_to_correspondence_cost_table_;
 };
 
 }  // namespace mapping

@@ -21,29 +21,35 @@
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/get_submap_handler.h"
+#include "cartographer/cloud/internal/handlers/load_state_from_file_handler.h"
 #include "cartographer/cloud/internal/handlers/load_state_handler.h"
 #include "cartographer/cloud/internal/handlers/write_state_handler.h"
+#include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
+#include "cartographer/io/proto_stream_deserializer.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace cloud {
 namespace {
 
-using common::make_unique;
-constexpr int kConnectionTimeoutInSecond = 10;
+using absl::make_unique;
+constexpr int kConnectionTimeoutInSeconds = 10;
 
 }  // namespace
 
-MapBuilderStub::MapBuilderStub(const std::string& server_address)
+MapBuilderStub::MapBuilderStub(const std::string& server_address,
+                               const std::string& client_id)
     : client_channel_(::grpc::CreateChannel(
           server_address, ::grpc::InsecureChannelCredentials())),
-      pose_graph_stub_(make_unique<PoseGraphStub>(client_channel_)) {
-  LOG(INFO) << "Connecting to SLAM process at " << server_address;
+      pose_graph_stub_(make_unique<PoseGraphStub>(client_channel_, client_id)),
+      client_id_(client_id) {
+  LOG(INFO) << "Connecting to SLAM process at " << server_address
+            << " with client_id " << client_id;
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
-      std::chrono::seconds(kConnectionTimeoutInSecond));
+      std::chrono::seconds(kConnectionTimeoutInSeconds));
   if (!client_channel_->WaitForConnected(deadline)) {
     LOG(FATAL) << "Failed to connect to " << server_address;
   }
@@ -54,13 +60,15 @@ int MapBuilderStub::AddTrajectoryBuilder(
     const mapping::proto::TrajectoryBuilderOptions& trajectory_options,
     LocalSlamResultCallback local_slam_result_callback) {
   proto::AddTrajectoryRequest request;
+  request.set_client_id(client_id_);
   *request.mutable_trajectory_builder_options() = trajectory_options;
   for (const auto& sensor_id : expected_sensor_ids) {
     *request.add_expected_sensor_ids() = cloud::ToProto(sensor_id);
   }
   async_grpc::Client<handlers::AddTrajectorySignature> client(
-      client_channel_, async_grpc::CreateLimitedBackoffStrategy(
-                           common::FromMilliseconds(100), 2.f, 5));
+      client_channel_, common::FromSeconds(10),
+      async_grpc::CreateLimitedBackoffStrategy(common::FromMilliseconds(100),
+                                               2.f, 5));
   CHECK(client.Write(request));
 
   // Construct trajectory builder stub.
@@ -68,7 +76,7 @@ int MapBuilderStub::AddTrajectoryBuilder(
       std::piecewise_construct,
       std::forward_as_tuple(client.response().trajectory_id()),
       std::forward_as_tuple(make_unique<TrajectoryBuilderStub>(
-          client_channel_, client.response().trajectory_id(),
+          client_channel_, client.response().trajectory_id(), client_id_,
           local_slam_result_callback)));
   return client.response().trajectory_id();
 }
@@ -81,15 +89,27 @@ int MapBuilderStub::AddTrajectoryForDeserialization(
 
 mapping::TrajectoryBuilderInterface* MapBuilderStub::GetTrajectoryBuilder(
     int trajectory_id) const {
-  return trajectory_builder_stubs_.at(trajectory_id).get();
+  auto it = trajectory_builder_stubs_.find(trajectory_id);
+  if (it == trajectory_builder_stubs_.end()) {
+    return nullptr;
+  }
+  return it->second.get();
 }
 
 void MapBuilderStub::FinishTrajectory(int trajectory_id) {
   proto::FinishTrajectoryRequest request;
+  request.set_client_id(client_id_);
   request.set_trajectory_id(trajectory_id);
   async_grpc::Client<handlers::FinishTrajectorySignature> client(
       client_channel_);
-  CHECK(client.Write(request));
+  ::grpc::Status status;
+  client.Write(request, &status);
+  if (!status.ok()) {
+    LOG(ERROR) << "Failed to finish trajectory " << trajectory_id
+               << " for client_id " << client_id_ << ": "
+               << status.error_message();
+    return;
+  }
   trajectory_builder_stubs_.erase(trajectory_id);
 }
 
@@ -104,18 +124,20 @@ std::string MapBuilderStub::SubmapToProto(
   return client.response().error_msg();
 }
 
-void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
+void MapBuilderStub::SerializeState(bool include_unfinished_submaps,
+                                    io::ProtoStreamWriterInterface* writer) {
+  if (include_unfinished_submaps) {
+    LOG(WARNING) << "Serializing unfinished submaps is currently unsupported. "
+                    "Proceeding to write the state without them.";
+  }
   google::protobuf::Empty request;
   async_grpc::Client<handlers::WriteStateSignature> client(client_channel_);
   CHECK(client.Write(request));
   proto::WriteStateResponse response;
   while (client.StreamRead(&response)) {
     switch (response.state_chunk_case()) {
-      case proto::WriteStateResponse::kPoseGraph:
-        writer->WriteProto(response.pose_graph());
-        break;
-      case proto::WriteStateResponse::kAllTrajectoryBuilderOptions:
-        writer->WriteProto(response.all_trajectory_builder_options());
+      case proto::WriteStateResponse::kHeader:
+        writer->WriteProto(response.header());
         break;
       case proto::WriteStateResponse::kSerializedData:
         writer->WriteProto(response.serialized_data());
@@ -126,33 +148,62 @@ void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
   }
 }
 
-void MapBuilderStub::LoadState(io::ProtoStreamReaderInterface* reader,
-                               const bool load_frozen_state) {
+std::map<int, int> MapBuilderStub::LoadState(
+    io::ProtoStreamReaderInterface* reader, const bool load_frozen_state) {
   if (!load_frozen_state) {
     LOG(FATAL) << "Not implemented";
   }
   async_grpc::Client<handlers::LoadStateSignature> client(client_channel_);
-  // Request with a PoseGraph proto is sent first.
   {
     proto::LoadStateRequest request;
-    CHECK(reader->ReadProto(request.mutable_pose_graph()));
+    request.set_client_id(client_id_);
     CHECK(client.Write(request));
   }
-  // Request with an AllTrajectoryBuilderOptions should be second.
+
+  io::ProtoStreamDeserializer deserializer(reader);
+  // Request with the SerializationHeader proto is sent first.
   {
     proto::LoadStateRequest request;
-    CHECK(reader->ReadProto(request.mutable_all_trajectory_builder_options()));
+    *request.mutable_serialization_header() = deserializer.header();
+    CHECK(client.Write(request));
+  }
+  // Request with a PoseGraph proto is sent second.
+  {
+    proto::LoadStateRequest request;
+    *request.mutable_serialized_data()->mutable_pose_graph() =
+        deserializer.pose_graph();
+    CHECK(client.Write(request));
+  }
+  // Request with an AllTrajectoryBuilderOptions should be third.
+  {
+    proto::LoadStateRequest request;
+    *request.mutable_serialized_data()
+         ->mutable_all_trajectory_builder_options() =
+        deserializer.all_trajectory_builder_options();
     CHECK(client.Write(request));
   }
   // Multiple requests with SerializedData are sent after.
   proto::LoadStateRequest request;
-  while (reader->ReadProto(request.mutable_serialized_data())) {
+  while (
+      deserializer.ReadNextSerializedData(request.mutable_serialized_data())) {
     CHECK(client.Write(request));
   }
 
   CHECK(reader->eof());
   CHECK(client.StreamWritesDone());
   CHECK(client.StreamFinish().ok());
+  return FromProto(client.response().trajectory_remapping());
+}
+
+std::map<int, int> MapBuilderStub::LoadStateFromFile(
+    const std::string& filename) {
+  proto::LoadStateFromFileRequest request;
+  request.set_file_path(filename);
+  request.set_client_id(client_id_);
+  async_grpc::Client<handlers::LoadStateFromFileSignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
+  return FromProto(client.response().trajectory_remapping());
 }
 
 int MapBuilderStub::num_trajectory_builders() const {

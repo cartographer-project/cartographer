@@ -19,7 +19,7 @@
 #include <array>
 #include <memory>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/internal/test_helpers.h"
@@ -31,8 +31,8 @@ namespace cartographer {
 namespace sensor {
 namespace {
 
-using test::CollatorInput;
-using test::CollatorOutput;
+using testing::CollatorInput;
+using testing::CollatorOutput;
 
 TEST(Collator, Ordering) {
   const int kTrajectoryId = 0;

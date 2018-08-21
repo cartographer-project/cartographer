@@ -16,15 +16,18 @@
 
 #include "cartographer/cloud/internal/client/pose_graph_stub.h"
 #include "async_grpc/client.h"
+#include "cartographer/cloud/internal/handlers/delete_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/get_all_submap_poses.h"
 #include "cartographer/cloud/internal/handlers/get_constraints_handler.h"
 #include "cartographer/cloud/internal/handlers/get_landmark_poses_handler.h"
 #include "cartographer/cloud/internal/handlers/get_local_to_global_transform_handler.h"
 #include "cartographer/cloud/internal/handlers/get_trajectory_node_poses_handler.h"
+#include "cartographer/cloud/internal/handlers/get_trajectory_states_handler.h"
 #include "cartographer/cloud/internal/handlers/is_trajectory_finished_handler.h"
 #include "cartographer/cloud/internal/handlers/is_trajectory_frozen_handler.h"
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
 #include "cartographer/cloud/internal/handlers/set_landmark_pose_handler.h"
+#include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
@@ -32,8 +35,9 @@
 namespace cartographer {
 namespace cloud {
 
-PoseGraphStub::PoseGraphStub(std::shared_ptr<::grpc::Channel> client_channel)
-    : client_channel_(client_channel) {}
+PoseGraphStub::PoseGraphStub(std::shared_ptr<::grpc::Channel> client_channel,
+                             const std::string& client_id)
+    : client_channel_(client_channel), client_id_(client_id) {}
 
 void PoseGraphStub::RunFinalOptimization() {
   google::protobuf::Empty request;
@@ -43,12 +47,12 @@ void PoseGraphStub::RunFinalOptimization() {
 }
 
 mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapData>
-PoseGraphStub::GetAllSubmapData() {
+PoseGraphStub::GetAllSubmapData() const {
   LOG(FATAL) << "Not implemented";
 }
 
 mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapPose>
-PoseGraphStub::GetAllSubmapPoses() {
+PoseGraphStub::GetAllSubmapPoses() const {
   google::protobuf::Empty request;
   async_grpc::Client<handlers::GetAllSubmapPosesSignature> client(
       client_channel_);
@@ -66,7 +70,8 @@ PoseGraphStub::GetAllSubmapPoses() {
   return submap_poses;
 }
 
-transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(int trajectory_id) {
+transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(
+    int trajectory_id) const {
   proto::GetLocalToGlobalTransformRequest request;
   request.set_trajectory_id(trajectory_id);
   async_grpc::Client<handlers::GetLocalToGlobalTransformSignature> client(
@@ -76,28 +81,50 @@ transform::Rigid3d PoseGraphStub::GetLocalToGlobalTransform(int trajectory_id) {
 }
 
 mapping::MapById<mapping::NodeId, mapping::TrajectoryNode>
-PoseGraphStub::GetTrajectoryNodes() {
+PoseGraphStub::GetTrajectoryNodes() const {
   LOG(FATAL) << "Not implemented";
 }
 
 mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose>
-PoseGraphStub::GetTrajectoryNodePoses() {
+PoseGraphStub::GetTrajectoryNodePoses() const {
   google::protobuf::Empty request;
   async_grpc::Client<handlers::GetTrajectoryNodePosesSignature> client(
       client_channel_);
   CHECK(client.Write(request));
   mapping::MapById<mapping::NodeId, mapping::TrajectoryNodePose> node_poses;
   for (const auto& node_pose : client.response().node_poses()) {
-    node_poses.Insert(mapping::NodeId{node_pose.node_id().trajectory_id(),
-                                      node_pose.node_id().node_index()},
-                      mapping::TrajectoryNodePose{
-                          node_pose.has_constant_data(),
-                          transform::ToRigid3(node_pose.global_pose())});
+    absl::optional<mapping::TrajectoryNodePose::ConstantPoseData>
+        constant_pose_data;
+    if (node_pose.has_constant_pose_data()) {
+      constant_pose_data = mapping::TrajectoryNodePose::ConstantPoseData{
+          common::FromUniversal(node_pose.constant_pose_data().timestamp()),
+          transform::ToRigid3(node_pose.constant_pose_data().local_pose())};
+    }
+    node_poses.Insert(
+        mapping::NodeId{node_pose.node_id().trajectory_id(),
+                        node_pose.node_id().node_index()},
+        mapping::TrajectoryNodePose{
+            transform::ToRigid3(node_pose.global_pose()), constant_pose_data});
   }
   return node_poses;
 }
 
-std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses() {
+std::map<int, mapping::PoseGraphInterface::TrajectoryState>
+PoseGraphStub::GetTrajectoryStates() const {
+  google::protobuf::Empty request;
+  async_grpc::Client<handlers::GetTrajectoryStatesSignature> client(
+      client_channel_);
+  CHECK(client.Write(request));
+  std::map<int, mapping::PoseGraphInterface::TrajectoryState>
+      trajectories_state;
+  for (const auto& entry : client.response().trajectories_state()) {
+    trajectories_state[entry.first] = FromProto(entry.second);
+  }
+  return trajectories_state;
+}
+
+std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses()
+    const {
   google::protobuf::Empty request;
   async_grpc::Client<handlers::GetLandmarkPosesSignature> client(
       client_channel_);
@@ -121,38 +148,67 @@ void PoseGraphStub::SetLandmarkPose(const std::string& landmark_id,
   CHECK(client.Write(request));
 }
 
-bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) {
+void PoseGraphStub::DeleteTrajectory(int trajectory_id) {
+  proto::DeleteTrajectoryRequest request;
+  request.set_client_id(client_id_);
+  request.set_trajectory_id(trajectory_id);
+  async_grpc::Client<handlers::DeleteTrajectorySignature> client(
+      client_channel_);
+  ::grpc::Status status;
+  client.Write(request, &status);
+  if (!status.ok()) {
+    LOG(ERROR) << "Failed to delete trajectory " << trajectory_id
+               << " for client_id " << client_id_ << ": "
+               << status.error_message();
+  }
+}
+
+bool PoseGraphStub::IsTrajectoryFinished(int trajectory_id) const {
   proto::IsTrajectoryFinishedRequest request;
   request.set_trajectory_id(trajectory_id);
   async_grpc::Client<handlers::IsTrajectoryFinishedSignature> client(
       client_channel_);
-  CHECK(client.Write(request));
+  ::grpc::Status status;
+  CHECK(client.Write(request, &status))
+      << "Failed to check if trajectory " << trajectory_id
+      << " is finished: " << status.error_message();
   return client.response().is_finished();
 }
 
-bool PoseGraphStub::IsTrajectoryFrozen(int trajectory_id) {
+bool PoseGraphStub::IsTrajectoryFrozen(int trajectory_id) const {
   proto::IsTrajectoryFrozenRequest request;
   request.set_trajectory_id(trajectory_id);
   async_grpc::Client<handlers::IsTrajectoryFrozenSignature> client(
       client_channel_);
-  CHECK(client.Write(request));
+  ::grpc::Status status;
+  CHECK(client.Write(request, &status))
+      << "Failed to check if trajectory " << trajectory_id
+      << " is frozen: " << status.error_message();
   return client.response().is_frozen();
 }
 
 std::map<int, mapping::PoseGraphInterface::TrajectoryData>
-PoseGraphStub::GetTrajectoryData() {
+PoseGraphStub::GetTrajectoryData() const {
   LOG(FATAL) << "Not implemented";
 }
 
 std::vector<mapping::PoseGraphInterface::Constraint>
-PoseGraphStub::constraints() {
+PoseGraphStub::constraints() const {
   google::protobuf::Empty request;
   async_grpc::Client<handlers::GetConstraintsSignature> client(client_channel_);
-  CHECK(client.Write(request));
+  ::grpc::Status status;
+  CHECK(client.Write(request, &status))
+      << "Failed to get constraints: " << status.error_message();
   return mapping::FromProto(client.response().constraints());
 }
 
-mapping::proto::PoseGraph PoseGraphStub::ToProto() {
+mapping::proto::PoseGraph PoseGraphStub::ToProto(
+    bool include_unfinished_submaps) const {
+  LOG(FATAL) << "Not implemented";
+}
+
+void PoseGraphStub::SetGlobalSlamOptimizationCallback(
+    GlobalSlamOptimizationCallback callback) {
   LOG(FATAL) << "Not implemented";
 }
 

@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "glog/logging.h"
 
@@ -63,13 +63,14 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
 
     auto overlap_begin = ranges.begin();
     while (overlap_begin < ranges.end() &&
-           data.time + common::FromSeconds((*overlap_begin)[3]) <
+           data.time + common::FromSeconds((*overlap_begin).time) <
                current_start_) {
       ++overlap_begin;
     }
     auto overlap_end = overlap_begin;
     while (overlap_end < ranges.end() &&
-           data.time + common::FromSeconds((*overlap_end)[3]) <= current_end_) {
+           data.time + common::FromSeconds((*overlap_end).time) <=
+               current_end_) {
       ++overlap_end;
     }
     if (ranges.begin() < overlap_begin && !warned_for_dropped_points) {
@@ -82,14 +83,15 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
     if (overlap_begin < overlap_end) {
       std::size_t origin_index = result.origins.size();
       result.origins.push_back(data.origin);
-      double time_correction = common::ToSeconds(data.time - current_end_);
+      const float time_correction =
+          static_cast<float>(common::ToSeconds(data.time - current_end_));
       for (auto overlap_it = overlap_begin; overlap_it != overlap_end;
            ++overlap_it) {
         sensor::TimedPointCloudOriginData::RangeMeasurement point{*overlap_it,
                                                                   origin_index};
         // current_end_ + point_time[3]_after == in_timestamp +
         // point_time[3]_before
-        point.point_time[3] += time_correction;
+        point.point_time.time += time_correction;
         result.ranges.push_back(point);
       }
     }
@@ -110,7 +112,7 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
   std::sort(result.ranges.begin(), result.ranges.end(),
             [](const sensor::TimedPointCloudOriginData::RangeMeasurement& a,
                const sensor::TimedPointCloudOriginData::RangeMeasurement& b) {
-              return a.point_time[3] < b.point_time[3];
+              return a.point_time.time < b.point_time.time;
             });
   return result;
 }

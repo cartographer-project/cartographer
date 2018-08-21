@@ -39,8 +39,10 @@ TEST(PrecomputationGridTest, CorrectValues) {
   // represented by uint8 values.
   std::mt19937 prng(42);
   std::uniform_int_distribution<int> distribution(0, 255);
+  ValueConversionTables conversion_tables;
   ProbabilityGrid probability_grid(
-      MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(250, 250)));
+      MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(250, 250)),
+      &conversion_tables);
   std::vector<float> reusable_intermediate_grid;
   PrecomputationGrid2D precomputation_grid_dummy(
       probability_grid, probability_grid.limits().cell_limits(), 1,
@@ -77,8 +79,10 @@ TEST(PrecomputationGridTest, CorrectValues) {
 TEST(PrecomputationGridTest, TinyProbabilityGrid) {
   std::mt19937 prng(42);
   std::uniform_int_distribution<int> distribution(0, 255);
+  ValueConversionTables conversion_tables;
   ProbabilityGrid probability_grid(
-      MapLimits(0.05, Eigen::Vector2d(0.1, 0.1), CellLimits(4, 4)));
+      MapLimits(0.05, Eigen::Vector2d(0.1, 0.1), CellLimits(4, 4)),
+      &conversion_tables);
   std::vector<float> reusable_intermediate_grid;
   PrecomputationGrid2D precomputation_grid_dummy(
       probability_grid, probability_grid.limits().cell_limits(), 1,
@@ -146,20 +150,22 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
   const auto options = CreateFastCorrelativeScanMatcherTestOptions2D(3);
 
   sensor::PointCloud point_cloud;
-  point_cloud.emplace_back(-2.5f, 0.5f, 0.f);
-  point_cloud.emplace_back(-2.f, 0.5f, 0.f);
-  point_cloud.emplace_back(0.f, -0.5f, 0.f);
-  point_cloud.emplace_back(0.5f, -1.6f, 0.f);
-  point_cloud.emplace_back(2.5f, 0.5f, 0.f);
-  point_cloud.emplace_back(2.5f, 1.7f, 0.f);
+  point_cloud.push_back({Eigen::Vector3f{-2.5f, 0.5f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{-2.f, 0.5f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{0.f, -0.5f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{0.5f, -1.6f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{2.5f, 0.5f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{2.5f, 1.7f, 0.f}});
 
   for (int i = 0; i != 50; ++i) {
     const transform::Rigid2f expected_pose(
         {2. * distribution(prng), 2. * distribution(prng)},
         0.5 * distribution(prng));
 
+    ValueConversionTables conversion_tables;
     ProbabilityGrid probability_grid(
-        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
+        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)),
+        &conversion_tables);
     range_data_inserter.Insert(
         sensor::RangeData{
             Eigen::Vector3f(expected_pose.translation().x(),
@@ -194,12 +200,12 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
   const auto options = CreateFastCorrelativeScanMatcherTestOptions2D(6);
 
   sensor::PointCloud unperturbed_point_cloud;
-  unperturbed_point_cloud.emplace_back(-2.5f, 0.5f, 0.f);
-  unperturbed_point_cloud.emplace_back(-2.25f, 0.5f, 0.f);
-  unperturbed_point_cloud.emplace_back(0.f, 0.5f, 0.f);
-  unperturbed_point_cloud.emplace_back(0.25f, 1.6f, 0.f);
-  unperturbed_point_cloud.emplace_back(2.5f, 0.5f, 0.f);
-  unperturbed_point_cloud.emplace_back(2.f, 1.8f, 0.f);
+  unperturbed_point_cloud.push_back({Eigen::Vector3f{-2.5f, 0.5f, 0.f}});
+  unperturbed_point_cloud.push_back({Eigen::Vector3f{-2.25f, 0.5f, 0.f}});
+  unperturbed_point_cloud.push_back({Eigen::Vector3f{0.f, 0.5f, 0.f}});
+  unperturbed_point_cloud.push_back({Eigen::Vector3f{0.25f, 1.6f, 0.f}});
+  unperturbed_point_cloud.push_back({Eigen::Vector3f{2.5f, 0.5f, 0.f}});
+  unperturbed_point_cloud.push_back({Eigen::Vector3f{2.f, 1.8f, 0.f}});
 
   for (int i = 0; i != 20; ++i) {
     const transform::Rigid2f perturbation(
@@ -212,8 +218,10 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
                            0.5 * distribution(prng)) *
         perturbation.inverse();
 
+    ValueConversionTables conversion_tables;
     ProbabilityGrid probability_grid(
-        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)));
+        MapLimits(0.05, Eigen::Vector2d(5., 5.), CellLimits(200, 200)),
+        &conversion_tables);
     range_data_inserter.Insert(
         sensor::RangeData{
             transform::Embed3D(expected_pose * perturbation).translation(),

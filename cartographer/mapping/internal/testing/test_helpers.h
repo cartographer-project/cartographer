@@ -25,7 +25,7 @@
 
 namespace cartographer {
 namespace mapping {
-namespace test {
+namespace testing {
 
 std::unique_ptr<::cartographer::common::LuaParameterDictionary>
 ResolveLuaParameters(const std::string& lua_code);
@@ -34,7 +34,13 @@ std::vector<cartographer::sensor::TimedPointCloudData>
 GenerateFakeRangeMeasurements(double travel_distance, double duration,
                               double time_step);
 
-proto::Submap CreateFakeSubmap3D(int trajectory_id = 1, int submap_index = 1);
+std::vector<cartographer::sensor::TimedPointCloudData>
+GenerateFakeRangeMeasurements(const Eigen::Vector3f& translation,
+                              double duration, double time_step,
+                              const transform::Rigid3f& local_to_global);
+
+proto::Submap CreateFakeSubmap3D(int trajectory_id = 1, int submap_index = 1,
+                                 bool finished = true);
 
 proto::Node CreateFakeNode(int trajectory_id = 1, int node_index = 1);
 
@@ -58,7 +64,7 @@ void AddToProtoGraph(const proto::PoseGraph::Constraint& constraint,
 void AddToProtoGraph(const proto::PoseGraph::LandmarkPose& landmark_node,
                      proto::PoseGraph* pose_graph);
 
-}  // namespace test
+}  // namespace testing
 }  // namespace mapping
 }  // namespace cartographer
 

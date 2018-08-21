@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "cartographer/common/optional.h"
+#include "absl/types/optional.h"
 #include "cartographer/sensor/data.h"
 
 namespace cartographer {
@@ -61,7 +61,7 @@ class CollatorInterface {
   // the ID of the trajectory that needs more data before CollatorInterface is
   // unblocked. Returns 'nullopt' for implementations that do not wait for a
   // particular trajectory.
-  virtual common::optional<int> GetBlockingTrajectoryId() const = 0;
+  virtual absl::optional<int> GetBlockingTrajectoryId() const = 0;
 };
 
 }  // namespace sensor

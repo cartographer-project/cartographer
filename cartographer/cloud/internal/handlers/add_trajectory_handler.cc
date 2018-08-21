@@ -16,11 +16,11 @@
 
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 
 namespace cartographer {
 namespace cloud {
@@ -41,6 +41,8 @@ void AddTrajectoryHandler::OnRequest(
           .AddTrajectoryBuilder(expected_sensor_ids,
                                 request.trajectory_builder_options(),
                                 local_slam_result_callback);
+  GetContext<MapBuilderContextInterface>()->RegisterClientIdForTrajectory(
+      request.client_id(), trajectory_id);
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
     auto trajectory_builder_options = request.trajectory_builder_options();
@@ -53,15 +55,23 @@ void AddTrajectoryHandler::OnRequest(
 
     // Don't instantiate the 'PureLocalizationTrimmer' on the server and don't
     // freeze the trajectory on the server.
-    trajectory_builder_options.set_pure_localization(false);
+    trajectory_builder_options.clear_pure_localization_trimmer();
 
-    GetContext<MapBuilderContextInterface>()
-        ->local_trajectory_uploader()
-        ->AddTrajectory(trajectory_id, expected_sensor_ids,
-                        trajectory_builder_options);
+    // Ignore initial poses in trajectory_builder_options.
+    trajectory_builder_options.clear_initial_trajectory_pose();
+
+    auto status =
+        GetContext<MapBuilderContextInterface>()
+            ->local_trajectory_uploader()
+            ->AddTrajectory(request.client_id(), trajectory_id,
+                            expected_sensor_ids, trajectory_builder_options);
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to create trajectory_id " << trajectory_id
+                 << " in uplink. Error: " << status.error_message();
+    }
   }
 
-  auto response = common::make_unique<proto::AddTrajectoryResponse>();
+  auto response = absl::make_unique<proto::AddTrajectoryResponse>();
   response->set_trajectory_id(trajectory_id);
   Send(std::move(response));
 }

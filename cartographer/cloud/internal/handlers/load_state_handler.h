@@ -20,7 +20,6 @@
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/io/internal/in_memory_proto_stream.h"
-#include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {
@@ -28,7 +27,7 @@ namespace handlers {
 
 DEFINE_HANDLER_SIGNATURE(
     LoadStateSignature, async_grpc::Stream<proto::LoadStateRequest>,
-    google::protobuf::Empty,
+    proto::LoadStateResponse,
     "/cartographer.cloud.proto.MapBuilderService/LoadState")
 
 class LoadStateHandler : public async_grpc::RpcHandler<LoadStateSignature> {
@@ -38,6 +37,7 @@ class LoadStateHandler : public async_grpc::RpcHandler<LoadStateSignature> {
 
  private:
   io::InMemoryProtoStreamReader reader_;
+  std::string client_id_;
 };
 
 }  // namespace handlers

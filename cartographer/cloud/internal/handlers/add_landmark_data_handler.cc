@@ -16,11 +16,11 @@
 
 #include "cartographer/cloud/internal/handlers/add_landmark_data_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/sensor/internal/dispatchable.h"
 #include "cartographer/sensor/landmark_data.h"
 #include "google/protobuf/empty.pb.h"
@@ -29,8 +29,8 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-void AddLandmarkDataHandler::OnRequest(
-    const proto::AddLandmarkDataRequest &request) {
+void AddLandmarkDataHandler::OnSensorData(
+    const proto::AddLandmarkDataRequest& request) {
   // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
   // thread-safe. Therefore it suffices to get an unsynchronized reference to
   // the 'MapBuilderContext'.
@@ -44,17 +44,13 @@ void AddLandmarkDataHandler::OnRequest(
   // 'MapBuilderContext'.
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    auto sensor_data = common::make_unique<proto::SensorData>();
+    auto sensor_data = absl::make_unique<proto::SensorData>();
     *sensor_data->mutable_sensor_metadata() = request.sensor_metadata();
     *sensor_data->mutable_landmark_data() = request.landmark_data();
     GetUnsynchronizedContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
         ->EnqueueSensorData(std::move(sensor_data));
   }
-}
-
-void AddLandmarkDataHandler::OnReadsDone() {
-  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers

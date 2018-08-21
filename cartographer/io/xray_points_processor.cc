@@ -20,8 +20,8 @@
 #include <string>
 
 #include "Eigen/Core"
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
 #include "cartographer/io/draw_trajectories.h"
 #include "cartographer/io/image.h"
@@ -133,7 +133,7 @@ std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
     floors = mapping::DetectFloors(trajectories.at(0));
   }
 
-  return common::make_unique<XRayPointsProcessor>(
+  return absl::make_unique<XRayPointsProcessor>(
       dictionary->GetDouble("voxel_size"),
       transform::FromDictionary(dictionary->GetDictionary("transform").get())
           .cast<float>(),
@@ -196,9 +196,9 @@ void XRayPointsProcessor::Insert(const PointsBatch& batch,
                                  Aggregation* const aggregation) {
   constexpr FloatColor kDefaultColor = {{0.f, 0.f, 0.f}};
   for (size_t i = 0; i < batch.points.size(); ++i) {
-    const Eigen::Vector3f camera_point = transform_ * batch.points[i];
+    const sensor::RangefinderPoint camera_point = transform_ * batch.points[i];
     const Eigen::Array3i cell_index =
-        aggregation->voxels.GetCellIndex(camera_point);
+        aggregation->voxels.GetCellIndex(camera_point.position);
     *aggregation->voxels.mutable_value(cell_index) = true;
     bounding_box_.extend(cell_index.matrix());
     ColumnData& column_data =

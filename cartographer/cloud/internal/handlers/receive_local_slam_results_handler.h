@@ -39,7 +39,8 @@ class ReceiveLocalSlamResultsHandler
   void OnFinish() override;
 
  private:
-  std::unique_ptr<MapBuilderContextInterface::SubscriptionId> subscription_id_;
+  std::unique_ptr<MapBuilderContextInterface::LocalSlamSubscriptionId>
+      subscription_id_;
 };
 
 }  // namespace handlers

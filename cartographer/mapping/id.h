@@ -27,7 +27,7 @@
 #include <tuple>
 #include <vector>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/pose_graph.pb.h"
@@ -55,6 +55,9 @@ common::Time GetTime(const T& t) {
 // Uniquely identifies a trajectory node using a combination of a unique
 // trajectory ID and a zero-based index of the node inside that trajectory.
 struct NodeId {
+  NodeId(int trajectory_id, int node_index)
+      : trajectory_id(trajectory_id), node_index(node_index) {}
+
   int trajectory_id;
   int node_index;
 
@@ -83,6 +86,9 @@ inline std::ostream& operator<<(std::ostream& os, const NodeId& v) {
 // Uniquely identifies a submap using a combination of a unique trajectory ID
 // and a zero-based index of the submap inside that trajectory.
 struct SubmapId {
+  SubmapId(int trajectory_id, int submap_index)
+      : trajectory_id(trajectory_id), submap_index(submap_index) {}
+
   int trajectory_id;
   int submap_index;
 
@@ -175,7 +181,7 @@ class MapById {
     }
 
     std::unique_ptr<const IdDataReference> operator->() const {
-      return common::make_unique<const IdDataReference>(this->operator*());
+      return absl::make_unique<const IdDataReference>(this->operator*());
     }
 
     ConstIterator& operator++() {
@@ -289,7 +295,7 @@ class MapById {
   void Trim(const IdType& id) {
     auto& trajectory = trajectories_.at(id.trajectory_id);
     const auto it = trajectory.data_.find(GetIndex(id));
-    CHECK(it != trajectory.data_.end());
+    CHECK(it != trajectory.data_.end()) << id;
     if (std::next(it) == trajectory.data_.end()) {
       // We are removing the data with the highest index from this trajectory.
       // We assume that we will never append to it anymore. If we did, we would

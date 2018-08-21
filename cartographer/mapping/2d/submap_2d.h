@@ -30,6 +30,7 @@
 #include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/mapping/value_conversion_tables.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
@@ -41,11 +42,12 @@ proto::SubmapsOptions2D CreateSubmapsOptions2D(
 
 class Submap2D : public Submap {
  public:
-  Submap2D(const Eigen::Vector2f& origin, std::unique_ptr<Grid2D> grid);
-  explicit Submap2D(const proto::Submap2D& proto);
+  Submap2D(const Eigen::Vector2f& origin, std::unique_ptr<Grid2D> grid,
+           ValueConversionTables* conversion_tables);
+  explicit Submap2D(const proto::Submap2D& proto,
+                    ValueConversionTables* conversion_tables);
 
-  void ToProto(proto::Submap* proto,
-               bool include_probability_grid_data) const override;
+  proto::Submap ToProto(bool include_grid_data) const override;
   void UpdateFromProto(const proto::Submap& proto) override;
 
   void ToResponseProto(const transform::Rigid3d& global_submap_pose,
@@ -61,12 +63,14 @@ class Submap2D : public Submap {
 
  private:
   std::unique_ptr<Grid2D> grid_;
+  ValueConversionTables* conversion_tables_;
 };
 
-// Except during initialization when only a single submap exists, there are
-// always two submaps into which range data is inserted: an old submap that is
-// used for matching, and a new one, which will be used for matching next, that
-// is being initialized.
+// The first active submap will be created on the insertion of the first range
+// data. Except during this initialization when no or only one single submap
+// exists, there are always two submaps into which range data is inserted: an
+// old submap that is used for matching, and a new one, which will be used for
+// matching next, that is being initialized.
 //
 // Once a certain number of range data have been inserted, the new submap is
 // considered initialized: the old submap is no longer changed, the "new" submap
@@ -79,14 +83,11 @@ class ActiveSubmaps2D {
   ActiveSubmaps2D(const ActiveSubmaps2D&) = delete;
   ActiveSubmaps2D& operator=(const ActiveSubmaps2D&) = delete;
 
-  // Returns the index of the newest initialized Submap which can be
-  // used for scan-to-map matching.
-  int matching_index() const;
-
   // Inserts 'range_data' into the Submap collection.
-  void InsertRangeData(const sensor::RangeData& range_data);
+  std::vector<std::shared_ptr<const Submap2D>> InsertRangeData(
+      const sensor::RangeData& range_data);
 
-  std::vector<std::shared_ptr<Submap2D>> submaps() const;
+  std::vector<std::shared_ptr<const Submap2D>> submaps() const;
 
  private:
   std::unique_ptr<RangeDataInserterInterface> CreateRangeDataInserter();
@@ -95,9 +96,9 @@ class ActiveSubmaps2D {
   void AddSubmap(const Eigen::Vector2f& origin);
 
   const proto::SubmapsOptions2D options_;
-  int matching_submap_index_ = 0;
   std::vector<std::shared_ptr<Submap2D>> submaps_;
   std::unique_ptr<RangeDataInserterInterface> range_data_inserter_;
+  ValueConversionTables conversion_tables_;
 };
 
 }  // namespace mapping

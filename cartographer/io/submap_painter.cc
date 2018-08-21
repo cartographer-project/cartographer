@@ -57,6 +57,16 @@ void CairoPaintSubmapSlices(
   }
 }
 
+bool Has2DGrid(const mapping::proto::Submap& submap) {
+  return submap.has_submap_2d() && submap.submap_2d().has_grid();
+}
+
+bool Has3DGrids(const mapping::proto::Submap& submap) {
+  return submap.has_submap_3d() &&
+         submap.submap_3d().has_low_resolution_hybrid_grid() &&
+         submap.submap_3d().has_high_resolution_hybrid_grid();
+}
+
 }  // namespace
 
 PaintSubmapSlicesResult PaintSubmapSlices(
@@ -110,7 +120,8 @@ PaintSubmapSlicesResult PaintSubmapSlices(
 void FillSubmapSlice(
     const ::cartographer::transform::Rigid3d& global_submap_pose,
     const ::cartographer::mapping::proto::Submap& proto,
-    SubmapSlice* const submap_slice) {
+    SubmapSlice* const submap_slice,
+    mapping::ValueConversionTables* conversion_tables) {
   ::cartographer::mapping::proto::SubmapQuery::Response response;
   ::cartographer::transform::Rigid3d local_pose;
   if (proto.has_submap_3d()) {
@@ -118,7 +129,8 @@ void FillSubmapSlice(
     local_pose = submap.local_pose();
     submap.ToResponseProto(global_submap_pose, &response);
   } else {
-    ::cartographer::mapping::Submap2D submap(proto.submap_2d());
+    ::cartographer::mapping::Submap2D submap(proto.submap_2d(),
+                                             conversion_tables);
     local_pose = submap.local_pose();
     submap.ToResponseProto(global_submap_pose, &response);
   }
@@ -135,6 +147,31 @@ void FillSubmapSlice(
   submap_slice->surface =
       DrawTexture(pixels.intensity, pixels.alpha, texture_proto.width(),
                   texture_proto.height(), &submap_slice->cairo_data);
+}
+
+void DeserializeAndFillSubmapSlices(
+    ProtoStreamDeserializer* deserializer,
+    std::map<mapping::SubmapId, SubmapSlice>* submap_slices,
+    mapping::ValueConversionTables* conversion_tables) {
+  std::map<mapping::SubmapId, transform::Rigid3d> submap_poses;
+  for (const auto& trajectory : deserializer->pose_graph().trajectory()) {
+    for (const auto& submap : trajectory.submap()) {
+      submap_poses[mapping::SubmapId(trajectory.trajectory_id(),
+                                     submap.submap_index())] =
+          transform::ToRigid3(submap.pose());
+    }
+  }
+  mapping::proto::SerializedData proto;
+  while (deserializer->ReadNextSerializedData(&proto)) {
+    if (proto.has_submap() &&
+        (Has2DGrid(proto.submap()) || Has3DGrids(proto.submap()))) {
+      const auto& submap = proto.submap();
+      const mapping::SubmapId id{submap.submap_id().trajectory_id(),
+                                 submap.submap_id().submap_index()};
+      FillSubmapSlice(submap_poses.at(id), submap, &(*submap_slices)[id],
+                      conversion_tables);
+    }
+  }
 }
 
 SubmapTexture::Pixels UnpackTextureData(const std::string& compressed_cells,

@@ -26,7 +26,7 @@
 #include <string>
 
 #include "Eigen/Eigenvalues"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/proto/scan_matching//ceres_scan_matcher_options_3d.pb.h"
@@ -60,13 +60,13 @@ ConstraintBuilder3D::ConstraintBuilder3D(
     common::ThreadPoolInterface* const thread_pool)
     : options_(options),
       thread_pool_(thread_pool),
-      finish_node_task_(common::make_unique<common::Task>()),
-      when_done_task_(common::make_unique<common::Task>()),
+      finish_node_task_(absl::make_unique<common::Task>()),
+      when_done_task_(absl::make_unique<common::Task>()),
       sampler_(options.sampling_ratio()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options_3d()) {}
 
 ConstraintBuilder3D::~ConstraintBuilder3D() {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   CHECK_EQ(finish_node_task_->GetState(), common::Task::NEW);
   CHECK_EQ(when_done_task_->GetState(), common::Task::NEW);
   CHECK_EQ(constraints_.size(), 0) << "WhenDone() was not called";
@@ -86,7 +86,7 @@ void ConstraintBuilder3D::MaybeAddConstraint(
   }
   if (!sampler_.Pulse()) return;
 
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   if (when_done_) {
     LOG(WARNING)
         << "MaybeAddConstraint was called while WhenDone was scheduled.";
@@ -96,8 +96,8 @@ void ConstraintBuilder3D::MaybeAddConstraint(
   auto* const constraint = &constraints_.back();
   const auto* scan_matcher =
       DispatchScanMatcherConstruction(submap_id, submap_nodes, submap);
-  auto constraint_task = common::make_unique<common::Task>();
-  constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
+  auto constraint_task = absl::make_unique<common::Task>();
+  constraint_task->SetWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
                       constant_data, global_node_pose, global_submap_pose,
                       *scan_matcher, constraint);
@@ -114,7 +114,7 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
     const std::vector<TrajectoryNode>& submap_nodes,
     const Eigen::Quaterniond& global_node_rotation,
     const Eigen::Quaterniond& global_submap_rotation) {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   if (when_done_) {
     LOG(WARNING)
         << "MaybeAddGlobalConstraint was called while WhenDone was scheduled.";
@@ -124,8 +124,8 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
   auto* const constraint = &constraints_.back();
   const auto* scan_matcher =
       DispatchScanMatcherConstruction(submap_id, submap_nodes, submap);
-  auto constraint_task = common::make_unique<common::Task>();
-  constraint_task->SetWorkItem([=]() EXCLUDES(mutex_) {
+  auto constraint_task = absl::make_unique<common::Task>();
+  constraint_task->SetWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     ComputeConstraint(submap_id, node_id, true, /* match_full_submap */
                       constant_data,
                       transform::Rigid3d::Rotation(global_node_rotation),
@@ -139,30 +139,29 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
 }
 
 void ConstraintBuilder3D::NotifyEndOfNode() {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   CHECK(finish_node_task_ != nullptr);
   finish_node_task_->SetWorkItem([this] {
-    common::MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     ++num_finished_nodes_;
   });
   auto finish_node_task_handle =
       thread_pool_->Schedule(std::move(finish_node_task_));
-  finish_node_task_ = common::make_unique<common::Task>();
+  finish_node_task_ = absl::make_unique<common::Task>();
   when_done_task_->AddDependency(finish_node_task_handle);
   ++num_started_nodes_;
 }
 
 void ConstraintBuilder3D::WhenDone(
     const std::function<void(const ConstraintBuilder3D::Result&)>& callback) {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   CHECK(when_done_ == nullptr);
   // TODO(gaschler): Consider using just std::function, it can also be empty.
-  when_done_ =
-      common::make_unique<std::function<void(const Result&)>>(callback);
+  when_done_ = absl::make_unique<std::function<void(const Result&)>>(callback);
   CHECK(when_done_task_ != nullptr);
   when_done_task_->SetWorkItem([this] { RunWhenDoneCallback(); });
   thread_pool_->Schedule(std::move(when_done_task_));
-  when_done_task_ = common::make_unique<common::Task>();
+  when_done_task_ = absl::make_unique<common::Task>();
 }
 
 const ConstraintBuilder3D::SubmapScanMatcher*
@@ -179,11 +178,11 @@ ConstraintBuilder3D::DispatchScanMatcherConstruction(
       &submap->low_resolution_hybrid_grid();
   auto& scan_matcher_options =
       options_.fast_correlative_scan_matcher_options_3d();
-  auto scan_matcher_task = common::make_unique<common::Task>();
+  auto scan_matcher_task = absl::make_unique<common::Task>();
   scan_matcher_task->SetWorkItem(
       [&submap_scan_matcher, &scan_matcher_options, submap_nodes]() {
         submap_scan_matcher.fast_correlative_scan_matcher =
-            common::make_unique<scan_matching::FastCorrelativeScanMatcher3D>(
+            absl::make_unique<scan_matching::FastCorrelativeScanMatcher3D>(
                 *submap_scan_matcher.high_resolution_hybrid_grid,
                 submap_scan_matcher.low_resolution_hybrid_grid, submap_nodes,
                 scan_matcher_options);
@@ -200,6 +199,7 @@ void ConstraintBuilder3D::ComputeConstraint(
     const transform::Rigid3d& global_submap_pose,
     const SubmapScanMatcher& submap_scan_matcher,
     std::unique_ptr<Constraint>* constraint) {
+  CHECK(submap_scan_matcher.fast_correlative_scan_matcher);
   // The 'constraint_transform' (submap i <- node j) is computed from:
   // - a 'high_resolution_point_cloud' in node j and
   // - the initial guess 'initial_pose' (submap i <- node j).
@@ -248,7 +248,7 @@ void ConstraintBuilder3D::ComputeConstraint(
     }
   }
   {
-    common::MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     score_histogram_.Add(match_result->score);
     rotational_score_histogram_.Add(match_result->rotational_score);
     low_resolution_score_histogram_.Add(match_result->low_resolution_score);
@@ -301,7 +301,7 @@ void ConstraintBuilder3D::RunWhenDoneCallback() {
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
-    common::MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     CHECK(when_done_ != nullptr);
     for (const std::unique_ptr<Constraint>& constraint : constraints_) {
       if (constraint == nullptr) continue;
@@ -326,12 +326,12 @@ void ConstraintBuilder3D::RunWhenDoneCallback() {
 }
 
 int ConstraintBuilder3D::GetNumFinishedNodes() {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   return num_finished_nodes_;
 }
 
 void ConstraintBuilder3D::DeleteScanMatcher(const SubmapId& submap_id) {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   if (when_done_) {
     LOG(WARNING)
         << "DeleteScanMatcher was called while WhenDone was scheduled.";
@@ -341,7 +341,7 @@ void ConstraintBuilder3D::DeleteScanMatcher(const SubmapId& submap_id) {
 
 void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
   auto* counts = factory->NewCounterFamily(
-      "mapping_internal_constraints_constraint_builder_3d_constraints",
+      "mapping_constraints_constraint_builder_3d_constraints",
       "Constraints computed");
   kConstraintsSearchedMetric =
       counts->Add({{"search_region", "local"}, {"matcher", "searched"}});
@@ -352,12 +352,11 @@ void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
   kGlobalConstraintsFoundMetric =
       counts->Add({{"search_region", "global"}, {"matcher", "found"}});
   auto* queue_length = factory->NewGaugeFamily(
-      "mapping_internal_constraints_constraint_builder_3d_queue_length",
-      "Queue length");
+      "mapping_constraints_constraint_builder_3d_queue_length", "Queue length");
   kQueueLengthMetric = queue_length->Add({});
   auto boundaries = metrics::Histogram::FixedWidth(0.05, 20);
   auto* scores = factory->NewHistogramFamily(
-      "mapping_internal_constraints_constraint_builder_3d_scores",
+      "mapping_constraints_constraint_builder_3d_scores",
       "Constraint scores built", boundaries);
   kConstraintScoresMetric =
       scores->Add({{"search_region", "local"}, {"kind", "score"}});

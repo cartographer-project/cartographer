@@ -19,13 +19,14 @@
 #include <map>
 #include <thread>
 
+#include "absl/memory/memory.h"
 #include "async_grpc/client.h"
+#include "async_grpc/token_file_credentials.h"
 #include "cartographer/cloud/internal/handlers/add_sensor_data_batch_handler.h"
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/common/blocking_queue.h"
-#include "cartographer/common/make_unique.h"
 #include "glog/logging.h"
 #include "grpc++/grpc++.h"
 
@@ -33,15 +34,45 @@ namespace cartographer {
 namespace cloud {
 namespace {
 
-using common::make_unique;
+using absl::make_unique;
 
-constexpr int kConnectionTimeoutInSecond = 10;
+constexpr int kConnectionTimeoutInSeconds = 10;
+constexpr int kTokenRefreshIntervalInSeconds = 60;
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
+
+// This defines the '::grpc::StatusCode's that are considered unrecoverable
+// errors and hence no retries will be attempted by the client.
+const std::set<::grpc::StatusCode> kUnrecoverableStatusCodes = {
+    ::grpc::NOT_FOUND};
+
+bool IsNewSubmap(const mapping::proto::Submap& submap) {
+  return (submap.has_submap_2d() && submap.submap_2d().num_range_data() == 1) ||
+         (submap.has_submap_3d() && submap.submap_3d().num_range_data() == 1);
+}
 
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
-  LocalTrajectoryUploader(const std::string &uplink_server_address,
-                          int batch_size, bool enable_ssl_encryption);
+  struct TrajectoryInfo {
+    TrajectoryInfo() = default;
+    TrajectoryInfo(
+        const int uplink_trajectory_id,
+        const std::set<SensorId>& expected_sensor_ids,
+        const mapping::proto::TrajectoryBuilderOptions& trajectory_options,
+        const std::string& client_id)
+        : uplink_trajectory_id(uplink_trajectory_id),
+          expected_sensor_ids(expected_sensor_ids),
+          trajectory_options(trajectory_options),
+          client_id(client_id) {}
+    const int uplink_trajectory_id;
+    const std::set<SensorId> expected_sensor_ids;
+    const mapping::proto::TrajectoryBuilderOptions trajectory_options;
+    const std::string client_id;
+  };
+
+ public:
+  LocalTrajectoryUploader(const std::string& uplink_server_address,
+                          int batch_size, bool enable_ssl_encryption,
+                          const std::string& token_file_path);
   ~LocalTrajectoryUploader();
 
   // Starts the upload thread.
@@ -51,11 +82,14 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
   // complete.
   void Shutdown() final;
 
-  void AddTrajectory(
-      int local_trajectory_id, const std::set<SensorId> &expected_sensor_ids,
-      const mapping::proto::TrajectoryBuilderOptions &trajectory_options) final;
-  void FinishTrajectory(int local_trajectory_id) final;
+  grpc::Status AddTrajectory(
+      const std::string& client_id, int local_trajectory_id,
+      const std::set<SensorId>& expected_sensor_ids,
+      const mapping::proto::TrajectoryBuilderOptions& trajectory_options) final;
+  grpc::Status FinishTrajectory(const std::string& client_id,
+                                int local_trajectory_id) final;
   void EnqueueSensorData(std::unique_ptr<proto::SensorData> sensor_data) final;
+  void TryRecovery();
 
   SensorId GetLocalSlamResultSensorId(int local_trajectory_id) const final {
     return SensorId{SensorId::SensorType::LOCAL_SLAM_RESULT,
@@ -64,31 +98,39 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 
  private:
   void ProcessSendQueue();
-  void TranslateTrajectoryId(proto::SensorMetadata *sensor_metadata);
+  // Returns 'false' for failure.
+  bool TranslateTrajectoryId(proto::SensorMetadata* sensor_metadata);
 
   std::shared_ptr<::grpc::Channel> client_channel_;
   int batch_size_;
-  std::map<int, int> local_to_cloud_trajectory_id_map_;
+  std::map<int, TrajectoryInfo> local_trajectory_id_to_trajectory_info_;
   common::BlockingQueue<std::unique_ptr<proto::SensorData>> send_queue_;
   bool shutting_down_ = false;
   std::unique_ptr<std::thread> upload_thread_;
 };
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
-    const std::string &uplink_server_address, int batch_size,
-    bool enable_ssl_encryption)
-    : client_channel_(::grpc::CreateChannel(
-          uplink_server_address,
-          enable_ssl_encryption
-              ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
-              : ::grpc::InsecureChannelCredentials())),
-      batch_size_(batch_size) {
-  std::chrono::system_clock::time_point deadline(
+    const std::string& uplink_server_address, int batch_size,
+    bool enable_ssl_encryption, const std::string& token_file_path)
+    : batch_size_(batch_size) {
+  auto channel_creds =
+      enable_ssl_encryption
+          ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
+          : ::grpc::InsecureChannelCredentials();
+
+  if (!token_file_path.empty()) {
+    auto call_creds = async_grpc::TokenFileCredentials(
+        token_file_path, std::chrono::seconds(kTokenRefreshIntervalInSeconds));
+    channel_creds =
+        grpc::CompositeChannelCredentials(channel_creds, call_creds);
+  }
+  client_channel_ = ::grpc::CreateChannel(uplink_server_address, channel_creds);
+  std::chrono::system_clock::time_point deadline =
       std::chrono::system_clock::now() +
-      std::chrono::seconds(kConnectionTimeoutInSecond));
+      std::chrono::seconds(kConnectionTimeoutInSeconds);
   LOG(INFO) << "Connecting to uplink " << uplink_server_address;
   if (!client_channel_->WaitForConnected(deadline)) {
-    LOG(FATAL) << "Failed to connect to " << uplink_server_address;
+    LOG(ERROR) << "Failed to connect to " << uplink_server_address;
   }
 }
 
@@ -108,20 +150,64 @@ void LocalTrajectoryUploader::Shutdown() {
   upload_thread_->join();
 }
 
+void LocalTrajectoryUploader::TryRecovery() {
+  // Wind the sensor_data_queue forward to the next new submap.
+  LOG(INFO) << "LocalTrajectoryUploader tries to recover with next submap.";
+  while (true) {
+    if (shutting_down_) {
+      return;
+    }
+    proto::SensorData* sensor_data =
+        send_queue_.PeekWithTimeout<proto::SensorData>(kPopTimeout);
+    if (sensor_data) {
+      CHECK_GE(sensor_data->local_slam_result_data().submaps_size(), 0);
+      if (sensor_data->sensor_data_case() ==
+              proto::SensorData::kLocalSlamResultData &&
+          sensor_data->local_slam_result_data().submaps_size() > 0 &&
+          IsNewSubmap(sensor_data->local_slam_result_data().submaps(
+              sensor_data->local_slam_result_data().submaps_size() - 1))) {
+        break;
+      } else {
+        send_queue_.Pop();
+      }
+    }
+  }
+
+  // Attempt to recreate the trajectories.
+  const auto local_trajectory_id_to_trajectory_info =
+      local_trajectory_id_to_trajectory_info_;
+  local_trajectory_id_to_trajectory_info_.clear();
+  for (const auto& entry : local_trajectory_id_to_trajectory_info) {
+    grpc::Status status = AddTrajectory(entry.second.client_id, entry.first,
+                                        entry.second.expected_sensor_ids,
+                                        entry.second.trajectory_options);
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to create trajectory. Aborting recovery attempt. "
+                 << status.error_message();
+      return;
+    }
+  }
+  LOG(INFO) << "LocalTrajectoryUploader recovered.";
+}
+
 void LocalTrajectoryUploader::ProcessSendQueue() {
   LOG(INFO) << "Starting uploader thread.";
   proto::AddSensorDataBatchRequest batch_request;
   while (!shutting_down_) {
     auto sensor_data = send_queue_.PopWithTimeout(kPopTimeout);
     if (sensor_data) {
-      proto::SensorData *added_sensor_data = batch_request.add_sensor_data();
+      if (!TranslateTrajectoryId(sensor_data->mutable_sensor_metadata())) {
+        batch_request.clear_sensor_data();
+        TryRecovery();
+        continue;
+      }
+      proto::SensorData* added_sensor_data = batch_request.add_sensor_data();
       *added_sensor_data = *sensor_data;
-      TranslateTrajectoryId(added_sensor_data->mutable_sensor_metadata());
 
       // A submap also holds a trajectory id that must be translated to uplink's
       // trajectory id.
       if (added_sensor_data->has_local_slam_result_data()) {
-        for (mapping::proto::Submap &mutable_submap :
+        for (mapping::proto::Submap& mutable_submap :
              *added_sensor_data->mutable_local_slam_result_data()
                   ->mutable_submaps()) {
           mutable_submap.mutable_submap_id()->set_trajectory_id(
@@ -131,28 +217,43 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
 
       if (batch_request.sensor_data_size() == batch_size_) {
         async_grpc::Client<handlers::AddSensorDataBatchSignature> client(
-            client_channel_, async_grpc::CreateUnlimitedConstantDelayStrategy(
-                                 common::FromSeconds(1)));
-        CHECK(client.Write(batch_request));
+            client_channel_, common::FromSeconds(kConnectionTimeoutInSeconds),
+            async_grpc::CreateUnlimitedConstantDelayStrategy(
+                common::FromSeconds(1), kUnrecoverableStatusCodes));
+        if (client.Write(batch_request)) {
+          LOG(INFO) << "Uploaded " << batch_request.ByteSize()
+                    << " bytes of sensor data.";
+          batch_request.clear_sensor_data();
+          continue;
+        }
+        // Unrecoverable error occurred. Attempt recovery.
         batch_request.clear_sensor_data();
+        TryRecovery();
       }
     }
   }
 }
 
-void LocalTrajectoryUploader::TranslateTrajectoryId(
-    proto::SensorMetadata *sensor_metadata) {
-  int cloud_trajectory_id =
-      local_to_cloud_trajectory_id_map_.at(sensor_metadata->trajectory_id());
+bool LocalTrajectoryUploader::TranslateTrajectoryId(
+    proto::SensorMetadata* sensor_metadata) {
+  auto it = local_trajectory_id_to_trajectory_info_.find(
+      sensor_metadata->trajectory_id());
+  if (it == local_trajectory_id_to_trajectory_info_.end()) {
+    return false;
+  }
+  int cloud_trajectory_id = it->second.uplink_trajectory_id;
   sensor_metadata->set_trajectory_id(cloud_trajectory_id);
+  return true;
 }
 
-void LocalTrajectoryUploader::AddTrajectory(
-    int local_trajectory_id, const std::set<SensorId> &expected_sensor_ids,
-    const mapping::proto::TrajectoryBuilderOptions &trajectory_options) {
+grpc::Status LocalTrajectoryUploader::AddTrajectory(
+    const std::string& client_id, int local_trajectory_id,
+    const std::set<SensorId>& expected_sensor_ids,
+    const mapping::proto::TrajectoryBuilderOptions& trajectory_options) {
   proto::AddTrajectoryRequest request;
+  request.set_client_id(client_id);
   *request.mutable_trajectory_builder_options() = trajectory_options;
-  for (const SensorId &sensor_id : expected_sensor_ids) {
+  for (const SensorId& sensor_id : expected_sensor_ids) {
     // Range sensors are not forwarded, but combined into a LocalSlamResult.
     if (sensor_id.type != SensorId::SensorType::RANGE) {
       *request.add_expected_sensor_ids() = cloud::ToProto(sensor_id);
@@ -160,22 +261,43 @@ void LocalTrajectoryUploader::AddTrajectory(
   }
   *request.add_expected_sensor_ids() =
       cloud::ToProto(GetLocalSlamResultSensorId(local_trajectory_id));
-  async_grpc::Client<handlers::AddTrajectorySignature> client(client_channel_);
-  CHECK(client.Write(request));
-  CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 0);
-  local_to_cloud_trajectory_id_map_[local_trajectory_id] =
-      client.response().trajectory_id();
+  async_grpc::Client<handlers::AddTrajectorySignature> client(
+      client_channel_, common::FromSeconds(kConnectionTimeoutInSeconds));
+  ::grpc::Status status;
+  if (!client.Write(request, &status)) {
+    LOG(ERROR) << status.error_message();
+    return status;
+  }
+  LOG(INFO) << "Created trajectory for client_id: " << client_id
+            << " local trajectory_id: " << local_trajectory_id
+            << " uplink trajectory_id: " << client.response().trajectory_id();
+  CHECK_EQ(local_trajectory_id_to_trajectory_info_.count(local_trajectory_id),
+           0);
+  local_trajectory_id_to_trajectory_info_.emplace(
+      std::piecewise_construct, std::forward_as_tuple(local_trajectory_id),
+      std::forward_as_tuple(client.response().trajectory_id(),
+                            expected_sensor_ids, trajectory_options,
+                            client_id));
+  return status;
 }
 
-void LocalTrajectoryUploader::FinishTrajectory(int local_trajectory_id) {
-  CHECK_EQ(local_to_cloud_trajectory_id_map_.count(local_trajectory_id), 1);
-  int cloud_trajectory_id =
-      local_to_cloud_trajectory_id_map_[local_trajectory_id];
+grpc::Status LocalTrajectoryUploader::FinishTrajectory(
+    const std::string& client_id, int local_trajectory_id) {
+  auto it = local_trajectory_id_to_trajectory_info_.find(local_trajectory_id);
+  if (it == local_trajectory_id_to_trajectory_info_.end()) {
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                        "local_trajectory_id has not been"
+                        " registered with AddTrajectory.");
+  }
+  int cloud_trajectory_id = it->second.uplink_trajectory_id;
   proto::FinishTrajectoryRequest request;
+  request.set_client_id(client_id);
   request.set_trajectory_id(cloud_trajectory_id);
   async_grpc::Client<handlers::FinishTrajectorySignature> client(
-      client_channel_);
-  CHECK(client.Write(request));
+      client_channel_, common::FromSeconds(kConnectionTimeoutInSeconds));
+  grpc::Status status;
+  client.Write(request, &status);
+  return status;
 }
 
 void LocalTrajectoryUploader::EnqueueSensorData(
@@ -186,10 +308,11 @@ void LocalTrajectoryUploader::EnqueueSensorData(
 }  // namespace
 
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
-    const std::string &uplink_server_address, int batch_size,
-    bool enable_ssl_encryption) {
+    const std::string& uplink_server_address, int batch_size,
+    bool enable_ssl_encryption, const std::string& token_file_path) {
   return make_unique<LocalTrajectoryUploader>(uplink_server_address, batch_size,
-                                              enable_ssl_encryption);
+                                              enable_ssl_encryption,
+                                              token_file_path);
 }
 
 }  // namespace cloud

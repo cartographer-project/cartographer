@@ -20,7 +20,7 @@
 #include <string>
 #include <tuple>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/collator_interface.h"
 #include "cartographer/sensor/imu_data.h"
@@ -36,7 +36,7 @@ MATCHER_P(Near, point, std::string(negation ? "Doesn't" : "Does") + " match.") {
   return arg.isApprox(point, 0.001f);
 }
 
-namespace test {
+namespace testing {
 
 typedef std::tuple<int /* trajectory_id */, std::string /* sensor_id */,
                    common::Time>
@@ -76,11 +76,11 @@ struct CollatorInput {
   }
 
   const int trajectory_id;
-  std::unique_ptr<sensor::Data> data;
+  std::unique_ptr<Data> data;
   const CollatorOutput expected_output;
 };
 
-}  // namespace test
+}  // namespace testing
 }  // namespace sensor
 }  // namespace cartographer
 

@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_MAPPING_INTERNAL_TESTING_MOCK_MAP_BUILDER_H_
 
 #include "cartographer/mapping/map_builder_interface.h"
+#include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"
@@ -46,8 +47,10 @@ class MockMapBuilder : public mapping::MapBuilderInterface {
   MOCK_METHOD2(SubmapToProto,
                std::string(const mapping::SubmapId &,
                            mapping::proto::SubmapQuery::Response *));
-  MOCK_METHOD1(SerializeState, void(io::ProtoStreamWriterInterface *));
-  MOCK_METHOD2(LoadState, void(io::ProtoStreamReaderInterface *, bool));
+  MOCK_METHOD2(SerializeState, void(bool, io::ProtoStreamWriterInterface *));
+  MOCK_METHOD2(LoadState,
+               std::map<int, int>(io::ProtoStreamReaderInterface *, bool));
+  MOCK_METHOD1(LoadStateFromFile, std::map<int, int>(const std::string &));
   MOCK_CONST_METHOD0(num_trajectory_builders, int());
   MOCK_METHOD0(pose_graph, mapping::PoseGraphInterface *());
   MOCK_CONST_METHOD0(

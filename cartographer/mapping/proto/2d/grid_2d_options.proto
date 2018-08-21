@@ -20,6 +20,7 @@ message GridOptions2D {
   enum GridType {
     INVALID_GRID = 0;
     PROBABILITY_GRID = 1;
+    TSDF = 2;
   }
 
   GridType grid_type = 1;

@@ -17,7 +17,7 @@
 #include "cartographer/mapping/pose_extrapolator.h"
 
 #include "Eigen/Geometry"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "gtest/gtest.h"
 #include "transform/rigid_transform_test_helpers.h"
 

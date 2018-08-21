@@ -20,8 +20,8 @@
 #include <sstream>
 #include <string>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/io/points_batch.h"
 #include "glog/logging.h"
 
@@ -82,7 +82,7 @@ PcdWritingPointsProcessor::FromDictionary(
     FileWriterFactory file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
-  return common::make_unique<PcdWritingPointsProcessor>(
+  return absl::make_unique<PcdWritingPointsProcessor>(
       file_writer_factory(dictionary->GetString("filename")), next);
 }
 
@@ -119,7 +119,8 @@ void PcdWritingPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
     WriteBinaryPcdHeader(has_colors_, 0, file_writer_.get());
   }
   for (size_t i = 0; i < batch->points.size(); ++i) {
-    WriteBinaryPcdPointCoordinate(batch->points[i], file_writer_.get());
+    WriteBinaryPcdPointCoordinate(batch->points[i].position,
+                                  file_writer_.get());
     if (!batch->colors.empty()) {
       WriteBinaryPcdPointColor(ToUint8Color(batch->colors[i]),
                                file_writer_.get());

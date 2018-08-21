@@ -24,7 +24,7 @@ namespace cartographer {
 namespace io {
 namespace {
 
-using common::make_unique;
+using absl::make_unique;
 using google::protobuf::Message;
 using mapping::proto::PoseGraph;
 using mapping::proto::SerializedData;

@@ -16,11 +16,11 @@
 
 #include "cartographer/cloud/internal/handlers/add_imu_data_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/internal/dispatchable.h"
 #include "google/protobuf/empty.pb.h"
@@ -29,7 +29,7 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-void AddImuDataHandler::OnRequest(const proto::AddImuDataRequest &request) {
+void AddImuDataHandler::OnSensorData(const proto::AddImuDataRequest& request) {
   // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
   // thread-safe. Therefore it suffices to get an unsynchronized reference to
   // the 'MapBuilderContext'.
@@ -43,17 +43,13 @@ void AddImuDataHandler::OnRequest(const proto::AddImuDataRequest &request) {
   // 'MapBuilderContext'.
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    auto sensor_data = common::make_unique<proto::SensorData>();
+    auto sensor_data = absl::make_unique<proto::SensorData>();
     *sensor_data->mutable_sensor_metadata() = request.sensor_metadata();
     *sensor_data->mutable_imu_data() = request.imu_data();
     GetUnsynchronizedContext<MapBuilderContextInterface>()
         ->local_trajectory_uploader()
         ->EnqueueSensorData(std::move(sensor_data));
   }
-}
-
-void AddImuDataHandler::OnReadsDone() {
-  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers

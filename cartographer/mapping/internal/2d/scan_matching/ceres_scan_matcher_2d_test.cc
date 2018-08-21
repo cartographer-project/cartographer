@@ -18,9 +18,9 @@
 
 #include <memory>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/sensor/point_cloud.h"
@@ -36,12 +36,13 @@ class CeresScanMatcherTest : public ::testing::Test {
  protected:
   CeresScanMatcherTest()
       : probability_grid_(
-            MapLimits(1., Eigen::Vector2d(10., 10.), CellLimits(20, 20))) {
+            MapLimits(1., Eigen::Vector2d(10., 10.), CellLimits(20, 20)),
+            &conversion_tables_) {
     probability_grid_.SetProbability(
         probability_grid_.limits().GetCellIndex(Eigen::Vector2f(-3.5f, 2.5f)),
         kMaxProbability);
 
-    point_cloud_.emplace_back(-3.f, 2.f, 0.f);
+    point_cloud_.push_back({Eigen::Vector3f{-3.f, 2.f, 0.f}});
 
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
@@ -56,7 +57,7 @@ class CeresScanMatcherTest : public ::testing::Test {
         })text");
     const proto::CeresScanMatcherOptions2D options =
         CreateCeresScanMatcherOptions2D(parameter_dictionary.get());
-    ceres_scan_matcher_ = common::make_unique<CeresScanMatcher2D>(options);
+    ceres_scan_matcher_ = absl::make_unique<CeresScanMatcher2D>(options);
   }
 
   void TestFromInitialPose(const transform::Rigid2d& initial_pose) {
@@ -73,6 +74,7 @@ class CeresScanMatcherTest : public ::testing::Test {
         << "\nExpected: " << transform::ToProto(expected_pose).DebugString();
   }
 
+  ValueConversionTables conversion_tables_;
   ProbabilityGrid probability_grid_;
   sensor::PointCloud point_cloud_;
   std::unique_ptr<CeresScanMatcher2D> ceres_scan_matcher_;

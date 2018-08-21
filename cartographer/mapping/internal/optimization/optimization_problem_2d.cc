@@ -81,7 +81,8 @@ void AddLandmarkCostFunctions(
     const std::map<std::string, LandmarkNode>& landmark_nodes,
     bool freeze_landmarks, const MapById<NodeId, NodeSpec2D>& node_data,
     MapById<NodeId, std::array<double, 3>>* C_nodes,
-    std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem) {
+    std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem,
+    double huber_scale) {
   for (const auto& landmark_node : landmark_nodes) {
     // Do not use landmarks that were not optimized for localization.
     if (!landmark_node.second.global_landmark_pose.has_value() &&
@@ -120,7 +121,7 @@ void AddLandmarkCostFunctions(
         C_landmarks->emplace(
             landmark_id,
             CeresPose(starting_point, nullptr /* translation_parametrization */,
-                      common::make_unique<ceres::QuaternionParameterization>(),
+                      absl::make_unique<ceres::QuaternionParameterization>(),
                       problem));
         if (freeze_landmarks) {
           problem->SetParameterBlockConstant(
@@ -132,7 +133,7 @@ void AddLandmarkCostFunctions(
       problem->AddResidualBlock(
           LandmarkCostFunction2D::CreateAutoDiffCostFunction(
               observation, prev->data, next->data),
-          nullptr /* loss function */, prev_node_pose->data(),
+          new ceres::HuberLoss(huber_scale), prev_node_pose->data(),
           next_node_pose->data(), C_landmarks->at(landmark_id).rotation(),
           C_landmarks->at(landmark_id).translation());
     }
@@ -195,11 +196,19 @@ void OptimizationProblem2D::SetMaxNumIterations(
 
 void OptimizationProblem2D::Solve(
     const std::vector<Constraint>& constraints,
-    const std::set<int>& frozen_trajectories,
+    const std::map<int, PoseGraphInterface::TrajectoryState>&
+        trajectories_state,
     const std::map<std::string, LandmarkNode>& landmark_nodes) {
   if (node_data_.empty()) {
     // Nothing to optimize.
     return;
+  }
+
+  std::set<int> frozen_trajectories;
+  for (const auto& it : trajectories_state) {
+    if (it.second == PoseGraphInterface::TrajectoryState::FROZEN) {
+      frozen_trajectories.insert(it.first);
+    }
   }
 
   ceres::Problem::Options problem_options;
@@ -237,8 +246,8 @@ void OptimizationProblem2D::Solve(
   // Add cost functions for intra- and inter-submap constraints.
   for (const Constraint& constraint : constraints) {
     problem.AddResidualBlock(
-        SpaCostFunction2D::CreateAutoDiffCostFunction(constraint.pose),
-        // Only loop closure constraints should have a loss function.
+        CreateAutoDiffSpaCostFunction(constraint.pose),
+        // Loop closure constraints should have a loss function.
         constraint.tag == Constraint::INTER_SUBMAP
             ? new ceres::HuberLoss(options_.huber_scale())
             : nullptr,
@@ -247,7 +256,8 @@ void OptimizationProblem2D::Solve(
   }
   // Add cost functions for landmarks.
   AddLandmarkCostFunctions(landmark_nodes, freeze_landmarks, node_data_,
-                           &C_nodes, &C_landmarks, &problem);
+                           &C_nodes, &C_landmarks, &problem,
+                           options_.huber_scale());
   // Add penalties for violating odometry or changes between consecutive nodes
   // if odometry is not available.
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
@@ -276,7 +286,7 @@ void OptimizationProblem2D::Solve(
                                         second_node_data);
       if (relative_odometry != nullptr) {
         problem.AddResidualBlock(
-            SpaCostFunction2D::CreateAutoDiffCostFunction(Constraint::Pose{
+            CreateAutoDiffSpaCostFunction(Constraint::Pose{
                 *relative_odometry, options_.odometry_translation_weight(),
                 options_.odometry_rotation_weight()}),
             nullptr /* loss function */, C_nodes.at(first_node_id).data(),
@@ -288,7 +298,7 @@ void OptimizationProblem2D::Solve(
           transform::Embed3D(first_node_data.local_pose_2d.inverse() *
                              second_node_data.local_pose_2d);
       problem.AddResidualBlock(
-          SpaCostFunction2D::CreateAutoDiffCostFunction(
+          CreateAutoDiffSpaCostFunction(
               Constraint::Pose{relative_local_slam_pose,
                                options_.local_slam_pose_translation_weight(),
                                options_.local_slam_pose_rotation_weight()}),
@@ -328,12 +338,12 @@ std::unique_ptr<transform::Rigid3d> OptimizationProblem2D::InterpolateOdometry(
   }
   if (it == odometry_data_.BeginOfTrajectory(trajectory_id)) {
     if (it->time == time) {
-      return common::make_unique<transform::Rigid3d>(it->pose);
+      return absl::make_unique<transform::Rigid3d>(it->pose);
     }
     return nullptr;
   }
   const auto prev_it = std::prev(it);
-  return common::make_unique<transform::Rigid3d>(
+  return absl::make_unique<transform::Rigid3d>(
       Interpolate(transform::TimestampedTransform{prev_it->time, prev_it->pose},
                   transform::TimestampedTransform{it->time, it->pose}, time)
           .transform);
@@ -354,7 +364,7 @@ OptimizationProblem2D::CalculateOdometryBetweenNodes(
           first_node_odometry->inverse() * (*second_node_odometry) *
           transform::Rigid3d::Rotation(
               second_node_data.gravity_alignment.inverse());
-      return common::make_unique<transform::Rigid3d>(relative_odometry);
+      return absl::make_unique<transform::Rigid3d>(relative_odometry);
     }
   }
   return nullptr;

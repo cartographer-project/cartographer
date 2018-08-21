@@ -54,9 +54,8 @@ void Run(const std::string& configuration_directory,
   // config.
   map_builder_server_options.mutable_map_builder_options()
       ->set_collate_by_trajectory(true);
-  auto map_builder = common::make_unique<mapping::MapBuilder>(
-      map_builder_server_options.map_builder_options(),
-      nullptr /* global_slam_optimization_callback */);
+  auto map_builder = absl::make_unique<mapping::MapBuilder>(
+      map_builder_server_options.map_builder_options());
   std::unique_ptr<MapBuilderServerInterface> map_builder_server =
       CreateMapBuilderServer(map_builder_server_options,
                              std::move(map_builder));
@@ -76,7 +75,7 @@ int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   if (FLAGS_configuration_directory.empty() ||
       FLAGS_configuration_basename.empty()) {
-    google::ShowUsageWithFlagsRestrict(argv[0], "cloud_server");
+    google::ShowUsageWithFlagsRestrict(argv[0], "map_builder_server");
     return EXIT_FAILURE;
   }
   cartographer::cloud::Run(FLAGS_configuration_directory,

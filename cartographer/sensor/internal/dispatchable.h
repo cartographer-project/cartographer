@@ -43,7 +43,7 @@ class Dispatchable : public Data {
 template <typename DataType>
 std::unique_ptr<Dispatchable<DataType>> MakeDispatchable(
     const std::string &sensor_id, const DataType &data) {
-  return common::make_unique<Dispatchable<DataType>>(sensor_id, data);
+  return absl::make_unique<Dispatchable<DataType>>(sensor_id, data);
 }
 
 }  // namespace sensor

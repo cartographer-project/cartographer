@@ -16,10 +16,10 @@
 
 #include "cartographer/cloud/internal/handlers/receive_local_slam_results_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
@@ -30,7 +30,7 @@ namespace {
 std::unique_ptr<proto::ReceiveLocalSlamResultsResponse> GenerateResponse(
     std::unique_ptr<MapBuilderContextInterface::LocalSlamResult>
         local_slam_result) {
-  auto response = common::make_unique<proto::ReceiveLocalSlamResultsResponse>();
+  auto response = absl::make_unique<proto::ReceiveLocalSlamResultsResponse>();
   response->set_trajectory_id(local_slam_result->trajectory_id);
   response->set_timestamp(common::ToUniversal(local_slam_result->time));
   *response->mutable_local_pose() =
@@ -51,7 +51,7 @@ std::unique_ptr<proto::ReceiveLocalSlamResultsResponse> GenerateResponse(
 void ReceiveLocalSlamResultsHandler::OnRequest(
     const proto::ReceiveLocalSlamResultsRequest& request) {
   auto writer = GetWriter();
-  MapBuilderContextInterface::SubscriptionId subscription_id =
+  MapBuilderContextInterface::LocalSlamSubscriptionId subscription_id =
       GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->SubscribeLocalSlamResults(
               request.trajectory_id(),
@@ -59,16 +59,22 @@ void ReceiveLocalSlamResultsHandler::OnRequest(
                   std::unique_ptr<MapBuilderContextInterface::LocalSlamResult>
                       local_slam_result) {
                 if (local_slam_result) {
-                  writer.Write(GenerateResponse(std::move(local_slam_result)));
+                  if (!writer.Write(
+                          GenerateResponse(std::move(local_slam_result)))) {
+                    // Client closed connection.
+                    LOG(INFO) << "Client closed connection.";
+                    return false;
+                  }
                 } else {
                   // Callback with 'nullptr' signals that the trajectory
                   // finished.
                   writer.WritesDone();
                 }
+                return true;
               });
 
   subscription_id_ =
-      common::make_unique<MapBuilderContextInterface::SubscriptionId>(
+      absl::make_unique<MapBuilderContextInterface::LocalSlamSubscriptionId>(
           subscription_id);
 }
 

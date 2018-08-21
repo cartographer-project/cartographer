@@ -16,11 +16,11 @@
 
 #include "cartographer/cloud/internal/handlers/add_fixed_frame_pose_data_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/internal/dispatchable.h"
 #include "google/protobuf/empty.pb.h"
@@ -29,8 +29,8 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-void AddFixedFramePoseDataHandler::OnRequest(
-    const proto::AddFixedFramePoseDataRequest &request) {
+void AddFixedFramePoseDataHandler::OnSensorData(
+    const proto::AddFixedFramePoseDataRequest& request) {
   // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
   // thread-safe. Therefore it suffices to get an unsynchronized reference to
   // the 'MapBuilderContext'.
@@ -45,7 +45,7 @@ void AddFixedFramePoseDataHandler::OnRequest(
   // 'MapBuilderContext'.
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    auto sensor_data = common::make_unique<proto::SensorData>();
+    auto sensor_data = absl::make_unique<proto::SensorData>();
     *sensor_data->mutable_sensor_metadata() = request.sensor_metadata();
     *sensor_data->mutable_fixed_frame_pose_data() =
         request.fixed_frame_pose_data();
@@ -53,10 +53,6 @@ void AddFixedFramePoseDataHandler::OnRequest(
         ->local_trajectory_uploader()
         ->EnqueueSensorData(std::move(sensor_data));
   }
-}
-
-void AddFixedFramePoseDataHandler::OnReadsDone() {
-  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers

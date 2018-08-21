@@ -41,7 +41,10 @@ const std::string kMessage = R"(
       x: 3.f y: 4.f z: 5.f
     }
     point_data {
-      x: 6.f y: 7.f z: 8.f t: 9.f
+      position {
+          x: 6.f y: 7.f z: 8.f
+      }
+      time: 9.f
     }
   })";
 
@@ -53,6 +56,11 @@ TEST_F(AddRangefinderDataHandlerTest, NoLocalSlamUploader) {
   proto::AddRangefinderDataRequest request;
   EXPECT_TRUE(
       google::protobuf::TextFormat::ParseFromString(kMessage, &request));
+  EXPECT_CALL(
+      *mock_map_builder_context_,
+      CheckClientIdForTrajectory(Eq(request.sensor_metadata().client_id()),
+                                 Eq(request.sensor_metadata().trajectory_id())))
+      .WillOnce(::testing::Return(true));
   EXPECT_CALL(*mock_map_builder_context_,
               DoEnqueueSensorData(
                   Eq(request.sensor_metadata().trajectory_id()),

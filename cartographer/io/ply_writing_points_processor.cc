@@ -20,8 +20,8 @@
 #include <sstream>
 #include <string>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/io/points_batch.h"
 #include "glog/logging.h"
 
@@ -85,7 +85,7 @@ PlyWritingPointsProcessor::FromDictionary(
     const FileWriterFactory& file_writer_factory,
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
-  return common::make_unique<PlyWritingPointsProcessor>(
+  return absl::make_unique<PlyWritingPointsProcessor>(
       file_writer_factory(dictionary->GetString("filename")), next);
 }
 
@@ -136,7 +136,7 @@ void PlyWritingPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   }
 
   for (size_t i = 0; i < batch->points.size(); ++i) {
-    WriteBinaryPlyPointCoordinate(batch->points[i], file_.get());
+    WriteBinaryPlyPointCoordinate(batch->points[i].position, file_.get());
     if (has_colors_) {
       WriteBinaryPlyPointColor(ToUint8Color(batch->colors[i]), file_.get());
     }

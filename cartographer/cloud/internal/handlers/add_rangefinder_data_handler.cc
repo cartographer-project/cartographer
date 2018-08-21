@@ -16,10 +16,10 @@
 
 #include "cartographer/cloud/internal/handlers/add_rangefinder_data_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/sensor/internal/dispatchable.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 #include "google/protobuf/empty.pb.h"
@@ -28,8 +28,8 @@ namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-void AddRangefinderDataHandler::OnRequest(
-    const proto::AddRangefinderDataRequest &request) {
+void AddRangefinderDataHandler::OnSensorData(
+    const proto::AddRangefinderDataRequest& request) {
   // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
   // thread-safe. Therefore it suffices to get an unsynchronized reference to
   // the 'MapBuilderContext'.
@@ -38,10 +38,6 @@ void AddRangefinderDataHandler::OnRequest(
       sensor::MakeDispatchable(
           request.sensor_metadata().sensor_id(),
           sensor::FromProto(request.timed_point_cloud_data())));
-}
-
-void AddRangefinderDataHandler::OnReadsDone() {
-  Send(common::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers

@@ -39,13 +39,17 @@ class Trimmable {
   virtual const std::vector<PoseGraphInterface::Constraint>& GetConstraints()
       const = 0;
 
-  // Marks 'submap_id' and corresponding intra-submap nodes as trimmed. They
+  // Trim 'submap_id' and corresponding intra-submap nodes. They
   // will no longer take part in scan matching, loop closure, visualization.
-  // Submaps and nodes are only marked, the numbering remains unchanged.
-  virtual void MarkSubmapAsTrimmed(const SubmapId& submap_id) = 0;
+  // The numbering remains unchanged.
+  virtual void TrimSubmap(const SubmapId& submap_id) = 0;
 
   // Checks if the given trajectory is finished or not.
   virtual bool IsFinished(int trajectory_id) const = 0;
+
+  // Sets the state for a specific trajectory.
+  virtual void SetTrajectoryState(
+      int trajectory_id, PoseGraphInterface::TrajectoryState state) = 0;
 };
 
 // An interface to implement algorithms that choose how to trim the pose graph.

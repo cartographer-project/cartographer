@@ -27,12 +27,12 @@ Task::~Task() {
 }
 
 Task::State Task::GetState() {
-  MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   return state_;
 }
 
 void Task::SetWorkItem(const WorkItem& work_item) {
-  MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   CHECK_EQ(state_, NEW);
   work_item_ = work_item;
 }
@@ -40,7 +40,7 @@ void Task::SetWorkItem(const WorkItem& work_item) {
 void Task::AddDependency(std::weak_ptr<Task> dependency) {
   std::shared_ptr<Task> shared_dependency;
   {
-    MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     CHECK_EQ(state_, NEW);
     if ((shared_dependency = dependency.lock())) {
       ++uncompleted_dependencies_;
@@ -52,7 +52,7 @@ void Task::AddDependency(std::weak_ptr<Task> dependency) {
 }
 
 void Task::SetThreadPool(ThreadPoolInterface* thread_pool) {
-  MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   CHECK_EQ(state_, NEW);
   state_ = DISPATCHED;
   thread_pool_to_notify_ = thread_pool;
@@ -64,7 +64,7 @@ void Task::SetThreadPool(ThreadPoolInterface* thread_pool) {
 }
 
 void Task::AddDependentTask(Task* dependent_task) {
-  MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   if (state_ == COMPLETED) {
     dependent_task->OnDependenyCompleted();
     return;
@@ -74,7 +74,7 @@ void Task::AddDependentTask(Task* dependent_task) {
 }
 
 void Task::OnDependenyCompleted() {
-  MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   CHECK(state_ == NEW || state_ == DISPATCHED);
   --uncompleted_dependencies_;
   if (uncompleted_dependencies_ == 0 && state_ == DISPATCHED) {
@@ -86,7 +86,7 @@ void Task::OnDependenyCompleted() {
 
 void Task::Execute() {
   {
-    MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     CHECK_EQ(state_, DEPENDENCIES_COMPLETED);
     state_ = RUNNING;
   }
@@ -96,7 +96,7 @@ void Task::Execute() {
     work_item_();
   }
 
-  MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   state_ = COMPLETED;
   for (Task* dependent_task : dependent_tasks_) {
     dependent_task->OnDependenyCompleted();

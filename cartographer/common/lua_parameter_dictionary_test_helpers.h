@@ -20,8 +20,8 @@
 #include <memory>
 #include <string>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "glog/logging.h"
 
@@ -48,8 +48,8 @@ class DummyFileResolver : public FileResolver {
 
 std::unique_ptr<LuaParameterDictionary> MakeDictionary(
     const std::string& code) {
-  return common::make_unique<LuaParameterDictionary>(
-      code, common::make_unique<DummyFileResolver>());
+  return absl::make_unique<LuaParameterDictionary>(
+      code, absl::make_unique<DummyFileResolver>());
 }
 
 }  // namespace common

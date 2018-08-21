@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/metrics/family_factory.h"
@@ -69,7 +69,7 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
           matching_result->insertion_result->constant_data, trajectory_id_,
           matching_result->insertion_result->insertion_submaps);
       CHECK_EQ(node_id.trajectory_id, trajectory_id_);
-      insertion_result = common::make_unique<InsertionResult>(InsertionResult{
+      insertion_result = absl::make_unique<InsertionResult>(InsertionResult{
           node_id, matching_result->insertion_result->constant_data,
           std::vector<std::shared_ptr<const Submap>>(
               matching_result->insertion_result->insertion_submaps.begin(),
@@ -136,7 +136,7 @@ std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder2D(
     const int trajectory_id, mapping::PoseGraph2D* const pose_graph,
     const TrajectoryBuilderInterface::LocalSlamResultCallback&
         local_slam_result_callback) {
-  return common::make_unique<
+  return absl::make_unique<
       GlobalTrajectoryBuilder<LocalTrajectoryBuilder2D, mapping::PoseGraph2D>>(
       std::move(local_trajectory_builder), trajectory_id, pose_graph,
       local_slam_result_callback);
@@ -147,7 +147,7 @@ std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder3D(
     const int trajectory_id, mapping::PoseGraph3D* const pose_graph,
     const TrajectoryBuilderInterface::LocalSlamResultCallback&
         local_slam_result_callback) {
-  return common::make_unique<
+  return absl::make_unique<
       GlobalTrajectoryBuilder<LocalTrajectoryBuilder3D, mapping::PoseGraph3D>>(
       std::move(local_trajectory_builder), trajectory_id, pose_graph,
       local_slam_result_callback);
@@ -155,7 +155,7 @@ std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder3D(
 
 void GlobalTrajectoryBuilderRegisterMetrics(metrics::FamilyFactory* factory) {
   auto* results = factory->NewCounterFamily(
-      "mapping_internal_global_trajectory_builder_local_slam_results",
+      "mapping_global_trajectory_builder_local_slam_results",
       "Local SLAM results");
   kLocalSlamMatchingResults = results->Add({{"type", "MatchingResult"}});
   kLocalSlamInsertionResults = results->Add({{"type", "InsertionResult"}});

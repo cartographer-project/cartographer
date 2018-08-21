@@ -17,7 +17,7 @@
 #include "cartographer/io/coloring_points_processor.h"
 
 #include "Eigen/Core"
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -33,8 +33,8 @@ ColoringPointsProcessor::FromDictionary(
   const Uint8Color color = {{static_cast<uint8>(color_values[0]),
                              static_cast<uint8>(color_values[1]),
                              static_cast<uint8>(color_values[2])}};
-  return common::make_unique<ColoringPointsProcessor>(ToFloatColor(color),
-                                                      frame_id, next);
+  return absl::make_unique<ColoringPointsProcessor>(ToFloatColor(color),
+                                                    frame_id, next);
 }
 
 ColoringPointsProcessor::ColoringPointsProcessor(const FloatColor& color,

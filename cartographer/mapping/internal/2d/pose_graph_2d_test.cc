@@ -20,8 +20,8 @@
 #include <memory>
 #include <random>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
@@ -44,7 +44,8 @@ class PoseGraph2DTest : public ::testing::Test {
     // kMinProbability) to unknown space (== kMinProbability).
     for (float t = 0.f; t < 2.f * M_PI; t += 0.005f) {
       const float r = (std::sin(20.f * t) + 2.f) * std::sin(t + 2.f);
-      point_cloud_.emplace_back(r * std::sin(t), r * std::cos(t), 0.f);
+      point_cloud_.push_back(
+          {Eigen::Vector3f{r * std::sin(t), r * std::cos(t), 0.f}});
     }
 
     {
@@ -62,9 +63,22 @@ class PoseGraph2DTest : public ::testing::Test {
                 hit_probability = 0.53,
                 miss_probability = 0.495,
               },
+            tsdf_range_data_inserter = {
+              truncation_distance = 0.3,
+              maximum_weight = 10.,
+              update_free_space = false,
+              normal_estimation_options = {
+                num_normal_samples = 4,
+                sample_radius = 0.5,
+              },
+              project_sdf_distance_to_scan_normal = false,
+              update_weight_range_exponent = 0,
+              update_weight_angle_scan_normal_to_ray_kernel_bandwith = 0,
+              update_weight_distance_cell_to_hit_kernel_bandwith = 0,
             },
-          })text");
-      active_submaps_ = common::make_unique<ActiveSubmaps2D>(
+          },
+        })text");
+      active_submaps_ = absl::make_unique<ActiveSubmaps2D>(
           mapping::CreateSubmapsOptions2D(parameter_dictionary.get()));
     }
 
@@ -129,6 +143,7 @@ class PoseGraph2DTest : public ::testing::Test {
               fixed_frame_pose_translation_weight = 1e1,
               fixed_frame_pose_rotation_weight = 1e2,
               log_solver_summary = true,
+              use_online_imu_extrinsics_in_3d = true,
               ceres_solver_options = {
                 use_nonmonotonic_steps = false,
                 max_num_iterations = 200,
@@ -141,9 +156,9 @@ class PoseGraph2DTest : public ::testing::Test {
             global_constraint_search_after_n_seconds = 10.0,
           })text");
       auto options = CreatePoseGraphOptions(parameter_dictionary.get());
-      pose_graph_ = common::make_unique<PoseGraph2D>(
-          options, nullptr /* global_slam_optimization_callback */,
-          common::make_unique<optimization::OptimizationProblem2D>(
+      pose_graph_ = absl::make_unique<PoseGraph2D>(
+          options,
+          absl::make_unique<optimization::OptimizationProblem2D>(
               options.optimization_problem_options()),
           &thread_pool_);
     }
@@ -157,17 +172,16 @@ class PoseGraph2DTest : public ::testing::Test {
     const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
-    std::vector<std::shared_ptr<const Submap2D>> insertion_submaps;
-    for (const auto& submap : active_submaps_->submaps()) {
-      insertion_submaps.push_back(submap);
-    }
     const sensor::RangeData range_data{
         Eigen::Vector3f::Zero(), new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
     constexpr int kTrajectoryId = 0;
     active_submaps_->InsertRangeData(TransformRangeData(
         range_data, transform::Embed3D(pose_estimate.cast<float>())));
-
+    std::vector<std::shared_ptr<const Submap2D>> insertion_submaps;
+    for (const auto& submap : active_submaps_->submaps()) {
+      insertion_submaps.push_back(submap);
+    }
     pose_graph_->AddNode(
         std::make_shared<const TrajectoryNode::Data>(
             TrajectoryNode::Data{common::FromUniversal(0),

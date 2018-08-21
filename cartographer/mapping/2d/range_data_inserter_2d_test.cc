@@ -18,9 +18,9 @@
 
 #include <memory>
 
+#include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/probability_values.h"
 #include "gmock/gmock.h"
@@ -33,7 +33,8 @@ class RangeDataInserterTest2D : public ::testing::Test {
  protected:
   RangeDataInserterTest2D()
       : probability_grid_(
-            MapLimits(1., Eigen::Vector2d(1., 5.), CellLimits(5, 5))) {
+            MapLimits(1., Eigen::Vector2d(1., 5.), CellLimits(5, 5)),
+            &conversion_tables_) {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
         "insert_free_space = true, "
@@ -43,21 +44,22 @@ class RangeDataInserterTest2D : public ::testing::Test {
     options_ = CreateProbabilityGridRangeDataInserterOptions2D(
         parameter_dictionary.get());
     range_data_inserter_ =
-        common::make_unique<ProbabilityGridRangeDataInserter2D>(options_);
+        absl::make_unique<ProbabilityGridRangeDataInserter2D>(options_);
   }
 
   void InsertPointCloud() {
     sensor::RangeData range_data;
-    range_data.returns.emplace_back(-3.5f, 0.5f, 0.f);
-    range_data.returns.emplace_back(-2.5f, 1.5f, 0.f);
-    range_data.returns.emplace_back(-1.5f, 2.5f, 0.f);
-    range_data.returns.emplace_back(-0.5f, 3.5f, 0.f);
+    range_data.returns.push_back({Eigen::Vector3f{-3.5f, 0.5f, 0.f}});
+    range_data.returns.push_back({Eigen::Vector3f{-2.5f, 1.5f, 0.f}});
+    range_data.returns.push_back({Eigen::Vector3f{-1.5f, 2.5f, 0.f}});
+    range_data.returns.push_back({Eigen::Vector3f{-0.5f, 3.5f, 0.f}});
     range_data.origin.x() = -0.5f;
     range_data.origin.y() = 0.5f;
     range_data_inserter_->Insert(range_data, &probability_grid_);
     probability_grid_.FinishUpdate();
   }
 
+  ValueConversionTables conversion_tables_;
   ProbabilityGrid probability_grid_;
   std::unique_ptr<ProbabilityGridRangeDataInserter2D> range_data_inserter_;
   proto::ProbabilityGridRangeDataInserterOptions2D options_;

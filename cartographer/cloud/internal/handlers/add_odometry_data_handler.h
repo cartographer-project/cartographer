@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_ADD_ODOMETRY_DATA_HANDLER_H
 
 #include "async_grpc/rpc_handler.h"
+#include "cartographer/cloud/internal/handlers/add_sensor_data_handler_base.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "google/protobuf/empty.pb.h"
 
@@ -31,10 +32,9 @@ DEFINE_HANDLER_SIGNATURE(
     "/cartographer.cloud.proto.MapBuilderService/AddOdometryData")
 
 class AddOdometryDataHandler
-    : public async_grpc::RpcHandler<AddOdometryDataSignature> {
+    : public AddSensorDataHandlerBase<AddOdometryDataSignature> {
  public:
-  void OnRequest(const proto::AddOdometryDataRequest &request) override;
-  void OnReadsDone() override;
+  void OnSensorData(const proto::AddOdometryDataRequest& request) override;
 };
 
 }  // namespace handlers

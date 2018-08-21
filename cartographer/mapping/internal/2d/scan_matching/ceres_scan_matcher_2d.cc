@@ -26,6 +26,7 @@
 #include "cartographer/mapping/internal/2d/scan_matching/occupied_space_cost_function_2d.h"
 #include "cartographer/mapping/internal/2d/scan_matching/rotation_delta_cost_functor_2d.h"
 #include "cartographer/mapping/internal/2d/scan_matching/translation_delta_cost_functor_2d.h"
+#include "cartographer/mapping/internal/2d/scan_matching/tsdf_match_cost_function_2d.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
 #include "glog/logging.h"
@@ -70,12 +71,24 @@ void CeresScanMatcher2D::Match(const Eigen::Vector2d& target_translation,
                                    initial_pose_estimate.rotation().angle()};
   ceres::Problem problem;
   CHECK_GT(options_.occupied_space_weight(), 0.);
-  problem.AddResidualBlock(
-      OccupiedSpaceCostFunction2D::CreateAutoDiffCostFunction(
-          options_.occupied_space_weight() /
-              std::sqrt(static_cast<double>(point_cloud.size())),
-          point_cloud, grid),
-      nullptr /* loss function */, ceres_pose_estimate);
+  switch (grid.GetGridType()) {
+    case GridType::PROBABILITY_GRID:
+      problem.AddResidualBlock(
+          CreateOccupiedSpaceCostFunction2D(
+              options_.occupied_space_weight() /
+                  std::sqrt(static_cast<double>(point_cloud.size())),
+              point_cloud, grid),
+          nullptr /* loss function */, ceres_pose_estimate);
+      break;
+    case GridType::TSDF:
+      problem.AddResidualBlock(
+          CreateTSDFMatchCostFunction2D(
+              options_.occupied_space_weight() /
+                  std::sqrt(static_cast<double>(point_cloud.size())),
+              point_cloud, static_cast<const TSDF2D&>(grid)),
+          nullptr /* loss function */, ceres_pose_estimate);
+      break;
+  }
   CHECK_GT(options_.translation_weight(), 0.);
   problem.AddResidualBlock(
       TranslationDeltaCostFunctor2D::CreateAutoDiffCostFunction(

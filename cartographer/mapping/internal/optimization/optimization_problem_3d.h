@@ -24,7 +24,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
-#include "cartographer/common/optional.h"
+#include "absl/types/optional.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
@@ -79,7 +79,8 @@ class OptimizationProblem3D
 
   void Solve(
       const std::vector<Constraint>& constraints,
-      const std::set<int>& frozen_trajectories,
+      const std::map<int, PoseGraphInterface::TrajectoryState>&
+          trajectories_state,
       const std::map<std::string, LandmarkNode>& landmark_nodes) override;
 
   const MapById<NodeId, NodeSpec3D>& node_data() const override {

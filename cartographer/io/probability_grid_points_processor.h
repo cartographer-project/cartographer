@@ -27,6 +27,7 @@
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 #include "cartographer/mapping/proto/2d/probability_grid_range_data_inserter_options_2d.pb.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
+#include "cartographer/mapping/value_conversion_tables.h"
 
 namespace cartographer {
 namespace io {
@@ -40,13 +41,14 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
   constexpr static const char* kConfigurationFileActionName =
       "write_probability_grid";
   enum class DrawTrajectories { kNo, kYes };
+  enum class OutputType { kPng, kPb };
   ProbabilityGridPointsProcessor(
       double resolution,
       const mapping::proto::ProbabilityGridRangeDataInserterOptions2D&
           probability_grid_range_data_inserter_options,
-      const DrawTrajectories& draw_trajectories,
+      const DrawTrajectories& draw_trajectories, const OutputType& output_type,
       std::unique_ptr<FileWriter> file_writer,
-      const std::vector<mapping::proto::Trajectory>& trajectorios,
+      const std::vector<mapping::proto::Trajectory>& trajectories,
       PointsProcessor* next);
   ProbabilityGridPointsProcessor(const ProbabilityGridPointsProcessor&) =
       delete;
@@ -65,10 +67,12 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
 
  private:
   const DrawTrajectories draw_trajectories_;
+  const OutputType output_type_;
   const std::vector<mapping::proto::Trajectory> trajectories_;
   std::unique_ptr<FileWriter> file_writer_;
   PointsProcessor* const next_;
   mapping::ProbabilityGridRangeDataInserter2D range_data_inserter_;
+  mapping::ValueConversionTables conversion_tables_;
   mapping::ProbabilityGrid probability_grid_;
 };
 
@@ -79,7 +83,8 @@ std::unique_ptr<Image> DrawProbabilityGrid(
 
 // Create an initially empty probability grid with 'resolution' and a small
 // size, suitable for a PointsBatchProcessor.
-mapping::ProbabilityGrid CreateProbabilityGrid(const double resolution);
+mapping::ProbabilityGrid CreateProbabilityGrid(
+    const double resolution, mapping::ValueConversionTables* conversion_tables);
 
 }  // namespace io
 }  // namespace cartographer

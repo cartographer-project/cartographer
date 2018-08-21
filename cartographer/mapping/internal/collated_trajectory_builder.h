@@ -41,10 +41,11 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
   using SensorId = TrajectoryBuilderInterface::SensorId;
 
   CollatedTrajectoryBuilder(
+      const proto::TrajectoryBuilderOptions& trajectory_options,
       sensor::CollatorInterface* sensor_collator, int trajectory_id,
       const std::set<SensorId>& expected_sensor_ids,
       std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder);
-  ~CollatedTrajectoryBuilder() override;
+  ~CollatedTrajectoryBuilder() override {}
 
   CollatedTrajectoryBuilder(const CollatedTrajectoryBuilder&) = delete;
   CollatedTrajectoryBuilder& operator=(const CollatedTrajectoryBuilder&) =
@@ -69,12 +70,21 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
   void AddSensorData(
       const std::string& sensor_id,
       const sensor::FixedFramePoseData& fixed_frame_pose_data) override {
-    AddData(sensor::MakeDispatchable(sensor_id, fixed_frame_pose_data));
+    if (collate_fixed_frame_) {
+      AddData(sensor::MakeDispatchable(sensor_id, fixed_frame_pose_data));
+      return;
+    }
+    wrapped_trajectory_builder_->AddSensorData(sensor_id,
+                                               fixed_frame_pose_data);
   }
 
   void AddSensorData(const std::string& sensor_id,
                      const sensor::LandmarkData& landmark_data) override {
-    AddData(sensor::MakeDispatchable(sensor_id, landmark_data));
+    if (collate_landmarks_) {
+      AddData(sensor::MakeDispatchable(sensor_id, landmark_data));
+      return;
+    }
+    wrapped_trajectory_builder_->AddSensorData(sensor_id, landmark_data);
   }
 
   void AddLocalSlamResultData(std::unique_ptr<mapping::LocalSlamResultData>
@@ -89,6 +99,8 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
                                 std::unique_ptr<sensor::Data> data);
 
   sensor::CollatorInterface* const sensor_collator_;
+  const bool collate_landmarks_;
+  const bool collate_fixed_frame_;
   const int trajectory_id_;
   std::unique_ptr<TrajectoryBuilderInterface> wrapped_trajectory_builder_;
 

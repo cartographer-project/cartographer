@@ -35,12 +35,10 @@ void WriteStateHandler::OnRequest(const google::protobuf::Empty& request) {
           return true;
         }
 
-        auto response = common::make_unique<proto::WriteStateResponse>();
-        if (proto->GetTypeName() == "cartographer.mapping.proto.PoseGraph") {
-          response->mutable_pose_graph()->CopyFrom(*proto);
-        } else if (proto->GetTypeName() ==
-                   "cartographer.mapping.proto.AllTrajectoryBuilderOptions") {
-          response->mutable_all_trajectory_builder_options()->CopyFrom(*proto);
+        auto response = absl::make_unique<proto::WriteStateResponse>();
+        if (proto->GetTypeName() ==
+            "cartographer.mapping.proto.SerializationHeader") {
+          response->mutable_header()->CopyFrom(*proto);
         } else if (proto->GetTypeName() ==
                    "cartographer.mapping.proto.SerializedData") {
           response->mutable_serialized_data()->CopyFrom(*proto);
@@ -51,7 +49,7 @@ void WriteStateHandler::OnRequest(const google::protobuf::Empty& request) {
         return true;
       });
   GetContext<MapBuilderContextInterface>()->map_builder().SerializeState(
-      &proto_stream_writer);
+      /*include_unfinished_submaps=*/false, &proto_stream_writer);
   proto_stream_writer.Close();
 }
 

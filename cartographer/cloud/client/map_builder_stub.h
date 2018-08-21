@@ -29,7 +29,8 @@ namespace cloud {
 
 class MapBuilderStub : public mapping::MapBuilderInterface {
  public:
-  MapBuilderStub(const std::string& server_address);
+  MapBuilderStub(const std::string& server_address,
+                 const std::string& client_id);
 
   MapBuilderStub(const MapBuilderStub&) = delete;
   MapBuilderStub& operator=(const MapBuilderStub&) = delete;
@@ -47,9 +48,11 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
   std::string SubmapToProto(
       const mapping::SubmapId& submap_id,
       mapping::proto::SubmapQuery::Response* response) override;
-  void SerializeState(io::ProtoStreamWriterInterface* writer) override;
-  void LoadState(io::ProtoStreamReaderInterface* reader,
-                 bool load_frozen_state) override;
+  void SerializeState(bool include_unfinished_submaps,
+                      io::ProtoStreamWriterInterface* writer) override;
+  std::map<int, int> LoadState(io::ProtoStreamReaderInterface* reader,
+                               bool load_frozen_state) override;
+  std::map<int, int> LoadStateFromFile(const std::string& filename) override;
   int num_trajectory_builders() const override;
   mapping::PoseGraphInterface* pose_graph() override;
   const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
@@ -60,6 +63,7 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
   std::unique_ptr<mapping::PoseGraphInterface> pose_graph_stub_;
   std::map<int, std::unique_ptr<mapping::TrajectoryBuilderInterface>>
       trajectory_builder_stubs_;
+  const std::string client_id_;
 };
 
 }  // namespace cloud

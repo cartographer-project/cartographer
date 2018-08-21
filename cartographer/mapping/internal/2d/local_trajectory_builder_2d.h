@@ -79,22 +79,22 @@ class LocalTrajectoryBuilder2D {
  private:
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
       common::Time time, const sensor::RangeData& gravity_aligned_range_data,
-      const transform::Rigid3d& gravity_alignment);
+      const transform::Rigid3d& gravity_alignment,
+      const absl::optional<common::Duration>& sensor_duration);
   sensor::RangeData TransformToGravityAlignedFrameAndFilter(
       const transform::Rigid3f& transform_to_gravity_aligned_frame,
       const sensor::RangeData& range_data) const;
-
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       common::Time time, const sensor::RangeData& range_data_in_local,
-      const sensor::RangeData& gravity_aligned_range_data,
+      const sensor::PointCloud& filtered_gravity_aligned_point_cloud,
       const transform::Rigid3d& pose_estimate,
       const Eigen::Quaterniond& gravity_alignment);
 
-  // Scan matches 'gravity_aligned_range_data' and returns the observed pose,
-  // or nullptr on failure.
+  // Scan matches 'filtered_gravity_aligned_point_cloud' and returns the
+  // observed pose, or nullptr on failure.
   std::unique_ptr<transform::Rigid2d> ScanMatch(
       common::Time time, const transform::Rigid2d& pose_prediction,
-      const sensor::RangeData& gravity_aligned_range_data);
+      const sensor::PointCloud& filtered_gravity_aligned_point_cloud);
 
   // Lazily constructs a PoseExtrapolator.
   void InitializeExtrapolator(common::Time time);
@@ -111,7 +111,10 @@ class LocalTrajectoryBuilder2D {
 
   int num_accumulated_ = 0;
   sensor::RangeData accumulated_range_data_;
-  std::chrono::steady_clock::time_point accumulation_started_;
+
+  absl::optional<std::chrono::steady_clock::time_point> last_wall_time_;
+  absl::optional<double> last_thread_cpu_time_seconds_;
+  absl::optional<common::Time> last_sensor_time_;
 
   RangeDataCollator range_data_collator_;
 };

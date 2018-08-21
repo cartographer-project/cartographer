@@ -30,8 +30,10 @@ namespace mapping {
 // Represents a 2D grid of probabilities.
 class ProbabilityGrid : public Grid2D {
  public:
-  explicit ProbabilityGrid(const MapLimits& limits);
-  explicit ProbabilityGrid(const proto::Grid2D& proto);
+  explicit ProbabilityGrid(const MapLimits& limits,
+                           ValueConversionTables* conversion_tables);
+  explicit ProbabilityGrid(const proto::Grid2D& proto,
+                           ValueConversionTables* conversion_tables);
 
   // Sets the probability of the cell at 'cell_index' to the given
   // 'probability'. Only allowed if the cell was unknown before.
@@ -48,14 +50,19 @@ class ProbabilityGrid : public Grid2D {
   bool ApplyLookupTable(const Eigen::Array2i& cell_index,
                         const std::vector<uint16>& table);
 
+  GridType GetGridType() const override;
+
   // Returns the probability of the cell with 'cell_index'.
   float GetProbability(const Eigen::Array2i& cell_index) const;
 
-  virtual proto::Grid2D ToProto() const override;
-  virtual std::unique_ptr<Grid2D> ComputeCroppedGrid() const override;
-  virtual bool DrawToSubmapTexture(
+  proto::Grid2D ToProto() const override;
+  std::unique_ptr<Grid2D> ComputeCroppedGrid() const override;
+  bool DrawToSubmapTexture(
       proto::SubmapQuery::Response::SubmapTexture* const texture,
       transform::Rigid3d local_pose) const override;
+
+ private:
+  ValueConversionTables* conversion_tables_;
 };
 
 }  // namespace mapping

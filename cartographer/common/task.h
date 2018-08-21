@@ -19,7 +19,7 @@
 
 #include <set>
 
-#include "cartographer/common/mutex.h"
+#include "absl/synchronization/mutex.h"
 #include "glog/logging.h"
 #include "thread_pool.h"
 
@@ -38,24 +38,24 @@ class Task {
   Task() = default;
   ~Task();
 
-  State GetState() EXCLUDES(mutex_);
+  State GetState() LOCKS_EXCLUDED(mutex_);
 
   // State must be 'NEW'.
-  void SetWorkItem(const WorkItem& work_item) EXCLUDES(mutex_);
+  void SetWorkItem(const WorkItem& work_item) LOCKS_EXCLUDED(mutex_);
 
   // State must be 'NEW'. 'dependency' may be nullptr, in which case it is
   // assumed completed.
-  void AddDependency(std::weak_ptr<Task> dependency) EXCLUDES(mutex_);
+  void AddDependency(std::weak_ptr<Task> dependency) LOCKS_EXCLUDED(mutex_);
 
  private:
   // Allowed in all states.
   void AddDependentTask(Task* dependent_task);
 
   // State must be 'DEPENDENCIES_COMPLETED' and becomes 'COMPLETED'.
-  void Execute() EXCLUDES(mutex_);
+  void Execute() LOCKS_EXCLUDED(mutex_);
 
   // State must be 'NEW' and becomes 'DISPATCHED' or 'DEPENDENCIES_COMPLETED'.
-  void SetThreadPool(ThreadPoolInterface* thread_pool) EXCLUDES(mutex_);
+  void SetThreadPool(ThreadPoolInterface* thread_pool) LOCKS_EXCLUDED(mutex_);
 
   // State must be 'NEW' or 'DISPATCHED'. If 'DISPATCHED', may become
   // 'DEPENDENCIES_COMPLETED'.
@@ -67,7 +67,7 @@ class Task {
   unsigned int uncompleted_dependencies_ GUARDED_BY(mutex_) = 0;
   std::set<Task*> dependent_tasks_ GUARDED_BY(mutex_);
 
-  Mutex mutex_;
+  absl::Mutex mutex_;
 };
 
 }  // namespace common

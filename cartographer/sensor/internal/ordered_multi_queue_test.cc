@@ -18,7 +18,7 @@
 
 #include <vector>
 
-#include "cartographer/common/make_unique.h"
+#include "absl/memory/memory.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -45,9 +45,8 @@ class OrderedMultiQueueTest : public ::testing::Test {
 
   std::unique_ptr<Data> MakeImu(const int ordinal) {
     return MakeDispatchable(
-        "imu",
-        sensor::ImuData{common::FromUniversal(ordinal), Eigen::Vector3d::Zero(),
-                        Eigen::Vector3d::Zero()});
+        "imu", ImuData{common::FromUniversal(ordinal), Eigen::Vector3d::Zero(),
+                       Eigen::Vector3d::Zero()});
   }
 
   std::vector<std::unique_ptr<Data>> values_;

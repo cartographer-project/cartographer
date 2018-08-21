@@ -40,7 +40,7 @@ class MockCallback {
 class ConstraintBuilder3DTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    auto constraint_builder_parameters = test::ResolveLuaParameters(R"text(
+    auto constraint_builder_parameters = testing::ResolveLuaParameters(R"text(
     include "pose_graph.lua"
     POSE_GRAPH.constraint_builder.sampling_ratio = 1
     POSE_GRAPH.constraint_builder.min_score = 0
@@ -48,7 +48,7 @@ class ConstraintBuilder3DTest : public ::testing::Test {
     POSE_GRAPH.constraint_builder.fast_correlative_scan_matcher_3d.min_low_resolution_score = 0
     POSE_GRAPH.constraint_builder.fast_correlative_scan_matcher_3d.min_rotational_score = 0
     return POSE_GRAPH.constraint_builder)text");
-    constraint_builder_ = common::make_unique<ConstraintBuilder3D>(
+    constraint_builder_ = absl::make_unique<ConstraintBuilder3D>(
         CreateConstraintBuilderOptions(constraint_builder_parameters.get()),
         &thread_pool_);
   }
@@ -60,10 +60,12 @@ class ConstraintBuilder3DTest : public ::testing::Test {
 
 TEST_F(ConstraintBuilder3DTest, CallsBack) {
   EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), 0);
-  EXPECT_CALL(mock_, Run(testing::IsEmpty()));
+  EXPECT_CALL(mock_, Run(::testing::IsEmpty()));
   constraint_builder_->NotifyEndOfNode();
   constraint_builder_->WhenDone(
-      std::bind(&MockCallback::Run, &mock_, std::placeholders::_1));
+      [this](const constraints::ConstraintBuilder3D::Result& result) {
+        mock_.Run(result);
+      });
   thread_pool_.WaitUntilIdle();
   EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), 1);
 }
@@ -73,9 +75,9 @@ TEST_F(ConstraintBuilder3DTest, FindsConstraints) {
   auto node_data = std::make_shared<TrajectoryNode::Data>();
   node_data->gravity_alignment = Eigen::Quaterniond::Identity();
   node_data->high_resolution_point_cloud.push_back(
-      Eigen::Vector3f(0.1, 0.2, 0.3));
+      {Eigen::Vector3f(0.1, 0.2, 0.3)});
   node_data->low_resolution_point_cloud.push_back(
-      Eigen::Vector3f(0.1, 0.2, 0.3));
+      {Eigen::Vector3f(0.1, 0.2, 0.3)});
   node_data->rotational_scan_matcher_histogram = Eigen::VectorXf::Zero(3);
   node_data->local_pose = transform::Rigid3d::Identity();
   node.constant_data = node_data;
@@ -87,12 +89,14 @@ TEST_F(ConstraintBuilder3DTest, FindsConstraints) {
     EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), expected_nodes);
     for (int j = 0; j < 2; ++j) {
       constraint_builder_->MaybeAddConstraint(
-          submap_id, &submap, NodeId{}, node.constant_data.get(), submap_nodes,
-          transform::Rigid3d::Identity(), transform::Rigid3d::Identity());
+          submap_id, &submap, NodeId{0, 0}, node.constant_data.get(),
+          submap_nodes, transform::Rigid3d::Identity(),
+          transform::Rigid3d::Identity());
     }
     constraint_builder_->MaybeAddGlobalConstraint(
-        submap_id, &submap, NodeId{}, node.constant_data.get(), submap_nodes,
-        Eigen::Quaterniond::Identity(), Eigen::Quaterniond::Identity());
+        submap_id, &submap, NodeId{0, 0}, node.constant_data.get(),
+        submap_nodes, Eigen::Quaterniond::Identity(),
+        Eigen::Quaterniond::Identity());
     constraint_builder_->NotifyEndOfNode();
     thread_pool_.WaitUntilIdle();
     EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), ++expected_nodes);
@@ -100,13 +104,15 @@ TEST_F(ConstraintBuilder3DTest, FindsConstraints) {
     thread_pool_.WaitUntilIdle();
     EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), ++expected_nodes);
     EXPECT_CALL(mock_,
-                Run(testing::AllOf(
-                    testing::SizeIs(3),
-                    testing::Each(testing::Field(
+                Run(::testing::AllOf(
+                    ::testing::SizeIs(3),
+                    ::testing::Each(::testing::Field(
                         &PoseGraphInterface::Constraint::tag,
                         PoseGraphInterface::Constraint::INTER_SUBMAP)))));
     constraint_builder_->WhenDone(
-        std::bind(&MockCallback::Run, &mock_, std::placeholders::_1));
+        [this](const constraints::ConstraintBuilder3D::Result& result) {
+          mock_.Run(result);
+        });
     thread_pool_.WaitUntilIdle();
     constraint_builder_->DeleteScanMatcher(submap_id);
   }

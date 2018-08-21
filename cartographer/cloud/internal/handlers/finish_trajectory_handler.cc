@@ -16,10 +16,10 @@
 
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/common/make_unique.h"
 #include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
@@ -28,17 +28,29 @@ namespace handlers {
 
 void FinishTrajectoryHandler::OnRequest(
     const proto::FinishTrajectoryRequest& request) {
+  if (!GetContext<MapBuilderContextInterface>()->CheckClientIdForTrajectory(
+          request.client_id(), request.trajectory_id())) {
+    LOG(ERROR) << "Unknown trajectory with ID " << request.trajectory_id()
+               << " and client_id " << request.client_id();
+    Finish(::grpc::Status(::grpc::NOT_FOUND, "Unknown trajectory"));
+    return;
+  }
   GetContext<MapBuilderContextInterface>()->map_builder().FinishTrajectory(
       request.trajectory_id());
   GetUnsynchronizedContext<MapBuilderContextInterface>()
       ->NotifyFinishTrajectory(request.trajectory_id());
   if (GetUnsynchronizedContext<MapBuilderContextInterface>()
           ->local_trajectory_uploader()) {
-    GetContext<MapBuilderContextInterface>()
-        ->local_trajectory_uploader()
-        ->FinishTrajectory(request.trajectory_id());
+    auto status =
+        GetContext<MapBuilderContextInterface>()
+            ->local_trajectory_uploader()
+            ->FinishTrajectory(request.client_id(), request.trajectory_id());
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to finish trajectory in uplink: "
+                 << status.error_message();
+    }
   }
-  Send(common::make_unique<google::protobuf::Empty>());
+  Send(absl::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers

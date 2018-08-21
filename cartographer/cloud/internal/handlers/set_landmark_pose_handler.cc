@@ -34,7 +34,7 @@ void SetLandmarkPoseHandler::OnRequest(
       ->SetLandmarkPose(
           request.landmark_pose().landmark_id(),
           transform::ToRigid3(request.landmark_pose().global_pose()));
-  Send(common::make_unique<google::protobuf::Empty>());
+  Send(absl::make_unique<google::protobuf::Empty>());
 }
 
 }  // namespace handlers
