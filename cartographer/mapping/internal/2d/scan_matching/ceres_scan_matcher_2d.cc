@@ -71,22 +71,23 @@ void CeresScanMatcher2D::Match(const Eigen::Vector2d& target_translation,
                                    initial_pose_estimate.rotation().angle()};
   ceres::Problem problem;
   CHECK_GT(options_.occupied_space_weight(), 0.);
-  if (grid.GetGridType() == GridType::PROBABILITY_GRID) {
-    problem.AddResidualBlock(
-        CreateOccupiedSpaceCostFunction2D(
-            options_.occupied_space_weight() /
-                std::sqrt(static_cast<double>(point_cloud.size())),
-            point_cloud, grid),
-        nullptr /* loss function */, ceres_pose_estimate);
-  } else if (grid.GetGridType() == GridType::TSDF) {
-    problem.AddResidualBlock(
-        CreateTSDFMatchCostFunction2D(
-            options_.occupied_space_weight() /
-                std::sqrt(static_cast<double>(point_cloud.size())),
-            point_cloud, static_cast<const TSDF2D&>(grid)),
-        nullptr /* loss function */, ceres_pose_estimate);
-  } else {
-    LOG(FATAL) << "Unknown GridType.";
+  switch (grid.GetGridType()) {
+    case GridType::PROBABILITY_GRID:
+      problem.AddResidualBlock(
+          CreateOccupiedSpaceCostFunction2D(
+              options_.occupied_space_weight() /
+                  std::sqrt(static_cast<double>(point_cloud.size())),
+              point_cloud, grid),
+          nullptr /* loss function */, ceres_pose_estimate);
+      break;
+    case GridType::TSDF:
+      problem.AddResidualBlock(
+          CreateTSDFMatchCostFunction2D(
+              options_.occupied_space_weight() /
+                  std::sqrt(static_cast<double>(point_cloud.size())),
+              point_cloud, static_cast<const TSDF2D&>(grid)),
+          nullptr /* loss function */, ceres_pose_estimate);
+      break;
   }
   CHECK_GT(options_.translation_weight(), 0.);
   problem.AddResidualBlock(
