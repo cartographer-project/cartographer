@@ -54,7 +54,8 @@ class PoseExtrapolator {
   void AddOdometryData(const sensor::OdometryData& odometry_data);
   transform::Rigid3d ExtrapolatePose(common::Time time);
 
-  // Gravity alignment estimate.
+  // Returns the current gravity alignment estimate as a rotation from
+  // the tracking frame into a gravity aligned frame.
   Eigen::Quaterniond EstimateGravityOrientation(common::Time time);
 
  private:

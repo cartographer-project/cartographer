@@ -352,9 +352,13 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
+  const auto local_from_gravity_aligned =
+      pose_estimate.rotation() * gravity_alignment.inverse();
+
   std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
       active_submaps_.InsertRangeData(filtered_range_data_in_local,
-                                      gravity_alignment);
+                                      local_from_gravity_aligned);
+
   const Eigen::VectorXf rotational_scan_matcher_histogram =
       scan_matching::RotationalScanMatcher::ComputeHistogram(
           sensor::TransformPointCloud(
