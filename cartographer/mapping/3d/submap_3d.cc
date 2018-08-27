@@ -253,12 +253,13 @@ void Submap3D::ToResponseProto(
                     response->add_textures());
 }
 
-void Submap3D::InsertRangeData(const sensor::RangeData& range_data,
+void Submap3D::InsertRangeData(const sensor::RangeData& range_data_in_local,
                                const RangeDataInserter3D& range_data_inserter,
                                const float high_resolution_max_range) {
   CHECK(!insertion_finished());
+  // Transform range data into submap frame.
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
-      range_data, local_pose().inverse().cast<float>());
+      range_data_in_local, local_pose().inverse().cast<float>());
   range_data_inserter.Insert(
       FilterRangeDataByMaxRange(transformed_range_data,
                                 high_resolution_max_range),
@@ -284,11 +285,11 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::submaps() const {
 
 std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertRangeData(
     const sensor::RangeData& range_data,
-    const Eigen::Quaterniond& gravity_alignment) {
+    const Eigen::Quaterniond& local_from_gravity_aligned) {
   if (submaps_.empty() ||
       submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
-                                 gravity_alignment));
+                                 local_from_gravity_aligned));
   }
   for (auto& submap : submaps_) {
     submap->InsertRangeData(range_data, range_data_inserter_,

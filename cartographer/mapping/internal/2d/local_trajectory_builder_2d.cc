@@ -75,12 +75,9 @@ std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
   transform::Rigid2d initial_ceres_pose = pose_prediction;
 
   if (options_.use_online_correlative_scan_matching()) {
-    CHECK_EQ(options_.submaps_options().grid_options_2d().grid_type(),
-             proto::GridOptions2D_GridType_PROBABILITY_GRID);
     const double score = real_time_correlative_scan_matcher_.Match(
         pose_prediction, filtered_gravity_aligned_point_cloud,
-        *static_cast<const ProbabilityGrid*>(matching_submap->grid()),
-        &initial_ceres_pose);
+        *matching_submap->grid(), &initial_ceres_pose);
     kRealTimeCorrelativeScanMatcherScoreMetric->Observe(score);
   }
 
