@@ -611,10 +611,8 @@ TEST_P(ClientServerTestByGridType, LoadStateAndDelete) {
                                  kAllTrajectoryBuilderOptionsProtoString,
                                  kSubmapProtoString,
                                  kNodeProtoString,
-                                 kTrajectoryDataProtoString,
                                  kImuDataProtoString,
                                  kOdometryDataProtoString,
-                                 kFixedFramePoseDataProtoString,
                                  kLandmarkDataProtoString,
                              });
 
@@ -652,11 +650,8 @@ TEST_P(ClientServerTestByGridType, LoadUnfrozenStateAndDelete) {
                                  kAllTrajectoryBuilderOptionsProtoString,
                                  kSubmapProtoString,
                                  kNodeProtoString,
-                                 kTrajectoryDataProtoString,
                                  kImuDataProtoString,
                                  kOdometryDataProtoString,
-                                 // TODO: not implemented by 2D pose graph.
-                                 /* kFixedFramePoseDataProtoString, */
                                  kLandmarkDataProtoString,
                              });
 
