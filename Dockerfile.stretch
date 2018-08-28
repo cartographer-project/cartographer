@@ -14,6 +14,13 @@
 
 FROM debian:stretch
 
+ARG cc
+ARG cxx
+
+# Set the preferred C/C++ compiler toolchain, if given (otherwise default).
+ENV CC=$cc
+ENV CXX=$cxx
+
 # This base image doesn't ship with sudo.
 RUN apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*
 
