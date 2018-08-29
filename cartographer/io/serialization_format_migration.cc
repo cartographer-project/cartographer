@@ -300,13 +300,13 @@ void MigrateStreamFormatToVersion1(
 mapping::MapById<mapping::SubmapId, mapping::proto::Submap>
 MigrateSubmapFormatVersion1ToVersion2(
     const mapping::MapById<mapping::SubmapId, mapping::proto::Submap>&
-        submap_id_to_submaps,
-    mapping::MapById<mapping::NodeId, mapping::proto::Node>& node_id_to_nodes,
+        submap_id_to_submap,
+    mapping::MapById<mapping::NodeId, mapping::proto::Node>& node_id_to_node,
     const mapping::proto::PoseGraph& pose_graph_proto) {
   using namespace cartographer::mapping;
-  if (submap_id_to_submaps.empty() ||
-      submap_id_to_submaps.begin()->data.has_submap_2d()) {
-    return submap_id_to_submaps;
+  if (submap_id_to_submap.empty() ||
+      submap_id_to_submap.begin()->data.has_submap_2d()) {
+    return submap_id_to_submap;
   }
 
   std::map<SubmapId, std::unique_ptr<Submap3D>> deserialized_submaps;
@@ -316,7 +316,7 @@ MigrateSubmapFormatVersion1ToVersion2(
       NodeId node_id{constraint_proto.node_id().trajectory_id(),
                      constraint_proto.node_id().node_index()};
       const TrajectoryNode::Data& node_data =
-          mapping::FromProto(node_id_to_nodes.at(node_id).node_data());
+          mapping::FromProto(node_id_to_node.at(node_id).node_data());
       const Eigen::VectorXf& rotational_scan_matcher_histogram_in_gravity =
           node_data.rotational_scan_matcher_histogram;
 
@@ -330,7 +330,7 @@ MigrateSubmapFormatVersion1ToVersion2(
 
       SubmapId submap_id{constraint_proto.submap_id().trajectory_id(),
                          constraint_proto.submap_id().submap_index()};
-      const proto::Submap& submap = submap_id_to_submaps.at(submap_id);
+      const proto::Submap& submap = submap_id_to_submap.at(submap_id);
       CHECK(submap.has_submap_3d());
       if (deserialized_submaps.find(submap_id) == deserialized_submaps.end()) {
         std::unique_ptr<Submap3D> submap3d =
@@ -341,9 +341,9 @@ MigrateSubmapFormatVersion1ToVersion2(
       submap_3d->AddScanHistogram(rotational_scan_matcher_histogram_in_local);
     }
   }
-  MapById<SubmapId, proto::Submap> migrated_submaps = submap_id_to_submaps;
+  MapById<SubmapId, proto::Submap> migrated_submaps = submap_id_to_submap;
   for (const auto& submap : deserialized_submaps) {
-    migrated_submaps.at(submap.first) = std::move(submap.second->ToProto(true));
+    migrated_submaps.at(submap.first) = submap.second->ToProto(true);
   }
   return migrated_submaps;
 }

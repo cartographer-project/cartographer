@@ -19,13 +19,13 @@
 #include <functional>
 #include <memory>
 
-#include "cartographer/transform/transform.h"
 #include "cartographer/io/internal/in_memory_proto_stream.h"
 #include "cartographer/mapping/proto/internal/legacy_serialized_data.pb.h"
 #include "cartographer/mapping/proto/pose_graph.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/transform/transform.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
@@ -237,23 +237,23 @@ TEST_F(MigrationTest, SerializedDataOrderAfterGridMigrationIsCorrect) {
 TEST_F(SubmapHistogramMigrationTest,
        SubmapHistogramGenerationFromTrajectoryNodes) {
   mapping::MapById<mapping::SubmapId, mapping::proto::Submap>
-      submap_id_to_submaps;
+      submap_id_to_submap;
   mapping::SubmapId submap_id(submap_.submap_id().trajectory_id(),
                               submap_.submap_id().submap_index());
-  submap_id_to_submaps.Insert(submap_id, submap_);
+  submap_id_to_submap.Insert(submap_id, submap_);
 
-  mapping::MapById<mapping::NodeId, mapping::proto::Node> node_id_to_nodes;
+  mapping::MapById<mapping::NodeId, mapping::proto::Node> node_id_to_node;
   mapping::NodeId node_id(node_.node_id().trajectory_id(),
                           node_.node_id().node_index());
-  node_id_to_nodes.Insert(node_id, node_);
+  node_id_to_node.Insert(node_id, node_);
 
-  const auto submap_ids_to_submap_migrated =
-      MigrateSubmapFormatVersion1ToVersion2(submap_id_to_submaps,
-                                            node_id_to_nodes, pose_graph_);
+  const auto submap_id_to_submap_migrated =
+      MigrateSubmapFormatVersion1ToVersion2(submap_id_to_submap,
+                                            node_id_to_node, pose_graph_);
 
-  EXPECT_EQ(submap_ids_to_submap_migrated.size(), submap_id_to_submaps.size());
+  EXPECT_EQ(submap_id_to_submap_migrated.size(), submap_id_to_submap.size());
   const mapping::proto::Submap& migrated_submap =
-      submap_ids_to_submap_migrated.at(submap_id);
+      submap_id_to_submap_migrated.at(submap_id);
   EXPECT_FALSE(migrated_submap.has_submap_2d());
   EXPECT_TRUE(migrated_submap.has_submap_3d());
 
