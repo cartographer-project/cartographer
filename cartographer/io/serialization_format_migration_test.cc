@@ -19,11 +19,13 @@
 #include <functional>
 #include <memory>
 
+#include "cartographer/transform/transform.h"
 #include "cartographer/io/internal/in_memory_proto_stream.h"
 #include "cartographer/mapping/proto/internal/legacy_serialized_data.pb.h"
 #include "cartographer/mapping/proto/pose_graph.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
+#include "cartographer/mapping/trajectory_node.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
@@ -100,6 +102,63 @@ class MigrationTest : public ::testing::Test {
   static constexpr int kNumOriginalMessages = 9;
 };
 
+class SubmapHistogramMigrationTest : public ::testing::Test {
+ protected:
+  void SetUp() {
+    CreateNode();
+    CreateSubmap();
+    CreatePoseGraphWithNodeToSubmapConstraint();
+  }
+
+ private:
+  void CreateSubmap() {
+    mapping::SubmapId submap_id{0, 0};
+    mapping::proto::Submap3D submap_3d;
+    *submap_3d.mutable_local_pose() =
+        transform::ToProto(transform::Rigid3d::Identity());
+    submap_3d.mutable_low_resolution_hybrid_grid();
+    submap_3d.mutable_high_resolution_hybrid_grid();
+    submap_3d.clear_rotational_scan_matcher_histogram();
+
+    submap_id.ToProto(submap_.mutable_submap_id());
+    *submap_.mutable_submap_3d() = submap_3d;
+  }
+
+  void CreateNode() {
+    mapping::TrajectoryNode::Data trajectory_node_data;
+    trajectory_node_data.local_pose = transform::Rigid3d::Identity();
+    trajectory_node_data.gravity_alignment = Eigen::Quaterniond::Identity();
+    trajectory_node_data.rotational_scan_matcher_histogram =
+        Eigen::VectorXf::Ones(10);
+
+    mapping::NodeId node_id{0, 0};
+    node_id.ToProto(node_.mutable_node_id());
+    *node_.mutable_node_data() = mapping::ToProto(trajectory_node_data);
+  }
+
+  void CreatePoseGraphWithNodeToSubmapConstraint() {
+    mapping::proto::PoseGraph::Constraint* constraint =
+        pose_graph_.add_constraint();
+    constraint->set_tag(mapping::proto::PoseGraph::Constraint::INTRA_SUBMAP);
+    *constraint->mutable_node_id() = node_.node_id();
+    *constraint->mutable_submap_id() = submap_.submap_id();
+    *constraint->mutable_relative_pose() =
+        transform::ToProto(transform::Rigid3d::Identity());
+
+    constraint = pose_graph_.add_constraint();
+    constraint->set_tag(mapping::proto::PoseGraph::Constraint::INTER_SUBMAP);
+    *constraint->mutable_node_id() = node_.node_id();
+    *constraint->mutable_submap_id() = submap_.submap_id();
+    *constraint->mutable_relative_pose() =
+        transform::ToProto(transform::Rigid3d::Identity());
+  }
+
+ protected:
+  mapping::proto::PoseGraph pose_graph_;
+  mapping::proto::Submap submap_;
+  mapping::proto::Node node_;
+};
+
 TEST_F(MigrationTest, MigrationAddsHeaderAsFirstMessage) {
   MigrateStreamFormatToVersion1(&reader_, writer_.get(),
                                 false /* migrate_grid_format */);
@@ -173,6 +232,41 @@ TEST_F(MigrationTest, SerializedDataOrderAfterGridMigrationIsCorrect) {
   EXPECT_TRUE(serialized[6].has_odometry_data());
   EXPECT_TRUE(serialized[7].has_fixed_frame_pose_data());
   EXPECT_TRUE(serialized[8].has_landmark_data());
+}
+
+TEST_F(SubmapHistogramMigrationTest,
+       SubmapHistogramGenerationFromTrajectoryNodes) {
+  mapping::MapById<mapping::SubmapId, mapping::proto::Submap>
+      submap_id_to_submaps;
+  mapping::SubmapId submap_id(submap_.submap_id().trajectory_id(),
+                              submap_.submap_id().submap_index());
+  submap_id_to_submaps.Insert(submap_id, submap_);
+
+  mapping::MapById<mapping::NodeId, mapping::proto::Node> node_id_to_nodes;
+  mapping::NodeId node_id(node_.node_id().trajectory_id(),
+                          node_.node_id().node_index());
+  node_id_to_nodes.Insert(node_id, node_);
+
+  const auto submap_ids_to_submap_migrated =
+      MigrateSubmapFormatVersion1ToVersion2(submap_id_to_submaps,
+                                            node_id_to_nodes, pose_graph_);
+
+  EXPECT_EQ(submap_ids_to_submap_migrated.size(), submap_id_to_submaps.size());
+  const mapping::proto::Submap& migrated_submap =
+      submap_ids_to_submap_migrated.at(submap_id);
+  EXPECT_FALSE(migrated_submap.has_submap_2d());
+  EXPECT_TRUE(migrated_submap.has_submap_3d());
+
+  const mapping::proto::Submap3D& migrated_submap_3d =
+      migrated_submap.submap_3d();
+  const mapping::proto::TrajectoryNodeData& node_data = node_.node_data();
+  EXPECT_EQ(migrated_submap_3d.rotational_scan_matcher_histogram_size(),
+            node_data.rotational_scan_matcher_histogram_size());
+
+  for (int i = 0; i < node_data.rotational_scan_matcher_histogram_size(); ++i) {
+    EXPECT_EQ(migrated_submap_3d.rotational_scan_matcher_histogram(i),
+              node_data.rotational_scan_matcher_histogram(i));
+  }
 }
 
 }  // namespace
