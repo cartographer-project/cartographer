@@ -20,6 +20,7 @@
 #include <limits>
 
 #include "cartographer/common/math.h"
+#include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
 #include "cartographer/sensor/range_data.h"
 #include "glog/logging.h"
 
@@ -221,6 +222,11 @@ proto::Submap Submap3D::ToProto(
     *submap_3d->mutable_low_resolution_hybrid_grid() =
         low_resolution_hybrid_grid().ToProto();
   }
+  for (Eigen::VectorXf::Index i = 0;
+       i != rotational_scan_matcher_histogram_.size(); ++i) {
+    submap_3d->add_rotational_scan_matcher_histogram(
+        rotational_scan_matcher_histogram_(i));
+  }
   return proto;
 }
 
@@ -239,6 +245,13 @@ void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   if (submap_3d.has_low_resolution_hybrid_grid()) {
     low_resolution_hybrid_grid_ =
         absl::make_unique<HybridGrid>(submap_3d.low_resolution_hybrid_grid());
+  }
+  rotational_scan_matcher_histogram_ =
+      Eigen::VectorXf::Zero(submap_3d.rotational_scan_matcher_histogram_size());
+  for (Eigen::VectorXf::Index i = 0;
+       i != submap_3d.rotational_scan_matcher_histogram_size(); ++i) {
+    rotational_scan_matcher_histogram_(i) =
+        submap_3d.rotational_scan_matcher_histogram(i);
   }
 }
 
@@ -267,6 +280,18 @@ void Submap3D::InsertRangeData(const sensor::RangeData& range_data_in_local,
   range_data_inserter.Insert(transformed_range_data,
                              low_resolution_hybrid_grid_.get());
   set_num_range_data(num_range_data() + 1);
+}
+
+void Submap3D::AddScanHistogram(
+    const Eigen::VectorXf& scan_histogram_in_local) {
+  if (rotational_scan_matcher_histogram_.size() == 0) {
+    rotational_scan_matcher_histogram_ =
+        Eigen::VectorXf::Zero(scan_histogram_in_local.rows());
+  }
+  const float submap_yaw_from_local = transform::GetYaw(local_pose().inverse());
+  rotational_scan_matcher_histogram_ +=
+      scan_matching::RotationalScanMatcher::RotateHistogram(
+          scan_histogram_in_local, submap_yaw_from_local);
 }
 
 void Submap3D::Finish() {
