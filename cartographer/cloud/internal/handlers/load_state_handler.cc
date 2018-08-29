@@ -40,12 +40,13 @@ void LoadStateHandler::OnRequest(const proto::LoadStateRequest& request) {
     default:
       LOG(FATAL) << "Unhandled proto::LoadStateRequest case.";
   }
+  load_frozen_state_ = request.load_frozen_state();
 }
 
 void LoadStateHandler::OnReadsDone() {
   auto trajectory_remapping =
       GetContext<MapBuilderContextInterface>()->map_builder().LoadState(
-          &reader_, true);
+          &reader_, load_frozen_state_);
   for (const auto& entry : trajectory_remapping) {
     GetContext<MapBuilderContextInterface>()->RegisterClientIdForTrajectory(
         client_id_, entry.second);

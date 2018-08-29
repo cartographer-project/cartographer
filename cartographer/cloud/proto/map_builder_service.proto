@@ -146,6 +146,7 @@ message LoadStateRequest {
     cartographer.mapping.proto.SerializationHeader serialization_header = 2;
     string client_id = 3;
   }
+  bool load_frozen_state = 4;
 }
 
 message TrajectoryRemapping {
