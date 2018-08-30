@@ -45,9 +45,6 @@ class Submap3D : public Submap {
   Submap3D(float high_resolution, float low_resolution,
            const transform::Rigid3d& local_submap_pose,
            const Eigen::VectorXf& rotational_scan_matcher_histogram);
-  Submap3D(float high_resolution, float low_resolution,
-           const transform::Rigid3d& local_submap_pose,
-           int rotational_scan_matcher_histogram_size);
 
   explicit Submap3D(const proto::Submap3D& proto);
 

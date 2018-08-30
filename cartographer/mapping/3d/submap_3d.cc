@@ -198,12 +198,6 @@ proto::SubmapsOptions3D CreateSubmapsOptions3D(
 
 Submap3D::Submap3D(const float high_resolution, const float low_resolution,
                    const transform::Rigid3d& local_submap_pose,
-                   const int rotational_scan_matcher_histogram_size)
-    : Submap3D(high_resolution, low_resolution, local_submap_pose,
-               Eigen::VectorXf::Zero(rotational_scan_matcher_histogram_size)) {}
-
-Submap3D::Submap3D(const float high_resolution, const float low_resolution,
-                   const transform::Rigid3d& local_submap_pose,
                    const Eigen::VectorXf& rotational_scan_matcher_histogram)
     : Submap(local_submap_pose),
       high_resolution_hybrid_grid_(
@@ -340,9 +334,11 @@ void ActiveSubmaps3D::AddSubmap(
     CHECK(submaps_.front()->insertion_finished());
     submaps_.erase(submaps_.begin());
   }
-  submaps_.emplace_back(
-      new Submap3D(options_.high_resolution(), options_.low_resolution(),
-                   local_submap_pose, rotational_scan_matcher_histogram_size));
+  const Eigen::VectorXf initial_rotational_scan_matcher_histogram =
+      Eigen::VectorXf::Zero(rotational_scan_matcher_histogram_size);
+  submaps_.emplace_back(new Submap3D(
+      options_.high_resolution(), options_.low_resolution(), local_submap_pose,
+      initial_rotational_scan_matcher_histogram));
 }
 
 }  // namespace mapping
