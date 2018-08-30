@@ -329,11 +329,12 @@ MigrateSubmapFormatVersion1ToVersion2(
 
       mapping::proto::Submap3D* submap_3d_proto =
           migrated_submap_proto.mutable_submap_3d();
-
-      const double submap_yaw_from_gravity = transform::GetYaw(
-          transform::ToRigid3(submap_3d_proto->local_pose()).rotation() *
-          node_data.local_pose.rotation() *
-          node_data.gravity_alignment.inverse());
+      const double submap_yaw_from_gravity =
+          transform::GetYaw(transform::ToRigid3(submap_3d_proto->local_pose())
+                                .inverse()
+                                .rotation() *
+                            node_data.local_pose.rotation() *
+                            node_data.gravity_alignment.inverse());
       const Eigen::VectorXf rotational_scan_matcher_histogram_in_submap =
           scan_matching::RotationalScanMatcher::RotateHistogram(
               rotational_scan_matcher_histogram_in_gravity,
