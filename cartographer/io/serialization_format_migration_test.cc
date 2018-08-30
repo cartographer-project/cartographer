@@ -114,8 +114,6 @@ class SubmapHistogramMigrationTest : public ::testing::Test {
  private:
   void CreateSubmap() {
     submap_ = mapping::testing::CreateFakeSubmap3D();
-    submap_.mutable_submap_3d()->mutable_low_resolution_hybrid_grid();
-    submap_.mutable_submap_3d()->mutable_high_resolution_hybrid_grid();
     submap_.mutable_submap_3d()->clear_rotational_scan_matcher_histogram();
   }
 
