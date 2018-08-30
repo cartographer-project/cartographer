@@ -366,9 +366,8 @@ std::map<int, int> MapBuilder::LoadState(
 
   // TODO(schwoere): Remove backwards compatibility once the pbstream format
   // version 2 is established.
-  constexpr uint32_t kFormatVersionWithoutSubmapHistograms = 1;
   if (deserializer.header().format_version() ==
-      kFormatVersionWithoutSubmapHistograms) {
+      io::kFormatVersionWithoutSubmapHistograms) {
     submap_id_to_submap =
         cartographer::io::MigrateSubmapFormatVersion1ToVersion2(
             submap_id_to_submap, node_id_to_node, pose_graph_proto);
