@@ -282,18 +282,6 @@ void Submap3D::InsertRangeData(const sensor::RangeData& range_data_in_local,
   set_num_range_data(num_range_data() + 1);
 }
 
-void Submap3D::AddScanHistogram(
-    const Eigen::VectorXf& scan_histogram_in_local) {
-  if (rotational_scan_matcher_histogram_.size() == 0) {
-    rotational_scan_matcher_histogram_ =
-        Eigen::VectorXf::Zero(scan_histogram_in_local.rows());
-  }
-  const float submap_yaw_from_local = transform::GetYaw(local_pose().inverse());
-  rotational_scan_matcher_histogram_ +=
-      scan_matching::RotationalScanMatcher::RotateHistogram(
-          scan_histogram_in_local, submap_yaw_from_local);
-}
-
 void Submap3D::Finish() {
   CHECK(!insertion_finished());
   set_insertion_finished(true);

@@ -67,7 +67,6 @@ class Submap3D : public Submap {
   void InsertRangeData(const sensor::RangeData& range_data,
                        const RangeDataInserter3D& range_data_inserter,
                        float high_resolution_max_range);
-  void AddScanHistogram(const Eigen::VectorXf& scan_histogram_in_local);
   void Finish();
 
  private:

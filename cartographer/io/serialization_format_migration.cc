@@ -309,7 +309,7 @@ MigrateSubmapFormatVersion1ToVersion2(
     return submap_id_to_submap;
   }
 
-  std::map<SubmapId, std::unique_ptr<Submap3D>> deserialized_submaps;
+  MapById<SubmapId, proto::Submap> migrated_submaps = submap_id_to_submap;
   for (const proto::PoseGraph::Constraint& constraint_proto :
        pose_graph_proto.constraint()) {
     if (constraint_proto.tag() == proto::PoseGraph::Constraint::INTRA_SUBMAP) {
@@ -321,30 +321,40 @@ MigrateSubmapFormatVersion1ToVersion2(
       const Eigen::VectorXf& rotational_scan_matcher_histogram_in_gravity =
           node_data.rotational_scan_matcher_histogram;
 
-      const float local_yaw_from_gravity =
-          transform::GetYaw(node_data.local_pose.rotation() *
-                            node_data.gravity_alignment.inverse());
-      const Eigen::VectorXf rotational_scan_matcher_histogram_in_local =
-          scan_matching::RotationalScanMatcher::RotateHistogram(
-              rotational_scan_matcher_histogram_in_gravity,
-              local_yaw_from_gravity);
       SubmapId submap_id{constraint_proto.submap_id().trajectory_id(),
                          constraint_proto.submap_id().submap_index()};
-      CHECK(submap_id_to_submap.Contains(submap_id));
-      const proto::Submap& submap_proto = submap_id_to_submap.at(submap_id);
-      CHECK(submap_proto.has_submap_3d());
-      if (deserialized_submaps.find(submap_id) == deserialized_submaps.end()) {
-        deserialized_submaps[submap_id] =
-            absl::make_unique<Submap3D>(submap_proto.submap_3d());
+      CHECK(migrated_submaps.Contains(submap_id));
+      proto::Submap& migrated_submap_proto = migrated_submaps.at(submap_id);
+      CHECK(migrated_submap_proto.has_submap_3d());
+
+      mapping::proto::Submap3D* submap_3d_proto =
+          migrated_submap_proto.mutable_submap_3d();
+
+      const double submap_yaw_from_gravity = transform::GetYaw(
+          transform::ToRigid3(submap_3d_proto->local_pose()).rotation() *
+          node_data.local_pose.rotation() *
+          node_data.gravity_alignment.inverse());
+      const Eigen::VectorXf rotational_scan_matcher_histogram_in_submap =
+          scan_matching::RotationalScanMatcher::RotateHistogram(
+              rotational_scan_matcher_histogram_in_gravity,
+              submap_yaw_from_gravity);
+
+      if (submap_3d_proto->rotational_scan_matcher_histogram_size() == 0) {
+        for (Eigen::VectorXf::Index i = 0;
+             i != rotational_scan_matcher_histogram_in_submap.size(); ++i) {
+          submap_3d_proto->add_rotational_scan_matcher_histogram(
+              rotational_scan_matcher_histogram_in_submap(i));
+        }
+      } else {
+        auto submap_histogram =
+            submap_3d_proto->mutable_rotational_scan_matcher_histogram();
+        for (Eigen::VectorXf::Index i = 0;
+             i != rotational_scan_matcher_histogram_in_submap.size(); ++i) {
+          *submap_histogram->Mutable(i) +=
+              rotational_scan_matcher_histogram_in_submap(i);
+        }
       }
-      Submap3D* const submap_3d = deserialized_submaps.at(submap_id).get();
-      submap_3d->AddScanHistogram(rotational_scan_matcher_histogram_in_local);
     }
-  }
-  MapById<SubmapId, proto::Submap> migrated_submaps = submap_id_to_submap;
-  for (const auto& submap : deserialized_submaps) {
-    migrated_submaps.at(submap.first) =
-        submap.second->ToProto(submap.second->insertion_finished());
   }
   return migrated_submaps;
 }
