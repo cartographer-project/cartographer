@@ -66,8 +66,9 @@ int MapBuilderStub::AddTrajectoryBuilder(
     *request.add_expected_sensor_ids() = cloud::ToProto(sensor_id);
   }
   async_grpc::Client<handlers::AddTrajectorySignature> client(
-      client_channel_, async_grpc::CreateLimitedBackoffStrategy(
-                           common::FromMilliseconds(100), 2.f, 5));
+      client_channel_, common::FromSeconds(10),
+      async_grpc::CreateLimitedBackoffStrategy(common::FromMilliseconds(100),
+                                               2.f, 5));
   CHECK(client.Write(request));
 
   // Construct trajectory builder stub.
@@ -123,7 +124,12 @@ std::string MapBuilderStub::SubmapToProto(
   return client.response().error_msg();
 }
 
-void MapBuilderStub::SerializeState(io::ProtoStreamWriterInterface* writer) {
+void MapBuilderStub::SerializeState(bool include_unfinished_submaps,
+                                    io::ProtoStreamWriterInterface* writer) {
+  if (include_unfinished_submaps) {
+    LOG(WARNING) << "Serializing unfinished submaps is currently unsupported. "
+                    "Proceeding to write the state without them.";
+  }
   google::protobuf::Empty request;
   async_grpc::Client<handlers::WriteStateSignature> client(client_channel_);
   CHECK(client.Write(request));

@@ -21,6 +21,7 @@
 
 #include <array>
 
+#include "cartographer/pose_graph/node/parameterization/parameterization.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {
@@ -37,12 +38,17 @@ class ImuCalibration : public Node {
   std::array<double, 4>* mutable_orientation() { return &orientation_; }
   const std::array<double, 4>& orientation() const { return orientation_; }
 
+  ceres::LocalParameterization* orientation_parameterization() const {
+    return orientation_parameterization_.ceres_parameterization();
+  }
+
  protected:
   proto::Parameters ToParametersProto() const final;
 
  private:
   double gravity_constant_;
   std::array<double, 4> orientation_;
+  Parameterization orientation_parameterization_;
 };
 
 }  // namespace pose_graph

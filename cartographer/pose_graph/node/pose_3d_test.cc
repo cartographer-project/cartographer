@@ -30,6 +30,7 @@ constexpr char kExpectedNode[] = R"PROTO(
   parameters {
     pose_3d {
       translation { x: 1 y: 2 z: 3 }
+      translation_parameterization: FIX_Z
       rotation: { w: 0 x: 1 y: 2 z: 3 }
     }
   }
@@ -39,7 +40,9 @@ TEST(Pose3DTest, ToProto) {
   Pose3D pose_3d({"bumpy_world", common::FromUniversal(1)}, true,
                  ParseProto<proto::Pose3D>(R"(
                    translation { x: 1 y: 2 z: 3 }
+                   translation_parameterization: FIX_Z
                    rotation: { w: 0 x: 1 y: 2 z: 3 }
+                   rotation_parameterization: NONE
                  )"));
   EXPECT_THAT(pose_3d.ToProto(), testing::EqualsProto(kExpectedNode));
 }

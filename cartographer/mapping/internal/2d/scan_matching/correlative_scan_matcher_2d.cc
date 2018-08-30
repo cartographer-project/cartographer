@@ -32,8 +32,8 @@ SearchParameters::SearchParameters(const double linear_search_window,
   // We set this value to something on the order of resolution to make sure that
   // the std::acos() below is defined.
   float max_scan_range = 3.f * resolution;
-  for (const Eigen::Vector3f& point : point_cloud) {
-    const float range = point.head<2>().norm();
+  for (const sensor::RangefinderPoint& point : point_cloud) {
+    const float range = point.position.head<2>().norm();
     max_scan_range = std::max(range, max_scan_range);
   }
   const double kSafetyMargin = 1. - 1e-3;
@@ -116,9 +116,9 @@ std::vector<DiscreteScan2D> DiscretizeScans(
   for (const sensor::PointCloud& scan : scans) {
     discrete_scans.emplace_back();
     discrete_scans.back().reserve(scan.size());
-    for (const Eigen::Vector3f& point : scan) {
+    for (const sensor::RangefinderPoint& point : scan) {
       const Eigen::Vector2f translated_point =
-          Eigen::Affine2f(initial_translation) * point.head<2>();
+          Eigen::Affine2f(initial_translation) * point.position.head<2>();
       discrete_scans.back().push_back(
           map_limits.GetCellIndex(translated_point));
     }

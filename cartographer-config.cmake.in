@@ -23,19 +23,24 @@
 set_and_check(CARTOGRAPHER_CMAKE_DIR "@PACKAGE_CARTOGRAPHER_CMAKE_DIR@")
 
 set(CERES_DIR_HINTS @Ceres_DIR@)
-
-if (cartographer_FIND_QUIETLY)
-   find_package(Ceres QUIET HINTS ${CERES_DIR_HINTS})
-elseif (cartographer_FIND_REQUIRED)
-   find_package(Ceres REQUIRED HINTS ${CERES_DIR_HINTS})
-else ()
-   find_package(Ceres HINTS ${CERES_DIR_HINTS})
-endif()
-
 set(CARTOGRAPHER_HAS_GRPC @CARTOGRAPHER_HAS_GRPC@)
 
+if (cartographer_FIND_QUIETLY)
+   set(QUIET_OR_REQUIRED_OPTION "QUIET")
+elseif (cartographer_FIND_REQUIRED)
+   set(QUIET_OR_REQUIRED_OPTION "REQUIRED")
+else ()
+   set(QUIET_OR_REQUIRED_OPTION "")
+endif()
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CARTOGRAPHER_CMAKE_DIR}/modules)
+
+find_package(Ceres ${QUIET_OR_REQUIRED_OPTION} HINTS ${CERES_DIR_HINTS})
+find_package(Abseil ${QUIET_OR_REQUIRED_OPTION})
 if(CARTOGRAPHER_HAS_GRPC)
-   find_package(async_grpc)
+   find_package(async_grpc ${QUIET_OR_REQUIRED_OPTION})
 endif()
 
 include("${CARTOGRAPHER_CMAKE_DIR}/CartographerTargets.cmake")
+
+unset(QUIET_OR_REQUIRED_OPTION)

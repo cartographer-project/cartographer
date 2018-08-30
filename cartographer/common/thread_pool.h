@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "cartographer/common/mutex.h"
+#include "absl/synchronization/mutex.h"
 #include "cartographer/common/task.h"
 
 namespace cartographer {
@@ -65,14 +65,14 @@ class ThreadPool : public ThreadPoolInterface {
   // When the returned weak pointer is expired, 'task' has certainly completed,
   // so dependants no longer need to add it as a dependency.
   std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task)
-      EXCLUDES(mutex_) override;
+      LOCKS_EXCLUDED(mutex_) override;
 
  private:
   void DoWork();
 
-  void NotifyDependenciesCompleted(Task* task) EXCLUDES(mutex_) override;
+  void NotifyDependenciesCompleted(Task* task) LOCKS_EXCLUDED(mutex_) override;
 
-  Mutex mutex_;
+  absl::Mutex mutex_;
   bool running_ GUARDED_BY(mutex_) = true;
   std::vector<std::thread> pool_ GUARDED_BY(mutex_);
   std::deque<std::shared_ptr<Task>> task_queue_ GUARDED_BY(mutex_);

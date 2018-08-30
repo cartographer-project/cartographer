@@ -19,6 +19,10 @@
 namespace cartographer {
 namespace sensor {
 
+metrics::Family<metrics::Counter>*
+    TrajectoryCollator::collator_metrics_family_ =
+        metrics::Family<metrics::Counter>::Null();
+
 void TrajectoryCollator::AddTrajectory(
     const int trajectory_id,
     const std::unordered_set<std::string>& expected_sensor_ids,
@@ -43,6 +47,8 @@ void TrajectoryCollator::FinishTrajectory(const int trajectory_id) {
 void TrajectoryCollator::AddSensorData(const int trajectory_id,
                                        std::unique_ptr<Data> data) {
   QueueKey queue_key{trajectory_id, data->GetSensorId()};
+  auto* metric = GetOrCreateSensorMetric(data->GetSensorId(), trajectory_id);
+  metric->Increment();
   trajectory_to_queue_.at(trajectory_id)
       .Add(std::move(queue_key), std::move(data));
 }
@@ -55,6 +61,30 @@ void TrajectoryCollator::Flush() {
 
 absl::optional<int> TrajectoryCollator::GetBlockingTrajectoryId() const {
   return absl::optional<int>();
+}
+
+void TrajectoryCollator::RegisterMetrics(
+    metrics::FamilyFactory* family_factory) {
+  collator_metrics_family_ = family_factory->NewCounterFamily(
+      "collator_input_total", "Sensor data received");
+}
+
+metrics::Counter* TrajectoryCollator::GetOrCreateSensorMetric(
+    const std::string& sensor_id, int trajectory_id) {
+  const std::string map_key = sensor_id + "/" + std::to_string(trajectory_id);
+
+  auto metrics_map_itr = metrics_map_.find(map_key);
+  if (metrics_map_itr != metrics_map_.end()) {
+    return metrics_map_itr->second;
+  }
+
+  LOG(INFO) << "Create metrics handler for key: " << map_key;
+  auto new_counter = collator_metrics_family_->Add(
+      {{"sensor_id", sensor_id},
+       {"trajectory_id", std::to_string(trajectory_id)}});
+
+  metrics_map_[map_key] = new_counter;
+  return new_counter;
 }
 
 }  // namespace sensor

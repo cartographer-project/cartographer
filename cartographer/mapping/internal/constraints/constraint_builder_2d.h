@@ -25,10 +25,10 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "absl/synchronization/mutex.h"
 #include "cartographer/common/fixed_ratio_sampler.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
-#include "cartographer/common/mutex.h"
 #include "cartographer/common/task.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/2d/submap_2d.h"
@@ -107,7 +107,7 @@ class ConstraintBuilder2D {
 
  private:
   struct SubmapScanMatcher {
-    const Grid2D* grid;
+    const Grid2D* grid = nullptr;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher2D>
         fast_correlative_scan_matcher;
     std::weak_ptr<common::Task> creation_task_handle;
@@ -116,7 +116,8 @@ class ConstraintBuilder2D {
   // The returned 'grid' and 'fast_correlative_scan_matcher' must only be
   // accessed after 'creation_task_handle' has completed.
   const SubmapScanMatcher* DispatchScanMatcherConstruction(
-      const SubmapId& submap_id, const Grid2D* grid) REQUIRES(mutex_);
+      const SubmapId& submap_id, const Grid2D* grid)
+      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Runs in a background thread and does computations for an additional
   // constraint, assuming 'submap' and 'compressed_point_cloud' do not change
@@ -127,13 +128,13 @@ class ConstraintBuilder2D {
                          const transform::Rigid2d& initial_relative_pose,
                          const SubmapScanMatcher& submap_scan_matcher,
                          std::unique_ptr<Constraint>* constraint)
-      EXCLUDES(mutex_);
+      LOCKS_EXCLUDED(mutex_);
 
-  void RunWhenDoneCallback() EXCLUDES(mutex_);
+  void RunWhenDoneCallback() LOCKS_EXCLUDED(mutex_);
 
   const constraints::proto::ConstraintBuilderOptions options_;
   common::ThreadPoolInterface* thread_pool_;
-  common::Mutex mutex_;
+  absl::Mutex mutex_;
 
   // 'callback' set by WhenDone().
   std::unique_ptr<std::function<void(const Result&)>> when_done_

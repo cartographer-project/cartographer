@@ -18,34 +18,10 @@
 
 #include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
+#include "cartographer/pose_graph/constraint/constraint_utils.h"
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
-
-void AddPoseParameters(Pose3D* pose, ceres::Problem* problem) {
-  auto transation = pose->mutable_translation();
-  auto rotation = pose->mutable_rotation();
-  problem->AddParameterBlock(transation->data(), transation->size());
-  problem->AddParameterBlock(rotation->data(), rotation->size());
-  if (pose->constant()) {
-    problem->SetParameterBlockConstant(transation->data());
-    problem->SetParameterBlockConstant(rotation->data());
-  }
-}
-
-void AddImuParameters(ImuCalibration* pose, ceres::Problem* problem) {
-  auto gravity = pose->mutable_gravity_constant();
-  auto orientation = pose->mutable_orientation();
-  problem->AddParameterBlock(gravity, 1);
-  problem->AddParameterBlock(orientation->data(), orientation->size());
-  if (pose->constant()) {
-    problem->SetParameterBlockConstant(gravity);
-    problem->SetParameterBlockConstant(orientation->data());
-  }
-}
-
-}  // namespace
 
 AccelerationConstraint3D::AccelerationConstraint3D(
     const ConstraintId& id, const proto::LossFunction& loss_function_proto,
@@ -60,29 +36,15 @@ AccelerationConstraint3D::AccelerationConstraint3D(
 
 void AccelerationConstraint3D::AddToOptimizer(Nodes* nodes,
                                               ceres::Problem* problem) const {
-  auto first_node = common::FindOrNull(nodes->pose_3d_nodes, first_);
-  if (first_node == nullptr) {
-    LOG(INFO) << "First node was not found in pose_3d_nodes.";
-    return;
-  }
-
-  auto second_node = common::FindOrNull(nodes->pose_3d_nodes, second_);
-  if (second_node == nullptr) {
-    LOG(INFO) << "Second node was not found in pose_3d_nodes.";
-    return;
-  }
-
-  auto third_node = common::FindOrNull(nodes->pose_3d_nodes, third_);
-  if (third_node == nullptr) {
-    LOG(INFO) << "Third node was not found in pose_3d_nodes.";
-    return;
-  }
-
-  auto imu_node = common::FindOrNull(nodes->imu_calibration_nodes, imu_);
-  if (imu_node == nullptr) {
-    LOG(INFO) << "IMU calibration node was not found in imu_calibration_nodes.";
-    return;
-  }
+  FIND_NODE_OR_RETURN(first_node, first_, nodes->pose_3d_nodes,
+                      "First node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_3d_nodes,
+                      "Second node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(third_node, third_, nodes->pose_3d_nodes,
+                      "Third node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(
+      imu_node, imu_, nodes->imu_calibration_nodes,
+      "IMU calibration node was not found in imu_calibration_nodes.");
 
   if (first_node->constant() && second_node->constant() &&
       third_node->constant() && imu_node->constant()) {
@@ -90,10 +52,10 @@ void AccelerationConstraint3D::AddToOptimizer(Nodes* nodes,
     return;
   }
 
-  AddPoseParameters(first_node, problem);
-  AddPoseParameters(second_node, problem);
-  AddPoseParameters(third_node, problem);
-  AddImuParameters(imu_node, problem);
+  AddPose3D(first_node, problem);
+  AddPose3D(second_node, problem);
+  AddPose3D(third_node, problem);
+  AddImuCalibration(imu_node, problem);
   problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(),
                             second_node->mutable_rotation()->data(),
                             second_node->mutable_translation()->data(),

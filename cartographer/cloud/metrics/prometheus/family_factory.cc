@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <unordered_map>
+
 #include "cartographer/cloud/metrics/prometheus/family_factory.h"
 
 #include "absl/memory/memory.h"
@@ -29,6 +31,23 @@ namespace prometheus {
 namespace {
 
 using BucketBoundaries = ::cartographer::metrics::Histogram::BucketBoundaries;
+
+// Creates or looks up already existing objects from a wrapper map.
+template <typename WrapperMap,
+          typename ObjectPtr = typename WrapperMap::key_type,
+          typename Wrapper = typename WrapperMap::mapped_type::element_type>
+Wrapper* GetOrCreateWrapper(ObjectPtr object_ptr, WrapperMap* wrapper_map,
+                            std::mutex* wrapper_mutex) {
+  std::lock_guard<std::mutex> lock(*wrapper_mutex);
+  auto wrappers_itr = wrapper_map->find(object_ptr);
+  if (wrappers_itr == wrapper_map->end()) {
+    auto wrapper = absl::make_unique<Wrapper>(object_ptr);
+    auto* ptr = wrapper.get();
+    (*wrapper_map)[object_ptr] = std::unique_ptr<Wrapper>(std::move(wrapper));
+    return ptr;
+  }
+  return wrappers_itr->second.get();
+}
 
 class Counter : public ::cartographer::metrics::Counter {
  public:
@@ -51,15 +70,14 @@ class CounterFamily
 
   Counter* Add(const std::map<std::string, std::string>& labels) override {
     ::prometheus::Counter* counter = &prometheus_->Add(labels);
-    auto wrapper = absl::make_unique<Counter>(counter);
-    auto* ptr = wrapper.get();
-    wrappers_.emplace_back(std::move(wrapper));
-    return ptr;
+    return GetOrCreateWrapper<>(counter, &wrappers_, &wrappers_mutex_);
   }
 
  private:
   ::prometheus::Family<::prometheus::Counter>* prometheus_;
-  std::vector<std::unique_ptr<Counter>> wrappers_;
+  std::mutex wrappers_mutex_;
+  std::unordered_map<::prometheus::Counter*, std::unique_ptr<Counter>>
+      wrappers_;
 };
 
 class Gauge : public ::cartographer::metrics::Gauge {
@@ -84,15 +102,13 @@ class GaugeFamily
 
   Gauge* Add(const std::map<std::string, std::string>& labels) override {
     ::prometheus::Gauge* gauge = &prometheus_->Add(labels);
-    auto wrapper = absl::make_unique<Gauge>(gauge);
-    auto* ptr = wrapper.get();
-    wrappers_.emplace_back(std::move(wrapper));
-    return ptr;
+    return GetOrCreateWrapper<>(gauge, &wrappers_, &wrappers_mutex_);
   }
 
  private:
   ::prometheus::Family<::prometheus::Gauge>* prometheus_;
-  std::vector<std::unique_ptr<Gauge>> wrappers_;
+  std::mutex wrappers_mutex_;
+  std::unordered_map<::prometheus::Gauge*, std::unique_ptr<Gauge>> wrappers_;
 };
 
 class Histogram : public ::cartographer::metrics::Histogram {
@@ -115,15 +131,14 @@ class HistogramFamily : public ::cartographer::metrics::Family<
 
   Histogram* Add(const std::map<std::string, std::string>& labels) override {
     ::prometheus::Histogram* histogram = &prometheus_->Add(labels, boundaries_);
-    auto wrapper = absl::make_unique<Histogram>(histogram);
-    auto* ptr = wrapper.get();
-    wrappers_.emplace_back(std::move(wrapper));
-    return ptr;
+    return GetOrCreateWrapper<>(histogram, &wrappers_, &wrappers_mutex_);
   }
 
  private:
   ::prometheus::Family<::prometheus::Histogram>* prometheus_;
-  std::vector<std::unique_ptr<Histogram>> wrappers_;
+  std::mutex wrappers_mutex_;
+  std::unordered_map<::prometheus::Histogram*, std::unique_ptr<Histogram>>
+      wrappers_;
   const BucketBoundaries boundaries_;
 };
 

@@ -140,8 +140,11 @@ class PoseGraphInterface {
   // Returns the collection of constraints.
   virtual std::vector<Constraint> constraints() const = 0;
 
-  // Serializes the constraints and trajectories.
-  virtual proto::PoseGraph ToProto() const = 0;
+  // Serializes the constraints and trajectories. If
+  // 'include_unfinished_submaps' is set to 'true', unfinished submps, i.e.
+  // submaps that have not yet received all rangefinder data insertions, will
+  // be included, otherwise not.
+  virtual proto::PoseGraph ToProto(bool include_unfinished_submaps) const = 0;
 
   // Sets the callback function that is invoked whenever the global optimization
   // problem is solved.

@@ -35,7 +35,7 @@ ThreadPoolForTesting::ThreadPoolForTesting()
 
 ThreadPoolForTesting::~ThreadPoolForTesting() {
   {
-    MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     CHECK(running_);
     running_ = false;
     CHECK_EQ(task_queue_.size(), 0);
@@ -45,7 +45,7 @@ ThreadPoolForTesting::~ThreadPoolForTesting() {
 }
 
 void ThreadPoolForTesting::NotifyDependenciesCompleted(Task* task) {
-  MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   CHECK(running_);
   auto it = tasks_not_ready_.find(task);
   CHECK(it != tasks_not_ready_.end());
@@ -56,7 +56,7 @@ void ThreadPoolForTesting::NotifyDependenciesCompleted(Task* task) {
 std::weak_ptr<Task> ThreadPoolForTesting::Schedule(std::unique_ptr<Task> task) {
   std::shared_ptr<Task> shared_task;
   {
-    MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     idle_ = false;
     CHECK(running_);
     auto insert_result =
@@ -69,11 +69,13 @@ std::weak_ptr<Task> ThreadPoolForTesting::Schedule(std::unique_ptr<Task> task) {
 }
 
 void ThreadPoolForTesting::WaitUntilIdle() {
+  const auto predicate = [this]()
+                             EXCLUSIVE_LOCKS_REQUIRED(mutex_) { return idle_; };
   for (;;) {
     {
-      common::MutexLocker locker(&mutex_);
-      if (locker.AwaitWithTimeout([this]() REQUIRES(mutex_) { return idle_; },
-                                  common::FromSeconds(0.1))) {
+      absl::MutexLock locker(&mutex_);
+      if (mutex_.AwaitWithTimeout(absl::Condition(&predicate),
+                                  absl::FromChrono(common::FromSeconds(0.1)))) {
         return;
       }
     }
@@ -81,14 +83,15 @@ void ThreadPoolForTesting::WaitUntilIdle() {
 }
 
 void ThreadPoolForTesting::DoWork() {
+  const auto predicate = [this]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    return !task_queue_.empty() || !running_;
+  };
   for (;;) {
     std::shared_ptr<Task> task;
     {
-      MutexLocker locker(&mutex_);
-      locker.AwaitWithTimeout(
-          [this]()
-              REQUIRES(mutex_) { return !task_queue_.empty() || !running_; },
-          common::FromSeconds(0.1));
+      absl::MutexLock locker(&mutex_);
+      mutex_.AwaitWithTimeout(absl::Condition(&predicate),
+                              absl::FromChrono(common::FromSeconds(0.1)));
       if (!task_queue_.empty()) {
         task = task_queue_.front();
         task_queue_.pop_front();

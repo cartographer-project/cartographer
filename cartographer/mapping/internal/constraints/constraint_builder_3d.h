@@ -25,11 +25,11 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "absl/synchronization/mutex.h"
 #include "cartographer/common/fixed_ratio_sampler.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
-#include "cartographer/common/mutex.h"
 #include "cartographer/common/task.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/mapping/3d/submap_3d.h"
@@ -114,8 +114,8 @@ class ConstraintBuilder3D {
 
  private:
   struct SubmapScanMatcher {
-    const HybridGrid* high_resolution_hybrid_grid;
-    const HybridGrid* low_resolution_hybrid_grid;
+    const HybridGrid* high_resolution_hybrid_grid = nullptr;
+    const HybridGrid* low_resolution_hybrid_grid = nullptr;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher3D>
         fast_correlative_scan_matcher;
     std::weak_ptr<common::Task> creation_task_handle;
@@ -124,7 +124,8 @@ class ConstraintBuilder3D {
   // The returned 'grid' and 'fast_correlative_scan_matcher' must only be
   // accessed after 'creation_task_handle' has completed.
   const SubmapScanMatcher* DispatchScanMatcherConstruction(
-      const SubmapId& submap_id, const Submap3D* submap) REQUIRES(mutex_);
+      const SubmapId& submap_id, const Submap3D* submap)
+      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Runs in a background thread and does computations for an additional
   // constraint.
@@ -136,13 +137,13 @@ class ConstraintBuilder3D {
                          const transform::Rigid3d& global_submap_pose,
                          const SubmapScanMatcher& submap_scan_matcher,
                          std::unique_ptr<Constraint>* constraint)
-      EXCLUDES(mutex_);
+      LOCKS_EXCLUDED(mutex_);
 
-  void RunWhenDoneCallback() EXCLUDES(mutex_);
+  void RunWhenDoneCallback() LOCKS_EXCLUDED(mutex_);
 
   const proto::ConstraintBuilderOptions options_;
   common::ThreadPoolInterface* thread_pool_;
-  common::Mutex mutex_;
+  absl::Mutex mutex_;
 
   // 'callback' set by WhenDone().
   std::unique_ptr<std::function<void(const Result&)>> when_done_

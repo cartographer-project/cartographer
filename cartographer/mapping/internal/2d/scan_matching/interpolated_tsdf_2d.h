@@ -96,11 +96,11 @@ class InterpolatedTSDF2D {
   T InterpolateBilinear(const T& x, const T& y, float x1, float y1, float x2,
                         float y2, float q11, float q12, float q21,
                         float q22) const {
-    const T normalized_x = (x - x1) / (x2 - x1);
-    const T normalized_y = (y - y1) / (y2 - y1);
-    const T q1 = (q12 - q11) * normalized_y + q11;
-    const T q2 = (q22 - q21) * normalized_y + q21;
-    return (q2 - q1) * normalized_x + q1;
+    const T normalized_x = (x - T(x1)) / T(x2 - x1);
+    const T normalized_y = (y - T(y1)) / T(y2 - y1);
+    const T q1 = T(q12 - q11) * normalized_y + T(q11);
+    const T q2 = T(q22 - q21) * normalized_y + T(q21);
+    return T(q2 - q1) * normalized_x + T(q1);
   }
 
   // Center of the next lower pixel, i.e., not necessarily the pixel containing

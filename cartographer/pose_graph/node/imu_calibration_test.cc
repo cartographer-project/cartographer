@@ -31,6 +31,7 @@ constexpr char kExpectedNode[] = R"PROTO(
     imu_calibration {
       gravity_constant: 10
       orientation: { w: 0 x: 1 y: 2 z: 3 }
+      orientation_parameterization: YAW_ONLY
     }
   }
 )PROTO";
@@ -40,6 +41,7 @@ TEST(Pose3DTest, ToProto) {
                                  true, ParseProto<proto::ImuCalibration>(R"(
                                      gravity_constant: 10
                                      orientation: { w: 0 x: 1 y: 2 z: 3 }
+                                     orientation_parameterization: YAW_ONLY
                                    )"));
   EXPECT_THAT(imu_calibration.ToProto(), testing::EqualsProto(kExpectedNode));
 }

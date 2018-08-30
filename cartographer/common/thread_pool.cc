@@ -35,7 +35,7 @@ void ThreadPoolInterface::SetThreadPool(Task* task) {
 }
 
 ThreadPool::ThreadPool(int num_threads) {
-  MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   for (int i = 0; i != num_threads; ++i) {
     pool_.emplace_back([this]() { ThreadPool::DoWork(); });
   }
@@ -43,7 +43,7 @@ ThreadPool::ThreadPool(int num_threads) {
 
 ThreadPool::~ThreadPool() {
   {
-    MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     CHECK(running_);
     running_ = false;
   }
@@ -53,7 +53,7 @@ ThreadPool::~ThreadPool() {
 }
 
 void ThreadPool::NotifyDependenciesCompleted(Task* task) {
-  MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   auto it = tasks_not_ready_.find(task);
   CHECK(it != tasks_not_ready_.end());
   task_queue_.push_back(it->second);
@@ -63,7 +63,7 @@ void ThreadPool::NotifyDependenciesCompleted(Task* task) {
 std::weak_ptr<Task> ThreadPool::Schedule(std::unique_ptr<Task> task) {
   std::shared_ptr<Task> shared_task;
   {
-    MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     auto insert_result =
         tasks_not_ready_.insert(std::make_pair(task.get(), std::move(task)));
     CHECK(insert_result.second) << "Schedule called twice";
@@ -80,13 +80,14 @@ void ThreadPool::DoWork() {
   // away CPU resources from more important foreground threads.
   CHECK_NE(nice(10), -1);
 #endif
+  const auto predicate = [this]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    return !task_queue_.empty() || !running_;
+  };
   for (;;) {
     std::shared_ptr<Task> task;
     {
-      MutexLocker locker(&mutex_);
-      locker.Await([this]() REQUIRES(mutex_) {
-        return !task_queue_.empty() || !running_;
-      });
+      absl::MutexLock locker(&mutex_);
+      mutex_.Await(absl::Condition(&predicate));
       if (!task_queue_.empty()) {
         task = std::move(task_queue_.front());
         task_queue_.pop_front();

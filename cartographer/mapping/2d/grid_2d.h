@@ -32,6 +32,8 @@ namespace mapping {
 proto::GridOptions2D CreateGridOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary);
 
+enum class GridType { PROBABILITY_GRID, TSDF };
+
 class Grid2D : public GridInterface {
  public:
   Grid2D(const MapLimits& limits, float min_correspondence_cost,
@@ -45,8 +47,11 @@ class Grid2D : public GridInterface {
 
   // Finishes the update sequence.
   void FinishUpdate();
+
   // Returns the correspondence cost of the cell with 'cell_index'.
   float GetCorrespondenceCost(const Eigen::Array2i& cell_index) const;
+
+  virtual GridType GetGridType() const = 0;
 
   // Returns the minimum possible correspondence cost.
   float GetMinCorrespondenceCost() const { return min_correspondence_cost_; }
@@ -91,6 +96,7 @@ class Grid2D : public GridInterface {
   std::vector<uint16>* mutable_correspondence_cost_cells() {
     return &correspondence_cost_cells_;
   }
+
   std::vector<int>* mutable_update_indices() { return &update_indices_; }
   Eigen::AlignedBox2i* mutable_known_cells_box() { return &known_cells_box_; }
 

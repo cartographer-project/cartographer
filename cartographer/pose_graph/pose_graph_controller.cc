@@ -20,17 +20,17 @@ namespace cartographer {
 namespace pose_graph {
 
 void PoseGraphController::AddNode(const proto::Node& node) {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   AddNodeToPoseGraphData(node, &data_);
 }
 
 void PoseGraphController::AddConstraint(const proto::Constraint& constraint) {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   AddConstraintToPoseGraphData(constraint, &data_);
 }
 
 Optimizer::SolverStatus PoseGraphController::Optimize() {
-  common::MutexLocker locker(&mutex_);
+  absl::MutexLock locker(&mutex_);
   return optimizer_->Solve(&data_);
 }
 

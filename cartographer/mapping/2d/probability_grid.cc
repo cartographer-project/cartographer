@@ -70,6 +70,10 @@ bool ProbabilityGrid::ApplyLookupTable(const Eigen::Array2i& cell_index,
   return true;
 }
 
+GridType ProbabilityGrid::GetGridType() const {
+  return GridType::PROBABILITY_GRID;
+}
+
 // Returns the probability of the cell with 'cell_index'.
 float ProbabilityGrid::GetProbability(const Eigen::Array2i& cell_index) const {
   if (!limits().Contains(cell_index)) return kMinProbability;

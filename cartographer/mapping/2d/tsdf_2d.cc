@@ -67,6 +67,8 @@ void TSDF2D::SetCell(const Eigen::Array2i& cell_index, float tsd,
   *weight_cell = value_converter_->WeightToValue(weight);
 }
 
+GridType TSDF2D::GetGridType() const { return GridType::TSDF; }
+
 float TSDF2D::GetTSD(const Eigen::Array2i& cell_index) const {
   if (limits().Contains(cell_index)) {
     return value_converter_->ValueToTSD(
@@ -128,6 +130,7 @@ std::unique_ptr<Grid2D> TSDF2D::ComputeCroppedGrid() const {
     cropped_grid->SetCell(xy_index, GetTSD(xy_index + offset),
                           GetWeight(xy_index + offset));
   }
+  cropped_grid->FinishUpdate();
   return std::move(cropped_grid);
 }
 
@@ -143,6 +146,7 @@ bool TSDF2D::DrawToSubmapTexture(
     if (!IsKnown(xy_index + offset)) {
       cells.push_back(0);  // value
       cells.push_back(0);  // alpha
+      continue;
     }
     // We would like to add 'delta' but this is not possible using a value and
     // alpha. We use premultiplied alpha, so when 'delta' is positive we can

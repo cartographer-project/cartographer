@@ -18,23 +18,10 @@
 
 #include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
+#include "cartographer/pose_graph/constraint/constraint_utils.h"
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
-
-void AddPoseParameters(Pose3D* pose, ceres::Problem* problem) {
-  auto transation = pose->mutable_translation();
-  auto rotation = pose->mutable_rotation();
-  problem->AddParameterBlock(transation->data(), transation->size());
-  problem->AddParameterBlock(rotation->data(), rotation->size());
-  if (pose->constant()) {
-    problem->SetParameterBlockConstant(transation->data());
-    problem->SetParameterBlockConstant(rotation->data());
-  }
-}
-
-}  // namespace
 
 RelativePoseConstraint3D::RelativePoseConstraint3D(
     const ConstraintId& id, const proto::LossFunction& loss_function_proto,
@@ -47,26 +34,19 @@ RelativePoseConstraint3D::RelativePoseConstraint3D(
 
 void RelativePoseConstraint3D::AddToOptimizer(Nodes* nodes,
                                               ceres::Problem* problem) const {
-  auto first_node = common::FindOrNull(nodes->pose_3d_nodes, first_);
-  if (first_node == nullptr) {
-    LOG(INFO) << "First node was not found in pose_3d_nodes.";
-    return;
-  }
-
-  auto second_node = common::FindOrNull(nodes->pose_3d_nodes, second_);
-  if (second_node == nullptr) {
-    LOG(INFO) << "Second node was not found in pose_3d_nodes.";
-    return;
-  }
+  FIND_NODE_OR_RETURN(first_node, first_, nodes->pose_3d_nodes,
+                      "First node was not found in pose_3d_nodes.");
+  FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_3d_nodes,
+                      "Second node was not found in pose_3d_nodes.");
 
   if (first_node->constant() && second_node->constant()) {
     LOG(INFO) << "Both nodes are constant, skipping the constraint.";
     return;
   }
 
-  AddPoseParameters(first_node, problem);
-  AddPoseParameters(second_node, problem);
-  problem->AddResidualBlock(ceres_cost_.get(), nullptr /* loss function */,
+  AddPose3D(first_node, problem);
+  AddPose3D(second_node, problem);
+  problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(),
                             first_node->mutable_translation()->data(),
                             first_node->mutable_rotation()->data(),
                             second_node->mutable_translation()->data(),

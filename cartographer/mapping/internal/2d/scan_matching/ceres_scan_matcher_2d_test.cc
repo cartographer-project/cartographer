@@ -42,7 +42,7 @@ class CeresScanMatcherTest : public ::testing::Test {
         probability_grid_.limits().GetCellIndex(Eigen::Vector2f(-3.5f, 2.5f)),
         kMaxProbability);
 
-    point_cloud_.emplace_back(-3.f, 2.f, 0.f);
+    point_cloud_.push_back({Eigen::Vector3f{-3.f, 2.f, 0.f}});
 
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {

@@ -21,6 +21,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "cartographer/metrics/counter.h"
+#include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/collator_interface.h"
 #include "cartographer/sensor/internal/ordered_multi_queue.h"
 
@@ -52,7 +54,18 @@ class TrajectoryCollator : public CollatorInterface {
 
   absl::optional<int> GetBlockingTrajectoryId() const override;
 
+  static void RegisterMetrics(metrics::FamilyFactory* family_factory);
+
  private:
+  metrics::Counter* GetOrCreateSensorMetric(const std::string& sensor_id,
+                                            int trajectory_id);
+
+  static cartographer::metrics::Family<metrics::Counter>*
+      collator_metrics_family_;
+
+  // Holds individual counters for each trajectory/sensor pair.
+  std::unordered_map<std::string, metrics::Counter*> metrics_map_;
+
   std::unordered_map<int, OrderedMultiQueue> trajectory_to_queue_;
 
   // Map of trajectory ID to all associated QueueKeys.

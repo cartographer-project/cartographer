@@ -58,27 +58,27 @@ TEST(Candidate, Construction) {
 
 TEST(GenerateRotatedScans, GenerateRotatedScans) {
   sensor::PointCloud point_cloud;
-  point_cloud.emplace_back(-1.f, 1.f, 0.f);
+  point_cloud.push_back({Eigen::Vector3f{-1.f, 1.f, 0.f}});
   const std::vector<sensor::PointCloud> scans =
       GenerateRotatedScans(point_cloud, SearchParameters(0, 1, M_PI / 2., 0.));
   EXPECT_EQ(3, scans.size());
-  EXPECT_NEAR(1., scans[0][0].x(), 1e-6);
-  EXPECT_NEAR(1., scans[0][0].y(), 1e-6);
-  EXPECT_NEAR(-1., scans[1][0].x(), 1e-6);
-  EXPECT_NEAR(1., scans[1][0].y(), 1e-6);
-  EXPECT_NEAR(-1., scans[2][0].x(), 1e-6);
-  EXPECT_NEAR(-1., scans[2][0].y(), 1e-6);
+  EXPECT_NEAR(1., scans[0][0].position.x(), 1e-6);
+  EXPECT_NEAR(1., scans[0][0].position.y(), 1e-6);
+  EXPECT_NEAR(-1., scans[1][0].position.x(), 1e-6);
+  EXPECT_NEAR(1., scans[1][0].position.y(), 1e-6);
+  EXPECT_NEAR(-1., scans[2][0].position.x(), 1e-6);
+  EXPECT_NEAR(-1., scans[2][0].position.y(), 1e-6);
 }
 
 TEST(DiscretizeScans, DiscretizeScans) {
   sensor::PointCloud point_cloud;
-  point_cloud.emplace_back(0.025f, 0.175f, 0.f);
-  point_cloud.emplace_back(-0.025f, 0.175f, 0.f);
-  point_cloud.emplace_back(-0.075f, 0.175f, 0.f);
-  point_cloud.emplace_back(-0.125f, 0.175f, 0.f);
-  point_cloud.emplace_back(-0.125f, 0.125f, 0.f);
-  point_cloud.emplace_back(-0.125f, 0.075f, 0.f);
-  point_cloud.emplace_back(-0.125f, 0.025f, 0.f);
+  point_cloud.push_back({Eigen::Vector3f{0.025f, 0.175f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{-0.025f, 0.175f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{-0.075f, 0.175f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{-0.125f, 0.175f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{-0.125f, 0.125f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{-0.125f, 0.075f, 0.f}});
+  point_cloud.push_back({Eigen::Vector3f{-0.125f, 0.025f, 0.f}});
   const MapLimits map_limits(0.05, Eigen::Vector2d(0.05, 0.25),
                              CellLimits(6, 6));
   const std::vector<sensor::PointCloud> scans =

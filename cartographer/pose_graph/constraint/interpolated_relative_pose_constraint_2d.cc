@@ -18,31 +18,10 @@
 
 #include "absl/memory/memory.h"
 #include "cartographer/common/utils.h"
+#include "cartographer/pose_graph/constraint/constraint_utils.h"
 
 namespace cartographer {
 namespace pose_graph {
-namespace {
-
-void AddPose3DParameters(Pose3D* pose, ceres::Problem* problem) {
-  auto transation = pose->mutable_translation();
-  auto rotation = pose->mutable_rotation();
-  problem->AddParameterBlock(transation->data(), transation->size());
-  problem->AddParameterBlock(rotation->data(), rotation->size());
-  if (pose->constant()) {
-    problem->SetParameterBlockConstant(transation->data());
-    problem->SetParameterBlockConstant(rotation->data());
-  }
-}
-
-void AddPose2DParameters(Pose2D* pose, ceres::Problem* problem) {
-  auto pose_2d = pose->mutable_pose_2d();
-  problem->AddParameterBlock(pose_2d->data(), pose_2d->size());
-  if (pose->constant()) {
-    problem->SetParameterBlockConstant(pose_2d->data());
-  }
-}
-
-}  // namespace
 
 InterpolatedRelativePoseConstraint2D::InterpolatedRelativePoseConstraint2D(
     const ConstraintId& id, const proto::LossFunction& loss_function_proto,
@@ -56,24 +35,12 @@ InterpolatedRelativePoseConstraint2D::InterpolatedRelativePoseConstraint2D(
 
 void InterpolatedRelativePoseConstraint2D::AddToOptimizer(
     Nodes* nodes, ceres::Problem* problem) const {
-  auto first_node_start =
-      common::FindOrNull(nodes->pose_2d_nodes, first_start_);
-  if (first_node_start == nullptr) {
-    LOG(INFO) << "First node (start) was not found in pose_2d_nodes.";
-    return;
-  }
-
-  auto first_node_end = common::FindOrNull(nodes->pose_2d_nodes, first_end_);
-  if (first_node_end == nullptr) {
-    LOG(INFO) << "First node (end) was not found in pose_2d_nodes.";
-    return;
-  }
-
-  auto second_node = common::FindOrNull(nodes->pose_3d_nodes, second_);
-  if (second_node == nullptr) {
-    LOG(INFO) << "Second node was not found in pose_3d_nodes.";
-    return;
-  }
+  FIND_NODE_OR_RETURN(first_node_start, first_start_, nodes->pose_2d_nodes,
+                      "First node (start) was not found in pose_2d_nodes.");
+  FIND_NODE_OR_RETURN(first_node_end, first_end_, nodes->pose_2d_nodes,
+                      "First node (end) was not found in pose_2d_nodes.");
+  FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_3d_nodes,
+                      "Second node was not found in pose_3d_nodes.");
 
   if (first_node_start->constant() && first_node_end->constant() &&
       second_node->constant()) {
@@ -81,9 +48,9 @@ void InterpolatedRelativePoseConstraint2D::AddToOptimizer(
     return;
   }
 
-  AddPose2DParameters(first_node_start, problem);
-  AddPose2DParameters(first_node_end, problem);
-  AddPose3DParameters(second_node, problem);
+  AddPose2D(first_node_start, problem);
+  AddPose2D(first_node_end, problem);
+  AddPose3D(second_node, problem);
   problem->AddResidualBlock(ceres_cost_.get(), ceres_loss(),
                             first_node_start->mutable_pose_2d()->data(),
                             first_node_end->mutable_pose_2d()->data(),

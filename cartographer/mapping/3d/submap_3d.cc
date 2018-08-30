@@ -42,8 +42,8 @@ struct PixelData {
 sensor::RangeData FilterRangeDataByMaxRange(const sensor::RangeData& range_data,
                                             const float max_range) {
   sensor::RangeData result{range_data.origin, {}, {}};
-  for (const Eigen::Vector3f& hit : range_data.returns) {
-    if ((hit - range_data.origin).norm() <= max_range) {
+  for (const sensor::RangefinderPoint& hit : range_data.returns) {
+    if ((hit.position - range_data.origin).norm() <= max_range) {
       result.returns.push_back(hit);
     }
   }
@@ -223,7 +223,7 @@ proto::Submap Submap3D::ToProto(
   auto* const submap_3d = proto.mutable_submap_3d();
   *submap_3d->mutable_local_pose() = transform::ToProto(local_pose());
   submap_3d->set_num_range_data(num_range_data());
-  submap_3d->set_finished(finished());
+  submap_3d->set_finished(insertion_finished());
   if (include_probability_grid_data) {
     *submap_3d->mutable_high_resolution_hybrid_grid() =
         high_resolution_hybrid_grid().ToProto();
@@ -245,7 +245,7 @@ void Submap3D::UpdateFromProto(const proto::Submap& proto) {
 
 void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   set_num_range_data(submap_3d.num_range_data());
-  set_finished(submap_3d.finished());
+  set_insertion_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
     high_resolution_hybrid_grid_ =
         absl::make_unique<HybridGrid>(submap_3d.high_resolution_hybrid_grid());
@@ -274,13 +274,14 @@ void Submap3D::ToResponseProto(
                     response->add_textures());
 }
 
-void Submap3D::InsertData(const sensor::RangeData& range_data,
+void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
                           const RangeDataInserter3D& range_data_inserter,
                           const float high_resolution_max_range,
                           const Eigen::VectorXf& scan_histogram_in_local) {
-  CHECK(!finished());
+  CHECK(!insertion_finished());
+  // Transform range data into submap frame.
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
-      range_data, local_pose().inverse().cast<float>());
+      range_data_in_local, local_pose().inverse().cast<float>());
   range_data_inserter.Insert(
       FilterRangeDataByMaxRange(transformed_range_data,
                                 high_resolution_max_range),
@@ -296,8 +297,8 @@ void Submap3D::InsertData(const sensor::RangeData& range_data,
 }
 
 void Submap3D::Finish() {
-  CHECK(!finished());
-  set_finished(true);
+  CHECK(!insertion_finished());
+  set_insertion_finished(true);
 }
 
 ActiveSubmaps3D::ActiveSubmaps3D(const proto::SubmapsOptions3D& options)
@@ -311,13 +312,13 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::submaps() const {
 
 std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
     const sensor::RangeData& range_data,
-    const Eigen::Quaterniond& gravity_alignment,
+    const Eigen::Quaterniond& local_from_gravity_aligned,
     const Eigen::VectorXf& rotational_scan_matcher_histogram_in_local) {
   if (submaps_.empty() ||
       submaps_.back()->num_range_data() == options_.num_range_data()) {
-    AddSubmap(
-        transform::Rigid3d(range_data.origin.cast<double>(), gravity_alignment),
-        rotational_scan_matcher_histogram_in_local.size());
+    AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
+                                 local_from_gravity_aligned),
+              rotational_scan_matcher_histogram_in_local.size());
   }
   for (auto& submap : submaps_) {
     submap->InsertData(range_data, range_data_inserter_,
@@ -336,7 +337,7 @@ void ActiveSubmaps3D::AddSubmap(
   if (submaps_.size() >= 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
-    CHECK(submaps_.front()->finished());
+    CHECK(submaps_.front()->insertion_finished());
     submaps_.erase(submaps_.begin());
   }
   submaps_.emplace_back(

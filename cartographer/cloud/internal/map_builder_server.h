@@ -135,7 +135,7 @@ class MapBuilderServer : public MapBuilderServerInterface {
   std::unique_ptr<mapping::MapBuilderInterface> map_builder_;
   common::BlockingQueue<std::unique_ptr<MapBuilderContextInterface::Data>>
       incoming_data_queue_;
-  common::Mutex subscriptions_lock_;
+  absl::Mutex subscriptions_lock_;
   int current_subscription_index_ = 0;
   std::map<int /* trajectory ID */, LocalSlamResultHandlerSubscriptions>
       local_slam_subscriptions_ GUARDED_BY(subscriptions_lock_);
