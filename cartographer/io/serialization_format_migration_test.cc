@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "cartographer/io/internal/in_memory_proto_stream.h"
+#include "cartographer/mapping/internal/testing/test_helpers.h"
 #include "cartographer/mapping/proto/internal/legacy_serialized_data.pb.h"
 #include "cartographer/mapping/proto/pose_graph.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
@@ -105,48 +106,31 @@ class MigrationTest : public ::testing::Test {
 class SubmapHistogramMigrationTest : public ::testing::Test {
  protected:
   void SetUp() {
-    CreateNode();
     CreateSubmap();
+    CreateNode();
     CreatePoseGraphWithNodeToSubmapConstraint();
   }
 
  private:
   void CreateSubmap() {
-    mapping::SubmapId submap_id{0, 0};
-    mapping::proto::Submap3D submap_3d;
-    *submap_3d.mutable_local_pose() =
-        transform::ToProto(transform::Rigid3d::Identity());
-    submap_3d.mutable_low_resolution_hybrid_grid();
-    submap_3d.mutable_high_resolution_hybrid_grid();
-    submap_3d.clear_rotational_scan_matcher_histogram();
-
-    submap_id.ToProto(submap_.mutable_submap_id());
-    *submap_.mutable_submap_3d() = submap_3d;
+    submap_ = mapping::testing::CreateFakeSubmap3D();
+    submap_.mutable_submap_3d()->mutable_low_resolution_hybrid_grid();
+    submap_.mutable_submap_3d()->mutable_high_resolution_hybrid_grid();
+    submap_.mutable_submap_3d()->clear_rotational_scan_matcher_histogram();
   }
 
   void CreateNode() {
-    mapping::TrajectoryNode::Data trajectory_node_data;
-    trajectory_node_data.local_pose = transform::Rigid3d::Identity();
-    trajectory_node_data.gravity_alignment = Eigen::Quaterniond::Identity();
-    trajectory_node_data.rotational_scan_matcher_histogram =
-        Eigen::VectorXf::Ones(10);
-
-    mapping::NodeId node_id{0, 0};
-    node_id.ToProto(node_.mutable_node_id());
-    *node_.mutable_node_data() = mapping::ToProto(trajectory_node_data);
+    node_ = mapping::testing::CreateFakeNode();
+    constexpr int histogram_size = 10;
+    for (int i = 0; i < histogram_size; ++i) {
+      node_.mutable_node_data()->add_rotational_scan_matcher_histogram(1.f);
+    }
   }
 
   void CreatePoseGraphWithNodeToSubmapConstraint() {
     mapping::proto::PoseGraph::Constraint* constraint =
         pose_graph_.add_constraint();
     constraint->set_tag(mapping::proto::PoseGraph::Constraint::INTRA_SUBMAP);
-    *constraint->mutable_node_id() = node_.node_id();
-    *constraint->mutable_submap_id() = submap_.submap_id();
-    *constraint->mutable_relative_pose() =
-        transform::ToProto(transform::Rigid3d::Identity());
-
-    constraint = pose_graph_.add_constraint();
-    constraint->set_tag(mapping::proto::PoseGraph::Constraint::INTER_SUBMAP);
     *constraint->mutable_node_id() = node_.node_id();
     *constraint->mutable_submap_id() = submap_.submap_id();
     *constraint->mutable_relative_pose() =
@@ -254,15 +238,14 @@ TEST_F(SubmapHistogramMigrationTest,
   EXPECT_EQ(submap_id_to_submap_migrated.size(), submap_id_to_submap.size());
   const mapping::proto::Submap& migrated_submap =
       submap_id_to_submap_migrated.at(submap_id);
+
   EXPECT_FALSE(migrated_submap.has_submap_2d());
   EXPECT_TRUE(migrated_submap.has_submap_3d());
-
   const mapping::proto::Submap3D& migrated_submap_3d =
       migrated_submap.submap_3d();
   const mapping::proto::TrajectoryNodeData& node_data = node_.node_data();
   EXPECT_EQ(migrated_submap_3d.rotational_scan_matcher_histogram_size(),
             node_data.rotational_scan_matcher_histogram_size());
-
   for (int i = 0; i < node_data.rotational_scan_matcher_histogram_size(); ++i) {
     EXPECT_EQ(migrated_submap_3d.rotational_scan_matcher_histogram(i),
               node_data.rotational_scan_matcher_histogram(i));

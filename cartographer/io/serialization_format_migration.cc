@@ -315,6 +315,7 @@ MigrateSubmapFormatVersion1ToVersion2(
     if (constraint_proto.tag() == proto::PoseGraph::Constraint::INTRA_SUBMAP) {
       NodeId node_id{constraint_proto.node_id().trajectory_id(),
                      constraint_proto.node_id().node_index()};
+      CHECK(node_id_to_node.Contains(node_id));
       const TrajectoryNode::Data& node_data =
           mapping::FromProto(node_id_to_node.at(node_id).node_data());
       const Eigen::VectorXf& rotational_scan_matcher_histogram_in_gravity =
@@ -327,15 +328,14 @@ MigrateSubmapFormatVersion1ToVersion2(
           scan_matching::RotationalScanMatcher::RotateHistogram(
               rotational_scan_matcher_histogram_in_gravity,
               local_yaw_from_gravity);
-
       SubmapId submap_id{constraint_proto.submap_id().trajectory_id(),
                          constraint_proto.submap_id().submap_index()};
-      const proto::Submap& submap = submap_id_to_submap.at(submap_id);
-      CHECK(submap.has_submap_3d());
+      CHECK(submap_id_to_submap.Contains(submap_id));
+      const proto::Submap& submap_proto = submap_id_to_submap.at(submap_id);
+      CHECK(submap_proto.has_submap_3d());
       if (deserialized_submaps.find(submap_id) == deserialized_submaps.end()) {
-        std::unique_ptr<Submap3D> submap3d =
-            absl::make_unique<Submap3D>(submap.submap_3d());
-        deserialized_submaps[submap_id] = std::move(submap3d);
+        deserialized_submaps[submap_id] =
+            absl::make_unique<Submap3D>(submap_proto.submap_3d());
       }
       Submap3D* const submap_3d = deserialized_submaps.at(submap_id).get();
       submap_3d->AddScanHistogram(rotational_scan_matcher_histogram_in_local);
@@ -343,7 +343,8 @@ MigrateSubmapFormatVersion1ToVersion2(
   }
   MapById<SubmapId, proto::Submap> migrated_submaps = submap_id_to_submap;
   for (const auto& submap : deserialized_submaps) {
-    migrated_submaps.at(submap.first) = submap.second->ToProto(true);
+    migrated_submaps.at(submap.first) =
+        submap.second->ToProto(submap.second->insertion_finished());
   }
   return migrated_submaps;
 }
