@@ -44,7 +44,9 @@ const common::Duration kPopTimeout = common::FromMilliseconds(100);
 // This defines the '::grpc::StatusCode's that are considered unrecoverable
 // errors and hence no retries will be attempted by the client.
 const std::set<::grpc::StatusCode> kUnrecoverableStatusCodes = {
-    ::grpc::DEADLINE_EXCEEDED, ::grpc::NOT_FOUND, ::grpc::UNAVAILABLE,
+    ::grpc::DEADLINE_EXCEEDED,
+    ::grpc::NOT_FOUND,
+    ::grpc::UNAVAILABLE,
     ::grpc::UNKNOWN,
 };
 
