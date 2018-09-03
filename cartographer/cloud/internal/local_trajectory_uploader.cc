@@ -43,7 +43,7 @@ const common::Duration kPopTimeout = common::FromMilliseconds(100);
 // This defines the '::grpc::StatusCode's that are considered unrecoverable
 // errors and hence no retries will be attempted by the client.
 const std::set<::grpc::StatusCode> kUnrecoverableStatusCodes = {
-    ::grpc::NOT_FOUND};
+    ::grpc::NOT_FOUND, ::grpc::UNAVAILABLE, ::grpc::UNKNOWN};
 
 bool IsNewSubmap(const mapping::proto::Submap& submap) {
   return (submap.has_submap_2d() && submap.submap_2d().num_range_data() == 1) ||
@@ -151,6 +151,14 @@ void LocalTrajectoryUploader::Shutdown() {
 }
 
 void LocalTrajectoryUploader::TryRecovery() {
+  auto channel_state = client_channel_->GetState(true /* try_to_connect */);
+  if (channel_state != grpc_connectivity_state::GRPC_CHANNEL_READY) {
+    LOG(ERROR) << "Failed to re-connect to uplink prior to recovery attempt.";
+    return;
+  } else {
+    LOG(INFO) << "Uplink channel ready again, trying recovery.";
+  }
+
   // Wind the sensor_data_queue forward to the next new submap.
   LOG(INFO) << "LocalTrajectoryUploader tries to recover with next submap.";
   while (true) {
