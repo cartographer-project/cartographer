@@ -37,6 +37,7 @@ namespace {
 using absl::make_unique;
 
 constexpr int kConnectionTimeoutInSeconds = 10;
+constexpr int kConnectionRecoveryTimeoutInSeconds = 60;
 constexpr int kTokenRefreshIntervalInSeconds = 60;
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
@@ -151,13 +152,18 @@ void LocalTrajectoryUploader::Shutdown() {
 }
 
 void LocalTrajectoryUploader::TryRecovery() {
-  auto channel_state = client_channel_->GetState(true /* try_to_connect */);
+  auto channel_state = client_channel_->GetState(false /* try_to_connect */);
   if (channel_state != grpc_connectivity_state::GRPC_CHANNEL_READY) {
-    LOG(ERROR) << "Failed to re-connect to uplink prior to recovery attempt.";
-    return;
-  } else {
-    LOG(INFO) << "Uplink channel ready again, trying recovery.";
+    LOG(INFO) << "Trying to re-connect to uplink...";
+    std::chrono::system_clock::time_point deadline =
+        std::chrono::system_clock::now() +
+        std::chrono::seconds(kConnectionRecoveryTimeoutInSeconds);
+    if (!client_channel_->WaitForConnected(deadline)) {
+      LOG(ERROR) << "Failed to re-connect to uplink prior to recovery attempt.";
+      return;
+    }
   }
+  LOG(INFO) << "Uplink channel ready, trying recovery.";
 
   // Wind the sensor_data_queue forward to the next new submap.
   LOG(INFO) << "LocalTrajectoryUploader tries to recover with next submap.";
