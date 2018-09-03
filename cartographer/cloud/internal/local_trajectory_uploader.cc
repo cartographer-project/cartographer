@@ -156,7 +156,7 @@ void LocalTrajectoryUploader::Shutdown() {
 }
 
 void LocalTrajectoryUploader::TryRecovery() {
-  auto get_channel_state = [this](bool try_to_connect) {
+  auto get_channel_state = [this]() {
     return client_channel_->GetState(false /* try_to_connect */);
   };
   if (get_channel_state() != grpc_connectivity_state::GRPC_CHANNEL_READY) {
@@ -205,7 +205,8 @@ void LocalTrajectoryUploader::TryRecovery() {
       if (get_channel_state() == grpc_connectivity_state::GRPC_CHANNEL_READY) {
         // TODO: Channel state can be ready even if there's no network.
         // Could it be that the TCP socket still alive?
-        LOG(WARNING) << "Request failed, but uplink channel claims to be ready."
+        LOG(WARNING)
+            << "Request failed, but uplink channel claims to be ready.";
       }
       LOG(ERROR) << "Failed to create trajectory. Aborting recovery attempt. "
                  << status.error_message();
