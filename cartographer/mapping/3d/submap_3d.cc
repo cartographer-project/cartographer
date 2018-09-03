@@ -271,7 +271,8 @@ void Submap3D::ToResponseProto(
 void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
                           const RangeDataInserter3D& range_data_inserter,
                           const float high_resolution_max_range,
-                          const Eigen::VectorXf& scan_histogram_in_local) {
+                          const Eigen::Quaterniond& local_from_gravity_aligned,
+                          const Eigen::VectorXf& scan_histogram_in_gravity) {
   CHECK(!insertion_finished());
   // Transform range data into submap frame.
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
@@ -283,11 +284,11 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
   range_data_inserter.Insert(transformed_range_data,
                              low_resolution_hybrid_grid_.get());
   set_num_range_data(num_range_data() + 1);
-  const float yaw_in_submap_from_local =
-      transform::GetYaw(local_pose().inverse());
+  const float yaw_in_submap_from_gravity = transform::GetYaw(
+      local_pose().inverse().rotation() * local_from_gravity_aligned);
   rotational_scan_matcher_histogram_ +=
       scan_matching::RotationalScanMatcher::RotateHistogram(
-          scan_histogram_in_local, yaw_in_submap_from_local);
+          scan_histogram_in_gravity, yaw_in_submap_from_gravity);
 }
 
 void Submap3D::Finish() {
@@ -307,17 +308,18 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::submaps() const {
 std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
     const sensor::RangeData& range_data,
     const Eigen::Quaterniond& local_from_gravity_aligned,
-    const Eigen::VectorXf& rotational_scan_matcher_histogram_in_local) {
+    const Eigen::VectorXf& rotational_scan_matcher_histogram_in_gravity) {
   if (submaps_.empty() ||
       submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
                                  local_from_gravity_aligned),
-              rotational_scan_matcher_histogram_in_local.size());
+              rotational_scan_matcher_histogram_in_gravity.size());
   }
   for (auto& submap : submaps_) {
     submap->InsertData(range_data, range_data_inserter_,
                        options_.high_resolution_max_range(),
-                       rotational_scan_matcher_histogram_in_local);
+                       local_from_gravity_aligned,
+                       rotational_scan_matcher_histogram_in_gravity);
   }
   if (submaps_.front()->num_range_data() == 2 * options_.num_range_data()) {
     submaps_.front()->Finish();

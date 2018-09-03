@@ -361,16 +361,10 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
 
   const auto local_from_gravity_aligned =
       pose_estimate.rotation() * gravity_alignment.inverse();
-  const float local_yaw_from_gravity =
-      transform::GetYaw(local_from_gravity_aligned);
-  const Eigen::VectorXf rotational_scan_matcher_histogram_in_local =
-      scan_matching::RotationalScanMatcher::RotateHistogram(
-          rotational_scan_matcher_histogram_in_gravity, local_yaw_from_gravity);
-
   std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
       active_submaps_.InsertData(filtered_range_data_in_local,
                                  local_from_gravity_aligned,
-                                 rotational_scan_matcher_histogram_in_local);
+                                 rotational_scan_matcher_histogram_in_gravity);
   return absl::make_unique<InsertionResult>(
       InsertionResult{std::make_shared<const mapping::TrajectoryNode::Data>(
                           mapping::TrajectoryNode::Data{
