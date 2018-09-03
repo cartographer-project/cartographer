@@ -38,6 +38,7 @@ class LoadStateHandler : public async_grpc::RpcHandler<LoadStateSignature> {
  private:
   io::InMemoryProtoStreamReader reader_;
   std::string client_id_;
+  bool load_frozen_state_;
 };
 
 }  // namespace handlers
