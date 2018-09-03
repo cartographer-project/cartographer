@@ -21,6 +21,7 @@
 #include "cartographer/io/internal/mapping_state_serialization.h"
 #include "cartographer/io/proto_stream.h"
 #include "cartographer/io/proto_stream_deserializer.h"
+#include "cartographer/io/serialization_format_migration.h"
 #include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
 #include "cartographer/mapping/internal/2d/overlapping_submaps_trimmer_2d.h"
 #include "cartographer/mapping/internal/2d/pose_graph_2d.h"
@@ -287,6 +288,8 @@ std::map<int, int> MapBuilder::LoadState(
                                  transform::ToRigid3(landmark.global_pose()));
   }
 
+  MapById<SubmapId, mapping::proto::Submap> submap_id_to_submap;
+  MapById<NodeId, mapping::proto::Node> node_id_to_node;
   SerializedData proto;
   while (deserializer.ReadNextSerializedData(&proto)) {
     switch (proto.data_case()) {
@@ -303,19 +306,20 @@ std::map<int, int> MapBuilder::LoadState(
         proto.mutable_submap()->mutable_submap_id()->set_trajectory_id(
             trajectory_remapping.at(
                 proto.submap().submap_id().trajectory_id()));
-        const transform::Rigid3d& submap_pose = submap_poses.at(
+        submap_id_to_submap.Insert(
             SubmapId{proto.submap().submap_id().trajectory_id(),
-                     proto.submap().submap_id().submap_index()});
-        pose_graph_->AddSubmapFromProto(submap_pose, proto.submap());
+                     proto.submap().submap_id().submap_index()},
+            proto.submap());
         break;
       }
       case SerializedData::kNode: {
         proto.mutable_node()->mutable_node_id()->set_trajectory_id(
             trajectory_remapping.at(proto.node().node_id().trajectory_id()));
-        const transform::Rigid3d& node_pose =
-            node_poses.at(NodeId{proto.node().node_id().trajectory_id(),
-                                 proto.node().node_id().node_index()});
+        const NodeId node_id(proto.node().node_id().trajectory_id(),
+                             proto.node().node_id().node_index());
+        const transform::Rigid3d& node_pose = node_poses.at(node_id);
         pose_graph_->AddNodeFromProto(node_pose, proto.node());
+        node_id_to_node.Insert(node_id, proto.node());
         break;
       }
       case SerializedData::kTrajectoryData: {
@@ -358,6 +362,20 @@ std::map<int, int> MapBuilder::LoadState(
         LOG(WARNING) << "Skipping unknown message type in stream: "
                      << proto.GetTypeName();
     }
+  }
+
+  // TODO(schwoere): Remove backwards compatibility once the pbstream format
+  // version 2 is established.
+  if (deserializer.header().format_version() ==
+      io::kFormatVersionWithoutSubmapHistograms) {
+    submap_id_to_submap =
+        cartographer::io::MigrateSubmapFormatVersion1ToVersion2(
+            submap_id_to_submap, node_id_to_node, pose_graph_proto);
+  }
+
+  for (const auto& submap_id_submap : submap_id_to_submap) {
+    pose_graph_->AddSubmapFromProto(submap_poses.at(submap_id_submap.id),
+                                    submap_id_submap.data);
   }
 
   if (load_frozen_state) {

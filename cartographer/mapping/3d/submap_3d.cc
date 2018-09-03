@@ -250,8 +250,8 @@ void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   }
   rotational_scan_matcher_histogram_ =
       Eigen::VectorXf::Zero(submap_3d.rotational_scan_matcher_histogram_size());
-  for (int i = 0; i != submap_3d.rotational_scan_matcher_histogram_size();
-       ++i) {
+  for (Eigen::VectorXf::Index i = 0;
+       i != submap_3d.rotational_scan_matcher_histogram_size(); ++i) {
     rotational_scan_matcher_histogram_(i) =
         submap_3d.rotational_scan_matcher_histogram(i);
   }
