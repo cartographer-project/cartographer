@@ -303,7 +303,7 @@ MigrateSubmapFormatVersion1ToVersion2(
         submap_id_to_submap,
     mapping::MapById<mapping::NodeId, mapping::proto::Node>& node_id_to_node,
     const mapping::proto::PoseGraph& pose_graph_proto) {
-  using namespace cartographer::mapping;
+  using namespace mapping;
   if (submap_id_to_submap.empty() ||
       submap_id_to_submap.begin()->data.has_submap_2d()) {
     return submap_id_to_submap;
@@ -316,8 +316,8 @@ MigrateSubmapFormatVersion1ToVersion2(
       NodeId node_id{constraint_proto.node_id().trajectory_id(),
                      constraint_proto.node_id().node_index()};
       CHECK(node_id_to_node.Contains(node_id));
-      const TrajectoryNode::Data& node_data =
-          mapping::FromProto(node_id_to_node.at(node_id).node_data());
+      const TrajectoryNode::Data node_data =
+          FromProto(node_id_to_node.at(node_id).node_data());
       const Eigen::VectorXf& rotational_scan_matcher_histogram_in_gravity =
           node_data.rotational_scan_matcher_histogram;
 
@@ -327,7 +327,7 @@ MigrateSubmapFormatVersion1ToVersion2(
       proto::Submap& migrated_submap_proto = migrated_submaps.at(submap_id);
       CHECK(migrated_submap_proto.has_submap_3d());
 
-      mapping::proto::Submap3D* submap_3d_proto =
+      proto::Submap3D* submap_3d_proto =
           migrated_submap_proto.mutable_submap_3d();
       const double submap_yaw_from_gravity =
           transform::GetYaw(transform::ToRigid3(submap_3d_proto->local_pose())

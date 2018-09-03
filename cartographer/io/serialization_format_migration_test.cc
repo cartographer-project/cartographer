@@ -72,7 +72,7 @@ class MigrationTest : public ::testing::Test {
   }
 
  protected:
-  void SetUp() {
+  void SetUp() override {
     AddLegacyDataToReader<mapping::proto::LegacySerializedData>(reader_);
     AddLegacyDataToReader<mapping::proto::LegacySerializedDataLegacySubmap>(
         reader_for_migrating_grid_);
@@ -105,7 +105,7 @@ class MigrationTest : public ::testing::Test {
 
 class SubmapHistogramMigrationTest : public ::testing::Test {
  protected:
-  void SetUp() {
+  void SetUp() override {
     CreateSubmap();
     CreateNode();
     CreatePoseGraphWithNodeToSubmapConstraint();
