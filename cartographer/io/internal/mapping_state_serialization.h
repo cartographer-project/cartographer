@@ -26,6 +26,8 @@ namespace io {
 
 // The current serialization format version.
 static constexpr int kMappingStateSerializationFormatVersion = 1;
+static constexpr int kFormatVersionWithoutSubmapHistograms =
+    kMappingStateSerializationFormatVersion;
 
 // Serialize mapping state to a pbstream.
 void WritePbStream(
