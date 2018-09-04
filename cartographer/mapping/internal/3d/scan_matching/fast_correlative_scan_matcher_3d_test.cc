@@ -105,11 +105,7 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
     hybrid_grid_->FinishUpdate();
 
     return absl::make_unique<FastCorrelativeScanMatcher3D>(
-        *hybrid_grid_, hybrid_grid_.get(),
-        std::vector<TrajectoryNode>(
-            {{std::make_shared<const TrajectoryNode::Data>(
-                  CreateConstantData(point_cloud_)),
-              pose.cast<double>()}}),
+        *hybrid_grid_, hybrid_grid_.get(), &GetRotationalScanMatcherHistogram(),
         options);
   }
 
@@ -120,7 +116,11 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
                                 {},
                                 point_cloud_,
                                 low_resolution_point_cloud,
-                                Eigen::VectorXf::Zero(10)};
+                                GetRotationalScanMatcherHistogram()};
+  }
+
+  const Eigen::VectorXf& GetRotationalScanMatcherHistogram() {
+    return rotational_scan_matcher_histogram_;
   }
 
   std::mt19937 prng_ = std::mt19937(42);
@@ -130,6 +130,8 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
   const proto::FastCorrelativeScanMatcherOptions3D options_;
   sensor::PointCloud point_cloud_;
   std::unique_ptr<HybridGrid> hybrid_grid_;
+  const Eigen::VectorXf rotational_scan_matcher_histogram_ =
+      Eigen::VectorXf::Zero(10);
 };
 
 constexpr float kMinScore = 0.1f;

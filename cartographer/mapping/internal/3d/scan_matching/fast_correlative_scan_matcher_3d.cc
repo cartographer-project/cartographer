@@ -109,28 +109,10 @@ struct Candidate3D {
   bool operator>(const Candidate3D& other) const { return score > other.score; }
 };
 
-namespace {
-
-std::vector<std::pair<Eigen::VectorXf, float>> HistogramsAtAnglesFromNodes(
-    const std::vector<TrajectoryNode>& nodes) {
-  std::vector<std::pair<Eigen::VectorXf, float>> histograms_at_angles;
-  for (const auto& node : nodes) {
-    histograms_at_angles.emplace_back(
-        node.constant_data->rotational_scan_matcher_histogram,
-        transform::GetYaw(
-            node.global_pose *
-            transform::Rigid3d::Rotation(
-                node.constant_data->gravity_alignment.inverse())));
-  }
-  return histograms_at_angles;
-}
-
-}  // namespace
-
 FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
     const HybridGrid& hybrid_grid,
     const HybridGrid* const low_resolution_hybrid_grid,
-    const std::vector<TrajectoryNode>& nodes,
+    const Eigen::VectorXf* rotational_scan_matcher_histogram,
     const proto::FastCorrelativeScanMatcherOptions3D& options)
     : options_(options),
       resolution_(hybrid_grid.resolution()),
@@ -138,7 +120,7 @@ FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
       precomputation_grid_stack_(
           absl::make_unique<PrecomputationGridStack3D>(hybrid_grid, options)),
       low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
-      rotational_scan_matcher_(HistogramsAtAnglesFromNodes(nodes)) {}
+      rotational_scan_matcher_(rotational_scan_matcher_histogram) {}
 
 FastCorrelativeScanMatcher3D::~FastCorrelativeScanMatcher3D() {}
 

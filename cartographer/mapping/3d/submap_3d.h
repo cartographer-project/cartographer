@@ -43,7 +43,9 @@ proto::SubmapsOptions3D CreateSubmapsOptions3D(
 class Submap3D : public Submap {
  public:
   Submap3D(float high_resolution, float low_resolution,
-           const transform::Rigid3d& local_submap_pose);
+           const transform::Rigid3d& local_submap_pose,
+           const Eigen::VectorXf& rotational_scan_matcher_histogram);
+
   explicit Submap3D(const proto::Submap3D& proto);
 
   proto::Submap ToProto(bool include_probability_grid_data) const override;
@@ -64,9 +66,12 @@ class Submap3D : public Submap {
 
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
-  void InsertRangeData(const sensor::RangeData& range_data,
-                       const RangeDataInserter3D& range_data_inserter,
-                       float high_resolution_max_range);
+  void InsertData(const sensor::RangeData& range_data,
+                  const RangeDataInserter3D& range_data_inserter,
+                  float high_resolution_max_range,
+                  const Eigen::Quaterniond& local_from_gravity_aligned,
+                  const Eigen::VectorXf& scan_histogram_in_gravity);
+
   void Finish();
 
  private:
@@ -97,14 +102,18 @@ class ActiveSubmaps3D {
   // Inserts 'range_data_in_local' into the Submap collection.
   // 'local_from_gravity_aligned' is used for the orientation of new submaps so
   // that the z axis approximately aligns with gravity.
-  std::vector<std::shared_ptr<const Submap3D>> InsertRangeData(
+  // 'rotational_scan_matcher_histogram_in_gravity' will be accumulated in all
+  // submaps of the Submap collection.
+  std::vector<std::shared_ptr<const Submap3D>> InsertData(
       const sensor::RangeData& range_data_in_local,
-      const Eigen::Quaterniond& local_from_gravity_aligned);
+      const Eigen::Quaterniond& local_from_gravity_aligned,
+      const Eigen::VectorXf& rotational_scan_matcher_histogram_in_gravity);
 
   std::vector<std::shared_ptr<const Submap3D>> submaps() const;
 
  private:
-  void AddSubmap(const transform::Rigid3d& local_submap_pose);
+  void AddSubmap(const transform::Rigid3d& local_submap_pose,
+                 int rotational_scan_matcher_histogram_size);
 
   const proto::SubmapsOptions3D options_;
   std::vector<std::shared_ptr<Submap3D>> submaps_;
