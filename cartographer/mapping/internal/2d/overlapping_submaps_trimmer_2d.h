@@ -23,11 +23,6 @@
 namespace cartographer {
 namespace mapping {
 
-/**
- *  /
-
- */
-
 // Trims submaps that have less than 'min_covered_cells_count' cells not
 // overlapped by at least 'fresh_submaps_count` submaps.
 class OverlappingSubmapsTrimmer2D : public PoseGraphTrimmer {
@@ -46,7 +41,7 @@ class OverlappingSubmapsTrimmer2D : public PoseGraphTrimmer {
  private:
   // Number of the most recent submaps to keep.
   const uint16 fresh_submaps_count_;
-  // Minimum area of covered space to keep submap from trimming.
+  // Minimum area of covered space to keep submap from trimming measured in m^2.
   const double min_covered_area_;
   // Number of added submaps before the trimmer is invoked.
   const uint16 min_added_submaps_count_;
