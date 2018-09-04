@@ -246,14 +246,10 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
   const transform::Rigid3d global_submap_pose =
       optimization_problem_->submap_data().at(submap_id).global_pose;
 
-  const transform::Rigid3d global_submap_pose_inverse =
-      global_submap_pose.inverse();
-
   bool maybe_add_local_constraint = false;
   bool maybe_add_global_constraint = false;
   const TrajectoryNode::Data* constant_data;
   const Submap3D* submap;
-  std::vector<TrajectoryNode> submap_nodes;
   {
     absl::MutexLock locker(&mutex_);
     CHECK(data_.submap_data.at(submap_id).state == SubmapState::kFinished);
@@ -261,14 +257,6 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
       // Uplink server only receives grids when they are finished, so skip
       // constraint search before that.
       return;
-    }
-
-    for (const NodeId& submap_node_id :
-         data_.submap_data.at(submap_id).node_ids) {
-      submap_nodes.push_back(TrajectoryNode{
-          data_.trajectory_nodes.at(submap_node_id).constant_data,
-          global_submap_pose_inverse *
-              data_.trajectory_nodes.at(submap_node_id).global_pose});
     }
 
     const common::Time node_time = GetLatestNodeTime(node_id, submap_id);
@@ -299,13 +287,13 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
   }
 
   if (maybe_add_local_constraint) {
-    constraint_builder_.MaybeAddConstraint(
-        submap_id, submap, node_id, constant_data, submap_nodes,
-        global_node_pose, global_submap_pose);
+    constraint_builder_.MaybeAddConstraint(submap_id, submap, node_id,
+                                           constant_data, global_node_pose,
+                                           global_submap_pose);
   } else if (maybe_add_global_constraint) {
     constraint_builder_.MaybeAddGlobalConstraint(
-        submap_id, submap, node_id, constant_data, submap_nodes,
-        global_node_pose.rotation(), global_submap_pose.rotation());
+        submap_id, submap, node_id, constant_data, global_node_pose.rotation(),
+        global_submap_pose.rotation());
   }
 }
 

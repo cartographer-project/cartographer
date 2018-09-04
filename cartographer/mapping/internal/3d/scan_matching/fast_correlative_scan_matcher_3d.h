@@ -75,7 +75,7 @@ class FastCorrelativeScanMatcher3D {
   FastCorrelativeScanMatcher3D(
       const HybridGrid& hybrid_grid,
       const HybridGrid* low_resolution_hybrid_grid,
-      const std::vector<TrajectoryNode>& nodes,
+      const Eigen::VectorXf* rotational_scan_matcher_histogram,
       const proto::FastCorrelativeScanMatcherOptions3D& options);
   ~FastCorrelativeScanMatcher3D();
 

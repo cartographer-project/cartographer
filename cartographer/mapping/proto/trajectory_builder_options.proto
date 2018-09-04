@@ -31,12 +31,7 @@ message TrajectoryBuilderOptions {
   LocalTrajectoryBuilderOptions3D trajectory_builder_3d_options = 2;
   InitialTrajectoryPose initial_trajectory_pose = 4;
 
-  message OverlappingSubmapsTrimmerOptions2D {
-    int32 fresh_submaps_count = 1;
-    double min_covered_area = 2;
-    int32 min_added_submaps_count = 3;
-  }
-  OverlappingSubmapsTrimmerOptions2D overlapping_submaps_trimmer_2d = 5;
+  reserved 5;
 
   bool pure_localization = 3 [deprecated = true];
   message PureLocalizationTrimmerOptions {

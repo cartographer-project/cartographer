@@ -21,11 +21,6 @@ TRAJECTORY_BUILDER = {
 --  pure_localization_trimmer = {
 --    max_submaps_to_keep = 3,
 --  },
---  overlapping_submaps_trimmer_2d = {
---    fresh_submaps_count = 1,
---    min_covered_area = 2,
---    min_added_submaps_count = 5,
---  },
   collate_fixed_frame = true,
   collate_landmarks = false,
 }

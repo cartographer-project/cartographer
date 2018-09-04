@@ -352,19 +352,19 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
-  const auto local_from_gravity_aligned =
-      pose_estimate.rotation() * gravity_alignment.inverse();
-
-  std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
-      active_submaps_.InsertRangeData(filtered_range_data_in_local,
-                                      local_from_gravity_aligned);
-
-  const Eigen::VectorXf rotational_scan_matcher_histogram =
+  const Eigen::VectorXf rotational_scan_matcher_histogram_in_gravity =
       scan_matching::RotationalScanMatcher::ComputeHistogram(
           sensor::TransformPointCloud(
               filtered_range_data_in_tracking.returns,
               transform::Rigid3f::Rotation(gravity_alignment.cast<float>())),
           options_.rotational_histogram_size());
+
+  const Eigen::Quaterniond local_from_gravity_aligned =
+      pose_estimate.rotation() * gravity_alignment.inverse();
+  std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
+      active_submaps_.InsertData(filtered_range_data_in_local,
+                                 local_from_gravity_aligned,
+                                 rotational_scan_matcher_histogram_in_gravity);
   return absl::make_unique<InsertionResult>(
       InsertionResult{std::make_shared<const mapping::TrajectoryNode::Data>(
                           mapping::TrajectoryNode::Data{
@@ -373,7 +373,7 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
                               {},  // 'filtered_point_cloud' is only used in 2D.
                               high_resolution_point_cloud_in_tracking,
                               low_resolution_point_cloud_in_tracking,
-                              rotational_scan_matcher_histogram,
+                              rotational_scan_matcher_histogram_in_gravity,
                               pose_estimate}),
                       std::move(insertion_submaps)});
 }
