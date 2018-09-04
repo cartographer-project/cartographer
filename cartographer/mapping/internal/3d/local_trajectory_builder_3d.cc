@@ -359,7 +359,7 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
               transform::Rigid3f::Rotation(gravity_alignment.cast<float>())),
           options_.rotational_histogram_size());
 
-  const auto local_from_gravity_aligned =
+  const Eigen::Quaterniond local_from_gravity_aligned =
       pose_estimate.rotation() * gravity_alignment.inverse();
   std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
       active_submaps_.InsertData(filtered_range_data_in_local,

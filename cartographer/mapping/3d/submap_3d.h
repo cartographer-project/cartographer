@@ -102,7 +102,7 @@ class ActiveSubmaps3D {
   // Inserts 'range_data_in_local' into the Submap collection.
   // 'local_from_gravity_aligned' is used for the orientation of new submaps so
   // that the z axis approximately aligns with gravity.
-  // 'rotational_scan_matcher_histogram_in_local' will be accumulated in all
+  // 'rotational_scan_matcher_histogram_in_gravity' will be accumulated in all
   // submaps of the Submap collection.
   std::vector<std::shared_ptr<const Submap3D>> InsertData(
       const sensor::RangeData& range_data_in_local,
