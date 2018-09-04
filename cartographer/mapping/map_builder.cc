@@ -23,7 +23,6 @@
 #include "cartographer/io/proto_stream_deserializer.h"
 #include "cartographer/io/serialization_format_migration.h"
 #include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
-#include "cartographer/mapping/internal/2d/overlapping_submaps_trimmer_2d.h"
 #include "cartographer/mapping/internal/2d/pose_graph_2d.h"
 #include "cartographer/mapping/internal/3d/local_trajectory_builder_3d.h"
 #include "cartographer/mapping/internal/3d/pose_graph_3d.h"
@@ -150,19 +149,6 @@ int MapBuilder::AddTrajectoryBuilder(
             std::move(local_trajectory_builder), trajectory_id,
             static_cast<PoseGraph2D*>(pose_graph_.get()),
             local_slam_result_callback)));
-
-    if (trajectory_options.has_overlapping_submaps_trimmer_2d()) {
-      const auto& trimmer_options =
-          trajectory_options.overlapping_submaps_trimmer_2d();
-      pose_graph_->AddTrimmer(absl::make_unique<OverlappingSubmapsTrimmer2D>(
-          trimmer_options.fresh_submaps_count(),
-          trimmer_options.min_covered_area() /
-              common::Pow2(trajectory_options.trajectory_builder_2d_options()
-                               .submaps_options()
-                               .grid_options_2d()
-                               .resolution()),
-          trimmer_options.min_added_submaps_count()));
-    }
   }
   MaybeAddPureLocalizationTrimmer(trajectory_id, trajectory_options,
                                   pose_graph_.get());

@@ -69,6 +69,22 @@ std::vector<PoseGraph::Constraint> FromProto(
   return constraints;
 }
 
+void PopulateOverlappingSubmapsTrimmerOptions2D(
+    proto::PoseGraphOptions* const pose_graph_options,
+    common::LuaParameterDictionary* const parameter_dictionary) {
+  constexpr char kDictionaryKey[] = "overlapping_submaps_trimmer_2d";
+  if (!parameter_dictionary->HasKey(kDictionaryKey)) return;
+
+  auto options_dictionary = parameter_dictionary->GetDictionary(kDictionaryKey);
+  auto* options = pose_graph_options->mutable_overlapping_submaps_trimmer_2d();
+  options->set_fresh_submaps_count(
+      options_dictionary->GetInt("fresh_submaps_count"));
+  options->set_min_covered_area(
+      options_dictionary->GetDouble("min_covered_area"));
+  options->set_min_added_submaps_count(
+      options_dictionary->GetInt("min_added_submaps_count"));
+}
+
 proto::PoseGraphOptions CreatePoseGraphOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::PoseGraphOptions options;
@@ -94,6 +110,7 @@ proto::PoseGraphOptions CreatePoseGraphOptions(
   options.set_global_constraint_search_after_n_seconds(
       parameter_dictionary->GetDouble(
           "global_constraint_search_after_n_seconds"));
+  PopulateOverlappingSubmapsTrimmerOptions2D(&options, parameter_dictionary);
   return options;
 }
 
