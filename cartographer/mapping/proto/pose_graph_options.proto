@@ -55,4 +55,14 @@ message PoseGraphOptions {
   // added between two trajectories, loop closure searches will be performed
   // globally rather than in a smaller search window.
   double global_constraint_search_after_n_seconds = 10;
+
+  message OverlappingSubmapsTrimmerOptions2D {
+    int32 fresh_submaps_count = 1;
+    double min_covered_area = 2;
+    int32 min_added_submaps_count = 3;
+  }
+
+  // Instantiates the 'OverlappingSubmapsTrimmer2d' which trims submaps from the
+  // pose graph based on the area of overlap.
+  OverlappingSubmapsTrimmerOptions2D overlapping_submaps_trimmer_2d = 11;
 }

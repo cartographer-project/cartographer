@@ -103,7 +103,7 @@ class OverlappingSubmapsTrimmer2DTest : public ::testing::Test {
 
 TEST_F(OverlappingSubmapsTrimmer2DTest, EmptyPoseGraph) {
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      0 /* min_covered_cells_count */,
+                                      0 /* min_covered_area */,
                                       0 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(), IsEmpty());
@@ -126,7 +126,7 @@ TEST_F(OverlappingSubmapsTrimmer2DTest, TrimOneOfTwoOverlappingSubmaps) {
   AddConstraint(1 /*submap_index*/, 1 /*node_index*/, true);
 
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      0 /* min_covered_cells_count */,
+                                      0 /* min_covered_area */,
                                       0 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(),
@@ -150,7 +150,7 @@ TEST_F(OverlappingSubmapsTrimmer2DTest, TestMinAddedSubmapsCountParam) {
   AddConstraint(1 /*submap_index*/, 1 /*node_index*/, true);
 
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      0 /* min_covered_cells_count */,
+                                      0 /* min_covered_area */,
                                       2 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(), IsEmpty());
@@ -184,7 +184,7 @@ TEST_F(OverlappingSubmapsTrimmer2DTest, DoNotTrimUnfinishedSubmap) {
   AddConstraint(1 /*submap_index*/, 1 /*node_index*/, true);
 
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      0 /* min_covered_cells_count */,
+                                      0 /* min_covered_area */,
                                       0 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(), IsEmpty());
@@ -209,7 +209,7 @@ TEST_F(OverlappingSubmapsTrimmer2DTest, UseOnlyIntraSubmapsToComputeFreshness) {
   AddConstraint(1 /*submap_index*/, 1 /*node_index*/, true);
 
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      0 /* min_covered_cells_count */,
+                                      0 /* min_covered_area */,
                                       0 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(),
@@ -267,7 +267,7 @@ TEST_F(OverlappingSubmapsTrimmer2DTest, TestTransformations) {
   AddConstraint(1 /*submap_index*/, 1 /*node_index*/, true);
 
   OverlappingSubmapsTrimmer2D trimmer(1 /* fresh_submaps_count */,
-                                      0 /* min_covered_cells_count */,
+                                      0 /* min_covered_area */,
                                       0 /* min_added_submaps_count */);
   trimmer.Trim(&fake_pose_graph_);
   EXPECT_THAT(fake_pose_graph_.trimmed_submaps(),
