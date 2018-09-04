@@ -156,10 +156,8 @@ void LocalTrajectoryUploader::Shutdown() {
 }
 
 void LocalTrajectoryUploader::TryRecovery() {
-  auto get_channel_state = [this]() {
-    return client_channel_->GetState(false /* try_to_connect */);
-  };
-  if (get_channel_state() != grpc_connectivity_state::GRPC_CHANNEL_READY) {
+  if (client_channel_->GetState(false /* try_to_connect */) !=
+      grpc_connectivity_state::GRPC_CHANNEL_READY) {
     LOG(INFO) << "Trying to re-connect to uplink...";
     std::chrono::system_clock::time_point deadline =
         std::chrono::system_clock::now() +
@@ -202,12 +200,6 @@ void LocalTrajectoryUploader::TryRecovery() {
                                         entry.second.expected_sensor_ids,
                                         entry.second.trajectory_options);
     if (!status.ok()) {
-      if (get_channel_state() == grpc_connectivity_state::GRPC_CHANNEL_READY) {
-        // TODO: Channel state can be ready even if there's no network.
-        // Could it be that the TCP socket still alive?
-        LOG(WARNING)
-            << "Request failed, but uplink channel claims to be ready.";
-      }
       LOG(ERROR) << "Failed to create trajectory. Aborting recovery attempt. "
                  << status.error_message();
       // Restore the previous state for the next recovery attempt.
