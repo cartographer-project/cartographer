@@ -247,6 +247,7 @@ bool LocalTrajectoryUploader::TranslateTrajectoryId(
     return false;
   }
   if (!it->second.uplink_trajectory_id.has_value()) {
+    // Could not yet register trajectory with uplink server.
     return false;
   }
   int cloud_trajectory_id = it->second.uplink_trajectory_id.value();
