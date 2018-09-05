@@ -141,7 +141,7 @@ class PoseGraphInterface {
   virtual std::vector<Constraint> constraints() const = 0;
 
   // Serializes the constraints and trajectories. If
-  // 'include_unfinished_submaps' is set to 'true', unfinished submps, i.e.
+  // 'include_unfinished_submaps' is set to 'true', unfinished submaps, i.e.
   // submaps that have not yet received all rangefinder data insertions, will
   // be included, otherwise not.
   virtual proto::PoseGraph ToProto(bool include_unfinished_submaps) const = 0;
