@@ -213,7 +213,6 @@ class ClientServerTestBase : public T {
 
   void WaitForLocalSlamResultUploads(size_t size) {
     while (stub_->pose_graph()->GetTrajectoryNodePoses().size() < size) {
-      LOG(INFO) << stub_->pose_graph()->GetTrajectoryNodePoses().size();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   }
@@ -587,6 +586,40 @@ TEST_P(ClientServerTestByGridType, LocalSlam2DUplinkServerRestarting) {
   }
 
   WaitForLocalSlamResults(measurements.size() / 2);
+  WaitForLocalSlamResultUploads(2);
+  stub_for_uploading_server_->FinishTrajectory(trajectory_id);
+  uploading_server_->Shutdown();
+  uploading_server_->WaitForShutdown();
+  server_->Shutdown();
+  server_->WaitForShutdown();
+}
+
+TEST_F(ClientServerTest, DelayedConnectionToUplinkServer) {
+  InitializeRealUploadingServer();
+  uploading_server_->Start();
+  InitializeStubForUploadingServer();
+  int trajectory_id = stub_for_uploading_server_->AddTrajectoryBuilder(
+      {kRangeSensorId}, trajectory_builder_options_,
+      local_slam_result_callback_);
+  TrajectoryBuilderInterface* trajectory_stub =
+      stub_for_uploading_server_->GetTrajectoryBuilder(trajectory_id);
+  const auto measurements = mapping::testing::GenerateFakeRangeMeasurements(
+      kTravelDistance, kDuration, kTimeStep);
+
+  // Insert the first measurement.
+  trajectory_stub->AddSensorData(kRangeSensorId.id, measurements.at(0));
+  WaitForLocalSlamResults(1);
+
+  LOG(INFO) << "Delayed start of uplink server.";
+  InitializeRealServer();
+  server_->Start();
+  InitializeStub();
+
+  // Insert all other measurements.
+  for (unsigned int i = 1; i < measurements.size(); ++i) {
+    trajectory_stub->AddSensorData(kRangeSensorId.id, measurements.at(i));
+  }
+  WaitForLocalSlamResults(measurements.size());
   WaitForLocalSlamResultUploads(2);
   stub_for_uploading_server_->FinishTrajectory(trajectory_id);
   uploading_server_->Shutdown();
