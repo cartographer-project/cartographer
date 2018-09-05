@@ -143,12 +143,12 @@ std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder2D(
 }
 
 std::unique_ptr<TrajectoryBuilderInterface> CreateGlobalTrajectoryBuilder3D(
-    std::unique_ptr<LocalTrajectoryBuilder3D> local_trajectory_builder,
+    std::unique_ptr<OptimizingLocalTrajectoryBuilder> local_trajectory_builder,
     const int trajectory_id, mapping::PoseGraph3D* const pose_graph,
     const TrajectoryBuilderInterface::LocalSlamResultCallback&
         local_slam_result_callback) {
-  return absl::make_unique<
-      GlobalTrajectoryBuilder<LocalTrajectoryBuilder3D, mapping::PoseGraph3D>>(
+  return absl::make_unique<GlobalTrajectoryBuilder<
+      OptimizingLocalTrajectoryBuilder, mapping::PoseGraph3D>>(
       std::move(local_trajectory_builder), trajectory_id, pose_graph,
       local_slam_result_callback);
 }
