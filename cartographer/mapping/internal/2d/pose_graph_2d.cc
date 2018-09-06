@@ -142,12 +142,13 @@ std::pair<NodeId, std::vector<SubmapId>> PoseGraph2D::AppendNode(
     LOG(INFO) << "Inserted submap " << submap_id << ".";
   }
   std::vector<SubmapId> submap_ids;
-  auto submap_id_iter =
+  auto submap_data_iter =
       std::prev(data_.submap_data.EndOfTrajectory(trajectory_id),
                 insertion_submaps.size());
   for (int i = 0; i < static_cast<int>(insertion_submaps.size()); ++i) {
-    submap_ids.push_back(submap_id_iter->id);
-    ++submap_id_iter;
+    CHECK_EQ(submap_data_iter->data.submap, insertion_submaps.at(i));
+    submap_ids.push_back(submap_data_iter->id);
+    ++submap_data_iter;
   }
   return {node_id, submap_ids};
 }
