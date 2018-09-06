@@ -72,10 +72,10 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
       CHECK_EQ(node_id.trajectory_id, trajectory_id_);
       insertion_result = absl::make_unique<InsertionResult>(InsertionResult{
           node_id, matching_result->insertion_result->constant_data,
+          node_submap_ids.second,
           std::vector<std::shared_ptr<const Submap>>(
               matching_result->insertion_result->insertion_submaps.begin(),
-              matching_result->insertion_result->insertion_submaps.end()),
-          node_submap_ids.second});
+              matching_result->insertion_result->insertion_submaps.end())});
     }
     if (local_slam_result_callback_) {
       local_slam_result_callback_(
