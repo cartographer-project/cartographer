@@ -34,6 +34,7 @@ class PoseGraphStub : public ::cartographer::mapping::PoseGraphInterface {
   void RunFinalOptimization() override;
   mapping::MapById<mapping::SubmapId, SubmapData> GetAllSubmapData()
       const override;
+  SubmapData GetSubmapData(const mapping::SubmapId& submap_id) const override;
   mapping::MapById<mapping::SubmapId, SubmapPose> GetAllSubmapPoses()
       const override;
   transform::Rigid3d GetLocalToGlobalTransform(
