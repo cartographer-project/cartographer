@@ -50,7 +50,7 @@ class TrajectoryBuilderInterface {
   struct InsertionResult {
     NodeId node_id;
     std::shared_ptr<const TrajectoryNode::Data> constant_data;
-    std::vector<std::shared_ptr<const Submap>> insertion_submaps;
+    std::vector<SubmapId> insertion_submap_ids;
   };
 
   // A callback which is called after local SLAM processes an accumulated

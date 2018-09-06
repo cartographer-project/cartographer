@@ -105,7 +105,7 @@ std::vector<SubmapId> PoseGraph3D::InitializeGlobalSubmapPoses(
   return {front_submap_id, last_submap_id};
 }
 
-NodeId PoseGraph3D::AppendNode(
+std::pair<NodeId, std::vector<SubmapId>> PoseGraph3D::AppendNode(
     std::shared_ptr<const TrajectoryNode::Data> constant_data,
     const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps,
@@ -129,18 +129,28 @@ NodeId PoseGraph3D::AppendNode(
     data_.submap_data.at(submap_id).submap = insertion_submaps.back();
     LOG(INFO) << "Inserted submap " << submap_id << ".";
   }
-  return node_id;
+  std::vector<SubmapId> submap_ids;
+  auto submap_id_iter =
+      std::prev(data_.submap_data.EndOfTrajectory(trajectory_id),
+                insertion_submaps.size());
+  for (int i = 0; i < static_cast<int>(insertion_submaps.size()); ++i) {
+    submap_ids.push_back(submap_id_iter->id);
+    ++submap_id_iter;
+  }
+  return {node_id, submap_ids};
 }
 
-NodeId PoseGraph3D::AddNode(
+std::pair<NodeId, std::vector<SubmapId>> PoseGraph3D::AddNode(
     std::shared_ptr<const TrajectoryNode::Data> constant_data,
     const int trajectory_id,
     const std::vector<std::shared_ptr<const Submap3D>>& insertion_submaps) {
   const transform::Rigid3d optimized_pose(
       GetLocalToGlobalTransform(trajectory_id) * constant_data->local_pose);
 
-  const NodeId node_id = AppendNode(constant_data, trajectory_id,
-                                    insertion_submaps, optimized_pose);
+  const auto node_submap_ids = AppendNode(constant_data, trajectory_id,
+                                          insertion_submaps, optimized_pose);
+  const NodeId& node_id = node_submap_ids.first;
+
   // We have to check this here, because it might have changed by the time we
   // execute the lambda.
   const bool newly_finished_submap =
@@ -149,7 +159,7 @@ NodeId PoseGraph3D::AddNode(
     return ComputeConstraintsForNode(node_id, insertion_submaps,
                                      newly_finished_submap);
   });
-  return node_id;
+  return node_submap_ids;
 }
 
 void PoseGraph3D::AddWorkItem(

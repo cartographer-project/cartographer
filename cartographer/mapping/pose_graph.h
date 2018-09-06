@@ -112,11 +112,6 @@ class PoseGraph : public PoseGraphInterface {
   // Gets the current trajectory clusters.
   virtual std::vector<std::vector<int>> GetConnectedTrajectories() const = 0;
 
-  // Returns the current optimized transform and submap itself for the given
-  // 'submap_id'. Returns 'nullptr' for the 'submap' member if the submap does
-  // not exist (anymore).
-  virtual SubmapData GetSubmapData(const SubmapId& submap_id) const = 0;
-
   proto::PoseGraph ToProto(bool include_unfinished_submaps) const override;
 
   // Returns the IMU data.
