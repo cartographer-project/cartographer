@@ -228,121 +228,126 @@ std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
 OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   // TODO(hrapp): Make the number of optimizations configurable.
   if (num_accumulated_ < options_.num_accumulated_range_data() &&
-      num_accumulated_ % 10 != 0) {
+      num_accumulated_ % 3 != 0) {
     return nullptr;
   }
 
   ceres::Problem problem;
-  std::shared_ptr<const Submap3D> matching_submap =
-      active_submaps_.submaps().front();
-  // We transform the states in 'batches_' in place to be in the submap frame as
-  // expected by the OccupiedSpaceCostFunctor. This is reverted after solving
-  // the optimization problem.
-  TransformStates(matching_submap->local_pose().inverse());
-  for (size_t i = 0; i < batches_.size(); ++i) {
-    Batch& batch = batches_[i];
-    problem.AddResidualBlock(
-        scan_matching::OccupiedSpaceCostFunction3D::CreateAutoDiffCostFunction(
-            options_.optimizing_local_trajectory_builder_options()
-                    .high_resolution_grid_weight() /
-                std::sqrt(static_cast<double>(
-                    batch.high_resolution_filtered_points.size())),
-            batch.high_resolution_filtered_points,
-            matching_submap->high_resolution_hybrid_grid()),
-        nullptr, batch.state.translation.data(), batch.state.rotation.data());
-    problem.AddResidualBlock(
-        scan_matching::OccupiedSpaceCostFunction3D::CreateAutoDiffCostFunction(
-            options_.optimizing_local_trajectory_builder_options()
-                    .low_resolution_grid_weight() /
-                std::sqrt(static_cast<double>(
-                    batch.low_resolution_filtered_points.size())),
-            batch.low_resolution_filtered_points,
-            matching_submap->low_resolution_hybrid_grid()),
-        nullptr, batch.state.translation.data(), batch.state.rotation.data());
-    if (i == 0) {
-      problem.SetParameterBlockConstant(batch.state.translation.data());
-      problem.SetParameterBlockConstant(batch.state.rotation.data());
-      problem.AddParameterBlock(batch.state.velocity.data(), 3);
-      problem.SetParameterBlockConstant(batch.state.velocity.data());
-    } else {
-      problem.SetParameterization(batch.state.rotation.data(),
-                                  new ceres::QuaternionParameterization());
-    }
-  }
+  if (!active_submaps_.submaps().empty()) {
+    std::shared_ptr<const Submap3D> matching_submap =
+        active_submaps_.submaps().front();
 
-  auto it = imu_data_.cbegin();
-  for (size_t i = 1; i < batches_.size(); ++i) {
-    problem.AddResidualBlock(
-        new ceres::AutoDiffCostFunction<VelocityDeltaCostFunctor, 3, 3, 3>(
-            new VelocityDeltaCostFunctor(
-                options_.optimizing_local_trajectory_builder_options()
-                    .velocity_weight())),
-        nullptr, batches_[i - 1].state.velocity.data(),
-        batches_[i].state.velocity.data());
-
-    problem.AddResidualBlock(
-        new ceres::AutoDiffCostFunction<TranslationCostFunction, 3, 3, 3, 3>(
-            new TranslationCostFunction(
-                options_.optimizing_local_trajectory_builder_options()
-                    .translation_weight(),
-                common::ToSeconds(batches_[i].time - batches_[i - 1].time))),
-        nullptr, batches_[i - 1].state.translation.data(),
-        batches_[i].state.translation.data(),
-        batches_[i - 1].state.velocity.data());
-
-    const IntegrateImuResult<double> result =
-        IntegrateImu(imu_data_, batches_[i - 1].time, batches_[i].time, &it);
-    problem.AddResidualBlock(
-        new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4>(
-            new RotationCostFunction(
-                options_.optimizing_local_trajectory_builder_options()
-                    .rotation_weight(),
-                result.delta_rotation)),
-        nullptr, batches_[i - 1].state.rotation.data(),
-        batches_[i].state.rotation.data());
-  }
-
-  if (odometer_data_.size() > 1) {
-    transform::TransformInterpolationBuffer interpolation_buffer;
-    for (const auto& odometer_data : odometer_data_) {
-      interpolation_buffer.Push(odometer_data.time, odometer_data.pose);
-    }
-    for (size_t i = 1; i < batches_.size(); ++i) {
-      // Only add constraints for this range data if  we have bracketing data
-      // from the odometer.
-      if (!(interpolation_buffer.earliest_time() <= batches_[i - 1].time &&
-            batches_[i].time <= interpolation_buffer.latest_time())) {
-        continue;
-      }
-      const transform::Rigid3d previous_odometer_pose =
-          interpolation_buffer.Lookup(batches_[i - 1].time);
-      const transform::Rigid3d current_odometer_pose =
-          interpolation_buffer.Lookup(batches_[i].time);
-      const transform::Rigid3d delta_pose =
-          current_odometer_pose.inverse() * previous_odometer_pose;
+    // We transform the states in 'batches_' in place to be in the submap frame
+    // as expected by the OccupiedSpaceCostFunctor. This is reverted after
+    // solving the optimization problem.
+    TransformStates(matching_submap->local_pose().inverse());
+    for (size_t i = 0; i < batches_.size(); ++i) {
+      Batch& batch = batches_[i];
       problem.AddResidualBlock(
-          new ceres::AutoDiffCostFunction<RelativeTranslationAndYawCostFunction,
-                                          4, 3, 4, 3, 4>(
-              new RelativeTranslationAndYawCostFunction(
+          scan_matching::OccupiedSpaceCostFunction3D::
+              CreateAutoDiffCostFunction(
                   options_.optimizing_local_trajectory_builder_options()
-                      .odometry_translation_weight(),
+                          .high_resolution_grid_weight() /
+                      std::sqrt(static_cast<double>(
+                          batch.high_resolution_filtered_points.size())),
+                  batch.high_resolution_filtered_points,
+                  matching_submap->high_resolution_hybrid_grid()),
+          nullptr, batch.state.translation.data(), batch.state.rotation.data());
+      problem.AddResidualBlock(
+          scan_matching::OccupiedSpaceCostFunction3D::
+              CreateAutoDiffCostFunction(
                   options_.optimizing_local_trajectory_builder_options()
-                      .odometry_rotation_weight(),
-                  delta_pose)),
+                          .low_resolution_grid_weight() /
+                      std::sqrt(static_cast<double>(
+                          batch.low_resolution_filtered_points.size())),
+                  batch.low_resolution_filtered_points,
+                  matching_submap->low_resolution_hybrid_grid()),
+          nullptr, batch.state.translation.data(), batch.state.rotation.data());
+      if (i == 0) {
+        problem.SetParameterBlockConstant(batch.state.translation.data());
+        problem.SetParameterBlockConstant(batch.state.rotation.data());
+        problem.AddParameterBlock(batch.state.velocity.data(), 3);
+        problem.SetParameterBlockConstant(batch.state.velocity.data());
+      } else {
+        problem.SetParameterization(batch.state.rotation.data(),
+                                    new ceres::QuaternionParameterization());
+      }
+    }
+
+    auto it = imu_data_.cbegin();
+    for (size_t i = 1; i < batches_.size(); ++i) {
+      problem.AddResidualBlock(
+          new ceres::AutoDiffCostFunction<VelocityDeltaCostFunctor, 3, 3, 3>(
+              new VelocityDeltaCostFunctor(
+                  options_.optimizing_local_trajectory_builder_options()
+                      .velocity_weight())),
+          nullptr, batches_[i - 1].state.velocity.data(),
+          batches_[i].state.velocity.data());
+
+      problem.AddResidualBlock(
+          new ceres::AutoDiffCostFunction<TranslationCostFunction, 3, 3, 3, 3>(
+              new TranslationCostFunction(
+                  options_.optimizing_local_trajectory_builder_options()
+                      .translation_weight(),
+                  common::ToSeconds(batches_[i].time - batches_[i - 1].time))),
           nullptr, batches_[i - 1].state.translation.data(),
-          batches_[i - 1].state.rotation.data(),
           batches_[i].state.translation.data(),
+          batches_[i - 1].state.velocity.data());
+
+      const IntegrateImuResult<double> result =
+          IntegrateImu(imu_data_, batches_[i - 1].time, batches_[i].time, &it);
+      problem.AddResidualBlock(
+          new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4>(
+              new RotationCostFunction(
+                  options_.optimizing_local_trajectory_builder_options()
+                      .rotation_weight(),
+                  result.delta_rotation)),
+          nullptr, batches_[i - 1].state.rotation.data(),
           batches_[i].state.rotation.data());
     }
-  }
 
-  ceres::Solver::Summary summary;
-  ceres::Solve(ceres_solver_options_, &problem, &summary);
-  // The optimized states in 'batches_' are in the submap frame and we transform
-  // them in place to be in the local SLAM frame again.
-  TransformStates(matching_submap->local_pose());
-  if (num_accumulated_ < options_.num_accumulated_range_data()) {
-    return nullptr;
+    if (odometer_data_.size() > 1) {
+      transform::TransformInterpolationBuffer interpolation_buffer;
+      for (const auto& odometer_data : odometer_data_) {
+        interpolation_buffer.Push(odometer_data.time, odometer_data.pose);
+      }
+      for (size_t i = 1; i < batches_.size(); ++i) {
+        // Only add constraints for this range data if  we have bracketing data
+        // from the odometer.
+        if (!(interpolation_buffer.earliest_time() <= batches_[i - 1].time &&
+              batches_[i].time <= interpolation_buffer.latest_time())) {
+          continue;
+        }
+        const transform::Rigid3d previous_odometer_pose =
+            interpolation_buffer.Lookup(batches_[i - 1].time);
+        const transform::Rigid3d current_odometer_pose =
+            interpolation_buffer.Lookup(batches_[i].time);
+        const transform::Rigid3d delta_pose =
+            current_odometer_pose.inverse() * previous_odometer_pose;
+        problem.AddResidualBlock(
+            new ceres::AutoDiffCostFunction<
+                RelativeTranslationAndYawCostFunction, 4, 3, 4, 3, 4>(
+                new RelativeTranslationAndYawCostFunction(
+                    options_.optimizing_local_trajectory_builder_options()
+                        .odometry_translation_weight(),
+                    options_.optimizing_local_trajectory_builder_options()
+                        .odometry_rotation_weight(),
+                    delta_pose)),
+            nullptr, batches_[i - 1].state.translation.data(),
+            batches_[i - 1].state.rotation.data(),
+            batches_[i].state.translation.data(),
+            batches_[i].state.rotation.data());
+      }
+    }
+
+    ceres::Solver::Summary summary;
+    ceres::Solve(ceres_solver_options_, &problem, &summary);
+    // The optimized states in 'batches_' are in the submap frame and we
+    // transform them in place to be in the local SLAM frame again.
+    TransformStates(matching_submap->local_pose());
+    if (num_accumulated_ < options_.num_accumulated_range_data()) {
+      return nullptr;
+    }
   }
 
   num_accumulated_ = 0;
@@ -409,12 +414,6 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
   }
-  // Querying the active submaps must be done here before calling
-  // InsertRangeData() since the queried values are valid for next insertion.
-  std::vector<std::shared_ptr<const Submap3D>> insertion_submaps;
-  for (std::shared_ptr<const Submap3D> submap : active_submaps_.submaps()) {
-    insertion_submaps.push_back(submap);
-  }
   // TODO(whess): Use an ImuTracker to track the gravity direction.
   const Eigen::Quaterniond kFakeGravityOrientation =
       Eigen::Quaterniond::Identity();
@@ -427,10 +426,12 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
                   kFakeGravityOrientation.cast<float>())),
           options_.rotational_histogram_size());
 
-  active_submaps_.InsertData(
-      sensor::TransformRangeData(range_data_in_tracking,
-                                 pose_observation.cast<float>()),
-      kFakeGravityOrientation, rotational_scan_matcher_histogram_in_gravity);
+  std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
+      active_submaps_.InsertData(
+          sensor::TransformRangeData(range_data_in_tracking,
+                                     pose_observation.cast<float>()),
+          kFakeGravityOrientation,
+          rotational_scan_matcher_histogram_in_gravity);
   //
   //            return std::unique_ptr<InsertionResult>(
   //                    new InsertionResult{time, range_data_in_tracking,

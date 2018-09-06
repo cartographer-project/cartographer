@@ -73,4 +73,14 @@ TRAJECTORY_BUILDER_3D = {
       num_free_space_voxels = 2,
     },
   },
+  optimizing_local_trajectory_builder = {
+      high_resolution_grid_weight = 1,
+      low_resolution_grid_weight = 1,
+      velocity_weight = 1,
+      translation_weight = 1,
+      rotation_weight = 1,
+      odometry_translation_weight = 1,
+      odometry_rotation_weight = 1,
+    
+  },
 }
