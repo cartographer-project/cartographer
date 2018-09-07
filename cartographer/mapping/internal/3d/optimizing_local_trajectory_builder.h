@@ -116,8 +116,12 @@ class OptimizingLocalTrajectoryBuilder {
       const sensor::RangeData& range_data_in_tracking);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
-      const common::Time time, const sensor::RangeData& range_data_in_tracking,
-      const transform::Rigid3d& pose_observation);
+      common::Time time, const sensor::RangeData& filtered_range_data_in_local,
+      const sensor::RangeData& filtered_range_data_in_tracking,
+      const sensor::PointCloud& high_resolution_point_cloud_in_tracking,
+      const sensor::PointCloud& low_resolution_point_cloud_in_tracking,
+      const transform::Rigid3d& pose_estimate,
+      const Eigen::Quaterniond& gravity_alignment);
 
   void TransformStates(const transform::Rigid3d& transform);
   std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
