@@ -183,6 +183,14 @@ void LocalTrajectoryUploader::TryRecovery() {
     }
   }
 
+  // Because the trajectories may be interrupted on the uplink side, we can no
+  // longer upload to those.
+  for (auto& entry : local_trajectory_id_to_trajectory_info_) {
+    entry.second.uplink_trajectory_id.reset();
+  }
+  // TODO(gaschler): If the uplink did not restart but only the connection was
+  // interrupted, this leaks trajectories in the uplink.
+
   // Attempt to recreate the trajectories.
   for (const auto& entry : local_trajectory_id_to_trajectory_info_) {
     grpc::Status status = RegisterTrajectory(entry.first);
