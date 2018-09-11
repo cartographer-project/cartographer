@@ -121,6 +121,14 @@ void Grid2D::ComputeCroppedLimits(Eigen::Array2i* const offset,
                        known_cells_box_.sizes().y() + 1);
 }
 
+// Grows the map as necessary to include 'point'. This changes the meaning of
+// these coordinates going forward. This method must be called immediately
+// after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
+void Grid2D::GrowLimits(const Eigen::Vector2f& point) {
+  GrowLimits(point, {mutable_correspondence_cost_cells()},
+             {kUnknownCorrespondenceValue});
+}
+
 void Grid2D::GrowLimits(const Eigen::Vector2f& point,
                         const std::vector<std::vector<uint16>*>& grids,
                         const std::vector<uint16>& grids_unknown_cell_values) {
