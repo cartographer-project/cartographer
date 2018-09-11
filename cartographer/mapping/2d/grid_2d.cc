@@ -106,7 +106,7 @@ void Grid2D::FinishUpdate() {
     update_indices_.pop_back();
   }
 }
-  
+
 // Fills in 'offset' and 'limits' to define a subregion of that contains all
 // known cells.
 void Grid2D::ComputeCroppedLimits(Eigen::Array2i* const offset,
