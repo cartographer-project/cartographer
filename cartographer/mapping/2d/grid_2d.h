@@ -49,7 +49,11 @@ class Grid2D : public GridInterface {
   void FinishUpdate();
 
   // Returns the correspondence cost of the cell with 'cell_index'.
-  float GetCorrespondenceCost(const Eigen::Array2i& cell_index) const;
+  float GetCorrespondenceCost(const Eigen::Array2i& cell_index) const {
+  if (!limits().Contains(cell_index)) return max_correspondence_cost_;
+  return (*value_to_correspondence_cost_table_)
+      [correspondence_cost_cells()[ToFlatIndex(cell_index)]];
+}
 
   virtual GridType GetGridType() const = 0;
 
@@ -60,7 +64,11 @@ class Grid2D : public GridInterface {
   float GetMaxCorrespondenceCost() const { return max_correspondence_cost_; }
 
   // Returns true if the probability at the specified index is known.
-  bool IsKnown(const Eigen::Array2i& cell_index) const;
+  bool IsKnown(const Eigen::Array2i& cell_index) const {
+  return limits_.Contains(cell_index) &&
+         correspondence_cost_cells_[ToFlatIndex(cell_index)] !=
+             kUnknownCorrespondenceValue;
+}
 
   // Fills in 'offset' and 'limits' to define a subregion of that contains all
   // known cells.
@@ -70,7 +78,10 @@ class Grid2D : public GridInterface {
   // Grows the map as necessary to include 'point'. This changes the meaning of
   // these coordinates going forward. This method must be called immediately
   // after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
-  virtual void GrowLimits(const Eigen::Vector2f& point);
+  virtual void GrowLimits(const Eigen::Vector2f& point) {
+  GrowLimits(point, {mutable_correspondence_cost_cells()},
+             {kUnknownCorrespondenceValue});
+}
 
   virtual std::unique_ptr<Grid2D> ComputeCroppedGrid() const = 0;
 
@@ -101,7 +112,10 @@ class Grid2D : public GridInterface {
   Eigen::AlignedBox2i* mutable_known_cells_box() { return &known_cells_box_; }
 
   // Converts a 'cell_index' into an index into 'cells_'.
-  int ToFlatIndex(const Eigen::Array2i& cell_index) const;
+  int ToFlatIndex(const Eigen::Array2i& cell_index) const {
+  CHECK(limits_.Contains(cell_index)) << cell_index;
+  return limits_.cell_limits().num_x_cells * cell_index.y() + cell_index.x();
+}
 
  private:
   MapLimits limits_;
