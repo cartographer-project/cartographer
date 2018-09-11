@@ -107,42 +107,6 @@ void Grid2D::FinishUpdate() {
   }
 }
 
-// Returns the correspondence cost of the cell with 'cell_index'.
-float Grid2D::GetCorrespondenceCost(const Eigen::Array2i& cell_index) const {
-  if (!limits().Contains(cell_index)) return max_correspondence_cost_;
-  return (*value_to_correspondence_cost_table_)
-      [correspondence_cost_cells()[ToFlatIndex(cell_index)]];
-}
-
-// Returns true if the correspondence cost at the specified index is known.
-bool Grid2D::IsKnown(const Eigen::Array2i& cell_index) const {
-  return limits_.Contains(cell_index) &&
-         correspondence_cost_cells_[ToFlatIndex(cell_index)] !=
-             kUnknownCorrespondenceValue;
-}
-
-// Fills in 'offset' and 'limits' to define a subregion of that contains all
-// known cells.
-void Grid2D::ComputeCroppedLimits(Eigen::Array2i* const offset,
-                                  CellLimits* const limits) const {
-  if (known_cells_box_.isEmpty()) {
-    *offset = Eigen::Array2i::Zero();
-    *limits = CellLimits(1, 1);
-    return;
-  }
-  *offset = known_cells_box_.min().array();
-  *limits = CellLimits(known_cells_box_.sizes().x() + 1,
-                       known_cells_box_.sizes().y() + 1);
-}
-
-// Grows the map as necessary to include 'point'. This changes the meaning of
-// these coordinates going forward. This method must be called immediately
-// after 'FinishUpdate', before any calls to 'ApplyLookupTable'.
-void Grid2D::GrowLimits(const Eigen::Vector2f& point) {
-  GrowLimits(point, {mutable_correspondence_cost_cells()},
-             {kUnknownCorrespondenceValue});
-}
-
 void Grid2D::GrowLimits(const Eigen::Vector2f& point,
                         const std::vector<std::vector<uint16>*>& grids,
                         const std::vector<uint16>& grids_unknown_cell_values) {
@@ -196,11 +160,6 @@ proto::Grid2D Grid2D::ToProto() const {
   result.set_min_correspondence_cost(min_correspondence_cost_);
   result.set_max_correspondence_cost(max_correspondence_cost_);
   return result;
-}
-
-int Grid2D::ToFlatIndex(const Eigen::Array2i& cell_index) const {
-  CHECK(limits_.Contains(cell_index)) << cell_index;
-  return limits_.cell_limits().num_x_cells * cell_index.y() + cell_index.x();
 }
 
 }  // namespace mapping
