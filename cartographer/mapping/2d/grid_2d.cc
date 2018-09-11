@@ -15,8 +15,6 @@
  */
 #include "cartographer/mapping/2d/grid_2d.h"
 
-#include "cartographer/mapping/probability_values.h"
-
 namespace cartographer {
 namespace mapping {
 namespace {
