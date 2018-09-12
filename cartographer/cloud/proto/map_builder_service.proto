@@ -161,6 +161,7 @@ message LoadStateResponse {
 message LoadStateFromFileRequest {
   string file_path = 1;
   string client_id = 2;
+  bool load_frozen_state = 3;
 }
 
 message LoadStateFromFileResponse {
