@@ -112,9 +112,9 @@ LocalTrajectoryUploader::LocalTrajectoryUploader(
   auto channel_creds =
       enable_google_auth
           ? grpc::GoogleDefaultCredentials()
-          : enable_ssl_encryption
-                ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
-                : ::grpc::InsecureChannelCredentials();
+          : (enable_ssl_encryption
+                 ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
+                 : ::grpc::InsecureChannelCredentials());
 
   client_channel_ = ::grpc::CreateChannel(uplink_server_address, channel_creds);
   std::chrono::system_clock::time_point deadline =
