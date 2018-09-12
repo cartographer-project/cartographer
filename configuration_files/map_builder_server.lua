@@ -22,5 +22,5 @@ MAP_BUILDER_SERVER = {
   uplink_server_address = "",
   upload_batch_size = 100,
   enable_ssl_encryption = false,
-  token_file_path = "",
+  enable_google_auth = false,
 }
