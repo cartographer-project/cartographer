@@ -52,7 +52,8 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
                       io::ProtoStreamWriterInterface* writer) override;
   std::map<int, int> LoadState(io::ProtoStreamReaderInterface* reader,
                                bool load_frozen_state) override;
-  std::map<int, int> LoadStateFromFile(const std::string& filename) override;
+  std::map<int, int> LoadStateFromFile(const std::string& filename,
+                                       bool load_frozen_state) override;
   int num_trajectory_builders() const override;
   mapping::PoseGraphInterface* pose_graph() override;
   const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&

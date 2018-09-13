@@ -391,7 +391,7 @@ std::map<int, int> MapBuilder::LoadState(
 }
 
 std::map<int, int> MapBuilder::LoadStateFromFile(
-    const std::string& state_filename) {
+    const std::string& state_filename, const bool load_frozen_state) {
   const std::string suffix = ".pbstream";
   if (state_filename.substr(
           std::max<int>(state_filename.size() - suffix.size(), 0)) != suffix) {
@@ -400,7 +400,7 @@ std::map<int, int> MapBuilder::LoadStateFromFile(
   }
   LOG(INFO) << "Loading saved state '" << state_filename << "'...";
   io::ProtoStreamReader stream(state_filename);
-  return LoadState(&stream, true);
+  return LoadState(&stream, load_frozen_state);
 }
 
 }  // namespace mapping

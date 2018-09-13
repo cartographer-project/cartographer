@@ -197,10 +197,11 @@ std::map<int, int> MapBuilderStub::LoadState(
 }
 
 std::map<int, int> MapBuilderStub::LoadStateFromFile(
-    const std::string& filename) {
+    const std::string& filename, const bool load_frozen_state) {
   proto::LoadStateFromFileRequest request;
   request.set_file_path(filename);
   request.set_client_id(client_id_);
+  request.set_load_frozen_state(load_frozen_state);
   async_grpc::Client<handlers::LoadStateFromFileSignature> client(
       client_channel_);
   CHECK(client.Write(request));
