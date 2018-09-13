@@ -34,7 +34,10 @@ find_package(Boost REQUIRED COMPONENTS iostreams)
 find_package(Ceres REQUIRED COMPONENTS SuiteSparse)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
-find_package(Protobuf 3.0.0 REQUIRED)
+
+set(PROTOBUF_INCLUDE_DIRS "$ENV{ROSWSS_ROOT}/external/protobuf3/include")
+set(PROTOBUF_LIBRARY "$ENV{ROSWSS_ROOT}/external/protobuf3/lib/libprotobuf.a")
+set(PROTOBUF_PROTOC_EXECUTABLE "$ENV{ROSWSS_ROOT}/external/protobuf3/bin/protoc")
 
 if (${BUILD_GRPC})
   find_package(async_grpc REQUIRED)
@@ -222,8 +225,7 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${CAIRO_INCLUDE_DIRS}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${CAIRO_LIBRARIES})
 
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  ${PROTOBUF_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROTOBUF_INCLUDE_DIRS})
 # TODO(hrapp): This should not explicitly list pthread and use
 # PROTOBUF_LIBRARIES, but that failed on first try.
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} pthread standalone_absl)
