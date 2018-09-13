@@ -41,6 +41,7 @@
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
 #include "cartographer/cloud/internal/handlers/set_landmark_pose_handler.h"
 #include "cartographer/cloud/internal/handlers/write_state_handler.h"
+#include "cartographer/cloud/internal/handlers/write_state_to_file_handler.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "glog/logging.h"
 
@@ -95,6 +96,7 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::LoadStateFromFileHandler>();
   server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler>();
   server_builder.RegisterHandler<handlers::WriteStateHandler>();
+  server_builder.RegisterHandler<handlers::WriteStateToFileHandler>();
   server_builder.RegisterHandler<handlers::SetLandmarkPoseHandler>();
   grpc_server_ = server_builder.Build();
   if (map_builder_server_options.map_builder_options()

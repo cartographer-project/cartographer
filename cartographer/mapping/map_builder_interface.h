@@ -84,6 +84,13 @@ class MapBuilderInterface {
   virtual void SerializeState(bool include_unfinished_submaps,
                               io::ProtoStreamWriterInterface* writer) = 0;
 
+  // Serializes the current state to a proto stream file on the host system. If
+  // 'include_unfinished_submaps' is set to true, unfinished submaps, i.e.
+  // submaps that have not yet received all rangefinder data insertions, will
+  // be included in the serialized state.
+  virtual void SerializeStateToFile(bool include_unfinished_submaps,
+                                    const std::string& filename) = 0;
+
   // Loads the SLAM state from a proto stream. Returns the remapping of new
   // trajectory_ids.
   virtual std::map<int /* trajectory id in proto */, int /* trajectory id */>
