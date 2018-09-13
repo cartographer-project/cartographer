@@ -50,6 +50,7 @@ namespace cloud {
 namespace {
 
 static auto* kIncomingDataQueueMetric = metrics::Gauge::Null();
+constexpr int kMaxMessageSize = 100 * 1024 * 1024;  // 100 MB
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
 }  // namespace
@@ -64,6 +65,8 @@ MapBuilderServer::MapBuilderServer(
       map_builder_server_options.num_grpc_threads());
   server_builder.SetNumEventThreads(
       map_builder_server_options.num_event_threads());
+  server_builder.SetMaxSendMessageSize(kMaxMessageSize);
+  server_builder.SetMaxReceiveMessageSize(kMaxMessageSize);
   if (!map_builder_server_options.uplink_server_address().empty()) {
     local_trajectory_uploader_ = CreateLocalTrajectoryUploader(
         map_builder_server_options.uplink_server_address(),
