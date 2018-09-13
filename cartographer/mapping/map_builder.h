@@ -60,7 +60,7 @@ class MapBuilder : public MapBuilderInterface {
                       io::ProtoStreamWriterInterface *writer) override;
 
   void SerializeStateToFile(bool include_unfinished_submaps,
-                            const std::string& filename) override;
+                            const std::string &filename) override;
 
   std::map<int, int> LoadState(io::ProtoStreamReaderInterface *reader,
                                bool load_frozen_state) override;
