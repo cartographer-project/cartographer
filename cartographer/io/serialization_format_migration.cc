@@ -278,6 +278,7 @@ void SerializeToVersion1Format(
       SerializedData::kFixedFramePoseDataFieldNumber,
       SerializedData::kLandmarkDataFieldNumber};
 
+  LOG(INFO) << "Writing proto stream.";
   output->WriteProto(CreateSerializationHeader());
   for (auto field_index : kFieldSerializationOrder) {
     const auto proto_vector_it = deserialized_data.find(field_index);
