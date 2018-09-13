@@ -24,6 +24,7 @@
 #include "cartographer/cloud/internal/handlers/load_state_from_file_handler.h"
 #include "cartographer/cloud/internal/handlers/load_state_handler.h"
 #include "cartographer/cloud/internal/handlers/write_state_handler.h"
+#include "cartographer/cloud/internal/handlers/write_state_to_file_handler.h"
 #include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
@@ -146,6 +147,22 @@ void MapBuilderStub::SerializeState(bool include_unfinished_submaps,
         LOG(FATAL) << "Unhandled message type";
     }
   }
+}
+
+void MapBuilderStub::SerializeStateToFile(bool include_unfinished_submaps,
+                                          const std::string& filename) {
+  if (include_unfinished_submaps) {
+    LOG(WARNING) << "Serializing unfinished submaps is currently unsupported. "
+                    "Proceeding to write the state without them.";
+  }
+  proto::WriteStateToFileRequest request;
+  request.set_filename(filename);
+  ::grpc::Status status;
+  async_grpc::Client<handlers::WriteStateToFileSignature> client(
+      client_channel_);
+  CHECK(client.Write(request, &status))
+      << "code: " << status.error_code()
+      << " reason: " << status.error_message();
 }
 
 std::map<int, int> MapBuilderStub::LoadState(
