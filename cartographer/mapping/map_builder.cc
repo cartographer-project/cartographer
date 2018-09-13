@@ -212,6 +212,14 @@ void MapBuilder::SerializeState(bool include_unfinished_submaps,
                     include_unfinished_submaps);
 }
 
+void MapBuilder::SerializeStateToFile(bool include_unfinished_submaps,
+                                      const std::string& filename) {
+  io::ProtoStreamWriter writer(filename);
+  io::WritePbStream(*pose_graph_, all_trajectory_builder_options_, &writer,
+                    include_unfinished_submaps);
+  writer.Close();
+}
+
 std::map<int, int> MapBuilder::LoadState(
     io::ProtoStreamReaderInterface* const reader, bool load_frozen_state) {
   io::ProtoStreamDeserializer deserializer(reader);
