@@ -32,10 +32,8 @@ void WriteStateToFileHandler::OnRequest(
     Finish(::grpc::Status(::grpc::INVALID_ARGUMENT, "Filename empty."));
     return;
   }
-  io::ProtoStreamWriter proto_stream_writer(request.filename());
-  GetContext<MapBuilderContextInterface>()->map_builder().SerializeState(
-      /*include_unfinished_submaps=*/false, &proto_stream_writer);
-  proto_stream_writer.Close();
+  GetContext<MapBuilderContextInterface>()->map_builder().SerializeStateToFile(
+      /*include_unfinished_submaps=*/false, request.filename());
 }
 
 }  // namespace handlers
