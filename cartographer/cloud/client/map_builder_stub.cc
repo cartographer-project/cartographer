@@ -164,9 +164,11 @@ bool MapBuilderStub::SerializeStateToFile(bool include_unfinished_submaps,
   ::grpc::Status status;
   async_grpc::Client<handlers::WriteStateToFileSignature> client(
       client_channel_);
-  CHECK(client.Write(request, &status))
-      << "code: " << status.error_code()
-      << " reason: " << status.error_message();
+  if (!client.Write(request, &status)) {
+    LOG(ERROR) << "WriteStateToFileRequest failed - "
+    << "code: " << status.error_code()
+    << " reason: " << status.error_message();
+  }
   return client.response().success();
 }
 
