@@ -174,7 +174,7 @@ TEST_F(PoseGraph3DTest, SerializationWithUnfinishedSubmaps) {
       pose_graph_->ToProto(/*include_unfinished_submaps=*/false);
   EXPECT_EQ(actual_proto.constraint_size(), 2);
   EXPECT_EQ(actual_proto.trajectory_size(), 1);
-  EXPECT_EQ(actual_proto.trajectory(0).node_size(), 2);
+  EXPECT_EQ(actual_proto.trajectory(0).node_size(), 3);
   EXPECT_EQ(actual_proto.trajectory(0).submap_size(), 1);
   EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
       proto.constraint(0), actual_proto.constraint(0)));

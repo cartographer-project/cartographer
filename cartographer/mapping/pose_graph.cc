@@ -190,11 +190,6 @@ proto::PoseGraph PoseGraph::ToProto(bool include_unfinished_submaps) const {
   for (const auto& node_id_data : GetTrajectoryNodes()) {
     proto::Trajectory* trajectory_proto =
         trajectory(node_id_data.id.trajectory_id);
-    if (!include_unfinished_submaps &&
-        orphaned_nodes.count(node_id_data.id) > 0) {
-      // Skip orphaned trajectory nodes.
-      continue;
-    }
     CHECK(node_id_data.data.constant_data != nullptr);
     auto* const node_proto = trajectory_proto->add_node();
     node_proto->set_node_index(node_id_data.id.node_index);
