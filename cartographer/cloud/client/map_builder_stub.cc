@@ -166,8 +166,8 @@ bool MapBuilderStub::SerializeStateToFile(bool include_unfinished_submaps,
       client_channel_);
   if (!client.Write(request, &status)) {
     LOG(ERROR) << "WriteStateToFileRequest failed - "
-    << "code: " << status.error_code()
-    << " reason: " << status.error_message();
+               << "code: " << status.error_code()
+               << " reason: " << status.error_message();
   }
   return client.response().success();
 }
