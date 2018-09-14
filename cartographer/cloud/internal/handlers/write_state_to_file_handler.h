@@ -27,7 +27,7 @@ namespace handlers {
 
 DEFINE_HANDLER_SIGNATURE(
     WriteStateToFileSignature, proto::WriteStateToFileRequest,
-    google::protobuf::Empty,
+    proto::WriteStateToFileResponse,
     "/cartographer.cloud.proto.MapBuilderService/WriteStateToFile")
 
 class WriteStateToFileHandler

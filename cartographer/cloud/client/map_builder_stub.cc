@@ -153,7 +153,7 @@ void MapBuilderStub::SerializeState(bool include_unfinished_submaps,
   }
 }
 
-void MapBuilderStub::SerializeStateToFile(bool include_unfinished_submaps,
+bool MapBuilderStub::SerializeStateToFile(bool include_unfinished_submaps,
                                           const std::string& filename) {
   if (include_unfinished_submaps) {
     LOG(WARNING) << "Serializing unfinished submaps is currently unsupported. "
@@ -167,6 +167,7 @@ void MapBuilderStub::SerializeStateToFile(bool include_unfinished_submaps,
   CHECK(client.Write(request, &status))
       << "code: " << status.error_code()
       << " reason: " << status.error_message();
+  return client.response().success();
 }
 
 std::map<int, int> MapBuilderStub::LoadState(

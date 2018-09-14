@@ -88,7 +88,8 @@ class MapBuilderInterface {
   // 'include_unfinished_submaps' is set to true, unfinished submaps, i.e.
   // submaps that have not yet received all rangefinder data insertions, will
   // be included in the serialized state.
-  virtual void SerializeStateToFile(bool include_unfinished_submaps,
+  // Returns true if the file was successfully written.
+  virtual bool SerializeStateToFile(bool include_unfinished_submaps,
                                     const std::string& filename) = 0;
 
   // Loads the SLAM state from a proto stream. Returns the remapping of new

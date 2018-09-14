@@ -232,6 +232,10 @@ message WriteStateToFileRequest {
   string filename = 1;
 }
 
+message WriteStateToFileResponse {
+  bool success = 1;
+}
+
 message IsTrajectoryFinishedRequest {
   int32 trajectory_id = 1;
 }
@@ -345,5 +349,6 @@ service MapBuilderService {
   rpc WriteState(google.protobuf.Empty) returns (stream WriteStateResponse);
 
   // Writes the serialized SLAM state to the host file system.
-  rpc WriteStateToFile(WriteStateToFileRequest) returns (google.protobuf.Empty);
+  rpc WriteStateToFile(WriteStateToFileRequest)
+      returns (WriteStateToFileResponse);
 }
