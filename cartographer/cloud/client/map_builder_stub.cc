@@ -39,7 +39,7 @@ using absl::make_unique;
 constexpr int kChannelTimeoutSeconds = 10;
 constexpr int kRetryBaseDelayMilliseconds = 500;
 constexpr float kRetryDelayFactor = 2.0;
-constexpr int kMaxRetries = 6;
+constexpr int kMaxRetries = 5;
 
 }  // namespace
 
