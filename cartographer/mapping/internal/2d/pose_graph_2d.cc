@@ -31,6 +31,7 @@
 #include "Eigen/Eigenvalues"
 #include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
+#include "cartographer/mapping/internal/2d/overlapping_submaps_trimmer_2d.h"
 #include "cartographer/mapping/proto/pose_graph/constraint_builder_options.pb.h"
 #include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/sensor/internal/voxel_filter.h"
@@ -49,7 +50,15 @@ PoseGraph2D::PoseGraph2D(
     : options_(options),
       optimization_problem_(std::move(optimization_problem)),
       constraint_builder_(options_.constraint_builder_options(), thread_pool),
-      thread_pool_(thread_pool) {}
+      thread_pool_(thread_pool) {
+  if (options.has_overlapping_submaps_trimmer_2d()) {
+    const auto& trimmer_options = options.overlapping_submaps_trimmer_2d();
+    AddTrimmer(absl::make_unique<OverlappingSubmapsTrimmer2D>(
+        trimmer_options.fresh_submaps_count(),
+        trimmer_options.min_covered_area(),
+        trimmer_options.min_added_submaps_count()));
+  }
+}
 
 PoseGraph2D::~PoseGraph2D() {
   WaitForAllComputations();

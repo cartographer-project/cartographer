@@ -35,4 +35,5 @@ message Submap3D {
   bool finished = 3;
   HybridGrid high_resolution_hybrid_grid = 4;
   HybridGrid low_resolution_hybrid_grid = 5;
+  repeated float rotational_scan_matcher_histogram = 6;
 }

@@ -24,23 +24,6 @@ namespace cartographer {
 namespace mapping {
 namespace {
 
-void PopulateOverlappingSubmapsTrimmerOptions2D(
-    proto::TrajectoryBuilderOptions* const trajectory_builder_options,
-    common::LuaParameterDictionary* const parameter_dictionary) {
-  constexpr char kDictionaryKey[] = "overlapping_submaps_trimmer_2d";
-  if (!parameter_dictionary->HasKey(kDictionaryKey)) return;
-
-  auto options_dictionary = parameter_dictionary->GetDictionary(kDictionaryKey);
-  auto* options =
-      trajectory_builder_options->mutable_overlapping_submaps_trimmer_2d();
-  options->set_fresh_submaps_count(
-      options_dictionary->GetInt("fresh_submaps_count"));
-  options->set_min_covered_area(
-      options_dictionary->GetDouble("min_covered_area"));
-  options->set_min_added_submaps_count(
-      options_dictionary->GetInt("min_added_submaps_count"));
-}
-
 void PopulatePureLocalizationTrimmerOptions(
     proto::TrajectoryBuilderOptions* const trajectory_builder_options,
     common::LuaParameterDictionary* const parameter_dictionary) {
@@ -65,7 +48,6 @@ proto::TrajectoryBuilderOptions CreateTrajectoryBuilderOptions(
   *options.mutable_trajectory_builder_3d_options() =
       CreateLocalTrajectoryBuilderOptions3D(
           parameter_dictionary->GetDictionary("trajectory_builder_3d").get());
-  PopulateOverlappingSubmapsTrimmerOptions2D(&options, parameter_dictionary);
   options.set_collate_fixed_frame(
       parameter_dictionary->GetBool("collate_fixed_frame"));
   options.set_collate_landmarks(

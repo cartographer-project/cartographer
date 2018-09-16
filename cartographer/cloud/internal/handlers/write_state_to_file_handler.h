@@ -14,35 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H
-#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H
+#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_WRITE_STATE_TO_FILE_HANDLER_H
+#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_WRITE_STATE_TO_FILE_HANDLER_H
 
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/io/internal/in_memory_proto_stream.h"
+#include "google/protobuf/empty.pb.h"
 
 namespace cartographer {
 namespace cloud {
 namespace handlers {
 
 DEFINE_HANDLER_SIGNATURE(
-    LoadStateSignature, async_grpc::Stream<proto::LoadStateRequest>,
-    proto::LoadStateResponse,
-    "/cartographer.cloud.proto.MapBuilderService/LoadState")
+    WriteStateToFileSignature, proto::WriteStateToFileRequest,
+    proto::WriteStateToFileResponse,
+    "/cartographer.cloud.proto.MapBuilderService/WriteStateToFile")
 
-class LoadStateHandler : public async_grpc::RpcHandler<LoadStateSignature> {
+class WriteStateToFileHandler
+    : public async_grpc::RpcHandler<WriteStateToFileSignature> {
  public:
-  void OnRequest(const proto::LoadStateRequest& request) override;
-  void OnReadsDone() override;
-
- private:
-  io::InMemoryProtoStreamReader reader_;
-  std::string client_id_;
-  bool load_frozen_state_;
+  void OnRequest(const proto::WriteStateToFileRequest& request) override;
 };
 
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H
+#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_WRITE_STATE_TO_FILE_HANDLER_H

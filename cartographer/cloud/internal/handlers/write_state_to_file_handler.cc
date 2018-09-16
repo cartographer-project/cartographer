@@ -14,35 +14,35 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H
-#define CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H
+#include "cartographer/cloud/internal/handlers/write_state_to_file_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
+#include "cartographer/cloud/internal/map_builder_context_interface.h"
+#include "cartographer/cloud/internal/map_builder_server.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/io/internal/in_memory_proto_stream.h"
+#include "cartographer/io/proto_stream.h"
 
 namespace cartographer {
 namespace cloud {
 namespace handlers {
 
-DEFINE_HANDLER_SIGNATURE(
-    LoadStateSignature, async_grpc::Stream<proto::LoadStateRequest>,
-    proto::LoadStateResponse,
-    "/cartographer.cloud.proto.MapBuilderService/LoadState")
-
-class LoadStateHandler : public async_grpc::RpcHandler<LoadStateSignature> {
- public:
-  void OnRequest(const proto::LoadStateRequest& request) override;
-  void OnReadsDone() override;
-
- private:
-  io::InMemoryProtoStreamReader reader_;
-  std::string client_id_;
-  bool load_frozen_state_;
-};
+void WriteStateToFileHandler::OnRequest(
+    const proto::WriteStateToFileRequest& request) {
+  if (request.filename().empty()) {
+    Finish(::grpc::Status(::grpc::INVALID_ARGUMENT, "Filename empty."));
+    return;
+  }
+  bool success =
+      GetContext<MapBuilderContextInterface>()
+          ->map_builder()
+          .SerializeStateToFile(
+              /*include_unfinished_submaps=*/false, request.filename());
+  auto response = absl::make_unique<proto::WriteStateToFileResponse>();
+  response->set_success(success);
+  Send(std::move(response));
+}
 
 }  // namespace handlers
 }  // namespace cloud
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_CLOUD_INTERNAL_HANDLERS_LOAD_STATE_HANDLER_H

@@ -26,5 +26,5 @@ message MapBuilderServerOptions {
   string uplink_server_address = 5;
   int32 upload_batch_size = 6;
   bool enable_ssl_encryption = 7;
-  string token_file_path = 8;
+  bool enable_google_auth = 9;
 }
