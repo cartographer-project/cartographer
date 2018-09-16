@@ -36,6 +36,7 @@ fi
 
 sudo apt-get install -y \
     clang \
+    libc++-dev \
     g++ \
     git \
     google-mock \
