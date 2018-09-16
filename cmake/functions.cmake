@@ -87,6 +87,7 @@ macro(google_initialize_cartographer_project)
 
   if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
     google_add_flag(GOOG_CXX_FLAGS "-stdlib=libc++")
+    google_add_flag(GOOG_CXX_FLAGS "-lc++abi")
   endif()
   
   if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
