@@ -43,7 +43,6 @@ const common::Duration kPopTimeout = common::FromMilliseconds(100);
 // This defines the '::grpc::StatusCode's that are considered unrecoverable
 // errors and hence no retries will be attempted by the client.
 const std::set<::grpc::StatusCode> kUnrecoverableStatusCodes = {
-    ::grpc::DEADLINE_EXCEEDED,
     ::grpc::NOT_FOUND,
     ::grpc::UNAVAILABLE,
     ::grpc::UNKNOWN,
@@ -52,6 +51,26 @@ const std::set<::grpc::StatusCode> kUnrecoverableStatusCodes = {
 bool IsNewSubmap(const mapping::proto::Submap& submap) {
   return (submap.has_submap_2d() && submap.submap_2d().num_range_data() == 1) ||
          (submap.has_submap_3d() && submap.submap_3d().num_range_data() == 1);
+}
+
+bool UploadSensorData(std::shared_ptr<::grpc::Channel> client_channel,
+                      const proto::AddSensorDataBatchRequest& request) {
+  while (true) {
+    async_grpc::Client<handlers::AddSensorDataBatchSignature> client(
+        client_channel, common::FromSeconds(kConnectionTimeoutInSeconds));
+    ::grpc::Status status;
+    if (!client.Write(request, &status)) {
+      if (kUnrecoverableStatusCodes.count(status.error_code()) > 0) {
+        return false;
+      } else {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        continue;
+      }
+    } else {
+      return true;
+    }
+  }
+  return false;
 }
 
 class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
@@ -224,11 +243,7 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
       }
 
       if (batch_request.sensor_data_size() == batch_size_) {
-        async_grpc::Client<handlers::AddSensorDataBatchSignature> client(
-            client_channel_, common::FromSeconds(kConnectionTimeoutInSeconds),
-            async_grpc::CreateUnlimitedConstantDelayStrategy(
-                common::FromSeconds(1), kUnrecoverableStatusCodes));
-        if (client.Write(batch_request)) {
+        if (UploadSensorData(client_channel_, batch_request)) {
           LOG(INFO) << "Uploaded " << batch_request.ByteSize()
                     << " bytes of sensor data.";
           batch_request.clear_sensor_data();
