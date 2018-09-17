@@ -116,8 +116,19 @@ OptimizingLocalTrajectoryBuilder::~OptimizingLocalTrajectoryBuilder() {}
 
 void OptimizingLocalTrajectoryBuilder::AddImuData(
     const sensor::ImuData& imu_data) {
-  imu_data_.push_back(imu_data);
-  RemoveObsoleteSensorData();
+  if (extrapolator_ != nullptr) {
+    extrapolator_->AddImuData(imu_data);
+    imu_data_.push_back(imu_data);
+    RemoveObsoleteSensorData();
+    return;
+  }
+  // We derive velocities from poses which are at least 1 ms apart for numerical
+  // stability. Usually poses known to the extrapolator will be further apart
+  // in time and thus the last two are used.
+  constexpr double kExtrapolationEstimationTimeSec = 0.001;
+  extrapolator_ = mapping::PoseExtrapolator::InitializeWithImu(
+      ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
+      options_.imu_gravity_time_constant(), imu_data);
 }
 
 void OptimizingLocalTrajectoryBuilder::AddOdometryData(
@@ -131,6 +142,19 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
     const std::string& sensor_id,
     const sensor::TimedPointCloudData& range_data) {
   CHECK_GT(range_data.ranges.size(), 0);
+
+  if (extrapolator_ == nullptr) {
+    // Until we've initialized the extrapolator with our first IMU message, we
+    // cannot compute the orientation of the rangefinder.
+    LOG(INFO) << "IMU not yet initialized.";
+    return nullptr;
+  }
+  const common::Time time_first_point =
+      range_data.time + common::FromSeconds(range_data.ranges.front().time);
+  if (time_first_point < extrapolator_->GetLastPoseTime()) {
+    LOG(INFO) << "Extrapolator is still initializing.";
+    // return nullptr;
+  }
 
   // TODO(hrapp): Handle misses.
   // TODO(hrapp): Where are NaNs in range_data_in_tracking coming from?
@@ -353,6 +377,8 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   num_accumulated_ = 0;
 
   const transform::Rigid3d optimized_pose = batches_.back().state.ToRigid();
+
+  extrapolator_->AddPose(time, optimized_pose);
   sensor::RangeData accumulated_range_data_in_tracking = {
       Eigen::Vector3f::Zero(), {}, {}};
 
@@ -409,13 +435,13 @@ OptimizingLocalTrajectoryBuilder::AddAccumulatedRangeData(
     return nullptr;
   }
 
-  const Eigen::Quaterniond kFakeGravityOrientation =
-      Eigen::Quaterniond::Identity();
+  const Eigen::Quaterniond gravity_alignment =
+      extrapolator_->EstimateGravityOrientation(time);
   std::unique_ptr<InsertionResult> insertion_result = InsertIntoSubmap(
       time, filtered_range_data_in_local, filtered_range_data_in_tracking,
       high_resolution_point_cloud_in_tracking,
       low_resolution_point_cloud_in_tracking, optimized_pose,
-      kFakeGravityOrientation);
+      gravity_alignment);
 
   return absl::make_unique<MatchingResult>(MatchingResult{
       time, optimized_pose, std::move(filtered_range_data_in_local),

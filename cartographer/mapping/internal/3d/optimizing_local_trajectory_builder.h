@@ -25,6 +25,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/3d/submap_3d.h"
 #include "cartographer/mapping/internal/motion_filter.h"
+#include "cartographer/mapping/pose_extrapolator.h"
 
 #include "cartographer/metrics/family_factory.h"
 
@@ -140,6 +141,7 @@ class OptimizingLocalTrajectoryBuilder {
   //            PoseEstimate last_pose_estimate_;
 
   MotionFilter motion_filter_;
+  std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
 };
 
 }  // namespace mapping
