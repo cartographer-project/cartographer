@@ -250,9 +250,10 @@ void OptimizingLocalTrajectoryBuilder::TransformStates(
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
 OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
-  // TODO(hrapp): Make the number of optimizations configurable.
   if (num_accumulated_ < options_.num_accumulated_range_data() &&
-      num_accumulated_ % 3 != 0) {
+      num_accumulated_ % options_.optimizing_local_trajectory_builder_options()
+                             .scans_per_optimization_update() !=
+          0) {
     return nullptr;
   }
 

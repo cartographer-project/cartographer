@@ -81,6 +81,6 @@ TRAJECTORY_BUILDER_3D = {
       rotation_weight = 1,
       odometry_translation_weight = 1,
       odometry_rotation_weight = 1,
-    
+      scans_per_optimization_update = 1,    
   },
 }
