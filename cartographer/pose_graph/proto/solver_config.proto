@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "cartographer/common/proto/ceres_solver_options.proto";
+
+package cartographer.pose_graph.proto;
+
+// Configuration for the non-linear least squares solver.
+message SolverConfig {
+  // If true, logs a summary of the optimization in every iteration.
+  bool log_solver_summary = 1;
+
+  // Options specific for the Ceres solver.
+  cartographer.common.proto.CeresSolverOptions ceres_options = 2;
+}
