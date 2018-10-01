@@ -14,32 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_OPTIMIZER_H_
-#define CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_OPTIMIZER_H_
+#ifndef CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_CERES_SOLVER_H_
+#define CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_CERES_SOLVER_H_
 
-#include "cartographer/pose_graph/pose_graph_data.h"
+#include "cartographer/pose_graph/solver/solver.h"
+#include "ceres/problem.h"
+#include "ceres/solver.h"
 
 namespace cartographer {
 namespace pose_graph {
 
-class Optimizer {
+class CeresSolver : public Solver {
  public:
-  enum class SolverStatus {
-    CONVERGENCE,
-    NO_CONVERGENCE,
-    FAILURE,
-  };
+  explicit CeresSolver(const ceres::Solver::Options& options);
 
-  Optimizer() = default;
-  virtual ~Optimizer() = default;
+  SolverStatus Solve(PoseGraphData* data) const final;
 
-  Optimizer(const Optimizer&) = delete;
-  Optimizer& operator=(const Optimizer&) = delete;
-
-  virtual SolverStatus Solve(PoseGraphData* data) const = 0;
+ private:
+  const ceres::Problem::Options problem_options_;
+  const ceres::Solver::Options solver_options_;
 };
 
 }  // namespace pose_graph
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_OPTIMIZER_H_
+#endif  // CARTOGRAPHER_POSE_GRAPH_OPTIMIZER_CERES_SOLVER_H_
