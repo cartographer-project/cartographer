@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/optimizer/ceres_optimizer.h"
+#include "cartographer/pose_graph/solver/ceres_solver.h"
 
 namespace cartographer {
 namespace pose_graph {
@@ -31,28 +31,28 @@ ceres::Problem::Options CreateCeresProblemOptions() {
   return problem_options;
 }
 
-Optimizer::SolverStatus ToSolverStatus(
+Solver::SolverStatus ToSolverStatus(
     const ceres::TerminationType& termination_type) {
   switch (termination_type) {
     case (ceres::TerminationType::CONVERGENCE):
-      return Optimizer::SolverStatus::CONVERGENCE;
+      return Solver::SolverStatus::CONVERGENCE;
     case (ceres::TerminationType::NO_CONVERGENCE):
-      return Optimizer::SolverStatus::NO_CONVERGENCE;
+      return Solver::SolverStatus::NO_CONVERGENCE;
     default:
-      return Optimizer::SolverStatus::FAILURE;
+      return Solver::SolverStatus::FAILURE;
   }
 }
 
 }  // namespace
 
-CeresOptimizer::CeresOptimizer(const ceres::Solver::Options& options)
+CeresSolver::CeresSolver(const ceres::Solver::Options& options)
     : problem_options_(CreateCeresProblemOptions()), solver_options_(options) {}
 
-Optimizer::SolverStatus CeresOptimizer::Solve(PoseGraphData* data) const {
+Solver::SolverStatus CeresSolver::Solve(PoseGraphData* data) const {
   ceres::Problem problem(problem_options_);
 
   for (const auto& constraint : data->constraints) {
-    constraint->AddToOptimizer(&data->nodes, &problem);
+    constraint->AddToSolver(&data->nodes, &problem);
   }
 
   ceres::Solver::Summary summary;

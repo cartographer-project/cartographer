@@ -18,15 +18,15 @@
 #define CARTOGRAPHER_POSE_GRAPH_POSE_GRAPH_CONTROLLER_H_
 
 #include "absl/synchronization/mutex.h"
-#include "cartographer/pose_graph/optimizer/optimizer.h"
 #include "cartographer/pose_graph/pose_graph_data.h"
+#include "cartographer/pose_graph/solver/solver.h"
 
 namespace cartographer {
 namespace pose_graph {
 
 class PoseGraphController {
-  PoseGraphController(std::unique_ptr<Optimizer> optimizer)
-      : optimizer_(std::move(optimizer)) {}
+  PoseGraphController(std::unique_ptr<Solver> optimizer)
+      : solver_(std::move(optimizer)) {}
 
   PoseGraphController(const PoseGraphController&) = delete;
   PoseGraphController& operator=(const PoseGraphController&) = delete;
@@ -35,10 +35,10 @@ class PoseGraphController {
   void AddConstraint(const proto::Constraint& constraint)
       LOCKS_EXCLUDED(mutex_);
 
-  Optimizer::SolverStatus Optimize() LOCKS_EXCLUDED(mutex_);
+  Solver::SolverStatus Optimize() LOCKS_EXCLUDED(mutex_);
 
  private:
-  std::unique_ptr<Optimizer> optimizer_;
+  std::unique_ptr<Solver> solver_;
 
   mutable absl::Mutex mutex_;
   PoseGraphData data_ GUARDED_BY(mutex_);
