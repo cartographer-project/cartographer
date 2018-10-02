@@ -28,11 +28,15 @@ namespace pose_graph {
 
 struct NodeId {
   NodeId(const std::string& object_id, common::Time time);
+  NodeId(const std::string& object_id, const std::string& group_id,
+         common::Time time);
   explicit NodeId(const proto::NodeId& node_id);
 
   // Object refers to dynamic/static objects, e.g. robot/landmark/submap poses,
   // IMU calibration, etc.
   std::string object_id;
+  // Id of the group to which the node belongs, e.g. "submap".
+  std::string group_id;
   // Time associated with the object's pose.
   common::Time time;
 
@@ -40,12 +44,17 @@ struct NodeId {
 };
 
 inline bool operator<(const NodeId& lhs, const NodeId& rhs) {
-  return std::forward_as_tuple(lhs.object_id, lhs.time) <
-         std::forward_as_tuple(rhs.object_id, rhs.time);
+  return std::forward_as_tuple(lhs.object_id, lhs.group_id, lhs.time) <
+         std::forward_as_tuple(rhs.object_id, rhs.group_id, rhs.time);
 }
 
 inline std::ostream& operator<<(std::ostream& os, const NodeId& id) {
-  return os << "(object_id: " << id.object_id << ", time: " << id.time << ")";
+  std::string group_message;
+  if (!id.group_id.empty()) {
+    group_message = ", group_id: " + id.group_id;
+  }
+  return os << "(object_id: " << id.object_id << group_message
+            << ", time: " << id.time << ")";
 }
 
 }  // namespace pose_graph
