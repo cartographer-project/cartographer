@@ -18,9 +18,10 @@
 #define CARTOGRAPHER_SENSOR_INTERNAL_TRAJECTORY_COLLATOR_H_
 
 #include <memory>
-#include <unordered_map>
 #include <vector>
+#include "unordered_map"
 
+#include "absl/container/flat_hash_map.h"
 #include "cartographer/metrics/counter.h"
 #include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/collator_interface.h"

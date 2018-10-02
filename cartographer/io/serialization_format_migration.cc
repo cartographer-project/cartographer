@@ -16,9 +16,9 @@
 
 #include "cartographer/io/serialization_format_migration.h"
 
-#include <unordered_map>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "cartographer/mapping/3d/submap_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
 #include "cartographer/mapping/probability_values.h"
@@ -32,7 +32,7 @@ namespace io {
 namespace {
 
 using mapping::proto::SerializedData;
-using ProtoMap = std::unordered_map<int, std::vector<SerializedData>>;
+using ProtoMap = absl::flat_hash_map<int, std::vector<SerializedData>>;
 
 bool ReadPoseGraph(cartographer::io::ProtoStreamReaderInterface* const input,
                    ProtoMap* proto_map) {
