@@ -55,7 +55,7 @@ LocalTrajectoryBuilder3D::LocalTrajectoryBuilder3D(
               options_.real_time_correlative_scan_matcher_options())),
       ceres_scan_matcher_(absl::make_unique<scan_matching::CeresScanMatcher3D>(
           options_.ceres_scan_matcher_options())),
-      accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}},
+      accumulated_range_data_in_local_{Eigen::Vector3f::Zero(), {}, {}},
       range_data_collator_(expected_range_sensor_ids) {}
 
 LocalTrajectoryBuilder3D::~LocalTrajectoryBuilder3D() {}
@@ -172,7 +172,7 @@ LocalTrajectoryBuilder3D::AddRangeData(
 
   if (num_accumulated_ == 0) {
     // 'accumulated_range_data_.origin' is not used.
-    accumulated_range_data_ = sensor::RangeData{{}, {}, {}};
+    accumulated_range_data_in_local_ = sensor::RangeData{{}, {}, {}};
   }
 
   for (size_t i = 0; i < hits.size(); ++i) {
@@ -184,14 +184,14 @@ LocalTrajectoryBuilder3D::AddRangeData(
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
-        accumulated_range_data_.returns.push_back(hit_in_local);
+        accumulated_range_data_in_local_.returns.push_back(hit_in_local);
       } else {
         // We insert a ray cropped to 'max_range' as a miss for hits beyond the
         // maximum range. This way the free space up to the maximum range will
         // be updated.
         hit_in_local.position =
             origin_in_local + options_.max_range() / range * delta;
-        accumulated_range_data_.misses.push_back(hit_in_local);
+        accumulated_range_data_in_local_.misses.push_back(hit_in_local);
       }
     }
   }
@@ -209,12 +209,12 @@ LocalTrajectoryBuilder3D::AddRangeData(
         extrapolator_->ExtrapolatePose(current_sensor_time).cast<float>();
 
     const auto voxel_filter_start = std::chrono::steady_clock::now();
-    const sensor::RangeData filtered_range_data = {
+    const sensor::RangeData filtered_range_data_in_local = {
         current_pose.translation(),
         sensor::VoxelFilter(options_.voxel_filter_size())
-            .Filter(accumulated_range_data_.returns),
+            .Filter(accumulated_range_data_in_local_.returns),
         sensor::VoxelFilter(options_.voxel_filter_size())
-            .Filter(accumulated_range_data_.misses)};
+            .Filter(accumulated_range_data_in_local_.misses)};
     const auto voxel_filter_stop = std::chrono::steady_clock::now();
     const auto voxel_filter_duration = voxel_filter_stop - voxel_filter_start;
 
@@ -227,7 +227,8 @@ LocalTrajectoryBuilder3D::AddRangeData(
 
     return AddAccumulatedRangeData(
         current_sensor_time,
-        sensor::TransformRangeData(filtered_range_data, current_pose.inverse()),
+        sensor::TransformRangeData(filtered_range_data_in_local,
+                                   current_pose.inverse()),
         sensor_duration);
   }
   return nullptr;

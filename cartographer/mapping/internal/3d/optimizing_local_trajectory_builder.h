@@ -132,6 +132,7 @@ class OptimizingLocalTrajectoryBuilder {
   const ceres::Solver::Options ceres_solver_options_;
   mapping::ActiveSubmaps3D active_submaps_;
   int num_accumulated_;
+  int total_num_accumulated_;
 
   std::deque<Batch> batches_;
   double gravity_constant_ = 9.8;

@@ -106,7 +106,7 @@ class LocalTrajectoryBuilder3D {
   std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
 
   int num_accumulated_ = 0;
-  sensor::RangeData accumulated_range_data_;
+  sensor::RangeData accumulated_range_data_in_local_;
   absl::optional<std::chrono::steady_clock::time_point> last_wall_time_;
 
   absl::optional<double> last_thread_cpu_time_seconds_;

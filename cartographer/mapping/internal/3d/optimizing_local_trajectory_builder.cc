@@ -110,6 +110,7 @@ OptimizingLocalTrajectoryBuilder::OptimizingLocalTrajectoryBuilder(
           options.ceres_scan_matcher_options().ceres_solver_options())),
       active_submaps_(options.submaps_options()),
       num_accumulated_(0),
+      total_num_accumulated_(0),
       motion_filter_(options.motion_filter_options()) {}
 
 OptimizingLocalTrajectoryBuilder::~OptimizingLocalTrajectoryBuilder() {}
@@ -194,7 +195,8 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
     batches_.push_back(
         Batch{range_data.time, point_cloud, high_resolution_filtered_points,
               low_resolution_filtered_points,
-              State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
+              State(Eigen::Vector3d::Zero(),
+                    extrapolator_->EstimateGravityOrientation(range_data.time),
                     Eigen::Vector3d::Zero())});
   } else {
     const Batch& last_batch = batches_.back();
@@ -207,6 +209,7 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
     });
   }
   ++num_accumulated_;
+  ++total_num_accumulated_;
 
   RemoveObsoleteSensorData();
   return MaybeOptimize(range_data.time);
@@ -250,15 +253,17 @@ void OptimizingLocalTrajectoryBuilder::TransformStates(
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
 OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
-  if (num_accumulated_ < options_.num_accumulated_range_data() &&
-      num_accumulated_ % options_.optimizing_local_trajectory_builder_options()
-                             .scans_per_optimization_update() !=
-          0) {
+  if ((num_accumulated_ < options_.num_accumulated_range_data() &&
+       num_accumulated_ % options_.optimizing_local_trajectory_builder_options()
+                              .scans_per_optimization_update() !=
+           0) ||
+      total_num_accumulated_ < options_.num_accumulated_range_data()) {
     return nullptr;
   }
 
   ceres::Problem problem;
-  if (!active_submaps_.submaps().empty()) {
+  if (!active_submaps_.submaps().empty() &&
+      (total_num_accumulated_ >= options_.num_accumulated_range_data())) {
     std::shared_ptr<const Submap3D> matching_submap =
         active_submaps_.submaps().front();
 
@@ -370,28 +375,49 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     // The optimized states in 'batches_' are in the submap frame and we
     // transform them in place to be in the local SLAM frame again.
     TransformStates(matching_submap->local_pose());
-    if (num_accumulated_ < options_.num_accumulated_range_data()) {
+    if (num_accumulated_ %
+                options_.optimizing_local_trajectory_builder_options()
+                    .scans_per_optimization_update() !=
+            0 &&
+        active_submaps_.submaps().front()->num_range_data() <
+            options_.num_accumulated_range_data()) {
+      LOG(INFO) << "num_accumulated_ < options_.num_accumulated_range_data() "
+                << num_accumulated_;
       return nullptr;
     }
   }
 
   num_accumulated_ = 0;
-
-  const transform::Rigid3d optimized_pose = batches_.back().state.ToRigid();
-
-  extrapolator_->AddPose(time, optimized_pose);
+  const transform::Rigid3d optimized_pose = batches_.front().state.ToRigid();
+  extrapolator_->AddPose(batches_.front().time, optimized_pose);
   sensor::RangeData accumulated_range_data_in_tracking = {
       Eigen::Vector3f::Zero(), {}, {}};
 
-  for (const auto& batch : batches_) {
-    const transform::Rigid3f transform =
-        (optimized_pose.inverse() * batch.state.ToRigid()).cast<float>();
-    for (const auto& point : batch.points) {
-      accumulated_range_data_in_tracking.returns.push_back(transform * point);
+  if (active_submaps_.submaps().empty()) {
+    for (const auto& batch : batches_) {
+      const transform::Rigid3f transform =
+          (optimized_pose.inverse() * batch.state.ToRigid()).cast<float>();
+      for (const auto& point : batch.points) {
+        accumulated_range_data_in_tracking.returns.push_back(transform * point);
+      }
+    }
+  } else {
+    for (int i = 0; i < options_.optimizing_local_trajectory_builder_options()
+                            .scans_per_optimization_update();
+         ++i) {
+      if (batches_.size() > i) {
+        Batch batch = batches_[i];
+        const transform::Rigid3f transform =
+            (optimized_pose.inverse() * batch.state.ToRigid()).cast<float>();
+        for (const auto& point : batch.points) {
+          accumulated_range_data_in_tracking.returns.push_back(transform *
+                                                               point);
+        }
+      }
     }
   }
 
-  return AddAccumulatedRangeData(time, optimized_pose,
+  return AddAccumulatedRangeData(batches_.front().time, optimized_pose,
                                  accumulated_range_data_in_tracking);
 }
 
