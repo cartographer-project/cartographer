@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/container/flat_hash_map.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
 #include "cartographer/metrics/counter.h"
@@ -59,7 +60,7 @@ class AddSensorDataBatchHandler
       counter_metrics_family_;
 
   // Holds individual metrics for each client.
-  std::unordered_map<std::string, std::unique_ptr<ClientMetrics>>
+  absl::flat_hash_map<std::string, std::unique_ptr<ClientMetrics>>
       client_metric_map_;
 };
 

@@ -256,9 +256,9 @@ def cartographer_repositories():
 
     _maybe(native.http_archive,
         name = "com_google_absl",
-        sha256 = "387cf016ab1ab8530d1cea8975276ce8d8bff355133776129bdc400d05519eb6",
-        strip_prefix = "abseil-cpp-44aa275286baf97fc13529aca547a88b180beb08",
-        urls = ["https://github.com/abseil/abseil-cpp/archive/44aa275286baf97fc13529aca547a88b180beb08.tar.gz"],
+        sha256 = "c8ba586a9ab12bc4a67bb419fc0d2146200942b072bac95f50490f977b7fb04f",
+        strip_prefix = "abseil-cpp-5441bbe1db5d0f2ca24b5b60166367b0966790af",
+        urls = ["https://github.com/abseil/abseil-cpp/archive/5441bbe1db5d0f2ca24b5b60166367b0966790af.tar.gz"],
     )
 
     # TODO(rodrigoq): remove these binds once grpc#14140 has been merged, as well
