@@ -59,10 +59,14 @@ class MapBuilder : public MapBuilderInterface {
   void SerializeState(bool include_unfinished_submaps,
                       io::ProtoStreamWriterInterface *writer) override;
 
+  bool SerializeStateToFile(bool include_unfinished_submaps,
+                            const std::string &filename) override;
+
   std::map<int, int> LoadState(io::ProtoStreamReaderInterface *reader,
                                bool load_frozen_state) override;
 
-  std::map<int, int> LoadStateFromFile(const std::string &filename) override;
+  std::map<int, int> LoadStateFromFile(const std::string &filename,
+                                       const bool load_frozen_state) override;
 
   mapping::PoseGraphInterface *pose_graph() override {
     return pose_graph_.get();

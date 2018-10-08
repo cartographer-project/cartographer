@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/pose_graph/optimizer/ceres_optimizer.h"
+#include "cartographer/pose_graph/solver/ceres_solver.h"
 
 #include "absl/memory/memory.h"
 #include "cartographer/pose_graph/constraint/relative_pose_constraint_2d.h"
@@ -67,14 +67,14 @@ constexpr char kRelativePose2D[] = R"PROTO(
   }
 )PROTO";
 
-TEST(CeresOptimizerTest, SmokeTest) {
+TEST(CeresSolverTest, SmokeTest) {
   PoseGraphData data;
   AddNodeToPoseGraphData(ParseProto<proto::Node>(kStartNode), &data);
   AddNodeToPoseGraphData(ParseProto<proto::Node>(kEndNode), &data);
   AddConstraintToPoseGraphData(ParseProto<proto::Constraint>(kRelativePose2D),
                                &data);
-  CeresOptimizer optimizer(ceres::Solver::Options{});
-  EXPECT_EQ(optimizer.Solve(&data), Optimizer::SolverStatus::CONVERGENCE);
+  CeresSolver optimizer(ceres::Solver::Options{});
+  EXPECT_EQ(optimizer.Solve(&data), Solver::SolverStatus::CONVERGENCE);
 }
 
 }  // namespace

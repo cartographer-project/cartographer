@@ -18,8 +18,8 @@
 #define CARTOGRAPHER_MAPPING_INTERNAL_CONNECTED_COMPONENTS_H_
 
 #include <map>
-#include <unordered_map>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "cartographer/mapping/proto/connected_components.pb.h"
 #include "cartographer/mapping/submaps.h"

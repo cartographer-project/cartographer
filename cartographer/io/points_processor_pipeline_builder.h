@@ -18,9 +18,9 @@
 #define CARTOGRAPHER_IO_POINTS_PROCESSOR_PIPELINE_BUILDER_H_
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_processor.h"
@@ -55,7 +55,7 @@ class PointsProcessorPipelineBuilder {
       common::LuaParameterDictionary* dictionary) const;
 
  private:
-  std::unordered_map<std::string, FactoryFunction> factories_;
+  absl::flat_hash_map<std::string, FactoryFunction> factories_;
 };
 
 // Register all 'PointsProcessor' that ship with Cartographer with this
