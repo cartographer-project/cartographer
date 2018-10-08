@@ -15,8 +15,8 @@
  */
 
 #include <functional>
-#include <unordered_set>
 
+#include "absl/container/flat_hash_set.h"
 #include "cartographer/io/internal/pbstream_info.h"
 #include "cartographer/io/internal/pbstream_migrate.h"
 #include "gflags/gflags.h"

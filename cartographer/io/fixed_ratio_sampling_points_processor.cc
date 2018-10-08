@@ -42,7 +42,7 @@ FixedRatioSamplingPointsProcessor::FixedRatioSamplingPointsProcessor(
 
 void FixedRatioSamplingPointsProcessor::Process(
     std::unique_ptr<PointsBatch> batch) {
-  std::unordered_set<int> to_remove;
+  absl::flat_hash_set<int> to_remove;
   for (size_t i = 0; i < batch->points.size(); ++i) {
     if (!sampler_->Pulse()) {
       to_remove.insert(i);
