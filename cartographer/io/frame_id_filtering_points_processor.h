@@ -17,8 +17,7 @@
 #ifndef CARTOGRAPHER_IO_FRAME_ID_FILTERING_POINTS_PROCESSOR_H_
 #define CARTOGRAPHER_IO_FRAME_ID_FILTERING_POINTS_PROCESSOR_H_
 
-#include <unordered_set>
-
+#include "absl/container/flat_hash_set.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_processor.h"
 
@@ -32,8 +31,8 @@ class FrameIdFilteringPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName = "frame_id_filter";
   FrameIdFilteringPointsProcessor(
-      const std::unordered_set<std::string>& keep_frame_ids,
-      const std::unordered_set<std::string>& drop_frame_ids,
+      const absl::flat_hash_set<std::string>& keep_frame_ids,
+      const absl::flat_hash_set<std::string>& drop_frame_ids,
       PointsProcessor* next);
   static std::unique_ptr<FrameIdFilteringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
@@ -48,8 +47,8 @@ class FrameIdFilteringPointsProcessor : public PointsProcessor {
   FlushResult Flush() override;
 
  private:
-  const std::unordered_set<std::string> keep_frame_ids_;
-  const std::unordered_set<std::string> drop_frame_ids_;
+  const absl::flat_hash_set<std::string> keep_frame_ids_;
+  const absl::flat_hash_set<std::string> drop_frame_ids_;
   PointsProcessor* const next_;
 };
 

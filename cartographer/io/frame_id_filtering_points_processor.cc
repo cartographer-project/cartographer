@@ -37,14 +37,14 @@ FrameIdFilteringPointsProcessor::FromDictionary(
         dictionary->GetDictionary("drop_frames")->GetArrayValuesAsStrings();
   }
   return absl::make_unique<FrameIdFilteringPointsProcessor>(
-      std::unordered_set<std::string>(keep_frames.begin(), keep_frames.end()),
-      std::unordered_set<std::string>(drop_frames.begin(), drop_frames.end()),
+      absl::flat_hash_set<std::string>(keep_frames.begin(), keep_frames.end()),
+      absl::flat_hash_set<std::string>(drop_frames.begin(), drop_frames.end()),
       next);
 }
 
 FrameIdFilteringPointsProcessor::FrameIdFilteringPointsProcessor(
-    const std::unordered_set<std::string>& keep_frame_ids,
-    const std::unordered_set<std::string>& drop_frame_ids,
+    const absl::flat_hash_set<std::string>& keep_frame_ids,
+    const absl::flat_hash_set<std::string>& drop_frame_ids,
     PointsProcessor* next)
     : keep_frame_ids_(keep_frame_ids),
       drop_frame_ids_(drop_frame_ids),

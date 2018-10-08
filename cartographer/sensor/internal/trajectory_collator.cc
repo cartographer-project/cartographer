@@ -25,7 +25,7 @@ metrics::Family<metrics::Counter>*
 
 void TrajectoryCollator::AddTrajectory(
     const int trajectory_id,
-    const std::unordered_set<std::string>& expected_sensor_ids,
+    const absl::flat_hash_set<std::string>& expected_sensor_ids,
     const Callback& callback) {
   CHECK_EQ(trajectory_to_queue_.count(trajectory_id), 0);
   for (const auto& sensor_id : expected_sensor_ids) {
