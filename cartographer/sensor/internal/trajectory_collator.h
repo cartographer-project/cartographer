@@ -42,9 +42,10 @@ class TrajectoryCollator : public CollatorInterface {
   TrajectoryCollator(const TrajectoryCollator&) = delete;
   TrajectoryCollator& operator=(const TrajectoryCollator&) = delete;
 
-  void AddTrajectory(int trajectory_id,
-                     const std::unordered_set<std::string>& expected_sensor_ids,
-                     const Callback& callback) override;
+  void AddTrajectory(
+      int trajectory_id,
+      const absl::flat_hash_set<std::string>& expected_sensor_ids,
+      const Callback& callback) override;
 
   void FinishTrajectory(int trajectory_id) override;
 
