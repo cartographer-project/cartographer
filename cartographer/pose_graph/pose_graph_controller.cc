@@ -19,6 +19,16 @@
 namespace cartographer {
 namespace pose_graph {
 
+void PoseGraphController::AddData(const proto::PoseGraphData& data) {
+  absl::MutexLock locker(&mutex_);
+  for (const auto& node : data.nodes()) {
+    AddNodeToPoseGraphData(node, &data_);
+  }
+  for (const auto& constraint : data.constraints()) {
+    AddConstraintToPoseGraphData(constraint, &data_);
+  }
+}
+
 void PoseGraphController::AddNode(const proto::Node& node) {
   absl::MutexLock locker(&mutex_);
   AddNodeToPoseGraphData(node, &data_);
