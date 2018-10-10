@@ -19,6 +19,7 @@
 
 #include "absl/synchronization/mutex.h"
 #include "cartographer/pose_graph/pose_graph_data.h"
+#include "cartographer/pose_graph/proto/pose_graph_data.pb.h"
 #include "cartographer/pose_graph/solver/solver.h"
 
 namespace cartographer {
@@ -32,6 +33,7 @@ class PoseGraphController {
   PoseGraphController(const PoseGraphController&) = delete;
   PoseGraphController& operator=(const PoseGraphController&) = delete;
 
+  void AddData(const proto::PoseGraphData& data) LOCKS_EXCLUDED(mutex_);
   void AddNode(const proto::Node& node) LOCKS_EXCLUDED(mutex_);
   void AddConstraint(const proto::Constraint& constraint)
       LOCKS_EXCLUDED(mutex_);
