@@ -388,8 +388,10 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   }
 
   num_accumulated_ = 0;
-  const transform::Rigid3d optimized_pose = batches_.front().state.ToRigid();
-  extrapolator_->AddPose(batches_.front().time, optimized_pose);
+
+  const transform::Rigid3d optimized_pose = batches_.back().state.ToRigid();
+
+  extrapolator_->AddPose(time, optimized_pose);
   sensor::RangeData accumulated_range_data_in_tracking = {
       Eigen::Vector3f::Zero(), {}, {}};
 
@@ -402,9 +404,10 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
       }
     }
   } else {
-    for (int i = 0; i < options_.optimizing_local_trajectory_builder_options()
-                            .scans_per_optimization_update();
-         ++i) {
+    for (int i = options_.optimizing_local_trajectory_builder_options()
+                     .scans_per_optimization_update() -
+                 1;
+         i >= 0; --i) {
       if (batches_.size() > i) {
         Batch batch = batches_[i];
         const transform::Rigid3f transform =
@@ -417,7 +420,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     }
   }
 
-  return AddAccumulatedRangeData(batches_.front().time, optimized_pose,
+  return AddAccumulatedRangeData(time, optimized_pose,
                                  accumulated_range_data_in_tracking);
 }
 
