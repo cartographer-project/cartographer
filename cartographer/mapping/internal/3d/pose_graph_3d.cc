@@ -53,8 +53,7 @@ PoseGraph3D::PoseGraph3D(
 PoseGraph3D::~PoseGraph3D() {
   {
     absl::MutexLock locker(&work_queue_mutex_);
-    if (work_queue_)
-      work_queue_->clear();
+    if (work_queue_) work_queue_->clear();
   }
   WaitForAllComputations();
   absl::MutexLock locker(&work_queue_mutex_);
