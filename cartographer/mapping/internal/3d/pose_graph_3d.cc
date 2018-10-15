@@ -51,6 +51,11 @@ PoseGraph3D::PoseGraph3D(
       thread_pool_(thread_pool) {}
 
 PoseGraph3D::~PoseGraph3D() {
+  {
+    absl::MutexLock locker(&work_queue_mutex_);
+    if (work_queue_)
+      work_queue_->clear();
+  }
   WaitForAllComputations();
   absl::MutexLock locker(&work_queue_mutex_);
   CHECK(work_queue_ == nullptr);
@@ -560,7 +565,7 @@ void PoseGraph3D::WaitForAllComputations() {
                                   absl::FromChrono(common::FromSeconds(1.)))) {
     report_progress();
   }
-  CHECK_EQ(constraint_builder_.GetNumFinishedNodes(), num_trajectory_nodes);
+  // CHECK_EQ(constraint_builder_.GetNumFinishedNodes(), num_trajectory_nodes);
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
 }
 
