@@ -15,8 +15,6 @@
  */
 #include "cartographer/mapping/2d/grid_2d.h"
 
-#include "cartographer/mapping/probability_values.h"
-
 namespace cartographer {
 namespace mapping {
 namespace {
@@ -107,20 +105,6 @@ void Grid2D::FinishUpdate() {
   }
 }
 
-// Returns the correspondence cost of the cell with 'cell_index'.
-float Grid2D::GetCorrespondenceCost(const Eigen::Array2i& cell_index) const {
-  if (!limits().Contains(cell_index)) return max_correspondence_cost_;
-  return (*value_to_correspondence_cost_table_)
-      [correspondence_cost_cells()[ToFlatIndex(cell_index)]];
-}
-
-// Returns true if the correspondence cost at the specified index is known.
-bool Grid2D::IsKnown(const Eigen::Array2i& cell_index) const {
-  return limits_.Contains(cell_index) &&
-         correspondence_cost_cells_[ToFlatIndex(cell_index)] !=
-             kUnknownCorrespondenceValue;
-}
-
 // Fills in 'offset' and 'limits' to define a subregion of that contains all
 // known cells.
 void Grid2D::ComputeCroppedLimits(Eigen::Array2i* const offset,
@@ -196,11 +180,6 @@ proto::Grid2D Grid2D::ToProto() const {
   result.set_min_correspondence_cost(min_correspondence_cost_);
   result.set_max_correspondence_cost(max_correspondence_cost_);
   return result;
-}
-
-int Grid2D::ToFlatIndex(const Eigen::Array2i& cell_index) const {
-  CHECK(limits_.Contains(cell_index)) << cell_index;
-  return limits_.cell_limits().num_x_cells * cell_index.y() + cell_index.x();
 }
 
 }  // namespace mapping
