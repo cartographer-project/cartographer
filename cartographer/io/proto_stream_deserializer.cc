@@ -31,7 +31,8 @@ mapping::proto::SerializationHeader ReadHeaderOrDie(
 }
 
 bool IsVersionSupported(const mapping::proto::SerializationHeader& header) {
-  return header.format_version() == kMappingStateSerializationFormatVersion;
+  return header.format_version() == kMappingStateSerializationFormatVersion ||
+         header.format_version() == kFormatVersionWithoutSubmapHistograms;
 }
 
 }  // namespace

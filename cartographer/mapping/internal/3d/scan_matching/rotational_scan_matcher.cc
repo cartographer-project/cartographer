@@ -133,6 +133,11 @@ float MatchHistograms(const Eigen::VectorXf& submap_histogram,
 
 }  // namespace
 
+RotationalScanMatcher::RotationalScanMatcher(const Eigen::VectorXf* histogram)
+    : histogram_(histogram) {}
+
+// Rotates the given 'histogram' by the given 'angle'. This might lead to
+// rotations of a fractional bucket which is handled by linearly interpolating.
 Eigen::VectorXf RotationalScanMatcher::RotateHistogram(
     const Eigen::VectorXf& histogram, const float angle) {
   const float rotate_by_buckets = -angle * histogram.size() / M_PI;
@@ -166,19 +171,6 @@ Eigen::VectorXf RotationalScanMatcher::ComputeHistogram(
   return histogram;
 }
 
-RotationalScanMatcher::RotationalScanMatcher(const Eigen::VectorXf& histogram)
-    : histogram_(histogram) {}
-
-RotationalScanMatcher::RotationalScanMatcher(
-    const std::vector<std::pair<Eigen::VectorXf, float>>& histograms_at_angles)
-    : histogram_(
-          Eigen::VectorXf::Zero(histograms_at_angles.at(0).first.size())) {
-  for (const auto& histogram_at_angle : histograms_at_angles) {
-    histogram_ +=
-        RotateHistogram(histogram_at_angle.first, histogram_at_angle.second);
-  }
-}
-
 std::vector<float> RotationalScanMatcher::Match(
     const Eigen::VectorXf& histogram, const float initial_angle,
     const std::vector<float>& angles) const {
@@ -187,7 +179,7 @@ std::vector<float> RotationalScanMatcher::Match(
   for (const float angle : angles) {
     const Eigen::VectorXf scan_histogram =
         RotateHistogram(histogram, initial_angle + angle);
-    result.push_back(MatchHistograms(histogram_, scan_histogram));
+    result.push_back(MatchHistograms(*histogram_, scan_histogram));
   }
   return result;
 }

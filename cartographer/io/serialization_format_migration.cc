@@ -16,9 +16,11 @@
 
 #include "cartographer/io/serialization_format_migration.h"
 
-#include <unordered_map>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
+#include "cartographer/mapping/3d/submap_3d.h"
+#include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping/proto/internal/legacy_serialized_data.pb.h"
 #include "cartographer/mapping/proto/internal/legacy_submap.pb.h"
@@ -30,7 +32,7 @@ namespace io {
 namespace {
 
 using mapping::proto::SerializedData;
-using ProtoMap = std::unordered_map<int, std::vector<SerializedData>>;
+using ProtoMap = absl::flat_hash_map<int, std::vector<SerializedData>>;
 
 bool ReadPoseGraph(cartographer::io::ProtoStreamReaderInterface* const input,
                    ProtoMap* proto_map) {
@@ -276,6 +278,7 @@ void SerializeToVersion1Format(
       SerializedData::kFixedFramePoseDataFieldNumber,
       SerializedData::kLandmarkDataFieldNumber};
 
+  LOG(INFO) << "Writing proto stream.";
   output->WriteProto(CreateSerializationHeader());
   for (auto field_index : kFieldSerializationOrder) {
     const auto proto_vector_it = deserialized_data.find(field_index);
@@ -293,6 +296,69 @@ void MigrateStreamFormatToVersion1(
     bool migrate_grid_format) {
   SerializeToVersion1Format(ParseLegacyData(input, migrate_grid_format),
                             output);
+}
+
+mapping::MapById<mapping::SubmapId, mapping::proto::Submap>
+MigrateSubmapFormatVersion1ToVersion2(
+    const mapping::MapById<mapping::SubmapId, mapping::proto::Submap>&
+        submap_id_to_submap,
+    mapping::MapById<mapping::NodeId, mapping::proto::Node>& node_id_to_node,
+    const mapping::proto::PoseGraph& pose_graph_proto) {
+  using namespace mapping;
+  if (submap_id_to_submap.empty() ||
+      submap_id_to_submap.begin()->data.has_submap_2d()) {
+    return submap_id_to_submap;
+  }
+
+  MapById<SubmapId, proto::Submap> migrated_submaps = submap_id_to_submap;
+  for (const proto::PoseGraph::Constraint& constraint_proto :
+       pose_graph_proto.constraint()) {
+    if (constraint_proto.tag() == proto::PoseGraph::Constraint::INTRA_SUBMAP) {
+      NodeId node_id{constraint_proto.node_id().trajectory_id(),
+                     constraint_proto.node_id().node_index()};
+      CHECK(node_id_to_node.Contains(node_id));
+      const TrajectoryNode::Data node_data =
+          FromProto(node_id_to_node.at(node_id).node_data());
+      const Eigen::VectorXf& rotational_scan_matcher_histogram_in_gravity =
+          node_data.rotational_scan_matcher_histogram;
+
+      SubmapId submap_id{constraint_proto.submap_id().trajectory_id(),
+                         constraint_proto.submap_id().submap_index()};
+      CHECK(migrated_submaps.Contains(submap_id));
+      proto::Submap& migrated_submap_proto = migrated_submaps.at(submap_id);
+      CHECK(migrated_submap_proto.has_submap_3d());
+
+      proto::Submap3D* submap_3d_proto =
+          migrated_submap_proto.mutable_submap_3d();
+      const double submap_yaw_from_gravity =
+          transform::GetYaw(transform::ToRigid3(submap_3d_proto->local_pose())
+                                .inverse()
+                                .rotation() *
+                            node_data.local_pose.rotation() *
+                            node_data.gravity_alignment.inverse());
+      const Eigen::VectorXf rotational_scan_matcher_histogram_in_submap =
+          scan_matching::RotationalScanMatcher::RotateHistogram(
+              rotational_scan_matcher_histogram_in_gravity,
+              submap_yaw_from_gravity);
+
+      if (submap_3d_proto->rotational_scan_matcher_histogram_size() == 0) {
+        for (Eigen::VectorXf::Index i = 0;
+             i != rotational_scan_matcher_histogram_in_submap.size(); ++i) {
+          submap_3d_proto->add_rotational_scan_matcher_histogram(
+              rotational_scan_matcher_histogram_in_submap(i));
+        }
+      } else {
+        auto submap_histogram =
+            submap_3d_proto->mutable_rotational_scan_matcher_histogram();
+        for (Eigen::VectorXf::Index i = 0;
+             i != rotational_scan_matcher_histogram_in_submap.size(); ++i) {
+          *submap_histogram->Mutable(i) +=
+              rotational_scan_matcher_histogram_in_submap(i);
+        }
+      }
+    }
+  }
+  return migrated_submaps;
 }
 
 }  // namespace io

@@ -78,7 +78,6 @@ class ConstraintBuilder3D {
   void MaybeAddConstraint(const SubmapId& submap_id, const Submap3D* submap,
                           const NodeId& node_id,
                           const TrajectoryNode::Data* const constant_data,
-                          const std::vector<TrajectoryNode>& submap_nodes,
                           const transform::Rigid3d& global_node_pose,
                           const transform::Rigid3d& global_submap_pose);
 
@@ -94,7 +93,6 @@ class ConstraintBuilder3D {
   void MaybeAddGlobalConstraint(
       const SubmapId& submap_id, const Submap3D* submap, const NodeId& node_id,
       const TrajectoryNode::Data* const constant_data,
-      const std::vector<TrajectoryNode>& submap_nodes,
       const Eigen::Quaterniond& global_node_rotation,
       const Eigen::Quaterniond& global_submap_rotation);
 
@@ -126,8 +124,7 @@ class ConstraintBuilder3D {
   // The returned 'grid' and 'fast_correlative_scan_matcher' must only be
   // accessed after 'creation_task_handle' has completed.
   const SubmapScanMatcher* DispatchScanMatcherConstruction(
-      const SubmapId& submap_id,
-      const std::vector<TrajectoryNode>& submap_nodes, const Submap3D* submap)
+      const SubmapId& submap_id, const Submap3D* submap)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Runs in a background thread and does computations for an additional

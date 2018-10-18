@@ -29,7 +29,7 @@ class RelativePoseConstraint3D : public Constraint {
                            const proto::LossFunction& loss_function_proto,
                            const proto::RelativePose3D& proto);
 
-  void AddToOptimizer(Nodes* nodes, ceres::Problem* problem) const final;
+  void AddToSolver(Nodes* nodes, ceres::Problem* problem) const final;
 
  protected:
   proto::CostFunction ToCostFunctionProto() const final;

@@ -24,10 +24,13 @@ namespace mapping {
 namespace {
 
 TEST(SubmapsTest, ToFromProto) {
+  Eigen::VectorXf histogram(2);
+  histogram << 1.0f, 2.0f;
   const Submap3D expected(
       0.05, 0.25,
       transform::Rigid3d(Eigen::Vector3d(1., 2., 0.),
-                         Eigen::Quaterniond(0., 0., 0., 1.)));
+                         Eigen::Quaterniond(0., 0., 0., 1.)),
+      histogram);
   const proto::Submap proto =
       expected.ToProto(true /* include_probability_grid_data */);
   EXPECT_FALSE(proto.has_submap_2d());
@@ -41,6 +44,8 @@ TEST(SubmapsTest, ToFromProto) {
   EXPECT_EQ(expected.insertion_finished(), actual.insertion_finished());
   EXPECT_NEAR(expected.high_resolution_hybrid_grid().resolution(), 0.05, 1e-6);
   EXPECT_NEAR(expected.low_resolution_hybrid_grid().resolution(), 0.25, 1e-6);
+  EXPECT_TRUE(expected.rotational_scan_matcher_histogram().isApprox(
+      actual.rotational_scan_matcher_histogram(), 1e-6));
 }
 
 }  // namespace

@@ -34,8 +34,8 @@ AccelerationConstraint3D::AccelerationConstraint3D(
       cost_(new AccelerationCost3D(proto.parameters())),
       ceres_cost_(absl::make_unique<AutoDiffFunction>(cost_)) {}
 
-void AccelerationConstraint3D::AddToOptimizer(Nodes* nodes,
-                                              ceres::Problem* problem) const {
+void AccelerationConstraint3D::AddToSolver(Nodes* nodes,
+                                           ceres::Problem* problem) const {
   FIND_NODE_OR_RETURN(first_node, first_, nodes->pose_3d_nodes,
                       "First node was not found in pose_3d_nodes.");
   FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_3d_nodes,
