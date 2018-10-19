@@ -18,9 +18,9 @@
 #define CARTOGRAPHER_SENSOR_INTERNAL_TRAJECTORY_COLLATOR_H_
 
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "cartographer/metrics/counter.h"
 #include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/collator_interface.h"
@@ -42,9 +42,10 @@ class TrajectoryCollator : public CollatorInterface {
   TrajectoryCollator(const TrajectoryCollator&) = delete;
   TrajectoryCollator& operator=(const TrajectoryCollator&) = delete;
 
-  void AddTrajectory(int trajectory_id,
-                     const std::unordered_set<std::string>& expected_sensor_ids,
-                     const Callback& callback) override;
+  void AddTrajectory(
+      int trajectory_id,
+      const absl::flat_hash_set<std::string>& expected_sensor_ids,
+      const Callback& callback) override;
 
   void FinishTrajectory(int trajectory_id) override;
 
@@ -64,12 +65,12 @@ class TrajectoryCollator : public CollatorInterface {
       collator_metrics_family_;
 
   // Holds individual counters for each trajectory/sensor pair.
-  std::unordered_map<std::string, metrics::Counter*> metrics_map_;
+  absl::flat_hash_map<std::string, metrics::Counter*> metrics_map_;
 
-  std::unordered_map<int, OrderedMultiQueue> trajectory_to_queue_;
+  absl::flat_hash_map<int, OrderedMultiQueue> trajectory_to_queue_;
 
   // Map of trajectory ID to all associated QueueKeys.
-  std::unordered_map<int, std::vector<QueueKey>> trajectory_to_queue_keys_;
+  absl::flat_hash_map<int, std::vector<QueueKey>> trajectory_to_queue_keys_;
 };
 
 }  // namespace sensor

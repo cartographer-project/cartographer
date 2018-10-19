@@ -19,7 +19,7 @@
 namespace cartographer {
 namespace io {
 
-void RemovePoints(std::unordered_set<int> to_remove, PointsBatch* batch) {
+void RemovePoints(absl::flat_hash_set<int> to_remove, PointsBatch* batch) {
   const int new_num_points = batch->points.size() - to_remove.size();
   sensor::PointCloud points;
   points.reserve(new_num_points);

@@ -17,8 +17,8 @@
 #include "cartographer/mapping/internal/connected_components.h"
 
 #include <algorithm>
-#include <unordered_set>
 
+#include "absl/container/flat_hash_set.h"
 #include "cartographer/mapping/proto/connected_components.pb.h"
 #include "glog/logging.h"
 
@@ -77,7 +77,7 @@ bool ConnectedComponents::TransitivelyConnected(const int trajectory_id_a,
 
 std::vector<std::vector<int>> ConnectedComponents::Components() {
   // Map from cluster exemplar -> growing cluster.
-  std::unordered_map<int, std::vector<int>> map;
+  absl::flat_hash_map<int, std::vector<int>> map;
   absl::MutexLock locker(&lock_);
   for (const auto& trajectory_id_entry : forest_) {
     map[FindSet(trajectory_id_entry.first)].push_back(

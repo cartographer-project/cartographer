@@ -22,12 +22,18 @@ namespace pose_graph {
 NodeId::NodeId(const std::string& object_id, common::Time time)
     : object_id(object_id), time(time) {}
 
+NodeId::NodeId(const std::string& object_id, const std::string& group_id,
+               common::Time time)
+    : object_id(object_id), group_id(group_id), time(time) {}
+
 NodeId::NodeId(const proto::NodeId& node_id)
-    : NodeId(node_id.object_id(), common::FromUniversal(node_id.timestamp())) {}
+    : NodeId(node_id.object_id(), node_id.group_id(),
+             common::FromUniversal(node_id.timestamp())) {}
 
 proto::NodeId NodeId::ToProto() const {
   proto::NodeId node_id;
   node_id.set_object_id(object_id);
+  node_id.set_group_id(group_id);
   node_id.set_timestamp(common::ToUniversal(time));
   return node_id;
 }

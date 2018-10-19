@@ -144,6 +144,7 @@ class PoseGraph2DTest : public ::testing::Test {
               fixed_frame_pose_rotation_weight = 1e2,
               log_solver_summary = true,
               use_online_imu_extrinsics_in_3d = true,
+              fix_z_in_3d = false,
               ceres_solver_options = {
                 use_nonmonotonic_steps = false,
                 max_num_iterations = 200,

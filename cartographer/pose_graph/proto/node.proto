@@ -45,7 +45,8 @@ message ImuCalibration {
 
 message NodeId {
   string object_id = 1;
-  int64 timestamp = 2;
+  string group_id = 2;
+  int64 timestamp = 3;
 }
 
 message Parameters {

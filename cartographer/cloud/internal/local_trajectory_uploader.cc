@@ -21,7 +21,6 @@
 
 #include "absl/memory/memory.h"
 #include "async_grpc/client.h"
-#include "async_grpc/token_file_credentials.h"
 #include "cartographer/cloud/internal/handlers/add_sensor_data_batch_handler.h"
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
@@ -68,7 +67,7 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
  public:
   LocalTrajectoryUploader(const std::string& uplink_server_address,
                           int batch_size, bool enable_ssl_encryption,
-                          const std::string& token_file_path);
+                          bool enable_google_auth);
   ~LocalTrajectoryUploader();
 
   // Starts the upload thread.
@@ -108,19 +107,15 @@ class LocalTrajectoryUploader : public LocalTrajectoryUploaderInterface {
 
 LocalTrajectoryUploader::LocalTrajectoryUploader(
     const std::string& uplink_server_address, int batch_size,
-    bool enable_ssl_encryption, const std::string& token_file_path)
+    bool enable_ssl_encryption, bool enable_google_auth)
     : batch_size_(batch_size) {
   auto channel_creds =
-      enable_ssl_encryption
-          ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
-          : ::grpc::InsecureChannelCredentials();
+      enable_google_auth
+          ? grpc::GoogleDefaultCredentials()
+          : (enable_ssl_encryption
+                 ? ::grpc::SslCredentials(::grpc::SslCredentialsOptions())
+                 : ::grpc::InsecureChannelCredentials());
 
-  if (!token_file_path.empty()) {
-    auto call_creds = async_grpc::TokenFileCredentials(
-        token_file_path, std::chrono::seconds(kTokenRefreshIntervalInSeconds));
-    channel_creds =
-        grpc::CompositeChannelCredentials(channel_creds, call_creds);
-  }
   client_channel_ = ::grpc::CreateChannel(uplink_server_address, channel_creds);
   std::chrono::system_clock::time_point deadline =
       std::chrono::system_clock::now() +
@@ -182,6 +177,14 @@ void LocalTrajectoryUploader::TryRecovery() {
       }
     }
   }
+
+  // Because the trajectories may be interrupted on the uplink side, we can no
+  // longer upload to those.
+  for (auto& entry : local_trajectory_id_to_trajectory_info_) {
+    entry.second.uplink_trajectory_id.reset();
+  }
+  // TODO(gaschler): If the uplink did not restart but only the connection was
+  // interrupted, this leaks trajectories in the uplink.
 
   // Attempt to recreate the trajectories.
   for (const auto& entry : local_trajectory_id_to_trajectory_info_) {
@@ -332,10 +335,10 @@ void LocalTrajectoryUploader::EnqueueSensorData(
 
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
     const std::string& uplink_server_address, int batch_size,
-    bool enable_ssl_encryption, const std::string& token_file_path) {
+    bool enable_ssl_encryption, bool enable_google_auth) {
   return make_unique<LocalTrajectoryUploader>(uplink_server_address, batch_size,
                                               enable_ssl_encryption,
-                                              token_file_path);
+                                              enable_google_auth);
 }
 
 }  // namespace cloud

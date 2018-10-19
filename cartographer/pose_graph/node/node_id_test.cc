@@ -27,24 +27,34 @@ namespace {
 TEST(NodeIdTest, FromProto) {
   proto::NodeId proto;
   proto.set_object_id("some_object");
+  proto.set_group_id("submap");
   proto.set_timestamp(1);
 
   NodeId node_id(proto);
   EXPECT_EQ(node_id.object_id, "some_object");
+  EXPECT_EQ(node_id.group_id, "submap");
   EXPECT_EQ(common::ToUniversal(node_id.time), 1);
 }
 
 TEST(NodeIdTest, ToProto) {
-  NodeId node_id{"some_object", common::FromUniversal(1)};
+  NodeId node_id{"some_object", "submap", common::FromUniversal(1)};
   EXPECT_THAT(node_id.ToProto(),
-              testing::EqualsProto("object_id: 'some_object' timestamp: 1"));
+              testing::EqualsProto(
+                  "object_id: 'some_object' group_id: 'submap' timestamp: 1"));
 }
 
-TEST(NodeIdTest, ToString) {
+TEST(NodeIdTest, ToStringWithoutGroupId) {
   std::stringstream ss;
   ss << NodeId{"some_object", common::FromUniversal(1)};
 
   EXPECT_EQ("(object_id: some_object, time: 1)", ss.str());
+}
+
+TEST(NodeIdTest, ToStringWithGroupId) {
+  std::stringstream ss;
+  ss << NodeId{"some_object", "submap", common::FromUniversal(1)};
+
+  EXPECT_EQ("(object_id: some_object, group_id: submap, time: 1)", ss.str());
 }
 
 }  // namespace

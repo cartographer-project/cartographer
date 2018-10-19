@@ -48,6 +48,8 @@ int pbstream_migrate(int argc, char** argv) {
             << "\" to new serialization format in \"" << argv[3] << "\"";
   cartographer::io::MigrateStreamFormatToVersion1(&input, &output,
                                                   FLAGS_migrate_grid_format);
+  CHECK(output.Close()) << "Could not write migrated pbstream file to: "
+                        << argv[3];
 
   return EXIT_SUCCESS;
 }

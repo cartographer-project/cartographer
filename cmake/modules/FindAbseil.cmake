@@ -19,7 +19,7 @@ set(ABSEIL_LIBRARIES absl::synchronization absl::optional)
 include(${CMAKE_CURRENT_LIST_DIR}/FetchContent.cmake)
 FetchContent_Declare(abseil
   GIT_REPOSITORY   https://github.com/abseil/abseil-cpp.git
-  GIT_TAG          44aa275286baf97fc13529aca547a88b180beb08
+  GIT_TAG          5441bbe1db5d0f2ca24b5b60166367b0966790af
 )
 
 function(_populate_add_abseil)

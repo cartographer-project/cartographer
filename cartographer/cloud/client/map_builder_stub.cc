@@ -24,6 +24,7 @@
 #include "cartographer/cloud/internal/handlers/load_state_from_file_handler.h"
 #include "cartographer/cloud/internal/handlers/load_state_handler.h"
 #include "cartographer/cloud/internal/handlers/write_state_handler.h"
+#include "cartographer/cloud/internal/handlers/write_state_to_file_handler.h"
 #include "cartographer/cloud/internal/mapping/serialization.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
@@ -35,7 +36,10 @@ namespace cloud {
 namespace {
 
 using absl::make_unique;
-constexpr int kConnectionTimeoutInSeconds = 10;
+constexpr int kChannelTimeoutSeconds = 10;
+constexpr int kRetryBaseDelayMilliseconds = 500;
+constexpr float kRetryDelayFactor = 2.0;
+constexpr int kMaxRetries = 5;
 
 }  // namespace
 
@@ -49,7 +53,7 @@ MapBuilderStub::MapBuilderStub(const std::string& server_address,
             << " with client_id " << client_id;
   std::chrono::system_clock::time_point deadline(
       std::chrono::system_clock::now() +
-      std::chrono::seconds(kConnectionTimeoutInSeconds));
+      std::chrono::seconds(kChannelTimeoutSeconds));
   if (!client_channel_->WaitForConnected(deadline)) {
     LOG(FATAL) << "Failed to connect to " << server_address;
   }
@@ -66,9 +70,10 @@ int MapBuilderStub::AddTrajectoryBuilder(
     *request.add_expected_sensor_ids() = cloud::ToProto(sensor_id);
   }
   async_grpc::Client<handlers::AddTrajectorySignature> client(
-      client_channel_, common::FromSeconds(10),
-      async_grpc::CreateLimitedBackoffStrategy(common::FromMilliseconds(100),
-                                               2.f, 5));
+      client_channel_, common::FromSeconds(kChannelTimeoutSeconds),
+      async_grpc::CreateLimitedBackoffStrategy(
+          common::FromMilliseconds(kRetryBaseDelayMilliseconds),
+          kRetryDelayFactor, kMaxRetries));
   CHECK(client.Write(request));
 
   // Construct trajectory builder stub.
@@ -148,6 +153,25 @@ void MapBuilderStub::SerializeState(bool include_unfinished_submaps,
   }
 }
 
+bool MapBuilderStub::SerializeStateToFile(bool include_unfinished_submaps,
+                                          const std::string& filename) {
+  if (include_unfinished_submaps) {
+    LOG(WARNING) << "Serializing unfinished submaps is currently unsupported. "
+                    "Proceeding to write the state without them.";
+  }
+  proto::WriteStateToFileRequest request;
+  request.set_filename(filename);
+  ::grpc::Status status;
+  async_grpc::Client<handlers::WriteStateToFileSignature> client(
+      client_channel_);
+  if (!client.Write(request, &status)) {
+    LOG(ERROR) << "WriteStateToFileRequest failed - "
+               << "code: " << status.error_code()
+               << " reason: " << status.error_message();
+  }
+  return client.response().success();
+}
+
 std::map<int, int> MapBuilderStub::LoadState(
     io::ProtoStreamReaderInterface* reader, const bool load_frozen_state) {
   async_grpc::Client<handlers::LoadStateSignature> client(client_channel_);
@@ -197,10 +221,11 @@ std::map<int, int> MapBuilderStub::LoadState(
 }
 
 std::map<int, int> MapBuilderStub::LoadStateFromFile(
-    const std::string& filename) {
+    const std::string& filename, const bool load_frozen_state) {
   proto::LoadStateFromFileRequest request;
   request.set_file_path(filename);
   request.set_client_id(client_id_);
+  request.set_load_frozen_state(load_frozen_state);
   async_grpc::Client<handlers::LoadStateFromFileSignature> client(
       client_channel_);
   CHECK(client.Write(request));
