@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#include <unordered_map>
-
 #include "cartographer/cloud/metrics/prometheus/family_factory.h"
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "prometheus/counter.h"
 #include "prometheus/family.h"
@@ -76,7 +75,7 @@ class CounterFamily
  private:
   ::prometheus::Family<::prometheus::Counter>* prometheus_;
   std::mutex wrappers_mutex_;
-  std::unordered_map<::prometheus::Counter*, std::unique_ptr<Counter>>
+  absl::flat_hash_map<::prometheus::Counter*, std::unique_ptr<Counter>>
       wrappers_;
 };
 
@@ -108,7 +107,7 @@ class GaugeFamily
  private:
   ::prometheus::Family<::prometheus::Gauge>* prometheus_;
   std::mutex wrappers_mutex_;
-  std::unordered_map<::prometheus::Gauge*, std::unique_ptr<Gauge>> wrappers_;
+  absl::flat_hash_map<::prometheus::Gauge*, std::unique_ptr<Gauge>> wrappers_;
 };
 
 class Histogram : public ::cartographer::metrics::Histogram {
@@ -137,7 +136,7 @@ class HistogramFamily : public ::cartographer::metrics::Family<
  private:
   ::prometheus::Family<::prometheus::Histogram>* prometheus_;
   std::mutex wrappers_mutex_;
-  std::unordered_map<::prometheus::Histogram*, std::unique_ptr<Histogram>>
+  absl::flat_hash_map<::prometheus::Histogram*, std::unique_ptr<Histogram>>
       wrappers_;
   const BucketBoundaries boundaries_;
 };

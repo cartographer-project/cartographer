@@ -43,7 +43,7 @@ class Constraint {
 
   const ConstraintId& constraint_id() const { return constraint_id_; }
 
-  virtual void AddToOptimizer(Nodes* nodes, ceres::Problem* problem) const = 0;
+  virtual void AddToSolver(Nodes* nodes, ceres::Problem* problem) const = 0;
 
  protected:
   virtual proto::CostFunction ToCostFunctionProto() const = 0;

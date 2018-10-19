@@ -32,8 +32,8 @@ RelativePoseConstraint3D::RelativePoseConstraint3D(
       cost_(new RelativePoseCost3D(proto.parameters())),
       ceres_cost_(absl::make_unique<AutoDiffFunction>(cost_)) {}
 
-void RelativePoseConstraint3D::AddToOptimizer(Nodes* nodes,
-                                              ceres::Problem* problem) const {
+void RelativePoseConstraint3D::AddToSolver(Nodes* nodes,
+                                           ceres::Problem* problem) const {
   FIND_NODE_OR_RETURN(first_node, first_, nodes->pose_3d_nodes,
                       "First node was not found in pose_3d_nodes.");
   FIND_NODE_OR_RETURN(second_node, second_, nodes->pose_3d_nodes,
