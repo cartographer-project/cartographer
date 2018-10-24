@@ -25,6 +25,8 @@ namespace mapping {
 
 class GridInterface {
   // todo(kdaun) move mutual functions of Grid2D/3D here
+ public:
+  virtual ~GridInterface() {}
 };
 
 }  // namespace mapping
