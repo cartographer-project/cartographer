@@ -124,10 +124,11 @@ ProbabilityGridRangeDataInserter2D::ProbabilityGridRangeDataInserter2D(
 void ProbabilityGridRangeDataInserter2D::Insert(
     const sensor::RangeData& range_data, GridInterface* const grid) const {
   ProbabilityGrid* const probability_grid = static_cast<ProbabilityGrid*>(grid);
+  CHECK(probability_grid != nullptr);
   // By not finishing the update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
   CastRays(range_data, hit_table_, miss_table_, options_.insert_free_space(),
-           CHECK_NOTNULL(probability_grid));
+           probability_grid);
   probability_grid->FinishUpdate();
 }
 

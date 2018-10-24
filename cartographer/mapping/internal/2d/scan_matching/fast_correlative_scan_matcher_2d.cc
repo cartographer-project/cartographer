@@ -229,8 +229,8 @@ bool FastCorrelativeScanMatcher2D::MatchWithSearchParameters(
     const transform::Rigid2d& initial_pose_estimate,
     const sensor::PointCloud& point_cloud, float min_score, float* score,
     transform::Rigid2d* pose_estimate) const {
-  CHECK_NOTNULL(score);
-  CHECK_NOTNULL(pose_estimate);
+  CHECK(score != nullptr);
+  CHECK(pose_estimate != nullptr);
 
   const Eigen::Rotation2Dd initial_rotation = initial_pose_estimate.rotation();
   const sensor::PointCloud rotated_point_cloud = sensor::TransformPointCloud(
