@@ -371,6 +371,7 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
     }
   }
   constraint_builder_.NotifyEndOfNode();
+  absl::MutexLock locker(&mutex_);
   ++num_nodes_since_last_loop_closure_;
   if (options_.optimize_every_n_nodes() > 0 &&
       num_nodes_since_last_loop_closure_ > options_.optimize_every_n_nodes()) {
@@ -1005,6 +1006,7 @@ transform::Rigid3d PoseGraph3D::GetLocalToGlobalTransform(
 }
 
 std::vector<std::vector<int>> PoseGraph3D::GetConnectedTrajectories() const {
+  absl::MutexLock locker(&mutex_);
   return data_.trajectory_connectivity_state.Components();
 }
 
