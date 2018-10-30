@@ -112,7 +112,8 @@ class PoseGraph3D : public PoseGraph {
       const std::vector<Constraint>& constraints) override;
   void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
-  std::vector<std::vector<int>> GetConnectedTrajectories() const override;
+  std::vector<std::vector<int>> GetConnectedTrajectories() const override
+      LOCKS_EXCLUDED(mutex_);
   PoseGraph::SubmapData GetSubmapData(const SubmapId& submap_id) const
       LOCKS_EXCLUDED(mutex_) override;
   MapById<SubmapId, SubmapData> GetAllSubmapData() const

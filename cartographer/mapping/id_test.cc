@@ -78,9 +78,8 @@ TEST(IdTest, DeleteTrajectory) {
   EXPECT_EQ(map_by_id.size(), 3);
   EXPECT_EQ(2, std::distance(map_by_id.trajectory_ids().begin(),
                              map_by_id.trajectory_ids().end()));
-  for (const auto& it : map_by_id.trajectory(trajectory_id)) {
-    map_by_id.Trim(it.id);
-  }
+  map_by_id.Trim(NodeId{trajectory_id, 4});
+  map_by_id.Trim(NodeId{trajectory_id, 5});
   EXPECT_EQ(0, std::distance(map_by_id.trajectory(trajectory_id).begin(),
                              map_by_id.trajectory(trajectory_id).end()));
   int invalid_trajectory_id = 2;
