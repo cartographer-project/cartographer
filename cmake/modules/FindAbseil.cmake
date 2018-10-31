@@ -14,7 +14,7 @@
 
 cmake_minimum_required(VERSION 3.2)
 
-set(ABSEIL_LIBRARIES absl::synchronization absl::optional)
+set(ABSEIL_LIBRARIES absl::synchronization absl::optional absl::hash)
 
 include(${CMAKE_CURRENT_LIST_DIR}/FetchContent.cmake)
 FetchContent_Declare(abseil
