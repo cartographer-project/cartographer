@@ -33,7 +33,7 @@ InterpolatedRelativePoseConstraint2D::InterpolatedRelativePoseConstraint2D(
       cost_(new InterpolatedRelativePoseCost2D(proto.parameters())),
       ceres_cost_(absl::make_unique<AutoDiffFunction>(cost_)) {}
 
-void InterpolatedRelativePoseConstraint2D::AddToOptimizer(
+void InterpolatedRelativePoseConstraint2D::AddToSolver(
     Nodes* nodes, ceres::Problem* problem) const {
   FIND_NODE_OR_RETURN(first_node_start, first_start_, nodes->pose_2d_nodes,
                       "First node (start) was not found in pose_2d_nodes.");

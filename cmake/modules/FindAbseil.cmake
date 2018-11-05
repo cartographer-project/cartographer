@@ -33,6 +33,7 @@ if(NOT TARGET standalone_absl)
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/${prefix}str_format_internal${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/${prefix}str_format_extension_internal${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/${prefix}absl_str_format${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/hash/${prefix}absl_hash${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/algorithm/${prefix}absl_algorithm${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_base${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_dynamic_annotations${suffix}"
@@ -63,7 +64,7 @@ if(NOT TARGET standalone_absl)
   ExternalProject_Add(${ABSEIL_PROJECT_NAME}
     PREFIX ${ABSEIL_PROJECT_NAME}
     GIT_REPOSITORY   https://github.com/abseil/abseil-cpp.git
-    GIT_TAG          44aa275286baf97fc13529aca547a88b180beb08
+    GIT_TAG          5441bbe1db5d0f2ca24b5b60166367b0966790af
     INSTALL_COMMAND  ""
     BUILD_COMMAND    ${CMAKE_COMMAND} --build "${ABSEIL_PROJECT_BUILD_DIR}"
     CMAKE_CACHE_ARGS "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON;-DBUILD_TESTING:BOOL=OFF;-DCMAKE_BUILD_TYPE:STRING=Release"

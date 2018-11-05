@@ -41,6 +41,7 @@
 #include "cartographer/cloud/internal/handlers/run_final_optimization_handler.h"
 #include "cartographer/cloud/internal/handlers/set_landmark_pose_handler.h"
 #include "cartographer/cloud/internal/handlers/write_state_handler.h"
+#include "cartographer/cloud/internal/handlers/write_state_to_file_handler.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "glog/logging.h"
 
@@ -49,6 +50,7 @@ namespace cloud {
 namespace {
 
 static auto* kIncomingDataQueueMetric = metrics::Gauge::Null();
+constexpr int kMaxMessageSize = 100 * 1024 * 1024;  // 100 MB
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
 }  // namespace
@@ -63,12 +65,14 @@ MapBuilderServer::MapBuilderServer(
       map_builder_server_options.num_grpc_threads());
   server_builder.SetNumEventThreads(
       map_builder_server_options.num_event_threads());
+  server_builder.SetMaxSendMessageSize(kMaxMessageSize);
+  server_builder.SetMaxReceiveMessageSize(kMaxMessageSize);
   if (!map_builder_server_options.uplink_server_address().empty()) {
     local_trajectory_uploader_ = CreateLocalTrajectoryUploader(
         map_builder_server_options.uplink_server_address(),
         map_builder_server_options.upload_batch_size(),
         map_builder_server_options.enable_ssl_encryption(),
-        map_builder_server_options.token_file_path());
+        map_builder_server_options.enable_google_auth());
   }
   server_builder.RegisterHandler<handlers::AddTrajectoryHandler>();
   server_builder.RegisterHandler<handlers::AddOdometryDataHandler>();
@@ -95,6 +99,7 @@ MapBuilderServer::MapBuilderServer(
   server_builder.RegisterHandler<handlers::LoadStateFromFileHandler>();
   server_builder.RegisterHandler<handlers::RunFinalOptimizationHandler>();
   server_builder.RegisterHandler<handlers::WriteStateHandler>();
+  server_builder.RegisterHandler<handlers::WriteStateToFileHandler>();
   server_builder.RegisterHandler<handlers::SetLandmarkPoseHandler>();
   grpc_server_ = server_builder.Build();
   if (map_builder_server_options.map_builder_options()
