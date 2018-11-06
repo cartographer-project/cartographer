@@ -29,10 +29,10 @@ if(NOT TARGET standalone_absl)
   set(ABSEIL_DEPENDENT_LIBRARIES
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_symbolize${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/time/${prefix}absl_time${suffix}"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/${prefix}absl_strings${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/${prefix}str_format_internal${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/${prefix}str_format_extension_internal${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/${prefix}absl_str_format${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/strings/${prefix}absl_strings${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/hash/${prefix}absl_hash${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/algorithm/${prefix}absl_algorithm${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_base${suffix}"
