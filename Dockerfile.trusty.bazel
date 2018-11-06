@@ -13,6 +13,14 @@
 # limitations under the License.
 
 FROM ubuntu:trusty
+
+ARG cc
+ARG cxx
+
+# Set the preferred C/C++ compiler toolchain, if given (otherwise default).
+ENV CC=$cc
+ENV CXX=$cxx
+
 COPY scripts/install_debs_bazel.sh cartographer/scripts/
 RUN cartographer/scripts/install_debs_bazel.sh && rm -rf /var/lib/apt/lists/*
 COPY . cartographer
