@@ -37,9 +37,9 @@ if(NOT TARGET standalone_absl)
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/algorithm/${prefix}absl_algorithm${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_base${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_dynamic_annotations${suffix}"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_malloc_internal${suffix}"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_spinlock_wait${suffix}"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_throw_delegate${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_internal_malloc_internal${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_internal_spinlock_wait${suffix}"
+    "${ABSEIL_PROJECT_BUILD_DIR}/absl/base/${prefix}absl_internal_throw_delegate${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/container/${prefix}absl_container${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/container/${prefix}test_instance_tracker_lib${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/debugging/${prefix}absl_debugging${suffix}"
@@ -64,7 +64,7 @@ if(NOT TARGET standalone_absl)
   ExternalProject_Add(${ABSEIL_PROJECT_NAME}
     PREFIX ${ABSEIL_PROJECT_NAME}
     GIT_REPOSITORY   https://github.com/abseil/abseil-cpp.git
-    GIT_TAG          5441bbe1db5d0f2ca24b5b60166367b0966790af
+    GIT_TAG          7b46e1d31a6b08b1c6da2a13e7b151a20446fa07
     INSTALL_COMMAND  ""
     BUILD_COMMAND    ${CMAKE_COMMAND} --build "${ABSEIL_PROJECT_BUILD_DIR}"
     CMAKE_CACHE_ARGS "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON;-DBUILD_TESTING:BOOL=OFF;-DCMAKE_BUILD_TYPE:STRING=Release"
@@ -81,6 +81,15 @@ if(NOT TARGET standalone_absl)
     INTERFACE_LINK_LIBRARIES
     "${ABSEIL_DEPENDENT_LIBRARIES}"
   )
+  if(MSVC)
+    # /wd4005  macro-redefinition
+    # /wd4068  unknown pragma
+    # /wd4244  conversion from 'type1' to 'type2'
+    # /wd4267  conversion from 'size_t' to 'type2'
+    # /wd4800  force value to bool 'true' or 'false' (performance warning)
+    target_compile_options(standalone_absl INTERFACE /wd4005 /wd4068 /wd4244 /wd4267 /wd4800)
+    target_compile_definitions(standalone_absl INTERFACE -DNOMINMAX -DWIN32_LEAN_AND_MEAN=1 -D_CRT_SECURE_NO_WARNINGS)
+  endif()
   add_dependencies(standalone_absl ${ABSEIL_PROJECT_NAME})
   unset(prefix)
   unset(suffix)
