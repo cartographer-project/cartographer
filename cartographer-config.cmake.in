@@ -37,7 +37,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CARTOGRAPHER_CMAKE_DIR}/modules)
 
 find_package(Ceres ${QUIET_OR_REQUIRED_OPTION} HINTS ${CERES_DIR_HINTS})
 if (WIN32)
-    set(Boost_USE_STATIC_LIBS FALSE)
     find_package(glog REQUIRED)
 endif()
 find_package(Abseil ${QUIET_OR_REQUIRED_OPTION})
