@@ -6,6 +6,7 @@ jobs:
   steps:
   - script: |
       choco sources add -n=roswin -s https://roswin.azurewebsites.net/api/v2/ --priority 1
+      mkdir D:\opt && mklink /J C:\opt D:\opt
       choco upgrade %ROS_METAPACKAGE% -y
       echo Apply hot-fix from https://github.com/ms-iot/catkin/pull/24
       powershell -Command "Invoke-WebRequest -OutFile C:\opt\ros\melodic\x64\bin\catkin_make_isolated https://raw.githubusercontent.com/ros/catkin/e98ee68d675f0ce6ad6297346743623f72f4da05/bin/catkin_make_isolated"
@@ -34,7 +35,7 @@ jobs:
       set PATH=%PATH:C:\Program Files\Git\bin;=%
       set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
       set PATH=%PATH:C:\Program Files\Git\mingw64\bin;=%
-      cd build_isolated\cartographer\install & ctest --no-compress-output -T Test
+      cd build_isolated\cartographer\install && ctest --no-compress-output -T Test
     displayName: Run tests
 
   - script: |
