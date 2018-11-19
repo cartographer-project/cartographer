@@ -8,7 +8,10 @@ jobs:
       choco sources add -n=roswin -s https://roswin.azurewebsites.net/api/v2/ --priority 1
       choco upgrade %ROS_METAPACKAGE% -y
       call "C:\opt\ros\melodic\x64\env.bat" rosdep install --from-paths . --ignore-src -r -y
+      rem Apply hot-fix from https://github.com/ms-iot/catkin/pull/24
       powershell -Command "Invoke-WebRequest -OutFile C:\opt\ros\melodic\x64\bin\catkin_make_isolated https://raw.githubusercontent.com/ros/catkin/e98ee68d675f0ce6ad6297346743623f72f4da05/bin/catkin_make_isolated"
+      rem Apply hot-fix from https://github.com/ms-iot/catkin/pull/25
+      powershell -Command "Invoke-WebRequest -OutFile C:\opt\ros\melodic\x64\share\catkin\cmake\catkin_package.cmake https://raw.githubusercontent.com/ros/catkin/f84dd870e6c1236c3e104b7c288128517485d948/cmake/catkin_package.cmake"
     env:
       ROS_METAPACKAGE: 'ros-melodic-desktop'
     displayName: Install prerequisites
