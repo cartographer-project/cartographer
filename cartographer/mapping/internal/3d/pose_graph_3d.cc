@@ -474,26 +474,26 @@ void PoseGraph3D::HandleWorkQueue(
         trimmers_.end());
 
     num_nodes_since_last_loop_closure_ = 0;
-  }
 
-  // Update the gauges that count the current number of constraints.
-  double inter_constraints_same_trajectory = 0;
-  double inter_constraints_different_trajectory = 0;
-  for (const auto& constraint : constraints()) {
-    if (constraint.tag ==
-        cartographer::mapping::PoseGraph::Constraint::INTRA_SUBMAP) {
-      continue;
+    // Update the gauges that count the current number of constraints.
+    double inter_constraints_same_trajectory = 0;
+    double inter_constraints_different_trajectory = 0;
+    for (const auto& constraint : data_.constraints) {
+      if (constraint.tag ==
+          cartographer::mapping::PoseGraph::Constraint::INTRA_SUBMAP) {
+        continue;
+      }
+      if (constraint.node_id.trajectory_id ==
+          constraint.submap_id.trajectory_id) {
+        ++inter_constraints_same_trajectory;
+      } else {
+        ++inter_constraints_different_trajectory;
+      }
     }
-    if (constraint.node_id.trajectory_id ==
-        constraint.submap_id.trajectory_id) {
-      ++inter_constraints_same_trajectory;
-    } else {
-      ++inter_constraints_different_trajectory;
-    }
+    kConstraintsSameTrajectoryMetric->Set(inter_constraints_same_trajectory);
+    kConstraintsDifferentTrajectoryMetric->Set(
+        inter_constraints_different_trajectory);
   }
-  kConstraintsSameTrajectoryMetric->Set(inter_constraints_same_trajectory);
-  kConstraintsDifferentTrajectoryMetric->Set(
-      inter_constraints_different_trajectory);
 
   DrainWorkQueue();
 }
