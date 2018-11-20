@@ -20,7 +20,7 @@ TAGfile = open(sys.argv[1]+"/Testing/TAG", 'r')
 dirname = TAGfile.readline().strip()
 
 xmlfile = open(sys.argv[1]+"/Testing/"+dirname+"/Test.xml", 'r')
-xslfile = open(sys.path[0] + "ctest_to_junit.xsl", 'r')
+xslfile = open(sys.path[0] + "/ctest_to_junit.xsl", 'r')
 
 xmlcontent = xmlfile.read()
 xslcontent = xslfile.read()
