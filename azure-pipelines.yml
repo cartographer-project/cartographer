@@ -23,8 +23,6 @@ jobs:
       rem Azure VM runs out of space on C:, so use D: for ros and rosdeps
       mkdir D:\opt && mklink /J C:\opt D:\opt
       choco upgrade %ROS_METAPACKAGE% -y
-      echo Apply hot-fix from https://github.com/ms-iot/catkin/pull/25
-      powershell -Command "Invoke-WebRequest -OutFile C:\opt\ros\melodic\x64\share\catkin\cmake\catkin_package.cmake https://raw.githubusercontent.com/ros/catkin/f84dd870e6c1236c3e104b7c288128517485d948/cmake/catkin_package.cmake"
       robocopy "." ".\src\cartographer" /E /MOVE /XD "src" > NUL
       call "C:\opt\ros\melodic\x64\env.bat" rosdep install --from-paths src --ignore-src -r -y
     env:
