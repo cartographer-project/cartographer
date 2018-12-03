@@ -77,7 +77,7 @@ RangeDataInserter3D::RangeDataInserter3D(
 
 void RangeDataInserter3D::Insert(const sensor::RangeData& range_data,
                                  HybridGrid* hybrid_grid) const {
-  CHECK_NOTNULL(hybrid_grid);
+  CHECK(hybrid_grid != nullptr);
 
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
     const Eigen::Array3i hit_cell = hybrid_grid->GetCellIndex(hit.position);
