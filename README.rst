@@ -45,11 +45,12 @@ Open house
 We regularly meet in an open-for-all Google hangout to discuss progress and plans for Cartographer.
 You can join the `mailing list`_ to receive announcements.
 
-The next Cartographer Open House Hangout is on **Thursday, November 22th, 5pm CET (9am PDT)** [`Hangouts link`_].
+The next Cartographer Open House Hangout is on **Thursday, December 13th, 5pm CET (9am PDT)** [`Hangouts link`_].
 
 .. _mailing list: https://groups.google.com/forum/#!forum/google-cartographer
 .. _Hangouts link: https://staging.talkgadget.google.com/hangouts/_/google.com/cartographeropenhouse
 
+- November 22, 2018: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/181122/slides.pdf>`_
 - October 25, 2018: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/181025/slides.pdf>`_
 - September 13, 2018: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/180913/slides.pdf>`_
 - August 16, 2018: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/180816/slides.pdf>`_
