@@ -62,6 +62,7 @@ class PoseGraphInterface {
     };
     std::vector<LandmarkObservation> landmark_observations;
     absl::optional<transform::Rigid3d> global_landmark_pose;
+    bool frozen = false;
   };
 
   struct SubmapPose {

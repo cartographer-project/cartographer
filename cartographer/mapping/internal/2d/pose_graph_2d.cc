@@ -931,6 +931,7 @@ void PoseGraph2D::SetLandmarkPose(const std::string& landmark_id,
   AddWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock locker(&mutex_);
     data_.landmark_nodes[landmark_id].global_landmark_pose = global_pose;
+    data_.landmark_nodes[landmark_id].frozen = true;
     return WorkItem::Result::kDoNotRunOptimization;
   });
 }
