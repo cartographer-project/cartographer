@@ -246,8 +246,10 @@ if(MSVC)
   target_compile_definitions(${PROJECT_NAME} PUBLIC -D_ENABLE_EXTENDED_ALIGNED_STORAGE)
 endif()
 
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  "${CAIRO_INCLUDE_DIRS}")
+if("${CAIRO_INCLUDE_DIRS}")
+  target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+    "${CAIRO_INCLUDE_DIRS}")
+endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC ${CAIRO_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
