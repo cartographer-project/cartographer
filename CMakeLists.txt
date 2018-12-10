@@ -243,7 +243,7 @@ if(WIN32)
 endif()
 if(MSVC)
   # Needed for VS 2017 5.8
-  target_compile_definitions(${PROJECT_NAME} PUBLIC -D_ENABLE_EXTENDED_ALIGNED_STORAGE)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_USE_MATH_DEFINES)
 endif()
 
 if("${CAIRO_INCLUDE_DIRS}")

@@ -74,7 +74,6 @@ macro(google_initialize_cartographer_project)
   endif()
 
   if(WIN32)
-    set(GOOG_CXX_FLAGS "-D_USE_MATH_DEFINES")
     # TODO turn on equivalent warnings on Windows
   else()
     set(GOOG_CXX_FLAGS "-pthread -std=c++11 -fPIC ${GOOG_CXX_FLAGS}")
