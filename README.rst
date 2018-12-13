@@ -50,6 +50,7 @@ The next Cartographer Open House Hangout is on **Thursday, January 17th 2019, 5p
 .. _mailing list: https://groups.google.com/forum/#!forum/google-cartographer
 .. _Hangouts link: https://staging.talkgadget.google.com/hangouts/_/google.com/cartographeropenhouse
 
+- November 22, 2018: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/181122/slides.pdf>`_
 - October 25, 2018: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/181025/slides.pdf>`_
 - September 13, 2018: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/180913/slides.pdf>`_
 - August 16, 2018: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/180816/slides.pdf>`_
