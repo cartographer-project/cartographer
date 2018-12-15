@@ -31,9 +31,7 @@ namespace {
 
 class ProtoStreamTest : public ::testing::Test {
  protected:
-  void SetUp() override {
-    test_directory_ = ".";
-  }
+  void SetUp() override { test_directory_ = "."; }
 
   std::string test_directory_;
 };
