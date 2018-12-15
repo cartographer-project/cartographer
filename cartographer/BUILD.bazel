@@ -94,7 +94,6 @@ cc_library(
     includes = ["."],
     deps = [
         ":cc_protos",
-        "@boost//:filesystem",
         "@boost//:iostreams",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/strings",

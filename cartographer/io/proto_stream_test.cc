@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "boost/filesystem.hpp"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
 #include "gtest/gtest.h"
@@ -33,16 +32,8 @@ namespace {
 class ProtoStreamTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    auto testdir = boost::filesystem::temp_directory_path();
-    testdir += "/proto_stream_test_%%%%";
-    testdir = boost::filesystem::unique_path(testdir);
-    boost::system::error_code ec;
-    boost::filesystem::create_directory(testdir, ec);
-    ASSERT_EQ(ec.value(), 0) << ec.category().name();
-    test_directory_ = testdir.string();
+    test_directory_ = ".";
   }
-
-  void TearDown() override { remove(test_directory_.c_str()); }
 
   std::string test_directory_;
 };

@@ -30,7 +30,7 @@ google_initialize_cartographer_project()
 google_enable_testing()
 
 find_package(Abseil REQUIRED)
-set(BOOST_COMPONENTS iostreams filesystem)
+set(BOOST_COMPONENTS iostreams)
 if(WIN32)
   list(APPEND BOOST_COMPONENTS zlib)
   set(Boost_USE_STATIC_LIBS FALSE)
