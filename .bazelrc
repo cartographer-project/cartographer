@@ -21,8 +21,3 @@ build -c opt
 # reduces build time.
 build --force_pic
 
-# A number of our dependencies rely on the deprecated new_http_archive rule,
-# e.g. Cares. We will have to wait for these dependencies to switch to the
-# new rule befor we can remove this override.
-build --incompatible_remove_native_http_archive=false
-build --incompatible_remove_native_git_repository=false
