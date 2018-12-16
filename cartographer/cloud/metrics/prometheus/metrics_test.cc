@@ -35,8 +35,8 @@ static auto* kCounter = ::cartographer::metrics::Counter::Null();
 static auto* kGauge = ::cartographer::metrics::Gauge::Null();
 static auto* kScoresMetric = ::cartographer::metrics::Histogram::Null();
 
-const char kLabelKey[] = "kind";
-const char kLabelValue[] = "score";
+const std::string kLabelKey = "kind";
+const std::string kLabelValue = "score";
 const std::array<double, 5> kObserveScores = {{-1, 0.11, 0.2, 0.5, 2}};
 
 class Algorithm {
