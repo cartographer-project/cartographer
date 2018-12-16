@@ -28,7 +28,7 @@ namespace cloud {
 namespace metrics {
 namespace prometheus {
 namespace {
- 
+
 using Label = ::prometheus::ClientMetric::Label;
 
 static auto* kCounter = ::cartographer::metrics::Counter::Null();
@@ -72,10 +72,8 @@ TEST(MetricsTest, CollectCounter) {
   EXPECT_THAT(
       collected[0].metric.at(0).label,
       testing::AllOf(
-          testing::ElementsAre(testing::Field(
-              &Label::name, kLabelKey)),
-          testing::ElementsAre(testing::Field(
-              &Label::value, kLabelValue))));
+          testing::ElementsAre(testing::Field(&Label::name, kLabelKey)),
+          testing::ElementsAre(testing::Field(&Label::value, kLabelValue))));
   EXPECT_THAT(collected[0].metric.at(0).counter.value,
               testing::DoubleEq(expected_value));
 }
@@ -101,10 +99,8 @@ TEST(MetricsTest, CollectGauge) {
   EXPECT_THAT(
       collected[0].metric.at(0).label,
       testing::AllOf(
-          testing::ElementsAre(testing::Field(
-              &Label::name, kLabelKey)),
-          testing::ElementsAre(testing::Field(
-              &Label::value, kLabelValue))));
+          testing::ElementsAre(testing::Field(&Label::name, kLabelKey)),
+          testing::ElementsAre(testing::Field(&Label::value, kLabelValue))));
   EXPECT_THAT(collected[0].metric.at(0).gauge.value,
               testing::DoubleEq(expected_value));
 }
@@ -126,13 +122,12 @@ TEST(MetricsTest, CollectHistogram) {
   EXPECT_THAT(
       collected[0].metric.at(0).label,
       testing::AllOf(
-          testing::ElementsAre(testing::Field(
-              &Label::name, kLabelKey)),
-          testing::ElementsAre(testing::Field(
-              &Label::value, kLabelValue))));
+          testing::ElementsAre(testing::Field(&Label::name, kLabelKey)),
+          testing::ElementsAre(testing::Field(&Label::value, kLabelValue))));
   EXPECT_THAT(collected[0].metric.at(0).histogram.sample_count,
               testing::Eq(kObserveScores.size()));
-  EXPECT_EQ(collected[0].metric.at(0).histogram.bucket.at(0).cumulative_count, 1);
+  EXPECT_EQ(collected[0].metric.at(0).histogram.bucket.at(0).cumulative_count,
+            1);
 }
 
 TEST(MetricsTest, RunExposerServer) {
