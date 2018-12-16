@@ -30,18 +30,32 @@ google_initialize_cartographer_project()
 google_enable_testing()
 
 find_package(Abseil REQUIRED)
-find_package(Boost REQUIRED COMPONENTS iostreams)
+set(BOOST_COMPONENTS iostreams)
+if(WIN32)
+  list(APPEND BOOST_COMPONENTS zlib)
+  set(Boost_USE_STATIC_LIBS FALSE)
+endif()
+find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 find_package(Ceres REQUIRED COMPONENTS SuiteSparse)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
-find_package(Protobuf 3.0.0 REQUIRED)
+# On Windows, Protobuf is incorrectly found by the bundled CMake module. Prefer native CMake config, if possible.
+set(protobuf_MODULE_COMPATIBLE TRUE CACHE INTERNAL "")
+find_package(Protobuf 3.0.0 CONFIG)
+if (NOT Protobuf_FOUND)
+  find_package(Protobuf 3.0.0 REQUIRED)
+endif()
 
 if (${BUILD_GRPC})
   find_package(async_grpc REQUIRED)
 endif()
 
 include(FindPkgConfig)
-PKG_SEARCH_MODULE(CAIRO REQUIRED cairo>=1.12.16)
+if (NOT WIN32)
+  PKG_SEARCH_MODULE(CAIRO REQUIRED cairo>=1.12.16)
+else()
+  find_library(CAIRO_LIBRARIES cairo)
+endif()
 
 # Only build the documentation if we can find Sphinx.
 find_package(Sphinx)
@@ -124,7 +138,7 @@ foreach(ABS_FIL ${ALL_PROTOS})
   add_custom_command(
     OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
            "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
-    COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+    COMMAND  ${Protobuf_PROTOC_EXECUTABLE}
     ARGS --cpp_out  ${PROJECT_BINARY_DIR} -I
       ${PROJECT_SOURCE_DIR} ${ABS_FIL}
     DEPENDS ${ABS_FIL}
@@ -150,7 +164,7 @@ if(${BUILD_GRPC})
     add_custom_command(
       OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
              "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
-      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+      COMMAND  ${Protobuf_PROTOC_EXECUTABLE}
       ARGS --cpp_out  ${PROJECT_BINARY_DIR}
         -I ${PROJECT_SOURCE_DIR}
         ${ABS_FIL}
@@ -165,7 +179,7 @@ if(${BUILD_GRPC})
 endif()
 set(INSTALL_GENERATED_HDRS ${ALL_PROTO_HDRS} ${ALL_GRPC_SERVICE_HDRS})
 
-add_library(${PROJECT_NAME} ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
+add_library(${PROJECT_NAME} STATIC ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/cartographer/common/config.h.cmake
@@ -214,19 +228,38 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${Boost_INCLUDE_DIRS}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
 
-# We expect find_package(Ceres) to have located these for us.
-target_link_libraries(${PROJECT_NAME} PUBLIC glog)
-target_link_libraries(${PROJECT_NAME} PUBLIC gflags)
+if (WIN32)
+  find_package(glog REQUIRED)
+  set(GLOG_LIBRARY glog::glog)
+else()
+  set(GLOG_LIBRARY glog)
+endif()
 
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  "${CAIRO_INCLUDE_DIRS}")
+target_link_libraries(${PROJECT_NAME} PUBLIC ${GLOG_LIBRARY})
+target_link_libraries(${PROJECT_NAME} PUBLIC gflags)
+if(WIN32)
+  # Needed to fix conflict with MSVC's error macro.
+  target_compile_definitions(${PROJECT_NAME} PUBLIC -DGLOG_NO_ABBREVIATED_SEVERITIES)
+endif()
+if(MSVC)
+  # Needed for VS 2017 5.8
+  target_compile_definitions(${PROJECT_NAME} PUBLIC -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_USE_MATH_DEFINES)
+endif()
+
+if("${CAIRO_INCLUDE_DIRS}")
+  target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+    "${CAIRO_INCLUDE_DIRS}")
+endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC ${CAIRO_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   ${PROTOBUF_INCLUDE_DIR})
 # TODO(hrapp): This should not explicitly list pthread and use
 # PROTOBUF_LIBRARIES, but that failed on first try.
-target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} pthread standalone_absl)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} standalone_absl)
+if (NOT WIN32)
+  target_link_libraries(${PROJECT_NAME} PUBLIC pthread)
+endif()
 if(${BUILD_GRPC})
   target_link_libraries(${PROJECT_NAME} PUBLIC grpc++)
   target_link_libraries(${PROJECT_NAME} PUBLIC async_grpc)
@@ -246,6 +279,10 @@ set(TEST_LIB
 add_library(${TEST_LIB} ${TEST_LIBRARY_HDRS} ${TEST_LIBRARY_SRCS})
 target_include_directories(${TEST_LIB} SYSTEM PRIVATE
   "${GMOCK_INCLUDE_DIRS}")
+# Needed for dynamically linked GTest on Windows.
+if (WIN32)
+  target_compile_definitions(${TEST_LIB} PUBLIC -DGTEST_LINKED_AS_SHARED_LIBRARY)
+endif()
 target_link_libraries(${TEST_LIB} PUBLIC ${GMOCK_LIBRARY})
 target_link_libraries(${TEST_LIB} PUBLIC ${PROJECT_NAME})
 set_target_properties(${TEST_LIB} PROPERTIES

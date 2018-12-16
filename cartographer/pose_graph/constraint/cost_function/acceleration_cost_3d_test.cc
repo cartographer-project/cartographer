@@ -16,6 +16,8 @@
 
 #include "cartographer/pose_graph/constraint/cost_function/acceleration_cost_3d.h"
 
+#include <array>
+
 #include "cartographer/testing/test_helpers.h"
 
 namespace cartographer {
