@@ -21,7 +21,7 @@ COMMIT="4e0814ee3f93b796356a51a4795a332568940a72"
 
 git clone --depth 1 https://github.com/jupp0r/prometheus-cpp.git
 cd prometheus-cpp
-git checkout $COMMIT
+git checkout ${COMMIT}
 git submodule update --init
 mkdir build
 cd build
