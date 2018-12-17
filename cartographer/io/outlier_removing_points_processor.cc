@@ -27,13 +27,23 @@ std::unique_ptr<OutlierRemovingPointsProcessor>
 OutlierRemovingPointsProcessor::FromDictionary(
     common::LuaParameterDictionary* const dictionary,
     PointsProcessor* const next) {
+  const double miss_per_hit_limit = [&]() {
+    if (!dictionary->HasKey("miss_per_hit_limit")) {
+      LOG(INFO) << "Using default value of 3 for miss_per_hit_limit.";
+      return 3.;
+    } else {
+      return dictionary->GetDouble("miss_per_hit_limit");
+    }
+  }();
   return absl::make_unique<OutlierRemovingPointsProcessor>(
-      dictionary->GetDouble("voxel_size"), next);
+      dictionary->GetDouble("voxel_size"), miss_per_hit_limit, next);
 }
 
 OutlierRemovingPointsProcessor::OutlierRemovingPointsProcessor(
-    const double voxel_size, PointsProcessor* next)
+    const double voxel_size, const double miss_per_hit_limit,
+    PointsProcessor* next)
     : voxel_size_(voxel_size),
+      miss_per_hit_limit_(miss_per_hit_limit),
       next_(next),
       state_(State::kPhase1),
       voxels_(voxel_size_) {
@@ -106,12 +116,11 @@ void OutlierRemovingPointsProcessor::ProcessInPhaseTwo(
 
 void OutlierRemovingPointsProcessor::ProcessInPhaseThree(
     std::unique_ptr<PointsBatch> batch) {
-  constexpr double kMissPerHitLimit = 3;
   absl::flat_hash_set<int> to_remove;
   for (size_t i = 0; i < batch->points.size(); ++i) {
     const VoxelData voxel =
         voxels_.value(voxels_.GetCellIndex(batch->points[i].position));
-    if (!(voxel.rays < kMissPerHitLimit * voxel.hits)) {
+    if (!(voxel.rays < miss_per_hit_limit_ * voxel.hits)) {
       to_remove.insert(i);
     }
   }
