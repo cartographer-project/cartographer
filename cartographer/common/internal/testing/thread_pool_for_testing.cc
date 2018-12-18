@@ -16,7 +16,9 @@
 
 #include "cartographer/common/internal/testing/thread_pool_for_testing.h"
 
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <algorithm>
 #include <chrono>
 #include <numeric>

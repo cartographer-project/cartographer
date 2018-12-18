@@ -31,13 +31,7 @@ namespace {
 
 class ProtoStreamTest : public ::testing::Test {
  protected:
-  void SetUp() override {
-    const std::string tmpdir = P_tmpdir;
-    test_directory_ = tmpdir + "/proto_stream_test_XXXXXX";
-    ASSERT_NE(mkdtemp(&test_directory_[0]), nullptr) << strerror(errno);
-  }
-
-  void TearDown() override { remove(test_directory_.c_str()); }
+  void SetUp() override { test_directory_ = "."; }
 
   std::string test_directory_;
 };

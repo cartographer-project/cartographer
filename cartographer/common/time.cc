@@ -56,10 +56,14 @@ common::Duration FromMilliseconds(const int64 milliseconds) {
 }
 
 double GetThreadCpuTimeSeconds() {
+#ifndef WIN32
   struct timespec thread_cpu_time;
   CHECK(clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_cpu_time) == 0)
       << std::strerror(errno);
   return thread_cpu_time.tv_sec + 1e-9 * thread_cpu_time.tv_nsec;
+#else
+  return 0.;
+#endif
 }
 
 }  // namespace common
