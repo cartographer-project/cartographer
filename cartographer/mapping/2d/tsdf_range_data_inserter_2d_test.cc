@@ -40,8 +40,8 @@ class RangeDataInserterTest2DTSDF : public ::testing::Test {
         "},"
         "project_sdf_distance_to_scan_normal = false,"
         "update_weight_range_exponent = 0,"
-        "update_weight_angle_scan_normal_to_ray_kernel_bandwith = 0,"
-        "update_weight_distance_cell_to_hit_kernel_bandwith = 0,"
+        "update_weight_angle_scan_normal_to_ray_kernel_bandwidth = 0,"
+        "update_weight_distance_cell_to_hit_kernel_bandwidth = 0,"
         "}");
     options_ = CreateTSDFRangeDataInserterOptions2D(parameter_dictionary.get());
     range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
@@ -289,8 +289,9 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertSmallAnglePointWitNormalProjection) {
 
 TEST_F(RangeDataInserterTest2DTSDF,
        InsertPointsWithAngleScanNormalToRayWeight) {
-  float bandwith = 10.f;
-  options_.set_update_weight_angle_scan_normal_to_ray_kernel_bandwith(bandwith);
+  float bandwidth = 10.f;
+  options_.set_update_weight_angle_scan_normal_to_ray_kernel_bandwidth(
+      bandwidth);
   range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   sensor::RangeData range_data;
   range_data.returns.push_back({Eigen::Vector3f{-0.5f, 3.5f, 0.f}});
@@ -304,7 +305,7 @@ TEST_F(RangeDataInserterTest2DTSDF,
   // Ray is perpendicular to surface.
   Eigen::Array2i cell_index =
       tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
-  float expected_weight = 1.f / (std::sqrt(2 * M_PI) * bandwith);
+  float expected_weight = 1.f / (std::sqrt(2 * M_PI) * bandwidth);
   EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
   x = 6.5f;
   y = 4.5f;
@@ -313,8 +314,8 @@ TEST_F(RangeDataInserterTest2DTSDF,
   // Ray is inclined relative to surface.
   cell_index = tsdf_.limits().GetCellIndex(Eigen::Vector2f(x, y));
   float angle = std::atan(7.f / 5.f);
-  expected_weight = 1.f / (std::sqrt(2 * M_PI) * bandwith) *
-                    std::exp(angle * angle / (2 * std::pow(bandwith, 2)));
+  expected_weight = 1.f / (std::sqrt(2 * M_PI) * bandwidth) *
+                    std::exp(angle * angle / (2 * std::pow(bandwidth, 2)));
   EXPECT_NEAR(expected_weight, tsdf_.GetWeight(cell_index), 1e-3);
   x = 6.5f;
   y = 4.5f;
@@ -323,8 +324,8 @@ TEST_F(RangeDataInserterTest2DTSDF,
 }
 
 TEST_F(RangeDataInserterTest2DTSDF, InsertPointsWithDistanceCellToHit) {
-  float bandwith = 10.f;
-  options_.set_update_weight_distance_cell_to_hit_kernel_bandwith(bandwith);
+  float bandwidth = 10.f;
+  options_.set_update_weight_distance_cell_to_hit_kernel_bandwidth(bandwidth);
   range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   InsertPoint();
   const float truncation_distance =
@@ -336,8 +337,8 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointsWithDistanceCellToHit) {
     float expected_tsdf =
         std::max(std::min(3.5f - y, truncation_distance), -truncation_distance);
     float expected_weight =
-        1.f / (std::sqrt(2 * M_PI) * bandwith) *
-        std::exp(std::pow(expected_tsdf, 2) / (2 * std::pow(bandwith, 2)));
+        1.f / (std::sqrt(2 * M_PI) * bandwidth) *
+        std::exp(std::pow(expected_tsdf, 2) / (2 * std::pow(bandwidth, 2)));
     EXPECT_THAT(MockCellProperties(cell_index, tsdf_),
                 EqualCellProperties(true, expected_tsdf, expected_weight));
   }
