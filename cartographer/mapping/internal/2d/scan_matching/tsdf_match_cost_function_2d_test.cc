@@ -48,8 +48,8 @@ class TSDFSpaceCostFunction2DTest : public ::testing::Test {
         "},"
         "project_sdf_distance_to_scan_normal = true,"
         "update_weight_range_exponent = 0,"
-        "update_weight_angle_scan_normal_to_ray_kernel_bandwith = 0,"
-        "update_weight_distance_cell_to_hit_kernel_bandwith = 0,"
+        "update_weight_angle_scan_normal_to_ray_kernel_bandwidth = 0,"
+        "update_weight_distance_cell_to_hit_kernel_bandwidth = 0,"
         "}");
     options_ = CreateTSDFRangeDataInserterOptions2D(parameter_dictionary.get());
     range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);

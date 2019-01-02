@@ -37,11 +37,11 @@ message TSDFRangeDataInserterOptions2D {
   // Update weight is scaled with 1/distance(origin,hit)^range_exponent.
   int32 update_weight_range_exponent = 6;
 
-  // Kernel bandwith of the weight factor based on the angle between.
+  // Kernel bandwidth of the weight factor based on the angle between.
   // scan normal and ray
-  double update_weight_angle_scan_normal_to_ray_kernel_bandwith = 7;
+  double update_weight_angle_scan_normal_to_ray_kernel_bandwidth = 7;
 
-  // Kernel bandwith of the weight factor based on the distance between
+  // Kernel bandwidth of the weight factor based on the distance between
   // cell and scan observation.
-  double update_weight_distance_cell_to_hit_kernel_bandwith = 8;
+  double update_weight_distance_cell_to_hit_kernel_bandwidth = 8;
 }
