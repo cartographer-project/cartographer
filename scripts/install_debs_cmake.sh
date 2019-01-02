@@ -41,6 +41,7 @@ sudo apt-get install -y \
     google-mock \
     libboost-all-dev \
     libcairo2-dev \
+    libcurl4-openssl-dev \
     libeigen3-dev \
     libgflags-dev \
     libgoogle-glog-dev \

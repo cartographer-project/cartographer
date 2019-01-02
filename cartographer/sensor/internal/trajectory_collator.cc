@@ -16,6 +16,8 @@
 
 #include "cartographer/sensor/internal/trajectory_collator.h"
 
+#include "absl/strings/str_cat.h"
+
 namespace cartographer {
 namespace sensor {
 
@@ -71,7 +73,8 @@ void TrajectoryCollator::RegisterMetrics(
 
 metrics::Counter* TrajectoryCollator::GetOrCreateSensorMetric(
     const std::string& sensor_id, int trajectory_id) {
-  const std::string map_key = sensor_id + "/" + std::to_string(trajectory_id);
+  const std::string trajectory_id_str = absl::StrCat(trajectory_id);
+  const std::string map_key = absl::StrCat(sensor_id, "/", trajectory_id_str);
 
   auto metrics_map_itr = metrics_map_.find(map_key);
   if (metrics_map_itr != metrics_map_.end()) {
@@ -80,8 +83,7 @@ metrics::Counter* TrajectoryCollator::GetOrCreateSensorMetric(
 
   LOG(INFO) << "Create metrics handler for key: " << map_key;
   auto new_counter = collator_metrics_family_->Add(
-      {{"sensor_id", sensor_id},
-       {"trajectory_id", std::to_string(trajectory_id)}});
+      {{"sensor_id", sensor_id}, {"trajectory_id", trajectory_id_str}});
 
   metrics_map_[map_key] = new_counter;
   return new_counter;

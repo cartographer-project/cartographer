@@ -19,11 +19,11 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_github_nelhage_rules_boost",
-        sha256 = "6de4d799373e25acd66ec681fba8ffeb13e7c501091d93afa3fadd26765b0f0d",
-        strip_prefix = "rules_boost-96ba810e48f4a28b85ee9c922f0b375274a97f98",
+	sha256 = "371f49e7b29e44a718baf8b9a2dd3eca865005a851c9ecf8fb6a10a715aa58dd",
+	strip_prefix = "rules_boost-a5a95642f6097f8949020646ffe89d7243008981",
         urls = [
-            "https://mirror.bazel.build/github.com/nelhage/rules_boost/archive/96ba810e48f4a28b85ee9c922f0b375274a97f98.tar.gz",
-            "https://github.com/nelhage/rules_boost/archive/96ba810e48f4a28b85ee9c922f0b375274a97f98.tar.gz",
+            "https://mirror.bazel.build/github.com/nelhage/rules_boost/archive/a5a95642f6097f8949020646ffe89d7243008981.tar.gz",
+            "https://github.com/nelhage/rules_boost/archive/a5a95642f6097f8949020646ffe89d7243008981.tar.gz",
         ],
     )
 
@@ -63,13 +63,13 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "net_zlib_zlib",
+	sha256 = "6d4d6640ca3121620995ee255945161821218752b551a1a180f4215f7d124d45",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:zlib.BUILD",
-        sha256 = "6d4d6640ca3121620995ee255945161821218752b551a1a180f4215f7d124d45",
-        strip_prefix = "zlib-cacf7f1d4e3d44d871b605da3b647f07d718623f",
+	strip_prefix = "zlib-cacf7f1d4e3d44d871b605da3b647f07d718623f",
         urls = [
-            "https://mirror.bazel.build/github.com/madler/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz",
-            "https://github.com/madler/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz",
-        ],
+        	"https://mirror.bazel.build/github.com/madler/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz",
+		"https://github.com/madler/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz",
+	],
     )
 
     _maybe(
@@ -229,26 +229,27 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_github_grpc_grpc",
-        sha256 = "2fdde7d64e6fb1a397bf2aa23aeddcdcf276652d9e48270e94eb0dc94d7c1345",
-        strip_prefix = "grpc-20e7074e4101b4fdbae1764caa952301b38957c4",
+        sha256 = "e699efa9422e071a42f052ba8369fbc810e6f7c6fb0a5b1c021f54ac1a92a1f3",
+	strip_prefix = "grpc-b250f34b1225cde1bb19496c5cc5d66e40111052",
         urls = [
-            "https://mirror.bazel.build/github.com/grpc/grpc/archive/20e7074e4101b4fdbae1764caa952301b38957c4.tar.gz",
-            "https://github.com/grpc/grpc/archive/20e7074e4101b4fdbae1764caa952301b38957c4.tar.gz",
+            "https://mirror.bazel.build/github.com/grpc/grpc/archive/b250f34b1225cde1bb19496c5cc5d66e40111052.tar.gz",
+            "https://github.com/grpc/grpc/archive/b250f34b1225cde1bb19496c5cc5d66e40111052.tar.gz",
         ],
     )
 
     _maybe(
         http_archive,
         name = "com_github_jupp0r_prometheus_cpp",
-        sha256 = "0d3e999dfbfc49bb117698154a01dac26fb59e77d0354ccb81107a6da7b014d0",
-        strip_prefix = "prometheus-cpp-8330b3f753fb774c9e0567baaac20ffb7042723b",
+	sha256 = "6604ea0b5ef75f405c09218f13805d4141f6506eaf0da76f5f64625f62acfcd3",
+	strip_prefix = "prometheus-cpp-4e0814ee3f93b796356a51a4795a332568940a72",
         urls = [
-            "https://github.com/jupp0r/prometheus-cpp/archive/8330b3f753fb774c9e0567baaac20ffb7042723b.tar.gz",
+            "https://github.com/jupp0r/prometheus-cpp/archive/4e0814ee3f93b796356a51a4795a332568940a72.tar.gz",
         ],
     )
 
     _maybe(http_archive,
         name = "com_github_googlecartographer_async_grpc",
+	sha256 = "83c2a27c92979787f38810adc4b6bb67aa09607c53dbadca3430a5f29e0a1cd3",
         strip_prefix = "async_grpc-771af45374af7f7bfc3b622ed7efbe29a4aba403",
         urls = [
             "https://github.com/googlecartographer/async_grpc/archive/771af45374af7f7bfc3b622ed7efbe29a4aba403.tar.gz",

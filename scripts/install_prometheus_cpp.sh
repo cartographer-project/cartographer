@@ -17,11 +17,11 @@
 set -o errexit
 set -o verbose
 
-VERSION="v0.2"
-# Digest: a5d981dab82ad6b90f78141eb189694d69c3fe0f
+COMMIT="4e0814ee3f93b796356a51a4795a332568940a72"
 
-git clone --branch ${VERSION} --depth 1 https://github.com/jupp0r/prometheus-cpp.git
+git clone https://github.com/jupp0r/prometheus-cpp.git
 cd prometheus-cpp
+git checkout ${COMMIT}
 git submodule update --init
 mkdir build
 cd build
