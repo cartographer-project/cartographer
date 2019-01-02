@@ -21,6 +21,7 @@
 
 #include "Eigen/Core"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_cat.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
 #include "cartographer/io/draw_trajectories.h"
@@ -236,7 +237,7 @@ PointsProcessor::FlushResult XRayPointsProcessor::Flush() {
     for (size_t i = 0; i < floors_.size(); ++i) {
       WriteVoxels(
           aggregations_[i],
-          file_writer_factory_(output_filename_ + std::to_string(i) + ".png")
+          file_writer_factory_(absl::StrCat(output_filename_, i, ".png"))
               .get());
     }
   }
