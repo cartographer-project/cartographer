@@ -138,7 +138,8 @@ std::map<std::string, transform::Rigid3d> PoseGraphStub::GetLandmarkPoses()
 }
 
 void PoseGraphStub::SetLandmarkPose(const std::string& landmark_id,
-                                    const transform::Rigid3d& global_pose) {
+                                    const transform::Rigid3d& global_pose,
+                                    const bool frozen) {
   proto::SetLandmarkPoseRequest request;
   request.mutable_landmark_pose()->set_landmark_id(landmark_id);
   *request.mutable_landmark_pose()->mutable_global_pose() =

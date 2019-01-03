@@ -279,7 +279,8 @@ std::map<int, int> MapBuilder::LoadState(
   // Set global poses of landmarks.
   for (const auto& landmark : pose_graph_proto.landmark_poses()) {
     pose_graph_->SetLandmarkPose(landmark.landmark_id(),
-                                 transform::ToRigid3(landmark.global_pose()));
+                                 transform::ToRigid3(landmark.global_pose()),
+                                 true);
   }
 
   MapById<SubmapId, mapping::proto::Submap> submap_id_to_submap;

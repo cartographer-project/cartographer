@@ -347,9 +347,8 @@ void OptimizationProblem3D::Solve(
         C_nodes.at(constraint.node_id).translation());
   }
   // Add cost functions for landmarks.
-  AddLandmarkCostFunctions(landmark_nodes, node_data_,
-                           &C_nodes, &C_landmarks, &problem,
-                           options_.huber_scale());
+  AddLandmarkCostFunctions(landmark_nodes, node_data_, &C_nodes, &C_landmarks,
+                           &problem, options_.huber_scale());
   // Add constraints based on IMU observations of angular velocities and
   // linear acceleration.
   if (!options_.fix_z_in_3d()) {
