@@ -164,9 +164,9 @@ void PoseExtrapolator::UpdateVelocitiesFromPoses() {
   const TimedPose& oldest_timed_pose = timed_pose_queue_.front();
   const auto oldest_time = oldest_timed_pose.time;
   const double queue_delta = common::ToSeconds(newest_time - oldest_time);
-  if (queue_delta < 0.001) {  // 1 ms
+  if (queue_delta < common::ToSeconds(pose_queue_duration_)) {
     LOG(WARNING) << "Queue too short for velocity estimation. Queue duration: "
-                 << queue_delta << " ms";
+                 << queue_delta << " s";
     return;
   }
   const transform::Rigid3d& newest_pose = newest_timed_pose.pose;
