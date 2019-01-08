@@ -18,6 +18,7 @@
 
 #include <cmath>
 #include <string>
+#include <vector>
 
 #include "Eigen/Core"
 #include "absl/memory/memory.h"
@@ -41,20 +42,37 @@ struct PixelData {
   float mean_b = 0.;
 };
 
-using PixelDataMatrix =
-    Eigen::Matrix<PixelData, Eigen::Dynamic, Eigen::Dynamic>;
+class PixelDataMatrix {
+ public:
+  PixelDataMatrix(const int width, const int height)
+      : width_(width), data_(width * height) {}
+
+  int width() const { return width_; }
+  int height() const { return data_.size() / width_; }
+  const PixelData& operator()(const int x, const int y) const {
+    return data_.at(x + y * width_);
+  }
+
+  PixelData& operator()(const int x, const int y) {
+    return data_.at(x + y * width_);
+  }
+
+ private:
+  int width_;
+  std::vector<PixelData> data_;
+};
 
 float Mix(const float a, const float b, const float t) {
   return a * (1. - t) + t * b;
 }
 
-// Convert 'mat' into a pleasing-to-look-at image.
-Image IntoImage(const PixelDataMatrix& mat) {
-  Image image(mat.cols(), mat.rows());
+// Convert 'matrix' into a pleasing-to-look-at image.
+Image IntoImage(const PixelDataMatrix& matrix) {
+  Image image(matrix.width(), matrix.height());
   float max = std::numeric_limits<float>::min();
-  for (int y = 0; y < mat.rows(); ++y) {
-    for (int x = 0; x < mat.cols(); ++x) {
-      const PixelData& cell = mat(y, x);
+  for (int y = 0; y < matrix.height(); ++y) {
+    for (int x = 0; x < matrix.width(); ++x) {
+      const PixelData& cell = matrix(x, y);
       if (cell.num_occupied_cells_in_column == 0.) {
         continue;
       }
@@ -62,9 +80,9 @@ Image IntoImage(const PixelDataMatrix& mat) {
     }
   }
 
-  for (int y = 0; y < mat.rows(); ++y) {
-    for (int x = 0; x < mat.cols(); ++x) {
-      const PixelData& cell = mat(y, x);
+  for (int y = 0; y < matrix.height(); ++y) {
+    for (int x = 0; x < matrix.width(); ++x) {
+      const PixelData& cell = matrix(x, y);
       if (cell.num_occupied_cells_in_column == 0.) {
         image.SetPixel(x, y, {{255, 255, 255}});
         continue;
@@ -161,12 +179,12 @@ void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
   // For the screen we are using. X: right, Y: up
   const int xsize = bounding_box_.sizes()[1] + 1;
   const int ysize = bounding_box_.sizes()[2] + 1;
-  PixelDataMatrix pixel_data_matrix = PixelDataMatrix(ysize, xsize);
+  PixelDataMatrix pixel_data_matrix(xsize, ysize);
   for (mapping::HybridGridBase<bool>::Iterator it(aggregation.voxels);
        !it.Done(); it.Next()) {
     const Eigen::Array3i cell_index = it.GetCellIndex();
     const Eigen::Array2i pixel = voxel_index_to_pixel(cell_index);
-    PixelData& pixel_data = pixel_data_matrix(pixel.y(), pixel.x());
+    PixelData& pixel_data = pixel_data_matrix(pixel.x(), pixel.y());
     const auto& column_data = aggregation.column_data.at(
         std::make_pair(cell_index[1], cell_index[2]));
     pixel_data.mean_r = column_data.sum_r / column_data.count;
