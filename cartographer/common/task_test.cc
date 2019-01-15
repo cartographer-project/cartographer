@@ -20,6 +20,7 @@
 #include <queue>
 
 #include "absl/memory/memory.h"
+#include "cartographer/common/thread_pool.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

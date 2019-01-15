@@ -36,7 +36,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>g++-static</build_depend>
+  <build_depend>git</build_depend>
   <build_depend>google-mock</build_depend>
   <build_depend>python-sphinx</build_depend>
 

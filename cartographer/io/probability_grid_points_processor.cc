@@ -36,14 +36,15 @@ void DrawTrajectoriesIntoImage(
     const std::vector<mapping::proto::Trajectory>& trajectories,
     cairo_surface_t* cairo_surface) {
   for (size_t i = 0; i < trajectories.size(); ++i) {
-    DrawTrajectory(trajectories[i], GetColor(i),
-                   [&probability_grid,
-                    &offset](const transform::Rigid3d& pose) -> Eigen::Array2i {
-                     return probability_grid.limits().GetCellIndex(
-                                pose.cast<float>().translation().head<2>()) -
-                            offset;
-                   },
-                   cairo_surface);
+    DrawTrajectory(
+        trajectories[i], GetColor(i),
+        [&probability_grid,
+         &offset](const transform::Rigid3d& pose) -> Eigen::Array2i {
+          return probability_grid.limits().GetCellIndex(
+                     pose.cast<float>().translation().head<2>()) -
+                 offset;
+        },
+        cairo_surface);
   }
 }
 

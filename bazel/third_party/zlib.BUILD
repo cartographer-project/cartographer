@@ -51,3 +51,8 @@ cc_library(
     ],
     includes = ["."],
 )
+
+alias(
+    name = "z",
+    actual = ":zlib",
+)
