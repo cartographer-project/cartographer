@@ -22,8 +22,8 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/2d/map_limits.h"
+#include "cartographer/mapping/2d/tsd_value_converter.h"
 #include "cartographer/mapping/2d/xy_index.h"
-#include "cartographer/mapping/internal/tsd_value_converter.h"
 namespace cartographer {
 namespace mapping {
 
