@@ -41,10 +41,14 @@ void Run(const std::string& pbstream_filename, bool all_debug_strings) {
   const auto header = deserializer.header();
   LOG(INFO) << "Header: " << header.DebugString();
   for (const mapping::proto::TrajectoryBuilderOptionsWithSensorIds&
-           trajectory_options : deserializer.all_trajectory_builder_options()
-                                    .options_with_sensor_ids()) {
+           trajectory_options :
+       deserializer.builder_options()
+           .trajectory_builder_options_with_sensor_ids()) {
     LOG(INFO) << "Trajectory options: " << trajectory_options.DebugString();
   }
+  LOG(INFO)
+      << "Map builder options: "
+      << deserializer.builder_options().map_builder_options().DebugString();
   const mapping::proto::PoseGraph pose_graph = deserializer.pose_graph();
   for (const mapping::proto::Trajectory& trajectory : pose_graph.trajectory()) {
     LOG(INFO) << "Trajectory id: " << trajectory.trajectory_id()

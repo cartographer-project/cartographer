@@ -57,17 +57,17 @@ ProtoStreamDeserializer::ProtoStreamDeserializer(
          "`SerializationHeader`, but got field tag "
       << pose_graph_.data_case();
 
-  CHECK(ReadNextSerializedData(&all_trajectory_builder_options_))
-      << "Serialized stream misses `AllTrajectoryBuilderOptions`.";
-  CHECK(all_trajectory_builder_options_.has_all_trajectory_builder_options())
+  CHECK(ReadNextSerializedData(&builder_options_))
+      << "Serialized stream misses `BuilderOptions`.";
+  CHECK(builder_options_.has_builder_options())
       << "Serialized stream order corrupt. Expecting "
-         "`AllTrajectoryBuilderOptions` after "
+         "`BuilderOptions` after "
          "PoseGraph, got field tag "
-      << all_trajectory_builder_options_.data_case();
+      << builder_options_.data_case();
 
   CHECK_EQ(pose_graph_.pose_graph().trajectory_size(),
-           all_trajectory_builder_options_.all_trajectory_builder_options()
-               .options_with_sensor_ids_size());
+           builder_options_.builder_options()
+               .trajectory_builder_options_with_sensor_ids_size());
 }
 
 bool ProtoStreamDeserializer::ReadNextSerializedData(

@@ -60,7 +60,7 @@ class MapBuilderInterface {
   // builder for it will return 'nullptr'.
   virtual int AddTrajectoryForDeserialization(
       const proto::TrajectoryBuilderOptionsWithSensorIds&
-          options_with_sensor_ids_proto) = 0;
+          trajectory_builder_options_with_sensor_ids_proto) = 0;
 
   // Returns the 'TrajectoryBuilderInterface' corresponding to the specified
   // 'trajectory_id' or 'nullptr' if the trajectory has no corresponding

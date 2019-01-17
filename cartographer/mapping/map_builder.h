@@ -30,45 +30,45 @@ namespace cartographer {
 namespace mapping {
 
 proto::MapBuilderOptions CreateMapBuilderOptions(
-    common::LuaParameterDictionary *const parameter_dictionary);
+    common::LuaParameterDictionary* const parameter_dictionary);
 
 // Wires up the complete SLAM stack with TrajectoryBuilders (for local submaps)
 // and a PoseGraph for loop closure.
 class MapBuilder : public MapBuilderInterface {
  public:
-  explicit MapBuilder(const proto::MapBuilderOptions &options);
+  explicit MapBuilder(const proto::MapBuilderOptions& options);
   ~MapBuilder() override {}
 
-  MapBuilder(const MapBuilder &) = delete;
-  MapBuilder &operator=(const MapBuilder &) = delete;
+  MapBuilder(const MapBuilder&) = delete;
+  MapBuilder& operator=(const MapBuilder&) = delete;
 
   int AddTrajectoryBuilder(
-      const std::set<SensorId> &expected_sensor_ids,
-      const proto::TrajectoryBuilderOptions &trajectory_options,
+      const std::set<SensorId>& expected_sensor_ids,
+      const proto::TrajectoryBuilderOptions& trajectory_options,
       LocalSlamResultCallback local_slam_result_callback) override;
 
   int AddTrajectoryForDeserialization(
-      const proto::TrajectoryBuilderOptionsWithSensorIds
-          &options_with_sensor_ids_proto) override;
+      const proto::TrajectoryBuilderOptionsWithSensorIds&
+          trajectory_builder_options_with_sensor_ids_proto) override;
 
   void FinishTrajectory(int trajectory_id) override;
 
-  std::string SubmapToProto(const SubmapId &submap_id,
-                            proto::SubmapQuery::Response *response) override;
+  std::string SubmapToProto(const SubmapId& submap_id,
+                            proto::SubmapQuery::Response* response) override;
 
   void SerializeState(bool include_unfinished_submaps,
-                      io::ProtoStreamWriterInterface *writer) override;
+                      io::ProtoStreamWriterInterface* writer) override;
 
   bool SerializeStateToFile(bool include_unfinished_submaps,
-                            const std::string &filename) override;
+                            const std::string& filename) override;
 
-  std::map<int, int> LoadState(io::ProtoStreamReaderInterface *reader,
+  std::map<int, int> LoadState(io::ProtoStreamReaderInterface* reader,
                                bool load_frozen_state) override;
 
-  std::map<int, int> LoadStateFromFile(const std::string &filename,
+  std::map<int, int> LoadStateFromFile(const std::string& filename,
                                        const bool load_frozen_state) override;
 
-  mapping::PoseGraphInterface *pose_graph() override {
+  mapping::PoseGraphInterface* pose_graph() override {
     return pose_graph_.get();
   }
 
@@ -76,13 +76,13 @@ class MapBuilder : public MapBuilderInterface {
     return trajectory_builders_.size();
   }
 
-  mapping::TrajectoryBuilderInterface *GetTrajectoryBuilder(
+  mapping::TrajectoryBuilderInterface* GetTrajectoryBuilder(
       int trajectory_id) const override {
     return trajectory_builders_.at(trajectory_id).get();
   }
 
-  const std::vector<proto::TrajectoryBuilderOptionsWithSensorIds>
-      &GetAllTrajectoryBuilderOptions() const override {
+  const std::vector<proto::TrajectoryBuilderOptionsWithSensorIds>&
+  GetAllTrajectoryBuilderOptions() const override {
     return all_trajectory_builder_options_;
   }
 

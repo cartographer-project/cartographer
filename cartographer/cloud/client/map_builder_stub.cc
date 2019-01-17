@@ -88,7 +88,7 @@ int MapBuilderStub::AddTrajectoryBuilder(
 
 int MapBuilderStub::AddTrajectoryForDeserialization(
     const mapping::proto::TrajectoryBuilderOptionsWithSensorIds&
-        options_with_sensor_ids_proto) {
+        trajectory_builder_options_with_sensor_ids_proto) {
   LOG(FATAL) << "Not implemented";
 }
 
@@ -197,12 +197,11 @@ std::map<int, int> MapBuilderStub::LoadState(
     request.set_load_frozen_state(load_frozen_state);
     CHECK(client.Write(request));
   }
-  // Request with an AllTrajectoryBuilderOptions should be third.
+  // Request with BuilderOptions should be third.
   {
     proto::LoadStateRequest request;
-    *request.mutable_serialized_data()
-         ->mutable_all_trajectory_builder_options() =
-        deserializer.all_trajectory_builder_options();
+    *request.mutable_serialized_data()->mutable_builder_options() =
+        deserializer.builder_options();
     request.set_load_frozen_state(load_frozen_state);
     CHECK(client.Write(request));
   }

@@ -41,7 +41,7 @@ class MapBuilderStub : public mapping::MapBuilderInterface {
       LocalSlamResultCallback local_slam_result_callback) override;
   int AddTrajectoryForDeserialization(
       const mapping::proto::TrajectoryBuilderOptionsWithSensorIds&
-          options_with_sensor_ids_proto) override;
+          trajectory_builder_options_with_sensor_ids_proto) override;
   mapping::TrajectoryBuilderInterface* GetTrajectoryBuilder(
       int trajectory_id) const override;
   void FinishTrajectory(int trajectory_id) override;

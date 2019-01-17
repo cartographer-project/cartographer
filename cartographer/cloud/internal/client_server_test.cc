@@ -63,9 +63,10 @@ constexpr char kPoseGraphProtoString[] = R"(pose_graph {
 		submap: {}
 	  }
     })";
-constexpr char kAllTrajectoryBuilderOptionsProtoString[] =
-    R"(all_trajectory_builder_options {
-      options_with_sensor_ids: {}
+constexpr char kBuilderOptionsProtoString[] =
+    R"(builder_options {
+      trajectory_builder_options_with_sensor_ids: {}
+      map_builder_options: {}
     })";
 constexpr char kSubmapProtoString[] = "submap {}";
 constexpr char kNodeProtoString[] = "node {}";
@@ -637,17 +638,16 @@ TEST_P(ClientServerTestByGridType, LoadStateAndDelete) {
   InitializeStub();
 
   // Load text proto into in_memory_reader.
-  auto reader =
-      ProtoReaderFromStrings(kSerializationHeaderProtoString,
-                             {
-                                 kPoseGraphProtoString,
-                                 kAllTrajectoryBuilderOptionsProtoString,
-                                 kSubmapProtoString,
-                                 kNodeProtoString,
-                                 kImuDataProtoString,
-                                 kOdometryDataProtoString,
-                                 kLandmarkDataProtoString,
-                             });
+  auto reader = ProtoReaderFromStrings(kSerializationHeaderProtoString,
+                                       {
+                                           kPoseGraphProtoString,
+                                           kBuilderOptionsProtoString,
+                                           kSubmapProtoString,
+                                           kNodeProtoString,
+                                           kImuDataProtoString,
+                                           kOdometryDataProtoString,
+                                           kLandmarkDataProtoString,
+                                       });
 
   auto trajectory_remapping = stub_->LoadState(reader.get(), true);
   int expected_trajectory_id = 0;
@@ -676,17 +676,16 @@ TEST_P(ClientServerTestByGridType, LoadUnfrozenStateAndDelete) {
   InitializeStub();
 
   // Load text proto into in_memory_reader.
-  auto reader =
-      ProtoReaderFromStrings(kSerializationHeaderProtoString,
-                             {
-                                 kPoseGraphProtoString,
-                                 kAllTrajectoryBuilderOptionsProtoString,
-                                 kSubmapProtoString,
-                                 kNodeProtoString,
-                                 kImuDataProtoString,
-                                 kOdometryDataProtoString,
-                                 kLandmarkDataProtoString,
-                             });
+  auto reader = ProtoReaderFromStrings(kSerializationHeaderProtoString,
+                                       {
+                                           kPoseGraphProtoString,
+                                           kBuilderOptionsProtoString,
+                                           kSubmapProtoString,
+                                           kNodeProtoString,
+                                           kImuDataProtoString,
+                                           kOdometryDataProtoString,
+                                           kLandmarkDataProtoString,
+                                       });
 
   auto trajectory_remapping =
       stub_->LoadState(reader.get(), false /* load_frozen_state */);
