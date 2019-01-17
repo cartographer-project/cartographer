@@ -53,7 +53,8 @@ TEST_F(SetLandmarkPoseHandlerTest, SetLandmarkPose) {
                       transform::IsNearly(
                           transform::Rigid3d(Eigen::Vector3d(1, 2, 3),
                                              Eigen::Quaterniond(4, 5, 6, 7)),
-                          kEps)));
+                          kEps),
+                      false));
   test_server_->SendWrite(request);
 }
 
