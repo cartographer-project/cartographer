@@ -62,6 +62,7 @@ class PoseGraphInterface {
     };
     std::vector<LandmarkObservation> landmark_observations;
     absl::optional<transform::Rigid3d> global_landmark_pose;
+    bool frozen = false;
   };
 
   struct SubmapPose {
@@ -123,7 +124,8 @@ class PoseGraphInterface {
 
   // Sets global pose of landmark 'landmark_id' to given 'global_pose'.
   virtual void SetLandmarkPose(const std::string& landmark_id,
-                               const transform::Rigid3d& global_pose) = 0;
+                               const transform::Rigid3d& global_pose,
+                               const bool frozen = false) = 0;
 
   // Deletes a trajectory asynchronously.
   virtual void DeleteTrajectory(int trajectory_id) = 0;

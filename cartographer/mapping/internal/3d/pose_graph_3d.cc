@@ -948,10 +948,12 @@ std::map<std::string, transform::Rigid3d> PoseGraph3D::GetLandmarkPoses()
 }
 
 void PoseGraph3D::SetLandmarkPose(const std::string& landmark_id,
-                                  const transform::Rigid3d& global_pose) {
+                                  const transform::Rigid3d& global_pose,
+                                  const bool frozen) {
   AddWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock locker(&mutex_);
     data_.landmark_nodes[landmark_id].global_landmark_pose = global_pose;
+    data_.landmark_nodes[landmark_id].frozen = frozen;
     return WorkItem::Result::kDoNotRunOptimization;
   });
 }
