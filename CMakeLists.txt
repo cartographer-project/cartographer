@@ -41,8 +41,8 @@ find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
 # On Windows, Protobuf is incorrectly found by the bundled CMake module. Prefer native CMake config, if possible.
 set(protobuf_MODULE_COMPATIBLE TRUE CACHE INTERNAL "")
-find_package(Protobuf 3.0.0 CONFIG)
-if (NOT Protobuf_FOUND)
+find_package(Protobuf 3.0.0 CONFIG QUIET)
+if (NOT PROTOBUF_FOUND)
   find_package(Protobuf 3.0.0 REQUIRED)
 endif()
 
@@ -142,7 +142,7 @@ foreach(ABS_FIL ${ALL_PROTOS})
   add_custom_command(
     OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
            "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
-    COMMAND  ${Protobuf_PROTOC_EXECUTABLE}
+    COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
     ARGS --cpp_out  ${PROJECT_BINARY_DIR} -I
       ${PROJECT_SOURCE_DIR} ${ABS_FIL}
     DEPENDS ${ABS_FIL}
@@ -168,7 +168,7 @@ if(${BUILD_GRPC})
     add_custom_command(
       OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
              "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
-      COMMAND  ${Protobuf_PROTOC_EXECUTABLE}
+      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
       ARGS --cpp_out  ${PROJECT_BINARY_DIR}
         -I ${PROJECT_SOURCE_DIR}
         ${ABS_FIL}

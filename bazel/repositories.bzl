@@ -13,14 +13,15 @@
 # limitations under the License.
 
 """External dependencies for Cartographer."""
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_github_nelhage_rules_boost",
-	sha256 = "371f49e7b29e44a718baf8b9a2dd3eca865005a851c9ecf8fb6a10a715aa58dd",
-	strip_prefix = "rules_boost-a5a95642f6097f8949020646ffe89d7243008981",
+        sha256 = "371f49e7b29e44a718baf8b9a2dd3eca865005a851c9ecf8fb6a10a715aa58dd",
+        strip_prefix = "rules_boost-a5a95642f6097f8949020646ffe89d7243008981",
         urls = [
             "https://mirror.bazel.build/github.com/nelhage/rules_boost/archive/a5a95642f6097f8949020646ffe89d7243008981.tar.gz",
             "https://github.com/nelhage/rules_boost/archive/a5a95642f6097f8949020646ffe89d7243008981.tar.gz",
@@ -63,13 +64,13 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "net_zlib_zlib",
-	sha256 = "6d4d6640ca3121620995ee255945161821218752b551a1a180f4215f7d124d45",
+        sha256 = "6d4d6640ca3121620995ee255945161821218752b551a1a180f4215f7d124d45",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:zlib.BUILD",
-	strip_prefix = "zlib-cacf7f1d4e3d44d871b605da3b647f07d718623f",
+        strip_prefix = "zlib-cacf7f1d4e3d44d871b605da3b647f07d718623f",
         urls = [
-        	"https://mirror.bazel.build/github.com/madler/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz",
-		"https://github.com/madler/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz",
-	],
+            "https://mirror.bazel.build/github.com/madler/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz",
+            "https://github.com/madler/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz",
+        ],
     )
 
     _maybe(
@@ -206,11 +207,11 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_google_protobuf",
-        sha256 = "0cc6607e2daa675101e9b7398a436f09167dffb8ca0489b0307ff7260498c13c",
-        strip_prefix = "protobuf-3.5.0",
+        sha256 = "2244b0308846bb22b4ff0bcc675e99290ff9f1115553ae9671eba1030af31bc0",
+        strip_prefix = "protobuf-3.6.1.2",
         urls = [
-            "https://mirror.bazel.build/github.com/google/protobuf/archive/v3.5.0.tar.gz",
-            "https://github.com/google/protobuf/archive/v3.5.0.tar.gz",
+            "https://mirror.bazel.build/github.com/google/protobuf/archive/v3.6.1.2.tar.gz",
+            "https://github.com/google/protobuf/archive/v3.6.1.2.tar.gz",
         ],
     )
 
@@ -230,7 +231,7 @@ def cartographer_repositories():
         http_archive,
         name = "com_github_grpc_grpc",
         sha256 = "e699efa9422e071a42f052ba8369fbc810e6f7c6fb0a5b1c021f54ac1a92a1f3",
-	strip_prefix = "grpc-b250f34b1225cde1bb19496c5cc5d66e40111052",
+        strip_prefix = "grpc-b250f34b1225cde1bb19496c5cc5d66e40111052",
         urls = [
             "https://mirror.bazel.build/github.com/grpc/grpc/archive/b250f34b1225cde1bb19496c5cc5d66e40111052.tar.gz",
             "https://github.com/grpc/grpc/archive/b250f34b1225cde1bb19496c5cc5d66e40111052.tar.gz",
@@ -240,23 +241,25 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_github_jupp0r_prometheus_cpp",
-	sha256 = "6604ea0b5ef75f405c09218f13805d4141f6506eaf0da76f5f64625f62acfcd3",
-	strip_prefix = "prometheus-cpp-4e0814ee3f93b796356a51a4795a332568940a72",
+        sha256 = "6604ea0b5ef75f405c09218f13805d4141f6506eaf0da76f5f64625f62acfcd3",
+        strip_prefix = "prometheus-cpp-4e0814ee3f93b796356a51a4795a332568940a72",
         urls = [
             "https://github.com/jupp0r/prometheus-cpp/archive/4e0814ee3f93b796356a51a4795a332568940a72.tar.gz",
         ],
     )
 
-    _maybe(http_archive,
+    _maybe(
+        http_archive,
         name = "com_github_googlecartographer_async_grpc",
-	sha256 = "83c2a27c92979787f38810adc4b6bb67aa09607c53dbadca3430a5f29e0a1cd3",
+        sha256 = "83c2a27c92979787f38810adc4b6bb67aa09607c53dbadca3430a5f29e0a1cd3",
         strip_prefix = "async_grpc-771af45374af7f7bfc3b622ed7efbe29a4aba403",
         urls = [
             "https://github.com/googlecartographer/async_grpc/archive/771af45374af7f7bfc3b622ed7efbe29a4aba403.tar.gz",
         ],
     )
 
-    _maybe(http_archive,
+    _maybe(
+        http_archive,
         name = "com_google_absl",
         sha256 = "c8ba586a9ab12bc4a67bb419fc0d2146200942b072bac95f50490f977b7fb04f",
         strip_prefix = "abseil-cpp-5441bbe1db5d0f2ca24b5b60166367b0966790af",
