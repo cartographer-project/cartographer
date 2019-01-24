@@ -33,7 +33,7 @@ DEFINE_string(configuration_basename, "",
               "configuration file.");
 DEFINE_string(subdictionary, "",
               "Only dump a subdictionary referenced by its Lua ID, e.g.: "
-              "'--subdictionary_id trajectory_builder.trajectory_builder_3d'");
+              "'--subdictionary trajectory_builder.trajectory_builder_3d'");
 
 namespace cartographer {
 namespace common {
@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
   google::SetUsageMessage(
       "Dumps a resolved Lua configuration to stdout.\n"
       "The output can be restricted to a subdictionary using the optional "
-      "'--subdictionary_id' parameter, which can be given in Lua syntax.\n"
+      "'--subdictionary' parameter, which can be given in Lua syntax.\n"
       "The logs of the configuration file resolver are written to stderr if "
       "'--logtostderr' is given.");
   google::ParseCommandLineFlags(&argc, &argv, true);
