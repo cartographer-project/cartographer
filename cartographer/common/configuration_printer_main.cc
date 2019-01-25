@@ -82,10 +82,11 @@ int main(int argc, char** argv) {
       "'--logtostderr' is given.");
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  CHECK(!FLAGS_configuration_directories.empty())
-      << "-configuration_directories is missing.";
-  CHECK(!FLAGS_configuration_basename.empty())
-      << "-configuration_basename is missing.";
+  if (FLAGS_configuration_directories.empty() ||
+      FLAGS_configuration_basename.empty()) {
+    google::ShowUsageWithFlagsRestrict(argv[0], "configuration_printer_main");
+    return EXIT_FAILURE;
+  }
 
   const std::vector<std::string> configuration_directories =
       absl::StrSplit(FLAGS_configuration_directories, ',', absl::SkipEmpty());
