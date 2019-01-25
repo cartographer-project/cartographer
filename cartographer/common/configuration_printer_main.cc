@@ -32,7 +32,7 @@ DEFINE_string(configuration_basename, "",
               "Basename, i.e. not containing any directory prefix, of the "
               "configuration file.");
 DEFINE_string(subdictionary, "",
-              "Only dump a subdictionary referenced by its Lua ID, e.g.: "
+              "Only print a subdictionary referenced by its Lua ID, e.g.: "
               "'--subdictionary trajectory_builder.trajectory_builder_3d'");
 
 namespace cartographer {
@@ -45,11 +45,9 @@ std::unique_ptr<LuaParameterDictionary> LoadLuaDictionary(
       absl::make_unique<ConfigurationFileResolver>(configuration_directories);
   const std::string code =
       file_resolver->GetFileContentOrDie(configuration_basename);
-  // We use no reference count because we just want to dump the configuration.
-  std::unique_ptr<LuaParameterDictionary> lua_parameter_dictionary =
-      LuaParameterDictionary::NonReferenceCounted(code,
-                                                  std::move(file_resolver));
-  return lua_parameter_dictionary;
+  // We use no reference count because we just want to print the configuration.
+  return LuaParameterDictionary::NonReferenceCounted(code,
+                                                     std::move(file_resolver));
 }
 
 void PrintSubdictionaryById(LuaParameterDictionary* lua_parameter_dictionary,
@@ -67,7 +65,8 @@ void PrintSubdictionaryById(LuaParameterDictionary* lua_parameter_dictionary,
     stack.push_back(stack.back()->GetDictionary(key));
   }
   CHECK(!stack.empty());
-  std::cout << stack.back()->ToString() << std::endl;
+  std::cout << subdictionary_id << " = " << stack.back()->ToString()
+            << std::endl;
 }
 
 }  // namespace common
@@ -76,7 +75,7 @@ void PrintSubdictionaryById(LuaParameterDictionary* lua_parameter_dictionary,
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   google::SetUsageMessage(
-      "Dumps a resolved Lua configuration to stdout.\n"
+      "Resolves and compiles a Lua configuration and prints it to stdout.\n"
       "The output can be restricted to a subdictionary using the optional "
       "'--subdictionary' parameter, which can be given in Lua syntax.\n"
       "The logs of the configuration file resolver are written to stderr if "
@@ -98,6 +97,6 @@ int main(int argc, char** argv) {
     ::cartographer::common::PrintSubdictionaryById(
         lua_parameter_dictionary.get(), FLAGS_subdictionary);
   } else {
-    std::cout << lua_parameter_dictionary->ToString() << std::endl;
+    std::cout << "return " << lua_parameter_dictionary->ToString() << std::endl;
   }
 }

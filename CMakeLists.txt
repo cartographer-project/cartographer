@@ -204,9 +204,9 @@ google_binary(cartographer_pbstream
   cartographer/io/pbstream_main.cc
 )
 
-google_binary(cartographer_dump_configuration
+google_binary(cartographer_print_configuration
   SRCS
-  cartographer/common/configuration_dumper_main.cc
+  cartographer/common/configuration_printer_main.cc
 )
 
 if(${BUILD_GRPC})
