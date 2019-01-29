@@ -159,6 +159,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "@com_google_glog//:glog",
-        "@org_tuxfamily_eigen//:eigen",
+        "@eigen3//:core",
     ],
 )

@@ -12,7 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-workspace(name = "com_github_googlecartographer_cartographer")
+workspace(name = "com_github_thirdwave_ai_cartographer")
+
+new_local_repository(
+        name = "eigen3",
+        build_file = "//:bazel/third_party/eigen3.BUILD",
+        path = "/usr/include/eigen3")
 
 load("//:bazel/repositories.bzl", "cartographer_repositories")
 
