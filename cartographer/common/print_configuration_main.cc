@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
 
   if (FLAGS_configuration_directories.empty() ||
       FLAGS_configuration_basename.empty()) {
-    google::ShowUsageWithFlagsRestrict(argv[0], "configuration_printer_main");
+    google::ShowUsageWithFlagsRestrict(argv[0], "print_configuration_main");
     return EXIT_FAILURE;
   }
 
