@@ -110,8 +110,8 @@ cc_library(
 )
 
 cc_binary(
-    name = "cartographer_print_config",
-    srcs = ["common/cartographer_print_config_main.cc"],
+    name = "cartographer_print_configuration",
+    srcs = ["common/print_configuration_main.cc"],
     deps = [
         ":cartographer",
         "@com_github_gflags_gflags//:gflags",
