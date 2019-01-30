@@ -1257,8 +1257,7 @@ void PoseGraph2D::RegisterMetrics(metrics::FamilyFactory* family_factory) {
   kConstraintsSameTrajectoryMetric =
       constraints->Add({{"tag", "inter_submap"}, {"trajectory", "same"}});
   auto* submaps = family_factory->NewGaugeFamily(
-      "mapping_2d_pose_graph_submaps",
-      "Number of submaps in the pose graph.");
+      "mapping_2d_pose_graph_submaps", "Number of submaps in the pose graph.");
   kActiveSubmapsMetric = submaps->Add({{"category", "active"}});
   kFrozenSubmapsMetric = submaps->Add({{"category", "frozen"}});
   kDeletedSubmapsMetric = submaps->Add({{"category", "deleted"}});
