@@ -179,7 +179,7 @@ def cartographer_repositories():
     )
 
     _maybe(
-       git_repository,
+        git_repository,
         name = "com_google_googletest",
         commit = "1f605414cc4137f0ad0cde4d0c7366ff2dfac590",
         remote = "https://github.com/google/googletest",
