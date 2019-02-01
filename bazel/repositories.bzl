@@ -15,6 +15,7 @@
 """External dependencies for Cartographer."""
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 def cartographer_repositories():
     _maybe(
@@ -40,14 +41,10 @@ def cartographer_repositories():
     )
 
     _maybe(
-        http_archive,
+        git_repository,
         name = "com_github_gflags_gflags",
-        sha256 = "6e16c8bc91b1310a44f3965e616383dbda48f83e8c1eaa2370a215057b00cabe",
-        strip_prefix = "gflags-77592648e3f3be87d6c7123eb81cbad75f9aef5a",
-        urls = [
-            "https://mirror.bazel.build/github.com/gflags/gflags/archive/77592648e3f3be87d6c7123eb81cbad75f9aef5a.tar.gz",
-            "https://github.com/gflags/gflags/archive/77592648e3f3be87d6c7123eb81cbad75f9aef5a.tar.gz",
-        ],
+        commit = "e292e0452fcfd5a8ae055b59052fc041cbab4abf",
+        remote = "https://github.com/gflags/gflags.git",
     )
 
     _maybe(
@@ -65,7 +62,7 @@ def cartographer_repositories():
         http_archive,
         name = "net_zlib_zlib",
         sha256 = "6d4d6640ca3121620995ee255945161821218752b551a1a180f4215f7d124d45",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:zlib.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party:zlib.BUILD",
         strip_prefix = "zlib-cacf7f1d4e3d44d871b605da3b647f07d718623f",
         urls = [
             "https://mirror.bazel.build/github.com/madler/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz",
@@ -76,7 +73,7 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "org_cairographics_pixman",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party/pixman:pixman.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party/pixman:pixman.BUILD",
         sha256 = "21b6b249b51c6800dc9553b65106e1e37d0e25df942c90531d4c3997aa20a88e",
         strip_prefix = "pixman-0.34.0",
         urls = [
@@ -88,7 +85,7 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "org_cairographics_cairo",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party/cairo:cairo.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party/cairo:cairo.BUILD",
         sha256 = "7e87878658f2c9951a14fc64114d4958c0e65ac47530b8ac3078b2ce41b66a09",
         strip_prefix = "cairo-1.14.10",
         urls = [
@@ -100,7 +97,7 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "org_freetype_freetype2",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:freetype2.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party:freetype2.BUILD",
         sha256 = "33a28fabac471891d0523033e99c0005b95e5618dc8ffa7fa47f9dadcacb1c9b",
         strip_prefix = "freetype-2.8",
         urls = [
@@ -112,7 +109,7 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "org_libgd_libgd",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:gd.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party:gd.BUILD",
         sha256 = "a66111c9b4a04e818e9e2a37d7ae8d4aae0939a100a36b0ffb52c706a09074b5",
         strip_prefix = "libgd-2.2.5",
         urls = [
@@ -124,7 +121,7 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "org_freedesktop_fontconfig",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party/fontconfig:fontconfig.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party/fontconfig:fontconfig.BUILD",
         sha256 = "fd5a6a663f4c4a00e196523902626654dd0c4a78686cbc6e472f338e50fdf806",
         strip_prefix = "fontconfig-2.12.4",
         urls = [
@@ -136,31 +133,19 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "org_ceres_solver_ceres_solver",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:ceres.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party:ceres.BUILD",
         sha256 = "ede5b4205ee8d7c7e029e9da74c7ee759fee6961f7e6bfa694274e4a55b8c7ca",
         strip_prefix = "ceres-solver-58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e",
         urls = [
             "https://mirror.bazel.build/github.com/ceres-solver/ceres-solver/archive/58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e.tar.gz",
             "https://github.com/ceres-solver/ceres-solver/archive/58c5edae2f7c4d2533fe8a975c1f5f0b892dfd3e.tar.gz",
         ],
-    )
-
-    _maybe(
-        http_archive,
-        name = "org_tuxfamily_eigen",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:eigen.BUILD",
-        sha256 = "ca7beac153d4059c02c8fc59816c82d54ea47fe58365e8aded4082ded0b820c4",
-        strip_prefix = "eigen-eigen-f3a22f35b044",
-        urls = [
-            "http://mirror.bazel.build/bitbucket.org/eigen/eigen/get/f3a22f35b044.tar.gz",
-            "https://bitbucket.org/eigen/eigen/get/f3a22f35b044.tar.gz",
-        ],
-    )
-
+    )           
+    
     _maybe(
         http_archive,
         name = "com_github_libexpat_libexpat",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:expat.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party:expat.BUILD",
         sha256 = "b5dcb503e40f615a0296a18acc6d975f2f1a3d01c7b3a4b3bb69de27bc9475c3",
         strip_prefix = "libexpat-R_2_2_4/expat",
         urls = [
@@ -172,7 +157,7 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "libjpeg",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:libjpeg.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party:libjpeg.BUILD",
         sha256 = "240fd398da741669bf3c90366f58452ea59041cacc741a489b99f2f6a0bad052",
         strip_prefix = "jpeg-9b",
         urls = [
@@ -184,7 +169,7 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "org_libpng_libpng",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:libpng.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party:libpng.BUILD",
         sha256 = "7f415186d38ca71c23058386d7cf5135c8beda821ee1beecdc2a7a26c0356615",
         strip_prefix = "libpng-1.2.57",
         urls = [
@@ -194,14 +179,10 @@ def cartographer_repositories():
     )
 
     _maybe(
-        http_archive,
+        git_repository,
         name = "com_google_googletest",
-        sha256 = "c18f281fd6621bb264570b99860a0241939b4a251c9b1af709b811d33bc63af8",
-        strip_prefix = "googletest-e3bd4cbeaeef3cee65a68a8bd3c535cb779e9b6d",
-        urls = [
-            "https://mirror.bazel.build/github.com/google/googletest/archive/e3bd4cbeaeef3cee65a68a8bd3c535cb779e9b6d.tar.gz",
-            "https://github.com/google/googletest/archive/e3bd4cbeaeef3cee65a68a8bd3c535cb779e9b6d.tar.gz",
-        ],
+        commit = "1f605414cc4137f0ad0cde4d0c7366ff2dfac590",
+        remote = "https://github.com/google/googletest",
     )
 
     _maybe(
@@ -218,13 +199,13 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "org_lua_lua",
-        build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:lua.BUILD",
+        build_file = "@com_github_thirdwave_ai_cartographer//bazel/third_party:lua.BUILD",
         sha256 = "b9e2e4aad6789b3b63a056d442f7b39f0ecfca3ae0f1fc0ae4e9614401b69f4b",
         strip_prefix = "lua-5.2.4",
         urls = [
             "https://mirror.bazel.build/www.lua.org/ftp/lua-5.2.4.tar.gz",
-            "https://www.lua.org/ftp/lua-5.2.4.tar.gz",
-        ],
+            "https://www.lua.org/ftp/lua-5.2.4.tar.gz", 
+        ], 
     )
 
     _maybe(

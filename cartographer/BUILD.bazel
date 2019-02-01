@@ -105,7 +105,7 @@ cc_library(
         "@org_cairographics_cairo//:cairo",
         "@org_ceres_solver_ceres_solver//:ceres",
         "@org_lua_lua//:lua",
-        "@org_tuxfamily_eigen//:eigen",
+        "@eigen3//:core",
     ],
 )
 
