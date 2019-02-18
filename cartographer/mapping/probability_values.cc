@@ -42,7 +42,9 @@ std::unique_ptr<std::vector<float>> PrecomputeValueToBoundedFloat(
   auto result = absl::make_unique<std::vector<float>>();
   // Repeat two times, so that both values with and without the update marker
   // can be converted to a probability.
-  for (int repeat = 0; repeat != 2; ++repeat) {
+  constexpr int kRepetitionCount = 2;
+  result->reserve(kRepetitionCount * kNumberOfValues);
+  for (int repeat = 0; repeat != kRepetitionCount; ++repeat) {
     for (int value = 0; value != kNumberOfValues; ++value) {
       result->push_back(SlowValueToBoundedFloat(
           value, unknown_value, unknown_result, lower_bound, upper_bound));
@@ -73,6 +75,7 @@ const std::vector<float>* const kValueToCorrespondenceCost =
 
 std::vector<uint16> ComputeLookupTableToApplyOdds(const float odds) {
   std::vector<uint16> result;
+  result.reserve(kNumberOfValues);
   result.push_back(ProbabilityToValue(ProbabilityFromOdds(odds)) +
                    kUpdateMarker);
   for (int cell = 1; cell != kNumberOfValues; ++cell) {
@@ -86,6 +89,7 @@ std::vector<uint16> ComputeLookupTableToApplyOdds(const float odds) {
 std::vector<uint16> ComputeLookupTableToApplyCorrespondenceCostOdds(
     float odds) {
   std::vector<uint16> result;
+  result.reserve(kNumberOfValues);
   result.push_back(CorrespondenceCostToValue(ProbabilityToCorrespondenceCost(
                        ProbabilityFromOdds(odds))) +
                    kUpdateMarker);
