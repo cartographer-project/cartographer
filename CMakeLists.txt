@@ -35,9 +35,25 @@ find_package(Ceres REQUIRED COMPONENTS SuiteSparse)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
 
-set(PROTOBUF_INCLUDE_DIRS "$ENV{ROSWSS_ROOT}/external/protobuf3/include")
-set(PROTOBUF_LIBRARY "$ENV{ROSWSS_ROOT}/external/protobuf3/lib/libprotobuf.a")
-set(PROTOBUF_PROTOC_EXECUTABLE "$ENV{ROSWSS_ROOT}/external/protobuf3/bin/protoc")
+set(PROTOBUF_LOCAL_VERSION "3.4.1")
+include(ExternalProject)
+ExternalProject_Add(protobuf3_local
+  GIT_REPOSITORY    https://github.com/google/protobuf.git
+  GIT_TAG           tags/v${PROTOBUF_LOCAL_VERSION}
+  CONFIGURE_COMMAND cmake ../protobuf3_local/cmake -G Ninja
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+    -DCMAKE_BUILD_TYPE=Release
+    -Dprotobuf_BUILD_TESTS=OFF
+    -Dprotobuf_MODULE_COMPATIBLE=ON
+    -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}/opt/protobuf3_local
+  BUILD_COMMAND ninja
+  INSTALL_COMMAND ninja install
+)
+ExternalProject_Get_property(protobuf3_local BINARY_DIR SOURCE_DIR)
+message("Using Protobuf built in: ${CMAKE_INSTALL_PREFIX}/opt/protobuf3_local")
+set(PROTOBUF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/opt/protobuf3_local/include")
+set(PROTOBUF_LIBRARY "${CMAKE_INSTALL_PREFIX}/opt/protobuf3_local/lib/libprotobuf.a")
+set(PROTOBUF_PROTOC_EXECUTABLE "${CMAKE_INSTALL_PREFIX}/opt/protobuf3_local/bin/protoc")
 
 if (${BUILD_GRPC})
   find_package(async_grpc REQUIRED)
@@ -169,6 +185,8 @@ endif()
 set(INSTALL_GENERATED_HDRS ${ALL_PROTO_HDRS} ${ALL_GRPC_SERVICE_HDRS})
 
 add_library(${PROJECT_NAME} ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
+add_dependencies(${PROJECT_NAME} protobuf3_local)
+
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/cartographer/common/config.h.cmake
@@ -218,6 +236,8 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
 
 # We expect find_package(Ceres) to have located these for us.
+find_package(gflags REQUIRED)
+find_package(glog)
 target_link_libraries(${PROJECT_NAME} PUBLIC glog)
 target_link_libraries(${PROJECT_NAME} PUBLIC gflags)
 
