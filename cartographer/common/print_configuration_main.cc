@@ -50,7 +50,7 @@ std::unique_ptr<LuaParameterDictionary> LoadLuaDictionary(
                                                      std::move(file_resolver));
 }
 
-void PrintSubdictionaryById(LuaParameterDictionary* lua_parameter_dictionary,
+void PrintSubdictionaryById(LuaParameterDictionary* lua_dictionary,
                             const std::string& subdictionary_id) {
   const std::vector<std::string> subdictionary_keys =
       absl::StrSplit(subdictionary_id, '.', absl::SkipEmpty());
@@ -59,12 +59,11 @@ void PrintSubdictionaryById(LuaParameterDictionary* lua_parameter_dictionary,
   std::vector<std::unique_ptr<LuaParameterDictionary>> stack;
   for (const auto& key : subdictionary_keys) {
     if (stack.empty()) {
-      stack.push_back(lua_parameter_dictionary->GetDictionary(key));
+      stack.push_back(lua_dictionary->GetDictionary(key));
       continue;
     }
     stack.push_back(stack.back()->GetDictionary(key));
   }
-  CHECK(!stack.empty());
   std::cout << subdictionary_id << " = " << stack.back()->ToString()
             << std::endl;
 }
@@ -91,13 +90,13 @@ int main(int argc, char** argv) {
   const std::vector<std::string> configuration_directories =
       absl::StrSplit(FLAGS_configuration_directories, ',', absl::SkipEmpty());
 
-  auto lua_parameter_dictionary = ::cartographer::common::LoadLuaDictionary(
+  auto lua_dictionary = ::cartographer::common::LoadLuaDictionary(
       configuration_directories, FLAGS_configuration_basename);
 
-  if (!FLAGS_subdictionary.empty()) {
-    ::cartographer::common::PrintSubdictionaryById(
-        lua_parameter_dictionary.get(), FLAGS_subdictionary);
-  } else {
-    std::cout << "return " << lua_parameter_dictionary->ToString() << std::endl;
+  if (FLAGS_subdictionary.empty()) {
+    std::cout << "return " << lua_dictionary->ToString() << std::endl;
+    return EXIT_SUCCESS;
   }
+  ::cartographer::common::PrintSubdictionaryById(lua_dictionary.get(),
+                                                 FLAGS_subdictionary);
 }
