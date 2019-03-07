@@ -23,7 +23,7 @@ namespace mapping {
 
 namespace {
 
-constexpr std::size_t kNumberOfValues = 32768;
+constexpr int kNumberOfValues = 32768;
 
 // 0 is unknown, [1, 32767] maps to [lower_bound, upper_bound].
 float SlowValueToBoundedFloat(const uint16 value, const uint16 unknown_value,
