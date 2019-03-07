@@ -23,16 +23,16 @@ namespace mapping {
 
 namespace {
 
-constexpr int kNumberOfValues = 32768;
+constexpr int kValueCount = 32768;
 
 // 0 is unknown, [1, 32767] maps to [lower_bound, upper_bound].
 float SlowValueToBoundedFloat(const uint16 value, const uint16 unknown_value,
                               const float unknown_result,
                               const float lower_bound,
                               const float upper_bound) {
-  CHECK_LT(value, kNumberOfValues);
+  CHECK_LT(value, kValueCount);
   if (value == unknown_value) return unknown_result;
-  const float kScale = (upper_bound - lower_bound) / (kNumberOfValues - 2.f);
+  const float kScale = (upper_bound - lower_bound) / (kValueCount - 2.f);
   return value * kScale + (lower_bound - kScale);
 }
 
@@ -43,9 +43,9 @@ std::unique_ptr<std::vector<float>> PrecomputeValueToBoundedFloat(
   // Repeat two times, so that both values with and without the update marker
   // can be converted to a probability.
   constexpr int kRepetitionCount = 2;
-  result->reserve(kRepetitionCount * kNumberOfValues);
+  result->reserve(kRepetitionCount * kValueCount);
   for (int repeat = 0; repeat != kRepetitionCount; ++repeat) {
-    for (int value = 0; value != kNumberOfValues; ++value) {
+    for (int value = 0; value != kValueCount; ++value) {
       result->push_back(SlowValueToBoundedFloat(
           value, unknown_value, unknown_result, lower_bound, upper_bound));
     }
@@ -75,10 +75,10 @@ const std::vector<float>* const kValueToCorrespondenceCost =
 
 std::vector<uint16> ComputeLookupTableToApplyOdds(const float odds) {
   std::vector<uint16> result;
-  result.reserve(kNumberOfValues);
+  result.reserve(kValueCount);
   result.push_back(ProbabilityToValue(ProbabilityFromOdds(odds)) +
                    kUpdateMarker);
-  for (int cell = 1; cell != kNumberOfValues; ++cell) {
+  for (int cell = 1; cell != kValueCount; ++cell) {
     result.push_back(ProbabilityToValue(ProbabilityFromOdds(
                          odds * Odds((*kValueToProbability)[cell]))) +
                      kUpdateMarker);
@@ -89,11 +89,11 @@ std::vector<uint16> ComputeLookupTableToApplyOdds(const float odds) {
 std::vector<uint16> ComputeLookupTableToApplyCorrespondenceCostOdds(
     float odds) {
   std::vector<uint16> result;
-  result.reserve(kNumberOfValues);
+  result.reserve(kValueCount);
   result.push_back(CorrespondenceCostToValue(ProbabilityToCorrespondenceCost(
                        ProbabilityFromOdds(odds))) +
                    kUpdateMarker);
-  for (int cell = 1; cell != kNumberOfValues; ++cell) {
+  for (int cell = 1; cell != kValueCount; ++cell) {
     result.push_back(
         CorrespondenceCostToValue(
             ProbabilityToCorrespondenceCost(ProbabilityFromOdds(
