@@ -111,12 +111,12 @@ proto::TSDFRangeDataInserterOptions2D CreateTSDFRangeDataInserterOptions2D(
       parameter_dictionary->GetBool("project_sdf_distance_to_scan_normal"));
   options.set_update_weight_range_exponent(
       parameter_dictionary->GetInt("update_weight_range_exponent"));
-  options.set_update_weight_angle_scan_normal_to_ray_kernel_bandwith(
+  options.set_update_weight_angle_scan_normal_to_ray_kernel_bandwidth(
       parameter_dictionary->GetDouble(
-          "update_weight_angle_scan_normal_to_ray_kernel_bandwith"));
-  options.set_update_weight_distance_cell_to_hit_kernel_bandwith(
+          "update_weight_angle_scan_normal_to_ray_kernel_bandwidth"));
+  options.set_update_weight_distance_cell_to_hit_kernel_bandwidth(
       parameter_dictionary->GetDouble(
-          "update_weight_distance_cell_to_hit_kernel_bandwith"));
+          "update_weight_distance_cell_to_hit_kernel_bandwidth"));
   return options;
 }
 
@@ -137,7 +137,7 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
 
   // Compute normals if needed.
   bool scale_update_weight_angle_scan_normal_to_ray =
-      options_.update_weight_angle_scan_normal_to_ray_kernel_bandwith() != 0.f;
+      options_.update_weight_angle_scan_normal_to_ray_kernel_bandwidth() != 0.f;
   sensor::RangeData sorted_range_data = range_data;
   std::vector<float> normals;
   if (options_.project_sdf_distance_to_scan_normal() ||
@@ -183,14 +183,14 @@ void TSDFRangeDataInserter2D::InsertHit(
 
   // Precompute weight factors.
   float weight_factor_angle_ray_normal = 1.f;
-  if (options_.update_weight_angle_scan_normal_to_ray_kernel_bandwith() !=
+  if (options_.update_weight_angle_scan_normal_to_ray_kernel_bandwidth() !=
       0.f) {
     const Eigen::Vector2f negative_ray = -ray;
     float angle_ray_normal =
         common::NormalizeAngleDifference(normal - common::atan2(negative_ray));
     weight_factor_angle_ray_normal = GaussianKernel(
         angle_ray_normal,
-        options_.update_weight_angle_scan_normal_to_ray_kernel_bandwith());
+        options_.update_weight_angle_scan_normal_to_ray_kernel_bandwidth());
   }
   float weight_factor_range = 1.f;
   if (options_.update_weight_range_exponent() != 0) {
@@ -213,10 +213,10 @@ void TSDFRangeDataInserter2D::InsertHit(
     update_tsd =
         common::Clamp(update_tsd, -truncation_distance, truncation_distance);
     float update_weight = weight_factor_range * weight_factor_angle_ray_normal;
-    if (options_.update_weight_distance_cell_to_hit_kernel_bandwith() != 0.f) {
+    if (options_.update_weight_distance_cell_to_hit_kernel_bandwidth() != 0.f) {
       update_weight *= GaussianKernel(
           update_tsd,
-          options_.update_weight_distance_cell_to_hit_kernel_bandwith());
+          options_.update_weight_distance_cell_to_hit_kernel_bandwidth());
     }
     UpdateCell(cell_index, update_tsd, update_weight, tsdf);
   }

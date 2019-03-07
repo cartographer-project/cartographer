@@ -79,16 +79,11 @@ transform::Rigid3d GetInitialLandmarkPose(
 
 void AddLandmarkCostFunctions(
     const std::map<std::string, LandmarkNode>& landmark_nodes,
-    bool freeze_landmarks, const MapById<NodeId, NodeSpec2D>& node_data,
+    const MapById<NodeId, NodeSpec2D>& node_data,
     MapById<NodeId, std::array<double, 3>>* C_nodes,
     std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem,
     double huber_scale) {
   for (const auto& landmark_node : landmark_nodes) {
-    // Do not use landmarks that were not optimized for localization.
-    if (!landmark_node.second.global_landmark_pose.has_value() &&
-        freeze_landmarks) {
-      continue;
-    }
     for (const auto& observation : landmark_node.second.landmark_observations) {
       const std::string& landmark_id = landmark_node.first;
       const auto& begin_of_trajectory =
@@ -123,7 +118,8 @@ void AddLandmarkCostFunctions(
             CeresPose(starting_point, nullptr /* translation_parametrization */,
                       absl::make_unique<ceres::QuaternionParameterization>(),
                       problem));
-        if (freeze_landmarks) {
+        // Set landmark constant if it is frozen.
+        if (landmark_node.second.frozen) {
           problem->SetParameterBlockConstant(
               C_landmarks->at(landmark_id).translation());
           problem->SetParameterBlockConstant(
@@ -220,7 +216,6 @@ void OptimizationProblem2D::Solve(
   MapById<NodeId, std::array<double, 3>> C_nodes;
   std::map<std::string, CeresPose> C_landmarks;
   bool first_submap = true;
-  bool freeze_landmarks = !frozen_trajectories.empty();
   for (const auto& submap_id_data : submap_data_) {
     const bool frozen =
         frozen_trajectories.count(submap_id_data.id.trajectory_id) != 0;
@@ -255,9 +250,8 @@ void OptimizationProblem2D::Solve(
         C_nodes.at(constraint.node_id).data());
   }
   // Add cost functions for landmarks.
-  AddLandmarkCostFunctions(landmark_nodes, freeze_landmarks, node_data_,
-                           &C_nodes, &C_landmarks, &problem,
-                           options_.huber_scale());
+  AddLandmarkCostFunctions(landmark_nodes, node_data_, &C_nodes, &C_landmarks,
+                           &problem, options_.huber_scale());
   // Add penalties for violating odometry or changes between consecutive nodes
   // if odometry is not available.
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {

@@ -21,12 +21,15 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "prometheus/exposer.h"
+#include "prometheus/metric_family.h"
 
 namespace cartographer {
 namespace cloud {
 namespace metrics {
 namespace prometheus {
 namespace {
+
+using Label = ::prometheus::ClientMetric::Label;
 
 static auto* kCounter = ::cartographer::metrics::Counter::Null();
 static auto* kGauge = ::cartographer::metrics::Gauge::Null();
@@ -58,22 +61,20 @@ TEST(MetricsTest, CollectCounter) {
   kCounter->Increment();
   kCounter->Increment(5);
   double expected_value = 1 + 5;
-  std::vector<::io::prometheus::client::MetricFamily> collected;
+  std::vector<::prometheus::MetricFamily> collected;
   {
     std::shared_ptr<::prometheus::Collectable> collectable;
     CHECK(collectable = factory.GetCollectable().lock());
     collected = collectable->Collect();
   }
   ASSERT_EQ(collected.size(), 1);
-  ASSERT_EQ(collected[0].metric_size(), 1);
+  ASSERT_EQ(collected[0].metric.size(), 1);
   EXPECT_THAT(
-      collected[0].metric(0).label(),
+      collected[0].metric.at(0).label,
       testing::AllOf(
-          testing::ElementsAre(testing::Property(
-              &io::prometheus::client::LabelPair::name, kLabelKey)),
-          testing::ElementsAre(testing::Property(
-              &io::prometheus::client::LabelPair::value, kLabelValue))));
-  EXPECT_THAT(collected[0].metric(0).counter().value(),
+          testing::ElementsAre(testing::Field(&Label::name, kLabelKey)),
+          testing::ElementsAre(testing::Field(&Label::value, kLabelValue))));
+  EXPECT_THAT(collected[0].metric.at(0).counter.value,
               testing::DoubleEq(expected_value));
 }
 
@@ -87,22 +88,20 @@ TEST(MetricsTest, CollectGauge) {
   kGauge->Decrement();
   kGauge->Decrement(2);
   double expected_value = 1 + 5 - 1 - 2;
-  std::vector<::io::prometheus::client::MetricFamily> collected;
+  std::vector<::prometheus::MetricFamily> collected;
   {
     std::shared_ptr<::prometheus::Collectable> collectable;
     CHECK(collectable = factory.GetCollectable().lock());
     collected = collectable->Collect();
   }
   ASSERT_EQ(collected.size(), 1);
-  ASSERT_EQ(collected[0].metric_size(), 1);
+  ASSERT_EQ(collected[0].metric.size(), 1);
   EXPECT_THAT(
-      collected[0].metric(0).label(),
+      collected[0].metric.at(0).label,
       testing::AllOf(
-          testing::ElementsAre(testing::Property(
-              &io::prometheus::client::LabelPair::name, kLabelKey)),
-          testing::ElementsAre(testing::Property(
-              &io::prometheus::client::LabelPair::value, kLabelValue))));
-  EXPECT_THAT(collected[0].metric(0).gauge().value(),
+          testing::ElementsAre(testing::Field(&Label::name, kLabelKey)),
+          testing::ElementsAre(testing::Field(&Label::value, kLabelValue))));
+  EXPECT_THAT(collected[0].metric.at(0).gauge.value,
               testing::DoubleEq(expected_value));
 }
 
@@ -112,24 +111,23 @@ TEST(MetricsTest, CollectHistogram) {
 
   Algorithm algorithm;
   algorithm.Run();
-  std::vector<::io::prometheus::client::MetricFamily> collected;
+  std::vector<::prometheus::MetricFamily> collected;
   {
     std::shared_ptr<::prometheus::Collectable> collectable;
     CHECK(collectable = registry.GetCollectable().lock());
     collected = collectable->Collect();
   }
   ASSERT_EQ(collected.size(), 1);
-  ASSERT_EQ(collected[0].metric_size(), 1);
+  ASSERT_EQ(collected[0].metric.size(), 1);
   EXPECT_THAT(
-      collected[0].metric(0).label(),
+      collected[0].metric.at(0).label,
       testing::AllOf(
-          testing::ElementsAre(testing::Property(
-              &io::prometheus::client::LabelPair::name, kLabelKey)),
-          testing::ElementsAre(testing::Property(
-              &io::prometheus::client::LabelPair::value, kLabelValue))));
-  EXPECT_THAT(collected[0].metric(0).histogram().sample_count(),
+          testing::ElementsAre(testing::Field(&Label::name, kLabelKey)),
+          testing::ElementsAre(testing::Field(&Label::value, kLabelValue))));
+  EXPECT_THAT(collected[0].metric.at(0).histogram.sample_count,
               testing::Eq(kObserveScores.size()));
-  EXPECT_EQ(collected[0].metric(0).histogram().bucket(0).cumulative_count(), 1);
+  EXPECT_EQ(collected[0].metric.at(0).histogram.bucket.at(0).cumulative_count,
+            1);
 }
 
 TEST(MetricsTest, RunExposerServer) {

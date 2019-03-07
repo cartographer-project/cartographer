@@ -133,7 +133,8 @@ class PoseGraph2D : public PoseGraph {
   std::map<std::string, transform::Rigid3d> GetLandmarkPoses() const override
       LOCKS_EXCLUDED(mutex_);
   void SetLandmarkPose(const std::string& landmark_id,
-                       const transform::Rigid3d& global_pose) override
+                       const transform::Rigid3d& global_pose,
+                       const bool frozen = false) override
       LOCKS_EXCLUDED(mutex_);
   sensor::MapByTime<sensor::ImuData> GetImuData() const override
       LOCKS_EXCLUDED(mutex_);
