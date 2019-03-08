@@ -39,10 +39,11 @@ find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 find_package(Ceres REQUIRED COMPONENTS SuiteSparse)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
-# On Windows, Protobuf is incorrectly found by the bundled CMake module. Prefer native CMake config, if possible.
-set(protobuf_MODULE_COMPATIBLE TRUE CACHE INTERNAL "")
-find_package(Protobuf 3.0.0 CONFIG QUIET)
-if (NOT PROTOBUF_FOUND)
+if(WIN32)
+  # On Windows, Protobuf is incorrectly found by the bundled CMake module, so prefer native CMake config.
+  set(protobuf_MODULE_COMPATIBLE TRUE CACHE INTERNAL "")
+  find_package(Protobuf 3.0.0 CONFIG)
+else()
   find_package(Protobuf 3.0.0 REQUIRED)
 endif()
 
