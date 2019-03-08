@@ -24,3 +24,5 @@ MAP_BUILDER_SERVER = {
   enable_ssl_encryption = false,
   enable_google_auth = false,
 }
+
+MAP_BUILDER.collate_by_trajectory = true
