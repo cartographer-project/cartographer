@@ -109,6 +109,16 @@ cc_library(
     ],
 )
 
+cc_binary(
+    name = "cartographer_print_configuration",
+    srcs = ["common/print_configuration_main.cc"],
+    deps = [
+        ":cartographer",
+        "@com_github_gflags_gflags//:gflags",
+        "@com_google_glog//:glog",
+    ],
+)
+
 [cc_test(
     name = src.replace("/", "_").replace(".cc", ""),
     srcs = [src],
