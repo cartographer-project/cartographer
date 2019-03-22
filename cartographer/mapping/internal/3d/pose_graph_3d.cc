@@ -1232,6 +1232,12 @@ void PoseGraph3D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   }
 }
 
+void PoseGraph3D::TrimmingHandle::AddSubmap(
+    const SubmapId& submap_id, const transform::Rigid3d& global_submap_pose,
+    const proto::Submap& submap) {
+  LOG(FATAL) << "not implemented.";
+}
+
 MapById<SubmapId, PoseGraphInterface::SubmapData>
 PoseGraph3D::GetSubmapDataUnderLock() const {
   MapById<SubmapId, PoseGraphInterface::SubmapData> submaps;

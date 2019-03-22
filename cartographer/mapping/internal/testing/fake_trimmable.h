@@ -94,6 +94,10 @@ class FakeTrimmable : public Trimmable {
     trimmed_submaps_.push_back(submap_id);
   }
 
+  void AddSubmap(const SubmapId& submap_id,
+                 const transform::Rigid3d& global_submap_pose,
+                 const proto::Submap& submap) override {}
+
   bool IsFinished(const int trajectory_id) const override { return false; }
 
   void SetTrajectoryState(

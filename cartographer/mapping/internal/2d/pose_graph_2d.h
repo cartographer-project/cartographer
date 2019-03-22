@@ -285,6 +285,10 @@ class PoseGraph2D : public PoseGraph {
         EXCLUSIVE_LOCKS_REQUIRED(parent_->mutex_);
     void TrimSubmap(const SubmapId& submap_id)
         EXCLUSIVE_LOCKS_REQUIRED(parent_->mutex_) override;
+    void AddSubmap(const SubmapId& submap_id,
+                   const transform::Rigid3d& global_submap_pose,
+                   const proto::Submap& submap)
+        EXCLUSIVE_LOCKS_REQUIRED(parent_->mutex_) override;
     bool IsFinished(int trajectory_id) const override
         EXCLUSIVE_LOCKS_REQUIRED(parent_->mutex_);
     void SetTrajectoryState(int trajectory_id, TrajectoryState state) override
