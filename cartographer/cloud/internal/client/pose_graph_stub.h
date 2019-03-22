@@ -32,6 +32,7 @@ class PoseGraphStub : public ::cartographer::mapping::PoseGraphInterface {
   PoseGraphStub& operator=(const PoseGraphStub&) = delete;
 
   void RunFinalOptimization() override;
+  void AddTrimmer(std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) override;
   mapping::MapById<mapping::SubmapId, SubmapData> GetAllSubmapData()
       const override;
   mapping::MapById<mapping::SubmapId, SubmapPose> GetAllSubmapPoses()

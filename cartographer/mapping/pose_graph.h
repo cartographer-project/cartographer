@@ -26,7 +26,6 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/pose_graph_interface.h"
-#include "cartographer/mapping/pose_graph_trimmer.h"
 #include "cartographer/mapping/proto/pose_graph.pb.h"
 #include "cartographer/mapping/proto/pose_graph_options.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
@@ -104,10 +103,6 @@ class PoseGraph : public PoseGraphInterface {
   // have to be deserialized before calling this function.
   virtual void AddSerializedConstraints(
       const std::vector<Constraint>& constraints) = 0;
-
-  // Adds a 'trimmer'. It will be used after all data added before it has been
-  // included in the pose graph.
-  virtual void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) = 0;
 
   // Gets the current trajectory clusters.
   virtual std::vector<std::vector<int>> GetConnectedTrajectories() const = 0;
