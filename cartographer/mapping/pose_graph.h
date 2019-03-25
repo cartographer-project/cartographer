@@ -109,9 +109,6 @@ class PoseGraph : public PoseGraphInterface {
   // included in the pose graph.
   virtual void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) = 0;
 
-  // Gets the current trajectory clusters.
-  virtual std::vector<std::vector<int>> GetConnectedTrajectories() const = 0;
-
   // Returns the current optimized transform and submap itself for the given
   // 'submap_id'. Returns 'nullptr' for the 'submap' member if the submap does
   // not exist (anymore).
