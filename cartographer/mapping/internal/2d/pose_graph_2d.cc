@@ -1229,6 +1229,28 @@ void PoseGraph2D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   }
 }
 
+void PoseGraph2D::TrimmingHandle::AddSubmap(
+    const SubmapId& submap_id, const transform::Rigid3d& global_submap_pose,
+    const proto::Submap& submap) {
+  const transform::Rigid2d global_submap_pose_2d =
+      transform::Project2D(global_submap_pose);
+
+  const std::shared_ptr<const Submap2D> submap_ptr =
+      std::make_shared<const Submap2D>(submap.submap_2d(),
+                                       &parent_->conversion_tables_);
+  parent_->AddTrajectoryIfNeeded(submap_id.trajectory_id);
+  if (!parent_->CanAddWorkItemModifying(submap_id.trajectory_id)) return;
+  parent_->data_.submap_data.Insert(submap_id, InternalSubmapData());
+  auto& submap_data = parent_->data_.submap_data.at(submap_id);
+  submap_data.submap = submap_ptr;
+  submap_data.state = SubmapState::kFinished;
+  // Immediately show the submap at the 'global_submap_pose'.
+  parent_->data_.global_submap_poses_2d.Insert(
+      submap_id, optimization::SubmapSpec2D{global_submap_pose_2d});
+  parent_->optimization_problem_->InsertSubmap(submap_id,
+                                               global_submap_pose_2d);
+}
+
 MapById<SubmapId, PoseGraphInterface::SubmapData>
 PoseGraph2D::GetSubmapDataUnderLock() const {
   MapById<SubmapId, PoseGraphInterface::SubmapData> submaps;

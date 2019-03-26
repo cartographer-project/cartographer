@@ -44,6 +44,10 @@ class Trimmable {
   // The numbering remains unchanged.
   virtual void TrimSubmap(const SubmapId& submap_id) = 0;
 
+  virtual void AddSubmap(const SubmapId& submap_id,
+                         const transform::Rigid3d& global_submap_pose,
+                         const proto::Submap& submap) = 0;
+
   // Checks if the given trajectory is finished or not.
   virtual bool IsFinished(int trajectory_id) const = 0;
 
