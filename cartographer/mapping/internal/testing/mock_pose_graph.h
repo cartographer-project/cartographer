@@ -34,7 +34,7 @@ class MockPoseGraph : public mapping::PoseGraphInterface {
   MOCK_METHOD0(RunFinalOptimization, void());
   MOCK_METHOD1(DoAddTrimmer, void(PoseGraphTrimmer*));
   void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) override {
-    DoAddTrimmer(trimmer.get());
+    DoAddTrimmer(trimmer.release());
   }
   MOCK_CONST_METHOD0(GetAllSubmapData,
                      mapping::MapById<mapping::SubmapId, SubmapData>());
