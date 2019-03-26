@@ -44,7 +44,6 @@ class Trimmable {
   // The numbering remains unchanged.
   virtual void TrimSubmap(const SubmapId& submap_id) = 0;
 
-  // Adds a submap.
   virtual void AddSubmap(const SubmapId& submap_id,
                          const transform::Rigid3d& global_submap_pose,
                          const proto::Submap& submap) = 0;

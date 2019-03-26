@@ -1241,12 +1241,12 @@ void PoseGraph2D::TrimmingHandle::AddSubmap(
   parent_->AddTrajectoryIfNeeded(submap_id.trajectory_id);
   if (!parent_->CanAddWorkItemModifying(submap_id.trajectory_id)) return;
   parent_->data_.submap_data.Insert(submap_id, InternalSubmapData());
-  parent_->data_.submap_data.at(submap_id).submap = submap_ptr;
+  auto& submap_data = parent_->data_.submap_data.at(submap_id);
+  submap_data.submap = submap_ptr;
+  submap_data.state = SubmapState::kFinished;
   // Immediately show the submap at the 'global_submap_pose'.
   parent_->data_.global_submap_poses_2d.Insert(
       submap_id, optimization::SubmapSpec2D{global_submap_pose_2d});
-
-  parent_->data_.submap_data.at(submap_id).state = SubmapState::kFinished;
   parent_->optimization_problem_->InsertSubmap(submap_id,
                                                global_submap_pose_2d);
 }
