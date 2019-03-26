@@ -98,8 +98,10 @@ class PoseGraphInterface {
   // Waits for all computations to finish and computes optimized poses.
   virtual void RunFinalOptimization() = 0;
 
-  // Adds a 'trimmer'. It will be used after all data added before it has been
-  // included in the pose graph.
+  // Adds a 'trimmer'. Note that calling this function creates a workitem
+  // to the queue which adds the trimmer to the pose graph, i.e. the trimmer
+  // will only be used after all data added before it has been included in the
+  // pose graph.
   virtual void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) = 0;
 
   // Returns data for all submaps.
