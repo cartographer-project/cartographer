@@ -46,6 +46,11 @@ void PoseGraphStub::RunFinalOptimization() {
   CHECK(client.Write(request));
 }
 
+void PoseGraphStub::AddTrimmer(
+    std::unique_ptr<mapping::PoseGraphTrimmer> trimmer) {
+  LOG(FATAL) << "Not implemented.";
+}
+
 mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapData>
 PoseGraphStub::GetAllSubmapData() const {
   LOG(FATAL) << "Not implemented";
