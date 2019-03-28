@@ -119,7 +119,8 @@ XRayPointsProcessor::XRayPointsProcessor(
     const double voxel_size, const double saturation_factor,
     const transform::Rigid3f& transform,
     const std::vector<mapping::Floor>& floors,
-    const DrawTrajectories& draw_trajectories, const string& output_filename,
+    const DrawTrajectories& draw_trajectories,
+    const std::string& output_filename,
     const std::vector<mapping::proto::Trajectory>& trajectories,
     FileWriterFactory file_writer_factory, PointsProcessor* const next)
     : draw_trajectories_(draw_trajectories),
