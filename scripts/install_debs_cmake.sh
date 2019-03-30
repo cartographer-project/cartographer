@@ -28,6 +28,7 @@ then
 elif [[ "$(lsb_release -sc)" = "jessie" ]]
 then
   sudo sh -c "echo 'deb [check-valid-until=no] http://archive.debian.org/debian jessie-backports main' >> /etc/apt/sources.list"
+  sudo sh -c "echo 'Acquire::Check-Valid-Until \"false\";' >> /etc/apt/apt.conf"
   sudo apt-get update
   sudo apt-get -t jessie-backports install cmake -y
 else
