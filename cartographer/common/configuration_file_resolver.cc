@@ -34,7 +34,6 @@ ConfigurationFileResolver::ConfigurationFileResolver(
 
 std::string ConfigurationFileResolver::GetFullPathOrDie(
     const std::string& basename) {
-  CHECK(!basename.empty()) << "File basename cannot be empty." << basename;
   for (const auto& path : configuration_files_directories_) {
     const std::string filename = path + "/" + basename;
     std::ifstream stream(filename.c_str());
@@ -48,6 +47,7 @@ std::string ConfigurationFileResolver::GetFullPathOrDie(
 
 std::string ConfigurationFileResolver::GetFileContentOrDie(
     const std::string& basename) {
+  CHECK(!basename.empty()) << "File basename cannot be empty." << basename;
   const std::string filename = GetFullPathOrDie(basename);
   std::ifstream stream(filename.c_str());
   return std::string((std::istreambuf_iterator<char>(stream)),
