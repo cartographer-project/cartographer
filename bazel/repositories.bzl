@@ -31,11 +31,10 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_github_antonovvk_bazel_rules",
-        sha256 = "ba75b07d3fd297375a6688e9a16583eb616e7a74b3d5e8791e7a222cf36ab26e",
-        strip_prefix = "bazel_rules-98ddd7e4f7c63ea0868f08bcc228463dac2f9f12",
+        sha256 = "2f5327a2dc9a0cc8ead93953a5d2ae2e0308aece685e46cc89c27538a7e9a73a",
+        strip_prefix = "bazel_rules-c76e47ebe6f0a03b9dd99e245d5a0611813c36f9",
         urls = [
-            "https://mirror.bazel.build/github.com/antonovvk/bazel_rules/archive/98ddd7e4f7c63ea0868f08bcc228463dac2f9f12.tar.gz",
-            "https://github.com/antonovvk/bazel_rules/archive/98ddd7e4f7c63ea0868f08bcc228463dac2f9f12.tar.gz",
+            "https://github.com/drigz/bazel_rules/archive/c76e47ebe6f0a03b9dd99e245d5a0611813c36f9.tar.gz",
         ],
     )
 
@@ -206,12 +205,20 @@ def cartographer_repositories():
 
     _maybe(
         http_archive,
+        name = "bazel_skylib",
+        sha256 = "bbccf674aa441c266df9894182d80de104cabd19be98be002f6d478aaa31574d",
+        strip_prefix = "bazel-skylib-2169ae1c374aab4a09aa90e65efe1a3aad4e279b",
+        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/2169ae1c374aab4a09aa90e65efe1a3aad4e279b.tar.gz"],
+    )
+
+    _maybe(
+        http_archive,
         name = "com_google_protobuf",
-        sha256 = "2244b0308846bb22b4ff0bcc675e99290ff9f1115553ae9671eba1030af31bc0",
-        strip_prefix = "protobuf-3.6.1.2",
+        sha256 = "f1748989842b46fa208b2a6e4e2785133cfcc3e4d43c17fecb023733f0f5443f",
+        strip_prefix = "protobuf-3.7.1",
         urls = [
-            "https://mirror.bazel.build/github.com/google/protobuf/archive/v3.6.1.2.tar.gz",
-            "https://github.com/google/protobuf/archive/v3.6.1.2.tar.gz",
+            "https://mirror.bazel.build/github.com/google/protobuf/archive/v3.7.1.tar.gz",
+            "https://github.com/google/protobuf/archive/v3.7.1.tar.gz",
         ],
     )
 
@@ -230,11 +237,11 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_github_grpc_grpc",
-        sha256 = "e699efa9422e071a42f052ba8369fbc810e6f7c6fb0a5b1c021f54ac1a92a1f3",
-        strip_prefix = "grpc-b250f34b1225cde1bb19496c5cc5d66e40111052",
+        sha256 = "f869c648090e8bddaa1260a271b1089caccbe735bf47ac9cd7d44d35a02fb129",
+        strip_prefix = "grpc-1.19.1",
         urls = [
-            "https://mirror.bazel.build/github.com/grpc/grpc/archive/b250f34b1225cde1bb19496c5cc5d66e40111052.tar.gz",
-            "https://github.com/grpc/grpc/archive/b250f34b1225cde1bb19496c5cc5d66e40111052.tar.gz",
+            "https://mirror.bazel.build/github.com/grpc/grpc/archive/v1.19.1.tar.gz",
+            "https://github.com/grpc/grpc/archive/v1.19.1.tar.gz",
         ],
     )
 
