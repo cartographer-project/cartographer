@@ -42,8 +42,7 @@ constexpr char kSerializationHeaderProtoString[] = "format_version: 1";
 constexpr char kUnsupportedSerializationHeaderProtoString[] =
     "format_version: 123";
 constexpr char kPoseGraphProtoString[] = "pose_graph {}";
-constexpr char kAllTrajectoryBuilderOptionsProtoString[] =
-    "all_trajectory_builder_options {}";
+constexpr char kBuilderOptionsProtoString[] = "builder_options {}";
 constexpr char kSubmapProtoString[] = "submap {}";
 constexpr char kNodeProtoString[] = "node {}";
 constexpr char kTrajectoryDataProtoString[] = "trajectory_data {}";
@@ -63,7 +62,7 @@ TEST_F(ProtoStreamDeserializerTest, WorksOnGoldenTextStream) {
   reader_ = ProtoReaderFromStrings(kSerializationHeaderProtoString,
                                    {
                                        kPoseGraphProtoString,
-                                       kAllTrajectoryBuilderOptionsProtoString,
+                                       kBuilderOptionsProtoString,
                                        kSubmapProtoString,
                                        kNodeProtoString,
                                        kTrajectoryDataProtoString,
@@ -84,11 +83,10 @@ TEST_F(ProtoStreamDeserializerTest, WorksOnGoldenTextStream) {
       ProtoFromStringOrDie<SerializedData>(kPoseGraphProtoString)
           .pose_graph()));
 
-  EXPECT_TRUE(
-      MessageDifferencer::Equals(deserializer.all_trajectory_builder_options(),
-                                 ProtoFromStringOrDie<SerializedData>(
-                                     kAllTrajectoryBuilderOptionsProtoString)
-                                     .all_trajectory_builder_options()));
+  EXPECT_TRUE(MessageDifferencer::Equals(
+      deserializer.builder_options(),
+      ProtoFromStringOrDie<SerializedData>(kBuilderOptionsProtoString)
+          .builder_options()));
 
   SerializedData serialized_data;
   EXPECT_TRUE(deserializer.ReadNextSerializedData(&serialized_data));

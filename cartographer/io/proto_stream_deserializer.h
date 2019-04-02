@@ -48,9 +48,8 @@ class ProtoStreamDeserializer {
     return pose_graph_.pose_graph();
   }
 
-  const mapping::proto::AllTrajectoryBuilderOptions&
-  all_trajectory_builder_options() {
-    return all_trajectory_builder_options_.all_trajectory_builder_options();
+  const mapping::proto::BuilderOptions& builder_options() {
+    return builder_options_.builder_options();
   }
 
   // Reads the next `SerializedData` message of the ProtoStream into `data`.
@@ -63,7 +62,7 @@ class ProtoStreamDeserializer {
 
   mapping::proto::SerializationHeader header_;
   mapping::proto::SerializedData pose_graph_;
-  mapping::proto::SerializedData all_trajectory_builder_options_;
+  mapping::proto::SerializedData builder_options_;
 };
 
 }  // namespace io

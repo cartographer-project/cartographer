@@ -25,7 +25,7 @@ namespace cartographer {
 namespace io {
 
 // This helper function, migrates the input stream, which is supposed to match
-// to the "old" stream format order (PoseGraph, AllTrajectoryBuilderOptions,
+// to the "old" stream format order (PoseGraph, BuilderOptions,
 // SerializedData*) to the version 1 stream format (SerializationHeader,
 // SerializedData*).
 void MigrateStreamFormatToVersion1(

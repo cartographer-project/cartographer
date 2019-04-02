@@ -44,11 +44,9 @@ bool ReadPoseGraph(cartographer::io::ProtoStreamReaderInterface* const input,
 bool ReadBuilderOptions(
     cartographer::io::ProtoStreamReaderInterface* const input,
     ProtoMap* proto_map) {
-  auto& options_vec =
-      (*proto_map)[SerializedData::kAllTrajectoryBuilderOptions];
+  auto& options_vec = (*proto_map)[SerializedData::kBuilderOptions];
   options_vec.emplace_back();
-  return input->ReadProto(
-      options_vec.back().mutable_all_trajectory_builder_options());
+  return input->ReadProto(options_vec.back().mutable_builder_options());
 }
 
 mapping::proto::Submap MigrateLegacySubmap2d(
@@ -246,7 +244,7 @@ ProtoMap ParseLegacyData(
   CHECK(ReadBuilderOptions(input, &proto_map))
       << "Input stream seems to differ from original stream format. Could "
          "not "
-         "read AllTrajectoryBuilderOptions as second message.";
+         "read BuilderOptions as second message.";
   if (migrate_grid_format) {
     do {
     } while (DeserializeNextAndMigrateGridFormat(input, &proto_map));
@@ -269,7 +267,7 @@ void SerializeToVersion1Format(
     cartographer::io::ProtoStreamWriterInterface* const output) {
   const std::vector<int> kFieldSerializationOrder = {
       SerializedData::kPoseGraphFieldNumber,
-      SerializedData::kAllTrajectoryBuilderOptionsFieldNumber,
+      SerializedData::kBuilderOptionsFieldNumber,
       SerializedData::kSubmapFieldNumber,
       SerializedData::kNodeFieldNumber,
       SerializedData::kTrajectoryDataFieldNumber,

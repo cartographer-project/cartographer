@@ -61,7 +61,3 @@ message TrajectoryBuilderOptionsWithSensorIds {
   repeated SensorId sensor_id = 1;
   TrajectoryBuilderOptions trajectory_builder_options = 2;
 }
-
-message AllTrajectoryBuilderOptions {
-  repeated TrajectoryBuilderOptionsWithSensorIds options_with_sensor_ids = 1;
-}

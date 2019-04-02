@@ -44,7 +44,7 @@ class MigrationTest : public ::testing::Test {
   template <class LegacySerializedDataType>
   void AddLegacyDataToReader(InMemoryProtoStreamReader& reader) {
     mapping::proto::PoseGraph pose_graph;
-    mapping::proto::AllTrajectoryBuilderOptions all_options;
+    mapping::proto::BuilderOptions builder_options;
     LegacySerializedDataType submap;
     submap.mutable_submap();
     LegacySerializedDataType node;
@@ -61,7 +61,7 @@ class MigrationTest : public ::testing::Test {
     landmark_data.mutable_landmark_data();
 
     reader.AddProto(pose_graph);
-    reader.AddProto(all_options);
+    reader.AddProto(builder_options);
     reader.AddProto(submap);
     reader.AddProto(node);
     reader.AddProto(imu_data);
@@ -181,7 +181,7 @@ TEST_F(MigrationTest, SerializedDataOrderIsCorrect) {
   }
 
   EXPECT_TRUE(serialized[0].has_pose_graph());
-  EXPECT_TRUE(serialized[1].has_all_trajectory_builder_options());
+  EXPECT_TRUE(serialized[1].has_builder_options());
   EXPECT_TRUE(serialized[2].has_submap());
   EXPECT_TRUE(serialized[3].has_node());
   EXPECT_TRUE(serialized[4].has_trajectory_data());
@@ -206,7 +206,7 @@ TEST_F(MigrationTest, SerializedDataOrderAfterGridMigrationIsCorrect) {
   }
 
   EXPECT_TRUE(serialized[0].has_pose_graph());
-  EXPECT_TRUE(serialized[1].has_all_trajectory_builder_options());
+  EXPECT_TRUE(serialized[1].has_builder_options());
   EXPECT_TRUE(serialized[2].has_submap());
   EXPECT_TRUE(serialized[3].has_node());
   EXPECT_TRUE(serialized[4].has_trajectory_data());

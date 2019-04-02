@@ -28,17 +28,18 @@ using mapping::SubmapId;
 using mapping::TrajectoryNode;
 using mapping::proto::SerializedData;
 
-mapping::proto::AllTrajectoryBuilderOptions
-CreateAllTrajectoryBuilderOptionsProto(
+mapping::proto::BuilderOptions CreateBuilderOptionsProto(
     const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
-        all_options_with_sensor_ids,
+        all_trajectory_builder_options_with_sensor_ids,
+    const mapping::proto::MapBuilderOptions& map_builder_options,
     const std::vector<int>& trajectory_ids_to_serialize) {
-  mapping::proto::AllTrajectoryBuilderOptions all_options_proto;
+  mapping::proto::BuilderOptions builder_options_proto;
   for (auto id : trajectory_ids_to_serialize) {
-    *all_options_proto.add_options_with_sensor_ids() =
-        all_options_with_sensor_ids[id];
+    *builder_options_proto.add_trajectory_builder_options_with_sensor_ids() =
+        all_trajectory_builder_options_with_sensor_ids[id];
   }
-  return all_options_proto;
+  *builder_options_proto.mutable_map_builder_options() = map_builder_options;
+  return builder_options_proto;
 }
 
 // Will return all trajectory ids, that have `state != DELETED`.
@@ -67,14 +68,15 @@ SerializedData SerializePoseGraph(const mapping::PoseGraph& pose_graph,
   return proto;
 }
 
-SerializedData SerializeTrajectoryBuilderOptions(
+SerializedData SerializeBuilderOptions(
     const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
         trajectory_builder_options,
+    const mapping::proto::MapBuilderOptions& map_builder_options,
     const std::vector<int>& trajectory_ids_to_serialize) {
   SerializedData proto;
-  *proto.mutable_all_trajectory_builder_options() =
-      CreateAllTrajectoryBuilderOptionsProto(trajectory_builder_options,
-                                             trajectory_ids_to_serialize);
+  *proto.mutable_builder_options() =
+      CreateBuilderOptionsProto(trajectory_builder_options, map_builder_options,
+                                trajectory_ids_to_serialize);
   return proto;
 }
 
@@ -213,13 +215,14 @@ void SerializeLandmarkNodes(
 void WritePbStream(
     const mapping::PoseGraph& pose_graph,
     const std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>&
-        trajectory_builder_options,
+        all_trajectory_builder_options,
+    const mapping::proto::MapBuilderOptions& map_builder_options,
     ProtoStreamWriterInterface* const writer, bool include_unfinished_submaps) {
   writer->WriteProto(CreateHeader());
   writer->WriteProto(
       SerializePoseGraph(pose_graph, include_unfinished_submaps));
-  writer->WriteProto(SerializeTrajectoryBuilderOptions(
-      trajectory_builder_options,
+  writer->WriteProto(SerializeBuilderOptions(
+      all_trajectory_builder_options, map_builder_options,
       GetValidTrajectoryIds(pose_graph.GetTrajectoryStates())));
 
   SerializeSubmaps(pose_graph.GetAllSubmapData(), include_unfinished_submaps,

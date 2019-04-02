@@ -163,23 +163,27 @@ int MapBuilder::AddTrajectoryBuilder(
         transform::ToRigid3(initial_trajectory_pose.relative_pose()),
         common::FromUniversal(initial_trajectory_pose.timestamp()));
   }
-  proto::TrajectoryBuilderOptionsWithSensorIds options_with_sensor_ids_proto;
+  proto::TrajectoryBuilderOptionsWithSensorIds
+      trajectory_builder_options_with_sensor_ids_proto;
   for (const auto& sensor_id : expected_sensor_ids) {
-    *options_with_sensor_ids_proto.add_sensor_id() = ToProto(sensor_id);
+    *trajectory_builder_options_with_sensor_ids_proto.add_sensor_id() =
+        ToProto(sensor_id);
   }
-  *options_with_sensor_ids_proto.mutable_trajectory_builder_options() =
-      trajectory_options;
-  all_trajectory_builder_options_.push_back(options_with_sensor_ids_proto);
+  *trajectory_builder_options_with_sensor_ids_proto
+       .mutable_trajectory_builder_options() = trajectory_options;
+  all_trajectory_builder_options_.push_back(
+      trajectory_builder_options_with_sensor_ids_proto);
   CHECK_EQ(trajectory_builders_.size(), all_trajectory_builder_options_.size());
   return trajectory_id;
 }
 
 int MapBuilder::AddTrajectoryForDeserialization(
     const proto::TrajectoryBuilderOptionsWithSensorIds&
-        options_with_sensor_ids_proto) {
+        trajectory_builder_options_with_sensor_ids_proto) {
   const int trajectory_id = trajectory_builders_.size();
   trajectory_builders_.emplace_back();
-  all_trajectory_builder_options_.push_back(options_with_sensor_ids_proto);
+  all_trajectory_builder_options_.push_back(
+      trajectory_builder_options_with_sensor_ids_proto);
   CHECK_EQ(trajectory_builders_.size(), all_trajectory_builder_options_.size());
   return trajectory_id;
 }
@@ -210,15 +214,15 @@ std::string MapBuilder::SubmapToProto(
 
 void MapBuilder::SerializeState(bool include_unfinished_submaps,
                                 io::ProtoStreamWriterInterface* const writer) {
-  io::WritePbStream(*pose_graph_, all_trajectory_builder_options_, writer,
-                    include_unfinished_submaps);
+  io::WritePbStream(*pose_graph_, all_trajectory_builder_options_, options_,
+                    writer, include_unfinished_submaps);
 }
 
 bool MapBuilder::SerializeStateToFile(bool include_unfinished_submaps,
                                       const std::string& filename) {
   io::ProtoStreamWriter writer(filename);
-  io::WritePbStream(*pose_graph_, all_trajectory_builder_options_, &writer,
-                    include_unfinished_submaps);
+  io::WritePbStream(*pose_graph_, all_trajectory_builder_options_, options_,
+                    &writer, include_unfinished_submaps);
   return (writer.Close());
 }
 
@@ -229,16 +233,15 @@ std::map<int, int> MapBuilder::LoadState(
   // Create a copy of the pose_graph_proto, such that we can re-write the
   // trajectory ids.
   proto::PoseGraph pose_graph_proto = deserializer.pose_graph();
-  const auto& all_builder_options_proto =
-      deserializer.all_trajectory_builder_options();
+  const auto& builder_options_proto = deserializer.builder_options();
 
   std::map<int, int> trajectory_remapping;
   for (int i = 0; i < pose_graph_proto.trajectory_size(); ++i) {
     auto& trajectory_proto = *pose_graph_proto.mutable_trajectory(i);
-    const auto& options_with_sensor_ids_proto =
-        all_builder_options_proto.options_with_sensor_ids(i);
-    const int new_trajectory_id =
-        AddTrajectoryForDeserialization(options_with_sensor_ids_proto);
+    const auto& trajectory_builder_options_with_sensor_ids_proto =
+        builder_options_proto.trajectory_builder_options_with_sensor_ids(i);
+    const int new_trajectory_id = AddTrajectoryForDeserialization(
+        trajectory_builder_options_with_sensor_ids_proto);
     CHECK(trajectory_remapping
               .emplace(trajectory_proto.trajectory_id(), new_trajectory_id)
               .second)
@@ -294,9 +297,9 @@ std::map<int, int> MapBuilder::LoadState(
         LOG(ERROR) << "Found multiple serialized `PoseGraph`. Serialized "
                       "stream likely corrupt!.";
         break;
-      case SerializedData::kAllTrajectoryBuilderOptions:
+      case SerializedData::kBuilderOptions:
         LOG(ERROR) << "Found multiple serialized "
-                      "`AllTrajectoryBuilderOptions`. Serialized stream likely "
+                      "`BuilderOptions`. Serialized stream likely "
                       "corrupt!.";
         break;
       case SerializedData::kSubmap: {
