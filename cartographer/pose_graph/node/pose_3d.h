@@ -17,10 +17,9 @@
 #ifndef CARTOGRAPHER_POSE_GRAPH_NODE_POSE_3D_H_
 #define CARTOGRAPHER_POSE_GRAPH_NODE_POSE_3D_H_
 
-#include "cartographer/pose_graph/node/node.h"
-
 #include <array>
 
+#include "cartographer/pose_graph/node/node.h"
 #include "cartographer/pose_graph/node/parameterization/parameterization.h"
 #include "cartographer/transform/transform.h"
 

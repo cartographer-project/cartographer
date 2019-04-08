@@ -17,10 +17,10 @@
 #ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
 #define CARTOGRAPHER_POSE_GRAPH_NODE_NODE_H_
 
+#include <vector>
+
 #include "cartographer/pose_graph/node/node_id.h"
 #include "cartographer/pose_graph/proto/node.pb.h"
-
-#include <vector>
 
 namespace cartographer {
 namespace pose_graph {

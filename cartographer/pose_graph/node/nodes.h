@@ -17,11 +17,11 @@
 #ifndef CARTOGRAPHER_POSE_GRAPH_NODE_NODES_H_
 #define CARTOGRAPHER_POSE_GRAPH_NODE_NODES_H_
 
+#include <map>
+
 #include "cartographer/pose_graph/node/imu_calibration.h"
 #include "cartographer/pose_graph/node/pose_2d.h"
 #include "cartographer/pose_graph/node/pose_3d.h"
-
-#include <map>
 
 namespace cartographer {
 namespace pose_graph {

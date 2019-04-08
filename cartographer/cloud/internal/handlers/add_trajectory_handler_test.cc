@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
+
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/internal/testing/handler_test.h"
 #include "cartographer/cloud/internal/testing/test_helpers.h"

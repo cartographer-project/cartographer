@@ -17,12 +17,12 @@
 #ifndef CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_CONSTRAINT_H_
 #define CARTOGRAPHER_POSE_GRAPH_CONSTRAINT_CONSTRAINT_H_
 
+#include <string>
+
 #include "cartographer/pose_graph/constraint/loss_function/loss_function.h"
 #include "cartographer/pose_graph/node/nodes.h"
 #include "cartographer/pose_graph/proto/constraint.pb.h"
 #include "ceres/problem.h"
-
-#include <string>
 
 namespace cartographer {
 namespace pose_graph {

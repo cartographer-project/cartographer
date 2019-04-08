@@ -17,11 +17,10 @@
 #ifndef CARTOGRAPHER_POSE_GRAPH_NODE_POSE_2D_H_
 #define CARTOGRAPHER_POSE_GRAPH_NODE_POSE_2D_H_
 
-#include "cartographer/pose_graph/node/node.h"
-
 #include <array>
 
 #include "Eigen/Core"
+#include "cartographer/pose_graph/node/node.h"
 
 namespace cartographer {
 namespace pose_graph {
