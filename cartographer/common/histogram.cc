@@ -21,6 +21,7 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "cartographer/common/port.h"
 #include "glog/logging.h"
 
@@ -59,8 +60,8 @@ std::string Histogram::ToString(const int buckets) const {
       }
     }
     total_count += count;
-    absl::StrAppend(&result, "\n[", lower_bound, ", ", upper_bound,
-                    i + 1 == buckets ? "]" : ")");
+    absl::StrAppendFormat(&result, "\n[%f, %f%c", lower_bound, upper_bound,
+                          i + 1 == buckets ? ']' : ')');
     constexpr int kMaxBarChars = 20;
     const int bar =
         (count * kMaxBarChars + values_.size() / 2) / values_.size();
