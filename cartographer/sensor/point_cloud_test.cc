@@ -15,10 +15,10 @@
  */
 
 #include "cartographer/sensor/point_cloud.h"
-#include "cartographer/transform/transform.h"
 
 #include <cmath>
 
+#include "cartographer/transform/transform.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {

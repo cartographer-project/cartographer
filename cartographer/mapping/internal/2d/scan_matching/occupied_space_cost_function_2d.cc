@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/mapping/internal/2d/scan_matching/occupied_space_cost_function_2d.h"
+
 #include "cartographer/mapping/probability_values.h"
 #include "ceres/cubic_interpolation.h"
 

@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/cloud/internal/handlers/set_landmark_pose_handler.h"
+
 #include "cartographer/cloud/internal/testing/handler_test.h"
 #include "cartographer/cloud/internal/testing/test_helpers.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"

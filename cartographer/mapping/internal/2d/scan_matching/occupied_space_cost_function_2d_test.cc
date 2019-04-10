@@ -18,7 +18,6 @@
 
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/probability_values.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
