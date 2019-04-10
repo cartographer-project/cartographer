@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+#include "cartographer/io/proto_stream_deserializer.h"
+
 #include <memory>
 
 #include "cartographer/io/internal/in_memory_proto_stream.h"
-#include "cartographer/io/proto_stream_deserializer.h"
 #include "cartographer/io/testing/test_helpers.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"
