@@ -1254,7 +1254,7 @@ void PoseGraph3D::RegisterMetrics(metrics::FamilyFactory* family_factory) {
   kWorkQueueDelayMetric = latency->Add({});
   auto* constraints = family_factory->NewGaugeFamily(
       "mapping_3d_pose_graph_constraints",
-      "Current number constraints in the pose graph");
+      "Current number of constraints in the pose graph");
   kConstraintsDifferentTrajectoryMetric =
       constraints->Add({{"tag", "inter_submap"}, {"trajectory", "different"}});
   kConstraintsSameTrajectoryMetric =
