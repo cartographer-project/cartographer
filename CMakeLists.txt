@@ -29,7 +29,7 @@ include("${PROJECT_SOURCE_DIR}/cmake/functions.cmake")
 google_initialize_cartographer_project()
 google_enable_testing()
 
-find_package(Abseil REQUIRED)
+find_package(absl REQUIRED)
 set(BOOST_COMPONENTS iostreams)
 if(WIN32)
   list(APPEND BOOST_COMPONENTS zlib)
@@ -268,7 +268,20 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   ${PROTOBUF_INCLUDE_DIR})
 # TODO(hrapp): This should not explicitly list pthread and use
 # PROTOBUF_LIBRARIES, but that failed on first try.
-target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} standalone_absl)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} 
+  absl::algorithm
+  absl::base
+  absl::debugging
+  absl::flat_hash_map
+  absl::memory
+  absl::meta
+  absl::numeric
+  absl::str_format
+  absl::strings
+  absl::synchronization
+  absl::time
+  absl::utility 
+)
 if (NOT WIN32)
   target_link_libraries(${PROJECT_NAME} PUBLIC pthread)
 endif()
