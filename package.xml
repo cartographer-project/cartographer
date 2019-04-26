@@ -35,16 +35,16 @@
   <author email="thlim@robotis.com">Darby Lim</author>
   <author email="pyo@robotis.com">Pyo</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>cmake</buildtool_depend>
 
   <build_depend>g++-static</build_depend>
   <build_depend>google-mock</build_depend>
   <build_depend>python-sphinx</build_depend>
 
   <depend>boost</depend>
-  <depend>ceres-solver</depend>
   <depend>eigen</depend>
   <depend>libcairo2-dev</depend>
+  <depend>libceres-dev</depend>
   <depend>libgflags-dev</depend>
   <depend>libgoogle-glog-dev</depend>
   <depend>lua5.2-dev</depend>
