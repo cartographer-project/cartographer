@@ -206,9 +206,8 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "bazel_skylib",
-        sha256 = "bbccf674aa441c266df9894182d80de104cabd19be98be002f6d478aaa31574d",
-        strip_prefix = "bazel-skylib-2169ae1c374aab4a09aa90e65efe1a3aad4e279b",
-        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/2169ae1c374aab4a09aa90e65efe1a3aad4e279b.tar.gz"],
+        strip_prefix = "bazel-skylib-67215655bf6ce349b2b88ae4f5945a706f8ce959",
+        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/67215655bf6ce349b2b88ae4f5945a706f8ce959.tar.gz"],
     )
 
     _maybe(
@@ -248,10 +247,10 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_github_jupp0r_prometheus_cpp",
-        sha256 = "6604ea0b5ef75f405c09218f13805d4141f6506eaf0da76f5f64625f62acfcd3",
-        strip_prefix = "prometheus-cpp-4e0814ee3f93b796356a51a4795a332568940a72",
+        sha256 = "07a704819cb90ed619cbf1a2713ba39faab27b8898b4561cc11a3c8b3ace83ea",
+        strip_prefix = "prometheus-cpp-4b11ee7a0aa7157494df06c4a324bf6d11bd0eec",
         urls = [
-            "https://github.com/jupp0r/prometheus-cpp/archive/4e0814ee3f93b796356a51a4795a332568940a72.tar.gz",
+            "https://github.com/jupp0r/prometheus-cpp/archive/4b11ee7a0aa7157494df06c4a324bf6d11bd0eec.tar.gz",
         ],
     )
 
