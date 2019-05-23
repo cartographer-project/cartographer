@@ -992,15 +992,14 @@ PoseGraph2D::GetLandmarkNodes() const {
 
 std::map<int, PoseGraphInterface::TrajectoryData>
 PoseGraph2D::GetTrajectoryData() const {
-  // The 2D optimization problem does not have any 'TrajectoryData'.
-  return {};
+  absl::MutexLock locker(&mutex_);
+  return optimization_problem_->trajectory_data();
 }
 
 sensor::MapByTime<sensor::FixedFramePoseData>
 PoseGraph2D::GetFixedFramePoseData() const {
-  // FixedFramePoseData is not yet implemented for 2D. We need to return empty
-  // so serialization works.
-  return {};
+  absl::MutexLock locker(&mutex_);
+  return optimization_problem_->fixed_frame_pose_data();
 }
 
 std::vector<PoseGraphInterface::Constraint> PoseGraph2D::constraints() const {
