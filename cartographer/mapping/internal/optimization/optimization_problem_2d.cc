@@ -374,9 +374,9 @@ void OptimizationProblem2D::Solve(
 
       if (!fixed_frame_pose_initialized) {
         transform::Rigid2d fixed_frame_pose_in_map;
-        if (trajectory_data.fixed_frame_origin_in_map_2d.has_value()) {
-          fixed_frame_pose_in_map =
-              trajectory_data.fixed_frame_origin_in_map_2d.value();
+        if (trajectory_data.fixed_frame_origin_in_map.has_value()) {
+          fixed_frame_pose_in_map = transform::Project2D(
+              trajectory_data.fixed_frame_origin_in_map.value());
         } else {
           fixed_frame_pose_in_map = node_data.global_pose_2d;
         }
@@ -413,8 +413,8 @@ void OptimizationProblem2D::Solve(
         ToPose(C_node_id_data.data);
   }
   for (const auto& C_fixed_frame : C_fixed_frames) {
-    trajectory_data_.at(C_fixed_frame.first).fixed_frame_origin_in_map_2d =
-        ToPose(C_fixed_frame.second);
+    trajectory_data_.at(C_fixed_frame.first).fixed_frame_origin_in_map =
+      transform::Embed3D(ToPose(C_fixed_frame.second));
   }
   for (const auto& C_landmark : C_landmarks) {
     landmark_data_[C_landmark.first] = C_landmark.second.ToRigid();

@@ -744,7 +744,24 @@ void PoseGraph2D::AddNodeFromProto(const transform::Rigid3d& global_pose,
 
 void PoseGraph2D::SetTrajectoryDataFromProto(
     const proto::TrajectoryData& data) {
-  LOG(ERROR) << "not implemented";
+  TrajectoryData trajectory_data;
+  // gravity_constant and imu_calibration are omitted as its not used in 2d
+
+  if (data.has_fixed_frame_origin_in_map()) {
+    trajectory_data.fixed_frame_origin_in_map =
+        transform::ToRigid3(data.fixed_frame_origin_in_map());
+
+    const int trajectory_id = data.trajectory_id();
+    AddWorkItem([this, trajectory_id, trajectory_data]()
+                    LOCKS_EXCLUDED(mutex_) {
+                      absl::MutexLock locker(&mutex_);
+                      if (CanAddWorkItemModifying(trajectory_id)) {
+                        optimization_problem_->SetTrajectoryData(
+                            trajectory_id, trajectory_data);
+                      }
+                      return WorkItem::Result::kDoNotRunOptimization;
+                    });
+  }
 }
 
 void PoseGraph2D::AddNodeToSubmap(const NodeId& node_id,
