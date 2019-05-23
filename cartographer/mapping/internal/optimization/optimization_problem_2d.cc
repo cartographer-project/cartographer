@@ -30,7 +30,6 @@
 #include "cartographer/mapping/internal/optimization/ceres_pose.h"
 #include "cartographer/mapping/internal/optimization/cost_functions/landmark_cost_function_2d.h"
 #include "cartographer/mapping/internal/optimization/cost_functions/spa_cost_function_2d.h"
-#include "cartographer/mapping/internal/optimization/cost_functions/spa_cost_function_3d.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
