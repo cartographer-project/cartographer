@@ -413,7 +413,7 @@ void OptimizationProblem2D::Solve(
   }
   for (const auto& C_fixed_frame : C_fixed_frames) {
     trajectory_data_.at(C_fixed_frame.first).fixed_frame_origin_in_map =
-      transform::Embed3D(ToPose(C_fixed_frame.second));
+        transform::Embed3D(ToPose(C_fixed_frame.second));
   }
   for (const auto& C_landmark : C_landmarks) {
     landmark_data_[C_landmark.first] = C_landmark.second.ToRigid();
