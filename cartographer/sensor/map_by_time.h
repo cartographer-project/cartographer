@@ -40,7 +40,13 @@ class MapByTime {
     CHECK_GE(trajectory_id, 0);
     auto& trajectory = data_[trajectory_id];
     if (!trajectory.empty()) {
-      CHECK_GT(data.time, std::prev(trajectory.end())->first);
+      auto prev_time = std::prev(trajectory.end())->first;
+      if (data.time <= prev_time) {
+        LOG(WARNING) << "Ignoring data with non-increasing timestamp. "
+                     << "last timestamp = " << prev_time
+                     << "; current timestamp = " << data.time;
+        return;
+      }
     }
     trajectory.emplace(data.time, data);
   }
