@@ -17,11 +17,10 @@
 #ifndef CARTOGRAPHER_MAPPING_MAP_BUILDER_H_
 #define CARTOGRAPHER_MAPPING_MAP_BUILDER_H_
 
-#include "cartographer/mapping/map_builder_interface.h"
-
 #include <memory>
 
 #include "cartographer/common/thread_pool.h"
+#include "cartographer/mapping/map_builder_interface.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/sensor/collator_interface.h"

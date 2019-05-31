@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/cloud/internal/handlers/get_landmark_poses_handler.h"
+
 #include "cartographer/cloud/internal/testing/handler_test.h"
 #include "cartographer/cloud/internal/testing/test_helpers.h"
 #include "google/protobuf/text_format.h"
