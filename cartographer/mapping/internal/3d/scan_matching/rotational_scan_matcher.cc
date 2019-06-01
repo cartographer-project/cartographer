@@ -143,6 +143,9 @@ Eigen::VectorXf RotationalScanMatcher::RotateHistogram(
   const float rotate_by_buckets = -angle * histogram.size() / M_PI;
   int full_buckets = common::RoundToInt(rotate_by_buckets - 0.5f);
   const float fraction = rotate_by_buckets - full_buckets;
+  if (histogram.size() == 0 && full_buckets < 0) {
+    full_buckets = 0;
+  }
   while (full_buckets < 0) {
     full_buckets += histogram.size();
   }
