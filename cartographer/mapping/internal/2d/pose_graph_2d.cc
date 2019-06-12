@@ -229,7 +229,14 @@ void PoseGraph2D::AddOdometryData(const int trajectory_id,
 void PoseGraph2D::AddFixedFramePoseData(
     const int trajectory_id,
     const sensor::FixedFramePoseData& fixed_frame_pose_data) {
-  LOG(FATAL) << "Not yet implemented for 2D.";
+  AddWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
+    absl::MutexLock locker(&mutex_);
+    if (CanAddWorkItemModifying(trajectory_id)) {
+      optimization_problem_->AddFixedFramePoseData(trajectory_id,
+                                                   fixed_frame_pose_data);
+    }
+    return WorkItem::Result::kDoNotRunOptimization;
+  });
 }
 
 void PoseGraph2D::AddLandmarkData(int trajectory_id,
@@ -969,14 +976,14 @@ PoseGraph2D::GetLandmarkNodes() const {
 std::map<int, PoseGraphInterface::TrajectoryData>
 PoseGraph2D::GetTrajectoryData() const {
   // The 2D optimization problem does not have any 'TrajectoryData'.
-  return {};
+  absl::MutexLock locker(&mutex_);
+  return optimization_problem_->trajectory_data();
 }
 
 sensor::MapByTime<sensor::FixedFramePoseData>
 PoseGraph2D::GetFixedFramePoseData() const {
-  // FixedFramePoseData is not yet implemented for 2D. We need to return empty
-  // so serialization works.
-  return {};
+  absl::MutexLock locker(&mutex_);
+  return optimization_problem_->fixed_frame_pose_data();
 }
 
 std::vector<PoseGraphInterface::Constraint> PoseGraph2D::constraints() const {

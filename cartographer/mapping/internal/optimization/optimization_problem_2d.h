@@ -36,6 +36,10 @@
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/timestamped_transform.h"
 
+#include "absl/types/optional.h"
+#include "cartographer/sensor/fixed_frame_pose_data.h"
+#include "cartographer/transform/transform_interpolation_buffer.h"
+
 namespace cartographer {
 namespace mapping {
 namespace optimization {
@@ -101,6 +105,23 @@ class OptimizationProblem2D
     return odometry_data_;
   }
 
+  void AddFixedFramePoseData(
+      int trajectory_id,
+      const sensor::FixedFramePoseData& fixed_frame_pose_data);
+  void SetTrajectoryData(
+      int trajectory_id,
+      const PoseGraphInterface::TrajectoryData& trajectory_data);
+
+
+  const sensor::MapByTime<sensor::FixedFramePoseData>& fixed_frame_pose_data()
+      const {
+    return fixed_frame_pose_data_;
+  }
+  const std::map<int, PoseGraphInterface::TrajectoryData>& trajectory_data()
+      const {
+    return trajectory_data_;
+  }
+
  private:
   std::unique_ptr<transform::Rigid3d> InterpolateOdometry(
       int trajectory_id, common::Time time) const;
@@ -115,10 +136,13 @@ class OptimizationProblem2D
   std::map<std::string, transform::Rigid3d> landmark_data_;
   sensor::MapByTime<sensor::ImuData> imu_data_;
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
+
+  sensor::MapByTime<sensor::FixedFramePoseData> fixed_frame_pose_data_;
+  std::map<int, PoseGraphInterface::TrajectoryData> trajectory_data_;
 };
 
 }  // namespace optimization
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_2D_H_
+#endif // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_2D_H_
