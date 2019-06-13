@@ -92,6 +92,10 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
     AddData(std::move(local_slam_result_data));
   }
 
+  void SetMapUpdateEnabled(bool map_update_enabled) override {
+    wrapped_trajectory_builder_->SetMapUpdateEnabled(map_update_enabled);
+  }
+
  private:
   void AddData(std::unique_ptr<sensor::Data> data);
 

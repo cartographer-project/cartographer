@@ -75,6 +75,8 @@ class OptimizingLocalTrajectoryBuilder {
 
   static void RegisterMetrics(metrics::FamilyFactory* family_factory);
 
+  void SetMapUpdateEnabled(bool map_update_enabled);
+
  private:
   struct State {
     std::array<double, 3> translation;
@@ -143,6 +145,7 @@ class OptimizingLocalTrajectoryBuilder {
 
   MotionFilter motion_filter_;
   std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
+  bool map_update_enabled_;
 };
 
 }  // namespace mapping

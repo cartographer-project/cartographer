@@ -56,7 +56,8 @@ LocalTrajectoryBuilder3D::LocalTrajectoryBuilder3D(
       ceres_scan_matcher_(absl::make_unique<scan_matching::CeresScanMatcher3D>(
           options_.ceres_scan_matcher_options())),
       accumulated_range_data_in_local_{Eigen::Vector3f::Zero(), {}, {}},
-      range_data_collator_(expected_range_sensor_ids) {}
+      range_data_collator_(expected_range_sensor_ids),
+      map_update_enabled_(true) {}
 
 LocalTrajectoryBuilder3D::~LocalTrajectoryBuilder3D() {}
 
@@ -363,9 +364,11 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
   const Eigen::Quaterniond local_from_gravity_aligned =
       pose_estimate.rotation() * gravity_alignment.inverse();
   std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
-      active_submaps_.InsertData(filtered_range_data_in_local,
-                                 local_from_gravity_aligned,
-                                 rotational_scan_matcher_histogram_in_gravity);
+      map_update_enabled_
+          ? active_submaps_.InsertData(
+                filtered_range_data_in_local, local_from_gravity_aligned,
+                rotational_scan_matcher_histogram_in_gravity)
+          : active_submaps_.submaps();
   return absl::make_unique<InsertionResult>(
       InsertionResult{std::make_shared<const mapping::TrajectoryNode::Data>(
                           mapping::TrajectoryNode::Data{
@@ -377,6 +380,10 @@ LocalTrajectoryBuilder3D::InsertIntoSubmap(
                               rotational_scan_matcher_histogram_in_gravity,
                               pose_estimate}),
                       std::move(insertion_submaps)});
+}
+
+void LocalTrajectoryBuilder3D::SetMapUpdateEnabled(bool map_update_enabled) {
+  map_update_enabled_ = map_update_enabled;
 }
 
 void LocalTrajectoryBuilder3D::RegisterMetrics(

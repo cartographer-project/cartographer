@@ -111,7 +111,8 @@ OptimizingLocalTrajectoryBuilder::OptimizingLocalTrajectoryBuilder(
       active_submaps_(options.submaps_options()),
       num_accumulated_(0),
       total_num_accumulated_(0),
-      motion_filter_(options.motion_filter_options()) {}
+      motion_filter_(options.motion_filter_options()),
+      map_update_enabled_(true) {}
 
 OptimizingLocalTrajectoryBuilder::~OptimizingLocalTrajectoryBuilder() {}
 
@@ -499,10 +500,15 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
 
   const Eigen::Quaterniond local_from_gravity_aligned =
       pose_estimate.rotation() * gravity_alignment.inverse();
+  if (!map_update_enabled_) {
+    LOG(WARNING) << "Map Update Disabled!";
+  }
   std::vector<std::shared_ptr<const mapping::Submap3D>> insertion_submaps =
-      active_submaps_.InsertData(filtered_range_data_in_local,
-                                 local_from_gravity_aligned,
-                                 rotational_scan_matcher_histogram_in_gravity);
+      map_update_enabled_
+          ? active_submaps_.InsertData(
+                filtered_range_data_in_local, local_from_gravity_aligned,
+                rotational_scan_matcher_histogram_in_gravity)
+          : active_submaps_.submaps();
   return absl::make_unique<InsertionResult>(
       InsertionResult{std::make_shared<const mapping::TrajectoryNode::Data>(
                           mapping::TrajectoryNode::Data{
@@ -552,6 +558,11 @@ void OptimizingLocalTrajectoryBuilder::RegisterMetrics(
     metrics::FamilyFactory* family_factory) {
   LOG(WARNING)
       << "OptimizingLocalTrajectoryBuilder::RegisterMetrics not implemented";
+}
+
+void OptimizingLocalTrajectoryBuilder::SetMapUpdateEnabled(
+    bool map_update_enabled) {
+  map_update_enabled_ = map_update_enabled;
 }
 
 }  // namespace mapping

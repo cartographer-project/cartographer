@@ -122,6 +122,10 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
     local_slam_result_data->AddToPoseGraph(trajectory_id_, pose_graph_);
   }
 
+  void SetMapUpdateEnabled(bool map_update_enabled) override {
+    local_trajectory_builder_->SetMapUpdateEnabled(map_update_enabled);
+  }
+
  private:
   const int trajectory_id_;
   PoseGraph* const pose_graph_;

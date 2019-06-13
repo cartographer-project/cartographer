@@ -72,6 +72,8 @@ class LocalTrajectoryBuilder3D {
       const sensor::TimedPointCloudData& range_data);
   void AddOdometryData(const sensor::OdometryData& odometry_data);
 
+  void SetMapUpdateEnabled(bool map_update_enabled);
+
   static void RegisterMetrics(metrics::FamilyFactory* family_factory);
 
  private:
@@ -114,6 +116,7 @@ class LocalTrajectoryBuilder3D {
   RangeDataCollator range_data_collator_;
 
   absl::optional<common::Time> last_sensor_time_;
+  bool map_update_enabled_;
 };
 
 }  // namespace mapping

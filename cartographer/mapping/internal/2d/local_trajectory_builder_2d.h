@@ -76,6 +76,11 @@ class LocalTrajectoryBuilder2D {
 
   static void RegisterMetrics(metrics::FamilyFactory* family_factory);
 
+  void SetMapUpdateEnabled(bool map_update_enabled) {
+    LOG(ERROR)
+        << "LocalTrajectoryBuilder2D::SetMapUpdateEnabled is not implemented";
+  };
+
  private:
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
       common::Time time, const sensor::RangeData& gravity_aligned_range_data,
