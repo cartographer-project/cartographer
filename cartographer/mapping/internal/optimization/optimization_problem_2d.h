@@ -25,19 +25,18 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "absl/types/optional.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/internal/optimization/optimization_problem_interface.h"
 #include "cartographer/mapping/pose_graph_interface.h"
 #include "cartographer/mapping/proto/pose_graph/optimization_problem_options.pb.h"
+#include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/map_by_time.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/timestamped_transform.h"
-
-#include "absl/types/optional.h"
-#include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/transform/transform_interpolation_buffer.h"
 
 namespace cartographer {
@@ -112,7 +111,6 @@ class OptimizationProblem2D
       int trajectory_id,
       const PoseGraphInterface::TrajectoryData& trajectory_data);
 
-
   const sensor::MapByTime<sensor::FixedFramePoseData>& fixed_frame_pose_data()
       const {
     return fixed_frame_pose_data_;
@@ -145,4 +143,4 @@ class OptimizationProblem2D
 }  // namespace mapping
 }  // namespace cartographer
 
-#endif // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_2D_H_
+#endif  // CARTOGRAPHER_MAPPING_INTERNAL_OPTIMIZATION_OPTIMIZATION_PROBLEM_2D_H_

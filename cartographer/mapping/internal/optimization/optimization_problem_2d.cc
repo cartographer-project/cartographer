@@ -19,16 +19,17 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include <iterator>
-
+#include "absl/memory/memory.h"
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
+#include "cartographer/mapping/internal/3d/rotation_parameterization.h"
 #include "cartographer/mapping/internal/optimization/ceres_pose.h"
 #include "cartographer/mapping/internal/optimization/cost_functions/landmark_cost_function_2d.h"
 #include "cartographer/mapping/internal/optimization/cost_functions/spa_cost_function_2d.h"
@@ -36,9 +37,6 @@
 #include "cartographer/transform/transform.h"
 #include "ceres/ceres.h"
 #include "glog/logging.h"
-
-#include "absl/memory/memory.h"
-#include "cartographer/mapping/internal/3d/rotation_parameterization.h"
 
 namespace cartographer {
 namespace mapping {
@@ -352,7 +350,7 @@ void OptimizationProblem2D::Solve(
     }
   }
 
-    // Add fixed frame pose constraints.
+  // Add fixed frame pose constraints.
   std::map<int, CeresPose> C_fixed_frames;
   for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
     const int trajectory_id = node_it->id.trajectory_id;
@@ -374,7 +372,6 @@ void OptimizationProblem2D::Solve(
         continue;
       }
 
-
       const Constraint::Pose constraint_pose{
           *fixed_frame_pose, options_.fixed_frame_pose_translation_weight(),
           options_.fixed_frame_pose_rotation_weight()};
@@ -386,7 +383,8 @@ void OptimizationProblem2D::Solve(
               trajectory_data.fixed_frame_origin_in_map.value();
         } else {
           fixed_frame_pose_in_map =
-              transform::Embed3D(node_data.global_pose_2d) * constraint_pose.zbar_ij.inverse();
+              transform::Embed3D(node_data.global_pose_2d) *
+              constraint_pose.zbar_ij.inverse();
         }
         C_fixed_frames.emplace(
             std::piecewise_construct, std::forward_as_tuple(trajectory_id),
@@ -403,11 +401,10 @@ void OptimizationProblem2D::Solve(
         fixed_frame_pose_initialized = true;
       }
 
-      problem.AddResidualBlock(
-          CreateAutoDiffSpaCostFunction(constraint_pose),
-          nullptr ,
-          C_fixed_frames.at(trajectory_id).translation(),
-          C_nodes.at(node_id).data());
+      problem.AddResidualBlock(CreateAutoDiffSpaCostFunction(constraint_pose),
+                               nullptr,
+                               C_fixed_frames.at(trajectory_id).translation(),
+                               C_nodes.at(node_id).data());
     }
   }
 
@@ -480,4 +477,4 @@ OptimizationProblem2D::CalculateOdometryBetweenNodes(
 
 }  // namespace optimization
 }  // namespace mapping
-} // namespace cartographer
+}  // namespace cartographer
