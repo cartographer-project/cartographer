@@ -378,22 +378,27 @@ class MapById {
 
     const std::map<int, DataType>& trajectory =
         trajectories_.at(trajectory_id).data_;
+
     if (internal::GetTime(std::prev(trajectory.end())->second) < time) {
       return EndOfTrajectory(trajectory_id);
     }
-    auto left = trajectory.begin();
-    auto right = std::prev(trajectory.end());
+
+    size_t left = 0;
+    size_t right = trajectory.size() - 1;
     while (left != right) {
-      const int middle = left->first + (right->first - left->first) / 2;
-      const auto lower_bound_middle = trajectory.lower_bound(middle);
-      if (internal::GetTime(lower_bound_middle->second) < time) {
-        left = std::next(lower_bound_middle);
+      const int middle_index = (left + right) / 2;
+      auto middle = trajectory.begin();
+      std::advance(middle, middle_index);
+
+      if (internal::GetTime(middle->second) < time) {
+        left = middle_index + 1;
       } else {
-        right = lower_bound_middle;
+        right = middle_index;
       }
     }
-
-    return ConstIterator(*this, IdType{trajectory_id, left->first});
+    auto result = trajectory.begin();
+    std::advance(result, left);
+    return ConstIterator(*this, IdType{trajectory_id, result->first});
   }
 
  private:
