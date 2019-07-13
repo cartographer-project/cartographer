@@ -73,7 +73,7 @@ struct RangeDataSorter {
     const Eigen::Vector2f delta_lhs =
         (lhs.position.head<2>() - origin_).normalized();
     const Eigen::Vector2f delta_rhs =
-        (lhs.position.head<2>() - origin_).normalized();
+        (rhs.position.head<2>() - origin_).normalized();
     if ((delta_lhs[1] < 0.f) != (delta_rhs[1] < 0.f)) {
       return delta_lhs[1] < 0.f;
     } else if (delta_lhs[1] < 0.f) {
