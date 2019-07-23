@@ -117,7 +117,8 @@ TEST(IdTest, MapByIdIterator) {
 TEST(IdTest, MapByIdTrajectoryRange) {
   MapById<NodeId, int> map_by_id = CreateTestMapById<NodeId>();
   std::deque<std::pair<NodeId, int>> expected_data = {
-      {NodeId{0, 0}, 0}, {NodeId{0, 1}, 1},
+      {NodeId{0, 0}, 0},
+      {NodeId{0, 1}, 1},
   };
   for (const auto& entry : map_by_id.trajectory(0)) {
     ASSERT_FALSE(expected_data.empty());
@@ -268,31 +269,32 @@ TEST(IdTest, LowerBoundTrimmedTrajectory) {
   }
 
   // Choose random length of a trim segment.
-  std::uniform_int_distribution<int> dt_trim_segment_length(1, static_cast<int>(N / 2));
+  std::uniform_int_distribution<int> dt_trim_segment_length(
+      1, static_cast<int>(N / 2));
   size_t trim_segment_length = dt_trim_segment_length(rng);
   // Choose random start for a trim_segment.
-  std::uniform_int_distribution<int> dt_trim_segment_start(2, N - trim_segment_length - 1);
+  std::uniform_int_distribution<int> dt_trim_segment_start(
+      2, N - trim_segment_length - 1);
   auto trim_segment_start_index = dt_trim_segment_start(rng);
 
   auto trim_segment_start = map_by_id.begin();
   std::advance(trim_segment_start, trim_segment_start_index);
 
   auto trim_segment_end = map_by_id.begin();
-  std::advance(trim_segment_end, trim_segment_start_index + trim_segment_length);
+  std::advance(trim_segment_end,
+               trim_segment_start_index + trim_segment_length);
 
-
-  for (auto it = trim_segment_start; it != trim_segment_end; ++it){
+  for (auto it = trim_segment_start; it != trim_segment_end; ++it) {
     map_by_id.Trim(it->id);
   }
 
   auto it = map_by_id.lower_bound(kTrajectoryId, CreateTime(0));
 
-  auto ground_truth = std::lower_bound(
-      map_by_id.BeginOfTrajectory(kTrajectoryId),
-      map_by_id.EndOfTrajectory(kTrajectoryId), CreateTime(0),
-      [](MapById<SubmapId, Data>::IdDataReference a, const common::Time& t) {
-        return a.data.time() < t;
-      });
+  auto ground_truth =
+      std::lower_bound(map_by_id.BeginOfTrajectory(kTrajectoryId),
+                       map_by_id.EndOfTrajectory(kTrajectoryId), CreateTime(0),
+                       [](MapById<SubmapId, Data>::IdDataReference a,
+                          const common::Time& t) { return a.data.time() < t; });
 
   EXPECT_EQ(ground_truth, it);
 }
