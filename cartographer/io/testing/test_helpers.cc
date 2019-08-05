@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/io/testing/test_helpers.h"
+
 #include "cartographer/mapping/proto/serialization.pb.h"
 
 namespace cartographer {

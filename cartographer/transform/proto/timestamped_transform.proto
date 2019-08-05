@@ -14,13 +14,12 @@
 
 syntax = "proto3";
 
-import "cartographer/pose_graph/proto/loss_function.proto";
-import "cartographer/pose_graph/proto/cost_function.proto";
+package cartographer.transform.proto;
 
-package cartographer.pose_graph.proto;
+import "cartographer/transform/proto/transform.proto";
 
-message Constraint {
-  string id = 1;
-  CostFunction cost_function = 2;
-  LossFunction loss_function = 3;
+// NEXT ID: 3
+message TimestampedTransform {
+  int64 time = 1;
+  transform.proto.Rigid3d transform = 2;
 }

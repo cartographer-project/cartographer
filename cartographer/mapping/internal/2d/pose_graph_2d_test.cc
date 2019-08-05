@@ -73,8 +73,8 @@ class PoseGraph2DTest : public ::testing::Test {
               },
               project_sdf_distance_to_scan_normal = false,
               update_weight_range_exponent = 0,
-              update_weight_angle_scan_normal_to_ray_kernel_bandwith = 0,
-              update_weight_distance_cell_to_hit_kernel_bandwith = 0,
+              update_weight_angle_scan_normal_to_ray_kernel_bandwidth = 0,
+              update_weight_distance_cell_to_hit_kernel_bandwidth = 0,
             },
           },
         })text");
@@ -144,6 +144,7 @@ class PoseGraph2DTest : public ::testing::Test {
               fixed_frame_pose_rotation_weight = 1e2,
               log_solver_summary = true,
               use_online_imu_extrinsics_in_3d = true,
+              fix_z_in_3d = false,
               ceres_solver_options = {
                 use_nonmonotonic_steps = false,
                 max_num_iterations = 200,

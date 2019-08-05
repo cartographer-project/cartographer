@@ -40,6 +40,11 @@ namespace cartographer {
 namespace mapping {
 
 static auto* kWorkQueueDelayMetric = metrics::Gauge::Null();
+static auto* kConstraintsSameTrajectoryMetric = metrics::Gauge::Null();
+static auto* kConstraintsDifferentTrajectoryMetric = metrics::Gauge::Null();
+static auto* kActiveSubmapsMetric = metrics::Gauge::Null();
+static auto* kFrozenSubmapsMetric = metrics::Gauge::Null();
+static auto* kDeletedSubmapsMetric = metrics::Gauge::Null();
 
 PoseGraph3D::PoseGraph3D(
     const proto::PoseGraphOptions& options,
@@ -128,6 +133,7 @@ NodeId PoseGraph3D::AppendNode(
         data_.submap_data.Append(trajectory_id, InternalSubmapData());
     data_.submap_data.at(submap_id).submap = insertion_submaps.back();
     LOG(INFO) << "Inserted submap " << submap_id << ".";
+    kActiveSubmapsMetric->Increment();
   }
   return node_id;
 }
@@ -371,6 +377,7 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
     }
   }
   constraint_builder_.NotifyEndOfNode();
+  absl::MutexLock locker(&mutex_);
   ++num_nodes_since_last_loop_closure_;
   if (options_.optimize_every_n_nodes() > 0 &&
       num_nodes_since_last_loop_closure_ > options_.optimize_every_n_nodes()) {
@@ -471,6 +478,25 @@ void PoseGraph3D::HandleWorkQueue(
         trimmers_.end());
 
     num_nodes_since_last_loop_closure_ = 0;
+
+    // Update the gauges that count the current number of constraints.
+    double inter_constraints_same_trajectory = 0;
+    double inter_constraints_different_trajectory = 0;
+    for (const auto& constraint : data_.constraints) {
+      if (constraint.tag ==
+          cartographer::mapping::PoseGraph::Constraint::INTRA_SUBMAP) {
+        continue;
+      }
+      if (constraint.node_id.trajectory_id ==
+          constraint.submap_id.trajectory_id) {
+        ++inter_constraints_same_trajectory;
+      } else {
+        ++inter_constraints_different_trajectory;
+      }
+    }
+    kConstraintsSameTrajectoryMetric->Set(inter_constraints_same_trajectory);
+    kConstraintsDifferentTrajectoryMetric->Set(
+        inter_constraints_different_trajectory);
   }
 
   DrainWorkQueue();
@@ -649,6 +675,15 @@ void PoseGraph3D::AddSubmapFromProto(
     data_.global_submap_poses_3d.Insert(
         submap_id, optimization::SubmapSpec3D{global_submap_pose});
   }
+
+  // TODO(MichaelGrupp): MapBuilder does freezing before deserializing submaps,
+  // so this should be fine.
+  if (IsTrajectoryFrozen(submap_id.trajectory_id)) {
+    kFrozenSubmapsMetric->Increment();
+  } else {
+    kActiveSubmapsMetric->Increment();
+  }
+
   AddWorkItem([this, submap_id, global_submap_pose]() LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock locker(&mutex_);
     data_.submap_data.at(submap_id).state = SubmapState::kFinished;
@@ -926,10 +961,12 @@ std::map<std::string, transform::Rigid3d> PoseGraph3D::GetLandmarkPoses()
 }
 
 void PoseGraph3D::SetLandmarkPose(const std::string& landmark_id,
-                                  const transform::Rigid3d& global_pose) {
+                                  const transform::Rigid3d& global_pose,
+                                  const bool frozen) {
   AddWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock locker(&mutex_);
     data_.landmark_nodes[landmark_id].global_landmark_pose = global_pose;
+    data_.landmark_nodes[landmark_id].frozen = frozen;
     return WorkItem::Result::kDoNotRunOptimization;
   });
 }
@@ -1005,6 +1042,7 @@ transform::Rigid3d PoseGraph3D::GetLocalToGlobalTransform(
 }
 
 std::vector<std::vector<int>> PoseGraph3D::GetConnectedTrajectories() const {
+  absl::MutexLock locker(&mutex_);
   return data_.trajectory_connectivity_state.Components();
 }
 
@@ -1178,6 +1216,14 @@ void PoseGraph3D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   parent_->constraint_builder_.DeleteScanMatcher(submap_id);
   parent_->optimization_problem_->TrimSubmap(submap_id);
 
+  // We have one submap less, update the gauge metrics.
+  kDeletedSubmapsMetric->Increment();
+  if (parent_->IsTrajectoryFrozen(submap_id.trajectory_id)) {
+    kFrozenSubmapsMetric->Decrement();
+  } else {
+    kActiveSubmapsMetric->Decrement();
+  }
+
   // Remove the 'nodes_to_remove' from the pose graph and the optimization
   // problem.
   for (const NodeId& node_id : nodes_to_remove) {
@@ -1206,6 +1252,18 @@ void PoseGraph3D::RegisterMetrics(metrics::FamilyFactory* family_factory) {
       "mapping_3d_pose_graph_work_queue_delay",
       "Age of the oldest entry in the work queue in seconds");
   kWorkQueueDelayMetric = latency->Add({});
+  auto* constraints = family_factory->NewGaugeFamily(
+      "mapping_3d_pose_graph_constraints",
+      "Current number of constraints in the pose graph");
+  kConstraintsDifferentTrajectoryMetric =
+      constraints->Add({{"tag", "inter_submap"}, {"trajectory", "different"}});
+  kConstraintsSameTrajectoryMetric =
+      constraints->Add({{"tag", "inter_submap"}, {"trajectory", "same"}});
+  auto* submaps = family_factory->NewGaugeFamily(
+      "mapping_3d_pose_graph_submaps", "Number of submaps in the pose graph.");
+  kActiveSubmapsMetric = submaps->Add({{"state", "active"}});
+  kFrozenSubmapsMetric = submaps->Add({{"state", "frozen"}});
+  kDeletedSubmapsMetric = submaps->Add({{"state", "deleted"}});
 }
 
 }  // namespace mapping

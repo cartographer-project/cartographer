@@ -18,9 +18,11 @@
 
 #include <cmath>
 #include <string>
+#include <vector>
 
 #include "Eigen/Core"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_cat.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
 #include "cartographer/io/draw_trajectories.h"
@@ -40,20 +42,37 @@ struct PixelData {
   float mean_b = 0.;
 };
 
-using PixelDataMatrix =
-    Eigen::Matrix<PixelData, Eigen::Dynamic, Eigen::Dynamic>;
+class PixelDataMatrix {
+ public:
+  PixelDataMatrix(const int width, const int height)
+      : width_(width), data_(width * height) {}
+
+  int width() const { return width_; }
+  int height() const { return data_.size() / width_; }
+  const PixelData& operator()(const int x, const int y) const {
+    return data_.at(x + y * width_);
+  }
+
+  PixelData& operator()(const int x, const int y) {
+    return data_.at(x + y * width_);
+  }
+
+ private:
+  int width_;
+  std::vector<PixelData> data_;
+};
 
 float Mix(const float a, const float b, const float t) {
   return a * (1. - t) + t * b;
 }
 
-// Convert 'mat' into a pleasing-to-look-at image.
-Image IntoImage(const PixelDataMatrix& mat) {
-  Image image(mat.cols(), mat.rows());
+// Convert 'matrix' into a pleasing-to-look-at image.
+Image IntoImage(const PixelDataMatrix& matrix, double saturation_factor) {
+  Image image(matrix.width(), matrix.height());
   float max = std::numeric_limits<float>::min();
-  for (int y = 0; y < mat.rows(); ++y) {
-    for (int x = 0; x < mat.cols(); ++x) {
-      const PixelData& cell = mat(y, x);
+  for (int y = 0; y < matrix.height(); ++y) {
+    for (int x = 0; x < matrix.width(); ++x) {
+      const PixelData& cell = matrix(x, y);
       if (cell.num_occupied_cells_in_column == 0.) {
         continue;
       }
@@ -61,9 +80,9 @@ Image IntoImage(const PixelDataMatrix& mat) {
     }
   }
 
-  for (int y = 0; y < mat.rows(); ++y) {
-    for (int x = 0; x < mat.cols(); ++x) {
-      const PixelData& cell = mat(y, x);
+  for (int y = 0; y < matrix.height(); ++y) {
+    for (int x = 0; x < matrix.width(); ++x) {
+      const PixelData& cell = matrix(x, y);
       if (cell.num_occupied_cells_in_column == 0.) {
         image.SetPixel(x, y, {{255, 255, 255}});
         continue;
@@ -73,7 +92,8 @@ Image IntoImage(const PixelDataMatrix& mat) {
       // basic idea here was that walls (full height) are fully saturated, but
       // details like chairs and tables are still well visible.
       const float saturation =
-          std::log(cell.num_occupied_cells_in_column) / max;
+          std::min<float>(1.0, std::log(cell.num_occupied_cells_in_column) /
+                                   max * saturation_factor);
       const FloatColor color = {{Mix(1.f, cell.mean_r, saturation),
                                  Mix(1.f, cell.mean_g, saturation),
                                  Mix(1.f, cell.mean_b, saturation)}};
@@ -96,7 +116,8 @@ bool ContainedIn(const common::Time& time,
 }  // namespace
 
 XRayPointsProcessor::XRayPointsProcessor(
-    const double voxel_size, const transform::Rigid3f& transform,
+    const double voxel_size, const double saturation_factor,
+    const transform::Rigid3f& transform,
     const std::vector<mapping::Floor>& floors,
     const DrawTrajectories& draw_trajectories,
     const std::string& output_filename,
@@ -108,7 +129,8 @@ XRayPointsProcessor::XRayPointsProcessor(
       next_(next),
       floors_(floors),
       output_filename_(output_filename),
-      transform_(transform) {
+      transform_(transform),
+      saturation_factor_(saturation_factor) {
   for (size_t i = 0; i < (floors_.empty() ? 1 : floors.size()); ++i) {
     aggregations_.emplace_back(
         Aggregation{mapping::HybridGridBase<bool>(voxel_size), {}});
@@ -127,6 +149,10 @@ std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
                                   dictionary->GetBool("draw_trajectories"))
                                      ? DrawTrajectories::kYes
                                      : DrawTrajectories::kNo;
+  const double saturation_factor =
+      dictionary->HasKey("saturation_factor")
+          ? dictionary->GetDouble("saturation_factor")
+          : 1.;
   if (separate_floor) {
     CHECK_EQ(trajectories.size(), 1)
         << "Can only detect floors with a single trajectory.";
@@ -134,7 +160,7 @@ std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
   }
 
   return absl::make_unique<XRayPointsProcessor>(
-      dictionary->GetDouble("voxel_size"),
+      dictionary->GetDouble("voxel_size"), saturation_factor,
       transform::FromDictionary(dictionary->GetDictionary("transform").get())
           .cast<float>(),
       floors, draw_trajectories, dictionary->GetString("filename"),
@@ -160,12 +186,12 @@ void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
   // For the screen we are using. X: right, Y: up
   const int xsize = bounding_box_.sizes()[1] + 1;
   const int ysize = bounding_box_.sizes()[2] + 1;
-  PixelDataMatrix pixel_data_matrix = PixelDataMatrix(ysize, xsize);
+  PixelDataMatrix pixel_data_matrix(xsize, ysize);
   for (mapping::HybridGridBase<bool>::Iterator it(aggregation.voxels);
        !it.Done(); it.Next()) {
     const Eigen::Array3i cell_index = it.GetCellIndex();
     const Eigen::Array2i pixel = voxel_index_to_pixel(cell_index);
-    PixelData& pixel_data = pixel_data_matrix(pixel.y(), pixel.x());
+    PixelData& pixel_data = pixel_data_matrix(pixel.x(), pixel.y());
     const auto& column_data = aggregation.column_data.at(
         std::make_pair(cell_index[1], cell_index[2]));
     pixel_data.mean_r = column_data.sum_r / column_data.count;
@@ -174,7 +200,7 @@ void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
     ++pixel_data.num_occupied_cells_in_column;
   }
 
-  Image image = IntoImage(pixel_data_matrix);
+  Image image = IntoImage(pixel_data_matrix, saturation_factor_);
   if (draw_trajectories_ == DrawTrajectories::kYes) {
     for (size_t i = 0; i < trajectories_.size(); ++i) {
       DrawTrajectory(
@@ -236,7 +262,7 @@ PointsProcessor::FlushResult XRayPointsProcessor::Flush() {
     for (size_t i = 0; i < floors_.size(); ++i) {
       WriteVoxels(
           aggregations_[i],
-          file_writer_factory_(output_filename_ + std::to_string(i) + ".png")
+          file_writer_factory_(absl::StrCat(output_filename_, i, ".png"))
               .get());
     }
   }

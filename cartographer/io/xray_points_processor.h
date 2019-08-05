@@ -38,7 +38,8 @@ class XRayPointsProcessor : public PointsProcessor {
       "write_xray_image";
   enum class DrawTrajectories { kNo, kYes };
   XRayPointsProcessor(
-      double voxel_size, const transform::Rigid3f& transform,
+      double voxel_size, double saturation_factor,
+      const transform::Rigid3f& transform,
       const std::vector<mapping::Floor>& floors,
       const DrawTrajectories& draw_trajectories,
       const std::string& output_filename,
@@ -90,6 +91,10 @@ class XRayPointsProcessor : public PointsProcessor {
 
   // Bounding box containing all cells with data in all 'aggregations_'.
   Eigen::AlignedBox3i bounding_box_;
+
+  // Scale the saturation of the point color. If saturation_factor_ > 1, the
+  // point has darker color, otherwise it has lighter color.
+  const double saturation_factor_;
 };
 
 }  // namespace io

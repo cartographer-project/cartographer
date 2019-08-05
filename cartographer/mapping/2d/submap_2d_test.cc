@@ -15,7 +15,6 @@
  */
 
 #include "cartographer/mapping/2d/submap_2d.h"
-#include "cartographer/mapping/2d/probability_grid.h"
 
 #include <map>
 #include <memory>
@@ -25,6 +24,7 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/transform/transform.h"
 #include "gmock/gmock.h"
 
@@ -60,8 +60,8 @@ TEST(Submap2DTest, TheRightNumberOfRangeDataAreInserted) {
       "},"
       "project_sdf_distance_to_scan_normal = false,"
       "update_weight_range_exponent = 0,"
-      "update_weight_angle_scan_normal_to_ray_kernel_bandwith = 0,"
-      "update_weight_distance_cell_to_hit_kernel_bandwith = 0,"
+      "update_weight_angle_scan_normal_to_ray_kernel_bandwidth = 0,"
+      "update_weight_distance_cell_to_hit_kernel_bandwidth = 0,"
       "},"
       "},"
       "}");

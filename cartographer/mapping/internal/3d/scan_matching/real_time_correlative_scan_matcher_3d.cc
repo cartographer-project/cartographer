@@ -35,7 +35,7 @@ float RealTimeCorrelativeScanMatcher3D::Match(
     const transform::Rigid3d& initial_pose_estimate,
     const sensor::PointCloud& point_cloud, const HybridGrid& hybrid_grid,
     transform::Rigid3d* pose_estimate) const {
-  CHECK_NOTNULL(pose_estimate);
+  CHECK(pose_estimate != nullptr);
   float best_score = -1.f;
   for (const transform::Rigid3f& transform : GenerateExhaustiveSearchTransforms(
            hybrid_grid.resolution(), point_cloud)) {

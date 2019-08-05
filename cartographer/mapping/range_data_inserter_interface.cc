@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/mapping/range_data_inserter_interface.h"
+
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 #include "cartographer/mapping/2d/tsdf_range_data_inserter_2d.h"
 

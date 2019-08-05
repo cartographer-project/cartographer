@@ -33,12 +33,12 @@ const int kLocalTrajectoryId = 3;
 
 TEST(LocalTrajectoryUploaderTest, HandlesInvalidUplink) {
   auto uploader = CreateLocalTrajectoryUploader("invalid-uplink-address:50051",
-                                                /*batch_size=*/1, false, "");
+                                                /*batch_size=*/1, false, false);
   uploader->Start();
   mapping::proto::TrajectoryBuilderOptions options;
   auto status = uploader->AddTrajectory(
       kClientId, kLocalTrajectoryId, {kRangeSensorId, kImuSensorId}, options);
-  EXPECT_EQ(status.error_code(), grpc::StatusCode::DEADLINE_EXCEEDED);
+  EXPECT_FALSE(status.ok());
   auto sensor_data = absl::make_unique<proto::SensorData>();
   sensor_data->mutable_sensor_metadata()->set_client_id(kClientId);
   sensor_data->mutable_sensor_metadata()->set_sensor_id(kImuSensorId.id);

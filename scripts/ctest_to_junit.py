@@ -1,5 +1,3 @@
-#!/bin/sh
-
 # Copyright 2018 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -o errexit
-set -o verbose
+from lxml import etree
+import StringIO
+import sys
 
-COMMIT="4e0814ee3f93b796356a51a4795a332568940a72"
+TAGfile = open(sys.argv[1]+"/Testing/TAG", 'r')
+dirname = TAGfile.readline().strip()
 
-git clone https://github.com/jupp0r/prometheus-cpp.git
-cd prometheus-cpp
-git checkout ${COMMIT}
-git submodule update --init
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make
-sudo make install
+xmlfile = open(sys.argv[1]+"/Testing/"+dirname+"/Test.xml", 'r')
+xslfile = open(sys.path[0] + "/ctest_to_junit.xsl", 'r')
+
+xmlcontent = xmlfile.read()
+xslcontent = xslfile.read()
+
+xmldoc = etree.parse(StringIO.StringIO(xmlcontent))
+xslt_root = etree.XML(xslcontent)
+transform = etree.XSLT(xslt_root)
+
+result_tree = transform(xmldoc)
+result_tree.write(sys.argv[1]+"/Testing/"+dirname+"/jUnit.xml")

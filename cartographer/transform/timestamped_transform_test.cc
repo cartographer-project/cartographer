@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_POSE_GRAPH_POSE_GRAPH_DATA_H_
-#define CARTOGRAPHER_POSE_GRAPH_POSE_GRAPH_DATA_H_
+#include "cartographer/transform/timestamped_transform.h"
 
-#include "cartographer/pose_graph/constraint/constraint.h"
-#include "cartographer/pose_graph/node/nodes.h"
+#include "cartographer/transform/rigid_transform_test_helpers.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace cartographer {
-namespace pose_graph {
+namespace transform {
+namespace {
 
-struct PoseGraphData {
-  Nodes nodes;
-  std::vector<std::unique_ptr<Constraint>> constraints;
-};
+TEST(TimestampedTransformTest, ToProtoAndBack) {
+  const TimestampedTransform expected{
+      common::FromUniversal(12345678),
+      Rigid3d(Eigen::Vector3d(1., 2., 3.),
+              Eigen::Quaterniond(1., 2., 3., 4.).normalized())};
+  const TimestampedTransform actual = FromProto(ToProto(expected));
+  EXPECT_EQ(expected.time, actual.time);
+  EXPECT_THAT(actual.transform, IsNearly(expected.transform, 1e-6));
+}
 
-void AddNodeToPoseGraphData(const proto::Node& node, PoseGraphData* data);
-void AddConstraintToPoseGraphData(const proto::Constraint& constraint,
-                                  PoseGraphData* data);
-
-}  // namespace pose_graph
+}  // namespace
+}  // namespace transform
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_POSE_GRAPH_POSE_GRAPH_DATA_H_

@@ -23,11 +23,11 @@
 #include <map>
 #include <memory>
 #include <set>
-#include <unordered_map>
 #include <vector>
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "cartographer/common/fixed_ratio_sampler.h"
 #include "cartographer/common/thread_pool.h"
@@ -112,7 +112,8 @@ class PoseGraph3D : public PoseGraph {
       const std::vector<Constraint>& constraints) override;
   void AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) override;
   void RunFinalOptimization() override;
-  std::vector<std::vector<int>> GetConnectedTrajectories() const override;
+  std::vector<std::vector<int>> GetConnectedTrajectories() const override
+      LOCKS_EXCLUDED(mutex_);
   PoseGraph::SubmapData GetSubmapData(const SubmapId& submap_id) const
       LOCKS_EXCLUDED(mutex_) override;
   MapById<SubmapId, SubmapData> GetAllSubmapData() const
@@ -130,7 +131,8 @@ class PoseGraph3D : public PoseGraph {
   std::map<std::string, transform::Rigid3d> GetLandmarkPoses() const override
       LOCKS_EXCLUDED(mutex_);
   void SetLandmarkPose(const std::string& landmark_id,
-                       const transform::Rigid3d& global_pose) override
+                       const transform::Rigid3d& global_pose,
+                       const bool frozen = false) override
       LOCKS_EXCLUDED(mutex_);
   sensor::MapByTime<sensor::ImuData> GetImuData() const override
       LOCKS_EXCLUDED(mutex_);
@@ -248,7 +250,7 @@ class PoseGraph3D : public PoseGraph {
   std::unique_ptr<WorkQueue> work_queue_ GUARDED_BY(work_queue_mutex_);
 
   // We globally localize a fraction of the nodes from each trajectory.
-  std::unordered_map<int, std::unique_ptr<common::FixedRatioSampler>>
+  absl::flat_hash_map<int, std::unique_ptr<common::FixedRatioSampler>>
       global_localization_samplers_ GUARDED_BY(mutex_);
 
   // Number of nodes added since last loop closure.

@@ -16,6 +16,7 @@
 
 #include "cartographer/cloud/internal/handlers/write_state_to_file_handler.h"
 
+#include "absl/memory/memory.h"
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/internal/map_builder_server.h"
@@ -32,8 +33,14 @@ void WriteStateToFileHandler::OnRequest(
     Finish(::grpc::Status(::grpc::INVALID_ARGUMENT, "Filename empty."));
     return;
   }
-  GetContext<MapBuilderContextInterface>()->map_builder().SerializeStateToFile(
-      /*include_unfinished_submaps=*/false, request.filename());
+  bool success =
+      GetContext<MapBuilderContextInterface>()
+          ->map_builder()
+          .SerializeStateToFile(
+              /*include_unfinished_submaps=*/false, request.filename());
+  auto response = absl::make_unique<proto::WriteStateToFileResponse>();
+  response->set_success(success);
+  Send(std::move(response));
 }
 
 }  // namespace handlers

@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/cloud/internal/handlers/set_landmark_pose_handler.h"
+
 #include "cartographer/cloud/internal/testing/handler_test.h"
 #include "cartographer/cloud/internal/testing/test_helpers.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
@@ -53,7 +54,8 @@ TEST_F(SetLandmarkPoseHandlerTest, SetLandmarkPose) {
                       transform::IsNearly(
                           transform::Rigid3d(Eigen::Vector3d(1, 2, 3),
                                              Eigen::Quaterniond(4, 5, 6, 7)),
-                          kEps)));
+                          kEps),
+                      false));
   test_server_->SendWrite(request);
 }
 
