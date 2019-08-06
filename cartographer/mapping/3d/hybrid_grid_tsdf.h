@@ -37,7 +37,7 @@
 namespace cartographer {
 namespace mapping {
 
-struct tsdf_voxel {
+struct TSDFVoxel {
   uint16 discrete_tsd;
   uint16 discrete_weight;
 };
@@ -48,12 +48,12 @@ struct tsdf_voxel {
 // require the grid to grow dynamically. For centimeter resolution, points
 // can only be tens of meters from the origin.
 // The hard limit of cell indexes is +/- 8192 around the origin.
-class HybridGridTSDF : public HybridGridBase<tsdf_voxel> {
+class HybridGridTSDF : public HybridGridBase<TSDFVoxel> {
  public:
   explicit HybridGridTSDF(const float resolution, float truncation_distance,
                           float max_weight,
                           ValueConversionTables* conversion_tables)
-      : HybridGridBase<tsdf_voxel>(resolution),
+      : HybridGridBase<TSDFVoxel>(resolution),
         conversion_tables_(conversion_tables),
         value_converter_(absl::make_unique<TSDValueConverter>(
             truncation_distance, max_weight, conversion_tables_)) {}
@@ -117,12 +117,11 @@ class HybridGridTSDF : public HybridGridBase<tsdf_voxel> {
 
   // Returns the truncated signed distance of the cell with 'index'.
   float GetTSD(const Eigen::Array3i& index) const {
-    // TODO(kdaun): check for grid limits
     return value_converter_->ValueToTSD(value(index).discrete_tsd);
   }
+
   // Returns the weight of the cell with 'index'.
   float GetWeight(const Eigen::Array3i& index) const {
-    // TODO(kdaun): check for grid limits
     return value_converter_->ValueToWeight(value(index).discrete_weight);
   }
 
