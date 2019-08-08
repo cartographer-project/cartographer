@@ -50,8 +50,8 @@ TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
   // Convert Rigid3d to Rigid3f
   auto translation = transform.translation();
   auto rotation    = transform.rotation();
-  Vector float_translation{static_cast<float>(translation.x()), static_cast<float>(translation.y()), static_cast<float>(translation.z())};
-  Quaternion float_rotation{static_cast<float>(rotation.w()), static_cast<float>(rotation.x()), static_cast<float>(rotation.y()), static_cast<float>(rotation.z())};
+  Vector float_translation = translation.cast<float>();
+  Quaternion float_rotation = rotation.cast<float>();
   transform::Rigid3f float_tf{float_translation, float_rotation};
   return TransformTimedPointCloud(point_cloud, float_tf);
 }
