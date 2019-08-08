@@ -52,6 +52,10 @@ PointCloud TransformPointCloud(const PointCloud& point_cloud,
 TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
                                          const transform::Rigid3f& transform);
 
+// Transforms 'point_cloud' according to 'transform'.
+TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
+                                         const transform::Rigid3d& transform);
+
 // Returns a new point cloud without points that fall outside the region defined
 // by 'min_z' and 'max_z'.
 PointCloud CropPointCloud(const PointCloud& point_cloud, float min_z,
