@@ -31,6 +31,7 @@
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/sensor/range_data.h"
+#include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 
@@ -67,7 +68,7 @@ class Submap3D : public Submap {
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
   void InsertData(const sensor::RangeData& range_data,
-                  const RangeDataInserter3D& range_data_inserter,
+                  const RangeDataInserterInterface* range_data_inserter,
                   float high_resolution_max_range,
                   const Eigen::Quaterniond& local_from_gravity_aligned,
                   const Eigen::VectorXf& scan_histogram_in_gravity);
@@ -112,12 +113,13 @@ class ActiveSubmaps3D {
   std::vector<std::shared_ptr<const Submap3D>> submaps() const;
 
  private:
+  std::unique_ptr<RangeDataInserterInterface> CreateRangeDataInserter();
   void AddSubmap(const transform::Rigid3d& local_submap_pose,
                  int rotational_scan_matcher_histogram_size);
 
   const proto::SubmapsOptions3D options_;
   std::vector<std::shared_ptr<Submap3D>> submaps_;
-  RangeDataInserter3D range_data_inserter_;
+  std::unique_ptr<RangeDataInserterInterface> range_data_inserter_;
 };
 
 }  // namespace mapping

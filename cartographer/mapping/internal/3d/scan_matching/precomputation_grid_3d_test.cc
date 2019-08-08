@@ -20,7 +20,7 @@
 #include <tuple>
 #include <vector>
 
-#include "cartographer/mapping/3d/hybrid_grid.h"
+#include "cartographer/mapping/3d/occupancy_grid.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {
@@ -29,7 +29,7 @@ namespace scan_matching {
 namespace {
 
 TEST(PrecomputedGridGenerator3DTest, TestAgainstNaiveAlgorithm) {
-  HybridGrid hybrid_grid(2.f);
+  OccupancyGrid hybrid_grid(2.f);
 
   std::mt19937 rng(23847);
   std::uniform_int_distribution<int> coordinate_distribution(-50, 49);

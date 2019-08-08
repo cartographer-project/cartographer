@@ -45,7 +45,7 @@ class HybridGridPointsProcessor : public PointsProcessor {
   PointsProcessor* const next_;
 
   mapping::RangeDataInserter3D range_data_inserter_;
-  mapping::HybridGrid hybrid_grid_;
+  mapping::OccupancyGrid hybrid_grid_;
   std::unique_ptr<FileWriter> file_writer_;
 };
 

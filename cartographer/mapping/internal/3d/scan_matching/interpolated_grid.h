@@ -54,21 +54,21 @@ class InterpolatedGrid {
 
     const Eigen::Array3i index1 =
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x1, y1, z1));
-    const double q111 = hybrid_grid_.GetProbability(index1);
-    const double q112 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(0, 0, 1));
-    const double q121 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(0, 1, 0));
-    const double q122 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(0, 1, 1));
-    const double q211 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 0, 0));
-    const double q212 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 0, 1));
-    const double q221 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 1, 0));
-    const double q222 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 1, 1));
+    const double q111 = 1.0 - hybrid_grid_.GetCorrespondenceCost(index1);
+    const double q112 = 1.0 -
+        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(0, 0, 1));
+    const double q121 = 1.0 -
+        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(0, 1, 0));
+    const double q122 = 1.0 -
+        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(0, 1, 1));
+    const double q211 = 1.0 -
+        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(1, 0, 0));
+    const double q212 = 1.0 -
+        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(1, 0, 1));
+    const double q221 = 1.0 -
+        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(1, 1, 0));
+    const double q222 = 1.0 -
+        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(1, 1, 1));
 
     const T normalized_x = (x - x1) / (x2 - x1);
     const T normalized_y = (y - y1) / (y2 - y1);

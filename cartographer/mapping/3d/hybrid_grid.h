@@ -27,6 +27,7 @@
 #include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
+#include "cartographer/mapping/grid_interface.h"
 #include "cartographer/mapping/3d/hybrid_grid_base.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping/proto/3d/hybrid_grid.pb.h"
@@ -41,28 +42,10 @@ namespace mapping {
 // require the grid to grow dynamically. For centimeter resolution, points
 // can only be tens of meters from the origin.
 // The hard limit of cell indexes is +/- 8192 around the origin.
-class HybridGrid : public HybridGridBase<uint16> {
+class HybridGrid : public GridInterface, public HybridGridBase<uint16> {
  public:
   explicit HybridGrid(const float resolution)
       : HybridGridBase<uint16>(resolution) {}
-
-  explicit HybridGrid(const proto::HybridGrid& proto)
-      : HybridGrid(proto.resolution()) {
-    CHECK_EQ(proto.values_size(), proto.x_indices_size());
-    CHECK_EQ(proto.values_size(), proto.y_indices_size());
-    CHECK_EQ(proto.values_size(), proto.z_indices_size());
-    for (int i = 0; i < proto.values_size(); ++i) {
-      // SetProbability does some error checking for us.
-      SetProbability(Eigen::Vector3i(proto.x_indices(i), proto.y_indices(i),
-                                     proto.z_indices(i)),
-                     ValueToProbability(proto.values(i)));
-    }
-  }
-
-  // Sets the probability of the cell at 'index' to the given 'probability'.
-  void SetProbability(const Eigen::Array3i& index, const float probability) {
-    *mutable_value(index) = ProbabilityToValue(probability);
-  }
 
   // Finishes the update sequence.
   void FinishUpdate() {
@@ -71,31 +54,6 @@ class HybridGrid : public HybridGridBase<uint16> {
       *update_indices_.back() -= kUpdateMarker;
       update_indices_.pop_back();
     }
-  }
-
-  // Applies the 'odds' specified when calling ComputeLookupTableToApplyOdds()
-  // to the probability of the cell at 'index' if the cell has not already been
-  // updated. Multiple updates of the same cell will be ignored until
-  // FinishUpdate() is called. Returns true if the cell was updated.
-  //
-  // If this is the first call to ApplyOdds() for the specified cell, its value
-  // will be set to probability corresponding to 'odds'.
-  bool ApplyLookupTable(const Eigen::Array3i& index,
-                        const std::vector<uint16>& table) {
-    DCHECK_EQ(table.size(), kUpdateMarker);
-    uint16* const cell = mutable_value(index);
-    if (*cell >= kUpdateMarker) {
-      return false;
-    }
-    update_indices_.push_back(cell);
-    *cell = table[*cell];
-    DCHECK_GE(*cell, kUpdateMarker);
-    return true;
-  }
-
-  // Returns the probability of the cell with 'index'.
-  float GetProbability(const Eigen::Array3i& index) const {
-    return ValueToProbability(value(index));
   }
 
   // Returns true if the probability at the specified 'index' is known.
@@ -115,9 +73,16 @@ class HybridGrid : public HybridGridBase<uint16> {
     return result;
   }
 
+  std::vector<ValueType*>* UpdateIndices() { return &update_indices_; }
+
+  float GetCorrespondenceCost(const Eigen::Array3i& index) const {
+    return (*value_to_correspondence_cost_table_)[value(index)];
+  }
+
  private:
   // Markers at changed cells.
   std::vector<ValueType*> update_indices_;
+  const std::vector<float>* value_to_correspondence_cost_table_;
 };
 
 }  // namespace mapping

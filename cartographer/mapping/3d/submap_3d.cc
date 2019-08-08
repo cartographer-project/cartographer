@@ -242,11 +242,11 @@ void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   set_insertion_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
     high_resolution_hybrid_grid_ =
-        absl::make_unique<HybridGrid>(submap_3d.high_resolution_hybrid_grid());
+        absl::make_unique<OccupancyGrid>(submap_3d.high_resolution_hybrid_grid());
   }
   if (submap_3d.has_low_resolution_hybrid_grid()) {
     low_resolution_hybrid_grid_ =
-        absl::make_unique<HybridGrid>(submap_3d.low_resolution_hybrid_grid());
+        absl::make_unique<OccupancyGrid>(submap_3d.low_resolution_hybrid_grid());
   }
   rotational_scan_matcher_histogram_ =
       Eigen::VectorXf::Zero(submap_3d.rotational_scan_matcher_histogram_size());
@@ -269,7 +269,7 @@ void Submap3D::ToResponseProto(
 }
 
 void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
-                          const RangeDataInserter3D& range_data_inserter,
+                          const RangeDataInserterInterface* range_data_inserter,
                           const float high_resolution_max_range,
                           const Eigen::Quaterniond& local_from_gravity_aligned,
                           const Eigen::VectorXf& scan_histogram_in_gravity) {
@@ -277,12 +277,13 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
   // Transform range data into submap frame.
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data_in_local, local_pose().inverse().cast<float>());
-  range_data_inserter.Insert(
-      FilterRangeDataByMaxRange(transformed_range_data,
-                                high_resolution_max_range),
-      high_resolution_hybrid_grid_.get());
-  range_data_inserter.Insert(transformed_range_data,
-                             low_resolution_hybrid_grid_.get());
+  LOG(ERROR) << "RangeDataInserter not implemented yet.";
+    range_data_inserter->Insert(
+        FilterRangeDataByMaxRange(transformed_range_data,
+                                  high_resolution_max_range),
+        high_resolution_hybrid_grid_.get());
+    range_data_inserter->Insert(transformed_range_data,
+                               low_resolution_hybrid_grid_.get());
   set_num_range_data(num_range_data() + 1);
   const float yaw_in_submap_from_gravity = transform::GetYaw(
       local_pose().inverse().rotation() * local_from_gravity_aligned);
@@ -296,9 +297,25 @@ void Submap3D::Finish() {
   set_insertion_finished(true);
 }
 
+std::unique_ptr<RangeDataInserterInterface>
+  ActiveSubmaps3D::CreateRangeDataInserter() {
+    switch (options_.range_data_inserter_options().range_data_inserter_type()) {
+      case proto::RangeDataInserterOptions::PROBABILITY_GRID_INSERTER_2D:
+        return absl::make_unique<ProbabilityGridRangeDataInserter2D>(
+            options_.range_data_inserter_options()
+                .probability_grid_range_data_inserter_options_2d());
+      case proto::RangeDataInserterOptions::TSDF_INSERTER_2D:
+        return absl::make_unique<TSDFRangeDataInserter2D>(
+            options_.range_data_inserter_options()
+                .tsdf_range_data_inserter_options_2d());
+      default:
+        LOG(FATAL) << "Unknown RangeDataInserterType.";
+    }
+  }
+
 ActiveSubmaps3D::ActiveSubmaps3D(const proto::SubmapsOptions3D& options)
     : options_(options),
-      range_data_inserter_(options.range_data_inserter_options()) {}
+      range_data_inserter_(CreateRangeDataInserter()) {}
 
 std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::submaps() const {
   return std::vector<std::shared_ptr<const Submap3D>>(submaps_.begin(),
@@ -316,7 +333,7 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
               rotational_scan_matcher_histogram_in_gravity.size());
   }
   for (auto& submap : submaps_) {
-    submap->InsertData(range_data, range_data_inserter_,
+    submap->InsertData(range_data, range_data_inserter_.get(),
                        options_.high_resolution_max_range(),
                        local_from_gravity_aligned,
                        rotational_scan_matcher_histogram_in_gravity);

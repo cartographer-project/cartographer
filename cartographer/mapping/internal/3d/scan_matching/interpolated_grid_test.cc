@@ -17,7 +17,7 @@
 #include "cartographer/mapping/internal/3d/scan_matching/interpolated_grid.h"
 
 #include "Eigen/Core"
-#include "cartographer/mapping/3d/hybrid_grid.h"
+#include "cartographer/mapping/3d/occupancy_grid.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -43,7 +43,7 @@ class InterpolatedGridTest : public ::testing::Test {
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x, y, z)));
   }
 
-  HybridGrid hybrid_grid_;
+  OccupancyGrid hybrid_grid_;
   InterpolatedGrid interpolated_grid_;
 };
 

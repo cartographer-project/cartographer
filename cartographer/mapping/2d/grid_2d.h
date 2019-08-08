@@ -33,7 +33,6 @@ namespace mapping {
 proto::GridOptions2D CreateGridOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary);
 
-enum class GridType { PROBABILITY_GRID, TSDF };
 
 class Grid2D : public GridInterface {
  public:

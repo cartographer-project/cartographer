@@ -100,8 +100,10 @@ float RealTimeCorrelativeScanMatcher3D::ScoreCandidate(
     const transform::Rigid3f& transform) const {
   float score = 0.f;
   for (const sensor::RangefinderPoint& point : transformed_point_cloud) {
-    score +=
-        hybrid_grid.GetProbability(hybrid_grid.GetCellIndex(point.position));
+    LOG(ERROR) << "ScoreCandidate not implemented yet.";
+    //    TODO(kdaun): generalize as in 2D
+    //    score +=
+    //        hybrid_grid.GetProbability(hybrid_grid.GetCellIndex(point.position));
   }
   score /= static_cast<float>(transformed_point_cloud.size());
   const float angle = transform::GetAngle(transform);

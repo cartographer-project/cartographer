@@ -20,7 +20,7 @@
 
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/mapping/3d/hybrid_grid.h"
+#include "cartographer/mapping/3d/occupancy_grid.h"
 #include "cartographer/mapping/internal/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -71,7 +71,7 @@ class RealTimeCorrelativeScanMatcher3DTest : public ::testing::Test {
     EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 1e-3));
   }
 
-  HybridGrid hybrid_grid_;
+  OccupancyGrid hybrid_grid_;
   transform::Rigid3d expected_pose_;
   sensor::PointCloud point_cloud_;
   std::unique_ptr<RealTimeCorrelativeScanMatcher3D>

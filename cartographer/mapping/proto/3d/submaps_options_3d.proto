@@ -19,6 +19,11 @@ import "cartographer/mapping/proto/3d/range_data_inserter_options_3d.proto";
 package cartographer.mapping.proto;
 
 message SubmapsOptions3D {
+  enum GridType {
+    INVALID_GRID = 0;
+    PROBABILITY_GRID = 1;
+    TSDF = 2;
+  }
   // Resolution of the 'high_resolution' map in meters used for local SLAM and
   // loop closure.
   double high_resolution = 1;
@@ -37,4 +42,6 @@ message SubmapsOptions3D {
   int32 num_range_data = 2;
 
   RangeDataInserterOptions3D range_data_inserter_options = 3;
+
+  GridType grid_type = 6;
 }

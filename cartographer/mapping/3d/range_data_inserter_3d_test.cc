@@ -62,7 +62,7 @@ class RangeDataInserter3DTest : public ::testing::Test {
   const proto::RangeDataInserterOptions3D& options() const { return options_; }
 
  private:
-  HybridGrid hybrid_grid_;
+  OccupancyGrid hybrid_grid_;
   std::unique_ptr<RangeDataInserter3D> range_data_inserter_;
   proto::RangeDataInserterOptions3D options_;
 };
