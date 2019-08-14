@@ -86,7 +86,6 @@ RangeDataInserter3D::RangeDataInserter3D(
 
 void RangeDataInserter3D::Insert(const sensor::RangeData& range_data,
                                  GridInterface* grid) const {
-  LOG(INFO) << "Insert start";
   CHECK(grid != nullptr);
   OccupancyGrid* occupancy_grid = static_cast<OccupancyGrid*>(grid);
 
@@ -100,7 +99,6 @@ void RangeDataInserter3D::Insert(const sensor::RangeData& range_data,
   InsertMissesIntoGrid(miss_table_, range_data.origin, range_data.returns,
                        occupancy_grid, options_.num_free_space_voxels());
   occupancy_grid->FinishUpdate();
-  LOG(INFO) << "Insert finished";
 }
 
 }  // namespace mapping

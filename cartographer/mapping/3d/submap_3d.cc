@@ -275,7 +275,6 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
                           const float high_resolution_max_range,
                           const Eigen::Quaterniond& local_from_gravity_aligned,
                           const Eigen::VectorXf& scan_histogram_in_gravity) {
-  LOG(INFO) << "InsertData start";
   CHECK(!insertion_finished());
   // Transform range data into submap frame.
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
@@ -292,7 +291,6 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
   rotational_scan_matcher_histogram_ +=
       scan_matching::RotationalScanMatcher::RotateHistogram(
           scan_histogram_in_gravity, yaw_in_submap_from_gravity);
-  LOG(INFO) << "InsertData end";
 }
 
 void Submap3D::Finish() {
@@ -328,7 +326,6 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
     const sensor::RangeData& range_data,
     const Eigen::Quaterniond& local_from_gravity_aligned,
     const Eigen::VectorXf& rotational_scan_matcher_histogram_in_gravity) {
-  LOG(INFO) << "InsertData start";
   if (submaps_.empty() ||
       submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
@@ -344,14 +341,12 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
   if (submaps_.front()->num_range_data() == 2 * options_.num_range_data()) {
     submaps_.front()->Finish();
   }
-  LOG(INFO) << "InsertData end";
   return submaps();
 }
 
 void ActiveSubmaps3D::AddSubmap(
     const transform::Rigid3d& local_submap_pose,
     const int rotational_scan_matcher_histogram_size) {
-  LOG(INFO) << "AddSubmap start";
   if (submaps_.size() >= 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
@@ -363,7 +358,6 @@ void ActiveSubmaps3D::AddSubmap(
   submaps_.emplace_back(new Submap3D(
       options_.high_resolution(), options_.low_resolution(), local_submap_pose,
       initial_rotational_scan_matcher_histogram, &conversion_tables_));
-  LOG(INFO) << "AddSubmap end";
 }
 
 }  // namespace mapping

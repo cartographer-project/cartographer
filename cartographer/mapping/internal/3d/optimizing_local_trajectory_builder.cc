@@ -429,7 +429,6 @@ std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
 OptimizingLocalTrajectoryBuilder::AddAccumulatedRangeData(
     const common::Time time, const transform::Rigid3d& optimized_pose,
     const sensor::RangeData& range_data_in_tracking) {
-  LOG(INFO) << "AddAccumulatedRangeData start";
   if (range_data_in_tracking.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";
     return nullptr;
@@ -474,7 +473,6 @@ OptimizingLocalTrajectoryBuilder::AddAccumulatedRangeData(
       high_resolution_point_cloud_in_tracking,
       low_resolution_point_cloud_in_tracking, optimized_pose,
       gravity_alignment);
-  LOG(INFO) << "AddAccumulatedRangeData end";
 
   return absl::make_unique<MatchingResult>(MatchingResult{
       time, optimized_pose, std::move(filtered_range_data_in_local),
@@ -490,7 +488,6 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
     const sensor::PointCloud& low_resolution_point_cloud_in_tracking,
     const transform::Rigid3d& pose_estimate,
     const Eigen::Quaterniond& gravity_alignment) {
-  LOG(INFO) << "InsertIntoSubmap start";
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
     return nullptr;
   }
@@ -523,7 +520,6 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
                               rotational_scan_matcher_histogram_in_gravity,
                               pose_estimate}),
                       std::move(insertion_submaps)});
-  LOG(INFO) << "InsertIntoSubmap end";
 }
 
 OptimizingLocalTrajectoryBuilder::State
