@@ -27,10 +27,11 @@
 #include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
-#include "cartographer/mapping/grid_interface.h"
 #include "cartographer/mapping/3d/hybrid_grid_base.h"
+#include "cartographer/mapping/grid_interface.h"
 #include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping/proto/3d/hybrid_grid.pb.h"
+#include "cartographer/mapping/value_conversion_tables.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -44,8 +45,14 @@ namespace mapping {
 // The hard limit of cell indexes is +/- 8192 around the origin.
 class HybridGrid : public GridInterface, public HybridGridBase<uint16> {
  public:
-  explicit HybridGrid(const float resolution)
-      : HybridGridBase<uint16>(resolution) {}
+  explicit HybridGrid(const float resolution, float min_correspondence_cost,
+                      float max_correspondence_cost,
+                      ValueConversionTables* conversion_tables)
+      : HybridGridBase<uint16>(resolution),
+        value_to_correspondence_cost_table_(
+            conversion_tables->GetConversionTable(max_correspondence_cost,
+                                                  min_correspondence_cost,
+                                                  max_correspondence_cost)) {}
 
   // Finishes the update sequence.
   void FinishUpdate() {

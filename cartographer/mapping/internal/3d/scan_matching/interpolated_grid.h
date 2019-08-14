@@ -51,7 +51,6 @@ class InterpolatedGrid {
   T GetProbability(const T& x, const T& y, const T& z) const {
     double x1, y1, z1, x2, y2, z2;
     ComputeInterpolationDataPoints(x, y, z, &x1, &y1, &z1, &x2, &y2, &z2);
-
     const Eigen::Array3i index1 =
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x1, y1, z1));
     const double q111 = 1.0 - hybrid_grid_.GetCorrespondenceCost(index1);

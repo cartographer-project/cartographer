@@ -76,6 +76,7 @@ GridType ProbabilityGrid::GetGridType() const {
 
 // Returns the probability of the cell with 'cell_index'.
 float ProbabilityGrid::GetProbability(const Eigen::Array2i& cell_index) const {
+  LOG(INFO) << "GetProbability";
   if (!limits().Contains(cell_index)) return kMinProbability;
   return CorrespondenceCostToProbability(ValueToCorrespondenceCost(
       correspondence_cost_cells()[ToFlatIndex(cell_index)]));

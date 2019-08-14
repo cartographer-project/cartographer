@@ -80,8 +80,9 @@ TEST_F(ConstraintBuilder3DTest, FindsConstraints) {
   node_data->rotational_scan_matcher_histogram = Eigen::VectorXf::Zero(3);
   node_data->local_pose = transform::Rigid3d::Identity();
   SubmapId submap_id{0, 1};
+  ValueConversionTables conversion_tables_;
   Submap3D submap(0.1, 0.1, transform::Rigid3d::Identity(),
-                  Eigen::VectorXf::Zero(3));
+                  Eigen::VectorXf::Zero(3), &conversion_tables_);
   int expected_nodes = 0;
   for (int i = 0; i < 2; ++i) {
     EXPECT_EQ(constraint_builder_->GetNumFinishedNodes(), expected_nodes);

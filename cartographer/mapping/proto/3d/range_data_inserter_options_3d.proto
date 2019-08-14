@@ -17,6 +17,12 @@ syntax = "proto3";
 package cartographer.mapping.proto;
 
 message RangeDataInserterOptions3D {
+  enum RangeDataInserterType3D {
+    INVALID_INSERTER = 0;
+    PROBABILITY_GRID_INSERTER_3D = 1;
+    TSDF_INSERTER_3D = 2;
+  }
+
   // Probability change for a hit (this will be converted to odds and therefore
   // must be greater than 0.5).
   double hit_probability = 1;
@@ -28,4 +34,6 @@ message RangeDataInserterOptions3D {
   // Up to how many free space voxels are updated for scan matching.
   // 0 disables free space.
   int32 num_free_space_voxels = 3;
+
+  RangeDataInserterType3D range_data_inserter_type = 4;
 }

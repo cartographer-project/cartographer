@@ -64,6 +64,15 @@ proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
       parameter_dictionary->GetInt("num_free_space_voxels"));
   CHECK_GT(options.hit_probability(), 0.5);
   CHECK_LT(options.miss_probability(), 0.5);
+  const std::string range_data_inserter_type_string =
+      parameter_dictionary->GetString("range_data_inserter_type");
+  proto::RangeDataInserterOptions3D_RangeDataInserterType3D
+      range_data_inserter_type;
+  CHECK(proto::RangeDataInserterOptions3D_RangeDataInserterType3D_Parse(
+      range_data_inserter_type_string, &range_data_inserter_type))
+      << "Unknown RangeDataInserterOptions_RangeDataInserterType kind: "
+      << range_data_inserter_type_string;
+  options.set_range_data_inserter_type(range_data_inserter_type);
   return options;
 }
 
@@ -76,19 +85,22 @@ RangeDataInserter3D::RangeDataInserter3D(
           ComputeLookupTableToApplyOdds(Odds(options_.miss_probability()))) {}
 
 void RangeDataInserter3D::Insert(const sensor::RangeData& range_data,
-                                 OccupancyGrid* hybrid_grid) const {
-  CHECK(hybrid_grid != nullptr);
+                                 GridInterface* grid) const {
+  LOG(INFO) << "Insert start";
+  CHECK(grid != nullptr);
+  OccupancyGrid* occupancy_grid = static_cast<OccupancyGrid*>(grid);
 
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
-    const Eigen::Array3i hit_cell = hybrid_grid->GetCellIndex(hit.position);
-    hybrid_grid->ApplyLookupTable(hit_cell, hit_table_);
+    const Eigen::Array3i hit_cell = occupancy_grid->GetCellIndex(hit.position);
+    occupancy_grid->ApplyLookupTable(hit_cell, hit_table_);
   }
 
   // By not starting a new update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
   InsertMissesIntoGrid(miss_table_, range_data.origin, range_data.returns,
-                       hybrid_grid, options_.num_free_space_voxels());
-  hybrid_grid->FinishUpdate();
+                       occupancy_grid, options_.num_free_space_voxels());
+  occupancy_grid->FinishUpdate();
+  LOG(INFO) << "Insert finished";
 }
 
 }  // namespace mapping

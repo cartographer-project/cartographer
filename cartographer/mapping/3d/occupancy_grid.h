@@ -43,10 +43,15 @@ namespace mapping {
 // The hard limit of cell indexes is +/- 8192 around the origin.
 class OccupancyGrid : public HybridGrid {
  public:
-  explicit OccupancyGrid(const float resolution) : HybridGrid(resolution) {}
+  explicit OccupancyGrid(const float resolution,
+                         ValueConversionTables* conversion_tables)
+      : HybridGrid(resolution, kMinCorrespondenceCost, kMaxCorrespondenceCost,
+                   conversion_tables) {}
 
-  explicit OccupancyGrid(const proto::HybridGrid& proto)
-      : HybridGrid(proto.resolution()) {
+  explicit OccupancyGrid(const proto::HybridGrid& proto,
+                         ValueConversionTables* conversion_tables)
+      : HybridGrid(proto.resolution(), kMinCorrespondenceCost,
+                   kMaxCorrespondenceCost, conversion_tables) {
     CHECK_EQ(proto.values_size(), proto.x_indices_size());
     CHECK_EQ(proto.values_size(), proto.y_indices_size());
     CHECK_EQ(proto.values_size(), proto.z_indices_size());

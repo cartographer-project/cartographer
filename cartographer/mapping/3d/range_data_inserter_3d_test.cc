@@ -28,7 +28,7 @@ namespace {
 
 class RangeDataInserter3DTest : public ::testing::Test {
  protected:
-  RangeDataInserter3DTest() : hybrid_grid_(1.f) {
+  RangeDataInserter3DTest() : hybrid_grid_(1.f, &conversion_tables_) {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
         "hit_probability = 0.7, "
@@ -62,6 +62,7 @@ class RangeDataInserter3DTest : public ::testing::Test {
   const proto::RangeDataInserterOptions3D& options() const { return options_; }
 
  private:
+  ValueConversionTables conversion_tables_;
   OccupancyGrid hybrid_grid_;
   std::unique_ptr<RangeDataInserter3D> range_data_inserter_;
   proto::RangeDataInserterOptions3D options_;

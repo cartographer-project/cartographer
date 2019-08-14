@@ -19,6 +19,7 @@
 
 #include "cartographer/mapping/3d/occupancy_grid.h"
 #include "cartographer/mapping/proto/3d/range_data_inserter_options_3d.pb.h"
+#include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
 
@@ -28,7 +29,7 @@ namespace mapping {
 proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class RangeDataInserter3D {
+class RangeDataInserter3D : public RangeDataInserterInterface {
  public:
   explicit RangeDataInserter3D(
       const proto::RangeDataInserterOptions3D& options);
@@ -36,9 +37,12 @@ class RangeDataInserter3D {
   RangeDataInserter3D(const RangeDataInserter3D&) = delete;
   RangeDataInserter3D& operator=(const RangeDataInserter3D&) = delete;
 
-  // Inserts 'range_data' into 'hybrid_grid'.
-  void Insert(const sensor::RangeData& range_data,
-              OccupancyGrid* hybrid_grid) const;
+  //  // Inserts 'range_data' into 'hybrid_grid'.
+  //  void Insert(const sensor::RangeData& range_data,
+  //              OccupancyGrid* hybrid_grid) const;
+
+  virtual void Insert(const sensor::RangeData& range_data,
+                      GridInterface* grid) const override;
 
  private:
   const proto::RangeDataInserterOptions3D options_;

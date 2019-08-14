@@ -96,7 +96,8 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
   std::unique_ptr<FastCorrelativeScanMatcher3D> GetFastCorrelativeScanMatcher(
       const proto::FastCorrelativeScanMatcherOptions3D& options,
       const transform::Rigid3f& pose) {
-    hybrid_grid_ = absl::make_unique<OccupancyGrid>(0.05f);
+    ValueConversionTables conversion_tables_;
+    hybrid_grid_ = absl::make_unique<OccupancyGrid>(0.05f, &conversion_tables_);
     range_data_inserter_.Insert(
         sensor::RangeData{pose.translation(),
                           sensor::TransformPointCloud(point_cloud_, pose),

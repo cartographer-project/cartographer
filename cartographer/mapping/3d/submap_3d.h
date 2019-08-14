@@ -29,9 +29,10 @@
 #include "cartographer/mapping/proto/3d/submaps_options_3d.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
-#include "cartographer/mapping/submaps.h"
-#include "cartographer/sensor/range_data.h"
 #include "cartographer/mapping/range_data_inserter_interface.h"
+#include "cartographer/mapping/submaps.h"
+#include "cartographer/mapping/value_conversion_tables.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 
@@ -45,7 +46,8 @@ class Submap3D : public Submap {
  public:
   Submap3D(float high_resolution, float low_resolution,
            const transform::Rigid3d& local_submap_pose,
-           const Eigen::VectorXf& rotational_scan_matcher_histogram);
+           const Eigen::VectorXf& rotational_scan_matcher_histogram,
+           ValueConversionTables* conversion_tables);
 
   explicit Submap3D(const proto::Submap3D& proto);
 
@@ -81,6 +83,7 @@ class Submap3D : public Submap {
   std::unique_ptr<HybridGrid> high_resolution_hybrid_grid_;
   std::unique_ptr<HybridGrid> low_resolution_hybrid_grid_;
   Eigen::VectorXf rotational_scan_matcher_histogram_;
+  ValueConversionTables* conversion_tables_;
 };
 
 // The first active submap will be created on the insertion of the first range
@@ -120,6 +123,7 @@ class ActiveSubmaps3D {
   const proto::SubmapsOptions3D options_;
   std::vector<std::shared_ptr<Submap3D>> submaps_;
   std::unique_ptr<RangeDataInserterInterface> range_data_inserter_;
+  ValueConversionTables conversion_tables_;
 };
 
 }  // namespace mapping

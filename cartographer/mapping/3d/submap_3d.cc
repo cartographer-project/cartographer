@@ -198,13 +198,15 @@ proto::SubmapsOptions3D CreateSubmapsOptions3D(
 
 Submap3D::Submap3D(const float high_resolution, const float low_resolution,
                    const transform::Rigid3d& local_submap_pose,
-                   const Eigen::VectorXf& rotational_scan_matcher_histogram)
+                   const Eigen::VectorXf& rotational_scan_matcher_histogram,
+                   ValueConversionTables* conversion_tables)
     : Submap(local_submap_pose),
       high_resolution_hybrid_grid_(
-          absl::make_unique<HybridGrid>(high_resolution)),
+          absl::make_unique<OccupancyGrid>(high_resolution, conversion_tables)),
       low_resolution_hybrid_grid_(
-          absl::make_unique<HybridGrid>(low_resolution)),
-      rotational_scan_matcher_histogram_(rotational_scan_matcher_histogram) {}
+          absl::make_unique<OccupancyGrid>(low_resolution, conversion_tables)),
+      rotational_scan_matcher_histogram_(rotational_scan_matcher_histogram),
+      conversion_tables_(conversion_tables) {}
 
 Submap3D::Submap3D(const proto::Submap3D& proto)
     : Submap(transform::ToRigid3(proto.local_pose())) {
@@ -241,12 +243,12 @@ void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   set_num_range_data(submap_3d.num_range_data());
   set_insertion_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
-    high_resolution_hybrid_grid_ =
-        absl::make_unique<OccupancyGrid>(submap_3d.high_resolution_hybrid_grid());
+    high_resolution_hybrid_grid_ = absl::make_unique<OccupancyGrid>(
+        submap_3d.high_resolution_hybrid_grid(), conversion_tables_);
   }
   if (submap_3d.has_low_resolution_hybrid_grid()) {
-    low_resolution_hybrid_grid_ =
-        absl::make_unique<OccupancyGrid>(submap_3d.low_resolution_hybrid_grid());
+    low_resolution_hybrid_grid_ = absl::make_unique<OccupancyGrid>(
+        submap_3d.low_resolution_hybrid_grid(), conversion_tables_);
   }
   rotational_scan_matcher_histogram_ =
       Eigen::VectorXf::Zero(submap_3d.rotational_scan_matcher_histogram_size());
@@ -273,11 +275,11 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
                           const float high_resolution_max_range,
                           const Eigen::Quaterniond& local_from_gravity_aligned,
                           const Eigen::VectorXf& scan_histogram_in_gravity) {
+  LOG(INFO) << "InsertData start";
   CHECK(!insertion_finished());
   // Transform range data into submap frame.
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data_in_local, local_pose().inverse().cast<float>());
-  LOG(ERROR) << "RangeDataInserter not implemented yet.";
     range_data_inserter->Insert(
         FilterRangeDataByMaxRange(transformed_range_data,
                                   high_resolution_max_range),
@@ -290,6 +292,7 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
   rotational_scan_matcher_histogram_ +=
       scan_matching::RotationalScanMatcher::RotateHistogram(
           scan_histogram_in_gravity, yaw_in_submap_from_gravity);
+  LOG(INFO) << "InsertData end";
 }
 
 void Submap3D::Finish() {
@@ -300,14 +303,13 @@ void Submap3D::Finish() {
 std::unique_ptr<RangeDataInserterInterface>
   ActiveSubmaps3D::CreateRangeDataInserter() {
     switch (options_.range_data_inserter_options().range_data_inserter_type()) {
-      case proto::RangeDataInserterOptions::PROBABILITY_GRID_INSERTER_2D:
-        return absl::make_unique<ProbabilityGridRangeDataInserter2D>(
-            options_.range_data_inserter_options()
-                .probability_grid_range_data_inserter_options_2d());
-      case proto::RangeDataInserterOptions::TSDF_INSERTER_2D:
-        return absl::make_unique<TSDFRangeDataInserter2D>(
-            options_.range_data_inserter_options()
-                .tsdf_range_data_inserter_options_2d());
+      case proto::RangeDataInserterOptions3D::PROBABILITY_GRID_INSERTER_3D:
+        return absl::make_unique<RangeDataInserter3D>(
+            options_.range_data_inserter_options());
+      case proto::RangeDataInserterOptions3D::TSDF_INSERTER_3D:
+        LOG(FATAL) << "Add TSDFRangeDataInserter3D";
+        return absl::make_unique<RangeDataInserter3D>(
+            options_.range_data_inserter_options());
       default:
         LOG(FATAL) << "Unknown RangeDataInserterType.";
     }
@@ -326,6 +328,7 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
     const sensor::RangeData& range_data,
     const Eigen::Quaterniond& local_from_gravity_aligned,
     const Eigen::VectorXf& rotational_scan_matcher_histogram_in_gravity) {
+  LOG(INFO) << "InsertData start";
   if (submaps_.empty() ||
       submaps_.back()->num_range_data() == options_.num_range_data()) {
     AddSubmap(transform::Rigid3d(range_data.origin.cast<double>(),
@@ -341,12 +344,14 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
   if (submaps_.front()->num_range_data() == 2 * options_.num_range_data()) {
     submaps_.front()->Finish();
   }
+  LOG(INFO) << "InsertData end";
   return submaps();
 }
 
 void ActiveSubmaps3D::AddSubmap(
     const transform::Rigid3d& local_submap_pose,
     const int rotational_scan_matcher_histogram_size) {
+  LOG(INFO) << "AddSubmap start";
   if (submaps_.size() >= 2) {
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
@@ -357,7 +362,8 @@ void ActiveSubmaps3D::AddSubmap(
       Eigen::VectorXf::Zero(rotational_scan_matcher_histogram_size);
   submaps_.emplace_back(new Submap3D(
       options_.high_resolution(), options_.low_resolution(), local_submap_pose,
-      initial_rotational_scan_matcher_histogram));
+      initial_rotational_scan_matcher_histogram, &conversion_tables_));
+  LOG(INFO) << "AddSubmap end";
 }
 
 }  // namespace mapping
