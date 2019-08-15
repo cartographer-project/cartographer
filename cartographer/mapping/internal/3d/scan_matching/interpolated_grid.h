@@ -19,13 +19,13 @@
 
 #include <cmath>
 
-#include "cartographer/mapping/3d/hybrid_grid.h"
+#include "cartographer/mapping/3d/occupancy_grid.h"
 
 namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 
-// Interpolates between HybridGrid probability voxels. We use the tricubic
+// Interpolates between OccupancyGrid probability voxels. We use the tricubic
 // interpolation which interpolates the values and has vanishing derivative at
 // these points.
 //
@@ -34,13 +34,13 @@ namespace scan_matching {
 // continuously differentiable.
 class InterpolatedGrid {
  public:
-  explicit InterpolatedGrid(const HybridGrid& hybrid_grid)
+  explicit InterpolatedGrid(const OccupancyGrid& hybrid_grid)
       : hybrid_grid_(hybrid_grid) {}
 
   InterpolatedGrid(const InterpolatedGrid&) = delete;
   InterpolatedGrid& operator=(const InterpolatedGrid&) = delete;
 
-  // Returns the interpolated probability at (x, y, z) of the HybridGrid
+  // Returns the interpolated probability at (x, y, z) of the OccupancyGrid
   // used to perform the interpolation.
   //
   // This is a piecewise, continuously differentiable function. We use the
@@ -53,21 +53,21 @@ class InterpolatedGrid {
     ComputeInterpolationDataPoints(x, y, z, &x1, &y1, &z1, &x2, &y2, &z2);
     const Eigen::Array3i index1 =
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x1, y1, z1));
-    const double q111 = 1.0 - hybrid_grid_.GetCorrespondenceCost(index1);
-    const double q112 = 1.0 -
-        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(0, 0, 1));
-    const double q121 = 1.0 -
-        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(0, 1, 0));
-    const double q122 = 1.0 -
-        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(0, 1, 1));
-    const double q211 = 1.0 -
-        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(1, 0, 0));
-    const double q212 = 1.0 -
-        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(1, 0, 1));
-    const double q221 = 1.0 -
-        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(1, 1, 0));
-    const double q222 = 1.0 -
-        hybrid_grid_.GetCorrespondenceCost(index1 + Eigen::Array3i(1, 1, 1));
+    const double q111 = hybrid_grid_.GetProbability(index1);
+    const double q112 =
+        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(0, 0, 1));
+    const double q121 =
+        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(0, 1, 0));
+    const double q122 =
+        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(0, 1, 1));
+    const double q211 =
+        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 0, 0));
+    const double q212 =
+        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 0, 1));
+    const double q221 =
+        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 1, 0));
+    const double q222 =
+        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 1, 1));
 
     const T normalized_x = (x - x1) / (x2 - x1);
     const T normalized_y = (y - y1) / (y2 - y1);
@@ -144,7 +144,7 @@ class InterpolatedGrid {
     return CenterOfLowerVoxel(jet_x.a, jet_y.a, jet_z.a);
   }
 
-  const HybridGrid& hybrid_grid_;
+  const OccupancyGrid& hybrid_grid_;
 };
 
 }  // namespace scan_matching

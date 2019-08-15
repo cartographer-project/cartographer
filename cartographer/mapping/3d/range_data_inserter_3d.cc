@@ -91,7 +91,9 @@ void RangeDataInserter3D::Insert(const sensor::RangeData& range_data,
 
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
     const Eigen::Array3i hit_cell = occupancy_grid->GetCellIndex(hit.position);
+    //    LOG(INFO)<<"P before hit "<<occupancy_grid->GetProbability(hit_cell);
     occupancy_grid->ApplyLookupTable(hit_cell, hit_table_);
+    //    LOG(INFO)<<"P after hit "<<occupancy_grid->GetProbability(hit_cell);
   }
 
   // By not starting a new update after hits are inserted, we give hits priority

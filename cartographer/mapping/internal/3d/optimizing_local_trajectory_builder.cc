@@ -282,7 +282,8 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                       std::sqrt(static_cast<double>(
                           batch.high_resolution_filtered_points.size())),
                   batch.high_resolution_filtered_points,
-                  matching_submap->high_resolution_hybrid_grid()),
+                  static_cast<const OccupancyGrid&>(
+                      matching_submap->high_resolution_hybrid_grid())),
           nullptr, batch.state.translation.data(), batch.state.rotation.data());
       problem.AddResidualBlock(
           scan_matching::OccupiedSpaceCostFunction3D::
@@ -292,7 +293,8 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                       std::sqrt(static_cast<double>(
                           batch.low_resolution_filtered_points.size())),
                   batch.low_resolution_filtered_points,
-                  matching_submap->low_resolution_hybrid_grid()),
+                  static_cast<const OccupancyGrid&>(
+                      matching_submap->low_resolution_hybrid_grid())),
           nullptr, batch.state.translation.data(), batch.state.rotation.data());
       if (i == 0) {
         problem.SetParameterBlockConstant(batch.state.translation.data());

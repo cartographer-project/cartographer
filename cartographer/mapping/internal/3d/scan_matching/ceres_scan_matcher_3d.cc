@@ -97,7 +97,7 @@ void CeresScanMatcher3D::Match(
         OccupiedSpaceCostFunction3D::CreateAutoDiffCostFunction(
             options_.occupied_space_weight(i) /
                 std::sqrt(static_cast<double>(point_cloud.size())),
-            point_cloud, hybrid_grid),
+            point_cloud, static_cast<const OccupancyGrid&>(hybrid_grid)),
         nullptr /* loss function */, ceres_pose.translation(),
         ceres_pose.rotation());
   }
