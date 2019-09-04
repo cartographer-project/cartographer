@@ -1240,12 +1240,31 @@ void PoseGraph2D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   // Remove all 'data_.constraints' related to 'nodes_to_remove'.
   {
     std::vector<Constraint> constraints;
+    std::set<SubmapId> unconstrained_submap_ids;
     for (const Constraint& constraint : parent_->data_.constraints) {
       if (nodes_to_remove.count(constraint.node_id) == 0) {
         constraints.push_back(constraint);
+      } else {
+        // A constraint to another submap will be removed, mark it as affected.
+        unconstrained_submap_ids.insert(constraint.submap_id);
       }
     }
     parent_->data_.constraints = std::move(constraints);
+    // Go through the changed constraints and finalize the list of submap IDs
+    // that lost constraints and now have zero inter-submap constraints.
+    for (const Constraint& constraint : parent_->data_.constraints) {
+      if (constraint.tag == Constraint::Tag::INTRA_SUBMAP) {
+        continue;
+      } else if (unconstrained_submap_ids.count(constraint.submap_id)) {
+        // False positive - this submap is still inter-submap-constrained with
+        // some node that is not from the submap that will be trimmed.
+        unconstrained_submap_ids.erase(constraint.submap_id);
+      }
+    }
+    // Delete submap scan matchers of now unconstrained submaps to save memory.
+    for (const SubmapId& submap_id : unconstrained_submap_ids) {
+      parent_->constraint_builder_.DeleteScanMatcher(submap_id);
+    }
   }
 
   // Mark the submap with 'submap_id' as trimmed and remove its data.
