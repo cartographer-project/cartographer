@@ -54,7 +54,7 @@ class Submap2D : public Submap {
                        proto::SubmapQuery::Response* response) const override;
 
   void ToResponseProto(const transform::Rigid3d& global_submap_pose,
-                       float min_z, float max_z, proto::SubmapQuery& proto) const override;
+                       float min_z, float max_z, proto::SubmapQuery::Resposne* response) const override;
 
   const Grid2D* grid() const { return grid_.get(); }
 
