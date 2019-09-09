@@ -360,6 +360,15 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
           scan_histogram_in_gravity, yaw_in_submap_from_gravity);
 }
 
+void Submap3D::ToResponseProto(const transform::Rigid3d& global_submap_pose,
+      float min_z, float max_z, proto::SubmapQuery::Response* const response) const {
+  response->set_submap_version(num_range_data());
+  AddToTextureProto(*high_resolution_hybrid_grid_, global_submap_pose, min_z, max_z,
+                    response->add_textures());
+  AddToTextureProto(*low_resolution_hybrid_grid_, global_submap_pose, min_z, max_z,
+                    response->add_textures());
+}
+
 void Submap3D::Finish() {
   CHECK(!insertion_finished());
   set_insertion_finished(true);
