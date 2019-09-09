@@ -99,10 +99,7 @@ std::vector<Eigen::Array4i> ExtractVoxelData(
 
 
     const Eigen::Vector3f cell_center_global = transform * cell_center_submap;
-    // Filter out voxels in range
-    if (cell_center_global.z() < min_z || cell_center_global.z() > max_z) {
-      continue;
-    }
+
     const Eigen::Array4i voxel_index_and_probability(
         common::RoundToInt(cell_center_global.x() * resolution_inverse),
         common::RoundToInt(cell_center_global.y() * resolution_inverse),
@@ -135,6 +132,12 @@ std::vector<Eigen::Array4i> ExtractVoxelData(
     const Eigen::Vector3f cell_center_submap =
         hybrid_grid.GetCenterOfCell(it.GetCellIndex());
     const Eigen::Vector3f cell_center_global = transform * cell_center_submap;
+
+    // Filter out voxels in range
+    if (cell_center_global.z() < min_z || cell_center_global.z() > max_z) {
+      continue;
+    }
+    
     const Eigen::Array4i voxel_index_and_probability(
         common::RoundToInt(cell_center_global.x() * resolution_inverse),
         common::RoundToInt(cell_center_global.y() * resolution_inverse),
