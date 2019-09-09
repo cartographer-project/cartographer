@@ -136,7 +136,7 @@ void Submap2D::ToResponseProto(
 
 
 void Submap2D::ToResponseProto(const transform::Rigid3d& global_submap_pose,
-      float min_z, float max_z, proto::SubmapQuery::Response* response) const  {
+      float min_z, float max_z, proto::SubmapQuery::Response* const response) const  {
         (void) min_z;
         (void) max_z;
         ToResponseProto(global_submap_pose, response);
