@@ -70,6 +70,11 @@ class Submap {
       const transform::Rigid3d& global_submap_pose,
       proto::SubmapQuery::Response* response) const = 0;
 
+  // Fills data into the 'response'.
+  virtual void ToResponseProto(
+      const transform::Rigid3d& global_submap_pose, float min_z, float max_z,
+      proto::SubmapQuery::Response* response) const = 0;
+
   // Pose of this submap in the local map frame.
   transform::Rigid3d local_pose() const { return local_pose_; }
 
