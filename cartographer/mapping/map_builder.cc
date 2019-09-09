@@ -206,6 +206,25 @@ std::string MapBuilder::SubmapToProto(
   return "";
 }
 
+std::string MapBuilder::SubmapToProto(
+    const SubmapId& submap_id, proto::SubmapQuery::Response* const response, float min_z, float max_z) {
+  if (submap_id.trajectory_id < 0 ||
+      submap_id.trajectory_id >= num_trajectory_builders()) {
+    return "Requested submap from trajectory " +
+           std::to_string(submap_id.trajectory_id) + " but there are only " +
+           std::to_string(num_trajectory_builders()) + " trajectories.";
+  }
+
+  const auto submap_data = pose_graph_->GetSubmapData(submap_id);
+  if (submap_data.submap == nullptr) {
+    return "Requested submap " + std::to_string(submap_id.submap_index) +
+           " from trajectory " + std::to_string(submap_id.trajectory_id) +
+           " but it does not exist: maybe it has been trimmed.";
+  }
+  submap_data.submap->ToResponseProto(submap_data.pose, min_z, max_z, response);
+  return "";      
+}
+
 void MapBuilder::SerializeState(bool include_unfinished_submaps,
                                 io::ProtoStreamWriterInterface* const writer) {
   io::WritePbStream(*pose_graph_, all_trajectory_builder_options_, writer,
