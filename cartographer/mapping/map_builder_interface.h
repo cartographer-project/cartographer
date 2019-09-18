@@ -77,6 +77,9 @@ class MapBuilderInterface {
   virtual std::string SubmapToProto(const SubmapId& submap_id,
                                     proto::SubmapQuery::Response* response) = 0;
 
+  virtual std::string SubmapToProto(const SubmapId& submap_id,
+                                    proto::SubmapQuery::Response* response, float min_z, float max_z) = 0;        
+
   // Serializes the current state to a proto stream. If
   // 'include_unfinished_submaps' is set to true, unfinished submaps, i.e.
   // submaps that have not yet received all rangefinder data insertions, will

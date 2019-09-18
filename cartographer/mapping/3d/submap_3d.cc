@@ -96,7 +96,48 @@ std::vector<Eigen::Array4i> ExtractVoxelData(
 
     const Eigen::Vector3f cell_center_submap =
         hybrid_grid.GetCenterOfCell(it.GetCellIndex());
+
+
     const Eigen::Vector3f cell_center_global = transform * cell_center_submap;
+
+    const Eigen::Array4i voxel_index_and_probability(
+        common::RoundToInt(cell_center_global.x() * resolution_inverse),
+        common::RoundToInt(cell_center_global.y() * resolution_inverse),
+        common::RoundToInt(cell_center_global.z() * resolution_inverse),
+        probability_value);
+
+    voxel_indices_and_probabilities.push_back(voxel_index_and_probability);
+    const Eigen::Array2i pixel_index = voxel_index_and_probability.head<2>();
+    *min_index = min_index->cwiseMin(pixel_index);
+    *max_index = max_index->cwiseMax(pixel_index);
+  }
+  return voxel_indices_and_probabilities;
+}
+
+std::vector<Eigen::Array4i> ExtractVoxelData(
+    const HybridGrid& hybrid_grid, const transform::Rigid3f& transform,
+    Eigen::Array2i* min_index, Eigen::Array2i* max_index, float min_z, float max_z) {
+  std::vector<Eigen::Array4i> voxel_indices_and_probabilities;
+  const float resolution_inverse = 1.f / hybrid_grid.resolution();
+
+  constexpr float kXrayObstructedCellProbabilityLimit = 0.501f;
+  for (auto it = HybridGrid::Iterator(hybrid_grid); !it.Done(); it.Next()) {
+    const uint16 probability_value = it.GetValue();
+    const float probability = ValueToProbability(probability_value);
+    if (probability < kXrayObstructedCellProbabilityLimit) {
+      // We ignore non-obstructed cells.
+      continue;
+    }
+
+    const Eigen::Vector3f cell_center_submap =
+        hybrid_grid.GetCenterOfCell(it.GetCellIndex());
+    const Eigen::Vector3f cell_center_global = transform * cell_center_submap;
+
+    // Filter out voxels in range
+    if (cell_center_global.z() < min_z || cell_center_global.z() > max_z) {
+      continue;
+    }
+    
     const Eigen::Array4i voxel_index_and_probability(
         common::RoundToInt(cell_center_global.x() * resolution_inverse),
         common::RoundToInt(cell_center_global.y() * resolution_inverse),
@@ -159,6 +200,38 @@ void AddToTextureProto(
   const std::vector<Eigen::Array4i> voxel_indices_and_probabilities =
       ExtractVoxelData(hybrid_grid, global_submap_pose.cast<float>(),
                        &min_index, &max_index);
+
+  const int width = max_index.y() - min_index.y() + 1;
+  const int height = max_index.x() - min_index.x() + 1;
+  texture->set_width(width);
+  texture->set_height(height);
+
+  const std::vector<PixelData> accumulated_pixel_data = AccumulatePixelData(
+      width, height, min_index, max_index, voxel_indices_and_probabilities);
+  const std::string cell_data = ComputePixelValues(accumulated_pixel_data);
+
+  common::FastGzipString(cell_data, texture->mutable_cells());
+  *texture->mutable_slice_pose() = transform::ToProto(
+      global_submap_pose.inverse() *
+      transform::Rigid3d::Translation(Eigen::Vector3d(
+          max_index.x() * resolution, max_index.y() * resolution,
+          global_submap_pose.translation().z())));
+}
+
+void AddToTextureProto(
+    const HybridGrid& hybrid_grid, const transform::Rigid3d& global_submap_pose, float min_z, float max_z,
+    proto::SubmapQuery::Response::SubmapTexture* const texture) {
+  // Generate an X-ray view through the 'hybrid_grid', aligned to the
+  // xy-plane in the global map frame.
+  const float resolution = hybrid_grid.resolution();
+  texture->set_resolution(resolution);
+
+  // Compute a bounding box for the texture.
+  Eigen::Array2i min_index(INT_MAX, INT_MAX);
+  Eigen::Array2i max_index(INT_MIN, INT_MIN);
+  const std::vector<Eigen::Array4i> voxel_indices_and_probabilities =
+      ExtractVoxelData(hybrid_grid, global_submap_pose.cast<float>(),
+                       &min_index, &max_index, min_z, max_z);
 
   const int width = max_index.y() - min_index.y() + 1;
   const int height = max_index.x() - min_index.x() + 1;
@@ -289,6 +362,15 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
   rotational_scan_matcher_histogram_ +=
       scan_matching::RotationalScanMatcher::RotateHistogram(
           scan_histogram_in_gravity, yaw_in_submap_from_gravity);
+}
+
+void Submap3D::ToResponseProto(const transform::Rigid3d& global_submap_pose,
+      float min_z, float max_z, proto::SubmapQuery::Response* const response) const {
+  response->set_submap_version(num_range_data());
+  AddToTextureProto(*high_resolution_hybrid_grid_, global_submap_pose, min_z, max_z,
+                    response->add_textures());
+  AddToTextureProto(*low_resolution_hybrid_grid_, global_submap_pose, min_z, max_z,
+                    response->add_textures());
 }
 
 void Submap3D::Finish() {

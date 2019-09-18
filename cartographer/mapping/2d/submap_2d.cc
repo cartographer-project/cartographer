@@ -134,6 +134,14 @@ void Submap2D::ToResponseProto(
   grid()->DrawToSubmapTexture(texture, local_pose());
 }
 
+
+void Submap2D::ToResponseProto(const transform::Rigid3d& global_submap_pose,
+      float min_z, float max_z, proto::SubmapQuery::Response* const response) const  {
+        (void) min_z;
+        (void) max_z;
+        ToResponseProto(global_submap_pose, response);
+}
+
 void Submap2D::InsertRangeData(
     const sensor::RangeData& range_data,
     const RangeDataInserterInterface* range_data_inserter) {
