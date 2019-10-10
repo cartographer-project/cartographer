@@ -34,14 +34,15 @@ MinMaxRangeFiteringPointsProcessor::FromDictionary(
 
 MinMaxRangeFiteringPointsProcessor::MinMaxRangeFiteringPointsProcessor(
     const double min_range, const double max_range, PointsProcessor* next)
-    : min_range_(min_range), max_range_(max_range), next_(next) {}
+    : min_range_squared_(min_range*min_range), max_range_squared_(max_range*max_range),
+      next_(next) {}
 
 void MinMaxRangeFiteringPointsProcessor::Process(
     std::unique_ptr<PointsBatch> batch) {
   absl::flat_hash_set<int> to_remove;
   for (size_t i = 0; i < batch->points.size(); ++i) {
-    const float range = (batch->points[i].position - batch->origin).norm();
-    if (!(min_range_ <= range && range <= max_range_)) {
+    const float range = (batch->points[i].position - batch->origin).squaredNorm();
+    if (!(min_range_squared_ <= range && range <= max_range_squared_)) {
       to_remove.insert(i);
     }
   }
