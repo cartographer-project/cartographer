@@ -27,21 +27,21 @@ namespace io {
 
 // Filters all points which distance in the Z direction from their 'origin' 
 // exceeds 'max_z' or 'min_z'.
-class VerticalRangeFiteringPointsProcessor : public PointsProcessor {
+class VerticalRangeFilteringPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName =
       "vertical_range_filter";
-  VerticalRangeFiteringPointsProcessor(double min_z, double max_z,
+  VerticalRangeFilteringPointsProcessor(double min_z, double max_z,
                                        PointsProcessor* next);
-  static std::unique_ptr<VerticalRangeFiteringPointsProcessor> FromDictionary(
+  static std::unique_ptr<VerticalRangeFilteringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
-  ~VerticalRangeFiteringPointsProcessor() override {}
+  ~VerticalRangeFilteringPointsProcessor() override {}
 
-  VerticalRangeFiteringPointsProcessor(
-      const VerticalRangeFiteringPointsProcessor&) = delete;
-  VerticalRangeFiteringPointsProcessor& operator=(
-      const VerticalRangeFiteringPointsProcessor&) = delete;
+  VerticalRangeFilteringPointsProcessor(
+      const VerticalRangeFilteringPointsProcessor&) = delete;
+  VerticalRangeFilteringPointsProcessor& operator=(
+      const VerticalRangeFilteringPointsProcessor&) = delete;
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
