@@ -25,6 +25,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/mapping/3d/range_data_inserter_3d.h"
+#include "cartographer/mapping/3d/tsdf_range_data_inserter_3d.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/proto/3d/submaps_options_3d.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"

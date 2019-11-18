@@ -127,7 +127,7 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
   std::mt19937 prng_ = std::mt19937(42);
   std::uniform_real_distribution<float> distribution_ =
       std::uniform_real_distribution<float>(-1.f, 1.f);
-  RangeDataInserter3D range_data_inserter_;
+  OccupancyGridRangeDataInserter3D range_data_inserter_;
   const proto::FastCorrelativeScanMatcherOptions3D options_;
   sensor::PointCloud point_cloud_;
   std::unique_ptr<OccupancyGrid> hybrid_grid_;

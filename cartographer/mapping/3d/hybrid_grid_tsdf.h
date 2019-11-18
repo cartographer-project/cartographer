@@ -30,6 +30,7 @@
 #include "cartographer/mapping/2d/tsd_value_converter.h"
 #include "cartographer/mapping/3d/hybrid_grid_base.h"
 #include "cartographer/mapping/probability_values.h"
+#include "cartographer/mapping/grid_interface.h"
 #include "cartographer/mapping/proto/3d/hybrid_grid.pb.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
@@ -48,7 +49,7 @@ struct TSDFVoxel {
 // require the grid to grow dynamically. For centimeter resolution, points
 // can only be tens of meters from the origin.
 // The hard limit of cell indexes is +/- 8192 around the origin.
-class HybridGridTSDF : public HybridGridBase<TSDFVoxel> {
+class HybridGridTSDF : public GridInterface, public HybridGridBase<TSDFVoxel> {
  public:
   explicit HybridGridTSDF(const float resolution, float truncation_distance,
                           float max_weight,

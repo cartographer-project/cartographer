@@ -76,7 +76,7 @@ proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
   return options;
 }
 
-RangeDataInserter3D::RangeDataInserter3D(
+OccupancyGridRangeDataInserter3D::OccupancyGridRangeDataInserter3D(
     const proto::RangeDataInserterOptions3D& options)
     : options_(options),
       hit_table_(
@@ -84,8 +84,8 @@ RangeDataInserter3D::RangeDataInserter3D(
       miss_table_(
           ComputeLookupTableToApplyOdds(Odds(options_.miss_probability()))) {}
 
-void RangeDataInserter3D::Insert(const sensor::RangeData& range_data,
-                                 GridInterface* grid) const {
+void OccupancyGridRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
+                                              GridInterface* grid) const {
   CHECK(grid != nullptr);
   OccupancyGrid* occupancy_grid = static_cast<OccupancyGrid*>(grid);
 

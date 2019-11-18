@@ -36,7 +36,7 @@ class RangeDataInserter3DTest : public ::testing::Test {
         "num_free_space_voxels = 1000, "
         "}");
     options_ = CreateRangeDataInserterOptions3D(parameter_dictionary.get());
-    range_data_inserter_.reset(new RangeDataInserter3D(options_));
+    range_data_inserter_.reset(new OccupancyGridRangeDataInserter3D(options_));
   }
 
   void InsertPointCloud() {
@@ -64,7 +64,7 @@ class RangeDataInserter3DTest : public ::testing::Test {
  private:
   ValueConversionTables conversion_tables_;
   OccupancyGrid hybrid_grid_;
-  std::unique_ptr<RangeDataInserter3D> range_data_inserter_;
+  std::unique_ptr<OccupancyGridRangeDataInserter3D> range_data_inserter_;
   proto::RangeDataInserterOptions3D options_;
 };
 

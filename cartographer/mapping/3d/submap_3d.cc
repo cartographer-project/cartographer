@@ -302,11 +302,10 @@ std::unique_ptr<RangeDataInserterInterface>
   ActiveSubmaps3D::CreateRangeDataInserter() {
     switch (options_.range_data_inserter_options().range_data_inserter_type()) {
       case proto::RangeDataInserterOptions3D::PROBABILITY_GRID_INSERTER_3D:
-        return absl::make_unique<RangeDataInserter3D>(
+        return absl::make_unique<OccupancyGridRangeDataInserter3D>(
             options_.range_data_inserter_options());
       case proto::RangeDataInserterOptions3D::TSDF_INSERTER_3D:
-        LOG(FATAL) << "Add TSDFRangeDataInserter3D";
-        return absl::make_unique<RangeDataInserter3D>(
+        return absl::make_unique<TSDFRangeDataInserter3D>(
             options_.range_data_inserter_options());
       default:
         LOG(FATAL) << "Unknown RangeDataInserterType.";
