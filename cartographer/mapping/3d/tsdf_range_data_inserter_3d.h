@@ -42,6 +42,11 @@ class TSDFRangeDataInserter3D : public RangeDataInserterInterface {
                       GridInterface* grid) const override;
 
  private:
+  void InsertHit(const Eigen::Vector3f& hit, const Eigen::Vector3f& origin,
+                 HybridGridTSDF* tsdf) const;
+  void UpdateCell(const Eigen::Array3i& cell, float update_sdf,
+                  float update_weight, HybridGridTSDF* tsdf) const;
+
   const proto::RangeDataInserterOptions3D options_;
 };
 

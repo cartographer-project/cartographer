@@ -61,7 +61,7 @@ class HybridGridTSDF : public GridInterface, public HybridGridBase<TSDFVoxel> {
 
   explicit HybridGridTSDF(const proto::HybridGrid& proto,
                           ValueConversionTables* conversion_tables)
-      : HybridGridTSDF(proto.resolution(), 1.0f, 0.3f, conversion_tables)
+      : HybridGridTSDF(proto.resolution(), 0.3f, 1000.0f, conversion_tables)
   // TODO(kdaun) Initialze from proto
   {
     CHECK_EQ(proto.values_size(), proto.x_indices_size());
@@ -123,6 +123,16 @@ class HybridGridTSDF : public GridInterface, public HybridGridBase<TSDFVoxel> {
 
   // Returns the weight of the cell with 'index'.
   float GetWeight(const Eigen::Array3i& index) const {
+    LOG(INFO) << "begin value";
+    auto bla = value(index);
+    LOG(INFO) << "end value";
+    LOG(INFO) << "end value " << value(index).discrete_weight;
+
+    LOG(INFO) << "end value " << &value_converter_;
+
+    LOG(INFO) << "end value "
+              << value_converter_->ValueToWeight(value(index).discrete_weight);
+
     return value_converter_->ValueToWeight(value(index).discrete_weight);
   }
 

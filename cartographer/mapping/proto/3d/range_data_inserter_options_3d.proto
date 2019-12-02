@@ -36,4 +36,7 @@ message RangeDataInserterOptions3D {
   int32 num_free_space_voxels = 3;
 
   RangeDataInserterType3D range_data_inserter_type = 4;
+
+  // Truncation for signed distance function based environment representation.
+  double truncation_distance = 5;
 }

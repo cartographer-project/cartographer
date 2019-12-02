@@ -281,6 +281,7 @@ class DynamicGrid {
   // Returns a pointer to the value at 'index' to allow changing it, dynamically
   // growing the DynamicGrid and constructing new WrappedGrids as needed.
   ValueType* mutable_value(const Eigen::Array3i& index) {
+    LOG(INFO) << "start mutable_value";
     const Eigen::Array3i shifted_index = index + (grid_size() >> 1);
     // The cast to unsigned is for performance to check with 3 comparisons
     // shifted_index.[xyz] >= 0 and shifted_index.[xyz] < grid_size.
@@ -296,6 +297,7 @@ class DynamicGrid {
     }
     const Eigen::Array3i inner_index =
         shifted_index - meta_index * WrappedGrid::grid_size();
+    LOG(INFO) << "finish mutable_value";
     return meta_cell->mutable_value(inner_index);
   }
 
