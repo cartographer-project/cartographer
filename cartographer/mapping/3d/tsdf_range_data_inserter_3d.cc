@@ -33,7 +33,6 @@ TSDFRangeDataInserter3D::TSDFRangeDataInserter3D(
 void TSDFRangeDataInserter3D::InsertHit(const Eigen::Vector3f& hit,
                                         const Eigen::Vector3f& origin,
                                         HybridGridTSDF* tsdf) const {
-  LOG(INFO) << "start InsertHit";
   const Eigen::Vector3f ray = hit - origin;
   const float range = ray.norm();
   const float truncation_distance = 0.3f;
@@ -66,17 +65,12 @@ void TSDFRangeDataInserter3D::InsertHit(const Eigen::Vector3f& hit,
     update_tsd =
         common::Clamp(update_tsd, -truncation_distance, truncation_distance);
     float update_weight = 1.0;
-
-    LOG(INFO) << "start UpdateCell";
     UpdateCell(update_cell_index, update_tsd, update_weight, tsdf);
-    LOG(INFO) << "finish UpdateCell";
   }
-  LOG(INFO) << "finish InsertHit";
 }
 
 void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
                                               GridInterface* grid) const {
-  LOG(INFO) << "start insert";
   CHECK(grid != nullptr);
   //  const float truncation_distance =
   //      static_cast<float>(options_.truncation_distance());
@@ -87,10 +81,7 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
     const Eigen::Vector3f hit = hit_point.position.head<3>();
     InsertHit(hit, origin, tsdf);
   }
-  LOG(INFO) << "finish insert";
-
   tsdf->FinishUpdate();
-  LOG(INFO) << "start update";
 }
 
 void TSDFRangeDataInserter3D::UpdateCell(const Eigen::Array3i& cell,
@@ -98,20 +89,15 @@ void TSDFRangeDataInserter3D::UpdateCell(const Eigen::Array3i& cell,
                                          HybridGridTSDF* tsdf) const {
   if (update_weight == 0.f) return;
 
-  LOG(INFO) << "start GetWeight";
   const float old_weight = tsdf->GetWeight(cell);
-  LOG(INFO) << "finish GetWeight";
-  LOG(INFO) << "start GetTSD";
   const float old_sdf = tsdf->GetTSD(cell);
-  LOG(INFO) << "start GetTSD";
   float updated_weight = old_weight + update_weight;
   float updated_sdf =
       (old_sdf * old_weight + update_sdf * update_weight) / updated_weight;
   float maximum_weight = 1000;  // static_cast<float>(options_.maximum_weight())
+                                // //todo(kdaun) replace by option parameter
   updated_weight = std::min(updated_weight, maximum_weight);
-  LOG(INFO) << "start SetCell";
   tsdf->SetCell(cell, updated_sdf, updated_weight);
-  LOG(INFO) << "finish SetCell";
 }
 
 }  // namespace mapping

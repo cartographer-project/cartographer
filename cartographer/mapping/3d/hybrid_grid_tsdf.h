@@ -123,16 +123,6 @@ class HybridGridTSDF : public GridInterface, public HybridGridBase<TSDFVoxel> {
 
   // Returns the weight of the cell with 'index'.
   float GetWeight(const Eigen::Array3i& index) const {
-    LOG(INFO) << "begin value";
-    auto bla = value(index);
-    LOG(INFO) << "end value";
-    LOG(INFO) << "end value " << value(index).discrete_weight;
-
-    LOG(INFO) << "end value " << &value_converter_;
-
-    LOG(INFO) << "end value "
-              << value_converter_->ValueToWeight(value(index).discrete_weight);
-
     return value_converter_->ValueToWeight(value(index).discrete_weight);
   }
 

@@ -193,20 +193,26 @@ proto::SubmapsOptions3D CreateSubmapsOptions3D(
       CreateRangeDataInserterOptions3D(
           parameter_dictionary->GetDictionary("range_data_inserter").get());
   CHECK_GT(options.num_range_data(), 0);
+  const std::string grid_type_string =
+      parameter_dictionary->GetString("grid_type");
+  proto::SubmapsOptions3D_GridType grid_type;
+  CHECK(proto::SubmapsOptions3D_GridType_Parse(grid_type_string, &grid_type))
+      << "Unknown SubmapsOptions3D_GridType kind: " << grid_type_string;
+  options.set_grid_type(grid_type);
   return options;
 }
 
-Submap3D::Submap3D(const float high_resolution, const float low_resolution,
-                   const transform::Rigid3d& local_submap_pose,
+Submap3D::Submap3D(const transform::Rigid3d& local_submap_pose,
+                   std::unique_ptr<GridInterface> low_resolution_grid,
+                   std::unique_ptr<GridInterface> high_resolution_grid,
                    const Eigen::VectorXf& rotational_scan_matcher_histogram,
                    ValueConversionTables* conversion_tables)
     : Submap(local_submap_pose),
-      high_resolution_hybrid_grid_(
-          absl::make_unique<OccupancyGrid>(high_resolution, conversion_tables)),
-      low_resolution_hybrid_grid_(
-          absl::make_unique<OccupancyGrid>(low_resolution, conversion_tables)),
       rotational_scan_matcher_histogram_(rotational_scan_matcher_histogram),
-      conversion_tables_(conversion_tables) {}
+      conversion_tables_(conversion_tables) {
+  low_resolution_hybrid_grid_ = std::move(low_resolution_grid);
+  high_resolution_hybrid_grid_ = std::move(high_resolution_grid);
+}
 
 Submap3D::Submap3D(const proto::Submap3D& proto)
     : Submap(transform::ToRigid3(proto.local_pose())) {
@@ -221,10 +227,11 @@ proto::Submap Submap3D::ToProto(
   submap_3d->set_num_range_data(num_range_data());
   submap_3d->set_finished(insertion_finished());
   if (include_probability_grid_data) {
-    *submap_3d->mutable_high_resolution_hybrid_grid() =
-        high_resolution_hybrid_grid().ToProto();
-    *submap_3d->mutable_low_resolution_hybrid_grid() =
-        low_resolution_hybrid_grid().ToProto();
+    LOG(ERROR) << "proto export not implemented";
+    //    *submap_3d->mutable_high_resolution_hybrid_grid() =
+    //        high_resolution_hybrid_grid().ToProto();
+    //    *submap_3d->mutable_low_resolution_hybrid_grid() =
+    //        low_resolution_hybrid_grid().ToProto();
   }
   for (Eigen::VectorXf::Index i = 0;
        i != rotational_scan_matcher_histogram_.size(); ++i) {
@@ -263,11 +270,11 @@ void Submap3D::ToResponseProto(
     const transform::Rigid3d& global_submap_pose,
     proto::SubmapQuery::Response* const response) const {
   response->set_submap_version(num_range_data());
-
-  AddToTextureProto(*high_resolution_hybrid_grid_, global_submap_pose,
-                    response->add_textures());
-  AddToTextureProto(*low_resolution_hybrid_grid_, global_submap_pose,
-                    response->add_textures());
+  LOG(WARNING) << "AddToTextureProto not implemented";
+  //  AddToTextureProto(*high_resolution_hybrid_grid_, global_submap_pose,
+  //                    response->add_textures());
+  //  AddToTextureProto(*low_resolution_hybrid_grid_, global_submap_pose,
+  //                    response->add_textures());
 }
 
 void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
@@ -343,6 +350,18 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
   return submaps();
 }
 
+std::unique_ptr<GridInterface> ActiveSubmaps3D::CreateGrid(float resolution) {
+  switch (options_.grid_type()) {
+    case proto::GridOptions2D::PROBABILITY_GRID:
+      return absl::make_unique<OccupancyGrid>(resolution, &conversion_tables_);
+    case proto::GridOptions2D::TSDF:
+      return absl::make_unique<HybridGridTSDF>(resolution, 0.3f, 1000.0f,
+                                               &conversion_tables_);
+    default:
+      LOG(FATAL) << "Unknown GridType.";
+  }
+}
+
 void ActiveSubmaps3D::AddSubmap(
     const transform::Rigid3d& local_submap_pose,
     const int rotational_scan_matcher_histogram_size) {
@@ -355,7 +374,11 @@ void ActiveSubmaps3D::AddSubmap(
   const Eigen::VectorXf initial_rotational_scan_matcher_histogram =
       Eigen::VectorXf::Zero(rotational_scan_matcher_histogram_size);
   submaps_.emplace_back(new Submap3D(
-      options_.high_resolution(), options_.low_resolution(), local_submap_pose,
+      local_submap_pose,
+      std::unique_ptr<GridInterface>(static_cast<GridInterface*>(
+          CreateGrid(options_.high_resolution()).release())),
+      std::unique_ptr<GridInterface>(static_cast<GridInterface*>(
+          CreateGrid(options_.low_resolution()).release())),
       initial_rotational_scan_matcher_histogram, &conversion_tables_));
 }
 

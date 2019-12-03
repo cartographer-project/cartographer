@@ -46,7 +46,7 @@ class RealTimeCorrelativeScanMatcher3D {
   // returns the score.
   float Match(const transform::Rigid3d& initial_pose_estimate,
               const sensor::PointCloud& point_cloud,
-              const HybridGrid& hybrid_grid,
+              const GridInterface& hybrid_grid,
               transform::Rigid3d* pose_estimate) const;
 
  private:

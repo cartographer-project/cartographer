@@ -92,7 +92,8 @@ void CeresScanMatcher3D::Match(
     CHECK_GT(options_.occupied_space_weight(i), 0.);
     const sensor::PointCloud& point_cloud =
         *point_clouds_and_hybrid_grids[i].first;
-    const HybridGrid& hybrid_grid = *point_clouds_and_hybrid_grids[i].second;
+    const GridInterface& hybrid_grid = *point_clouds_and_hybrid_grids[i].second;
+    LOG(ERROR) << "TODO(kdaun) check for grid type and cast accordingly";
     problem.AddResidualBlock(
         OccupiedSpaceCostFunction3D::CreateAutoDiffCostFunction(
             options_.occupied_space_weight(i) /

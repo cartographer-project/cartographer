@@ -33,22 +33,24 @@ RealTimeCorrelativeScanMatcher3D::RealTimeCorrelativeScanMatcher3D(
 
 float RealTimeCorrelativeScanMatcher3D::Match(
     const transform::Rigid3d& initial_pose_estimate,
-    const sensor::PointCloud& point_cloud, const HybridGrid& hybrid_grid,
+    const sensor::PointCloud& point_cloud, const GridInterface& hybrid_grid,
     transform::Rigid3d* pose_estimate) const {
   CHECK(pose_estimate != nullptr);
   float best_score = -1.f;
-  for (const transform::Rigid3f& transform : GenerateExhaustiveSearchTransforms(
-           hybrid_grid.resolution(), point_cloud)) {
-    const transform::Rigid3f candidate =
-        initial_pose_estimate.cast<float>() * transform;
-    const float score = ScoreCandidate(
-        hybrid_grid, sensor::TransformPointCloud(point_cloud, candidate),
-        transform);
-    if (score > best_score) {
-      best_score = score;
-      *pose_estimate = candidate.cast<double>();
-    }
-  }
+  LOG(ERROR) << "TODO(kdaun) implement similar to 2d";
+  //  for (const transform::Rigid3f& transform :
+  //  GenerateExhaustiveSearchTransforms(
+  //           hybrid_grid.resolution(), point_cloud)) {
+  //    const transform::Rigid3f candidate =
+  //        initial_pose_estimate.cast<float>() * transform;
+  //    const float score = ScoreCandidate(
+  //        hybrid_grid, sensor::TransformPointCloud(point_cloud, candidate),
+  //        transform);
+  //    if (score > best_score) {
+  //      best_score = score;
+  //      *pose_estimate = candidate.cast<double>();
+  //    }
+  //  }
   return best_score;
 }
 

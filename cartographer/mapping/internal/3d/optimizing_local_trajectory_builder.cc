@@ -24,6 +24,7 @@
 #include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
 #include "cartographer/mapping/internal/3d/scan_matching/translation_cost_function.h"
 #include "cartographer/mapping/internal/3d/scan_matching/translation_delta_cost_functor_3d.h"
+#include "cartographer/mapping/internal/3d/scan_matching/tsdf_space_cost_function_3d.h"
 #include "cartographer/mapping/proto/3d/optimizing_local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping/proto/scan_matching/ceres_scan_matcher_options_3d.pb.h"
 #include "cartographer/transform/transform.h"
@@ -274,28 +275,45 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     TransformStates(matching_submap->local_pose().inverse());
     for (size_t i = 0; i < batches_.size(); ++i) {
       Batch& batch = batches_[i];
-      problem.AddResidualBlock(
-          scan_matching::OccupiedSpaceCostFunction3D::
-              CreateAutoDiffCostFunction(
-                  options_.optimizing_local_trajectory_builder_options()
-                          .high_resolution_grid_weight() /
-                      std::sqrt(static_cast<double>(
-                          batch.high_resolution_filtered_points.size())),
-                  batch.high_resolution_filtered_points,
-                  static_cast<const OccupancyGrid&>(
-                      matching_submap->high_resolution_hybrid_grid())),
-          nullptr, batch.state.translation.data(), batch.state.rotation.data());
-      problem.AddResidualBlock(
-          scan_matching::OccupiedSpaceCostFunction3D::
-              CreateAutoDiffCostFunction(
-                  options_.optimizing_local_trajectory_builder_options()
-                          .low_resolution_grid_weight() /
-                      std::sqrt(static_cast<double>(
-                          batch.low_resolution_filtered_points.size())),
-                  batch.low_resolution_filtered_points,
-                  static_cast<const OccupancyGrid&>(
-                      matching_submap->low_resolution_hybrid_grid())),
-          nullptr, batch.state.translation.data(), batch.state.rotation.data());
+      LOG(ERROR) << "TODO(kdaun) check for grid type and match accordingly";
+      if (true) {
+        problem.AddResidualBlock(
+            scan_matching::TSDFSpaceCostFunction3D::CreateAutoDiffCostFunction(
+                options_.optimizing_local_trajectory_builder_options()
+                        .high_resolution_grid_weight() /
+                    std::sqrt(static_cast<double>(
+                        batch.high_resolution_filtered_points.size())),
+                batch.high_resolution_filtered_points,
+                static_cast<const HybridGridTSDF&>(
+                    matching_submap->high_resolution_hybrid_grid())),
+            nullptr, batch.state.translation.data(),
+            batch.state.rotation.data());
+      } else {
+        problem.AddResidualBlock(
+            scan_matching::OccupiedSpaceCostFunction3D::
+                CreateAutoDiffCostFunction(
+                    options_.optimizing_local_trajectory_builder_options()
+                            .high_resolution_grid_weight() /
+                        std::sqrt(static_cast<double>(
+                            batch.high_resolution_filtered_points.size())),
+                    batch.high_resolution_filtered_points,
+                    static_cast<const OccupancyGrid&>(
+                        matching_submap->high_resolution_hybrid_grid())),
+            nullptr, batch.state.translation.data(),
+            batch.state.rotation.data());
+        problem.AddResidualBlock(
+            scan_matching::OccupiedSpaceCostFunction3D::
+                CreateAutoDiffCostFunction(
+                    options_.optimizing_local_trajectory_builder_options()
+                            .low_resolution_grid_weight() /
+                        std::sqrt(static_cast<double>(
+                            batch.low_resolution_filtered_points.size())),
+                    batch.low_resolution_filtered_points,
+                    static_cast<const OccupancyGrid&>(
+                        matching_submap->low_resolution_hybrid_grid())),
+            nullptr, batch.state.translation.data(),
+            batch.state.rotation.data());
+      }
       if (i == 0) {
         problem.SetParameterBlockConstant(batch.state.translation.data());
         problem.SetParameterBlockConstant(batch.state.rotation.data());

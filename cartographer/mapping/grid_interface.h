@@ -27,6 +27,7 @@ enum class GridType { PROBABILITY_GRID, TSDF };
 
 class GridInterface {
   // todo(kdaun) move mutual functions of Grid2D/3D here
+  // todo(kdaun) add function to get grid type and order(2D/3D)
  public:
   virtual ~GridInterface() {}
 };
