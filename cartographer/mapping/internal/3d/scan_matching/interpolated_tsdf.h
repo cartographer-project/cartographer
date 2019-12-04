@@ -52,6 +52,20 @@ class InterpolatedTSDF {
     ComputeInterpolationDataPoints(x, y, z, &x1, &y1, &z1, &x2, &y2, &z2);
     const Eigen::Array3i index1 =
         tsdf_.GetCellIndex(Eigen::Vector3f(x1, y1, z1));
+
+    const double w111 = tsdf_.GetWeight(index1);
+    const double w112 = tsdf_.GetWeight(index1 + Eigen::Array3i(0, 0, 1));
+    const double w121 = tsdf_.GetWeight(index1 + Eigen::Array3i(0, 1, 0));
+    const double w122 = tsdf_.GetWeight(index1 + Eigen::Array3i(0, 1, 1));
+    const double w211 = tsdf_.GetWeight(index1 + Eigen::Array3i(1, 0, 0));
+    const double w212 = tsdf_.GetWeight(index1 + Eigen::Array3i(1, 0, 1));
+    const double w221 = tsdf_.GetWeight(index1 + Eigen::Array3i(1, 1, 0));
+    const double w222 = tsdf_.GetWeight(index1 + Eigen::Array3i(1, 1, 1));
+    if (w111 == 0.0 || w112 == 0.0 || w121 == 0.0 || w122 == 0.0 ||
+        w211 == 0.0 || w212 == 0.0 || w221 == 0.0 || w222 == 0.0) {
+      return T(-0.3);
+    }
+
     const double q111 = tsdf_.GetTSD(index1);
     const double q112 = tsdf_.GetTSD(index1 + Eigen::Array3i(0, 0, 1));
     const double q121 = tsdf_.GetTSD(index1 + Eigen::Array3i(0, 1, 0));

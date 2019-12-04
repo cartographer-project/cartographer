@@ -73,6 +73,9 @@ proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
       << "Unknown RangeDataInserterOptions_RangeDataInserterType kind: "
       << range_data_inserter_type_string;
   options.set_range_data_inserter_type(range_data_inserter_type);
+  options.set_truncation_distance(
+      parameter_dictionary->GetDouble("truncation_distance"));
+  CHECK_GT(options.truncation_distance(), 0.0);
   return options;
 }
 

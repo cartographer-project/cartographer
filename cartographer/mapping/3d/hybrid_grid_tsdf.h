@@ -41,6 +41,12 @@ namespace mapping {
 struct TSDFVoxel {
   uint16 discrete_tsd;
   uint16 discrete_weight;
+
+ public:
+  bool operator==(const TSDFVoxel& rhs) const
+  {
+    return (discrete_tsd == rhs.discrete_tsd) && (discrete_weight == rhs.discrete_weight);
+  }
 };
 
 // A grid containing probability values stored using 15 bits, and an update
@@ -146,6 +152,8 @@ class HybridGridTSDF : public GridInterface, public HybridGridBase<TSDFVoxel> {
     //    }
     return result;
   }
+
+  const TSDValueConverter& ValueConverter() const { return *value_converter_; }
 
  private:
   // Markers at changed cells.
