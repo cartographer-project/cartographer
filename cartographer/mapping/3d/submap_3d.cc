@@ -111,6 +111,44 @@ std::vector<Eigen::Array4i> ExtractVoxelData(
   return voxel_indices_and_probabilities;
 }
 
+// The first three entries of each returned value are a cell_index and the
+// last is the corresponding probability value. We batch them together like
+// this to only have one vector and have better cache locality.
+std::vector<Eigen::Array4i> ExtractVoxelData(
+    const HybridGridTSDF& hybrid_grid, const transform::Rigid3f& transform,
+    Eigen::Array2i* min_index, Eigen::Array2i* max_index) {
+  std::vector<Eigen::Array4i> voxel_indices_and_probabilities;
+  const float resolution_inverse = 1.f / hybrid_grid.resolution();
+
+  constexpr float kXrayObstructedCellProbabilityLimit = 0.501f;
+  for (auto it = HybridGridTSDF::Iterator(hybrid_grid); !it.Done(); it.Next()) {
+    const TSDFVoxel voxel = it.GetValue();
+    const float tsd =
+        hybrid_grid.ValueConverter().ValueToTSD(voxel.discrete_tsd);
+    const float probability = 1.f - std::abs(tsd) / 0.3;
+    const float probability_value = ProbabilityToValue(probability);
+    if (probability < kXrayObstructedCellProbabilityLimit) {
+      // We ignore non-obstructed cells.
+      continue;
+    }
+
+    const Eigen::Vector3f cell_center_submap =
+        hybrid_grid.GetCenterOfCell(it.GetCellIndex());
+    const Eigen::Vector3f cell_center_global = transform * cell_center_submap;
+    const Eigen::Array4i voxel_index_and_probability(
+        common::RoundToInt(cell_center_global.x() * resolution_inverse),
+        common::RoundToInt(cell_center_global.y() * resolution_inverse),
+        common::RoundToInt(cell_center_global.z() * resolution_inverse),
+        probability_value);
+
+    voxel_indices_and_probabilities.push_back(voxel_index_and_probability);
+    const Eigen::Array2i pixel_index = voxel_index_and_probability.head<2>();
+    *min_index = min_index->cwiseMin(pixel_index);
+    *max_index = max_index->cwiseMax(pixel_index);
+  }
+  return voxel_indices_and_probabilities;
+}
+
 // Builds texture data containing interleaved value and alpha for the
 // visualization from 'accumulated_pixel_data'.
 std::string ComputePixelValues(
@@ -147,6 +185,39 @@ std::string ComputePixelValues(
 
 void AddToTextureProto(
     const HybridGrid& hybrid_grid, const transform::Rigid3d& global_submap_pose,
+    proto::SubmapQuery::Response::SubmapTexture* const texture) {
+  // Generate an X-ray view through the 'hybrid_grid', aligned to the
+  // xy-plane in the global map frame.
+  const float resolution = hybrid_grid.resolution();
+  texture->set_resolution(resolution);
+
+  // Compute a bounding box for the texture.
+  Eigen::Array2i min_index(INT_MAX, INT_MAX);
+  Eigen::Array2i max_index(INT_MIN, INT_MIN);
+  const std::vector<Eigen::Array4i> voxel_indices_and_probabilities =
+      ExtractVoxelData(hybrid_grid, global_submap_pose.cast<float>(),
+                       &min_index, &max_index);
+
+  const int width = max_index.y() - min_index.y() + 1;
+  const int height = max_index.x() - min_index.x() + 1;
+  texture->set_width(width);
+  texture->set_height(height);
+
+  const std::vector<PixelData> accumulated_pixel_data = AccumulatePixelData(
+      width, height, min_index, max_index, voxel_indices_and_probabilities);
+  const std::string cell_data = ComputePixelValues(accumulated_pixel_data);
+
+  common::FastGzipString(cell_data, texture->mutable_cells());
+  *texture->mutable_slice_pose() = transform::ToProto(
+      global_submap_pose.inverse() *
+      transform::Rigid3d::Translation(Eigen::Vector3d(
+          max_index.x() * resolution, max_index.y() * resolution,
+          global_submap_pose.translation().z())));
+}
+
+void AddToTextureProto(
+    const HybridGridTSDF& hybrid_grid,
+    const transform::Rigid3d& global_submap_pose,
     proto::SubmapQuery::Response::SubmapTexture* const texture) {
   // Generate an X-ray view through the 'hybrid_grid', aligned to the
   // xy-plane in the global map frame.
@@ -271,10 +342,17 @@ void Submap3D::ToResponseProto(
     proto::SubmapQuery::Response* const response) const {
   response->set_submap_version(num_range_data());
   LOG(WARNING) << "AddToTextureProto not implemented";
-  //  AddToTextureProto(*high_resolution_hybrid_grid_, global_submap_pose,
-  //                    response->add_textures());
-  //  AddToTextureProto(*low_resolution_hybrid_grid_, global_submap_pose,
-  //                    response->add_textures());
+  HybridGridTSDF* low_res_grid =
+      static_cast<HybridGridTSDF*>(low_resolution_hybrid_grid_.get());
+  HybridGridTSDF* high_res_grid =
+      static_cast<HybridGridTSDF*>(high_resolution_hybrid_grid_.get());
+  AddToTextureProto(*low_res_grid, global_submap_pose,
+                    response->add_textures());
+  AddToTextureProto(*high_res_grid, global_submap_pose,
+                    response->add_textures());
+  //    AddToTextureProto(static_cast<HybridGridTSDF>(*low_resolution_hybrid_grid_),
+  //    global_submap_pose,
+  //                      response->add_textures());
 }
 
 void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
@@ -316,6 +394,8 @@ std::unique_ptr<RangeDataInserterInterface>
             options_.range_data_inserter_options());
       default:
         LOG(FATAL) << "Unknown RangeDataInserterType.";
+        return absl::make_unique<TSDFRangeDataInserter3D>(
+            options_.range_data_inserter_options()); //todo(kdaun) fix error: control reaches end of non-void function
     }
   }
 
@@ -359,6 +439,8 @@ std::unique_ptr<GridInterface> ActiveSubmaps3D::CreateGrid(float resolution) {
                                                &conversion_tables_);
     default:
       LOG(FATAL) << "Unknown GridType.";
+      return absl::make_unique<HybridGridTSDF>(resolution, 0.3f, 1000.0f,
+                                               &conversion_tables_); //todo(kdaun) fix default return
   }
 }
 
