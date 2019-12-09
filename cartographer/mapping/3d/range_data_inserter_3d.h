@@ -26,7 +26,8 @@
 namespace cartographer {
 namespace mapping {
 
-proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
+proto::ProbabilityGridRangeDataInserterOptions3D
+CreateProbabilityGridRangeDataInserterOptions3D(
     common::LuaParameterDictionary* parameter_dictionary);
 
 class OccupancyGridRangeDataInserter3D : public RangeDataInserterInterface {

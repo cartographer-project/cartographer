@@ -53,9 +53,10 @@ void InsertMissesIntoGrid(const std::vector<uint16>& miss_table,
 
 }  // namespace
 
-proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
+proto::ProbabilityGridRangeDataInserterOptions3D
+CreateProbabilityGridRangeDataInserterOptions3D(
     common::LuaParameterDictionary* parameter_dictionary) {
-  proto::RangeDataInserterOptions3D options;
+  proto::ProbabilityGridRangeDataInserterOptions3D options;
   options.set_hit_probability(
       parameter_dictionary->GetDouble("hit_probability"));
   options.set_miss_probability(
@@ -64,28 +65,18 @@ proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
       parameter_dictionary->GetInt("num_free_space_voxels"));
   CHECK_GT(options.hit_probability(), 0.5);
   CHECK_LT(options.miss_probability(), 0.5);
-  const std::string range_data_inserter_type_string =
-      parameter_dictionary->GetString("range_data_inserter_type");
-  proto::RangeDataInserterOptions3D_RangeDataInserterType3D
-      range_data_inserter_type;
-  CHECK(proto::RangeDataInserterOptions3D_RangeDataInserterType3D_Parse(
-      range_data_inserter_type_string, &range_data_inserter_type))
-      << "Unknown RangeDataInserterOptions_RangeDataInserterType kind: "
-      << range_data_inserter_type_string;
-  options.set_range_data_inserter_type(range_data_inserter_type);
-  options.set_truncation_distance(
-      parameter_dictionary->GetDouble("truncation_distance"));
-  CHECK_GT(options.truncation_distance(), 0.0);
   return options;
 }
 
 OccupancyGridRangeDataInserter3D::OccupancyGridRangeDataInserter3D(
     const proto::RangeDataInserterOptions3D& options)
     : options_(options),
-      hit_table_(
-          ComputeLookupTableToApplyOdds(Odds(options_.hit_probability()))),
-      miss_table_(
-          ComputeLookupTableToApplyOdds(Odds(options_.miss_probability()))) {}
+      hit_table_(ComputeLookupTableToApplyOdds(
+          Odds(options_.probability_grid_range_data_inserter_options_3d()
+                   .hit_probability()))),
+      miss_table_(ComputeLookupTableToApplyOdds(
+          Odds(options_.probability_grid_range_data_inserter_options_3d()
+                   .miss_probability()))) {}
 
 void OccupancyGridRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
                                               GridInterface* grid) const {
@@ -101,8 +92,10 @@ void OccupancyGridRangeDataInserter3D::Insert(const sensor::RangeData& range_dat
 
   // By not starting a new update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
-  InsertMissesIntoGrid(miss_table_, range_data.origin, range_data.returns,
-                       occupancy_grid, options_.num_free_space_voxels());
+  InsertMissesIntoGrid(
+      miss_table_, range_data.origin, range_data.returns, occupancy_grid,
+      options_.probability_grid_range_data_inserter_options_3d()
+          .num_free_space_voxels());
   occupancy_grid->FinishUpdate();
 }
 

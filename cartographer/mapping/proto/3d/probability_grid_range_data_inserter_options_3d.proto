@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package cartographer.mapping.proto;
+
+message ProbabilityGridRangeDataInserterOptions3D {
+  // Probability change for a hit (this will be converted to odds and therefore
+  // must be greater than 0.5).
+  double hit_probability = 1;
+
+  // Probability change for a miss (this will be converted to odds and therefore
+  // must be less than 0.5).
+  double miss_probability = 2;
+
+  // Up to how many free space voxels are updated for scan matching.
+  // 0 disables free space.
+  int32 num_free_space_voxels = 3;
+}

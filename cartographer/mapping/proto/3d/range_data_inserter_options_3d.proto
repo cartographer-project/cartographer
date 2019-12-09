@@ -14,6 +14,9 @@
 
 syntax = "proto3";
 
+import "cartographer/mapping/proto/3d/probability_grid_range_data_inserter_options_3d.proto";
+import "cartographer/mapping/proto/3d/tsdf_range_data_inserter_options_3d.proto";
+
 package cartographer.mapping.proto;
 
 message RangeDataInserterOptions3D {
@@ -23,20 +26,8 @@ message RangeDataInserterOptions3D {
     TSDF_INSERTER_3D = 2;
   }
 
-  // Probability change for a hit (this will be converted to odds and therefore
-  // must be greater than 0.5).
-  double hit_probability = 1;
-
-  // Probability change for a miss (this will be converted to odds and therefore
-  // must be less than 0.5).
-  double miss_probability = 2;
-
-  // Up to how many free space voxels are updated for scan matching.
-  // 0 disables free space.
-  int32 num_free_space_voxels = 3;
-
-  RangeDataInserterType3D range_data_inserter_type = 4;
-
-  // Truncation for signed distance function based environment representation.
-  double truncation_distance = 5;
+  RangeDataInserterType3D range_data_inserter_type = 1;
+  ProbabilityGridRangeDataInserterOptions3D
+      probability_grid_range_data_inserter_options_3d = 2;
+  TSDFRangeDataInserterOptions3D tsdf_range_data_inserter_options_3d = 3;
 }

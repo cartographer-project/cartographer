@@ -26,6 +26,9 @@
 namespace cartographer {
 namespace mapping {
 
+proto::TSDFRangeDataInserterOptions3D CreateTSDFRangeDataInserterOptions3D(
+    common::LuaParameterDictionary* parameter_dictionary);
+
 class TSDFRangeDataInserter3D : public RangeDataInserterInterface {
  public:
   explicit TSDFRangeDataInserter3D(

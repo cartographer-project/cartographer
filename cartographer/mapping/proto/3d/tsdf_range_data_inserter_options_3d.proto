@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package cartographer.mapping.proto;
+
+message TSDFRangeDataInserterOptions3D {
+  // Distance to the surface within the signed distance function is evaluated.
+  double truncation_distance = 1;
+
+  // Maximum weight that can be stored in a cell.
+  double maximum_weight = 2;
+
+  // Up to how many free space voxels are updated for scan matching.
+  // 0 disables free space.
+  int32 num_free_space_voxels = 3;
+
+  // Project the distance between the updated cell und the range observation to
+  // the estimated scan normal.
+  bool project_sdf_distance_to_scan_normal = 4;
+}

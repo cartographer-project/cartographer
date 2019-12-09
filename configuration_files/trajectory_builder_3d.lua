@@ -68,9 +68,18 @@ TRAJECTORY_BUILDER_3D = {
     low_resolution = 0.45,
     num_range_data = 160,
     range_data_inserter = {
-      hit_probability = 0.55,
-      miss_probability = 0.49,
-      num_free_space_voxels = 2,
+      range_data_inserter_type = "PROBABILITY_GRID_INSERTER_3D",
+      probability_grid_range_data_inserter = {
+        hit_probability = 0.55,
+        miss_probability = 0.49,
+        num_free_space_voxels = 2,
+      },
+      tsdf_range_data_inserter = {
+        truncation_distance = 0.3,
+        maximum_weight = 1000.,
+        num_free_space_voxels = 0,
+        project_sdf_distance_to_scan_normal = false,
+      },
     },
   },
   optimizing_local_trajectory_builder = {

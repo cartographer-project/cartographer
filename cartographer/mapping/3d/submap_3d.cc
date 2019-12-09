@@ -435,8 +435,15 @@ std::unique_ptr<GridInterface> ActiveSubmaps3D::CreateGrid(float resolution) {
     case proto::GridOptions2D::PROBABILITY_GRID:
       return absl::make_unique<OccupancyGrid>(resolution, &conversion_tables_);
     case proto::GridOptions2D::TSDF:
-      return absl::make_unique<HybridGridTSDF>(resolution, 0.3f, 1000.0f,
-                                               &conversion_tables_);
+      return absl::make_unique<HybridGridTSDF>(
+          resolution,
+          options_.range_data_inserter_options()
+              .tsdf_range_data_inserter_options_3d()
+              .truncation_distance(),
+          options_.range_data_inserter_options()
+              .tsdf_range_data_inserter_options_3d()
+              .maximum_weight(),
+          &conversion_tables_);
     default:
       LOG(FATAL) << "Unknown GridType.";
       return absl::make_unique<HybridGridTSDF>(resolution, 0.3f, 1000.0f,

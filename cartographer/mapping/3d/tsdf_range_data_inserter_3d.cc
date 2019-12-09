@@ -25,6 +25,18 @@ namespace mapping {
 namespace {
 }  // namespace
 
+proto::TSDFRangeDataInserterOptions3D CreateTSDFRangeDataInserterOptions3D(
+    common::LuaParameterDictionary* parameter_dictionary) {
+  proto::TSDFRangeDataInserterOptions3D options;
+  options.set_truncation_distance(
+      parameter_dictionary->GetDouble("truncation_distance"));
+  options.set_maximum_weight(parameter_dictionary->GetDouble("maximum_weight"));
+  options.set_project_sdf_distance_to_scan_normal(
+      parameter_dictionary->GetBool("project_sdf_distance_to_scan_normal"));
+  options.set_num_free_space_voxels(
+      parameter_dictionary->GetInt("num_free_space_voxels"));
+  return options;
+}
 
 TSDFRangeDataInserter3D::TSDFRangeDataInserter3D(
     const proto::RangeDataInserterOptions3D& options)
@@ -35,12 +47,16 @@ void TSDFRangeDataInserter3D::InsertHit(const Eigen::Vector3f& hit,
                                         HybridGridTSDF* tsdf) const {
   const Eigen::Vector3f ray = hit - origin;
   const float range = ray.norm();
-  const float truncation_distance = 0.3f;
+  const float truncation_distance =
+      options_.tsdf_range_data_inserter_options_3d().truncation_distance();
   //      static_cast<float>(options_.truncation_distance());
   //  LOG(INFO)<<"tau "<<truncation_distance;
   if (range < truncation_distance) return;
   const float truncation_ratio = truncation_distance / range;
-  bool update_free_space = false;
+  bool update_free_space =
+      bool(options_.tsdf_range_data_inserter_options_3d()
+               .num_free_space_voxels());  // todo(kdaun) use num free space
+                                           // cells value instead of bool
   const Eigen::Vector3f ray_begin =
       update_free_space ? origin : origin + (1.0f - truncation_ratio) * ray;
   const Eigen::Vector3f ray_end = origin + (1.0f + truncation_ratio) * ray;
@@ -72,8 +88,6 @@ void TSDFRangeDataInserter3D::InsertHit(const Eigen::Vector3f& hit,
 void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
                                               GridInterface* grid) const {
   CHECK(grid != nullptr);
-  //  const float truncation_distance =
-  //      static_cast<float>(options_.truncation_distance());
   HybridGridTSDF* tsdf = static_cast<HybridGridTSDF*>(grid);
 
   const Eigen::Vector3f origin = range_data.origin.head<3>();
@@ -94,8 +108,8 @@ void TSDFRangeDataInserter3D::UpdateCell(const Eigen::Array3i& cell,
   float updated_weight = old_weight + update_weight;
   float updated_sdf =
       (old_sdf * old_weight + update_sdf * update_weight) / updated_weight;
-  float maximum_weight = 1000;  // static_cast<float>(options_.maximum_weight())
-                                // //todo(kdaun) replace by option parameter
+  float maximum_weight = static_cast<float>(
+      options_.tsdf_range_data_inserter_options_3d().maximum_weight());
   updated_weight = std::min(updated_weight, maximum_weight);
   tsdf->SetCell(cell, updated_sdf, updated_weight);
 }
