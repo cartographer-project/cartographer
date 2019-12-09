@@ -63,7 +63,7 @@ class RangeDataInserter3DTest : public ::testing::Test {
 
  private:
   ValueConversionTables conversion_tables_;
-  OccupancyGrid hybrid_grid_;
+  HybridGrid hybrid_grid_;
   std::unique_ptr<OccupancyGridRangeDataInserter3D> range_data_inserter_;
   proto::RangeDataInserterOptions3D options_;
 };

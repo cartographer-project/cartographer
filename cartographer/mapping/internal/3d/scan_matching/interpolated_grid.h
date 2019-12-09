@@ -19,7 +19,7 @@
 
 #include <cmath>
 
-#include "cartographer/mapping/3d/occupancy_grid.h"
+#include "cartographer/mapping/3d/hybrid_grid.h"
 
 namespace cartographer {
 namespace mapping {
@@ -34,13 +34,13 @@ namespace scan_matching {
 // continuously differentiable.
 class InterpolatedGrid {
  public:
-  explicit InterpolatedGrid(const OccupancyGrid& hybrid_grid)
+  explicit InterpolatedGrid(const HybridGrid& hybrid_grid)
       : hybrid_grid_(hybrid_grid) {}
 
   InterpolatedGrid(const InterpolatedGrid&) = delete;
   InterpolatedGrid& operator=(const InterpolatedGrid&) = delete;
 
-  // Returns the interpolated probability at (x, y, z) of the OccupancyGrid
+  // Returns the interpolated probability at (x, y, z) of the HybridGrid
   // used to perform the interpolation.
   //
   // This is a piecewise, continuously differentiable function. We use the
@@ -144,7 +144,7 @@ class InterpolatedGrid {
     return CenterOfLowerVoxel(jet_x.a, jet_y.a, jet_z.a);
   }
 
-  const OccupancyGrid& hybrid_grid_;
+  const HybridGrid& hybrid_grid_;
 };
 
 }  // namespace scan_matching

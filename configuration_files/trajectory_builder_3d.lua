@@ -67,6 +67,7 @@ TRAJECTORY_BUILDER_3D = {
     high_resolution_max_range = 20.,
     low_resolution = 0.45,
     num_range_data = 160,
+    grid_type = "PROBABILITY_GRID",
     range_data_inserter = {
       range_data_inserter_type = "PROBABILITY_GRID_INSERTER_3D",
       probability_grid_range_data_inserter = {

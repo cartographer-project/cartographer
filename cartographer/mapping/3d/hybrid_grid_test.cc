@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/3d/occupancy_grid.h"
+#include "cartographer/mapping/3d/hybrid_grid.h"
 
 #include <map>
 #include <random>
@@ -28,7 +28,7 @@ namespace {
 
 TEST(HybridGridTest, ApplyOdds) {
   ValueConversionTables conversion_tables_;
-  OccupancyGrid hybrid_grid(1.f, &conversion_tables_);
+  HybridGrid hybrid_grid(1.f, &conversion_tables_);
 
   EXPECT_FALSE(hybrid_grid.IsKnown(Eigen::Array3i(0, 0, 0)));
   EXPECT_FALSE(hybrid_grid.IsKnown(Eigen::Array3i(0, 1, 0)));
@@ -70,7 +70,7 @@ TEST(HybridGridTest, ApplyOdds) {
 
 TEST(HybridGridTest, GetProbability) {
   ValueConversionTables conversion_tables_;
-  OccupancyGrid hybrid_grid(1.f, &conversion_tables_);
+  HybridGrid hybrid_grid(1.f, &conversion_tables_);
 
   hybrid_grid.SetProbability(
       hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 1.f, 1.f)),
@@ -90,7 +90,7 @@ MATCHER_P(AllCwiseEqual, index, "") { return (arg == index).all(); }
 
 TEST(HybridGridTest, GetCellIndex) {
   ValueConversionTables conversion_tables_;
-  OccupancyGrid hybrid_grid(2.f, &conversion_tables_);
+  HybridGrid hybrid_grid(2.f, &conversion_tables_);
 
   EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 0.f, 0.f)),
               AllCwiseEqual(Eigen::Array3i(0, 0, 0)));
@@ -114,7 +114,7 @@ TEST(HybridGridTest, GetCellIndex) {
 
 TEST(HybridGridTest, GetCenterOfCell) {
   ValueConversionTables conversion_tables_;
-  OccupancyGrid hybrid_grid(2.f, &conversion_tables_);
+  HybridGrid hybrid_grid(2.f, &conversion_tables_);
 
   const Eigen::Array3i index(3, 2, 1);
   const Eigen::Vector3f center = hybrid_grid.GetCenterOfCell(index);
@@ -148,7 +148,7 @@ class RandomHybridGridTest : public ::testing::Test {
 
  protected:
   ValueConversionTables conversion_tables_;
-  OccupancyGrid hybrid_grid_;
+  HybridGrid hybrid_grid_;
   using ValueMap = std::map<std::tuple<int, int, int>, float>;
   ValueMap values_;
 };
@@ -216,7 +216,7 @@ struct EigenComparator {
 
 TEST_F(RandomHybridGridTest, FromProto) {
   ValueConversionTables conversion_tables_;
-  const OccupancyGrid constructed_grid(hybrid_grid_.ToProto(),
+  const HybridGrid constructed_grid(hybrid_grid_.ToProto(),
                                        &conversion_tables_);
 
   std::map<Eigen::Vector3i, float, EigenComparator> member_map(

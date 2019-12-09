@@ -321,11 +321,11 @@ void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   set_num_range_data(submap_3d.num_range_data());
   set_insertion_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
-    high_resolution_hybrid_grid_ = absl::make_unique<OccupancyGrid>(
+    high_resolution_hybrid_grid_ = absl::make_unique<HybridGrid>(
         submap_3d.high_resolution_hybrid_grid(), conversion_tables_);
   }
   if (submap_3d.has_low_resolution_hybrid_grid()) {
-    low_resolution_hybrid_grid_ = absl::make_unique<OccupancyGrid>(
+    low_resolution_hybrid_grid_ = absl::make_unique<HybridGrid>(
         submap_3d.low_resolution_hybrid_grid(), conversion_tables_);
   }
   rotational_scan_matcher_histogram_ =
@@ -341,18 +341,33 @@ void Submap3D::ToResponseProto(
     const transform::Rigid3d& global_submap_pose,
     proto::SubmapQuery::Response* const response) const {
   response->set_submap_version(num_range_data());
-  LOG(WARNING) << "AddToTextureProto not implemented";
-  HybridGridTSDF* low_res_grid =
-      static_cast<HybridGridTSDF*>(low_resolution_hybrid_grid_.get());
-  HybridGridTSDF* high_res_grid =
-      static_cast<HybridGridTSDF*>(high_resolution_hybrid_grid_.get());
-  AddToTextureProto(*low_res_grid, global_submap_pose,
-                    response->add_textures());
-  AddToTextureProto(*high_res_grid, global_submap_pose,
-                    response->add_textures());
-  //    AddToTextureProto(static_cast<HybridGridTSDF>(*low_resolution_hybrid_grid_),
-  //    global_submap_pose,
-  //                      response->add_textures());
+  switch (low_resolution_hybrid_grid_->GetGridType()) {
+    case GridType::PROBABILITY_GRID: {
+      HybridGrid* low_res_grid =
+          static_cast<HybridGrid*>(low_resolution_hybrid_grid_.get());
+      HybridGrid* high_res_grid =
+          static_cast<HybridGrid*>(high_resolution_hybrid_grid_.get());
+      AddToTextureProto(*low_res_grid, global_submap_pose,
+                        response->add_textures());
+      AddToTextureProto(*high_res_grid, global_submap_pose,
+                        response->add_textures());
+      break;
+    }
+    case GridType::TSDF: {
+      HybridGridTSDF* low_res_grid =
+          static_cast<HybridGridTSDF*>(low_resolution_hybrid_grid_.get());
+      HybridGridTSDF* high_res_grid =
+          static_cast<HybridGridTSDF*>(high_resolution_hybrid_grid_.get());
+      AddToTextureProto(*low_res_grid, global_submap_pose,
+                        response->add_textures());
+      AddToTextureProto(*high_res_grid, global_submap_pose,
+                        response->add_textures());
+      break;
+    }
+    case GridType::NONE:
+      LOG(FATAL) << "Gridtype not initialized.";
+      break;
+  }
 }
 
 void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
@@ -432,9 +447,9 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
 
 std::unique_ptr<GridInterface> ActiveSubmaps3D::CreateGrid(float resolution) {
   switch (options_.grid_type()) {
-    case proto::GridOptions2D::PROBABILITY_GRID:
-      return absl::make_unique<OccupancyGrid>(resolution, &conversion_tables_);
-    case proto::GridOptions2D::TSDF:
+    case proto::SubmapsOptions3D_GridType_PROBABILITY_GRID:
+      return absl::make_unique<HybridGrid>(resolution, &conversion_tables_);
+    case proto::SubmapsOptions3D_GridType_TSDF:
       return absl::make_unique<HybridGridTSDF>(
           resolution,
           options_.range_data_inserter_options()

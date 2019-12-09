@@ -39,7 +39,7 @@ class TSDFRangeDataInserter3D : public RangeDataInserterInterface {
 
   //  // Inserts 'range_data' into 'hybrid_grid'.
   //  void Insert(const sensor::RangeData& range_data,
-  //              OccupancyGrid* hybrid_grid) const;
+  //              HybridGrid* hybrid_grid) const;
 
   virtual void Insert(const sensor::RangeData& range_data,
                       GridInterface* grid) const override;

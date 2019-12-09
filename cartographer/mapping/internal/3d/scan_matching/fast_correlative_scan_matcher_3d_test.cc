@@ -97,7 +97,7 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
       const proto::FastCorrelativeScanMatcherOptions3D& options,
       const transform::Rigid3f& pose) {
     ValueConversionTables conversion_tables_;
-    hybrid_grid_ = absl::make_unique<OccupancyGrid>(0.05f, &conversion_tables_);
+    hybrid_grid_ = absl::make_unique<HybridGrid>(0.05f, &conversion_tables_);
     range_data_inserter_.Insert(
         sensor::RangeData{pose.translation(),
                           sensor::TransformPointCloud(point_cloud_, pose),
@@ -130,7 +130,7 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
   OccupancyGridRangeDataInserter3D range_data_inserter_;
   const proto::FastCorrelativeScanMatcherOptions3D options_;
   sensor::PointCloud point_cloud_;
-  std::unique_ptr<OccupancyGrid> hybrid_grid_;
+  std::unique_ptr<HybridGrid> hybrid_grid_;
   const Eigen::VectorXf rotational_scan_matcher_histogram_ =
       Eigen::VectorXf::Zero(10);
 };

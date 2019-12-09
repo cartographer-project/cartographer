@@ -166,6 +166,9 @@ void RealTimeCorrelativeScanMatcher2D::ScoreCandidates(
             discrete_scans[candidate.scan_index], candidate.x_index_offset,
             candidate.y_index_offset);
         break;
+      case GridType::NONE:
+        LOG(FATAL) << "Gridtype not initialized.";
+        break;
     }
     candidate.score *=
         std::exp(-common::Pow2(std::hypot(candidate.x, candidate.y) *

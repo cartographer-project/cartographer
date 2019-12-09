@@ -17,7 +17,7 @@
 #include "cartographer/mapping/internal/3d/scan_matching/interpolated_grid.h"
 
 #include "Eigen/Core"
-#include "cartographer/mapping/3d/occupancy_grid.h"
+#include "cartographer/mapping/3d/hybrid_grid.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -45,7 +45,7 @@ class InterpolatedGridTest : public ::testing::Test {
   }
 
   ValueConversionTables conversion_tables_;
-  OccupancyGrid hybrid_grid_;
+  HybridGrid hybrid_grid_;
   InterpolatedGrid interpolated_grid_;
 };
 

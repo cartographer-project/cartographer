@@ -88,6 +88,7 @@ void TSDFRangeDataInserter3D::InsertHit(const Eigen::Vector3f& hit,
 void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
                                               GridInterface* grid) const {
   CHECK(grid != nullptr);
+  CHECK(grid->GetGridType() == GridType::TSDF);
   HybridGridTSDF* tsdf = static_cast<HybridGridTSDF*>(grid);
 
   const Eigen::Vector3f origin = range_data.origin.head<3>();

@@ -83,6 +83,7 @@ class HybridGridTSDF : public GridInterface, public HybridGridBase<TSDFVoxel> {
       //                     ValueToProbability(proto.values(i)));
     }
   }
+  virtual GridType GetGridType() const override { return GridType::TSDF; };
 
   // Sets the probability of the cell at 'index' to the given 'probability'.
   void SetCell(const Eigen::Array3i& index, const float tsd,

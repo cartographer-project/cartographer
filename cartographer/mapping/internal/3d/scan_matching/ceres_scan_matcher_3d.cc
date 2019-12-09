@@ -130,14 +130,32 @@ void CeresScanMatcher3D::SetupProblem(
     const sensor::PointCloud& point_cloud =
         *point_clouds_and_hybrid_grids[i].first;
     const GridInterface& hybrid_grid = *point_clouds_and_hybrid_grids[i].second;
-    LOG(ERROR) << "TODO(kdaun) check for grid type and cast accordingly";
-    problem->AddResidualBlock(
-        TSDFSpaceCostFunction3D::CreateAutoDiffCostFunction(
-            options_.occupied_space_weight(i) /
-                std::sqrt(static_cast<double>(point_cloud.size())),
-            point_cloud, static_cast<const HybridGridTSDF&>(hybrid_grid)),
-        nullptr /* loss function */, ceres_pose->translation(),
-        ceres_pose->rotation());
+
+    switch (hybrid_grid.GetGridType()) {
+      case GridType::PROBABILITY_GRID: {
+        problem->AddResidualBlock(
+            OccupiedSpaceCostFunction3D::CreateAutoDiffCostFunction(
+                options_.occupied_space_weight(i) /
+                    std::sqrt(static_cast<double>(point_cloud.size())),
+                point_cloud, static_cast<const HybridGrid&>(hybrid_grid)),
+            nullptr /* loss function */, ceres_pose->translation(),
+            ceres_pose->rotation());
+        break;
+      }
+      case GridType::TSDF: {
+        problem->AddResidualBlock(
+            TSDFSpaceCostFunction3D::CreateAutoDiffCostFunction(
+                options_.occupied_space_weight(i) /
+                    std::sqrt(static_cast<double>(point_cloud.size())),
+                point_cloud, static_cast<const HybridGridTSDF&>(hybrid_grid)),
+            nullptr /* loss function */, ceres_pose->translation(),
+            ceres_pose->rotation());
+        break;
+      }
+      case GridType::NONE:
+        LOG(FATAL) << "Gridtype not initialized.";
+        break;
+    }
   }
   CHECK_GE(options_.translation_weight(), 0.);
   problem->AddResidualBlock(

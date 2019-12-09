@@ -88,6 +88,9 @@ void CeresScanMatcher2D::Match(const Eigen::Vector2d& target_translation,
               point_cloud, static_cast<const TSDF2D&>(grid)),
           nullptr /* loss function */, ceres_pose_estimate);
       break;
+    case GridType::NONE:
+      LOG(FATAL) << "Gridtype not initialized.";
+      break;
   }
   CHECK_GT(options_.translation_weight(), 0.);
   problem.AddResidualBlock(

@@ -27,7 +27,7 @@ namespace {
 void InsertMissesIntoGrid(const std::vector<uint16>& miss_table,
                           const Eigen::Vector3f& origin,
                           const sensor::PointCloud& returns,
-                          OccupancyGrid* hybrid_grid,
+                          HybridGrid* hybrid_grid,
                           const int num_free_space_voxels) {
   const Eigen::Array3i origin_cell = hybrid_grid->GetCellIndex(origin);
   for (const sensor::RangefinderPoint& hit : returns) {
@@ -81,7 +81,8 @@ OccupancyGridRangeDataInserter3D::OccupancyGridRangeDataInserter3D(
 void OccupancyGridRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
                                               GridInterface* grid) const {
   CHECK(grid != nullptr);
-  OccupancyGrid* occupancy_grid = static_cast<OccupancyGrid*>(grid);
+  CHECK(grid->GetGridType() == GridType::PROBABILITY_GRID);
+  HybridGrid* occupancy_grid = static_cast<HybridGrid*>(grid);
 
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
     const Eigen::Array3i hit_cell = occupancy_grid->GetCellIndex(hit.position);

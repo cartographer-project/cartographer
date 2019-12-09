@@ -275,44 +275,51 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     TransformStates(matching_submap->local_pose().inverse());
     for (size_t i = 0; i < batches_.size(); ++i) {
       Batch& batch = batches_[i];
-      LOG(ERROR) << "TODO(kdaun) check for grid type and match accordingly";
-      if (true) {
-        problem.AddResidualBlock(
-            scan_matching::TSDFSpaceCostFunction3D::CreateAutoDiffCostFunction(
-                options_.optimizing_local_trajectory_builder_options()
-                        .high_resolution_grid_weight() /
-                    std::sqrt(static_cast<double>(
-                        batch.high_resolution_filtered_points.size())),
-                batch.high_resolution_filtered_points,
-                static_cast<const HybridGridTSDF&>(
-                    matching_submap->high_resolution_hybrid_grid())),
-            nullptr, batch.state.translation.data(),
-            batch.state.rotation.data());
-      } else {
-        problem.AddResidualBlock(
-            scan_matching::OccupiedSpaceCostFunction3D::
-                CreateAutoDiffCostFunction(
-                    options_.optimizing_local_trajectory_builder_options()
-                            .high_resolution_grid_weight() /
-                        std::sqrt(static_cast<double>(
-                            batch.high_resolution_filtered_points.size())),
-                    batch.high_resolution_filtered_points,
-                    static_cast<const OccupancyGrid&>(
-                        matching_submap->high_resolution_hybrid_grid())),
-            nullptr, batch.state.translation.data(),
-            batch.state.rotation.data());
-        problem.AddResidualBlock(
-            scan_matching::OccupiedSpaceCostFunction3D::
-                CreateAutoDiffCostFunction(
-                    options_.optimizing_local_trajectory_builder_options()
-                            .low_resolution_grid_weight() /
-                        std::sqrt(static_cast<double>(
-                            batch.low_resolution_filtered_points.size())),
-                    batch.low_resolution_filtered_points,
-                    static_cast<const OccupancyGrid&>(
-                        matching_submap->low_resolution_hybrid_grid())),
-            nullptr, batch.state.translation.data(),
-            batch.state.rotation.data());
+      switch (matching_submap->high_resolution_hybrid_grid().GetGridType()) {
+        case GridType::PROBABILITY_GRID: {
+          problem.AddResidualBlock(
+              scan_matching::OccupiedSpaceCostFunction3D::
+              CreateAutoDiffCostFunction(
+                  options_.optimizing_local_trajectory_builder_options()
+                      .high_resolution_grid_weight() /
+                      std::sqrt(static_cast<double>(
+                                    batch.high_resolution_filtered_points.size())),
+                  batch.high_resolution_filtered_points,
+                  static_cast<const HybridGrid&>(
+                      matching_submap->high_resolution_hybrid_grid())),
+              nullptr, batch.state.translation.data(),
+              batch.state.rotation.data());
+          problem.AddResidualBlock(
+              scan_matching::OccupiedSpaceCostFunction3D::
+              CreateAutoDiffCostFunction(
+                  options_.optimizing_local_trajectory_builder_options()
+                      .low_resolution_grid_weight() /
+                      std::sqrt(static_cast<double>(
+                                    batch.low_resolution_filtered_points.size())),
+                  batch.low_resolution_filtered_points,
+                  static_cast<const HybridGrid&>(
+                      matching_submap->low_resolution_hybrid_grid())),
+              nullptr, batch.state.translation.data(),
+              batch.state.rotation.data());
+          break;
+        }
+        case GridType::TSDF: {
+          problem.AddResidualBlock(
+              scan_matching::TSDFSpaceCostFunction3D::CreateAutoDiffCostFunction(
+                  options_.optimizing_local_trajectory_builder_options()
+                      .high_resolution_grid_weight() /
+                      std::sqrt(static_cast<double>(
+                                    batch.high_resolution_filtered_points.size())),
+                  batch.high_resolution_filtered_points,
+                  static_cast<const HybridGridTSDF&>(
+                      matching_submap->high_resolution_hybrid_grid())),
+              nullptr, batch.state.translation.data(),
+              batch.state.rotation.data());
+          break;
+        }
+        case GridType::NONE:
+          LOG(FATAL) << "Gridtype not initialized.";
+          break;
       }
       if (i == 0) {
         problem.SetParameterBlockConstant(batch.state.translation.data());

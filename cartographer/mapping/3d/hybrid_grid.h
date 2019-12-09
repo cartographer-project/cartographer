@@ -45,14 +45,32 @@ namespace mapping {
 // The hard limit of cell indexes is +/- 8192 around the origin.
 class HybridGrid : public GridInterface, public HybridGridBase<uint16> {
  public:
-  explicit HybridGrid(const float resolution, float min_correspondence_cost,
-                      float max_correspondence_cost,
+  explicit HybridGrid(const float resolution,
                       ValueConversionTables* conversion_tables)
       : HybridGridBase<uint16>(resolution),
         value_to_correspondence_cost_table_(
-            conversion_tables->GetConversionTable(max_correspondence_cost,
-                                                  min_correspondence_cost,
-                                                  max_correspondence_cost)) {}
+            conversion_tables->GetConversionTable(kMaxCorrespondenceCost,
+                                                  kMinCorrespondenceCost,
+                                                  kMaxCorrespondenceCost)) {}
+
+  virtual GridType GetGridType() const override {
+    return GridType::PROBABILITY_GRID;
+  };
+
+
+  explicit HybridGrid(const proto::HybridGrid& proto,
+                         ValueConversionTables* conversion_tables)
+      : HybridGrid(proto.resolution(), conversion_tables) {
+    CHECK_EQ(proto.values_size(), proto.x_indices_size());
+    CHECK_EQ(proto.values_size(), proto.y_indices_size());
+    CHECK_EQ(proto.values_size(), proto.z_indices_size());
+    for (int i = 0; i < proto.values_size(); ++i) {
+      // SetProbability does some error checking for us.
+      SetProbability(Eigen::Vector3i(proto.x_indices(i), proto.y_indices(i),
+                                     proto.z_indices(i)),
+                     ValueToProbability(proto.values(i)));
+    }
+  }
 
   // Finishes the update sequence.
   void FinishUpdate() {
@@ -84,6 +102,36 @@ class HybridGrid : public GridInterface, public HybridGridBase<uint16> {
 
   float GetCorrespondenceCost(const Eigen::Array3i& index) const {
     return (*value_to_correspondence_cost_table_)[value(index)];
+  }
+
+  // Sets the probability of the cell at 'index' to the given 'probability'.
+  void SetProbability(const Eigen::Array3i& index, const float probability) {
+    *mutable_value(index) = ProbabilityToValue(probability);
+  }
+
+  // Applies the 'odds' specified when calling ComputeLookupTableToApplyOdds()
+  // to the probability of the cell at 'index' if the cell has not already been
+  // updated. Multiple updates of the same cell will be ignored until
+  // FinishUpdate() is called. Returns true if the cell was updated.
+  //
+  // If this is the first call to ApplyOdds() for the specified cell, its value
+  // will be set to probability corresponding to 'odds'.
+  bool ApplyLookupTable(const Eigen::Array3i& index,
+                        const std::vector<uint16>& table) {
+    DCHECK_EQ(table.size(), kUpdateMarker);
+    uint16* const cell = mutable_value(index);
+    if (*cell >= kUpdateMarker) {
+      return false;
+    }
+    UpdateIndices()->push_back(cell);
+    *cell = table[*cell];
+    DCHECK_GE(*cell, kUpdateMarker);
+    return true;
+  }
+
+  // Returns the probability of the cell with 'index'.
+  float GetProbability(const Eigen::Array3i& index) const {
+    return ValueToProbability(value(index));
   }
 
  private:
