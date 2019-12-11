@@ -24,6 +24,28 @@
 namespace cartographer {
 namespace mapping {
 namespace scan_matching {
+namespace {
+
+template <typename T, typename T2>
+void InterpolateLinear(const T2& q1, const T2& q2, const double w1,
+                       const double w2, const T& normalized_ratio, T& q,
+                       double& w) {
+  if (w1 == 0.0 && w2 == 0.0) {
+    q = T(-0.3);
+    w = 0.0;
+  } else if (w1 == 0.0) {
+    q = T(q2);
+    w = w2;
+  } else if (w2 == 0.0) {
+    q = T(q1);
+    w = w1;
+  } else {
+    q = (q2 - q1) * normalized_ratio + q1;
+    w = w1 + w2;
+  }
+}
+
+}  // namespace
 
 // Interpolates between OccupancyGrid probability voxels. We use the tricubic
 // interpolation which interpolates the values and has vanishing derivative at
@@ -61,9 +83,9 @@ class InterpolatedTSDF {
     const double w212 = tsdf_.GetWeight(index1 + Eigen::Array3i(1, 0, 1));
     const double w221 = tsdf_.GetWeight(index1 + Eigen::Array3i(1, 1, 0));
     const double w222 = tsdf_.GetWeight(index1 + Eigen::Array3i(1, 1, 1));
-    if (w111 == 0.0 || w112 == 0.0 || w121 == 0.0 || w122 == 0.0 ||
-        w211 == 0.0 || w212 == 0.0 || w221 == 0.0 || w222 == 0.0) {
-      return T(-0.3);
+    if (w111 == 0.0 && w112 == 0.0 && w121 == 0.0 && w122 == 0.0 &&
+        w211 == 0.0 && w212 == 0.0 && w221 == 0.0 && w222 == 0.0) {
+      return T(tsdf_.ValueConverter().getMinTSD());
     }
 
     const double q111 = tsdf_.GetTSD(index1);
@@ -79,32 +101,29 @@ class InterpolatedTSDF {
     const T normalized_y = (y - y1) / (y2 - y1);
     const T normalized_z = (z - z1) / (z2 - z1);
 
-    // Compute pow(..., 2) and pow(..., 3). Using pow() here is very expensive.
-    const T normalized_xx = normalized_x * normalized_x;
-    const T normalized_xxx = normalized_x * normalized_xx;
-    const T normalized_yy = normalized_y * normalized_y;
-    const T normalized_yyy = normalized_y * normalized_yy;
-    const T normalized_zz = normalized_z * normalized_z;
-    const T normalized_zzz = normalized_z * normalized_zz;
+    T q11, q12, q21, q22, q1, q2, q;
+    double w11, w12, w21, w22, w1, w2, w;
+    InterpolateLinear(q111, q112, w111, w112, normalized_z, q11, w11);
+    InterpolateLinear(q121, q122, w121, w122, normalized_z, q12, w12);
+    InterpolateLinear(q211, q212, w211, w212, normalized_z, q21, w21);
+    InterpolateLinear(q221, q222, w221, w222, normalized_z, q22, w22);
 
-    // We first interpolate in z, then y, then x. All 7 times this uses the same
-    // scheme: A * (2t^3 - 3t^2 + 1) + B * (-2t^3 + 3t^2).
-    // The first polynomial is 1 at t=0, 0 at t=1, the second polynomial is 0
-    // at t=0, 1 at t=1. Both polynomials have derivative zero at t=0 and t=1.
-    const T q11 = (q111 - q112) * normalized_zzz * 2. +
-                  (q112 - q111) * normalized_zz * 3. + q111;
-    const T q12 = (q121 - q122) * normalized_zzz * 2. +
-                  (q122 - q121) * normalized_zz * 3. + q121;
-    const T q21 = (q211 - q212) * normalized_zzz * 2. +
-                  (q212 - q211) * normalized_zz * 3. + q211;
-    const T q22 = (q221 - q222) * normalized_zzz * 2. +
-                  (q222 - q221) * normalized_zz * 3. + q221;
-    const T q1 = (q11 - q12) * normalized_yyy * 2. +
-                 (q12 - q11) * normalized_yy * 3. + q11;
-    const T q2 = (q21 - q22) * normalized_yyy * 2. +
-                 (q22 - q21) * normalized_yy * 3. + q21;
-    return (q1 - q2) * normalized_xxx * 2. + (q2 - q1) * normalized_xx * 3. +
-           q1;
+    InterpolateLinear(q11, q12, w11, w12, normalized_y, q1, w1);
+    InterpolateLinear(q21, q22, w21, w22, normalized_y, q2, w2);
+
+    InterpolateLinear(q1, q2, w1, w2, normalized_x, q, w);
+
+    return q;
+
+    //
+    //    const T q11 = (q112 - q111) * normalized_z  + q111;
+    //    const T q12 = (q122 - q121) * normalized_z  + q121;
+    //    const T q21 = (q212 - q211) * normalized_z  + q211;
+    //    const T q22 = (q222 - q221) * normalized_z  + q221;
+    //
+    //    const T q1 = (q12 - q11) * normalized_y + q11;
+    //    const T q2 = (q22 - q21) * normalized_y + q21;
+    //    return (q2 - q1) * normalized_x + q1;
   }
 
   template <typename T>
@@ -126,32 +145,14 @@ class InterpolatedTSDF {
     const T normalized_y = (y - y1) / (y2 - y1);
     const T normalized_z = (z - z1) / (z2 - z1);
 
-    // Compute pow(..., 2) and pow(..., 3). Using pow() here is very expensive.
-    const T normalized_xx = normalized_x * normalized_x;
-    const T normalized_xxx = normalized_x * normalized_xx;
-    const T normalized_yy = normalized_y * normalized_y;
-    const T normalized_yyy = normalized_y * normalized_yy;
-    const T normalized_zz = normalized_z * normalized_z;
-    const T normalized_zzz = normalized_z * normalized_zz;
+    const T q11 = (q112 - q111) * normalized_z + q111;
+    const T q12 = (q122 - q121) * normalized_z + q121;
+    const T q21 = (q212 - q211) * normalized_z + q211;
+    const T q22 = (q222 - q221) * normalized_z + q221;
 
-    // We first interpolate in z, then y, then x. All 7 times this uses the same
-    // scheme: A * (2t^3 - 3t^2 + 1) + B * (-2t^3 + 3t^2).
-    // The first polynomial is 1 at t=0, 0 at t=1, the second polynomial is 0
-    // at t=0, 1 at t=1. Both polynomials have derivative zero at t=0 and t=1.
-    const T q11 = (q111 - q112) * normalized_zzz * 2. +
-                  (q112 - q111) * normalized_zz * 3. + q111;
-    const T q12 = (q121 - q122) * normalized_zzz * 2. +
-                  (q122 - q121) * normalized_zz * 3. + q121;
-    const T q21 = (q211 - q212) * normalized_zzz * 2. +
-                  (q212 - q211) * normalized_zz * 3. + q211;
-    const T q22 = (q221 - q222) * normalized_zzz * 2. +
-                  (q222 - q221) * normalized_zz * 3. + q221;
-    const T q1 = (q11 - q12) * normalized_yyy * 2. +
-                 (q12 - q11) * normalized_yy * 3. + q11;
-    const T q2 = (q21 - q22) * normalized_yyy * 2. +
-                 (q22 - q21) * normalized_yy * 3. + q21;
-    return (q1 - q2) * normalized_xxx * 2. + (q2 - q1) * normalized_xx * 3. +
-           q1;
+    const T q1 = (q12 - q11) * normalized_y + q11;
+    const T q2 = (q22 - q21) * normalized_y + q21;
+    return (q2 - q1) * normalized_x + q1;
   }
 
  private:
