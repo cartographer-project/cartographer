@@ -199,11 +199,11 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
   if (imu_data_.empty() || time < imu_data_.front().time) {
     // There is no IMU data until 'time', so we advance the ImuTracker and use
     // the angular velocities from poses and fake gravity to help 2D stability.
-    imu_tracker->Advance(time);
-    imu_tracker->AddImuLinearAccelerationObservation(Eigen::Vector3d::UnitZ());
     imu_tracker->AddImuAngularVelocityObservation(
         odometry_data_.size() < 2 ? angular_velocity_from_poses_
                                   : angular_velocity_from_odometry_);
+    imu_tracker->Advance(time);
+    imu_tracker->AddImuLinearAccelerationObservation(Eigen::Vector3d::UnitZ());
     return;
   }
   if (imu_tracker->time() < imu_data_.front().time) {
