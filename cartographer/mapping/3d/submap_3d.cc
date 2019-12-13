@@ -480,9 +480,9 @@ void ActiveSubmaps3D::AddSubmap(
   submaps_.emplace_back(new Submap3D(
       local_submap_pose,
       std::unique_ptr<GridInterface>(static_cast<GridInterface*>(
-          CreateGrid(options_.high_resolution()).release())),
+                                         CreateGrid(options_.low_resolution()).release())),
       std::unique_ptr<GridInterface>(static_cast<GridInterface*>(
-          CreateGrid(options_.low_resolution()).release())),
+          CreateGrid(options_.high_resolution()).release())),
       initial_rotational_scan_matcher_histogram, &conversion_tables_));
 }
 
