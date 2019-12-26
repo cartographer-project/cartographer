@@ -47,6 +47,10 @@ class TSDFRangeDataInserter3D : public RangeDataInserterInterface {
  private:
   void InsertHit(const Eigen::Vector3f& hit, const Eigen::Vector3f& origin,
                  HybridGridTSDF* tsdf) const;
+  void InsertHitWithNormal(const Eigen::Vector3f& hit,
+                           const Eigen::Vector3f& origin,
+                           const Eigen::Vector3f& normal,
+                           HybridGridTSDF* tsdf) const;
   void UpdateCell(const Eigen::Array3i& cell, float update_sdf,
                   float update_weight, HybridGridTSDF* tsdf) const;
 
