@@ -36,6 +36,13 @@ struct IntegrateImuResult {
   Eigen::Quaternion<T> delta_rotation;
 };
 
+template <typename T>
+struct IntegrateImuWithTranslationResult {
+  Eigen::Matrix<T, 3, 1> delta_velocity;
+  Eigen::Matrix<T, 3, 1> delta_translation;
+  Eigen::Quaternion<T> delta_rotation;
+};
+
 template <typename T, typename RangeType, typename IteratorType>
 IntegrateImuResult<T> IntegrateImu(
     const RangeType& imu_data,
@@ -88,6 +95,63 @@ IntegrateImuResult<double> IntegrateImu(const RangeType& imu_data,
                                         const common::Time end_time,
                                         IteratorType* const it) {
   return IntegrateImu<double, RangeType, IteratorType>(
+      imu_data, Eigen::Affine3d::Identity(), Eigen::Affine3d::Identity(),
+      start_time, end_time, it);
+}
+
+template <typename T, typename RangeType, typename IteratorType>
+IntegrateImuWithTranslationResult<T> IntegrateImuWithTranslation(
+    const RangeType& imu_data,
+    const Eigen::Transform<T, 3, Eigen::Affine>&
+        linear_acceleration_calibration,
+    const Eigen::Transform<T, 3, Eigen::Affine>& angular_velocity_calibration,
+    const common::Time start_time, const common::Time end_time,
+    IteratorType* const it) {
+  CHECK_LE(start_time, end_time);
+  CHECK(*it != imu_data.end());
+  CHECK_LE((*it)->time, start_time);
+  if (std::next(*it) != imu_data.end()) {
+    CHECK_GT(std::next(*it)->time, start_time);
+  }
+
+  common::Time current_time = start_time;
+
+  IntegrateImuWithTranslationResult<T> result = {
+      Eigen::Matrix<T, 3, 1>::Zero(), Eigen::Matrix<T, 3, 1>::Zero(),
+      Eigen::Quaterniond::Identity().cast<T>()};
+  while (current_time < end_time) {
+    common::Time next_imu_data = common::Time::max();
+    if (std::next(*it) != imu_data.end()) {
+      next_imu_data = std::next(*it)->time;
+    }
+    common::Time next_time = std::min(next_imu_data, end_time);
+    const T delta_t(common::ToSeconds(next_time - current_time));
+
+    const Eigen::Matrix<T, 3, 1> delta_angle =
+        (angular_velocity_calibration *
+         (*it)->angular_velocity.template cast<T>()) *
+        delta_t;
+    result.delta_rotation *=
+        transform::AngleAxisVectorToRotationQuaternion(delta_angle);
+    result.delta_velocity += result.delta_rotation *
+                             ((linear_acceleration_calibration *
+                               (*it)->linear_acceleration.template cast<T>()) *
+                              delta_t);
+    result.delta_translation += result.delta_velocity * delta_t;
+    current_time = next_time;
+    if (current_time == next_imu_data) {
+      ++(*it);
+    }
+  }
+  return result;
+}
+
+// Returns velocity delta in map frame.
+template <typename RangeType, typename IteratorType>
+IntegrateImuWithTranslationResult<double> IntegrateImuWithTranslation(
+    const RangeType& imu_data, const common::Time start_time,
+    const common::Time end_time, IteratorType* const it) {
+  return IntegrateImuWithTranslation<double, RangeType, IteratorType>(
       imu_data, Eigen::Affine3d::Identity(), Eigen::Affine3d::Identity(),
       start_time, end_time, it);
 }
