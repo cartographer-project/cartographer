@@ -25,4 +25,6 @@ message OptimizingLocalTrajectoryBuilderOptions {
   double odometry_translation_weight = 4;
   double odometry_rotation_weight = 5;
   int32 scans_per_optimization_update = 8;
+  bool initialize_map_orientation_with_imu = 9;
+  bool calibrate_imu = 10;
 }

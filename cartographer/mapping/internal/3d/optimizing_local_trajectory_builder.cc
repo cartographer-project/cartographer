@@ -18,7 +18,9 @@
 
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/time.h"
+#include "cartographer/evaluation/grid_drawer.h"
 #include "cartographer/mapping/internal/3d/imu_integration.h"
+#include "cartographer/mapping/internal/3d/imu_static_calibration.h"
 #include "cartographer/mapping/internal/3d/scan_matching/occupied_space_cost_function_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotation_cost_function.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
@@ -112,8 +114,14 @@ OptimizingLocalTrajectoryBuilder::OptimizingLocalTrajectoryBuilder(
       active_submaps_(options.submaps_options()),
       num_accumulated_(0),
       total_num_accumulated_(0),
+      imu_calibrated_(false),
+      linear_acceleration_calibration_(
+          Eigen::Transform<double, 3, Eigen::Affine>::Identity()),
+      angular_velocity_calibration_(
+          Eigen::Transform<double, 3, Eigen::Affine>::Identity()),
       motion_filter_(options.motion_filter_options()),
-      map_update_enabled_(true) {}
+      map_update_enabled_(true),
+      map_data_initialized_(false) {}
 
 OptimizingLocalTrajectoryBuilder::~OptimizingLocalTrajectoryBuilder() {}
 
@@ -154,13 +162,7 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
   }
   const common::Time time_first_point =
       range_data.time + common::FromSeconds(range_data.ranges.front().time);
-  if (time_first_point < extrapolator_->GetLastPoseTime()) {
-    LOG(INFO) << "Extrapolator is still initializing.";
-    // return nullptr;
-  }
 
-  // TODO(hrapp): Handle misses.
-  // TODO(hrapp): Where are NaNs in range_data_in_tracking coming from?
   sensor::PointCloud point_cloud;
   for (const auto& hit : range_data.ranges) {
     const Eigen::Vector3f delta = hit.position - range_data.origin;
@@ -194,21 +196,33 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
 
   if (batches_.empty()) {
     // First rangefinder data ever. Initialize to the origin.
-    batches_.push_back(
-        Batch{range_data.time, point_cloud, high_resolution_filtered_points,
-              low_resolution_filtered_points,
-              State(Eigen::Vector3d::Zero(),
-                    extrapolator_->EstimateGravityOrientation(range_data.time),
-                    Eigen::Vector3d::Zero())});
+    if (options_.optimizing_local_trajectory_builder_options()
+            .initialize_map_orientation_with_imu()) {
+      batches_.push_back(Batch{
+          range_data.time, point_cloud, high_resolution_filtered_points,
+          low_resolution_filtered_points,
+          State(Eigen::Vector3d::Zero(),
+                extrapolator_->EstimateGravityOrientation(range_data.time),
+                Eigen::Vector3d::Zero())});
+    } else {
+      batches_.push_back(
+          Batch{range_data.time, point_cloud, high_resolution_filtered_points,
+                low_resolution_filtered_points,
+                State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
+                      Eigen::Vector3d::Zero())});
+    }
   } else {
     const Batch& last_batch = batches_.back();
-    batches_.push_back(Batch{
-        range_data.time,
-        point_cloud,
-        high_resolution_filtered_points,
-        low_resolution_filtered_points,
-        PredictState(last_batch.state, last_batch.time, range_data.time),
-    });
+    if (map_data_initialized_) {
+      batches_.push_back(Batch{
+          range_data.time, point_cloud, high_resolution_filtered_points,
+          low_resolution_filtered_points,
+          PredictState(last_batch.state, last_batch.time, range_data.time)});
+    } else {
+      batches_.push_back(
+          Batch{range_data.time, point_cloud, high_resolution_filtered_points,
+                low_resolution_filtered_points, last_batch.state});
+    }
   }
   ++num_accumulated_;
   ++total_num_accumulated_;
@@ -265,7 +279,16 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
 
   ceres::Problem problem;
   if (!active_submaps_.submaps().empty() &&
-      (total_num_accumulated_ >= options_.num_accumulated_range_data())) {
+      (total_num_accumulated_ >= 4 * options_.num_accumulated_range_data())) {
+    if (!imu_calibrated_ &&
+        options_.optimizing_local_trajectory_builder_options()
+            .calibrate_imu()) {
+      CalibrateIMU(imu_data_, gravity_constant_,
+                   linear_acceleration_calibration_,
+                   angular_velocity_calibration_);
+      imu_calibrated_ = true;
+    }
+    map_data_initialized_ = true;
     std::shared_ptr<const Submap3D> matching_submap =
         active_submaps_.submaps().front();
 
@@ -313,6 +336,18 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                   batch.high_resolution_filtered_points,
                   static_cast<const HybridGridTSDF&>(
                       matching_submap->high_resolution_hybrid_grid())),
+              nullptr, batch.state.translation.data(),
+              batch.state.rotation.data());
+          problem.AddResidualBlock(
+              scan_matching::TSDFSpaceCostFunction3D::
+                  CreateAutoDiffCostFunction(
+                      options_.optimizing_local_trajectory_builder_options()
+                              .low_resolution_grid_weight() /
+                          std::sqrt(static_cast<double>(
+                              batch.low_resolution_filtered_points.size())),
+                      batch.low_resolution_filtered_points,
+                      static_cast<const HybridGridTSDF&>(
+                          matching_submap->low_resolution_hybrid_grid())),
               nullptr, batch.state.translation.data(),
               batch.state.rotation.data());
           break;
@@ -560,7 +595,8 @@ OptimizingLocalTrajectoryBuilder::PredictState(const State& start_state,
   }
 
   const IntegrateImuResult<double> result =
-      IntegrateImu(imu_data_, start_time, end_time, &it);
+      IntegrateImu(imu_data_, linear_acceleration_calibration_,
+                   angular_velocity_calibration_, start_time, end_time, &it);
 
   const Eigen::Quaterniond start_rotation(
       start_state.rotation[0], start_state.rotation[1], start_state.rotation[2],

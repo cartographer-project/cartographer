@@ -32,8 +32,8 @@ namespace cartographer {
 namespace mapping {
 
 // Static IMU Calibration, assumes the IMU to be static during calibration
-// interval Estimates acceleration scale, angular velocity biases and alignes
-// the IMU frame with the direction of gravity
+// interval. Estimates acceleration scale, angular velocity biases and aligns
+// the IMU frame with the direction of gravity.
 void CalibrateIMU(
     const std::deque<sensor::ImuData>& imu_data, const double gravity_constant,
     Eigen::Transform<double, 3, Eigen::Affine>& linear_acceleration_calibration,
@@ -47,10 +47,14 @@ void CalibrateIMU(
   double normalization_factor = 1.0 / imu_data.size();
   angular_biases = normalization_factor * angular_biases;
   acceleration_biases = normalization_factor * acceleration_biases;
-  LOG(INFO) << "Pre Calibration: \n " << acceleration_biases << "\n \n"
-            << acceleration_biases.norm() / gravity_constant << "\n \n"
-            << angular_biases << "\n \n"
-            << common::ToSeconds(imu_data.back().time - imu_data.front().time);
+  LOG(INFO) << "IMU data before calibration:\n  Linear accelerations:\n"
+            << acceleration_biases << "\n Acceleration scale: \n"
+            << acceleration_biases.norm() / gravity_constant
+            << "\n Angular velocities: \n"
+            << angular_biases << "\n Data duration: \n"
+            << common::ToSeconds(imu_data.back().time - imu_data.front().time)
+            << "\n Data set size: \n"
+            << imu_data.size();
   double acceleration_scale_correction_factor =
       gravity_constant / acceleration_biases.norm();
   Eigen::Quaterniond r = Eigen::Quaterniond::FromTwoVectors(
@@ -61,17 +65,19 @@ void CalibrateIMU(
   angular_velocity_calibration =
       r.matrix() * Eigen::Translation3d(-angular_biases);
 
-  LOG(INFO) << "angular_velocity_calibration: \n "
-            << angular_velocity_calibration.translation() << "\n \n";
-  LOG(INFO) << "angular_velocity_calibration: \n "
-            << angular_velocity_calibration.rotation() << "\n \n";
-  LOG(INFO) << "linear_acceleration_calibration: \n "
-            << linear_acceleration_calibration.translation() << "\n \n";
-  LOG(INFO) << "linear_acceleration_calibration: \n "
-            << linear_acceleration_calibration.rotation() << "\n \n";
-  LOG(INFO) << "Post Calibration: \n "
-            << linear_acceleration_calibration * acceleration_biases << "\n \n"
-            << angular_velocity_calibration * angular_biases << "\n \n";
+  LOG(INFO) << "Angular velocity correction:\n"
+            << angular_velocity_calibration.rotation() << "\n"
+            << angular_velocity_calibration.translation() << "\n"
+            << "Linear acceleration correction:\n"
+            << linear_acceleration_calibration.rotation() << "\n"
+            << linear_acceleration_calibration.translation();
+  LOG(INFO) << "IMU data after calibration:\n  Linear accelerations:\n"
+            << linear_acceleration_calibration * acceleration_biases
+            << "\n Acceleration scale: \n"
+            << (linear_acceleration_calibration * acceleration_biases).norm() /
+                   gravity_constant
+            << "\n Angular velocities: \n"
+            << angular_velocity_calibration * angular_biases;
 }
 
 }  // namespace mapping

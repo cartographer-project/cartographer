@@ -39,6 +39,9 @@ CreateOptimizingLocalTrajectoryBuilderOptions(
       parameter_dictionary->GetDouble("odometry_rotation_weight"));
   options.set_scans_per_optimization_update(
       parameter_dictionary->GetInt("scans_per_optimization_update"));
+  options.set_initialize_map_orientation_with_imu(
+      parameter_dictionary->GetBool("initialize_map_orientation_with_imu"));
+  options.set_calibrate_imu(parameter_dictionary->GetBool("calibrate_imu"));
 
   return options;
 }

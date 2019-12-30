@@ -141,11 +141,14 @@ class OptimizingLocalTrajectoryBuilder {
   std::deque<sensor::ImuData> imu_data_;
   std::deque<sensor::OdometryData> odometer_data_;
 
-  //            PoseEstimate last_pose_estimate_;
+  bool imu_calibrated_;
+  Eigen::Transform<double, 3, Eigen::Affine> linear_acceleration_calibration_;
+  Eigen::Transform<double, 3, Eigen::Affine> angular_velocity_calibration_;
 
   MotionFilter motion_filter_;
   std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
   bool map_update_enabled_;
+  bool map_data_initialized_;
 };
 
 }  // namespace mapping
