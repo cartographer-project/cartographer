@@ -125,7 +125,8 @@ std::vector<Eigen::Array4i> ExtractVoxelData(
     const TSDFVoxel voxel = it.GetValue();
     const float tsd =
         hybrid_grid.ValueConverter().ValueToTSD(voxel.discrete_tsd);
-    const float probability = 1.f - std::abs(tsd) / 0.3;
+    const float probability =
+        1.f - std::abs(tsd) / hybrid_grid.ValueConverter().getMaxTSD();
     const float probability_value = ProbabilityToValue(probability);
     if (probability < kXrayObstructedCellProbabilityLimit) {
       // We ignore non-obstructed cells.
@@ -281,8 +282,8 @@ Submap3D::Submap3D(const transform::Rigid3d& local_submap_pose,
     : Submap(local_submap_pose),
       rotational_scan_matcher_histogram_(rotational_scan_matcher_histogram),
       conversion_tables_(conversion_tables) {
-  low_resolution_hybrid_grid_ = std::move(low_resolution_grid);
-  high_resolution_hybrid_grid_ = std::move(high_resolution_grid);
+  low_resolution_grid_ = std::move(low_resolution_grid);
+  high_resolution_grid_ = std::move(high_resolution_grid);
 }
 
 Submap3D::Submap3D(const proto::Submap3D& proto)
@@ -321,11 +322,11 @@ void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   set_num_range_data(submap_3d.num_range_data());
   set_insertion_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
-    high_resolution_hybrid_grid_ = absl::make_unique<HybridGrid>(
+    high_resolution_grid_ = absl::make_unique<HybridGrid>(
         submap_3d.high_resolution_hybrid_grid(), conversion_tables_);
   }
   if (submap_3d.has_low_resolution_hybrid_grid()) {
-    low_resolution_hybrid_grid_ = absl::make_unique<HybridGrid>(
+    low_resolution_grid_ = absl::make_unique<HybridGrid>(
         submap_3d.low_resolution_hybrid_grid(), conversion_tables_);
   }
   rotational_scan_matcher_histogram_ =
@@ -341,12 +342,12 @@ void Submap3D::ToResponseProto(
     const transform::Rigid3d& global_submap_pose,
     proto::SubmapQuery::Response* const response) const {
   response->set_submap_version(num_range_data());
-  switch (low_resolution_hybrid_grid_->GetGridType()) {
+  switch (low_resolution_grid_->GetGridType()) {
     case GridType::PROBABILITY_GRID: {
       HybridGrid* low_res_grid =
-          static_cast<HybridGrid*>(low_resolution_hybrid_grid_.get());
+          static_cast<HybridGrid*>(low_resolution_grid_.get());
       HybridGrid* high_res_grid =
-          static_cast<HybridGrid*>(high_resolution_hybrid_grid_.get());
+          static_cast<HybridGrid*>(high_resolution_grid_.get());
       AddToTextureProto(*low_res_grid, global_submap_pose,
                         response->add_textures());
       AddToTextureProto(*high_res_grid, global_submap_pose,
@@ -355,9 +356,9 @@ void Submap3D::ToResponseProto(
     }
     case GridType::TSDF: {
       HybridGridTSDF* low_res_grid =
-          static_cast<HybridGridTSDF*>(low_resolution_hybrid_grid_.get());
+          static_cast<HybridGridTSDF*>(low_resolution_grid_.get());
       HybridGridTSDF* high_res_grid =
-          static_cast<HybridGridTSDF*>(high_resolution_hybrid_grid_.get());
+          static_cast<HybridGridTSDF*>(high_resolution_grid_.get());
       AddToTextureProto(*low_res_grid, global_submap_pose,
                         response->add_textures());
       AddToTextureProto(*high_res_grid, global_submap_pose,
@@ -379,12 +380,12 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
   // Transform range data into submap frame.
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data_in_local, local_pose().inverse().cast<float>());
-    range_data_inserter->Insert(
-        FilterRangeDataByMaxRange(transformed_range_data,
-                                  high_resolution_max_range),
-        high_resolution_hybrid_grid_.get());
-    range_data_inserter->Insert(transformed_range_data,
-                               low_resolution_hybrid_grid_.get());
+  range_data_inserter->Insert(
+      FilterRangeDataByMaxRange(transformed_range_data,
+                                high_resolution_max_range),
+      high_resolution_grid_.get());
+  range_data_inserter->Insert(transformed_range_data,
+                              low_resolution_grid_.get());
   set_num_range_data(num_range_data() + 1);
   const float yaw_in_submap_from_gravity = transform::GetYaw(
       local_pose().inverse().rotation() * local_from_gravity_aligned);
@@ -454,7 +455,7 @@ std::unique_ptr<GridInterface> ActiveSubmaps3D::CreateGrid(float resolution) {
           resolution,
           options_.range_data_inserter_options()
               .tsdf_range_data_inserter_options_3d()
-              .truncation_distance(),
+              .relative_truncation_distance(),
           options_.range_data_inserter_options()
               .tsdf_range_data_inserter_options_3d()
               .maximum_weight(),

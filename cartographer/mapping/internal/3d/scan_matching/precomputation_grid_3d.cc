@@ -59,6 +59,22 @@ PrecomputationGrid3D ConvertToPrecomputationGrid(
   }
   return result;
 }
+PrecomputationGrid3D ConvertToPrecomputationGrid(
+    const HybridGridTSDF& hybrid_grid) {
+  PrecomputationGrid3D result(hybrid_grid.resolution());
+  for (auto it = HybridGridTSDF::Iterator(hybrid_grid); !it.Done(); it.Next()) {
+    const TSDFVoxel voxel = it.GetValue();
+    const float tsd =
+        hybrid_grid.ValueConverter().ValueToTSD(voxel.discrete_tsd);
+    const float normalized_tsd =
+        1.f - std::abs(tsd) / hybrid_grid.ValueConverter().getMaxTSD();
+    const int cell_value = common::RoundToInt(normalized_tsd * 255.f);
+    CHECK_GE(cell_value, 0);
+    CHECK_LE(cell_value, 255);
+    *result.mutable_value(it.GetCellIndex()) = cell_value;
+  }
+  return result;
+}
 
 PrecomputationGrid3D PrecomputeGrid(const PrecomputationGrid3D& grid,
                                     const bool half_resolution,

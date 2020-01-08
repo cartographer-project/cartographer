@@ -4,7 +4,7 @@ package cartographer.mapping.proto;
 
 message TSDFRangeDataInserterOptions3D {
   // Distance to the surface within the signed distance function is evaluated.
-  double truncation_distance = 1;
+  double relative_truncation_distance = 1;
 
   // Maximum weight that can be stored in a cell.
   double maximum_weight = 2;

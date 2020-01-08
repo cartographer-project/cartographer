@@ -57,13 +57,14 @@ struct TSDFVoxel {
 // The hard limit of cell indexes is +/- 8192 around the origin.
 class HybridGridTSDF : public GridInterface, public HybridGridBase<TSDFVoxel> {
  public:
-  explicit HybridGridTSDF(const float resolution, float truncation_distance,
-                          float max_weight,
+  explicit HybridGridTSDF(const float resolution,
+                          float relative_truncation_distance, float max_weight,
                           ValueConversionTables* conversion_tables)
       : HybridGridBase<TSDFVoxel>(resolution),
         conversion_tables_(conversion_tables),
         value_converter_(absl::make_unique<TSDValueConverter>(
-            truncation_distance, max_weight, conversion_tables_)) {}
+            relative_truncation_distance * resolution, max_weight,
+            conversion_tables_)) {}
 
   explicit HybridGridTSDF(const proto::HybridGrid& proto,
                           ValueConversionTables* conversion_tables)

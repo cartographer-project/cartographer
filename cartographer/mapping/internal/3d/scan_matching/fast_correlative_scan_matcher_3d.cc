@@ -24,8 +24,9 @@
 #include "Eigen/Geometry"
 #include "absl/memory/memory.h"
 #include "cartographer/common/math.h"
+#include "cartographer/mapping/3d/hybrid_grid_tsdf.h"
 #include "cartographer/mapping/internal/3d/scan_matching/low_resolution_matcher.h"
-#include "cartographer/mapping/proto/scan_matching//fast_correlative_scan_matcher_options_3d.pb.h"
+#include "cartographer/mapping/proto/scan_matching/fast_correlative_scan_matcher_options_3d.pb.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -55,12 +56,26 @@ CreateFastCorrelativeScanMatcherOptions3D(
 }
 
 PrecomputationGridStack3D::PrecomputationGridStack3D(
-    const HybridGrid& hybrid_grid,
+    const GridInterface& grid,
     const proto::FastCorrelativeScanMatcherOptions3D& options) {
   CHECK_GE(options.branch_and_bound_depth(), 1);
   CHECK_GE(options.full_resolution_depth(), 1);
   precomputation_grids_.reserve(options.branch_and_bound_depth());
-  precomputation_grids_.push_back(ConvertToPrecomputationGrid(hybrid_grid));
+  switch (grid.GetGridType()) {
+    case GridType::PROBABILITY_GRID: {
+      precomputation_grids_.push_back(
+          ConvertToPrecomputationGrid(static_cast<const HybridGrid&>(grid)));
+      break;
+    }
+    case GridType::TSDF: {
+      precomputation_grids_.push_back(ConvertToPrecomputationGrid(
+          static_cast<const HybridGridTSDF&>(grid)));
+      break;
+    }
+    case GridType::NONE:
+      LOG(FATAL) << "Gridtype not initialized.";
+      break;
+  }
   Eigen::Array3i last_width = Eigen::Array3i::Ones();
   for (int depth = 1; depth != options.branch_and_bound_depth(); ++depth) {
     const bool half_resolution = depth >= options.full_resolution_depth();
@@ -110,17 +125,30 @@ struct Candidate3D {
 };
 
 FastCorrelativeScanMatcher3D::FastCorrelativeScanMatcher3D(
-    const HybridGrid& hybrid_grid,
-    const HybridGrid* const low_resolution_hybrid_grid,
+    const GridInterface& grid, const GridInterface* const low_resolution_grid,
     const Eigen::VectorXf* rotational_scan_matcher_histogram,
     const proto::FastCorrelativeScanMatcherOptions3D& options)
     : options_(options),
-      resolution_(hybrid_grid.resolution()),
-      width_in_voxels_(hybrid_grid.grid_size()),
       precomputation_grid_stack_(
-          absl::make_unique<PrecomputationGridStack3D>(hybrid_grid, options)),
-      low_resolution_hybrid_grid_(low_resolution_hybrid_grid),
-      rotational_scan_matcher_(rotational_scan_matcher_histogram) {}
+          absl::make_unique<PrecomputationGridStack3D>(grid, options)),
+      low_resolution_hybrid_grid_(low_resolution_grid),
+      rotational_scan_matcher_(rotational_scan_matcher_histogram) {
+  switch (grid.GetGridType()) {
+    case GridType::PROBABILITY_GRID: {
+      resolution_ = static_cast<const HybridGrid&>(grid).resolution();
+      width_in_voxels_ = static_cast<const HybridGrid&>(grid).grid_size();
+      break;
+    }
+    case GridType::TSDF: {
+      resolution_ = static_cast<const HybridGridTSDF&>(grid).resolution();
+      width_in_voxels_ = static_cast<const HybridGridTSDF&>(grid).grid_size();
+      break;
+    }
+    case GridType::NONE:
+      LOG(FATAL) << "Gridtype not initialized.";
+      break;
+  }
+}
 
 FastCorrelativeScanMatcher3D::~FastCorrelativeScanMatcher3D() {}
 

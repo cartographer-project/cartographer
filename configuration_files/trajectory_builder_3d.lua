@@ -76,7 +76,7 @@ TRAJECTORY_BUILDER_3D = {
         num_free_space_voxels = 2,
       },
       tsdf_range_data_inserter = {
-        truncation_distance = 0.3,
+        relative_truncation_distance = 4,
         maximum_weight = 1000.,
         num_free_space_voxels = 0,
         project_sdf_distance_to_scan_normal = false,

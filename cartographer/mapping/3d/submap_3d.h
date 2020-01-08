@@ -60,10 +60,10 @@ class Submap3D : public Submap {
                        proto::SubmapQuery::Response* response) const override;
 
   const GridInterface& high_resolution_hybrid_grid() const {
-    return *high_resolution_hybrid_grid_;
+    return *high_resolution_grid_;
   }
   const GridInterface& low_resolution_hybrid_grid() const {
-    return *low_resolution_hybrid_grid_;
+    return *low_resolution_grid_;
   }
   const Eigen::VectorXf& rotational_scan_matcher_histogram() const {
     return rotational_scan_matcher_histogram_;
@@ -82,8 +82,8 @@ class Submap3D : public Submap {
  private:
   void UpdateFromProto(const proto::Submap3D& submap_3d);
 
-  std::unique_ptr<GridInterface> high_resolution_hybrid_grid_;
-  std::unique_ptr<GridInterface> low_resolution_hybrid_grid_;
+  std::unique_ptr<GridInterface> high_resolution_grid_;
+  std::unique_ptr<GridInterface> low_resolution_grid_;
   Eigen::VectorXf rotational_scan_matcher_histogram_;
   ValueConversionTables* conversion_tables_;
 };

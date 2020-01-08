@@ -30,8 +30,8 @@ namespace {
 proto::TSDFRangeDataInserterOptions3D CreateTSDFRangeDataInserterOptions3D(
     common::LuaParameterDictionary* parameter_dictionary) {
   proto::TSDFRangeDataInserterOptions3D options;
-  options.set_truncation_distance(
-      parameter_dictionary->GetDouble("truncation_distance"));
+  options.set_relative_truncation_distance(
+      parameter_dictionary->GetDouble("relative_truncation_distance"));
   options.set_maximum_weight(parameter_dictionary->GetDouble("maximum_weight"));
   options.set_project_sdf_distance_to_scan_normal(
       parameter_dictionary->GetBool("project_sdf_distance_to_scan_normal"));
@@ -50,9 +50,9 @@ void TSDFRangeDataInserter3D::InsertHit(const Eigen::Vector3f& hit,
   const Eigen::Vector3f ray = hit - origin;
   const float range = ray.norm();
   const float truncation_distance =
-      options_.tsdf_range_data_inserter_options_3d().truncation_distance() *
-      tsdf->resolution() /
-      0.05f;  // todo(kdaun) clean up truncation distance scaling
+      options_.tsdf_range_data_inserter_options_3d()
+          .relative_truncation_distance() *
+      tsdf->resolution();
   //      static_cast<float>(options_.truncation_distance());
   //  LOG(INFO)<<"tau "<<truncation_distance;
   if (range < truncation_distance) return;

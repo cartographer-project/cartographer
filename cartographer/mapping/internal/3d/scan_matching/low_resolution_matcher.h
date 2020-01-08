@@ -28,7 +28,7 @@ namespace mapping {
 namespace scan_matching {
 
 std::function<float(const transform::Rigid3f&)> CreateLowResolutionMatcher(
-    const HybridGrid* low_resolution_grid, const sensor::PointCloud* points);
+    const GridInterface* low_resolution_grid, const sensor::PointCloud* points);
 
 }  // namespace scan_matching
 }  // namespace mapping
