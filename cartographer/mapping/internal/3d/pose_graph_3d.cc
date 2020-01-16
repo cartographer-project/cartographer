@@ -1217,6 +1217,26 @@ void PoseGraph3D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
     }
     parent_->data_.constraints = std::move(constraints);
   }
+
+  // A frozen trajectory needs special care because there we can't identify the
+  // nodes_to_remove based on optimization constraints (it doesn't have them).
+  if (parent_->IsTrajectoryFrozen(submap_id.trajectory_id)) {
+    // Remove node_ids that are associated with the frozen submap to be trimmed.
+    nodes_to_remove.insert(
+        parent_->data_.submap_data.at(submap_id).node_ids.begin(),
+        parent_->data_.submap_data.at(submap_id).node_ids.end());
+    // Retain overlapping nodes that are also associated with other submaps.
+    for (const auto& other_submap : parent_->data_.submap_data) {
+      if (other_submap.id == submap_id) {
+        continue;
+      }
+      std::set_intersection(
+          nodes_to_remove.begin(), nodes_to_remove.end(),
+          other_submap.data.node_ids.begin(), other_submap.data.node_ids.end(),
+          std::inserter(nodes_to_retain, nodes_to_retain.begin()));
+    }
+  }
+
   // Remove all 'data_.constraints' related to 'nodes_to_remove'.
   // If the removal lets other submaps lose all their inter-submap constraints,
   // delete their corresponding constraint submap matchers to save memory.
@@ -1270,6 +1290,9 @@ void PoseGraph3D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   // Remove the 'nodes_to_remove' from the pose graph and the optimization
   // problem.
   for (const NodeId& node_id : nodes_to_remove) {
+    if (nodes_to_retain.count(node_id)) {
+      continue;
+    }
     parent_->data_.trajectory_nodes.Trim(node_id);
     parent_->optimization_problem_->TrimTrajectoryNode(node_id);
   }
