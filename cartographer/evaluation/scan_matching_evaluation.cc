@@ -281,7 +281,7 @@ void RunScanMatchingEvaluation() {
       tsdf_range_data_inserter = {
         truncation_distance = 0.3,
         maximum_weight = 1000.,
-        num_free_space_voxels = 2,
+        num_free_space_voxels = 0,
         project_sdf_distance_to_scan_normal = false,
       },})text");
   range_data_inserter_options =
@@ -289,7 +289,7 @@ void RunScanMatchingEvaluation() {
           parameter_dictionary_range_data_inserter.get());
   Sample sample = GenerateDefinedSample(0.0, 0.0, 0.0,
                                         ScanCloudGenerator::ModelType::CUBOID,
-                                        {1.25, 1.25, 1.25}, 0.071, 0.f);
+                                        {19.25, 1.25, 1.25}, 0.031, 0.f);
   //  sample.range_data.returns.clear();
   //
   //  sensor::RangefinderPoint point_t;
@@ -331,20 +331,20 @@ void RunScanMatchingEvaluation() {
   point.position = {0.f, 0.f, 0.f};
   sensor::PointCloud single_point = {point};
 
-  for (float x = -0.4f; x < 0.401f; x += 0.01) {
-    const transform::Rigid3d initial_pose_estimate({x, 0.0, 0.0},
-                                                   {1.0, 0.0, 0.0, 0.0});
-    transform::Rigid3d pose_estimate = transform::Rigid3d::Identity();
-    ceres::Solver::Summary summary;
-    ceres_scan_matcher.Match(
-        target_translation, initial_pose_estimate,
-        {{&(sample.range_data.returns), &hybrid_grid_tsdf}}, &pose_estimate,
-        &summary);
-    LOG(INFO) << "x " << x << " \tmatch \t" << pose_estimate.DebugString();
-  }
+  //  for (float x = -0.4f; x < 0.401f; x += 0.01) {
+  //    const transform::Rigid3d initial_pose_estimate({x, 0.0, 0.0},
+  //                                                   {1.0, 0.0, 0.0, 0.0});
+  //    transform::Rigid3d pose_estimate = transform::Rigid3d::Identity();
+  //    ceres::Solver::Summary summary;
+  //    ceres_scan_matcher.Match(
+  //        target_translation, initial_pose_estimate,
+  //        {{&(sample.range_data.returns), &hybrid_grid_tsdf}}, &pose_estimate,
+  //        &summary);
+  //    LOG(INFO) << "x " << x << " \tmatch \t" << pose_estimate.DebugString();
+  //  }
 
   GridDrawer grid_drawer;
-  grid_drawer.DrawInterpolatedTSD(hybrid_grid_tsdf);
+  grid_drawer.DrawInterpolatedTSD(hybrid_grid_tsdf, 0.2);
   grid_drawer.DrawPointcloud(sample.range_data.returns,
                              transform::Rigid3d::Identity());
   grid_drawer.ToFile("interpolated_grid_with_cloud.png");
@@ -354,8 +354,9 @@ void RunScanMatchingEvaluation() {
   grid_drawer.ToFile("cost.png");
 
   grid_drawer = GridDrawer();
-  grid_drawer.DrawTSD(hybrid_grid_tsdf);
+  grid_drawer.DrawTSD(hybrid_grid_tsdf, 0.2);
   grid_drawer.ToFile("tsdf.png");
+  LOG(INFO) << "wrote file";
 }
 
 }  // namespace evaluation

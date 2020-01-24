@@ -217,11 +217,16 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
       batches_.push_back(Batch{
           range_data.time, point_cloud, high_resolution_filtered_points,
           low_resolution_filtered_points,
+//          State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
+//                Eigen::Vector3d::Zero())});
           PredictState(last_batch.state, last_batch.time, range_data.time)});
     } else {
       batches_.push_back(
           Batch{range_data.time, point_cloud, high_resolution_filtered_points,
-                low_resolution_filtered_points, last_batch.state});
+                low_resolution_filtered_points,
+//                State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
+//                      Eigen::Vector3d::Zero())});
+                last_batch.state});
     }
   }
   ++num_accumulated_;
@@ -364,6 +369,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
       } else {
         problem.SetParameterization(batch.state.rotation.data(),
                                     new ceres::QuaternionParameterization());
+        // problem.SetParameterBlockConstant(batch.state.rotation.data());
       }
     }
 

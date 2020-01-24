@@ -16,10 +16,11 @@ namespace evaluation {
 class GridDrawer {
  public:
   GridDrawer();
+  GridDrawer(const cartographer::mapping::HybridGridTSDF& grid);
+  void DrawTSD(const cartographer::mapping::HybridGridTSDF& grid, double z);
 
-  void DrawTSD(const cartographer::mapping::HybridGridTSDF& grid);
-
-  void DrawInterpolatedTSD(const cartographer::mapping::HybridGridTSDF& grid);
+  void DrawInterpolatedTSD(const cartographer::mapping::HybridGridTSDF& grid,
+                           double z);
 
   void DrawSinglePointCostFunction(
       const cartographer::mapping::HybridGridTSDF& grid,
@@ -40,13 +41,13 @@ class GridDrawer {
   cairo_surface_t* grid_surface_;
   cairo_t* grid_surface_context_;
   double scale_;
-  int scaled_num_x_cells_;
-  int scaled_num_y_cells_;
-  double min_x_;
-  double min_y_;
-  double max_x_;
-  double max_y_;
-  double z_;
+  Eigen::Vector3d min_limits_;
+  Eigen::Vector3d max_limits_;
+  Eigen::Vector3i scaled_num_cells_;
+  int axis0_;
+  int axis1_;
+  int axis2_;
+
   float max_tsd_;
   float resolution_;
 };
