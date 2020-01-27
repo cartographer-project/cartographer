@@ -192,6 +192,27 @@ void GridDrawer::DrawPointcloud(
   cairo_fill(grid_surface_context_);
 }
 
+
+void GridDrawer::DrawPose(const cartographer::transform::Rigid3d& transform, float r, float g, float b) {
+
+
+  cairo_set_source_rgb(grid_surface_context_, r, g, b);
+  float z_range = 0.6;
+      float x = (transform.translation()[axis0_] - min_limits_[axis0_]) *
+          scaled_num_cells_[axis0_] /
+          (max_limits_[axis0_] - min_limits_[axis0_]);
+      float y = (transform.translation()[axis1_] - min_limits_[axis1_]) *
+          scaled_num_cells_[axis1_] /
+          (max_limits_[axis1_] - min_limits_[axis1_]);
+
+  float point_size = 0.5f * scale_;
+  cairo_rectangle(grid_surface_context_, (x - 0.5 * point_size),
+                  (y - 0.5 * point_size), point_size, point_size);
+
+  cairo_fill(grid_surface_context_);
+
+}
+
 void GridDrawer::ToFile(std::string filename) {
   cairo_surface_write_to_png(grid_surface_, filename.c_str());
 }

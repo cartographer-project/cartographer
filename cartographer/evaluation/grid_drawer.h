@@ -35,6 +35,8 @@ class GridDrawer {
   void DrawPointcloud(const sensor::PointCloud& range_data,
                       const cartographer::transform::Rigid3d& transform);
 
+  void DrawPose(const cartographer::transform::Rigid3d& transform, float r, float g, float b);
+
   void ToFile(std::string filename);
 
  private:

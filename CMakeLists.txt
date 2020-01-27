@@ -68,6 +68,9 @@ if(SPHINX_FOUND)
   add_subdirectory("docs")
 endif()
 
+find_package(Python2 COMPONENTS Development NumPy)
+
+
 # Install catkin package.xml
 install(FILES package.xml DESTINATION share/cartographer)
 
@@ -242,8 +245,11 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LUA_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  "${Boost_INCLUDE_DIRS}")
+        "${Boost_INCLUDE_DIRS}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
+
+target_include_directories(${PROJECT_NAME} PUBLIC ${Python2_INCLUDE_DIRS} ${Python2_NumPy_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC Python2::Python Python2::NumPy)
 
 if (WIN32)
   find_package(glog REQUIRED)
