@@ -44,6 +44,7 @@
   <depend>ceres_catkin</depend>
   <depend>eigen_catkin</depend>
   <depend>libcairo2-dev</depend>
+  <depend>libpcl-all-dev</depend>
   <depend>gflags_catkin</depend>
   <depend>glog_catkin</depend>
   <depend>lua5.2-dev</depend>
