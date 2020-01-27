@@ -188,8 +188,13 @@ std::vector<Floor> FindFloors(const proto::Trajectory& trajectory,
           common::FromUniversal(
               trajectory.node(span.end_index - 1).timestamp())});
     }
-    std::sort(z_values.begin(), z_values.end());
-    floors.back().z = Median(z_values);
+    if (!z_values.empty()) {
+      std::sort(z_values.begin(), z_values.end());
+      floors.back().z = Median(z_values);
+    } else {
+      LOG(ERROR) << "All spans in level are short";
+      floors.pop_back();
+    }
   }
   return floors;
 }
