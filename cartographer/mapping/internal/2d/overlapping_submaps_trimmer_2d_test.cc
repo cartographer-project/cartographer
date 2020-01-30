@@ -74,8 +74,9 @@ class OverlappingSubmapsTrimmer2DTest : public ::testing::Test {
   }
 
   void AddTrajectoryNode(int node_index, int64 timestamp) {
-    TrajectoryNode::Data data;
+    auto data = TrajectoryNode::Data();
     data.time = common::FromUniversal(timestamp);
+    data.gravity_alignment = Eigen::Quaterniond::Identity();
 
     fake_pose_graph_.mutable_trajectory_nodes()->Insert(
         NodeId{0 /* trajectory_id */, node_index},

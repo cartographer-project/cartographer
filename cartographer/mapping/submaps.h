@@ -20,7 +20,6 @@
 #include <memory>
 #include <vector>
 
-#include "Eigen/Geometry"
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/id.h"
