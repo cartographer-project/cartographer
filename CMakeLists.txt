@@ -36,7 +36,7 @@ if(WIN32)
   set(Boost_USE_STATIC_LIBS FALSE)
 endif()
 find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-find_package(PCL 1.8 REQUIRED)
+find_package(PythonLibs 2.7)
 find_package(Ceres REQUIRED COMPONENTS SuiteSparse)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
@@ -69,8 +69,25 @@ if(SPHINX_FOUND)
   add_subdirectory("docs")
 endif()
 
-find_package(Python2 COMPONENTS Development NumPy)
+#find_package(PCL REQUIRED common kdtree search features)
 
+# Open3D
+find_package(Open3D HINTS ${CMAKE_INSTALL_PREFIX}/lib/CMake)
+list(APPEND Open3D_LIBRARIES dl)
+if (Open3D_FOUND)
+  message(STATUS "Found Open3D ${Open3D_VERSION}")
+  add_definitions(-DUNIX)
+  add_compile_options(-Wno-deprecated-declarations)
+  add_compile_options(-Wno-unused-result)
+  add_definitions(-O3)
+else ()
+  message(SEND_ERROR "Open3D not found")
+endif ()
+
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${Open3D_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Open3D_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${Open3D_EXE_LINKER_FLAGS}")
 
 # Install catkin package.xml
 install(FILES package.xml DESTINATION share/cartographer)
@@ -246,23 +263,29 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LUA_LIBRARIES})
 
 # PCL
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PCL_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${PCL_LIBRARIES})
-set(BLACKLISTED_PCL_DEFINITIONS " -march=native -msse4.2 -mfpmath=sse ")
-foreach(DEFINITION ${PCL_DEFINITIONS})
-  list (FIND BLACKLISTED_PCL_DEFINITIONS "${DEFINITION}" DEFINITIONS_INDEX)
-  if (${DEFINITIONS_INDEX} GREATER -1)
-    continue()
-  endif()
-  set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${DEFINITION}")
-endforeach()
+#target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PCL_INCLUDE_DIRS})
+#target_link_libraries(${PROJECT_NAME} PUBLIC ${PCL_LIBRARIES})
+#set(BLACKLISTED_PCL_DEFINITIONS " -march=native -msse4.2 -mfpmath=sse ")
+#foreach(DEFINITION ${PCL_DEFINITIONS})
+#  list (FIND BLACKLISTED_PCL_DEFINITIONS "${DEFINITION}" DEFINITIONS_INDEX)
+#  if (${DEFINITIONS_INDEX} GREATER -1)
+#    continue()
+#  endif()
+#  set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${DEFINITION}")
+#endforeach()
+
+
+
+
+target_include_directories(${PROJECT_NAME} PUBLIC ${Open3D_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${Open3D_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
         "${Boost_INCLUDE_DIRS}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${Python2_INCLUDE_DIRS} ${Python2_NumPy_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC Python2::Python Python2::NumPy)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PYTHON_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${PYTHON_LIBRARIES})
 
 if (WIN32)
   find_package(glog REQUIRED)
