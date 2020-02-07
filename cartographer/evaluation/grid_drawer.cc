@@ -32,9 +32,9 @@ GridDrawer::GridDrawer(const cartographer::mapping::HybridGridTSDF& grid)
     : scale_(4.0) {
   max_tsd_ = grid.ValueConverter().getMaxTSD();
   resolution_ = grid.resolution();
-  axis0_ = 1;
-  axis1_ = 2;
-  axis2_ = 0;
+  axis0_ = 0;
+  axis1_ = 1;
+  axis2_ = 2;
   min_limits_ = {1.0, -12.0, -1.0};
   max_limits_ = {1.1, 12.0, 2.0};
   scaled_num_cells_ =
@@ -107,10 +107,10 @@ void GridDrawer::DrawInterpolatedTSD(
           grid.ValueConverter().getMaxTSD();
 
       if (normalized_tsdf > 0.f) {
-        g = 1. - std::pow(std::abs(normalized_tsdf), 1.0);
+        g = 1. - std::pow(std::abs(normalized_tsdf), 0.5);
         b = g;
       } else {
-        r = 1. - std::pow(std::abs(normalized_tsdf), 1.0);
+        r = 1. - std::pow(std::abs(normalized_tsdf), 0.5);
         g = r;
       }
 

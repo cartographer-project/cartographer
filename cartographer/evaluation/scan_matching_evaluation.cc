@@ -352,8 +352,13 @@ void RunScanMatchingEvaluation() {
   //  sample.range_data.returns = single_point_t;
 
   mapping::ValueConversionTables conversion_tables_;
-  mapping::HybridGridTSDF hybrid_grid_tsdf(0.05, 0.3, 1000,
-                                           &conversion_tables_);
+  mapping::HybridGridTSDF hybrid_grid_tsdf(
+      0.05,
+      range_data_inserter_options.tsdf_range_data_inserter_options_3d()
+          .relative_truncation_distance(),
+      range_data_inserter_options.tsdf_range_data_inserter_options_3d()
+          .maximum_weight(),
+      &conversion_tables_);
   mapping::TSDFRangeDataInserter3D tsdf_range_data_inserter(
       range_data_inserter_options);
   tsdf_range_data_inserter.Insert(sample.range_data, &hybrid_grid_tsdf);
@@ -535,7 +540,7 @@ void RunScanMatchingEvaluationDriftTest() {
         num_free_space_voxels = 2,
       },
       tsdf_range_data_inserter = {
-        relative_truncation_distance = 6,
+        relative_truncation_distance = 4,
         maximum_weight = 1000.,
         num_free_space_voxels = 0,
         project_sdf_distance_to_scan_normal = false,
@@ -549,8 +554,13 @@ void RunScanMatchingEvaluationDriftTest() {
 
 
   mapping::ValueConversionTables conversion_tables_;
-  mapping::HybridGridTSDF hybrid_grid_tsdf(0.05, 0.3, 1000,
-                                           &conversion_tables_);
+  mapping::HybridGridTSDF hybrid_grid_tsdf(
+      0.05,
+      range_data_inserter_options.tsdf_range_data_inserter_options_3d()
+          .relative_truncation_distance(),
+      range_data_inserter_options.tsdf_range_data_inserter_options_3d()
+          .maximum_weight(),
+      &conversion_tables_);
   mapping::TSDFRangeDataInserter3D tsdf_range_data_inserter(
       range_data_inserter_options);
   tsdf_range_data_inserter.Insert(sample.range_data, &hybrid_grid_tsdf);
@@ -599,10 +609,10 @@ void RunScanMatchingEvaluationDriftTest() {
   grid_drawer.DrawPointcloud(sample.range_data.returns,
                              transform::Rigid3d::Identity());
   grid_drawer.ToFile("interpolated_grid_with_cloud.png");
-
-  grid_drawer = GridDrawer();
-  grid_drawer.DrawSinglePointCostFunction(hybrid_grid_tsdf, ceres_scan_matcher);
-  grid_drawer.ToFile("cost.png");
+  //
+  //  grid_drawer = GridDrawer();
+  //  grid_drawer.DrawSinglePointCostFunction(hybrid_grid_tsdf,
+  //  ceres_scan_matcher); grid_drawer.ToFile("cost.png");
 
   grid_drawer = GridDrawer();
   grid_drawer.DrawTSD(hybrid_grid_tsdf, 0.2);
@@ -616,21 +626,26 @@ void RunScanMatchingEvaluationDriftTest() {
   int idx = 0;
 
   std::normal_distribution<float> normal_distribution(0,
-                                                      0.1);  // 0.0
+                                                      0.05);  // 0.0
   std::vector<float> positions_x = {};
   std::vector<float> positions_y = {};
   std::vector<float> positions_z = {};
 
-  for (double phi = -M_PI; phi < 1 * M_PI; phi += 0.1 * M_PI) {
-
+  for (double phi = -M_PI; phi < 3 * M_PI; phi += 0.1 * M_PI) {
     cartographer::transform::Rigid3d pertubation = cartographer::transform::Rigid3d({normal_distribution(e1),normal_distribution(e1),0}, {1, 0, 0, 0});
     initial_pose_estimate = pertubation * initial_pose_estimate;
 
+    //
+    //    Sample sample = GenerateDefinedSampleSlice(0, 0, 0.0,
+    //                                               ScanCloudGenerator::ModelType::CUBOID,
+    //                                               {17.25, 1.25, 1.25}, 0.031,
+    //                                               0.002f, std::fmod(phi +
+    //                                               M_PI, 2.0* M_PI) - M_PI,
+    //                                               (1.0/6.0) * M_PI);
 
-
-    Sample sample = GenerateDefinedSampleSlice(0, 0, 0.0,
-                                               ScanCloudGenerator::ModelType::CUBOID,
-                                               {17.25, 1.25, 1.25}, 0.031, 0.002f, std::fmod(phi + M_PI, 2.0* M_PI) - M_PI, (1.0/6.0) * M_PI);
+    Sample sample =
+        GenerateDefinedSample(0, 0, 0.0, ScanCloudGenerator::ModelType::CUBOID,
+                              {1.25, 1.25, 1.25}, 0.031, 0.002f);
 
     ceres::Solver::Summary summary;
     ceres_scan_matcher.Match(
@@ -658,10 +673,11 @@ void RunScanMatchingEvaluationDriftTest() {
     idx++;
   }
 
-
-  matplotlibcpp::plot(positions_x);
-  matplotlibcpp::plot(positions_y);
-  matplotlibcpp::plot(positions_z);
+  matplotlibcpp::plot();
+  matplotlibcpp::named_plot("x", positions_x);
+  matplotlibcpp::named_plot("y", positions_y);
+  matplotlibcpp::named_plot("z", positions_z);
+  matplotlibcpp::legend();
   matplotlibcpp::show();
 }
 
