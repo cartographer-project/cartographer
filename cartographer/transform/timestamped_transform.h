@@ -36,6 +36,30 @@ TimestampedTransform Interpolate(const TimestampedTransform& start,
                                  const TimestampedTransform& end,
                                  const common::Time time);
 
+template <typename T>
+transform::Rigid3<T> InterpolateTransform(const transform::Rigid3<T>& start,
+                                          const transform::Rigid3<T>& end,
+                                          const double factor) {
+  const Eigen::Matrix<T, 3, 1> origin =
+      start.translation() + (end.translation() - start.translation()) * factor;
+  const Eigen::Quaternion<T> rotation =
+      start.rotation().slerp(T(factor), end.rotation());
+  return transform::Rigid3<T>(origin, rotation);
+}
+
+template <typename T>
+transform::Rigid3<T> InterpolateTransform(const transform::Rigid3<T>& start,
+                                          const transform::Rigid3<T>& end,
+                                          const common::Time time_start,
+                                          const common::Time time_end,
+                                          const common::Time time) {
+  CHECK_LE(time_start, time);
+  CHECK_GE(time_end, time);
+  const double duration = common::ToSeconds(time_end - time_start);
+  const double factor = common::ToSeconds(time - time_start) / duration;
+  return InterpolateTransform(start, end, factor);
+}
+
 }  // namespace transform
 }  // namespace cartographer
 

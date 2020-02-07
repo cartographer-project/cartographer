@@ -22,7 +22,6 @@
 
 #include "cartographer/mapping/3d/hybrid_grid.h"
 #include "gmock/gmock.h"
-
 namespace cartographer {
 namespace mapping {
 namespace scan_matching {

@@ -78,6 +78,8 @@ class OptimizingLocalTrajectoryBuilder {
   void SetMapUpdateEnabled(bool map_update_enabled);
 
  private:
+  void AddControlPoint(common::Time t);
+
   struct State {
     std::array<double, 3> translation;
     std::array<double, 4> rotation;  // Rotation quaternion as (w, x, y, z).
@@ -109,6 +111,18 @@ class OptimizingLocalTrajectoryBuilder {
     State state;
   };
 
+  struct PointCloudSet {
+    common::Time time;
+    sensor::PointCloud points;
+    sensor::PointCloud high_resolution_filtered_points;
+    sensor::PointCloud low_resolution_filtered_points;
+  };
+
+  struct ControlPoint {
+    common::Time time;
+    State state;
+  };
+
   State PredictState(const State& start_state, const common::Time start_time,
                      const common::Time end_time);
 
@@ -137,9 +151,14 @@ class OptimizingLocalTrajectoryBuilder {
   int total_num_accumulated_;
 
   std::deque<Batch> batches_;
+  std::deque<ControlPoint> control_points_;
   double gravity_constant_ = 9.8;
   std::deque<sensor::ImuData> imu_data_;
   std::deque<sensor::OdometryData> odometer_data_;
+  std::deque<PointCloudSet> point_cloud_data_;
+
+  common::Duration ct_window_horizon_;
+  common::Duration ct_window_rate_;
 
   bool imu_calibrated_;
   Eigen::Transform<double, 3, Eigen::Affine> linear_acceleration_calibration_;
