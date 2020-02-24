@@ -22,6 +22,7 @@
 #include "cartographer/mapping/internal/3d/scan_matching/interpolated_tsdf.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
+#include "cartographer/transform/timestamped_transform.h"
 #include "cartographer/transform/transform.h"
 
 namespace cartographer {

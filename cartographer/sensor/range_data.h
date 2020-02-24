@@ -33,6 +33,9 @@ struct RangeData {
   Eigen::Vector3f origin;
   PointCloud returns;
   PointCloud misses;
+  RangeData();
+  RangeData(const Eigen::Vector3f& origin, const PointCloud& returns,
+            const PointCloud& misses);
 };
 
 // Like 'RangeData', but with 'TimedPointClouds'.
