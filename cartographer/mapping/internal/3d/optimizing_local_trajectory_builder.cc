@@ -22,7 +22,7 @@
 #include "cartographer/mapping/internal/3d/imu_integration.h"
 #include "cartographer/mapping/internal/3d/imu_static_calibration.h"
 #include "cartographer/mapping/internal/3d/scan_matching/interpolated_occupied_space_cost_function_3d.h"
-#include "cartographer/mapping/internal/3d/scan_matching/interpolated_tsdf_space_function_3d.h"
+#include "cartographer/mapping/internal/3d/scan_matching/interpolated_tsdf_space_cost_function_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/occupied_space_cost_function_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotation_cost_function.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
@@ -116,8 +116,12 @@ OptimizingLocalTrajectoryBuilder::OptimizingLocalTrajectoryBuilder(
       active_submaps_(options.submaps_options()),
       num_accumulated_(0),
       total_num_accumulated_(0),
-      ct_window_horizon_(common::FromSeconds(1.2)),
-      ct_window_rate_(common::FromSeconds(0.2)),
+      last_optimization_time_(common::FromUniversal(0)),
+      optimization_rate_(
+          common::FromSeconds(0.05)),  // todo(kdaun) add to config
+      ct_window_horizon_(
+          common::FromSeconds(0.9)),              // todo(kdaun) add to config
+      ct_window_rate_(common::FromSeconds(0.1)),  // todo(kdaun) add to config
       imu_calibrated_(false),
       linear_acceleration_calibration_(
           Eigen::Transform<double, 3, Eigen::Affine>::Identity()),
@@ -166,7 +170,6 @@ void OptimizingLocalTrajectoryBuilder::AddOdometryData(
     AddControlPoint(control_points_.back().time + ct_window_rate_);
   }
   odometer_data_.push_back(odometry_data);
-  RemoveObsoleteSensorData();
 }
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
@@ -232,7 +235,9 @@ void OptimizingLocalTrajectoryBuilder::AddControlPoint(common::Time t) {
         t, State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
                  Eigen::Vector3d::Zero())});
   } else {
-    control_points_.push_back(ControlPoint{t, control_points_.back().state});
+    control_points_.push_back(
+        ControlPoint{t, PredictState(control_points_.back().state,
+                                     control_points_.back().time, t)});
   }
 }
 
@@ -257,13 +262,14 @@ void OptimizingLocalTrajectoryBuilder::RemoveObsoleteSensorData() {
 
 void OptimizingLocalTrajectoryBuilder::TransformStates(
     const transform::Rigid3d& transform) {
-  for (Batch& batch : batches_) {
-    const transform::Rigid3d new_pose = transform * batch.state.ToRigid();
-    const auto& velocity = batch.state.velocity;
+  for (ControlPoint& control_point : control_points_) {
+    const transform::Rigid3d new_pose =
+        transform * control_point.state.ToRigid();
+    const auto& velocity = control_point.state.velocity;
     const Eigen::Vector3d new_velocity =
         transform.rotation() *
         Eigen::Vector3d(velocity[0], velocity[1], velocity[2]);
-    batch.state =
+    control_point.state =
         State(new_pose.translation(), new_pose.rotation(), new_velocity);
   }
 }
@@ -272,19 +278,22 @@ std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
 OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   if (control_points_.size() + 1 <
           size_t(std::floor(ct_window_horizon_ / ct_window_rate_)) ||
-      0.0 < common::ToSeconds(control_points_.front().time + ct_window_rate_ -
-                              time)) {
-    LOG(INFO) << "NO OPT " << control_points_.size() << "\t "
-              << common::ToSeconds(control_points_.front().time +
-                                   ct_window_rate_ - time);
+      time - last_optimization_time_ < optimization_rate_) {
+    if (control_points_.size() + 1 <
+        size_t(std::floor(ct_window_horizon_ / ct_window_rate_))) {
+      LOG(INFO) << "No Optimization - not enough control points "
+                << control_points_.size() + 1 << "\t < "
+                << size_t(std::floor(ct_window_horizon_ / ct_window_rate_));
+    }
+    LOG(INFO) << "No Optimization - optimization rate threshold "
+              << common::ToSeconds(time - last_optimization_time_) << "\t < "
+              << common::ToSeconds(optimization_rate_);
     return nullptr;
   }
-  LOG(INFO) << "OPT";
+  last_optimization_time_ = time;
 
   ceres::Problem problem;
   if (!active_submaps_.submaps().empty()
-      //  &&  (total_num_accumulated_ >= 4 *
-      //  options_.num_accumulated_range_data())
   ) {
     if (!imu_calibrated_ &&
         options_.optimizing_local_trajectory_builder_options()
@@ -298,14 +307,14 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     std::shared_ptr<const Submap3D> matching_submap =
         active_submaps_.submaps().front();
 
-    // We transform the states in 'batches_' in place to be in the submap frame
-    // as expected by the OccupiedSpaceCostFunctor. This is reverted after
+    // We transform the states in 'control_points_' in place to be in the submap
+    // frame as expected by the OccupiedSpaceCostFunctor. This is reverted after
     // solving the optimization problem.
     TransformStates(matching_submap->local_pose().inverse());
     auto next_control_point = control_points_.begin();
     for (size_t i = 0; i < point_cloud_data_.size(); ++i) {
       PointCloudSet& point_cloud_set = point_cloud_data_[i];
-      while (next_control_point->time < point_cloud_set.time) {
+      while (next_control_point->time <= point_cloud_set.time) {
         CHECK(next_control_point != control_points_.end());
         next_control_point++;
       }
@@ -411,8 +420,45 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                   result.delta_rotation)),
           nullptr, control_points_[i - 1].state.rotation.data(),
           control_points_[i].state.rotation.data());
+    }
 
-      problem.SetParameterization(control_points_[i - 1].state.rotation.data(),
+    if (odometer_data_.size() > 1) {
+      transform::TransformInterpolationBuffer interpolation_buffer;
+      for (const auto& odometer_data : odometer_data_) {
+        interpolation_buffer.Push(odometer_data.time, odometer_data.pose);
+      }
+      for (size_t i = 1; i < control_points_.size(); ++i) {
+        // Only add constraints for this range data if  we have bracketing data
+        // from the odometer.
+        if (!(interpolation_buffer.earliest_time() <=
+                  control_points_[i - 1].time &&
+              control_points_[i].time <= interpolation_buffer.latest_time())) {
+          continue;
+        }
+        const transform::Rigid3d previous_odometer_pose =
+            interpolation_buffer.Lookup(control_points_[i - 1].time);
+        const transform::Rigid3d current_odometer_pose =
+            interpolation_buffer.Lookup(control_points_[i].time);
+        const transform::Rigid3d delta_pose =
+            current_odometer_pose.inverse() * previous_odometer_pose;
+        problem.AddResidualBlock(
+            new ceres::AutoDiffCostFunction<
+                RelativeTranslationAndYawCostFunction, 4, 3, 4, 3, 4>(
+                new RelativeTranslationAndYawCostFunction(
+                    options_.optimizing_local_trajectory_builder_options()
+                        .odometry_translation_weight(),
+                    options_.optimizing_local_trajectory_builder_options()
+                        .odometry_rotation_weight(),
+                    delta_pose)),
+            nullptr, control_points_[i - 1].state.translation.data(),
+            control_points_[i - 1].state.rotation.data(),
+            control_points_[i].state.translation.data(),
+            control_points_[i].state.rotation.data());
+      }
+    }
+
+    for (size_t i = 1; i < control_points_.size(); ++i) {
+      problem.SetParameterization(control_points_[i].state.rotation.data(),
                                   new ceres::QuaternionParameterization());
     }
     problem.SetParameterBlockConstant(
@@ -422,51 +468,14 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     problem.SetParameterBlockConstant(
         control_points_.front().state.velocity.data());
 
-    //    if (odometer_data_.size() > 1) {
-    //      transform::TransformInterpolationBuffer interpolation_buffer;
-    //      for (const auto& odometer_data : odometer_data_) {
-    //        interpolation_buffer.Push(odometer_data.time, odometer_data.pose);
-    //      }
-    //      for (size_t i = 1; i < batches_.size(); ++i) {
-    //        // Only add constraints for this range data if  we have bracketing
-    //        data
-    //        // from the odometer.
-    //        if (!(interpolation_buffer.earliest_time() <= batches_[i - 1].time
-    //        &&
-    //              batches_[i].time <= interpolation_buffer.latest_time())) {
-    //          continue;
-    //        }
-    //        const transform::Rigid3d previous_odometer_pose =
-    //            interpolation_buffer.Lookup(batches_[i - 1].time);
-    //        const transform::Rigid3d current_odometer_pose =
-    //            interpolation_buffer.Lookup(batches_[i].time);
-    //        const transform::Rigid3d delta_pose =
-    //            current_odometer_pose.inverse() * previous_odometer_pose;
-    //        problem.AddResidualBlock(
-    //            new ceres::AutoDiffCostFunction<
-    //                RelativeTranslationAndYawCostFunction, 4, 3, 4, 3, 4>(
-    //                new RelativeTranslationAndYawCostFunction(
-    //                    options_.optimizing_local_trajectory_builder_options()
-    //                        .odometry_translation_weight(),
-    //                    options_.optimizing_local_trajectory_builder_options()
-    //                        .odometry_rotation_weight(),
-    //                    delta_pose)),
-    //            nullptr, batches_[i - 1].state.translation.data(),
-    //            batches_[i - 1].state.rotation.data(),
-    //            batches_[i].state.translation.data(),
-    //            batches_[i].state.rotation.data());
-    //      }
-    //    }
-
     ceres::Solver::Summary summary;
     ceres::Solve(ceres_solver_options_, &problem, &summary);
-    // The optimized states in 'batches_' are in the submap frame and we
+    // The optimized states in 'control_points_' are in the submap frame and we
     // transform them in place to be in the local SLAM frame again.
     TransformStates(matching_submap->local_pose());
   }
 
   num_accumulated_ = 0;
-
   const transform::Rigid3d optimized_pose =
       control_points_.front().state.ToRigid();
 
@@ -478,9 +487,10 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     std::deque<ControlPoint>::iterator control_points_iterator =
         control_points_.begin();
     for (auto& point_cloud_set : point_cloud_data_) {
-      while (control_points_iterator->time < point_cloud_set.time) {
+      while (control_points_iterator->time <= point_cloud_set.time) {
         ++control_points_iterator;
       }
+      CHECK(control_points_iterator != control_points_.begin());
       CHECK(control_points_iterator != control_points_.end());
       auto transform_cloud = InterpolateTransform(
           std::prev(control_points_iterator)->state.ToRigid(),
@@ -494,8 +504,8 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
       }
     }
   } else {
-    CHECK(control_points_.front().time < point_cloud_data_.front().time);
-    CHECK(control_points_.back().time > point_cloud_data_.back().time);
+    CHECK(control_points_.front().time <= point_cloud_data_.front().time);
+    CHECK(control_points_.back().time >= point_cloud_data_.back().time);
     while (ct_window_horizon_ <
            control_points_.back().time - point_cloud_data_.front().time) {
       while (std::next(control_points_.begin())->time <
@@ -503,7 +513,6 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
         control_points_.pop_front();
       }
       CHECK(std::next(control_points_.begin()) != control_points_.end());
-      CHECK(point_cloud_data_.begin() != point_cloud_data_.end());
       auto transform_cloud = InterpolateTransform(
           control_points_.begin()->state.ToRigid(),
           std::next(control_points_.begin())->state.ToRigid(),
