@@ -117,11 +117,12 @@ OptimizingLocalTrajectoryBuilder::OptimizingLocalTrajectoryBuilder(
       num_accumulated_(0),
       total_num_accumulated_(0),
       last_optimization_time_(common::FromUniversal(0)),
+      initial_data_time_(common::FromUniversal(0)),
       optimization_rate_(
-          common::FromSeconds(0.05)),  // todo(kdaun) add to config
+          common::FromSeconds(options.optimizing_local_trajectory_builder_options().optimization_rate())),
       ct_window_horizon_(
-          common::FromSeconds(0.9)),              // todo(kdaun) add to config
-      ct_window_rate_(common::FromSeconds(0.1)),  // todo(kdaun) add to config
+          common::FromSeconds(options.optimizing_local_trajectory_builder_options().ct_window_horizon())),
+      ct_window_rate_(common::FromSeconds(options.optimizing_local_trajectory_builder_options().ct_window_rate())),
       imu_calibrated_(false),
       linear_acceleration_calibration_(
           Eigen::Transform<double, 3, Eigen::Affine>::Identity()),
@@ -138,15 +139,9 @@ void OptimizingLocalTrajectoryBuilder::AddImuData(
   if (extrapolator_ != nullptr) {
     extrapolator_->AddImuData(imu_data);
     imu_data_.push_back(imu_data);
-    CHECK(!control_points_.empty());
-    if (imu_data.time - control_points_.back().time >=
-        common::FromSeconds(.0)) {
-      AddControlPoint(control_points_.back().time + ct_window_rate_);
-    }
     return;
   }
-
-  AddControlPoint(imu_data.time);
+  initial_data_time_ = imu_data.time;
   // We derive velocities from poses which are at least 1 ms apart for numerical
   // stability. Usually poses known to the extrapolator will be further apart
   // in time and thus the last two are used.
@@ -165,10 +160,6 @@ void OptimizingLocalTrajectoryBuilder::AddOdometryData(
     LOG(INFO) << "IMU not yet initialized.";
     return;
   }
-  if (odometry_data.time - control_points_.back().time >=
-      common::FromSeconds(.0)) {
-    AddControlPoint(control_points_.back().time + ct_window_rate_);
-  }
   odometer_data_.push_back(odometry_data);
 }
 
@@ -184,11 +175,6 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
     LOG(INFO) << "IMU not yet initialized.";
     return nullptr;
   }
-  if (range_data.time - control_points_.back().time >=
-      common::FromSeconds(.0)) {
-    AddControlPoint(control_points_.back().time + ct_window_rate_);
-  }
-
   PointCloudSet point_cloud_set;
   point_cloud_set.time = range_data.time;
   for (const auto& hit : range_data.ranges) {
@@ -225,7 +211,6 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
   ++num_accumulated_;
   ++total_num_accumulated_;
 
-  RemoveObsoleteSensorData();
   return MaybeOptimize(range_data.time);
 }
 
@@ -242,20 +227,17 @@ void OptimizingLocalTrajectoryBuilder::AddControlPoint(common::Time t) {
 }
 
 void OptimizingLocalTrajectoryBuilder::RemoveObsoleteSensorData() {
-  if (imu_data_.empty()) {
-    control_points_.clear();
+  if (control_points_.empty()) {
     return;
   }
 
   while (imu_data_.size() > 1 &&
-         (control_points_.empty() ||
-          imu_data_[1].time <= control_points_.front().time)) {
+         (imu_data_[1].time <= control_points_.front().time)) {
     imu_data_.pop_front();
   }
 
   while (odometer_data_.size() > 1 &&
-         (control_points_.empty() ||
-          odometer_data_[1].time <= control_points_.front().time)) {
+         (odometer_data_[1].time <= control_points_.front().time)) {
     odometer_data_.pop_front();
   }
 }
@@ -276,34 +258,42 @@ void OptimizingLocalTrajectoryBuilder::TransformStates(
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
 OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
-  if (control_points_.size() + 1 <
-          size_t(std::floor(ct_window_horizon_ / ct_window_rate_)) ||
+  if (time - initial_data_time_ < ct_window_horizon_ ||
       time - last_optimization_time_ < optimization_rate_) {
-    if (control_points_.size() + 1 <
-        size_t(std::floor(ct_window_horizon_ / ct_window_rate_))) {
-      LOG(INFO) << "No Optimization - not enough control points "
-                << control_points_.size() + 1 << "\t < "
-                << size_t(std::floor(ct_window_horizon_ / ct_window_rate_));
+    if (time - initial_data_time_ < ct_window_horizon_) {
+      LOG(INFO) << "No Optimization - not enough time since initialization "
+                << common::ToSeconds(time - initial_data_time_) << "\t < "
+                << common::ToSeconds(ct_window_horizon_);
     }
+    else {
     LOG(INFO) << "No Optimization - optimization rate threshold "
               << common::ToSeconds(time - last_optimization_time_) << "\t < "
               << common::ToSeconds(optimization_rate_);
+    }
     return nullptr;
   }
+  if(control_points_.empty()) {
+    AddControlPoint(initial_data_time_);
+  }
   last_optimization_time_ = time;
+  if (!imu_calibrated_ &&
+      options_.optimizing_local_trajectory_builder_options()
+          .calibrate_imu()) {
+    CalibrateIMU(imu_data_, gravity_constant_,
+                 linear_acceleration_calibration_,
+                 angular_velocity_calibration_);
+    imu_calibrated_ = true;
+  }
+  while(control_points_.back().time < time) {
+    AddControlPoint(control_points_.back().time + ct_window_rate_);
+  }
 
   ceres::Problem problem;
   if (!active_submaps_.submaps().empty()
   ) {
-    if (!imu_calibrated_ &&
-        options_.optimizing_local_trajectory_builder_options()
-            .calibrate_imu()) {
-      CalibrateIMU(imu_data_, gravity_constant_,
-                   linear_acceleration_calibration_,
-                   angular_velocity_calibration_);
-      imu_calibrated_ = true;
-    }
+
     map_data_initialized_ = true;
+
     std::shared_ptr<const Submap3D> matching_submap =
         active_submaps_.submaps().front();
 
@@ -641,8 +631,8 @@ OptimizingLocalTrajectoryBuilder::PredictState(const State& start_state,
     --it;
   }
 
-  const IntegrateImuResult<double> result =
-      IntegrateImu(imu_data_, linear_acceleration_calibration_,
+  const IntegrateImuWithTranslationResult<double> result =
+      IntegrateImuWithTranslation(imu_data_, linear_acceleration_calibration_,
                    angular_velocity_calibration_, start_time, end_time, &it);
 
   const Eigen::Quaterniond start_rotation(
@@ -656,6 +646,9 @@ OptimizingLocalTrajectoryBuilder::PredictState(const State& start_state,
       Eigen::Map<const Eigen::Vector3d>(start_state.translation.data()) +
       delta_time_seconds *
           Eigen::Map<const Eigen::Vector3d>(start_state.velocity.data());
+              +
+          start_rotation * result.delta_translation -
+          0.5 * gravity_constant_ * delta_time_seconds * delta_time_seconds * Eigen::Vector3d::UnitZ();
   const Eigen::Vector3d velocity =
       Eigen::Map<const Eigen::Vector3d>(start_state.velocity.data()) +
       start_rotation * result.delta_velocity -

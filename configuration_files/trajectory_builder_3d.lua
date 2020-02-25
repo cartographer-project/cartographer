@@ -91,8 +91,10 @@ TRAJECTORY_BUILDER_3D = {
       rotation_weight = 1,
       odometry_translation_weight = 1,
       odometry_rotation_weight = 1,
-      scans_per_optimization_update = 1,
       initialize_map_orientation_with_imu = true,
       calibrate_imu = false,
+      optimization_rate = 0.05,
+      ct_window_horizon = 0.9,
+      ct_window_rate = 0.1,
   },
 }

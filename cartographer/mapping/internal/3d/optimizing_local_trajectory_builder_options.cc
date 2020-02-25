@@ -37,11 +37,15 @@ CreateOptimizingLocalTrajectoryBuilderOptions(
       parameter_dictionary->GetDouble("odometry_translation_weight"));
   options.set_odometry_rotation_weight(
       parameter_dictionary->GetDouble("odometry_rotation_weight"));
-  options.set_scans_per_optimization_update(
-      parameter_dictionary->GetInt("scans_per_optimization_update"));
   options.set_initialize_map_orientation_with_imu(
       parameter_dictionary->GetBool("initialize_map_orientation_with_imu"));
   options.set_calibrate_imu(parameter_dictionary->GetBool("calibrate_imu"));
+  options.set_optimization_rate(
+      parameter_dictionary->GetDouble("optimization_rate"));
+  options.set_ct_window_horizon(
+      parameter_dictionary->GetDouble("ct_window_horizon"));
+  options.set_ct_window_rate(
+      parameter_dictionary->GetDouble("ct_window_rate"));
 
   return options;
 }

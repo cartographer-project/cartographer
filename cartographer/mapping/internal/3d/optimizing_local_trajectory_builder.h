@@ -142,11 +142,13 @@ class OptimizingLocalTrajectoryBuilder {
   int num_accumulated_;
   int total_num_accumulated_;
   common::Time last_optimization_time_;
+  common::Time initial_data_time_;
   common::Duration optimization_rate_;
 
   std::deque<ControlPoint> control_points_;
-  double gravity_constant_ = 9.8;
+  double gravity_constant_ = 9.80665;
   std::deque<sensor::ImuData> imu_data_;
+  std::deque<sensor::ImuData> imu_data_debug_;
   std::deque<sensor::OdometryData> odometer_data_;
   std::deque<PointCloudSet> point_cloud_data_;
 
