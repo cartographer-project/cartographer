@@ -47,8 +47,8 @@ TEST(IMUIntegrationTest, ZeroIntegration) {
     --it;
   }
   IntegrateImuWithTranslationResult<double> result =
-      IntegrateImuWithTranslation(imu_data_deque, start_time, current_time,
-                                  &it);
+      IntegrateImuWithTranslationEuler(imu_data_deque, start_time, current_time,
+                                       &it);
 
   EXPECT_NEAR(0.f, result.delta_velocity.norm(), kPrecision);
   EXPECT_NEAR(0.f, result.delta_translation.norm(), kPrecision);
@@ -76,8 +76,8 @@ TEST(IMUIntegrationTest, ConstantAcceleration) {
       --it;
     }
     IntegrateImuWithTranslationResult<double> result =
-        IntegrateImuWithTranslation(imu_data_deque, start_time, current_time,
-                                    &it);
+        IntegrateImuWithTranslationEuler(imu_data_deque, start_time,
+                                         current_time, &it);
     double delta_time = common::ToSeconds(current_time - start_time);
     Eigen::Vector3d expected_velocity =
         delta_time * initial_gravity_acceleration;

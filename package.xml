@@ -50,6 +50,7 @@
   <depend>lua5.2-dev</depend>
   <depend>ninja-build</depend>
   <depend>python2</depend>
+  <depend>imu_integrator_rk4</depend>
 
   <export>
     <build_type>cmake</build_type>

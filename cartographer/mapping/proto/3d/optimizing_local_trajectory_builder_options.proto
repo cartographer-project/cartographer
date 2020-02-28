@@ -17,6 +17,11 @@ syntax = "proto3";
 package cartographer.mapping.proto;
 
 message OptimizingLocalTrajectoryBuilderOptions {
+  enum IMUIntegrator {
+    INVALID = 0;
+    EULER = 1;
+    RK4 = 2;
+  }
   double high_resolution_grid_weight = 6;
   double low_resolution_grid_weight = 7;
   double velocity_weight = 1;
@@ -24,10 +29,10 @@ message OptimizingLocalTrajectoryBuilderOptions {
   double rotation_weight = 3;
   double odometry_translation_weight = 4;
   double odometry_rotation_weight = 5;
-//  int32 scans_per_optimization_update = 8;
   bool initialize_map_orientation_with_imu = 9;
   bool calibrate_imu = 10;
   double optimization_rate = 11;
   double ct_window_horizon = 12;
   double ct_window_rate = 13;
+  IMUIntegrator imu_integrator = 14;
 }

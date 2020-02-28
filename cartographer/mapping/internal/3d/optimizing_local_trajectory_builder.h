@@ -118,6 +118,9 @@ class OptimizingLocalTrajectoryBuilder {
   State PredictState(const State& start_state, const common::Time start_time,
                      const common::Time end_time);
 
+  State PredictStateRK4(const State& start_state, const common::Time start_time,
+                        const common::Time end_time);
+
   void RemoveObsoleteSensorData();
 
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
@@ -148,7 +151,6 @@ class OptimizingLocalTrajectoryBuilder {
   std::deque<ControlPoint> control_points_;
   double gravity_constant_ = 9.80665;
   std::deque<sensor::ImuData> imu_data_;
-  std::deque<sensor::ImuData> imu_data_debug_;
   std::deque<sensor::OdometryData> odometer_data_;
   std::deque<PointCloudSet> point_cloud_data_;
 
@@ -162,7 +164,6 @@ class OptimizingLocalTrajectoryBuilder {
   MotionFilter motion_filter_;
   std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
   bool map_update_enabled_;
-  bool map_data_initialized_;
 };
 
 }  // namespace mapping
