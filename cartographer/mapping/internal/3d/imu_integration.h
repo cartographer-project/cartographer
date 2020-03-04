@@ -175,6 +175,7 @@ IntegrateImuWithTranslationResult<T> IntegrateImuWithTranslationRK4(
     CHECK_GE(std::next(*it)->time, start_time);
   }
   // TODO(kdaun) add extrapolation
+  // TODO(kdaun) finish templating
 
   common::Time current_time = start_time;
   imu_integrator::ImuIntegratorRK4 integrator(0.0, 0.0, 0.0, 0.0, 9.80665);
@@ -310,6 +311,33 @@ IntegrateImuWithTranslationResult<double> IntegrateImuWithTranslation(
     }
     case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4: {
       return IntegrateImuWithTranslationRK4(imu_data, start_time, end_time, it);
+    }
+    default:
+      LOG(FATAL) << "Unsupported imu integrator type.";
+  }
+}
+
+// Returns velocity delta in map frame.
+template <typename T, typename RangeType, typename IteratorType>
+IntegrateImuWithTranslationResult<double> IntegrateImuWithTranslation(
+    const RangeType& imu_data,
+    const Eigen::Transform<T, 3, Eigen::Affine>&
+        linear_acceleration_calibration,
+    const Eigen::Transform<T, 3, Eigen::Affine>& angular_velocity_calibration,
+    const common::Time start_time, const common::Time end_time,
+    const ::cartographer::mapping::proto::
+        OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator& integrator_type,
+    IteratorType* const it) {
+  switch (integrator_type) {
+    case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_EULER: {
+      return IntegrateImuWithTranslationEuler(
+          imu_data, linear_acceleration_calibration,
+          angular_velocity_calibration, start_time, end_time, it);
+    }
+    case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4: {
+      return IntegrateImuWithTranslationRK4(
+          imu_data, linear_acceleration_calibration,
+          angular_velocity_calibration, start_time, end_time, it);
     }
     default:
       LOG(FATAL) << "Unsupported imu integrator type.";

@@ -40,27 +40,80 @@ namespace mapping {
 
 namespace {
 
-// Computes the cost of differences between two velocities. For the constant
-// velocity model the residuals are just the vector difference.
-class VelocityDeltaCostFunctor {
+class PredictionIMUCostFunctor {
  public:
-  explicit VelocityDeltaCostFunctor(const double scaling_factor)
-      : scaling_factor_(scaling_factor) {}
+  explicit PredictionIMUCostFunctor(
+      const double translation_scaling_factor,
+      const double velocity_scaling_factor,
+      const double rotation_scaling_factor, const double delta_time_seconds,
+      const IntegrateImuWithTranslationResult<double>& imu_integral)
 
-  VelocityDeltaCostFunctor(const VelocityDeltaCostFunctor&) = delete;
-  VelocityDeltaCostFunctor& operator=(const VelocityDeltaCostFunctor&) = delete;
+      : translation_scaling_factor_(translation_scaling_factor),
+        velocity_scaling_factor_(velocity_scaling_factor),
+        rotation_scaling_factor_(rotation_scaling_factor),
+        delta_time_seconds_(delta_time_seconds),
+        imu_integral_(imu_integral) {}
+
+  PredictionIMUCostFunctor(const PredictionIMUCostFunctor&) = delete;
+  PredictionIMUCostFunctor& operator=(const PredictionIMUCostFunctor&) = delete;
 
   template <typename T>
-  bool operator()(const T* const old_velocity, const T* const new_velocity,
+  bool operator()(const T* const old_translation, const T* const old_velocity,
+                  const T* const old_rotation, const T* const new_translation,
+                  const T* const new_velocity, const T* const new_rotation,
                   T* residual) const {
-    residual[0] = scaling_factor_ * (new_velocity[0] - old_velocity[0]);
-    residual[1] = scaling_factor_ * (new_velocity[1] - old_velocity[1]);
-    residual[2] = scaling_factor_ * (new_velocity[2] - old_velocity[2]);
+    const Eigen::Matrix<T, 3, 1> start_translation(
+        old_translation[0], old_translation[1], old_translation[2]);
+    const Eigen::Matrix<T, 3, 1> end_translation(
+        new_translation[0], new_translation[1], new_translation[2]);
+    const Eigen::Matrix<T, 3, 1> start_velocity(
+        old_velocity[0], old_velocity[1], old_velocity[2]);
+    const Eigen::Matrix<T, 3, 1> end_velocity(new_velocity[0], new_velocity[1],
+                                              new_velocity[2]);
+
+    const Eigen::Quaternion<T> start_rotation(old_rotation[0], old_rotation[1],
+                                              old_rotation[2], old_rotation[3]);
+    const Eigen::Quaternion<T> end_rotation(new_rotation[0], new_rotation[1],
+                                            new_rotation[2], new_rotation[3]);
+
+    const Eigen::Matrix<T, 3, 1> predicted_translation =
+        start_translation + T(delta_time_seconds_) * start_velocity +
+        start_rotation * imu_integral_.delta_translation.cast<T>();
+
+    const Eigen::Matrix<T, 3, 1> predicted_velocity =
+        start_velocity +
+        start_rotation * imu_integral_.delta_velocity.cast<T>();
+
+    residual[0] = translation_scaling_factor_ *
+                  (new_translation[0] - predicted_translation[0]);
+    residual[1] = translation_scaling_factor_ *
+                  (new_translation[1] - predicted_translation[1]);
+    residual[2] = translation_scaling_factor_ *
+                  (new_translation[2] - predicted_translation[2]);
+
+    residual[3] =
+        velocity_scaling_factor_ * (new_velocity[0] - predicted_velocity[0]);
+    residual[4] =
+        velocity_scaling_factor_ * (new_velocity[1] - predicted_velocity[1]);
+    residual[5] =
+        velocity_scaling_factor_ * (new_velocity[2] - predicted_velocity[2]);
+
+    const Eigen::Quaternion<T> rotation_error =
+        end_rotation.conjugate() * start_rotation *
+        imu_integral_.delta_rotation.cast<T>();
+    residual[6] = rotation_scaling_factor_ * rotation_error.x();
+    residual[7] = rotation_scaling_factor_ * rotation_error.y();
+    residual[8] = rotation_scaling_factor_ * rotation_error.z();
+
     return true;
   }
 
  private:
-  const double scaling_factor_;
+  const double translation_scaling_factor_;
+  const double velocity_scaling_factor_;
+  const double rotation_scaling_factor_;
+  const double delta_time_seconds_;
+  const IntegrateImuWithTranslationResult<double> imu_integral_;
 };
 
 class RelativeTranslationAndYawCostFunction {
@@ -268,11 +321,6 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                 << common::ToSeconds(time - initial_data_time_) << "\t < "
                 << common::ToSeconds(ct_window_horizon_);
     }
-    else {
-    LOG(INFO) << "No Optimization - optimization rate threshold "
-              << common::ToSeconds(time - last_optimization_time_) << "\t < "
-              << common::ToSeconds(optimization_rate_);
-    }
     return nullptr;
   }
   if(control_points_.empty()) {
@@ -386,39 +434,32 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     }
     auto it = imu_data_.cbegin();
     for (size_t i = 1; i < control_points_.size(); ++i) {
-      problem.AddResidualBlock(
-          new ceres::AutoDiffCostFunction<VelocityDeltaCostFunctor, 3, 3, 3>(
-              new VelocityDeltaCostFunctor(
-                  options_.optimizing_local_trajectory_builder_options()
-                      .velocity_weight())),
-          nullptr, control_points_[i - 1].state.velocity.data(),
-          control_points_[i].state.velocity.data());
-
-      problem.AddResidualBlock(
-          new ceres::AutoDiffCostFunction<TranslationCostFunction, 3, 3, 3, 3>(
-              new TranslationCostFunction(
-                  options_.optimizing_local_trajectory_builder_options()
-                      .translation_weight(),
-                  common::ToSeconds(control_points_[i].time -
-                                    control_points_[i - 1].time))),
-          nullptr, control_points_[i - 1].state.translation.data(),
-          control_points_[i].state.translation.data(),
-          control_points_[i - 1].state.velocity.data());
-
-      IntegrateImuWithTranslationResult<double> result =
+      IntegrateImuWithTranslationResult<double> imu_integral =
           IntegrateImuWithTranslation(
-              imu_data_, control_points_[i - 1].time, control_points_[i].time,
+              imu_data_, linear_acceleration_calibration_,
+              angular_velocity_calibration_, control_points_[i - 1].time,
+              control_points_[i].time,
               options_.optimizing_local_trajectory_builder_options()
                   .imu_integrator(),
               &it);
 
       problem.AddResidualBlock(
-          new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4>(
-              new RotationCostFunction(
-                  options_.optimizing_local_trajectory_builder_options()
-                      .rotation_weight(),
-                  result.delta_rotation)),
-          nullptr, control_points_[i - 1].state.rotation.data(),
+          new ceres::AutoDiffCostFunction<PredictionIMUCostFunctor, 9, 3, 3, 4,
+                                          3, 3, 4>(new PredictionIMUCostFunctor(
+              options_.optimizing_local_trajectory_builder_options()
+                  .translation_weight(),
+              options_.optimizing_local_trajectory_builder_options()
+                  .velocity_weight(),
+              options_.optimizing_local_trajectory_builder_options()
+                  .rotation_weight(),
+              common::ToSeconds(control_points_[i].time -
+                                control_points_[i - 1].time),
+              imu_integral)),
+          nullptr, control_points_[i - 1].state.translation.data(),
+          control_points_[i - 1].state.velocity.data(),
+          control_points_[i - 1].state.rotation.data(),
+          control_points_[i].state.translation.data(),
+          control_points_[i].state.velocity.data(),
           control_points_[i].state.rotation.data());
     }
 
@@ -457,10 +498,6 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
       }
     }
 
-    for (size_t i = 1; i < control_points_.size(); ++i) {
-      problem.SetParameterization(control_points_[i].state.rotation.data(),
-                                  new ceres::QuaternionParameterization());
-    }
     problem.SetParameterBlockConstant(
         control_points_.front().state.translation.data());
     problem.SetParameterBlockConstant(
@@ -468,6 +505,10 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     problem.SetParameterBlockConstant(
         control_points_.front().state.velocity.data());
 
+    for (size_t i = 1; i < control_points_.size(); ++i) {
+      problem.SetParameterization(control_points_[i].state.rotation.data(),
+                                  new ceres::QuaternionParameterization());
+    }
     ceres::Solver::Summary summary;
     ceres::Solve(ceres_solver_options_, &problem, &summary);
     // The optimized states in 'control_points_' are in the submap frame and we
@@ -660,10 +701,6 @@ OptimizingLocalTrajectoryBuilder::PredictState(const State& start_state,
       Eigen::Map<const Eigen::Vector3d>(start_state.translation.data()) +
       delta_time_seconds *
           Eigen::Map<const Eigen::Vector3d>(start_state.velocity.data());
-  //              +
-  //          start_rotation * result.delta_translation -
-  //          0.5 * gravity_constant_ * delta_time_seconds * delta_time_seconds
-  //          * Eigen::Vector3d::UnitZ();
   const Eigen::Vector3d velocity =
       Eigen::Map<const Eigen::Vector3d>(start_state.velocity.data()) +
       start_rotation * result.delta_velocity -
