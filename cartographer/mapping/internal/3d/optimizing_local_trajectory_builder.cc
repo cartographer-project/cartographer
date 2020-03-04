@@ -389,41 +389,47 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
             break;
           }
           case GridType::TSDF: {
-            problem.AddResidualBlock(
-                scan_matching::InterpolatedTSDFSpaceCostFunction3D::
-                    CreateAutoDiffCostFunction(
-                        options_.optimizing_local_trajectory_builder_options()
-                                .high_resolution_grid_weight() /
-                            std::sqrt(static_cast<double>(
-                                point_cloud_set.high_resolution_filtered_points
-                                    .size())),
-                        point_cloud_set.high_resolution_filtered_points,
-                        static_cast<const HybridGridTSDF&>(
-                            matching_submap->high_resolution_hybrid_grid()),
-                        interpolation_factor),
-                nullptr,
-                std::prev(next_control_point)->state.translation.data(),
-                std::prev(next_control_point)->state.rotation.data(),
-                next_control_point->state.translation.data(),
-                next_control_point->state.rotation.data());
+            if (options_.optimizing_local_trajectory_builder_options()
+                    .high_resolution_grid_weight() > 0.0) {
+              problem.AddResidualBlock(
+                  scan_matching::InterpolatedTSDFSpaceCostFunction3D::
+                      CreateAutoDiffCostFunction(
+                          options_.optimizing_local_trajectory_builder_options()
+                                  .high_resolution_grid_weight() /
+                              std::sqrt(static_cast<double>(
+                                  point_cloud_set
+                                      .high_resolution_filtered_points.size())),
+                          point_cloud_set.high_resolution_filtered_points,
+                          static_cast<const HybridGridTSDF&>(
+                              matching_submap->high_resolution_hybrid_grid()),
+                          interpolation_factor),
+                  nullptr,
+                  std::prev(next_control_point)->state.translation.data(),
+                  std::prev(next_control_point)->state.rotation.data(),
+                  next_control_point->state.translation.data(),
+                  next_control_point->state.rotation.data());
+            }
 
-            problem.AddResidualBlock(
-                scan_matching::InterpolatedTSDFSpaceCostFunction3D::
-                    CreateAutoDiffCostFunction(
-                        options_.optimizing_local_trajectory_builder_options()
-                                .low_resolution_grid_weight() /
-                            std::sqrt(static_cast<double>(
-                                point_cloud_set.low_resolution_filtered_points
-                                    .size())),
-                        point_cloud_set.low_resolution_filtered_points,
-                        static_cast<const HybridGridTSDF&>(
-                            matching_submap->low_resolution_hybrid_grid()),
-                        interpolation_factor),
-                nullptr,
-                std::prev(next_control_point)->state.translation.data(),
-                std::prev(next_control_point)->state.rotation.data(),
-                next_control_point->state.translation.data(),
-                next_control_point->state.rotation.data());
+            if (options_.optimizing_local_trajectory_builder_options()
+                    .low_resolution_grid_weight() > 0.0) {
+              problem.AddResidualBlock(
+                  scan_matching::InterpolatedTSDFSpaceCostFunction3D::
+                      CreateAutoDiffCostFunction(
+                          options_.optimizing_local_trajectory_builder_options()
+                                  .low_resolution_grid_weight() /
+                              std::sqrt(static_cast<double>(
+                                  point_cloud_set.low_resolution_filtered_points
+                                      .size())),
+                          point_cloud_set.low_resolution_filtered_points,
+                          static_cast<const HybridGridTSDF&>(
+                              matching_submap->low_resolution_hybrid_grid()),
+                          interpolation_factor),
+                  nullptr,
+                  std::prev(next_control_point)->state.translation.data(),
+                  std::prev(next_control_point)->state.rotation.data(),
+                  next_control_point->state.translation.data(),
+                  next_control_point->state.rotation.data());
+            }
             break;
           }
           case GridType::NONE:

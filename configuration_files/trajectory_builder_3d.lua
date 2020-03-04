@@ -80,6 +80,8 @@ TRAJECTORY_BUILDER_3D = {
         maximum_weight = 1000.,
         num_free_space_voxels = 0,
         project_sdf_distance_to_scan_normal = false,
+        weight_function_epsilon = 0.1,
+        weight_function_sigma = 4.,
       },
     },
   },

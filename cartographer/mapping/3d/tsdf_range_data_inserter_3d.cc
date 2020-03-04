@@ -54,6 +54,10 @@ proto::TSDFRangeDataInserterOptions3D CreateTSDFRangeDataInserterOptions3D(
       parameter_dictionary->GetBool("project_sdf_distance_to_scan_normal"));
   options.set_num_free_space_voxels(
       parameter_dictionary->GetInt("num_free_space_voxels"));
+  options.set_weight_function_epsilon(
+      parameter_dictionary->GetDouble("weight_function_epsilon"));
+  options.set_weight_function_sigma(
+      parameter_dictionary->GetDouble("weight_function_sigma"));
   return options;
 }
 
@@ -200,6 +204,16 @@ void TSDFRangeDataInserter3D::InsertHit(const Eigen::Vector3f& hit,
       update_tsd =
           common::Clamp(update_tsd, -truncation_distance, truncation_distance);
       float update_weight = 1.0;
+      float epsilon = options_.tsdf_range_data_inserter_options_3d()
+                          .weight_function_epsilon();
+      float normalized_update_tsd = update_tsd / truncation_distance;
+      // Exponential weight drop-off behind surface
+      if (normalized_update_tsd < -epsilon) {
+        float sigma = options_.tsdf_range_data_inserter_options_3d()
+                          .weight_function_sigma();
+        update_weight = float(
+            std::exp(-sigma * std::pow(-normalized_update_tsd - epsilon, 2)));
+      }
       UpdateCell(update_cell_index, update_tsd, update_weight, tsdf);
     }
   } else {
@@ -367,6 +381,10 @@ void TSDFRangeDataInserter3D::UpdateCell(const Eigen::Array3i& cell,
       options_.tsdf_range_data_inserter_options_3d().maximum_weight());
   updated_weight = std::min(updated_weight, maximum_weight);
   tsdf->SetCell(cell, updated_sdf, updated_weight);
+  if (old_weight == tsdf->GetWeight(cell) &&
+      old_weight < 0.999 * maximum_weight) {
+    LOG(WARNING) << "Weight underflow " << update_weight;
+  }
 }
 
 }  // namespace mapping

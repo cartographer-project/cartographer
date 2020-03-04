@@ -16,4 +16,11 @@ message TSDFRangeDataInserterOptions3D {
   // Project the distance between the updated cell und the range observation to
   // the estimated scan normal.
   bool project_sdf_distance_to_scan_normal = 4;
+
+  // Relative distance (to truncation distance) behind surface with constant
+  // weight.
+  double weight_function_epsilon = 5;
+
+  // Exponential drop-off model variance.
+  double weight_function_sigma = 6;
 }
