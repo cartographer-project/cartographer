@@ -46,13 +46,25 @@ class PredictionIMUCostFunctor {
       const double translation_scaling_factor,
       const double velocity_scaling_factor,
       const double rotation_scaling_factor, const double delta_time_seconds,
-      const IntegrateImuWithTranslationResult<double>& imu_integral)
-
+      const std::deque<sensor::ImuData>& imu_data,
+      const Eigen::Transform<double, 3, Eigen::Affine>&
+          linear_acceleration_calibration,
+      const Eigen::Transform<double, 3, Eigen::Affine>&
+          angular_velocity_calibration,
+      const common::Time start_time, const common::Time end_time,
+      const ::cartographer::mapping::proto::
+          OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator&
+              integrator_type)
       : translation_scaling_factor_(translation_scaling_factor),
         velocity_scaling_factor_(velocity_scaling_factor),
         rotation_scaling_factor_(rotation_scaling_factor),
         delta_time_seconds_(delta_time_seconds),
-        imu_integral_(imu_integral) {}
+        imu_data_(imu_data),
+        linear_acceleration_calibration_(linear_acceleration_calibration),
+        angular_velocity_calibration_(angular_velocity_calibration),
+        start_time_(start_time),
+        end_time_(end_time),
+        integrator_type_(integrator_type) {}
 
   PredictionIMUCostFunctor(const PredictionIMUCostFunctor&) = delete;
   PredictionIMUCostFunctor& operator=(const PredictionIMUCostFunctor&) = delete;
@@ -76,13 +88,30 @@ class PredictionIMUCostFunctor {
     const Eigen::Quaternion<T> end_rotation(new_rotation[0], new_rotation[1],
                                             new_rotation[2], new_rotation[3]);
 
+    auto it = --imu_data_.cend();
+    while (it->time > start_time_) {
+      CHECK(it != imu_data_.cbegin());
+      --it;
+    }
+
+    const std::array<T, 3> start_translation_arr{
+        {old_translation[0], old_translation[1], old_translation[2]}};
+    const std::array<T, 4> start_rotation_arr{
+        {old_rotation[0], old_rotation[1], old_rotation[2], old_rotation[3]}};
+    const std::array<T, 3> start_velocity_arr{
+        {old_velocity[0], old_velocity[1], old_velocity[2]}};
+    IntegrateImuWithTranslationResult<T> imu_integral =
+        IntegrateImuWithTranslationRK4(
+            imu_data_, linear_acceleration_calibration_,
+            angular_velocity_calibration_, start_translation_arr,
+            start_rotation_arr, start_velocity_arr, start_time_, end_time_,
+            &it);
+
     const Eigen::Matrix<T, 3, 1> predicted_translation =
-        start_translation + T(delta_time_seconds_) * start_velocity +
-        start_rotation * imu_integral_.delta_translation.cast<T>();
+        imu_integral.delta_translation;
 
     const Eigen::Matrix<T, 3, 1> predicted_velocity =
-        start_velocity +
-        start_rotation * imu_integral_.delta_velocity.cast<T>();
+        imu_integral.delta_velocity;
 
     residual[0] = translation_scaling_factor_ *
                   (new_translation[0] - predicted_translation[0]);
@@ -99,8 +128,7 @@ class PredictionIMUCostFunctor {
         velocity_scaling_factor_ * (new_velocity[2] - predicted_velocity[2]);
 
     const Eigen::Quaternion<T> rotation_error =
-        end_rotation.conjugate() * start_rotation *
-        imu_integral_.delta_rotation.cast<T>();
+        end_rotation.conjugate() * imu_integral.delta_rotation;
     residual[6] = rotation_scaling_factor_ * rotation_error.x();
     residual[7] = rotation_scaling_factor_ * rotation_error.y();
     residual[8] = rotation_scaling_factor_ * rotation_error.z();
@@ -113,7 +141,44 @@ class PredictionIMUCostFunctor {
   const double velocity_scaling_factor_;
   const double rotation_scaling_factor_;
   const double delta_time_seconds_;
-  const IntegrateImuWithTranslationResult<double> imu_integral_;
+  const std::deque<sensor::ImuData>& imu_data_;
+  const Eigen::Transform<double, 3, Eigen::Affine>&
+      linear_acceleration_calibration_;
+  const Eigen::Transform<double, 3, Eigen::Affine>&
+      angular_velocity_calibration_;
+  const common::Time start_time_;
+  const common::Time end_time_;
+  const ::cartographer::mapping::proto::
+      OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator& integrator_type_;
+};
+
+class GravityDirectionCostFunction {
+ public:
+  GravityDirectionCostFunction(
+      const double scaling_factor,
+      const Eigen::Quaterniond& gravity_direction_in_tracking)
+      : scaling_factor_(scaling_factor),
+        gravity_direction_in_tracking_(gravity_direction_in_tracking) {}
+
+  GravityDirectionCostFunction(const GravityDirectionCostFunction&) = delete;
+  GravityDirectionCostFunction& operator=(const GravityDirectionCostFunction&) =
+      delete;
+
+  template <typename T>
+  bool operator()(const T* const orientation, T* residual) const {
+    Eigen::Quaternion<T> qorientation(orientation[0], orientation[1],
+                                      orientation[2], orientation[3]);
+
+    Eigen::Quaternion<T> delta =
+        gravity_direction_in_tracking_.cast<T>() * qorientation;
+    residual[0] = scaling_factor_ * transform::GetRoll(delta);
+    residual[1] = scaling_factor_ * transform::GetPitch(delta);
+    return true;
+  }
+
+ private:
+  const double scaling_factor_;
+  const Eigen::Quaterniond gravity_direction_in_tracking_;
 };
 
 class RelativeTranslationAndYawCostFunction {
@@ -216,14 +281,20 @@ void OptimizingLocalTrajectoryBuilder::AddOdometryData(
     LOG(INFO) << "IMU not yet initialized.";
     return;
   }
+  if (!imu_data_.empty() && (imu_data_.front().time >= odometry_data.time)) {
+    // Until we've initialized the extrapolator with our first IMU message, we
+    // cannot compute the orientation of the rangefinder.
+    LOG(INFO) << "Odometry data dropped to maintain IMU consistency.";
+    return;
+  }
   odometer_data_.push_back(odometry_data);
 }
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
 OptimizingLocalTrajectoryBuilder::AddRangeData(
     const std::string& sensor_id,
-    const sensor::TimedPointCloudData& range_data) {
-  CHECK_GT(range_data.ranges.size(), 0);
+    const sensor::TimedPointCloudData& range_data_in_tracking) {
+  CHECK_GT(range_data_in_tracking.ranges.size(), 0);
 
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator with our first IMU message, we
@@ -232,9 +303,10 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
     return nullptr;
   }
   PointCloudSet point_cloud_set;
-  point_cloud_set.time = range_data.time;
-  for (const auto& hit : range_data.ranges) {
-    const Eigen::Vector3f delta = hit.position - range_data.origin;
+  point_cloud_set.time = range_data_in_tracking.time;
+  point_cloud_set.origin = range_data_in_tracking.origin;
+  for (const auto& hit : range_data_in_tracking.ranges) {
+    const Eigen::Vector3f delta = hit.position - range_data_in_tracking.origin;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
@@ -267,18 +339,28 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
   ++num_accumulated_;
   ++total_num_accumulated_;
 
-  return MaybeOptimize(range_data.time);
+  return MaybeOptimize(range_data_in_tracking.time);
 }
 
 void OptimizingLocalTrajectoryBuilder::AddControlPoint(common::Time t) {
   if (control_points_.empty()) {
-    control_points_.push_back(ControlPoint{
-        t, State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
-                 Eigen::Vector3d::Zero())});
+    if (options_.optimizing_local_trajectory_builder_options()
+            .initialize_map_orientation_with_imu()) {
+      Eigen::Quaterniond g = extrapolator_->EstimateGravityOrientation(t);
+      LOG(INFO) << "g " << g.vec();
+      control_points_.push_back(ControlPoint{
+          t, State(Eigen::Vector3d::Zero(), g, Eigen::Vector3d::Zero())});
+    } else {
+      control_points_.push_back(ControlPoint{
+          t, State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
+                   Eigen::Vector3d::Zero())});
+    }
   } else {
     control_points_.push_back(
         ControlPoint{t, PredictStateRK4(control_points_.back().state,
                                         control_points_.back().time, t)});
+    //    control_points_.push_back(
+    //        ControlPoint{t, control_points_.back().state});
   }
 }
 
@@ -314,12 +396,12 @@ void OptimizingLocalTrajectoryBuilder::TransformStates(
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
 OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
-  if (time - initial_data_time_ < ct_window_horizon_ ||
+  if (time - initial_data_time_ < 2.0 * ct_window_horizon_ ||
       time - last_optimization_time_ < optimization_rate_) {
-    if (time - initial_data_time_ < ct_window_horizon_) {
+    if (time - initial_data_time_ < 2.0 * ct_window_horizon_) {
       LOG(INFO) << "No Optimization - not enough time since initialization "
                 << common::ToSeconds(time - initial_data_time_) << "\t < "
-                << common::ToSeconds(ct_window_horizon_);
+                << 2.0 * common::ToSeconds(ct_window_horizon_);
     }
     return nullptr;
   }
@@ -438,17 +520,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
         }
       }
     }
-    auto it = imu_data_.cbegin();
     for (size_t i = 1; i < control_points_.size(); ++i) {
-      IntegrateImuWithTranslationResult<double> imu_integral =
-          IntegrateImuWithTranslation(
-              imu_data_, linear_acceleration_calibration_,
-              angular_velocity_calibration_, control_points_[i - 1].time,
-              control_points_[i].time,
-              options_.optimizing_local_trajectory_builder_options()
-                  .imu_integrator(),
-              &it);
-
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<PredictionIMUCostFunctor, 9, 3, 3, 4,
                                           3, 3, 4>(new PredictionIMUCostFunctor(
@@ -460,13 +532,26 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                   .rotation_weight(),
               common::ToSeconds(control_points_[i].time -
                                 control_points_[i - 1].time),
-              imu_integral)),
+              imu_data_, linear_acceleration_calibration_,
+              angular_velocity_calibration_, control_points_[i - 1].time,
+              control_points_[i].time,
+              options_.optimizing_local_trajectory_builder_options()
+                  .imu_integrator())),
           nullptr, control_points_[i - 1].state.translation.data(),
           control_points_[i - 1].state.velocity.data(),
           control_points_[i - 1].state.rotation.data(),
           control_points_[i].state.translation.data(),
           control_points_[i].state.velocity.data(),
           control_points_[i].state.rotation.data());
+
+      //      problem.AddResidualBlock(
+      //          new ceres::AutoDiffCostFunction<GravityDirectionCostFunction,
+      //          2, 4>(new GravityDirectionCostFunction(
+      //              0.3 *
+      //              options_.optimizing_local_trajectory_builder_options()
+      //                  .rotation_weight(),
+      //              extrapolator_->EstimateGravityOrientation(control_points_[i].time))),
+      //          nullptr,control_points_[i].state.rotation.data());
     }
 
     if (odometer_data_.size() > 1) {
@@ -551,11 +636,12 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
           accumulated_range_data_in_tracking.returns.push_back(transform *
                                                                point);
         }
+        accumulated_range_data_in_tracking.origin =
+            (transform * point_cloud_set.origin);
       }
     }
   } else {
     CHECK(control_points_.front().time <= point_cloud_data_.front().time);
-    //    CHECK(control_points_.back().time >= point_cloud_data_.back().time);
     while (ct_window_horizon_ <
            control_points_.back().time - point_cloud_data_.front().time) {
       while (std::next(control_points_.begin())->time <
@@ -574,6 +660,8 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
       for (const auto& point : point_cloud_data_.front().points) {
         accumulated_range_data_in_tracking.returns.push_back(transform * point);
       }
+      accumulated_range_data_in_tracking.origin =
+          (transform * point_cloud_data_.front().origin);
       point_cloud_data_.pop_front();
     }
   }
@@ -681,20 +769,19 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
                       std::move(insertion_submaps)});
 }
 
-OptimizingLocalTrajectoryBuilder::State
-OptimizingLocalTrajectoryBuilder::PredictState(const State& start_state,
-                                               const common::Time start_time,
-                                               const common::Time end_time) {
+State OptimizingLocalTrajectoryBuilder::PredictState(
+    const State& start_state, const common::Time start_time,
+    const common::Time end_time) {
   auto it = --imu_data_.cend();
   while (it->time > start_time) {
     CHECK(it != imu_data_.cbegin());
     --it;
   }
 
-  const IntegrateImuWithTranslationResult<double> result =
-      IntegrateImuWithTranslationEuler(
-          imu_data_, linear_acceleration_calibration_,
-          angular_velocity_calibration_, start_time, end_time, &it);
+  const IntegrateImuWithTranslationResult<double> result;  // =
+  //      IntegrateImuWithTranslationEuler(
+  //          imu_data_, linear_acceleration_calibration_,
+  //          angular_velocity_calibration_, start_time, end_time, &it);
 
   const Eigen::Quaterniond start_rotation(
       start_state.rotation[0], start_state.rotation[1], start_state.rotation[2],
@@ -715,10 +802,9 @@ OptimizingLocalTrajectoryBuilder::PredictState(const State& start_state,
   return State(position, orientation, velocity);
 }
 
-OptimizingLocalTrajectoryBuilder::State
-OptimizingLocalTrajectoryBuilder::PredictStateRK4(const State& start_state,
-                                                  const common::Time start_time,
-                                                  const common::Time end_time) {
+State OptimizingLocalTrajectoryBuilder::PredictStateRK4(
+    const State& start_state, const common::Time start_time,
+    const common::Time end_time) {
   auto it = --imu_data_.cend();
   while (it->time > start_time) {
     CHECK(it != imu_data_.cbegin());
@@ -728,22 +814,13 @@ OptimizingLocalTrajectoryBuilder::PredictStateRK4(const State& start_state,
   const IntegrateImuWithTranslationResult<double> result =
       IntegrateImuWithTranslationRK4(
           imu_data_, linear_acceleration_calibration_,
-          angular_velocity_calibration_, start_time, end_time, &it);
+          angular_velocity_calibration_, start_state.translation,
+          start_state.rotation, start_state.velocity, start_time, end_time,
+          &it);
 
-  const Eigen::Quaterniond start_rotation(
-      start_state.rotation[0], start_state.rotation[1], start_state.rotation[2],
-      start_state.rotation[3]);
-  const Eigen::Quaterniond orientation = start_rotation * result.delta_rotation;
-  const double delta_time_seconds = common::ToSeconds(end_time - start_time);
-
-  const Eigen::Vector3d position =
-      Eigen::Map<const Eigen::Vector3d>(start_state.translation.data()) +
-      delta_time_seconds *
-          Eigen::Map<const Eigen::Vector3d>(start_state.velocity.data()) +
-      start_rotation * result.delta_translation;
-  const Eigen::Vector3d velocity =
-      Eigen::Map<const Eigen::Vector3d>(start_state.velocity.data()) +
-      start_rotation * result.delta_velocity;
+  const Eigen::Quaterniond orientation = result.delta_rotation;
+  const Eigen::Vector3d position = result.delta_translation;
+  const Eigen::Vector3d velocity = result.delta_velocity;
 
   return State(position, orientation, velocity);
 }

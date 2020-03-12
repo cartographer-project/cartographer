@@ -36,6 +36,42 @@ FloatType GetAngle(const Rigid3<FloatType>& transform) {
                                    std::abs(transform.rotation().w()));
 }
 
+// Returns the roll component in radians of the given 3D 'rotation'. Assuming
+// 'rotation' is composed of three rotations around X, then Y, then Z, returns
+// the angle of the Z rotation.
+template <typename T>
+T GetRoll(const Eigen::Quaternion<T>& q) {
+  T sinr_cosp = T(2) * (q.w() * q.x() + q.y() * q.z());
+  T cosr_cosp = T(1) - T(2) * (q.x() * q.x() + q.y() * q.y());
+  return atan2(sinr_cosp, cosr_cosp);
+}
+
+// Returns the roll component in radians of the given 3D transformation
+// 'transform'.
+template <typename T>
+T GetRoll(const Rigid3<T>& transform) {
+  return GetRoll(transform.rotation());
+}
+// Returns the pitch component in radians of the given 3D 'rotation'. Assuming
+// 'rotation' is composed of three rotations around X, then Y, then Z, returns
+// the angle of the Z rotation.
+template <typename T>
+T GetPitch(const Eigen::Quaternion<T>& q) {
+  T sinp = T(2) * (q.w() * q.y() - q.z() * q.x());
+  if (abs(sinp) >= T(1))
+    return T(M_PI /
+             2);  // use 90 degrees if out of range //todo(kdaun) use sign
+  else
+    return asin(sinp);
+}
+
+// Returns the pitch component in radians of the given 3D transformation
+// 'transform'.
+template <typename T>
+T GetPitch(const Rigid3<T>& transform) {
+  return GetPitch(transform.rotation());
+}
+
 // Returns the yaw component in radians of the given 3D 'rotation'. Assuming
 // 'rotation' is composed of three rotations around X, then Y, then Z, returns
 // the angle of the Z rotation.
