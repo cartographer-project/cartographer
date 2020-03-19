@@ -25,7 +25,7 @@
 #include "imu-integrator/imu-integrator.h"
 
 #include "cartographer/common/time.h"
-#include "cartographer/mapping/internal/3d/optimizing_local_trajectory_builder.h"
+#include "cartographer/mapping/internal/3d/state.h"
 #include "cartographer/mapping/proto/3d/optimizing_local_trajectory_builder_options.pb.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/transform/transform.h"
@@ -162,7 +162,7 @@ IntegrateImuWithTranslationResult<double> IntegrateImuWithTranslationEuler(
 }
 
 template <typename T, typename RangeType, typename IteratorType>
-IntegrateImuWithTranslationResult<T> IntegrateImuWithTranslationRK4(
+IntegrateImuWithTranslationResult<T> IntegrateImuRK4(
     const RangeType& imu_data,
     const Eigen::Transform<double, 3, Eigen::Affine>&
         linear_acceleration_calibration,
@@ -171,7 +171,8 @@ IntegrateImuWithTranslationResult<T> IntegrateImuWithTranslationRK4(
     const std::array<T, 3>& start_translation,
     const std::array<T, 4>& start_rotation,
     const std::array<T, 3>& start_velocity, const common::Time start_time,
-    const common::Time end_time, IteratorType* const it) {
+    const common::Time end_time, double gravity_acceleration,
+    IteratorType* const it) {
   CHECK_LE(start_time, end_time);
   CHECK(*it != imu_data.end());
   CHECK_LE((*it)->time, start_time);
@@ -179,10 +180,10 @@ IntegrateImuWithTranslationResult<T> IntegrateImuWithTranslationRK4(
   if (std::next(*it) != imu_data.end()) {
     CHECK_GE(std::next(*it)->time, start_time);
   }
-  // TODO(kdaun) add extrapolation
 
   common::Time current_time = start_time;
-  imu_integrator::ImuIntegratorRK4 integrator(0.0, 0.0, 0.0, 0.0, 9.80665);
+  imu_integrator::ImuIntegratorRK4 integrator(0.0, 0.0, 0.0, 0.0,
+                                              gravity_acceleration);
   Eigen::Matrix<T, imu_integrator::kStateSize, 1> current_state;
   Eigen::Matrix<T, imu_integrator::kStateSize, 1> next_state;
   Eigen::Matrix<double, 2 * imu_integrator::kImuReadingSize, 1>
@@ -302,67 +303,113 @@ IntegrateImuWithTranslationResult<T> IntegrateImuWithTranslationRK4(
   return result;
 }
 
-// Returns velocity delta in map frame.
-template <typename T, typename RangeType, typename IteratorType>
-IntegrateImuWithTranslationResult<double> IntegrateImuWithTranslation(
-    const RangeType& imu_data,
-    const Eigen::Transform<double, 3, Eigen::Affine>&
-        linear_acceleration_calibration,
-    const Eigen::Transform<double, 3, Eigen::Affine>&
-        angular_velocity_calibration,
-    const State& start_state, const common::Time start_time,
-    const common::Time end_time,
-    const ::cartographer::mapping::proto::
-        OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator& integrator_type,
-    IteratorType* const it) {
-  switch (integrator_type) {
-    case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_EULER: {
-      return IntegrateImuWithTranslationRK4(
-          imu_data, linear_acceleration_calibration,
-          angular_velocity_calibration, start_state.translation,
-          start_state.rotation, start_state.velocity, start_time, end_time, it);
-    }
-    case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4: {
-      return IntegrateImuWithTranslationRK4(
-          imu_data, linear_acceleration_calibration,
-          angular_velocity_calibration, start_state.translation,
-          start_state.rotation, start_state.velocity, start_time, end_time, it);
-    }
-    default:
-      LOG(FATAL) << "Unsupported imu integrator type.";
-      return IntegrateImuWithTranslationRK4(
-          imu_data, linear_acceleration_calibration,
-          angular_velocity_calibration, start_state.translation,
-          start_state.rotation, start_state.velocity, start_time, end_time, it);
-  }
-}
+class ImuIntegrator {
+ public:
+  ImuIntegrator(
+      double gyro_noise_sigma, double gyro_bias_sigma, double acc_noise_sigma,
+      double acc_bias_sigma, double gravity_acceleration,
+      const Eigen::Transform<double, 3, Eigen::Affine>&
+          linear_acceleration_calibration,
+      const Eigen::Transform<double, 3, Eigen::Affine>&
+          angular_velocity_calibration,
+      const proto::OptimizingLocalTrajectoryBuilderOptions::IMUIntegrator
+          integrator_type)
+      : gyro_noise_sigma_(gyro_noise_sigma),
+        gyro_bias_sigma_(gyro_bias_sigma),
+        acc_noise_sigma_(acc_noise_sigma),
+        acc_bias_sigma_(acc_bias_sigma),
+        gravity_acceleration_(gravity_acceleration),
+        linear_acceleration_calibration_(linear_acceleration_calibration),
+        angular_velocity_calibration_(angular_velocity_calibration),
+        integrator_type_(integrator_type) {}
+  ImuIntegrator(
+      const Eigen::Transform<double, 3, Eigen::Affine>&
+          linear_acceleration_calibration,
+      const Eigen::Transform<double, 3, Eigen::Affine>&
+          angular_velocity_calibration,
+      const proto::OptimizingLocalTrajectoryBuilderOptions::IMUIntegrator
+          integrator_type)
+      : gyro_noise_sigma_(0.0),
+        gyro_bias_sigma_(0.0),
+        acc_noise_sigma_(0.0),
+        acc_bias_sigma_(0.0),
+        gravity_acceleration_(9.80665),
+        linear_acceleration_calibration_(linear_acceleration_calibration),
+        angular_velocity_calibration_(angular_velocity_calibration),
+        integrator_type_(integrator_type) {}
+  ImuIntegrator(
+      const proto::OptimizingLocalTrajectoryBuilderOptions::IMUIntegrator
+          integrator_type)
+      : gyro_noise_sigma_(0.0),
+        gyro_bias_sigma_(0.0),
+        acc_noise_sigma_(0.0),
+        acc_bias_sigma_(0.0),
+        gravity_acceleration_(9.80665),
+        linear_acceleration_calibration_(Eigen::Affine3d::Identity()),
+        angular_velocity_calibration_(Eigen::Affine3d::Identity()),
+        integrator_type_(integrator_type) {}
 
-// Returns velocity delta in map frame.
-template <typename RangeType, typename IteratorType>
-IntegrateImuWithTranslationResult<double> IntegrateImuWithTranslation(
-    const RangeType& imu_data, const State& start_state,
-    const common::Time start_time, const common::Time end_time,
-    const ::cartographer::mapping::proto::
-        OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator& integrator_type,
-    IteratorType* const it) {
-  switch (integrator_type) {
-    case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_EULER: {
-      LOG(FATAL) << "TODO EULER";
-      return IntegrateImuWithTranslationRK4(
-          imu_data, Eigen::Affine3d::Identity(), Eigen::Affine3d::Identity(),
-          start_state.translation, start_state.rotation, start_state.velocity,
-          start_time, end_time, it);
+  template <typename RangeType, typename IteratorType>
+  IntegrateImuWithTranslationResult<double> IntegrateStateWithGravity(
+      const RangeType& imu_data, const State& start_state,
+      const common::Time start_time, const common::Time end_time,
+      IteratorType* const it) {
+    switch (integrator_type_) {
+      case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_EULER: {
+        LOG(FATAL) << "IntegrateStateWithGravity - EULER not implemented";
+        return {};
+      }
+      case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4: {
+        return IntegrateImuRK4(imu_data, linear_acceleration_calibration_,
+                               angular_velocity_calibration_,
+                               start_state.translation, start_state.rotation,
+                               start_state.velocity, start_time, end_time,
+                               gravity_acceleration_, it);
+      }
+      default:
+        LOG(FATAL) << "Unsupported imu integrator type.";
     }
-    case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4: {
-      return IntegrateImuWithTranslationRK4(
-          imu_data, Eigen::Affine3d::Identity(), Eigen::Affine3d::Identity(),
-          start_state.translation, start_state.rotation, start_state.velocity,
-          start_time, end_time, it);
-    }
-    default:
-      LOG(FATAL) << "Unsupported imu integrator type.";
   }
-}
+
+  template <typename RangeType, typename IteratorType>
+  IntegrateImuWithTranslationResult<double> IntegrateIMU(
+      const RangeType& imu_data, const common::Time start_time,
+      const common::Time end_time, IteratorType* const it) {
+    switch (integrator_type_) {
+      case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_EULER: {
+        return IntegrateImuWithTranslationEuler<double>(
+            imu_data, linear_acceleration_calibration_,
+            angular_velocity_calibration_, start_time, end_time, it);
+      }
+      case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4: {
+        const State start_state(Eigen::Vector3d::Zero(),
+                                Eigen::Quaterniond::Identity(),
+                                Eigen::Vector3d::Zero());
+        return IntegrateImuRK4(imu_data, linear_acceleration_calibration_,
+                               angular_velocity_calibration_,
+                               start_state.translation, start_state.rotation,
+                               start_state.velocity, start_time, end_time, 0.0,
+                               it);
+      }
+      default:
+        LOG(FATAL) << "Unsupported imu integrator type.";
+    }
+  }
+
+ private:
+  // TODO(kdaun) add sigmas to config and integrator
+  double gyro_noise_sigma_;
+  double gyro_bias_sigma_;
+  double acc_noise_sigma_;
+  double acc_bias_sigma_;
+  double gravity_acceleration_;
+  const Eigen::Transform<double, 3, Eigen::Affine>
+      linear_acceleration_calibration_;
+  const Eigen::Transform<double, 3, Eigen::Affine>
+      angular_velocity_calibration_;
+  const proto::OptimizingLocalTrajectoryBuilderOptions::IMUIntegrator
+      integrator_type_;
+};
 
 }  // namespace mapping
 }  // namespace cartographer

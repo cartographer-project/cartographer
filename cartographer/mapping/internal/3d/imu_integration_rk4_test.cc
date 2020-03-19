@@ -198,12 +198,11 @@ TEST(IMUIntegrationRK4Test, ConstantAccelerationIMUObservations) {
   State initial_state =
       State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
             Eigen::Vector3d::Zero());
-
+  ImuIntegrator imu_integrator(
+      proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4);
   IntegrateImuWithTranslationResult<double> result =
-      IntegrateImuWithTranslation(
-          imu_data_deque, initial_state, start_time, integration_end_time,
-          proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4,
-          &it);
+      imu_integrator.IntegrateStateWithGravity(
+          imu_data_deque, initial_state, start_time, integration_end_time, &it);
   Eigen::Vector3d expected_velocity = Eigen::Vector3d::Zero();
   Eigen::Vector3d expected_translation = Eigen::Vector3d::Zero();
   EXPECT_NEAR_EIGEN(result.delta_velocity, expected_velocity, kPrecision);
@@ -244,12 +243,12 @@ TEST(IMUIntegrationRK4Test, StandingInGravityIMUObservations) {
       State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
             Eigen::Vector3d::Zero());
 
+  ImuIntegrator imu_integrator(
+      proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4);
   IntegrateImuWithTranslationResult<double> result =
-      IntegrateImuWithTranslation(
-          imu_data_deque, initial_state, integration_start_time,
-          integration_end_time,
-          proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4,
-          &it);
+      imu_integrator.IntegrateStateWithGravity(imu_data_deque, initial_state,
+                                               integration_start_time,
+                                               integration_end_time, &it);
   double delta_time =
       common::ToSeconds(integration_end_time - integration_start_time);
   Eigen::Vector3d expected_velocity = -delta_time * gravity_acceleration;
@@ -267,10 +266,10 @@ TEST(IMUIntegrationRK4Test, StandingInGravityIMUObservations) {
   }
   initial_state = State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
                         Eigen::Vector3d::Zero());
-  result = IntegrateImuWithTranslation(
+
+  result = imu_integrator.IntegrateStateWithGravity(
       imu_data_deque, initial_state, integration_start_time,
-      integration_end_time,
-      proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4, &it);
+      integration_end_time, &it);
   delta_time = common::ToSeconds(integration_end_time - integration_start_time);
   expected_velocity = -delta_time * gravity_acceleration;
   expected_translation = -0.5 * delta_time * delta_time * gravity_acceleration;
@@ -286,10 +285,9 @@ TEST(IMUIntegrationRK4Test, StandingInGravityIMUObservations) {
   }
   initial_state = State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
                         Eigen::Vector3d::Zero());
-  result = IntegrateImuWithTranslation(
+  result = imu_integrator.IntegrateStateWithGravity(
       imu_data_deque, initial_state, integration_start_time,
-      integration_end_time,
-      proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4, &it);
+      integration_end_time, &it);
   delta_time = common::ToSeconds(integration_end_time - integration_start_time);
   expected_velocity = -delta_time * gravity_acceleration;
   expected_translation = -0.5 * delta_time * delta_time * gravity_acceleration;
@@ -305,10 +303,9 @@ TEST(IMUIntegrationRK4Test, StandingInGravityIMUObservations) {
   }
   initial_state = State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
                         Eigen::Vector3d::Zero());
-  result = IntegrateImuWithTranslation(
+  result = imu_integrator.IntegrateStateWithGravity(
       imu_data_deque, initial_state, integration_start_time,
-      integration_end_time,
-      proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4, &it);
+      integration_end_time, &it);
   delta_time = common::ToSeconds(integration_end_time - integration_start_time);
   expected_velocity = -delta_time * gravity_acceleration;
   expected_translation = -0.5 * delta_time * delta_time * gravity_acceleration;
@@ -345,13 +342,12 @@ TEST(IMUIntegrationRK4Test,
 
   State initial_state = State(Eigen::Vector3d::Zero(),
                               Eigen::Quaterniond::Identity(), {1.0, 0.0, 0.0});
-
+  ImuIntegrator imu_integrator(
+      proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4);
   IntegrateImuWithTranslationResult<double> result =
-      IntegrateImuWithTranslation(
-          imu_data_deque, initial_state, integration_start_time,
-          integration_end_time,
-          proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4,
-          &it);
+      imu_integrator.IntegrateStateWithGravity(imu_data_deque, initial_state,
+                                               integration_start_time,
+                                               integration_end_time, &it);
   Eigen::Vector3d expected_velocity = {1.0, 0.0, 0.0};
   Eigen::Vector3d expected_translation = {1.5, 0.0, 0.0};
   EXPECT_NEAR_EIGEN(result.delta_velocity, expected_velocity, kPrecision);

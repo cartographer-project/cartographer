@@ -19,7 +19,6 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/time.h"
 #include "cartographer/evaluation/grid_drawer.h"
-#include "cartographer/mapping/internal/3d/imu_integration.h"
 #include "cartographer/mapping/internal/3d/imu_static_calibration.h"
 #include "cartographer/mapping/internal/3d/scan_matching/interpolated_occupied_space_cost_function_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/interpolated_tsdf_space_cost_function_3d.h"
@@ -101,11 +100,10 @@ class PredictionIMUCostFunctor {
     const std::array<T, 3> start_velocity_arr{
         {old_velocity[0], old_velocity[1], old_velocity[2]}};
     IntegrateImuWithTranslationResult<T> imu_integral =
-        IntegrateImuWithTranslationRK4(
-            imu_data_, linear_acceleration_calibration_,
-            angular_velocity_calibration_, start_translation_arr,
-            start_rotation_arr, start_velocity_arr, start_time_, end_time_,
-            &it);
+        IntegrateImuRK4(imu_data_, linear_acceleration_calibration_,
+                        angular_velocity_calibration_, start_translation_arr,
+                        start_rotation_arr, start_velocity_arr, start_time_,
+                        end_time_, 9.80665, &it);
 
     const Eigen::Matrix<T, 3, 1> predicted_translation =
         imu_integral.delta_translation;
@@ -778,10 +776,8 @@ State OptimizingLocalTrajectoryBuilder::PredictState(
     --it;
   }
 
-  const IntegrateImuWithTranslationResult<double> result;  // =
-  //      IntegrateImuWithTranslationEuler(
-  //          imu_data_, linear_acceleration_calibration_,
-  //          angular_velocity_calibration_, start_time, end_time, &it);
+  const IntegrateImuWithTranslationResult<double> result =
+      imu_integrator_->IntegrateIMU(imu_data_, start_time, end_time, &it);
 
   const Eigen::Quaterniond start_rotation(
       start_state.rotation[0], start_state.rotation[1], start_state.rotation[2],
@@ -789,7 +785,6 @@ State OptimizingLocalTrajectoryBuilder::PredictState(
   const Eigen::Quaterniond orientation = start_rotation * result.delta_rotation;
   const double delta_time_seconds = common::ToSeconds(end_time - start_time);
 
-  // TODO(hrapp): IntegrateImu should integration position as well.
   const Eigen::Vector3d position =
       Eigen::Map<const Eigen::Vector3d>(start_state.translation.data()) +
       delta_time_seconds *
@@ -810,19 +805,11 @@ State OptimizingLocalTrajectoryBuilder::PredictStateRK4(
     CHECK(it != imu_data_.cbegin());
     --it;
   }
-
   const IntegrateImuWithTranslationResult<double> result =
-      IntegrateImuWithTranslationRK4(
-          imu_data_, linear_acceleration_calibration_,
-          angular_velocity_calibration_, start_state.translation,
-          start_state.rotation, start_state.velocity, start_time, end_time,
-          &it);
-
-  const Eigen::Quaterniond orientation = result.delta_rotation;
-  const Eigen::Vector3d position = result.delta_translation;
-  const Eigen::Vector3d velocity = result.delta_velocity;
-
-  return State(position, orientation, velocity);
+      imu_integrator_->IntegrateStateWithGravity(imu_data_, start_state,
+                                                 start_time, end_time, &it);
+  return State(result.delta_translation, result.delta_rotation,
+               result.delta_velocity);
 }
 
 void OptimizingLocalTrajectoryBuilder::RegisterMetrics(
