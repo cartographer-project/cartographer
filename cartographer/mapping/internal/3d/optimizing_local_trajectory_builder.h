@@ -78,6 +78,9 @@ class OptimizingLocalTrajectoryBuilder {
 
   void SetMapUpdateEnabled(bool map_update_enabled);
 
+  State PredictState(const State& start_state, const common::Time start_time,
+                     const common::Time end_time);
+
  private:
   void AddControlPoint(common::Time t);
 
@@ -94,11 +97,13 @@ class OptimizingLocalTrajectoryBuilder {
     State state;
   };
 
-  State PredictState(const State& start_state, const common::Time start_time,
-                     const common::Time end_time);
 
   State PredictStateRK4(const State& start_state, const common::Time start_time,
                         const common::Time end_time);
+
+  State PredictStateEuler(const State& start_state,
+                          const common::Time start_time,
+                          const common::Time end_time);
 
   void RemoveObsoleteSensorData();
 

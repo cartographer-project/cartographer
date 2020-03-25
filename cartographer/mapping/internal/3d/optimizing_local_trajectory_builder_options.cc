@@ -48,13 +48,18 @@ CreateOptimizingLocalTrajectoryBuilderOptions(
       parameter_dictionary->GetDouble("ct_window_rate"));
   const std::string imu_integrator_string =
       parameter_dictionary->GetString("imu_integrator");
-  proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator
-      imu_integrator_type;
-  CHECK(proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_Parse(
-      imu_integrator_string, &imu_integrator_type))
+  proto::IMUIntegrator imu_integrator_type;
+  CHECK(proto::IMUIntegrator_Parse(imu_integrator_string, &imu_integrator_type))
       << "Unknown OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator type: "
       << imu_integrator_string;
   options.set_imu_integrator(imu_integrator_type);
+  const std::string imu_cost_term_string =
+      parameter_dictionary->GetString("imu_cost_term");
+  proto::IMUCostTerm imu_cost_term_type;
+  CHECK(proto::IMUCostTerm_Parse(imu_cost_term_string, &imu_cost_term_type))
+      << "Unknown OptimizingLocalTrajectoryBuilderOptions_IMUCostTerm type: "
+      << imu_cost_term_string;
+  options.set_imu_cost_term(imu_cost_term_type);
   return options;
 }
 

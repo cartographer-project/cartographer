@@ -305,15 +305,14 @@ IntegrateImuWithTranslationResult<T> IntegrateImuRK4(
 
 class ImuIntegrator {
  public:
-  ImuIntegrator(
-      double gyro_noise_sigma, double gyro_bias_sigma, double acc_noise_sigma,
-      double acc_bias_sigma, double gravity_acceleration,
-      const Eigen::Transform<double, 3, Eigen::Affine>&
-          linear_acceleration_calibration,
-      const Eigen::Transform<double, 3, Eigen::Affine>&
-          angular_velocity_calibration,
-      const proto::OptimizingLocalTrajectoryBuilderOptions::IMUIntegrator
-          integrator_type)
+  ImuIntegrator(double gyro_noise_sigma, double gyro_bias_sigma,
+                double acc_noise_sigma, double acc_bias_sigma,
+                double gravity_acceleration,
+                const Eigen::Transform<double, 3, Eigen::Affine>&
+                    linear_acceleration_calibration,
+                const Eigen::Transform<double, 3, Eigen::Affine>&
+                    angular_velocity_calibration,
+                const proto::IMUIntegrator integrator_type)
       : gyro_noise_sigma_(gyro_noise_sigma),
         gyro_bias_sigma_(gyro_bias_sigma),
         acc_noise_sigma_(acc_noise_sigma),
@@ -322,13 +321,11 @@ class ImuIntegrator {
         linear_acceleration_calibration_(linear_acceleration_calibration),
         angular_velocity_calibration_(angular_velocity_calibration),
         integrator_type_(integrator_type) {}
-  ImuIntegrator(
-      const Eigen::Transform<double, 3, Eigen::Affine>&
-          linear_acceleration_calibration,
-      const Eigen::Transform<double, 3, Eigen::Affine>&
-          angular_velocity_calibration,
-      const proto::OptimizingLocalTrajectoryBuilderOptions::IMUIntegrator
-          integrator_type)
+  ImuIntegrator(const Eigen::Transform<double, 3, Eigen::Affine>&
+                    linear_acceleration_calibration,
+                const Eigen::Transform<double, 3, Eigen::Affine>&
+                    angular_velocity_calibration,
+                const proto::IMUIntegrator integrator_type)
       : gyro_noise_sigma_(0.0),
         gyro_bias_sigma_(0.0),
         acc_noise_sigma_(0.0),
@@ -337,9 +334,11 @@ class ImuIntegrator {
         linear_acceleration_calibration_(linear_acceleration_calibration),
         angular_velocity_calibration_(angular_velocity_calibration),
         integrator_type_(integrator_type) {}
-  ImuIntegrator(
-      const proto::OptimizingLocalTrajectoryBuilderOptions::IMUIntegrator
-          integrator_type)
+  double GetGravityAcceleration() const { return gravity_acceleration_; }
+  void SetGravityAcceleration(double gravity_acceleration) {
+    gravity_acceleration_ = gravity_acceleration;
+  }
+  ImuIntegrator(const proto::IMUIntegrator integrator_type)
       : gyro_noise_sigma_(0.0),
         gyro_bias_sigma_(0.0),
         acc_noise_sigma_(0.0),
@@ -348,6 +347,24 @@ class ImuIntegrator {
         linear_acceleration_calibration_(Eigen::Affine3d::Identity()),
         angular_velocity_calibration_(Eigen::Affine3d::Identity()),
         integrator_type_(integrator_type) {}
+  const Eigen::Transform<double, 3, Eigen::Affine>&
+  GetLinearAccelerationCalibration() const {
+    return linear_acceleration_calibration_;
+  }
+  void SetLinearAccelerationCalibration(
+      const Eigen::Transform<double, 3, Eigen::Affine>&
+          linear_acceleration_calibration) {
+    linear_acceleration_calibration_ = linear_acceleration_calibration;
+  }
+  const Eigen::Transform<double, 3, Eigen::Affine>&
+  GetAngularVelocityCalibration() const {
+    return angular_velocity_calibration_;
+  }
+  void SetAngularVelocityCalibration(
+      const Eigen::Transform<double, 3, Eigen::Affine>&
+          angular_velocity_calibration) {
+    angular_velocity_calibration_ = angular_velocity_calibration;
+  }
 
   template <typename RangeType, typename IteratorType>
   IntegrateImuWithTranslationResult<double> IntegrateStateWithGravity(
@@ -355,11 +372,11 @@ class ImuIntegrator {
       const common::Time start_time, const common::Time end_time,
       IteratorType* const it) {
     switch (integrator_type_) {
-      case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_EULER: {
+      case proto::IMUIntegrator::EULER: {
         LOG(FATAL) << "IntegrateStateWithGravity - EULER not implemented";
         return {};
       }
-      case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4: {
+      case proto::IMUIntegrator::RK4: {
         return IntegrateImuRK4(imu_data, linear_acceleration_calibration_,
                                angular_velocity_calibration_,
                                start_state.translation, start_state.rotation,
@@ -376,12 +393,12 @@ class ImuIntegrator {
       const RangeType& imu_data, const common::Time start_time,
       const common::Time end_time, IteratorType* const it) {
     switch (integrator_type_) {
-      case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_EULER: {
+      case proto::IMUIntegrator::EULER: {
         return IntegrateImuWithTranslationEuler<double>(
             imu_data, linear_acceleration_calibration_,
             angular_velocity_calibration_, start_time, end_time, it);
       }
-      case proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4: {
+      case proto::IMUIntegrator::RK4: {
         const State start_state(Eigen::Vector3d::Zero(),
                                 Eigen::Quaterniond::Identity(),
                                 Eigen::Vector3d::Zero());
@@ -403,12 +420,9 @@ class ImuIntegrator {
   double acc_noise_sigma_;
   double acc_bias_sigma_;
   double gravity_acceleration_;
-  const Eigen::Transform<double, 3, Eigen::Affine>
-      linear_acceleration_calibration_;
-  const Eigen::Transform<double, 3, Eigen::Affine>
-      angular_velocity_calibration_;
-  const proto::OptimizingLocalTrajectoryBuilderOptions::IMUIntegrator
-      integrator_type_;
+  Eigen::Transform<double, 3, Eigen::Affine> linear_acceleration_calibration_;
+  Eigen::Transform<double, 3, Eigen::Affine> angular_velocity_calibration_;
+  proto::IMUIntegrator integrator_type_;
 };
 
 }  // namespace mapping

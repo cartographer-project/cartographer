@@ -16,12 +16,17 @@ syntax = "proto3";
 
 package cartographer.mapping.proto;
 
+enum IMUIntegrator {
+  INVALID_IMU_INTEGRATOR = 0;
+  EULER = 1;
+  RK4 = 2;
+}
+enum IMUCostTerm {
+  INVALID_IMU_COST_TERM = 0;
+  DIRECT = 1;
+  PREINTEGRATION = 2;
+}
 message OptimizingLocalTrajectoryBuilderOptions {
-  enum IMUIntegrator {
-    INVALID = 0;
-    EULER = 1;
-    RK4 = 2;
-  }
   double high_resolution_grid_weight = 6;
   double low_resolution_grid_weight = 7;
   double velocity_weight = 1;
@@ -35,4 +40,5 @@ message OptimizingLocalTrajectoryBuilderOptions {
   double ct_window_horizon = 12;
   double ct_window_rate = 13;
   IMUIntegrator imu_integrator = 14;
+  IMUCostTerm imu_cost_term = 15;
 }

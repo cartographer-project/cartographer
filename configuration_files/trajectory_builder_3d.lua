@@ -99,5 +99,6 @@ TRAJECTORY_BUILDER_3D = {
       ct_window_horizon = 0.9,
       ct_window_rate = 0.1,
       imu_integrator = "RK4",
+      imu_cost_term = "DIRECT",
   },
 }
