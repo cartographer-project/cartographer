@@ -196,7 +196,7 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
 void OptimizingLocalTrajectoryBuilder::AddControlPoint(common::Time t) {
   if (control_points_.empty()) {
     if (options_.optimizing_local_trajectory_builder_options()
-            .initialize_map_orientation_with_imu()) {
+        .initialize_map_orientation_with_imu()) {
       Eigen::Quaterniond g = extrapolator_->EstimateGravityOrientation(t);
       LOG(INFO) << "g " << g.vec();
       control_points_.push_back(ControlPoint{
@@ -207,14 +207,14 @@ void OptimizingLocalTrajectoryBuilder::AddControlPoint(common::Time t) {
                    Eigen::Vector3d::Zero())});
     }
   } else {
-    if(active_submaps_.submaps().empty()){
-          control_points_.push_back(
-              ControlPoint{t, control_points_.back().state});
+    if (active_submaps_.submaps().empty()) {
+      control_points_.push_back(
+          ControlPoint{t, control_points_.back().state});
+    } else {
+      control_points_.push_back(
+          ControlPoint{t, PredictState(control_points_.back().state,
+                                       control_points_.back().time, t)});
     }
-    else {
-    control_points_.push_back(
-        ControlPoint{t, PredictState(control_points_.back().state,
-                                     control_points_.back().time, t)});
   }
 }
 
