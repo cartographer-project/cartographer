@@ -60,6 +60,8 @@ CreateOptimizingLocalTrajectoryBuilderOptions(
       << "Unknown OptimizingLocalTrajectoryBuilderOptions_IMUCostTerm type: "
       << imu_cost_term_string;
   options.set_imu_cost_term(imu_cost_term_type);
+  options.set_sync_control_points_with_range_data(
+      parameter_dictionary->GetBool("sync_control_points_with_range_data"));
   return options;
 }
 

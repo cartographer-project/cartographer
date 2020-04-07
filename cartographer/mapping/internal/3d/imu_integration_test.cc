@@ -58,15 +58,15 @@ TEST(IMUIntegrationTest, ZeroIntegration) {
 }
 
 TEST(IMUIntegrationTest, ConstantAcceleration) {
-  Eigen::Vector3d initial_gravity_acceleration(0, 0, 10);
+  Eigen::Vector3d initial_gravity_acceleration(0, 0, 9.80665);
   Eigen::Vector3d initial_angular_velocity(0, 0, 0);
   common::Time start_time = common::FromUniversal(0);
   common::Time current_time = start_time;
   std::deque<sensor::ImuData> imu_data_deque;
   imu_data_deque.push_back(
       {current_time, initial_gravity_acceleration, initial_angular_velocity});
-  for (int i = 0; i < 100; ++i) {
-    current_time += common::FromSeconds(1);
+  for (int i = 0; i < 1000; ++i) {
+    current_time += common::FromSeconds(0.01);
     imu_data_deque.push_back(
         {current_time, initial_gravity_acceleration, initial_angular_velocity});
 
@@ -91,6 +91,9 @@ TEST(IMUIntegrationTest, ConstantAcceleration) {
         0.,
         result.delta_rotation.angularDistance(Eigen::Quaterniond::Identity()),
         kPrecision);
+    LOG(INFO) << "expected \t" << (expected_translation.z()) << " observed \t"
+              << (result.delta_translation.z()) << " abs error \t"
+              << (result.delta_translation.z() - expected_translation.z());
   }
 }
 

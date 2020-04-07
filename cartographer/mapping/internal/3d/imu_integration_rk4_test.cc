@@ -131,6 +131,10 @@ TEST(IMUIntegrationRK4Test, ConstantAcceleration) {
                       kPrecision);
     EXPECT_NEAR_EIGEN(getPositionFromState(next_state), expected_translation,
                       kPrecision);
+    LOG(INFO)
+        << "expected \t" << (expected_translation).norm() << " observed \t"
+        << (getPositionFromState(next_state)).norm() << " abs error \t"
+        << (getPositionFromState(next_state) - expected_translation).norm();
   }
 }
 
@@ -198,8 +202,7 @@ TEST(IMUIntegrationRK4Test, ConstantAccelerationIMUObservations) {
   State initial_state =
       State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
             Eigen::Vector3d::Zero());
-  ImuIntegrator imu_integrator(
-      proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4);
+  ImuIntegrator imu_integrator(proto::IMUIntegrator::RK4);
   IntegrateImuWithTranslationResult<double> result =
       imu_integrator.IntegrateStateWithGravity(
           imu_data_deque, initial_state, start_time, integration_end_time, &it);
@@ -243,8 +246,7 @@ TEST(IMUIntegrationRK4Test, StandingInGravityIMUObservations) {
       State(Eigen::Vector3d::Zero(), Eigen::Quaterniond::Identity(),
             Eigen::Vector3d::Zero());
 
-  ImuIntegrator imu_integrator(
-      proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4);
+  ImuIntegrator imu_integrator(proto::IMUIntegrator::RK4);
   IntegrateImuWithTranslationResult<double> result =
       imu_integrator.IntegrateStateWithGravity(imu_data_deque, initial_state,
                                                integration_start_time,
@@ -342,8 +344,7 @@ TEST(IMUIntegrationRK4Test,
 
   State initial_state = State(Eigen::Vector3d::Zero(),
                               Eigen::Quaterniond::Identity(), {1.0, 0.0, 0.0});
-  ImuIntegrator imu_integrator(
-      proto::OptimizingLocalTrajectoryBuilderOptions_IMUIntegrator_RK4);
+  ImuIntegrator imu_integrator(proto::IMUIntegrator::RK4);
   IntegrateImuWithTranslationResult<double> result =
       imu_integrator.IntegrateStateWithGravity(imu_data_deque, initial_state,
                                                integration_start_time,
@@ -352,6 +353,93 @@ TEST(IMUIntegrationRK4Test,
   Eigen::Vector3d expected_translation = {1.5, 0.0, 0.0};
   EXPECT_NEAR_EIGEN(result.delta_velocity, expected_velocity, kPrecision);
   EXPECT_NEAR_EIGEN(result.delta_translation, expected_translation, kPrecision);
+}
+
+TEST(IMUIntegrationTest, ConstantAccelerationIMUIntegrator) {
+  Eigen::Vector3d initial_gravity_acceleration(0, 0, 10);
+  Eigen::Vector3d initial_angular_velocity(0, 0, 0);
+  common::Time start_time = common::FromUniversal(0);
+  common::Time current_time = start_time;
+  std::deque<sensor::ImuData> imu_data_deque;
+  imu_data_deque.push_back(
+      {current_time, initial_gravity_acceleration, initial_angular_velocity});
+  for (int i = 0; i < 100; ++i) {
+    current_time += common::FromSeconds(1);
+    imu_data_deque.push_back(
+        {current_time, initial_gravity_acceleration, initial_angular_velocity});
+
+    auto it = --imu_data_deque.cend();
+    while (it->time > start_time) {
+      CHECK(it != imu_data_deque.cbegin());
+      --it;
+    }
+
+    ImuIntegrator imu_integrator(proto::IMUIntegrator::RK4);
+    IntegrateImuWithTranslationResult<double> result =
+        imu_integrator.IntegrateIMU(imu_data_deque, start_time, current_time,
+                                    &it);
+    double delta_time = common::ToSeconds(current_time - start_time);
+    Eigen::Vector3d expected_velocity =
+        delta_time * initial_gravity_acceleration;
+    Eigen::Vector3d expected_translation =
+        0.5 * delta_time * delta_time * initial_gravity_acceleration;
+    EXPECT_NEAR(0.f, (result.delta_velocity - expected_velocity).norm(),
+                kPrecision);
+    EXPECT_NEAR(0.f, (result.delta_translation - expected_translation).norm(),
+                delta_time * 10);
+    EXPECT_NEAR(
+        0.,
+        result.delta_rotation.angularDistance(Eigen::Quaterniond::Identity()),
+        kPrecision);
+    LOG(INFO) << "xexpected \t" << (expected_translation).norm()
+              << " observed \t" << (result.delta_translation).norm()
+              << " abs error \t"
+              << (result.delta_translation - expected_translation).norm();
+  }
+}
+
+TEST(IMUIntegrationTest, ConstantAccelerationIMUIntegratorWithGravity) {
+  Eigen::Vector3d initial_gravity_acceleration(0, 0, 10);
+  Eigen::Vector3d initial_angular_velocity(0, 0, 0);
+  common::Time start_time = common::FromUniversal(0);
+  common::Time current_time = start_time;
+  std::deque<sensor::ImuData> imu_data_deque;
+  imu_data_deque.push_back(
+      {current_time, initial_gravity_acceleration, initial_angular_velocity});
+  for (int i = 0; i < 100; ++i) {
+    current_time += common::FromSeconds(1);
+    imu_data_deque.push_back(
+        {current_time, initial_gravity_acceleration, initial_angular_velocity});
+
+    auto it = --imu_data_deque.cend();
+    while (it->time > start_time) {
+      CHECK(it != imu_data_deque.cbegin());
+      --it;
+    }
+
+    ImuIntegrator imu_integrator(proto::IMUIntegrator::RK4);
+    imu_integrator.SetGravityAcceleration(10.0);
+    IntegrateImuWithTranslationResult<double> result =
+        imu_integrator.IntegrateIMU(imu_data_deque, start_time, current_time,
+                                    &it);
+    double delta_time = common::ToSeconds(current_time - start_time);
+    Eigen::Vector3d expected_velocity =
+        delta_time * initial_gravity_acceleration;
+    Eigen::Vector3d expected_translation =
+        0.5 * delta_time * delta_time * initial_gravity_acceleration;
+    EXPECT_NEAR(0.f, (result.delta_velocity - expected_velocity).norm(),
+                kPrecision);
+    EXPECT_NEAR(0.f, (result.delta_translation - expected_translation).norm(),
+                delta_time * 10);
+    EXPECT_NEAR(
+        0.,
+        result.delta_rotation.angularDistance(Eigen::Quaterniond::Identity()),
+        kPrecision);
+    LOG(INFO) << "gexpected \t" << (expected_translation).norm()
+              << " observed \t" << (result.delta_translation).norm()
+              << " abs error \t"
+              << (result.delta_translation - expected_translation).norm();
+  }
 }
 
 }  // namespace

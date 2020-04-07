@@ -55,7 +55,10 @@ class RelativeTranslationAndYawCostFunction {
     residual[0] = translation_scaling_factor_ * error.translation().x();
     residual[1] = translation_scaling_factor_ * error.translation().y();
     residual[2] = translation_scaling_factor_ * error.translation().z();
-    residual[3] = rotation_scaling_factor_ * transform::GetYaw(error);
+    //    residual[3] = rotation_scaling_factor_ * transform::GetYaw(error);
+    residual[3] = rotation_scaling_factor_ * error.rotation().x();
+    residual[4] = rotation_scaling_factor_ * error.rotation().y();
+    residual[5] = rotation_scaling_factor_ * error.rotation().z();
     return true;
   }
 

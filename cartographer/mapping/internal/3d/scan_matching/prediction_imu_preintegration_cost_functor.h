@@ -31,12 +31,13 @@ class PredictionImuPreintegrationCostFunctor {
       const double velocity_scaling_factor,
       const double rotation_scaling_factor, const double delta_time_seconds,
       const IntegrateImuWithTranslationResult<double>&
-          imu_preintegration_result)
+          imu_preintegration_result,
+          const Eigen::Vector3d& gravity)
       : translation_scaling_factor_(translation_scaling_factor),
         velocity_scaling_factor_(velocity_scaling_factor),
         rotation_scaling_factor_(rotation_scaling_factor),
         delta_time_seconds_(delta_time_seconds),
-        gravity_constant_(9.80665),
+        gravity_(gravity),
         imu_preintegration_result_(imu_preintegration_result) {}
 
   PredictionImuPreintegrationCostFunctor(
@@ -62,23 +63,29 @@ class PredictionImuPreintegrationCostFunctor {
     const Eigen::Matrix<T, 3, 1> end_velocity(new_velocity[0], new_velocity[1],
                                               new_velocity[2]);
 
-    const Eigen::Matrix<T, 3, 1> translation_error =
-        start_rotation *
-            (end_translation - start_translation +
-             (0.5 * gravity_constant_ * std::pow(delta_time_seconds_, 2) *
-              Eigen::Vector3d::UnitZ())
-                 .cast<T>()) -
-        imu_preintegration_result_.delta_translation.cast<T>() -
+//    const Eigen::Matrix<T, 3, 1> translation_error =
+//            (end_translation - start_translation +
+//             (0.5 * std::pow(delta_time_seconds_, 2) * gravity_)
+//                 .cast<T>()) -
+//                start_rotation * imu_preintegration_result_.delta_translation.cast<T>() -
+//        T(delta_time_seconds_) * start_velocity;
+//    const Eigen::Matrix<T, 3, 1> velocity_error =
+//         (end_velocity - start_velocity +
+//                          ( delta_time_seconds_ *
+//                           gravity_)
+//                              .cast<T>()) -
+//             start_rotation * imu_preintegration_result_.delta_velocity.cast<T>();
+//    const Eigen::Quaternion<T> rotation_error =
+//        imu_preintegration_result_.delta_rotation.cast<T>() *
+//        end_rotation.conjugate() * start_rotation;
+
+    const Eigen::Matrix<T, 3, 1> translation_error = end_translation - start_translation  -
         T(delta_time_seconds_) * start_velocity;
     const Eigen::Matrix<T, 3, 1> velocity_error =
-        start_rotation * (end_velocity - start_velocity +
-                          (gravity_constant_ * delta_time_seconds_ *
-                           Eigen::Vector3d::UnitZ())
-                              .cast<T>()) -
-        imu_preintegration_result_.delta_velocity.cast<T>();
+        end_velocity - start_velocity;
     const Eigen::Quaternion<T> rotation_error =
-        imu_preintegration_result_.delta_rotation.cast<T>() *
-        end_rotation.conjugate() * start_rotation;
+        end_rotation.conjugate() * start_rotation *
+            imu_preintegration_result_.delta_rotation.cast<T>();
 
     residual[0] = translation_scaling_factor_ * translation_error.x();
     residual[1] = translation_scaling_factor_ * translation_error.y();
@@ -98,7 +105,7 @@ class PredictionImuPreintegrationCostFunctor {
   const double velocity_scaling_factor_;
   const double rotation_scaling_factor_;
   const double delta_time_seconds_;
-  const double gravity_constant_;
+  const Eigen::Vector3d gravity_;
   const IntegrateImuWithTranslationResult<double> imu_preintegration_result_;
 };
 
