@@ -22,8 +22,6 @@
 
 #include "imu-integrator/imu-integrator.h"
 
-#include <maplab-common/test/testing-entrypoint.h>
-#include <maplab-common/test/testing-predicates.h>
 #include <map>
 #include <random>
 #include <tuple>
@@ -84,15 +82,21 @@ TEST(IMUIntegrationRK4Test, GravityOnly) {
                        &next_state, &next_phi, &next_cov);
   double expected_translation = -1.0 * pow(delta_time_seconds, 2.0) / 2;
   double expected_final_velocity = -1.0 * delta_time_seconds;
-  EXPECT_NEAR_EIGEN(getOrientationFromState(next_state),
-                    Eigen::Vector4d(0, 0, 0, 1), 1e-15);
-  EXPECT_ZERO_EIGEN(getGyroBiasFromState(next_state), 1e-15);
-  EXPECT_NEAR_EIGEN(getVelocityFromState(next_state),
-                    Eigen::Vector3d(0, 0, expected_final_velocity), 1e-15);
-  EXPECT_ZERO_EIGEN(getAccelBiasFromState(next_state), 1e-15);
-  EXPECT_NEAR_EIGEN(getPositionFromState(next_state),
-                    Eigen::Vector3d(0, 0, expected_translation), 1e-15);
-  EXPECT_ZERO_EIGEN(next_cov, 1e-15);
+  EXPECT_NEAR(
+      (getOrientationFromState(next_state) - Eigen::Vector4d(0, 0, 0, 1))
+          .norm(),
+      0, 1e-15);
+  EXPECT_NEAR(getGyroBiasFromState(next_state).norm(), 0, 1e-15);
+  EXPECT_NEAR((getVelocityFromState(next_state) -
+               Eigen::Vector3d(0, 0, expected_final_velocity))
+                  .norm(),
+              0, 1e-15);
+  EXPECT_NEAR(getAccelBiasFromState(next_state).norm(), 0, 1e-15);
+  EXPECT_NEAR((getPositionFromState(next_state) -
+               Eigen::Vector3d(0, 0, expected_translation))
+                  .norm(),
+              0, 1e-15);
+  EXPECT_NEAR(next_cov.norm(), 0, 1e-15);
 }
 
 TEST(IMUIntegrationRK4Test, ConstantAcceleration) {
@@ -127,10 +131,11 @@ TEST(IMUIntegrationRK4Test, ConstantAcceleration) {
         delta_time * initial_gravity_acceleration;
     Eigen::Vector3d expected_translation =
         0.5 * delta_time * delta_time * initial_gravity_acceleration;
-    EXPECT_NEAR_EIGEN(getVelocityFromState(next_state), expected_velocity,
-                      kPrecision);
-    EXPECT_NEAR_EIGEN(getPositionFromState(next_state), expected_translation,
-                      kPrecision);
+    EXPECT_NEAR((getVelocityFromState(next_state) - expected_velocity).norm(),
+                0, kPrecision);
+    EXPECT_NEAR(
+        (getPositionFromState(next_state) - expected_translation).norm(), 0,
+        kPrecision);
     LOG(INFO)
         << "expected \t" << (expected_translation).norm() << " observed \t"
         << (getPositionFromState(next_state)).norm() << " abs error \t"
@@ -166,10 +171,11 @@ TEST(IMUIntegrationRK4Test, StandingInGravity) {
     current_state = next_state;
     Eigen::Vector3d expected_velocity = Eigen::Vector3d::Zero();
     Eigen::Vector3d expected_translation = Eigen::Vector3d::Zero();
-    EXPECT_NEAR_EIGEN(getVelocityFromState(next_state), expected_velocity,
-                      kPrecision);
-    EXPECT_NEAR_EIGEN(getPositionFromState(next_state), expected_translation,
-                      kPrecision);
+    EXPECT_NEAR((getVelocityFromState(next_state) - expected_velocity).norm(),
+                0, kPrecision);
+    EXPECT_NEAR(
+        (getPositionFromState(next_state) - expected_translation).norm(), 0,
+        kPrecision);
   }
 }
 
@@ -208,8 +214,10 @@ TEST(IMUIntegrationRK4Test, ConstantAccelerationIMUObservations) {
           imu_data_deque, initial_state, start_time, integration_end_time, &it);
   Eigen::Vector3d expected_velocity = Eigen::Vector3d::Zero();
   Eigen::Vector3d expected_translation = Eigen::Vector3d::Zero();
-  EXPECT_NEAR_EIGEN(result.delta_velocity, expected_velocity, kPrecision);
-  EXPECT_NEAR_EIGEN(result.delta_translation, expected_translation, kPrecision);
+  EXPECT_NEAR((result.delta_velocity - expected_velocity).norm(), 0,
+              kPrecision);
+  EXPECT_NEAR((result.delta_translation - expected_translation).norm(), 0,
+              kPrecision);
 }
 
 TEST(IMUIntegrationRK4Test, StandingInGravityIMUObservations) {
@@ -256,8 +264,10 @@ TEST(IMUIntegrationRK4Test, StandingInGravityIMUObservations) {
   Eigen::Vector3d expected_velocity = -delta_time * gravity_acceleration;
   Eigen::Vector3d expected_translation =
       -0.5 * delta_time * delta_time * gravity_acceleration;
-  EXPECT_NEAR_EIGEN(result.delta_velocity, expected_velocity, kPrecision);
-  EXPECT_NEAR_EIGEN(result.delta_translation, expected_translation, kPrecision);
+  EXPECT_NEAR((result.delta_velocity - expected_velocity).norm(), 0,
+              kPrecision);
+  EXPECT_NEAR((result.delta_translation - expected_translation).norm(), 0,
+              kPrecision);
 
   integration_start_time = common::FromUniversal(0) + common::FromSeconds(0.5);
   integration_end_time = common::FromUniversal(0) + common::FromSeconds(1.5);
@@ -275,8 +285,10 @@ TEST(IMUIntegrationRK4Test, StandingInGravityIMUObservations) {
   delta_time = common::ToSeconds(integration_end_time - integration_start_time);
   expected_velocity = -delta_time * gravity_acceleration;
   expected_translation = -0.5 * delta_time * delta_time * gravity_acceleration;
-  EXPECT_NEAR_EIGEN(result.delta_velocity, expected_velocity, kPrecision);
-  EXPECT_NEAR_EIGEN(result.delta_translation, expected_translation, kPrecision);
+  EXPECT_NEAR((result.delta_velocity - expected_velocity).norm(), 0,
+              kPrecision);
+  EXPECT_NEAR((result.delta_translation - expected_translation).norm(), 0,
+              kPrecision);
 
   integration_start_time = common::FromUniversal(0) + common::FromSeconds(0.5);
   integration_end_time = common::FromUniversal(0) + common::FromSeconds(2.5);
@@ -293,8 +305,10 @@ TEST(IMUIntegrationRK4Test, StandingInGravityIMUObservations) {
   delta_time = common::ToSeconds(integration_end_time - integration_start_time);
   expected_velocity = -delta_time * gravity_acceleration;
   expected_translation = -0.5 * delta_time * delta_time * gravity_acceleration;
-  EXPECT_NEAR_EIGEN(result.delta_velocity, expected_velocity, kPrecision);
-  EXPECT_NEAR_EIGEN(result.delta_translation, expected_translation, kPrecision);
+  EXPECT_NEAR((result.delta_velocity - expected_velocity).norm(), 0,
+              kPrecision);
+  EXPECT_NEAR((result.delta_translation - expected_translation).norm(), 0,
+              kPrecision);
 
   integration_start_time = common::FromUniversal(0) + common::FromSeconds(0.0);
   integration_end_time = common::FromUniversal(0) + common::FromSeconds(3.0);
@@ -311,8 +325,10 @@ TEST(IMUIntegrationRK4Test, StandingInGravityIMUObservations) {
   delta_time = common::ToSeconds(integration_end_time - integration_start_time);
   expected_velocity = -delta_time * gravity_acceleration;
   expected_translation = -0.5 * delta_time * delta_time * gravity_acceleration;
-  EXPECT_NEAR_EIGEN(result.delta_velocity, expected_velocity, kPrecision);
-  EXPECT_NEAR_EIGEN(result.delta_translation, expected_translation, kPrecision);
+  EXPECT_NEAR((result.delta_velocity - expected_velocity).norm(), 0,
+              kPrecision);
+  EXPECT_NEAR((result.delta_translation - expected_translation).norm(), 0,
+              kPrecision);
 }
 
 TEST(IMUIntegrationRK4Test,
@@ -351,8 +367,10 @@ TEST(IMUIntegrationRK4Test,
                                                integration_end_time, &it);
   Eigen::Vector3d expected_velocity = {1.0, 0.0, 0.0};
   Eigen::Vector3d expected_translation = {1.5, 0.0, 0.0};
-  EXPECT_NEAR_EIGEN(result.delta_velocity, expected_velocity, kPrecision);
-  EXPECT_NEAR_EIGEN(result.delta_translation, expected_translation, kPrecision);
+  EXPECT_NEAR((result.delta_velocity - expected_velocity).norm(), 0,
+              kPrecision);
+  EXPECT_NEAR((result.delta_translation - expected_translation).norm(), 0,
+              kPrecision);
 }
 
 TEST(IMUIntegrationTest, ConstantAccelerationIMUIntegrator) {
