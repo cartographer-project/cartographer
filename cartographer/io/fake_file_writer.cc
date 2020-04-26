@@ -20,36 +20,40 @@
 #include "gtest/gtest.h"
 
 namespace cartographer {
-namespace io {
+  namespace io {
 
-FakeFileWriter::FakeFileWriter(const std::string& filename,
-                               std::shared_ptr<std::vector<char>> content)
-    : is_closed_(false), content_(content), filename_(filename) {
-  CHECK(content != nullptr);
-}
+    FakeFileWriter::FakeFileWriter(const std::string& filename,
+                                   std::shared_ptr<std::vector<char>> content)
+            : is_closed_(false), content_(content), filename_(filename) {
+      CHECK(content != nullptr);
+    }
 
-bool FakeFileWriter::Write(const char* const data, const size_t len) {
-  EXPECT_FALSE(is_closed_);
-  content_->insert(content_->end(), data, data + len);
-  return true;
-}
+    bool FakeFileWriter::Write(const char* const data, const size_t len) {
+      EXPECT_FALSE(is_closed_);
+      content_->insert(content_->end(), data, data + len);
+      return true;
+    }
 
-bool FakeFileWriter::Close() {
-  EXPECT_FALSE(is_closed_);
-  is_closed_ = true;
-  return true;
-}
+    bool FakeFileWriter::Close() {
+      EXPECT_FALSE(is_closed_);
+      is_closed_ = true;
+      return true;
+    }
 
-bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
-  EXPECT_FALSE(is_closed_);
-  if (content_->size() < len) {
-    content_->resize(len);
-  }
-  std::copy(data, data + len, content_->begin());
-  return true;
-}
+    bool FakeFileWriter::WriteHeader(const char* const data, const size_t len) {
+      EXPECT_FALSE(is_closed_);
+      if (content_->size() < len) {
+        content_->resize(len);
+      }
+      std::copy(data, data + len, content_->begin());
+      return true;
+    }
 
-std::string FakeFileWriter::GetFilename() { return filename_; }
+    std::string FakeFileWriter::GetFilename() { return filename_; }
 
-}  // namespace io
+    void FakeFileWriter::UpdateFileName(const std::string& filename) {
+      filename_ = filename;
+    }
+
+  }  // namespace io
 }  // namespace cartographer

@@ -68,11 +68,29 @@ if(SPHINX_FOUND)
   add_subdirectory("docs")
 endif()
 
+# Open3D
+message(STATUS "prefix ${CMAKE_INSTALL_PREFIX}")
+find_package(Open3D HINTS ${CMAKE_INSTALL_PREFIX}/lib/CMake)
+list(APPEND Open3D_LIBRARIES dl)
+if (Open3D_FOUND)
+  message(STATUS "Found Open3D ${Open3D_VERSION}")
+  add_definitions(-DUNIX)
+  add_compile_options(-Wno-deprecated-declarations)
+  add_compile_options(-Wno-unused-result)
+  add_definitions(-O3)
+else ()
+  message(SEND_ERROR "Open3D not found")
+endif ()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${Open3D_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Open3D_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${Open3D_EXE_LINKER_FLAGS}")
+
 # Install catkin package.xml
 install(FILES package.xml DESTINATION share/cartographer)
 
 set(CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY ${CMAKE_INSTALL_PREFIX}/share/cartographer/configuration_files
-  CACHE PATH ".lua configuration files directory")
+        CACHE PATH ".lua configuration files directory")
 
 install(DIRECTORY configuration_files DESTINATION share/cartographer/)
 
@@ -141,14 +159,14 @@ foreach(ABS_FIL ${ALL_PROTOS})
   list(APPEND ALL_PROTO_HDRS "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h")
 
   add_custom_command(
-    OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
-           "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
-    COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-    ARGS --cpp_out  ${PROJECT_BINARY_DIR} -I
-      ${PROJECT_SOURCE_DIR} ${ABS_FIL}
-    DEPENDS ${ABS_FIL}
-    COMMENT "Running C++ protocol buffer compiler on ${ABS_FIL}"
-    VERBATIM
+          OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
+          "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
+          COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+          ARGS --cpp_out  ${PROJECT_BINARY_DIR} -I
+          ${PROJECT_SOURCE_DIR} ${ABS_FIL}
+          DEPENDS ${ABS_FIL}
+          COMMENT "Running C++ protocol buffer compiler on ${ABS_FIL}"
+          VERBATIM
   )
 endforeach()
 set_source_files_properties(${ALL_PROTO_SRCS} ${ALL_PROTO_HDRS} PROPERTIES GENERATED TRUE)
@@ -167,15 +185,15 @@ if(${BUILD_GRPC})
     list(APPEND ALL_GRPC_SERVICE_HDRS "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h")
 
     add_custom_command(
-      OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
-             "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
-      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-      ARGS --cpp_out  ${PROJECT_BINARY_DIR}
-        -I ${PROJECT_SOURCE_DIR}
-        ${ABS_FIL}
-      DEPENDS ${ABS_FIL}
-      COMMENT "Running C++ protocol buffer compiler on ${ABS_FIL}"
-      VERBATIM
+            OUTPUT "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.cc"
+            "${PROJECT_BINARY_DIR}/${DIR}/${FIL_WE}.pb.h"
+            COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+            ARGS --cpp_out  ${PROJECT_BINARY_DIR}
+            -I ${PROJECT_SOURCE_DIR}
+            ${ABS_FIL}
+            DEPENDS ${ABS_FIL}
+            COMMENT "Running C++ protocol buffer compiler on ${ABS_FIL}"
+            VERBATIM
     )
   endforeach()
   set_source_files_properties(${ALL_GRPC_SERVICE_SRCS} ${ALL_GRPC_SERVICE_HDRS} PROPERTIES GENERATED TRUE)
@@ -187,34 +205,34 @@ set(INSTALL_GENERATED_HDRS ${ALL_PROTO_HDRS} ${ALL_GRPC_SERVICE_HDRS})
 add_library(${PROJECT_NAME} STATIC ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
 
 configure_file(
-  ${PROJECT_SOURCE_DIR}/cartographer/common/config.h.cmake
-  ${PROJECT_BINARY_DIR}/cartographer/common/config.h)
+        ${PROJECT_SOURCE_DIR}/cartographer/common/config.h.cmake
+        ${PROJECT_BINARY_DIR}/cartographer/common/config.h)
 
 google_binary(cartographer_autogenerate_ground_truth
-  SRCS
-    cartographer/ground_truth/autogenerate_ground_truth_main.cc
-)
+        SRCS
+        cartographer/ground_truth/autogenerate_ground_truth_main.cc
+        )
 
 google_binary(cartographer_compute_relations_metrics
-  SRCS
-    cartographer/ground_truth/compute_relations_metrics_main.cc
-)
+        SRCS
+        cartographer/ground_truth/compute_relations_metrics_main.cc
+        )
 
 google_binary(cartographer_pbstream
-  SRCS
-  cartographer/io/pbstream_main.cc
-)
+        SRCS
+        cartographer/io/pbstream_main.cc
+        )
 
 google_binary(cartographer_print_configuration
-  SRCS
-  cartographer/common/print_configuration_main.cc
-)
+        SRCS
+        cartographer/common/print_configuration_main.cc
+        )
 
 if(${BUILD_GRPC})
   google_binary(cartographer_grpc_server
-    SRCS
-      cartographer/cloud/map_builder_server_main.cc
-  )
+          SRCS
+          cartographer/cloud/map_builder_server_main.cc
+          )
   target_link_libraries(cartographer_grpc_server PUBLIC grpc++)
   target_link_libraries(cartographer_grpc_server PUBLIC async_grpc)
   if(${BUILD_PROMETHEUS})
@@ -225,19 +243,22 @@ if(${BUILD_GRPC})
 endif()
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  "${EIGEN3_INCLUDE_DIR}")
+        "${EIGEN3_INCLUDE_DIR}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${EIGEN3_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  "${CERES_INCLUDE_DIRS}")
+        "${CERES_INCLUDE_DIRS}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${CERES_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  "${LUA_INCLUDE_DIR}")
+        "${LUA_INCLUDE_DIR}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LUA_LIBRARIES})
 
+target_include_directories(${PROJECT_NAME} PUBLIC ${Open3D_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${Open3D_LIBRARIES})
+
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  "${Boost_INCLUDE_DIRS}")
+        "${Boost_INCLUDE_DIRS}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
 
 if (WIN32)
@@ -260,12 +281,12 @@ endif()
 
 if("${CAIRO_INCLUDE_DIRS}")
   target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-    "${CAIRO_INCLUDE_DIRS}")
+          "${CAIRO_INCLUDE_DIRS}")
 endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC ${CAIRO_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  ${PROTOBUF_INCLUDE_DIR})
+        ${PROTOBUF_INCLUDE_DIR})
 # TODO(hrapp): This should not explicitly list pthread and use
 # PROTOBUF_LIBRARIES, but that failed on first try.
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} standalone_absl)
@@ -285,14 +306,14 @@ endif()
 
 set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
 set_target_properties(${PROJECT_NAME} PROPERTIES
-  COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
+        COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
 set(TEST_LIB
-  cartographer_test_library
-)
+        cartographer_test_library
+        )
 add_library(${TEST_LIB} ${TEST_LIBRARY_HDRS} ${TEST_LIBRARY_SRCS})
 target_include_directories(${TEST_LIB} SYSTEM PRIVATE
-  "${GMOCK_INCLUDE_DIRS}")
+        "${GMOCK_INCLUDE_DIRS}")
 # Needed for dynamically linked GTest on Windows.
 if (WIN32)
   target_compile_definitions(${TEST_LIB} PUBLIC -DGTEST_LINKED_AS_SHARED_LIBRARY)
@@ -300,7 +321,7 @@ endif()
 target_link_libraries(${TEST_LIB} PUBLIC ${GMOCK_LIBRARY})
 target_link_libraries(${TEST_LIB} PUBLIC ${PROJECT_NAME})
 set_target_properties(${TEST_LIB} PROPERTIES
-  COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
+        COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
 foreach(ABS_FIL ${ALL_TESTS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${ABS_FIL})
@@ -324,25 +345,25 @@ endforeach()
 # Add the binary directory first, so that port.h is included after it has
 # been generated.
 target_include_directories(${PROJECT_NAME} PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-)
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:include>
+        )
 
 install(
-  TARGETS ${PROJECT_NAME}
-  EXPORT CartographerExport
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+        TARGETS ${PROJECT_NAME}
+        EXPORT CartographerExport
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
 )
 
 foreach(HDR ${INSTALL_SOURCE_HDRS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${HDR})
   get_filename_component(DIR ${REL_FIL} DIRECTORY)
   install(
-    FILES ${HDR}
-    DESTINATION include/${DIR}
+          FILES ${HDR}
+          DESTINATION include/${DIR}
   )
 endforeach()
 
@@ -350,27 +371,27 @@ foreach(HDR ${INSTALL_GENERATED_HDRS})
   file(RELATIVE_PATH REL_FIL ${PROJECT_BINARY_DIR} ${HDR})
   get_filename_component(DIR ${REL_FIL} DIRECTORY)
   install(
-    FILES ${HDR}
-    DESTINATION include/${DIR}
+          FILES ${HDR}
+          DESTINATION include/${DIR}
   )
 endforeach()
 
 set(CARTOGRAPHER_CMAKE_DIR share/cartographer/cmake)
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
-  cartographer-config.cmake.in
-  ${PROJECT_BINARY_DIR}/cmake/cartographer/cartographer-config.cmake
-  PATH_VARS CARTOGRAPHER_CMAKE_DIR
-  INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}/share/cartographer
+        cartographer-config.cmake.in
+        ${PROJECT_BINARY_DIR}/cmake/cartographer/cartographer-config.cmake
+        PATH_VARS CARTOGRAPHER_CMAKE_DIR
+        INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}/share/cartographer
 )
 
 install(
-  EXPORT CartographerExport
-  DESTINATION share/cartographer/cmake/
-  FILE CartographerTargets.cmake
+        EXPORT CartographerExport
+        DESTINATION share/cartographer/cmake/
+        FILE CartographerTargets.cmake
 )
 
 install(
-  FILES ${PROJECT_BINARY_DIR}/cmake/cartographer/cartographer-config.cmake
-  DESTINATION share/cartographer/
+        FILES ${PROJECT_BINARY_DIR}/cmake/cartographer/cartographer-config.cmake
+        DESTINATION share/cartographer/
 )
