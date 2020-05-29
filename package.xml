@@ -17,7 +17,28 @@
 
 <package format="2">
   <name>cartographer</name>
-  <version>1.0.0</version>
+  <!--
+  We add 900 to the patch part of the version and then multiply it by 10,
+  i.e. our version = `(upstream_patch_version + 900) * 10`,
+  so we can have intermediate releases as well as release any future official 1.0.x versions.
+
+  This is basically packing the patch part of the version and a fourth version part together
+  into the third part of the version.
+
+  The use of `900` instead of something else like `100` is arbitrary, but it might
+  help people recognize that this is a "special" version number.
+  It is needed however, because we cannot have a leading `0` in our patch version.
+
+  Consider these possible future versions as an example:
+
+  1.0.9000 -> current state of this repository, 1.0.0 + some commits from us and upstream
+  1.0.9010 -> upstream 1.0.1
+  1.0.9011 -> upstream 1.0.1 + additional commits from upstream or us
+  1.0.9012 -> upstream 1.0.1 + additional commits from 1.0.1011 + more new commits
+  1.0.9020 -> upstream 1.0.2
+  and so on...
+  -->
+  <version>1.0.9000</version>
   <description>
     Cartographer is a system that provides real-time simultaneous localization
     and mapping (SLAM) in 2D and 3D across multiple platforms and sensor
