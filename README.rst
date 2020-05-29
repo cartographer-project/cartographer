@@ -39,16 +39,19 @@ Getting started
 .. _our Read the Docs site: https://google-cartographer.readthedocs.io
 .. _creating an issue: https://github.com/googlecartographer/cartographer_ros/issues/new?labels=question
 
-Open house
-==========
+Contributing
+============
 
-We regularly meet in an open-for-all Google hangout to discuss progress and plans for Cartographer.
-You can join the `mailing list`_ to receive announcements.
+You can find information about contributing to Cartographer at `our Contribution
+page`_.
 
-The next Cartographer Open House Hangout is on **Thursday, May 9th 2019, 5pm CEST (8am PDT)** [`Hangouts link`_].
+.. _our Contribution page: https://github.com/googlecartographer/cartographer/blob/master/CONTRIBUTING.md
 
-.. _mailing list: https://groups.google.com/forum/#!forum/google-cartographer
-.. _Hangouts link: https://staging.talkgadget.google.com/hangouts/_/google.com/cartographeropenhouse
+Open house slide archive
+========================
+
+In the past there had been regular open-for-all meetings to discuss progress and plans for Cartographer.
+Slides of these Cartographer Open House meetings are listed below.
 
 - March 14, 2019: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/190314/slides.pdf>`_
 - February 21, 2019: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/190221/slides.pdf>`_
@@ -79,14 +82,6 @@ The next Cartographer Open House Hangout is on **Thursday, May 9th 2019, 5pm CES
 - July 6, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170706/slides.pdf>`_
 - June 22, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170622/sildes.pdf>`_
 - June 8, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170608/slides.pdf>`_
-
-Contributing
-============
-
-You can find information about contributing to Cartographer at `our Contribution
-page`_.
-
-.. _our Contribution page: https://github.com/googlecartographer/cartographer/blob/master/CONTRIBUTING.md
 
 .. |build| image:: https://travis-ci.org/googlecartographer/cartographer.svg?branch=master
     :alt: Build Status
