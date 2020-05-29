@@ -90,7 +90,7 @@ TEST_F(MigrationTest, MigrationAddsHeaderAsFirstMessage) {
 
   mapping::proto::SerializationHeader header;
   EXPECT_TRUE(TextFormat::ParseFromString(output_messages_[0], &header));
-  EXPECT_THAT(header.format_version(), Eq(1));
+  EXPECT_THAT(header.format_version(), Eq<uint32>(1));
 }
 
 TEST_F(MigrationTest, SerializedDataOrderIsCorrect) {
