@@ -60,6 +60,7 @@
 
   <build_depend>g++-static</build_depend>
   <build_depend>google-mock</build_depend>
+  <build_depend>gtest</build_depend>
   <build_depend>python3-sphinx</build_depend>
 
   <depend>libboost-iostreams-dev</depend>
