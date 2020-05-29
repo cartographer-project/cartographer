@@ -64,7 +64,7 @@ class LocklessQueue {
       data_list_head_ = data_list_head_->next;
       std::unique_ptr<T> data = std::move(node->data);
       PushNodeToList(&free_list_head_, node);
-      return std::move(data);
+      return data;
     }
     return nullptr;
   }
