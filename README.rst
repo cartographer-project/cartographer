@@ -27,7 +27,7 @@ configurations.
 
 |video|
 
-.. _Cartographer: https://github.com/googlecartographer/cartographer
+.. _Cartographer: https://github.com/cartographer-project/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
 Getting started
@@ -37,7 +37,7 @@ Getting started
 * You can ask a question by `creating an issue`_.
 
 .. _our Read the Docs site: https://google-cartographer.readthedocs.io
-.. _creating an issue: https://github.com/googlecartographer/cartographer_ros/issues/new?labels=question
+.. _creating an issue: https://github.com/cartographer-project/cartographer_ros/issues/new?labels=question
 
 Contributing
 ============
@@ -45,7 +45,7 @@ Contributing
 You can find information about contributing to Cartographer at `our Contribution
 page`_.
 
-.. _our Contribution page: https://github.com/googlecartographer/cartographer/blob/master/CONTRIBUTING.md
+.. _our Contribution page: https://github.com/cartographer-project/cartographer/blob/master/CONTRIBUTING.md
 
 Open house slide archive
 ========================
@@ -83,10 +83,10 @@ Slides of these Cartographer Open House meetings are listed below.
 - June 22, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170622/sildes.pdf>`_
 - June 8, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170608/slides.pdf>`_
 
-.. |build| image:: https://travis-ci.org/googlecartographer/cartographer.svg?branch=master
+.. |build| image:: https://travis-ci.org/cartographer-project/cartographer.svg?branch=master
     :alt: Build Status
     :scale: 100%
-    :target: https://travis-ci.org/googlecartographer/cartographer
+    :target: https://travis-ci.org/cartographer-project/cartographer
 .. |docs| image:: https://readthedocs.org/projects/google-cartographer/badge/?version=latest
     :alt: Documentation Status
     :scale: 100%
@@ -94,7 +94,7 @@ Slides of these Cartographer Open House meetings are listed below.
 .. |license| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
      :alt: Apache 2 license.
      :scale: 100%
-     :target: https://github.com/googlecartographer/cartographer/blob/master/LICENSE
+     :target: https://github.com/cartographer-project/cartographer/blob/master/LICENSE
 .. |video| image:: https://j.gifs.com/wp3BJM.gif
     :alt: Cartographer 3D SLAM Demo
     :scale: 100%
