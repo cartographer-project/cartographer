@@ -27,21 +27,21 @@ namespace io {
 
 // Filters all points that are farther away from their 'origin' as 'max_range'
 // or closer than 'min_range'.
-class MinMaxRangeFiteringPointsProcessor : public PointsProcessor {
+class MinMaxRangeFilteringPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName =
       "min_max_range_filter";
-  MinMaxRangeFiteringPointsProcessor(double min_range, double max_range,
-                                     PointsProcessor* next);
-  static std::unique_ptr<MinMaxRangeFiteringPointsProcessor> FromDictionary(
+  MinMaxRangeFilteringPointsProcessor(double min_range, double max_range,
+                                      PointsProcessor* next);
+  static std::unique_ptr<MinMaxRangeFilteringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
-  ~MinMaxRangeFiteringPointsProcessor() override {}
+  ~MinMaxRangeFilteringPointsProcessor() override {}
 
-  MinMaxRangeFiteringPointsProcessor(
-      const MinMaxRangeFiteringPointsProcessor&) = delete;
-  MinMaxRangeFiteringPointsProcessor& operator=(
-      const MinMaxRangeFiteringPointsProcessor&) = delete;
+  MinMaxRangeFilteringPointsProcessor(
+      const MinMaxRangeFilteringPointsProcessor&) = delete;
+  MinMaxRangeFilteringPointsProcessor& operator=(
+      const MinMaxRangeFilteringPointsProcessor&) = delete;
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
