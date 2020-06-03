@@ -83,7 +83,7 @@ void RegisterBuiltInPointsProcessors(
   RegisterPlainPointsProcessor<CountingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<FixedRatioSamplingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<FrameIdFilteringPointsProcessor>(builder);
-  RegisterPlainPointsProcessor<MinMaxRangeFiteringPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<MinMaxRangeFilteringPointsProcessor>(builder);
   RegisterPlainPointsProcessor<OutlierRemovingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<ColoringPointsProcessor>(builder);
   RegisterPlainPointsProcessor<IntensityToColorPointsProcessor>(builder);
